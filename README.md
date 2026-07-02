@@ -22,7 +22,7 @@ No install, no build, no dependencies.
 - **Faithful StS mechanics:** 3 energy / draw 5 turns, block that expires, telegraphed enemy intents, exhaust/ethereal/retain keywords, exact StS damage-order math.
 - **Elden Ring flavor with real mechanics:** Bleed as a build-up meter that bursts for %-max-HP damage, Scarlet Rot as a non-decaying timed DoT, and a Poise/Stagger system that skips enemy turns and opens damage windows.
 
-Full design: **[SPEC.md](SPEC.md)**. The original brief: **[PROMPT.md](PROMPT.md)**.
+Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md](docs/GDD.md)** (design intent, UI mockups, art direction). The original brief: **[PROMPT.md](PROMPT.md)**.
 
 ## Roadmap
 
