@@ -139,6 +139,37 @@
 .fx-banner.blood { color: var(--ember); }
 .combat.shake { animation: shake 200ms; }
 
+/* ---------- ability / relic / status fx ---------- */
+.sprite.hitflash > :first-child { animation: hitflash 200ms ease-out; }
+@keyframes hitflash {
+  0% { filter: brightness(2.1) saturate(1.8); transform: translateX(4px); }
+  100% { filter: none; transform: none; }
+}
+.sprite.crumble > :first-child { animation: crumble 300ms ease-in forwards; }
+@keyframes crumble { to { opacity: 0.2; transform: translateY(10px) scale(0.92); filter: grayscale(1); } }
+.relic.proc { animation: relicProc 300ms ease-out; }
+@keyframes relicProc {
+  0% { transform: scale(1.45); box-shadow: 0 0 18px var(--gold); }
+  100% { transform: none; }
+}
+.energy-orb.pulse { animation: orbPulse 240ms ease-out; }
+@keyframes orbPulse {
+  0% { transform: scale(1.18); box-shadow: 0 0 34px rgba(201, 162, 39, 0.6); }
+  100% { transform: none; }
+}
+.card-ghost {
+  position: fixed; z-index: 700; pointer-events: none;
+  transition: transform 220ms ease-in, opacity 220ms ease-in;
+}
+.stance-flare {
+  position: absolute; width: 180px; height: 180px; border-radius: 50%;
+  pointer-events: none; animation: flare 300ms ease-out forwards;
+}
+@keyframes flare {
+  0% { opacity: 0.7; transform: scale(0.4); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
 @keyframes float-up { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-42px); } }
 @keyframes banner-pop { 0% { opacity: 0; letter-spacing: 0.6em; } 30% { opacity: 1; } 100% { opacity: 0; letter-spacing: 0.25em; } }
 @keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(4px, -3px); } 50% { transform: translate(-4px, 2px); } 75% { transform: translate(3px, 3px); } }

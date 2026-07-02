@@ -623,6 +623,26 @@ export async function runTests() {
     eq(shrineHealAmount(REG, rn4), Math.floor((78 * 30 * 1.15) / 100), 'Grace Fragment ×1.15');
   });
 
+  // ---- 19. Keepsakes (character creation boons) -------------------------------------------
+  test('19. keepsakes: effect lists validate and apply as run effects', async () => {
+    const { KEEPSAKES } = await import('../src/content/keepsakes.js');
+    // Every keepsake's effects must pass the same closed-set validation as events.
+    const probe = { ...contentBundle, events: [...contentBundle.events, ...KEEPSAKES.map((k) => ({
+      id: `ks_${k.id}`, name: k.name, text: 'probe',
+      choices: [{ label: 'x', effects: k.effects, resultText: 'x' }],
+    }))] };
+    const v = validateContent(probe);
+    assert(v.ok, `keepsake effects invalid: ${v.errors.map((e) => e.path + ': ' + e.msg).join(' | ')}`);
+
+    const rn = createRunState({ seed: 11, classId: 'vagabond', registries: REG });
+    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'oldRune').effects);
+    eq(rn.runes, 50, 'Old Rune grants 50 runes');
+    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'travelersFlask').effects);
+    eq(rn.flasks[0].flaskId, 'crimsonFlask', "Traveler's Flask grants a Crimson Flask");
+    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
+    assert(rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'Whetstone Memory upgrades a Strike');
+  });
+
   const passed = results.filter((r) => r.ok).length;
   const failed = results.length - passed;
   return { passed, failed, results };

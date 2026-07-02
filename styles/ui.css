@@ -104,3 +104,57 @@
 .reward-row { display: flex; gap: 22px; }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 .heal-note { color: var(--green); font-size: 13px; }
+
+/* ---------- main menu ambience ---------- */
+.title-screen { position: relative; overflow: hidden; }
+.title-stack { animation: screenIn 700ms ease-out; }
+.title-menu { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.title-glow { animation: titleGlow 3.2s ease-in-out infinite alternate; }
+@keyframes titleGlow {
+  from { text-shadow: 0 0 26px rgba(201, 162, 39, 0.25); }
+  to { text-shadow: 0 0 60px rgba(201, 162, 39, 0.6); }
+}
+.ember {
+  position: absolute; bottom: -10px; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--ember); box-shadow: 0 0 8px var(--ember); opacity: 0;
+  animation: emberFloat 9s linear infinite;
+}
+@keyframes emberFloat {
+  0% { transform: translate(0, 0); opacity: 0; }
+  12% { opacity: 0.8; }
+  60% { opacity: 0.5; }
+  100% { transform: translate(26px, -92vh); opacity: 0; }
+}
+
+/* ---------- character customization ---------- */
+.cz-portrait {
+  width: 130px; height: 160px; border-radius: 12px; background: #2a2418;
+  border: 3px solid var(--gold); display: flex; align-items: center; justify-content: center;
+  font-size: 64px; transition: border-color 200ms, box-shadow 300ms;
+}
+.cz-label { color: var(--muted); font-size: 10px; letter-spacing: 0.3em; margin-bottom: 6px; }
+.cz-opts { display: flex; gap: 8px; }
+.cz-opt {
+  width: 40px; height: 40px; border-radius: 9px; background: var(--panel);
+  border: 2px solid var(--line-soft); display: flex; align-items: center; justify-content: center;
+  font-size: 20px; cursor: pointer; transition: transform 120ms, border-color 120ms;
+}
+.cz-opt:hover { transform: translateY(-2px); }
+.cz-opt.chosen { border-color: var(--parchment); }
+.cz-opt.tint.chosen { outline: 2px solid var(--parchment); outline-offset: 2px; }
+.cz-class.chosen { border-color: var(--gold); box-shadow: 0 0 18px rgba(201, 162, 39, 0.25); }
+.cz-keepsakes { display: flex; flex-direction: column; gap: 8px; }
+.cz-keepsake {
+  display: flex; gap: 10px; align-items: center; background: var(--panel);
+  border: 1.5px solid var(--line-soft); border-radius: 10px; padding: 8px 12px;
+  cursor: pointer; transition: border-color 120ms;
+}
+.cz-keepsake:hover { border-color: var(--muted); }
+.cz-keepsake.chosen { border-color: var(--gold); }
+.cz-keepsake .ks-icon { font-size: 22px; }
+.cz-keepsake p { font-size: 11px; color: var(--muted); }
+
+/* ---------- event screen ---------- */
+.event-art { display: inline-block; animation: artFloat 4s ease-in-out infinite; }
+@keyframes artFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+#choices button { animation: screenIn 260ms ease-out backwards; }

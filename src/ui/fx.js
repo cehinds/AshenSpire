@@ -41,6 +41,29 @@ function shake(combatEl) {
   combatEl.classList.add('shake');
 }
 
+// Add a short-lived CSS class (restarting its animation if already present).
+function flash(el, cls, ms = 300) {
+  if (!el) return;
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), ms);
+}
+
+// Radial flare over an anchor (stance entries, big procs).
+function flare(layer, anchor, color) {
+  if (!layer || !anchor) return;
+  const lr = layer.getBoundingClientRect();
+  const ar = anchor.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'stance-flare';
+  el.style.left = `${ar.left - lr.left + ar.width / 2 - 90}px`;
+  el.style.top = `${ar.top - lr.top + ar.height / 2 - 90}px`;
+  el.style.background = `radial-gradient(circle, ${color} 0%, transparent 65%)`;
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), 320);
+}
+
 /**
  * animateEvents(events, ctx, done)
  *   ctx = { layer, combatEl, anchorFor(entityId) → element|null }
@@ -78,7 +101,9 @@ function visualFor(e) {
     case 'damageDealt':
       return (ctx) => {
         sfx.play('hit');
-        floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, e.amount >= 15 ? 'dmg heavy' : 'dmg');
+        const anchor = ctx.anchorFor(e.targetId);
+        floatNum(ctx.layer, anchor, `-${e.amount}`, e.amount >= 15 ? 'dmg heavy' : 'dmg');
+        flash(anchor, 'hitflash', 220);
         if (e.amount >= 15) shake(ctx.combatEl);
       };
     case 'blockGained':
@@ -110,10 +135,26 @@ function visualFor(e) {
     case 'enemyDied':
       return (ctx) => {
         sfx.play('enemyDeath');
-        floatNum(ctx.layer, ctx.anchorFor(e.targetId), '✝', 'dmg heavy');
+        const anchor = ctx.anchorFor(e.targetId);
+        floatNum(ctx.layer, anchor, '✝', 'dmg heavy');
+        if (anchor) anchor.classList.add('crumble');
       };
     case 'stanceEntered':
-      return () => sfx.play('stance');
+      return (ctx) => {
+        sfx.play('stance');
+        const color = e.stance === 'bulwark' ? 'rgba(127,168,201,.55)' : 'rgba(201,80,46,.55)';
+        flare(ctx.layer, ctx.anchorFor('player'), color);
+      };
+    case 'relicTriggered':
+      return (ctx) => {
+        sfx.play('relic');
+        if (ctx.relicAnchor) flash(ctx.relicAnchor(e.relicId), 'proc', 320);
+      };
+    case 'energySpent':
+    case 'energyGained':
+      return (ctx) => {
+        if (ctx.orb) flash(ctx.orb(), 'pulse', 260);
+      };
     default:
       return null;
   }

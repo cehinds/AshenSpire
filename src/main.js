@@ -25,6 +25,9 @@ import {
   resolveUnknownNode,
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
+import { mountCustomize } from './ui/screens/customize.js';
+import { KEEPSAKES } from './content/keepsakes.js';
+import { executeRunEffects } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
 import { mountRewards } from './ui/screens/reward.js';
@@ -68,7 +71,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun(classId, seedString) {
+function newRun({ classId, seedString, customization, keepsakeId }) {
   let seed;
   try {
     seed = seedFromString(seedString || randomSeedString());
@@ -77,11 +80,18 @@ function newRun(classId, seedString) {
   }
   run = createRunState({ seed, classId, registries });
   run.seedString = seedToString(seed);
+  run.customization = customization || { name: 'Tarnished', glyph: '⚔', tint: 'gold' };
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
   run.path = [];
   run.seenEvents = [];
   run.lastEncounters = [];
   rng = createRng(seed);
+
+  // Keepsake: a one-time bundle of run-level effects (content/keepsakes.js).
+  const keepsake = KEEPSAKES.find((k) => k.id === keepsakeId);
+  if (keepsake && keepsake.effects.length) {
+    executeRunEffects({ run, registries, rng }, keepsake.effects);
+  }
 
   run.mapGraph = generateActMap({ config: registries.mapConfig(1), rng });
   // Pre-roll every '?' node (stream 'events') so outcomes are seed-determined
@@ -115,15 +125,22 @@ function resumeRun() {
 function showTitle() {
   run = null;
   mountTitle(app, {
-    registries,
-    defaultSeedString: randomSeedString(),
     hasSave: saves.hasRun(),
-    onStart: (classId, seedString) => newRun(classId, seedString),
+    onBegin: showCustomize,
     onContinue: resumeRun,
     onAbandon: () => {
       saves.clearRun();
       showTitle();
     },
+  });
+}
+
+function showCustomize() {
+  mountCustomize(app, {
+    registries,
+    defaultSeedString: randomSeedString(),
+    onBack: showTitle,
+    onStart: (config) => newRun(config),
   });
 }
 

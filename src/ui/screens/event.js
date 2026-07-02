@@ -18,17 +18,18 @@ export function mountEvent(app, { registries, run, rng, eventId, onDone }) {
 
   app.innerHTML = `
     <div class="screen" style="gap:20px">
-      <div style="font-size:56px">${esc(def.art || '❖')}</div>
+      <div class="event-art" style="font-size:56px">${esc(def.art || '❖')}</div>
       <h2 style="color:var(--gold);font-size:24px">${esc(def.name).toUpperCase()}</h2>
       <p style="max-width:560px;text-align:center;line-height:1.7;color:var(--parchment)">${esc(def.text)}</p>
       <div id="choices" style="display:flex;flex-direction:column;gap:10px;min-width:420px"></div>
     </div>`;
 
   const box = app.querySelector('#choices');
-  def.choices.forEach((choice) => {
+  def.choices.forEach((choice, i) => {
     const btn = document.createElement('button');
     btn.className = 'subtle';
     btn.style.fontSize = '13px';
+    btn.style.animationDelay = `${i * 70}ms`; // staggered entrance
     btn.textContent = choice.label;
     if (!meets(choice.requires)) {
       btn.disabled = true;
