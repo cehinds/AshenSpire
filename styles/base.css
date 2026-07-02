@@ -1,0 +1,67 @@
+/* styles/base.css — palette, reset, typography (GDD §7, sprite style guide) */
+
+:root {
+  --bg: #0d0b08;
+  --bg-raise: #171310;
+  --panel: #241d15;
+  --line: #3a3226;
+  --line-soft: #4a4034;
+  --parchment: #e8dcc0;
+  --muted: #7a6f5a;
+  --gold: #c9a227;
+  --blood: #8a1a1a;
+  --rot: #b5541c;
+  --frost: #7fa8c9;
+  --grace: #9fc3e8;
+  --ember: #c9502e;
+  --green: #7fd97f;
+  --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
+  --font-body: Inter, 'Segoe UI', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  background: radial-gradient(ellipse 60% 40% at 70% 10%, rgba(201, 162, 39, 0.06), transparent),
+    linear-gradient(#16110c, var(--bg));
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: 14px;
+  overflow: hidden;
+  user-select: none;
+}
+
+#app { height: 100vh; display: flex; flex-direction: column; }
+
+h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: 0.08em; }
+
+button {
+  font-family: var(--font-display);
+  letter-spacing: 0.1em;
+  background: var(--panel);
+  color: var(--gold);
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  padding: 10px 26px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 120ms, transform 120ms;
+}
+button:hover { background: #2e2517; }
+button:disabled { border-color: var(--line); color: var(--muted); cursor: default; }
+button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 12px; padding: 6px 14px; }
+
+.bar {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar > .fill { position: absolute; inset: 0; right: auto; transition: width 200ms; }
+.bar > .label {
+  position: relative; z-index: 1; text-align: center; font-size: 10px;
+  line-height: 1; padding: 2px 0; color: var(--parchment); text-shadow: 0 1px 2px #000;
+}

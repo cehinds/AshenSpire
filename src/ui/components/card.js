@@ -1,0 +1,97 @@
+// src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
+//
+// All numbers shown come from the engine: in combat, previewCard tokens
+// (live math, SPEC §3.13); outside combat, the card's own literal values via
+// computeTokenBindings. No math happens here.
+
+import { resolveCard } from '../../model/registries.js';
+import { computeTokenBindings } from '../../model/validate.js';
+import { attachTooltip, esc } from './tooltip.js';
+
+/** Static token values straight off the def (for reward/pile/deck views). */
+export function staticTokens(def) {
+  const tokens = {};
+  for (const b of computeTokenBindings(def.effects || [])) {
+    const v = (def.effects[b.index] || {})[b.field];
+    if (typeof v === 'number') tokens[b.token] = v;
+  }
+  return tokens;
+}
+
+function fillTemplate(def, tokens, baseTokens) {
+  let html = esc(def.textTemplate);
+  html = html.replace(/\{([A-Za-z][\w.]*)\}/g, (m, tok) => {
+    const v = tokens[tok];
+    if (v == null) return m;
+    let cls = 'val';
+    if (baseTokens && typeof baseTokens[tok] === 'number') {
+      if (v > baseTokens[tok]) cls += ' up';
+      else if (v < baseTokens[tok]) cls += ' down';
+    }
+    return `<span class="${cls}">${v}</span>`;
+  });
+  // Light keyword coloring for readability.
+  html = html
+    .replace(/\b(Bleed|Scarlet Rot|Staggered|Poise)\b/g, '<span class="st-bleed">$1</span>')
+    .replace(/\b(Exhaust|Ethereal|Innate|Retain|Unplayable)\b/g, '<span class="kw">$1</span>');
+  return html;
+}
+
+/**
+ * renderCard(registries, ref, opts) → element.
+ *   ref  — { cardId, upgraded, instanceId? }
+ *   opts — { preview?    (previewCard result → live numbers),
+ *            affordable? (bool; greys out when false),
+ *            small?      (scale for reward/pile grids) }
+ */
+export function renderCard(registries, ref, opts = {}) {
+  const def = resolveCard(registries, ref);
+  const el = document.createElement('div');
+  el.className = `card rarity-${def.rarity}${ref.upgraded ? ' upgraded' : ''}`;
+  if (opts.affordable === false) el.classList.add('unaffordable');
+  if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
+  el.dataset.cardId = def.id;
+
+  const base = staticTokens(def);
+  const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
+  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
+
+  el.innerHTML =
+    `<div class="cost">${esc(cost)}</div>` +
+    `<div class="cname">${esc(def.name)}</div>` +
+    `<div class="art">${esc(def.icon || '❖')}</div>` +
+    `<div class="ctype">${esc(def.type.toUpperCase())}</div>` +
+    `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
+
+  attachTooltip(el, () => cardTooltip(registries, def, tokens));
+  if (opts.small) {
+    el.style.transform = 'scale(0.92)';
+  }
+  return el;
+}
+
+function cardTooltip(registries, def, tokens) {
+  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)}</div>`;
+  html += `<div>${fillTemplate(def, tokens, null)}</div>`;
+  // Nested keyword + status tooltips (SPEC §7.3).
+  const lines = [];
+  for (const kw of def.keywords || []) {
+    if (registries.keywords.has(kw)) {
+      const k = registries.keywords.get(kw);
+      lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
+    }
+  }
+  for (const eff of def.effects || []) {
+    if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {
+      const s = registries.statuses.get(eff.status);
+      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    }
+    if (eff.op === 'enterStance' && registries.stances.has(eff.stance)) {
+      const s = registries.stances.get(eff.stance);
+      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    }
+  }
+  if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);
+  if (lines.length) html += `<div class="tt-kw">${lines.join('<br>')}</div>`;
+  return html;
+}

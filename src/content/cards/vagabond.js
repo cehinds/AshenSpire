@@ -1,0 +1,318 @@
+// src/content/cards/vagabond.js — the 24-card M1 Vagabond pool (SPEC §5.2)
+//
+// Pure data. Every card's numbers come from the SPEC §5.2 table; text tokens
+// bind to effects per SPEC §3.13. Powers with invisible stack counts use
+// formula-valued stacks ({f:'add',args:[1]}) — formula values are exempt from
+// the literal-number token rule (documented in DEVELOPER.md).
+
+const one = { f: 'add', args: [1] };
+
+export const vagabondCards = [
+  // ---- Starters -------------------------------------------------------------
+  {
+    id: 'strike', name: 'Strike', class: 'vagabond', rarity: 'starter', cost: 1, type: 'attack',
+    keywords: [], icon: '⚔',
+    effects: [{ op: 'damage', target: 'enemy', amount: 6 }],
+    textTemplate: 'Deal {damage} damage.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 9 }] },
+  },
+  {
+    id: 'defend', name: 'Defend', class: 'vagabond', rarity: 'starter', cost: 1, type: 'skill',
+    keywords: [], icon: '🛡',
+    effects: [{ op: 'block', target: 'self', amount: 5 }],
+    textTemplate: 'Gain {block} Block.',
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 8 }] },
+  },
+  {
+    id: 'bloodflameSlash', name: 'Bloodflame Slash', class: 'vagabond', rarity: 'starter', cost: 1, type: 'attack',
+    keywords: [], icon: '🗡',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 5 },
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 },
+    ],
+    textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 5 },
+        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 5 },
+      ],
+    },
+  },
+
+  // ---- Commons ---------------------------------------------------------------
+  {
+    id: 'crimsonCleave', name: 'Crimson Cleave', class: 'vagabond', rarity: 'common', cost: 2, type: 'attack',
+    keywords: [], icon: '🪓',
+    effects: [
+      { op: 'damage', target: 'allEnemies', amount: 8 },
+      { op: 'applyStatus', target: 'allEnemies', status: 'bleed', stacks: 2 },
+    ],
+    textTemplate: 'Deal {damage} damage to ALL enemies. Apply {bleed} Bleed to ALL.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'allEnemies', amount: 11 },
+        { op: 'applyStatus', target: 'allEnemies', status: 'bleed', stacks: 2 },
+      ],
+    },
+  },
+  {
+    id: 'shieldBash', name: 'Shield Bash', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '🛡',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 5 },
+      { op: 'poiseDamage', target: 'enemy', amount: 4 },
+    ],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 8 },
+        { op: 'poiseDamage', target: 'enemy', amount: 5 },
+      ],
+    },
+  },
+  {
+    id: 'quickstep', name: 'Quickstep', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    keywords: [], icon: '👣',
+    effects: [
+      { op: 'block', target: 'self', amount: 6 },
+      { op: 'draw', amount: 1 },
+    ],
+    textTemplate: 'Gain {block} Block. Draw {draw} card.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 8 },
+        { op: 'draw', amount: 1 },
+      ],
+    },
+  },
+  {
+    id: 'guardCounter', name: 'Guard Counter', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '↩',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 4, if: { p: 'not', pred: { p: 'hasBlock', of: 'self' } } },
+      { op: 'damage', target: 'enemy', amount: 10, if: { p: 'hasBlock', of: 'self' } },
+    ],
+    textTemplate: 'Deal {damage} damage. If you have Block: deal {damage.2} instead.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 6, if: { p: 'not', pred: { p: 'hasBlock', of: 'self' } } },
+        { op: 'damage', target: 'enemy', amount: 14, if: { p: 'hasBlock', of: 'self' } },
+      ],
+    },
+  },
+  {
+    id: 'ironResolve', name: 'Iron Resolve', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    keywords: [], icon: '⛨',
+    effects: [
+      { op: 'block', target: 'self', amount: 5, if: { p: 'not', pred: { p: 'inStance', stance: 'bulwark' } } },
+      { op: 'block', target: 'self', amount: 9, if: { p: 'inStance', stance: 'bulwark' } },
+    ],
+    textTemplate: 'Gain {block} Block. If in Bulwark Stance: gain {block.2} instead.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 7, if: { p: 'not', pred: { p: 'inStance', stance: 'bulwark' } } },
+        { op: 'block', target: 'self', amount: 12, if: { p: 'inStance', stance: 'bulwark' } },
+      ],
+    },
+  },
+  {
+    id: 'serratedBlade', name: 'Serrated Blade', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '🪚',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 7 },
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3, if: { p: 'hasStatus', of: 'target', status: 'bleed' } },
+    ],
+    textTemplate: 'Deal {damage} damage. If the target has Bleed: apply {bleed} more Bleed.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 9 },
+        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 4, if: { p: 'hasStatus', of: 'target', status: 'bleed' } },
+      ],
+    },
+  },
+  {
+    id: 'enterBloodflame', name: 'Enter: Bloodflame', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    keywords: [], icon: '🔥',
+    effects: [
+      { op: 'enterStance', stance: 'bloodflame' },
+      { op: 'draw', amount: 1 },
+    ],
+    textTemplate: 'Enter Bloodflame Stance. Draw {draw} card.',
+    upgrade: { cost: 0 },
+  },
+  {
+    id: 'enterBulwark', name: 'Enter: Bulwark', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    keywords: [], icon: '🛡',
+    effects: [{ op: 'enterStance', stance: 'bulwark' }],
+    textTemplate: 'Enter Bulwark Stance.',
+    upgrade: {
+      effects: [
+        { op: 'enterStance', stance: 'bulwark' },
+        { op: 'block', target: 'self', amount: 3 },
+      ],
+      textTemplate: 'Enter Bulwark Stance. Gain {block} extra Block.',
+    },
+  },
+
+  // ---- Uncommons --------------------------------------------------------------
+  {
+    id: 'stomp', name: 'Stomp', class: 'vagabond', rarity: 'uncommon', cost: 2, type: 'attack',
+    keywords: [], icon: '🦶',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 12 },
+      { op: 'poiseDamage', target: 'enemy', amount: 8 },
+    ],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 16 },
+        { op: 'poiseDamage', target: 'enemy', amount: 10 },
+      ],
+    },
+  },
+  {
+    id: 'rallyingStandard', name: 'Rallying Standard', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'power',
+    keywords: [], icon: '⚑',
+    effects: [{ op: 'applyStatus', target: 'self', status: 'rallyingStandard', stacks: one }],
+    textTemplate: 'At the start of your turn, gain 1 Strength and take 1 damage.',
+    upgrade: {
+      effects: [{ op: 'applyStatus', target: 'self', status: 'rallyingStandardUp', stacks: one }],
+      textTemplate: 'At the start of your turn, gain 1 Strength.',
+    },
+  },
+  {
+    id: 'warSurgeon', name: 'War Surgeon', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'skill',
+    keywords: ['exhaust'], icon: '⚕',
+    effects: [
+      {
+        op: 'heal', target: 'self',
+        amount: { f: 'mul', args: [2, { f: 'stacks', status: 'bleed', of: 'allEnemies', per: 4 }] },
+      },
+    ],
+    textTemplate: 'Heal 2 HP for every 4 Bleed on all enemies. Exhaust.',
+    upgrade: {
+      effects: [
+        {
+          op: 'heal', target: 'self',
+          amount: { f: 'mul', args: [2, { f: 'stacks', status: 'bleed', of: 'allEnemies', per: 3 }] },
+        },
+      ],
+      textTemplate: 'Heal 2 HP for every 3 Bleed on all enemies. Exhaust.',
+    },
+  },
+  {
+    id: 'hemorrhage', name: 'Hemorrhage', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'skill',
+    keywords: ['exhaust'], icon: '🩸',
+    effects: [
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: { f: 'stacks', status: 'bleed', of: 'target' } },
+    ],
+    textTemplate: "Double the target's Bleed. Exhaust.",
+    upgrade: {
+      keywords: [],
+      textTemplate: "Double the target's Bleed.",
+    },
+  },
+  {
+    id: 'twinbladeFlurry', name: 'Twinblade Flurry', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'attack',
+    keywords: [], icon: '⚔',
+    effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }],
+    textTemplate: 'Deal {damage} damage {hits} times.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 4, hits: 3 }] },
+  },
+  {
+    id: 'shieldwall', name: 'Shieldwall', class: 'vagabond', rarity: 'uncommon', cost: 2, type: 'skill',
+    keywords: [], icon: '🧱',
+    effects: [
+      { op: 'block', target: 'self', amount: 12 },
+      { op: 'applyStatus', target: 'self', status: 'bulwarkEcho', stacks: one, if: { p: 'inStance', stance: 'bulwark' } },
+    ],
+    textTemplate: 'Gain {block} Block. If in Bulwark Stance: gain 4 Block next turn.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 16 },
+        { op: 'applyStatus', target: 'self', status: 'bulwarkEcho', stacks: one, if: { p: 'inStance', stance: 'bulwark' } },
+      ],
+    },
+  },
+  {
+    id: 'kickOff', name: 'Kick Off', class: 'vagabond', rarity: 'uncommon', cost: 0, type: 'attack',
+    keywords: ['exhaust'], icon: '🥾',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 4 },
+      { op: 'poiseDamage', target: 'enemy', amount: 3 },
+    ],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage. Exhaust.',
+    upgrade: {
+      keywords: [],
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 7 },
+        { op: 'poiseDamage', target: 'enemy', amount: 3 },
+      ],
+      textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
+    },
+  },
+
+  // ---- Rares -------------------------------------------------------------------
+  {
+    id: 'executioner', name: 'Executioner', class: 'vagabond', rarity: 'rare', cost: 2, type: 'attack',
+    keywords: [], icon: '⚰',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 10, if: { p: 'not', pred: { p: 'hasStatus', of: 'target', status: 'staggered' } } },
+      { op: 'damage', target: 'enemy', amount: 25, if: { p: 'hasStatus', of: 'target', status: 'staggered' } },
+    ],
+    textTemplate: 'Deal {damage} damage. If the target is Staggered: deal {damage.2} instead.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 14, if: { p: 'not', pred: { p: 'hasStatus', of: 'target', status: 'staggered' } } },
+        { op: 'damage', target: 'enemy', amount: 32, if: { p: 'hasStatus', of: 'target', status: 'staggered' } },
+      ],
+    },
+  },
+  {
+    id: 'lordsBlood', name: "Lord's Blood", class: 'vagabond', rarity: 'rare', cost: 3, type: 'power',
+    keywords: [], icon: '♛',
+    effects: [{ op: 'applyStatus', target: 'self', status: 'lordsBlood', stacks: one }],
+    textTemplate: 'Bleed and Poise thresholds no longer increase after filling.',
+    upgrade: { cost: 2 },
+  },
+  {
+    id: 'unbreakable', name: 'Unbreakable', class: 'vagabond', rarity: 'rare', cost: 2, type: 'power',
+    keywords: [], icon: '⬟',
+    effects: [{ op: 'applyStatus', target: 'self', status: 'unbreakable', stacks: one }],
+    textTemplate: 'Block no longer expires at the start of your turn. (Block capped at 30.)',
+    upgrade: {
+      effects: [{ op: 'applyStatus', target: 'self', status: 'unbreakableUp', stacks: one }],
+      textTemplate: 'Block no longer expires at the start of your turn. (Block capped at 40.)',
+    },
+  },
+  {
+    id: 'graftedArms', name: 'Grafted Arms', class: 'vagabond', rarity: 'rare', cost: 'X', type: 'attack',
+    keywords: [], icon: '🦾',
+    effects: [{ op: 'damage', target: 'randomEnemy', amount: 6, hits: { f: 'energySpent' } }],
+    textTemplate: 'Deal {damage} damage to a random enemy once per Energy spent.',
+    upgrade: { effects: [{ op: 'damage', target: 'randomEnemy', amount: 8, hits: { f: 'energySpent' } }] },
+  },
+  {
+    id: 'lastStand', name: 'Last Stand', class: 'vagabond', rarity: 'rare', cost: 1, type: 'skill',
+    keywords: ['ethereal'], icon: '🕯',
+    effects: [{ op: 'block', target: 'self', amount: { f: 'missingHp', of: 'self', max: 20 } }],
+    textTemplate: 'Ethereal. Gain Block equal to your missing HP (max 20).',
+    upgrade: {
+      effects: [{ op: 'block', target: 'self', amount: { f: 'missingHp', of: 'self', max: 30 } }],
+      textTemplate: 'Ethereal. Gain Block equal to your missing HP (max 30).',
+    },
+  },
+  {
+    id: 'warriorsVow', name: "Warrior's Vow", class: 'vagabond', rarity: 'rare', cost: 0, type: 'skill',
+    keywords: ['innate', 'exhaust'], icon: '📜',
+    effects: [{ op: 'enterStance', stance: 'bloodflame' }],
+    textTemplate: 'Innate. Enter Bloodflame Stance. Exhaust.',
+    upgrade: {
+      effects: [
+        { op: 'enterStance', stance: 'bloodflame' },
+        { op: 'draw', amount: 1 },
+      ],
+      textTemplate: 'Innate. Enter Bloodflame Stance. Draw {draw} card. Exhaust.',
+    },
+  },
+];
