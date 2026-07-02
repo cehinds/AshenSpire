@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" font-family="Verdana, Geneva, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16110c"/><stop offset="1" stop-color="#0d0b08"/>
+    </linearGradient>
+    <linearGradient id="cardface" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#241e15"/><stop offset="1" stop-color="#1a1510"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="580" fill="url(#bg)"/>
+  <text x="500" y="606" fill="#7a6f5a" font-size="13" text-anchor="middle" font-style="italic">Card anatomy — DOM-rendered card, 140×196 px at rest, ×1.5 on hover</text>
+  <text x="500" y="36" fill="#c9a227" font-size="20" text-anchor="middle" font-family="Georgia, serif" letter-spacing="2">CARD ANATOMY</text>
+
+  <!-- ===== main card (scaled up ~2x for annotation) ===== -->
+  <g transform="translate(230,320)">
+    <rect x="-130" y="-182" width="260" height="364" rx="18" fill="url(#cardface)" stroke="#7fa8c9" stroke-width="4"/>
+    <!-- cost orb -->
+    <circle cx="-100" cy="-152" r="26" fill="#1c1610" stroke="#c9a227" stroke-width="3"/>
+    <text x="-100" y="-143" fill="#e8dcc0" font-size="24" text-anchor="middle" font-weight="bold">1</text>
+    <!-- name -->
+    <text y="-144" fill="#e8dcc0" font-size="19" text-anchor="middle" font-family="Georgia, serif">Serrated Blade</text>
+    <!-- art frame -->
+    <rect x="-104" y="-120" width="208" height="130" rx="8" fill="#14100c" stroke="#3a3226" stroke-width="2"/>
+    <path d="M-46 -18 l76 -76 m0 0 l-14 -4 m14 4 l4 14" stroke="#8a8072" stroke-width="8" fill="none"/>
+    <path d="M-30 -34 l8 8 M-14 -50 l8 8 M2 -66 l8 8" stroke="#8a1a1a" stroke-width="4"/>
+    <!-- type banner -->
+    <rect x="-104" y="22" width="208" height="30" rx="6" fill="#2a241c"/>
+    <text y="43" fill="#c9a227" font-size="15" text-anchor="middle" letter-spacing="4">ATTACK</text>
+    <!-- text box -->
+    <text y="86" fill="#e8dcc0" font-size="16" text-anchor="middle">Deal 7 damage.</text>
+    <text y="112" fill="#e8dcc0" font-size="16" text-anchor="middle">If target has <tspan fill="#c9502e" font-weight="bold">Bleed</tspan>:</text>
+    <text y="138" fill="#e8dcc0" font-size="16" text-anchor="middle">apply <tspan fill="#c9502e" font-weight="bold">3 Bleed</tspan>.</text>
+    <!-- rarity gem -->
+    <path d="M0 162 l12 10 -12 10 -12 -10 z" fill="#7fa8c9"/>
+  </g>
+
+  <!-- ===== callouts ===== -->
+  <g fill="#e8dcc0" font-size="13">
+    <g stroke="#7a6f5a" stroke-width="1" stroke-dasharray="4 3">
+      <line x1="130" y1="168" x2="60" y2="130"/>
+      <line x1="230" y1="176" x2="410" y2="120"/>
+      <line x1="230" y1="240" x2="410" y2="230"/>
+      <line x1="230" y1="357" x2="410" y2="330"/>
+      <line x1="230" y1="420" x2="410" y2="420"/>
+      <line x1="360" y1="308" x2="410" y2="490"/>
+      <line x1="230" y1="492" x2="120" y2="520"/>
+    </g>
+    <text x="14" y="116">energy cost — greys out</text>
+    <text x="14" y="132" fill="#7a6f5a">when unaffordable</text>
+    <text x="420" y="112">name — Cinzel (Georgia in mockup)</text>
+    <text x="420" y="224">art — one game-icons.net glyph,</text>
+    <text x="420" y="240" fill="#7a6f5a">auto-placeholder if missing (assets.js)</text>
+    <text x="420" y="324">type banner — Attack / Skill / Power</text>
+    <text x="420" y="414">templated text: "{damage}" tokens filled by the</text>
+    <text x="420" y="430" fill="#7a6f5a">engine's formula evaluator; keywords highlighted +</text>
+    <text x="420" y="446" fill="#7a6f5a">nested tooltip on hover</text>
+    <text x="420" y="484">frame color = rarity</text>
+    <text x="30" y="540">rarity gem</text>
+  </g>
+
+  <!-- rarity swatches -->
+  <g transform="translate(420,500)">
+    <rect width="26" height="36" rx="5" fill="#241e15" stroke="#5a5040" stroke-width="3"/>
+    <text x="36" y="24" fill="#e8dcc0" font-size="12">Common</text>
+    <rect x="120" width="26" height="36" rx="5" fill="#241e15" stroke="#7fa8c9" stroke-width="3"/>
+    <text x="156" y="24" fill="#e8dcc0" font-size="12">Uncommon</text>
+    <rect x="260" width="26" height="36" rx="5" fill="#241e15" stroke="#c9a227" stroke-width="3"/>
+    <text x="296" y="24" fill="#e8dcc0" font-size="12">Rare</text>
+    <rect x="380" width="26" height="36" rx="5" fill="#1a1015" stroke="#6a3a7a" stroke-width="3"/>
+    <text x="416" y="24" fill="#e8dcc0" font-size="12">Curse/Status</text>
+  </g>
+
+  <!-- ===== upgraded mini-card comparison ===== -->
+  <g transform="translate(830,270)">
+    <rect x="-95" y="-133" width="190" height="266" rx="14" fill="url(#cardface)" stroke="#7fa8c9" stroke-width="3"/>
+    <circle cx="-72" cy="-110" r="19" fill="#1c1610" stroke="#c9a227" stroke-width="2.5"/>
+    <text x="-72" y="-103" fill="#e8dcc0" font-size="17" text-anchor="middle" font-weight="bold">1</text>
+    <text y="-104" fill="#7fd97f" font-size="14" text-anchor="middle" font-family="Georgia, serif">Serrated Blade+</text>
+    <rect x="-76" y="-88" width="152" height="92" rx="6" fill="#14100c" stroke="#3a3226"/>
+    <path d="M-34 -14 l56 -56 m0 0 l-10 -3 m10 3 l3 10" stroke="#8a8072" stroke-width="6" fill="none"/>
+    <rect x="-76" y="14" width="152" height="22" rx="5" fill="#2a241c"/>
+    <text y="30" fill="#c9a227" font-size="11" text-anchor="middle" letter-spacing="3">ATTACK</text>
+    <text y="62" fill="#e8dcc0" font-size="12" text-anchor="middle">Deal <tspan fill="#7fd97f" font-weight="bold">9</tspan> damage.</text>
+    <text y="82" fill="#e8dcc0" font-size="12" text-anchor="middle">If target has <tspan fill="#c9502e">Bleed</tspan>:</text>
+    <text y="102" fill="#e8dcc0" font-size="12" text-anchor="middle">apply <tspan fill="#7fd97f" font-weight="bold">4</tspan> <tspan fill="#c9502e">Bleed</tspan>.</text>
+    <path d="M0 116 l10 8 -10 8 -10 -8 z" fill="#7fa8c9"/>
+    <text y="160" fill="#7a6f5a" font-size="11" text-anchor="middle" font-style="italic">upgraded: green name +</text>
+    <text y="176" fill="#7a6f5a" font-size="11" text-anchor="middle" font-style="italic">changed numbers in green</text>
+  </g>
+</svg>
