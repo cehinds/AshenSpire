@@ -255,9 +255,14 @@ export function formulaCtxFor(ctx, action, primaryTarget) {
 
 function evalNum(ctx, action, value, dflt, target) {
   if (value === undefined) return dflt;
-  if (typeof value === 'number') return Math.floor(value);
-  if (isFormula(value)) return evaluate(value, formulaCtxFor(ctx, action, target));
-  throw new Error(`Expected number or formula, got ${JSON.stringify(value)}`);
+  let v;
+  if (typeof value === 'number') v = Math.floor(value);
+  else if (isFormula(value)) v = evaluate(value, formulaCtxFor(ctx, action, target));
+  else throw new Error(`Expected number or formula, got ${JSON.stringify(value)}`);
+  // Generic amount scaling (e.g. flaskPowerMult): rounded up per SPEC §5.4.
+  const mult = action.meta && action.meta.amountMult;
+  if (typeof mult === 'number' && mult !== 1) v = Math.ceil(v * mult);
+  return v;
 }
 
 // ---------------------------------------------------------------------------
@@ -443,6 +448,11 @@ function runRunOpcode(ctx, action, eff) {
       const n = evalNum(ctx, action, eff.amount, 0);
       run.runes = Math.max(0, run.runes + n);
       ctx.emit('runesChanged', { amount: n, total: run.runes });
+      break;
+    }
+    case 'addCardToDeck': {
+      ctx.registries.cards.get(eff.card); // throws on dangling id
+      run.deck.push({ instanceId: ctx.nextInstanceId(), cardId: eff.card, upgraded: false });
       break;
     }
     case 'removeCardFromDeck': {

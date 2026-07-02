@@ -15,6 +15,20 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
 import { computeAttackDamage } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
+import { generateActMap } from '../src/engine/mapgen.js';
+import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY } from '../src/engine/save.js';
+import { createRunState, RUN_SCHEMA_VERSION } from '../src/model/state.js';
+import { executeRunEffects } from '../src/engine/actions.js';
+import {
+  rollEncounter,
+  rollRuneReward,
+  rollCardRewardIds,
+  rollFlaskDrop,
+  rollRelicReward,
+  buildShopStock,
+  resolveUnknownNode,
+  shrineHealAmount,
+} from '../src/engine/encounters.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -61,7 +75,7 @@ function testBundle() {
 const REG = createRegistries(testBundle());
 
 // deck: array of cardId strings or { id, up: true }
-function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, relicIds = [] } = {}) {
+function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, relicIds = [], flasks = [] } = {}) {
   const rng = createRng(seed >>> 0);
   const instances = deck.map((d, i) => {
     const isObj = typeof d === 'object';
@@ -70,7 +84,7 @@ function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], 
   return createCombat({
     registries: REG,
     rng,
-    player: { classId: 'vagabond', maxHp, hp, deck: instances, relicIds },
+    player: { classId: 'vagabond', maxHp, hp, deck: instances, relicIds, flasks },
     enemyIds: enemies,
   });
 }
@@ -342,9 +356,111 @@ export async function runTests() {
     assert(hist.includes('b'), 'fallback move was forced in');
   });
 
-  // ---- 12 / 13 — M2 placeholders ---------------------------------------------------
-  skip('12. map generation constraints', 'M2 — mapgen.js lands with the run milestone');
-  skip('13. save round-trip + versioning', 'M2 — save.js lands with the run milestone');
+  // ---- 12. Map generation (SPEC §6, §8.12) -------------------------------------------
+  test('12. map gen: fixed-seed snapshot; constraints over 200 seeds', () => {
+    const config = contentBundle.mapConfigs[1];
+    const gen = (seed) => generateActMap({ config, rng: createRng(seed) });
+
+    // Fixed seed → identical graph (determinism snapshot).
+    eq(JSON.stringify(gen(0x715e)), JSON.stringify(gen(0x715e)), 'same seed, same map');
+
+    for (let s = 1; s <= 200; s++) {
+      const map = gen(s * 2654435761);
+      const nodes = Object.values(map.nodes);
+
+      // Fixed rows: floor 1 all monster, floor 9 all treasure, floor 15 shrine.
+      for (const n of nodes) {
+        if (n.floor === 1) eq(n.type, 'monster', `seed ${s}: floor-1 node ${n.id}`);
+        if (n.floor === 9) eq(n.type, 'treasure', `seed ${s}: floor-9 node ${n.id}`);
+        // No early elites/shrines; no floor-14 shrine (SPEC §6 constraints).
+        if (n.floor < config.floorRules.noEliteOrShrineBefore && n.floor > 1) {
+          assert(n.type !== 'elite' && n.type !== 'shrine', `seed ${s}: early ${n.type} on floor ${n.floor}`);
+        }
+        if (n.floor === config.floorRules.noShrineOn) {
+          assert(n.type !== 'shrine', `seed ${s}: shrine on floor 14`);
+        }
+      }
+      eq(map.nodes[map.shrineId].type, 'shrine', `seed ${s}: pre-boss shrine`);
+      eq(map.nodes[map.bossId].type, 'boss', `seed ${s}: boss node`);
+
+      // Minimum counts (hard promise even via the relax path).
+      assert(nodes.filter((n) => n.type === 'elite').length >= config.floorRules.minReachableElites, `seed ${s}: elites`);
+      assert(nodes.filter((n) => n.type === 'merchant').length >= config.floorRules.minReachableMerchants, `seed ${s}: merchant`);
+
+      // No crossing edges within the path floors.
+      for (let floor = 1; floor < config.floors - 1; floor++) {
+        const es = [];
+        for (const n of nodes.filter((x) => x.floor === floor)) {
+          for (const toId of n.next) {
+            const to = map.nodes[toId];
+            if (to.floor === floor + 1) es.push([n.col, to.col]);
+          }
+        }
+        for (let i = 0; i < es.length; i++) {
+          for (let j = i + 1; j < es.length; j++) {
+            const [a1, a2] = es[i];
+            const [b1, b2] = es[j];
+            assert(!((a1 < b1 && a2 > b2) || (a1 > b1 && a2 < b2)), `seed ${s}: crossing edges on floor ${floor}`);
+          }
+        }
+      }
+
+      // Boss reachable from EVERY floor-1 start (BFS).
+      for (const startId of map.startIds) {
+        const seen = new Set([startId]);
+        const queue = [startId];
+        while (queue.length) {
+          for (const nx of map.nodes[queue.shift()].next) {
+            if (!seen.has(nx)) {
+              seen.add(nx);
+              queue.push(nx);
+            }
+          }
+        }
+        assert(seen.has(map.bossId), `seed ${s}: boss unreachable from ${startId}`);
+      }
+    }
+  });
+
+  // ---- 13. Save round-trip + versioning (SPEC §3.12, §8.13) ----------------------------
+  test('13. save round-trip; unknown schemaVersion and dangling ids refused + archived', () => {
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    const rng = createRng(0xfeed);
+    rng.float('shuffle');
+    rng.float('cardRewards');
+    const run = createRunState({ seed: 0xfeed, classId: 'vagabond', registries: REG });
+    run.runes = 123;
+    run.floor = 4;
+    saves.saveRun(run, rng);
+
+    const loaded = saves.loadRun(REG);
+    eq(JSON.stringify(loaded), JSON.stringify(run), 'round-trip identical');
+    eq(loaded.streamCounters.shuffle, 1, 'rng counters persisted');
+
+    // Unknown schemaVersion → refused, archived, save slot cleared.
+    const tampered = { ...run, schemaVersion: RUN_SCHEMA_VERSION + 99 };
+    storage.setItem(RUN_KEY, JSON.stringify(tampered));
+    eq(saves.loadRun(REG), null, 'unknown schemaVersion refused');
+    assert(storage.getItem(RUN_ARCHIVE_KEY) != null, 'refused save was archived');
+    eq(storage.getItem(RUN_KEY), null, 'save slot cleared after archive');
+
+    // contentVersion mismatch + dangling card id → refused and archived.
+    const ghost = { ...run, contentVersion: 'other', deck: [{ instanceId: 'g1', cardId: 'ghostCard', upgraded: false }] };
+    storage.setItem(RUN_KEY, JSON.stringify(ghost));
+    eq(saves.loadRun(REG), null, 'dangling id after content change refused');
+
+    // contentVersion mismatch but all ids resolve → run survives the patch.
+    const fine = { ...run, contentVersion: 'other' };
+    storage.setItem(RUN_KEY, JSON.stringify(fine));
+    const migrated = saves.loadRun(REG);
+    assert(migrated != null, 'compatible save survives content patch');
+    eq(migrated.contentVersion, REG.contentVersion, 'contentVersion re-stamped');
+
+    // Meta history capped at 20.
+    for (let i = 0; i < 25; i++) saves.recordResult({ victory: i % 2 === 0, seed: i });
+    eq(saves.loadMeta().results.length, 20, 'history capped at 20');
+  });
 
   // ---- 14. Scripted bot completes a boss combat -------------------------------------
   test('14. bot (leftmost affordable, end turn) finishes a seeded boss fight without throwing', () => {
@@ -434,6 +550,77 @@ export async function runTests() {
     const drawnBefore = logOf(c, 'cardDrawn').length;
     dispatch(c, { type: 'endTurn' });
     assert(logOf(c, 'cardDrawn').length >= drawnBefore + 6, 'ownerTurnStart hook drew an extra card');
+  });
+
+  // ---- 18. M2 run systems ---------------------------------------------------------------
+  test('18. run systems: deterministic rewards, flask pity, relic passives, event opcodes, Physick', () => {
+    // Same seed → identical roll bundle (SPEC §3.11 stream promise).
+    const rollAll = () => {
+      const r = createRng(0xaa11);
+      const rn = createRunState({ seed: 0xaa11, classId: 'vagabond', registries: REG });
+      return JSON.stringify([
+        rollEncounter(REG, r, { pool: 'normal' }),
+        rollRuneReward(REG, r, 'normal', []),
+        rollCardRewardIds(REG, r, { classId: 'vagabond', pool: 'normal' }),
+        rollFlaskDrop(REG, r, rn),
+        rollRelicReward(REG, r, ['tarnishedMedallion']),
+        buildShopStock(REG, r, rn),
+        resolveUnknownNode(REG, r, {}),
+      ]);
+    };
+    eq(rollAll(), rollAll(), 'reward/shop/unknown rolls deterministic');
+
+    // runeGainMult passive (Rune Pouch ×1.25, floored).
+    const base = rollRuneReward(REG, createRng(7), 'normal', []);
+    eq(rollRuneReward(REG, createRng(7), 'normal', ['runePouch']), Math.floor(base * 1.25), 'Rune Pouch');
+
+    // Beast Eye: elites offer +1 card choice.
+    eq(rollCardRewardIds(REG, createRng(9), { classId: 'vagabond', pool: 'elite', relicIds: ['beastEye'] }).length, 4, 'Beast Eye extra choice');
+
+    // Flask pity: −step on drop, +step on miss.
+    const rn2 = createRunState({ seed: 1, classId: 'vagabond', registries: REG });
+    rn2.flaskChancePct = 100;
+    assert(rollFlaskDrop(REG, createRng(3), rn2) != null, 'guaranteed drop at 100%');
+    eq(rn2.flaskChancePct, 90, 'chance decayed after drop');
+    rn2.flaskChancePct = 0;
+    eq(rollFlaskDrop(REG, createRng(3), rn2), null, 'no drop at 0%');
+    eq(rn2.flaskChancePct, 10, 'chance grew after miss');
+
+    // Cracked Tear: Flask of Stone 15 Block × 1.5 → ceil 23.
+    const c = makeCombat({ deck: Array(5).fill('strike'), relicIds: ['crackedTear'], flasks: [{ flaskId: 'flaskOfStone' }] });
+    dispatch(c, { type: 'useFlask', slot: 0 });
+    eq(c.player.block, 23, 'flaskPowerMult 1.5 rounded up');
+
+    // Wondrous Physick: the one budgeted script — two random flask payloads.
+    const w = makeCombat({ deck: Array(5).fill('strike'), flasks: [{ flaskId: 'wondrousPhysick' }] });
+    const out = dispatch(w, { type: 'useFlask', slot: 0 });
+    assert(out.events.some((e) => e.type === 'flaskUsed'), 'physick used');
+    assert(
+      out.events.some((e) => ['blockGained', 'healed', 'energyGained', 'statusApplied'].includes(e.type)),
+      'physick produced flask effects'
+    );
+
+    // Ancestral Horn: Powers cost 1 less (preview AND execution).
+    const h = makeCombat({ deck: ['unbreakable', 'strike', 'strike', 'strike', 'strike'], relicIds: ['ancestralHorn'] });
+    const inst = h.piles.hand.find((x) => x.cardId === 'unbreakable');
+    eq(previewCard(h, inst.instanceId).cost, 1, 'preview shows reduced cost');
+    dispatch(h, { type: 'playCard', cardInstanceId: inst.instanceId });
+    eq(h.player.energy, 2, 'paid 1 instead of 2');
+
+    // Run-level event opcodes: addCardToDeck + startCombat + shrine math.
+    const rn3 = createRunState({ seed: 2, classId: 'vagabond', registries: REG });
+    executeRunEffects({ run: rn3, registries: REG, rng: createRng(5) }, [
+      { op: 'addCardToDeck', card: 'guilt' },
+      { op: 'startCombat', encounterId: 'loneSoldier' },
+    ]);
+    assert(rn3.deck.some((x) => x.cardId === 'guilt'), 'curse added to deck');
+    eq(rn3.combatEntered, 'loneSoldier', 'startCombat handed off');
+
+    const rn4 = createRunState({ seed: 4, classId: 'vagabond', registries: REG });
+    rn4.hp = 10;
+    eq(shrineHealAmount(REG, rn4), Math.floor((78 * 30) / 100), 'shrine heal 30%');
+    rn4.relics.push('graceFragment');
+    eq(shrineHealAmount(REG, rn4), Math.floor((78 * 30 * 1.15) / 100), 'Grace Fragment ×1.15');
   });
 
   const passed = results.filter((r) => r.ok).length;

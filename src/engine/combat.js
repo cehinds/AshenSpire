@@ -16,7 +16,7 @@
 import * as A from './actions.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import * as S from './statuses.js';
-import { resolveCard } from '../model/registries.js';
+import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
@@ -431,6 +431,17 @@ function needsEnemyTarget(def) {
   return (def.effects || []).some((eff) => eff.target === 'enemy');
 }
 
+// Effective numeric cost after relic passives (powerCostReduction, min 0).
+// X-cost is unaffected (it always consumes all energy).
+function effectiveCost(combat, def) {
+  if (def.cost === 'X') return 'X';
+  let cost = def.cost;
+  if (def.type === 'power') {
+    cost = Math.max(0, cost - passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction'));
+  }
+  return cost;
+}
+
 function doPlayCard(combat, { cardInstanceId, targetId }) {
   if (combat.phase !== 'player') throw new Error('Cards can only be played on the player turn');
   const p = combat.player;
@@ -443,7 +454,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   if (kws.includes('unplayable')) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
-  const cost = isX ? p.energy : def.cost;
+  const cost = isX ? p.energy : effectiveCost(combat, def);
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
 
   let target = null;
@@ -529,8 +540,10 @@ function doUseFlask(combat, { slot, targetId }) {
   }
   p.flasks.splice(slot, 1);
   combat.emit('flaskUsed', { flaskId: flask.flaskId, slot, targetId: target ? target.id : null });
+  // Cracked Tear-style passives scale flask amounts (rounded up, SPEC §5.4).
+  const amountMult = passiveMult(combat.registries, p.relicIds, 'flaskPowerMult');
   for (const eff of def.effects || []) {
-    combat.enqueue({ effect: eff, source: p, owner: p, target, meta: {} });
+    combat.enqueue({ effect: eff, source: p, owner: p, target, meta: amountMult !== 1 ? { amountMult } : {} });
   }
   drainQueue(combat);
 }
@@ -568,6 +581,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
   const def = resolveCard(combat.registries, inst);
   const p = combat.player;
   const isX = def.cost === 'X';
+  const shownCost = isX ? p.energy : effectiveCost(combat, def);
   const target = targetId != null ? findEntity(combat, targetId) : null;
   const living = combat.enemies.filter((e) => e.alive);
 
@@ -576,7 +590,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     source: p,
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
-    meta: { energySpent: isX ? p.energy : typeof def.cost === 'number' ? def.cost : 0 },
+    meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
   };
 
   const bindings = computeTokenBindings(def.effects || []);
@@ -644,7 +658,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     upgraded: inst.upgraded,
     name: def.name,
     type: def.type,
-    cost: isX ? p.energy : def.cost,
+    cost: shownCost,
     costIsX: isX,
     needsTarget: needsEnemyTarget(def),
     values,

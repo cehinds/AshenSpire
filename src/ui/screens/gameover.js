@@ -14,9 +14,11 @@ export function mountGameOver(app, { registries, game, victory, onTitle }) {
       <h1 class="title-big" style="color:${color}">${title}</h1>
       <table class="stats-table">
         <tr><td>Seed</td><td style="font-family:monospace">${esc(game.seedString)}</td></tr>
-        <tr><td>Fights won</td><td>${game.stats.fightsWon} / ${game.gauntletLength}</td></tr>
+        <tr><td>Floor reached</td><td>${game.floor}${game.mapGraph ? ` / ${game.mapGraph.floors}` : ''}</td></tr>
+        <tr><td>Fights won</td><td>${game.stats.fightsWon}</td></tr>
         <tr><td>Damage dealt</td><td>${game.stats.damageDealt}</td></tr>
         <tr><td>Damage taken</td><td>${game.stats.damageTaken}</td></tr>
+        <tr><td>Runes held</td><td>${game.runes}</td></tr>
         <tr><td>Final HP</td><td>${victory ? game.hp : 0} / ${game.maxHp}</td></tr>
       </table>
       <div>

@@ -136,7 +136,7 @@ CREDITS.md
 | Entity | Key fields |
 |---|---|
 | Card | `id, class, rarity, cost (int \| 'X'), type, keywords[], effects[], textTemplate, upgrade` (partial override object) |
-| Relic | `id, rarity, textTemplate, triggers[]` |
+| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult (`runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction`) |
 | Status | `id, name, icon, stackMode, decay, meter?, modifiers?, hooks?` (§3.7) |
 | Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
 | Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
@@ -173,7 +173,7 @@ effects: [
 **Opcode list** (closed set; extending it is an engine PR):
 
 - Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`.
-- Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `loseMaxHpPct`, `startCombat {encounterId}`.
+- Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `loseMaxHpPct`, `startCombat {encounterId}`.
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
 
@@ -209,7 +209,7 @@ phases: [{ on: 'hpBelowPct', pct: 50, once: true,
 
 Trigger fields: `on` (event name from §3.10, plus `hpBelowPct`), `if?` (predicate), `do` (effects, §3.4), `once?`, `limitPerTurn?`.
 
-Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), `{ p: 'eventIsAttack' }` / `{ p: 'eventSourceIsOwner' }` (gate a trigger on its firing event's payload — e.g. a stance that reacts only to the owner's own attack hits), and `all / any / not` combinators.
+Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), `{ p: 'eventIsAttack' }` / `{ p: 'eventSourceIsOwner' }` / `{ p: 'eventStatusIs', status }` (gate a trigger on its firing event's payload — e.g. a stance that reacts only to the owner's own attack hits, or a relic reacting to Bleed meter fills), and `all / any / not` combinators.
 
 ### 3.7 Status model — statuses are content, not code
 

@@ -202,6 +202,23 @@ export const statuses = [
     tooltip: 'Build-up thresholds (Bleed and Poise) no longer increase after filling.',
   },
   {
+    // Blood Grease flask: this turn, attacks apply +2 Bleed per hit
+    // (same hook shape as Bloodflame Stance; expires at turn end).
+    id: 'bloodGrease',
+    name: 'Blood Grease',
+    icon: '🫗',
+    stackMode: 'refresh',
+    decay: 'perTurnEnd',
+    hooks: [
+      {
+        on: 'damageDealt',
+        if: { p: 'all', preds: [{ p: 'eventSourceIsOwner' }, { p: 'eventIsAttack' }] },
+        do: [{ op: 'applyStatus', status: 'bleed', stacks: 2 }],
+      },
+    ],
+    tooltip: 'Your attacks apply 2 extra Bleed per hit this turn.',
+  },
+  {
     id: 'bulwarkEcho',
     name: 'Shieldwall Echo',
     icon: '⛨',

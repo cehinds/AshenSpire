@@ -437,6 +437,7 @@ const PREDICATE_FIELDS = {
   random: ['pct'],
   eventIsAttack: [],
   eventSourceIsOwner: [],
+  eventStatusIs: ['status'],
   all: ['preds'],
   any: ['preds'],
   not: ['pred'],
@@ -467,6 +468,7 @@ export function validatePredicate(pred, path, vctx) {
       }
       break;
     case 'hasStatus':
+    case 'eventStatusIs':
       if (typeof pred.status !== 'string' || !vctx.ids.statuses.has(pred.status)) {
         err(`${path}.status`, `Dangling reference: unknown status id '${pred.status}'`);
       }

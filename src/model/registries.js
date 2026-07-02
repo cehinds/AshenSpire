@@ -110,6 +110,39 @@ export function createRegistries(contentBundle) {
 }
 
 // ---------------------------------------------------------------------------
+// Relic passives (SPEC PASSIVE_KEYS) — data lookups over owned relic defs.
+// ---------------------------------------------------------------------------
+
+/** Product of a multiplicative passive across owned relics (default 1). */
+export function passiveMult(registries, relicIds, key) {
+  let m = 1;
+  for (const id of relicIds || []) {
+    const p = registries.relics.get(id).passives;
+    if (p && typeof p[key] === 'number') m *= p[key];
+  }
+  return m;
+}
+
+/** Sum of an additive passive across owned relics (default 0). */
+export function passiveSum(registries, relicIds, key) {
+  let s = 0;
+  for (const id of relicIds || []) {
+    const p = registries.relics.get(id).passives;
+    if (p && typeof p[key] === 'number') s += p[key];
+  }
+  return s;
+}
+
+/** True if any owned relic sets the boolean passive. */
+export function passiveFlag(registries, relicIds, key) {
+  for (const id of relicIds || []) {
+    const p = registries.relics.get(id).passives;
+    if (p && p[key] === true) return true;
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // Card resolution — definitions vs instances (SPEC §3.3, §4.3)
 // ---------------------------------------------------------------------------
 

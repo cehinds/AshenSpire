@@ -1,1 +1,40 @@
-/* styles/map.css — act map screen lands with M2 (SPEC §7.1). */
+/* styles/map.css — act map screen (mockup: docs/mockups/map-screen.svg) */
+
+.mapscreen { flex: 1; display: flex; overflow: hidden; }
+.mapscreen .map-scroll { flex: 1; overflow-y: auto; display: flex; justify-content: center; }
+.mapscreen svg { display: block; }
+
+.map-node { cursor: default; }
+.map-node circle { fill: var(--panel); stroke: var(--line-soft); stroke-width: 2; }
+.map-node text { fill: #8a7a5a; font-size: 13px; text-anchor: middle; dominant-baseline: central; }
+.map-node.elite circle { stroke: var(--blood); }
+.map-node.elite text { fill: var(--ember); }
+.map-node.boss circle { stroke: var(--blood); stroke-width: 3; }
+.map-node.shrine text, .map-node.treasure text { fill: var(--gold); }
+.map-node.merchant text { fill: var(--grace); }
+.map-node.visited circle { stroke: var(--gold); }
+.map-node.current circle { stroke: var(--parchment); stroke-width: 3; }
+.map-node.reachable { cursor: pointer; }
+.map-node.reachable circle { stroke: var(--parchment); stroke-width: 2.5; }
+.map-node.reachable:hover circle { fill: #2e2517; stroke: var(--gold); }
+.map-node.reachable text { fill: var(--parchment); }
+.map-node.revealed circle { stroke-dasharray: 5 3; }
+
+.map-edge { stroke: var(--line-soft); stroke-width: 2; fill: none; }
+.map-edge.traveled { stroke: var(--gold); stroke-width: 3; }
+
+.map-side {
+  width: 230px; border-left: 1px solid var(--line); background: var(--bg-raise);
+  padding: 18px; display: flex; flex-direction: column; gap: 14px; font-size: 12px;
+}
+.map-side h2 { color: var(--gold); font-size: 15px; letter-spacing: 0.15em; }
+.map-side .hud-line { display: flex; justify-content: space-between; color: var(--parchment); }
+.map-side .hud-line span:first-child { color: var(--muted); }
+.map-side .legend div { margin: 3px 0; color: var(--parchment); }
+.map-side .legend .ic { display: inline-block; width: 22px; }
+.map-side .relic-strip { display: flex; flex-wrap: wrap; gap: 5px; }
+.map-side .relic-strip .relic {
+  width: 26px; height: 26px; border-radius: 6px; background: var(--panel);
+  border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px;
+}
+.map-side .deck-btn { margin-top: auto; }

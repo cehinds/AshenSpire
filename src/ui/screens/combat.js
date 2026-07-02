@@ -13,17 +13,19 @@ import { enemySprite, playerSprite, classGlyph } from '../assets.js';
 import { animateEvents } from '../fx.js';
 import { sfx } from '../sfx.js';
 
-export function mountCombat(app, { registries, game, combat, fightIndex, fightCount, onEnd }) {
+export function mountCombat(app, { registries, run, combat, label, onEnd }) {
   app.innerHTML = `
     <div class="combat">
       <header class="topbar">
-        <div class="portrait">${classGlyph(game.classId)}</div>
+        <div class="portrait">${classGlyph(run.class)}</div>
         <div class="who">
-          <span class="nm">${esc(registries.classes.get(game.classId).name.toUpperCase())}</span>
+          <span class="nm">${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
           <div class="bar hpbar"><div class="fill"></div><div class="label"></div></div>
         </div>
+        <span class="runes" style="color:var(--gold);font-size:13px">⛁ ${run.runes}</span>
+        <div class="flasks" style="display:flex;gap:6px"></div>
         <div class="relics"></div>
-        <span class="fight-label">FIGHT ${fightIndex + 1} / ${fightCount} · SEED ${esc(game.seedString)}</span>
+        <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
       </header>
       <div class="field">
         <div class="player-zone"></div>
@@ -51,7 +53,8 @@ export function mountCombat(app, { registries, game, combat, fightIndex, fightCo
     anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
   };
 
-  let selected = null; // instanceId in click-targeting mode
+  let selected = null; // card instanceId in click-targeting mode
+  let selectedFlask = null; // flask slot index awaiting a target
   let busy = false; // animating / resolving
 
   // ---------- rendering ----------
@@ -78,6 +81,29 @@ export function mountCombat(app, { registries, game, combat, fightIndex, fightCo
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate.replace(/[{}]/g, ''))}`);
       relics.appendChild(el);
     }
+    // Flask slots — click to drink; targeted flasks enter targeting mode.
+    const flasks = $('.topbar .flasks');
+    flasks.innerHTML = '';
+    p.flasks.forEach((f, slot) => {
+      const def = registries.flasks.get(f.flaskId);
+      const el = document.createElement('div');
+      el.className = 'relic';
+      el.style.cursor = 'pointer';
+      if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
+      el.textContent = def.icon || '🧪';
+      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}${def.targeted ? '<br><i>Click, then choose a target.</i>' : '<br><i>Click to drink.</i>'}`);
+      el.addEventListener('click', () => {
+        if (busy || combat.result) return;
+        if (def.targeted) {
+          selectedFlask = selectedFlask === slot ? null : slot;
+          selected = null;
+          render();
+        } else {
+          useFlask(slot, null);
+        }
+      });
+      flasks.appendChild(el);
+    });
   }
 
   function statusRow(entity) {
@@ -214,7 +240,7 @@ export function mountCombat(app, { registries, game, combat, fightIndex, fightCo
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
       const box = document.createElement('div');
-      box.className = `combatant enemy${enemy.alive ? '' : ' dead'}${selected ? ' targetable' : ''}`;
+      box.className = `combatant enemy${enemy.alive ? '' : ' dead'}${selected || selectedFlask != null ? ' targetable' : ''}`;
       box.dataset.eid = enemy.id;
       if (enemy.alive) box.appendChild(intentEl(enemy));
       const sprite = document.createElement('div');
@@ -232,8 +258,9 @@ export function mountCombat(app, { registries, game, combat, fightIndex, fightCo
       if (enemy.alive) {
         box.addEventListener('click', () => {
           if (selected) playCard(selected, enemy.id);
+          else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
         });
-        box.addEventListener('pointerenter', () => selected && box.classList.add('hover-target'));
+        box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
       }
       row.appendChild(box);
@@ -337,15 +364,17 @@ export function mountCombat(app, { registries, game, combat, fightIndex, fightCo
 
   // Cancel targeting with right-click / Esc.
   combatEl.addEventListener('contextmenu', (ev) => {
-    if (selected) {
+    if (selected || selectedFlask != null) {
       ev.preventDefault();
       selected = null;
+      selectedFlask = null;
       render();
     }
   });
   const escHandler = (ev) => {
-    if (ev.key === 'Escape' && selected) {
+    if (ev.key === 'Escape' && (selected || selectedFlask != null)) {
       selected = null;
+      selectedFlask = null;
       render();
     }
   };
@@ -354,9 +383,26 @@ export function mountCombat(app, { registries, game, combat, fightIndex, fightCo
   // ---------- actions ----------
   function trackStats(events) {
     for (const e of events) {
-      if (e.type === 'damageDealt' && e.sourceId === 'player') game.stats.damageDealt += e.amount;
-      if (e.type === 'hpLost' && e.targetId === 'player') game.stats.damageTaken += e.amount;
+      if (e.type === 'damageDealt' && e.sourceId === 'player') run.stats.damageDealt += e.amount;
+      if (e.type === 'hpLost' && e.targetId === 'player') run.stats.damageTaken += e.amount;
     }
+  }
+
+  function useFlask(slot, targetId) {
+    if (busy || combat.result) return;
+    selectedFlask = null;
+    selected = null;
+    hideTooltip();
+    let out;
+    try {
+      out = dispatch(combat, { type: 'useFlask', slot, targetId: targetId || undefined });
+    } catch (err) {
+      render();
+      return;
+    }
+    sfx.play('flask');
+    busy = true;
+    afterDispatch(out.events);
   }
 
   function afterDispatch(events) {
@@ -374,6 +420,7 @@ export function mountCombat(app, { registries, game, combat, fightIndex, fightCo
   function playCard(instanceId, targetId) {
     if (busy || combat.result) return;
     selected = null;
+    selectedFlask = null;
     hideTooltip();
     let out;
     try {
@@ -390,6 +437,7 @@ export function mountCombat(app, { registries, game, combat, fightIndex, fightCo
   $('.end-turn').addEventListener('click', () => {
     if (busy || combat.result || combat.phase !== 'player') return;
     selected = null;
+    selectedFlask = null;
     hideTooltip();
     let out;
     try {
