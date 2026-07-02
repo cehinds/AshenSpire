@@ -118,6 +118,7 @@ export const PREDICATES = Object.freeze([
   'random',
   'eventIsAttack',
   'eventSourceIsOwner',
+  'eventTargetIsOwner',
   'eventStatusIs',
   'all',
   'any',

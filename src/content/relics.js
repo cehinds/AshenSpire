@@ -25,6 +25,39 @@ export const relics = [
     flavor: 'Its face is worn smooth, but it still remembers being gold.',
   },
 
+  {
+    // SPEC §5.1 said "first Power each combat costs 1 less"; passives are
+    // unconditional, so the shipped design leans into the class identity
+    // instead: open every combat with the combo already primed.
+    id: 'glintstoneShard',
+    name: 'Glintstone Shard',
+    rarity: 'starter',
+    icon: '💠',
+    triggers: [
+      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'glintstoneCharge', stacks: { f: 'add', args: [1] } }] },
+    ],
+    textTemplate: 'Begin each combat with Glintstone Charge (your first spell counts as a combo).',
+    flavor: 'A chip of someone else’s genius. It still hums.',
+  },
+  {
+    // SPEC §5.1's overheal-to-block needs overflow math no trigger can see;
+    // the shipped design keeps the fantasy: every heal armors you — including
+    // "wasted" heals at full HP, which become pure Block.
+    id: 'goldFigurine',
+    name: 'Gold Figurine',
+    rarity: 'starter',
+    icon: '🗿',
+    triggers: [
+      {
+        on: 'healed',
+        if: { p: 'eventTargetIsOwner' },
+        do: [{ op: 'block', target: 'owner', amount: 2 }],
+      },
+    ],
+    textTemplate: 'Whenever you heal, gain {block} Block (even at full HP).',
+    flavor: 'It is very small and very heavy and it loves you.',
+  },
+
   // ---- commons ---------------------------------------------------------------
   {
     id: 'goldenSeed',

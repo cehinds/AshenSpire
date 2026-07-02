@@ -201,6 +201,136 @@ export const statuses = [
     modifiers: { meterMaxGrowthDisabled: true },
     tooltip: 'Build-up thresholds (Bleed and Poise) no longer increase after filling.',
   },
+  // ---- Astrologer: the Glintstone combo engine (SPEC §5.1 identity) ---------
+  {
+    // Set by every spell after its own effects resolve; spells check it FIRST,
+    // so the 2nd+ spell each turn gets its "Glintstone:" bonus. Unique + turn-
+    // end decay = a clean per-turn combo flag, zero engine involvement.
+    id: 'glintstoneCharge',
+    name: 'Glintstone Charge',
+    icon: '✦',
+    stackMode: 'unique',
+    decay: 'perTurnEnd',
+    tooltip: 'A spell was cast this turn: your next Glintstone bonus is live. Fades at end of turn.',
+  },
+  {
+    id: 'stargazer',
+    name: 'Stargazer',
+    icon: '🔭',
+    stackMode: 'unique',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [{ op: 'applyStatus', target: 'owner', status: 'glintstoneCharge', stacks: 1 }],
+      },
+    ],
+    tooltip: 'At the start of your turn, gain Glintstone Charge.',
+  },
+  {
+    id: 'astralArmor',
+    name: 'Astral Armor',
+    icon: '🌌',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'ownerTurnEnd',
+        do: [
+          {
+            op: 'block',
+            target: 'owner',
+            amount: { f: 'mul', args: [4, { f: 'stacks', status: 'astralArmor', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'At the end of your turn, gain 4 Block per stack.',
+  },
+  {
+    id: 'constellation',
+    name: 'Constellation',
+    icon: '💫',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'statusApplied',
+        if: { p: 'all', preds: [{ p: 'eventStatusIs', status: 'glintstoneCharge' }, { p: 'eventTargetIsOwner' }] },
+        do: [
+          {
+            op: 'damage',
+            target: 'randomEnemy',
+            amount: { f: 'mul', args: [4, { f: 'stacks', status: 'constellation', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever you gain Glintstone Charge, deal 4 damage per stack to a random enemy.',
+  },
+
+  // ---- Prophet: blood economy powers (SPEC §5.1 identity) -------------------
+  {
+    id: 'thornHalo',
+    name: 'Thorn Halo',
+    icon: '🌿',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [
+          {
+            op: 'applyStatus',
+            target: 'allEnemies',
+            status: 'scarletRot',
+            stacks: { f: 'stacks', status: 'thornHalo', of: 'owner' },
+          },
+        ],
+      },
+    ],
+    tooltip: 'At the start of your turn, apply 1 Scarlet Rot per stack to ALL enemies.',
+  },
+  {
+    id: 'communion',
+    name: 'Communion',
+    icon: '🕊',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [
+          {
+            op: 'heal',
+            target: 'owner',
+            amount: { f: 'mul', args: [3, { f: 'stacks', status: 'communion', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'At the start of your turn, heal 3 HP per stack.',
+  },
+  {
+    id: 'lifeTithe',
+    name: 'Life Tithe',
+    icon: '⚰',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'enemyDied',
+        do: [
+          {
+            op: 'heal',
+            target: 'owner',
+            amount: { f: 'mul', args: [8, { f: 'stacks', status: 'lifeTithe', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever an enemy dies, heal 8 HP per stack.',
+  },
   {
     // Blood Grease flask: this turn, attacks apply +2 Bleed per hit
     // (same hook shape as Bloodflame Stance; expires at turn end).

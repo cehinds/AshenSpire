@@ -236,6 +236,8 @@ export function evalPredicate(ctx, pred, pctx = {}) {
       return !!pctx.event && pctx.event.isAttack === true;
     case 'eventSourceIsOwner':
       return !!pctx.event && !!pctx.owner && pctx.event.sourceId === pctx.owner.id;
+    case 'eventTargetIsOwner':
+      return !!pctx.event && !!pctx.owner && pctx.event.targetId === pctx.owner.id;
     case 'eventStatusIs':
       return !!pctx.event && pctx.event.status === pred.status;
     case 'everyNthCardThisCombat': {

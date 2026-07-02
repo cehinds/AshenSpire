@@ -56,6 +56,7 @@ const TEST_ENEMIES = [
   { id: 'tDummy', name: 'T Dummy', hp: [30, 30], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tGiant', name: 'T Giant', hp: [400, 400], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tHitter', name: 'T Hitter', hp: [50, 50], poiseMax: 99, moves: { hit: { intent: 'attack', damage: 10, weight: 1 } } },
+  { id: 'tRegen', name: 'T Regen', hp: [50, 50], poiseMax: 99, moves: { regen: { intent: 'buff', weight: 1, effects: [{ op: 'heal', target: 'self', amount: 4 }] } } },
   { id: 'tAi', name: 'T AI', hp: [999, 999], poiseMax: 999, moves: { a: { intent: 'unknown', weight: 9999, maxConsecutive: 1 }, b: { intent: 'unknown', weight: 1 } } },
   {
     id: 'tDelayer', name: 'T Delayer', hp: [60, 60], poiseMax: 5, firstMove: 'held',
@@ -641,6 +642,71 @@ export async function runTests() {
     eq(rn.flasks[0].flaskId, 'crimsonFlask', "Traveler's Flask grants a Crimson Flask");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
     assert(rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'Whetstone Memory upgrades a Strike');
+  });
+
+  // ---- 20. M3 phase 1: Astrologer + Prophet class mechanics ---------------------------------
+  test('20. Glintstone combos, Glintstone Shard, blood economy, Gold Figurine — all pure data', () => {
+    eq(REG.classes.size, 3, 'three playable classes registered');
+
+    // Glintstone: 1st spell plain, 2nd spell empowered, charge fades at turn end.
+    const a = makeCombat({ deck: Array(5).fill('glintstonePebble'), enemies: ['tGiant'] });
+    playFromHand(a, 'glintstonePebble');
+    let hits = logOf(a, 'damageDealt').map((e) => e.amount);
+    eq(hits.join(','), '6', 'first spell: no bonus');
+    playFromHand(a, 'glintstonePebble');
+    hits = logOf(a, 'damageDealt').map((e) => e.amount);
+    eq(hits.join(','), '6,6,3', 'second spell: Glintstone bonus fired');
+    dispatch(a, { type: 'endTurn' });
+    eq(S.getStacks(a.player, 'glintstoneCharge'), 0, 'charge fades at turn end');
+    playFromHand(a, 'glintstonePebble');
+    eq(logOf(a, 'damageDealt').map((e) => e.amount).join(','), '6,6,3,6', 'new turn: no bonus again');
+
+    // Glintstone Shard: combat starts pre-charged → the FIRST spell combos.
+    const s = makeCombat({ deck: Array(5).fill('glintstonePebble'), enemies: ['tGiant'], relicIds: ['glintstoneShard'] });
+    playFromHand(s, 'glintstonePebble');
+    eq(logOf(s, 'damageDealt').map((e) => e.amount).join(','), '6,3', 'Shard pre-charges the opener');
+
+    // Prophet blood economy: Blood Pact pays HP for energy + draw.
+    const p = makeCombat({ deck: ['bloodPact', 'strike', 'strike', 'strike', 'strike', 'strike'] });
+    const hpBefore = p.player.hp;
+    const handBefore = p.piles.hand.length;
+    playFromHand(p, 'bloodPact');
+    eq(p.player.hp, hpBefore - 2, 'paid 2 HP (ignores block)');
+    eq(p.player.energy, 4, '0-cost + gain 1 → energy 4');
+    eq(p.piles.hand.length, handBefore, 'drew 1 (played 1, drew 1)');
+
+    // Gold Figurine: your heals armor you (even at full HP); enemy heals do not.
+    const g = makeCombat({ deck: ['urgentHeal', 'strike', 'strike', 'strike', 'strike'], relicIds: ['goldFigurine'], enemies: ['tRegen'] });
+    playFromHand(g, 'urgentHeal'); // at full HP → 0 healed, still armors
+    eq(g.player.block, 2, 'overheal converted to Block');
+    dispatch(g, { type: 'endTurn' }); // tRegen heals itself
+    assert(logOf(g, 'healed').some((e) => e.targetId === 'e1'), 'enemy healed itself');
+    eq(g.player.block, 0, "enemy heals did NOT trigger the Figurine (eventTargetIsOwner)");
+
+    // A bot finishes an elite fight with each new class's starting deck.
+    for (const classId of ['astrologer', 'prophet']) {
+      const cls = REG.classes.get(classId);
+      const deck = cls.startingDeck.map((id, i) => ({ instanceId: `b${i}`, cardId: id, upgraded: false }));
+      const c = createCombat({
+        registries: REG,
+        rng: createRng(0xabc0 + classId.length),
+        player: { classId, maxHp: cls.maxHp, hp: cls.maxHp, deck, relicIds: [cls.startingRelic] },
+        enemyIds: ['crucibleAspirant'],
+      });
+      let guard = 0;
+      while (!c.result) {
+        if (++guard > 2000) throw new Error(`${classId} bot did not finish`);
+        const target = c.enemies.find((e) => e.alive);
+        const playable = c.piles.hand.find((inst) => {
+          const def = resolveCard(REG, inst);
+          if ((def.keywords || []).includes('unplayable')) return false;
+          return c.player.energy >= (def.cost === 'X' ? 0 : def.cost);
+        });
+        if (playable && target) dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
+        else dispatch(c, { type: 'endTurn' });
+      }
+      assert(c.result === 'victory' || c.result === 'defeat', `${classId} elite fight concluded (${c.result})`);
+    }
   });
 
   const passed = results.filter((r) => r.ok).length;
