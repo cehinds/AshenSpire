@@ -209,7 +209,7 @@ phases: [{ on: 'hpBelowPct', pct: 50, once: true,
 
 Trigger fields: `on` (event name from §3.10, plus `hpBelowPct`), `if?` (predicate), `do` (effects, §3.4), `once?`, `limitPerTurn?`.
 
-Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), and `all / any / not` combinators.
+Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), `{ p: 'eventIsAttack' }` / `{ p: 'eventSourceIsOwner' }` (gate a trigger on its firing event's payload — e.g. a stance that reacts only to the owner's own attack hits), and `all / any / not` combinators.
 
 ### 3.7 Status model — statuses are content, not code
 
@@ -345,7 +345,7 @@ dmg = floor(dmg); if dmg < 0 → 0
 
 - Types: **Attack, Skill, Power, Curse, Status**. Powers are removed from play when played (not exhausted — they don't hit the exhaust pile). Curses/Statuses are unplayable unless stated.
 - Keywords (exact StS semantics; engine primitives per §3.7): **Exhaust** (removed for the combat after play), **Ethereal** (exhausts if in hand at end of turn), **Innate** (starts on top of draw pile), **Retain** (not discarded at end of turn), **Unplayable**, **X-cost** (consumes all energy; effect scales via `{f:'energySpent'}`).
-- Upgrades: every non-curse card has exactly one upgrade (`name+`), a partial override object on the card def (numbers, cost, added keywords). Upgrading is permanent for the run.
+- Upgrades: every non-curse card has exactly one upgrade (`name+`), a partial override object on the card def (numbers, cost, keywords — a present `keywords` list replaces the base list, so upgrades can remove Exhaust). Upgrading is permanent for the run.
 - Empty draw pile + draw needed → discard pile is shuffled (stream `shuffle`) into draw first.
 
 ### 4.4 Status effects

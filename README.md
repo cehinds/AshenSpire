@@ -2,7 +2,7 @@
 
 A single-player roguelike deckbuilder for the browser. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**. Built with vanilla ES-module JavaScript, HTML, and CSS — no framework, no build step.
 
-> **Status: pre-implementation.** The design is complete ([PROMPT.md](PROMPT.md) → [SPEC.md](SPEC.md)); code lands milestone by milestone starting with M1.
+> **Status: M1 in review.** The combat vertical slice is playable — Vagabond vs. a 4-fight gauntlet ending at The Watchful Omen. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
 ## Playing
 
@@ -28,7 +28,7 @@ Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md
 
 | Milestone | Scope | Status |
 |---|---|---|
-| **M1** | Combat vertical slice — Vagabond class, 24 cards, Act 1 enemies + elite + boss, full combat UI | not started |
+| **M1** | Combat vertical slice — Vagabond class, 24 cards, Act 1 enemies + elite + boss, full combat UI | **in review** |
 | **M2** | The run — map generation, rewards, relics, flasks, shops, events, save/continue, seeds | not started |
 | **M3** | Content — Astrologer & Prophet classes, Acts 2–3, full relic/event pools, balance pass | not started |
 | **M4** | Polish — fx, run history, keyboard shortcuts, asset pass | not started |

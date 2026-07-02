@@ -1,0 +1,411 @@
+// src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
+// docs/mockups/combat-screen.svg)
+//
+// Renders strictly from combat state; animates from dispatch events. Every
+// number displayed comes from previewCard / previewIntent — no math here.
+
+import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
+import { resolveCard } from '../../model/registries.js';
+import { renderCard } from '../components/card.js';
+import { openPileModal } from '../components/piles.js';
+import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
+import { enemySprite, playerSprite, classGlyph } from '../assets.js';
+import { animateEvents } from '../fx.js';
+import { sfx } from '../sfx.js';
+
+export function mountCombat(app, { registries, game, combat, fightIndex, fightCount, onEnd }) {
+  app.innerHTML = `
+    <div class="combat">
+      <header class="topbar">
+        <div class="portrait">${classGlyph(game.classId)}</div>
+        <div class="who">
+          <span class="nm">${esc(registries.classes.get(game.classId).name.toUpperCase())}</span>
+          <div class="bar hpbar"><div class="fill"></div><div class="label"></div></div>
+        </div>
+        <div class="relics"></div>
+        <span class="fight-label">FIGHT ${fightIndex + 1} / ${fightCount} · SEED ${esc(game.seedString)}</span>
+      </header>
+      <div class="field">
+        <div class="player-zone"></div>
+        <div class="enemy-row"></div>
+      </div>
+      <div class="hand-area">
+        <div class="energy-orb"></div>
+        <div class="hand"></div>
+        <button class="end-turn">END TURN</button>
+      </div>
+      <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
+      <div class="pile discard"><span class="n"></span><small>DISCARD</small></div>
+      <div class="pile exhaust" style="display:none"><span class="n"></span><small>EXHAUST</small></div>
+      <div class="fx-layer"></div>
+      <svg id="target-arrow" width="100%" height="100%" style="display:none">
+        <line x1="0" y1="0" x2="0" y2="0" stroke="var(--gold)" stroke-width="3" stroke-dasharray="8 6"/>
+      </svg>
+    </div>`;
+
+  const $ = (sel) => app.querySelector(sel);
+  const combatEl = $('.combat');
+  const fxCtx = {
+    layer: $('.fx-layer'),
+    combatEl,
+    anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
+  };
+
+  let selected = null; // instanceId in click-targeting mode
+  let busy = false; // animating / resolving
+
+  // ---------- rendering ----------
+  function render() {
+    renderTopbar();
+    renderPlayer();
+    renderEnemies();
+    renderHand();
+    renderControls();
+  }
+
+  function renderTopbar() {
+    const p = combat.player;
+    const hp = $('.topbar .hpbar');
+    hp.querySelector('.fill').style.width = `${(p.hp / p.maxHp) * 100}%`;
+    hp.querySelector('.label').textContent = `${p.hp} / ${p.maxHp}`;
+    const relics = $('.topbar .relics');
+    relics.innerHTML = '';
+    for (const rid of p.relicIds) {
+      const def = registries.relics.get(rid);
+      const el = document.createElement('div');
+      el.className = 'relic';
+      el.textContent = def.icon || '◆';
+      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate.replace(/[{}]/g, ''))}`);
+      relics.appendChild(el);
+    }
+  }
+
+  function statusRow(entity) {
+    const row = document.createElement('div');
+    row.className = 'statuses';
+    for (const [sid, inst] of Object.entries(entity.statuses)) {
+      const def = registries.statuses.get(sid);
+      const stacks = inst.meter ? inst.meter.value : inst.stacks;
+      const el = document.createElement('div');
+      el.className = 'status-icon';
+      el.style.borderColor = statusTint(sid);
+      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
+      attachTooltip(el, () => {
+        let extra = '';
+        if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
+        if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
+        return `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(def.tooltip || '')}${extra}`;
+      });
+      row.appendChild(el);
+    }
+    return row;
+  }
+
+  function statusTint(sid) {
+    return (
+      { bleed: 'var(--ember)', scarletRot: 'var(--rot)', staggered: 'var(--gold)', strength: 'var(--gold)', vulnerable: 'var(--grace)', weak: 'var(--muted)', frail: 'var(--muted)' }[sid] ||
+      'var(--muted)'
+    );
+  }
+
+  function meterBars(entity) {
+    const wrap = document.createElement('div');
+    wrap.className = 'meters';
+    const hp = document.createElement('div');
+    hp.className = 'bar hpbar';
+    hp.innerHTML = `<div class="fill" style="width:${(entity.hp / entity.maxHp) * 100}%"></div><div class="label">${entity.hp} / ${entity.maxHp}</div>`;
+    wrap.appendChild(hp);
+    if (entity.kind === 'enemy') {
+      const poise = document.createElement('div');
+      poise.className = `bar poisebar${entity.poiseMeter.value >= entity.poiseMeter.max * 0.75 ? ' full' : ''}`;
+      poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (entity.poiseMeter.value / entity.poiseMeter.max) * 100)}%"></div>`;
+      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${entity.poiseMeter.value} / ${entity.poiseMeter.max} — filling this Staggers the enemy: it skips a turn and takes +50% damage.`);
+      wrap.appendChild(poise);
+      const bleedInst = entity.statuses.bleed;
+      if (bleedInst && bleedInst.meter && bleedInst.meter.value > 0) {
+        const bl = document.createElement('div');
+        bl.className = 'bar bleedbar';
+        bl.innerHTML = `<div class="fill" style="width:${Math.min(100, (bleedInst.meter.value / bleedInst.meter.max) * 100)}%"></div>`;
+        attachTooltip(bl, () => `<div class="tt-title">Bleed</div>${bleedInst.meter.value} / ${bleedInst.meter.max} — bursts at the threshold for 15% max HP (min 8, max 35).`);
+        wrap.appendChild(bl);
+      }
+    }
+    return wrap;
+  }
+
+  function blockBadge(entity) {
+    if (entity.block <= 0) return null;
+    const b = document.createElement('div');
+    b.className = 'block-badge';
+    b.textContent = entity.block;
+    attachTooltip(b, () => `<div class="tt-title">Block ${entity.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
+    return b;
+  }
+
+  function renderPlayer() {
+    const zone = $('.player-zone');
+    zone.innerHTML = '';
+    const p = combat.player;
+    const box = document.createElement('div');
+    box.className = 'combatant player';
+    box.dataset.eid = 'player';
+    const sprite = document.createElement('div');
+    sprite.className = 'sprite';
+    sprite.appendChild(playerSprite());
+    const badge = blockBadge(p);
+    if (badge) sprite.appendChild(badge);
+    box.appendChild(sprite);
+    box.appendChild(meterBars(p));
+    if (p.stanceId) {
+      const st = registries.stances.get(p.stanceId);
+      const chip = document.createElement('div');
+      chip.className = `stance-chip ${p.stanceId}`;
+      chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
+      attachTooltip(chip, () => `<div class="tt-title">${esc(st.name)}</div>${esc(st.tooltip || '')}`);
+      box.appendChild(chip);
+    }
+    box.appendChild(statusRow(p));
+    zone.appendChild(box);
+  }
+
+  function intentEl(enemy) {
+    const iv = previewIntent(combat, enemy.id);
+    const el = document.createElement('div');
+    let cls = iv.kind;
+    let inner = '';
+    if (iv.kind === 'staggered') {
+      inner = '✦ STAGGERED';
+    } else if (iv.kind === 'attack') {
+      inner = `<span class="ic">⚔</span>${iv.hits > 1 ? `${iv.damage}×${iv.hits}` : iv.damage}`;
+      if (iv.delayed) inner += ' ⌛';
+      cls = `attack${iv.delayed ? ' delayed' : ''}`;
+    } else if (iv.kind === 'block') {
+      inner = '<span class="ic">🛡</span>';
+    } else if (iv.kind === 'buff') {
+      inner = '<span class="ic">↑</span>';
+    } else if (iv.kind === 'debuff') {
+      inner = '<span class="ic">☾</span>';
+    } else {
+      inner = '?';
+    }
+    el.className = `intent ${cls}`;
+    el.innerHTML = inner;
+    attachTooltip(el, () => intentTooltip(iv, enemy));
+    return el;
+  }
+
+  function intentTooltip(iv, enemy) {
+    if (iv.kind === 'staggered') return `<div class="tt-title">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.`;
+    if (iv.kind === 'attack') {
+      let t = `<div class="tt-title">Intent: Attack</div>Attacking for <b>${iv.damage}${iv.hits > 1 ? ` × ${iv.hits} (${iv.totalDamage} total)` : ''}</b> damage (modifiers included).`;
+      if (iv.pending) t += '<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.';
+      else if (iv.delayed) t += '<br><b>Delayed:</b> it will hold this turn and strike the next. Stagger cancels it.';
+      return t;
+    }
+    if (iv.kind === 'block') return `<div class="tt-title">Intent: Defend</div>Gaining Block.`;
+    if (iv.kind === 'buff') return `<div class="tt-title">Intent: Buff</div>Strengthening itself.`;
+    if (iv.kind === 'debuff') return `<div class="tt-title">Intent: Debuff</div>Hindering you.`;
+    return `<div class="tt-title">Intent: Unknown</div>`;
+  }
+
+  function renderEnemies() {
+    const row = $('.enemy-row');
+    row.innerHTML = '';
+    for (const enemy of combat.enemies) {
+      const def = registries.enemies.get(enemy.enemyId);
+      const box = document.createElement('div');
+      box.className = `combatant enemy${enemy.alive ? '' : ' dead'}${selected ? ' targetable' : ''}`;
+      box.dataset.eid = enemy.id;
+      if (enemy.alive) box.appendChild(intentEl(enemy));
+      const sprite = document.createElement('div');
+      sprite.className = 'sprite';
+      sprite.appendChild(enemySprite(def));
+      const badge = blockBadge(enemy);
+      if (badge) sprite.appendChild(badge);
+      box.appendChild(sprite);
+      const nm = document.createElement('div');
+      nm.className = 'nm';
+      nm.textContent = def.name;
+      box.appendChild(nm);
+      box.appendChild(meterBars(enemy));
+      box.appendChild(statusRow(enemy));
+      if (enemy.alive) {
+        box.addEventListener('click', () => {
+          if (selected) playCard(selected, enemy.id);
+        });
+        box.addEventListener('pointerenter', () => selected && box.classList.add('hover-target'));
+        box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
+      }
+      row.appendChild(box);
+    }
+  }
+
+  function renderHand() {
+    const hand = $('.hand');
+    hand.innerHTML = '';
+    const n = combat.piles.hand.length;
+    combat.piles.hand.forEach((inst, i) => {
+      const pv = previewCard(combat, inst.instanceId);
+      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && !isUnplayable(inst);
+      const el = renderCard(registries, inst, { preview: pv, affordable });
+      const spread = Math.min(6, n) * 1.2;
+      el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
+      el.style.zIndex = i;
+      if (inst.instanceId === selected) el.classList.add('selected');
+      wireCardInput(el, inst, pv, affordable);
+      hand.appendChild(el);
+    });
+  }
+
+  function isUnplayable(inst) {
+    return (resolveCard(registries, inst).keywords || []).includes('unplayable');
+  }
+
+  function renderControls() {
+    $('.energy-orb').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    const anyPlayable = combat.piles.hand.some((inst) => {
+      const def = resolveCard(registries, inst);
+      if ((def.keywords || []).includes('unplayable')) return false;
+      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost);
+    });
+    $('.end-turn').classList.toggle('pulse', combat.player.energy > 0 && anyPlayable);
+    $('.pile.draw .n').textContent = combat.piles.draw.length;
+    $('.pile.discard .n').textContent = combat.piles.discard.length;
+    const ex = $('.pile.exhaust');
+    ex.style.display = combat.piles.exhaust.length ? '' : 'none';
+    ex.querySelector('.n').textContent = combat.piles.exhaust.length;
+  }
+
+  // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
+  function wireCardInput(el, inst, pv, affordable) {
+    let dragGhost = null;
+    let dragging = false;
+    let suppressClick = false; // a finished drag must not double-fire as a click
+    let startX = 0;
+    let startY = 0;
+
+    el.addEventListener('pointerdown', (ev) => {
+      if (busy || !affordable || ev.button !== 0) return;
+      startX = ev.clientX;
+      startY = ev.clientY;
+      const onMove = (mv) => {
+        if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > 12) {
+          dragging = true;
+          hideTooltip();
+          dragGhost = el.cloneNode(true);
+          dragGhost.style.cssText += 'position:fixed;z-index:600;pointer-events:none;opacity:.9;transform:scale(1.1);';
+          document.body.appendChild(dragGhost);
+        }
+        if (dragging && dragGhost) {
+          dragGhost.style.left = `${mv.clientX - 70}px`;
+          dragGhost.style.top = `${mv.clientY - 100}px`;
+        }
+      };
+      const onUp = (up) => {
+        removeEventListener('pointermove', onMove);
+        removeEventListener('pointerup', onUp);
+        if (dragGhost) dragGhost.remove();
+        if (!dragging) return; // plain click handled by 'click'
+        dragging = false;
+        suppressClick = true; // whatever happens next, this drag is not a click
+        const under = document.elementFromPoint(up.clientX, up.clientY);
+        const enemyBox = under && under.closest ? under.closest('.enemy:not(.dead)') : null;
+        if (pv.needsTarget) {
+          if (enemyBox) playCard(inst.instanceId, enemyBox.dataset.eid);
+        } else if (under && under.closest && under.closest('.field')) {
+          playCard(inst.instanceId, null);
+        }
+      };
+      addEventListener('pointermove', onMove);
+      addEventListener('pointerup', onUp);
+    });
+
+    el.addEventListener('click', () => {
+      if (suppressClick) {
+        suppressClick = false;
+        return;
+      }
+      if (busy || !affordable || dragging) return;
+      if (pv.needsTarget) {
+        selected = selected === inst.instanceId ? null : inst.instanceId;
+        render();
+      } else {
+        playCard(inst.instanceId, null);
+      }
+    });
+  }
+
+  // Cancel targeting with right-click / Esc.
+  combatEl.addEventListener('contextmenu', (ev) => {
+    if (selected) {
+      ev.preventDefault();
+      selected = null;
+      render();
+    }
+  });
+  const escHandler = (ev) => {
+    if (ev.key === 'Escape' && selected) {
+      selected = null;
+      render();
+    }
+  };
+  addEventListener('keydown', escHandler);
+
+  // ---------- actions ----------
+  function trackStats(events) {
+    for (const e of events) {
+      if (e.type === 'damageDealt' && e.sourceId === 'player') game.stats.damageDealt += e.amount;
+      if (e.type === 'hpLost' && e.targetId === 'player') game.stats.damageTaken += e.amount;
+    }
+  }
+
+  function afterDispatch(events) {
+    trackStats(events);
+    render(); // final state immediately; floats play over it (≤300 ms, skippable)
+    animateEvents(events, fxCtx, () => {
+      busy = false;
+      if (combat.result) {
+        removeEventListener('keydown', escHandler);
+        setTimeout(() => onEnd(combat.result, combat), 350);
+      }
+    });
+  }
+
+  function playCard(instanceId, targetId) {
+    if (busy || combat.result) return;
+    selected = null;
+    hideTooltip();
+    let out;
+    try {
+      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined });
+    } catch (err) {
+      render(); // illegal input: show nothing, just resync (ENGINE-API §12)
+      return;
+    }
+    sfx.play('cardPlay');
+    busy = true;
+    afterDispatch(out.events);
+  }
+
+  $('.end-turn').addEventListener('click', () => {
+    if (busy || combat.result || combat.phase !== 'player') return;
+    selected = null;
+    hideTooltip();
+    let out;
+    try {
+      out = dispatch(combat, { type: 'endTurn' });
+    } catch (err) {
+      return;
+    }
+    busy = true;
+    afterDispatch(out.events);
+  });
+
+  $('.pile.draw').addEventListener('click', () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true }));
+  $('.pile.discard').addEventListener('click', () => openPileModal(registries, 'Discard pile', combat.piles.discard));
+  $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
+
+  render();
+  // Combat-start events (relic triggers, opening draw) get a quick pass too.
+  animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
+}

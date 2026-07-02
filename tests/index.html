@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>EldenSpire — engine tests</title>
+  <style>
+    body { background: #0d0b08; color: #e8dcc0; font: 14px/1.6 monospace; padding: 2rem; }
+    h1 { color: #c9a227; font-size: 18px; }
+    li { list-style: none; margin: 2px 0; }
+    .pass::before { content: '✔ '; color: #7fd97f; }
+    .fail::before { content: '✘ '; color: #ff6b6b; }
+    .skip::before { content: '– '; color: #7a6f5a; }
+    .fail { color: #ff6b6b; }
+    .skip { color: #7a6f5a; }
+    #summary { margin-top: 1rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>EldenSpire — headless engine tests (SPEC §8)</h1>
+  <ul id="results"></ul>
+  <div id="summary">running…</div>
+  <script type="module">
+    import { runTests } from './engine.test.js';
+    const ul = document.getElementById('results');
+    const { passed, failed, results } = await runTests();
+    for (const r of results) {
+      const li = document.createElement('li');
+      li.className = r.skipped ? 'skip' : r.ok ? 'pass' : 'fail';
+      li.textContent = r.name + (r.detail ? ` — ${r.detail}` : '');
+      ul.appendChild(li);
+    }
+    const s = document.getElementById('summary');
+    s.textContent = `${passed} passed, ${failed} failed`;
+    s.style.color = failed ? '#ff6b6b' : '#7fd97f';
+  </script>
+</body>
+</html>

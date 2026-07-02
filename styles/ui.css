@@ -1,0 +1,106 @@
+/* styles/ui.css — tooltips, cards, modals, screens shared chrome */
+
+/* ---------- tooltip ---------- */
+#tooltip {
+  position: fixed; z-index: 1000; max-width: 280px; pointer-events: none;
+  background: #14100c; border: 1px solid var(--gold); border-radius: 8px;
+  padding: 10px 12px; font-size: 12px; line-height: 1.5; color: var(--parchment);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7); display: none;
+}
+#tooltip .tt-title { color: var(--gold); font-family: var(--font-display); font-size: 13px; margin-bottom: 4px; }
+#tooltip .tt-kw { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; color: var(--muted); }
+#tooltip .tt-kw b { color: var(--parchment); }
+
+/* ---------- card ---------- */
+.card {
+  position: relative; width: 140px; height: 196px; border-radius: 10px;
+  background: linear-gradient(#241e15, #1a1510);
+  border: 2px solid #5a5040; color: var(--parchment);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 26px 8px 8px; cursor: pointer; flex-shrink: 0;
+  transition: transform 140ms, box-shadow 140ms, border-color 140ms;
+}
+.card.rarity-uncommon { border-color: var(--frost); }
+.card.rarity-rare { border-color: var(--gold); }
+.card.rarity-special { border-color: #6a3a7a; }
+.card .cost {
+  position: absolute; top: -10px; left: -10px; width: 30px; height: 30px;
+  border-radius: 50%; background: #1c1610; border: 2px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; color: var(--parchment);
+}
+.card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
+.card .cname { font-family: var(--font-display); font-size: 11.5px; text-align: center; line-height: 1.15; min-height: 26px; }
+.card.upgraded .cname { color: var(--green); }
+.card .art {
+  width: 116px; height: 66px; margin: 3px 0; border-radius: 6px;
+  background: #14100c; border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center; font-size: 34px;
+}
+.card .ctype {
+  width: 116px; border-radius: 4px; background: #2a241c; color: var(--gold);
+  font-size: 9px; letter-spacing: 3px; text-align: center; padding: 3px 0;
+  font-family: var(--font-display);
+}
+.card .ctext { font-size: 11px; text-align: center; line-height: 1.4; margin-top: 6px; }
+.card .ctext .kw { color: var(--gold); }
+.card .ctext .st-bleed { color: var(--ember); font-weight: 600; }
+.card .ctext .val { font-weight: 700; }
+.card .ctext .val.up { color: var(--green); }
+.card .ctext .val.down { color: var(--ember); }
+
+/* ---------- modal / pile viewer ---------- */
+.modal-veil {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal {
+  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 12px;
+  max-width: 900px; max-height: 80vh; padding: 22px; overflow: auto;
+}
+.modal h2 { color: var(--gold); font-size: 16px; margin-bottom: 14px; }
+.modal .grid { display: flex; flex-wrap: wrap; gap: 14px; }
+
+/* ---------- generic screens ---------- */
+.screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }
+.screen .title-big { font-size: 44px; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
+.screen .subtitle { color: var(--muted); letter-spacing: 0.3em; font-size: 12px; }
+.seed-line { color: var(--muted); font-size: 12px; }
+.seed-line input {
+  background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
+  border-radius: 6px; padding: 4px 8px; width: 110px; font-family: monospace; text-align: center;
+}
+
+.class-row { display: flex; gap: 18px; }
+.class-pick {
+  width: 190px; padding: 16px; border: 2px solid var(--line-soft); border-radius: 12px;
+  background: var(--panel); cursor: pointer; text-align: center; transition: border-color 150ms, transform 150ms;
+}
+.class-pick:hover { border-color: var(--gold); transform: translateY(-3px); }
+.class-pick.locked { opacity: 0.45; cursor: default; }
+.class-pick.locked:hover { border-color: var(--line-soft); transform: none; }
+.class-pick .glyph { font-size: 44px; margin-bottom: 8px; }
+.class-pick h3 { color: var(--gold); font-size: 15px; margin-bottom: 6px; }
+.class-pick p { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.class-pick .chip { display: inline-block; margin-top: 8px; font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; }
+
+.stats-table { border-collapse: collapse; font-size: 13px; }
+.stats-table td { padding: 4px 14px; }
+.stats-table td:first-child { color: var(--muted); text-align: right; }
+
+.deck-strip { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 860px; }
+.deck-strip .mini {
+  font-size: 11px; border: 1px solid var(--line-soft); border-radius: 6px;
+  background: var(--panel); padding: 3px 8px;
+}
+.deck-strip .mini.upgraded { color: var(--green); }
+
+.validation-banner {
+  background: #3a1010; border-bottom: 2px solid #ff6b6b; color: #ffb3b3;
+  padding: 8px 16px; font-size: 12px; font-family: monospace; white-space: pre-wrap;
+}
+
+/* reward screen */
+.reward-row { display: flex; gap: 22px; }
+.reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
+.heal-note { color: var(--green); font-size: 13px; }
