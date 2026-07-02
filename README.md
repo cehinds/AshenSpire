@@ -42,8 +42,9 @@ PROMPT.md        the build brief
 SPEC.md          the full design + technical specification (source of truth)
 index.html       game entry point (lands with M1)
 styles/          CSS
-src/engine/      pure, headless game logic — no DOM access
-src/content/     all cards, enemies, relics, events as data files
+src/model/       schemas, registries, formula evaluator, validation
+src/engine/      generic interpreters + procedural generators — no DOM access
+src/content/     ALL game data: cards, statuses, enemies, relics, events, tuning
 src/ui/          rendering and input
 tests/           headless engine tests (open tests/index.html, expect all green)
 DEVELOPER.md     how to add a card/relic/enemy/event (lands with M1)

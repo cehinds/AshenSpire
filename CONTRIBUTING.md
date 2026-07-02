@@ -5,7 +5,7 @@
 1. **[SPEC.md](SPEC.md) is the source of truth.** Formulas, orderings, and state shapes marked contractual there don't change in a feature PR — change the spec first, in its own PR, then implement.
 2. **No FromSoftware assets or proper nouns.** Every new asset goes through `src/ui/assets.js` and gets a line in [CREDITS.md](CREDITS.md) with source URL + license (CC0 / CC-BY / OFL only).
 3. **Engine stays headless.** Nothing under `src/engine/` may reference `document`, `window`, `localStorage`, or timers. If a change can't be tested from `tests/index.html`, it doesn't belong in the engine.
-4. **Content is data.** A new card, relic, enemy, or event is a data object in one `src/content/` file. If you find yourself writing imperative per-card code, extend the effect DSL instead (spec §3.3–3.4) and document it in `DEVELOPER.md`.
+4. **Content is data.** A new card, relic, **status**, enemy, or event is a data object in one `src/content/` file, validated against its schema (spec §3.14). If you find yourself writing imperative per-entity code, extend the effect/formula/trigger DSL instead (spec §3.4–3.7) — or, as a last resort, use the budgeted `scripts.js` escape hatch (<5% of content, justified in a comment).
 5. **Tests green before merge.** Open `tests/index.html` — all assertions pass, zero console errors. New mechanics ship with new assertions.
 
 ## Branch model
@@ -33,8 +33,9 @@ feature/* ──► dev ──► release ──► main
 
 Full walkthroughs live in `DEVELOPER.md` (lands with M1). Short version:
 
-- **Card:** add one object to `src/content/cards/<class>.js` — id, name, cost, type, rarity, effect-DSL list, upgrade delta.
-- **Relic:** add to `src/content/relics.js` — id, rarity, `{event, condition?, effects}` triggers.
+- **Card:** add one object to `src/content/cards/<class>.js` — id, name, cost, type, rarity, effect opcodes, text template, upgrade override.
+- **Relic:** add to `src/content/relics.js` — id, rarity, `{on, if?, do}` triggers.
+- **Status:** add to `src/content/statuses.js` — stack mode, decay, optional meter/modifiers/hooks. No engine code.
 - **Enemy:** add to `src/content/enemies/act<N>.js` — hp range, poiseMax, weighted move table with `maxConsecutive`.
 - **Event:** add to `src/content/events.js` — text + choices, each choice a list of run-level effects.
 
