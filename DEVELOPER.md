@@ -118,16 +118,18 @@ delayed attack (Held Blade pattern — Stagger cancels it); `locked: true` +
 | Set | Where defined | Contents |
 |---|---|---|
 | Combat opcodes | `model/schemas.js` `COMBAT_OPCODES` | damage, block, applyStatus, removeStatus, draw, discard, exhaust, addCard, gainEnergy, loseHp, heal, shuffleDiscardIntoDraw, enterStance, poiseDamage |
-| Run opcodes | `RUN_OPCODES` | addRunes, removeCardFromDeck, upgradeCard, addRelic, addFlask, loseMaxHpPct, startCombat |
+| Run opcodes | `RUN_OPCODES` | addRunes, addCardToDeck, removeCardFromDeck, upgradeCard, addRelic, addFlask, loseMaxHpPct, startCombat |
 | Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner |
 | Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
-| Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, everyNthCardThisCombat, random, eventIsAttack, eventSourceIsOwner, all, any, not |
+| Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, everyNthCardThisCombat, random, eventIsAttack, eventSourceIsOwner, eventStatusIs, all, any, not |
+| Relic passives | `PASSIVE_KEYS` | runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction |
 | Modifier keys | `MODIFIER_KEYS` | damageDealtMult, damageTakenMult, blockGainedMult, attackDamageAdd, blockAdd, skipTurn, retainBlock, blockCap, meterMaxGrowthDisabled |
 
 Escape hatch: `src/content/scripts.js` (named functions callable as
 `{ script: 'name' }` effects). Budget < 5% of content, each entry justified in
-a comment. M1 uses **zero** scripts.
+a comment. Current usage: **one** (Wondrous Physick — dynamic meta-selection
+of other flasks' effect lists, which the DSL cannot reference).
 
 ## M1 known deviations (tracked for M2/M3)
 

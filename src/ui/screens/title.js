@@ -4,20 +4,32 @@ import { LOCKED_CLASSES } from '../../content/index.js';
 import { classGlyph } from '../assets.js';
 import { esc } from '../components/tooltip.js';
 
-export function mountTitle(app, { registries, defaultSeedString, onStart }) {
+export function mountTitle(app, { registries, defaultSeedString, hasSave, onStart, onContinue, onAbandon }) {
   app.innerHTML = `
     <div class="screen">
       <div>
         <h1 class="title-big">SPIRE OF THE ERDTREE</h1>
-        <p class="subtitle" style="text-align:center">A ROGUELIKE DECKBUILDER — M1 COMBAT SLICE</p>
+        <p class="subtitle" style="text-align:center">A ROGUELIKE DECKBUILDER — ACT I</p>
       </div>
+      ${hasSave ? `
+      <div style="display:flex;gap:12px;align-items:center">
+        <button id="continue-run">CONTINUE THE CLIMB</button>
+        <button class="subtle" id="abandon-run">Abandon run</button>
+      </div>` : ''}
       <div class="class-row"></div>
       <div class="seed-line">Seed <input id="seed-input" maxlength="10" spellcheck="false"></div>
       <p style="color:var(--muted);font-size:11px;max-width:520px;text-align:center;line-height:1.6">
-        Choose the Vagabond to begin the gauntlet: two fights, an elite, and The Watchful Omen.
-        Same seed, same run.
+        Choose the Vagabond and climb Act I: fifteen floors of the Fallow Marches,
+        ending at The Watchful Omen. Same seed, same run.
       </p>
     </div>`;
+
+  if (hasSave) {
+    app.querySelector('#continue-run').addEventListener('click', onContinue);
+    app.querySelector('#abandon-run').addEventListener('click', () => {
+      onAbandon();
+    });
+  }
 
   app.querySelector('#seed-input').value = defaultSeedString;
 

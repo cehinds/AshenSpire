@@ -41,6 +41,7 @@ export const COMBAT_OPCODES = Object.freeze([
 
 export const RUN_OPCODES = Object.freeze([
   'addRunes',
+  'addCardToDeck',
   'removeCardFromDeck',
   'upgradeCard',
   'addRelic',
@@ -117,9 +118,24 @@ export const PREDICATES = Object.freeze([
   'random',
   'eventIsAttack',
   'eventSourceIsOwner',
+  'eventStatusIs',
   'all',
   'any',
   'not',
+]);
+
+// Relic passive keys — data the run systems (rewards, shops, shrines, map)
+// and cost/flask math consult. Closed set; each key is generic capability,
+// not entity behavior (law §3.1(2)).
+//   *Mult keys multiply across relics; flags OR; reductions sum.
+export const PASSIVE_KEYS = Object.freeze([
+  'runeGainMult', // rune rewards ×
+  'eliteExtraCardReward', // flag: elites offer one extra card choice
+  'flaskPowerMult', // flask effect amounts ×
+  'revealUnknown', // flag: '?' map nodes show their resolved type
+  'shrineHealMult', // shrine rest healing ×
+  'shrineNoRest', // flag: shrines offer Smith only
+  'powerCostReduction', // Power cards cost N less (min 0)
 ]);
 
 // Status/stance modifier keys consulted by the generic damage/block math and
@@ -198,6 +214,7 @@ export const EFFECT_SPECS = Object.freeze({
   enterStance: { allowed: ['stance'], required: ['stance'], refs: { stance: 'stances' } },
   poiseDamage: { allowed: [], required: ['amount'], refs: {} },
   addRunes: { allowed: [], required: ['amount'], refs: {} },
+  addCardToDeck: { allowed: ['card'], required: ['card'], refs: { card: 'cards' } },
   removeCardFromDeck: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },
   upgradeCard: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },
   addRelic: { allowed: ['id', 'random'], required: [], refs: { id: 'relics' } },
@@ -306,6 +323,17 @@ export const SCHEMAS = Object.freeze({
     rarity: en(...RELIC_RARITIES),
     textTemplate: str,
     triggers: triggersNode,
+    passives: opt(
+      obj({
+        runeGainMult: opt(num),
+        eliteExtraCardReward: opt(bool),
+        flaskPowerMult: opt(num),
+        revealUnknown: opt(bool),
+        shrineHealMult: opt(num),
+        shrineNoRest: opt(bool),
+        powerCostReduction: opt(num),
+      })
+    ),
     icon: opt(str),
     flavor: opt(str),
     script: opt(ref('scripts')),

@@ -1,65 +1,54 @@
-// src/ui/screens/reward.js — M1 gauntlet glue between fights (SPEC §9 M1):
-// heal a slice of max HP, then pick 1 of 3 cards (visible Skip — deck
-// discipline is a skill we teach by affordance, GDD §5). Full run rewards
-// (runes, relics, flasks) land with M2.
+// src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1)
+//
+// Rewards arrive pre-rolled by engine/encounters.js (deterministic streams);
+// this screen only presents them. Skipping the card is a visible affordance
+// (deck discipline, GDD §5). Runes/relic/flask apply immediately; the flask
+// is lost with a note if all slots are full.
 
 import { renderCard } from '../components/card.js';
 import { esc } from '../components/tooltip.js';
+import { sfx } from '../sfx.js';
 
-/** Roll `count` distinct card ids from the class pool (stream 'cardRewards'). */
-export function rollCardRewards(registries, game, count) {
-  const pool = registries.classes.get(game.classId).cardPool;
-  const weights = registries.balance.gauntlet.rarityWeights;
-  const byRarity = {};
-  for (const id of pool) {
-    const def = registries.cards.get(id);
-    (byRarity[def.rarity] = byRarity[def.rarity] || []).push(id);
+export function mountRewards(app, { registries, run, rewards, onDone }) {
+  const lines = [];
+  if (rewards.runes) {
+    run.runes += rewards.runes;
+    lines.push(`<span style="color:var(--gold)">+${rewards.runes} runes</span> (${run.runes} total)`);
   }
-  const rarities = Object.keys(weights).filter((r) => byRarity[r] && byRarity[r].length);
-  const total = rarities.reduce((a, r) => a + weights[r], 0);
-  const picks = [];
-  let guard = 0;
-  while (picks.length < count && guard++ < 100) {
-    let roll = game.rng.float('cardRewards') * total;
-    let rarity = rarities[rarities.length - 1];
-    for (const r of rarities) {
-      roll -= weights[r];
-      if (roll < 0) {
-        rarity = r;
-        break;
-      }
+  if (rewards.relicId) {
+    run.relics.push(rewards.relicId);
+    const def = registries.relics.get(rewards.relicId);
+    lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(def.textTemplate.replace(/[{}]/g, ''))}`);
+  }
+  if (rewards.flaskId) {
+    const def = registries.flasks.get(rewards.flaskId);
+    if (run.flasks.length < (registries.balance.flaskSlots || 3)) {
+      run.flasks.push({ flaskId: rewards.flaskId });
+      lines.push(`Flask: <b>${esc(def.icon || '🧪')} ${esc(def.name)}</b>`);
+    } else {
+      lines.push(`<span style="color:var(--muted)">A ${esc(def.name)} — but your flask slots are full. It stays in the mud.</span>`);
     }
-    const options = byRarity[rarity].filter((id) => !picks.includes(id));
-    if (!options.length) continue;
-    picks.push(game.rng.pick('cardRewards', options));
   }
-  return picks;
-}
 
-export function mountReward(app, { registries, game, healed, onContinue }) {
-  const picks = rollCardRewards(registries, game, registries.balance.gauntlet.rewardChoices);
-
+  sfx.play('victory');
   app.innerHTML = `
     <div class="screen">
-      <h2 style="color:var(--gold);font-size:24px">VICTORY</h2>
-      ${healed > 0 ? `<p class="heal-note">The grace of the shrine mends you: +${healed} HP (${game.hp}/${game.maxHp})</p>` : ''}
-      <p class="subtitle">CHOOSE A CARD</p>
-      <div class="reward-row"></div>
-      <button class="subtle" id="skip-btn">Skip reward</button>
+      <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
+      ${lines.map((l) => `<p style="font-size:14px">${l}</p>`).join('')}
+      ${rewards.cardIds && rewards.cardIds.length ? '<p class="subtitle">CHOOSE A CARD</p><div class="reward-row"></div>' : ''}
+      <button class="subtle" id="reward-continue">${rewards.cardIds && rewards.cardIds.length ? 'Skip the card' : 'CONTINUE'}</button>
     </div>`;
 
   const row = app.querySelector('.reward-row');
-  picks.forEach((cardId) => {
-    const el = renderCard(registries, { cardId, upgraded: false }, {});
-    el.addEventListener('click', () => {
-      game.deck.push({ instanceId: `r${game.deck.length}_${cardId}`, cardId, upgraded: false });
-      onContinue(cardId);
-    });
-    row.appendChild(el);
-  });
-  app.querySelector('#skip-btn').addEventListener('click', () => onContinue(null));
-
-  if (!picks.length) {
-    row.innerHTML = `<p style="color:var(--muted)">${esc('No rewards available.')}</p>`;
+  if (row) {
+    for (const cardId of rewards.cardIds) {
+      const el = renderCard(registries, { cardId, upgraded: false }, {});
+      el.addEventListener('click', () => {
+        run.deck.push({ instanceId: `r${run.deck.length}_${cardId}`, cardId, upgraded: false });
+        onDone(cardId);
+      });
+      row.appendChild(el);
+    }
   }
+  app.querySelector('#reward-continue').addEventListener('click', () => onDone(null));
 }
