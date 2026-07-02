@@ -141,7 +141,7 @@ CREDITS.md
 | Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
 | Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
 | Enemy | `id, name, hp: [min,max], poiseMax, moves{}, firstMove?, phases?[]` |
-| Encounter | `id, enemies[], weight, minFloor?, pool: normal \| elite \| boss` |
+| Encounter | `id, enemies[], weight, minFloor?, pool: normal \| elite \| boss, act? (default 1)` |
 | Event | `id, name, art, text, choices[]` (each choice: `label, requires?, effects, resultText`) |
 | Flask | `id, rarity, targeted?, effects[]` |
 | Class | `id, name, maxHp, startingRelic, startingDeck[], cardPool[]` |

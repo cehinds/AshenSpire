@@ -93,9 +93,16 @@ function newRun({ classId, seedString, customization, keepsakeId }) {
     executeRunEffects({ run, registries, rng }, keepsake.effects);
   }
 
-  run.mapGraph = generateActMap({ config: registries.mapConfig(1), rng });
-  // Pre-roll every '?' node (stream 'events') so outcomes are seed-determined
-  // and the Stonesword Key can reveal them (SPEC §6).
+  buildActMap();
+  saves.saveRun(run, rng);
+  showMap();
+}
+
+// Generate the current act's map and pre-roll every '?' node (stream
+// 'events') so outcomes are seed-determined and the Stonesword Key can
+// reveal them (SPEC §6).
+function buildActMap() {
+  run.mapGraph = generateActMap({ config: registries.mapConfig(run.actNumber), rng });
   const assigned = [];
   for (const node of Object.values(run.mapGraph.nodes)) {
     if (node.type === 'event') {
@@ -103,6 +110,17 @@ function newRun({ classId, seedString, customization, keepsakeId }) {
       if (node.resolved.kind === 'event') assigned.push(node.resolved.eventId);
     }
   }
+}
+
+// Between acts: grace holds the spire together a little longer.
+function advanceAct() {
+  run.actNumber += 1;
+  run.floor = 0;
+  run.mapNodeId = null;
+  run.path = [];
+  run.lastEncounters = [];
+  run.hp = run.maxHp; // full heal between acts (v1 kindness; M3 balance pass may trim)
+  buildActMap();
   saves.saveRun(run, rng);
   showMap();
 }
@@ -199,7 +217,7 @@ function enterNode(nodeId) {
 
 // ---- combat ------------------------------------------------------------------------
 function startFight(pool, nodeId) {
-  const encounterId = rollEncounter(registries, rng, { pool, exclude: run.lastEncounters });
+  const encounterId = rollEncounter(registries, rng, { pool, act: run.actNumber, exclude: run.lastEncounters });
   if (pool === 'normal') {
     run.lastEncounters.push(encounterId);
     if (run.lastEncounters.length > 2) run.lastEncounters.shift();
@@ -225,7 +243,11 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     enemyIds: enc.enemies,
   });
   const label =
-    enc.pool === 'boss' ? 'THE WATCHFUL OMEN' : enc.pool === 'elite' ? `ELITE · FLOOR ${run.floor}` : `FLOOR ${run.floor}`;
+    enc.pool === 'boss'
+      ? registries.enemies.get(enc.enemies[0]).name.toUpperCase()
+      : enc.pool === 'elite'
+        ? `ELITE · FLOOR ${run.floor}`
+        : `ACT ${run.actNumber} · FLOOR ${run.floor}`;
   mountCombat(app, {
     registries,
     run,
@@ -249,9 +271,25 @@ function onCombatEnd(result, combat, enc) {
   run.combatEntered = null;
 
   if (enc.pool === 'boss') {
-    saves.clearRun();
-    saves.recordResult({ victory: true, seed: run.seedString, class: run.class, floor: run.floor });
-    return mountGameOver(app, { registries, game: run, victory: true, onTitle: showTitle });
+    if (run.actNumber >= 3) {
+      // The Rot Valkyrie falls: the Great Rune is restored.
+      saves.clearRun();
+      saves.recordResult({ victory: true, seed: run.seedString, class: run.class, act: run.actNumber, floor: run.floor });
+      return mountGameOver(app, { registries, game: run, victory: true, onTitle: showTitle });
+    }
+    // Act boss down: boss rewards, then the climb continues.
+    const bossRewards = {
+      title: `${registries.enemies.get(enc.enemies[0]).name.toUpperCase()} FALLS`,
+      runes: rollRuneReward(registries, rng, 'boss', run.relics),
+      cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics }),
+      relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+    };
+    return mountRewards(app, {
+      registries,
+      run,
+      rewards: bossRewards,
+      onDone: () => advanceAct(),
+    });
   }
 
   const rewards = {

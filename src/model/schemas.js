@@ -388,6 +388,7 @@ export const SCHEMAS = Object.freeze({
     weight: num,
     minFloor: opt(int),
     pool: en(...ENCOUNTER_POOLS),
+    act: opt(int), // defaults to 1
   }),
 
   event: obj({

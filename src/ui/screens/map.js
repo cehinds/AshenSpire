@@ -22,6 +22,12 @@ const ICONS = {
 const COL_X = 95;
 const ROW_H = 46;
 
+const ACT_NAMES = {
+  1: 'ACT I — THE FALLOW MARCHES',
+  2: 'ACT II — THE GRAFTED COURT',
+  3: 'ACT III — THE ASHEN CROWN',
+};
+
 export function mountMap(app, { registries, run, onPick }) {
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
@@ -51,7 +57,7 @@ export function mountMap(app, { registries, run, onPick }) {
     <div class="mapscreen">
       <div class="map-scroll">
         <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-          <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">ACT I — THE FALLOW MARCHES</text>
+          <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${ACT_NAMES[run.actNumber] || `ACT ${run.actNumber}`}</text>
           ${edgeSvg}
           <g id="map-nodes"></g>
         </svg>
@@ -60,6 +66,7 @@ export function mountMap(app, { registries, run, onPick }) {
         <h2>THE CLIMB</h2>
         <div class="hud-line"><span>HP</span><b>${run.hp} / ${run.maxHp}</b></div>
         <div class="hud-line"><span>Runes</span><b style="color:var(--gold)">${run.runes}</b></div>
+        <div class="hud-line"><span>Act</span><b>${run.actNumber} / 3</b></div>
         <div class="hud-line"><span>Floor</span><b>${run.floor} / ${map.floors}</b></div>
         <div class="hud-line"><span>Seed</span><b style="font-family:monospace">${esc(run.seedString)}</b></div>
         <div class="hud-line"><span>Flasks</span><b>${run.flasks.map((f) => registries.flasks.get(f.flaskId).icon).join(' ') || '—'}</b></div>

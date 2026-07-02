@@ -17,6 +17,8 @@ import { act1Enemies } from './enemies/act1.js';
 import { act2Enemies } from './enemies/act2.js';
 import { act3Enemies } from './enemies/act3.js';
 import { act1Encounters, M1_GAUNTLET } from './encounters/act1.js';
+import { act2Encounters } from './encounters/act2.js';
+import { act3Encounters } from './encounters/act3.js';
 import { events } from './events.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
@@ -31,7 +33,7 @@ export const contentBundle = {
   stances,
   keywords,
   enemies: [...act1Enemies, ...act2Enemies, ...act3Enemies],
-  encounters: [...act1Encounters],
+  encounters: [...act1Encounters, ...act2Encounters, ...act3Encounters],
   events,
   flasks,
   classes,
