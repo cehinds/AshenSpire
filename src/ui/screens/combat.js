@@ -9,7 +9,7 @@ import { resolveCard } from '../../model/registries.js';
 import { renderCard } from '../components/card.js';
 import { openPileModal } from '../components/piles.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
-import { enemySprite, playerSprite, classGlyph } from '../assets.js';
+import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents } from '../fx.js';
 import { sfx } from '../sfx.js';
 
@@ -17,9 +17,9 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
   app.innerHTML = `
     <div class="combat">
       <header class="topbar">
-        <div class="portrait">${classGlyph(run.class)}</div>
+        <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
         <div class="who">
-          <span class="nm">${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
+          <span class="nm">${esc(((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase())} · ${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
           <div class="bar hpbar"><div class="fill"></div><div class="label"></div></div>
         </div>
         <span class="runes" style="color:var(--gold);font-size:13px">⛁ ${run.runes}</span>
@@ -51,6 +51,8 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
     layer: $('.fx-layer'),
     combatEl,
     anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
+    relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
+    orb: () => app.querySelector('.energy-orb'),
   };
 
   let selected = null; // card instanceId in click-targeting mode
@@ -77,6 +79,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
       const def = registries.relics.get(rid);
       const el = document.createElement('div');
       el.className = 'relic';
+      el.dataset.relicId = rid;
       el.textContent = def.icon || '◆';
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate.replace(/[{}]/g, ''))}`);
       relics.appendChild(el);
@@ -177,7 +180,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
     box.dataset.eid = 'player';
     const sprite = document.createElement('div');
     sprite.className = 'sprite';
-    sprite.appendChild(playerSprite());
+    sprite.appendChild(playerSprite(run.customization || {}));
     const badge = blockBadge(p);
     if (badge) sprite.appendChild(badge);
     box.appendChild(sprite);
@@ -417,11 +420,35 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
     });
   }
 
+  // Ghost the played card flying toward its target (≤220 ms, purely cosmetic).
+  function flyCard(instanceId, targetId) {
+    const cardEl = app.querySelector(`.hand .card[data-instance-id="${instanceId}"]`);
+    if (!cardEl) return;
+    const dest = (targetId && fxCtx.anchorFor(targetId)) || fxCtx.anchorFor('player');
+    const from = cardEl.getBoundingClientRect();
+    const to = dest ? dest.getBoundingClientRect() : from;
+    const ghost = cardEl.cloneNode(true);
+    ghost.className = `${cardEl.className} card-ghost`;
+    ghost.style.left = `${from.left}px`;
+    ghost.style.top = `${from.top}px`;
+    ghost.style.width = `${from.width}px`;
+    ghost.style.margin = '0';
+    document.body.appendChild(ghost);
+    requestAnimationFrame(() => {
+      const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+      const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+      ghost.style.transform = `translate(${dx}px, ${dy}px) scale(0.35) rotate(6deg)`;
+      ghost.style.opacity = '0';
+    });
+    setTimeout(() => ghost.remove(), 260);
+  }
+
   function playCard(instanceId, targetId) {
     if (busy || combat.result) return;
     selected = null;
     selectedFlask = null;
     hideTooltip();
+    flyCard(instanceId, targetId);
     let out;
     try {
       out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined });

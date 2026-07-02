@@ -13,6 +13,7 @@ export function mountGameOver(app, { registries, game, victory, onTitle }) {
     <div class="screen" style="gap:22px">
       <h1 class="title-big" style="color:${color}">${title}</h1>
       <table class="stats-table">
+        <tr><td>Tarnished</td><td>${esc((game.customization && game.customization.name) || 'Tarnished')} ${esc((game.customization && game.customization.glyph) || '')}</td></tr>
         <tr><td>Seed</td><td style="font-family:monospace">${esc(game.seedString)}</td></tr>
         <tr><td>Floor reached</td><td>${game.floor}${game.mapGraph ? ` / ${game.mapGraph.floors}` : ''}</td></tr>
         <tr><td>Fights won</td><td>${game.stats.fightsWon}</td></tr>

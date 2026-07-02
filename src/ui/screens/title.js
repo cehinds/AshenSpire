@@ -1,58 +1,35 @@
-// src/ui/screens/title.js — title + class select + seed entry (SPEC §7.1)
+// src/ui/screens/title.js — animated main menu (SPEC §7.1)
+//
+// Ambient animation only (gold-glow pulse, drifting embers) — feedback
+// animations stay ≤300 ms elsewhere; ambient loops respect
+// prefers-reduced-motion (styles/ui.css).
 
-import { LOCKED_CLASSES } from '../../content/index.js';
-import { classGlyph } from '../assets.js';
-import { esc } from '../components/tooltip.js';
+export function mountTitle(app, { hasSave, onBegin, onContinue, onAbandon }) {
+  const embers = Array.from({ length: 7 }, (_, i) => {
+    const left = 8 + ((i * 13.7) % 84);
+    const delay = (i * 1.7) % 9;
+    const dur = 7 + (i % 4) * 2;
+    return `<span class="ember" style="left:${left}%;animation-delay:${delay}s;animation-duration:${dur}s"></span>`;
+  }).join('');
 
-export function mountTitle(app, { registries, defaultSeedString, hasSave, onStart, onContinue, onAbandon }) {
   app.innerHTML = `
-    <div class="screen">
-      <div>
-        <h1 class="title-big">SPIRE OF THE ERDTREE</h1>
-        <p class="subtitle" style="text-align:center">A ROGUELIKE DECKBUILDER — ACT I</p>
+    <div class="screen title-screen">
+      ${embers}
+      <div class="title-stack">
+        <h1 class="title-big title-glow">SPIRE OF THE ERDTREE</h1>
+        <p class="subtitle" style="text-align:center">A ROGUELIKE DECKBUILDER</p>
       </div>
-      ${hasSave ? `
-      <div style="display:flex;gap:12px;align-items:center">
-        <button id="continue-run">CONTINUE THE CLIMB</button>
-        <button class="subtle" id="abandon-run">Abandon run</button>
-      </div>` : ''}
-      <div class="class-row"></div>
-      <div class="seed-line">Seed <input id="seed-input" maxlength="10" spellcheck="false"></div>
-      <p style="color:var(--muted);font-size:11px;max-width:520px;text-align:center;line-height:1.6">
-        Choose the Vagabond and climb Act I: fifteen floors of the Fallow Marches,
-        ending at The Watchful Omen. Same seed, same run.
-      </p>
+      <div class="title-menu">
+        ${hasSave ? '<button id="continue-run">CONTINUE THE CLIMB</button>' : ''}
+        <button id="begin-run">${hasSave ? 'NEW CLIMB' : 'BEGIN THE CLIMB'}</button>
+        ${hasSave ? '<button class="subtle" id="abandon-run">Abandon saved run</button>' : ''}
+      </div>
+      <p style="color:var(--muted);font-size:11px;letter-spacing:.15em">GRACE FLOWS UPWARD. FOLLOW IT.</p>
     </div>`;
 
+  app.querySelector('#begin-run').addEventListener('click', onBegin);
   if (hasSave) {
     app.querySelector('#continue-run').addEventListener('click', onContinue);
-    app.querySelector('#abandon-run').addEventListener('click', () => {
-      onAbandon();
-    });
-  }
-
-  app.querySelector('#seed-input').value = defaultSeedString;
-
-  const row = app.querySelector('.class-row');
-  for (const cls of registries.classes.all()) {
-    const el = document.createElement('div');
-    el.className = 'class-pick';
-    el.innerHTML = `
-      <div class="glyph">${classGlyph(cls.id)}</div>
-      <h3>${esc(cls.name)}</h3>
-      <p>${esc(cls.description || '')}</p>
-      <span class="chip">HP ${cls.maxHp} · ${cls.startingDeck.length} cards</span>`;
-    el.addEventListener('click', () => onStart(cls.id, app.querySelector('#seed-input').value.trim()));
-    row.appendChild(el);
-  }
-  for (const cls of LOCKED_CLASSES) {
-    const el = document.createElement('div');
-    el.className = 'class-pick locked';
-    el.innerHTML = `
-      <div class="glyph">${classGlyph(cls.id)}</div>
-      <h3>${esc(cls.name)}</h3>
-      <p>${esc(cls.description)}</p>
-      <span class="chip">ARRIVES IN ${esc(cls.milestone)}</span>`;
-    row.appendChild(el);
+    app.querySelector('#abandon-run').addEventListener('click', onAbandon);
   }
 }

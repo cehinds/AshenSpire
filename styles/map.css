@@ -13,7 +13,13 @@
 .map-node.shrine text, .map-node.treasure text { fill: var(--gold); }
 .map-node.merchant text { fill: var(--grace); }
 .map-node.visited circle { stroke: var(--gold); }
-.map-node.current circle { stroke: var(--parchment); stroke-width: 3; }
+.map-node.current circle {
+  stroke: var(--parchment); stroke-width: 3;
+  animation: nodePulse 1.5s ease-in-out infinite alternate;
+}
+@keyframes nodePulse { from { stroke-width: 3; } to { stroke-width: 5.5; } }
+.map-node.reachable circle { animation: reachGlow 2s ease-in-out infinite alternate; }
+@keyframes reachGlow { from { stroke-opacity: 0.65; } to { stroke-opacity: 1; } }
 .map-node.reachable { cursor: pointer; }
 .map-node.reachable circle { stroke: var(--parchment); stroke-width: 2.5; }
 .map-node.reachable:hover circle { fill: #2e2517; stroke: var(--gold); }

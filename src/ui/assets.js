@@ -41,14 +41,30 @@ export function enemySprite(enemyDef) {
   return el;
 }
 
-export function playerSprite() {
+// Character customization options (cosmetic — stored on run.customization).
+export const PORTRAIT_GLYPHS = ['⚔', '🛡', '🔥', '🌙', '☀', '🐺'];
+export const PORTRAIT_TINTS = [
+  { id: 'gold', css: 'var(--gold)', name: 'Erdtree gold' },
+  { id: 'ember', css: 'var(--ember)', name: 'Bloodflame ember' },
+  { id: 'frost', css: 'var(--frost)', name: 'Carian frost' },
+  { id: 'rot', css: 'var(--rot)', name: 'Scarlet rot' },
+  { id: 'grace', css: 'var(--grace)', name: 'Lost grace' },
+];
+
+export function playerSprite(customization = {}) {
+  const tint = tintCss(customization.tint);
   const el = document.createElement('div');
   el.style.cssText =
-    'width:110px;height:140px;border-radius:10px;background:#2a2418;border:2px solid var(--gold);' +
+    `width:110px;height:140px;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
     'display:flex;align-items:center;justify-content:center;font-size:52px;position:relative;' +
-    'box-shadow:0 10px 12px rgba(0,0,0,.5);';
-  el.textContent = '🛡';
+    `box-shadow:0 10px 12px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.4);`;
+  el.textContent = customization.glyph || '🛡';
   return el;
+}
+
+export function tintCss(tintId) {
+  const t = PORTRAIT_TINTS.find((x) => x.id === tintId);
+  return t ? t.css : 'var(--gold)';
 }
 
 export function classGlyph(classId) {
