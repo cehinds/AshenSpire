@@ -437,6 +437,7 @@ const PREDICATE_FIELDS = {
   random: ['pct'],
   eventIsAttack: [],
   eventSourceIsOwner: [],
+  eventTargetIsOwner: [],
   eventStatusIs: ['status'],
   all: ['preds'],
   any: ['preds'],

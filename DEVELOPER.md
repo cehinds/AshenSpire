@@ -122,7 +122,7 @@ delayed attack (Held Blade pattern — Stagger cancels it); `locked: true` +
 | Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner |
 | Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
-| Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, everyNthCardThisCombat, random, eventIsAttack, eventSourceIsOwner, eventStatusIs, all, any, not |
+| Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, everyNthCardThisCombat, random, eventIsAttack, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, all, any, not |
 | Relic passives | `PASSIVE_KEYS` | runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction |
 | Modifier keys | `MODIFIER_KEYS` | damageDealtMult, damageTakenMult, blockGainedMult, attackDamageAdd, blockAdd, skipTurn, retainBlock, blockCap, meterMaxGrowthDisabled |
 

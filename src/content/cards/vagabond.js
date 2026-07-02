@@ -10,14 +10,15 @@ const one = { f: 'add', args: [1] };
 export const vagabondCards = [
   // ---- Starters -------------------------------------------------------------
   {
-    id: 'strike', name: 'Strike', class: 'vagabond', rarity: 'starter', cost: 1, type: 'attack',
+    // Shared basic (all three classes start with Strikes/Defends — colorless).
+    id: 'strike', name: 'Strike', class: 'colorless', rarity: 'starter', cost: 1, type: 'attack',
     keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 6 }],
     textTemplate: 'Deal {damage} damage.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 9 }] },
   },
   {
-    id: 'defend', name: 'Defend', class: 'vagabond', rarity: 'starter', cost: 1, type: 'skill',
+    id: 'defend', name: 'Defend', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
     keywords: [], icon: '🛡',
     effects: [{ op: 'block', target: 'self', amount: 5 }],
     textTemplate: 'Gain {block} Block.',

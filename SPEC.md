@@ -141,7 +141,7 @@ CREDITS.md
 | Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
 | Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
 | Enemy | `id, name, hp: [min,max], poiseMax, moves{}, firstMove?, phases?[]` |
-| Encounter | `id, enemies[], weight, minFloor?, pool: normal \| elite \| boss` |
+| Encounter | `id, enemies[], weight, minFloor?, pool: normal \| elite \| boss, act? (default 1)` |
 | Event | `id, name, art, text, choices[]` (each choice: `label, requires?, effects, resultText`) |
 | Flask | `id, rarity, targeted?, effects[]` |
 | Class | `id, name, maxHp, startingRelic, startingDeck[], cardPool[]` |
@@ -209,7 +209,7 @@ phases: [{ on: 'hpBelowPct', pct: 50, once: true,
 
 Trigger fields: `on` (event name from §3.10, plus `hpBelowPct`), `if?` (predicate), `do` (effects, §3.4), `once?`, `limitPerTurn?`.
 
-Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), `{ p: 'eventIsAttack' }` / `{ p: 'eventSourceIsOwner' }` / `{ p: 'eventStatusIs', status }` (gate a trigger on its firing event's payload — e.g. a stance that reacts only to the owner's own attack hits, or a relic reacting to Bleed meter fills), and `all / any / not` combinators.
+Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), `{ p: 'eventIsAttack' }` / `{ p: 'eventSourceIsOwner' }` / `{ p: 'eventTargetIsOwner' }` / `{ p: 'eventStatusIs', status }` (gate a trigger on its firing event's payload — e.g. a stance that reacts only to the owner's own attack hits, or a relic reacting to Bleed meter fills), and `all / any / not` combinators.
 
 ### 3.7 Status model — statuses are content, not code
 

@@ -17,16 +17,17 @@ import { passiveMult, passiveFlag } from '../model/registries.js';
 // ---------------------------------------------------------------------------
 
 /**
- * rollEncounter(registries, rng, { pool, exclude }) → encounter id.
- * Weighted pick from the pool; `exclude` is the no-repeat window (pass the
- * last 1–2 fought encounter ids).
+ * rollEncounter(registries, rng, { pool, act, exclude }) → encounter id.
+ * Weighted pick from the act's pool; `exclude` is the no-repeat window
+ * (pass the last 1–2 fought encounter ids). Encounters default to act 1.
  */
-export function rollEncounter(registries, rng, { pool, exclude = [] } = {}) {
-  let candidates = registries.encounters.all().filter((e) => e.pool === pool && !exclude.includes(e.id));
+export function rollEncounter(registries, rng, { pool, act = 1, exclude = [] } = {}) {
+  const inActPool = (e) => e.pool === pool && (e.act || 1) === act;
+  let candidates = registries.encounters.all().filter((e) => inActPool(e) && !exclude.includes(e.id));
   if (candidates.length === 0) {
-    candidates = registries.encounters.all().filter((e) => e.pool === pool);
+    candidates = registries.encounters.all().filter(inActPool);
   }
-  if (candidates.length === 0) throw new Error(`No encounters in pool '${pool}'`);
+  if (candidates.length === 0) throw new Error(`No encounters in pool '${pool}' for act ${act}`);
   const total = candidates.reduce((a, e) => a + e.weight, 0);
   let r = rng.float('enemyAI') * total;
   for (const e of candidates) {

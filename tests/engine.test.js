@@ -13,7 +13,7 @@ import {
 } from '../src/model/validate.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
-import { computeAttackDamage } from '../src/engine/actions.js';
+import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY } from '../src/engine/save.js';
@@ -56,6 +56,7 @@ const TEST_ENEMIES = [
   { id: 'tDummy', name: 'T Dummy', hp: [30, 30], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tGiant', name: 'T Giant', hp: [400, 400], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tHitter', name: 'T Hitter', hp: [50, 50], poiseMax: 99, moves: { hit: { intent: 'attack', damage: 10, weight: 1 } } },
+  { id: 'tRegen', name: 'T Regen', hp: [50, 50], poiseMax: 99, moves: { regen: { intent: 'buff', weight: 1, effects: [{ op: 'heal', target: 'self', amount: 4 }] } } },
   { id: 'tAi', name: 'T AI', hp: [999, 999], poiseMax: 999, moves: { a: { intent: 'unknown', weight: 9999, maxConsecutive: 1 }, b: { intent: 'unknown', weight: 1 } } },
   {
     id: 'tDelayer', name: 'T Delayer', hp: [60, 60], poiseMax: 5, firstMove: 'held',
@@ -641,6 +642,132 @@ export async function runTests() {
     eq(rn.flasks[0].flaskId, 'crimsonFlask', "Traveler's Flask grants a Crimson Flask");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
     assert(rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'Whetstone Memory upgrades a Strike');
+  });
+
+  // ---- 20. M3 phase 1: Astrologer + Prophet class mechanics ---------------------------------
+  test('20. Glintstone combos, Glintstone Shard, blood economy, Gold Figurine — all pure data', () => {
+    eq(REG.classes.size, 3, 'three playable classes registered');
+
+    // Glintstone: 1st spell plain, 2nd spell empowered, charge fades at turn end.
+    const a = makeCombat({ deck: Array(5).fill('glintstonePebble'), enemies: ['tGiant'] });
+    playFromHand(a, 'glintstonePebble');
+    let hits = logOf(a, 'damageDealt').map((e) => e.amount);
+    eq(hits.join(','), '6', 'first spell: no bonus');
+    playFromHand(a, 'glintstonePebble');
+    hits = logOf(a, 'damageDealt').map((e) => e.amount);
+    eq(hits.join(','), '6,6,3', 'second spell: Glintstone bonus fired');
+    dispatch(a, { type: 'endTurn' });
+    eq(S.getStacks(a.player, 'glintstoneCharge'), 0, 'charge fades at turn end');
+    playFromHand(a, 'glintstonePebble');
+    eq(logOf(a, 'damageDealt').map((e) => e.amount).join(','), '6,6,3,6', 'new turn: no bonus again');
+
+    // Glintstone Shard: combat starts pre-charged → the FIRST spell combos.
+    const s = makeCombat({ deck: Array(5).fill('glintstonePebble'), enemies: ['tGiant'], relicIds: ['glintstoneShard'] });
+    playFromHand(s, 'glintstonePebble');
+    eq(logOf(s, 'damageDealt').map((e) => e.amount).join(','), '6,3', 'Shard pre-charges the opener');
+
+    // Prophet blood economy: Blood Pact pays HP for energy + draw.
+    const p = makeCombat({ deck: ['bloodPact', 'strike', 'strike', 'strike', 'strike', 'strike'] });
+    const hpBefore = p.player.hp;
+    const handBefore = p.piles.hand.length;
+    playFromHand(p, 'bloodPact');
+    eq(p.player.hp, hpBefore - 2, 'paid 2 HP (ignores block)');
+    eq(p.player.energy, 4, '0-cost + gain 1 → energy 4');
+    eq(p.piles.hand.length, handBefore, 'drew 1 (played 1, drew 1)');
+
+    // Gold Figurine: your heals armor you (even at full HP); enemy heals do not.
+    const g = makeCombat({ deck: ['urgentHeal', 'strike', 'strike', 'strike', 'strike'], relicIds: ['goldFigurine'], enemies: ['tRegen'] });
+    playFromHand(g, 'urgentHeal'); // at full HP → 0 healed, still armors
+    eq(g.player.block, 2, 'overheal converted to Block');
+    dispatch(g, { type: 'endTurn' }); // tRegen heals itself
+    assert(logOf(g, 'healed').some((e) => e.targetId === 'e1'), 'enemy healed itself');
+    eq(g.player.block, 0, "enemy heals did NOT trigger the Figurine (eventTargetIsOwner)");
+
+    // A bot finishes an elite fight with each new class's starting deck.
+    for (const classId of ['astrologer', 'prophet']) {
+      const cls = REG.classes.get(classId);
+      const deck = cls.startingDeck.map((id, i) => ({ instanceId: `b${i}`, cardId: id, upgraded: false }));
+      const c = createCombat({
+        registries: REG,
+        rng: createRng(0xabc0 + classId.length),
+        player: { classId, maxHp: cls.maxHp, hp: cls.maxHp, deck, relicIds: [cls.startingRelic] },
+        enemyIds: ['crucibleAspirant'],
+      });
+      let guard = 0;
+      while (!c.result) {
+        if (++guard > 2000) throw new Error(`${classId} bot did not finish`);
+        const target = c.enemies.find((e) => e.alive);
+        const playable = c.piles.hand.find((inst) => {
+          const def = resolveCard(REG, inst);
+          if ((def.keywords || []).includes('unplayable')) return false;
+          return c.player.energy >= (def.cost === 'X' ? 0 : def.cost);
+        });
+        if (playable && target) dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
+        else dispatch(c, { type: 'endTurn' });
+      }
+      assert(c.result === 'victory' || c.result === 'defeat', `${classId} elite fight concluded (${c.result})`);
+    }
+  });
+
+  // ---- 21. M3 phase 2: Acts II–III mechanics ------------------------------------------------
+  test('21. act-scoped encounters; Rot Valkyrie heal-on-hit; player-side Bleed; Grafted King phase', () => {
+    // Encounter rolls are act-scoped.
+    for (let i = 0; i < 20; i++) {
+      const r = createRng(i * 7919);
+      assert(rollEncounter(REG, r, { pool: 'normal', act: 2 }).startsWith('a2_'), 'act 2 pool only');
+      assert(rollEncounter(REG, r, { pool: 'normal', act: 3 }).startsWith('a3_'), 'act 3 pool only');
+      assert(!rollEncounter(REG, r, { pool: 'normal', act: 1 }).startsWith('a2_'), 'act 1 pool untouched');
+    }
+    eq(rollEncounter(REG, createRng(1), { pool: 'boss', act: 3 }), 'a3_bossRotValkyrie', 'act 3 boss');
+
+    // Rot Valkyrie: heals 3 whenever SHE lands a hit (persistent phase trigger);
+    // her thrust also Bleeds the PLAYER (entity-agnostic status model).
+    const v = makeCombat({ deck: Array(5).fill('defend'), enemies: ['rotValkyrie'] });
+    const e1 = getEntity(v, 'e1');
+    applyLoseHp(v, e1, 30); // give her something to heal back
+    dispatch(v, { type: 'endTurn' }); // firstMove spiralThrust: 14 dmg + 2 player Bleed
+    const heals = logOf(v, 'healed').filter((e) => e.targetId === 'e1');
+    assert(heals.length >= 1 && heals[0].amount === 3, 'healed 3 off her own hit');
+    eq(S.getStacks(v.player, 'bleed'), 2, 'her blade Bleeds the player');
+
+    // Player-side Bleed meter bursts exactly like an enemy's (SPEC §10 seam).
+    S.applyStatus(v, v.player, 'bleed', 10); // 2 + 10 = 12 → fill (effects enqueued)
+    dispatch(v, { type: 'endTurn' }); // drains the queue
+    const burst = logOf(v, 'hpLost').filter((e) => e.targetId === 'player' && e.cause === 'effect').pop();
+    assert(burst, 'player bleed burst');
+    eq(burst.amount, Math.floor((78 * 15) / 100), 'burst = 15% of player max HP (11)');
+
+    // Grafted King: ≤50% HP grafts new limbs — unlocks thousandHands, buffs, Frails you.
+    const k = makeCombat({ deck: Array(5).fill('defend'), enemies: ['graftedKing'] });
+    const king = getEntity(k, 'e1');
+    applyLoseHp(k, king, 115); // 220 → 105 (<50%): checkPhases fires in afterHpChange
+    dispatch(k, { type: 'endTurn' }); // drain phase effects
+    assert(king.unlockedMoves.includes('thousandHands'), 'phase 2 move unlocked');
+    assert(S.getStacks(king, 'strength') >= 2, 'phase buffed his Strength');
+    assert(S.getStacks(k.player, 'frail') >= 1 || logOf(k, 'statusApplied').some((e) => e.status === 'frail'), 'player Frailed by the phase');
+
+    // Full-fight bot: an upgraded Vagabond deck concludes the final boss fight.
+    const cls = REG.classes.get('vagabond');
+    const deck = [...cls.startingDeck, 'stomp', 'executioner', 'crimsonCleave'].map((id, i) => ({ instanceId: `f${i}`, cardId: id, upgraded: true }));
+    const f = createCombat({
+      registries: REG,
+      rng: createRng(0xf17e),
+      player: { classId: 'vagabond', maxHp: 78, hp: 78, deck, relicIds: ['tarnishedMedallion'] },
+      enemyIds: ['rotValkyrie'],
+    });
+    let guard = 0;
+    while (!f.result) {
+      if (++guard > 3000) throw new Error('final boss bot did not finish');
+      const target = f.enemies.find((e) => e.alive);
+      const playable = f.piles.hand.find((inst) => {
+        const def = resolveCard(REG, inst);
+        if ((def.keywords || []).includes('unplayable')) return false;
+        return f.player.energy >= (def.cost === 'X' ? 0 : def.cost);
+      });
+      if (playable && target) dispatch(f, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
+      else dispatch(f, { type: 'endTurn' });
+    }
+    assert(f.result === 'victory' || f.result === 'defeat', `final boss fight concluded (${f.result})`);
   });
 
   const passed = results.filter((r) => r.ok).length;
