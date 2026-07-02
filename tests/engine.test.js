@@ -197,6 +197,15 @@ export async function runTests() {
     eq(x.player.energy, 0, 'X-cost consumed all energy');
     eq(logOf(x, 'damageDealt').filter((e) => e.sourceId === 'player').length, 3, '3 energy → 3 hits');
 
+    // X = 0 whiffs entirely (StS): playable, but zero hits.
+    const x0 = makeCombat({ deck: ['graftedArms', 'defend', 'defend', 'defend', 'strike'] });
+    playFromHand(x0, 'defend');
+    playFromHand(x0, 'defend');
+    playFromHand(x0, 'defend');
+    eq(x0.player.energy, 0, 'energy spent on defends');
+    playFromHand(x0, 'graftedArms');
+    eq(logOf(x0, 'damageDealt').filter((e) => e.sourceId === 'player').length, 0, 'X=0 → 0 hits');
+
     const up = resolveCard(REG, { cardId: 'kickOff', upgraded: true });
     assert(!up.keywords.includes('exhaust'), 'Kick Off+ upgrade removed Exhaust');
     eq(resolveCard(REG, { cardId: 'hemorrhage', upgraded: true }).keywords.length, 0, 'Hemorrhage+ removed Exhaust');
@@ -279,6 +288,17 @@ export async function runTests() {
     eq(S.getStacks(e1, 'staggered'), 1, 'staggered decayed at enemy turn end');
     playFromHand(c, 'strike');
     eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 9, 'window still open on player\'s next turn');
+  });
+
+  // ---- 10b. Same-stance re-entry is a no-op (StS) -------------------------------
+  test('10b. re-entering the current stance is a no-op (no onEnter re-trigger)', () => {
+    const c = makeCombat({ deck: ['enterBloodflame', 'enterBloodflame', 'strike', 'strike', 'strike'] });
+    playFromHand(c, 'enterBloodflame');
+    eq(c.player.hp, 76, 'first entry costs 2 HP');
+    playFromHand(c, 'enterBloodflame');
+    eq(c.player.hp, 76, 'second entry did NOT re-trigger the 2 HP onEnter');
+    eq(logOf(c, 'stanceEntered').length, 1, 'only one stanceEntered event');
+    eq(c.player.stanceId, 'bloodflame', 'still in the stance');
   });
 
   // ---- 10. Stances -------------------------------------------------------------

@@ -305,7 +305,8 @@ function runOpcode(ctx, action, eff) {
 
   switch (eff.op) {
     case 'damage': {
-      const hits = Math.max(1, evalNum(ctx, action, eff.hits, 1));
+      // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
+      const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
       for (let h = 0; h < hits; h++) {
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
@@ -406,6 +407,7 @@ function runOpcode(ctx, action, eff) {
     case 'enterStance': {
       const stanceId = eff.stance;
       const def = ctx.registries.stances.get(stanceId);
+      if (ctx.player.stanceId === stanceId) break; // already in it: no-op (StS)
       if (ctx.player.stanceId) {
         ctx.emit('stanceExited', { stance: ctx.player.stanceId });
       }

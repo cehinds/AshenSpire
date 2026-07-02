@@ -249,7 +249,7 @@ enemy-sourced effect it resolves to the player.
 | `loseHp` | `amount` | direct HP loss — ignores all attack modifiers **and block** → `hpLost` |
 | `heal` | `amount` | capped at maxHp → `healed` (amount = actual gained) |
 | `shuffleDiscardIntoDraw` | — | → `deckShuffled` |
-| `enterStance` | `stance` | exits previous → `stanceExited`, `stanceEntered`, then enqueues the stance's `onEnter` effects |
+| `enterStance` | `stance` | no-op if already in that stance (StS); else exits previous → `stanceExited`, `stanceEntered`, then enqueues the stance's `onEnter` effects |
 | `poiseDamage` | `amount` | feeds the enemy's poise meter; on fill: skip flag set, pending delayed move cancelled, `meterFilled(meter:'poise')` + `enemyStaggered` emitted, `balance.poise.onFill` enqueued, `poiseMax ×= growthMult` (ceil) unless growth disabled |
 
 Run-level opcodes (`addRunes {amount}`, `removeCardFromDeck {card?|random?}`,

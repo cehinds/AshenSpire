@@ -38,7 +38,14 @@ function randomSeedString() {
 }
 
 function startRun(classId, seedString) {
-  const seed = seedFromString(seedString || randomSeedString());
+  let seed;
+  try {
+    seed = seedFromString(seedString || randomSeedString());
+  } catch (e) {
+    // Invalid seed characters: fall back to a fresh random seed rather than
+    // crashing the start button. The real seed shows in the combat header.
+    seed = seedFromString(randomSeedString());
+  }
   const cls = registries.classes.get(classId);
   game = {
     classId,

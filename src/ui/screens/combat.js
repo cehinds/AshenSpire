@@ -280,6 +280,7 @@ export function mountCombat(app, { registries, game, combat, fightIndex, fightCo
   function wireCardInput(el, inst, pv, affordable) {
     let dragGhost = null;
     let dragging = false;
+    let suppressClick = false; // a finished drag must not double-fire as a click
     let startX = 0;
     let startY = 0;
 
@@ -306,6 +307,7 @@ export function mountCombat(app, { registries, game, combat, fightIndex, fightCo
         if (dragGhost) dragGhost.remove();
         if (!dragging) return; // plain click handled by 'click'
         dragging = false;
+        suppressClick = true; // whatever happens next, this drag is not a click
         const under = document.elementFromPoint(up.clientX, up.clientY);
         const enemyBox = under && under.closest ? under.closest('.enemy:not(.dead)') : null;
         if (pv.needsTarget) {
@@ -319,6 +321,10 @@ export function mountCombat(app, { registries, game, combat, fightIndex, fightCo
     });
 
     el.addEventListener('click', () => {
+      if (suppressClick) {
+        suppressClick = false;
+        return;
+      }
       if (busy || !affordable || dragging) return;
       if (pv.needsTarget) {
         selected = selected === inst.instanceId ? null : inst.instanceId;
