@@ -210,7 +210,31 @@ export const relics = [
     textTemplate: 'Power cards cost 1 less.',
   },
 
-  // ---- boss ------------------------------------------------------------------
+  // ---- boss (one per act boss — a Faustian trade each, GDD §5) ----------------
+  {
+    id: 'crownOfGrafting',
+    name: 'Crown of Grafting',
+    rarity: 'boss',
+    icon: '👑',
+    triggers: [
+      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'strength', stacks: 2 }] },
+      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'frail', stacks: 1 }] },
+    ],
+    textTemplate: 'Begin each combat with {strength} Strength — and {frail} Frail. New limbs are heavy.',
+    flavor: 'It fits. That is the worst part.',
+  },
+  {
+    id: 'omenHorn',
+    name: 'Omen Horn',
+    rarity: 'boss',
+    icon: '📯',
+    triggers: [
+      { on: 'playerTurnStart', do: [{ op: 'draw', amount: 1 }] },
+      { on: 'combatStart', do: [{ op: 'loseHp', target: 'owner', amount: 2 }] },
+    ],
+    textTemplate: 'Draw {draw} extra card each turn. At the start of each combat, lose {loseHp} HP.',
+    flavor: 'It sounds without being blown. Something is answering.',
+  },
   {
     id: 'ashOfRemembrance',
     name: 'Ash of Remembrance',

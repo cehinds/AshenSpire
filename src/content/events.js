@@ -73,6 +73,90 @@ export const events = [
     ],
   },
   {
+    id: 'bloodstainedAltar',
+    name: 'Bloodstained Altar',
+    art: '🩸',
+    text:
+      'An altar of dark stone, its channels worn smooth by use. The instructions are carved plainly: ' +
+      'the stone sharpens what is given to it, and it keeps a portion.',
+    choices: [
+      {
+        label: 'Offer your blood (upgrade 2 random cards, lose 8% max HP)',
+        effects: [
+          { op: 'upgradeCard', random: true },
+          { op: 'upgradeCard', random: true },
+          { op: 'loseMaxHpPct', pct: 8 },
+        ],
+        resultText: 'The channels drink. Two of your cards come back keener than any smith could make them.',
+      },
+      { label: 'Leave', effects: [], resultText: 'The altar does not care. It has waited longer than you.' },
+    ],
+  },
+  {
+    id: 'wanderingPhysician',
+    name: 'Wandering Physician',
+    art: '🩺',
+    text:
+      'A physician in a rain-rotted coat unrolls his instruments without being asked. ' +
+      '"I can cut something out of you," he says. "The procedure is not painless. Or I can simply patch you."',
+    choices: [
+      {
+        label: 'The procedure (remove a random card, take 4 damage)',
+        effects: [
+          { op: 'removeCardFromDeck', random: true },
+          { op: 'damage', target: 'self', amount: 4 },
+        ],
+        resultText: 'He holds something up to the light, nods, and does not let you see it.',
+      },
+      {
+        label: 'The patch (heal 15% max HP)',
+        effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 15 } }],
+        resultText: 'Competent, quick, and strangely cold. He refuses payment.',
+      },
+      { label: 'Leave', effects: [], resultText: '"Suit yourself. The spire will finish what I would have started."' },
+    ],
+  },
+  {
+    id: 'goldenMoth',
+    name: 'Golden Moth',
+    art: '🦋',
+    text:
+      'A moth the size of a shield rests on a broken pillar, wings dusted with rune-light. ' +
+      'It is dying, slowly and without complaint. Runes drip from its wings like pollen.',
+    choices: [
+      {
+        label: 'Gather the falling runes (gain 40 runes)',
+        effects: [{ op: 'addRunes', amount: 40 }],
+        resultText: 'The runes come away easily. The moth watches you with something like approval.',
+      },
+      {
+        label: 'Sit with it a while (heal 10% max HP)',
+        effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 10 } }],
+        resultText: 'You keep the vigil. When you rise, some of its lightness has passed to you.',
+      },
+      { label: 'Leave', effects: [], resultText: 'Some deaths are not yours to attend.' },
+    ],
+  },
+  {
+    id: 'feralShrine',
+    name: 'Shrine of the Feral Grace',
+    art: '🐾',
+    text:
+      'A shrine no church would recognize: antlers, wax, and old blood. Grace pools here anyway — ' +
+      'wild, unattended, and guarded by something that has not left claw marks this fresh by accident.',
+    choices: [
+      {
+        label: 'Take the offering (gain a random relic — its keeper objects)',
+        effects: [
+          { op: 'addRelic', random: true },
+          { op: 'startCombat', encounterId: 'eliteCrucible' },
+        ],
+        resultText: 'Your hand closes on the relic. Behind you, the undergrowth stands up.',
+      },
+      { label: 'Leave', effects: [], resultText: 'Wild grace keeps its own accounts. You leave the ledger closed.' },
+    ],
+  },
+  {
     id: 'ancientRuneStone',
     name: 'Ancient Rune Stone',
     art: '🗿',
