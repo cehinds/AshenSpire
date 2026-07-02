@@ -40,18 +40,23 @@ Implement these rules exactly as StS does; do not simplify them away:
 - **Bosses with mechanics that echo their inspiration** (original names): a Margit-like boss with delayed-attack intents that swap timing; a Godrick-like boss with a phase 2 that adds a new attack pattern at 50% HP; a Malenia-like final boss that heals when she hits you.
 - **Shrine of Grace = rest site.** **Merchant = wandering trader with dialogue flavor.** Unknown nodes roll Elden Ring–flavored events (e.g., "Erdtree Avatar offers a blessing…" choose-one events with real trade-offs).
 
-## Architecture requirements
+## Architecture requirements — data- and model-driven, procedural where it counts
 
 - **Vanilla JS (ES modules), HTML, CSS. No framework, no bundler.** Target modern evergreen browsers.
-- **Strict engine/UI separation:**
-  - `src/engine/` — pure game logic. State in, state out. Zero DOM access. A combat can run headless (this is what makes it testable).
-  - `src/ui/` — rendering + input only. Subscribes to engine events, dispatches player actions.
-  - `src/content/` — **all cards, relics, enemies, events, and map config as plain data objects** (JSON-like modules). Adding a card must require touching only one file in `content/`, using a small effect-DSL (e.g. `{ damage: 6, applyToTarget: { weak: 1 } }`) interpreted by the engine — no per-card imperative code for the common 90%.
-  - `src/engine/rng.js` — seeded PRNG (e.g. mulberry32) with named streams.
-- **Event-driven combat resolution:** a single action queue (like StS's GameActionManager) so relic/power triggers ("when you draw a Status…", "at the start of turn…") hook cleanly via events, not scattered if-statements.
-- **Save/continue:** serialize full run state to `localStorage` after every choice; offer Continue on the title screen. Abandoning mid-combat restarts that combat (StS behavior).
-- **A `DEVELOPER.md`** documenting: state shape, the effect DSL, how to add a card / relic / enemy / event in under 10 lines each, and the event names the engine emits.
-- **Basic tests:** a headless test page or simple assertion runner covering damage math, Weak/Vulnerable ordering, block expiry, exhaust, and deck reshuffle. No test framework dependency required.
+- **Four layers, dependencies pointing downward only:**
+  - `src/content/` — **pure data packs**: every card, relic, status, stance, enemy, encounter table, event, flask, class, map config, and *every balance constant*. No logic.
+  - `src/model/` — schemas for every entity type, typed id→definition registries, a structured formula evaluator, state factories, and content validation.
+  - `src/engine/` — **generic interpreters** (action queue, trigger wiring, status-model interpreter) plus the **seeded procedural generators** (map, encounters, rewards, enemy AI). Zero DOM access; a combat runs headless.
+  - `src/ui/` — rendering + input only. Renders from model state, dispatches a closed set of player intents.
+- **Schema-first.** All content is validated against schemas at boot (dev mode) and in tests: unknown fields, bad enums, and dangling id references fail loudly.
+- **The engine contains no entity-specific code.** No `if (status === 'bleed')` anywhere. The engine implements a closed set of primitives — effect opcodes, structured formula ops (JSON objects, not parsed strings), trigger events, predicates, and a generic status model (stack modes, meters, timers, stat modifiers) — and all game behavior is data composing those primitives. Adding a card, relic, **or even a new status effect** means adding data, not engine code.
+- **Procedural content stays procedural.** Map generation, encounter rolls, reward rolls, and enemy move selection remain seeded algorithms — but every knob they consume (type weights, floor constraints, encounter pools, rarity odds, prices) lives in content data. Generators are pure functions of `(config, rngStream, runState)` so they're snapshot-testable.
+- **Event-driven combat resolution:** a single action queue (like StS's GameActionManager); relics, powers, statuses, and boss phases all hook in through one declarative trigger form (`{on, if, do}`), never scattered if-statements.
+- **Card text is templated** (`"Deal {damage}."`) with tokens bound to effect values computed by the same formula evaluator the engine executes — displayed numbers cannot drift from actual math.
+- **A budgeted escape hatch:** a `scripts.js` registry for the rare behavior the DSL can't express (<5% of content, each entry justified in a comment). If a script pattern appears twice, promote it to a DSL primitive.
+- **Save/continue:** serialize run state (ids + instance data only, never definitions) to `localStorage` after every choice, with schema and content versioning; offer Continue on the title screen. Abandoning mid-combat restarts that combat (StS behavior).
+- **A `DEVELOPER.md`** documenting: the layer rules, state shape, every opcode/formula op/event/predicate, and how to add a card / relic / status / enemy / event in under 10 lines each.
+- **Basic tests:** a headless assertion page covering damage math and ordering, block expiry, exhaust, reshuffle, the status model, content validation (every object passes its schema, every id resolves), and text-token binding. No test framework dependency.
 
 ## UX requirements — fun and easy to play
 

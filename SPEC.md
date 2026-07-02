@@ -37,9 +37,30 @@ These override everything else in the spec.
 
 ---
 
-## 3. Architecture
+## 3. Architecture — data- and model-driven, procedural where it counts
 
-### 3.1 File tree
+### 3.1 Layers and design laws
+
+Four layers; dependencies point downward only:
+
+```
+┌─ UI        (src/ui)      renders model state; dispatches player intents
+├─ Systems   (src/engine)  generic interpreters (action queue, triggers,
+│                          status model) + seeded PROCEDURAL GENERATORS
+├─ Model     (src/model)   schemas, registries, formulas, state, validation
+└─ Content   (src/content) pure data packs — all game content and tuning
+```
+
+Design laws (contractual):
+
+1. **Schema-first.** Every entity type has a schema in `model/schemas.js`. All content is validated at boot (dev mode) and in tests — unknown fields, bad enums, and dangling id references fail loudly (§3.14).
+2. **The engine contains no entity-specific code.** There is no `if (status === 'bleed')` anywhere. The engine implements a closed set of primitives — effect opcodes (§3.4), formula ops (§3.5), trigger events + predicates (§3.6), and a generic status model (§3.7) — and *all* game behavior is content data composing those primitives. Adding a card, relic, status, stance, enemy, or event = adding data.
+3. **Procedural content stays procedural.** Map generation, encounter rolls, reward rolls, and enemy move selection are seeded algorithms (§3.8) — but every knob they consume lives in content data, never as code constants.
+4. **All tuning is data.** `content/balance.js` holds every global constant (energy 3, draw 5, hand 10, reward odds, rune ranges, prices, flask drop decay). A balance change is a one-file data diff.
+5. **Headless engine.** Nothing under `src/engine/` or `src/model/` references `document`, `window`, `localStorage`, or timers. A combat runs to completion from `tests/index.html` with no UI imports.
+6. **Budgeted escape hatch.** `content/scripts.js` is a registry of named custom behaviors for what the DSL can't express. Target <5% of content; every entry carries a comment justifying why the DSL couldn't do it. A script pattern appearing twice gets promoted to a DSL primitive (engine PR).
+
+### 3.2 File tree
 
 ```
 index.html              boot + <main id="app">, loads src/main.js as module
@@ -49,31 +70,43 @@ styles/
   map.css               map screen
   ui.css                tooltips, buttons, modals, piles
 src/
-  main.js               boot: load save, mount screen router
+  main.js               boot: validate content (dev), load save, mount router
+  model/
+    schemas.js          entity schemas for every content type
+    registries.js       typed id → definition registries, frozen at load
+    formulas.js         structured formula evaluator (§3.5)
+    validate.js         content validation (boot in dev mode, and from tests)
+    state.js            run/combat state factories + (de)serialization
   engine/
-    state.js            createRunState/createCombatState factories + (de)serialization
-    combat.js           combat reducer: action queue, turn loop
-    actions.js          action definitions (DamageAction, DrawAction, ...)
-    effects.js          effect-DSL interpreter (data → queued actions)
-    triggers.js         event bus + trigger registration (relics, powers, statuses)
-    statuses.js         status/buff registry and stacking rules
-    map.js              act map generation
-    rewards.js          card/relic/rune/flask reward rolls
-    rng.js              mulberry32 + named streams
-    save.js             localStorage save/load, schema versioning
+    combat.js           action queue + turn loop (generic interpreter)
+    actions.js          opcode implementations (§3.4)
+    triggers.js         event bus + declarative trigger wiring (§3.6)
+    statuses.js         status-model interpreter: meters, decay, modifiers (§3.7)
+    mapgen.js           procedural act-map generator (§3.8, §6)
+    encounters.js       encounter + reward rolls (§3.8)
+    rng.js              mulberry32 + named streams (§3.11)
+    save.js             localStorage, schema + content versioning (§3.12)
   content/
-    cards/vagabond.js   card defs (data objects)
+    balance.js          every global tuning constant
+    classes.js          class defs: starting deck, relic, HP, card pool ids
+    cards/vagabond.js   card defs (pure data)
     cards/astrologer.js
     cards/prophet.js
-    cards/colorless.js  colorless + curses + statuses
-    enemies/act1.js     enemy defs incl. move-pattern state machines
+    cards/colorless.js  colorless + curses + statuses (the card kind)
+    statuses.js         ALL combat statuses as data — incl. Bleed/Rot/Poise
+    stances.js          stance defs (same trigger/modifier shapes)
+    keywords.js         keyword names + tooltip text (semantics: §3.7 note)
+    enemies/act1.js     enemy defs incl. move tables and phase triggers
     enemies/act2.js
     enemies/act3.js
+    encounters/act1.js  weighted encounter pools, elite + boss lists
+    encounters/act2.js
+    encounters/act3.js
     relics.js
     flasks.js
     events.js
-    classes.js          class defs: starting deck, relic, HP
-    mapconfig.js        per-act map tuning constants
+    mapconfig.js        per-act map-generation knobs
+    scripts.js          budgeted escape-hatch behaviors (<5% of content)
   ui/
     screens/title.js    title / continue / class select
     screens/map.js
@@ -91,45 +124,151 @@ src/
     fx.js               floating numbers, shake, flash (≤300 ms, skippable)
 tests/
   index.html            headless test runner page
-  engine.test.js        assertions against pure engine
+  engine.test.js        assertions against model + engine
 DEVELOPER.md
 CREDITS.md
 ```
 
-### 3.2 Engine/UI contract
+### 3.3 Domain model, registries, and state
 
-- `src/engine/**` never touches `document`, `window`, `localStorage`, or timers. All engine functions are `(state, input) → state + emitted events`. Combat must be runnable headless in the test page.
-- The UI holds the single mutable `runState`, calls engine functions, and re-renders from state + animates from the emitted event list.
-- **Player inputs are a closed set** (everything the UI may ask the engine to do):
-  `playCard(cardInstanceId, targetId?)`, `endTurn()`, `useFlask(slot, targetId?)`, `discardFlask(slot)`, `chooseMapNode(nodeId)`, `chooseReward(choice)`, `restAction('rest'|'smith', cardId?)`, `shopAction(...)`, `eventChoice(index)`, `abandonRun()`.
+**Entity types** (each with a schema in `schemas.js`):
 
-### 3.3 Action queue
+| Entity | Key fields |
+|---|---|
+| Card | `id, class, rarity, cost (int \| 'X'), type, keywords[], effects[], textTemplate, upgrade` (partial override object) |
+| Relic | `id, rarity, textTemplate, triggers[]` |
+| Status | `id, name, icon, stackMode, decay, meter?, modifiers?, hooks?` (§3.7) |
+| Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
+| Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
+| Enemy | `id, name, hp: [min,max], poiseMax, moves{}, firstMove?, phases?[]` |
+| Encounter | `id, enemies[], weight, minFloor?, pool: normal \| elite \| boss` |
+| Event | `id, name, art, text, choices[]` (each choice: `label, requires?, effects, resultText`) |
+| Flask | `id, rarity, targeted?, effects[]` |
+| Class | `id, name, maxHp, startingRelic, startingDeck[], cardPool[]` |
+| MapConfig | per-act: `floors, columns, pathCount, typeWeights, floorRules` |
+| Balance | flat constants object (energy, draw, handMax, odds tables, prices…) |
 
-Combat resolves through a FIFO **action queue** (mirrors StS's GameActionManager). Playing a card enqueues its effects as actions; each action, when executed, may emit events; event triggers (relics, powers, statuses) may enqueue further actions. The queue drains fully before control returns to the UI.
+- `registries.js` loads all content into typed, deep-frozen registries keyed by id. **Cross-references are by id only**; registry getters throw on unknown ids (caught by validation before runtime).
+- **Definitions vs instances:** state (`model/state.js`) stores instance data referencing definitions by id — a deck card is `{ instanceId, cardId, upgraded }`, an enemy is `{ instanceId, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }`. Saves serialize instances + RNG counters only, **never definitions** — saves stay small and content patches apply to loaded runs (guarded by `contentVersion`, §3.12).
+- **Player intents are a closed set** (everything the UI may ask the engine to do): `playCard(cardInstanceId, targetId?)`, `endTurn()`, `useFlask(slot, targetId?)`, `discardFlask(slot)`, `chooseMapNode(nodeId)`, `chooseReward(choice)`, `restAction('rest'|'smith', cardId?)`, `shopAction(...)`, `eventChoice(index)`, `abandonRun()`.
 
-Core action types (module `actions.js`):
+### 3.4 Effect DSL (opcodes)
+
+An effect is an array of opcode objects; playing a card, triggering a relic, or resolving an event choice enqueues them onto the action queue (§3.9).
+
+```js
+// Bloodflame Slash: "Deal 5 damage. Apply 3 Bleed."
+effects: [
+  { op: 'damage',      target: 'enemy', amount: 5 },
+  { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 },
+]
+
+// Last Stand: "Gain Block equal to missing HP (max 20)."
+effects: [
+  { op: 'block', target: 'self',
+    amount: { f: 'missingHp', of: 'self', max: 20 } },
+]
+```
+
+**Opcode list** (closed set; extending it is an engine PR):
+
+- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`.
+- Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `loseMaxHpPct`, `startCombat {encounterId}`.
+
+Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
+
+### 3.5 Formulas — structured objects, not strings
+
+Every dynamic number is a JSON formula object evaluated by `model/formulas.js`. No string parsing — formulas are validatable data:
+
+```js
+{ f: 'percentMaxHp', of: 'owner', pct: 15, min: 8, max: 35 }   // Bleed burst
+{ f: 'missingHp', of: 'self', max: 20 }                        // Last Stand
+{ f: 'stacks', status: 'bleed', of: 'allEnemies', per: 4 }     // War Surgeon
+{ f: 'energySpent', per: 6 }                                   // X-cost scaling
+{ f: 'add', args: [ 3, { f: 'stacks', status: 'strength', of: 'self' } ] }
+```
+
+Op set (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `missingHp {of, max?}`, `stacks {status, of, per?}`, `energySpent {per}`, `blockOf {of}`, `hpOf {of}`, `cardsPlayedThisTurn {per}`. Every evaluation floors its final result (StS integer math). The **same evaluator** computes card-preview numbers for the UI (§3.13, §4.2).
+
+### 3.6 Trigger DSL and predicates
+
+Relics, powers, statuses, stances, and enemy boss phases all hook the engine through one declarative form, wired by `triggers.js` at combat start:
+
+```js
+// Fell Omen Brand: "Whenever an enemy Staggers, draw 2."
+triggers: [{ on: 'enemyStaggered', do: [{ op: 'draw', amount: 2 }] }]
+
+// Watchful Omen, phase 2 at 50% HP (defined on the enemy):
+phases: [{ on: 'hpBelowPct', pct: 50, once: true,
+  do: [ { op: 'applyStatus', target: 'player', status: 'frail', stacks: 1 },
+        { op: 'applyStatus', target: 'player', status: 'weak',  stacks: 1 },
+        { op: 'applyStatus', target: 'self',   status: 'strength', stacks: 2 } ],
+  unlockMoves: ['twinDaggers'] }]
+```
+
+Trigger fields: `on` (event name from §3.10, plus `hpBelowPct`), `if?` (predicate), `do` (effects, §3.4), `once?`, `limitPerTurn?`.
+
+Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), and `all / any / not` combinators.
+
+### 3.7 Status model — statuses are content, not code
+
+`content/statuses.js` defines every status over a generic model interpreted by `engine/statuses.js`. **Adding a status requires no engine change.** Schema:
 
 ```
-Damage        { source, target, base, isAttack, hits }
-Block         { target, amount }
-ApplyStatus   { source, target, statusId, stacks }
-Draw          { who, count }
-Discard       { who, cards | random:n }
-Exhaust       { cards }
-AddCard       { cardId, pile: draw|discard|hand, position: random|top }
-GainEnergy    { amount }
-LoseHP        { target, amount }        // ignores block (for Madness, thorns-like)
-Heal          { target, amount }
-ShuffleDiscardIntoDraw {}
-EnterStance   { stanceId }
-PoiseDamage   { target, amount }
+{ id, name, icon,
+  stackMode: 'add' | 'refresh' | 'unique',
+  decay: 'none' | 'perTurnEnd' | { duration: n } | 'onConsume',
+  meter?: { max: n, growthMult: x, onFill: [effects] },   // build-up statuses
+  modifiers?: { damageDealtMult?, damageTakenMult?, blockGainedMult?,
+                attackDamageAdd?, blockAdd? },             // consulted by §4.2 math
+  hooks?: [triggers §3.6] }                                // ownerTurnStart etc.
 ```
 
-Rule: **nothing mutates HP/block/piles except an executed action.** Triggers react to events; they never mutate directly.
+The Elden Ring layer, fully as data — no engine special cases:
 
-### 3.4 Event bus
+```js
+bleed: {
+  stackMode: 'add', decay: 'none',
+  meter: { max: 12, growthMult: 1.5,
+    onFill: [{ op: 'loseHp', target: 'owner',
+      amount: { f: 'percentMaxHp', of: 'owner', pct: 15, min: 8, max: 35 } }] },
+},
+scarletRot: {
+  stackMode: 'add', decay: { duration: 3 },   // re-apply adds stacks + refreshes
+  hooks: [{ on: 'ownerTurnStart',
+    do: [{ op: 'loseHp', target: 'owner',
+      amount: { f: 'stacks', status: 'scarletRot', of: 'owner' } }] }],
+},
+weak:       { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageDealtMult: 0.75 } },
+vulnerable: { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageTakenMult: 1.5 } },
+frostbite:  { stackMode: 'unique', decay: 'onConsume', /* +30% on next big hit: hook on damaged ≥10 */ },
+```
 
-Events emitted by executed actions (closed list; `DEVELOPER.md` will document payloads):
+Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, `onFill` applies a `staggered` status whose modifiers/hooks implement the skipped turn and +50% window; `growthMult: 1.25`). Stances (`content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
+
+**Engine-primitive exceptions:** card-zone/turn semantics that genuinely can't be data — **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost** — are fixed engine behaviors. `content/keywords.js` supplies only their display names and tooltip text.
+
+### 3.8 Procedural systems — kept procedural, parameterized by data
+
+| Generator | Algorithm (code, in `src/engine/`) | Knobs (data, in `src/content/`) |
+|---|---|---|
+| Act map | StS path-walk + typing constraints (§6), `mapgen.js` | `mapconfig.js`: floors, columns, path count, type weights, per-floor rules |
+| Encounters | weighted roll with no-repeat window, `encounters.js` | `encounters/actN.js`: pools, weights, elite/boss lists |
+| Rewards | rarity rolls + pity/decay counters, `encounters.js` | `balance.js`: odds tables, rune ranges, flask-drop decay |
+| Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
+
+Every generator is a pure function of `(config, rngStream, runState)` → snapshot-testable with fixed seeds (§8).
+
+### 3.9 Action queue
+
+Combat resolves through a FIFO **action queue** (mirrors StS's GameActionManager). Playing a card enqueues its opcodes as actions; each executed action may emit events; triggers (§3.6) may enqueue further actions. The queue drains fully before control returns to the UI.
+
+Rule: **nothing mutates HP/block/piles/statuses except an executed action.** Triggers react to events; they never mutate directly.
+
+### 3.10 Event bus
+
+Events emitted by executed actions (closed list; `DEVELOPER.md` documents payloads):
 
 ```
 combatStart, combatEnd(victory)
@@ -137,28 +276,39 @@ playerTurnStart, playerTurnEnd, enemyTurnStart, enemyTurnEnd
 cardDrawn, cardPlayed, cardExhausted, cardDiscarded, deckShuffled
 damageDealt(source,target,amount,blocked,isAttack)
 blockGained, hpLost, healed
-statusApplied, statusExpired, stanceEntered, stanceExited
+statusApplied, statusExpired, meterFilled, stanceEntered, stanceExited
 enemySpawned, enemyDied, enemyStaggered
 energyGained, energySpent
 flaskUsed, relicTriggered(relicId)
 ```
 
-Relics, powers, and statuses register trigger handlers `{ event, condition?, effects }` declaratively in content files; `triggers.js` wires them at combat start.
-
-### 3.5 Seeded RNG
+### 3.11 Seeded RNG
 
 - `rng.js` implements **mulberry32**. A run seed (uint32, displayed base-35 like StS, e.g. `3LB6HXYD`) is rolled at run start or entered manually on the class-select screen.
 - **Named streams**, each independently derived from the seed + a stream salt + a monotonically increasing counter that is *saved with the run*:
   `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`.
 - Consequence (StS-faithful): re-fighting the same combat after reload produces the same shuffles; choosing a different path doesn't change what a later card reward would have been on another stream.
 
-### 3.6 Save format
+### 3.12 Save format
 
-- Key `sote_run_v1` — full run state JSON: `{ schemaVersion, seed, streamCounters, class, floor, mapNodeId, hp, maxHp, runes, deck[], relics[], flasks[], mapGraph, actNumber, combat?: <combat snapshot>, history[] }`.
-- Saved after **every** committed player choice (node chosen, reward taken, card played is NOT saved — see next point).
-- **Mid-combat**: only `combatEntered: nodeId` is saved, not per-card state. Reload restarts that combat from its start with the same shuffle stream state (StS behavior). Abandoning mid-combat = same.
+- Key `sote_run_v1` — run state JSON: `{ schemaVersion, contentVersion, seed, streamCounters, class, floor, mapNodeId, hp, maxHp, runes, deck[], relics[], flasks[], mapGraph, actNumber, combatEntered?, history[] }`. Instances by id only (§3.3).
+- Saved after **every** committed player choice (node chosen, reward taken). **Mid-combat**: only `combatEntered: nodeId` is saved — reload restarts that combat from its start with the same shuffle-stream state (StS behavior). Abandoning mid-combat = same.
 - Key `sote_meta_v1` — settings + last 20 run results for the history screen.
-- `save.js` refuses (and archives) saves with an unknown `schemaVersion`.
+- `save.js` refuses (and archives) saves with an unknown `schemaVersion`; a `contentVersion` mismatch warns and re-validates the deck/relic ids against current registries (unknown ids → refuse and archive).
+
+### 3.13 Card text templating
+
+Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Bleed."` Tokens bind to opcode values by op/status name (disambiguated by index when repeated: `{damage.2}`). The UI fills tokens via the **same formula evaluator and damage preview the engine executes** (§3.5, §4.2) — so a Strike in hand shows 9 when you have +3 Strength and shows it struck through to 6 when Weak. A validation rule (§3.14) rejects any template token that doesn't bind, and any player-visible numeric effect lacking a token.
+
+### 3.14 Content validation
+
+`model/validate.js` runs at boot in dev mode and from the test page. It checks, across ALL registries:
+
+1. Every content object conforms to its schema (fields, types, enums).
+2. Every id cross-reference resolves (cards in pools/decks, statuses in effects, encounters on maps, moves in `unlockMoves`, …).
+3. Every opcode, formula op, event name, and predicate used anywhere is in the closed sets of §3.4–§3.6.
+4. Every text-template token binds (§3.13).
+5. `scripts.js` budget report: script-using content is listed; the count must stay <5% of total content objects.
 
 ---
 
@@ -166,9 +316,9 @@ Relics, powers, and statuses register trigger handlers `{ event, condition?, eff
 
 ### 4.1 Turn loop
 
-1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. Relic/power `combatStart` triggers fire.
+1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
 2. **Player turn start:** lose all block (unless modified), set energy to 3 (base), draw 5, `playerTurnStart` triggers.
-3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size **10** — draws beyond 10 skip (the card stays in the draw pile is *not* StS behavior; StS discards them — we do the StS thing: excess drawn cards go to discard with a "hand full" toast).
+3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size **10** — excess drawn cards go to discard with a "hand full" toast (StS behavior).
 4. **Player turn end:** `playerTurnEnd` triggers; discard hand except `Retain` cards; `Ethereal` cards in hand exhaust instead. Unspent energy is lost.
 5. **Enemy turn:** each living enemy, in row order, executes its telegraphed intent; enemies lose their block at the start of *their* turn.
 6. New intents are rolled (stream `enemyAI`), display updates, back to 2.
@@ -187,15 +337,15 @@ dmg = dmg * (defender is Staggered  ? 1.5  : 1)
 dmg = floor(dmg); if dmg < 0 → 0
 ```
 
-Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. Non-attack damage (`LoseHP`, Rot ticks, Bleed bursts) ignores Strength/Weak/Vulnerable/Stagger *and block* only where specified (§4.4). Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
+(The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
 
-**Card preview numbers in the UI must be computed by the same engine function** (`previewDamage(card, source, target)`); no duplicated math in the UI.
+**Card preview numbers in the UI are computed by the same engine function** (`previewDamage(card, source, target)`); no duplicated math in the UI (§3.13).
 
 ### 4.3 Card rules
 
 - Types: **Attack, Skill, Power, Curse, Status**. Powers are removed from play when played (not exhausted — they don't hit the exhaust pile). Curses/Statuses are unplayable unless stated.
-- Keywords (exact StS semantics): **Exhaust** (removed for the combat after play), **Ethereal** (exhausts if in hand at end of turn), **Innate** (starts on top of draw pile), **Retain** (not discarded at end of turn), **Unplayable**, **X-cost** (consumes all energy; effect scales by amount consumed; X counts energy *after* other costs).
-- Upgrades: every non-curse card has exactly one upgrade (`name+`), improving numbers or reducing cost. Upgrading is permanent for the run.
+- Keywords (exact StS semantics; engine primitives per §3.7): **Exhaust** (removed for the combat after play), **Ethereal** (exhausts if in hand at end of turn), **Innate** (starts on top of draw pile), **Retain** (not discarded at end of turn), **Unplayable**, **X-cost** (consumes all energy; effect scales via `{f:'energySpent'}`).
+- Upgrades: every non-curse card has exactly one upgrade (`name+`), a partial override object on the card def (numbers, cost, added keywords). Upgrading is permanent for the run.
 - Empty draw pile + draw needed → discard pile is shuffled (stream `shuffle`) into draw first.
 
 ### 4.4 Status effects
@@ -214,28 +364,28 @@ Elden Ring layer (the thematic differentiator — these must feel distinct):
 
 | Status | Mechanic |
 |---|---|
-| **Bleed (build-up)** | A meter on each enemy, threshold starts at **12**. Cards add Bleed points; points do **not** decay during combat. On reaching threshold: burst `LoseHP` = **15% of target's max HP (min 8, max 35)**, meter resets, threshold ×1.5 (rounded up). Ignores block. |
-| **Scarlet Rot** | DoT on enemy: take N `LoseHP` at its turn start. Unlike StS Poison, stacks **do not tick down** — instead Rot has a duration of **3 of its turns**, then expires entirely. Re-applying adds stacks and refreshes duration. Ignores block. |
+| **Bleed (build-up)** | A meter on each enemy, threshold starts at **12**. Cards add Bleed points; points do **not** decay during combat. On reaching threshold: burst `loseHp` = **15% of target's max HP (min 8, max 35)**, meter resets, threshold ×1.5 (rounded up). Ignores block. |
+| **Scarlet Rot** | DoT on enemy: take N `loseHp` at its turn start. Unlike StS Poison, stacks **do not tick down** — instead Rot has a duration of **3 of its turns**, then expires entirely. Re-applying adds stacks and refreshes duration. Ignores block. |
 | **Frostbite** | On enemy: next time it takes attack damage ≥ 10 in one hit, it takes +30% (floored) and Frostbite is consumed. One stack max. |
 | **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 energy per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |
-| **Poise / Stagger** | Every enemy has `poiseMax` (8–40 by enemy). `PoiseDamage` fills the meter (shown under HP). When full: enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), it takes +50% attack damage until the end of the *player's* next turn, then meter empties and `poiseMax` ×1.25 (rounded up). Poise meter does not decay. |
+| **Poise / Stagger** | Every enemy has `poiseMax` (8–40 by enemy). `poiseDamage` fills the meter (shown under HP). When full: enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), it takes +50% attack damage until the end of the *player's* next turn, then meter empties and `poiseMax` ×1.25 (rounded up). Poise meter does not decay. |
 
-Stacking rules live in `statuses.js`; each status declares `stackMode: add | refresh | unique`.
+All of the above — including the whole Elden Ring layer — are data objects in `content/statuses.js` over the generic status model (§3.7); none has engine-side special cases.
 
 ### 4.5 Stances (Vagabond mechanic)
 
-At most one stance active. Entering a stance exits the previous (`stanceExited` then `stanceEntered`). Stances persist between combats? **No — combat-scoped.**
+At most one stance active. Entering a stance exits the previous (`stanceExited` then `stanceEntered`). Stances are combat-scoped.
 
 - **Bloodflame Stance:** your attacks apply +2 Bleed. On entering: take 2 damage (ignores block).
 - **Bulwark Stance:** whenever you play a Skill, gain 2 Block. On entering: gain 3 Block.
 
-Some cards read "If in [stance]: bonus". Stance icon shows beside the player's status row.
+Some cards read "If in [stance]: bonus" (predicate `inStance`). Stance icon shows beside the player's status row.
 
 ### 4.6 Enemy intents
 
 - Every enemy shows next action as icon + number: **Attack (exact total damage, `n×m` for multi-hit — numbers already include its Strength and your Vulnerable, recomputed live)**, Block, Buff, Debuff, Unknown (rare, for one scripted boss move), Staggered.
 - Move selection: per-enemy **weighted state machine** on stream `enemyAI`, with StS-style repeat constraints declared per move (`maxConsecutive: 1|2`).
-- Bosses have phase-based pattern tables keyed on HP thresholds.
+- Bosses declare phase triggers (`phases`, §3.6) keyed on HP thresholds.
 
 Enemy definition shape (content file):
 
@@ -247,8 +397,9 @@ Enemy definition shape (content file):
   moves: {
     slash:   { intent: 'attack', damage: 7,  weight: 45, maxConsecutive: 2 },
     guard:   { intent: 'block',  block: 6,   weight: 30, maxConsecutive: 1 },
-    warcry:  { intent: 'buff',   effects: [{ applyToSelf: { strength: 2 } }],
-               weight: 25, maxConsecutive: 1 },
+    warcry:  { intent: 'buff',   weight: 25, maxConsecutive: 1,
+               effects: [{ op: 'applyStatus', target: 'self',
+                           status: 'strength', stacks: 2 }] },
   },
   firstMove: 'slash',      // optional scripted opener
 }
@@ -305,7 +456,7 @@ Colorless/curse/status M1 minimum: **Wound** (status, unplayable), **Dazed** (st
 
 ### 5.3 Enemy roster — Act 1 (M1)
 
-Basics (encounters roll from a weighted table on stream `enemyAI`):
+Basics (encounters roll from the weighted table in `content/encounters/act1.js`):
 
 | Enemy | HP | Poise | Moves (weight) | Notes |
 |---|---|---|---|---|
@@ -319,7 +470,7 @@ Elite — **Crucible Aspirant** (HP 68–72, Poise 24): opener always Consecrate
 
 Boss — **The Watchful Omen** (Margit-inspired, HP 140, Poise 30):
 - **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 16 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 16 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 9 (repeatable ×2), Hammer Toss 6×2.
-- **Phase 2 (≤50% HP, triggers once, interrupts pattern):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 4×4*.
+- **Phase 2 (≤50% HP, `phases` trigger, once):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 4×4*.
 - Staggering him cancels a Held Blade in progress (satisfying counterplay).
 - Reward: 75–90 runes, rare relic choice, card reward with rare upgrade odds boosted.
 
@@ -344,9 +495,9 @@ Boss — **The Watchful Omen** (Margit-inspired, HP 140, Poise 30):
 | Erdtree Sapling | rare | At the start of your turn, if you have no Block: gain 4 Block. |
 | Dragon Heart | rare | +1 energy each turn. Shrines no longer offer Rest (smith only). |
 | Ancestral Horn | rare | Powers cost 1 less. |
-| Ash of Remembrance | boss | Choose: transform Strikes+Defends offered? No — v1 boss relic: **+1 energy each turn; at combat start, gain 1 Madness.** |
+| Ash of Remembrance | boss | **+1 energy each turn; at combat start, gain 1 Madness.** |
 
-Relic triggers use the same declarative `{event, condition, effects}` mechanism as powers (§3.4).
+Relic behavior uses the trigger DSL (§3.6) — the same declarative form as powers, statuses, and boss phases.
 
 ### 5.5 Flasks (potions)
 
@@ -364,28 +515,28 @@ Relic triggers use the same declarative `{event, condition, effects}` mechanism 
 
 ### 5.6 Events — Unknown nodes (M2: 4 minimum, M3: 10)
 
-Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning). Every event is a real trade-off, StS-style. M2 launch set:
+Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning, in `balance.js`). Every event is a real trade-off, StS-style. M2 launch set:
 
 1. **Erdtree Avatar** — *Offer a card* (remove 1 card from deck, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt curse) / *Leave*.
 2. **Abandoned Merchant Cart** — *Loot* (gain 60–90 runes, 50% chance: fight a Wandering Soldier ambush) / *Leave*.
 3. **Weeping Peninsula Pilgrim** — *Give 50 runes* (gain a random uncommon relic) / *Refuse* (nothing).
 4. **Ancient Rune Stone** — *Study* (upgrade a random card, lose 7% max HP) / *Smash* (gain 35 runes) / *Leave*.
 
-Event definition = data object: `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }` where `effects` reuse the run-level effect DSL (heal, damage, addCard, removeCard, addRelic, runes±, upgradeRandom, startCombat).
+Event definition = data object: `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }` where `effects` are run-level opcodes from the one effect DSL (§3.4).
 
 ---
 
 ## 6. Map generation
 
-Faithful to StS's published algorithm, simplified where invisible to the player:
+Faithful to StS's published algorithm, simplified where invisible to the player. Algorithm lives in `engine/mapgen.js`; every constant below comes from `content/mapconfig.js`:
 
 - Per act: **15 floors × 7 columns** grid. Floor 15 is always a single **Shrine** row; the Boss node sits above it.
 - Generate **6 paths** bottom-to-top: each starts at a random column on floor 1 (first 2 paths must start at distinct columns); each step moves to column −1/0/+1 on the next floor; edges may merge but must not cross (swap targets when a crossing would occur — StS's rule).
 - **Node typing** (StS proportions): fixed — floor 1 all Monster, floor 9 all Treasure, floor 15 Shrine. Remaining nodes rolled: Monster 45%, Event(?) 22%, Elite 8%, Shrine 12%, Merchant 5%, remainder Monster; with constraints: no Elite/Shrine before floor 6, no Shrine on floor 14, no two identical non-Monster types adjacent along an edge, ≥2 Elites and ≥1 Merchant reachable per act (regenerate typing if violated, map RNG stream, bounded retries → relax weakest constraint).
 - Player sees the full act map; only nodes connected by an edge from the current node are clickable. With **Stonesword Key** relic, `?` nodes render their resolved type.
-- Acts 2/3 reuse the generator with different encounter tables and elite/boss pools (`mapconfig.js`).
+- Acts 2/3 reuse the generator with different encounter tables and elite/boss pools (data only).
 
-Rewards after combat: runes (Monster 15–25, Elite 35–50, Boss 75–90) + card reward (choose 1 of 3: common 60% / uncommon 35% / rare 5%; Elite shifts to 45/40/15) + flask roll (§5.5). Elites additionally drop a relic; bosses drop a boss-relic choice of 3. Merchant prices: cards 45–160 runes by rarity, relics 140–300, flasks 50–80, card removal 75 (+25 per purchase).
+Rewards after combat: runes (Monster 15–25, Elite 35–50, Boss 75–90) + card reward (choose 1 of 3: common 60% / uncommon 35% / rare 5%; Elite shifts to 45/40/15) + flask roll (§5.5). Elites additionally drop a relic; bosses drop a boss-relic choice of 3. Merchant prices: cards 45–160 runes by rarity, relics 140–300, flasks 50–80, card removal 75 (+25 per purchase). All numbers: `balance.js`.
 
 ---
 
@@ -440,16 +591,19 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
 2. Block absorbs before HP; block expires at player turn start; Unbreakable power keeps it (cap applied).
 3. Frail + Dexterity block math.
 4. Draw 5 with 3 in draw pile → reshuffle discard, order from seeded stream is deterministic (fixed seed snapshot).
-5. Hand-limit: 6th+ drawn cards beyond 10 go to discard.
-6. Exhaust, Ethereal-at-end-of-turn, Retain, Innate-on-top, X-cost consumes all energy and scales.
-7. Bleed: accumulation, burst at 12, damage clamp, threshold ×1.5, Lord's Blood freezes threshold.
+5. Hand-limit: drawn cards beyond 10 go to discard.
+6. Exhaust, Ethereal-at-end-of-turn, Retain, Innate-on-top, X-cost consumes all energy and scales via `energySpent`.
+7. Bleed: accumulation, burst at 12, damage clamp, threshold ×1.5, Lord's Blood freezes threshold — all driven purely by the `content/statuses.js` data.
 8. Scarlet Rot: ticks at enemy turn start, expires after 3, refresh on re-apply.
 9. Poise: fill → Stagger skips enemy move, +50% damage window, poiseMax growth; Stagger cancels Held Blade.
 10. Stances: exclusivity, Bloodflame per-hit Bleed on multi-hit, Bulwark on-Skill block.
 11. Intent constraint: with a forced RNG stream, `maxConsecutive` is never violated over 1000 rolls.
 12. Map gen: fixed seed → snapshot graph; constraints hold over 200 random seeds (no early elites, no crossing edges, boss reachable from every floor-1 node).
-13. Save round-trip: serialize → deserialize → identical state; unknown schemaVersion is refused and archived.
+13. Save round-trip: serialize → deserialize → identical state; unknown schemaVersion refused and archived; contentVersion mismatch with a dangling card id refused and archived.
 14. Full headless auto-run: a scripted bot (plays leftmost affordable card, ends turn) completes a seeded M1 combat without throwing.
+15. **Content validation (§3.14):** every shipped content object passes its schema; every id cross-reference resolves; every opcode/formula op/event/predicate used is in the closed sets; `scripts.js` budget < 5%.
+16. **Text templating (§3.13):** every template token binds to an effect value; no player-visible numeric effect lacks a token; Strike's preview shows 9 with +3 Strength and 6 under Weak via the shared evaluator.
+17. **Status-model generality:** define a throwaway status (in test code, not shipped content) with a meter + hook + modifier; verify it behaves per schema with zero engine changes — proving law §3.1(2).
 
 CI-less workflow: opening `tests/index.html` must show all green before any milestone is called done.
 
@@ -458,7 +612,7 @@ CI-less workflow: opening `tests/index.html` must show all green before any mile
 ## 9. Milestones & acceptance criteria
 
 ### M1 — Combat vertical slice
-Build: engine core (queue, events, statuses, stances, Bleed/Rot/Poise), Vagabond + 24-card set, 5 Act-1 encounters + elite + Watchful Omen boss, combat screen with full tooltips/targeting/piles, tests 1–11 + 14.
+Build: model layer (schemas, registries, formulas, validation), engine core (queue, triggers, status-model interpreter), all statuses/stances as content data, Vagabond + 24-card set, 5 Act-1 encounters + elite + Watchful Omen boss, combat screen with full tooltips/targeting/piles, tests 1–11 + 14–17.
 **Accept when:** `index.html` → class select (Vagabond only) → a fixed 4-fight gauntlet (2 monsters → elite → boss) is winnable and losable with zero console errors; every visible number matches engine math; all listed tests green.
 
 ### M2 — The run
@@ -467,20 +621,21 @@ Build: map gen + map screen, rewards (cards/runes/flasks/relics), 16 relics, 7 f
 
 ### M3 — Content pass
 Build: Astrologer + Prophet pools (~50 cards each + starters), Acts 2–3 (rosters, elites, 2 bosses incl. phase mechanics and the heal-on-hit final boss), events to 10, relics to 40, colorless pool, balance pass (target: experienced-player win rate ~35–50% at v1 tuning; instrument run history to check).
-**Accept when:** all 3 classes can complete 3-act runs; every card/relic/event reachable; no unbeatable-by-construction encounters (elite HP vs. average deck DPS sanity table included in the balance notes).
+**Accept when:** all 3 classes can complete 3-act runs; every card/relic/event reachable; no unbeatable-by-construction encounters (elite HP vs. average deck DPS sanity table included in the balance notes); `scripts.js` budget still < 5%.
 
 ### M4 — Polish
 Build: fx pass (floating numbers, shake, transitions), run-history screen, keyboard shortcuts, first-run tooltip overlay (≤4 callouts), sfx hook wiring, asset pass replacing placeholders (CREDITS.md complete), performance check (60 fps on a mid-range laptop; no per-frame allocations in fx loops).
-**Accept when:** DEVELOPER.md documents state shape, DSL, event list, and "add a card/relic/enemy/event in <10 lines" walkthroughs — each verified by actually adding a throwaway example.
+**Accept when:** DEVELOPER.md documents the layer rules, state shape, every opcode/formula op/event/predicate, and "add a card/relic/status/enemy/event in <10 lines" walkthroughs — each verified by actually adding a throwaway example.
 
 ---
 
 ## 10. Forward hooks (build the seam now, not the feature)
 
-- **Ascension-style difficulty:** run state carries `modifiers: []` consulted by engine constants (enemy HP ×, gold ×, starting curse). v1 always empty.
-- **Act 2/3 signature mechanics needing engine support from M1:** enemy phase-change interrupts (Watchful Omen already exercises this), enemy self-heal on dealing damage (final boss), enemy applying Bleed to the *player* (player Bleed meter mirrors enemy rules, threshold 15).
+- **Ascension-style difficulty:** run state carries `modifiers: []` consulted by `balance.js` lookups (enemy HP ×, gold ×, starting curse). v1 always empty.
+- **Act 2/3 signature mechanics needing engine support from M1:** enemy phase-change interrupts (Watchful Omen already exercises this), enemy self-heal on dealing damage (final boss — a status hook on `damageDealt`), enemy applying Bleed to the *player* (player-side meters already exist in the status model; player Bleed threshold 15).
 - **Wondrous Physick crafting** (combine two flasks at shrines): flask effects are already composable data; UI only.
 - **Daily seed / run sharing:** seeds are already displayed and enterable; nothing else needed in v1.
+- **Content packs / mods:** the data/model split makes a pack = one folder of content files passing validation; a pack loader is out of scope for v1 but requires no engine redesign.
 - **Second card pools per class ("Remembrance" variants):** class def already takes `cardPool: []`, so alternate pools are content-only.
 
 ## 11. Non-goals (v1)
