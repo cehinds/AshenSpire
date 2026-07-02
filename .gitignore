@@ -1,0 +1,16 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Node (only used for optional tooling like `npx serve`)
+node_modules/
+npm-debug.log*
+
+# Local scratch — never commit balance notes or saves from here
+scratch/
+*.local.*
