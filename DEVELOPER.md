@@ -194,6 +194,13 @@ empirical Act-1 win-rate pass (the naive bot). The **Run History** screen
 the live win-rate telemetry the balance pass is tuned against. Re-run the harness
 after any content or tuning change to catch regressions.
 
+`node tools/runsim.mjs [N]` goes further: it plays **whole seeded runs** (map
+path → encounters → combats → rewards → shrines/events/ambushes → act bosses,
+Acts 1–3) with the same greedy bot plus a simple pilot. Any crash is a real
+integration bug; the win rate is a completability **floor**, not a balance
+target (the bot can't pilot combos or curate a deck). Baseline at 30 runs/class:
+zero crashes, and the Prophet completes full 3-act runs even naively.
+
 ## M1 known deviations (tracked for M2/M3)
 
 1. **Frostbite** is specced (SPEC §4.4) but not shipped — its
