@@ -36,6 +36,8 @@ import { mountShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
+import { openSettings } from './ui/screens/settings.js';
+import { setSpritesEnabled } from './ui/assets.js';
 
 const app = document.getElementById('app');
 
@@ -63,6 +65,9 @@ function pickStorage() {
   }
 }
 const saves = createSaveManager(pickStorage());
+
+// Apply persisted display settings at boot (default: sprites on).
+setSpritesEnabled(saves.loadMeta().settings.useSprites !== false);
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -148,9 +153,22 @@ function showTitle() {
     onBegin: showCustomize,
     onContinue: resumeRun,
     onHistory: showHistory,
+    onSettings: showSettings,
     onAbandon: () => {
       saves.clearRun();
       showTitle();
+    },
+  });
+}
+
+function showSettings() {
+  openSettings({
+    meta: saves.loadMeta(),
+    onChange: (changed) => {
+      const meta = saves.loadMeta();
+      Object.assign(meta.settings, changed);
+      saves.saveMeta(meta);
+      if ('useSprites' in changed) setSpritesEnabled(changed.useSprites);
     },
   });
 }

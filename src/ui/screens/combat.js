@@ -181,7 +181,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     box.dataset.eid = 'player';
     const sprite = document.createElement('div');
     sprite.className = 'sprite';
-    sprite.appendChild(playerSprite(run.customization || {}));
+    sprite.appendChild(playerSprite(run.customization || {}, run.class));
     const badge = blockBadge(p);
     if (badge) sprite.appendChild(badge);
     box.appendChild(sprite);

@@ -4,7 +4,7 @@
 // animations stay ≤300 ms elsewhere; ambient loops respect
 // prefers-reduced-motion (styles/ui.css).
 
-export function mountTitle(app, { hasSave, onBegin, onContinue, onAbandon, onHistory }) {
+export function mountTitle(app, { hasSave, onBegin, onContinue, onAbandon, onHistory, onSettings }) {
   const embers = Array.from({ length: 7 }, (_, i) => {
     const left = 8 + ((i * 13.7) % 84);
     const delay = (i * 1.7) % 9;
@@ -23,6 +23,7 @@ export function mountTitle(app, { hasSave, onBegin, onContinue, onAbandon, onHis
         ${hasSave ? '<button id="continue-run">CONTINUE THE CLIMB</button>' : ''}
         <button id="begin-run">${hasSave ? 'NEW CLIMB' : 'BEGIN THE CLIMB'}</button>
         <button class="subtle" id="run-history">RUN HISTORY</button>
+        <button class="subtle" id="settings">SETTINGS</button>
         ${hasSave ? '<button class="subtle" id="abandon-run">Abandon saved run</button>' : ''}
       </div>
       <p style="color:var(--muted);font-size:11px;letter-spacing:.15em">GRACE FLOWS UPWARD. FOLLOW IT.</p>
@@ -30,6 +31,7 @@ export function mountTitle(app, { hasSave, onBegin, onContinue, onAbandon, onHis
 
   app.querySelector('#begin-run').addEventListener('click', onBegin);
   app.querySelector('#run-history').addEventListener('click', onHistory);
+  app.querySelector('#settings').addEventListener('click', onSettings);
   if (hasSave) {
     app.querySelector('#continue-run').addEventListener('click', onContinue);
     app.querySelector('#abandon-run').addEventListener('click', onAbandon);
