@@ -35,6 +35,7 @@ import { mountRest } from './ui/screens/rest.js';
 import { mountShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
+import { mountHistory } from './ui/screens/history.js';
 
 const app = document.getElementById('app');
 
@@ -146,11 +147,33 @@ function showTitle() {
     hasSave: saves.hasRun(),
     onBegin: showCustomize,
     onContinue: resumeRun,
+    onHistory: showHistory,
     onAbandon: () => {
       saves.clearRun();
       showTitle();
     },
   });
+}
+
+function showHistory() {
+  mountHistory(app, { meta: saves.loadMeta(), onBack: showTitle });
+}
+
+// A run-history record (SPEC §3.12) — enriched so the history screen can show
+// class, progress, and per-class win rates.
+function runResult(victory) {
+  return {
+    victory,
+    seed: run.seedString,
+    class: run.class,
+    className: registries.classes.get(run.class).name,
+    act: run.actNumber,
+    floor: run.floor,
+    fightsWon: run.stats.fightsWon,
+    damageDealt: run.stats.damageDealt,
+    damageTaken: run.stats.damageTaken,
+    name: run.customization && run.customization.name,
+  };
 }
 
 function showCustomize() {
@@ -262,8 +285,8 @@ function onCombatEnd(result, combat, enc) {
 
   if (result !== 'victory') {
     saves.clearRun();
-    saves.recordResult({ victory: false, seed: run.seedString, class: run.class, floor: run.floor });
-    return mountGameOver(app, { registries, game: run, victory: false, onTitle: showTitle });
+    saves.recordResult(runResult(false));
+    return mountGameOver(app, { registries, game: run, victory: false, onTitle: showTitle, onHistory: showHistory });
   }
 
   run.hp = combat.player.hp;
@@ -274,8 +297,8 @@ function onCombatEnd(result, combat, enc) {
     if (run.actNumber >= 3) {
       // The Rot Valkyrie falls: the Great Rune is restored.
       saves.clearRun();
-      saves.recordResult({ victory: true, seed: run.seedString, class: run.class, act: run.actNumber, floor: run.floor });
-      return mountGameOver(app, { registries, game: run, victory: true, onTitle: showTitle });
+      saves.recordResult(runResult(true));
+      return mountGameOver(app, { registries, game: run, victory: true, onTitle: showTitle, onHistory: showHistory });
     }
     // Act boss down: boss rewards, then the climb continues.
     const bossRewards = {

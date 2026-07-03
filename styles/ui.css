@@ -154,6 +154,23 @@
 .cz-keepsake .ks-icon { font-size: 22px; }
 .cz-keepsake p { font-size: 11px; color: var(--muted); }
 
+/* ---------- run history ---------- */
+.hx-byclass { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; }
+.hx-wrap { width: 100%; max-width: 720px; overflow-y: auto; max-height: 58vh; margin-top: 4px; }
+.hx-table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.hx-table th {
+  color: var(--muted); text-align: left; font-weight: 400; font-size: 10px;
+  letter-spacing: 0.15em; padding: 6px 12px; border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; background: var(--bg);
+}
+.hx-table td { padding: 8px 12px; border-bottom: 1px solid var(--line-soft); }
+.hx-table td.hx-num { text-align: right; color: var(--muted); }
+.hx-table tbody tr:hover td { background: rgba(255, 255, 255, 0.03); }
+.hx-win { color: var(--gold); font-family: var(--font-display); font-size: 11px; letter-spacing: 0.08em; }
+.hx-loss { color: var(--blood); font-family: var(--font-display); font-size: 11px; letter-spacing: 0.08em; }
+.hx-seed { font-family: monospace; color: var(--muted); }
+.go-actions { display: flex; gap: 12px; align-items: center; }
+
 /* ---------- event screen ---------- */
 .event-art { display: inline-block; animation: artFloat 4s ease-in-out infinite; }
 @keyframes artFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
