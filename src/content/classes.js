@@ -18,11 +18,14 @@ export const classes = [
       // Commons
       'crimsonCleave', 'shieldBash', 'quickstep', 'guardCounter', 'ironResolve',
       'serratedBlade', 'enterBloodflame', 'enterBulwark',
+      'riposte', 'rend', 'cleavingBlow',
       // Uncommons
       'stomp', 'rallyingStandard', 'warSurgeon', 'hemorrhage', 'twinbladeFlurry',
       'shieldwall', 'kickOff',
+      'wardingLunge', 'impale', 'warcry',
       // Rares
       'executioner', 'lordsBlood', 'unbreakable', 'graftedArms', 'lastStand', 'warriorsVow',
+      'ruinousBlow', 'bloodhuntersStrike', 'sanguinePactCard',
     ],
     description:
       'Weapon-arts duelist: stance dancing between Bloodflame offense and Bulwark defense, with Bleed and Poise as twin payoff meters.',

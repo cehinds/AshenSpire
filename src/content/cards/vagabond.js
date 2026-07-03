@@ -1,9 +1,15 @@
-// src/content/cards/vagabond.js — the 24-card M1 Vagabond pool (SPEC §5.2)
+// src/content/cards/vagabond.js — the Vagabond pool (SPEC §5.2; grown to 30
+// rewardable cards to match the other classes).
 //
 // Pure data. Every card's numbers come from the SPEC §5.2 table; text tokens
 // bind to effects per SPEC §3.13. Powers with invisible stack counts use
 // formula-valued stacks ({f:'add',args:[1]}) — formula values are exempt from
 // the literal-number token rule (documented in DEVELOPER.md).
+//
+// Content-pass additions deepen the stance / Bleed / Poise identity: Riposte &
+// Cleaving Blow (Poise), Rend & Bloodhunter's Strike (Bleed), Warding Lunge
+// (defense + Bloodflame), Impale (Stagger→Bleed), and Sanguine Pact (a power
+// that turns Bleed bursts into Strength).
 
 const one = { f: 'add', args: [1] };
 
@@ -154,6 +160,53 @@ export const vagabondCards = [
       textTemplate: 'Enter Bulwark Stance. Gain {block} extra Block.',
     },
   },
+  {
+    id: 'riposte', name: 'Riposte', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '⚔',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 6 },
+      { op: 'poiseDamage', target: 'enemy', amount: 4, if: { p: 'hasBlock', of: 'self' } },
+    ],
+    textTemplate: 'Deal {damage} damage. If you have Block: deal {poiseDamage} Poise damage.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 8 },
+        { op: 'poiseDamage', target: 'enemy', amount: 6, if: { p: 'hasBlock', of: 'self' } },
+      ],
+    },
+  },
+  {
+    id: 'rend', name: 'Rend', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '🩸',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 5 },
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 },
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2, if: { p: 'inStance', stance: 'bloodflame' } },
+    ],
+    textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed. Bloodflame: apply {bleed.2} more.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 7 },
+        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 },
+        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2, if: { p: 'inStance', stance: 'bloodflame' } },
+      ],
+    },
+  },
+  {
+    id: 'cleavingBlow', name: 'Cleaving Blow', class: 'vagabond', rarity: 'common', cost: 2, type: 'attack',
+    keywords: [], icon: '🪓',
+    effects: [
+      { op: 'damage', target: 'allEnemies', amount: 7 },
+      { op: 'poiseDamage', target: 'allEnemies', amount: 3 },
+    ],
+    textTemplate: 'Deal {damage} damage to ALL enemies. Deal {poiseDamage} Poise damage to ALL.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'allEnemies', amount: 9 },
+        { op: 'poiseDamage', target: 'allEnemies', amount: 4 },
+      ],
+    },
+  },
 
   // ---- Uncommons --------------------------------------------------------------
   {
@@ -252,6 +305,49 @@ export const vagabondCards = [
       textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
     },
   },
+  {
+    id: 'wardingLunge', name: 'Warding Lunge', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'skill',
+    keywords: [], icon: '🛡',
+    effects: [
+      { op: 'block', target: 'self', amount: 8 },
+      { op: 'enterStance', stance: 'bloodflame' },
+    ],
+    textTemplate: 'Gain {block} Block. Enter Bloodflame Stance.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 11 },
+        { op: 'enterStance', stance: 'bloodflame' },
+      ],
+    },
+  },
+  {
+    id: 'impale', name: 'Impale', class: 'vagabond', rarity: 'uncommon', cost: 2, type: 'attack',
+    keywords: [], icon: '🗡',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 9 },
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 6, if: { p: 'hasStatus', of: 'target', status: 'staggered' } },
+    ],
+    textTemplate: 'Deal {damage} damage. If the target is Staggered: apply {bleed} Bleed.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 12 },
+        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 8, if: { p: 'hasStatus', of: 'target', status: 'staggered' } },
+      ],
+    },
+  },
+  {
+    id: 'warcry', name: 'Warcry', class: 'vagabond', rarity: 'uncommon', cost: 0, type: 'skill',
+    keywords: ['exhaust'], icon: '📣',
+    effects: [
+      { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 },
+      { op: 'draw', amount: 1 },
+    ],
+    textTemplate: 'Gain {strength} Strength. Draw {draw} card. Exhaust.',
+    upgrade: {
+      keywords: [],
+      textTemplate: 'Gain {strength} Strength. Draw {draw} card.',
+    },
+  },
 
   // ---- Rares -------------------------------------------------------------------
   {
@@ -315,5 +411,42 @@ export const vagabondCards = [
       ],
       textTemplate: 'Innate. Enter Bloodflame Stance. Draw {draw} card. Exhaust.',
     },
+  },
+  {
+    id: 'ruinousBlow', name: 'Ruinous Blow', class: 'vagabond', rarity: 'rare', cost: 3, type: 'attack',
+    keywords: [], icon: '🔨',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 20 },
+      { op: 'poiseDamage', target: 'enemy', amount: 12 },
+    ],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 26 },
+        { op: 'poiseDamage', target: 'enemy', amount: 14 },
+      ],
+    },
+  },
+  {
+    id: 'bloodhuntersStrike', name: "Bloodhunter's Strike", class: 'vagabond', rarity: 'rare', cost: 1, type: 'attack',
+    keywords: [], icon: '🩸',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 4 },
+      { op: 'damage', target: 'enemy', amount: { f: 'stacks', status: 'bleed', of: 'target' } },
+    ],
+    textTemplate: 'Deal {damage} damage, plus 1 for each Bleed on the target.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 6 },
+        { op: 'damage', target: 'enemy', amount: { f: 'stacks', status: 'bleed', of: 'target' } },
+      ],
+    },
+  },
+  {
+    id: 'sanguinePactCard', name: 'Sanguine Pact', class: 'vagabond', rarity: 'rare', cost: 2, type: 'power',
+    keywords: [], icon: '🩸',
+    effects: [{ op: 'applyStatus', target: 'self', status: 'sanguinePact', stacks: one }],
+    textTemplate: 'Whenever Bleed bursts on an enemy, gain 2 Strength.',
+    upgrade: { cost: 1 },
   },
 ];
