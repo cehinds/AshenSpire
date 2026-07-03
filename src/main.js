@@ -66,8 +66,12 @@ function pickStorage() {
 }
 const saves = createSaveManager(pickStorage());
 
-// Apply persisted display settings at boot (default: sprites on).
-setSpritesEnabled(saves.loadMeta().settings.useSprites !== false);
+// Apply persisted display settings at boot (defaults: sprites on, motion normal).
+function applyDisplaySettings(settings) {
+  setSpritesEnabled(settings.useSprites !== false);
+  document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
+}
+applyDisplaySettings(saves.loadMeta().settings);
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -183,7 +187,7 @@ function showSettings() {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
       saves.saveMeta(meta);
-      if ('useSprites' in changed) setSpritesEnabled(changed.useSprites);
+      applyDisplaySettings(meta.settings);
     },
   });
 }
@@ -223,6 +227,7 @@ function showMap() {
     registries,
     run,
     onPick: enterNode,
+    onSettings: showSettings,
     onSave: () => {
       persist();
       return activeSlot;
