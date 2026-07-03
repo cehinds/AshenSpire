@@ -277,6 +277,12 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     combat,
     label,
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
+    showTutorial: !saves.loadMeta().settings.seenTutorial,
+    onTutorialDone: () => {
+      const meta = saves.loadMeta();
+      meta.settings.seenTutorial = true;
+      saves.saveMeta(meta);
+    },
   });
 }
 

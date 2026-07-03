@@ -12,8 +12,9 @@ import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents } from '../fx.js';
 import { sfx } from '../sfx.js';
+import { mountTutorial } from '../components/tutorial.js';
 
-export function mountCombat(app, { registries, run, combat, label, onEnd }) {
+export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone }) {
   app.innerHTML = `
     <div class="combat">
       <header class="topbar">
@@ -548,4 +549,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
   render();
   // Combat-start events (relic triggers, opening draw) get a quick pass too.
   animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
+
+  // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.
+  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone() });
 }
