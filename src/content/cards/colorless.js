@@ -1,10 +1,67 @@
-// src/content/cards/colorless.js — statuses (the card kind) + curses (SPEC §5.2)
+// src/content/cards/colorless.js — statuses/curses (injected) + neutral
+// colorless cards any class can pick up (SPEC §5.2, §1).
 //
-// Enemies and events inject these into the player's deck. Unplayability is
-// keyword-driven (SPEC §4.3 note). Guilt's end-of-turn HP loss requires an
-// in-hand hook that lands with M2's event system (M1 deviation, see PR notes).
+// The status/curse cards (rarity 'special') are injected by enemies and events;
+// unplayability is keyword-driven (SPEC §4.3 note). The playable colorless cards
+// (common/uncommon/rare) are class-agnostic utility, sold at Merchants —
+// StS-faithful: colorless comes from shops, not standard combat rewards
+// (rollShopCards in engine/encounters.js appends them to every class's stock).
 
 export const colorlessCards = [
+  // ---- Neutral playable colorless (Merchant stock, SPEC §1) ------------------
+  {
+    id: 'honedEdge', name: 'Honed Edge', class: 'colorless', rarity: 'common', cost: 1, type: 'skill',
+    keywords: ['exhaust'], icon: '🔩',
+    effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 2 }],
+    textTemplate: 'Gain {strength} Strength. Exhaust.',
+    upgrade: { effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 3 }] },
+  },
+  {
+    id: 'ironSkin', name: 'Iron Skin', class: 'colorless', rarity: 'common', cost: 1, type: 'skill',
+    keywords: [], icon: '🛡',
+    effects: [{ op: 'block', target: 'self', amount: 8 }],
+    textTemplate: 'Gain {block} Block.',
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 11 }] },
+  },
+  {
+    id: 'fieldDressing', name: 'Field Dressing', class: 'colorless', rarity: 'uncommon', cost: 1, type: 'skill',
+    keywords: ['exhaust'], icon: '🩹',
+    effects: [{ op: 'heal', target: 'self', amount: 8 }],
+    textTemplate: 'Heal {heal} HP. Exhaust.',
+    upgrade: { effects: [{ op: 'heal', target: 'self', amount: 12 }] },
+  },
+  {
+    id: 'hex', name: 'Hex', class: 'colorless', rarity: 'uncommon', cost: 0, type: 'skill',
+    keywords: ['exhaust'], icon: '🕯',
+    effects: [
+      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 },
+      { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 2 },
+    ],
+    textTemplate: 'Apply {weak} Weak and {vulnerable} Vulnerable. Exhaust.',
+    upgrade: {
+      effects: [
+        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 },
+        { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 3 },
+      ],
+    },
+  },
+  {
+    id: 'transmute', name: 'Transmute', class: 'colorless', rarity: 'rare', cost: 1, type: 'skill',
+    keywords: ['exhaust'], icon: '⚗',
+    effects: [
+      { op: 'gainEnergy', amount: 2 },
+      { op: 'draw', amount: 1 },
+    ],
+    textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} card. Exhaust.',
+    upgrade: {
+      effects: [
+        { op: 'gainEnergy', amount: 2 },
+        { op: 'draw', amount: 2 },
+      ],
+    },
+  },
+
+  // ---- Statuses (the card kind) + curses (enemy/event injected) --------------
   {
     id: 'wound', name: 'Wound', class: 'colorless', rarity: 'special', cost: 0, type: 'status',
     keywords: ['unplayable'], icon: '💢',

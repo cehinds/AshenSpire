@@ -4,6 +4,14 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 > **Status: feature-complete core loop.** Three classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
+## Preview
+
+Preview images (SVG, open in any browser): the three class sprites —
+[docs/preview/class-sprites.svg](docs/preview/class-sprites.svg) — and the
+save-slot main menu — [docs/preview/title-save-slots.svg](docs/preview/title-save-slots.svg).
+
+![Character classes](docs/preview/class-sprites.svg)
+
 ## Playing
 
 Once M1 lands: open `index.html` in any modern browser, or serve the folder with any static server:
@@ -30,8 +38,8 @@ Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md
 |---|---|---|
 | **M1** | Combat vertical slice — Vagabond class, 24 cards, Act 1 enemies + elite + boss, full combat UI | **shipped** |
 | **M2** | The run — map generation, rewards, relics, flasks, shops, events, save/continue, seeds | **shipped** |
-| **M3** | Content — Astrologer & Prophet classes, Acts 2–3, full relic/event pools, balance pass | **classes, acts, relics (40), events (10) shipped**; class card-pool growth (~50/class) + balance pass remaining |
-| **M4** | Polish — fx, run history, keyboard shortcuts, asset pass | fx + character customization shipped; rest not started |
+| **M3** | Content — Astrologer & Prophet classes, Acts 2–3, full relic/event pools, balance pass | **core content shipped**: 3 classes, 3 acts, 40 relics, 10 events, ~30 cards/class + colorless, first balance pass ([BALANCE.md](docs/BALANCE.md)). Deeper pools (~50) & win-rate tuning await playtest telemetry (M4) |
+| **M4** | Polish — fx, run history, keyboard shortcuts, asset pass | **shipped**: fx, customization, run-history + win-rate telemetry, keyboard shortcuts (1–9 / E / Esc), first-run tutorial, sfx hooks, DEVELOPER.md walkthroughs + perf notes, placeholder art tuned across all acts. Bundling real external art/audio is a deliberate v1 deferral (SPEC §11 non-goal) — the generated-placeholder system is the shipped visual style |
 
 Acceptance criteria per milestone are in [SPEC.md §9](SPEC.md).
 

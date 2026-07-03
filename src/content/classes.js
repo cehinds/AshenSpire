@@ -40,10 +40,13 @@ export const classes = [
     cardPool: [
       // Commons
       'cometFragment', 'glintbladePhalanx', 'crystalBarrier', 'starShower', 'scholarsInsight', 'frostVeil',
+      'starSlicer', 'glintstoneWard', 'starlance', 'twinkling', 'frostNova',
       // Uncommons
       'glintstoneArc', 'lucidity', 'stargazerCard', 'astralArmorCard', 'moonveilCut', 'meteorite',
+      'meteorSwarm', 'gravityWell', 'ceruleanCoilCard', 'astralCleave', 'radiantSpray',
       // Rares
       'supernova', 'timeDilation', 'glintstoneKris', 'constellationCard',
+      'starfallBeam', 'starcaller', 'umbralWard', 'waxingMoonCard',
     ],
     description:
       'Sorcery combos: the second spell each turn is empowered (Glintstone). Fragile early — sequencing is everything.',
@@ -61,10 +64,13 @@ export const classes = [
     cardPool: [
       // Commons
       'bloodPact', 'rotTouch', 'flagellation', 'penance', 'litany', 'graveOffering',
+      'bloodletting', 'contagion', 'cullTheWeak', 'transfusion', 'rotward',
       // Uncommons
       'martyrBlood', 'rotBloom', 'sacredHarvest', 'thornHaloCard', 'communionCard', 'goldenVow',
+      'plagueBearer', 'exsanguinate', 'stigmataCard', 'scourge', 'reclamation',
       // Rares
       'secondBloom', 'butterflyPlague', 'lifeTitheCard', 'crimsonRite',
+      'rotNova', 'lastRites', 'zealotryCard', 'bloodHarvest',
     ],
     description:
       'HP as a resource: pay blood for tempo, spread Scarlet Rot, and heal it all back. One pool — mistakes compound.',

@@ -21,6 +21,13 @@
   border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px;
 }
 .topbar .fight-label { margin-left: auto; color: var(--muted); font-size: 12px; letter-spacing: 0.12em; }
+.topbar .topbar-btn {
+  margin-left: 10px; width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
+  font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: border-color 140ms, color 140ms;
+}
+.topbar .topbar-btn:hover { border-color: var(--gold); color: var(--gold); }
 
 /* ---------- battlefield ---------- */
 .field { flex: 1; display: flex; align-items: stretch; position: relative; }
@@ -85,6 +92,19 @@
 .intent.staggered { border-color: var(--gold); color: var(--gold); }
 .intent.delayed { border-style: dashed; }
 .intent .ic { font-size: 13px; }
+
+/* ---------- keyboard shortcut hints (SPEC §7.3) ---------- */
+.card .key-hint {
+  position: absolute; bottom: 3px; right: 6px; z-index: 2;
+  font-family: monospace; font-size: 10px; color: var(--muted); opacity: 0.75; pointer-events: none;
+}
+.enemy-key {
+  position: absolute; top: 2px; left: 2px; z-index: 3;
+  min-width: 17px; height: 17px; padding: 0 3px; border-radius: 4px;
+  background: var(--gold); color: #1c1610; font-family: monospace; font-weight: 700; font-size: 11px;
+  display: flex; align-items: center; justify-content: center; pointer-events: none;
+  box-shadow: 0 0 8px rgba(201, 162, 39, 0.5);
+}
 
 /* ---------- hand + controls ---------- */
 .hand-area { height: 230px; flex-shrink: 0; position: relative; display: flex; align-items: flex-end; justify-content: center; }

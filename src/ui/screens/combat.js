@@ -12,8 +12,9 @@ import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents } from '../fx.js';
 import { sfx } from '../sfx.js';
+import { mountTutorial } from '../components/tutorial.js';
 
-export function mountCombat(app, { registries, run, combat, label, onEnd }) {
+export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings }) {
   app.innerHTML = `
     <div class="combat">
       <header class="topbar">
@@ -26,6 +27,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
         <div class="flasks" style="display:flex;gap:6px"></div>
         <div class="relics"></div>
         <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
+        <button class="topbar-btn" id="combat-settings" title="Settings">⚙</button>
       </header>
       <div class="field">
         <div class="player-zone"></div>
@@ -180,7 +182,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
     box.dataset.eid = 'player';
     const sprite = document.createElement('div');
     sprite.className = 'sprite';
-    sprite.appendChild(playerSprite(run.customization || {}));
+    sprite.appendChild(playerSprite(run.customization || {}, run.class));
     const badge = blockBadge(p);
     if (badge) sprite.appendChild(badge);
     box.appendChild(sprite);
@@ -240,12 +242,24 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
   function renderEnemies() {
     const row = $('.enemy-row');
     row.innerHTML = '';
+    const targeting = selected || selectedFlask != null;
+    const living = combat.enemies.filter((e) => e.alive);
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
       const box = document.createElement('div');
-      box.className = `combatant enemy${enemy.alive ? '' : ' dead'}${selected || selectedFlask != null ? ' targetable' : ''}`;
+      box.className = `combatant enemy${enemy.alive ? '' : ' dead'}${targeting ? ' targetable' : ''}`;
       box.dataset.eid = enemy.id;
       if (enemy.alive) box.appendChild(intentEl(enemy));
+      // Target-number badge for keyboard targeting (SPEC §7.3).
+      if (enemy.alive && targeting) {
+        const idx = living.indexOf(enemy);
+        if (idx < 9) {
+          const kh = document.createElement('span');
+          kh.className = 'enemy-key';
+          kh.textContent = idx + 1;
+          box.appendChild(kh);
+        }
+      }
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(enemySprite(def));
@@ -282,6 +296,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
       el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
       el.style.zIndex = i;
       if (inst.instanceId === selected) el.classList.add('selected');
+      if (i < 9) {
+        const hint = document.createElement('span');
+        hint.className = 'key-hint';
+        hint.textContent = i + 1;
+        el.appendChild(hint);
+      }
       wireCardInput(el, inst, pv, affordable);
       hand.appendChild(el);
     });
@@ -374,14 +394,61 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
       render();
     }
   });
-  const escHandler = (ev) => {
-    if (ev.key === 'Escape' && (selected || selectedFlask != null)) {
-      selected = null;
-      selectedFlask = null;
-      render();
+  // Keyboard shortcuts (SPEC §7.3): Esc cancels targeting; 1–9 select/play the
+  // Nth card (or, while targeting, pick the Nth living enemy); E ends the turn.
+  const keyHandler = (ev) => {
+    if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    const tag = (ev.target && ev.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    if (ev.key === 'Escape') {
+      if (selected || selectedFlask != null) {
+        selected = null;
+        selectedFlask = null;
+        hideTooltip();
+        render();
+      }
+      return;
+    }
+    if (busy || combat.result || combat.phase !== 'player') return;
+
+    if (ev.key === 'e' || ev.key === 'E') {
+      ev.preventDefault();
+      $('.end-turn').click();
+      return;
+    }
+
+    if (/^[1-9]$/.test(ev.key)) {
+      ev.preventDefault();
+      const n = Number(ev.key) - 1;
+      // Targeting mode: the number picks the Nth living enemy.
+      if (selected || selectedFlask != null) {
+        const enemy = combat.enemies.filter((e) => e.alive)[n];
+        if (!enemy) return;
+        if (selected) playCard(selected, enemy.id);
+        else useFlask(selectedFlask, enemy.id);
+        return;
+      }
+      // Selection mode: play the Nth hand card (auto-target a lone enemy).
+      const inst = combat.piles.hand[n];
+      if (!inst) return;
+      const pv = previewCard(combat, inst.instanceId);
+      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && !isUnplayable(inst);
+      if (!affordable) return;
+      if (pv.needsTarget) {
+        const living = combat.enemies.filter((e) => e.alive);
+        if (living.length === 1) playCard(inst.instanceId, living[0].id);
+        else {
+          selected = inst.instanceId;
+          selectedFlask = null;
+          render();
+        }
+      } else {
+        playCard(inst.instanceId, null);
+      }
     }
   };
-  addEventListener('keydown', escHandler);
+  addEventListener('keydown', keyHandler);
 
   // ---------- actions ----------
   function trackStats(events) {
@@ -414,7 +481,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
     animateEvents(events, fxCtx, () => {
       busy = false;
       if (combat.result) {
-        removeEventListener('keydown', escHandler);
+        removeEventListener('keydown', keyHandler);
         setTimeout(() => onEnd(combat.result, combat), 350);
       }
     });
@@ -479,8 +546,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd }) {
   $('.pile.draw').addEventListener('click', () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true }));
   $('.pile.discard').addEventListener('click', () => openPileModal(registries, 'Discard pile', combat.piles.discard));
   $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
+  if (onSettings) $('#combat-settings').addEventListener('click', onSettings);
 
   render();
   // Combat-start events (relic triggers, opening draw) get a quick pass too.
   animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
+
+  // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.
+  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone() });
 }

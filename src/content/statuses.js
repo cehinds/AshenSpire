@@ -268,6 +268,52 @@ export const statuses = [
     ],
     tooltip: 'Whenever you gain Glintstone Charge, deal 4 damage per stack to a random enemy.',
   },
+  {
+    // Cerulean Coil power: turns each Skill into a trickle of Block. Same
+    // cardPlayed + cardTypeIs shape the Twinned Armor relic uses, as a power.
+    id: 'ceruleanCoil',
+    name: 'Cerulean Coil',
+    icon: '🌀',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'cardPlayed',
+        if: { p: 'cardTypeIs', type: 'skill' },
+        do: [
+          {
+            op: 'block',
+            target: 'owner',
+            amount: { f: 'mul', args: [2, { f: 'stacks', status: 'ceruleanCoil', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever you play a Skill, gain 2 Block per stack.',
+  },
+  {
+    // Waxing Moon power: scaling Vulnerable spread — the Astrologer's answer to
+    // Thorn Halo (Rot). Same ownerTurnStart + allEnemies shape.
+    id: 'waxingMoon',
+    name: 'Waxing Moon',
+    icon: '🌕',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [
+          {
+            op: 'applyStatus',
+            target: 'allEnemies',
+            status: 'vulnerable',
+            stacks: { f: 'mul', args: [2, { f: 'stacks', status: 'waxingMoon', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'At the start of your turn, apply 2 Vulnerable to ALL enemies per stack.',
+  },
 
   // ---- Prophet: blood economy powers (SPEC §5.1 identity) -------------------
   {
@@ -330,6 +376,54 @@ export const statuses = [
       },
     ],
     tooltip: 'Whenever an enemy dies, heal 8 HP per stack.',
+  },
+  {
+    // Stigmata power: holy wounds that mend — every point of HP you spend heals
+    // a little back (and, with Gold Figurine, becomes Block). Gated to the
+    // owner's own HP loss; heal emits 'healed', not 'hpLost', so no loop.
+    id: 'stigmata',
+    name: 'Stigmata',
+    icon: '🩹',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'hpLost',
+        if: { p: 'eventTargetIsOwner' },
+        do: [
+          {
+            op: 'heal',
+            target: 'owner',
+            amount: { f: 'mul', args: [2, { f: 'stacks', status: 'stigmata', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever you lose HP, heal 2 HP per stack.',
+  },
+  {
+    // Zealotry power: pain answered with fury — each HP loss lashes a random
+    // enemy. damage emits 'damageDealt' on the enemy (not the owner's 'hpLost'),
+    // so it cannot re-trigger itself.
+    id: 'zealotry',
+    name: 'Zealotry',
+    icon: '⚡',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'hpLost',
+        if: { p: 'eventTargetIsOwner' },
+        do: [
+          {
+            op: 'damage',
+            target: 'randomEnemy',
+            amount: { f: 'mul', args: [3, { f: 'stacks', status: 'zealotry', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever you lose HP, deal 3 damage to a random enemy per stack.',
   },
   {
     // Blood Grease flask: this turn, attacks apply +2 Bleed per hit

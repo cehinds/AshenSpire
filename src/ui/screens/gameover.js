@@ -4,7 +4,7 @@ import { resolveCard } from '../../model/registries.js';
 import { esc } from '../components/tooltip.js';
 import { sfx } from '../sfx.js';
 
-export function mountGameOver(app, { registries, game, victory, onTitle }) {
+export function mountGameOver(app, { registries, game, victory, onTitle, onHistory }) {
   sfx.play(victory ? 'victory' : 'youDied');
   const title = victory ? 'GREAT RUNE RESTORED' : 'YOU DIED';
   const color = victory ? 'var(--gold)' : 'var(--blood)';
@@ -26,7 +26,10 @@ export function mountGameOver(app, { registries, game, victory, onTitle }) {
         <p class="subtitle" style="text-align:center;margin-bottom:8px">FINAL DECK (${game.deck.length})</p>
         <div class="deck-strip"></div>
       </div>
-      <button id="to-title">RETURN TO TITLE</button>
+      <div class="go-actions">
+        <button id="to-title">RETURN TO TITLE</button>
+        <button class="subtle" id="to-history">RUN HISTORY</button>
+      </div>
     </div>`;
 
   const strip = app.querySelector('.deck-strip');
@@ -38,4 +41,5 @@ export function mountGameOver(app, { registries, game, victory, onTitle }) {
     strip.appendChild(el);
   }
   app.querySelector('#to-title').addEventListener('click', onTitle);
+  if (onHistory) app.querySelector('#to-history').addEventListener('click', onHistory);
 }

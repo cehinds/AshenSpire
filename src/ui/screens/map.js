@@ -28,7 +28,7 @@ const ACT_NAMES = {
   3: 'ACT III — THE ASHEN CROWN',
 };
 
-export function mountMap(app, { registries, run, onPick }) {
+export function mountMap(app, { registries, run, onPick, onSave, onSettings }) {
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -79,7 +79,11 @@ export function mountMap(app, { registries, run, onPick }) {
           <div><span class="ic" style="color:var(--grace)">⚖</span>Merchant</div>
           <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
         </div>
-        <button class="subtle deck-btn" id="view-deck">View deck (${run.deck.length})</button>
+        <div class="map-buttons">
+          <button class="subtle deck-btn" id="view-deck">View deck (${run.deck.length})</button>
+          <button class="subtle deck-btn" id="save-run">Save</button>
+          <button class="subtle deck-btn" id="map-settings">Settings</button>
+        </div>
       </aside>
     </div>`;
 
@@ -122,6 +126,17 @@ export function mountMap(app, { registries, run, onPick }) {
   app.querySelector('#view-deck').addEventListener('click', () => {
     openPileModal(registries, 'Your deck', run.deck);
   });
+
+  app.querySelector('#save-run').addEventListener('click', () => {
+    const slot = onSave ? onSave() : null;
+    const toast = document.createElement('div');
+    toast.className = 'save-toast';
+    toast.textContent = slot ? `Saved to Slot ${slot}` : 'Saved';
+    app.appendChild(toast);
+    setTimeout(() => toast.remove(), 1600);
+  });
+
+  if (onSettings) app.querySelector('#map-settings').addEventListener('click', onSettings);
 }
 
 function nodeTooltip(type, node, revealed) {

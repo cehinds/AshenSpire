@@ -81,3 +81,10 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Manual override from Settings — applies regardless of the OS preference. */
+.reduced-motion, .reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

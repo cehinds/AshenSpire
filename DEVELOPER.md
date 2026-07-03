@@ -126,6 +126,35 @@ Special moves: `delay: { turns, whileCharging }` makes a telegraphed
 delayed attack (Held Blade pattern — Stagger cancels it); `locked: true` +
 `phases[].unlockMoves` gates moves behind HP-threshold phase changes.
 
+## Add an event (one file: `src/content/events.js`)
+
+```js
+{
+  id: 'testShrine', name: 'Test Shrine', art: '🕯',
+  text: 'A quiet shrine offers a choice.',
+  choices: [
+    { label: 'Pray (heal 10% max HP)',
+      effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 10 } }],
+      resultText: 'You are mended.' },
+    { label: 'Leave', effects: [], resultText: 'You leave it be.' },
+  ],
+}
+```
+
+Events fire on `?` (Unknown) map nodes. `effects` are the **same DSL** as cards,
+but run-level (SPEC §3.4): `addRunes`, `addRelic {random?|id}`,
+`removeCardFromDeck`, `upgradeCard {random?}`, `loseMaxHpPct`,
+`startCombat {encounterId}`, plus `heal`/`damage`/`addCardToDeck`. `requires?`
+(e.g. `{ runes: 50 }`) gates a choice; a `startCombat` effect hands control to
+the combat orchestrator after `resultText` shows. Nothing to register — every
+shipped event is reachable via Unknown nodes.
+
+> Each walkthrough above is **validation-checked**: add the snippet and run the
+> suite — test 15 (content validation) rejects unknown fields, bad enums,
+> dangling ids, out-of-set opcodes/formulas/predicates, and unbound template
+> tokens. All six types (card, status, relic, enemy, encounter, event) are
+> confirmed to validate from these exact examples.
+
 ## Reference — the closed sets (extend = engine PR)
 
 | Set | Where defined | Contents |
@@ -143,6 +172,27 @@ Escape hatch: `src/content/scripts.js` (named functions callable as
 `{ script: 'name' }` effects). Budget < 5% of content, each entry justified in
 a comment. Current usage: **one** (Wondrous Physick — dynamic meta-selection
 of other flasks' effect lists, which the DSL cannot reference).
+
+## Performance (SPEC §9 M4)
+
+Combat feedback is **CSS-driven**: JS only toggles short-lived classes and
+appends floating numbers/banners that self-remove after ≤320 ms (`src/ui/fx.js`),
+staggered `STEP_MS` apart and skippable on click. There are **no
+`requestAnimationFrame` / `setInterval` render loops** anywhere — the single
+`rAF` in the codebase fires *one* frame to kick a CSS transition (the played-card
+ghost). So there are **no per-frame JS allocations**; frame rate is just the
+browser compositing a handful of transitions, comfortably 60 fps on mid-range
+hardware. Ambient title effects (embers, gold glow) are pure CSS and honor
+`prefers-reduced-motion` (`styles/ui.css`).
+
+## Balance & telemetry
+
+`node tools/balance.mjs` regenerates [docs/BALANCE.md](docs/BALANCE.md): enemy
+intent-DPS vs. HP sanity table, measured starting-deck DPS per class, and an
+empirical Act-1 win-rate pass (the naive bot). The **Run History** screen
+(Title → Run History) shows per-run outcomes and overall/per-class win rates —
+the live win-rate telemetry the balance pass is tuned against. Re-run the harness
+after any content or tuning change to catch regressions.
 
 ## M1 known deviations (tracked for M2/M3)
 
