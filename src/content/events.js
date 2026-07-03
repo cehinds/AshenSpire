@@ -1,9 +1,9 @@
-// src/content/events.js — Unknown-node events (SPEC §5.6, M2 launch set)
+// src/content/events.js — Unknown-node events (SPEC §5.6; grown to 10 in M3)
 //
 // Every choice is a real trade-off, StS-style. `requires` is checked by the
 // event screen (e.g. { runes: 50 }); `effects` are run-level opcodes executed
 // via executeRunEffects. A startCombat effect hands control to the combat
-// orchestrator after resultText is shown.
+// orchestrator after resultText is shown. SPEC §9 M3 target: 10 events.
 
 export const events = [
   {
@@ -178,6 +178,57 @@ export const events = [
         resultText: 'The stone comes apart into rune-light. The hum does not entirely stop.',
       },
       { label: 'Leave', effects: [], resultText: 'Some doors are better left unread.' },
+    ],
+  },
+  {
+    id: 'graveOfTheNameless',
+    name: 'Grave of the Nameless',
+    art: '⚰',
+    text:
+      'A cairn of broken swords marks a grave no one tends. Rune-light seeps between the blades ' +
+      'like frost. The mound is quiet — the particular quiet of something that could stop being quiet.',
+    choices: [
+      {
+        label: 'Dig for runes (gain 90 runes; the keeper may wake)',
+        effects: [
+          { op: 'addRunes', amount: 90 },
+          { op: 'startCombat', encounterId: 'loneSoldier', if: { p: 'random', pct: 40 } },
+        ],
+        resultText: 'The runes come loose in cold handfuls. Somewhere under the swords, something shifts its weight.',
+      },
+      {
+        label: 'Pay respects (heal 15% max HP)',
+        effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 15 } }],
+        resultText: 'You right a fallen blade and stand a while. When you leave, you are lighter than you came.',
+      },
+      { label: 'Leave', effects: [], resultText: 'You leave the nameless to their naming.' },
+    ],
+  },
+  {
+    id: 'rotPriestOffer',
+    name: "Rot-Priest's Offer",
+    art: '☣',
+    text:
+      'A priest kneels in a ring of dead grass, robes fused to weeping skin. He is unbothered, almost radiant. ' +
+      '"The Rot gives," he says, holding out a reliquary in one ruined hand. "It asks only a little flesh in return."',
+    choices: [
+      {
+        label: 'Accept the blessing (gain a random relic; lose 10% max HP)',
+        effects: [
+          { op: 'addRelic', random: true },
+          { op: 'loseMaxHpPct', pct: 10 },
+        ],
+        resultText: 'His hand closes over yours. The reliquary is warm, and the warmth does not stop where your skin does.',
+      },
+      {
+        label: 'Rob him (gain 50 runes; take a Guilt curse)',
+        effects: [
+          { op: 'addRunes', amount: 50 },
+          { op: 'addCardToDeck', card: 'guilt' },
+        ],
+        resultText: 'He does not resist. He only smiles wider, as if you have taken exactly what he meant you to.',
+      },
+      { label: 'Leave', effects: [], resultText: '"The Rot is patient," he calls after you. "It will keep your seat."' },
     ],
   },
 ];
