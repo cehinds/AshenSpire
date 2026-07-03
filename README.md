@@ -4,6 +4,14 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 > **Status: feature-complete core loop.** Three classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
+## Preview
+
+Preview images (SVG, open in any browser): the three class sprites —
+[docs/preview/class-sprites.svg](docs/preview/class-sprites.svg) — and the
+save-slot main menu — [docs/preview/title-save-slots.svg](docs/preview/title-save-slots.svg).
+
+![Character classes](docs/preview/class-sprites.svg)
+
 ## Playing
 
 Once M1 lands: open `index.html` in any modern browser, or serve the folder with any static server:
