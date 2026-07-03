@@ -201,6 +201,30 @@ export const statuses = [
     modifiers: { meterMaxGrowthDisabled: true },
     tooltip: 'Build-up thresholds (Bleed and Poise) no longer increase after filling.',
   },
+  {
+    // Sanguine Pact power: Bleed bursts feed Strength — the Vagabond's answer to
+    // Thorn Halo / Constellation. Same meterFilled + eventStatusIs shape.
+    id: 'sanguinePact',
+    name: 'Sanguine Pact',
+    icon: '🩸',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'meterFilled',
+        if: { p: 'eventStatusIs', status: 'bleed' },
+        do: [
+          {
+            op: 'applyStatus',
+            target: 'owner',
+            status: 'strength',
+            stacks: { f: 'mul', args: [2, { f: 'stacks', status: 'sanguinePact', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever Bleed bursts on an enemy, gain 2 Strength per stack.',
+  },
   // ---- Astrologer: the Glintstone combo engine (SPEC §5.1 identity) ---------
   {
     // Set by every spell after its own effects resolve; spells check it FIRST,

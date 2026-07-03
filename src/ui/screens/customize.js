@@ -6,7 +6,7 @@
 
 import { LOCKED_CLASSES } from '../../content/index.js';
 import { KEEPSAKES } from '../../content/keepsakes.js';
-import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, tintCss, classGlyph } from '../assets.js';
+import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
 import { esc } from '../components/tooltip.js';
 
 export function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
@@ -50,7 +50,12 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     const p = $('#cz-portrait');
     p.style.borderColor = tintCss(state.tint);
     p.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
-    p.textContent = state.glyph;
+    p.innerHTML = '';
+    // With sprites on, preview the class figure you'll actually play; otherwise
+    // the chosen sigil (which is what combat shows when sprites are off).
+    const sprite = spritesAreEnabled() ? classSprite(state.classId, tintCss(state.tint)) : null;
+    if (sprite) p.appendChild(sprite);
+    else p.textContent = state.glyph;
   }
 
   // ---- class row (real classes + locked M3 silhouettes) ----
@@ -63,6 +68,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     el.addEventListener('click', () => {
       state.classId = cls.id;
       classes.querySelectorAll('.cz-class').forEach((x) => x.classList.toggle('chosen', x === el));
+      renderPortrait();
     });
     classes.appendChild(el);
   }
