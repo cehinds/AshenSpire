@@ -11,21 +11,32 @@ const SIZE_TIERS = {
   large: { w: 150, h: 160, font: 60 },
 };
 
-// Enemy id → size tier (display only; defaults to medium).
+// Enemy id → size tier (display only; defaults to medium). Bosses & the biggest
+// bruisers read 'large'; fast/fragile minions 'small'. All three acts tuned so
+// no enemy falls back to the generic default.
 const ENEMY_TIER = {
-  rotHound: 'small',
-  graveWisp: 'small',
-  wanderingSoldier: 'medium',
-  demiBrute: 'medium',
-  crucibleAspirant: 'large',
-  watchfulOmen: 'large',
+  // Act 1
+  rotHound: 'small', graveWisp: 'small', wanderingSoldier: 'medium', demiBrute: 'medium',
+  crucibleAspirant: 'large', watchfulOmen: 'large',
+  // Act 2 — The Grafted Court
+  courtMarionette: 'small', graftedHound: 'small', courtSurgeon: 'medium',
+  gildedKnight: 'medium', livingArmor: 'medium', courtDuelist: 'large', graftedKing: 'large',
+  // Act 3 — The Ashen Crown
+  graceStarvedPilgrim: 'small', valkyrieShade: 'medium', ashRevenant: 'medium',
+  charredColossus: 'large', crucibleLord: 'large', rotValkyrie: 'large',
 };
 
+// Enemy id → border tint (thematic: blood=Bleed, rot=Scarlet Rot, gold=elite/boss
+// radiance, frost=armor, grace=spectral, ember=ash). Defaults to var(--line-soft).
 const ENEMY_TINT = {
-  graveWisp: 'var(--grace)',
-  rotHound: 'var(--rot)',
-  crucibleAspirant: 'var(--gold)',
-  watchfulOmen: 'var(--blood)',
+  // Act 1
+  graveWisp: 'var(--grace)', rotHound: 'var(--rot)', crucibleAspirant: 'var(--gold)', watchfulOmen: 'var(--blood)',
+  // Act 2
+  gildedKnight: 'var(--gold)', courtSurgeon: 'var(--grace)', graftedHound: 'var(--blood)',
+  courtMarionette: 'var(--rot)', livingArmor: 'var(--frost)', courtDuelist: 'var(--frost)', graftedKing: 'var(--gold)',
+  // Act 3
+  ashRevenant: 'var(--ember)', graceStarvedPilgrim: 'var(--grace)', valkyrieShade: 'var(--blood)',
+  charredColossus: 'var(--ember)', crucibleLord: 'var(--gold)', rotValkyrie: 'var(--rot)',
 };
 
 /** Placeholder sprite: tinted rounded rect + glyph (+shadow), per style guide. */

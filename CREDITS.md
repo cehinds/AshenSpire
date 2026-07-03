@@ -13,9 +13,24 @@ Allowed licenses: CC0, CC BY 3.0/4.0 (with attribution), SIL OFL (fonts).
 
 ## Assets in use
 
+**v1 ships zero bundled third-party asset files.** Every visual is generated at
+runtime by `src/ui/assets.js` — the style guide's placeholder recipe (a tinted,
+rounded panel + a Unicode glyph + the entity's name). This is a deliberate design
+choice (SPEC §2.4): the game is fully playable and visually coherent with no
+downloads, and real art can be swapped in later by mapping an id to a URL with a
+row in the table below — no game-code changes.
+
 | Asset | Used for | Source | Author | License |
 |---|---|---|---|---|
-| *(none yet — assets land with M1/M4)* | | | | |
+| Generated placeholder sprites | enemy / player / card / relic art (`src/ui/assets.js`) | original to this project | EldenSpire | CC0 |
+| Unicode emoji glyphs (⚔ 🩸 💎 ☄ …) | card/relic/status/enemy icons, sigils | Unicode standard; rendered by the player's OS/browser emoji font | Unicode / OS vendor | Not embedded — system-rendered |
+| Cinzel (display), Inter (body) | typography | referenced by `font-family` with robust system fallbacks (Georgia / system-ui); **not bundled** in v1 | Google Fonts | SIL OFL (when self-hosted) |
+
+> When real art lands: download from a **Planned source** above, place it under
+> `assets/`, reference it from `src/ui/assets.js`, and add a row here (source URL,
+> author, license). Self-host the Cinzel/Inter `woff2` under `assets/fonts/` with
+> an `@font-face` block and a row here — the fallbacks keep the game readable
+> until then.
 
 ## Code
 
