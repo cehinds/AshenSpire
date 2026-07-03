@@ -157,8 +157,16 @@ export function buildShopStock(registries, rng, run) {
   return { cards, relics, flasks, removeCost };
 }
 
+// Shop card pool = the class pool + neutral colorless cards (StS-faithful:
+// colorless is sold at Merchants, not offered in standard combat rewards).
+// The status/curse colorless are rarity 'special' and excluded here.
+const SHOP_RARITIES = ['common', 'uncommon', 'rare'];
 function rollShopCards(registries, rng, classId, count) {
-  const pool = [...registries.classes.get(classId).cardPool];
+  const colorless = registries.cards
+    .all()
+    .filter((c) => c.class === 'colorless' && SHOP_RARITIES.includes(c.rarity))
+    .map((c) => c.id);
+  const pool = [...registries.classes.get(classId).cardPool, ...colorless];
   const out = [];
   while (out.length < count && pool.length) {
     const id = rng.pick('shop', pool);
