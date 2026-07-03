@@ -72,12 +72,19 @@ setSpritesEnabled(saves.loadMeta().settings.useSprites !== false);
 // ---- run state ----------------------------------------------------------------
 let run = null;
 let rng = null;
+let activeSlot = 1; // which save slot the current run persists to (SPEC §3.12 + slots)
+
+// Autosave the current run to its slot (after every committed choice).
+function persist() {
+  saves.saveRun(run, rng, activeSlot);
+}
 
 function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId }) {
+function newRun({ classId, seedString, customization, keepsakeId, slot = 1 }) {
+  activeSlot = slot;
   let seed;
   try {
     seed = seedFromString(seedString || randomSeedString());
@@ -100,7 +107,7 @@ function newRun({ classId, seedString, customization, keepsakeId }) {
   }
 
   buildActMap();
-  saves.saveRun(run, rng);
+  persist();
   showMap();
 }
 
@@ -127,12 +134,13 @@ function advanceAct() {
   run.lastEncounters = [];
   run.hp = run.maxHp; // full heal between acts (v1 kindness; M3 balance pass may trim)
   buildActMap();
-  saves.saveRun(run, rng);
+  persist();
   showMap();
 }
 
-function resumeRun() {
-  run = saves.loadRun(registries);
+function resumeRun(slot = 1) {
+  activeSlot = slot;
+  run = saves.loadRun(registries, slot);
   if (!run) return showTitle();
   rng = createRng(run.seed, run.streamCounters);
   if (run.combatEntered && run.combatEntered.encounterId) {
@@ -148,16 +156,23 @@ function resumeRun() {
 // ---- screens --------------------------------------------------------------------
 function showTitle() {
   run = null;
+  const slots = saves.listSlots().map(({ slot, summary }) => ({
+    slot,
+    summary: summary && {
+      ...summary,
+      className: registries.classes.has(summary.class) ? registries.classes.get(summary.class).name : summary.class,
+    },
+  }));
   mountTitle(app, {
-    hasSave: saves.hasRun(),
-    onBegin: showCustomize,
-    onContinue: resumeRun,
-    onHistory: showHistory,
-    onSettings: showSettings,
-    onAbandon: () => {
-      saves.clearRun();
+    slots,
+    onContinue: (slot) => resumeRun(slot),
+    onNew: (slot) => showCustomize(slot),
+    onDelete: (slot) => {
+      saves.clearRun(slot);
       showTitle();
     },
+    onHistory: showHistory,
+    onSettings: showSettings,
   });
 }
 
@@ -194,17 +209,25 @@ function runResult(victory) {
   };
 }
 
-function showCustomize() {
+function showCustomize(slot = 1) {
   mountCustomize(app, {
     registries,
     defaultSeedString: randomSeedString(),
     onBack: showTitle,
-    onStart: (config) => newRun(config),
+    onStart: (config) => newRun({ ...config, slot }),
   });
 }
 
 function showMap() {
-  mountMap(app, { registries, run, onPick: enterNode });
+  mountMap(app, {
+    registries,
+    run,
+    onPick: enterNode,
+    onSave: () => {
+      persist();
+      return activeSlot;
+    },
+  });
 }
 
 function enterNode(nodeId) {
@@ -218,7 +241,7 @@ function enterNode(nodeId) {
     const res = node.resolved || { kind: 'fight' };
     if (res.kind === 'event') {
       run.seenEvents.push(res.eventId);
-      saves.saveRun(run, rng);
+      persist();
       return showEvent(res.eventId);
     }
     kind = res.kind; // fight | shrine | treasure
@@ -233,11 +256,11 @@ function enterNode(nodeId) {
     case 'boss':
       return startFight('boss', nodeId);
     case 'shrine':
-      saves.saveRun(run, rng);
+      persist();
       return showRest();
     case 'merchant':
       run.shopStock = buildShopStock(registries, rng, run);
-      saves.saveRun(run, rng);
+      persist();
       return showShop();
     case 'treasure': {
       const relicId = rollRelicReward(registries, rng, run.relics);
@@ -246,7 +269,7 @@ function enterNode(nodeId) {
         run,
         rewards: { relicId, title: 'TREASURE' },
         onDone: () => {
-          saves.saveRun(run, rng);
+          persist();
           showMap();
         },
       });
@@ -268,7 +291,7 @@ function startFight(pool, nodeId) {
 
 function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   run.combatEntered = { nodeId, encounterId };
-  if (!resuming) saves.saveRun(run, rng); // counters BEFORE the combat → reload restarts it identically
+  if (!resuming) persist(); // counters BEFORE the combat → reload restarts it identically
   const enc = registries.encounters.get(encounterId);
   const combat = createCombat({
     registries,
@@ -308,7 +331,7 @@ function onCombatEnd(result, combat, enc) {
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
 
   if (result !== 'victory') {
-    saves.clearRun();
+    saves.clearRun(activeSlot);
     saves.recordResult(runResult(false));
     return mountGameOver(app, { registries, game: run, victory: false, onTitle: showTitle, onHistory: showHistory });
   }
@@ -320,7 +343,7 @@ function onCombatEnd(result, combat, enc) {
   if (enc.pool === 'boss') {
     if (run.actNumber >= 3) {
       // The Rot Valkyrie falls: the Great Rune is restored.
-      saves.clearRun();
+      saves.clearRun(activeSlot);
       saves.recordResult(runResult(true));
       return mountGameOver(app, { registries, game: run, victory: true, onTitle: showTitle, onHistory: showHistory });
     }
@@ -351,7 +374,7 @@ function onCombatEnd(result, combat, enc) {
     run,
     rewards,
     onDone: () => {
-      saves.saveRun(run, rng);
+      persist();
       showMap();
     },
   });
@@ -363,7 +386,7 @@ function showRest() {
     registries,
     run,
     onDone: () => {
-      saves.saveRun(run, rng);
+      persist();
       showMap();
     },
   });
@@ -373,10 +396,10 @@ function showShop() {
   mountShop(app, {
     registries,
     run,
-    onChanged: () => saves.saveRun(run, rng),
+    onChanged: () => persist(),
     onLeave: () => {
       run.shopStock = null;
-      saves.saveRun(run, rng);
+      persist();
       showMap();
     },
   });
@@ -395,7 +418,7 @@ function showEvent(eventId) {
         run.combatEntered = null;
         return enterCombat(run.mapNodeId, encounterId);
       }
-      saves.saveRun(run, rng);
+      persist();
       showMap();
     },
   });

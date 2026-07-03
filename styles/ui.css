@@ -105,6 +105,32 @@
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 .heal-note { color: var(--green); font-size: 13px; }
 
+/* ---------- save slots (title) ---------- */
+.slot-list { display: flex; flex-direction: column; gap: 10px; width: 430px; max-width: 92vw; animation: screenIn 500ms ease-out; }
+.slot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 16px; border: 1.5px solid var(--line-soft); border-radius: 12px;
+  background: var(--panel); transition: border-color 150ms, transform 150ms;
+}
+.slot.occupied:hover { border-color: var(--gold); transform: translateY(-1px); }
+.slot.empty { opacity: 0.9; }
+.slot-info { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.slot-tag { color: var(--muted); font-size: 9px; letter-spacing: 0.22em; }
+.slot-title { color: var(--gold); font-family: var(--font-display); font-size: 15px; }
+.slot-meta { color: var(--parchment); font-size: 11px; }
+.slot-seed { color: var(--muted); font-size: 10px; font-family: monospace; }
+.slot-empty-label { color: var(--muted); font-size: 13px; font-style: italic; }
+.slot-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.slot-delete { min-width: 34px; padding: 6px 8px; }
+.slot-delete.armed { color: var(--blood); border-color: var(--blood); }
+.save-toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 60;
+  background: var(--bg-raise); border: 1px solid var(--gold); color: var(--gold);
+  padding: 8px 18px; border-radius: 8px; font-size: 12px; letter-spacing: 0.1em;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6); animation: screenIn 200ms ease-out;
+}
+.map-buttons { display: flex; gap: 8px; }
+
 /* ---------- main menu ambience ---------- */
 .title-screen { position: relative; overflow: hidden; }
 .title-stack { animation: screenIn 700ms ease-out; }
