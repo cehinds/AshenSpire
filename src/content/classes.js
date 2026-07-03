@@ -64,10 +64,13 @@ export const classes = [
     cardPool: [
       // Commons
       'bloodPact', 'rotTouch', 'flagellation', 'penance', 'litany', 'graveOffering',
+      'bloodletting', 'contagion', 'cullTheWeak', 'transfusion', 'rotward',
       // Uncommons
       'martyrBlood', 'rotBloom', 'sacredHarvest', 'thornHaloCard', 'communionCard', 'goldenVow',
+      'plagueBearer', 'exsanguinate', 'stigmataCard', 'scourge', 'reclamation',
       // Rares
       'secondBloom', 'butterflyPlague', 'lifeTitheCard', 'crimsonRite',
+      'rotNova', 'lastRites', 'zealotryCard', 'bloodHarvest',
     ],
     description:
       'HP as a resource: pay blood for tempo, spread Scarlet Rot, and heal it all back. One pool — mistakes compound.',

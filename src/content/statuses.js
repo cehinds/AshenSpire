@@ -378,6 +378,54 @@ export const statuses = [
     tooltip: 'Whenever an enemy dies, heal 8 HP per stack.',
   },
   {
+    // Stigmata power: holy wounds that mend — every point of HP you spend heals
+    // a little back (and, with Gold Figurine, becomes Block). Gated to the
+    // owner's own HP loss; heal emits 'healed', not 'hpLost', so no loop.
+    id: 'stigmata',
+    name: 'Stigmata',
+    icon: '🩹',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'hpLost',
+        if: { p: 'eventTargetIsOwner' },
+        do: [
+          {
+            op: 'heal',
+            target: 'owner',
+            amount: { f: 'mul', args: [2, { f: 'stacks', status: 'stigmata', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever you lose HP, heal 2 HP per stack.',
+  },
+  {
+    // Zealotry power: pain answered with fury — each HP loss lashes a random
+    // enemy. damage emits 'damageDealt' on the enemy (not the owner's 'hpLost'),
+    // so it cannot re-trigger itself.
+    id: 'zealotry',
+    name: 'Zealotry',
+    icon: '⚡',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'hpLost',
+        if: { p: 'eventTargetIsOwner' },
+        do: [
+          {
+            op: 'damage',
+            target: 'randomEnemy',
+            amount: { f: 'mul', args: [3, { f: 'stacks', status: 'zealotry', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever you lose HP, deal 3 damage to a random enemy per stack.',
+  },
+  {
     // Blood Grease flask: this turn, attacks apply +2 Bleed per hit
     // (same hook shape as Bloodflame Stance; expires at turn end).
     id: 'bloodGrease',
