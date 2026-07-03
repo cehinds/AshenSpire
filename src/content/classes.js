@@ -40,10 +40,13 @@ export const classes = [
     cardPool: [
       // Commons
       'cometFragment', 'glintbladePhalanx', 'crystalBarrier', 'starShower', 'scholarsInsight', 'frostVeil',
+      'starSlicer', 'glintstoneWard', 'starlance', 'twinkling', 'frostNova',
       // Uncommons
       'glintstoneArc', 'lucidity', 'stargazerCard', 'astralArmorCard', 'moonveilCut', 'meteorite',
+      'meteorSwarm', 'gravityWell', 'ceruleanCoilCard', 'astralCleave', 'radiantSpray',
       // Rares
       'supernova', 'timeDilation', 'glintstoneKris', 'constellationCard',
+      'starfallBeam', 'starcaller', 'umbralWard', 'waxingMoonCard',
     ],
     description:
       'Sorcery combos: the second spell each turn is empowered (Glintstone). Fragile early — sequencing is everything.',

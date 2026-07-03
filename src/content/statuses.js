@@ -268,6 +268,52 @@ export const statuses = [
     ],
     tooltip: 'Whenever you gain Glintstone Charge, deal 4 damage per stack to a random enemy.',
   },
+  {
+    // Cerulean Coil power: turns each Skill into a trickle of Block. Same
+    // cardPlayed + cardTypeIs shape the Twinned Armor relic uses, as a power.
+    id: 'ceruleanCoil',
+    name: 'Cerulean Coil',
+    icon: '🌀',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'cardPlayed',
+        if: { p: 'cardTypeIs', type: 'skill' },
+        do: [
+          {
+            op: 'block',
+            target: 'owner',
+            amount: { f: 'mul', args: [2, { f: 'stacks', status: 'ceruleanCoil', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever you play a Skill, gain 2 Block per stack.',
+  },
+  {
+    // Waxing Moon power: scaling Vulnerable spread — the Astrologer's answer to
+    // Thorn Halo (Rot). Same ownerTurnStart + allEnemies shape.
+    id: 'waxingMoon',
+    name: 'Waxing Moon',
+    icon: '🌕',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [
+          {
+            op: 'applyStatus',
+            target: 'allEnemies',
+            status: 'vulnerable',
+            stacks: { f: 'mul', args: [2, { f: 'stacks', status: 'waxingMoon', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'At the start of your turn, apply 2 Vulnerable to ALL enemies per stack.',
+  },
 
   // ---- Prophet: blood economy powers (SPEC §5.1 identity) -------------------
   {
