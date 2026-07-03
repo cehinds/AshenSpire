@@ -118,7 +118,12 @@ function visualFor(e) {
         ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst')
         : null; // attack damage already shown by damageDealt
     case 'healed':
-      return e.amount > 0 ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal') : null;
+      return e.amount > 0
+        ? (ctx) => {
+            sfx.play('heal');
+            floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
+          }
+        : null;
     case 'meterFilled':
       return e.status === 'bleed'
         ? (ctx) => {
