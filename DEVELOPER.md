@@ -7,13 +7,26 @@ How to run, test, and add content. The architecture contract lives in
 ## Run & test
 
 ```
+# one command: validate content, run tests, then serve + open the browser
+run.bat                # Windows; optional port arg, e.g. `run.bat 3000`
+
 # play (no build step — any static server, or open index.html directly)
 npx serve .            # then http://localhost:3000
+node tools/serve.mjs   # or the zero-dependency built-in server (port 8000)
 
-# tests (17 assertions, SPEC §8)
+# tests (22 assertions, SPEC §8)
 node tests/run-node.mjs        # CI-style, exits 1 on failure
 # or open tests/index.html in a browser — same suite, green/red list
+
+# "build" for a data-driven, no-bundler game = validate the whole content
+# bundle (schemas, closed sets, id refs, scripts budget); exits 1 on failure
+node tools/build.mjs
 ```
+
+`run.bat` is the dedicated launcher: it runs `tools/build.mjs` (content
+validation), then `tests/run-node.mjs`, then `tools/serve.mjs`, aborting if
+build or tests fail. Only Node.js 18+ is required — no `npm install`. Set
+`NO_OPEN=1` to serve without launching a browser.
 
 ## The four layers (dependencies point down only)
 

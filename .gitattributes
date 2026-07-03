@@ -1,0 +1,3 @@
+# Windows batch scripts must keep CRLF line endings so cmd.exe parses them
+# correctly (a lone-LF .bat mis-splits lines). Checked out as CRLF everywhere.
+*.bat text eol=crlf
