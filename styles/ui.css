@@ -107,6 +107,24 @@
 .rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.7s ease-in-out infinite alternate; }
 .pad-live { color: var(--green); font-size: 11px; }
 .pad-off { color: var(--muted); font-size: 11px; }
+
+/* ---------- custom climb ---------- */
+.mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.mod-chip {
+  text-align: left; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line-soft); color: var(--parchment);
+  display: flex; flex-direction: column; gap: 2px; transition: border-color 140ms, background 140ms;
+}
+.mod-chip b { font-size: 12px; }
+.mod-chip span { font-size: 10.5px; color: var(--muted); line-height: 1.35; }
+.mod-chip:hover { border-color: var(--gold); }
+.mod-chip.on { background: rgba(201, 162, 39, 0.16); border-color: var(--gold); }
+.mod-chip.on b { color: var(--gold); }
+.mod-chip.forced { cursor: not-allowed; opacity: 0.85; }
+.mod-chip.forced::after { content: 'ASCENSION'; font-size: 8px; letter-spacing: 0.12em; color: var(--ember); margin-top: 2px; }
+.customrun .cz-label { color: var(--muted); font-size: 11px; letter-spacing: 0.18em; margin-bottom: 6px; }
+.draft-grid { gap: 16px; }
+.hx-custom { display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 4px; font-size: 9px; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
 .farewell { gap: 22px; }
 .farewell .title-big { opacity: 0.9; }
 

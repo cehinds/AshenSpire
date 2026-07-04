@@ -7,8 +7,8 @@ import { renderCard } from '../components/card.js';
 import { esc } from '../components/tooltip.js';
 import { sfx } from '../sfx.js';
 
-export function mountRest(app, { registries, run, onDone }) {
-  const heal = shrineHealAmount(registries, run);
+export function mountRest(app, { registries, run, onDone, healMult = 1 }) {
+  const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
 

@@ -52,13 +52,17 @@ export function rollRuneReward(registries, rng, pool, relicIds) {
  * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct
  * card ids (rarity-weighted per pool; elites offer +1 with Beast Eye).
  */
-export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [] }) {
+export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false }) {
   const bal = registries.balance.rewards;
   let count = bal.cardChoices;
   if (pool === 'elite' && passiveFlag(registries, relicIds, 'eliteExtraCardReward')) count += 1;
 
   const cardPool = registries.classes.get(classId).cardPool;
-  const weights = bal.rarityWeights[pool] || bal.rarityWeights.normal;
+  // flatRarity (Custom Climb "Chaos Rewards") ignores the pool weighting and
+  // gives every rarity equal odds — far more rares than normal.
+  const weights = flatRarity
+    ? { common: 1, uncommon: 1, rare: 1 }
+    : bal.rarityWeights[pool] || bal.rarityWeights.normal;
   const byRarity = {};
   for (const id of cardPool) {
     const def = registries.cards.get(id);

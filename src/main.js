@@ -10,7 +10,8 @@
 import { contentBundle } from './content/index.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
-import { createRunState } from './model/state.js';
+import { createRunState, createDeck, createIdGen } from './model/state.js';
+import { activeMods, isCustomRun } from './content/customMods.js';
 import { createRng, seedToString, seedFromString } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
 import { generateActMap } from './engine/mapgen.js';
@@ -26,6 +27,8 @@ import {
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
 import { mountCustomize } from './ui/screens/customize.js';
+import { mountCustomRun } from './ui/screens/customRun.js';
+import { mountDraft } from './ui/screens/draft.js';
 import { KEEPSAKES } from './content/keepsakes.js';
 import { executeRunEffects } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
@@ -102,7 +105,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, slot = 1 }) {
   activeSlot = slot;
   let seed;
   try {
@@ -113,6 +116,7 @@ function newRun({ classId, seedString, customization, keepsakeId, slot = 1 }) {
   run = createRunState({ seed, classId, registries });
   run.seedString = seedToString(seed);
   run.customization = customization || { name: 'Tarnished', glyph: '⚔', tint: 'gold' };
+  run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
   run.path = [];
   run.seenEvents = [];
@@ -125,9 +129,41 @@ function newRun({ classId, seedString, customization, keepsakeId, slot = 1 }) {
     executeRunEffects({ run, registries, rng }, keepsake.effects);
   }
 
+  // Custom Climb: alternate starting decks + start-of-run rule effects.
+  const deckMode = run.custom.deckMode || 'standard';
+  const mods = activeMods(run.custom);
+  if (deckMode === 'sealed') {
+    run.deck = createDeck(sealedDeckIds(classId), createIdGen('rc'));
+  } else if (deckMode === 'draft') {
+    run.deck = createDeck(draftBaseIds(), createIdGen('rc'));
+  }
+  if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
+  if (mods.hoarder) run.runes += 250;
+
+  if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
+  startClimb();
+}
+
+// After the deck is finalized (incl. any draft), generate the map and go.
+function startClimb() {
   buildActMap();
   persist();
   showMap();
+}
+
+// Sealed: keep a small basic core, fill the rest with random pool cards.
+function sealedDeckIds(classId) {
+  const pool = registries.classes.get(classId).cardPool.slice();
+  const ids = ['strike', 'strike', 'strike', 'strike', 'defend', 'defend', 'defend'];
+  for (let i = 0; i < 3 && pool.length; i++) {
+    const id = rng.pick('misc', pool);
+    pool.splice(pool.indexOf(id), 1);
+    ids.push(id);
+  }
+  return ids;
+}
+function draftBaseIds() {
+  return ['strike', 'strike', 'strike', 'strike', 'defend', 'defend', 'defend'];
 }
 
 // Generate the current act's map and pre-roll every '?' node (stream
@@ -151,7 +187,12 @@ function advanceAct() {
   run.mapNodeId = null;
   run.path = [];
   run.lastEncounters = [];
-  run.hp = run.maxHp; // full heal between acts (v1 kindness; M3 balance pass may trim)
+  // Full heal between acts — halved under the "Scarce Grace" custom rule.
+  if (run.custom && activeMods(run.custom).lessHealing) {
+    run.hp = Math.min(run.maxHp, run.hp + Math.floor((run.maxHp - run.hp) * 0.5));
+  } else {
+    run.hp = run.maxHp;
+  }
   buildActMap();
   persist();
   showMap();
@@ -194,6 +235,10 @@ function showTitle() {
     onHistory: showHistory,
     onSettings: showSettings,
     onQuit: quitGame,
+    onCustom: () => {
+      const empty = slots.find((s) => !s.summary);
+      showCustomRun(empty ? empty.slot : 1);
+    },
   });
 }
 
@@ -285,6 +330,8 @@ function runResult(victory) {
     damageDealt: run.stats.damageDealt,
     damageTaken: run.stats.damageTaken,
     name: run.customization && run.customization.name,
+    custom: isCustomRun(run.custom),
+    ascension: (run.custom && run.custom.ascension) || 0,
   };
 }
 
@@ -294,6 +341,28 @@ function showCustomize(slot = 1) {
     defaultSeedString: randomSeedString(),
     onBack: showTitle,
     onStart: (config) => newRun({ ...config, slot }),
+  });
+}
+
+function showCustomRun(slot = 1) {
+  mountCustomRun(app, {
+    registries,
+    defaultSeedString: randomSeedString(),
+    onBack: showTitle,
+    onStart: (config) => newRun({ ...config, slot }),
+  });
+}
+
+// Draft deck builder (Custom Climb): pick cards, then start the climb.
+function showDraft() {
+  mountDraft(app, {
+    registries,
+    classId: run.class,
+    rng,
+    onDone: (picks) => {
+      run.deck.push(...picks);
+      startClimb();
+    },
   });
 }
 
@@ -342,10 +411,19 @@ function enterNode(nodeId) {
     case 'shrine':
       persist();
       return showRest();
-    case 'merchant':
-      run.shopStock = buildShopStock(registries, rng, run);
+    case 'merchant': {
+      const stock = buildShopStock(registries, rng, run);
+      const pm = shopPriceMult();
+      if (pm !== 1) {
+        for (const kind of ['cards', 'relics', 'flasks']) {
+          for (const item of stock[kind]) item.cost = Math.ceil(item.cost * pm);
+        }
+        stock.removeCost = Math.ceil(stock.removeCost * pm);
+      }
+      run.shopStock = stock;
       persist();
       return showShop();
+    }
     case 'treasure': {
       const relicId = rollRelicReward(registries, rng, run.relics);
       return mountRewards(app, {
@@ -364,7 +442,22 @@ function enterNode(nodeId) {
 }
 
 // ---- combat ------------------------------------------------------------------------
+// Custom Climb combat rules → generic createCombat options for a given pool.
+function combatMods(pool) {
+  const mods = run.custom ? activeMods(run.custom) : {};
+  let hpMult = 1;
+  const enemyStatuses = [];
+  const playerStatuses = [];
+  if ((pool === 'elite' || pool === 'boss') && mods.toughElites) hpMult *= 1.3;
+  if (pool === 'boss' && mods.bigBosses) hpMult *= 1.5;
+  if (mods.deadlyEnemies) enemyStatuses.push({ status: 'strength', stacks: 1 });
+  if (mods.glassCannon) playerStatuses.push({ status: 'glassCannon', stacks: 1 });
+  return { hpMult, enemyStatuses, playerStatuses };
+}
+
 function startFight(pool, nodeId) {
+  // "Elite Gauntlet" chaos rule promotes ordinary monster nodes to elites.
+  if (pool === 'normal' && run.custom && activeMods(run.custom).allElite) pool = 'elite';
   const encounterId = rollEncounter(registries, rng, { pool, act: run.actNumber, exclude: run.lastEncounters });
   if (pool === 'normal') {
     run.lastEncounters.push(encounterId);
@@ -378,6 +471,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   if (!resuming) persist(); // counters BEFORE the combat → reload restarts it identically
   const enc = registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
+  const cm = combatMods(enc.pool);
   const combat = createCombat({
     registries,
     rng,
@@ -390,6 +484,9 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       flasks: run.flasks,
     },
     enemyIds: enc.enemies,
+    hpMult: cm.hpMult,
+    enemyStatuses: cm.enemyStatuses,
+    playerStatuses: cm.playerStatuses,
   });
   const label =
     enc.pool === 'boss'
@@ -441,7 +538,7 @@ function onCombatEnd(result, combat, enc) {
     const bossRewards = {
       title: `${registries.enemies.get(enc.enemies[0]).name.toUpperCase()} FALLS`,
       runes: rollRuneReward(registries, rng, 'boss', run.relics),
-      cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics }),
+      cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
     };
     return mountRewards(app, {
@@ -455,7 +552,7 @@ function onCombatEnd(result, combat, enc) {
   const rewards = {
     title: enc.pool === 'elite' ? 'ELITE VANQUISHED' : 'VICTORY',
     runes: rollRuneReward(registries, rng, enc.pool, run.relics),
-    cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics }),
+    cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
   };
@@ -470,11 +567,25 @@ function onCombatEnd(result, combat, enc) {
   });
 }
 
+// Custom Climb helpers used across nodes.
+function chaosRewardsOn() {
+  return !!(run.custom && activeMods(run.custom).chaosRewards);
+}
+function shopPriceMult() {
+  const mods = run.custom ? activeMods(run.custom) : {};
+  let m = 1;
+  if (mods.expensiveShops) m *= 1.5;
+  if (mods.hoarder) m *= 2;
+  return m;
+}
+
 // ---- non-combat nodes -----------------------------------------------------------------
 function showRest() {
+  const healMult = run.custom && activeMods(run.custom).lessHealing ? 0.5 : 1;
   mountRest(app, {
     registries,
     run,
+    healMult,
     onDone: () => {
       persist();
       showMap();

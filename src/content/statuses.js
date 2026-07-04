@@ -603,4 +603,15 @@ export const statuses = [
     ],
     tooltip: 'At the start of your next turn: gain 4 Block per stack.',
   },
+  {
+    // Custom Climb "Glass Cannon" modifier — applied to the player at combat
+    // start (both directions at once). Pure data over existing modifier keys.
+    id: 'glassCannon',
+    name: 'Glass Cannon',
+    icon: '💥',
+    stackMode: 'unique',
+    decay: 'none',
+    modifiers: { damageDealtMult: 1.25, damageTakenMult: 1.25 },
+    tooltip: 'Deal 25% more attack damage, and take 25% more.',
+  },
 ];
