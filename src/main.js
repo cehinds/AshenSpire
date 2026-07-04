@@ -38,6 +38,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { openSettings } from './ui/screens/settings.js';
 import { setSpritesEnabled } from './ui/assets.js';
+import { setAnimSpeed } from './ui/fx.js';
 
 const app = document.getElementById('app');
 
@@ -70,6 +71,7 @@ const saves = createSaveManager(pickStorage());
 function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
+  setAnimSpeed(settings.animSpeed || 'normal');
 }
 applyDisplaySettings(saves.loadMeta().settings);
 

@@ -294,7 +294,10 @@ function enemyPhase(combat) {
 
 // Enqueue a move's payload as ordinary actions (SPEC §3.9: only executed
 // actions mutate). Order: damage hits, block, then effects.
+// 'enemyMoveStarted' marks the acting enemy so the UI can pace playback
+// one actor at a time (SPEC §7.4); content triggers may also key off it.
 function executeMovePayload(combat, enemy, move, moveId) {
+  combat.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
   if (move.damage != null) {
     combat.enqueue({
       effect: { op: 'damage', target: 'player', amount: move.damage, hits: move.hits != null ? move.hits : 1 },

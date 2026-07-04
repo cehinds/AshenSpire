@@ -214,6 +214,13 @@
 }
 .toggle.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); }
 .toggle.on .knob { left: 22px; background: var(--gold); }
+.choice-group { display: flex; gap: 4px; flex-shrink: 0; }
+.choice-group .choice {
+  padding: 5px 9px; font-size: 10px; letter-spacing: 0.08em; border-radius: 6px;
+  background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
+  cursor: pointer; transition: color 160ms, border-color 160ms, background 160ms;
+}
+.choice-group .choice.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); color: var(--gold); }
 
 /* ---------- first-run tutorial overlay ---------- */
 .tut-veil { position: fixed; inset: 0; z-index: 800; }

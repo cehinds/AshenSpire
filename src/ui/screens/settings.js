@@ -17,6 +17,14 @@ const ROWS = [
     label: 'Reduced motion',
     note: 'Calm the ambient title effects and shorten animations.',
   },
+  {
+    key: 'animSpeed',
+    type: 'choice',
+    def: 'normal',
+    choices: ['slow', 'normal', 'fast', 'instant'],
+    label: 'Combat pacing',
+    note: 'How deliberately actions play out — one actor at a time, or instant.',
+  },
 ];
 
 // Resolve a stored value against its default (defaults keep meta.settings sparse).
@@ -28,6 +36,16 @@ export function openSettings({ meta, onChange }) {
   const settings = meta.settings || (meta.settings = {});
 
   const rowsHtml = ROWS.map((r) => {
+    if (r.type === 'choice') {
+      const cur = r.choices.includes(settings[r.key]) ? settings[r.key] : r.def;
+      const opts = r.choices
+        .map((c) => `<button class="choice${c === cur ? ' on' : ''}" data-key="${r.key}" data-val="${c}">${c.toUpperCase()}</button>`)
+        .join('');
+      return `<div class="set-row">
+          <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+          <div class="choice-group">${opts}</div>
+        </div>`;
+    }
     const on = valueOf(settings, r);
     return `<div class="set-row">
         <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
@@ -52,6 +70,15 @@ export function openSettings({ meta, onChange }) {
     if (e.target === veil) close();
   });
   veil.querySelector('#set-close').addEventListener('click', close);
+
+  veil.querySelectorAll('.choice').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const group = btn.parentElement;
+      group.querySelectorAll('.choice').forEach((b) => b.classList.toggle('on', b === btn));
+      settings[btn.dataset.key] = btn.dataset.val;
+      onChange({ [btn.dataset.key]: btn.dataset.val });
+    });
+  });
 
   veil.querySelectorAll('.toggle').forEach((btn) => {
     btn.addEventListener('click', () => {

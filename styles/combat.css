@@ -157,7 +157,31 @@
   text-shadow: 0 0 30px rgba(201, 162, 39, 0.7); animation: banner-pop 300ms ease-out forwards;
 }
 .fx-banner.blood { color: var(--ember); }
+.fx-banner.turn { font-size: 24px; color: var(--parchment); text-shadow: 0 0 24px rgba(230, 220, 195, 0.5); }
 .combat.shake { animation: shake 200ms; }
+
+/* ---------- paced playback: one actor at a time (SPEC §7.4) ---------- */
+/* Attack lunge: enemies step left toward the player, the player steps right. */
+.enemy .sprite.act-attack { animation: lunge-left 280ms ease-out; }
+.player .sprite.act-attack { animation: lunge-right 280ms ease-out; }
+.sprite.act-move { animation: act-step 260ms ease-out; }
+@keyframes lunge-left {
+  0% { transform: none; }
+  35% { transform: translateX(-26px) scale(1.06); filter: brightness(1.25); }
+  100% { transform: none; }
+}
+@keyframes lunge-right {
+  0% { transform: none; }
+  35% { transform: translateX(26px) scale(1.06); filter: brightness(1.25); }
+  100% { transform: none; }
+}
+@keyframes act-step {
+  0% { transform: none; }
+  40% { transform: translateY(-8px) scale(1.05); filter: brightness(1.35) drop-shadow(0 0 12px rgba(201, 162, 39, 0.55)); }
+  100% { transform: none; }
+}
+.reduced-motion .sprite.act-attack,
+.reduced-motion .sprite.act-move { animation: none; }
 
 /* ---------- ability / relic / status fx ---------- */
 .sprite.hitflash > :first-child { animation: hitflash 200ms ease-out; }

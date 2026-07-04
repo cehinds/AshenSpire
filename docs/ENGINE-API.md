@@ -430,6 +430,7 @@ current dispatch's `events`.
 | `combatEnd` | `{ victory: bool }` (triggers on it cannot enqueue combat actions) |
 | `playerTurnStart` / `playerTurnEnd` | `{ turn }` |
 | `enemyTurnStart` / `enemyTurnEnd` | `{ turn }` |
+| `enemyMoveStarted` | `{ sourceId, enemyId, moveId, kind }` — fired as an enemy begins executing its move (the UI paces per-actor playback on it) |
 | `cardDrawn` | `{ cardInstanceId, cardId }` |
 | `cardPlayed` | `{ cardInstanceId, cardId, cardType, targetId, ordinalThisTurn, ordinalThisCombat, energySpent }` |
 | `cardExhausted` | `{ cardInstanceId, cardId, reason: 'played'\|'ethereal'\|'effect' }` |
