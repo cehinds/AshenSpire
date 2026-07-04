@@ -82,11 +82,32 @@ sfx.sink = (id) => audio.sfx(id);
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
 initInput({ getSettings: () => saves.loadMeta().settings || {} });
 
+// Accent palettes — each swaps the primary accent (--gold) plus its rgb form
+// (used by focus glow / halos). Keys match the settings 'accent' choices.
+const ACCENTS = {
+  gold: { hex: '#c9a227', rgb: '201, 162, 39' },
+  crimson: { hex: '#c1453a', rgb: '193, 69, 58' },
+  frost: { hex: '#7fa8c9', rgb: '127, 168, 201' },
+  verdant: { hex: '#8bae54', rgb: '139, 174, 84' },
+  violet: { hex: '#a06cc8', rgb: '160, 108, 200' },
+};
+
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;
 function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
+  document.body.classList.toggle('hi-contrast', settings.highContrast === true);
+  document.body.classList.toggle('large-text', settings.largeText === true);
+  document.body.classList.toggle('no-shake', settings.screenShake === false);
+  // Accent theme → CSS variables on the root (falls back to gold).
+  const accent = ACCENTS[settings.accent] || ACCENTS.gold;
+  const root = document.documentElement.style;
+  root.setProperty('--gold', accent.hex);
+  root.setProperty('--accent-rgb', accent.rgb);
+  // Interface scale — zoom the whole app; 100 = untouched.
+  const scale = Math.max(50, Math.min(200, Number(settings.uiScale) || 100));
+  document.body.style.zoom = scale === 100 ? '' : String(scale / 100);
   setAnimSpeed(settings.animSpeed || 'normal');
   audio.setVolumes(settings);
   // Re-point external music only when the folder actually changed (avoids

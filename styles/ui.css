@@ -91,7 +91,7 @@
 /* ---------- keyboard / gamepad focus cursor ---------- */
 .gp-focus {
   outline: 3px solid var(--gold) !important; outline-offset: 2px;
-  box-shadow: 0 0 16px rgba(201, 162, 39, 0.6) !important; border-radius: 6px;
+  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.6) !important; border-radius: 6px;
 }
 .map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
 .reduced-motion .gp-focus { box-shadow: none !important; }

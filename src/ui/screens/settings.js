@@ -15,6 +15,14 @@ const ROWS = [
   { cat: 'Display', key: 'mapZoom', type: 'choice', def: '115',
     choices: ['100', '115', '130', '150'], label: 'Map zoom %',
     note: 'Default zoom when the act map opens. In-map + / − buttons override per view.' },
+  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
+    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
+    note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
+  { cat: 'Display', key: 'uiScale', type: 'choice', def: '100',
+    choices: ['90', '100', '110', '125'], label: 'Interface scale',
+    note: 'Zoom the whole interface — smaller for more room, larger for readability.' },
+  { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake',
+    note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
 
@@ -30,6 +38,10 @@ const ROWS = [
 
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: 'Reduced motion',
     note: 'Calm ambient effects, drop the map pulse, and shorten animations.' },
+  { cat: 'Accessibility', key: 'highContrast', def: false, label: 'High contrast',
+    note: 'Brighter text and stronger borders throughout for readability.' },
+  { cat: 'Accessibility', key: 'largeText', def: false, label: 'Larger text',
+    note: 'Bump body and tooltip text up a notch.' },
 ];
 
 const CATEGORIES = ['Display', 'Audio', 'Accessibility'];
