@@ -83,11 +83,19 @@ sfx.sink = (id) => audio.sfx(id);
 initInput({ getSettings: () => saves.loadMeta().settings || {} });
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
+let lastMusicFolder;
 function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
   setAnimSpeed(settings.animSpeed || 'normal');
   audio.setVolumes(settings);
+  // Re-point external music only when the folder actually changed (avoids
+  // re-fetching the manifest on every unrelated settings tweak).
+  const folder = settings.musicFolder || '';
+  if (folder !== lastMusicFolder) {
+    lastMusicFolder = folder;
+    audio.configureMusic({ folder });
+  }
 }
 applyDisplaySettings(saves.loadMeta().settings);
 
@@ -581,6 +589,7 @@ function shopPriceMult() {
 
 // ---- non-combat nodes -----------------------------------------------------------------
 function showRest() {
+  audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? 0.5 : 1;
   mountRest(app, {
     registries,
@@ -594,6 +603,7 @@ function showRest() {
 }
 
 function showShop() {
+  audio.music('shop');
   mountShop(app, {
     registries,
     run,

@@ -291,6 +291,12 @@
 .range-wrap { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .range-wrap .range-val { color: var(--gold); font-size: 11px; width: 24px; text-align: right; font-variant-numeric: tabular-nums; }
 input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor: pointer; }
+.set-row-wide { flex-wrap: wrap; }
+.set-text {
+  flex: 1; min-width: 200px; background: var(--panel); border: 1px solid var(--line);
+  color: var(--parchment); border-radius: 6px; padding: 6px 10px; font-size: 12px; font-family: monospace;
+}
+.set-text:focus { border-color: var(--gold); outline: none; }
 
 /* ---------- first-run tutorial overlay ---------- */
 .tut-veil { position: fixed; inset: 0; z-index: 800; }

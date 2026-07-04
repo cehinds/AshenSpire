@@ -24,6 +24,9 @@ const ROWS = [
     note: 'Ambient score for the title, map, and battles.' },
   { cat: 'Audio', key: 'sfxVolume', type: 'range', def: 75, label: 'Sound effects',
     note: 'Hits, blocks, bleed bursts, UI.' },
+  { cat: 'Audio', key: 'musicFolder', type: 'text', def: '', label: 'Music folder',
+    placeholder: 'e.g. music/ or https://…',
+    note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = built-in generated score.' },
 
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: 'Reduced motion',
     note: 'Calm ambient effects, drop the map pulse, and shorten animations.' },
@@ -37,6 +40,13 @@ function valueOf(settings, row) {
 }
 
 function rowHtml(settings, r) {
+  if (r.type === 'text') {
+    const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
+    return `<div class="set-row set-row-wide">
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <input type="text" class="set-text" spellcheck="false" data-key="${r.key}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}">
+      </div>`;
+  }
   if (r.type === 'range') {
     const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
     return `<div class="set-row">
@@ -96,6 +106,17 @@ export function renderSettings(container, { settings, onChange, grouped = true }
     html = ROWS.map((r) => rowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
+
+  container.querySelectorAll('.set-text').forEach((input) => {
+    // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
+    // mid-type.
+    const commit = () => {
+      settings[input.dataset.key] = input.value.trim();
+      onChange({ [input.dataset.key]: input.value.trim() });
+    };
+    input.addEventListener('change', commit);
+    input.addEventListener('blur', commit);
+  });
 
   container.querySelectorAll('.set-range').forEach((slider) => {
     slider.addEventListener('input', () => {

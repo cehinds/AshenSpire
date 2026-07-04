@@ -24,15 +24,56 @@ const SCALES = {
   dread: [0, 2, 3, 7, 8, 10, 12],
 };
 
-// Music beds: root frequency, scale, note cadence (ms), and a low drone.
+// Music beds per context. Each context has a `gain`, a `drone` flag, and a set
+// of procedural VARIANTS (root frequency, scale, note cadence in ms) — one is
+// picked at random each time the context starts, so the score varies between a
+// handful of "tracks" even with zero audio files. Shop and Rest have their own
+// calmer sets; Boss/Elite their own darker ones.
 const BEDS = {
-  title: { root: 146.83, scale: 'calm', cadence: 2600, drone: true, gain: 0.5 },
-  map: { root: 164.81, scale: 'calm', cadence: 2200, drone: true, gain: 0.42 },
-  combat: { root: 130.81, scale: 'tense', cadence: 1500, drone: true, gain: 0.5 },
-  elite: { root: 110.0, scale: 'tense', cadence: 1150, drone: true, gain: 0.55 },
-  boss: { root: 98.0, scale: 'dread', cadence: 1000, drone: true, gain: 0.6 },
-  victory: { root: 196.0, scale: 'calm', cadence: 1400, drone: false, gain: 0.5 },
+  title: { drone: true, gain: 0.5, variants: [
+    { root: 146.83, scale: 'calm', cadence: 2600 },
+    { root: 130.81, scale: 'dread', cadence: 3000 },
+    { root: 164.81, scale: 'calm', cadence: 2400 },
+  ] },
+  map: { drone: true, gain: 0.42, variants: [
+    { root: 164.81, scale: 'calm', cadence: 2200 },
+    { root: 155.56, scale: 'calm', cadence: 2500 },
+    { root: 174.61, scale: 'dread', cadence: 2000 },
+  ] },
+  combat: { drone: true, gain: 0.5, variants: [
+    { root: 130.81, scale: 'tense', cadence: 1500 },
+    { root: 123.47, scale: 'dread', cadence: 1300 },
+    { root: 146.83, scale: 'tense', cadence: 1400 },
+    { root: 138.59, scale: 'tense', cadence: 1250 },
+  ] },
+  elite: { drone: true, gain: 0.55, variants: [
+    { root: 110.0, scale: 'tense', cadence: 1150 },
+    { root: 103.83, scale: 'dread', cadence: 1050 },
+    { root: 116.54, scale: 'tense', cadence: 1100 },
+  ] },
+  boss: { drone: true, gain: 0.6, variants: [
+    { root: 98.0, scale: 'dread', cadence: 1000 },
+    { root: 92.5, scale: 'dread', cadence: 900 },
+    { root: 87.31, scale: 'tense', cadence: 950 },
+  ] },
+  shop: { drone: true, gain: 0.4, variants: [
+    { root: 196.0, scale: 'calm', cadence: 2200 },
+    { root: 174.61, scale: 'calm', cadence: 2000 },
+  ] },
+  rest: { drone: true, gain: 0.34, variants: [
+    { root: 130.81, scale: 'calm', cadence: 3200 },
+    { root: 146.83, scale: 'calm', cadence: 3000 },
+  ] },
+  victory: { drone: false, gain: 0.5, variants: [
+    { root: 196.0, scale: 'calm', cadence: 1400 },
+    { root: 220.0, scale: 'calm', cadence: 1200 },
+  ] },
 };
+
+// Contexts that can be backed by external audio files. A manifest maps each to
+// a list of file paths (see configureMusic); missing/failed loads fall back to
+// the procedural bed above.
+const MUSIC_CONTEXTS = Object.keys(BEDS);
 
 export function initAudio(settings = {}) {
   const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -54,6 +95,10 @@ export function initAudio(settings = {}) {
     nodes: [], // live music nodes to tear down on switch
     timer: null,
     sampleCache: new Map(),
+    folder: '', // external music folder/URL
+    tracks: {}, // context → [track urls] from the folder manifest
+    mediaEl: null, // currently-playing external <audio>, if any
+    mediaSources: new WeakMap(), // <audio> → MediaElementSource (one per element)
   };
   applyGains();
 
@@ -189,6 +234,18 @@ export function initAudio(settings = {}) {
       clearInterval(state.timer);
       state.timer = null;
     }
+    // Stop an external track if one is playing.
+    if (state.mediaEl) {
+      const el = state.mediaEl;
+      state.mediaEl = null;
+      try {
+        el.onended = null;
+        el.onerror = null;
+        el.pause();
+      } catch (e) {
+        /* ignore */
+      }
+    }
     const t = now();
     for (const n of state.nodes) {
       try {
@@ -202,6 +259,8 @@ export function initAudio(settings = {}) {
     }
     state.nodes = [];
   }
+
+  const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
   function drone(freq, gain) {
     const o = ctx.createOscillator();
@@ -238,15 +297,56 @@ export function initAudio(settings = {}) {
     const bed = BEDS[context];
     if (!bed || state.muted) return;
     resume();
-    // (Sample-based beds would load here from MUSIC_MANIFEST; none ship yet.)
-    if (bed.drone) drone(bed.root / 2, 0.12 * bed.gain);
-    const scale = SCALES[bed.scale];
+    // Prefer an external track for this context if the folder provided any;
+    // fall back to a procedural variant on missing/unplayable files.
+    const ext = state.tracks[context];
+    if (ext && ext.length) {
+      playExternal(context, ext);
+      return;
+    }
+    playProcedural(context, bed);
+  }
+
+  // Stream a random track from the context's list; when it ends, play another
+  // (fresh random pick → variety). Any load/decode error → procedural bed.
+  function playExternal(context, urls) {
+    const url = pickRandom(urls);
+    let el;
+    try {
+      el = new Audio(url);
+      el.crossOrigin = 'anonymous';
+      el.preload = 'auto';
+      if (!state.mediaSources.has(el)) {
+        const src = ctx.createMediaElementSource(el);
+        src.connect(musicBus);
+        state.mediaSources.set(el, src);
+      }
+    } catch (e) {
+      return playProcedural(context, BEDS[context]);
+    }
+    el.addEventListener('ended', () => {
+      if (state.context === context) playExternal(context, urls);
+    });
+    el.addEventListener('error', () => {
+      if (state.context === context) {
+        state.mediaEl = null;
+        playProcedural(context, BEDS[context]);
+      }
+    });
+    const p = el.play();
+    if (p && p.catch) p.catch(() => {}); // autoplay-block is handled by resume()
+    state.mediaEl = el;
+  }
+
+  function playProcedural(context, bed) {
+    const variant = pickRandom(bed.variants);
+    if (bed.drone) drone(variant.root / 2, 0.12 * bed.gain);
+    const scale = SCALES[variant.scale];
     let step = 0;
     const playNote = () => {
-      if (state.sfxVol < 0) return;
       const deg = scale[(step * 3 + (step % 2 ? 2 : 0)) % scale.length];
       const oct = step % 4 === 0 ? 2 : 1;
-      const freq = bed.root * oct * Math.pow(2, deg / 12);
+      const freq = variant.root * oct * Math.pow(2, deg / 12);
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = 'triangle';
@@ -261,7 +361,44 @@ export function initAudio(settings = {}) {
       step++;
     };
     playNote();
-    state.timer = setInterval(playNote, bed.cadence);
+    state.timer = setInterval(playNote, variant.cadence);
+  }
+
+  /**
+   * configureMusic({ folder }) — point the engine at a folder/URL of music.
+   * Fetches `<folder>/manifest.json` mapping context → [file paths], e.g.
+   *   { "combat": ["combat/track1.mp3", "combat/track2.mp3"], "boss": [...] }
+   * Relative entries resolve against the folder; each context then plays a
+   * random track from its list, looping to a fresh pick. No folder / no
+   * manifest / unreachable files → the procedural score is used. Re-applied
+   * live restarts the current context so a new folder takes effect at once.
+   */
+  async function configureMusic({ folder } = {}) {
+    state.folder = folder || '';
+    state.tracks = {};
+    if (folder) {
+      try {
+        const base = String(folder).replace(/\/+$/, '');
+        const res = await fetch(`${base}/manifest.json`);
+        if (res.ok) {
+          const m = await res.json();
+          for (const key of MUSIC_CONTEXTS) {
+            const list = m[key];
+            if (Array.isArray(list) && list.length) {
+              state.tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : `${base}/${f}`));
+            }
+          }
+        }
+      } catch (e) {
+        state.tracks = {}; // fall back entirely to procedural
+      }
+    }
+    // Re-trigger the current context so the new source is used immediately.
+    if (state.context && !state.muted) {
+      const c = state.context;
+      state.context = null;
+      music(c);
+    }
   }
 
   // ---- samples (manifest override path) ------------------------------------
@@ -301,7 +438,7 @@ export function initAudio(settings = {}) {
     }
   }
 
-  return { sfx, music, stopMusic, setVolumes, resume, isReal: true };
+  return { sfx, music, stopMusic, setVolumes, configureMusic, resume, isReal: true };
 }
 
 function clampVol(v, dflt) {
@@ -312,5 +449,5 @@ function clampVol(v, dflt) {
 
 // No-WebAudio fallback: a no-op engine so callers never branch.
 function silentEngine() {
-  return { sfx() {}, music() {}, stopMusic() {}, setVolumes() {}, resume() {}, isReal: false };
+  return { sfx() {}, music() {}, stopMusic() {}, setVolumes() {}, configureMusic() {}, resume() {}, isReal: false };
 }
