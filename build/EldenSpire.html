@@ -391,6 +391,12 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .range-wrap { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .range-wrap .range-val { color: var(--gold); font-size: 11px; width: 24px; text-align: right; font-variant-numeric: tabular-nums; }
 input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor: pointer; }
+.set-row-wide { flex-wrap: wrap; }
+.set-text {
+  flex: 1; min-width: 200px; background: var(--panel); border: 1px solid var(--line);
+  color: var(--parchment); border-radius: 6px; padding: 6px 10px; font-size: 12px; font-family: monospace;
+}
+.set-text:focus { border-color: var(--gold); outline: none; }
 
 /* ---------- first-run tutorial overlay ---------- */
 .tut-veil { position: fixed; inset: 0; z-index: 800; }
@@ -808,11 +814,19 @@ sfx.sink = (id) => audio.sfx(id);
 initInput({ getSettings: () => saves.loadMeta().settings || {} });
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
+let lastMusicFolder;
 function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
   setAnimSpeed(settings.animSpeed || 'normal');
   audio.setVolumes(settings);
+  // Re-point external music only when the folder actually changed (avoids
+  // re-fetching the manifest on every unrelated settings tweak).
+  const folder = settings.musicFolder || '';
+  if (folder !== lastMusicFolder) {
+    lastMusicFolder = folder;
+    audio.configureMusic({ folder });
+  }
 }
 applyDisplaySettings(saves.loadMeta().settings);
 
@@ -1306,6 +1320,7 @@ function shopPriceMult() {
 
 // ---- non-combat nodes -----------------------------------------------------------------
 function showRest() {
+  audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? 0.5 : 1;
   mountRest(app, {
     registries,
@@ -1319,6 +1334,7 @@ function showRest() {
 }
 
 function showShop() {
+  audio.music('shop');
   mountShop(app, {
     registries,
     run,
@@ -10974,6 +10990,9 @@ const ROWS = [
     note: 'Ambient score for the title, map, and battles.' },
   { cat: 'Audio', key: 'sfxVolume', type: 'range', def: 75, label: 'Sound effects',
     note: 'Hits, blocks, bleed bursts, UI.' },
+  { cat: 'Audio', key: 'musicFolder', type: 'text', def: '', label: 'Music folder',
+    placeholder: 'e.g. music/ or https://…',
+    note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = built-in generated score.' },
 
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: 'Reduced motion',
     note: 'Calm ambient effects, drop the map pulse, and shorten animations.' },
@@ -10987,6 +11006,13 @@ function valueOf(settings, row) {
 }
 
 function rowHtml(settings, r) {
+  if (r.type === 'text') {
+    const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
+    return `<div class="set-row set-row-wide">
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <input type="text" class="set-text" spellcheck="false" data-key="${r.key}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}">
+      </div>`;
+  }
   if (r.type === 'range') {
     const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
     return `<div class="set-row">
@@ -11046,6 +11072,17 @@ function renderSettings(container, { settings, onChange, grouped = true }) {
     html = ROWS.map((r) => rowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
+
+  container.querySelectorAll('.set-text').forEach((input) => {
+    // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
+    // mid-type.
+    const commit = () => {
+      settings[input.dataset.key] = input.value.trim();
+      onChange({ [input.dataset.key]: input.value.trim() });
+    };
+    input.addEventListener('change', commit);
+    input.addEventListener('blur', commit);
+  });
 
   container.querySelectorAll('.set-range').forEach((slider) => {
     slider.addEventListener('input', () => {
@@ -11219,10 +11256,22 @@ const FOCUS_SELECTOR = [
   '.toggle',
   '.slot-continue',
   '.slot-new',
+  '.class-pick:not(.locked)', // character creation + custom-run class picks
+  '.cz-opt',
+  '.cz-keepsake',
+  '.cr-class',
+  '.mod-chip',
   'input[type="range"]',
   'input[type="text"]',
   '[data-focusable]',
 ].join(',');
+
+// "Chrome" the focus cursor skips during normal play — the top bar, piles, map
+// side panel, zoom, and end-turn/energy. These are reached by their dedicated
+// (rebindable) keys / the Menu overlay instead of by wandering into them
+// (StS2-style: navigation stays on cards, targets, and map nodes). Ignored when
+// a modal/overlay is open, where its own contents ARE the scope.
+const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb';
 
 // Actions whose gamepad button is rebindable. Each maps to how it's delivered:
 // 'cursor' actions are handled here; 'key' actions dispatch a synthetic keydown
@@ -11272,21 +11321,62 @@ function visible(el) {
   return cs.visibility !== 'hidden' && cs.display !== 'none';
 }
 
+// The active focus scope: the topmost open modal/overlay if any, else the app.
+function scopeRoot() {
+  const modals = document.querySelectorAll('.modal-veil');
+  return modals.length ? modals[modals.length - 1] : document.getElementById('app') || document.body;
+}
+
 function focusables() {
-  return Array.from(document.querySelectorAll(FOCUS_SELECTOR)).filter(visible);
+  const root = scopeRoot();
+  const inModal = root.classList && root.classList.contains('modal-veil');
+  return Array.from(root.querySelectorAll(FOCUS_SELECTOR)).filter(
+    (el) => visible(el) && (inModal || !(el.closest && el.closest(CHROME)))
+  );
 }
 
 function current() {
   return document.querySelector('.gp-focus');
 }
 
-function setFocus(el) {
+// A stable identity for the focused element, so focus can be restored to the
+// "same" element after a screen re-render (focus memory between inputs).
+let focusKey = null;
+function keyOf(el) {
+  if (!el) return null;
+  const d = el.dataset || {};
+  if (d.instanceId) return `i:${d.instanceId}`;
+  if (d.eid) return `e:${d.eid}`;
+  if (d.classId) return `c:${d.classId}`;
+  if (d.mod) return `m:${d.mod}`;
+  if (d.deck) return `d:${d.deck}`;
+  if (d.tab) return `t:${d.tab}`;
+  if (d.slot) return `s:${el.className}:${d.slot}`;
+  if (el.id) return `#${el.id}`;
+  return `x:${(el.textContent || '').trim().slice(0, 28)}`;
+}
+function findByKey(k) {
+  if (!k) return null;
+  return focusables().find((el) => keyOf(el) === k) || null;
+}
+
+function setFocus(el, remember = true) {
   const prev = current();
   if (prev && prev !== el) prev.classList.remove('gp-focus');
   if (el) {
     el.classList.add('gp-focus');
     if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (remember) focusKey = keyOf(el);
+  } else if (remember) {
+    focusKey = null;
   }
+}
+
+/** Focus the first focusable matching a selector (used for combat targeting). */
+function focusFirst(selector) {
+  const el = focusables().find((e) => e.matches && e.matches(selector));
+  if (el) setFocus(el);
+  return !!el;
 }
 
 function ensureFocus() {
@@ -11484,6 +11574,26 @@ function stopPolling() {
 function initInput({ getSettings } = {}) {
   setBindings((getSettings && getSettings().bindings) || {});
   addEventListener('keydown', onKeydown, true);
+
+  // Focus memory: after a re-render drops the cursor, restore it to the same
+  // logical element (by key) if it still exists — so navigation doesn't snap
+  // back to the top between inputs. A full screen change won't match, leaving
+  // focus cleared until the next nav press (correct).
+  const appRoot = document.getElementById('app');
+  if (appRoot && typeof MutationObserver !== 'undefined') {
+    let scheduled = false;
+    const mo = new MutationObserver(() => {
+      if (scheduled) return;
+      scheduled = true;
+      setTimeout(() => {
+        scheduled = false;
+        if (!enabled || current() || !focusKey) return;
+        const el = findByKey(focusKey);
+        if (el) setFocus(el, false);
+      }, 0);
+    });
+    mo.observe(appRoot, { childList: true, subtree: true });
+  }
   addEventListener('gamepadconnected', () => {
     document.body.classList.add('has-gamepad');
     startPolling();
@@ -11504,7 +11614,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, setBindings, getBindings, actionForButton, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, setBindings, getBindings, actionForButton, focusFirst, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/screens/combat.js": function (module, exports, require) {
@@ -11524,6 +11634,7 @@ const { animateEvents, playTimeline } = require("src/ui/fx.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { overlayIsOpen } = require("src/ui/components/overlay.js");
+const { focusFirst } = require("src/ui/input.js");
 
 function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -11572,6 +11683,17 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let busy = false; // animating / resolving
+  let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
+
+  // Entering targeting mode: move the focus cursor onto an enemy so keyboard /
+  // gamepad players confirm a target next, not wander into the top bar. Prefer
+  // the last enemy they attacked (if still alive), else the first living one.
+  function focusTargeting() {
+    const living = combat.enemies.filter((e) => e.alive);
+    if (!living.length) return;
+    const pref = (lastTargetId && living.find((e) => e.id === lastTargetId)) || living[0];
+    focusFirst(`.combatant.enemy[data-eid="${pref.id}"]`);
+  }
 
   // Display snapshot for paced playback (SPEC §7.4): while a timeline plays,
   // bars/hand render from this pre-dispatch copy, advanced beat by beat, so
@@ -11953,6 +12075,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       if (pv.needsTarget) {
         selected = selected === inst.instanceId ? null : inst.instanceId;
         render();
+        if (selected) focusTargeting();
       } else {
         playCard(inst.instanceId, null);
       }
@@ -12029,6 +12152,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
           selected = inst.instanceId;
           selectedFlask = null;
           render();
+          focusTargeting();
         }
       } else {
         playCard(inst.instanceId, null);
@@ -12121,6 +12245,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
 
   function playCard(instanceId, targetId) {
     if (busy || combat.result) return;
+    if (targetId) lastTargetId = targetId; // remembered for the next card's aim
     selected = null;
     selectedFlask = null;
     hideTooltip();
@@ -12415,19 +12540,44 @@ function playTimeline(events, ctx, done) {
 
   const beats = groupBeats(events);
   let flushed = false;
+  let finished = false;
   const skip = () => {
     flushed = true;
   };
   addEventListener('pointerdown', skip, { once: true, capture: true });
   const finish = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(watchdog);
     removeEventListener('pointerdown', skip, { capture: true });
     if (done) done();
+  };
+  // Safety net: however playback ends (or a re-render throws mid-beat), never
+  // leave the caller's `busy` flag stuck — force completion after a bounded
+  // wall-clock budget. This is what prevents the "cards stop responding" hang.
+  const budget = 2000 + beats.length * (speed.beatMs + speed.lungeMs + 4 * speed.stepMs);
+  const watchdog = setTimeout(() => {
+    try {
+      if (ctx.onFlush) ctx.onFlush();
+    } catch (e) {
+      /* ignore */
+    }
+    finish();
+  }, budget);
+
+  const safe = (fn) => {
+    try {
+      if (fn) fn();
+    } catch (e) {
+      /* a render/visual error must not break the chain */
+    }
   };
 
   let bi = 0;
   const nextBeat = () => {
+    if (finished) return;
     if (flushed) {
-      if (ctx.onFlush) ctx.onFlush();
+      safe(() => ctx.onFlush && ctx.onFlush());
       finish();
       return;
     }
@@ -12438,15 +12588,15 @@ function playTimeline(events, ctx, done) {
     const beat = beats[bi++];
 
     if (beat.banner) {
-      banner(ctx.layer, beat.banner, 'turn');
-      if (ctx.onBeatApplied) ctx.onBeatApplied(beat);
+      safe(() => banner(ctx.layer, beat.banner, 'turn'));
+      safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
       setTimeout(nextBeat, Math.max(260, speed.beatMs));
       return;
     }
 
     // 1) actor animation (lunge for attacks, glow-step otherwise)
     const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
-    if (actorEl) flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs);
+    if (actorEl) safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
     const visuals = beat.events.map(visualFor).filter(Boolean);
@@ -12454,17 +12604,19 @@ function playTimeline(events, ctx, done) {
     setTimeout(() => {
       let vi = 0;
       const stepV = () => {
+        if (finished) return;
         if (flushed) {
           nextBeat();
           return;
         }
         if (vi < visuals.length) {
-          visuals[vi++](ctx);
+          const v = visuals[vi++];
+          safe(() => v(ctx));
           setTimeout(stepV, speed.stepMs);
           return;
         }
         // 3) HUD updates for this beat, 4) inter-beat breath
-        if (ctx.onBeatApplied) ctx.onBeatApplied(beat);
+        safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
         setTimeout(nextBeat, speed.beatMs);
       };
       stepV();
@@ -13121,15 +13273,56 @@ const SCALES = {
   dread: [0, 2, 3, 7, 8, 10, 12],
 };
 
-// Music beds: root frequency, scale, note cadence (ms), and a low drone.
+// Music beds per context. Each context has a `gain`, a `drone` flag, and a set
+// of procedural VARIANTS (root frequency, scale, note cadence in ms) — one is
+// picked at random each time the context starts, so the score varies between a
+// handful of "tracks" even with zero audio files. Shop and Rest have their own
+// calmer sets; Boss/Elite their own darker ones.
 const BEDS = {
-  title: { root: 146.83, scale: 'calm', cadence: 2600, drone: true, gain: 0.5 },
-  map: { root: 164.81, scale: 'calm', cadence: 2200, drone: true, gain: 0.42 },
-  combat: { root: 130.81, scale: 'tense', cadence: 1500, drone: true, gain: 0.5 },
-  elite: { root: 110.0, scale: 'tense', cadence: 1150, drone: true, gain: 0.55 },
-  boss: { root: 98.0, scale: 'dread', cadence: 1000, drone: true, gain: 0.6 },
-  victory: { root: 196.0, scale: 'calm', cadence: 1400, drone: false, gain: 0.5 },
+  title: { drone: true, gain: 0.5, variants: [
+    { root: 146.83, scale: 'calm', cadence: 2600 },
+    { root: 130.81, scale: 'dread', cadence: 3000 },
+    { root: 164.81, scale: 'calm', cadence: 2400 },
+  ] },
+  map: { drone: true, gain: 0.42, variants: [
+    { root: 164.81, scale: 'calm', cadence: 2200 },
+    { root: 155.56, scale: 'calm', cadence: 2500 },
+    { root: 174.61, scale: 'dread', cadence: 2000 },
+  ] },
+  combat: { drone: true, gain: 0.5, variants: [
+    { root: 130.81, scale: 'tense', cadence: 1500 },
+    { root: 123.47, scale: 'dread', cadence: 1300 },
+    { root: 146.83, scale: 'tense', cadence: 1400 },
+    { root: 138.59, scale: 'tense', cadence: 1250 },
+  ] },
+  elite: { drone: true, gain: 0.55, variants: [
+    { root: 110.0, scale: 'tense', cadence: 1150 },
+    { root: 103.83, scale: 'dread', cadence: 1050 },
+    { root: 116.54, scale: 'tense', cadence: 1100 },
+  ] },
+  boss: { drone: true, gain: 0.6, variants: [
+    { root: 98.0, scale: 'dread', cadence: 1000 },
+    { root: 92.5, scale: 'dread', cadence: 900 },
+    { root: 87.31, scale: 'tense', cadence: 950 },
+  ] },
+  shop: { drone: true, gain: 0.4, variants: [
+    { root: 196.0, scale: 'calm', cadence: 2200 },
+    { root: 174.61, scale: 'calm', cadence: 2000 },
+  ] },
+  rest: { drone: true, gain: 0.34, variants: [
+    { root: 130.81, scale: 'calm', cadence: 3200 },
+    { root: 146.83, scale: 'calm', cadence: 3000 },
+  ] },
+  victory: { drone: false, gain: 0.5, variants: [
+    { root: 196.0, scale: 'calm', cadence: 1400 },
+    { root: 220.0, scale: 'calm', cadence: 1200 },
+  ] },
 };
+
+// Contexts that can be backed by external audio files. A manifest maps each to
+// a list of file paths (see configureMusic); missing/failed loads fall back to
+// the procedural bed above.
+const MUSIC_CONTEXTS = Object.keys(BEDS);
 
 function initAudio(settings = {}) {
   const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -13151,6 +13344,10 @@ function initAudio(settings = {}) {
     nodes: [], // live music nodes to tear down on switch
     timer: null,
     sampleCache: new Map(),
+    folder: '', // external music folder/URL
+    tracks: {}, // context → [track urls] from the folder manifest
+    mediaEl: null, // currently-playing external <audio>, if any
+    mediaSources: new WeakMap(), // <audio> → MediaElementSource (one per element)
   };
   applyGains();
 
@@ -13286,6 +13483,18 @@ function initAudio(settings = {}) {
       clearInterval(state.timer);
       state.timer = null;
     }
+    // Stop an external track if one is playing.
+    if (state.mediaEl) {
+      const el = state.mediaEl;
+      state.mediaEl = null;
+      try {
+        el.onended = null;
+        el.onerror = null;
+        el.pause();
+      } catch (e) {
+        /* ignore */
+      }
+    }
     const t = now();
     for (const n of state.nodes) {
       try {
@@ -13299,6 +13508,8 @@ function initAudio(settings = {}) {
     }
     state.nodes = [];
   }
+
+  const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
   function drone(freq, gain) {
     const o = ctx.createOscillator();
@@ -13335,15 +13546,56 @@ function initAudio(settings = {}) {
     const bed = BEDS[context];
     if (!bed || state.muted) return;
     resume();
-    // (Sample-based beds would load here from MUSIC_MANIFEST; none ship yet.)
-    if (bed.drone) drone(bed.root / 2, 0.12 * bed.gain);
-    const scale = SCALES[bed.scale];
+    // Prefer an external track for this context if the folder provided any;
+    // fall back to a procedural variant on missing/unplayable files.
+    const ext = state.tracks[context];
+    if (ext && ext.length) {
+      playExternal(context, ext);
+      return;
+    }
+    playProcedural(context, bed);
+  }
+
+  // Stream a random track from the context's list; when it ends, play another
+  // (fresh random pick → variety). Any load/decode error → procedural bed.
+  function playExternal(context, urls) {
+    const url = pickRandom(urls);
+    let el;
+    try {
+      el = new Audio(url);
+      el.crossOrigin = 'anonymous';
+      el.preload = 'auto';
+      if (!state.mediaSources.has(el)) {
+        const src = ctx.createMediaElementSource(el);
+        src.connect(musicBus);
+        state.mediaSources.set(el, src);
+      }
+    } catch (e) {
+      return playProcedural(context, BEDS[context]);
+    }
+    el.addEventListener('ended', () => {
+      if (state.context === context) playExternal(context, urls);
+    });
+    el.addEventListener('error', () => {
+      if (state.context === context) {
+        state.mediaEl = null;
+        playProcedural(context, BEDS[context]);
+      }
+    });
+    const p = el.play();
+    if (p && p.catch) p.catch(() => {}); // autoplay-block is handled by resume()
+    state.mediaEl = el;
+  }
+
+  function playProcedural(context, bed) {
+    const variant = pickRandom(bed.variants);
+    if (bed.drone) drone(variant.root / 2, 0.12 * bed.gain);
+    const scale = SCALES[variant.scale];
     let step = 0;
     const playNote = () => {
-      if (state.sfxVol < 0) return;
       const deg = scale[(step * 3 + (step % 2 ? 2 : 0)) % scale.length];
       const oct = step % 4 === 0 ? 2 : 1;
-      const freq = bed.root * oct * Math.pow(2, deg / 12);
+      const freq = variant.root * oct * Math.pow(2, deg / 12);
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = 'triangle';
@@ -13358,7 +13610,44 @@ function initAudio(settings = {}) {
       step++;
     };
     playNote();
-    state.timer = setInterval(playNote, bed.cadence);
+    state.timer = setInterval(playNote, variant.cadence);
+  }
+
+  /**
+   * configureMusic({ folder }) — point the engine at a folder/URL of music.
+   * Fetches `<folder>/manifest.json` mapping context → [file paths], e.g.
+   *   { "combat": ["combat/track1.mp3", "combat/track2.mp3"], "boss": [...] }
+   * Relative entries resolve against the folder; each context then plays a
+   * random track from its list, looping to a fresh pick. No folder / no
+   * manifest / unreachable files → the procedural score is used. Re-applied
+   * live restarts the current context so a new folder takes effect at once.
+   */
+  async function configureMusic({ folder } = {}) {
+    state.folder = folder || '';
+    state.tracks = {};
+    if (folder) {
+      try {
+        const base = String(folder).replace(/\/+$/, '');
+        const res = await fetch(`${base}/manifest.json`);
+        if (res.ok) {
+          const m = await res.json();
+          for (const key of MUSIC_CONTEXTS) {
+            const list = m[key];
+            if (Array.isArray(list) && list.length) {
+              state.tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : `${base}/${f}`));
+            }
+          }
+        }
+      } catch (e) {
+        state.tracks = {}; // fall back entirely to procedural
+      }
+    }
+    // Re-trigger the current context so the new source is used immediately.
+    if (state.context && !state.muted) {
+      const c = state.context;
+      state.context = null;
+      music(c);
+    }
   }
 
   // ---- samples (manifest override path) ------------------------------------
@@ -13398,7 +13687,7 @@ function initAudio(settings = {}) {
     }
   }
 
-  return { sfx, music, stopMusic, setVolumes, resume, isReal: true };
+  return { sfx, music, stopMusic, setVolumes, configureMusic, resume, isReal: true };
 }
 
 function clampVol(v, dflt) {
@@ -13409,7 +13698,7 @@ function clampVol(v, dflt) {
 
 // No-WebAudio fallback: a no-op engine so callers never branch.
 function silentEngine() {
-  return { sfx() {}, music() {}, stopMusic() {}, setVolumes() {}, resume() {}, isReal: false };
+  return { sfx() {}, music() {}, stopMusic() {}, setVolumes() {}, configureMusic() {}, resume() {}, isReal: false };
 }
 
 
