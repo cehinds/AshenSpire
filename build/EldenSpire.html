@@ -207,6 +207,24 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.7s ease-in-out infinite alternate; }
 .pad-live { color: var(--green); font-size: 11px; }
 .pad-off { color: var(--muted); font-size: 11px; }
+
+/* ---------- custom climb ---------- */
+.mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.mod-chip {
+  text-align: left; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line-soft); color: var(--parchment);
+  display: flex; flex-direction: column; gap: 2px; transition: border-color 140ms, background 140ms;
+}
+.mod-chip b { font-size: 12px; }
+.mod-chip span { font-size: 10.5px; color: var(--muted); line-height: 1.35; }
+.mod-chip:hover { border-color: var(--gold); }
+.mod-chip.on { background: rgba(201, 162, 39, 0.16); border-color: var(--gold); }
+.mod-chip.on b { color: var(--gold); }
+.mod-chip.forced { cursor: not-allowed; opacity: 0.85; }
+.mod-chip.forced::after { content: 'ASCENSION'; font-size: 8px; letter-spacing: 0.12em; color: var(--ember); margin-top: 2px; }
+.customrun .cz-label { color: var(--muted); font-size: 11px; letter-spacing: 0.18em; margin-bottom: 6px; }
+.draft-grid { gap: 16px; }
+.hx-custom { display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 4px; font-size: 9px; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
 .farewell { gap: 22px; }
 .farewell .title-big { opacity: 0.9; }
 
@@ -725,7 +743,8 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 const { contentBundle } = require("src/content/index.js");
 const { validateContent } = require("src/model/validate.js");
 const { createRegistries } = require("src/model/registries.js");
-const { createRunState } = require("src/model/state.js");
+const { createRunState, createDeck, createIdGen } = require("src/model/state.js");
+const { activeMods, isCustomRun } = require("src/content/customMods.js");
 const { createRng, seedToString, seedFromString } = require("src/engine/rng.js");
 const { createCombat } = require("src/engine/combat.js");
 const { generateActMap } = require("src/engine/mapgen.js");
@@ -733,6 +752,8 @@ const { createSaveManager, createMemoryStorage } = require("src/engine/save.js")
 const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, buildShopStock, resolveUnknownNode } = require("src/engine/encounters.js");
 const { mountTitle } = require("src/ui/screens/title.js");
 const { mountCustomize } = require("src/ui/screens/customize.js");
+const { mountCustomRun } = require("src/ui/screens/customRun.js");
+const { mountDraft } = require("src/ui/screens/draft.js");
 const { KEEPSAKES } = require("src/content/keepsakes.js");
 const { executeRunEffects } = require("src/engine/actions.js");
 const { mountMap } = require("src/ui/screens/map.js");
@@ -809,7 +830,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, slot = 1 }) {
   activeSlot = slot;
   let seed;
   try {
@@ -820,6 +841,7 @@ function newRun({ classId, seedString, customization, keepsakeId, slot = 1 }) {
   run = createRunState({ seed, classId, registries });
   run.seedString = seedToString(seed);
   run.customization = customization || { name: 'Tarnished', glyph: '⚔', tint: 'gold' };
+  run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
   run.path = [];
   run.seenEvents = [];
@@ -832,9 +854,41 @@ function newRun({ classId, seedString, customization, keepsakeId, slot = 1 }) {
     executeRunEffects({ run, registries, rng }, keepsake.effects);
   }
 
+  // Custom Climb: alternate starting decks + start-of-run rule effects.
+  const deckMode = run.custom.deckMode || 'standard';
+  const mods = activeMods(run.custom);
+  if (deckMode === 'sealed') {
+    run.deck = createDeck(sealedDeckIds(classId), createIdGen('rc'));
+  } else if (deckMode === 'draft') {
+    run.deck = createDeck(draftBaseIds(), createIdGen('rc'));
+  }
+  if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
+  if (mods.hoarder) run.runes += 250;
+
+  if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
+  startClimb();
+}
+
+// After the deck is finalized (incl. any draft), generate the map and go.
+function startClimb() {
   buildActMap();
   persist();
   showMap();
+}
+
+// Sealed: keep a small basic core, fill the rest with random pool cards.
+function sealedDeckIds(classId) {
+  const pool = registries.classes.get(classId).cardPool.slice();
+  const ids = ['strike', 'strike', 'strike', 'strike', 'defend', 'defend', 'defend'];
+  for (let i = 0; i < 3 && pool.length; i++) {
+    const id = rng.pick('misc', pool);
+    pool.splice(pool.indexOf(id), 1);
+    ids.push(id);
+  }
+  return ids;
+}
+function draftBaseIds() {
+  return ['strike', 'strike', 'strike', 'strike', 'defend', 'defend', 'defend'];
 }
 
 // Generate the current act's map and pre-roll every '?' node (stream
@@ -858,7 +912,12 @@ function advanceAct() {
   run.mapNodeId = null;
   run.path = [];
   run.lastEncounters = [];
-  run.hp = run.maxHp; // full heal between acts (v1 kindness; M3 balance pass may trim)
+  // Full heal between acts — halved under the "Scarce Grace" custom rule.
+  if (run.custom && activeMods(run.custom).lessHealing) {
+    run.hp = Math.min(run.maxHp, run.hp + Math.floor((run.maxHp - run.hp) * 0.5));
+  } else {
+    run.hp = run.maxHp;
+  }
   buildActMap();
   persist();
   showMap();
@@ -901,6 +960,10 @@ function showTitle() {
     onHistory: showHistory,
     onSettings: showSettings,
     onQuit: quitGame,
+    onCustom: () => {
+      const empty = slots.find((s) => !s.summary);
+      showCustomRun(empty ? empty.slot : 1);
+    },
   });
 }
 
@@ -992,6 +1055,8 @@ function runResult(victory) {
     damageDealt: run.stats.damageDealt,
     damageTaken: run.stats.damageTaken,
     name: run.customization && run.customization.name,
+    custom: isCustomRun(run.custom),
+    ascension: (run.custom && run.custom.ascension) || 0,
   };
 }
 
@@ -1001,6 +1066,28 @@ function showCustomize(slot = 1) {
     defaultSeedString: randomSeedString(),
     onBack: showTitle,
     onStart: (config) => newRun({ ...config, slot }),
+  });
+}
+
+function showCustomRun(slot = 1) {
+  mountCustomRun(app, {
+    registries,
+    defaultSeedString: randomSeedString(),
+    onBack: showTitle,
+    onStart: (config) => newRun({ ...config, slot }),
+  });
+}
+
+// Draft deck builder (Custom Climb): pick cards, then start the climb.
+function showDraft() {
+  mountDraft(app, {
+    registries,
+    classId: run.class,
+    rng,
+    onDone: (picks) => {
+      run.deck.push(...picks);
+      startClimb();
+    },
   });
 }
 
@@ -1049,10 +1136,19 @@ function enterNode(nodeId) {
     case 'shrine':
       persist();
       return showRest();
-    case 'merchant':
-      run.shopStock = buildShopStock(registries, rng, run);
+    case 'merchant': {
+      const stock = buildShopStock(registries, rng, run);
+      const pm = shopPriceMult();
+      if (pm !== 1) {
+        for (const kind of ['cards', 'relics', 'flasks']) {
+          for (const item of stock[kind]) item.cost = Math.ceil(item.cost * pm);
+        }
+        stock.removeCost = Math.ceil(stock.removeCost * pm);
+      }
+      run.shopStock = stock;
       persist();
       return showShop();
+    }
     case 'treasure': {
       const relicId = rollRelicReward(registries, rng, run.relics);
       return mountRewards(app, {
@@ -1071,7 +1167,22 @@ function enterNode(nodeId) {
 }
 
 // ---- combat ------------------------------------------------------------------------
+// Custom Climb combat rules → generic createCombat options for a given pool.
+function combatMods(pool) {
+  const mods = run.custom ? activeMods(run.custom) : {};
+  let hpMult = 1;
+  const enemyStatuses = [];
+  const playerStatuses = [];
+  if ((pool === 'elite' || pool === 'boss') && mods.toughElites) hpMult *= 1.3;
+  if (pool === 'boss' && mods.bigBosses) hpMult *= 1.5;
+  if (mods.deadlyEnemies) enemyStatuses.push({ status: 'strength', stacks: 1 });
+  if (mods.glassCannon) playerStatuses.push({ status: 'glassCannon', stacks: 1 });
+  return { hpMult, enemyStatuses, playerStatuses };
+}
+
 function startFight(pool, nodeId) {
+  // "Elite Gauntlet" chaos rule promotes ordinary monster nodes to elites.
+  if (pool === 'normal' && run.custom && activeMods(run.custom).allElite) pool = 'elite';
   const encounterId = rollEncounter(registries, rng, { pool, act: run.actNumber, exclude: run.lastEncounters });
   if (pool === 'normal') {
     run.lastEncounters.push(encounterId);
@@ -1085,6 +1196,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   if (!resuming) persist(); // counters BEFORE the combat → reload restarts it identically
   const enc = registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
+  const cm = combatMods(enc.pool);
   const combat = createCombat({
     registries,
     rng,
@@ -1097,6 +1209,9 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       flasks: run.flasks,
     },
     enemyIds: enc.enemies,
+    hpMult: cm.hpMult,
+    enemyStatuses: cm.enemyStatuses,
+    playerStatuses: cm.playerStatuses,
   });
   const label =
     enc.pool === 'boss'
@@ -1148,7 +1263,7 @@ function onCombatEnd(result, combat, enc) {
     const bossRewards = {
       title: `${registries.enemies.get(enc.enemies[0]).name.toUpperCase()} FALLS`,
       runes: rollRuneReward(registries, rng, 'boss', run.relics),
-      cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics }),
+      cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
     };
     return mountRewards(app, {
@@ -1162,7 +1277,7 @@ function onCombatEnd(result, combat, enc) {
   const rewards = {
     title: enc.pool === 'elite' ? 'ELITE VANQUISHED' : 'VICTORY',
     runes: rollRuneReward(registries, rng, enc.pool, run.relics),
-    cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics }),
+    cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
   };
@@ -1177,11 +1292,25 @@ function onCombatEnd(result, combat, enc) {
   });
 }
 
+// Custom Climb helpers used across nodes.
+function chaosRewardsOn() {
+  return !!(run.custom && activeMods(run.custom).chaosRewards);
+}
+function shopPriceMult() {
+  const mods = run.custom ? activeMods(run.custom) : {};
+  let m = 1;
+  if (mods.expensiveShops) m *= 1.5;
+  if (mods.hoarder) m *= 2;
+  return m;
+}
+
 // ---- non-combat nodes -----------------------------------------------------------------
 function showRest() {
+  const healMult = run.custom && activeMods(run.custom).lessHealing ? 0.5 : 1;
   mountRest(app, {
     registries,
     run,
+    healMult,
     onDone: () => {
       persist();
       showMap();
@@ -1941,6 +2070,17 @@ const statuses = [
       },
     ],
     tooltip: 'At the start of your next turn: gain 4 Block per stack.',
+  },
+  {
+    // Custom Climb "Glass Cannon" modifier — applied to the player at combat
+    // start (both directions at once). Pure data over existing modifier keys.
+    id: 'glassCannon',
+    name: 'Glass Cannon',
+    icon: '💥',
+    stackMode: 'unique',
+    decay: 'none',
+    modifiers: { damageDealtMult: 1.25, damageTakenMult: 1.25 },
+    tooltip: 'Deal 25% more attack damage, and take 25% more.',
   },
 ];
 
@@ -6900,6 +7040,74 @@ function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax }) {
 Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, serializeRun, deserializeRun, createPlayerCombatEntity, createEnemyCombatEntity });
 
 },
+"src/content/customMods.js": function (module, exports, require) {
+// src/content/customMods.js — Custom Climb modifiers (data only).
+//
+// A tailored take on Slay the Spire 2's custom mode. Three groups:
+//   • DIFFICULTY — harder rules; the Ascension ladder just enables the first N
+//     of these in ASCENSION_ORDER, so "Ascension 4" == the four hardest-first
+//     rules, and every rule is also individually toggleable.
+//   • CHAOS — flavourful run-warping toggles, independent of difficulty.
+//   • DECK_MODES — how your starting deck is built.
+// The orchestrator (main.js) reads run.custom.mods[id] at the relevant hook;
+// nothing here is engine-specific.
+
+const DIFFICULTY_MODS = [
+  { id: 'toughElites', label: 'Tough Elites', desc: 'Elites and bosses have +30% HP.' },
+  { id: 'lessHealing', label: 'Scarce Grace', desc: 'Shrine rest and between-act healing are halved.' },
+  { id: 'deadlyEnemies', label: 'Deadly Foes', desc: 'Every enemy begins combat with +1 Strength.' },
+  { id: 'cursedStart', label: 'Cursed Start', desc: 'Begin the run with a Guilt curse shuffled into your deck.' },
+  { id: 'expensiveShops', label: 'Greedy Merchants', desc: 'Shop prices are 50% higher.' },
+  { id: 'bigBosses', label: 'Dread Bosses', desc: 'Act bosses have +50% HP.' },
+];
+
+const CHAOS_MODS = [
+  { id: 'allElite', label: 'Elite Gauntlet', desc: 'Every monster node is an Elite fight.' },
+  { id: 'hoarder', label: 'Hoarder', desc: 'Start with +250 runes — but every shop price doubles.' },
+  { id: 'chaosRewards', label: 'Chaos Rewards', desc: 'Card rewards ignore rarity: rares everywhere.' },
+  { id: 'glassCannon', label: 'Glass Cannon', desc: 'You deal +25% damage, but take +25% damage.' },
+];
+
+const DECK_MODES = [
+  { id: 'standard', label: 'Standard', desc: "Your class's normal starting deck." },
+  { id: 'sealed', label: 'Sealed', desc: 'A random starting deck drawn from your class pool.' },
+  { id: 'draft', label: 'Draft', desc: 'Draft your starting deck card by card.' },
+];
+
+// Ascension enables the first N difficulty rules (hardest impact first).
+const ASCENSION_ORDER = [
+  'toughElites',
+  'deadlyEnemies',
+  'lessHealing',
+  'bigBosses',
+  'cursedStart',
+  'expensiveShops',
+];
+const MAX_ASCENSION = ASCENSION_ORDER.length;
+
+const ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS];
+
+// True when a run carries any non-default rule (so it is flagged + excluded
+// from win-rate telemetry).
+function isCustomRun(custom) {
+  if (!custom) return false;
+  if (custom.ascension > 0) return true;
+  if (custom.deckMode && custom.deckMode !== 'standard') return true;
+  return !!(custom.mods && Object.values(custom.mods).some(Boolean));
+}
+
+// Resolve the effective active-mod set: explicit toggles OR ascension-enabled.
+function activeMods(custom) {
+  const out = { ...((custom && custom.mods) || {}) };
+  const asc = (custom && custom.ascension) || 0;
+  for (let i = 0; i < asc && i < ASCENSION_ORDER.length; i++) out[ASCENSION_ORDER[i]] = true;
+  return out;
+}
+
+
+Object.assign(module.exports, { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, ALL_MODS, isCustomRun, activeMods });
+
+},
 "src/engine/rng.js": function (module, exports, require) {
 // src/engine/rng.js — mulberry32 PRNG + named streams with saved counters (SPEC §3.11)
 //
@@ -7105,7 +7313,7 @@ const QUEUE_GUARD = 10000;
  * first player turn starts (energy set, 5 drawn, playerTurnStart triggers).
  * Setup events are in combat.eventLog.
  */
-function createCombat({ registries, rng, player, enemyIds }) {
+function createCombat({ registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [] }) {
   const bal = registries.balance || {};
   const combat = {
     registries,
@@ -7136,10 +7344,13 @@ function createCombat({ registries, rng, player, enemyIds }) {
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
 
-  // Enemies — HP rolled on stream 'enemyHP' (SPEC §3.11, §4.6).
+  // Enemies — HP rolled on stream 'enemyHP' (SPEC §3.11, §4.6). An optional
+  // hpMult (Custom Climb difficulty rules) scales the rolled HP after the roll,
+  // so the same seed rolls the same base then scales — determinism preserved.
   enemyIds.forEach((enemyId, i) => {
     const def = registries.enemies.get(enemyId);
-    const hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
+    let hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
+    if (hpMult !== 1) hp = Math.max(1, Math.round(hp * hpMult));
     combat.enemies.push(
       createEnemyCombatEntity({ instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax })
     );
@@ -7162,6 +7373,16 @@ function createCombat({ registries, rng, player, enemyIds }) {
   combat.piles.draw = [...innate, ...rest];
 
   combat.emit('combatStart', {});
+  // Optional Custom Climb buffs (generic — statuses are content ids, applied via
+  // the same applyStatus opcode content uses, so no entity-specific engine code).
+  for (const s of playerStatuses) {
+    combat.enqueue({ effect: { op: 'applyStatus', target: 'self', status: s.status, stacks: s.stacks }, source: combat.player, owner: combat.player, target: combat.player, meta: {} });
+  }
+  for (const enemy of combat.enemies) {
+    for (const s of enemyStatuses) {
+      combat.enqueue({ effect: { op: 'applyStatus', target: 'self', status: s.status, stacks: s.stacks }, source: enemy, owner: enemy, target: enemy, meta: {} });
+    }
+  }
   drainQueue(combat);
   rollIntents(combat, true);
   if (!combat.result) startPlayerTurn(combat);
@@ -9255,13 +9476,17 @@ function rollRuneReward(registries, rng, pool, relicIds) {
  * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct
  * card ids (rarity-weighted per pool; elites offer +1 with Beast Eye).
  */
-function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [] }) {
+function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false }) {
   const bal = registries.balance.rewards;
   let count = bal.cardChoices;
   if (pool === 'elite' && passiveFlag(registries, relicIds, 'eliteExtraCardReward')) count += 1;
 
   const cardPool = registries.classes.get(classId).cardPool;
-  const weights = bal.rarityWeights[pool] || bal.rarityWeights.normal;
+  // flatRarity (Custom Climb "Chaos Rewards") ignores the pool weighting and
+  // gives every rarity equal odds — far more rares than normal.
+  const weights = flatRarity
+    ? { common: 1, uncommon: 1, rare: 1 }
+    : bal.rarityWeights[pool] || bal.rarityWeights.normal;
   const byRarity = {};
   for (const id of cardPool) {
     const def = registries.cards.get(id);
@@ -9429,7 +9654,7 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 
 const { esc } = require("src/ui/components/tooltip.js");
 
-function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit }) {
+function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom }) {
   const embers = Array.from({ length: 7 }, (_, i) => {
     const left = 8 + ((i * 13.7) % 84);
     const delay = (i * 1.7) % 9;
@@ -9468,6 +9693,7 @@ function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSett
       </div>
       <div class="slot-list">${slotCards}</div>
       <div class="title-menu">
+        <button class="subtle" id="custom-climb">CUSTOM CLIMB</button>
         <button class="subtle" id="run-history">RUN HISTORY</button>
         <button class="subtle" id="settings">SETTINGS</button>
         <button class="subtle" id="quit-game">QUIT</button>
@@ -9478,6 +9704,7 @@ function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSett
   app.querySelector('#run-history').addEventListener('click', onHistory);
   app.querySelector('#settings').addEventListener('click', onSettings);
   if (onQuit) app.querySelector('#quit-game').addEventListener('click', onQuit);
+  if (onCustom) app.querySelector('#custom-climb').addEventListener('click', onCustom);
   app.querySelectorAll('.slot-continue').forEach((b) => b.addEventListener('click', () => onContinue(+b.dataset.slot)));
   app.querySelectorAll('.slot-new').forEach((b) => b.addEventListener('click', () => onNew(+b.dataset.slot)));
   // Delete is a two-click, self-resetting confirm (no blocking dialog).
@@ -9920,6 +10147,304 @@ function classGlyph(classId) {
 
 
 Object.assign(module.exports, { enemySprite, PORTRAIT_GLYPHS, PORTRAIT_TINTS, setSpritesEnabled, spritesAreEnabled, classSprite, playerSprite, tintCss, classGlyph });
+
+},
+"src/ui/screens/customRun.js": function (module, exports, require) {
+// src/ui/screens/customRun.js — Custom Climb setup (SPEC §10 ascension seam).
+//
+// Pick a class, an Ascension level (a preset that stacks difficulty rules), any
+// individual difficulty/chaos toggles, a deck mode, and a seed — then hand the
+// assembled { classId, seedString, custom } to the orchestrator. Custom runs
+// are flagged and kept out of win-rate telemetry (see history.js).
+
+const { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, activeMods } = require("src/content/customMods.js");
+const { classGlyph } = require("src/ui/assets.js");
+const { esc } = require("src/ui/components/tooltip.js");
+
+function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart }) {
+  const state = {
+    classId: registries.classes.all()[0].id,
+    ascension: 0,
+    mods: {}, // explicit toggles (on top of ascension-enabled rules)
+    deckMode: 'standard',
+  };
+
+  app.innerHTML = `
+    <div class="screen customrun" style="justify-content:flex-start;overflow-y:auto;gap:16px;padding-top:26px">
+      <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">CUSTOM CLIMB</h2>
+      <p class="subtitle">SHAPE YOUR OWN ASCENT — RESULTS ARE KEPT OUT OF WIN-RATE STATS</p>
+
+      <div style="display:flex;flex-direction:column;gap:16px;max-width:680px;width:92%">
+        <div><p class="cz-label">CLASS</p><div id="cr-classes" class="class-row" style="flex-wrap:wrap;justify-content:center"></div></div>
+
+        <div>
+          <p class="cz-label">ASCENSION <span id="cr-asc-val" style="color:var(--gold)">0</span> / ${MAX_ASCENSION}</p>
+          <input id="cr-asc" type="range" min="0" max="${MAX_ASCENSION}" step="1" value="0" style="width:100%;accent-color:var(--gold)">
+          <p class="set-note" id="cr-asc-note">No extra difficulty. Slide up to stack the rules below.</p>
+        </div>
+
+        <div><p class="cz-label">DIFFICULTY RULES</p><div id="cr-diff" class="mod-grid"></div></div>
+        <div><p class="cz-label">CHAOS</p><div id="cr-chaos" class="mod-grid"></div></div>
+        <div><p class="cz-label">STARTING DECK</p><div id="cr-deck" class="mod-grid"></div></div>
+
+        <div class="seed-line">Seed <input id="cr-seed" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></div>
+      </div>
+
+      <div style="display:flex;gap:14px;padding-bottom:24px">
+        <button class="subtle" id="cr-back">Back</button>
+        <button id="cr-start">BEGIN THE CLIMB</button>
+      </div>
+    </div>`;
+
+  const $ = (s) => app.querySelector(s);
+
+  // ---- class picks ----
+  const classes = $('#cr-classes');
+  for (const cls of registries.classes.all()) {
+    const el = document.createElement('div');
+    el.className = 'class-pick cr-class';
+    el.dataset.classId = cls.id;
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3><span class="chip">HP ${cls.maxHp}</span>`;
+    el.addEventListener('click', () => {
+      state.classId = cls.id;
+      classes.querySelectorAll('.cr-class').forEach((x) => x.classList.toggle('chosen', x === el));
+    });
+    classes.appendChild(el);
+  }
+  classes.querySelector('.cr-class').classList.add('chosen');
+
+  // ---- ascension slider (enables the first N difficulty rules) ----
+  const ascLabel = $('#cr-asc-val');
+  const ascNote = $('#cr-asc-note');
+  const asc = $('#cr-asc');
+  asc.addEventListener('input', () => {
+    state.ascension = Number(asc.value);
+    ascLabel.textContent = state.ascension;
+    const enabled = ASCENSION_ORDER.slice(0, state.ascension)
+      .map((id) => DIFFICULTY_MODS.find((m) => m.id === id).label)
+      .join(', ');
+    ascNote.textContent = state.ascension ? `Enables: ${enabled}.` : 'No extra difficulty. Slide up to stack the rules below.';
+    refreshModChips();
+  });
+
+  // ---- mod toggle grids ----
+  function modChip(m) {
+    const el = document.createElement('button');
+    el.className = 'mod-chip';
+    el.dataset.mod = m.id;
+    el.innerHTML = `<b>${esc(m.label)}</b><span>${esc(m.desc)}</span>`;
+    el.addEventListener('click', () => {
+      if (el.classList.contains('forced')) return; // locked on by the ascension level
+      state.mods[m.id] = !state.mods[m.id];
+      refreshModChips();
+    });
+    return el;
+  }
+  const diffBox = $('#cr-diff');
+  const chaosBox = $('#cr-chaos');
+  DIFFICULTY_MODS.forEach((m) => diffBox.appendChild(modChip(m)));
+  CHAOS_MODS.forEach((m) => chaosBox.appendChild(modChip(m)));
+
+  // Reflect both explicit toggles and ascension-enabled rules; ascension-forced
+  // rules show as "locked on" (can't be turned off below the slider level).
+  function refreshModChips() {
+    const eff = activeMods(state);
+    const forced = new Set(ASCENSION_ORDER.slice(0, state.ascension));
+    app.querySelectorAll('.mod-chip').forEach((el) => {
+      const id = el.dataset.mod;
+      el.classList.toggle('on', !!eff[id]);
+      el.classList.toggle('forced', forced.has(id));
+    });
+  }
+
+  // ---- deck mode ----
+  const deckBox = $('#cr-deck');
+  DECK_MODES.forEach((m, i) => {
+    const el = document.createElement('button');
+    el.className = `mod-chip${i === 0 ? ' on' : ''}`;
+    el.dataset.deck = m.id;
+    el.innerHTML = `<b>${esc(m.label)}</b><span>${esc(m.desc)}</span>`;
+    el.addEventListener('click', () => {
+      state.deckMode = m.id;
+      deckBox.querySelectorAll('.mod-chip').forEach((x) => x.classList.toggle('on', x === el));
+    });
+    deckBox.appendChild(el);
+  });
+
+  $('#cr-back').addEventListener('click', onBack);
+  $('#cr-start').addEventListener('click', () => {
+    onStart({
+      classId: state.classId,
+      seedString: $('#cr-seed').value.trim(),
+      custom: { ascension: state.ascension, mods: { ...state.mods }, deckMode: state.deckMode },
+    });
+  });
+
+  refreshModChips();
+}
+
+
+Object.assign(module.exports, { mountCustomRun });
+
+},
+"src/ui/screens/draft.js": function (module, exports, require) {
+// src/ui/screens/draft.js — Custom Climb "Draft" deck builder.
+//
+// Presents `rounds` rounds of `choices` cards from the class pool; the player
+// picks one each round to add to their starting deck. Deterministic on the
+// run's rng (stream 'cardRewards'), so a seed drafts the same offers.
+
+const { renderCard } = require("src/ui/components/card.js");
+const { createCardInstance, createIdGen } = require("src/model/state.js");
+
+function mountDraft(app, { registries, classId, rng, rounds = 3, choices = 3, onDone }) {
+  const pool = registries.classes.get(classId).cardPool.slice();
+  const idGen = createIdGen('df');
+  const picked = [];
+  let round = 0;
+
+  function renderRound() {
+    // Offer `choices` distinct cards from the remaining pool.
+    const offer = [];
+    const local = pool.slice();
+    for (let i = 0; i < choices && local.length; i++) {
+      const id = rng.pick('cardRewards', local);
+      local.splice(local.indexOf(id), 1);
+      offer.push(id);
+    }
+
+    app.innerHTML = `
+      <div class="screen" style="gap:18px">
+        <h2 style="color:var(--gold);font-size:24px;letter-spacing:.15em">DRAFT YOUR DECK</h2>
+        <p class="subtitle">PICK ${round + 1} OF ${rounds} — CHOOSE A CARD TO ADD</p>
+        <div class="grid draft-grid" style="justify-content:center"></div>
+        <p class="set-note">Drafted so far: <b id="draft-count">${picked.length}</b></p>
+      </div>`;
+
+    const grid = app.querySelector('.draft-grid');
+    for (const id of offer) {
+      const el = renderCard(registries, { instanceId: `preview_${id}`, cardId: id, upgraded: false }, {});
+      el.addEventListener('click', () => {
+        picked.push(createCardInstance(id, false, idGen));
+        // Remove one copy from the pool so later rounds skew fresh.
+        const idx = pool.indexOf(id);
+        if (idx >= 0) pool.splice(idx, 1);
+        round += 1;
+        if (round >= rounds) onDone(picked);
+        else renderRound();
+      });
+      grid.appendChild(el);
+    }
+  }
+
+  renderRound();
+}
+
+
+Object.assign(module.exports, { mountDraft });
+
+},
+"src/ui/components/card.js": function (module, exports, require) {
+// src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
+//
+// All numbers shown come from the engine: in combat, previewCard tokens
+// (live math, SPEC §3.13); outside combat, the card's own literal values via
+// computeTokenBindings. No math happens here.
+
+const { resolveCard } = require("src/model/registries.js");
+const { computeTokenBindings } = require("src/model/validate.js");
+const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+
+/** Static token values straight off the def (for reward/pile/deck views). */
+function staticTokens(def) {
+  const tokens = {};
+  for (const b of computeTokenBindings(def.effects || [])) {
+    const v = (def.effects[b.index] || {})[b.field];
+    if (typeof v === 'number') tokens[b.token] = v;
+  }
+  return tokens;
+}
+
+function fillTemplate(def, tokens, baseTokens) {
+  let html = esc(def.textTemplate);
+  html = html.replace(/\{([A-Za-z][\w.]*)\}/g, (m, tok) => {
+    const v = tokens[tok];
+    if (v == null) return m;
+    let cls = 'val';
+    if (baseTokens && typeof baseTokens[tok] === 'number') {
+      if (v > baseTokens[tok]) cls += ' up';
+      else if (v < baseTokens[tok]) cls += ' down';
+    }
+    return `<span class="${cls}">${v}</span>`;
+  });
+  // Light keyword coloring for readability.
+  html = html
+    .replace(/\b(Bleed|Scarlet Rot|Staggered|Poise)\b/g, '<span class="st-bleed">$1</span>')
+    .replace(/\b(Exhaust|Ethereal|Innate|Retain|Unplayable)\b/g, '<span class="kw">$1</span>');
+  return html;
+}
+
+/**
+ * renderCard(registries, ref, opts) → element.
+ *   ref  — { cardId, upgraded, instanceId? }
+ *   opts — { preview?    (previewCard result → live numbers),
+ *            affordable? (bool; greys out when false),
+ *            small?      (scale for reward/pile grids) }
+ */
+function renderCard(registries, ref, opts = {}) {
+  const def = resolveCard(registries, ref);
+  const el = document.createElement('div');
+  el.className = `card rarity-${def.rarity}${ref.upgraded ? ' upgraded' : ''}`;
+  if (opts.affordable === false) el.classList.add('unaffordable');
+  if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
+  el.dataset.cardId = def.id;
+
+  const base = staticTokens(def);
+  const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
+  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
+
+  el.innerHTML =
+    `<div class="cost">${esc(cost)}</div>` +
+    `<div class="cname">${esc(def.name)}</div>` +
+    `<div class="art">${esc(def.icon || '❖')}</div>` +
+    `<div class="ctype">${esc(def.type.toUpperCase())}</div>` +
+    `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
+
+  attachTooltip(el, () => cardTooltip(registries, def, tokens));
+  if (opts.small) {
+    el.style.transform = 'scale(0.92)';
+  }
+  return el;
+}
+
+function cardTooltip(registries, def, tokens) {
+  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)}</div>`;
+  html += `<div>${fillTemplate(def, tokens, null)}</div>`;
+  // Nested keyword + status tooltips (SPEC §7.3).
+  const lines = [];
+  for (const kw of def.keywords || []) {
+    if (registries.keywords.has(kw)) {
+      const k = registries.keywords.get(kw);
+      lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
+    }
+  }
+  for (const eff of def.effects || []) {
+    if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {
+      const s = registries.statuses.get(eff.status);
+      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    }
+    if (eff.op === 'enterStance' && registries.stances.has(eff.stance)) {
+      const s = registries.stances.get(eff.stance);
+      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    }
+  }
+  if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);
+  if (lines.length) html += `<div class="tt-kw">${lines.join('<br>')}</div>`;
+  return html;
+}
+
+
+Object.assign(module.exports, { staticTokens, renderCard });
 
 },
 "src/ui/screens/map.js": function (module, exports, require) {
@@ -10420,109 +10945,6 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
 
 
 Object.assign(module.exports, { overlayIsOpen, closeOverlay, openOverlay });
-
-},
-"src/ui/components/card.js": function (module, exports, require) {
-// src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
-//
-// All numbers shown come from the engine: in combat, previewCard tokens
-// (live math, SPEC §3.13); outside combat, the card's own literal values via
-// computeTokenBindings. No math happens here.
-
-const { resolveCard } = require("src/model/registries.js");
-const { computeTokenBindings } = require("src/model/validate.js");
-const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
-
-/** Static token values straight off the def (for reward/pile/deck views). */
-function staticTokens(def) {
-  const tokens = {};
-  for (const b of computeTokenBindings(def.effects || [])) {
-    const v = (def.effects[b.index] || {})[b.field];
-    if (typeof v === 'number') tokens[b.token] = v;
-  }
-  return tokens;
-}
-
-function fillTemplate(def, tokens, baseTokens) {
-  let html = esc(def.textTemplate);
-  html = html.replace(/\{([A-Za-z][\w.]*)\}/g, (m, tok) => {
-    const v = tokens[tok];
-    if (v == null) return m;
-    let cls = 'val';
-    if (baseTokens && typeof baseTokens[tok] === 'number') {
-      if (v > baseTokens[tok]) cls += ' up';
-      else if (v < baseTokens[tok]) cls += ' down';
-    }
-    return `<span class="${cls}">${v}</span>`;
-  });
-  // Light keyword coloring for readability.
-  html = html
-    .replace(/\b(Bleed|Scarlet Rot|Staggered|Poise)\b/g, '<span class="st-bleed">$1</span>')
-    .replace(/\b(Exhaust|Ethereal|Innate|Retain|Unplayable)\b/g, '<span class="kw">$1</span>');
-  return html;
-}
-
-/**
- * renderCard(registries, ref, opts) → element.
- *   ref  — { cardId, upgraded, instanceId? }
- *   opts — { preview?    (previewCard result → live numbers),
- *            affordable? (bool; greys out when false),
- *            small?      (scale for reward/pile grids) }
- */
-function renderCard(registries, ref, opts = {}) {
-  const def = resolveCard(registries, ref);
-  const el = document.createElement('div');
-  el.className = `card rarity-${def.rarity}${ref.upgraded ? ' upgraded' : ''}`;
-  if (opts.affordable === false) el.classList.add('unaffordable');
-  if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
-  el.dataset.cardId = def.id;
-
-  const base = staticTokens(def);
-  const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
-  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
-
-  el.innerHTML =
-    `<div class="cost">${esc(cost)}</div>` +
-    `<div class="cname">${esc(def.name)}</div>` +
-    `<div class="art">${esc(def.icon || '❖')}</div>` +
-    `<div class="ctype">${esc(def.type.toUpperCase())}</div>` +
-    `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
-
-  attachTooltip(el, () => cardTooltip(registries, def, tokens));
-  if (opts.small) {
-    el.style.transform = 'scale(0.92)';
-  }
-  return el;
-}
-
-function cardTooltip(registries, def, tokens) {
-  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)}</div>`;
-  html += `<div>${fillTemplate(def, tokens, null)}</div>`;
-  // Nested keyword + status tooltips (SPEC §7.3).
-  const lines = [];
-  for (const kw of def.keywords || []) {
-    if (registries.keywords.has(kw)) {
-      const k = registries.keywords.get(kw);
-      lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
-    }
-  }
-  for (const eff of def.effects || []) {
-    if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {
-      const s = registries.statuses.get(eff.status);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
-    }
-    if (eff.op === 'enterStance' && registries.stances.has(eff.stance)) {
-      const s = registries.stances.get(eff.stance);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
-    }
-  }
-  if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);
-  if (lines.length) html += `<div class="tt-kw">${lines.join('<br>')}</div>`;
-  return html;
-}
-
-
-Object.assign(module.exports, { staticTokens, renderCard });
 
 },
 "src/ui/screens/settings.js": function (module, exports, require) {
@@ -12298,8 +12720,8 @@ const { renderCard } = require("src/ui/components/card.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { sfx } = require("src/ui/sfx.js");
 
-function mountRest(app, { registries, run, onDone }) {
-  const heal = shrineHealAmount(registries, run);
+function mountRest(app, { registries, run, onDone, healMult = 1 }) {
+  const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
 
@@ -12604,13 +13026,17 @@ const { esc } = require("src/ui/components/tooltip.js");
 
 function mountHistory(app, { meta, onBack }) {
   const results = (meta.results || []).slice().reverse(); // most recent first
-  const total = results.length;
-  const wins = results.filter((r) => r.victory).length;
+  // Win-rate telemetry counts STANDARD runs only — custom climbs are excluded
+  // so their modifiers can't skew the balance numbers (SPEC §10).
+  const standard = results.filter((r) => !r.custom);
+  const customCount = results.length - standard.length;
+  const total = standard.length;
+  const wins = standard.filter((r) => r.victory).length;
   const pct = total ? Math.round((wins / total) * 100) : 0;
 
-  // Per-class win/run tallies (the balance telemetry payoff).
+  // Per-class win/run tallies (the balance telemetry payoff) — standard only.
   const byClass = {};
-  for (const r of results) {
+  for (const r of standard) {
     const k = r.className || r.class || '—';
     const b = (byClass[k] = byClass[k] || { runs: 0, wins: 0 });
     b.runs += 1;
@@ -12628,9 +13054,12 @@ function mountHistory(app, { meta, onBack }) {
       const reached = r.victory
         ? `Act ${r.act || 3} cleared`
         : `Act ${r.act || 1} · Floor ${r.floor != null ? r.floor : '—'}`;
+      const tag = r.custom
+        ? `<span class="hx-custom" title="Custom Climb — excluded from win rate">CUSTOM${r.ascension ? ` A${r.ascension}` : ''}</span>`
+        : '';
       return `<tr>
         <td>${outcome}</td>
-        <td>${esc(r.className || r.class || '—')}</td>
+        <td>${esc(r.className || r.class || '—')}${tag}</td>
         <td>${reached}</td>
         <td class="hx-num">${r.fightsWon != null ? r.fightsWon : '—'}</td>
         <td class="hx-seed">${esc(r.seed || '')}</td>
@@ -12638,8 +13067,9 @@ function mountHistory(app, { meta, onBack }) {
     })
     .join('');
 
-  const body = total
-    ? `<p class="subtitle">${total} RUN${total === 1 ? '' : 'S'} · ${wins} WON · ${pct}% WIN RATE</p>
+  const customNote = customCount ? ` · ${customCount} CUSTOM (not counted)` : '';
+  const body = results.length
+    ? `<p class="subtitle">${total} STANDARD RUN${total === 1 ? '' : 'S'} · ${wins} WON · ${pct}% WIN RATE${customNote}</p>
        <p class="hx-byclass">${classLine}</p>
        <div class="hx-wrap">
          <table class="hx-table">
