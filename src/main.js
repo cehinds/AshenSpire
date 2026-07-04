@@ -37,6 +37,7 @@ import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { openSettings } from './ui/screens/settings.js';
+import { openOverlay } from './ui/components/overlay.js';
 import { setSpritesEnabled } from './ui/assets.js';
 import { setAnimSpeed } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
@@ -207,6 +208,28 @@ function showHistory() {
   mountHistory(app, { meta: saves.loadMeta(), onBack: showTitle });
 }
 
+// The in-run tabbed overlay (Deck / Relics / Stats / Settings), shared by the
+// map and combat screens via their onMenu callback.
+function showOverlay(initialTab = 'deck') {
+  if (!run) return;
+  openOverlay({
+    registries,
+    run,
+    meta: saves.loadMeta(),
+    initialTab,
+    onSettingsChange: (changed) => {
+      const meta = saves.loadMeta();
+      Object.assign(meta.settings, changed);
+      saves.saveMeta(meta);
+      applyDisplaySettings(meta.settings);
+    },
+    onSave: () => {
+      persist();
+      return activeSlot;
+    },
+  });
+}
+
 // A run-history record (SPEC §3.12) — enriched so the history screen can show
 // class, progress, and per-class win rates.
 function runResult(victory) {
@@ -241,6 +264,7 @@ function showMap() {
     meta: saves.loadMeta(),
     onPick: enterNode,
     onSettings: showSettings,
+    onMenu: showOverlay,
     onSave: () => {
       persist();
       return activeSlot;
@@ -339,6 +363,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     label,
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
+    onMenu: showOverlay,
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
       const meta = saves.loadMeta();

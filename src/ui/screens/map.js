@@ -6,7 +6,7 @@
 
 import { passiveFlag } from '../../model/registries.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
-import { openPileModal } from '../components/piles.js';
+import { overlayIsOpen } from '../components/overlay.js';
 
 const ICONS = {
   monster: '⚔',
@@ -37,7 +37,7 @@ function defaultZoom(meta) {
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), 1.15);
 }
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onSettings }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMenu }) {
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -97,7 +97,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
           <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
         </div>
         <div class="map-buttons">
-          <button class="subtle deck-btn" id="view-deck">View deck (${run.deck.length})</button>
+          <button class="deck-btn" id="open-menu">☰ Menu</button>
           <button class="subtle deck-btn" id="save-run">Save</button>
           <button class="subtle deck-btn" id="map-settings">Settings</button>
         </div>
@@ -143,9 +143,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
     strip.appendChild(el);
   }
 
-  app.querySelector('#view-deck').addEventListener('click', () => {
-    openPileModal(registries, 'Your deck', run.deck);
-  });
+  if (onMenu) app.querySelector('#open-menu').addEventListener('click', () => onMenu('deck'));
 
   app.querySelector('#save-run').addEventListener('click', () => {
     const slot = onSave ? onSave() : null;
@@ -238,6 +236,28 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
     panning = false;
     scroll.classList.remove('grabbing');
   });
+
+  // Keyboard: M opens the menu overlay; + / − / 0 zoom; the overlay owns Esc
+  // while open. Removed when the screen is torn down (app.innerHTML replaced).
+  const mapKeys = (ev) => {
+    if (!app.querySelector('.mapscreen')) {
+      removeEventListener('keydown', mapKeys);
+      return;
+    }
+    if (overlayIsOpen()) return;
+    const tag = (ev.target && ev.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (ev.key === 'm' || ev.key === 'M') {
+      if (onMenu) onMenu('deck');
+    } else if (ev.key === '+' || ev.key === '=') {
+      stepZoom(1);
+    } else if (ev.key === '-' || ev.key === '_') {
+      stepZoom(-1);
+    } else if (ev.key === '0') {
+      centerOnCurrent();
+    }
+  };
+  addEventListener('keydown', mapKeys);
 
   applyZoom(false);
   // Center once the flex container actually has a measured height. A rAF can

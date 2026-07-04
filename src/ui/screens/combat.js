@@ -13,8 +13,9 @@ import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline } from '../fx.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
+import { overlayIsOpen } from '../components/overlay.js';
 
-export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings }) {
+export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
     <div class="combat">
       <header class="topbar">
@@ -27,6 +28,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
         <div class="flasks" style="display:flex;gap:6px"></div>
         <div class="relics"></div>
         <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
+        <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
         <button class="topbar-btn" id="combat-settings" title="Settings">⚙</button>
       </header>
       <div class="field">
@@ -462,6 +464,13 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (overlayIsOpen()) return; // the overlay owns input while open
+
+    if (ev.key === 'm' || ev.key === 'M') {
+      ev.preventDefault();
+      if (onMenu) onMenu('deck');
+      return;
+    }
 
     if (ev.key === 'Escape') {
       if (selected || selectedFlask != null) {
@@ -635,6 +644,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   $('.pile.discard').addEventListener('click', () => openPileModal(registries, 'Discard pile', combat.piles.discard));
   $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
   if (onSettings) $('#combat-settings').addEventListener('click', onSettings);
+  if (onMenu) $('#combat-menu').addEventListener('click', () => onMenu('deck'));
 
   render();
   // Combat-start events (relic triggers, opening draw) get a quick pass too.

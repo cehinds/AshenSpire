@@ -61,6 +61,31 @@
 .modal h2 { color: var(--gold); font-size: 16px; margin-bottom: 14px; }
 .modal .grid { display: flex; flex-wrap: wrap; gap: 14px; }
 
+/* ---------- in-run tabbed overlay ---------- */
+.overlay-modal { width: 760px; max-width: 92vw; height: 74vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.overlay-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.overlay-tabs .ov-tab {
+  padding: 7px 14px; border-radius: 8px 8px 0 0; font-size: 12px; letter-spacing: 0.05em;
+  background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer;
+}
+.overlay-tabs .ov-tab:hover { color: var(--parchment); }
+.overlay-tabs .ov-tab.on { color: var(--gold); border-color: var(--line); border-bottom-color: transparent; background: var(--bg-raise); }
+.overlay-actions { display: flex; gap: 8px; align-items: center; }
+.overlay-body { flex: 1; overflow: auto; padding: 18px; }
+.overlay-body .grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.ov-relic-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.ov-relic { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px; }
+.ov-relic-ic { font-size: 20px; flex-shrink: 0; }
+.ov-relic b { color: var(--parchment); font-size: 13px; }
+.ov-relic p { color: var(--muted); font-size: 11px; margin-top: 2px; line-height: 1.4; }
+.ov-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; max-width: 520px; }
+.ov-stat { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line-soft); padding: 6px 0; }
+.ov-stat span { color: var(--muted); font-size: 12px; }
+.ov-stat b { color: var(--parchment); font-size: 12px; }
+.set-cat { color: var(--gold); font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin: 14px 0 4px; }
+.set-cat:first-child { margin-top: 0; }
+
 /* ---------- generic screens ---------- */
 .screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }
 .screen .title-big { font-size: 44px; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
