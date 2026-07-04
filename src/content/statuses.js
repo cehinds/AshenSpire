@@ -339,6 +339,50 @@ export const statuses = [
     tooltip: 'At the start of your turn, apply 2 Vulnerable to ALL enemies per stack.',
   },
 
+  {
+    // Moonlit Shield power: every Glintstone Charge gained also hardens into
+    // Block. Same statusApplied + eventStatusIs/eventTargetIsOwner shape as
+    // Constellation, but pays out Block on the owner instead of damage.
+    id: 'moonlitShield',
+    name: 'Moonlit Shield',
+    icon: '🔷',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'statusApplied',
+        if: { p: 'all', preds: [{ p: 'eventStatusIs', status: 'glintstoneCharge' }, { p: 'eventTargetIsOwner' }] },
+        do: [
+          {
+            op: 'block',
+            target: 'owner',
+            amount: { f: 'mul', args: [3, { f: 'stacks', status: 'moonlitShield', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever you gain Glintstone Charge, gain 3 Block per stack.',
+  },
+  {
+    // Astromancer power: opens every turn already combo-primed and card-fed —
+    // the Astrologer's answer to Stargazer, with a draw riding along.
+    id: 'astromancer',
+    name: 'Astromancer',
+    icon: '📚',
+    stackMode: 'unique',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [
+          { op: 'applyStatus', target: 'owner', status: 'glintstoneCharge', stacks: 1 },
+          { op: 'draw', target: 'owner', amount: 1 },
+        ],
+      },
+    ],
+    tooltip: 'At the start of your turn, gain Glintstone Charge and draw a card.',
+  },
+
   // ---- Prophet: blood economy powers (SPEC §5.1 identity) -------------------
   {
     id: 'thornHalo',
@@ -450,6 +494,55 @@ export const statuses = [
     tooltip: 'Whenever you lose HP, deal 3 damage to a random enemy per stack.',
   },
   {
+    // Grace Tide power: every heal (self-cast or Gold Figurine's Block-on-heal
+    // notwithstanding) hardens into Strength. Same healed + eventTargetIsOwner
+    // shape as Gold Figurine's relic trigger, but as a power that scales.
+    id: 'graceTide',
+    name: 'Grace Tide',
+    icon: '🌊',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'healed',
+        if: { p: 'eventTargetIsOwner' },
+        do: [
+          {
+            op: 'applyStatus',
+            target: 'owner',
+            status: 'strength',
+            stacks: { f: 'stacks', status: 'graceTide', of: 'owner' },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever you heal, gain 1 Strength per stack.',
+  },
+  {
+    // Harbinger of Rot power: every Rot you spread mends you a little — gated
+    // to the owner's own applications via eventSourceIsOwner (the target is
+    // the enemy, not the owner, so eventTargetIsOwner would never fire here).
+    id: 'harbingerOfRot',
+    name: 'Harbinger of Rot',
+    icon: '❀',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'statusApplied',
+        if: { p: 'all', preds: [{ p: 'eventStatusIs', status: 'scarletRot' }, { p: 'eventSourceIsOwner' }] },
+        do: [
+          {
+            op: 'heal',
+            target: 'owner',
+            amount: { f: 'stacks', status: 'harbingerOfRot', of: 'owner' },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever you apply Scarlet Rot to an enemy, heal 1 HP per stack.',
+  },
+  {
     // Blood Grease flask: this turn, attacks apply +2 Bleed per hit
     // (same hook shape as Bloodflame Stance; expires at turn end).
     id: 'bloodGrease',
@@ -465,6 +558,29 @@ export const statuses = [
       },
     ],
     tooltip: 'Your attacks apply 2 extra Bleed per hit this turn.',
+  },
+  {
+    // Iron Vow power: pain hardens into guard — same hpLost + eventTargetIsOwner
+    // shape as Stigmata/Zealotry, but pays out Block instead of a heal/lash.
+    id: 'ironVow',
+    name: 'Iron Vow',
+    icon: '⛓',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'hpLost',
+        if: { p: 'eventTargetIsOwner' },
+        do: [
+          {
+            op: 'block',
+            target: 'owner',
+            amount: { f: 'mul', args: [3, { f: 'stacks', status: 'ironVow', of: 'owner' }] },
+          },
+        ],
+      },
+    ],
+    tooltip: 'Whenever you lose HP, gain 3 Block per stack.',
   },
   {
     id: 'bulwarkEcho',

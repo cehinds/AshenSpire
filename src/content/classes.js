@@ -18,14 +18,14 @@ export const classes = [
       // Commons
       'crimsonCleave', 'shieldBash', 'quickstep', 'guardCounter', 'ironResolve',
       'serratedBlade', 'enterBloodflame', 'enterBulwark',
-      'riposte', 'rend', 'cleavingBlow',
+      'riposte', 'rend', 'cleavingBlow', 'goreslash', 'bracingStance',
       // Uncommons
       'stomp', 'rallyingStandard', 'warSurgeon', 'hemorrhage', 'twinbladeFlurry',
       'shieldwall', 'kickOff',
-      'wardingLunge', 'impale', 'warcry',
+      'wardingLunge', 'impale', 'warcry', 'flameToBlade', 'ironVowCard',
       // Rares
       'executioner', 'lordsBlood', 'unbreakable', 'graftedArms', 'lastStand', 'warriorsVow',
-      'ruinousBlow', 'bloodhuntersStrike', 'sanguinePactCard',
+      'ruinousBlow', 'bloodhuntersStrike', 'sanguinePactCard', 'bloodTithe', 'poiseBreaker',
     ],
     description:
       'Weapon-arts duelist: stance dancing between Bloodflame offense and Bulwark defense, with Bleed and Poise as twin payoff meters.',
@@ -43,13 +43,13 @@ export const classes = [
     cardPool: [
       // Commons
       'cometFragment', 'glintbladePhalanx', 'crystalBarrier', 'starShower', 'scholarsInsight', 'frostVeil',
-      'starSlicer', 'glintstoneWard', 'starlance', 'twinkling', 'frostNova',
+      'starSlicer', 'glintstoneWard', 'starlance', 'twinkling', 'frostNova', 'shootingShard', 'wardingStar',
       // Uncommons
       'glintstoneArc', 'lucidity', 'stargazerCard', 'astralArmorCard', 'moonveilCut', 'meteorite',
-      'meteorSwarm', 'gravityWell', 'ceruleanCoilCard', 'astralCleave', 'radiantSpray',
+      'meteorSwarm', 'gravityWell', 'ceruleanCoilCard', 'astralCleave', 'radiantSpray', 'starPath', 'moonlitShieldCard',
       // Rares
       'supernova', 'timeDilation', 'glintstoneKris', 'constellationCard',
-      'starfallBeam', 'starcaller', 'umbralWard', 'waxingMoonCard',
+      'starfallBeam', 'starcaller', 'umbralWard', 'waxingMoonCard', 'celestialLance', 'astromancerCard',
     ],
     description:
       'Sorcery combos: the second spell each turn is empowered (Glintstone). Fragile early — sequencing is everything.',
@@ -67,13 +67,13 @@ export const classes = [
     cardPool: [
       // Commons
       'bloodPact', 'rotTouch', 'flagellation', 'penance', 'litany', 'graveOffering',
-      'bloodletting', 'contagion', 'cullTheWeak', 'transfusion', 'rotward',
+      'bloodletting', 'contagion', 'cullTheWeak', 'transfusion', 'rotward', 'painOffering', 'witheringTouch',
       // Uncommons
       'martyrBlood', 'rotBloom', 'sacredHarvest', 'thornHaloCard', 'communionCard', 'goldenVow',
-      'plagueBearer', 'exsanguinate', 'stigmataCard', 'scourge', 'reclamation',
+      'plagueBearer', 'exsanguinate', 'stigmataCard', 'scourge', 'reclamation', 'desperateRite', 'graceTideCard',
       // Rares
       'secondBloom', 'butterflyPlague', 'lifeTitheCard', 'crimsonRite',
-      'rotNova', 'lastRites', 'zealotryCard', 'bloodHarvest',
+      'rotNova', 'lastRites', 'zealotryCard', 'bloodHarvest', 'bloodOfferingRite', 'harbingerOfRotCard',
     ],
     description:
       'HP as a resource: pay blood for tempo, spread Scarlet Rot, and heal it all back. One pool — mistakes compound.',

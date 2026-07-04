@@ -449,4 +449,95 @@ export const vagabondCards = [
     textTemplate: 'Whenever Bleed bursts on an enemy, gain 2 Strength.',
     upgrade: { cost: 1 },
   },
+
+  // ---- Content-pass additions (round 2) ---------------------------------------
+  // Two more commons (Bleed/Poise upkeep), two uncommons (a stance-flip attack
+  // and a power that turns HP loss into Block), two rares (Bleed-scaling finisher
+  // and a Poise-scaling finisher) — rounding the pool to 36.
+  {
+    id: 'goreslash', name: 'Goreslash', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '🩸',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 6 },
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 },
+    ],
+    textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 8 },
+        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 },
+      ],
+    },
+  },
+  {
+    id: 'bracingStance', name: 'Bracing Stance', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    keywords: [], icon: '🛡',
+    effects: [
+      { op: 'block', target: 'self', amount: 6 },
+      { op: 'block', target: 'self', amount: 3, if: { p: 'inStance', stance: 'bulwark' } },
+    ],
+    textTemplate: 'Gain {block} Block. If in Bulwark Stance: gain {block.2} more.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 8 },
+        { op: 'block', target: 'self', amount: 4, if: { p: 'inStance', stance: 'bulwark' } },
+      ],
+    },
+  },
+  {
+    id: 'flameToBlade', name: 'Flame to Blade', class: 'vagabond', rarity: 'uncommon', cost: 2, type: 'attack',
+    keywords: [], icon: '🔥',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 8 },
+      { op: 'damage', target: 'enemy', amount: 6, if: { p: 'inStance', stance: 'bloodflame' } },
+      { op: 'enterStance', stance: 'bloodflame' },
+    ],
+    textTemplate: 'Deal {damage} damage. If already in Bloodflame Stance: deal {damage.2} more. Enter Bloodflame Stance.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 10 },
+        { op: 'damage', target: 'enemy', amount: 8, if: { p: 'inStance', stance: 'bloodflame' } },
+        { op: 'enterStance', stance: 'bloodflame' },
+      ],
+    },
+  },
+  {
+    id: 'ironVowCard', name: 'Iron Vow', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'power',
+    keywords: [], icon: '⛓',
+    effects: [{ op: 'applyStatus', target: 'self', status: 'ironVow', stacks: one }],
+    textTemplate: 'Whenever you lose HP, gain 3 Block.',
+    upgrade: { cost: 0 },
+  },
+  {
+    id: 'bloodTithe', name: 'Blood Tithe', class: 'vagabond', rarity: 'rare', cost: 2, type: 'attack',
+    keywords: [], icon: '🗡',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 6 },
+      { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'stacks', status: 'bleed', of: 'target' }] } },
+    ],
+    textTemplate: 'Deal {damage} damage, plus double the Bleed on the target.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 9 },
+        { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'stacks', status: 'bleed', of: 'target' }] } },
+      ],
+    },
+  },
+  {
+    id: 'poiseBreaker', name: 'Poise Breaker', class: 'vagabond', rarity: 'rare', cost: 2, type: 'attack',
+    keywords: [], icon: '🔨',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 11 },
+      { op: 'poiseDamage', target: 'enemy', amount: 10 },
+      { op: 'poiseDamage', target: 'enemy', amount: 8, if: { p: 'hasStatus', of: 'target', status: 'staggered' } },
+    ],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage. If the target is Staggered: deal {poiseDamage.2} more Poise damage.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 14 },
+        { op: 'poiseDamage', target: 'enemy', amount: 12 },
+        { op: 'poiseDamage', target: 'enemy', amount: 10, if: { p: 'hasStatus', of: 'target', status: 'staggered' } },
+      ],
+    },
+  },
 ];
