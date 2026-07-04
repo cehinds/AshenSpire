@@ -191,19 +191,44 @@ export function playTimeline(events, ctx, done) {
 
   const beats = groupBeats(events);
   let flushed = false;
+  let finished = false;
   const skip = () => {
     flushed = true;
   };
   addEventListener('pointerdown', skip, { once: true, capture: true });
   const finish = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(watchdog);
     removeEventListener('pointerdown', skip, { capture: true });
     if (done) done();
+  };
+  // Safety net: however playback ends (or a re-render throws mid-beat), never
+  // leave the caller's `busy` flag stuck — force completion after a bounded
+  // wall-clock budget. This is what prevents the "cards stop responding" hang.
+  const budget = 2000 + beats.length * (speed.beatMs + speed.lungeMs + 4 * speed.stepMs);
+  const watchdog = setTimeout(() => {
+    try {
+      if (ctx.onFlush) ctx.onFlush();
+    } catch (e) {
+      /* ignore */
+    }
+    finish();
+  }, budget);
+
+  const safe = (fn) => {
+    try {
+      if (fn) fn();
+    } catch (e) {
+      /* a render/visual error must not break the chain */
+    }
   };
 
   let bi = 0;
   const nextBeat = () => {
+    if (finished) return;
     if (flushed) {
-      if (ctx.onFlush) ctx.onFlush();
+      safe(() => ctx.onFlush && ctx.onFlush());
       finish();
       return;
     }
@@ -214,15 +239,15 @@ export function playTimeline(events, ctx, done) {
     const beat = beats[bi++];
 
     if (beat.banner) {
-      banner(ctx.layer, beat.banner, 'turn');
-      if (ctx.onBeatApplied) ctx.onBeatApplied(beat);
+      safe(() => banner(ctx.layer, beat.banner, 'turn'));
+      safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
       setTimeout(nextBeat, Math.max(260, speed.beatMs));
       return;
     }
 
     // 1) actor animation (lunge for attacks, glow-step otherwise)
     const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
-    if (actorEl) flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs);
+    if (actorEl) safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
     const visuals = beat.events.map(visualFor).filter(Boolean);
@@ -230,17 +255,19 @@ export function playTimeline(events, ctx, done) {
     setTimeout(() => {
       let vi = 0;
       const stepV = () => {
+        if (finished) return;
         if (flushed) {
           nextBeat();
           return;
         }
         if (vi < visuals.length) {
-          visuals[vi++](ctx);
+          const v = visuals[vi++];
+          safe(() => v(ctx));
           setTimeout(stepV, speed.stepMs);
           return;
         }
         // 3) HUD updates for this beat, 4) inter-beat breath
-        if (ctx.onBeatApplied) ctx.onBeatApplied(beat);
+        safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
         setTimeout(nextBeat, speed.beatMs);
       };
       stepV();

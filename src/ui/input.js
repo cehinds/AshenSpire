@@ -23,10 +23,22 @@ const FOCUS_SELECTOR = [
   '.toggle',
   '.slot-continue',
   '.slot-new',
+  '.class-pick:not(.locked)', // character creation + custom-run class picks
+  '.cz-opt',
+  '.cz-keepsake',
+  '.cr-class',
+  '.mod-chip',
   'input[type="range"]',
   'input[type="text"]',
   '[data-focusable]',
 ].join(',');
+
+// "Chrome" the focus cursor skips during normal play — the top bar, piles, map
+// side panel, zoom, and end-turn/energy. These are reached by their dedicated
+// (rebindable) keys / the Menu overlay instead of by wandering into them
+// (StS2-style: navigation stays on cards, targets, and map nodes). Ignored when
+// a modal/overlay is open, where its own contents ARE the scope.
+const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb';
 
 // Actions whose gamepad button is rebindable. Each maps to how it's delivered:
 // 'cursor' actions are handled here; 'key' actions dispatch a synthetic keydown
@@ -76,21 +88,62 @@ function visible(el) {
   return cs.visibility !== 'hidden' && cs.display !== 'none';
 }
 
+// The active focus scope: the topmost open modal/overlay if any, else the app.
+function scopeRoot() {
+  const modals = document.querySelectorAll('.modal-veil');
+  return modals.length ? modals[modals.length - 1] : document.getElementById('app') || document.body;
+}
+
 function focusables() {
-  return Array.from(document.querySelectorAll(FOCUS_SELECTOR)).filter(visible);
+  const root = scopeRoot();
+  const inModal = root.classList && root.classList.contains('modal-veil');
+  return Array.from(root.querySelectorAll(FOCUS_SELECTOR)).filter(
+    (el) => visible(el) && (inModal || !(el.closest && el.closest(CHROME)))
+  );
 }
 
 function current() {
   return document.querySelector('.gp-focus');
 }
 
-function setFocus(el) {
+// A stable identity for the focused element, so focus can be restored to the
+// "same" element after a screen re-render (focus memory between inputs).
+let focusKey = null;
+function keyOf(el) {
+  if (!el) return null;
+  const d = el.dataset || {};
+  if (d.instanceId) return `i:${d.instanceId}`;
+  if (d.eid) return `e:${d.eid}`;
+  if (d.classId) return `c:${d.classId}`;
+  if (d.mod) return `m:${d.mod}`;
+  if (d.deck) return `d:${d.deck}`;
+  if (d.tab) return `t:${d.tab}`;
+  if (d.slot) return `s:${el.className}:${d.slot}`;
+  if (el.id) return `#${el.id}`;
+  return `x:${(el.textContent || '').trim().slice(0, 28)}`;
+}
+function findByKey(k) {
+  if (!k) return null;
+  return focusables().find((el) => keyOf(el) === k) || null;
+}
+
+function setFocus(el, remember = true) {
   const prev = current();
   if (prev && prev !== el) prev.classList.remove('gp-focus');
   if (el) {
     el.classList.add('gp-focus');
     if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (remember) focusKey = keyOf(el);
+  } else if (remember) {
+    focusKey = null;
   }
+}
+
+/** Focus the first focusable matching a selector (used for combat targeting). */
+export function focusFirst(selector) {
+  const el = focusables().find((e) => e.matches && e.matches(selector));
+  if (el) setFocus(el);
+  return !!el;
 }
 
 function ensureFocus() {
@@ -288,6 +341,26 @@ function stopPolling() {
 export function initInput({ getSettings } = {}) {
   setBindings((getSettings && getSettings().bindings) || {});
   addEventListener('keydown', onKeydown, true);
+
+  // Focus memory: after a re-render drops the cursor, restore it to the same
+  // logical element (by key) if it still exists — so navigation doesn't snap
+  // back to the top between inputs. A full screen change won't match, leaving
+  // focus cleared until the next nav press (correct).
+  const appRoot = document.getElementById('app');
+  if (appRoot && typeof MutationObserver !== 'undefined') {
+    let scheduled = false;
+    const mo = new MutationObserver(() => {
+      if (scheduled) return;
+      scheduled = true;
+      setTimeout(() => {
+        scheduled = false;
+        if (!enabled || current() || !focusKey) return;
+        const el = findByKey(focusKey);
+        if (el) setFocus(el, false);
+      }, 0);
+    });
+    mo.observe(appRoot, { childList: true, subtree: true });
+  }
   addEventListener('gamepadconnected', () => {
     document.body.classList.add('has-gamepad');
     startPolling();

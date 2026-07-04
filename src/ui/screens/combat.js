@@ -14,6 +14,7 @@ import { animateEvents, playTimeline } from '../fx.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { overlayIsOpen } from '../components/overlay.js';
+import { focusFirst } from '../input.js';
 
 export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -62,6 +63,17 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let busy = false; // animating / resolving
+  let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
+
+  // Entering targeting mode: move the focus cursor onto an enemy so keyboard /
+  // gamepad players confirm a target next, not wander into the top bar. Prefer
+  // the last enemy they attacked (if still alive), else the first living one.
+  function focusTargeting() {
+    const living = combat.enemies.filter((e) => e.alive);
+    if (!living.length) return;
+    const pref = (lastTargetId && living.find((e) => e.id === lastTargetId)) || living[0];
+    focusFirst(`.combatant.enemy[data-eid="${pref.id}"]`);
+  }
 
   // Display snapshot for paced playback (SPEC §7.4): while a timeline plays,
   // bars/hand render from this pre-dispatch copy, advanced beat by beat, so
@@ -443,6 +455,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       if (pv.needsTarget) {
         selected = selected === inst.instanceId ? null : inst.instanceId;
         render();
+        if (selected) focusTargeting();
       } else {
         playCard(inst.instanceId, null);
       }
@@ -519,6 +532,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
           selected = inst.instanceId;
           selectedFlask = null;
           render();
+          focusTargeting();
         }
       } else {
         playCard(inst.instanceId, null);
@@ -611,6 +625,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
 
   function playCard(instanceId, targetId) {
     if (busy || combat.result) return;
+    if (targetId) lastTargetId = targetId; // remembered for the next card's aim
     selected = null;
     selectedFlask = null;
     hideTooltip();
