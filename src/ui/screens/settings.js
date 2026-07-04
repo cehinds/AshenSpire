@@ -25,6 +25,14 @@ const ROWS = [
     label: 'Combat pacing',
     note: 'How deliberately actions play out — one actor at a time, or instant.',
   },
+  {
+    key: 'mapZoom',
+    type: 'choice',
+    def: '115',
+    choices: ['100', '115', '130', '150'],
+    label: 'Map zoom %',
+    note: 'Default zoom when the act map opens. In-map + / − buttons override per view.',
+  },
 ];
 
 // Resolve a stored value against its default (defaults keep meta.settings sparse).

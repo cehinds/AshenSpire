@@ -228,6 +228,7 @@ function showMap() {
   mountMap(app, {
     registries,
     run,
+    meta: saves.loadMeta(),
     onPick: enterNode,
     onSettings: showSettings,
     onSave: () => {

@@ -1,8 +1,26 @@
 /* styles/map.css — act map screen (mockup: docs/mockups/map-screen.svg) */
 
 .mapscreen { flex: 1; display: flex; overflow: hidden; }
-.mapscreen .map-scroll { flex: 1; overflow-y: auto; display: flex; justify-content: center; }
+.mapscreen .map-scroll {
+  flex: 1; overflow: auto; position: relative;
+  cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.mapscreen .map-scroll.grabbing { cursor: grabbing; }
+.mapscreen .map-scroll::-webkit-scrollbar { width: 12px; height: 12px; }
+.mapscreen .map-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; border: 3px solid transparent; background-clip: padding-box; }
+.mapscreen .map-scroll::-webkit-scrollbar-thumb:hover { background: var(--gold); background-clip: padding-box; }
+/* Canvas centers the (possibly smaller-than-viewport) svg horizontally. */
+.mapscreen .map-canvas { display: flex; justify-content: center; min-width: min-content; min-height: min-content; }
 .mapscreen svg { display: block; }
+
+/* zoom controls */
+.map-zoom { position: absolute; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
+.map-zoom .zbtn {
+  width: 34px; height: 34px; border-radius: 8px; font-size: 18px; line-height: 1;
+  background: var(--bg-raise); border: 1px solid var(--line); color: var(--parchment);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.map-zoom .zbtn:hover { border-color: var(--gold); color: var(--gold); }
 
 .map-node { cursor: default; }
 .map-node circle { fill: var(--panel); stroke: var(--line-soft); stroke-width: 2; }
@@ -18,12 +36,30 @@
   animation: nodePulse 1.5s ease-in-out infinite alternate;
 }
 @keyframes nodePulse { from { stroke-width: 3; } to { stroke-width: 5.5; } }
-.map-node.reachable circle { animation: reachGlow 2s ease-in-out infinite alternate; }
-@keyframes reachGlow { from { stroke-opacity: 0.65; } to { stroke-opacity: 1; } }
 .map-node.reachable { cursor: pointer; }
-.map-node.reachable circle { stroke: var(--parchment); stroke-width: 2.5; }
-.map-node.reachable:hover circle { fill: #2e2517; stroke: var(--gold); }
+.map-node.reachable > circle:not(.node-halo) {
+  stroke: var(--gold); stroke-width: 2.5;
+  animation: reachStroke 1.4s ease-in-out infinite alternate;
+}
+@keyframes reachStroke { from { stroke-opacity: 0.7; } to { stroke-opacity: 1; } }
+/* rhythmic pulsing halo — the strong "go here next" cue */
+.map-node .node-halo {
+  fill: none; stroke: var(--gold); stroke-width: 2.5;
+  transform-box: fill-box; transform-origin: center;
+  animation: haloPulse 1.6s ease-in-out infinite;
+}
+@keyframes haloPulse {
+  0% { stroke-opacity: 0.55; transform: scale(0.9); }
+  50% { stroke-opacity: 0; transform: scale(1.35); }
+  100% { stroke-opacity: 0.55; transform: scale(0.9); }
+}
+.map-node.reachable:hover circle:not(.node-halo) { fill: #2e2517; stroke: var(--gold); }
 .map-node.reachable text { fill: var(--parchment); }
+
+/* Reduced motion: keep a static, high-contrast highlight, no pulsing. */
+.reduced-motion .map-node.reachable > circle:not(.node-halo) { animation: none; stroke-opacity: 1; }
+.reduced-motion .map-node .node-halo { animation: none; stroke-opacity: 0.5; }
+.reduced-motion .map-node.current circle { animation: none; }
 .map-node.revealed circle { stroke-dasharray: 5 3; }
 
 .map-edge { stroke: var(--line-soft); stroke-width: 2; fill: none; }
