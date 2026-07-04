@@ -32,7 +32,7 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab = 'deck' }) {
+export function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, initialTab = 'deck' }) {
   closeOverlay();
   const settings = meta.settings || (meta.settings = {});
 
@@ -53,6 +53,7 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, i
         </div>
         <div class="overlay-actions">
           ${onSave ? '<button class="subtle" id="ov-save">Save</button>' : ''}
+          ${onQuit ? '<button class="subtle" id="ov-quit">Save &amp; Quit</button>' : ''}
           <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
         </div>
       </div>
@@ -156,6 +157,13 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, i
       const slot = onSave();
       saveBtn.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
       setTimeout(() => (saveBtn.textContent = 'Save'), 1500);
+    });
+  }
+  const quitBtn = veil.querySelector('#ov-quit');
+  if (quitBtn && onQuit) {
+    quitBtn.addEventListener('click', () => {
+      closeOverlay();
+      onQuit(); // save the run to its slot, then return to the title screen
     });
   }
 

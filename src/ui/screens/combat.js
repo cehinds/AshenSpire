@@ -461,6 +461,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   // Keyboard shortcuts (SPEC §7.3): Esc cancels targeting; 1–9 select/play the
   // Nth card (or, while targeting, pick the Nth living enemy); E ends the turn.
   const keyHandler = (ev) => {
+    // Self-clean if the combat screen was torn down (e.g. Save & Quit mid-fight)
+    // — the listener lives on window, so it must detach when its DOM is gone.
+    if (!app.querySelector('.combat')) {
+      removeEventListener('keydown', keyHandler);
+      return;
+    }
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;

@@ -227,6 +227,10 @@ function showOverlay(initialTab = 'deck') {
       persist();
       return activeSlot;
     },
+    onQuit: () => {
+      persist(); // the run is resumable from its slot via Continue
+      showTitle();
+    },
   });
 }
 
