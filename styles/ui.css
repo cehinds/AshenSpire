@@ -221,6 +221,9 @@
   cursor: pointer; transition: color 160ms, border-color 160ms, background 160ms;
 }
 .choice-group .choice.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); color: var(--gold); }
+.range-wrap { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.range-wrap .range-val { color: var(--gold); font-size: 11px; width: 24px; text-align: right; font-variant-numeric: tabular-nums; }
+input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor: pointer; }
 
 /* ---------- first-run tutorial overlay ---------- */
 .tut-veil { position: fixed; inset: 0; z-index: 800; }

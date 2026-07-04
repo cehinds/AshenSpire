@@ -39,6 +39,8 @@ import { mountHistory } from './ui/screens/history.js';
 import { openSettings } from './ui/screens/settings.js';
 import { setSpritesEnabled } from './ui/assets.js';
 import { setAnimSpeed } from './ui/fx.js';
+import { sfx } from './ui/sfx.js';
+import { initAudio } from './ui/audio.js';
 
 const app = document.getElementById('app');
 
@@ -67,11 +69,17 @@ function pickStorage() {
 }
 const saves = createSaveManager(pickStorage());
 
+// Procedural audio engine (SPEC §7.4). The sink plugs into the existing sfx
+// hook seam, so every sfx.play() call site makes sound with no change.
+const audio = initAudio(saves.loadMeta().settings || {});
+sfx.sink = (id) => audio.sfx(id);
+
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
   setAnimSpeed(settings.animSpeed || 'normal');
+  audio.setVolumes(settings);
 }
 applyDisplaySettings(saves.loadMeta().settings);
 
@@ -161,6 +169,7 @@ function resumeRun(slot = 1) {
 
 // ---- screens --------------------------------------------------------------------
 function showTitle() {
+  audio.music('title');
   run = null;
   const slots = saves.listSlots().map(({ slot, summary }) => ({
     slot,
@@ -225,6 +234,7 @@ function showCustomize(slot = 1) {
 }
 
 function showMap() {
+  audio.music('map');
   mountMap(app, {
     registries,
     run,
@@ -239,6 +249,7 @@ function showMap() {
 }
 
 function enterNode(nodeId) {
+  sfx.play('nodeTravel');
   const node = run.mapGraph.nodes[nodeId];
   run.mapNodeId = nodeId;
   run.path.push(nodeId);
@@ -301,6 +312,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   run.combatEntered = { nodeId, encounterId };
   if (!resuming) persist(); // counters BEFORE the combat → reload restarts it identically
   const enc = registries.encounters.get(encounterId);
+  audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const combat = createCombat({
     registries,
     rng,
@@ -340,6 +352,8 @@ function onCombatEnd(result, combat, enc) {
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
 
   if (result !== 'victory') {
+    audio.stopMusic();
+    sfx.play('youDied');
     saves.clearRun(activeSlot);
     saves.recordResult(runResult(false));
     return mountGameOver(app, { registries, game: run, victory: false, onTitle: showTitle, onHistory: showHistory });
@@ -352,6 +366,7 @@ function onCombatEnd(result, combat, enc) {
   if (enc.pool === 'boss') {
     if (run.actNumber >= 3) {
       // The Rot Valkyrie falls: the Great Rune is restored.
+      audio.music('victory');
       saves.clearRun(activeSlot);
       saves.recordResult(runResult(true));
       return mountGameOver(app, { registries, game: run, victory: true, onTitle: showTitle, onHistory: showHistory });

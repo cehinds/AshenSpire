@@ -33,6 +33,26 @@ const ROWS = [
     label: 'Map zoom %',
     note: 'Default zoom when the act map opens. In-map + / − buttons override per view.',
   },
+  {
+    key: 'muteAudio',
+    def: false,
+    label: 'Mute all audio',
+    note: 'Silence music and sound effects.',
+  },
+  {
+    key: 'musicVolume',
+    type: 'range',
+    def: 55,
+    label: 'Music volume',
+    note: 'Ambient score for the title, map, and battles.',
+  },
+  {
+    key: 'sfxVolume',
+    type: 'range',
+    def: 75,
+    label: 'Sound effects',
+    note: 'Hits, blocks, bleed bursts, UI.',
+  },
 ];
 
 // Resolve a stored value against its default (defaults keep meta.settings sparse).
@@ -44,6 +64,16 @@ export function openSettings({ meta, onChange }) {
   const settings = meta.settings || (meta.settings = {});
 
   const rowsHtml = ROWS.map((r) => {
+    if (r.type === 'range') {
+      const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
+      return `<div class="set-row">
+          <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+          <div class="range-wrap">
+            <input type="range" class="set-range" min="0" max="100" step="5" value="${val}" data-key="${r.key}">
+            <span class="range-val" data-for="${r.key}">${val}</span>
+          </div>
+        </div>`;
+    }
     if (r.type === 'choice') {
       const cur = r.choices.includes(settings[r.key]) ? settings[r.key] : r.def;
       const opts = r.choices
@@ -78,6 +108,16 @@ export function openSettings({ meta, onChange }) {
     if (e.target === veil) close();
   });
   veil.querySelector('#set-close').addEventListener('click', close);
+
+  veil.querySelectorAll('.set-range').forEach((slider) => {
+    slider.addEventListener('input', () => {
+      const val = Number(slider.value);
+      const out = veil.querySelector(`.range-val[data-for="${slider.dataset.key}"]`);
+      if (out) out.textContent = val;
+      settings[slider.dataset.key] = val;
+      onChange({ [slider.dataset.key]: val });
+    });
+  });
 
   veil.querySelectorAll('.choice').forEach((btn) => {
     btn.addEventListener('click', () => {
