@@ -164,13 +164,33 @@ of other flasks' effect lists, which the DSL cannot reference).
 
 Combat feedback is **CSS-driven**: JS only toggles short-lived classes and
 appends floating numbers/banners that self-remove after ≤320 ms (`src/ui/fx.js`),
-staggered `STEP_MS` apart and skippable on click. There are **no
-`requestAnimationFrame` / `setInterval` render loops** anywhere — the single
-`rAF` in the codebase fires *one* frame to kick a CSS transition (the played-card
-ghost). So there are **no per-frame JS allocations**; frame rate is just the
-browser compositing a handful of transitions, comfortably 60 fps on mid-range
-hardware. Ambient title effects (embers, gold glow) are pure CSS and honor
-`prefers-reduced-motion` (`styles/ui.css`).
+staggered `STEP_MS` apart and skippable on click. There are **no per-frame
+render loops** — paced combat playback (`playTimeline`) is `setTimeout`-driven
+beat by beat, and the one timed loop in the codebase is the gamepad poller
+(`src/ui/input.js`, ~60 Hz `setInterval`) which is **input, not render**, and
+runs only while a controller is connected (started on `gamepadconnected`,
+stopped when the last pad disconnects) — no idle cost. So there are **no
+per-frame JS allocations**; frame rate is just the browser compositing a handful
+of transitions, comfortably 60 fps. Ambient title effects (embers, gold glow)
+are pure CSS and honor `prefers-reduced-motion` (`styles/ui.css`).
+
+## Input — keyboard + gamepad (SPEC §7.3)
+
+`src/ui/input.js` adds a focus cursor over interactive elements (arrow keys /
+D-pad / left stick move it spatially; Enter / A activate — via `dispatchEvent`
+so SVG map nodes work too) plus the gamepad poller. `cursor` actions activate
+the focused element; `key` actions (Cancel/Menu/End-turn) dispatch the same
+synthetic keys the screens already listen for, so a controller reuses every
+existing keyboard handler with no per-screen rewrite. Which pad button drives
+each action is rebindable in the overlay's **Controls** tab
+(`src/ui/screens/controls.js`), persisted to `meta.settings.bindings`.
+
+## Standalone build (`build/EldenSpire.html`)
+
+`node tools/bundle.mjs` emits a single self-contained HTML file to `build/` —
+all CSS inlined, every ES module bundled into one classic `<script>` via a tiny
+per-module-closure runtime (so file:// has no module/CORS issue). Double-click
+to play; no server, no Node, no external files. Re-run after any source change.
 
 ## Balance & telemetry
 

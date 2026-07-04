@@ -85,6 +85,30 @@
 .ov-stat b { color: var(--parchment); font-size: 12px; }
 .set-cat { color: var(--gold); font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin: 14px 0 4px; }
 .set-cat:first-child { margin-top: 0; }
+.subtle.danger { border-color: var(--blood); color: var(--ember); }
+.subtle.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
+
+/* ---------- keyboard / gamepad focus cursor ---------- */
+.gp-focus {
+  outline: 3px solid var(--gold) !important; outline-offset: 2px;
+  box-shadow: 0 0 16px rgba(201, 162, 39, 0.6) !important; border-radius: 6px;
+}
+.map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
+.reduced-motion .gp-focus { box-shadow: none !important; }
+
+/* ---------- controls / rebinds ---------- */
+.rebind-list { display: flex; flex-direction: column; }
+.rebind-row .rebind-ctl { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.pad-btn {
+  min-width: 62px; text-align: center; padding: 4px 8px; border-radius: 6px;
+  background: var(--panel); border: 1px solid var(--gold); color: var(--gold);
+  font-size: 12px; font-variant-numeric: tabular-nums;
+}
+.rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.7s ease-in-out infinite alternate; }
+.pad-live { color: var(--green); font-size: 11px; }
+.pad-off { color: var(--muted); font-size: 11px; }
+.farewell { gap: 22px; }
+.farewell .title-big { opacity: 0.9; }
 
 /* ---------- generic screens ---------- */
 .screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }

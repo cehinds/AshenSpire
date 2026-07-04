@@ -38,6 +38,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { openSettings } from './ui/screens/settings.js';
 import { openOverlay } from './ui/components/overlay.js';
+import { initInput, setBindings } from './ui/input.js';
 import { setSpritesEnabled } from './ui/assets.js';
 import { setAnimSpeed } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
@@ -74,6 +75,9 @@ const saves = createSaveManager(pickStorage());
 // hook seam, so every sfx.play() call site makes sound with no change.
 const audio = initAudio(saves.loadMeta().settings || {});
 sfx.sink = (id) => audio.sfx(id);
+
+// Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
+initInput({ getSettings: () => saves.loadMeta().settings || {} });
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 function applyDisplaySettings(settings) {
@@ -189,6 +193,7 @@ function showTitle() {
     },
     onHistory: showHistory,
     onSettings: showSettings,
+    onQuit: quitGame,
   });
 }
 
@@ -208,6 +213,36 @@ function showHistory() {
   mountHistory(app, { meta: saves.loadMeta(), onBack: showTitle });
 }
 
+// Quit the game entirely. In a real browser tab window.close() is usually
+// blocked (the tab wasn't script-opened), so we stop the game and show a
+// graceful "safe to close" screen; in a standalone/launcher window the close
+// succeeds. Any in-progress run is persisted first, so nothing is lost.
+function quitGame() {
+  if (run) persist();
+  audio.stopMusic();
+  run = null;
+  app.innerHTML = `
+    <div class="screen farewell">
+      <h1 class="title-big">GRACE FADES</h1>
+      <p class="subtitle" style="text-align:center">Your climb is saved. You may close this window.</p>
+      <button class="subtle" id="farewell-back">Return to title</button>
+    </div>`;
+  const closeTimer = setTimeout(() => {
+    try {
+      window.close();
+    } catch (e) {
+      /* browser blocked it — the farewell screen stands in */
+    }
+  }, 120);
+  const back = app.querySelector('#farewell-back');
+  if (back) {
+    back.addEventListener('click', () => {
+      clearTimeout(closeTimer); // changed their mind before the window closed
+      showTitle();
+    });
+  }
+}
+
 // The in-run tabbed overlay (Deck / Relics / Stats / Settings), shared by the
 // map and combat screens via their onMenu callback.
 function showOverlay(initialTab = 'deck') {
@@ -222,6 +257,7 @@ function showOverlay(initialTab = 'deck') {
       Object.assign(meta.settings, changed);
       saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
+      if (changed.bindings) setBindings(changed.bindings);
     },
     onSave: () => {
       persist();
@@ -231,6 +267,7 @@ function showOverlay(initialTab = 'deck') {
       persist(); // the run is resumable from its slot via Continue
       showTitle();
     },
+    onExit: quitGame, // "Quit Game" — leave the app entirely
   });
 }
 

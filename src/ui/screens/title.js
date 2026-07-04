@@ -7,7 +7,7 @@
 
 import { esc } from '../components/tooltip.js';
 
-export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings }) {
+export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit }) {
   const embers = Array.from({ length: 7 }, (_, i) => {
     const left = 8 + ((i * 13.7) % 84);
     const delay = (i * 1.7) % 9;
@@ -48,12 +48,14 @@ export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory,
       <div class="title-menu">
         <button class="subtle" id="run-history">RUN HISTORY</button>
         <button class="subtle" id="settings">SETTINGS</button>
+        <button class="subtle" id="quit-game">QUIT</button>
       </div>
       <p style="color:var(--muted);font-size:11px;letter-spacing:.15em">GRACE FLOWS UPWARD. FOLLOW IT.</p>
     </div>`;
 
   app.querySelector('#run-history').addEventListener('click', onHistory);
   app.querySelector('#settings').addEventListener('click', onSettings);
+  if (onQuit) app.querySelector('#quit-game').addEventListener('click', onQuit);
   app.querySelectorAll('.slot-continue').forEach((b) => b.addEventListener('click', () => onContinue(+b.dataset.slot)));
   app.querySelectorAll('.slot-new').forEach((b) => b.addEventListener('click', () => onNew(+b.dataset.slot)));
   // Delete is a two-click, self-resetting confirm (no blocking dialog).

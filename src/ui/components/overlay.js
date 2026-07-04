@@ -7,6 +7,7 @@
 
 import { renderCard } from './card.js';
 import { renderSettings } from '../screens/settings.js';
+import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
 
 let openVeil = null;
@@ -32,7 +33,7 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, initialTab = 'deck' }) {
+export function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
   closeOverlay();
   const settings = meta.settings || (meta.settings = {});
 
@@ -41,6 +42,7 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     { id: 'relics', label: 'Relics & Flasks' },
     { id: 'stats', label: 'Stats' },
     { id: 'settings', label: 'Settings' },
+    { id: 'controls', label: 'Controls' },
   ];
 
   const veil = document.createElement('div');
@@ -54,6 +56,7 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
         <div class="overlay-actions">
           ${onSave ? '<button class="subtle" id="ov-save">Save</button>' : ''}
           ${onQuit ? '<button class="subtle" id="ov-quit">Save &amp; Quit</button>' : ''}
+          ${onExit ? '<button class="subtle danger" id="ov-exit">Quit Game</button>' : ''}
           <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
         </div>
       </div>
@@ -71,6 +74,7 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     else if (id === 'relics') renderRelics(body);
     else if (id === 'stats') renderStats(body);
     else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}) });
+    else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
   }
 
   function renderDeck(container) {
@@ -164,6 +168,13 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     quitBtn.addEventListener('click', () => {
       closeOverlay();
       onQuit(); // save the run to its slot, then return to the title screen
+    });
+  }
+  const exitBtn = veil.querySelector('#ov-exit');
+  if (exitBtn && onExit) {
+    exitBtn.addEventListener('click', () => {
+      closeOverlay();
+      onExit(); // leave the app entirely (persists first)
     });
   }
 
