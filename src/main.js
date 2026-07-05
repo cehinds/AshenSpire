@@ -102,6 +102,10 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('no-shake', settings.screenShake === false);
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
+  document.body.classList.toggle('readable-ui', settings.readableHeadings === true);
+  // Ambient effects level → data attr read by the title screen (ember count) + CSS.
+  const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
+  document.documentElement.dataset.ambient = amb;
   // Accent theme → CSS variables on the root (falls back to gold).
   const accent = ACCENTS[settings.accent] || ACCENTS.gold;
   const root = document.documentElement.style;

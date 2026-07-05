@@ -380,6 +380,20 @@ export function initAudio(settings = {}) {
       o.connect(g).connect(musicBus);
       o.start(t);
       o.stop(t + 1.9);
+      // Every few notes, lay a soft harmony a perfect fifth above — adds body
+      // and variety without a second melodic line to manage.
+      if (step % 3 === 1) {
+        const h = ctx.createOscillator();
+        const hg = ctx.createGain();
+        h.type = 'sine';
+        h.frequency.value = freq * 1.4983; // ~perfect fifth
+        hg.gain.setValueAtTime(0.0001, t);
+        hg.gain.exponentialRampToValueAtTime(0.07 * bed.gain, t + 0.12);
+        hg.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+        h.connect(hg).connect(musicBus);
+        h.start(t);
+        h.stop(t + 1.7);
+      }
       step++;
     };
     playNote();
