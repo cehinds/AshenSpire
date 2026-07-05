@@ -15,6 +15,7 @@ import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { overlayIsOpen } from '../components/overlay.js';
 import { focusFirst, matchAction } from '../input.js';
+import { hintBarHtml } from '../components/hints.js';
 
 export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -48,6 +49,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
         <line x1="0" y1="0" x2="0" y2="0" stroke="var(--gold)" stroke-width="3" stroke-dasharray="8 6"/>
       </svg>
+      ${hintBarHtml('combat')}
     </div>`;
 
   const $ = (sel) => app.querySelector(sel);

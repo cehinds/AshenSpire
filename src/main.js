@@ -103,6 +103,7 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
   document.body.classList.toggle('readable-ui', settings.readableHeadings === true);
+  document.body.classList.toggle('hide-hints', settings.controlHints === false);
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
   document.documentElement.dataset.ambient = amb;
