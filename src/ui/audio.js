@@ -48,7 +48,7 @@ const BEDS = {
     { root: 174.61, scale: 'dread', cadence: 2000, wave: 'triangle', lift: 2 },
     { root: 146.83, scale: 'veiled', cadence: 2350, wave: 'sine', lift: 3 },
   ] },
-  combat: { drone: true, gain: 0.5, variants: [
+  combat: { drone: true, gain: 0.5, pulse: true, variants: [
     { root: 130.81, scale: 'tense', cadence: 1500, wave: 'triangle', lift: 3 },
     { root: 123.47, scale: 'dread', cadence: 1300, wave: 'square', lift: 2 },
     { root: 146.83, scale: 'tense', cadence: 1400, wave: 'triangle', lift: 4 },
@@ -56,13 +56,13 @@ const BEDS = {
     { root: 130.81, scale: 'veiled', cadence: 1350, wave: 'triangle', lift: 5 },
     { root: 155.56, scale: 'dread', cadence: 1200, wave: 'square', lift: 2 },
   ] },
-  elite: { drone: true, gain: 0.55, variants: [
+  elite: { drone: true, gain: 0.55, pulse: true, variants: [
     { root: 110.0, scale: 'tense', cadence: 1150, wave: 'sawtooth', lift: 3 },
     { root: 103.83, scale: 'dread', cadence: 1050, wave: 'square', lift: 2 },
     { root: 116.54, scale: 'wrath', cadence: 1100, wave: 'sawtooth', lift: 4 },
     { root: 98.0, scale: 'wrath', cadence: 1000, wave: 'square', lift: 3 },
   ] },
-  boss: { drone: true, gain: 0.6, variants: [
+  boss: { drone: true, gain: 0.6, pulse: true, variants: [
     { root: 98.0, scale: 'dread', cadence: 1000, wave: 'sawtooth', lift: 2 },
     { root: 92.5, scale: 'wrath', cadence: 900, wave: 'square', lift: 3 },
     { root: 87.31, scale: 'wrath', cadence: 950, wave: 'sawtooth', lift: 4 },
@@ -110,6 +110,7 @@ export function initAudio(settings = {}) {
     context: null, // current music bed key
     nodes: [], // live music nodes to tear down on switch
     timer: null,
+    pulseTimer: null, // rhythmic low-thump layer (battle beds)
     sampleCache: new Map(),
     folder: '', // external music folder/URL
     tracks: {}, // context → [track urls] from the folder manifest
@@ -250,6 +251,10 @@ export function initAudio(settings = {}) {
       clearInterval(state.timer);
       state.timer = null;
     }
+    if (state.pulseTimer) {
+      clearInterval(state.pulseTimer);
+      state.pulseTimer = null;
+    }
     // Stop an external track if one is playing.
     if (state.mediaEl) {
       const el = state.mediaEl;
@@ -379,6 +384,28 @@ export function initAudio(settings = {}) {
     };
     playNote();
     state.timer = setInterval(playNote, variant.cadence);
+
+    // Battle beds get a rhythmic low thump — a heartbeat under the melody. It
+    // pulses at roughly two beats per melodic note, so tenser (faster-cadence)
+    // variants throb harder. Tears down with the rest via state.pulseTimer.
+    if (bed.pulse) {
+      const thump = () => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        const t = now();
+        o.frequency.setValueAtTime(variant.root / 2, t);
+        o.frequency.exponentialRampToValueAtTime(variant.root / 3, t + 0.18);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.22 * bed.gain, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+        o.connect(g).connect(musicBus);
+        o.start(t);
+        o.stop(t + 0.36);
+      };
+      thump();
+      state.pulseTimer = setInterval(thump, Math.max(420, variant.cadence / 2));
+    }
   }
 
   /**

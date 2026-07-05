@@ -66,6 +66,9 @@ function shake(combatEl) {
 // Add a short-lived CSS class (restarting its animation if already present).
 function flash(el, cls, ms = 300) {
   if (!el) return;
+  // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
+  // numbers and HUD updates (which carry the actual info) are unaffected.
+  if (document.body.classList.contains('reduce-flashes')) return;
   el.classList.remove(cls);
   void el.offsetWidth;
   el.classList.add(cls);

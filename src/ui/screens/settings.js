@@ -42,6 +42,10 @@ const ROWS = [
     note: 'Brighter text and stronger borders throughout for readability.' },
   { cat: 'Accessibility', key: 'largeText', def: false, label: 'Larger text',
     note: 'Bump body and tooltip text up a notch.' },
+  { cat: 'Accessibility', key: 'colorblindSafe', def: false, label: 'Colorblind-friendly',
+    note: 'Shift danger/heal/rot/frost colors to a more distinguishable palette.' },
+  { cat: 'Accessibility', key: 'reduceFlashes', def: false, label: 'Reduce flashes',
+    note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
 ];
 
 const CATEGORIES = ['Display', 'Audio', 'Accessibility'];

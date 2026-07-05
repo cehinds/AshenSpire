@@ -33,6 +33,19 @@ body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-
 body.large-text { font-size: 15.5px; }
 body.large-text #tooltip { font-size: 13px; }
 
+/* Accessibility: colorblind-friendly semantic remap (Okabe-Ito hues chosen to
+   stay distinguishable under deuteranopia/protanopia — danger→vermillion,
+   heal→bluish-green, frost→sky, rot→orange, bleed→reddish-purple). */
+body.cb-safe {
+  --blood: #d55e00;
+  --ember: #d55e00;
+  --green: #009e73;
+  --frost: #56b4e9;
+  --grace: #56b4e9;
+  --rot: #e69f00;
+}
+body.cb-safe .card .ctext .st-bleed { color: #cc79a7; }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body { height: 100%; }

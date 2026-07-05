@@ -40,6 +40,19 @@ body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-
 body.large-text { font-size: 15.5px; }
 body.large-text #tooltip { font-size: 13px; }
 
+/* Accessibility: colorblind-friendly semantic remap (Okabe-Ito hues chosen to
+   stay distinguishable under deuteranopia/protanopia — danger→vermillion,
+   heal→bluish-green, frost→sky, rot→orange, bleed→reddish-purple). */
+body.cb-safe {
+  --blood: #d55e00;
+  --ember: #d55e00;
+  --green: #009e73;
+  --frost: #56b4e9;
+  --grace: #56b4e9;
+  --rot: #e69f00;
+}
+body.cb-safe .card .ctext .st-bleed { color: #cc79a7; }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body { height: 100%; }
@@ -845,6 +858,8 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('hi-contrast', settings.highContrast === true);
   document.body.classList.toggle('large-text', settings.largeText === true);
   document.body.classList.toggle('no-shake', settings.screenShake === false);
+  document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
+  document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
   // Accent theme → CSS variables on the root (falls back to gold).
   const accent = ACCENTS[settings.accent] || ACCENTS.gold;
   const root = document.documentElement.style;
@@ -11043,6 +11058,10 @@ const ROWS = [
     note: 'Brighter text and stronger borders throughout for readability.' },
   { cat: 'Accessibility', key: 'largeText', def: false, label: 'Larger text',
     note: 'Bump body and tooltip text up a notch.' },
+  { cat: 'Accessibility', key: 'colorblindSafe', def: false, label: 'Colorblind-friendly',
+    note: 'Shift danger/heal/rot/frost colors to a more distinguishable palette.' },
+  { cat: 'Accessibility', key: 'reduceFlashes', def: false, label: 'Reduce flashes',
+    note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
 ];
 
 const CATEGORIES = ['Display', 'Audio', 'Accessibility'];
@@ -12462,6 +12481,9 @@ function shake(combatEl) {
 // Add a short-lived CSS class (restarting its animation if already present).
 function flash(el, cls, ms = 300) {
   if (!el) return;
+  // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
+  // numbers and HUD updates (which carry the actual info) are unaffected.
+  if (document.body.classList.contains('reduce-flashes')) return;
   el.classList.remove(cls);
   void el.offsetWidth;
   el.classList.add(cls);
@@ -13346,7 +13368,7 @@ const BEDS = {
     { root: 174.61, scale: 'dread', cadence: 2000, wave: 'triangle', lift: 2 },
     { root: 146.83, scale: 'veiled', cadence: 2350, wave: 'sine', lift: 3 },
   ] },
-  combat: { drone: true, gain: 0.5, variants: [
+  combat: { drone: true, gain: 0.5, pulse: true, variants: [
     { root: 130.81, scale: 'tense', cadence: 1500, wave: 'triangle', lift: 3 },
     { root: 123.47, scale: 'dread', cadence: 1300, wave: 'square', lift: 2 },
     { root: 146.83, scale: 'tense', cadence: 1400, wave: 'triangle', lift: 4 },
@@ -13354,13 +13376,13 @@ const BEDS = {
     { root: 130.81, scale: 'veiled', cadence: 1350, wave: 'triangle', lift: 5 },
     { root: 155.56, scale: 'dread', cadence: 1200, wave: 'square', lift: 2 },
   ] },
-  elite: { drone: true, gain: 0.55, variants: [
+  elite: { drone: true, gain: 0.55, pulse: true, variants: [
     { root: 110.0, scale: 'tense', cadence: 1150, wave: 'sawtooth', lift: 3 },
     { root: 103.83, scale: 'dread', cadence: 1050, wave: 'square', lift: 2 },
     { root: 116.54, scale: 'wrath', cadence: 1100, wave: 'sawtooth', lift: 4 },
     { root: 98.0, scale: 'wrath', cadence: 1000, wave: 'square', lift: 3 },
   ] },
-  boss: { drone: true, gain: 0.6, variants: [
+  boss: { drone: true, gain: 0.6, pulse: true, variants: [
     { root: 98.0, scale: 'dread', cadence: 1000, wave: 'sawtooth', lift: 2 },
     { root: 92.5, scale: 'wrath', cadence: 900, wave: 'square', lift: 3 },
     { root: 87.31, scale: 'wrath', cadence: 950, wave: 'sawtooth', lift: 4 },
@@ -13408,6 +13430,7 @@ function initAudio(settings = {}) {
     context: null, // current music bed key
     nodes: [], // live music nodes to tear down on switch
     timer: null,
+    pulseTimer: null, // rhythmic low-thump layer (battle beds)
     sampleCache: new Map(),
     folder: '', // external music folder/URL
     tracks: {}, // context → [track urls] from the folder manifest
@@ -13548,6 +13571,10 @@ function initAudio(settings = {}) {
       clearInterval(state.timer);
       state.timer = null;
     }
+    if (state.pulseTimer) {
+      clearInterval(state.pulseTimer);
+      state.pulseTimer = null;
+    }
     // Stop an external track if one is playing.
     if (state.mediaEl) {
       const el = state.mediaEl;
@@ -13677,6 +13704,28 @@ function initAudio(settings = {}) {
     };
     playNote();
     state.timer = setInterval(playNote, variant.cadence);
+
+    // Battle beds get a rhythmic low thump — a heartbeat under the melody. It
+    // pulses at roughly two beats per melodic note, so tenser (faster-cadence)
+    // variants throb harder. Tears down with the rest via state.pulseTimer.
+    if (bed.pulse) {
+      const thump = () => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        const t = now();
+        o.frequency.setValueAtTime(variant.root / 2, t);
+        o.frequency.exponentialRampToValueAtTime(variant.root / 3, t + 0.18);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.22 * bed.gain, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+        o.connect(g).connect(musicBus);
+        o.start(t);
+        o.stop(t + 0.36);
+      };
+      thump();
+      state.pulseTimer = setInterval(thump, Math.max(420, variant.cadence / 2));
+    }
   }
 
   /**

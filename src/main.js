@@ -100,6 +100,8 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('hi-contrast', settings.highContrast === true);
   document.body.classList.toggle('large-text', settings.largeText === true);
   document.body.classList.toggle('no-shake', settings.screenShake === false);
+  document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
+  document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
   // Accent theme → CSS variables on the root (falls back to gold).
   const accent = ACCENTS[settings.accent] || ACCENTS.gold;
   const root = document.documentElement.style;
