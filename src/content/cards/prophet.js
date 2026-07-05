@@ -484,4 +484,38 @@ export const prophetCards = [
     textTemplate: 'Whenever Scarlet Rot is applied to an enemy, heal 1 HP.',
     upgrade: { cost: 1 },
   },
+
+  // ---- Content-pass additions (round 4) --------------------------------------
+  {
+    id: 'rotwardLash', name: 'Rotward Lash', class: 'prophet', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '🦠',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 6 },
+      { op: 'applyStatus', target: 'enemy', status: 'scarletRot', stacks: 2 },
+      { op: 'loseHp', target: 'self', amount: 2 },
+    ],
+    textTemplate: 'Deal {damage} damage. Apply {scarletRot} Scarlet Rot. Lose {loseHp} HP.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 8 },
+        { op: 'applyStatus', target: 'enemy', status: 'scarletRot', stacks: 3 },
+        { op: 'loseHp', target: 'self', amount: 2 },
+      ],
+    },
+  },
+  {
+    id: 'lordsMercy', name: "Lord's Mercy", class: 'prophet', rarity: 'uncommon', cost: 1, type: 'skill',
+    keywords: [], icon: '🙏',
+    effects: [
+      { op: 'heal', target: 'self', amount: 5 },
+      { op: 'block', target: 'self', amount: 4 },
+    ],
+    textTemplate: 'Heal {heal} HP. Gain {block} Block.',
+    upgrade: {
+      effects: [
+        { op: 'heal', target: 'self', amount: 7 },
+        { op: 'block', target: 'self', amount: 6 },
+      ],
+    },
+  },
 ];

@@ -550,4 +550,42 @@ export const astrologerCards = [
     textTemplate: 'At the start of your turn, gain Glintstone Charge and draw a card.',
     upgrade: { cost: 0 },
   },
+
+  // ---- Content-pass additions (round 4) --------------------------------------
+  {
+    id: 'glintSpark', name: 'Glint Spark', class: 'astrologer', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '✨',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 5 },
+      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Deal {damage} damage. Glintstone: apply {weak} Weak.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 7 },
+        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'astralInsight', name: 'Astral Insight', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'skill',
+    keywords: [], icon: '🌠',
+    effects: [
+      { op: 'block', target: 'self', amount: 5 },
+      { op: 'draw', amount: 1 },
+      { op: 'draw', amount: 1, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Gain {block} Block. Draw {draw} card. Glintstone: draw {draw.2} more.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 7 },
+        { op: 'draw', amount: 1 },
+        { op: 'draw', amount: 1, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
 ];
