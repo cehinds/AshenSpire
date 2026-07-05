@@ -1,6 +1,6 @@
 /* styles/map.css — act map screen (mockup: docs/mockups/map-screen.svg) */
 
-.mapscreen { flex: 1; display: flex; overflow: hidden; }
+.mapscreen { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .mapscreen .map-scroll {
   flex: 1; overflow: auto; position: relative;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
@@ -65,18 +65,34 @@
 .map-edge { stroke: var(--line-soft); stroke-width: 2; fill: none; }
 .map-edge.traveled { stroke: var(--gold); stroke-width: 3; }
 
-.map-side {
-  width: 230px; border-left: 1px solid var(--line); background: var(--bg-raise);
-  padding: 18px; display: flex; flex-direction: column; gap: 14px; font-size: 12px;
+/* ---------- horizontal map header (matches the combat top bar) ---------- */
+/* Reuses .topbar/.portrait/.who/.hpbar/.relics from combat.css; these rules add
+   the map-specific stats, wrapping, and the legend popover. Items are flex so
+   they reflow as customization toggles hide/show them. */
+.map-header {
+  height: auto; min-height: 52px; flex-wrap: wrap; row-gap: 6px; position: relative;
 }
-.map-side h2 { color: var(--gold); font-size: 15px; letter-spacing: 0.15em; }
-.map-side .hud-line { display: flex; justify-content: space-between; color: var(--parchment); }
-.map-side .hud-line span:first-child { color: var(--muted); }
-.map-side .legend div { margin: 3px 0; color: var(--parchment); }
-.map-side .legend .ic { display: inline-block; width: 22px; }
-.map-side .relic-strip { display: flex; flex-wrap: wrap; gap: 5px; }
-.map-side .relic-strip .relic {
-  width: 26px; height: 26px; border-radius: 6px; background: var(--panel);
-  border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px;
+.map-header .hpbar { width: 150px; }
+.map-header .mh-stat { color: var(--parchment); font-size: 12px; white-space: nowrap; }
+.map-header .runes { color: var(--gold); }
+.map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
+.map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 11px; }
+.map-header .mh-flasks { display: flex; gap: 5px; font-size: 17px; line-height: 1; }
+.map-header .mh-flask { cursor: default; }
+.map-header .mh-actions { margin-left: auto; display: flex; gap: 8px; }
+.map-legend-pop {
+  position: absolute; top: calc(100% + 4px); right: 12px; z-index: 20;
+  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 8px;
+  padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; font-size: 12px;
+  color: var(--parchment); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
 }
-.map-side .deck-btn { margin-top: auto; }
+.map-legend-pop[hidden] { display: none; }
+.map-legend-pop .ic { display: inline-block; width: 22px; }
+
+/* Customization (body classes set by applyDisplaySettings) — the bar flexes. */
+body.map-compact .map-header { min-height: 42px; gap: 10px; padding: 0 10px; }
+body.map-compact .map-header .nm { display: none; }
+body.map-compact .map-header .hpbar { width: 120px; height: 12px; }
+body.map-compact .map-header .mh-stat { font-size: 11px; }
+body.hide-header-relics .map-header .mh-relics { display: none; }
+body.hide-header-seed .map-header .mh-seed { display: none; }

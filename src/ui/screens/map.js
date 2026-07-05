@@ -9,6 +9,7 @@ import { attachTooltip, esc } from '../components/tooltip.js';
 import { overlayIsOpen } from '../components/overlay.js';
 import { matchAction } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
+import { classGlyph, tintCss } from '../assets.js';
 
 const ICONS = {
   monster: '⚔',
@@ -65,8 +66,37 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
     }
   }
 
+  const cz = run.customization || {};
+  const hpPct = Math.max(0, Math.min(100, Math.round((run.hp / Math.max(1, run.maxHp)) * 100)));
+  const className = registries.classes.get(run.class).name;
+  const heroName = (cz.name || className).toUpperCase();
+
   app.innerHTML = `
     <div class="mapscreen">
+      <header class="topbar map-header">
+        <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
+        <div class="who">
+          <span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span>
+          <div class="bar hpbar"><div class="fill" style="width:${hpPct}%"></div><div class="label">HP ${run.hp} / ${run.maxHp}</div></div>
+        </div>
+        <span class="mh-stat runes">⛁ ${run.runes}</span>
+        <span class="mh-stat mh-prog">Act ${run.actNumber} / 3 · Floor ${run.floor} / ${map.floors}</span>
+        <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
+        <div class="mh-flasks"></div>
+        <div class="relics mh-relics"></div>
+        <div class="mh-actions">
+          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
+          <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
+        </div>
+        <div class="map-legend-pop" hidden>
+          <div><span class="ic">⚔</span>Monster</div>
+          <div><span class="ic">?</span>Unknown</div>
+          <div><span class="ic" style="color:var(--ember)">☠</span>Elite</div>
+          <div><span class="ic" style="color:var(--gold)">♨</span>Shrine of Grace</div>
+          <div><span class="ic" style="color:var(--grace)">⚖</span>Merchant</div>
+          <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
+        </div>
+      </header>
       <div class="map-scroll">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -81,29 +111,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
           <button class="zbtn" id="zoom-in" title="Zoom in">+</button>
         </div>
       </div>
-      <aside class="map-side">
-        <h2>THE CLIMB</h2>
-        <div class="hud-line"><span>HP</span><b>${run.hp} / ${run.maxHp}</b></div>
-        <div class="hud-line"><span>Runes</span><b style="color:var(--gold)">${run.runes}</b></div>
-        <div class="hud-line"><span>Act</span><b>${run.actNumber} / 3</b></div>
-        <div class="hud-line"><span>Floor</span><b>${run.floor} / ${map.floors}</b></div>
-        <div class="hud-line"><span>Seed</span><b style="font-family:monospace">${esc(run.seedString)}</b></div>
-        <div class="hud-line"><span>Flasks</span><b>${run.flasks.map((f) => registries.flasks.get(f.flaskId).icon).join(' ') || '—'}</b></div>
-        <div class="relic-strip"></div>
-        <div class="legend">
-          <div><span class="ic">⚔</span>Monster</div>
-          <div><span class="ic">?</span>Unknown</div>
-          <div><span class="ic" style="color:var(--ember)">☠</span>Elite</div>
-          <div><span class="ic" style="color:var(--gold)">♨</span>Shrine of Grace</div>
-          <div><span class="ic" style="color:var(--grace)">⚖</span>Merchant</div>
-          <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
-        </div>
-        <div class="map-buttons">
-          <button class="deck-btn" id="open-menu">☰ Menu</button>
-          <button class="subtle deck-btn" id="save-run">Save</button>
-          <button class="subtle deck-btn" id="map-settings">Settings</button>
-        </div>
-      </aside>
       ${hintBarHtml('map')}
     </div>`;
 
@@ -136,7 +143,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
     g.appendChild(el);
   }
 
-  const strip = app.querySelector('.relic-strip');
+  const strip = app.querySelector('.mh-relics');
   for (const rid of run.relics) {
     const def = registries.relics.get(rid);
     const el = document.createElement('div');
@@ -146,18 +153,36 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
     strip.appendChild(el);
   }
 
+  const flaskWrap = app.querySelector('.mh-flasks');
+  for (const f of run.flasks) {
+    const def = registries.flasks.get(f.flaskId);
+    const el = document.createElement('span');
+    el.className = 'mh-flask';
+    el.textContent = def.icon || '🧪';
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
+    flaskWrap.appendChild(el);
+  }
+
   if (onMenu) app.querySelector('#open-menu').addEventListener('click', () => onMenu('deck'));
 
-  app.querySelector('#save-run').addEventListener('click', () => {
-    const slot = onSave ? onSave() : null;
-    const toast = document.createElement('div');
-    toast.className = 'save-toast';
-    toast.textContent = slot ? `Saved to Slot ${slot}` : 'Saved';
-    app.appendChild(toast);
-    setTimeout(() => toast.remove(), 1600);
+  // Legend "?" popover: opens on click; a one-shot outside-click listener closes
+  // it (added only while open, so it never leaks across screens).
+  const legendBtn = app.querySelector('#map-legend');
+  const legendPop = app.querySelector('.map-legend-pop');
+  legendBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const opening = legendPop.hidden;
+    legendPop.hidden = !opening;
+    if (opening) {
+      const off = (ev) => {
+        if (ev.target !== legendBtn && !legendPop.contains(ev.target)) {
+          legendPop.hidden = true;
+          document.removeEventListener('click', off, true);
+        }
+      };
+      document.addEventListener('click', off, true);
+    }
   });
-
-  if (onSettings) app.querySelector('#map-settings').addEventListener('click', onSettings);
 
   // ---- zoom + centering (SPEC §7.1 map UX) ----
   const scroll = app.querySelector('.map-scroll');

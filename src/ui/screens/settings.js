@@ -28,6 +28,13 @@ const ROWS = [
     note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
   { cat: 'Display', key: 'controlHints', def: true, label: 'Control hints',
     note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
+  { cat: 'Display', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
+    choices: ['comfortable', 'compact'], label: 'Map header',
+    note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
+  { cat: 'Display', key: 'mapHeaderRelics', def: true, label: 'Relics in map header',
+    note: 'Show your relic icons in the map header bar.' },
+  { cat: 'Display', key: 'mapHeaderSeed', def: true, label: 'Seed in map header',
+    note: 'Show the run seed in the map header bar.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
 
