@@ -7,6 +7,7 @@
 import { passiveFlag } from '../../model/registries.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { overlayIsOpen } from '../components/overlay.js';
+import { matchAction } from '../input.js';
 
 const ICONS = {
   monster: '⚔',
@@ -247,8 +248,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
     if (overlayIsOpen()) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    if (ev.key === 'm' || ev.key === 'M') {
+    if (matchAction(ev, 'menu') || matchAction(ev, 'deck')) {
       if (onMenu) onMenu('deck');
+    } else if (matchAction(ev, 'relics')) {
+      if (onMenu) onMenu('relics');
+    } else if (matchAction(ev, 'stats')) {
+      if (onMenu) onMenu('stats');
     } else if (ev.key === '+' || ev.key === '=') {
       stepZoom(1);
     } else if (ev.key === '-' || ev.key === '_') {

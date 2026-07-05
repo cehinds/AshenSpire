@@ -14,7 +14,7 @@ import { animateEvents, playTimeline } from '../fx.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { overlayIsOpen } from '../components/overlay.js';
-import { focusFirst } from '../input.js';
+import { focusFirst, matchAction } from '../input.js';
 
 export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -485,10 +485,13 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
     if (overlayIsOpen()) return; // the overlay owns input while open
 
-    if (ev.key === 'm' || ev.key === 'M') {
-      ev.preventDefault();
-      if (onMenu) onMenu('deck');
-      return;
+    // Dedicated (rebindable) overlay keys: Menu → Deck, plus jump-to-tab keys.
+    for (const [id, tab] of [['menu', 'deck'], ['deck', 'deck'], ['relics', 'relics'], ['stats', 'stats']]) {
+      if (matchAction(ev, id)) {
+        ev.preventDefault();
+        if (onMenu) onMenu(tab);
+        return;
+      }
     }
 
     if (ev.key === 'Escape') {
@@ -502,7 +505,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     }
     if (busy || combat.result || combat.phase !== 'player') return;
 
-    if (ev.key === 'e' || ev.key === 'E') {
+    if (matchAction(ev, 'endTurn')) {
       ev.preventDefault();
       $('.end-turn').click();
       return;
