@@ -7,7 +7,7 @@
 import { passiveFlag } from '../../model/registries.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { overlayIsOpen } from '../components/overlay.js';
-import { matchAction } from '../input.js';
+import { matchAction, isEngaged, focusFirst } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
 
@@ -297,22 +297,29 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
   addEventListener('keydown', mapKeys);
 
   applyZoom(false);
-  // Center once the flex container actually has a measured height. A rAF can
-  // fire before layout settles (clientHeight 0), so observe the box and center
-  // on its first non-zero size, then stop.
-  if (scroll.clientHeight > 0) {
+  // Auto-center the camera on the current node. The flex container may report
+  // height 0 until layout settles (the header/sub-strip above it size first), so
+  // center on the first non-zero size via a ResizeObserver, with a timeout
+  // backstop. Smart default: land the cursor on a reachable next node (only once
+  // the player is using keyboard/gamepad, so mouse players get no stray ring).
+  function centerAndFocus() {
     centerOnCurrent();
+    if (isEngaged()) focusFirst('.map-node.reachable');
+  }
+  if (scroll.clientHeight > 0) {
+    centerAndFocus();
   } else if (typeof ResizeObserver !== 'undefined') {
     const ro = new ResizeObserver(() => {
       if (scroll.clientHeight > 0) {
-        centerOnCurrent();
+        centerAndFocus();
         ro.disconnect();
       }
     });
     ro.observe(scroll);
-  } else {
-    setTimeout(centerOnCurrent, 60);
   }
+  // Backstop in case the observer never fires (e.g. instant layout): re-center
+  // shortly after mount. Cheap and idempotent.
+  setTimeout(centerAndFocus, 120);
 }
 
 function nodeTooltip(type, node, revealed) {

@@ -9,6 +9,7 @@ import { renderCard } from './card.js';
 import { renderSettings } from '../screens/settings.js';
 import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
+import { isEngaged, focusFirst } from '../input.js';
 
 let openVeil = null;
 let escHandler = null;
@@ -195,5 +196,10 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
   addEventListener('keydown', escHandler, true);
 
   selectTab(TABS.some((t) => t.id === initialTab) ? initialTab : 'deck');
+
+  // Smart default (keyboard/gamepad): land on the active tab so arrows can move
+  // to its content or across tabs, rather than leaving focus nowhere.
+  if (isEngaged()) setTimeout(() => focusFirst('.ov-tab.on') || focusFirst('.ov-tab'), 0);
+
   return veil;
 }

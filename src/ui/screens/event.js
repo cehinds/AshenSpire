@@ -6,6 +6,7 @@
 
 import { executeRunEffects } from '../../engine/actions.js';
 import { esc } from '../components/tooltip.js';
+import { isEngaged, focusFirst } from '../input.js';
 
 export function mountEvent(app, { registries, run, rng, eventId, onDone }) {
   const def = registries.events.get(eventId);
@@ -43,6 +44,9 @@ export function mountEvent(app, { registries, run, rng, eventId, onDone }) {
     box.appendChild(btn);
   });
 
+  // Smart default (keyboard/gamepad): land on the first available choice.
+  if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
+
   function showResult(text) {
     box.innerHTML = '';
     const p = document.createElement('p');
@@ -53,5 +57,6 @@ export function mountEvent(app, { registries, run, rng, eventId, onDone }) {
     cont.addEventListener('click', onDone);
     box.appendChild(p);
     box.appendChild(cont);
+    if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
   }
 }
