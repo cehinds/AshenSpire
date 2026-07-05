@@ -96,6 +96,23 @@
 .map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
 .reduced-motion .gp-focus { box-shadow: none !important; }
 
+/* ---------- contextual control-hint bar ---------- */
+.hint-bar {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: 6px; z-index: 40;
+  display: flex; gap: 14px; pointer-events: none; white-space: nowrap;
+  padding: 4px 12px; border-radius: 10px; max-width: 96vw; overflow: hidden;
+  background: rgba(12, 10, 7, 0.62); border: 1px solid var(--line-soft);
+  font-size: 11px; color: var(--muted); letter-spacing: 0.04em;
+}
+.hint-bar.hint-combat { top: 58px; bottom: auto; } /* under the 52px topbar; combat's bottom is full */
+.hint-bar .hint { display: inline-flex; align-items: center; gap: 5px; }
+.hint-bar kbd {
+  font-family: var(--font-body); font-size: 10px; min-width: 15px; text-align: center;
+  padding: 1px 5px; border-radius: 4px; color: var(--parchment);
+  background: var(--panel); border: 1px solid var(--gold);
+}
+body.hide-hints .hint-bar { display: none; }
+
 /* ---------- controls / rebinds ---------- */
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }

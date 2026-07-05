@@ -230,6 +230,23 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
 .reduced-motion .gp-focus { box-shadow: none !important; }
 
+/* ---------- contextual control-hint bar ---------- */
+.hint-bar {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: 6px; z-index: 40;
+  display: flex; gap: 14px; pointer-events: none; white-space: nowrap;
+  padding: 4px 12px; border-radius: 10px; max-width: 96vw; overflow: hidden;
+  background: rgba(12, 10, 7, 0.62); border: 1px solid var(--line-soft);
+  font-size: 11px; color: var(--muted); letter-spacing: 0.04em;
+}
+.hint-bar.hint-combat { top: 58px; bottom: auto; } /* under the 52px topbar; combat's bottom is full */
+.hint-bar .hint { display: inline-flex; align-items: center; gap: 5px; }
+.hint-bar kbd {
+  font-family: var(--font-body); font-size: 10px; min-width: 15px; text-align: center;
+  padding: 1px 5px; border-radius: 4px; color: var(--parchment);
+  background: var(--panel); border: 1px solid var(--gold);
+}
+body.hide-hints .hint-bar { display: none; }
+
 /* ---------- controls / rebinds ---------- */
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
@@ -868,6 +885,7 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
   document.body.classList.toggle('readable-ui', settings.readableHeadings === true);
+  document.body.classList.toggle('hide-hints', settings.controlHints === false);
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
   document.documentElement.dataset.ambient = amb;
@@ -10539,6 +10557,7 @@ const { passiveFlag } = require("src/model/registries.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { overlayIsOpen } = require("src/ui/components/overlay.js");
 const { matchAction } = require("src/ui/input.js");
+const { hintBarHtml } = require("src/ui/components/hints.js");
 
 const ICONS = {
   monster: '⚔',
@@ -10634,6 +10653,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
           <button class="subtle deck-btn" id="map-settings">Settings</button>
         </div>
       </aside>
+      ${hintBarHtml('map')}
     </div>`;
 
   const g = app.querySelector('#map-nodes');
@@ -11062,6 +11082,8 @@ const ROWS = [
   { cat: 'Display', key: 'ambient', type: 'choice', def: 'normal',
     choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
     note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
+  { cat: 'Display', key: 'controlHints', def: true, label: 'Control hints',
+    note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
 
@@ -11819,6 +11841,49 @@ function initInput({ getSettings } = {}) {
 Object.assign(module.exports, { ACTIONS, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, keyLabel, focusFirst, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
+"src/ui/components/hints.js": function (module, exports, require) {
+// src/ui/components/hints.js — the contextual control-hint bar (SPEC §7.3).
+//
+// A thin, unobtrusive strip pinned to the bottom of the map and combat screens
+// that lists the currently-bound keys for the dedicated overlay/zone actions, so
+// the rebindable D/R/T/M/E keys are discoverable. Labels come from the live
+// keyLabel() binding, so they reflect rebinds. The whole bar is hidden by CSS
+// when the "Control hints" setting is off (body.hide-hints).
+
+const { keyLabel } = require("src/ui/input.js");
+
+// Which action chips each context shows, in reading order. All of these carry a
+// rebindable keyboard key (keyLabel returns a real key, never '—').
+const CHIPS = {
+  combat: [
+    { id: 'endTurn', label: 'End Turn' },
+    { id: 'deck', label: 'Deck' },
+    { id: 'relics', label: 'Relics' },
+    { id: 'stats', label: 'Stats' },
+    { id: 'menu', label: 'Menu' },
+  ],
+  map: [
+    { id: 'deck', label: 'Deck' },
+    { id: 'relics', label: 'Relics' },
+    { id: 'stats', label: 'Stats' },
+    { id: 'menu', label: 'Menu' },
+  ],
+};
+
+/** HTML for the hint bar in a given context ('combat' | 'map'). */
+function hintBarHtml(context) {
+  const chips = CHIPS[context] || [];
+  if (!chips.length) return '';
+  const inner = chips
+    .map((c) => `<span class="hint"><kbd>${keyLabel(c.id)}</kbd>${c.label}</span>`)
+    .join('');
+  return `<div class="hint-bar hint-${context}" role="presentation" aria-hidden="true">${inner}</div>`;
+}
+
+
+Object.assign(module.exports, { hintBarHtml });
+
+},
 "src/ui/screens/combat.js": function (module, exports, require) {
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
@@ -11837,6 +11902,7 @@ const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { overlayIsOpen } = require("src/ui/components/overlay.js");
 const { focusFirst, matchAction } = require("src/ui/input.js");
+const { hintBarHtml } = require("src/ui/components/hints.js");
 
 function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -11870,6 +11936,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
         <line x1="0" y1="0" x2="0" y2="0" stroke="var(--gold)" stroke-width="3" stroke-dasharray="8 6"/>
       </svg>
+      ${hintBarHtml('combat')}
     </div>`;
 
   const $ = (sel) => app.querySelector(sel);

@@ -26,6 +26,8 @@ const ROWS = [
   { cat: 'Display', key: 'ambient', type: 'choice', def: 'normal',
     choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
     note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
+  { cat: 'Display', key: 'controlHints', def: true, label: 'Control hints',
+    note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
 

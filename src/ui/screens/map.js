@@ -8,6 +8,7 @@ import { passiveFlag } from '../../model/registries.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { overlayIsOpen } from '../components/overlay.js';
 import { matchAction } from '../input.js';
+import { hintBarHtml } from '../components/hints.js';
 
 const ICONS = {
   monster: '⚔',
@@ -103,6 +104,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
           <button class="subtle deck-btn" id="map-settings">Settings</button>
         </div>
       </aside>
+      ${hintBarHtml('map')}
     </div>`;
 
   const g = app.querySelector('#map-nodes');
