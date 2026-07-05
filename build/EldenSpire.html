@@ -2788,6 +2788,40 @@ const vagabondCards = [
       ],
     },
   },
+
+  // ---- Content-pass additions (round 4) --------------------------------------
+  {
+    id: 'rondelParry', name: 'Rondel Parry', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    keywords: [], icon: '🗡',
+    effects: [
+      { op: 'block', target: 'self', amount: 5 },
+      { op: 'poiseDamage', target: 'enemy', amount: 5 },
+    ],
+    textTemplate: 'Gain {block} Block and deal {poiseDamage} Poise damage.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 7 },
+        { op: 'poiseDamage', target: 'enemy', amount: 7 },
+      ],
+    },
+  },
+  {
+    id: 'sunderplate', name: 'Sunderplate', class: 'vagabond', rarity: 'uncommon', cost: 2, type: 'attack',
+    keywords: [], icon: '⚒',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 9 },
+      { op: 'poiseDamage', target: 'enemy', amount: 10 },
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3, if: { p: 'hasStatus', of: 'target', status: 'staggered' } },
+    ],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage. If the target is Staggered: apply {bleed} Bleed.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 12 },
+        { op: 'poiseDamage', target: 'enemy', amount: 13 },
+        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 4, if: { p: 'hasStatus', of: 'target', status: 'staggered' } },
+      ],
+    },
+  },
 ];
 
 
@@ -3347,6 +3381,44 @@ const astrologerCards = [
     textTemplate: 'At the start of your turn, gain Glintstone Charge and draw a card.',
     upgrade: { cost: 0 },
   },
+
+  // ---- Content-pass additions (round 4) --------------------------------------
+  {
+    id: 'glintSpark', name: 'Glint Spark', class: 'astrologer', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '✨',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 5 },
+      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Deal {damage} damage. Glintstone: apply {weak} Weak.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 7 },
+        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'astralInsight', name: 'Astral Insight', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'skill',
+    keywords: [], icon: '🌠',
+    effects: [
+      { op: 'block', target: 'self', amount: 5 },
+      { op: 'draw', amount: 1 },
+      { op: 'draw', amount: 1, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Gain {block} Block. Draw {draw} card. Glintstone: draw {draw.2} more.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 7 },
+        { op: 'draw', amount: 1 },
+        { op: 'draw', amount: 1, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
 ];
 
 
@@ -3839,6 +3911,40 @@ const prophetCards = [
     effects: [{ op: 'applyStatus', target: 'self', status: 'harbingerOfRot', stacks: one }],
     textTemplate: 'Whenever Scarlet Rot is applied to an enemy, heal 1 HP.',
     upgrade: { cost: 1 },
+  },
+
+  // ---- Content-pass additions (round 4) --------------------------------------
+  {
+    id: 'rotwardLash', name: 'Rotward Lash', class: 'prophet', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '🦠',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 6 },
+      { op: 'applyStatus', target: 'enemy', status: 'scarletRot', stacks: 2 },
+      { op: 'loseHp', target: 'self', amount: 2 },
+    ],
+    textTemplate: 'Deal {damage} damage. Apply {scarletRot} Scarlet Rot. Lose {loseHp} HP.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 8 },
+        { op: 'applyStatus', target: 'enemy', status: 'scarletRot', stacks: 3 },
+        { op: 'loseHp', target: 'self', amount: 2 },
+      ],
+    },
+  },
+  {
+    id: 'lordsMercy', name: "Lord's Mercy", class: 'prophet', rarity: 'uncommon', cost: 1, type: 'skill',
+    keywords: [], icon: '🙏',
+    effects: [
+      { op: 'heal', target: 'self', amount: 5 },
+      { op: 'block', target: 'self', amount: 4 },
+    ],
+    textTemplate: 'Heal {heal} HP. Gain {block} Block.',
+    upgrade: {
+      effects: [
+        { op: 'heal', target: 'self', amount: 7 },
+        { op: 'block', target: 'self', amount: 6 },
+      ],
+    },
   },
 ];
 

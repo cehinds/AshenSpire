@@ -540,4 +540,38 @@ export const vagabondCards = [
       ],
     },
   },
+
+  // ---- Content-pass additions (round 4) --------------------------------------
+  {
+    id: 'rondelParry', name: 'Rondel Parry', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    keywords: [], icon: '🗡',
+    effects: [
+      { op: 'block', target: 'self', amount: 5 },
+      { op: 'poiseDamage', target: 'enemy', amount: 5 },
+    ],
+    textTemplate: 'Gain {block} Block and deal {poiseDamage} Poise damage.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 7 },
+        { op: 'poiseDamage', target: 'enemy', amount: 7 },
+      ],
+    },
+  },
+  {
+    id: 'sunderplate', name: 'Sunderplate', class: 'vagabond', rarity: 'uncommon', cost: 2, type: 'attack',
+    keywords: [], icon: '⚒',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 9 },
+      { op: 'poiseDamage', target: 'enemy', amount: 10 },
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3, if: { p: 'hasStatus', of: 'target', status: 'staggered' } },
+    ],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage. If the target is Staggered: apply {bleed} Bleed.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 12 },
+        { op: 'poiseDamage', target: 'enemy', amount: 13 },
+        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 4, if: { p: 'hasStatus', of: 'target', status: 'staggered' } },
+      ],
+    },
+  },
 ];
