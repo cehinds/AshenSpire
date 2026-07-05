@@ -41,7 +41,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { openSettings } from './ui/screens/settings.js';
 import { openOverlay } from './ui/components/overlay.js';
-import { initInput, setBindings } from './ui/input.js';
+import { initInput, setBindings, setKeyBindings } from './ui/input.js';
 import { setSpritesEnabled } from './ui/assets.js';
 import { setAnimSpeed } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
@@ -338,6 +338,7 @@ function showOverlay(initialTab = 'deck') {
       saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
       if (changed.bindings) setBindings(changed.bindings);
+      if (changed.keyBindings) setKeyBindings(changed.keyBindings);
     },
     onSave: () => {
       persist();

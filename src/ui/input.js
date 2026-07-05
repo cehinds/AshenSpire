@@ -40,14 +40,24 @@ const FOCUS_SELECTOR = [
 // a modal/overlay is open, where its own contents ARE the scope.
 const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb';
 
-// Actions whose gamepad button is rebindable. Each maps to how it's delivered:
-// 'cursor' actions are handled here; 'key' actions dispatch a synthetic keydown
-// so a screen's own handler runs (parity with mouse+keyboard play).
+// Rebindable actions. Each carries BOTH a keyboard key (defKey) and a gamepad
+// button (defBtn), and both are rebindable (Controls tab). Delivery:
+//   'cursor' — handled here (activates the focus cursor).
+//   'key'    — the canonical binding is the keyboard key; screens match it via
+//              matchAction(ev, id). A pad press dispatches that same key, so the
+//              screens' own handlers run for controller + keyboard alike.
+// The deck/relics/stats actions jump the in-run overlay straight to that tab
+// (StS2-style dedicated zone keys) instead of only the generic Menu.
 export const ACTIONS = [
+  // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
+  // and overlay-close always work; only their pad button is rebindable.
   { id: 'confirm', label: 'Confirm / Play', kind: 'cursor', keyHint: 'Enter', defBtn: 0 },
   { id: 'cancel', label: 'Cancel / Back', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
-  { id: 'menu', label: 'Open Menu', kind: 'key', key: 'm', keyHint: 'M', defBtn: 9 },
-  { id: 'endTurn', label: 'End Turn', kind: 'key', key: 'e', keyHint: 'E', defBtn: 2 },
+  { id: 'endTurn', label: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
+  { id: 'menu', label: 'Open Menu', kind: 'key', defKey: 'm', defBtn: 9 },
+  { id: 'deck', label: 'Open Deck', kind: 'key', defKey: 'd', defBtn: 3 },
+  { id: 'relics', label: 'Open Relics', kind: 'key', defKey: 'r', defBtn: 4 },
+  { id: 'stats', label: 'Open Stats', kind: 'key', defKey: 't', defBtn: 5 },
 ];
 
 const DEADZONE = 0.5;
@@ -55,6 +65,7 @@ const REPEAT_MS = 180;
 const POLL_MS = 16; // ~60 Hz input polling (only while a pad is connected)
 
 let bindings = {}; // action id → gamepad button index
+let keyBindings = {}; // action id → keyboard key (e.g. 'm', 'Escape')
 let pollTimer = null;
 let padPrev = {}; // gamepad index → last pressed-button booleans
 let lastNav = 0; // step counter gate for held-direction repeat
@@ -76,6 +87,38 @@ export function getBindings() {
 
 export function actionForButton(btn) {
   return ACTIONS.find((a) => bindings[a.id] === btn) || null;
+}
+
+// ---- keyboard bindings ------------------------------------------------------
+
+function defaultKeyBindings() {
+  const b = {};
+  for (const a of ACTIONS) if (a.defKey) b[a.id] = a.defKey;
+  return b;
+}
+
+export function setKeyBindings(stored) {
+  keyBindings = { ...defaultKeyBindings(), ...(stored || {}) };
+}
+
+export function getKeyBindings() {
+  return { ...keyBindings };
+}
+
+/** True if a keydown event matches the key currently bound to an action. */
+export function matchAction(ev, id) {
+  const k = keyBindings[id];
+  if (!k) return false;
+  return (ev.key || '').toLowerCase() === k.toLowerCase();
+}
+
+/** Human label for an action's bound key (Controls tab + reference). */
+export function keyLabel(id) {
+  const k = keyBindings[id] || '';
+  if (!k) return '—';
+  if (k === 'Escape') return 'Esc';
+  if (k === ' ') return 'Space';
+  return k.length === 1 ? k.toUpperCase() : k;
 }
 
 // ---- focus cursor -----------------------------------------------------------
@@ -238,12 +281,35 @@ function doAction(id) {
   const a = ACTIONS.find((x) => x.id === id);
   if (!a) return;
   if (a.kind === 'cursor') activate();
-  else synthKey(a.key);
+  // Dispatch the CURRENTLY bound key so a pad press stays in sync with keyboard
+  // rebinds (screens match by binding via matchAction). Fixed-key actions
+  // (cancel) fall back to a.key.
+  else synthKey(keyBindings[id] || a.defKey || a.key);
 }
 
 // ---- keyboard navigation ----------------------------------------------------
 
+// Controls tab: capture the next keypress to rebind a keyboard action.
+let keyCapture = null;
+export function captureNextKey(cb) {
+  keyCapture = cb;
+}
+export function cancelKeyCapture() {
+  keyCapture = null;
+}
+
 function onKeydown(ev) {
+  // Key-rebind capture runs even while nav is enabled and ignores lone modifiers.
+  if (keyCapture) {
+    const k = ev.key;
+    if (k === 'Shift' || k === 'Control' || k === 'Alt' || k === 'Meta') return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const cb = keyCapture;
+    keyCapture = null;
+    cb(k);
+    return;
+  }
   if (!enabled) return;
   const tag = (ev.target && ev.target.tagName) || '';
   const typing = tag === 'INPUT' || tag === 'TEXTAREA';
@@ -339,7 +405,9 @@ function stopPolling() {
  * Bindings come from settings.bindings (rebindable in the Controls tab).
  */
 export function initInput({ getSettings } = {}) {
-  setBindings((getSettings && getSettings().bindings) || {});
+  const s = (getSettings && getSettings()) || {};
+  setBindings(s.bindings || {});
+  setKeyBindings(s.keyBindings || {});
   addEventListener('keydown', onKeydown, true);
 
   // Focus memory: after a re-render drops the cursor, restore it to the same
