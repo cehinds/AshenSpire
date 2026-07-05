@@ -60,6 +60,36 @@ export const colorlessCards = [
       ],
     },
   },
+  {
+    // The pool's first colorless ATTACK — a neutral multi-hit that rides
+    // Strength/Vulnerable well in any class.
+    id: 'twinFang', name: 'Twin Fang', class: 'colorless', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '🗡',
+    effects: [{ op: 'damage', target: 'enemy', amount: 4, hits: 2 }],
+    textTemplate: 'Deal {damage} damage {hits} times.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 6, hits: 2 }] },
+  },
+  {
+    id: 'blindingSand', name: 'Blinding Sand', class: 'colorless', rarity: 'common', cost: 0, type: 'skill',
+    keywords: ['exhaust'], icon: '🌪',
+    effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 2 }],
+    textTemplate: 'Apply {weak} Weak to ALL enemies. Exhaust.',
+    upgrade: { effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 3 }] },
+  },
+  {
+    id: 'hamstring', name: 'Hamstring', class: 'colorless', rarity: 'uncommon', cost: 0, type: 'skill',
+    keywords: ['exhaust'], icon: '🦵',
+    effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'vulnerable', stacks: 2 }],
+    textTemplate: 'Apply {vulnerable} Vulnerable to ALL enemies. Exhaust.',
+    upgrade: { effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'vulnerable', stacks: 3 }] },
+  },
+  {
+    id: 'masterOfStrategy', name: 'Master of Strategy', class: 'colorless', rarity: 'rare', cost: 0, type: 'skill',
+    keywords: ['exhaust'], icon: '📜',
+    effects: [{ op: 'draw', amount: 3 }],
+    textTemplate: 'Draw {draw} cards. Exhaust.',
+    upgrade: { effects: [{ op: 'draw', amount: 4 }] },
+  },
 
   // ---- Statuses (the card kind) + curses (enemy/event injected) --------------
   {
