@@ -6,7 +6,7 @@
 
 import { passiveFlag } from '../../model/registries.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
-import { openPileModal } from '../components/piles.js';
+import { overlayIsOpen } from '../components/overlay.js';
 
 const ICONS = {
   monster: '⚔',
@@ -28,7 +28,16 @@ const ACT_NAMES = {
   3: 'ACT III — THE ASHEN CROWN',
 };
 
-export function mountMap(app, { registries, run, onPick, onSave, onSettings }) {
+// Map zoom levels (%) selectable in-view and defaulted from settings.
+const ZOOM_STEPS = [1, 1.15, 1.3, 1.5, 1.75, 2];
+function defaultZoom(meta) {
+  const pct = Number(((meta && meta.settings) || {}).mapZoom);
+  const z = pct ? pct / 100 : 1.15;
+  // Snap to the nearest step so +/- stays on the ladder.
+  return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), 1.15);
+}
+
+export function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMenu }) {
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -36,6 +45,7 @@ export function mountMap(app, { registries, run, onPick, onSave, onSettings }) {
   const height = (maxFloor + 1) * ROW_H + 30;
   const x = (col) => 60 + col * COL_X;
   const y = (floor) => height - floor * ROW_H;
+  let zoom = defaultZoom(meta);
 
   const reachable = new Set(run.mapNodeId ? map.nodes[run.mapNodeId].next : map.startIds);
   const traveled = new Set(run.path || []);
@@ -56,11 +66,18 @@ export function mountMap(app, { registries, run, onPick, onSave, onSettings }) {
   app.innerHTML = `
     <div class="mapscreen">
       <div class="map-scroll">
-        <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-          <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${ACT_NAMES[run.actNumber] || `ACT ${run.actNumber}`}</text>
-          ${edgeSvg}
-          <g id="map-nodes"></g>
-        </svg>
+        <div class="map-canvas">
+          <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+            <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${ACT_NAMES[run.actNumber] || `ACT ${run.actNumber}`}</text>
+            ${edgeSvg}
+            <g id="map-nodes"></g>
+          </svg>
+        </div>
+        <div class="map-zoom">
+          <button class="zbtn" id="zoom-out" title="Zoom out">−</button>
+          <button class="zbtn" id="zoom-reset" title="Reset / center">⊙</button>
+          <button class="zbtn" id="zoom-in" title="Zoom in">+</button>
+        </div>
       </div>
       <aside class="map-side">
         <h2>THE CLIMB</h2>
@@ -80,7 +97,7 @@ export function mountMap(app, { registries, run, onPick, onSave, onSettings }) {
           <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
         </div>
         <div class="map-buttons">
-          <button class="subtle deck-btn" id="view-deck">View deck (${run.deck.length})</button>
+          <button class="deck-btn" id="open-menu">☰ Menu</button>
           <button class="subtle deck-btn" id="save-run">Save</button>
           <button class="subtle deck-btn" id="map-settings">Settings</button>
         </div>
@@ -107,7 +124,10 @@ export function mountMap(app, { registries, run, onPick, onSave, onSettings }) {
     const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     el.setAttribute('class', cls);
     const r = n.type === 'boss' ? 20 : 15;
-    el.innerHTML = `<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${ICONS[shownType] || '?'}</text>`;
+    // Reachable nodes get a rhythmic pulsing halo so the next choices read at
+    // a glance; the halo is inert when reduced-motion is set (CSS handles it).
+    const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
+    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${ICONS[shownType] || '?'}</text>`;
     if (isReachable) el.addEventListener('click', () => onPick(n.id));
     attachTooltip(el, () => nodeTooltip(shownType, n, revealed));
     g.appendChild(el);
@@ -123,9 +143,7 @@ export function mountMap(app, { registries, run, onPick, onSave, onSettings }) {
     strip.appendChild(el);
   }
 
-  app.querySelector('#view-deck').addEventListener('click', () => {
-    openPileModal(registries, 'Your deck', run.deck);
-  });
+  if (onMenu) app.querySelector('#open-menu').addEventListener('click', () => onMenu('deck'));
 
   app.querySelector('#save-run').addEventListener('click', () => {
     const slot = onSave ? onSave() : null;
@@ -137,6 +155,127 @@ export function mountMap(app, { registries, run, onPick, onSave, onSettings }) {
   });
 
   if (onSettings) app.querySelector('#map-settings').addEventListener('click', onSettings);
+
+  // ---- zoom + centering (SPEC §7.1 map UX) ----
+  const scroll = app.querySelector('.map-scroll');
+  const svgEl = app.querySelector('.map-scroll svg');
+
+  // The svg scales by setting its pixel width/height (viewBox unchanged), so
+  // the scroll container grows and native scrollbars appear.
+  function applyZoom(center) {
+    svgEl.style.width = `${width * zoom}px`;
+    svgEl.style.height = `${height * zoom}px`;
+    if (center) centerOnCurrent();
+  }
+
+  // Scroll so the current node sits in the middle of the viewport. At run
+  // start there is no current node yet, so frame the reachable start nodes
+  // (their centroid) — the requested default framing.
+  function centerOnCurrent() {
+    let fx;
+    let fy;
+    if (run.mapNodeId && map.nodes[run.mapNodeId]) {
+      const f = map.nodes[run.mapNodeId];
+      fx = x(f.col);
+      fy = y(f.floor);
+    } else {
+      const rs = nodes.filter((n) => reachable.has(n.id));
+      if (!rs.length) return;
+      fx = rs.reduce((a, n) => a + x(n.col), 0) / rs.length;
+      fy = rs.reduce((a, n) => a + y(n.floor), 0) / rs.length;
+    }
+    scroll.scrollTop = Math.max(0, fy * zoom - scroll.clientHeight / 2);
+    scroll.scrollLeft = Math.max(0, fx * zoom - scroll.clientWidth / 2);
+  }
+
+  function setZoom(next, keepCenter = true) {
+    zoom = Math.min(ZOOM_STEPS[ZOOM_STEPS.length - 1], Math.max(ZOOM_STEPS[0], next));
+    applyZoom(keepCenter);
+  }
+  const stepZoom = (dir) => {
+    const i = ZOOM_STEPS.findIndex((z) => Math.abs(z - zoom) < 0.001);
+    const ni = Math.min(ZOOM_STEPS.length - 1, Math.max(0, (i < 0 ? 1 : i) + dir));
+    setZoom(ZOOM_STEPS[ni]);
+  };
+  app.querySelector('#zoom-in').addEventListener('click', () => stepZoom(1));
+  app.querySelector('#zoom-out').addEventListener('click', () => stepZoom(-1));
+  app.querySelector('#zoom-reset').addEventListener('click', () => centerOnCurrent());
+
+  // Ctrl/⌘ + wheel zooms toward the pointer-ish center; plain wheel scrolls.
+  scroll.addEventListener(
+    'wheel',
+    (ev) => {
+      if (!(ev.ctrlKey || ev.metaKey)) return;
+      ev.preventDefault();
+      stepZoom(ev.deltaY < 0 ? 1 : -1);
+    },
+    { passive: false }
+  );
+
+  // Drag-to-pan (in addition to scrollbars).
+  let panning = false;
+  let sx = 0;
+  let sy = 0;
+  let sl = 0;
+  let st = 0;
+  scroll.addEventListener('pointerdown', (ev) => {
+    if (ev.target.closest('.map-node.reachable') || ev.target.closest('.map-zoom')) return;
+    panning = true;
+    sx = ev.clientX;
+    sy = ev.clientY;
+    sl = scroll.scrollLeft;
+    st = scroll.scrollTop;
+    scroll.classList.add('grabbing');
+  });
+  addEventListener('pointermove', (ev) => {
+    if (!panning) return;
+    scroll.scrollLeft = sl - (ev.clientX - sx);
+    scroll.scrollTop = st - (ev.clientY - sy);
+  });
+  addEventListener('pointerup', () => {
+    panning = false;
+    scroll.classList.remove('grabbing');
+  });
+
+  // Keyboard: M opens the menu overlay; + / − / 0 zoom; the overlay owns Esc
+  // while open. Removed when the screen is torn down (app.innerHTML replaced).
+  const mapKeys = (ev) => {
+    if (!app.querySelector('.mapscreen')) {
+      removeEventListener('keydown', mapKeys);
+      return;
+    }
+    if (overlayIsOpen()) return;
+    const tag = (ev.target && ev.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (ev.key === 'm' || ev.key === 'M') {
+      if (onMenu) onMenu('deck');
+    } else if (ev.key === '+' || ev.key === '=') {
+      stepZoom(1);
+    } else if (ev.key === '-' || ev.key === '_') {
+      stepZoom(-1);
+    } else if (ev.key === '0') {
+      centerOnCurrent();
+    }
+  };
+  addEventListener('keydown', mapKeys);
+
+  applyZoom(false);
+  // Center once the flex container actually has a measured height. A rAF can
+  // fire before layout settles (clientHeight 0), so observe the box and center
+  // on its first non-zero size, then stop.
+  if (scroll.clientHeight > 0) {
+    centerOnCurrent();
+  } else if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => {
+      if (scroll.clientHeight > 0) {
+        centerOnCurrent();
+        ro.disconnect();
+      }
+    });
+    ro.observe(scroll);
+  } else {
+    setTimeout(centerOnCurrent, 60);
+  }
 }
 
 function nodeTooltip(type, node, revealed) {

@@ -461,4 +461,93 @@ export const astrologerCards = [
     textTemplate: 'At the start of your turn, apply 2 Vulnerable to ALL enemies.',
     upgrade: { cost: 1 },
   },
+
+  // ---- Content-pass additions (round 2) ---------------------------------------
+  // Two more commons (a cheap combo-piece and a defensive combo-piece), two
+  // uncommons (a card-draw combo skill and a scaling shield power), two rares
+  // (a heavy Glintstone-gated attack and a combo-fed draw power) — rounding
+  // the pool to 36. All follow the same "check charge first, then GAIN_CHARGE
+  // last" shape as the rest of the pool.
+  {
+    id: 'shootingShard', name: 'Shooting Shard', class: 'astrologer', rarity: 'common', cost: 0, type: 'attack',
+    keywords: [], icon: '💫',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 4 },
+      { op: 'damage', target: 'enemy', amount: 3, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Deal {damage} damage. Glintstone: deal {damage.2} more.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 5 },
+        { op: 'damage', target: 'enemy', amount: 4, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'wardingStar', name: 'Warding Star', class: 'astrologer', rarity: 'common', cost: 1, type: 'skill',
+    keywords: [], icon: '⭐',
+    effects: [
+      { op: 'block', target: 'self', amount: 6 },
+      { op: 'draw', amount: 1, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Gain {block} Block. Glintstone: draw {draw} card.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 8 },
+        { op: 'draw', amount: 1, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'starPath', name: 'Star Path', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'skill',
+    keywords: [], icon: '🌌',
+    effects: [
+      { op: 'draw', amount: 1 },
+      { op: 'draw', amount: 1, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Draw {draw} card. Glintstone: draw {draw.2} more.',
+    upgrade: {
+      effects: [
+        { op: 'draw', amount: 2 },
+        { op: 'draw', amount: 1, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'moonlitShieldCard', name: 'Moonlit Shield', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'power',
+    keywords: [], icon: '🔷',
+    effects: [{ op: 'applyStatus', target: 'self', status: 'moonlitShield', stacks: one }],
+    textTemplate: 'Whenever you gain Glintstone Charge, gain 3 Block.',
+    upgrade: { cost: 0 },
+  },
+  {
+    id: 'celestialLance', name: 'Celestial Lance', class: 'astrologer', rarity: 'rare', cost: 2, type: 'attack',
+    keywords: [], icon: '🔱',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 10, if: { p: 'not', pred: CHARGED } },
+      { op: 'damage', target: 'enemy', amount: 22, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Deal {damage} damage. Glintstone: {damage.2} instead.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 13, if: { p: 'not', pred: CHARGED } },
+        { op: 'damage', target: 'enemy', amount: 28, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'astromancerCard', name: 'Astromancer', class: 'astrologer', rarity: 'rare', cost: 1, type: 'power',
+    keywords: [], icon: '📚',
+    effects: [{ op: 'applyStatus', target: 'self', status: 'astromancer', stacks: one }],
+    textTemplate: 'At the start of your turn, gain Glintstone Charge and draw a card.',
+    upgrade: { cost: 0 },
+  },
 ];

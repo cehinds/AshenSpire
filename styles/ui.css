@@ -61,6 +61,73 @@
 .modal h2 { color: var(--gold); font-size: 16px; margin-bottom: 14px; }
 .modal .grid { display: flex; flex-wrap: wrap; gap: 14px; }
 
+/* ---------- in-run tabbed overlay ---------- */
+.overlay-modal { width: 760px; max-width: 92vw; height: 74vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.overlay-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.overlay-tabs .ov-tab {
+  padding: 7px 14px; border-radius: 8px 8px 0 0; font-size: 12px; letter-spacing: 0.05em;
+  background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer;
+}
+.overlay-tabs .ov-tab:hover { color: var(--parchment); }
+.overlay-tabs .ov-tab.on { color: var(--gold); border-color: var(--line); border-bottom-color: transparent; background: var(--bg-raise); }
+.overlay-actions { display: flex; gap: 8px; align-items: center; }
+.overlay-body { flex: 1; overflow: auto; padding: 18px; }
+.overlay-body .grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.ov-relic-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.ov-relic { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px; }
+.ov-relic-ic { font-size: 20px; flex-shrink: 0; }
+.ov-relic b { color: var(--parchment); font-size: 13px; }
+.ov-relic p { color: var(--muted); font-size: 11px; margin-top: 2px; line-height: 1.4; }
+.ov-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; max-width: 520px; }
+.ov-stat { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line-soft); padding: 6px 0; }
+.ov-stat span { color: var(--muted); font-size: 12px; }
+.ov-stat b { color: var(--parchment); font-size: 12px; }
+.set-cat { color: var(--gold); font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin: 14px 0 4px; }
+.set-cat:first-child { margin-top: 0; }
+.subtle.danger { border-color: var(--blood); color: var(--ember); }
+.subtle.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
+
+/* ---------- keyboard / gamepad focus cursor ---------- */
+.gp-focus {
+  outline: 3px solid var(--gold) !important; outline-offset: 2px;
+  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.6) !important; border-radius: 6px;
+}
+.map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
+.reduced-motion .gp-focus { box-shadow: none !important; }
+
+/* ---------- controls / rebinds ---------- */
+.rebind-list { display: flex; flex-direction: column; }
+.rebind-row .rebind-ctl { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.pad-btn {
+  min-width: 62px; text-align: center; padding: 4px 8px; border-radius: 6px;
+  background: var(--panel); border: 1px solid var(--gold); color: var(--gold);
+  font-size: 12px; font-variant-numeric: tabular-nums;
+}
+.rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.7s ease-in-out infinite alternate; }
+.pad-live { color: var(--green); font-size: 11px; }
+.pad-off { color: var(--muted); font-size: 11px; }
+
+/* ---------- custom climb ---------- */
+.mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.mod-chip {
+  text-align: left; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line-soft); color: var(--parchment);
+  display: flex; flex-direction: column; gap: 2px; transition: border-color 140ms, background 140ms;
+}
+.mod-chip b { font-size: 12px; }
+.mod-chip span { font-size: 10.5px; color: var(--muted); line-height: 1.35; }
+.mod-chip:hover { border-color: var(--gold); }
+.mod-chip.on { background: rgba(201, 162, 39, 0.16); border-color: var(--gold); }
+.mod-chip.on b { color: var(--gold); }
+.mod-chip.forced { cursor: not-allowed; opacity: 0.85; }
+.mod-chip.forced::after { content: 'ASCENSION'; font-size: 8px; letter-spacing: 0.12em; color: var(--ember); margin-top: 2px; }
+.customrun .cz-label { color: var(--muted); font-size: 11px; letter-spacing: 0.18em; margin-bottom: 6px; }
+.draft-grid { gap: 16px; }
+.hx-custom { display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 4px; font-size: 9px; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
+.farewell { gap: 22px; }
+.farewell .title-big { opacity: 0.9; }
+
 /* ---------- generic screens ---------- */
 .screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }
 .screen .title-big { font-size: 44px; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
@@ -214,6 +281,22 @@
 }
 .toggle.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); }
 .toggle.on .knob { left: 22px; background: var(--gold); }
+.choice-group { display: flex; gap: 4px; flex-shrink: 0; }
+.choice-group .choice {
+  padding: 5px 9px; font-size: 10px; letter-spacing: 0.08em; border-radius: 6px;
+  background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
+  cursor: pointer; transition: color 160ms, border-color 160ms, background 160ms;
+}
+.choice-group .choice.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); color: var(--gold); }
+.range-wrap { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.range-wrap .range-val { color: var(--gold); font-size: 11px; width: 24px; text-align: right; font-variant-numeric: tabular-nums; }
+input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor: pointer; }
+.set-row-wide { flex-wrap: wrap; }
+.set-text {
+  flex: 1; min-width: 200px; background: var(--panel); border: 1px solid var(--line);
+  color: var(--parchment); border-radius: 6px; padding: 6px 10px; font-size: 12px; font-family: monospace;
+}
+.set-text:focus { border-color: var(--gold); outline: none; }
 
 /* ---------- first-run tutorial overlay ---------- */
 .tut-veil { position: fixed; inset: 0; z-index: 800; }

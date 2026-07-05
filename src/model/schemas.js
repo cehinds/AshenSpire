@@ -71,6 +71,7 @@ export const EVENTS = Object.freeze([
   'playerTurnEnd',
   'enemyTurnStart',
   'enemyTurnEnd',
+  'enemyMoveStarted',
   'cardDrawn',
   'cardPlayed',
   'cardExhausted',

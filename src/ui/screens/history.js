@@ -8,13 +8,17 @@ import { esc } from '../components/tooltip.js';
 
 export function mountHistory(app, { meta, onBack }) {
   const results = (meta.results || []).slice().reverse(); // most recent first
-  const total = results.length;
-  const wins = results.filter((r) => r.victory).length;
+  // Win-rate telemetry counts STANDARD runs only — custom climbs are excluded
+  // so their modifiers can't skew the balance numbers (SPEC §10).
+  const standard = results.filter((r) => !r.custom);
+  const customCount = results.length - standard.length;
+  const total = standard.length;
+  const wins = standard.filter((r) => r.victory).length;
   const pct = total ? Math.round((wins / total) * 100) : 0;
 
-  // Per-class win/run tallies (the balance telemetry payoff).
+  // Per-class win/run tallies (the balance telemetry payoff) — standard only.
   const byClass = {};
-  for (const r of results) {
+  for (const r of standard) {
     const k = r.className || r.class || '—';
     const b = (byClass[k] = byClass[k] || { runs: 0, wins: 0 });
     b.runs += 1;
@@ -32,9 +36,12 @@ export function mountHistory(app, { meta, onBack }) {
       const reached = r.victory
         ? `Act ${r.act || 3} cleared`
         : `Act ${r.act || 1} · Floor ${r.floor != null ? r.floor : '—'}`;
+      const tag = r.custom
+        ? `<span class="hx-custom" title="Custom Climb — excluded from win rate">CUSTOM${r.ascension ? ` A${r.ascension}` : ''}</span>`
+        : '';
       return `<tr>
         <td>${outcome}</td>
-        <td>${esc(r.className || r.class || '—')}</td>
+        <td>${esc(r.className || r.class || '—')}${tag}</td>
         <td>${reached}</td>
         <td class="hx-num">${r.fightsWon != null ? r.fightsWon : '—'}</td>
         <td class="hx-seed">${esc(r.seed || '')}</td>
@@ -42,8 +49,9 @@ export function mountHistory(app, { meta, onBack }) {
     })
     .join('');
 
-  const body = total
-    ? `<p class="subtitle">${total} RUN${total === 1 ? '' : 'S'} · ${wins} WON · ${pct}% WIN RATE</p>
+  const customNote = customCount ? ` · ${customCount} CUSTOM (not counted)` : '';
+  const body = results.length
+    ? `<p class="subtitle">${total} STANDARD RUN${total === 1 ? '' : 'S'} · ${wins} WON · ${pct}% WIN RATE${customNote}</p>
        <p class="hx-byclass">${classLine}</p>
        <div class="hx-wrap">
          <table class="hx-table">

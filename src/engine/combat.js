@@ -40,7 +40,7 @@ const QUEUE_GUARD = 10000;
  * first player turn starts (energy set, 5 drawn, playerTurnStart triggers).
  * Setup events are in combat.eventLog.
  */
-export function createCombat({ registries, rng, player, enemyIds }) {
+export function createCombat({ registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [] }) {
   const bal = registries.balance || {};
   const combat = {
     registries,
@@ -71,10 +71,13 @@ export function createCombat({ registries, rng, player, enemyIds }) {
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
 
-  // Enemies — HP rolled on stream 'enemyHP' (SPEC §3.11, §4.6).
+  // Enemies — HP rolled on stream 'enemyHP' (SPEC §3.11, §4.6). An optional
+  // hpMult (Custom Climb difficulty rules) scales the rolled HP after the roll,
+  // so the same seed rolls the same base then scales — determinism preserved.
   enemyIds.forEach((enemyId, i) => {
     const def = registries.enemies.get(enemyId);
-    const hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
+    let hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
+    if (hpMult !== 1) hp = Math.max(1, Math.round(hp * hpMult));
     combat.enemies.push(
       createEnemyCombatEntity({ instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax })
     );
@@ -97,6 +100,16 @@ export function createCombat({ registries, rng, player, enemyIds }) {
   combat.piles.draw = [...innate, ...rest];
 
   combat.emit('combatStart', {});
+  // Optional Custom Climb buffs (generic — statuses are content ids, applied via
+  // the same applyStatus opcode content uses, so no entity-specific engine code).
+  for (const s of playerStatuses) {
+    combat.enqueue({ effect: { op: 'applyStatus', target: 'self', status: s.status, stacks: s.stacks }, source: combat.player, owner: combat.player, target: combat.player, meta: {} });
+  }
+  for (const enemy of combat.enemies) {
+    for (const s of enemyStatuses) {
+      combat.enqueue({ effect: { op: 'applyStatus', target: 'self', status: s.status, stacks: s.stacks }, source: enemy, owner: enemy, target: enemy, meta: {} });
+    }
+  }
   drainQueue(combat);
   rollIntents(combat, true);
   if (!combat.result) startPlayerTurn(combat);
@@ -294,7 +307,10 @@ function enemyPhase(combat) {
 
 // Enqueue a move's payload as ordinary actions (SPEC §3.9: only executed
 // actions mutate). Order: damage hits, block, then effects.
+// 'enemyMoveStarted' marks the acting enemy so the UI can pace playback
+// one actor at a time (SPEC §7.4); content triggers may also key off it.
 function executeMovePayload(combat, enemy, move, moveId) {
+  combat.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
   if (move.damage != null) {
     combat.enqueue({
       effect: { op: 'damage', target: 'player', amount: move.damage, hits: move.hits != null ? move.hits : 1 },

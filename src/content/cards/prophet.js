@@ -405,4 +405,83 @@ export const prophetCards = [
       ],
     },
   },
+
+  // ---- Content-pass additions (round 2) ---------------------------------------
+  // Two more commons (a cheap blood-payment attack and a Rot poke), two
+  // uncommons (an HP-gated finisher and a heal-fed power), two rares (a heavy
+  // HP-for-damage attack and a Rot-fed power) — rounding the pool to 36.
+  {
+    id: 'painOffering', name: 'Pain Offering', class: 'prophet', rarity: 'common', cost: 0, type: 'attack',
+    keywords: [], icon: '🩸',
+    effects: [
+      { op: 'loseHp', target: 'self', amount: 2 },
+      { op: 'damage', target: 'enemy', amount: 7 },
+    ],
+    textTemplate: 'Lose {loseHp} HP. Deal {damage} damage.',
+    upgrade: {
+      effects: [
+        { op: 'loseHp', target: 'self', amount: 2 },
+        { op: 'damage', target: 'enemy', amount: 10 },
+      ],
+    },
+  },
+  {
+    id: 'witheringTouch', name: 'Withering Touch', class: 'prophet', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '🦠',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 4 },
+      { op: 'applyStatus', target: 'enemy', status: 'scarletRot', stacks: 3 },
+    ],
+    textTemplate: 'Deal {damage} damage. Apply {scarletRot} Scarlet Rot.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 6 },
+        { op: 'applyStatus', target: 'enemy', status: 'scarletRot', stacks: 4 },
+      ],
+    },
+  },
+  {
+    id: 'desperateRite', name: 'Desperate Rite', class: 'prophet', rarity: 'uncommon', cost: 1, type: 'attack',
+    keywords: [], icon: '🔺',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 9, if: { p: 'not', pred: { p: 'hpBelowPct', of: 'self', pct: 50 } } },
+      { op: 'damage', target: 'enemy', amount: 16, if: { p: 'hpBelowPct', of: 'self', pct: 50 } },
+    ],
+    textTemplate: 'Deal {damage} damage. If below half HP: deal {damage.2} instead.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 12, if: { p: 'not', pred: { p: 'hpBelowPct', of: 'self', pct: 50 } } },
+        { op: 'damage', target: 'enemy', amount: 20, if: { p: 'hpBelowPct', of: 'self', pct: 50 } },
+      ],
+    },
+  },
+  {
+    id: 'graceTideCard', name: 'Grace Tide', class: 'prophet', rarity: 'uncommon', cost: 1, type: 'power',
+    keywords: [], icon: '🌊',
+    effects: [{ op: 'applyStatus', target: 'self', status: 'graceTide', stacks: one }],
+    textTemplate: 'Whenever you heal, gain 1 Strength.',
+    upgrade: { cost: 0 },
+  },
+  {
+    id: 'bloodOfferingRite', name: 'Blood Offering', class: 'prophet', rarity: 'rare', cost: 1, type: 'attack',
+    keywords: [], icon: '⚰',
+    effects: [
+      { op: 'loseHp', target: 'self', amount: 6 },
+      { op: 'damage', target: 'enemy', amount: 24 },
+    ],
+    textTemplate: 'Lose {loseHp} HP. Deal {damage} damage.',
+    upgrade: {
+      effects: [
+        { op: 'loseHp', target: 'self', amount: 6 },
+        { op: 'damage', target: 'enemy', amount: 30 },
+      ],
+    },
+  },
+  {
+    id: 'harbingerOfRotCard', name: 'Harbinger of Rot', class: 'prophet', rarity: 'rare', cost: 2, type: 'power',
+    keywords: [], icon: '❀',
+    effects: [{ op: 'applyStatus', target: 'self', status: 'harbingerOfRot', stacks: one }],
+    textTemplate: 'Whenever Scarlet Rot is applied to an enemy, heal 1 HP.',
+    upgrade: { cost: 1 },
+  },
 ];

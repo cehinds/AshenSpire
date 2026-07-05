@@ -9,6 +9,7 @@
   --parchment: #e8dcc0;
   --muted: #7a6f5a;
   --gold: #c9a227;
+  --accent-rgb: 201, 162, 39; /* --gold as rgb, for glow/halo alpha (swapped by accent theme) */
   --blood: #8a1a1a;
   --rot: #b5541c;
   --frost: #7fa8c9;
@@ -18,6 +19,32 @@
   --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
   --font-body: Inter, 'Segoe UI', system-ui, sans-serif;
 }
+
+/* Accessibility: high contrast raises text/line contrast by swapping tokens. */
+body.hi-contrast {
+  --parchment: #fdf6e6;
+  --muted: #a89571;
+  --line: #6a5b43;
+  --line-soft: #85714f;
+}
+body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-keepsake p { color: #cdbf9e; }
+
+/* Accessibility: larger text bumps body/tooltip up a notch (compounds with zoom). */
+body.large-text { font-size: 15.5px; }
+body.large-text #tooltip { font-size: 13px; }
+
+/* Accessibility: colorblind-friendly semantic remap (Okabe-Ito hues chosen to
+   stay distinguishable under deuteranopia/protanopia — danger→vermillion,
+   heal→bluish-green, frost→sky, rot→orange, bleed→reddish-purple). */
+body.cb-safe {
+  --blood: #d55e00;
+  --ember: #d55e00;
+  --green: #009e73;
+  --frost: #56b4e9;
+  --grace: #56b4e9;
+  --rot: #e69f00;
+}
+body.cb-safe .card .ctext .st-bleed { color: #cc79a7; }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 

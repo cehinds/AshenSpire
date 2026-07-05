@@ -8,6 +8,26 @@ import { sfx } from './sfx.js';
 
 const STEP_MS = 80;
 
+// ---------------------------------------------------------------------------
+// Animation speed (settings-driven; 'instant' collapses paced playback to the
+// classic fast-float behavior — also forced by reducedMotion).
+// ---------------------------------------------------------------------------
+
+export const ANIM_SPEEDS = {
+  slow: { beatMs: 700, stepMs: 140, lungeMs: 340 },
+  normal: { beatMs: 400, stepMs: 90, lungeMs: 260 },
+  fast: { beatMs: 180, stepMs: 45, lungeMs: 160 },
+  instant: null,
+};
+
+let animSpeed = 'normal';
+export function setAnimSpeed(v) {
+  animSpeed = ANIM_SPEEDS[v] === undefined ? 'normal' : v;
+}
+export function getAnimSpeed() {
+  return animSpeed;
+}
+
 let pending = [];
 let flushRequested = false;
 
@@ -36,6 +56,8 @@ function banner(layer, text, cls = '') {
 
 function shake(combatEl) {
   if (!combatEl) return;
+  // Honor the Screen shake setting (and reduced motion, which also drops it).
+  if (document.body.classList.contains('no-shake') || document.body.classList.contains('reduced-motion')) return;
   combatEl.classList.remove('shake');
   void combatEl.offsetWidth; // restart animation
   combatEl.classList.add('shake');
@@ -44,6 +66,9 @@ function shake(combatEl) {
 // Add a short-lived CSS class (restarting its animation if already present).
 function flash(el, cls, ms = 300) {
   if (!el) return;
+  // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
+  // numbers and HUD updates (which carry the actual info) are unaffected.
+  if (document.body.classList.contains('reduce-flashes')) return;
   el.classList.remove(cls);
   void el.offsetWidth;
   el.classList.add(cls);
@@ -94,6 +119,166 @@ export function animateEvents(events, ctx, done) {
     setTimeout(step, STEP_MS);
   };
   step();
+}
+
+// ---------------------------------------------------------------------------
+// Paced playback — one actor at a time (SPEC §7.4 extension).
+//
+// Groups a dispatch's event log into "beats": each card play, flask use, and
+// enemy move is its own beat, played as actor animation → effect visuals →
+// numbers → HUD update (ctx.onBeatApplied), before the next actor moves.
+// Turn boundaries become banner beats. Click skips to the end state.
+// ---------------------------------------------------------------------------
+
+function groupBeats(events) {
+  const beats = [];
+  let cur = { actorId: null, banner: null, kind: null, events: [] };
+  const push = () => {
+    if (cur.events.length || cur.banner || cur.actorId) beats.push(cur);
+  };
+  for (const e of events) {
+    switch (e.type) {
+      case 'cardPlayed':
+        push();
+        cur = { actorId: 'player', banner: null, kind: e.cardType === 'attack' ? 'attack' : 'act', events: [e] };
+        break;
+      case 'flaskUsed':
+        push();
+        cur = { actorId: 'player', banner: null, kind: 'act', events: [e] };
+        break;
+      case 'enemyMoveStarted':
+        push();
+        cur = { actorId: e.sourceId, banner: null, kind: e.kind === 'attack' ? 'attack' : 'act', events: [e] };
+        break;
+      case 'enemyTurnStart':
+        push();
+        cur = { actorId: null, banner: 'ENEMY TURN', kind: 'banner', events: [e] };
+        break;
+      case 'playerTurnStart':
+        push();
+        cur = { actorId: null, banner: 'YOUR TURN', kind: 'banner', events: [e] };
+        break;
+      case 'cardDrawn':
+        // Draws fire just before 'playerTurnStart' — split them out of the
+        // last enemy beat so the hand refills as its own step.
+        if (cur.actorId && cur.actorId !== 'player' && cur.kind !== 'draw') {
+          push();
+          cur = { actorId: null, banner: null, kind: 'draw', events: [] };
+        }
+        cur.events.push(e);
+        break;
+      default:
+        cur.events.push(e);
+    }
+  }
+  push();
+  return beats;
+}
+
+/**
+ * playTimeline(events, ctx, done)
+ *   ctx = animateEvents ctx + {
+ *     onBeatApplied(beat)  — apply this beat's events to the display state
+ *                            (HP/block bars, hand, statuses) AFTER its visuals,
+ *     onFlush()            — skip: jump display to true final state,
+ *   }
+ * Uses the module anim speed; 'instant' (or reducedMotion) falls back to
+ * animateEvents' classic behavior (final state + fast floats).
+ */
+export function playTimeline(events, ctx, done) {
+  const speed = ANIM_SPEEDS[animSpeed];
+  const reduced = document.body.classList.contains('reduced-motion');
+  if (!speed || reduced) {
+    if (ctx.onFlush) ctx.onFlush();
+    animateEvents(events, ctx, done);
+    return;
+  }
+
+  const beats = groupBeats(events);
+  let flushed = false;
+  let finished = false;
+  const skip = () => {
+    flushed = true;
+  };
+  addEventListener('pointerdown', skip, { once: true, capture: true });
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(watchdog);
+    removeEventListener('pointerdown', skip, { capture: true });
+    if (done) done();
+  };
+  // Safety net: however playback ends (or a re-render throws mid-beat), never
+  // leave the caller's `busy` flag stuck — force completion after a bounded
+  // wall-clock budget. This is what prevents the "cards stop responding" hang.
+  const budget = 2000 + beats.length * (speed.beatMs + speed.lungeMs + 4 * speed.stepMs);
+  const watchdog = setTimeout(() => {
+    try {
+      if (ctx.onFlush) ctx.onFlush();
+    } catch (e) {
+      /* ignore */
+    }
+    finish();
+  }, budget);
+
+  const safe = (fn) => {
+    try {
+      if (fn) fn();
+    } catch (e) {
+      /* a render/visual error must not break the chain */
+    }
+  };
+
+  let bi = 0;
+  const nextBeat = () => {
+    if (finished) return;
+    if (flushed) {
+      safe(() => ctx.onFlush && ctx.onFlush());
+      finish();
+      return;
+    }
+    if (bi >= beats.length) {
+      finish();
+      return;
+    }
+    const beat = beats[bi++];
+
+    if (beat.banner) {
+      safe(() => banner(ctx.layer, beat.banner, 'turn'));
+      safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
+      setTimeout(nextBeat, Math.max(260, speed.beatMs));
+      return;
+    }
+
+    // 1) actor animation (lunge for attacks, glow-step otherwise)
+    const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
+    if (actorEl) safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
+
+    // 2) after the wind-up, the beat's effect visuals + numbers, staggered
+    const visuals = beat.events.map(visualFor).filter(Boolean);
+    const windup = actorEl ? Math.round(speed.lungeMs * 0.55) : 0;
+    setTimeout(() => {
+      let vi = 0;
+      const stepV = () => {
+        if (finished) return;
+        if (flushed) {
+          nextBeat();
+          return;
+        }
+        if (vi < visuals.length) {
+          const v = visuals[vi++];
+          safe(() => v(ctx));
+          setTimeout(stepV, speed.stepMs);
+          return;
+        }
+        // 3) HUD updates for this beat, 4) inter-beat breath
+        safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
+        setTimeout(nextBeat, speed.beatMs);
+      };
+      stepV();
+    }, windup);
+  };
+  nextBeat();
 }
 
 function visualFor(e) {

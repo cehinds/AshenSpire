@@ -329,8 +329,15 @@ const combat = createCombat({
             deck: [{ instanceId, cardId, upgraded }],
             relicIds: [...], flasks: [{ flaskId }] /* optional */ },
   enemyIds: ['<enemyDefId>', ...],   // row order; instances become 'e1','e2',…
+  hpMult: 1,                         // optional: scale rolled enemy HP (post-roll, determinism kept)
+  enemyStatuses: [],                 // optional: [{ status, stacks }] applied to every enemy at combatStart
+  playerStatuses: [],                // optional: [{ status, stacks }] applied to the player at combatStart
 });
 ```
+
+`hpMult` / `enemyStatuses` / `playerStatuses` are generic config seams (used by
+Custom Climb difficulty rules) — they carry no entity-specific engine code:
+statuses are applied via the same `applyStatus` opcode content uses.
 
 Runs the full combat-start sequence (SPEC §4.1): enemy HP rolled on
 `enemyHP`; deck shuffled on `shuffle` with **Innate** cards moved (stably) to
@@ -430,6 +437,7 @@ current dispatch's `events`.
 | `combatEnd` | `{ victory: bool }` (triggers on it cannot enqueue combat actions) |
 | `playerTurnStart` / `playerTurnEnd` | `{ turn }` |
 | `enemyTurnStart` / `enemyTurnEnd` | `{ turn }` |
+| `enemyMoveStarted` | `{ sourceId, enemyId, moveId, kind }` — fired as an enemy begins executing its move (the UI paces per-actor playback on it) |
 | `cardDrawn` | `{ cardInstanceId, cardId }` |
 | `cardPlayed` | `{ cardInstanceId, cardId, cardType, targetId, ordinalThisTurn, ordinalThisCombat, energySpent }` |
 | `cardExhausted` | `{ cardInstanceId, cardId, reason: 'played'\|'ethereal'\|'effect' }` |

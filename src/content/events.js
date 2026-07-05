@@ -205,6 +205,109 @@ export const events = [
     ],
   },
   {
+    id: 'sleepingSmith',
+    name: 'Sleeping Smith',
+    art: '🔨',
+    text:
+      'A smith slumps over his anvil, hammer still loose in one hand. His forge is cold, but the blade ' +
+      'laid across it hums like it remembers heat. He does not stir when you approach.',
+    choices: [
+      {
+        label: 'Take the blade (upgrade a random card)',
+        effects: [{ op: 'upgradeCard', random: true }],
+        resultText: 'The hum quiets the moment it leaves the anvil, as if it was only ever waiting for a hand.',
+      },
+      {
+        label: 'Wake him (pay 30 runes, heal 12% max HP)',
+        requires: { runes: 30 },
+        effects: [
+          { op: 'addRunes', amount: -30 },
+          { op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 12 } },
+        ],
+        resultText: 'He blinks awake just long enough to press a cold coin into your palm, and something in you settles.',
+      },
+      { label: 'Leave', effects: [], resultText: 'You let him sleep. The blade goes on humming behind you.' },
+    ],
+  },
+  {
+    id: 'crucibleTrial',
+    name: 'Crucible Trial',
+    art: '⚔',
+    text:
+      'A cracked stone ring marks a trial-ground no map names. A single soldier stands within it, ' +
+      'unmoving, waiting for someone foolish or hungry enough to step inside.',
+    choices: [
+      {
+        label: 'Enter the ring (fight the soldier for 60 runes)',
+        effects: [
+          { op: 'addRunes', amount: 60 },
+          { op: 'startCombat', encounterId: 'loneSoldier' },
+        ],
+        resultText: 'You step across the stone line. The soldier finally moves.',
+      },
+      {
+        label: 'Circle it instead (lose 5% max HP crossing the rubble, gain 20 runes)',
+        effects: [
+          { op: 'loseMaxHpPct', pct: 5 },
+          { op: 'addRunes', amount: 20 },
+        ],
+        resultText: 'The rubble takes its toll, but the ring — and whatever waits in it — stays quiet.',
+      },
+      { label: 'Leave', effects: [], resultText: 'Some rings are drawn for a reason. You leave this one closed.' },
+    ],
+  },
+  {
+    id: 'discardedReliquary',
+    name: 'Discarded Reliquary',
+    art: '📦',
+    text:
+      'A traveler\'s pack lies split open at the trail\'s edge, its owner nowhere to be found. ' +
+      'Among the ruined provisions, a single card sits face-down, deliberately placed — as though left as a warning, not a gift.',
+    choices: [
+      {
+        label: 'Take it with you (gain a Guilt curse; the pack has 45 runes)',
+        effects: [
+          { op: 'addCardToDeck', card: 'guilt' },
+          { op: 'addRunes', amount: 45 },
+        ],
+        resultText: 'You pick it up before you can think better of it. It settles into your deck like it was always there.',
+      },
+      {
+        label: 'Burn the pack (gain 25 runes; leave the card)',
+        effects: [{ op: 'addRunes', amount: 25 }],
+        resultText: 'The provisions catch fast. The face-down card curls to ash before you can read it.',
+      },
+      { label: 'Leave', effects: [], resultText: 'You step around the pack and do not look back.' },
+    ],
+  },
+  {
+    id: 'omensAltar',
+    name: "Omen's Altar",
+    art: '🔱',
+    text:
+      'An altar carved with a face too many-eyed to be a saint. A voice — or something like one — ' +
+      'offers to lend you its strength, if you will let it watch through your eyes for the rest of the road.',
+    choices: [
+      {
+        label: 'Accept its gaze (gain a random relic; take a Guilt curse)',
+        effects: [
+          { op: 'addRelic', random: true },
+          { op: 'addCardToDeck', card: 'guilt' },
+        ],
+        resultText: 'The eyes close over yours like a second lid. You do not feel them leave.',
+      },
+      {
+        label: 'Shatter the altar (fight what wakes, gain 70 runes)',
+        effects: [
+          { op: 'addRunes', amount: 70 },
+          { op: 'startCombat', encounterId: 'eliteCrucible' },
+        ],
+        resultText: 'The stone face cracks down the middle. What answers the noise is not stone at all.',
+      },
+      { label: 'Leave', effects: [], resultText: 'The many eyes stay open behind you, patient as ever.' },
+    ],
+  },
+  {
     id: 'rotPriestOffer',
     name: "Rot-Priest's Offer",
     art: '☣',

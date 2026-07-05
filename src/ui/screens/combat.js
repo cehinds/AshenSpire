@@ -10,11 +10,13 @@ import { renderCard } from '../components/card.js';
 import { openPileModal } from '../components/piles.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
-import { animateEvents } from '../fx.js';
+import { animateEvents, playTimeline } from '../fx.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
+import { overlayIsOpen } from '../components/overlay.js';
+import { focusFirst } from '../input.js';
 
-export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings }) {
+export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
     <div class="combat">
       <header class="topbar">
@@ -27,6 +29,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
         <div class="flasks" style="display:flex;gap:6px"></div>
         <div class="relics"></div>
         <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
+        <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
         <button class="topbar-btn" id="combat-settings" title="Settings">⚙</button>
       </header>
       <div class="field">
@@ -60,6 +63,75 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let busy = false; // animating / resolving
+  let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
+
+  // Entering targeting mode: move the focus cursor onto an enemy so keyboard /
+  // gamepad players confirm a target next, not wander into the top bar. Prefer
+  // the last enemy they attacked (if still alive), else the first living one.
+  function focusTargeting() {
+    const living = combat.enemies.filter((e) => e.alive);
+    if (!living.length) return;
+    const pref = (lastTargetId && living.find((e) => e.id === lastTargetId)) || living[0];
+    focusFirst(`.combatant.enemy[data-eid="${pref.id}"]`);
+  }
+
+  // Display snapshot for paced playback (SPEC §7.4): while a timeline plays,
+  // bars/hand render from this pre-dispatch copy, advanced beat by beat, so
+  // the HUD updates one actor at a time instead of jumping to the outcome.
+  let disp = null;
+  const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
+  function takeSnapshot() {
+    const ents = {
+      player: { hp: combat.player.hp, block: combat.player.block, alive: true },
+    };
+    for (const e of combat.enemies) ents[e.id] = { hp: e.hp, block: e.block, alive: e.alive };
+    return { ents, hand: [...combat.piles.hand] };
+  }
+  function findInst(instanceId) {
+    for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
+      const c = combat.piles[pile].find((x) => x.instanceId === instanceId);
+      if (c) return c;
+    }
+    return null;
+  }
+  function applyBeatToDisp(beat) {
+    if (!disp) return;
+    for (const e of beat.events) {
+      const t = e.targetId && disp.ents[e.targetId];
+      switch (e.type) {
+        case 'damageDealt':
+          if (t) t.block = Math.max(0, t.block - e.blocked);
+          break;
+        case 'hpLost':
+          if (t) t.hp = Math.max(0, t.hp - e.amount);
+          break;
+        case 'healed':
+          if (t) t.hp = Math.min(t.hp + e.amount, (getEntity(combat, e.targetId) || {}).maxHp || t.hp + e.amount);
+          break;
+        case 'blockGained':
+          if (t) t.block += e.amount;
+          break;
+        case 'enemyDied':
+          if (t) {
+            t.alive = false;
+            t.hp = 0;
+          }
+          break;
+        case 'cardDrawn': {
+          const inst = findInst(e.cardInstanceId);
+          if (inst && !disp.hand.some((c) => c.instanceId === inst.instanceId)) disp.hand.push(inst);
+          break;
+        }
+        case 'cardPlayed':
+        case 'cardDiscarded':
+        case 'cardExhausted': {
+          const i = disp.hand.findIndex((c) => c.instanceId === e.cardInstanceId);
+          if (i >= 0) disp.hand.splice(i, 1);
+          break;
+        }
+      }
+    }
+  }
 
   // ---------- rendering ----------
   function render() {
@@ -72,9 +144,10 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
 
   function renderTopbar() {
     const p = combat.player;
+    const pv = dv(p);
     const hp = $('.topbar .hpbar');
-    hp.querySelector('.fill').style.width = `${(p.hp / p.maxHp) * 100}%`;
-    hp.querySelector('.label').textContent = `${p.hp} / ${p.maxHp}`;
+    hp.querySelector('.fill').style.width = `${(pv.hp / p.maxHp) * 100}%`;
+    hp.querySelector('.label').textContent = `${pv.hp} / ${p.maxHp}`;
     const relics = $('.topbar .relics');
     relics.innerHTML = '';
     for (const rid of p.relicIds) {
@@ -140,11 +213,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   }
 
   function meterBars(entity) {
+    const v = dv(entity);
     const wrap = document.createElement('div');
     wrap.className = 'meters';
     const hp = document.createElement('div');
     hp.className = 'bar hpbar';
-    hp.innerHTML = `<div class="fill" style="width:${(entity.hp / entity.maxHp) * 100}%"></div><div class="label">${entity.hp} / ${entity.maxHp}</div>`;
+    hp.innerHTML = `<div class="fill" style="width:${(v.hp / entity.maxHp) * 100}%"></div><div class="label">${v.hp} / ${entity.maxHp}</div>`;
     wrap.appendChild(hp);
     if (entity.kind === 'enemy') {
       const poise = document.createElement('div');
@@ -165,11 +239,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   }
 
   function blockBadge(entity) {
-    if (entity.block <= 0) return null;
+    const v = dv(entity);
+    if (v.block <= 0) return null;
     const b = document.createElement('div');
     b.className = 'block-badge';
-    b.textContent = entity.block;
-    attachTooltip(b, () => `<div class="tt-title">Block ${entity.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
+    b.textContent = v.block;
+    attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
     return b;
   }
 
@@ -247,7 +322,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
       const box = document.createElement('div');
-      box.className = `combatant enemy${enemy.alive ? '' : ' dead'}${targeting ? ' targetable' : ''}`;
+      box.className = `combatant enemy${dv(enemy).alive ? '' : ' dead'}${targeting ? ' targetable' : ''}`;
       box.dataset.eid = enemy.id;
       if (enemy.alive) box.appendChild(intentEl(enemy));
       // Target-number badge for keyboard targeting (SPEC §7.3).
@@ -287,8 +362,9 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   function renderHand() {
     const hand = $('.hand');
     hand.innerHTML = '';
-    const n = combat.piles.hand.length;
-    combat.piles.hand.forEach((inst, i) => {
+    const handList = disp ? disp.hand : combat.piles.hand;
+    const n = handList.length;
+    handList.forEach((inst, i) => {
       const pv = previewCard(combat, inst.instanceId);
       const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && !isUnplayable(inst);
       const el = renderCard(registries, inst, { preview: pv, affordable });
@@ -379,6 +455,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       if (pv.needsTarget) {
         selected = selected === inst.instanceId ? null : inst.instanceId;
         render();
+        if (selected) focusTargeting();
       } else {
         playCard(inst.instanceId, null);
       }
@@ -397,9 +474,22 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   // Keyboard shortcuts (SPEC §7.3): Esc cancels targeting; 1–9 select/play the
   // Nth card (or, while targeting, pick the Nth living enemy); E ends the turn.
   const keyHandler = (ev) => {
+    // Self-clean if the combat screen was torn down (e.g. Save & Quit mid-fight)
+    // — the listener lives on window, so it must detach when its DOM is gone.
+    if (!app.querySelector('.combat')) {
+      removeEventListener('keydown', keyHandler);
+      return;
+    }
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (overlayIsOpen()) return; // the overlay owns input while open
+
+    if (ev.key === 'm' || ev.key === 'M') {
+      ev.preventDefault();
+      if (onMenu) onMenu('deck');
+      return;
+    }
 
     if (ev.key === 'Escape') {
       if (selected || selectedFlask != null) {
@@ -442,6 +532,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
           selected = inst.instanceId;
           selectedFlask = null;
           render();
+          focusTargeting();
         }
       } else {
         playCard(inst.instanceId, null);
@@ -463,10 +554,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     selectedFlask = null;
     selected = null;
     hideTooltip();
+    disp = takeSnapshot();
     let out;
     try {
       out = dispatch(combat, { type: 'useFlask', slot, targetId: targetId || undefined });
     } catch (err) {
+      disp = null;
       render();
       return;
     }
@@ -477,14 +570,34 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
 
   function afterDispatch(events) {
     trackStats(events);
-    render(); // final state immediately; floats play over it (≤300 ms, skippable)
-    animateEvents(events, fxCtx, () => {
-      busy = false;
-      if (combat.result) {
-        removeEventListener('keydown', keyHandler);
-        setTimeout(() => onEnd(combat.result, combat), 350);
+    render(); // hand/energy react now; bars render from the pre-dispatch snapshot
+    playTimeline(
+      events,
+      {
+        ...fxCtx,
+        onBeatApplied: (beat) => {
+          applyBeatToDisp(beat);
+          renderTopbar();
+          renderPlayer();
+          renderEnemies();
+          renderHand();
+          renderControls();
+        },
+        onFlush: () => {
+          disp = null;
+          render();
+        },
+      },
+      () => {
+        disp = null;
+        render();
+        busy = false;
+        if (combat.result) {
+          removeEventListener('keydown', keyHandler);
+          setTimeout(() => onEnd(combat.result, combat), 350);
+        }
       }
-    });
+    );
   }
 
   // Ghost the played card flying toward its target (≤220 ms, purely cosmetic).
@@ -512,14 +625,17 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
 
   function playCard(instanceId, targetId) {
     if (busy || combat.result) return;
+    if (targetId) lastTargetId = targetId; // remembered for the next card's aim
     selected = null;
     selectedFlask = null;
     hideTooltip();
     flyCard(instanceId, targetId);
+    disp = takeSnapshot();
     let out;
     try {
       out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined });
     } catch (err) {
+      disp = null;
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
     }
@@ -533,10 +649,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     selected = null;
     selectedFlask = null;
     hideTooltip();
+    disp = takeSnapshot();
     let out;
     try {
       out = dispatch(combat, { type: 'endTurn' });
     } catch (err) {
+      disp = null;
       return;
     }
     busy = true;
@@ -547,6 +665,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   $('.pile.discard').addEventListener('click', () => openPileModal(registries, 'Discard pile', combat.piles.discard));
   $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
   if (onSettings) $('#combat-settings').addEventListener('click', onSettings);
+  if (onMenu) $('#combat-menu').addEventListener('click', () => onMenu('deck'));
 
   render();
   // Combat-start events (relic triggers, opening draw) get a quick pass too.
