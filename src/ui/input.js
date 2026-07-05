@@ -67,6 +67,16 @@ const POLL_MS = 16; // ~60 Hz input polling (only while a pad is connected)
 let bindings = {}; // action id → gamepad button index
 let keyBindings = {}; // action id → keyboard key (e.g. 'm', 'Escape')
 let pollTimer = null;
+let engaged = false; // has the user driven with keyboard/gamepad this session?
+
+/**
+ * True once the player has actually navigated with keyboard or gamepad. Screens
+ * use this to gate auto-focus defaults so mouse-only players never see an
+ * unrequested focus ring.
+ */
+export function isEngaged() {
+  return engaged;
+}
 let padPrev = {}; // gamepad index → last pressed-button booleans
 let lastNav = 0; // step counter gate for held-direction repeat
 let enabled = true;
@@ -315,6 +325,9 @@ function onKeydown(ev) {
   const typing = tag === 'INPUT' || tag === 'TEXTAREA';
   const cur = current();
 
+  if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === 'Enter')) {
+    engaged = true;
+  }
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
     // On a focused slider, horizontal arrows tune it rather than navigate.
     if (cur && cur.matches('input[type="range"]') && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
@@ -360,6 +373,7 @@ function pollPads() {
     for (let i = 0; i < pressed.length; i++) {
       const rising = pressed[i] && !prev[i];
       if (!rising) continue;
+      engaged = true;
       if (rebindCapture) {
         const cb = rebindCapture;
         rebindCapture = null;

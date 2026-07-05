@@ -53,6 +53,21 @@
 .combatant .nm { font-size: 12px; }
 .combatant.dead { opacity: 0.25; filter: grayscale(1); pointer-events: none; }
 
+/* Likely-target glow: a tinted, slightly-larger clone of the sprite sits behind
+   the real one (which is kept on top), so the target reads as a colored,
+   glowing silhouette — red for an enemy, blue for a self/buff target. */
+.combatant .sprite > *:not(.aim-silho) { position: relative; z-index: 1; }
+.aim-silho {
+  position: absolute; left: 50%; bottom: 0; z-index: 0; pointer-events: none;
+  transform: translateX(-50%) scale(1.16); transform-origin: center bottom;
+  filter: blur(2px); opacity: 0.9;
+  animation: aimGlow 900ms ease-in-out infinite alternate;
+}
+.aim-silho > * { box-shadow: none !important; }
+@keyframes aimGlow { from { opacity: 0.5; } to { opacity: 0.95; } }
+.reduced-motion .aim-silho { animation: none; filter: blur(1px); opacity: 0.8; }
+.combatant.player.armed { cursor: pointer; }
+
 .enemy .sprite { cursor: pointer; }
 .enemy.targetable .sprite { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: 10px; }
 .enemy.hover-target .sprite { outline-style: solid; }
