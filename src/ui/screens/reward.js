@@ -8,6 +8,7 @@
 import { renderCard } from '../components/card.js';
 import { esc } from '../components/tooltip.js';
 import { sfx } from '../sfx.js';
+import { isEngaged, focusFirst } from '../input.js';
 
 export function mountRewards(app, { registries, run, rewards, onDone }) {
   const lines = [];
@@ -51,4 +52,8 @@ export function mountRewards(app, { registries, run, rewards, onDone }) {
     }
   }
   app.querySelector('#reward-continue').addEventListener('click', () => onDone(null));
+
+  // Smart default (keyboard/gamepad): land on the first card to choose, else the
+  // Continue button.
+  if (isEngaged()) setTimeout(() => focusFirst('.reward-row .card') || focusFirst('#reward-continue'), 0);
 }

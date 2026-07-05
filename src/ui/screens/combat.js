@@ -14,7 +14,7 @@ import { animateEvents, playTimeline } from '../fx.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { overlayIsOpen } from '../components/overlay.js';
-import { focusFirst, matchAction } from '../input.js';
+import { focusFirst, matchAction, isEngaged } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 
 export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
@@ -64,8 +64,10 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
 
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
+  let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
+  let aimScheduled = false; // debounce for the aim-highlight observer
 
   // Entering targeting mode: move the focus cursor onto an enemy so keyboard /
   // gamepad players confirm a target next, not wander into the top bar. Prefer
@@ -75,6 +77,95 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     if (!living.length) return;
     const pref = (lastTargetId && living.find((e) => e.id === lastTargetId)) || living[0];
     focusFirst(`.combatant.enemy[data-eid="${pref.id}"]`);
+  }
+
+  // ---- likely-target highlight (SPEC §7.3) ----------------------------------
+  // A tinted, slightly-enlarged clone of the prospective target's sprite sits
+  // behind it, so the target you're about to hit glows red (an enemy) or blue
+  // (self/buff). Follows mouse hover and keyboard/pad focus. Works for the SVG
+  // player figure (recolor fills) and emoji-box enemies (solid colored box).
+  const AIM_RED = '#e0463c';
+  const AIM_BLUE = '#4d94e0';
+
+  function tintClone(spriteWrap, color) {
+    const src = spriteWrap.firstElementChild;
+    if (!src) return null;
+    const clone = src.cloneNode(true);
+    const svg = clone.matches && clone.matches('svg') ? clone : clone.querySelector && clone.querySelector('svg');
+    if (svg) {
+      svg.querySelectorAll('*').forEach((n) => {
+        const f = n.getAttribute && n.getAttribute('fill');
+        const s = n.getAttribute && n.getAttribute('stroke');
+        if (f && f !== 'none') n.setAttribute('fill', color);
+        if (s && s !== 'none') n.setAttribute('stroke', color);
+      });
+    } else if (clone.style) {
+      clone.style.background = color;
+      clone.style.borderColor = color;
+      clone.style.color = 'transparent';
+      clone.style.boxShadow = 'none';
+    }
+    return clone;
+  }
+
+  function clearAim() {
+    app.querySelectorAll('.aim-silho').forEach((n) => n.remove());
+    app.querySelectorAll('.combatant.aiming').forEach((n) => n.classList.remove('aiming', 'aim-enemy', 'aim-self'));
+  }
+
+  function setAim(combatantEl, kind) {
+    const spriteWrap = combatantEl.querySelector('.sprite');
+    if (!spriteWrap) return;
+    const clone = tintClone(spriteWrap, kind === 'self' ? AIM_BLUE : AIM_RED);
+    if (!clone) return;
+    const holder = document.createElement('div');
+    holder.className = 'aim-silho';
+    holder.appendChild(clone);
+    spriteWrap.insertBefore(holder, spriteWrap.firstChild);
+    combatantEl.classList.add('aiming', kind === 'self' ? 'aim-self' : 'aim-enemy');
+  }
+
+  // The single prospective target right now: an armed self-card → the player
+  // (blue); an enemy-targeting card → the hovered or focused enemy (red).
+  function currentAim() {
+    if (selfArm) {
+      const p = $('.combatant.player');
+      return p ? { el: p, kind: 'self' } : null;
+    }
+    if (selected || selectedFlask != null) {
+      const el = $('.combatant.enemy.hover-target') || $('.combatant.enemy.gp-focus');
+      return el ? { el, kind: 'enemy' } : null;
+    }
+    return null;
+  }
+
+  function refreshAim() {
+    const want = currentAim();
+    const cur = $('.combatant.aiming');
+    if ((want && cur === want.el && cur.querySelector('.aim-silho')) || (!want && !cur)) return;
+    clearAim();
+    if (want) setAim(want.el, want.kind);
+  }
+
+  // Arm a self/buff card: highlight the player blue and wait for a second
+  // Confirm (keyboard/gamepad). Mouse plays such cards on the first click.
+  function armSelf(instanceId) {
+    selfArm = selfArm === instanceId ? null : instanceId;
+    selected = null;
+    selectedFlask = null;
+    hideTooltip();
+    render();
+    if (selfArm) focusFirst('.combatant.player');
+    refreshAim();
+  }
+
+  // Land the cursor on the leftmost playable card at the start of your turn —
+  // only once the player has actually used keyboard/gamepad (mouse users never
+  // get an unrequested focus ring).
+  function focusHandDefault() {
+    if (!isEngaged() || busy || combat.result || combat.phase !== 'player') return;
+    if (selected || selectedFlask != null || selfArm) return;
+    if (!focusFirst('.hand .card:not(.unaffordable)')) focusFirst('.hand .card');
   }
 
   // Display snapshot for paced playback (SPEC §7.4): while a timeline plays,
@@ -142,6 +233,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     renderEnemies();
     renderHand();
     renderControls();
+    refreshAim(); // re-apply the target glow after the board rebuilds
   }
 
   function renderTopbar() {
@@ -255,8 +347,16 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     zone.innerHTML = '';
     const p = combat.player;
     const box = document.createElement('div');
-    box.className = 'combatant player';
+    box.className = `combatant player${selfArm ? ' armed' : ''}`;
     box.dataset.eid = 'player';
+    // When a self/buff card is armed, the player is a confirmable target.
+    if (selfArm) {
+      box.dataset.focusable = '';
+      box.style.cursor = 'pointer';
+      box.addEventListener('click', () => {
+        if (selfArm) playCard(selfArm, null);
+      });
+    }
     const sprite = document.createElement('div');
     sprite.className = 'sprite';
     sprite.appendChild(playerSprite(run.customization || {}, run.class));
@@ -373,7 +473,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       const spread = Math.min(6, n) * 1.2;
       el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
       el.style.zIndex = i;
-      if (inst.instanceId === selected) el.classList.add('selected');
+      if (inst.instanceId === selected || inst.instanceId === selfArm) el.classList.add('selected');
       if (i < 9) {
         const hint = document.createElement('span');
         hint.className = 'key-hint';
@@ -448,7 +548,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       addEventListener('pointerup', onUp);
     });
 
-    el.addEventListener('click', () => {
+    el.addEventListener('click', (ev) => {
       if (suppressClick) {
         suppressClick = false;
         return;
@@ -456,20 +556,26 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       if (busy || !affordable || dragging) return;
       if (pv.needsTarget) {
         selected = selected === inst.instanceId ? null : inst.instanceId;
+        selfArm = null;
         render();
         if (selected) focusTargeting();
-      } else {
+      } else if (ev.isTrusted) {
+        // Real mouse click on a self/buff card → play immediately.
         playCard(inst.instanceId, null);
+      } else {
+        // Synthetic click from keyboard/gamepad Confirm → arm the blue confirm.
+        armSelf(inst.instanceId);
       }
     });
   }
 
   // Cancel targeting with right-click / Esc.
   combatEl.addEventListener('contextmenu', (ev) => {
-    if (selected || selectedFlask != null) {
+    if (selected || selectedFlask != null || selfArm) {
       ev.preventDefault();
       selected = null;
       selectedFlask = null;
+      selfArm = null;
       render();
     }
   });
@@ -497,11 +603,13 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     }
 
     if (ev.key === 'Escape') {
-      if (selected || selectedFlask != null) {
+      if (selected || selectedFlask != null || selfArm) {
         selected = null;
         selectedFlask = null;
+        selfArm = null;
         hideTooltip();
         render();
+        focusHandDefault();
       }
       return;
     }
@@ -600,6 +708,8 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
         if (combat.result) {
           removeEventListener('keydown', keyHandler);
           setTimeout(() => onEnd(combat.result, combat), 350);
+        } else {
+          focusHandDefault(); // land on the leftmost playable card for kb/pad
         }
       }
     );
@@ -633,6 +743,8 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     if (targetId) lastTargetId = targetId; // remembered for the next card's aim
     selected = null;
     selectedFlask = null;
+    selfArm = null;
+    clearAim();
     hideTooltip();
     flyCard(instanceId, targetId);
     disp = takeSnapshot();
@@ -673,6 +785,25 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   if (onMenu) $('#combat-menu').addEventListener('click', () => onMenu('deck'));
 
   render();
+
+  // Keep the target glow in sync with focus/hover: the field's class attributes
+  // change as the cursor (gp-focus) or pointer (hover-target) moves; a full
+  // render() also re-applies it. Observing attributes only (childList untouched)
+  // avoids feedback from our own inserted silhouette node.
+  const field = $('.field');
+  if (field && typeof MutationObserver !== 'undefined') {
+    const aimObs = new MutationObserver(() => {
+      if (aimScheduled) return;
+      aimScheduled = true;
+      setTimeout(() => {
+        aimScheduled = false;
+        if (app.querySelector('.combat')) refreshAim();
+      }, 0);
+    });
+    aimObs.observe(field, { attributes: true, attributeFilter: ['class'], subtree: true });
+  }
+  focusHandDefault();
+
   // Combat-start events (relic triggers, opening draw) get a quick pass too.
   animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
 

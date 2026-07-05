@@ -7,6 +7,7 @@
 import { renderCard } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { sfx } from '../sfx.js';
+import { isEngaged, focusFirst } from '../input.js';
 
 export function mountShop(app, { registries, run, onLeave, onChanged }) {
   const stock = run.shopStock;
@@ -116,4 +117,8 @@ export function mountShop(app, { registries, run, onLeave, onChanged }) {
   }
 
   render();
+
+  // Smart default (keyboard/gamepad): land on the first purchasable card, else
+  // the Leave button.
+  if (isEngaged()) setTimeout(() => focusFirst('#shop-cards .card') || focusFirst('#leave-shop'), 0);
 }
