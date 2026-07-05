@@ -777,9 +777,24 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 .map-header .runes { color: var(--gold); }
 .map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
 .map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 11px; }
-.map-header .mh-flasks { display: flex; gap: 5px; font-size: 17px; line-height: 1; }
-.map-header .mh-flask { cursor: default; }
 .map-header .mh-actions { margin-left: auto; display: flex; gap: 8px; }
+
+/* Relic + flask sub-strip: a slim full-width row under the main bar. Flasks,
+   a divider, then relic chips; wraps to more rows as they accumulate. */
+.map-substrip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px; row-gap: 4px;
+  padding: 4px 14px; background: var(--panel); border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.map-substrip[hidden] { display: none; }
+.map-substrip .mh-flasks { display: flex; gap: 5px; font-size: 15px; line-height: 1; }
+.map-substrip .mh-flask { cursor: default; }
+.map-substrip .mh-div { width: 1px; align-self: stretch; min-height: 16px; background: var(--line); margin: 0 4px; }
+.map-substrip .mh-relics { display: flex; flex-wrap: wrap; gap: 5px; }
+.map-substrip .relic {
+  width: 22px; height: 22px; border-radius: 5px; background: var(--bg-raise);
+  border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 12px;
+}
 .map-legend-pop {
   position: absolute; top: calc(100% + 4px); right: 12px; z-index: 20;
   background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 8px;
@@ -794,8 +809,14 @@ body.map-compact .map-header { min-height: 42px; gap: 10px; padding: 0 10px; }
 body.map-compact .map-header .nm { display: none; }
 body.map-compact .map-header .hpbar { width: 120px; height: 12px; }
 body.map-compact .map-header .mh-stat { font-size: 11px; }
-body.hide-header-relics .map-header .mh-relics { display: none; }
+body.map-compact .map-substrip { padding: 2px 10px; }
+body.map-compact .map-substrip .relic { width: 19px; height: 19px; font-size: 11px; }
 body.hide-header-seed .map-header .mh-seed { display: none; }
+/* Relics toggle hides the relic chips (and divider) in the sub-strip; when there
+   are also no flasks, the whole strip collapses so there's no empty bar. */
+body.hide-header-relics .map-substrip .mh-relics,
+body.hide-header-relics .map-substrip .mh-div { display: none; }
+body.hide-header-relics .map-substrip.no-flasks { display: none; }
 
   </style>
 </head>
@@ -10999,6 +11020,8 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
   const hpPct = Math.max(0, Math.min(100, Math.round((run.hp / Math.max(1, run.maxHp)) * 100)));
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
+  const hasRelics = run.relics.length > 0;
+  const hasFlasks = run.flasks.length > 0;
 
   app.innerHTML = `
     <div class="mapscreen">
@@ -11011,8 +11034,6 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
         <span class="mh-stat runes">⛁ ${run.runes}</span>
         <span class="mh-stat mh-prog">Act ${run.actNumber} / 3 · Floor ${run.floor} / ${map.floors}</span>
         <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
-        <div class="mh-flasks"></div>
-        <div class="relics mh-relics"></div>
         <div class="mh-actions">
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
           <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
@@ -11026,6 +11047,11 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
           <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
         </div>
       </header>
+      <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>
+        <div class="mh-flasks"></div>
+        ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
+        <div class="relics mh-relics"></div>
+      </div>
       <div class="map-scroll">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
