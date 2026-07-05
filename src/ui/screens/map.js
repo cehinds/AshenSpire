@@ -70,6 +70,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
   const hpPct = Math.max(0, Math.min(100, Math.round((run.hp / Math.max(1, run.maxHp)) * 100)));
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
+  const hasRelics = run.relics.length > 0;
+  const hasFlasks = run.flasks.length > 0;
 
   app.innerHTML = `
     <div class="mapscreen">
@@ -82,8 +84,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
         <span class="mh-stat runes">⛁ ${run.runes}</span>
         <span class="mh-stat mh-prog">Act ${run.actNumber} / 3 · Floor ${run.floor} / ${map.floors}</span>
         <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
-        <div class="mh-flasks"></div>
-        <div class="relics mh-relics"></div>
         <div class="mh-actions">
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
           <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
@@ -97,6 +97,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
           <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
         </div>
       </header>
+      <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>
+        <div class="mh-flasks"></div>
+        ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
+        <div class="relics mh-relics"></div>
+      </div>
       <div class="map-scroll">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
