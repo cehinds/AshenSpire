@@ -334,4 +334,152 @@ export const events = [
       { label: 'Leave', effects: [], resultText: '"The Rot is patient," he calls after you. "It will keep your seat."' },
     ],
   },
+
+  // ---- Content-pass additions (round 3) --------------------------------------
+  {
+    id: 'fingercreeperNest',
+    name: 'Fingercreeper Nest',
+    art: '🕷',
+    text:
+      'A cluster of pale, many-jointed hands scuttles in the dark ahead, nested around a strongbox ' +
+      'they have dragged from somewhere below. They have not noticed you. Yet.',
+    choices: [
+      {
+        label: 'Snatch the strongbox (gain 80 runes; they may wake)',
+        effects: [
+          { op: 'addRunes', amount: 80 },
+          { op: 'startCombat', encounterId: 'loneSoldier', if: { p: 'random', pct: 45 } },
+        ],
+        resultText: 'The box comes free with a wet scrape. All around you, fingers go still — then flex.',
+      },
+      { label: 'Back away slowly', effects: [], resultText: 'You retrace your steps one careful footfall at a time. The nest never stirs.' },
+    ],
+  },
+  {
+    id: 'fadedGrace',
+    name: 'Site of Faded Grace',
+    art: '🕯',
+    text:
+      'A guiding grace once pooled here, now guttering to a thread of gold. It has just enough left ' +
+      'to give — a mending, or a sharpening — but not both, and not for long.',
+    choices: [
+      {
+        label: 'Warm yourself (heal 18% max HP)',
+        effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 18 } }],
+        resultText: 'The last of the light soaks into you. When it fades, the ground is only ground.',
+      },
+      {
+        label: 'Temper a blade (upgrade a random card, lose 6% max HP)',
+        effects: [
+          { op: 'upgradeCard', random: true },
+          { op: 'loseMaxHpPct', pct: 6 },
+        ],
+        resultText: 'You hold a card to the dying grace until it takes the edge. It costs you something to keep the flame that long.',
+      },
+      { label: 'Leave', effects: [], resultText: 'You let the grace fade unspent. Some kindnesses are not yours to take.' },
+    ],
+  },
+  {
+    id: 'merchantsGhost',
+    name: "Merchant's Ghost",
+    art: '👻',
+    text:
+      'A translucent figure keeps a stall that is no longer there, weighing wares no living hand can hold. ' +
+      '"Custom," it sighs, almost grateful. "It has been so long. I have something you\'ll want."',
+    choices: [
+      {
+        label: 'Pay in kind (give 60 runes, gain a random relic)',
+        requires: { runes: 60 },
+        effects: [
+          { op: 'addRunes', amount: -60 },
+          { op: 'addRelic', random: true },
+        ],
+        resultText: 'The runes vanish from your hand into a ledger that isn\'t there. The relic is very solid, and very cold.',
+      },
+      {
+        label: 'Take it and run (gain a random relic and a Guilt curse)',
+        effects: [
+          { op: 'addRelic', random: true },
+          { op: 'addCardToDeck', card: 'guilt' },
+        ],
+        resultText: 'It does not chase you. It only watches, and writes something down, and the writing follows you out.',
+      },
+      { label: 'Leave', effects: [], resultText: '"Come again," it says, to no one, already forgetting you.' },
+    ],
+  },
+  {
+    id: 'runebearDen',
+    name: 'Runebear Den',
+    art: '🐻',
+    text:
+      'The cave reeks of musk and old kills. Rune-light glitters in the bone-litter at the back — a fortune, ' +
+      'if you are quiet, and quick, and the mound of fur by the wall keeps breathing slow.',
+    choices: [
+      {
+        label: 'Go for the hoard (gain 100 runes; it will almost certainly wake)',
+        effects: [
+          { op: 'addRunes', amount: 100 },
+          { op: 'startCombat', encounterId: 'eliteCrucible', if: { p: 'random', pct: 75 } },
+        ],
+        resultText: 'Your hands fill with cold light. Behind you, the breathing stops.',
+      },
+      {
+        label: 'Skim the edges (squeeze past the rubble, lose 5% max HP, gain 25 runes)',
+        effects: [
+          { op: 'loseMaxHpPct', pct: 5 },
+          { op: 'addRunes', amount: 25 },
+        ],
+        resultText: 'You take only what is within reach and pay for it in scraped ribs. The den keeps its heart.',
+      },
+      { label: 'Leave', effects: [], resultText: 'Some fortunes are guarded by teeth. You leave this one to its keeper.' },
+    ],
+  },
+  {
+    id: 'stakeOfMarika',
+    name: 'Stake of Marika',
+    art: '⛧',
+    text:
+      'A stake of gilded thorn juts from the path, humming with the promise of return. It asks for a piece of you ' +
+      'to hold in trust — a card, and a measure of your vigor — and offers a relic drawn up from where the dead wait.',
+    choices: [
+      {
+        label: 'Give what it asks (remove a random card, lose 8% max HP, gain a random relic)',
+        effects: [
+          { op: 'removeCardFromDeck', random: true },
+          { op: 'loseMaxHpPct', pct: 8 },
+          { op: 'addRelic', random: true },
+        ],
+        resultText: 'The stake drinks a card and a breath of your strength, and hands back something older than either.',
+      },
+      { label: 'Leave', effects: [], resultText: 'You step around the thorn. It hums after you, patient, certain you\'ll be back.' },
+    ],
+  },
+  {
+    id: 'twoFingersRiddle',
+    name: "Two Fingers' Riddle",
+    art: '✌',
+    text:
+      'A pair of enormous fingers rises from a font of still water, tapping a slow rhythm only they understand. ' +
+      'Read one way, the rhythm sharpens the mind. Read another, it mends the flesh — but the second reading leaves a mark.',
+    choices: [
+      {
+        label: 'Sharpen (upgrade 2 random cards, take 5 damage)',
+        effects: [
+          { op: 'upgradeCard', random: true },
+          { op: 'upgradeCard', random: true },
+          { op: 'damage', target: 'self', amount: 5 },
+        ],
+        resultText: 'The rhythm settles behind your eyes. Two of your cards come back keener; your hands ache with the knowing.',
+      },
+      {
+        label: 'Mend (heal 22% max HP, gain a Guilt curse)',
+        effects: [
+          { op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 22 } },
+          { op: 'addCardToDeck', card: 'guilt' },
+        ],
+        resultText: 'Warmth floods you, generous and total. Something reads back through the water, and does not look away.',
+      },
+      { label: 'Leave', effects: [], resultText: 'The fingers tap on. You leave the riddle unanswered, which is its own kind of answer.' },
+    ],
+  },
 ];

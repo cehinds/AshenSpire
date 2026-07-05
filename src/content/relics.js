@@ -586,4 +586,79 @@ export const relics = [
     textTemplate: 'Whenever an enemy Staggers, gain {strength} Strength.',
     flavor: 'It has not fallen in a hundred routs. It does not intend to start with yours.',
   },
+
+  // ---- Content-pass additions (round 3: 48 -> 54) ------------------------------
+  {
+    id: 'emberwickCharm',
+    name: 'Emberwick Charm',
+    rarity: 'common',
+    icon: '🕯',
+    triggers: [
+      {
+        on: 'hpLost',
+        once: true,
+        if: { p: 'eventTargetIsOwner' },
+        do: [{ op: 'gainEnergy', amount: 1 }],
+      },
+    ],
+    textTemplate: 'The first time you lose HP each combat, gain {gainEnergy} Energy.',
+    flavor: 'It burns brightest at the moment you can least afford to slow down.',
+  },
+  {
+    id: 'carrionMorsel',
+    name: 'Carrion Morsel',
+    rarity: 'common',
+    icon: '🍖',
+    triggers: [{ on: 'enemyDied', do: [{ op: 'heal', target: 'owner', amount: 2 }] }],
+    textTemplate: 'Whenever an enemy dies, heal {heal} HP.',
+    flavor: 'The spire feeds those who feed it. It is not fussy about the manners of the exchange.',
+  },
+  {
+    id: 'gravetendersBell',
+    name: "Gravetender's Bell",
+    rarity: 'uncommon',
+    icon: '🔔',
+    triggers: [{ on: 'enemyDied', do: [{ op: 'draw', amount: 1 }] }],
+    textTemplate: 'Whenever an enemy dies, draw {draw} card.',
+    flavor: 'One toll for each name laid down. The tending is in the counting.',
+  },
+  {
+    id: 'sentinelsOath',
+    name: "Sentinel's Oath",
+    rarity: 'uncommon',
+    icon: '🛡',
+    triggers: [
+      {
+        on: 'cardPlayed',
+        if: { p: 'everyNthCardThisCombat', n: 12 },
+        do: [{ op: 'applyStatus', target: 'owner', status: 'strength', stacks: 1 }],
+      },
+    ],
+    textTemplate: 'Every 12th card you play each combat: gain {strength} Strength.',
+    flavor: 'The oath is long and the watch is longer. Endurance is its own kind of edge.',
+  },
+  {
+    id: 'tarnishedWarflag',
+    name: 'Tarnished Warflag',
+    rarity: 'rare',
+    icon: '🏴',
+    triggers: [{ on: 'playerTurnStart', do: [{ op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1 }] }],
+    textTemplate: 'At the start of each turn, apply {weak} Weak to ALL enemies.',
+    flavor: 'The colors are all but rotted away. What it musters now answers to no banner but yours.',
+  },
+  {
+    id: 'wrathCoil',
+    name: 'Wrath Coil',
+    rarity: 'rare',
+    icon: '⚡',
+    triggers: [
+      {
+        on: 'hpLost',
+        if: { p: 'eventTargetIsOwner' },
+        do: [{ op: 'damage', target: 'randomEnemy', amount: 3 }],
+      },
+    ],
+    textTemplate: 'Whenever you lose HP, deal {damage} damage to a random enemy.',
+    flavor: 'It winds tighter with every wound and lets go all at once, at someone else.',
+  },
 ];
