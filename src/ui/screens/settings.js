@@ -23,6 +23,9 @@ const ROWS = [
     note: 'Zoom the whole interface — smaller for more room, larger for readability.' },
   { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake',
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
+  { cat: 'Display', key: 'ambient', type: 'choice', def: 'normal',
+    choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
+    note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
 
@@ -46,6 +49,8 @@ const ROWS = [
     note: 'Shift danger/heal/rot/frost colors to a more distinguishable palette.' },
   { cat: 'Accessibility', key: 'reduceFlashes', def: false, label: 'Reduce flashes',
     note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
+  { cat: 'Accessibility', key: 'readableHeadings', def: false, label: 'Readable headings',
+    note: 'Use the plain UI font for titles instead of the decorative serif.' },
 ];
 
 const CATEGORIES = ['Display', 'Audio', 'Accessibility'];

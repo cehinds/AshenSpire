@@ -53,6 +53,13 @@ body.cb-safe {
 }
 body.cb-safe .card .ctext .st-bleed { color: #cc79a7; }
 
+/* Accessibility: readable headings swap the decorative serif for the UI sans. */
+body.readable-ui { --font-display: var(--font-body); }
+
+/* Ambient effects: 'off' also stills the title glow pulse; 'high' brightens it. */
+:root[data-ambient='off'] .title-glow { animation: none; text-shadow: 0 0 20px rgba(var(--accent-rgb), 0.2); }
+:root[data-ambient='high'] .title-glow { animation-duration: 2.2s; }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body { height: 100%; }
@@ -860,6 +867,10 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('no-shake', settings.screenShake === false);
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
+  document.body.classList.toggle('readable-ui', settings.readableHeadings === true);
+  // Ambient effects level → data attr read by the title screen (ember count) + CSS.
+  const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
+  document.documentElement.dataset.ambient = amb;
   // Accent theme → CSS variables on the root (falls back to gold).
   const accent = ACCENTS[settings.accent] || ACCENTS.gold;
   const root = document.documentElement.style;
@@ -9721,7 +9732,10 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 const { esc } = require("src/ui/components/tooltip.js");
 
 function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom }) {
-  const embers = Array.from({ length: 7 }, (_, i) => {
+  // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
+  const EMBER_COUNT = { off: 0, low: 3, normal: 7, high: 14 };
+  const emberN = EMBER_COUNT[document.documentElement.dataset.ambient] ?? 7;
+  const embers = Array.from({ length: emberN }, (_, i) => {
     const left = 8 + ((i * 13.7) % 84);
     const delay = (i * 1.7) % 9;
     const dur = 7 + (i % 4) * 2;
@@ -11039,6 +11053,9 @@ const ROWS = [
     note: 'Zoom the whole interface — smaller for more room, larger for readability.' },
   { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake',
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
+  { cat: 'Display', key: 'ambient', type: 'choice', def: 'normal',
+    choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
+    note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
 
@@ -11062,6 +11079,8 @@ const ROWS = [
     note: 'Shift danger/heal/rot/frost colors to a more distinguishable palette.' },
   { cat: 'Accessibility', key: 'reduceFlashes', def: false, label: 'Reduce flashes',
     note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
+  { cat: 'Accessibility', key: 'readableHeadings', def: false, label: 'Readable headings',
+    note: 'Use the plain UI font for titles instead of the decorative serif.' },
 ];
 
 const CATEGORIES = ['Display', 'Audio', 'Accessibility'];
@@ -13700,6 +13719,20 @@ function initAudio(settings = {}) {
       o.connect(g).connect(musicBus);
       o.start(t);
       o.stop(t + 1.9);
+      // Every few notes, lay a soft harmony a perfect fifth above — adds body
+      // and variety without a second melodic line to manage.
+      if (step % 3 === 1) {
+        const h = ctx.createOscillator();
+        const hg = ctx.createGain();
+        h.type = 'sine';
+        h.frequency.value = freq * 1.4983; // ~perfect fifth
+        hg.gain.setValueAtTime(0.0001, t);
+        hg.gain.exponentialRampToValueAtTime(0.07 * bed.gain, t + 0.12);
+        hg.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+        h.connect(hg).connect(musicBus);
+        h.start(t);
+        h.stop(t + 1.7);
+      }
       step++;
     };
     playNote();

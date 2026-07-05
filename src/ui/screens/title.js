@@ -8,7 +8,10 @@
 import { esc } from '../components/tooltip.js';
 
 export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom }) {
-  const embers = Array.from({ length: 7 }, (_, i) => {
+  // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
+  const EMBER_COUNT = { off: 0, low: 3, normal: 7, high: 14 };
+  const emberN = EMBER_COUNT[document.documentElement.dataset.ambient] ?? 7;
+  const embers = Array.from({ length: emberN }, (_, i) => {
     const left = 8 + ((i * 13.7) % 84);
     const delay = (i * 1.7) % 9;
     const dur = 7 + (i % 4) * 2;

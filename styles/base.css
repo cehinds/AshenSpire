@@ -46,6 +46,13 @@ body.cb-safe {
 }
 body.cb-safe .card .ctext .st-bleed { color: #cc79a7; }
 
+/* Accessibility: readable headings swap the decorative serif for the UI sans. */
+body.readable-ui { --font-display: var(--font-body); }
+
+/* Ambient effects: 'off' also stills the title glow pulse; 'high' brightens it. */
+:root[data-ambient='off'] .title-glow { animation: none; text-shadow: 0 0 20px rgba(var(--accent-rgb), 0.2); }
+:root[data-ambient='high'] .title-glow { animation-duration: 2.2s; }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body { height: 100%; }
