@@ -87,6 +87,8 @@
 .set-cat:first-child { margin-top: 0; }
 .subtle.danger { border-color: var(--blood); color: var(--ember); }
 .subtle.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
+.ov-save-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; margin-top: 14px; max-width: 320px; }
+.ov-save-actions button { text-align: left; padding: 11px 16px; }
 
 /* ---------- keyboard / gamepad focus cursor ---------- */
 .gp-focus {

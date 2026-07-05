@@ -37,10 +37,12 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
   closeOverlay();
   const settings = meta.settings || (meta.settings = {});
 
+  const hasSave = !!(onSave || onQuit || onExit);
   const TABS = [
     { id: 'deck', label: `Deck (${run.deck.length})` },
     { id: 'relics', label: 'Relics & Flasks' },
     { id: 'stats', label: 'Stats' },
+    ...(hasSave ? [{ id: 'save', label: 'Save' }] : []),
     { id: 'settings', label: 'Settings' },
     { id: 'controls', label: 'Controls' },
   ];
@@ -54,9 +56,6 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
           ${TABS.map((t) => `<button class="ov-tab" data-tab="${t.id}">${t.label}</button>`).join('')}
         </div>
         <div class="overlay-actions">
-          ${onSave ? '<button class="subtle" id="ov-save">Save</button>' : ''}
-          ${onQuit ? '<button class="subtle" id="ov-quit">Save &amp; Quit</button>' : ''}
-          ${onExit ? '<button class="subtle danger" id="ov-exit">Quit Game</button>' : ''}
           <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
         </div>
       </div>
@@ -73,6 +72,7 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     if (id === 'deck') renderDeck(body);
     else if (id === 'relics') renderRelics(body);
     else if (id === 'stats') renderStats(body);
+    else if (id === 'save') renderSave(body);
     else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}) });
     else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
   }
@@ -125,6 +125,34 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     container.appendChild(wrap);
   }
 
+  // Save tab: save to the current slot, save-and-quit to title, or quit the app.
+  // (In-run slot switching is intentionally left to the title's Continue.)
+  function renderSave(container) {
+    const wrap = document.createElement('div');
+    wrap.className = 'ov-save-tab';
+    wrap.innerHTML = `
+      <h3 class="set-cat">Save</h3>
+      <p class="set-note" style="max-width:420px">Your climb is written to its save slot. You can resume it later from the title screen's Continue.</p>
+      <div class="ov-save-actions">
+        ${onSave ? '<button class="subtle" id="ovs-save">Save now</button>' : ''}
+        ${onQuit ? '<button class="subtle" id="ovs-quit">Save &amp; Quit to Title</button>' : ''}
+        ${onExit ? '<button class="subtle danger" id="ovs-exit">Quit Game</button>' : ''}
+      </div>`;
+    container.appendChild(wrap);
+    const s = wrap.querySelector('#ovs-save');
+    if (s && onSave) {
+      s.addEventListener('click', () => {
+        const slot = onSave();
+        s.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
+        setTimeout(() => (s.textContent = 'Save now'), 1500);
+      });
+    }
+    const q = wrap.querySelector('#ovs-quit');
+    if (q && onQuit) q.addEventListener('click', () => { closeOverlay(); onQuit(); });
+    const e = wrap.querySelector('#ovs-exit');
+    if (e && onExit) e.addEventListener('click', () => { closeOverlay(); onExit(); });
+  }
+
   function renderStats(container) {
     const s = run.stats || {};
     const cls = registries.classes.get(run.class);
@@ -155,28 +183,6 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
   veil.addEventListener('click', (e) => {
     if (e.target === veil) closeOverlay();
   });
-  const saveBtn = veil.querySelector('#ov-save');
-  if (saveBtn && onSave) {
-    saveBtn.addEventListener('click', () => {
-      const slot = onSave();
-      saveBtn.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
-      setTimeout(() => (saveBtn.textContent = 'Save'), 1500);
-    });
-  }
-  const quitBtn = veil.querySelector('#ov-quit');
-  if (quitBtn && onQuit) {
-    quitBtn.addEventListener('click', () => {
-      closeOverlay();
-      onQuit(); // save the run to its slot, then return to the title screen
-    });
-  }
-  const exitBtn = veil.querySelector('#ov-exit');
-  if (exitBtn && onExit) {
-    exitBtn.addEventListener('click', () => {
-      closeOverlay();
-      onExit(); // leave the app entirely (persists first)
-    });
-  }
 
   // Esc closes the overlay, captured before screen-level key handlers see it.
   escHandler = (ev) => {

@@ -221,6 +221,8 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .set-cat:first-child { margin-top: 0; }
 .subtle.danger { border-color: var(--blood); color: var(--ember); }
 .subtle.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
+.ov-save-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; margin-top: 14px; max-width: 320px; }
+.ov-save-actions button { text-align: left; padding: 11px 16px; }
 
 /* ---------- keyboard / gamepad focus cursor ---------- */
 .gp-focus {
@@ -698,7 +700,7 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
   <style data-src="styles/map.css">
 /* styles/map.css — act map screen (mockup: docs/mockups/map-screen.svg) */
 
-.mapscreen { flex: 1; display: flex; overflow: hidden; }
+.mapscreen { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .mapscreen .map-scroll {
   flex: 1; overflow: auto; position: relative;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
@@ -763,21 +765,37 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 .map-edge { stroke: var(--line-soft); stroke-width: 2; fill: none; }
 .map-edge.traveled { stroke: var(--gold); stroke-width: 3; }
 
-.map-side {
-  width: 230px; border-left: 1px solid var(--line); background: var(--bg-raise);
-  padding: 18px; display: flex; flex-direction: column; gap: 14px; font-size: 12px;
+/* ---------- horizontal map header (matches the combat top bar) ---------- */
+/* Reuses .topbar/.portrait/.who/.hpbar/.relics from combat.css; these rules add
+   the map-specific stats, wrapping, and the legend popover. Items are flex so
+   they reflow as customization toggles hide/show them. */
+.map-header {
+  height: auto; min-height: 52px; flex-wrap: wrap; row-gap: 6px; position: relative;
 }
-.map-side h2 { color: var(--gold); font-size: 15px; letter-spacing: 0.15em; }
-.map-side .hud-line { display: flex; justify-content: space-between; color: var(--parchment); }
-.map-side .hud-line span:first-child { color: var(--muted); }
-.map-side .legend div { margin: 3px 0; color: var(--parchment); }
-.map-side .legend .ic { display: inline-block; width: 22px; }
-.map-side .relic-strip { display: flex; flex-wrap: wrap; gap: 5px; }
-.map-side .relic-strip .relic {
-  width: 26px; height: 26px; border-radius: 6px; background: var(--panel);
-  border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px;
+.map-header .hpbar { width: 150px; }
+.map-header .mh-stat { color: var(--parchment); font-size: 12px; white-space: nowrap; }
+.map-header .runes { color: var(--gold); }
+.map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
+.map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 11px; }
+.map-header .mh-flasks { display: flex; gap: 5px; font-size: 17px; line-height: 1; }
+.map-header .mh-flask { cursor: default; }
+.map-header .mh-actions { margin-left: auto; display: flex; gap: 8px; }
+.map-legend-pop {
+  position: absolute; top: calc(100% + 4px); right: 12px; z-index: 20;
+  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 8px;
+  padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; font-size: 12px;
+  color: var(--parchment); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
 }
-.map-side .deck-btn { margin-top: auto; }
+.map-legend-pop[hidden] { display: none; }
+.map-legend-pop .ic { display: inline-block; width: 22px; }
+
+/* Customization (body classes set by applyDisplaySettings) — the bar flexes. */
+body.map-compact .map-header { min-height: 42px; gap: 10px; padding: 0 10px; }
+body.map-compact .map-header .nm { display: none; }
+body.map-compact .map-header .hpbar { width: 120px; height: 12px; }
+body.map-compact .map-header .mh-stat { font-size: 11px; }
+body.hide-header-relics .map-header .mh-relics { display: none; }
+body.hide-header-seed .map-header .mh-seed { display: none; }
 
   </style>
 </head>
@@ -886,6 +904,9 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
   document.body.classList.toggle('readable-ui', settings.readableHeadings === true);
   document.body.classList.toggle('hide-hints', settings.controlHints === false);
+  document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
+  document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
+  document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
   document.documentElement.dataset.ambient = amb;
@@ -10917,6 +10938,7 @@ const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { overlayIsOpen } = require("src/ui/components/overlay.js");
 const { matchAction } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
+const { classGlyph, tintCss } = require("src/ui/assets.js");
 
 const ICONS = {
   monster: '⚔',
@@ -10973,8 +10995,37 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
     }
   }
 
+  const cz = run.customization || {};
+  const hpPct = Math.max(0, Math.min(100, Math.round((run.hp / Math.max(1, run.maxHp)) * 100)));
+  const className = registries.classes.get(run.class).name;
+  const heroName = (cz.name || className).toUpperCase();
+
   app.innerHTML = `
     <div class="mapscreen">
+      <header class="topbar map-header">
+        <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
+        <div class="who">
+          <span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span>
+          <div class="bar hpbar"><div class="fill" style="width:${hpPct}%"></div><div class="label">HP ${run.hp} / ${run.maxHp}</div></div>
+        </div>
+        <span class="mh-stat runes">⛁ ${run.runes}</span>
+        <span class="mh-stat mh-prog">Act ${run.actNumber} / 3 · Floor ${run.floor} / ${map.floors}</span>
+        <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
+        <div class="mh-flasks"></div>
+        <div class="relics mh-relics"></div>
+        <div class="mh-actions">
+          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
+          <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
+        </div>
+        <div class="map-legend-pop" hidden>
+          <div><span class="ic">⚔</span>Monster</div>
+          <div><span class="ic">?</span>Unknown</div>
+          <div><span class="ic" style="color:var(--ember)">☠</span>Elite</div>
+          <div><span class="ic" style="color:var(--gold)">♨</span>Shrine of Grace</div>
+          <div><span class="ic" style="color:var(--grace)">⚖</span>Merchant</div>
+          <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
+        </div>
+      </header>
       <div class="map-scroll">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -10989,29 +11040,6 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
           <button class="zbtn" id="zoom-in" title="Zoom in">+</button>
         </div>
       </div>
-      <aside class="map-side">
-        <h2>THE CLIMB</h2>
-        <div class="hud-line"><span>HP</span><b>${run.hp} / ${run.maxHp}</b></div>
-        <div class="hud-line"><span>Runes</span><b style="color:var(--gold)">${run.runes}</b></div>
-        <div class="hud-line"><span>Act</span><b>${run.actNumber} / 3</b></div>
-        <div class="hud-line"><span>Floor</span><b>${run.floor} / ${map.floors}</b></div>
-        <div class="hud-line"><span>Seed</span><b style="font-family:monospace">${esc(run.seedString)}</b></div>
-        <div class="hud-line"><span>Flasks</span><b>${run.flasks.map((f) => registries.flasks.get(f.flaskId).icon).join(' ') || '—'}</b></div>
-        <div class="relic-strip"></div>
-        <div class="legend">
-          <div><span class="ic">⚔</span>Monster</div>
-          <div><span class="ic">?</span>Unknown</div>
-          <div><span class="ic" style="color:var(--ember)">☠</span>Elite</div>
-          <div><span class="ic" style="color:var(--gold)">♨</span>Shrine of Grace</div>
-          <div><span class="ic" style="color:var(--grace)">⚖</span>Merchant</div>
-          <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
-        </div>
-        <div class="map-buttons">
-          <button class="deck-btn" id="open-menu">☰ Menu</button>
-          <button class="subtle deck-btn" id="save-run">Save</button>
-          <button class="subtle deck-btn" id="map-settings">Settings</button>
-        </div>
-      </aside>
       ${hintBarHtml('map')}
     </div>`;
 
@@ -11044,7 +11072,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
     g.appendChild(el);
   }
 
-  const strip = app.querySelector('.relic-strip');
+  const strip = app.querySelector('.mh-relics');
   for (const rid of run.relics) {
     const def = registries.relics.get(rid);
     const el = document.createElement('div');
@@ -11054,18 +11082,36 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
     strip.appendChild(el);
   }
 
+  const flaskWrap = app.querySelector('.mh-flasks');
+  for (const f of run.flasks) {
+    const def = registries.flasks.get(f.flaskId);
+    const el = document.createElement('span');
+    el.className = 'mh-flask';
+    el.textContent = def.icon || '🧪';
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
+    flaskWrap.appendChild(el);
+  }
+
   if (onMenu) app.querySelector('#open-menu').addEventListener('click', () => onMenu('deck'));
 
-  app.querySelector('#save-run').addEventListener('click', () => {
-    const slot = onSave ? onSave() : null;
-    const toast = document.createElement('div');
-    toast.className = 'save-toast';
-    toast.textContent = slot ? `Saved to Slot ${slot}` : 'Saved';
-    app.appendChild(toast);
-    setTimeout(() => toast.remove(), 1600);
+  // Legend "?" popover: opens on click; a one-shot outside-click listener closes
+  // it (added only while open, so it never leaks across screens).
+  const legendBtn = app.querySelector('#map-legend');
+  const legendPop = app.querySelector('.map-legend-pop');
+  legendBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const opening = legendPop.hidden;
+    legendPop.hidden = !opening;
+    if (opening) {
+      const off = (ev) => {
+        if (ev.target !== legendBtn && !legendPop.contains(ev.target)) {
+          legendPop.hidden = true;
+          document.removeEventListener('click', off, true);
+        }
+      };
+      document.addEventListener('click', off, true);
+    }
   });
-
-  if (onSettings) app.querySelector('#map-settings').addEventListener('click', onSettings);
 
   // ---- zoom + centering (SPEC §7.1 map UX) ----
   const scroll = app.querySelector('.map-scroll');
@@ -11253,10 +11299,12 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
   closeOverlay();
   const settings = meta.settings || (meta.settings = {});
 
+  const hasSave = !!(onSave || onQuit || onExit);
   const TABS = [
     { id: 'deck', label: `Deck (${run.deck.length})` },
     { id: 'relics', label: 'Relics & Flasks' },
     { id: 'stats', label: 'Stats' },
+    ...(hasSave ? [{ id: 'save', label: 'Save' }] : []),
     { id: 'settings', label: 'Settings' },
     { id: 'controls', label: 'Controls' },
   ];
@@ -11270,9 +11318,6 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
           ${TABS.map((t) => `<button class="ov-tab" data-tab="${t.id}">${t.label}</button>`).join('')}
         </div>
         <div class="overlay-actions">
-          ${onSave ? '<button class="subtle" id="ov-save">Save</button>' : ''}
-          ${onQuit ? '<button class="subtle" id="ov-quit">Save &amp; Quit</button>' : ''}
-          ${onExit ? '<button class="subtle danger" id="ov-exit">Quit Game</button>' : ''}
           <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
         </div>
       </div>
@@ -11289,6 +11334,7 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
     if (id === 'deck') renderDeck(body);
     else if (id === 'relics') renderRelics(body);
     else if (id === 'stats') renderStats(body);
+    else if (id === 'save') renderSave(body);
     else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}) });
     else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
   }
@@ -11341,6 +11387,34 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
     container.appendChild(wrap);
   }
 
+  // Save tab: save to the current slot, save-and-quit to title, or quit the app.
+  // (In-run slot switching is intentionally left to the title's Continue.)
+  function renderSave(container) {
+    const wrap = document.createElement('div');
+    wrap.className = 'ov-save-tab';
+    wrap.innerHTML = `
+      <h3 class="set-cat">Save</h3>
+      <p class="set-note" style="max-width:420px">Your climb is written to its save slot. You can resume it later from the title screen's Continue.</p>
+      <div class="ov-save-actions">
+        ${onSave ? '<button class="subtle" id="ovs-save">Save now</button>' : ''}
+        ${onQuit ? '<button class="subtle" id="ovs-quit">Save &amp; Quit to Title</button>' : ''}
+        ${onExit ? '<button class="subtle danger" id="ovs-exit">Quit Game</button>' : ''}
+      </div>`;
+    container.appendChild(wrap);
+    const s = wrap.querySelector('#ovs-save');
+    if (s && onSave) {
+      s.addEventListener('click', () => {
+        const slot = onSave();
+        s.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
+        setTimeout(() => (s.textContent = 'Save now'), 1500);
+      });
+    }
+    const q = wrap.querySelector('#ovs-quit');
+    if (q && onQuit) q.addEventListener('click', () => { closeOverlay(); onQuit(); });
+    const e = wrap.querySelector('#ovs-exit');
+    if (e && onExit) e.addEventListener('click', () => { closeOverlay(); onExit(); });
+  }
+
   function renderStats(container) {
     const s = run.stats || {};
     const cls = registries.classes.get(run.class);
@@ -11371,28 +11445,6 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
   veil.addEventListener('click', (e) => {
     if (e.target === veil) closeOverlay();
   });
-  const saveBtn = veil.querySelector('#ov-save');
-  if (saveBtn && onSave) {
-    saveBtn.addEventListener('click', () => {
-      const slot = onSave();
-      saveBtn.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
-      setTimeout(() => (saveBtn.textContent = 'Save'), 1500);
-    });
-  }
-  const quitBtn = veil.querySelector('#ov-quit');
-  if (quitBtn && onQuit) {
-    quitBtn.addEventListener('click', () => {
-      closeOverlay();
-      onQuit(); // save the run to its slot, then return to the title screen
-    });
-  }
-  const exitBtn = veil.querySelector('#ov-exit');
-  if (exitBtn && onExit) {
-    exitBtn.addEventListener('click', () => {
-      closeOverlay();
-      onExit(); // leave the app entirely (persists first)
-    });
-  }
 
   // Esc closes the overlay, captured before screen-level key handlers see it.
   escHandler = (ev) => {
@@ -11443,6 +11495,13 @@ const ROWS = [
     note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
   { cat: 'Display', key: 'controlHints', def: true, label: 'Control hints',
     note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
+  { cat: 'Display', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
+    choices: ['comfortable', 'compact'], label: 'Map header',
+    note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
+  { cat: 'Display', key: 'mapHeaderRelics', def: true, label: 'Relics in map header',
+    note: 'Show your relic icons in the map header bar.' },
+  { cat: 'Display', key: 'mapHeaderSeed', def: true, label: 'Seed in map header',
+    note: 'Show the run seed in the map header bar.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
 
