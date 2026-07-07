@@ -1,19 +1,17 @@
-// tools/serve.mjs — a tiny zero-dependency static server for the game.
+// tools/serve.mjs — a zero-dependency static file server for local play.
 //
-// The game is vanilla ES modules; browsers block `import` over file:// (CORS),
-// so it must be served over http. Rather than pull in `serve`/`http-server`
-// (SPEC §1: no dependencies), this is ~50 lines of Node core. Serves the repo
-// root (resolved from this file's location, so cwd doesn't matter).
-//
-// Run: node tools/serve.mjs [port]   (default 8000; also honors $PORT)
+// Serves the project over http://localhost so the ES-module app (index.html →
+// src/main.js) and the optional music/ folder load correctly (file:// blocks
+// module + audio loading in most browsers). Used by tools/launch.mjs, or run
+// directly:  node tools/serve.mjs [--port N] [--no-open] [--root DIR]
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { join, normalize, extname, sep } from 'node:path';
+import { resolve, join, extname, normalize } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { spawn } from 'node:child_process';
 
-const ROOT = fileURLToPath(new URL('..', import.meta.url)); // tools/.. = repo root
-const PORT = Number(process.argv[2] || process.env.PORT || 8000);
+const ROOT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -25,45 +23,98 @@ const MIME = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
-  '.webp': 'image/webp',
   '.gif': 'image/gif',
+  '.webp': 'image/webp',
   '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2',
+  '.mp3': 'audio/mpeg',
+  '.ogg': 'audio/ogg',
+  '.wav': 'audio/wav',
   '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
   '.ttf': 'font/ttf',
-  '.map': 'application/json; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
 };
 
-const server = createServer(async (req, res) => {
+/** Open a URL in the default browser (best-effort; silent if headless). */
+export function openBrowser(url) {
   try {
-    let urlPath = decodeURIComponent(new URL(req.url, `http://${req.headers.host}`).pathname);
-    if (urlPath === '/') urlPath = '/index.html';
-
-    // Resolve within ROOT and reject path traversal.
-    const filePath = normalize(join(ROOT, urlPath));
-    if (!filePath.startsWith(ROOT.endsWith(sep) ? ROOT : ROOT + sep)) {
-      res.writeHead(403).end('403 Forbidden');
-      return;
+    if (process.platform === 'win32') {
+      spawn('cmd', ['/c', 'start', '""', url], { stdio: 'ignore', detached: true }).unref();
+    } else if (process.platform === 'darwin') {
+      spawn('open', [url], { stdio: 'ignore', detached: true }).unref();
+    } else {
+      spawn('xdg-open', [url], { stdio: 'ignore', detached: true }).unref();
     }
-
-    const info = await stat(filePath).catch(() => null);
-    if (!info || !info.isFile()) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' }).end(`404 Not Found: ${urlPath}`);
-      return;
-    }
-
-    const body = await readFile(filePath);
-    res.writeHead(200, {
-      'Content-Type': MIME[extname(filePath).toLowerCase()] || 'application/octet-stream',
-      'Content-Length': body.length,
-      'Cache-Control': 'no-cache',
-    }).end(body);
-  } catch (err) {
-    res.writeHead(500, { 'Content-Type': 'text/plain' }).end(`500 ${err.message}`);
+  } catch {
+    /* no browser available — the URL is printed regardless */
   }
-});
+}
 
-server.listen(PORT, () => {
-  console.log(`EldenSpire served at http://localhost:${PORT}/  (root: ${ROOT})`);
-  console.log('Press Ctrl+C to stop.');
-});
+/**
+ * serve({ root, port, open }) → Promise<{ server, url, port }>
+ * Bumps to the next port if the requested one is in use.
+ */
+export function serve({ root = ROOT_DIR, port = 8080, open = true } = {}) {
+  const rootResolved = resolve(root);
+  const server = createServer(async (req, res) => {
+    try {
+      const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+      const rel = normalize(urlPath).replace(/^([/\\]|\.\.([/\\]|$))+/, '');
+      let filePath = rel ? join(rootResolved, rel) : rootResolved;
+      if (!resolve(filePath).startsWith(rootResolved)) {
+        res.writeHead(403);
+        res.end('Forbidden');
+        return;
+      }
+      let s;
+      try {
+        s = await stat(filePath);
+      } catch {
+        res.writeHead(404);
+        res.end('Not found');
+        return;
+      }
+      if (s.isDirectory()) filePath = join(filePath, 'index.html');
+      const body = await readFile(filePath);
+      const type = MIME[extname(filePath).toLowerCase()] || 'application/octet-stream';
+      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache' });
+      res.end(body);
+    } catch {
+      res.writeHead(500);
+      res.end('Server error');
+    }
+  });
+
+  return new Promise((done) => {
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`serve: port ${port} in use — trying ${port + 1}`);
+        port += 1;
+        server.listen(port);
+      } else {
+        throw err;
+      }
+    });
+    server.listen(port, () => {
+      const url = `http://localhost:${port}/`;
+      console.log(`\n  ▸ Spire of the Erdtree is live at ${url}`);
+      console.log(`    Serving ${rootResolved}`);
+      console.log('    Press Ctrl+C to stop.\n');
+      if (open) openBrowser(url);
+      done({ server, url, port });
+    });
+  });
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
+  const args = process.argv.slice(2);
+  const flag = (name, def) => {
+    const i = args.indexOf(name);
+    return i >= 0 && args[i + 1] ? args[i + 1] : def;
+  };
+  serve({
+    port: Number(flag('--port', 8080)),
+    root: flag('--root', ROOT_DIR),
+    open: !args.includes('--no-open'),
+  });
+}

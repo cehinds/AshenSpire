@@ -14,15 +14,27 @@ save-slot main menu — [docs/preview/title-save-slots.svg](docs/preview/title-s
 
 ## Playing
 
-Once M1 lands: open `index.html` in any modern browser, or serve the folder with any static server:
+**One-click (recommended):** double-click **`run.bat`** (Windows) or run **`./run.sh`**
+(macOS/Linux). This builds the standalone into `dist/`, serves the live app on
+`http://localhost:8080`, and opens it in your browser. Requires
+[Node.js](https://nodejs.org) (used only as a tiny static server + bundler — no
+packages to install).
+
+**Standalone file:** grab **[`dist/EldenSpire.html`](dist/EldenSpire.html)** — the
+entire game compiled into one self-contained HTML file. Double-click to play,
+no server needed. (External music folders need http; see [dist/README.md](dist/README.md).)
+
+**Manually:** open `index.html` via any static server:
 
 ```
+node tools/serve.mjs      # zero-dependency, opens the browser
+# or
 npx serve .
 # or
 python -m http.server
 ```
 
-No install, no build, no dependencies.
+No install, no framework, no build step for the source.
 
 ## What is this?
 
