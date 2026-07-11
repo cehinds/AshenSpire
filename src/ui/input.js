@@ -122,6 +122,27 @@ export function matchAction(ev, id) {
   return (ev.key || '').toLowerCase() === k.toLowerCase();
 }
 
+// Compact standard-mapping button glyphs for the hint bar / on-screen prompts.
+const PAD_LABELS = {
+  0: 'A', 1: 'B', 2: 'X', 3: 'Y', 4: 'LB', 5: 'RB', 6: 'LT', 7: 'RT',
+  8: 'Back', 9: 'Start', 10: 'L3', 11: 'R3', 12: '▲', 13: '▼', 14: '◀', 15: '▶', 16: '⊙',
+};
+
+/** Label for the gamepad button currently bound to an action (hint bar). */
+export function padLabel(id) {
+  const btn = bindings[id];
+  return btn == null ? '' : PAD_LABELS[btn] || `B${btn}`;
+}
+
+/** True if at least one gamepad is currently connected. */
+export function hasGamepad() {
+  return (
+    typeof navigator !== 'undefined' &&
+    typeof navigator.getGamepads === 'function' &&
+    Array.from(navigator.getGamepads()).some(Boolean)
+  );
+}
+
 /** Human label for an action's bound key (Controls tab + reference). */
 export function keyLabel(id) {
   const k = keyBindings[id] || '';

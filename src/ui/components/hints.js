@@ -6,7 +6,7 @@
 // keyLabel() binding, so they reflect rebinds. The whole bar is hidden by CSS
 // when the "Control hints" setting is off (body.hide-hints).
 
-import { keyLabel } from '../input.js';
+import { keyLabel, padLabel, hasGamepad } from '../input.js';
 
 // Which action chips each context shows, in reading order. All of these carry a
 // rebindable keyboard key (keyLabel returns a real key, never '—').
@@ -26,12 +26,36 @@ const CHIPS = {
   ],
 };
 
+// Show controller glyphs when a gamepad is connected, keyboard keys otherwise.
+function chipsHtml(context, pad) {
+  return (CHIPS[context] || [])
+    .map((c) => {
+      const label = pad ? padLabel(c.id) || keyLabel(c.id) : keyLabel(c.id);
+      return `<span class="hint"><kbd>${label}</kbd>${c.label}</span>`;
+    })
+    .join('');
+}
+
 /** HTML for the hint bar in a given context ('combat' | 'map'). */
 export function hintBarHtml(context) {
   const chips = CHIPS[context] || [];
   if (!chips.length) return '';
-  const inner = chips
-    .map((c) => `<span class="hint"><kbd>${keyLabel(c.id)}</kbd>${c.label}</span>`)
-    .join('');
-  return `<div class="hint-bar hint-${context}" role="presentation" aria-hidden="true">${inner}</div>`;
+  const pad = hasGamepad();
+  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''}" role="presentation" aria-hidden="true">${chipsHtml(context, pad)}</div>`;
+}
+
+/** Rebuild any visible hint bars in place — called when a pad (dis)connects. */
+export function refreshHintBars() {
+  const pad = hasGamepad();
+  document.querySelectorAll('.hint-bar').forEach((bar) => {
+    const context = bar.classList.contains('hint-combat') ? 'combat' : bar.classList.contains('hint-map') ? 'map' : null;
+    if (!context) return;
+    bar.classList.toggle('hint-pad', pad);
+    bar.innerHTML = chipsHtml(context, pad);
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('gamepadconnected', refreshHintBars);
+  window.addEventListener('gamepaddisconnected', refreshHintBars);
 }

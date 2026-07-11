@@ -113,6 +113,8 @@
   padding: 1px 5px; border-radius: 4px; color: var(--parchment);
   background: var(--panel); border: 1px solid var(--gold);
 }
+/* Controller glyphs read as rounded buttons. */
+.hint-bar.hint-pad kbd { border-radius: 999px; padding: 1px 7px; }
 body.hide-hints .hint-bar { display: none; }
 
 /* ---------- controls / rebinds ---------- */
