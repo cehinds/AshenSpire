@@ -62,8 +62,13 @@ body.readable-ui { --font-display: var(--font-body); }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html, body { height: 100%; }
+html { height: 100%; overflow: hidden; }
 
+/* UI size: the whole app is zoomed by --ui-zoom (Settings → UI size / Auto, set
+   in main.js). Sizing uses PERCENT heights (not vh) everywhere below `body` so
+   they resolve against the zoomed box and stay exactly viewport-sized — scaling
+   up never overflows, scaling down still fills. (vh ignores zoom, which is what
+   used to overflow.) */
 body {
   background: radial-gradient(ellipse 60% 40% at 70% 10%, rgba(201, 162, 39, 0.06), transparent),
     linear-gradient(#16110c, var(--bg));
@@ -72,9 +77,12 @@ body {
   font-size: 14px;
   overflow: hidden;
   user-select: none;
+  zoom: var(--ui-zoom, 1);
+  width: 100%;
+  height: 100%;
 }
 
-#app { height: 100vh; display: flex; flex-direction: column; }
+#app { height: 100%; display: flex; flex-direction: column; }
 
 h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: 0.08em; }
 
@@ -930,6 +938,56 @@ const ACCENTS = {
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;
+// UI size — the whole app is zoomed by `body.style.zoom` so every fixed-px
+// element (cards, sprites, map nodes, menus) scales together. "Auto" flexes the
+// zoom with the window against a design baseline so the board fills big screens
+// and shrinks to fit small ones; S–XL are fixed overrides. Legacy numeric values
+// ('90'/'100'…) still resolve. Clamped so it never gets unusably tiny/huge.
+const UI_DESIGN_W = 1200;
+const UI_DESIGN_H = 730;
+const UI_NAMED = { s: 0.85, m: 1, l: 1.2, xl: 1.45 };
+
+function computeAutoZoom() {
+  if (typeof window === 'undefined') return 1;
+  const fit = Math.min(window.innerWidth / UI_DESIGN_W, window.innerHeight / UI_DESIGN_H);
+  return Math.max(0.62, Math.min(1.7, Math.round(fit * 100) / 100));
+}
+
+function resolveZoom(uiScale) {
+  const key = String(uiScale == null ? 'auto' : uiScale).toLowerCase();
+  if (key === 'auto') return computeAutoZoom();
+  if (UI_NAMED[key] != null) return UI_NAMED[key];
+  const n = Number(uiScale); // legacy '90'/'100'/'110'/'125'
+  if (!Number.isNaN(n) && n >= 50 && n <= 200) return n / 100;
+  return computeAutoZoom();
+}
+
+function applyUiScale(settings) {
+  const z = resolveZoom(settings.uiScale);
+  // Set as a CSS var so base.css can compensate the body's width/height for the
+  // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
+  document.body.style.zoom = '';
+  document.documentElement.style.setProperty('--ui-zoom', String(z));
+}
+
+// Re-flex Auto sizing whenever the window changes. Only recomputes for Auto and
+// only touches the zoom, so it's cheap. Also re-applies shortly after boot and
+// on `load` — some environments report tiny window dims until layout settles,
+// which would otherwise freeze Auto at the clamp floor.
+let uiResizeTimer = null;
+function reflexAutoScale() {
+  const s = (saves.loadMeta().settings) || {};
+  if (String(s.uiScale == null ? 'auto' : s.uiScale).toLowerCase() === 'auto') applyUiScale(s);
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', () => {
+    clearTimeout(uiResizeTimer);
+    uiResizeTimer = setTimeout(reflexAutoScale, 150);
+  });
+  window.addEventListener('load', reflexAutoScale);
+  setTimeout(reflexAutoScale, 300);
+}
+
 function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
@@ -951,9 +1009,8 @@ function applyDisplaySettings(settings) {
   const root = document.documentElement.style;
   root.setProperty('--gold', accent.hex);
   root.setProperty('--accent-rgb', accent.rgb);
-  // Interface scale — zoom the whole app; 100 = untouched.
-  const scale = Math.max(50, Math.min(200, Number(settings.uiScale) || 100));
-  document.body.style.zoom = scale === 100 ? '' : String(scale / 100);
+  // UI size — zoom the whole app (see applyUiScale). Auto flexes with the window.
+  applyUiScale(settings);
   setAnimSpeed(settings.animSpeed || 'normal');
   audio.setVolumes(settings);
   // Re-point external music only when the folder actually changed (avoids
@@ -10503,10 +10560,13 @@ Object.assign(module.exports, { KEEPSAKES });
 // glyph + name). Swapping in real art later = mapping an id to a URL here,
 // with a CREDITS.md row — no game-code changes.
 
+// Sizes are generous on purpose — the board reads best when sprites fill it, and
+// the whole UI is zoomed to fit the window (main.js applyUiScale), so larger
+// base sizes just mean a bolder board rather than overflow.
 const SIZE_TIERS = {
-  small: { w: 70, h: 100, font: 34 },
-  medium: { w: 100, h: 130, font: 44 },
-  large: { w: 150, h: 160, font: 60 },
+  small: { w: 92, h: 128, font: 44 },
+  medium: { w: 132, h: 168, font: 58 },
+  large: { w: 194, h: 206, font: 78 },
 };
 
 // Enemy id → size tier (display only; defaults to medium). Bosses & the biggest
@@ -10628,8 +10688,15 @@ function classSprite(classId, tint) {
   if (!build) return null;
   const el = document.createElement('div');
   el.className = 'class-sprite';
-  el.style.cssText = 'width:110px;height:140px;display:flex;align-items:flex-end;justify-content:center;';
+  el.style.cssText = 'width:150px;height:190px;display:flex;align-items:flex-end;justify-content:center;';
   el.innerHTML = build(tint);
+  // The class SVGs hardcode 110×140; scale them to the (larger) container so the
+  // player figure reads as boldly as the enemies (viewBox keeps proportions).
+  const svg = el.querySelector('svg');
+  if (svg) {
+    svg.setAttribute('width', '150');
+    svg.setAttribute('height', '190');
+  }
   return el;
 }
 
@@ -10644,8 +10711,8 @@ function playerSprite(customization = {}, classId) {
   }
   const el = document.createElement('div');
   el.style.cssText =
-    `width:110px;height:140px;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
-    'display:flex;align-items:center;justify-content:center;font-size:52px;position:relative;' +
+    `width:150px;height:190px;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
+    'display:flex;align-items:center;justify-content:center;font-size:70px;position:relative;' +
     `box-shadow:0 10px 12px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.4);`;
   el.textContent = customization.glyph || '🛡';
   return el;
@@ -11539,9 +11606,9 @@ const ROWS = [
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
-  { cat: 'Display', key: 'uiScale', type: 'choice', def: '100',
-    choices: ['90', '100', '110', '125'], label: 'Interface scale',
-    note: 'Zoom the whole interface — smaller for more room, larger for readability.' },
+  { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
+    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size',
+    note: 'Auto flexes the whole interface with your window; S–XL is a fixed override.' },
   { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake',
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
   { cat: 'Display', key: 'ambient', type: 'choice', def: 'normal',

@@ -55,8 +55,13 @@ body.readable-ui { --font-display: var(--font-body); }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html, body { height: 100%; }
+html { height: 100%; overflow: hidden; }
 
+/* UI size: the whole app is zoomed by --ui-zoom (Settings → UI size / Auto, set
+   in main.js). Sizing uses PERCENT heights (not vh) everywhere below `body` so
+   they resolve against the zoomed box and stay exactly viewport-sized — scaling
+   up never overflows, scaling down still fills. (vh ignores zoom, which is what
+   used to overflow.) */
 body {
   background: radial-gradient(ellipse 60% 40% at 70% 10%, rgba(201, 162, 39, 0.06), transparent),
     linear-gradient(#16110c, var(--bg));
@@ -65,9 +70,12 @@ body {
   font-size: 14px;
   overflow: hidden;
   user-select: none;
+  zoom: var(--ui-zoom, 1);
+  width: 100%;
+  height: 100%;
 }
 
-#app { height: 100vh; display: flex; flex-direction: column; }
+#app { height: 100%; display: flex; flex-direction: column; }
 
 h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: 0.08em; }
 
