@@ -255,6 +255,8 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
   padding: 1px 5px; border-radius: 4px; color: var(--parchment);
   background: var(--panel); border: 1px solid var(--gold);
 }
+/* Controller glyphs read as rounded buttons. */
+.hint-bar.hint-pad kbd { border-radius: 999px; padding: 1px 7px; }
 body.hide-hints .hint-bar { display: none; }
 
 /* ---------- controls / rebinds ---------- */
@@ -12112,6 +12114,27 @@ function matchAction(ev, id) {
   return (ev.key || '').toLowerCase() === k.toLowerCase();
 }
 
+// Compact standard-mapping button glyphs for the hint bar / on-screen prompts.
+const PAD_LABELS = {
+  0: 'A', 1: 'B', 2: 'X', 3: 'Y', 4: 'LB', 5: 'RB', 6: 'LT', 7: 'RT',
+  8: 'Back', 9: 'Start', 10: 'L3', 11: 'R3', 12: '▲', 13: '▼', 14: '◀', 15: '▶', 16: '⊙',
+};
+
+/** Label for the gamepad button currently bound to an action (hint bar). */
+function padLabel(id) {
+  const btn = bindings[id];
+  return btn == null ? '' : PAD_LABELS[btn] || `B${btn}`;
+}
+
+/** True if at least one gamepad is currently connected. */
+function hasGamepad() {
+  return (
+    typeof navigator !== 'undefined' &&
+    typeof navigator.getGamepads === 'function' &&
+    Array.from(navigator.getGamepads()).some(Boolean)
+  );
+}
+
 /** Human label for an action's bound key (Controls tab + reference). */
 function keyLabel(id) {
   const k = keyBindings[id] || '';
@@ -12453,7 +12476,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, keyLabel, focusFirst, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, focusFirst, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/components/hints.js": function (module, exports, require) {
@@ -12465,7 +12488,7 @@ Object.assign(module.exports, { ACTIONS, isEngaged, setBindings, getBindings, ac
 // keyLabel() binding, so they reflect rebinds. The whole bar is hidden by CSS
 // when the "Control hints" setting is off (body.hide-hints).
 
-const { keyLabel } = require("src/ui/input.js");
+const { keyLabel, padLabel, hasGamepad } = require("src/ui/input.js");
 
 // Which action chips each context shows, in reading order. All of these carry a
 // rebindable keyboard key (keyLabel returns a real key, never '—').
@@ -12485,18 +12508,42 @@ const CHIPS = {
   ],
 };
 
+// Show controller glyphs when a gamepad is connected, keyboard keys otherwise.
+function chipsHtml(context, pad) {
+  return (CHIPS[context] || [])
+    .map((c) => {
+      const label = pad ? padLabel(c.id) || keyLabel(c.id) : keyLabel(c.id);
+      return `<span class="hint"><kbd>${label}</kbd>${c.label}</span>`;
+    })
+    .join('');
+}
+
 /** HTML for the hint bar in a given context ('combat' | 'map'). */
 function hintBarHtml(context) {
   const chips = CHIPS[context] || [];
   if (!chips.length) return '';
-  const inner = chips
-    .map((c) => `<span class="hint"><kbd>${keyLabel(c.id)}</kbd>${c.label}</span>`)
-    .join('');
-  return `<div class="hint-bar hint-${context}" role="presentation" aria-hidden="true">${inner}</div>`;
+  const pad = hasGamepad();
+  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''}" role="presentation" aria-hidden="true">${chipsHtml(context, pad)}</div>`;
+}
+
+/** Rebuild any visible hint bars in place — called when a pad (dis)connects. */
+function refreshHintBars() {
+  const pad = hasGamepad();
+  document.querySelectorAll('.hint-bar').forEach((bar) => {
+    const context = bar.classList.contains('hint-combat') ? 'combat' : bar.classList.contains('hint-map') ? 'map' : null;
+    if (!context) return;
+    bar.classList.toggle('hint-pad', pad);
+    bar.innerHTML = chipsHtml(context, pad);
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('gamepadconnected', refreshHintBars);
+  window.addEventListener('gamepaddisconnected', refreshHintBars);
 }
 
 
-Object.assign(module.exports, { hintBarHtml });
+Object.assign(module.exports, { hintBarHtml, refreshHintBars });
 
 },
 "src/ui/screens/combat.js": function (module, exports, require) {
