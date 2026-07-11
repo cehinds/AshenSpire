@@ -644,15 +644,22 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 /* ---------- fx ---------- */
 .fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }
 .float-num {
-  position: absolute; font-family: var(--font-display); font-weight: 800; font-size: 24px;
-  color: var(--parchment); text-shadow: 0 2px 6px #000;
-  animation: float-up 280ms ease-out forwards;
+  position: absolute; font-family: var(--font-display); font-weight: 800; font-size: 25px;
+  color: var(--parchment);
+  /* A dark outline keeps numbers legible over any sprite. */
+  text-shadow: 0 0 3px #000, 0 0 3px #000, 0 2px 5px #000;
+  transform-origin: center bottom;
+  animation: num-pop 540ms cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
 }
 .float-num.dmg { color: #ff8f6b; }
-.float-num.heavy { font-size: 32px; }
+.float-num.small { font-size: 20px; }
+.float-num.heavy { font-size: 34px; }
+.float-num.crit { font-size: 44px; color: #ffc861; text-shadow: 0 0 4px #000, 0 0 10px rgba(201, 162, 39, 0.7), 0 2px 6px #000; }
 .float-num.blk { color: var(--frost); }
 .float-num.heal { color: var(--green); }
-.float-num.burst { color: var(--ember); font-size: 34px; }
+.float-num.burst { color: var(--ember); font-size: 36px; }
+/* Reduced motion: a plain rise, no bounce/overshoot. */
+.reduced-motion .float-num { animation: float-up 260ms ease-out forwards; }
 .fx-banner {
   position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%);
   font-family: var(--font-display); font-size: 30px; letter-spacing: 0.3em; color: var(--gold);
@@ -717,6 +724,14 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 }
 
 @keyframes float-up { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-42px); } }
+/* Punchy number: snap in with an overshoot, settle, then rise and fade. */
+@keyframes num-pop {
+  0% { opacity: 0; transform: translateY(6px) scale(0.5); }
+  16% { opacity: 1; transform: translateY(0) scale(1.22); }
+  30% { transform: translateY(-2px) scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-48px) scale(1); }
+}
 @keyframes banner-pop { 0% { opacity: 0; letter-spacing: 0.6em; } 30% { opacity: 1; } 100% { opacity: 0; letter-spacing: 0.25em; } }
 @keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(4px, -3px); } 50% { transform: translate(-4px, 2px); } 75% { transform: translate(3px, 3px); } }
 @keyframes pulse-gold { from { box-shadow: 0 0 6px rgba(201, 162, 39, 0.3); } to { box-shadow: 0 0 22px rgba(201, 162, 39, 0.8); } }
@@ -13456,7 +13471,15 @@ function floatNum(layer, anchor, text, cls) {
   el.style.left = `${ar.left - lr.left + ar.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
   el.style.top = `${ar.top - lr.top + ar.height * 0.25}px`;
   layer.appendChild(el);
-  setTimeout(() => el.remove(), 300);
+  setTimeout(() => el.remove(), 600);
+}
+
+// Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
+function dmgClass(amount) {
+  if (amount >= 25) return 'dmg crit';
+  if (amount >= 15) return 'dmg heavy';
+  if (amount < 6) return 'dmg small';
+  return 'dmg';
 }
 
 function banner(layer, text, cls = '') {
@@ -13701,7 +13724,7 @@ function visualFor(e) {
       return (ctx) => {
         sfx.play('hit');
         const anchor = ctx.anchorFor(e.targetId);
-        floatNum(ctx.layer, anchor, `-${e.amount}`, e.amount >= 15 ? 'dmg heavy' : 'dmg');
+        floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
         flash(anchor, 'hitflash', 220);
         if (e.amount >= 15) shake(ctx.combatEl);
       };

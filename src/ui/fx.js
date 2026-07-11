@@ -42,7 +42,15 @@ function floatNum(layer, anchor, text, cls) {
   el.style.left = `${ar.left - lr.left + ar.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
   el.style.top = `${ar.top - lr.top + ar.height * 0.25}px`;
   layer.appendChild(el);
-  setTimeout(() => el.remove(), 300);
+  setTimeout(() => el.remove(), 600);
+}
+
+// Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
+function dmgClass(amount) {
+  if (amount >= 25) return 'dmg crit';
+  if (amount >= 15) return 'dmg heavy';
+  if (amount < 6) return 'dmg small';
+  return 'dmg';
 }
 
 function banner(layer, text, cls = '') {
@@ -287,7 +295,7 @@ function visualFor(e) {
       return (ctx) => {
         sfx.play('hit');
         const anchor = ctx.anchorFor(e.targetId);
-        floatNum(ctx.layer, anchor, `-${e.amount}`, e.amount >= 15 ? 'dmg heavy' : 'dmg');
+        floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
         flash(anchor, 'hitflash', 220);
         if (e.amount >= 15) shake(ctx.combatEl);
       };
