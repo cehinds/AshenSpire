@@ -5,10 +5,13 @@
 // glyph + name). Swapping in real art later = mapping an id to a URL here,
 // with a CREDITS.md row — no game-code changes.
 
+// Sizes are generous on purpose — the board reads best when sprites fill it, and
+// the whole UI is zoomed to fit the window (main.js applyUiScale), so larger
+// base sizes just mean a bolder board rather than overflow.
 const SIZE_TIERS = {
-  small: { w: 70, h: 100, font: 34 },
-  medium: { w: 100, h: 130, font: 44 },
-  large: { w: 150, h: 160, font: 60 },
+  small: { w: 92, h: 128, font: 44 },
+  medium: { w: 132, h: 168, font: 58 },
+  large: { w: 194, h: 206, font: 78 },
 };
 
 // Enemy id → size tier (display only; defaults to medium). Bosses & the biggest
@@ -130,8 +133,15 @@ export function classSprite(classId, tint) {
   if (!build) return null;
   const el = document.createElement('div');
   el.className = 'class-sprite';
-  el.style.cssText = 'width:110px;height:140px;display:flex;align-items:flex-end;justify-content:center;';
+  el.style.cssText = 'width:150px;height:190px;display:flex;align-items:flex-end;justify-content:center;';
   el.innerHTML = build(tint);
+  // The class SVGs hardcode 110×140; scale them to the (larger) container so the
+  // player figure reads as boldly as the enemies (viewBox keeps proportions).
+  const svg = el.querySelector('svg');
+  if (svg) {
+    svg.setAttribute('width', '150');
+    svg.setAttribute('height', '190');
+  }
   return el;
 }
 
@@ -146,8 +156,8 @@ export function playerSprite(customization = {}, classId) {
   }
   const el = document.createElement('div');
   el.style.cssText =
-    `width:110px;height:140px;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
-    'display:flex;align-items:center;justify-content:center;font-size:52px;position:relative;' +
+    `width:150px;height:190px;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
+    'display:flex;align-items:center;justify-content:center;font-size:70px;position:relative;' +
     `box-shadow:0 10px 12px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.4);`;
   el.textContent = customization.glyph || '🛡';
   return el;

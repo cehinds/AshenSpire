@@ -94,6 +94,56 @@ const ACCENTS = {
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;
+// UI size — the whole app is zoomed by `body.style.zoom` so every fixed-px
+// element (cards, sprites, map nodes, menus) scales together. "Auto" flexes the
+// zoom with the window against a design baseline so the board fills big screens
+// and shrinks to fit small ones; S–XL are fixed overrides. Legacy numeric values
+// ('90'/'100'…) still resolve. Clamped so it never gets unusably tiny/huge.
+const UI_DESIGN_W = 1200;
+const UI_DESIGN_H = 730;
+const UI_NAMED = { s: 0.85, m: 1, l: 1.2, xl: 1.45 };
+
+function computeAutoZoom() {
+  if (typeof window === 'undefined') return 1;
+  const fit = Math.min(window.innerWidth / UI_DESIGN_W, window.innerHeight / UI_DESIGN_H);
+  return Math.max(0.62, Math.min(1.7, Math.round(fit * 100) / 100));
+}
+
+function resolveZoom(uiScale) {
+  const key = String(uiScale == null ? 'auto' : uiScale).toLowerCase();
+  if (key === 'auto') return computeAutoZoom();
+  if (UI_NAMED[key] != null) return UI_NAMED[key];
+  const n = Number(uiScale); // legacy '90'/'100'/'110'/'125'
+  if (!Number.isNaN(n) && n >= 50 && n <= 200) return n / 100;
+  return computeAutoZoom();
+}
+
+function applyUiScale(settings) {
+  const z = resolveZoom(settings.uiScale);
+  // Set as a CSS var so base.css can compensate the body's width/height for the
+  // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
+  document.body.style.zoom = '';
+  document.documentElement.style.setProperty('--ui-zoom', String(z));
+}
+
+// Re-flex Auto sizing whenever the window changes. Only recomputes for Auto and
+// only touches the zoom, so it's cheap. Also re-applies shortly after boot and
+// on `load` — some environments report tiny window dims until layout settles,
+// which would otherwise freeze Auto at the clamp floor.
+let uiResizeTimer = null;
+function reflexAutoScale() {
+  const s = (saves.loadMeta().settings) || {};
+  if (String(s.uiScale == null ? 'auto' : s.uiScale).toLowerCase() === 'auto') applyUiScale(s);
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', () => {
+    clearTimeout(uiResizeTimer);
+    uiResizeTimer = setTimeout(reflexAutoScale, 150);
+  });
+  window.addEventListener('load', reflexAutoScale);
+  setTimeout(reflexAutoScale, 300);
+}
+
 function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
@@ -115,9 +165,8 @@ function applyDisplaySettings(settings) {
   const root = document.documentElement.style;
   root.setProperty('--gold', accent.hex);
   root.setProperty('--accent-rgb', accent.rgb);
-  // Interface scale — zoom the whole app; 100 = untouched.
-  const scale = Math.max(50, Math.min(200, Number(settings.uiScale) || 100));
-  document.body.style.zoom = scale === 100 ? '' : String(scale / 100);
+  // UI size — zoom the whole app (see applyUiScale). Auto flexes with the window.
+  applyUiScale(settings);
   setAnimSpeed(settings.animSpeed || 'normal');
   audio.setVolumes(settings);
   // Re-point external music only when the folder actually changed (avoids
