@@ -4160,6 +4160,68 @@ const colorlessCards = [
     upgrade: { effects: [{ op: 'draw', amount: 4 }] },
   },
 
+  // ---- Content-pass additions (round 5) --------------------------------------
+  {
+    id: 'bashingBlow', name: 'Bashing Blow', class: 'colorless', rarity: 'common', cost: 1, type: 'attack',
+    keywords: [], icon: '🔨',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 7 },
+      { op: 'poiseDamage', target: 'enemy', amount: 4 },
+    ],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 9 },
+        { op: 'poiseDamage', target: 'enemy', amount: 6 },
+      ],
+    },
+  },
+  {
+    id: 'quickGuard', name: 'Quick Guard', class: 'colorless', rarity: 'common', cost: 1, type: 'skill',
+    keywords: ['exhaust'], icon: '🛡',
+    effects: [
+      { op: 'block', target: 'self', amount: 5 },
+      { op: 'draw', amount: 1 },
+    ],
+    textTemplate: 'Gain {block} Block. Draw {draw} card. Exhaust.',
+    upgrade: {
+      keywords: ['exhaust'],
+      effects: [
+        { op: 'block', target: 'self', amount: 7 },
+        { op: 'draw', amount: 1 },
+      ],
+    },
+  },
+  {
+    id: 'sweepingBlow', name: 'Sweeping Blow', class: 'colorless', rarity: 'uncommon', cost: 1, type: 'attack',
+    keywords: [], icon: '🌀',
+    effects: [{ op: 'damage', target: 'allEnemies', amount: 6 }],
+    textTemplate: 'Deal {damage} damage to ALL enemies.',
+    upgrade: { effects: [{ op: 'damage', target: 'allEnemies', amount: 8 }] },
+  },
+  {
+    id: 'enfeeble', name: 'Enfeeble', class: 'colorless', rarity: 'uncommon', cost: 1, type: 'skill',
+    keywords: ['exhaust'], icon: '💀',
+    effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'vulnerable', stacks: 3 }],
+    textTemplate: 'Apply {vulnerable} Vulnerable to ALL enemies. Exhaust.',
+    upgrade: { effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'vulnerable', stacks: 4 }] },
+  },
+  {
+    id: 'colossusSmash', name: 'Colossus Smash', class: 'colorless', rarity: 'rare', cost: 2, type: 'attack',
+    keywords: [], icon: '💥',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 18 },
+      { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 2 },
+    ],
+    textTemplate: 'Deal {damage} damage. Apply {vulnerable} Vulnerable.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 24 },
+        { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 2 },
+      ],
+    },
+  },
+
   // ---- Statuses (the card kind) + curses (enemy/event injected) --------------
   {
     id: 'wound', name: 'Wound', class: 'colorless', rarity: 'special', cost: 0, type: 'status',
