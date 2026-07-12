@@ -6,11 +6,13 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 ## Preview
 
-Preview images (SVG, open in any browser): the three class sprites —
-[docs/preview/class-sprites.svg](docs/preview/class-sprites.svg) — and the
-save-slot main menu — [docs/preview/title-save-slots.svg](docs/preview/title-save-slots.svg).
+![Combat](docs/preview/combat.png)
 
-![Character classes](docs/preview/class-sprites.svg)
+![Act map](docs/preview/map.png)
+
+More: the [title screen](docs/preview/title.png) and the three
+[class sprites](docs/preview/class-sprites.svg). Regenerate the screenshots any
+time with `node tools/screenshot.mjs` (uses your local Chrome/Edge headlessly).
 
 ## Playing
 

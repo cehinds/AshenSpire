@@ -716,4 +716,21 @@ function showEvent(eventId) {
   });
 }
 
-showTitle();
+// Dev screenshot hook (?shot=map|combat): boot straight into a seeded showcase
+// run so headless captures (tools/screenshot.mjs) can photograph deeper screens
+// without interaction. Uses slot 1 transiently; normal boots are unaffected.
+const shotState = new URLSearchParams(location.search).get('shot');
+if (shotState === 'map' || shotState === 'combat') {
+  // Suppress the first-run tutorial so captures show a clean board.
+  const shotMeta = saves.loadMeta();
+  shotMeta.settings.seenTutorial = true;
+  saves.saveMeta(shotMeta);
+  newRun({ classId: 'vagabond', seedString: 'SHOWCASE', slot: 1 });
+  if (shotState === 'combat') {
+    const g = run.mapGraph;
+    const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
+    enterNode(startId);
+  }
+} else {
+  showTitle();
+}
