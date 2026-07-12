@@ -29,6 +29,7 @@ const SHOTS = [
   { name: 'title', query: '' },
   { name: 'map', query: '?shot=map' },
   { name: 'combat', query: '?shot=combat' },
+  { name: 'fx', query: '?shot=fx' }, // combat FX posed frozen mid-animation
 ];
 
 const args = process.argv.slice(2);

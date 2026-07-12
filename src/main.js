@@ -717,20 +717,63 @@ function showEvent(eventId) {
   });
 }
 
-// Dev screenshot hook (?shot=map|combat): boot straight into a seeded showcase
-// run so headless captures (tools/screenshot.mjs) can photograph deeper screens
-// without interaction. Uses slot 1 transiently; normal boots are unaffected.
+// Dev screenshot hook (?shot=map|combat|fx): boot straight into a seeded
+// showcase run so headless captures (tools/screenshot.mjs) can photograph
+// deeper screens without interaction. `fx` poses the combat FX frozen
+// mid-animation (negative animation-delay + paused) so the transient slash /
+// glyph / spark / recoil effects are photographable. Normal boots unaffected.
 const shotState = new URLSearchParams(location.search).get('shot');
-if (shotState === 'map' || shotState === 'combat') {
+
+function poseFxShowcase() {
+  const layer = document.querySelector('.fx-layer');
+  const enemies = [...document.querySelectorAll('.combatant.enemy .sprite')];
+  const player = document.querySelector('.combatant.player .sprite');
+  if (!layer || !enemies.length || !player) return;
+  const put = (cls, text, anchor, atMs, extra) => {
+    const lr = layer.getBoundingClientRect();
+    const ar = anchor.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = cls;
+    if (text) el.textContent = text;
+    el.style.left = `${ar.left - lr.left + ar.width / 2 + ((extra && extra.dx) || 0)}px`;
+    el.style.top = `${ar.top - lr.top + ar.height * 0.4 + ((extra && extra.dy) || 0)}px`;
+    el.style.animationDelay = `-${atMs}ms`; // jump mid-animation…
+    el.style.animationPlayState = 'paused'; // …and hold the frame
+    layer.appendChild(el);
+  };
+  const e0 = enemies[0];
+  const e1 = enemies[1] || enemies[0];
+  put('fx-slash', '', e0, 120);
+  put('float-num crit', '-26', e0, 200, { dy: -34 });
+  put('fx-spark', '✦', e1, 140);
+  put('float-num blk small', 'BLOCKED', e1, 220, { dy: -30 });
+  put('fx-glyph', '✦', player, 170);
+  // Victim recoil held mid-knockback; the second enemy teeters (stagger).
+  e0.classList.add('hitflash', 'hit-heavy');
+  if (e0.firstElementChild) {
+    e0.firstElementChild.style.animationDelay = '-95ms';
+    e0.firstElementChild.style.animationPlayState = 'paused';
+  }
+  if (e1 !== e0) {
+    e1.classList.add('wobble');
+    if (e1.firstElementChild) {
+      e1.firstElementChild.style.animationDelay = '-110ms';
+      e1.firstElementChild.style.animationPlayState = 'paused';
+    }
+  }
+}
+
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
   saves.saveMeta(shotMeta);
   newRun({ classId: 'vagabond', seedString: 'SHOWCASE', slot: 1 });
-  if (shotState === 'combat') {
+  if (shotState === 'combat' || shotState === 'fx') {
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
     enterNode(startId);
+    if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
   }
 } else {
   showTitle();
