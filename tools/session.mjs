@@ -22,6 +22,9 @@ import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward, resolveUnknownNode, shrineHealAmount,
 } from '../src/engine/encounters.js';
+import {
+  createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
+} from '../src/engine/coopCombat.js';
 
 const LAST_ACT = 3;
 
@@ -84,7 +87,10 @@ export function createSession({ registries, seedString, endless = false }) {
 
   function setConnected(id, connected) {
     const m = members.get(id);
-    if (m) m.connected = !!connected;
+    if (m) {
+      m.connected = !!connected;
+      if (live) combatPresence(id, !!connected); // rescale the live fight
+    }
     return m;
   }
 
@@ -167,68 +173,117 @@ export function createSession({ registries, seedString, endless = false }) {
     session.scene = { kind: 'map' };
   }
 
-  // ---- combat (via injected resolver) --------------------------------------
-  let pendingCombat = null;
+  // ---- combat (live shared fight via coopCombat) ---------------------------
+  let live = null; // { combat, pool } — the running shared fight
+
+  function memberAsPlayer(m) {
+    return {
+      id: m.id, name: m.name, classId: m.classId,
+      maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
+      relicIds: m.run.relics, flasks: m.run.flasks,
+    };
+  }
 
   function enterCombat(pool) {
     const encounterId = rollEncounter(registries, rng, { pool, act: contentAct() });
     const enc = registries.encounters.get(encounterId);
     const loop = loopCount();
-    const enemyStatuses = loop > 0 ? [{ status: 'strength', stacks: loop }] : [];
-    pendingCombat = { pool, encounterId, enemyIds: enc.enemies, loop, enemyStatuses };
-    session.scene = {
-      kind: 'combat',
-      pool,
-      encounterId,
+    const extraHpMult = 1 + 0.35 * loop; // endless cycle scaling (headcount handled by the runner)
+    const combat = createCoopCombat({
+      registries, rng,
+      players: connectedMembers().map(memberAsPlayer),
       enemyIds: enc.enemies,
-      headcount: connectedMembers().length,
-      hpMult: coopHpMult(connectedMembers().length) * (1 + 0.35 * loop),
-    };
+      extraHpMult,
+      enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: loop }] : [],
+    });
+    live = { combat, pool };
+    session.scene = combatScene();
     return { ok: true, combat: session.scene };
   }
 
-  /**
-   * Resolve the pending combat with an injected resolver. The resolver runs the
-   * actual fight (bot in tests, live shared combat in S3) and reports each
-   * participating member's ending HP + the party result.
-   */
-  function resolveCombat(resolver) {
-    if (!pendingCombat) return { ok: false, error: 'no combat pending' };
-    const party = connectedMembers();
-    const headcount = party.length;
-    const hpMult = coopHpMult(headcount) * (1 + 0.35 * pendingCombat.loop);
-    const outcome = resolver({
-      registries,
-      rng,
-      enemyIds: pendingCombat.enemyIds,
-      enemyStatuses: pendingCombat.enemyStatuses,
-      hpMult,
-      party: party.map((m) => ({ id: m.id, classId: m.classId, run: m.run })),
-    });
-    // Apply per-member HP; anyone at 0 who was NOT revived falls.
-    for (const m of party) {
-      const s = outcome.survivors && outcome.survivors[m.id];
-      if (s) m.run.hp = Math.max(0, s.hp);
+  function combatScene() {
+    const c = live.combat;
+    return {
+      kind: 'combat',
+      pool: live.pool,
+      phase: c.phase,
+      turn: c.turn,
+      result: c.result,
+      headcount: connectedMembers().length,
+      enemies: c.enemies.map((e) => ({ id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block, intent: e.intent })),
+      players: [...c.players.values()].map((P) => ({
+        id: P.id, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
+        energy: P.entity.energy, connected: P.connected, alive: P.entity.alive,
+        ended: P.ended, hand: P.piles.hand.length,
+      })),
+    };
+  }
+
+  // Route a member's combat intents to the live shared fight.
+  function combatPlay(memberId, cardInstanceId, targetId) {
+    if (!live) return { ok: false, error: 'no combat' };
+    try { playCard(live.combat, memberId, cardInstanceId, targetId); }
+    catch (e) { return { ok: false, error: e.message }; }
+    return settleCombat();
+  }
+  function combatEndTurn(memberId) {
+    if (!live) return { ok: false, error: 'no combat' };
+    try { endTurn(live.combat, memberId); } catch (e) { return { ok: false, error: e.message }; }
+    return settleCombat();
+  }
+  function combatFlask(memberId, slot, targetId) {
+    if (!live) return { ok: false, error: 'no combat' };
+    try { useFlask(live.combat, memberId, slot, targetId); } catch (e) { return { ok: false, error: e.message }; }
+    return settleCombat();
+  }
+
+  // Apply the fight's outcome once it ends (StS2 revive: downed players who
+  // survive the fight come back next floor at 1 HP).
+  function settleCombat() {
+    if (!live) return { ok: true };
+    const c = live.combat;
+    if (!c.result) { session.scene = combatScene(); return { ok: true }; }
+    const pool = live.pool;
+    const outcome = coopOutcome(c);
+    for (const m of livingMembers()) {
+      const s = outcome.survivors[m.id];
+      if (!s) continue;
+      m.run.hp = s.downed ? 0 : Math.max(0, s.hp);
     }
-    const anyAlive = party.some((m) => m.run.hp > 0);
-    if (!anyAlive || outcome.result === 'defeat') {
-      for (const m of party) if (m.run.hp <= 0) m.alive = false;
-      if (!livingMembers().length) {
-        session.scene = { kind: 'complete', victory: false };
-        pendingCombat = null;
-        return { ok: true, result: 'defeat' };
-      }
+    live = null;
+    if (c.result === 'defeat') {
+      for (const m of livingMembers()) if (m.run.hp <= 0) m.alive = false;
+      if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; return { ok: true, result: 'defeat' }; }
     }
-    const pool = pendingCombat.pool;
-    pendingCombat = null;
-    // Rewards per member (present → choose; absent → queued for catch-up).
+    // Victory: revive any downed-but-not-dead members at 1 HP for the next floor.
+    for (const m of livingMembers()) if (m.run.hp <= 0) m.run.hp = 1;
     grantRewards(pool);
-    if (pool === 'boss') {
-      // Boss down → after rewards are cleared the act advances (handled when
-      // the reward scene closes). Mark the pending act-advance.
-      session.scene.afterReward = 'advanceAct';
+    if (pool === 'boss') session.scene.afterReward = 'advanceAct';
+    return { ok: true, result: c.result };
+  }
+
+  // Mid-combat presence: drop removes the player (rescale down); reconnect
+  // jumps them back in (rescale up). Called from setConnected during a fight.
+  function combatPresence(memberId, connected) {
+    if (!live) return;
+    if (connected) {
+      const m = members.get(memberId);
+      if (m) joinCombat(live.combat, memberAsPlayer(m));
+    } else {
+      leaveCombat(live.combat, memberId);
     }
-    return { ok: true, result: 'victory' };
+    settleCombat();
+  }
+
+  // Headless convenience: bot-drive the live fight to a result (tests/sims).
+  function autoResolveCombat(botTurnFn) {
+    if (!live) return { ok: false, error: 'no combat' };
+    let guard = 0;
+    while (live && live.combat && !live.combat.result && live.combat.phase !== 'suspended' && guard++ < 400) {
+      for (const m of connectedMembers()) botTurnFn(live.combat, m.id);
+      settleCombat();
+    }
+    return { ok: true, result: live ? null : 'done' };
   }
 
   // ---- rewards + catch-up --------------------------------------------------
@@ -381,10 +436,12 @@ export function createSession({ registries, seedString, endless = false }) {
   return {
     session,
     addMember, setConnected, connectedMembers, livingMembers,
-    start, chooseNode, resolveCombat, resolveNode,
+    start, chooseNode, resolveNode,
+    combatPlay, combatEndTurn, combatFlask, autoResolveCombat,
     chooseReward, shrineChoice, eventChoice, resolveCatchup,
     snapshot, contentAct, loopCount,
     get scene() { return session.scene; },
+    get live() { return live; },
   };
 }
 
