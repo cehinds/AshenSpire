@@ -1021,7 +1021,7 @@ const { contentBundle } = require("src/content/index.js");
 const { validateContent } = require("src/model/validate.js");
 const { createRegistries } = require("src/model/registries.js");
 const { createRunState, createDeck, createIdGen } = require("src/model/state.js");
-const { activeMods, isCustomRun } = require("src/content/customMods.js");
+const { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } = require("src/content/customMods.js");
 const { createRng, seedToString, seedFromString } = require("src/engine/rng.js");
 const { createCombat } = require("src/engine/combat.js");
 const { generateActMap } = require("src/engine/mapgen.js");
@@ -1261,8 +1261,18 @@ function draftBaseIds() {
 // Generate the current act's map and pre-roll every '?' node (stream
 // 'events') so outcomes are seed-determined and the Stonesword Key can
 // reveal them (SPEC §6).
+// Endless Spire: acts past 3 loop back through acts 1-3 content, harder each
+// cycle (combatMods). All content lookups go through contentAct(); the real
+// run.actNumber keeps counting up for labels, saves, and history.
+function endlessOn() {
+  return !!(run.custom && activeMods(run.custom).endless);
+}
+function contentAct() {
+  return endlessOn() ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
+}
+
 function buildActMap() {
-  run.mapGraph = generateActMap({ config: registries.mapConfig(run.actNumber), rng });
+  run.mapGraph = generateActMap({ config: registries.mapConfig(contentAct()), rng });
   const assigned = [];
   for (const node of Object.values(run.mapGraph.nodes)) {
     if (node.type === 'event') {
@@ -1545,13 +1555,20 @@ function combatMods(pool) {
   if (pool === 'boss' && mods.bigBosses) hpMult *= 1.5;
   if (mods.deadlyEnemies) enemyStatuses.push({ status: 'strength', stacks: 1 });
   if (mods.glassCannon) playerStatuses.push({ status: 'glassCannon', stacks: 1 });
+  if (mods.endless) {
+    const { loop } = endlessActInfo(run.actNumber);
+    if (loop > 0) {
+      hpMult *= 1 + ENDLESS_HP_PER_LOOP * loop;
+      enemyStatuses.push({ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop });
+    }
+  }
   return { hpMult, enemyStatuses, playerStatuses };
 }
 
 function startFight(pool, nodeId) {
   // "Elite Gauntlet" chaos rule promotes ordinary monster nodes to elites.
   if (pool === 'normal' && run.custom && activeMods(run.custom).allElite) pool = 'elite';
-  const encounterId = rollEncounter(registries, rng, { pool, act: run.actNumber, exclude: run.lastEncounters });
+  const encounterId = rollEncounter(registries, rng, { pool, act: contentAct(), exclude: run.lastEncounters });
   if (pool === 'normal') {
     run.lastEncounters.push(encounterId);
     if (run.lastEncounters.length > 2) run.lastEncounters.shift();
@@ -1627,7 +1644,8 @@ function onCombatEnd(result, combat, enc) {
   run.combatEntered = null;
 
   if (enc.pool === 'boss') {
-    if (run.actNumber >= 3) {
+    // Endless Spire: no summit — the climb loops until death.
+    if (run.actNumber >= 3 && !endlessOn()) {
       // The Rot Valkyrie falls: the Great Rune is restored.
       audio.music('victory');
       saves.clearRun(activeSlot);
@@ -7927,6 +7945,7 @@ const CHAOS_MODS = [
   { id: 'hoarder', label: 'Hoarder', desc: 'Start with +250 runes — but every shop price doubles.' },
   { id: 'chaosRewards', label: 'Chaos Rewards', desc: 'Card rewards ignore rarity: rares everywhere.' },
   { id: 'glassCannon', label: 'Glass Cannon', desc: 'You deal +25% damage, but take +25% damage.' },
+  { id: 'endless', label: 'Endless Spire', desc: 'After Act 3 the spire loops — each cycle, foes gain HP and Strength. Only death ends the climb.' },
 ];
 
 const DECK_MODES = [
@@ -7957,6 +7976,17 @@ function isCustomRun(custom) {
   return !!(custom.mods && Object.values(custom.mods).some(Boolean));
 }
 
+// ---- Endless Spire -----------------------------------------------------------
+// Acts beyond 3 reuse the content of act ((n-1) % 3) + 1; `loop` counts
+// completed 3-act cycles (0 on the first pass) and drives per-cycle scaling.
+// Pure math so main.js, runsim, and tests all agree on the same numbers.
+const ENDLESS_HP_PER_LOOP = 0.35; // +35% enemy HP per completed cycle
+const ENDLESS_STR_PER_LOOP = 1; // +1 enemy Strength per completed cycle
+
+function endlessActInfo(actNumber) {
+  return { contentAct: ((actNumber - 1) % 3) + 1, loop: Math.floor((actNumber - 1) / 3) };
+}
+
 // Resolve the effective active-mod set: explicit toggles OR ascension-enabled.
 function activeMods(custom) {
   const out = { ...((custom && custom.mods) || {}) };
@@ -7966,7 +7996,7 @@ function activeMods(custom) {
 }
 
 
-Object.assign(module.exports, { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, ALL_MODS, isCustomRun, activeMods });
+Object.assign(module.exports, { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, ALL_MODS, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP, endlessActInfo, activeMods });
 
 },
 "src/engine/rng.js": function (module, exports, require) {
@@ -11366,6 +11396,14 @@ const ACT_NAMES = {
   3: 'ACT III — THE ASHEN CROWN',
 };
 
+// Endless Spire: acts past 3 reuse the act 1-3 names with a cycle marker
+// ("ACT I — THE FALLOW MARCHES · CYCLE 2" on act 4, and so on).
+function actTitle(actNumber) {
+  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
+  const loop = Math.floor((actNumber - 1) / 3);
+  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
+}
+
 // Map zoom levels (%) selectable in-view and defaulted from settings.
 const ZOOM_STEPS = [1, 1.15, 1.3, 1.5, 1.75, 2];
 function defaultZoom(meta) {
@@ -11417,7 +11455,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
           <div class="bar hpbar"><div class="fill" style="width:${hpPct}%"></div><div class="label">HP ${run.hp} / ${run.maxHp}</div></div>
         </div>
         <span class="mh-stat runes">⛁ ${run.runes}</span>
-        <span class="mh-stat mh-prog">Act ${run.actNumber} / 3 · Floor ${run.floor} / ${map.floors}</span>
+        <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
         <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
         <div class="mh-actions">
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
@@ -11440,7 +11478,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
       <div class="map-scroll">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-            <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${ACT_NAMES[run.actNumber] || `ACT ${run.actNumber}`}</text>
+            <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(run.actNumber)}</text>
             ${edgeSvg}
             <g id="map-nodes"></g>
           </svg>
@@ -11841,7 +11879,7 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
       ['Tarnished', (run.customization && run.customization.name) || cls.name],
       ['Class', cls.name],
       ['Seed', run.seedString],
-      ['Act', `${run.actNumber} / 3`],
+      ['Act', run.actNumber > 3 ? `${run.actNumber} (endless)` : `${run.actNumber} / 3`],
       ['Floor', run.floor],
       ['HP', `${run.hp} / ${run.maxHp}`],
       ['Runes', run.runes],
