@@ -1017,8 +1017,9 @@ function resolveZoom(uiScale) {
   const key = String(uiScale == null ? 'auto' : uiScale).toLowerCase();
   if (key === 'auto') return computeAutoZoom();
   if (UI_NAMED[key] != null) return UI_NAMED[key];
-  const n = Number(uiScale); // legacy '90'/'100'/'110'/'125'
-  if (!Number.isNaN(n) && n >= 50 && n <= 200) return n / 100;
+  // Anything else (incl. legacy numeric '90'/'100'/'110'/'125') is Auto: the
+  // settings UI displays such values as Auto, so behaving as fixed zoom made
+  // the control look dead ("scaling stopped working").
   return computeAutoZoom();
 }
 
@@ -12802,7 +12803,6 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
         <div class="relics"></div>
         <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
         <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
-        <button class="topbar-btn" id="combat-settings" title="Settings">⚙</button>
       </header>
       <div class="field">
         <div class="player-zone"></div>
@@ -13599,7 +13599,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
   $('.pile.draw').addEventListener('click', () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true }));
   $('.pile.discard').addEventListener('click', () => openPileModal(registries, 'Discard pile', combat.piles.discard));
   $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
-  if (onSettings) $('#combat-settings').addEventListener('click', onSettings);
+  // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
   if (onMenu) $('#combat-menu').addEventListener('click', () => onMenu('deck'));
 
   render();

@@ -32,7 +32,6 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
         <div class="relics"></div>
         <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
         <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
-        <button class="topbar-btn" id="combat-settings" title="Settings">⚙</button>
       </header>
       <div class="field">
         <div class="player-zone"></div>
@@ -829,7 +828,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   $('.pile.draw').addEventListener('click', () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true }));
   $('.pile.discard').addEventListener('click', () => openPileModal(registries, 'Discard pile', combat.piles.discard));
   $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
-  if (onSettings) $('#combat-settings').addEventListener('click', onSettings);
+  // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
   if (onMenu) $('#combat-menu').addEventListener('click', () => onMenu('deck'));
 
   render();
