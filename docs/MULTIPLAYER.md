@@ -84,10 +84,21 @@ pure function of server state.
   session into `tools/lan.mjs` over the WS protocol + the browser thin-client
   renderer. S1's client-local shared-seed run remains the playable intermediate
   until then.
-- **S3 — Shared combat + thin client** ⏳ interactive multi-player combat as the
-  session's combat resolver (party-wide debuffs, throw-potion, live join/leave
-  rescale, solo-finish on drop); wire session ↔ `tools/lan.mjs` intents;
-  browser renders authoritative `state` snapshots instead of running locally.
+- **S3 — Shared combat + thin client** 🟡 *server side done:*
+  `src/engine/coopCombat.js` is a standalone N-player fight engine reusing the
+  solo opcode/status/trigger primitives (solo `combat.js` untouched, 23 tests
+  green): shared enemies, per-player energy/hand/block, one shared player phase,
+  enemy attacks fan out to every player, party-wide debuffs (automatic via the
+  shared enemies), delayed enemy moves, headcount HP scaling, live join/leave
+  rescale, last-player-drop → suspend. Wired into the session as the live combat
+  (`combatPlay`/`combatEndTurn`/`combatFlask`, `settleCombat` with StS2 revive-
+  at-1-HP-on-victory). Proven by `tools/coop-combat-smoke.mjs` (13) +
+  `tools/session-smoke.mjs` (17, now driving the real fight). *Remaining:* wire
+  the session into `tools/lan.mjs` over the WS intent protocol + the browser
+  thin-client renderer (the last big UI piece). v1 combat gaps to revisit:
+  poise/Stagger in the enemy turn, flask throw-to-ally (S5), and a once-per-
+  combat relic shared by two players can mis-gate (trigger keys aren't player-
+  scoped in `triggers.js`).
 - **S4 — Catch-up series UI** ⏳ replay the per-member catch-up queue (already
   accrued by S2) as reward/event screens on reconnect.
 - **S5 — Polish** ⏳ fork voting, Mend at rest sites, co-op-only cards, host
