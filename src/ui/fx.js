@@ -193,6 +193,10 @@ function groupBeats(events) {
  * Uses the module anim speed; 'instant' (or reducedMotion) falls back to
  * animateEvents' classic behavior (final state + fast floats).
  */
+// Debug lifecycle counters (window.__fx) — cheap, used to diagnose stuck-busy
+// reports: every timeline must end in exactly one finish (done/watchdog/flush).
+const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
+
 export function playTimeline(events, ctx, done) {
   const speed = ANIM_SPEEDS[animSpeed];
   const reduced = document.body.classList.contains('reduced-motion');
@@ -201,6 +205,7 @@ export function playTimeline(events, ctx, done) {
     animateEvents(events, ctx, done);
     return;
   }
+  dbg.open = (dbg.open || 0) + 1;
 
   const beats = groupBeats(events);
   let flushed = false;
@@ -212,6 +217,7 @@ export function playTimeline(events, ctx, done) {
   const finish = () => {
     if (finished) return;
     finished = true;
+    dbg.finished = (dbg.finished || 0) + 1;
     clearTimeout(watchdog);
     removeEventListener('pointerdown', skip, { capture: true });
     if (done) done();
@@ -221,6 +227,8 @@ export function playTimeline(events, ctx, done) {
   // wall-clock budget. This is what prevents the "cards stop responding" hang.
   const budget = 2000 + beats.length * (speed.beatMs + speed.lungeMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
+    dbg.watchdog = (dbg.watchdog || 0) + 1;
+    console.warn('[fx] watchdog forced timeline completion');
     try {
       if (ctx.onFlush) ctx.onFlush();
     } catch (e) {
