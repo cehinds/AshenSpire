@@ -73,14 +73,23 @@ pure function of server state.
 - **S1 — Foundation** ✅ discovery + lobby + WS transport. Intermediate: players
   currently launch the shared seed *independently* (client-local run) with a
   live party strip. Proves the pipe end-to-end. *(This is replaced by S2.)*
-- **S2 — Server-authoritative session** ⏳ `tools/session.mjs`: server runs the
-  real run/map/rewards via the engine; intent protocol; browser thin-client
-  mode. Headless protocol test drives 2 mock clients through a run.
-- **S3 — Shared combat** ⏳ multi-player combat in the session; headcount
-  scaling; party-wide debuffs; throw-potion; live join/leave rescale;
-  solo-finish on drop.
-- **S4 — Catch-up series** ⏳ per-member missed-node queue with rolled options;
-  replay as reward/event screens on reconnect.
+- **S2 — Server-authoritative session core** ✅ `tools/session.mjs`: the server
+  runs the real shared run via the engine — one shared map/RNG, per-member
+  build (own deck/relics/hp), headcount HP scaling (`coopHpMult`), per-member
+  rewards, and the catch-up queue. Combat is an **injected resolver** seam
+  (`resolveCombat(resolver)`) so S3 drops the live fight in without touching the
+  loop. Proven headless by `tools/session-smoke.mjs` (18 checks: map → combat →
+  rewards, drop-out rescale-down, catch-up accrual, reconnect replay).
+  *Deferred to S3 (they're inseparable from combat rendering):* wiring the
+  session into `tools/lan.mjs` over the WS protocol + the browser thin-client
+  renderer. S1's client-local shared-seed run remains the playable intermediate
+  until then.
+- **S3 — Shared combat + thin client** ⏳ interactive multi-player combat as the
+  session's combat resolver (party-wide debuffs, throw-potion, live join/leave
+  rescale, solo-finish on drop); wire session ↔ `tools/lan.mjs` intents;
+  browser renders authoritative `state` snapshots instead of running locally.
+- **S4 — Catch-up series UI** ⏳ replay the per-member catch-up queue (already
+  accrued by S2) as reward/event screens on reconnect.
 - **S5 — Polish** ⏳ fork voting, Mend at rest sites, co-op-only cards, host
   persistence to disk / resume.
 
