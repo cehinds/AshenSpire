@@ -14,7 +14,9 @@
 // This is a completability floor, not a balance target: the bot can't pilot
 // combos or curate a deck. Any full-run crash = a real integration bug.
 //
-// Run: node tools/runsim.mjs [runsPerClass=30]
+// Run: node tools/runsim.mjs [runsPerClass=30] [--endless]
+//   --endless: Endless Spire mode — acts loop past 3 with per-cycle scaling
+//   (capped at act 15 here); reports climb depth instead of win rate.
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
@@ -27,17 +29,23 @@ import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward, resolveUnknownNode, shrineHealAmount,
 } from '../src/engine/encounters.js';
+import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
 
 const REG = createRegistries(contentBundle);
-const N = Number(process.argv[2] || 30);
+const argv = process.argv.slice(2);
+const ENDLESS = argv.includes('--endless');
+const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
+const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
 
 // ---- the combat bot (same policy as tests/balance) --------------------------
-function botFight(run, rng, encounterId) {
+function botFight(run, rng, encounterId, cm = {}) {
   const enc = REG.encounters.get(encounterId);
   const combat = createCombat({
     registries: REG, rng,
     player: { classId: run.class, maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds: run.relics, flasks: run.flasks },
     enemyIds: enc.enemies,
+    hpMult: cm.hpMult || 1,
+    enemyStatuses: cm.enemyStatuses || [],
   });
   let guard = 0;
   while (!combat.result && guard++ < 9000) {
@@ -92,10 +100,16 @@ function simulateRun(classId, seed) {
   const rng = createRng(seed);
   const result = { classId, seed, victory: false, act: 1, floor: 0, deaths: null };
 
-  for (let act = 1; act <= 3; act++) {
+  const lastAct = ENDLESS ? ENDLESS_ACT_CAP : 3;
+  for (let act = 1; act <= lastAct; act++) {
     run.actNumber = act;
     result.act = act;
-    const map = generateActMap({ config: REG.mapConfig(act), rng });
+    // Endless: acts past 3 reuse act 1-3 content, scaled per completed cycle.
+    const { contentAct, loop } = ENDLESS ? endlessActInfo(act) : { contentAct: act, loop: 0 };
+    const cm = loop > 0
+      ? { hpMult: 1 + ENDLESS_HP_PER_LOOP * loop, enemyStatuses: [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop }] }
+      : {};
+    const map = generateActMap({ config: REG.mapConfig(contentAct), rng });
     // pre-roll unknowns like main.js does
     const assigned = [];
     for (const n of Object.values(map.nodes)) {
@@ -127,7 +141,7 @@ function simulateRun(classId, seed) {
           if (run.combatEntered) {
             const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
             run.combatEntered = null;
-            if (botFight(run, rng, encId) !== 'victory') { result.deaths = `ambush:${encId}`; return result; }
+            if (botFight(run, rng, encId, cm) !== 'victory') { result.deaths = `ambush:${encId}`; return result; }
             afterVictory(run, rng, 'normal');
           }
           kind = null;
@@ -136,8 +150,8 @@ function simulateRun(classId, seed) {
 
       if (kind === 'monster' || kind === 'fight' || kind === 'elite' || kind === 'boss') {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
-        const encId = rollEncounter(REG, rng, { pool, act });
-        if (botFight(run, rng, encId) !== 'victory') { result.deaths = `${pool}:${encId}`; return result; }
+        const encId = rollEncounter(REG, rng, { pool, act: contentAct });
+        if (botFight(run, rng, encId, cm) !== 'victory') { result.deaths = `${pool}:${encId}`; return result; }
         afterVictory(run, rng, pool);
         if (pool === 'boss') {
           const boss = rollRelicReward(REG, rng, run.relics, { rarities: ['boss'] });
@@ -162,10 +176,10 @@ function simulateRun(classId, seed) {
 }
 
 // ---- fleet -------------------------------------------------------------------
-console.log(`EldenSpire full-run simulation — ${N} runs/class, greedy bot\n`);
+console.log(`EldenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot\n`);
 let crash = null;
 for (const cls of REG.classes.all()) {
-  let wins = 0, acts = 0, floors = 0;
+  let wins = 0, acts = 0, floors = 0, maxAct = 0;
   const deaths = {};
   for (let i = 1; i <= N; i++) {
     let r;
@@ -177,14 +191,17 @@ for (const cls of REG.classes.all()) {
       break;
     }
     if (r.victory) wins++;
-    acts += r.act; floors += r.floor;
+    acts += r.act; floors += r.floor; maxAct = Math.max(maxAct, r.act);
     if (r.deaths) deaths[r.deaths.split(':')[0]] = (deaths[r.deaths.split(':')[0]] || 0) + 1;
   }
   if (crash) break;
   console.log(
-    `${cls.name.padEnd(11)} full-run wins ${String(wins).padStart(2)}/${N}` +
-    `  avg act ${(acts / N).toFixed(2)}  avg floor ${(floors / N).toFixed(1)}` +
-    `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
+    ENDLESS
+      ? `${cls.name.padEnd(11)} avg depth act ${(acts / N).toFixed(2)}  deepest act ${maxAct}` +
+        `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
+      : `${cls.name.padEnd(11)} full-run wins ${String(wins).padStart(2)}/${N}` +
+        `  avg act ${(acts / N).toFixed(2)}  avg floor ${(floors / N).toFixed(1)}` +
+        `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
   );
 }
 if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }

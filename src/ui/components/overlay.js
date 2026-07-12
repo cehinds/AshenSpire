@@ -161,7 +161,7 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
       ['Tarnished', (run.customization && run.customization.name) || cls.name],
       ['Class', cls.name],
       ['Seed', run.seedString],
-      ['Act', `${run.actNumber} / 3`],
+      ['Act', run.actNumber > 3 ? `${run.actNumber} (endless)` : `${run.actNumber} / 3`],
       ['Floor', run.floor],
       ['HP', `${run.hp} / ${run.maxHp}`],
       ['Runes', run.runes],

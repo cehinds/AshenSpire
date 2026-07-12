@@ -11,7 +11,7 @@ import { contentBundle } from './content/index.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
-import { activeMods, isCustomRun } from './content/customMods.js';
+import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
 import { generateActMap } from './engine/mapgen.js';
@@ -259,8 +259,18 @@ function draftBaseIds() {
 // Generate the current act's map and pre-roll every '?' node (stream
 // 'events') so outcomes are seed-determined and the Stonesword Key can
 // reveal them (SPEC §6).
+// Endless Spire: acts past 3 loop back through acts 1-3 content, harder each
+// cycle (combatMods). All content lookups go through contentAct(); the real
+// run.actNumber keeps counting up for labels, saves, and history.
+function endlessOn() {
+  return !!(run.custom && activeMods(run.custom).endless);
+}
+function contentAct() {
+  return endlessOn() ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
+}
+
 function buildActMap() {
-  run.mapGraph = generateActMap({ config: registries.mapConfig(run.actNumber), rng });
+  run.mapGraph = generateActMap({ config: registries.mapConfig(contentAct()), rng });
   const assigned = [];
   for (const node of Object.values(run.mapGraph.nodes)) {
     if (node.type === 'event') {
@@ -543,13 +553,20 @@ function combatMods(pool) {
   if (pool === 'boss' && mods.bigBosses) hpMult *= 1.5;
   if (mods.deadlyEnemies) enemyStatuses.push({ status: 'strength', stacks: 1 });
   if (mods.glassCannon) playerStatuses.push({ status: 'glassCannon', stacks: 1 });
+  if (mods.endless) {
+    const { loop } = endlessActInfo(run.actNumber);
+    if (loop > 0) {
+      hpMult *= 1 + ENDLESS_HP_PER_LOOP * loop;
+      enemyStatuses.push({ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop });
+    }
+  }
   return { hpMult, enemyStatuses, playerStatuses };
 }
 
 function startFight(pool, nodeId) {
   // "Elite Gauntlet" chaos rule promotes ordinary monster nodes to elites.
   if (pool === 'normal' && run.custom && activeMods(run.custom).allElite) pool = 'elite';
-  const encounterId = rollEncounter(registries, rng, { pool, act: run.actNumber, exclude: run.lastEncounters });
+  const encounterId = rollEncounter(registries, rng, { pool, act: contentAct(), exclude: run.lastEncounters });
   if (pool === 'normal') {
     run.lastEncounters.push(encounterId);
     if (run.lastEncounters.length > 2) run.lastEncounters.shift();
@@ -625,7 +642,8 @@ function onCombatEnd(result, combat, enc) {
   run.combatEntered = null;
 
   if (enc.pool === 'boss') {
-    if (run.actNumber >= 3) {
+    // Endless Spire: no summit — the climb loops until death.
+    if (run.actNumber >= 3 && !endlessOn()) {
       // The Rot Valkyrie falls: the Great Rune is restored.
       audio.music('victory');
       saves.clearRun(activeSlot);

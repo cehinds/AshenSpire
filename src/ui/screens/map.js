@@ -31,6 +31,14 @@ const ACT_NAMES = {
   3: 'ACT III — THE ASHEN CROWN',
 };
 
+// Endless Spire: acts past 3 reuse the act 1-3 names with a cycle marker
+// ("ACT I — THE FALLOW MARCHES · CYCLE 2" on act 4, and so on).
+function actTitle(actNumber) {
+  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
+  const loop = Math.floor((actNumber - 1) / 3);
+  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
+}
+
 // Map zoom levels (%) selectable in-view and defaulted from settings.
 const ZOOM_STEPS = [1, 1.15, 1.3, 1.5, 1.75, 2];
 function defaultZoom(meta) {
@@ -82,7 +90,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
           <div class="bar hpbar"><div class="fill" style="width:${hpPct}%"></div><div class="label">HP ${run.hp} / ${run.maxHp}</div></div>
         </div>
         <span class="mh-stat runes">⛁ ${run.runes}</span>
-        <span class="mh-stat mh-prog">Act ${run.actNumber} / 3 · Floor ${run.floor} / ${map.floors}</span>
+        <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
         <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
         <div class="mh-actions">
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
@@ -105,7 +113,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
       <div class="map-scroll">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-            <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${ACT_NAMES[run.actNumber] || `ACT ${run.actNumber}`}</text>
+            <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(run.actNumber)}</text>
             ${edgeSvg}
             <g id="map-nodes"></g>
           </svg>

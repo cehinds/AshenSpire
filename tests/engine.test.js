@@ -29,6 +29,9 @@ import {
   resolveUnknownNode,
   shrineHealAmount,
 } from '../src/engine/encounters.js';
+import {
+  endlessActInfo, activeMods, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP,
+} from '../src/content/customMods.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -768,6 +771,38 @@ export async function runTests() {
       else dispatch(f, { type: 'endTurn' });
     }
     assert(f.result === 'victory' || f.result === 'defeat', `final boss fight concluded (${f.result})`);
+  });
+
+  // ---- 22. Endless Spire (Custom Climb chaos rule) --------------------------
+  test('22. Endless Spire: act loop math, per-cycle scaling, mod wiring', () => {
+    // Acts 1-3 are the first pass (loop 0); 4-6 replay acts 1-3 as cycle 2; etc.
+    for (const [act, want] of [[1, [1, 0]], [3, [3, 0]], [4, [1, 1]], [6, [3, 1]], [7, [1, 2]], [12, [3, 3]]]) {
+      const { contentAct, loop } = endlessActInfo(act);
+      eq(contentAct, want[0], `act ${act} content act`);
+      eq(loop, want[1], `act ${act} loop count`);
+    }
+    // Every looped content act must resolve to real content (no unknown-act throw).
+    for (let act = 4; act <= 12; act++) {
+      const ca = endlessActInfo(act).contentAct;
+      assert(REG.mapConfig(ca), `mapConfig exists for looped act ${act} → ${ca}`);
+      assert(rollEncounter(REG, createRng(act), { pool: 'boss', act: ca }), `boss encounter rolls for looped act ${act}`);
+    }
+    // Cycle scaling applies in combat: +35% HP and +1 Strength per loop.
+    const base = createCombat({
+      registries: REG, rng: createRng(7), player: { classId: 'vagabond', maxHp: 84, hp: 84, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] },
+      enemyIds: ['rotHound'],
+    });
+    const loop2 = createCombat({
+      registries: REG, rng: createRng(7), player: { classId: 'vagabond', maxHp: 84, hp: 84, deck: [{ instanceId: 'x2', cardId: 'strike', upgraded: false }] },
+      enemyIds: ['rotHound'],
+      hpMult: 1 + ENDLESS_HP_PER_LOOP * 2,
+      enemyStatuses: [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * 2 }],
+    });
+    eq(getEntity(loop2, 'e1').maxHp, Math.round(getEntity(base, 'e1').maxHp * 1.7), 'loop-2 enemy HP = base ×1.7');
+    eq(S.getStacks(getEntity(loop2, 'e1'), 'strength'), 2, 'loop-2 enemy has +2 Strength');
+    // The chaos toggle flags the run as custom (kept out of win-rate telemetry).
+    assert(activeMods({ mods: { endless: true } }).endless, 'endless resolves as an active mod');
+    assert(isCustomRun({ mods: { endless: true } }), 'endless runs are flagged custom');
   });
 
   const passed = results.filter((r) => r.ok).length;

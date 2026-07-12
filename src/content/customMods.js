@@ -23,6 +23,7 @@ export const CHAOS_MODS = [
   { id: 'hoarder', label: 'Hoarder', desc: 'Start with +250 runes — but every shop price doubles.' },
   { id: 'chaosRewards', label: 'Chaos Rewards', desc: 'Card rewards ignore rarity: rares everywhere.' },
   { id: 'glassCannon', label: 'Glass Cannon', desc: 'You deal +25% damage, but take +25% damage.' },
+  { id: 'endless', label: 'Endless Spire', desc: 'After Act 3 the spire loops — each cycle, foes gain HP and Strength. Only death ends the climb.' },
 ];
 
 export const DECK_MODES = [
@@ -51,6 +52,17 @@ export function isCustomRun(custom) {
   if (custom.ascension > 0) return true;
   if (custom.deckMode && custom.deckMode !== 'standard') return true;
   return !!(custom.mods && Object.values(custom.mods).some(Boolean));
+}
+
+// ---- Endless Spire -----------------------------------------------------------
+// Acts beyond 3 reuse the content of act ((n-1) % 3) + 1; `loop` counts
+// completed 3-act cycles (0 on the first pass) and drives per-cycle scaling.
+// Pure math so main.js, runsim, and tests all agree on the same numbers.
+export const ENDLESS_HP_PER_LOOP = 0.35; // +35% enemy HP per completed cycle
+export const ENDLESS_STR_PER_LOOP = 1; // +1 enemy Strength per completed cycle
+
+export function endlessActInfo(actNumber) {
+  return { contentAct: ((actNumber - 1) % 3) + 1, loop: Math.floor((actNumber - 1) / 3) };
 }
 
 // Resolve the effective active-mod set: explicit toggles OR ascension-enabled.
