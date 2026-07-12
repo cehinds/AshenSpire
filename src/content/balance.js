@@ -41,7 +41,7 @@ export const balance = {
     removeStep: 25,
   },
 
-  shrine: { healPct: 30 },
+  shrine: { healPct: 35 },
 
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
   unknownNode: { event: 55, fight: 25, shrine: 12, treasure: 8 },

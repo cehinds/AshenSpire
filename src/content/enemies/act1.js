@@ -89,21 +89,21 @@ export const act1Enemies = [
   {
     id: 'watchfulOmen',
     name: 'The Watchful Omen',
-    hp: [140, 140],
+    hp: [120, 120],
     poiseMax: 30,
     art: '👁',
     firstMove: 'caneStrike',
     moves: {
-      caneStrike: { intent: 'attack', damage: 9, weight: 40, maxConsecutive: 2 },
-      hammerToss: { intent: 'attack', damage: 6, hits: 2, weight: 30, maxConsecutive: 2 },
+      caneStrike: { intent: 'attack', damage: 8, weight: 40, maxConsecutive: 2 },
+      hammerToss: { intent: 'attack', damage: 5, hits: 2, weight: 30, maxConsecutive: 2 },
       heldBlade: {
         // Signature delayed attack: telegraphs 16, holds (gaining 8 Block),
         // lands the following turn regardless of newly rolled intents.
         // Staggering him cancels it (engine-generic delayed-move rule).
-        intent: 'attack', damage: 16, weight: 30, maxConsecutive: 1,
+        intent: 'attack', damage: 14, weight: 30, maxConsecutive: 1,
         delay: { turns: 1, whileCharging: { block: 8 } },
       },
-      twinDaggers: { intent: 'attack', damage: 4, hits: 4, weight: 35, locked: true },
+      twinDaggers: { intent: 'attack', damage: 3, hits: 4, weight: 35, locked: true },
     },
     phases: [
       {

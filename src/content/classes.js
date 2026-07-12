@@ -7,7 +7,7 @@ export const classes = [
   {
     id: 'vagabond',
     name: 'Vagabond',
-    maxHp: 78,
+    maxHp: 84,
     startingRelic: 'tarnishedMedallion',
     startingDeck: [
       'strike', 'strike', 'strike', 'strike', 'strike',
@@ -33,7 +33,7 @@ export const classes = [
   {
     id: 'astrologer',
     name: 'Astrologer',
-    maxHp: 66,
+    maxHp: 72,
     startingRelic: 'glintstoneShard',
     startingDeck: [
       'strike', 'strike', 'strike', 'strike', 'strike',
@@ -57,7 +57,7 @@ export const classes = [
   {
     id: 'prophet',
     name: 'Prophet',
-    maxHp: 72,
+    maxHp: 78,
     startingRelic: 'goldFigurine',
     startingDeck: [
       'strike', 'strike', 'strike', 'strike', 'strike',

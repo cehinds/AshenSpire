@@ -41,6 +41,18 @@ function botFight(run, rng, encounterId) {
   });
   let guard = 0;
   while (!combat.result && guard++ < 9000) {
+    // Drink a flask when hurt (below 55% HP) — humans use them; a bot that
+    // hoards flasks under-measures the sustain the game actually provides.
+    if (combat.player.hp < combat.player.maxHp * 0.55 && combat.player.flasks.length) {
+      const fdef = REG.flasks.get(combat.player.flasks[0].flaskId);
+      const ftgt = combat.enemies.find((e) => e.alive);
+      try {
+        dispatch(combat, { type: 'useFlask', slot: 0, targetId: fdef.targeted ? ftgt && ftgt.id : undefined });
+        continue;
+      } catch (e) {
+        /* flask rejected — fall through to cards */
+      }
+    }
     const card = combat.piles.hand.find((h) => {
       const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
       if ((def.keywords || []).includes('unplayable')) return false;
