@@ -41,6 +41,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { openSettings } from './ui/screens/settings.js';
 import { openOverlay } from './ui/components/overlay.js';
+import { showBossIntro } from './ui/components/intro.js';
 import { initInput, setBindings, setKeyBindings } from './ui/input.js';
 import { setSpritesEnabled } from './ui/assets.js';
 import { setAnimSpeed } from './ui/fx.js';
@@ -599,6 +600,13 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       saves.saveMeta(meta);
     },
   });
+  // Boss fights open on a name splash (skippable; not repeated on reload-resume).
+  if (enc.pool === 'boss' && !resuming) {
+    showBossIntro(
+      { name: registries.enemies.get(enc.enemies[0]).name, act: run.actNumber },
+      { hold: shotState === 'boss' }
+    );
+  }
 }
 
 function onCombatEnd(result, combat, enc) {
@@ -763,13 +771,16 @@ function poseFxShowcase() {
   }
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
   saves.saveMeta(shotMeta);
   newRun({ classId: 'vagabond', seedString: 'SHOWCASE', slot: 1 });
-  if (shotState === 'combat' || shotState === 'fx') {
+  if (shotState === 'boss') {
+    // Straight into the act-1 boss; the intro card is held for the camera.
+    enterCombat(run.mapGraph.startIds[0], 'bossOmen');
+  } else if (shotState === 'combat' || shotState === 'fx') {
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
     enterNode(startId);

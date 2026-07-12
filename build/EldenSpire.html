@@ -232,6 +232,33 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .ov-save-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; margin-top: 14px; max-width: 320px; }
 .ov-save-actions button { text-align: left; padding: 11px 16px; }
 
+/* ---------- boss-intro title card ---------- */
+.boss-intro {
+  position: fixed; inset: 0; z-index: 650; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse 70% 50% at 50% 46%, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.88));
+  animation: bi-veil 480ms ease-out;
+}
+.boss-intro .bi-stack { text-align: center; animation: bi-rise 700ms cubic-bezier(0.2, 0.8, 0.3, 1); }
+.boss-intro .bi-tag {
+  color: var(--muted); font-family: var(--font-display); font-size: 13px;
+  letter-spacing: 0.5em; margin-bottom: 14px;
+}
+.boss-intro .bi-name {
+  color: var(--gold); font-size: 54px; letter-spacing: 0.12em; line-height: 1.15;
+  max-width: 80vw; text-shadow: 0 0 34px rgba(var(--accent-rgb), 0.55), 0 2px 10px #000;
+}
+.boss-intro .bi-rule {
+  width: 340px; max-width: 60vw; height: 1px; margin: 20px auto 0;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: bi-rule 900ms ease-out;
+}
+.boss-intro.bi-out { animation: bi-fade 460ms ease-in forwards; }
+@keyframes bi-veil { from { opacity: 0; } }
+@keyframes bi-rise { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
+@keyframes bi-rule { from { transform: scaleX(0.2); opacity: 0; } }
+@keyframes bi-fade { to { opacity: 0; } }
+
 /* ---------- command log (Settings → Advanced) ---------- */
 .debug-modal { width: 720px; max-width: 94vw; }
 .debug-log-body {
@@ -1016,6 +1043,7 @@ const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
 const { openSettings } = require("src/ui/screens/settings.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
+const { showBossIntro } = require("src/ui/components/intro.js");
 const { initInput, setBindings, setKeyBindings } = require("src/ui/input.js");
 const { setSpritesEnabled } = require("src/ui/assets.js");
 const { setAnimSpeed } = require("src/ui/fx.js");
@@ -1574,6 +1602,13 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       saves.saveMeta(meta);
     },
   });
+  // Boss fights open on a name splash (skippable; not repeated on reload-resume).
+  if (enc.pool === 'boss' && !resuming) {
+    showBossIntro(
+      { name: registries.enemies.get(enc.enemies[0]).name, act: run.actNumber },
+      { hold: shotState === 'boss' }
+    );
+  }
 }
 
 function onCombatEnd(result, combat, enc) {
@@ -1738,13 +1773,16 @@ function poseFxShowcase() {
   }
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
   saves.saveMeta(shotMeta);
   newRun({ classId: 'vagabond', seedString: 'SHOWCASE', slot: 1 });
-  if (shotState === 'combat' || shotState === 'fx') {
+  if (shotState === 'boss') {
+    // Straight into the act-1 boss; the intro card is held for the camera.
+    enterCombat(run.mapGraph.startIds[0], 'bossOmen');
+  } else if (shotState === 'combat' || shotState === 'fx') {
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
     enterNode(startId);
@@ -14810,6 +14848,55 @@ function mountHistory(app, { meta, onBack }) {
 
 
 Object.assign(module.exports, { mountHistory });
+
+},
+"src/ui/components/intro.js": function (module, exports, require) {
+// src/ui/components/intro.js — boss-intro title card (SPEC §7.4 feel).
+//
+// A full-screen name splash when a boss fight begins: act tag, the boss's name
+// in the display serif with a gold glow, a thin rule. Auto-dismisses after a
+// beat; any click or key skips it. Reduced-motion collapses the animation (the
+// global kill) but the card still reads. `hold` freezes it mid-animation for
+// screenshots (?shot=boss).
+
+const { esc } = require("src/ui/components/tooltip.js");
+
+function showBossIntro({ name, act }, { hold = false } = {}) {
+  const veil = document.createElement('div');
+  veil.className = 'boss-intro';
+  veil.innerHTML = `
+    <div class="bi-stack">
+      <div class="bi-tag">ACT ${Number(act) || 1} · BOSS</div>
+      <h1 class="bi-name">${esc(String(name || 'THE UNNAMED').toUpperCase())}</h1>
+      <div class="bi-rule"></div>
+    </div>`;
+  document.body.appendChild(veil);
+
+  if (hold) {
+    // Screenshot mode: jump mid-animation and freeze.
+    veil.querySelectorAll('*').forEach((el) => {
+      el.style.animationDelay = '-600ms';
+      el.style.animationPlayState = 'paused';
+    });
+    return veil;
+  }
+
+  let timer = null;
+  const close = () => {
+    clearTimeout(timer);
+    removeEventListener('keydown', onKey, true);
+    veil.classList.add('bi-out');
+    setTimeout(() => veil.remove(), 480);
+  };
+  const onKey = () => close();
+  timer = setTimeout(close, 2300);
+  veil.addEventListener('pointerdown', close);
+  addEventListener('keydown', onKey, true);
+  return veil;
+}
+
+
+Object.assign(module.exports, { showBossIntro });
 
 },
 "src/ui/audio.js": function (module, exports, require) {
