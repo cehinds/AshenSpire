@@ -76,11 +76,22 @@ export function spritesAreEnabled() {
   return spritesEnabled;
 }
 
-// Each builder takes a tint (CSS color/var) used for accents; the robe/armor
-// base is class-flavored. viewBox 110×140, figure standing on a soft shadow.
+// Each builder takes a tint (CSS color/var) used for accents and the player's
+// chosen sigil, worn as a chest medallion so the customization reads on the
+// figure itself (not just the portrait). No sigil → the original plain accent.
+// viewBox 110×140, figure standing on a soft shadow.
+function sigilMedallion(cx, cy, t, sigil, plainR) {
+  if (!sigil) return `<circle cx="${cx}" cy="${cy}" r="${plainR}" fill="${t}"/>`;
+  const safe = String(sigil).replace(/[<>&"]/g, '');
+  return (
+    `<circle cx="${cx}" cy="${cy}" r="8" fill="#14100c" stroke="${t}" stroke-width="1.5"/>` +
+    `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>`
+  );
+}
+
 const CLASS_SVG = {
   // Vagabond — armored knight, greatsword held point-down, cape behind.
-  vagabond: (t) => `
+  vagabond: (t, sigil) => `
     <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
       <ellipse cx="55" cy="133" rx="28" ry="5" fill="rgba(0,0,0,.45)"/>
       <path d="M30 48 L24 130 L86 130 L80 48 Q55 40 30 48Z" fill="#20190f"/>
@@ -92,13 +103,13 @@ const CLASS_SVG = {
       <path d="M40 56 Q55 49 70 56" fill="none" stroke="${t}" stroke-width="1.5"/>
       <path d="M44 26 Q55 12 66 26 Q68 40 55 47 Q42 40 44 26Z" fill="#4a4034" stroke="${t}" stroke-width="1.4"/>
       <rect x="53" y="28" width="4" height="16" rx="2" fill="#0e0a08"/>
-      <circle cx="55" cy="80" r="5.5" fill="${t}"/>
       <rect x="52.5" y="66" width="5" height="58" rx="1" fill="#b8b0a0"/>
       <rect x="44" y="64" width="22" height="4" rx="2" fill="${t}"/>
       <circle cx="55" cy="61" r="4" fill="${t}"/>
+      ${sigilMedallion(55, 84, t, sigil, 5.5)}
     </svg>`,
   // Astrologer — robed mage, wide pointed hat, star-topped staff, sparkles.
-  astrologer: (t) => `
+  astrologer: (t, sigil) => `
     <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
       <ellipse cx="55" cy="133" rx="26" ry="5" fill="rgba(0,0,0,.45)"/>
       <rect x="80" y="30" width="3.5" height="99" rx="1" fill="#6b5d45"/>
@@ -108,12 +119,12 @@ const CLASS_SVG = {
       <circle cx="55" cy="50" r="9" fill="#463c2e"/>
       <path d="M32 40 Q55 5 78 40 Q55 30 32 40Z" fill="#2b2547" stroke="${t}" stroke-width="1.4"/>
       <circle cx="55" cy="12" r="2.6" fill="${t}"/>
-      <circle cx="55" cy="66" r="4.5" fill="${t}"/>
+      ${sigilMedallion(55, 66, t, sigil, 4.5)}
       <circle cx="29" cy="52" r="1.7" fill="${t}"/>
       <circle cx="40" cy="96" r="1.5" fill="${t}"/>
     </svg>`,
   // Prophet — hooded pilgrim, halo, prayer beads at the waist.
-  prophet: (t) => `
+  prophet: (t, sigil) => `
     <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
       <ellipse cx="55" cy="133" rx="26" ry="5" fill="rgba(0,0,0,.45)"/>
       <circle cx="55" cy="30" r="16" fill="none" stroke="${t}" stroke-width="2"/>
@@ -122,19 +133,19 @@ const CLASS_SVG = {
       <path d="M46 50 Q55 41 64 50 L62 68 Q55 72 48 68Z" fill="#0e0a08"/>
       <path d="M40 44 Q55 20 70 44" fill="none" stroke="${t}" stroke-width="1.4"/>
       <circle cx="55" cy="60" r="3.2" fill="${t}"/>
-      <path d="M49 86 Q55 98 61 86" fill="none" stroke="${t}" stroke-width="1.4"/>
-      <circle cx="55" cy="98" r="3" fill="${t}"/>
+      ${sigilMedallion(55, 84, t, sigil, 3)}
+      <path d="M49 95 Q55 105 61 95" fill="none" stroke="${t}" stroke-width="1.4"/>
     </svg>`,
 };
 
 /** A tinted inline-SVG class sprite, or null if the class has none. */
-export function classSprite(classId, tint) {
+export function classSprite(classId, tint, sigil) {
   const build = CLASS_SVG[classId];
   if (!build) return null;
   const el = document.createElement('div');
   el.className = 'class-sprite';
   el.style.cssText = 'width:150px;height:190px;display:flex;align-items:flex-end;justify-content:center;';
-  el.innerHTML = build(tint);
+  el.innerHTML = build(tint, sigil);
   // The class SVGs hardcode 110×140; scale them to the (larger) container so the
   // player figure reads as boldly as the enemies (viewBox keeps proportions).
   const svg = el.querySelector('svg');
@@ -152,7 +163,7 @@ export function classSprite(classId, tint) {
 export function playerSprite(customization = {}, classId) {
   const tint = tintCss(customization.tint);
   if (spritesEnabled && CLASS_SVG[classId]) {
-    return classSprite(classId, tint);
+    return classSprite(classId, tint, customization.glyph);
   }
   const el = document.createElement('div');
   el.style.cssText =
