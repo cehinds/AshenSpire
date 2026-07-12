@@ -54,6 +54,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
+  if (typeof window !== 'undefined') window.__combat = combat; // debug handle
   const fxCtx = {
     layer: $('.fx-layer'),
     combatEl,
@@ -469,9 +470,19 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     const handList = disp ? disp.hand : combat.piles.hand;
     const n = handList.length;
     handList.forEach((inst, i) => {
-      const pv = previewCard(combat, inst.instanceId);
-      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && !isUnplayable(inst);
-      const el = renderCard(registries, inst, { preview: pv, affordable });
+      // disp.hand is a pre-dispatch snapshot; on a combat-ending play the engine
+      // strands the in-flight card in no pile (finishCombat clears the queue),
+      // so previewCard can no longer resolve it. Render such cards inert instead
+      // of letting the throw wedge the timeline (this froze the game on the
+      // killing blow).
+      let pv = null;
+      try {
+        pv = previewCard(combat, inst.instanceId);
+      } catch (e) {
+        console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
+      }
+      const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && !isUnplayable(inst);
+      const el = renderCard(registries, inst, pv ? { preview: pv, affordable } : { affordable });
       const spread = Math.min(6, n) * 1.2;
       el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
       el.style.zIndex = i;
@@ -482,7 +493,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
         hint.textContent = i + 1;
         el.appendChild(hint);
       }
-      wireCardInput(el, inst, pv, affordable);
+      if (pv) wireCardInput(el, inst, pv, affordable);
       hand.appendChild(el);
     });
   }
@@ -674,6 +685,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     try {
       out = dispatch(combat, { type: 'useFlask', slot, targetId: targetId || undefined });
     } catch (err) {
+      console.warn("[combat] dispatch rejected:", err && err.message);
       disp = null;
       render();
       return;
@@ -684,8 +696,16 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   }
 
   function afterDispatch(events) {
-    trackStats(events);
-    render(); // hand/energy react now; bars render from the pre-dispatch snapshot
+    // Nothing between here and playTimeline may prevent the timeline from
+    // starting: busy is already true, and only the timeline's finish releases
+    // it (and fires onEnd on victory/defeat). A render throw here once froze
+    // the game permanently on the killing blow.
+    try {
+      trackStats(events);
+      render(); // hand/energy react now; bars render from the pre-dispatch snapshot
+    } catch (e) {
+      console.warn('[combat] post-dispatch render failed:', e && e.message);
+    }
     playTimeline(
       events,
       {
@@ -741,7 +761,10 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   }
 
   function playCard(instanceId, targetId) {
-    if (busy || combat.result) return;
+    if (busy || combat.result) {
+      console.debug('[combat] playCard ignored:', JSON.stringify({ busy, result: combat.result, phase: combat.phase }));
+      return;
+    }
     if (targetId) lastTargetId = targetId; // remembered for the next card's aim
     selected = null;
     selectedFlask = null;
@@ -754,6 +777,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     try {
       out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined });
     } catch (err) {
+      console.warn("[combat] dispatch rejected:", err && err.message);
       disp = null;
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
@@ -764,7 +788,10 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   }
 
   $('.end-turn').addEventListener('click', () => {
-    if (busy || combat.result || combat.phase !== 'player') return;
+    if (busy || combat.result || combat.phase !== 'player') {
+      console.debug('[combat] endTurn ignored:', JSON.stringify({ busy, result: combat.result, phase: combat.phase }));
+      return;
+    }
     selected = null;
     selectedFlask = null;
     hideTooltip();
@@ -773,6 +800,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     try {
       out = dispatch(combat, { type: 'endTurn' });
     } catch (err) {
+      console.warn("[combat] dispatch rejected:", err && err.message);
       disp = null;
       return;
     }
