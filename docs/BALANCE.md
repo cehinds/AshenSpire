@@ -13,20 +13,20 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 1 | Demi-Brute | 32 | 4.5 | — | 16 | normal |
 | 1 | Grave Wisp | 11 | 2 | 2 | 4 | normal |
 | 1 | Crucible Aspirant | 70 | 6.9 | 0.7 | 24 | elite |
-| 1 | The Watchful Omen | 140 | 12 | — | 30 | boss |
+| 1 | The Watchful Omen | 120 | 10.4 | — | 30 | boss |
 | 2 | Gilded Knight | 44 | 5.5 | — | 18 | normal |
 | 2 | Court Surgeon | 32 | 2.8 | 2.4 | 10 | normal |
-| 2 | Grafted Hound | 26 | 8.4 | — | 8 | normal |
+| 2 | Grafted Hound | 26 | 7.2 | — | 8 | normal |
 | 2 | Court Marionette | 17 | 5.5 | — | 6 | normal |
 | 2 | Living Armor | 38 | 7.5 | — | 22 | normal |
-| 2 | Duelist of the Court | 93 | 12 | — | 26 | elite |
-| 2 | The Grafted King | 220 | 9.3 | — | 34 | boss |
+| 2 | Duelist of the Court | 93 | 10.2 | — | 26 | elite |
+| 2 | The Grafted King | 195 | 8.9 | — | 34 | boss |
 | 3 | Ash Revenant | 36 | 6.6 | 2.7 | 10 | normal |
 | 3 | Grace-Starved Pilgrim | 30 | 5.4 | — | 8 | normal |
-| 3 | Valkyrie Shade | 42 | 8.5 | — | 14 | normal |
+| 3 | Valkyrie Shade | 42 | 7.5 | — | 14 | normal |
 | 3 | Charred Colossus | 57.5 | 8 | — | 30 | normal |
 | 3 | Crucible Lord | 135 | 8.3 | 1.4 | 30 | elite |
-| 3 | The Rot Valkyrie | 280 | 12.8 | — | 36 | boss |
+| 3 | The Rot Valkyrie | 250 | 12 | — | 36 | boss |
 
 ## 2. Encounters (incoming totals)
 
@@ -38,21 +38,21 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 1 | twinPatrol | normal | 2 | 48 | 6.3 | — |
 | 1 | bruiser | normal | 2 | 43 | 6.5 | 2 |
 | 1 | eliteCrucible | elite | 1 | 70 | 6.9 | 0.7 |
-| 1 | bossOmen | boss | 1 | 140 | 12 | — |
+| 1 | bossOmen | boss | 1 | 120 | 10.4 | — |
 | 2 | a2_knight | normal | 1 | 44 | 5.5 | — |
 | 2 | a2_surgery | normal | 2 | 49 | 8.3 | 2.4 |
-| 2 | a2_kennel | normal | 2 | 52 | 16.8 | — |
+| 2 | a2_kennel | normal | 2 | 52 | 14.4 | — |
 | 2 | a2_procession | normal | 2 | 61 | 11 | — |
 | 2 | a2_vault | normal | 2 | 70 | 10.3 | 2.4 |
-| 2 | a2_eliteDuelist | elite | 1 | 93 | 12 | — |
-| 2 | a2_bossGraftedKing | boss | 1 | 220 | 9.3 | — |
+| 2 | a2_eliteDuelist | elite | 1 | 93 | 10.2 | — |
+| 2 | a2_bossGraftedKing | boss | 1 | 195 | 8.9 | — |
 | 3 | a3_revenant | normal | 1 | 36 | 6.6 | 2.7 |
 | 3 | a3_pilgrims | normal | 2 | 60 | 10.8 | — |
-| 3 | a3_shades | normal | 2 | 72 | 13.9 | — |
+| 3 | a3_shades | normal | 2 | 72 | 12.9 | — |
 | 3 | a3_colossus | normal | 1 | 57.5 | 8 | — |
-| 3 | a3_ashChoir | normal | 2 | 78 | 15.1 | 2.7 |
+| 3 | a3_ashChoir | normal | 2 | 78 | 14.1 | 2.7 |
 | 3 | a3_eliteCrucibleLord | elite | 1 | 135 | 8.3 | 1.4 |
-| 3 | a3_bossRotValkyrie | boss | 1 | 280 | 12.8 | — |
+| 3 | a3_bossRotValkyrie | boss | 1 | 250 | 12 | — |
 
 ## 3. Player baselines (measured naive starting-deck DPS)
 
@@ -62,9 +62,9 @@ conservative floor. Reference bands assume deck growth: mid = ×1.6, late = ×2.
 
 | Class | Max HP | Start DPS | ~Mid (×1.6) | ~Late (×2.4) |
 |-------|-------:|----------:|------------:|-------------:|
-| Vagabond | 78 | 10.5 | 16.8 | 25.2 |
-| Astrologer | 66 | 10.8 | 17.3 | 25.9 |
-| Prophet | 72 | 9 | 14.4 | 21.6 |
+| Vagabond | 84 | 10.5 | 16.8 | 25.2 |
+| Astrologer | 72 | 10.8 | 17.3 | 25.9 |
+| Prophet | 78 | 9 | 14.4 | 21.6 |
 
 ## 4. Sanity table — elites & bosses
 
@@ -75,12 +75,12 @@ lowest class HP / incoming DPS. Verdict flags unbeatable-by-construction
 
 | Act | Encounter | HP | Heal/t | refDPS | Turns to kill | InDPS | Turns to die | Verdict |
 |----:|-----------|---:|-------:|-------:|--------------:|------:|-------------:|---------|
-| 1 | eliteCrucible | 70 | 0.7 | 10.1 | 7.5 | 6.9 | 9.6 | ok |
-| 1 | bossOmen | 140 | — | 10.1 | 13.9 | 12 | 5.5 | **race — check** |
-| 2 | a2_eliteDuelist | 93 | — | 16.2 | 5.8 | 12 | 5.5 | **race — check** |
-| 2 | a2_bossGraftedKing | 220 | — | 16.2 | 13.6 | 9.3 | 7.1 | **race — check** |
-| 3 | a3_eliteCrucibleLord | 135 | 1.4 | 24.2 | 5.9 | 8.3 | 7.9 | ok |
-| 3 | a3_bossRotValkyrie | 280 | — | 24.2 | 11.6 | 12.8 | 5.1 | **race — check** |
+| 1 | eliteCrucible | 70 | 0.7 | 10.1 | 7.5 | 6.9 | 10.4 | ok |
+| 1 | bossOmen | 120 | — | 10.1 | 11.9 | 10.4 | 6.9 | **race — check** |
+| 2 | a2_eliteDuelist | 93 | — | 16.2 | 5.8 | 10.2 | 7.1 | ok |
+| 2 | a2_bossGraftedKing | 195 | — | 16.2 | 12.1 | 8.9 | 8.1 | **race — check** |
+| 3 | a3_eliteCrucibleLord | 135 | 1.4 | 24.2 | 5.9 | 8.3 | 8.7 | ok |
+| 3 | a3_bossRotValkyrie | 250 | — | 24.2 | 10.3 | 12 | 6 | **race — check** |
 
 > Note: the Rot Valkyrie (final boss) also heals **3 per hit she lands** via a
 > phase trigger (not a move effect), up to ~15/turn on her 5-hit moves — the
@@ -94,27 +94,27 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 
 | Class | Encounter | Win % | Avg HP lost (of max) |
 |-------|-----------|------:|---------------------:|
-| Vagabond | loneSoldier (normal) | 100 | 1.9 / 78 |
-| Vagabond | patrol (normal) | 100 | 10.7 / 78 |
-| Vagabond | packHunt (normal) | 100 | 10.8 / 78 |
-| Vagabond | twinPatrol (normal) | 100 | 10.7 / 78 |
-| Vagabond | bruiser (normal) | 100 | 9.6 / 78 |
-| Vagabond | eliteCrucible (elite) | 100 | 37.4 / 78 |
-| Vagabond | bossOmen (boss) | 35.7 | 74.8 / 78 |
-| Astrologer | loneSoldier (normal) | 100 | 1.8 / 66 |
-| Astrologer | patrol (normal) | 100 | 9.6 / 66 |
-| Astrologer | packHunt (normal) | 100 | 8.7 / 66 |
-| Astrologer | twinPatrol (normal) | 100 | 9.7 / 66 |
-| Astrologer | bruiser (normal) | 100 | 9.1 / 66 |
-| Astrologer | eliteCrucible (elite) | 99.3 | 36.4 / 66 |
-| Astrologer | bossOmen (boss) | 0.7 | 66 / 66 |
-| Prophet | loneSoldier (normal) | 100 | 1.6 / 72 |
-| Prophet | patrol (normal) | 100 | 8.2 / 72 |
-| Prophet | packHunt (normal) | 100 | 7.4 / 72 |
-| Prophet | twinPatrol (normal) | 100 | 7.5 / 72 |
-| Prophet | bruiser (normal) | 100 | 6.8 / 72 |
-| Prophet | eliteCrucible (elite) | 100 | 35.4 / 72 |
-| Prophet | bossOmen (boss) | 7.7 | 71.5 / 72 |
+| Vagabond | loneSoldier (normal) | 100 | 1.9 / 84 |
+| Vagabond | patrol (normal) | 100 | 10.7 / 84 |
+| Vagabond | packHunt (normal) | 100 | 10.8 / 84 |
+| Vagabond | twinPatrol (normal) | 100 | 10.7 / 84 |
+| Vagabond | bruiser (normal) | 100 | 9.6 / 84 |
+| Vagabond | eliteCrucible (elite) | 100 | 37.4 / 84 |
+| Vagabond | bossOmen (boss) | 97.7 | 59 / 84 |
+| Astrologer | loneSoldier (normal) | 100 | 1.8 / 72 |
+| Astrologer | patrol (normal) | 100 | 9.6 / 72 |
+| Astrologer | packHunt (normal) | 100 | 8.7 / 72 |
+| Astrologer | twinPatrol (normal) | 100 | 9.7 / 72 |
+| Astrologer | bruiser (normal) | 100 | 9.1 / 72 |
+| Astrologer | eliteCrucible (elite) | 100 | 36.4 / 72 |
+| Astrologer | bossOmen (boss) | 71.3 | 63.9 / 72 |
+| Prophet | loneSoldier (normal) | 100 | 1.6 / 78 |
+| Prophet | patrol (normal) | 100 | 8.2 / 78 |
+| Prophet | packHunt (normal) | 100 | 7.4 / 78 |
+| Prophet | twinPatrol (normal) | 100 | 7.5 / 78 |
+| Prophet | bruiser (normal) | 100 | 6.8 / 78 |
+| Prophet | eliteCrucible (elite) | 100 | 35.4 / 78 |
+| Prophet | bossOmen (boss) | 94.3 | 57.1 / 78 |
 
 ## 6. Findings (first pass)
 

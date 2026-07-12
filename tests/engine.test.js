@@ -619,9 +619,9 @@ export async function runTests() {
 
     const rn4 = createRunState({ seed: 4, classId: 'vagabond', registries: REG });
     rn4.hp = 10;
-    eq(shrineHealAmount(REG, rn4), Math.floor((78 * 30) / 100), 'shrine heal 30%');
+    eq(shrineHealAmount(REG, rn4), Math.floor((84 * 35) / 100), 'shrine heal 35%');
     rn4.relics.push('graceFragment');
-    eq(shrineHealAmount(REG, rn4), Math.floor((78 * 30 * 1.15) / 100), 'Grace Fragment ×1.15');
+    eq(shrineHealAmount(REG, rn4), Math.floor((84 * 35 * 1.15) / 100), 'Grace Fragment ×1.15');
   });
 
   // ---- 19. Keepsakes (character creation boons) -------------------------------------------
@@ -720,14 +720,14 @@ export async function runTests() {
     }
     eq(rollEncounter(REG, createRng(1), { pool: 'boss', act: 3 }), 'a3_bossRotValkyrie', 'act 3 boss');
 
-    // Rot Valkyrie: heals 3 whenever SHE lands a hit (persistent phase trigger);
+    // Rot Valkyrie: heals 2 whenever SHE lands a hit (persistent phase trigger);
     // her thrust also Bleeds the PLAYER (entity-agnostic status model).
     const v = makeCombat({ deck: Array(5).fill('defend'), enemies: ['rotValkyrie'] });
     const e1 = getEntity(v, 'e1');
     applyLoseHp(v, e1, 30); // give her something to heal back
-    dispatch(v, { type: 'endTurn' }); // firstMove spiralThrust: 14 dmg + 2 player Bleed
+    dispatch(v, { type: 'endTurn' }); // firstMove spiralThrust: 12 dmg + 2 player Bleed
     const heals = logOf(v, 'healed').filter((e) => e.targetId === 'e1');
-    assert(heals.length >= 1 && heals[0].amount === 3, 'healed 3 off her own hit');
+    assert(heals.length >= 1 && heals[0].amount === 2, 'healed 2 off her own hit');
     eq(S.getStacks(v.player, 'bleed'), 2, 'her blade Bleeds the player');
 
     // Player-side Bleed meter bursts exactly like an enemy's (SPEC §10 seam).

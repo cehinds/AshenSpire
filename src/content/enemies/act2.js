@@ -49,7 +49,7 @@ export const act2Enemies = [
     poiseMax: 8,
     art: '🐩',
     moves: {
-      maul: { intent: 'attack', damage: 5, hits: 2, weight: 60 },
+      maul: { intent: 'attack', damage: 4, hits: 2, weight: 60 },
       rend: {
         // The player's own favorite trick, reflected: Bleed on YOU.
         intent: 'attack', damage: 6, weight: 40,
@@ -97,8 +97,8 @@ export const act2Enemies = [
         intent: 'buff', weight: 10, maxConsecutive: 1,
         effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 3 }],
       },
-      flurry: { intent: 'attack', damage: 6, hits: 3, weight: 40, maxConsecutive: 2 },
-      lunge: { intent: 'attack', damage: 16, weight: 30, maxConsecutive: 1 },
+      flurry: { intent: 'attack', damage: 5, hits: 3, weight: 40, maxConsecutive: 2 },
+      lunge: { intent: 'attack', damage: 14, weight: 30, maxConsecutive: 1 },
       riposte: { intent: 'block', block: 10, weight: 20, maxConsecutive: 1 },
     },
   },
@@ -107,18 +107,18 @@ export const act2Enemies = [
   {
     id: 'graftedKing',
     name: 'The Grafted King',
-    hp: [220, 220],
+    hp: [195, 195],
     poiseMax: 34,
     art: '👑',
     firstMove: 'courtlyDecree',
     moves: {
-      scepterBlow: { intent: 'attack', damage: 12, weight: 40, maxConsecutive: 2 },
+      scepterBlow: { intent: 'attack', damage: 11, weight: 40, maxConsecutive: 2 },
       graspingHands: { intent: 'attack', damage: 5, hits: 3, weight: 30, maxConsecutive: 2 },
       courtlyDecree: {
         intent: 'block', block: 15, weight: 30, maxConsecutive: 1,
         effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 2 }],
       },
-      thousandHands: { intent: 'attack', damage: 4, hits: 6, weight: 40, locked: true },
+      thousandHands: { intent: 'attack', damage: 3, hits: 6, weight: 40, locked: true },
     },
     phases: [
       {

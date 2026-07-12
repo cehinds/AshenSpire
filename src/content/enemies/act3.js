@@ -48,7 +48,7 @@ export const act3Enemies = [
     poiseMax: 14,
     art: '🪶',
     moves: {
-      spiralLance: { intent: 'attack', damage: 6, hits: 2, weight: 50 },
+      spiralLance: { intent: 'attack', damage: 5, hits: 2, weight: 50 },
       bloodFeather: {
         intent: 'attack', damage: 5, weight: 50,
         effects: [{ op: 'applyStatus', target: 'player', status: 'bleed', stacks: 3 }],
@@ -100,13 +100,13 @@ export const act3Enemies = [
   {
     id: 'rotValkyrie',
     name: 'The Rot Valkyrie',
-    hp: [280, 280],
+    hp: [250, 250],
     poiseMax: 36,
     art: '🦋',
     firstMove: 'spiralThrust',
     moves: {
       spiralThrust: {
-        intent: 'attack', damage: 14, weight: 35, maxConsecutive: 2,
+        intent: 'attack', damage: 12, weight: 35, maxConsecutive: 2,
         effects: [{ op: 'applyStatus', target: 'player', status: 'bleed', stacks: 2 }],
       },
       waterfowl: {
@@ -121,11 +121,11 @@ export const act3Enemies = [
     },
     phases: [
       {
-        // Signature inversion (SPEC §10): she heals 3 whenever SHE lands a hit.
+        // Signature inversion (SPEC §10): she heals 2 whenever SHE lands a hit.
         // A persistent (once:false) trigger on her own damageDealt events.
         on: 'damageDealt', once: false,
         if: { p: 'eventSourceIsOwner' },
-        do: [{ op: 'heal', target: 'self', amount: 3 }],
+        do: [{ op: 'heal', target: 'self', amount: 2 }],
       },
       {
         // ≤50% HP: the scarlet bloom. One-way door.
