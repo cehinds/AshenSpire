@@ -51,13 +51,16 @@ export function openBrowser(url) {
 }
 
 /**
- * serve({ root, port, open }) → Promise<{ server, url, port }>
- * Bumps to the next port if the requested one is in use.
+ * serve({ root, port, open, lan }) → Promise<{ server, url, port }>
+ * Bumps to the next port if the requested one is in use. `lan: true` attaches
+ * the Tarnished Together session layer (tools/lan.mjs: discovery + lobby WS).
  */
-export function serve({ root = ROOT_DIR, port = 8080, open = true } = {}) {
+export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false } = {}) {
   const rootResolved = resolve(root);
+  let lanLayer = null; // attached after listen (needs the final port)
   const server = createServer(async (req, res) => {
     try {
+      if (lanLayer && (await lanLayer.handleHttp(req, res))) return;
       const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
       const rel = normalize(urlPath).replace(/^([/\\]|\.\.([/\\]|$))+/, '');
       let filePath = rel ? join(rootResolved, rel) : rootResolved;
@@ -95,10 +98,16 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true } = {}) {
         throw err;
       }
     });
-    server.listen(port, () => {
+    server.listen(port, async () => {
       const url = `http://localhost:${port}/`;
       console.log(`\n  ▸ Spire of the Erdtree is live at ${url}`);
       console.log(`    Serving ${rootResolved}`);
+      if (lan) {
+        const { attachLan, lanAddress } = await import('./lan.mjs');
+        lanLayer = attachLan(server, { port });
+        server.on('close', () => lanLayer.close());
+        console.log(`    LAN play: friends on your network can join at http://${lanAddress()}:${port}/`);
+      }
       console.log('    Press Ctrl+C to stop.\n');
       if (open) openBrowser(url);
       done({ server, url, port });
@@ -116,5 +125,6 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     port: Number(flag('--port', 8080)),
     root: flag('--root', ROOT_DIR),
     open: !args.includes('--no-open'),
+    lan: !args.includes('--no-lan'),
   });
 }

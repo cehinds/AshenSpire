@@ -43,7 +43,9 @@ import { openSettings } from './ui/screens/settings.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { initInput, setBindings, setKeyBindings } from './ui/input.js';
-import { setSpritesEnabled } from './ui/assets.js';
+import { setSpritesEnabled, classGlyph } from './ui/assets.js';
+import { mountLobby } from './ui/screens/lobby.js';
+import { lanInfo } from './net/lan.js';
 import { setAnimSpeed } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio } from './ui/audio.js';
@@ -189,6 +191,86 @@ let activeSlot = 1; // which save slot the current run persists to (SPEC §3.12 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
   saves.saveRun(run, rng, activeSlot);
+  sendLanStatus();
+}
+
+// ---- Tarnished Together (LAN) -------------------------------------------------
+// Phase 1: everyone plays the same seeded run on their own machine; the lobby
+// socket relays progress so the whole party shows in a strip on every screen.
+let lanLink = null; // { conn, name } while a LAN session is live
+
+function sendLanStatus(extra = {}) {
+  if (!lanLink || !run) return;
+  lanLink.conn.send({
+    t: 'status',
+    act: run.actNumber, floor: run.floor, hp: run.hp, maxHp: run.maxHp,
+    ...extra,
+  });
+}
+
+function partyStripEl() {
+  let el = document.getElementById('party-strip');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'party-strip';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+function updatePartyStrip(players) {
+  const el = partyStripEl();
+  if (!players || !players.length) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = players.map((p) => {
+    const state = p.dead ? '☠' : p.victory ? '👑' : `A${p.act}·F${p.floor}`;
+    const hp = p.dead ? '' : ` <span class="ps-hp">${p.hp}/${p.maxHp}</span>`;
+    return `<span class="ps-chip${p.dead ? ' dead' : ''}">⚑ ${escapeHtml(p.name)} <span class="ps-pos">${state}</span>${hp}</span>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+}
+
+function dropLanLink() {
+  if (!lanLink) return;
+  lanLink.conn.close();
+  lanLink = null;
+  const el = document.getElementById('party-strip');
+  if (el) el.remove();
+}
+
+function startLanRun({ conn, name, classId, seedString }) {
+  lanLink = { conn, name };
+  conn.setHandlers({
+    onMessage: (msg) => {
+      if (msg.t === 'party') updatePartyStrip(msg.players);
+    },
+    onClose: () => {
+      const el = document.getElementById('party-strip');
+      if (el) el.innerHTML = '<span class="ps-chip dead">⚠ party link lost</span>';
+      lanLink = null;
+    },
+  });
+  const empty = saves.listSlots().find((s) => !s.summary);
+  newRun({
+    classId,
+    seedString,
+    customization: { name, glyph: classGlyph(classId), tint: 'gold' },
+    slot: empty ? empty.slot : 1,
+  });
+  sendLanStatus();
+}
+
+function showLobby() {
+  audio.music('title');
+  mountLobby(app, {
+    registries,
+    defaultSeedString: randomSeedString(),
+    onBack: () => showTitle(),
+    onStart: startLanRun,
+  });
 }
 
 function randomSeedString() {
@@ -317,6 +399,7 @@ function resumeRun(slot = 1) {
 function showTitle() {
   audio.music('title');
   run = null;
+  dropLanLink(); // a LAN session spans one run; back at the title it's over
   const slots = saves.listSlots().map(({ slot, summary }) => ({
     slot,
     summary: summary && {
@@ -339,6 +422,12 @@ function showTitle() {
       const empty = slots.find((s) => !s.summary);
       showCustomRun(empty ? empty.slot : 1);
     },
+    onLan: showLobby,
+  });
+  // Tarnished Together needs the launcher's server behind the page.
+  lanInfo().then((info) => {
+    const btn = app.querySelector('#lan-play');
+    if (info && btn) btn.hidden = false;
   });
 }
 
@@ -632,6 +721,8 @@ function onCombatEnd(result, combat, enc) {
   if (result !== 'victory') {
     audio.stopMusic();
     sfx.play('youDied');
+    run.hp = 0;
+    sendLanStatus({ dead: true });
     saves.clearRun(activeSlot);
     saves.recordResult(runResult(false));
     return mountGameOver(app, { registries, game: run, victory: false, onTitle: showTitle, onHistory: showHistory });
@@ -646,6 +737,7 @@ function onCombatEnd(result, combat, enc) {
     if (run.actNumber >= 3 && !endlessOn()) {
       // The Rot Valkyrie falls: the Great Rune is restored.
       audio.music('victory');
+      sendLanStatus({ victory: true });
       saves.clearRun(activeSlot);
       saves.recordResult(runResult(true));
       return mountGameOver(app, { registries, game: run, victory: true, onTitle: showTitle, onHistory: showHistory });
