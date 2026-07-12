@@ -693,9 +693,38 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 .reduced-motion .sprite.act-move { animation: none; }
 
 /* ---------- ability / relic / status fx ---------- */
+/* Hit reaction: the victim flashes AND recoils away from the blow — enemies are
+   knocked right (struck from the player's side), the player left. A heavy hit
+   (≥15, the same threshold as screen shake) recoils further with a tilt. */
 .sprite.hitflash > :first-child { animation: hitflash 200ms ease-out; }
+.enemy .sprite.hitflash > :first-child { animation: hit-enemy 220ms cubic-bezier(0.25, 0.8, 0.35, 1); }
+.player .sprite.hitflash > :first-child { animation: hit-player 220ms cubic-bezier(0.25, 0.8, 0.35, 1); }
+.enemy .sprite.hitflash.hit-heavy > :first-child { animation: hit-enemy-heavy 340ms cubic-bezier(0.25, 0.8, 0.35, 1); }
+.player .sprite.hitflash.hit-heavy > :first-child { animation: hit-player-heavy 340ms cubic-bezier(0.25, 0.8, 0.35, 1); }
 @keyframes hitflash {
   0% { filter: brightness(2.1) saturate(1.8); transform: translateX(4px); }
+  100% { filter: none; transform: none; }
+}
+@keyframes hit-enemy {
+  0% { filter: brightness(2.1) saturate(1.8); }
+  30% { transform: translateX(13px); }
+  100% { filter: none; transform: none; }
+}
+@keyframes hit-player {
+  0% { filter: brightness(2.1) saturate(1.8); }
+  30% { transform: translateX(-13px); }
+  100% { filter: none; transform: none; }
+}
+@keyframes hit-enemy-heavy {
+  0% { filter: brightness(2.3) saturate(1.9); }
+  28% { transform: translateX(26px) rotate(5deg); }
+  60% { transform: translateX(6px) rotate(1deg); }
+  100% { filter: none; transform: none; }
+}
+@keyframes hit-player-heavy {
+  0% { filter: brightness(2.3) saturate(1.9); }
+  28% { transform: translateX(-26px) rotate(-5deg); }
+  60% { transform: translateX(-6px) rotate(-1deg); }
   100% { filter: none; transform: none; }
 }
 .sprite.crumble > :first-child { animation: crumble 300ms ease-in forwards; }
@@ -13724,9 +13753,15 @@ function visualFor(e) {
       return (ctx) => {
         sfx.play('hit');
         const anchor = ctx.anchorFor(e.targetId);
+        const heavy = e.amount >= 15;
         floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
-        flash(anchor, 'hitflash', 220);
-        if (e.amount >= 15) shake(ctx.combatEl);
+        // Victim reaction: flash + directional recoil (CSS); heavy hits recoil
+        // further (hit-heavy modifier) and kick the screen.
+        flash(anchor, 'hitflash', heavy ? 380 : 220);
+        if (heavy) {
+          flash(anchor, 'hit-heavy', 380);
+          shake(ctx.combatEl);
+        }
       };
     case 'blockGained':
       return e.amount > 0

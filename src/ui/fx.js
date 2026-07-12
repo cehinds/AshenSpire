@@ -295,9 +295,15 @@ function visualFor(e) {
       return (ctx) => {
         sfx.play('hit');
         const anchor = ctx.anchorFor(e.targetId);
+        const heavy = e.amount >= 15;
         floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
-        flash(anchor, 'hitflash', 220);
-        if (e.amount >= 15) shake(ctx.combatEl);
+        // Victim reaction: flash + directional recoil (CSS); heavy hits recoil
+        // further (hit-heavy modifier) and kick the screen.
+        flash(anchor, 'hitflash', heavy ? 380 : 220);
+        if (heavy) {
+          flash(anchor, 'hit-heavy', 380);
+          shake(ctx.combatEl);
+        }
       };
     case 'blockGained':
       return e.amount > 0
