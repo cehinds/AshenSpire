@@ -54,4 +54,5 @@ serve({
   root: ROOT,
   port: pi >= 0 ? Number(args[pi + 1]) : 8080,
   open: !args.includes('--no-open'),
+  lan: !args.includes('--no-lan'),
 });

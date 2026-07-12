@@ -376,3 +376,30 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 .event-art { display: inline-block; animation: artFloat 4s ease-in-out infinite; }
 @keyframes artFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 #choices button { animation: screenIn 260ms ease-out backwards; }
+
+/* ---- Tarnished Together: party status strip (LAN play) --------------------- */
+/* Fixed chip column, top-right under the header; read-only, never intercepts. */
+#party-strip {
+  position: fixed;
+  top: 64px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  z-index: 400;
+  pointer-events: none;
+}
+.ps-chip {
+  background: rgba(16, 13, 10, 0.88);
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ps-chip .ps-pos { color: var(--gold); }
+.ps-chip .ps-hp { color: var(--ember); }
+.ps-chip.dead { opacity: 0.65; }

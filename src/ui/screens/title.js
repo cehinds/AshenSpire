@@ -7,7 +7,7 @@
 
 import { esc } from '../components/tooltip.js';
 
-export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom }) {
+export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan }) {
   // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
   const EMBER_COUNT = { off: 0, low: 3, normal: 7, high: 14 };
   const emberN = EMBER_COUNT[document.documentElement.dataset.ambient] ?? 7;
@@ -49,6 +49,7 @@ export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory,
       </div>
       <div class="slot-list">${slotCards}</div>
       <div class="title-menu">
+        <button class="subtle" id="lan-play" hidden>TARNISHED TOGETHER</button>
         <button class="subtle" id="custom-climb">CUSTOM CLIMB</button>
         <button class="subtle" id="run-history">RUN HISTORY</button>
         <button class="subtle" id="settings">SETTINGS</button>
@@ -61,6 +62,9 @@ export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory,
   app.querySelector('#settings').addEventListener('click', onSettings);
   if (onQuit) app.querySelector('#quit-game').addEventListener('click', onQuit);
   if (onCustom) app.querySelector('#custom-climb').addEventListener('click', onCustom);
+  // LAN play only exists when the launcher's server is behind the page — the
+  // orchestrator un-hides the button once /api/lan/info answers.
+  if (onLan) app.querySelector('#lan-play').addEventListener('click', onLan);
   app.querySelectorAll('.slot-continue').forEach((b) => b.addEventListener('click', () => onContinue(+b.dataset.slot)));
   app.querySelectorAll('.slot-new').forEach((b) => b.addEventListener('click', () => onNew(+b.dataset.slot)));
   // Delete is a two-click, self-resetting confirm (no blocking dialog).

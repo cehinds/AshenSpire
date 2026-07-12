@@ -519,6 +519,33 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 @keyframes artFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 #choices button { animation: screenIn 260ms ease-out backwards; }
 
+/* ---- Tarnished Together: party status strip (LAN play) --------------------- */
+/* Fixed chip column, top-right under the header; read-only, never intercepts. */
+#party-strip {
+  position: fixed;
+  top: 64px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  z-index: 400;
+  pointer-events: none;
+}
+.ps-chip {
+  background: rgba(16, 13, 10, 0.88);
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ps-chip .ps-pos { color: var(--gold); }
+.ps-chip .ps-hp { color: var(--ember); }
+.ps-chip.dead { opacity: 0.65; }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -1045,7 +1072,9 @@ const { openSettings } = require("src/ui/screens/settings.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
 const { initInput, setBindings, setKeyBindings } = require("src/ui/input.js");
-const { setSpritesEnabled } = require("src/ui/assets.js");
+const { setSpritesEnabled, classGlyph } = require("src/ui/assets.js");
+const { mountLobby } = require("src/ui/screens/lobby.js");
+const { lanInfo } = require("src/net/lan.js");
 const { setAnimSpeed } = require("src/ui/fx.js");
 const { sfx } = require("src/ui/sfx.js");
 const { initAudio } = require("src/ui/audio.js");
@@ -1191,6 +1220,86 @@ let activeSlot = 1; // which save slot the current run persists to (SPEC §3.12 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
   saves.saveRun(run, rng, activeSlot);
+  sendLanStatus();
+}
+
+// ---- Tarnished Together (LAN) -------------------------------------------------
+// Phase 1: everyone plays the same seeded run on their own machine; the lobby
+// socket relays progress so the whole party shows in a strip on every screen.
+let lanLink = null; // { conn, name } while a LAN session is live
+
+function sendLanStatus(extra = {}) {
+  if (!lanLink || !run) return;
+  lanLink.conn.send({
+    t: 'status',
+    act: run.actNumber, floor: run.floor, hp: run.hp, maxHp: run.maxHp,
+    ...extra,
+  });
+}
+
+function partyStripEl() {
+  let el = document.getElementById('party-strip');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'party-strip';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+function updatePartyStrip(players) {
+  const el = partyStripEl();
+  if (!players || !players.length) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = players.map((p) => {
+    const state = p.dead ? '☠' : p.victory ? '👑' : `A${p.act}·F${p.floor}`;
+    const hp = p.dead ? '' : ` <span class="ps-hp">${p.hp}/${p.maxHp}</span>`;
+    return `<span class="ps-chip${p.dead ? ' dead' : ''}">⚑ ${escapeHtml(p.name)} <span class="ps-pos">${state}</span>${hp}</span>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+}
+
+function dropLanLink() {
+  if (!lanLink) return;
+  lanLink.conn.close();
+  lanLink = null;
+  const el = document.getElementById('party-strip');
+  if (el) el.remove();
+}
+
+function startLanRun({ conn, name, classId, seedString }) {
+  lanLink = { conn, name };
+  conn.setHandlers({
+    onMessage: (msg) => {
+      if (msg.t === 'party') updatePartyStrip(msg.players);
+    },
+    onClose: () => {
+      const el = document.getElementById('party-strip');
+      if (el) el.innerHTML = '<span class="ps-chip dead">⚠ party link lost</span>';
+      lanLink = null;
+    },
+  });
+  const empty = saves.listSlots().find((s) => !s.summary);
+  newRun({
+    classId,
+    seedString,
+    customization: { name, glyph: classGlyph(classId), tint: 'gold' },
+    slot: empty ? empty.slot : 1,
+  });
+  sendLanStatus();
+}
+
+function showLobby() {
+  audio.music('title');
+  mountLobby(app, {
+    registries,
+    defaultSeedString: randomSeedString(),
+    onBack: () => showTitle(),
+    onStart: startLanRun,
+  });
 }
 
 function randomSeedString() {
@@ -1319,6 +1428,7 @@ function resumeRun(slot = 1) {
 function showTitle() {
   audio.music('title');
   run = null;
+  dropLanLink(); // a LAN session spans one run; back at the title it's over
   const slots = saves.listSlots().map(({ slot, summary }) => ({
     slot,
     summary: summary && {
@@ -1341,6 +1451,12 @@ function showTitle() {
       const empty = slots.find((s) => !s.summary);
       showCustomRun(empty ? empty.slot : 1);
     },
+    onLan: showLobby,
+  });
+  // Tarnished Together needs the launcher's server behind the page.
+  lanInfo().then((info) => {
+    const btn = app.querySelector('#lan-play');
+    if (info && btn) btn.hidden = false;
   });
 }
 
@@ -1634,6 +1750,8 @@ function onCombatEnd(result, combat, enc) {
   if (result !== 'victory') {
     audio.stopMusic();
     sfx.play('youDied');
+    run.hp = 0;
+    sendLanStatus({ dead: true });
     saves.clearRun(activeSlot);
     saves.recordResult(runResult(false));
     return mountGameOver(app, { registries, game: run, victory: false, onTitle: showTitle, onHistory: showHistory });
@@ -1648,6 +1766,7 @@ function onCombatEnd(result, combat, enc) {
     if (run.actNumber >= 3 && !endlessOn()) {
       // The Rot Valkyrie falls: the Great Rune is restored.
       audio.music('victory');
+      sendLanStatus({ victory: true });
       saves.clearRun(activeSlot);
       saves.recordResult(runResult(true));
       return mountGameOver(app, { registries, game: run, victory: true, onTitle: showTitle, onHistory: showHistory });
@@ -10545,7 +10664,7 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 
 const { esc } = require("src/ui/components/tooltip.js");
 
-function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom }) {
+function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan }) {
   // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
   const EMBER_COUNT = { off: 0, low: 3, normal: 7, high: 14 };
   const emberN = EMBER_COUNT[document.documentElement.dataset.ambient] ?? 7;
@@ -10587,6 +10706,7 @@ function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSett
       </div>
       <div class="slot-list">${slotCards}</div>
       <div class="title-menu">
+        <button class="subtle" id="lan-play" hidden>TARNISHED TOGETHER</button>
         <button class="subtle" id="custom-climb">CUSTOM CLIMB</button>
         <button class="subtle" id="run-history">RUN HISTORY</button>
         <button class="subtle" id="settings">SETTINGS</button>
@@ -10599,6 +10719,9 @@ function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSett
   app.querySelector('#settings').addEventListener('click', onSettings);
   if (onQuit) app.querySelector('#quit-game').addEventListener('click', onQuit);
   if (onCustom) app.querySelector('#custom-climb').addEventListener('click', onCustom);
+  // LAN play only exists when the launcher's server is behind the page — the
+  // orchestrator un-hides the button once /api/lan/info answers.
+  if (onLan) app.querySelector('#lan-play').addEventListener('click', onLan);
   app.querySelectorAll('.slot-continue').forEach((b) => b.addEventListener('click', () => onContinue(+b.dataset.slot)));
   app.querySelectorAll('.slot-new').forEach((b) => b.addEventListener('click', () => onNew(+b.dataset.slot)));
   // Delete is a two-click, self-resetting confirm (no blocking dialog).
@@ -14946,6 +15069,294 @@ function showBossIntro({ name, act }, { hold = false } = {}) {
 
 
 Object.assign(module.exports, { showBossIntro });
+
+},
+"src/ui/screens/lobby.js": function (module, exports, require) {
+// src/ui/screens/lobby.js — Tarnished Together lobby (LAN play, phase 1).
+//
+// Browse: light a fire (host) or join one found by UDP discovery (the list
+// refreshes every 2s from this machine's launcher at /api/lan/info).
+// Room: roster + class picks + ready-up; the host sets the seed and begins.
+// On start every player launches the SAME seeded run on their own machine and
+// the socket is handed to the orchestrator for live party-status broadcasts.
+// Shared-map voting and true co-op combat are the next phases.
+
+const { lanInfo, lanHost, lanUnhost, lanConnect } = require("src/net/lan.js");
+const { classGlyph } = require("src/ui/assets.js");
+const { esc } = require("src/ui/components/tooltip.js");
+
+const NAME_KEY = 'sote_lan_name';
+
+function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
+  let conn = null;
+  let hosting = false;
+  let myId = null;
+  let pollTimer = null;
+  const state = {
+    name: localStorage.getItem(NAME_KEY) || 'Tarnished',
+    classId: registries.classes.all()[0].id,
+    ready: false,
+    seedString: defaultSeedString,
+    players: [],
+  };
+
+  function cleanup() {
+    clearInterval(pollTimer);
+    if (conn) { conn.close(); conn = null; }
+    if (hosting) { lanUnhost(); hosting = false; }
+  }
+
+  function back(note) {
+    cleanup();
+    onBack(note);
+  }
+
+  // ---- browse view -----------------------------------------------------------
+  function renderBrowse(note) {
+    app.innerHTML = `
+      <div class="screen lobby" style="gap:18px">
+        <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">TARNISHED TOGETHER</h2>
+        <p class="subtitle">CLIMB WITH FRIENDS ON YOUR LOCAL NETWORK</p>
+        ${note ? `<p style="color:var(--ember);font-size:13px">${esc(note)}</p>` : ''}
+        <div style="display:flex;flex-direction:column;gap:14px;width:min(480px,92%)">
+          <div class="seed-line" style="justify-content:center">Your name
+            <input id="lb-name" maxlength="18" spellcheck="false" value="${esc(state.name)}">
+          </div>
+          <button id="lb-host">⚑ LIGHT A FIRE (HOST)</button>
+          <p class="cz-label" style="margin-top:6px">FIRES ON YOUR NETWORK</p>
+          <div id="lb-hosts" style="display:flex;flex-direction:column;gap:8px">
+            <p class="set-note" id="lb-scanning">Scanning…</p>
+          </div>
+        </div>
+        <button class="subtle" id="lb-back">Back</button>
+      </div>`;
+    app.querySelector('#lb-back').addEventListener('click', () => back());
+    app.querySelector('#lb-name').addEventListener('input', (e) => {
+      state.name = e.target.value.trim() || 'Tarnished';
+      localStorage.setItem(NAME_KEY, state.name);
+    });
+    app.querySelector('#lb-host').addEventListener('click', host);
+
+    const hostsBox = app.querySelector('#lb-hosts');
+    const refresh = async () => {
+      const info = await lanInfo();
+      if (!info || !hostsBox.isConnected) return;
+      const hosts = info.hosts || [];
+      hostsBox.innerHTML = hosts.length
+        ? hosts.map((h, i) =>
+            `<button class="mod-chip lb-join" data-i="${i}" style="text-align:left">
+               <b>⚑ ${esc(h.name)}</b><span>${esc(h.addr)}:${h.port}</span>
+             </button>`).join('')
+        : '<p class="set-note">No fires found yet — host one, or have a friend host. (Both machines must run the game via run.bat.)</p>';
+      hostsBox.querySelectorAll('.lb-join').forEach((b) =>
+        b.addEventListener('click', () => join(hosts[Number(b.dataset.i)])));
+    };
+    refresh();
+    pollTimer = setInterval(refresh, 2000);
+  }
+
+  // ---- connect paths ----------------------------------------------------------
+  async function host() {
+    try {
+      const h = await lanHost(state.name);
+      hosting = true;
+      connect({ addr: 'localhost', port: h.port, hostKey: h.hostKey, shareAddr: `${h.addr}:${h.port}` });
+    } catch (e) {
+      renderBrowse(`Could not host: ${e.message}`);
+    }
+  }
+
+  function join(h) {
+    connect({ addr: h.addr, port: h.port });
+  }
+
+  function connect({ addr, port, hostKey, shareAddr }) {
+    clearInterval(pollTimer);
+    conn = lanConnect({
+      addr,
+      port,
+      onMessage: (msg) => {
+        if (msg.t === 'welcome') {
+          myId = msg.id;
+          conn.send({ t: 'hello', name: state.name, classId: state.classId, hostKey });
+        } else if (msg.t === 'roster') {
+          state.players = msg.players;
+          if (msg.seedString) state.seedString = msg.seedString;
+          renderRoom(shareAddr);
+        } else if (msg.t === 'start') {
+          const me = (msg.players || []).find((p) => p.id === myId);
+          clearInterval(pollTimer);
+          const handoff = conn;
+          conn = null; // the orchestrator owns the socket now (cleanup must not close it)
+          onStart({
+            conn: handoff,
+            name: state.name,
+            classId: (me && me.classId) || state.classId,
+            seedString: msg.seedString || state.seedString,
+          });
+        } else if (msg.t === 'hostGone') {
+          cleanup();
+          renderBrowse('The host left the fire.');
+        }
+      },
+      onClose: () => {
+        conn = null;
+        cleanup();
+        renderBrowse('Connection lost.');
+      },
+    });
+  }
+
+  // ---- room view --------------------------------------------------------------
+  function isHostMe() {
+    const me = state.players.find((p) => p.id === myId);
+    return !!(me && me.isHost);
+  }
+
+  function renderRoom(shareAddr) {
+    const iAmHost = isHostMe();
+    const others = state.players.filter((p) => !p.isHost);
+    const allReady = others.every((p) => p.ready);
+    app.innerHTML = `
+      <div class="screen lobby" style="gap:16px">
+        <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">AT THE FIRE</h2>
+        ${shareAddr ? `<p class="subtitle">FRIENDS JOIN FROM THEIR OWN LAUNCHER — YOUR FIRE IS AT ${esc(shareAddr)}</p>` : '<p class="subtitle">WAITING AT THE FIRE</p>'}
+        <div id="lb-roster" style="display:flex;flex-direction:column;gap:8px;width:min(460px,92%)">
+          ${state.players.map((p) => `
+            <div class="slot occupied" style="padding:10px 14px">
+              <div class="slot-info">
+                <span class="slot-title">${p.isHost ? '⚑ ' : ''}${esc(p.name)}${p.id === myId ? ' (you)' : ''}</span>
+                <span class="slot-meta">${p.classId ? esc(registries.classes.get(p.classId).name) : 'choosing…'}${p.isHost ? ' · host' : p.ready ? ' · READY' : ' · not ready'}</span>
+              </div>
+              <span style="font-size:26px">${p.classId ? classGlyph(p.classId) : '…'}</span>
+            </div>`).join('')}
+        </div>
+        <div><p class="cz-label">YOUR CLASS</p><div id="lb-classes" class="class-row" style="flex-wrap:wrap;justify-content:center"></div></div>
+        ${iAmHost
+          ? `<div class="seed-line">Seed <input id="lb-seed" maxlength="10" spellcheck="false" value="${esc(state.seedString)}"></div>
+             <button id="lb-start" ${state.players.length && allReady ? '' : 'disabled'}>BEGIN THE CLIMB${allReady ? '' : ' (waiting for ready)'}</button>`
+          : `<button id="lb-ready">${state.ready ? '✓ READY — WAITING FOR THE HOST' : 'READY UP'}</button>`}
+        <button class="subtle" id="lb-leave">Leave</button>
+      </div>`;
+
+    const classes = app.querySelector('#lb-classes');
+    for (const cls of registries.classes.all()) {
+      const el = document.createElement('div');
+      el.className = `class-pick cr-class${cls.id === state.classId ? ' chosen' : ''}`;
+      el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3>`;
+      el.addEventListener('click', () => {
+        state.classId = cls.id;
+        conn.send({ t: 'pick', classId: cls.id });
+      });
+      classes.appendChild(el);
+    }
+    app.querySelector('#lb-leave').addEventListener('click', () => back());
+    if (iAmHost) {
+      app.querySelector('#lb-seed').addEventListener('change', (e) => {
+        state.seedString = e.target.value.trim();
+        conn.send({ t: 'seed', seedString: state.seedString });
+      });
+      const startBtn = app.querySelector('#lb-start');
+      if (startBtn) startBtn.addEventListener('click', () => {
+        conn.send({ t: 'seed', seedString: state.seedString });
+        conn.send({ t: 'start' });
+      });
+    } else {
+      app.querySelector('#lb-ready').addEventListener('click', () => {
+        state.ready = !state.ready;
+        conn.send({ t: 'ready', ready: state.ready });
+      });
+    }
+  }
+
+  renderBrowse();
+}
+
+
+Object.assign(module.exports, { mountLobby });
+
+},
+"src/net/lan.js": function (module, exports, require) {
+// src/net/lan.js — browser side of Tarnished Together (LAN play).
+//
+// Talks to the launcher's LAN layer (tools/lan.mjs): the game's OWN server
+// answers /api/lan/* (discovery + hosting), and the lobby itself is a
+// WebSocket to the HOST's server at ws://<host>:<port>/lan. When the game is
+// opened without the launcher (file://, dist build), lanInfo() resolves null
+// and the whole feature stays hidden.
+
+/** null when no launcher server is behind the page (dist build / file://). */
+async function lanInfo() {
+  try {
+    const res = await fetch('/api/lan/info', { cache: 'no-store' });
+    if (!res.ok) return null;
+    const info = await res.json();
+    return info && info.lan ? info : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Start hosting on this machine's launcher; returns { hostKey, addr, port }. */
+async function lanHost(name) {
+  const res = await fetch('/api/lan/host', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error(`hosting failed (${res.status})`);
+  return res.json();
+}
+
+function lanUnhost() {
+  return fetch('/api/lan/unhost', { method: 'POST' }).catch(() => {});
+}
+
+/**
+ * Open the lobby socket to a host. Returns { send(obj), close() }.
+ * onMessage(obj) per JSON message; onClose() once, on any disconnect.
+ */
+function lanConnect({ addr, port, onMessage, onClose }) {
+  const ws = new WebSocket(`ws://${addr}:${port}/lan`);
+  let closed = false;
+  let handler = onMessage;
+  let closeHandler = onClose;
+  const closeOnce = () => {
+    if (closed) return;
+    closed = true;
+    if (closeHandler) closeHandler();
+  };
+  ws.addEventListener('message', (ev) => {
+    try {
+      if (handler) handler(JSON.parse(ev.data));
+    } catch {
+      /* non-JSON frame — ignored */
+    }
+  });
+  ws.addEventListener('close', closeOnce);
+  ws.addEventListener('error', closeOnce);
+  return {
+    send(obj) {
+      if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+    },
+    // The lobby opens the socket, then hands it to the run orchestrator —
+    // swap handlers instead of reconnecting.
+    setHandlers({ onMessage: m, onClose: c }) {
+      if (m !== undefined) handler = m;
+      if (c !== undefined) closeHandler = c;
+    },
+    close() {
+      closed = true; // caller-initiated: suppress onClose
+      try { ws.close(); } catch { /* already closed */ }
+    },
+    get open() {
+      return ws.readyState === WebSocket.OPEN;
+    },
+  };
+}
+
+
+Object.assign(module.exports, { lanInfo, lanHost, lanUnhost, lanConnect });
 
 },
 "src/ui/audio.js": function (module, exports, require) {
