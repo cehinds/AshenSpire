@@ -113,8 +113,9 @@ function resolveZoom(uiScale) {
   const key = String(uiScale == null ? 'auto' : uiScale).toLowerCase();
   if (key === 'auto') return computeAutoZoom();
   if (UI_NAMED[key] != null) return UI_NAMED[key];
-  const n = Number(uiScale); // legacy '90'/'100'/'110'/'125'
-  if (!Number.isNaN(n) && n >= 50 && n <= 200) return n / 100;
+  // Anything else (incl. legacy numeric '90'/'100'/'110'/'125') is Auto: the
+  // settings UI displays such values as Auto, so behaving as fixed zoom made
+  // the control look dead ("scaling stopped working").
   return computeAutoZoom();
 }
 
