@@ -62,6 +62,8 @@ export function hintBarHtml(context) {
 /** Rebuild any visible hint bars in place — called when a pad (dis)connects. */
 export function refreshHintBars() {
   const pad = hasGamepad();
+  // Keyboard-only affordances (card quick-play badges) hide while a pad drives.
+  document.body.classList.toggle('pad-mode', pad);
   document.querySelectorAll('.hint-bar').forEach((bar) => {
     const context = bar.classList.contains('hint-combat') ? 'combat' : bar.classList.contains('hint-map') ? 'map' : null;
     if (!context) return;

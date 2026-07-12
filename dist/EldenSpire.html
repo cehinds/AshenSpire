@@ -605,10 +605,30 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 .intent .ic { font-size: 13px; }
 
 /* ---------- keyboard shortcut hints (SPEC §7.3) ---------- */
+/* Positional quick-play badge: a square gray keycap straddling the card's
+   top-center edge (approved look — coin placement, square, gray). Static per
+   slot: leftmost card is always 1 … then Q for the 10th. Hidden while a
+   gamepad drives (body.pad-mode, kept live by refreshHintBars). */
 .card .key-hint {
-  position: absolute; bottom: 3px; right: 6px; z-index: 2;
-  font-family: monospace; font-size: 10px; color: var(--muted); opacity: 0.75; pointer-events: none;
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 3;
+  min-width: 20px; height: 20px; padding: 0 4px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  background: #2b2b28; border: 1.5px solid #8d887c; color: #d8d3c4;
+  font-family: var(--font-body); font-weight: 700; font-size: 11px;
+  pointer-events: none; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
 }
+body.pad-mode .card .key-hint { display: none; }
+
+/* Flask quick-use badge on the top-bar flask icons (F/G/H or pad glyphs). */
+.flask-slot { position: relative; }
+.flask-slot .flask-key {
+  position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%);
+  min-width: 14px; padding: 0 3px; border-radius: 3px; text-align: center;
+  background: #2b2b28; border: 1px solid #8d887c; color: #d8d3c4;
+  font-family: var(--font-body); font-weight: 700; font-size: 9px; line-height: 13px;
+  pointer-events: none;
+}
+body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .enemy-key {
   position: absolute; top: 2px; left: 2px; z-index: 3;
   min-width: 17px; height: 17px; padding: 0 3px; border-radius: 4px;
@@ -741,8 +761,59 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
   60% { transform: translateX(-6px) rotate(-1deg); }
   100% { filter: none; transform: none; }
 }
-.sprite.crumble > :first-child { animation: crumble 300ms ease-in forwards; }
-@keyframes crumble { to { opacity: 0.2; transform: translateY(10px) scale(0.92); filter: grayscale(1); } }
+/* Death: a slower dissolve — sag, drain, blur to ash. */
+.sprite.crumble > :first-child { animation: crumble 550ms ease-in forwards; }
+@keyframes crumble {
+  40% { opacity: 0.7; filter: grayscale(0.6) blur(1px); }
+  to { opacity: 0.12; transform: translateY(14px) scale(0.9); filter: grayscale(1) blur(3px); }
+}
+
+/* Attack impact: a slashing arc sweeping across the victim. */
+.fx-slash {
+  position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px;
+  border-radius: 50%; border-top: 3px solid #f3e9cf; border-right: 3px solid transparent;
+  pointer-events: none; filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.8));
+  animation: slash-sweep 260ms ease-out forwards;
+}
+@keyframes slash-sweep {
+  from { transform: rotate(calc(var(--rot, 0deg) - 90deg)) scale(0.55); opacity: 0; }
+  25% { opacity: 1; }
+  to { transform: rotate(calc(var(--rot, 0deg) + 70deg)) scale(1.2); opacity: 0; }
+}
+
+/* Cast flourish (skills/powers/buff moves) + stagger star. */
+.fx-glyph {
+  position: absolute; margin-left: -11px; pointer-events: none;
+  color: var(--grace); font-size: 22px; text-shadow: 0 0 10px currentColor;
+  animation: glyph-pop 430ms ease-out forwards;
+}
+@keyframes glyph-pop {
+  from { transform: scale(0.4); opacity: 0; }
+  30% { opacity: 1; }
+  to { transform: scale(1.6) translateY(-14px); opacity: 0; }
+}
+
+/* Fully blocked hit: frost spark, armor held. */
+.fx-spark {
+  position: absolute; margin-left: -10px; pointer-events: none;
+  color: var(--frost); font-size: 20px; text-shadow: 0 0 8px currentColor;
+  animation: spark-pop 300ms ease-out forwards;
+}
+@keyframes spark-pop {
+  from { transform: scale(0.5); opacity: 0; }
+  40% { opacity: 1; }
+  to { transform: scale(1.5); opacity: 0; }
+}
+
+/* Stagger: the figure teeters. */
+.sprite.wobble > :first-child { animation: wobble 550ms ease-in-out; }
+@keyframes wobble {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(6deg); }
+  40% { transform: rotate(-5deg); }
+  60% { transform: rotate(3deg); }
+  80% { transform: rotate(-2deg); }
+}
 .relic.proc { animation: relicProc 300ms ease-out; }
 @keyframes relicProc {
   0% { transform: scale(1.45); box-shadow: 0 0 18px var(--gold); }
@@ -12249,6 +12320,11 @@ const ACTIONS = [
   { id: 'deck', label: 'Open Deck', kind: 'key', defKey: 'd', defBtn: 3 },
   { id: 'relics', label: 'Open Relics', kind: 'key', defKey: 'r', defBtn: 4 },
   { id: 'stats', label: 'Open Stats', kind: 'key', defKey: 't', defBtn: 5 },
+  // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
+  // we give both a rebindable key per slot).
+  { id: 'flask1', label: 'Use Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
+  { id: 'flask2', label: 'Use Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
+  { id: 'flask3', label: 'Use Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
 ];
 
 const DEADZONE = 0.5;
@@ -12748,6 +12824,8 @@ function hintBarHtml(context) {
 /** Rebuild any visible hint bars in place — called when a pad (dis)connects. */
 function refreshHintBars() {
   const pad = hasGamepad();
+  // Keyboard-only affordances (card quick-play badges) hide while a pad drives.
+  document.body.classList.toggle('pad-mode', pad);
   document.querySelectorAll('.hint-bar').forEach((bar) => {
     const context = bar.classList.contains('hint-combat') ? 'combat' : bar.classList.contains('hint-map') ? 'map' : null;
     if (!context) return;
@@ -13033,10 +13111,18 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     p.flasks.forEach((f, slot) => {
       const def = registries.flasks.get(f.flaskId);
       const el = document.createElement('div');
-      el.className = 'relic';
+      el.className = 'relic flask-slot';
       el.style.cursor = 'pointer';
       if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
       el.textContent = def.icon || '🧪';
+      // Quick-use key badge (F/G/H by default; pad glyph while a pad drives).
+      if (slot < 3) {
+        const kb = document.createElement('span');
+        kb.className = 'flask-key';
+        const id = `flask${slot + 1}`;
+        kb.textContent = hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
+        el.appendChild(kb);
+      }
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}${def.targeted ? '<br><i>Click, then choose a target.</i>' : '<br><i>Click to drink.</i>'}`);
       el.addEventListener('click', () => {
         if (busy || combat.result) return;
@@ -13258,10 +13344,12 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
       el.style.zIndex = i;
       if (inst.instanceId === selected || inst.instanceId === selfArm) el.classList.add('selected');
-      if (i < 9) {
+      // Positional quick-play key badge: 1–9 then Q, tied to the slot not the
+      // card. Hidden while a gamepad drives (body.pad-mode via refreshHintBars).
+      if (i < 10) {
         const hint = document.createElement('span');
         hint.className = 'key-hint';
-        hint.textContent = i + 1;
+        hint.textContent = i < 9 ? i + 1 : 'Q';
         el.appendChild(hint);
       }
       if (pv) wireCardInput(el, inst, pv, affordable);
@@ -13409,19 +13497,42 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       return;
     }
 
-    if (/^[1-9]$/.test(ev.key)) {
+    // Flask quick-use (F/G/H by default, rebindable; pads route through the
+    // same bound keys). Drinks immediately, or enters aim mode when targeted.
+    for (let slot = 0; slot < 3; slot++) {
+      if (matchAction(ev, `flask${slot + 1}`)) {
+        ev.preventDefault();
+        const f = combat.player.flasks[slot];
+        if (!f) return;
+        const fdef = registries.flasks.get(f.flaskId);
+        if (fdef.targeted) {
+          selectedFlask = slot;
+          selected = null;
+          selfArm = null;
+          render();
+          focusTargeting();
+        } else {
+          useFlask(slot, null);
+        }
+        return;
+      }
+    }
+
+    // Positional card keys: 1–9 then Q for the 10th (hand caps at 10). The key
+    // is tied to the SLOT, not the card — leftmost is always 1.
+    const cardIdx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
+    if (cardIdx >= 0) {
       ev.preventDefault();
-      const n = Number(ev.key) - 1;
-      // Targeting mode: the number picks the Nth living enemy.
-      if (selected || selectedFlask != null) {
-        const enemy = combat.enemies.filter((e) => e.alive)[n];
+      // Targeting mode: a NUMBER picks the Nth living enemy (Q never targets).
+      if ((selected || selectedFlask != null) && cardIdx < 9) {
+        const enemy = combat.enemies.filter((e) => e.alive)[cardIdx];
         if (!enemy) return;
         if (selected) playCard(selected, enemy.id);
         else useFlask(selectedFlask, enemy.id);
         return;
       }
       // Selection mode: play the Nth hand card (auto-target a lone enemy).
-      const inst = combat.piles.hand[n];
+      const inst = combat.piles.hand[cardIdx];
       if (!inst) return;
       const pv = previewCard(combat, inst.instanceId);
       const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && !isUnplayable(inst);
@@ -13737,6 +13848,21 @@ function dmgClass(amount) {
   return 'dmg';
 }
 
+/** Spawn a transient effect element (slash arc, cast glyph, block spark…). */
+function spawnFx(layer, anchor, cls, ms, text) {
+  if (!layer || !anchor) return;
+  const lr = layer.getBoundingClientRect();
+  const ar = anchor.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = cls;
+  if (text) el.textContent = text;
+  el.style.left = `${ar.left - lr.left + ar.width / 2}px`;
+  el.style.top = `${ar.top - lr.top + ar.height * 0.4}px`;
+  el.style.setProperty('--rot', `${Math.round(Math.random() * 50 - 25)}deg`);
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+
 function banner(layer, text, cls = '') {
   if (!layer) return;
   const el = document.createElement('div');
@@ -13956,7 +14082,12 @@ function playTimeline(events, ctx, done) {
     if (actorEl) safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
-    const visuals = beat.events.map(visualFor).filter(Boolean);
+    const visuals = beat.events.map((e) => visualFor(e, beat.kind)).filter(Boolean);
+    // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
+    // glyph as their wind-up — attacks get the slash arc on impact instead.
+    if (actorEl && beat.kind !== 'attack' && beat.events.length) {
+      safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', 450, '✦'));
+    }
     const windup = actorEl ? Math.round(speed.lungeMs * 0.55) : 0;
     setTimeout(() => {
       let vi = 0;
@@ -13982,16 +14113,27 @@ function playTimeline(events, ctx, done) {
   nextBeat();
 }
 
-function visualFor(e) {
+function visualFor(e, beatKind) {
   switch (e.type) {
     case 'damageDealt':
+      // Fully blocked: a frost spark and a BLOCKED float — the armor held, so
+      // no flinch, no shake, no slash.
+      if (e.amount === 0 && e.blocked > 0) {
+        return (ctx) => {
+          sfx.play('block');
+          const anchor = ctx.anchorFor(e.targetId);
+          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
+          floatNum(ctx.layer, anchor, 'BLOCKED', 'blk small');
+        };
+      }
       return (ctx) => {
         sfx.play('hit');
         const anchor = ctx.anchorFor(e.targetId);
         const heavy = e.amount >= 15;
         floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
-        // Victim reaction: flash + directional recoil (CSS); heavy hits recoil
-        // further (hit-heavy modifier) and kick the screen.
+        // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
+        // recoil further (hit-heavy) and kick the screen.
+        if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
         flash(anchor, 'hitflash', heavy ? 380 : 220);
         if (heavy) {
           flash(anchor, 'hit-heavy', 380);
@@ -14027,6 +14169,9 @@ function visualFor(e) {
       return (ctx) => {
         sfx.play('stagger');
         banner(ctx.layer, 'STAGGERED');
+        const anchor = ctx.anchorFor(e.targetId);
+        flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
+        spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');
         shake(ctx.combatEl);
       };
     case 'enemyDied':

@@ -54,6 +54,21 @@ function dmgClass(amount) {
   return 'dmg';
 }
 
+/** Spawn a transient effect element (slash arc, cast glyph, block spark…). */
+function spawnFx(layer, anchor, cls, ms, text) {
+  if (!layer || !anchor) return;
+  const lr = layer.getBoundingClientRect();
+  const ar = anchor.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = cls;
+  if (text) el.textContent = text;
+  el.style.left = `${ar.left - lr.left + ar.width / 2}px`;
+  el.style.top = `${ar.top - lr.top + ar.height * 0.4}px`;
+  el.style.setProperty('--rot', `${Math.round(Math.random() * 50 - 25)}deg`);
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+
 function banner(layer, text, cls = '') {
   if (!layer) return;
   const el = document.createElement('div');
@@ -273,7 +288,12 @@ export function playTimeline(events, ctx, done) {
     if (actorEl) safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
-    const visuals = beat.events.map(visualFor).filter(Boolean);
+    const visuals = beat.events.map((e) => visualFor(e, beat.kind)).filter(Boolean);
+    // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
+    // glyph as their wind-up — attacks get the slash arc on impact instead.
+    if (actorEl && beat.kind !== 'attack' && beat.events.length) {
+      safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', 450, '✦'));
+    }
     const windup = actorEl ? Math.round(speed.lungeMs * 0.55) : 0;
     setTimeout(() => {
       let vi = 0;
@@ -299,16 +319,27 @@ export function playTimeline(events, ctx, done) {
   nextBeat();
 }
 
-function visualFor(e) {
+function visualFor(e, beatKind) {
   switch (e.type) {
     case 'damageDealt':
+      // Fully blocked: a frost spark and a BLOCKED float — the armor held, so
+      // no flinch, no shake, no slash.
+      if (e.amount === 0 && e.blocked > 0) {
+        return (ctx) => {
+          sfx.play('block');
+          const anchor = ctx.anchorFor(e.targetId);
+          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
+          floatNum(ctx.layer, anchor, 'BLOCKED', 'blk small');
+        };
+      }
       return (ctx) => {
         sfx.play('hit');
         const anchor = ctx.anchorFor(e.targetId);
         const heavy = e.amount >= 15;
         floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
-        // Victim reaction: flash + directional recoil (CSS); heavy hits recoil
-        // further (hit-heavy modifier) and kick the screen.
+        // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
+        // recoil further (hit-heavy) and kick the screen.
+        if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
         flash(anchor, 'hitflash', heavy ? 380 : 220);
         if (heavy) {
           flash(anchor, 'hit-heavy', 380);
@@ -344,6 +375,9 @@ function visualFor(e) {
       return (ctx) => {
         sfx.play('stagger');
         banner(ctx.layer, 'STAGGERED');
+        const anchor = ctx.anchorFor(e.targetId);
+        flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
+        spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');
         shake(ctx.combatEl);
       };
     case 'enemyDied':

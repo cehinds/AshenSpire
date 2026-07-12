@@ -58,6 +58,11 @@ export const ACTIONS = [
   { id: 'deck', label: 'Open Deck', kind: 'key', defKey: 'd', defBtn: 3 },
   { id: 'relics', label: 'Open Relics', kind: 'key', defKey: 'r', defBtn: 4 },
   { id: 'stats', label: 'Open Stats', kind: 'key', defKey: 't', defBtn: 5 },
+  // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
+  // we give both a rebindable key per slot).
+  { id: 'flask1', label: 'Use Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
+  { id: 'flask2', label: 'Use Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
+  { id: 'flask3', label: 'Use Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
 ];
 
 const DEADZONE = 0.5;

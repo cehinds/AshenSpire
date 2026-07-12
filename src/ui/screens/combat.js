@@ -262,10 +262,18 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     p.flasks.forEach((f, slot) => {
       const def = registries.flasks.get(f.flaskId);
       const el = document.createElement('div');
-      el.className = 'relic';
+      el.className = 'relic flask-slot';
       el.style.cursor = 'pointer';
       if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
       el.textContent = def.icon || '🧪';
+      // Quick-use key badge (F/G/H by default; pad glyph while a pad drives).
+      if (slot < 3) {
+        const kb = document.createElement('span');
+        kb.className = 'flask-key';
+        const id = `flask${slot + 1}`;
+        kb.textContent = hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
+        el.appendChild(kb);
+      }
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}${def.targeted ? '<br><i>Click, then choose a target.</i>' : '<br><i>Click to drink.</i>'}`);
       el.addEventListener('click', () => {
         if (busy || combat.result) return;
@@ -487,10 +495,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
       el.style.zIndex = i;
       if (inst.instanceId === selected || inst.instanceId === selfArm) el.classList.add('selected');
-      if (i < 9) {
+      // Positional quick-play key badge: 1–9 then Q, tied to the slot not the
+      // card. Hidden while a gamepad drives (body.pad-mode via refreshHintBars).
+      if (i < 10) {
         const hint = document.createElement('span');
         hint.className = 'key-hint';
-        hint.textContent = i + 1;
+        hint.textContent = i < 9 ? i + 1 : 'Q';
         el.appendChild(hint);
       }
       if (pv) wireCardInput(el, inst, pv, affordable);
@@ -638,19 +648,42 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       return;
     }
 
-    if (/^[1-9]$/.test(ev.key)) {
+    // Flask quick-use (F/G/H by default, rebindable; pads route through the
+    // same bound keys). Drinks immediately, or enters aim mode when targeted.
+    for (let slot = 0; slot < 3; slot++) {
+      if (matchAction(ev, `flask${slot + 1}`)) {
+        ev.preventDefault();
+        const f = combat.player.flasks[slot];
+        if (!f) return;
+        const fdef = registries.flasks.get(f.flaskId);
+        if (fdef.targeted) {
+          selectedFlask = slot;
+          selected = null;
+          selfArm = null;
+          render();
+          focusTargeting();
+        } else {
+          useFlask(slot, null);
+        }
+        return;
+      }
+    }
+
+    // Positional card keys: 1–9 then Q for the 10th (hand caps at 10). The key
+    // is tied to the SLOT, not the card — leftmost is always 1.
+    const cardIdx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
+    if (cardIdx >= 0) {
       ev.preventDefault();
-      const n = Number(ev.key) - 1;
-      // Targeting mode: the number picks the Nth living enemy.
-      if (selected || selectedFlask != null) {
-        const enemy = combat.enemies.filter((e) => e.alive)[n];
+      // Targeting mode: a NUMBER picks the Nth living enemy (Q never targets).
+      if ((selected || selectedFlask != null) && cardIdx < 9) {
+        const enemy = combat.enemies.filter((e) => e.alive)[cardIdx];
         if (!enemy) return;
         if (selected) playCard(selected, enemy.id);
         else useFlask(selectedFlask, enemy.id);
         return;
       }
       // Selection mode: play the Nth hand card (auto-target a lone enemy).
-      const inst = combat.piles.hand[n];
+      const inst = combat.piles.hand[cardIdx];
       if (!inst) return;
       const pv = previewCard(combat, inst.instanceId);
       const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && !isUnplayable(inst);
