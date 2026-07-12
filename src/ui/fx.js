@@ -5,6 +5,7 @@
 // Staggers get the loud treatment (they're the theme).
 
 import { sfx } from './sfx.js';
+import { dlog } from './debuglog.js';
 
 const STEP_MS = 80;
 
@@ -229,6 +230,7 @@ export function playTimeline(events, ctx, done) {
   const watchdog = setTimeout(() => {
     dbg.watchdog = (dbg.watchdog || 0) + 1;
     console.warn('[fx] watchdog forced timeline completion');
+    dlog('fx', 'watchdog forced timeline completion', { open: dbg.open, finished: dbg.finished });
     try {
       if (ctx.onFlush) ctx.onFlush();
     } catch (e) {

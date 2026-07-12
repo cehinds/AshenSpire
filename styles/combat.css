@@ -138,6 +138,11 @@
   font-size: 19px; font-weight: 800; box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
 }
 .end-turn { position: absolute; right: 34px; bottom: 76px; }
+.end-turn .et-key {
+  font-family: var(--font-body); font-size: 10px; margin-left: 7px; vertical-align: 1px;
+  padding: 1px 6px; border-radius: 4px; color: var(--parchment);
+  background: var(--panel); border: 1px solid var(--gold);
+}
 .end-turn.pulse { animation: pulse-gold 700ms infinite alternate; }
 
 .pile {

@@ -68,6 +68,9 @@ export function refreshHintBars() {
     bar.classList.toggle('hint-pad', pad);
     bar.innerHTML = chipsHtml(context, pad);
   });
+  // The End Turn button carries its own key chip — keep it in sync too.
+  const etKey = document.querySelector('.end-turn .et-key');
+  if (etKey) etKey.textContent = pad ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
 }
 
 if (typeof window !== 'undefined') {
