@@ -145,8 +145,13 @@ export function hasGamepad() {
 
 /** Human label for an action's bound key (Controls tab + reference). */
 export function keyLabel(id) {
-  const k = keyBindings[id] || '';
-  if (!k) return '—';
+  let k = keyBindings[id] || '';
+  if (!k) {
+    // Fixed-key actions (confirm=Enter, cancel=Esc) aren't in the rebind map.
+    const a = ACTIONS.find((x) => x.id === id);
+    if (a && (a.keyHint || a.key)) return a.keyHint || a.key;
+    return '—';
+  }
   if (k === 'Escape') return 'Esc';
   if (k === ' ') return 'Space';
   return k.length === 1 ? k.toUpperCase() : k;

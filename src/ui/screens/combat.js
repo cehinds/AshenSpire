@@ -15,7 +15,7 @@ import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { overlayIsOpen } from '../components/overlay.js';
 import { focusFirst, matchAction, isEngaged } from '../input.js';
-import { hintBarHtml } from '../components/hints.js';
+import { hintBarHtml, setHintMode } from '../components/hints.js';
 
 export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -234,6 +234,8 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     renderHand();
     renderControls();
     refreshAim(); // re-apply the target glow after the board rebuilds
+    // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
+    setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
   }
 
   function renderTopbar() {

@@ -24,11 +24,26 @@ const CHIPS = {
     { id: 'stats', label: 'Stats' },
     { id: 'menu', label: 'Menu' },
   ],
+  // While aiming a card/flask, the combat bar swaps to the two live choices.
+  targeting: [
+    { id: 'confirm', label: 'Confirm' },
+    { id: 'cancel', label: 'Cancel' },
+  ],
 };
+
+// Combat sets 'targeting' while a card/flask is aimed; null restores the
+// default chips. The bar rebuilds in place.
+let hintMode = null;
+export function setHintMode(mode) {
+  if (mode === hintMode) return;
+  hintMode = mode;
+  refreshHintBars();
+}
 
 // Show controller glyphs when a gamepad is connected, keyboard keys otherwise.
 function chipsHtml(context, pad) {
-  return (CHIPS[context] || [])
+  const set = context === 'combat' && hintMode === 'targeting' ? CHIPS.targeting : CHIPS[context];
+  return (set || [])
     .map((c) => {
       const label = pad ? padLabel(c.id) || keyLabel(c.id) : keyLabel(c.id);
       return `<span class="hint"><kbd>${label}</kbd>${c.label}</span>`;

@@ -12181,8 +12181,13 @@ function hasGamepad() {
 
 /** Human label for an action's bound key (Controls tab + reference). */
 function keyLabel(id) {
-  const k = keyBindings[id] || '';
-  if (!k) return '—';
+  let k = keyBindings[id] || '';
+  if (!k) {
+    // Fixed-key actions (confirm=Enter, cancel=Esc) aren't in the rebind map.
+    const a = ACTIONS.find((x) => x.id === id);
+    if (a && (a.keyHint || a.key)) return a.keyHint || a.key;
+    return '—';
+  }
   if (k === 'Escape') return 'Esc';
   if (k === ' ') return 'Space';
   return k.length === 1 ? k.toUpperCase() : k;
@@ -12550,11 +12555,26 @@ const CHIPS = {
     { id: 'stats', label: 'Stats' },
     { id: 'menu', label: 'Menu' },
   ],
+  // While aiming a card/flask, the combat bar swaps to the two live choices.
+  targeting: [
+    { id: 'confirm', label: 'Confirm' },
+    { id: 'cancel', label: 'Cancel' },
+  ],
 };
+
+// Combat sets 'targeting' while a card/flask is aimed; null restores the
+// default chips. The bar rebuilds in place.
+let hintMode = null;
+function setHintMode(mode) {
+  if (mode === hintMode) return;
+  hintMode = mode;
+  refreshHintBars();
+}
 
 // Show controller glyphs when a gamepad is connected, keyboard keys otherwise.
 function chipsHtml(context, pad) {
-  return (CHIPS[context] || [])
+  const set = context === 'combat' && hintMode === 'targeting' ? CHIPS.targeting : CHIPS[context];
+  return (set || [])
     .map((c) => {
       const label = pad ? padLabel(c.id) || keyLabel(c.id) : keyLabel(c.id);
       return `<span class="hint"><kbd>${label}</kbd>${c.label}</span>`;
@@ -12587,7 +12607,7 @@ if (typeof window !== 'undefined') {
 }
 
 
-Object.assign(module.exports, { hintBarHtml, refreshHintBars });
+Object.assign(module.exports, { setHintMode, hintBarHtml, refreshHintBars });
 
 },
 "src/ui/screens/combat.js": function (module, exports, require) {
@@ -12608,7 +12628,7 @@ const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { overlayIsOpen } = require("src/ui/components/overlay.js");
 const { focusFirst, matchAction, isEngaged } = require("src/ui/input.js");
-const { hintBarHtml } = require("src/ui/components/hints.js");
+const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 
 function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -12827,6 +12847,8 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     renderHand();
     renderControls();
     refreshAim(); // re-apply the target glow after the board rebuilds
+    // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
+    setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
   }
 
   function renderTopbar() {
