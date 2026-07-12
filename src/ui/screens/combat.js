@@ -14,8 +14,9 @@ import { animateEvents, playTimeline } from '../fx.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { overlayIsOpen } from '../components/overlay.js';
-import { focusFirst, matchAction, isEngaged } from '../input.js';
+import { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad } from '../input.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
+import { dlog } from '../debuglog.js';
 
 export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -504,6 +505,10 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
 
   function renderControls() {
     $('.energy-orb').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    // The bound key (or pad button) rides on the End Turn button itself, so the
+    // shortcut is discoverable without reading the hint bar. Tracks rebinds.
+    const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
+    $('.end-turn').innerHTML = `END TURN <kbd class="et-key">${esc(etKey)}</kbd>`;
     const anyPlayable = combat.piles.hand.some((inst) => {
       const def = resolveCard(registries, inst);
       if ((def.keywords || []).includes('unplayable')) return false;
@@ -676,7 +681,10 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   }
 
   function useFlask(slot, targetId) {
-    if (busy || combat.result) return;
+    if (busy || combat.result) {
+      dlog('ignored', `useFlask slot=${slot}`, { busy, result: combat.result, phase: combat.phase });
+      return;
+    }
     selectedFlask = null;
     selected = null;
     hideTooltip();
@@ -686,10 +694,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       out = dispatch(combat, { type: 'useFlask', slot, targetId: targetId || undefined });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
+      dlog('rejected', `useFlask slot=${slot}`, err && err.message);
       disp = null;
       render();
       return;
     }
+    dlog('dispatch', `useFlask slot=${slot}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length });
     sfx.play('flask');
     busy = true;
     afterDispatch(out.events);
@@ -762,7 +772,9 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
 
   function playCard(instanceId, targetId) {
     if (busy || combat.result) {
-      console.debug('[combat] playCard ignored:', JSON.stringify({ busy, result: combat.result, phase: combat.phase }));
+      const why = { busy, result: combat.result, phase: combat.phase };
+      console.debug('[combat] playCard ignored:', JSON.stringify(why));
+      dlog('ignored', `playCard ${instanceId}`, why);
       return;
     }
     if (targetId) lastTargetId = targetId; // remembered for the next card's aim
@@ -778,10 +790,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
+      dlog('rejected', `playCard ${instanceId}`, err && err.message);
       disp = null;
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
     }
+    dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
     sfx.play('cardPlay');
     busy = true;
     afterDispatch(out.events);
@@ -789,7 +803,9 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
 
   $('.end-turn').addEventListener('click', () => {
     if (busy || combat.result || combat.phase !== 'player') {
-      console.debug('[combat] endTurn ignored:', JSON.stringify({ busy, result: combat.result, phase: combat.phase }));
+      const why = { busy, result: combat.result, phase: combat.phase };
+      console.debug('[combat] endTurn ignored:', JSON.stringify(why));
+      dlog('ignored', 'endTurn', why);
       return;
     }
     selected = null;
@@ -801,9 +817,11 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       out = dispatch(combat, { type: 'endTurn' });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
+      dlog('rejected', 'endTurn', err && err.message);
       disp = null;
       return;
     }
+    dlog('dispatch', 'endTurn', { events: out.events.length });
     busy = true;
     afterDispatch(out.events);
   });

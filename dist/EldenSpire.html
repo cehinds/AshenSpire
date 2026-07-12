@@ -232,6 +232,15 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .ov-save-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; margin-top: 14px; max-width: 320px; }
 .ov-save-actions button { text-align: left; padding: 11px 16px; }
 
+/* ---------- command log (Settings → Advanced) ---------- */
+.debug-modal { width: 720px; max-width: 94vw; }
+.debug-log-body {
+  margin-top: 10px; max-height: 46vh; overflow: auto; user-select: text;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 10px 12px; font-family: Consolas, monospace; font-size: 11px;
+  line-height: 1.55; color: var(--parchment); white-space: pre-wrap; word-break: break-word;
+}
+
 /* ---------- keyboard / gamepad focus cursor ---------- */
 .gp-focus {
   outline: 3px solid var(--gold) !important; outline-offset: 2px;
@@ -625,6 +634,11 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
   font-size: 19px; font-weight: 800; box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
 }
 .end-turn { position: absolute; right: 34px; bottom: 76px; }
+.end-turn .et-key {
+  font-family: var(--font-body); font-size: 10px; margin-left: 7px; vertical-align: 1px;
+  padding: 1px 6px; border-radius: 4px; color: var(--parchment);
+  background: var(--panel); border: 1px solid var(--gold);
+}
 .end-turn.pulse { animation: pulse-gold 700ms infinite alternate; }
 
 .pile {
@@ -11719,6 +11733,8 @@ Object.assign(module.exports, { overlayIsOpen, closeOverlay, openOverlay });
 // Settings tab. Each row declares its default so stored settings stay sparse.
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
+const { openDebugLog } = require("src/ui/debuglog.js");
+
 const ROWS = [
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
@@ -11773,9 +11789,11 @@ const ROWS = [
     note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
   { cat: 'Accessibility', key: 'readableHeadings', def: false, label: 'Readable headings',
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
+  { cat: 'Advanced', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
+    note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
 ];
 
-const CATEGORIES = ['Display', 'Audio', 'Accessibility'];
+const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Advanced'];
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
@@ -11798,6 +11816,12 @@ function rowHtml(settings, r) {
           <input type="range" class="set-range" min="0" max="100" step="5" value="${val}" data-key="${r.key}">
           <span class="range-val" data-for="${r.key}">${val}</span>
         </div>
+      </div>`;
+  }
+  if (r.type === 'button') {
+    return `<div class="set-row">
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <button class="subtle" data-btn="${r.key}">${r.btn || 'Open'}</button>
       </div>`;
   }
   if (r.type === 'choice') {
@@ -11871,6 +11895,10 @@ function renderSettings(container, { settings, onChange, grouped = true }) {
     });
   });
 
+  container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
+    btn.addEventListener('click', openDebugLog);
+  });
+
   container.querySelectorAll('.choice').forEach((btn) => {
     btn.addEventListener('click', () => {
       btn.parentElement.querySelectorAll('.choice').forEach((b) => b.classList.toggle('on', b === btn));
@@ -11922,6 +11950,115 @@ function openSettings({ meta, onChange }) {
 
 
 Object.assign(module.exports, { renderSettings, openSettings });
+
+},
+"src/ui/debuglog.js": function (module, exports, require) {
+// src/ui/debuglog.js — in-game command log (Settings → Advanced → Command log).
+//
+// A ring buffer of everything the UI asks the engine to do and everything that
+// comes back: dispatches, rejections, ignored inputs, timeline lifecycle, and
+// uncaught page errors. Exists so a stuck game can be diagnosed from inside the
+// game — open the log, read the last commands, copy them into a bug report.
+
+const MAX_ENTRIES = 300;
+const entries = [];
+
+/** Append one entry: dlog('dispatch', 'playCard strike_3 -> e1', {events: 12}) */
+function dlog(kind, msg, data) {
+  let detail = '';
+  if (data !== undefined) {
+    try {
+      detail = typeof data === 'string' ? data : JSON.stringify(data);
+    } catch (e) {
+      detail = String(data);
+    }
+  }
+  entries.push({ time: new Date(), kind, msg, detail });
+  if (entries.length > MAX_ENTRIES) entries.splice(0, entries.length - MAX_ENTRIES);
+}
+
+function getEntries() {
+  return entries;
+}
+
+// Uncaught errors are invisible in most consoles players look at — capture them
+// into the log so "it just stopped working" becomes a stack trace.
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (ev) => {
+    dlog('ERROR', String(ev.message || 'uncaught error'), ev.error && ev.error.stack ? String(ev.error.stack).split('\n').slice(0, 4).join(' | ') : '');
+  });
+  window.addEventListener('unhandledrejection', (ev) => {
+    dlog('ERROR', 'unhandled promise rejection', String((ev.reason && ev.reason.stack) || ev.reason).slice(0, 300));
+  });
+}
+
+function formatEntry(e) {
+  const hh = String(e.time.getHours()).padStart(2, '0');
+  const mm = String(e.time.getMinutes()).padStart(2, '0');
+  const ss = String(e.time.getSeconds()).padStart(2, '0');
+  return `${hh}:${mm}:${ss} [${e.kind}] ${e.msg}${e.detail ? ' :: ' + e.detail : ''}`;
+}
+
+/** The whole log as copyable text (plus live engine/fx state header). */
+function logText() {
+  const fx = typeof window !== 'undefined' && window.__fx ? JSON.stringify(window.__fx) : 'n/a';
+  const c = typeof window !== 'undefined' ? window.__combat : null;
+  const state = c ? `phase=${c.phase} result=${c.result} hand=${c.piles.hand.length} energy=${c.player.energy}` : 'no combat';
+  const head = `EldenSpire command log — ${new Date().toISOString()}\nstate: ${state}\ntimelines: ${fx}\n---`;
+  return [head, ...entries.map(formatEntry)].join('\n');
+}
+
+/** Open the log viewer modal (usable over the in-run overlay). */
+function openDebugLog() {
+  const veil = document.createElement('div');
+  veil.className = 'modal-veil';
+  veil.style.zIndex = '700'; // above the in-run overlay
+  veil.innerHTML = `
+    <div class="modal debug-modal">
+      <h2>COMMAND LOG</h2>
+      <p class="set-note">The last ${MAX_ENTRIES} commands and results between the interface and the engine, newest at the bottom. Copy this into a bug report if the game misbehaves.</p>
+      <pre class="debug-log-body"></pre>
+      <div class="set-actions" style="gap:8px">
+        <button class="subtle" id="dbg-copy">Copy</button>
+        <button class="subtle" id="dbg-refresh">Refresh</button>
+        <button id="dbg-close">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(veil);
+
+  const body = veil.querySelector('.debug-log-body');
+  const fill = () => {
+    body.textContent = logText();
+    body.scrollTop = body.scrollHeight;
+  };
+  fill();
+
+  veil.querySelector('#dbg-refresh').addEventListener('click', fill);
+  veil.querySelector('#dbg-copy').addEventListener('click', async () => {
+    const btn = veil.querySelector('#dbg-copy');
+    try {
+      await navigator.clipboard.writeText(logText());
+      btn.textContent = 'Copied';
+    } catch (e) {
+      // Clipboard blocked (e.g. file://): select the text for manual copy.
+      const range = document.createRange();
+      range.selectNodeContents(body);
+      const sel = getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      btn.textContent = 'Select+Ctrl C';
+    }
+    setTimeout(() => (btn.textContent = 'Copy'), 1500);
+  });
+  const close = () => veil.remove();
+  veil.querySelector('#dbg-close').addEventListener('click', close);
+  veil.addEventListener('click', (e) => {
+    if (e.target === veil) close();
+  });
+}
+
+
+Object.assign(module.exports, { dlog, getEntries, logText, openDebugLog });
 
 },
 "src/ui/screens/controls.js": function (module, exports, require) {
@@ -12616,6 +12753,9 @@ function refreshHintBars() {
     bar.classList.toggle('hint-pad', pad);
     bar.innerHTML = chipsHtml(context, pad);
   });
+  // The End Turn button carries its own key chip — keep it in sync too.
+  const etKey = document.querySelector('.end-turn .et-key');
+  if (etKey) etKey.textContent = pad ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
 }
 
 if (typeof window !== 'undefined') {
@@ -12644,8 +12784,9 @@ const { animateEvents, playTimeline } = require("src/ui/fx.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { overlayIsOpen } = require("src/ui/components/overlay.js");
-const { focusFirst, matchAction, isEngaged } = require("src/ui/input.js");
+const { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad } = require("src/ui/input.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
+const { dlog } = require("src/ui/debuglog.js");
 
 function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -13134,6 +13275,10 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
 
   function renderControls() {
     $('.energy-orb').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
+    // The bound key (or pad button) rides on the End Turn button itself, so the
+    // shortcut is discoverable without reading the hint bar. Tracks rebinds.
+    const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
+    $('.end-turn').innerHTML = `END TURN <kbd class="et-key">${esc(etKey)}</kbd>`;
     const anyPlayable = combat.piles.hand.some((inst) => {
       const def = resolveCard(registries, inst);
       if ((def.keywords || []).includes('unplayable')) return false;
@@ -13306,7 +13451,10 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
   }
 
   function useFlask(slot, targetId) {
-    if (busy || combat.result) return;
+    if (busy || combat.result) {
+      dlog('ignored', `useFlask slot=${slot}`, { busy, result: combat.result, phase: combat.phase });
+      return;
+    }
     selectedFlask = null;
     selected = null;
     hideTooltip();
@@ -13316,10 +13464,12 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       out = dispatch(combat, { type: 'useFlask', slot, targetId: targetId || undefined });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
+      dlog('rejected', `useFlask slot=${slot}`, err && err.message);
       disp = null;
       render();
       return;
     }
+    dlog('dispatch', `useFlask slot=${slot}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length });
     sfx.play('flask');
     busy = true;
     afterDispatch(out.events);
@@ -13392,7 +13542,9 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
 
   function playCard(instanceId, targetId) {
     if (busy || combat.result) {
-      console.debug('[combat] playCard ignored:', JSON.stringify({ busy, result: combat.result, phase: combat.phase }));
+      const why = { busy, result: combat.result, phase: combat.phase };
+      console.debug('[combat] playCard ignored:', JSON.stringify(why));
+      dlog('ignored', `playCard ${instanceId}`, why);
       return;
     }
     if (targetId) lastTargetId = targetId; // remembered for the next card's aim
@@ -13408,10 +13560,12 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
+      dlog('rejected', `playCard ${instanceId}`, err && err.message);
       disp = null;
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
     }
+    dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
     sfx.play('cardPlay');
     busy = true;
     afterDispatch(out.events);
@@ -13419,7 +13573,9 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
 
   $('.end-turn').addEventListener('click', () => {
     if (busy || combat.result || combat.phase !== 'player') {
-      console.debug('[combat] endTurn ignored:', JSON.stringify({ busy, result: combat.result, phase: combat.phase }));
+      const why = { busy, result: combat.result, phase: combat.phase };
+      console.debug('[combat] endTurn ignored:', JSON.stringify(why));
+      dlog('ignored', 'endTurn', why);
       return;
     }
     selected = null;
@@ -13431,9 +13587,11 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       out = dispatch(combat, { type: 'endTurn' });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
+      dlog('rejected', 'endTurn', err && err.message);
       disp = null;
       return;
     }
+    dlog('dispatch', 'endTurn', { events: out.events.length });
     busy = true;
     afterDispatch(out.events);
   });
@@ -13530,6 +13688,7 @@ Object.assign(module.exports, { openPileModal });
 // Staggers get the loud treatment (they're the theme).
 
 const { sfx } = require("src/ui/sfx.js");
+const { dlog } = require("src/ui/debuglog.js");
 
 const STEP_MS = 80;
 
@@ -13754,6 +13913,7 @@ function playTimeline(events, ctx, done) {
   const watchdog = setTimeout(() => {
     dbg.watchdog = (dbg.watchdog || 0) + 1;
     console.warn('[fx] watchdog forced timeline completion');
+    dlog('fx', 'watchdog forced timeline completion', { open: dbg.open, finished: dbg.finished });
     try {
       if (ctx.onFlush) ctx.onFlush();
     } catch (e) {

@@ -90,6 +90,15 @@
 .ov-save-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; margin-top: 14px; max-width: 320px; }
 .ov-save-actions button { text-align: left; padding: 11px 16px; }
 
+/* ---------- command log (Settings → Advanced) ---------- */
+.debug-modal { width: 720px; max-width: 94vw; }
+.debug-log-body {
+  margin-top: 10px; max-height: 46vh; overflow: auto; user-select: text;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 10px 12px; font-family: Consolas, monospace; font-size: 11px;
+  line-height: 1.55; color: var(--parchment); white-space: pre-wrap; word-break: break-word;
+}
+
 /* ---------- keyboard / gamepad focus cursor ---------- */
 .gp-focus {
   outline: 3px solid var(--gold) !important; outline-offset: 2px;

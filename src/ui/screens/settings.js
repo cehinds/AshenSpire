@@ -6,6 +6,8 @@
 // Settings tab. Each row declares its default so stored settings stay sparse.
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
+import { openDebugLog } from '../debuglog.js';
+
 const ROWS = [
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
@@ -60,9 +62,11 @@ const ROWS = [
     note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
   { cat: 'Accessibility', key: 'readableHeadings', def: false, label: 'Readable headings',
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
+  { cat: 'Advanced', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
+    note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
 ];
 
-const CATEGORIES = ['Display', 'Audio', 'Accessibility'];
+const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Advanced'];
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
@@ -85,6 +89,12 @@ function rowHtml(settings, r) {
           <input type="range" class="set-range" min="0" max="100" step="5" value="${val}" data-key="${r.key}">
           <span class="range-val" data-for="${r.key}">${val}</span>
         </div>
+      </div>`;
+  }
+  if (r.type === 'button') {
+    return `<div class="set-row">
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <button class="subtle" data-btn="${r.key}">${r.btn || 'Open'}</button>
       </div>`;
   }
   if (r.type === 'choice') {
@@ -156,6 +166,10 @@ export function renderSettings(container, { settings, onChange, grouped = true }
       settings[slider.dataset.key] = val;
       onChange({ [slider.dataset.key]: val });
     });
+  });
+
+  container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
+    btn.addEventListener('click', openDebugLog);
   });
 
   container.querySelectorAll('.choice').forEach((btn) => {
