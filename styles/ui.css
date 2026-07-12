@@ -90,6 +90,33 @@
 .ov-save-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; margin-top: 14px; max-width: 320px; }
 .ov-save-actions button { text-align: left; padding: 11px 16px; }
 
+/* ---------- boss-intro title card ---------- */
+.boss-intro {
+  position: fixed; inset: 0; z-index: 650; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse 70% 50% at 50% 46%, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.88));
+  animation: bi-veil 480ms ease-out;
+}
+.boss-intro .bi-stack { text-align: center; animation: bi-rise 700ms cubic-bezier(0.2, 0.8, 0.3, 1); }
+.boss-intro .bi-tag {
+  color: var(--muted); font-family: var(--font-display); font-size: 13px;
+  letter-spacing: 0.5em; margin-bottom: 14px;
+}
+.boss-intro .bi-name {
+  color: var(--gold); font-size: 54px; letter-spacing: 0.12em; line-height: 1.15;
+  max-width: 80vw; text-shadow: 0 0 34px rgba(var(--accent-rgb), 0.55), 0 2px 10px #000;
+}
+.boss-intro .bi-rule {
+  width: 340px; max-width: 60vw; height: 1px; margin: 20px auto 0;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: bi-rule 900ms ease-out;
+}
+.boss-intro.bi-out { animation: bi-fade 460ms ease-in forwards; }
+@keyframes bi-veil { from { opacity: 0; } }
+@keyframes bi-rise { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
+@keyframes bi-rule { from { transform: scaleX(0.2); opacity: 0; } }
+@keyframes bi-fade { to { opacity: 0; } }
+
 /* ---------- command log (Settings → Advanced) ---------- */
 .debug-modal { width: 720px; max-width: 94vw; }
 .debug-log-body {

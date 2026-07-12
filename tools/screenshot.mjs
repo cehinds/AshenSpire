@@ -30,6 +30,7 @@ const SHOTS = [
   { name: 'map', query: '?shot=map' },
   { name: 'combat', query: '?shot=combat' },
   { name: 'fx', query: '?shot=fx' }, // combat FX posed frozen mid-animation
+  { name: 'boss-intro', query: '?shot=boss' }, // boss name splash, held
 ];
 
 const args = process.argv.slice(2);
