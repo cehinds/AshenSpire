@@ -1866,6 +1866,53 @@ function poseFxShowcase() {
   }
 }
 
+// Co-op screenshot states (?shot=coop|coopmap): mount the LAN thin client with
+// a canned server snapshot through a stub socket — no server/second player
+// needed — so the co-op board/map can be photographed like the solo shots.
+function coopStubMount(snapshot, myId) {
+  const stub = { _h: null, setHandlers(h) { this._h = h; }, send() {}, close() {}, get open() { return false; } };
+  mountCoop(app, { registries, conn: stub, myId, onLeave() {} });
+  if (stub._h && stub._h.onMessage) stub._h.onMessage({ t: 'state', snapshot });
+}
+function coopCombatShot() {
+  const hand = ['strike', 'strike', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
+  const party = [
+    { id: 'p1', name: 'Ranni', classId: 'astrologer', connected: true, alive: true, hp: 61, maxHp: 72, runes: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
+    { id: 'p2', name: 'Blaidd', classId: 'vagabond', connected: true, alive: true, hp: 84, maxHp: 84, runes: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
+  ];
+  return {
+    actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
+    scene: {
+      kind: 'combat', pool: 'normal', phase: 'player', turn: 2, headcount: 2,
+      enemies: [
+        { id: 'e1', enemyId: 'rotHound', hp: 13, maxHp: 30, block: 0, alive: true, intent: { kind: 'attack', moveId: 'bite', damage: 6, hits: 1, delayed: false }, statuses: { bleed: { meter: { value: 4, max: 12 } } }, poiseMeter: { value: 4, max: 10 } },
+        { id: 'e2', enemyId: 'rotHound', hp: 30, maxHp: 30, block: 5, alive: true, intent: { kind: 'block', moveId: 'guard', block: 5 }, statuses: {}, poiseMeter: { value: 0, max: 10 } },
+        { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 } },
+      ],
+      players: [
+        { id: 'p1', hp: 61, maxHp: 72, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, flasks: [{ flaskId: 'crimsonFlask' }] },
+        { id: 'p2', hp: 84, maxHp: 84, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, flasks: [] },
+      ],
+    },
+    party,
+  };
+}
+function coopMapShot() {
+  newRun({ classId: 'vagabond', seedString: 'SHOWCASE', slot: 1 });
+  const g = run.mapGraph;
+  const nodeType = (n) => (n.type === 'event' ? 'unknown' : n.type);
+  return {
+    actNumber: 1, floor: 0, seedString: 'SHOWCASE', endless: false,
+    scene: { kind: 'map' },
+    reachableIds: g.startIds.slice(),
+    map: { floors: g.floors, startIds: g.startIds, bossId: g.bossId, nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })) },
+    party: [
+      { id: 'p1', name: 'Ranni', classId: 'astrologer', connected: true, alive: true, hp: 61, maxHp: 72, catchupQueue: [] },
+      { id: 'p2', name: 'Blaidd', classId: 'vagabond', connected: true, alive: true, hp: 84, maxHp: 84, catchupQueue: [] },
+    ],
+  };
+}
+
 if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
@@ -1881,6 +1928,10 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     enterNode(startId);
     if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
   }
+} else if (shotState === 'coop') {
+  coopStubMount(coopCombatShot(), 'p1');
+} else if (shotState === 'coopmap') {
+  coopStubMount(coopMapShot(), 'p1');
 } else {
   showTitle();
 }

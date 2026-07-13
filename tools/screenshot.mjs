@@ -31,6 +31,8 @@ const SHOTS = [
   { name: 'combat', query: '?shot=combat' },
   { name: 'fx', query: '?shot=fx' }, // combat FX posed frozen mid-animation
   { name: 'boss-intro', query: '?shot=boss' }, // boss name splash, held
+  { name: 'coop-combat', query: '?shot=coop' }, // LAN co-op combat board (2 players)
+  { name: 'coop-map', query: '?shot=coopmap' }, // LAN co-op shared map
 ];
 
 const args = process.argv.slice(2);
