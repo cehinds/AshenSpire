@@ -109,17 +109,13 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
           state.players = msg.players;
           if (msg.seedString) state.seedString = msg.seedString;
           renderRoom(shareAddr);
-        } else if (msg.t === 'start') {
-          const me = (msg.players || []).find((p) => p.id === myId);
+        } else if (msg.t === 'started') {
+          // The server-authoritative run has begun. Hand the live socket to the
+          // co-op client (it renders snapshots; cleanup must not close it).
           clearInterval(pollTimer);
           const handoff = conn;
-          conn = null; // the orchestrator owns the socket now (cleanup must not close it)
-          onStart({
-            conn: handoff,
-            name: state.name,
-            classId: (me && me.classId) || state.classId,
-            seedString: msg.seedString || state.seedString,
-          });
+          conn = null;
+          onStart({ conn: handoff, myId, name: state.name });
         } else if (msg.t === 'hostGone') {
           cleanup();
           renderBrowse('The host left the fire.');

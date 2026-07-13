@@ -81,15 +81,27 @@ try {
   ok(seeded.seedString === 'ERDTREE', 'host seed propagates to guest');
 
   host.send({ t: 'start' });
-  const gStart = await guest.next((m) => m.t === 'start', 'guest start');
-  const hStart = await host.next((m) => m.t === 'start', 'host start');
-  ok(gStart.seedString === 'ERDTREE' && hStart.seedString === 'ERDTREE', 'start broadcast carries the seed to all');
-  ok(gStart.players.length === 2, 'start payload includes the full roster');
+  const gStarted = await guest.next((m) => m.t === 'started', 'guest started');
+  ok(gStarted.seedString === 'ERDTREE', 'started broadcast carries the seed to all');
 
-  // --- guest drops → host sees the roster shrink ---
+  // --- server-authoritative snapshots flow over the socket ---
+  const state0 = await guest.next((m) => m.t === 'state', 'first state snapshot');
+  ok(state0.snapshot && state0.snapshot.scene.kind === 'map', 'first snapshot is the shared map');
+  ok(state0.snapshot.party.length === 2, 'snapshot party has both members');
+  const firstNode = state0.snapshot.reachableIds[0];
+
+  // Host routes a node choice; BOTH clients receive the resulting snapshot.
+  host.send({ t: 'chooseNode', nodeId: firstNode });
+  const advanced = await guest.next((m) => m.t === 'state' && m.snapshot.scene.kind !== 'map', 'post-node snapshot');
+  ok(['combat', 'reward', 'shrine', 'event', 'complete'].includes(advanced.snapshot.scene.kind), 'choosing a node advances the shared scene for all clients');
+
+  // --- guest drops mid-run → the run persists; member marked absent ---
   guest.close();
-  const shrunk = await host.next((m) => m.t === 'roster' && m.players.length === 1, 'shrunk roster');
-  ok(shrunk.players.length === 1, 'roster shrinks when a player disconnects');
+  const afterDrop = await host.next(
+    (m) => m.t === 'state' && m.snapshot.party.find((p) => p.name === 'Blaidd')?.connected === false,
+    'state after guest drop'
+  );
+  ok(!!afterDrop, 'dropped member marked absent, run continues on the server');
 
   host.close();
 } catch (e) {

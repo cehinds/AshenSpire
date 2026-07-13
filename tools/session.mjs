@@ -213,8 +213,12 @@ export function createSession({ registries, seedString, endless = false }) {
       enemies: c.enemies.map((e) => ({ id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block, intent: e.intent })),
       players: [...c.players.values()].map((P) => ({
         id: P.id, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
-        energy: P.entity.energy, connected: P.connected, alive: P.entity.alive,
-        ended: P.ended, hand: P.piles.hand.length,
+        energy: P.entity.energy, energyMax: P.entity.energyMax,
+        connected: P.connected, alive: P.entity.alive, ended: P.ended,
+        statuses: P.entity.statuses, stanceId: P.entity.stanceId,
+        hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
+        drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
+        flasks: P.entity.flasks,
       })),
     };
   }
@@ -416,10 +420,19 @@ export function createSession({ registries, seedString, endless = false }) {
       hp: m.run.hp, maxHp: m.run.maxHp, runes: m.run.runes,
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,
       catchup: m.catchup.length,
+      catchupQueue: m.catchup, // rolled options for the reconnect series
     };
   }
 
   function snapshot() {
+    const g = session.mapGraph;
+    const reachableNodes = g
+      ? session.reachableIds.map((id) => {
+          const n = g.nodes[id];
+          // Unknown ('event') nodes stay masked as '?' until entered.
+          return { id, type: n.type === 'event' ? 'unknown' : n.type, floor: n.floor };
+        })
+      : [];
     return {
       id: session.id,
       seedString: session.seedString,
@@ -429,6 +442,7 @@ export function createSession({ registries, seedString, endless = false }) {
       scene: session.scene,
       cursorId: session.cursorId,
       reachableIds: session.reachableIds,
+      reachableNodes,
       party: [...members.values()].map(memberView),
     };
   }
