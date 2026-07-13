@@ -354,12 +354,20 @@ export function createSession({ registries, seedString, endless = false }) {
     session.scene = { kind: 'shrine', done: {} };
     return { ok: true };
   }
-  function shrineChoice(memberId, choice) {
+  function shrineChoice(memberId, choice, targetId) {
     if (session.scene.kind !== 'shrine') return { ok: false, error: 'no shrine open' };
     const m = members.get(memberId);
     if (!m) return { ok: false };
-    if (choice === 'rest') m.run.hp = Math.min(m.run.maxHp, m.run.hp + shrineHealAmount(registries, m.run));
-    else { const c = m.run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true; }
+    if (choice === 'rest') {
+      m.run.hp = Math.min(m.run.maxHp, m.run.hp + shrineHealAmount(registries, m.run));
+    } else if (choice === 'mend') {
+      // Co-op Mend: heal an ally for 30% of their max HP instead of resting.
+      const ally = members.get(targetId);
+      if (!ally || !ally.alive) return { ok: false, error: 'no such ally' };
+      ally.run.hp = Math.min(ally.run.maxHp, ally.run.hp + Math.ceil(ally.run.maxHp * 0.3));
+    } else {
+      const c = m.run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true;
+    }
     session.scene.done[memberId] = true;
     const waiting = connectedMembers().filter((mm) => !session.scene.done[mm.id]);
     if (!waiting.length) advanceFromNode();

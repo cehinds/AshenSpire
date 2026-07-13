@@ -118,6 +118,14 @@ try {
   const res = S.resolveCatchup('p2', 0, { cardId: queued.offer.cardIds[0], takeRelic: true, flask: true });
   ok(res.ok && p2.run.deck.length === deckBefore + 1, 'catch-up replay adds the chosen missed card');
   ok(p2.catchup.length === 0, 'catch-up queue drains after replay');
+
+  // --- Mend at a shrine: a player heals a wounded ally 30% instead of resting ---
+  S.session.scene = { kind: 'shrine', done: {} };
+  const p1m = S.session.members.get('p1');
+  p1m.run.hp = 20;
+  const mendBefore = p1m.run.hp;
+  S.shrineChoice('p2', 'mend', 'p1'); // p2 mends p1
+  ok(p1m.run.hp === Math.min(p1m.run.maxHp, mendBefore + Math.ceil(p1m.run.maxHp * 0.3)), 'Mend heals the targeted ally for 30% of their max HP');
 } catch (e) {
   ok(false, `threw: ${e.stack || e.message}`);
 }

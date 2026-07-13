@@ -110,9 +110,16 @@ pure function of server state.
   combat relic shared by two players can mis-gate (trigger keys aren't player-
   scoped in `triggers.js`).
 - **S4 — Catch-up series UI** ⏳ replay the per-member catch-up queue (already
-  accrued by S2) as reward/event screens on reconnect.
-- **S5 — Polish** ⏳ fork voting, Mend at rest sites, co-op-only cards, host
-  persistence to disk / resume.
+  accrued by S2) as reward/event screens on reconnect. (Client renders it; a
+  dedicated multi-step flow is the remaining polish.)
+- **S5 — Polish** 🟡 *shipped:* Stagger in the co-op enemy turn (a poise-filled
+  enemy loses its telegraphed move), **flask throw-to-ally** (a non-offensive
+  flask lands on a chosen hero — armed in the client, delivered by clicking a
+  seat), and **Mend at rest sites** (heal an ally 30% instead of resting).
+  Verified live in real 2-player co-op across two launchers (cross-launcher
+  discovery + real-time combat sync, zero console errors) and headless
+  (`coop-combat-smoke` 17, `session-smoke` mend). *Remaining:* fork-vote on map
+  splits (currently first-pick-wins), co-op-only cards, host disk-persist/resume.
 
 ## Constraints
 

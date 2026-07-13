@@ -179,7 +179,7 @@ export function attachLan(server, { port }) {
       case 'endTurn': g.combatEndTurn(id); break;
       case 'useFlask': g.combatFlask(id, msg.slot, msg.targetId); break;
       case 'chooseReward': g.chooseReward(id, msg.pick || {}); break;
-      case 'shrineChoice': g.shrineChoice(id, msg.choice); break;
+      case 'shrineChoice': g.shrineChoice(id, msg.choice, msg.targetId); break;
       case 'eventChoice': g.eventChoice(id, msg.choiceIndex); break;
       case 'catchupChoice': g.resolveCatchup(id, msg.index, msg.pick || {}); break;
       default: return;
