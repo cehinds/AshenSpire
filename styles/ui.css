@@ -377,88 +377,39 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 @keyframes artFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 #choices button { animation: screenIn 260ms ease-out backwards; }
 
-/* ---- Tarnished Together: party status strip (LAN play) --------------------- */
-/* Fixed chip column, top-right under the header; read-only, never intercepts. */
-#party-strip {
-  position: fixed;
-  top: 64px;
-  right: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 5px;
-  z-index: 400;
-  pointer-events: none;
-}
-.ps-chip {
-  background: rgba(16, 13, 10, 0.88);
-  border: 1px solid var(--line-soft);
-  border-radius: 6px;
-  padding: 3px 9px;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  white-space: nowrap;
-}
-.ps-chip .ps-pos { color: var(--gold); }
-.ps-chip .ps-hp { color: var(--ember); }
-.ps-chip.dead { opacity: 0.65; }
+/* ---- Tarnished Together: co-op (LAN) — layers on the shared solo board/map -- */
+/* The co-op combat/map/reward screens reuse the solo components + CSS; these
+   rules only add the co-op-specific bits: a seat per player, turn flags, the
+   party read-out, and the throw/mend affordances. */
+.coop-note { color: var(--muted); font-size: 13px; padding: 18px; text-align: center; }
+.coop-choices { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 8px; }
+.coop-take { border-color: var(--gold); }
 
-/* ---- Tarnished Together: co-op thin client (LAN) -------------------------- */
-.coop-screen { justify-content: flex-start; gap: 12px; padding: 14px 18px; overflow-y: auto; }
-.coop-head { display: flex; align-items: center; gap: 14px; width: 100%; }
-.coop-head .coop-act { color: var(--gold); font-size: 17px; letter-spacing: .18em; font-family: Georgia, serif; }
-.coop-head .coop-seed { color: var(--muted); font-size: 11px; letter-spacing: .12em; }
-.coop-head .coop-leave { margin-left: auto; }
-.coop-party { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
-.coop-pc { display: flex; align-items: center; gap: 6px; background: rgba(16,13,10,.8); border: 1px solid var(--line-soft); border-radius: 7px; padding: 4px 9px; font-size: 12px; }
+/* multiple player seats sit side-by-side in the combat player-zone */
+.combat.coop .player-zone { display: flex; flex-direction: row; flex-wrap: wrap; gap: 14px; align-items: flex-end; justify-content: center; }
+.combat.coop .combatant.player { position: relative; }
+.combat.coop .combatant.player.me .sprite { filter: drop-shadow(0 0 6px rgba(200,160,70,.55)); }
+.combat.coop .combatant.player.ended { opacity: .62; }
+.combat.coop .combatant.player.down { filter: grayscale(1); opacity: .45; }
+.combat.coop .combatant.player.away { opacity: .45; }
+.combat.coop .combatant.player.throw-target { cursor: pointer; outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 8px; box-shadow: 0 0 12px rgba(200,160,70,.4); }
+.coop-seat-name { font-size: 11px; color: #e0d4b8; text-align: center; margin-top: 3px; }
+.coop-turnflag { color: var(--gold); font-size: 10px; letter-spacing: .06em; }
+.combat.coop .combatant.enemy.selected-target { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 8px; }
+
+/* the party read-out in map/reward headers */
+.coop-partybar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.coop-pc { display: inline-flex; align-items: center; gap: 6px; background: rgba(16,13,10,.8); border: 1px solid var(--line-soft); border-radius: 7px; padding: 3px 9px; font-size: 12px; color: #ded1b6; }
 .coop-pc.me { border-color: var(--gold); }
 .coop-pc.away { opacity: .55; }
 .coop-pc.dead { opacity: .4; filter: grayscale(1); }
 .coop-pc-glyph { font-size: 15px; }
-.coop-pc-hp { position: relative; display: inline-block; width: 84px; height: 13px; background: #24140f; border-radius: 3px; overflow: hidden; }
+.coop-pc-hp { position: relative; display: inline-block; width: 70px; height: 12px; background: #24140f; border-radius: 3px; overflow: hidden; }
 .coop-pc-hp i { position: absolute; inset: 0; width: 0; background: linear-gradient(90deg, var(--blood), #b8432f); }
-.coop-pc-hp b { position: relative; font-size: 10px; color: #f2e6cf; padding-left: 5px; line-height: 13px; font-weight: 600; }
-.coop-body { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.coop-title { color: var(--gold); font-size: 20px; letter-spacing: .08em; text-align: center; }
-.coop-sub { color: var(--muted); font-size: 12px; text-align: center; margin-top: -6px; }
-.coop-note { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
-.coop-nodes, .coop-choices { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-.coop-node { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 120px; padding: 14px 18px; }
-.coop-node .ic { font-size: 26px; color: var(--gold); }
-.coop-enemies { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; min-height: 150px; align-items: flex-end; }
-.coop-enemy { display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; padding: 6px; border: 2px solid transparent; border-radius: 8px; }
-.coop-enemy.sel { border-color: var(--gold); }
-.coop-enemy.dead { opacity: .35; filter: grayscale(1); pointer-events: none; }
-.coop-enemy-glyph { font-size: 52px; }
-.coop-enemy-intent { font-size: 13px; color: var(--ember); min-height: 16px; }
-.coop-enemy-nm { font-size: 12px; color: #d8cdb4; }
-.coop-hpbar { position: relative; width: 92px; height: 15px; background: #24140f; border-radius: 3px; overflow: hidden; }
-.coop-hpbar i { position: absolute; inset: 0; width: 0; background: linear-gradient(90deg, var(--blood), #b8432f); }
-.coop-hpbar b { position: relative; font-size: 10px; color: #f2e6cf; padding-left: 5px; line-height: 15px; }
-.coop-seats { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.coop-seat { display: flex; flex-direction: column; gap: 2px; background: rgba(16,13,10,.8); border: 1px solid var(--line-soft); border-radius: 7px; padding: 6px 12px; font-size: 12px; min-width: 130px; }
-.coop-seat.me { border-color: var(--gold); }
-.coop-seat.ended { opacity: .6; }
-.coop-seat.down { filter: grayscale(1); opacity: .5; }
-.coop-seat-nm { color: #e8dcc0; }
-.coop-seat-stats { color: var(--muted); font-size: 11px; }
-.coop-seat-flag { color: var(--gold); font-size: 10px; letter-spacing: .08em; }
-.coop-hand, .coop-cards { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.coop-card { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 96px; height: 128px; padding: 8px; border: 1px solid var(--line-soft); border-radius: 9px; background: linear-gradient(180deg, #2a2418, #1b1710); }
-.coop-card.attack { border-color: #7a3a2c; }
-.coop-card.skill { border-color: #3a5a6a; }
-.coop-card.power { border-color: #6a5a2a; }
-.coop-card.disabled { opacity: .4; cursor: not-allowed; }
-.coop-card-cost { position: absolute; top: -8px; left: -8px; width: 24px; height: 24px; border-radius: 50%; background: #14100c; border: 1px solid var(--gold); color: var(--gold); font-size: 13px; display: flex; align-items: center; justify-content: center; }
-.coop-card-nm { font-size: 12px; color: #ece1c8; text-align: center; }
-.coop-card-type { font-size: 9px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
-.coop-flasks, .coop-reward-extra { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.coop-actions { display: flex; gap: 12px; justify-content: center; }
-.coop-take { border-color: var(--gold); }
+.coop-pc-hp b { position: relative; font-size: 9px; color: #f2e6cf; padding-left: 5px; line-height: 12px; font-weight: 600; }
 
-/* co-op: flask throw-to-ally + Mend affordances */
+/* flasks (throw-to-ally) */
+.coop-flasks { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 4px 0; }
+.coop-flask { padding: 5px 12px; font-size: 13px; }
 .coop-flask.armed { border-color: var(--gold); box-shadow: 0 0 8px rgba(200,160,70,.5); }
-.coop-arm { color: var(--gold); font-size: 13px; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: 7px; padding: 6px 12px; }
-.coop-seat.throw-target { border-color: var(--gold); cursor: pointer; box-shadow: 0 0 8px rgba(200,160,70,.4); }
-.coop-seat.throw-target .coop-seat-flag { color: var(--gold); }
+.coop-arm { color: var(--gold); font-size: 13px; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: 7px; padding: 6px 12px; margin: 4px auto; width: fit-content; }

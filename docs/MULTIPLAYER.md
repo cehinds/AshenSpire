@@ -91,10 +91,15 @@ pure function of server state.
   `rejoinId` reconnects to the same body). Built the browser thin client
   `src/ui/screens/coop.js` — renders authoritative snapshots (map/combat/reward/
   shrine/event/catch-up/complete) and sends intents, never mutating locally.
-  Verified in a real browser against the live server: map → shared combat (enemy
-  phase fanned out, HP 84→72) → victory → reward → next floor, zero console
-  errors. `tools/lan-smoke.mjs` (14) now drives the server-authoritative run over
-  the socket. *Original S3 server core:*
+  **Full visual parity with solo:** coop.js reuses the real components + CSS —
+  `enemySprite`/`playerSprite`, the shared `renderCard`, the SVG node map, and
+  the `.combat`/`.mapscreen` shells; only co-op extras are layered on (a seat per
+  player, whose-turn flags, party read-out, throw/mend affordances). The snapshot
+  carries what those need (full map graph, enemy statuses/poise, per-player hand
+  instances). Verified live in 2-player across two launchers: real SVG map (53
+  nodes) + parity combat board (sprites, real cards, intents, 2 seats), zero
+  console errors. `tools/lan-smoke.mjs` (14) drives the server-authoritative run
+  over the socket. *Original S3 server core:*
   `src/engine/coopCombat.js` is a standalone N-player fight engine reusing the
   solo opcode/status/trigger primitives (solo `combat.js` untouched, 23 tests
   green): shared enemies, per-player energy/hand/block, one shared player phase,
