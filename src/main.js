@@ -45,6 +45,7 @@ import { showBossIntro } from './ui/components/intro.js';
 import { initInput, setBindings, setKeyBindings } from './ui/input.js';
 import { setSpritesEnabled, classGlyph } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
+import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
 import { setAnimSpeed } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
@@ -195,73 +196,15 @@ function persist() {
 }
 
 // ---- Tarnished Together (LAN) -------------------------------------------------
-// Phase 1: everyone plays the same seeded run on their own machine; the lobby
-// socket relays progress so the whole party shows in a strip on every screen.
-let lanLink = null; // { conn, name } while a LAN session is live
+// The run is server-authoritative (the launcher owns it via tools/session.mjs);
+// the browser is a thin client that renders snapshots and sends intents. Solo
+// play never touches any of this.
+let inCoop = false;
 
-function sendLanStatus(extra = {}) {
-  if (!lanLink || !run) return;
-  lanLink.conn.send({
-    t: 'status',
-    act: run.actNumber, floor: run.floor, hp: run.hp, maxHp: run.maxHp,
-    ...extra,
-  });
-}
-
-function partyStripEl() {
-  let el = document.getElementById('party-strip');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'party-strip';
-    document.body.appendChild(el);
-  }
-  return el;
-}
-
-function updatePartyStrip(players) {
-  const el = partyStripEl();
-  if (!players || !players.length) { el.hidden = true; return; }
-  el.hidden = false;
-  el.innerHTML = players.map((p) => {
-    const state = p.dead ? '☠' : p.victory ? '👑' : `A${p.act}·F${p.floor}`;
-    const hp = p.dead ? '' : ` <span class="ps-hp">${p.hp}/${p.maxHp}</span>`;
-    return `<span class="ps-chip${p.dead ? ' dead' : ''}">⚑ ${escapeHtml(p.name)} <span class="ps-pos">${state}</span>${hp}</span>`;
-  }).join('');
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
-}
-
-function dropLanLink() {
-  if (!lanLink) return;
-  lanLink.conn.close();
-  lanLink = null;
-  const el = document.getElementById('party-strip');
-  if (el) el.remove();
-}
-
-function startLanRun({ conn, name, classId, seedString }) {
-  lanLink = { conn, name };
-  conn.setHandlers({
-    onMessage: (msg) => {
-      if (msg.t === 'party') updatePartyStrip(msg.players);
-    },
-    onClose: () => {
-      const el = document.getElementById('party-strip');
-      if (el) el.innerHTML = '<span class="ps-chip dead">⚠ party link lost</span>';
-      lanLink = null;
-    },
-  });
-  const empty = saves.listSlots().find((s) => !s.summary);
-  newRun({
-    classId,
-    seedString,
-    customization: { name, glyph: classGlyph(classId), tint: 'gold' },
-    slot: empty ? empty.slot : 1,
-  });
-  sendLanStatus();
-}
+// A no-op in solo (kept so persist() stays simple); the co-op client, not the
+// orchestrator, owns the LAN socket and rendering.
+function sendLanStatus() { /* server-authoritative co-op needs no client push */ }
+function dropLanLink() { inCoop = false; }
 
 function showLobby() {
   audio.music('title');
@@ -269,7 +212,10 @@ function showLobby() {
     registries,
     defaultSeedString: randomSeedString(),
     onBack: () => showTitle(),
-    onStart: startLanRun,
+    onStart: ({ conn, myId }) => {
+      inCoop = true;
+      mountCoop(app, { registries, conn, myId, onLeave: () => showTitle() });
+    },
   });
 }
 

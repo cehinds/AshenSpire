@@ -84,7 +84,17 @@ pure function of server state.
   session into `tools/lan.mjs` over the WS protocol + the browser thin-client
   renderer. S1's client-local shared-seed run remains the playable intermediate
   until then.
-- **S3 — Shared combat + thin client** 🟡 *server side done:*
+- **S3 — Shared combat + thin client** ✅ *done end-to-end.* Wired the session
+  into `tools/lan.mjs` over the WS intent protocol (chooseNode/playCard/endTurn/
+  useFlask/chooseReward/shrineChoice/eventChoice/catchupChoice → server; `state`
+  snapshots → all clients; drop marks the member absent and the run persists;
+  `rejoinId` reconnects to the same body). Built the browser thin client
+  `src/ui/screens/coop.js` — renders authoritative snapshots (map/combat/reward/
+  shrine/event/catch-up/complete) and sends intents, never mutating locally.
+  Verified in a real browser against the live server: map → shared combat (enemy
+  phase fanned out, HP 84→72) → victory → reward → next floor, zero console
+  errors. `tools/lan-smoke.mjs` (14) now drives the server-authoritative run over
+  the socket. *Original S3 server core:*
   `src/engine/coopCombat.js` is a standalone N-player fight engine reusing the
   solo opcode/status/trigger primitives (solo `combat.js` untouched, 23 tests
   green): shared enemies, per-player energy/hand/block, one shared player phase,

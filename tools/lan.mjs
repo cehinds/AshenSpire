@@ -16,6 +16,11 @@
 import { createSocket } from 'node:dgram';
 import { createHash, randomBytes } from 'node:crypto';
 import { networkInterfaces } from 'node:os';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createSession } from './session.mjs';
+
+const REG = createRegistries(contentBundle);
 
 const DISCOVERY_PORT = 48711;
 const BEACON_MS = 2000;
@@ -140,18 +145,64 @@ export function attachLan(server, { port }) {
     for (const sock of session.clients.keys()) sock.write(frame);
   }
 
-  function partyStatus() {
-    return [...session.clients.values()]
-      .filter((pl) => pl.status)
-      .map((pl) => ({ id: pl.id, name: pl.name, ...pl.status }));
+  // (party progress is now carried inside the authoritative game snapshot)
+
+  // Broadcast the authoritative game snapshot to every connected client.
+  function broadcastState() {
+    if (!session.game) return;
+    broadcast({ t: 'state', snapshot: session.game.snapshot() });
+  }
+
+  // Start the server-authoritative run from the lobby roster.
+  function startGame() {
+    const game = createSession({ registries: REG, seedString: session.seedString || 'ERDTREE', endless: !!session.endless });
+    for (const cl of session.clients.values()) {
+      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || REG.classes.all()[0].id });
+    }
+    game.start();
+    session.game = game;
+    session.started = true;
+    broadcast({ t: 'started', seedString: session.seedString });
+    broadcastState();
+  }
+
+  // Route an in-run intent to the game for this client's member, then push the
+  // new authoritative snapshot to everyone.
+  function onGameIntent(pl, msg) {
+    const g = session.game;
+    if (!g) return;
+    const id = pl.id;
+    switch (msg.t) {
+      case 'resync': broadcastState(); return;
+      case 'chooseNode': g.chooseNode(id, msg.nodeId); break;
+      case 'playCard': g.combatPlay(id, msg.cardInstanceId, msg.targetId); break;
+      case 'endTurn': g.combatEndTurn(id); break;
+      case 'useFlask': g.combatFlask(id, msg.slot, msg.targetId); break;
+      case 'chooseReward': g.chooseReward(id, msg.pick || {}); break;
+      case 'shrineChoice': g.shrineChoice(id, msg.choice); break;
+      case 'eventChoice': g.eventChoice(id, msg.choiceIndex); break;
+      case 'catchupChoice': g.resolveCatchup(id, msg.index, msg.pick || {}); break;
+      default: return;
+    }
+    broadcastState();
   }
 
   function onLobbyMessage(sock, pl, msg) {
+    // In-run intents route to the authoritative game.
+    if (session.game && msg.t !== 'hello') { onGameIntent(pl, msg); return; }
     switch (msg.t) {
       case 'hello':
         pl.name = String(msg.name || 'Tarnished').slice(0, 18);
         pl.classId = msg.classId || null;
         pl.isHost = !!(hosting && msg.hostKey === hosting.hostKey);
+        // Reconnect into a running game as the same member, if it exists.
+        if (session.game && msg.rejoinId && session.game.session.members.has(msg.rejoinId)) {
+          pl.id = msg.rejoinId;
+          session.game.setConnected(pl.id, true);
+          sock.write(wsEncode(JSON.stringify({ t: 'rejoined', id: pl.id })));
+          broadcastState();
+          return;
+        }
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
         break;
       case 'pick':
@@ -167,17 +218,14 @@ export function attachLan(server, { port }) {
         session.seedString = String(msg.seedString || '').slice(0, 10);
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
         break;
+      case 'endless':
+        if (!pl.isHost) return;
+        session.endless = !!msg.on;
+        broadcast({ t: 'roster', players: roster(), seedString: session.seedString, endless: session.endless });
+        break;
       case 'start':
         if (!pl.isHost) return;
-        session.started = true;
-        broadcast({ t: 'start', seedString: session.seedString, players: roster() });
-        break;
-      case 'status':
-        pl.status = {
-          act: msg.act, floor: msg.floor, hp: msg.hp, maxHp: msg.maxHp,
-          scene: msg.scene, dead: !!msg.dead, victory: !!msg.victory,
-        };
-        broadcast({ t: 'party', players: partyStatus() });
+        startGame();
         break;
       default:
         break;
@@ -193,11 +241,11 @@ export function attachLan(server, { port }) {
       'Upgrade: websocket\r\nConnection: Upgrade\r\n' +
       `Sec-WebSocket-Accept: ${wsAccept(key)}\r\n\r\n`
     );
-    if (!session) session = { seedString: '', started: false, clients: new Map() };
+    if (!session) session = { seedString: '', started: false, endless: false, game: null, clients: new Map() };
     const pl = { id: `p${nextPlayerId++}`, name: 'Tarnished', classId: null, ready: false, isHost: false, status: null };
     session.clients.set(sock, pl);
     sock.setNoDelay(true);
-    sock.write(wsEncode(JSON.stringify({ t: 'welcome', id: pl.id })));
+    sock.write(wsEncode(JSON.stringify({ t: 'welcome', id: pl.id, inGame: !!session.game })));
 
     let buf = Buffer.alloc(0);
     sock.on('data', (chunk) => {
@@ -218,10 +266,18 @@ export function attachLan(server, { port }) {
     const drop = () => {
       if (!session || !session.clients.has(sock)) return;
       const wasHost = pl.isHost;
+      const inGame = !!session.game;
       session.clients.delete(sock);
+      if (inGame && session.game.session.members.has(pl.id)) {
+        // Mid-run: the member's body stays; mark absent (rescales the live
+        // fight; missed nodes accrue to their catch-up queue). The run persists
+        // on the server even if everyone leaves.
+        session.game.setConnected(pl.id, false);
+        if (session.clients.size) broadcastState();
+        return;
+      }
       if (!session.clients.size) { session = null; return; }
       broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
-      broadcast({ t: 'party', players: partyStatus() });
       if (wasHost && !session.started) broadcast({ t: 'hostGone' });
     };
     sock.on('close', drop);
