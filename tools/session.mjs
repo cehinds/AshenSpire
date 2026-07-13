@@ -210,7 +210,10 @@ export function createSession({ registries, seedString, endless = false }) {
       turn: c.turn,
       result: c.result,
       headcount: connectedMembers().length,
-      enemies: c.enemies.map((e) => ({ id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block, intent: e.intent })),
+      enemies: c.enemies.map((e) => ({
+        id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
+        alive: e.alive, intent: e.intent, statuses: e.statuses, poiseMeter: e.poiseMeter,
+      })),
       players: [...c.players.values()].map((P) => ({
         id: P.id, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         energy: P.entity.energy, energyMax: P.entity.energyMax,
@@ -434,13 +437,19 @@ export function createSession({ registries, seedString, endless = false }) {
 
   function snapshot() {
     const g = session.mapGraph;
+    const nodeType = (n) => (n.type === 'event' ? 'unknown' : n.type);
     const reachableNodes = g
-      ? session.reachableIds.map((id) => {
-          const n = g.nodes[id];
-          // Unknown ('event') nodes stay masked as '?' until entered.
-          return { id, type: n.type === 'event' ? 'unknown' : n.type, floor: n.floor };
-        })
+      ? session.reachableIds.map((id) => { const n = g.nodes[id]; return { id, type: nodeType(n), floor: n.floor }; })
       : [];
+    // Full graph so the client can draw the real SVG node map (parity with solo).
+    const map = g
+      ? {
+          floors: g.floors,
+          startIds: g.startIds,
+          bossId: g.bossId,
+          nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })),
+        }
+      : null;
     return {
       id: session.id,
       seedString: session.seedString,
@@ -451,6 +460,7 @@ export function createSession({ registries, seedString, endless = false }) {
       cursorId: session.cursorId,
       reachableIds: session.reachableIds,
       reachableNodes,
+      map,
       party: [...members.values()].map(memberView),
     };
   }
