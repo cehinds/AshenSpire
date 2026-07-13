@@ -24,6 +24,7 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
   let snap = null;
   let me = myId;
   let selectedEnemy = null;
+  let armedFlask = null; // slot of a non-offensive flask waiting for a throw target
 
   conn.setHandlers({
     onMessage: (msg) => {
@@ -120,12 +121,14 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
       </div>`;
     }).join('');
 
+    const arming = armedFlask != null;
     const seats = sc.players.map((p) => {
       const m = snap.party.find((x) => x.id === p.id) || {};
-      return `<div class="coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}">
+      const throwable = arming && p.alive && p.connected;
+      return `<div class="coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}${throwable ? ' throw-target' : ''}" data-seat="${p.id}">
         <span class="coop-seat-nm">${classGlyph(m.classId)} ${esc(m.name || p.id)}</span>
         <span class="coop-seat-stats">♥ ${p.hp}/${p.maxHp}${p.block ? ' · 🛡' + p.block : ''} · ⚡${p.energy}/${p.energyMax}</span>
-        <span class="coop-seat-flag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? 'ended turn' : 'thinking…'}</span>
+        <span class="coop-seat-flag">${throwable ? '⚗ throw here' : !p.connected ? 'away' : !p.alive ? 'down' : p.ended ? 'ended turn' : 'thinking…'}</span>
       </div>`;
     }).join('');
 
@@ -143,13 +146,21 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
       }).join('')}</div>`;
     }
     const flasks = meP && meP.flasks && meP.flasks.length
-      ? `<div class="coop-flasks">${meP.flasks.map((f, i) => `<button class="coop-flask" data-slot="${i}">⚗ ${esc(registries.flasks.get(f.flaskId).name)}</button>`).join('')}</div>` : '';
+      ? `<div class="coop-flasks">${meP.flasks.map((f, i) => {
+          const fd = registries.flasks.get(f.flaskId);
+          return `<button class="coop-flask${armedFlask === i ? ' armed' : ''}" data-slot="${i}" data-flaskid="${esc(f.flaskId)}" title="${esc(fd.textTemplate || '')}">⚗ ${esc(fd.name)}${fd.targeted ? '' : ' ▾'}</button>`;
+        }).join('')}</div>` : '';
+
+    const armBanner = arming
+      ? `<div class="coop-arm">Throwing <b>${esc(registries.flasks.get(meP.flasks[armedFlask].flaskId).name)}</b> — click a hero to receive it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>`
+      : '';
 
     const canEnd = meP && meP.alive && meP.connected && !meP.ended;
     const body = `
       <div class="coop-enemies">${enemyRow}</div>
       <div class="coop-seats">${seats}</div>
       ${flasks}
+      ${armBanner}
       ${handHtml}
       <div class="coop-actions">
         <button id="coop-endturn" ${canEnd ? '' : 'disabled'}>END TURN</button>
@@ -168,7 +179,21 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
         send({ t: 'playCard', cardInstanceId: inst, targetId: needs ? selectedEnemy : undefined });
       }));
     app.querySelectorAll('.coop-flask').forEach((el) =>
-      el.addEventListener('click', () => send({ t: 'useFlask', slot: Number(el.dataset.slot), targetId: selectedEnemy })));
+      el.addEventListener('click', () => {
+        const slot = Number(el.dataset.slot);
+        const fd = registries.flasks.get(el.dataset.flaskid);
+        if (fd.targeted) { send({ t: 'useFlask', slot, targetId: selectedEnemy }); armedFlask = null; }
+        else { armedFlask = armedFlask === slot ? null : slot; render(); } // arm → click a hero seat
+      }));
+    // Deliver an armed (thrown) flask to a hero seat: self drinks, ally receives.
+    app.querySelectorAll('.coop-seat.throw-target').forEach((el) =>
+      el.addEventListener('click', () => {
+        const to = el.dataset.seat;
+        send({ t: 'useFlask', slot: armedFlask, targetId: to === me ? undefined : to });
+        armedFlask = null;
+      }));
+    const cancel = app.querySelector('#coop-cancel-flask');
+    if (cancel) cancel.addEventListener('click', () => { armedFlask = null; render(); });
     const et = app.querySelector('#coop-endturn');
     if (et) et.addEventListener('click', () => send({ t: 'endTurn' }));
     wireLeave();
@@ -213,13 +238,16 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
   // ---- shrine / event -------------------------------------------------------
   function renderShrine() {
     const done = snap.scene.done && snap.scene.done[me];
+    const allies = snap.party.filter((p) => p.id !== me && p.alive && p.connected);
     const body = `<h2 class="coop-title">Shrine of Grace</h2>
       ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">
-        <button data-shrine="rest">Rest — heal</button>
+        <button data-shrine="rest">Rest — heal yourself</button>
         <button data-shrine="smith">Smith — upgrade a card</button>
+        ${allies.map((a) => `<button class="coop-take" data-mend="${a.id}">Mend ${esc(a.name)} (+30% HP)</button>`).join('')}
       </div>`}`;
     app.innerHTML = shell(body);
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));
+    app.querySelectorAll('[data-mend]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'mend', targetId: b.dataset.mend })));
     wireLeave();
   }
   function renderEvent() {

@@ -332,25 +332,44 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   }
 }
 
+// targetId may be an enemy id (offensive flask) OR another player's member id
+// (StS2 throw-to-ally: a self-beneficial flask lands on a chosen ally instead).
 export function useFlask(C, playerId, slot, targetId) {
   if (C.result) throw new Error('Combat is over');
   if (C.phase !== 'player') throw new Error('Not the player phase');
   const P = C.players.get(playerId);
   if (!P || !P.connected || !P.entity.alive) throw new Error(`Player '${playerId}' cannot act`);
-  setActive(C, P);
   const p = P.entity;
   const flask = p.flasks[slot];
   if (!flask) throw new Error(`No flask in slot ${slot}`);
   const def = C.registries.flasks.get(flask.flaskId);
-  let target = null;
-  if (targetId != null) { target = findEntity(C, targetId); if (!target || !target.alive) throw new Error(`Invalid target '${targetId}'`); }
-  else if (def.targeted) target = C.enemies.find((e) => e.alive) || null;
+
+  // Throw-to-ally: a non-offensive flask directed at another living player.
+  const ally = targetId && C.players.get(targetId);
+  const thrown = ally && !def.targeted && ally.entity.alive;
+  const recipient = thrown ? ally.entity : p;
+
+  let enemyTarget = null;
+  if (!thrown) {
+    if (targetId != null && !C.players.has(targetId)) {
+      enemyTarget = findEntity(C, targetId);
+      if (!enemyTarget || !enemyTarget.alive) throw new Error(`Invalid target '${targetId}'`);
+    } else if (def.targeted) {
+      enemyTarget = C.enemies.find((e) => e.alive) || null;
+    }
+  }
+
   p.flasks.splice(slot, 1);
+  // Effects that target 'self'/'player' resolve against the recipient (thrower
+  // or ally); offensive effects still hit the enemy target.
+  setActive(C, thrown ? ally : P);
   C._buffer = [];
   try {
-    C.emit('flaskUsed', { flaskId: flask.flaskId, slot, targetId: target ? target.id : null });
+    C.emit(thrown ? 'flaskThrown' : 'flaskUsed', { flaskId: flask.flaskId, slot, from: playerId, to: thrown ? targetId : (enemyTarget ? enemyTarget.id : null) });
     const amountMult = passiveMult(C.registries, p.relicIds, 'flaskPowerMult');
-    for (const eff of def.effects || []) C.enqueue({ effect: eff, source: p, owner: p, target, meta: amountMult !== 1 ? { amountMult } : {} });
+    for (const eff of def.effects || []) {
+      C.enqueue({ effect: eff, source: recipient, owner: recipient, target: enemyTarget || recipient, meta: amountMult !== 1 ? { amountMult } : {} });
+    }
     drainQueue(C);
     return { events: C._buffer };
   } finally { C._buffer = null; }
@@ -416,7 +435,10 @@ function enemyPhase(C) {
     drainQueue(C);
     if (C.result || !enemy.alive) continue;
 
-    if (enemy.pendingMove) {
+    // Staggered (poise meter filled) or skipTurn: the telegraphed move is lost.
+    if (enemy.skipNextTurn || S.getFlag(C, enemy, 'skipTurn')) {
+      enemy.skipNextTurn = false;
+    } else if (enemy.pendingMove) {
       if (C.turn >= enemy.pendingMove.resolveOnTurn) {
         const def = C.registries.enemies.get(enemy.enemyId);
         const move = def.moves[enemy.pendingMove.moveId];
@@ -489,6 +511,7 @@ function rollIntents(C, isFirstTurn = false) {
   for (const enemy of C.enemies) {
     if (!enemy.alive) continue;
     if (enemy.pendingMove) { if (enemy.intent) enemy.intent = { ...enemy.intent, pending: true }; continue; }
+    if (enemy.skipNextTurn || S.getFlag(C, enemy, 'skipTurn')) { enemy.intent = { kind: 'staggered', moveId: null }; continue; }
     const def = C.registries.enemies.get(enemy.enemyId);
     let moveId;
     if (isFirstTurn && def.firstMove) moveId = def.firstMove;

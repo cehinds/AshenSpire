@@ -9,7 +9,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import {
-  createCoopCombat, coopHpMult, playCard, endTurn, leaveCombat, joinCombat, coopOutcome,
+  createCoopCombat, coopHpMult, playCard, endTurn, useFlask, leaveCombat, joinCombat, coopOutcome,
 } from '../src/engine/coopCombat.js';
 
 const REG = createRegistries(contentBundle);
@@ -91,6 +91,26 @@ try {
   leaveCombat(C3, 'p1');
   ok(C3.phase === 'suspended', 'fight suspends when the last player drops');
   ok(coopOutcome(C3).result === 'suspended', 'suspended outcome surfaces for the session');
+
+  // --- Stagger: a poise-filled (skipNextTurn) enemy loses its telegraphed move ---
+  const C4 = createCoopCombat({ registries: REG, rng: createRng(0x5a), players: players(), enemyIds: ['wanderingSoldier'] });
+  for (const e of C4.enemies) e.skipNextTurn = true; // simulate a full poise meter
+  const hpBefore = [...C4.players.values()].map((P) => P.entity.hp);
+  endTurn(C4, 'p1'); endTurn(C4, 'p2'); // → enemy phase
+  const hpAfter = [...C4.players.values()].map((P) => P.entity.hp);
+  ok(hpBefore.every((h, i) => h === hpAfter[i]), 'staggered enemy deals no damage (move skipped)');
+  ok(C4.enemies.every((e) => !e.skipNextTurn), 'skipNextTurn is consumed by the enemy turn');
+
+  // --- Throw-to-ally: a self-heal flask lands on a wounded teammate ---
+  const throwers = players();
+  throwers[0].flasks = [{ flaskId: 'crimsonFlask' }]; // p1 carries a heal flask
+  throwers[1].hp = 30; // p2 is hurt
+  const C5 = createCoopCombat({ registries: REG, rng: createRng(0x7c), players: throwers, enemyIds: ['rotHound'] });
+  const p2 = C5.players.get('p2').entity;
+  const p2Before = p2.hp;
+  useFlask(C5, 'p1', 0, 'p2'); // p1 throws the Crimson Flask to p2
+  ok(p2.hp > p2Before, 'thrown heal flask heals the targeted ally, not the thrower');
+  ok(C5.players.get('p1').entity.flasks.length === 0, 'the thrower spends the flask');
 } catch (e) {
   ok(false, `threw: ${e.stack || e.message}`);
 }
