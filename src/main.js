@@ -874,6 +874,32 @@ function coopMapShot() {
   };
 }
 
+function coopShotParty() {
+  return [
+    { id: 'p1', name: 'Ranni', classId: 'astrologer', connected: true, alive: true, hp: 61, maxHp: 72, runes: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
+    { id: 'p2', name: 'Blaidd', classId: 'vagabond', connected: true, alive: true, hp: 84, maxHp: 84, runes: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
+  ];
+}
+function coopRewardShot() {
+  return {
+    actNumber: 1, floor: 4, seedString: 'SHOWCASE', endless: false,
+    scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], runes: 32, flaskId: 'crimsonFlask', relicId: 'tarnishedMedallion' } } },
+    party: coopShotParty(),
+  };
+}
+function coopShrineShot() {
+  return { actNumber: 1, floor: 5, seedString: 'SHOWCASE', endless: false, scene: { kind: 'shrine', done: {} }, party: coopShotParty() };
+}
+function coopCatchupShot() {
+  const party = coopShotParty();
+  party[0].catchup = 2;
+  party[0].catchupQueue = [
+    { type: 'reward', act: 1, floor: 2, offer: { pool: 'normal', cardIds: ['guardCounter', 'rend', 'goldenVow'], relicId: 'tarnishedMedallion' } },
+    { type: 'treasure', act: 1, floor: 3, relicId: 'tarnishedMedallion' },
+  ];
+  return { actNumber: 1, floor: 6, seedString: 'SHOWCASE', endless: false, scene: { kind: 'map' }, reachableIds: [], map: null, party };
+}
+
 if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
@@ -893,6 +919,12 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   coopStubMount(coopCombatShot(), 'p1');
 } else if (shotState === 'coopmap') {
   coopStubMount(coopMapShot(), 'p1');
+} else if (shotState === 'coopreward') {
+  coopStubMount(coopRewardShot(), 'p1');
+} else if (shotState === 'coopshrine') {
+  coopStubMount(coopShrineShot(), 'p1');
+} else if (shotState === 'coopcatchup') {
+  coopStubMount(coopCatchupShot(), 'p1');
 } else {
   showTitle();
 }
