@@ -33,6 +33,9 @@ const SHOTS = [
   { name: 'boss-intro', query: '?shot=boss' }, // boss name splash, held
   { name: 'coop-combat', query: '?shot=coop' }, // LAN co-op combat board (2 players)
   { name: 'coop-map', query: '?shot=coopmap' }, // LAN co-op shared map
+  { name: 'coop-reward', query: '?shot=coopreward' }, // per-member reward pick
+  { name: 'coop-shrine', query: '?shot=coopshrine' }, // rest / smith / Mend an ally
+  { name: 'coop-catchup', query: '?shot=coopcatchup' }, // reconnect catch-up series
 ];
 
 const args = process.argv.slice(2);
