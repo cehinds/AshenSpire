@@ -104,7 +104,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false }
       console.log(`    Serving ${rootResolved}`);
       if (lan) {
         const { attachLan, lanAddress } = await import('./lan.mjs');
-        lanLayer = attachLan(server, { port });
+        lanLayer = attachLan(server, { port, root: rootResolved });
         server.on('close', () => lanLayer.close());
         console.log(`    LAN play: friends on your network can join at http://${lanAddress()}:${port}/`);
       }

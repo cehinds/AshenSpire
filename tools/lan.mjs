@@ -16,9 +16,11 @@
 import { createSocket } from 'node:dgram';
 import { createHash, randomBytes } from 'node:crypto';
 import { networkInterfaces } from 'node:os';
+import { readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createSession } from './session.mjs';
+import { createSession, restoreSession } from './session.mjs';
 
 const REG = createRegistries(contentBundle);
 
@@ -96,12 +98,32 @@ function wsDecode(buf) {
  * attachLan(server, { port }) → { handleHttp, close }
  * `port` is the HTTP port the game is served on (announced in beacons).
  */
-export function attachLan(server, { port }) {
+export function attachLan(server, { port, root }) {
   const selfId = randomBytes(6).toString('hex');
   const discovered = new Map(); // id → { name, addr, port, seen }
   let hosting = null; // { name, hostKey, beaconTimer }
   let session = null; // { seedString, started, clients: Map<socket, player> }
   let nextPlayerId = 1;
+
+  // -- host disk-resume: the run persists to a file so the launcher can restart --
+  const savePath = root ? join(root, '.coop-session.json') : null;
+  let savedGame = null; // a serialize() blob loaded from disk, awaiting resume
+  if (savePath && existsSync(savePath)) {
+    try { savedGame = JSON.parse(readFileSync(savePath, 'utf8')); } catch { savedGame = null; }
+  }
+  function persistGame() {
+    if (!savePath || !session || !session.game) return;
+    const data = session.game.serialize(); // null during a live fight
+    if (data) { try { writeFileSync(savePath, JSON.stringify(data)); savedGame = data; } catch { /* disk full/RO */ } }
+  }
+  function clearSave() {
+    savedGame = null;
+    if (savePath && existsSync(savePath)) { try { rmSync(savePath); } catch { /* ignore */ } }
+  }
+  function saveInfo() {
+    if (!savedGame) return null;
+    return { act: savedGame.actNumber, floor: savedGame.floor, players: (savedGame.members || []).map((m) => m.name) };
+  }
 
   // -- discovery socket (always listening; beacons only while hosting) --------
   const udp = createSocket({ type: 'udp4', reuseAddr: true });
@@ -147,10 +169,13 @@ export function attachLan(server, { port }) {
 
   // (party progress is now carried inside the authoritative game snapshot)
 
-  // Broadcast the authoritative game snapshot to every connected client.
+  // Broadcast the authoritative game snapshot to every connected client, then
+  // persist the run at safe boundaries (serialize() is null mid-combat).
   function broadcastState() {
     if (!session.game) return;
     broadcast({ t: 'state', snapshot: session.game.snapshot() });
+    if (session.game.scene.kind === 'complete') clearSave(); // run over — forget it
+    else persistGame();
   }
 
   // Start the server-authoritative run from the lobby roster.
@@ -188,8 +213,9 @@ export function attachLan(server, { port }) {
   }
 
   function onLobbyMessage(sock, pl, msg) {
-    // In-run intents route to the authoritative game.
-    if (session.game && msg.t !== 'hello') { onGameIntent(pl, msg); return; }
+    // In-run intents route to the authoritative game (but 'resume' is a lobby
+    // action that re-attaches a returning player, so let it through).
+    if (session.game && msg.t !== 'hello' && msg.t !== 'resume') { onGameIntent(pl, msg); return; }
     switch (msg.t) {
       case 'hello':
         pl.name = String(msg.name || 'Tarnished').slice(0, 18);
@@ -227,9 +253,32 @@ export function attachLan(server, { port }) {
         if (!pl.isHost) return;
         startGame();
         break;
+      case 'resume':
+        if (!pl.isHost) return;
+        if (!session.game && !savedGame) return;
+        resumeGame();
+        break;
       default:
         break;
     }
+  }
+
+  // Bring a run back for the connected lobby clients. If no run is live (the
+  // launcher restarted), restore it from disk first; then assign each connected
+  // client to a member (in order) and tell it which member it now controls.
+  function resumeGame() {
+    if (!session.game) { session.game = restoreSession(REG, savedGame); session.started = true; }
+    const game = session.game;
+    const memberIds = [...game.session.members.keys()];
+    let i = 0;
+    for (const [sock2, cl] of session.clients) {
+      const mid = memberIds[i++];
+      if (!mid) break;
+      cl.id = mid;
+      game.setConnected(mid, true);
+      sock2.write(wsEncode(JSON.stringify({ t: 'resumed', yourId: mid, seedString: game.session.seedString })));
+    }
+    broadcastState();
   }
 
   server.on('upgrade', (req, sock) => {
@@ -299,6 +348,8 @@ export function attachLan(server, { port }) {
         port,
         hosting: hosting ? { name: hosting.name } : null,
         hosts: hostsAlive(),
+        hasSave: !!savedGame,
+        save: saveInfo(),
       });
       return true;
     }
