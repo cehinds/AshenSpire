@@ -101,6 +101,15 @@ try {
   ok(hpBefore.every((h, i) => h === hpAfter[i]), 'staggered enemy deals no damage (move skipped)');
   ok(C4.enemies.every((e) => !e.skipNextTurn), 'skipNextTurn is consumed by the enemy turn');
 
+  // --- 'ally' card target: Rallying Banner blocks the TEAMMATE, not the caster ---
+  const supporters = players();
+  supporters[0].deck = Array.from({ length: 5 }, (_, i) => ({ instanceId: `rb${i}`, cardId: 'rallyingBanner', upgraded: false }));
+  const C6 = createCoopCombat({ registries: REG, rng: createRng(0xa11e), players: supporters, enemyIds: ['rotHound'] });
+  const banner = C6.players.get('p1').piles.hand[0];
+  playCard(C6, 'p1', banner.instanceId, 'p2'); // aim the ally card at Blaidd
+  ok(C6.players.get('p2').entity.block === 10, 'ally-targeted Block lands on the chosen teammate');
+  ok(C6.players.get('p1').entity.block === 0, 'the caster gains none of it');
+
   // --- Throw-to-ally: a self-heal flask lands on a wounded teammate ---
   const throwers = players();
   throwers[0].flasks = [{ flaskId: 'crimsonFlask' }]; // p1 carries a heal flask

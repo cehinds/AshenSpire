@@ -9,6 +9,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession, coopHpMult } from './session.mjs';
+import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 
 const REG = createRegistries(contentBundle);
 const fails = [];
@@ -121,6 +122,7 @@ try {
   ok(S.scene.kind === 'reward' || S.scene.kind === 'complete', 'shared combat settles into rewards (or run end)');
   if (S.scene.kind === 'reward') {
     ok(!!S.scene.offers.p1 && !!S.scene.offers.p2, 'both present members get their own reward offer');
+    ok(COOP_CARD_IDS.includes(S.scene.offers.p1.cardIds[S.scene.offers.p1.cardIds.length - 1]), 'party rewards carry a co-op-only card option');
     for (const id of Object.keys(S.scene.offers)) S.chooseReward(id, { cardId: S.scene.offers[id].cardIds[0] });
     ok(S.session.members.get('p2').run.deck.length === p2DeckBefore + 1, 'p2 deck grew by the chosen card');
   }

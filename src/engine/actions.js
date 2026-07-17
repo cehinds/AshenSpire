@@ -231,6 +231,13 @@ export function resolveTargets(ctx, action, targetSpec) {
       const living = livingEnemies(ctx);
       return living.length ? [ctx.rng.pick('misc', living)] : [];
     }
+    case 'ally': {
+      // Co-op: the explicitly aimed living teammate. Solo — or no pick — falls
+      // back to the source, so every ally card stays fully solo-valid.
+      const t = action.target;
+      if (t && t.kind === 'player' && t !== action.source && t.alive) return [t];
+      return [action.source].filter(Boolean);
+    }
     default:
       throw new Error(`Unknown effect target '${targetSpec}'`);
   }

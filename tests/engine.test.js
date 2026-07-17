@@ -805,6 +805,22 @@ export async function runTests() {
     assert(isCustomRun({ mods: { endless: true } }), 'endless runs are flagged custom');
   });
 
+  // ---- 23. 'ally' target (co-op cards, solo-valid) ---------------------------
+  test("23. 'ally' target falls back to self in solo; co-op cards validate", () => {
+    // Solo: no teammate exists, so Rallying Banner's ally-block lands on the player.
+    const c = makeCombat({ deck: ['rallyingBanner', 'strike', 'strike', 'strike', 'strike'] });
+    playFromHand(c, 'rallyingBanner');
+    eq(c.player.block, 10, "ally-targeted Block resolves to the player when there's no ally");
+    // The co-op set is registered, special-rarity (kept out of pools/shops).
+    for (const id of ['rallyingBanner', 'sharedFlame', 'lordsOath']) {
+      assert(REG.cards.has(id), `co-op card '${id}' registered`);
+      eq(REG.cards.get(id).rarity, 'special', `'${id}' is special rarity (never in solo pools)`);
+    }
+    for (const cls of REG.classes.all()) {
+      assert(!cls.cardPool.includes('rallyingBanner'), `no class pool contains a co-op card (${cls.id})`);
+    }
+  });
+
   const passed = results.filter((r) => r.ok).length;
   const failed = results.length - passed;
   return { passed, failed, results };
