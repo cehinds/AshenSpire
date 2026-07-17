@@ -254,11 +254,22 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
       if (to) edgeSvg += `<line class="map-edge" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
     }
 
+    // Fork voting: who has voted for which reachable node (2+ present members).
+    const votes = snap.scene.votes || {};
+    const votesByNode = {};
+    for (const [pid, nid] of Object.entries(votes)) (votesByNode[nid] = votesByNode[nid] || []).push(pid);
+    const present = snap.party.filter((p) => p.connected && p.alive);
+    const voting = present.length > 1;
+    const voteLine = voting
+      ? `<span class="mh-stat coop-voteline">${Object.keys(votes).length ? `VOTES ${Object.keys(votes).length}/${present.length}` : 'VOTE FOR THE PATH'}</span>`
+      : '';
+
     app.innerHTML = `
       <div class="mapscreen">
         <header class="topbar map-header">
           <span class="mh-stat mh-prog">${snap.actNumber > 3 ? `Act ${snap.actNumber}` : `Act ${snap.actNumber} / 3`} · Floor ${snap.floor}</span>
           <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(snap.seedString)}</span>
+          ${voteLine}
           <div class="coop-partybar"></div>
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
@@ -274,12 +285,17 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
     const g = app.querySelector('#map-nodes');
     for (const n of nodes) {
       const isReachable = reachable.has(n.id);
-      const cls = ['map-node', n.type, isReachable ? 'reachable' : ''].filter(Boolean).join(' ');
+      const voters = votesByNode[n.id] || [];
+      const cls = ['map-node', n.type, isReachable ? 'reachable' : '', voters.includes(me) ? 'my-vote' : ''].filter(Boolean).join(' ');
       const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       el.setAttribute('class', cls);
       const r = n.type === 'boss' ? 20 : 15;
       const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
-      el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${NODE_ICONS[n.type] || '?'}</text>`;
+      // Vote pips: the voters' class glyphs ride above a voted node.
+      const pips = voters.length
+        ? `<text class="vote-pips" x="${x(n.col)}" y="${y(n.floor) - r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${voters.map((pid) => classGlyph((snap.party.find((p) => p.id === pid) || {}).classId)).join('')}</text>`
+        : '';
+      el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${NODE_ICONS[n.type] || '?'}</text>${pips}`;
       if (isReachable) el.addEventListener('click', () => send({ t: 'chooseNode', nodeId: n.id }));
       g.appendChild(el);
     }

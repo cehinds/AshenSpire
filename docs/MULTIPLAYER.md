@@ -133,8 +133,13 @@ pure function of server state.
   by `tools/session-resume-smoke.mjs` (10: JSON round-trip, RNG counters,
   refuses-to-persist-mid-fight) + `tools/lan-resume-smoke.mjs` (7: persist →
   server restart → load → resume over the socket) and live in the browser.
-  *Remaining:* fork-vote on map splits (currently first-pick-wins), co-op-only
-  cards.
+  *Also shipped:* **fork voting** — with 2+ present members every map pick is a
+  vote (changeable until the last vote lands); majority wins, ties break toward
+  the earliest-joined member (the host); a disconnect that completes a vote
+  resolves it; solo routes instantly. The scene carries `votes` so every client
+  shows vote pips (voters' class glyphs above the node), your vote ringed gold,
+  and a VOTES n/m counter. *Remaining:* co-op-only cards (needs an 'ally' card
+  target — an engine-primitive design decision, ask first).
 
 ## Constraints
 

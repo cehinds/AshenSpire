@@ -108,6 +108,7 @@ export function createSession({ registries, seedString, endless = false, restore
     if (m) {
       m.connected = !!connected;
       if (live) combatPresence(id, !!connected); // rescale the live fight
+      if (!connected) maybeResolveVotes(); // a leaver may complete a map vote
     }
     return m;
   }
@@ -155,10 +156,49 @@ export function createSession({ registries, seedString, endless = false, restore
     buildMap();
   }
 
-  // A connected member routes the party; first valid pick wins (S5: fork vote).
+  // Fork voting (StS2): with 2+ present members, each casts (and may change) a
+  // vote for a reachable node; the party moves once everyone present has voted.
+  // Majority wins; ties break toward the earliest-joined voter (the host).
+  // Solo — or a party reduced to one by disconnects — routes instantly.
   function chooseNode(memberId, nodeId) {
     if (session.scene.kind !== 'map') return { ok: false, error: 'not on the map' };
     if (!session.reachableIds.includes(nodeId)) return { ok: false, error: 'node not reachable' };
+    const voters = connectedMembers();
+    if (voters.length > 1) {
+      if (!session.scene.votes) session.scene.votes = {};
+      session.scene.votes[memberId] = nodeId;
+      const waiting = voters.filter((m) => !session.scene.votes[m.id]);
+      if (waiting.length) return { ok: true, waiting: waiting.length };
+      nodeId = tallyVotes(session.scene.votes, voters);
+    }
+    return travelTo(nodeId);
+  }
+
+  function tallyVotes(votes, voters) {
+    const counts = {};
+    for (const m of voters) {
+      const v = votes[m.id];
+      if (v) counts[v] = (counts[v] || 0) + 1;
+    }
+    let best = null;
+    let bestN = -1;
+    for (const m of [...voters].sort((a, b) => a.index - b.index)) {
+      const v = votes[m.id];
+      if (v && counts[v] > bestN) { best = v; bestN = counts[v]; }
+    }
+    return best;
+  }
+
+  // A disconnect during a vote can leave everyone-remaining already voted.
+  function maybeResolveVotes() {
+    if (session.scene.kind !== 'map' || !session.scene.votes) return;
+    const voters = connectedMembers();
+    if (!voters.length) return;
+    const waiting = voters.filter((m) => !session.scene.votes[m.id]);
+    if (!waiting.length) travelTo(tallyVotes(session.scene.votes, voters));
+  }
+
+  function travelTo(nodeId) {
     const node = session.mapGraph.nodes[nodeId];
     session.cursorId = nodeId;
     session.floor = node.floor;

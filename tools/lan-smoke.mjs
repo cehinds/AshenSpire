@@ -90,8 +90,12 @@ try {
   ok(state0.snapshot.party.length === 2, 'snapshot party has both members');
   const firstNode = state0.snapshot.reachableIds[0];
 
-  // Host routes a node choice; BOTH clients receive the resulting snapshot.
+  // Fork voting: the host's lone vote holds the party; the guest's matching
+  // vote completes it and BOTH clients receive the advanced snapshot.
   host.send({ t: 'chooseNode', nodeId: firstNode });
+  const voteHeld = await guest.next((m) => m.t === 'state' && m.snapshot.scene.kind === 'map' && m.snapshot.scene.votes, 'vote-held snapshot');
+  ok(voteHeld.snapshot.scene.votes && Object.keys(voteHeld.snapshot.scene.votes).length === 1, 'a lone vote holds the party (vote visible to all)');
+  guest.send({ t: 'chooseNode', nodeId: firstNode });
   const advanced = await guest.next((m) => m.t === 'state' && m.snapshot.scene.kind !== 'map', 'post-node snapshot');
   ok(['combat', 'reward', 'shrine', 'event', 'complete'].includes(advanced.snapshot.scene.kind), 'choosing a node advances the shared scene for all clients');
 
