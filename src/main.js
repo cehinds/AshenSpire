@@ -836,7 +836,7 @@ function coopStubMount(snapshot, myId) {
   if (stub._h && stub._h.onMessage) stub._h.onMessage({ t: 'state', snapshot });
 }
 function coopCombatShot() {
-  const hand = ['strike', 'strike', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
+  const hand = ['strike', 'rallyingBanner', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
   const party = [
     { id: 'p1', name: 'Ranni', classId: 'astrologer', connected: true, alive: true, hp: 61, maxHp: 72, runes: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
     { id: 'p2', name: 'Blaidd', classId: 'vagabond', connected: true, alive: true, hp: 84, maxHp: 84, runes: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },

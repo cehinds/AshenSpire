@@ -138,8 +138,22 @@ pure function of server state.
   the earliest-joined member (the host); a disconnect that completes a vote
   resolves it; solo routes instantly. The scene carries `votes` so every client
   shows vote pips (voters' class glyphs above the node), your vote ringed gold,
-  and a VOTES n/m counter. *Remaining:* co-op-only cards (needs an 'ally' card
-  target — an engine-primitive design decision, ask first).
+  and a VOTES n/m counter. *Also shipped:* **co-op-only cards** on a new `ally`
+  target primitive (user-approved addition to the closed target set, SPEC §3.4):
+  'ally' resolves to the explicitly aimed living teammate and **falls back to
+  self in solo**, so every co-op card stays engine-valid everywhere. Cards in
+  `src/content/cards/coop.js` (Rallying Banner / Shared Flame / Lord's Oath) at
+  rarity `special` — excluded from class pools AND merchant stock; the co-op
+  session appends one as an extra option to every combat reward while the party
+  has 2+ living members. Client: clicking an ally card arms seat-aim (the
+  flask-throw affordance). Proven: engine test 23 (solo fallback + pool
+  exclusion), coop-combat-smoke (ally Block lands on the teammate, not the
+  caster), session-smoke (party rewards carry a co-op option).
+
+**Tarnished Together is feature-complete.** Known edge for a later pass: a
+once-per-combat relic owned by BOTH players shares a trigger-state key
+(`triggers.js` keys aren't player-scoped), so the first proc consumes it for
+both. Cosmetic-scale; noted, not blocking.
 
 ## Constraints
 

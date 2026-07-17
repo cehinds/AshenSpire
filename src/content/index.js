@@ -11,6 +11,7 @@ import { vagabondCards } from './cards/vagabond.js';
 import { astrologerCards } from './cards/astrologer.js';
 import { prophetCards } from './cards/prophet.js';
 import { colorlessCards } from './cards/colorless.js';
+import { coopCards } from './cards/coop.js';
 import { relics } from './relics.js';
 import { flasks } from './flasks.js';
 import { act1Enemies } from './enemies/act1.js';
@@ -27,7 +28,7 @@ import { scripts } from './scripts.js';
 export const contentBundle = {
   version: '0.1.0-m1',
   balance,
-  cards: [...vagabondCards, ...astrologerCards, ...prophetCards, ...colorlessCards],
+  cards: [...vagabondCards, ...astrologerCards, ...prophetCards, ...colorlessCards, ...coopCards],
   relics,
   statuses,
   stances,

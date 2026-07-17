@@ -32,7 +32,8 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
   let snap = null;
   let me = myId;
   let selectedEnemy = null;
-  let armedFlask = null;
+  let armedFlask = null; // non-offensive flask slot awaiting a throw seat
+  let armedAllyCard = null; // ally-targeted card instanceId awaiting a seat
 
   conn.setHandlers({
     onMessage: (msg) => {
@@ -124,7 +125,9 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
     const living = sc.enemies.filter((e) => e.hp > 0);
     if (selectedEnemy == null || !living.find((e) => e.id === selectedEnemy)) selectedEnemy = living[0] ? living[0].id : null;
     const meP = sc.players.find((p) => p.id === me);
-    const arming = armedFlask != null;
+    const arming = armedFlask != null || armedAllyCard != null;
+    const armedCardDef = armedAllyCard && meP ? (() => { const c = meP.hand.find((h) => h.instanceId === armedAllyCard); return c ? cardDef(c) : null; })() : null;
+    if (armedAllyCard && !armedCardDef) armedAllyCard = null; // card left the hand
 
     app.innerHTML = `
       <div class="combat coop">
@@ -137,7 +140,8 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
           <div class="enemy-row"></div>
         </div>
         ${meP && meP.flasks && meP.flasks.length ? '<div class="coop-flasks"></div>' : ''}
-        ${arming ? `<div class="coop-arm">Throwing <b>${esc(registries.flasks.get(meP.flasks[armedFlask].flaskId).name)}</b> — click a hero seat to give it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
+        ${armedFlask != null ? `<div class="coop-arm">Throwing <b>${esc(registries.flasks.get(meP.flasks[armedFlask].flaskId).name)}</b> — click a hero seat to give it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
+        ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — click the hero who receives it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
         <div class="hand-area">
           <div class="energy-orb">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</div>
           <div class="hand"></div>
@@ -163,7 +167,10 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
       box.appendChild(nm);
       box.appendChild(meterBars(p, false));
       box.appendChild(statusRow(p.statuses));
-      if (arming && p.alive && p.connected) box.addEventListener('click', () => { send({ t: 'useFlask', slot: armedFlask, targetId: p.id === me ? undefined : p.id }); armedFlask = null; });
+      if (arming && p.alive && p.connected) box.addEventListener('click', () => {
+        if (armedAllyCard) { send({ t: 'playCard', cardInstanceId: armedAllyCard, targetId: p.id }); armedAllyCard = null; }
+        else { send({ t: 'useFlask', slot: armedFlask, targetId: p.id === me ? undefined : p.id }); armedFlask = null; }
+      });
       zone.appendChild(box);
     }
 
@@ -199,8 +206,11 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
         const spread = Math.min(6, n) * 1.2;
         el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
         el.style.zIndex = i;
+        if (c.instanceId === armedAllyCard) el.classList.add('selected');
         el.addEventListener('click', () => {
           if (!affordable) return;
+          const needsAlly = (def.effects || []).some((ef) => ef.target === 'ally');
+          if (needsAlly) { armedAllyCard = armedAllyCard === c.instanceId ? null : c.instanceId; armedFlask = null; render(); return; }
           const needs = (def.effects || []).some((ef) => ef.target === 'enemy');
           send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
         });
@@ -232,7 +242,7 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
     et.disabled = !canEnd;
     et.classList.toggle('pulse', canEnd && meP.energy > 0);
     if (canEnd) et.addEventListener('click', () => send({ t: 'endTurn' }));
-    const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; render(); });
+    const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; armedAllyCard = null; render(); });
     wireLeave();
   }
 

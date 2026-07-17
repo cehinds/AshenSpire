@@ -25,6 +25,7 @@ import {
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
 } from '../src/engine/coopCombat.js';
+import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 
 const LAST_ACT = 3;
 
@@ -356,6 +357,11 @@ export function createSession({ registries, seedString, endless = false, restore
     const cardIds = rollCardRewardIds(registries, m.rng, {
       classId: m.classId, pool, relicIds: m.run.relics,
     });
+    // Co-op-only cards (StS2): with a real party, every combat reward carries
+    // one team-play option on top of the normal class picks.
+    if (livingMembers().length > 1) {
+      cardIds.push(m.rng.pick('cardRewards', COOP_CARD_IDS));
+    }
     const runes = rollRuneReward(registries, m.rng, pool, m.run.relics);
     const flaskId = pool !== 'boss' ? rollFlaskDrop(registries, m.rng, m.run) : null;
     const relicId = pool === 'elite' || pool === 'boss'

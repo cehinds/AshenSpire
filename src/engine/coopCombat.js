@@ -291,8 +291,15 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
 
   let target = null;
   if (targetId != null) {
-    target = findEntity(C, targetId);
-    if (!target || !target.alive) throw new Error(`Invalid target '${targetId}'`);
+    // targetId may be a teammate's member id (ally-targeted co-op cards).
+    if (C.players.has(targetId)) {
+      const AP = C.players.get(targetId);
+      if (!AP.entity.alive) throw new Error(`Ally '${targetId}' is down`);
+      target = AP.entity;
+    } else {
+      target = findEntity(C, targetId);
+      if (!target || !target.alive) throw new Error(`Invalid target '${targetId}'`);
+    }
   } else if (needsEnemyTarget(def)) {
     target = C.enemies.find((e) => e.alive) || null;
     if (!target) throw new Error('No living enemy to target');

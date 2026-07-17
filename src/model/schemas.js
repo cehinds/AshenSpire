@@ -61,6 +61,7 @@ export const TARGETS = Object.freeze([
   'randomEnemy',
   'player',
   'owner',
+  'ally', // co-op: a chosen living teammate; resolves to self in solo play
 ]);
 
 // Event bus events emitted by executed actions (SPEC §3.10).
