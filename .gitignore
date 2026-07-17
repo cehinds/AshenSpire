@@ -18,3 +18,4 @@ scratch/
 # dist: keep the stable standalone (dist/EldenSpire.html); the version-stamped
 # copies the launcher emits are build artifacts.
 dist/EldenSpire-*.html
+.coop-session.json

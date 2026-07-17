@@ -34,30 +34,48 @@ export function coopHpMult(headcount) {
 }
 
 /** A deterministic per-member RNG stream, independent of the shared map RNG. */
-function memberRng(seed, index) {
-  return createRng((seed ^ ((index + 1) * 0x9e3779b1)) >>> 0);
+function memberRng(seed, index, counters) {
+  return createRng((seed ^ ((index + 1) * 0x9e3779b1)) >>> 0, counters || {});
 }
 
-export function createSession({ registries, seedString, endless = false }) {
-  const seed = safeSeed(seedString);
-  const rng = createRng(seed); // shared: map gen, encounter rolls
+// Rebuild a session from a serialize() blob (host disk-resume). Members come
+// back disconnected; players re-attach by rejoinId.
+export function restoreSession(registries, data) {
+  const s = createSession({ registries, seedString: data.seedString, endless: data.endless, restore: data });
+  return s;
+}
+
+export function createSession({ registries, seedString, endless = false, restore = null }) {
+  const seed = restore ? (restore.seed >>> 0) : safeSeed(seedString);
+  const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
   const members = new Map(); // id → member
-  let order = 0;
+  let order = restore ? restore.order : 0;
 
   const session = {
     id: `s${(seed % 100000).toString(36)}`,
-    seedString: seedToString(seed),
+    seedString: restore ? restore.seedString : seedToString(seed),
     seed,
     endless,
-    actNumber: 1,
-    floor: 0,
-    mapGraph: null,
-    cursorId: null,
-    reachableIds: [],
-    scene: { kind: 'lobby' },
-    started: false,
+    actNumber: restore ? restore.actNumber : 1,
+    floor: restore ? restore.floor : 0,
+    mapGraph: restore ? restore.mapGraph : null,
+    cursorId: restore ? restore.cursorId : null,
+    reachableIds: restore ? restore.reachableIds.slice() : [],
+    scene: restore ? restore.scene : { kind: 'lobby' },
+    started: restore ? restore.started : false,
     members,
   };
+
+  // Restore members (disconnected until they re-attach by rejoinId).
+  if (restore) {
+    for (const md of restore.members) {
+      members.set(md.id, {
+        id: md.id, name: md.name, index: md.index, classId: md.classId,
+        connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
+        catchup: md.catchup || [], alive: md.alive !== false,
+      });
+    }
+  }
 
   // ---- members -------------------------------------------------------------
   function contentAct() {
@@ -435,6 +453,31 @@ export function createSession({ registries, seedString, endless = false }) {
     };
   }
 
+  // Serialize the run to plain JSON for host disk-resume. Returns null during a
+  // live fight (combat is not persisted; resume lands at the pre-combat node).
+  function serialize() {
+    if (live || session.scene.kind === 'combat') return null;
+    return {
+      v: 1,
+      seed: session.seed,
+      seedString: session.seedString,
+      endless: session.endless,
+      actNumber: session.actNumber,
+      floor: session.floor,
+      cursorId: session.cursorId,
+      reachableIds: session.reachableIds.slice(),
+      scene: session.scene,
+      started: session.started,
+      mapGraph: session.mapGraph,
+      rng: rng.getCounters(),
+      order,
+      members: [...members.values()].map((m) => ({
+        id: m.id, name: m.name, index: m.index, classId: m.classId, alive: m.alive,
+        run: m.run, catchup: m.catchup, rng: m.rng.getCounters(),
+      })),
+    };
+  }
+
   function snapshot() {
     const g = session.mapGraph;
     const nodeType = (n) => (n.type === 'event' ? 'unknown' : n.type);
@@ -471,7 +514,7 @@ export function createSession({ registries, seedString, endless = false }) {
     start, chooseNode, resolveNode,
     combatPlay, combatEndTurn, combatFlask, autoResolveCombat,
     chooseReward, shrineChoice, eventChoice, resolveCatchup,
-    snapshot, contentAct, loopCount,
+    snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },
     get live() { return live; },
   };

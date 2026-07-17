@@ -116,6 +116,12 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
           const handoff = conn;
           conn = null;
           onStart({ conn: handoff, myId, name: state.name });
+        } else if (msg.t === 'resumed') {
+          // A saved run was restored; the server assigned me this member.
+          clearInterval(pollTimer);
+          const handoff = conn;
+          conn = null;
+          onStart({ conn: handoff, myId: msg.yourId, name: state.name });
         } else if (msg.t === 'hostGone') {
           cleanup();
           renderBrowse('The host left the fire.');
@@ -155,11 +161,23 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
         </div>
         <div><p class="cz-label">YOUR CLASS</p><div id="lb-classes" class="class-row" style="flex-wrap:wrap;justify-content:center"></div></div>
         ${iAmHost
-          ? `<div class="seed-line">Seed <input id="lb-seed" maxlength="10" spellcheck="false" value="${esc(state.seedString)}"></div>
+          ? `<div id="lb-resume-wrap"></div>
+             <div class="seed-line">Seed <input id="lb-seed" maxlength="10" spellcheck="false" value="${esc(state.seedString)}"></div>
              <button id="lb-start" ${state.players.length && allReady ? '' : 'disabled'}>BEGIN THE CLIMB${allReady ? '' : ' (waiting for ready)'}</button>`
           : `<button id="lb-ready">${state.ready ? '✓ READY — WAITING FOR THE HOST' : 'READY UP'}</button>`}
         <button class="subtle" id="lb-leave">Leave</button>
       </div>`;
+
+    // Host only: if this launcher has a saved run, offer to resume it.
+    if (iAmHost) {
+      lanInfo().then((info) => {
+        const wrap = app.querySelector('#lb-resume-wrap');
+        if (!wrap || !info || !info.hasSave) return;
+        const s = info.save || {};
+        wrap.innerHTML = `<button id="lb-resume" class="coop-take" style="border-color:var(--gold)">⟳ RESUME LAST RUN — Act ${s.act || '?'} · Floor ${s.floor || 0}${s.players ? ' · ' + s.players.map(esc).join(', ') : ''}</button>`;
+        wrap.querySelector('#lb-resume').addEventListener('click', () => conn.send({ t: 'resume' }));
+      });
+    }
 
     const classes = app.querySelector('#lb-classes');
     for (const cls of registries.classes.all()) {

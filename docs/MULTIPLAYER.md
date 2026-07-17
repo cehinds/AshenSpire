@@ -123,8 +123,18 @@ pure function of server state.
   seat), and **Mend at rest sites** (heal an ally 30% instead of resting).
   Verified live in real 2-player co-op across two launchers (cross-launcher
   discovery + real-time combat sync, zero console errors) and headless
-  (`coop-combat-smoke` 17, `session-smoke` mend). *Remaining:* fork-vote on map
-  splits (currently first-pick-wins), co-op-only cards, host disk-persist/resume.
+  (`coop-combat-smoke` 17, `session-smoke` mend). *Also shipped:* **host
+  disk-persist/resume** — the run serializes to `.coop-session.json` (gitignored)
+  at every safe boundary (never mid-combat; a resumed run lands at the
+  pre-combat node) and the launcher reloads it on startup; the lobby's host sees
+  a "⟳ RESUME LAST RUN" button that re-seats connected clients as the saved
+  members (`resumed` → the client learns its member id). Resume also re-attaches
+  to a run still live in memory (host left the screen, not the server). Proven
+  by `tools/session-resume-smoke.mjs` (10: JSON round-trip, RNG counters,
+  refuses-to-persist-mid-fight) + `tools/lan-resume-smoke.mjs` (7: persist →
+  server restart → load → resume over the socket) and live in the browser.
+  *Remaining:* fork-vote on map splits (currently first-pick-wins), co-op-only
+  cards.
 
 ## Constraints
 
