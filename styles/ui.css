@@ -413,3 +413,8 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 .coop-flask { padding: 5px 12px; font-size: 13px; }
 .coop-flask.armed { border-color: var(--gold); box-shadow: 0 0 8px rgba(200,160,70,.5); }
 .coop-arm { color: var(--gold); font-size: 13px; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: 7px; padding: 6px 12px; margin: 4px auto; width: fit-content; }
+
+/* co-op: fork voting on the shared map */
+.map-node.my-vote > circle { stroke: var(--gold); stroke-width: 3; }
+.coop-voteline { color: var(--gold); letter-spacing: .12em; }
+.vote-pips { pointer-events: none; }

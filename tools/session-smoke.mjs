@@ -34,6 +34,14 @@ function botTurn(combat, memberId) {
   if (!P.ended && combat.phase === 'player' && !combat.result) endTurn(combat, memberId);
 }
 
+// Fork voting: every present member votes for the same node so the party moves.
+function route(S, nodeId) {
+  for (const m of S.connectedMembers()) {
+    S.chooseNode(m.id, nodeId);
+    if (S.scene.kind !== 'map') return; // vote resolved (or solo routed)
+  }
+}
+
 // Walk the party forward, auto-resolving each non-combat scene and each live
 // fight, until they reach `stopKind` or a fixed step budget runs out.
 function walk(S, { steps = 12, healBetween = true } = {}) {
@@ -41,7 +49,7 @@ function walk(S, { steps = 12, healBetween = true } = {}) {
   while (guard++ < steps * 6) {
     const sc = S.scene;
     if (sc.kind === 'complete') return sc;
-    if (sc.kind === 'map') S.chooseNode(S.connectedMembers()[0].id, S.session.reachableIds[0]);
+    if (sc.kind === 'map') route(S, S.session.reachableIds[0]);
     else if (sc.kind === 'combat') {
       S.autoResolveCombat(botTurn);
       if (healBetween) for (const m of S.livingMembers()) if (m.run.hp < 6) m.run.hp = m.run.maxHp; // keep the bot alive to keep walking
@@ -65,13 +73,40 @@ try {
   ok(S.scene.kind === 'map', 'start → shared map scene');
   ok(S.snapshot().party.length === 2, 'snapshot shows a 2-member party');
 
+  // --- fork voting: one vote holds the party; a tie breaks toward the host ---
+  const opts = S.session.reachableIds;
+  const r1 = S.chooseNode('p1', opts[0]);
+  ok(S.scene.kind === 'map' && r1.waiting === 1, 'a lone vote holds the party on the map (1 still to vote)');
+  ok(S.scene.votes && S.scene.votes.p1 === opts[0], 'the vote is recorded on the scene for all clients');
+  if (opts.length > 1) {
+    S.chooseNode('p2', opts[1]); // 1-1 tie → the host's (earliest-joined) pick wins
+    ok(S.scene.kind !== 'map' || S.session.cursorId === opts[0], 'tie breaks toward the host pick and the party travels');
+    ok(S.session.cursorId === opts[0], 'party traveled to the host-voted node');
+  } else {
+    S.chooseNode('p2', opts[0]);
+    ok(S.session.cursorId === opts[0], 'both votes in → the party travels');
+  }
+  // rewind to a clean map for the rest of the walk (whatever the node opened)
+  {
+    let unlock = 0;
+    while (S.scene.kind !== 'map' && S.scene.kind !== 'complete' && unlock++ < 10) {
+      const sc = S.scene;
+      if (sc.kind === 'combat') S.autoResolveCombat(botTurn);
+      else if (sc.kind === 'reward') for (const id of Object.keys(sc.offers)) S.chooseReward(id, { cardId: sc.offers[id].cardIds[0] });
+      else if (sc.kind === 'shrine') for (const m of S.connectedMembers()) S.shrineChoice(m.id, 'rest');
+      else if (sc.kind === 'event') for (const m of S.connectedMembers()) S.eventChoice(m.id, 0);
+      else break;
+    }
+    for (const m of S.livingMembers()) if (m.run.hp < 12) m.run.hp = m.run.maxHp;
+  }
+
   // First node → live shared combat, both members in one fight.
-  S.chooseNode('p1', S.session.reachableIds[0]);
+  route(S, S.session.reachableIds[0]);
   // (first node may be an event/shrine; push until a combat opens)
   let steps = 0;
   while (S.scene.kind !== 'combat' && S.scene.kind !== 'complete' && steps++ < 8) {
     const sc = S.scene;
-    if (sc.kind === 'map') S.chooseNode('p1', S.session.reachableIds[0]);
+    if (sc.kind === 'map') route(S, S.session.reachableIds[0]);
     else if (sc.kind === 'reward') for (const id of Object.keys(sc.offers)) S.chooseReward(id, { cardId: sc.offers[id].cardIds[0] });
     else if (sc.kind === 'shrine') for (const m of S.connectedMembers()) S.shrineChoice(m.id, 'rest');
     else if (sc.kind === 'event') for (const m of S.connectedMembers()) S.eventChoice(m.id, 0);
@@ -96,7 +131,7 @@ try {
   let g = 0;
   while (S.scene.kind !== 'combat' && S.scene.kind !== 'complete' && g++ < 10) {
     const sc = S.scene;
-    if (sc.kind === 'map') S.chooseNode('p1', S.session.reachableIds[0]);
+    if (sc.kind === 'map') route(S, S.session.reachableIds[0]);
     else if (sc.kind === 'reward') { for (const id of Object.keys(sc.offers)) S.chooseReward(id, { cardId: sc.offers[id].cardIds[0] }); }
     else if (sc.kind === 'shrine') S.shrineChoice('p1', 'rest');
     else if (sc.kind === 'event') S.eventChoice('p1', 0);

@@ -30,13 +30,21 @@ function botTurn(combat, memberId) {
   if (!P.ended && combat.phase === 'player' && !combat.result) endTurn(combat, memberId);
 }
 
+// Fork voting: every present member votes for the same node so the party moves.
+function route(S, nodeId) {
+  for (const m of S.connectedMembers()) {
+    S.chooseNode(m.id, nodeId);
+    if (S.scene.kind !== 'map') return;
+  }
+}
+
 // Advance a session to the first clean (non-combat) map boundary after a fight.
 function walkToBoundary(S) {
   let guard = 0;
   while (guard++ < 40) {
     const sc = S.scene;
     if (sc.kind === 'map' && guard > 1) return;
-    if (sc.kind === 'map') S.chooseNode(S.connectedMembers()[0].id, S.session.reachableIds[0]);
+    if (sc.kind === 'map') route(S, S.session.reachableIds[0]);
     else if (sc.kind === 'combat') { S.autoResolveCombat(botTurn); for (const m of S.livingMembers()) if (m.run.hp < 12) m.run.hp = m.run.maxHp; }
     else if (sc.kind === 'reward') { for (const id of Object.keys(sc.offers)) S.chooseReward(id, { cardId: sc.offers[id].cardIds[0] }); }
     else if (sc.kind === 'shrine') S.connectedMembers().forEach((m) => S.shrineChoice(m.id, 'rest'));

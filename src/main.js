@@ -864,7 +864,8 @@ function coopMapShot() {
   const nodeType = (n) => (n.type === 'event' ? 'unknown' : n.type);
   return {
     actNumber: 1, floor: 0, seedString: 'SHOWCASE', endless: false,
-    scene: { kind: 'map' },
+    // Blaidd has already voted for a start node; Ranni (you) is still deciding.
+    scene: { kind: 'map', votes: { p2: g.startIds[1] || g.startIds[0] } },
     reachableIds: g.startIds.slice(),
     map: { floors: g.floors, startIds: g.startIds, bossId: g.bossId, nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })) },
     party: [
