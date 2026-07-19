@@ -202,11 +202,14 @@ async function main() {
   })()`);
   ok(played, 'host played a card into the shared fight');
   await until(guestTab, `(${battleState}) !== ${JSON.stringify(before)}`, "guest's screen reflects the host's play");
+  // Snapshot-diff FX: the guest derives floats/recoil from the state change.
+  const fx = await evalIn(guestTab, `({ floats: document.querySelectorAll('.fx-layer .float-num').length, flash: document.querySelectorAll('.sprite.hitflash').length })`);
+  ok(fx.floats > 0 || fx.flash > 0, `guest shows combat FX from the host's play (floats=${fx.floats} recoil=${fx.flash})`);
   const viewHost = await evalIn(hostTab, battleState);
   const viewGuest = await evalIn(guestTab, battleState);
   ok(viewHost === viewGuest, `both clients render the identical shared fight (${viewGuest})`);
-  await shoot(hostTab, 'coop-live-host.png');
   await shoot(guestTab, 'coop-live-guest.png');
+  await shoot(hostTab, 'coop-live-host.png');
 
   // ---- teardown -------------------------------------------------------------
   cdp.close();

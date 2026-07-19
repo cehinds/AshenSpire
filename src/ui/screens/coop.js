@@ -34,6 +34,7 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
   let selectedEnemy = null;
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
   let armedAllyCard = null; // ally-targeted card instanceId awaiting a seat
+  let prevCombat = null; // last combat scene, for snapshot-diff FX
 
   conn.setHandlers({
     onMessage: (msg) => {
@@ -52,6 +53,7 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
     if (!snap) return;
     const mm = myMember();
     if (mm && mm.catchupQueue && mm.catchupQueue.length) return renderCatchup(mm);
+    if (snap.scene.kind !== 'combat') prevCombat = null;
     switch (snap.scene.kind) {
       case 'map': return renderMap();
       case 'combat': return renderCombat();
@@ -147,6 +149,7 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
           <div class="hand"></div>
           <button class="end-turn" id="coop-endturn">END TURN</button>
         </div>
+        <div class="fx-layer"></div>
       </div>`;
 
     // Player seats (all party members in the fight).
@@ -245,6 +248,8 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
     et.classList.toggle('pulse', canEnd && meP.energy > 0);
     if (canEnd) et.addEventListener('click', () => send({ t: 'endTurn' }));
     const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; armedAllyCard = null; render(); });
+    spawnCombatFx(sc, prevCombat);
+    prevCombat = sc;
     wireLeave();
   }
 
@@ -397,6 +402,58 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
     app.innerHTML = `<div class="screen"><h1 class="title-big" style="color:var(--gold)">${win ? '👑 The Spire is Yours' : '☠ The Party Has Fallen'}</h1>
       <button id="coop-leave2" style="margin-top:20px">Return to the fire</button></div>`;
     const b = app.querySelector('#coop-leave2'); if (b) b.addEventListener('click', () => { conn.close(); onLeave(); });
+  }
+
+  // ---- snapshot-diff combat FX ---------------------------------------------
+  // The client renders authoritative snapshots, so FX are derived by diffing
+  // consecutive combat scenes: HP down -> damage float + hit recoil, block up ->
+  // block float, HP up -> heal float, death -> crumble. Reuses the solo FX CSS.
+  function spawnCombatFx(now, prev) {
+    if (!prev) return;
+    const layer = app.querySelector('.fx-layer');
+    if (!layer) return;
+    const put = (sel, cls, text, dy = 0.35) => {
+      const anchor = app.querySelector(sel);
+      if (!anchor) return;
+      const lr = layer.getBoundingClientRect();
+      const ar = anchor.getBoundingClientRect();
+      const el = document.createElement('div');
+      el.className = cls;
+      el.textContent = text;
+      el.style.left = `${ar.left - lr.left + ar.width / 2}px`;
+      el.style.top = `${ar.top - lr.top + ar.height * dy}px`;
+      layer.appendChild(el);
+      setTimeout(() => el.remove(), 1100);
+    };
+    const recoil = (sel, heavy) => {
+      const box = app.querySelector(sel);
+      if (box) box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
+    };
+    for (const e of now.enemies) {
+      const pe = prev.enemies.find((x) => x.id === e.id);
+      if (!pe) continue;
+      const dmg = Math.max(0, pe.hp - e.hp);
+      if (dmg > 0) {
+        put(`[data-eid="${e.id}"]`, dmg >= 12 ? 'float-num crit' : 'float-num dmg', `-${dmg}`);
+        recoil(`[data-eid="${e.id}"] .sprite`, dmg >= 12);
+      }
+      if ((e.block || 0) > (pe.block || 0)) put(`[data-eid="${e.id}"]`, 'float-num blk small', `+${e.block - (pe.block || 0)}`);
+      if (pe.hp > 0 && e.hp <= 0) {
+        const b = app.querySelector(`[data-eid="${e.id}"] .sprite`);
+        if (b) b.classList.add('crumble');
+      }
+    }
+    for (const p of now.players) {
+      const pp = prev.players.find((x) => x.id === p.id);
+      if (!pp) continue;
+      const dmg = Math.max(0, pp.hp - p.hp);
+      if (dmg > 0) {
+        put(`[data-seat="${p.id}"]`, dmg >= 12 ? 'float-num heavy dmg' : 'float-num dmg', `-${dmg}`);
+        recoil(`[data-seat="${p.id}"] .sprite`, dmg >= 12);
+      }
+      if (p.hp > pp.hp) put(`[data-seat="${p.id}"]`, 'float-num heal', `+${p.hp - pp.hp}`);
+      if ((p.block || 0) > (pp.block || 0)) put(`[data-seat="${p.id}"]`, 'float-num blk small', `+${p.block - (pp.block || 0)}`);
+    }
   }
 
   if (conn.open) send({ t: 'resync' });

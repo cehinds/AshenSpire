@@ -353,3 +353,13 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 @keyframes banner-pop { 0% { opacity: 0; letter-spacing: 0.6em; } 30% { opacity: 1; } 100% { opacity: 0; letter-spacing: 0.25em; } }
 @keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(4px, -3px); } 50% { transform: translate(-4px, 2px); } 75% { transform: translate(3px, 3px); } }
 @keyframes pulse-gold { from { box-shadow: 0 0 6px rgba(201, 162, 39, 0.3); } to { box-shadow: 0 0 22px rgba(201, 162, 39, 0.8); } }
+
+/* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */
+@keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; }
+.combatant.enemy .sprite > img { animation-duration: 2.6s; }
+.combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
+.combatant:nth-child(3) .sprite > img { animation-delay: -1.7s; }
+.combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
+.reduced-motion .combatant .sprite > img { animation: none; }
+.combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
