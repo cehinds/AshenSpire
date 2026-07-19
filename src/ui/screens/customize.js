@@ -53,7 +53,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     p.innerHTML = '';
     // With sprites on, preview the class figure you'll actually play; otherwise
     // the chosen sigil (which is what combat shows when sprites are off).
-    const sprite = spritesAreEnabled() ? classSprite(state.classId, tintCss(state.tint), state.glyph) : null;
+    const sprite = spritesAreEnabled() ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint) : null;
     if (sprite) p.appendChild(sprite);
     else p.textContent = state.glyph;
   }

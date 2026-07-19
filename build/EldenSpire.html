@@ -10977,7 +10977,7 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
     p.innerHTML = '';
     // With sprites on, preview the class figure you'll actually play; otherwise
     // the chosen sigil (which is what combat shows when sprites are off).
-    const sprite = spritesAreEnabled() ? classSprite(state.classId, tintCss(state.tint), state.glyph) : null;
+    const sprite = spritesAreEnabled() ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint) : null;
     if (sprite) p.appendChild(sprite);
     else p.textContent = state.glyph;
   }
@@ -11248,20 +11248,58 @@ const CLASS_SVG = {
     </svg>`,
 };
 
-/** A tinted inline-SVG class sprite, or null if the class has none. */
-function classSprite(classId, tint, sigil) {
+// Rendered class sprites (tools/sprites-blender.py → assets/sprites/): one
+// transparent PNG per class × accent tint. Missing/unloadable art falls back
+// to the inline SVG silhouette, so the single-file dist and file:// play keep
+// working with zero configuration. Art credit: procedurally generated in
+// Blender by this repo (see CREDITS.md).
+const SPRITE_TINT_IDS = ['gold', 'ember', 'frost', 'rot', 'grace'];
+const SPRITE_CLASSES = ['vagabond', 'astrologer', 'prophet'];
+function renderedSpriteUrl(classId, tintId) {
+  if (!SPRITE_CLASSES.includes(classId)) return null;
+  const t = SPRITE_TINT_IDS.includes(tintId) ? tintId : 'gold';
+  return `assets/sprites/${classId}_${t}.png`;
+}
+
+/** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
+function classSprite(classId, tint, sigil, tintId) {
   const build = CLASS_SVG[classId];
   if (!build) return null;
   const el = document.createElement('div');
   el.className = 'class-sprite';
-  el.style.cssText = 'width:150px;height:190px;display:flex;align-items:flex-end;justify-content:center;';
-  el.innerHTML = build(tint, sigil);
-  // The class SVGs hardcode 110×140; scale them to the (larger) container so the
-  // player figure reads as boldly as the enemies (viewBox keeps proportions).
-  const svg = el.querySelector('svg');
-  if (svg) {
-    svg.setAttribute('width', '150');
-    svg.setAttribute('height', '190');
+  el.style.cssText = 'width:150px;height:190px;display:flex;align-items:flex-end;justify-content:center;position:relative;';
+
+  const fallbackToSvg = () => {
+    el.innerHTML = build(tint, sigil);
+    const svg = el.querySelector('svg');
+    if (svg) {
+      // The class SVGs hardcode 110×140; scale them to the (larger) container so
+      // the player figure reads as boldly as the enemies (viewBox keeps ratio).
+      svg.setAttribute('width', '150');
+      svg.setAttribute('height', '190');
+    }
+  };
+
+  const url = renderedSpriteUrl(classId, tintId);
+  if (!url) {
+    fallbackToSvg();
+    return el;
+  }
+  const img = document.createElement('img');
+  img.src = url;
+  img.alt = classId;
+  img.style.cssText = 'width:150px;height:190px;object-fit:contain;image-rendering:auto;';
+  img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
+  el.appendChild(img);
+  // The chosen sigil rides the rendered art as a chest medallion overlay.
+  if (sigil) {
+    const med = document.createElement('span');
+    med.textContent = sigil;
+    med.style.cssText =
+      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);` +
+      `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
+      'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
+    el.appendChild(med);
   }
   return el;
 }
@@ -11273,7 +11311,7 @@ function classSprite(classId, tint, sigil) {
 function playerSprite(customization = {}, classId) {
   const tint = tintCss(customization.tint);
   if (spritesEnabled && CLASS_SVG[classId]) {
-    return classSprite(classId, tint, customization.glyph);
+    return classSprite(classId, tint, customization.glyph, customization.tint);
   }
   const el = document.createElement('div');
   el.style.cssText =
