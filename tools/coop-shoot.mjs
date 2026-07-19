@@ -157,7 +157,11 @@ async function main() {
   await evalIn(guestTab, click('.lb-join'));
   await until(guestTab, `!!document.querySelector('#lb-ready')`, 'guest in the room');
   await evalIn(guestTab, `(() => { const v = [...document.querySelectorAll('.cr-class')].find((p) => /vagabond/i.test(p.textContent)); if (v) v.click(); return true; })()`);
-  await wait(250);
+  await wait(200);
+  // Blaidd picks the Carian frost accent — the shots must show gold vs blue.
+  await evalIn(guestTab, `(() => { const d = [...document.querySelectorAll('.tint-dot')].find((x) => /frost/i.test(x.title)); if (d) d.click(); return !!d; })()`);
+  await until(hostTab, `[...document.querySelectorAll('#lb-roster .slot span[style*="color"]')].length > 0`, 'host sees tinted roster');
+  await wait(200);
   await evalIn(guestTab, click('#lb-ready'));
   await until(guestTab, `/READY —/.test(document.querySelector('#lb-ready')?.textContent || '')`, 'guest readied');
   ok(true, 'guest joined via the host URL and readied up');
@@ -181,6 +185,8 @@ async function main() {
   await until(hostTab, `!!document.querySelector('.combat.coop')`, 'host in shared combat');
   await until(guestTab, `!!document.querySelector('.combat.coop')`, 'guest in shared combat');
   ok(true, 'vote resolved into one shared fight');
+  const tintsOnHost = await evalIn(hostTab, `[...document.querySelectorAll('.coop-seat-name span')].map((s) => s.getAttribute('style') || '').join(' ')`);
+  ok(/frost/.test(tintsOnHost) && /gold/.test(tintsOnHost), "both accents render on the host's board (gold Ranni, frost Blaidd)");
 
   // Host plays a card into the shared fight; both screens must render the
   // identical battle state (enemy HP row + every seat's energy).

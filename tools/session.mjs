@@ -71,7 +71,7 @@ export function createSession({ registries, seedString, endless = false, restore
   if (restore) {
     for (const md of restore.members) {
       members.set(md.id, {
-        id: md.id, name: md.name, index: md.index, classId: md.classId,
+        id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold',
         connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
         catchup: md.catchup || [], alive: md.alive !== false,
       });
@@ -86,7 +86,7 @@ export function createSession({ registries, seedString, endless = false, restore
     return endless ? Math.floor((session.actNumber - 1) / LAST_ACT) : 0;
   }
 
-  function addMember({ id, name, classId }) {
+  function addMember({ id, name, classId, tint }) {
     const index = order++;
     const run = createRunState({ seed, classId, registries });
     const m = {
@@ -95,6 +95,7 @@ export function createSession({ registries, seedString, endless = false, restore
       index,
       classId,
       connected: true,
+      tint: tint || 'gold', // chosen accent — colors this hero's sprite for everyone
       run, // per-member build: deck/relics/flasks/hp/maxHp/runes
       rng: memberRng(seed, index),
       catchup: [], // pending missed-node choices (S4 replay)
@@ -491,7 +492,7 @@ export function createSession({ registries, seedString, endless = false, restore
   // ---- snapshot (authoritative state to broadcast) -------------------------
   function memberView(m) {
     return {
-      id: m.id, name: m.name, classId: m.classId, connected: m.connected, alive: m.alive,
+      id: m.id, name: m.name, classId: m.classId, tint: m.tint, connected: m.connected, alive: m.alive,
       hp: m.run.hp, maxHp: m.run.maxHp, runes: m.run.runes,
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,
       catchup: m.catchup.length,
@@ -518,7 +519,7 @@ export function createSession({ registries, seedString, endless = false, restore
       rng: rng.getCounters(),
       order,
       members: [...members.values()].map((m) => ({
-        id: m.id, name: m.name, index: m.index, classId: m.classId, alive: m.alive,
+        id: m.id, name: m.name, index: m.index, classId: m.classId, tint: m.tint, alive: m.alive,
         run: m.run, catchup: m.catchup, rng: m.rng.getCounters(),
       })),
     };

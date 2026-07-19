@@ -8,10 +8,11 @@
 // Shared-map voting and true co-op combat are the next phases.
 
 import { lanInfo, lanHost, lanUnhost, lanConnect } from '../../net/lan.js';
-import { classGlyph } from '../assets.js';
+import { classGlyph, PORTRAIT_TINTS, tintCss } from '../assets.js';
 import { esc } from '../components/tooltip.js';
 
 const NAME_KEY = 'sote_lan_name';
+const TINT_KEY = 'sote_lan_tint';
 
 export function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
   let conn = null;
@@ -21,6 +22,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
   const state = {
     name: localStorage.getItem(NAME_KEY) || 'Tarnished',
     classId: registries.classes.all()[0].id,
+    tint: localStorage.getItem(TINT_KEY) || 'gold',
     ready: false,
     seedString: defaultSeedString,
     players: [],
@@ -108,7 +110,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
       onMessage: (msg) => {
         if (msg.t === 'welcome') {
           myId = msg.id;
-          conn.send({ t: 'hello', name: state.name, classId: state.classId, hostKey });
+          conn.send({ t: 'hello', name: state.name, classId: state.classId, tint: state.tint, hostKey });
         } else if (msg.t === 'roster') {
           state.players = msg.players;
           if (msg.seedString) state.seedString = msg.seedString;
@@ -160,10 +162,11 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
                 <span class="slot-title">${p.isHost ? '⚑ ' : ''}${esc(p.name)}${p.id === myId ? ' (you)' : ''}</span>
                 <span class="slot-meta">${p.classId ? esc(registries.classes.get(p.classId).name) : 'choosing…'}${p.isHost ? ' · host' : p.ready ? ' · READY' : ' · not ready'}</span>
               </div>
-              <span style="font-size:26px">${p.classId ? classGlyph(p.classId) : '…'}</span>
+              <span style="font-size:26px;color:${tintCss(p.tint)}">${p.classId ? classGlyph(p.classId) : '…'}</span>
             </div>`).join('')}
         </div>
         <div><p class="cz-label">YOUR CLASS</p><div id="lb-classes" class="class-row" style="flex-wrap:wrap;justify-content:center"></div></div>
+        <div><p class="cz-label">YOUR ACCENT</p><div id="lb-tints" class="lb-tints"></div></div>
         ${iAmHost
           ? `<div id="lb-resume-wrap"></div>
              <div class="seed-line">Seed <input id="lb-seed" maxlength="10" spellcheck="false" value="${esc(state.seedString)}"></div>
@@ -193,6 +196,22 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
         conn.send({ t: 'pick', classId: cls.id });
       });
       classes.appendChild(el);
+    }
+    // Accent swatches: the chosen tint colors your sprite + party chips for
+    // everyone, so two Vagabonds still read apart on the shared board.
+    const tints = app.querySelector('#lb-tints');
+    for (const t of PORTRAIT_TINTS) {
+      const dot = document.createElement('button');
+      dot.className = `tint-dot${t.id === state.tint ? ' chosen' : ''}`;
+      dot.style.background = t.css;
+      dot.title = t.name;
+      dot.addEventListener('click', () => {
+        state.tint = t.id;
+        localStorage.setItem(TINT_KEY, t.id);
+        conn.send({ t: 'pick', tint: t.id });
+        tints.querySelectorAll('.tint-dot').forEach((d) => d.classList.toggle('chosen', d === dot));
+      });
+      tints.appendChild(dot);
     }
     app.querySelector('#lb-leave').addEventListener('click', () => back());
     if (iAmHost) {
