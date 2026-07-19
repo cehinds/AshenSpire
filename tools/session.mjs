@@ -257,15 +257,23 @@ export function createSession({ registries, seedString, endless = false, restore
       extraHpMult,
       enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: loop }] : [],
     });
-    live = { combat, pool };
+    live = { combat, pool, evCursor: combat.eventLog.length }; // skip setup events
     session.scene = combatScene();
     return { ok: true, combat: session.scene };
   }
 
   function combatScene() {
     const c = live.combat;
+    // Compact digest of display-worthy events since the LAST snapshot, so the
+    // client can pace the enemy phase (banner + per-enemy lunges) without a
+    // full timeline protocol. The cursor advances with each snapshot build.
+    const events = c.eventLog.slice(live.evCursor || 0)
+      .filter((e) => e.type === 'enemyMoveStarted' || e.type === 'enemyDied' || e.type === 'playerDowned')
+      .map((e) => ({ type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId, kind: e.kind, targetId: e.targetId, playerId: e.playerId }));
+    live.evCursor = c.eventLog.length;
     return {
       kind: 'combat',
+      events,
       pool: live.pool,
       phase: c.phase,
       turn: c.turn,

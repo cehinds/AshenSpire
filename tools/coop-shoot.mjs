@@ -211,6 +211,22 @@ async function main() {
   await shoot(guestTab, 'coop-live-guest.png');
   await shoot(hostTab, 'coop-live-host.png');
 
+  // Enemy-phase pacing: both end their turns → the guest holds the old board,
+  // shows the ENEMY TURN banner + paced lunges, then the new turn lands.
+  await evalIn(hostTab, click('#coop-endturn'));
+  await evalIn(guestTab, click('#coop-endturn'));
+  let sawBanner = false;
+  {
+    const t0 = Date.now();
+    while (Date.now() - t0 < 6000 && !sawBanner) {
+      sawBanner = await evalIn(guestTab, `!!document.querySelector('.coop-turn-banner')`);
+      if (!sawBanner) await wait(80);
+    }
+  }
+  ok(sawBanner, 'guest sees the ENEMY TURN banner when the phase resolves');
+  await until(guestTab, `[...document.querySelectorAll('.coop-seat-name')].map((n) => (n.textContent.match(/⚡\\d+\\/\\d+/) || [''])[0]).join(',') === '⚡3/3,⚡3/3'`, 'new player turn landed (energy refilled) after the paced phase');
+  ok(true, 'paced enemy phase resolved into the next turn');
+
   // ---- teardown -------------------------------------------------------------
   cdp.close();
   child.kill();

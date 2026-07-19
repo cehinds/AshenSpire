@@ -35,11 +35,13 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
   let armedAllyCard = null; // ally-targeted card instanceId awaiting a seat
   let prevCombat = null; // last combat scene, for snapshot-diff FX
+  let pacing = false; // an enemy-turn replay is holding the render
+  let pendingSnap = null; // newest snapshot that arrived while pacing
 
   conn.setHandlers({
     onMessage: (msg) => {
       if (msg.t === 'rejoined') { me = msg.id; return; }
-      if (msg.t === 'state') { snap = msg.snapshot; render(); }
+      if (msg.t === 'state') receiveSnapshot(msg.snapshot);
     },
     onClose: () => { app.innerHTML = `<div class="screen"><div class="coop-note">⚠ Connection to the fire was lost.</div><button class="subtle" id="coop-leave">Leave</button></div>`; wireLeave(); },
   });
@@ -402,6 +404,56 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
     app.innerHTML = `<div class="screen"><h1 class="title-big" style="color:var(--gold)">${win ? '👑 The Spire is Yours' : '☠ The Party Has Fallen'}</h1>
       <button id="coop-leave2" style="margin-top:20px">Return to the fire</button></div>`;
     const b = app.querySelector('#coop-leave2'); if (b) b.addEventListener('click', () => { conn.close(); onLeave(); });
+  }
+
+  // ---- enemy-turn pacing -----------------------------------------------------
+  // A turn-advancing snapshot means the whole enemy phase resolved server-side.
+  // Instead of jumping to the result, hold the old board, announce ENEMY TURN,
+  // lunge each acting enemy in order, THEN land the new state — whose diff-FX
+  // spawns all the damage/block floats at once.
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function receiveSnapshot(s) {
+    if (pacing) { pendingSnap = s; return; }
+    const sc = s.scene;
+    const moves = sc && sc.kind === 'combat' && sc.events ? sc.events.filter((e) => e.type === 'enemyMoveStarted') : [];
+    if (moves.length && prevCombat && sc.turn > prevCombat.turn && app.querySelector('.combat.coop')) {
+      paceEnemyTurn(s, moves);
+      return;
+    }
+    snap = s;
+    render();
+  }
+
+  async function paceEnemyTurn(s, moves) {
+    pacing = true;
+    try {
+      banner('ENEMY TURN');
+      await sleep(650);
+      for (const mv of moves) {
+        const box = app.querySelector(`[data-eid="${mv.sourceId}"]`);
+        if (box && !box.classList.contains('dead')) {
+          box.classList.add('acting');
+          setTimeout(() => box.classList.remove('acting'), 420);
+        }
+        await sleep(400);
+      }
+      await sleep(160);
+    } finally {
+      pacing = false;
+      snap = pendingSnap || s;
+      pendingSnap = null;
+      render();
+      if (snap.scene.kind === 'combat') banner(`TURN ${snap.scene.turn}`, true);
+    }
+  }
+
+  function banner(text, small) {
+    const el = document.createElement('div');
+    el.className = `coop-turn-banner${small ? ' small' : ''}`;
+    el.textContent = text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), small ? 900 : 1100);
   }
 
   // ---- snapshot-diff combat FX ---------------------------------------------
