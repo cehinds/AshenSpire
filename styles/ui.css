@@ -423,3 +423,26 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 .lb-tints { display: flex; gap: 10px; justify-content: center; }
 .tint-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
 .tint-dot.chosen { border-color: var(--parchment); box-shadow: 0 0 10px rgba(255,255,255,.35); }
+
+/* co-op: turn banners + acting-enemy lunge (enemy-phase pacing) */
+.coop-turn-banner {
+  position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%);
+  z-index: 640; pointer-events: none; color: var(--gold);
+  font-family: var(--font-display); font-size: 40px; letter-spacing: .3em;
+  text-shadow: 0 0 24px rgba(201, 162, 39, .5), 0 2px 8px #000;
+  animation: turn-banner 1100ms ease-out forwards;
+}
+.coop-turn-banner.small { font-size: 22px; top: 30%; animation-duration: 900ms; }
+@keyframes turn-banner {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.92); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.reduced-motion .coop-turn-banner { animation: turn-banner 500ms ease-out forwards; }
+.combatant.enemy.acting .sprite > img { animation: enemy-lunge 400ms cubic-bezier(.25,.8,.35,1); }
+@keyframes enemy-lunge {
+  0% { transform: translateX(0); }
+  35% { transform: translateX(-22px) scale(1.05); filter: brightness(1.3); }
+  100% { transform: translateX(0); }
+}
