@@ -15246,11 +15246,15 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
     const refresh = async () => {
       const info = await lanInfo();
       if (!info || !hostsBox.isConnected) return;
-      const hosts = info.hosts || [];
+      // Discovered fires, plus THIS launcher's own fire if it is hosting — so a
+      // friend who opened the host's URL directly (the address the launcher
+      // banner advertises) can join with one click, no launcher of their own.
+      const hosts = [...(info.hosts || [])];
+      if (info.hosting) hosts.unshift({ name: info.hosting.name, addr: location.hostname, port: info.port, local: true });
       hostsBox.innerHTML = hosts.length
         ? hosts.map((h, i) =>
             `<button class="mod-chip lb-join" data-i="${i}" style="text-align:left">
-               <b>⚑ ${esc(h.name)}</b><span>${esc(h.addr)}:${h.port}</span>
+               <b>⚑ ${esc(h.name)}</b><span>${h.local ? 'this fire' : `${esc(h.addr)}:${h.port}`}</span>
              </button>`).join('')
         : '<p class="set-note">No fires found yet — host one, or have a friend host. (Both machines must run the game via run.bat.)</p>';
       hostsBox.querySelectorAll('.lb-join').forEach((b) =>
