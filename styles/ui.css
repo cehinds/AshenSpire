@@ -418,3 +418,8 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 .map-node.my-vote > circle { stroke: var(--gold); stroke-width: 3; }
 .coop-voteline { color: var(--gold); letter-spacing: .12em; }
 .vote-pips { pointer-events: none; }
+
+/* co-op lobby: accent swatches (tint applies to your sprite for everyone) */
+.lb-tints { display: flex; gap: 10px; justify-content: center; }
+.tint-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.tint-dot.chosen { border-color: var(--parchment); box-shadow: 0 0 10px rgba(255,255,255,.35); }

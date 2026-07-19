@@ -561,6 +561,11 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
 .coop-voteline { color: var(--gold); letter-spacing: .12em; }
 .vote-pips { pointer-events: none; }
 
+/* co-op lobby: accent swatches (tint applies to your sprite for everyone) */
+.lb-tints { display: flex; gap: 10px; justify-content: center; }
+.tint-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.tint-dot.chosen { border-color: var(--parchment); box-shadow: 0 0 10px rgba(255,255,255,.35); }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -15187,10 +15192,11 @@ Object.assign(module.exports, { showBossIntro });
 // Shared-map voting and true co-op combat are the next phases.
 
 const { lanInfo, lanHost, lanUnhost, lanConnect } = require("src/net/lan.js");
-const { classGlyph } = require("src/ui/assets.js");
+const { classGlyph, PORTRAIT_TINTS, tintCss } = require("src/ui/assets.js");
 const { esc } = require("src/ui/components/tooltip.js");
 
 const NAME_KEY = 'sote_lan_name';
+const TINT_KEY = 'sote_lan_tint';
 
 function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
   let conn = null;
@@ -15200,6 +15206,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
     name: localStorage.getItem(NAME_KEY) || 'Tarnished',
     classId: registries.classes.all()[0].id,
+    tint: localStorage.getItem(TINT_KEY) || 'gold',
     ready: false,
     seedString: defaultSeedString,
     players: [],
@@ -15287,7 +15294,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
       onMessage: (msg) => {
         if (msg.t === 'welcome') {
           myId = msg.id;
-          conn.send({ t: 'hello', name: state.name, classId: state.classId, hostKey });
+          conn.send({ t: 'hello', name: state.name, classId: state.classId, tint: state.tint, hostKey });
         } else if (msg.t === 'roster') {
           state.players = msg.players;
           if (msg.seedString) state.seedString = msg.seedString;
@@ -15339,10 +15346,11 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
                 <span class="slot-title">${p.isHost ? '⚑ ' : ''}${esc(p.name)}${p.id === myId ? ' (you)' : ''}</span>
                 <span class="slot-meta">${p.classId ? esc(registries.classes.get(p.classId).name) : 'choosing…'}${p.isHost ? ' · host' : p.ready ? ' · READY' : ' · not ready'}</span>
               </div>
-              <span style="font-size:26px">${p.classId ? classGlyph(p.classId) : '…'}</span>
+              <span style="font-size:26px;color:${tintCss(p.tint)}">${p.classId ? classGlyph(p.classId) : '…'}</span>
             </div>`).join('')}
         </div>
         <div><p class="cz-label">YOUR CLASS</p><div id="lb-classes" class="class-row" style="flex-wrap:wrap;justify-content:center"></div></div>
+        <div><p class="cz-label">YOUR ACCENT</p><div id="lb-tints" class="lb-tints"></div></div>
         ${iAmHost
           ? `<div id="lb-resume-wrap"></div>
              <div class="seed-line">Seed <input id="lb-seed" maxlength="10" spellcheck="false" value="${esc(state.seedString)}"></div>
@@ -15372,6 +15380,22 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
         conn.send({ t: 'pick', classId: cls.id });
       });
       classes.appendChild(el);
+    }
+    // Accent swatches: the chosen tint colors your sprite + party chips for
+    // everyone, so two Vagabonds still read apart on the shared board.
+    const tints = app.querySelector('#lb-tints');
+    for (const t of PORTRAIT_TINTS) {
+      const dot = document.createElement('button');
+      dot.className = `tint-dot${t.id === state.tint ? ' chosen' : ''}`;
+      dot.style.background = t.css;
+      dot.title = t.name;
+      dot.addEventListener('click', () => {
+        state.tint = t.id;
+        localStorage.setItem(TINT_KEY, t.id);
+        conn.send({ t: 'pick', tint: t.id });
+        tints.querySelectorAll('.tint-dot').forEach((d) => d.classList.toggle('chosen', d === dot));
+      });
+      tints.appendChild(dot);
     }
     app.querySelector('#lb-leave').addEventListener('click', () => back());
     if (iAmHost) {
@@ -15648,8 +15672,10 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
       box.appendChild(sprite);
       const nm = document.createElement('div');
       nm.className = 'coop-seat-name';
-      nm.innerHTML = `${esc(m.name || p.id)}${p.id === me ? ' <b>(you)</b>' : ''} · ⚡${p.energy}/${p.energyMax} <span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
+      nm.innerHTML = `<span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''} · ⚡${p.energy}/${p.energyMax} <span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
       box.appendChild(nm);
+      // Your own seat glows in YOUR accent, not a fixed gold.
+      if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
       box.appendChild(meterBars(p, false));
       box.appendChild(statusRow(p.statuses));
       if (arming && p.alive && p.connected) box.addEventListener('click', () => {
@@ -15804,8 +15830,8 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
     if (!bar) return;
     bar.innerHTML = snap.party.map((p) => {
       const pct = Math.max(0, Math.min(100, Math.round((p.hp / Math.max(1, p.maxHp)) * 100)));
-      return `<span class="coop-pc${p.id === me ? ' me' : ''}${p.connected ? '' : ' away'}${p.alive ? '' : ' dead'}">
-        <span class="coop-pc-glyph">${classGlyph(p.classId)}</span>${esc(p.name)}
+      return `<span class="coop-pc${p.id === me ? ' me' : ''}${p.connected ? '' : ' away'}${p.alive ? '' : ' dead'}" style="border-color:${tintCss(p.tint)}">
+        <span class="coop-pc-glyph" style="color:${tintCss(p.tint)}">${classGlyph(p.classId)}</span>${esc(p.name)}
         <span class="coop-pc-hp"><i style="width:${pct}%"></i><b>${p.hp}/${p.maxHp}</b></span></span>`;
     }).join('');
   }
