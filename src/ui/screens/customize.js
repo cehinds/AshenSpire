@@ -6,7 +6,7 @@
 
 import { LOCKED_CLASSES } from '../../content/index.js';
 import { KEEPSAKES } from '../../content/keepsakes.js';
-import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
+import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
 import { esc } from '../components/tooltip.js';
 
 export function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
@@ -15,6 +15,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     name: 'Tarnished',
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
+    spriteStyle: 'rendered',
     keepsakeId: 'none',
   };
 
@@ -34,6 +35,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
           <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
           <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
           <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
+          <div><p class="cz-label">SPRITE</p><div id="cz-styles" class="cz-opts"></div></div>
           <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
         </div>
       </div>
@@ -53,7 +55,9 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     p.innerHTML = '';
     // With sprites on, preview the class figure you'll actually play; otherwise
     // the chosen sigil (which is what combat shows when sprites are off).
-    const sprite = spritesAreEnabled() ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint) : null;
+    const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
+      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, state.spriteStyle)
+      : null;
     if (sprite) p.appendChild(sprite);
     else p.textContent = state.glyph;
   }
@@ -107,6 +111,21 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     tintBox.appendChild(b);
   });
 
+  // ---- sprite style (rendered art / classic silhouette / sigil glyph) ----
+  const styleBox = $('#cz-styles');
+  SPRITE_STYLES.forEach((st, i) => {
+    const b = document.createElement('div');
+    b.className = `cz-opt style${i === 0 ? ' chosen' : ''}`;
+    b.textContent = st.name;
+    b.style.cssText = 'width:auto;padding:0 12px;font-size:12px;letter-spacing:.08em;';
+    b.addEventListener('click', () => {
+      state.spriteStyle = st.id;
+      styleBox.querySelectorAll('.cz-opt').forEach((x) => x.classList.toggle('chosen', x === b));
+      renderPortrait();
+    });
+    styleBox.appendChild(b);
+  });
+
   // ---- keepsakes ----
   const ksBox = $('#cz-keepsakes');
   KEEPSAKES.forEach((ks, i) => {
@@ -128,7 +147,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     onStart({
       classId: state.classId,
       seedString: $('#seed-input').value.trim(),
-      customization: { name: state.name, glyph: state.glyph, tint: state.tint },
+      customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
       keepsakeId: state.keepsakeId,
     });
   });

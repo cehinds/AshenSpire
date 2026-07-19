@@ -158,7 +158,7 @@ export function attachLan(server, { port, root }) {
   // -- lobby session ------------------------------------------------------------
   function roster() {
     return [...session.clients.values()].map((pl) => ({
-      id: pl.id, name: pl.name, classId: pl.classId, tint: pl.tint, ready: pl.ready, isHost: pl.isHost,
+      id: pl.id, name: pl.name, classId: pl.classId, tint: pl.tint, spriteStyle: pl.spriteStyle, ready: pl.ready, isHost: pl.isHost,
     }));
   }
 
@@ -182,7 +182,7 @@ export function attachLan(server, { port, root }) {
   function startGame() {
     const game = createSession({ registries: REG, seedString: session.seedString || 'ERDTREE', endless: !!session.endless });
     for (const cl of session.clients.values()) {
-      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || REG.classes.all()[0].id, tint: cl.tint });
+      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || REG.classes.all()[0].id, tint: cl.tint, spriteStyle: cl.spriteStyle });
     }
     game.start();
     session.game = game;
@@ -221,6 +221,7 @@ export function attachLan(server, { port, root }) {
         pl.name = String(msg.name || 'Tarnished').slice(0, 18);
         pl.classId = msg.classId || null;
         pl.tint = msg.tint || 'gold';
+        pl.spriteStyle = msg.spriteStyle || 'rendered';
         pl.isHost = !!(hosting && msg.hostKey === hosting.hostKey);
         // Reconnect into a running game as the same member, if it exists.
         if (session.game && msg.rejoinId && session.game.session.members.has(msg.rejoinId)) {
@@ -235,6 +236,7 @@ export function attachLan(server, { port, root }) {
       case 'pick':
         if (msg.classId) pl.classId = msg.classId;
         if (msg.tint) pl.tint = msg.tint;
+        if (msg.spriteStyle) pl.spriteStyle = msg.spriteStyle;
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
         break;
       case 'ready':

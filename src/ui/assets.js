@@ -42,16 +42,34 @@ const ENEMY_TINT = {
   charredColossus: 'var(--ember)', crucibleLord: 'var(--gold)', rotValkyrie: 'var(--rot)',
 };
 
-/** Placeholder sprite: tinted rounded rect + glyph (+shadow), per style guide. */
+/**
+ * Enemy sprite: the Blender-rendered PNG when it exists
+ * (assets/sprites/enemy_<id>.png, tools/sprites-blender.py), else the style
+ * guide's placeholder recipe (tinted rounded rect + glyph). New enemies with
+ * no render yet fall back automatically — the img error handler swaps in the
+ * placeholder, so content can ship art-less.
+ */
 export function enemySprite(enemyDef) {
   const tier = SIZE_TIERS[ENEMY_TIER[enemyDef.id] || 'medium'];
   const tint = ENEMY_TINT[enemyDef.id] || 'var(--line-soft)';
   const el = document.createElement('div');
-  el.style.cssText = `width:${tier.w}px;height:${tier.h}px;border-radius:10px;` +
-    `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
-    `justify-content:center;font-size:${tier.font}px;position:relative;` +
-    `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
-  el.textContent = enemyDef.art || '☠';
+  const placeholder = () => {
+    el.innerHTML = '';
+    el.style.cssText = `width:${tier.w}px;height:${tier.h}px;border-radius:10px;` +
+      `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
+      `justify-content:center;font-size:${tier.font}px;position:relative;` +
+      `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
+    el.textContent = enemyDef.art || '☠';
+  };
+  el.style.cssText = `width:${tier.w}px;height:${tier.h}px;position:relative;` +
+    'display:flex;align-items:flex-end;justify-content:center;';
+  const img = document.createElement('img');
+  img.src = `assets/sprites/enemy_${enemyDef.id}.png`;
+  img.alt = enemyDef.name || enemyDef.id;
+  img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
+    `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
+  img.addEventListener('error', placeholder);
+  el.appendChild(img);
   return el;
 }
 
@@ -151,8 +169,16 @@ function renderedSpriteUrl(classId, tintId) {
   return `assets/sprites/${classId}_${t}.png`;
 }
 
+// Player sprite styles: 'rendered' (Blender PNG), 'classic' (inline SVG
+// silhouette), 'glyph' (sigil-in-a-panel). Chosen per character.
+export const SPRITE_STYLES = [
+  { id: 'rendered', name: 'Rendered' },
+  { id: 'classic', name: 'Classic' },
+  { id: 'glyph', name: 'Sigil' },
+];
+
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
-export function classSprite(classId, tint, sigil, tintId) {
+export function classSprite(classId, tint, sigil, tintId, style) {
   const build = CLASS_SVG[classId];
   if (!build) return null;
   const el = document.createElement('div');
@@ -170,7 +196,7 @@ export function classSprite(classId, tint, sigil, tintId) {
     }
   };
 
-  const url = renderedSpriteUrl(classId, tintId);
+  const url = style === 'classic' ? null : renderedSpriteUrl(classId, tintId);
   if (!url) {
     fallbackToSvg();
     return el;
@@ -200,8 +226,9 @@ export function classSprite(classId, tint, sigil, tintId) {
  */
 export function playerSprite(customization = {}, classId) {
   const tint = tintCss(customization.tint);
-  if (spritesEnabled && CLASS_SVG[classId]) {
-    return classSprite(classId, tint, customization.glyph, customization.tint);
+  const style = customization.spriteStyle || 'rendered';
+  if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
+    return classSprite(classId, tint, customization.glyph, customization.tint, style);
   }
   const el = document.createElement('div');
   el.style.cssText =

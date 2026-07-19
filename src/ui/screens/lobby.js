@@ -8,7 +8,7 @@
 // Shared-map voting and true co-op combat are the next phases.
 
 import { lanInfo, lanHost, lanUnhost, lanConnect } from '../../net/lan.js';
-import { classGlyph, PORTRAIT_TINTS, tintCss } from '../assets.js';
+import { classGlyph, PORTRAIT_TINTS, SPRITE_STYLES, tintCss } from '../assets.js';
 import { esc } from '../components/tooltip.js';
 
 const NAME_KEY = 'sote_lan_name';
@@ -23,6 +23,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
     name: localStorage.getItem(NAME_KEY) || 'Tarnished',
     classId: registries.classes.all()[0].id,
     tint: localStorage.getItem(TINT_KEY) || 'gold',
+    spriteStyle: localStorage.getItem('sote_lan_style') || 'rendered',
     ready: false,
     seedString: defaultSeedString,
     players: [],
@@ -110,7 +111,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
       onMessage: (msg) => {
         if (msg.t === 'welcome') {
           myId = msg.id;
-          conn.send({ t: 'hello', name: state.name, classId: state.classId, tint: state.tint, hostKey });
+          conn.send({ t: 'hello', name: state.name, classId: state.classId, tint: state.tint, spriteStyle: state.spriteStyle, hostKey });
         } else if (msg.t === 'roster') {
           state.players = msg.players;
           if (msg.seedString) state.seedString = msg.seedString;
@@ -167,6 +168,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
         </div>
         <div><p class="cz-label">YOUR CLASS</p><div id="lb-classes" class="class-row" style="flex-wrap:wrap;justify-content:center"></div></div>
         <div><p class="cz-label">YOUR ACCENT</p><div id="lb-tints" class="lb-tints"></div></div>
+        <div><p class="cz-label">SPRITE</p><div id="lb-styles" class="lb-tints"></div></div>
         ${iAmHost
           ? `<div id="lb-resume-wrap"></div>
              <div class="seed-line">Seed <input id="lb-seed" maxlength="10" spellcheck="false" value="${esc(state.seedString)}"></div>
@@ -212,6 +214,20 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
         tints.querySelectorAll('.tint-dot').forEach((d) => d.classList.toggle('chosen', d === dot));
       });
       tints.appendChild(dot);
+    }
+    const styles = app.querySelector('#lb-styles');
+    for (const st of SPRITE_STYLES) {
+      const b = document.createElement('button');
+      b.className = `mod-chip lb-style${st.id === state.spriteStyle ? ' on' : ''}`;
+      b.style.cssText = 'padding:5px 12px;font-size:12px;';
+      b.innerHTML = `<b>${esc(st.name)}</b>`;
+      b.addEventListener('click', () => {
+        state.spriteStyle = st.id;
+        localStorage.setItem('sote_lan_style', st.id);
+        conn.send({ t: 'pick', spriteStyle: st.id });
+        styles.querySelectorAll('.lb-style').forEach((x) => x.classList.toggle('on', x === b));
+      });
+      styles.appendChild(b);
     }
     app.querySelector('#lb-leave').addEventListener('click', () => back());
     if (iAmHost) {
