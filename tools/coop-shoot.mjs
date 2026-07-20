@@ -146,6 +146,10 @@ async function main() {
   await evalIn(hostTab, click('#lb-host'));
   await until(hostTab, `document.querySelector('h2')?.textContent === 'AT THE FIRE'`, 'host at the fire');
   ok(true, 'host lit a fire');
+  // Couch party: the host adds a LOCAL seat on its screen.
+  await evalIn(hostTab, click('#lb-addlocal'));
+  await until(hostTab, `[...document.querySelectorAll('.slot-meta')].some((s) => /local seat/.test(s.textContent))`, 'local seat in roster');
+  ok(true, 'host added a local (couch) player');
 
   // Guest: opens the HOST's advertised URL directly, sees the local fire, joins.
   await cdp.send('Page.navigate', { url: base }, guestTab);
@@ -173,26 +177,39 @@ async function main() {
   await until(hostTab, `!!document.querySelector('.mapscreen')`, 'host on shared map');
   await until(guestTab, `!!document.querySelector('.mapscreen')`, 'guest on shared map');
   ok(true, 'server-authoritative run started for both clients');
+  await until(hostTab, `document.querySelectorAll('.coop-seat-tabs .seat-tab').length === 2`, 'host shows two seat tabs');
+  ok(true, "host's screen shows seat tabs for its two couch seats");
 
   // Fork vote: host votes first — guest sees the held vote, then completes it.
   await evalIn(hostTab, click('.map-node.reachable'));
-  await until(guestTab, `/VOTES 1\\/2/.test(document.querySelector('.coop-voteline')?.textContent || '')`, 'guest sees VOTES 1/2');
+  await until(guestTab, `/VOTES 1\\/3/.test(document.querySelector('.coop-voteline')?.textContent || '')`, 'guest sees VOTES 1/3');
   ok(true, "host's vote is visible on the guest's map");
   // Scroll the map to the reachable start row so the vote pip is in frame.
   await evalIn(guestTab, `(() => { const s = document.querySelector('.map-scroll'); if (s) s.scrollTop = s.scrollHeight; return true; })()`);
   await shoot(guestTab, 'coop-live-vote.png');
+  // The host's second (couch) seat votes: switch seat tab, click the node.
+  await evalIn(hostTab, `(() => { const b = document.querySelectorAll('.coop-seat-tabs .seat-tab')[1]; if (b) b.dispatchEvent(new MouseEvent('click', { bubbles: true })); return !!b; })()`);
+  await wait(250);
+  await evalIn(hostTab, click('.map-node.reachable'));
+  await until(guestTab, `/VOTES 2\\/3/.test(document.querySelector('.coop-voteline')?.textContent || '')`, 'guest sees VOTES 2/3');
+  ok(true, "the couch seat's vote (cast via seat tabs) reached everyone");
   await evalIn(guestTab, click('.map-node.reachable'));
   await until(hostTab, `!!document.querySelector('.combat.coop')`, 'host in shared combat');
   await until(guestTab, `!!document.querySelector('.combat.coop')`, 'guest in shared combat');
   ok(true, 'vote resolved into one shared fight');
-  const tintsOnHost = await evalIn(hostTab, `[...document.querySelectorAll('.coop-seat-name span')].map((s) => s.getAttribute('style') || '').join(' ')`);
-  ok(/frost/.test(tintsOnHost) && /gold/.test(tintsOnHost), "both accents render on the host's board (gold Ranni, frost Blaidd)");
+  // Accents differentiate players: the host's board shows 2+ distinct tints
+  // across its seats (gold host + the local seat's own accent, etc.).
+  const tints = await evalIn(hostTab, `[...new Set([...document.querySelectorAll('.coop-seat-name span[style*="--"]')].map((s) => (s.getAttribute('style').match(/--\\w+/) || [''])[0]))]`);
+  ok(Array.isArray(tints) && tints.length >= 2, `board shows multiple distinct accents (${tints.join(',')})`);
 
   // Host plays a card into the shared fight; both screens must render the
   // identical battle state (enemy HP row + every seat's energy).
   const battleState = `[...document.querySelectorAll('.enemy-row .hpbar .label')].map((l) => l.textContent).join('|')
     + ' ⚡' + [...document.querySelectorAll('.coop-seat-name')].map((n) => (n.textContent.match(/⚡\\d+\\/\\d+/) || [''])[0]).join(',')`;
   const before = await evalIn(guestTab, battleState);
+  // Play as the host's FIRST seat again.
+  await evalIn(hostTab, `(() => { const b = document.querySelectorAll('.coop-seat-tabs .seat-tab')[0]; if (b) b.dispatchEvent(new MouseEvent('click', { bubbles: true })); return true; })()`);
+  await wait(200);
   await evalIn(hostTab, click('.combatant.enemy:not(.dead)'));
   await wait(200);
   const played = await evalIn(hostTab, `(() => {
@@ -214,6 +231,9 @@ async function main() {
   // Enemy-phase pacing: both end their turns → the guest holds the old board,
   // shows the ENEMY TURN banner + paced lunges, then the new turn lands.
   await evalIn(hostTab, click('#coop-endturn'));
+  await evalIn(hostTab, `(() => { const b = document.querySelectorAll('.coop-seat-tabs .seat-tab')[1]; if (b) b.dispatchEvent(new MouseEvent('click', { bubbles: true })); return true; })()`);
+  await wait(250);
+  await evalIn(hostTab, click('#coop-endturn'));
   await evalIn(guestTab, click('#coop-endturn'));
   let sawBanner = false;
   {
@@ -224,7 +244,7 @@ async function main() {
     }
   }
   ok(sawBanner, 'guest sees the ENEMY TURN banner when the phase resolves');
-  await until(guestTab, `[...document.querySelectorAll('.coop-seat-name')].map((n) => (n.textContent.match(/⚡\\d+\\/\\d+/) || [''])[0]).join(',') === '⚡3/3,⚡3/3'`, 'new player turn landed (energy refilled) after the paced phase');
+  await until(guestTab, `(() => { const es = [...document.querySelectorAll('.coop-seat-name')].map((n) => (n.textContent.match(/⚡(\\d+)\\/(\\d+)/) || [])); return es.length >= 3 && es.every((m) => m[1] === m[2]); })()`, 'new player turn landed (all seats refilled) after the paced phase');
   ok(true, 'paced enemy phase resolved into the next turn');
 
   // ---- teardown -------------------------------------------------------------

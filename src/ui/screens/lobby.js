@@ -27,6 +27,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
     ready: false,
     seedString: defaultSeedString,
     players: [],
+    locals: [], // couch seats riding this connection: {name, classId, tint, spriteStyle}
   };
 
   function cleanup() {
@@ -118,17 +119,17 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
           renderRoom(shareAddr);
         } else if (msg.t === 'started') {
           // The server-authoritative run has begun. Hand the live socket to the
-          // co-op client (it renders snapshots; cleanup must not close it).
+          // co-op client; yourIds lists EVERY seat this screen controls (couch).
           clearInterval(pollTimer);
           const handoff = conn;
           conn = null;
-          onStart({ conn: handoff, myId, name: state.name });
+          onStart({ conn: handoff, myId, myIds: msg.yourIds || [myId], name: state.name });
         } else if (msg.t === 'resumed') {
-          // A saved run was restored; the server assigned me this member.
+          // A saved run was restored; the server assigned this screen its seats.
           clearInterval(pollTimer);
           const handoff = conn;
           conn = null;
-          onStart({ conn: handoff, myId: msg.yourId, name: state.name });
+          onStart({ conn: handoff, myId: msg.yourId, myIds: msg.yourIds || [msg.yourId], name: state.name });
         } else if (msg.t === 'hostGone') {
           cleanup();
           renderBrowse('The host left the fire.');
@@ -161,7 +162,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
             <div class="slot occupied" style="padding:10px 14px">
               <div class="slot-info">
                 <span class="slot-title">${p.isHost ? '⚑ ' : ''}${esc(p.name)}${p.id === myId ? ' (you)' : ''}</span>
-                <span class="slot-meta">${p.classId ? esc(registries.classes.get(p.classId).name) : 'choosing…'}${p.isHost ? ' · host' : p.ready ? ' · READY' : ' · not ready'}</span>
+                <span class="slot-meta">${p.classId ? esc(registries.classes.get(p.classId).name) : 'choosing…'}${p.isLocal ? ' · 💺 local seat' : p.isHost ? ' · host' : p.ready ? ' · READY' : ' · not ready'}</span>
               </div>
               <span style="font-size:26px;color:${tintCss(p.tint)}">${p.classId ? classGlyph(p.classId) : '…'}</span>
             </div>`).join('')}
@@ -169,6 +170,11 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
         <div><p class="cz-label">YOUR CLASS</p><div id="lb-classes" class="class-row" style="flex-wrap:wrap;justify-content:center"></div></div>
         <div><p class="cz-label">YOUR ACCENT</p><div id="lb-tints" class="lb-tints"></div></div>
         <div><p class="cz-label">SPRITE</p><div id="lb-styles" class="lb-tints"></div></div>
+        <div style="width:min(460px,92%)"><p class="cz-label">LOCAL PARTY — MORE PLAYERS ON THIS SCREEN</p>
+          <div id="lb-locals" style="display:flex;flex-direction:column;gap:6px"></div>
+          <button class="subtle" id="lb-addlocal" style="margin-top:6px">＋ ADD LOCAL PLAYER</button>
+          <p class="set-note">Each local player gets their own hero. Keyboard/mouse drive the active seat (Tab switches); each connected controller drives its own seat.</p>
+        </div>
         ${iAmHost
           ? `<div id="lb-resume-wrap"></div>
              <div class="seed-line">Seed <input id="lb-seed" maxlength="10" spellcheck="false" value="${esc(state.seedString)}"></div>
@@ -231,6 +237,44 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
       });
       styles.appendChild(b);
     }
+    // ---- local (couch) party editor ----
+    const sendLocals = () => conn.send({ t: 'locals', locals: state.locals });
+    const localsBox = app.querySelector('#lb-locals');
+    const classList = registries.classes.all();
+    const renderLocals = () => {
+      localsBox.innerHTML = '';
+      state.locals.forEach((lp, i) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:8px;align-items:center;';
+        row.innerHTML = `
+          <input class="ll-name" maxlength="14" spellcheck="false" value="${esc(lp.name)}" style="width:110px;background:var(--panel);border:1px solid var(--line);color:var(--parchment);border-radius:6px;padding:4px 8px">
+          <button class="subtle ll-class" style="min-width:100px">${classGlyph(lp.classId)} ${esc(classList.find((c) => c.id === lp.classId).name)}</button>
+          <button class="tint-dot ll-tint" style="background:${tintCss(lp.tint)}"></button>
+          <button class="subtle ll-del" title="Remove">✕</button>`;
+        row.querySelector('.ll-name').addEventListener('input', (e) => { lp.name = e.target.value.trim() || `Player ${i + 2}`; sendLocals(); });
+        row.querySelector('.ll-class').addEventListener('click', () => {
+          const ci = classList.findIndex((c) => c.id === lp.classId);
+          lp.classId = classList[(ci + 1) % classList.length].id;
+          renderLocals(); sendLocals();
+        });
+        row.querySelector('.ll-tint').addEventListener('click', () => {
+          const ti = PORTRAIT_TINTS.findIndex((x) => x.id === lp.tint);
+          lp.tint = PORTRAIT_TINTS[(ti + 1) % PORTRAIT_TINTS.length].id;
+          renderLocals(); sendLocals();
+        });
+        row.querySelector('.ll-del').addEventListener('click', () => { state.locals.splice(i, 1); renderLocals(); sendLocals(); });
+        localsBox.appendChild(row);
+      });
+    };
+    renderLocals();
+    const addBtn = app.querySelector('#lb-addlocal');
+    addBtn.disabled = state.players.length + 0 >= 4 || state.locals.length >= 3;
+    addBtn.addEventListener('click', () => {
+      if (state.players.length >= 4 || state.locals.length >= 3) return;
+      const n = state.locals.length + 2;
+      state.locals.push({ name: `Player ${n}`, classId: classList[(n - 1) % classList.length].id, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: 'rendered' });
+      renderLocals(); sendLocals();
+    });
     app.querySelector('#lb-leave').addEventListener('click', () => back());
     if (iAmHost) {
       app.querySelector('#lb-seed').addEventListener('change', (e) => {

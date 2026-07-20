@@ -80,14 +80,24 @@ try {
   const seeded = await guest.next((m) => m.t === 'roster' && m.seedString === 'ERDTREE', 'seed roster');
   ok(seeded.seedString === 'ERDTREE', 'host seed propagates to guest');
 
+  // Couch party: the host adds a LOCAL seat riding its own connection.
+  host.send({ t: 'locals', locals: [{ name: 'Torrent', classId: 'prophet', tint: 'rot' }] });
+  const withLocal = await guest.next((m) => m.t === 'roster' && m.players.length === 3, 'roster with local');
+  const localRow = withLocal.players.find((p) => p.isLocal);
+  ok(!!localRow && localRow.name === 'Torrent' && localRow.ready, 'local seat appears in the roster, always ready');
+
   host.send({ t: 'start' });
+  const hStarted = await host.next((m) => m.t === 'started', 'host started');
   const gStarted = await guest.next((m) => m.t === 'started', 'guest started');
   ok(gStarted.seedString === 'ERDTREE', 'started broadcast carries the seed to all');
+  ok(hStarted.yourIds && hStarted.yourIds.length === 2, 'host controls two seats (main + local)');
+  ok(gStarted.yourIds && gStarted.yourIds.length === 1, 'guest controls one seat');
+  const localId = hStarted.yourIds[1];
 
   // --- server-authoritative snapshots flow over the socket ---
   const state0 = await guest.next((m) => m.t === 'state', 'first state snapshot');
   ok(state0.snapshot && state0.snapshot.scene.kind === 'map', 'first snapshot is the shared map');
-  ok(state0.snapshot.party.length === 2, 'snapshot party has both members');
+  ok(state0.snapshot.party.length === 3, 'snapshot party includes the local seat');
   const firstNode = state0.snapshot.reachableIds[0];
 
   // Fork voting: the host's lone vote holds the party; the guest's matching
@@ -96,6 +106,8 @@ try {
   const voteHeld = await guest.next((m) => m.t === 'state' && m.snapshot.scene.kind === 'map' && m.snapshot.scene.votes, 'vote-held snapshot');
   ok(voteHeld.snapshot.scene.votes && Object.keys(voteHeld.snapshot.scene.votes).length === 1, 'a lone vote holds the party (vote visible to all)');
   guest.send({ t: 'chooseNode', nodeId: firstNode });
+  // The host casts its LOCAL seat's vote via `as` — completing 3/3.
+  host.send({ t: 'chooseNode', nodeId: firstNode, as: localId });
   const advanced = await guest.next((m) => m.t === 'state' && m.snapshot.scene.kind !== 'map', 'post-node snapshot');
   ok(['combat', 'reward', 'shrine', 'event', 'complete'].includes(advanced.snapshot.scene.kind), 'choosing a node advances the shared scene for all clients');
 
