@@ -213,10 +213,16 @@ function findByKey(k) {
 
 function setFocus(el, remember = true) {
   const prev = current();
-  if (prev && prev !== el) prev.classList.remove('gp-focus');
+  if (prev && prev !== el) {
+    prev.classList.remove('gp-focus');
+    // Focus-mode tooltips: tooltip.js listens for these so controller players
+    // get every tooltip a mouse hover would show (SPEC §7.3).
+    prev.dispatchEvent(new CustomEvent('gpblur'));
+  }
   if (el) {
     el.classList.add('gp-focus');
     if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (prev !== el) el.dispatchEvent(new CustomEvent('gpfocus'));
     if (remember) focusKey = keyOf(el);
   } else if (remember) {
     focusKey = null;

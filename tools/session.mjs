@@ -443,7 +443,10 @@ export function createSession({ registries, seedString, endless = false, restore
       if (!ally || !ally.alive) return { ok: false, error: 'no such ally' };
       ally.run.hp = Math.min(ally.run.maxHp, ally.run.hp + Math.ceil(ally.run.maxHp * 0.3));
     } else {
-      const c = m.run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true;
+      // Smith: the chosen card if given (validated), else first unupgraded.
+      const c = (targetId && m.run.deck.find((d) => d.instanceId === targetId && !d.upgraded))
+        || m.run.deck.find((d) => !d.upgraded);
+      if (c) c.upgraded = true;
     }
     session.scene.done[memberId] = true;
     const waiting = connectedMembers().filter((mm) => !session.scene.done[mm.id]);
@@ -503,6 +506,7 @@ export function createSession({ registries, seedString, endless = false, restore
     return {
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
       hp: m.run.hp, maxHp: m.run.maxHp, runes: m.run.runes,
+      deck: m.run.deck.map((c) => ({ instanceId: c.instanceId, cardId: c.cardId, upgraded: c.upgraded })),
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,
       catchup: m.catchup.length,
       catchupQueue: m.catchup, // rolled options for the reconnect series

@@ -589,6 +589,19 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
   100% { transform: translateX(0); }
 }
 
+/* co-op: couch-party seat tabs (shown only when this screen owns 2+ seats) */
+.coop-seat-tabs {
+  position: fixed; left: 50%; bottom: 46px; transform: translateX(-50%);
+  display: flex; gap: 8px; align-items: center; z-index: 620;
+}
+.seat-tab {
+  padding: 5px 12px; font-size: 12px; border-radius: 7px;
+  background: rgba(16,13,10,.9); border: 1.5px solid var(--line-soft); color: #ded1b6;
+}
+.seat-tab.on { background: #2a2418; color: var(--gold); box-shadow: 0 0 10px rgba(201,162,39,.35); }
+.seat-tab .pip { color: var(--gold); }
+.seat-hint { color: var(--muted); font-size: 10px; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: 4px; padding: 1px 6px; }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -1294,9 +1307,9 @@ function showLobby() {
     registries,
     defaultSeedString: randomSeedString(),
     onBack: () => showTitle(),
-    onStart: ({ conn, myId }) => {
+    onStart: ({ conn, myId, myIds }) => {
       inCoop = true;
-      mountCoop(app, { registries, conn, myId, onLeave: () => showTitle() });
+      mountCoop(app, { registries, conn, myId, myIds, onLeave: () => showTitle() });
     },
   });
 }
@@ -10918,19 +10931,23 @@ function position(x, y) {
 
 /**
  * attachTooltip(el, contentFn) — contentFn() → HTML string (computed at show
- * time so numbers are always live).
+ * time so numbers are always live). Shows on pointer hover AND on the
+ * keyboard/gamepad focus cursor (input.js dispatches gpfocus/gpblur when the
+ * gp-focus cursor lands on / leaves an element), so controller players get
+ * every tooltip a mouse would.
  */
 function attachTooltip(el, contentFn) {
+  const show = (x, y) => {
+    const html = contentFn();
+    if (!html) return;
+    const t = ensure();
+    t.innerHTML = html;
+    t.style.display = 'block';
+    position(x, y);
+  };
   el.addEventListener('pointerenter', (ev) => {
     clearTimeout(showTimer);
-    showTimer = setTimeout(() => {
-      const html = contentFn();
-      if (!html) return;
-      const t = ensure();
-      t.innerHTML = html;
-      t.style.display = 'block';
-      position(ev.clientX, ev.clientY);
-    }, 140);
+    showTimer = setTimeout(() => show(ev.clientX, ev.clientY), 140);
   });
   el.addEventListener('pointermove', (ev) => {
     if (tipEl && tipEl.style.display === 'block') position(ev.clientX, ev.clientY);
@@ -10939,6 +10956,12 @@ function attachTooltip(el, contentFn) {
     clearTimeout(showTimer);
     if (tipEl) tipEl.style.display = 'none';
   });
+  el.addEventListener('gpfocus', () => {
+    clearTimeout(showTimer);
+    const r = el.getBoundingClientRect();
+    showTimer = setTimeout(() => show(r.right, r.top), 160);
+  });
+  el.addEventListener('gpblur', hideTooltip);
 }
 
 function hideTooltip() {
@@ -11675,11 +11698,29 @@ function renderCard(registries, ref, opts = {}) {
     `<div class="ctype">${esc(def.type.toUpperCase())}</div>` +
     `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
 
-  attachTooltip(el, () => cardTooltip(registries, def, tokens));
+  // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
+  attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
   if (opts.small) {
     el.style.transform = 'scale(0.92)';
   }
   return el;
+}
+
+/**
+ * Tooltip HTML previewing what a card becomes when Smithed: current text in
+ * muted, upgraded text below with changed values highlighted green/red (the
+ * same up/down coloring cards use in play). All numbers come from the defs.
+ */
+function upgradePreviewHtml(registries, ref) {
+  const base = resolveCard(registries, { cardId: ref.cardId, upgraded: false });
+  const upg = resolveCard(registries, { cardId: ref.cardId, upgraded: true });
+  const baseTokens = staticTokens(base);
+  const upgTokens = { ...baseTokens, ...staticTokens(upg) };
+  let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
+  html += `<div style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
+  html += `<div style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
+  if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
+  return html;
 }
 
 function cardTooltip(registries, def, tokens) {
@@ -11709,7 +11750,7 @@ function cardTooltip(registries, def, tokens) {
 }
 
 
-Object.assign(module.exports, { staticTokens, renderCard });
+Object.assign(module.exports, { staticTokens, renderCard, upgradePreviewHtml });
 
 },
 "src/ui/screens/map.js": function (module, exports, require) {
@@ -12955,10 +12996,16 @@ function findByKey(k) {
 
 function setFocus(el, remember = true) {
   const prev = current();
-  if (prev && prev !== el) prev.classList.remove('gp-focus');
+  if (prev && prev !== el) {
+    prev.classList.remove('gp-focus');
+    // Focus-mode tooltips: tooltip.js listens for these so controller players
+    // get every tooltip a mouse hover would show (SPEC §7.3).
+    prev.dispatchEvent(new CustomEvent('gpblur'));
+  }
   if (el) {
     el.classList.add('gp-focus');
     if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (prev !== el) el.dispatchEvent(new CustomEvent('gpfocus'));
     if (remember) focusKey = keyOf(el);
   } else if (remember) {
     focusKey = null;
@@ -14306,16 +14353,33 @@ function getAnimSpeed() {
 let pending = [];
 let flushRequested = false;
 
+// The whole UI is scaled by --ui-zoom (main.js applyUiScale). getBoundingClientRect
+// returns POST-zoom (visual) pixels, but a child's `style.left` is interpreted in
+// the layer's PRE-zoom local space — so a raw visual offset lands at offset×zoom,
+// pulling anchored FX toward the origin (worse the further right the target). This
+// converts an anchor's on-screen box into the layer's local coordinates so FX land
+// exactly on their target regardless of zoom.
+function anchorLocalBox(layer, anchor) {
+  const lr = layer.getBoundingClientRect();
+  const ar = anchor.getBoundingClientRect();
+  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  return {
+    left: (ar.left - lr.left) / z,
+    top: (ar.top - lr.top) / z,
+    width: ar.width / z,
+    height: ar.height / z,
+  };
+}
+
 /** Spawn a floating number over an anchor element. */
 function floatNum(layer, anchor, text, cls) {
   if (!layer || !anchor) return;
-  const lr = layer.getBoundingClientRect();
-  const ar = anchor.getBoundingClientRect();
+  const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
   el.textContent = text;
-  el.style.left = `${ar.left - lr.left + ar.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
-  el.style.top = `${ar.top - lr.top + ar.height * 0.25}px`;
+  el.style.left = `${b.left + b.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
+  el.style.top = `${b.top + b.height * 0.25}px`;
   layer.appendChild(el);
   setTimeout(() => el.remove(), 600);
 }
@@ -14331,13 +14395,12 @@ function dmgClass(amount) {
 /** Spawn a transient effect element (slash arc, cast glyph, block spark…). */
 function spawnFx(layer, anchor, cls, ms, text) {
   if (!layer || !anchor) return;
-  const lr = layer.getBoundingClientRect();
-  const ar = anchor.getBoundingClientRect();
+  const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = cls;
   if (text) el.textContent = text;
-  el.style.left = `${ar.left - lr.left + ar.width / 2}px`;
-  el.style.top = `${ar.top - lr.top + ar.height * 0.4}px`;
+  el.style.left = `${b.left + b.width / 2}px`;
+  el.style.top = `${b.top + b.height * 0.4}px`;
   el.style.setProperty('--rot', `${Math.round(Math.random() * 50 - 25)}deg`);
   layer.appendChild(el);
   setTimeout(() => el.remove(), ms);
@@ -14376,12 +14439,11 @@ function flash(el, cls, ms = 300) {
 // Radial flare over an anchor (stance entries, big procs).
 function flare(layer, anchor, color) {
   if (!layer || !anchor) return;
-  const lr = layer.getBoundingClientRect();
-  const ar = anchor.getBoundingClientRect();
+  const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = 'stance-flare';
-  el.style.left = `${ar.left - lr.left + ar.width / 2 - 90}px`;
-  el.style.top = `${ar.top - lr.top + ar.height / 2 - 90}px`;
+  el.style.left = `${b.left + b.width / 2 - 90}px`;
+  el.style.top = `${b.top + b.height / 2 - 90}px`;
   el.style.background = `radial-gradient(circle, ${color} 0%, transparent 65%)`;
   layer.appendChild(el);
   setTimeout(() => el.remove(), 320);
@@ -14683,7 +14745,7 @@ function visualFor(e, beatKind) {
 }
 
 
-Object.assign(module.exports, { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, animateEvents, playTimeline });
+Object.assign(module.exports, { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, anchorLocalBox, animateEvents, playTimeline });
 
 },
 "src/ui/sfx.js": function (module, exports, require) {
@@ -14861,7 +14923,7 @@ Object.assign(module.exports, { mountRewards });
 
 const { shrineHealAmount } = require("src/engine/encounters.js");
 const { passiveFlag, resolveCard } = require("src/model/registries.js");
-const { renderCard } = require("src/ui/components/card.js");
+const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { sfx } = require("src/ui/sfx.js");
 
@@ -14905,7 +14967,8 @@ function mountRest(app, { registries, run, onDone, healMult = 1 }) {
       grid.style.flexWrap = 'wrap';
       grid.style.justifyContent = 'center';
       for (const inst of upgradable) {
-        const el = renderCard(registries, inst, { small: true });
+        // Hover/focus a candidate to preview exactly what the upgrade changes.
+        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
         el.addEventListener('click', () => {
           inst.upgraded = true;
           sfx.play('shrine');
@@ -15310,7 +15373,7 @@ Object.assign(module.exports, { showBossIntro });
 
 const { lanInfo, lanHost, lanUnhost, lanConnect } = require("src/net/lan.js");
 const { classGlyph, PORTRAIT_TINTS, SPRITE_STYLES, tintCss } = require("src/ui/assets.js");
-const { esc } = require("src/ui/components/tooltip.js");
+const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 
 const NAME_KEY = 'sote_lan_name';
 const TINT_KEY = 'sote_lan_tint';
@@ -15328,6 +15391,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
     ready: false,
     seedString: defaultSeedString,
     players: [],
+    locals: [], // couch seats riding this connection: {name, classId, tint, spriteStyle}
   };
 
   function cleanup() {
@@ -15419,17 +15483,17 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
           renderRoom(shareAddr);
         } else if (msg.t === 'started') {
           // The server-authoritative run has begun. Hand the live socket to the
-          // co-op client (it renders snapshots; cleanup must not close it).
+          // co-op client; yourIds lists EVERY seat this screen controls (couch).
           clearInterval(pollTimer);
           const handoff = conn;
           conn = null;
-          onStart({ conn: handoff, myId, name: state.name });
+          onStart({ conn: handoff, myId, myIds: msg.yourIds || [myId], name: state.name });
         } else if (msg.t === 'resumed') {
-          // A saved run was restored; the server assigned me this member.
+          // A saved run was restored; the server assigned this screen its seats.
           clearInterval(pollTimer);
           const handoff = conn;
           conn = null;
-          onStart({ conn: handoff, myId: msg.yourId, name: state.name });
+          onStart({ conn: handoff, myId: msg.yourId, myIds: msg.yourIds || [msg.yourId], name: state.name });
         } else if (msg.t === 'hostGone') {
           cleanup();
           renderBrowse('The host left the fire.');
@@ -15462,7 +15526,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
             <div class="slot occupied" style="padding:10px 14px">
               <div class="slot-info">
                 <span class="slot-title">${p.isHost ? '⚑ ' : ''}${esc(p.name)}${p.id === myId ? ' (you)' : ''}</span>
-                <span class="slot-meta">${p.classId ? esc(registries.classes.get(p.classId).name) : 'choosing…'}${p.isHost ? ' · host' : p.ready ? ' · READY' : ' · not ready'}</span>
+                <span class="slot-meta">${p.classId ? esc(registries.classes.get(p.classId).name) : 'choosing…'}${p.isLocal ? ' · 💺 local seat' : p.isHost ? ' · host' : p.ready ? ' · READY' : ' · not ready'}</span>
               </div>
               <span style="font-size:26px;color:${tintCss(p.tint)}">${p.classId ? classGlyph(p.classId) : '…'}</span>
             </div>`).join('')}
@@ -15470,6 +15534,11 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
         <div><p class="cz-label">YOUR CLASS</p><div id="lb-classes" class="class-row" style="flex-wrap:wrap;justify-content:center"></div></div>
         <div><p class="cz-label">YOUR ACCENT</p><div id="lb-tints" class="lb-tints"></div></div>
         <div><p class="cz-label">SPRITE</p><div id="lb-styles" class="lb-tints"></div></div>
+        <div style="width:min(460px,92%)"><p class="cz-label">LOCAL PARTY — MORE PLAYERS ON THIS SCREEN</p>
+          <div id="lb-locals" style="display:flex;flex-direction:column;gap:6px"></div>
+          <button class="subtle" id="lb-addlocal" style="margin-top:6px">＋ ADD LOCAL PLAYER</button>
+          <p class="set-note">Each local player gets their own hero. Keyboard/mouse drive the active seat (Tab switches); each connected controller drives its own seat.</p>
+        </div>
         ${iAmHost
           ? `<div id="lb-resume-wrap"></div>
              <div class="seed-line">Seed <input id="lb-seed" maxlength="10" spellcheck="false" value="${esc(state.seedString)}"></div>
@@ -15494,6 +15563,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
       const el = document.createElement('div');
       el.className = `class-pick cr-class${cls.id === state.classId ? ' chosen' : ''}`;
       el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3>`;
+      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${cls.maxHp} · ${cls.startingDeck.length} cards`);
       el.addEventListener('click', () => {
         state.classId = cls.id;
         conn.send({ t: 'pick', classId: cls.id });
@@ -15507,7 +15577,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
       const dot = document.createElement('button');
       dot.className = `tint-dot${t.id === state.tint ? ' chosen' : ''}`;
       dot.style.background = t.css;
-      dot.title = t.name;
+      attachTooltip(dot, () => `<div class="tt-title">${esc(t.name)}</div>Colors your hero's accents for the whole party.`);
       dot.addEventListener('click', () => {
         state.tint = t.id;
         localStorage.setItem(TINT_KEY, t.id);
@@ -15522,6 +15592,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
       b.className = `mod-chip lb-style${st.id === state.spriteStyle ? ' on' : ''}`;
       b.style.cssText = 'padding:5px 12px;font-size:12px;';
       b.innerHTML = `<b>${esc(st.name)}</b>`;
+      attachTooltip(b, () => `<div class="tt-title">${esc(st.name)}</div>${st.id === 'rendered' ? 'The rendered low-poly figure.' : st.id === 'classic' ? 'The classic hand-drawn silhouette.' : 'Your sigil in a tinted panel.'}`);
       b.addEventListener('click', () => {
         state.spriteStyle = st.id;
         localStorage.setItem('sote_lan_style', st.id);
@@ -15530,6 +15601,44 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
       });
       styles.appendChild(b);
     }
+    // ---- local (couch) party editor ----
+    const sendLocals = () => conn.send({ t: 'locals', locals: state.locals });
+    const localsBox = app.querySelector('#lb-locals');
+    const classList = registries.classes.all();
+    const renderLocals = () => {
+      localsBox.innerHTML = '';
+      state.locals.forEach((lp, i) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:8px;align-items:center;';
+        row.innerHTML = `
+          <input class="ll-name" maxlength="14" spellcheck="false" value="${esc(lp.name)}" style="width:110px;background:var(--panel);border:1px solid var(--line);color:var(--parchment);border-radius:6px;padding:4px 8px">
+          <button class="subtle ll-class" style="min-width:100px">${classGlyph(lp.classId)} ${esc(classList.find((c) => c.id === lp.classId).name)}</button>
+          <button class="tint-dot ll-tint" style="background:${tintCss(lp.tint)}"></button>
+          <button class="subtle ll-del" title="Remove">✕</button>`;
+        row.querySelector('.ll-name').addEventListener('input', (e) => { lp.name = e.target.value.trim() || `Player ${i + 2}`; sendLocals(); });
+        row.querySelector('.ll-class').addEventListener('click', () => {
+          const ci = classList.findIndex((c) => c.id === lp.classId);
+          lp.classId = classList[(ci + 1) % classList.length].id;
+          renderLocals(); sendLocals();
+        });
+        row.querySelector('.ll-tint').addEventListener('click', () => {
+          const ti = PORTRAIT_TINTS.findIndex((x) => x.id === lp.tint);
+          lp.tint = PORTRAIT_TINTS[(ti + 1) % PORTRAIT_TINTS.length].id;
+          renderLocals(); sendLocals();
+        });
+        row.querySelector('.ll-del').addEventListener('click', () => { state.locals.splice(i, 1); renderLocals(); sendLocals(); });
+        localsBox.appendChild(row);
+      });
+    };
+    renderLocals();
+    const addBtn = app.querySelector('#lb-addlocal');
+    addBtn.disabled = state.players.length + 0 >= 4 || state.locals.length >= 3;
+    addBtn.addEventListener('click', () => {
+      if (state.players.length >= 4 || state.locals.length >= 3) return;
+      const n = state.locals.length + 2;
+      state.locals.push({ name: `Player ${n}`, classId: classList[(n - 1) % classList.length].id, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: 'rendered' });
+      renderLocals(); sendLocals();
+    });
     app.querySelector('#lb-leave').addEventListener('click', () => back());
     if (iAmHost) {
       app.querySelector('#lb-seed').addEventListener('change', (e) => {
@@ -15654,8 +15763,9 @@ Object.assign(module.exports, { lanInfo, lanHost, lanUnhost, lanConnect });
 // (kept here so solo combat.js stays untouched).
 
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
-const { renderCard } = require("src/ui/components/card.js");
+const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { anchorLocalBox } = require("src/ui/fx.js");
 const { resolveCard } = require("src/model/registries.js");
 
 const NODE_ICONS = { monster: '⚔', fight: '⚔', elite: '☠', shrine: '♨', merchant: '⚖', treasure: '▣', boss: '👁', unknown: '?' };
@@ -15670,9 +15780,12 @@ function actTitle(actNumber) {
 }
 const STATUS_TINT = { bleed: 'var(--ember)', scarletRot: 'var(--rot)', staggered: 'var(--gold)', strength: 'var(--gold)', vulnerable: 'var(--grace)', weak: 'var(--muted)', frail: 'var(--muted)' };
 
-function mountCoop(app, { registries, conn, myId, onLeave }) {
+function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   let snap = null;
-  let me = myId;
+  // Couch co-op: this screen may control several seats; `me` is the ACTIVE one.
+  let seats = (myIds && myIds.length ? myIds : [myId]).slice();
+  let seatIdx = 0;
+  let me = seats[0];
   let selectedEnemy = null;
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
   let armedAllyCard = null; // ally-targeted card instanceId awaiting a seat
@@ -15682,22 +15795,113 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
 
   conn.setHandlers({
     onMessage: (msg) => {
-      if (msg.t === 'rejoined') { me = msg.id; return; }
+      if (msg.t === 'rejoined') { seats = [msg.id]; seatIdx = 0; me = msg.id; return; }
       if (msg.t === 'state') receiveSnapshot(msg.snapshot);
     },
-    onClose: () => { app.innerHTML = `<div class="screen"><div class="coop-note">⚠ Connection to the fire was lost.</div><button class="subtle" id="coop-leave">Leave</button></div>`; wireLeave(); },
+    onClose: () => { teardown(); app.innerHTML = `<div class="screen"><div class="coop-note">⚠ Connection to the fire was lost.</div><button class="subtle" id="coop-leave">Leave</button></div>`; wireLeave(); },
   });
 
-  const send = (obj) => conn.send(obj);
+  // Every game intent carries the ACTIVE seat (`as`); the server validates
+  // ownership and falls back to the connection's main seat.
+  const send = (obj) => conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
+
+  function setSeat(i) {
+    if (i === seatIdx || !seats[i]) return;
+    seatIdx = i;
+    me = seats[i];
+    armedFlask = null;
+    armedAllyCard = null;
+    render();
+  }
+
+  // A seat has something to do in the current scene (drives the tab pips).
+  function seatPending(id) {
+    const sc = snap && snap.scene;
+    if (!sc) return false;
+    if (sc.kind === 'map') return !!(sc.votes && !sc.votes[id]) || !sc.votes;
+    if (sc.kind === 'combat') { const p = sc.players.find((x) => x.id === id); return !!(p && p.alive && p.connected && !p.ended); }
+    if (sc.kind === 'reward') return !!(sc.offers[id] && !sc.chosen[id]);
+    if (sc.kind === 'shrine' || sc.kind === 'event') return !(sc.done && sc.done[id]);
+    return false;
+  }
+
+  function renderSeatTabs() {
+    if (seats.length < 2) return;
+    const host = app.querySelector('.coop-seat-tabs') || (() => {
+      const d = document.createElement('div');
+      d.className = 'coop-seat-tabs';
+      document.body.appendChild(d);
+      return d;
+    })();
+    host.innerHTML = seats.map((id, i) => {
+      const p = snap.party.find((x) => x.id === id) || {};
+      return `<button class="seat-tab${i === seatIdx ? ' on' : ''}" data-seat-i="${i}" style="border-color:${tintCss(p.tint)}">
+        ${classGlyph(p.classId)} ${esc(p.name || id)}${seatPending(id) ? ' <span class="pip">●</span>' : ''}</button>`;
+    }).join('') + '<span class="seat-hint">Tab</span>';
+    host.querySelectorAll('.seat-tab').forEach((b) => b.addEventListener('click', () => setSeat(Number(b.dataset.seatI))));
+  }
+
+  function removeSeatTabs() {
+    const d = document.querySelector('.coop-seat-tabs');
+    if (d) d.remove();
+  }
+
+  // ---- couch input: keyboard drives the active seat; pads own their seats ---
+  const keyHandler = (ev) => {
+    if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
+    if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
+    if (!snap || snap.scene.kind !== 'combat') return;
+    const sc = snap.scene;
+    const meP = sc.players.find((p) => p.id === me);
+    if (!meP || !meP.alive || !meP.connected) return;
+    if (ev.key === 'e' || ev.key === 'E') { if (!meP.ended) send({ t: 'endTurn' }); return; }
+    const fl = { f: 0, g: 1, h: 2 }[ev.key.toLowerCase()];
+    if (fl != null && meP.flasks && meP.flasks[fl]) { send({ t: 'useFlask', slot: fl, targetId: selectedEnemy }); return; }
+    const idx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
+    if (idx >= 0 && !meP.ended && meP.hand[idx]) {
+      const c = meP.hand[idx];
+      const def = cardDef(c);
+      if ((def.effects || []).some((e) => e.target === 'ally')) { armedAllyCard = c.instanceId; render(); return; }
+      const needs = (def.effects || []).some((e) => e.target === 'enemy');
+      send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
+    }
+  };
+  document.addEventListener('keydown', keyHandler);
+  // Gamepads: pad 0 → seat 2, pad 1 → seat 3, … (keyboard/mouse keep seat 1).
+  // A pad's first button press pulls the active seat to its own; navigation
+  // then flows through the global focus system like solo play.
+  let padPrev = [];
+  const padTimer = setInterval(() => {
+    if (seats.length < 2 || !navigator.getGamepads) return;
+    const pads = navigator.getGamepads();
+    for (let p = 0; p < pads.length; p++) {
+      const gp = pads[p];
+      if (!gp || !gp.connected) continue;
+      const pressed = gp.buttons.some((b) => b.pressed);
+      const was = padPrev[p];
+      padPrev[p] = pressed;
+      if (pressed && !was) {
+        const target = Math.min(p + 1, seats.length - 1);
+        if (target !== seatIdx) setSeat(target);
+      }
+    }
+  }, 120);
+
+  function teardown() {
+    document.removeEventListener('keydown', keyHandler);
+    clearInterval(padTimer);
+    removeSeatTabs();
+  }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
   const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded });
-  const wireLeave = () => { const b = app.querySelector('#coop-leave'); if (b) b.addEventListener('click', () => { conn.close(); onLeave(); }); };
+  const wireLeave = () => { const b = app.querySelector('#coop-leave'); if (b) b.addEventListener('click', () => { teardown(); conn.close(); onLeave(); }); };
 
   function render() {
     if (!snap) return;
     const mm = myMember();
     if (mm && mm.catchupQueue && mm.catchupQueue.length) return renderCatchup(mm);
     if (snap.scene.kind !== 'combat') prevCombat = null;
+    renderSeatTabs();
     switch (snap.scene.kind) {
       case 'map': return renderMap();
       case 'combat': return renderCombat();
@@ -15762,6 +15966,19 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
     else if (intent.kind === 'debuff') { inner = '<span class="ic">☾</span>'; }
     el.className = `intent ${cls}`;
     el.innerHTML = inner;
+    attachTooltip(el, () => {
+      if (!intent || !intent.moveId) return '<div class="tt-title">Intent: Unknown</div>';
+      if (intent.kind === 'staggered') return '<div class="tt-title">Staggered</div>Poise broken: its turn is skipped and it takes +50% damage.';
+      if (intent.damage != null) {
+        let s = `<div class="tt-title">Intent: Attack</div>Attacking each hero for <b>${intent.damage}${intent.hits > 1 ? ` × ${intent.hits}` : ''}</b> damage.`;
+        if (intent.delayed) s += '<br><b>Delayed:</b> it holds this turn and strikes later. Stagger cancels it.';
+        return s;
+      }
+      if (intent.block != null) return '<div class="tt-title">Intent: Defend</div>Gaining Block.';
+      if (intent.kind === 'buff') return '<div class="tt-title">Intent: Buff</div>Strengthening itself.';
+      if (intent.kind === 'debuff') return '<div class="tt-title">Intent: Debuff</div>Hindering the party.';
+      return '<div class="tt-title">Intent</div>';
+    });
     return el;
   }
 
@@ -15957,6 +16174,10 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
         ? `<text class="vote-pips" x="${x(n.col)}" y="${y(n.floor) - r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${voters.map((pid) => classGlyph((snap.party.find((p) => p.id === pid) || {}).classId)).join('')}</text>`
         : '';
       el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${NODE_ICONS[n.type] || '?'}</text>${pips}`;
+      attachTooltip(el, () => {
+        const names = { monster: 'Monster — a normal fight', fight: 'Monster — a normal fight', elite: 'Elite — a hard fight with a relic reward', boss: 'The act boss', shrine: 'Shrine of Grace — rest, smith, or mend an ally', treasure: 'Treasure — a free relic each', merchant: 'Merchant', unknown: 'Unknown — could be anything' };
+        return `<div class="tt-title">${esc(names[n.type] || n.type)}</div>${isReachable ? 'Click to vote for this path.' : ''}`;
+      });
       if (isReachable) el.addEventListener('click', () => send({ t: 'chooseNode', nodeId: n.id }));
       g.appendChild(el);
     }
@@ -15970,10 +16191,19 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
     if (!bar) return;
     bar.innerHTML = snap.party.map((p) => {
       const pct = Math.max(0, Math.min(100, Math.round((p.hp / Math.max(1, p.maxHp)) * 100)));
-      return `<span class="coop-pc${p.id === me ? ' me' : ''}${p.connected ? '' : ' away'}${p.alive ? '' : ' dead'}" style="border-color:${tintCss(p.tint)}">
+      return `<span class="coop-pc${p.id === me ? ' me' : ''}${p.connected ? '' : ' away'}${p.alive ? '' : ' dead'}" data-pc="${p.id}" style="border-color:${tintCss(p.tint)}">
         <span class="coop-pc-glyph" style="color:${tintCss(p.tint)}">${classGlyph(p.classId)}</span>${esc(p.name)}
         <span class="coop-pc-hp"><i style="width:${pct}%"></i><b>${p.hp}/${p.maxHp}</b></span></span>`;
     }).join('');
+    bar.querySelectorAll('.coop-pc').forEach((chip) => {
+      const p = snap.party.find((x) => x.id === chip.dataset.pc);
+      if (p) attachTooltip(chip, () => {
+        const cls = registries.classes.get(p.classId);
+        return `<div class="tt-title">${esc(p.name)} — ${esc(cls ? cls.name : p.classId)}</div>` +
+          `HP ${p.hp}/${p.maxHp} · ⛁ ${p.runes ?? 0} · deck ${p.deckSize ?? '?'} · relics ${p.relics ?? 0}` +
+          `${p.connected ? '' : '<br><b>Away</b> — missed rewards queue for their return.'}${p.alive ? '' : '<br><b>Fallen.</b>'}`;
+      });
+    });
   }
 
   // ---- reward / shrine / event (reuse renderCard + solo styling) ------------
@@ -16004,14 +16234,30 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
   function renderShrine() {
     const done = snap.scene.done && snap.scene.done[me];
     const allies = snap.party.filter((p) => p.id !== me && p.alive && p.connected);
+    const mm = myMember();
+    const upgradable = ((mm && mm.deck) || []).filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
     app.innerHTML = rewardShell(`${rTitle('Shrine of Grace')}
       ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">
         <button data-shrine="rest">Rest — heal yourself</button>
-        <button data-shrine="smith">Smith — upgrade a card</button>
+        <button id="coop-smith" ${upgradable.length ? '' : 'disabled'}>Smith — upgrade a card</button>
         ${allies.map((a) => `<button class="coop-take" data-mend="${a.id}">Mend ${esc(a.name)} (+30% HP)</button>`).join('')}
-      </div>`}`);
+      </div>
+      <div id="coop-smith-grid" class="reward-row" style="display:none;max-width:900px;flex-wrap:wrap"></div>`}`);
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));
     app.querySelectorAll('[data-mend]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'mend', targetId: b.dataset.mend })));
+    // Smith opens a picker of your unupgraded cards; hover/focus previews the
+    // exact upgrade (changed values highlighted) before you commit.
+    const smithBtn = app.querySelector('#coop-smith');
+    if (smithBtn && upgradable.length) smithBtn.addEventListener('click', () => {
+      const grid = app.querySelector('#coop-smith-grid');
+      if (grid.style.display !== 'none') return;
+      grid.style.display = 'flex';
+      for (const inst of upgradable) {
+        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
+        el.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'smith', targetId: inst.instanceId }));
+        grid.appendChild(el);
+      }
+    });
     renderPartyBar(); wireLeave();
   }
   function renderEvent() {
@@ -16045,7 +16291,7 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
     const win = snap.scene.victory;
     app.innerHTML = `<div class="screen"><h1 class="title-big" style="color:var(--gold)">${win ? '👑 The Spire is Yours' : '☠ The Party Has Fallen'}</h1>
       <button id="coop-leave2" style="margin-top:20px">Return to the fire</button></div>`;
-    const b = app.querySelector('#coop-leave2'); if (b) b.addEventListener('click', () => { conn.close(); onLeave(); });
+    const b = app.querySelector('#coop-leave2'); if (b) b.addEventListener('click', () => { teardown(); conn.close(); onLeave(); });
   }
 
   // ---- enemy-turn pacing -----------------------------------------------------
@@ -16109,13 +16355,15 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
     const put = (sel, cls, text, dy = 0.35) => {
       const anchor = app.querySelector(sel);
       if (!anchor) return;
-      const lr = layer.getBoundingClientRect();
-      const ar = anchor.getBoundingClientRect();
+      // Convert the anchor's on-screen box into the layer's local (pre-zoom)
+      // coordinates, or the float lands at position×zoom (drifts left onto the
+      // wrong enemy the further right the target is). See fx.js anchorLocalBox.
+      const b = anchorLocalBox(layer, anchor);
       const el = document.createElement('div');
       el.className = cls;
       el.textContent = text;
-      el.style.left = `${ar.left - lr.left + ar.width / 2}px`;
-      el.style.top = `${ar.top - lr.top + ar.height * dy}px`;
+      el.style.left = `${b.left + b.width / 2}px`;
+      el.style.top = `${b.top + b.height * dy}px`;
       layer.appendChild(el);
       setTimeout(() => el.remove(), 1100);
     };
