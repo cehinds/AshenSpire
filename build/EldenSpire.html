@@ -11798,34 +11798,10 @@ const { overlayIsOpen } = require("src/ui/components/overlay.js");
 const { matchAction, isEngaged, focusFirst } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
 const { classGlyph, tintCss } = require("src/ui/assets.js");
-
-const ICONS = {
-  monster: '⚔',
-  event: '?',
-  elite: '☠',
-  shrine: '♨',
-  merchant: '⚖',
-  treasure: '▣',
-  boss: '👁',
-  fight: '⚔',
-};
+const { nodeIcon, nodeBlurb, actTitle } = require("src/ui/uiContent.js");
 
 const COL_X = 95;
 const ROW_H = 46;
-
-const ACT_NAMES = {
-  1: 'ACT I — THE FALLOW MARCHES',
-  2: 'ACT II — THE GRAFTED COURT',
-  3: 'ACT III — THE ASHEN CROWN',
-};
-
-// Endless Spire: acts past 3 reuse the act 1-3 names with a cycle marker
-// ("ACT I — THE FALLOW MARCHES · CYCLE 2" on act 4, and so on).
-function actTitle(actNumber) {
-  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
-  const loop = Math.floor((actNumber - 1) / 3);
-  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
-}
 
 // Map zoom levels (%) selectable in-view and defaulted from settings.
 const ZOOM_STEPS = [1, 1.15, 1.3, 1.5, 1.75, 2];
@@ -11938,7 +11914,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
     // Reachable nodes get a rhythmic pulsing halo so the next choices read at
     // a glance; the halo is inert when reduced-motion is set (CSS handles it).
     const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
-    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${ICONS[shownType] || '?'}</text>`;
+    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>`;
     if (isReachable) el.addEventListener('click', () => onPick(n.id));
     attachTooltip(el, () => nodeTooltip(shownType, n, revealed));
     g.appendChild(el);
@@ -12119,17 +12095,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
 }
 
 function nodeTooltip(type, node, revealed) {
-  const names = {
-    monster: 'Monster — a fight, runes, and a card reward.',
-    event: 'Unknown — an event, a fight, a shrine… who can say.',
-    elite: 'Elite — dangerous. Drops a relic.',
-    shrine: 'Shrine of Grace — rest (heal) or smith (upgrade a card).',
-    merchant: 'Merchant — cards, relics, flasks, card removal.',
-    treasure: 'Treasure — a relic, free.',
-    boss: 'The Watchful Omen. He has been waiting.',
-    fight: 'An ambush revealed by the Stonesword Key.',
-  };
-  let t = `<div class="tt-title">Floor ${node.floor}</div>${names[type] || ''}`;
+  let t = `<div class="tt-title">Floor ${node.floor}</div>${nodeBlurb(type)}`;
   if (revealed) t += '<br><i>Revealed by the Stonesword Key.</i>';
   return t;
 }
@@ -13405,6 +13371,90 @@ if (typeof window !== 'undefined') {
 Object.assign(module.exports, { setHintMode, hintBarHtml, refreshHintBars });
 
 },
+"src/ui/uiContent.js": function (module, exports, require) {
+// src/ui/uiContent.js — shared UI presentation data.
+//
+// The map, combat, and co-op screens all draw the same things — map node
+// types, act titles, enemy intents. These used to be hardcoded (and drifting)
+// in each screen. This is the single source so their icons, labels, and prose
+// can't diverge. Pure presentation data + tiny pure helpers, no game state.
+
+// ---- map node types ---------------------------------------------------------
+const NODE_TYPES = {
+  monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — runes and a card reward.' },
+  fight: { icon: '⚔', name: 'Monster', blurb: 'A fight — runes and a card reward.' },
+  elite: { icon: '☠', name: 'Elite', blurb: 'A hard fight. Drops a relic.' },
+  boss: { icon: '👁', name: 'Boss', blurb: 'The act boss.' },
+  shrine: { icon: '♨', name: 'Shrine of Grace', blurb: 'Rest (heal), smith (upgrade a card), or mend an ally.' },
+  merchant: { icon: '⚖', name: 'Merchant', blurb: 'Cards, relics, flasks, card removal.' },
+  treasure: { icon: '▣', name: 'Treasure', blurb: 'A relic, free.' },
+  event: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
+  unknown: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
+};
+const nodeIcon = (type) => (NODE_TYPES[type] || {}).icon || '?';
+const nodeName = (type) => (NODE_TYPES[type] || {}).name || String(type);
+const nodeBlurb = (type) => (NODE_TYPES[type] || {}).blurb || '';
+
+// ---- act titles -------------------------------------------------------------
+const ACT_NAMES = {
+  1: 'ACT I — THE FALLOW MARCHES',
+  2: 'ACT II — THE GRAFTED COURT',
+  3: 'ACT III — THE ASHEN CROWN',
+};
+// Endless Spire: acts past 3 reuse the act 1-3 names with a "· CYCLE n" marker.
+function actTitle(actNumber) {
+  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
+  const loop = Math.floor((actNumber - 1) / 3);
+  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
+}
+
+// ---- enemy intents ----------------------------------------------------------
+// `iv` is a preview/snapshot intent:
+//   { kind, moveId?, damage?, hits?, block?, delayed?, pending?, totalDamage? }
+const INTENT_ICONS = { attack: '⚔', block: '🛡', buff: '↑', debuff: '☾', staggered: '✦', unknown: '?' };
+
+// Solo (previewIntent) supplies { kind, damage, hits, block, delayed, pending,
+// totalDamage } and marks unknown via kind:'unknown'; the co-op snapshot intent
+// supplies the same fields plus moveId (null when unknown). These helpers key on
+// kind + field presence so both shapes render identically.
+const isUnknownIntent = (iv) => !iv || iv.kind === 'unknown' || iv.moveId === null;
+
+/** The badge shown over an enemy → { cls, html }. */
+function intentBadge(iv) {
+  if (isUnknownIntent(iv)) return { cls: 'unknown', html: '?' };
+  if (iv.kind === 'staggered') return { cls: 'staggered', html: '✦ STAGGERED' };
+  if (iv.damage != null) {
+    const n = iv.hits > 1 ? `${iv.damage}×${iv.hits}` : `${iv.damage}`;
+    return { cls: `attack${iv.delayed ? ' delayed' : ''}`, html: `<span class="ic">${INTENT_ICONS.attack}</span>${n}${iv.delayed ? ' ⌛' : ''}` };
+  }
+  if (iv.block != null) return { cls: 'block', html: `<span class="ic">${INTENT_ICONS.block}</span>` };
+  if (iv.kind === 'buff') return { cls: 'buff', html: `<span class="ic">${INTENT_ICONS.buff}</span>` };
+  if (iv.kind === 'debuff') return { cls: 'debuff', html: `<span class="ic">${INTENT_ICONS.debuff}</span>` };
+  return { cls: iv.kind || 'unknown', html: '?' };
+}
+
+/** Intent hover tooltip. `victim` names who attacks/debuffs hit ('you' solo,
+ *  'each hero' in co-op). Reads totalDamage/pending when the caller has them. */
+function intentTooltip(iv, { victim = 'you' } = {}) {
+  if (isUnknownIntent(iv)) return '<div class="tt-title">Intent: Unknown</div>';
+  if (iv.kind === 'staggered') return `<div class="tt-title">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.`;
+  if (iv.damage != null) {
+    const total = iv.totalDamage != null && iv.hits > 1 ? ` (${iv.totalDamage} total)` : '';
+    let t = `<div class="tt-title">Intent: Attack</div>Attacking ${victim} for <b>${iv.damage}${iv.hits > 1 ? ` × ${iv.hits}${total}` : ''}</b> damage (modifiers included).`;
+    if (iv.pending) t += '<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.';
+    else if (iv.delayed) t += '<br><b>Delayed:</b> it holds this turn and strikes the next. Stagger cancels it.';
+    return t;
+  }
+  if (iv.block != null) return '<div class="tt-title">Intent: Defend</div>Gaining Block.';
+  if (iv.kind === 'buff') return '<div class="tt-title">Intent: Buff</div>Strengthening itself.';
+  if (iv.kind === 'debuff') return `<div class="tt-title">Intent: Debuff</div>Hindering ${victim}.`;
+  return '<div class="tt-title">Intent: Unknown</div>';
+}
+
+
+Object.assign(module.exports, { NODE_TYPES, nodeIcon, nodeName, nodeBlurb, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip });
+
+},
 "src/ui/screens/combat.js": function (module, exports, require) {
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
@@ -13419,6 +13469,7 @@ const { openPileModal } = require("src/ui/components/piles.js");
 const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline } = require("src/ui/fx.js");
+const { intentBadge, intentTooltip } = require("src/ui/uiContent.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { overlayIsOpen } = require("src/ui/components/overlay.js");
@@ -13791,41 +13842,11 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
   function intentEl(enemy) {
     const iv = previewIntent(combat, enemy.id);
     const el = document.createElement('div');
-    let cls = iv.kind;
-    let inner = '';
-    if (iv.kind === 'staggered') {
-      inner = '✦ STAGGERED';
-    } else if (iv.kind === 'attack') {
-      inner = `<span class="ic">⚔</span>${iv.hits > 1 ? `${iv.damage}×${iv.hits}` : iv.damage}`;
-      if (iv.delayed) inner += ' ⌛';
-      cls = `attack${iv.delayed ? ' delayed' : ''}`;
-    } else if (iv.kind === 'block') {
-      inner = '<span class="ic">🛡</span>';
-    } else if (iv.kind === 'buff') {
-      inner = '<span class="ic">↑</span>';
-    } else if (iv.kind === 'debuff') {
-      inner = '<span class="ic">☾</span>';
-    } else {
-      inner = '?';
-    }
-    el.className = `intent ${cls}`;
-    el.innerHTML = inner;
-    attachTooltip(el, () => intentTooltip(iv, enemy));
+    const badge = intentBadge(iv);
+    el.className = `intent ${badge.cls}`;
+    el.innerHTML = badge.html;
+    attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
     return el;
-  }
-
-  function intentTooltip(iv, enemy) {
-    if (iv.kind === 'staggered') return `<div class="tt-title">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.`;
-    if (iv.kind === 'attack') {
-      let t = `<div class="tt-title">Intent: Attack</div>Attacking for <b>${iv.damage}${iv.hits > 1 ? ` × ${iv.hits} (${iv.totalDamage} total)` : ''}</b> damage (modifiers included).`;
-      if (iv.pending) t += '<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.';
-      else if (iv.delayed) t += '<br><b>Delayed:</b> it will hold this turn and strike the next. Stagger cancels it.';
-      return t;
-    }
-    if (iv.kind === 'block') return `<div class="tt-title">Intent: Defend</div>Gaining Block.`;
-    if (iv.kind === 'buff') return `<div class="tt-title">Intent: Buff</div>Strengthening itself.`;
-    if (iv.kind === 'debuff') return `<div class="tt-title">Intent: Debuff</div>Hindering you.`;
-    return `<div class="tt-title">Intent: Unknown</div>`;
   }
 
   function renderEnemies() {
@@ -15791,18 +15812,11 @@ const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/asset
 const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { anchorLocalBox } = require("src/ui/fx.js");
+const { nodeIcon, nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip } = require("src/ui/uiContent.js");
 const { resolveCard } = require("src/model/registries.js");
 
-const NODE_ICONS = { monster: '⚔', fight: '⚔', elite: '☠', shrine: '♨', merchant: '⚖', treasure: '▣', boss: '👁', unknown: '?' };
-const ACT_NAMES = { 1: 'ACT I — THE FALLOW MARCHES', 2: 'ACT II — THE GRAFTED COURT', 3: 'ACT III — THE ASHEN CROWN' };
 const COL_X = 95;
 const ROW_H = 46;
-
-function actTitle(actNumber) {
-  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
-  const loop = Math.floor((actNumber - 1) / 3);
-  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
-}
 
 function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   let snap = null;
@@ -15983,29 +15997,10 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   }
   function intentEl(intent) {
     const el = document.createElement('div');
-    let cls = intent ? intent.kind : 'unknown';
-    let inner = '?';
-    if (!intent || !intent.moveId) { inner = '?'; }
-    else if (intent.kind === 'staggered') { inner = '✦ STAGGERED'; }
-    else if (intent.damage != null) { inner = `<span class="ic">⚔</span>${intent.hits > 1 ? `${intent.damage}×${intent.hits}` : intent.damage}${intent.delayed ? ' ⌛' : ''}`; cls = `attack${intent.delayed ? ' delayed' : ''}`; }
-    else if (intent.block != null) { inner = '<span class="ic">🛡</span>'; cls = 'block'; }
-    else if (intent.kind === 'buff') { inner = '<span class="ic">↑</span>'; }
-    else if (intent.kind === 'debuff') { inner = '<span class="ic">☾</span>'; }
-    el.className = `intent ${cls}`;
-    el.innerHTML = inner;
-    attachTooltip(el, () => {
-      if (!intent || !intent.moveId) return '<div class="tt-title">Intent: Unknown</div>';
-      if (intent.kind === 'staggered') return '<div class="tt-title">Staggered</div>Poise broken: its turn is skipped and it takes +50% damage.';
-      if (intent.damage != null) {
-        let s = `<div class="tt-title">Intent: Attack</div>Attacking each hero for <b>${intent.damage}${intent.hits > 1 ? ` × ${intent.hits}` : ''}</b> damage.`;
-        if (intent.delayed) s += '<br><b>Delayed:</b> it holds this turn and strikes later. Stagger cancels it.';
-        return s;
-      }
-      if (intent.block != null) return '<div class="tt-title">Intent: Defend</div>Gaining Block.';
-      if (intent.kind === 'buff') return '<div class="tt-title">Intent: Buff</div>Strengthening itself.';
-      if (intent.kind === 'debuff') return '<div class="tt-title">Intent: Debuff</div>Hindering the party.';
-      return '<div class="tt-title">Intent</div>';
-    });
+    const badge = intentBadge(intent);
+    el.className = `intent ${badge.cls}`;
+    el.innerHTML = badge.html;
+    attachTooltip(el, () => intentTooltip(intent, { victim: 'each hero' }));
     return el;
   }
 
@@ -16200,11 +16195,8 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const pips = voters.length
         ? `<text class="vote-pips" x="${x(n.col)}" y="${y(n.floor) - r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${voters.map((pid) => classGlyph((snap.party.find((p) => p.id === pid) || {}).classId)).join('')}</text>`
         : '';
-      el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${NODE_ICONS[n.type] || '?'}</text>${pips}`;
-      attachTooltip(el, () => {
-        const names = { monster: 'Monster — a normal fight', fight: 'Monster — a normal fight', elite: 'Elite — a hard fight with a relic reward', boss: 'The act boss', shrine: 'Shrine of Grace — rest, smith, or mend an ally', treasure: 'Treasure — a free relic each', merchant: 'Merchant', unknown: 'Unknown — could be anything' };
-        return `<div class="tt-title">${esc(names[n.type] || n.type)}</div>${isReachable ? 'Click to vote for this path.' : ''}`;
-      });
+      el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(n.type)}</text>${pips}`;
+      attachTooltip(el, () => `<div class="tt-title">${esc(nodeName(n.type))}</div>${nodeBlurb(n.type)}${isReachable ? '<br>Click to vote for this path.' : ''}`);
       if (isReachable) el.addEventListener('click', () => send({ t: 'chooseNode', nodeId: n.id }));
       g.appendChild(el);
     }

@@ -10,34 +10,10 @@ import { overlayIsOpen } from '../components/overlay.js';
 import { matchAction, isEngaged, focusFirst } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
-
-const ICONS = {
-  monster: '⚔',
-  event: '?',
-  elite: '☠',
-  shrine: '♨',
-  merchant: '⚖',
-  treasure: '▣',
-  boss: '👁',
-  fight: '⚔',
-};
+import { nodeIcon, nodeBlurb, actTitle } from '../uiContent.js';
 
 const COL_X = 95;
 const ROW_H = 46;
-
-const ACT_NAMES = {
-  1: 'ACT I — THE FALLOW MARCHES',
-  2: 'ACT II — THE GRAFTED COURT',
-  3: 'ACT III — THE ASHEN CROWN',
-};
-
-// Endless Spire: acts past 3 reuse the act 1-3 names with a cycle marker
-// ("ACT I — THE FALLOW MARCHES · CYCLE 2" on act 4, and so on).
-function actTitle(actNumber) {
-  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
-  const loop = Math.floor((actNumber - 1) / 3);
-  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
-}
 
 // Map zoom levels (%) selectable in-view and defaulted from settings.
 const ZOOM_STEPS = [1, 1.15, 1.3, 1.5, 1.75, 2];
@@ -150,7 +126,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
     // Reachable nodes get a rhythmic pulsing halo so the next choices read at
     // a glance; the halo is inert when reduced-motion is set (CSS handles it).
     const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
-    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${ICONS[shownType] || '?'}</text>`;
+    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>`;
     if (isReachable) el.addEventListener('click', () => onPick(n.id));
     attachTooltip(el, () => nodeTooltip(shownType, n, revealed));
     g.appendChild(el);
@@ -331,17 +307,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
 }
 
 function nodeTooltip(type, node, revealed) {
-  const names = {
-    monster: 'Monster — a fight, runes, and a card reward.',
-    event: 'Unknown — an event, a fight, a shrine… who can say.',
-    elite: 'Elite — dangerous. Drops a relic.',
-    shrine: 'Shrine of Grace — rest (heal) or smith (upgrade a card).',
-    merchant: 'Merchant — cards, relics, flasks, card removal.',
-    treasure: 'Treasure — a relic, free.',
-    boss: 'The Watchful Omen. He has been waiting.',
-    fight: 'An ambush revealed by the Stonesword Key.',
-  };
-  let t = `<div class="tt-title">Floor ${node.floor}</div>${names[type] || ''}`;
+  let t = `<div class="tt-title">Floor ${node.floor}</div>${nodeBlurb(type)}`;
   if (revealed) t += '<br><i>Revealed by the Stonesword Key.</i>';
   return t;
 }

@@ -11,6 +11,7 @@ import { openPileModal } from '../components/piles.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline } from '../fx.js';
+import { intentBadge, intentTooltip } from '../uiContent.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { overlayIsOpen } from '../components/overlay.js';
@@ -383,41 +384,11 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   function intentEl(enemy) {
     const iv = previewIntent(combat, enemy.id);
     const el = document.createElement('div');
-    let cls = iv.kind;
-    let inner = '';
-    if (iv.kind === 'staggered') {
-      inner = '✦ STAGGERED';
-    } else if (iv.kind === 'attack') {
-      inner = `<span class="ic">⚔</span>${iv.hits > 1 ? `${iv.damage}×${iv.hits}` : iv.damage}`;
-      if (iv.delayed) inner += ' ⌛';
-      cls = `attack${iv.delayed ? ' delayed' : ''}`;
-    } else if (iv.kind === 'block') {
-      inner = '<span class="ic">🛡</span>';
-    } else if (iv.kind === 'buff') {
-      inner = '<span class="ic">↑</span>';
-    } else if (iv.kind === 'debuff') {
-      inner = '<span class="ic">☾</span>';
-    } else {
-      inner = '?';
-    }
-    el.className = `intent ${cls}`;
-    el.innerHTML = inner;
-    attachTooltip(el, () => intentTooltip(iv, enemy));
+    const badge = intentBadge(iv);
+    el.className = `intent ${badge.cls}`;
+    el.innerHTML = badge.html;
+    attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
     return el;
-  }
-
-  function intentTooltip(iv, enemy) {
-    if (iv.kind === 'staggered') return `<div class="tt-title">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.`;
-    if (iv.kind === 'attack') {
-      let t = `<div class="tt-title">Intent: Attack</div>Attacking for <b>${iv.damage}${iv.hits > 1 ? ` × ${iv.hits} (${iv.totalDamage} total)` : ''}</b> damage (modifiers included).`;
-      if (iv.pending) t += '<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.';
-      else if (iv.delayed) t += '<br><b>Delayed:</b> it will hold this turn and strike the next. Stagger cancels it.';
-      return t;
-    }
-    if (iv.kind === 'block') return `<div class="tt-title">Intent: Defend</div>Gaining Block.`;
-    if (iv.kind === 'buff') return `<div class="tt-title">Intent: Buff</div>Strengthening itself.`;
-    if (iv.kind === 'debuff') return `<div class="tt-title">Intent: Debuff</div>Hindering you.`;
-    return `<div class="tt-title">Intent: Unknown</div>`;
   }
 
   function renderEnemies() {
