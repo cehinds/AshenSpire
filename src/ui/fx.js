@@ -32,16 +32,33 @@ export function getAnimSpeed() {
 let pending = [];
 let flushRequested = false;
 
+// The whole UI is scaled by --ui-zoom (main.js applyUiScale). getBoundingClientRect
+// returns POST-zoom (visual) pixels, but a child's `style.left` is interpreted in
+// the layer's PRE-zoom local space — so a raw visual offset lands at offset×zoom,
+// pulling anchored FX toward the origin (worse the further right the target). This
+// converts an anchor's on-screen box into the layer's local coordinates so FX land
+// exactly on their target regardless of zoom.
+export function anchorLocalBox(layer, anchor) {
+  const lr = layer.getBoundingClientRect();
+  const ar = anchor.getBoundingClientRect();
+  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  return {
+    left: (ar.left - lr.left) / z,
+    top: (ar.top - lr.top) / z,
+    width: ar.width / z,
+    height: ar.height / z,
+  };
+}
+
 /** Spawn a floating number over an anchor element. */
 function floatNum(layer, anchor, text, cls) {
   if (!layer || !anchor) return;
-  const lr = layer.getBoundingClientRect();
-  const ar = anchor.getBoundingClientRect();
+  const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
   el.textContent = text;
-  el.style.left = `${ar.left - lr.left + ar.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
-  el.style.top = `${ar.top - lr.top + ar.height * 0.25}px`;
+  el.style.left = `${b.left + b.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
+  el.style.top = `${b.top + b.height * 0.25}px`;
   layer.appendChild(el);
   setTimeout(() => el.remove(), 600);
 }
@@ -57,13 +74,12 @@ function dmgClass(amount) {
 /** Spawn a transient effect element (slash arc, cast glyph, block spark…). */
 function spawnFx(layer, anchor, cls, ms, text) {
   if (!layer || !anchor) return;
-  const lr = layer.getBoundingClientRect();
-  const ar = anchor.getBoundingClientRect();
+  const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = cls;
   if (text) el.textContent = text;
-  el.style.left = `${ar.left - lr.left + ar.width / 2}px`;
-  el.style.top = `${ar.top - lr.top + ar.height * 0.4}px`;
+  el.style.left = `${b.left + b.width / 2}px`;
+  el.style.top = `${b.top + b.height * 0.4}px`;
   el.style.setProperty('--rot', `${Math.round(Math.random() * 50 - 25)}deg`);
   layer.appendChild(el);
   setTimeout(() => el.remove(), ms);
@@ -102,12 +118,11 @@ function flash(el, cls, ms = 300) {
 // Radial flare over an anchor (stance entries, big procs).
 function flare(layer, anchor, color) {
   if (!layer || !anchor) return;
-  const lr = layer.getBoundingClientRect();
-  const ar = anchor.getBoundingClientRect();
+  const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = 'stance-flare';
-  el.style.left = `${ar.left - lr.left + ar.width / 2 - 90}px`;
-  el.style.top = `${ar.top - lr.top + ar.height / 2 - 90}px`;
+  el.style.left = `${b.left + b.width / 2 - 90}px`;
+  el.style.top = `${b.top + b.height / 2 - 90}px`;
   el.style.background = `radial-gradient(circle, ${color} 0%, transparent 65%)`;
   layer.appendChild(el);
   setTimeout(() => el.remove(), 320);
