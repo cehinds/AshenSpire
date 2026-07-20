@@ -157,9 +157,24 @@ export function attachLan(server, { port, root }) {
 
   // -- lobby session ------------------------------------------------------------
   function roster() {
-    return [...session.clients.values()].map((pl) => ({
-      id: pl.id, name: pl.name, classId: pl.classId, tint: pl.tint, spriteStyle: pl.spriteStyle, ready: pl.ready, isHost: pl.isHost,
-    }));
+    const out = [];
+    for (const pl of session.clients.values()) {
+      out.push({ id: pl.id, name: pl.name, classId: pl.classId, tint: pl.tint, spriteStyle: pl.spriteStyle, ready: pl.ready, isHost: pl.isHost });
+      // Local (couch) players ride their owner's connection and are always ready.
+      (pl.locals || []).forEach((lp, i) => out.push({
+        id: `${pl.id}L${i + 1}`, name: lp.name, classId: lp.classId, tint: lp.tint,
+        spriteStyle: lp.spriteStyle, ready: true, isHost: false, isLocal: true, ownerId: pl.id,
+      }));
+    }
+    return out;
+  }
+
+  // Every member id a socket's client controls (its main seat + local seats).
+  // ownedIds is set explicitly at game start / resume; before that it derives
+  // from the declared locals.
+  function memberIdsOf(pl) {
+    if (pl.ownedIds) return pl.ownedIds;
+    return [pl.id, ...((pl.locals || []).map((_, i) => `${pl.id}L${i + 1}`))];
   }
 
   function broadcast(obj) {
@@ -181,13 +196,21 @@ export function attachLan(server, { port, root }) {
   // Start the server-authoritative run from the lobby roster.
   function startGame() {
     const game = createSession({ registries: REG, seedString: session.seedString || 'ERDTREE', endless: !!session.endless });
+    const fallbackClass = REG.classes.all()[0].id;
     for (const cl of session.clients.values()) {
-      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || REG.classes.all()[0].id, tint: cl.tint, spriteStyle: cl.spriteStyle });
+      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, tint: cl.tint, spriteStyle: cl.spriteStyle });
+      (cl.locals || []).forEach((lp, i) => game.addMember({
+        id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, tint: lp.tint, spriteStyle: lp.spriteStyle,
+      }));
     }
     game.start();
     session.game = game;
     session.started = true;
-    broadcast({ t: 'started', seedString: session.seedString });
+    // Per-socket: each client learns EVERY seat it controls (couch co-op).
+    for (const [sock2, cl] of session.clients) {
+      cl.ownedIds = memberIdsOf(cl);
+      sock2.write(wsEncode(JSON.stringify({ t: 'started', seedString: session.seedString, yourIds: cl.ownedIds })));
+    }
     broadcastState();
   }
 
@@ -196,7 +219,8 @@ export function attachLan(server, { port, root }) {
   function onGameIntent(pl, msg) {
     const g = session.game;
     if (!g) return;
-    const id = pl.id;
+    // Couch co-op: `as` lets a client act for any seat it OWNS (validated).
+    const id = msg.as && memberIdsOf(pl).includes(msg.as) ? msg.as : pl.id;
     switch (msg.t) {
       case 'resync': broadcastState(); return;
       case 'chooseNode': g.chooseNode(id, msg.nodeId); break;
@@ -243,6 +267,18 @@ export function attachLan(server, { port, root }) {
         pl.ready = !!msg.ready;
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
         break;
+      case 'locals': {
+        // Couch party: up to 3 local seats riding this connection (4 total).
+        const sane = (Array.isArray(msg.locals) ? msg.locals : []).slice(0, 3).map((lp) => ({
+          name: String((lp && lp.name) || 'Tarnished').slice(0, 18),
+          classId: (lp && lp.classId) || null,
+          tint: (lp && lp.tint) || 'gold',
+          spriteStyle: (lp && lp.spriteStyle) || 'rendered',
+        }));
+        pl.locals = sane;
+        broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
+        break;
+      }
       case 'seed':
         if (!pl.isHost) return;
         session.seedString = String(msg.seedString || '').slice(0, 10);
@@ -274,13 +310,21 @@ export function attachLan(server, { port, root }) {
     if (!session.game) { session.game = restoreSession(REG, savedGame); session.started = true; }
     const game = session.game;
     const memberIds = [...game.session.members.keys()];
-    let i = 0;
-    for (const [sock2, cl] of session.clients) {
-      const mid = memberIds[i++];
-      if (!mid) break;
-      cl.id = mid;
-      game.setConnected(mid, true);
-      sock2.write(wsEncode(JSON.stringify({ t: 'resumed', yourId: mid, seedString: game.session.seedString })));
+    const socks = [...session.clients.entries()];
+    // One member per connected client, in order; leftover members (a couch
+    // party's local seats) all attach to the FIRST client.
+    const assigned = new Map(socks.map(([s]) => [s, []]));
+    memberIds.forEach((mid, i) => {
+      const slot = i < socks.length ? socks[i] : socks[0];
+      if (slot) assigned.get(slot[0]).push(mid);
+    });
+    for (const [sock2, cl] of socks) {
+      const mids = assigned.get(sock2) || [];
+      if (!mids.length) continue;
+      cl.id = mids[0];
+      cl.ownedIds = mids;
+      for (const mid of mids) game.setConnected(mid, true);
+      sock2.write(wsEncode(JSON.stringify({ t: 'resumed', yourId: mids[0], yourIds: mids, seedString: game.session.seedString })));
     }
     broadcastState();
   }
@@ -322,10 +366,12 @@ export function attachLan(server, { port, root }) {
       const inGame = !!session.game;
       session.clients.delete(sock);
       if (inGame && session.game.session.members.has(pl.id)) {
-        // Mid-run: the member's body stays; mark absent (rescales the live
-        // fight; missed nodes accrue to their catch-up queue). The run persists
-        // on the server even if everyone leaves.
-        session.game.setConnected(pl.id, false);
+        // Mid-run: the members' bodies stay; mark every seat this socket owned
+        // absent (rescales the live fight; missed nodes accrue to catch-up).
+        // The run persists on the server even if everyone leaves.
+        for (const mid of memberIdsOf(pl)) {
+          if (session.game.session.members.has(mid)) session.game.setConnected(mid, false);
+        }
         if (session.clients.size) broadcastState();
         return;
       }

@@ -15827,7 +15827,10 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
 
   function renderSeatTabs() {
     if (seats.length < 2) return;
-    const host = app.querySelector('.coop-seat-tabs') || (() => {
+    // The tab bar lives on document.body (a fixed overlay), so look it up there
+    // — querying inside `app` never finds it and would spawn a duplicate per
+    // render (stacking stale seat tabs).
+    const host = document.querySelector('.coop-seat-tabs') || (() => {
       const d = document.createElement('div');
       d.className = 'coop-seat-tabs';
       document.body.appendChild(d);

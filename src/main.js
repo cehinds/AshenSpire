@@ -212,9 +212,9 @@ function showLobby() {
     registries,
     defaultSeedString: randomSeedString(),
     onBack: () => showTitle(),
-    onStart: ({ conn, myId }) => {
+    onStart: ({ conn, myId, myIds }) => {
       inCoop = true;
-      mountCoop(app, { registries, conn, myId, onLeave: () => showTitle() });
+      mountCoop(app, { registries, conn, myId, myIds, onLeave: () => showTitle() });
     },
   });
 }

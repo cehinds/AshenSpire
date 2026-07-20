@@ -446,3 +446,16 @@ input[type='range'].set-range { width: 120px; accent-color: var(--gold); cursor:
   35% { transform: translateX(-22px) scale(1.05); filter: brightness(1.3); }
   100% { transform: translateX(0); }
 }
+
+/* co-op: couch-party seat tabs (shown only when this screen owns 2+ seats) */
+.coop-seat-tabs {
+  position: fixed; left: 50%; bottom: 46px; transform: translateX(-50%);
+  display: flex; gap: 8px; align-items: center; z-index: 620;
+}
+.seat-tab {
+  padding: 5px 12px; font-size: 12px; border-radius: 7px;
+  background: rgba(16,13,10,.9); border: 1.5px solid var(--line-soft); color: #ded1b6;
+}
+.seat-tab.on { background: #2a2418; color: var(--gold); box-shadow: 0 0 10px rgba(201,162,39,.35); }
+.seat-tab .pip { color: var(--gold); }
+.seat-hint { color: var(--muted); font-size: 10px; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: 4px; padding: 1px 6px; }
