@@ -323,14 +323,18 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       const poise = document.createElement('div');
       poise.className = `bar poisebar${entity.poiseMeter.value >= entity.poiseMeter.max * 0.75 ? ' full' : ''}`;
       poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (entity.poiseMeter.value / entity.poiseMeter.max) * 100)}%"></div>`;
-      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${entity.poiseMeter.value} / ${entity.poiseMeter.max} — filling this Staggers the enemy: it skips a turn and takes +50% damage.`);
+      // Meter-bar tooltips render the STATUS def's own text (data) so they can't
+      // drift from the balance/formula numbers.
+      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${entity.poiseMeter.value} / ${entity.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
       const bleedInst = entity.statuses.bleed;
       if (bleedInst && bleedInst.meter && bleedInst.meter.value > 0) {
         const bl = document.createElement('div');
         bl.className = 'bar bleedbar';
         bl.innerHTML = `<div class="fill" style="width:${Math.min(100, (bleedInst.meter.value / bleedInst.meter.max) * 100)}%"></div>`;
-        attachTooltip(bl, () => `<div class="tt-title">Bleed</div>${bleedInst.meter.value} / ${bleedInst.meter.max} — bursts at the threshold for 15% max HP (min 8, max 35).`);
+        const bleedDef = registries.statuses.get('bleed');
+        attachTooltip(bl, () => `<div class="tt-title">${esc(bleedDef.name)}</div>${bleedInst.meter.value} / ${bleedInst.meter.max}. ${esc(bleedDef.tooltip || '')}`);
         wrap.appendChild(bl);
       }
     }

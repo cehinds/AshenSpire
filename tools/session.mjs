@@ -70,7 +70,7 @@ export function createSession({ registries, seedString, endless = false, restore
       members.set(md.id, {
         id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
         connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
-        catchup: md.catchup || [], alive: md.alive !== false,
+        catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
       });
     }
   }
@@ -97,6 +97,7 @@ export function createSession({ registries, seedString, endless = false, restore
       run, // per-member build: deck/relics/flasks/hp/maxHp/runes
       rng: memberRng(seed, index),
       catchup: [], // pending missed-node choices (S4 replay)
+      cardSeq: 0, // monotonic counter for reward/catch-up card instance ids
       alive: true,
     };
     members.set(id, m);
@@ -399,7 +400,7 @@ export function createSession({ registries, seedString, endless = false, restore
     const m = members.get(memberId);
     if (!offer || !m) return { ok: false, error: 'no offer for member' };
     if (cardId && offer.cardIds.includes(cardId)) {
-      m.run.deck.push({ instanceId: m.run._idGen ? m.run._idGen() : `rc_${cardId}_${m.run.deck.length}`, cardId, upgraded: false });
+      m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
     }
     if (takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) {
       m.run.relics.push(offer.relicId);
@@ -487,7 +488,7 @@ export function createSession({ registries, seedString, endless = false, restore
     if (item.type === 'reward') {
       const offer = item.offer;
       if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
-        m.run.deck.push({ instanceId: `cu_${pick.cardId}_${m.run.deck.length}`, cardId: pick.cardId, upgraded: false });
+        m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
       if (pick && pick.takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) m.run.relics.push(offer.relicId);
       if (pick && pick.flask && offer.flaskId && m.run.flasks.length < (registries.balance.flaskSlots || 3)) m.run.flasks.push({ flaskId: offer.flaskId });
@@ -530,7 +531,7 @@ export function createSession({ registries, seedString, endless = false, restore
       order,
       members: [...members.values()].map((m) => ({
         id: m.id, name: m.name, index: m.index, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, alive: m.alive,
-        run: m.run, catchup: m.catchup, rng: m.rng.getCounters(),
+        run: m.run, catchup: m.catchup, cardSeq: m.cardSeq, rng: m.rng.getCounters(),
       })),
     };
   }
