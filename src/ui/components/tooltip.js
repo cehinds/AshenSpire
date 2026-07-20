@@ -26,19 +26,23 @@ function position(x, y) {
 
 /**
  * attachTooltip(el, contentFn) — contentFn() → HTML string (computed at show
- * time so numbers are always live).
+ * time so numbers are always live). Shows on pointer hover AND on the
+ * keyboard/gamepad focus cursor (input.js dispatches gpfocus/gpblur when the
+ * gp-focus cursor lands on / leaves an element), so controller players get
+ * every tooltip a mouse would.
  */
 export function attachTooltip(el, contentFn) {
+  const show = (x, y) => {
+    const html = contentFn();
+    if (!html) return;
+    const t = ensure();
+    t.innerHTML = html;
+    t.style.display = 'block';
+    position(x, y);
+  };
   el.addEventListener('pointerenter', (ev) => {
     clearTimeout(showTimer);
-    showTimer = setTimeout(() => {
-      const html = contentFn();
-      if (!html) return;
-      const t = ensure();
-      t.innerHTML = html;
-      t.style.display = 'block';
-      position(ev.clientX, ev.clientY);
-    }, 140);
+    showTimer = setTimeout(() => show(ev.clientX, ev.clientY), 140);
   });
   el.addEventListener('pointermove', (ev) => {
     if (tipEl && tipEl.style.display === 'block') position(ev.clientX, ev.clientY);
@@ -47,6 +51,12 @@ export function attachTooltip(el, contentFn) {
     clearTimeout(showTimer);
     if (tipEl) tipEl.style.display = 'none';
   });
+  el.addEventListener('gpfocus', () => {
+    clearTimeout(showTimer);
+    const r = el.getBoundingClientRect();
+    showTimer = setTimeout(() => show(r.right, r.top), 160);
+  });
+  el.addEventListener('gpblur', hideTooltip);
 }
 
 export function hideTooltip() {

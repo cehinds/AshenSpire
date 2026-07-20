@@ -63,11 +63,29 @@ export function renderCard(registries, ref, opts = {}) {
     `<div class="ctype">${esc(def.type.toUpperCase())}</div>` +
     `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
 
-  attachTooltip(el, () => cardTooltip(registries, def, tokens));
+  // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
+  attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
   if (opts.small) {
     el.style.transform = 'scale(0.92)';
   }
   return el;
+}
+
+/**
+ * Tooltip HTML previewing what a card becomes when Smithed: current text in
+ * muted, upgraded text below with changed values highlighted green/red (the
+ * same up/down coloring cards use in play). All numbers come from the defs.
+ */
+export function upgradePreviewHtml(registries, ref) {
+  const base = resolveCard(registries, { cardId: ref.cardId, upgraded: false });
+  const upg = resolveCard(registries, { cardId: ref.cardId, upgraded: true });
+  const baseTokens = staticTokens(base);
+  const upgTokens = { ...baseTokens, ...staticTokens(upg) };
+  let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
+  html += `<div style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
+  html += `<div style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
+  if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
+  return html;
 }
 
 function cardTooltip(registries, def, tokens) {

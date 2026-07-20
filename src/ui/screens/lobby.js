@@ -9,7 +9,7 @@
 
 import { lanInfo, lanHost, lanUnhost, lanConnect } from '../../net/lan.js';
 import { classGlyph, PORTRAIT_TINTS, SPRITE_STYLES, tintCss } from '../assets.js';
-import { esc } from '../components/tooltip.js';
+import { esc, attachTooltip } from '../components/tooltip.js';
 
 const NAME_KEY = 'sote_lan_name';
 const TINT_KEY = 'sote_lan_tint';
@@ -193,6 +193,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
       const el = document.createElement('div');
       el.className = `class-pick cr-class${cls.id === state.classId ? ' chosen' : ''}`;
       el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3>`;
+      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${cls.maxHp} · ${cls.startingDeck.length} cards`);
       el.addEventListener('click', () => {
         state.classId = cls.id;
         conn.send({ t: 'pick', classId: cls.id });
@@ -206,7 +207,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
       const dot = document.createElement('button');
       dot.className = `tint-dot${t.id === state.tint ? ' chosen' : ''}`;
       dot.style.background = t.css;
-      dot.title = t.name;
+      attachTooltip(dot, () => `<div class="tt-title">${esc(t.name)}</div>Colors your hero's accents for the whole party.`);
       dot.addEventListener('click', () => {
         state.tint = t.id;
         localStorage.setItem(TINT_KEY, t.id);
@@ -221,6 +222,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
       b.className = `mod-chip lb-style${st.id === state.spriteStyle ? ' on' : ''}`;
       b.style.cssText = 'padding:5px 12px;font-size:12px;';
       b.innerHTML = `<b>${esc(st.name)}</b>`;
+      attachTooltip(b, () => `<div class="tt-title">${esc(st.name)}</div>${st.id === 'rendered' ? 'The rendered low-poly figure.' : st.id === 'classic' ? 'The classic hand-drawn silhouette.' : 'Your sigil in a tinted panel.'}`);
       b.addEventListener('click', () => {
         state.spriteStyle = st.id;
         localStorage.setItem('sote_lan_style', st.id);

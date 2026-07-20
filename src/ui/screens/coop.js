@@ -12,7 +12,7 @@
 // (kept here so solo combat.js stays untouched).
 
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
-import { renderCard } from '../components/card.js';
+import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { resolveCard } from '../../model/registries.js';
 
@@ -120,6 +120,19 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
     else if (intent.kind === 'debuff') { inner = '<span class="ic">☾</span>'; }
     el.className = `intent ${cls}`;
     el.innerHTML = inner;
+    attachTooltip(el, () => {
+      if (!intent || !intent.moveId) return '<div class="tt-title">Intent: Unknown</div>';
+      if (intent.kind === 'staggered') return '<div class="tt-title">Staggered</div>Poise broken: its turn is skipped and it takes +50% damage.';
+      if (intent.damage != null) {
+        let s = `<div class="tt-title">Intent: Attack</div>Attacking each hero for <b>${intent.damage}${intent.hits > 1 ? ` × ${intent.hits}` : ''}</b> damage.`;
+        if (intent.delayed) s += '<br><b>Delayed:</b> it holds this turn and strikes later. Stagger cancels it.';
+        return s;
+      }
+      if (intent.block != null) return '<div class="tt-title">Intent: Defend</div>Gaining Block.';
+      if (intent.kind === 'buff') return '<div class="tt-title">Intent: Buff</div>Strengthening itself.';
+      if (intent.kind === 'debuff') return '<div class="tt-title">Intent: Debuff</div>Hindering the party.';
+      return '<div class="tt-title">Intent</div>';
+    });
     return el;
   }
 
@@ -315,6 +328,10 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
         ? `<text class="vote-pips" x="${x(n.col)}" y="${y(n.floor) - r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${voters.map((pid) => classGlyph((snap.party.find((p) => p.id === pid) || {}).classId)).join('')}</text>`
         : '';
       el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${NODE_ICONS[n.type] || '?'}</text>${pips}`;
+      attachTooltip(el, () => {
+        const names = { monster: 'Monster — a normal fight', fight: 'Monster — a normal fight', elite: 'Elite — a hard fight with a relic reward', boss: 'The act boss', shrine: 'Shrine of Grace — rest, smith, or mend an ally', treasure: 'Treasure — a free relic each', merchant: 'Merchant', unknown: 'Unknown — could be anything' };
+        return `<div class="tt-title">${esc(names[n.type] || n.type)}</div>${isReachable ? 'Click to vote for this path.' : ''}`;
+      });
       if (isReachable) el.addEventListener('click', () => send({ t: 'chooseNode', nodeId: n.id }));
       g.appendChild(el);
     }
@@ -328,10 +345,19 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
     if (!bar) return;
     bar.innerHTML = snap.party.map((p) => {
       const pct = Math.max(0, Math.min(100, Math.round((p.hp / Math.max(1, p.maxHp)) * 100)));
-      return `<span class="coop-pc${p.id === me ? ' me' : ''}${p.connected ? '' : ' away'}${p.alive ? '' : ' dead'}" style="border-color:${tintCss(p.tint)}">
+      return `<span class="coop-pc${p.id === me ? ' me' : ''}${p.connected ? '' : ' away'}${p.alive ? '' : ' dead'}" data-pc="${p.id}" style="border-color:${tintCss(p.tint)}">
         <span class="coop-pc-glyph" style="color:${tintCss(p.tint)}">${classGlyph(p.classId)}</span>${esc(p.name)}
         <span class="coop-pc-hp"><i style="width:${pct}%"></i><b>${p.hp}/${p.maxHp}</b></span></span>`;
     }).join('');
+    bar.querySelectorAll('.coop-pc').forEach((chip) => {
+      const p = snap.party.find((x) => x.id === chip.dataset.pc);
+      if (p) attachTooltip(chip, () => {
+        const cls = registries.classes.get(p.classId);
+        return `<div class="tt-title">${esc(p.name)} — ${esc(cls ? cls.name : p.classId)}</div>` +
+          `HP ${p.hp}/${p.maxHp} · ⛁ ${p.runes ?? 0} · deck ${p.deckSize ?? '?'} · relics ${p.relics ?? 0}` +
+          `${p.connected ? '' : '<br><b>Away</b> — missed rewards queue for their return.'}${p.alive ? '' : '<br><b>Fallen.</b>'}`;
+      });
+    });
   }
 
   // ---- reward / shrine / event (reuse renderCard + solo styling) ------------
@@ -362,14 +388,30 @@ export function mountCoop(app, { registries, conn, myId, onLeave }) {
   function renderShrine() {
     const done = snap.scene.done && snap.scene.done[me];
     const allies = snap.party.filter((p) => p.id !== me && p.alive && p.connected);
+    const mm = myMember();
+    const upgradable = ((mm && mm.deck) || []).filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
     app.innerHTML = rewardShell(`${rTitle('Shrine of Grace')}
       ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">
         <button data-shrine="rest">Rest — heal yourself</button>
-        <button data-shrine="smith">Smith — upgrade a card</button>
+        <button id="coop-smith" ${upgradable.length ? '' : 'disabled'}>Smith — upgrade a card</button>
         ${allies.map((a) => `<button class="coop-take" data-mend="${a.id}">Mend ${esc(a.name)} (+30% HP)</button>`).join('')}
-      </div>`}`);
+      </div>
+      <div id="coop-smith-grid" class="reward-row" style="display:none;max-width:900px;flex-wrap:wrap"></div>`}`);
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));
     app.querySelectorAll('[data-mend]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'mend', targetId: b.dataset.mend })));
+    // Smith opens a picker of your unupgraded cards; hover/focus previews the
+    // exact upgrade (changed values highlighted) before you commit.
+    const smithBtn = app.querySelector('#coop-smith');
+    if (smithBtn && upgradable.length) smithBtn.addEventListener('click', () => {
+      const grid = app.querySelector('#coop-smith-grid');
+      if (grid.style.display !== 'none') return;
+      grid.style.display = 'flex';
+      for (const inst of upgradable) {
+        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
+        el.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'smith', targetId: inst.instanceId }));
+        grid.appendChild(el);
+      }
+    });
     renderPartyBar(); wireLeave();
   }
   function renderEvent() {

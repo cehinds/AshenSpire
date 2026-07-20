@@ -3,7 +3,7 @@
 
 import { shrineHealAmount } from '../../engine/encounters.js';
 import { passiveFlag, resolveCard } from '../../model/registries.js';
-import { renderCard } from '../components/card.js';
+import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { esc } from '../components/tooltip.js';
 import { sfx } from '../sfx.js';
 
@@ -47,7 +47,8 @@ export function mountRest(app, { registries, run, onDone, healMult = 1 }) {
       grid.style.flexWrap = 'wrap';
       grid.style.justifyContent = 'center';
       for (const inst of upgradable) {
-        const el = renderCard(registries, inst, { small: true });
+        // Hover/focus a candidate to preview exactly what the upgrade changes.
+        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
         el.addEventListener('click', () => {
           inst.upgraded = true;
           sfx.play('shrine');

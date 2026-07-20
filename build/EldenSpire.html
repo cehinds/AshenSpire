@@ -10918,19 +10918,23 @@ function position(x, y) {
 
 /**
  * attachTooltip(el, contentFn) — contentFn() → HTML string (computed at show
- * time so numbers are always live).
+ * time so numbers are always live). Shows on pointer hover AND on the
+ * keyboard/gamepad focus cursor (input.js dispatches gpfocus/gpblur when the
+ * gp-focus cursor lands on / leaves an element), so controller players get
+ * every tooltip a mouse would.
  */
 function attachTooltip(el, contentFn) {
+  const show = (x, y) => {
+    const html = contentFn();
+    if (!html) return;
+    const t = ensure();
+    t.innerHTML = html;
+    t.style.display = 'block';
+    position(x, y);
+  };
   el.addEventListener('pointerenter', (ev) => {
     clearTimeout(showTimer);
-    showTimer = setTimeout(() => {
-      const html = contentFn();
-      if (!html) return;
-      const t = ensure();
-      t.innerHTML = html;
-      t.style.display = 'block';
-      position(ev.clientX, ev.clientY);
-    }, 140);
+    showTimer = setTimeout(() => show(ev.clientX, ev.clientY), 140);
   });
   el.addEventListener('pointermove', (ev) => {
     if (tipEl && tipEl.style.display === 'block') position(ev.clientX, ev.clientY);
@@ -10939,6 +10943,12 @@ function attachTooltip(el, contentFn) {
     clearTimeout(showTimer);
     if (tipEl) tipEl.style.display = 'none';
   });
+  el.addEventListener('gpfocus', () => {
+    clearTimeout(showTimer);
+    const r = el.getBoundingClientRect();
+    showTimer = setTimeout(() => show(r.right, r.top), 160);
+  });
+  el.addEventListener('gpblur', hideTooltip);
 }
 
 function hideTooltip() {
@@ -11675,11 +11685,29 @@ function renderCard(registries, ref, opts = {}) {
     `<div class="ctype">${esc(def.type.toUpperCase())}</div>` +
     `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
 
-  attachTooltip(el, () => cardTooltip(registries, def, tokens));
+  // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
+  attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
   if (opts.small) {
     el.style.transform = 'scale(0.92)';
   }
   return el;
+}
+
+/**
+ * Tooltip HTML previewing what a card becomes when Smithed: current text in
+ * muted, upgraded text below with changed values highlighted green/red (the
+ * same up/down coloring cards use in play). All numbers come from the defs.
+ */
+function upgradePreviewHtml(registries, ref) {
+  const base = resolveCard(registries, { cardId: ref.cardId, upgraded: false });
+  const upg = resolveCard(registries, { cardId: ref.cardId, upgraded: true });
+  const baseTokens = staticTokens(base);
+  const upgTokens = { ...baseTokens, ...staticTokens(upg) };
+  let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
+  html += `<div style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
+  html += `<div style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
+  if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
+  return html;
 }
 
 function cardTooltip(registries, def, tokens) {
@@ -11709,7 +11737,7 @@ function cardTooltip(registries, def, tokens) {
 }
 
 
-Object.assign(module.exports, { staticTokens, renderCard });
+Object.assign(module.exports, { staticTokens, renderCard, upgradePreviewHtml });
 
 },
 "src/ui/screens/map.js": function (module, exports, require) {
@@ -12955,10 +12983,16 @@ function findByKey(k) {
 
 function setFocus(el, remember = true) {
   const prev = current();
-  if (prev && prev !== el) prev.classList.remove('gp-focus');
+  if (prev && prev !== el) {
+    prev.classList.remove('gp-focus');
+    // Focus-mode tooltips: tooltip.js listens for these so controller players
+    // get every tooltip a mouse hover would show (SPEC §7.3).
+    prev.dispatchEvent(new CustomEvent('gpblur'));
+  }
   if (el) {
     el.classList.add('gp-focus');
     if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (prev !== el) el.dispatchEvent(new CustomEvent('gpfocus'));
     if (remember) focusKey = keyOf(el);
   } else if (remember) {
     focusKey = null;
@@ -14861,7 +14895,7 @@ Object.assign(module.exports, { mountRewards });
 
 const { shrineHealAmount } = require("src/engine/encounters.js");
 const { passiveFlag, resolveCard } = require("src/model/registries.js");
-const { renderCard } = require("src/ui/components/card.js");
+const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { sfx } = require("src/ui/sfx.js");
 
@@ -14905,7 +14939,8 @@ function mountRest(app, { registries, run, onDone, healMult = 1 }) {
       grid.style.flexWrap = 'wrap';
       grid.style.justifyContent = 'center';
       for (const inst of upgradable) {
-        const el = renderCard(registries, inst, { small: true });
+        // Hover/focus a candidate to preview exactly what the upgrade changes.
+        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
         el.addEventListener('click', () => {
           inst.upgraded = true;
           sfx.play('shrine');
@@ -15310,7 +15345,7 @@ Object.assign(module.exports, { showBossIntro });
 
 const { lanInfo, lanHost, lanUnhost, lanConnect } = require("src/net/lan.js");
 const { classGlyph, PORTRAIT_TINTS, SPRITE_STYLES, tintCss } = require("src/ui/assets.js");
-const { esc } = require("src/ui/components/tooltip.js");
+const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 
 const NAME_KEY = 'sote_lan_name';
 const TINT_KEY = 'sote_lan_tint';
@@ -15494,6 +15529,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
       const el = document.createElement('div');
       el.className = `class-pick cr-class${cls.id === state.classId ? ' chosen' : ''}`;
       el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3>`;
+      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${cls.maxHp} · ${cls.startingDeck.length} cards`);
       el.addEventListener('click', () => {
         state.classId = cls.id;
         conn.send({ t: 'pick', classId: cls.id });
@@ -15507,7 +15543,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
       const dot = document.createElement('button');
       dot.className = `tint-dot${t.id === state.tint ? ' chosen' : ''}`;
       dot.style.background = t.css;
-      dot.title = t.name;
+      attachTooltip(dot, () => `<div class="tt-title">${esc(t.name)}</div>Colors your hero's accents for the whole party.`);
       dot.addEventListener('click', () => {
         state.tint = t.id;
         localStorage.setItem(TINT_KEY, t.id);
@@ -15522,6 +15558,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
       b.className = `mod-chip lb-style${st.id === state.spriteStyle ? ' on' : ''}`;
       b.style.cssText = 'padding:5px 12px;font-size:12px;';
       b.innerHTML = `<b>${esc(st.name)}</b>`;
+      attachTooltip(b, () => `<div class="tt-title">${esc(st.name)}</div>${st.id === 'rendered' ? 'The rendered low-poly figure.' : st.id === 'classic' ? 'The classic hand-drawn silhouette.' : 'Your sigil in a tinted panel.'}`);
       b.addEventListener('click', () => {
         state.spriteStyle = st.id;
         localStorage.setItem('sote_lan_style', st.id);
@@ -15654,7 +15691,7 @@ Object.assign(module.exports, { lanInfo, lanHost, lanUnhost, lanConnect });
 // (kept here so solo combat.js stays untouched).
 
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
-const { renderCard } = require("src/ui/components/card.js");
+const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { resolveCard } = require("src/model/registries.js");
 
@@ -15762,6 +15799,19 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
     else if (intent.kind === 'debuff') { inner = '<span class="ic">☾</span>'; }
     el.className = `intent ${cls}`;
     el.innerHTML = inner;
+    attachTooltip(el, () => {
+      if (!intent || !intent.moveId) return '<div class="tt-title">Intent: Unknown</div>';
+      if (intent.kind === 'staggered') return '<div class="tt-title">Staggered</div>Poise broken: its turn is skipped and it takes +50% damage.';
+      if (intent.damage != null) {
+        let s = `<div class="tt-title">Intent: Attack</div>Attacking each hero for <b>${intent.damage}${intent.hits > 1 ? ` × ${intent.hits}` : ''}</b> damage.`;
+        if (intent.delayed) s += '<br><b>Delayed:</b> it holds this turn and strikes later. Stagger cancels it.';
+        return s;
+      }
+      if (intent.block != null) return '<div class="tt-title">Intent: Defend</div>Gaining Block.';
+      if (intent.kind === 'buff') return '<div class="tt-title">Intent: Buff</div>Strengthening itself.';
+      if (intent.kind === 'debuff') return '<div class="tt-title">Intent: Debuff</div>Hindering the party.';
+      return '<div class="tt-title">Intent</div>';
+    });
     return el;
   }
 
@@ -15957,6 +16007,10 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
         ? `<text class="vote-pips" x="${x(n.col)}" y="${y(n.floor) - r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${voters.map((pid) => classGlyph((snap.party.find((p) => p.id === pid) || {}).classId)).join('')}</text>`
         : '';
       el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${NODE_ICONS[n.type] || '?'}</text>${pips}`;
+      attachTooltip(el, () => {
+        const names = { monster: 'Monster — a normal fight', fight: 'Monster — a normal fight', elite: 'Elite — a hard fight with a relic reward', boss: 'The act boss', shrine: 'Shrine of Grace — rest, smith, or mend an ally', treasure: 'Treasure — a free relic each', merchant: 'Merchant', unknown: 'Unknown — could be anything' };
+        return `<div class="tt-title">${esc(names[n.type] || n.type)}</div>${isReachable ? 'Click to vote for this path.' : ''}`;
+      });
       if (isReachable) el.addEventListener('click', () => send({ t: 'chooseNode', nodeId: n.id }));
       g.appendChild(el);
     }
@@ -15970,10 +16024,19 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
     if (!bar) return;
     bar.innerHTML = snap.party.map((p) => {
       const pct = Math.max(0, Math.min(100, Math.round((p.hp / Math.max(1, p.maxHp)) * 100)));
-      return `<span class="coop-pc${p.id === me ? ' me' : ''}${p.connected ? '' : ' away'}${p.alive ? '' : ' dead'}" style="border-color:${tintCss(p.tint)}">
+      return `<span class="coop-pc${p.id === me ? ' me' : ''}${p.connected ? '' : ' away'}${p.alive ? '' : ' dead'}" data-pc="${p.id}" style="border-color:${tintCss(p.tint)}">
         <span class="coop-pc-glyph" style="color:${tintCss(p.tint)}">${classGlyph(p.classId)}</span>${esc(p.name)}
         <span class="coop-pc-hp"><i style="width:${pct}%"></i><b>${p.hp}/${p.maxHp}</b></span></span>`;
     }).join('');
+    bar.querySelectorAll('.coop-pc').forEach((chip) => {
+      const p = snap.party.find((x) => x.id === chip.dataset.pc);
+      if (p) attachTooltip(chip, () => {
+        const cls = registries.classes.get(p.classId);
+        return `<div class="tt-title">${esc(p.name)} — ${esc(cls ? cls.name : p.classId)}</div>` +
+          `HP ${p.hp}/${p.maxHp} · ⛁ ${p.runes ?? 0} · deck ${p.deckSize ?? '?'} · relics ${p.relics ?? 0}` +
+          `${p.connected ? '' : '<br><b>Away</b> — missed rewards queue for their return.'}${p.alive ? '' : '<br><b>Fallen.</b>'}`;
+      });
+    });
   }
 
   // ---- reward / shrine / event (reuse renderCard + solo styling) ------------
@@ -16004,14 +16067,30 @@ function mountCoop(app, { registries, conn, myId, onLeave }) {
   function renderShrine() {
     const done = snap.scene.done && snap.scene.done[me];
     const allies = snap.party.filter((p) => p.id !== me && p.alive && p.connected);
+    const mm = myMember();
+    const upgradable = ((mm && mm.deck) || []).filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
     app.innerHTML = rewardShell(`${rTitle('Shrine of Grace')}
       ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">
         <button data-shrine="rest">Rest — heal yourself</button>
-        <button data-shrine="smith">Smith — upgrade a card</button>
+        <button id="coop-smith" ${upgradable.length ? '' : 'disabled'}>Smith — upgrade a card</button>
         ${allies.map((a) => `<button class="coop-take" data-mend="${a.id}">Mend ${esc(a.name)} (+30% HP)</button>`).join('')}
-      </div>`}`);
+      </div>
+      <div id="coop-smith-grid" class="reward-row" style="display:none;max-width:900px;flex-wrap:wrap"></div>`}`);
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));
     app.querySelectorAll('[data-mend]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'mend', targetId: b.dataset.mend })));
+    // Smith opens a picker of your unupgraded cards; hover/focus previews the
+    // exact upgrade (changed values highlighted) before you commit.
+    const smithBtn = app.querySelector('#coop-smith');
+    if (smithBtn && upgradable.length) smithBtn.addEventListener('click', () => {
+      const grid = app.querySelector('#coop-smith-grid');
+      if (grid.style.display !== 'none') return;
+      grid.style.display = 'flex';
+      for (const inst of upgradable) {
+        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
+        el.addEventListener('click', () => send({ t: 'shrineChoice', choice: 'smith', targetId: inst.instanceId }));
+        grid.appendChild(el);
+      }
+    });
     renderPartyBar(); wireLeave();
   }
   function renderEvent() {
