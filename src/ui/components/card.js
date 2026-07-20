@@ -32,7 +32,7 @@ function fillTemplate(def, tokens, baseTokens) {
   });
   // Light keyword coloring for readability.
   html = html
-    .replace(/\b(Bleed|Scarlet Rot|Staggered|Poise)\b/g, '<span class="st-bleed">$1</span>')
+    .replace(/\b(Bleed|Crimson Blight|Staggered|Poise)\b/g, '<span class="st-bleed">$1</span>')
     .replace(/\b(Exhaust|Ethereal|Innate|Retain|Unplayable)\b/g, '<span class="kw">$1</span>');
   return html;
 }

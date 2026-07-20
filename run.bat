@@ -1,5 +1,5 @@
 @echo off
-REM Spire of the Erdtree — build the standalone, refresh dist\, then serve on
+REM Ashen Spire — build the standalone, refresh dist\, then serve on
 REM localhost and open the game in your browser. Double-click to play.
 setlocal
 where node >nul 2>nul

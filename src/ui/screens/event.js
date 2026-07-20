@@ -13,7 +13,7 @@ export function mountEvent(app, { registries, run, rng, eventId, onDone }) {
 
   function meets(requires) {
     if (!requires) return true;
-    if (typeof requires.runes === 'number' && run.runes < requires.runes) return false;
+    if (typeof requires.cinders === 'number' && run.cinders < requires.cinders) return false;
     return true;
   }
 

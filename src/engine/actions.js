@@ -451,10 +451,10 @@ function runRunOpcode(ctx, action, eff) {
     throw new Error(`Run-level opcode '${eff.op}' requires a run context (use executeRunEffects)`);
   }
   switch (eff.op) {
-    case 'addRunes': {
+    case 'addCinders': {
       const n = evalNum(ctx, action, eff.amount, 0);
-      run.runes = Math.max(0, run.runes + n);
-      ctx.emit('runesChanged', { amount: n, total: run.runes });
+      run.cinders = Math.max(0, run.cinders + n);
+      ctx.emit('cindersChanged', { amount: n, total: run.cinders });
       break;
     }
     case 'addCardToDeck': {

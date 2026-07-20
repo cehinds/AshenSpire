@@ -74,7 +74,7 @@
 }
 .map-header .hpbar { width: 15rem; }
 .map-header .mh-stat { color: var(--parchment); font-size: 1.2rem; white-space: nowrap; }
-.map-header .runes { color: var(--gold); }
+.map-header .cinders { color: var(--gold); }
 .map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
 .map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
 .map-header .mh-actions { margin-left: auto; display: flex; gap: 0.8rem; }

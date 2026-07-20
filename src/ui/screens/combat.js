@@ -28,7 +28,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
           <span class="nm">${esc(((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase())} · ${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
           <div class="bar hpbar"><div class="fill"></div><div class="label"></div></div>
         </div>
-        <span class="runes" style="color:var(--gold);font-size:13px">⛁ ${run.runes}</span>
+        <span class="cinders" style="color:var(--gold);font-size:13px">⛁ ${run.cinders}</span>
         <div class="flasks" style="display:flex;gap:6px"></div>
         <div class="relics"></div>
         <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>

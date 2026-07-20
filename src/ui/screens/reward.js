@@ -2,7 +2,7 @@
 //
 // Rewards arrive pre-rolled by engine/encounters.js (deterministic streams);
 // this screen only presents them. Skipping the card is a visible affordance
-// (deck discipline, GDD §5). Runes/relic/flask apply immediately; the flask
+// (deck discipline, GDD §5). Cinders/relic/flask apply immediately; the flask
 // is lost with a note if all slots are full.
 
 import { renderCard } from '../components/card.js';
@@ -12,9 +12,9 @@ import { isEngaged, focusFirst } from '../input.js';
 
 export function mountRewards(app, { registries, run, rewards, onDone }) {
   const lines = [];
-  if (rewards.runes) {
-    run.runes += rewards.runes;
-    lines.push(`<span style="color:var(--gold)">+${rewards.runes} runes</span> (${run.runes} total)`);
+  if (rewards.cinders) {
+    run.cinders += rewards.cinders;
+    lines.push(`<span style="color:var(--gold)">+${rewards.cinders} cinders</span> (${run.cinders} total)`);
   }
   if (rewards.relicId) {
     run.relics.push(rewards.relicId);

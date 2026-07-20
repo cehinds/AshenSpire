@@ -36,7 +36,7 @@ body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-
 
 /* Accessibility: colorblind-friendly semantic remap (Okabe-Ito hues chosen to
    stay distinguishable under deuteranopia/protanopia — danger→vermillion,
-   heal→bluish-green, frost→sky, rot→orange, bleed→reddish-purple). */
+   heal→bluish-green, frost→sky, blight→orange, bleed→reddish-purple). */
 body.cb-safe {
   --blood: #d55e00;
   --ember: #d55e00;

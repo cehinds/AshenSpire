@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/bundle.mjs — produce a standalone, single-file, double-click-to-play
-// build of EldenSpire at build/EldenSpire.html.
+// build of AshenSpire at build/AshenSpire.html.
 //
 // Zero dependencies (Node core only). Reads index.html, inlines every
 // stylesheet, statically walks the ES-module import graph from src/main.js,
@@ -251,7 +251,7 @@ for (const id of order) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Emit build/EldenSpire.html
+// 4. Emit build/AshenSpire.html
 // ---------------------------------------------------------------------------
 
 // Inline CSS in index.html order.
@@ -294,7 +294,7 @@ ${moduleEntries}
   require(${JSON.stringify(entryId)});
 })();`;
 
-const title = (/<title>([\s\S]*?)<\/title>/i.exec(indexHtml) || [, 'EldenSpire'])[1].trim();
+const title = (/<title>([\s\S]*?)<\/title>/i.exec(indexHtml) || [, 'AshenSpire'])[1].trim();
 
 const html = `<!DOCTYPE html>
 <html lang="en">
@@ -315,7 +315,7 @@ ${runtime}
 
 const outDir = resolve(ROOT, 'build');
 mkdirSync(outDir, { recursive: true });
-const outPath = resolve(outDir, 'EldenSpire.html');
+const outPath = resolve(outDir, 'AshenSpire.html');
 writeFileSync(outPath, html, 'utf8');
 
 // ---------------------------------------------------------------------------

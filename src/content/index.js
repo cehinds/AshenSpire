@@ -7,9 +7,9 @@ import { balance } from './balance.js';
 import { statuses } from './statuses.js';
 import { stances } from './stances.js';
 import { keywords } from './keywords.js';
-import { vagabondCards } from './cards/vagabond.js';
-import { astrologerCards } from './cards/astrologer.js';
-import { prophetCards } from './cards/prophet.js';
+import { reaverCards } from './cards/reaver.js';
+import { starseerCards } from './cards/starseer.js';
+import { heraldCards } from './cards/herald.js';
 import { colorlessCards } from './cards/colorless.js';
 import { coopCards } from './cards/coop.js';
 import { relics } from './relics.js';
@@ -26,9 +26,9 @@ import { mapConfigs } from './mapconfig.js';
 import { scripts } from './scripts.js';
 
 export const contentBundle = {
-  version: '0.1.0-m1',
+  version: '0.2.0-ashen',
   balance,
-  cards: [...vagabondCards, ...astrologerCards, ...prophetCards, ...colorlessCards, ...coopCards],
+  cards: [...reaverCards, ...starseerCards, ...heraldCards, ...colorlessCards, ...coopCards],
   relics,
   statuses,
   stances,

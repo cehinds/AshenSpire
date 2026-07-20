@@ -1,4 +1,4 @@
-// src/ui/screens/gameover.js — YOU DIED / GREAT RUNE RESTORED (SPEC §7.4)
+// src/ui/screens/gameover.js — YOU PERISHED / EMBER RESTORED (SPEC §7.4)
 
 import { resolveCard } from '../../model/registries.js';
 import { esc } from '../components/tooltip.js';
@@ -6,20 +6,20 @@ import { sfx } from '../sfx.js';
 
 export function mountGameOver(app, { registries, game, victory, onTitle, onHistory }) {
   sfx.play(victory ? 'victory' : 'youDied');
-  const title = victory ? 'GREAT RUNE RESTORED' : 'YOU DIED';
+  const title = victory ? 'EMBER RESTORED' : 'YOU PERISHED';
   const color = victory ? 'var(--gold)' : 'var(--blood)';
 
   app.innerHTML = `
     <div class="screen" style="gap:22px">
       <h1 class="title-big" style="color:${color}">${title}</h1>
       <table class="stats-table">
-        <tr><td>Tarnished</td><td>${esc((game.customization && game.customization.name) || 'Tarnished')} ${esc((game.customization && game.customization.glyph) || '')}</td></tr>
+        <tr><td>Forsaken</td><td>${esc((game.customization && game.customization.name) || 'Forsaken')} ${esc((game.customization && game.customization.glyph) || '')}</td></tr>
         <tr><td>Seed</td><td style="font-family:monospace">${esc(game.seedString)}</td></tr>
         <tr><td>Floor reached</td><td>${game.floor}${game.mapGraph ? ` / ${game.mapGraph.floors}` : ''}</td></tr>
         <tr><td>Fights won</td><td>${game.stats.fightsWon}</td></tr>
         <tr><td>Damage dealt</td><td>${game.stats.damageDealt}</td></tr>
         <tr><td>Damage taken</td><td>${game.stats.damageTaken}</td></tr>
-        <tr><td>Runes held</td><td>${game.runes}</td></tr>
+        <tr><td>Cinders held</td><td>${game.cinders}</td></tr>
         <tr><td>Final HP</td><td>${victory ? game.hp : 0} / ${game.maxHp}</td></tr>
       </table>
       <div>

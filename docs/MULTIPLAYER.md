@@ -1,6 +1,6 @@
-# Tarnished Together — LAN co-op design
+# Forsaken Together — LAN co-op design
 
-The authoritative spec for EldenSpire's drop-in/drop-out LAN co-op. Built in
+The authoritative spec for AshenSpire's drop-in/drop-out LAN co-op. Built in
 stages (see **Status** at the bottom). Read this first when resuming the work.
 
 ## Pillars (locked with the user)
@@ -142,7 +142,7 @@ pure function of server state.
   target primitive (user-approved addition to the closed target set, SPEC §3.4):
   'ally' resolves to the explicitly aimed living teammate and **falls back to
   self in solo**, so every co-op card stays engine-valid everywhere. Cards in
-  `src/content/cards/coop.js` (Rallying Banner / Shared Flame / Lord's Oath) at
+  `src/content/cards/coop.js` (Rallying Banner / Shared Flame / Oath of Ash) at
   rarity `special` — excluded from class pools AND merchant stock; the co-op
   session appends one as an extra option to every combat reward while the party
   has 2+ living members. Client: clicking an ally card arms seat-aim (the
@@ -150,14 +150,14 @@ pure function of server state.
   exclusion), coop-combat-smoke (ally Block lands on the teammate, not the
   caster), session-smoke (party rewards carry a co-op option).
 
-**Tarnished Together is feature-complete.** Known edge for a later pass: a
+**Forsaken Together is feature-complete.** Known edge for a later pass: a
 once-per-combat relic owned by BOTH players shares a trigger-state key
 (`triggers.js` keys aren't player-scoped), so the first proc consumes it for
 both. Cosmetic-scale; noted, not blocking.
 
 ## Constraints
 
-- The single-file `dist/EldenSpire.html` has **no server**, so co-op requires
+- The single-file `dist/AshenSpire.html` has **no server**, so co-op requires
   the launcher (`run.bat` / `node tools/launch.mjs`). Solo play is unchanged
   and never depends on any of this.
 - Nothing here touches the engine's public API — co-op is orchestration around

@@ -1,4 +1,4 @@
-// src/content/cards/vagabond.js — the Vagabond pool (SPEC §5.2; grown to 30
+// src/content/cards/reaver.js — the Reaver pool (SPEC §5.2; grown to 30
 // rewardable cards to match the other classes).
 //
 // Pure data. Every card's numbers come from the SPEC §5.2 table; text tokens
@@ -8,12 +8,12 @@
 //
 // Content-pass additions deepen the stance / Bleed / Poise identity: Riposte &
 // Cleaving Blow (Poise), Rend & Bloodhunter's Strike (Bleed), Warding Lunge
-// (defense + Bloodflame), Impale (Stagger→Bleed), and Sanguine Pact (a power
+// (defense + Gorefire), Impale (Stagger→Bleed), and Sanguine Pact (a power
 // that turns Bleed bursts into Strength).
 
 const one = { f: 'add', args: [1] };
 
-export const vagabondCards = [
+export const reaverCards = [
   // ---- Starters -------------------------------------------------------------
   {
     // Shared basic (all three classes start with Strikes/Defends — colorless).
@@ -31,7 +31,7 @@ export const vagabondCards = [
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 8 }] },
   },
   {
-    id: 'bloodflameSlash', name: 'Bloodflame Slash', class: 'vagabond', rarity: 'starter', cost: 1, type: 'attack',
+    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, type: 'attack',
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -48,7 +48,7 @@ export const vagabondCards = [
 
   // ---- Commons ---------------------------------------------------------------
   {
-    id: 'crimsonCleave', name: 'Crimson Cleave', class: 'vagabond', rarity: 'common', cost: 2, type: 'attack',
+    id: 'crimsonCleave', name: 'Crimson Cleave', class: 'reaver', rarity: 'common', cost: 2, type: 'attack',
     keywords: [], icon: '🪓',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 8 },
@@ -63,7 +63,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'shieldBash', name: 'Shield Bash', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    id: 'shieldBash', name: 'Shield Bash', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '🛡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -78,7 +78,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'quickstep', name: 'Quickstep', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    id: 'quickstep', name: 'Quickstep', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '👣',
     effects: [
       { op: 'block', target: 'self', amount: 6 },
@@ -93,7 +93,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'guardCounter', name: 'Guard Counter', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    id: 'guardCounter', name: 'Guard Counter', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '↩',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4, if: { p: 'not', pred: { p: 'hasBlock', of: 'self' } } },
@@ -108,7 +108,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'ironResolve', name: 'Iron Resolve', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    id: 'ironResolve', name: 'Iron Resolve', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '⛨',
     effects: [
       { op: 'block', target: 'self', amount: 5, if: { p: 'not', pred: { p: 'inStance', stance: 'bulwark' } } },
@@ -123,7 +123,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'serratedBlade', name: 'Serrated Blade', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    id: 'serratedBlade', name: 'Serrated Blade', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '🪚',
     effects: [
       { op: 'damage', target: 'enemy', amount: 7 },
@@ -138,17 +138,17 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'enterBloodflame', name: 'Enter: Bloodflame', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    id: 'enterGorefire', name: 'Enter: Gorefire', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '🔥',
     effects: [
-      { op: 'enterStance', stance: 'bloodflame' },
+      { op: 'enterStance', stance: 'gorefire' },
       { op: 'draw', amount: 1 },
     ],
-    textTemplate: 'Enter Bloodflame Stance. Draw {draw} card.',
+    textTemplate: 'Enter Gorefire Stance. Draw {draw} card.',
     upgrade: { cost: 0 },
   },
   {
-    id: 'enterBulwark', name: 'Enter: Bulwark', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    id: 'enterBulwark', name: 'Enter: Bulwark', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '🛡',
     effects: [{ op: 'enterStance', stance: 'bulwark' }],
     textTemplate: 'Enter Bulwark Stance.',
@@ -161,7 +161,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'riposte', name: 'Riposte', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    id: 'riposte', name: 'Riposte', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '⚔',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -176,24 +176,24 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'rend', name: 'Rend', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    id: 'rend', name: 'Rend', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '🩸',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
       { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 },
-      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2, if: { p: 'inStance', stance: 'bloodflame' } },
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2, if: { p: 'inStance', stance: 'gorefire' } },
     ],
-    textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed. Bloodflame: apply {bleed.2} more.',
+    textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed. Gorefire: apply {bleed.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 7 },
         { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 },
-        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2, if: { p: 'inStance', stance: 'bloodflame' } },
+        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2, if: { p: 'inStance', stance: 'gorefire' } },
       ],
     },
   },
   {
-    id: 'cleavingBlow', name: 'Cleaving Blow', class: 'vagabond', rarity: 'common', cost: 2, type: 'attack',
+    id: 'cleavingBlow', name: 'Cleaving Blow', class: 'reaver', rarity: 'common', cost: 2, type: 'attack',
     keywords: [], icon: '🪓',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 7 },
@@ -210,7 +210,7 @@ export const vagabondCards = [
 
   // ---- Uncommons --------------------------------------------------------------
   {
-    id: 'stomp', name: 'Stomp', class: 'vagabond', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'stomp', name: 'Stomp', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
     keywords: [], icon: '🦶',
     effects: [
       { op: 'damage', target: 'enemy', amount: 12 },
@@ -225,7 +225,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'rallyingStandard', name: 'Rallying Standard', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'rallyingStandard', name: 'Rallying Standard', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'power',
     keywords: [], icon: '⚑',
     effects: [{ op: 'applyStatus', target: 'self', status: 'rallyingStandard', stacks: one }],
     textTemplate: 'At the start of your turn, gain 1 Strength and take 1 damage.',
@@ -235,7 +235,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'warSurgeon', name: 'War Surgeon', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'skill',
+    id: 'warSurgeon', name: 'War Surgeon', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'skill',
     keywords: ['exhaust'], icon: '⚕',
     effects: [
       {
@@ -255,7 +255,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'hemorrhage', name: 'Hemorrhage', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'skill',
+    id: 'hemorrhage', name: 'Hemorrhage', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'skill',
     keywords: ['exhaust'], icon: '🩸',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: { f: 'stacks', status: 'bleed', of: 'target' } },
@@ -267,14 +267,14 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'twinbladeFlurry', name: 'Twinblade Flurry', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'attack',
+    id: 'twinbladeFlurry', name: 'Twinblade Flurry', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'attack',
     keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }],
     textTemplate: 'Deal {damage} damage {hits} times.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 4, hits: 3 }] },
   },
   {
-    id: 'shieldwall', name: 'Shieldwall', class: 'vagabond', rarity: 'uncommon', cost: 2, type: 'skill',
+    id: 'shieldwall', name: 'Shieldwall', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'skill',
     keywords: [], icon: '🧱',
     effects: [
       { op: 'block', target: 'self', amount: 12 },
@@ -289,7 +289,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'kickOff', name: 'Kick Off', class: 'vagabond', rarity: 'uncommon', cost: 0, type: 'attack',
+    id: 'kickOff', name: 'Kick Off', class: 'reaver', rarity: 'uncommon', cost: 0, type: 'attack',
     keywords: ['exhaust'], icon: '🥾',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -306,22 +306,22 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'wardingLunge', name: 'Warding Lunge', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'skill',
+    id: 'wardingLunge', name: 'Warding Lunge', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'skill',
     keywords: [], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 8 },
-      { op: 'enterStance', stance: 'bloodflame' },
+      { op: 'enterStance', stance: 'gorefire' },
     ],
-    textTemplate: 'Gain {block} Block. Enter Bloodflame Stance.',
+    textTemplate: 'Gain {block} Block. Enter Gorefire Stance.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 11 },
-        { op: 'enterStance', stance: 'bloodflame' },
+        { op: 'enterStance', stance: 'gorefire' },
       ],
     },
   },
   {
-    id: 'impale', name: 'Impale', class: 'vagabond', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'impale', name: 'Impale', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 9 },
@@ -336,7 +336,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'warcry', name: 'Warcry', class: 'vagabond', rarity: 'uncommon', cost: 0, type: 'skill',
+    id: 'warcry', name: 'Warcry', class: 'reaver', rarity: 'uncommon', cost: 0, type: 'skill',
     keywords: ['exhaust'], icon: '📣',
     effects: [
       { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 },
@@ -351,7 +351,7 @@ export const vagabondCards = [
 
   // ---- Rares -------------------------------------------------------------------
   {
-    id: 'executioner', name: 'Executioner', class: 'vagabond', rarity: 'rare', cost: 2, type: 'attack',
+    id: 'executioner', name: 'Executioner', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
     keywords: [], icon: '⚰',
     effects: [
       { op: 'damage', target: 'enemy', amount: 10, if: { p: 'not', pred: { p: 'hasStatus', of: 'target', status: 'staggered' } } },
@@ -366,14 +366,14 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'lordsBlood', name: "Lord's Blood", class: 'vagabond', rarity: 'rare', cost: 3, type: 'power',
+    id: 'goreblood', name: "Goreblood", class: 'reaver', rarity: 'rare', cost: 3, type: 'power',
     keywords: [], icon: '♛',
-    effects: [{ op: 'applyStatus', target: 'self', status: 'lordsBlood', stacks: one }],
+    effects: [{ op: 'applyStatus', target: 'self', status: 'goreblood', stacks: one }],
     textTemplate: 'Bleed and Poise thresholds no longer increase after filling.',
     upgrade: { cost: 2 },
   },
   {
-    id: 'unbreakable', name: 'Unbreakable', class: 'vagabond', rarity: 'rare', cost: 2, type: 'power',
+    id: 'unbreakable', name: 'Unbreakable', class: 'reaver', rarity: 'rare', cost: 2, type: 'power',
     keywords: [], icon: '⬟',
     effects: [{ op: 'applyStatus', target: 'self', status: 'unbreakable', stacks: one }],
     textTemplate: 'Block no longer expires at the start of your turn. (Block capped at 30.)',
@@ -383,14 +383,14 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'graftedArms', name: 'Grafted Arms', class: 'vagabond', rarity: 'rare', cost: 'X', type: 'attack',
+    id: 'stitchedArms', name: 'Stitched Arms', class: 'reaver', rarity: 'rare', cost: 'X', type: 'attack',
     keywords: [], icon: '🦾',
     effects: [{ op: 'damage', target: 'randomEnemy', amount: 6, hits: { f: 'energySpent' } }],
     textTemplate: 'Deal {damage} damage to a random enemy once per Energy spent.',
     upgrade: { effects: [{ op: 'damage', target: 'randomEnemy', amount: 8, hits: { f: 'energySpent' } }] },
   },
   {
-    id: 'lastStand', name: 'Last Stand', class: 'vagabond', rarity: 'rare', cost: 1, type: 'skill',
+    id: 'lastStand', name: 'Last Stand', class: 'reaver', rarity: 'rare', cost: 1, type: 'skill',
     keywords: ['ethereal'], icon: '🕯',
     effects: [{ op: 'block', target: 'self', amount: { f: 'missingHp', of: 'self', max: 20 } }],
     textTemplate: 'Ethereal. Gain Block equal to your missing HP (max 20).',
@@ -400,20 +400,20 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'warriorsVow', name: "Warrior's Vow", class: 'vagabond', rarity: 'rare', cost: 0, type: 'skill',
+    id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, type: 'skill',
     keywords: ['innate', 'exhaust'], icon: '📜',
-    effects: [{ op: 'enterStance', stance: 'bloodflame' }],
-    textTemplate: 'Innate. Enter Bloodflame Stance. Exhaust.',
+    effects: [{ op: 'enterStance', stance: 'gorefire' }],
+    textTemplate: 'Innate. Enter Gorefire Stance. Exhaust.',
     upgrade: {
       effects: [
-        { op: 'enterStance', stance: 'bloodflame' },
+        { op: 'enterStance', stance: 'gorefire' },
         { op: 'draw', amount: 1 },
       ],
-      textTemplate: 'Innate. Enter Bloodflame Stance. Draw {draw} card. Exhaust.',
+      textTemplate: 'Innate. Enter Gorefire Stance. Draw {draw} card. Exhaust.',
     },
   },
   {
-    id: 'ruinousBlow', name: 'Ruinous Blow', class: 'vagabond', rarity: 'rare', cost: 3, type: 'attack',
+    id: 'ruinousBlow', name: 'Ruinous Blow', class: 'reaver', rarity: 'rare', cost: 3, type: 'attack',
     keywords: [], icon: '🔨',
     effects: [
       { op: 'damage', target: 'enemy', amount: 20 },
@@ -428,7 +428,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'bloodhuntersStrike', name: "Bloodhunter's Strike", class: 'vagabond', rarity: 'rare', cost: 1, type: 'attack',
+    id: 'bloodhuntersStrike', name: "Bloodhunter's Strike", class: 'reaver', rarity: 'rare', cost: 1, type: 'attack',
     keywords: [], icon: '🩸',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -443,7 +443,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'sanguinePactCard', name: 'Sanguine Pact', class: 'vagabond', rarity: 'rare', cost: 2, type: 'power',
+    id: 'sanguinePactCard', name: 'Sanguine Pact', class: 'reaver', rarity: 'rare', cost: 2, type: 'power',
     keywords: [], icon: '🩸',
     effects: [{ op: 'applyStatus', target: 'self', status: 'sanguinePact', stacks: one }],
     textTemplate: 'Whenever Bleed bursts on an enemy, gain 2 Strength.',
@@ -455,7 +455,7 @@ export const vagabondCards = [
   // and a power that turns HP loss into Block), two rares (Bleed-scaling finisher
   // and a Poise-scaling finisher) — rounding the pool to 36.
   {
-    id: 'goreslash', name: 'Goreslash', class: 'vagabond', rarity: 'common', cost: 1, type: 'attack',
+    id: 'goreslash', name: 'Goreslash', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '🩸',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -470,7 +470,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'bracingStance', name: 'Bracing Stance', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    id: 'bracingStance', name: 'Bracing Stance', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 6 },
@@ -485,31 +485,31 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'flameToBlade', name: 'Flame to Blade', class: 'vagabond', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'flameToBlade', name: 'Flame to Blade', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
     keywords: [], icon: '🔥',
     effects: [
       { op: 'damage', target: 'enemy', amount: 8 },
-      { op: 'damage', target: 'enemy', amount: 6, if: { p: 'inStance', stance: 'bloodflame' } },
-      { op: 'enterStance', stance: 'bloodflame' },
+      { op: 'damage', target: 'enemy', amount: 6, if: { p: 'inStance', stance: 'gorefire' } },
+      { op: 'enterStance', stance: 'gorefire' },
     ],
-    textTemplate: 'Deal {damage} damage. If already in Bloodflame Stance: deal {damage.2} more. Enter Bloodflame Stance.',
+    textTemplate: 'Deal {damage} damage. If already in Gorefire Stance: deal {damage.2} more. Enter Gorefire Stance.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 10 },
-        { op: 'damage', target: 'enemy', amount: 8, if: { p: 'inStance', stance: 'bloodflame' } },
-        { op: 'enterStance', stance: 'bloodflame' },
+        { op: 'damage', target: 'enemy', amount: 8, if: { p: 'inStance', stance: 'gorefire' } },
+        { op: 'enterStance', stance: 'gorefire' },
       ],
     },
   },
   {
-    id: 'ironVowCard', name: 'Iron Vow', class: 'vagabond', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'ironVowCard', name: 'Iron Vow', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'power',
     keywords: [], icon: '⛓',
     effects: [{ op: 'applyStatus', target: 'self', status: 'ironVow', stacks: one }],
     textTemplate: 'Whenever you lose HP, gain 3 Block.',
     upgrade: { cost: 0 },
   },
   {
-    id: 'bloodTithe', name: 'Blood Tithe', class: 'vagabond', rarity: 'rare', cost: 2, type: 'attack',
+    id: 'bloodTithe', name: 'Blood Tithe', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -524,7 +524,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'poiseBreaker', name: 'Poise Breaker', class: 'vagabond', rarity: 'rare', cost: 2, type: 'attack',
+    id: 'poiseBreaker', name: 'Poise Breaker', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
     keywords: [], icon: '🔨',
     effects: [
       { op: 'damage', target: 'enemy', amount: 11 },
@@ -543,7 +543,7 @@ export const vagabondCards = [
 
   // ---- Content-pass additions (round 4) --------------------------------------
   {
-    id: 'rondelParry', name: 'Rondel Parry', class: 'vagabond', rarity: 'common', cost: 1, type: 'skill',
+    id: 'rondelParry', name: 'Rondel Parry', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '🗡',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
@@ -558,7 +558,7 @@ export const vagabondCards = [
     },
   },
   {
-    id: 'sunderplate', name: 'Sunderplate', class: 'vagabond', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'sunderplate', name: 'Sunderplate', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
     keywords: [], icon: '⚒',
     effects: [
       { op: 'damage', target: 'enemy', amount: 9 },

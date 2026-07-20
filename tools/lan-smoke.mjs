@@ -50,7 +50,7 @@ try {
   ok(typeof info0.addr === 'string' && info0.port === port, 'info advertises addr + port');
 
   const hostRes = await (await fetch(`${base}/api/lan/host`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Ranni' }),
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Wren' }),
   })).json();
   ok(typeof hostRes.hostKey === 'string' && hostRes.hostKey.length > 0, 'hosting returns a hostKey');
 
@@ -59,29 +59,29 @@ try {
   await host.ready;
   const hWelcome = await host.next((m) => m.t === 'welcome', 'host welcome');
   ok(!!hWelcome.id, 'host receives welcome + player id');
-  host.send({ t: 'hello', name: 'Ranni', classId: 'astrologer', hostKey: hostRes.hostKey });
+  host.send({ t: 'hello', name: 'Wren', classId: 'starseer', hostKey: hostRes.hostKey });
   const hRoster = await host.next((m) => m.t === 'roster', 'host roster');
   ok(hRoster.players.length === 1 && hRoster.players[0].isHost, 'host flagged isHost in roster');
 
   const guest = client(`ws://localhost:${port}/lan`);
   await guest.ready;
   const gWelcome = await guest.next((m) => m.t === 'welcome', 'guest welcome');
-  guest.send({ t: 'hello', name: 'Blaidd', classId: 'vagabond' });
+  guest.send({ t: 'hello', name: 'Fenn', classId: 'reaver' });
   const gRoster = await guest.next((m) => m.t === 'roster' && m.players.length === 2, 'guest 2-roster');
   ok(gRoster.players.length === 2, 'roster grows to 2 when guest joins');
-  ok(gRoster.players.some((p) => p.name === 'Blaidd' && !p.isHost), 'guest present and not host');
+  ok(gRoster.players.some((p) => p.name === 'Fenn' && !p.isHost), 'guest present and not host');
 
   // --- ready + seed + start ---
   guest.send({ t: 'ready', ready: true });
-  const rosterReady = await host.next((m) => m.t === 'roster' && m.players.find((p) => p.name === 'Blaidd')?.ready, 'guest-ready roster');
+  const rosterReady = await host.next((m) => m.t === 'roster' && m.players.find((p) => p.name === 'Fenn')?.ready, 'guest-ready roster');
   ok(!!rosterReady, 'guest ready state propagates to host');
 
-  host.send({ t: 'seed', seedString: 'ERDTREE' });
-  const seeded = await guest.next((m) => m.t === 'roster' && m.seedString === 'ERDTREE', 'seed roster');
-  ok(seeded.seedString === 'ERDTREE', 'host seed propagates to guest');
+  host.send({ t: 'seed', seedString: 'GOLDBOUGH' });
+  const seeded = await guest.next((m) => m.t === 'roster' && m.seedString === 'GOLDBOUGH', 'seed roster');
+  ok(seeded.seedString === 'GOLDBOUGH', 'host seed propagates to guest');
 
   // Couch party: the host adds a LOCAL seat riding its own connection.
-  host.send({ t: 'locals', locals: [{ name: 'Torrent', classId: 'prophet', tint: 'rot' }] });
+  host.send({ t: 'locals', locals: [{ name: 'Torrent', classId: 'herald', tint: 'rot' }] });
   const withLocal = await guest.next((m) => m.t === 'roster' && m.players.length === 3, 'roster with local');
   const localRow = withLocal.players.find((p) => p.isLocal);
   ok(!!localRow && localRow.name === 'Torrent' && localRow.ready, 'local seat appears in the roster, always ready');
@@ -89,7 +89,7 @@ try {
   host.send({ t: 'start' });
   const hStarted = await host.next((m) => m.t === 'started', 'host started');
   const gStarted = await guest.next((m) => m.t === 'started', 'guest started');
-  ok(gStarted.seedString === 'ERDTREE', 'started broadcast carries the seed to all');
+  ok(gStarted.seedString === 'GOLDBOUGH', 'started broadcast carries the seed to all');
   ok(hStarted.yourIds && hStarted.yourIds.length === 2, 'host controls two seats (main + local)');
   ok(gStarted.yourIds && gStarted.yourIds.length === 1, 'guest controls one seat');
   const localId = hStarted.yourIds[1];
@@ -114,7 +114,7 @@ try {
   // --- guest drops mid-run → the run persists; member marked absent ---
   guest.close();
   const afterDrop = await host.next(
-    (m) => m.t === 'state' && m.snapshot.party.find((p) => p.name === 'Blaidd')?.connected === false,
+    (m) => m.t === 'state' && m.snapshot.party.find((p) => p.name === 'Fenn')?.connected === false,
     'state after guest drop'
   );
   ok(!!afterDrop, 'dropped member marked absent, run continues on the server');

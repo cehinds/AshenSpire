@@ -1,7 +1,7 @@
 // src/ui/screens/map.js — the act map (SPEC §7.1, mockup: map-screen.svg)
 //
 // Full act visible; only edge-connected nodes from the current position are
-// clickable; traveled path in gold. With the Stonesword Key passive, '?'
+// clickable; traveled path in gold. With the Sealstone Key passive, '?'
 // nodes render their pre-rolled resolution (dashed ring marks a reveal).
 
 import { passiveFlag } from '../../model/registries.js';
@@ -65,7 +65,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
           <span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span>
           <div class="bar hpbar"><div class="fill" style="width:${hpPct}%"></div><div class="label">HP ${run.hp} / ${run.maxHp}</div></div>
         </div>
-        <span class="mh-stat runes">⛁ ${run.runes}</span>
+        <span class="mh-stat cinders">⛁ ${run.cinders}</span>
         <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
         <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
         <div class="mh-actions">
@@ -76,7 +76,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
           <div><span class="ic">⚔</span>Monster</div>
           <div><span class="ic">?</span>Unknown</div>
           <div><span class="ic" style="color:var(--ember)">☠</span>Elite</div>
-          <div><span class="ic" style="color:var(--gold)">♨</span>Shrine of Grace</div>
+          <div><span class="ic" style="color:var(--gold)">♨</span>Shrine of Emberlight</div>
           <div><span class="ic" style="color:var(--grace)">⚖</span>Merchant</div>
           <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
         </div>
@@ -308,6 +308,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
 
 function nodeTooltip(type, node, revealed) {
   let t = `<div class="tt-title">Floor ${node.floor}</div>${nodeBlurb(type)}`;
-  if (revealed) t += '<br><i>Revealed by the Stonesword Key.</i>';
+  if (revealed) t += '<br><i>Revealed by the Sealstone Key.</i>';
   return t;
 }

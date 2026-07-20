@@ -22,8 +22,8 @@ function deckOf(classId) {
 }
 function players() {
   return [
-    { id: 'p1', name: 'Ranni', classId: 'astrologer', maxHp: 72, hp: 72, deck: deckOf('astrologer'), relicIds: [], flasks: [] },
-    { id: 'p2', name: 'Blaidd', classId: 'vagabond', maxHp: 84, hp: 84, deck: deckOf('vagabond'), relicIds: [], flasks: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', maxHp: 72, hp: 72, deck: deckOf('starseer'), relicIds: [], flasks: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', maxHp: 84, hp: 84, deck: deckOf('reaver'), relicIds: [], flasks: [] },
   ];
 }
 
@@ -50,7 +50,7 @@ function botTurn(C, playerId) {
 
 try {
   // --- headcount scaling at fight start ---
-  const enemyIds = ['rotHound', 'graveWisp'];
+  const enemyIds = ['blightHound', 'graveWisp'];
   const rngA = createRng(0x5eed);
   const baseHp = [];
   { // solo-scale reference: roll the same enemies with a 1p mult
@@ -73,7 +73,7 @@ try {
   ok(out.survivors.p1 && out.survivors.p2, 'coopOutcome reports both players\' ending HP');
 
   // --- live drop rescales enemies DOWN ---
-  const C2 = createCoopCombat({ registries: REG, rng: createRng(0x1234), players: players(), enemyIds: ['demiBrute'] });
+  const C2 = createCoopCombat({ registries: REG, rng: createRng(0x1234), players: players(), enemyIds: ['huskBrute'] });
   const before = C2.enemies[0].maxHp;
   leaveCombat(C2, 'p2');
   ok(C2.enemies[0].maxHp < before, 'enemy max HP rescales DOWN when p2 drops mid-combat');
@@ -87,7 +87,7 @@ try {
   ok(C2.players.get('p2').connected === true, 'p2 reconnected into the fight');
 
   // --- last player leaving suspends the fight (server holds it) ---
-  const C3 = createCoopCombat({ registries: REG, rng: createRng(0x9), players: [players()[0]], enemyIds: ['rotHound'] });
+  const C3 = createCoopCombat({ registries: REG, rng: createRng(0x9), players: [players()[0]], enemyIds: ['blightHound'] });
   leaveCombat(C3, 'p1');
   ok(C3.phase === 'suspended', 'fight suspends when the last player drops');
   ok(coopOutcome(C3).result === 'suspended', 'suspended outcome surfaces for the session');
@@ -104,9 +104,9 @@ try {
   // --- 'ally' card target: Rallying Banner blocks the TEAMMATE, not the caster ---
   const supporters = players();
   supporters[0].deck = Array.from({ length: 5 }, (_, i) => ({ instanceId: `rb${i}`, cardId: 'rallyingBanner', upgraded: false }));
-  const C6 = createCoopCombat({ registries: REG, rng: createRng(0xa11e), players: supporters, enemyIds: ['rotHound'] });
+  const C6 = createCoopCombat({ registries: REG, rng: createRng(0xa11e), players: supporters, enemyIds: ['blightHound'] });
   const banner = C6.players.get('p1').piles.hand[0];
-  playCard(C6, 'p1', banner.instanceId, 'p2'); // aim the ally card at Blaidd
+  playCard(C6, 'p1', banner.instanceId, 'p2'); // aim the ally card at Fenn
   ok(C6.players.get('p2').entity.block === 10, 'ally-targeted Block lands on the chosen teammate');
   ok(C6.players.get('p1').entity.block === 0, 'the caster gains none of it');
 
@@ -114,7 +114,7 @@ try {
   const throwers = players();
   throwers[0].flasks = [{ flaskId: 'crimsonFlask' }]; // p1 carries a heal flask
   throwers[1].hp = 30; // p2 is hurt
-  const C5 = createCoopCombat({ registries: REG, rng: createRng(0x7c), players: throwers, enemyIds: ['rotHound'] });
+  const C5 = createCoopCombat({ registries: REG, rng: createRng(0x7c), players: throwers, enemyIds: ['blightHound'] });
   const p2 = C5.players.get('p2').entity;
   const p2Before = p2.hp;
   useFlask(C5, 'p1', 0, 'p2'); // p1 throws the Crimson Flask to p2

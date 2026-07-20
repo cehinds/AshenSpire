@@ -9,13 +9,13 @@
 // M3 content pass: 20 → 40. New relics reuse only shipped statuses/opcodes and
 // proven trigger shapes. One design note worth keeping: relics that GRANT BLOCK
 // on turn 1 fire on `playerTurnStart` (once), never `combatStart` — combat-start
-// block is wiped by the turn-1 block-expiry (SPEC §4.1). See Erdleaf Charm.
+// block is wiped by the turn-1 block-expiry (SPEC §4.1). See Goldleaf Charm.
 
 export const relics = [
   // ---- starter ---------------------------------------------------------------
   {
-    id: 'tarnishedMedallion',
-    name: 'Tarnished Medallion',
+    id: 'forsakenMedallion',
+    name: 'Forsaken Medallion',
     rarity: 'starter',
     icon: '🏅',
     triggers: [
@@ -34,14 +34,14 @@ export const relics = [
     // SPEC §5.1 said "first Power each combat costs 1 less"; passives are
     // unconditional, so the shipped design leans into the class identity
     // instead: open every combat with the combo already primed.
-    id: 'glintstoneShard',
-    name: 'Glintstone Shard',
+    id: 'starstoneShard',
+    name: 'Starstone Shard',
     rarity: 'starter',
     icon: '💠',
     triggers: [
-      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'glintstoneCharge', stacks: { f: 'add', args: [1] } }] },
+      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'starstoneCharge', stacks: { f: 'add', args: [1] } }] },
     ],
-    textTemplate: 'Begin each combat with Glintstone Charge (your first spell counts as a combo).',
+    textTemplate: 'Begin each combat with Starstone Charge (your first spell counts as a combo).',
     flavor: 'A chip of someone else’s genius. It still hums.',
   },
   {
@@ -65,8 +65,8 @@ export const relics = [
 
   // ---- commons ---------------------------------------------------------------
   {
-    id: 'goldenSeed',
-    name: 'Golden Seed',
+    id: 'goldenSprout',
+    name: 'Golden Sprout',
     rarity: 'common',
     icon: '🌰',
     triggers: [{ on: 'combatStart', do: [{ op: 'heal', target: 'owner', amount: 3 }] }],
@@ -97,17 +97,17 @@ export const relics = [
     textTemplate: 'At the start of each combat, draw {draw} extra card.',
   },
   {
-    id: 'runePouch',
-    name: 'Rune Pouch',
+    id: 'cinderPouch',
+    name: 'Cinder Pouch',
     rarity: 'common',
     icon: '👝',
     triggers: [],
     passives: { runeGainMult: 1.25 },
-    textTemplate: 'Gain 25% more Runes from combats.',
+    textTemplate: 'Gain 25% more Cinders from combats.',
   },
   {
-    id: 'beastEye',
-    name: 'Beast Eye',
+    id: 'feralEye',
+    name: 'Feral Eye',
     rarity: 'common',
     icon: '👁',
     triggers: [],
@@ -115,8 +115,8 @@ export const relics = [
     textTemplate: 'Elites offer an extra card reward choice.',
   },
   {
-    id: 'erdleafCharm',
-    name: 'Erdleaf Charm',
+    id: 'goldleafCharm',
+    name: 'Goldleaf Charm',
     rarity: 'common',
     icon: '🍂',
     // playerTurnStart (once), NOT combatStart: block gained at combat start is
@@ -193,8 +193,8 @@ export const relics = [
     textTemplate: 'Flasks are 50% stronger (rounded up).',
   },
   {
-    id: 'stoneswordKey',
-    name: 'Stonesword Key',
+    id: 'sealstoneKey',
+    name: 'Sealstone Key',
     rarity: 'uncommon',
     icon: '🗝',
     triggers: [],
@@ -202,8 +202,8 @@ export const relics = [
     textTemplate: 'Unknown (?) locations on the map are revealed.',
   },
   {
-    id: 'fellOmenBrand',
-    name: 'Fell Omen Brand',
+    id: 'fellWardenBrand',
+    name: 'Fell Warden Brand',
     rarity: 'uncommon',
     icon: '🔱',
     triggers: [{ on: 'enemyStaggered', do: [{ op: 'draw', amount: 2 }] }],
@@ -224,8 +224,8 @@ export const relics = [
     textTemplate: 'Whenever Bleed bursts, the victim loses {loseHp} additional HP.',
   },
   {
-    id: 'graceFragment',
-    name: 'Grace Fragment',
+    id: 'emberFragment',
+    name: 'Ember Fragment',
     rarity: 'uncommon',
     icon: '✨',
     triggers: [],
@@ -247,8 +247,8 @@ export const relics = [
     textTemplate: 'Every 10th card you play each combat: gain {block} Block.',
   },
   {
-    id: 'rotTouchedIdol',
-    name: 'Rot-Touched Idol',
+    id: 'blightTouchedIdol',
+    name: 'Blight-Touched Idol',
     rarity: 'uncommon',
     icon: '☣',
     triggers: [
@@ -256,11 +256,11 @@ export const relics = [
         on: 'damageDealt',
         once: true,
         if: { p: 'all', preds: [{ p: 'eventIsAttack' }, { p: 'eventSourceIsOwner' }] },
-        do: [{ op: 'applyStatus', status: 'scarletRot', stacks: 3 }],
+        do: [{ op: 'applyStatus', status: 'crimsonBlight', stacks: 3 }],
       },
     ],
-    textTemplate: 'Your first attack each combat applies {scarletRot} Scarlet Rot.',
-    flavor: 'The carving was of a saint. The rot made it a saint of something else.',
+    textTemplate: 'Your first attack each combat applies {crimsonBlight} Crimson Blight.',
+    flavor: 'The carving was of a saint. The blight made it a saint of something else.',
   },
   {
     id: 'warhorn',
@@ -305,8 +305,8 @@ export const relics = [
     flavor: 'It gathers on the vial overnight, from nowhere, for no one.',
   },
   {
-    id: 'ceruleanSigil',
-    name: 'Cerulean Sigil',
+    id: 'azureSigil',
+    name: 'Azure Sigil',
     rarity: 'uncommon',
     icon: '🔵',
     triggers: [
@@ -338,8 +338,8 @@ export const relics = [
 
   // ---- rares -----------------------------------------------------------------
   {
-    id: 'erdtreeSapling',
-    name: 'Erdtree Sapling',
+    id: 'goldboughSapling',
+    name: 'Goldbough Sapling',
     rarity: 'rare',
     icon: '🌱',
     triggers: [
@@ -352,8 +352,8 @@ export const relics = [
     textTemplate: 'At the start of your turn, if you have no Block: gain {block} Block.',
   },
   {
-    id: 'dragonHeart',
-    name: 'Dragon Heart',
+    id: 'wyrmHeart',
+    name: 'Wyrm Heart',
     rarity: 'rare',
     icon: '🫀',
     triggers: [{ on: 'playerTurnStart', do: [{ op: 'gainEnergy', amount: 1 }] }],
@@ -371,8 +371,8 @@ export const relics = [
     textTemplate: 'Power cards cost 1 less.',
   },
   {
-    id: 'titansRune',
-    name: "Titan's Rune",
+    id: 'titansCinder',
+    name: "Titan's Cinder",
     rarity: 'rare',
     icon: '🌟',
     triggers: [{ on: 'playerTurnStart', do: [{ op: 'applyStatus', target: 'owner', status: 'strength', stacks: 1 }] }],
@@ -400,9 +400,9 @@ export const relics = [
     rarity: 'rare',
     icon: '🔥',
     triggers: [
-      { on: 'playerTurnStart', do: [{ op: 'applyStatus', target: 'allEnemies', status: 'scarletRot', stacks: 1 }] },
+      { on: 'playerTurnStart', do: [{ op: 'applyStatus', target: 'allEnemies', status: 'crimsonBlight', stacks: 1 }] },
     ],
-    textTemplate: 'At the start of each turn, apply {scarletRot} Scarlet Rot to ALL enemies.',
+    textTemplate: 'At the start of each turn, apply {crimsonBlight} Crimson Blight to ALL enemies.',
     flavor: 'The smoke seeks out lungs. It is not particular about whose.',
   },
   {
@@ -435,8 +435,8 @@ export const relics = [
 
   // ---- boss (one per act boss — a Faustian trade each, GDD §5) ----------------
   {
-    id: 'crownOfGrafting',
-    name: 'Crown of Grafting',
+    id: 'crownOfStitches',
+    name: 'Crown of Stitches',
     rarity: 'boss',
     icon: '👑',
     triggers: [
@@ -447,8 +447,8 @@ export const relics = [
     flavor: 'It fits. That is the worst part.',
   },
   {
-    id: 'omenHorn',
-    name: 'Omen Horn',
+    id: 'wardenHorn',
+    name: 'Warden Horn',
     rarity: 'boss',
     icon: '📯',
     triggers: [
@@ -471,8 +471,8 @@ export const relics = [
     flavor: 'The dead lend strength. They are not gentle about it.',
   },
   {
-    id: 'runeOfTheFallen',
-    name: 'Rune of the Fallen',
+    id: 'cinderOfTheFallen',
+    name: 'Cinder of the Fallen',
     rarity: 'boss',
     icon: '☠',
     triggers: [
@@ -541,7 +541,7 @@ export const relics = [
     icon: '🧂',
     triggers: [],
     passives: { runeGainMult: 1.2 },
-    textTemplate: 'Gain 20% more Runes from combats.',
+    textTemplate: 'Gain 20% more Cinders from combats.',
     flavor: 'It was buried to keep something in, or something out. No one remembers which.',
   },
   {
@@ -638,8 +638,8 @@ export const relics = [
     flavor: 'The oath is long and the watch is longer. Endurance is its own kind of edge.',
   },
   {
-    id: 'tarnishedWarflag',
-    name: 'Tarnished Warflag',
+    id: 'forsakenWarflag',
+    name: 'Forsaken Warflag',
     rarity: 'rare',
     icon: '🏴',
     triggers: [{ on: 'playerTurnStart', do: [{ op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1 }] }],

@@ -1,6 +1,6 @@
 // tools/coop-shoot.mjs — LIVE multi-client co-op screenshots (no canned data).
 //
-// Drives TWO real browser clients through the actual Tarnished Together flow —
+// Drives TWO real browser clients through the actual Forsaken Together flow —
 // host a fire, join it, ready up, start, fork-vote, fight the shared battle —
 // against a real in-process LAN server, and photographs both screens.
 //
@@ -142,7 +142,7 @@ async function main() {
   await until(hostTab, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'host sees LAN button');
   await evalIn(hostTab, click('#lan-play'));
   await until(hostTab, `!!document.querySelector('#lb-name')`, 'host lobby');
-  await evalIn(hostTab, `(() => { const n = document.querySelector('#lb-name'); n.value = 'Ranni'; n.dispatchEvent(new Event('input')); return true; })()`);
+  await evalIn(hostTab, `(() => { const n = document.querySelector('#lb-name'); n.value = 'Wren'; n.dispatchEvent(new Event('input')); return true; })()`);
   await evalIn(hostTab, click('#lb-host'));
   await until(hostTab, `document.querySelector('h2')?.textContent === 'AT THE FIRE'`, 'host at the fire');
   ok(true, 'host lit a fire');
@@ -156,13 +156,13 @@ async function main() {
   await until(guestTab, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'guest sees LAN button');
   await evalIn(guestTab, click('#lan-play'));
   await until(guestTab, `!!document.querySelector('#lb-name')`, 'guest lobby');
-  await evalIn(guestTab, `(() => { const n = document.querySelector('#lb-name'); n.value = 'Blaidd'; n.dispatchEvent(new Event('input')); return true; })()`);
+  await evalIn(guestTab, `(() => { const n = document.querySelector('#lb-name'); n.value = 'Fenn'; n.dispatchEvent(new Event('input')); return true; })()`);
   await until(guestTab, `!!document.querySelector('.lb-join')`, 'guest sees the fire');
   await evalIn(guestTab, click('.lb-join'));
   await until(guestTab, `!!document.querySelector('#lb-ready')`, 'guest in the room');
-  await evalIn(guestTab, `(() => { const v = [...document.querySelectorAll('.cr-class')].find((p) => /vagabond/i.test(p.textContent)); if (v) v.click(); return true; })()`);
+  await evalIn(guestTab, `(() => { const v = [...document.querySelectorAll('.cr-class')].find((p) => /reaver/i.test(p.textContent)); if (v) v.click(); return true; })()`);
   await wait(200);
-  // Blaidd picks the Carian frost accent — the shots must show gold vs blue.
+  // Fenn picks the Hoarfrost accent — the shots must show gold vs blue.
   await evalIn(guestTab, `(() => { const d = [...document.querySelectorAll('.tint-dot')].find((x) => /frost/i.test(x.title)); if (d) d.click(); return !!d; })()`);
   await until(hostTab, `[...document.querySelectorAll('#lb-roster .slot span[style*="color"]')].length > 0`, 'host sees tinted roster');
   await wait(200);

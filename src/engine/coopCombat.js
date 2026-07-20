@@ -1,4 +1,4 @@
-// src/engine/coopCombat.js — shared N-player combat runner (Tarnished Together S3).
+// src/engine/coopCombat.js — shared N-player combat runner (Forsaken Together S3).
 //
 // A SEPARATE co-op fight engine that reuses the solo engine's generic opcode /
 // status / trigger primitives (actions.js, statuses.js, triggers.js) but has its

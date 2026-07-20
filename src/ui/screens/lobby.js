@@ -1,4 +1,4 @@
-// src/ui/screens/lobby.js — Tarnished Together lobby (LAN play, phase 1).
+// src/ui/screens/lobby.js — Forsaken Together lobby (LAN play, phase 1).
 //
 // Browse: light a fire (host) or join one found by UDP discovery (the list
 // refreshes every 2s from this machine's launcher at /api/lan/info).
@@ -20,7 +20,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
   let myId = null;
   let pollTimer = null;
   const state = {
-    name: localStorage.getItem(NAME_KEY) || 'Tarnished',
+    name: localStorage.getItem(NAME_KEY) || 'Forsaken',
     classId: registries.classes.all()[0].id,
     tint: localStorage.getItem(TINT_KEY) || 'gold',
     spriteStyle: localStorage.getItem('sote_lan_style') || 'rendered',
@@ -45,7 +45,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
   function renderBrowse(note) {
     app.innerHTML = `
       <div class="screen lobby" style="gap:18px">
-        <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">TARNISHED TOGETHER</h2>
+        <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">FORSAKEN TOGETHER</h2>
         <p class="subtitle">CLIMB WITH FRIENDS ON YOUR LOCAL NETWORK</p>
         ${note ? `<p style="color:var(--ember);font-size:13px">${esc(note)}</p>` : ''}
         <div style="display:flex;flex-direction:column;gap:14px;width:min(480px,92%)">
@@ -62,7 +62,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
       </div>`;
     app.querySelector('#lb-back').addEventListener('click', () => back());
     app.querySelector('#lb-name').addEventListener('input', (e) => {
-      state.name = e.target.value.trim() || 'Tarnished';
+      state.name = e.target.value.trim() || 'Forsaken';
       localStorage.setItem(NAME_KEY, state.name);
     });
     app.querySelector('#lb-host').addEventListener('click', host);
@@ -207,7 +207,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
       classes.appendChild(el);
     }
     // Accent swatches: the chosen tint colors your sprite + party chips for
-    // everyone, so two Vagabonds still read apart on the shared board.
+    // everyone, so two Reavers still read apart on the shared board.
     const tints = app.querySelector('#lb-tints');
     for (const t of PORTRAIT_TINTS) {
       const dot = document.createElement('button');

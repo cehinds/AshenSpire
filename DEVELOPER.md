@@ -1,4 +1,4 @@
-# DEVELOPER.md — extending EldenSpire
+# DEVELOPER.md — extending AshenSpire
 
 How to run, test, and add content. The architecture contract lives in
 [SPEC.md §3](SPEC.md); exact engine signatures in
@@ -39,7 +39,7 @@ Rules that keep this honest:
 
 ```js
 {
-  id: 'moonSlash', name: 'Moon Slash', class: 'vagabond', rarity: 'common',
+  id: 'moonSlash', name: 'Moon Slash', class: 'reaver', rarity: 'common',
   cost: 1, type: 'attack', keywords: [], icon: '🌙',
   effects: [
     { op: 'damage', target: 'enemy', amount: 6 },
@@ -79,7 +79,7 @@ should appear in rewards. Notes:
 The engine interprets `stackMode` (add/refresh/unique), `decay`
 (none / perTurnEnd / {duration:n} / onConsume), build-up `meter`s
 (max, growthMult, onFill effects), stat `modifiers`, and trigger `hooks`.
-Bleed, Scarlet Rot, and Staggered are all plain data here — test 17 proves a
+Bleed, Crimson Blight, and Staggered are all plain data here — test 17 proves a
 brand-new status needs zero engine changes.
 
 ## Add a relic (one file: `src/content/relics.js`)
@@ -129,10 +129,10 @@ delayed attack (Held Blade pattern — Stagger cancels it); `locked: true` +
 ```
 
 Events fire on `?` (Unknown) map nodes. `effects` are the **same DSL** as cards,
-but run-level (SPEC §3.4): `addRunes`, `addRelic {random?|id}`,
+but run-level (SPEC §3.4): `addCinders`, `addRelic {random?|id}`,
 `removeCardFromDeck`, `upgradeCard {random?}`, `loseMaxHpPct`,
 `startCombat {encounterId}`, plus `heal`/`damage`/`addCardToDeck`. `requires?`
-(e.g. `{ runes: 50 }`) gates a choice; a `startCombat` effect hands control to
+(e.g. `{ cinders: 50 }`) gates a choice; a `startCombat` effect hands control to
 the combat orchestrator after `resultText` shows. Nothing to register — every
 shipped event is reachable via Unknown nodes.
 
@@ -147,7 +147,7 @@ shipped event is reachable via Unknown nodes.
 | Set | Where defined | Contents |
 |---|---|---|
 | Combat opcodes | `model/schemas.js` `COMBAT_OPCODES` | damage, block, applyStatus, removeStatus, draw, discard, exhaust, addCard, gainEnergy, loseHp, heal, shuffleDiscardIntoDraw, enterStance, poiseDamage |
-| Run opcodes | `RUN_OPCODES` | addRunes, addCardToDeck, removeCardFromDeck, upgradeCard, addRelic, addFlask, loseMaxHpPct, startCombat |
+| Run opcodes | `RUN_OPCODES` | addCinders, addCardToDeck, removeCardFromDeck, upgradeCard, addRelic, addFlask, loseMaxHpPct, startCombat |
 | Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner |
 | Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
@@ -157,7 +157,7 @@ shipped event is reachable via Unknown nodes.
 
 Escape hatch: `src/content/scripts.js` (named functions callable as
 `{ script: 'name' }` effects). Budget < 5% of content, each entry justified in
-a comment. Current usage: **one** (Wondrous Physick — dynamic meta-selection
+a comment. Current usage: **one** (Wondrous Draught — dynamic meta-selection
 of other flasks' effect lists, which the DSL cannot reference).
 
 ## Performance (SPEC §9 M4)
@@ -185,7 +185,7 @@ existing keyboard handler with no per-screen rewrite. Which pad button drives
 each action is rebindable in the overlay's **Controls** tab
 (`src/ui/screens/controls.js`), persisted to `meta.settings.bindings`.
 
-## Standalone build (`build/EldenSpire.html`)
+## Standalone build (`build/AshenSpire.html`)
 
 `node tools/bundle.mjs` emits a single self-contained HTML file to `build/` —
 all CSS inlined, every ES module bundled into one classic `<script>` via a tiny
@@ -206,7 +206,7 @@ path → encounters → combats → rewards → shrines/events/ambushes → act 
 Acts 1–3) with the same greedy bot plus a simple pilot. Any crash is a real
 integration bug; the win rate is a completability **floor**, not a balance
 target (the bot can't pilot combos or curate a deck). Baseline at 30 runs/class:
-zero crashes, and the Prophet completes full 3-act runs even naively.
+zero crashes, and the Herald completes full 3-act runs even naively.
 
 ## M1 known deviations (tracked for M2/M3)
 
@@ -216,8 +216,8 @@ zero crashes, and the Prophet completes full 3-act runs even naively.
 2. **Guilt** ships as an inert unplayable curse — its "lose 1 HP at turn end
    while in hand" needs an in-hand card hook (engine seam planned with M2's
    event system, which is the first thing that can grant Guilt).
-3. **Warrior's Vow** enters Bloodflame instead of "a stance of your choice" —
+3. **Warrior's Vow** enters Gorefire instead of "a stance of your choice" —
    a generic choose-one UI primitive is an M2/M3 feature.
-4. **Lord's Blood** freezes Poise thresholds as well as Bleed (the
+4. **Goreblood** freezes Poise thresholds as well as Bleed (the
    `meterMaxGrowthDisabled` flag is global by design — strictly a buff; the
    card text says so honestly).

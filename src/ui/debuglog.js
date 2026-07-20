@@ -49,7 +49,7 @@ export function logText() {
   const fx = typeof window !== 'undefined' && window.__fx ? JSON.stringify(window.__fx) : 'n/a';
   const c = typeof window !== 'undefined' ? window.__combat : null;
   const state = c ? `phase=${c.phase} result=${c.result} hand=${c.piles.hand.length} energy=${c.player.energy}` : 'no combat';
-  const head = `EldenSpire command log — ${new Date().toISOString()}\nstate: ${state}\ntimelines: ${fx}\n---`;
+  const head = `AshenSpire command log — ${new Date().toISOString()}\nstate: ${state}\ntimelines: ${fx}\n---`;
   return [head, ...entries.map(formatEntry)].join('\n');
 }
 

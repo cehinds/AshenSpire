@@ -19,7 +19,7 @@ export const balance = {
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
   rewards: {
     cardChoices: 3,
-    runes: { normal: [15, 25], elite: [35, 50], boss: [75, 90] },
+    cinders: { normal: [15, 25], elite: [35, 50], boss: [75, 90] },
     rarityWeights: {
       normal: { common: 60, uncommon: 35, rare: 5 },
       elite: { common: 45, uncommon: 40, rare: 15 },
@@ -53,7 +53,7 @@ export const balance = {
     rarityWeights: { common: 60, uncommon: 35, rare: 5 },
   },
 
-  // ---- Tarnished Together (co-op) ------------------------------------------
+  // ---- Forsaken Together (co-op) ------------------------------------------
   coop: {
     headcountHpFactor: 0.6, // enemy HP ×(1 + factor×(headcount−1)): 2p ×1.6, 3p ×2.2, 4p ×2.8
     mendHealPct: 30, // Mend at a shrine heals an ally this % of their max HP
@@ -69,9 +69,9 @@ export const balance = {
   customMods: {
     toughElitesHpMult: 1.3, // Tough Elites: elites & bosses ×HP
     bigBossesHpMult: 1.5, // Dread Bosses: act bosses ×HP
-    hoarderRunes: 250, // Hoarder: bonus starting runes
+    hoarderRunes: 250, // Hoarder: bonus starting cinders
     expensiveShopsMult: 1.5, // Greedy Merchants: ×shop price
     hoarderShopMult: 2, // Hoarder: ×shop price
-    lessHealingMult: 0.5, // Scarce Grace: ×healing (shrine rest + between-act)
+    lessHealingMult: 0.5, // Scarce Embers: ×healing (shrine rest + between-act)
   },
 };

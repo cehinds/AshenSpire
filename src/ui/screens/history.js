@@ -32,7 +32,7 @@ export function mountHistory(app, { meta, onBack }) {
     .map((r) => {
       const outcome = r.victory
         ? '<span class="hx-win">RUNE RESTORED</span>'
-        : '<span class="hx-loss">YOU DIED</span>';
+        : '<span class="hx-loss">YOU PERISHED</span>';
       const reached = r.victory
         ? `Act ${r.act || 3} cleared`
         : `Act ${r.act || 1} · Floor ${r.floor != null ? r.floor : '—'}`;

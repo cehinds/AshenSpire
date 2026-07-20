@@ -52,11 +52,11 @@ export function enemySprite(enemyDef) {
 // Character customization options (cosmetic — stored on run.customization).
 export const PORTRAIT_GLYPHS = ['⚔', '🛡', '🔥', '🌙', '☀', '🐺'];
 export const PORTRAIT_TINTS = [
-  { id: 'gold', css: 'var(--gold)', name: 'Erdtree gold' },
-  { id: 'ember', css: 'var(--ember)', name: 'Bloodflame ember' },
-  { id: 'frost', css: 'var(--frost)', name: 'Carian frost' },
-  { id: 'rot', css: 'var(--rot)', name: 'Scarlet rot' },
-  { id: 'grace', css: 'var(--grace)', name: 'Lost grace' },
+  { id: 'gold', css: 'var(--gold)', name: 'Goldbough gold' },
+  { id: 'ember', css: 'var(--ember)', name: 'Gorefire ember' },
+  { id: 'frost', css: 'var(--frost)', name: 'Hoarfrost' },
+  { id: 'rot', css: 'var(--rot)', name: 'Crimson blight' },
+  { id: 'grace', css: 'var(--grace)', name: 'Lost ember' },
 ];
 
 // ---- Class character sprites (inline SVG, tinted) --------------------------
@@ -84,8 +84,8 @@ function sigilMedallion(cx, cy, t, sigil, plainR) {
 }
 
 const CLASS_SVG = {
-  // Vagabond — armored knight, greatsword held point-down, cape behind.
-  vagabond: (t, sigil) => `
+  // Reaver — armored knight, greatsword held point-down, cape behind.
+  reaver: (t, sigil) => `
     <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
       <ellipse cx="55" cy="133" rx="28" ry="5" fill="rgba(0,0,0,.45)"/>
       <path d="M30 48 L24 130 L86 130 L80 48 Q55 40 30 48Z" fill="#20190f"/>
@@ -102,8 +102,8 @@ const CLASS_SVG = {
       <circle cx="55" cy="61" r="4" fill="${t}"/>
       ${sigilMedallion(55, 84, t, sigil, 5.5)}
     </svg>`,
-  // Astrologer — robed mage, wide pointed hat, star-topped staff, sparkles.
-  astrologer: (t, sigil) => `
+  // Starseer — robed mage, wide pointed hat, star-topped staff, sparkles.
+  starseer: (t, sigil) => `
     <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
       <ellipse cx="55" cy="133" rx="26" ry="5" fill="rgba(0,0,0,.45)"/>
       <rect x="80" y="30" width="3.5" height="99" rx="1" fill="#6b5d45"/>
@@ -117,8 +117,8 @@ const CLASS_SVG = {
       <circle cx="29" cy="52" r="1.7" fill="${t}"/>
       <circle cx="40" cy="96" r="1.5" fill="${t}"/>
     </svg>`,
-  // Prophet — hooded pilgrim, halo, prayer beads at the waist.
-  prophet: (t, sigil) => `
+  // Herald — hooded pilgrim, halo, prayer beads at the waist.
+  herald: (t, sigil) => `
     <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
       <ellipse cx="55" cy="133" rx="26" ry="5" fill="rgba(0,0,0,.45)"/>
       <circle cx="55" cy="30" r="16" fill="none" stroke="${t}" stroke-width="2"/>
@@ -138,7 +138,7 @@ const CLASS_SVG = {
 // working with zero configuration. Art credit: procedurally generated in
 // Blender by this repo (see CREDITS.md).
 const SPRITE_TINT_IDS = ['gold', 'ember', 'frost', 'rot', 'grace'];
-const SPRITE_CLASSES = ['vagabond', 'astrologer', 'prophet'];
+const SPRITE_CLASSES = ['reaver', 'starseer', 'herald'];
 function renderedSpriteUrl(classId, tintId) {
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const t = SPRITE_TINT_IDS.includes(tintId) ? tintId : 'gold';

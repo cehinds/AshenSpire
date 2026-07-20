@@ -14,11 +14,11 @@ export const KEEPSAKES = [
     effects: [],
   },
   {
-    id: 'oldRune',
-    name: 'Old Rune',
+    id: 'oldCinder',
+    name: 'Old Cinder',
     icon: '🪙',
-    desc: 'Begin the climb with 50 runes.',
-    effects: [{ op: 'addRunes', amount: 50 }],
+    desc: 'Begin the climb with 50 cinders.',
+    effects: [{ op: 'addCinders', amount: 50 }],
   },
   {
     id: 'travelersFlask',

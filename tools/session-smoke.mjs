@@ -67,9 +67,9 @@ function walk(S, { steps = 12, healBetween = true } = {}) {
 try {
   ok(coopHpMult(1) === 1 && Math.abs(coopHpMult(2) - 1.6) < 1e-9, 'coop HP scaling wired: 1p×1.0, 2p×1.6');
 
-  const S = createSession({ registries: REG, seedString: 'ERDTREE' });
-  S.addMember({ id: 'p1', name: 'Ranni', classId: 'astrologer' });
-  S.addMember({ id: 'p2', name: 'Blaidd', classId: 'vagabond' });
+  const S = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+  S.addMember({ id: 'p1', name: 'Wren', classId: 'starseer' });
+  S.addMember({ id: 'p2', name: 'Fenn', classId: 'reaver' });
   S.start();
   ok(S.scene.kind === 'map', 'start → shared map scene');
   ok(S.snapshot().party.length === 2, 'snapshot shows a 2-member party');

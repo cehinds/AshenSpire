@@ -1,4 +1,4 @@
-// tools/session.mjs — server-authoritative co-op run (Tarnished Together S2).
+// tools/session.mjs — server-authoritative co-op run (Forsaken Together S2).
 //
 // The dungeon lives here, not in any browser. One shared map + RNG; each member
 // keeps their own build (deck/relics/hp/gold). The server drives the whole run
@@ -88,13 +88,13 @@ export function createSession({ registries, seedString, endless = false, restore
     const run = createRunState({ seed, classId, registries });
     const m = {
       id,
-      name: String(name || 'Tarnished').slice(0, 18),
+      name: String(name || 'Forsaken').slice(0, 18),
       index,
       classId,
       connected: true,
       tint: tint || 'gold', // chosen accent — colors this hero's sprite for everyone
       spriteStyle: spriteStyle || 'rendered', // rendered PNG / classic SVG / sigil glyph
-      run, // per-member build: deck/relics/flasks/hp/maxHp/runes
+      run, // per-member build: deck/relics/flasks/hp/maxHp/cinders
       rng: memberRng(seed, index),
       catchup: [], // pending missed-node choices (S4 replay)
       cardSeq: 0, // monotonic counter for reward/catch-up card instance ids
@@ -370,19 +370,19 @@ export function createSession({ registries, seedString, endless = false, restore
     if (livingMembers().length > 1) {
       cardIds.push(m.rng.pick('cardRewards', COOP_CARD_IDS));
     }
-    const runes = rollRuneReward(registries, m.rng, pool, m.run.relics);
+    const cinders = rollRuneReward(registries, m.rng, pool, m.run.relics);
     const flaskId = pool !== 'boss' ? rollFlaskDrop(registries, m.rng, m.run) : null;
     const relicId = pool === 'elite' || pool === 'boss'
       ? rollRelicReward(registries, m.rng, m.run.relics, pool === 'boss' ? { rarities: ['boss'] } : {})
       : null;
-    return { pool, cardIds, runes, flaskId, relicId };
+    return { pool, cardIds, cinders, flaskId, relicId };
   }
 
   function grantRewards(pool) {
     const pending = {}; // memberId → reward offer (for present members to choose)
     for (const m of livingMembers()) {
       const offer = rollRewardFor(m, pool);
-      m.run.runes += offer.runes; // gold is auto-granted; card/relic are choices
+      m.run.cinders += offer.cinders; // gold is auto-granted; card/relic are choices
       if (m.connected) {
         pending[m.id] = offer;
       } else {
@@ -503,7 +503,7 @@ export function createSession({ registries, seedString, endless = false, restore
   function memberView(m) {
     return {
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
-      hp: m.run.hp, maxHp: m.run.maxHp, runes: m.run.runes,
+      hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
       deck: m.run.deck.map((c) => ({ instanceId: c.instanceId, cardId: c.cardId, upgraded: c.upgraded })),
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,
       catchup: m.catchup.length,
@@ -580,8 +580,8 @@ export function createSession({ registries, seedString, endless = false, restore
 
 function safeSeed(seedString) {
   try {
-    return seedFromString(seedString || 'ERDTREE');
+    return seedFromString(seedString || 'GOLDBOUGH');
   } catch {
-    return seedFromString('ERDTREE');
+    return seedFromString('GOLDBOUGH');
   }
 }

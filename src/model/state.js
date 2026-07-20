@@ -30,7 +30,7 @@ export function createDeck(cardIds, idGen = createIdGen('d')) {
 
 /**
  * createRunState({ seed, classId, registries }) → new run at floor 0, act 1.
- * Starting deck/relic/HP come from the class def; runes from
+ * Starting deck/relic/HP come from the class def; cinders from
  * balance.startingRunes (default 0).
  */
 export function createRunState({ seed, classId, registries }) {
@@ -47,7 +47,7 @@ export function createRunState({ seed, classId, registries }) {
     mapNodeId: null,
     hp: classDef.maxHp,
     maxHp: classDef.maxHp,
-    runes: registries.balance.startingRunes || 0,
+    cinders: registries.balance.startingRunes || 0,
     deck: createDeck(classDef.startingDeck, idGen),
     relics: [classDef.startingRelic],
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots (default 3)

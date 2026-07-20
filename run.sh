@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Spire of the Erdtree — build the standalone, refresh dist/, then serve on
+# Ashen Spire — build the standalone, refresh dist/, then serve on
 # localhost and open the game in your browser.
 #   ./run.sh              build + serve + open
 #   ./run.sh --no-open    build + serve, don't open a browser

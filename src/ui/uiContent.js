@@ -7,11 +7,11 @@
 
 // ---- map node types ---------------------------------------------------------
 export const NODE_TYPES = {
-  monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — runes and a card reward.' },
-  fight: { icon: '⚔', name: 'Monster', blurb: 'A fight — runes and a card reward.' },
+  monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
+  fight: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
   elite: { icon: '☠', name: 'Elite', blurb: 'A hard fight. Drops a relic.' },
   boss: { icon: '👁', name: 'Boss', blurb: 'The act boss.' },
-  shrine: { icon: '♨', name: 'Shrine of Grace', blurb: 'Rest (heal), smith (upgrade a card), or mend an ally.' },
+  shrine: { icon: '♨', name: 'Shrine of Emberlight', blurb: 'Rest (heal), smith (upgrade a card), or mend an ally.' },
   merchant: { icon: '⚖', name: 'Merchant', blurb: 'Cards, relics, flasks, card removal.' },
   treasure: { icon: '▣', name: 'Treasure', blurb: 'A relic, free.' },
   event: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
@@ -24,7 +24,7 @@ export const nodeBlurb = (type) => (NODE_TYPES[type] || {}).blurb || '';
 // ---- act titles -------------------------------------------------------------
 export const ACT_NAMES = {
   1: 'ACT I — THE FALLOW MARCHES',
-  2: 'ACT II — THE GRAFTED COURT',
+  2: 'ACT II — THE STITCHED COURT',
   3: 'ACT III — THE ASHEN CROWN',
 };
 // Endless Spire: acts past 3 reuse the act 1-3 names with a "· CYCLE n" marker.

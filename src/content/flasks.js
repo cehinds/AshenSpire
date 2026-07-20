@@ -1,7 +1,7 @@
 // src/content/flasks.js — the M2 flask set (SPEC §5.5)
 //
 // 3 slots; found from combats (decaying drop chance, balance.rewards),
-// shops, and events. Wondrous Physick is the repo's first — and only —
+// shops, and events. Wondrous Draught is the repo's first — and only —
 // scripts.js user (see scripts.js for the justification).
 
 export const flasks = [
@@ -14,8 +14,8 @@ export const flasks = [
     textTemplate: 'Heal 25% of your max HP.',
   },
   {
-    id: 'ceruleanFlask',
-    name: 'Cerulean Flask',
+    id: 'azureFlask',
+    name: 'Azure Flask',
     rarity: 'common',
     icon: '🫙',
     effects: [{ op: 'gainEnergy', amount: 2 }],
@@ -38,28 +38,28 @@ export const flasks = [
     textTemplate: 'Gain 15 Block.',
   },
   {
-    id: 'rotCoating',
-    name: 'Rot Coating',
+    id: 'blightCoating',
+    name: 'Blight Coating',
     rarity: 'uncommon',
     icon: '🦠',
     targeted: true,
-    effects: [{ op: 'applyStatus', target: 'enemy', status: 'scarletRot', stacks: 4 }],
-    textTemplate: 'Apply 4 Scarlet Rot to an enemy.',
+    effects: [{ op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: 4 }],
+    textTemplate: 'Apply 4 Crimson Blight to an enemy.',
   },
   {
-    id: 'bloodGrease',
-    name: 'Blood Grease',
+    id: 'bloodUnction',
+    name: 'Blood Unction',
     rarity: 'uncommon',
     icon: '🫗',
-    effects: [{ op: 'applyStatus', target: 'self', status: 'bloodGrease', stacks: 1 }],
+    effects: [{ op: 'applyStatus', target: 'self', status: 'bloodUnction', stacks: 1 }],
     textTemplate: 'This turn, your attacks apply 2 extra Bleed per hit.',
   },
   {
-    id: 'wondrousPhysick',
-    name: 'Wondrous Physick',
+    id: 'wondrousDraught',
+    name: 'Wondrous Draught',
     rarity: 'rare',
     icon: '⚗',
-    effects: [{ script: 'wondrousPhysick' }],
+    effects: [{ script: 'wondrousDraught' }],
     textTemplate: 'Gain the effects of two different random flasks at once.',
   },
 ];

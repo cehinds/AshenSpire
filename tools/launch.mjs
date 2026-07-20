@@ -1,7 +1,7 @@
 // tools/launch.mjs — the one-click launcher.
 //
 // 1. Builds the standalone single-file HTML (tools/bundle.mjs → build/).
-// 2. Copies it into dist/ (a stable EldenSpire.html + a version-stamped copy).
+// 2. Copies it into dist/ (a stable AshenSpire.html + a version-stamped copy).
 // 3. Serves the live app on http://localhost and opens it in the browser.
 //
 // Invoked by run.bat (Windows) and run.sh (macOS/Linux), or: node tools/launch.mjs
@@ -35,13 +35,13 @@ if (build.status !== 0) {
 }
 
 // 2. Refresh dist/ from the fresh build.
-const src = resolve(ROOT, 'build', 'EldenSpire.html');
+const src = resolve(ROOT, 'build', 'AshenSpire.html');
 const distDir = resolve(ROOT, 'dist');
 mkdirSync(distDir, { recursive: true });
 const ver = version();
-copyFileSync(src, resolve(distDir, 'EldenSpire.html'));
-copyFileSync(src, resolve(distDir, `EldenSpire-${ver}.html`));
-console.log(`launch: dist refreshed → dist/EldenSpire.html + dist/EldenSpire-${ver}.html`);
+copyFileSync(src, resolve(distDir, 'AshenSpire.html'));
+copyFileSync(src, resolve(distDir, `AshenSpire-${ver}.html`));
+console.log(`launch: dist refreshed → dist/AshenSpire.html + dist/AshenSpire-${ver}.html`);
 
 if (args.includes('--build-only')) {
   console.log('launch: --build-only set, skipping server.');

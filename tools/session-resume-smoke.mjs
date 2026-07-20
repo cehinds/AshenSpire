@@ -54,9 +54,9 @@ function walkToBoundary(S) {
 }
 
 try {
-  const S = createSession({ registries: REG, seedString: 'ERDTREE' });
-  S.addMember({ id: 'p1', name: 'Ranni', classId: 'astrologer' });
-  S.addMember({ id: 'p2', name: 'Blaidd', classId: 'vagabond' });
+  const S = createSession({ registries: REG, seedString: 'GOLDBOUGH' });
+  S.addMember({ id: 'p1', name: 'Wren', classId: 'starseer' });
+  S.addMember({ id: 'p2', name: 'Fenn', classId: 'reaver' });
   S.start();
   walkToBoundary(S);
   ok(S.scene.kind === 'map', 'reached a clean map boundary to persist at');

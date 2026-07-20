@@ -377,7 +377,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 @keyframes artFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 #choices button { animation: screenIn 260ms ease-out backwards; }
 
-/* ---- Tarnished Together: co-op (LAN) — layers on the shared solo board/map -- */
+/* ---- Forsaken Together: co-op (LAN) — layers on the shared solo board/map -- */
 /* The co-op combat/map/reward screens reuse the solo components + CSS; these
    rules only add the co-op-specific bits: a seat per player, turn flags, the
    party read-out, and the throw/mend affordances. */

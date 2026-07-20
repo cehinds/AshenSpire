@@ -44,18 +44,18 @@ export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory,
     <div class="screen title-screen">
       ${embers}
       <div class="title-stack">
-        <h1 class="title-big title-glow">SPIRE OF THE ERDTREE</h1>
+        <h1 class="title-big title-glow">ASHEN SPIRE</h1>
         <p class="subtitle" style="text-align:center">A ROGUELIKE DECKBUILDER</p>
       </div>
       <div class="slot-list">${slotCards}</div>
       <div class="title-menu">
-        <button class="subtle" id="lan-play" hidden>TARNISHED TOGETHER</button>
+        <button class="subtle" id="lan-play" hidden>FORSAKEN TOGETHER</button>
         <button class="subtle" id="custom-climb">CUSTOM CLIMB</button>
         <button class="subtle" id="run-history">RUN HISTORY</button>
         <button class="subtle" id="settings">SETTINGS</button>
         <button class="subtle" id="quit-game">QUIT</button>
       </div>
-      <p style="color:var(--muted);font-size:11px;letter-spacing:.15em">GRACE FLOWS UPWARD. FOLLOW IT.</p>
+      <p style="color:var(--muted);font-size:11px;letter-spacing:.15em">THE EMBER FLOWS UPWARD. FOLLOW IT.</p>
     </div>`;
 
   app.querySelector('#run-history').addEventListener('click', onHistory);

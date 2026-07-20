@@ -7,16 +7,16 @@
 
 export const scripts = {
   /**
-   * Wondrous Physick: "Gain the effects of two DIFFERENT random flasks."
+   * Wondrous Draught: "Gain the effects of two DIFFERENT random flasks."
    * Why a script: the DSL has no way to reference another entity's effect
    * list dynamically ("a random flask's effects") — that's meta-content
    * selection, not effect composition. Everything the picked flasks DO still
    * runs through the ordinary DSL/queue.
    */
-  wondrousPhysick(ctx, action) {
+  wondrousDraught(ctx, action) {
     const pool = ctx.registries.flasks
       .all()
-      .filter((f) => f.id !== 'wondrousPhysick' && !usesScript(f));
+      .filter((f) => f.id !== 'wondrousDraught' && !usesScript(f));
     if (pool.length === 0) return;
     const first = ctx.rng.pick('misc', pool);
     const rest = pool.filter((f) => f.id !== first.id);

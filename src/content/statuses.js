@@ -1,7 +1,7 @@
 // src/content/statuses.js — ALL combat statuses as data (SPEC §3.7, §4.4)
 //
 // The engine interprets these through the generic status model; nothing in
-// src/engine names any of these ids. The Elden Ring layer (Bleed, Scarlet Rot,
+// src/engine names any of these ids. The Elden Ring layer (Bleed, Crimson Blight,
 // Stagger, Madness) lives here as data, exactly like the StS layer.
 
 export const statuses = [
@@ -79,9 +79,9 @@ export const statuses = [
       'Build-up: points do not decay. At the threshold, burst for 15% of max HP (min 8, max 35), ignoring Block. Each burst raises the threshold ×1.5.',
   },
   {
-    id: 'scarletRot',
+    id: 'crimsonBlight',
     tint: 'var(--rot)',
-    name: 'Scarlet Rot',
+    name: 'Crimson Blight',
     icon: '❀',
     stackMode: 'add',
     decay: { duration: 3 },
@@ -92,13 +92,13 @@ export const statuses = [
           {
             op: 'loseHp',
             target: 'owner',
-            amount: { f: 'stacks', status: 'scarletRot', of: 'owner' },
+            amount: { f: 'stacks', status: 'crimsonBlight', of: 'owner' },
           },
         ],
       },
     ],
     tooltip:
-      'At the start of its turn, loses HP equal to Rot stacks (ignores Block). Stacks do not tick down; the Rot expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
+      'At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
   },
   {
     id: 'madness',
@@ -200,8 +200,8 @@ export const statuses = [
     tooltip: 'Block no longer expires at the start of your turn. Block is capped at 40.',
   },
   {
-    id: 'lordsBlood',
-    name: "Lord's Blood",
+    id: 'goreblood',
+    name: "Goreblood",
     icon: '♛',
     stackMode: 'unique',
     decay: 'none',
@@ -209,7 +209,7 @@ export const statuses = [
     tooltip: 'Build-up thresholds (Bleed and Poise) no longer increase after filling.',
   },
   {
-    // Sanguine Pact power: Bleed bursts feed Strength — the Vagabond's answer to
+    // Sanguine Pact power: Bleed bursts feed Strength — the Reaver's answer to
     // Thorn Halo / Constellation. Same meterFilled + eventStatusIs shape.
     id: 'sanguinePact',
     name: 'Sanguine Pact',
@@ -232,17 +232,17 @@ export const statuses = [
     ],
     tooltip: 'Whenever Bleed bursts on an enemy, gain 2 Strength per stack.',
   },
-  // ---- Astrologer: the Glintstone combo engine (SPEC §5.1 identity) ---------
+  // ---- Starseer: the Starstone combo engine (SPEC §5.1 identity) ---------
   {
     // Set by every spell after its own effects resolve; spells check it FIRST,
-    // so the 2nd+ spell each turn gets its "Glintstone:" bonus. Unique + turn-
+    // so the 2nd+ spell each turn gets its "Starstone:" bonus. Unique + turn-
     // end decay = a clean per-turn combo flag, zero engine involvement.
-    id: 'glintstoneCharge',
-    name: 'Glintstone Charge',
+    id: 'starstoneCharge',
+    name: 'Starstone Charge',
     icon: '✦',
     stackMode: 'unique',
     decay: 'perTurnEnd',
-    tooltip: 'A spell was cast this turn: your next Glintstone bonus is live. Fades at end of turn.',
+    tooltip: 'A spell was cast this turn: your next Starstone bonus is live. Fades at end of turn.',
   },
   {
     id: 'stargazer',
@@ -253,10 +253,10 @@ export const statuses = [
     hooks: [
       {
         on: 'ownerTurnStart',
-        do: [{ op: 'applyStatus', target: 'owner', status: 'glintstoneCharge', stacks: 1 }],
+        do: [{ op: 'applyStatus', target: 'owner', status: 'starstoneCharge', stacks: 1 }],
       },
     ],
-    tooltip: 'At the start of your turn, gain Glintstone Charge.',
+    tooltip: 'At the start of your turn, gain Starstone Charge.',
   },
   {
     id: 'astralArmor',
@@ -287,7 +287,7 @@ export const statuses = [
     hooks: [
       {
         on: 'statusApplied',
-        if: { p: 'all', preds: [{ p: 'eventStatusIs', status: 'glintstoneCharge' }, { p: 'eventTargetIsOwner' }] },
+        if: { p: 'all', preds: [{ p: 'eventStatusIs', status: 'starstoneCharge' }, { p: 'eventTargetIsOwner' }] },
         do: [
           {
             op: 'damage',
@@ -297,13 +297,13 @@ export const statuses = [
         ],
       },
     ],
-    tooltip: 'Whenever you gain Glintstone Charge, deal 4 damage per stack to a random enemy.',
+    tooltip: 'Whenever you gain Starstone Charge, deal 4 damage per stack to a random enemy.',
   },
   {
-    // Cerulean Coil power: turns each Skill into a trickle of Block. Same
+    // Azure Coil power: turns each Skill into a trickle of Block. Same
     // cardPlayed + cardTypeIs shape the Twinned Armor relic uses, as a power.
-    id: 'ceruleanCoil',
-    name: 'Cerulean Coil',
+    id: 'azureCoil',
+    name: 'Azure Coil',
     icon: '🌀',
     stackMode: 'add',
     decay: 'none',
@@ -315,7 +315,7 @@ export const statuses = [
           {
             op: 'block',
             target: 'owner',
-            amount: { f: 'mul', args: [2, { f: 'stacks', status: 'ceruleanCoil', of: 'owner' }] },
+            amount: { f: 'mul', args: [2, { f: 'stacks', status: 'azureCoil', of: 'owner' }] },
           },
         ],
       },
@@ -323,8 +323,8 @@ export const statuses = [
     tooltip: 'Whenever you play a Skill, gain 2 Block per stack.',
   },
   {
-    // Waxing Moon power: scaling Vulnerable spread — the Astrologer's answer to
-    // Thorn Halo (Rot). Same ownerTurnStart + allEnemies shape.
+    // Waxing Moon power: scaling Vulnerable spread — the Starseer's answer to
+    // Thorn Halo (Blight). Same ownerTurnStart + allEnemies shape.
     id: 'waxingMoon',
     name: 'Waxing Moon',
     icon: '🌕',
@@ -347,7 +347,7 @@ export const statuses = [
   },
 
   {
-    // Moonlit Shield power: every Glintstone Charge gained also hardens into
+    // Moonlit Shield power: every Starstone Charge gained also hardens into
     // Block. Same statusApplied + eventStatusIs/eventTargetIsOwner shape as
     // Constellation, but pays out Block on the owner instead of damage.
     id: 'moonlitShield',
@@ -358,7 +358,7 @@ export const statuses = [
     hooks: [
       {
         on: 'statusApplied',
-        if: { p: 'all', preds: [{ p: 'eventStatusIs', status: 'glintstoneCharge' }, { p: 'eventTargetIsOwner' }] },
+        if: { p: 'all', preds: [{ p: 'eventStatusIs', status: 'starstoneCharge' }, { p: 'eventTargetIsOwner' }] },
         do: [
           {
             op: 'block',
@@ -368,11 +368,11 @@ export const statuses = [
         ],
       },
     ],
-    tooltip: 'Whenever you gain Glintstone Charge, gain 3 Block per stack.',
+    tooltip: 'Whenever you gain Starstone Charge, gain 3 Block per stack.',
   },
   {
     // Astromancer power: opens every turn already combo-primed and card-fed —
-    // the Astrologer's answer to Stargazer, with a draw riding along.
+    // the Starseer's answer to Stargazer, with a draw riding along.
     id: 'astromancer',
     name: 'Astromancer',
     icon: '📚',
@@ -382,15 +382,15 @@ export const statuses = [
       {
         on: 'ownerTurnStart',
         do: [
-          { op: 'applyStatus', target: 'owner', status: 'glintstoneCharge', stacks: 1 },
+          { op: 'applyStatus', target: 'owner', status: 'starstoneCharge', stacks: 1 },
           { op: 'draw', target: 'owner', amount: 1 },
         ],
       },
     ],
-    tooltip: 'At the start of your turn, gain Glintstone Charge and draw a card.',
+    tooltip: 'At the start of your turn, gain Starstone Charge and draw a card.',
   },
 
-  // ---- Prophet: blood economy powers (SPEC §5.1 identity) -------------------
+  // ---- Herald: blood economy powers (SPEC §5.1 identity) -------------------
   {
     id: 'thornHalo',
     name: 'Thorn Halo',
@@ -404,13 +404,13 @@ export const statuses = [
           {
             op: 'applyStatus',
             target: 'allEnemies',
-            status: 'scarletRot',
+            status: 'crimsonBlight',
             stacks: { f: 'stacks', status: 'thornHalo', of: 'owner' },
           },
         ],
       },
     ],
-    tooltip: 'At the start of your turn, apply 1 Scarlet Rot per stack to ALL enemies.',
+    tooltip: 'At the start of your turn, apply 1 Crimson Blight per stack to ALL enemies.',
   },
   {
     id: 'communion',
@@ -501,11 +501,11 @@ export const statuses = [
     tooltip: 'Whenever you lose HP, deal 3 damage to a random enemy per stack.',
   },
   {
-    // Grace Tide power: every heal (self-cast or Gold Figurine's Block-on-heal
+    // Ember Tide power: every heal (self-cast or Gold Figurine's Block-on-heal
     // notwithstanding) hardens into Strength. Same healed + eventTargetIsOwner
     // shape as Gold Figurine's relic trigger, but as a power that scales.
-    id: 'graceTide',
-    name: 'Grace Tide',
+    id: 'emberTide',
+    name: 'Ember Tide',
     icon: '🌊',
     stackMode: 'add',
     decay: 'none',
@@ -518,7 +518,7 @@ export const statuses = [
             op: 'applyStatus',
             target: 'owner',
             status: 'strength',
-            stacks: { f: 'stacks', status: 'graceTide', of: 'owner' },
+            stacks: { f: 'stacks', status: 'emberTide', of: 'owner' },
           },
         ],
       },
@@ -526,34 +526,34 @@ export const statuses = [
     tooltip: 'Whenever you heal, gain 1 Strength per stack.',
   },
   {
-    // Harbinger of Rot power: every Rot you spread mends you a little — gated
+    // Harbinger of Blight power: every Blight you spread mends you a little — gated
     // to the owner's own applications via eventSourceIsOwner (the target is
     // the enemy, not the owner, so eventTargetIsOwner would never fire here).
-    id: 'harbingerOfRot',
-    name: 'Harbinger of Rot',
+    id: 'harbingerOfBlight',
+    name: 'Harbinger of Blight',
     icon: '❀',
     stackMode: 'add',
     decay: 'none',
     hooks: [
       {
         on: 'statusApplied',
-        if: { p: 'all', preds: [{ p: 'eventStatusIs', status: 'scarletRot' }, { p: 'eventSourceIsOwner' }] },
+        if: { p: 'all', preds: [{ p: 'eventStatusIs', status: 'crimsonBlight' }, { p: 'eventSourceIsOwner' }] },
         do: [
           {
             op: 'heal',
             target: 'owner',
-            amount: { f: 'stacks', status: 'harbingerOfRot', of: 'owner' },
+            amount: { f: 'stacks', status: 'harbingerOfBlight', of: 'owner' },
           },
         ],
       },
     ],
-    tooltip: 'Whenever you apply Scarlet Rot to an enemy, heal 1 HP per stack.',
+    tooltip: 'Whenever you apply Crimson Blight to an enemy, heal 1 HP per stack.',
   },
   {
-    // Blood Grease flask: this turn, attacks apply +2 Bleed per hit
-    // (same hook shape as Bloodflame Stance; expires at turn end).
-    id: 'bloodGrease',
-    name: 'Blood Grease',
+    // Blood Unction flask: this turn, attacks apply +2 Bleed per hit
+    // (same hook shape as Gorefire Stance; expires at turn end).
+    id: 'bloodUnction',
+    name: 'Blood Unction',
     icon: '🫗',
     stackMode: 'refresh',
     decay: 'perTurnEnd',

@@ -58,7 +58,7 @@ const ROWS = [
     choices: ['S', 'M', 'L', 'XL'], label: 'Text size',
     note: 'Scale all interface text and sizing together (sets the root size). M is default; L/XL aid readability. Stacks with UI size.' },
   { cat: 'Accessibility', key: 'colorblindSafe', def: false, label: 'Colorblind-friendly',
-    note: 'Shift danger/heal/rot/frost colors to a more distinguishable palette.' },
+    note: 'Shift danger/heal/blight/frost colors to a more distinguishable palette.' },
   { cat: 'Accessibility', key: 'reduceFlashes', def: false, label: 'Reduce flashes',
     note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
   { cat: 'Accessibility', key: 'readableHeadings', def: false, label: 'Readable headings',

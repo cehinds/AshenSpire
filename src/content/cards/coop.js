@@ -1,4 +1,4 @@
-// src/content/cards/coop.js — Tarnished Together co-op-only cards (SPEC §5.2).
+// src/content/cards/coop.js — Forsaken Together co-op-only cards (SPEC §5.2).
 //
 // Support cards built around the 'ally' target (a chosen living teammate;
 // resolves to self in solo, so every card here is engine-valid everywhere).
@@ -14,7 +14,7 @@ export const coopCards = [
     effects: [{ op: 'block', target: 'ally', amount: 10 }],
     textTemplate: 'An ally gains {block} Block.',
     upgrade: { effects: [{ op: 'block', target: 'ally', amount: 14 }] },
-    flavor: 'Raised where the grace-given rally.',
+    flavor: 'Raised where the ember-given rally.',
   },
   {
     id: 'sharedFlame', name: 'Shared Flame', class: 'colorless', rarity: 'special', cost: 1, type: 'skill',
@@ -25,7 +25,7 @@ export const coopCards = [
     flavor: 'Warmth passed hand to hand outlives the fire.',
   },
   {
-    id: 'lordsOath', name: "Lord's Oath", class: 'colorless', rarity: 'special', cost: 2, type: 'skill',
+    id: 'ashOath', name: "Oath of Ash", class: 'colorless', rarity: 'special', cost: 2, type: 'skill',
     keywords: ['exhaust'], icon: '🤝',
     effects: [
       { op: 'applyStatus', target: 'ally', status: 'strength', stacks: 2 },

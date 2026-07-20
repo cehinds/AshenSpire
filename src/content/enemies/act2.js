@@ -1,8 +1,8 @@
-// src/content/enemies/act2.js — Act II: The Grafted Court (GDD §2)
+// src/content/enemies/act2.js — Act II: The Stitched Court (GDD §2)
 //
 // The mid-spire palace — a court that stitched itself together to survive.
 // Act II escalates: bigger numbers, self-healing, and the first enemies that
-// turn YOUR mechanics against you (Bleed and Rot applied to the player —
+// turn YOUR mechanics against you (Bleed and Blight applied to the player —
 // the status model is entity-agnostic, so player-side meters just work).
 
 export const act2Enemies = [
@@ -47,10 +47,10 @@ export const act2Enemies = [
     },
   },
   {
-    id: 'graftedHound',
+    id: 'stitchedHound',
     size: 'small',
     tint: 'var(--blood)',
-    name: 'Grafted Hound',
+    name: 'Stitched Hound',
     hp: [24, 28],
     poiseMax: 8,
     art: '🐩',
@@ -75,7 +75,7 @@ export const act2Enemies = [
       dart: { intent: 'attack', damage: 4, hits: 2, weight: 50 },
       blowdart: {
         intent: 'attack', damage: 3, weight: 50,
-        effects: [{ op: 'applyStatus', target: 'player', status: 'scarletRot', stacks: 2 }],
+        effects: [{ op: 'applyStatus', target: 'player', status: 'crimsonBlight', stacks: 2 }],
       },
     },
   },
@@ -115,12 +115,12 @@ export const act2Enemies = [
     },
   },
 
-  // ---- Boss: The Grafted King (GDD §2 — phase 2 literally adds limbs) ----------
+  // ---- Boss: The Stitched King (GDD §2 — phase 2 literally adds limbs) ----------
   {
-    id: 'graftedKing',
+    id: 'stitchedKing',
     size: 'large',
     tint: 'var(--gold)',
-    name: 'The Grafted King',
+    name: 'The Stitched King',
     hp: [195, 195],
     poiseMax: 34,
     art: '👑',
@@ -136,7 +136,7 @@ export const act2Enemies = [
     },
     phases: [
       {
-        // ≤50% HP: new limbs are grafted on. The pattern changes; the rules don't.
+        // ≤50% HP: new limbs are stitched on. The pattern changes; the rules don't.
         on: 'hpBelowPct', pct: 50,
         do: [
           { op: 'applyStatus', target: 'self', status: 'strength', stacks: 2 },
