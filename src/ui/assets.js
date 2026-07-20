@@ -9,11 +9,14 @@
 // the whole UI is zoomed to fit the window (main.js applyUiScale), so larger
 // base sizes just mean a bolder board rather than overflow.
 // Sprite size tiers (the display dimensions each enemy def's `size` selects).
+// Values are in px-magnitude; emitted as rem (÷10, since :root is 62.5% → 1rem =
+// 10px) so sprites track the text-size setting. Shadow offsets stay px.
 const SIZE_TIERS = {
   small: { w: 92, h: 128, font: 44 },
   medium: { w: 132, h: 168, font: 58 },
   large: { w: 194, h: 206, font: 78 },
 };
+const rem = (px) => `${px / 10}rem`;
 
 /**
  * Enemy sprite: the Blender-rendered PNG when it exists
@@ -28,13 +31,13 @@ export function enemySprite(enemyDef) {
   const el = document.createElement('div');
   const placeholder = () => {
     el.innerHTML = '';
-    el.style.cssText = `width:${tier.w}px;height:${tier.h}px;border-radius:10px;` +
+    el.style.cssText = `width:${rem(tier.w)};height:${rem(tier.h)};border-radius:10px;` +
       `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
-      `justify-content:center;font-size:${tier.font}px;position:relative;` +
+      `justify-content:center;font-size:${rem(tier.font)};position:relative;` +
       `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
     el.textContent = enemyDef.art || '☠';
   };
-  el.style.cssText = `width:${tier.w}px;height:${tier.h}px;position:relative;` +
+  el.style.cssText = `width:${rem(tier.w)};height:${rem(tier.h)};position:relative;` +
     'display:flex;align-items:flex-end;justify-content:center;';
   const img = document.createElement('img');
   img.src = `assets/sprites/enemy_${enemyDef.id}.png`;
@@ -156,16 +159,17 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   if (!build) return null;
   const el = document.createElement('div');
   el.className = 'class-sprite';
-  el.style.cssText = 'width:150px;height:190px;display:flex;align-items:flex-end;justify-content:center;position:relative;';
+  el.style.cssText = 'width:15rem;height:19rem;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
   const fallbackToSvg = () => {
     el.innerHTML = build(tint, sigil);
     const svg = el.querySelector('svg');
     if (svg) {
-      // The class SVGs hardcode 110×140; scale them to the (larger) container so
-      // the player figure reads as boldly as the enemies (viewBox keeps ratio).
-      svg.setAttribute('width', '150');
-      svg.setAttribute('height', '190');
+      // The class SVGs hardcode a 110×140 viewBox; fill the rem-sized container
+      // (viewBox keeps ratio) so the figure reads as boldly as the enemies and
+      // tracks the text-size setting.
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
     }
   };
 
@@ -177,7 +181,7 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   const img = document.createElement('img');
   img.src = url;
   img.alt = classId;
-  img.style.cssText = 'width:150px;height:190px;object-fit:contain;image-rendering:auto;';
+  img.style.cssText = 'width:100%;height:100%;object-fit:contain;image-rendering:auto;';
   img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
   el.appendChild(img);
   // The chosen sigil rides the rendered art as a chest medallion overlay.
@@ -186,8 +190,8 @@ export function classSprite(classId, tint, sigil, tintId, style) {
     med.textContent = sigil;
     med.style.cssText =
       `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);` +
-      `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
-      'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
+      `width:2.2rem;height:2.2rem;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
+      'display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#e8dcc0;';
     el.appendChild(med);
   }
   return el;
@@ -205,8 +209,8 @@ export function playerSprite(customization = {}, classId) {
   }
   const el = document.createElement('div');
   el.style.cssText =
-    `width:150px;height:190px;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
-    'display:flex;align-items:center;justify-content:center;font-size:70px;position:relative;' +
+    `width:15rem;height:19rem;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
+    'display:flex;align-items:center;justify-content:center;font-size:7rem;position:relative;' +
     `box-shadow:0 10px 12px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.4);`;
   el.textContent = customization.glyph || '🛡';
   return el;

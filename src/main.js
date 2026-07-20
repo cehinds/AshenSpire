@@ -154,7 +154,13 @@ function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
   document.body.classList.toggle('hi-contrast', settings.highContrast === true);
-  document.body.classList.toggle('large-text', settings.largeText === true);
+  // Text size sets the root font-size %; because all type + component dimensions
+  // are rem, one value rescales the whole UI (base.css). Legacy boolean largeText
+  // maps to L. Stacks with --ui-zoom (which additionally scales px hairlines).
+  const TEXT_SIZES = { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' };
+  const tKey = TEXT_SIZES[settings.textSize] ? settings.textSize
+    : (settings.largeText === true ? 'L' : 'M');
+  document.documentElement.style.fontSize = TEXT_SIZES[tKey];
   document.body.classList.toggle('no-shake', settings.screenShake === false);
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
