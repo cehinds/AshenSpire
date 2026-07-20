@@ -3,6 +3,7 @@
 export const act1Enemies = [
   {
     id: 'wanderingSoldier',
+    size: 'medium',
     name: 'Wandering Soldier',
     hp: [22, 26],
     poiseMax: 10,
@@ -18,6 +19,8 @@ export const act1Enemies = [
   },
   {
     id: 'rotHound',
+    size: 'small',
+    tint: 'var(--rot)',
     name: 'Rot Hound',
     hp: [12, 15],
     poiseMax: 6,
@@ -29,6 +32,7 @@ export const act1Enemies = [
   },
   {
     id: 'demiBrute',
+    size: 'medium',
     name: 'Demi-Brute',
     hp: [30, 34],
     poiseMax: 16,
@@ -44,6 +48,8 @@ export const act1Enemies = [
   },
   {
     id: 'graveWisp',
+    size: 'small',
+    tint: 'var(--grace)',
     name: 'Grave Wisp',
     hp: [10, 12],
     poiseMax: 4,
@@ -63,6 +69,8 @@ export const act1Enemies = [
   // ---- Elite (SPEC §5.3) ----------------------------------------------------
   {
     id: 'crucibleAspirant',
+    size: 'large',
+    tint: 'var(--gold)',
     name: 'Crucible Aspirant',
     hp: [68, 72],
     poiseMax: 24,
@@ -88,6 +96,8 @@ export const act1Enemies = [
   // ---- Boss: The Watchful Omen (SPEC §5.3 — Margit-inspired) -----------------
   {
     id: 'watchfulOmen',
+    size: 'large',
+    tint: 'var(--blood)',
     name: 'The Watchful Omen',
     hp: [120, 120],
     poiseMax: 30,

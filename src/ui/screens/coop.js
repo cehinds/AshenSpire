@@ -15,19 +15,11 @@ import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox } from '../fx.js';
+import { nodeIcon, nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip } from '../uiContent.js';
 import { resolveCard } from '../../model/registries.js';
 
-const NODE_ICONS = { monster: '⚔', fight: '⚔', elite: '☠', shrine: '♨', merchant: '⚖', treasure: '▣', boss: '👁', unknown: '?' };
-const ACT_NAMES = { 1: 'ACT I — THE FALLOW MARCHES', 2: 'ACT II — THE GRAFTED COURT', 3: 'ACT III — THE ASHEN CROWN' };
 const COL_X = 95;
 const ROW_H = 46;
-
-function actTitle(actNumber) {
-  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
-  const loop = Math.floor((actNumber - 1) / 3);
-  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
-}
-const STATUS_TINT = { bleed: 'var(--ember)', scarletRot: 'var(--rot)', staggered: 'var(--gold)', strength: 'var(--gold)', vulnerable: 'var(--grace)', weak: 'var(--muted)', frail: 'var(--muted)' };
 
 export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   let snap = null;
@@ -175,7 +167,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const el = document.createElement('div');
       el.className = 'status-icon';
-      el.style.borderColor = STATUS_TINT[sid] || 'var(--muted)';
+      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(def.tooltip || '')}`);
       row.appendChild(el);
@@ -193,7 +185,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const poise = document.createElement('div');
       poise.className = `bar poisebar${ent.poiseMeter.value >= ent.poiseMeter.max * 0.75 ? ' full' : ''}`;
       poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (ent.poiseMeter.value / ent.poiseMeter.max) * 100)}%"></div>`;
-      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${ent.poiseMeter.value} / ${ent.poiseMeter.max} — filling this Staggers the enemy.`);
+      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${ent.poiseMeter.value} / ${ent.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
     }
     return wrap;
@@ -208,29 +201,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   }
   function intentEl(intent) {
     const el = document.createElement('div');
-    let cls = intent ? intent.kind : 'unknown';
-    let inner = '?';
-    if (!intent || !intent.moveId) { inner = '?'; }
-    else if (intent.kind === 'staggered') { inner = '✦ STAGGERED'; }
-    else if (intent.damage != null) { inner = `<span class="ic">⚔</span>${intent.hits > 1 ? `${intent.damage}×${intent.hits}` : intent.damage}${intent.delayed ? ' ⌛' : ''}`; cls = `attack${intent.delayed ? ' delayed' : ''}`; }
-    else if (intent.block != null) { inner = '<span class="ic">🛡</span>'; cls = 'block'; }
-    else if (intent.kind === 'buff') { inner = '<span class="ic">↑</span>'; }
-    else if (intent.kind === 'debuff') { inner = '<span class="ic">☾</span>'; }
-    el.className = `intent ${cls}`;
-    el.innerHTML = inner;
-    attachTooltip(el, () => {
-      if (!intent || !intent.moveId) return '<div class="tt-title">Intent: Unknown</div>';
-      if (intent.kind === 'staggered') return '<div class="tt-title">Staggered</div>Poise broken: its turn is skipped and it takes +50% damage.';
-      if (intent.damage != null) {
-        let s = `<div class="tt-title">Intent: Attack</div>Attacking each hero for <b>${intent.damage}${intent.hits > 1 ? ` × ${intent.hits}` : ''}</b> damage.`;
-        if (intent.delayed) s += '<br><b>Delayed:</b> it holds this turn and strikes later. Stagger cancels it.';
-        return s;
-      }
-      if (intent.block != null) return '<div class="tt-title">Intent: Defend</div>Gaining Block.';
-      if (intent.kind === 'buff') return '<div class="tt-title">Intent: Buff</div>Strengthening itself.';
-      if (intent.kind === 'debuff') return '<div class="tt-title">Intent: Debuff</div>Hindering the party.';
-      return '<div class="tt-title">Intent</div>';
-    });
+    const badge = intentBadge(intent);
+    el.className = `intent ${badge.cls}`;
+    el.innerHTML = badge.html;
+    attachTooltip(el, () => intentTooltip(intent, { victim: 'each hero' }));
     return el;
   }
 
@@ -425,11 +399,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const pips = voters.length
         ? `<text class="vote-pips" x="${x(n.col)}" y="${y(n.floor) - r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${voters.map((pid) => classGlyph((snap.party.find((p) => p.id === pid) || {}).classId)).join('')}</text>`
         : '';
-      el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${NODE_ICONS[n.type] || '?'}</text>${pips}`;
-      attachTooltip(el, () => {
-        const names = { monster: 'Monster — a normal fight', fight: 'Monster — a normal fight', elite: 'Elite — a hard fight with a relic reward', boss: 'The act boss', shrine: 'Shrine of Grace — rest, smith, or mend an ally', treasure: 'Treasure — a free relic each', merchant: 'Merchant', unknown: 'Unknown — could be anything' };
-        return `<div class="tt-title">${esc(names[n.type] || n.type)}</div>${isReachable ? 'Click to vote for this path.' : ''}`;
-      });
+      el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(n.type)}</text>${pips}`;
+      attachTooltip(el, () => `<div class="tt-title">${esc(nodeName(n.type))}</div>${nodeBlurb(n.type)}${isReachable ? '<br>Click to vote for this path.' : ''}`);
       if (isReachable) el.addEventListener('click', () => send({ t: 'chooseNode', nodeId: n.id }));
       g.appendChild(el);
     }

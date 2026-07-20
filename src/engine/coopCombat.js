@@ -36,9 +36,11 @@ import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/stat
 
 const QUEUE_GUARD = 10000;
 
-/** Co-op enemy HP scaling by live headcount — sub-linear, StS2-flavoured. */
-export function coopHpMult(headcount) {
-  return 1 + 0.6 * Math.max(0, headcount - 1); // 1p ×1.0, 2p ×1.6, 3p ×2.2
+// Co-op enemy HP scaling by live headcount — sub-linear, StS2-flavoured. The
+// factor comes from balance.coop.headcountHpFactor; the default keeps the pure
+// function usable (tests) and matches that balance value.
+export function coopHpMult(headcount, factor = 0.6) {
+  return 1 + factor * Math.max(0, headcount - 1); // 1p ×1.0, 2p ×1.6, 3p ×2.2, 4p ×2.8
 }
 
 /**
@@ -79,7 +81,8 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
   C.nextInstanceId = () => `gen${++C._idCounter}`;
 
   const headcount = players.length;
-  C.baseHpMult = coopHpMult(headcount) * extraHpMult;
+  C.hpFactor = (registries.balance.coop && registries.balance.coop.headcountHpFactor) || 0.6;
+  C.baseHpMult = coopHpMult(headcount, C.hpFactor) * extraHpMult;
 
   // Enemies (HP rolled on 'enemyHP', then scaled — determinism preserved).
   enemyIds.forEach((enemyId, i) => {
@@ -185,7 +188,7 @@ export function leaveCombat(C, playerId) {
 
 // Enemy HP tracks the live headcount: rescale current + max by the mult delta.
 function rescaleEnemies(C) {
-  const target = coopHpMult(Math.max(1, connectedCount(C))) * C.extraHpMult;
+  const target = coopHpMult(Math.max(1, connectedCount(C)), C.hpFactor) * C.extraHpMult;
   const ratio = target / C.baseHpMult;
   if (Math.abs(ratio - 1) < 1e-9) return;
   for (const e of C.enemies) {

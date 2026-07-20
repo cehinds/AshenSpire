@@ -11,6 +11,7 @@ import { openPileModal } from '../components/piles.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline } from '../fx.js';
+import { intentBadge, intentTooltip } from '../uiContent.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { overlayIsOpen } from '../components/overlay.js';
@@ -297,7 +298,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const el = document.createElement('div');
       el.className = 'status-icon';
-      el.style.borderColor = statusTint(sid);
+      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
       attachTooltip(el, () => {
         let extra = '';
@@ -308,13 +309,6 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       row.appendChild(el);
     }
     return row;
-  }
-
-  function statusTint(sid) {
-    return (
-      { bleed: 'var(--ember)', scarletRot: 'var(--rot)', staggered: 'var(--gold)', strength: 'var(--gold)', vulnerable: 'var(--grace)', weak: 'var(--muted)', frail: 'var(--muted)' }[sid] ||
-      'var(--muted)'
-    );
   }
 
   function meterBars(entity) {
@@ -329,14 +323,18 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       const poise = document.createElement('div');
       poise.className = `bar poisebar${entity.poiseMeter.value >= entity.poiseMeter.max * 0.75 ? ' full' : ''}`;
       poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (entity.poiseMeter.value / entity.poiseMeter.max) * 100)}%"></div>`;
-      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${entity.poiseMeter.value} / ${entity.poiseMeter.max} — filling this Staggers the enemy: it skips a turn and takes +50% damage.`);
+      // Meter-bar tooltips render the STATUS def's own text (data) so they can't
+      // drift from the balance/formula numbers.
+      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${entity.poiseMeter.value} / ${entity.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
       const bleedInst = entity.statuses.bleed;
       if (bleedInst && bleedInst.meter && bleedInst.meter.value > 0) {
         const bl = document.createElement('div');
         bl.className = 'bar bleedbar';
         bl.innerHTML = `<div class="fill" style="width:${Math.min(100, (bleedInst.meter.value / bleedInst.meter.max) * 100)}%"></div>`;
-        attachTooltip(bl, () => `<div class="tt-title">Bleed</div>${bleedInst.meter.value} / ${bleedInst.meter.max} — bursts at the threshold for 15% max HP (min 8, max 35).`);
+        const bleedDef = registries.statuses.get('bleed');
+        attachTooltip(bl, () => `<div class="tt-title">${esc(bleedDef.name)}</div>${bleedInst.meter.value} / ${bleedInst.meter.max}. ${esc(bleedDef.tooltip || '')}`);
         wrap.appendChild(bl);
       }
     }
@@ -390,41 +388,11 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   function intentEl(enemy) {
     const iv = previewIntent(combat, enemy.id);
     const el = document.createElement('div');
-    let cls = iv.kind;
-    let inner = '';
-    if (iv.kind === 'staggered') {
-      inner = '✦ STAGGERED';
-    } else if (iv.kind === 'attack') {
-      inner = `<span class="ic">⚔</span>${iv.hits > 1 ? `${iv.damage}×${iv.hits}` : iv.damage}`;
-      if (iv.delayed) inner += ' ⌛';
-      cls = `attack${iv.delayed ? ' delayed' : ''}`;
-    } else if (iv.kind === 'block') {
-      inner = '<span class="ic">🛡</span>';
-    } else if (iv.kind === 'buff') {
-      inner = '<span class="ic">↑</span>';
-    } else if (iv.kind === 'debuff') {
-      inner = '<span class="ic">☾</span>';
-    } else {
-      inner = '?';
-    }
-    el.className = `intent ${cls}`;
-    el.innerHTML = inner;
-    attachTooltip(el, () => intentTooltip(iv, enemy));
+    const badge = intentBadge(iv);
+    el.className = `intent ${badge.cls}`;
+    el.innerHTML = badge.html;
+    attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
     return el;
-  }
-
-  function intentTooltip(iv, enemy) {
-    if (iv.kind === 'staggered') return `<div class="tt-title">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.`;
-    if (iv.kind === 'attack') {
-      let t = `<div class="tt-title">Intent: Attack</div>Attacking for <b>${iv.damage}${iv.hits > 1 ? ` × ${iv.hits} (${iv.totalDamage} total)` : ''}</b> damage (modifiers included).`;
-      if (iv.pending) t += '<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.';
-      else if (iv.delayed) t += '<br><b>Delayed:</b> it will hold this turn and strike the next. Stagger cancels it.';
-      return t;
-    }
-    if (iv.kind === 'block') return `<div class="tt-title">Intent: Defend</div>Gaining Block.`;
-    if (iv.kind === 'buff') return `<div class="tt-title">Intent: Buff</div>Strengthening itself.`;
-    if (iv.kind === 'debuff') return `<div class="tt-title">Intent: Debuff</div>Hindering you.`;
-    return `<div class="tt-title">Intent: Unknown</div>`;
   }
 
   function renderEnemies() {

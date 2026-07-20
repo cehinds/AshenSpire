@@ -1138,7 +1138,7 @@ const { openSettings } = require("src/ui/screens/settings.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
 const { initInput, setBindings, setKeyBindings } = require("src/ui/input.js");
-const { setSpritesEnabled, classGlyph } = require("src/ui/assets.js");
+const { setSpritesEnabled, classGlyph, setClassGlyphs } = require("src/ui/assets.js");
 const { mountLobby } = require("src/ui/screens/lobby.js");
 const { mountCoop } = require("src/ui/screens/coop.js");
 const { lanInfo } = require("src/net/lan.js");
@@ -1161,6 +1161,7 @@ if (!validation.ok) {
 }
 
 const registries = createRegistries(contentBundle);
+setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
 function pickStorage() {
   try {
@@ -1351,7 +1352,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
     run.deck = createDeck(draftBaseIds(), createIdGen('rc'));
   }
   if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
-  if (mods.hoarder) run.runes += 250;
+  if (mods.hoarder) run.runes += registries.balance.customMods.hoarderRunes;
 
   if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
   startClimb();
@@ -1412,7 +1413,7 @@ function advanceAct() {
   run.lastEncounters = [];
   // Full heal between acts — halved under the "Scarce Grace" custom rule.
   if (run.custom && activeMods(run.custom).lessHealing) {
-    run.hp = Math.min(run.maxHp, run.hp + Math.floor((run.maxHp - run.hp) * 0.5));
+    run.hp = Math.min(run.maxHp, run.hp + Math.floor((run.maxHp - run.hp) * registries.balance.customMods.lessHealingMult));
   } else {
     run.hp = run.maxHp;
   }
@@ -1679,8 +1680,9 @@ function combatMods(pool) {
   let hpMult = 1;
   const enemyStatuses = [];
   const playerStatuses = [];
-  if ((pool === 'elite' || pool === 'boss') && mods.toughElites) hpMult *= 1.3;
-  if (pool === 'boss' && mods.bigBosses) hpMult *= 1.5;
+  const cm = registries.balance.customMods;
+  if ((pool === 'elite' || pool === 'boss') && mods.toughElites) hpMult *= cm.toughElitesHpMult;
+  if (pool === 'boss' && mods.bigBosses) hpMult *= cm.bigBossesHpMult;
   if (mods.deadlyEnemies) enemyStatuses.push({ status: 'strength', stacks: 1 });
   if (mods.glassCannon) playerStatuses.push({ status: 'glassCannon', stacks: 1 });
   if (mods.endless) {
@@ -1823,15 +1825,15 @@ function chaosRewardsOn() {
 function shopPriceMult() {
   const mods = run.custom ? activeMods(run.custom) : {};
   let m = 1;
-  if (mods.expensiveShops) m *= 1.5;
-  if (mods.hoarder) m *= 2;
+  if (mods.expensiveShops) m *= registries.balance.customMods.expensiveShopsMult;
+  if (mods.hoarder) m *= registries.balance.customMods.hoarderShopMult;
   return m;
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
 function showRest() {
   audio.music('rest');
-  const healMult = run.custom && activeMods(run.custom).lessHealing ? 0.5 : 1;
+  const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
   mountRest(app, {
     registries,
     run,
@@ -2133,6 +2135,28 @@ const balance = {
     rewardChoices: 3,
     rarityWeights: { common: 60, uncommon: 35, rare: 5 },
   },
+
+  // ---- Tarnished Together (co-op) ------------------------------------------
+  coop: {
+    headcountHpFactor: 0.6, // enemy HP ×(1 + factor×(headcount−1)): 2p ×1.6, 3p ×2.2, 4p ×2.8
+    mendHealPct: 30, // Mend at a shrine heals an ally this % of their max HP
+    reviveHp: 1, // downed-but-not-dead members revive next floor at this HP (StS2)
+  },
+
+  // ---- Endless Spire + Custom Climb rule magnitudes ------------------------
+  endless: {
+    hpPerLoop: 0.35, // +% enemy HP per completed cycle
+    strPerLoop: 1, // +Strength per completed cycle
+    actsPerCycle: 3, // acts before the spire loops (also the act count)
+  },
+  customMods: {
+    toughElitesHpMult: 1.3, // Tough Elites: elites & bosses ×HP
+    bigBossesHpMult: 1.5, // Dread Bosses: act bosses ×HP
+    hoarderRunes: 250, // Hoarder: bonus starting runes
+    expensiveShopsMult: 1.5, // Greedy Merchants: ×shop price
+    hoarderShopMult: 2, // Hoarder: ×shop price
+    lessHealingMult: 0.5, // Scarce Grace: ×healing (shrine rest + between-act)
+  },
 };
 
 
@@ -2150,6 +2174,7 @@ const statuses = [
   // ---- StS layer (SPEC §4.4 table) ----------------------------------------
   {
     id: 'strength',
+    tint: 'var(--gold)',
     name: 'Strength',
     icon: '↑',
     stackMode: 'add',
@@ -2168,6 +2193,7 @@ const statuses = [
   },
   {
     id: 'weak',
+    tint: 'var(--muted)',
     name: 'Weak',
     icon: '↓',
     stackMode: 'add',
@@ -2177,6 +2203,7 @@ const statuses = [
   },
   {
     id: 'vulnerable',
+    tint: 'var(--grace)',
     name: 'Vulnerable',
     icon: 'V',
     stackMode: 'add',
@@ -2186,6 +2213,7 @@ const statuses = [
   },
   {
     id: 'frail',
+    tint: 'var(--muted)',
     name: 'Frail',
     icon: '✂',
     stackMode: 'add',
@@ -2197,6 +2225,7 @@ const statuses = [
   // ---- Elden Ring layer (SPEC §4.4 — build-up, not spam) -------------------
   {
     id: 'bleed',
+    tint: 'var(--ember)',
     name: 'Bleed',
     icon: '💧',
     stackMode: 'add',
@@ -2217,6 +2246,7 @@ const statuses = [
   },
   {
     id: 'scarletRot',
+    tint: 'var(--rot)',
     name: 'Scarlet Rot',
     icon: '❀',
     stackMode: 'add',
@@ -2260,6 +2290,7 @@ const statuses = [
   },
   {
     id: 'staggered',
+    tint: 'var(--gold)',
     name: 'Staggered',
     icon: '✦',
     stackMode: 'refresh',
@@ -5519,6 +5550,7 @@ Object.assign(module.exports, { flasks });
 const act1Enemies = [
   {
     id: 'wanderingSoldier',
+    size: 'medium',
     name: 'Wandering Soldier',
     hp: [22, 26],
     poiseMax: 10,
@@ -5534,6 +5566,8 @@ const act1Enemies = [
   },
   {
     id: 'rotHound',
+    size: 'small',
+    tint: 'var(--rot)',
     name: 'Rot Hound',
     hp: [12, 15],
     poiseMax: 6,
@@ -5545,6 +5579,7 @@ const act1Enemies = [
   },
   {
     id: 'demiBrute',
+    size: 'medium',
     name: 'Demi-Brute',
     hp: [30, 34],
     poiseMax: 16,
@@ -5560,6 +5595,8 @@ const act1Enemies = [
   },
   {
     id: 'graveWisp',
+    size: 'small',
+    tint: 'var(--grace)',
     name: 'Grave Wisp',
     hp: [10, 12],
     poiseMax: 4,
@@ -5579,6 +5616,8 @@ const act1Enemies = [
   // ---- Elite (SPEC §5.3) ----------------------------------------------------
   {
     id: 'crucibleAspirant',
+    size: 'large',
+    tint: 'var(--gold)',
     name: 'Crucible Aspirant',
     hp: [68, 72],
     poiseMax: 24,
@@ -5604,6 +5643,8 @@ const act1Enemies = [
   // ---- Boss: The Watchful Omen (SPEC §5.3 — Margit-inspired) -----------------
   {
     id: 'watchfulOmen',
+    size: 'large',
+    tint: 'var(--blood)',
     name: 'The Watchful Omen',
     hp: [120, 120],
     poiseMax: 30,
@@ -5652,6 +5693,8 @@ Object.assign(module.exports, { act1Enemies });
 const act2Enemies = [
   {
     id: 'gildedKnight',
+    size: 'medium',
+    tint: 'var(--gold)',
     name: 'Gilded Knight',
     hp: [42, 46],
     poiseMax: 18,
@@ -5667,6 +5710,8 @@ const act2Enemies = [
   },
   {
     id: 'courtSurgeon',
+    size: 'medium',
+    tint: 'var(--grace)',
     name: 'Court Surgeon',
     hp: [30, 34],
     poiseMax: 10,
@@ -5688,6 +5733,8 @@ const act2Enemies = [
   },
   {
     id: 'graftedHound',
+    size: 'small',
+    tint: 'var(--blood)',
     name: 'Grafted Hound',
     hp: [24, 28],
     poiseMax: 8,
@@ -5703,6 +5750,8 @@ const act2Enemies = [
   },
   {
     id: 'courtMarionette',
+    size: 'small',
+    tint: 'var(--rot)',
     name: 'Court Marionette',
     hp: [16, 18],
     poiseMax: 6,
@@ -5717,6 +5766,8 @@ const act2Enemies = [
   },
   {
     id: 'livingArmor',
+    size: 'medium',
+    tint: 'var(--frost)',
     name: 'Living Armor',
     hp: [36, 40],
     poiseMax: 22,
@@ -5731,6 +5782,8 @@ const act2Enemies = [
   // ---- Elite ------------------------------------------------------------------
   {
     id: 'courtDuelist',
+    size: 'large',
+    tint: 'var(--frost)',
     name: 'Duelist of the Court',
     hp: [90, 96],
     poiseMax: 26,
@@ -5750,6 +5803,8 @@ const act2Enemies = [
   // ---- Boss: The Grafted King (GDD §2 — phase 2 literally adds limbs) ----------
   {
     id: 'graftedKing',
+    size: 'large',
+    tint: 'var(--gold)',
     name: 'The Grafted King',
     hp: [195, 195],
     poiseMax: 34,
@@ -5794,6 +5849,8 @@ Object.assign(module.exports, { act2Enemies });
 const act3Enemies = [
   {
     id: 'ashRevenant',
+    size: 'medium',
+    tint: 'var(--ember)',
     name: 'Ash Revenant',
     hp: [34, 38],
     poiseMax: 10,
@@ -5811,6 +5868,8 @@ const act3Enemies = [
   },
   {
     id: 'graceStarvedPilgrim',
+    size: 'small',
+    tint: 'var(--grace)',
     name: 'Grace-Starved Pilgrim',
     hp: [28, 32],
     poiseMax: 8,
@@ -5828,6 +5887,8 @@ const act3Enemies = [
   },
   {
     id: 'valkyrieShade',
+    size: 'medium',
+    tint: 'var(--blood)',
     name: 'Valkyrie Shade',
     hp: [40, 44],
     poiseMax: 14,
@@ -5842,6 +5903,8 @@ const act3Enemies = [
   },
   {
     id: 'charredColossus',
+    size: 'large',
+    tint: 'var(--ember)',
     name: 'Charred Colossus',
     hp: [55, 60],
     poiseMax: 30,
@@ -5859,6 +5922,8 @@ const act3Enemies = [
   // ---- Elite ------------------------------------------------------------------
   {
     id: 'crucibleLord',
+    size: 'large',
+    tint: 'var(--gold)',
     name: 'Crucible Lord',
     hp: [130, 140],
     poiseMax: 30,
@@ -5884,6 +5949,8 @@ const act3Enemies = [
   // ---- Final boss: The Rot Valkyrie (GDD §2, SPEC §5.3/§10) ---------------------
   {
     id: 'rotValkyrie',
+    size: 'large',
+    tint: 'var(--rot)',
     name: 'The Rot Valkyrie',
     hp: [250, 250],
     poiseMax: 36,
@@ -6483,6 +6550,7 @@ Object.assign(module.exports, { events });
 const classes = [
   {
     id: 'vagabond',
+    glyph: '⚔',
     name: 'Vagabond',
     maxHp: 84,
     startingRelic: 'tarnishedMedallion',
@@ -6509,6 +6577,7 @@ const classes = [
   },
   {
     id: 'astrologer',
+    glyph: '☄',
     name: 'Astrologer',
     maxHp: 72,
     startingRelic: 'glintstoneShard',
@@ -6533,6 +6602,7 @@ const classes = [
   },
   {
     id: 'prophet',
+    glyph: '☀',
     name: 'Prophet',
     maxHp: 78,
     startingRelic: 'goldFigurine',
@@ -7582,6 +7652,7 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     icon: opt(str),
+    tint: opt(str), // status-pip accent CSS color (display)
     stackMode: en(...STACK_MODES),
     decay: union(en('none', 'perTurnEnd', 'onConsume'), obj({ duration: int })),
     meter: opt(obj({ max: int, growthMult: num, onFill: effects })),
@@ -7617,6 +7688,8 @@ const SCHEMAS = Object.freeze({
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),
     art: opt(str),
+    size: opt(en('small', 'medium', 'large')), // sprite size tier (display)
+    tint: opt(str), // border/accent CSS color (display)
     script: opt(ref('scripts')),
   }),
 
@@ -7659,6 +7732,7 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
+    glyph: opt(str), // class sigil glyph (display)
     startingRelic: ref('relics'),
     startingDeck: arr(ref('cards')),
     cardPool: arr(ref('cards')),
@@ -8190,6 +8264,9 @@ Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInsta
 "src/content/customMods.js": function (module, exports, require) {
 // src/content/customMods.js — Custom Climb modifiers (data only).
 //
+// Tuning magnitudes live in balance.js (balance.endless / balance.customMods);
+// the endless constants below re-export from there so there is one source.
+//
 // A tailored take on Slay the Spire 2's custom mode. Three groups:
 //   • DIFFICULTY — harder rules; the Ascension ladder just enables the first N
 //     of these in ASCENSION_ORDER, so "Ascension 4" == the four hardest-first
@@ -8198,6 +8275,8 @@ Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInsta
 //   • DECK_MODES — how your starting deck is built.
 // The orchestrator (main.js) reads run.custom.mods[id] at the relevant hook;
 // nothing here is engine-specific.
+
+const { balance } = require("src/content/balance.js");
 
 const DIFFICULTY_MODS = [
   { id: 'toughElites', label: 'Tough Elites', desc: 'Elites and bosses have +30% HP.' },
@@ -8248,11 +8327,12 @@ function isCustomRun(custom) {
 // Acts beyond 3 reuse the content of act ((n-1) % 3) + 1; `loop` counts
 // completed 3-act cycles (0 on the first pass) and drives per-cycle scaling.
 // Pure math so main.js, runsim, and tests all agree on the same numbers.
-const ENDLESS_HP_PER_LOOP = 0.35; // +35% enemy HP per completed cycle
-const ENDLESS_STR_PER_LOOP = 1; // +1 enemy Strength per completed cycle
+const ENDLESS_HP_PER_LOOP = balance.endless.hpPerLoop;
+const ENDLESS_STR_PER_LOOP = balance.endless.strPerLoop;
 
 function endlessActInfo(actNumber) {
-  return { contentAct: ((actNumber - 1) % 3) + 1, loop: Math.floor((actNumber - 1) / 3) };
+  const per = balance.endless.actsPerCycle;
+  return { contentAct: ((actNumber - 1) % per) + 1, loop: Math.floor((actNumber - 1) / per) };
 }
 
 // Resolve the effective active-mod set: explicit toggles OR ascension-enabled.
@@ -9708,7 +9788,7 @@ function executeRunEffects({ run, registries, rng }, effects) {
     player: facade,
     enemies: [],
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
-    handMax: 10,
+    handMax: registries.balance.handMax,
     queue: [],
     eventLog: events,
     _buffer: null,
@@ -11193,38 +11273,11 @@ Object.assign(module.exports, { KEEPSAKES });
 // Sizes are generous on purpose — the board reads best when sprites fill it, and
 // the whole UI is zoomed to fit the window (main.js applyUiScale), so larger
 // base sizes just mean a bolder board rather than overflow.
+// Sprite size tiers (the display dimensions each enemy def's `size` selects).
 const SIZE_TIERS = {
   small: { w: 92, h: 128, font: 44 },
   medium: { w: 132, h: 168, font: 58 },
   large: { w: 194, h: 206, font: 78 },
-};
-
-// Enemy id → size tier (display only; defaults to medium). Bosses & the biggest
-// bruisers read 'large'; fast/fragile minions 'small'. All three acts tuned so
-// no enemy falls back to the generic default.
-const ENEMY_TIER = {
-  // Act 1
-  rotHound: 'small', graveWisp: 'small', wanderingSoldier: 'medium', demiBrute: 'medium',
-  crucibleAspirant: 'large', watchfulOmen: 'large',
-  // Act 2 — The Grafted Court
-  courtMarionette: 'small', graftedHound: 'small', courtSurgeon: 'medium',
-  gildedKnight: 'medium', livingArmor: 'medium', courtDuelist: 'large', graftedKing: 'large',
-  // Act 3 — The Ashen Crown
-  graceStarvedPilgrim: 'small', valkyrieShade: 'medium', ashRevenant: 'medium',
-  charredColossus: 'large', crucibleLord: 'large', rotValkyrie: 'large',
-};
-
-// Enemy id → border tint (thematic: blood=Bleed, rot=Scarlet Rot, gold=elite/boss
-// radiance, frost=armor, grace=spectral, ember=ash). Defaults to var(--line-soft).
-const ENEMY_TINT = {
-  // Act 1
-  graveWisp: 'var(--grace)', rotHound: 'var(--rot)', crucibleAspirant: 'var(--gold)', watchfulOmen: 'var(--blood)',
-  // Act 2
-  gildedKnight: 'var(--gold)', courtSurgeon: 'var(--grace)', graftedHound: 'var(--blood)',
-  courtMarionette: 'var(--rot)', livingArmor: 'var(--frost)', courtDuelist: 'var(--frost)', graftedKing: 'var(--gold)',
-  // Act 3
-  ashRevenant: 'var(--ember)', graceStarvedPilgrim: 'var(--grace)', valkyrieShade: 'var(--blood)',
-  charredColossus: 'var(--ember)', crucibleLord: 'var(--gold)', rotValkyrie: 'var(--rot)',
 };
 
 /**
@@ -11235,8 +11288,8 @@ const ENEMY_TINT = {
  * placeholder, so content can ship art-less.
  */
 function enemySprite(enemyDef) {
-  const tier = SIZE_TIERS[ENEMY_TIER[enemyDef.id] || 'medium'];
-  const tint = ENEMY_TINT[enemyDef.id] || 'var(--line-soft)';
+  const tier = SIZE_TIERS[enemyDef.size || 'medium'];
+  const tint = enemyDef.tint || 'var(--line-soft)';
   const el = document.createElement('div');
   const placeholder = () => {
     el.innerHTML = '';
@@ -11429,12 +11482,20 @@ function tintCss(tintId) {
   return t ? t.css : 'var(--gold)';
 }
 
+// Class sigil glyphs come from the class defs (data). main.js registers them at
+// boot via setClassGlyphs so classGlyph(id) stays a cheap synchronous lookup for
+// its many call sites; unknown classes fall back to the generic sigil.
+let classGlyphs = {};
+function setClassGlyphs(classes) {
+  classGlyphs = {};
+  for (const c of classes || []) if (c.glyph) classGlyphs[c.id] = c.glyph;
+}
 function classGlyph(classId) {
-  return { vagabond: '⚔', astrologer: '☄', prophet: '☀' }[classId] || '❖';
+  return classGlyphs[classId] || '❖';
 }
 
 
-Object.assign(module.exports, { enemySprite, PORTRAIT_GLYPHS, PORTRAIT_TINTS, setSpritesEnabled, spritesAreEnabled, SPRITE_STYLES, classSprite, playerSprite, tintCss, classGlyph });
+Object.assign(module.exports, { enemySprite, PORTRAIT_GLYPHS, PORTRAIT_TINTS, setSpritesEnabled, spritesAreEnabled, SPRITE_STYLES, classSprite, playerSprite, tintCss, setClassGlyphs, classGlyph });
 
 },
 "src/ui/screens/customRun.js": function (module, exports, require) {
@@ -11766,34 +11827,10 @@ const { overlayIsOpen } = require("src/ui/components/overlay.js");
 const { matchAction, isEngaged, focusFirst } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
 const { classGlyph, tintCss } = require("src/ui/assets.js");
-
-const ICONS = {
-  monster: '⚔',
-  event: '?',
-  elite: '☠',
-  shrine: '♨',
-  merchant: '⚖',
-  treasure: '▣',
-  boss: '👁',
-  fight: '⚔',
-};
+const { nodeIcon, nodeBlurb, actTitle } = require("src/ui/uiContent.js");
 
 const COL_X = 95;
 const ROW_H = 46;
-
-const ACT_NAMES = {
-  1: 'ACT I — THE FALLOW MARCHES',
-  2: 'ACT II — THE GRAFTED COURT',
-  3: 'ACT III — THE ASHEN CROWN',
-};
-
-// Endless Spire: acts past 3 reuse the act 1-3 names with a cycle marker
-// ("ACT I — THE FALLOW MARCHES · CYCLE 2" on act 4, and so on).
-function actTitle(actNumber) {
-  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
-  const loop = Math.floor((actNumber - 1) / 3);
-  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
-}
 
 // Map zoom levels (%) selectable in-view and defaulted from settings.
 const ZOOM_STEPS = [1, 1.15, 1.3, 1.5, 1.75, 2];
@@ -11906,7 +11943,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
     // Reachable nodes get a rhythmic pulsing halo so the next choices read at
     // a glance; the halo is inert when reduced-motion is set (CSS handles it).
     const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
-    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${ICONS[shownType] || '?'}</text>`;
+    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>`;
     if (isReachable) el.addEventListener('click', () => onPick(n.id));
     attachTooltip(el, () => nodeTooltip(shownType, n, revealed));
     g.appendChild(el);
@@ -12087,17 +12124,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
 }
 
 function nodeTooltip(type, node, revealed) {
-  const names = {
-    monster: 'Monster — a fight, runes, and a card reward.',
-    event: 'Unknown — an event, a fight, a shrine… who can say.',
-    elite: 'Elite — dangerous. Drops a relic.',
-    shrine: 'Shrine of Grace — rest (heal) or smith (upgrade a card).',
-    merchant: 'Merchant — cards, relics, flasks, card removal.',
-    treasure: 'Treasure — a relic, free.',
-    boss: 'The Watchful Omen. He has been waiting.',
-    fight: 'An ambush revealed by the Stonesword Key.',
-  };
-  let t = `<div class="tt-title">Floor ${node.floor}</div>${names[type] || ''}`;
+  let t = `<div class="tt-title">Floor ${node.floor}</div>${nodeBlurb(type)}`;
   if (revealed) t += '<br><i>Revealed by the Stonesword Key.</i>';
   return t;
 }
@@ -13373,6 +13400,90 @@ if (typeof window !== 'undefined') {
 Object.assign(module.exports, { setHintMode, hintBarHtml, refreshHintBars });
 
 },
+"src/ui/uiContent.js": function (module, exports, require) {
+// src/ui/uiContent.js — shared UI presentation data.
+//
+// The map, combat, and co-op screens all draw the same things — map node
+// types, act titles, enemy intents. These used to be hardcoded (and drifting)
+// in each screen. This is the single source so their icons, labels, and prose
+// can't diverge. Pure presentation data + tiny pure helpers, no game state.
+
+// ---- map node types ---------------------------------------------------------
+const NODE_TYPES = {
+  monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — runes and a card reward.' },
+  fight: { icon: '⚔', name: 'Monster', blurb: 'A fight — runes and a card reward.' },
+  elite: { icon: '☠', name: 'Elite', blurb: 'A hard fight. Drops a relic.' },
+  boss: { icon: '👁', name: 'Boss', blurb: 'The act boss.' },
+  shrine: { icon: '♨', name: 'Shrine of Grace', blurb: 'Rest (heal), smith (upgrade a card), or mend an ally.' },
+  merchant: { icon: '⚖', name: 'Merchant', blurb: 'Cards, relics, flasks, card removal.' },
+  treasure: { icon: '▣', name: 'Treasure', blurb: 'A relic, free.' },
+  event: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
+  unknown: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
+};
+const nodeIcon = (type) => (NODE_TYPES[type] || {}).icon || '?';
+const nodeName = (type) => (NODE_TYPES[type] || {}).name || String(type);
+const nodeBlurb = (type) => (NODE_TYPES[type] || {}).blurb || '';
+
+// ---- act titles -------------------------------------------------------------
+const ACT_NAMES = {
+  1: 'ACT I — THE FALLOW MARCHES',
+  2: 'ACT II — THE GRAFTED COURT',
+  3: 'ACT III — THE ASHEN CROWN',
+};
+// Endless Spire: acts past 3 reuse the act 1-3 names with a "· CYCLE n" marker.
+function actTitle(actNumber) {
+  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
+  const loop = Math.floor((actNumber - 1) / 3);
+  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
+}
+
+// ---- enemy intents ----------------------------------------------------------
+// `iv` is a preview/snapshot intent:
+//   { kind, moveId?, damage?, hits?, block?, delayed?, pending?, totalDamage? }
+const INTENT_ICONS = { attack: '⚔', block: '🛡', buff: '↑', debuff: '☾', staggered: '✦', unknown: '?' };
+
+// Solo (previewIntent) supplies { kind, damage, hits, block, delayed, pending,
+// totalDamage } and marks unknown via kind:'unknown'; the co-op snapshot intent
+// supplies the same fields plus moveId (null when unknown). These helpers key on
+// kind + field presence so both shapes render identically.
+const isUnknownIntent = (iv) => !iv || iv.kind === 'unknown' || iv.moveId === null;
+
+/** The badge shown over an enemy → { cls, html }. */
+function intentBadge(iv) {
+  if (isUnknownIntent(iv)) return { cls: 'unknown', html: '?' };
+  if (iv.kind === 'staggered') return { cls: 'staggered', html: '✦ STAGGERED' };
+  if (iv.damage != null) {
+    const n = iv.hits > 1 ? `${iv.damage}×${iv.hits}` : `${iv.damage}`;
+    return { cls: `attack${iv.delayed ? ' delayed' : ''}`, html: `<span class="ic">${INTENT_ICONS.attack}</span>${n}${iv.delayed ? ' ⌛' : ''}` };
+  }
+  if (iv.block != null) return { cls: 'block', html: `<span class="ic">${INTENT_ICONS.block}</span>` };
+  if (iv.kind === 'buff') return { cls: 'buff', html: `<span class="ic">${INTENT_ICONS.buff}</span>` };
+  if (iv.kind === 'debuff') return { cls: 'debuff', html: `<span class="ic">${INTENT_ICONS.debuff}</span>` };
+  return { cls: iv.kind || 'unknown', html: '?' };
+}
+
+/** Intent hover tooltip. `victim` names who attacks/debuffs hit ('you' solo,
+ *  'each hero' in co-op). Reads totalDamage/pending when the caller has them. */
+function intentTooltip(iv, { victim = 'you' } = {}) {
+  if (isUnknownIntent(iv)) return '<div class="tt-title">Intent: Unknown</div>';
+  if (iv.kind === 'staggered') return `<div class="tt-title">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.`;
+  if (iv.damage != null) {
+    const total = iv.totalDamage != null && iv.hits > 1 ? ` (${iv.totalDamage} total)` : '';
+    let t = `<div class="tt-title">Intent: Attack</div>Attacking ${victim} for <b>${iv.damage}${iv.hits > 1 ? ` × ${iv.hits}${total}` : ''}</b> damage (modifiers included).`;
+    if (iv.pending) t += '<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.';
+    else if (iv.delayed) t += '<br><b>Delayed:</b> it holds this turn and strikes the next. Stagger cancels it.';
+    return t;
+  }
+  if (iv.block != null) return '<div class="tt-title">Intent: Defend</div>Gaining Block.';
+  if (iv.kind === 'buff') return '<div class="tt-title">Intent: Buff</div>Strengthening itself.';
+  if (iv.kind === 'debuff') return `<div class="tt-title">Intent: Debuff</div>Hindering ${victim}.`;
+  return '<div class="tt-title">Intent: Unknown</div>';
+}
+
+
+Object.assign(module.exports, { NODE_TYPES, nodeIcon, nodeName, nodeBlurb, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip });
+
+},
 "src/ui/screens/combat.js": function (module, exports, require) {
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
@@ -13387,6 +13498,7 @@ const { openPileModal } = require("src/ui/components/piles.js");
 const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline } = require("src/ui/fx.js");
+const { intentBadge, intentTooltip } = require("src/ui/uiContent.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { overlayIsOpen } = require("src/ui/components/overlay.js");
@@ -13673,7 +13785,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const el = document.createElement('div');
       el.className = 'status-icon';
-      el.style.borderColor = statusTint(sid);
+      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
       attachTooltip(el, () => {
         let extra = '';
@@ -13684,13 +13796,6 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       row.appendChild(el);
     }
     return row;
-  }
-
-  function statusTint(sid) {
-    return (
-      { bleed: 'var(--ember)', scarletRot: 'var(--rot)', staggered: 'var(--gold)', strength: 'var(--gold)', vulnerable: 'var(--grace)', weak: 'var(--muted)', frail: 'var(--muted)' }[sid] ||
-      'var(--muted)'
-    );
   }
 
   function meterBars(entity) {
@@ -13705,14 +13810,18 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       const poise = document.createElement('div');
       poise.className = `bar poisebar${entity.poiseMeter.value >= entity.poiseMeter.max * 0.75 ? ' full' : ''}`;
       poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (entity.poiseMeter.value / entity.poiseMeter.max) * 100)}%"></div>`;
-      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${entity.poiseMeter.value} / ${entity.poiseMeter.max} — filling this Staggers the enemy: it skips a turn and takes +50% damage.`);
+      // Meter-bar tooltips render the STATUS def's own text (data) so they can't
+      // drift from the balance/formula numbers.
+      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${entity.poiseMeter.value} / ${entity.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
       const bleedInst = entity.statuses.bleed;
       if (bleedInst && bleedInst.meter && bleedInst.meter.value > 0) {
         const bl = document.createElement('div');
         bl.className = 'bar bleedbar';
         bl.innerHTML = `<div class="fill" style="width:${Math.min(100, (bleedInst.meter.value / bleedInst.meter.max) * 100)}%"></div>`;
-        attachTooltip(bl, () => `<div class="tt-title">Bleed</div>${bleedInst.meter.value} / ${bleedInst.meter.max} — bursts at the threshold for 15% max HP (min 8, max 35).`);
+        const bleedDef = registries.statuses.get('bleed');
+        attachTooltip(bl, () => `<div class="tt-title">${esc(bleedDef.name)}</div>${bleedInst.meter.value} / ${bleedInst.meter.max}. ${esc(bleedDef.tooltip || '')}`);
         wrap.appendChild(bl);
       }
     }
@@ -13766,41 +13875,11 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
   function intentEl(enemy) {
     const iv = previewIntent(combat, enemy.id);
     const el = document.createElement('div');
-    let cls = iv.kind;
-    let inner = '';
-    if (iv.kind === 'staggered') {
-      inner = '✦ STAGGERED';
-    } else if (iv.kind === 'attack') {
-      inner = `<span class="ic">⚔</span>${iv.hits > 1 ? `${iv.damage}×${iv.hits}` : iv.damage}`;
-      if (iv.delayed) inner += ' ⌛';
-      cls = `attack${iv.delayed ? ' delayed' : ''}`;
-    } else if (iv.kind === 'block') {
-      inner = '<span class="ic">🛡</span>';
-    } else if (iv.kind === 'buff') {
-      inner = '<span class="ic">↑</span>';
-    } else if (iv.kind === 'debuff') {
-      inner = '<span class="ic">☾</span>';
-    } else {
-      inner = '?';
-    }
-    el.className = `intent ${cls}`;
-    el.innerHTML = inner;
-    attachTooltip(el, () => intentTooltip(iv, enemy));
+    const badge = intentBadge(iv);
+    el.className = `intent ${badge.cls}`;
+    el.innerHTML = badge.html;
+    attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
     return el;
-  }
-
-  function intentTooltip(iv, enemy) {
-    if (iv.kind === 'staggered') return `<div class="tt-title">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.`;
-    if (iv.kind === 'attack') {
-      let t = `<div class="tt-title">Intent: Attack</div>Attacking for <b>${iv.damage}${iv.hits > 1 ? ` × ${iv.hits} (${iv.totalDamage} total)` : ''}</b> damage (modifiers included).`;
-      if (iv.pending) t += '<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.';
-      else if (iv.delayed) t += '<br><b>Delayed:</b> it will hold this turn and strike the next. Stagger cancels it.';
-      return t;
-    }
-    if (iv.kind === 'block') return `<div class="tt-title">Intent: Defend</div>Gaining Block.`;
-    if (iv.kind === 'buff') return `<div class="tt-title">Intent: Buff</div>Strengthening itself.`;
-    if (iv.kind === 'debuff') return `<div class="tt-title">Intent: Debuff</div>Hindering you.`;
-    return `<div class="tt-title">Intent: Unknown</div>`;
   }
 
   function renderEnemies() {
@@ -15766,19 +15845,11 @@ const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/asset
 const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { anchorLocalBox } = require("src/ui/fx.js");
+const { nodeIcon, nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip } = require("src/ui/uiContent.js");
 const { resolveCard } = require("src/model/registries.js");
 
-const NODE_ICONS = { monster: '⚔', fight: '⚔', elite: '☠', shrine: '♨', merchant: '⚖', treasure: '▣', boss: '👁', unknown: '?' };
-const ACT_NAMES = { 1: 'ACT I — THE FALLOW MARCHES', 2: 'ACT II — THE GRAFTED COURT', 3: 'ACT III — THE ASHEN CROWN' };
 const COL_X = 95;
 const ROW_H = 46;
-
-function actTitle(actNumber) {
-  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
-  const loop = Math.floor((actNumber - 1) / 3);
-  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
-}
-const STATUS_TINT = { bleed: 'var(--ember)', scarletRot: 'var(--rot)', staggered: 'var(--gold)', strength: 'var(--gold)', vulnerable: 'var(--grace)', weak: 'var(--muted)', frail: 'var(--muted)' };
 
 function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   let snap = null;
@@ -15926,7 +15997,7 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const el = document.createElement('div');
       el.className = 'status-icon';
-      el.style.borderColor = STATUS_TINT[sid] || 'var(--muted)';
+      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(def.tooltip || '')}`);
       row.appendChild(el);
@@ -15944,7 +16015,8 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const poise = document.createElement('div');
       poise.className = `bar poisebar${ent.poiseMeter.value >= ent.poiseMeter.max * 0.75 ? ' full' : ''}`;
       poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (ent.poiseMeter.value / ent.poiseMeter.max) * 100)}%"></div>`;
-      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${ent.poiseMeter.value} / ${ent.poiseMeter.max} — filling this Staggers the enemy.`);
+      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${ent.poiseMeter.value} / ${ent.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
     }
     return wrap;
@@ -15959,29 +16031,10 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   }
   function intentEl(intent) {
     const el = document.createElement('div');
-    let cls = intent ? intent.kind : 'unknown';
-    let inner = '?';
-    if (!intent || !intent.moveId) { inner = '?'; }
-    else if (intent.kind === 'staggered') { inner = '✦ STAGGERED'; }
-    else if (intent.damage != null) { inner = `<span class="ic">⚔</span>${intent.hits > 1 ? `${intent.damage}×${intent.hits}` : intent.damage}${intent.delayed ? ' ⌛' : ''}`; cls = `attack${intent.delayed ? ' delayed' : ''}`; }
-    else if (intent.block != null) { inner = '<span class="ic">🛡</span>'; cls = 'block'; }
-    else if (intent.kind === 'buff') { inner = '<span class="ic">↑</span>'; }
-    else if (intent.kind === 'debuff') { inner = '<span class="ic">☾</span>'; }
-    el.className = `intent ${cls}`;
-    el.innerHTML = inner;
-    attachTooltip(el, () => {
-      if (!intent || !intent.moveId) return '<div class="tt-title">Intent: Unknown</div>';
-      if (intent.kind === 'staggered') return '<div class="tt-title">Staggered</div>Poise broken: its turn is skipped and it takes +50% damage.';
-      if (intent.damage != null) {
-        let s = `<div class="tt-title">Intent: Attack</div>Attacking each hero for <b>${intent.damage}${intent.hits > 1 ? ` × ${intent.hits}` : ''}</b> damage.`;
-        if (intent.delayed) s += '<br><b>Delayed:</b> it holds this turn and strikes later. Stagger cancels it.';
-        return s;
-      }
-      if (intent.block != null) return '<div class="tt-title">Intent: Defend</div>Gaining Block.';
-      if (intent.kind === 'buff') return '<div class="tt-title">Intent: Buff</div>Strengthening itself.';
-      if (intent.kind === 'debuff') return '<div class="tt-title">Intent: Debuff</div>Hindering the party.';
-      return '<div class="tt-title">Intent</div>';
-    });
+    const badge = intentBadge(intent);
+    el.className = `intent ${badge.cls}`;
+    el.innerHTML = badge.html;
+    attachTooltip(el, () => intentTooltip(intent, { victim: 'each hero' }));
     return el;
   }
 
@@ -16176,11 +16229,8 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const pips = voters.length
         ? `<text class="vote-pips" x="${x(n.col)}" y="${y(n.floor) - r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${voters.map((pid) => classGlyph((snap.party.find((p) => p.id === pid) || {}).classId)).join('')}</text>`
         : '';
-      el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${NODE_ICONS[n.type] || '?'}</text>${pips}`;
-      attachTooltip(el, () => {
-        const names = { monster: 'Monster — a normal fight', fight: 'Monster — a normal fight', elite: 'Elite — a hard fight with a relic reward', boss: 'The act boss', shrine: 'Shrine of Grace — rest, smith, or mend an ally', treasure: 'Treasure — a free relic each', merchant: 'Merchant', unknown: 'Unknown — could be anything' };
-        return `<div class="tt-title">${esc(names[n.type] || n.type)}</div>${isReachable ? 'Click to vote for this path.' : ''}`;
-      });
+      el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(n.type)}</text>${pips}`;
+      attachTooltip(el, () => `<div class="tt-title">${esc(nodeName(n.type))}</div>${nodeBlurb(n.type)}${isReachable ? '<br>Click to vote for this path.' : ''}`);
       if (isReachable) el.addEventListener('click', () => send({ t: 'chooseNode', nodeId: n.id }));
       g.appendChild(el);
     }

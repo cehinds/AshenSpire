@@ -346,6 +346,7 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     icon: opt(str),
+    tint: opt(str), // status-pip accent CSS color (display)
     stackMode: en(...STACK_MODES),
     decay: union(en('none', 'perTurnEnd', 'onConsume'), obj({ duration: int })),
     meter: opt(obj({ max: int, growthMult: num, onFill: effects })),
@@ -381,6 +382,8 @@ export const SCHEMAS = Object.freeze({
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),
     art: opt(str),
+    size: opt(en('small', 'medium', 'large')), // sprite size tier (display)
+    tint: opt(str), // border/accent CSS color (display)
     script: opt(ref('scripts')),
   }),
 
@@ -423,6 +426,7 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
+    glyph: opt(str), // class sigil glyph (display)
     startingRelic: ref('relics'),
     startingDeck: arr(ref('cards')),
     cardPool: arr(ref('cards')),

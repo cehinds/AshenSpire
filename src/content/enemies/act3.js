@@ -9,6 +9,8 @@
 export const act3Enemies = [
   {
     id: 'ashRevenant',
+    size: 'medium',
+    tint: 'var(--ember)',
     name: 'Ash Revenant',
     hp: [34, 38],
     poiseMax: 10,
@@ -26,6 +28,8 @@ export const act3Enemies = [
   },
   {
     id: 'graceStarvedPilgrim',
+    size: 'small',
+    tint: 'var(--grace)',
     name: 'Grace-Starved Pilgrim',
     hp: [28, 32],
     poiseMax: 8,
@@ -43,6 +47,8 @@ export const act3Enemies = [
   },
   {
     id: 'valkyrieShade',
+    size: 'medium',
+    tint: 'var(--blood)',
     name: 'Valkyrie Shade',
     hp: [40, 44],
     poiseMax: 14,
@@ -57,6 +63,8 @@ export const act3Enemies = [
   },
   {
     id: 'charredColossus',
+    size: 'large',
+    tint: 'var(--ember)',
     name: 'Charred Colossus',
     hp: [55, 60],
     poiseMax: 30,
@@ -74,6 +82,8 @@ export const act3Enemies = [
   // ---- Elite ------------------------------------------------------------------
   {
     id: 'crucibleLord',
+    size: 'large',
+    tint: 'var(--gold)',
     name: 'Crucible Lord',
     hp: [130, 140],
     poiseMax: 30,
@@ -99,6 +109,8 @@ export const act3Enemies = [
   // ---- Final boss: The Rot Valkyrie (GDD §2, SPEC §5.3/§10) ---------------------
   {
     id: 'rotValkyrie',
+    size: 'large',
+    tint: 'var(--rot)',
     name: 'The Rot Valkyrie',
     hp: [250, 250],
     poiseMax: 36,

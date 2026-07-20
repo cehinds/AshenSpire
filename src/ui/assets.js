@@ -8,38 +8,11 @@
 // Sizes are generous on purpose — the board reads best when sprites fill it, and
 // the whole UI is zoomed to fit the window (main.js applyUiScale), so larger
 // base sizes just mean a bolder board rather than overflow.
+// Sprite size tiers (the display dimensions each enemy def's `size` selects).
 const SIZE_TIERS = {
   small: { w: 92, h: 128, font: 44 },
   medium: { w: 132, h: 168, font: 58 },
   large: { w: 194, h: 206, font: 78 },
-};
-
-// Enemy id → size tier (display only; defaults to medium). Bosses & the biggest
-// bruisers read 'large'; fast/fragile minions 'small'. All three acts tuned so
-// no enemy falls back to the generic default.
-const ENEMY_TIER = {
-  // Act 1
-  rotHound: 'small', graveWisp: 'small', wanderingSoldier: 'medium', demiBrute: 'medium',
-  crucibleAspirant: 'large', watchfulOmen: 'large',
-  // Act 2 — The Grafted Court
-  courtMarionette: 'small', graftedHound: 'small', courtSurgeon: 'medium',
-  gildedKnight: 'medium', livingArmor: 'medium', courtDuelist: 'large', graftedKing: 'large',
-  // Act 3 — The Ashen Crown
-  graceStarvedPilgrim: 'small', valkyrieShade: 'medium', ashRevenant: 'medium',
-  charredColossus: 'large', crucibleLord: 'large', rotValkyrie: 'large',
-};
-
-// Enemy id → border tint (thematic: blood=Bleed, rot=Scarlet Rot, gold=elite/boss
-// radiance, frost=armor, grace=spectral, ember=ash). Defaults to var(--line-soft).
-const ENEMY_TINT = {
-  // Act 1
-  graveWisp: 'var(--grace)', rotHound: 'var(--rot)', crucibleAspirant: 'var(--gold)', watchfulOmen: 'var(--blood)',
-  // Act 2
-  gildedKnight: 'var(--gold)', courtSurgeon: 'var(--grace)', graftedHound: 'var(--blood)',
-  courtMarionette: 'var(--rot)', livingArmor: 'var(--frost)', courtDuelist: 'var(--frost)', graftedKing: 'var(--gold)',
-  // Act 3
-  ashRevenant: 'var(--ember)', graceStarvedPilgrim: 'var(--grace)', valkyrieShade: 'var(--blood)',
-  charredColossus: 'var(--ember)', crucibleLord: 'var(--gold)', rotValkyrie: 'var(--rot)',
 };
 
 /**
@@ -50,8 +23,8 @@ const ENEMY_TINT = {
  * placeholder, so content can ship art-less.
  */
 export function enemySprite(enemyDef) {
-  const tier = SIZE_TIERS[ENEMY_TIER[enemyDef.id] || 'medium'];
-  const tint = ENEMY_TINT[enemyDef.id] || 'var(--line-soft)';
+  const tier = SIZE_TIERS[enemyDef.size || 'medium'];
+  const tint = enemyDef.tint || 'var(--line-soft)';
   const el = document.createElement('div');
   const placeholder = () => {
     el.innerHTML = '';
@@ -244,6 +217,14 @@ export function tintCss(tintId) {
   return t ? t.css : 'var(--gold)';
 }
 
+// Class sigil glyphs come from the class defs (data). main.js registers them at
+// boot via setClassGlyphs so classGlyph(id) stays a cheap synchronous lookup for
+// its many call sites; unknown classes fall back to the generic sigil.
+let classGlyphs = {};
+export function setClassGlyphs(classes) {
+  classGlyphs = {};
+  for (const c of classes || []) if (c.glyph) classGlyphs[c.id] = c.glyph;
+}
 export function classGlyph(classId) {
-  return { vagabond: '⚔', astrologer: '☄', prophet: '☀' }[classId] || '❖';
+  return classGlyphs[classId] || '❖';
 }

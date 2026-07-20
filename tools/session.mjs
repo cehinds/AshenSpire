@@ -27,12 +27,8 @@ import {
 } from '../src/engine/coopCombat.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 
-const LAST_ACT = 3;
-
-/** Co-op enemy HP scaling by live headcount — sub-linear, StS2-flavoured. */
-export function coopHpMult(headcount) {
-  return 1 + 0.6 * Math.max(0, headcount - 1); // 1p ×1.0, 2p ×1.6, 3p ×2.2, 4p ×2.8
-}
+// Re-export so tests/other tools share the one definition (no divergent copy).
+export { coopHpMult } from '../src/engine/coopCombat.js';
 
 /** A deterministic per-member RNG stream, independent of the shared map RNG. */
 function memberRng(seed, index, counters) {
@@ -47,6 +43,7 @@ export function restoreSession(registries, data) {
 }
 
 export function createSession({ registries, seedString, endless = false, restore = null }) {
+  const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
   const seed = restore ? (restore.seed >>> 0) : safeSeed(seedString);
   const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
   const members = new Map(); // id → member
@@ -73,7 +70,7 @@ export function createSession({ registries, seedString, endless = false, restore
       members.set(md.id, {
         id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
         connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
-        catchup: md.catchup || [], alive: md.alive !== false,
+        catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
       });
     }
   }
@@ -100,6 +97,7 @@ export function createSession({ registries, seedString, endless = false, restore
       run, // per-member build: deck/relics/flasks/hp/maxHp/runes
       rng: memberRng(seed, index),
       catchup: [], // pending missed-node choices (S4 replay)
+      cardSeq: 0, // monotonic counter for reward/catch-up card instance ids
       alive: true,
     };
     members.set(id, m);
@@ -249,13 +247,13 @@ export function createSession({ registries, seedString, endless = false, restore
     const encounterId = rollEncounter(registries, rng, { pool, act: contentAct() });
     const enc = registries.encounters.get(encounterId);
     const loop = loopCount();
-    const extraHpMult = 1 + 0.35 * loop; // endless cycle scaling (headcount handled by the runner)
+    const extraHpMult = 1 + registries.balance.endless.hpPerLoop * loop; // endless cycle scaling (headcount handled by the runner)
     const combat = createCoopCombat({
       registries, rng,
       players: connectedMembers().map(memberAsPlayer),
       enemyIds: enc.enemies,
       extraHpMult,
-      enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: loop }] : [],
+      enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
     });
     live = { combat, pool, evCursor: combat.eventLog.length }; // skip setup events
     session.scene = combatScene();
@@ -332,7 +330,7 @@ export function createSession({ registries, seedString, endless = false, restore
       if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; return { ok: true, result: 'defeat' }; }
     }
     // Victory: revive any downed-but-not-dead members at 1 HP for the next floor.
-    for (const m of livingMembers()) if (m.run.hp <= 0) m.run.hp = 1;
+    for (const m of livingMembers()) if (m.run.hp <= 0) m.run.hp = registries.balance.coop.reviveHp;
     grantRewards(pool);
     if (pool === 'boss') session.scene.afterReward = 'advanceAct';
     return { ok: true, result: c.result };
@@ -402,7 +400,7 @@ export function createSession({ registries, seedString, endless = false, restore
     const m = members.get(memberId);
     if (!offer || !m) return { ok: false, error: 'no offer for member' };
     if (cardId && offer.cardIds.includes(cardId)) {
-      m.run.deck.push({ instanceId: m.run._idGen ? m.run._idGen() : `rc_${cardId}_${m.run.deck.length}`, cardId, upgraded: false });
+      m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
     }
     if (takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) {
       m.run.relics.push(offer.relicId);
@@ -441,7 +439,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // Co-op Mend: heal an ally for 30% of their max HP instead of resting.
       const ally = members.get(targetId);
       if (!ally || !ally.alive) return { ok: false, error: 'no such ally' };
-      ally.run.hp = Math.min(ally.run.maxHp, ally.run.hp + Math.ceil(ally.run.maxHp * 0.3));
+      ally.run.hp = Math.min(ally.run.maxHp, ally.run.hp + Math.ceil(ally.run.maxHp * (registries.balance.coop.mendHealPct / 100)));
     } else {
       // Smith: the chosen card if given (validated), else first unupgraded.
       const c = (targetId && m.run.deck.find((d) => d.instanceId === targetId && !d.upgraded))
@@ -490,7 +488,7 @@ export function createSession({ registries, seedString, endless = false, restore
     if (item.type === 'reward') {
       const offer = item.offer;
       if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
-        m.run.deck.push({ instanceId: `cu_${pick.cardId}_${m.run.deck.length}`, cardId: pick.cardId, upgraded: false });
+        m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
       if (pick && pick.takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) m.run.relics.push(offer.relicId);
       if (pick && pick.flask && offer.flaskId && m.run.flasks.length < (registries.balance.flaskSlots || 3)) m.run.flasks.push({ flaskId: offer.flaskId });
@@ -533,7 +531,7 @@ export function createSession({ registries, seedString, endless = false, restore
       order,
       members: [...members.values()].map((m) => ({
         id: m.id, name: m.name, index: m.index, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, alive: m.alive,
-        run: m.run, catchup: m.catchup, rng: m.rng.getCounters(),
+        run: m.run, catchup: m.catchup, cardSeq: m.cardSeq, rng: m.rng.getCounters(),
       })),
     };
   }

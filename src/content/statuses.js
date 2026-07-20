@@ -8,6 +8,7 @@ export const statuses = [
   // ---- StS layer (SPEC §4.4 table) ----------------------------------------
   {
     id: 'strength',
+    tint: 'var(--gold)',
     name: 'Strength',
     icon: '↑',
     stackMode: 'add',
@@ -26,6 +27,7 @@ export const statuses = [
   },
   {
     id: 'weak',
+    tint: 'var(--muted)',
     name: 'Weak',
     icon: '↓',
     stackMode: 'add',
@@ -35,6 +37,7 @@ export const statuses = [
   },
   {
     id: 'vulnerable',
+    tint: 'var(--grace)',
     name: 'Vulnerable',
     icon: 'V',
     stackMode: 'add',
@@ -44,6 +47,7 @@ export const statuses = [
   },
   {
     id: 'frail',
+    tint: 'var(--muted)',
     name: 'Frail',
     icon: '✂',
     stackMode: 'add',
@@ -55,6 +59,7 @@ export const statuses = [
   // ---- Elden Ring layer (SPEC §4.4 — build-up, not spam) -------------------
   {
     id: 'bleed',
+    tint: 'var(--ember)',
     name: 'Bleed',
     icon: '💧',
     stackMode: 'add',
@@ -75,6 +80,7 @@ export const statuses = [
   },
   {
     id: 'scarletRot',
+    tint: 'var(--rot)',
     name: 'Scarlet Rot',
     icon: '❀',
     stackMode: 'add',
@@ -118,6 +124,7 @@ export const statuses = [
   },
   {
     id: 'staggered',
+    tint: 'var(--gold)',
     name: 'Staggered',
     icon: '✦',
     stackMode: 'refresh',
