@@ -6,6 +6,7 @@
 export const classes = [
   {
     id: 'vagabond',
+    glyph: '⚔',
     name: 'Vagabond',
     maxHp: 84,
     startingRelic: 'tarnishedMedallion',
@@ -32,6 +33,7 @@ export const classes = [
   },
   {
     id: 'astrologer',
+    glyph: '☄',
     name: 'Astrologer',
     maxHp: 72,
     startingRelic: 'glintstoneShard',
@@ -56,6 +58,7 @@ export const classes = [
   },
   {
     id: 'prophet',
+    glyph: '☀',
     name: 'Prophet',
     maxHp: 78,
     startingRelic: 'goldFigurine',

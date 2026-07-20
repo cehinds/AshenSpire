@@ -27,7 +27,6 @@ function actTitle(actNumber) {
   const loop = Math.floor((actNumber - 1) / 3);
   return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
 }
-const STATUS_TINT = { bleed: 'var(--ember)', scarletRot: 'var(--rot)', staggered: 'var(--gold)', strength: 'var(--gold)', vulnerable: 'var(--grace)', weak: 'var(--muted)', frail: 'var(--muted)' };
 
 export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   let snap = null;
@@ -175,7 +174,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const el = document.createElement('div');
       el.className = 'status-icon';
-      el.style.borderColor = STATUS_TINT[sid] || 'var(--muted)';
+      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(def.tooltip || '')}`);
       row.appendChild(el);

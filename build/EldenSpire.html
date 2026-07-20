@@ -1138,7 +1138,7 @@ const { openSettings } = require("src/ui/screens/settings.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
 const { initInput, setBindings, setKeyBindings } = require("src/ui/input.js");
-const { setSpritesEnabled, classGlyph } = require("src/ui/assets.js");
+const { setSpritesEnabled, classGlyph, setClassGlyphs } = require("src/ui/assets.js");
 const { mountLobby } = require("src/ui/screens/lobby.js");
 const { mountCoop } = require("src/ui/screens/coop.js");
 const { lanInfo } = require("src/net/lan.js");
@@ -1161,6 +1161,7 @@ if (!validation.ok) {
 }
 
 const registries = createRegistries(contentBundle);
+setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
 function pickStorage() {
   try {
@@ -2150,6 +2151,7 @@ const statuses = [
   // ---- StS layer (SPEC §4.4 table) ----------------------------------------
   {
     id: 'strength',
+    tint: 'var(--gold)',
     name: 'Strength',
     icon: '↑',
     stackMode: 'add',
@@ -2168,6 +2170,7 @@ const statuses = [
   },
   {
     id: 'weak',
+    tint: 'var(--muted)',
     name: 'Weak',
     icon: '↓',
     stackMode: 'add',
@@ -2177,6 +2180,7 @@ const statuses = [
   },
   {
     id: 'vulnerable',
+    tint: 'var(--grace)',
     name: 'Vulnerable',
     icon: 'V',
     stackMode: 'add',
@@ -2186,6 +2190,7 @@ const statuses = [
   },
   {
     id: 'frail',
+    tint: 'var(--muted)',
     name: 'Frail',
     icon: '✂',
     stackMode: 'add',
@@ -2197,6 +2202,7 @@ const statuses = [
   // ---- Elden Ring layer (SPEC §4.4 — build-up, not spam) -------------------
   {
     id: 'bleed',
+    tint: 'var(--ember)',
     name: 'Bleed',
     icon: '💧',
     stackMode: 'add',
@@ -2217,6 +2223,7 @@ const statuses = [
   },
   {
     id: 'scarletRot',
+    tint: 'var(--rot)',
     name: 'Scarlet Rot',
     icon: '❀',
     stackMode: 'add',
@@ -2260,6 +2267,7 @@ const statuses = [
   },
   {
     id: 'staggered',
+    tint: 'var(--gold)',
     name: 'Staggered',
     icon: '✦',
     stackMode: 'refresh',
@@ -5519,6 +5527,7 @@ Object.assign(module.exports, { flasks });
 const act1Enemies = [
   {
     id: 'wanderingSoldier',
+    size: 'medium',
     name: 'Wandering Soldier',
     hp: [22, 26],
     poiseMax: 10,
@@ -5534,6 +5543,8 @@ const act1Enemies = [
   },
   {
     id: 'rotHound',
+    size: 'small',
+    tint: 'var(--rot)',
     name: 'Rot Hound',
     hp: [12, 15],
     poiseMax: 6,
@@ -5545,6 +5556,7 @@ const act1Enemies = [
   },
   {
     id: 'demiBrute',
+    size: 'medium',
     name: 'Demi-Brute',
     hp: [30, 34],
     poiseMax: 16,
@@ -5560,6 +5572,8 @@ const act1Enemies = [
   },
   {
     id: 'graveWisp',
+    size: 'small',
+    tint: 'var(--grace)',
     name: 'Grave Wisp',
     hp: [10, 12],
     poiseMax: 4,
@@ -5579,6 +5593,8 @@ const act1Enemies = [
   // ---- Elite (SPEC §5.3) ----------------------------------------------------
   {
     id: 'crucibleAspirant',
+    size: 'large',
+    tint: 'var(--gold)',
     name: 'Crucible Aspirant',
     hp: [68, 72],
     poiseMax: 24,
@@ -5604,6 +5620,8 @@ const act1Enemies = [
   // ---- Boss: The Watchful Omen (SPEC §5.3 — Margit-inspired) -----------------
   {
     id: 'watchfulOmen',
+    size: 'large',
+    tint: 'var(--blood)',
     name: 'The Watchful Omen',
     hp: [120, 120],
     poiseMax: 30,
@@ -5652,6 +5670,8 @@ Object.assign(module.exports, { act1Enemies });
 const act2Enemies = [
   {
     id: 'gildedKnight',
+    size: 'medium',
+    tint: 'var(--gold)',
     name: 'Gilded Knight',
     hp: [42, 46],
     poiseMax: 18,
@@ -5667,6 +5687,8 @@ const act2Enemies = [
   },
   {
     id: 'courtSurgeon',
+    size: 'medium',
+    tint: 'var(--grace)',
     name: 'Court Surgeon',
     hp: [30, 34],
     poiseMax: 10,
@@ -5688,6 +5710,8 @@ const act2Enemies = [
   },
   {
     id: 'graftedHound',
+    size: 'small',
+    tint: 'var(--blood)',
     name: 'Grafted Hound',
     hp: [24, 28],
     poiseMax: 8,
@@ -5703,6 +5727,8 @@ const act2Enemies = [
   },
   {
     id: 'courtMarionette',
+    size: 'small',
+    tint: 'var(--rot)',
     name: 'Court Marionette',
     hp: [16, 18],
     poiseMax: 6,
@@ -5717,6 +5743,8 @@ const act2Enemies = [
   },
   {
     id: 'livingArmor',
+    size: 'medium',
+    tint: 'var(--frost)',
     name: 'Living Armor',
     hp: [36, 40],
     poiseMax: 22,
@@ -5731,6 +5759,8 @@ const act2Enemies = [
   // ---- Elite ------------------------------------------------------------------
   {
     id: 'courtDuelist',
+    size: 'large',
+    tint: 'var(--frost)',
     name: 'Duelist of the Court',
     hp: [90, 96],
     poiseMax: 26,
@@ -5750,6 +5780,8 @@ const act2Enemies = [
   // ---- Boss: The Grafted King (GDD §2 — phase 2 literally adds limbs) ----------
   {
     id: 'graftedKing',
+    size: 'large',
+    tint: 'var(--gold)',
     name: 'The Grafted King',
     hp: [195, 195],
     poiseMax: 34,
@@ -5794,6 +5826,8 @@ Object.assign(module.exports, { act2Enemies });
 const act3Enemies = [
   {
     id: 'ashRevenant',
+    size: 'medium',
+    tint: 'var(--ember)',
     name: 'Ash Revenant',
     hp: [34, 38],
     poiseMax: 10,
@@ -5811,6 +5845,8 @@ const act3Enemies = [
   },
   {
     id: 'graceStarvedPilgrim',
+    size: 'small',
+    tint: 'var(--grace)',
     name: 'Grace-Starved Pilgrim',
     hp: [28, 32],
     poiseMax: 8,
@@ -5828,6 +5864,8 @@ const act3Enemies = [
   },
   {
     id: 'valkyrieShade',
+    size: 'medium',
+    tint: 'var(--blood)',
     name: 'Valkyrie Shade',
     hp: [40, 44],
     poiseMax: 14,
@@ -5842,6 +5880,8 @@ const act3Enemies = [
   },
   {
     id: 'charredColossus',
+    size: 'large',
+    tint: 'var(--ember)',
     name: 'Charred Colossus',
     hp: [55, 60],
     poiseMax: 30,
@@ -5859,6 +5899,8 @@ const act3Enemies = [
   // ---- Elite ------------------------------------------------------------------
   {
     id: 'crucibleLord',
+    size: 'large',
+    tint: 'var(--gold)',
     name: 'Crucible Lord',
     hp: [130, 140],
     poiseMax: 30,
@@ -5884,6 +5926,8 @@ const act3Enemies = [
   // ---- Final boss: The Rot Valkyrie (GDD §2, SPEC §5.3/§10) ---------------------
   {
     id: 'rotValkyrie',
+    size: 'large',
+    tint: 'var(--rot)',
     name: 'The Rot Valkyrie',
     hp: [250, 250],
     poiseMax: 36,
@@ -6483,6 +6527,7 @@ Object.assign(module.exports, { events });
 const classes = [
   {
     id: 'vagabond',
+    glyph: '⚔',
     name: 'Vagabond',
     maxHp: 84,
     startingRelic: 'tarnishedMedallion',
@@ -6509,6 +6554,7 @@ const classes = [
   },
   {
     id: 'astrologer',
+    glyph: '☄',
     name: 'Astrologer',
     maxHp: 72,
     startingRelic: 'glintstoneShard',
@@ -6533,6 +6579,7 @@ const classes = [
   },
   {
     id: 'prophet',
+    glyph: '☀',
     name: 'Prophet',
     maxHp: 78,
     startingRelic: 'goldFigurine',
@@ -7582,6 +7629,7 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     icon: opt(str),
+    tint: opt(str), // status-pip accent CSS color (display)
     stackMode: en(...STACK_MODES),
     decay: union(en('none', 'perTurnEnd', 'onConsume'), obj({ duration: int })),
     meter: opt(obj({ max: int, growthMult: num, onFill: effects })),
@@ -7617,6 +7665,8 @@ const SCHEMAS = Object.freeze({
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),
     art: opt(str),
+    size: opt(en('small', 'medium', 'large')), // sprite size tier (display)
+    tint: opt(str), // border/accent CSS color (display)
     script: opt(ref('scripts')),
   }),
 
@@ -7659,6 +7709,7 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
+    glyph: opt(str), // class sigil glyph (display)
     startingRelic: ref('relics'),
     startingDeck: arr(ref('cards')),
     cardPool: arr(ref('cards')),
@@ -11193,38 +11244,11 @@ Object.assign(module.exports, { KEEPSAKES });
 // Sizes are generous on purpose — the board reads best when sprites fill it, and
 // the whole UI is zoomed to fit the window (main.js applyUiScale), so larger
 // base sizes just mean a bolder board rather than overflow.
+// Sprite size tiers (the display dimensions each enemy def's `size` selects).
 const SIZE_TIERS = {
   small: { w: 92, h: 128, font: 44 },
   medium: { w: 132, h: 168, font: 58 },
   large: { w: 194, h: 206, font: 78 },
-};
-
-// Enemy id → size tier (display only; defaults to medium). Bosses & the biggest
-// bruisers read 'large'; fast/fragile minions 'small'. All three acts tuned so
-// no enemy falls back to the generic default.
-const ENEMY_TIER = {
-  // Act 1
-  rotHound: 'small', graveWisp: 'small', wanderingSoldier: 'medium', demiBrute: 'medium',
-  crucibleAspirant: 'large', watchfulOmen: 'large',
-  // Act 2 — The Grafted Court
-  courtMarionette: 'small', graftedHound: 'small', courtSurgeon: 'medium',
-  gildedKnight: 'medium', livingArmor: 'medium', courtDuelist: 'large', graftedKing: 'large',
-  // Act 3 — The Ashen Crown
-  graceStarvedPilgrim: 'small', valkyrieShade: 'medium', ashRevenant: 'medium',
-  charredColossus: 'large', crucibleLord: 'large', rotValkyrie: 'large',
-};
-
-// Enemy id → border tint (thematic: blood=Bleed, rot=Scarlet Rot, gold=elite/boss
-// radiance, frost=armor, grace=spectral, ember=ash). Defaults to var(--line-soft).
-const ENEMY_TINT = {
-  // Act 1
-  graveWisp: 'var(--grace)', rotHound: 'var(--rot)', crucibleAspirant: 'var(--gold)', watchfulOmen: 'var(--blood)',
-  // Act 2
-  gildedKnight: 'var(--gold)', courtSurgeon: 'var(--grace)', graftedHound: 'var(--blood)',
-  courtMarionette: 'var(--rot)', livingArmor: 'var(--frost)', courtDuelist: 'var(--frost)', graftedKing: 'var(--gold)',
-  // Act 3
-  ashRevenant: 'var(--ember)', graceStarvedPilgrim: 'var(--grace)', valkyrieShade: 'var(--blood)',
-  charredColossus: 'var(--ember)', crucibleLord: 'var(--gold)', rotValkyrie: 'var(--rot)',
 };
 
 /**
@@ -11235,8 +11259,8 @@ const ENEMY_TINT = {
  * placeholder, so content can ship art-less.
  */
 function enemySprite(enemyDef) {
-  const tier = SIZE_TIERS[ENEMY_TIER[enemyDef.id] || 'medium'];
-  const tint = ENEMY_TINT[enemyDef.id] || 'var(--line-soft)';
+  const tier = SIZE_TIERS[enemyDef.size || 'medium'];
+  const tint = enemyDef.tint || 'var(--line-soft)';
   const el = document.createElement('div');
   const placeholder = () => {
     el.innerHTML = '';
@@ -11429,12 +11453,20 @@ function tintCss(tintId) {
   return t ? t.css : 'var(--gold)';
 }
 
+// Class sigil glyphs come from the class defs (data). main.js registers them at
+// boot via setClassGlyphs so classGlyph(id) stays a cheap synchronous lookup for
+// its many call sites; unknown classes fall back to the generic sigil.
+let classGlyphs = {};
+function setClassGlyphs(classes) {
+  classGlyphs = {};
+  for (const c of classes || []) if (c.glyph) classGlyphs[c.id] = c.glyph;
+}
 function classGlyph(classId) {
-  return { vagabond: '⚔', astrologer: '☄', prophet: '☀' }[classId] || '❖';
+  return classGlyphs[classId] || '❖';
 }
 
 
-Object.assign(module.exports, { enemySprite, PORTRAIT_GLYPHS, PORTRAIT_TINTS, setSpritesEnabled, spritesAreEnabled, SPRITE_STYLES, classSprite, playerSprite, tintCss, classGlyph });
+Object.assign(module.exports, { enemySprite, PORTRAIT_GLYPHS, PORTRAIT_TINTS, setSpritesEnabled, spritesAreEnabled, SPRITE_STYLES, classSprite, playerSprite, tintCss, setClassGlyphs, classGlyph });
 
 },
 "src/ui/screens/customRun.js": function (module, exports, require) {
@@ -13673,7 +13705,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const el = document.createElement('div');
       el.className = 'status-icon';
-      el.style.borderColor = statusTint(sid);
+      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
       attachTooltip(el, () => {
         let extra = '';
@@ -13684,13 +13716,6 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       row.appendChild(el);
     }
     return row;
-  }
-
-  function statusTint(sid) {
-    return (
-      { bleed: 'var(--ember)', scarletRot: 'var(--rot)', staggered: 'var(--gold)', strength: 'var(--gold)', vulnerable: 'var(--grace)', weak: 'var(--muted)', frail: 'var(--muted)' }[sid] ||
-      'var(--muted)'
-    );
   }
 
   function meterBars(entity) {
@@ -15778,7 +15803,6 @@ function actTitle(actNumber) {
   const loop = Math.floor((actNumber - 1) / 3);
   return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
 }
-const STATUS_TINT = { bleed: 'var(--ember)', scarletRot: 'var(--rot)', staggered: 'var(--gold)', strength: 'var(--gold)', vulnerable: 'var(--grace)', weak: 'var(--muted)', frail: 'var(--muted)' };
 
 function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   let snap = null;
@@ -15926,7 +15950,7 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const el = document.createElement('div');
       el.className = 'status-icon';
-      el.style.borderColor = STATUS_TINT[sid] || 'var(--muted)';
+      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(def.tooltip || '')}`);
       row.appendChild(el);

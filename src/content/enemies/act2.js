@@ -8,6 +8,8 @@
 export const act2Enemies = [
   {
     id: 'gildedKnight',
+    size: 'medium',
+    tint: 'var(--gold)',
     name: 'Gilded Knight',
     hp: [42, 46],
     poiseMax: 18,
@@ -23,6 +25,8 @@ export const act2Enemies = [
   },
   {
     id: 'courtSurgeon',
+    size: 'medium',
+    tint: 'var(--grace)',
     name: 'Court Surgeon',
     hp: [30, 34],
     poiseMax: 10,
@@ -44,6 +48,8 @@ export const act2Enemies = [
   },
   {
     id: 'graftedHound',
+    size: 'small',
+    tint: 'var(--blood)',
     name: 'Grafted Hound',
     hp: [24, 28],
     poiseMax: 8,
@@ -59,6 +65,8 @@ export const act2Enemies = [
   },
   {
     id: 'courtMarionette',
+    size: 'small',
+    tint: 'var(--rot)',
     name: 'Court Marionette',
     hp: [16, 18],
     poiseMax: 6,
@@ -73,6 +81,8 @@ export const act2Enemies = [
   },
   {
     id: 'livingArmor',
+    size: 'medium',
+    tint: 'var(--frost)',
     name: 'Living Armor',
     hp: [36, 40],
     poiseMax: 22,
@@ -87,6 +97,8 @@ export const act2Enemies = [
   // ---- Elite ------------------------------------------------------------------
   {
     id: 'courtDuelist',
+    size: 'large',
+    tint: 'var(--frost)',
     name: 'Duelist of the Court',
     hp: [90, 96],
     poiseMax: 26,
@@ -106,6 +118,8 @@ export const act2Enemies = [
   // ---- Boss: The Grafted King (GDD §2 — phase 2 literally adds limbs) ----------
   {
     id: 'graftedKing',
+    size: 'large',
+    tint: 'var(--gold)',
     name: 'The Grafted King',
     hp: [195, 195],
     poiseMax: 34,

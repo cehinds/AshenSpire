@@ -43,7 +43,7 @@ import { openSettings } from './ui/screens/settings.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { initInput, setBindings, setKeyBindings } from './ui/input.js';
-import { setSpritesEnabled, classGlyph } from './ui/assets.js';
+import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
@@ -66,6 +66,7 @@ if (!validation.ok) {
 }
 
 const registries = createRegistries(contentBundle);
+setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
 function pickStorage() {
   try {

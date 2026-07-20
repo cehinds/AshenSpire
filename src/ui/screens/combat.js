@@ -297,7 +297,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const el = document.createElement('div');
       el.className = 'status-icon';
-      el.style.borderColor = statusTint(sid);
+      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
       attachTooltip(el, () => {
         let extra = '';
@@ -308,13 +308,6 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       row.appendChild(el);
     }
     return row;
-  }
-
-  function statusTint(sid) {
-    return (
-      { bleed: 'var(--ember)', scarletRot: 'var(--rot)', staggered: 'var(--gold)', strength: 'var(--gold)', vulnerable: 'var(--grace)', weak: 'var(--muted)', frail: 'var(--muted)' }[sid] ||
-      'var(--muted)'
-    );
   }
 
   function meterBars(entity) {
