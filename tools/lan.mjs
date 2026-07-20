@@ -1,4 +1,4 @@
-// tools/lan.mjs — zero-dependency LAN session layer ("Tarnished Together").
+// tools/lan.mjs — zero-dependency LAN session layer ("Forsaken Together").
 //
 // Adds three things to the launcher's static server (tools/serve.mjs):
 //   • UDP auto-discovery: a hosting machine broadcasts a beacon every 2s on
@@ -195,7 +195,7 @@ export function attachLan(server, { port, root }) {
 
   // Start the server-authoritative run from the lobby roster.
   function startGame() {
-    const game = createSession({ registries: REG, seedString: session.seedString || 'ERDTREE', endless: !!session.endless });
+    const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless });
     const fallbackClass = REG.classes.all()[0].id;
     for (const cl of session.clients.values()) {
       game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, tint: cl.tint, spriteStyle: cl.spriteStyle });
@@ -242,7 +242,7 @@ export function attachLan(server, { port, root }) {
     if (session.game && msg.t !== 'hello' && msg.t !== 'resume') { onGameIntent(pl, msg); return; }
     switch (msg.t) {
       case 'hello':
-        pl.name = String(msg.name || 'Tarnished').slice(0, 18);
+        pl.name = String(msg.name || 'Forsaken').slice(0, 18);
         pl.classId = msg.classId || null;
         pl.tint = msg.tint || 'gold';
         pl.spriteStyle = msg.spriteStyle || 'rendered';
@@ -270,7 +270,7 @@ export function attachLan(server, { port, root }) {
       case 'locals': {
         // Couch party: up to 3 local seats riding this connection (4 total).
         const sane = (Array.isArray(msg.locals) ? msg.locals : []).slice(0, 3).map((lp) => ({
-          name: String((lp && lp.name) || 'Tarnished').slice(0, 18),
+          name: String((lp && lp.name) || 'Forsaken').slice(0, 18),
           classId: (lp && lp.classId) || null,
           tint: (lp && lp.tint) || 'gold',
           spriteStyle: (lp && lp.spriteStyle) || 'rendered',
@@ -339,7 +339,7 @@ export function attachLan(server, { port, root }) {
       `Sec-WebSocket-Accept: ${wsAccept(key)}\r\n\r\n`
     );
     if (!session) session = { seedString: '', started: false, endless: false, game: null, clients: new Map() };
-    const pl = { id: `p${nextPlayerId++}`, name: 'Tarnished', classId: null, ready: false, isHost: false, status: null };
+    const pl = { id: `p${nextPlayerId++}`, name: 'Forsaken', classId: null, ready: false, isHost: false, status: null };
     session.clients.set(sock, pl);
     sock.setNoDelay(true);
     sock.write(wsEncode(JSON.stringify({ t: 'welcome', id: pl.id, inGame: !!session.game })));
@@ -407,7 +407,7 @@ export function attachLan(server, { port, root }) {
       let body = '';
       req.on('data', (d) => (body += d));
       await new Promise((r) => req.on('end', r));
-      let name = 'Tarnished';
+      let name = 'Forsaken';
       try { name = String(JSON.parse(body || '{}').name || name).slice(0, 18); } catch { /* default */ }
       if (hosting) clearInterval(hosting.beaconTimer);
       hosting = { name, hostKey: randomBytes(8).toString('hex'), beaconTimer: null };

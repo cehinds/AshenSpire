@@ -88,7 +88,7 @@ function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], 
   return createCombat({
     registries: REG,
     rng,
-    player: { classId: 'vagabond', maxHp, hp, deck: instances, relicIds, flasks },
+    player: { classId: 'reaver', maxHp, hp, deck: instances, relicIds, flasks },
     enemyIds: enemies,
   });
 }
@@ -210,18 +210,18 @@ export async function runTests() {
     const inn = makeCombat({ deck: ['warriorsVow', ...Array(9).fill('strike')], seed: 0xbeef });
     assert(inn.piles.hand.some((x) => x.cardId === 'warriorsVow'), 'Innate in opening hand');
 
-    const x = makeCombat({ deck: ['graftedArms', 'strike', 'strike', 'strike', 'strike'] });
-    playFromHand(x, 'graftedArms');
+    const x = makeCombat({ deck: ['stitchedArms', 'strike', 'strike', 'strike', 'strike'] });
+    playFromHand(x, 'stitchedArms');
     eq(x.player.energy, 0, 'X-cost consumed all energy');
     eq(logOf(x, 'damageDealt').filter((e) => e.sourceId === 'player').length, 3, '3 energy → 3 hits');
 
     // X = 0 whiffs entirely (StS): playable, but zero hits.
-    const x0 = makeCombat({ deck: ['graftedArms', 'defend', 'defend', 'defend', 'strike'] });
+    const x0 = makeCombat({ deck: ['stitchedArms', 'defend', 'defend', 'defend', 'strike'] });
     playFromHand(x0, 'defend');
     playFromHand(x0, 'defend');
     playFromHand(x0, 'defend');
     eq(x0.player.energy, 0, 'energy spent on defends');
-    playFromHand(x0, 'graftedArms');
+    playFromHand(x0, 'stitchedArms');
     eq(logOf(x0, 'damageDealt').filter((e) => e.sourceId === 'player').length, 0, 'X=0 → 0 hits');
 
     const up = resolveCard(REG, { cardId: 'kickOff', upgraded: true });
@@ -231,55 +231,55 @@ export async function runTests() {
 
   // ---- 7. Bleed: accumulate / burst / clamp / threshold growth / freeze --------
   test('7. Bleed bursts at 12 for clamp(15% maxHp, 8, 35); threshold ×1.5; Lord\'s Blood freezes', () => {
-    const c = makeCombat({ deck: Array(6).fill('bloodflameSlash') });
-    playFromHand(c, 'bloodflameSlash');
-    playFromHand(c, 'bloodflameSlash');
-    playFromHand(c, 'bloodflameSlash'); // 9 bleed
+    const c = makeCombat({ deck: Array(6).fill('gorefireSlash') });
+    playFromHand(c, 'gorefireSlash');
+    playFromHand(c, 'gorefireSlash');
+    playFromHand(c, 'gorefireSlash'); // 9 bleed
     eq(S.getStacks(getEntity(c, 'e1'), 'bleed'), 9, 'bleed accumulated, no decay');
     dispatch(c, { type: 'endTurn' });
     eq(S.getStacks(getEntity(c, 'e1'), 'bleed'), 9, 'bleed persists through turns');
-    playFromHand(c, 'bloodflameSlash'); // 12 → burst
+    playFromHand(c, 'gorefireSlash'); // 12 → burst
     const burst = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1' && e.cause === 'effect').pop();
     assert(burst, 'burst happened');
     eq(burst.amount, 8, '15% of 30 = 4.5 → min-clamped to 8');
     eq(getEntity(c, 'e1').statuses.bleed.meter.max, 18, 'threshold grew ×1.5');
 
-    const g = makeCombat({ deck: Array(6).fill('bloodflameSlash'), enemies: ['tGiant'] });
+    const g = makeCombat({ deck: Array(6).fill('gorefireSlash'), enemies: ['tGiant'] });
     for (let i = 0; i < 4; i++) {
       if (g.player.energy === 0) dispatch(g, { type: 'endTurn' });
-      playFromHand(g, 'bloodflameSlash');
+      playFromHand(g, 'gorefireSlash');
     }
     const gb = logOf(g, 'hpLost').filter((e) => e.targetId === 'e1' && e.cause === 'effect').pop();
     eq(gb.amount, 35, '15% of 400 = 60 → max-clamped to 35');
 
-    const l = makeCombat({ deck: ['lordsBlood', ...Array(6).fill('bloodflameSlash')] });
-    const lb = l.piles.hand.find((x) => x.cardId === 'lordsBlood');
+    const l = makeCombat({ deck: ['goreblood', ...Array(6).fill('gorefireSlash')] });
+    const lb = l.piles.hand.find((x) => x.cardId === 'goreblood');
     if (lb) dispatch(l, { type: 'playCard', cardInstanceId: lb.instanceId });
-    else throw new Error('lordsBlood not in opening hand (6-card deck draws 5; adjust seed)');
+    else throw new Error('goreblood not in opening hand (6-card deck draws 5; adjust seed)');
     for (let i = 0; i < 4; i++) {
       if (l.player.energy === 0) dispatch(l, { type: 'endTurn' });
-      playFromHand(l, 'bloodflameSlash');
+      playFromHand(l, 'gorefireSlash');
     }
-    eq(getEntity(l, 'e1').statuses.bleed.meter.max, 12, "Lord's Blood froze the threshold");
+    eq(getEntity(l, 'e1').statuses.bleed.meter.max, 12, "Goreblood froze the threshold");
   });
 
-  // ---- 8. Scarlet Rot: tick / expire after 3 / refresh ---------------------------
-  test('8. Rot ticks at enemy turn start, expires entirely after 3 turns, re-apply refreshes', () => {
+  // ---- 8. Crimson Blight: tick / expire after 3 / refresh ---------------------------
+  test('8. Blight ticks at enemy turn start, expires entirely after 3 turns, re-apply refreshes', () => {
     const c = makeCombat({ deck: Array(5).fill('defend') });
     const e1 = getEntity(c, 'e1');
-    S.applyStatus(c, e1, 'scarletRot', 4);
+    S.applyStatus(c, e1, 'crimsonBlight', 4);
     dispatch(c, { type: 'endTurn' }); // enemy turn 1
     let ticks = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1');
     eq(ticks.length, 1, 'one tick');
     eq(ticks[0].amount, 4, 'tick = stacks');
-    S.applyStatus(c, e1, 'scarletRot', 2); // 6 stacks, duration refreshed to 3
+    S.applyStatus(c, e1, 'crimsonBlight', 2); // 6 stacks, duration refreshed to 3
     dispatch(c, { type: 'endTurn' }); // tick 6 (duration 3→2)
     dispatch(c, { type: 'endTurn' }); // tick 6 (2→1)
     dispatch(c, { type: 'endTurn' }); // tick 6 (1→0 → expired)
     ticks = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1');
     eq(ticks.map((t) => t.amount).join(','), '4,6,6,6', 'tick sequence');
-    assert(!e1.statuses.scarletRot, 'rot expired entirely');
-    assert(logOf(c, 'statusExpired').some((e) => e.status === 'scarletRot' && e.reason === 'expired'), 'expired event');
+    assert(!e1.statuses.crimsonBlight, 'blight expired entirely');
+    assert(logOf(c, 'statusExpired').some((e) => e.status === 'crimsonBlight' && e.reason === 'expired'), 'expired event');
   });
 
   // ---- 9. Poise: fill → Stagger (skip + 1.5× window + growth + cancel delayed) ----
@@ -310,29 +310,29 @@ export async function runTests() {
 
   // ---- 10b. Same-stance re-entry is a no-op (StS) -------------------------------
   test('10b. re-entering the current stance is a no-op (no onEnter re-trigger)', () => {
-    const c = makeCombat({ deck: ['enterBloodflame', 'enterBloodflame', 'strike', 'strike', 'strike'] });
-    playFromHand(c, 'enterBloodflame');
+    const c = makeCombat({ deck: ['enterGorefire', 'enterGorefire', 'strike', 'strike', 'strike'] });
+    playFromHand(c, 'enterGorefire');
     eq(c.player.hp, 76, 'first entry costs 2 HP');
-    playFromHand(c, 'enterBloodflame');
+    playFromHand(c, 'enterGorefire');
     eq(c.player.hp, 76, 'second entry did NOT re-trigger the 2 HP onEnter');
     eq(logOf(c, 'stanceEntered').length, 1, 'only one stanceEntered event');
-    eq(c.player.stanceId, 'bloodflame', 'still in the stance');
+    eq(c.player.stanceId, 'gorefire', 'still in the stance');
   });
 
   // ---- 10. Stances -------------------------------------------------------------
-  test('10. stance exclusivity; Bloodflame per-hit Bleed; Bulwark on-Skill block', () => {
-    const c = makeCombat({ deck: ['enterBloodflame', 'twinbladeFlurry', 'enterBulwark', 'defend', 'strike'] });
-    playFromHand(c, 'enterBloodflame');
-    eq(c.player.stanceId, 'bloodflame', 'entered bloodflame');
-    eq(c.player.hp, 76, 'entering Bloodflame cost 2 HP (ignores block)');
+  test('10. stance exclusivity; Gorefire per-hit Bleed; Bulwark on-Skill block', () => {
+    const c = makeCombat({ deck: ['enterGorefire', 'twinbladeFlurry', 'enterBulwark', 'defend', 'strike'] });
+    playFromHand(c, 'enterGorefire');
+    eq(c.player.stanceId, 'gorefire', 'entered gorefire');
+    eq(c.player.hp, 76, 'entering Gorefire cost 2 HP (ignores block)');
     playFromHand(c, 'twinbladeFlurry');
     eq(S.getStacks(getEntity(c, 'e1'), 'bleed'), 6, '3 hits × 2 Bleed per hit');
     playFromHand(c, 'enterBulwark');
     eq(c.player.stanceId, 'bulwark', 'stance switched (exclusive)');
-    assert(logOf(c, 'stanceExited').some((e) => e.stance === 'bloodflame'), 'exited event');
+    assert(logOf(c, 'stanceExited').some((e) => e.stance === 'gorefire'), 'exited event');
     eq(c.player.block, 3, 'Bulwark onEnter +3 (its own play does not double-trigger)');
     dispatch(c, { type: 'endTurn' });
-    const d = c.piles.hand.find((x) => x.cardId === 'defend' || x.cardId === 'enterBloodflame');
+    const d = c.piles.hand.find((x) => x.cardId === 'defend' || x.cardId === 'enterGorefire');
     const before = c.player.block;
     const skill = c.piles.hand.find((x) => resolveCard(REG, x).type === 'skill' && resolveCard(REG, x).cardId !== undefined) || d;
     const defend = c.piles.hand.find((x) => x.cardId === 'defend');
@@ -433,8 +433,8 @@ export async function runTests() {
     const rng = createRng(0xfeed);
     rng.float('shuffle');
     rng.float('cardRewards');
-    const run = createRunState({ seed: 0xfeed, classId: 'vagabond', registries: REG });
-    run.runes = 123;
+    const run = createRunState({ seed: 0xfeed, classId: 'reaver', registries: REG });
+    run.cinders = 123;
     run.floor = 4;
     saves.saveRun(run, rng);
 
@@ -468,12 +468,12 @@ export async function runTests() {
 
   // ---- 14. Scripted bot completes a boss combat -------------------------------------
   test('14. bot (leftmost affordable, end turn) finishes a seeded boss fight without throwing', () => {
-    const deck = REG.classes.get('vagabond').startingDeck.map((id, i) => ({ instanceId: `c${i}`, cardId: id, upgraded: false }));
+    const deck = REG.classes.get('reaver').startingDeck.map((id, i) => ({ instanceId: `c${i}`, cardId: id, upgraded: false }));
     const c = createCombat({
       registries: REG,
       rng: createRng(0x51deb00b),
-      player: { classId: 'vagabond', maxHp: 78, hp: 78, deck, relicIds: ['tarnishedMedallion'] },
-      enemyIds: ['watchfulOmen'],
+      player: { classId: 'reaver', maxHp: 78, hp: 78, deck, relicIds: ['forsakenMedallion'] },
+      enemyIds: ['fellWarden'],
     });
     let guard = 0;
     while (!c.result) {
@@ -492,7 +492,7 @@ export async function runTests() {
       }
     }
     assert(c.result === 'victory' || c.result === 'defeat', 'combat concluded');
-    assert(logOf(c, 'relicTriggered').some((e) => e.relicId === 'tarnishedMedallion'), 'starter relic fired');
+    assert(logOf(c, 'relicTriggered').some((e) => e.relicId === 'forsakenMedallion'), 'starter relic fired');
   });
 
   // ---- 15. Content validation ---------------------------------------------------------
@@ -561,28 +561,28 @@ export async function runTests() {
     // Same seed → identical roll bundle (SPEC §3.11 stream promise).
     const rollAll = () => {
       const r = createRng(0xaa11);
-      const rn = createRunState({ seed: 0xaa11, classId: 'vagabond', registries: REG });
+      const rn = createRunState({ seed: 0xaa11, classId: 'reaver', registries: REG });
       return JSON.stringify([
         rollEncounter(REG, r, { pool: 'normal' }),
         rollRuneReward(REG, r, 'normal', []),
-        rollCardRewardIds(REG, r, { classId: 'vagabond', pool: 'normal' }),
+        rollCardRewardIds(REG, r, { classId: 'reaver', pool: 'normal' }),
         rollFlaskDrop(REG, r, rn),
-        rollRelicReward(REG, r, ['tarnishedMedallion']),
+        rollRelicReward(REG, r, ['forsakenMedallion']),
         buildShopStock(REG, r, rn),
         resolveUnknownNode(REG, r, {}),
       ]);
     };
     eq(rollAll(), rollAll(), 'reward/shop/unknown rolls deterministic');
 
-    // runeGainMult passive (Rune Pouch ×1.25, floored).
+    // runeGainMult passive (Cinder Pouch ×1.25, floored).
     const base = rollRuneReward(REG, createRng(7), 'normal', []);
-    eq(rollRuneReward(REG, createRng(7), 'normal', ['runePouch']), Math.floor(base * 1.25), 'Rune Pouch');
+    eq(rollRuneReward(REG, createRng(7), 'normal', ['cinderPouch']), Math.floor(base * 1.25), 'Cinder Pouch');
 
-    // Beast Eye: elites offer +1 card choice.
-    eq(rollCardRewardIds(REG, createRng(9), { classId: 'vagabond', pool: 'elite', relicIds: ['beastEye'] }).length, 4, 'Beast Eye extra choice');
+    // Feral Eye: elites offer +1 card choice.
+    eq(rollCardRewardIds(REG, createRng(9), { classId: 'reaver', pool: 'elite', relicIds: ['feralEye'] }).length, 4, 'Feral Eye extra choice');
 
     // Flask pity: −step on drop, +step on miss.
-    const rn2 = createRunState({ seed: 1, classId: 'vagabond', registries: REG });
+    const rn2 = createRunState({ seed: 1, classId: 'reaver', registries: REG });
     rn2.flaskChancePct = 100;
     assert(rollFlaskDrop(REG, createRng(3), rn2) != null, 'guaranteed drop at 100%');
     eq(rn2.flaskChancePct, 90, 'chance decayed after drop');
@@ -595,8 +595,8 @@ export async function runTests() {
     dispatch(c, { type: 'useFlask', slot: 0 });
     eq(c.player.block, 23, 'flaskPowerMult 1.5 rounded up');
 
-    // Wondrous Physick: the one budgeted script — two random flask payloads.
-    const w = makeCombat({ deck: Array(5).fill('strike'), flasks: [{ flaskId: 'wondrousPhysick' }] });
+    // Wondrous Draught: the one budgeted script — two random flask payloads.
+    const w = makeCombat({ deck: Array(5).fill('strike'), flasks: [{ flaskId: 'wondrousDraught' }] });
     const out = dispatch(w, { type: 'useFlask', slot: 0 });
     assert(out.events.some((e) => e.type === 'flaskUsed'), 'physick used');
     assert(
@@ -612,7 +612,7 @@ export async function runTests() {
     eq(h.player.energy, 2, 'paid 1 instead of 2');
 
     // Run-level event opcodes: addCardToDeck + startCombat + shrine math.
-    const rn3 = createRunState({ seed: 2, classId: 'vagabond', registries: REG });
+    const rn3 = createRunState({ seed: 2, classId: 'reaver', registries: REG });
     executeRunEffects({ run: rn3, registries: REG, rng: createRng(5) }, [
       { op: 'addCardToDeck', card: 'guilt' },
       { op: 'startCombat', encounterId: 'loneSoldier' },
@@ -620,11 +620,11 @@ export async function runTests() {
     assert(rn3.deck.some((x) => x.cardId === 'guilt'), 'curse added to deck');
     eq(rn3.combatEntered, 'loneSoldier', 'startCombat handed off');
 
-    const rn4 = createRunState({ seed: 4, classId: 'vagabond', registries: REG });
+    const rn4 = createRunState({ seed: 4, classId: 'reaver', registries: REG });
     rn4.hp = 10;
     eq(shrineHealAmount(REG, rn4), Math.floor((84 * 35) / 100), 'shrine heal 35%');
-    rn4.relics.push('graceFragment');
-    eq(shrineHealAmount(REG, rn4), Math.floor((84 * 35 * 1.15) / 100), 'Grace Fragment ×1.15');
+    rn4.relics.push('emberFragment');
+    eq(shrineHealAmount(REG, rn4), Math.floor((84 * 35 * 1.15) / 100), 'Ember Fragment ×1.15');
   });
 
   // ---- 19. Keepsakes (character creation boons) -------------------------------------------
@@ -638,38 +638,38 @@ export async function runTests() {
     const v = validateContent(probe);
     assert(v.ok, `keepsake effects invalid: ${v.errors.map((e) => e.path + ': ' + e.msg).join(' | ')}`);
 
-    const rn = createRunState({ seed: 11, classId: 'vagabond', registries: REG });
-    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'oldRune').effects);
-    eq(rn.runes, 50, 'Old Rune grants 50 runes');
+    const rn = createRunState({ seed: 11, classId: 'reaver', registries: REG });
+    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'oldCinder').effects);
+    eq(rn.cinders, 50, 'Old Cinder grants 50 cinders');
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'travelersFlask').effects);
     eq(rn.flasks[0].flaskId, 'crimsonFlask', "Traveler's Flask grants a Crimson Flask");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
     assert(rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'Whetstone Memory upgrades a Strike');
   });
 
-  // ---- 20. M3 phase 1: Astrologer + Prophet class mechanics ---------------------------------
-  test('20. Glintstone combos, Glintstone Shard, blood economy, Gold Figurine — all pure data', () => {
+  // ---- 20. M3 phase 1: Starseer + Herald class mechanics ---------------------------------
+  test('20. Starstone combos, Starstone Shard, blood economy, Gold Figurine — all pure data', () => {
     eq(REG.classes.size, 3, 'three playable classes registered');
 
-    // Glintstone: 1st spell plain, 2nd spell empowered, charge fades at turn end.
-    const a = makeCombat({ deck: Array(5).fill('glintstonePebble'), enemies: ['tGiant'] });
-    playFromHand(a, 'glintstonePebble');
+    // Starstone: 1st spell plain, 2nd spell empowered, charge fades at turn end.
+    const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'] });
+    playFromHand(a, 'starstonePebble');
     let hits = logOf(a, 'damageDealt').map((e) => e.amount);
     eq(hits.join(','), '6', 'first spell: no bonus');
-    playFromHand(a, 'glintstonePebble');
+    playFromHand(a, 'starstonePebble');
     hits = logOf(a, 'damageDealt').map((e) => e.amount);
-    eq(hits.join(','), '6,6,3', 'second spell: Glintstone bonus fired');
+    eq(hits.join(','), '6,6,3', 'second spell: Starstone bonus fired');
     dispatch(a, { type: 'endTurn' });
-    eq(S.getStacks(a.player, 'glintstoneCharge'), 0, 'charge fades at turn end');
-    playFromHand(a, 'glintstonePebble');
+    eq(S.getStacks(a.player, 'starstoneCharge'), 0, 'charge fades at turn end');
+    playFromHand(a, 'starstonePebble');
     eq(logOf(a, 'damageDealt').map((e) => e.amount).join(','), '6,6,3,6', 'new turn: no bonus again');
 
-    // Glintstone Shard: combat starts pre-charged → the FIRST spell combos.
-    const s = makeCombat({ deck: Array(5).fill('glintstonePebble'), enemies: ['tGiant'], relicIds: ['glintstoneShard'] });
-    playFromHand(s, 'glintstonePebble');
+    // Starstone Shard: combat starts pre-charged → the FIRST spell combos.
+    const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'] });
+    playFromHand(s, 'starstonePebble');
     eq(logOf(s, 'damageDealt').map((e) => e.amount).join(','), '6,3', 'Shard pre-charges the opener');
 
-    // Prophet blood economy: Blood Pact pays HP for energy + draw.
+    // Herald blood economy: Blood Pact pays HP for energy + draw.
     const p = makeCombat({ deck: ['bloodPact', 'strike', 'strike', 'strike', 'strike', 'strike'] });
     const hpBefore = p.player.hp;
     const handBefore = p.piles.hand.length;
@@ -687,14 +687,14 @@ export async function runTests() {
     eq(g.player.block, 0, "enemy heals did NOT trigger the Figurine (eventTargetIsOwner)");
 
     // A bot finishes an elite fight with each new class's starting deck.
-    for (const classId of ['astrologer', 'prophet']) {
+    for (const classId of ['starseer', 'herald']) {
       const cls = REG.classes.get(classId);
       const deck = cls.startingDeck.map((id, i) => ({ instanceId: `b${i}`, cardId: id, upgraded: false }));
       const c = createCombat({
         registries: REG,
         rng: createRng(0xabc0 + classId.length),
         player: { classId, maxHp: cls.maxHp, hp: cls.maxHp, deck, relicIds: [cls.startingRelic] },
-        enemyIds: ['crucibleAspirant'],
+        enemyIds: ['wyrmAspirant'],
       });
       let guard = 0;
       while (!c.result) {
@@ -713,7 +713,7 @@ export async function runTests() {
   });
 
   // ---- 21. M3 phase 2: Acts II–III mechanics ------------------------------------------------
-  test('21. act-scoped encounters; Rot Valkyrie heal-on-hit; player-side Bleed; Grafted King phase', () => {
+  test('21. act-scoped encounters; Blighted Valkyrie heal-on-hit; player-side Bleed; Stitched King phase', () => {
     // Encounter rolls are act-scoped.
     for (let i = 0; i < 20; i++) {
       const r = createRng(i * 7919);
@@ -723,9 +723,9 @@ export async function runTests() {
     }
     eq(rollEncounter(REG, createRng(1), { pool: 'boss', act: 3 }), 'a3_bossRotValkyrie', 'act 3 boss');
 
-    // Rot Valkyrie: heals 2 whenever SHE lands a hit (persistent phase trigger);
+    // Blighted Valkyrie: heals 2 whenever SHE lands a hit (persistent phase trigger);
     // her thrust also Bleeds the PLAYER (entity-agnostic status model).
-    const v = makeCombat({ deck: Array(5).fill('defend'), enemies: ['rotValkyrie'] });
+    const v = makeCombat({ deck: Array(5).fill('defend'), enemies: ['blightedValkyrie'] });
     const e1 = getEntity(v, 'e1');
     applyLoseHp(v, e1, 30); // give her something to heal back
     dispatch(v, { type: 'endTurn' }); // firstMove spiralThrust: 12 dmg + 2 player Bleed
@@ -740,8 +740,8 @@ export async function runTests() {
     assert(burst, 'player bleed burst');
     eq(burst.amount, Math.floor((78 * 15) / 100), 'burst = 15% of player max HP (11)');
 
-    // Grafted King: ≤50% HP grafts new limbs — unlocks thousandHands, buffs, Frails you.
-    const k = makeCombat({ deck: Array(5).fill('defend'), enemies: ['graftedKing'] });
+    // Stitched King: ≤50% HP grafts new limbs — unlocks thousandHands, buffs, Frails you.
+    const k = makeCombat({ deck: Array(5).fill('defend'), enemies: ['stitchedKing'] });
     const king = getEntity(k, 'e1');
     applyLoseHp(k, king, 115); // 220 → 105 (<50%): checkPhases fires in afterHpChange
     dispatch(k, { type: 'endTurn' }); // drain phase effects
@@ -749,14 +749,14 @@ export async function runTests() {
     assert(S.getStacks(king, 'strength') >= 2, 'phase buffed his Strength');
     assert(S.getStacks(k.player, 'frail') >= 1 || logOf(k, 'statusApplied').some((e) => e.status === 'frail'), 'player Frailed by the phase');
 
-    // Full-fight bot: an upgraded Vagabond deck concludes the final boss fight.
-    const cls = REG.classes.get('vagabond');
+    // Full-fight bot: an upgraded Reaver deck concludes the final boss fight.
+    const cls = REG.classes.get('reaver');
     const deck = [...cls.startingDeck, 'stomp', 'executioner', 'crimsonCleave'].map((id, i) => ({ instanceId: `f${i}`, cardId: id, upgraded: true }));
     const f = createCombat({
       registries: REG,
       rng: createRng(0xf17e),
-      player: { classId: 'vagabond', maxHp: 78, hp: 78, deck, relicIds: ['tarnishedMedallion'] },
-      enemyIds: ['rotValkyrie'],
+      player: { classId: 'reaver', maxHp: 78, hp: 78, deck, relicIds: ['forsakenMedallion'] },
+      enemyIds: ['blightedValkyrie'],
     });
     let guard = 0;
     while (!f.result) {
@@ -789,12 +789,12 @@ export async function runTests() {
     }
     // Cycle scaling applies in combat: +35% HP and +1 Strength per loop.
     const base = createCombat({
-      registries: REG, rng: createRng(7), player: { classId: 'vagabond', maxHp: 84, hp: 84, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] },
-      enemyIds: ['rotHound'],
+      registries: REG, rng: createRng(7), player: { classId: 'reaver', maxHp: 84, hp: 84, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] },
+      enemyIds: ['blightHound'],
     });
     const loop2 = createCombat({
-      registries: REG, rng: createRng(7), player: { classId: 'vagabond', maxHp: 84, hp: 84, deck: [{ instanceId: 'x2', cardId: 'strike', upgraded: false }] },
-      enemyIds: ['rotHound'],
+      registries: REG, rng: createRng(7), player: { classId: 'reaver', maxHp: 84, hp: 84, deck: [{ instanceId: 'x2', cardId: 'strike', upgraded: false }] },
+      enemyIds: ['blightHound'],
       hpMult: 1 + ENDLESS_HP_PER_LOOP * 2,
       enemyStatuses: [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * 2 }],
     });
@@ -812,7 +812,7 @@ export async function runTests() {
     playFromHand(c, 'rallyingBanner');
     eq(c.player.block, 10, "ally-targeted Block resolves to the player when there's no ally");
     // The co-op set is registered, special-rarity (kept out of pools/shops).
-    for (const id of ['rallyingBanner', 'sharedFlame', 'lordsOath']) {
+    for (const id of ['rallyingBanner', 'sharedFlame', 'ashOath']) {
       assert(REG.cards.has(id), `co-op card '${id}' registered`);
       eq(REG.cards.get(id).rarity, 'special', `'${id}' is special rarity (never in solo pools)`);
     }

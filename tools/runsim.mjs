@@ -81,7 +81,7 @@ function botFight(run, rng, encounterId, cm = {}) {
 }
 
 function afterVictory(run, rng, pool) {
-  run.runes += rollRuneReward(REG, rng, pool, run.relics);
+  run.cinders += rollRuneReward(REG, rng, pool, run.relics);
   const cards = rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics });
   if (cards.length) run.deck.push({ instanceId: run._id(), cardId: cards[0], upgraded: false });
   const flask = rollFlaskDrop(REG, rng, run);
@@ -135,7 +135,7 @@ function simulateRun(classId, seed) {
         if (res.kind === 'event') {
           run.seenEvents.push(res.eventId);
           const ev = REG.events.get(res.eventId);
-          const choice = ev.choices.find((c) => !c.requires || (c.requires.runes || 0) <= run.runes) || ev.choices[ev.choices.length - 1];
+          const choice = ev.choices.find((c) => !c.requires || (c.requires.cinders || 0) <= run.cinders) || ev.choices[ev.choices.length - 1];
           executeRunEffects({ run, registries: REG, rng }, choice.effects);
           if (run.hp <= 0) { result.deaths = `event:${res.eventId}`; return result; }
           if (run.combatEntered) {
@@ -176,7 +176,7 @@ function simulateRun(classId, seed) {
 }
 
 // ---- fleet -------------------------------------------------------------------
-console.log(`EldenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot\n`);
+console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot\n`);
 let crash = null;
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;

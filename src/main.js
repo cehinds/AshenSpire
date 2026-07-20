@@ -154,7 +154,13 @@ function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
   document.body.classList.toggle('hi-contrast', settings.highContrast === true);
-  document.body.classList.toggle('large-text', settings.largeText === true);
+  // Text size sets the root font-size %; because all type + component dimensions
+  // are rem, one value rescales the whole UI (base.css). Legacy boolean largeText
+  // maps to L. Stacks with --ui-zoom (which additionally scales px hairlines).
+  const TEXT_SIZES = { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' };
+  const tKey = TEXT_SIZES[settings.textSize] ? settings.textSize
+    : (settings.largeText === true ? 'L' : 'M');
+  document.documentElement.style.fontSize = TEXT_SIZES[tKey];
   document.body.classList.toggle('no-shake', settings.screenShake === false);
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
@@ -196,7 +202,7 @@ function persist() {
   sendLanStatus();
 }
 
-// ---- Tarnished Together (LAN) -------------------------------------------------
+// ---- Forsaken Together (LAN) -------------------------------------------------
 // The run is server-authoritative (the launcher owns it via tools/session.mjs);
 // the browser is a thin client that renders snapshots and sends intents. Solo
 // play never touches any of this.
@@ -234,7 +240,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
   }
   run = createRunState({ seed, classId, registries });
   run.seedString = seedToString(seed);
-  run.customization = customization || { name: 'Tarnished', glyph: '⚔', tint: 'gold' };
+  run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
   run.path = [];
@@ -257,7 +263,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
     run.deck = createDeck(draftBaseIds(), createIdGen('rc'));
   }
   if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
-  if (mods.hoarder) run.runes += registries.balance.customMods.hoarderRunes;
+  if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderRunes;
 
   if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
   startClimb();
@@ -286,7 +292,7 @@ function draftBaseIds() {
 }
 
 // Generate the current act's map and pre-roll every '?' node (stream
-// 'events') so outcomes are seed-determined and the Stonesword Key can
+// 'events') so outcomes are seed-determined and the Sealstone Key can
 // reveal them (SPEC §6).
 // Endless Spire: acts past 3 loop back through acts 1-3 content, harder each
 // cycle (combatMods). All content lookups go through contentAct(); the real
@@ -309,14 +315,14 @@ function buildActMap() {
   }
 }
 
-// Between acts: grace holds the spire together a little longer.
+// Between acts: ember holds the spire together a little longer.
 function advanceAct() {
   run.actNumber += 1;
   run.floor = 0;
   run.mapNodeId = null;
   run.path = [];
   run.lastEncounters = [];
-  // Full heal between acts — halved under the "Scarce Grace" custom rule.
+  // Full heal between acts — halved under the "Scarce Embers" custom rule.
   if (run.custom && activeMods(run.custom).lessHealing) {
     run.hp = Math.min(run.maxHp, run.hp + Math.floor((run.maxHp - run.hp) * registries.balance.customMods.lessHealingMult));
   } else {
@@ -371,7 +377,7 @@ function showTitle() {
     },
     onLan: showLobby,
   });
-  // Tarnished Together needs the launcher's server behind the page.
+  // Forsaken Together needs the launcher's server behind the page.
   lanInfo().then((info) => {
     const btn = app.querySelector('#lan-play');
     if (info && btn) btn.hidden = false;
@@ -404,7 +410,7 @@ function quitGame() {
   run = null;
   app.innerHTML = `
     <div class="screen farewell">
-      <h1 class="title-big">GRACE FADES</h1>
+      <h1 class="title-big">THE EMBER GUTTERS</h1>
       <p class="subtitle" style="text-align:center">Your climb is saved. You may close this window.</p>
       <button class="subtle" id="farewell-back">Return to title</button>
     </div>`;
@@ -683,7 +689,7 @@ function onCombatEnd(result, combat, enc) {
   if (enc.pool === 'boss') {
     // Endless Spire: no summit — the climb loops until death.
     if (run.actNumber >= 3 && !endlessOn()) {
-      // The Rot Valkyrie falls: the Great Rune is restored.
+      // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
       sendLanStatus({ victory: true });
       saves.clearRun(activeSlot);
@@ -693,7 +699,7 @@ function onCombatEnd(result, combat, enc) {
     // Act boss down: boss rewards, then the climb continues.
     const bossRewards = {
       title: `${registries.enemies.get(enc.enemies[0]).name.toUpperCase()} FALLS`,
-      runes: rollRuneReward(registries, rng, 'boss', run.relics),
+      cinders: rollRuneReward(registries, rng, 'boss', run.relics),
       cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
     };
@@ -707,7 +713,7 @@ function onCombatEnd(result, combat, enc) {
 
   const rewards = {
     title: enc.pool === 'elite' ? 'ELITE VANQUISHED' : 'VICTORY',
-    runes: rollRuneReward(registries, rng, enc.pool, run.relics),
+    cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
     cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
@@ -840,16 +846,16 @@ function coopStubMount(snapshot, myId) {
 function coopCombatShot() {
   const hand = ['strike', 'rallyingBanner', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
   const party = [
-    { id: 'p1', name: 'Ranni', classId: 'astrologer', connected: true, alive: true, hp: 61, maxHp: 72, runes: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
-    { id: 'p2', name: 'Blaidd', classId: 'vagabond', connected: true, alive: true, hp: 84, maxHp: 84, runes: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
   return {
     actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
     scene: {
       kind: 'combat', pool: 'normal', phase: 'player', turn: 2, headcount: 2,
       enemies: [
-        { id: 'e1', enemyId: 'rotHound', hp: 13, maxHp: 30, block: 0, alive: true, intent: { kind: 'attack', moveId: 'bite', damage: 6, hits: 1, delayed: false }, statuses: { bleed: { meter: { value: 4, max: 12 } } }, poiseMeter: { value: 4, max: 10 } },
-        { id: 'e2', enemyId: 'rotHound', hp: 30, maxHp: 30, block: 5, alive: true, intent: { kind: 'block', moveId: 'guard', block: 5 }, statuses: {}, poiseMeter: { value: 0, max: 10 } },
+        { id: 'e1', enemyId: 'blightHound', hp: 13, maxHp: 30, block: 0, alive: true, intent: { kind: 'attack', moveId: 'bite', damage: 6, hits: 1, delayed: false }, statuses: { bleed: { meter: { value: 4, max: 12 } } }, poiseMeter: { value: 4, max: 10 } },
+        { id: 'e2', enemyId: 'blightHound', hp: 30, maxHp: 30, block: 5, alive: true, intent: { kind: 'block', moveId: 'guard', block: 5 }, statuses: {}, poiseMeter: { value: 0, max: 10 } },
         { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 } },
       ],
       players: [
@@ -861,32 +867,32 @@ function coopCombatShot() {
   };
 }
 function coopMapShot() {
-  newRun({ classId: 'vagabond', seedString: 'SHOWCASE', slot: 1 });
+  newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
   const g = run.mapGraph;
   const nodeType = (n) => (n.type === 'event' ? 'unknown' : n.type);
   return {
     actNumber: 1, floor: 0, seedString: 'SHOWCASE', endless: false,
-    // Blaidd has already voted for a start node; Ranni (you) is still deciding.
+    // Fenn has already voted for a start node; Wren (you) is still deciding.
     scene: { kind: 'map', votes: { p2: g.startIds[1] || g.startIds[0] } },
     reachableIds: g.startIds.slice(),
     map: { floors: g.floors, startIds: g.startIds, bossId: g.bossId, nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })) },
     party: [
-      { id: 'p1', name: 'Ranni', classId: 'astrologer', connected: true, alive: true, hp: 61, maxHp: 72, catchupQueue: [] },
-      { id: 'p2', name: 'Blaidd', classId: 'vagabond', connected: true, alive: true, hp: 84, maxHp: 84, catchupQueue: [] },
+      { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, catchupQueue: [] },
+      { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, catchupQueue: [] },
     ],
   };
 }
 
 function coopShotParty() {
   return [
-    { id: 'p1', name: 'Ranni', classId: 'astrologer', connected: true, alive: true, hp: 61, maxHp: 72, runes: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
-    { id: 'p2', name: 'Blaidd', classId: 'vagabond', connected: true, alive: true, hp: 84, maxHp: 84, runes: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
 }
 function coopRewardShot() {
   return {
     actNumber: 1, floor: 4, seedString: 'SHOWCASE', endless: false,
-    scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], runes: 32, flaskId: 'crimsonFlask', relicId: 'tarnishedMedallion' } } },
+    scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 32, flaskId: 'crimsonFlask', relicId: 'forsakenMedallion' } } },
     party: coopShotParty(),
   };
 }
@@ -897,8 +903,8 @@ function coopCatchupShot() {
   const party = coopShotParty();
   party[0].catchup = 2;
   party[0].catchupQueue = [
-    { type: 'reward', act: 1, floor: 2, offer: { pool: 'normal', cardIds: ['guardCounter', 'rend', 'goldenVow'], relicId: 'tarnishedMedallion' } },
-    { type: 'treasure', act: 1, floor: 3, relicId: 'tarnishedMedallion' },
+    { type: 'reward', act: 1, floor: 2, offer: { pool: 'normal', cardIds: ['guardCounter', 'rend', 'gildedOath'], relicId: 'forsakenMedallion' } },
+    { type: 'treasure', act: 1, floor: 3, relicId: 'forsakenMedallion' },
   ];
   return { actNumber: 1, floor: 6, seedString: 'SHOWCASE', endless: false, scene: { kind: 'map' }, reachableIds: [], map: null, party };
 }
@@ -908,7 +914,7 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
   saves.saveMeta(shotMeta);
-  newRun({ classId: 'vagabond', seedString: 'SHOWCASE', slot: 1 });
+  newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
   if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');

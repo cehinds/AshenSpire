@@ -16,7 +16,7 @@ import { balance } from './balance.js';
 
 export const DIFFICULTY_MODS = [
   { id: 'toughElites', label: 'Tough Elites', desc: 'Elites and bosses have +30% HP.' },
-  { id: 'lessHealing', label: 'Scarce Grace', desc: 'Shrine rest and between-act healing are halved.' },
+  { id: 'lessHealing', label: 'Scarce Embers', desc: 'Shrine rest and between-act healing are halved.' },
   { id: 'deadlyEnemies', label: 'Deadly Foes', desc: 'Every enemy begins combat with +1 Strength.' },
   { id: 'cursedStart', label: 'Cursed Start', desc: 'Begin the run with a Guilt curse shuffled into your deck.' },
   { id: 'expensiveShops', label: 'Greedy Merchants', desc: 'Shop prices are 50% higher.' },
@@ -25,7 +25,7 @@ export const DIFFICULTY_MODS = [
 
 export const CHAOS_MODS = [
   { id: 'allElite', label: 'Elite Gauntlet', desc: 'Every monster node is an Elite fight.' },
-  { id: 'hoarder', label: 'Hoarder', desc: 'Start with +250 runes — but every shop price doubles.' },
+  { id: 'hoarder', label: 'Hoarder', desc: 'Start with +250 cinders — but every shop price doubles.' },
   { id: 'chaosRewards', label: 'Chaos Rewards', desc: 'Card rewards ignore rarity: rares everywhere.' },
   { id: 'glassCannon', label: 'Glass Cannon', desc: 'You deal +25% damage, but take +25% damage.' },
   { id: 'endless', label: 'Endless Spire', desc: 'After Act 3 the spire loops — each cycle, foes gain HP and Strength. Only death ends the climb.' },

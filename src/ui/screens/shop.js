@@ -18,12 +18,12 @@ export function mountShop(app, { registries, run, onLeave, onChanged }) {
       <div class="screen" style="justify-content:flex-start;overflow-y:auto;gap:14px;padding-top:28px">
         <h2 style="color:var(--gold);font-size:24px">THE WANDERING MERCHANT</h2>
         <p class="subtitle">"I'VE CLIMBED HIGHER THAN YOU. I CAME BACK. DRAW YOUR OWN CONCLUSIONS."</p>
-        <p style="color:var(--gold)">Runes: <b>${run.runes}</b> · HP ${run.hp}/${run.maxHp}</p>
+        <p style="color:var(--gold)">Cinders: <b>${run.cinders}</b> · HP ${run.hp}/${run.maxHp}</p>
         <div class="reward-row" id="shop-cards"></div>
         <div class="class-row" id="shop-items"></div>
         <div class="class-row">
-          <div class="class-pick${run.runes >= stock.removeCost && run.deck.length > 1 ? '' : ' locked'}" id="remove-opt">
-            <div class="glyph">✂</div><h3>Remove a card</h3><p>${stock.removeCost} runes. The deck remembers what you cut.</p>
+          <div class="class-pick${run.cinders >= stock.removeCost && run.deck.length > 1 ? '' : ' locked'}" id="remove-opt">
+            <div class="glyph">✂</div><h3>Remove a card</h3><p>${stock.removeCost} cinders. The deck remembers what you cut.</p>
           </div>
         </div>
         <div id="remove-grid" class="deck-strip" style="display:none;max-width:900px"></div>
@@ -37,11 +37,11 @@ export function mountShop(app, { registries, run, onLeave, onChanged }) {
       const el = renderCard(registries, { cardId: item.id, upgraded: false }, { small: true });
       const tag = document.createElement('span');
       tag.className = 'mini';
-      tag.textContent = `${item.cost} runes`;
-      tag.style.color = run.runes >= item.cost ? 'var(--gold)' : 'var(--muted)';
-      if (run.runes >= item.cost) {
+      tag.textContent = `${item.cost} cinders`;
+      tag.style.color = run.cinders >= item.cost ? 'var(--gold)' : 'var(--muted)';
+      if (run.cinders >= item.cost) {
         el.addEventListener('click', () => {
-          run.runes -= item.cost;
+          run.cinders -= item.cost;
           run.deck.push({ instanceId: `s${run.deck.length}_${item.id}`, cardId: item.id, upgraded: false });
           stock.cards.splice(i, 1);
           sfx.play('buy');
@@ -59,8 +59,8 @@ export function mountShop(app, { registries, run, onLeave, onChanged }) {
     const items = app.querySelector('#shop-items');
     stock.relics.forEach((item, i) => {
       const def = registries.relics.get(item.id);
-      items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, def.textTemplate.replace(/[{}]/g, ''), item.cost, run.runes >= item.cost, () => {
-        run.runes -= item.cost;
+      items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, def.textTemplate.replace(/[{}]/g, ''), item.cost, run.cinders >= item.cost, () => {
+        run.cinders -= item.cost;
         run.relics.push(item.id);
         stock.relics.splice(i, 1);
         sfx.play('buy');
@@ -70,9 +70,9 @@ export function mountShop(app, { registries, run, onLeave, onChanged }) {
     });
     stock.flasks.forEach((item, i) => {
       const def = registries.flasks.get(item.id);
-      const can = run.runes >= item.cost && slotsFree();
+      const can = run.cinders >= item.cost && slotsFree();
       items.appendChild(shopItem(`${def.icon || '🧪'} ${def.name}`, slotsFree() ? def.textTemplate : 'Flask slots full.', item.cost, can, () => {
-        run.runes -= item.cost;
+        run.cinders -= item.cost;
         run.flasks.push({ flaskId: item.id });
         stock.flasks.splice(i, 1);
         sfx.play('buy');
@@ -81,7 +81,7 @@ export function mountShop(app, { registries, run, onLeave, onChanged }) {
       }));
     });
 
-    if (run.runes >= stock.removeCost && run.deck.length > 1) {
+    if (run.cinders >= stock.removeCost && run.deck.length > 1) {
       app.querySelector('#remove-opt').addEventListener('click', () => {
         const grid = app.querySelector('#remove-grid');
         if (grid.style.display !== 'none') return;
@@ -92,7 +92,7 @@ export function mountShop(app, { registries, run, onLeave, onChanged }) {
         run.deck.forEach((inst, idx) => {
           const el = renderCard(registries, inst, { small: true });
           el.addEventListener('click', () => {
-            run.runes -= stock.removeCost;
+            run.cinders -= stock.removeCost;
             run.deck.splice(idx, 1);
             run.removesPurchased = (run.removesPurchased || 0) + 1;
             stock.removeCost = registries.balance.shop.removeBase + registries.balance.shop.removeStep * run.removesPurchased;
@@ -111,7 +111,7 @@ export function mountShop(app, { registries, run, onLeave, onChanged }) {
   function shopItem(title, desc, cost, affordable, onBuy) {
     const el = document.createElement('div');
     el.className = `class-pick${affordable ? '' : ' locked'}`;
-    el.innerHTML = `<h3 style="font-size:13px">${esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} runes</span>`;
+    el.innerHTML = `<h3 style="font-size:13px">${esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} cinders</span>`;
     if (affordable) el.addEventListener('click', onBuy);
     return el;
   }

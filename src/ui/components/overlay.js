@@ -158,13 +158,13 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     const s = run.stats || {};
     const cls = registries.classes.get(run.class);
     const rows = [
-      ['Tarnished', (run.customization && run.customization.name) || cls.name],
+      ['Forsaken', (run.customization && run.customization.name) || cls.name],
       ['Class', cls.name],
       ['Seed', run.seedString],
       ['Act', run.actNumber > 3 ? `${run.actNumber} (endless)` : `${run.actNumber} / 3`],
       ['Floor', run.floor],
       ['HP', `${run.hp} / ${run.maxHp}`],
-      ['Runes', run.runes],
+      ['Cinders', run.cinders],
       ['Fights won', s.fightsWon || 0],
       ['Damage dealt', s.damageDealt || 0],
       ['Damage taken', s.damageTaken || 0],

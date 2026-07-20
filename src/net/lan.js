@@ -1,4 +1,4 @@
-// src/net/lan.js — browser side of Tarnished Together (LAN play).
+// src/net/lan.js — browser side of Forsaken Together (LAN play).
 //
 // Talks to the launcher's LAN layer (tools/lan.mjs): the game's OWN server
 // answers /api/lan/* (discovery + hosting), and the lobby itself is a

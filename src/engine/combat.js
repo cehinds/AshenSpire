@@ -645,7 +645,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
       case 'draw':
       case 'gainEnergy':
       case 'poiseDamage':
-      case 'addRunes': {
+      case 'addCinders': {
         entry.value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);
         break;
       }

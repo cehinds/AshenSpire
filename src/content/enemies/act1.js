@@ -18,10 +18,10 @@ export const act1Enemies = [
     },
   },
   {
-    id: 'rotHound',
+    id: 'blightHound',
     size: 'small',
     tint: 'var(--rot)',
-    name: 'Rot Hound',
+    name: 'Blight Hound',
     hp: [12, 15],
     poiseMax: 6,
     art: '🐕',
@@ -31,9 +31,9 @@ export const act1Enemies = [
     },
   },
   {
-    id: 'demiBrute',
+    id: 'huskBrute',
     size: 'medium',
-    name: 'Demi-Brute',
+    name: 'Husk Brute',
     hp: [30, 34],
     poiseMax: 16,
     art: '🪨',
@@ -68,10 +68,10 @@ export const act1Enemies = [
 
   // ---- Elite (SPEC §5.3) ----------------------------------------------------
   {
-    id: 'crucibleAspirant',
+    id: 'wyrmAspirant',
     size: 'large',
     tint: 'var(--gold)',
-    name: 'Crucible Aspirant',
+    name: 'Wyrm Aspirant',
     hp: [68, 72],
     poiseMax: 24,
     art: '🐲',
@@ -93,12 +93,12 @@ export const act1Enemies = [
     },
   },
 
-  // ---- Boss: The Watchful Omen (SPEC §5.3 — Margit-inspired) -----------------
+  // ---- Boss: The Fell Warden (SPEC §5.3 — the Fell Warden-inspired) -----------------
   {
-    id: 'watchfulOmen',
+    id: 'fellWarden',
     size: 'large',
     tint: 'var(--blood)',
-    name: 'The Watchful Omen',
+    name: 'The Fell Warden',
     hp: [120, 120],
     poiseMax: 30,
     art: '👁',

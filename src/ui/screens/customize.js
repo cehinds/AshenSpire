@@ -11,8 +11,8 @@ import { esc } from '../components/tooltip.js';
 
 export function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
-    classId: 'vagabond',
-    name: 'Tarnished',
+    classId: 'reaver',
+    name: 'Forsaken',
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
     spriteStyle: 'rendered',
@@ -21,12 +21,12 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
 
   app.innerHTML = `
     <div class="screen customize" style="justify-content:flex-start;overflow-y:auto;gap:16px;padding-top:26px">
-      <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">PREPARE YOUR TARNISHED</h2>
+      <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">PREPARE YOUR FORSAKEN</h2>
 
       <div style="display:flex;gap:34px;align-items:flex-start">
         <div class="preview-pane" style="display:flex;flex-direction:column;align-items:center;gap:10px">
           <div id="cz-portrait" class="cz-portrait"></div>
-          <input id="cz-name" maxlength="16" spellcheck="false" value="Tarnished"
+          <input id="cz-name" maxlength="16" spellcheck="false" value="Forsaken"
             style="background:var(--panel);border:1px solid var(--line);color:var(--parchment);border-radius:8px;padding:6px 10px;width:150px;text-align:center;font-family:var(--font-display);letter-spacing:.08em">
           <div class="seed-line">Seed <input id="seed-input" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></div>
         </div>
@@ -140,7 +140,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
   });
 
   $('#cz-name').addEventListener('input', (ev) => {
-    state.name = ev.target.value.trim() || 'Tarnished';
+    state.name = ev.target.value.trim() || 'Forsaken';
   });
   $('#cz-back').addEventListener('click', onBack);
   $('#cz-start').addEventListener('click', () => {

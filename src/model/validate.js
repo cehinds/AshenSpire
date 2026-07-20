@@ -35,7 +35,7 @@ export const TOKENIZABLE_OPS = Object.freeze([
   'poiseDamage',
   'draw',
   'gainEnergy',
-  'addRunes',
+  'addCinders',
   'loseMaxHpPct',
 ]);
 

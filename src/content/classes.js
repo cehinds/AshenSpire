@@ -1,65 +1,65 @@
 // src/content/classes.js — class definitions (SPEC §5.1)
 //
-// Only the Vagabond registers in M1 (the schema is strict; locked classes are
+// Only the Reaver registers in M1 (the schema is strict; locked classes are
 // UI display data, exported separately below and NOT part of the bundle).
 
 export const classes = [
   {
-    id: 'vagabond',
+    id: 'reaver',
     glyph: '⚔',
-    name: 'Vagabond',
+    name: 'Reaver',
     maxHp: 84,
-    startingRelic: 'tarnishedMedallion',
+    startingRelic: 'forsakenMedallion',
     startingDeck: [
       'strike', 'strike', 'strike', 'strike', 'strike',
       'defend', 'defend', 'defend', 'defend',
-      'bloodflameSlash',
+      'gorefireSlash',
     ],
     cardPool: [
       // Commons
       'crimsonCleave', 'shieldBash', 'quickstep', 'guardCounter', 'ironResolve',
-      'serratedBlade', 'enterBloodflame', 'enterBulwark',
+      'serratedBlade', 'enterGorefire', 'enterBulwark',
       'riposte', 'rend', 'cleavingBlow', 'goreslash', 'bracingStance',
       // Uncommons
       'stomp', 'rallyingStandard', 'warSurgeon', 'hemorrhage', 'twinbladeFlurry',
       'shieldwall', 'kickOff',
       'wardingLunge', 'impale', 'warcry', 'flameToBlade', 'ironVowCard',
       // Rares
-      'executioner', 'lordsBlood', 'unbreakable', 'graftedArms', 'lastStand', 'warriorsVow',
+      'executioner', 'goreblood', 'unbreakable', 'stitchedArms', 'lastStand', 'warriorsVow',
       'ruinousBlow', 'bloodhuntersStrike', 'sanguinePactCard', 'bloodTithe', 'poiseBreaker',
     ],
     description:
-      'Weapon-arts duelist: stance dancing between Bloodflame offense and Bulwark defense, with Bleed and Poise as twin payoff meters.',
+      'Weapon-arts duelist: stance dancing between Gorefire offense and Bulwark defense, with Bleed and Poise as twin payoff meters.',
   },
   {
-    id: 'astrologer',
+    id: 'starseer',
     glyph: '☄',
-    name: 'Astrologer',
+    name: 'Starseer',
     maxHp: 72,
-    startingRelic: 'glintstoneShard',
+    startingRelic: 'starstoneShard',
     startingDeck: [
       'strike', 'strike', 'strike', 'strike', 'strike',
       'defend', 'defend', 'defend', 'defend',
-      'glintstonePebble',
+      'starstonePebble',
     ],
     cardPool: [
       // Commons
-      'cometFragment', 'glintbladePhalanx', 'crystalBarrier', 'starShower', 'scholarsInsight', 'frostVeil',
-      'starSlicer', 'glintstoneWard', 'starlance', 'twinkling', 'frostNova', 'shootingShard', 'wardingStar',
+      'cometFragment', 'starbladePhalanx', 'crystalBarrier', 'starShower', 'scholarsInsight', 'frostVeil',
+      'starSlicer', 'starstoneWard', 'starlance', 'twinkling', 'frostNova', 'shootingShard', 'wardingStar',
       // Uncommons
-      'glintstoneArc', 'lucidity', 'stargazerCard', 'astralArmorCard', 'moonveilCut', 'meteorite',
-      'meteorSwarm', 'gravityWell', 'ceruleanCoilCard', 'astralCleave', 'radiantSpray', 'starPath', 'moonlitShieldCard',
+      'starstoneArc', 'lucidity', 'stargazerCard', 'astralArmorCard', 'moonrendCut', 'meteorite',
+      'meteorSwarm', 'gravityWell', 'azureCoilCard', 'astralCleave', 'radiantSpray', 'starPath', 'moonlitShieldCard',
       // Rares
-      'supernova', 'timeDilation', 'glintstoneKris', 'constellationCard',
+      'supernova', 'timeDilation', 'starstoneKris', 'constellationCard',
       'starfallBeam', 'starcaller', 'umbralWard', 'waxingMoonCard', 'celestialLance', 'astromancerCard',
     ],
     description:
-      'Sorcery combos: the second spell each turn is empowered (Glintstone). Fragile early — sequencing is everything.',
+      'Sorcery combos: the second spell each turn is empowered (Starstone). Fragile early — sequencing is everything.',
   },
   {
-    id: 'prophet',
+    id: 'herald',
     glyph: '☀',
-    name: 'Prophet',
+    name: 'Herald',
     maxHp: 78,
     startingRelic: 'goldFigurine',
     startingDeck: [
@@ -69,17 +69,17 @@ export const classes = [
     ],
     cardPool: [
       // Commons
-      'bloodPact', 'rotTouch', 'flagellation', 'penance', 'litany', 'graveOffering',
-      'bloodletting', 'contagion', 'cullTheWeak', 'transfusion', 'rotward', 'painOffering', 'witheringTouch',
+      'bloodPact', 'blightTouch', 'flagellation', 'penance', 'litany', 'graveOffering',
+      'bloodletting', 'contagion', 'cullTheWeak', 'transfusion', 'blightward', 'painOffering', 'witheringTouch',
       // Uncommons
-      'martyrBlood', 'rotBloom', 'sacredHarvest', 'thornHaloCard', 'communionCard', 'goldenVow',
-      'plagueBearer', 'exsanguinate', 'stigmataCard', 'scourge', 'reclamation', 'desperateRite', 'graceTideCard',
+      'martyrBlood', 'blightBloom', 'sacredHarvest', 'thornHaloCard', 'communionCard', 'gildedOath',
+      'plagueBearer', 'exsanguinate', 'stigmataCard', 'scourge', 'reclamation', 'desperateRite', 'emberTideCard',
       // Rares
       'secondBloom', 'butterflyPlague', 'lifeTitheCard', 'crimsonRite',
-      'rotNova', 'lastRites', 'zealotryCard', 'bloodHarvest', 'bloodOfferingRite', 'harbingerOfRotCard',
+      'blightNova', 'lastRites', 'zealotryCard', 'bloodHarvest', 'bloodOfferingRite', 'harbingerOfBlightCard',
     ],
     description:
-      'HP as a resource: pay blood for tempo, spread Scarlet Rot, and heal it all back. One pool — mistakes compound.',
+      'HP as a resource: pay blood for tempo, spread Crimson Blight, and heal it all back. One pool — mistakes compound.',
   },
 ];
 

@@ -6,7 +6,7 @@
 // run mutation is limited to explicitly documented counters (flask pity,
 // removal price). Stream usage: encounters → 'enemyAI', card rewards →
 // 'cardRewards', relics → 'relicRewards', flasks → 'flaskRewards',
-// unknown nodes + events → 'events', shop stock → 'shop', runes → 'misc'.
+// unknown nodes + events → 'events', shop stock → 'shop', cinders → 'misc'.
 //
 // Headless: no document/window/localStorage/timers.
 
@@ -41,16 +41,16 @@ export function rollEncounter(registries, rng, { pool, act = 1, exclude = [] } =
 // Combat rewards (SPEC §6)
 // ---------------------------------------------------------------------------
 
-/** Rune reward for a combat pool, scaled by runeGainMult passives (floored). */
+/** Cinder reward for a combat pool, scaled by runeGainMult passives (floored). */
 export function rollRuneReward(registries, rng, pool, relicIds) {
-  const range = registries.balance.rewards.runes[pool];
+  const range = registries.balance.rewards.cinders[pool];
   const base = rng.int('misc', range[0], range[1]);
   return Math.floor(base * passiveMult(registries, relicIds, 'runeGainMult'));
 }
 
 /**
  * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct
- * card ids (rarity-weighted per pool; elites offer +1 with Beast Eye).
+ * card ids (rarity-weighted per pool; elites offer +1 with Feral Eye).
  */
 export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false }) {
   const bal = registries.balance.rewards;

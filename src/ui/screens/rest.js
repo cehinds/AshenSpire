@@ -1,4 +1,4 @@
-// src/ui/screens/rest.js — Shrine of Grace: Rest (heal) or Smith (upgrade)
+// src/ui/screens/rest.js — Shrine of Emberlight: Rest (heal) or Smith (upgrade)
 // (SPEC §7.1; heal math from engine/encounters.js shrineHealAmount)
 
 import { shrineHealAmount } from '../../engine/encounters.js';
@@ -14,13 +14,13 @@ export function mountRest(app, { registries, run, onDone, healMult = 1 }) {
 
   app.innerHTML = `
     <div class="screen">
-      <h2 style="color:var(--gold);font-size:26px">SHRINE OF GRACE</h2>
+      <h2 style="color:var(--gold);font-size:26px">SHRINE OF EMBER</h2>
       <p class="subtitle">THE GOLD LIGHT HOLDS, FOR NOW</p>
       <div class="class-row">
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
           <h3>Rest</h3>
-          <p>${noRest ? 'The Dragon Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}).`}</p>
+          <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}).`}</p>
         </div>
         <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt">
           <div class="glyph">⚒</div>

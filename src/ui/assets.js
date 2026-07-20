@@ -9,11 +9,14 @@
 // the whole UI is zoomed to fit the window (main.js applyUiScale), so larger
 // base sizes just mean a bolder board rather than overflow.
 // Sprite size tiers (the display dimensions each enemy def's `size` selects).
+// Values are in px-magnitude; emitted as rem (÷10, since :root is 62.5% → 1rem =
+// 10px) so sprites track the text-size setting. Shadow offsets stay px.
 const SIZE_TIERS = {
   small: { w: 92, h: 128, font: 44 },
   medium: { w: 132, h: 168, font: 58 },
   large: { w: 194, h: 206, font: 78 },
 };
+const rem = (px) => `${px / 10}rem`;
 
 /**
  * Enemy sprite: the Blender-rendered PNG when it exists
@@ -28,13 +31,13 @@ export function enemySprite(enemyDef) {
   const el = document.createElement('div');
   const placeholder = () => {
     el.innerHTML = '';
-    el.style.cssText = `width:${tier.w}px;height:${tier.h}px;border-radius:10px;` +
+    el.style.cssText = `width:${rem(tier.w)};height:${rem(tier.h)};border-radius:10px;` +
       `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
-      `justify-content:center;font-size:${tier.font}px;position:relative;` +
+      `justify-content:center;font-size:${rem(tier.font)};position:relative;` +
       `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
     el.textContent = enemyDef.art || '☠';
   };
-  el.style.cssText = `width:${tier.w}px;height:${tier.h}px;position:relative;` +
+  el.style.cssText = `width:${rem(tier.w)};height:${rem(tier.h)};position:relative;` +
     'display:flex;align-items:flex-end;justify-content:center;';
   const img = document.createElement('img');
   img.src = `assets/sprites/enemy_${enemyDef.id}.png`;
@@ -49,11 +52,11 @@ export function enemySprite(enemyDef) {
 // Character customization options (cosmetic — stored on run.customization).
 export const PORTRAIT_GLYPHS = ['⚔', '🛡', '🔥', '🌙', '☀', '🐺'];
 export const PORTRAIT_TINTS = [
-  { id: 'gold', css: 'var(--gold)', name: 'Erdtree gold' },
-  { id: 'ember', css: 'var(--ember)', name: 'Bloodflame ember' },
-  { id: 'frost', css: 'var(--frost)', name: 'Carian frost' },
-  { id: 'rot', css: 'var(--rot)', name: 'Scarlet rot' },
-  { id: 'grace', css: 'var(--grace)', name: 'Lost grace' },
+  { id: 'gold', css: 'var(--gold)', name: 'Goldbough gold' },
+  { id: 'ember', css: 'var(--ember)', name: 'Gorefire ember' },
+  { id: 'frost', css: 'var(--frost)', name: 'Hoarfrost' },
+  { id: 'rot', css: 'var(--rot)', name: 'Crimson blight' },
+  { id: 'grace', css: 'var(--grace)', name: 'Lost ember' },
 ];
 
 // ---- Class character sprites (inline SVG, tinted) --------------------------
@@ -81,8 +84,8 @@ function sigilMedallion(cx, cy, t, sigil, plainR) {
 }
 
 const CLASS_SVG = {
-  // Vagabond — armored knight, greatsword held point-down, cape behind.
-  vagabond: (t, sigil) => `
+  // Reaver — armored knight, greatsword held point-down, cape behind.
+  reaver: (t, sigil) => `
     <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
       <ellipse cx="55" cy="133" rx="28" ry="5" fill="rgba(0,0,0,.45)"/>
       <path d="M30 48 L24 130 L86 130 L80 48 Q55 40 30 48Z" fill="#20190f"/>
@@ -99,8 +102,8 @@ const CLASS_SVG = {
       <circle cx="55" cy="61" r="4" fill="${t}"/>
       ${sigilMedallion(55, 84, t, sigil, 5.5)}
     </svg>`,
-  // Astrologer — robed mage, wide pointed hat, star-topped staff, sparkles.
-  astrologer: (t, sigil) => `
+  // Starseer — robed mage, wide pointed hat, star-topped staff, sparkles.
+  starseer: (t, sigil) => `
     <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
       <ellipse cx="55" cy="133" rx="26" ry="5" fill="rgba(0,0,0,.45)"/>
       <rect x="80" y="30" width="3.5" height="99" rx="1" fill="#6b5d45"/>
@@ -114,8 +117,8 @@ const CLASS_SVG = {
       <circle cx="29" cy="52" r="1.7" fill="${t}"/>
       <circle cx="40" cy="96" r="1.5" fill="${t}"/>
     </svg>`,
-  // Prophet — hooded pilgrim, halo, prayer beads at the waist.
-  prophet: (t, sigil) => `
+  // Herald — hooded pilgrim, halo, prayer beads at the waist.
+  herald: (t, sigil) => `
     <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
       <ellipse cx="55" cy="133" rx="26" ry="5" fill="rgba(0,0,0,.45)"/>
       <circle cx="55" cy="30" r="16" fill="none" stroke="${t}" stroke-width="2"/>
@@ -135,7 +138,7 @@ const CLASS_SVG = {
 // working with zero configuration. Art credit: procedurally generated in
 // Blender by this repo (see CREDITS.md).
 const SPRITE_TINT_IDS = ['gold', 'ember', 'frost', 'rot', 'grace'];
-const SPRITE_CLASSES = ['vagabond', 'astrologer', 'prophet'];
+const SPRITE_CLASSES = ['reaver', 'starseer', 'herald'];
 function renderedSpriteUrl(classId, tintId) {
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const t = SPRITE_TINT_IDS.includes(tintId) ? tintId : 'gold';
@@ -156,16 +159,17 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   if (!build) return null;
   const el = document.createElement('div');
   el.className = 'class-sprite';
-  el.style.cssText = 'width:150px;height:190px;display:flex;align-items:flex-end;justify-content:center;position:relative;';
+  el.style.cssText = 'width:15rem;height:19rem;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
   const fallbackToSvg = () => {
     el.innerHTML = build(tint, sigil);
     const svg = el.querySelector('svg');
     if (svg) {
-      // The class SVGs hardcode 110×140; scale them to the (larger) container so
-      // the player figure reads as boldly as the enemies (viewBox keeps ratio).
-      svg.setAttribute('width', '150');
-      svg.setAttribute('height', '190');
+      // The class SVGs hardcode a 110×140 viewBox; fill the rem-sized container
+      // (viewBox keeps ratio) so the figure reads as boldly as the enemies and
+      // tracks the text-size setting.
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
     }
   };
 
@@ -177,7 +181,7 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   const img = document.createElement('img');
   img.src = url;
   img.alt = classId;
-  img.style.cssText = 'width:150px;height:190px;object-fit:contain;image-rendering:auto;';
+  img.style.cssText = 'width:100%;height:100%;object-fit:contain;image-rendering:auto;';
   img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
   el.appendChild(img);
   // The chosen sigil rides the rendered art as a chest medallion overlay.
@@ -186,8 +190,8 @@ export function classSprite(classId, tint, sigil, tintId, style) {
     med.textContent = sigil;
     med.style.cssText =
       `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);` +
-      `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
-      'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
+      `width:2.2rem;height:2.2rem;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
+      'display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#e8dcc0;';
     el.appendChild(med);
   }
   return el;
@@ -205,8 +209,8 @@ export function playerSprite(customization = {}, classId) {
   }
   const el = document.createElement('div');
   el.style.cssText =
-    `width:150px;height:190px;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
-    'display:flex;align-items:center;justify-content:center;font-size:70px;position:relative;' +
+    `width:15rem;height:19rem;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
+    'display:flex;align-items:center;justify-content:center;font-size:7rem;position:relative;' +
     `box-shadow:0 10px 12px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.4);`;
   el.textContent = customization.glyph || '🛡';
   return el;

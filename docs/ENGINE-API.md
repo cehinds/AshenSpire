@@ -71,7 +71,7 @@ Returns the **effective card def** (frozen, cached). Upgrade merge rules:
 | `flaskSlots` (3) | max flask slots (run-level `addFlask`) |
 | `poise.growthMult` (1.25) | poiseMax multiplier after each Stagger (ceil) |
 | `poise.onFill` ([]) | effects enqueued when a poise meter fills, `owner`/`self` = the Staggered enemy. **This is where content applies its "staggered" status** (e.g. `damageTakenMult: 1.5` + a `playerTurnEnd` hook that removes itself). The engine never names that status. |
-| `startingRunes` (0) | initial runes in `createRunState` |
+| `startingRunes` (0) | initial cinders in `createRunState` |
 
 ---
 
@@ -252,7 +252,7 @@ enemy-sourced effect it resolves to the player.
 | `enterStance` | `stance` | no-op if already in that stance (StS); else exits previous → `stanceExited`, `stanceEntered`, then enqueues the stance's `onEnter` effects |
 | `poiseDamage` | `amount` | feeds the enemy's poise meter; on fill: skip flag set, pending delayed move cancelled, `meterFilled(meter:'poise')` + `enemyStaggered` emitted, `balance.poise.onFill` enqueued, `poiseMax ×= growthMult` (ceil) unless growth disabled |
 
-Run-level opcodes (`addRunes {amount}`, `removeCardFromDeck {card?|random?}`,
+Run-level opcodes (`addCinders {amount}`, `removeCardFromDeck {card?|random?}`,
 `upgradeCard {card?|random?}`, `addRelic {id?|random?}`, `addFlask
 {id?|random?}`, `loseMaxHpPct {pct}`, `startCombat {encounterId}`) require a
 run context — use:
@@ -458,7 +458,7 @@ current dispatch's `events`.
 | `flaskUsed` | `{ flaskId, slot, targetId }` |
 | `relicTriggered` | `{ relicId }` |
 
-(Run-level `executeRunEffects` additionally emits a non-bus `runesChanged
+(Run-level `executeRunEffects` additionally emits a non-bus `cindersChanged
 { amount, total }`.)
 
 ---
@@ -470,7 +470,7 @@ Tokens `{name}` / `{name.N}` bind to effect values **in effect order** via
 `previewCard`):
 
 - token base = op name (`damage`, `block`, `heal`, `loseHp`, `poiseDamage`,
-  `draw`, `gainEnergy`, `addRunes`, `loseMaxHpPct`) — **except** `applyStatus`,
+  `draw`, `gainEnergy`, `addCinders`, `loseMaxHpPct`) — **except** `applyStatus`,
   which binds under its **status id** (`{someStatusId}` = the stacks applied);
 - a `damage` op's `hits` binds as `{hits}`;
 - repeats get `.2`, `.3`… suffixes (`{damage}`, `{damage.2}`).
@@ -531,7 +531,7 @@ import { createRunState, serializeRun, deserializeRun,
 
 const run = createRunState({ seed, classId, registries });
 // { schemaVersion, contentVersion, seed, streamCounters, class, floor,
-//   actNumber, mapNodeId, hp, maxHp, runes, deck:[{instanceId,cardId,upgraded}],
+//   actNumber, mapNodeId, hp, maxHp, cinders, deck:[{instanceId,cardId,upgraded}],
 //   relics:[relicIds], flasks:[{flaskId}], mapGraph, combatEntered, history,
 //   modifiers }
 ```

@@ -53,7 +53,7 @@ export function openBrowser(url) {
 /**
  * serve({ root, port, open, lan }) → Promise<{ server, url, port }>
  * Bumps to the next port if the requested one is in use. `lan: true` attaches
- * the Tarnished Together session layer (tools/lan.mjs: discovery + lobby WS).
+ * the Forsaken Together session layer (tools/lan.mjs: discovery + lobby WS).
  */
 export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false } = {}) {
   const rootResolved = resolve(root);
@@ -100,7 +100,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false }
     });
     server.listen(port, async () => {
       const url = `http://localhost:${port}/`;
-      console.log(`\n  ▸ Spire of the Erdtree is live at ${url}`);
+      console.log(`\n  ▸ Ashen Spire is live at ${url}`);
       console.log(`    Serving ${rootResolved}`);
       if (lan) {
         const { attachLan, lanAddress } = await import('./lan.mjs');

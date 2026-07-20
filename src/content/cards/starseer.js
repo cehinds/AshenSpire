@@ -1,31 +1,31 @@
-// src/content/cards/astrologer.js — the Astrologer pool (SPEC §5.1: M3)
+// src/content/cards/starseer.js — the Starseer pool (SPEC §5.1: M3)
 //
-// Class identity: GLINTSTONE COMBOS — the 2nd+ spell each turn is empowered.
-// Mechanically pure data: each spell checks glintstoneCharge FIRST (its
-// "Glintstone:" bonus), then applies the charge for the next spell. The
+// Class identity: STARSTONE COMBOS — the 2nd+ spell each turn is empowered.
+// Mechanically pure data: each spell checks starstoneCharge FIRST (its
+// "Starstone:" bonus), then applies the charge for the next spell. The
 // charge is unique + turn-end decay (content/statuses.js). Weak early block
 // is the designed weakness (GDD §4.3).
 //
 // M3 note: pool grown to 30 rewardable cards in the M3 content pass (toward
-// SPEC's ~50). New cards deepen the Glintstone identity — multi-hit (Star
+// SPEC's ~50). New cards deepen the Starstone identity — multi-hit (Star
 // Slicer), AoE combos (Meteor Swarm, Radiant Spray, Starfall Beam), control
-// (Frost Nova, Gravity Well), and scaling powers (Cerulean Coil, Waxing Moon).
+// (Frost Nova, Gravity Well), and scaling powers (Azure Coil, Waxing Moon).
 
 const one = { f: 'add', args: [1] };
-const CHARGED = { p: 'hasStatus', of: 'self', status: 'glintstoneCharge' };
-const GAIN_CHARGE = { op: 'applyStatus', target: 'self', status: 'glintstoneCharge', stacks: one };
+const CHARGED = { p: 'hasStatus', of: 'self', status: 'starstoneCharge' };
+const GAIN_CHARGE = { op: 'applyStatus', target: 'self', status: 'starstoneCharge', stacks: one };
 
-export const astrologerCards = [
+export const starseerCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'glintstonePebble', name: 'Glintstone Pebble', class: 'astrologer', rarity: 'starter', cost: 1, type: 'attack',
+    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, type: 'attack',
     keywords: [], icon: '💎',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
       { op: 'damage', target: 'enemy', amount: 3, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Glintstone: deal {damage.2} more.',
+    textTemplate: 'Deal {damage} damage. Starstone: deal {damage.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 8 },
@@ -37,21 +37,21 @@ export const astrologerCards = [
 
   // ---- Commons ----------------------------------------------------------------
   {
-    id: 'cometFragment', name: 'Comet Fragment', class: 'astrologer', rarity: 'common', cost: 0, type: 'attack',
+    id: 'cometFragment', name: 'Comet Fragment', class: 'starseer', rarity: 'common', cost: 0, type: 'attack',
     keywords: [], icon: '☄',
     effects: [{ op: 'damage', target: 'enemy', amount: 3 }, GAIN_CHARGE],
     textTemplate: 'Deal {damage} damage.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 5 }, GAIN_CHARGE] },
   },
   {
-    id: 'glintbladePhalanx', name: 'Glintblade Phalanx', class: 'astrologer', rarity: 'common', cost: 1, type: 'attack',
+    id: 'starbladePhalanx', name: 'Starblade Phalanx', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
       { op: 'damage', target: 'enemy', amount: 4, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Glintstone: deal {damage.2} again.',
+    textTemplate: 'Deal {damage} damage. Starstone: deal {damage.2} again.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 6 },
@@ -61,14 +61,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'crystalBarrier', name: 'Crystal Barrier', class: 'astrologer', rarity: 'common', cost: 1, type: 'skill',
+    id: 'crystalBarrier', name: 'Crystal Barrier', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '🔷',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
       { op: 'block', target: 'self', amount: 4, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Gain {block} Block. Glintstone: {block.2} more.',
+    textTemplate: 'Gain {block} Block. Starstone: {block.2} more.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 7 },
@@ -78,14 +78,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'starShower', name: 'Star Shower', class: 'astrologer', rarity: 'common', cost: 2, type: 'attack',
+    id: 'starShower', name: 'Star Shower', class: 'starseer', rarity: 'common', cost: 2, type: 'attack',
     keywords: [], icon: '🌠',
     effects: [
       { op: 'damage', target: 'enemy', amount: 3, hits: 3 },
       { op: 'damage', target: 'enemy', amount: 3, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage {hits} times. Glintstone: one more hit of {damage.2}.',
+    textTemplate: 'Deal {damage} damage {hits} times. Starstone: one more hit of {damage.2}.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 4, hits: 3 },
@@ -95,14 +95,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'scholarsInsight', name: "Scholar's Insight", class: 'astrologer', rarity: 'common', cost: 1, type: 'skill',
+    id: 'scholarsInsight', name: "Scholar's Insight", class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '📖',
     effects: [{ op: 'draw', amount: 2 }, GAIN_CHARGE],
     textTemplate: 'Draw {draw} cards.',
     upgrade: { effects: [{ op: 'draw', amount: 3 }, GAIN_CHARGE] },
   },
   {
-    id: 'frostVeil', name: 'Frost Veil', class: 'astrologer', rarity: 'common', cost: 1, type: 'skill',
+    id: 'frostVeil', name: 'Frost Veil', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '🌫',
     effects: [
       { op: 'block', target: 'self', amount: 4 },
@@ -119,14 +119,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'starSlicer', name: 'Star Slicer', class: 'astrologer', rarity: 'common', cost: 1, type: 'attack',
+    id: 'starSlicer', name: 'Star Slicer', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '🌠',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4, hits: 2 },
       { op: 'damage', target: 'enemy', amount: 4, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage {hits} times. Glintstone: one more hit of {damage.2}.',
+    textTemplate: 'Deal {damage} damage {hits} times. Starstone: one more hit of {damage.2}.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 5, hits: 2 },
@@ -136,14 +136,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'glintstoneWard', name: 'Glintstone Ward', class: 'astrologer', rarity: 'common', cost: 1, type: 'skill',
+    id: 'starstoneWard', name: 'Starstone Ward', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '🔰',
     effects: [
       { op: 'block', target: 'self', amount: 4 },
       { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Gain {block} Block. Glintstone: apply {weak} Weak.',
+    textTemplate: 'Gain {block} Block. Starstone: apply {weak} Weak.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 6 },
@@ -153,14 +153,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'starlance', name: 'Starlance', class: 'astrologer', rarity: 'common', cost: 2, type: 'attack',
+    id: 'starlance', name: 'Starlance', class: 'starseer', rarity: 'common', cost: 2, type: 'attack',
     keywords: [], icon: '🏹',
     effects: [
       { op: 'damage', target: 'enemy', amount: 9, if: { p: 'not', pred: CHARGED } },
       { op: 'damage', target: 'enemy', amount: 13, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Glintstone: {damage.2} instead.',
+    textTemplate: 'Deal {damage} damage. Starstone: {damage.2} instead.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 12, if: { p: 'not', pred: CHARGED } },
@@ -170,14 +170,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'twinkling', name: 'Twinkling', class: 'astrologer', rarity: 'common', cost: 0, type: 'skill',
+    id: 'twinkling', name: 'Twinkling', class: 'starseer', rarity: 'common', cost: 0, type: 'skill',
     keywords: [], icon: '✨',
     effects: [
       { op: 'draw', amount: 1 },
       { op: 'gainEnergy', amount: 1, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Draw {draw} card. Glintstone: gain {gainEnergy} Energy.',
+    textTemplate: 'Draw {draw} card. Starstone: gain {gainEnergy} Energy.',
     upgrade: {
       effects: [
         { op: 'draw', amount: 2 },
@@ -187,7 +187,7 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'frostNova', name: 'Frost Nova', class: 'astrologer', rarity: 'common', cost: 1, type: 'attack',
+    id: 'frostNova', name: 'Frost Nova', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '❄',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -195,7 +195,7 @@ export const astrologerCards = [
       { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Apply {weak} Weak. Glintstone: apply {vulnerable} Vulnerable.',
+    textTemplate: 'Deal {damage} damage. Apply {weak} Weak. Starstone: apply {vulnerable} Vulnerable.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 6 },
@@ -208,14 +208,14 @@ export const astrologerCards = [
 
   // ---- Uncommons -----------------------------------------------------------------
   {
-    id: 'glintstoneArc', name: 'Glintstone Arc', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'attack',
+    id: 'starstoneArc', name: 'Starstone Arc', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'attack',
     keywords: [], icon: '⚡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 7 },
       { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Glintstone: apply {vulnerable} Vulnerable.',
+    textTemplate: 'Deal {damage} damage. Starstone: apply {vulnerable} Vulnerable.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 9 },
@@ -225,21 +225,21 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'lucidity', name: 'Lucidity', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'skill',
+    id: 'lucidity', name: 'Lucidity', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'skill',
     keywords: [], icon: '🌙',
     effects: [{ op: 'gainEnergy', amount: 1 }, { op: 'draw', amount: 1 }, GAIN_CHARGE],
     textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} card.',
     upgrade: { effects: [{ op: 'gainEnergy', amount: 1 }, { op: 'draw', amount: 2 }, GAIN_CHARGE] },
   },
   {
-    id: 'stargazerCard', name: 'Stargazer', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'stargazerCard', name: 'Stargazer', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'power',
     keywords: [], icon: '🔭',
     effects: [{ op: 'applyStatus', target: 'self', status: 'stargazer', stacks: one }],
-    textTemplate: 'At the start of your turn, gain Glintstone Charge.',
+    textTemplate: 'At the start of your turn, gain Starstone Charge.',
     upgrade: { cost: 0 },
   },
   {
-    id: 'astralArmorCard', name: 'Astral Armor', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'astralArmorCard', name: 'Astral Armor', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'power',
     keywords: [], icon: '🌌',
     effects: [{ op: 'applyStatus', target: 'self', status: 'astralArmor', stacks: one }],
     textTemplate: 'At the end of your turn, gain 4 Block.',
@@ -249,7 +249,7 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'moonveilCut', name: 'Moonveil Cut', class: 'astrologer', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'moonrendCut', name: 'Moonrend Cut', class: 'starseer', rarity: 'uncommon', cost: 2, type: 'attack',
     keywords: [], icon: '🌒',
     effects: [
       { op: 'damage', target: 'enemy', amount: 8 },
@@ -266,14 +266,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'meteorite', name: 'Meteorite', class: 'astrologer', rarity: 'uncommon', cost: 3, type: 'attack',
+    id: 'meteorite', name: 'Meteorite', class: 'starseer', rarity: 'uncommon', cost: 3, type: 'attack',
     keywords: [], icon: '🪨',
     effects: [
       { op: 'damage', target: 'enemy', amount: 18, if: { p: 'not', pred: CHARGED } },
       { op: 'damage', target: 'enemy', amount: 24, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Glintstone: {damage.2} instead.',
+    textTemplate: 'Deal {damage} damage. Starstone: {damage.2} instead.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 22, if: { p: 'not', pred: CHARGED } },
@@ -283,14 +283,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'meteorSwarm', name: 'Meteor Swarm', class: 'astrologer', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'meteorSwarm', name: 'Meteor Swarm', class: 'starseer', rarity: 'uncommon', cost: 2, type: 'attack',
     keywords: [], icon: '☄',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 5 },
       { op: 'damage', target: 'allEnemies', amount: 5, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage to ALL enemies. Glintstone: {damage.2} again.',
+    textTemplate: 'Deal {damage} damage to ALL enemies. Starstone: {damage.2} again.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'allEnemies', amount: 7 },
@@ -300,14 +300,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'gravityWell', name: 'Gravity Well', class: 'astrologer', rarity: 'uncommon', cost: 2, type: 'skill',
+    id: 'gravityWell', name: 'Gravity Well', class: 'starseer', rarity: 'uncommon', cost: 2, type: 'skill',
     keywords: [], icon: '🕳',
     effects: [
       { op: 'applyStatus', target: 'allEnemies', status: 'vulnerable', stacks: 2 },
       { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Apply {vulnerable} Vulnerable to ALL enemies. Glintstone: apply {weak} Weak to ALL.',
+    textTemplate: 'Apply {vulnerable} Vulnerable to ALL enemies. Starstone: apply {weak} Weak to ALL.',
     upgrade: {
       effects: [
         { op: 'applyStatus', target: 'allEnemies', status: 'vulnerable', stacks: 3 },
@@ -317,14 +317,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'ceruleanCoilCard', name: 'Cerulean Coil', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'azureCoilCard', name: 'Azure Coil', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'power',
     keywords: [], icon: '🌀',
-    effects: [{ op: 'applyStatus', target: 'self', status: 'ceruleanCoil', stacks: one }],
+    effects: [{ op: 'applyStatus', target: 'self', status: 'azureCoil', stacks: one }],
     textTemplate: 'Whenever you play a Skill, gain 2 Block.',
     upgrade: { cost: 0 },
   },
   {
-    id: 'astralCleave', name: 'Astral Cleave', class: 'astrologer', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'astralCleave', name: 'Astral Cleave', class: 'starseer', rarity: 'uncommon', cost: 2, type: 'attack',
     keywords: [], icon: '⚔',
     effects: [
       { op: 'damage', target: 'enemy', amount: 10 },
@@ -332,7 +332,7 @@ export const astrologerCards = [
       { op: 'damage', target: 'enemy', amount: 5, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage. Glintstone: deal {damage.2} more.',
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage. Starstone: deal {damage.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 13 },
@@ -343,7 +343,7 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'radiantSpray', name: 'Radiant Spray', class: 'astrologer', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'radiantSpray', name: 'Radiant Spray', class: 'starseer', rarity: 'uncommon', cost: 2, type: 'attack',
     keywords: [], icon: '🎇',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 4 },
@@ -351,7 +351,7 @@ export const astrologerCards = [
       { op: 'damage', target: 'allEnemies', amount: 4, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} to ALL enemies. Apply {vulnerable} Vulnerable to ALL. Glintstone: deal {damage.2} to ALL again.',
+    textTemplate: 'Deal {damage} to ALL enemies. Apply {vulnerable} Vulnerable to ALL. Starstone: deal {damage.2} to ALL again.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'allEnemies', amount: 6 },
@@ -364,21 +364,21 @@ export const astrologerCards = [
 
   // ---- Rares -----------------------------------------------------------------------
   {
-    id: 'supernova', name: 'Supernova', class: 'astrologer', rarity: 'rare', cost: 'X', type: 'attack',
+    id: 'supernova', name: 'Supernova', class: 'starseer', rarity: 'rare', cost: 'X', type: 'attack',
     keywords: [], icon: '💥',
     effects: [{ op: 'damage', target: 'allEnemies', amount: 8, hits: { f: 'energySpent' } }, GAIN_CHARGE],
     textTemplate: 'Deal {damage} damage to ALL enemies once per Energy spent.',
     upgrade: { effects: [{ op: 'damage', target: 'allEnemies', amount: 10, hits: { f: 'energySpent' } }, GAIN_CHARGE] },
   },
   {
-    id: 'timeDilation', name: 'Time Dilation', class: 'astrologer', rarity: 'rare', cost: 2, type: 'skill',
+    id: 'timeDilation', name: 'Time Dilation', class: 'starseer', rarity: 'rare', cost: 2, type: 'skill',
     keywords: ['exhaust'], icon: '⏳',
     effects: [{ op: 'gainEnergy', amount: 2 }, { op: 'draw', amount: 3 }, GAIN_CHARGE],
     textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} cards. Exhaust.',
     upgrade: { keywords: [], textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} cards.' },
   },
   {
-    id: 'glintstoneKris', name: 'Glintstone Kris', class: 'astrologer', rarity: 'rare', cost: 1, type: 'attack',
+    id: 'starstoneKris', name: 'Starstone Kris', class: 'starseer', rarity: 'rare', cost: 1, type: 'attack',
     keywords: [], icon: '🔪',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -386,7 +386,7 @@ export const astrologerCards = [
       { op: 'damage', target: 'enemy', amount: 5, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Glintstone: draw {draw} card and deal {damage.2} again.',
+    textTemplate: 'Deal {damage} damage. Starstone: draw {draw} card and deal {damage.2} again.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 7 },
@@ -397,21 +397,21 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'constellationCard', name: 'Constellation', class: 'astrologer', rarity: 'rare', cost: 2, type: 'power',
+    id: 'constellationCard', name: 'Constellation', class: 'starseer', rarity: 'rare', cost: 2, type: 'power',
     keywords: [], icon: '💫',
     effects: [{ op: 'applyStatus', target: 'self', status: 'constellation', stacks: one }],
-    textTemplate: 'Whenever you gain Glintstone Charge, deal 4 damage to a random enemy.',
+    textTemplate: 'Whenever you gain Starstone Charge, deal 4 damage to a random enemy.',
     upgrade: { cost: 1 },
   },
   {
-    id: 'starfallBeam', name: 'Starfall Beam', class: 'astrologer', rarity: 'rare', cost: 3, type: 'attack',
+    id: 'starfallBeam', name: 'Starfall Beam', class: 'starseer', rarity: 'rare', cost: 3, type: 'attack',
     keywords: [], icon: '🔆',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 12, if: { p: 'not', pred: CHARGED } },
       { op: 'damage', target: 'allEnemies', amount: 20, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage to ALL enemies. Glintstone: {damage.2} instead.',
+    textTemplate: 'Deal {damage} damage to ALL enemies. Starstone: {damage.2} instead.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'allEnemies', amount: 16, if: { p: 'not', pred: CHARGED } },
@@ -421,14 +421,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'starcaller', name: 'Starcaller', class: 'astrologer', rarity: 'rare', cost: 'X', type: 'attack',
+    id: 'starcaller', name: 'Starcaller', class: 'starseer', rarity: 'rare', cost: 'X', type: 'attack',
     keywords: [], icon: '⭐',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6, hits: { f: 'energySpent' } },
       { op: 'damage', target: 'enemy', amount: 8, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage once per Energy spent. Glintstone: deal {damage.2} more.',
+    textTemplate: 'Deal {damage} damage once per Energy spent. Starstone: deal {damage.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 8, hits: { f: 'energySpent' } },
@@ -438,14 +438,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'umbralWard', name: 'Umbral Ward', class: 'astrologer', rarity: 'rare', cost: 2, type: 'skill',
+    id: 'umbralWard', name: 'Umbral Ward', class: 'starseer', rarity: 'rare', cost: 2, type: 'skill',
     keywords: [], icon: '🌑',
     effects: [
       { op: 'block', target: 'self', amount: 20, if: { p: 'not', pred: CHARGED } },
       { op: 'block', target: 'self', amount: 30, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Gain {block} Block. Glintstone: {block.2} instead.',
+    textTemplate: 'Gain {block} Block. Starstone: {block.2} instead.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 26, if: { p: 'not', pred: CHARGED } },
@@ -455,7 +455,7 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'waxingMoonCard', name: 'Waxing Moon', class: 'astrologer', rarity: 'rare', cost: 2, type: 'power',
+    id: 'waxingMoonCard', name: 'Waxing Moon', class: 'starseer', rarity: 'rare', cost: 2, type: 'power',
     keywords: [], icon: '🌕',
     effects: [{ op: 'applyStatus', target: 'self', status: 'waxingMoon', stacks: one }],
     textTemplate: 'At the start of your turn, apply 2 Vulnerable to ALL enemies.',
@@ -465,18 +465,18 @@ export const astrologerCards = [
   // ---- Content-pass additions (round 2) ---------------------------------------
   // Two more commons (a cheap combo-piece and a defensive combo-piece), two
   // uncommons (a card-draw combo skill and a scaling shield power), two rares
-  // (a heavy Glintstone-gated attack and a combo-fed draw power) — rounding
+  // (a heavy Starstone-gated attack and a combo-fed draw power) — rounding
   // the pool to 36. All follow the same "check charge first, then GAIN_CHARGE
   // last" shape as the rest of the pool.
   {
-    id: 'shootingShard', name: 'Shooting Shard', class: 'astrologer', rarity: 'common', cost: 0, type: 'attack',
+    id: 'shootingShard', name: 'Shooting Shard', class: 'starseer', rarity: 'common', cost: 0, type: 'attack',
     keywords: [], icon: '💫',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
       { op: 'damage', target: 'enemy', amount: 3, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Glintstone: deal {damage.2} more.',
+    textTemplate: 'Deal {damage} damage. Starstone: deal {damage.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 5 },
@@ -486,14 +486,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'wardingStar', name: 'Warding Star', class: 'astrologer', rarity: 'common', cost: 1, type: 'skill',
+    id: 'wardingStar', name: 'Warding Star', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '⭐',
     effects: [
       { op: 'block', target: 'self', amount: 6 },
       { op: 'draw', amount: 1, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Gain {block} Block. Glintstone: draw {draw} card.',
+    textTemplate: 'Gain {block} Block. Starstone: draw {draw} card.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 8 },
@@ -503,14 +503,14 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'starPath', name: 'Star Path', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'skill',
+    id: 'starPath', name: 'Star Path', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'skill',
     keywords: [], icon: '🌌',
     effects: [
       { op: 'draw', amount: 1 },
       { op: 'draw', amount: 1, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Draw {draw} card. Glintstone: draw {draw.2} more.',
+    textTemplate: 'Draw {draw} card. Starstone: draw {draw.2} more.',
     upgrade: {
       effects: [
         { op: 'draw', amount: 2 },
@@ -520,21 +520,21 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'moonlitShieldCard', name: 'Moonlit Shield', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'moonlitShieldCard', name: 'Moonlit Shield', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'power',
     keywords: [], icon: '🔷',
     effects: [{ op: 'applyStatus', target: 'self', status: 'moonlitShield', stacks: one }],
-    textTemplate: 'Whenever you gain Glintstone Charge, gain 3 Block.',
+    textTemplate: 'Whenever you gain Starstone Charge, gain 3 Block.',
     upgrade: { cost: 0 },
   },
   {
-    id: 'celestialLance', name: 'Celestial Lance', class: 'astrologer', rarity: 'rare', cost: 2, type: 'attack',
+    id: 'celestialLance', name: 'Celestial Lance', class: 'starseer', rarity: 'rare', cost: 2, type: 'attack',
     keywords: [], icon: '🔱',
     effects: [
       { op: 'damage', target: 'enemy', amount: 10, if: { p: 'not', pred: CHARGED } },
       { op: 'damage', target: 'enemy', amount: 22, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Glintstone: {damage.2} instead.',
+    textTemplate: 'Deal {damage} damage. Starstone: {damage.2} instead.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 13, if: { p: 'not', pred: CHARGED } },
@@ -544,23 +544,23 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'astromancerCard', name: 'Astromancer', class: 'astrologer', rarity: 'rare', cost: 1, type: 'power',
+    id: 'astromancerCard', name: 'Astromancer', class: 'starseer', rarity: 'rare', cost: 1, type: 'power',
     keywords: [], icon: '📚',
     effects: [{ op: 'applyStatus', target: 'self', status: 'astromancer', stacks: one }],
-    textTemplate: 'At the start of your turn, gain Glintstone Charge and draw a card.',
+    textTemplate: 'At the start of your turn, gain Starstone Charge and draw a card.',
     upgrade: { cost: 0 },
   },
 
   // ---- Content-pass additions (round 4) --------------------------------------
   {
-    id: 'glintSpark', name: 'Glint Spark', class: 'astrologer', rarity: 'common', cost: 1, type: 'attack',
+    id: 'starSpark', name: 'Star Spark', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '✨',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
       { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Glintstone: apply {weak} Weak.',
+    textTemplate: 'Deal {damage} damage. Starstone: apply {weak} Weak.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 7 },
@@ -570,7 +570,7 @@ export const astrologerCards = [
     },
   },
   {
-    id: 'astralInsight', name: 'Astral Insight', class: 'astrologer', rarity: 'uncommon', cost: 1, type: 'skill',
+    id: 'astralInsight', name: 'Astral Insight', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'skill',
     keywords: [], icon: '🌠',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
@@ -578,7 +578,7 @@ export const astrologerCards = [
       { op: 'draw', amount: 1, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Gain {block} Block. Draw {draw} card. Glintstone: draw {draw.2} more.',
+    textTemplate: 'Gain {block} Block. Draw {draw} card. Starstone: draw {draw.2} more.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 7 },

@@ -39,7 +39,7 @@ const root = mkdtempSync(join(tmpdir(), 'coopresume-'));
 const savePath = join(root, '.coop-session.json');
 
 try {
-  const host = async (port) => (await (await fetch(`http://localhost:${port}/api/lan/host`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Ranni' }) })).json()).hostKey;
+  const host = async (port) => (await (await fetch(`http://localhost:${port}/api/lan/host`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Wren' }) })).json()).hostKey;
 
   // --- server #1: host a run, advance a node, then it persists to disk ---
   const s1 = await serve({ root, port: 8196, open: false, lan: true });
@@ -47,7 +47,7 @@ try {
   const c1 = client(`ws://localhost:${s1.port}/lan`);
   await c1.ready;
   await c1.next((m) => m.t === 'welcome', 'welcome');
-  c1.send({ t: 'hello', name: 'Ranni', classId: 'astrologer', hostKey: hk1 });
+  c1.send({ t: 'hello', name: 'Wren', classId: 'starseer', hostKey: hk1 });
   await c1.next((m) => m.t === 'roster', 'roster');
   c1.send({ t: 'start' });
   const st0 = await c1.next((m) => m.t === 'state', 'first state');
@@ -67,20 +67,20 @@ try {
   const s2 = await serve({ root, port: 8196, open: false, lan: true });
   const info2 = await (await fetch(`http://localhost:${s2.port}/api/lan/info`)).json();
   ok(info2.hasSave === true, 'a fresh server on the same root reports a resumable save');
-  ok(info2.save && info2.save.players.includes('Ranni'), 'save metadata carries the party (Ranni)');
+  ok(info2.save && info2.save.players.includes('Wren'), 'save metadata carries the party (Wren)');
 
   // --- resume: host reconnects and the run comes back ---
   const c2 = client(`ws://localhost:${s2.port}/lan`);
   await c2.ready;
   await c2.next((m) => m.t === 'welcome', 'welcome2');
   const hk2 = await host(s2.port);
-  c2.send({ t: 'hello', name: 'Ranni', classId: 'astrologer', hostKey: hk2 });
+  c2.send({ t: 'hello', name: 'Wren', classId: 'starseer', hostKey: hk2 });
   await c2.next((m) => m.t === 'roster', 'roster2');
   c2.send({ t: 'resume' });
   const resumed = await c2.next((m) => m.t === 'resumed', 'resumed');
   ok(!!resumed.yourId, 'the server hands the client its restored member id');
   const st2 = await c2.next((m) => m.t === 'state', 'resumed state');
-  ok(st2.snapshot.party.some((p) => p.name === 'Ranni' && p.connected), 'resumed run has the player back, connected');
+  ok(st2.snapshot.party.some((p) => p.name === 'Wren' && p.connected), 'resumed run has the player back, connected');
   ok(st2.snapshot.actNumber >= 1, 'resumed run is back on the map at the saved progress');
 
   c2.close();

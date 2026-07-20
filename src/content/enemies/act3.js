@@ -1,7 +1,7 @@
 // src/content/enemies/act3.js — Act III: The Ashen Crown (GDD §2)
 //
 // The burnt canopy. Act III judges: self-reforming revenants, heavy hits,
-// and the Rot Valkyrie — the one enemy in the game that inverts a player
+// and the Blighted Valkyrie — the one enemy in the game that inverts a player
 // mechanic (she heals off landing hits on YOU, and her blades Bleed you).
 // Both behaviors are plain data: a persistent damageDealt phase trigger and
 // move effects on the entity-agnostic status model (SPEC §10 seams).
@@ -27,10 +27,10 @@ export const act3Enemies = [
     },
   },
   {
-    id: 'graceStarvedPilgrim',
+    id: 'emberStarvedPilgrim',
     size: 'small',
     tint: 'var(--grace)',
-    name: 'Grace-Starved Pilgrim',
+    name: 'Ember-Starved Pilgrim',
     hp: [28, 32],
     poiseMax: 8,
     art: '🧎',
@@ -81,10 +81,10 @@ export const act3Enemies = [
 
   // ---- Elite ------------------------------------------------------------------
   {
-    id: 'crucibleLord',
+    id: 'wyrmLord',
     size: 'large',
     tint: 'var(--gold)',
-    name: 'Crucible Lord',
+    name: 'Wyrm Lord',
     hp: [130, 140],
     poiseMax: 30,
     art: '🐉',
@@ -106,12 +106,12 @@ export const act3Enemies = [
     },
   },
 
-  // ---- Final boss: The Rot Valkyrie (GDD §2, SPEC §5.3/§10) ---------------------
+  // ---- Final boss: The Blighted Valkyrie (GDD §2, SPEC §5.3/§10) ---------------------
   {
-    id: 'rotValkyrie',
+    id: 'blightedValkyrie',
     size: 'large',
     tint: 'var(--rot)',
-    name: 'The Rot Valkyrie',
+    name: 'The Blighted Valkyrie',
     hp: [250, 250],
     poiseMax: 36,
     art: '🦋',
@@ -121,13 +121,13 @@ export const act3Enemies = [
         intent: 'attack', damage: 12, weight: 35, maxConsecutive: 2,
         effects: [{ op: 'applyStatus', target: 'player', status: 'bleed', stacks: 2 }],
       },
-      waterfowl: {
+      whirlwind: {
         intent: 'attack', damage: 4, hits: 5, weight: 30, maxConsecutive: 1,
         effects: [{ op: 'applyStatus', target: 'player', status: 'bleed', stacks: 2 }],
       },
       rotWings: {
         intent: 'block', block: 10, weight: 20, maxConsecutive: 1,
-        effects: [{ op: 'applyStatus', target: 'player', status: 'scarletRot', stacks: 3 }],
+        effects: [{ op: 'applyStatus', target: 'player', status: 'crimsonBlight', stacks: 3 }],
       },
       scarletDance: { intent: 'attack', damage: 5, hits: 5, weight: 35, locked: true },
     },
@@ -144,7 +144,7 @@ export const act3Enemies = [
         on: 'hpBelowPct', pct: 50,
         do: [
           { op: 'applyStatus', target: 'self', status: 'strength', stacks: 3 },
-          { op: 'applyStatus', target: 'player', status: 'scarletRot', stacks: 4 },
+          { op: 'applyStatus', target: 'player', status: 'crimsonBlight', stacks: 4 },
         ],
         unlockMoves: ['scarletDance'],
       },

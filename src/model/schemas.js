@@ -40,7 +40,7 @@ export const COMBAT_OPCODES = Object.freeze([
 ]);
 
 export const RUN_OPCODES = Object.freeze([
-  'addRunes',
+  'addCinders',
   'addCardToDeck',
   'removeCardFromDeck',
   'upgradeCard',
@@ -132,7 +132,7 @@ export const PREDICATES = Object.freeze([
 // not entity behavior (law §3.1(2)).
 //   *Mult keys multiply across relics; flags OR; reductions sum.
 export const PASSIVE_KEYS = Object.freeze([
-  'runeGainMult', // rune rewards ×
+  'runeGainMult', // cinder rewards ×
   'eliteExtraCardReward', // flag: elites offer one extra card choice
   'flaskPowerMult', // flask effect amounts ×
   'revealUnknown', // flag: '?' map nodes show their resolved type
@@ -216,7 +216,7 @@ export const EFFECT_SPECS = Object.freeze({
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
   enterStance: { allowed: ['stance'], required: ['stance'], refs: { stance: 'stances' } },
   poiseDamage: { allowed: [], required: ['amount'], refs: {} },
-  addRunes: { allowed: [], required: ['amount'], refs: {} },
+  addCinders: { allowed: [], required: ['amount'], refs: {} },
   addCardToDeck: { allowed: ['card'], required: ['card'], refs: { card: 'cards' } },
   removeCardFromDeck: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },
   upgradeCard: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },

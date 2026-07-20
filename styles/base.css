@@ -29,13 +29,14 @@ body.hi-contrast {
 }
 body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-keepsake p { color: #cdbf9e; }
 
-/* Accessibility: larger text bumps body/tooltip up a notch (compounds with zoom). */
-body.large-text { font-size: 15.5px; }
-body.large-text #tooltip { font-size: 13px; }
+/* Accessibility: text size is set on the root element (main.js applyDisplaySettings
+   → html font-size %). Because all type + component dimensions are rem, one root
+   value rescales the whole UI proportionally — S/M/L/XL. Compounds with --ui-zoom
+   (which additionally scales the px-kept hairlines/radii). */
 
 /* Accessibility: colorblind-friendly semantic remap (Okabe-Ito hues chosen to
    stay distinguishable under deuteranopia/protanopia — danger→vermillion,
-   heal→bluish-green, frost→sky, rot→orange, bleed→reddish-purple). */
+   heal→bluish-green, frost→sky, blight→orange, bleed→reddish-purple). */
 body.cb-safe {
   --blood: #d55e00;
   --ember: #d55e00;
@@ -55,7 +56,10 @@ body.readable-ui { --font-display: var(--font-body); }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html { height: 100%; overflow: hidden; }
+/* Root sizing anchor: 62.5% makes 1rem = 10px, so every rem in the stylesheets
+   maps to px÷10 at rest. The text-size setting overrides this % on <html> to
+   grow/shrink all rem-based type + dimensions at once (main.js). */
+html { height: 100%; overflow: hidden; font-size: 62.5%; }
 
 /* UI size: the whole app is zoomed by --ui-zoom (Settings → UI size / Auto, set
    in main.js). Sizing uses PERCENT heights (not vh) everywhere below `body` so
@@ -67,7 +71,7 @@ body {
     linear-gradient(#16110c, var(--bg));
   color: var(--parchment);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 1.4rem;
   overflow: hidden;
   user-select: none;
   zoom: var(--ui-zoom, 1);
@@ -86,14 +90,14 @@ button {
   color: var(--gold);
   border: 2px solid var(--gold);
   border-radius: 10px;
-  padding: 10px 26px;
-  font-size: 15px;
+  padding: 1rem 2.6rem;
+  font-size: 1.5rem;
   cursor: pointer;
   transition: background 120ms, transform 120ms;
 }
 button:hover { background: #2e2517; }
 button:disabled { border-color: var(--line); color: var(--muted); cursor: default; }
-button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 12px; padding: 6px 14px; }
+button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 1.2rem; padding: 0.6rem 1.4rem; }
 
 .bar {
   position: relative;
@@ -104,8 +108,8 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 }
 .bar > .fill { position: absolute; inset: 0; right: auto; transition: width 200ms; }
 .bar > .label {
-  position: relative; z-index: 1; text-align: center; font-size: 10px;
-  line-height: 1; padding: 2px 0; color: var(--parchment); text-shadow: 0 1px 2px #000;
+  position: relative; z-index: 1; text-align: center; font-size: 1rem;
+  line-height: 1; padding: 0.2rem 0; color: var(--parchment); text-shadow: 0 1px 2px #000;
 }
 
 /* ---------- screen transitions (every mount fades in) ---------- */

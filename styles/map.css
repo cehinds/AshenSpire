@@ -6,7 +6,7 @@
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
 }
 .mapscreen .map-scroll.grabbing { cursor: grabbing; }
-.mapscreen .map-scroll::-webkit-scrollbar { width: 12px; height: 12px; }
+.mapscreen .map-scroll::-webkit-scrollbar { width: 1.2rem; height: 1.2rem; }
 .mapscreen .map-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; border: 3px solid transparent; background-clip: padding-box; }
 .mapscreen .map-scroll::-webkit-scrollbar-thumb:hover { background: var(--gold); background-clip: padding-box; }
 /* Canvas centers the (possibly smaller-than-viewport) svg horizontally. */
@@ -14,9 +14,9 @@
 .mapscreen svg { display: block; }
 
 /* zoom controls */
-.map-zoom { position: absolute; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
+.map-zoom { position: absolute; right: 1.4rem; bottom: 1.4rem; display: flex; flex-direction: column; gap: 0.6rem; z-index: 5; }
 .map-zoom .zbtn {
-  width: 34px; height: 34px; border-radius: 8px; font-size: 18px; line-height: 1;
+  width: 3.4rem; height: 3.4rem; border-radius: 8px; font-size: 1.8rem; line-height: 1;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--parchment);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
@@ -70,47 +70,47 @@
    the map-specific stats, wrapping, and the legend popover. Items are flex so
    they reflow as customization toggles hide/show them. */
 .map-header {
-  height: auto; min-height: 52px; flex-wrap: wrap; row-gap: 6px; position: relative;
+  height: auto; min-height: 5.2rem; flex-wrap: wrap; row-gap: 0.6rem; position: relative;
 }
-.map-header .hpbar { width: 150px; }
-.map-header .mh-stat { color: var(--parchment); font-size: 12px; white-space: nowrap; }
-.map-header .runes { color: var(--gold); }
+.map-header .hpbar { width: 15rem; }
+.map-header .mh-stat { color: var(--parchment); font-size: 1.2rem; white-space: nowrap; }
+.map-header .cinders { color: var(--gold); }
 .map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
-.map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 11px; }
-.map-header .mh-actions { margin-left: auto; display: flex; gap: 8px; }
+.map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
+.map-header .mh-actions { margin-left: auto; display: flex; gap: 0.8rem; }
 
 /* Relic + flask sub-strip: a slim full-width row under the main bar. Flasks,
    a divider, then relic chips; wraps to more rows as they accumulate. */
 .map-substrip {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 5px; row-gap: 4px;
-  padding: 4px 14px; background: var(--panel); border-bottom: 1px solid var(--line);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; row-gap: 0.4rem;
+  padding: 0.4rem 1.4rem; background: var(--panel); border-bottom: 1px solid var(--line);
   flex-shrink: 0;
 }
 .map-substrip[hidden] { display: none; }
-.map-substrip .mh-flasks { display: flex; gap: 5px; font-size: 15px; line-height: 1; }
+.map-substrip .mh-flasks { display: flex; gap: 0.5rem; font-size: 1.5rem; line-height: 1; }
 .map-substrip .mh-flask { cursor: default; }
-.map-substrip .mh-div { width: 1px; align-self: stretch; min-height: 16px; background: var(--line); margin: 0 4px; }
-.map-substrip .mh-relics { display: flex; flex-wrap: wrap; gap: 5px; }
+.map-substrip .mh-div { width: 1px; align-self: stretch; min-height: 1.6rem; background: var(--line); margin: 0 0.4rem; }
+.map-substrip .mh-relics { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .map-substrip .relic {
-  width: 22px; height: 22px; border-radius: 5px; background: var(--bg-raise);
-  border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 12px;
+  width: 2.2rem; height: 2.2rem; border-radius: 5px; background: var(--bg-raise);
+  border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
 }
 .map-legend-pop {
-  position: absolute; top: calc(100% + 4px); right: 12px; z-index: 20;
+  position: absolute; top: calc(100% + 0.4rem); right: 1.2rem; z-index: 20;
   background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 8px;
-  padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; font-size: 12px;
+  padding: 1rem 1.4rem; display: flex; flex-direction: column; gap: 0.4rem; font-size: 1.2rem;
   color: var(--parchment); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
 }
 .map-legend-pop[hidden] { display: none; }
-.map-legend-pop .ic { display: inline-block; width: 22px; }
+.map-legend-pop .ic { display: inline-block; width: 2.2rem; }
 
 /* Customization (body classes set by applyDisplaySettings) — the bar flexes. */
-body.map-compact .map-header { min-height: 42px; gap: 10px; padding: 0 10px; }
+body.map-compact .map-header { min-height: 4.2rem; gap: 1rem; padding: 0 1rem; }
 body.map-compact .map-header .nm { display: none; }
-body.map-compact .map-header .hpbar { width: 120px; height: 12px; }
-body.map-compact .map-header .mh-stat { font-size: 11px; }
-body.map-compact .map-substrip { padding: 2px 10px; }
-body.map-compact .map-substrip .relic { width: 19px; height: 19px; font-size: 11px; }
+body.map-compact .map-header .hpbar { width: 12rem; height: 1.2rem; }
+body.map-compact .map-header .mh-stat { font-size: 1.1rem; }
+body.map-compact .map-substrip { padding: 0.2rem 1rem; }
+body.map-compact .map-substrip .relic { width: 1.9rem; height: 1.9rem; font-size: 1.1rem; }
 body.hide-header-seed .map-header .mh-seed { display: none; }
 /* Relics toggle hides the relic chips (and divider) in the sub-strip; when there
    are also no flasks, the whole strip collapses so there's no empty bar. */

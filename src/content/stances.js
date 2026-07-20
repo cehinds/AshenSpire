@@ -1,12 +1,12 @@
-// src/content/stances.js — Vagabond stances as data (SPEC §4.5)
+// src/content/stances.js — Reaver stances as data (SPEC §4.5)
 //
 // At most one stance is active; the enterStance opcode handles exclusivity.
 // Stances are combat-scoped.
 
 export const stances = [
   {
-    id: 'bloodflame',
-    name: 'Bloodflame Stance',
+    id: 'gorefire',
+    name: 'Gorefire Stance',
     icon: '🔥',
     onEnter: [{ op: 'loseHp', target: 'self', amount: 2 }],
     hooks: [

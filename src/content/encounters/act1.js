@@ -2,13 +2,13 @@
 
 export const act1Encounters = [
   { id: 'loneSoldier', enemies: ['wanderingSoldier'], weight: 20, pool: 'normal' },
-  { id: 'patrol', enemies: ['wanderingSoldier', 'rotHound'], weight: 25, pool: 'normal' },
-  { id: 'packHunt', enemies: ['rotHound', 'rotHound', 'graveWisp'], weight: 25, pool: 'normal' },
+  { id: 'patrol', enemies: ['wanderingSoldier', 'blightHound'], weight: 25, pool: 'normal' },
+  { id: 'packHunt', enemies: ['blightHound', 'blightHound', 'graveWisp'], weight: 25, pool: 'normal' },
   { id: 'twinPatrol', enemies: ['wanderingSoldier', 'wanderingSoldier'], weight: 15, pool: 'normal' },
-  { id: 'bruiser', enemies: ['demiBrute', 'graveWisp'], weight: 15, pool: 'normal' },
-  { id: 'eliteCrucible', enemies: ['crucibleAspirant'], weight: 1, pool: 'elite' },
-  { id: 'bossOmen', enemies: ['watchfulOmen'], weight: 1, pool: 'boss' },
+  { id: 'bruiser', enemies: ['huskBrute', 'graveWisp'], weight: 15, pool: 'normal' },
+  { id: 'eliteWyrm', enemies: ['wyrmAspirant'], weight: 1, pool: 'elite' },
+  { id: 'bossOmen', enemies: ['fellWarden'], weight: 1, pool: 'boss' },
 ];
 
 // M1 acceptance gauntlet (SPEC §9 M1): 2 monsters → elite → boss.
-export const M1_GAUNTLET = ['patrol', 'packHunt', 'eliteCrucible', 'bossOmen'];
+export const M1_GAUNTLET = ['patrol', 'packHunt', 'eliteWyrm', 'bossOmen'];

@@ -1,4 +1,4 @@
-// src/ui/screens/coop.js — Tarnished Together thin client (LAN co-op).
+// src/ui/screens/coop.js — Forsaken Together thin client (LAN co-op).
 //
 // Server-authoritative renderer: the launcher owns the run (tools/session.mjs)
 // and pushes { t:'state', snapshot } over the lobby socket. This screen never
@@ -423,7 +423,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       if (p) attachTooltip(chip, () => {
         const cls = registries.classes.get(p.classId);
         return `<div class="tt-title">${esc(p.name)} — ${esc(cls ? cls.name : p.classId)}</div>` +
-          `HP ${p.hp}/${p.maxHp} · ⛁ ${p.runes ?? 0} · deck ${p.deckSize ?? '?'} · relics ${p.relics ?? 0}` +
+          `HP ${p.hp}/${p.maxHp} · ⛁ ${p.cinders ?? 0} · deck ${p.deckSize ?? '?'} · relics ${p.relics ?? 0}` +
           `${p.connected ? '' : '<br><b>Away</b> — missed rewards queue for their return.'}${p.alive ? '' : '<br><b>Fallen.</b>'}`;
       });
     });
@@ -459,7 +459,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
     const allies = snap.party.filter((p) => p.id !== me && p.alive && p.connected);
     const mm = myMember();
     const upgradable = ((mm && mm.deck) || []).filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
-    app.innerHTML = rewardShell(`${rTitle('Shrine of Grace')}
+    app.innerHTML = rewardShell(`${rTitle('Shrine of Emberlight')}
       ${done ? '<div class="coop-note">Waiting for the party…</div>' : `<div class="coop-choices">
         <button data-shrine="rest">Rest — heal yourself</button>
         <button id="coop-smith" ${upgradable.length ? '' : 'disabled'}>Smith — upgrade a card</button>
@@ -496,7 +496,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   function renderCatchup(mm) {
     const item = mm.catchupQueue[0];
     const remaining = mm.catchupQueue.length;
-    let inner = `${rTitle(`Grace Debt — ${remaining} missed`)}<p class="coop-note">Claim what you would have earned while away.</p>`;
+    let inner = `${rTitle(`Ember Debt — ${remaining} missed`)}<p class="coop-note">Claim what you would have earned while away.</p>`;
     if (item.type === 'reward') inner += '<div class="reward-row"></div>';
     inner += `<div class="coop-choices" style="margin-top:12px">
       ${(item.type === 'reward' && item.offer.relicId) || (item.type === 'treasure' && item.relicId) ? `<button class="coop-take" data-cu="relic">Take relic</button>` : ''}
