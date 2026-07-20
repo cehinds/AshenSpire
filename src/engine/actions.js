@@ -548,7 +548,7 @@ export function executeRunEffects({ run, registries, rng }, effects) {
     player: facade,
     enemies: [],
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
-    handMax: 10,
+    handMax: registries.balance.handMax,
     queue: [],
     eventLog: events,
     _buffer: null,

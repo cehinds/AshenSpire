@@ -257,7 +257,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
     run.deck = createDeck(draftBaseIds(), createIdGen('rc'));
   }
   if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
-  if (mods.hoarder) run.runes += 250;
+  if (mods.hoarder) run.runes += registries.balance.customMods.hoarderRunes;
 
   if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
   startClimb();
@@ -318,7 +318,7 @@ function advanceAct() {
   run.lastEncounters = [];
   // Full heal between acts — halved under the "Scarce Grace" custom rule.
   if (run.custom && activeMods(run.custom).lessHealing) {
-    run.hp = Math.min(run.maxHp, run.hp + Math.floor((run.maxHp - run.hp) * 0.5));
+    run.hp = Math.min(run.maxHp, run.hp + Math.floor((run.maxHp - run.hp) * registries.balance.customMods.lessHealingMult));
   } else {
     run.hp = run.maxHp;
   }
@@ -585,8 +585,9 @@ function combatMods(pool) {
   let hpMult = 1;
   const enemyStatuses = [];
   const playerStatuses = [];
-  if ((pool === 'elite' || pool === 'boss') && mods.toughElites) hpMult *= 1.3;
-  if (pool === 'boss' && mods.bigBosses) hpMult *= 1.5;
+  const cm = registries.balance.customMods;
+  if ((pool === 'elite' || pool === 'boss') && mods.toughElites) hpMult *= cm.toughElitesHpMult;
+  if (pool === 'boss' && mods.bigBosses) hpMult *= cm.bigBossesHpMult;
   if (mods.deadlyEnemies) enemyStatuses.push({ status: 'strength', stacks: 1 });
   if (mods.glassCannon) playerStatuses.push({ status: 'glassCannon', stacks: 1 });
   if (mods.endless) {
@@ -729,15 +730,15 @@ function chaosRewardsOn() {
 function shopPriceMult() {
   const mods = run.custom ? activeMods(run.custom) : {};
   let m = 1;
-  if (mods.expensiveShops) m *= 1.5;
-  if (mods.hoarder) m *= 2;
+  if (mods.expensiveShops) m *= registries.balance.customMods.expensiveShopsMult;
+  if (mods.hoarder) m *= registries.balance.customMods.hoarderShopMult;
   return m;
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
 function showRest() {
   audio.music('rest');
-  const healMult = run.custom && activeMods(run.custom).lessHealing ? 0.5 : 1;
+  const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
   mountRest(app, {
     registries,
     run,

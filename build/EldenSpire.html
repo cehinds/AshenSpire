@@ -1352,7 +1352,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
     run.deck = createDeck(draftBaseIds(), createIdGen('rc'));
   }
   if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
-  if (mods.hoarder) run.runes += 250;
+  if (mods.hoarder) run.runes += registries.balance.customMods.hoarderRunes;
 
   if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
   startClimb();
@@ -1413,7 +1413,7 @@ function advanceAct() {
   run.lastEncounters = [];
   // Full heal between acts — halved under the "Scarce Grace" custom rule.
   if (run.custom && activeMods(run.custom).lessHealing) {
-    run.hp = Math.min(run.maxHp, run.hp + Math.floor((run.maxHp - run.hp) * 0.5));
+    run.hp = Math.min(run.maxHp, run.hp + Math.floor((run.maxHp - run.hp) * registries.balance.customMods.lessHealingMult));
   } else {
     run.hp = run.maxHp;
   }
@@ -1680,8 +1680,9 @@ function combatMods(pool) {
   let hpMult = 1;
   const enemyStatuses = [];
   const playerStatuses = [];
-  if ((pool === 'elite' || pool === 'boss') && mods.toughElites) hpMult *= 1.3;
-  if (pool === 'boss' && mods.bigBosses) hpMult *= 1.5;
+  const cm = registries.balance.customMods;
+  if ((pool === 'elite' || pool === 'boss') && mods.toughElites) hpMult *= cm.toughElitesHpMult;
+  if (pool === 'boss' && mods.bigBosses) hpMult *= cm.bigBossesHpMult;
   if (mods.deadlyEnemies) enemyStatuses.push({ status: 'strength', stacks: 1 });
   if (mods.glassCannon) playerStatuses.push({ status: 'glassCannon', stacks: 1 });
   if (mods.endless) {
@@ -1824,15 +1825,15 @@ function chaosRewardsOn() {
 function shopPriceMult() {
   const mods = run.custom ? activeMods(run.custom) : {};
   let m = 1;
-  if (mods.expensiveShops) m *= 1.5;
-  if (mods.hoarder) m *= 2;
+  if (mods.expensiveShops) m *= registries.balance.customMods.expensiveShopsMult;
+  if (mods.hoarder) m *= registries.balance.customMods.hoarderShopMult;
   return m;
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
 function showRest() {
   audio.music('rest');
-  const healMult = run.custom && activeMods(run.custom).lessHealing ? 0.5 : 1;
+  const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
   mountRest(app, {
     registries,
     run,
@@ -2133,6 +2134,28 @@ const balance = {
     healPct: 15,
     rewardChoices: 3,
     rarityWeights: { common: 60, uncommon: 35, rare: 5 },
+  },
+
+  // ---- Tarnished Together (co-op) ------------------------------------------
+  coop: {
+    headcountHpFactor: 0.6, // enemy HP ×(1 + factor×(headcount−1)): 2p ×1.6, 3p ×2.2, 4p ×2.8
+    mendHealPct: 30, // Mend at a shrine heals an ally this % of their max HP
+    reviveHp: 1, // downed-but-not-dead members revive next floor at this HP (StS2)
+  },
+
+  // ---- Endless Spire + Custom Climb rule magnitudes ------------------------
+  endless: {
+    hpPerLoop: 0.35, // +% enemy HP per completed cycle
+    strPerLoop: 1, // +Strength per completed cycle
+    actsPerCycle: 3, // acts before the spire loops (also the act count)
+  },
+  customMods: {
+    toughElitesHpMult: 1.3, // Tough Elites: elites & bosses ×HP
+    bigBossesHpMult: 1.5, // Dread Bosses: act bosses ×HP
+    hoarderRunes: 250, // Hoarder: bonus starting runes
+    expensiveShopsMult: 1.5, // Greedy Merchants: ×shop price
+    hoarderShopMult: 2, // Hoarder: ×shop price
+    lessHealingMult: 0.5, // Scarce Grace: ×healing (shrine rest + between-act)
   },
 };
 
@@ -8241,6 +8264,9 @@ Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInsta
 "src/content/customMods.js": function (module, exports, require) {
 // src/content/customMods.js — Custom Climb modifiers (data only).
 //
+// Tuning magnitudes live in balance.js (balance.endless / balance.customMods);
+// the endless constants below re-export from there so there is one source.
+//
 // A tailored take on Slay the Spire 2's custom mode. Three groups:
 //   • DIFFICULTY — harder rules; the Ascension ladder just enables the first N
 //     of these in ASCENSION_ORDER, so "Ascension 4" == the four hardest-first
@@ -8249,6 +8275,8 @@ Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInsta
 //   • DECK_MODES — how your starting deck is built.
 // The orchestrator (main.js) reads run.custom.mods[id] at the relevant hook;
 // nothing here is engine-specific.
+
+const { balance } = require("src/content/balance.js");
 
 const DIFFICULTY_MODS = [
   { id: 'toughElites', label: 'Tough Elites', desc: 'Elites and bosses have +30% HP.' },
@@ -8299,11 +8327,12 @@ function isCustomRun(custom) {
 // Acts beyond 3 reuse the content of act ((n-1) % 3) + 1; `loop` counts
 // completed 3-act cycles (0 on the first pass) and drives per-cycle scaling.
 // Pure math so main.js, runsim, and tests all agree on the same numbers.
-const ENDLESS_HP_PER_LOOP = 0.35; // +35% enemy HP per completed cycle
-const ENDLESS_STR_PER_LOOP = 1; // +1 enemy Strength per completed cycle
+const ENDLESS_HP_PER_LOOP = balance.endless.hpPerLoop;
+const ENDLESS_STR_PER_LOOP = balance.endless.strPerLoop;
 
 function endlessActInfo(actNumber) {
-  return { contentAct: ((actNumber - 1) % 3) + 1, loop: Math.floor((actNumber - 1) / 3) };
+  const per = balance.endless.actsPerCycle;
+  return { contentAct: ((actNumber - 1) % per) + 1, loop: Math.floor((actNumber - 1) / per) };
 }
 
 // Resolve the effective active-mod set: explicit toggles OR ascension-enabled.
@@ -9759,7 +9788,7 @@ function executeRunEffects({ run, registries, rng }, effects) {
     player: facade,
     enemies: [],
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
-    handMax: 10,
+    handMax: registries.balance.handMax,
     queue: [],
     eventLog: events,
     _buffer: null,

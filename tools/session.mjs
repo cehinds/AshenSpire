@@ -27,12 +27,8 @@ import {
 } from '../src/engine/coopCombat.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 
-const LAST_ACT = 3;
-
-/** Co-op enemy HP scaling by live headcount — sub-linear, StS2-flavoured. */
-export function coopHpMult(headcount) {
-  return 1 + 0.6 * Math.max(0, headcount - 1); // 1p ×1.0, 2p ×1.6, 3p ×2.2, 4p ×2.8
-}
+// Re-export so tests/other tools share the one definition (no divergent copy).
+export { coopHpMult } from '../src/engine/coopCombat.js';
 
 /** A deterministic per-member RNG stream, independent of the shared map RNG. */
 function memberRng(seed, index, counters) {
@@ -47,6 +43,7 @@ export function restoreSession(registries, data) {
 }
 
 export function createSession({ registries, seedString, endless = false, restore = null }) {
+  const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
   const seed = restore ? (restore.seed >>> 0) : safeSeed(seedString);
   const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
   const members = new Map(); // id → member
@@ -249,13 +246,13 @@ export function createSession({ registries, seedString, endless = false, restore
     const encounterId = rollEncounter(registries, rng, { pool, act: contentAct() });
     const enc = registries.encounters.get(encounterId);
     const loop = loopCount();
-    const extraHpMult = 1 + 0.35 * loop; // endless cycle scaling (headcount handled by the runner)
+    const extraHpMult = 1 + registries.balance.endless.hpPerLoop * loop; // endless cycle scaling (headcount handled by the runner)
     const combat = createCoopCombat({
       registries, rng,
       players: connectedMembers().map(memberAsPlayer),
       enemyIds: enc.enemies,
       extraHpMult,
-      enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: loop }] : [],
+      enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
     });
     live = { combat, pool, evCursor: combat.eventLog.length }; // skip setup events
     session.scene = combatScene();
@@ -332,7 +329,7 @@ export function createSession({ registries, seedString, endless = false, restore
       if (!livingMembers().length) { session.scene = { kind: 'complete', victory: false }; return { ok: true, result: 'defeat' }; }
     }
     // Victory: revive any downed-but-not-dead members at 1 HP for the next floor.
-    for (const m of livingMembers()) if (m.run.hp <= 0) m.run.hp = 1;
+    for (const m of livingMembers()) if (m.run.hp <= 0) m.run.hp = registries.balance.coop.reviveHp;
     grantRewards(pool);
     if (pool === 'boss') session.scene.afterReward = 'advanceAct';
     return { ok: true, result: c.result };
@@ -441,7 +438,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // Co-op Mend: heal an ally for 30% of their max HP instead of resting.
       const ally = members.get(targetId);
       if (!ally || !ally.alive) return { ok: false, error: 'no such ally' };
-      ally.run.hp = Math.min(ally.run.maxHp, ally.run.hp + Math.ceil(ally.run.maxHp * 0.3));
+      ally.run.hp = Math.min(ally.run.maxHp, ally.run.hp + Math.ceil(ally.run.maxHp * (registries.balance.coop.mendHealPct / 100)));
     } else {
       // Smith: the chosen card if given (validated), else first unupgraded.
       const c = (targetId && m.run.deck.find((d) => d.instanceId === targetId && !d.upgraded))

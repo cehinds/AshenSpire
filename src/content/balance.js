@@ -52,4 +52,26 @@ export const balance = {
     rewardChoices: 3,
     rarityWeights: { common: 60, uncommon: 35, rare: 5 },
   },
+
+  // ---- Tarnished Together (co-op) ------------------------------------------
+  coop: {
+    headcountHpFactor: 0.6, // enemy HP ×(1 + factor×(headcount−1)): 2p ×1.6, 3p ×2.2, 4p ×2.8
+    mendHealPct: 30, // Mend at a shrine heals an ally this % of their max HP
+    reviveHp: 1, // downed-but-not-dead members revive next floor at this HP (StS2)
+  },
+
+  // ---- Endless Spire + Custom Climb rule magnitudes ------------------------
+  endless: {
+    hpPerLoop: 0.35, // +% enemy HP per completed cycle
+    strPerLoop: 1, // +Strength per completed cycle
+    actsPerCycle: 3, // acts before the spire loops (also the act count)
+  },
+  customMods: {
+    toughElitesHpMult: 1.3, // Tough Elites: elites & bosses ×HP
+    bigBossesHpMult: 1.5, // Dread Bosses: act bosses ×HP
+    hoarderRunes: 250, // Hoarder: bonus starting runes
+    expensiveShopsMult: 1.5, // Greedy Merchants: ×shop price
+    hoarderShopMult: 2, // Hoarder: ×shop price
+    lessHealingMult: 0.5, // Scarce Grace: ×healing (shrine rest + between-act)
+  },
 };

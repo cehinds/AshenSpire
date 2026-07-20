@@ -1,5 +1,8 @@
 // src/content/customMods.js — Custom Climb modifiers (data only).
 //
+// Tuning magnitudes live in balance.js (balance.endless / balance.customMods);
+// the endless constants below re-export from there so there is one source.
+//
 // A tailored take on Slay the Spire 2's custom mode. Three groups:
 //   • DIFFICULTY — harder rules; the Ascension ladder just enables the first N
 //     of these in ASCENSION_ORDER, so "Ascension 4" == the four hardest-first
@@ -8,6 +11,8 @@
 //   • DECK_MODES — how your starting deck is built.
 // The orchestrator (main.js) reads run.custom.mods[id] at the relevant hook;
 // nothing here is engine-specific.
+
+import { balance } from './balance.js';
 
 export const DIFFICULTY_MODS = [
   { id: 'toughElites', label: 'Tough Elites', desc: 'Elites and bosses have +30% HP.' },
@@ -58,11 +63,12 @@ export function isCustomRun(custom) {
 // Acts beyond 3 reuse the content of act ((n-1) % 3) + 1; `loop` counts
 // completed 3-act cycles (0 on the first pass) and drives per-cycle scaling.
 // Pure math so main.js, runsim, and tests all agree on the same numbers.
-export const ENDLESS_HP_PER_LOOP = 0.35; // +35% enemy HP per completed cycle
-export const ENDLESS_STR_PER_LOOP = 1; // +1 enemy Strength per completed cycle
+export const ENDLESS_HP_PER_LOOP = balance.endless.hpPerLoop;
+export const ENDLESS_STR_PER_LOOP = balance.endless.strPerLoop;
 
 export function endlessActInfo(actNumber) {
-  return { contentAct: ((actNumber - 1) % 3) + 1, loop: Math.floor((actNumber - 1) / 3) };
+  const per = balance.endless.actsPerCycle;
+  return { contentAct: ((actNumber - 1) % per) + 1, loop: Math.floor((actNumber - 1) / per) };
 }
 
 // Resolve the effective active-mod set: explicit toggles OR ascension-enabled.
