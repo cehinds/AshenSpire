@@ -8,11 +8,11 @@
 # plate/plateLt/leather/under  body palette (hex, no '#')
 # tags   granted while worn      mods   card rewrites (see weapons.csv)
 id,classId,name,plate,plateLt,leather,under,tags,mods,unlock,blurb
-default,reaver,Wayfarer Plate,7E715D,9C8D73,4B3522,332A1E,guard,,,"The armour you were buried in."
+default,reaver,Wayfarer Plate,63705A,879473,4B3522,332A1E,guard,,,"The armour you were buried in."
 vigil,reaver,Ashen Vigil,302B25,4A433A,241C16,1A1712,guard|ash,defend.block=+2,beatStitchedKing,"Blackened at the court that broke."
 oathsworn,reaver,Gilded Oathsworn,B39C5E,E0CB8C,5A4626,3A3020,guard|oath,defend.block=+1|self.strength=+1,winAsReaver,"Kept bright by an oath unbroken."
 warden,reaver,Warden Mail,3F4C5A,64798E,3A3226,24272A,guard|heavy,defend.block=+3|strike.damage=-1,reachAshenCrown,"Issued, not chosen."
-default,starseer,Nightweave,2B2547,3A3358,4B3522,332A1E,starstone,,,"Dyed with the dark between stars."
+default,starseer,Nightweave,17294F,26406E,4B3522,332A1E,starstone,,,"Dyed with the dark between stars."
 eclipse,starseer,Eclipse Habit,1C1A2E,2E2B47,2A2118,17151F,starstone|ritual,power.potency=+1,winAsStarseer,"Worn only when the moon is eaten."
 starlit,starseer,Starlit Silks,4A5E96,93AEE2,3A3226,242A40,starstone|flourish,strike.hits=+1|strike.damage=-1,beatFellWarden,"It catches light that is not there."
 astral,starseer,Astral Vestment,331E4E,5B2E96,3A2E4A,241E33,starstone|oath,power.potency=+2|defend.block=-1,winTwice,"Cut for someone taller than you."
