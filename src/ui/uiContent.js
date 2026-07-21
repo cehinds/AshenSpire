@@ -88,3 +88,39 @@ export function backdropClass(actNumber) {
   const n = Number(actNumber) > 0 ? Math.floor(Number(actNumber)) : 1;
   return `backdrop act-${((n - 1) % BACKDROP_ACTS) + 1}`;
 }
+
+// ---- gamepad buttons --------------------------------------------------------
+// One table, two presentations. The hint bar wants a compact glyph and the
+// controls screen wants a readable word; these lived as two near-identical
+// tables (input.js PAD_LABELS / controls.js BUTTON_NAMES) that agreed on
+// buttons 0-11 and silently disagreed on the d-pad and guide.
+export const PAD_BUTTONS = {
+  0: { glyph: 'A', name: 'A' },
+  1: { glyph: 'B', name: 'B' },
+  2: { glyph: 'X', name: 'X' },
+  3: { glyph: 'Y', name: 'Y' },
+  4: { glyph: 'LB', name: 'LB' },
+  5: { glyph: 'RB', name: 'RB' },
+  6: { glyph: 'LT', name: 'LT' },
+  7: { glyph: 'RT', name: 'RT' },
+  8: { glyph: 'Back', name: 'Back' },
+  9: { glyph: 'Start', name: 'Start' },
+  10: { glyph: 'L3', name: 'L3' },
+  11: { glyph: 'R3', name: 'R3' },
+  12: { glyph: '▲', name: 'D-Up' },
+  13: { glyph: '▼', name: 'D-Down' },
+  14: { glyph: '◀', name: 'D-Left' },
+  15: { glyph: '▶', name: 'D-Right' },
+  16: { glyph: '⊙', name: 'Guide' },
+};
+/** Compact glyph for the hint bar; falls back to B<n> for unmapped buttons. */
+export function padGlyph(btn) {
+  const b = PAD_BUTTONS[btn];
+  return b ? b.glyph : `B${btn}`;
+}
+/** Readable name for the controls/rebind list; '—' when nothing is bound. */
+export function padName(btn) {
+  if (btn == null) return '—';
+  const b = PAD_BUTTONS[btn];
+  return b ? b.name : `Btn ${btn}`;
+}

@@ -12863,87 +12863,11 @@ Object.assign(module.exports, { dlog, getEntries, logText, openDebugLog });
 // suspended (autoplay policy) and resumes on the first user gesture.
 
 const { balance } = require("src/content/balance.js");
+const { SFX_MANIFEST, MUSIC_MANIFEST, SCALES, BEDS } = require("src/content/music.js");
 
 // Default levels for a profile that has never touched the sliders — one source,
 // shared with ui/screens/settings.js.
 const AUDIO_DEFAULTS = balance.ui.audio;
-
-// A real build can point these at files; missing/failed loads fall back to synth.
-const SFX_MANIFEST = {
-  // cardPlay: 'assets/sfx/card.ogg',  ← example: drop a file here to override
-};
-const MUSIC_MANIFEST = {
-  // combat: 'assets/music/combat.ogg',
-};
-
-// Minor / phrygian-ish scales (semitone offsets from the root) per mood.
-const SCALES = {
-  calm: [0, 3, 5, 7, 10, 12, 15],
-  tense: [0, 1, 5, 6, 7, 10, 12],
-  dread: [0, 2, 3, 7, 8, 10, 12],
-  hymn: [0, 2, 4, 7, 9, 12, 16], // warmer major-pentatonic-ish (shop/rest/victory)
-  veiled: [0, 3, 5, 6, 10, 12, 15], // dorian-flavored, wistful
-  wrath: [0, 1, 4, 5, 8, 11, 12], // jagged, aggressive (elite/boss)
-};
-
-// Music beds per context. Each context has a `gain`, a `drone` flag, and a set
-// of procedural VARIANTS (root frequency, scale, note cadence in ms) — one is
-// picked at random each time the context starts, so the score varies between a
-// handful of "tracks" even with zero audio files. Shop and Rest have their own
-// calmer sets; Boss/Elite their own darker ones.
-// Each variant may also set `wave` (oscillator timbre) and `lift` (melodic
-// stride through the scale) so variants differ in colour and contour, not just
-// key/tempo — more perceived variety from the same synth.
-const BEDS = {
-  title: { drone: true, gain: 0.5, variants: [
-    { root: 146.83, scale: 'calm', cadence: 2600, wave: 'triangle', lift: 3 },
-    { root: 130.81, scale: 'dread', cadence: 3000, wave: 'sine', lift: 2 },
-    { root: 164.81, scale: 'calm', cadence: 2400, wave: 'triangle', lift: 4 },
-    { root: 155.56, scale: 'veiled', cadence: 2800, wave: 'sine', lift: 3 },
-  ] },
-  map: { drone: true, gain: 0.42, variants: [
-    { root: 164.81, scale: 'calm', cadence: 2200, wave: 'triangle', lift: 3 },
-    { root: 155.56, scale: 'calm', cadence: 2500, wave: 'sine', lift: 4 },
-    { root: 174.61, scale: 'dread', cadence: 2000, wave: 'triangle', lift: 2 },
-    { root: 146.83, scale: 'veiled', cadence: 2350, wave: 'sine', lift: 3 },
-  ] },
-  combat: { drone: true, gain: 0.5, pulse: true, variants: [
-    { root: 130.81, scale: 'tense', cadence: 1500, wave: 'triangle', lift: 3 },
-    { root: 123.47, scale: 'dread', cadence: 1300, wave: 'square', lift: 2 },
-    { root: 146.83, scale: 'tense', cadence: 1400, wave: 'triangle', lift: 4 },
-    { root: 138.59, scale: 'tense', cadence: 1250, wave: 'sawtooth', lift: 3 },
-    { root: 130.81, scale: 'veiled', cadence: 1350, wave: 'triangle', lift: 5 },
-    { root: 155.56, scale: 'dread', cadence: 1200, wave: 'square', lift: 2 },
-  ] },
-  elite: { drone: true, gain: 0.55, pulse: true, variants: [
-    { root: 110.0, scale: 'tense', cadence: 1150, wave: 'sawtooth', lift: 3 },
-    { root: 103.83, scale: 'dread', cadence: 1050, wave: 'square', lift: 2 },
-    { root: 116.54, scale: 'wrath', cadence: 1100, wave: 'sawtooth', lift: 4 },
-    { root: 98.0, scale: 'wrath', cadence: 1000, wave: 'square', lift: 3 },
-  ] },
-  boss: { drone: true, gain: 0.6, pulse: true, variants: [
-    { root: 98.0, scale: 'dread', cadence: 1000, wave: 'sawtooth', lift: 2 },
-    { root: 92.5, scale: 'wrath', cadence: 900, wave: 'square', lift: 3 },
-    { root: 87.31, scale: 'wrath', cadence: 950, wave: 'sawtooth', lift: 4 },
-    { root: 82.41, scale: 'dread', cadence: 860, wave: 'square', lift: 2 },
-    { root: 103.83, scale: 'wrath', cadence: 920, wave: 'sawtooth', lift: 3 },
-  ] },
-  shop: { drone: true, gain: 0.4, variants: [
-    { root: 196.0, scale: 'hymn', cadence: 2200, wave: 'triangle', lift: 3 },
-    { root: 174.61, scale: 'calm', cadence: 2000, wave: 'sine', lift: 4 },
-    { root: 220.0, scale: 'hymn', cadence: 2400, wave: 'triangle', lift: 2 },
-  ] },
-  rest: { drone: true, gain: 0.34, variants: [
-    { root: 130.81, scale: 'calm', cadence: 3200, wave: 'sine', lift: 3 },
-    { root: 146.83, scale: 'hymn', cadence: 3000, wave: 'sine', lift: 2 },
-    { root: 123.47, scale: 'veiled', cadence: 3400, wave: 'triangle', lift: 3 },
-  ] },
-  victory: { drone: false, gain: 0.5, variants: [
-    { root: 196.0, scale: 'hymn', cadence: 1400, wave: 'triangle', lift: 3 },
-    { root: 220.0, scale: 'hymn', cadence: 1200, wave: 'triangle', lift: 4 },
-    { root: 246.94, scale: 'calm', cadence: 1300, wave: 'sine', lift: 2 },
-  ] },
-};
 
 // Contexts that can be backed by external audio files. A manifest maps each to
 // a list of file paths (see configureMusic); missing/failed loads fall back to
@@ -13377,6 +13301,98 @@ function silentEngine() {
 Object.assign(module.exports, { AUDIO_DEFAULTS, initAudio });
 
 },
+"src/content/music.js": function (module, exports, require) {
+// src/content/music.js — the procedural score, as data (SPEC §3.1(4)).
+//
+// The synth engine (src/ui/audio.js) knows how to PLAY a bed; what the beds
+// are is content. Adding a mood or a new screen's music is a data edit here,
+// with no change to the engine — same rule the cards and enemies follow.
+//
+// Sample manifests sit here too: naming a file for an id makes the engine play
+// that sample instead of synthesizing, and a missing/failed load falls back to
+// the synth, so this stays safe to point at art that doesn't exist yet.
+
+// A real build can point these at files; missing/failed loads fall back to synth.
+const SFX_MANIFEST = {
+  // cardPlay: 'assets/sfx/card.ogg',  ← example: drop a file here to override
+};
+const MUSIC_MANIFEST = {
+  // combat: 'assets/music/combat.ogg',
+};
+
+// Minor / phrygian-ish scales (semitone offsets from the root) per mood.
+const SCALES = {
+  calm: [0, 3, 5, 7, 10, 12, 15],
+  tense: [0, 1, 5, 6, 7, 10, 12],
+  dread: [0, 2, 3, 7, 8, 10, 12],
+  hymn: [0, 2, 4, 7, 9, 12, 16], // warmer major-pentatonic-ish (shop/rest/victory)
+  veiled: [0, 3, 5, 6, 10, 12, 15], // dorian-flavored, wistful
+  wrath: [0, 1, 4, 5, 8, 11, 12], // jagged, aggressive (elite/boss)
+};
+
+// Music beds per context. Each context has a `gain`, a `drone` flag, and a set
+// of procedural VARIANTS (root frequency, scale, note cadence in ms) — one is
+// picked at random each time the context starts, so the score varies between a
+// handful of "tracks" even with zero audio files. Shop and Rest have their own
+// calmer sets; Boss/Elite their own darker ones.
+// Each variant may also set `wave` (oscillator timbre) and `lift` (melodic
+// stride through the scale) so variants differ in colour and contour, not just
+// key/tempo — more perceived variety from the same synth.
+const BEDS = {
+  title: { drone: true, gain: 0.5, variants: [
+    { root: 146.83, scale: 'calm', cadence: 2600, wave: 'triangle', lift: 3 },
+    { root: 130.81, scale: 'dread', cadence: 3000, wave: 'sine', lift: 2 },
+    { root: 164.81, scale: 'calm', cadence: 2400, wave: 'triangle', lift: 4 },
+    { root: 155.56, scale: 'veiled', cadence: 2800, wave: 'sine', lift: 3 },
+  ] },
+  map: { drone: true, gain: 0.42, variants: [
+    { root: 164.81, scale: 'calm', cadence: 2200, wave: 'triangle', lift: 3 },
+    { root: 155.56, scale: 'calm', cadence: 2500, wave: 'sine', lift: 4 },
+    { root: 174.61, scale: 'dread', cadence: 2000, wave: 'triangle', lift: 2 },
+    { root: 146.83, scale: 'veiled', cadence: 2350, wave: 'sine', lift: 3 },
+  ] },
+  combat: { drone: true, gain: 0.5, pulse: true, variants: [
+    { root: 130.81, scale: 'tense', cadence: 1500, wave: 'triangle', lift: 3 },
+    { root: 123.47, scale: 'dread', cadence: 1300, wave: 'square', lift: 2 },
+    { root: 146.83, scale: 'tense', cadence: 1400, wave: 'triangle', lift: 4 },
+    { root: 138.59, scale: 'tense', cadence: 1250, wave: 'sawtooth', lift: 3 },
+    { root: 130.81, scale: 'veiled', cadence: 1350, wave: 'triangle', lift: 5 },
+    { root: 155.56, scale: 'dread', cadence: 1200, wave: 'square', lift: 2 },
+  ] },
+  elite: { drone: true, gain: 0.55, pulse: true, variants: [
+    { root: 110.0, scale: 'tense', cadence: 1150, wave: 'sawtooth', lift: 3 },
+    { root: 103.83, scale: 'dread', cadence: 1050, wave: 'square', lift: 2 },
+    { root: 116.54, scale: 'wrath', cadence: 1100, wave: 'sawtooth', lift: 4 },
+    { root: 98.0, scale: 'wrath', cadence: 1000, wave: 'square', lift: 3 },
+  ] },
+  boss: { drone: true, gain: 0.6, pulse: true, variants: [
+    { root: 98.0, scale: 'dread', cadence: 1000, wave: 'sawtooth', lift: 2 },
+    { root: 92.5, scale: 'wrath', cadence: 900, wave: 'square', lift: 3 },
+    { root: 87.31, scale: 'wrath', cadence: 950, wave: 'sawtooth', lift: 4 },
+    { root: 82.41, scale: 'dread', cadence: 860, wave: 'square', lift: 2 },
+    { root: 103.83, scale: 'wrath', cadence: 920, wave: 'sawtooth', lift: 3 },
+  ] },
+  shop: { drone: true, gain: 0.4, variants: [
+    { root: 196.0, scale: 'hymn', cadence: 2200, wave: 'triangle', lift: 3 },
+    { root: 174.61, scale: 'calm', cadence: 2000, wave: 'sine', lift: 4 },
+    { root: 220.0, scale: 'hymn', cadence: 2400, wave: 'triangle', lift: 2 },
+  ] },
+  rest: { drone: true, gain: 0.34, variants: [
+    { root: 130.81, scale: 'calm', cadence: 3200, wave: 'sine', lift: 3 },
+    { root: 146.83, scale: 'hymn', cadence: 3000, wave: 'sine', lift: 2 },
+    { root: 123.47, scale: 'veiled', cadence: 3400, wave: 'triangle', lift: 3 },
+  ] },
+  victory: { drone: false, gain: 0.5, variants: [
+    { root: 196.0, scale: 'hymn', cadence: 1400, wave: 'triangle', lift: 3 },
+    { root: 220.0, scale: 'hymn', cadence: 1200, wave: 'triangle', lift: 4 },
+    { root: 246.94, scale: 'calm', cadence: 1300, wave: 'sine', lift: 2 },
+  ] },
+};
+
+
+Object.assign(module.exports, { SFX_MANIFEST, MUSIC_MANIFEST, SCALES, BEDS });
+
+},
 "src/ui/screens/controls.js": function (module, exports, require) {
 // src/ui/screens/controls.js — the Controls tab: rebind each action's keyboard
 // key AND gamepad button (SPEC §7.3).
@@ -13388,14 +13404,12 @@ Object.assign(module.exports, { AUDIO_DEFAULTS, initAudio });
 // (Enter always activates the cursor); everything else is rebindable.
 
 const { ACTIONS, getBindings, getKeyBindings, keyLabel, captureNextButton, cancelCapture, captureNextKey, cancelKeyCapture } = require("src/ui/input.js");
+const { padName } = require("src/ui/uiContent.js");
 
 // Standard-mapping button labels (navigator gamepad "standard" layout).
-const BUTTON_NAMES = {
-  0: 'A', 1: 'B', 2: 'X', 3: 'Y', 4: 'LB', 5: 'RB', 6: 'LT', 7: 'RT',
-  8: 'Back', 9: 'Start', 10: 'L3', 11: 'R3', 12: 'D-Up', 13: 'D-Down',
-  14: 'D-Left', 15: 'D-Right', 16: 'Guide',
-};
-const btnName = (i) => (i == null ? '—' : BUTTON_NAMES[i] || `Btn ${i}`);
+// Button names come from the shared PAD_BUTTONS table (uiContent.js) — this
+// screen shows the readable word, the hint bar shows the compact glyph.
+const btnName = padName;
 
 function renderControls(container, { settings, onChange }) {
   const padConnected =
@@ -13519,6 +13533,8 @@ Object.assign(module.exports, { renderControls });
 // The number keys (1–9) and letter hotkeys stay owned by the screens; this
 // module adds navigation + controller parity on top without touching them.
 
+const { padGlyph } = require("src/ui/uiContent.js");
+
 const FOCUS_SELECTOR = [
   'button:not([disabled])',
   '.card',
@@ -13557,19 +13573,27 @@ const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .
 const ACTIONS = [
   // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
   // and overlay-close always work; only their pad button is rebindable.
-  { id: 'confirm', label: 'Confirm / Play', kind: 'cursor', keyHint: 'Enter', defBtn: 0 },
-  { id: 'cancel', label: 'Cancel / Back', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
-  { id: 'endTurn', label: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
-  { id: 'menu', label: 'Open Menu', kind: 'key', defKey: 'm', defBtn: 9 },
-  { id: 'deck', label: 'Open Deck', kind: 'key', defKey: 'd', defBtn: 3 },
-  { id: 'relics', label: 'Open Relics', kind: 'key', defKey: 'r', defBtn: 4 },
-  { id: 'stats', label: 'Open Stats', kind: 'key', defKey: 't', defBtn: 5 },
+  { id: 'confirm', label: 'Confirm / Play', short: 'Confirm', kind: 'cursor', keyHint: 'Enter', defBtn: 0 },
+  { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
+  { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
+  { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
+  { id: 'deck', label: 'Open Deck', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3 },
+  { id: 'relics', label: 'Open Relics', short: 'Relics', kind: 'key', defKey: 'r', defBtn: 4 },
+  { id: 'stats', label: 'Open Stats', short: 'Stats', kind: 'key', defKey: 't', defBtn: 5 },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
-  { id: 'flask1', label: 'Use Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
-  { id: 'flask2', label: 'Use Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
-  { id: 'flask3', label: 'Use Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
+  { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
+  { id: 'flask2', label: 'Use Flask 2', short: 'Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
+  { id: 'flask3', label: 'Use Flask 3', short: 'Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
 ];
+
+/** Compact label for the hint bar. The full `label` reads as a settings row
+ *  ("Open Deck"); the bar wants the short form ("Deck"). One action registry,
+ *  two presentations — the bar used to restate these and could drift. */
+function actionShort(id) {
+  const a = ACTIONS.find((x) => x.id === id);
+  return a ? a.short || a.label : id;
+}
 
 const DEADZONE = 0.5;
 const REPEAT_MS = 180;
@@ -13634,15 +13658,12 @@ function matchAction(ev, id) {
 }
 
 // Compact standard-mapping button glyphs for the hint bar / on-screen prompts.
-const PAD_LABELS = {
-  0: 'A', 1: 'B', 2: 'X', 3: 'Y', 4: 'LB', 5: 'RB', 6: 'LT', 7: 'RT',
-  8: 'Back', 9: 'Start', 10: 'L3', 11: 'R3', 12: '▲', 13: '▼', 14: '◀', 15: '▶', 16: '⊙',
-};
-
-/** Label for the gamepad button currently bound to an action (hint bar). */
+/** Label for the gamepad button currently bound to an action (hint bar).
+ *  Glyphs come from the shared PAD_BUTTONS table (uiContent.js) so the hint bar
+ *  and the controls screen can't drift apart. */
 function padLabel(id) {
   const btn = bindings[id];
-  return btn == null ? '' : PAD_LABELS[btn] || `B${btn}`;
+  return btn == null ? '' : padGlyph(btn);
 }
 
 /** True if at least one gamepad is currently connected. */
@@ -14006,94 +14027,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, focusFirst, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
-
-},
-"src/ui/components/hints.js": function (module, exports, require) {
-// src/ui/components/hints.js — the contextual control-hint bar (SPEC §7.3).
-//
-// A thin, unobtrusive strip pinned to the bottom of the map and combat screens
-// that lists the currently-bound keys for the dedicated overlay/zone actions, so
-// the rebindable D/R/T/M/E keys are discoverable. Labels come from the live
-// keyLabel() binding, so they reflect rebinds. The whole bar is hidden by CSS
-// when the "Control hints" setting is off (body.hide-hints).
-
-const { keyLabel, padLabel, hasGamepad } = require("src/ui/input.js");
-
-// Which action chips each context shows, in reading order. All of these carry a
-// rebindable keyboard key (keyLabel returns a real key, never '—').
-const CHIPS = {
-  combat: [
-    { id: 'endTurn', label: 'End Turn' },
-    { id: 'deck', label: 'Deck' },
-    { id: 'relics', label: 'Relics' },
-    { id: 'stats', label: 'Stats' },
-    { id: 'menu', label: 'Menu' },
-  ],
-  map: [
-    { id: 'deck', label: 'Deck' },
-    { id: 'relics', label: 'Relics' },
-    { id: 'stats', label: 'Stats' },
-    { id: 'menu', label: 'Menu' },
-  ],
-  // While aiming a card/flask, the combat bar swaps to the two live choices.
-  targeting: [
-    { id: 'confirm', label: 'Confirm' },
-    { id: 'cancel', label: 'Cancel' },
-  ],
-};
-
-// Combat sets 'targeting' while a card/flask is aimed; null restores the
-// default chips. The bar rebuilds in place.
-let hintMode = null;
-function setHintMode(mode) {
-  if (mode === hintMode) return;
-  hintMode = mode;
-  refreshHintBars();
-}
-
-// Show controller glyphs when a gamepad is connected, keyboard keys otherwise.
-function chipsHtml(context, pad) {
-  const set = context === 'combat' && hintMode === 'targeting' ? CHIPS.targeting : CHIPS[context];
-  return (set || [])
-    .map((c) => {
-      const label = pad ? padLabel(c.id) || keyLabel(c.id) : keyLabel(c.id);
-      return `<span class="hint"><kbd>${label}</kbd>${c.label}</span>`;
-    })
-    .join('');
-}
-
-/** HTML for the hint bar in a given context ('combat' | 'map'). */
-function hintBarHtml(context) {
-  const chips = CHIPS[context] || [];
-  if (!chips.length) return '';
-  const pad = hasGamepad();
-  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''}" role="presentation" aria-hidden="true">${chipsHtml(context, pad)}</div>`;
-}
-
-/** Rebuild any visible hint bars in place — called when a pad (dis)connects. */
-function refreshHintBars() {
-  const pad = hasGamepad();
-  // Keyboard-only affordances (card quick-play badges) hide while a pad drives.
-  document.body.classList.toggle('pad-mode', pad);
-  document.querySelectorAll('.hint-bar').forEach((bar) => {
-    const context = bar.classList.contains('hint-combat') ? 'combat' : bar.classList.contains('hint-map') ? 'map' : null;
-    if (!context) return;
-    bar.classList.toggle('hint-pad', pad);
-    bar.innerHTML = chipsHtml(context, pad);
-  });
-  // The End Turn button carries its own key chip — keep it in sync too.
-  const etKey = document.querySelector('.end-turn .et-key');
-  if (etKey) etKey.textContent = pad ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
-}
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('gamepadconnected', refreshHintBars);
-  window.addEventListener('gamepaddisconnected', refreshHintBars);
-}
-
-
-Object.assign(module.exports, { setHintMode, hintBarHtml, refreshHintBars });
+Object.assign(module.exports, { ACTIONS, actionShort, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, focusFirst, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/uiContent.js": function (module, exports, require) {
@@ -14188,8 +14122,119 @@ function backdropClass(actNumber) {
   return `backdrop act-${((n - 1) % BACKDROP_ACTS) + 1}`;
 }
 
+// ---- gamepad buttons --------------------------------------------------------
+// One table, two presentations. The hint bar wants a compact glyph and the
+// controls screen wants a readable word; these lived as two near-identical
+// tables (input.js PAD_LABELS / controls.js BUTTON_NAMES) that agreed on
+// buttons 0-11 and silently disagreed on the d-pad and guide.
+const PAD_BUTTONS = {
+  0: { glyph: 'A', name: 'A' },
+  1: { glyph: 'B', name: 'B' },
+  2: { glyph: 'X', name: 'X' },
+  3: { glyph: 'Y', name: 'Y' },
+  4: { glyph: 'LB', name: 'LB' },
+  5: { glyph: 'RB', name: 'RB' },
+  6: { glyph: 'LT', name: 'LT' },
+  7: { glyph: 'RT', name: 'RT' },
+  8: { glyph: 'Back', name: 'Back' },
+  9: { glyph: 'Start', name: 'Start' },
+  10: { glyph: 'L3', name: 'L3' },
+  11: { glyph: 'R3', name: 'R3' },
+  12: { glyph: '▲', name: 'D-Up' },
+  13: { glyph: '▼', name: 'D-Down' },
+  14: { glyph: '◀', name: 'D-Left' },
+  15: { glyph: '▶', name: 'D-Right' },
+  16: { glyph: '⊙', name: 'Guide' },
+};
+/** Compact glyph for the hint bar; falls back to B<n> for unmapped buttons. */
+function padGlyph(btn) {
+  const b = PAD_BUTTONS[btn];
+  return b ? b.glyph : `B${btn}`;
+}
+/** Readable name for the controls/rebind list; '—' when nothing is bound. */
+function padName(btn) {
+  if (btn == null) return '—';
+  const b = PAD_BUTTONS[btn];
+  return b ? b.name : `Btn ${btn}`;
+}
 
-Object.assign(module.exports, { NODE_TYPES, nodeIcon, nodeName, nodeBlurb, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass });
+
+Object.assign(module.exports, { NODE_TYPES, nodeIcon, nodeName, nodeBlurb, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, PAD_BUTTONS, padGlyph, padName });
+
+},
+"src/ui/components/hints.js": function (module, exports, require) {
+// src/ui/components/hints.js — the contextual control-hint bar (SPEC §7.3).
+//
+// A thin, unobtrusive strip pinned to the bottom of the map and combat screens
+// that lists the currently-bound keys for the dedicated overlay/zone actions, so
+// the rebindable D/R/T/M/E keys are discoverable. Labels come from the live
+// keyLabel() binding, so they reflect rebinds. The whole bar is hidden by CSS
+// when the "Control hints" setting is off (body.hide-hints).
+
+const { keyLabel, padLabel, hasGamepad, actionShort } = require("src/ui/input.js");
+
+// Which action chips each context shows, in reading order — ids only. The
+// labels come from the ACTIONS registry (actionShort), so this can't drift from
+// the actions it points at and a new action is a one-place edit. All of these
+// carry a rebindable keyboard key (keyLabel returns a real key, never '—').
+const CHIPS = {
+  combat: ['endTurn', 'deck', 'relics', 'stats', 'menu'],
+  map: ['deck', 'relics', 'stats', 'menu'],
+  // While aiming a card/flask, the combat bar swaps to the two live choices.
+  targeting: ['confirm', 'cancel'],
+};
+
+// Combat sets 'targeting' while a card/flask is aimed; null restores the
+// default chips. The bar rebuilds in place.
+let hintMode = null;
+function setHintMode(mode) {
+  if (mode === hintMode) return;
+  hintMode = mode;
+  refreshHintBars();
+}
+
+// Show controller glyphs when a gamepad is connected, keyboard keys otherwise.
+function chipsHtml(context, pad) {
+  const set = context === 'combat' && hintMode === 'targeting' ? CHIPS.targeting : CHIPS[context];
+  return (set || [])
+    .map((id) => {
+      const key = pad ? padLabel(id) || keyLabel(id) : keyLabel(id);
+      return `<span class="hint"><kbd>${key}</kbd>${actionShort(id)}</span>`;
+    })
+    .join('');
+}
+
+/** HTML for the hint bar in a given context ('combat' | 'map'). */
+function hintBarHtml(context) {
+  const chips = CHIPS[context] || [];
+  if (!chips.length) return '';
+  const pad = hasGamepad();
+  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''}" role="presentation" aria-hidden="true">${chipsHtml(context, pad)}</div>`;
+}
+
+/** Rebuild any visible hint bars in place — called when a pad (dis)connects. */
+function refreshHintBars() {
+  const pad = hasGamepad();
+  // Keyboard-only affordances (card quick-play badges) hide while a pad drives.
+  document.body.classList.toggle('pad-mode', pad);
+  document.querySelectorAll('.hint-bar').forEach((bar) => {
+    const context = bar.classList.contains('hint-combat') ? 'combat' : bar.classList.contains('hint-map') ? 'map' : null;
+    if (!context) return;
+    bar.classList.toggle('hint-pad', pad);
+    bar.innerHTML = chipsHtml(context, pad);
+  });
+  // The End Turn button carries its own key chip — keep it in sync too.
+  const etKey = document.querySelector('.end-turn .et-key');
+  if (etKey) etKey.textContent = pad ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('gamepadconnected', refreshHintBars);
+  window.addEventListener('gamepaddisconnected', refreshHintBars);
+}
+
+
+Object.assign(module.exports, { setHintMode, hintBarHtml, refreshHintBars });
 
 },
 "src/ui/screens/combat.js": function (module, exports, require) {
