@@ -1336,7 +1336,6 @@ export async function runTests({ artManifest = null } = {}) {
       return;
     }
 
-    const RENDER_FIELDS = ['geom', 'scale', 'metal', 'accent'];
     // '1.00' from the CSV cell and 1 from the compiler are the same value. But
     // a colour like '0E0A08' must never be coerced, so only compare as numbers
     // when BOTH sides parse cleanly.
@@ -1348,7 +1347,6 @@ export async function runTests({ artManifest = null } = {}) {
         && /^-?\d*\.?\d+$/.test(String(x).trim()) && /^-?\d*\.?\d+$/.test(String(y).trim());
       return numeric ? a === b : String(x) === String(y);
     };
-    const ARMOUR_FIELDS = ['plate', 'plateLt', 'leather', 'under'];
     const stale = [];
     const orphaned = [];
 
@@ -1358,7 +1356,11 @@ export async function runTests({ artManifest = null } = {}) {
         stale.push(`${a.id}: no art rendered`);
         continue;
       }
-      for (const f of RENDER_FIELDS) {
+      // Whatever the renderer recorded is what gets checked — add a field to
+      // tools/equipment-blender.py and this widens on its own. Restating the
+      // list here would put the same fact in Python and in JS with nothing
+      // checking they agree: the defect this very test exists to catch.
+      for (const f of Object.keys(entry.fields)) {
         // CSV coercion turns '1.00' into 1; compare as strings on both sides.
         if (!same(entry.fields[f], a[f])) {
           stale.push(`${a.id}.${f}: art has '${entry.fields[f]}', CSV says '${a[f]}'`);
@@ -1376,7 +1378,7 @@ export async function runTests({ artManifest = null } = {}) {
         stale.push(`${key}: no art rendered`);
         continue;
       }
-      for (const f of ARMOUR_FIELDS) {
+      for (const f of Object.keys(entry.fields)) {
         if (!same(entry.fields[f], o[f])) {
           stale.push(`${key}.${f}: art has '${entry.fields[f]}', CSV says '${o[f]}'`);
         }
