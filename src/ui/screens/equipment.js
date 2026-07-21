@@ -22,6 +22,7 @@ import {
 import { renderCard } from '../components/card.js';
 import { esc } from '../components/tooltip.js';
 import { playerSprite, equippedFigure } from '../assets.js';
+import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
 
 const CFG = () => balance.equipment;
@@ -54,8 +55,8 @@ function figureFor(registries, run, cz) {
  */
 function thumbSrc(piece) {
   return piece.kind === 'armor'
-    ? `assets/equipment/body_${piece.classId}_${piece.id}.png`
-    : `assets/equipment/icon_${piece.id}.png`;
+    ? assetUrl(`assets/equipment/body_${piece.classId}_${piece.id}.webp`)
+    : assetUrl(`assets/equipment/icon_${piece.id}.webp`);
 }
 
 /** A piece's mods, written the way a player reads them. */

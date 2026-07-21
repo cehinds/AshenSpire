@@ -23,7 +23,7 @@ row in the table below — no game-code changes.
 | Asset | Used for | Source | Author | License |
 |---|---|---|---|---|
 | Generated placeholder sprites | enemy / player / card / relic art (`src/ui/assets.js`) | original to this project | AshenSpire | CC0 |
-| Rendered class sprites (`assets/sprites/*.png`) | player figures, one PNG per class × accent tint; inline-SVG fallback when unavailable | procedurally modeled + rendered by this repo's own Blender pipeline (`tools/sprites-blender.py`, headless; regenerate with `blender --background --factory-startup --python tools/sprites-blender.py -- assets/sprites`) | AshenSpire | CC0 |
+| Rendered class sprites (`assets/sprites/*.webp`) | player figures, one WebP per class × accent tint; inline-SVG fallback when unavailable | procedurally modeled + rendered by this repo's own Blender pipeline (`tools/sprites-blender.py`, headless; regenerate with `blender --background --factory-startup --python tools/sprites-blender.py -- assets/sprites`) | AshenSpire | CC0 |
 | Unicode emoji glyphs (⚔ 🩸 💎 ☄ …) | card/relic/status/enemy icons, sigils | Unicode standard; rendered by the player's OS/browser emoji font | Unicode / OS vendor | Not embedded — system-rendered |
 | Cinzel (display), Inter (body) | typography | referenced by `font-family` with robust system fallbacks (Georgia / system-ui); **not bundled** in v1 | Google Fonts | SIL OFL (when self-hosted) |
 

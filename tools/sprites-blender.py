@@ -254,8 +254,14 @@ hero_rim.data.energy = 0.0
 scene.render.film_transparent = True
 scene.render.resolution_x = 300
 scene.render.resolution_y = 380
-scene.render.image_settings.file_format = "PNG"
+# WEBP, not PNG, and for one reason: these renders SHIP INSIDE the single-file
+# build as base64 data URIs (tools/bundle.mjs). PNG made that impossible — the
+# art weighed 9.3 MB, which is ~12.4 MB once base64'd. Quality 88 with an alpha
+# channel keeps these flat-shaded figures visually identical at a fraction of
+# the weight. Matches tools/backdrops-blender.py, which already did this.
+scene.render.image_settings.file_format = "WEBP"
 scene.render.image_settings.color_mode = "RGBA"
+scene.render.image_settings.quality = 88
 scene.view_settings.view_transform = "Standard"  # punchy flat colors, no AgX
 try:
     scene.render.engine = "BLENDER_EEVEE_NEXT"
@@ -454,7 +460,7 @@ for class_id, build in builders.items():
         cloth_bsdf.inputs["Base Color"].default_value = rgba
         cloth_bsdf.inputs["Emission Color"].default_value = rgba
         hero_rim.data.color = rgba[:3]
-        scene.render.filepath = os.path.join(OUT, f"{class_id}_{tint_id}.png")
+        scene.render.filepath = os.path.join(OUT, f"{class_id}_{tint_id}.webp")
         bpy.ops.render.render(write_still=True)
         count += 1
     clear_parts()
@@ -467,7 +473,7 @@ for enemy_id, (build, h) in ENEMIES.items():
     frame = h * 1.12
     cam.data.ortho_scale = frame
     cam.location.z = frame / 2 - 0.03
-    scene.render.filepath = os.path.join(OUT, f"enemy_{enemy_id}.png")
+    scene.render.filepath = os.path.join(OUT, f"enemy_{enemy_id}.webp")
     bpy.ops.render.render(write_still=True)
     count += 1
     clear_parts()

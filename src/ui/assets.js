@@ -6,6 +6,7 @@
 // with a CREDITS.md row — no game-code changes.
 
 import { balance } from '../content/balance.js';
+import { assetUrl } from './assetmap.js';
 
 // Sprite size tiers (the display dimensions each enemy def's `size` selects) are
 // data — content/balance.js → ui.spriteTiers. Sizes are generous on purpose: the
@@ -18,7 +19,7 @@ const rem = (px) => `${px / 10}rem`;
 
 /**
  * Enemy sprite: the Blender-rendered PNG when it exists
- * (assets/sprites/enemy_<id>.png, tools/sprites-blender.py), else the style
+ * (assets/sprites/enemy_<id>.webp, tools/sprites-blender.py), else the style
  * guide's placeholder recipe (tinted rounded rect + glyph). New enemies with
  * no render yet fall back automatically — the img error handler swaps in the
  * placeholder, so content can ship art-less.
@@ -38,7 +39,7 @@ export function enemySprite(enemyDef) {
   el.style.cssText = `width:${rem(tier.w)};height:${rem(tier.h)};position:relative;` +
     'display:flex;align-items:flex-end;justify-content:center;';
   const img = document.createElement('img');
-  img.src = `assets/sprites/enemy_${enemyDef.id}.png`;
+  img.src = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
   img.alt = enemyDef.name || enemyDef.id;
   img.style.cssText = `width:100%;height:100%;object-fit:contain;` +
     `filter:drop-shadow(0 ${Math.round(tier.h * 0.06)}px 8px rgba(0,0,0,.55));`;
@@ -143,7 +144,7 @@ const SPRITE_CLASSES = Object.keys(CLASS_SVG);
 function renderedSpriteUrl(classId, tintId) {
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const t = SPRITE_TINT_IDS.includes(tintId) ? tintId : 'gold';
-  return `assets/sprites/${classId}_${t}.png`;
+  return assetUrl(`assets/sprites/${classId}_${t}.webp`);
 }
 
 // Player sprite styles: 'rendered' (Blender PNG), 'classic' (inline SVG
@@ -229,9 +230,9 @@ export function equippedFigure({ classId, armourId, rightId, leftId }) {
     img.addEventListener('error', () => img.remove());
     el.appendChild(img);
   };
-  layer(`assets/equipment/body_${classId}_${armourId || 'default'}.png`, 1);
-  if (leftId) layer(`assets/equipment/weapon_${leftId}.png`, 2);
-  if (rightId) layer(`assets/equipment/weapon_${rightId}.png`, 3);
+  layer(assetUrl(`assets/equipment/body_${classId}_${armourId || 'default'}.webp`), 1);
+  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 2);
+  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 3);
   return el;
 }
 

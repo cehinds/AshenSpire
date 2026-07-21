@@ -281,8 +281,14 @@ except TypeError:
     scene.render.engine = "BLENDER_EEVEE"
 scene.render.resolution_x, scene.render.resolution_y = RES_X, RES_Y
 scene.render.film_transparent = True
-scene.render.image_settings.file_format = "PNG"
+# WEBP, not PNG, and for one reason: these renders SHIP INSIDE the single-file
+# build as base64 data URIs (tools/bundle.mjs). PNG made that impossible — the
+# art weighed 9.3 MB, which is ~12.4 MB once base64'd. Quality 88 with an alpha
+# channel keeps these flat-shaded figures visually identical at a fraction of
+# the weight. Matches tools/backdrops-blender.py, which already did this.
+scene.render.image_settings.file_format = "WEBP"
 scene.render.image_settings.color_mode = "RGBA"
+scene.render.image_settings.quality = 88
 scene.view_settings.view_transform = "Standard"
 
 bpy.ops.object.camera_add(location=(0, -8, 0.98), rotation=(math.radians(90), 0, 0))
@@ -338,9 +344,9 @@ for w in rows("weapons.csv"):
     build(mat(hexrgb(w["metal"]), metallic=0.7, rough=0.35),
           mat(hexrgb(w["accent"]), metallic=0.5, rough=0.35, emit=0.4),
           float(w["scale"]))
-    scene.render.filepath = os.path.join(OUT, f"weapon_{w['id']}.png")
+    scene.render.filepath = os.path.join(OUT, f"weapon_{w['id']}.webp")
     bpy.ops.render.render(write_still=True)
-    render_icon(os.path.join(OUT, f"icon_{w['id']}.png"))
+    render_icon(os.path.join(OUT, f"icon_{w['id']}.webp"))
     clear()
     count += 1
     print("ARM", w["id"])
@@ -390,7 +396,7 @@ for o in rows("outfits.csv"):
     lib["ACCENT_CLOTH"].node_tree.nodes["Principled BSDF"].inputs["Emission Color"].default_value = ac2
     lib["hero_rim"].data.color = acc[:3]
     build()
-    lib["scene"].render.filepath = os.path.join(OUT, f"body_{o['classId']}_{o['id']}.png")
+    lib["scene"].render.filepath = os.path.join(OUT, f"body_{o['classId']}_{o['id']}.webp")
     bpy.ops.render.render(write_still=True)
     lib["clear_parts"]()
     sets += 1
