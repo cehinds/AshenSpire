@@ -5,17 +5,15 @@
 // glyph + name). Swapping in real art later = mapping an id to a URL here,
 // with a CREDITS.md row — no game-code changes.
 
-// Sizes are generous on purpose — the board reads best when sprites fill it, and
-// the whole UI is zoomed to fit the window (main.js applyUiScale), so larger
-// base sizes just mean a bolder board rather than overflow.
-// Sprite size tiers (the display dimensions each enemy def's `size` selects).
-// Values are in px-magnitude; emitted as rem (÷10, since :root is 62.5% → 1rem =
-// 10px) so sprites track the text-size setting. Shadow offsets stay px.
-const SIZE_TIERS = {
-  small: { w: 92, h: 128, font: 44 },
-  medium: { w: 132, h: 168, font: 58 },
-  large: { w: 194, h: 206, font: 78 },
-};
+import { balance } from '../content/balance.js';
+
+// Sprite size tiers (the display dimensions each enemy def's `size` selects) are
+// data — content/balance.js → ui.spriteTiers. Sizes are generous on purpose: the
+// board reads best when sprites fill it, and the whole UI is zoomed to fit the
+// window (main.js applyUiScale), so larger base sizes mean a bolder board rather
+// than overflow. Values are px-magnitude; emitted as rem (÷10, since :root is
+// 62.5% → 1rem = 10px) so sprites track the text-size setting. Shadows stay px.
+const SIZE_TIERS = balance.ui.spriteTiers;
 const rem = (px) => `${px / 10}rem`;
 
 /**
@@ -137,8 +135,11 @@ const CLASS_SVG = {
 // to the inline SVG silhouette, so the single-file dist and file:// play keep
 // working with zero configuration. Art credit: procedurally generated in
 // Blender by this repo (see CREDITS.md).
-const SPRITE_TINT_IDS = ['gold', 'ember', 'frost', 'rot', 'grace'];
-const SPRITE_CLASSES = ['reaver', 'starseer', 'herald'];
+// Derived, never restated: the tint slots ARE the customization tints, and the
+// classes with rendered art ARE the ones with a silhouette builder. Hand-listing
+// them again let the sprite lookup silently drift from the content it serves.
+const SPRITE_TINT_IDS = PORTRAIT_TINTS.map((t) => t.id);
+const SPRITE_CLASSES = Object.keys(CLASS_SVG);
 function renderedSpriteUrl(classId, tintId) {
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const t = SPRITE_TINT_IDS.includes(tintId) ? tintId : 'gold';
