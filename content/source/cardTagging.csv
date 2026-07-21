@@ -1,0 +1,27 @@
+# content/source/cardTagging.csv — which tags each card carries.
+#
+# Tag a card by adding a row (or editing one) — no code change. Multiple tags
+# are pipe-separated. Cards absent from this file simply have no tags.
+# Validated by the test suite: every cardId must exist and every tag must be
+# registered in cardTags.csv.
+cardId,tags
+strike,blade
+defend,guard
+gorefireSlash,blade|blood|gorefire
+crimsonCleave,blade|blood
+shieldBash,guard|blade
+quickstep,flourish
+guardCounter,guard|flourish
+ironResolve,guard
+serratedBlade,blade|blood
+enterGorefire,gorefire|oath
+enterBulwark,guard|oath
+riposte,guard|flourish
+starstonePebble,starstone
+cometFragment,starstone
+starbladePhalanx,starstone|guard
+frostNova,starstone
+gildedOath,ritual|oath
+urgentHeal,ritual
+bloodPact,blood|ritual
+blightTouch,blight|ritual
