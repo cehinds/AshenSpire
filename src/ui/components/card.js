@@ -7,6 +7,7 @@
 import { resolveCard } from '../../model/registries.js';
 import { computeTokenBindings } from '../../model/validate.js';
 import { attachTooltip, esc } from './tooltip.js';
+import { balance } from '../../content/balance.js';
 
 /** Static token values straight off the def (for reward/pile/deck views). */
 export function staticTokens(def) {
@@ -47,7 +48,16 @@ function fillTemplate(def, tokens, baseTokens) {
 export function renderCard(registries, ref, opts = {}) {
   const def = resolveCard(registries, ref);
   const el = document.createElement('div');
-  el.className = `card rarity-${def.rarity} cls-${def.class}${ref.upgraded ? ' upgraded' : ''}`;
+  el.className = `card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
+  // Type presentation is data (balance.ui.cardTypes): corner radii carry the
+  // type (attack squarest → power roundest) and each type owns its banner
+  // colour. Renaming a label here never touches engine logic.
+  const ty = balance.ui.cardTypes[def.type];
+  if (ty) {
+    el.style.setProperty('--card-type-color', ty.color);
+    el.style.setProperty('--card-radius', `${ty.radius}px`);
+    el.style.setProperty('--card-art-radius', `${ty.art}px`);
+  }
   // The class motif hue is DATA (class def cardTint), handed to CSS as a var so
   // adding a class brings its own card colour with no stylesheet edit. Colorless
   // cards have no owning class, so they fall back to the neutral frame.
@@ -65,7 +75,7 @@ export function renderCard(registries, ref, opts = {}) {
     `<div class="cost">${esc(cost)}</div>` +
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
-    `<div class="ctype">${esc(def.type.toUpperCase())}</div>` +
+    `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
     `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
 
   // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).

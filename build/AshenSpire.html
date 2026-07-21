@@ -159,7 +159,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 
 /* ---------- card ---------- */
 .card {
-  position: relative; width: 14rem; height: 19.6rem; border-radius: 10px;
+  position: relative; width: 14rem; height: 19.6rem; border-radius: var(--card-radius, 10px);
   background: linear-gradient(#241e15, #1a1510);
   border: 2px solid #5a5040; color: var(--parchment);
   display: flex; flex-direction: column; align-items: center;
@@ -179,7 +179,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .card .cname { font-family: var(--font-display); font-size: 1.15rem; text-align: center; line-height: 1.15; min-height: 2.6rem; }
 .card.upgraded .cname { color: var(--green); }
 .card .art {
-  width: 11.6rem; height: 6.6rem; margin: 0.3rem 0; border-radius: 6px;
+  width: 11.6rem; height: 6.6rem; margin: 0.3rem 0; border-radius: var(--card-art-radius, 6px);
   background: #14100c; border: 1px solid var(--line);
   display: flex; align-items: center; justify-content: center; font-size: 3.4rem;
 }
@@ -194,6 +194,30 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .card .ctext .val { font-weight: 700; }
 .card .ctext .val.up { color: var(--green); }
 .card .ctext .val.down { color: var(--ember); }
+
+
+/* ---------- card TYPE: geometry + banner colour --------------------------- */
+/* Type reads as SHAPE first — attack squarest and chamfered, power roundest,
+   skill between (radii come from balance.ui.cardTypes as --card-radius /
+   --card-art-radius). Each type also owns its banner colour, kept to that one
+   small element so it doesn't fight rarity (border), class (wash) or accent
+   (chrome). */
+.card .ctype {
+  color: var(--card-type-color, var(--gold));
+  background: color-mix(in srgb, var(--card-type-color, var(--gold)) 15%, #2a241c);
+}
+/* Attack: clipped top-left / bottom-right, so the frame reads like an edge. */
+.card.type-attack .art {
+  clip-path: polygon(0.8rem 0, 100% 0, 100% calc(100% - 0.8rem), calc(100% - 0.8rem) 100%, 0 100%, 0 0.8rem);
+}
+.card.type-attack .ctype {
+  clip-path: polygon(0.5rem 0, 100% 0, calc(100% - 0.5rem) 100%, 0 100%);
+}
+/* Skill: the neutral middle — plain rounded banner. */
+.card.type-skill .ctype { border-radius: 4px; }
+/* Power: fully rounded, with a keep-line inside the art to read as ongoing. */
+.card.type-power .ctype { border-radius: 999px; }
+.card.type-power .art { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--card-type-color) 40%, transparent); }
 
 /* ---------- card colour motif (Settings → Display → Card motif) ------------ */
 /* Two independent axes, both player-chosen:
@@ -210,10 +234,9 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
   content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
   background: var(--card-tint); opacity: var(--card-motif-strength);
 }
-:root[data-card-motif='wash'] .card .ctype,
-:root[data-card-motif='band'] .card .ctype {
-  background: rgba(var(--accent-rgb), 0.16);
-}
+/* (The banner used to take the accent here. The card TYPE owns it now — see
+   the type block above — so the motif leaves it alone and the two systems
+   stop fighting over the same element.) */
 
 /* accent — your accent takes the border; rarity demotes to a corner pip so it
    stays readable, and the class shows as a large watermark sigil. */
@@ -2285,6 +2308,17 @@ const balance = {
     // colour axes: the owning class (each class def's cardTint) and the
     // player's accent. `cardMotif` picks how the class one is expressed;
     // `cardMotifStrength` is the wash depth for each choice.
+    // Card TYPE presentation. Geometry carries the type (attack squarest,
+    // power roundest, skill between) and each type owns its banner colour.
+    // label is display-only — the engine keys on the id (CARD_TYPES is frozen
+    // and the Bulwark stance matches 'skill'), so renaming here is safe.
+    cardTypes: {
+      attack: { label: 'ATTACK', color: '#c9502e', radius: 3, art: 0 },
+      skill: { label: 'SKILL', color: '#7fa8c9', radius: 10, art: 6 },
+      power: { label: 'POWER', color: '#c9a227', radius: 20, art: 16 },
+      curse: { label: 'CURSE', color: '#6a3a7a', radius: 10, art: 6 },
+      status: { label: 'STATUS', color: '#7a6f5a', radius: 10, art: 6 },
+    },
     cardMotif: 'wash',
     cardMotifModes: ['off', 'wash', 'accent', 'band'],
     cardMotifStrength: { subtle: 0.06, normal: 0.10, strong: 0.17 },
@@ -11932,6 +11966,7 @@ Object.assign(module.exports, { mountDraft });
 const { resolveCard } = require("src/model/registries.js");
 const { computeTokenBindings } = require("src/model/validate.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { balance } = require("src/content/balance.js");
 
 /** Static token values straight off the def (for reward/pile/deck views). */
 function staticTokens(def) {
@@ -11972,7 +12007,16 @@ function fillTemplate(def, tokens, baseTokens) {
 function renderCard(registries, ref, opts = {}) {
   const def = resolveCard(registries, ref);
   const el = document.createElement('div');
-  el.className = `card rarity-${def.rarity} cls-${def.class}${ref.upgraded ? ' upgraded' : ''}`;
+  el.className = `card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
+  // Type presentation is data (balance.ui.cardTypes): corner radii carry the
+  // type (attack squarest → power roundest) and each type owns its banner
+  // colour. Renaming a label here never touches engine logic.
+  const ty = balance.ui.cardTypes[def.type];
+  if (ty) {
+    el.style.setProperty('--card-type-color', ty.color);
+    el.style.setProperty('--card-radius', `${ty.radius}px`);
+    el.style.setProperty('--card-art-radius', `${ty.art}px`);
+  }
   // The class motif hue is DATA (class def cardTint), handed to CSS as a var so
   // adding a class brings its own card colour with no stylesheet edit. Colorless
   // cards have no owning class, so they fall back to the neutral frame.
@@ -11990,7 +12034,7 @@ function renderCard(registries, ref, opts = {}) {
     `<div class="cost">${esc(cost)}</div>` +
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
-    `<div class="ctype">${esc(def.type.toUpperCase())}</div>` +
+    `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
     `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
 
   // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).

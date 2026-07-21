@@ -13,7 +13,7 @@
 
 /* ---------- card ---------- */
 .card {
-  position: relative; width: 14rem; height: 19.6rem; border-radius: 10px;
+  position: relative; width: 14rem; height: 19.6rem; border-radius: var(--card-radius, 10px);
   background: linear-gradient(#241e15, #1a1510);
   border: 2px solid #5a5040; color: var(--parchment);
   display: flex; flex-direction: column; align-items: center;
@@ -33,7 +33,7 @@
 .card .cname { font-family: var(--font-display); font-size: 1.15rem; text-align: center; line-height: 1.15; min-height: 2.6rem; }
 .card.upgraded .cname { color: var(--green); }
 .card .art {
-  width: 11.6rem; height: 6.6rem; margin: 0.3rem 0; border-radius: 6px;
+  width: 11.6rem; height: 6.6rem; margin: 0.3rem 0; border-radius: var(--card-art-radius, 6px);
   background: #14100c; border: 1px solid var(--line);
   display: flex; align-items: center; justify-content: center; font-size: 3.4rem;
 }
@@ -48,6 +48,30 @@
 .card .ctext .val { font-weight: 700; }
 .card .ctext .val.up { color: var(--green); }
 .card .ctext .val.down { color: var(--ember); }
+
+
+/* ---------- card TYPE: geometry + banner colour --------------------------- */
+/* Type reads as SHAPE first — attack squarest and chamfered, power roundest,
+   skill between (radii come from balance.ui.cardTypes as --card-radius /
+   --card-art-radius). Each type also owns its banner colour, kept to that one
+   small element so it doesn't fight rarity (border), class (wash) or accent
+   (chrome). */
+.card .ctype {
+  color: var(--card-type-color, var(--gold));
+  background: color-mix(in srgb, var(--card-type-color, var(--gold)) 15%, #2a241c);
+}
+/* Attack: clipped top-left / bottom-right, so the frame reads like an edge. */
+.card.type-attack .art {
+  clip-path: polygon(0.8rem 0, 100% 0, 100% calc(100% - 0.8rem), calc(100% - 0.8rem) 100%, 0 100%, 0 0.8rem);
+}
+.card.type-attack .ctype {
+  clip-path: polygon(0.5rem 0, 100% 0, calc(100% - 0.5rem) 100%, 0 100%);
+}
+/* Skill: the neutral middle — plain rounded banner. */
+.card.type-skill .ctype { border-radius: 4px; }
+/* Power: fully rounded, with a keep-line inside the art to read as ongoing. */
+.card.type-power .ctype { border-radius: 999px; }
+.card.type-power .art { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--card-type-color) 40%, transparent); }
 
 /* ---------- card colour motif (Settings → Display → Card motif) ------------ */
 /* Two independent axes, both player-chosen:
@@ -64,10 +88,9 @@
   content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
   background: var(--card-tint); opacity: var(--card-motif-strength);
 }
-:root[data-card-motif='wash'] .card .ctype,
-:root[data-card-motif='band'] .card .ctype {
-  background: rgba(var(--accent-rgb), 0.16);
-}
+/* (The banner used to take the accent here. The card TYPE owns it now — see
+   the type block above — so the motif leaves it alone and the two systems
+   stop fighting over the same element.) */
 
 /* accent — your accent takes the border; rarity demotes to a corner pip so it
    stays readable, and the class shows as a large watermark sigil. */
