@@ -115,6 +115,17 @@ export const balance = {
     // colour axes: the owning class (each class def's cardTint) and the
     // player's accent. `cardMotif` picks how the class one is expressed;
     // `cardMotifStrength` is the wash depth for each choice.
+    // Card TYPE presentation. Geometry carries the type (attack squarest,
+    // power roundest, skill between) and each type owns its banner colour.
+    // label is display-only — the engine keys on the id (CARD_TYPES is frozen
+    // and the Bulwark stance matches 'skill'), so renaming here is safe.
+    cardTypes: {
+      attack: { label: 'ATTACK', color: '#c9502e', radius: 3, art: 0 },
+      skill: { label: 'SKILL', color: '#7fa8c9', radius: 10, art: 6 },
+      power: { label: 'POWER', color: '#c9a227', radius: 20, art: 16 },
+      curse: { label: 'CURSE', color: '#6a3a7a', radius: 10, art: 6 },
+      status: { label: 'STATUS', color: '#7a6f5a', radius: 10, art: 6 },
+    },
     cardMotif: 'wash',
     cardMotifModes: ['off', 'wash', 'accent', 'band'],
     cardMotifStrength: { subtle: 0.06, normal: 0.10, strong: 0.17 },
