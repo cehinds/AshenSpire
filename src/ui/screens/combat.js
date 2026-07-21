@@ -11,7 +11,7 @@ import { openPileModal } from '../components/piles.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline } from '../fx.js';
-import { intentBadge, intentTooltip } from '../uiContent.js';
+import { intentBadge, intentTooltip, backdropClass } from '../uiContent.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { overlayIsOpen } from '../components/overlay.js';
@@ -34,6 +34,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
         <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
         <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
       </header>
+      <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field">
         <div class="player-zone"></div>
         <div class="enemy-row"></div>

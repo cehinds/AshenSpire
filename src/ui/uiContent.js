@@ -76,3 +76,13 @@ export function intentTooltip(iv, { victim = 'you' } = {}) {
   if (iv.kind === 'debuff') return `<div class="tt-title">Intent: Debuff</div>Hindering ${victim}.`;
   return '<div class="tt-title">Intent: Unknown</div>';
 }
+
+// ---- act backdrops ---------------------------------------------------------
+// One rendered plate per act (tools/backdrops-blender.py → assets/bg/*.webp,
+// styled by .backdrop.act-N in combat.css). Endless loops past act 3, so the
+// act cycles back through the three plates rather than rendering art-less.
+export const BACKDROP_ACTS = 3;
+export function backdropClass(actNumber) {
+  const n = Number(actNumber) > 0 ? Math.floor(Number(actNumber)) : 1;
+  return `backdrop act-${((n - 1) % BACKDROP_ACTS) + 1}`;
+}
