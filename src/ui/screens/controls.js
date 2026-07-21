@@ -17,14 +17,12 @@ import {
   captureNextKey,
   cancelKeyCapture,
 } from '../input.js';
+import { padName } from '../uiContent.js';
 
 // Standard-mapping button labels (navigator gamepad "standard" layout).
-const BUTTON_NAMES = {
-  0: 'A', 1: 'B', 2: 'X', 3: 'Y', 4: 'LB', 5: 'RB', 6: 'LT', 7: 'RT',
-  8: 'Back', 9: 'Start', 10: 'L3', 11: 'R3', 12: 'D-Up', 13: 'D-Down',
-  14: 'D-Left', 15: 'D-Right', 16: 'Guide',
-};
-const btnName = (i) => (i == null ? '—' : BUTTON_NAMES[i] || `Btn ${i}`);
+// Button names come from the shared PAD_BUTTONS table (uiContent.js) — this
+// screen shows the readable word, the hint bar shows the compact glyph.
+const btnName = padName;
 
 export function renderControls(container, { settings, onChange }) {
   const padConnected =

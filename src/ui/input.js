@@ -13,6 +13,8 @@
 // The number keys (1–9) and letter hotkeys stay owned by the screens; this
 // module adds navigation + controller parity on top without touching them.
 
+import { padGlyph } from './uiContent.js';
+
 const FOCUS_SELECTOR = [
   'button:not([disabled])',
   '.card',
@@ -51,19 +53,27 @@ const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .
 export const ACTIONS = [
   // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
   // and overlay-close always work; only their pad button is rebindable.
-  { id: 'confirm', label: 'Confirm / Play', kind: 'cursor', keyHint: 'Enter', defBtn: 0 },
-  { id: 'cancel', label: 'Cancel / Back', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
-  { id: 'endTurn', label: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
-  { id: 'menu', label: 'Open Menu', kind: 'key', defKey: 'm', defBtn: 9 },
-  { id: 'deck', label: 'Open Deck', kind: 'key', defKey: 'd', defBtn: 3 },
-  { id: 'relics', label: 'Open Relics', kind: 'key', defKey: 'r', defBtn: 4 },
-  { id: 'stats', label: 'Open Stats', kind: 'key', defKey: 't', defBtn: 5 },
+  { id: 'confirm', label: 'Confirm / Play', short: 'Confirm', kind: 'cursor', keyHint: 'Enter', defBtn: 0 },
+  { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
+  { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
+  { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
+  { id: 'deck', label: 'Open Deck', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3 },
+  { id: 'relics', label: 'Open Relics', short: 'Relics', kind: 'key', defKey: 'r', defBtn: 4 },
+  { id: 'stats', label: 'Open Stats', short: 'Stats', kind: 'key', defKey: 't', defBtn: 5 },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
-  { id: 'flask1', label: 'Use Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
-  { id: 'flask2', label: 'Use Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
-  { id: 'flask3', label: 'Use Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
+  { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
+  { id: 'flask2', label: 'Use Flask 2', short: 'Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
+  { id: 'flask3', label: 'Use Flask 3', short: 'Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
 ];
+
+/** Compact label for the hint bar. The full `label` reads as a settings row
+ *  ("Open Deck"); the bar wants the short form ("Deck"). One action registry,
+ *  two presentations — the bar used to restate these and could drift. */
+export function actionShort(id) {
+  const a = ACTIONS.find((x) => x.id === id);
+  return a ? a.short || a.label : id;
+}
 
 const DEADZONE = 0.5;
 const REPEAT_MS = 180;
@@ -128,15 +138,12 @@ export function matchAction(ev, id) {
 }
 
 // Compact standard-mapping button glyphs for the hint bar / on-screen prompts.
-const PAD_LABELS = {
-  0: 'A', 1: 'B', 2: 'X', 3: 'Y', 4: 'LB', 5: 'RB', 6: 'LT', 7: 'RT',
-  8: 'Back', 9: 'Start', 10: 'L3', 11: 'R3', 12: '▲', 13: '▼', 14: '◀', 15: '▶', 16: '⊙',
-};
-
-/** Label for the gamepad button currently bound to an action (hint bar). */
+/** Label for the gamepad button currently bound to an action (hint bar).
+ *  Glyphs come from the shared PAD_BUTTONS table (uiContent.js) so the hint bar
+ *  and the controls screen can't drift apart. */
 export function padLabel(id) {
   const btn = bindings[id];
-  return btn == null ? '' : PAD_LABELS[btn] || `B${btn}`;
+  return btn == null ? '' : padGlyph(btn);
 }
 
 /** True if at least one gamepad is currently connected. */

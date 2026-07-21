@@ -6,29 +6,17 @@
 // keyLabel() binding, so they reflect rebinds. The whole bar is hidden by CSS
 // when the "Control hints" setting is off (body.hide-hints).
 
-import { keyLabel, padLabel, hasGamepad } from '../input.js';
+import { keyLabel, padLabel, hasGamepad, actionShort } from '../input.js';
 
-// Which action chips each context shows, in reading order. All of these carry a
-// rebindable keyboard key (keyLabel returns a real key, never '—').
+// Which action chips each context shows, in reading order — ids only. The
+// labels come from the ACTIONS registry (actionShort), so this can't drift from
+// the actions it points at and a new action is a one-place edit. All of these
+// carry a rebindable keyboard key (keyLabel returns a real key, never '—').
 const CHIPS = {
-  combat: [
-    { id: 'endTurn', label: 'End Turn' },
-    { id: 'deck', label: 'Deck' },
-    { id: 'relics', label: 'Relics' },
-    { id: 'stats', label: 'Stats' },
-    { id: 'menu', label: 'Menu' },
-  ],
-  map: [
-    { id: 'deck', label: 'Deck' },
-    { id: 'relics', label: 'Relics' },
-    { id: 'stats', label: 'Stats' },
-    { id: 'menu', label: 'Menu' },
-  ],
+  combat: ['endTurn', 'deck', 'relics', 'stats', 'menu'],
+  map: ['deck', 'relics', 'stats', 'menu'],
   // While aiming a card/flask, the combat bar swaps to the two live choices.
-  targeting: [
-    { id: 'confirm', label: 'Confirm' },
-    { id: 'cancel', label: 'Cancel' },
-  ],
+  targeting: ['confirm', 'cancel'],
 };
 
 // Combat sets 'targeting' while a card/flask is aimed; null restores the
@@ -44,9 +32,9 @@ export function setHintMode(mode) {
 function chipsHtml(context, pad) {
   const set = context === 'combat' && hintMode === 'targeting' ? CHIPS.targeting : CHIPS[context];
   return (set || [])
-    .map((c) => {
-      const label = pad ? padLabel(c.id) || keyLabel(c.id) : keyLabel(c.id);
-      return `<span class="hint"><kbd>${label}</kbd>${c.label}</span>`;
+    .map((id) => {
+      const key = pad ? padLabel(id) || keyLabel(id) : keyLabel(id);
+      return `<span class="hint"><kbd>${key}</kbd>${actionShort(id)}</span>`;
     })
     .join('');
 }
