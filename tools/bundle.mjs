@@ -10,12 +10,16 @@
 //
 // Usage: node tools/bundle.mjs
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
+
+// Shared by the CSS url() pass and the assets/ sweep, so it is declared up here
+// rather than beside either of them (const is not hoisted).
+const MIME = { '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml' };
 
 function fail(msg) {
   console.error('bundle.mjs: ERROR — ' + msg);
@@ -121,6 +125,59 @@ function visit(absPath) {
   for (const d of deps) visit(d);
 }
 visit(entryAbs);
+
+// ---------------------------------------------------------------------------
+// 2b. Carry the art inside the file.
+//
+// Rendered images are referenced by paths BUILT AT RUNTIME
+// (`assets/equipment/weapon_${id}.webp`), so no amount of source reading finds
+// them — which is exactly how the standalone build shipped for months with the
+// sprites silently falling back to placeholder rectangles. So: sweep assets/
+// wholesale and hand the result to src/ui/assetmap.js, whose assetUrl() prefers
+// the map when it is populated.
+//
+// Every file under assets/ goes in. Being deliberate about which ones is how
+// the last hole opened; a build that carries one asset too many is a kilobyte,
+// a build that misses one is a bug nobody sees.
+// ---------------------------------------------------------------------------
+const ASSET_DIR = resolve(ROOT, 'assets');
+const ASSET_MAP_ID = 'src/ui/assetmap.js';
+
+function walkAssets(dir) {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const abs = resolve(dir, entry.name);
+    if (entry.isDirectory()) out.push(...walkAssets(abs));
+    else out.push(abs);
+  }
+  return out;
+}
+
+let mapEntries = 0;
+let mapBytes = 0;
+if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
+  const pairs = [];
+  for (const abs of walkAssets(ASSET_DIR)) {
+    const mime = MIME[extname(abs).toLowerCase()];
+    if (!mime) continue; // README, .blend, whatever else lives there
+    const buf = readFileSync(abs);
+    const key = posix.join('assets', relative(ASSET_DIR, abs).split(/[\\/]/g).join('/'));
+    pairs.push(`  ${JSON.stringify(key)}: "data:${mime};base64,${buf.toString('base64')}"`);
+    mapEntries += 1;
+    mapBytes += buf.length;
+  }
+  const src = sources.get(ASSET_MAP_ID);
+  if (!/\/\* ASSET_MAP_START \*\/[\s\S]*?\/\* ASSET_MAP_END \*\//.test(src)) {
+    fail(`${ASSET_MAP_ID} has lost its ASSET_MAP markers — the bundler anchors on them`);
+  }
+  sources.set(
+    ASSET_MAP_ID,
+    src.replace(
+      /\/\* ASSET_MAP_START \*\/[\s\S]*?\/\* ASSET_MAP_END \*\//,
+      `/* ASSET_MAP_START */\nexport const ASSET_MAP = {\n${pairs.join(',\n')}\n};\n/* ASSET_MAP_END */`
+    )
+  );
+}
 
 // ---------------------------------------------------------------------------
 // 3. Transform each module source: imports -> require, strip exports, and
@@ -259,7 +316,6 @@ for (const id of order) {
 // added later). Rewrite each url() to a base64 data: URI, resolved relative to
 // the stylesheet. Absolute/remote/data: urls are left alone; a missing file is
 // a hard fail rather than a silently blank background.
-const MIME = { '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml' };
 let inlinedAssets = 0;
 let inlinedAssetBytes = 0;
 
@@ -352,6 +408,10 @@ console.log('  entry            : ' + entryId);
 console.log('  modules bundled  : ' + order.length);
 console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
 console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
+console.log('  art inlined      : ' + mapEntries + ' files (' + Math.round(mapBytes / 1024) + ' KiB raw)');
+if (mapEntries === 0) {
+  console.log('  WARNING          : no art inlined — the standalone build will show fallbacks');
+}
 console.log('  output           : ' + idOf(outPath));
 console.log('  output size      : ' + bytes + ' bytes (' + kib + ' KiB)');
 process.exit(0);
