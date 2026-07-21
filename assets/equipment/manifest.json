@@ -1,0 +1,426 @@
+{
+  "armaments": {
+    "ashStaff": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "staffOrb",
+        "metal": "6B5D45",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_ashStaff.webp",
+        "icon_ashStaff.webp"
+      ]
+    },
+    "battleaxe": {
+      "fields": {
+        "accent": "C9502E",
+        "geom": "axe",
+        "metal": "A8A090",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_battleaxe.webp",
+        "icon_battleaxe.webp"
+      ]
+    },
+    "blightRod": {
+      "fields": {
+        "accent": "B5541C",
+        "geom": "staffOrb",
+        "metal": "4B3522",
+        "scale": "0.95"
+      },
+      "files": [
+        "weapon_blightRod.webp",
+        "icon_blightRod.webp"
+      ]
+    },
+    "boneSceptre": {
+      "fields": {
+        "accent": "B5541C",
+        "geom": "staffSkull",
+        "metal": "B8AE98",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_boneSceptre.webp",
+        "icon_boneSceptre.webp"
+      ]
+    },
+    "buckler": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "round",
+        "metal": "8E8678",
+        "scale": "0.80"
+      },
+      "files": [
+        "weapon_buckler.webp",
+        "icon_buckler.webp"
+      ]
+    },
+    "dagger": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "dagger",
+        "metal": "C0B8A6",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_dagger.webp",
+        "icon_dagger.webp"
+      ]
+    },
+    "emberlightSceptre": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "staffFlame",
+        "metal": "6B5D45",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_emberlightSceptre.webp",
+        "icon_emberlightSceptre.webp"
+      ]
+    },
+    "goldboughBranch": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "staffBranch",
+        "metal": "6B5D45",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_goldboughBranch.webp",
+        "icon_goldboughBranch.webp"
+      ]
+    },
+    "gorefireBrand": {
+      "fields": {
+        "accent": "C9502E",
+        "geom": "staffFlame",
+        "metal": "4B3522",
+        "scale": "0.95"
+      },
+      "files": [
+        "weapon_gorefireBrand.webp",
+        "icon_gorefireBrand.webp"
+      ]
+    },
+    "greatsword": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "colossal",
+        "metal": "B8B0A0",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_greatsword.webp",
+        "icon_greatsword.webp"
+      ]
+    },
+    "halberd": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "polearm",
+        "metal": "A8A090",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_halberd.webp",
+        "icon_halberd.webp"
+      ]
+    },
+    "katana": {
+      "fields": {
+        "accent": "C9502E",
+        "geom": "curved",
+        "metal": "C6BEAC",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_katana.webp",
+        "icon_katana.webp"
+      ]
+    },
+    "kiteShield": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "kite",
+        "metal": "8E8678",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_kiteShield.webp",
+        "icon_kiteShield.webp"
+      ]
+    },
+    "lantern": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "lantern",
+        "metal": "6B5D45",
+        "scale": "0.85"
+      },
+      "files": [
+        "weapon_lantern.webp",
+        "icon_lantern.webp"
+      ]
+    },
+    "parryDagger": {
+      "fields": {
+        "accent": "7FA8C9",
+        "geom": "dagger",
+        "metal": "C0B8A6",
+        "scale": "0.85"
+      },
+      "files": [
+        "weapon_parryDagger.webp",
+        "icon_parryDagger.webp"
+      ]
+    },
+    "roundShield": {
+      "fields": {
+        "accent": "7FA8C9",
+        "geom": "round",
+        "metal": "8E8678",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_roundShield.webp",
+        "icon_roundShield.webp"
+      ]
+    },
+    "spikedShield": {
+      "fields": {
+        "accent": "C9502E",
+        "geom": "spiked",
+        "metal": "8E8678",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_spikedShield.webp",
+        "icon_spikedShield.webp"
+      ]
+    },
+    "starstoneStaff": {
+      "fields": {
+        "accent": "7FA8C9",
+        "geom": "staffCrystal",
+        "metal": "6B5D45",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_starstoneStaff.webp",
+        "icon_starstoneStaff.webp"
+      ]
+    },
+    "straightSword": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "sword",
+        "metal": "B8B0A0",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_straightSword.webp",
+        "icon_straightSword.webp"
+      ]
+    },
+    "torch": {
+      "fields": {
+        "accent": "C9502E",
+        "geom": "torch",
+        "metal": "6B5D45",
+        "scale": "0.90"
+      },
+      "files": [
+        "weapon_torch.webp",
+        "icon_torch.webp"
+      ]
+    },
+    "towerShield": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "tower",
+        "metal": "7E766A",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_towerShield.webp",
+        "icon_towerShield.webp"
+      ]
+    },
+    "twinblade": {
+      "fields": {
+        "accent": "7FA8C9",
+        "geom": "twin",
+        "metal": "C0B8A6",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_twinblade.webp",
+        "icon_twinblade.webp"
+      ]
+    },
+    "warhammer": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "hammer",
+        "metal": "8E8678",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_warhammer.webp",
+        "icon_warhammer.webp"
+      ]
+    },
+    "wyrmhornStaff": {
+      "fields": {
+        "accent": "C9A227",
+        "geom": "staffHorn",
+        "metal": "B8AE98",
+        "scale": "1.00"
+      },
+      "files": [
+        "weapon_wyrmhornStaff.webp",
+        "icon_wyrmhornStaff.webp"
+      ]
+    }
+  },
+  "armour": {
+    "herald/default": {
+      "fields": {
+        "leather": "4B3522",
+        "plate": "2E1F1F",
+        "plateLt": "3A2A2A",
+        "under": "241413"
+      },
+      "files": [
+        "body_herald_default.webp"
+      ]
+    },
+    "herald/emberhabit": {
+      "fields": {
+        "leather": "3A2618",
+        "plate": "5A3A24",
+        "plateLt": "8A5C38",
+        "under": "2A1C12"
+      },
+      "files": [
+        "body_herald_emberhabit.webp"
+      ]
+    },
+    "herald/ossuary": {
+      "fields": {
+        "leather": "2A2622",
+        "plate": "3A3630",
+        "plateLt": "555047",
+        "under": "1E1B18"
+      },
+      "files": [
+        "body_herald_ossuary.webp"
+      ]
+    },
+    "herald/pilgrim": {
+      "fields": {
+        "leather": "3A3226",
+        "plate": "4A4034",
+        "plateLt": "6B5D45",
+        "under": "2A2418"
+      },
+      "files": [
+        "body_herald_pilgrim.webp"
+      ]
+    },
+    "reaver/default": {
+      "fields": {
+        "leather": "4B3522",
+        "plate": "7E715D",
+        "plateLt": "9C8D73",
+        "under": "332A1E"
+      },
+      "files": [
+        "body_reaver_default.webp"
+      ]
+    },
+    "reaver/oathsworn": {
+      "fields": {
+        "leather": "5A4626",
+        "plate": "B39C5E",
+        "plateLt": "E0CB8C",
+        "under": "3A3020"
+      },
+      "files": [
+        "body_reaver_oathsworn.webp"
+      ]
+    },
+    "reaver/vigil": {
+      "fields": {
+        "leather": "241C16",
+        "plate": "302B25",
+        "plateLt": "4A433A",
+        "under": "1A1712"
+      },
+      "files": [
+        "body_reaver_vigil.webp"
+      ]
+    },
+    "reaver/warden": {
+      "fields": {
+        "leather": "3A3226",
+        "plate": "5A5F63",
+        "plateLt": "7C8288",
+        "under": "24272A"
+      },
+      "files": [
+        "body_reaver_warden.webp"
+      ]
+    },
+    "starseer/astral": {
+      "fields": {
+        "leather": "3A2E4A",
+        "plate": "4A3A68",
+        "plateLt": "6E58A0",
+        "under": "241E33"
+      },
+      "files": [
+        "body_starseer_astral.webp"
+      ]
+    },
+    "starseer/default": {
+      "fields": {
+        "leather": "4B3522",
+        "plate": "2B2547",
+        "plateLt": "3A3358",
+        "under": "332A1E"
+      },
+      "files": [
+        "body_starseer_default.webp"
+      ]
+    },
+    "starseer/eclipse": {
+      "fields": {
+        "leather": "2A2118",
+        "plate": "1C1A2E",
+        "plateLt": "2E2B47",
+        "under": "17151F"
+      },
+      "files": [
+        "body_starseer_eclipse.webp"
+      ]
+    },
+    "starseer/starlit": {
+      "fields": {
+        "leather": "3A3226",
+        "plate": "3A4468",
+        "plateLt": "5A6699",
+        "under": "242A40"
+      },
+      "files": [
+        "body_starseer_starlit.webp"
+      ]
+    }
+  }
+}
