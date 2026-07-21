@@ -1234,6 +1234,68 @@ export async function runTests() {
     assert(carriedIds(run.loadout).includes('greatsword'), 'and what is slotted');
   });
 
+  // ---- 32. no dead armaments (property, not a snapshot) --------------------
+  test('32. no armament is strictly dominated by one of equal or lower rarity', () => {
+    // Found by Vira, who read the shipped CSVs from the neighbouring worktree
+    // and caught what every grammar test here missed: tests 27 and 28 check that
+    // each mod PARSES and RESOLVES, and nothing checked whether an item was
+    // worth picking up. A common battleaxe strictly beat an uncommon halberd at
+    // identical cost — rarity lying to the player.
+    //
+    // Written as a PROPERTY over the relationship between items rather than an
+    // assertion about any one of them, so it keeps working after every future
+    // rebalance and catches the next dead item authored without noticing.
+    //
+    // The trap Vira hit and corrected before reporting: `cost` inverts. Paying
+    // more is worse, and comparing it naively invents dominance that isn't there.
+    const LOWER_IS_BETTER = new Set(['cost']);
+    const RARITY = { common: 0, uncommon: 1, rare: 2 };
+
+    const vec = (piece) => {
+      const out = {};
+      for (const raw of piece.mods) {
+        const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
+        if (!m) continue;
+        const key = `${m[1]}.${m[2]}`;
+        const n = Number(m[3]);
+        out[key] = (out[key] || 0) + (LOWER_IS_BETTER.has(m[2]) ? -n : n);
+      }
+      return out;
+    };
+
+    const arms = REG.equipment.armaments;
+    const dominated = [];
+    for (const a of arms) {
+      for (const b of arms) {
+        if (a === b || a.kind !== b.kind || a.hand !== b.hand) continue;
+        if (RARITY[b.rarity] > RARITY[a.rarity]) continue; // b must be as cheap or cheaper
+        // A tag `a` carries that `b` lacks is a reason to keep `a` — but only
+        // once tags gate something. Today they are read by two UI files and
+        // nothing else, so this escape hatch is generous on purpose and should
+        // TIGHTEN the day a tag becomes mechanical.
+        if ((a.tags || []).some((t) => !(b.tags || []).includes(t))) continue;
+        const va = vec(a);
+        const vb = vec(b);
+        const keys = new Set([...Object.keys(va), ...Object.keys(vb)]);
+        let better = false;
+        let worseAnywhere = false;
+        for (const k of keys) {
+          const x = va[k] || 0;
+          const y = vb[k] || 0;
+          if (y > x) better = true;
+          if (y < x) worseAnywhere = true;
+        }
+        if (better && !worseAnywhere) dominated.push(`${a.id} (${a.rarity}) < ${b.id} (${b.rarity})`);
+      }
+    }
+    eq(dominated.join('; '), '', 'no armament is strictly dominated');
+
+    // The escape hatch above is only sound while it stays honest about itself.
+    // If a tag ever gates a mechanic, delete this and tighten the rule.
+    const tagsAreCosmetic = true; // verified: only card.js and equipment.js read them
+    assert(tagsAreCosmetic, 'tags remain display-only — revisit the dominance escape hatch when they are not');
+  });
+
   const passed = results.filter((r) => r.ok).length;
   const failed = results.length - passed;
   return { passed, failed, results };

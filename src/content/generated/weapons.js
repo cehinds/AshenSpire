@@ -98,7 +98,8 @@ export const weapons = [
     ],
     "mods": [
       "strike.damage=+2",
-      "strike.cost=+1"
+      "strike.cost=+1",
+      "strike.poise=+4"
     ],
     "unlock": "",
     "blurb": "Reach enough to keep the dead at arm's length."
@@ -192,9 +193,12 @@ export const weapons = [
     "metal": "8E8678",
     "accent": "C9A227",
     "tags": "guard",
-    "mods": "defend.block=+3",
+    "mods": [
+      "defend.block=+3",
+      "strike.damage=-1"
+    ],
     "unlock": "",
-    "blurb": "A wall you can carry."
+    "blurb": "A wall you can carry. Your arm knows it."
   },
   {
     "id": "towerShield",
@@ -264,7 +268,10 @@ export const weapons = [
     "metal": "6B5D45",
     "accent": "C9A227",
     "tags": "guard",
-    "mods": "defend.block=+1",
+    "mods": [
+      "defend.block=+1",
+      "self.regen=+1"
+    ],
     "unlock": "",
     "blurb": "Light enough to see what is coming."
   },
