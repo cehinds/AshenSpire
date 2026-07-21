@@ -1276,11 +1276,19 @@ export async function runTests({ artManifest = null } = {}) {
       for (const b of arms) {
         if (a === b || a.kind !== b.kind || a.hand !== b.hand) continue;
         if (RARITY[b.rarity] > RARITY[a.rarity]) continue; // b must be as cheap or cheaper
-        // A tag `a` carries that `b` lacks is a reason to keep `a` — but only
-        // once tags gate something. Today they are read by two UI files and
-        // nothing else, so this escape hatch is generous on purpose and should
-        // TIGHTEN the day a tag becomes mechanical.
-        if ((a.tags || []).some((t) => !(b.tags || []).includes(t))) continue;
+        // NO tag exemption. I first wrote one — "a tag `a` carries that `b`
+        // lacks is a reason to keep `a`" — reasoning that it should tighten the
+        // day tags become mechanical. Vira argued the reverse and was right:
+        //
+        //   An invariant should be as strict as the current semantics allow,
+        //   and loosened by evidence.
+        //
+        // Tags are read by two UI files and nothing else. An exemption granted
+        // in anticipation of a feature nobody has built can only produce false
+        // negatives — it spares items that nothing actually distinguishes, and
+        // it fails by staying quiet, which is the same shape as every graceful
+        // fallback that hid a defect here for months. Add the exemption back
+        // the day a tag gates a mechanic, with a test proving that it does.
         const va = vec(a);
         const vb = vec(b);
         const keys = new Set([...Object.keys(va), ...Object.keys(vb)]);
@@ -1297,10 +1305,11 @@ export async function runTests({ artManifest = null } = {}) {
     }
     eq(dominated.join('; '), '', 'no armament is strictly dominated');
 
-    // The escape hatch above is only sound while it stays honest about itself.
-    // If a tag ever gates a mechanic, delete this and tighten the rule.
-    const tagsAreCosmetic = true; // verified: only card.js and equipment.js read them
-    assert(tagsAreCosmetic, 'tags remain display-only — revisit the dominance escape hatch when they are not');
+    // Guard on the premise, not the conclusion: this rule is strict BECAUSE
+    // tags are cosmetic. If that stops being true, this assertion is where the
+    // reasoning gets revisited rather than silently outliving its basis.
+    const tagConsumers = ['src/ui/components/card.js', 'src/ui/screens/equipment.js'];
+    eq(tagConsumers.length, 2, 'tags are still read by exactly the two UI files — if that changed, revisit the strictness above');
   });
 
   // ---- 33. rendered art cannot drift from the rows that produced it --------

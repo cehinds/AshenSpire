@@ -97,7 +97,7 @@ export const weapons = [
       "heavy"
     ],
     "mods": [
-      "strike.damage=+2",
+      "strike.damage=+3",
       "strike.cost=+1",
       "strike.poise=+4"
     ],
