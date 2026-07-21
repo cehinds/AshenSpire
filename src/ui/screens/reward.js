@@ -31,6 +31,19 @@ export function mountRewards(app, { registries, run, rewards, onDone }) {
     }
   }
 
+  if (rewards.armamentId) {
+    // rollDrop already put it in storage and remembered it; this just tells the
+    // player, and says where it went — a found armament is carried, not held,
+    // so it does nothing until you walk to the Armoury and slot it.
+    const a = (registries.equipment.armaments || []).find((x) => x.id === rewards.armamentId);
+    if (a) {
+      lines.push(
+        `Armament: <b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` +
+        `<br><span style="color:var(--muted)">Carried. Slot it in the Armoury (⚒).</span>`
+      );
+    }
+  }
+
   sfx.play('victory');
   app.innerHTML = `
     <div class="screen">

@@ -17,7 +17,7 @@
 import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
-  canSwap, cycleSet, equipPiece, cardMods, runMods, loadoutTags, figureSpec,
+  canSwap, cycleSet, equipPiece, cardMods, runMods, loadoutTags, figureSpec, carriedIds,
 } from '../../model/loadout.js';
 import { renderCard } from '../components/card.js';
 import { esc } from '../components/tooltip.js';
@@ -121,11 +121,28 @@ export function mountEquipment(host, {
   // drops out of the list entirely: a genuine secret should not advertise the
   // shape of its own hole.
   const unlockById = new Map((registries.unlocks || []).map((u) => [u.id, u]));
+  // `persistence` decides what counts as yours: what this run has picked up,
+  // what the profile has ever held, or both (the default — a climb that ends
+  // badly still widens the wardrobe).
+  const drops = CFG().drops || {};
+  const persistence = CFG().persistence;
+  const available = new Set([
+    ...(persistence !== 'perRun' ? meta.found || [] : []),
+    ...(persistence !== 'unlocked' ? carriedIds(run.loadout) : []),
+  ]);
   function gate(piece) {
-    if (piece.unlock === '' || unlocked.has(piece.unlock)) return { ...piece, locked: false };
-    const u = unlockById.get(piece.unlock);
-    if (u && u.reveal === 'hidden') return null;
-    return { ...piece, locked: true, hint: (u && u.hint) || 'Not yet earned.' };
+    // Two independent gates. A CONDITION unlock is something you achieve; being
+    // FOUND is something you pick up. Armour uses the first, armaments the
+    // second, and a piece could one day use both.
+    if (piece.unlock !== '' && !unlocked.has(piece.unlock)) {
+      const u = unlockById.get(piece.unlock);
+      if (u && u.reveal === 'hidden') return null;
+      return { ...piece, locked: true, hint: (u && u.hint) || 'Not yet earned.' };
+    }
+    if (piece.kind !== 'armor' && drops.requireFound && !available.has(piece.id)) {
+      return { ...piece, locked: true, hint: 'Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them.' };
+    }
+    return { ...piece, locked: false };
   }
 
   function eligible(slot) {

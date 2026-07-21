@@ -13,6 +13,9 @@ export const STREAM_NAMES = Object.freeze([
   'cardRewards',
   'relicRewards',
   'flaskRewards',
+  // Armament drops get their own stream so adding one to a node kind can't
+  // shift what every later relic or card reward rolls in an existing seed.
+  'armaments',
   'enemyAI',
   'enemyHP',
   'events',
