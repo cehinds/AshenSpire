@@ -39,6 +39,7 @@ import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, tagsFor, tagIdsFor, cardsWithTag } from '../src/content/tags.js';
 import { cardTagging } from '../src/content/generated/cardTagging.js';
 import { weapons } from '../src/content/generated/weapons.js';
+import { KEEPSAKES } from '../src/content/keepsakes.js';
 import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
 } from '../src/model/loadout.js';
@@ -121,11 +122,18 @@ function logOf(combat, type) {
 // Runner
 // ---------------------------------------------------------------------------
 
-export async function runTests() {
+export async function runTests({ artManifest = null } = {}) {
   const results = [];
   const test = (name, fn) => {
     try {
-      fn();
+      const out = fn();
+      // An async test body would resolve AFTER this returns, so every throw
+      // inside it would be swallowed and the test would report green forever.
+      // Refuse it rather than quietly lie — the same rule as every other
+      // fallback here: if it can fail silently, make it fail loudly instead.
+      if (out && typeof out.then === 'function') {
+        throw new Error('test body returned a promise; this harness is synchronous — pass data in via runTests({...}) instead');
+      }
       results.push({ name, ok: true });
     } catch (e) {
       results.push({ name, ok: false, detail: e && e.message ? e.message : String(e) });
@@ -661,8 +669,7 @@ export async function runTests() {
   });
 
   // ---- 19. Keepsakes (character creation boons) -------------------------------------------
-  test('19. keepsakes: effect lists validate and apply as run effects', async () => {
-    const { KEEPSAKES } = await import('../src/content/keepsakes.js');
+  test('19. keepsakes: effect lists validate and apply as run effects', () => {
     // Every keepsake's effects must pass the same closed-set validation as events.
     const probe = { ...contentBundle, events: [...contentBundle.events, ...KEEPSAKES.map((k) => ({
       id: `ks_${k.id}`, name: k.name, text: 'probe',
@@ -1294,6 +1301,92 @@ export async function runTests() {
     // If a tag ever gates a mechanic, delete this and tighten the rule.
     const tagsAreCosmetic = true; // verified: only card.js and equipment.js read them
     assert(tagsAreCosmetic, 'tags remain display-only — revisit the dominance escape hatch when they are not');
+  });
+
+  // ---- 33. rendered art cannot drift from the rows that produced it --------
+  test('33. every armament and armour set has art rendered from its CURRENT row', () => {
+    // Bjorn's gap, named from a codebase he'd never seen: a derived artifact
+    // drifting from its source with nothing asserting between them. Add a
+    // weapon, forget to re-render, and the game shows a stale image forever.
+    // Same defect as a frame constant pointing at the wrong sprite for months.
+    //
+    // His pattern was "hash the source, stamp the hash into the artifact." One
+    // change: the RENDERER records the fields it actually read, and this test
+    // does the comparing. Stamping a hash in Blender would put the same hash
+    // function in Python and in JS with nothing checking they agree — the very
+    // defect being closed, in a smaller costume.
+    //
+    // Checks BOTH directions, which is the half that's easy to forget: a stale
+    // render and an orphaned image are different bugs and only one of them is
+    // visible in game.
+    const manifest = artManifest;
+    if (!manifest) {
+      // Browser test page has no filesystem. Skipping loudly beats a green tick
+      // that means nothing — the counter beside the quiet fallback.
+      assert(true, 'SKIPPED (no filesystem): art provenance is checked in Node');
+      return;
+    }
+
+    const RENDER_FIELDS = ['geom', 'scale', 'metal', 'accent'];
+    // '1.00' from the CSV cell and 1 from the compiler are the same value. But
+    // a colour like '0E0A08' must never be coerced, so only compare as numbers
+    // when BOTH sides parse cleanly.
+    const same = (x, y) => {
+      const a = Number(x);
+      const b = Number(y);
+      const numeric = String(x).trim() !== '' && String(y).trim() !== ''
+        && Number.isFinite(a) && Number.isFinite(b)
+        && /^-?\d*\.?\d+$/.test(String(x).trim()) && /^-?\d*\.?\d+$/.test(String(y).trim());
+      return numeric ? a === b : String(x) === String(y);
+    };
+    const ARMOUR_FIELDS = ['plate', 'plateLt', 'leather', 'under'];
+    const stale = [];
+    const orphaned = [];
+
+    for (const a of REG.equipment.armaments) {
+      const entry = manifest.armaments[a.id];
+      if (!entry) {
+        stale.push(`${a.id}: no art rendered`);
+        continue;
+      }
+      for (const f of RENDER_FIELDS) {
+        // CSV coercion turns '1.00' into 1; compare as strings on both sides.
+        if (!same(entry.fields[f], a[f])) {
+          stale.push(`${a.id}.${f}: art has '${entry.fields[f]}', CSV says '${a[f]}'`);
+        }
+      }
+    }
+    for (const id of Object.keys(manifest.armaments)) {
+      if (!REG.equipment.armaments.some((a) => a.id === id)) orphaned.push(`weapon_${id}`);
+    }
+
+    for (const o of REG.equipment.armour) {
+      const key = `${o.classId}/${o.id}`;
+      const entry = manifest.armour[key];
+      if (!entry) {
+        stale.push(`${key}: no art rendered`);
+        continue;
+      }
+      for (const f of ARMOUR_FIELDS) {
+        if (!same(entry.fields[f], o[f])) {
+          stale.push(`${key}.${f}: art has '${entry.fields[f]}', CSV says '${o[f]}'`);
+        }
+      }
+    }
+    for (const key of Object.keys(manifest.armour)) {
+      const [classId, id] = key.split('/');
+      if (!REG.equipment.armour.some((o) => o.classId === classId && o.id === id)) {
+        orphaned.push(`body_${classId}_${id}`);
+      }
+    }
+
+    eq(stale.join('; '), '', 'no rendered art is stale — re-run tools/equipment-blender.py');
+    eq(orphaned.join('; '), '', 'no rendered art is orphaned by a deleted row');
+
+    // The manifest must also actually cover the content, or an empty file would
+    // pass every assertion above by having nothing to disagree with.
+    eq(Object.keys(manifest.armaments).length, REG.equipment.armaments.length, 'every armament is covered');
+    eq(Object.keys(manifest.armour).length, REG.equipment.armour.length, 'every armour set is covered');
   });
 
   const passed = results.filter((r) => r.ok).length;

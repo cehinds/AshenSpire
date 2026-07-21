@@ -17,6 +17,7 @@
 
 import bpy
 import csv
+import json
 import math
 import os
 import sys
@@ -335,6 +336,23 @@ def render_icon(path):
     scene.render.resolution_x, scene.render.resolution_y = RES_X, RES_Y
 
 
+# ---- provenance --------------------------------------------------------------
+# The gap Bjorn named: a derived artifact drifting from its source with nothing
+# asserting between them. Add a weapon, forget to re-render, and the game shows
+# a stale image forever — the same defect as a frame constant pointing at the
+# wrong sprite for months.
+#
+# His pattern was "hash the source, stamp the hash into the artifact." I've
+# changed one thing: the renderer records the FIELDS IT ACTUALLY READ, and node
+# does the hashing. Stamping a hash here would mean the same hash function
+# living in Python and in JS with nothing checking they agree — which is the
+# very defect this is meant to close, wearing a smaller costume.
+#
+# Only render-relevant fields go in. A balance tweak to `mods` must not
+# invalidate art it cannot affect.
+RENDER_FIELDS = ("geom", "scale", "metal", "accent")
+manifest = {"armaments": {}, "armour": {}}
+
 count = 0
 for w in rows("weapons.csv"):
     build = GEOM.get(w["geom"])
@@ -347,6 +365,10 @@ for w in rows("weapons.csv"):
     scene.render.filepath = os.path.join(OUT, f"weapon_{w['id']}.webp")
     bpy.ops.render.render(write_still=True)
     render_icon(os.path.join(OUT, f"icon_{w['id']}.webp"))
+    manifest["armaments"][w["id"]] = {
+        "fields": {k: w[k] for k in RENDER_FIELDS},
+        "files": [f"weapon_{w['id']}.webp", f"icon_{w['id']}.webp"],
+    }
     clear()
     count += 1
     print("ARM", w["id"])
@@ -398,8 +420,15 @@ for o in rows("outfits.csv"):
     build()
     lib["scene"].render.filepath = os.path.join(OUT, f"body_{o['classId']}_{o['id']}.webp")
     bpy.ops.render.render(write_still=True)
+    manifest["armour"][f"{o['classId']}/{o['id']}"] = {
+        "fields": {k: o[k] for k in ("plate", "plateLt", "leather", "under")},
+        "files": [f"body_{o['classId']}_{o['id']}.webp"],
+    }
     lib["clear_parts"]()
     sets += 1
     print("SET", o["classId"], o["id"])
+
+with open(os.path.join(OUT, "manifest.json"), "w", encoding="utf-8") as fh:
+    json.dump(manifest, fh, indent=2, sort_keys=True)
 
 print(f"EQUIPMENT OK: {count} armaments + {sets} armour sets -> {OUT}")
