@@ -389,6 +389,29 @@ CLASS_BUILD = {
     "reaver": lib["build_reaver"], "starseer": lib["build_starseer"], "herald": lib["build_herald"],
 }
 
+# WHICH materials an armour set actually repaints, per class.
+#
+# This was the bug, and it shipped: repaint() named HERO_PLATE / HERO_PLATE_LT /
+# HERO_LEATHER / HERO_UNDER — materials that ONLY the reaver's builder uses. The
+# starseer's body is ROBE_BLUE, the herald's is ROBE_RED and HOOD_DARK, and
+# neither was ever touched. Eight of twelve armour sets rendered pixel-identical
+# to their class default (measured: dE 0.0, tools/palette-audit.py) while the CSV
+# declared four distinct palettes each and the Armoury offered them by name.
+#
+# The CSV's four columns assume a body structure only the reaver has. Classes
+# genuinely differ in how many paintable surfaces they own, so this maps what
+# exists rather than pretending every class has four.
+#
+# Only materials UNIQUE to one class are listed. NEAR_BLACK and WOOD are shared
+# between builders, and repainting a shared material would leak the last set's
+# colour into the next class rendered.
+CLASS_BODY_MATS = {
+    "reaver": {"plate": "HERO_PLATE", "plateLt": "HERO_PLATE_LT",
+               "leather": "HERO_LEATHER", "under": "HERO_UNDER"},
+    "starseer": {"plate": "ROBE_BLUE", "plateLt": "ROBE_BLUE_LT"},
+    "herald": {"plate": "ROBE_RED", "plateLt": "HOOD_DARK", "leather": "CLOTH_DARK"},
+}
+
 
 def repaint(name, hexv):
     m = lib[name]
@@ -408,10 +431,10 @@ for o in rows("outfits.csv"):
     build = CLASS_BUILD.get(o["classId"])
     if not build:
         continue
-    repaint("HERO_PLATE", o["plate"])
-    repaint("HERO_PLATE_LT", o["plateLt"])
-    repaint("HERO_LEATHER", o["leather"])
-    repaint("HERO_UNDER", o["under"])
+    painted = []
+    for field, matname in CLASS_BODY_MATS[o["classId"]].items():
+        repaint(matname, o[field])
+        painted.append(field)
     acc = repaint("ACCENT", "C9A227")
     lib["ACCENT"].node_tree.nodes["Principled BSDF"].inputs["Emission Color"].default_value = acc
     ac2 = repaint("ACCENT_CLOTH", "C9A227")
@@ -421,12 +444,24 @@ for o in rows("outfits.csv"):
     lib["scene"].render.filepath = os.path.join(OUT, f"body_{o['classId']}_{o['id']}.webp")
     bpy.ops.render.render(write_still=True)
     manifest["armour"][f"{o['classId']}/{o['id']}"] = {
-        "fields": {k: o[k] for k in ("plate", "plateLt", "leather", "under")},
+        "fields": {k: o[k] for k in painted},
         "files": [f"body_{o['classId']}_{o['id']}.webp"],
     }
     lib["clear_parts"]()
     sets += 1
     print("SET", o["classId"], o["id"])
+
+# Measure what was actually rendered, in the same run that rendered it.
+#
+# Test 33 stayed green through the entire time eight armour sets were rendering
+# pixel-identical, because it proved the renderer READ the palette values — not
+# that it applied them. Bjorn's name for that shape is a hollow citation: a
+# reference that asserts authority and points at nothing. This closes it by
+# asserting a property of the OUTPUT.
+audit_path = os.path.join(ROOT, "tools", "palette-audit.py")
+audit = {"__name__": "palette_audit", "bpy": bpy, "os": os, "json": json, "math": math, "sys": sys}
+exec(compile(open(audit_path, encoding="utf-8").read(), audit_path, "exec"), audit)
+manifest["audit"] = audit["measure"](OUT, manifest)
 
 with open(os.path.join(OUT, "manifest.json"), "w", encoding="utf-8") as fh:
     json.dump(manifest, fh, indent=2, sort_keys=True)
