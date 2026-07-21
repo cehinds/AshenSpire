@@ -74,4 +74,45 @@ export const balance = {
     hoarderShopMult: 2, // Hoarder: ×shop price
     lessHealingMult: 0.5, // Scarce Embers: ×healing (shrine rest + between-act)
   },
+
+  // ---- presentation config (read by the UI layer, never by the engine) ----
+  // Same rule as the tuning above: code never embeds these numbers. Keeping the
+  // audio defaults here in particular means the engine fallback and the settings
+  // slider can't drift apart — they previously lived in two files and silently
+  // disagreed.
+  ui: {
+    // Accent themes → --gold plus its rgb form (focus glow / halos).
+    accents: {
+      gold: { hex: '#c9a227', rgb: '201, 162, 39' },
+      crimson: { hex: '#c1453a', rgb: '193, 69, 58' },
+      frost: { hex: '#7fa8c9', rgb: '127, 168, 201' },
+      verdant: { hex: '#8bae54', rgb: '139, 174, 84' },
+      violet: { hex: '#a06cc8', rgb: '160, 108, 200' },
+    },
+    // UI size → whole-app zoom (--ui-zoom). 'Auto' flexes against the design
+    // baseline below and is clamped so it never gets unusably tiny/huge.
+    uiScale: {
+      named: { s: 0.85, m: 1, l: 1.2, xl: 1.45 },
+      designW: 1200,
+      designH: 730,
+      min: 0.62,
+      max: 1.7,
+    },
+    // Text size → root font-size %. Because type + dimensions are rem, one
+    // value rescales the whole UI (styles/base.css).
+    textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },
+    // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
+    // renderer emits them as rem (÷10).
+    spriteTiers: {
+      small: { w: 92, h: 128, font: 44 },
+      medium: { w: 132, h: 168, font: 58 },
+      large: { w: 194, h: 206, font: 78 },
+    },
+    // How many act backdrop plates exist (assets/bg/bg_act*.webp). Endless acts
+    // past this cycle back through them.
+    backdropActs: 3,
+    // Default audio levels for a profile that has never touched the sliders.
+    // Music is 0 (muted) while testing; sfx stays audible.
+    audio: { musicVolume: 0, sfxVolume: 75 },
+  },
 };

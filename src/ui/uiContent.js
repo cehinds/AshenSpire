@@ -5,6 +5,8 @@
 // in each screen. This is the single source so their icons, labels, and prose
 // can't diverge. Pure presentation data + tiny pure helpers, no game state.
 
+import { balance } from '../content/balance.js';
+
 // ---- map node types ---------------------------------------------------------
 export const NODE_TYPES = {
   monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
@@ -81,7 +83,7 @@ export function intentTooltip(iv, { victim = 'you' } = {}) {
 // One rendered plate per act (tools/backdrops-blender.py → assets/bg/*.webp,
 // styled by .backdrop.act-N in combat.css). Endless loops past act 3, so the
 // act cycles back through the three plates rather than rendering art-less.
-export const BACKDROP_ACTS = 3;
+export const BACKDROP_ACTS = balance.ui.backdropActs;
 export function backdropClass(actNumber) {
   const n = Number(actNumber) > 0 ? Math.floor(Number(actNumber)) : 1;
   return `backdrop act-${((n - 1) % BACKDROP_ACTS) + 1}`;

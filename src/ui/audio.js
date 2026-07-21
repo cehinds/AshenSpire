@@ -9,6 +9,12 @@
 // and calls `engine.music(context)` as screens mount. The AudioContext starts
 // suspended (autoplay policy) and resumes on the first user gesture.
 
+import { balance } from '../content/balance.js';
+
+// Default levels for a profile that has never touched the sliders — one source,
+// shared with ui/screens/settings.js.
+export const AUDIO_DEFAULTS = balance.ui.audio;
+
 // A real build can point these at files; missing/failed loads fall back to synth.
 const SFX_MANIFEST = {
   // cardPlay: 'assets/sfx/card.ogg',  ← example: drop a file here to override
@@ -104,11 +110,12 @@ export function initAudio(settings = {}) {
   master.connect(ctx.destination);
 
   const state = {
-    // Music defaults to 0 (muted) for testing; sfx stays audible. Must match the
-    // musicVolume row default in ui/screens/settings.js — this fallback is what
-    // an unset setting actually resolves to (settings are stored sparse).
-    musicVol: clampVol(settings.musicVolume, 0),
-    sfxVol: clampVol(settings.sfxVolume, 75),
+    // Defaults are data (content/balance.js → ui.audio), shared with the
+    // settings sliders. They used to live in two files and could silently
+    // disagree: this fallback is what an unset setting actually resolves to
+    // (settings are stored sparse), while the row `def` only drew the slider.
+    musicVol: clampVol(settings.musicVolume, AUDIO_DEFAULTS.musicVolume),
+    sfxVol: clampVol(settings.sfxVolume, AUDIO_DEFAULTS.sfxVolume),
     muted: settings.muteAudio === true,
     context: null, // current music bed key
     nodes: [], // live music nodes to tear down on switch

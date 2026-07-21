@@ -87,15 +87,10 @@ sfx.sink = (id) => audio.sfx(id);
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
 initInput({ getSettings: () => saves.loadMeta().settings || {} });
 
-// Accent palettes — each swaps the primary accent (--gold) plus its rgb form
-// (used by focus glow / halos). Keys match the settings 'accent' choices.
-const ACCENTS = {
-  gold: { hex: '#c9a227', rgb: '201, 162, 39' },
-  crimson: { hex: '#c1453a', rgb: '193, 69, 58' },
-  frost: { hex: '#7fa8c9', rgb: '127, 168, 201' },
-  verdant: { hex: '#8bae54', rgb: '139, 174, 84' },
-  violet: { hex: '#a06cc8', rgb: '160, 108, 200' },
-};
+// All presentation config is data (content/balance.js → balance.ui): accent
+// palettes, UI zoom scale, text sizes. Code never embeds these numbers.
+const UI = registries.balance.ui;
+const ACCENTS = UI.accents;
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;
@@ -104,14 +99,13 @@ let lastMusicFolder;
 // zoom with the window against a design baseline so the board fills big screens
 // and shrinks to fit small ones; S–XL are fixed overrides. Legacy numeric values
 // ('90'/'100'…) still resolve. Clamped so it never gets unusably tiny/huge.
-const UI_DESIGN_W = 1200;
-const UI_DESIGN_H = 730;
-const UI_NAMED = { s: 0.85, m: 1, l: 1.2, xl: 1.45 };
+const UI_NAMED = UI.uiScale.named;
 
 function computeAutoZoom() {
   if (typeof window === 'undefined') return 1;
-  const fit = Math.min(window.innerWidth / UI_DESIGN_W, window.innerHeight / UI_DESIGN_H);
-  return Math.max(0.62, Math.min(1.7, Math.round(fit * 100) / 100));
+  const z = UI.uiScale;
+  const fit = Math.min(window.innerWidth / z.designW, window.innerHeight / z.designH);
+  return Math.max(z.min, Math.min(z.max, Math.round(fit * 100) / 100));
 }
 
 function resolveZoom(uiScale) {
@@ -157,7 +151,7 @@ function applyDisplaySettings(settings) {
   // Text size sets the root font-size %; because all type + component dimensions
   // are rem, one value rescales the whole UI (base.css). Legacy boolean largeText
   // maps to L. Stacks with --ui-zoom (which additionally scales px hairlines).
-  const TEXT_SIZES = { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' };
+  const TEXT_SIZES = UI.textSize;
   const tKey = TEXT_SIZES[settings.textSize] ? settings.textSize
     : (settings.largeText === true ? 'L' : 'M');
   document.documentElement.style.fontSize = TEXT_SIZES[tKey];
