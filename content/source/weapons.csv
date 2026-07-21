@@ -14,7 +14,7 @@ straightSword,Straight Sword,weapon,right,common,sword,1.00,B8B0A0,C9A227,blade,
 greatsword,Greatsword,weapon,right,uncommon,colossal,1.00,B8B0A0,C9A227,blade|heavy,strike.damage=+4|strike.cost=+1|strike.poise=+3,,"Slow, and it does not care."
 dagger,Dagger,weapon,either,common,dagger,1.00,C0B8A6,C9A227,blade|flourish,strike.damage=3|strike.hits=2,,"Two cuts where one would do."
 katana,Katana,weapon,right,uncommon,curved,1.00,C6BEAC,C9502E,blade|blood|flourish,strike.damage=-1|strike.bleed=+2,,"A long curve, and a long grudge."
-halberd,Halberd,weapon,right,uncommon,polearm,1.00,A8A090,C9A227,blade|heavy,strike.damage=+2|strike.cost=+1|strike.poise=+4,,"Reach enough to keep the dead at arm's length."
+halberd,Halberd,weapon,right,uncommon,polearm,1.00,A8A090,C9A227,blade|heavy,strike.damage=+3|strike.cost=+1|strike.poise=+4,,"Reach enough to keep the dead at arm's length."
 warhammer,Warhammer,weapon,right,uncommon,hammer,1.00,8E8678,C9A227,heavy,strike.damage=+2|strike.poise=+6,,"Poise is a fiction. This is the argument."
 twinblade,Twinblade,weapon,right,rare,twin,1.00,C0B8A6,7FA8C9,blade|flourish,strike.damage=2|strike.hits=3,,"Both ends are the business end."
 battleaxe,Battleaxe,weapon,right,common,axe,1.00,A8A090,C9502E,blade|heavy,strike.damage=+3|strike.cost=+1,,"It was a woodcutter's once."
