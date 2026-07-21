@@ -111,6 +111,13 @@ export const balance = {
     // How many act backdrop plates exist (assets/bg/bg_act*.webp). Endless acts
     // past this cycle back through them.
     backdropActs: 3,
+    // Card colour motif (Settings → Display). Cards carry two independent
+    // colour axes: the owning class (each class def's cardTint) and the
+    // player's accent. `cardMotif` picks how the class one is expressed;
+    // `cardMotifStrength` is the wash depth for each choice.
+    cardMotif: 'wash',
+    cardMotifModes: ['off', 'wash', 'accent', 'band'],
+    cardMotifStrength: { subtle: 0.06, normal: 0.10, strong: 0.17 },
     // Default audio levels for a profile that has never touched the sliders.
     // Music is 0 (muted) while testing; sfx stays audible.
     audio: { musicVolume: 0, sfxVolume: 75 },

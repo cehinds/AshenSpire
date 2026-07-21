@@ -156,6 +156,13 @@ function applyDisplaySettings(settings) {
     : (settings.largeText === true ? 'L' : 'M');
   document.documentElement.style.fontSize = TEXT_SIZES[tKey];
   document.body.classList.toggle('no-shake', settings.screenShake === false);
+  // Card colour motif: mode on the root as a data attr, wash depth as a var, so
+  // switching is a re-paint with no re-render. Both defaults live in balance.ui.
+  const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
+  document.documentElement.dataset.cardMotif = motif;
+  const strengths = UI.cardMotifStrength;
+  const sKey = strengths[settings.cardMotifStrength] != null ? settings.cardMotifStrength : 'normal';
+  document.documentElement.style.setProperty('--card-motif-strength', String(strengths[sKey]));
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
   document.body.classList.toggle('readable-ui', settings.readableHeadings === true);

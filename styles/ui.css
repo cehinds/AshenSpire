@@ -49,6 +49,50 @@
 .card .ctext .val.up { color: var(--green); }
 .card .ctext .val.down { color: var(--ember); }
 
+/* ---------- card colour motif (Settings → Display → Card motif) ------------ */
+/* Two independent axes, both player-chosen:
+     class  → --card-tint, set per card from the class def's cardTint (data, so
+              a new class brings its own hue with no edit here)
+     accent → --gold / --accent-rgb, already themed by the accent setting
+   The mode lives on :root[data-card-motif] and the wash depth on
+   --card-motif-strength, so switching is a re-paint with no re-render.
+   Colorless cards carry no --card-tint and keep the neutral frame. */
+:root { --card-motif-strength: 0.10; }
+
+/* wash — the class tints the card body; rarity keeps the border. */
+:root[data-card-motif='wash'] .card[style*='--card-tint']::before {
+  content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
+  background: var(--card-tint); opacity: var(--card-motif-strength);
+}
+:root[data-card-motif='wash'] .card .ctype,
+:root[data-card-motif='band'] .card .ctype {
+  background: rgba(var(--accent-rgb), 0.16);
+}
+
+/* accent — your accent takes the border; rarity demotes to a corner pip so it
+   stays readable, and the class shows as a large watermark sigil. */
+:root[data-card-motif='accent'] .card { border-color: var(--gold); }
+:root[data-card-motif='accent'] .card::after {
+  content: ''; position: absolute; top: 5px; right: 5px; width: 9px; height: 9px;
+  border-radius: 50%; background: var(--line-soft); pointer-events: none;
+}
+:root[data-card-motif='accent'] .card.rarity-uncommon::after { background: var(--frost); }
+:root[data-card-motif='accent'] .card.rarity-rare::after { background: var(--gold); }
+:root[data-card-motif='accent'] .card.rarity-special::after { background: #6a3a7a; }
+:root[data-card-motif='accent'] .card[style*='--card-tint']::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: var(--card-tint); opacity: calc(var(--card-motif-strength) * 1.3);
+  -webkit-mask-image: radial-gradient(circle at 50% 52%, #000 38%, transparent 72%);
+  mask-image: radial-gradient(circle at 50% 52%, #000 38%, transparent 72%);
+}
+
+/* band — a class stripe along the top and an accent rule under the art. */
+:root[data-card-motif='band'] .card[style*='--card-tint']::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px;
+  background: var(--card-tint); pointer-events: none;
+}
+:root[data-card-motif='band'] .card .art { border-bottom: 2px solid var(--gold); }
+
 /* ---------- modal / pile viewer ---------- */
 .modal-veil {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: 500;

@@ -195,6 +195,50 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .card .ctext .val.up { color: var(--green); }
 .card .ctext .val.down { color: var(--ember); }
 
+/* ---------- card colour motif (Settings → Display → Card motif) ------------ */
+/* Two independent axes, both player-chosen:
+     class  → --card-tint, set per card from the class def's cardTint (data, so
+              a new class brings its own hue with no edit here)
+     accent → --gold / --accent-rgb, already themed by the accent setting
+   The mode lives on :root[data-card-motif] and the wash depth on
+   --card-motif-strength, so switching is a re-paint with no re-render.
+   Colorless cards carry no --card-tint and keep the neutral frame. */
+:root { --card-motif-strength: 0.10; }
+
+/* wash — the class tints the card body; rarity keeps the border. */
+:root[data-card-motif='wash'] .card[style*='--card-tint']::before {
+  content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
+  background: var(--card-tint); opacity: var(--card-motif-strength);
+}
+:root[data-card-motif='wash'] .card .ctype,
+:root[data-card-motif='band'] .card .ctype {
+  background: rgba(var(--accent-rgb), 0.16);
+}
+
+/* accent — your accent takes the border; rarity demotes to a corner pip so it
+   stays readable, and the class shows as a large watermark sigil. */
+:root[data-card-motif='accent'] .card { border-color: var(--gold); }
+:root[data-card-motif='accent'] .card::after {
+  content: ''; position: absolute; top: 5px; right: 5px; width: 9px; height: 9px;
+  border-radius: 50%; background: var(--line-soft); pointer-events: none;
+}
+:root[data-card-motif='accent'] .card.rarity-uncommon::after { background: var(--frost); }
+:root[data-card-motif='accent'] .card.rarity-rare::after { background: var(--gold); }
+:root[data-card-motif='accent'] .card.rarity-special::after { background: #6a3a7a; }
+:root[data-card-motif='accent'] .card[style*='--card-tint']::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: var(--card-tint); opacity: calc(var(--card-motif-strength) * 1.3);
+  -webkit-mask-image: radial-gradient(circle at 50% 52%, #000 38%, transparent 72%);
+  mask-image: radial-gradient(circle at 50% 52%, #000 38%, transparent 72%);
+}
+
+/* band — a class stripe along the top and an accent rule under the art. */
+:root[data-card-motif='band'] .card[style*='--card-tint']::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px;
+  background: var(--card-tint); pointer-events: none;
+}
+:root[data-card-motif='band'] .card .art { border-bottom: 2px solid var(--gold); }
+
 /* ---------- modal / pile viewer ---------- */
 .modal-veil {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: 500;
@@ -1287,6 +1331,13 @@ function applyDisplaySettings(settings) {
     : (settings.largeText === true ? 'L' : 'M');
   document.documentElement.style.fontSize = TEXT_SIZES[tKey];
   document.body.classList.toggle('no-shake', settings.screenShake === false);
+  // Card colour motif: mode on the root as a data attr, wash depth as a var, so
+  // switching is a re-paint with no re-render. Both defaults live in balance.ui.
+  const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
+  document.documentElement.dataset.cardMotif = motif;
+  const strengths = UI.cardMotifStrength;
+  const sKey = strengths[settings.cardMotifStrength] != null ? settings.cardMotifStrength : 'normal';
+  document.documentElement.style.setProperty('--card-motif-strength', String(strengths[sKey]));
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
   document.body.classList.toggle('readable-ui', settings.readableHeadings === true);
@@ -2230,6 +2281,13 @@ const balance = {
     // How many act backdrop plates exist (assets/bg/bg_act*.webp). Endless acts
     // past this cycle back through them.
     backdropActs: 3,
+    // Card colour motif (Settings → Display). Cards carry two independent
+    // colour axes: the owning class (each class def's cardTint) and the
+    // player's accent. `cardMotif` picks how the class one is expressed;
+    // `cardMotifStrength` is the wash depth for each choice.
+    cardMotif: 'wash',
+    cardMotifModes: ['off', 'wash', 'accent', 'band'],
+    cardMotifStrength: { subtle: 0.06, normal: 0.10, strong: 0.17 },
     // Default audio levels for a profile that has never touched the sliders.
     // Music is 0 (muted) while testing; sfx stays audible.
     audio: { musicVolume: 0, sfxVolume: 75 },
@@ -6627,6 +6685,7 @@ Object.assign(module.exports, { events });
 const classes = [
   {
     id: 'reaver',
+    cardTint: '#a8724a',
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
@@ -6654,6 +6713,7 @@ const classes = [
   },
   {
     id: 'starseer',
+    cardTint: '#8f86d8',
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
@@ -6679,6 +6739,7 @@ const classes = [
   },
   {
     id: 'herald',
+    cardTint: '#c98a6a',
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
@@ -7810,6 +7871,7 @@ const SCHEMAS = Object.freeze({
     name: str,
     maxHp: int,
     glyph: opt(str), // class sigil glyph (display)
+    cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),
     startingDeck: arr(ref('cards')),
     cardPool: arr(ref('cards')),
@@ -11910,7 +11972,12 @@ function fillTemplate(def, tokens, baseTokens) {
 function renderCard(registries, ref, opts = {}) {
   const def = resolveCard(registries, ref);
   const el = document.createElement('div');
-  el.className = `card rarity-${def.rarity}${ref.upgraded ? ' upgraded' : ''}`;
+  el.className = `card rarity-${def.rarity} cls-${def.class}${ref.upgraded ? ' upgraded' : ''}`;
+  // The class motif hue is DATA (class def cardTint), handed to CSS as a var so
+  // adding a class brings its own card colour with no stylesheet edit. Colorless
+  // cards have no owning class, so they fall back to the neutral frame.
+  const owner = registries.classes.has(def.class) ? registries.classes.get(def.class) : null;
+  if (owner && owner.cardTint) el.style.setProperty('--card-tint', owner.cardTint);
   if (opts.affordable === false) el.classList.add('unaffordable');
   if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
   el.dataset.cardId = def.id;
@@ -12522,6 +12589,9 @@ Object.assign(module.exports, { overlayIsOpen, closeOverlay, openOverlay });
 
 const { openDebugLog } = require("src/ui/debuglog.js");
 const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
+const { balance } = require("src/content/balance.js");
+
+const UI_DEFAULTS = balance.ui;
 
 const ROWS = [
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
@@ -12538,6 +12608,12 @@ const ROWS = [
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size',
     note: 'Auto flexes the whole interface with your window; S–XL is a fixed override.' },
+  { cat: 'Display', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
+    choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
+    note: 'Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.' },
+  { cat: 'Display', key: 'cardMotifStrength', type: 'choice', def: 'normal',
+    choices: ['subtle', 'normal', 'strong'], label: 'Motif strength',
+    note: 'How strongly the class colour tints a card.' },
   { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake',
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
   { cat: 'Display', key: 'ambient', type: 'choice', def: 'normal',

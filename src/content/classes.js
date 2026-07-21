@@ -6,6 +6,7 @@
 export const classes = [
   {
     id: 'reaver',
+    cardTint: '#a8724a',
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
@@ -33,6 +34,7 @@ export const classes = [
   },
   {
     id: 'starseer',
+    cardTint: '#8f86d8',
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
@@ -58,6 +60,7 @@ export const classes = [
   },
   {
     id: 'herald',
+    cardTint: '#c98a6a',
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
