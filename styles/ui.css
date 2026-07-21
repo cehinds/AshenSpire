@@ -553,7 +553,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: rgba(6, 5, 4, 0.82); backdrop-filter: blur(2px);
 }
 .armoury {
-  width: 108rem; max-width: 96vw; height: 88vh; display: flex; flex-direction: column;
+  /* PERCENT, not vw/vh: the whole app is zoomed by --ui-zoom on <body>, and
+     viewport units ignore that zoom — which is exactly what pushed this panel
+     off the corner of the screen at Auto sizing. See base.css. */
+  width: 108rem; max-width: 96%; height: 92%; display: flex; flex-direction: column;
   background: var(--bg-raise); border: 1px solid var(--line); border-radius: 6px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); overflow: hidden;
 }
@@ -573,14 +576,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury-close:hover { color: var(--parchment); }
 
 .armoury-body { flex: 1; display: flex; gap: 1.6rem; padding: 1.6rem; overflow: hidden; }
-.armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; }
+.armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; overflow-y: auto; }
 .armoury-right { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; overflow-y: auto; }
 .armoury.view-rack .armoury-left { display: none; }
 .armoury.view-grid .armoury-left { flex: 1; }
 .armoury.view-grid .armoury-right { max-width: 38rem; }
 
-.armoury-figure { width: 22rem; height: 28rem; display: flex; align-items: flex-end; justify-content: center; }
+/* flex:0 0 auto matters — the figure sits in a flex column and would otherwise
+   be squeezed to nothing by the slot blocks below it. */
+.armoury-figure { flex: 0 0 auto; width: 22rem; height: 28rem; position: relative; }
 .armoury-figure img { width: 100%; height: 100%; object-fit: contain; }
+.armoury-figure > * { width: 100%; height: 100%; }
+.armoury.view-grid .armoury-figure { width: 26rem; height: 33rem; }
 
 .equip-slots { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .armoury.view-hybrid .equip-slots, .armoury.view-rack .equip-slots { justify-content: flex-start; }
@@ -635,3 +642,16 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   padding: 0.7rem 1.6rem; background: rgba(201, 80, 46, 0.14);
   border-bottom: 1px solid var(--ember); color: var(--parchment); font-size: 1.2rem;
 }
+
+/* Grid view: the figure between two columns of slots, hands on the side they
+   are actually held. The picker moves to the right pane so the middle stays a
+   picture of a person rather than a form. */
+.armoury.view-grid .armoury-left {
+  flex-direction: row; align-items: center; justify-content: center;
+  gap: 2rem; flex: 1; flex-wrap: wrap; min-width: 0;
+}
+.armoury.view-grid .armoury-right { max-width: 40rem; }
+/* Grid keeps the middle a picture of a person: the picker pane only takes
+   space once a slot is actually being changed. */
+.armoury.view-grid:not(.picking) .armoury-right { display: none; }
+.ag-col { display: flex; flex-direction: column; gap: 1.2rem; }

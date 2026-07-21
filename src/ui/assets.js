@@ -202,9 +202,55 @@ export function classSprite(classId, tint, sigil, tintId, style) {
  * The player's combat figure: the class sprite when sprites are enabled (and the
  * class has one), else the chosen sigil glyph in a tinted panel.
  */
-export function playerSprite(customization = {}, classId) {
+/**
+ * equippedFigure({ classId, armourId, rightId, leftId }) → element | null.
+ *
+ * The figure as LAYERS: a bare-handed body in the armour set's palette, with
+ * each held armament stacked over it. All of them are rendered on one shared
+ * camera and canvas (tools/equipment-blender.py), which is what lets them be
+ * absolutely positioned on top of each other and simply line up.
+ *
+ * Layering is why this is affordable at all: 12 armour sets × 24 armaments ×
+ * 24 off-hands pre-rendered is six figures' worth of combinations, while one
+ * PNG per piece is 36 files. Any layer that fails to load just removes itself,
+ * so a missing asset degrades to a plainer figure rather than a broken one.
+ */
+export function equippedFigure({ classId, armourId, rightId, leftId }) {
+  if (!SPRITE_CLASSES.includes(classId)) return null;
+  const el = document.createElement('div');
+  el.className = 'equipped-figure';
+  el.style.cssText = 'position:relative;width:100%;height:100%;';
+  const layer = (src, z) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = '';
+    img.style.cssText =
+      `position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:${z};`;
+    img.addEventListener('error', () => img.remove());
+    el.appendChild(img);
+  };
+  layer(`assets/equipment/body_${classId}_${armourId || 'default'}.png`, 1);
+  if (leftId) layer(`assets/equipment/weapon_${leftId}.png`, 2);
+  if (rightId) layer(`assets/equipment/weapon_${rightId}.png`, 3);
+  return el;
+}
+
+/**
+ * playerSprite(customization, classId, equip?) — the player's figure.
+ *
+ * With `equip` ({ armourId, rightId, leftId }) it composites the layered
+ * equipment figure; without it, the single rendered class PNG as before.
+ */
+export function playerSprite(customization = {}, classId, equip = null) {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || 'rendered';
+  if (equip && spritesEnabled && style === 'rendered' && SPRITE_CLASSES.includes(classId)) {
+    const el = document.createElement('div');
+    el.className = 'class-sprite';
+    el.style.cssText = 'width:15rem;height:19rem;position:relative;';
+    el.appendChild(equippedFigure({ classId, ...equip }));
+    return el;
+  }
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
     return classSprite(classId, tint, customization.glyph, customization.tint, style);
   }

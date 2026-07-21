@@ -106,6 +106,13 @@ torus = bpy.ops.mesh.primitive_torus_add
 
 
 # ---- the three classes (camera looks from -Y; "front" is -Y) ----------------
+# Each class figure carries a built-in armament. When the equipment renderer
+# needs a BODY layer to stack armaments onto (tools/equipment-blender.py), it
+# flips this off so the hands come out empty and the weapon PNGs — which are
+# built at these same hand positions — line up over them.
+WITH_WEAPON = True
+
+
 def build_reaver():
     # CAPE first (behind everything): a broad accent sweep that gives the hero a
     # silhouette no enemy has, and carries the player's tint at a glance.
@@ -139,14 +146,15 @@ def build_reaver():
         part(cube, HERO_PLATE_LT, loc=(side * 0.11, -0.125, 1.44), scale=(0.045, 0.045, 0.075))
     part(cone, ACCENT_CLOTH, loc=(0, 0.05, 1.74), blight=(-12, 0, 0), vertices=6, radius1=0.075, radius2=0.010, depth=0.30)
     # greatsword: fullered blade, tip, quillons, wrapped grip, faceted pommel
-    part(cube, STEEL, loc=(0.62, 0, 0.88), scale=(0.050, 0.018, 0.44))
-    part(cube, HERO_PLATE_LT, loc=(0.62, -0.019, 0.88), scale=(0.013, 0.004, 0.42))
-    part(cone, STEEL, loc=(0.62, 0, 0.38), blight=(180, 0, 0), vertices=4, radius1=0.050, radius2=0.0, depth=0.14)
-    part(cube, ACCENT, loc=(0.62, 0, 1.34), scale=(0.17, 0.032, 0.030))
-    for side in (-1, 1):
-        part(ico, ACCENT, loc=(0.62 + side * 0.165, 0, 1.34), subdivisions=1, radius=0.038)
-    part(cyl, HERO_LEATHER, loc=(0.62, 0, 1.47), vertices=8, radius=0.026, depth=0.22)
-    part(ico, ACCENT, loc=(0.62, 0, 1.61), subdivisions=2, radius=0.050)
+    if WITH_WEAPON:
+        part(cube, STEEL, loc=(0.62, 0, 0.88), scale=(0.050, 0.018, 0.44))
+        part(cube, HERO_PLATE_LT, loc=(0.62, -0.019, 0.88), scale=(0.013, 0.004, 0.42))
+        part(cone, STEEL, loc=(0.62, 0, 0.38), blight=(180, 0, 0), vertices=4, radius1=0.050, radius2=0.0, depth=0.14)
+        part(cube, ACCENT, loc=(0.62, 0, 1.34), scale=(0.17, 0.032, 0.030))
+        for side in (-1, 1):
+            part(ico, ACCENT, loc=(0.62 + side * 0.165, 0, 1.34), subdivisions=1, radius=0.038)
+        part(cyl, HERO_LEATHER, loc=(0.62, 0, 1.47), vertices=8, radius=0.026, depth=0.22)
+        part(ico, ACCENT, loc=(0.62, 0, 1.61), subdivisions=2, radius=0.050)
 
 
 def build_starseer():
@@ -169,12 +177,13 @@ def build_starseer():
     part(torus, ACCENT, loc=(0, 0.005, 1.645), major_radius=0.245, minor_radius=0.026)
     part(ico, ACCENT, loc=(0, 0.085, 2.00), subdivisions=1, radius=0.045)
     # star-topped staff: shaft, binding, orb, and orbiting motes
-    part(cyl, WOOD, loc=(-0.54, 0, 0.88), vertices=8, radius=0.024, depth=1.62)
-    part(cyl, ACCENT, loc=(-0.54, 0, 1.24), vertices=8, radius=0.034, depth=0.05)
-    part(ico, ACCENT, loc=(-0.54, 0, 1.80), subdivisions=2, radius=0.090)
-    part(ico, ACCENT, loc=(-0.36, -0.10, 1.62), subdivisions=1, radius=0.028)
-    part(ico, ACCENT, loc=(-0.30, -0.08, 1.32), subdivisions=1, radius=0.030)
-    part(ico, ACCENT, loc=(0.38, -0.08, 0.72), subdivisions=1, radius=0.024)
+    if WITH_WEAPON:
+        part(cyl, WOOD, loc=(-0.54, 0, 0.88), vertices=8, radius=0.024, depth=1.62)
+        part(cyl, ACCENT, loc=(-0.54, 0, 1.24), vertices=8, radius=0.034, depth=0.05)
+        part(ico, ACCENT, loc=(-0.54, 0, 1.80), subdivisions=2, radius=0.090)
+        part(ico, ACCENT, loc=(-0.36, -0.10, 1.62), subdivisions=1, radius=0.028)
+        part(ico, ACCENT, loc=(-0.30, -0.08, 1.32), subdivisions=1, radius=0.030)
+        part(ico, ACCENT, loc=(0.38, -0.08, 0.72), subdivisions=1, radius=0.024)
     # belt clasp
     part(cyl, ACCENT, loc=(0, -0.30, 0.92), blight=(90, 0, 0), vertices=10, radius=0.045, depth=0.03)
 
@@ -205,8 +214,9 @@ def build_herald():
         dz = 0.035 * (1 - abs(x) / 0.22)
         part(ico, ACCENT, loc=(x, -0.315, 0.80 - dz), subdivisions=1, radius=0.032)
     # censer swinging from one hand
-    part(cyl, WOOD, loc=(0.40, -0.06, 1.16), vertices=6, radius=0.008, depth=0.34)
-    part(ico, ACCENT, loc=(0.40, -0.06, 0.96), subdivisions=2, radius=0.070)
+    if WITH_WEAPON:
+        part(cyl, WOOD, loc=(0.40, -0.06, 1.16), vertices=6, radius=0.008, depth=0.34)
+        part(ico, ACCENT, loc=(0.40, -0.06, 0.96), subdivisions=2, radius=0.070)
 
 
 # ---- stage: camera, lights, film -------------------------------------------
