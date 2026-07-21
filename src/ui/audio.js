@@ -104,7 +104,10 @@ export function initAudio(settings = {}) {
   master.connect(ctx.destination);
 
   const state = {
-    musicVol: clampVol(settings.musicVolume, 55),
+    // Music defaults to 0 (muted) for testing; sfx stays audible. Must match the
+    // musicVolume row default in ui/screens/settings.js — this fallback is what
+    // an unset setting actually resolves to (settings are stored sparse).
+    musicVol: clampVol(settings.musicVolume, 0),
     sfxVol: clampVol(settings.sfxVolume, 75),
     muted: settings.muteAudio === true,
     context: null, // current music bed key
