@@ -61,6 +61,21 @@ NEAR_BLACK = make_mat("nearBlack", srgb(0x0E, 0x0A, 0x08))
 WOOD = make_mat("wood", srgb(0x6B, 0x5D, 0x45))
 SKIN = make_mat("skin", srgb(0x46, 0x3C, 0x2E))
 
+# ---- hero palette -----------------------------------------------------------
+# The player used to share ARMOR (0x4A4034) with the wanderingSoldier's IRON —
+# the same hex — so "you" read as just another soldier on the board. The hero
+# palette is deliberately WARMER and LIGHTER than every enemy body colour, and
+# the classes carry a large ACCENT_CLOTH surface (cape / tabard / mantle) in the
+# player's chosen tint. Enemies keep the cold, desaturated iron and get no
+# accent rim, so the silhouette that glows is always yours.
+HERO_PLATE = make_mat("heroPlate", srgb(0x7E, 0x71, 0x5D), metallic=0.45, rough=0.42)
+HERO_PLATE_LT = make_mat("heroPlateLt", srgb(0x9C, 0x8D, 0x73), metallic=0.50, rough=0.36)
+HERO_LEATHER = make_mat("heroLeather", srgb(0x4B, 0x35, 0x22))
+HERO_UNDER = make_mat("heroUnder", srgb(0x33, 0x2A, 0x1E))
+# Large accent surfaces: cloth, so barely emissive — ACCENT stays for the small
+# metal highlights. Both are re-tinted together before each render.
+ACCENT_CLOTH = make_mat("accentCloth", srgb(*TINTS["gold"]), metallic=0.0, rough=0.72, emit=0.10)
+
 _parts = []
 
 
@@ -92,42 +107,72 @@ torus = bpy.ops.mesh.primitive_torus_add
 
 # ---- the three classes (camera looks from -Y; "front" is -Y) ----------------
 def build_reaver():
-    # cloak + boots
-    part(cone, LEATHER, loc=(0, 0, 0.6), vertices=9, radius1=0.5, radius2=0.17, depth=1.2)
-    part(cube, NEAR_BLACK, loc=(-0.14, 0, 0.05), scale=(0.09, 0.13, 0.05))
-    part(cube, NEAR_BLACK, loc=(0.14, 0, 0.05), scale=(0.09, 0.13, 0.05))
-    # chest + pauldrons
-    part(cube, ARMOR, loc=(0, 0, 1.06), scale=(0.30, 0.20, 0.22), blight=(0, 0, 0))
-    part(ico, ARMOR, loc=(-0.36, 0, 1.24), subdivisions=2, radius=0.17)
-    part(ico, ARMOR, loc=(0.36, 0, 1.24), subdivisions=2, radius=0.17)
-    # helm + crest band + visor slit
-    part(uv, ARMOR, loc=(0, 0, 1.46), segments=14, ring_count=10, radius=0.175)
-    part(torus, ACCENT, loc=(0, 0, 1.50), major_radius=0.165, minor_radius=0.022)
-    part(cube, NEAR_BLACK, loc=(0, -0.155, 1.44), scale=(0.10, 0.03, 0.022))
-    # greatsword (blade, tip, crossguard, grip, pommel)
-    part(cube, STEEL, loc=(0.60, 0, 0.86), scale=(0.045, 0.016, 0.42))
-    part(cone, STEEL, loc=(0.60, 0, 0.38), blight=(180, 0, 0), vertices=4, radius1=0.045, radius2=0.0, depth=0.12)
-    part(cube, ACCENT, loc=(0.60, 0, 1.30), scale=(0.15, 0.03, 0.028))
-    part(cyl, NEAR_BLACK, loc=(0.60, 0, 1.42), vertices=8, radius=0.024, depth=0.20)
-    part(ico, ACCENT, loc=(0.60, 0, 1.55), subdivisions=2, radius=0.045)
-    # chest medallion
-    part(cyl, ACCENT, loc=(0, -0.225, 1.06), blight=(90, 0, 0), vertices=12, radius=0.055, depth=0.03)
+    # CAPE first (behind everything): a broad accent sweep that gives the hero a
+    # silhouette no enemy has, and carries the player's tint at a glance.
+    part(cone, ACCENT_CLOTH, loc=(0, 0.16, 0.66), vertices=7, radius1=0.60, radius2=0.20, depth=1.34)
+    part(cone, ACCENT_CLOTH, loc=(0, 0.20, 1.24), vertices=7, radius1=0.34, radius2=0.30, depth=0.22)
+    # legs: greave, knee cop, boot — layered instead of one skirt
+    part(cone, HERO_UNDER, loc=(0, 0, 0.60), vertices=9, radius1=0.44, radius2=0.16, depth=1.16)
+    for side in (-1, 1):
+        part(cyl, HERO_PLATE, loc=(side * 0.15, -0.02, 0.40), vertices=8, radius=0.105, depth=0.46)
+        part(ico, HERO_PLATE_LT, loc=(side * 0.16, -0.05, 0.60), subdivisions=1, radius=0.085)
+        part(cube, NEAR_BLACK, loc=(side * 0.16, -0.03, 0.06), scale=(0.10, 0.14, 0.06))
+    # belt + tabard hanging over the legs (more accent surface, front-facing)
+    part(cube, HERO_LEATHER, loc=(0, -0.03, 0.86), scale=(0.30, 0.20, 0.05))
+    part(cyl, ACCENT, loc=(0, -0.225, 0.86), blight=(90, 0, 0), vertices=10, radius=0.055, depth=0.03)
+    part(cube, ACCENT_CLOTH, loc=(0, -0.215, 0.62), scale=(0.13, 0.02, 0.24))
+    # torso: cuirass, chest ridge, gorget
+    part(cube, HERO_PLATE, loc=(0, 0, 1.08), scale=(0.30, 0.20, 0.24))
+    part(cube, HERO_PLATE_LT, loc=(0, -0.195, 1.10), scale=(0.06, 0.02, 0.22))
+    part(cyl, HERO_PLATE_LT, loc=(0, 0, 1.32), blight=(90, 0, 0), vertices=12, radius=0.19, depth=0.06)
+    # pauldrons with a raised accent rim, plus bracers
+    for side in (-1, 1):
+        part(ico, HERO_PLATE, loc=(side * 0.37, 0, 1.25), subdivisions=2, radius=0.18)
+        part(torus, ACCENT, loc=(side * 0.37, 0, 1.30), major_radius=0.155, minor_radius=0.020)
+        part(cyl, HERO_PLATE, loc=(side * 0.40, -0.02, 0.98), blight=(0, side * 7, 0), vertices=8, radius=0.072, depth=0.30)
+    # helm: skull, brow guard, T-visor, cheek plates, crest plume
+    part(uv, HERO_PLATE, loc=(0, 0, 1.50), segments=16, ring_count=12, radius=0.18)
+    part(torus, ACCENT, loc=(0, 0, 1.54), major_radius=0.170, minor_radius=0.024)
+    part(cube, NEAR_BLACK, loc=(0, -0.160, 1.50), scale=(0.11, 0.03, 0.020))
+    part(cube, NEAR_BLACK, loc=(0, -0.160, 1.44), scale=(0.020, 0.03, 0.055))
+    for side in (-1, 1):
+        part(cube, HERO_PLATE_LT, loc=(side * 0.11, -0.125, 1.44), scale=(0.045, 0.045, 0.075))
+    part(cone, ACCENT_CLOTH, loc=(0, 0.05, 1.74), blight=(-12, 0, 0), vertices=6, radius1=0.075, radius2=0.010, depth=0.30)
+    # greatsword: fullered blade, tip, quillons, wrapped grip, faceted pommel
+    part(cube, STEEL, loc=(0.62, 0, 0.88), scale=(0.050, 0.018, 0.44))
+    part(cube, HERO_PLATE_LT, loc=(0.62, -0.019, 0.88), scale=(0.013, 0.004, 0.42))
+    part(cone, STEEL, loc=(0.62, 0, 0.38), blight=(180, 0, 0), vertices=4, radius1=0.050, radius2=0.0, depth=0.14)
+    part(cube, ACCENT, loc=(0.62, 0, 1.34), scale=(0.17, 0.032, 0.030))
+    for side in (-1, 1):
+        part(ico, ACCENT, loc=(0.62 + side * 0.165, 0, 1.34), subdivisions=1, radius=0.038)
+    part(cyl, HERO_LEATHER, loc=(0.62, 0, 1.47), vertices=8, radius=0.026, depth=0.22)
+    part(ico, ACCENT, loc=(0.62, 0, 1.61), subdivisions=2, radius=0.050)
 
 
 def build_starseer():
-    # robe + shoulders + sash (raised so the head sits ON the body, no gap)
-    part(cone, ROBE_BLUE, loc=(0, 0, 0.65), vertices=10, radius1=0.44, radius2=0.15, depth=1.3)
-    part(cone, ROBE_BLUE_LT, loc=(0, -0.02, 1.16), vertices=10, radius1=0.27, radius2=0.14, depth=0.42)
-    part(ico, ROBE_BLUE_LT, loc=(-0.23, 0, 1.30), subdivisions=2, radius=0.12)
-    part(ico, ROBE_BLUE_LT, loc=(0.23, 0, 1.30), subdivisions=2, radius=0.12)
-    # head under a wide-brim wizard hat with an accent band (tip kept in frame)
-    part(uv, SKIN, loc=(0, 0, 1.44), segments=12, ring_count=8, radius=0.15)
-    part(cone, ROBE_BLUE, loc=(0, 0, 1.58), vertices=12, radius1=0.50, radius2=0.30, depth=0.10)
+    # mantle behind the robe — the accent surface that marks a player figure
+    part(cone, ACCENT_CLOTH, loc=(0, 0.15, 0.80), vertices=7, radius1=0.50, radius2=0.20, depth=1.10)
+    # layered robe: outer, lighter overlay, and a front panel with trim
+    part(cone, ROBE_BLUE, loc=(0, 0, 0.65), vertices=10, radius1=0.46, radius2=0.15, depth=1.32)
+    part(cone, ROBE_BLUE_LT, loc=(0, -0.02, 1.16), vertices=10, radius1=0.28, radius2=0.14, depth=0.42)
+    part(cube, ROBE_BLUE_LT, loc=(0, -0.235, 0.62), scale=(0.115, 0.02, 0.30))
+    part(cube, ACCENT_CLOTH, loc=(0, -0.250, 0.62), scale=(0.030, 0.02, 0.30))
+    # shoulders + hanging sleeves (silhouette weight, not just spheres)
+    for side in (-1, 1):
+        part(ico, ROBE_BLUE_LT, loc=(side * 0.24, 0, 1.30), subdivisions=2, radius=0.125)
+        part(cone, ROBE_BLUE, loc=(side * 0.28, 0.02, 1.02), vertices=8, radius1=0.115, radius2=0.055, depth=0.38)
+    # head, collar, wide-brim hat with accent band and a star at the tip
+    part(uv, SKIN, loc=(0, 0, 1.44), segments=14, ring_count=10, radius=0.15)
+    part(cyl, ROBE_BLUE_LT, loc=(0, 0, 1.33), blight=(90, 0, 0), vertices=12, radius=0.165, depth=0.06)
+    part(cone, ROBE_BLUE, loc=(0, 0, 1.58), vertices=14, radius1=0.52, radius2=0.30, depth=0.10)
     part(cone, ROBE_BLUE, loc=(0, 0.03, 1.80), blight=(-7, 0, 0), vertices=10, radius1=0.24, radius2=0.015, depth=0.44)
     part(torus, ACCENT, loc=(0, 0.005, 1.645), major_radius=0.245, minor_radius=0.026)
-    # star-topped staff + drifting sparks
-    part(cyl, WOOD, loc=(-0.54, 0, 0.88), vertices=8, radius=0.022, depth=1.62)
-    part(ico, ACCENT, loc=(-0.54, 0, 1.80), subdivisions=1, radius=0.085)
+    part(ico, ACCENT, loc=(0, 0.085, 2.00), subdivisions=1, radius=0.045)
+    # star-topped staff: shaft, binding, orb, and orbiting motes
+    part(cyl, WOOD, loc=(-0.54, 0, 0.88), vertices=8, radius=0.024, depth=1.62)
+    part(cyl, ACCENT, loc=(-0.54, 0, 1.24), vertices=8, radius=0.034, depth=0.05)
+    part(ico, ACCENT, loc=(-0.54, 0, 1.80), subdivisions=2, radius=0.090)
+    part(ico, ACCENT, loc=(-0.36, -0.10, 1.62), subdivisions=1, radius=0.028)
     part(ico, ACCENT, loc=(-0.30, -0.08, 1.32), subdivisions=1, radius=0.030)
     part(ico, ACCENT, loc=(0.38, -0.08, 0.72), subdivisions=1, radius=0.024)
     # belt clasp
@@ -135,19 +180,33 @@ def build_starseer():
 
 
 def build_herald():
-    # robe + rope belt
-    part(cone, ROBE_RED, loc=(0, 0, 0.62), vertices=9, radius1=0.46, radius2=0.19, depth=1.24)
-    part(torus, CLOTH_DARK, loc=(0, 0, 0.88), major_radius=0.30, minor_radius=0.030)
-    # hood with a shadowed face
-    part(uv, HOOD_DARK, loc=(0, 0.02, 1.42), segments=12, ring_count=8, radius=0.21)
-    part(uv, NEAR_BLACK, loc=(0, -0.075, 1.40), segments=10, ring_count=6, radius=0.135)
-    part(cone, HOOD_DARK, loc=(0, 0.10, 1.60), blight=(18, 0, 0), vertices=8, radius1=0.16, radius2=0.02, depth=0.30)
-    # halo behind the hood
-    part(torus, ACCENT, loc=(0, 0.16, 1.55), blight=(90, 0, 0), major_radius=0.30, minor_radius=0.020)
+    # accent mantle over the shoulders, falling behind — the player marker
+    part(cone, ACCENT_CLOTH, loc=(0, 0.14, 0.86), vertices=7, radius1=0.46, radius2=0.22, depth=1.02)
+    # robe, rope belt, and a stole running down the front
+    part(cone, ROBE_RED, loc=(0, 0, 0.62), vertices=9, radius1=0.47, radius2=0.19, depth=1.26)
+    part(cone, HOOD_DARK, loc=(0, -0.02, 1.14), vertices=9, radius1=0.30, radius2=0.20, depth=0.34)
+    part(torus, CLOTH_DARK, loc=(0, 0, 0.88), major_radius=0.30, minor_radius=0.032)
+    for side in (-1, 1):
+        part(cube, ACCENT_CLOTH, loc=(side * 0.085, -0.245, 0.74), scale=(0.032, 0.02, 0.30))
+        part(cone, ROBE_RED, loc=(side * 0.27, 0.02, 1.00), vertices=8, radius1=0.105, radius2=0.050, depth=0.36)
+    # hood: outer, brow, deep shadow where the face would be, and a peak
+    part(uv, HOOD_DARK, loc=(0, 0.02, 1.44), segments=14, ring_count=10, radius=0.215)
+    part(cyl, HOOD_DARK, loc=(0, -0.10, 1.46), blight=(90, 0, 0), vertices=12, radius=0.175, depth=0.05)
+    part(uv, NEAR_BLACK, loc=(0, -0.080, 1.41), segments=10, ring_count=6, radius=0.140)
+    part(cone, HOOD_DARK, loc=(0, 0.10, 1.62), blight=(18, 0, 0), vertices=8, radius1=0.16, radius2=0.02, depth=0.30)
+    # two faint eyes in the dark of the hood
+    for side in (-1, 1):
+        part(ico, ACCENT, loc=(side * 0.048, -0.185, 1.44), subdivisions=1, radius=0.020)
+    # halo behind the hood + a smaller inner ring
+    part(torus, ACCENT, loc=(0, 0.16, 1.57), blight=(90, 0, 0), major_radius=0.32, minor_radius=0.022)
+    part(torus, ACCENT, loc=(0, 0.17, 1.57), blight=(90, 0, 0), major_radius=0.22, minor_radius=0.010)
     # prayer beads arced across the waist
-    for i, x in enumerate((-0.20, -0.10, 0.0, 0.10, 0.20)):
+    for x in (-0.20, -0.10, 0.0, 0.10, 0.20):
         dz = 0.035 * (1 - abs(x) / 0.22)
         part(ico, ACCENT, loc=(x, -0.315, 0.80 - dz), subdivisions=1, radius=0.032)
+    # censer swinging from one hand
+    part(cyl, WOOD, loc=(0.40, -0.06, 1.16), vertices=6, radius=0.008, depth=0.34)
+    part(ico, ACCENT, loc=(0.40, -0.06, 0.96), subdivisions=2, radius=0.070)
 
 
 # ---- stage: camera, lights, film -------------------------------------------
@@ -175,6 +234,12 @@ bpy.ops.object.light_add(type="SUN", rotation=(math.radians(80), 0, math.radians
 fill = bpy.context.active_object
 fill.data.energy = 0.7
 fill.data.color = (0.9, 0.85, 1.0)
+
+# Hero-only accent rim: lit in the player's chosen tint and switched OFF for
+# enemy renders, so the figure edged in your accent colour is always you.
+bpy.ops.object.light_add(type="SUN", rotation=(math.radians(-70), 0, math.radians(-150)))
+hero_rim = bpy.context.active_object
+hero_rim.data.energy = 0.0
 
 scene.render.film_transparent = True
 scene.render.resolution_x = 300
@@ -362,19 +427,31 @@ ENEMIES = {
 
 # ---- render every class x tint, then every enemy -----------------------------
 accent_bsdf = ACCENT.node_tree.nodes["Principled BSDF"]
+cloth_bsdf = ACCENT_CLOTH.node_tree.nodes["Principled BSDF"]
 builders = {"reaver": build_reaver, "starseer": build_starseer, "herald": build_herald}
 count = 0
+
+# Classes render at 3x their 150x190 display size (enemies stay 2x) — the player
+# figure is the one under constant scrutiny, so it carries the extra detail.
+scene.render.resolution_x, scene.render.resolution_y = 450, 570
+hero_rim.data.energy = 2.6
 for class_id, build in builders.items():
     build()
     for tint_id, rgb in TINTS.items():
         rgba = srgb(*rgb)
         accent_bsdf.inputs["Base Color"].default_value = rgba
         accent_bsdf.inputs["Emission Color"].default_value = rgba
+        cloth_bsdf.inputs["Base Color"].default_value = rgba
+        cloth_bsdf.inputs["Emission Color"].default_value = rgba
+        hero_rim.data.color = rgba[:3]
         scene.render.filepath = os.path.join(OUT, f"{class_id}_{tint_id}.png")
         bpy.ops.render.render(write_still=True)
         count += 1
     clear_parts()
 
+# Enemies: no accent rim, back to 2x.
+hero_rim.data.energy = 0.0
+scene.render.resolution_x, scene.render.resolution_y = 300, 380
 for enemy_id, (build, h) in ENEMIES.items():
     build()
     frame = h * 1.12
