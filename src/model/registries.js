@@ -7,6 +7,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { REGISTRY_TYPES } from './schemas.js';
+import { applyCardMods } from './loadout.js';
 
 /** Recursively freeze a value in place (functions and frozen values skipped). */
 export function deepFreeze(value) {
@@ -103,6 +104,11 @@ export function createRegistries(contentBundle) {
     return cfg;
   };
 
+  // Armaments/armour are tables, not id→def registries: pieces are looked up
+  // by (slot, class) far more often than by bare id, and armour ids repeat
+  // across classes on purpose. They ride along frozen, like balance.
+  registries.equipment = deepFreeze({ ...(bundle.equipment || {}) });
+
   registries.scripts = Object.freeze({ ...(bundle.scripts || {}) });
   registries.contentVersion = String(bundle.version || bundle.contentVersion || '0');
 
@@ -163,18 +169,40 @@ const resolveCache = new WeakMap();
 export function resolveCard(registries, instanceOrRef) {
   const cardId = instanceOrRef.cardId;
   const base = registries.cards.get(cardId);
-  if (!instanceOrRef.upgraded) return base;
+  const mods = instanceOrRef.mods;
+  if (!instanceOrRef.upgraded && !(mods && mods.length)) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
     cache = new Map();
     resolveCache.set(registries, cache);
   }
-  let merged = cache.get(cardId);
-  if (merged) return merged;
+  // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
+  // has to include them — two Strikes can differ if one was drawn before a
+  // mid-combat weapon swap and the other after.
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${mods ? mods.join(',') : ''}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
 
+  let result = base;
+  if (instanceOrRef.upgraded) result = mergeUpgrade(base);
+  if (mods && mods.length) {
+    const eq = registries.equipment || {};
+    result = deepFreeze(
+      applyCardMods(result, mods, {
+        modFields: eq.modFields || {},
+        limits: (registries.balance.equipment || {}).limits || {},
+      })
+    );
+  }
+  cache.set(key, result);
+  return result;
+}
+
+/** The upgrade half of resolveCard, split out so mods can layer on top. */
+function mergeUpgrade(base) {
   const up = base.upgrade || {};
-  merged = {
+  return deepFreeze({
     ...base,
     ...up,
     name: up.name != null ? up.name : `${base.name}+`,
@@ -182,8 +210,5 @@ export function resolveCard(registries, instanceOrRef) {
     effects: up.effects != null ? up.effects : base.effects,
     textTemplate: up.textTemplate != null ? up.textTemplate : base.textTemplate,
     upgraded: true,
-  };
-  deepFreeze(merged);
-  cache.set(cardId, merged);
-  return merged;
+  });
 }

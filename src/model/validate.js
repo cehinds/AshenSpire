@@ -59,6 +59,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'balance',
   'mapConfigs',
   'scripts',
+  'equipment',
 ]);
 
 /**

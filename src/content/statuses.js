@@ -100,6 +100,52 @@ export const statuses = [
     tooltip:
       'At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
   },
+  // Burn and Regen exist for equipment to point at: a torch has to be able to
+  // set something alight, and a warm habit has to be able to give a little
+  // back. Both are ordinary content statuses — nothing in the engine knows
+  // they are the ones armaments reach for (content/source/equipMods.csv does).
+  {
+    id: 'burn',
+    tint: 'var(--ember)',
+    name: 'Burn',
+    icon: '🔥',
+    stackMode: 'add',
+    decay: 'perTurnEnd',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [
+          {
+            op: 'loseHp',
+            target: 'owner',
+            amount: { f: 'stacks', status: 'burn', of: 'owner' },
+          },
+        ],
+      },
+    ],
+    tooltip: 'At the start of its turn, loses HP equal to Burn stacks (ignores Block). One stack burns out each turn.',
+  },
+  {
+    id: 'regen',
+    tint: 'var(--grace)',
+    name: 'Regen',
+    icon: '🌿',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [
+          {
+            op: 'heal',
+            target: 'owner',
+            amount: { f: 'stacks', status: 'regen', of: 'owner' },
+          },
+        ],
+      },
+    ],
+    tooltip: 'At the start of its turn, heals HP equal to Regen stacks. Lasts the whole fight.',
+  },
   {
     id: 'madness',
     name: 'Madness',

@@ -7,6 +7,8 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { createLoadout, runMods, stampDeck } from './loadout.js';
+
 export const RUN_SCHEMA_VERSION = 1;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
@@ -36,7 +38,11 @@ export function createDeck(cardIds, idGen = createIdGen('d')) {
 export function createRunState({ seed, classId, registries }) {
   const classDef = registries.classes.get(classId);
   const idGen = createIdGen('rc');
-  return {
+  const loadout = createLoadout(registries, classId);
+  // Armour can carry `self.maxHp`, so the pool it sets has to be known before
+  // hp is filled — the run starts at full, in whatever it starts wearing.
+  const maxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
+  const run = {
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
     seed: seed >>> 0,
@@ -45,10 +51,11 @@ export function createRunState({ seed, classId, registries }) {
     floor: 0,
     actNumber: 1,
     mapNodeId: null,
-    hp: classDef.maxHp,
-    maxHp: classDef.maxHp,
+    hp: maxHp,
+    maxHp,
     cinders: registries.balance.startingCinders || 0,
     deck: createDeck(classDef.startingDeck, idGen),
+    loadout,
     relics: [classDef.startingRelic],
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots (default 3)
     seedString: null, // set by the orchestrator right after creation (display/replay)
@@ -57,6 +64,11 @@ export function createRunState({ seed, classId, registries }) {
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // Stamp the starting deck with whatever the loadout says. Bare-handed this
+  // is a no-op; in an armour set with `defend.block=+2` it is already true of
+  // the very first Defend you draw.
+  stampDeck(registries, run);
+  return run;
 }
 
 /**
@@ -83,6 +95,9 @@ export const RUN_SHAPE = [
   { key: 'flasks', type: 'array' },
   { key: 'history', type: 'array' },
   { key: 'modifiers', type: 'array' },
+  // Optional so a run saved before equipment existed still loads; save.js
+  // heals it with a fresh loadout rather than refusing the save.
+  { key: 'loadout', type: 'object', optional: true },
   { key: 'seedString', type: 'string', nullable: true },
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
@@ -101,7 +116,7 @@ export function validateRunShape(run) {
   for (const f of RUN_SHAPE) {
     const v = run[f.key];
     if (v === undefined) {
-      problems.push(`missing '${f.key}'`);
+      if (!f.optional) problems.push(`missing '${f.key}'`);
       continue;
     }
     if (v === null) {

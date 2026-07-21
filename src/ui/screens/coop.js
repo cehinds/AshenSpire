@@ -137,7 +137,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
     removeSeatTabs();
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
-  const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded });
+  const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded, mods: c.mods });
   const wireLeave = () => { const b = app.querySelector('#coop-leave'); if (b) b.addEventListener('click', () => { teardown(); conn.close(); onLeave(); }); };
 
   function render() {
@@ -295,7 +295,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       meP.hand.forEach((c, i) => {
         const def = cardDef(c);
         const affordable = !meP.ended && (def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost);
-        const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId }, { affordable });
+        const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods }, { affordable });
         const spread = Math.min(6, n) * 1.2;
         el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
         el.style.zIndex = i;

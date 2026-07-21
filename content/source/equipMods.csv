@@ -1,0 +1,37 @@
+# content/source/equipMods.csv — the modifier VOCABULARY for equipment.
+#
+# Equipment carries no code. It carries strings like "strike.damage=+4", and
+# this table is the only place that says what may appear after the dot and
+# what it does. An unregistered field is a hard test failure, so a typo
+# ("strike.dmg=3") fails loudly instead of silently doing nothing.
+#
+# scope   card  rewrites a card named in equipTargets.csv
+#         run   applies to the run itself (the prefix is always `self`)
+#
+# apply   amount       set/adjust the amount of the first `op` effect,
+#                      APPENDING one aimed at `effTarget` if the card has none
+#         hits         set/adjust the damage effect's native hit count
+#         cost         set/adjust the card's energy cost
+#         scale        adjust every numeric amount on the card at once
+#         status       set/adjust the stacks of an applyStatus for `status`
+#         startStatus  apply `status` to the player at the start of each fight
+#         maxHp        added to run max HP (and current HP) at run creation
+#
+# clause  appended to the card's rules text when the mod introduces a token
+#         the text does not already mention. Blank = nothing to say.
+#
+# Value syntax in weapons.csv / outfits.csv:  =N replaces, =+N / =-N adjusts.
+field,scope,apply,op,effTarget,status,label,clause,blurb
+damage,card,amount,damage,enemy,,Damage,Deal {damage} damage.,"How hard the card hits."
+block,card,amount,block,self,,Block,Gain {block} Block.,"How much the card guards."
+poise,card,amount,poiseDamage,enemy,,Poise,Deal {poiseDamage} Poise damage.,"Build-up toward a Stagger."
+hits,card,hits,damage,enemy,,Hits,Strikes {hits} times.,"How many times the damage lands."
+cost,card,cost,,,,Cost,,"Energy to play. Never drops below 0."
+potency,card,scale,,,,Potency,,"Every number on the card, together."
+bleed,card,status,applyStatus,enemy,bleed,Bleed,Apply {bleed} Bleed.,"Bleed build-up the card applies."
+blight,card,status,applyStatus,enemy,crimsonBlight,Blight,Apply {crimsonBlight} Crimson Blight.,"Crimson Blight the card applies."
+burn,card,status,applyStatus,enemy,burn,Burn,Apply {burn} Burn.,"Burn the card applies."
+strength,run,startStatus,,,strength,Strength,,"Strength you begin every fight with."
+dexterity,run,startStatus,,,dexterity,Dexterity,,"Dexterity you begin every fight with."
+regen,run,startStatus,,,regen,Regen,,"HP recovered at the start of each turn."
+maxHp,run,maxHp,,,,Max HP,,"Added to your maximum HP for the run."

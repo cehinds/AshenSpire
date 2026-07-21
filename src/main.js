@@ -11,6 +11,7 @@ import { contentBundle } from './content/index.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
+import { runMods, stampDeck } from './model/loadout.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
@@ -634,11 +635,15 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
+      loadout: run.loadout,
     },
     enemyIds: enc.enemies,
     hpMult: cm.hpMult,
     enemyStatuses: cm.enemyStatuses,
-    playerStatuses: cm.playerStatuses,
+    // `self.*` mods (Strength from an oathsworn set, Regen from a warm habit)
+    // enter through the same door Custom Climb buffs already used — the engine
+    // has no equipment code, only statuses applied at combat start.
+    playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
   const label =
     enc.pool === 'boss'
@@ -672,6 +677,9 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
 
 function onCombatEnd(result, combat, enc) {
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
+  // A weapon swapped mid-fight stays swapped: combat works on copies of the
+  // deck's instances, so the run's own copies need the new numbers stamped in.
+  stampDeck(registries, run);
 
   if (result !== 'victory') {
     audio.stopMusic();
