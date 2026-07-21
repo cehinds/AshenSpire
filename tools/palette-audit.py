@@ -135,17 +135,22 @@ def measure(OUT, manifest, verbose=True):
                           for i, ca in enumerate(clss) for cb in clss[i + 1:])
 
     print(f"\nTIGHTEST WITHIN-CLASS PAIR : {tightest_within:.4f}   ({worst[1]}: {worst[2]} vs {worst[3]})")
-    print(f"CLOSEST BETWEEN-CLASS PAIR : {closest_between:.4f}")
-    print("Invariant (Vira): tightest-within MUST EXCEED closest-between.")
-    print("  A same-class pair shares one builder, one silhouette, one light — colour is")
-    print("  the ONLY separator. A cross-class pair gets geometry for free. The pair with")
-    print("  less help must therefore carry the more separation.")
-    print("  ->", "PASS" if tightest_within > closest_between
-          else f"FAIL by {closest_between / tightest_within:.1f}x")
+    print(f"CLOSEST BETWEEN-CLASS PAIR : {closest_between:.4f}  (context only)")
+    print("  RETRACTED: `tightest-within > closest-between` was proposed as an invariant")
+    print("  and is WRONG. Vira solved for its ceiling — unbounded. An optimiser maximises")
+    print("  it by painting all three classes the same colour, driving the denominator to")
+    print("  zero, then spreading each class freely. Satisfied by destroying the thing the")
+    print("  game needs. The flaw is the ratio form: same-class pairs are separated by")
+    print("  COLOUR and cross-class pairs by SILHOUETTE, so the two numbers never")
+    print("  constrained each other, and a ratio invents a relationship to exploit.")
+    print("  The absolute within-class floor is the real instrument. See test 34.")
 
+    # tightest/closest is printed above as a diagnostic and deliberately NOT
+    # returned into the manifest. Vira solved for its ceiling: unbounded, and
+    # maximised by painting all three classes identical. A number recorded in an
+    # artifact is an invitation to assert it later; this one is malformed for
+    # every threshold. The absolute floor is the real instrument.
     return {
-        "tightestWithinClass": tightest_within,
-        "closestBetweenClass": closest_between,
         "withinClassMin": {c: min(dist(by_class[c][a], by_class[c][b])
                                   for i, a in enumerate(sorted(by_class[c]))
                                   for b in sorted(by_class[c])[i + 1:])
