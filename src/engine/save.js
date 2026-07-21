@@ -8,6 +8,7 @@
 // are ARCHIVED — moved aside, never silently deleted — and load returns null.
 
 import { serializeRun, deserializeRun } from '../model/state.js';
+import { createLoadout, stampDeck } from '../model/loadout.js';
 
 export const RUN_KEY = 'sote_run_v1';
 export const RUN_ARCHIVE_KEY = 'sote_run_archived';
@@ -68,6 +69,12 @@ export function createSaveManager(storage) {
         }
         // Ids all still resolve: the run survives the content patch.
         run.contentVersion = registries.contentVersion;
+      }
+      // A run saved before equipment existed has no loadout. Give it the bare
+      // starting one and re-stamp, rather than throwing away someone's climb.
+      if (!run.loadout) {
+        run.loadout = createLoadout(registries, run.class);
+        stampDeck(registries, run);
       }
       return run;
     },

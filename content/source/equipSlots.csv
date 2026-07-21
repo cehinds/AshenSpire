@@ -1,0 +1,16 @@
+# content/source/equipSlots.csv — what you can wear and when you can change it.
+#
+# Slots are data so the layout is not welded into the UI: add a row, get a
+# slot. `sets` is how many switchable loadouts that slot carries (the Right
+# Hand's three sets are three weapons you cycle between, as in an armament
+# rack). `swap` is the rule the engine enforces:
+#
+#   combat        may be switched mid-fight, at balance.equipment.swapCost
+#   outOfCombat   may only be changed on the map, at rest, or in a shop
+#
+# `kinds` gates which armament rows (weapons.csv `kind`) fit the slot.
+id,label,kinds,sets,swap,storage,order,blurb
+rightHand,Right Hand,weapon|staff,3,combat,true,1,"Your main armament. Rewrites Strike."
+leftHand,Left Hand,shield|weapon,3,combat,true,2,"Off-hand. Rewrites Defend."
+armor,Armour,armor,1,outOfCombat,false,3,"Your set. Repaints you and steadies the numbers."
+talisman,Talisman,talisman,3,outOfCombat,false,4,"Small charms. Empty until talismans are authored."

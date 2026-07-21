@@ -228,10 +228,7 @@ export const weapons = [
     "metal": "8E8678",
     "accent": "7FA8C9",
     "tags": "guard",
-    "mods": [
-      "defend.block=+2",
-      "defend.cost=-0"
-    ],
+    "mods": "defend.block=+2",
     "unlock": "",
     "blurb": "Plain, round, and enough."
   },
@@ -251,7 +248,7 @@ export const weapons = [
     ],
     "mods": [
       "defend.block=+2",
-      "defend.thorns=+3"
+      "strike.damage=+1"
     ],
     "unlock": "",
     "blurb": "Defence with an opinion."
@@ -302,7 +299,7 @@ export const weapons = [
     ],
     "mods": [
       "defend.block=+1",
-      "defend.riposte=+2"
+      "strike.poise=+2"
     ],
     "unlock": "",
     "blurb": "Held wrong on purpose."

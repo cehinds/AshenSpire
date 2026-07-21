@@ -20,6 +20,7 @@ import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
+import { canSwap, cycleSet, stampDeck } from '../model/loadout.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -59,6 +60,10 @@ export function createCombat({ registries, rng, player, enemyIds, hpMult = 1, en
       energyMax: bal.energy != null ? bal.energy : 3,
     }),
     enemies: [],
+    // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
+    // still swapped when the fight ends.
+    loadout: player.loadout || null,
+    swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
     queue: [],
     eventLog: [],
@@ -89,6 +94,9 @@ export function createCombat({ registries, rng, player, enemyIds, hpMult = 1, en
     instanceId: c.instanceId,
     cardId: c.cardId,
     upgraded: !!c.upgraded,
+    // Equipment numbers ride on the instance (model/loadout.js) — copy them in
+    // or every card would come back to its bare-handed self at combat start.
+    ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);
   const innate = [];
@@ -164,6 +172,8 @@ function startPlayerTurn(combat) {
   combat.phase = 'player';
   const p = combat.player;
   p.counters.cardsPlayedThisTurn = 0;
+  const eqcfg = combat.registries.balance.equipment || {};
+  combat.swapsLeft = eqcfg.swapCostKind === 'allowance' ? eqcfg.swapAllowancePerTurn || 0 : 0;
 
   // (2) Lose all block — unless modified (generic 'retainBlock' modifier;
   // a 'blockCap' modifier clamps what is kept).
@@ -434,6 +444,9 @@ export function dispatch(combat, intent) {
       case 'useFlask':
         doUseFlask(combat, intent);
         break;
+      case 'swapArmament':
+        doSwapArmament(combat, intent);
+        break;
       default:
         throw new Error(`Unknown combat intent '${intent.type}'`);
     }
@@ -441,6 +454,46 @@ export function dispatch(combat, intent) {
   } finally {
     combat._buffer = null;
   }
+}
+
+/**
+ * doSwapArmament — cycle a hand to another of its sets, mid-fight.
+ *
+ * Everything about the price is data (balance.equipment): what it costs, what
+ * currency it costs in, whether the turn ends, and whether the cards already
+ * in your hand are rewritten or only the ones you draw next. The engine's part
+ * is small on purpose — it charges the price and re-stamps piles.
+ */
+function doSwapArmament(combat, { slotId, setIndex }) {
+  if (combat.phase !== 'player') throw new Error('Armaments can only be swapped on your turn');
+  const cfg = combat.registries.balance.equipment || {};
+  if (!cfg.enabled) throw new Error('Equipment is disabled');
+  if (!combat.loadout) throw new Error('This combat has no loadout');
+
+  const allowed = canSwap(combat.registries, slotId, { inCombat: true });
+  if (!allowed.ok) throw new Error(allowed.reason);
+
+  const p = combat.player;
+  if (cfg.swapCostKind === 'allowance') {
+    if ((combat.swapsLeft || 0) < 1) throw new Error('No swaps left this turn');
+  } else if (p.energy < cfg.swapCost) {
+    throw new Error(`Swapping costs ${cfg.swapCost} Energy`);
+  }
+
+  if (!cycleSet(combat.loadout, slotId, setIndex)) throw new Error(`No set ${setIndex} on '${slotId}'`);
+
+  if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
+  else p.energy -= cfg.swapCost;
+
+  // The new numbers reach the draw and discard piles always; the hand only if
+  // the config says a swap re-arms what you are already holding.
+  const piles = [combat.piles.draw, combat.piles.discard];
+  if (cfg.restampHand) piles.push(combat.piles.hand);
+  const run = { deck: [], loadout: combat.loadout, class: p.classId };
+  for (const pile of piles) stampDeck(combat.registries, run, pile);
+
+  combat.emit('armamentSwapped', { slotId, setIndex });
+  if (cfg.swapEndsTurn) doEndTurn(combat);
 }
 
 function needsEnemyTarget(def) {

@@ -133,4 +133,41 @@ export const balance = {
     // Music is 0 (muted) while testing; sfx stays audible.
     audio: { musicVolume: 0, sfxVolume: 75 },
   },
+
+  // ---- Armaments & armour (equipment) ---------------------------------------
+  // What you carry rewrites the cards you start with, rather than adding new
+  // ones: a dagger turns Strike into 3×2, a greatsword into one heavy swing.
+  // The pieces themselves live in content/source/weapons.csv and outfits.csv;
+  // what a mod is ALLOWED to say lives in equipMods.csv. Everything here is
+  // the rules of the system, kept in one place so it can be tuned or switched
+  // off without touching the model.
+  equipment: {
+    enabled: true,
+
+    // 'perRun'   what you find is yours for this run only
+    // 'unlocked' pieces are permanent once unlocked, chosen before a run
+    // 'both'     unlocked pieces are choosable AND drops apply for the run
+    persistence: 'both',
+
+    // Swapping a hand mid-fight. 'energy' spends from the turn's pool;
+    // 'allowance' gives a separate per-turn budget that energy never touches.
+    swapCostKind: 'energy',
+    swapCost: 2,
+    swapAllowancePerTurn: 1, // only consulted when swapCostKind === 'allowance'
+    swapEndsTurn: false,
+
+    // true  → swapping rewrites the Strikes/Defends already in your hand
+    // false → only cards drawn after the swap carry the new numbers
+    restampHand: true,
+
+    storageSlots: 8, // pieces carried but not slotted; hand slots lock in combat
+
+    defaultView: 'hybrid', // 'grid' | 'rack' | 'hybrid'
+    views: ['grid', 'rack', 'hybrid'],
+    spriteReacts: 'full', // 'none' | 'hands' | 'full'
+
+    // Floors of the mod system, so a piece can't be authored past the point
+    // where the card stops making sense.
+    limits: { minCost: 0, minDamage: 0, minBlock: 0, maxHits: 6 },
+  },
 };

@@ -689,6 +689,99 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .seat-tab .pip { color: var(--gold); }
 .seat-hint { color: var(--muted); font-size: 1rem; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: 4px; padding: 0.1rem 0.6rem; }
 
+/* ---- Armoury (equipment) --------------------------------------------------
+   Three layouts over one loadout. The view class on .armoury does all the
+   rearranging, so the screen builds the same DOM every time and only CSS
+   decides whether you are looking at a person or at a list. */
+.armoury-overlay {
+  position: fixed; inset: 0; z-index: 60; display: flex;
+  align-items: center; justify-content: center;
+  background: rgba(6, 5, 4, 0.82); backdrop-filter: blur(2px);
+}
+.armoury {
+  width: 108rem; max-width: 96vw; height: 88vh; display: flex; flex-direction: column;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); overflow: hidden;
+}
+.armoury-head {
+  display: flex; align-items: center; gap: 1.6rem; padding: 1.2rem 1.6rem;
+  border-bottom: 1px solid var(--line); background: var(--panel);
+}
+.armoury-head h2 { color: var(--gold); font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 2px; }
+.armoury-views { display: flex; gap: 0.4rem; margin-left: auto; }
+.armoury-views button {
+  background: none; border: 1px solid var(--line); color: var(--muted);
+  padding: 0.4rem 1.1rem; border-radius: 3px; cursor: pointer;
+  font-size: 1.2rem; text-transform: capitalize; font-family: var(--font-body);
+}
+.armoury-views button.on { color: var(--gold); border-color: var(--gold); background: var(--bg); }
+.armoury-close { background: none; border: none; color: var(--muted); font-size: 1.8rem; cursor: pointer; }
+.armoury-close:hover { color: var(--parchment); }
+
+.armoury-body { flex: 1; display: flex; gap: 1.6rem; padding: 1.6rem; overflow: hidden; }
+.armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; }
+.armoury-right { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; overflow-y: auto; }
+.armoury.view-rack .armoury-left { display: none; }
+.armoury.view-grid .armoury-left { flex: 1; }
+.armoury.view-grid .armoury-right { max-width: 38rem; }
+
+.armoury-figure { width: 22rem; height: 28rem; display: flex; align-items: flex-end; justify-content: center; }
+.armoury-figure img { width: 100%; height: 100%; object-fit: contain; }
+
+.equip-slots { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
+.armoury.view-hybrid .equip-slots, .armoury.view-rack .equip-slots { justify-content: flex-start; }
+.equip-slot { border: 1px solid var(--line); border-radius: 4px; padding: 0.8rem; background: var(--panel); }
+.es-head { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 0.6rem; }
+.es-label { color: var(--gold); font-size: 1.1rem; letter-spacing: 1px; text-transform: uppercase; }
+.es-sealed { color: var(--muted); font-size: 1rem; font-style: italic; }
+.es-sets { display: flex; gap: 0.6rem; }
+.es-cell {
+  width: 7rem; height: 7rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  background: var(--bg); color: var(--parchment); cursor: pointer; padding: 0.3rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;
+}
+.es-cell img { width: 100%; height: 4rem; object-fit: contain; }
+.es-cell span { font-size: 0.95rem; line-height: 1.1; text-align: center; color: var(--muted); }
+.es-cell.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.es-cell.on span { color: var(--parchment); }
+.es-cell.empty .es-empty { font-size: 2.2rem; color: var(--line-soft); }
+
+.equip-picker { border-top: 1px solid var(--line); padding-top: 1.2rem; }
+.equip-picker h4 { color: var(--gold); font-size: 1.2rem; margin-bottom: 0.8rem; letter-spacing: 1px; }
+.ep-hint { color: var(--muted); font-size: 1.2rem; font-style: italic; }
+.ep-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.equip-chip {
+  display: grid; grid-template-columns: 3.6rem 1fr auto; grid-template-rows: auto auto;
+  gap: 0.2rem 0.9rem; align-items: center; text-align: left;
+  border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
+  color: var(--parchment); padding: 0.6rem 0.9rem; cursor: pointer; font-family: var(--font-body);
+}
+.equip-chip:hover { border-color: var(--line-soft); }
+.equip-chip.on { border-color: var(--gold); background: var(--bg); }
+.equip-chip.locked { opacity: 0.45; cursor: not-allowed; }
+.ec-art { grid-row: 1 / 3; width: 3.6rem; height: 3.6rem; object-fit: contain; }
+.ec-name { font-size: 1.3rem; }
+.ec-mods { grid-column: 2 / 4; font-size: 1.05rem; color: var(--muted); }
+.ec-tags { display: flex; gap: 0.3rem; }
+.ec-tags em, .ef-tags em {
+  font-style: normal; font-size: 0.95rem; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px; padding: 0 0.4rem;
+}
+.ef-tags em.none { color: var(--muted); border-color: var(--line); }
+.ec-lock { grid-column: 1 / 4; font-size: 1rem; color: var(--muted); font-style: italic; }
+.equip-chip.rarity-rare { border-left: 3px solid var(--gold); }
+.equip-chip.rarity-uncommon { border-left: 3px solid var(--frost); }
+
+.armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
+.equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.equip-foot { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
+.ef-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.ef-run { color: var(--grace); font-size: 1.15rem; }
+.armoury-notice {
+  padding: 0.7rem 1.6rem; background: rgba(201, 80, 46, 0.14);
+  border-bottom: 1px solid var(--ember); color: var(--parchment); font-size: 1.2rem;
+}
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -1233,6 +1326,7 @@ const { contentBundle } = require("src/content/index.js");
 const { validateContent } = require("src/model/validate.js");
 const { createRegistries } = require("src/model/registries.js");
 const { createRunState, createDeck, createIdGen } = require("src/model/state.js");
+const { runMods, stampDeck } = require("src/model/loadout.js");
 const { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } = require("src/content/customMods.js");
 const { createRng, seedToString, seedFromString } = require("src/engine/rng.js");
 const { createCombat } = require("src/engine/combat.js");
@@ -1254,6 +1348,7 @@ const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
 const { openSettings } = require("src/ui/screens/settings.js");
+const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
 const { initInput, setBindings, setKeyBindings } = require("src/ui/input.js");
@@ -1611,6 +1706,30 @@ function showSettings() {
   });
 }
 
+/**
+ * The Armoury. Outside combat it edits the loadout directly and re-stamps the
+ * deck; the chosen view is a setting so it survives the session.
+ */
+function showArmoury() {
+  mountEquipment(document.body, {
+    registries,
+    run,
+    meta: saves.loadMeta(),
+    inCombat: false,
+    onChange: (loadout, settingChange) => {
+      if (settingChange) {
+        const meta = saves.loadMeta();
+        Object.assign(meta.settings, settingChange);
+        saves.saveMeta(meta);
+      }
+      run.loadout = loadout;
+      stampDeck(registries, run);
+      persist();
+    },
+    onClose: showMap,
+  });
+}
+
 function showHistory() {
   mountHistory(app, { meta: saves.loadMeta(), onBack: showTitle });
 }
@@ -1733,6 +1852,7 @@ function showMap() {
     onPick: enterNode,
     onSettings: showSettings,
     onMenu: showOverlay,
+    onArmoury: showArmoury,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1848,11 +1968,15 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
+      loadout: run.loadout,
     },
     enemyIds: enc.enemies,
     hpMult: cm.hpMult,
     enemyStatuses: cm.enemyStatuses,
-    playerStatuses: cm.playerStatuses,
+    // `self.*` mods (Strength from an oathsworn set, Regen from a warm habit)
+    // enter through the same door Custom Climb buffs already used — the engine
+    // has no equipment code, only statuses applied at combat start.
+    playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
   const label =
     enc.pool === 'boss'
@@ -1886,6 +2010,9 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
 
 function onCombatEnd(result, combat, enc) {
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
+  // A weapon swapped mid-fight stays swapped: combat works on copies of the
+  // deck's instances, so the run's own copies need the new numbers stamped in.
+  stampDeck(registries, run);
 
   if (result !== 'victory') {
     audio.stopMusic();
@@ -2181,6 +2308,8 @@ const { events } = require("src/content/events.js");
 const { classes, LOCKED_CLASSES } = require("src/content/classes.js");
 const { mapConfigs } = require("src/content/mapconfig.js");
 const { scripts } = require("src/content/scripts.js");
+const { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } = require("src/content/equipment.js");
+const { equipTargets } = require("src/content/generated/equipTargets.js");
 
 const contentBundle = {
   version: '0.2.0-ashen',
@@ -2197,6 +2326,15 @@ const contentBundle = {
   classes,
   mapConfigs,
   scripts,
+  // Equipment rides in the bundle as plain tables (see model/registries.js).
+  equipment: {
+    armaments: ARMAMENTS,
+    armour: ARMOUR,
+    slots: SLOTS,
+    modFields: Object.fromEntries(MOD_FIELDS),
+    targets: equipTargets,
+    cardTargets: CARD_TARGETS,
+  },
 };
 
 // Not part of the bundle (UI-only data / M1 flow):
@@ -2342,6 +2480,43 @@ const balance = {
     // Music is 0 (muted) while testing; sfx stays audible.
     audio: { musicVolume: 0, sfxVolume: 75 },
   },
+
+  // ---- Armaments & armour (equipment) ---------------------------------------
+  // What you carry rewrites the cards you start with, rather than adding new
+  // ones: a dagger turns Strike into 3×2, a greatsword into one heavy swing.
+  // The pieces themselves live in content/source/weapons.csv and outfits.csv;
+  // what a mod is ALLOWED to say lives in equipMods.csv. Everything here is
+  // the rules of the system, kept in one place so it can be tuned or switched
+  // off without touching the model.
+  equipment: {
+    enabled: true,
+
+    // 'perRun'   what you find is yours for this run only
+    // 'unlocked' pieces are permanent once unlocked, chosen before a run
+    // 'both'     unlocked pieces are choosable AND drops apply for the run
+    persistence: 'both',
+
+    // Swapping a hand mid-fight. 'energy' spends from the turn's pool;
+    // 'allowance' gives a separate per-turn budget that energy never touches.
+    swapCostKind: 'energy',
+    swapCost: 2,
+    swapAllowancePerTurn: 1, // only consulted when swapCostKind === 'allowance'
+    swapEndsTurn: false,
+
+    // true  → swapping rewrites the Strikes/Defends already in your hand
+    // false → only cards drawn after the swap carry the new numbers
+    restampHand: true,
+
+    storageSlots: 8, // pieces carried but not slotted; hand slots lock in combat
+
+    defaultView: 'hybrid', // 'grid' | 'rack' | 'hybrid'
+    views: ['grid', 'rack', 'hybrid'],
+    spriteReacts: 'full', // 'none' | 'hands' | 'full'
+
+    // Floors of the mod system, so a piece can't be authored past the point
+    // where the card stops making sense.
+    limits: { minCost: 0, minDamage: 0, minBlock: 0, maxHits: 6 },
+  },
 };
 
 
@@ -2450,6 +2625,52 @@ const statuses = [
     ],
     tooltip:
       'At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
+  },
+  // Burn and Regen exist for equipment to point at: a torch has to be able to
+  // set something alight, and a warm habit has to be able to give a little
+  // back. Both are ordinary content statuses — nothing in the engine knows
+  // they are the ones armaments reach for (content/source/equipMods.csv does).
+  {
+    id: 'burn',
+    tint: 'var(--ember)',
+    name: 'Burn',
+    icon: '🔥',
+    stackMode: 'add',
+    decay: 'perTurnEnd',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [
+          {
+            op: 'loseHp',
+            target: 'owner',
+            amount: { f: 'stacks', status: 'burn', of: 'owner' },
+          },
+        ],
+      },
+    ],
+    tooltip: 'At the start of its turn, loses HP equal to Burn stacks (ignores Block). One stack burns out each turn.',
+  },
+  {
+    id: 'regen',
+    tint: 'var(--grace)',
+    name: 'Regen',
+    icon: '🌿',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [
+          {
+            op: 'heal',
+            target: 'owner',
+            amount: { f: 'stacks', status: 'regen', of: 'owner' },
+          },
+        ],
+      },
+    ],
+    tooltip: 'At the start of its turn, heals HP equal to Regen stacks. Lasts the whole fight.',
   },
   {
     id: 'madness',
@@ -6893,6 +7114,1027 @@ function usesScript(def) {
 Object.assign(module.exports, { scripts });
 
 },
+"src/content/equipment.js": function (module, exports, require) {
+// src/content/equipment.js — armaments, armour, slots, and the mod vocabulary.
+//
+// Five spreadsheets feed this file and nothing else does:
+//
+//   content/source/weapons.csv       every armament (weapon / shield / staff)
+//   content/source/outfits.csv       every armour set (an outfit IS a set)
+//   content/source/equipSlots.csv    what you can wear, and when you may swap
+//   content/source/equipMods.csv     what a mod string is allowed to say
+//   content/source/equipTargets.csv  which card each mod prefix rewrites
+//
+// This module only NORMALISES them — the CSV compiler coerces a single value
+// to a string and a pipe-separated one to an array, so every list-shaped
+// column has to be forced back to an array exactly once, here. No balance
+// numbers and no behaviour live in this file; see model/loadout.js for what
+// the mods actually do.
+
+const { weapons } = require("src/content/generated/weapons.js");
+const { outfits } = require("src/content/generated/outfits.js");
+const { equipSlots } = require("src/content/generated/equipSlots.js");
+const { equipMods } = require("src/content/generated/equipMods.js");
+const { equipTargets } = require("src/content/generated/equipTargets.js");
+
+/** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
+function list(v) {
+  if (v === '' || v == null) return [];
+  return Array.isArray(v) ? v : [v];
+}
+
+function normPiece(row) {
+  return { ...row, tags: list(row.tags), mods: list(row.mods) };
+}
+
+/** Every armament: weapons, shields and staves, in authoring order. */
+const ARMAMENTS = weapons.map(normPiece);
+
+/** Every armour set. `id` is unique per class, not globally — key by both. */
+const ARMOUR = outfits.map((row) => ({ ...normPiece(row), kind: 'armor' }));
+
+/** Slot definitions, ordered. */
+const SLOTS = equipSlots
+  .map((row) => ({ ...row, kinds: list(row.kinds) }))
+  .sort((a, b) => a.order - b.order);
+
+/** The registered modifier fields, keyed by field name. */
+const MOD_FIELDS = new Map(equipMods.map((m) => [m.field, m]));
+
+const ARMAMENT_BY_ID = new Map(ARMAMENTS.map((a) => [a.id, a]));
+const SLOT_BY_ID = new Map(SLOTS.map((s) => [s.id, s]));
+
+function armamentById(id) {
+  return ARMAMENT_BY_ID.get(id) || null;
+}
+
+function slotById(id) {
+  return SLOT_BY_ID.get(id) || null;
+}
+
+/** Armour sets belonging to one class, in authoring order. */
+function armourForClass(classId) {
+  return ARMOUR.filter((o) => o.classId === classId);
+}
+
+/** The set a class starts in — the one row per class with no unlock. */
+function startingArmour(classId) {
+  return armourForClass(classId).find((o) => o.unlock === '') || null;
+}
+
+/** Armour is keyed by (classId, id) because ids repeat across classes. */
+function armourById(classId, id) {
+  return armourForClass(classId).find((o) => o.id === id) || null;
+}
+
+/** Which armaments may go in a slot, by the slot's `kinds` gate. */
+function armamentsForSlot(slotId) {
+  const slot = slotById(slotId);
+  if (!slot) return [];
+  return ARMAMENTS.filter((a) => slot.kinds.includes(a.kind));
+}
+
+/**
+ * The card a mod prefix rewrites for a given class, e.g.
+ * cardForTarget('power', 'herald') → 'urgentHeal'. Class-specific rows win
+ * over the '*' fallback.
+ */
+function cardForTarget(target, classId) {
+  const exact = equipTargets.find((t) => t.target === target && t.classId === classId);
+  if (exact) return exact.cardId;
+  const any = equipTargets.find((t) => t.target === target && t.classId === '*');
+  return any ? any.cardId : null;
+}
+
+/** Every mod prefix that resolves to a card (for validation and tests). */
+const CARD_TARGETS = [...new Set(equipTargets.map((t) => t.target))];
+
+
+Object.assign(module.exports, { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, armamentById, slotById, armourForClass, startingArmour, armourById, armamentsForSlot, cardForTarget, CARD_TARGETS });
+
+},
+"src/content/generated/weapons.js": function (module, exports, require) {
+// GENERATED by tools/content-build.mjs from content/source/weapons.csv
+// Do not edit by hand — edit the source file and re-run the build.
+
+const weapons = [
+  {
+    "id": "straightSword",
+    "name": "Straight Sword",
+    "kind": "weapon",
+    "hand": "right",
+    "rarity": "common",
+    "geom": "sword",
+    "scale": 1,
+    "metal": "B8B0A0",
+    "accent": "C9A227",
+    "tags": "blade",
+    "mods": "strike.damage=+1",
+    "unlock": "",
+    "blurb": "Honest steel. It asks nothing clever of you."
+  },
+  {
+    "id": "greatsword",
+    "name": "Greatsword",
+    "kind": "weapon",
+    "hand": "right",
+    "rarity": "uncommon",
+    "geom": "colossal",
+    "scale": 1,
+    "metal": "B8B0A0",
+    "accent": "C9A227",
+    "tags": [
+      "blade",
+      "heavy"
+    ],
+    "mods": [
+      "strike.damage=+4",
+      "strike.cost=+1",
+      "strike.poise=+3"
+    ],
+    "unlock": "",
+    "blurb": "Slow, and it does not care."
+  },
+  {
+    "id": "dagger",
+    "name": "Dagger",
+    "kind": "weapon",
+    "hand": "either",
+    "rarity": "common",
+    "geom": "dagger",
+    "scale": 1,
+    "metal": "C0B8A6",
+    "accent": "C9A227",
+    "tags": [
+      "blade",
+      "flourish"
+    ],
+    "mods": [
+      "strike.damage=3",
+      "strike.hits=2"
+    ],
+    "unlock": "",
+    "blurb": "Two cuts where one would do."
+  },
+  {
+    "id": "katana",
+    "name": "Katana",
+    "kind": "weapon",
+    "hand": "right",
+    "rarity": "uncommon",
+    "geom": "curved",
+    "scale": 1,
+    "metal": "C6BEAC",
+    "accent": "C9502E",
+    "tags": [
+      "blade",
+      "blood",
+      "flourish"
+    ],
+    "mods": [
+      "strike.damage=-1",
+      "strike.bleed=+2"
+    ],
+    "unlock": "",
+    "blurb": "A long curve, and a long grudge."
+  },
+  {
+    "id": "halberd",
+    "name": "Halberd",
+    "kind": "weapon",
+    "hand": "right",
+    "rarity": "uncommon",
+    "geom": "polearm",
+    "scale": 1,
+    "metal": "A8A090",
+    "accent": "C9A227",
+    "tags": [
+      "blade",
+      "heavy"
+    ],
+    "mods": [
+      "strike.damage=+2",
+      "strike.cost=+1"
+    ],
+    "unlock": "",
+    "blurb": "Reach enough to keep the dead at arm's length."
+  },
+  {
+    "id": "warhammer",
+    "name": "Warhammer",
+    "kind": "weapon",
+    "hand": "right",
+    "rarity": "uncommon",
+    "geom": "hammer",
+    "scale": 1,
+    "metal": "8E8678",
+    "accent": "C9A227",
+    "tags": "heavy",
+    "mods": [
+      "strike.damage=+2",
+      "strike.poise=+6"
+    ],
+    "unlock": "",
+    "blurb": "Poise is a fiction. This is the argument."
+  },
+  {
+    "id": "twinblade",
+    "name": "Twinblade",
+    "kind": "weapon",
+    "hand": "right",
+    "rarity": "rare",
+    "geom": "twin",
+    "scale": 1,
+    "metal": "C0B8A6",
+    "accent": "7FA8C9",
+    "tags": [
+      "blade",
+      "flourish"
+    ],
+    "mods": [
+      "strike.damage=2",
+      "strike.hits=3"
+    ],
+    "unlock": "",
+    "blurb": "Both ends are the business end."
+  },
+  {
+    "id": "battleaxe",
+    "name": "Battleaxe",
+    "kind": "weapon",
+    "hand": "right",
+    "rarity": "common",
+    "geom": "axe",
+    "scale": 1,
+    "metal": "A8A090",
+    "accent": "C9502E",
+    "tags": [
+      "blade",
+      "heavy"
+    ],
+    "mods": [
+      "strike.damage=+3",
+      "strike.cost=+1"
+    ],
+    "unlock": "",
+    "blurb": "It was a woodcutter's once."
+  },
+  {
+    "id": "buckler",
+    "name": "Buckler",
+    "kind": "shield",
+    "hand": "left",
+    "rarity": "common",
+    "geom": "round",
+    "scale": 0.8,
+    "metal": "8E8678",
+    "accent": "C9A227",
+    "tags": [
+      "guard",
+      "flourish"
+    ],
+    "mods": "defend.block=+2",
+    "unlock": "",
+    "blurb": "Small enough to be quick with."
+  },
+  {
+    "id": "kiteShield",
+    "name": "Kite Shield",
+    "kind": "shield",
+    "hand": "left",
+    "rarity": "common",
+    "geom": "kite",
+    "scale": 1,
+    "metal": "8E8678",
+    "accent": "C9A227",
+    "tags": "guard",
+    "mods": "defend.block=+3",
+    "unlock": "",
+    "blurb": "A wall you can carry."
+  },
+  {
+    "id": "towerShield",
+    "name": "Tower Shield",
+    "kind": "shield",
+    "hand": "left",
+    "rarity": "rare",
+    "geom": "tower",
+    "scale": 1,
+    "metal": "7E766A",
+    "accent": "C9A227",
+    "tags": [
+      "guard",
+      "heavy"
+    ],
+    "mods": [
+      "defend.block=+6",
+      "strike.damage=-2"
+    ],
+    "unlock": "",
+    "blurb": "You will not be moved. You will not move."
+  },
+  {
+    "id": "roundShield",
+    "name": "Round Shield",
+    "kind": "shield",
+    "hand": "left",
+    "rarity": "common",
+    "geom": "round",
+    "scale": 1,
+    "metal": "8E8678",
+    "accent": "7FA8C9",
+    "tags": "guard",
+    "mods": "defend.block=+2",
+    "unlock": "",
+    "blurb": "Plain, round, and enough."
+  },
+  {
+    "id": "spikedShield",
+    "name": "Spiked Shield",
+    "kind": "shield",
+    "hand": "left",
+    "rarity": "uncommon",
+    "geom": "spiked",
+    "scale": 1,
+    "metal": "8E8678",
+    "accent": "C9502E",
+    "tags": [
+      "guard",
+      "blade"
+    ],
+    "mods": [
+      "defend.block=+2",
+      "strike.damage=+1"
+    ],
+    "unlock": "",
+    "blurb": "Defence with an opinion."
+  },
+  {
+    "id": "lantern",
+    "name": "Lantern",
+    "kind": "shield",
+    "hand": "left",
+    "rarity": "common",
+    "geom": "lantern",
+    "scale": 0.85,
+    "metal": "6B5D45",
+    "accent": "C9A227",
+    "tags": "guard",
+    "mods": "defend.block=+1",
+    "unlock": "",
+    "blurb": "Light enough to see what is coming."
+  },
+  {
+    "id": "torch",
+    "name": "Torch",
+    "kind": "shield",
+    "hand": "left",
+    "rarity": "common",
+    "geom": "torch",
+    "scale": 0.9,
+    "metal": "6B5D45",
+    "accent": "C9502E",
+    "tags": "gorefire",
+    "mods": "strike.burn=+2",
+    "unlock": "",
+    "blurb": "Fire remembers what steel forgets."
+  },
+  {
+    "id": "parryDagger",
+    "name": "Parrying Dagger",
+    "kind": "shield",
+    "hand": "left",
+    "rarity": "uncommon",
+    "geom": "dagger",
+    "scale": 0.85,
+    "metal": "C0B8A6",
+    "accent": "7FA8C9",
+    "tags": [
+      "guard",
+      "flourish"
+    ],
+    "mods": [
+      "defend.block=+1",
+      "strike.poise=+2"
+    ],
+    "unlock": "",
+    "blurb": "Held wrong on purpose."
+  },
+  {
+    "id": "ashStaff",
+    "name": "Ash Staff",
+    "kind": "staff",
+    "hand": "right",
+    "rarity": "common",
+    "geom": "staffOrb",
+    "scale": 1,
+    "metal": "6B5D45",
+    "accent": "C9A227",
+    "tags": "ritual",
+    "mods": "power.potency=+1",
+    "unlock": "",
+    "blurb": "Grey wood, warm at the grip."
+  },
+  {
+    "id": "starstoneStaff",
+    "name": "Starstone Staff",
+    "kind": "staff",
+    "hand": "right",
+    "rarity": "uncommon",
+    "geom": "staffCrystal",
+    "scale": 1,
+    "metal": "6B5D45",
+    "accent": "7FA8C9",
+    "tags": "starstone",
+    "mods": [
+      "power.potency=+2",
+      "strike.damage=-1"
+    ],
+    "unlock": "",
+    "blurb": "The stone hums before you do."
+  },
+  {
+    "id": "boneSceptre",
+    "name": "Bone Sceptre",
+    "kind": "staff",
+    "hand": "right",
+    "rarity": "uncommon",
+    "geom": "staffSkull",
+    "scale": 1,
+    "metal": "B8AE98",
+    "accent": "B5541C",
+    "tags": [
+      "ritual",
+      "blight"
+    ],
+    "mods": [
+      "power.potency=+1",
+      "strike.blight=+2"
+    ],
+    "unlock": "",
+    "blurb": "Someone knelt for this once."
+  },
+  {
+    "id": "emberlightSceptre",
+    "name": "Emberlight Sceptre",
+    "kind": "staff",
+    "hand": "right",
+    "rarity": "rare",
+    "geom": "staffFlame",
+    "scale": 1,
+    "metal": "6B5D45",
+    "accent": "C9A227",
+    "tags": [
+      "ritual",
+      "oath"
+    ],
+    "mods": "power.potency=+3",
+    "unlock": "",
+    "blurb": "It keeps a little of the guiding flame."
+  },
+  {
+    "id": "goldboughBranch",
+    "name": "Goldbough Branch",
+    "kind": "staff",
+    "hand": "right",
+    "rarity": "rare",
+    "geom": "staffBranch",
+    "scale": 1,
+    "metal": "6B5D45",
+    "accent": "C9A227",
+    "tags": [
+      "ritual",
+      "oath"
+    ],
+    "mods": [
+      "power.potency=+2",
+      "self.regen=+1"
+    ],
+    "unlock": "",
+    "blurb": "Cut, and still growing."
+  },
+  {
+    "id": "blightRod",
+    "name": "Blight Rod",
+    "kind": "staff",
+    "hand": "right",
+    "rarity": "uncommon",
+    "geom": "staffOrb",
+    "scale": 0.95,
+    "metal": "4B3522",
+    "accent": "B5541C",
+    "tags": "blight",
+    "mods": "strike.blight=+3",
+    "unlock": "",
+    "blurb": "Wet to the touch. It should not be."
+  },
+  {
+    "id": "gorefireBrand",
+    "name": "Gorefire Brand",
+    "kind": "staff",
+    "hand": "right",
+    "rarity": "rare",
+    "geom": "staffFlame",
+    "scale": 0.95,
+    "metal": "4B3522",
+    "accent": "C9502E",
+    "tags": [
+      "gorefire",
+      "blood"
+    ],
+    "mods": [
+      "strike.burn=+2",
+      "strike.bleed=+1"
+    ],
+    "unlock": "",
+    "blurb": "Blood takes to flame more readily than wood."
+  },
+  {
+    "id": "wyrmhornStaff",
+    "name": "Wyrmhorn Staff",
+    "kind": "staff",
+    "hand": "right",
+    "rarity": "rare",
+    "geom": "staffHorn",
+    "scale": 1,
+    "metal": "B8AE98",
+    "accent": "C9A227",
+    "tags": [
+      "ritual",
+      "heavy"
+    ],
+    "mods": [
+      "power.potency=+2",
+      "strike.poise=+2"
+    ],
+    "unlock": "",
+    "blurb": "Taken from something that objected."
+  }
+];
+
+
+Object.assign(module.exports, { weapons });
+
+},
+"src/content/generated/outfits.js": function (module, exports, require) {
+// GENERATED by tools/content-build.mjs from content/source/outfits.csv
+// Do not edit by hand — edit the source file and re-run the build.
+
+const outfits = [
+  {
+    "id": "default",
+    "classId": "reaver",
+    "name": "Wayfarer Plate",
+    "plate": "7E715D",
+    "plateLt": "9C8D73",
+    "leather": "4B3522",
+    "under": "332A1E",
+    "tags": "guard",
+    "mods": "",
+    "unlock": "",
+    "blurb": "The armour you were buried in."
+  },
+  {
+    "id": "vigil",
+    "classId": "reaver",
+    "name": "Ashen Vigil",
+    "plate": "302B25",
+    "plateLt": "4A433A",
+    "leather": "241C16",
+    "under": "1A1712",
+    "tags": [
+      "guard",
+      "ash"
+    ],
+    "mods": "defend.block=+2",
+    "unlock": "beatStitchedKing",
+    "blurb": "Blackened at the court that broke."
+  },
+  {
+    "id": "oathsworn",
+    "classId": "reaver",
+    "name": "Gilded Oathsworn",
+    "plate": "B39C5E",
+    "plateLt": "E0CB8C",
+    "leather": "5A4626",
+    "under": "3A3020",
+    "tags": [
+      "guard",
+      "oath"
+    ],
+    "mods": [
+      "defend.block=+1",
+      "self.strength=+1"
+    ],
+    "unlock": "winAsReaver",
+    "blurb": "Kept bright by an oath unbroken."
+  },
+  {
+    "id": "warden",
+    "classId": "reaver",
+    "name": "Warden Mail",
+    "plate": "5A5F63",
+    "plateLt": "7C8288",
+    "leather": "3A3226",
+    "under": "24272A",
+    "tags": [
+      "guard",
+      "heavy"
+    ],
+    "mods": [
+      "defend.block=+3",
+      "strike.damage=-1"
+    ],
+    "unlock": "reachAshenCrown",
+    "blurb": "Issued, not chosen."
+  },
+  {
+    "id": "default",
+    "classId": "starseer",
+    "name": "Nightweave",
+    "plate": "2B2547",
+    "plateLt": "3A3358",
+    "leather": "4B3522",
+    "under": "332A1E",
+    "tags": "starstone",
+    "mods": "",
+    "unlock": "",
+    "blurb": "Dyed with the dark between stars."
+  },
+  {
+    "id": "eclipse",
+    "classId": "starseer",
+    "name": "Eclipse Habit",
+    "plate": "1C1A2E",
+    "plateLt": "2E2B47",
+    "leather": "2A2118",
+    "under": "17151F",
+    "tags": [
+      "starstone",
+      "ritual"
+    ],
+    "mods": "power.potency=+1",
+    "unlock": "winAsStarseer",
+    "blurb": "Worn only when the moon is eaten."
+  },
+  {
+    "id": "starlit",
+    "classId": "starseer",
+    "name": "Starlit Silks",
+    "plate": "3A4468",
+    "plateLt": "5A6699",
+    "leather": "3A3226",
+    "under": "242A40",
+    "tags": [
+      "starstone",
+      "flourish"
+    ],
+    "mods": [
+      "strike.hits=+1",
+      "strike.damage=-1"
+    ],
+    "unlock": "beatFellWarden",
+    "blurb": "It catches light that is not there."
+  },
+  {
+    "id": "astral",
+    "classId": "starseer",
+    "name": "Astral Vestment",
+    "plate": "4A3A68",
+    "plateLt": "6E58A0",
+    "leather": "3A2E4A",
+    "under": "241E33",
+    "tags": [
+      "starstone",
+      "oath"
+    ],
+    "mods": [
+      "power.potency=+2",
+      "defend.block=-1"
+    ],
+    "unlock": "winTwice",
+    "blurb": "Cut for someone taller than you."
+  },
+  {
+    "id": "default",
+    "classId": "herald",
+    "name": "Rite Vestments",
+    "plate": "2E1F1F",
+    "plateLt": "3A2A2A",
+    "leather": "4B3522",
+    "under": 241413,
+    "tags": "ritual",
+    "mods": "",
+    "unlock": "",
+    "blurb": "Plain cloth, plainly kept."
+  },
+  {
+    "id": "ossuary",
+    "classId": "herald",
+    "name": "Ossuary Weave",
+    "plate": "3A3630",
+    "plateLt": 555047,
+    "leather": "2A2622",
+    "under": "1E1B18",
+    "tags": [
+      "ritual",
+      "blight"
+    ],
+    "mods": "strike.blight=+1",
+    "unlock": "beatBlightedValkyrie",
+    "blurb": "Threaded through with quiet bone."
+  },
+  {
+    "id": "emberhabit",
+    "classId": "herald",
+    "name": "Emberlight Habit",
+    "plate": "5A3A24",
+    "plateLt": "8A5C38",
+    "leather": "3A2618",
+    "under": "2A1C12",
+    "tags": [
+      "ritual",
+      "oath"
+    ],
+    "mods": [
+      "power.potency=+1",
+      "self.regen=+1"
+    ],
+    "unlock": "beatKingAsHerald",
+    "blurb": "Warm long after the fire is out."
+  },
+  {
+    "id": "pilgrim",
+    "classId": "herald",
+    "name": "Pilgrim Wrap",
+    "plate": "4A4034",
+    "plateLt": "6B5D45",
+    "leather": "3A3226",
+    "under": "2A2418",
+    "tags": [
+      "ritual",
+      "guard"
+    ],
+    "mods": [
+      "defend.block=+2",
+      "self.maxHp=+4"
+    ],
+    "unlock": "reachStitchedCourt",
+    "blurb": "Road dust worked into the weave."
+  }
+];
+
+
+Object.assign(module.exports, { outfits });
+
+},
+"src/content/generated/equipSlots.js": function (module, exports, require) {
+// GENERATED by tools/content-build.mjs from content/source/equipSlots.csv
+// Do not edit by hand — edit the source file and re-run the build.
+
+const equipSlots = [
+  {
+    "id": "rightHand",
+    "label": "Right Hand",
+    "kinds": [
+      "weapon",
+      "staff"
+    ],
+    "sets": 3,
+    "swap": "combat",
+    "storage": true,
+    "order": 1,
+    "blurb": "Your main armament. Rewrites Strike."
+  },
+  {
+    "id": "leftHand",
+    "label": "Left Hand",
+    "kinds": [
+      "shield",
+      "weapon"
+    ],
+    "sets": 3,
+    "swap": "combat",
+    "storage": true,
+    "order": 2,
+    "blurb": "Off-hand. Rewrites Defend."
+  },
+  {
+    "id": "armor",
+    "label": "Armour",
+    "kinds": "armor",
+    "sets": 1,
+    "swap": "outOfCombat",
+    "storage": false,
+    "order": 3,
+    "blurb": "Your set. Repaints you and steadies the numbers."
+  },
+  {
+    "id": "talisman",
+    "label": "Talisman",
+    "kinds": "talisman",
+    "sets": 3,
+    "swap": "outOfCombat",
+    "storage": false,
+    "order": 4,
+    "blurb": "Small charms. Empty until talismans are authored."
+  }
+];
+
+
+Object.assign(module.exports, { equipSlots });
+
+},
+"src/content/generated/equipMods.js": function (module, exports, require) {
+// GENERATED by tools/content-build.mjs from content/source/equipMods.csv
+// Do not edit by hand — edit the source file and re-run the build.
+
+const equipMods = [
+  {
+    "field": "damage",
+    "scope": "card",
+    "apply": "amount",
+    "op": "damage",
+    "effTarget": "enemy",
+    "status": "",
+    "label": "Damage",
+    "clause": "Deal {damage} damage.",
+    "blurb": "How hard the card hits."
+  },
+  {
+    "field": "block",
+    "scope": "card",
+    "apply": "amount",
+    "op": "block",
+    "effTarget": "self",
+    "status": "",
+    "label": "Block",
+    "clause": "Gain {block} Block.",
+    "blurb": "How much the card guards."
+  },
+  {
+    "field": "poise",
+    "scope": "card",
+    "apply": "amount",
+    "op": "poiseDamage",
+    "effTarget": "enemy",
+    "status": "",
+    "label": "Poise",
+    "clause": "Deal {poiseDamage} Poise damage.",
+    "blurb": "Build-up toward a Stagger."
+  },
+  {
+    "field": "hits",
+    "scope": "card",
+    "apply": "hits",
+    "op": "damage",
+    "effTarget": "enemy",
+    "status": "",
+    "label": "Hits",
+    "clause": "Strikes {hits} times.",
+    "blurb": "How many times the damage lands."
+  },
+  {
+    "field": "cost",
+    "scope": "card",
+    "apply": "cost",
+    "op": "",
+    "effTarget": "",
+    "status": "",
+    "label": "Cost",
+    "clause": "",
+    "blurb": "Energy to play. Never drops below 0."
+  },
+  {
+    "field": "potency",
+    "scope": "card",
+    "apply": "scale",
+    "op": "",
+    "effTarget": "",
+    "status": "",
+    "label": "Potency",
+    "clause": "",
+    "blurb": "Every number on the card, together."
+  },
+  {
+    "field": "bleed",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "bleed",
+    "label": "Bleed",
+    "clause": "Apply {bleed} Bleed.",
+    "blurb": "Bleed build-up the card applies."
+  },
+  {
+    "field": "blight",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "crimsonBlight",
+    "label": "Blight",
+    "clause": "Apply {crimsonBlight} Crimson Blight.",
+    "blurb": "Crimson Blight the card applies."
+  },
+  {
+    "field": "burn",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "burn",
+    "label": "Burn",
+    "clause": "Apply {burn} Burn.",
+    "blurb": "Burn the card applies."
+  },
+  {
+    "field": "strength",
+    "scope": "run",
+    "apply": "startStatus",
+    "op": "",
+    "effTarget": "",
+    "status": "strength",
+    "label": "Strength",
+    "clause": "",
+    "blurb": "Strength you begin every fight with."
+  },
+  {
+    "field": "dexterity",
+    "scope": "run",
+    "apply": "startStatus",
+    "op": "",
+    "effTarget": "",
+    "status": "dexterity",
+    "label": "Dexterity",
+    "clause": "",
+    "blurb": "Dexterity you begin every fight with."
+  },
+  {
+    "field": "regen",
+    "scope": "run",
+    "apply": "startStatus",
+    "op": "",
+    "effTarget": "",
+    "status": "regen",
+    "label": "Regen",
+    "clause": "",
+    "blurb": "HP recovered at the start of each turn."
+  },
+  {
+    "field": "maxHp",
+    "scope": "run",
+    "apply": "maxHp",
+    "op": "",
+    "effTarget": "",
+    "status": "",
+    "label": "Max HP",
+    "clause": "",
+    "blurb": "Added to your maximum HP for the run."
+  }
+];
+
+
+Object.assign(module.exports, { equipMods });
+
+},
+"src/content/generated/equipTargets.js": function (module, exports, require) {
+// GENERATED by tools/content-build.mjs from content/source/equipTargets.csv
+// Do not edit by hand — edit the source file and re-run the build.
+
+const equipTargets = [
+  {
+    "target": "strike",
+    "classId": "*",
+    "cardId": "strike"
+  },
+  {
+    "target": "defend",
+    "classId": "*",
+    "cardId": "defend"
+  },
+  {
+    "target": "power",
+    "classId": "reaver",
+    "cardId": "gorefireSlash"
+  },
+  {
+    "target": "power",
+    "classId": "starseer",
+    "cardId": "starstonePebble"
+  },
+  {
+    "target": "power",
+    "classId": "herald",
+    "cardId": "urgentHeal"
+  }
+];
+
+
+Object.assign(module.exports, { equipTargets });
+
+},
 "src/model/validate.js": function (module, exports, require) {
 // src/model/validate.js — content validation (SPEC §3.14)
 //
@@ -6945,6 +8187,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'balance',
   'mapConfigs',
   'scripts',
+  'equipment',
 ]);
 
 /**
@@ -7572,6 +8815,7 @@ const EVENTS = Object.freeze([
   'cardExhausted',
   'cardDiscarded',
   'deckShuffled',
+  'armamentSwapped',
   'damageDealt',
   'blockGained',
   'hpLost',
@@ -8129,6 +9373,7 @@ Object.assign(module.exports, { FORMULA_OPS, FORMULA_OF, isFormula, evaluate });
 // Headless: no document/window/localStorage/timers.
 
 const { REGISTRY_TYPES } = require("src/model/schemas.js");
+const { applyCardMods } = require("src/model/loadout.js");
 
 /** Recursively freeze a value in place (functions and frozen values skipped). */
 function deepFreeze(value) {
@@ -8225,6 +9470,11 @@ function createRegistries(contentBundle) {
     return cfg;
   };
 
+  // Armaments/armour are tables, not id→def registries: pieces are looked up
+  // by (slot, class) far more often than by bare id, and armour ids repeat
+  // across classes on purpose. They ride along frozen, like balance.
+  registries.equipment = deepFreeze({ ...(bundle.equipment || {}) });
+
   registries.scripts = Object.freeze({ ...(bundle.scripts || {}) });
   registries.contentVersion = String(bundle.version || bundle.contentVersion || '0');
 
@@ -8285,18 +9535,40 @@ const resolveCache = new WeakMap();
 function resolveCard(registries, instanceOrRef) {
   const cardId = instanceOrRef.cardId;
   const base = registries.cards.get(cardId);
-  if (!instanceOrRef.upgraded) return base;
+  const mods = instanceOrRef.mods;
+  if (!instanceOrRef.upgraded && !(mods && mods.length)) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
     cache = new Map();
     resolveCache.set(registries, cache);
   }
-  let merged = cache.get(cardId);
-  if (merged) return merged;
+  // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
+  // has to include them — two Strikes can differ if one was drawn before a
+  // mid-combat weapon swap and the other after.
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${mods ? mods.join(',') : ''}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
 
+  let result = base;
+  if (instanceOrRef.upgraded) result = mergeUpgrade(base);
+  if (mods && mods.length) {
+    const eq = registries.equipment || {};
+    result = deepFreeze(
+      applyCardMods(result, mods, {
+        modFields: eq.modFields || {},
+        limits: (registries.balance.equipment || {}).limits || {},
+      })
+    );
+  }
+  cache.set(key, result);
+  return result;
+}
+
+/** The upgrade half of resolveCard, split out so mods can layer on top. */
+function mergeUpgrade(base) {
   const up = base.upgrade || {};
-  merged = {
+  return deepFreeze({
     ...base,
     ...up,
     name: up.name != null ? up.name : `${base.name}+`,
@@ -8304,14 +9576,417 @@ function resolveCard(registries, instanceOrRef) {
     effects: up.effects != null ? up.effects : base.effects,
     textTemplate: up.textTemplate != null ? up.textTemplate : base.textTemplate,
     upgraded: true,
-  };
-  deepFreeze(merged);
-  cache.set(cardId, merged);
-  return merged;
+  });
 }
 
 
 Object.assign(module.exports, { deepFreeze, createRegistries, passiveMult, passiveSum, passiveFlag, resolveCard });
+
+},
+"src/model/loadout.js": function (module, exports, require) {
+// src/model/loadout.js — what you carry, and what it does to your cards.
+//
+// The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
+// engine doesn't already have. So a piece never ships an effect: it ships
+// NUMBERS aimed at the cards you already start with. A dagger doesn't give you
+// a dagger card — it turns Strike into 3 damage twice. A greatsword turns the
+// same Strike into one heavy, expensive swing. The deck size never changes,
+// and the engine never learns the word "dagger".
+//
+// Three tables do all the deciding, none of them in this file:
+//   equipSlots.csv    what slots exist, how many sets each carries, swap rules
+//   equipMods.csv     which fields a mod may name and how each one applies
+//   equipTargets.csv  which card each mod prefix rewrites, per class
+//
+// Everything here is headless and pure: no document, no timers, no randomness.
+
+// ---------------------------------------------------------------------------
+// Mod strings
+// ---------------------------------------------------------------------------
+
+/**
+ * parseMod('strike.damage=+4') → { prefix, field, mode: 'add'|'set', value }
+ * Returns null on anything malformed; validateEquipment() reports those.
+ */
+function parseMod(str) {
+  const m = /^([A-Za-z]\w*)\.([A-Za-z]\w*)=([+-]?)(\d+(?:\.\d+)?)$/.exec(String(str).trim());
+  if (!m) return null;
+  const [, prefix, field, sign, num] = m;
+  return {
+    prefix,
+    field,
+    mode: sign ? 'add' : 'set',
+    value: sign === '-' ? -Number(num) : Number(num),
+  };
+}
+
+/**
+ * validateEquipment(registries) → [] when sound, else human-readable problems.
+ * Catches the mistakes CSV authoring actually makes: a misspelled field, a mod
+ * aimed at a prefix no class maps to a card, a slot whose `kinds` gate matches
+ * nothing, and armour that leaves a class with no starting set (or two).
+ */
+function validateEquipment(registries) {
+  const eq = registries.equipment || {};
+  const fields = eq.modFields || {};
+  const problems = [];
+  const pieces = [...(eq.armaments || []), ...(eq.armour || [])];
+
+  for (const piece of pieces) {
+    for (const raw of piece.mods || []) {
+      const mod = parseMod(raw);
+      if (!mod) {
+        problems.push(`${piece.id}: unparseable mod '${raw}'`);
+        continue;
+      }
+      const spec = fields[mod.field];
+      if (!spec) {
+        problems.push(`${piece.id}: unknown mod field '${mod.field}' (register it in equipMods.csv)`);
+        continue;
+      }
+      if (spec.scope === 'run' && mod.prefix !== 'self') {
+        problems.push(`${piece.id}: '${mod.field}' is a run mod and must be written as 'self.${mod.field}'`);
+      }
+      if (spec.scope === 'card' && !(eq.cardTargets || []).includes(mod.prefix)) {
+        problems.push(`${piece.id}: '${mod.prefix}' is not a card target (add it to equipTargets.csv)`);
+      }
+      if (spec.status && !registries.statuses.has(spec.status)) {
+        problems.push(`equipMods.csv: field '${mod.field}' names unknown status '${spec.status}'`);
+      }
+    }
+  }
+
+  const kinds = new Set(pieces.map((p) => p.kind));
+  for (const slot of eq.slots || []) {
+    if (slot.kinds.length === 0) problems.push(`slot '${slot.id}' gates on no kinds`);
+  }
+  for (const kind of kinds) {
+    const fits = (eq.slots || []).some((s) => s.kinds.includes(kind));
+    if (!fits) problems.push(`no slot accepts pieces of kind '${kind}'`);
+  }
+
+  for (const classId of registries.classes.ids()) {
+    const sets = (eq.armour || []).filter((o) => o.classId === classId);
+    const starting = sets.filter((o) => o.unlock === '');
+    if (starting.length !== 1) {
+      problems.push(`class '${classId}' has ${starting.length} starting armour sets (need exactly 1)`);
+    }
+  }
+  return problems;
+}
+
+// ---------------------------------------------------------------------------
+// Loadout shape
+// ---------------------------------------------------------------------------
+
+/**
+ * createLoadout(registries, classId) → a fresh loadout.
+ *
+ *   { sets: { slotId: [itemId|null × slot.sets] },
+ *     active: { slotId: index },
+ *     storage: [itemId] }
+ *
+ * Slots come from the table, so adding a row to equipSlots.csv adds a slot to
+ * every new run with no change here. You start bare-handed in your class's one
+ * unlocked armour set — the run is meant to arm you.
+ */
+function createLoadout(registries, classId) {
+  const eq = registries.equipment || {};
+  const sets = {};
+  const active = {};
+  for (const slot of eq.slots || []) {
+    sets[slot.id] = new Array(Math.max(1, slot.sets)).fill(null);
+    active[slot.id] = 0;
+  }
+  const starting = (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
+  if (starting && sets.armor) sets.armor[0] = starting.id;
+  return { sets, active, storage: [] };
+}
+
+/** The piece in a slot's active set, or null. Armour resolves per class. */
+function equippedIn(registries, loadout, classId, slotId) {
+  const ids = (loadout.sets || {})[slotId] || [];
+  const id = ids[(loadout.active || {})[slotId] || 0];
+  if (!id) return null;
+  const eq = registries.equipment || {};
+  const slot = (eq.slots || []).find((s) => s.id === slotId);
+  if (slot && slot.kinds.includes('armor')) {
+    return (eq.armour || []).find((o) => o.classId === classId && o.id === id) || null;
+  }
+  return (eq.armaments || []).find((a) => a.id === id) || null;
+}
+
+/** Every currently-worn piece, in slot order — the order mods apply in. */
+function equippedPieces(registries, loadout, classId) {
+  if (!loadout) return [];
+  const out = [];
+  for (const slot of (registries.equipment || {}).slots || []) {
+    const piece = equippedIn(registries, loadout, classId, slot.id);
+    if (piece) out.push(piece);
+  }
+  return out;
+}
+
+/** Tags granted by what you're wearing (deduplicated, slot order). */
+function loadoutTags(registries, loadout, classId) {
+  const seen = [];
+  for (const p of equippedPieces(registries, loadout, classId)) {
+    for (const t of p.tags || []) if (!seen.includes(t)) seen.push(t);
+  }
+  return seen;
+}
+
+/** A short string that changes whenever the worn set does — for cache keys. */
+function loadoutSignature(loadout) {
+  if (!loadout) return '';
+  return Object.keys(loadout.sets || {})
+    .sort()
+    .map((k) => `${k}:${(loadout.sets[k] || [])[(loadout.active || {})[k] || 0] || '-'}`)
+    .join('|');
+}
+
+// ---------------------------------------------------------------------------
+// Collecting mods
+// ---------------------------------------------------------------------------
+
+/**
+ * cardMods(registries, loadout, classId) → Map(cardId → ['damage=+4', ...]).
+ * The prefix is dropped because it has already done its job (choosing the
+ * card); order is slot order, and the applier honours it.
+ */
+function cardMods(registries, loadout, classId) {
+  const eq = registries.equipment || {};
+  const fields = eq.modFields || {};
+  const out = new Map();
+  for (const piece of equippedPieces(registries, loadout, classId)) {
+    for (const raw of piece.mods || []) {
+      const mod = parseMod(raw);
+      const spec = mod && fields[mod.field];
+      if (!spec || spec.scope !== 'card') continue;
+      const cardId = cardForTarget(eq, mod.prefix, classId);
+      if (!cardId) continue;
+      const list = out.get(cardId) || [];
+      list.push(`${mod.field}=${mod.mode === 'add' ? (mod.value >= 0 ? '+' : '') : ''}${mod.value}`);
+      out.set(cardId, list);
+    }
+  }
+  return out;
+}
+
+function cardForTarget(eq, target, classId) {
+  const rows = eq.targets || [];
+  const exact = rows.find((t) => t.target === target && t.classId === classId);
+  if (exact) return exact.cardId;
+  const any = rows.find((t) => t.target === target && t.classId === '*');
+  return any ? any.cardId : null;
+}
+
+/**
+ * runMods(registries, loadout, classId) → { maxHp, startStatuses: [{status, stacks}] }
+ * The `self.*` half of the vocabulary: things a piece does to you rather than
+ * to a card. startStatuses are handed straight to createCombat's existing
+ * playerStatuses hook, so the engine needs no equipment code to honour them.
+ */
+function runMods(registries, loadout, classId) {
+  const fields = (registries.equipment || {}).modFields || {};
+  const stacks = new Map();
+  let maxHp = 0;
+  for (const piece of equippedPieces(registries, loadout, classId)) {
+    for (const raw of piece.mods || []) {
+      const mod = parseMod(raw);
+      const spec = mod && fields[mod.field];
+      if (!spec || spec.scope !== 'run') continue;
+      if (spec.apply === 'maxHp') {
+        maxHp = mod.mode === 'add' ? maxHp + mod.value : mod.value;
+      } else if (spec.apply === 'startStatus') {
+        const prev = stacks.get(spec.status) || 0;
+        stacks.set(spec.status, mod.mode === 'add' ? prev + mod.value : mod.value);
+      }
+    }
+  }
+  return {
+    maxHp,
+    startStatuses: [...stacks].filter(([, n]) => n > 0).map(([status, n]) => ({ status, stacks: n })),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Applying mods to a card
+// ---------------------------------------------------------------------------
+
+const TOKEN_RE = /\{([A-Za-z][\w.]*)\}/g;
+
+function firstIndexOfOp(effects, op) {
+  return effects.findIndex((e) => e && e.op === op);
+}
+
+function adjust(current, mod, floor) {
+  const next = mod.mode === 'add' ? (typeof current === 'number' ? current : 0) + mod.value : mod.value;
+  return floor == null ? next : Math.max(floor, next);
+}
+
+/**
+ * applyCardMods(def, mods, opts) → a new card def, or `def` unchanged.
+ *
+ *   mods = ['damage=+4', 'hits=2', 'cost=+1']   (prefix already stripped)
+ *   opts = { modFields, limits }
+ *
+ * Mods apply in order, so a later `=N` genuinely replaces an earlier `+N` —
+ * that's what lets a Tower Shield's flat block override a smaller bonus rather
+ * than stacking with it. Formula-valued amounts are left alone: a piece may
+ * change a number, never the shape of an effect.
+ */
+function applyCardMods(def, mods, opts = {}) {
+  if (!mods || !mods.length) return def;
+  const fields = opts.modFields || {};
+  const limits = opts.limits || {};
+  const effects = (def.effects || []).map((e) => ({ ...e }));
+  let cost = def.cost;
+  const touched = [];
+
+  for (const raw of mods) {
+    const mod = parseMod(`x.${raw}`);
+    const spec = mod && fields[mod.field];
+    if (!spec) continue;
+    touched.push(spec);
+
+    if (spec.apply === 'cost') {
+      cost = adjust(cost, mod, limits.minCost != null ? limits.minCost : 0);
+      continue;
+    }
+    if (spec.apply === 'scale') {
+      for (const e of effects) {
+        if (typeof e.amount === 'number') e.amount = Math.max(0, e.amount + mod.value);
+        if (typeof e.stacks === 'number') e.stacks = Math.max(0, e.stacks + mod.value);
+      }
+      continue;
+    }
+    if (spec.apply === 'amount') {
+      const i = firstIndexOfOp(effects, spec.op);
+      const floor = spec.op === 'damage' ? limits.minDamage : spec.op === 'block' ? limits.minBlock : 0;
+      if (i === -1) {
+        if (mod.value > 0) effects.push({ op: spec.op, target: spec.effTarget, amount: mod.value });
+      } else if (typeof effects[i].amount === 'number') {
+        effects[i].amount = adjust(effects[i].amount, mod, floor != null ? floor : 0);
+      }
+      continue;
+    }
+    if (spec.apply === 'hits') {
+      const i = firstIndexOfOp(effects, spec.op);
+      if (i === -1) continue;
+      const max = limits.maxHits != null ? limits.maxHits : 99;
+      const n = adjust(effects[i].hits != null ? effects[i].hits : 1, mod, 1);
+      effects[i].hits = Math.min(max, n);
+      continue;
+    }
+    if (spec.apply === 'status') {
+      const i = effects.findIndex((e) => e && e.op === 'applyStatus' && e.status === spec.status);
+      if (i === -1) {
+        if (mod.value > 0) {
+          effects.push({ op: 'applyStatus', target: spec.effTarget, status: spec.status, stacks: mod.value });
+        }
+      } else if (typeof effects[i].stacks === 'number') {
+        effects[i].stacks = adjust(effects[i].stacks, mod, 0);
+      }
+    }
+  }
+
+  // Rules text: numbers already in the template re-bind on their own (the UI
+  // reads tokens off the effects). A mod that introduced something the text
+  // never mentioned gets its clause appended, so a burning Strike says so.
+  let textTemplate = def.textTemplate;
+  const present = new Set();
+  let m;
+  TOKEN_RE.lastIndex = 0;
+  while ((m = TOKEN_RE.exec(textTemplate || '')) !== null) present.add(m[1]);
+  for (const spec of touched) {
+    if (!spec.clause) continue;
+    TOKEN_RE.lastIndex = 0;
+    const tok = TOKEN_RE.exec(spec.clause);
+    if (!tok || present.has(tok[1])) continue;
+    present.add(tok[1]);
+    textTemplate = `${textTemplate} ${spec.clause}`.trim();
+  }
+
+  return { ...def, cost, effects, textTemplate, equipMods: mods };
+}
+
+// ---------------------------------------------------------------------------
+// Stamping the deck
+// ---------------------------------------------------------------------------
+
+/**
+ * stampDeck(registries, run, cards) → number of instances re-stamped.
+ *
+ * Card instances carry their equipment numbers as `inst.mods`, which is what
+ * makes the whole system fall out of the existing architecture: resolveCard
+ * already turns an instance into a def, saves already serialize instances, and
+ * co-op already ships instances between seats. Nothing else had to learn about
+ * equipment.
+ *
+ * Re-stamping is idempotent, so calling it after every swap is safe. Pass
+ * `cards` to stamp a hand mid-combat; it defaults to the run deck.
+ */
+function stampDeck(registries, run, cards) {
+  const list = cards || run.deck || [];
+  const mods = cardMods(registries, run.loadout, run.class);
+  let n = 0;
+  for (const inst of list) {
+    const next = mods.get(inst.cardId) || [];
+    const prev = inst.mods || [];
+    if (next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
+    if (next.length) inst.mods = next;
+    else delete inst.mods;
+    n += 1;
+  }
+  return n;
+}
+
+// ---------------------------------------------------------------------------
+// Swapping
+// ---------------------------------------------------------------------------
+
+/**
+ * canSwap(registries, slotId, { inCombat }) → { ok, reason }.
+ * The rule lives in equipSlots.csv (`swap`): hands may be changed mid-fight at
+ * a price, armour and talismans may not. Storage is sealed in combat too — you
+ * cycle between the sets you brought, you don't rummage.
+ */
+function canSwap(registries, slotId, { inCombat = false } = {}) {
+  const slot = ((registries.equipment || {}).slots || []).find((s) => s.id === slotId);
+  if (!slot) return { ok: false, reason: `No slot '${slotId}'` };
+  if (inCombat && slot.swap !== 'combat') {
+    return { ok: false, reason: `${slot.label} can only be changed outside combat.` };
+  }
+  return { ok: true, reason: '' };
+}
+
+/** canDrawFromStorage — storage is sealed once a fight starts. */
+function canUseStorage({ inCombat = false } = {}) {
+  return !inCombat;
+}
+
+/**
+ * cycleSet(loadout, slotId, index) → mutates the active set index.
+ * Returns false when the slot or index doesn't exist.
+ */
+function cycleSet(loadout, slotId, index) {
+  const ids = (loadout.sets || {})[slotId];
+  if (!ids || index < 0 || index >= ids.length) return false;
+  loadout.active[slotId] = index;
+  return true;
+}
+
+/** equipPiece — put a piece id into a specific set of a slot (null clears). */
+function equipPiece(loadout, slotId, setIndex, itemId) {
+  const ids = (loadout.sets || {})[slotId];
+  if (!ids || setIndex < 0 || setIndex >= ids.length) return false;
+  ids[setIndex] = itemId || null;
+  return true;
+}
+
+
+Object.assign(module.exports, { parseMod, validateEquipment, createLoadout, equippedIn, equippedPieces, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, canUseStorage, cycleSet, equipPiece });
 
 },
 "src/model/state.js": function (module, exports, require) {
@@ -8323,6 +9998,8 @@ Object.assign(module.exports, { deepFreeze, createRegistries, passiveMult, passi
 // Saves serialize instances + RNG counters, never definitions.
 //
 // Headless: no document/window/localStorage/timers.
+
+const { createLoadout, runMods, stampDeck } = require("src/model/loadout.js");
 
 const RUN_SCHEMA_VERSION = 1;
 
@@ -8353,7 +10030,11 @@ function createDeck(cardIds, idGen = createIdGen('d')) {
 function createRunState({ seed, classId, registries }) {
   const classDef = registries.classes.get(classId);
   const idGen = createIdGen('rc');
-  return {
+  const loadout = createLoadout(registries, classId);
+  // Armour can carry `self.maxHp`, so the pool it sets has to be known before
+  // hp is filled — the run starts at full, in whatever it starts wearing.
+  const maxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
+  const run = {
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
     seed: seed >>> 0,
@@ -8362,10 +10043,11 @@ function createRunState({ seed, classId, registries }) {
     floor: 0,
     actNumber: 1,
     mapNodeId: null,
-    hp: classDef.maxHp,
-    maxHp: classDef.maxHp,
+    hp: maxHp,
+    maxHp,
     cinders: registries.balance.startingCinders || 0,
     deck: createDeck(classDef.startingDeck, idGen),
+    loadout,
     relics: [classDef.startingRelic],
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots (default 3)
     seedString: null, // set by the orchestrator right after creation (display/replay)
@@ -8374,6 +10056,11 @@ function createRunState({ seed, classId, registries }) {
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // Stamp the starting deck with whatever the loadout says. Bare-handed this
+  // is a no-op; in an armour set with `defend.block=+2` it is already true of
+  // the very first Defend you draw.
+  stampDeck(registries, run);
+  return run;
 }
 
 /**
@@ -8400,6 +10087,9 @@ const RUN_SHAPE = [
   { key: 'flasks', type: 'array' },
   { key: 'history', type: 'array' },
   { key: 'modifiers', type: 'array' },
+  // Optional so a run saved before equipment existed still loads; save.js
+  // heals it with a fresh loadout rather than refusing the save.
+  { key: 'loadout', type: 'object', optional: true },
   { key: 'seedString', type: 'string', nullable: true },
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
@@ -8418,7 +10108,7 @@ function validateRunShape(run) {
   for (const f of RUN_SHAPE) {
     const v = run[f.key];
     if (v === undefined) {
-      problems.push(`missing '${f.key}'`);
+      if (!f.optional) problems.push(`missing '${f.key}'`);
       continue;
     }
     if (v === null) {
@@ -8788,6 +10478,7 @@ const { resolveCard, passiveSum, passiveMult } = require("src/model/registries.j
 const { evaluate } = require("src/model/formulas.js");
 const { computeTokenBindings } = require("src/model/validate.js");
 const { createPlayerCombatEntity, createEnemyCombatEntity } = require("src/model/state.js");
+const { canSwap, cycleSet, stampDeck } = require("src/model/loadout.js");
 
 const QUEUE_GUARD = 10000;
 
@@ -8827,6 +10518,10 @@ function createCombat({ registries, rng, player, enemyIds, hpMult = 1, enemyStat
       energyMax: bal.energy != null ? bal.energy : 3,
     }),
     enemies: [],
+    // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
+    // still swapped when the fight ends.
+    loadout: player.loadout || null,
+    swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
     queue: [],
     eventLog: [],
@@ -8857,6 +10552,9 @@ function createCombat({ registries, rng, player, enemyIds, hpMult = 1, enemyStat
     instanceId: c.instanceId,
     cardId: c.cardId,
     upgraded: !!c.upgraded,
+    // Equipment numbers ride on the instance (model/loadout.js) — copy them in
+    // or every card would come back to its bare-handed self at combat start.
+    ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);
   const innate = [];
@@ -8932,6 +10630,8 @@ function startPlayerTurn(combat) {
   combat.phase = 'player';
   const p = combat.player;
   p.counters.cardsPlayedThisTurn = 0;
+  const eqcfg = combat.registries.balance.equipment || {};
+  combat.swapsLeft = eqcfg.swapCostKind === 'allowance' ? eqcfg.swapAllowancePerTurn || 0 : 0;
 
   // (2) Lose all block — unless modified (generic 'retainBlock' modifier;
   // a 'blockCap' modifier clamps what is kept).
@@ -9202,6 +10902,9 @@ function dispatch(combat, intent) {
       case 'useFlask':
         doUseFlask(combat, intent);
         break;
+      case 'swapArmament':
+        doSwapArmament(combat, intent);
+        break;
       default:
         throw new Error(`Unknown combat intent '${intent.type}'`);
     }
@@ -9209,6 +10912,46 @@ function dispatch(combat, intent) {
   } finally {
     combat._buffer = null;
   }
+}
+
+/**
+ * doSwapArmament — cycle a hand to another of its sets, mid-fight.
+ *
+ * Everything about the price is data (balance.equipment): what it costs, what
+ * currency it costs in, whether the turn ends, and whether the cards already
+ * in your hand are rewritten or only the ones you draw next. The engine's part
+ * is small on purpose — it charges the price and re-stamps piles.
+ */
+function doSwapArmament(combat, { slotId, setIndex }) {
+  if (combat.phase !== 'player') throw new Error('Armaments can only be swapped on your turn');
+  const cfg = combat.registries.balance.equipment || {};
+  if (!cfg.enabled) throw new Error('Equipment is disabled');
+  if (!combat.loadout) throw new Error('This combat has no loadout');
+
+  const allowed = canSwap(combat.registries, slotId, { inCombat: true });
+  if (!allowed.ok) throw new Error(allowed.reason);
+
+  const p = combat.player;
+  if (cfg.swapCostKind === 'allowance') {
+    if ((combat.swapsLeft || 0) < 1) throw new Error('No swaps left this turn');
+  } else if (p.energy < cfg.swapCost) {
+    throw new Error(`Swapping costs ${cfg.swapCost} Energy`);
+  }
+
+  if (!cycleSet(combat.loadout, slotId, setIndex)) throw new Error(`No set ${setIndex} on '${slotId}'`);
+
+  if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
+  else p.energy -= cfg.swapCost;
+
+  // The new numbers reach the draw and discard piles always; the hand only if
+  // the config says a swap re-arms what you are already holding.
+  const piles = [combat.piles.draw, combat.piles.discard];
+  if (cfg.restampHand) piles.push(combat.piles.hand);
+  const run = { deck: [], loadout: combat.loadout, class: p.classId };
+  for (const pile of piles) stampDeck(combat.registries, run, pile);
+
+  combat.emit('armamentSwapped', { slotId, setIndex });
+  if (cfg.swapEndsTurn) doEndTurn(combat);
 }
 
 function needsEnemyTarget(def) {
@@ -10796,6 +12539,7 @@ Object.assign(module.exports, { NODE_TYPES, generateActMap });
 // are ARCHIVED — moved aside, never silently deleted — and load returns null.
 
 const { serializeRun, deserializeRun } = require("src/model/state.js");
+const { createLoadout, stampDeck } = require("src/model/loadout.js");
 
 const RUN_KEY = 'sote_run_v1';
 const RUN_ARCHIVE_KEY = 'sote_run_archived';
@@ -10856,6 +12600,12 @@ function createSaveManager(storage) {
         }
         // Ids all still resolve: the run survives the content patch.
         run.contentVersion = registries.contentVersion;
+      }
+      // A run saved before equipment existed has no loadout. Give it the bare
+      // starting one and re-stamp, rather than throwing away someone's climb.
+      if (!run.loadout) {
+        run.loadout = createLoadout(registries, run.class);
+        stampDeck(registries, run);
       }
       return run;
     },
@@ -12417,7 +14167,7 @@ function defaultZoom(meta) {
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), 1.15);
 }
 
-function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMenu }) {
+function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMenu, onArmoury }) {
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -12462,6 +14212,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
         <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
         <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
         <div class="mh-actions">
+          <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
           <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
         </div>
@@ -12546,6 +14297,9 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
   }
 
   if (onMenu) app.querySelector('#open-menu').addEventListener('click', () => onMenu('deck'));
+  const armouryBtn = app.querySelector('#open-armoury');
+  if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
+  else armouryBtn.remove();
 
   // Legend "?" popover: opens on click; a one-shot outside-click listener closes
   // it (added only while open, so it never leaks across screens).
@@ -14676,6 +16430,7 @@ const { overlayIsOpen } = require("src/ui/components/overlay.js");
 const { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad } = require("src/ui/input.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
+const { mountEquipment } = require("src/ui/screens/equipment.js");
 
 function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -14690,6 +16445,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
         <div class="flasks" style="display:flex;gap:6px"></div>
         <div class="relics"></div>
         <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
+        <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
         <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
       </header>
       <div class="${backdropClass(run.actNumber)}"></div>
@@ -15491,6 +17247,32 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
   if (onMenu) $('#combat-menu').addEventListener('click', () => onMenu('deck'));
 
+  // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
+  // storage seal themselves, and picking another hand set routes through the
+  // engine intent that charges for it instead of mutating the loadout here.
+  $('#combat-armoury').addEventListener('click', () => {
+    if (!registries.balance.equipment.enabled) return;
+    const panel = mountEquipment(document.body, {
+      registries,
+      run,
+      meta: { settings: { customization: run.customization } },
+      inCombat: true,
+      onSwap: (slotId, setIndex) => {
+        let out;
+        try {
+          out = dispatch(combat, { type: 'swapArmament', slotId, setIndex });
+        } catch (e) {
+          dlog('equip', e.message);
+          return e.message; // the panel shows the refusal in place
+        }
+        sfx.play('cardPlay');
+        panel.redraw();
+        render();
+        afterDispatch(out.events);
+      },
+    });
+  });
+
   render();
 
   // Keep the target glow in sync with focus/hover: the field's class attributes
@@ -16101,6 +17883,313 @@ function mountTutorial(root, { onDone }) {
 
 
 Object.assign(module.exports, { mountTutorial });
+
+},
+"src/ui/screens/equipment.js": function (module, exports, require) {
+// src/ui/screens/equipment.js — the Armoury.
+//
+// Three views of the same loadout, because the two obvious layouts are both
+// right for different things and neither should have to win:
+//
+//   grid    the figure in the middle, slots as squares around it — you are
+//           looking at a PERSON, and the kit hangs off them
+//   rack    a dense two-column armament rack — you are looking at a LIST, and
+//           you want to compare eight shields quickly
+//   hybrid  the rack, with the figure and its slot squares alongside
+//
+// The panel builds itself from registries.equipment.slots, so a new row in
+// equipSlots.csv appears here with no change to this file. The card strip at
+// the bottom is the whole point of the system made visible: pick up a dagger
+// and watch Strike become 3×2 before you commit to it.
+
+const { balance } = require("src/content/balance.js");
+const { resolveCard } = require("src/model/registries.js");
+const { canSwap, cycleSet, equipPiece, equippedIn, cardMods, runMods, loadoutTags } = require("src/model/loadout.js");
+const { renderCard } = require("src/ui/components/card.js");
+const { esc } = require("src/ui/components/tooltip.js");
+const { playerSprite } = require("src/ui/assets.js");
+const { sfx } = require("src/ui/sfx.js");
+
+const CFG = () => balance.equipment;
+
+/** The armour set a class is wearing right now (or its starting one). */
+function wornArmourId(registries, run) {
+  const worn = equippedIn(registries, run.loadout, run.class, 'armor');
+  return worn ? worn.id : 'default';
+}
+
+/**
+ * The figure. Armour is a whole repaint of the class body, so a set swap is a
+ * different rendered PNG (tools/equipment-blender.py) rather than an overlay;
+ * anything missing falls back to the ordinary class sprite, which keeps the
+ * single-file dist and file:// play working exactly as before.
+ */
+function figureFor(registries, run, cz) {
+  const el = document.createElement('div');
+  el.className = 'armoury-figure';
+  if (CFG().spriteReacts === 'none') {
+    el.appendChild(playerSprite(cz, run.class));
+    return el;
+  }
+  const img = document.createElement('img');
+  img.src = `assets/equipment/body_${run.class}_${wornArmourId(registries, run)}.png`;
+  img.alt = 'your figure';
+  img.addEventListener('error', () => {
+    img.remove();
+    el.appendChild(playerSprite(cz, run.class));
+  });
+  el.appendChild(img);
+  return el;
+}
+
+/** A piece's mods, written the way a player reads them. */
+function modSummary(registries, piece) {
+  const fields = registries.equipment.modFields || {};
+  const parts = [];
+  for (const raw of piece.mods || []) {
+    const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
+    if (!m) continue;
+    const spec = fields[m[2]];
+    if (!spec) continue;
+    const where = m[1] === 'self' ? '' : `${m[1][0].toUpperCase()}${m[1].slice(1)} `;
+    const sign = m[3][0] === '+' || m[3][0] === '-' ? m[3] : `= ${m[3]}`;
+    parts.push(`${where}${spec.label} ${sign}`);
+  }
+  return parts;
+}
+
+function pieceChip(registries, piece, { selected, locked, hint }) {
+  const el = document.createElement('button');
+  el.className = `equip-chip rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}${locked ? ' locked' : ''}`;
+  el.type = 'button';
+  const mods = modSummary(registries, piece);
+  el.innerHTML =
+    `<img class="ec-art" src="assets/equipment/weapon_${esc(piece.id)}.png" alt="">` +
+    `<span class="ec-name">${esc(piece.name)}</span>` +
+    `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>` +
+    `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>` +
+    (locked ? `<span class="ec-lock">🔒 ${esc(hint || 'Locked')}</span>` : '');
+  const art = el.querySelector('.ec-art');
+  art.addEventListener('error', () => art.remove());
+  return el;
+}
+
+/**
+ * mountEquipment(host, opts) → { close() }
+ *
+ *   inCombat  seals storage and honours each slot's swap rule
+ *   onSwap    called with (slotId, setIndex) instead of mutating, so combat can
+ *             route the change through the engine intent that charges for it
+ */
+function mountEquipment(host, {
+  registries, run, meta = {}, inCombat = false, onClose, onChange, onSwap,
+}) {
+  const eq = registries.equipment;
+  const cz = (meta.settings && meta.settings.customization) || run.customization || {};
+  const unlocked = new Set(meta.unlocked || []);
+  let view = (meta.settings && meta.settings.equipView) || CFG().defaultView;
+  let picking = null; // { slotId, setIndex }
+  let notice = ''; // a refusal to show in place, cleared on the next draw
+
+  const wrap = document.createElement('div');
+  wrap.className = 'armoury-overlay';
+  host.appendChild(wrap);
+
+  const close = () => {
+    wrap.remove();
+    if (onClose) onClose();
+  };
+
+  function eligible(slot) {
+    if (slot.kinds.includes('armor')) {
+      return (eq.armour || [])
+        .filter((o) => o.classId === run.class)
+        .map((o) => ({ ...o, locked: o.unlock !== '' && !unlocked.has(o.unlock) }));
+    }
+    return (eq.armaments || [])
+      .filter((a) => slot.kinds.includes(a.kind))
+      .map((a) => ({ ...a, locked: a.unlock !== '' && !unlocked.has(a.unlock) }));
+  }
+
+  function slotBlock(slot) {
+    const box = document.createElement('div');
+    box.className = 'equip-slot';
+    const rule = canSwap(registries, slot.id, { inCombat });
+    box.innerHTML =
+      `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>` +
+      (rule.ok ? '' : `<span class="es-sealed" title="${esc(rule.reason)}">sealed</span>`) +
+      `</div><div class="es-sets"></div>`;
+    const sets = box.querySelector('.es-sets');
+
+    (run.loadout.sets[slot.id] || []).forEach((itemId, i) => {
+      const active = (run.loadout.active[slot.id] || 0) === i;
+      const piece = itemId
+        ? (slot.kinds.includes('armor')
+          ? (eq.armour || []).find((o) => o.classId === run.class && o.id === itemId)
+          : (eq.armaments || []).find((a) => a.id === itemId))
+        : null;
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = `es-cell${active ? ' on' : ''}${piece ? '' : ' empty'}`;
+      cell.title = piece ? piece.name : 'Empty';
+      cell.innerHTML = piece
+        ? `<img src="assets/equipment/weapon_${esc(piece.id)}.png" alt=""><span>${esc(piece.name)}</span>`
+        : `<span class="es-empty">＋</span>`;
+      const im = cell.querySelector('img');
+      if (im) im.addEventListener('error', () => { im.replaceWith(Object.assign(document.createElement('span'), { textContent: '⚔' })); });
+
+      cell.addEventListener('click', () => {
+        // Clicking a set you're not in switches to it; clicking the one you're
+        // already in opens the picker. Same square, two jobs, no extra chrome.
+        if (!active) {
+          if (!rule.ok) { notice = rule.reason; draw(); return; }
+          if (onSwap) {
+            // In combat the swap is the engine's to allow or refuse — it may
+            // say no because the energy isn't there, and the player should be
+            // told that in the panel rather than in the console.
+            const refused = onSwap(slot.id, i);
+            if (refused) { notice = refused; draw(); }
+            return;
+          }
+          cycleSet(run.loadout, slot.id, i);
+          sfx.play('cardPlay');
+          commit();
+        } else if (!inCombat) {
+          picking = picking && picking.slotId === slot.id && picking.setIndex === i ? null : { slotId: slot.id, setIndex: i };
+          draw();
+        }
+      });
+      sets.appendChild(cell);
+    });
+    return box;
+  }
+
+  function pickerBlock() {
+    const box = document.createElement('div');
+    box.className = 'equip-picker';
+    if (!picking) {
+      box.innerHTML = inCombat
+        ? '<p class="ep-hint">Storage is sealed in combat. Cycle between the sets you brought.</p>'
+        : '<p class="ep-hint">Pick a slot above to change what is in it.</p>';
+      return box;
+    }
+    const slot = eq.slots.find((s) => s.id === picking.slotId);
+    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4><div class="ep-list"></div>`;
+    const list = box.querySelector('.ep-list');
+
+    const bare = document.createElement('button');
+    bare.type = 'button';
+    bare.className = 'equip-chip bare';
+    bare.innerHTML = '<span class="ec-name">Bare</span><span class="ec-mods">Nothing at all</span>';
+    bare.addEventListener('click', () => {
+      equipPiece(run.loadout, picking.slotId, picking.setIndex, null);
+      commit();
+    });
+    list.appendChild(bare);
+
+    const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
+    for (const piece of eligible(slot)) {
+      const chip = pieceChip(registries, piece, {
+        selected: piece.id === current,
+        locked: piece.locked,
+        hint: piece.blurb,
+      });
+      if (!piece.locked) {
+        chip.addEventListener('click', () => {
+          equipPiece(run.loadout, picking.slotId, picking.setIndex, piece.id);
+          sfx.play('cardPlay');
+          commit();
+        });
+      }
+      list.appendChild(chip);
+    }
+    return box;
+  }
+
+  /** The rewrites, live: the actual cards this loadout produces right now. */
+  function cardStrip() {
+    const box = document.createElement('div');
+    box.className = 'equip-cards';
+    const mods = cardMods(registries, run.loadout, run.class);
+    const ids = [...new Set((eq.targets || [])
+      .filter((t) => t.classId === '*' || t.classId === run.class)
+      .map((t) => t.cardId))];
+    for (const cardId of ids) {
+      if (!registries.cards.has(cardId)) continue;
+      box.appendChild(renderCard(registries, { cardId, mods: mods.get(cardId) }, { small: true }));
+    }
+    const rm = runMods(registries, run.loadout, run.class);
+    const bits = [];
+    if (rm.maxHp) bits.push(`Max HP ${rm.maxHp > 0 ? '+' : ''}${rm.maxHp}`);
+    for (const s of rm.startStatuses) bits.push(`${registries.statuses.get(s.status).name} ${s.stacks}`);
+    const tags = loadoutTags(registries, run.loadout, run.class);
+    const foot = document.createElement('div');
+    foot.className = 'equip-foot';
+    foot.innerHTML =
+      `<span class="ef-tags">${tags.map((t) => `<em>${esc(t)}</em>`).join('') || '<em class="none">no tags</em>'}</span>` +
+      (bits.length ? `<span class="ef-run">${bits.map(esc).join(' · ')}</span>` : '');
+    box.appendChild(foot);
+    return box;
+  }
+
+  function commit() {
+    if (onChange) onChange(run.loadout);
+    draw();
+  }
+
+  function draw() {
+    wrap.innerHTML = `
+      <div class="armoury view-${esc(view)}">
+        <header class="armoury-head">
+          <h2>ARMOURY</h2>
+          <div class="armoury-views">
+            ${CFG().views.map((v) => `<button type="button" data-view="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
+          </div>
+          <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
+        </header>
+        ${notice ? `<p class="armoury-notice">${esc(notice)}</p>` : ''}
+        <div class="armoury-body">
+          <div class="armoury-left"></div>
+          <div class="armoury-right"></div>
+        </div>
+        <div class="armoury-strip"></div>
+      </div>`;
+
+    const left = wrap.querySelector('.armoury-left');
+    const right = wrap.querySelector('.armoury-right');
+    // 'grid' hangs the slots around the figure; 'rack' drops the figure
+    // entirely for density; 'hybrid' keeps both, figure beside the rack.
+    if (view !== 'rack') left.appendChild(figureFor(registries, run, cz));
+    const slotHost = view === 'grid' ? left : right;
+    const slotWrap = document.createElement('div');
+    slotWrap.className = 'equip-slots';
+    for (const slot of eq.slots) slotWrap.appendChild(slotBlock(slot));
+    slotHost.appendChild(slotWrap);
+    (view === 'grid' ? right : right).appendChild(pickerBlock());
+    wrap.querySelector('.armoury-strip').appendChild(cardStrip());
+
+    notice = '';
+    wrap.querySelector('.armoury-close').addEventListener('click', close);
+    for (const b of wrap.querySelectorAll('[data-view]')) {
+      b.addEventListener('click', () => {
+        view = b.dataset.view;
+        if (onChange) onChange(run.loadout, { equipView: view });
+        draw();
+      });
+    }
+  }
+
+  const onKey = (e) => {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+  };
+  document.addEventListener('keydown', onKey);
+
+  draw();
+  return { close, redraw: draw };
+}
+
+
+Object.assign(module.exports, { mountEquipment });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {
@@ -17139,7 +19228,7 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
     removeSeatTabs();
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
-  const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded });
+  const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded, mods: c.mods });
   const wireLeave = () => { const b = app.querySelector('#coop-leave'); if (b) b.addEventListener('click', () => { teardown(); conn.close(); onLeave(); }); };
 
   function render() {
@@ -17297,7 +19386,7 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       meP.hand.forEach((c, i) => {
         const def = cardDef(c);
         const affordable = !meP.ended && (def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost);
-        const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId }, { affordable });
+        const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods }, { affordable });
         const spread = Math.min(6, n) * 1.2;
         el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
         el.style.zIndex = i;

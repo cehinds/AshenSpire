@@ -18,6 +18,7 @@ import { overlayIsOpen } from '../components/overlay.js';
 import { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad } from '../input.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
+import { mountEquipment } from './equipment.js';
 
 export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -32,6 +33,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
         <div class="flasks" style="display:flex;gap:6px"></div>
         <div class="relics"></div>
         <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
+        <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
         <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
       </header>
       <div class="${backdropClass(run.actNumber)}"></div>
@@ -832,6 +834,32 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
   if (onMenu) $('#combat-menu').addEventListener('click', () => onMenu('deck'));
+
+  // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
+  // storage seal themselves, and picking another hand set routes through the
+  // engine intent that charges for it instead of mutating the loadout here.
+  $('#combat-armoury').addEventListener('click', () => {
+    if (!registries.balance.equipment.enabled) return;
+    const panel = mountEquipment(document.body, {
+      registries,
+      run,
+      meta: { settings: { customization: run.customization } },
+      inCombat: true,
+      onSwap: (slotId, setIndex) => {
+        let out;
+        try {
+          out = dispatch(combat, { type: 'swapArmament', slotId, setIndex });
+        } catch (e) {
+          dlog('equip', e.message);
+          return e.message; // the panel shows the refusal in place
+        }
+        sfx.play('cardPlay');
+        panel.redraw();
+        render();
+        afterDispatch(out.events);
+      },
+    });
+  });
 
   render();
 

@@ -118,7 +118,12 @@ function addPlayerState(C, p, { initial = false } = {}) {
     classId: p.classId, maxHp: p.maxHp, hp: p.hp != null ? p.hp : p.maxHp,
     relicIds: p.relicIds || [], flasks: p.flasks || [], energyMax: C.energyMax,
   });
-  const deck = (p.deck || []).map((c) => ({ instanceId: c.instanceId, cardId: c.cardId, upgraded: !!c.upgraded }));
+  const deck = (p.deck || []).map((c) => ({
+    instanceId: c.instanceId,
+    cardId: c.cardId,
+    upgraded: !!c.upgraded,
+    ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}), // equipment numbers
+  }));
   const shuffled = C.rng.shuffle('shuffle', deck);
   const innate = [];
   const rest = [];

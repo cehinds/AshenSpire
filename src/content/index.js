@@ -24,6 +24,8 @@ import { events } from './events.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
 import { scripts } from './scripts.js';
+import { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } from './equipment.js';
+import { equipTargets } from './generated/equipTargets.js';
 
 export const contentBundle = {
   version: '0.2.0-ashen',
@@ -40,6 +42,15 @@ export const contentBundle = {
   classes,
   mapConfigs,
   scripts,
+  // Equipment rides in the bundle as plain tables (see model/registries.js).
+  equipment: {
+    armaments: ARMAMENTS,
+    armour: ARMOUR,
+    slots: SLOTS,
+    modFields: Object.fromEntries(MOD_FIELDS),
+    targets: equipTargets,
+    cardTargets: CARD_TARGETS,
+  },
 };
 
 // Not part of the bundle (UI-only data / M1 flow):

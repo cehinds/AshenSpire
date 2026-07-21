@@ -38,6 +38,9 @@ import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, tagsFor, tagIdsFor, cardsWithTag } from '../src/content/tags.js';
 import { cardTagging } from '../src/content/generated/cardTagging.js';
 import { weapons } from '../src/content/generated/weapons.js';
+import {
+  validateEquipment, equipPiece, stampDeck, runMods, loadoutTags,
+} from '../src/model/loadout.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 
 // ---------------------------------------------------------------------------
@@ -1008,6 +1011,101 @@ export async function runTests() {
       checkTags(o.tags, o.id);
       checkMods(o.mods, o.id);
     }
+  });
+
+  // ---- 28. equipment: pieces rewrite the cards you already have ------------
+  test('28. armaments rewrite Strike/Defend, cost energy to swap, and survive a save', () => {
+    // The load-bearing claim of the whole system: equipment adds no cards and
+    // no engine code. It changes numbers on the starters, through one closed
+    // vocabulary (equipMods.csv) that a typo cannot slip past.
+    eq(validateEquipment(REG).join('; '), '', 'every authored piece parses against the vocabulary');
+
+    const bal = REG.balance.equipment;
+    const strikeOf = (mods) => resolveCard(REG, { cardId: 'strike', mods });
+    const dmgOf = (def) => (def.effects.find((e) => e.op === 'damage') || {}).amount;
+
+    eq(dmgOf(strikeOf([])), 6, 'a bare Strike is still 6');
+
+    // A dagger trades weight for repetition; a greatsword does the reverse.
+    const dagger = strikeOf(['damage=3', 'hits=2']);
+    eq(dmgOf(dagger), 3, 'dagger: Strike drops to 3');
+    eq(dagger.effects.find((e) => e.op === 'damage').hits, 2, 'dagger: Strike lands twice');
+    assert(dagger.textTemplate.includes('{hits}'), 'dagger: the rules text learns to mention hits');
+
+    const great = strikeOf(['damage=+4', 'cost=+1', 'poise=+3']);
+    eq(dmgOf(great), 10, 'greatsword: Strike climbs to 10');
+    eq(great.cost, 2, 'greatsword: Strike costs more');
+    eq((great.effects.find((e) => e.op === 'poiseDamage') || {}).amount, 3, 'greatsword: Poise damage appended');
+    assert(great.textTemplate.includes('{poiseDamage}'), 'greatsword: the new Poise line is spoken');
+
+    // Order matters and is slot order: a later '=N' replaces, it does not stack.
+    eq(dmgOf(strikeOf(['damage=+4', 'damage=3'])), 3, 'a set value overrides an earlier adjustment');
+    // Floors hold, so no piece can author a card into nonsense.
+    eq(dmgOf(strikeOf(['damage=-99'])), bal.limits.minDamage, 'damage cannot go below its floor');
+    eq(strikeOf(['cost=-99']).cost, bal.limits.minCost, 'cost cannot go below its floor');
+    eq(strikeOf(['hits=+99']).effects[0].hits, bal.limits.maxHits, 'hits are capped');
+
+    // Mods layer ON TOP of an upgrade rather than fighting with it.
+    eq(dmgOf(resolveCard(REG, { cardId: 'strike', upgraded: true })), 9, 'Strike+ is 9 bare-handed');
+    eq(dmgOf(resolveCard(REG, { cardId: 'strike', upgraded: true, mods: ['damage=+4'] })), 13, 'Strike+ with a greatsword is 13');
+
+    // A run starts stamped by whatever it starts wearing, and `self.*` mods
+    // reach the run rather than a card.
+    const run = createRunState({ seed: 7, classId: 'reaver', registries: REG });
+    assert(run.loadout && run.loadout.sets.rightHand.length === 3, 'the right hand carries three sets');
+    eq(run.loadout.sets.armor[0], 'default', 'the reaver starts in its one unlocked set');
+
+    equipPiece(run.loadout, 'rightHand', 0, 'dagger');
+    equipPiece(run.loadout, 'rightHand', 1, 'greatsword');
+    equipPiece(run.loadout, 'armor', 0, 'oathsworn');
+    stampDeck(REG, run);
+    const aStrike = run.deck.find((c) => c.cardId === 'strike');
+    eq(dmgOf(resolveCard(REG, aStrike)), 3, 'the deck itself is stamped with the dagger');
+    eq(runMods(REG, run.loadout, 'reaver').startStatuses[0].status, 'strength', 'the Oathsworn set grants Strength');
+    assert(loadoutTags(REG, run.loadout, 'reaver').includes('blade'), 'worn pieces contribute their tags');
+
+    // Swapping mid-fight: the price is paid, and the hand is re-armed.
+    const rng = createRng(11);
+    const combat = createCombat({
+      registries: REG,
+      rng,
+      player: { classId: 'reaver', maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds: [], loadout: run.loadout },
+      enemyIds: ['fellWarden'],
+    });
+    const energyBefore = combat.player.energy;
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+    eq(combat.player.energy, energyBefore - bal.swapCost, 'the swap costs what the config says');
+    const inHand = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
+    eq(dmgOf(resolveCard(REG, inHand)), 10, 'every Strike now swings the greatsword');
+    // Armour is not something you change with a knight in the room.
+    let refused = '';
+    try {
+      dispatch(combat, { type: 'swapArmament', slotId: 'armor', setIndex: 0 });
+    } catch (e) {
+      refused = e.message;
+    }
+    assert(refused.includes('outside combat'), 'armour cannot be swapped mid-fight');
+
+    // Combat works on COPIES of the deck instances, so the orchestrator
+    // re-stamps the run's own copies when the fight ends (main.js onCombatEnd).
+    stampDeck(REG, run);
+
+    // The instance carries the numbers, so the save carries them too.
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    saves.saveRun(run, rng);
+    const loaded = saves.loadRun(REG);
+    eq(loaded.loadout.sets.rightHand[1], 'greatsword', 'the loadout round-trips');
+    eq(dmgOf(resolveCard(REG, loaded.deck.find((c) => c.cardId === 'strike'))), 10, 'stamped cards round-trip');
+
+    // And a run saved before equipment existed is healed, not refused.
+    const legacy = JSON.parse(JSON.stringify(run));
+    delete legacy.loadout;
+    for (const c of legacy.deck) delete c.mods;
+    storage.setItem(RUN_KEY, JSON.stringify(legacy));
+    const healed = saves.loadRun(REG);
+    assert(healed && healed.loadout, 'a pre-equipment save loads with a fresh loadout');
+    eq(healed.loadout.sets.rightHand[0], null, 'the healed loadout starts bare-handed');
   });
 
   const passed = results.filter((r) => r.ok).length;

@@ -78,6 +78,7 @@ export const EVENTS = Object.freeze([
   'cardExhausted',
   'cardDiscarded',
   'deckShuffled',
+  'armamentSwapped',
   'damageDealt',
   'blockGained',
   'hpLost',
