@@ -10,6 +10,8 @@ export const outfits = [
     "plateLt": "9C8D73",
     "leather": "4B3522",
     "under": "332A1E",
+    "tags": "guard",
+    "mods": "",
     "unlock": "",
     "blurb": "The armour you were buried in."
   },
@@ -21,6 +23,11 @@ export const outfits = [
     "plateLt": "4A433A",
     "leather": "241C16",
     "under": "1A1712",
+    "tags": [
+      "guard",
+      "ash"
+    ],
+    "mods": "defend.block=+2",
     "unlock": "beatStitchedKing",
     "blurb": "Blackened at the court that broke."
   },
@@ -32,8 +39,35 @@ export const outfits = [
     "plateLt": "E0CB8C",
     "leather": "5A4626",
     "under": "3A3020",
+    "tags": [
+      "guard",
+      "oath"
+    ],
+    "mods": [
+      "defend.block=+1",
+      "self.strength=+1"
+    ],
     "unlock": "winAsReaver",
     "blurb": "Kept bright by an oath unbroken."
+  },
+  {
+    "id": "warden",
+    "classId": "reaver",
+    "name": "Warden Mail",
+    "plate": "5A5F63",
+    "plateLt": "7C8288",
+    "leather": "3A3226",
+    "under": "24272A",
+    "tags": [
+      "guard",
+      "heavy"
+    ],
+    "mods": [
+      "defend.block=+3",
+      "strike.damage=-1"
+    ],
+    "unlock": "reachAshenCrown",
+    "blurb": "Issued, not chosen."
   },
   {
     "id": "default",
@@ -43,6 +77,8 @@ export const outfits = [
     "plateLt": "3A3358",
     "leather": "4B3522",
     "under": "332A1E",
+    "tags": "starstone",
+    "mods": "",
     "unlock": "",
     "blurb": "Dyed with the dark between stars."
   },
@@ -54,8 +90,51 @@ export const outfits = [
     "plateLt": "2E2B47",
     "leather": "2A2118",
     "under": "17151F",
+    "tags": [
+      "starstone",
+      "ritual"
+    ],
+    "mods": "power.potency=+1",
     "unlock": "winAsStarseer",
     "blurb": "Worn only when the moon is eaten."
+  },
+  {
+    "id": "starlit",
+    "classId": "starseer",
+    "name": "Starlit Silks",
+    "plate": "3A4468",
+    "plateLt": "5A6699",
+    "leather": "3A3226",
+    "under": "242A40",
+    "tags": [
+      "starstone",
+      "flourish"
+    ],
+    "mods": [
+      "strike.hits=+1",
+      "strike.damage=-1"
+    ],
+    "unlock": "beatFellWarden",
+    "blurb": "It catches light that is not there."
+  },
+  {
+    "id": "astral",
+    "classId": "starseer",
+    "name": "Astral Vestment",
+    "plate": "4A3A68",
+    "plateLt": "6E58A0",
+    "leather": "3A2E4A",
+    "under": "241E33",
+    "tags": [
+      "starstone",
+      "oath"
+    ],
+    "mods": [
+      "power.potency=+2",
+      "defend.block=-1"
+    ],
+    "unlock": "winTwice",
+    "blurb": "Cut for someone taller than you."
   },
   {
     "id": "default",
@@ -65,6 +144,8 @@ export const outfits = [
     "plateLt": "3A2A2A",
     "leather": "4B3522",
     "under": 241413,
+    "tags": "ritual",
+    "mods": "",
     "unlock": "",
     "blurb": "Plain cloth, plainly kept."
   },
@@ -76,7 +157,50 @@ export const outfits = [
     "plateLt": 555047,
     "leather": "2A2622",
     "under": "1E1B18",
+    "tags": [
+      "ritual",
+      "blight"
+    ],
+    "mods": "strike.blight=+1",
     "unlock": "beatBlightedValkyrie",
     "blurb": "Threaded through with quiet bone."
+  },
+  {
+    "id": "emberhabit",
+    "classId": "herald",
+    "name": "Emberlight Habit",
+    "plate": "5A3A24",
+    "plateLt": "8A5C38",
+    "leather": "3A2618",
+    "under": "2A1C12",
+    "tags": [
+      "ritual",
+      "oath"
+    ],
+    "mods": [
+      "power.potency=+1",
+      "self.regen=+1"
+    ],
+    "unlock": "beatKingAsHerald",
+    "blurb": "Warm long after the fire is out."
+  },
+  {
+    "id": "pilgrim",
+    "classId": "herald",
+    "name": "Pilgrim Wrap",
+    "plate": "4A4034",
+    "plateLt": "6B5D45",
+    "leather": "3A3226",
+    "under": "2A2418",
+    "tags": [
+      "ritual",
+      "guard"
+    ],
+    "mods": [
+      "defend.block=+2",
+      "self.maxHp=+4"
+    ],
+    "unlock": "reachStitchedCourt",
+    "blurb": "Road dust worked into the weave."
   }
 ];

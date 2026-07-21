@@ -61,5 +61,55 @@ export const unlocks = [
     "param": "blightedValkyrie",
     "reveal": "hidden",
     "hint": ""
+  },
+  {
+    "id": "reachAshenCrown",
+    "kind": "outfit",
+    "ref": "warden",
+    "name": "Warden Mail",
+    "condition": "reachAct",
+    "param": 3,
+    "reveal": "listed",
+    "hint": "Reach the Ashen Crown."
+  },
+  {
+    "id": "beatFellWarden",
+    "kind": "outfit",
+    "ref": "starlit",
+    "name": "Starlit Silks",
+    "condition": "beatBoss",
+    "param": "fellWarden",
+    "reveal": "listed",
+    "hint": "Defeat the Fell Warden."
+  },
+  {
+    "id": "winTwice",
+    "kind": "outfit",
+    "ref": "astral",
+    "name": "Astral Vestment",
+    "condition": "winRuns",
+    "param": 2,
+    "reveal": "listed",
+    "hint": "Win two runs."
+  },
+  {
+    "id": "beatKingAsHerald",
+    "kind": "outfit",
+    "ref": "emberhabit",
+    "name": "Emberlight Habit",
+    "condition": "beatBoss",
+    "param": "stitchedKing",
+    "reveal": "listed",
+    "hint": "Defeat the Stitched King."
+  },
+  {
+    "id": "reachStitchedCourt",
+    "kind": "outfit",
+    "ref": "pilgrim",
+    "name": "Pilgrim Wrap",
+    "condition": "reachAct",
+    "param": 2,
+    "reveal": "listed",
+    "hint": "Reach the Stitched Court."
   }
 ];

@@ -1,0 +1,36 @@
+# content/source/weapons.csv — armaments (Ashen Spire)
+#
+# Weapon TYPES are generic fantasy categories (greatsword, katana, buckler),
+# which no one owns — only specific named weapons are anyone's IP. Each row is
+# one armament: how it looks (geom + scale + palette), what it grants (tags),
+# and how it rewrites your starting cards (mods).
+#
+# hand   right | left | either   (staves are right; shields left; daggers either)
+# geom   the Blender archetype the renderer builds (tools/equipment-blender.py)
+# mods   card rewrites, pipe-separated:  strike.damage=3|strike.hits=2|self.strength=+2
+#        '=' replaces, '+/-' adjusts. Empty = no card change.
+id,name,kind,hand,rarity,geom,scale,metal,accent,tags,mods,unlock,blurb
+straightSword,Straight Sword,weapon,right,common,sword,1.00,B8B0A0,C9A227,blade,strike.damage=+1,,"Honest steel. It asks nothing clever of you."
+greatsword,Greatsword,weapon,right,uncommon,colossal,1.00,B8B0A0,C9A227,blade|heavy,strike.damage=+4|strike.cost=+1|strike.poise=+3,,"Slow, and it does not care."
+dagger,Dagger,weapon,either,common,dagger,1.00,C0B8A6,C9A227,blade|flourish,strike.damage=3|strike.hits=2,,"Two cuts where one would do."
+katana,Katana,weapon,right,uncommon,curved,1.00,C6BEAC,C9502E,blade|blood|flourish,strike.damage=-1|strike.bleed=+2,,"A long curve, and a long grudge."
+halberd,Halberd,weapon,right,uncommon,polearm,1.00,A8A090,C9A227,blade|heavy,strike.damage=+2|strike.cost=+1,,"Reach enough to keep the dead at arm's length."
+warhammer,Warhammer,weapon,right,uncommon,hammer,1.00,8E8678,C9A227,heavy,strike.damage=+2|strike.poise=+6,,"Poise is a fiction. This is the argument."
+twinblade,Twinblade,weapon,right,rare,twin,1.00,C0B8A6,7FA8C9,blade|flourish,strike.damage=2|strike.hits=3,,"Both ends are the business end."
+battleaxe,Battleaxe,weapon,right,common,axe,1.00,A8A090,C9502E,blade|heavy,strike.damage=+3|strike.cost=+1,,"It was a woodcutter's once."
+buckler,Buckler,shield,left,common,round,0.80,8E8678,C9A227,guard|flourish,defend.block=+2,,"Small enough to be quick with."
+kiteShield,Kite Shield,shield,left,common,kite,1.00,8E8678,C9A227,guard,defend.block=+3,,"A wall you can carry."
+towerShield,Tower Shield,shield,left,rare,tower,1.00,7E766A,C9A227,guard|heavy,defend.block=+6|strike.damage=-2,,"You will not be moved. You will not move."
+roundShield,Round Shield,shield,left,common,round,1.00,8E8678,7FA8C9,guard,defend.block=+2|defend.cost=-0,,"Plain, round, and enough."
+spikedShield,Spiked Shield,shield,left,uncommon,spiked,1.00,8E8678,C9502E,guard|blade,defend.block=+2|defend.thorns=+3,,"Defence with an opinion."
+lantern,Lantern,shield,left,common,lantern,0.85,6B5D45,C9A227,guard,defend.block=+1,,"Light enough to see what is coming."
+torch,Torch,shield,left,common,torch,0.90,6B5D45,C9502E,gorefire,strike.burn=+2,,"Fire remembers what steel forgets."
+parryDagger,Parrying Dagger,shield,left,uncommon,dagger,0.85,C0B8A6,7FA8C9,guard|flourish,defend.block=+1|defend.riposte=+2,,"Held wrong on purpose."
+ashStaff,Ash Staff,staff,right,common,staffOrb,1.00,6B5D45,C9A227,ritual,power.potency=+1,,"Grey wood, warm at the grip."
+starstoneStaff,Starstone Staff,staff,right,uncommon,staffCrystal,1.00,6B5D45,7FA8C9,starstone,power.potency=+2|strike.damage=-1,,"The stone hums before you do."
+boneSceptre,Bone Sceptre,staff,right,uncommon,staffSkull,1.00,B8AE98,B5541C,ritual|blight,power.potency=+1|strike.blight=+2,,"Someone knelt for this once."
+emberlightSceptre,Emberlight Sceptre,staff,right,rare,staffFlame,1.00,6B5D45,C9A227,ritual|oath,power.potency=+3,,"It keeps a little of the guiding flame."
+goldboughBranch,Goldbough Branch,staff,right,rare,staffBranch,1.00,6B5D45,C9A227,ritual|oath,power.potency=+2|self.regen=+1,,"Cut, and still growing."
+blightRod,Blight Rod,staff,right,uncommon,staffOrb,0.95,4B3522,B5541C,blight,strike.blight=+3,,"Wet to the touch. It should not be."
+gorefireBrand,Gorefire Brand,staff,right,rare,staffFlame,0.95,4B3522,C9502E,gorefire|blood,strike.burn=+2|strike.bleed=+1,,"Blood takes to flame more readily than wood."
+wyrmhornStaff,Wyrmhorn Staff,staff,right,rare,staffHorn,1.00,B8AE98,C9A227,ritual|heavy,power.potency=+2|strike.poise=+2,,"Taken from something that objected."

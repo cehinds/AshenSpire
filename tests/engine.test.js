@@ -37,6 +37,7 @@ import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, tagsFor, tagIdsFor, cardsWithTag } from '../src/content/tags.js';
 import { cardTagging } from '../src/content/generated/cardTagging.js';
+import { weapons } from '../src/content/generated/weapons.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 
 // ---------------------------------------------------------------------------
@@ -949,6 +950,64 @@ export async function runTests() {
     eq(tagsFor('nonexistentCard').length, 0, 'an untagged card resolves to no tags');
     assert(cardsWithTag('blade').includes('strike'), 'reverse lookup finds Blade cards');
     assert(cardsWithTag('nope').length === 0, 'reverse lookup on an unknown tag is empty');
+  });
+
+  // ---- 27. armaments + armour sets (CSV-authored) --------------------------
+  test('27. weapons and armour sets validate against the tag registry', () => {
+    const tagIds = TAGS.map((t) => t.id);
+    const classIds = REG.classes.all().map((c) => c.id);
+    const KINDS = ['weapon', 'shield', 'staff'];
+    const HANDS = ['right', 'left', 'either'];
+    const RARITY = ['common', 'uncommon', 'rare'];
+    // Modifier ops are a closed vocabulary — a typo like 'strike.dmg' would
+    // otherwise sit in the CSV doing nothing until someone noticed in play.
+    const TARGETS = ['strike', 'defend', 'power', 'self'];
+
+    const ids = weapons.map((w) => w.id);
+    eq(ids.length, new Set(ids).size, 'armament ids are unique');
+    eq(weapons.filter((w) => w.kind === 'weapon').length, 8, 'eight weapons');
+    eq(weapons.filter((w) => w.kind === 'shield').length, 8, 'eight shields/offhands');
+    eq(weapons.filter((w) => w.kind === 'staff').length, 8, 'eight staves');
+
+    const checkMods = (mods, where) => {
+      if (mods === '') return;
+      for (const m of (Array.isArray(mods) ? mods : [mods])) {
+        const [lhs] = String(m).split('=');
+        const [target, field] = lhs.split('.');
+        assert(TARGETS.includes(target), `${where}: '${m}' targets a known card (${target})`);
+        assert(field && field.length > 0, `${where}: '${m}' names a field`);
+      }
+    };
+    const checkTags = (tags, where) => {
+      for (const t of (tags === '' ? [] : Array.isArray(tags) ? tags : [tags])) {
+        assert(tagIds.includes(t), `${where}: tag '${t}' is registered`);
+      }
+    };
+
+    for (const w of weapons) {
+      assert(KINDS.includes(w.kind), `${w.id}: known kind`);
+      assert(HANDS.includes(w.hand), `${w.id}: known hand (${w.hand})`);
+      assert(RARITY.includes(w.rarity), `${w.id}: known rarity (${w.rarity})`);
+      assert(/^[0-9A-Fa-f]{6}$/.test(w.metal), `${w.id}: metal is a 6-digit hex`);
+      assert(/^[0-9A-Fa-f]{6}$/.test(w.accent), `${w.id}: accent is a 6-digit hex`);
+      assert(String(w.geom).length > 0, `${w.id}: names a geometry archetype`);
+      checkTags(w.tags, w.id);
+      checkMods(w.mods, w.id);
+      // Shields belong in the off hand; staves are cast from the right.
+      if (w.kind === 'shield') assert(w.hand !== 'right', `${w.id}: a shield is not right-hand-only`);
+      if (w.kind === 'staff') eq(w.hand, 'right', `${w.id}: staves are right-handed`);
+    }
+
+    // Armour: four sets per class, exactly one of them unlocked from the start.
+    for (const id of classIds) {
+      const mine = outfits.filter((o) => o.classId === id);
+      eq(mine.length, 4, `class '${id}' has four armour sets`);
+      eq(mine.filter((o) => o.unlock === '').length, 1, `class '${id}' has exactly one starting set`);
+    }
+    for (const o of outfits) {
+      checkTags(o.tags, o.id);
+      checkMods(o.mods, o.id);
+    }
   });
 
   const passed = results.filter((r) => r.ok).length;
