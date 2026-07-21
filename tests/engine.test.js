@@ -41,6 +41,9 @@ import { weapons } from '../src/content/generated/weapons.js';
 import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags,
 } from '../src/model/loadout.js';
+import {
+  UNLOCK_CONDITIONS, REVEAL_MODES, emptyProgress, recordProgress, evaluateUnlocks, unlockView,
+} from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 
 // ---------------------------------------------------------------------------
@@ -1106,6 +1109,75 @@ export async function runTests() {
     const healed = saves.loadRun(REG);
     assert(healed && healed.loadout, 'a pre-equipment save loads with a fresh loadout');
     eq(healed.loadout.sets.rightHand[0], null, 'the healed loadout starts bare-handed');
+  });
+
+  // ---- 30. unlocks are earned, remembered, and never taken back -------------
+  test('30. unlock conditions evaluate against durable progress, not recent history', () => {
+    // The conditions are a closed set, so an unregistered one is caught here
+    // rather than sitting in the CSV never firing.
+    for (const u of REG.unlocks) {
+      assert(UNLOCK_CONDITIONS[u.condition], `unlock '${u.id}' uses a registered condition (${u.condition})`);
+      assert(REVEAL_MODES.includes(u.reveal), `unlock '${u.id}' uses a known reveal mode (${u.reveal})`);
+    }
+
+    const meta = { unlocked: [], progress: emptyProgress() };
+    const play = (result) => {
+      meta.progress = recordProgress(meta.progress, result);
+      const fresh = evaluateUnlocks(REG.unlocks, meta);
+      meta.unlocked = [...meta.unlocked, ...fresh];
+      return fresh;
+    };
+
+    eq(evaluateUnlocks(REG.unlocks, meta).join(','), '', 'a fresh profile has earned nothing');
+
+    // Dying in act 2 still counts as having REACHED act 2.
+    const r1 = play({ victory: false, class: 'reaver', act: 2, bosses: [] });
+    assert(r1.includes('reachStitchedCourt'), 'reaching act 2 earns the Pilgrim Wrap');
+    assert(!r1.includes('winAsReaver'), 'a loss is not a win');
+
+    // Felling a boss counts even in a run that ends badly.
+    const r2 = play({ victory: false, class: 'herald', act: 2, bosses: ['fellWarden'] });
+    assert(r2.includes('beatFellWarden'), 'the Fell Warden falling earns Starlit Silks');
+    eq(play({ victory: false, class: 'herald', act: 1, bosses: ['fellWarden'] }).join(','), '',
+      'the same boss again earns nothing new');
+
+    // Progress only ever grows — an act-1 death cannot undo having seen act 2.
+    eq(meta.progress.maxAct, 2, 'max act reached is a high-water mark');
+
+    const r3 = play({ victory: true, class: 'reaver', act: 3, bosses: ['stitchedKing'] });
+    assert(r3.includes('winAsReaver'), 'winning as the Reaver earns the Oathsworn set');
+    assert(r3.includes('beatStitchedKing'), 'and the King falling earns the Ashen Vigil');
+    assert(r3.includes('reachAshenCrown'), 'and act 3 earns the Warden Mail');
+
+    // winRuns counts TOTAL wins, which is the reason progress exists at all:
+    // meta.results is capped, so counting from it would silently become
+    // "wins, recently".
+    assert(!meta.unlocked.includes('winTwice'), 'one win is not two');
+    const r4 = play({ victory: true, class: 'starseer', act: 3, bosses: [] });
+    assert(r4.includes('winTwice'), 'the second win earns the Astral Vestment');
+    assert(!r4.includes('graveWardenUnlock'), 'three wins still pending at two');
+    assert(play({ victory: true, class: 'herald', act: 3, bosses: [] }).includes('graveWardenUnlock'),
+      'the third win earns the Grave Warden');
+
+    // Earned things stay earned even if the tally were somehow rebuilt.
+    eq(evaluateUnlocks(REG.unlocks, meta).join(','), '', 'nothing is earned twice');
+
+    // Reveal modes: a hidden unlock is invisible until it is earned.
+    const blind = { unlocked: [], progress: emptyProgress() };
+    const shown = unlockView(REG.unlocks, blind).map((u) => u.id);
+    assert(!shown.includes('ashChildUnlock'), 'a hidden unlock is not listed while unearned');
+    assert(shown.includes('graveWardenUnlock'), 'a teased unlock is listed, with its hint');
+    eq(unlockView(REG.unlocks, blind).find((u) => u.id === 'graveWardenUnlock').hint, 'Win three runs.',
+      'the teased hint tells you what to do');
+    const seen = unlockView(REG.unlocks, { unlocked: ['ashChildUnlock'] }).map((u) => u.id);
+    assert(seen.includes('ashChildUnlock'), 'once earned, the secret appears');
+
+    // Every armour set an unlock points at must exist, or the wardrobe gates a
+    // door onto nothing.
+    for (const u of REG.unlocks) {
+      if (u.kind !== 'outfit') continue;
+      assert(REG.equipment.armour.some((o) => o.id === u.ref), `unlock '${u.id}' points at a real armour set`);
+    }
   });
 
   const passed = results.filter((r) => r.ok).length;

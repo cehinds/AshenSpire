@@ -12,6 +12,7 @@ import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
 import { runMods, stampDeck } from './model/loadout.js';
+import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
@@ -502,7 +503,25 @@ function runResult(victory) {
     name: run.customization && run.customization.name,
     custom: isCustomRun(run.custom),
     ascension: (run.custom && run.custom.ascension) || 0,
+    // Which bosses fell. beatBoss unlocks need this, and a run that ends in
+    // act 3 has already earned the act 1 and 2 kills whatever happens next.
+    bosses: [...(run.bossesBeaten || [])],
   };
+}
+
+/**
+ * Close out a run: record it, advance the durable progress tally, and hand back
+ * anything newly earned. Kept in one place so a defeat and a victory can never
+ * disagree about what counts.
+ */
+function finishRun(victory) {
+  const result = runResult(victory);
+  const meta = saves.recordResult(result);
+  meta.progress = recordProgress(meta.progress, result);
+  const fresh = evaluateUnlocks(registries.unlocks, meta);
+  if (fresh.length) meta.unlocked = [...(meta.unlocked || []), ...fresh];
+  saves.saveMeta(meta);
+  return fresh.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
 }
 
 function showCustomize(slot = 1) {
@@ -713,8 +732,8 @@ function onCombatEnd(result, combat, enc) {
     run.hp = 0;
     sendLanStatus({ dead: true });
     saves.clearRun(activeSlot);
-    saves.recordResult(runResult(false));
-    return mountGameOver(app, { registries, game: run, victory: false, onTitle: showTitle, onHistory: showHistory });
+    const earnedOnDeath = finishRun(false);
+    return mountGameOver(app, { registries, game: run, victory: false, earned: earnedOnDeath, onTitle: showTitle, onHistory: showHistory });
   }
 
   run.hp = combat.player.hp;
@@ -722,14 +741,16 @@ function onCombatEnd(result, combat, enc) {
   run.combatEntered = null;
 
   if (enc.pool === 'boss') {
+    run.bossesBeaten = run.bossesBeaten || [];
+    for (const id of enc.enemies) if (!run.bossesBeaten.includes(id)) run.bossesBeaten.push(id);
     // Endless Spire: no summit — the climb loops until death.
     if (run.actNumber >= 3 && !endlessOn()) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
       sendLanStatus({ victory: true });
       saves.clearRun(activeSlot);
-      saves.recordResult(runResult(true));
-      return mountGameOver(app, { registries, game: run, victory: true, onTitle: showTitle, onHistory: showHistory });
+      const earned = finishRun(true);
+      return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
     }
     // Act boss down: boss rewards, then the climb continues.
     const bossRewards = {
