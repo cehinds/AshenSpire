@@ -1,0 +1,22 @@
+# content/source/cardTags.csv — card SUBTYPES (Ashen Spire)
+#
+# The primary type stays attack / skill / power (engine-load-bearing: the
+# Bulwark stance matches 'skill'). Tags are the flavour layer beneath it —
+# what KIND of attack, what school a skill belongs to — and are display +
+# future-synergy only, so adding one never touches engine code.
+#
+# NOT the same as the mechanical keywords (exhaust/ethereal/innate/retain/
+# unplayable) — those are a frozen engine set. Tags are content.
+#
+# columns: id, label, color (hex, no '#'), glyph, blurb
+id,label,color,glyph,blurb
+blade,Blade,C9502E,⚔,"Steel and edge — direct weapon work."
+guard,Guard,7FA8C9,🛡,"Bracing, blocking, holding the line."
+blood,Blood,8A1A1A,🩸,"Bleed, and the letting of it."
+gorefire,Gorefire,C9502E,🔥,"The blood-and-flame stance."
+starstone,Starstone,7FA8C9,✦,"Astral sorcery — charges and combos."
+ritual,Ritual,C9A227,◈,"Rites, offerings, and faith work."
+blight,Blight,B5541C,☣,"Creeping decay."
+oath,Oath,C9A227,✚,"Binding, lasting commitments."
+flourish,Flourish,9FC3E8,✧,"Finesse — footwork and multi-hit."
+ash,Ash,7A6F5A,•,"Spent once, then gone to ash."

@@ -35,6 +35,9 @@ import {
 import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
+import { TAGS, tagsFor, tagIdsFor, cardsWithTag } from '../src/content/tags.js';
+import { cardTagging } from '../src/content/generated/cardTagging.js';
+import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -913,6 +916,39 @@ export async function runTests() {
       if (u.reveal === 'hidden') eq(u.hint, '', `hidden unlock '${u.id}' shows no hint`);
     }
     eq(unlockIds.length, new Set(unlockIds).size, 'unlock ids are unique');
+  });
+
+  // ---- 26. card subtype tags (CSV-authored) --------------------------------
+  test('26. card tags resolve, stay distinct from engine keywords, and index', () => {
+    // Subtypes live under the frozen attack/skill/power type. Tagging is a CSV
+    // row, so these checks are what stops a spreadsheet typo from silently
+    // dropping a chip or pointing at a card that does not exist.
+    const tagIds = TAGS.map((t) => t.id);
+    eq(tagIds.length, new Set(tagIds).size, 'tag ids are unique');
+    for (const t of TAGS) {
+      assert(/^[0-9A-Fa-f]{6}$/.test(t.color), `tag '${t.id}' colour is a 6-digit hex`);
+      assert(String(t.label).length > 0 && String(t.glyph).length > 0, `tag '${t.id}' has a label + glyph`);
+      // Tags are CONTENT; keywords are a frozen engine set. Overlapping names
+      // would make 'exhaust' ambiguous between flavour and mechanics.
+      assert(!ENGINE_KEYWORDS.includes(t.id), `tag '${t.id}' does not collide with an engine keyword`);
+    }
+    const seen = new Set();
+    for (const row of cardTagging) {
+      assert(REG.cards.has(row.cardId), `tagged card '${row.cardId}' exists`);
+      assert(!seen.has(row.cardId), `card '${row.cardId}' is tagged only once`);
+      seen.add(row.cardId);
+      const ids = tagIdsFor(row.cardId);
+      assert(ids.length > 0, `card '${row.cardId}' resolves to at least one tag`);
+      for (const id of ids) assert(tagIds.includes(id), `card '${row.cardId}' uses a registered tag ('${id}')`);
+      // A single-value CSV cell must still come back as an array, not a string.
+      assert(Array.isArray(ids), `tags for '${row.cardId}' normalise to an array`);
+    }
+    // The lookups the UI and any future synergy predicate depend on.
+    eq(tagsFor('gorefireSlash').length, 3, 'gorefireSlash carries three tags');
+    eq(tagsFor('strike')[0].label, 'Blade', 'strike resolves to the Blade tag');
+    eq(tagsFor('nonexistentCard').length, 0, 'an untagged card resolves to no tags');
+    assert(cardsWithTag('blade').includes('strike'), 'reverse lookup finds Blade cards');
+    assert(cardsWithTag('nope').length === 0, 'reverse lookup on an unknown tag is empty');
   });
 
   const passed = results.filter((r) => r.ok).length;

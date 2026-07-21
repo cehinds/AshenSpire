@@ -8,6 +8,7 @@ import { resolveCard } from '../../model/registries.js';
 import { computeTokenBindings } from '../../model/validate.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { balance } from '../../content/balance.js';
+import { tagsFor } from '../../content/tags.js';
 
 /** Static token values straight off the def (for reward/pile/deck views). */
 export function staticTokens(def) {
@@ -67,6 +68,7 @@ export function renderCard(registries, ref, opts = {}) {
   if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
   el.dataset.cardId = def.id;
 
+  const tags = tagsFor(def.id);
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
@@ -76,6 +78,13 @@ export function renderCard(registries, ref, opts = {}) {
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
+    // Subtypes: authored in content/source/cardTagging.csv. Untagged cards
+    // render nothing here, so the layout is unchanged for them.
+    (tags.length
+      ? `<div class="ctags">${tags
+          .map((t) => `<span class="ctag" style="--tag-color:#${esc(t.color)}" title="${esc(t.blurb)}">${esc(t.glyph)} ${esc(t.label)}</span>`)
+          .join('')}</div>`
+      : '') +
     `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
 
   // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
