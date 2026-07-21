@@ -47,7 +47,12 @@ function fillTemplate(def, tokens, baseTokens) {
 export function renderCard(registries, ref, opts = {}) {
   const def = resolveCard(registries, ref);
   const el = document.createElement('div');
-  el.className = `card rarity-${def.rarity}${ref.upgraded ? ' upgraded' : ''}`;
+  el.className = `card rarity-${def.rarity} cls-${def.class}${ref.upgraded ? ' upgraded' : ''}`;
+  // The class motif hue is DATA (class def cardTint), handed to CSS as a var so
+  // adding a class brings its own card colour with no stylesheet edit. Colorless
+  // cards have no owning class, so they fall back to the neutral frame.
+  const owner = registries.classes.has(def.class) ? registries.classes.get(def.class) : null;
+  if (owner && owner.cardTint) el.style.setProperty('--card-tint', owner.cardTint);
   if (opts.affordable === false) el.classList.add('unaffordable');
   if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
   el.dataset.cardId = def.id;

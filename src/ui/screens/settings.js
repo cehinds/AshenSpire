@@ -8,6 +8,9 @@
 
 import { openDebugLog } from '../debuglog.js';
 import { AUDIO_DEFAULTS } from '../audio.js';
+import { balance } from '../../content/balance.js';
+
+const UI_DEFAULTS = balance.ui;
 
 const ROWS = [
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
@@ -24,6 +27,12 @@ const ROWS = [
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size',
     note: 'Auto flexes the whole interface with your window; S–XL is a fixed override.' },
+  { cat: 'Display', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
+    choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
+    note: 'Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.' },
+  { cat: 'Display', key: 'cardMotifStrength', type: 'choice', def: 'normal',
+    choices: ['subtle', 'normal', 'strong'], label: 'Motif strength',
+    note: 'How strongly the class colour tints a card.' },
   { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake',
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
   { cat: 'Display', key: 'ambient', type: 'choice', def: 'normal',
