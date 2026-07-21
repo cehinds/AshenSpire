@@ -12520,8 +12520,8 @@ const ROWS = [
 
   { cat: 'Audio', key: 'muteAudio', def: false, label: 'Mute all audio',
     note: 'Silence music and sound effects.' },
-  { cat: 'Audio', key: 'musicVolume', type: 'range', def: 55, label: 'Music volume',
-    note: 'Ambient score for the title, map, and battles.' },
+  { cat: 'Audio', key: 'musicVolume', type: 'range', def: 0, label: 'Music volume',
+    note: 'Ambient score for the title, map, and battles. Defaults to 0 (muted) while testing — raise it to hear the score.' },
   { cat: 'Audio', key: 'sfxVolume', type: 'range', def: 75, label: 'Sound effects',
     note: 'Hits, blocks, bleed bursts, UI.' },
   { cat: 'Audio', key: 'musicFolder', type: 'text', def: '', label: 'Music folder',
@@ -16709,7 +16709,10 @@ function initAudio(settings = {}) {
   master.connect(ctx.destination);
 
   const state = {
-    musicVol: clampVol(settings.musicVolume, 55),
+    // Music defaults to 0 (muted) for testing; sfx stays audible. Must match the
+    // musicVolume row default in ui/screens/settings.js — this fallback is what
+    // an unset setting actually resolves to (settings are stored sparse).
+    musicVol: clampVol(settings.musicVolume, 0),
     sfxVol: clampVol(settings.sfxVolume, 75),
     muted: settings.muteAudio === true,
     context: null, // current music bed key
