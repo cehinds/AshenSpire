@@ -333,8 +333,8 @@
     "reaver/default": {
       "fields": {
         "leather": "4B3522",
-        "plate": "7E715D",
-        "plateLt": "9C8D73",
+        "plate": "63705A",
+        "plateLt": "879473",
         "under": "332A1E"
       },
       "files": [
@@ -385,8 +385,8 @@
     },
     "starseer/default": {
       "fields": {
-        "plate": "2B2547",
-        "plateLt": "3A3358"
+        "plate": "17294F",
+        "plateLt": "26406E"
       },
       "files": [
         "body_starseer_default.webp"
@@ -412,10 +412,42 @@
     }
   },
   "audit": {
+    "tightestPairChannels": {
+      "herald": {
+        "dC": 0.0071410358735895865,
+        "dE": 0.04222720860003957,
+        "dHueDeg": 11.71722361572128,
+        "dL": 0.04091937193423567,
+        "pair": [
+          "ossuary",
+          "pilgrim"
+        ]
+      },
+      "reaver": {
+        "dC": 0.01790360073896996,
+        "dE": 0.03600902170655603,
+        "dHueDeg": 1.6098894407013802,
+        "dL": 0.031212515960204912,
+        "pair": [
+          "default",
+          "warden"
+        ]
+      },
+      "starseer": {
+        "dC": 0.010495513393609508,
+        "dE": 0.03543040270888798,
+        "dHueDeg": 133.56405469659046,
+        "dL": 0.025977645811370742,
+        "pair": [
+          "default",
+          "eclipse"
+        ]
+      }
+    },
     "withinClassMin": {
       "herald": 0.04222720860003957,
-      "reaver": 0.03811951805993238,
-      "starseer": 0.028664006515891276
+      "reaver": 0.03600902170655603,
+      "starseer": 0.03543040270888798
     }
   }
 }

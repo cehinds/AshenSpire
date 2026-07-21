@@ -81,6 +81,30 @@ def dist(a, b):
     return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
 
 
+def lch(lab):
+    """Oklab -> (L, C, h°). Separating the channels is the whole point.
+
+    Bjorn's finding, from looking at the sprites rather than at the numbers: the
+    pairs that read as two different suits differ in HUE; the pair that reads as
+    one suit under two lights differs only in lightness and chroma within one
+    hue. A scalar dE adds those as one currency. Perceptually they are not one
+    currency — a hue shift says 'different object', a lightness shift says 'same
+    object, differently lit'.
+
+    Which makes a scalar floor gameable in exactly the way Vira's ratio was:
+    you pass it by making one set darker, manufacturing the very failure the
+    test exists to prevent, while the test goes green.
+    """
+    L, a, b = lab
+    return L, math.hypot(a, b), math.degrees(math.atan2(b, a))
+
+
+def dhue(a, b):
+    """Absolute hue difference in degrees, wrapped to 0..180."""
+    d = abs(lch(a)[2] - lch(b)[2]) % 360.0
+    return 360.0 - d if d > 180.0 else d
+
+
 def measure(OUT, manifest, verbose=True):
     labs = {}
     for key, entry in manifest["armour"].items():
@@ -112,6 +136,24 @@ def measure(OUT, manifest, verbose=True):
             print(f"    {d:6.1f}   {a} / {b}")
         if worst is None or pairs[0][0] < worst[0]:
             worst = (pairs[0][0], cls, pairs[0][1], pairs[0][2])
+
+    print("\n=== CHANNEL DECOMPOSITION of each class's tightest pair ===")
+    print("    (dL lightness, dC chroma, dh hue angle — a scalar dE adds these as")
+    print("     one currency, and Bjorn's eyes say they are not one currency)")
+    decomp = {}
+    for cls in sorted(by_class):
+        sets = by_class[cls]
+        ids = sorted(sets)
+        pr = min(((dist(sets[a], sets[b]), a, b) for i, a in enumerate(ids)
+                  for b in ids[i + 1:]), key=lambda t: t[0])
+        _, a, b = pr
+        la, ca, _ = lch(sets[a])
+        lb, cb, _ = lch(sets[b])
+        dh = dhue(sets[a], sets[b])
+        decomp[cls] = {"pair": [a, b], "dE": pr[0], "dL": abs(la - lb),
+                       "dC": abs(ca - cb), "dHueDeg": dh}
+        print(f"    {cls:9} {a:11} vs {b:11}  dE {pr[0]:.4f}   "
+              f"dL {abs(la - lb):.4f}  dC {abs(ca - cb):.4f}  dh {dh:6.1f}deg")
 
     print("\n=== BETWEEN CLASSES (silhouettes differ — palette carries little) ===")
     clss = sorted(by_class)
@@ -151,6 +193,7 @@ def measure(OUT, manifest, verbose=True):
     # artifact is an invitation to assert it later; this one is malformed for
     # every threshold. The absolute floor is the real instrument.
     return {
+        "tightestPairChannels": decomp,
         "withinClassMin": {c: min(dist(by_class[c][a], by_class[c][b])
                                   for i, a in enumerate(sorted(by_class[c]))
                                   for b in sorted(by_class[c])[i + 1:])
