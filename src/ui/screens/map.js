@@ -24,7 +24,7 @@ function defaultZoom(meta) {
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), 1.15);
 }
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMenu }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMenu, onArmoury }) {
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -69,6 +69,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
         <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
         <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
         <div class="mh-actions">
+          <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
           <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
         </div>
@@ -153,6 +154,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
   }
 
   if (onMenu) app.querySelector('#open-menu').addEventListener('click', () => onMenu('deck'));
+  const armouryBtn = app.querySelector('#open-armoury');
+  if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
+  else armouryBtn.remove();
 
   // Legend "?" popover: opens on click; a one-shot outside-click listener closes
   // it (added only while open, so it never leaks across screens).

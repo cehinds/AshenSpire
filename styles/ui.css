@@ -542,3 +542,96 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .seat-tab.on { background: #2a2418; color: var(--gold); box-shadow: 0 0 10px rgba(201,162,39,.35); }
 .seat-tab .pip { color: var(--gold); }
 .seat-hint { color: var(--muted); font-size: 1rem; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: 4px; padding: 0.1rem 0.6rem; }
+
+/* ---- Armoury (equipment) --------------------------------------------------
+   Three layouts over one loadout. The view class on .armoury does all the
+   rearranging, so the screen builds the same DOM every time and only CSS
+   decides whether you are looking at a person or at a list. */
+.armoury-overlay {
+  position: fixed; inset: 0; z-index: 60; display: flex;
+  align-items: center; justify-content: center;
+  background: rgba(6, 5, 4, 0.82); backdrop-filter: blur(2px);
+}
+.armoury {
+  width: 108rem; max-width: 96vw; height: 88vh; display: flex; flex-direction: column;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); overflow: hidden;
+}
+.armoury-head {
+  display: flex; align-items: center; gap: 1.6rem; padding: 1.2rem 1.6rem;
+  border-bottom: 1px solid var(--line); background: var(--panel);
+}
+.armoury-head h2 { color: var(--gold); font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 2px; }
+.armoury-views { display: flex; gap: 0.4rem; margin-left: auto; }
+.armoury-views button {
+  background: none; border: 1px solid var(--line); color: var(--muted);
+  padding: 0.4rem 1.1rem; border-radius: 3px; cursor: pointer;
+  font-size: 1.2rem; text-transform: capitalize; font-family: var(--font-body);
+}
+.armoury-views button.on { color: var(--gold); border-color: var(--gold); background: var(--bg); }
+.armoury-close { background: none; border: none; color: var(--muted); font-size: 1.8rem; cursor: pointer; }
+.armoury-close:hover { color: var(--parchment); }
+
+.armoury-body { flex: 1; display: flex; gap: 1.6rem; padding: 1.6rem; overflow: hidden; }
+.armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; }
+.armoury-right { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; overflow-y: auto; }
+.armoury.view-rack .armoury-left { display: none; }
+.armoury.view-grid .armoury-left { flex: 1; }
+.armoury.view-grid .armoury-right { max-width: 38rem; }
+
+.armoury-figure { width: 22rem; height: 28rem; display: flex; align-items: flex-end; justify-content: center; }
+.armoury-figure img { width: 100%; height: 100%; object-fit: contain; }
+
+.equip-slots { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
+.armoury.view-hybrid .equip-slots, .armoury.view-rack .equip-slots { justify-content: flex-start; }
+.equip-slot { border: 1px solid var(--line); border-radius: 4px; padding: 0.8rem; background: var(--panel); }
+.es-head { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 0.6rem; }
+.es-label { color: var(--gold); font-size: 1.1rem; letter-spacing: 1px; text-transform: uppercase; }
+.es-sealed { color: var(--muted); font-size: 1rem; font-style: italic; }
+.es-sets { display: flex; gap: 0.6rem; }
+.es-cell {
+  width: 7rem; height: 7rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  background: var(--bg); color: var(--parchment); cursor: pointer; padding: 0.3rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;
+}
+.es-cell img { width: 100%; height: 4rem; object-fit: contain; }
+.es-cell span { font-size: 0.95rem; line-height: 1.1; text-align: center; color: var(--muted); }
+.es-cell.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.es-cell.on span { color: var(--parchment); }
+.es-cell.empty .es-empty { font-size: 2.2rem; color: var(--line-soft); }
+
+.equip-picker { border-top: 1px solid var(--line); padding-top: 1.2rem; }
+.equip-picker h4 { color: var(--gold); font-size: 1.2rem; margin-bottom: 0.8rem; letter-spacing: 1px; }
+.ep-hint { color: var(--muted); font-size: 1.2rem; font-style: italic; }
+.ep-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.equip-chip {
+  display: grid; grid-template-columns: 3.6rem 1fr auto; grid-template-rows: auto auto;
+  gap: 0.2rem 0.9rem; align-items: center; text-align: left;
+  border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
+  color: var(--parchment); padding: 0.6rem 0.9rem; cursor: pointer; font-family: var(--font-body);
+}
+.equip-chip:hover { border-color: var(--line-soft); }
+.equip-chip.on { border-color: var(--gold); background: var(--bg); }
+.equip-chip.locked { opacity: 0.45; cursor: not-allowed; }
+.ec-art { grid-row: 1 / 3; width: 3.6rem; height: 3.6rem; object-fit: contain; }
+.ec-name { font-size: 1.3rem; }
+.ec-mods { grid-column: 2 / 4; font-size: 1.05rem; color: var(--muted); }
+.ec-tags { display: flex; gap: 0.3rem; }
+.ec-tags em, .ef-tags em {
+  font-style: normal; font-size: 0.95rem; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px; padding: 0 0.4rem;
+}
+.ef-tags em.none { color: var(--muted); border-color: var(--line); }
+.ec-lock { grid-column: 1 / 4; font-size: 1rem; color: var(--muted); font-style: italic; }
+.equip-chip.rarity-rare { border-left: 3px solid var(--gold); }
+.equip-chip.rarity-uncommon { border-left: 3px solid var(--frost); }
+
+.armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
+.equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.equip-foot { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
+.ef-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.ef-run { color: var(--grace); font-size: 1.15rem; }
+.armoury-notice {
+  padding: 0.7rem 1.6rem; background: rgba(201, 80, 46, 0.14);
+  border-bottom: 1px solid var(--ember); color: var(--parchment); font-size: 1.2rem;
+}

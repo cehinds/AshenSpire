@@ -41,6 +41,7 @@ import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { openSettings } from './ui/screens/settings.js';
+import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { initInput, setBindings, setKeyBindings } from './ui/input.js';
@@ -398,6 +399,30 @@ function showSettings() {
   });
 }
 
+/**
+ * The Armoury. Outside combat it edits the loadout directly and re-stamps the
+ * deck; the chosen view is a setting so it survives the session.
+ */
+function showArmoury() {
+  mountEquipment(document.body, {
+    registries,
+    run,
+    meta: saves.loadMeta(),
+    inCombat: false,
+    onChange: (loadout, settingChange) => {
+      if (settingChange) {
+        const meta = saves.loadMeta();
+        Object.assign(meta.settings, settingChange);
+        saves.saveMeta(meta);
+      }
+      run.loadout = loadout;
+      stampDeck(registries, run);
+      persist();
+    },
+    onClose: showMap,
+  });
+}
+
 function showHistory() {
   mountHistory(app, { meta: saves.loadMeta(), onBack: showTitle });
 }
@@ -520,6 +545,7 @@ function showMap() {
     onPick: enterNode,
     onSettings: showSettings,
     onMenu: showOverlay,
+    onArmoury: showArmoury,
     onSave: () => {
       persist();
       return activeSlot;

@@ -689,6 +689,99 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .seat-tab .pip { color: var(--gold); }
 .seat-hint { color: var(--muted); font-size: 1rem; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: 4px; padding: 0.1rem 0.6rem; }
 
+/* ---- Armoury (equipment) --------------------------------------------------
+   Three layouts over one loadout. The view class on .armoury does all the
+   rearranging, so the screen builds the same DOM every time and only CSS
+   decides whether you are looking at a person or at a list. */
+.armoury-overlay {
+  position: fixed; inset: 0; z-index: 60; display: flex;
+  align-items: center; justify-content: center;
+  background: rgba(6, 5, 4, 0.82); backdrop-filter: blur(2px);
+}
+.armoury {
+  width: 108rem; max-width: 96vw; height: 88vh; display: flex; flex-direction: column;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); overflow: hidden;
+}
+.armoury-head {
+  display: flex; align-items: center; gap: 1.6rem; padding: 1.2rem 1.6rem;
+  border-bottom: 1px solid var(--line); background: var(--panel);
+}
+.armoury-head h2 { color: var(--gold); font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 2px; }
+.armoury-views { display: flex; gap: 0.4rem; margin-left: auto; }
+.armoury-views button {
+  background: none; border: 1px solid var(--line); color: var(--muted);
+  padding: 0.4rem 1.1rem; border-radius: 3px; cursor: pointer;
+  font-size: 1.2rem; text-transform: capitalize; font-family: var(--font-body);
+}
+.armoury-views button.on { color: var(--gold); border-color: var(--gold); background: var(--bg); }
+.armoury-close { background: none; border: none; color: var(--muted); font-size: 1.8rem; cursor: pointer; }
+.armoury-close:hover { color: var(--parchment); }
+
+.armoury-body { flex: 1; display: flex; gap: 1.6rem; padding: 1.6rem; overflow: hidden; }
+.armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; }
+.armoury-right { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; overflow-y: auto; }
+.armoury.view-rack .armoury-left { display: none; }
+.armoury.view-grid .armoury-left { flex: 1; }
+.armoury.view-grid .armoury-right { max-width: 38rem; }
+
+.armoury-figure { width: 22rem; height: 28rem; display: flex; align-items: flex-end; justify-content: center; }
+.armoury-figure img { width: 100%; height: 100%; object-fit: contain; }
+
+.equip-slots { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
+.armoury.view-hybrid .equip-slots, .armoury.view-rack .equip-slots { justify-content: flex-start; }
+.equip-slot { border: 1px solid var(--line); border-radius: 4px; padding: 0.8rem; background: var(--panel); }
+.es-head { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 0.6rem; }
+.es-label { color: var(--gold); font-size: 1.1rem; letter-spacing: 1px; text-transform: uppercase; }
+.es-sealed { color: var(--muted); font-size: 1rem; font-style: italic; }
+.es-sets { display: flex; gap: 0.6rem; }
+.es-cell {
+  width: 7rem; height: 7rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  background: var(--bg); color: var(--parchment); cursor: pointer; padding: 0.3rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;
+}
+.es-cell img { width: 100%; height: 4rem; object-fit: contain; }
+.es-cell span { font-size: 0.95rem; line-height: 1.1; text-align: center; color: var(--muted); }
+.es-cell.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.es-cell.on span { color: var(--parchment); }
+.es-cell.empty .es-empty { font-size: 2.2rem; color: var(--line-soft); }
+
+.equip-picker { border-top: 1px solid var(--line); padding-top: 1.2rem; }
+.equip-picker h4 { color: var(--gold); font-size: 1.2rem; margin-bottom: 0.8rem; letter-spacing: 1px; }
+.ep-hint { color: var(--muted); font-size: 1.2rem; font-style: italic; }
+.ep-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.equip-chip {
+  display: grid; grid-template-columns: 3.6rem 1fr auto; grid-template-rows: auto auto;
+  gap: 0.2rem 0.9rem; align-items: center; text-align: left;
+  border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
+  color: var(--parchment); padding: 0.6rem 0.9rem; cursor: pointer; font-family: var(--font-body);
+}
+.equip-chip:hover { border-color: var(--line-soft); }
+.equip-chip.on { border-color: var(--gold); background: var(--bg); }
+.equip-chip.locked { opacity: 0.45; cursor: not-allowed; }
+.ec-art { grid-row: 1 / 3; width: 3.6rem; height: 3.6rem; object-fit: contain; }
+.ec-name { font-size: 1.3rem; }
+.ec-mods { grid-column: 2 / 4; font-size: 1.05rem; color: var(--muted); }
+.ec-tags { display: flex; gap: 0.3rem; }
+.ec-tags em, .ef-tags em {
+  font-style: normal; font-size: 0.95rem; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px; padding: 0 0.4rem;
+}
+.ef-tags em.none { color: var(--muted); border-color: var(--line); }
+.ec-lock { grid-column: 1 / 4; font-size: 1rem; color: var(--muted); font-style: italic; }
+.equip-chip.rarity-rare { border-left: 3px solid var(--gold); }
+.equip-chip.rarity-uncommon { border-left: 3px solid var(--frost); }
+
+.armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
+.equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.equip-foot { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
+.ef-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.ef-run { color: var(--grace); font-size: 1.15rem; }
+.armoury-notice {
+  padding: 0.7rem 1.6rem; background: rgba(201, 80, 46, 0.14);
+  border-bottom: 1px solid var(--ember); color: var(--parchment); font-size: 1.2rem;
+}
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -1255,6 +1348,7 @@ const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
 const { openSettings } = require("src/ui/screens/settings.js");
+const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
 const { initInput, setBindings, setKeyBindings } = require("src/ui/input.js");
@@ -1612,6 +1706,30 @@ function showSettings() {
   });
 }
 
+/**
+ * The Armoury. Outside combat it edits the loadout directly and re-stamps the
+ * deck; the chosen view is a setting so it survives the session.
+ */
+function showArmoury() {
+  mountEquipment(document.body, {
+    registries,
+    run,
+    meta: saves.loadMeta(),
+    inCombat: false,
+    onChange: (loadout, settingChange) => {
+      if (settingChange) {
+        const meta = saves.loadMeta();
+        Object.assign(meta.settings, settingChange);
+        saves.saveMeta(meta);
+      }
+      run.loadout = loadout;
+      stampDeck(registries, run);
+      persist();
+    },
+    onClose: showMap,
+  });
+}
+
 function showHistory() {
   mountHistory(app, { meta: saves.loadMeta(), onBack: showTitle });
 }
@@ -1734,6 +1852,7 @@ function showMap() {
     onPick: enterNode,
     onSettings: showSettings,
     onMenu: showOverlay,
+    onArmoury: showArmoury,
     onSave: () => {
       persist();
       return activeSlot;
@@ -14048,7 +14167,7 @@ function defaultZoom(meta) {
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), 1.15);
 }
 
-function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMenu }) {
+function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMenu, onArmoury }) {
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -14093,6 +14212,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
         <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
         <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
         <div class="mh-actions">
+          <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
           <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
         </div>
@@ -14177,6 +14297,9 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
   }
 
   if (onMenu) app.querySelector('#open-menu').addEventListener('click', () => onMenu('deck'));
+  const armouryBtn = app.querySelector('#open-armoury');
+  if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
+  else armouryBtn.remove();
 
   // Legend "?" popover: opens on click; a one-shot outside-click listener closes
   // it (added only while open, so it never leaks across screens).
@@ -16307,6 +16430,7 @@ const { overlayIsOpen } = require("src/ui/components/overlay.js");
 const { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad } = require("src/ui/input.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
+const { mountEquipment } = require("src/ui/screens/equipment.js");
 
 function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -16321,6 +16445,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
         <div class="flasks" style="display:flex;gap:6px"></div>
         <div class="relics"></div>
         <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
+        <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
         <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
       </header>
       <div class="${backdropClass(run.actNumber)}"></div>
@@ -17122,6 +17247,32 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
   if (onMenu) $('#combat-menu').addEventListener('click', () => onMenu('deck'));
 
+  // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
+  // storage seal themselves, and picking another hand set routes through the
+  // engine intent that charges for it instead of mutating the loadout here.
+  $('#combat-armoury').addEventListener('click', () => {
+    if (!registries.balance.equipment.enabled) return;
+    const panel = mountEquipment(document.body, {
+      registries,
+      run,
+      meta: { settings: { customization: run.customization } },
+      inCombat: true,
+      onSwap: (slotId, setIndex) => {
+        let out;
+        try {
+          out = dispatch(combat, { type: 'swapArmament', slotId, setIndex });
+        } catch (e) {
+          dlog('equip', e.message);
+          return e.message; // the panel shows the refusal in place
+        }
+        sfx.play('cardPlay');
+        panel.redraw();
+        render();
+        afterDispatch(out.events);
+      },
+    });
+  });
+
   render();
 
   // Keep the target glow in sync with focus/hover: the field's class attributes
@@ -17732,6 +17883,313 @@ function mountTutorial(root, { onDone }) {
 
 
 Object.assign(module.exports, { mountTutorial });
+
+},
+"src/ui/screens/equipment.js": function (module, exports, require) {
+// src/ui/screens/equipment.js — the Armoury.
+//
+// Three views of the same loadout, because the two obvious layouts are both
+// right for different things and neither should have to win:
+//
+//   grid    the figure in the middle, slots as squares around it — you are
+//           looking at a PERSON, and the kit hangs off them
+//   rack    a dense two-column armament rack — you are looking at a LIST, and
+//           you want to compare eight shields quickly
+//   hybrid  the rack, with the figure and its slot squares alongside
+//
+// The panel builds itself from registries.equipment.slots, so a new row in
+// equipSlots.csv appears here with no change to this file. The card strip at
+// the bottom is the whole point of the system made visible: pick up a dagger
+// and watch Strike become 3×2 before you commit to it.
+
+const { balance } = require("src/content/balance.js");
+const { resolveCard } = require("src/model/registries.js");
+const { canSwap, cycleSet, equipPiece, equippedIn, cardMods, runMods, loadoutTags } = require("src/model/loadout.js");
+const { renderCard } = require("src/ui/components/card.js");
+const { esc } = require("src/ui/components/tooltip.js");
+const { playerSprite } = require("src/ui/assets.js");
+const { sfx } = require("src/ui/sfx.js");
+
+const CFG = () => balance.equipment;
+
+/** The armour set a class is wearing right now (or its starting one). */
+function wornArmourId(registries, run) {
+  const worn = equippedIn(registries, run.loadout, run.class, 'armor');
+  return worn ? worn.id : 'default';
+}
+
+/**
+ * The figure. Armour is a whole repaint of the class body, so a set swap is a
+ * different rendered PNG (tools/equipment-blender.py) rather than an overlay;
+ * anything missing falls back to the ordinary class sprite, which keeps the
+ * single-file dist and file:// play working exactly as before.
+ */
+function figureFor(registries, run, cz) {
+  const el = document.createElement('div');
+  el.className = 'armoury-figure';
+  if (CFG().spriteReacts === 'none') {
+    el.appendChild(playerSprite(cz, run.class));
+    return el;
+  }
+  const img = document.createElement('img');
+  img.src = `assets/equipment/body_${run.class}_${wornArmourId(registries, run)}.png`;
+  img.alt = 'your figure';
+  img.addEventListener('error', () => {
+    img.remove();
+    el.appendChild(playerSprite(cz, run.class));
+  });
+  el.appendChild(img);
+  return el;
+}
+
+/** A piece's mods, written the way a player reads them. */
+function modSummary(registries, piece) {
+  const fields = registries.equipment.modFields || {};
+  const parts = [];
+  for (const raw of piece.mods || []) {
+    const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
+    if (!m) continue;
+    const spec = fields[m[2]];
+    if (!spec) continue;
+    const where = m[1] === 'self' ? '' : `${m[1][0].toUpperCase()}${m[1].slice(1)} `;
+    const sign = m[3][0] === '+' || m[3][0] === '-' ? m[3] : `= ${m[3]}`;
+    parts.push(`${where}${spec.label} ${sign}`);
+  }
+  return parts;
+}
+
+function pieceChip(registries, piece, { selected, locked, hint }) {
+  const el = document.createElement('button');
+  el.className = `equip-chip rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}${locked ? ' locked' : ''}`;
+  el.type = 'button';
+  const mods = modSummary(registries, piece);
+  el.innerHTML =
+    `<img class="ec-art" src="assets/equipment/weapon_${esc(piece.id)}.png" alt="">` +
+    `<span class="ec-name">${esc(piece.name)}</span>` +
+    `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>` +
+    `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>` +
+    (locked ? `<span class="ec-lock">🔒 ${esc(hint || 'Locked')}</span>` : '');
+  const art = el.querySelector('.ec-art');
+  art.addEventListener('error', () => art.remove());
+  return el;
+}
+
+/**
+ * mountEquipment(host, opts) → { close() }
+ *
+ *   inCombat  seals storage and honours each slot's swap rule
+ *   onSwap    called with (slotId, setIndex) instead of mutating, so combat can
+ *             route the change through the engine intent that charges for it
+ */
+function mountEquipment(host, {
+  registries, run, meta = {}, inCombat = false, onClose, onChange, onSwap,
+}) {
+  const eq = registries.equipment;
+  const cz = (meta.settings && meta.settings.customization) || run.customization || {};
+  const unlocked = new Set(meta.unlocked || []);
+  let view = (meta.settings && meta.settings.equipView) || CFG().defaultView;
+  let picking = null; // { slotId, setIndex }
+  let notice = ''; // a refusal to show in place, cleared on the next draw
+
+  const wrap = document.createElement('div');
+  wrap.className = 'armoury-overlay';
+  host.appendChild(wrap);
+
+  const close = () => {
+    wrap.remove();
+    if (onClose) onClose();
+  };
+
+  function eligible(slot) {
+    if (slot.kinds.includes('armor')) {
+      return (eq.armour || [])
+        .filter((o) => o.classId === run.class)
+        .map((o) => ({ ...o, locked: o.unlock !== '' && !unlocked.has(o.unlock) }));
+    }
+    return (eq.armaments || [])
+      .filter((a) => slot.kinds.includes(a.kind))
+      .map((a) => ({ ...a, locked: a.unlock !== '' && !unlocked.has(a.unlock) }));
+  }
+
+  function slotBlock(slot) {
+    const box = document.createElement('div');
+    box.className = 'equip-slot';
+    const rule = canSwap(registries, slot.id, { inCombat });
+    box.innerHTML =
+      `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>` +
+      (rule.ok ? '' : `<span class="es-sealed" title="${esc(rule.reason)}">sealed</span>`) +
+      `</div><div class="es-sets"></div>`;
+    const sets = box.querySelector('.es-sets');
+
+    (run.loadout.sets[slot.id] || []).forEach((itemId, i) => {
+      const active = (run.loadout.active[slot.id] || 0) === i;
+      const piece = itemId
+        ? (slot.kinds.includes('armor')
+          ? (eq.armour || []).find((o) => o.classId === run.class && o.id === itemId)
+          : (eq.armaments || []).find((a) => a.id === itemId))
+        : null;
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = `es-cell${active ? ' on' : ''}${piece ? '' : ' empty'}`;
+      cell.title = piece ? piece.name : 'Empty';
+      cell.innerHTML = piece
+        ? `<img src="assets/equipment/weapon_${esc(piece.id)}.png" alt=""><span>${esc(piece.name)}</span>`
+        : `<span class="es-empty">＋</span>`;
+      const im = cell.querySelector('img');
+      if (im) im.addEventListener('error', () => { im.replaceWith(Object.assign(document.createElement('span'), { textContent: '⚔' })); });
+
+      cell.addEventListener('click', () => {
+        // Clicking a set you're not in switches to it; clicking the one you're
+        // already in opens the picker. Same square, two jobs, no extra chrome.
+        if (!active) {
+          if (!rule.ok) { notice = rule.reason; draw(); return; }
+          if (onSwap) {
+            // In combat the swap is the engine's to allow or refuse — it may
+            // say no because the energy isn't there, and the player should be
+            // told that in the panel rather than in the console.
+            const refused = onSwap(slot.id, i);
+            if (refused) { notice = refused; draw(); }
+            return;
+          }
+          cycleSet(run.loadout, slot.id, i);
+          sfx.play('cardPlay');
+          commit();
+        } else if (!inCombat) {
+          picking = picking && picking.slotId === slot.id && picking.setIndex === i ? null : { slotId: slot.id, setIndex: i };
+          draw();
+        }
+      });
+      sets.appendChild(cell);
+    });
+    return box;
+  }
+
+  function pickerBlock() {
+    const box = document.createElement('div');
+    box.className = 'equip-picker';
+    if (!picking) {
+      box.innerHTML = inCombat
+        ? '<p class="ep-hint">Storage is sealed in combat. Cycle between the sets you brought.</p>'
+        : '<p class="ep-hint">Pick a slot above to change what is in it.</p>';
+      return box;
+    }
+    const slot = eq.slots.find((s) => s.id === picking.slotId);
+    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4><div class="ep-list"></div>`;
+    const list = box.querySelector('.ep-list');
+
+    const bare = document.createElement('button');
+    bare.type = 'button';
+    bare.className = 'equip-chip bare';
+    bare.innerHTML = '<span class="ec-name">Bare</span><span class="ec-mods">Nothing at all</span>';
+    bare.addEventListener('click', () => {
+      equipPiece(run.loadout, picking.slotId, picking.setIndex, null);
+      commit();
+    });
+    list.appendChild(bare);
+
+    const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
+    for (const piece of eligible(slot)) {
+      const chip = pieceChip(registries, piece, {
+        selected: piece.id === current,
+        locked: piece.locked,
+        hint: piece.blurb,
+      });
+      if (!piece.locked) {
+        chip.addEventListener('click', () => {
+          equipPiece(run.loadout, picking.slotId, picking.setIndex, piece.id);
+          sfx.play('cardPlay');
+          commit();
+        });
+      }
+      list.appendChild(chip);
+    }
+    return box;
+  }
+
+  /** The rewrites, live: the actual cards this loadout produces right now. */
+  function cardStrip() {
+    const box = document.createElement('div');
+    box.className = 'equip-cards';
+    const mods = cardMods(registries, run.loadout, run.class);
+    const ids = [...new Set((eq.targets || [])
+      .filter((t) => t.classId === '*' || t.classId === run.class)
+      .map((t) => t.cardId))];
+    for (const cardId of ids) {
+      if (!registries.cards.has(cardId)) continue;
+      box.appendChild(renderCard(registries, { cardId, mods: mods.get(cardId) }, { small: true }));
+    }
+    const rm = runMods(registries, run.loadout, run.class);
+    const bits = [];
+    if (rm.maxHp) bits.push(`Max HP ${rm.maxHp > 0 ? '+' : ''}${rm.maxHp}`);
+    for (const s of rm.startStatuses) bits.push(`${registries.statuses.get(s.status).name} ${s.stacks}`);
+    const tags = loadoutTags(registries, run.loadout, run.class);
+    const foot = document.createElement('div');
+    foot.className = 'equip-foot';
+    foot.innerHTML =
+      `<span class="ef-tags">${tags.map((t) => `<em>${esc(t)}</em>`).join('') || '<em class="none">no tags</em>'}</span>` +
+      (bits.length ? `<span class="ef-run">${bits.map(esc).join(' · ')}</span>` : '');
+    box.appendChild(foot);
+    return box;
+  }
+
+  function commit() {
+    if (onChange) onChange(run.loadout);
+    draw();
+  }
+
+  function draw() {
+    wrap.innerHTML = `
+      <div class="armoury view-${esc(view)}">
+        <header class="armoury-head">
+          <h2>ARMOURY</h2>
+          <div class="armoury-views">
+            ${CFG().views.map((v) => `<button type="button" data-view="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
+          </div>
+          <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
+        </header>
+        ${notice ? `<p class="armoury-notice">${esc(notice)}</p>` : ''}
+        <div class="armoury-body">
+          <div class="armoury-left"></div>
+          <div class="armoury-right"></div>
+        </div>
+        <div class="armoury-strip"></div>
+      </div>`;
+
+    const left = wrap.querySelector('.armoury-left');
+    const right = wrap.querySelector('.armoury-right');
+    // 'grid' hangs the slots around the figure; 'rack' drops the figure
+    // entirely for density; 'hybrid' keeps both, figure beside the rack.
+    if (view !== 'rack') left.appendChild(figureFor(registries, run, cz));
+    const slotHost = view === 'grid' ? left : right;
+    const slotWrap = document.createElement('div');
+    slotWrap.className = 'equip-slots';
+    for (const slot of eq.slots) slotWrap.appendChild(slotBlock(slot));
+    slotHost.appendChild(slotWrap);
+    (view === 'grid' ? right : right).appendChild(pickerBlock());
+    wrap.querySelector('.armoury-strip').appendChild(cardStrip());
+
+    notice = '';
+    wrap.querySelector('.armoury-close').addEventListener('click', close);
+    for (const b of wrap.querySelectorAll('[data-view]')) {
+      b.addEventListener('click', () => {
+        view = b.dataset.view;
+        if (onChange) onChange(run.loadout, { equipView: view });
+        draw();
+      });
+    }
+  }
+
+  const onKey = (e) => {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+  };
+  document.addEventListener('keydown', onKey);
+
+  draw();
+  return { close, redraw: draw };
+}
+
+
+Object.assign(module.exports, { mountEquipment });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {
