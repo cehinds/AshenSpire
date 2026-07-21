@@ -15,7 +15,7 @@ import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox } from '../fx.js';
-import { nodeIcon, nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip } from '../uiContent.js';
+import { nodeIcon, nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass } from '../uiContent.js';
 import { resolveCard } from '../../model/registries.js';
 
 const COL_X = 95;
@@ -224,6 +224,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
           <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
           <button class="subtle coop-leave" id="coop-leave" style="margin-left:auto">Leave</button>
         </header>
+        <div class="${backdropClass(snap.actNumber)}"></div>
         <div class="field">
           <div class="player-zone"></div>
           <div class="enemy-row"></div>

@@ -11,7 +11,7 @@
 // Usage: node tools/bundle.mjs
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { dirname, resolve, relative, posix } from 'node:path';
+import { dirname, resolve, relative, posix, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -254,11 +254,35 @@ for (const id of order) {
 // 4. Emit build/AshenSpire.html
 // ---------------------------------------------------------------------------
 
+// Assets referenced from CSS url(...) must travel INSIDE the single file, or
+// the standalone build silently loses them (the act backdrops, and anything
+// added later). Rewrite each url() to a base64 data: URI, resolved relative to
+// the stylesheet. Absolute/remote/data: urls are left alone; a missing file is
+// a hard fail rather than a silently blank background.
+const MIME = { '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml' };
+let inlinedAssets = 0;
+let inlinedAssetBytes = 0;
+
+function inlineCssUrls(css, cssAbs) {
+  return css.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (whole, _q, ref) => {
+    if (/^(data:|https?:|\/\/)/i.test(ref)) return whole;
+    const assetAbs = resolve(dirname(cssAbs), ref.split('?')[0].split('#')[0]);
+    if (!existsSync(assetAbs)) fail(`asset referenced from CSS not found: ${ref}`);
+    const ext = extname(assetAbs).toLowerCase();
+    const mime = MIME[ext];
+    if (!mime) fail(`unsupported CSS asset type '${ext}' for ${ref}`);
+    const buf = readFileSync(assetAbs);
+    inlinedAssets += 1;
+    inlinedAssetBytes += buf.length;
+    return `url("data:${mime};base64,${buf.toString('base64')}")`;
+  });
+}
+
 // Inline CSS in index.html order.
 const styleBlocks = cssHrefs.map((href) => {
   const cssAbs = resolve(ROOT, href);
   if (!existsSync(cssAbs)) fail('stylesheet not found: ' + href);
-  const css = readFileSync(cssAbs, 'utf8');
+  const css = inlineCssUrls(readFileSync(cssAbs, 'utf8'), cssAbs);
   return `  <style data-src="${href}">\n${css}\n  </style>`;
 });
 
@@ -327,6 +351,7 @@ console.log('bundle.mjs: OK');
 console.log('  entry            : ' + entryId);
 console.log('  modules bundled  : ' + order.length);
 console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
+console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
 console.log('  output           : ' + idOf(outPath));
 console.log('  output size      : ' + bytes + ' bytes (' + kib + ' KiB)');
 process.exit(0);
