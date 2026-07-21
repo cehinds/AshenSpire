@@ -1,21 +1,22 @@
-# content/source/outfits.csv — alternative outfits (Ashen Spire)
+# content/source/outfits.csv — armour sets (Ashen Spire)
 #
-# An outfit is a PALETTE record, not new art: the same class geometry rendered
-# with different armour/cloth colours. The accent stays player-chosen and is
-# composited at runtime, so any outfit works with any accent.
+# An armour set IS an outfit: the same class geometry repainted, plus what it
+# grants. Kept as one table rather than two systems, because "outfit" and
+# "armour set" were the same record under different names.
 #
-# Columns
-#   id        unique outfit id (also the sprite filename part)
-#   classId   reaver | starseer | herald
-#   name      shown in the customize picker
-#   plate/plateLt/leather/under   hex palette, no '#'
-#   unlock    '' = available from the start, else an unlocks.csv id
-#   blurb     one line of flavour for the picker
-id,classId,name,plate,plateLt,leather,under,unlock,blurb
-default,reaver,Wayfarer Plate,7E715D,9C8D73,4B3522,332A1E,,The armour you were buried in.
-vigil,reaver,Ashen Vigil,302B25,4A433A,241C16,1A1712,beatStitchedKing,Blackened at the court that broke.
-oathsworn,reaver,Gilded Oathsworn,B39C5E,E0CB8C,5A4626,3A3020,winAsReaver,Kept bright by an oath unbroken.
-default,starseer,Nightweave,2B2547,3A3358,4B3522,332A1E,,Dyed with the dark between stars.
-eclipse,starseer,Eclipse Habit,1C1A2E,2E2B47,2A2118,17151F,winAsStarseer,Worn only when the moon is eaten.
-default,herald,Rite Vestments,2E1F1F,3A2A2A,4B3522,241413,,"Plain cloth, plainly kept."
-ossuary,herald,Ossuary Weave,3A3630,555047,2A2622,1E1B18,beatBlightedValkyrie,Threaded through with quiet bone.
+# Four sets per class; exactly one per class starts unlocked (empty `unlock`).
+# plate/plateLt/leather/under  body palette (hex, no '#')
+# tags   granted while worn      mods   card rewrites (see weapons.csv)
+id,classId,name,plate,plateLt,leather,under,tags,mods,unlock,blurb
+default,reaver,Wayfarer Plate,7E715D,9C8D73,4B3522,332A1E,guard,,,"The armour you were buried in."
+vigil,reaver,Ashen Vigil,302B25,4A433A,241C16,1A1712,guard|ash,defend.block=+2,beatStitchedKing,"Blackened at the court that broke."
+oathsworn,reaver,Gilded Oathsworn,B39C5E,E0CB8C,5A4626,3A3020,guard|oath,defend.block=+1|self.strength=+1,winAsReaver,"Kept bright by an oath unbroken."
+warden,reaver,Warden Mail,5A5F63,7C8288,3A3226,24272A,guard|heavy,defend.block=+3|strike.damage=-1,reachAshenCrown,"Issued, not chosen."
+default,starseer,Nightweave,2B2547,3A3358,4B3522,332A1E,starstone,,,"Dyed with the dark between stars."
+eclipse,starseer,Eclipse Habit,1C1A2E,2E2B47,2A2118,17151F,starstone|ritual,power.potency=+1,winAsStarseer,"Worn only when the moon is eaten."
+starlit,starseer,Starlit Silks,3A4468,5A6699,3A3226,242A40,starstone|flourish,strike.hits=+1|strike.damage=-1,beatFellWarden,"It catches light that is not there."
+astral,starseer,Astral Vestment,4A3A68,6E58A0,3A2E4A,241E33,starstone|oath,power.potency=+2|defend.block=-1,winTwice,"Cut for someone taller than you."
+default,herald,Rite Vestments,2E1F1F,3A2A2A,4B3522,241413,ritual,,,"Plain cloth, plainly kept."
+ossuary,herald,Ossuary Weave,3A3630,555047,2A2622,1E1B18,ritual|blight,strike.blight=+1,beatBlightedValkyrie,"Threaded through with quiet bone."
+emberhabit,herald,Emberlight Habit,5A3A24,8A5C38,3A2618,2A1C12,ritual|oath,power.potency=+1|self.regen=+1,beatKingAsHerald,"Warm long after the fire is out."
+pilgrim,herald,Pilgrim Wrap,4A4034,6B5D45,3A3226,2A2418,ritual|guard,defend.block=+2|self.maxHp=+4,reachStitchedCourt,"Road dust worked into the weave."
