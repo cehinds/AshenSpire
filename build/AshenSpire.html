@@ -1356,14 +1356,14 @@ const { contentBundle } = require("src/content/index.js");
 const { validateContent } = require("src/model/validate.js");
 const { createRegistries } = require("src/model/registries.js");
 const { createRunState, createDeck, createIdGen } = require("src/model/state.js");
-const { runMods, stampDeck } = require("src/model/loadout.js");
+const { runMods, stampDeck, addToStorage, carriedIds } = require("src/model/loadout.js");
 const { recordProgress, evaluateUnlocks } = require("src/model/unlocks.js");
 const { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } = require("src/content/customMods.js");
 const { createRng, seedToString, seedFromString } = require("src/engine/rng.js");
 const { createCombat } = require("src/engine/combat.js");
 const { generateActMap } = require("src/engine/mapgen.js");
 const { createSaveManager, createMemoryStorage } = require("src/engine/save.js");
-const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, buildShopStock, resolveUnknownNode } = require("src/engine/encounters.js");
+const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, buildShopStock, resolveUnknownNode, rollArmamentDrop } = require("src/engine/encounters.js");
 const { mountTitle } = require("src/ui/screens/title.js");
 const { mountCustomize } = require("src/ui/screens/customize.js");
 const { mountCustomRun } = require("src/ui/screens/customRun.js");
@@ -1851,6 +1851,30 @@ function runResult(victory) {
  * anything newly earned. Kept in one place so a defeat and a victory can never
  * disagree about what counts.
  */
+/**
+ * rollDrop(source) → armament id | null, and it is REMEMBERED.
+ *
+ * Finding a piece does two things at once, which is the whole bargain: it goes
+ * into this run's storage so you can use it now, and into the profile's found
+ * set so it stays available in every run after — a climb that ends badly still
+ * widens the wardrobe.
+ */
+function rollDrop(source) {
+  const meta = saves.loadMeta();
+  const id = rollArmamentDrop(registries, rng, {
+    source,
+    found: meta.found || [],
+    carried: carriedIds(run.loadout),
+  });
+  if (!id) return null;
+  addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
+  if ((registries.balance.equipment.drops || {}).permanentOnFind) {
+    meta.found = [...(meta.found || []), id];
+    saves.saveMeta(meta);
+  }
+  return id;
+}
+
 function finishRun(victory) {
   const result = runResult(victory);
   const meta = saves.recordResult(result);
@@ -1953,10 +1977,11 @@ function enterNode(nodeId) {
     }
     case 'treasure': {
       const relicId = rollRelicReward(registries, rng, run.relics);
+      const armamentId = rollDrop('treasure');
       return mountRewards(app, {
         registries,
         run,
-        rewards: { relicId, title: 'TREASURE' },
+        rewards: { relicId, armamentId, title: 'TREASURE' },
         onDone: () => {
           persist();
           showMap();
@@ -2090,11 +2115,16 @@ function onCombatEnd(result, combat, enc) {
       return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
     }
     // Act boss down: boss rewards, then the climb continues.
+    // A boss always drops an armament — unless you already own every one it
+    // could give, in which case it pays out instead of dropping nothing.
+    const bossArmament = rollDrop('boss');
+    const drops = registries.balance.equipment.drops || {};
     const bossRewards = {
       title: `${registries.enemies.get(enc.enemies[0]).name.toUpperCase()} FALLS`,
-      cinders: rollRuneReward(registries, rng, 'boss', run.relics),
+      cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
       cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      armamentId: bossArmament,
     };
     return mountRewards(app, {
       registries,
@@ -2110,6 +2140,10 @@ function onCombatEnd(result, combat, enc) {
     cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
+    // Elites are the mid-run source of armaments; ordinary fights are not
+    // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
+    // no-op there rather than a hidden 0%).
+    armamentId: rollDrop(enc.pool),
   };
   mountRewards(app, {
     registries,
@@ -2569,6 +2603,31 @@ const balance = {
     // Floors of the mod system, so a piece can't be authored past the point
     // where the card stops making sense.
     limits: { minCost: 0, minDamage: 0, minBlock: 0, maxHits: 6 },
+
+    // ---- Where armaments come from ------------------------------------------
+    // You start bare-handed and the run arms you. A found piece is yours for
+    // the run immediately AND remembered forever, so a climb that ends badly
+    // still widens the wardrobe — the roguelike bargain: this run's loss is
+    // next run's option.
+    drops: {
+      enabled: true,
+      // false makes every authored armament available from the start (a sandbox
+      // for testing the mod system without playing for it).
+      requireFound: true,
+      permanentOnFind: true,
+      // Chance a node of each kind yields an armament, and the rarity odds when
+      // it does. Bosses always drop; their table is weighted to the good stuff.
+      chance: { treasure: 60, elite: 30, boss: 100, shop: 0 },
+      rarityWeights: {
+        treasure: { common: 55, uncommon: 35, rare: 10 },
+        elite: { common: 40, uncommon: 45, rare: 15 },
+        boss: { common: 15, uncommon: 45, rare: 40 },
+      },
+      // A duplicate is a non-event, so drops prefer something you have never
+      // held. With nothing new left the node gives cinders instead.
+      preferUnfound: true,
+      consolationCinders: 40,
+    },
   },
 };
 
@@ -10183,6 +10242,33 @@ function cycleSet(loadout, slotId, index) {
   return true;
 }
 
+/**
+ * addToStorage(loadout, itemId, cap) → true when it went in.
+ *
+ * Where a found armament lands. Storage is what you are carrying but not
+ * holding; hand slots are sealed against it once a fight starts (canUseStorage).
+ * A duplicate is refused rather than stacking — you either have a Katana or
+ * you don't.
+ */
+function addToStorage(loadout, itemId, cap = 8) {
+  if (!loadout || !itemId) return false;
+  loadout.storage = loadout.storage || [];
+  if (loadout.storage.includes(itemId)) return false;
+  if (loadout.storage.length >= cap) return false;
+  loadout.storage.push(itemId);
+  return true;
+}
+
+/** Every armament this run has access to: carried, plus whatever is slotted. */
+function carriedIds(loadout) {
+  if (!loadout) return [];
+  const out = [...(loadout.storage || [])];
+  for (const ids of Object.values(loadout.sets || {})) {
+    for (const id of ids) if (id && !out.includes(id)) out.push(id);
+  }
+  return out;
+}
+
 /** equipPiece — put a piece id into a specific set of a slot (null clears). */
 function equipPiece(loadout, slotId, setIndex, itemId) {
   const ids = (loadout.sets || {})[slotId];
@@ -10192,7 +10278,7 @@ function equipPiece(loadout, slotId, setIndex, itemId) {
 }
 
 
-Object.assign(module.exports, { parseMod, validateEquipment, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, canUseStorage, cycleSet, equipPiece });
+Object.assign(module.exports, { parseMod, validateEquipment, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, canUseStorage, cycleSet, addToStorage, carriedIds, equipPiece });
 
 },
 "src/model/state.js": function (module, exports, require) {
@@ -10619,6 +10705,9 @@ const STREAM_NAMES = Object.freeze([
   'cardRewards',
   'relicRewards',
   'flaskRewards',
+  // Armament drops get their own stream so adding one to a node kind can't
+  // shift what every later relic or card reward rolls in an existing seed.
+  'armaments',
   'enemyAI',
   'enemyHP',
   'events',
@@ -13125,6 +13214,52 @@ function rollRelicReward(registries, rng, ownedIds, { rarities = ['common', 'unc
   return pool.length ? rng.pick('relicRewards', pool) : null;
 }
 
+/**
+ * rollArmamentDrop(registries, rng, { source, found, carried }) → id | null.
+ *
+ * Deterministic on stream 'armaments', like every other reward roll, so a seed
+ * still replays exactly. `source` keys into balance.equipment.drops.chance and
+ * .rarityWeights ('treasure' | 'elite' | 'boss').
+ *
+ * `found` is everything the profile has ever held and `carried` is what this
+ * run already has; a piece in either is a non-event, so the roll prefers
+ * something new and returns null when there is nothing left to give (the
+ * caller pays consolation cinders instead).
+ */
+function rollArmamentDrop(registries, rng, { source, found = [], carried = [] } = {}) {
+  const cfg = (registries.balance.equipment || {}).drops || {};
+  if (!cfg.enabled) return null;
+  const chance = (cfg.chance || {})[source];
+  if (!chance) return null;
+  if (rng.int('armaments', 1, 100) > chance) return null;
+
+  const weights = (cfg.rarityWeights || {})[source] || {};
+  const seen = new Set([...found, ...carried]);
+  let pool = (registries.equipment.armaments || []).filter((a) => a.unlock === '');
+  if (cfg.preferUnfound) {
+    const fresh = pool.filter((a) => !seen.has(a.id));
+    if (!fresh.length) return null;
+    pool = fresh;
+  }
+
+  // Rarity first (so a rare stays rare however many rares exist), then a piece
+  // from within it. Rarities the pool can't fill are skipped rather than
+  // rolling a null.
+  const rarities = Object.keys(weights).filter((r) => pool.some((a) => a.rarity === r));
+  if (!rarities.length) return null;
+  const total = rarities.reduce((a, r) => a + weights[r], 0);
+  let roll = rng.float('armaments') * total;
+  let rarity = rarities[rarities.length - 1];
+  for (const r of rarities) {
+    roll -= weights[r];
+    if (roll < 0) {
+      rarity = r;
+      break;
+    }
+  }
+  return rng.pick('armaments', pool.filter((a) => a.rarity === rarity).map((a) => a.id));
+}
+
 // ---------------------------------------------------------------------------
 // Shop (SPEC §6 prices — all from balance.shop)
 // ---------------------------------------------------------------------------
@@ -13221,7 +13356,7 @@ function shrineHealAmount(registries, run) {
 }
 
 
-Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, buildShopStock, resolveUnknownNode, shrineHealAmount });
+Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, rollArmamentDrop, buildShopStock, resolveUnknownNode, shrineHealAmount });
 
 },
 "src/ui/screens/title.js": function (module, exports, require) {
@@ -18261,7 +18396,7 @@ Object.assign(module.exports, { mountTutorial });
 
 const { balance } = require("src/content/balance.js");
 const { resolveCard } = require("src/model/registries.js");
-const { canSwap, cycleSet, equipPiece, cardMods, runMods, loadoutTags, figureSpec } = require("src/model/loadout.js");
+const { canSwap, cycleSet, equipPiece, cardMods, runMods, loadoutTags, figureSpec, carriedIds } = require("src/model/loadout.js");
 const { renderCard } = require("src/ui/components/card.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { playerSprite, equippedFigure } = require("src/ui/assets.js");
@@ -18364,11 +18499,28 @@ function mountEquipment(host, {
   // drops out of the list entirely: a genuine secret should not advertise the
   // shape of its own hole.
   const unlockById = new Map((registries.unlocks || []).map((u) => [u.id, u]));
+  // `persistence` decides what counts as yours: what this run has picked up,
+  // what the profile has ever held, or both (the default — a climb that ends
+  // badly still widens the wardrobe).
+  const drops = CFG().drops || {};
+  const persistence = CFG().persistence;
+  const available = new Set([
+    ...(persistence !== 'perRun' ? meta.found || [] : []),
+    ...(persistence !== 'unlocked' ? carriedIds(run.loadout) : []),
+  ]);
   function gate(piece) {
-    if (piece.unlock === '' || unlocked.has(piece.unlock)) return { ...piece, locked: false };
-    const u = unlockById.get(piece.unlock);
-    if (u && u.reveal === 'hidden') return null;
-    return { ...piece, locked: true, hint: (u && u.hint) || 'Not yet earned.' };
+    // Two independent gates. A CONDITION unlock is something you achieve; being
+    // FOUND is something you pick up. Armour uses the first, armaments the
+    // second, and a piece could one day use both.
+    if (piece.unlock !== '' && !unlocked.has(piece.unlock)) {
+      const u = unlockById.get(piece.unlock);
+      if (u && u.reveal === 'hidden') return null;
+      return { ...piece, locked: true, hint: (u && u.hint) || 'Not yet earned.' };
+    }
+    if (piece.kind !== 'armor' && drops.requireFound && !available.has(piece.id)) {
+      return { ...piece, locked: true, hint: 'Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them.' };
+    }
+    return { ...piece, locked: false };
   }
 
   function eligible(slot) {
@@ -18615,6 +18767,19 @@ function mountRewards(app, { registries, run, rewards, onDone }) {
       lines.push(`Flask: <b>${esc(def.icon || '🧪')} ${esc(def.name)}</b>`);
     } else {
       lines.push(`<span style="color:var(--muted)">A ${esc(def.name)} — but your flask slots are full. It stays in the mud.</span>`);
+    }
+  }
+
+  if (rewards.armamentId) {
+    // rollDrop already put it in storage and remembered it; this just tells the
+    // player, and says where it went — a found armament is carried, not held,
+    // so it does nothing until you walk to the Armoury and slot it.
+    const a = (registries.equipment.armaments || []).find((x) => x.id === rewards.armamentId);
+    if (a) {
+      lines.push(
+        `Armament: <b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` +
+        `<br><span style="color:var(--muted)">Carried. Slot it in the Armoury (⚒).</span>`
+      );
     }
   }
 

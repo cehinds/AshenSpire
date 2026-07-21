@@ -121,6 +121,52 @@ export function rollRelicReward(registries, rng, ownedIds, { rarities = ['common
   return pool.length ? rng.pick('relicRewards', pool) : null;
 }
 
+/**
+ * rollArmamentDrop(registries, rng, { source, found, carried }) → id | null.
+ *
+ * Deterministic on stream 'armaments', like every other reward roll, so a seed
+ * still replays exactly. `source` keys into balance.equipment.drops.chance and
+ * .rarityWeights ('treasure' | 'elite' | 'boss').
+ *
+ * `found` is everything the profile has ever held and `carried` is what this
+ * run already has; a piece in either is a non-event, so the roll prefers
+ * something new and returns null when there is nothing left to give (the
+ * caller pays consolation cinders instead).
+ */
+export function rollArmamentDrop(registries, rng, { source, found = [], carried = [] } = {}) {
+  const cfg = (registries.balance.equipment || {}).drops || {};
+  if (!cfg.enabled) return null;
+  const chance = (cfg.chance || {})[source];
+  if (!chance) return null;
+  if (rng.int('armaments', 1, 100) > chance) return null;
+
+  const weights = (cfg.rarityWeights || {})[source] || {};
+  const seen = new Set([...found, ...carried]);
+  let pool = (registries.equipment.armaments || []).filter((a) => a.unlock === '');
+  if (cfg.preferUnfound) {
+    const fresh = pool.filter((a) => !seen.has(a.id));
+    if (!fresh.length) return null;
+    pool = fresh;
+  }
+
+  // Rarity first (so a rare stays rare however many rares exist), then a piece
+  // from within it. Rarities the pool can't fill are skipped rather than
+  // rolling a null.
+  const rarities = Object.keys(weights).filter((r) => pool.some((a) => a.rarity === r));
+  if (!rarities.length) return null;
+  const total = rarities.reduce((a, r) => a + weights[r], 0);
+  let roll = rng.float('armaments') * total;
+  let rarity = rarities[rarities.length - 1];
+  for (const r of rarities) {
+    roll -= weights[r];
+    if (roll < 0) {
+      rarity = r;
+      break;
+    }
+  }
+  return rng.pick('armaments', pool.filter((a) => a.rarity === rarity).map((a) => a.id));
+}
+
 // ---------------------------------------------------------------------------
 // Shop (SPEC §6 prices — all from balance.shop)
 // ---------------------------------------------------------------------------

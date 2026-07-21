@@ -11,7 +11,7 @@ import { contentBundle } from './content/index.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
-import { runMods, stampDeck } from './model/loadout.js';
+import { runMods, stampDeck, addToStorage, carriedIds } from './model/loadout.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString } from './engine/rng.js';
@@ -26,6 +26,7 @@ import {
   rollRelicReward,
   buildShopStock,
   resolveUnknownNode,
+  rollArmamentDrop,
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
 import { mountCustomize } from './ui/screens/customize.js';
@@ -514,6 +515,30 @@ function runResult(victory) {
  * anything newly earned. Kept in one place so a defeat and a victory can never
  * disagree about what counts.
  */
+/**
+ * rollDrop(source) → armament id | null, and it is REMEMBERED.
+ *
+ * Finding a piece does two things at once, which is the whole bargain: it goes
+ * into this run's storage so you can use it now, and into the profile's found
+ * set so it stays available in every run after — a climb that ends badly still
+ * widens the wardrobe.
+ */
+function rollDrop(source) {
+  const meta = saves.loadMeta();
+  const id = rollArmamentDrop(registries, rng, {
+    source,
+    found: meta.found || [],
+    carried: carriedIds(run.loadout),
+  });
+  if (!id) return null;
+  addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
+  if ((registries.balance.equipment.drops || {}).permanentOnFind) {
+    meta.found = [...(meta.found || []), id];
+    saves.saveMeta(meta);
+  }
+  return id;
+}
+
 function finishRun(victory) {
   const result = runResult(victory);
   const meta = saves.recordResult(result);
@@ -616,10 +641,11 @@ function enterNode(nodeId) {
     }
     case 'treasure': {
       const relicId = rollRelicReward(registries, rng, run.relics);
+      const armamentId = rollDrop('treasure');
       return mountRewards(app, {
         registries,
         run,
-        rewards: { relicId, title: 'TREASURE' },
+        rewards: { relicId, armamentId, title: 'TREASURE' },
         onDone: () => {
           persist();
           showMap();
@@ -753,11 +779,16 @@ function onCombatEnd(result, combat, enc) {
       return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
     }
     // Act boss down: boss rewards, then the climb continues.
+    // A boss always drops an armament — unless you already own every one it
+    // could give, in which case it pays out instead of dropping nothing.
+    const bossArmament = rollDrop('boss');
+    const drops = registries.balance.equipment.drops || {};
     const bossRewards = {
       title: `${registries.enemies.get(enc.enemies[0]).name.toUpperCase()} FALLS`,
-      cinders: rollRuneReward(registries, rng, 'boss', run.relics),
+      cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
       cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      armamentId: bossArmament,
     };
     return mountRewards(app, {
       registries,
@@ -773,6 +804,10 @@ function onCombatEnd(result, combat, enc) {
     cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
+    // Elites are the mid-run source of armaments; ordinary fights are not
+    // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
+    // no-op there rather than a hidden 0%).
+    armamentId: rollDrop(enc.pool),
   };
   mountRewards(app, {
     registries,

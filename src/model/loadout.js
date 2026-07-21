@@ -418,6 +418,33 @@ export function cycleSet(loadout, slotId, index) {
   return true;
 }
 
+/**
+ * addToStorage(loadout, itemId, cap) → true when it went in.
+ *
+ * Where a found armament lands. Storage is what you are carrying but not
+ * holding; hand slots are sealed against it once a fight starts (canUseStorage).
+ * A duplicate is refused rather than stacking — you either have a Katana or
+ * you don't.
+ */
+export function addToStorage(loadout, itemId, cap = 8) {
+  if (!loadout || !itemId) return false;
+  loadout.storage = loadout.storage || [];
+  if (loadout.storage.includes(itemId)) return false;
+  if (loadout.storage.length >= cap) return false;
+  loadout.storage.push(itemId);
+  return true;
+}
+
+/** Every armament this run has access to: carried, plus whatever is slotted. */
+export function carriedIds(loadout) {
+  if (!loadout) return [];
+  const out = [...(loadout.storage || [])];
+  for (const ids of Object.values(loadout.sets || {})) {
+    for (const id of ids) if (id && !out.includes(id)) out.push(id);
+  }
+  return out;
+}
+
 /** equipPiece — put a piece id into a specific set of a slot (null clears). */
 export function equipPiece(loadout, slotId, setIndex, itemId) {
   const ids = (loadout.sets || {})[slotId];

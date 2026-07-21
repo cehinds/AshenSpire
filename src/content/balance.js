@@ -169,5 +169,30 @@ export const balance = {
     // Floors of the mod system, so a piece can't be authored past the point
     // where the card stops making sense.
     limits: { minCost: 0, minDamage: 0, minBlock: 0, maxHits: 6 },
+
+    // ---- Where armaments come from ------------------------------------------
+    // You start bare-handed and the run arms you. A found piece is yours for
+    // the run immediately AND remembered forever, so a climb that ends badly
+    // still widens the wardrobe — the roguelike bargain: this run's loss is
+    // next run's option.
+    drops: {
+      enabled: true,
+      // false makes every authored armament available from the start (a sandbox
+      // for testing the mod system without playing for it).
+      requireFound: true,
+      permanentOnFind: true,
+      // Chance a node of each kind yields an armament, and the rarity odds when
+      // it does. Bosses always drop; their table is weighted to the good stuff.
+      chance: { treasure: 60, elite: 30, boss: 100, shop: 0 },
+      rarityWeights: {
+        treasure: { common: 55, uncommon: 35, rare: 10 },
+        elite: { common: 40, uncommon: 45, rare: 15 },
+        boss: { common: 15, uncommon: 45, rare: 40 },
+      },
+      // A duplicate is a non-event, so drops prefer something you have never
+      // held. With nothing new left the node gives cinders instead.
+      preferUnfound: true,
+      consolationCinders: 40,
+    },
   },
 };

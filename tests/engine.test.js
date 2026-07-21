@@ -28,6 +28,7 @@ import {
   buildShopStock,
   resolveUnknownNode,
   shrineHealAmount,
+  rollArmamentDrop,
 } from '../src/engine/encounters.js';
 import {
   endlessActInfo, activeMods, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP,
@@ -39,7 +40,7 @@ import { TAGS, tagsFor, tagIdsFor, cardsWithTag } from '../src/content/tags.js';
 import { cardTagging } from '../src/content/generated/cardTagging.js';
 import { weapons } from '../src/content/generated/weapons.js';
 import {
-  validateEquipment, equipPiece, stampDeck, runMods, loadoutTags,
+  validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
 } from '../src/model/loadout.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, emptyProgress, recordProgress, evaluateUnlocks, unlockView,
@@ -1178,6 +1179,59 @@ export async function runTests() {
       if (u.kind !== 'outfit') continue;
       assert(REG.equipment.armour.some((o) => o.id === u.ref), `unlock '${u.id}' points at a real armour set`);
     }
+  });
+
+  // ---- 31. armament drops: the run arms you, and the profile remembers -----
+  test('31. armament drops are seeded, prefer the unheld, and run dry rather than repeat', () => {
+    const drops = REG.balance.equipment.drops;
+    const roll = (seed, source, opts = {}) =>
+      rollArmamentDrop(REG, createRng(seed), { source, ...opts });
+
+    // Same seed, same drop — a run replays exactly, drops included.
+    eq(roll(42, 'boss'), roll(42, 'boss'), 'the same seed drops the same armament');
+
+    // A boss always gives something; treasure is a coin toss, so over many
+    // seeds it must both hit and miss.
+    const bossOut = [1, 2, 3, 4, 5, 6, 7, 8].map((s) => roll(s, 'boss'));
+    assert(bossOut.every(Boolean), 'a boss always drops (chance 100)');
+    const treasureOut = Array.from({ length: 40 }, (_, i) => roll(i + 1, 'treasure'));
+    assert(treasureOut.some(Boolean), 'treasure sometimes drops');
+    assert(treasureOut.some((x) => x === null), 'and sometimes does not');
+
+    // Everything that drops is a real, slottable armament.
+    const armIds = REG.equipment.armaments.map((a) => a.id);
+    for (const id of bossOut) assert(armIds.includes(id), `dropped '${id}' is a real armament`);
+
+    // A piece already held is never handed to you again.
+    const held = armIds.filter((id) => id !== 'towerShield');
+    const only = roll(9, 'boss', { found: held });
+    eq(only, 'towerShield', 'with one left unheld, that is what drops');
+    eq(roll(9, 'boss', { found: armIds }), null, 'holding everything, a boss drops nothing');
+    eq(roll(9, 'boss', { found: held.slice(0, 5), carried: held.slice(5) }), 'towerShield',
+      'carried counts as held, same as found');
+
+    // Boss odds lean rare; treasure odds lean common. Checked over many seeds
+    // rather than asserting one roll, since the point is the distribution.
+    const rarityOf = (id) => REG.equipment.armaments.find((a) => a.id === id).rarity;
+    const bossRares = Array.from({ length: 120 }, (_, i) => roll(i + 100, 'boss'))
+      .filter(Boolean).filter((id) => rarityOf(id) === 'rare').length;
+    const treasureRares = Array.from({ length: 120 }, (_, i) => roll(i + 100, 'treasure'))
+      .filter(Boolean).filter((id) => rarityOf(id) === 'rare').length;
+    assert(bossRares > treasureRares, `bosses drop rares more often (${bossRares} vs ${treasureRares})`);
+
+    // Ordinary fights are not a source: with no 'normal' key the roll is a
+    // no-op rather than a hidden 0%.
+    eq(drops.chance.normal, undefined, "there is no 'normal' drop chance");
+    eq(roll(3, 'normal'), null, 'an ordinary fight drops no armament');
+
+    // Storage: what you find is carried, capped, and never duplicated.
+    const run = createRunState({ seed: 5, classId: 'reaver', registries: REG });
+    assert(addToStorage(run.loadout, 'katana', 8), 'a find goes into storage');
+    assert(!addToStorage(run.loadout, 'katana', 8), 'the same piece does not stack');
+    assert(!addToStorage(run.loadout, 'dagger', 1), 'storage respects its cap');
+    assert(carriedIds(run.loadout).includes('katana'), 'carried counts what is in storage');
+    equipPiece(run.loadout, 'rightHand', 0, 'greatsword');
+    assert(carriedIds(run.loadout).includes('greatsword'), 'and what is slotted');
   });
 
   const passed = results.filter((r) => r.ok).length;
