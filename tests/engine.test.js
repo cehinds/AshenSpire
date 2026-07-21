@@ -33,6 +33,8 @@ import {
   endlessActInfo, activeMods, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP,
 } from '../src/content/customMods.js';
 import { createCoopCombat } from '../src/engine/coopCombat.js';
+import { outfits } from '../src/content/generated/outfits.js';
+import { unlocks } from '../src/content/generated/unlocks.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -867,6 +869,50 @@ export async function runTests() {
 
     // Enemy-owned gates stay shared (enemies are one set, not per-seat).
     assert(C.enemies.length === 1, 'shared enemy set is unaffected by seat scoping');
+  });
+
+  // ---- 25. authored content (CSV -> generated modules) ----------------------
+  test('25. outfits + unlocks compile and cross-reference correctly', () => {
+    // Authoring is CSV; tools/content-build.mjs compiles it into the generated
+    // modules imported here. These checks are what stops a spreadsheet typo
+    // from reaching the game as a silently broken reference.
+    const CONDITIONS = ['winAsClass', 'beatBoss', 'reachAct', 'winRuns'];
+    const REVEALS = ['teased', 'hidden', 'listed'];
+    const classIds = REG.classes.all().map((c) => c.id);
+    const unlockIds = unlocks.map((u) => u.id);
+    const outfitIds = outfits.map((o) => o.id);
+
+    assert(outfits.length > 0 && unlocks.length > 0, 'CSV sources compiled to rows');
+
+    for (const o of outfits) {
+      assert(classIds.includes(o.classId), `outfit '${o.id}' targets a real class (${o.classId})`);
+      assert(/^[0-9A-Fa-f]{6}$/.test(o.plate), `outfit '${o.id}' plate is a 6-digit hex`);
+      assert(/^[0-9A-Fa-f]{6}$/.test(o.plateLt), `outfit '${o.id}' plateLt is a 6-digit hex`);
+      if (o.unlock !== '') {
+        assert(unlockIds.includes(o.unlock), `outfit '${o.id}' unlock '${o.unlock}' exists`);
+      }
+    }
+    // Every class must have a starting outfit, or customization has nothing to show.
+    for (const id of classIds) {
+      assert(outfits.some((o) => o.classId === id && o.unlock === ''), `class '${id}' has an unlocked outfit`);
+    }
+    for (const u of unlocks) {
+      assert(CONDITIONS.includes(u.condition), `unlock '${u.id}' uses a known condition (${u.condition})`);
+      assert(REVEALS.includes(u.reveal), `unlock '${u.id}' uses a known reveal mode (${u.reveal})`);
+      if (u.kind === 'outfit') {
+        assert(outfitIds.includes(u.ref), `unlock '${u.id}' points at a real outfit (${u.ref})`);
+      }
+      if (u.condition === 'winAsClass') {
+        assert(classIds.includes(u.param), `unlock '${u.id}' names a real class (${u.param})`);
+      }
+      if (u.condition === 'beatBoss') {
+        assert(REG.enemies.has(u.param), `unlock '${u.id}' names a real enemy (${u.param})`);
+      }
+      // A 'teased' unlock promises the player a hint; a 'hidden' one must not.
+      if (u.reveal === 'teased') assert(String(u.hint).length > 0, `teased unlock '${u.id}' has a hint`);
+      if (u.reveal === 'hidden') eq(u.hint, '', `hidden unlock '${u.id}' shows no hint`);
+    }
+    eq(unlockIds.length, new Set(unlockIds).size, 'unlock ids are unique');
   });
 
   const passed = results.filter((r) => r.ok).length;

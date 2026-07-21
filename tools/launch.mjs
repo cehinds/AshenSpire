@@ -26,6 +26,16 @@ function version() {
 
 const args = process.argv.slice(2);
 
+// 0. Compile authored content (content/source/*.csv|json → src/content/generated).
+// Runs first so a spreadsheet edit is picked up by the very next launch without
+// anyone remembering a separate command.
+console.log('launch: compiling authored content…');
+const content = spawnSync(process.execPath, [resolve(ROOT, 'tools/content-build.mjs')], { stdio: 'inherit' });
+if (content.status !== 0) {
+  console.error('launch: content build failed — fix content/source and retry.');
+  process.exit(content.status || 1);
+}
+
 // 1. Build the standalone bundle.
 console.log('launch: building the standalone bundle…');
 const build = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs')], { stdio: 'inherit' });

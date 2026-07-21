@@ -1,0 +1,21 @@
+# content/source/outfits.csv — alternative outfits (Ashen Spire)
+#
+# An outfit is a PALETTE record, not new art: the same class geometry rendered
+# with different armour/cloth colours. The accent stays player-chosen and is
+# composited at runtime, so any outfit works with any accent.
+#
+# Columns
+#   id        unique outfit id (also the sprite filename part)
+#   classId   reaver | starseer | herald
+#   name      shown in the customize picker
+#   plate/plateLt/leather/under   hex palette, no '#'
+#   unlock    '' = available from the start, else an unlocks.csv id
+#   blurb     one line of flavour for the picker
+id,classId,name,plate,plateLt,leather,under,unlock,blurb
+default,reaver,Wayfarer Plate,7E715D,9C8D73,4B3522,332A1E,,The armour you were buried in.
+vigil,reaver,Ashen Vigil,302B25,4A433A,241C16,1A1712,beatStitchedKing,Blackened at the court that broke.
+oathsworn,reaver,Gilded Oathsworn,B39C5E,E0CB8C,5A4626,3A3020,winAsReaver,Kept bright by an oath unbroken.
+default,starseer,Nightweave,2B2547,3A3358,4B3522,332A1E,,Dyed with the dark between stars.
+eclipse,starseer,Eclipse Habit,1C1A2E,2E2B47,2A2118,17151F,winAsStarseer,Worn only when the moon is eaten.
+default,herald,Rite Vestments,2E1F1F,3A2A2A,4B3522,241413,,"Plain cloth, plainly kept."
+ossuary,herald,Ossuary Weave,3A3630,555047,2A2622,1E1B18,beatBlightedValkyrie,Threaded through with quiet bone.
