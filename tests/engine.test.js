@@ -1433,20 +1433,22 @@ export async function runTests({ artManifest = null } = {}) {
     const classIds = [...new Set(REG.equipment.armour.map((o) => o.classId))];
     eq(Object.keys(audit.withinClassMin).length, classIds.length, 'every class was measured');
 
-    // TRACKED, NOT GATED. Vira's invariant is `tightestWithin > closestBetween`,
-    // on the reasoning that a same-class pair shares a silhouette and so must
-    // carry more colour separation than a cross-class pair that gets geometry
-    // for free. The reasoning is sound and the ratio of exactly 1.0 is a guess:
-    // three repaint passes took it 2.6x -> 1.8x -> 1.4x, and `closestBetween`
-    // FELL each time, because spreading a class's sets pulls its centroid toward
-    // the others. It may not be satisfiable without garish colour. Asserting it
-    // would mean painting to satisfy a bar nobody has shown is right.
+    // The ratio `tightestWithin / closestBetween` is NOT recorded here, and the
+    // reason is worth keeping: Vira proposed it, I declined to assert it as an
+    // unvalidated bar, and she then solved for its ceiling and found there
+    // isn't one. An optimiser maximises it by painting all three classes the
+    // same colour — driving the denominator to zero — then spreading each
+    // class's sets freely. Unbounded, and satisfied by destroying the thing the
+    // game needs.
     //
-    // So the number is recorded and not enforced, pending Vira's read. Asserting
-    // an unvalidated bar is how a shared assumption gets promoted into a check —
-    // the most durable place for a wrong idea to live (her words).
-    assert(Number.isFinite(audit.tightestWithinClass / audit.closestBetweenClass),
-      `separation ratio tracked at ${(audit.tightestWithinClass / audit.closestBetweenClass).toFixed(2)}x (target 1.0, unenforced)`);
+    // The flaw is the RATIO FORM, not the statistic: same-class and cross-class
+    // pairs are discriminated through different channels (colour vs
+    // silhouette), so they don't constrain each other, and putting them in a
+    // ratio invents a relationship the optimiser then exploits. Cross-class
+    // pair distance degenerates identically to centroid distance.
+    //
+    // Not even tracked. A number in the manifest is an invitation to assert it
+    // later, and this one is malformed for every k.
   });
 
   const passed = results.filter((r) => r.ok).length;

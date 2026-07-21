@@ -412,8 +412,6 @@
     }
   },
   "audit": {
-    "closestBetweenClass": 0.04026558937331608,
-    "tightestWithinClass": 0.028664006515891276,
     "withinClassMin": {
       "herald": 0.04222720860003957,
       "reaver": 0.03811951805993238,
