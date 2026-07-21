@@ -294,8 +294,7 @@
       "fields": {
         "leather": "4B3522",
         "plate": "2E1F1F",
-        "plateLt": "3A2A2A",
-        "under": "241413"
+        "plateLt": "3A2A2A"
       },
       "files": [
         "body_herald_default.webp"
@@ -305,8 +304,7 @@
       "fields": {
         "leather": "3A2618",
         "plate": "5A3A24",
-        "plateLt": "8A5C38",
-        "under": "2A1C12"
+        "plateLt": "8A5C38"
       },
       "files": [
         "body_herald_emberhabit.webp"
@@ -316,8 +314,7 @@
       "fields": {
         "leather": "2A2622",
         "plate": "3A3630",
-        "plateLt": "555047",
-        "under": "1E1B18"
+        "plateLt": "555047"
       },
       "files": [
         "body_herald_ossuary.webp"
@@ -327,8 +324,7 @@
       "fields": {
         "leather": "3A3226",
         "plate": "4A4034",
-        "plateLt": "6B5D45",
-        "under": "2A2418"
+        "plateLt": "6B5D45"
       },
       "files": [
         "body_herald_pilgrim.webp"
@@ -380,10 +376,8 @@
     },
     "starseer/astral": {
       "fields": {
-        "leather": "3A2E4A",
         "plate": "4A3A68",
-        "plateLt": "6E58A0",
-        "under": "241E33"
+        "plateLt": "6E58A0"
       },
       "files": [
         "body_starseer_astral.webp"
@@ -391,10 +385,8 @@
     },
     "starseer/default": {
       "fields": {
-        "leather": "4B3522",
         "plate": "2B2547",
-        "plateLt": "3A3358",
-        "under": "332A1E"
+        "plateLt": "3A3358"
       },
       "files": [
         "body_starseer_default.webp"
@@ -402,10 +394,8 @@
     },
     "starseer/eclipse": {
       "fields": {
-        "leather": "2A2118",
         "plate": "1C1A2E",
-        "plateLt": "2E2B47",
-        "under": "17151F"
+        "plateLt": "2E2B47"
       },
       "files": [
         "body_starseer_eclipse.webp"
@@ -413,14 +403,19 @@
     },
     "starseer/starlit": {
       "fields": {
-        "leather": "3A3226",
         "plate": "3A4468",
-        "plateLt": "5A6699",
-        "under": "242A40"
+        "plateLt": "5A6699"
       },
       "files": [
         "body_starseer_starlit.webp"
       ]
+    }
+  },
+  "audit": {
+    "withinClassMinDeltaE": {
+      "herald": 4.213201844531223,
+      "reaver": 6.488532031371736,
+      "starseer": 5.844394001907453
     }
   }
 }
