@@ -4,7 +4,7 @@ import { resolveCard } from '../../model/registries.js';
 import { esc } from '../components/tooltip.js';
 import { sfx } from '../sfx.js';
 
-export function mountGameOver(app, { registries, game, victory, onTitle, onHistory }) {
+export function mountGameOver(app, { registries, game, victory, onTitle, onHistory, earned = [] }) {
   sfx.play(victory ? 'victory' : 'youDied');
   const title = victory ? 'EMBER RESTORED' : 'YOU PERISHED';
   const color = victory ? 'var(--gold)' : 'var(--blood)';
@@ -22,6 +22,10 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
         <tr><td>Cinders held</td><td>${game.cinders}</td></tr>
         <tr><td>Final HP</td><td>${victory ? game.hp : 0} / ${game.maxHp}</td></tr>
       </table>
+      ${earned.length ? `<div class="go-earned">
+        <p class="subtitle">${earned.length === 1 ? 'EARNED' : 'EARNED'}</p>
+        ${earned.map((u) => `<div class="ge-row"><span class="ge-name">${esc(u.name)}</span><span class="ge-kind">${esc(u.kind)}</span></div>`).join('')}
+      </div>` : ''}
       <div>
         <p class="subtitle" style="text-align:center;margin-bottom:8px">FINAL DECK (${game.deck.length})</p>
         <div class="deck-strip"></div>

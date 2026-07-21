@@ -109,6 +109,10 @@ export function createRegistries(contentBundle) {
   // across classes on purpose. They ride along frozen, like balance.
   registries.equipment = deepFreeze({ ...(bundle.equipment || {}) });
 
+  // What can be earned. A table, like equipment — evaluated against saved
+  // progress by model/unlocks.js, never by anything in here.
+  registries.unlocks = deepFreeze([...(bundle.unlocks || [])]);
+
   registries.scripts = Object.freeze({ ...(bundle.scripts || {}) });
   registries.contentVersion = String(bundle.version || bundle.contentVersion || '0');
 

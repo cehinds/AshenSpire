@@ -60,6 +60,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'mapConfigs',
   'scripts',
   'equipment',
+  'unlocks',
 ]);
 
 /**

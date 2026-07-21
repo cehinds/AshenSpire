@@ -26,6 +26,7 @@ import { mapConfigs } from './mapconfig.js';
 import { scripts } from './scripts.js';
 import { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
+import { unlocks } from './generated/unlocks.js';
 
 export const contentBundle = {
   version: '0.2.0-ashen',
@@ -51,6 +52,7 @@ export const contentBundle = {
     targets: equipTargets,
     cardTargets: CARD_TARGETS,
   },
+  unlocks,
 };
 
 // Not part of the bundle (UI-only data / M1 flow):

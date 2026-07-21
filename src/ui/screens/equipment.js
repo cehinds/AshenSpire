@@ -116,15 +116,23 @@ export function mountEquipment(host, {
     if (onClose) onClose();
   };
 
+  // A piece gated behind an unlock shows locked with that unlock's HINT — the
+  // thing you'd have to do — rather than its flavour blurb. A 'hidden' unlock
+  // drops out of the list entirely: a genuine secret should not advertise the
+  // shape of its own hole.
+  const unlockById = new Map((registries.unlocks || []).map((u) => [u.id, u]));
+  function gate(piece) {
+    if (piece.unlock === '' || unlocked.has(piece.unlock)) return { ...piece, locked: false };
+    const u = unlockById.get(piece.unlock);
+    if (u && u.reveal === 'hidden') return null;
+    return { ...piece, locked: true, hint: (u && u.hint) || 'Not yet earned.' };
+  }
+
   function eligible(slot) {
-    if (slot.kinds.includes('armor')) {
-      return (eq.armour || [])
-        .filter((o) => o.classId === run.class)
-        .map((o) => ({ ...o, locked: o.unlock !== '' && !unlocked.has(o.unlock) }));
-    }
-    return (eq.armaments || [])
-      .filter((a) => slot.kinds.includes(a.kind))
-      .map((a) => ({ ...a, locked: a.unlock !== '' && !unlocked.has(a.unlock) }));
+    const pool = slot.kinds.includes('armor')
+      ? (eq.armour || []).filter((o) => o.classId === run.class)
+      : (eq.armaments || []).filter((a) => slot.kinds.includes(a.kind));
+    return pool.map(gate).filter(Boolean);
   }
 
   function slotBlock(slot) {
@@ -208,7 +216,7 @@ export function mountEquipment(host, {
       const chip = pieceChip(registries, piece, {
         selected: piece.id === current,
         locked: piece.locked,
-        hint: piece.blurb,
+        hint: piece.hint,
       });
       if (!piece.locked) {
         chip.addEventListener('click', () => {
