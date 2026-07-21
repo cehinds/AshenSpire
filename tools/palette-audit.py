@@ -32,19 +32,24 @@ def to_srgb(c):
     return 12.92 * c if c <= 0.0031308 else 1.055 * (c ** (1 / 2.4)) - 0.055
 
 
-def srgb_to_lab(r, g, b):
-    """sRGB (0..1) -> CIE Lab, D65. CIE76 distance in this space is euclidean."""
+def srgb_to_oklab(r, g, b):
+    """sRGB (0..1) -> Oklab. Euclidean distance here is perceptual.
+
+    Oklab rather than CIE Lab (Vira's call, and she measured it): CIE76 is poor
+    at low chroma, and these armour sets are dark desaturated neutrals — exactly
+    where it flatters. She found RGB overstating separation by 20% for the same
+    reason. Not CIEDE2000: ~60 lines of hue-rotation special cases nobody in
+    this repo can audit. A metric you cannot check is a claim, not a check.
+    """
     def lin(c):
         return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
     r, g, b = lin(r), lin(g), lin(b)
-    x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047
-    y = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 1.00000
-    z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883
-
-    def f(t):
-        return t ** (1 / 3) if t > 0.008856 else (7.787 * t) + (16 / 116)
-    fx, fy, fz = f(x), f(y), f(z)
-    return (116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz))
+    l = (0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b) ** (1 / 3)
+    m = (0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b) ** (1 / 3)
+    s_ = (0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b) ** (1 / 3)
+    return (0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s_,
+            1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s_,
+            0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s_)
 
 
 def body_lab(path):
@@ -69,7 +74,7 @@ def body_lab(path):
         n += 1
     if not n:
         return None
-    return srgb_to_lab(acc[0] / n, acc[1] / n, acc[2] / n)
+    return srgb_to_oklab(acc[0] / n, acc[1] / n, acc[2] / n)
 
 
 def dist(a, b):
@@ -118,14 +123,33 @@ def measure(OUT, manifest, verbose=True):
                 return [sum(x[k] for x in v) / len(v) for k in range(3)]
             print(f"    {dist(cent(ca), cent(cb)):6.1f}   {ca} / {cb}")
 
-    print(f"\nWORST WITHIN-CLASS PAIR: ΔE {worst[0]:.1f} — {worst[1]} {worst[2]} vs {worst[3]}")
-    print("Reference: ΔE ~2.3 is a just-noticeable difference; ~10 is clearly distinct.")
+    def cent2(c):
+        v = list(by_class[c].values())
+        return [sum(x[k] for x in v) / len(v) for k in range(3)]
+
+    tightest_within = min(dist(by_class[c][a], by_class[c][b])
+                          for c in by_class
+                          for i, a in enumerate(sorted(by_class[c]))
+                          for b in sorted(by_class[c])[i + 1:])
+    closest_between = min(dist(cent2(ca), cent2(cb))
+                          for i, ca in enumerate(clss) for cb in clss[i + 1:])
+
+    print(f"\nTIGHTEST WITHIN-CLASS PAIR : {tightest_within:.4f}   ({worst[1]}: {worst[2]} vs {worst[3]})")
+    print(f"CLOSEST BETWEEN-CLASS PAIR : {closest_between:.4f}")
+    print("Invariant (Vira): tightest-within MUST EXCEED closest-between.")
+    print("  A same-class pair shares one builder, one silhouette, one light — colour is")
+    print("  the ONLY separator. A cross-class pair gets geometry for free. The pair with")
+    print("  less help must therefore carry the more separation.")
+    print("  ->", "PASS" if tightest_within > closest_between
+          else f"FAIL by {closest_between / tightest_within:.1f}x")
 
     return {
-        "withinClassMinDeltaE": {c: min(dist(by_class[c][a], by_class[c][b])
-                                        for i, a in enumerate(sorted(by_class[c]))
-                                        for b in sorted(by_class[c])[i + 1:])
-                                 for c in by_class},
+        "tightestWithinClass": tightest_within,
+        "closestBetweenClass": closest_between,
+        "withinClassMin": {c: min(dist(by_class[c][a], by_class[c][b])
+                                  for i, a in enumerate(sorted(by_class[c]))
+                                  for b in sorted(by_class[c])[i + 1:])
+                           for c in by_class},
     }
 
 

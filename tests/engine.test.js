@@ -1400,45 +1400,53 @@ export async function runTests({ artManifest = null } = {}) {
     eq(Object.keys(manifest.armour).length, REG.equipment.armour.length, 'every armour set is covered');
   });
 
-  // ---- 34. armour sets must be visibly distinct in the RENDER ---------------
-  test('34. no two armour sets of a class render closer than a just-noticeable difference', () => {
-    // Test 33 stayed green while EIGHT of twelve armour sets rendered
-    // pixel-identical to their class default. It proved the renderer READ the
-    // palette values; it could not prove they were applied — repaint() named
-    // materials only the reaver's builder uses, so the starseer and herald
-    // bodies were never touched at all.
+  // ---- 34. armour sets must be visibly distinct in the RENDER --------------
+  test('34. armour sets of a class are perceptibly separated in the rendered image', () => {
+    // Test 33 stayed green while EIGHT of twelve sets rendered pixel-identical.
+    // It proved the renderer READ the palette values; it could not prove they
+    // were applied. Bjorn's name for that shape is a hollow citation — a
+    // reference asserting authority that points at nothing.
     //
-    // Bjorn's name for that shape is a hollow citation: a reference asserting
-    // authority that points at nothing. It is more dangerous than a plain
-    // duplicate because the reader sees a check and stops looking.
-    //
-    // So this asserts a property of the OUTPUT — measured in CIE Lab from the
+    // So this asserts a property of the OUTPUT: Oklab distance measured from
     // rendered pixels by tools/palette-audit.py, in the same run that produced
-    // them. Within a class the geometry is identical (one builder, four
-    // repaints), so colour is the only signal and this is the whole claim.
-    // Between classes the silhouettes differ completely, so no bar is asserted
-    // there: an invariant should be as strict as the semantics allow, and no
-    // stricter (Vira).
+    // them. Within a class the geometry is identical (one builder, N repaints),
+    // so colour is the entire signal.
     if (!artManifest) {
       assert(true, 'SKIPPED (no filesystem): render distinctness is checked in Node');
       return;
     }
     const audit = artManifest.audit;
-    assert(audit && audit.withinClassMinDeltaE, 'the manifest carries a render audit — re-run tools/equipment-blender.py');
+    assert(audit && audit.withinClassMin, 'the manifest carries a render audit — re-run tools/equipment-blender.py');
 
-    // 2.3 is the standard just-noticeable difference. Deliberately a FLOOR and
-    // not the current value: pinning to today's 4.2 would fail on every
-    // harmless repaint and teach everyone to edit the threshold.
-    const JND = 2.3;
-    const tooClose = Object.entries(audit.withinClassMinDeltaE)
-      .filter(([, d]) => d < JND)
-      .map(([cls, d]) => `${cls}: ΔE ${d.toFixed(1)}`);
-    eq(tooClose.join('; '), '', `every class's armour sets differ by at least ΔE ${JND}`);
+    // An absolute floor, in Oklab, on the pair that shares a silhouette.
+    // 0.02 is roughly a comfortably-visible step at sprite size; it is a FLOOR,
+    // deliberately not today's 0.0287 — pinning to the current value fails on
+    // every harmless repaint and teaches everyone to edit the threshold.
+    const FLOOR = 0.02;
+    const tooClose = Object.entries(audit.withinClassMin)
+      .filter(([, d]) => d < FLOOR)
+      .map(([cls, d]) => `${cls}: ${d.toFixed(4)}`);
+    eq(tooClose.join('; '), '', `every class's sets are separated by at least ${FLOOR} Oklab`);
 
     // Coverage, or an empty audit passes by having nothing to disagree with —
     // which is exactly how the original defect survived.
     const classIds = [...new Set(REG.equipment.armour.map((o) => o.classId))];
-    eq(Object.keys(audit.withinClassMinDeltaE).length, classIds.length, 'every class was measured');
+    eq(Object.keys(audit.withinClassMin).length, classIds.length, 'every class was measured');
+
+    // TRACKED, NOT GATED. Vira's invariant is `tightestWithin > closestBetween`,
+    // on the reasoning that a same-class pair shares a silhouette and so must
+    // carry more colour separation than a cross-class pair that gets geometry
+    // for free. The reasoning is sound and the ratio of exactly 1.0 is a guess:
+    // three repaint passes took it 2.6x -> 1.8x -> 1.4x, and `closestBetween`
+    // FELL each time, because spreading a class's sets pulls its centroid toward
+    // the others. It may not be satisfiable without garish colour. Asserting it
+    // would mean painting to satisfy a bar nobody has shown is right.
+    //
+    // So the number is recorded and not enforced, pending Vira's read. Asserting
+    // an unvalidated bar is how a shared assumption gets promoted into a check —
+    // the most durable place for a wrong idea to live (her words).
+    assert(Number.isFinite(audit.tightestWithinClass / audit.closestBetweenClass),
+      `separation ratio tracked at ${(audit.tightestWithinClass / audit.closestBetweenClass).toFixed(2)}x (target 1.0, unenforced)`);
   });
 
   const passed = results.filter((r) => r.ok).length;
