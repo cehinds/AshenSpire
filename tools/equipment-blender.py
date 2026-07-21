@@ -125,12 +125,23 @@ def a_dagger(M, A, s):
 def a_curved(M, A, s):
     # Held point-DOWN like the other blades (the class bodies carry weapons that
     # way), curving gently forward as it descends from the guard.
-    for i in range(6):
-        t = i / 5.0
-        part(cube, M, loc=(RX + t * t * 0.075 * s, 0, 1.04 - t * 0.54 * s),
-             rot=(0, -5 - i * 3, 0), scale=(0.032 * s, 0.011 * s, 0.062 * s))
-    part(cone, M, loc=(RX + 0.075 * s, 0, 0.44 * s), rot=(180, 0, -14),
-         vertices=4, radius1=0.032 * s, radius2=0, depth=0.10 * s)
+    # Segments ride a real arc and are rotated to its TANGENT. Laying them out
+    # on a straight line with increasing tilt (the first attempt) made a
+    # sawtooth, because a tilted block only reads as a curve when its long axis
+    # follows the curve.
+    R, SWEEP, N = 1.4 * s, 26.0, 8
+    z0 = 1.04
+    for i in range(N + 1):
+        a = math.radians(SWEEP * i / N)
+        part(cube, M, loc=(RX + R * (1 - math.cos(a)), 0, z0 - R * math.sin(a)),
+             rot=(0, -math.degrees(a), 0), scale=(0.032 * s, 0.011 * s, 0.048 * s))
+    # The tip continues along the last segment's tangent, not straight down —
+    # otherwise it hangs off the blade end as a visible notch.
+    a = math.radians(SWEEP)
+    reach = 0.103 * s
+    part(cone, M,
+         loc=(RX + R * (1 - math.cos(a)) + reach * math.sin(a), 0, z0 - R * math.sin(a) - reach * math.cos(a)),
+         rot=(180, -SWEEP, 0), vertices=4, radius1=0.032 * s, radius2=0, depth=0.11 * s)
     part(cube, A, loc=(RX, 0, 1.14), scale=(0.10 * s, 0.024 * s, 0.020 * s))
     part(cyl, M, loc=(RX, 0, 1.28), vertices=8, radius=0.021 * s, depth=0.24 * s)
     part(ico, A, loc=(RX, 0, 1.41), subdivisions=1, radius=0.030 * s)
@@ -289,6 +300,35 @@ bpy.context.object.data.color = (0.72, 0.82, 1.0)
 bpy.ops.object.light_add(type="SUN", rotation=(math.radians(80), 0, math.radians(35)))
 bpy.context.object.data.energy = 0.7
 
+LAYER_CAM = (cam.location.copy(), cam.data.ortho_scale)
+ICON_RES = 224
+
+
+def render_icon(path):
+    """The same armament again, but framed as an ITEM rather than as a layer.
+
+    The layer render leaves the piece off at the edge of a body-sized canvas —
+    correct for compositing, useless as a 7rem slot icon. Rather than author a
+    second geometry, point the camera at the piece's own bounding box and pull
+    in. One source of truth, two framings.
+    """
+    xs, zs = [], []
+    for ob in parts:
+        for corner in ob.bound_box:
+            wc = ob.matrix_world @ __import__("mathutils").Vector(corner)
+            xs.append(wc.x)
+            zs.append(wc.z)
+    cx, cz = (min(xs) + max(xs)) / 2, (min(zs) + max(zs)) / 2
+    span = max(max(xs) - min(xs), max(zs) - min(zs))
+    cam.location = (cx, LAYER_CAM[0].y, cz)
+    cam.data.ortho_scale = max(0.25, span * 1.22)
+    scene.render.resolution_x = scene.render.resolution_y = ICON_RES
+    scene.render.filepath = path
+    bpy.ops.render.render(write_still=True)
+    cam.location, cam.data.ortho_scale = LAYER_CAM
+    scene.render.resolution_x, scene.render.resolution_y = RES_X, RES_Y
+
+
 count = 0
 for w in rows("weapons.csv"):
     build = GEOM.get(w["geom"])
@@ -300,6 +340,7 @@ for w in rows("weapons.csv"):
           float(w["scale"]))
     scene.render.filepath = os.path.join(OUT, f"weapon_{w['id']}.png")
     bpy.ops.render.render(write_still=True)
+    render_icon(os.path.join(OUT, f"icon_{w['id']}.png"))
     clear()
     count += 1
     print("ARM", w["id"])
@@ -332,6 +373,9 @@ def repaint(name, hexv):
 sets = 0
 lib["scene"].render.resolution_x, lib["scene"].render.resolution_y = RES_X, RES_Y
 lib["hero_rim"].data.energy = 2.6
+# Bodies are LAYERS, so they come out bare-handed and the weapon PNGs above —
+# built at the same hand positions on the same camera — drop straight over them.
+lib["WITH_WEAPON"] = False
 for o in rows("outfits.csv"):
     build = CLASS_BUILD.get(o["classId"])
     if not build:

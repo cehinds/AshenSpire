@@ -19,6 +19,7 @@ import { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad } fr
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
+import { figureSpec } from '../../model/loadout.js';
 
 export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
   app.innerHTML = `
@@ -371,7 +372,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     }
     const sprite = document.createElement('div');
     sprite.className = 'sprite';
-    sprite.appendChild(playerSprite(run.customization || {}, run.class));
+    sprite.appendChild(playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)));
     const badge = blockBadge(p);
     if (badge) sprite.appendChild(badge);
     box.appendChild(sprite);

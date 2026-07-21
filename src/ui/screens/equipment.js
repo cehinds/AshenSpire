@@ -17,43 +17,45 @@
 import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
-  canSwap, cycleSet, equipPiece, equippedIn, cardMods, runMods, loadoutTags,
+  canSwap, cycleSet, equipPiece, cardMods, runMods, loadoutTags, figureSpec,
 } from '../../model/loadout.js';
 import { renderCard } from '../components/card.js';
 import { esc } from '../components/tooltip.js';
-import { playerSprite } from '../assets.js';
+import { playerSprite, equippedFigure } from '../assets.js';
 import { sfx } from '../sfx.js';
 
 const CFG = () => balance.equipment;
 
-/** The armour set a class is wearing right now (or its starting one). */
-function wornArmourId(registries, run) {
-  const worn = equippedIn(registries, run.loadout, run.class, 'armor');
-  return worn ? worn.id : 'default';
-}
-
 /**
- * The figure. Armour is a whole repaint of the class body, so a set swap is a
- * different rendered PNG (tools/equipment-blender.py) rather than an overlay;
- * anything missing falls back to the ordinary class sprite, which keeps the
- * single-file dist and file:// play working exactly as before.
+ * The figure, as layers: a bare-handed body in the armour set's palette with
+ * each held armament stacked over it (see assets.js equippedFigure). Anything
+ * missing falls back to the ordinary class sprite, so the single-file dist and
+ * file:// play keep working exactly as before.
  */
 function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
-  if (CFG().spriteReacts === 'none') {
+  const reacts = CFG().spriteReacts;
+  if (reacts === 'none') {
     el.appendChild(playerSprite(cz, run.class));
     return el;
   }
-  const img = document.createElement('img');
-  img.src = `assets/equipment/body_${run.class}_${wornArmourId(registries, run)}.png`;
-  img.alt = 'your figure';
-  img.addEventListener('error', () => {
-    img.remove();
-    el.appendChild(playerSprite(cz, run.class));
-  });
-  el.appendChild(img);
+  const spec = figureSpec(registries, run.loadout, run.class);
+  if (reacts === 'hands') spec.armourId = 'default';
+  const fig = equippedFigure({ classId: run.class, ...spec });
+  el.appendChild(fig || playerSprite(cz, run.class));
   return el;
+}
+
+/**
+ * A piece's thumbnail. Armaments have a tight icon render; an armour set's
+ * "icon" is the set itself — the body in its own palette — because there is no
+ * separate object to photograph.
+ */
+function thumbSrc(piece) {
+  return piece.kind === 'armor'
+    ? `assets/equipment/body_${piece.classId}_${piece.id}.png`
+    : `assets/equipment/icon_${piece.id}.png`;
 }
 
 /** A piece's mods, written the way a player reads them. */
@@ -78,7 +80,7 @@ function pieceChip(registries, piece, { selected, locked, hint }) {
   el.type = 'button';
   const mods = modSummary(registries, piece);
   el.innerHTML =
-    `<img class="ec-art" src="assets/equipment/weapon_${esc(piece.id)}.png" alt="">` +
+    `<img class="ec-art" src="${esc(thumbSrc(piece))}" alt="">` +
     `<span class="ec-name">${esc(piece.name)}</span>` +
     `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>` +
     `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>` +
@@ -147,7 +149,7 @@ export function mountEquipment(host, {
       cell.className = `es-cell${active ? ' on' : ''}${piece ? '' : ' empty'}`;
       cell.title = piece ? piece.name : 'Empty';
       cell.innerHTML = piece
-        ? `<img src="assets/equipment/weapon_${esc(piece.id)}.png" alt=""><span>${esc(piece.name)}</span>`
+        ? `<img src="${esc(thumbSrc(piece))}" alt=""><span>${esc(piece.name)}</span>`
         : `<span class="es-empty">＋</span>`;
       const im = cell.querySelector('img');
       if (im) im.addEventListener('error', () => { im.replaceWith(Object.assign(document.createElement('span'), { textContent: '⚔' })); });
@@ -253,7 +255,7 @@ export function mountEquipment(host, {
 
   function draw() {
     wrap.innerHTML = `
-      <div class="armoury view-${esc(view)}">
+      <div class="armoury view-${esc(view)}${picking ? ' picking' : ''}">
         <header class="armoury-head">
           <h2>ARMOURY</h2>
           <div class="armoury-views">
@@ -271,15 +273,40 @@ export function mountEquipment(host, {
 
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
-    // 'grid' hangs the slots around the figure; 'rack' drops the figure
-    // entirely for density; 'hybrid' keeps both, figure beside the rack.
-    if (view !== 'rack') left.appendChild(figureFor(registries, run, cz));
-    const slotHost = view === 'grid' ? left : right;
-    const slotWrap = document.createElement('div');
-    slotWrap.className = 'equip-slots';
-    for (const slot of eq.slots) slotWrap.appendChild(slotBlock(slot));
-    slotHost.appendChild(slotWrap);
-    (view === 'grid' ? right : right).appendChild(pickerBlock());
+    const blocks = eq.slots
+      // A slot with nothing that fits it isn't a slot yet: Talisman is declared
+      // in equipSlots.csv but has no pieces authored, and three empty squares
+      // read as broken rather than as a promise. It appears the day a talisman
+      // row exists.
+      .filter((slot) => eligible(slot).length)
+      .map((slot) => ({ slot, el: slotBlock(slot) }));
+
+    if (view === 'grid') {
+      // The figure in the middle with its kit hanging off it, hands on the side
+      // they are actually held: the sprite carries the right-hand armament at
+      // screen right, so the Right Hand column is the right one.
+      const cols = { l: document.createElement('div'), r: document.createElement('div') };
+      cols.l.className = 'ag-col';
+      cols.r.className = 'ag-col';
+      blocks.forEach(({ slot, el: b }, i) => {
+        const id = slot.id.toLowerCase();
+        const side = id.includes('right') ? 'r' : id.includes('left') ? 'l' : (i % 2 ? 'r' : 'l');
+        cols[side].appendChild(b);
+      });
+      left.appendChild(cols.l);
+      left.appendChild(figureFor(registries, run, cz));
+      left.appendChild(cols.r);
+      right.appendChild(pickerBlock());
+    } else {
+      // 'rack' drops the figure entirely for density; 'hybrid' keeps it beside
+      // the same list.
+      if (view !== 'rack') left.appendChild(figureFor(registries, run, cz));
+      const slotWrap = document.createElement('div');
+      slotWrap.className = 'equip-slots';
+      for (const b of blocks) slotWrap.appendChild(b.el);
+      right.appendChild(slotWrap);
+      right.appendChild(pickerBlock());
+    }
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
 
     notice = '';

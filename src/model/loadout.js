@@ -141,6 +141,33 @@ export function equippedPieces(registries, loadout, classId) {
   return out;
 }
 
+/**
+ * figureSpec(registries, loadout, classId) → { armourId, rightId, leftId }
+ *
+ * What the sprite layers should be, derived rather than stored. Slots declare
+ * their own `kinds`, so this finds the armour slot and the two hands by what
+ * they accept instead of hard-coding 'rightHand'/'leftHand' — a renamed slot
+ * keeps working, and a fourth hand would too.
+ */
+export function figureSpec(registries, loadout, classId) {
+  const slots = (registries.equipment || {}).slots || [];
+  const spec = { armourId: 'default', rightId: null, leftId: null };
+  if (!loadout) return spec;
+  for (const slot of slots) {
+    const piece = equippedIn(registries, loadout, classId, slot.id);
+    if (slot.kinds.includes('armor')) {
+      if (piece) spec.armourId = piece.id;
+    } else if (piece) {
+      // 'right'/'left' is the piece's own property (weapons.csv `hand`), with
+      // the slot as the tiebreaker for anything usable in either.
+      const hand = piece.hand === 'either' ? (slot.id.toLowerCase().includes('left') ? 'left' : 'right') : piece.hand;
+      if (hand === 'left') spec.leftId = piece.id;
+      else spec.rightId = piece.id;
+    }
+  }
+  return spec;
+}
+
 /** Tags granted by what you're wearing (deduplicated, slot order). */
 export function loadoutTags(registries, loadout, classId) {
   const seen = [];
