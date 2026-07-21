@@ -7,7 +7,7 @@ export const balance = {
   draw: 5,
   handMax: 10,
   flaskSlots: 3,
-  startingRunes: 0,
+  startingCinders: 0,
 
   // Engine-consulted poise config (see ENGINE-API §1). onFill is where content
   // defines what "Staggered" means — the engine never names the status.
@@ -69,7 +69,7 @@ export const balance = {
   customMods: {
     toughElitesHpMult: 1.3, // Tough Elites: elites & bosses ×HP
     bigBossesHpMult: 1.5, // Dread Bosses: act bosses ×HP
-    hoarderRunes: 250, // Hoarder: bonus starting cinders
+    hoarderCinders: 250, // Hoarder: bonus starting cinders
     expensiveShopsMult: 1.5, // Greedy Merchants: ×shop price
     hoarderShopMult: 2, // Hoarder: ×shop price
     lessHealingMult: 0.5, // Scarce Embers: ×healing (shrine rest + between-act)

@@ -263,7 +263,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
     run.deck = createDeck(draftBaseIds(), createIdGen('rc'));
   }
   if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
-  if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderRunes;
+  if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderCinders;
 
   if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
   startClimb();

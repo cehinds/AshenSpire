@@ -1362,7 +1362,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
     run.deck = createDeck(draftBaseIds(), createIdGen('rc'));
   }
   if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
-  if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderRunes;
+  if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderCinders;
 
   if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
   startClimb();
@@ -2100,7 +2100,7 @@ const balance = {
   draw: 5,
   handMax: 10,
   flaskSlots: 3,
-  startingRunes: 0,
+  startingCinders: 0,
 
   // Engine-consulted poise config (see ENGINE-API §1). onFill is where content
   // defines what "Staggered" means — the engine never names the status.
@@ -2162,7 +2162,7 @@ const balance = {
   customMods: {
     toughElitesHpMult: 1.3, // Tough Elites: elites & bosses ×HP
     bigBossesHpMult: 1.5, // Dread Bosses: act bosses ×HP
-    hoarderRunes: 250, // Hoarder: bonus starting cinders
+    hoarderCinders: 250, // Hoarder: bonus starting cinders
     expensiveShopsMult: 1.5, // Greedy Merchants: ×shop price
     hoarderShopMult: 2, // Hoarder: ×shop price
     lessHealingMult: 0.5, // Scarce Embers: ×healing (shrine rest + between-act)
@@ -8169,7 +8169,7 @@ function createDeck(cardIds, idGen = createIdGen('d')) {
 /**
  * createRunState({ seed, classId, registries }) → new run at floor 0, act 1.
  * Starting deck/relic/HP come from the class def; cinders from
- * balance.startingRunes (default 0).
+ * balance.startingCinders (default 0).
  */
 function createRunState({ seed, classId, registries }) {
   const classDef = registries.classes.get(classId);
@@ -8185,10 +8185,11 @@ function createRunState({ seed, classId, registries }) {
     mapNodeId: null,
     hp: classDef.maxHp,
     maxHp: classDef.maxHp,
-    cinders: registries.balance.startingRunes || 0,
+    cinders: registries.balance.startingCinders || 0,
     deck: createDeck(classDef.startingDeck, idGen),
     relics: [classDef.startingRelic],
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots (default 3)
+    seedString: null, // set by the orchestrator right after creation (display/replay)
     mapGraph: null,
     combatEntered: null,
     history: [],
@@ -8196,13 +8197,77 @@ function createRunState({ seed, classId, registries }) {
   };
 }
 
+/**
+ * The persisted run shape, declared once (SPEC §3.12). Keeps the save contract
+ * data-driven instead of implied by whatever createRunState happens to set, and
+ * gives deserializeRun something to check so a parseable-but-malformed save is
+ * refused at load (→ save.js archives it) rather than crashing mid-run.
+ *
+ * `nullable` fields are legitimately null before their first use. Unlisted keys
+ * are allowed through untouched — this is a floor, not a whitelist.
+ */
+const RUN_SHAPE = [
+  { key: 'contentVersion', type: 'string' },
+  { key: 'seed', type: 'number' },
+  { key: 'streamCounters', type: 'object' },
+  { key: 'class', type: 'string' },
+  { key: 'floor', type: 'number' },
+  { key: 'actNumber', type: 'number' },
+  { key: 'hp', type: 'number' },
+  { key: 'maxHp', type: 'number' },
+  { key: 'cinders', type: 'number' },
+  { key: 'deck', type: 'array' },
+  { key: 'relics', type: 'array' },
+  { key: 'flasks', type: 'array' },
+  { key: 'history', type: 'array' },
+  { key: 'modifiers', type: 'array' },
+  { key: 'seedString', type: 'string', nullable: true },
+  { key: 'mapNodeId', type: 'string', nullable: true },
+  { key: 'mapGraph', type: 'object', nullable: true },
+  { key: 'combatEntered', type: 'object', nullable: true },
+];
+
+function typeOk(value, type) {
+  if (type === 'array') return Array.isArray(value);
+  if (type === 'object') return value !== null && typeof value === 'object' && !Array.isArray(value);
+  return typeof value === type; // 'string' | 'number'
+}
+
+/** validateRunShape(run) → [] when sound, else a list of human-readable problems. */
+function validateRunShape(run) {
+  const problems = [];
+  for (const f of RUN_SHAPE) {
+    const v = run[f.key];
+    if (v === undefined) {
+      problems.push(`missing '${f.key}'`);
+      continue;
+    }
+    if (v === null) {
+      if (!f.nullable) problems.push(`'${f.key}' is null`);
+      continue;
+    }
+    if (!typeOk(v, f.type)) problems.push(`'${f.key}' should be ${f.type}`);
+  }
+  // Deck entries are the ids the run is rebuilt from — the one nested shape
+  // worth checking, since a bad entry breaks combat rather than the load.
+  if (Array.isArray(run.deck)) {
+    const bad = run.deck.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
+    if (bad !== -1) problems.push(`deck[${bad}] is not { instanceId, cardId }`);
+  }
+  if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
+    problems.push('maxHp must be > 0');
+  }
+  return problems;
+}
+
 function serializeRun(run) {
   return JSON.stringify(run);
 }
 
 /**
- * deserializeRun(json) → run object. Throws on parse failure or unknown
- * schemaVersion (save.js in M2 adds archiving + contentVersion checks).
+ * deserializeRun(json) → run object. Throws on parse failure, unknown
+ * schemaVersion, or a run that doesn't match RUN_SHAPE (save.js turns any
+ * throw here into an archive-and-refuse, so a bad save is never silently lost).
  */
 function deserializeRun(json) {
   const run = JSON.parse(json);
@@ -8210,6 +8275,8 @@ function deserializeRun(json) {
   if (run.schemaVersion !== RUN_SCHEMA_VERSION) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (expected ${RUN_SCHEMA_VERSION})`);
   }
+  const problems = validateRunShape(run);
+  if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
   return run;
 }
 
@@ -8268,7 +8335,7 @@ function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax }) {
 }
 
 
-Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, serializeRun, deserializeRun, createPlayerCombatEntity, createEnemyCombatEntity });
+Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, RUN_SHAPE, validateRunShape, serializeRun, deserializeRun, createPlayerCombatEntity, createEnemyCombatEntity });
 
 },
 "src/content/customMods.js": function (module, exports, require) {
@@ -10088,16 +10155,33 @@ function emitEvent(ctx, type, payload = {}) {
   return event;
 }
 
+/**
+ * Trigger-state key for an entity's own gates (once / limitPerTurn).
+ *
+ * Co-op runs every seat through ONE ctx — coopCombat re-points ctx.player at
+ * each player in turn — and every player combat entity carries the same
+ * id 'player'. Without a per-seat discriminator, one player's once-per-combat
+ * relic/stance/status would consume the gate for the whole party. coopCombat
+ * sets ctx.playerKey to the active seat id; solo never sets it, so solo keys
+ * keep using the entity id exactly as before. Enemies are genuinely shared and
+ * keep their own (already unique) entity ids.
+ */
+function ownerKeyFor(ctx, entity) {
+  if (entity && entity.kind === 'player' && ctx.playerKey) return ctx.playerKey;
+  return entity ? entity.id : 'none';
+}
+
 function scanTriggers(ctx, event) {
   const player = ctx.player;
   if (!player) return; // run-level contexts have no combat trigger sources
+  const pKey = ownerKeyFor(ctx, player);
 
   // Relics (player-owned).
   for (const relicId of player.relicIds) {
     const def = ctx.registries.relics.get(relicId);
     (def.triggers || []).forEach((trig, i) => {
       if (trig.on !== event.type) return;
-      const fired = maybeFire(ctx, `relic:${relicId}:${i}`, trig, player, event);
+      const fired = maybeFire(ctx, `relic:${pKey}:${relicId}:${i}`, trig, player, event);
       if (fired && event.type !== 'relicTriggered') {
         emitEvent(ctx, 'relicTriggered', { relicId });
       }
@@ -10109,7 +10193,7 @@ function scanTriggers(ctx, event) {
     const stance = ctx.registries.stances.get(player.stanceId);
     (stance.hooks || []).forEach((trig, i) => {
       if (trig.on !== event.type) return;
-      maybeFire(ctx, `stance:${player.stanceId}:${i}`, trig, player, event);
+      maybeFire(ctx, `stance:${pKey}:${player.stanceId}:${i}`, trig, player, event);
     });
   }
 
@@ -10121,7 +10205,7 @@ function scanTriggers(ctx, event) {
       const def = ctx.registries.statuses.get(statusId);
       (def.hooks || []).forEach((trig, i) => {
         if (trig.on !== event.type) return;
-        maybeFire(ctx, `status:${entity.id}:${statusId}:${i}`, trig, entity, event);
+        maybeFire(ctx, `status:${ownerKeyFor(ctx, entity)}:${statusId}:${i}`, trig, entity, event);
       });
     }
   }
@@ -10149,18 +10233,19 @@ function allCombatants(ctx) {
 function fireOwnerHooks(ctx, entity, hookName) {
   if (!entity.alive) return;
   const syntheticEvent = { type: hookName, ownerId: entity.id };
+  const oKey = ownerKeyFor(ctx, entity);
   for (const statusId of Object.keys(entity.statuses)) {
     const def = ctx.registries.statuses.get(statusId);
     (def.hooks || []).forEach((trig, i) => {
       if (trig.on !== hookName) return;
-      maybeFire(ctx, `status:${entity.id}:${statusId}:${i}:${hookName}`, trig, entity, syntheticEvent);
+      maybeFire(ctx, `status:${oKey}:${statusId}:${i}:${hookName}`, trig, entity, syntheticEvent);
     });
   }
   if (entity.kind === 'player' && entity.stanceId) {
     const stance = ctx.registries.stances.get(entity.stanceId);
     (stance.hooks || []).forEach((trig, i) => {
       if (trig.on !== hookName) return;
-      maybeFire(ctx, `stance:${entity.stanceId}:${i}:${hookName}`, trig, entity, syntheticEvent);
+      maybeFire(ctx, `stance:${oKey}:${entity.stanceId}:${i}:${hookName}`, trig, entity, syntheticEvent);
     });
   }
 }

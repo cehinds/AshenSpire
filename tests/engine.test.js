@@ -17,7 +17,7 @@ import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY } from '../src/engine/save.js';
-import { createRunState, RUN_SCHEMA_VERSION } from '../src/model/state.js';
+import { createRunState, RUN_SCHEMA_VERSION, validateRunShape } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter,
@@ -32,6 +32,7 @@ import {
 import {
   endlessActInfo, activeMods, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP,
 } from '../src/content/customMods.js';
+import { createCoopCombat } from '../src/engine/coopCombat.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -461,7 +462,26 @@ export async function runTests() {
     assert(migrated != null, 'compatible save survives content patch');
     eq(migrated.contentVersion, REG.contentVersion, 'contentVersion re-stamped');
 
+    // Parseable but malformed body (right schemaVersion, broken shape) → refused
+    // and archived, instead of loading and exploding later mid-run.
+    for (const [label, bad] of [
+      ['missing hp', (() => { const r = { ...run }; delete r.hp; return r; })()],
+      ['deck not an array', { ...run, deck: 'nope' }],
+      ['deck entry missing cardId', { ...run, deck: [{ instanceId: 'x1' }] }],
+      ['null class', { ...run, class: null }],
+    ]) {
+      storage.removeItem(RUN_ARCHIVE_KEY);
+      storage.setItem(RUN_KEY, JSON.stringify(bad));
+      eq(saves.loadRun(REG), null, `malformed save refused (${label})`);
+      assert(storage.getItem(RUN_ARCHIVE_KEY) != null, `malformed save archived (${label})`);
+    }
+
+    // A sound save still declares its shape (no drift): seedString is part of it.
+    assert(validateRunShape(run).length === 0, 'a freshly created run satisfies RUN_SHAPE');
+    assert('seedString' in run, 'seedString is declared by createRunState, not bolted on later');
+
     // Meta history capped at 20.
+    storage.setItem(RUN_KEY, JSON.stringify(run));
     for (let i = 0; i < 25; i++) saves.recordResult({ victory: i % 2 === 0, seed: i });
     eq(saves.loadMeta().results.length, 20, 'history capped at 20');
   });
@@ -819,6 +839,34 @@ export async function runTests() {
     for (const cls of REG.classes.all()) {
       assert(!cls.cardPool.includes('rallyingBanner'), `no class pool contains a co-op card (${cls.id})`);
     }
+  });
+
+  // ---- 24. co-op: once/limitPerTurn gates are per-seat, not party-wide -------
+  test('24. a once-per-combat relic held by two co-op players fires for each', () => {
+    // Goldleaf Charm: { on:'playerTurnStart', once:true, block 4 to owner }.
+    // Co-op runs every seat through ONE ctx and all player entities share the id
+    // 'player', so before per-seat scoping the first seat's fire consumed the
+    // gate and the second seat silently got nothing.
+    const deck = (tag) => Array.from({ length: 5 }, (_, i) => ({ instanceId: `${tag}${i}`, cardId: 'strike', upgraded: false }));
+    const C = createCoopCombat({
+      registries: REG,
+      rng: createRng(11),
+      players: [
+        { id: 'p1', classId: 'reaver', maxHp: 80, hp: 80, deck: deck('a'), relicIds: ['goldleafCharm'], flasks: [] },
+        { id: 'p2', classId: 'reaver', maxHp: 80, hp: 80, deck: deck('b'), relicIds: ['goldleafCharm'], flasks: [] },
+      ],
+      enemyIds: ['blightHound'],
+    });
+    eq(C.players.get('p1').entity.block, 4, 'seat 1 got its own Goldleaf Charm block');
+    eq(C.players.get('p2').entity.block, 4, 'seat 2 got its own Goldleaf Charm block (gate is per-seat)');
+
+    // The gate still holds WITHIN a seat: the relic must not re-fire next turn.
+    const before = C.players.get('p1').entity.block;
+    C.emit('playerTurnStart', { turn: C.turn, playerId: 'p1' });
+    eq(C.players.get('p1').entity.block, before, "once:true still gates repeat fires for the same seat");
+
+    // Enemy-owned gates stay shared (enemies are one set, not per-seat).
+    assert(C.enemies.length === 1, 'shared enemy set is unaffected by seat scoping');
   });
 
   const passed = results.filter((r) => r.ok).length;
