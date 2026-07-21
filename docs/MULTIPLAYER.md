@@ -111,9 +111,8 @@ pure function of server state.
   `tools/session-smoke.mjs` (17, now driving the real fight). *Remaining:* wire
   the session into `tools/lan.mjs` over the WS intent protocol + the browser
   thin-client renderer (the last big UI piece). v1 combat gaps to revisit:
-  poise/Stagger in the enemy turn, flask throw-to-ally (S5), and a once-per-
-  combat relic shared by two players can mis-gate (trigger keys aren't player-
-  scoped in `triggers.js`).
+  poise/Stagger in the enemy turn and flask throw-to-ally (S5). (Per-seat
+  once/limitPerTurn gating is now handled — see below.)
 - **S4 — Catch-up series UI** ⏳ replay the per-member catch-up queue (already
   accrued by S2) as reward/event screens on reconnect. (Client renders it; a
   dedicated multi-step flow is the remaining polish.)
@@ -150,10 +149,16 @@ pure function of server state.
   exclusion), coop-combat-smoke (ally Block lands on the teammate, not the
   caster), session-smoke (party rewards carry a co-op option).
 
-**Forsaken Together is feature-complete.** Known edge for a later pass: a
-once-per-combat relic owned by BOTH players shares a trigger-state key
-(`triggers.js` keys aren't player-scoped), so the first proc consumes it for
-both. Cosmetic-scale; noted, not blocking.
+**Forsaken Together is feature-complete.**
+
+**Per-seat trigger gating (fixed).** Co-op runs every seat through ONE combat
+ctx (`setActive` re-points `C.player`), and every player entity carries the same
+`id: 'player'` — so `once` / `limitPerTurn` state was shared party-wide: the
+first seat's once-per-combat relic consumed it for everyone, and the same held
+for stance and player-status hooks. `setActive` now publishes `C.playerKey`
+(the seat id) and `triggers.js` `ownerKeyFor()` scopes player-owned trigger
+state by it. Solo never sets `playerKey`, so solo keys are unchanged; enemies
+stay shared (they have unique entity ids). Covered by engine test 24.
 
 ## Constraints
 

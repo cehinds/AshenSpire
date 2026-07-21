@@ -36,16 +36,33 @@ export function emitEvent(ctx, type, payload = {}) {
   return event;
 }
 
+/**
+ * Trigger-state key for an entity's own gates (once / limitPerTurn).
+ *
+ * Co-op runs every seat through ONE ctx — coopCombat re-points ctx.player at
+ * each player in turn — and every player combat entity carries the same
+ * id 'player'. Without a per-seat discriminator, one player's once-per-combat
+ * relic/stance/status would consume the gate for the whole party. coopCombat
+ * sets ctx.playerKey to the active seat id; solo never sets it, so solo keys
+ * keep using the entity id exactly as before. Enemies are genuinely shared and
+ * keep their own (already unique) entity ids.
+ */
+function ownerKeyFor(ctx, entity) {
+  if (entity && entity.kind === 'player' && ctx.playerKey) return ctx.playerKey;
+  return entity ? entity.id : 'none';
+}
+
 function scanTriggers(ctx, event) {
   const player = ctx.player;
   if (!player) return; // run-level contexts have no combat trigger sources
+  const pKey = ownerKeyFor(ctx, player);
 
   // Relics (player-owned).
   for (const relicId of player.relicIds) {
     const def = ctx.registries.relics.get(relicId);
     (def.triggers || []).forEach((trig, i) => {
       if (trig.on !== event.type) return;
-      const fired = maybeFire(ctx, `relic:${relicId}:${i}`, trig, player, event);
+      const fired = maybeFire(ctx, `relic:${pKey}:${relicId}:${i}`, trig, player, event);
       if (fired && event.type !== 'relicTriggered') {
         emitEvent(ctx, 'relicTriggered', { relicId });
       }
@@ -57,7 +74,7 @@ function scanTriggers(ctx, event) {
     const stance = ctx.registries.stances.get(player.stanceId);
     (stance.hooks || []).forEach((trig, i) => {
       if (trig.on !== event.type) return;
-      maybeFire(ctx, `stance:${player.stanceId}:${i}`, trig, player, event);
+      maybeFire(ctx, `stance:${pKey}:${player.stanceId}:${i}`, trig, player, event);
     });
   }
 
@@ -69,7 +86,7 @@ function scanTriggers(ctx, event) {
       const def = ctx.registries.statuses.get(statusId);
       (def.hooks || []).forEach((trig, i) => {
         if (trig.on !== event.type) return;
-        maybeFire(ctx, `status:${entity.id}:${statusId}:${i}`, trig, entity, event);
+        maybeFire(ctx, `status:${ownerKeyFor(ctx, entity)}:${statusId}:${i}`, trig, entity, event);
       });
     }
   }
@@ -97,18 +114,19 @@ function allCombatants(ctx) {
 export function fireOwnerHooks(ctx, entity, hookName) {
   if (!entity.alive) return;
   const syntheticEvent = { type: hookName, ownerId: entity.id };
+  const oKey = ownerKeyFor(ctx, entity);
   for (const statusId of Object.keys(entity.statuses)) {
     const def = ctx.registries.statuses.get(statusId);
     (def.hooks || []).forEach((trig, i) => {
       if (trig.on !== hookName) return;
-      maybeFire(ctx, `status:${entity.id}:${statusId}:${i}:${hookName}`, trig, entity, syntheticEvent);
+      maybeFire(ctx, `status:${oKey}:${statusId}:${i}:${hookName}`, trig, entity, syntheticEvent);
     });
   }
   if (entity.kind === 'player' && entity.stanceId) {
     const stance = ctx.registries.stances.get(entity.stanceId);
     (stance.hooks || []).forEach((trig, i) => {
       if (trig.on !== hookName) return;
-      maybeFire(ctx, `stance:${entity.stanceId}:${i}:${hookName}`, trig, entity, syntheticEvent);
+      maybeFire(ctx, `stance:${oKey}:${entity.stanceId}:${i}:${hookName}`, trig, entity, syntheticEvent);
     });
   }
 }

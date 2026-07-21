@@ -24,9 +24,9 @@
 // live on the shared C.enemies.
 //
 // v1 limitations (documented, for a later pass): no poise/Stagger in the enemy
-// turn; flask throw-to-ally is S5; a once-per-combat relic shared by two players
-// can mis-gate (trigger keys aren't player-scoped in triggers.js). Delayed
-// (telegraphed) enemy moves ARE supported.
+// turn; flask throw-to-ally is S5. Delayed (telegraphed) enemy moves ARE
+// supported. Per-seat once/limitPerTurn gating is handled: setActive publishes
+// C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import * as A from './actions.js';
 import * as S from './statuses.js';
@@ -151,6 +151,10 @@ function addPlayerState(C, p, { initial = false } = {}) {
 function setActive(C, P) {
   C.player = P ? P.entity : null;
   C.piles = P ? P.piles : null;
+  // Every player entity carries id 'player', so triggers.js scopes player-owned
+  // once / limitPerTurn gates by this seat id instead (see ownerKeyFor). Without
+  // it, one seat's once-per-combat relic/stance/status consumes the party's.
+  C.playerKey = P ? P.id : null;
 }
 
 function firstLiving(C) {
