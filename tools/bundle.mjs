@@ -19,7 +19,18 @@ const ROOT = resolve(__dirname, '..');
 
 // Shared by the CSS url() pass and the assets/ sweep, so it is declared up here
 // rather than beside either of them (const is not hoisted).
-const MIME = { '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml' };
+//
+// Audio is here BEFORE any audio exists, deliberately. Vira's finding: the sweep
+// skips unknown extensions silently, so the first .ogg anyone adds would be
+// dropped from the single-file build without a word — and we would rediscover
+// the art-less-build bug in a new medium. music.js already documents the hook
+// (SFX_MANIFEST / MUSIC_MANIFEST), so the day it gets used is coming.
+const MIME = {
+  '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml',
+  '.ogg': 'audio/ogg', '.mp3': 'audio/mpeg', '.wav': 'audio/wav',
+  '.m4a': 'audio/mp4', '.woff2': 'font/woff2',
+};
 
 function fail(msg) {
   console.error('bundle.mjs: ERROR — ' + msg);
@@ -155,11 +166,19 @@ function walkAssets(dir) {
 
 let mapEntries = 0;
 let mapBytes = 0;
+const skipped = []; // files under assets/ with no MIME mapping — reported, not silent
 if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
   const pairs = [];
   for (const abs of walkAssets(ASSET_DIR)) {
     const mime = MIME[extname(abs).toLowerCase()];
-    if (!mime) continue; // README, .blend, whatever else lives there
+    if (!mime) {
+      // A LOUD COUNTER beside a quiet fallback. Skipping unknown types is the
+      // right behaviour — README.md and .blend files don't belong in the
+      // bundle — but skipping them SILENTLY is how the art vanished for months.
+      // The build now says what it left behind.
+      skipped.push(idOf(abs));
+      continue;
+    }
     const buf = readFileSync(abs);
     const key = posix.join('assets', relative(ASSET_DIR, abs).split(/[\\/]/g).join('/'));
     pairs.push(`  ${JSON.stringify(key)}: "data:${mime};base64,${buf.toString('base64')}"`);
@@ -409,8 +428,51 @@ console.log('  modules bundled  : ' + order.length);
 console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
 console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
 console.log('  art inlined      : ' + mapEntries + ' files (' + Math.round(mapBytes / 1024) + ' KiB raw)');
+if (skipped.length) {
+  console.log('  skipped (no MIME): ' + skipped.length + ' — ' + skipped.slice(0, 4).join(', ') + (skipped.length > 4 ? ' …' : ''));
+}
 if (mapEntries === 0) {
   console.log('  WARNING          : no art inlined — the standalone build will show fallbacks');
+}
+
+// ---------------------------------------------------------------------------
+// Dangling literal asset references.
+//
+// The check that would have caught the art-less build, and Bjorn's shape: a
+// content check whose scope stops one step short. Runtime-CONSTRUCTED paths
+// (`assets/equipment/weapon_${id}.webp`) can't be verified statically — Vira
+// audited those against the CSVs and found both directions clean. But a LITERAL
+// path in shipped source can be, and it costs nothing.
+//
+// Comment lines are excluded: music.js documents `assets/sfx/card.ogg` as an
+// example of a hook that is deliberately unused. Counting a documented example
+// as a dangling reference is the same error as counting an unfired branch as a
+// missing key — which is exactly the false positive Vira caught in her own audit
+// an hour ago.
+// ---------------------------------------------------------------------------
+{
+  const LITERAL = /['"`](assets\/[A-Za-z0-9_\-./]+\.[a-z0-9]{2,5})['"`]/g;
+  const dangling = [];
+  for (const [id, src] of sources) {
+    for (const line of src.split('\n')) {
+      const t = line.trim();
+      if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) continue;
+      LITERAL.lastIndex = 0;
+      let m;
+      while ((m = LITERAL.exec(line)) !== null) {
+        if (!existsSync(resolve(ROOT, m[1]))) dangling.push(`${id} → ${m[1]}`);
+      }
+    }
+  }
+  if (dangling.length) {
+    fail(
+      'literal asset reference(s) point at files that do not exist:\n    ' +
+      dangling.join('\n    ') +
+      '\n  Either add the file or remove the reference — a path the code states and the ' +
+      'repo lacks fails silently at runtime.'
+    );
+  }
+  console.log('  literal refs     : all resolve');
 }
 console.log('  output           : ' + idOf(outPath));
 console.log('  output size      : ' + bytes + ' bytes (' + kib + ' KiB)');
