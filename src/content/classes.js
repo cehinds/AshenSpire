@@ -30,7 +30,7 @@ export const classes = [
       'ruinousBlow', 'bloodhuntersStrike', 'sanguinePactCard', 'bloodTithe', 'poiseBreaker',
     ],
     description:
-      'Weapon-arts duelist: stance dancing between Gorefire offense and Bulwark defense, with Bleed and Poise as twin payoff meters.',
+      'Fights up close and switches footing mid-battle — one stance hits harder, the other holds the line. Wounds you land keep bleeding, and heavy blows stagger.',
   },
   {
     id: 'starseer',
@@ -56,7 +56,7 @@ export const classes = [
       'starfallBeam', 'starcaller', 'umbralWard', 'waxingMoonCard', 'celestialLance', 'astromancerCard',
     ],
     description:
-      'Sorcery combos: the second spell each turn is empowered (Starstone). Fragile early — sequencing is everything.',
+      'Casts in sequence — the second spell each turn strikes harder than the first. Fragile early on, so the order you play cards matters more than their power.',
   },
   {
     id: 'herald',
@@ -82,7 +82,7 @@ export const classes = [
       'blightNova', 'lastRites', 'zealotryCard', 'bloodHarvest', 'bloodOfferingRite', 'harbingerOfBlightCard',
     ],
     description:
-      'HP as a resource: pay blood for tempo, spread Crimson Blight, and heal it all back. One pool — mistakes compound.',
+      'Spends its own health to act, then heals it back. Spreads a rot that damages enemies over time. One pool for everything, so mistakes stack up fast.',
   },
 ];
 

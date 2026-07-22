@@ -23,6 +23,42 @@ export const nodeIcon = (type) => (NODE_TYPES[type] || {}).icon || '?';
 export const nodeName = (type) => (NODE_TYPES[type] || {}).name || String(type);
 export const nodeBlurb = (type) => (NODE_TYPES[type] || {}).blurb || '';
 
+// Tints for the map glyphs. Here rather than in the map's markup for the reason
+// this file already claims in its header — one source, or they diverge.
+export const NODE_TINT = {
+  elite: 'var(--ember)',
+  boss: 'var(--ember)',
+  shrine: 'var(--gold)',
+  merchant: 'var(--grace)',
+  treasure: 'var(--gold)',
+};
+
+/**
+ * legendEntries() → [{ icon, name, tint }], one row per distinct glyph.
+ *
+ * Bjorn cold-played the map and could not identify `👁`. It is the BOSS — the
+ * most important node on the board — and it was missing from the legend, because
+ * the legend was hand-written in map.js while the icons live here, in a file
+ * whose own header says it is the single source so they "can't diverge".
+ *
+ * A claim of single-sourcing with an unchecked second copy beside it. Deriving
+ * the legend means a new node type appears in it without anyone remembering to,
+ * and the hardcoded list dies — which is the proof the collapse was real rather
+ * than a layer of indirection (Bjorn's criterion).
+ *
+ * Aliases (monster/fight, event/unknown) collapse to one row by glyph.
+ */
+export function legendEntries() {
+  const seen = new Set();
+  const out = [];
+  for (const [type, def] of Object.entries(NODE_TYPES)) {
+    if (seen.has(def.icon)) continue;
+    seen.add(def.icon);
+    out.push({ icon: def.icon, name: def.name, tint: NODE_TINT[type] || '' });
+  }
+  return out;
+}
+
 // ---- act titles -------------------------------------------------------------
 export const ACT_NAMES = {
   1: 'ACT I — THE FALLOW MARCHES',

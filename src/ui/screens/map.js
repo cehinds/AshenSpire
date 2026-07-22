@@ -10,7 +10,7 @@ import { overlayIsOpen } from '../components/overlay.js';
 import { matchAction, isEngaged, focusFirst } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
-import { nodeIcon, nodeBlurb, actTitle } from '../uiContent.js';
+import { nodeIcon, nodeBlurb, actTitle, legendEntries } from '../uiContent.js';
 
 const COL_X = 95;
 const ROW_H = 46;
@@ -74,12 +74,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
           <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
         </div>
         <div class="map-legend-pop" hidden>
-          <div><span class="ic">⚔</span>Monster</div>
-          <div><span class="ic">?</span>Unknown</div>
-          <div><span class="ic" style="color:var(--ember)">☠</span>Elite</div>
-          <div><span class="ic" style="color:var(--gold)">♨</span>Shrine of Emberlight</div>
-          <div><span class="ic" style="color:var(--grace)">⚖</span>Merchant</div>
-          <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
+          ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
         </div>
       </header>
       <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>

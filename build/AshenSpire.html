@@ -7092,7 +7092,7 @@ const classes = [
       'ruinousBlow', 'bloodhuntersStrike', 'sanguinePactCard', 'bloodTithe', 'poiseBreaker',
     ],
     description:
-      'Weapon-arts duelist: stance dancing between Gorefire offense and Bulwark defense, with Bleed and Poise as twin payoff meters.',
+      'Fights up close and switches footing mid-battle — one stance hits harder, the other holds the line. Wounds you land keep bleeding, and heavy blows stagger.',
   },
   {
     id: 'starseer',
@@ -7118,7 +7118,7 @@ const classes = [
       'starfallBeam', 'starcaller', 'umbralWard', 'waxingMoonCard', 'celestialLance', 'astromancerCard',
     ],
     description:
-      'Sorcery combos: the second spell each turn is empowered (Starstone). Fragile early — sequencing is everything.',
+      'Casts in sequence — the second spell each turn strikes harder than the first. Fragile early on, so the order you play cards matters more than their power.',
   },
   {
     id: 'herald',
@@ -7144,7 +7144,7 @@ const classes = [
       'blightNova', 'lastRites', 'zealotryCard', 'bloodHarvest', 'bloodOfferingRite', 'harbingerOfBlightCard',
     ],
     description:
-      'HP as a resource: pay blood for tempo, spread Crimson Blight, and heal it all back. One pool — mistakes compound.',
+      'Spends its own health to act, then heals it back. Spreads a rot that damages enemies over time. One pool for everything, so mistakes stack up fast.',
   },
 ];
 
@@ -14788,7 +14788,7 @@ const { overlayIsOpen } = require("src/ui/components/overlay.js");
 const { matchAction, isEngaged, focusFirst } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
 const { classGlyph, tintCss } = require("src/ui/assets.js");
-const { nodeIcon, nodeBlurb, actTitle } = require("src/ui/uiContent.js");
+const { nodeIcon, nodeBlurb, actTitle, legendEntries } = require("src/ui/uiContent.js");
 
 const COL_X = 95;
 const ROW_H = 46;
@@ -14852,12 +14852,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
           <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
         </div>
         <div class="map-legend-pop" hidden>
-          <div><span class="ic">⚔</span>Monster</div>
-          <div><span class="ic">?</span>Unknown</div>
-          <div><span class="ic" style="color:var(--ember)">☠</span>Elite</div>
-          <div><span class="ic" style="color:var(--gold)">♨</span>Shrine of Emberlight</div>
-          <div><span class="ic" style="color:var(--grace)">⚖</span>Merchant</div>
-          <div><span class="ic" style="color:var(--gold)">▣</span>Treasure</div>
+          ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
         </div>
       </header>
       <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>
@@ -16863,6 +16858,42 @@ const nodeIcon = (type) => (NODE_TYPES[type] || {}).icon || '?';
 const nodeName = (type) => (NODE_TYPES[type] || {}).name || String(type);
 const nodeBlurb = (type) => (NODE_TYPES[type] || {}).blurb || '';
 
+// Tints for the map glyphs. Here rather than in the map's markup for the reason
+// this file already claims in its header — one source, or they diverge.
+const NODE_TINT = {
+  elite: 'var(--ember)',
+  boss: 'var(--ember)',
+  shrine: 'var(--gold)',
+  merchant: 'var(--grace)',
+  treasure: 'var(--gold)',
+};
+
+/**
+ * legendEntries() → [{ icon, name, tint }], one row per distinct glyph.
+ *
+ * Bjorn cold-played the map and could not identify `👁`. It is the BOSS — the
+ * most important node on the board — and it was missing from the legend, because
+ * the legend was hand-written in map.js while the icons live here, in a file
+ * whose own header says it is the single source so they "can't diverge".
+ *
+ * A claim of single-sourcing with an unchecked second copy beside it. Deriving
+ * the legend means a new node type appears in it without anyone remembering to,
+ * and the hardcoded list dies — which is the proof the collapse was real rather
+ * than a layer of indirection (Bjorn's criterion).
+ *
+ * Aliases (monster/fight, event/unknown) collapse to one row by glyph.
+ */
+function legendEntries() {
+  const seen = new Set();
+  const out = [];
+  for (const [type, def] of Object.entries(NODE_TYPES)) {
+    if (seen.has(def.icon)) continue;
+    seen.add(def.icon);
+    out.push({ icon: def.icon, name: def.name, tint: NODE_TINT[type] || '' });
+  }
+  return out;
+}
+
 // ---- act titles -------------------------------------------------------------
 const ACT_NAMES = {
   1: 'ACT I — THE FALLOW MARCHES',
@@ -16966,7 +16997,7 @@ function padName(btn) {
 }
 
 
-Object.assign(module.exports, { NODE_TYPES, nodeIcon, nodeName, nodeBlurb, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, PAD_BUTTONS, padGlyph, padName });
+Object.assign(module.exports, { NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, PAD_BUTTONS, padGlyph, padName });
 
 },
 "src/ui/components/hints.js": function (module, exports, require) {
