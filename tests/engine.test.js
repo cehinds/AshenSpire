@@ -1418,6 +1418,23 @@ export async function runTests({ artManifest = null } = {}) {
     const audit = artManifest.audit;
     assert(audit && audit.withinClassMin, 'the manifest carries a render audit — re-run tools/equipment-blender.py');
 
+    // KNOWN LIMITATION, recorded rather than quietly carried: this measures the
+    // mean of every opaque pixel, and all of a class's sets share unpainted
+    // surfaces — the reaver's always-gold cape above all. That drags all four
+    // means toward gold and washes out the surfaces actually under test. At
+    // source, reaver default (hue 132.6deg) and warden (250.4deg) are 118deg
+    // apart; this metric reports 1.6deg. The correct instrument is a masked
+    // render showing only the repainted materials. Until then the number below
+    // is a floor on a DILUTED quantity, which makes it conservative rather than
+    // wrong — it can miss a real collision, it cannot invent one.
+    //
+    // Bjorn judged the pairs at in-game size and found hue, not total distance,
+    // decides whether two sets read as two suits: dE 0.0381 at 1.8deg hue read
+    // as one suit, while dE 0.0418 with a wide hue gap read as two. A scalar
+    // floor is therefore gameable by darkening. His bracketed hue floor is
+    // (5.9deg, 11.7deg], suggested 12deg, from two observations — not enough to
+    // assert on, and not to be promoted into a check on this evidence.
+
     // An absolute floor, in Oklab, on the pair that shares a silhouette.
     // 0.02 is roughly a comfortably-visible step at sprite size; it is a FLOOR,
     // deliberately not today's 0.0287 — pinning to the current value fails on
