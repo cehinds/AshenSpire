@@ -192,7 +192,24 @@ def measure(OUT, manifest, verbose=True):
     # maximised by painting all three classes identical. A number recorded in an
     # artifact is an invitation to assert it later; this one is malformed for
     # every threshold. The absolute floor is the real instrument.
+    # METHOD, recorded beside the numbers. Bjorn published three decimals he
+    # could not regenerate a day later, because the method lived only in the
+    # script that produced them: "a number without its method is an opinion with
+    # decimal places." His re-measurement came out ~1.5x higher with the
+    # ordering INVERTED, purely from alpha threshold / sample stride / averaging
+    # order differing. Anyone comparing against these figures needs to know they
+    # were made the same way.
     return {
+        "method": {
+            "space": "Oklab (CIE76-style euclidean)",
+            "source": "rendered pixels of body_<class>_<set>.webp",
+            "alphaMin": 0.9,
+            "sampleStride": "every 4th pixel (16 floats)",
+            "averaging": "mean of sRGB over opaque pixels, THEN convert to Oklab",
+            "note": "measures the WHOLE figure, so shared unpainted surfaces "
+                    "(the reaver's always-gold cape) dilute it; a masked render "
+                    "is the correct instrument and is not built",
+        },
         "tightestPairChannels": decomp,
         "withinClassMin": {c: min(dist(by_class[c][a], by_class[c][b])
                                   for i, a in enumerate(sorted(by_class[c]))
