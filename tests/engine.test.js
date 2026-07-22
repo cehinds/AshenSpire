@@ -1435,15 +1435,36 @@ export async function runTests({ artManifest = null } = {}) {
     // (5.9deg, 11.7deg], suggested 12deg, from two observations — not enough to
     // assert on, and not to be promoted into a check on this evidence.
 
-    // An absolute floor, in Oklab, on the pair that shares a silhouette.
-    // 0.02 is roughly a comfortably-visible step at sprite size; it is a FLOOR,
-    // deliberately not today's 0.0287 — pinning to the current value fails on
-    // every harmless repaint and teaches everyone to edit the threshold.
-    const FLOOR = 0.02;
-    const tooClose = Object.entries(audit.withinClassMin)
-      .filter(([, d]) => d < FLOOR)
+    // THERE IS NO PERCEPTUAL THRESHOLD HERE, DELIBERATELY. This asserted an
+    // Oklab floor of 0.02 until Bjorn retracted the evidence under it — and the
+    // history is the useful part:
+    //
+    //   1. He judged three pairs by eye and bracketed a hue floor at (5.9, 11.7]
+    //      degrees, suggesting 12.
+    //   2. Vira warned hue is unstable at low chroma.
+    //   3. He re-measured with controls. His own numbers did not reproduce: dE
+    //      ~1.5x higher and the ORDERING INVERTED. He could not regenerate his
+    //      published figures because he had not recorded his method.
+    //
+    // What survived is the QUANTITY, and it survived harder: re-measured, the
+    // pair with the LARGEST dE (reaver default|oathsworn, 0.0665) is the one he
+    // read as a single suit under two lights. Not a 10% gap with opposite
+    // verdicts — a full inversion. So dE does not measure what we care about,
+    // and hue is unstable exactly where our palettes live (starseer's default
+    // sits at chroma 0.0241, below Vira's ~0.03 instability threshold, and is
+    // the pair whose hue swung most between his two measurements).
+    //
+    // Asserting 0.02 now would encode a number whose evidence was withdrawn.
+    // "A number without its method is an opinion with decimal places" (Bjorn).
+    //
+    // So this asserts only what is actually known: the ORIGINAL DEFECT, which
+    // was eight sets rendering PIXEL-IDENTICAL. That is not a perceptual claim
+    // and is not dressed as one.
+    const IDENTICAL = 0.005; // not a JND — a "these are literally the same image" guard
+    const identical = Object.entries(audit.withinClassMin)
+      .filter(([, d]) => d < IDENTICAL)
       .map(([cls, d]) => `${cls}: ${d.toFixed(4)}`);
-    eq(tooClose.join('; '), '', `every class's sets are separated by at least ${FLOOR} Oklab`);
+    eq(identical.join('; '), '', 'no class renders two of its armour sets as effectively the same image');
 
     // Coverage, or an empty audit passes by having nothing to disagree with —
     // which is exactly how the original defect survived.

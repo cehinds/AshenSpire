@@ -412,6 +412,14 @@
     }
   },
   "audit": {
+    "method": {
+      "alphaMin": 0.9,
+      "averaging": "mean of sRGB over opaque pixels, THEN convert to Oklab",
+      "note": "measures the WHOLE figure, so shared unpainted surfaces (the reaver's always-gold cape) dilute it; a masked render is the correct instrument and is not built",
+      "sampleStride": "every 4th pixel (16 floats)",
+      "source": "rendered pixels of body_<class>_<set>.webp",
+      "space": "Oklab (CIE76-style euclidean)"
+    },
     "tightestPairChannels": {
       "herald": {
         "dC": 0.0071410358735895865,
