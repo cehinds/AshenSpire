@@ -65,6 +65,15 @@ concurrency:
 permissions:
   contents: read
 
+# KNOWN WARNING, deliberately not chased: the runner reports that
+# actions/checkout@v4 and actions/setup-node@v4 execute on Node 20, which is
+# deprecated and is being forced onto Node 24. Nothing is broken today. I am not
+# bumping the tags in the same commit that fixes a CI failure, because I cannot
+# test the bump from here and a wrong tag turns a now-green workflow red for a
+# reason unrelated to this repo. Act on it when a run FAILS or prints a
+# hard-deprecation date, not when it warns — and bump both actions in one commit
+# that does nothing else, so the diff is legible if it breaks.
+
 jobs:
   # ---------------------------------------------------------------------------
   # The engine suite and the guards' own self-tests, on all three platforms.
@@ -157,9 +166,10 @@ jobs:
   # ---------------------------------------------------------------------------
   # The save-overwrite guard needs a real browser: the defect was a URL reaching
   # localStorage, which is unreachable from Node. Ubuntu only — Chrome is
-  # preinstalled on that image. The probe exits 2 when it finds no browser, which
-  # is red on purpose: an unreachable instrument is `unknown`, and unknown blocks.
-  # It must never be allowed to read as a pass.
+  # preinstalled on that image. The probe exits 2 when the instrument is
+  # unavailable, which is red on purpose: `unknown` blocks, and it must never read
+  # as a pass. It exits 1 only when a check actually RAN and failed. Those two were
+  # the same exit code until run 1 of this workflow taught me otherwise.
   # ---------------------------------------------------------------------------
   browser-guard:
     name: ?shot= cannot touch a player's save
@@ -177,12 +187,24 @@ jobs:
           done
           echo "(probe exits 2 if none of these exist — unknown, which blocks)"
 
+      - name: Unavailable instrument resolves to 2, not to a verdict
+        # THIS STEP EXISTS BECAUSE OF RUN 1 OF THIS WORKFLOW. The probe timed out
+        # acquiring CDP on a cold runner (15.06s) and exited 1 — reporting "the
+        # guard failed" when the truth was "the instrument was not ready"; the
+        # identical job passed 66 seconds later on the pull_request event. Three
+        # unavailability branches now each resolve to exit 2 (`unknown`, which
+        # blocks), and this step triggers all three on purpose in ~3 seconds.
+        # Raising a timeout until it stops firing would be the author grading his
+        # own guard, which is what this whole branch exists to delete.
+        run: node tools/shotguard-probe.mjs --selftest-unavailable
+
       - name: Storage gate holds, and a normal boot still saves
         run: node tools/shotguard-probe.mjs
 
       - name: The probe can fail — gate defeated on the wire, failures required
         # Inverted expectation. Without this step the step above is a guard that
-        # has never failed.
+        # has never failed. (`--defeat-gate` is the same defeat WITHOUT the
+        # inversion and exits 1; it is for a human at a terminal, not for here.)
         run: node tools/shotguard-probe.mjs --mutate
 
   # ---------------------------------------------------------------------------
@@ -206,6 +228,8 @@ jobs:
           echo "  · no version-stamped build artifact is tracked in dist/"
           echo "  · ?shot= cannot write to localStorage, and a normal boot still can"
           echo "  · both shipped-artifact guards were shown to FAIL on a known-bad input"
+          echo "  · the browser probe's three UNAVAILABLE branches were each triggered and"
+          echo "    each resolved to exit 2 (unknown/blocks), not to a verdict about the gate"
           echo ""
           echo "IT DOES NOT MEAN:"
           echo "  · that the game is playable. NOTHING HERE PLAYS IT. In particular the"
@@ -221,6 +245,10 @@ jobs:
           echo "    that row is Bjorn's with Vira verifying and nothing here checks it."
           echo "  · that the co-op/LAN code works. SPEC.md:643 lists it as a non-goal and"
           echo "    it shipped anyway; no test here touches tools/lan.mjs or serve.mjs."
+          echo "  · anything about TIMING on a machine other than this one. Acquiring CDP"
+          echo "    takes ~272ms on a warm local browser and timed out at 15060ms on a"
+          echo "    cold runner during run 1 of this workflow. A green here is not a"
+          echo "    statement about how slow some other runner's cold start can be."
           echo ""
           echo "RULES THIS REPO STILL ENFORCES BY HAND (SOP 3 requirement 3, not met):"
           echo "  · SOP 3 review-lens sign-offs — a human gate, no machine check"
