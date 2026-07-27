@@ -42,7 +42,7 @@ import { mountShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
-import { openSettings } from './ui/screens/settings.js';
+import { openSettings, settingOn } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { showBossIntro } from './ui/components/intro.js';
@@ -151,7 +151,11 @@ if (typeof window !== 'undefined') {
 function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
-  document.body.classList.toggle('hi-contrast', settings.highContrast === true);
+  // High contrast is ON unless the player turned it off. Asked rather than
+  // hand-written (`settingOn`, src/ui/screens/settings.js) because a sparse
+  // store makes the polarity part of the default: `=== true` here silently
+  // re-declares `def: false` there, and the pair drifts with nothing checking.
+  document.body.classList.toggle('hi-contrast', settingOn(settings, 'highContrast'));
   // Text size sets the root font-size %; because all type + component dimensions
   // are rem, one value rescales the whole UI (base.css). Legacy boolean largeText
   // maps to L. Stacks with --ui-zoom (which additionally scales px hairlines).
@@ -880,11 +884,15 @@ function showEvent(eventId) {
   });
 }
 
-// Dev screenshot hook (?shot=map|combat|fx): boot straight into a seeded
+// Dev screenshot hook (?shot=map|combat|fx|death): boot straight into a seeded
 // showcase run so headless captures (tools/screenshot.mjs) can photograph
 // deeper screens without interaction. `fx` poses the combat FX frozen
 // mid-animation (negative animation-delay + paused) so the transient slash /
-// glyph / spark / recoil effects are photographable. Normal boots unaffected.
+// glyph / spark / recoil effects are photographable. `death` mounts the game-over
+// screen on a spent run — added because YOU PERISHED was the one screen no tool
+// could photograph, so its contrast could only ever be inferred from the
+// stylesheet, and an inferred number is the adjacent thing, not the thing.
+// Normal boots unaffected.
 const shotState = new URLSearchParams(location.search).get('shot');
 
 function poseFxShowcase() {
@@ -1000,13 +1008,22 @@ function coopCatchupShot() {
   return { actNumber: 1, floor: 6, seedString: 'SHOWCASE', endless: false, scene: { kind: 'map' }, reachableIds: [], map: null, party };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
   saves.saveMeta(shotMeta);
   newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
-  if (shotState === 'boss') {
+  if (shotState === 'death') {
+    // A run that ended on floor 4 with a few fights behind it, so the stats
+    // table has real numbers under the title instead of a row of zeroes.
+    run.floor = 4;
+    run.stats.fightsWon = 3;
+    run.stats.damageDealt = 214;
+    run.stats.damageTaken = 96;
+    run.hp = 0;
+    mountGameOver(app, { registries, game: run, victory: false, earned: [], onTitle: showTitle, onHistory: showHistory });
+  } else if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');
   } else if (shotState === 'combat' || shotState === 'fx') {

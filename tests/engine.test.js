@@ -47,6 +47,11 @@ import {
   UNLOCK_CONDITIONS, REVEAL_MODES, emptyProgress, recordProgress, evaluateUnlocks, unlockView,
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
+// The one UI import in this suite, and it is deliberate: `settingOn` is where a
+// default now lives, so a default is testable headlessly. settings.js reaches no
+// DOM at module scope (verified — it imports cleanly under plain Node), so the
+// "no DOM access" rule at the top of this file still holds.
+import { settingOn } from '../src/ui/screens/settings.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -1487,6 +1492,40 @@ export async function runTests({ artManifest = null } = {}) {
     //
     // Not even tracked. A number in the manifest is an invitation to assert it
     // later, and this one is malformed for every k.
+  });
+
+  test('35. accessibility defaults resolve from ONE home, and high contrast is on', () => {
+    // Why a default deserves a test: this value lived in two places with
+    // opposite spellings. `settings.js` declared `def: false`; `main.js` asked
+    // `settings.highContrast === true`. Both meant "off", so they agreed — and
+    // agreement is not synchronization. Flipping either one alone yields a game
+    // whose Settings switch and whose actual palette disagree, and nothing here
+    // would notice, because the disagreement is invisible until a human looks at
+    // a screen and a switch at the same time.
+    //
+    // So this asserts the property rather than the value in one file: resolving
+    // a default goes through `settingOn`, and `settingOn` against an EMPTY store
+    // — exactly what a first-boot player has in sote_meta_v1 — answers true.
+    eq(typeof settingOn, 'function', 'settingOn is exported for main.js to ask');
+    eq(settingOn({}, 'highContrast'), true, 'first boot gets high contrast');
+    eq(settingOn({ highContrast: false }, 'highContrast'), false, 'a player can turn it off');
+    eq(settingOn({ highContrast: true }, 'highContrast'), true, 'and back on');
+
+    // Both edges of the sparse store, and for a def:false row too — otherwise
+    // this only proves the one polarity it was written for.
+    eq(settingOn({}, 'colorblindSafe'), false, 'a def:false row still defaults off');
+    eq(settingOn({ colorblindSafe: true }, 'colorblindSafe'), true, 'and can be turned on');
+
+    // An unknown key must throw, not answer false: a silent false is how a
+    // renamed setting becomes a quietly-disabled feature.
+    let threw = false;
+    try { settingOn({}, 'noSuchSetting'); } catch { threw = true; }
+    eq(threw, true, 'an unknown settings key throws instead of defaulting');
+
+    // What this does NOT check, said out loud: that main.js actually calls
+    // settingOn (no DOM here, so applyDisplaySettings is unreachable from this
+    // suite), and that the resulting palette clears WCAG. The second is measured
+    // from rendered pixels by `node tools/contrast-audit.mjs --gate`.
   });
 
   const passed = results.filter((r) => r.ok).length;
