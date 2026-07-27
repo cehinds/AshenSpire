@@ -49,9 +49,12 @@
 // fixtures and its wiring in tests/run-node.mjs when EITHER holds:
 //   (a) `zoom:` is gone from styles/base.css and `--ui-zoom` from src/ — the two
 //       spaces have collapsed into one and there is nothing left to convert; or
-//   (b) `--selftest` recall is below 4/4 and cannot be restored by fixing the
-//       check. A detector whose own corpus escapes it is decoration; delete the
-//       check, not the fixtures.
+//   (b) `--selftest` reports known-bad recall below 2/2 OR known-good cleared
+//       below 3/3, and it cannot be restored by fixing the check. A detector whose
+//       own corpus escapes it is decoration; delete the check, not the fixtures.
+//       Both numbers move with the SELFTEST table below — if you add a fixture,
+//       update this line in the same commit or the condition stops being
+//       evaluable, which is the same as not having one.
 // It is NOT removed merely because the repo goes clean — clean is the state it is
 // for.
 //
