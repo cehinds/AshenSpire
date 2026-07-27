@@ -59,15 +59,60 @@ const SHIPPED = 'dist/AshenSpire.html'; // the path README.md:25 gives a player
 // second copy of the very artifact we are trying to stop tracking.
 const STALE_BLOB = '940dd0da11972e7ca378787700aebb84e6566f54';
 
+// The floor check A holds the artifact to, and Vira's condition 2: the fact is a
+// COUNT, and the count is of ASSET_MAP ENTRIES — never of `data:` URIs. Today the
+// two are 97 and 101, and the four extra URIs belong to CSS, so they drift for
+// reasons that are not this defect. She fed the old boolean `ASSET_MAP + 1 image`
+// and it passed; the historical blob had exactly 3 images, so the missing token was
+// the only thing that ever caught it.
+//
+// WHERE I DEPART FROM HER NUMBER, and she should rule on it rather than inherit it:
+// she specified 97 (98 files under assets/ minus manifest.json). I made it a FLOOR
+// of 64, not an equality of 97, because an equality here is two values that must
+// stay equal — SOP 5's whole subject — and the day someone legitimately adds or
+// removes a sprite, CI goes red for a true reason nobody wants and the fix is to
+// retype the number. A floor cannot be fixed by retyping it upward without lying on
+// purpose. 64 is far below the real 97 and far above the defect class it has to
+// catch: the stale blob had 3, and a sparse checkout or an unfetched LFS pointer
+// gives you a handful. If she wants the equality instead, it is one constant.
+//
+// REMOVAL CONDITION: the floor goes back to a boolean the day an ASSET_MAP cannot be
+// partially populated — i.e. if bundle.mjs ever fails hard on a missing asset
+// instead of writing a thinner map. It is RAISED only when the real count drops
+// below it, never to track the count upward: a floor that follows the population is
+// the equality this replaced.
+const MIN_ASSET_MAP_ENTRIES = 64;
+
+// dist/'s tracked contents, as an ALLOWLIST off the SHIPPED const — Vira's and
+// Bjorn's condition 2, converged on independently. The old check was a denylist
+// keyed on `/^AshenSpire-.+\.html$/`, which caught exactly the one shape already
+// deleted: she fed it nine twin shapes and it caught one. It is load-bearing rather
+// than cosmetic because checks A and B read ONLY dist/AshenSpire.html, so a tracked
+// twin under any other name is invisible to the entire chain — which is what
+// 40c5b21 shipped. Derived from SHIPPED so the base name still has one home.
+//
+// REMOVAL CONDITION: this list is deleted with check C, on the day dist/ tracks
+// nothing (see the tool's removal condition above). Entries are ADDED only by a
+// human who means to track a new file in dist/ — an addition made to turn CI green
+// is the denylist's failure mode reintroduced by hand.
+const ALLOWED_TRACKED_IN_DIST = [SHIPPED.replace(`${DIST_DIR}/`, ''), 'README.md'];
+
 // ---------------------------------------------------------------------------
 // The checks, as pure functions over bytes, so --selftest can feed them a corpus
 // instead of asserting against a mock of myself.
 // ---------------------------------------------------------------------------
 
-/** A. Does this HTML actually carry the art inline? */
-export function checkCarriesArt(name, bytes) {
+/**
+ * A. Does this HTML actually carry the art inline?
+ * `minEntries` is a parameter and not a constant read from scope so the corpus can
+ * drive both edges of the threshold instead of only the side it likes.
+ */
+export function checkCarriesArt(name, bytes, minEntries = MIN_ASSET_MAP_ENTRIES) {
   const text = bytes.toString('utf8');
   const hasMap = text.includes('ASSET_MAP');
+  // Entries, not `data:` URIs: an ASSET_MAP key mapped to an inlined image. The URI
+  // count includes images CSS owns and is the wrong population to threshold on.
+  const entries = (text.match(/"assets\/[^"]+":\s*"data:/g) || []).length;
   const images = (text.match(/data:image\/[a-z+]*;base64/g) || []).length;
   if (!hasMap) {
     return {
@@ -76,10 +121,19 @@ export function checkCarriesArt(name, bytes) {
         `tools/bundle.mjs. ${images} inlined image(s) found; a real build has ~101.`,
     };
   }
-  if (images === 0) {
-    return { ok: false, code: 'NO_ART', detail: `${name} has an ASSET_MAP but zero inlined images.` };
+  if (entries < minEntries) {
+    return {
+      ok: false, code: 'NO_ART',
+      detail: `${name} has an ASSET_MAP with only ${entries} entr${entries === 1 ? 'y' : 'ies'} ` +
+        `(floor is ${minEntries}; a real build has 97, in ${images} total inlined images). ` +
+        `A partial assets/ tree, a sparse checkout or an unfetched LFS pointer produces ` +
+        `exactly this: the token present and the art absent.`,
+    };
   }
-  return { ok: true, code: 'NO_ART', detail: `${name}: ASSET_MAP present, ${images} inlined images` };
+  return {
+    ok: true, code: 'NO_ART',
+    detail: `${name}: ASSET_MAP present, ${entries} entries (floor ${minEntries}), ${images} inlined images`,
+  };
 }
 
 /** B. Is the shipped file the build, byte for byte? */
@@ -95,18 +149,27 @@ export function checkShippedIsBuilt(distName, distBytes, buildBytes) {
   };
 }
 
-/** C. Has a version-stamped build artifact been committed again? */
-export function checkNoStampedTwin(trackedDistFiles) {
-  const stamped = trackedDistFiles.filter((f) => /^AshenSpire-.+\.html$/.test(f));
-  if (stamped.length) {
+/**
+ * C. Is anything tracked in dist/ that is not the one file a player is handed?
+ * An allowlist, not a name pattern: the question "is this the shipped artifact?" has
+ * one right answer and infinitely many wrong ones, and the wrong ones are the bug.
+ */
+export function checkNoStampedTwin(trackedDistFiles, allowed = ALLOWED_TRACKED_IN_DIST) {
+  const unexpected = trackedDistFiles.filter((f) => !allowed.includes(f));
+  if (unexpected.length) {
     return {
       ok: false, code: 'STAMPED_TWIN',
-      detail: `tracked version-stamped artifact(s) in dist/: ${stamped.join(', ')}. ` +
-        `These are launcher output and are ignored by .gitignore — a tracked one means the ` +
-        `ignore rule and tools/launch.mjs have drifted apart again.`,
+      detail: `tracked file(s) in dist/ that are not on the allowlist [${allowed.join(', ')}]: ` +
+        `${unexpected.join(', ')}. Launcher output is ignored by .gitignore, so a TRACKED one ` +
+        `means the ignore rule and tools/launch.mjs have drifted apart again — and checks A ` +
+        `and B read only ${SHIPPED}, so a twin under any other name is invisible to them. ` +
+        `If a new file genuinely belongs in dist/, add it to the allowlist deliberately.`,
     };
   }
-  return { ok: true, code: 'STAMPED_TWIN', detail: 'no version-stamped artifact is tracked' };
+  return {
+    ok: true, code: 'STAMPED_TWIN',
+    detail: `dist/ tracks only the allowlist [${allowed.join(', ')}] — no twin, stamped or otherwise`,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -141,18 +204,43 @@ if (SELFTEST) {
     if (!wantOk && !r.ok) console.log(`         reason given: ${r.detail.split(' — ')[0].slice(0, 96)}`);
   };
 
-  const goodArt = Buffer.from(
-    '<html><script>const ASSET_MAP={"assets/a.webp":"data:image/webp;base64,AAAA"};</script></html>', 'utf8');
+  // A synthetic build with a full-sized ASSET_MAP. Generated at the real count
+  // rather than typed, so the fixture cannot silently drift from the floor it is
+  // supposed to clear.
+  const artMap = (n) => Buffer.from('<html><script>const ASSET_MAP={' +
+    Array.from({ length: n }, (_, i) => `"assets/a${i}.webp":"data:image/webp;base64,AAAA"`).join(',') +
+    '};</script></html>', 'utf8');
+  const goodArt = artMap(97);
 
   // 1. Synthetic art-less build — the class of defect, minimal form.
   expect('synthetic: html with no ASSET_MAP',
     checkCarriesArt('synthetic-artless.html', Buffer.from('<html>no map here</html>', 'utf8')),
     false, 'NO_ART');
 
-  // 2. Synthetic: ASSET_MAP present but empty of images.
-  expect('synthetic: ASSET_MAP with zero images',
+  // 2. Synthetic: ASSET_MAP present but empty.
+  expect('synthetic: ASSET_MAP with zero entries',
     checkCarriesArt('synthetic-emptymap.html', Buffer.from('<html>const ASSET_MAP={};</html>', 'utf8')),
     false, 'NO_ART');
+
+  // 2b-2d. VIRA'S CONDITION 2, the cases the old boolean PASSED. The predicate used
+  //        to be `images === 0`, so one image cleared it — and the real stale blob
+  //        had three, which means the missing token was the only thing that ever
+  //        caught it. Both edges of the floor, because a threshold checked on one
+  //        side is a threshold nobody has measured.
+  expect('vira: ASSET_MAP with 1 entry (passed the old boolean)',
+    checkCarriesArt('synthetic-1-entry.html', artMap(1)), false, 'NO_ART');
+  expect('vira: ASSET_MAP with 3 entries — the stale blob\'s own image count',
+    checkCarriesArt('synthetic-3-entries.html', artMap(3)), false, 'NO_ART');
+  expect('edge: one entry below the floor fails',
+    checkCarriesArt('synthetic-floor-minus-1.html', artMap(MIN_ASSET_MAP_ENTRIES - 1)), false, 'NO_ART');
+  expect('edge: exactly at the floor passes',
+    checkCarriesArt('synthetic-floor.html', artMap(MIN_ASSET_MAP_ENTRIES)), true, 'NO_ART');
+  // The population trap Vira named: `data:` URIs are 101 and ASSET_MAP entries are
+  // 97, and four of the URIs are CSS's. A file with plenty of URIs and no entries is
+  // the thing a URI threshold would wave through.
+  expect('vira: 101 data: URIs but no ASSET_MAP entries (the wrong population)',
+    checkCarriesArt('synthetic-uris-no-entries.html', Buffer.from('<html>const ASSET_MAP={};' +
+      'data:image/webp;base64,AAAA'.repeat(101) + '</html>', 'utf8')), false, 'NO_ART');
 
   // 3. THE REAL DEFECT — dist/AshenSpire.html exactly as committed at 40c5b21,
   //    fetched from git by blob id. If this stops failing, the check is broken,
@@ -183,16 +271,37 @@ if (SELFTEST) {
     checkNoStampedTwin(['AshenSpire.html', 'AshenSpire-0.2.0-ashen.html', 'README.md']),
     false, 'STAMPED_TWIN');
 
+  // 5b. VIRA'S NINE TWIN SHAPES, verbatim from her sign-off. The denylist
+  //     `/^AshenSpire-.+\.html$/` caught one of these — the one already deleted.
+  //     The allowlist has to catch all nine, and it is load-bearing rather than
+  //     tidy: checks A and B read only dist/AshenSpire.html, so a tracked twin
+  //     under any other name is invisible to the whole chain. That is what 40c5b21
+  //     shipped.
+  for (const twin of [
+    'AshenSpire-0.2.0-ashen.html', 'EldenSpire-0.2.0.html', 'SpireOfAsh-0.3.0.html',
+    'AshenSpire.old.html', 'ashenspire-0.3.0.html', 'AshenSpire_0.2.0.html',
+    'AshenSpire-0.2.0-ashen.htm', 'AshenSpire copy.html', 'sub/AshenSpire-9.9.9.html',
+  ]) {
+    expect(`vira's twin shapes: ${twin} tracked in dist/`,
+      checkNoStampedTwin(['AshenSpire.html', 'README.md', twin]), false, 'STAMPED_TWIN');
+  }
+
   // 6-8. Positive controls — the checks must not fail everything indiscriminately.
   expect('control: good build carries art', checkCarriesArt('good.html', goodArt), true, 'NO_ART');
   expect('control: identical bytes are not drift',
     checkShippedIsBuilt('good.html', goodArt, goodArt), true, 'DRIFT');
   expect('control: clean dist/ listing', checkNoStampedTwin(['AshenSpire.html', 'README.md']), true, 'STAMPED_TWIN');
+  expect('control: the real tracked dist/ listing passes the allowlist',
+    checkNoStampedTwin(ALLOWED_TRACKED_IN_DIST), true, 'STAMPED_TWIN');
 
   boundary([
     'nothing about the working tree — --selftest checks the CHECKS, not the repo',
     'the synthetic cases are my model of the defect; only the blob cases are the defect',
     'no browser opened anything: art PRESENT is not art RENDERING',
+    'the floor on ASSET_MAP entries is 64 against a real 97: it catches "a handful",',
+    ' never "one asset short". An exact count would be two values kept equal by hand',
+    'the allowlist is a claim about NAMES tracked in dist/, not about their contents:',
+    ' a tracked README.md full of the wrong prose passes here and always will',
   ]);
   if (bad.length) {
     console.error(`\nverify-shipped --selftest: ${bad.length} case(s) landed on the wrong verdict:`);
