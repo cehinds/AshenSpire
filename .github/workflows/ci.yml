@@ -1,0 +1,230 @@
+# .github/workflows/ci.yml — the first workflow this repository has ever had.
+#
+# Before this file, `git ls-tree <ref> -- .github` was empty at every ref. SOP 3
+# has required CI all along, so the rule was not met here — it was UNREAD. Under
+# SOP 2's silence guard a run that is absent is `unknown`, and unknown blocks; a
+# repo with no workflow has been sitting in `unknown` and reading as green.
+#
+# SOP 3's four requirements, and where each is honestly met or not:
+#
+#  1. RUNS ON EVERY PUSH AND PR — `on:` below covers every branch and every PR
+#     target. Not tags-only, not workflow_dispatch-only.  → MET
+#
+#  2. EVERY RUNNER THE CODE MAKES A PLATFORM-SPECIFIC CLAIM ON — this repo makes
+#     four, and they are not hypothetical:
+#       · run.sh (POSIX, mode 100755) vs run.bat (Windows) — README.md offers both
+#       · tools/bundle.mjs splits paths on /[\\/]/ and rebuilds keys with
+#         posix.join: an explicit claim about backslash-separated paths
+#       · tools/dirorder.mjs claims byte order is identical on every filesystem.
+#         This is THE claim that failed: build/AshenSpire.html at 40c5b21 was
+#         built on a case-insensitive filesystem (its ASSET_MAP order is
+#         case-insensitive collation), so a Linux rebuild differed. windows-latest
+#         and macos-latest are literally the runners that produced the defect.
+#       · tools/screenshot.mjs carries Windows, macOS and Linux browser paths
+#     → MET, and see the honest warning on `reproducible` below.
+#
+#  3. A MACHINE CHECK FOR EACH RULE WE ENFORCE BY HAND — PARTIALLY MET, and I am
+#     not going to dress that up. Newly machine-checked here: the shipped artifact
+#     carries its art, dist/ IS the build, no version-stamped twin is tracked, and
+#     ?shot= cannot reach a player's save. Still enforced by hand, listed by the
+#     `boundary` job so the gap is in the run's own output rather than in a doc:
+#     SOP 3's review-lens sign-offs, SOP 5's one-version-derived check (this repo
+#     satisfies SOP 5 by construction — src/content/index.js:32 is the only home
+#     and tools/launch.mjs:17-25 derives it — but NOTHING STOPS a second copy
+#     being born, and I did not build that detector), and SOP 2's ref/domain
+#     resolution guard.
+#
+#  4. A NAMED BOUNDARY IN THE RUN'S OWN OUTPUT — the `boundary` job always runs,
+#     including on failure, and tools/verify-shipped.mjs and
+#     tools/shotguard-probe.mjs each print their own boundary block. A suite that
+#     prints only PASS is "green wasn't clearance" shipped as infrastructure.
+#
+# REMOVAL CONDITION (SOP 1's corollary). This workflow is deleted, not amended,
+# when EITHER holds:
+#   · the standalone stops being a tracked artifact — when a release workflow
+#     attaches it and README.md links the release, the `reproducible` job's
+#     dist/-freshness gate is verifying a file that no longer exists, and the
+#     remaining test legs belong in a smaller workflow;
+#   · the repo stops shipping a single-file build at all, which is the premise of
+#     every check here.
+# It is NOT removed for being red. A red here means a claim in this repo is false
+# on some platform, which is the entire reason it exists. See the warning below.
+
+name: ci
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+# One in-flight run per ref; a superseded run's result is not evidence about HEAD.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # The engine suite and the guards' own self-tests, on all three platforms.
+  # These assert nothing about byte-identity, so they are the legs least likely
+  # to be red for a reason that is really about the runner.
+  # ---------------------------------------------------------------------------
+  test:
+    name: tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false # a Windows-only failure is a FINDING; do not hide it
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      # Before checkout, deliberately: with autocrlf on (the Windows default) the
+      # working tree gets CRLF bytes that were stored as LF, and the bundler reads
+      # index.html and the stylesheets verbatim. That would make the build differ
+      # on Windows for a reason that has nothing to do with the code. Fixed here
+      # rather than with a .gitattributes because I cannot test a .gitattributes
+      # on Windows from where I am, and an untested repo-wide line-ending rule is
+      # a bigger claim than a runner setting.
+      - name: Keep checked-out bytes identical to stored bytes
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Engine suite
+        run: node tests/run-node.mjs
+
+      - name: Shipped-artifact guard — self-test against the known-bad corpus
+        # Proves the guard can fail. A guard that has never failed proves nothing,
+        # which is exactly what bundle.mjs:435's WARNING was.
+        run: node tools/verify-shipped.mjs --selftest
+
+  # ---------------------------------------------------------------------------
+  # Is the artifact we ship the artifact this source builds — on every platform?
+  #
+  # READ THIS BEFORE LOOSENING ANYTHING HERE. If this job is red on
+  # windows-latest or macos-latest while green on ubuntu-latest, that is a REAL
+  # FINDING: the build is not reproducible across filesystems, which is the
+  # defect tools/dirorder.mjs was written to close and which shipped undetected
+  # for months. The fix belongs in bundle.mjs or dirorder.mjs. It does NOT belong
+  # in this job's expectations, and it is not a reason to drop a runner.
+  #
+  # Named honestly by its author: I wrote the windows and macos legs and have
+  # never watched them run. Until they do, requirement 2 is `unknown` here, not
+  # green — and `unknown` blocks.
+  # ---------------------------------------------------------------------------
+  reproducible:
+    name: shipped artifact is this source (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Keep checked-out bytes identical to stored bytes
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Rebuild the standalone and refresh dist/
+        run: node tools/launch.mjs --build-only
+
+      - name: dist/ carries its art, and IS the build
+        run: node tools/verify-shipped.mjs
+
+      - name: The committed artifact equals a fresh build on THIS runner
+        # The check that catches both staleness and cross-platform build drift.
+        # Building twice in one tree cannot catch the latter: readdir order is
+        # stable per filesystem, so a same-machine double-build was always
+        # identical and always would have been. This is the only place the
+        # platform claim is actually tested.
+        run: |
+          git --no-pager diff --stat -- build dist
+          git diff --exit-code -- build dist
+
+  # ---------------------------------------------------------------------------
+  # The save-overwrite guard needs a real browser: the defect was a URL reaching
+  # localStorage, which is unreachable from Node. Ubuntu only — Chrome is
+  # preinstalled on that image. The probe exits 2 when it finds no browser, which
+  # is red on purpose: an unreachable instrument is `unknown`, and unknown blocks.
+  # It must never be allowed to read as a pass.
+  # ---------------------------------------------------------------------------
+  browser-guard:
+    name: ?shot= cannot touch a player's save
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Which browser will be used
+        run: |
+          for p in /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser; do
+            [ -x "$p" ] && echo "found: $p" && "$p" --version
+          done
+          echo "(probe exits 2 if none of these exist — unknown, which blocks)"
+
+      - name: Storage gate holds, and a normal boot still saves
+        run: node tools/shotguard-probe.mjs
+
+      - name: The probe can fail — gate defeated on the wire, failures required
+        # Inverted expectation. Without this step the step above is a guard that
+        # has never failed.
+        run: node tools/shotguard-probe.mjs --mutate
+
+  # ---------------------------------------------------------------------------
+  # SOP 3 requirement 4. Always runs, including when everything above is red, so
+  # the boundary is never the thing that got cut when the run went bad.
+  # ---------------------------------------------------------------------------
+  boundary:
+    name: what this green does NOT cover
+    runs-on: ubuntu-latest
+    needs: [test, reproducible, browser-guard]
+    if: always()
+    steps:
+      - name: Named boundary
+        run: |
+          echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} browser-guard=${{ needs.browser-guard.result }}"
+          echo ""
+          echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
+          echo "  · 34 engine tests pass on Linux, Windows and macOS"
+          echo "  · the standalone rebuilds byte-identically to what is committed, on each runner"
+          echo "  · dist/AshenSpire.html carries its inlined art and IS that build"
+          echo "  · no version-stamped build artifact is tracked in dist/"
+          echo "  · ?shot= cannot write to localStorage, and a normal boot still can"
+          echo "  · both shipped-artifact guards were shown to FAIL on a known-bad input"
+          echo ""
+          echo "IT DOES NOT MEAN:"
+          echo "  · that the game is playable. NOTHING HERE PLAYS IT. In particular the"
+          echo "    first-run tutorial lockout (Sunna's finding) is fixed on"
+          echo "    feature/tutorial-zoom-lock and NOT on this branch — a green run here"
+          echo "    still describes a build that can lock a new player out of their first"
+          echo "    fight at 1920x1080."
+          echo "  · that anything RENDERED. Art present in the file is not art on screen;"
+          echo "    no screenshot is compared, and screenshot bytes are not even"
+          echo "    deterministic on this app (two runs of identical code differ)."
+          echo "  · that content is correct or balanced. README.md:55's counts disagree"
+          echo "    with the loader (54 relics / 20 events / 39 cards vs 40 / 10 / ~30);"
+          echo "    that row is Bjorn's with Vira verifying and nothing here checks it."
+          echo "  · that the co-op/LAN code works. SPEC.md:643 lists it as a non-goal and"
+          echo "    it shipped anyway; no test here touches tools/lan.mjs or serve.mjs."
+          echo ""
+          echo "RULES THIS REPO STILL ENFORCES BY HAND (SOP 3 requirement 3, not met):"
+          echo "  · SOP 3 review-lens sign-offs — a human gate, no machine check"
+          echo "  · SOP 5 one-version-derived — satisfied by construction today"
+          echo "    (src/content/index.js:32 is the only home; tools/launch.mjs:17-25"
+          echo "    derives it) but NO detector stops a second copy being born"
+          echo "  · SOP 2 ref/domain resolution before reading an empty result as clean"
