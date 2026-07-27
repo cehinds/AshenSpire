@@ -185,6 +185,23 @@ existing keyboard handler with no per-screen rewrite. Which pad button drives
 each action is rebindable in the overlay's **Controls** tab
 (`src/ui/screens/controls.js`), persisted to `meta.settings.bindings`.
 
+## First-run tutorial — the reachability probe
+
+`src/ui/components/tutorial.js` positions its spotlight and bubble in the veil's
+**local** coordinates via `anchorLocalBox()` (`src/ui/fx.js`) — never raw
+`getBoundingClientRect()` offsets, which are post-`--ui-zoom` pixels and land at
+`offset×zoom` when written back as inline `left`/`top`. That mistake once put
+both of the tutorial's buttons below the fold at 1920×1080, and since `finish()`
+is the only writer of `seenTutorial`, the veil came back on every reload.
+
+`node tools/tutorial-reach.mjs` is the check: real headless Chromium at eight
+viewports (zoom 0.62 → 1.70), advancing each step with **real mouse clicks at
+real screen coordinates**, plus the two exits that need no geometry — Escape,
+and a veil that lets board clicks through (`pointer-events: none`). It also
+walks the real first-run path and asserts the flag persists. Run it after any
+change to the tutorial, to `--ui-zoom`, or to the combat board's layout; it
+prints the boundary of what it did not cover.
+
 ## Standalone build (`build/AshenSpire.html`)
 
 `node tools/bundle.mjs` emits a single self-contained HTML file to `build/` —
