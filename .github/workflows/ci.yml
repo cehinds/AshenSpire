@@ -25,8 +25,10 @@
 #
 #  3. A MACHINE CHECK FOR EACH RULE WE ENFORCE BY HAND — PARTIALLY MET, and I am
 #     not going to dress that up. Newly machine-checked here: the shipped artifact
-#     carries its art, dist/ IS the build, no version-stamped twin is tracked, and
-#     ?shot= cannot reach a player's save. Still enforced by hand, listed by the
+#     carries its art, dist/ IS the build, no version-stamped twin is tracked,
+#     ?shot= cannot reach a player's save, and — since Vira's sign-off — the
+#     dirorder comparator itself, which was a FIFTH hand-enforced rule that I had
+#     protected with a comment and left off this list. Still enforced by hand, listed by the
 #     `boundary` job so the gap is in the run's own output rather than in a doc:
 #     SOP 3's review-lens sign-offs, SOP 5's one-version-derived check (this repo
 #     satisfies SOP 5 by construction — src/content/index.js:32 is the only home
@@ -113,6 +115,21 @@ jobs:
         # Proves the guard can fail. A guard that has never failed proves nothing,
         # which is exactly what bundle.mjs:435's WARNING was.
         run: node tools/verify-shipped.mjs --selftest
+
+      - name: Directory order — the corpus history already wrote
+        # HERE, in the matrix job, and not in `reproducible`: the claim under test is
+        # that the comparator produces the SAME order on every runner, so it belongs
+        # on every runner. It also measures the divergence itself — that collation
+        # and byte order disagree about the blightHound pair on THIS filesystem's
+        # Node — which was reasoned and never run until this step existed.
+        run: node tools/dirorder.mjs --selftest
+
+      - name: Directory order — reinstate the defect five ways, catch each
+        # Inverted expectation, the same idiom as shotguard-probe --mutate. Without
+        # this the step above is a corpus nobody has watched go red. Case 1 is Vira's
+        # exact mutation — the one that put the 40c5b21 key order back with every
+        # other leg of this gate green.
+        run: node tools/dirorder.mjs --mutate
 
   # ---------------------------------------------------------------------------
   # Is the artifact we ship the artifact this source builds — on every platform?
@@ -228,6 +245,9 @@ jobs:
           echo "  · no version-stamped build artifact is tracked in dist/"
           echo "  · ?shot= cannot write to localStorage, and a normal boot still can"
           echo "  · both shipped-artifact guards were shown to FAIL on a known-bad input"
+          echo "  · the directory-order comparator sorts the real 40c5b21 sprites listing"
+          echo "    into byte order on all three runners, and five reinstatements of the"
+          echo "    collation defect were each caught by that corpus"
           echo "  · the browser probe's three UNAVAILABLE branches were each triggered and"
           echo "    each resolved to exit 2 (unknown/blocks), not to a verdict about the gate"
           echo ""
