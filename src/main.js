@@ -72,7 +72,25 @@ if (!validation.ok) {
 const registries = createRegistries(contentBundle);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
+// Dev screenshot hook (?shot=…). Read HERE, above pickStorage(), because storage
+// selection depends on it; the hook that consumes it lives at the bottom of this
+// file where the states are listed. One read, one home — parsing the query string
+// twice would be the same fact in two places.
+const shotState = new URLSearchParams(location.search).get('shot');
+
 function pickStorage() {
+  // A ?shot= boot NEVER touches durable storage. It used to: the hook wrote
+  // settings.seenTutorial into sote_meta_v1, and then newRun({ slot: 1 }) →
+  // startClimb() → persist() → saveRun(run, rng, 1) clobbered sote_run_v1. So a
+  // URL meant only for tools/screenshot.mjs destroyed a player's in-progress run
+  // — and it shipped in dist/, reachable by anyone who typed it.
+  //
+  // The gate is the storage SEAM, not a guard at each write, because there are
+  // two writes today and the third one would not know to ask. Memory storage is
+  // the module's own documented stub (engine/save.js), and the shot states are
+  // ephemeral showcases that never wanted persistence — so this removes a
+  // capability rather than adding a branch. tools/screenshot.mjs is unchanged.
+  if (shotState) return createMemoryStorage();
   try {
     window.localStorage.setItem('sote_probe', '1');
     window.localStorage.removeItem('sote_probe');
@@ -885,7 +903,10 @@ function showEvent(eventId) {
 // deeper screens without interaction. `fx` poses the combat FX frozen
 // mid-animation (negative animation-delay + paused) so the transient slash /
 // glyph / spark / recoil effects are photographable. Normal boots unaffected.
-const shotState = new URLSearchParams(location.search).get('shot');
+//
+// `shotState` is declared beside pickStorage() near the top of this file, not
+// here, because storage selection reads it: a ?shot= boot runs on memory storage
+// so it cannot touch the player's save. See the comment there for what it broke.
 
 function poseFxShowcase() {
   const layer = document.querySelector('.fx-layer');

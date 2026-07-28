@@ -10,7 +10,8 @@
 //
 // Usage: node tools/bundle.mjs
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readdirSortedSync } from './dirorder.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -156,7 +157,9 @@ const ASSET_MAP_ID = 'src/ui/assetmap.js';
 
 function walkAssets(dir) {
   const out = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+  // Sorted, not raw: the filesystem's order is a property of the machine, and it
+  // reached the shipped bundle. tools/dirorder.mjs carries the whole reason.
+  for (const entry of readdirSortedSync(dir, { withFileTypes: true })) {
     const abs = resolve(dir, entry.name);
     if (entry.isDirectory()) out.push(...walkAssets(abs));
     else out.push(abs);
