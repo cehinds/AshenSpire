@@ -51,7 +51,7 @@ import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
-import { setAnimSpeed } from './ui/fx.js';
+import { setAnimSpeed, anchorLocalBox, clampBox } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio } from './ui/audio.js';
 
@@ -971,14 +971,40 @@ function poseFxShowcase() {
   const enemies = [...document.querySelectorAll('.combatant.enemy .sprite')];
   const player = document.querySelector('.combatant.player .sprite');
   if (!layer || !enemies.length || !player) return;
+  // Container: THE FX LAYER — these are `position: absolute` children of
+  // `.fx-layer`, so the layer is the containing block and the bound, NOT the
+  // viewport (the layer is `inset: 0` over the combat board only).
+  //
+  // EldenSpire#15 listed this site as "already differences a rect against the
+  // layer's own rect — may be correct." It was not. Differencing two visual rects
+  // gives a visual delta, and `style.left` reads local: byte-for-byte the deviant
+  // removed from tutorial.js in 3a0def9, missing only the `/ z`. Measured at seven
+  // viewports: the miss runs from −400 local px at zoom 0.62 to +822 at 1.70, dead
+  // on only at 1.00, and at 1.48 and above two of the five elements sat outside the
+  // layer entirely. Dev-only (`?shot=fx`) — so no player saw it, and every
+  // screenshot this repo has ever used as evidence did.
+  //
+  // `anchorLocalBox` is exactly this arithmetic with the conversion in it, so the
+  // hand-rolled copy goes and the one home takes it. The dx/dy extras were already
+  // local px, authored in the same space as fx.js floatNum's own −14, and stay.
+  const view = anchorLocalBox(layer, layer);
   const put = (cls, text, anchor, atMs, extra) => {
-    const lr = layer.getBoundingClientRect();
-    const ar = anchor.getBoundingClientRect();
+    const b = anchorLocalBox(layer, anchor);
     const el = document.createElement('div');
     el.className = cls;
     if (text) el.textContent = text;
-    el.style.left = `${ar.left - lr.left + ar.width / 2 + ((extra && extra.dx) || 0)}px`;
-    el.style.top = `${ar.top - lr.top + ar.height * 0.4 + ((extra && extra.dy) || 0)}px`;
+    const at = clampBox(
+      {
+        left: b.left + b.width / 2 + ((extra && extra.dx) || 0),
+        top: b.top + b.height * 0.4 + ((extra && extra.dy) || 0),
+        width: 0, // a point, not a box: these elements are centred by their own CSS
+        height: 0,
+      },
+      view,
+      { pad: 0 }
+    );
+    el.style.left = `${at.left}px`;
+    el.style.top = `${at.top}px`;
     el.style.animationDelay = `-${atMs}ms`; // jump mid-animation…
     el.style.animationPlayState = 'paused'; // …and hold the frame
     layer.appendChild(el);

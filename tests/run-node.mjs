@@ -91,11 +91,65 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (tree.code !== 0 || !treeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // 38 — the BOUND, the arithmetic half only (EldenSpire#15, Marina's Rule 2).
+  //
+  // This is deliberately a small test with a loud boundary. Bounding cannot be
+  // verified without layout, so no test in this file can ever discharge Rule 2 —
+  // tools/zoomplace.mjs does that, in a browser, and nothing runs it automatically
+  // yet (`#16`). What IS testable here is that clampBox never returns a box
+  // outside the container it was given, including the cases a caller gets wrong:
+  // a box bigger than the view, a negative input, keep larger than the box.
+  //
+  // The known-bad is the third case. Before the fix, tooltip.js clamped correctly
+  // and rendered off-screen anyway, because it clamped in one space and wrote in
+  // another — so a test that only fed clampBox sane numbers would have been green
+  // against the actual defect. It cannot see that defect either. It says so.
+  const { clampBox } = await import('../src/ui/fx.js');
+  const view = { width: 1000, height: 800 };
+  const inside = (b, w, h, pad) => b.left >= pad - 0.001 && b.top >= pad - 0.001 && b.left + w <= view.width - pad + 0.001 && b.top + h <= view.height - pad + 0.001;
+  const cases = [
+    ['a box already inside is not moved', () => {
+      const r = clampBox({ left: 100, top: 100, width: 200, height: 100 }, view);
+      return r.left === 100 && r.top === 100;
+    }],
+    ['a box off the right/bottom is pulled back inside', () => {
+      const r = clampBox({ left: 1400, top: 1400, width: 200, height: 100 }, view);
+      return inside(r, 200, 100, 4);
+    }],
+    ['a box off the left/top is pushed back inside', () => {
+      const r = clampBox({ left: -900, top: -900, width: 200, height: 100 }, view);
+      return inside(r, 200, 100, 4);
+    }],
+    ['a box larger than the view pins to the low edge, never slides off the far one', () => {
+      const r = clampBox({ left: -5000, top: 5000, width: 4000, height: 3000 }, view);
+      return r.left === 4 && r.top === 4;
+    }],
+    ['keep:40 lets a pointer-tracked box overhang, but never vanish', () => {
+      const r = clampBox({ left: -5000, top: -5000, width: 200, height: 100 }, view, { keep: 40 });
+      return r.left + 200 >= 44 && r.top + 100 >= 44 && r.left < 4 && r.top < 4;
+    }],
+    ['keep larger than the box degrades to the whole box, not to a negative bound', () => {
+      const r = clampBox({ left: 9999, top: 9999, width: 20, height: 20 }, view, { keep: 500 });
+      return inside(r, 20, 20, 4);
+    }],
+  ];
+  const bad = cases.filter(([, fn]) => !fn()).map(([n]) => n);
+  console.log(
+    `${bad.length ? 'FAIL' : 'PASS'}  38. clampBox keeps a box inside its named container` +
+      ` — ${bad.length ? `failed: ${bad.join('; ')}` : `${cases.length}/${cases.length} cases, incl. box>view and keep>box.`}` +
+      ` (arithmetic only — the space it is computed in is what #15 was, and no unit test can see that)`
+  );
+  if (bad.length) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
 console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
 console.log('          check over coordinate spaces — they prove a transform has two');
-console.log('          homes, never that a pixel renders wrong. Nothing here opens a');
-console.log('          browser, so no test in this file has seen the screen.');
+console.log('          homes, never that a pixel renders wrong. 38 is arithmetic on');
+console.log('          numbers a caller supplies, and the #15 defect was a correct');
+console.log('          clamp computed in the wrong space, which 38 cannot detect.');
+console.log('          Nothing here opens a browser, so no test in this file has seen');
+console.log('          the screen. `node tools/zoomplace.mjs` is the half that has.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

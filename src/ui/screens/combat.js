@@ -10,7 +10,7 @@ import { renderCard } from '../components/card.js';
 import { openPileModal } from '../components/piles.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
-import { animateEvents, playTimeline } from '../fx.js';
+import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { intentBadge, intentTooltip, backdropClass } from '../uiContent.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -524,8 +524,22 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
           document.body.appendChild(dragGhost);
         }
         if (dragging && dragGhost) {
-          dragGhost.style.left = `${mv.clientX - 70}px`;
-          dragGhost.style.top = `${mv.clientY - 100}px`;
+          // Container: THE VIEWPORT. The ghost is `position: fixed` and tracks the
+          // pointer, so nothing smaller is its bound. EldenSpire#15: `clientX` is
+          // visual px and `style.left` is local px, so the ghost ran away from the
+          // hand at every zoom but 1.00 — at 1920×1080 it sat 247 local px
+          // down-right of the cursor and clipped off the bottom edge, on the exact
+          // affordance the first-run tutorial teaches. The grip (70, 100) is
+          // unchanged: it was always meant as local px, into a 140×196 card.
+          const view = viewportLocalBox();
+          const g = anchorLocalBox(VIEWPORT_ORIGIN, dragGhost);
+          const at = anchorLocalBox(VIEWPORT_ORIGIN, { left: mv.clientX, top: mv.clientY, width: 0, height: 0 });
+          // keep:40, not the whole box — a card dragged to the edge of the screen
+          // SHOULD hang over it, the way it does in the hand. What must never
+          // happen is the ghost leaving entirely, which is what it did at 1.48.
+          const p = clampBox({ left: at.left - 70, top: at.top - 100, width: g.width, height: g.height }, view, { keep: 40 });
+          dragGhost.style.left = `${p.left}px`;
+          dragGhost.style.top = `${p.top}px`;
         }
       };
       const onUp = (up) => {
@@ -756,18 +770,49 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     const cardEl = app.querySelector(`.hand .card[data-instance-id="${instanceId}"]`);
     if (!cardEl) return;
     const dest = (targetId && fxCtx.anchorFor(targetId)) || fxCtx.anchorFor('player');
-    const from = cardEl.getBoundingClientRect();
-    const to = dest ? dest.getBoundingClientRect() : from;
+    // Container: THE VIEWPORT — `.card-ghost` is `position: fixed` (combat.css:364).
+    // EldenSpire#15: `from`/`to` are raw visual rects, so at 1920×1080 the ghost
+    // started 190 local px below the card it was a ghost of, entirely under the
+    // bottom edge, and flew to a point that was not the enemy.
+    //
+    // THE TRANSFORM IS THE SAME SPACE, and it is the half no instrument here can
+    // see: zoomunits.mjs reads neither `transform` nor `cssText` and says so in its
+    // own boundary block, so `dx`/`dy` below were never in the carried set and
+    // never could have been. Marina measured the mechanism — `translate(100px)`
+    // under `zoom: 1.5` moves 150 visual px — which is why the deltas convert too.
+    // Found by hand, on a screen. Not by the detector, which cannot.
+    const view = viewportLocalBox();
+    const b = anchorLocalBox(VIEWPORT_ORIGIN, cardEl);
+    const t = anchorLocalBox(VIEWPORT_ORIGIN, dest || cardEl);
     const ghost = cardEl.cloneNode(true);
     ghost.className = `${cardEl.className} card-ghost`;
-    ghost.style.left = `${from.left}px`;
-    ghost.style.top = `${from.top}px`;
-    ghost.style.width = `${from.width}px`;
+    // keep:40 — the start box is the card's own, already on screen, so this never
+    // fires in play; it is here so a future wrong `b` is a misplaced ghost rather
+    // than an invisible one.
+    const at = clampBox(b, view, { keep: 40 });
+    ghost.style.left = `${at.left}px`;
+    ghost.style.top = `${at.top}px`;
+    ghost.style.width = `${b.width}px`;
     ghost.style.margin = '0';
     document.body.appendChild(ghost);
     requestAnimationFrame(() => {
-      const dx = to.left + to.width / 2 - (from.left + from.width / 2);
-      const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+      // Centred on the CARD's box — the original model, kept. I tried measuring the
+      // ghost's own box here instead, since the ghost is the thing that flies, and
+      // it is worse: the clone inherits the card's class list including its entry
+      // animation, so a rect read inside this rAF catches that animation mid-frame
+      // (measured 203.59 tall against a 196 layout box — an 8.18 px offset that
+      // changes with WHEN you look). A number read off a running animation is not a
+      // measurement. The card's box holds still.
+      //
+      // What that leaves is a real ~3.5 local px approximation: the card carries
+      // `.hand .card.selected` — translateY(-56px) scale(1.32), combat.css:180 —
+      // and the ghost stops matching that selector the moment it is reparented to
+      // <body>. It is CONSTANT at every zoom, which is exactly how zoomplace.mjs
+      // separates it from the #15 defect, whose error is (1−1/z)·offset and runs
+      // from −207 to +403 local px across the dial. Cosmetic, pre-existing, and not
+      // this card's subject — named here so the next reader does not re-find it.
+      const dx = t.left + t.width / 2 - (at.left + b.width / 2);
+      const dy = t.top + t.height / 2 - (at.top + b.height / 2);
       ghost.style.transform = `translate(${dx}px, ${dy}px) scale(0.35) rotate(6deg)`;
       ghost.style.opacity = '0';
     });
