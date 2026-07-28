@@ -62,8 +62,12 @@ const ROWS = [
 
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: 'Reduced motion',
     note: 'Calm ambient effects, drop the map pulse, and shorten animations.' },
-  { cat: 'Accessibility', key: 'highContrast', def: false, label: 'High contrast',
-    note: 'Brighter text and stronger borders throughout for readability.' },
+  // ON by default. Measured, not assumed: at the old default eight text targets
+  // sat below the WCAG AA floor and the secondary buttons' own outlines sat at
+  // 1.64:1 against a 3.0 floor. High contrast clears all of that and costs one
+  // thing — see the note. `node tools/contrast-audit.mjs` re-runs the numbers.
+  { cat: 'Accessibility', key: 'highContrast', def: true, label: 'High contrast',
+    note: 'Brighter text and stronger borders throughout for readability. On by default — turn it off for the dimmer, more atmospheric palette.' },
   { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'M',
     choices: ['S', 'M', 'L', 'XL'], label: 'Text size',
     note: 'Scale all interface text and sizing together (sets the root size). M is default; L/XL aid readability. Stacks with UI size.' },
@@ -82,6 +86,35 @@ const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Advanced'];
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
   return row.def ? settings[row.key] !== false : settings[row.key] === true;
+}
+
+/**
+ * settingOn(settings, key) → is this boolean setting ON, given a sparse store?
+ *
+ * Exported because a default lives in exactly one place — the `def` field on the
+ * row above — and everything else asks. Stored settings are sparse (an untouched
+ * key is simply absent), so "is it on" is not `!!settings[key]`: it depends on
+ * the default, and the polarity inverts with it. `def: false` must be read as
+ * `=== true`; `def: true` must be read as `!== false`. Writing that test out by
+ * hand at the point of use means the default is recorded twice, once here and
+ * once as a comparison operator somewhere else — and the two are only ever
+ * checked by a human noticing that the toggle in Settings disagrees with the
+ * screen. That is the second copy this project keeps finding. This function is
+ * the one home.
+ *
+ * NOT YET the one home for every toggle: applyDisplaySettings in src/main.js
+ * still hand-writes the polarity for useSprites, reducedMotion, screenShake,
+ * controlHints, colorblindSafe, reduceFlashes, readableHeadings, mapHeaderRelics
+ * and mapHeaderSeed. Those are all still `def:`-agreeing today, and converting
+ * them is a mechanical change I deliberately did not make in the same commit as
+ * a default flip: one wrong polarity there silently changes a different default,
+ * and nothing in the suite would catch it. Convert them when someone next has a
+ * reason to touch that function, one at a time.
+ */
+export function settingOn(settings, key) {
+  const row = ROWS.find((r) => r.key === key);
+  if (!row) throw new Error(`settingOn: no settings row named '${key}'`);
+  return valueOf(settings || {}, row);
 }
 
 function rowHtml(settings, r) {

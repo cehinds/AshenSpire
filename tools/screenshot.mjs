@@ -31,6 +31,14 @@ const SHOTS = [
   { name: 'combat', query: '?shot=combat' },
   { name: 'fx', query: '?shot=fx' }, // combat FX posed frozen mid-animation
   { name: 'boss-intro', query: '?shot=boss' }, // boss name splash, held
+  // Added 2026-07-28 (Vira, reviewing #10). ?shot=death shipped in src/main.js and
+  // never reached this list — so the one screen I added a state FOR, because nothing
+  // could photograph it, still was not photographed by the preview generator. 10
+  // states in main.js, 9 here. The PNG is deliberately NOT in the same commit:
+  // running this tool rewrites ALL of docs/preview/ under the new high-contrast
+  // default, which is a visible artifact change and Constantine's to see coming. The
+  // list is right now; the folder is still stale, which was already true and recorded.
+  { name: 'death', query: '?shot=death' }, // YOU PERISHED — the worst contrast in the game
   { name: 'coop-combat', query: '?shot=coop' }, // LAN co-op combat board (2 players)
   { name: 'coop-map', query: '?shot=coopmap' }, // LAN co-op shared map
   { name: 'coop-reward', query: '?shot=coopreward' }, // per-member reward pick

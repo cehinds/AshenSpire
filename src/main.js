@@ -42,7 +42,7 @@ import { mountShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
-import { openSettings } from './ui/screens/settings.js';
+import { openSettings, settingOn } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { showBossIntro } from './ui/components/intro.js';
@@ -72,7 +72,30 @@ if (!validation.ok) {
 const registries = createRegistries(contentBundle);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
+// Dev screenshot hook (?shot=…). Read HERE, above pickStorage(), because storage
+// selection depends on it; the hook that consumes it lives at the bottom of this
+// file where the states are listed. One read, one home — parsing the query string
+// twice would be the same fact in two places.
+//
+// ONE `URLSearchParams` construction in this file, deliberately, and every fact
+// derives from it (`shot`, `shotSettings`). That collapse is Rune's and it is the
+// thing that makes the gate below reach every state; keep the count at one.
+const shotParams = new URLSearchParams(location.search);
+const shotState = shotParams.get('shot');
+
 function pickStorage() {
+  // A ?shot= boot NEVER touches durable storage. It used to: the hook wrote
+  // settings.seenTutorial into sote_meta_v1, and then newRun({ slot: 1 }) →
+  // startClimb() → persist() → saveRun(run, rng, 1) clobbered sote_run_v1. So a
+  // URL meant only for tools/screenshot.mjs destroyed a player's in-progress run
+  // — and it shipped in dist/, reachable by anyone who typed it.
+  //
+  // The gate is the storage SEAM, not a guard at each write, because there are
+  // two writes today and the third one would not know to ask. Memory storage is
+  // the module's own documented stub (engine/save.js), and the shot states are
+  // ephemeral showcases that never wanted persistence — so this removes a
+  // capability rather than adding a branch. tools/screenshot.mjs is unchanged.
+  if (shotState) return createMemoryStorage();
   try {
     window.localStorage.setItem('sote_probe', '1');
     window.localStorage.removeItem('sote_probe');
@@ -82,6 +105,48 @@ function pickStorage() {
   }
 }
 const saves = createSaveManager(pickStorage());
+
+// `?shotSettings=<json>` — display settings for a ?shot= boot, written into the
+// EPHEMERAL store above. Read only when shotState is truthy, so a normal boot
+// cannot reach this at all, and it writes through the memory stub, so Rune's gate
+// is untouched and there is still no durable write. The gate line itself is
+// deliberately not modified: tools/shotguard-probe.mjs --mutate matches it
+// byte-for-byte and REFUSES to run if it has changed.
+//
+// WHY THIS EXISTS. A ?shot= boot has no durable settings by construction, so
+// sote_meta_v1 is never read and every display setting resolves to its default.
+// Correct for the gate — and it silently broke my own instrument.
+// tools/contrast-audit.mjs seeded each profile into localStorage and then
+// measured nine profiles rendering identically on every ?shot= screen, reporting
+// `hi-contrast-off` map Act/Floor at 6.33 where the truth is 3.74: a PASS
+// standing in for an AA failure, in the direction that flatters the change.
+// Vira caught it reviewing #10 and made it a merge condition; the invariant she
+// wrote is "the profile reported is the profile rendered."
+//
+// The settings go through saves.loadMeta() like any other boot, so what gets
+// measured is the app's OWN resolution — settingOn(), resolveZoom(),
+// applyDisplaySettings() — and never the instrument's copy of those rules. That
+// is the whole reason this is a URL parameter rather than the audit reaching in
+// and setting `body.hi-contrast` itself, which would have been three lines and
+// would have measured my own mock.
+if (shotState) {
+  const raw = shotParams.get('shotSettings');
+  if (raw) {
+    try {
+      const incoming = JSON.parse(raw);
+      if (incoming && typeof incoming === 'object' && !Array.isArray(incoming)) {
+        const meta = saves.loadMeta();
+        saves.saveMeta({ ...meta, settings: { ...(meta.settings || {}), ...incoming } });
+      } else {
+        console.warn('?shotSettings ignored: not a JSON object');
+      }
+    } catch (e) {
+      // Loud but harmless: a malformed value must not take the boot down, and it
+      // must not silently look like "the defaults were what you asked for."
+      console.warn('?shotSettings ignored (not JSON):', e && e.message);
+    }
+  }
+}
 
 // Procedural audio engine (SPEC §7.4). The sink plugs into the existing sfx
 // hook seam, so every sfx.play() call site makes sound with no change.
@@ -151,7 +216,11 @@ if (typeof window !== 'undefined') {
 function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
-  document.body.classList.toggle('hi-contrast', settings.highContrast === true);
+  // High contrast is ON unless the player turned it off. Asked rather than
+  // hand-written (`settingOn`, src/ui/screens/settings.js) because a sparse
+  // store makes the polarity part of the default: `=== true` here silently
+  // re-declares `def: false` there, and the pair drifts with nothing checking.
+  document.body.classList.toggle('hi-contrast', settingOn(settings, 'highContrast'));
   // Text size sets the root font-size %; because all type + component dimensions
   // are rem, one value rescales the whole UI (base.css). Legacy boolean largeText
   // maps to L. Stacks with --ui-zoom (which additionally scales px hairlines).
@@ -880,12 +949,22 @@ function showEvent(eventId) {
   });
 }
 
-// Dev screenshot hook (?shot=map|combat|fx): boot straight into a seeded
+// Dev screenshot hook (?shot=map|combat|fx|death): boot straight into a seeded
 // showcase run so headless captures (tools/screenshot.mjs) can photograph
 // deeper screens without interaction. `fx` poses the combat FX frozen
 // mid-animation (negative animation-delay + paused) so the transient slash /
-// glyph / spark / recoil effects are photographable. Normal boots unaffected.
-const shotState = new URLSearchParams(location.search).get('shot');
+// glyph / spark / recoil effects are photographable. `death` mounts the game-over
+// screen on a spent run — added because YOU PERISHED was the one screen no tool
+// could photograph, so its contrast could only ever be inferred from the
+// stylesheet, and an inferred number is the adjacent thing, not the thing.
+// Normal boots unaffected.
+//
+// `shotState` is declared beside pickStorage() near the top of this file, not
+// here, because storage selection reads it: a ?shot= boot runs on memory storage
+// so it cannot touch the player's save. See the comment there for what it broke.
+// That gate is `if (shotState)` — truthy, not a list of states — so `death` is
+// inside it by construction and needs no guard of its own. Do not re-read
+// location.search down here to add a state: the single const IS the gate's reach.
 
 function poseFxShowcase() {
   const layer = document.querySelector('.fx-layer');
@@ -1000,13 +1079,22 @@ function coopCatchupShot() {
   return { actNumber: 1, floor: 6, seedString: 'SHOWCASE', endless: false, scene: { kind: 'map' }, reachableIds: [], map: null, party };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
   saves.saveMeta(shotMeta);
   newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
-  if (shotState === 'boss') {
+  if (shotState === 'death') {
+    // A run that ended on floor 4 with a few fights behind it, so the stats
+    // table has real numbers under the title instead of a row of zeroes.
+    run.floor = 4;
+    run.stats.fightsWon = 3;
+    run.stats.damageDealt = 214;
+    run.stats.damageTaken = 96;
+    run.hp = 0;
+    mountGameOver(app, { registries, game: run, victory: false, earned: [], onTitle: showTitle, onHistory: showHistory });
+  } else if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');
   } else if (shotState === 'combat' || shotState === 'fx') {
