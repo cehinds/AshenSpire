@@ -133,11 +133,23 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
       const r = clampBox({ left: 9999, top: 9999, width: 20, height: 20 }, view, { keep: 500 });
       return inside(r, 20, 20, 4);
     }],
+    // The far edge of the SAME rule, because `lo` and `hi` are different
+    // expressions and the keep:40 case above exercises only `lo`. Its known-bad:
+    // mutate `hi = span - pad - k` to `span - pad - size` and all six cases above
+    // stay green while a pointer-tracked box loses its overhang (956 -> 796).
+    // A finite `keep` on the high edge is the one branch nothing else watches —
+    // no browser run reaches it — so this line is its only witness, and until now
+    // it was a one-sided one.
+    ['keep:40 overhangs the RIGHT/BOTTOM edge too, not just the left/top', () => {
+      const r = clampBox({ left: 9999, top: 9999, width: 200, height: 100 }, view, { keep: 40 });
+      return r.left + 200 > view.width - 4 && r.top + 100 > view.height - 4
+          && r.left <= view.width - 4 - 40 + 0.001 && r.top <= view.height - 4 - 40 + 0.001;
+    }],
   ];
   const bad = cases.filter(([, fn]) => !fn()).map(([n]) => n);
   console.log(
     `${bad.length ? 'FAIL' : 'PASS'}  38. clampBox keeps a box inside its named container` +
-      ` — ${bad.length ? `failed: ${bad.join('; ')}` : `${cases.length}/${cases.length} cases, incl. box>view and keep>box.`}` +
+      ` — ${bad.length ? `failed: ${bad.join('; ')}` : `${cases.length}/${cases.length} cases, incl. box>view, keep>box, and a finite keep on BOTH far edges.`}` +
       ` (arithmetic only — the space it is computed in is what #15 was, and no unit test can see that)`
   );
   if (bad.length) zoomExtra++;
