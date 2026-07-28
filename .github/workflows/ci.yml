@@ -239,7 +239,14 @@ jobs:
           echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} browser-guard=${{ needs.browser-guard.result }}"
           echo ""
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
-          echo "  · 34 engine tests pass on Linux, Windows and macOS"
+          # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
+          # this branch existed. Not corrected to 35: this job has no checkout and no
+          # node, so it cannot count, and a hardcoded total in a BOUNDARY block goes
+          # quietly false every time the suite grows — which is the exact failure this
+          # block exists to prevent. The `test` job prints the real count.
+          # — Sunna, 2026-07-28, one line in Rune's file, said out loud rather than silently.
+          echo "  · the whole engine suite passes on Linux, Windows and macOS"
+          echo "    (the count is printed by the suite itself in the \`test\` job, not asserted here)"
           echo "  · the standalone rebuilds byte-identically to what is committed, on each runner"
           echo "  · dist/AshenSpire.html carries its inlined art and IS that build"
           echo "  · no version-stamped build artifact is tracked in dist/"
