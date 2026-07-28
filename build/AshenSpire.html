@@ -585,17 +585,29 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .set-text:focus { border-color: var(--gold); outline: none; }
 
 /* ---------- first-run tutorial overlay ---------- */
-.tut-veil { position: fixed; inset: 0; z-index: 800; }
+/* pointer-events:none is load-bearing, not tidiness. The veil covers the whole
+   viewport only to host the spotlight's shadow — but swallowing clicks turned a
+   mispositioned callout into a permanent lockout of the first fight, since the
+   veil is removed only by its own two buttons (the only writers of
+   `seenTutorial`, so a reload brought it straight back). The coach marks explain
+   the board; they must never stand between the player and it. The bubble takes
+   pointer events back for its buttons. */
+.tut-veil { position: fixed; inset: 0; z-index: 800; pointer-events: none; }
+/* absolute, not fixed: this makes the veil their containing block, so the veil
+   IS the layer their inline left/top is measured in — which is what tutorial.js
+   hands anchorLocalBox(). As `fixed` the two agreed only because the veil
+   happens to be inset:0; changing that inset would have silently skewed every
+   callout again. */
 .tut-spot {
-  position: fixed; border: 2px solid var(--gold); border-radius: 10px;
+  position: absolute; border: 2px solid var(--gold); border-radius: 10px;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72), 0 0 22px rgba(201, 162, 39, 0.55);
   transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
   pointer-events: none;
 }
 .tut-bubble {
-  position: fixed; width: 30rem; background: var(--bg-raise); border: 1px solid var(--gold);
+  position: absolute; width: 30rem; background: var(--bg-raise); border: 1px solid var(--gold);
   border-radius: 12px; padding: 1.4rem 1.6rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
-  animation: screenIn 200ms ease-out;
+  animation: screenIn 200ms ease-out; pointer-events: auto;
 }
 .tut-bubble .tut-title { color: var(--gold); font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.6rem; }
 .tut-bubble .tut-text { font-size: 1.25rem; color: var(--parchment); line-height: 1.5; margin-bottom: 1.2rem; }
@@ -18602,6 +18614,17 @@ Object.assign(module.exports, { sfx });
 // first combat. Spotlights each key element and explains it; the "seen" flag is
 // persisted in meta settings (main.js) so it never shows twice. Steps whose
 // target isn't on screen (e.g. a Staggered enemy has no intent) are skipped.
+//
+// THREE INDEPENDENT EXITS, on purpose. `finish()` is the only thing that ever
+// writes `seenTutorial` (main.js onTutorialDone), so an unreachable exit is not
+// a cosmetic bug — it locks the player out of their first fight and survives a
+// reload, because the flag is still unwritten. So: the buttons, the Escape key,
+// and — the backstop that needs no geometry at all — a veil that does not eat
+// the board's input (ui.css .tut-veil is pointer-events:none; only the bubble
+// takes clicks). Even with every callout mispositioned, the player can play.
+
+const { anchorLocalBox } = require("src/ui/fx.js");
+const { overlayIsOpen } = require("src/ui/components/overlay.js");
 
 const STEPS = [
   { sel: '.energy-orb', title: 'Energy', text: 'Three energy each turn. Cards cost energy to play — spend it wisely.' },
@@ -18632,25 +18655,47 @@ function mountTutorial(root, { onDone }) {
   const bubble = veil.querySelector('.tut-bubble');
   let i = 0;
 
+  // Keep every number below in ONE space: the veil's own local coordinates.
+  // getBoundingClientRect answers in post-zoom (visual) pixels, but an inline
+  // left/top on a child is read in the layer's pre-zoom local space — so a raw
+  // rect offset lands at offset×zoom. anchorLocalBox (fx.js, five other call
+  // sites) is where that conversion lives; measuring the veil against itself
+  // gives the viewport in the same space, so clamps compare like with like.
+  // The veil really is the layer here — .tut-spot / .tut-bubble are absolute
+  // inside it (ui.css), so it is their containing block, not just their parent.
+  const MARGIN = 12;
+  const clamp = (v, max) => Math.max(MARGIN, Math.min(v, max));
+
+  function place() {
+    const target = root.querySelector(steps[i].sel);
+    if (!target) return false;
+    const view = anchorLocalBox(veil, veil); // the viewport, in the veil's space
+    const box = anchorLocalBox(veil, target);
+    const pad = 8;
+    spot.style.left = `${box.left - pad}px`;
+    spot.style.top = `${box.top - pad}px`;
+    spot.style.width = `${box.width + pad * 2}px`;
+    spot.style.height = `${box.height + pad * 2}px`;
+
+    // Measure the bubble as rendered (its height depends on the text that was
+    // just written into it) rather than trusting a constant, then clamp BOTH
+    // axes — the buttons live at its bottom edge, so an unclamped Y is exactly
+    // how "Got it" ended up below the fold.
+    const b = anchorLocalBox(veil, bubble);
+    const below = box.top + box.height + 20;
+    const above = box.top - b.height - MARGIN;
+    const wantY = below + b.height + MARGIN <= view.height ? below : above;
+    bubble.style.left = `${clamp(box.left, view.width - b.width - MARGIN)}px`;
+    bubble.style.top = `${clamp(wantY, view.height - b.height - MARGIN)}px`;
+    return true;
+  }
+
   function show() {
     const step = steps[i];
-    const target = root.querySelector(step.sel);
-    if (!target) return next(); // vanished between filter and show
-    const r = target.getBoundingClientRect();
-    const pad = 8;
-    spot.style.left = `${r.left - pad}px`;
-    spot.style.top = `${r.top - pad}px`;
-    spot.style.width = `${r.width + pad * 2}px`;
-    spot.style.height = `${r.height + pad * 2}px`;
     veil.querySelector('.tut-title').textContent = step.title;
     veil.querySelector('.tut-text').textContent = step.text;
     veil.querySelector('.tut-next').textContent = i === steps.length - 1 ? 'Got it' : `Next (${i + 1}/${steps.length})`;
-
-    const bubbleW = 300;
-    const bubbleH = 160;
-    bubble.style.left = `${Math.max(12, Math.min(r.left, window.innerWidth - bubbleW - 12))}px`;
-    bubble.style.top =
-      r.bottom + 20 + bubbleH < window.innerHeight ? `${r.bottom + 20}px` : `${Math.max(12, r.top - bubbleH - 12)}px`;
+    if (!place()) next(); // target vanished between filter and show
   }
 
   function next() {
@@ -18659,10 +18704,38 @@ function mountTutorial(root, { onDone }) {
     else show();
   }
 
+  let done = false;
   function finish() {
+    if (done) return; // Escape, then a click on the same frame, is still one finish
+    done = true;
+    removeEventListener('keydown', onKey, true);
+    removeEventListener('resize', onResize);
     veil.remove();
     onDone();
   }
+
+  // Escape ends the tutorial. Captured (before the combat screen's own Esc, which
+  // would otherwise only cancel targeting) so exactly one thing answers the key —
+  // but an open overlay owns input while it's open, same rule as combat.js.
+  function onKey(ev) {
+    if (ev.key !== 'Escape' || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    const tag = (ev.target && ev.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (overlayIsOpen()) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    finish();
+  }
+  addEventListener('keydown', onKey, true);
+
+  // Resizing changes --ui-zoom (Auto), which changes the local space every
+  // placement above was computed in — re-place instead of going stale.
+  let resizeTimer = null;
+  function onResize() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (!done) place(); }, 220); // after main.js's 150ms zoom re-flex
+  }
+  addEventListener('resize', onResize);
 
   veil.querySelector('.tut-next').addEventListener('click', next);
   veil.querySelector('.tut-skip').addEventListener('click', finish);
