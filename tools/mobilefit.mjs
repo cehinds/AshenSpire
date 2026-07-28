@@ -205,6 +205,11 @@ const FIT = `(() => {
   const de = document.documentElement, app = document.getElementById('app');
   const ui = window.__uiScale || null;
   const designW = ui ? ui.designW : null, designH = ui ? ui.designH : null;
+  // IS THE NARROW LAYOUT ACTUALLY LAID OUT? Observed, not inferred from a
+  // breakpoint number this tool would then be holding a second copy of. The
+  // narrow rule turns .hand-area into a grid; nothing else in the sheet does.
+  const ha = document.querySelector('.hand-area');
+  const narrowActive = !!ha && getComputedStyle(ha).display === 'grid';
   // Observational bleed: every element the fight needs, measured against the
   // VISUAL viewport, which is the space a finger and an eye both live in.
   const need = ['.topbar', '.field', '.hand-area', '.end-turn', '.energy-orb', '.pile.draw', '.pile.discard'];
@@ -220,17 +225,57 @@ const FIT = `(() => {
     if (worst > 0.5) bleed.push({ sel: s, over, worst });
   }
   // Widest thing on the board, so "bleed" is not limited to the list above.
+  //
+  // AN ELEMENT CLIPPED BY A SCROLLER IS NOT BLEEDING OFF THE SCREEN. The first
+  // version of this loop reported 175.81px of bleed on track B and named
+  // '.card' — the fifth card of a hand that is now a horizontal strip, sitting
+  // exactly where a scrolled-out card is supposed to sit, inside a container
+  // that clips it. document.scrollWidth - clientWidth was 0 at the same
+  // moment, which is what a real overflow would have moved. So skip anything
+  // with a scrolling/clipping ancestor between it and .combat: that element's
+  // container owns its bounds, and the viewport does not.
+  const clipped = (e) => {
+    // .combat is checked FIRST and ends the walk: it carries overflow:hidden
+    // itself and is viewport-sized, so testing it before stopping made every
+    // element on the board "clipped" and the metric always zero. The question
+    // is whether a container INSIDE the board owns this element's bounds.
+    for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) {
+      if (p.classList && p.classList.contains('combat')) return false;
+      const cs = getComputedStyle(p);
+      if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible') return true;
+    }
+    return false;
+  };
   let widest = 0, widestSel = '';
   for (const e of document.querySelectorAll('.combat *')) {
     const r = e.getBoundingClientRect();
     if (r.width <= 0) continue;
     const o = Math.max(0, -r.left) + Math.max(0, r.right - innerWidth);
-    if (o > widest) { widest = o; widestSel = e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\\s+/)[0] : e.tagName; }
+    if (o > widest && !clipped(e)) { widest = o; widestSel = e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\\s+/)[0] : e.tagName; }
   }
   return {
     z, designW, designH, vw: innerWidth, vh: innerHeight,
     localW: app ? app.clientWidth : null, localH: app ? app.clientHeight : null,
-    literal: designW == null ? null : { lhs: z * designW, rhs: innerWidth, holds: z * designW <= innerWidth + 0.5 },
+    // Sunna's form is 'zoom x designW <= innerWidth'. It has exactly one
+    // design width in it, and it stops being answerable the moment a layout
+    // has two. So: the invariant holds if the applied zoom fits ANY baseline
+    // the app is actually drawn for, and the tool names which one carried it.
+    // On a tree with one baseline this is her sentence unchanged.
+    narrowActive,
+    literal: designW == null ? null : (() => {
+      const cands = [{ name: 'designW', w: designW }];
+      // narrowW counts ONLY when the narrow layout is actually laid out. The
+      // first version accepted any baseline that fit, and at 1200x730 with UI
+      // size XL it PASSED - 1.45 x 430 = 623 <= 1200 - while the board on
+      // screen was the WIDE layout in 828 local px with END TURN at 14/45. A
+      // fit against a baseline the layout is not using is not a fit; it is the
+      // invariant answering a question about a different app.
+      if (ui && ui.narrowW && narrowActive) cands.push({ name: 'narrowW(active)', w: ui.narrowW });
+      const evald = cands.map((c) => ({ ...c, lhs: z * c.w, fits: z * c.w <= innerWidth + 0.5 }));
+      const winner = evald.find((c) => c.fits);
+      return { all: evald, holds: !!winner, by: winner ? winner.name : null,
+               lhs: evald[0].lhs, rhs: innerWidth };
+    })(),
     literalH: designH == null ? null : { lhs: z * designH, rhs: innerHeight, holds: z * designH <= innerHeight + 0.5 },
     docOverflowX: de.scrollWidth - de.clientWidth,
     pageScrollY: de.scrollHeight - de.clientHeight,
@@ -242,6 +287,29 @@ const FIT = `(() => {
     // local box the layout is actually authored in. Printed at every shape so
     // the divergence is a number in the log and not an argument in a review.
     mq520: matchMedia('(max-width: 520px)').matches,
+    // THE ELEMENT AT RISK FROM container-type. Declaring a container makes
+    // that element a containing block for its absolutely- AND fixed-positioned
+    // descendants. The overlays fixed this week (#15, #18) are children of
+    // <body> and out of reach, but #target-arrow is position:fixed with
+    // width/height 100% and lives inside .combat, inside #app. If #app becomes
+    // its containing block its 100% resolves against #app instead of the
+    // viewport. Reported at every shape so the answer is a number rather than
+    // an argument about the spec.
+    arrow: (() => {
+      const a = document.getElementById('target-arrow');
+      if (!a) return null;
+      // It ships display:none until a card is armed, so at rest it measures
+      // 0x0 and the check was vacuously red. Shown for the measurement and put
+      // back — the harness must not leave the board in a state no player asked
+      // for, and a check that can only run on a state nobody visits is the
+      // defect I logged on 2026-07-28.
+      const prev = a.style.display;
+      a.style.display = 'block';
+      const r = a.getBoundingClientRect();
+      a.style.display = prev;
+      return { w: r.width, h: r.height, left: r.left, top: r.top,
+               matchesViewport: Math.abs(r.width - innerWidth) < 1 && Math.abs(r.height - innerHeight) < 1 };
+    })(),
     // An orientation gate (track A) is a DELIBERATE cover over the board. Its
     // presence changes what the reach grid means: 0/45 behind a screen that
     // says "turn your phone sideways" is the design, and 0/45 behind a hand of
@@ -342,6 +410,8 @@ async function main() {
 
     const fit = await evalIn(FIT);
     console.log(`    ui-zoom ${fit.z} · viewport ${fit.vw}x${fit.vh} visual · app ${fit.localW}x${fit.localH} local · hand ${fit.hand ? fit.hand.cards : '?'} cards (${n2(fit.hand && fit.hand.w)} visual px)`);
+    if (fit.arrow) ok(fit.arrow.matchesViewport, `${name}: #target-arrow (position:fixed inside the new container) still measures the viewport — ${n2(fit.arrow.w)}x${n2(fit.arrow.h)} vs ${fit.vw}x${fit.vh}`);
+    console.log(`    narrow layout active: ${fit.narrowActive ? 'YES (.hand-area is a grid)' : 'no (wide layout)'}`);
     console.log(`    breakpoint room: a 520px MEDIA query says ${fit.mq520 ? 'narrow' : 'wide'} (sees ${fit.vw}); a 520px CONTAINER query on #app says ${fit.localW <= 520 ? 'narrow' : 'wide'} (sees ${fit.localW})${fit.mq520 !== (fit.localW <= 520) ? '  <-- THEY DISAGREE' : ''}`);
     // If a gate is up, everything below is measuring the gate. Say so first and
     // switch what is asserted — otherwise track A's "0/45" and dev's "0/45"
@@ -352,7 +422,8 @@ async function main() {
     const gated = !!(fit.gate && fit.gate.up);
     if (!gated) {
       if (fit.literal) {
-        ok(fit.literal.holds, `${name}: #23 (a) LITERAL — zoom x designW = ${n2(fit.literal.lhs)} <= innerWidth ${fit.literal.rhs}`);
+        const shown = fit.literal.all.map((c) => `${c.name} ${c.w} -> ${n2(c.lhs)}${c.fits ? ' FITS' : ''}`).join(' · ');
+        ok(fit.literal.holds, `${name}: #23 (a) LITERAL — the applied zoom ${fit.z} fits a baseline the app is drawn for: ${shown} <= innerWidth ${fit.literal.rhs}`);
       }
       ok(fit.docOverflowX <= 0.5, `${name}: #23 (b) OBSERVATIONAL — nothing overflows the document horizontally (scrollWidth - clientWidth = ${n2(fit.docOverflowX)})`);
       ok(fit.bleed.length === 0, `${name}: #23 (b) OBSERVATIONAL — no required element crosses a viewport edge${fit.bleed.length ? ` (${fit.bleed.map((b) => `${b.sel} by ${n2(b.worst)}px`).join(', ')})` : ''}`);
