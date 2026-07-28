@@ -358,8 +358,14 @@ boundary([
   '   — that needs a browser and a seeing seat, and this tool has neither',
   'nothing played it. This says the shipped file IS this source, never that this',
   ' source is a good game, balanced, or even winnable',
-  'no statement about the tutorial lockout: that fix lives on another branch, so a',
-  ' dist/ verified here still contains the locked tutorial',
+  // Was: "that fix lives on another branch, so a dist/ verified here still contains
+  // the locked tutorial." True at #8. False since e97bd5a rebuilt the bundles on this
+  // branch. Third boundary line of mine to date itself in one night, so this one is
+  // phrased as what the TOOL can and cannot see, which no merge can falsify.
+  // — Rune, 2026-07-28.
+  'no statement about the tutorial lockout either way. This tool compares bytes, so',
+  ' it cannot tell a bundle whose coach marks are reachable from one whose are not —',
+  ' that is tools/tutorial-reach.mjs, and it needs a browser at a real --ui-zoom',
   'reproducibility across machines is not checked here — that is the git-diff step',
   ' in .github/workflows/ci.yml running on three runners',
 ]);
