@@ -259,11 +259,33 @@ jobs:
           echo "    each resolved to exit 2 (unknown/blocks), not to a verdict about the gate"
           echo ""
           echo "IT DOES NOT MEAN:"
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. In particular the"
-          echo "    first-run tutorial lockout (Sunna's finding) is fixed on"
-          echo "    feature/tutorial-zoom-lock and NOT on this branch — a green run here"
-          echo "    still describes a build that can lock a new player out of their first"
-          echo "    fight at 1920x1080."
+          echo "  · that the game is playable. NOTHING HERE PLAYS IT. No job in this file"
+          echo "    opens a browser on the game itself, so every claim below is a claim"
+          echo "    about files, never about a fight."
+          # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
+          # this branch." True when Sunna wrote it, false the moment #7 merges — a
+          # boundary block that names a branch dates itself. Replaced with the thing that
+          # stays true either way: nothing here runs the probe that would catch it.
+          # — Rune, 2026-07-28, at the #7 merge.
+          echo "  · that a new player can reach the end of the first-run tutorial. That is"
+          echo "    geometry at a real --ui-zoom, and only a browser can see it:"
+          echo "    tools/tutorial-reach.mjs drives 8 viewports (zoom 0.62–1.70) and NO job"
+          echo "    here runs it. The lockout it exists to prevent was invisible to a green"
+          echo "    suite for this defect's entire lifetime."
+          # Was: "#9's palette-check.sh / palette-probe.html are not in this tree at all."
+          # True at 5315249, false the moment #9 merged — both files are here now. And the
+          # enumeration was a second copy of Freja's own header, which is the one place
+          # that has to change the day a job IS added. So this points at hers instead of
+          # restating it: one fact, one home. Second time tonight I wrote a boundary line
+          # that dated itself, having just cut one for the same reason.
+          # — Rune, 2026-07-28, at the 8e11c5a merge.
+          echo "  · anything about COLOUR. Contrast, hue, gamma, colourblind-safe mode and"
+          echo "    the High-contrast default (#10) are ALL unverified here: no job in this"
+          echo "    file runs a colour check of any kind. Every future PR touching colour"
+          echo "    gets a green that says nothing about what it changed — structurally,"
+          echo "    until a job is added. WHICH checks are unrun, and why no step was added"
+          echo "    to this workflow, is stated once in tools/palette-check.sh's header"
+          echo "    (\`CI DOES NOT RUN THIS\`); read that, not a copy of it kept here."
           echo "  · that anything RENDERED. Art present in the file is not art on screen;"
           echo "    no screenshot is compared, and screenshot bytes are not even"
           echo "    deterministic on this app (two runs of identical code differ)."

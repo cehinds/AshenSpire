@@ -22,5 +22,80 @@ for (const r of results) {
   const tag = r.skipped ? 'SKIP' : r.ok ? 'PASS' : 'FAIL';
   console.log(`${tag}  ${r.name}${r.detail ? ` — ${r.detail}` : ''}`);
 }
-console.log(`\n${passed} passed, ${failed} failed`);
-process.exit(failed > 0 ? 1 : 0);
+
+// The zoom-unit guard runs HERE, not as a script somebody remembers to run. A
+// check nobody reads is not a check: the tutorial lockout it exists to catch
+// shipped past this suite while the suite was green the whole time.
+// Two lines, because they fail for different reasons and must not be conflated:
+//   36 — the check's own integrity (its corpus). Its failure is the check's fault.
+//   37 — findings in src/. Its failure is the code's state, not the check's.
+// Numbered 36/37, not 35/36: dev's test 35 is Sunna's accessibility-defaults test
+// in engine.test.js. Two files, no git conflict, and a suite that would have
+// printed "35." twice — the collision a merge cannot see.
+let zoomExtra = 0;
+let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the same
+                    // two-homes defect these two lines exist to catch.
+{
+  const { execFileSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const cwd = fileURLToPath(new URL('..', import.meta.url));
+  const run = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/zoomunits.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+  // One reader for both lines: quote the tool's own terminated RESULT sentence.
+  // `grab` is gone — it defaulted to '?' on a miss, so renaming a word in either
+  // tool output printed a question mark inside a PASS (Bjorn's finding 1, same
+  // class as the drift that started this). A verdict the harness cannot read in
+  // full is a FAIL that says so, in both tests, through the same three lines.
+  const quote = (out) => {
+    const m = out.match(/^RESULT: (.*)$/m);
+    if (!m) return { text: null, why: 'NO RESULT LINE — the harness could not read the tool' };
+    if (!/\.$/.test(m[1])) return { text: null, why: `TRUNCATED RESULT — "${m[1]}" does not end the sentence, so the verdict wrapped and the harness read half of it` };
+    return { text: m[1], why: null };
+  };
+
+  const self = run(['--selftest']);
+  const selfV = quote(self.out);
+  console.log(
+    `${self.code === 0 && selfV.text ? 'PASS' : 'FAIL'}  36. the zoom-unit check still catches its own known-bad corpus` +
+      ` — ${selfV.text || `zoomunits --selftest (exit ${self.code}): ${selfV.why}`}`
+  );
+  if (self.code !== 0 || !selfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const tree = run([]);
+  // The detail is the tool's OWN RESULT line, quoted — not numbers scraped out of
+  // it and recomposed here. Recomposing is a second home for the verdict, and it
+  // drifted the day admissibility became a fourth failure condition the three
+  // regexes did not know about: the suite printed FAIL beside a name that read
+  // "0 new, 0 vanished". Quoting has no regex to widen, so a clause added to
+  // RESULT reaches this line without anyone remembering to. And a run with NO
+  // RESULT line is itself a failure: the harness could not read the tool, which
+  // is not the same as the tool having nothing to say.
+  // (Bjorn's ruling, 2026-07-28, over my proposal to add a fourth number — his
+  // test is "did something become deletable?"; under this the whole `grab` helper did.)
+  // A verdict is one whole terminated sentence on one line. Without the `.` test a
+  // RESULT that ever wraps is quoted up to the wrap and PASSES on half a sentence —
+  // the `?` defect in a new dress. Bjorn ruled the first wording, then wrapped the
+  // line himself and watched it print `PASS … 9 carried, 0 new,`; this is his
+  // corrected version, taken from his log rather than from a relay of it.
+  const treeV = quote(tree.out);
+  console.log(
+    `${tree.code === 0 && treeV.text ? 'PASS' : 'FAIL'}  37. the carried set of unconverted px writes is exactly as recorded` +
+      ` — ${treeV.text || `zoomunits (exit ${tree.code}): ${treeV.why}`}` +
+      ` (\`node tools/zoomunits.mjs\` for the ledger, \`--raw\` for the bare red)`
+  );
+  if (tree.code !== 0 || !treeV.text) zoomExtra++;
+  else zoomPassed++;
+}
+
+console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
+console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
+console.log('          check over coordinate spaces — they prove a transform has two');
+console.log('          homes, never that a pixel renders wrong. Nothing here opens a');
+console.log('          browser, so no test in this file has seen the screen.');
+process.exit(failed + zoomExtra > 0 ? 1 : 0);

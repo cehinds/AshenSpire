@@ -439,17 +439,29 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .set-text:focus { border-color: var(--gold); outline: none; }
 
 /* ---------- first-run tutorial overlay ---------- */
-.tut-veil { position: fixed; inset: 0; z-index: 800; }
+/* pointer-events:none is load-bearing, not tidiness. The veil covers the whole
+   viewport only to host the spotlight's shadow — but swallowing clicks turned a
+   mispositioned callout into a permanent lockout of the first fight, since the
+   veil is removed only by its own two buttons (the only writers of
+   `seenTutorial`, so a reload brought it straight back). The coach marks explain
+   the board; they must never stand between the player and it. The bubble takes
+   pointer events back for its buttons. */
+.tut-veil { position: fixed; inset: 0; z-index: 800; pointer-events: none; }
+/* absolute, not fixed: this makes the veil their containing block, so the veil
+   IS the layer their inline left/top is measured in — which is what tutorial.js
+   hands anchorLocalBox(). As `fixed` the two agreed only because the veil
+   happens to be inset:0; changing that inset would have silently skewed every
+   callout again. */
 .tut-spot {
-  position: fixed; border: 2px solid var(--gold); border-radius: 10px;
+  position: absolute; border: 2px solid var(--gold); border-radius: 10px;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72), 0 0 22px rgba(201, 162, 39, 0.55);
   transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
   pointer-events: none;
 }
 .tut-bubble {
-  position: fixed; width: 30rem; background: var(--bg-raise); border: 1px solid var(--gold);
+  position: absolute; width: 30rem; background: var(--bg-raise); border: 1px solid var(--gold);
   border-radius: 12px; padding: 1.4rem 1.6rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
-  animation: screenIn 200ms ease-out;
+  animation: screenIn 200ms ease-out; pointer-events: auto;
 }
 .tut-bubble .tut-title { color: var(--gold); font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.6rem; }
 .tut-bubble .tut-text { font-size: 1.25rem; color: var(--parchment); line-height: 1.5; margin-bottom: 1.2rem; }
