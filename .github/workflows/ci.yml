@@ -259,11 +259,25 @@ jobs:
           echo "    each resolved to exit 2 (unknown/blocks), not to a verdict about the gate"
           echo ""
           echo "IT DOES NOT MEAN:"
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. In particular the"
-          echo "    first-run tutorial lockout (Sunna's finding) is fixed on"
-          echo "    feature/tutorial-zoom-lock and NOT on this branch — a green run here"
-          echo "    still describes a build that can lock a new player out of their first"
-          echo "    fight at 1920x1080."
+          echo "  · that the game is playable. NOTHING HERE PLAYS IT. No job in this file"
+          echo "    opens a browser on the game itself, so every claim below is a claim"
+          echo "    about files, never about a fight."
+          # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
+          # this branch." True when Sunna wrote it, false the moment #7 merges — a
+          # boundary block that names a branch dates itself. Replaced with the thing that
+          # stays true either way: nothing here runs the probe that would catch it.
+          # — Rune, 2026-07-28, at the #7 merge.
+          echo "  · that a new player can reach the end of the first-run tutorial. That is"
+          echo "    geometry at a real --ui-zoom, and only a browser can see it:"
+          echo "    tools/tutorial-reach.mjs drives 8 viewports (zoom 0.62–1.70) and NO job"
+          echo "    here runs it. The lockout it exists to prevent was invisible to a green"
+          echo "    suite for this defect's entire lifetime."
+          echo "  · anything about COLOUR. No job runs tools/palette-audit.py or"
+          echo "    tools/contrast-audit.mjs, and #9's palette-check.sh / palette-probe.html"
+          echo "    are not in this tree at all. Contrast, hue, gamma, colourblind-safe"
+          echo "    mode and the High-contrast default (#10) are ALL unverified here — so"
+          echo "    every future PR touching colour gets a green that says nothing about"
+          echo "    the thing it changed. Structurally, until a job is added."
           echo "  · that anything RENDERED. Art present in the file is not art on screen;"
           echo "    no screenshot is compared, and screenshot bytes are not even"
           echo "    deterministic on this app (two runs of identical code differ)."
