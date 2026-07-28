@@ -92,8 +92,17 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 // Only admissibility() spawns git; the carried/new/vanished half is pure filesystem.
 import { execFileSync } from 'node:child_process';
 import { resolve, relative, extname } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const ROOT = resolve(new URL('..', import.meta.url).pathname);
+// fileURLToPath, not .pathname — the SAME defect as the main-module guard below,
+// four hundred lines up and found while fixing that one. A file URL's .pathname
+// keeps the leading slash before a drive letter and leaves percent-escapes encoded,
+// so on Windows ROOT resolved to `\D:\a\EldenSpire\EldenSpire` (a rooted path with a
+// literal `D:` directory — not a legal path) instead of `D:\a\EldenSpire\EldenSpire`,
+// and any repo path containing a space became `%20`. Fixing only the guard would have
+// moved windows-latest from a vacuous green to `exit 2, no .js/.mjs files found`.
+// Ten other tools in this repo already spell it this way.
+const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 
 // ---------------------------------------------------------------- the two spaces
 
@@ -557,4 +566,13 @@ function main(argv) {
   return 0;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) process.exit(main(process.argv.slice(2)));
+// pathToFileURL, not `file://` + argv[1]. The hand-rolled form is correct only where
+// argv[1] starts with `/`: on Windows it compares
+//   file://D:\a\EldenSpire\tools\zoomunits.mjs   against
+//   file:///D:/a/EldenSpire/tools/zoomunits.mjs
+// which is always false, so main() never ran, nothing printed, and node exited 0 —
+// a whole guard reported green on every Windows run this branch ever had. This repo
+// already spells the predicate correctly in tools/serve.mjs and tools/dirorder.mjs;
+// this is a collapse to the spelling already proven on Windows, `|| ''` included so
+// the three sites read alike. (Bjorn's diagnosis and strings, 2026-07-28.)
+if (import.meta.url === pathToFileURL(process.argv[1] || '').href) process.exit(main(process.argv.slice(2)));
