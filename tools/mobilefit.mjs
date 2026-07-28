@@ -87,7 +87,19 @@ const SHAPES = [
   { w: 360, h: 640, d: 2, mobile: true, tag: 'portrait', known: { endTurn: 0 } },
   { w: 844, h: 390, d: 3, mobile: true, tag: 'landscape', known: { endTurn: 45 } },
   { w: 915, h: 412, d: 2.6, mobile: true, tag: 'landscape', known: {} },
+  // Landscape as a phone actually reports it while the browser chrome is
+  // showing. 844x390 is the DEVICE; innerHeight is smaller whenever the address
+  // bar is up, and "landscape already works" is a claim about the shape a player
+  // is actually in. ~46px is Chrome-on-Android's landscape bar; the number is a
+  // stand-in, so this row is a SENSITIVITY reading, not a device.
+  { w: 844, h: 344, d: 3, mobile: true, tag: 'landscape-chrome', known: {} },
   { w: 1920, h: 1080, d: 1, mobile: false, tag: 'desktop', known: { endTurn: 45 } },
+  // The decisive case for WHICH primitive a reflow is written in. Settings ->
+  // UI size -> XL is zoom 1.45 on a 1200px screen, so the layout has 828 LOCAL
+  // px while a media query still reads 1200. Not a phone and not hypothetical:
+  // it is a shipped setting, and it is where a media-query breakpoint and a
+  // container-query breakpoint give different answers on the same screen.
+  { w: 1200, h: 730, d: 1, mobile: false, tag: 'desktop-XL', settings: { uiScale: 'xl' }, known: {} },
 ];
 
 // The controls a fight cannot be advanced without. `.end-turn` is #21's subject;
@@ -225,6 +237,11 @@ const FIT = `(() => {
     bleed, worstBleed: widest, worstBleedSel: widestSel,
     hand: (() => { const h = document.querySelector('.hand'); if (!h) return null; const r = h.getBoundingClientRect();
       return { cards: document.querySelectorAll('.hand .card').length, w: r.width, left: r.left, right: r.right }; })(),
+    // WHICH ROOM A BREAKPOINT IS EVALUATED IN. A media query resolves against
+    // the UNZOOMED viewport; a container query on #app resolves against the
+    // local box the layout is actually authored in. Printed at every shape so
+    // the divergence is a number in the log and not an argument in a review.
+    mq520: matchMedia('(max-width: 520px)').matches,
   };
 })()`;
 
@@ -277,7 +294,7 @@ async function main() {
   const rows = [];
   const ceiling = {}; // per-control grid reading at the design baseline — the bar
   for (const vp of SHAPES) {
-    const name = `${vp.w}x${vp.h}`;
+    const name = `${vp.w}x${vp.h}${vp.settings ? `-${Object.values(vp.settings).join('-')}` : ''}`;
     if (only && only !== name) continue;
     console.log(`\n  ${name} @ dSF ${vp.d}  (${vp.tag})`);
 
@@ -286,12 +303,26 @@ async function main() {
     // "Touch points must be between 1 and 16", which killed the run at the first
     // desktop shape after five mobile ones. `enabled` is the switch.
     await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: vp.mobile, maxTouchPoints: 5 }, S);
-    await cdp.send('Page.navigate', { url: `${base}?shot=combat` }, S);
+    const q = `shot=combat${vp.settings ? `&shotSettings=${encodeURIComponent(JSON.stringify(vp.settings))}` : ''}`;
+    await cdp.send('Page.navigate', { url: `${base}?${q}` }, S);
     await until(`!!document.querySelector('.combat .hand .card')`, `${name}: combat board`);
     await wait(900); // auto-zoom re-flexes on a 150 ms debounce plus a boot re-apply
 
+    // THE SHOT IS TAKEN HERE, BEFORE ANY GESTURE. The first run captured it
+    // after the .end-turn tap, and at 390x844 that tap lands on a hand card —
+    // so every portrait screenshot carried an armed card and an open tooltip
+    // that no player had summoned. A photograph of the board is a photograph of
+    // the board at rest, not of the harness poking it.
+    if (shotsDir) {
+      const shot = await cdp.send('Page.captureScreenshot', { format: 'png' }, S);
+      const out = join(resolve(shotsDir), `${name}.png`);
+      writeFileSync(out, Buffer.from(shot.data, 'base64'));
+      console.log(`    shot (at rest, before any gesture): ${out}`);
+    }
+
     const fit = await evalIn(FIT);
     console.log(`    ui-zoom ${fit.z} · viewport ${fit.vw}x${fit.vh} visual · app ${fit.localW}x${fit.localH} local · hand ${fit.hand ? fit.hand.cards : '?'} cards (${n2(fit.hand && fit.hand.w)} visual px)`);
+    console.log(`    breakpoint room: a 520px MEDIA query says ${fit.mq520 ? 'narrow' : 'wide'} (sees ${fit.vw}); a 520px CONTAINER query on #app says ${fit.localW <= 520 ? 'narrow' : 'wide'} (sees ${fit.localW})${fit.mq520 !== (fit.localW <= 520) ? '  <-- THEY DISAGREE' : ''}`);
     if (fit.literal) {
       ok(fit.literal.holds, `${name}: #23 (a) LITERAL — zoom x designW = ${n2(fit.literal.lhs)} <= innerWidth ${fit.literal.rhs}`);
     }
@@ -336,13 +367,6 @@ async function main() {
     if (vp.known && vp.known.endTurn != null && et) {
       const same = et.hits === vp.known.endTurn;
       console.log(`    baseline check: Sunna observed .end-turn ${vp.known.endTurn}/45 at bf18a2e; this tree reads ${et.hits}/45 — ${same ? 'reproduced' : 'CHANGED'}`);
-    }
-
-    if (shotsDir) {
-      const shot = await cdp.send('Page.captureScreenshot', { format: 'png' }, S);
-      const out = join(resolve(shotsDir), `${name}.png`);
-      writeFileSync(out, Buffer.from(shot.data, 'base64'));
-      console.log(`    shot: ${out}`);
     }
 
     rows.push({ name, tag: vp.tag, z: fit.z, local: `${fit.localW}x${fit.localH}`,
