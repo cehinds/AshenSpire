@@ -17,7 +17,8 @@
 // 'false' become booleans, empty stays '', and a value containing '|' becomes
 // an array. Quoted fields may contain commas.
 
-import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readdirSortedSync } from './dirorder.mjs';
 import { dirname, resolve, join, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -94,7 +95,7 @@ mkdirSync(OUT, { recursive: true });
 
 const results = [];
 let stale = 0;
-for (const file of readdirSync(SRC).sort()) {
+for (const file of readdirSortedSync(SRC)) {
   const ext = extname(file).toLowerCase();
   if (ext !== '.csv' && ext !== '.json') continue;
   const name = basename(file, ext);
