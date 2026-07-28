@@ -389,6 +389,23 @@ def measure(OUT, manifest, verbose=True):
                               "which is why one figure crosses the chroma guard on the "
                               "encode alone (D2b). Numbers in this block describe a "
                               "desaturated picture, not the game's.",
+            # Checked at dev @ 5315249, when High contrast became the default: the
+            # `body.hi-contrast` block (styles/base.css) swaps four text/line COLOUR
+            # TOKENS plus one text rule and applies no filter to any sprite, so the
+            # new default leaves every number in this block undisturbed. Read the
+            # stylesheet; did not assume it from the changelog.
+            "spriteFilterBoundary":
+                "The armour figure is composited by playerSprite() into "
+                ".combatant.player > .sprite, and CSS filters that subtree in real "
+                "game states: .combatant.dead is grayscale(1) (styles/combat.css), and "
+                "coop .player.down / .coop-pc.dead are grayscale(1) (styles/ui.css). "
+                "Under grayscale(1) two armour sets are IDENTICAL by construction - "
+                "chroma is zero and every number here is unreachable. This tool "
+                "measures the decoded .webp, one transform EARLIER than the delivered "
+                "pixel, so it is silent about every filtered state. A boundary, not a "
+                "defect: a dead combatant SHOULD read as drained. What nobody has "
+                "measured is whether set identity survives the states that are not "
+                "meant to drain it.",
             "capabilities": "supports: is this pair separated at all, in lightness. "
                             "does NOT support: any hue claim below chroma "
                             f"{CHROMA_GUARD}, any claim about WHICH pair is closest "

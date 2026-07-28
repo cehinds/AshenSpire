@@ -26,6 +26,29 @@
 # The probe declares each expected verdict BEFORE measuring, so this script can
 # only ever agree or disagree with a declaration that is already in the artifact.
 #
+# ── CI DOES NOT RUN THIS. A GREEN CI RUN SAYS NOTHING ABOUT COLOUR. ───────────
+# Checked at the merge of dev @ 5315249, which brought this repo its first
+# workflow: .github/workflows/ci.yml contains no reference to palette-check.sh,
+# palette-audit.py or palette-probe.html in any of its four jobs. So none of the
+# 20 declared checks below runs per commit. Under SOP 2's silence guard that makes
+# every claim in this directory `unknown` in CI — and unknown blocks, it does not
+# read green. Stated here because a green run on a branch carrying this file is an
+# absence that looks like a result, which is the one shape this house keeps
+# finding. The `boundary` job says "nothing here RENDERS"; it does not yet say
+# "nothing here checks whether two armour sets are separated", and that sentence
+# is the accurate one.
+#
+# THE EXIT-CODE CONTRACT, for whoever wires it in — and it is not "just add a
+# step", which is why I did not add one to another seat's workflow:
+#   1, 2, 3  MUST block. Broken instrument, no evidence, determinism lost.
+#   127      MUST block, as `unknown` — never a pass. No browser is not a clean bill.
+#   4        MUST NOT block while the content call is held for Constantine. Exit 4
+#            is a live finding about the palettes (reaver default|warden), not a
+#            regression, and a gate that is red-by-design on an unmade decision
+#            teaches everyone to ignore the gate. It needs to be VISIBLE and
+#            non-blocking until someone repaints, then blocking forever after.
+# Wiring that split is Rune's file and Marina's sequence, not mine to self-grant.
+#
 # ── REMOVAL CONDITION (SOP 1's corollary) ─────────────────────────────────────
 # This script has no life of its own — it is the exit status of
 # tools/palette-probe.html. It dies with the probe (that file's own REMOVAL
