@@ -91,7 +91,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 // Only admissibility() spawns git; the carried/new/vanished half is pure filesystem.
 import { execFileSync } from 'node:child_process';
-import { resolve, relative, extname } from 'node:path';
+import { resolve, relative, extname, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // fileURLToPath, not .pathname — the SAME defect as the main-module guard below,
@@ -342,6 +342,17 @@ const CARRIED = [
 
 const norm = (s) => s.replace(/\s+/g, ' ').trim();
 
+// One spelling of a path, chosen at the edge where the platform's convention enters
+// the program. path.relative answers in the HOST separator, so on Windows the scanner
+// produced `src\ui\components\tooltip.js` while the ledger records `src/ui/...`, no
+// key ever matched, and the tool reported `0 carried, 9 new, 9 vanished` — every entry
+// vanished and every finding new, on a tree where nothing had changed. Third defect of
+// this family in this file: a value spelled by the platform instead of normalised at
+// the boundary. Both sides of every comparison go through here, so neither the scanner
+// nor the ledger can reintroduce a host-specific spelling. On POSIX it is the identity
+// function, so no key value on Linux or macOS moves by a byte.
+const relKey = (p) => p.split(sep).join('/');
+
 // ------------------------------------------------------------- admissibility
 // "Carried" means PREDATES THIS CHANGE. Nothing enforced that until now: a write
 // and its CARRIED entry could arrive in one commit and every gate stayed green
@@ -380,7 +391,7 @@ function admissibility(entries) {
   for (const [file, texts] of wanted) {
     let atBase = null;
     try {
-      atBase = execFileSync('git', ['show', `${base}:${file}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+      atBase = execFileSync('git', ['show', `${base}:${relKey(file)}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
     } catch {
       atBase = null; // the file itself is new in this change — every entry for it is inadmissible
     }
@@ -470,12 +481,12 @@ function main(argv) {
   // Match findings against the carried set by file + the write's own text. An
   // entry may be claimed once, so a duplicated write shows up as new rather than
   // hiding behind its twin.
-  const unclaimed = CARRIED.map((c) => ({ ...c, key: `${c.file}\x00${norm(c.text)}`, hit: null }));
+  const unclaimed = CARRIED.map((c) => ({ ...c, key: `${relKey(c.file)}\x00${norm(c.text)}`, hit: null }));
   const fresh = [];
   let total = 0;
   let writes = 0;
   for (const f of files) {
-    const rel = relative(ROOT, f);
+    const rel = relKey(relative(ROOT, f));
     const { findings, stats } = scan(readFileSync(f, 'utf8'));
     writes += stats.writes;
     for (const fd of findings) {
@@ -549,7 +560,7 @@ function main(argv) {
 
   console.log(
     `RESULT: ${held.length} carried, ${fresh.length} new, ${vanished.length} vanished, ` +
-      `${adm.state === 'unknown' ? 'admissibility UNKNOWN' : `${adm.inadmissible.length} inadmissible`}.`
+      `${adm.state === 'unknown' ? 'admissibility UNKNOWN' : `${adm.inadmissible.length} inadmissible of ${adm.checked} checked`}.`
   );
   if (fresh.length || vanished.length || (adm.state === 'ok' && adm.inadmissible.length)) {
     console.log('        The carried set no longer describes the tree. Fix the new write, or');
