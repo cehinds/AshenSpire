@@ -160,6 +160,11 @@ initInput({ getSettings: () => saves.loadMeta().settings || {} });
 // palettes, UI zoom scale, text sizes. Code never embeds these numbers.
 const UI = registries.balance.ui;
 const ACCENTS = UI.accents;
+// Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
+// fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
+// designW off disk is measuring the tree rather than the page in front of it —
+// which is the whole difference for dist/, one inlined file. Read-only.
+if (typeof window !== 'undefined') window.__uiScale = UI.uiScale;
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;

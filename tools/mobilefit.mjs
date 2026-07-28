@@ -1,0 +1,376 @@
+// tools/mobilefit.mjs — can a finger reach the combat controls, at every shape
+// we ship, in both orientations?
+//
+// This is the browser instrument for EldenSpire #21 and #23. Sunna measured both
+// by hand on the shipped bundle at `bf18a2e`; this re-runs her two edges on
+// demand so a proposed fix can be judged by the same numbers rather than by an
+// adjective. It measures nothing about how any of it FEELS — that stays her read.
+//
+// WHAT IT ASSERTS
+//   1. #21's reach grid. A 45-point grid over each required combat control,
+//      hit-tested with elementFromPoint. Sunna's known-bad is `.end-turn` at
+//      0/45 on all three portrait shapes; her green is 45/45 at 844x390. Both
+//      are re-run here on every invocation, so the grid is observed red before
+//      any number it prints is used as coverage (development.md, The instrument
+//      rule).
+//   2. #23's fit invariant, in two forms, because the literal one stops being
+//      meaningful the moment a layout gains a narrow mode:
+//        (a) LITERAL — appliedZoom x designW <= innerWidth, with designW read
+//            from balance.ui.uiScale, whatever the running code says it needs.
+//        (b) OBSERVATIONAL — the app's own scrollWidth does not exceed the
+//            viewport, and no required control's box crosses a viewport edge.
+//      (a) is Sunna's card verbatim. (b) is the thing (a) is a proxy FOR, and it
+//      survives a design baseline that changes. A fix that satisfies (a) by
+//      redefining designW and still bleeds is caught by (b), and only by (b).
+//   3. #23's second, independent mechanism: page-level scroll travel. Reported,
+//      never asserted — whether a phone SHOULD scroll the board is a design call
+//      and not this tool's to make.
+//
+// WHY LOCAL PX APPEAR NEXT TO VISUAL PX EVERYWHERE BELOW
+//   The app is zoomed by `body { zoom: var(--ui-zoom) }`. Hit-testing and
+//   getBoundingClientRect are VISUAL; layout authoring is LOCAL. A number without
+//   its space is not a measurement (see tools/zoomplace.mjs's header, and
+//   EldenSpire#15). Every reported pair is labelled.
+//
+// Usage
+//   node tools/mobilefit.mjs                 source tree via tools/serve.mjs
+//   node tools/mobilefit.mjs --dist          dist/AshenSpire.html over file://
+//   node tools/mobilefit.mjs --only 390x844
+//   node tools/mobilefit.mjs --shots DIR     also write a PNG per shape
+//   CHROME=/path/to/chrome node tools/mobilefit.mjs
+//
+// Exit codes
+//   0  every shape satisfied every assertion
+//   1  an assertion failed  (expected on `dev` — that is the point)
+//   2  usage / no browser / a board that would not mount — never a pass
+//
+// BOUNDARY, printed again at the end where a reader will see it:
+//   Linux headless Chromium 1194 only. CDP device emulation is not a phone: it
+//   carries viewport, DPR, the viewport meta and the touch event stream, and it
+//   does NOT carry iOS/WebKit, real fonts, the OS gesture layer, or a thumb --
+//   these touches land where aimed. It also does not carry a moving address bar:
+//   measured in this harness, 100dvh, 100svh and 100lvh are all the same number,
+//   so this tool can say NOTHING about the 60-100px the bar eats and returns.
+//   It hit-tests reachability only; it never judges legibility.
+
+import { spawn } from 'node:child_process';
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { serve } from './serve.mjs';
+
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const BROWSERS = [
+  process.env.CHROME,
+  '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+  '/usr/bin/google-chrome',
+  '/usr/bin/chromium',
+  'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+].filter(Boolean);
+
+// The five phone shapes Sunna measured, plus the two desktop edges every gate in
+// this repo has used. `known` records what her run at `bf18a2e` observed, so a
+// baseline run either reproduces her numbers or the instrument is wrong.
+// 1200x730 RUNS FIRST AND IS THE REFERENCE, not merely the non-regression edge.
+// The bar for every other shape is what the SAME control reads here, because a
+// 45-point grid over a bounding box cannot read 45/45 on a round control: the
+// energy orb is a circle, its box corners belong to the parent, and pi/4 of 45
+// is 35. A flat `hits === 45` called the orb broken in LANDSCAPE, where the
+// fight is fine and Sunna's own run says so. The reference reading is the
+// control's own geometry; a shape is judged against that, never against 45.
+const SHAPES = [
+  { w: 1200, h: 730, d: 1, mobile: false, tag: 'desktop', reference: true, known: { endTurn: 45 } },
+  { w: 390, h: 844, d: 3, mobile: true, tag: 'portrait', known: { endTurn: 0 } },
+  { w: 412, h: 915, d: 2.6, mobile: true, tag: 'portrait', known: { endTurn: 0 } },
+  { w: 360, h: 640, d: 2, mobile: true, tag: 'portrait', known: { endTurn: 0 } },
+  { w: 844, h: 390, d: 3, mobile: true, tag: 'landscape', known: { endTurn: 45 } },
+  { w: 915, h: 412, d: 2.6, mobile: true, tag: 'landscape', known: {} },
+  { w: 1920, h: 1080, d: 1, mobile: false, tag: 'desktop', known: { endTurn: 45 } },
+];
+
+// The controls a fight cannot be advanced without. `.end-turn` is #21's subject;
+// the other three are named in its re-open clause, so they are measured from the
+// start rather than added the day one of them regresses.
+const CONTROLS = ['.end-turn', '.energy-orb', '.pile.draw', '.pile.discard'];
+
+const args = process.argv.slice(2);
+const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
+const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
+const only = argOf('--only');
+const shotsDir = argOf('--shots');
+const useDist = args.includes('--dist');
+
+const fails = [];
+const ok = (cond, msg) => { console.log(`    ${cond ? '\u2713' : '\u2717'} ${msg}`); if (!cond) fails.push(msg); };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const n2 = (v) => (v == null ? 'n/a' : (Math.round(v * 100) / 100).toString());
+
+// ---- minimal CDP client (same shape as tools/zoomplace.mjs / tutorial-reach.mjs)
+function connectCdp(wsUrl) {
+  const ws = new WebSocket(wsUrl);
+  let nextId = 1;
+  const pending = new Map();
+  ws.addEventListener('message', (ev) => {
+    const msg = JSON.parse(ev.data);
+    if (msg.id && pending.has(msg.id)) {
+      const { res, rej } = pending.get(msg.id);
+      pending.delete(msg.id);
+      if (msg.error) rej(new Error(`${msg.error.message} (${msg.error.code})`));
+      else res(msg.result);
+    }
+  });
+  return {
+    ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
+    send(method, params = {}, sessionId) {
+      const id = nextId++;
+      return new Promise((res, rej) => {
+        pending.set(id, { res, rej });
+        ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+      });
+    },
+    close: () => ws.close(),
+  };
+}
+
+function launchChrome(browser, userDataDir) {
+  return new Promise((res, rej) => {
+    const child = spawn(browser, [
+      '--headless', '--no-sandbox', '--disable-gpu', '--window-size=1440,860',
+      '--remote-debugging-port=0', `--user-data-dir=${userDataDir}`,
+      '--disable-renderer-backgrounding', '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows', '--allow-file-access-from-files',
+      '--no-first-run', 'about:blank',
+    ], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let err = '';
+    const onData = (d) => {
+      err += d;
+      const m = /DevTools listening on (ws:\/\/\S+)/.exec(err);
+      if (m) res({ child, wsUrl: m[1] });
+    };
+    child.stderr.on('data', onData);
+    child.stdout.on('data', onData);
+    child.on('error', rej);
+    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-500)}`)), 12000);
+  });
+}
+
+// ------------------------------------------------------------- page probes
+//
+// THE GRID. 9 columns x 5 rows = 45 points, each at the CENTRE of its cell, so
+// no point ever lands on a border pixel where the answer is a rounding coin
+// flip. A point counts as reached when elementFromPoint returns the control or
+// anything inside it -- `closest()`, not identity, because `.pile` and
+// `.end-turn` both have children that would otherwise read as misses.
+//
+// Reported alongside: what DID answer at the missed points. "0/45" and "0/45,
+// and the thing on top is a hand card" are different findings, and only the
+// second one names a cause.
+const GRID = (sel) => `(() => {
+  const el = document.querySelector(${JSON.stringify(sel)});
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (!(r.width > 0 && r.height > 0)) return { present: true, rendered: false, hits: 0, of: 45, r };
+  const COLS = 9, ROWS = 5;
+  let hits = 0; const blockers = {};
+  for (let i = 0; i < COLS; i++) for (let j = 0; j < ROWS; j++) {
+    const x = r.left + r.width * (i + 0.5) / COLS;
+    const y = r.top + r.height * (j + 0.5) / ROWS;
+    const hit = document.elementFromPoint(x, y);
+    if (hit && hit.closest(${JSON.stringify(sel)}) === el) { hits++; continue; }
+    const k = hit ? (hit.tagName.toLowerCase() + (hit.className && typeof hit.className === 'string' ? '.' + hit.className.trim().split(/\\s+/).join('.') : '')) : 'null';
+    blockers[k] = (blockers[k] || 0) + 1;
+  }
+  return { present: true, rendered: true, hits, of: COLS * ROWS, blockers,
+    r: { left: r.left, top: r.top, width: r.width, height: r.height, right: r.right, bottom: r.bottom },
+    cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+})()`;
+
+// Fit: the two forms of #23's invariant, plus the scroll travel that survives it.
+const FIT = `(() => {
+  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  const de = document.documentElement, app = document.getElementById('app');
+  const ui = window.__uiScale || null;
+  const designW = ui ? ui.designW : null, designH = ui ? ui.designH : null;
+  // Observational bleed: every element the fight needs, measured against the
+  // VISUAL viewport, which is the space a finger and an eye both live in.
+  const need = ['.topbar', '.field', '.hand-area', '.end-turn', '.energy-orb', '.pile.draw', '.pile.discard'];
+  const bleed = [];
+  for (const s of need) {
+    const e = document.querySelector(s);
+    if (!e) continue;
+    const r = e.getBoundingClientRect();
+    if (!(r.width > 0 && r.height > 0)) continue;
+    const over = { left: Math.max(0, -r.left), right: Math.max(0, r.right - innerWidth),
+                   top: Math.max(0, -r.top), bottom: Math.max(0, r.bottom - innerHeight) };
+    const worst = Math.max(over.left, over.right, over.top, over.bottom);
+    if (worst > 0.5) bleed.push({ sel: s, over, worst });
+  }
+  // Widest thing on the board, so "bleed" is not limited to the list above.
+  let widest = 0, widestSel = '';
+  for (const e of document.querySelectorAll('.combat *')) {
+    const r = e.getBoundingClientRect();
+    if (r.width <= 0) continue;
+    const o = Math.max(0, -r.left) + Math.max(0, r.right - innerWidth);
+    if (o > widest) { widest = o; widestSel = e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\\s+/)[0] : e.tagName; }
+  }
+  return {
+    z, designW, designH, vw: innerWidth, vh: innerHeight,
+    localW: app ? app.clientWidth : null, localH: app ? app.clientHeight : null,
+    literal: designW == null ? null : { lhs: z * designW, rhs: innerWidth, holds: z * designW <= innerWidth + 0.5 },
+    literalH: designH == null ? null : { lhs: z * designH, rhs: innerHeight, holds: z * designH <= innerHeight + 0.5 },
+    docOverflowX: de.scrollWidth - de.clientWidth,
+    pageScrollY: de.scrollHeight - de.clientHeight,
+    bleed, worstBleed: widest, worstBleedSel: widestSel,
+    hand: (() => { const h = document.querySelector('.hand'); if (!h) return null; const r = h.getBoundingClientRect();
+      return { cards: document.querySelectorAll('.hand .card').length, w: r.width, left: r.left, right: r.right }; })(),
+  };
+})()`;
+
+const TURN = `(() => { const c = window.__combat; return c ? { turn: c.turn, energy: c.player.energy } : null; })()`;
+
+// ---------------------------------------------------------------------- main
+async function main() {
+  if (!browserPath) { console.error('mobilefit: no Chrome/Edge found — pass --browser PATH or set $CHROME'); process.exit(2); }
+  const profile = mkdtempSync(join(tmpdir(), 'mobilefit-'));
+  let server = null, base;
+  if (useDist) {
+    const f = resolve(ROOT, 'dist/AshenSpire.html');
+    if (!existsSync(f)) { console.error(`mobilefit: ${f} does not exist — run \`node tools/launch.mjs --build-only\` first`); process.exit(2); }
+    base = pathToFileURL(f).href;
+  } else {
+    const s = await serve({ root: ROOT, port: 8262, open: false });
+    server = s.server; base = `http://localhost:${s.port}/`;
+  }
+  if (shotsDir) mkdirSync(resolve(shotsDir), { recursive: true });
+  console.log(`mobilefit — ${base}${useDist ? '  (the shipped single-file bundle)' : '  (source tree)'}`);
+
+  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  const cdp = connectCdp(wsUrl);
+  await cdp.ready;
+  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+  await cdp.send('Page.enable', {}, S);
+  await cdp.send('Runtime.enable', {}, S);
+
+  const evalIn = async (expression) => {
+    const r = await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, S);
+    if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'page threw');
+    return r.result.value;
+  };
+  const until = async (expr, label, timeoutMs = 15000) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < timeoutMs) { if (await evalIn(expr)) return true; await wait(120); }
+    throw new Error(`timeout: ${label}`);
+  };
+
+  // A real finger, not a mouse: Input.dispatchTouchEvent is what fires the
+  // pointer stream a phone fires, including the pointercancel of #22.
+  const tap = async (x, y) => {
+    const pt = [{ x, y, radiusX: 12, radiusY: 12, force: 1 }];
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: pt }, S);
+    await wait(60);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, S);
+  };
+
+  const rows = [];
+  const ceiling = {}; // per-control grid reading at the design baseline — the bar
+  for (const vp of SHAPES) {
+    const name = `${vp.w}x${vp.h}`;
+    if (only && only !== name) continue;
+    console.log(`\n  ${name} @ dSF ${vp.d}  (${vp.tag})`);
+
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S);
+    // maxTouchPoints must be >= 1 whatever `enabled` says — CDP rejects 0 with
+    // "Touch points must be between 1 and 16", which killed the run at the first
+    // desktop shape after five mobile ones. `enabled` is the switch.
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: vp.mobile, maxTouchPoints: 5 }, S);
+    await cdp.send('Page.navigate', { url: `${base}?shot=combat` }, S);
+    await until(`!!document.querySelector('.combat .hand .card')`, `${name}: combat board`);
+    await wait(900); // auto-zoom re-flexes on a 150 ms debounce plus a boot re-apply
+
+    const fit = await evalIn(FIT);
+    console.log(`    ui-zoom ${fit.z} · viewport ${fit.vw}x${fit.vh} visual · app ${fit.localW}x${fit.localH} local · hand ${fit.hand ? fit.hand.cards : '?'} cards (${n2(fit.hand && fit.hand.w)} visual px)`);
+    if (fit.literal) {
+      ok(fit.literal.holds, `${name}: #23 (a) LITERAL — zoom x designW = ${n2(fit.literal.lhs)} <= innerWidth ${fit.literal.rhs}`);
+    }
+    ok(fit.docOverflowX <= 0.5, `${name}: #23 (b) OBSERVATIONAL — nothing overflows the document horizontally (scrollWidth - clientWidth = ${n2(fit.docOverflowX)})`);
+    ok(fit.bleed.length === 0, `${name}: #23 (b) OBSERVATIONAL — no required element crosses a viewport edge${fit.bleed.length ? ` (${fit.bleed.map((b) => `${b.sel} by ${n2(b.worst)}px`).join(', ')})` : ''}`);
+    console.log(`    page scroll travel: ${n2(fit.pageScrollY)}px vertical, ${n2(fit.docOverflowX)}px horizontal · worst horizontal bleed on the board: ${n2(fit.worstBleed)}px (${fit.worstBleedSel})`);
+
+    const grids = {};
+    for (const sel of CONTROLS) {
+      const g = await evalIn(GRID(sel));
+      grids[sel] = g;
+      if (!g) { ok(false, `${name}: ${sel} exists in the DOM`); continue; }
+      if (!g.rendered) { console.log(`    ${sel.padEnd(14)} not rendered (0x0)`); ok(false, `${name}: ${sel} renders`); continue; }
+      const blocked = Object.entries(g.blockers || {}).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([k, v]) => `${v}x ${k}`).join(', ');
+      console.log(`    ${sel.padEnd(14)} ${String(g.hits).padStart(2)}/${g.of} reachable · box ${n2(g.r.width)}x${n2(g.r.height)} at (${n2(g.r.left)},${n2(g.r.top)})${blocked ? ` · on top: ${blocked}` : ''}`);
+      if (vp.reference) { ceiling[sel] = g.hits; continue; } // the reference sets the bar; it cannot fail against itself
+      const bar = ceiling[sel];
+      if (bar == null) {
+        console.log(`      (no reference reading — 1200x730 was skipped, so this number has no bar and is NOT asserted)`);
+        continue;
+      }
+      ok(g.hits >= bar, `${name}: ${sel} reads ${g.hits}/${g.of}, bar is ${bar}/${g.of} (its reading at the 1200x730 design baseline)`);
+    }
+
+    // The control that makes the grid mean something: a real touch at the centre
+    // of .end-turn either advances the fight or it does not.
+    let advanced = null;
+    const et = grids['.end-turn'];
+    if (vp.mobile && et && et.rendered) {
+      const before = await evalIn(TURN);
+      await tap(et.cx, et.cy);
+      await wait(700);
+      const after = await evalIn(TURN);
+      advanced = !!(before && after && after.turn !== before.turn);
+      console.log(`    real touch at .end-turn centre (${n2(et.cx)},${n2(et.cy)}): turn ${before && before.turn} -> ${after && after.turn} — ${advanced ? 'ADVANCED' : 'did nothing'}`);
+    }
+
+    // The instrument rule, run inline: does this grid reproduce what Sunna
+    // observed at bf18a2e? Printed, never asserted — on a FIXED tree it is
+    // supposed to disagree, and a tool that fails when its own fix works is a
+    // tool that can only ever measure the past.
+    if (vp.known && vp.known.endTurn != null && et) {
+      const same = et.hits === vp.known.endTurn;
+      console.log(`    baseline check: Sunna observed .end-turn ${vp.known.endTurn}/45 at bf18a2e; this tree reads ${et.hits}/45 — ${same ? 'reproduced' : 'CHANGED'}`);
+    }
+
+    if (shotsDir) {
+      const shot = await cdp.send('Page.captureScreenshot', { format: 'png' }, S);
+      const out = join(resolve(shotsDir), `${name}.png`);
+      writeFileSync(out, Buffer.from(shot.data, 'base64'));
+      console.log(`    shot: ${out}`);
+    }
+
+    rows.push({ name, tag: vp.tag, z: fit.z, local: `${fit.localW}x${fit.localH}`,
+      endTurn: et && et.rendered ? `${et.hits}/45` : 'n/r', advanced,
+      bleed: n2(fit.worstBleed), scrollY: n2(fit.pageScrollY) });
+  }
+
+  console.log('\n  SUMMARY');
+  console.log('  shape       kind       zoom  local space   END TURN  touch  worst bleed  page scrollY');
+  for (const r of rows) {
+    console.log(`  ${r.name.padEnd(11)} ${r.tag.padEnd(10)} ${String(r.z).padEnd(5)} ${r.local.padEnd(13)} ${r.endTurn.padEnd(9)} ${(r.advanced === null ? '-' : r.advanced ? 'yes' : 'NO').padEnd(6)} ${r.bleed.padEnd(12)} ${r.scrollY}`);
+  }
+
+  console.log(`\n  BOUNDARY — Linux headless Chromium only; CDP emulation carries viewport, DPR,
+  the viewport meta and the touch stream, and carries NO iOS/WebKit, no real
+  fonts, no OS gesture layer, no thumb, and NO MOVING ADDRESS BAR (100dvh,
+  100svh and 100lvh all measure the same here, so this tool is silent on the
+  60-100px the bar eats and returns). It hit-tests reachability; it never judges
+  legibility, and it says nothing about #22's pointercancel, which is a separate
+  card measured by a separate gesture.`);
+
+  console.log(`\n  ${fails.length ? `FAIL — ${fails.length} assertion(s)` : 'PASS — every assertion held'} over ${rows.length} shape(s), ${CONTROLS.length} control(s) each.`);
+  for (const f of fails) console.log(`    - ${f}`);
+
+  cdp.close();
+  child.kill();
+  if (server) server.close();
+  process.exit(fails.length ? 1 : 0);
+}
+
+main().catch((e) => { console.error(`mobilefit: ${e.message}`); process.exit(2); });
