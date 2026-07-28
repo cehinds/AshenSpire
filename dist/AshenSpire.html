@@ -1378,7 +1378,7 @@ const { mountShop } = require("src/ui/screens/shop.js");
 const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
-const { openSettings } = require("src/ui/screens/settings.js");
+const { openSettings, settingOn } = require("src/ui/screens/settings.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
@@ -1505,7 +1505,11 @@ if (typeof window !== 'undefined') {
 function applyDisplaySettings(settings) {
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
-  document.body.classList.toggle('hi-contrast', settings.highContrast === true);
+  // High contrast is ON unless the player turned it off. Asked rather than
+  // hand-written (`settingOn`, src/ui/screens/settings.js) because a sparse
+  // store makes the polarity part of the default: `=== true` here silently
+  // re-declares `def: false` there, and the pair drifts with nothing checking.
+  document.body.classList.toggle('hi-contrast', settingOn(settings, 'highContrast'));
   // Text size sets the root font-size %; because all type + component dimensions
   // are rem, one value rescales the whole UI (base.css). Legacy boolean largeText
   // maps to L. Stacks with --ui-zoom (which additionally scales px hairlines).
@@ -2234,15 +2238,22 @@ function showEvent(eventId) {
   });
 }
 
-// Dev screenshot hook (?shot=map|combat|fx): boot straight into a seeded
+// Dev screenshot hook (?shot=map|combat|fx|death): boot straight into a seeded
 // showcase run so headless captures (tools/screenshot.mjs) can photograph
 // deeper screens without interaction. `fx` poses the combat FX frozen
 // mid-animation (negative animation-delay + paused) so the transient slash /
-// glyph / spark / recoil effects are photographable. Normal boots unaffected.
+// glyph / spark / recoil effects are photographable. `death` mounts the game-over
+// screen on a spent run — added because YOU PERISHED was the one screen no tool
+// could photograph, so its contrast could only ever be inferred from the
+// stylesheet, and an inferred number is the adjacent thing, not the thing.
+// Normal boots unaffected.
 //
 // `shotState` is declared beside pickStorage() near the top of this file, not
 // here, because storage selection reads it: a ?shot= boot runs on memory storage
 // so it cannot touch the player's save. See the comment there for what it broke.
+// That gate is `if (shotState)` — truthy, not a list of states — so `death` is
+// inside it by construction and needs no guard of its own. Do not re-read
+// location.search down here to add a state: the single const IS the gate's reach.
 
 function poseFxShowcase() {
   const layer = document.querySelector('.fx-layer');
@@ -2357,13 +2368,22 @@ function coopCatchupShot() {
   return { actNumber: 1, floor: 6, seedString: 'SHOWCASE', endless: false, scene: { kind: 'map' }, reachableIds: [], map: null, party };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
   saves.saveMeta(shotMeta);
   newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
-  if (shotState === 'boss') {
+  if (shotState === 'death') {
+    // A run that ended on floor 4 with a few fights behind it, so the stats
+    // table has real numbers under the title instead of a row of zeroes.
+    run.floor = 4;
+    run.stats.fightsWon = 3;
+    run.stats.damageDealt = 214;
+    run.stats.damageTaken = 96;
+    run.hp = 0;
+    mountGameOver(app, { registries, game: run, victory: false, earned: [], onTitle: showTitle, onHistory: showHistory });
+  } else if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');
   } else if (shotState === 'combat' || shotState === 'fx') {
@@ -15390,8 +15410,12 @@ const ROWS = [
 
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: 'Reduced motion',
     note: 'Calm ambient effects, drop the map pulse, and shorten animations.' },
-  { cat: 'Accessibility', key: 'highContrast', def: false, label: 'High contrast',
-    note: 'Brighter text and stronger borders throughout for readability.' },
+  // ON by default. Measured, not assumed: at the old default eight text targets
+  // sat below the WCAG AA floor and the secondary buttons' own outlines sat at
+  // 1.64:1 against a 3.0 floor. High contrast clears all of that and costs one
+  // thing — see the note. `node tools/contrast-audit.mjs` re-runs the numbers.
+  { cat: 'Accessibility', key: 'highContrast', def: true, label: 'High contrast',
+    note: 'Brighter text and stronger borders throughout for readability. On by default — turn it off for the dimmer, more atmospheric palette.' },
   { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'M',
     choices: ['S', 'M', 'L', 'XL'], label: 'Text size',
     note: 'Scale all interface text and sizing together (sets the root size). M is default; L/XL aid readability. Stacks with UI size.' },
@@ -15410,6 +15434,35 @@ const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Advanced'];
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
   return row.def ? settings[row.key] !== false : settings[row.key] === true;
+}
+
+/**
+ * settingOn(settings, key) → is this boolean setting ON, given a sparse store?
+ *
+ * Exported because a default lives in exactly one place — the `def` field on the
+ * row above — and everything else asks. Stored settings are sparse (an untouched
+ * key is simply absent), so "is it on" is not `!!settings[key]`: it depends on
+ * the default, and the polarity inverts with it. `def: false` must be read as
+ * `=== true`; `def: true` must be read as `!== false`. Writing that test out by
+ * hand at the point of use means the default is recorded twice, once here and
+ * once as a comparison operator somewhere else — and the two are only ever
+ * checked by a human noticing that the toggle in Settings disagrees with the
+ * screen. That is the second copy this project keeps finding. This function is
+ * the one home.
+ *
+ * NOT YET the one home for every toggle: applyDisplaySettings in src/main.js
+ * still hand-writes the polarity for useSprites, reducedMotion, screenShake,
+ * controlHints, colorblindSafe, reduceFlashes, readableHeadings, mapHeaderRelics
+ * and mapHeaderSeed. Those are all still `def:`-agreeing today, and converting
+ * them is a mechanical change I deliberately did not make in the same commit as
+ * a default flip: one wrong polarity there silently changes a different default,
+ * and nothing in the suite would catch it. Convert them when someone next has a
+ * reason to touch that function, one at a time.
+ */
+function settingOn(settings, key) {
+  const row = ROWS.find((r) => r.key === key);
+  if (!row) throw new Error(`settingOn: no settings row named '${key}'`);
+  return valueOf(settings || {}, row);
 }
 
 function rowHtml(settings, r) {
@@ -15561,7 +15614,7 @@ function openSettings({ meta, onChange }) {
 }
 
 
-Object.assign(module.exports, { renderSettings, openSettings });
+Object.assign(module.exports, { settingOn, renderSettings, openSettings });
 
 },
 "src/ui/debuglog.js": function (module, exports, require) {
