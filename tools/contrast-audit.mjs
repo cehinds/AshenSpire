@@ -191,20 +191,44 @@ async function connectCdp(port) {
 async function gotoScreen(cdp, url, settings) {
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
-  // Settings must exist BEFORE src/main.js runs — applyDisplaySettings is called
-  // at module top level, so a post-load write would measure the wrong body.
-  // Cleared, not just overwritten: a ?shot= run WRITES a save into slot 1, so the
-  // next profile boots with an occupied slot and the title screen offers CONTINUE
-  // where the previous one offered BEGIN A CLIMB. The numbers survive that (every
-  // target is looked up per screen) but the SCREENSHOTS do not — a before/after
-  // pair where one side has a save and the other doesn't reads as "this change
-  // deleted my run", which is the opposite of what is being claimed.
+  // TWO CHANNELS, because there are two kinds of boot and only one of them reads
+  // localStorage. This is the defect Vira held #10 for: everything below used to
+  // be the localStorage seed alone.
+  //
+  //  · TITLE SCREEN (no ?shot=) — a normal boot. localStorage is the store, so
+  //    seeding sote_meta_v1 before any page script is exactly what a returning
+  //    player has. Settings must exist BEFORE src/main.js runs, because
+  //    applyDisplaySettings is called at module top level and a post-load write
+  //    would measure the wrong body.
+  //  · ?shot= SCREENS — gated onto the memory stub since #8, so sote_meta_v1 is
+  //    NEVER READ and every display setting resolves to its default. The seed
+  //    below reached none of them: nine profiles rendered one identical frame and
+  //    this tool reported the differences it had asked for. `?shotSettings=`
+  //    (src/main.js, beside pickStorage) is the channel that does reach them; it
+  //    writes the same settings into that same ephemeral store, so the app
+  //    resolves them through its own saves.loadMeta() and I measure its rules
+  //    rather than my copy of them.
+  //
+  // Both are sent every time. Sending the wrong one is a no-op; deciding which to
+  // send from the URL would be a second place that knows how the gate works.
+  //
+  // localStorage is CLEARED, not just overwritten, so the title screen offers
+  // BEGIN A CLIMB and not CONTINUE across profiles. The numbers survive an
+  // occupied slot (targets are looked up per screen) but a before/after pair where
+  // one side has a save reads as "this change deleted my run", which is the
+  // opposite of what is being claimed. (A ?shot= boot no longer writes that slot
+  // at all — Rune's gate, #8 — so this is now about the localStorage era and about
+  // any real save the browser profile happens to carry.)
+  const seed = { ...settings, seenTutorial: true, musicVolume: 0, sfxVolume: 0 };
   await cdp.send('Page.addScriptToEvaluateOnNewDocument', {
     source: `localStorage.clear();
       localStorage.setItem('sote_meta_v1', ${JSON.stringify(
-    JSON.stringify({ settings: { ...settings, seenTutorial: true, musicVolume: 0, sfxVolume: 0 }, results: [] })
+    JSON.stringify({ settings: seed, results: [] })
   )});`,
   });
+  if (url.includes('?shot=')) {
+    url += `&shotSettings=${encodeURIComponent(JSON.stringify(seed))}`;
+  }
   const loaded = new Promise((ok) => {
     const off = (m) => { if (m.method === 'Page.loadEventFired') ok(); };
     cdp.on(off);
@@ -525,10 +549,14 @@ if (asJson) {
   console.log(`\n${measured.length} measured · ${fails.length} below the WCAG AA floor (best rendered pixel).`);
   // Named boundary, in the run's own output (SOP 3, CI expectation 4).
   console.log(
-    'Boundary: this measures TEXT contrast only, at one viewport, one font stack, one\n'
-    + 'zoom (Auto), with hover/focus states unvisited. It says nothing about non-text\n'
-    + 'contrast (borders, bars, map nodes), colour-blind confusability, motion, or\n'
-    + 'whether any of it is legible in motion. A green run is not an accessibility pass.'
+    'Boundary: this measures TEXT contrast only, at one viewport, one font stack,\n'
+    + 'with hover/focus states unvisited. It says nothing about non-text contrast\n'
+    + '(borders, bars, map nodes), colour-blind confusability, motion, or whether any\n'
+    + 'of it is legible in motion. A green run is not an accessibility pass.\n'
+    + 'This line said "one zoom (Auto)" until 2026-07-28. That was TRUE of every ?shot=\n'
+    + 'screen, for the wrong reason: those screens ignored the profile entirely, so ui-S\n'
+    + 'really did render at Auto while this table printed ui-S next to it. A boundary can\n'
+    + 'be accurate and still be a lie about why. Fixed via ?shotSettings= (Vira, #10).'
   );
 }
 

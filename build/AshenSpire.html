@@ -1412,7 +1412,12 @@ setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 // selection depends on it; the hook that consumes it lives at the bottom of this
 // file where the states are listed. One read, one home — parsing the query string
 // twice would be the same fact in two places.
-const shotState = new URLSearchParams(location.search).get('shot');
+//
+// ONE `URLSearchParams` construction in this file, deliberately, and every fact
+// derives from it (`shot`, `shotSettings`). That collapse is Rune's and it is the
+// thing that makes the gate below reach every state; keep the count at one.
+const shotParams = new URLSearchParams(location.search);
+const shotState = shotParams.get('shot');
 
 function pickStorage() {
   // A ?shot= boot NEVER touches durable storage. It used to: the hook wrote
@@ -1436,6 +1441,48 @@ function pickStorage() {
   }
 }
 const saves = createSaveManager(pickStorage());
+
+// `?shotSettings=<json>` — display settings for a ?shot= boot, written into the
+// EPHEMERAL store above. Read only when shotState is truthy, so a normal boot
+// cannot reach this at all, and it writes through the memory stub, so Rune's gate
+// is untouched and there is still no durable write. The gate line itself is
+// deliberately not modified: tools/shotguard-probe.mjs --mutate matches it
+// byte-for-byte and REFUSES to run if it has changed.
+//
+// WHY THIS EXISTS. A ?shot= boot has no durable settings by construction, so
+// sote_meta_v1 is never read and every display setting resolves to its default.
+// Correct for the gate — and it silently broke my own instrument.
+// tools/contrast-audit.mjs seeded each profile into localStorage and then
+// measured nine profiles rendering identically on every ?shot= screen, reporting
+// `hi-contrast-off` map Act/Floor at 6.33 where the truth is 3.74: a PASS
+// standing in for an AA failure, in the direction that flatters the change.
+// Vira caught it reviewing #10 and made it a merge condition; the invariant she
+// wrote is "the profile reported is the profile rendered."
+//
+// The settings go through saves.loadMeta() like any other boot, so what gets
+// measured is the app's OWN resolution — settingOn(), resolveZoom(),
+// applyDisplaySettings() — and never the instrument's copy of those rules. That
+// is the whole reason this is a URL parameter rather than the audit reaching in
+// and setting `body.hi-contrast` itself, which would have been three lines and
+// would have measured my own mock.
+if (shotState) {
+  const raw = shotParams.get('shotSettings');
+  if (raw) {
+    try {
+      const incoming = JSON.parse(raw);
+      if (incoming && typeof incoming === 'object' && !Array.isArray(incoming)) {
+        const meta = saves.loadMeta();
+        saves.saveMeta({ ...meta, settings: { ...(meta.settings || {}), ...incoming } });
+      } else {
+        console.warn('?shotSettings ignored: not a JSON object');
+      }
+    } catch (e) {
+      // Loud but harmless: a malformed value must not take the boot down, and it
+      // must not silently look like "the defaults were what you asked for."
+      console.warn('?shotSettings ignored (not JSON):', e && e.message);
+    }
+  }
+}
 
 // Procedural audio engine (SPEC §7.4). The sink plugs into the existing sfx
 // hook seam, so every sfx.play() call site makes sound with no change.
