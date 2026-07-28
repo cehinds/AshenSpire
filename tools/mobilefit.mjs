@@ -242,6 +242,26 @@ const FIT = `(() => {
     // local box the layout is actually authored in. Printed at every shape so
     // the divergence is a number in the log and not an argument in a review.
     mq520: matchMedia('(max-width: 520px)').matches,
+    // An orientation gate (track A) is a DELIBERATE cover over the board. Its
+    // presence changes what the reach grid means: 0/45 behind a screen that
+    // says "turn your phone sideways" is the design, and 0/45 behind a hand of
+    // cards is EldenSpire#21. A tool that cannot tell those apart would score
+    // the two tracks with the same number and call it a comparison.
+    gate: (() => {
+      const g = document.getElementById('orient-gate');
+      if (!g) return null;
+      const cs = getComputedStyle(g);
+      const r = g.getBoundingClientRect();
+      const up = cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0;
+      if (!up) return { up: false };
+      // Does it actually cover, and does it EAT input? #21 is a lockout because
+      // a covered control still looks alive, so a gate that only covers the
+      // pixels would reproduce the bug with better manners.
+      const pts = [[4, 4], [innerWidth - 4, 4], [4, innerHeight - 4], [innerWidth - 4, innerHeight - 4], [innerWidth / 2, innerHeight / 2]];
+      const owned = pts.filter((p) => { const e = document.elementFromPoint(p[0], p[1]); return e && (e === g || g.contains(e)); }).length;
+      return { up: true, w: r.width, h: r.height, coversViewport: r.width >= innerWidth - 0.5 && r.height >= innerHeight - 0.5,
+        cornersAndCentreOwned: owned + '/5', text: (g.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 70) };
+    })(),
   };
 })()`;
 
@@ -323,12 +343,31 @@ async function main() {
     const fit = await evalIn(FIT);
     console.log(`    ui-zoom ${fit.z} · viewport ${fit.vw}x${fit.vh} visual · app ${fit.localW}x${fit.localH} local · hand ${fit.hand ? fit.hand.cards : '?'} cards (${n2(fit.hand && fit.hand.w)} visual px)`);
     console.log(`    breakpoint room: a 520px MEDIA query says ${fit.mq520 ? 'narrow' : 'wide'} (sees ${fit.vw}); a 520px CONTAINER query on #app says ${fit.localW <= 520 ? 'narrow' : 'wide'} (sees ${fit.localW})${fit.mq520 !== (fit.localW <= 520) ? '  <-- THEY DISAGREE' : ''}`);
-    if (fit.literal) {
-      ok(fit.literal.holds, `${name}: #23 (a) LITERAL — zoom x designW = ${n2(fit.literal.lhs)} <= innerWidth ${fit.literal.rhs}`);
+    // If a gate is up, everything below is measuring the gate. Say so first and
+    // switch what is asserted — otherwise track A's "0/45" and dev's "0/45"
+    // print identically and mean opposite things. The board behind a screen
+    // that says "portrait is not supported" is not making a claim about fit;
+    // #23's own removal condition allows exactly that answer, PROVIDED the app
+    // says it to the player. The gate assertions are what stands in.
+    const gated = !!(fit.gate && fit.gate.up);
+    if (!gated) {
+      if (fit.literal) {
+        ok(fit.literal.holds, `${name}: #23 (a) LITERAL — zoom x designW = ${n2(fit.literal.lhs)} <= innerWidth ${fit.literal.rhs}`);
+      }
+      ok(fit.docOverflowX <= 0.5, `${name}: #23 (b) OBSERVATIONAL — nothing overflows the document horizontally (scrollWidth - clientWidth = ${n2(fit.docOverflowX)})`);
+      ok(fit.bleed.length === 0, `${name}: #23 (b) OBSERVATIONAL — no required element crosses a viewport edge${fit.bleed.length ? ` (${fit.bleed.map((b) => `${b.sel} by ${n2(b.worst)}px`).join(', ')})` : ''}`);
     }
-    ok(fit.docOverflowX <= 0.5, `${name}: #23 (b) OBSERVATIONAL — nothing overflows the document horizontally (scrollWidth - clientWidth = ${n2(fit.docOverflowX)})`);
-    ok(fit.bleed.length === 0, `${name}: #23 (b) OBSERVATIONAL — no required element crosses a viewport edge${fit.bleed.length ? ` (${fit.bleed.map((b) => `${b.sel} by ${n2(b.worst)}px`).join(', ')})` : ''}`);
     console.log(`    page scroll travel: ${n2(fit.pageScrollY)}px vertical, ${n2(fit.docOverflowX)}px horizontal · worst horizontal bleed on the board: ${n2(fit.worstBleed)}px (${fit.worstBleedSel})`);
+
+    if (fit.gate) {
+      if (gated) {
+        console.log(`    ORIENTATION GATE UP — ${n2(fit.gate.w)}x${n2(fit.gate.h)} covering ${fit.vw}x${fit.vh}, owns ${fit.gate.cornersAndCentreOwned} of the corners+centre · "${fit.gate.text}"`);
+        ok(fit.gate.coversViewport, `${name}: the gate covers the whole viewport (a gate written in vw/vh would cover ${n2(fit.vw * fit.z)}x${n2(fit.vh * fit.z)} of it)`);
+        ok(fit.gate.cornersAndCentreOwned === '5/5', `${name}: the gate EATS input at all four corners and the centre — a cover that does not hit-test is #21 with better manners`);
+      } else {
+        console.log(`    orientation gate present in the DOM and DOWN — the board is live here`);
+      }
+    }
 
     const grids = {};
     for (const sel of CONTROLS) {
@@ -339,6 +378,7 @@ async function main() {
       const blocked = Object.entries(g.blockers || {}).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([k, v]) => `${v}x ${k}`).join(', ');
       console.log(`    ${sel.padEnd(14)} ${String(g.hits).padStart(2)}/${g.of} reachable · box ${n2(g.r.width)}x${n2(g.r.height)} at (${n2(g.r.left)},${n2(g.r.top)})${blocked ? ` · on top: ${blocked}` : ''}`);
       if (vp.reference) { ceiling[sel] = g.hits; continue; } // the reference sets the bar; it cannot fail against itself
+      if (gated) continue; // measured through a deliberate cover — asserted above, on the gate
       const bar = ceiling[sel];
       if (bar == null) {
         console.log(`      (no reference reading — 1200x730 was skipped, so this number has no bar and is NOT asserted)`);
@@ -351,7 +391,7 @@ async function main() {
     // of .end-turn either advances the fight or it does not.
     let advanced = null;
     const et = grids['.end-turn'];
-    if (vp.mobile && et && et.rendered) {
+    if (vp.mobile && et && et.rendered && !gated) {
       const before = await evalIn(TURN);
       await tap(et.cx, et.cy);
       await wait(700);
@@ -370,7 +410,7 @@ async function main() {
     }
 
     rows.push({ name, tag: vp.tag, z: fit.z, local: `${fit.localW}x${fit.localH}`,
-      endTurn: et && et.rendered ? `${et.hits}/45` : 'n/r', advanced,
+      endTurn: gated ? 'GATED' : (et && et.rendered ? `${et.hits}/45` : 'n/r'), advanced,
       bleed: n2(fit.worstBleed), scrollY: n2(fit.pageScrollY) });
   }
 
