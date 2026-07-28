@@ -46,6 +46,12 @@
 //   an entry with no finding        → red. It was fixed or edited; delete its
 //                                     line here in the SAME commit (that is the
 //                                     set's upkeep rule, and it enforces itself).
+//   an entry for a write THIS CHANGE introduced → red, and the discharge is to FIX
+//                                     the write, never to edit the ledger. Checked
+//                                     at git merge-base origin/dev HEAD; a base
+//                                     that will not resolve is UNKNOWN, not clean.
+//                                     (Vira's ratchet, ruled over a literal count:
+//                                     "carried" MEANS predates this change.)
 //   every entry matched, nothing new → 0, and all nine still print, every run.
 //
 // Keyed on file + the write's own text, NEVER on line numbers: src/main.js moved
@@ -60,9 +66,12 @@
 //   node tools/zoomunits.mjs --raw          ignore the carried set: any finding is red
 //
 // Exit codes
-//   0  the carried set matched exactly and nothing new (or --raw: no finding at all)
-//   1  a NEW finding, a VANISHED entry, or a corpus miss under --selftest
-//   2  usage error
+//   0  the carried set matched exactly, nothing new, every entry admissible
+//      (or --raw: no finding at all)
+//   1  a NEW finding, a VANISHED entry, an INADMISSIBLE entry, or a corpus miss
+//      under --selftest
+//   2  UNKNOWN — the admissibility base would not resolve, or a usage error. Never
+//      a pass: unknown blocks (SOP 2), it is not the softer bucket.
 //
 // REMOVAL CONDITION (development.md SOP 1's corollary). Delete this file, its
 // fixtures and its wiring in tests/run-node.mjs when EITHER holds:
@@ -80,6 +89,8 @@
 // — Bjorn Falk
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
+// Only admissibility() spawns git; the carried/new/vanished half is pure filesystem.
+import { execFileSync } from 'node:child_process';
 import { resolve, relative, extname } from 'node:path';
 
 const ROOT = resolve(new URL('..', import.meta.url).pathname);
@@ -222,14 +233,49 @@ function jsFiles(p) {
     .flatMap((e) => jsFiles(resolve(abs, e.name)));
 }
 
-function boundary(scanned, skipped) {
+function boundary(scanned, skipped, mode = {}) {
   console.log('BOUNDARY: consistency check, not correctness — it proves a second copy of');
   console.log('          fx.js anchorLocalBox exists and differs; never that a given site');
   console.log('          renders wrong. That needs a browser at a real --ui-zoom.');
   console.log('BOUNDARY: not looked at — style.transform / style.cssText / setProperty, CSS');
   console.log('          written by a stylesheet rather than inline, values crossing a');
   console.log(`          function boundary as an argument, and ${skipped} non-JS file(s).`);
+  console.log('BOUNDARY: one finding per line, first match wins. A line holding a converted');
+  console.log('          write followed by an unconverted one reads clean — and with no');
+  console.log('          finding there is no entry, so rule (3) below never sees it. That');
+  console.log('          bypasses this guard upstream of itself (Bjorn, carded, pre-existing).');
   console.log(`BOUNDARY: read ${scanned} .js/.mjs file(s). A path not given is a path not checked.`);
+  // Bjorn: a boundary line is the one piece of prose that may never be wrong — and
+  // under --raw this block asserted three rules were enforced in a run where zero of
+  // them executed. The claim is now conditioned on the invocation that printed it.
+  if (mode.raw) {
+    console.log('BOUNDARY: --raw. The carried set was NOT consulted in this run — none of the');
+    console.log('          three rules below ran, and this output says nothing about whether');
+    console.log('          the ledger matches the tree. It is the presence detector only.');
+    return;
+  }
+  // Vira's amendment: test 37's name and this tool's header READ as a ratchet, so
+  // the boundary has to say which rules a machine actually holds and which are prose.
+  console.log('BOUNDARY: three rules govern the carried set. ALL THREE ARE MACHINE-ENFORCED:');
+  console.log('          (1) a finding not in the set is red · (2) an entry with no finding is');
+  console.log('          red · (3) an entry may not be admitted for a write this change');
+  console.log('          introduced — checked at git merge-base origin/dev HEAD, and UNKNOWN');
+  console.log('          when that base will not resolve. NOT enforced, and prose only: each');
+  console.log('          entry\'s NOTE (why it is unfixed, who owns it) is unchecked text, and');
+  console.log('          RELOCATION is not caught — deleting a carried write and reintroducing');
+  console.log('          byte-identical text elsewhere in the SAME file reads as no change,');
+  console.log('          with the note now describing a site that moved (Vira, carded).');
+  // Bjorn's finding 3, and it is the sharpest limit on rule (3): it is a PR-time
+  // gate by construction.
+  console.log('BOUNDARY: rule (3) is a PR-TIME gate and goes VACUOUS once this branch merges.');
+  console.log('          On dev, merge-base origin/dev HEAD is HEAD, so every entry predates');
+  console.log('          "this change" trivially and a laundered entry that cleared review');
+  console.log('          ONCE is never caught by rule (3) again. It gates entry, not residence.');
+  if (mode.adm && mode.adm.state === 'ok') {
+    console.log(`BOUNDARY: rule (3) was checked against base ${mode.adm.base.slice(0, 12)} — named because a stale`);
+    console.log('          origin/dev silently moves it (a clone of a worktree inherits the');
+    console.log('          stale ref, and the check then proves something about the wrong tree).');
+  }
 }
 
 // The carried set — see THE CARRIED SET in the header. `text` is the write's own
@@ -287,6 +333,64 @@ const CARRIED = [
 
 const norm = (s) => s.replace(/\s+/g, ' ').trim();
 
+// ------------------------------------------------------------- admissibility
+// "Carried" means PREDATES THIS CHANGE. Nothing enforced that until now: a write
+// and its CARRIED entry could arrive in one commit and every gate stayed green
+// (Bjorn demonstrated it; Vira reinstated it and ruled this the fix over a
+// literal count, because a literal's false red is discharged by editing the
+// number down — the reflex that opens the laundering path — while this one is
+// discharged by FIXING THE WRITE).
+//
+// THIS IS THE ONLY PART OF THE TOOL THAT TOUCHES GIT, deliberately (Vira's
+// binding). carried/new/vanished above is pure filesystem and stays that way, so
+// a git failure can never change which findings matched which entries. An
+// unresolvable base is UNKNOWN → exit 2, never folded into a pass (SOP 2's
+// silence guard: an empty answer against an unproven ref is not a clean one).
+//
+// Counted, not merely present: k entries sharing one text need k occurrences at
+// the base. Presence alone would admit a byte-identical twin introduced by this
+// change, which is the same laundering one entry to the right. That is stricter
+// than the ruling's wording and is flagged as such in the commit — the ruling's
+// three cases behave identically either way.
+function admissibility(entries) {
+  let base;
+  try {
+    base = execFileSync('git', ['merge-base', 'origin/dev', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
+    if (!/^[0-9a-f]{7,40}$/.test(base)) throw new Error(`merge-base returned ${JSON.stringify(base)}`);
+  } catch (e) {
+    return { state: 'unknown', why: `could not resolve git merge-base origin/dev HEAD — ${e.message.split('\n')[0]}` };
+  }
+  const wanted = new Map(); // file → Map(normalised text → entries needing it)
+  for (const c of entries) {
+    if (!wanted.has(c.file)) wanted.set(c.file, new Map());
+    const m = wanted.get(c.file);
+    const k = norm(c.text);
+    m.set(k, (m.get(k) || 0) + 1);
+  }
+  const inadmissible = [];
+  for (const [file, texts] of wanted) {
+    let atBase = null;
+    try {
+      atBase = execFileSync('git', ['show', `${base}:${file}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+    } catch {
+      atBase = null; // the file itself is new in this change — every entry for it is inadmissible
+    }
+    const counts = new Map();
+    if (atBase !== null) {
+      for (const line of atBase.split('\n')) {
+        const k = norm(line);
+        if (k) counts.set(k, (counts.get(k) || 0) + 1);
+      }
+    }
+    for (const [text, need] of texts) {
+      const have = counts.get(text) || 0;
+      if (have < need) inadmissible.push({ file, text, need, have, fileMissing: atBase === null });
+    }
+  }
+  return { state: 'ok', base, inadmissible, checked: entries.length };
+}
+
+
 const SELFTEST = [
   ['tests/fixtures/zoomunits/bad_tutorial_40c5b21.js', 'flag', 6],
   ['tests/fixtures/zoomunits/bad_taint_through_let.js', 'flag', 2],
@@ -320,7 +424,16 @@ function selftest() {
   console.log(`known-good clear  ${goodHit}/${good}`);
   console.log('OK* = right verdict, different count than recorded — read it before trusting the recall.');
   const pass = badHit === bad && goodHit === good;
-  console.log(pass ? 'RESULT: corpus held.' : 'RESULT: corpus escaped — the check is decoration until this is 5/5.');
+  // The numbers live ON the RESULT line so the harness can quote one terminated
+  // sentence instead of scraping two. Bjorn's finding 1: test 36's detail came from
+  // the same `grab` helper, so renaming a word in this output printed `recall ?`
+  // inside a PASS. There is now nothing for a rename to silently break — a RESULT
+  // this harness cannot read is a FAIL, not a question mark.
+  console.log(
+    pass
+      ? `RESULT: corpus held — known-bad recall ${badHit}/${bad}, known-good cleared ${goodHit}/${good}.`
+      : `RESULT: corpus escaped — known-bad recall ${badHit}/${bad}, known-good cleared ${goodHit}/${good}; the check is decoration until both are full.`
+  );
   return pass ? 0 : 1;
 }
 
@@ -391,8 +504,31 @@ function main(argv) {
     }
   }
 
+  // Admissibility runs AFTER the pure-filesystem partition above and cannot alter
+  // it — every carried/new/vanished number is already decided at this point. Under
+  // --raw it is not computed at all, so that invocation spawns no git whatsoever.
+  const adm = raw ? null : admissibility(CARRIED);
+  // `adm` is null under --raw (git deliberately never consulted), so every reader
+  // of it is guarded. Without this the --raw path threw and exit 1 made the crash
+  // look exactly like the bare red it was supposed to be printing.
+  if (adm && adm.state === 'unknown') {
+    console.log(`\nADMISSIBLE — UNKNOWN. ${adm.why}`);
+    console.log('        Whether these entries predate this change is unproven, not proven false.');
+    console.log('        Unknown blocks (SOP 2); it is never folded into a pass.');
+  } else if (adm && adm.inadmissible.length) {
+    console.log(`\nINADMISSIBLE — ${adm.inadmissible.length} entry(ies) record a write that does NOT predate this change`);
+    console.log(`        (base: git merge-base origin/dev HEAD = ${adm.base.slice(0, 12)})`);
+    for (const i of adm.inadmissible) {
+      console.log(`  ${i.file}${i.fileMissing ? '  [file absent at base]' : ''}  ${i.have}/${i.need} occurrence(s) at base`);
+      console.log(`          ${i.text}`);
+    }
+    console.log('        "Carried" means PREDATES THIS CHANGE. Discharge this by FIXING the');
+    console.log('        write, not by editing the ledger — an entry admitted here would be');
+    console.log('        this change laundering its own defect into the debt column.');
+  }
+
   console.log(`\n${files.length} file(s), ${writes} inline px geometry write(s), ${total} unconverted`);
-  boundary(files.length, 0);
+  boundary(files.length, 0, { raw, adm });
   if (raw) {
     console.log(
       total
@@ -401,12 +537,17 @@ function main(argv) {
     );
     return total ? 1 : 0;
   }
-  console.log(`RESULT: ${held.length} carried, ${fresh.length} new, ${vanished.length} vanished.`);
-  if (fresh.length || vanished.length) {
+
+  console.log(
+    `RESULT: ${held.length} carried, ${fresh.length} new, ${vanished.length} vanished, ` +
+      `${adm.state === 'unknown' ? 'admissibility UNKNOWN' : `${adm.inadmissible.length} inadmissible`}.`
+  );
+  if (fresh.length || vanished.length || (adm.state === 'ok' && adm.inadmissible.length)) {
     console.log('        The carried set no longer describes the tree. Fix the new write, or');
     console.log('        update the set — whichever is true — in the same commit.');
     return 1;
   }
+  if (adm.state === 'unknown') return 2;
   // `held.length`, not the word "nine". Bjorn grew the set to 10 and this line
   // still said nine — a derived count and a literal for the same fact, two lines
   // apart, inside the tool that exists to catch two homes for one fact. I did not

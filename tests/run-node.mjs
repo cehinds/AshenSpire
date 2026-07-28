@@ -46,29 +46,50 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
       return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
     }
   };
-  const grab = (out, re) => (out.match(re) || [])[1] ?? '?';
+  // One reader for both lines: quote the tool's own terminated RESULT sentence.
+  // `grab` is gone — it defaulted to '?' on a miss, so renaming a word in either
+  // tool output printed a question mark inside a PASS (Bjorn's finding 1, same
+  // class as the drift that started this). A verdict the harness cannot read in
+  // full is a FAIL that says so, in both tests, through the same three lines.
+  const quote = (out) => {
+    const m = out.match(/^RESULT: (.*)$/m);
+    if (!m) return { text: null, why: 'NO RESULT LINE — the harness could not read the tool' };
+    if (!/\.$/.test(m[1])) return { text: null, why: `TRUNCATED RESULT — "${m[1]}" does not end the sentence, so the verdict wrapped and the harness read half of it` };
+    return { text: m[1], why: null };
+  };
 
   const self = run(['--selftest']);
+  const selfV = quote(self.out);
   console.log(
-    `${self.code === 0 ? 'PASS' : 'FAIL'}  36. the zoom-unit check still catches its own known-bad corpus` +
-      ` — recall ${grab(self.out, /known-bad recall\s+(\S+)/)}, known-good cleared ${grab(self.out, /known-good clear\s+(\S+)/)}`
+    `${self.code === 0 && selfV.text ? 'PASS' : 'FAIL'}  36. the zoom-unit check still catches its own known-bad corpus` +
+      ` — ${selfV.text || `zoomunits --selftest (exit ${self.code}): ${selfV.why}`}`
   );
-  if (self.code !== 0) zoomExtra++;
+  if (self.code !== 0 || !selfV.text) zoomExtra++;
   else zoomPassed++;
 
   const tree = run([]);
-  // Deliberately NOT named "no unconverted write" — nine of them are carried and
-  // unfixed. This asserts the SET: a tenth site is red, and so is a site fixed
-  // without its entry deleted. The carried count sits in the test name on
-  // purpose, because a baseline's failure mode is becoming the place defects go
-  // quiet, and `--raw` still prints the bare red Bjorn shipped.
+  // The detail is the tool's OWN RESULT line, quoted — not numbers scraped out of
+  // it and recomposed here. Recomposing is a second home for the verdict, and it
+  // drifted the day admissibility became a fourth failure condition the three
+  // regexes did not know about: the suite printed FAIL beside a name that read
+  // "0 new, 0 vanished". Quoting has no regex to widen, so a clause added to
+  // RESULT reaches this line without anyone remembering to. And a run with NO
+  // RESULT line is itself a failure: the harness could not read the tool, which
+  // is not the same as the tool having nothing to say.
+  // (Bjorn's ruling, 2026-07-28, over my proposal to add a fourth number — his
+  // test is "did something become deletable?"; under this the whole `grab` helper did.)
+  // A verdict is one whole terminated sentence on one line. Without the `.` test a
+  // RESULT that ever wraps is quoted up to the wrap and PASSES on half a sentence —
+  // the `?` defect in a new dress. Bjorn ruled the first wording, then wrapped the
+  // line himself and watched it print `PASS … 9 carried, 0 new,`; this is his
+  // corrected version, taken from his log rather than from a relay of it.
+  const treeV = quote(tree.out);
   console.log(
-    `${tree.code === 0 ? 'PASS' : 'FAIL'}  37. the carried set of unconverted px writes is exactly as recorded` +
-      ` — ${grab(tree.out, /RESULT: (\d+) carried/)} carried and UNFIXED,` +
-      ` ${grab(tree.out, /carried, (\d+) new/)} new, ${grab(tree.out, /new, (\d+) vanished/)} vanished` +
+    `${tree.code === 0 && treeV.text ? 'PASS' : 'FAIL'}  37. the carried set of unconverted px writes is exactly as recorded` +
+      ` — ${treeV.text || `zoomunits (exit ${tree.code}): ${treeV.why}`}` +
       ` (\`node tools/zoomunits.mjs\` for the ledger, \`--raw\` for the bare red)`
   );
-  if (tree.code !== 0) zoomExtra++;
+  if (tree.code !== 0 || !treeV.text) zoomExtra++;
   else zoomPassed++;
 }
 
