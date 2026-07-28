@@ -306,42 +306,91 @@ async function main() {
     ok(spotOn.cover > 0.5, `resize: spotlight still lands on its target (${(spotOn.cover * 100).toFixed(0)}% of ${spotOn.sel})`);
   }
 
-  // End-to-end on the REAL first-run path (no hand-mounting): a fresh player
-  // walks into their first fight and leaves by the keyboard. What makes this
-  // worth its own case is the flag — `seenTutorial` is written only by
-  // onTutorialDone, so if Escape removed the veil WITHOUT reaching finish(),
-  // the coach marks would be back on the next reload and the player would be
-  // right back in the trap.
+  // End-to-end on the REAL first-run path, through the title screen with real
+  // durable storage — no ?shot=, no hand-mounting, no seeded flag. What makes it
+  // worth its own case is the reload: `seenTutorial` is written only by
+  // onTutorialDone, so if Escape removed the veil without reaching finish(), the
+  // coach marks would be back the moment the player reloaded, which is exactly
+  // how the original lock survived. So this reloads and looks.
+  //
+  // It cannot use ?shot= for this. A ?shot= boot never touches durable storage
+  // (main.js pickStorage — the gate added in #8 after the hook clobbered a real
+  // save), so there is nothing to read back afterwards. That gate is correct and
+  // this check goes the long way round instead of weakening it.
   if (!only) {
-    console.log('\n  first-run path at 1920x1080: map → first fight → Escape → reload-proof?');
+    console.log('\n  first-run path at 1920x1080: title → BEGIN → first fight → Escape → RELOAD');
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false }, S);
-    await cdp.send('Page.navigate', { url: `http://localhost:${port}/?shot=map` }, S);
-    await until(`!!document.querySelector('.map-node.monster.reachable')`, 'a reachable fight on the map');
-    await wait(600);
-    // ?shot= suppresses the first-run flag for clean captures — put a genuinely
-    // new player back in the save, then let the game's own code decide to show it.
-    const armed = await evalIn(`(() => {
-      const m = JSON.parse(localStorage.getItem('sote_meta_v1'));
-      m.settings.seenTutorial = false;
-      localStorage.setItem('sote_meta_v1', JSON.stringify(m));
-      return m.settings.seenTutorial === false;
-    })()`);
-    ok(armed, 'first-run: save armed as a player who has never seen the tutorial');
-    const node = await evalIn(`(() => { const r = document.querySelector('.map-node.monster.reachable').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
-    await clickAt(node.x, node.y);
+    await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+    await until(`!!document.querySelector('.slot-new')`, 'the title screen');
+    await evalIn(`(() => { localStorage.clear(); return 1; })()`);
+    await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+    await until(`!!document.querySelector('.slot-new')`, 'the title screen, storage cleared');
+    ok(
+      await evalIn(`localStorage.getItem('sote_meta_v1') === null`),
+      'first-run: a genuinely new player — no meta in durable storage at all'
+    );
+    await wait(400);
+    // Scroll the control into view first, then click where it actually is. That
+    // is not politeness — at 1920x1080 on the shipped defaults, #cz-start
+    // ("BEGIN THE CLIMB") lays out at top 1216 in a 1080px viewport, 136px below
+    // the fold with elementFromPoint returning null. The pane scrolls, so it is
+    // recoverable, unlike the tutorial lockout — but it is the same defect class
+    // (a required control off-screen at zoom > 1) on the screen BEFORE this one,
+    // and it is reported, not fixed, here: it is outside this branch's subject.
+    const clickSel = async (sel, label) => {
+      const pt = await evalIn(`(() => {
+        const e = document.querySelector(${JSON.stringify(sel)});
+        if (!e) return null;
+        const before = e.getBoundingClientRect();
+        const off = before.bottom > innerHeight || before.top < 0;
+        if (off) e.scrollIntoView({ block: 'center' });
+        const r = e.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, scrolled: off, top: Math.round(before.top) };
+      })()`);
+      if (!pt) throw new Error(`no element for ${label} (${sel})`);
+      if (pt.scrolled) console.log(`    note: ${label} laid out at top ${pt.top} in a ${1080}px viewport — scrolled into view to click it`);
+      await clickAt(pt.x, pt.y);
+    };
+    await clickSel('.slot-new', 'BEGIN A CLIMB');
+    await until(`!!document.querySelector('#cz-start')`, 'the customize screen');
+    // Fix the seed so the first floor reliably offers a fight (the same seed the
+    // ?shot= harness uses); everything else stays at the shipped defaults, which
+    // since #10 means High contrast ON — a real new player's board, not a tuned one.
+    await evalIn(`(() => { const s = document.querySelector('#seed-input'); s.value = 'SHOWCASE'; s.dispatchEvent(new Event('input', { bubbles: true })); return s.value; })()`);
+    await clickSel('#cz-start', 'BEGIN THE CLIMB');
+    await until(`!!document.querySelector('.map-node.reachable')`, 'the map');
+    await wait(500);
+    const haveFight = await evalIn(`!!document.querySelector('.map-node.monster.reachable')`);
+    ok(haveFight, 'first-run: the first floor offers a fight to walk into');
+    await clickSel('.map-node.monster.reachable', 'a monster node');
     let mounted = true;
     try {
-      await until(`!!document.querySelector('.tut-veil')`, 'the tutorial mounting itself', 8000);
+      await until(`!!document.querySelector('.tut-veil')`, 'the tutorial mounting itself', 10000);
     } catch { mounted = false; }
-    ok(mounted, 'first-run: the game showed the tutorial on its own (real showTutorial path)');
+    ok(mounted, 'first-run: the game showed the tutorial on its own (real showTutorial path, real storage)');
     if (mounted) {
+      const p = await evalIn(PROBE);
+      ok(p.next.inside && p.next.hit && p.skip.inside && p.skip.hit, `first-run: both buttons reachable at ui-zoom ${p.zoom} on the shipped defaults`);
       await pressKey('Escape', 'Escape', 27);
       const after = await evalIn(`({
         veil: !!document.querySelector('.tut-veil'),
-        seen: JSON.parse(localStorage.getItem('sote_meta_v1')).settings.seenTutorial === true,
+        meta: localStorage.getItem('sote_meta_v1'),
       })`);
       ok(!after.veil, 'first-run: Escape removed the tutorial');
-      ok(after.seen, 'first-run: …and it PERSISTED seenTutorial — a reload will not bring the lock back');
+      ok(
+        !!after.meta && JSON.parse(after.meta).settings.seenTutorial === true,
+        'first-run: …and wrote seenTutorial to DURABLE storage (the write the buttons used to be the only source of)'
+      );
+      // The claim Sunna's repro actually turns on: "Reload does not clear it."
+      await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+      await until(`!!document.querySelector('.slot-continue')`, 'the title screen with a saved run');
+      await clickSel('.slot-continue', 'CONTINUE');
+      await until(`!!document.querySelector('.combat')`, 'the fight, resumed');
+      await wait(1500); // give a re-mount every chance to appear
+      ok(
+        !(await evalIn(`!!document.querySelector('.tut-veil')`)),
+        'first-run: RELOADED and continued — the tutorial did not come back'
+      );
     }
   }
 
