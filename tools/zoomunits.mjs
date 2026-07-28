@@ -348,7 +348,7 @@ function main(argv) {
   // Match findings against the carried set by file + the write's own text. An
   // entry may be claimed once, so a duplicated write shows up as new rather than
   // hiding behind its twin.
-  const unclaimed = CARRIED.map((c) => ({ ...c, key: `${c.file} ${norm(c.text)}`, hit: null }));
+  const unclaimed = CARRIED.map((c) => ({ ...c, key: `${c.file}\x00${norm(c.text)}`, hit: null }));
   const fresh = [];
   let total = 0;
   let writes = 0;
@@ -358,7 +358,7 @@ function main(argv) {
     writes += stats.writes;
     for (const fd of findings) {
       total++;
-      const key = `${rel} ${norm(fd.text)}`;
+      const key = `${rel}\x00${norm(fd.text)}`;
       const entry = raw ? null : unclaimed.find((c) => c.key === key && !c.hit);
       if (entry) entry.hit = { rel, ...fd };
       else fresh.push({ rel, ...fd });
@@ -407,8 +407,12 @@ function main(argv) {
     console.log('        update the set — whichever is true — in the same commit.');
     return 1;
   }
-  console.log('        The set is exactly as recorded. This is NOT "clean": nine writes still');
-  console.log('        carry a visual pixel into local space and none of them is owned.');
+  // `held.length`, not the word "nine". Bjorn grew the set to 10 and this line
+  // still said nine — a derived count and a literal for the same fact, two lines
+  // apart, inside the tool that exists to catch two homes for one fact. I did not
+  // reason that out when I wrote it; I typed the number I happened to be looking at.
+  console.log(`        The set is exactly as recorded. This is NOT "clean": ${held.length} write(s)`);
+  console.log('        still carry a visual pixel into local space and none of them is owned.');
   return 0;
 }
 
