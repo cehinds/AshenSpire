@@ -233,13 +233,23 @@ export function scan(src) {
 
 // ---------------------------------------------------------------- driving
 
-function jsFiles(p) {
+// `skipped` is an accumulator, not a return value, because the recursion flat-maps.
+// It counts entries that EXIST under the given paths and are not .js/.mjs — the
+// files this tool structurally cannot read, which is exactly what the boundary
+// block claims to report. It was the literal `0` until now (Vira's finding): the
+// number was never computed, and read true for its whole life only because src/
+// happens to contain no non-JS file. Measured or absent; this is measured.
+function jsFiles(p, skipped) {
   const abs = resolve(p);
   const st = statSync(abs);
-  if (st.isFile()) return extname(abs) === '.js' || extname(abs) === '.mjs' ? [abs] : [];
+  if (st.isFile()) {
+    const isJs = extname(abs) === '.js' || extname(abs) === '.mjs';
+    if (!isJs) skipped.n++;
+    return isJs ? [abs] : [];
+  }
   return readdirSync(abs, { withFileTypes: true })
     .sort((a, b) => (a.name < b.name ? -1 : 1)) // sorted: the order IS part of the output
-    .flatMap((e) => jsFiles(resolve(abs, e.name)));
+    .flatMap((e) => jsFiles(resolve(abs, e.name), skipped));
 }
 
 function boundary(scanned, skipped, mode = {}) {
@@ -443,16 +453,48 @@ function selftest() {
   console.log(`\nknown-bad recall  ${badHit}/${bad}`);
   console.log(`known-good clear  ${goodHit}/${good}`);
   console.log('OK* = right verdict, different count than recorded — read it before trusting the recall.');
-  const pass = badHit === bad && goodHit === good;
+
+  // The boundary block's non-JS count needs a fixture or it is unfalsifiable: src/
+  // holds zero non-JS files, so a measured 0 and the hardcoded 0 it replaced are the
+  // same three characters on this tree, and the defect would have been invisible
+  // again the day someone reintroduced it. This directory is the mixed corpus that
+  // already exists for this tool — five .js and exactly one non-JS
+  // (two-spaces-probe.html) — so the number has to move with reality to stay right.
+  // Asserted on the RENDERED LINE, not on the counter, because the original defect
+  // was at the CALL SITE — `boundary(files.length, 0)` — and a fixture that would
+  // not have caught its own bug is decoration. This drives a real run over the
+  // fixture directory and reads the sentence a person reads. `--raw` so the run
+  // makes ZERO git calls and Vira's verified binding-1 property is unchanged.
+  const covDir = resolve(ROOT, 'tests/fixtures/zoomunits');
+  const covLines = [];
+  const realLog = console.log;
+  console.log = (...a) => covLines.push(a.join(' '));
+  try {
+    main(['--raw', covDir]);
+  } finally {
+    console.log = realLog;
+  }
+  const covRead = /read (\d+) \.js\/\.mjs file/.exec(covLines.join('\n'));
+  const covSkip = /and (\d+) non-JS file\(s\)/.exec(covLines.join('\n'));
+  const covOk = !!covRead && covRead[1] === '5' && !!covSkip && covSkip[1] === '1';
+  console.log(
+    `  ${covOk ? 'OK  ' : 'MISS'}  boundary line over tests/fixtures/zoomunits → ` +
+      `"read ${covRead ? covRead[1] : '?'} .js/.mjs" and "${covSkip ? covSkip[1] : '?'} non-JS" (expected 5 and 1)`
+  );
+
+  const corpusPass = badHit === bad && goodHit === good;
+  const pass = corpusPass && covOk;
   // The numbers live ON the RESULT line so the harness can quote one terminated
   // sentence instead of scraping two. Bjorn's finding 1: test 36's detail came from
   // the same `grab` helper, so renaming a word in this output printed `recall ?`
   // inside a PASS. There is now nothing for a rename to silently break — a RESULT
   // this harness cannot read is a FAIL, not a question mark.
+  // "corpus held" stays keyed on the CORPUS, so it cannot start meaning something
+  // else; the skip-count fixture is its own clause. The exit code reflects both.
   console.log(
-    pass
-      ? `RESULT: corpus held — known-bad recall ${badHit}/${bad}, known-good cleared ${goodHit}/${good}.`
-      : `RESULT: corpus escaped — known-bad recall ${badHit}/${bad}, known-good cleared ${goodHit}/${good}; the check is decoration until both are full.`
+    corpusPass
+      ? `RESULT: corpus held — known-bad recall ${badHit}/${bad}, known-good cleared ${goodHit}/${good}; non-JS skip count ${covOk ? 'measured' : 'NOT MEASURED'}.`
+      : `RESULT: corpus escaped — known-bad recall ${badHit}/${bad}, known-good cleared ${goodHit}/${good}; the check is decoration until both are full; non-JS skip count ${covOk ? 'measured' : 'NOT MEASURED'}.`
   );
   return pass ? 0 : 1;
 }
@@ -461,9 +503,10 @@ function main(argv) {
   if (argv.includes('--selftest')) return selftest();
   const paths = argv.filter((a) => !a.startsWith('--'));
   const targets = paths.length ? paths : [resolve(ROOT, 'src')];
+  const skipped = { n: 0 };
   let files;
   try {
-    files = targets.flatMap(jsFiles);
+    files = targets.flatMap((t) => jsFiles(t, skipped)); // NOT flatMap(jsFiles): that passes the index as `skipped`
   } catch (e) {
     console.error(`zoomunits: ${e.message}`);
     return 2;
@@ -548,7 +591,7 @@ function main(argv) {
   }
 
   console.log(`\n${files.length} file(s), ${writes} inline px geometry write(s), ${total} unconverted`);
-  boundary(files.length, 0, { raw, adm });
+  boundary(files.length, skipped.n, { raw, adm });
   if (raw) {
     console.log(
       total
