@@ -57,9 +57,16 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   else zoomPassed++;
 
   const tree = run([]);
+  // Deliberately NOT named "no unconverted write" — nine of them are carried and
+  // unfixed. This asserts the SET: a tenth site is red, and so is a site fixed
+  // without its entry deleted. The carried count sits in the test name on
+  // purpose, because a baseline's failure mode is becoming the place defects go
+  // quiet, and `--raw` still prints the bare red Bjorn shipped.
   console.log(
-    `${tree.code === 0 ? 'PASS' : 'FAIL'}  37. no inline px geometry write carries a visual pixel into local space` +
-      ` — ${grab(tree.out, /(\d+) unconverted/)} unconverted (run \`node tools/zoomunits.mjs\` for file:line)`
+    `${tree.code === 0 ? 'PASS' : 'FAIL'}  37. the carried set of unconverted px writes is exactly as recorded` +
+      ` — ${grab(tree.out, /RESULT: (\d+) carried/)} carried and UNFIXED,` +
+      ` ${grab(tree.out, /carried, (\d+) new/)} new, ${grab(tree.out, /new, (\d+) vanished/)} vanished` +
+      ` (\`node tools/zoomunits.mjs\` for the ledger, \`--raw\` for the bare red)`
   );
   if (tree.code !== 0) zoomExtra++;
   else zoomPassed++;

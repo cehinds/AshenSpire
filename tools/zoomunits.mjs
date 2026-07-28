@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // tools/zoomunits.mjs — one coordinate space, one home.
 //
-// The whole UI is scaled by `--ui-zoom` (styles/base.css:77 `body { zoom: ... }`,
+// The whole UI is scaled by `--ui-zoom` (styles/base.css, `body { zoom: var(--ui-zoom, 1) }`,
 // set in main.js applyUiScale). That makes two pixel units live in this codebase:
 //
 //   VISUAL px — what getBoundingClientRect() and pointer events report.
@@ -36,13 +36,32 @@
 // One fact, one home, one deviant — so the check is a detector plus the known-bad
 // corpus that proves it (development.md SOP 3), not a line in a review checklist.
 //
+// THE CARRIED SET (added by Rune at the dev merge; Bjorn's instrument, his ruled
+// shape). Nine unconverted writes at four sites predate this check and none is
+// owned yet. Left as a bare red they made the suite permanently red, which trains
+// a reader to skip the line — and a red that is always there cannot tell you a
+// TENTH site just arrived. So the set below is recorded and asserted EXACTLY:
+//
+//   a finding not in the set        → red. Something new carries the bug.
+//   an entry with no finding        → red. It was fixed or edited; delete its
+//                                     line here in the SAME commit (that is the
+//                                     set's upkeep rule, and it enforces itself).
+//   every entry matched, nothing new → 0, and all nine still print, every run.
+//
+// Keyed on file + the write's own text, NEVER on line numbers: src/main.js moved
+// 79 lines between 082860c and this ref (#8's ?shot= gate, #10's ?shotSettings=
+// seeding) while every one of these writes stayed byte-identical. A baseline
+// pinned to line numbers is a `red-at <old ref>` read against a newer tree.
+// `--raw` restores the original verdict — any finding is red, no set consulted.
+//
 // Usage
 //   node tools/zoomunits.mjs [<path> ...]   scan files/dirs (default: src/)
 //   node tools/zoomunits.mjs --selftest     run the known-bad/known-good corpus
+//   node tools/zoomunits.mjs --raw          ignore the carried set: any finding is red
 //
 // Exit codes
-//   0  clean — no unconverted write, every file read
-//   1  at least one finding, OR a corpus miss under --selftest
+//   0  the carried set matched exactly and nothing new (or --raw: no finding at all)
+//   1  a NEW finding, a VANISHED entry, or a corpus miss under --selftest
 //   2  usage error
 //
 // REMOVAL CONDITION (development.md SOP 1's corollary). Delete this file, its
@@ -213,6 +232,61 @@ function boundary(scanned, skipped) {
   console.log(`BOUNDARY: read ${scanned} .js/.mjs file(s). A path not given is a path not checked.`);
 }
 
+// The carried set — see THE CARRIED SET in the header. `text` is the write's own
+// source line, whitespace-normalised; it is the key, and the line numbers in the
+// notes are prose that this tool re-derives on every run rather than trusting.
+// Each note says why it is still here, because an entry with no reason is a site
+// nobody ever has to fix.
+const CARRIED = [
+  {
+    file: 'src/main.js',
+    text: 'el.style.left = `${ar.left - lr.left + ar.width / 2 + ((extra && extra.dx) || 0)}px`;',
+    note: 'poseFxShowcase — dev-only (?shot=fx), so no player sees it; it is the harness that generates this repo’s screenshot evidence, which is worse, not better. Byte-for-byte the deviant removed from tutorial.js in 3a0def9. Unowned.',
+  },
+  {
+    file: 'src/main.js',
+    text: 'el.style.top = `${ar.top - lr.top + ar.height * 0.4 + ((extra && extra.dy) || 0)}px`;',
+    note: 'poseFxShowcase, the y half of the same write. Unowned.',
+  },
+  {
+    file: 'src/ui/components/tooltip.js',
+    text: 'el.style.left = `${Math.max(4, left)}px`;',
+    note: 'the shared tooltip singleton, tainted through a reassigned `let` — the shape no grep finds. Player-facing at every zoom. Unowned.',
+  },
+  {
+    file: 'src/ui/components/tooltip.js',
+    text: 'el.style.top = `${Math.max(4, top)}px`;',
+    note: 'the same tooltip, y axis. Unowned.',
+  },
+  {
+    file: 'src/ui/screens/combat.js',
+    text: 'dragGhost.style.left = `${mv.clientX - 70}px`;',
+    note: 'drag-to-target ghost, straight from clientX. PLAYER-FACING on every zoomed desktop, on the affordance the tutorial itself teaches. The most consequential of the nine. Unowned.',
+  },
+  {
+    file: 'src/ui/screens/combat.js',
+    text: 'dragGhost.style.top = `${mv.clientY - 100}px`;',
+    note: 'the same drag ghost, y axis. Unowned.',
+  },
+  {
+    file: 'src/ui/screens/combat.js',
+    text: 'ghost.style.left = `${from.left}px`;',
+    note: 'flyCard’s ghost, from a raw rect. Player-facing. Unowned.',
+  },
+  {
+    file: 'src/ui/screens/combat.js',
+    text: 'ghost.style.top = `${from.top}px`;',
+    note: 'flyCard’s ghost, y axis. Unowned.',
+  },
+  {
+    file: 'src/ui/screens/combat.js',
+    text: 'ghost.style.width = `${from.width}px`;',
+    note: 'flyCard’s ghost, width. Unowned.',
+  },
+];
+
+const norm = (s) => s.replace(/\s+/g, ' ').trim();
+
 const SELFTEST = [
   ['tests/fixtures/zoomunits/bad_tutorial_40c5b21.js', 'flag', 6],
   ['tests/fixtures/zoomunits/bad_taint_through_let.js', 'flag', 2],
@@ -268,28 +342,74 @@ function main(argv) {
     return 1;
   }
 
-  console.log(`zoomunits — ${targets.map((t) => relative(ROOT, resolve(t)) || '.').join(', ')}`);
+  const raw = argv.includes('--raw');
+  console.log(`zoomunits — ${targets.map((t) => relative(ROOT, resolve(t)) || '.').join(', ')}${raw ? ' (--raw: carried set ignored)' : ''}`);
+
+  // Match findings against the carried set by file + the write's own text. An
+  // entry may be claimed once, so a duplicated write shows up as new rather than
+  // hiding behind its twin.
+  const unclaimed = CARRIED.map((c) => ({ ...c, key: `${c.file} ${norm(c.text)}`, hit: null }));
+  const fresh = [];
   let total = 0;
   let writes = 0;
   for (const f of files) {
+    const rel = relative(ROOT, f);
     const { findings, stats } = scan(readFileSync(f, 'utf8'));
     writes += stats.writes;
-    if (!findings.length) continue;
-    console.log(`\n${relative(ROOT, f)}`);
     for (const fd of findings) {
       total++;
-      console.log(`  :${fd.line}  ${fd.write} — ${fd.why}`);
+      const key = `${rel} ${norm(fd.text)}`;
+      const entry = raw ? null : unclaimed.find((c) => c.key === key && !c.hit);
+      if (entry) entry.hit = { rel, ...fd };
+      else fresh.push({ rel, ...fd });
+    }
+  }
+  const vanished = raw ? [] : unclaimed.filter((c) => !c.hit);
+
+  if (fresh.length) {
+    console.log(`\nNEW — not in the carried set:`);
+    for (const fd of fresh) {
+      console.log(`  ${fd.rel}:${fd.line}  ${fd.write} — ${fd.why}`);
       console.log(`          ${fd.text}`);
     }
   }
+  if (vanished.length) {
+    console.log(`\nVANISHED — recorded in the carried set, not found in the tree:`);
+    for (const c of vanished) {
+      console.log(`  ${c.file}  ${c.text}`);
+      console.log(`          fixed, moved or reformatted — delete this entry in the same commit.`);
+    }
+  }
+  const held = unclaimed.filter((c) => c.hit);
+  if (held.length) {
+    // Printed on every run, including green ones: the whole risk of a carried set
+    // is that it becomes a place where defects go quiet.
+    console.log(`\nCARRIED — ${held.length} known unconverted write(s), still unfixed, line numbers re-derived now:`);
+    for (const c of held) {
+      console.log(`  ${c.hit.rel}:${c.hit.line}  ${c.hit.write}`);
+      console.log(`          ${c.note}`);
+    }
+  }
+
   console.log(`\n${files.length} file(s), ${writes} inline px geometry write(s), ${total} unconverted`);
   boundary(files.length, 0);
-  console.log(
-    total
-      ? `RESULT: ${total} write(s) carry a visual pixel into local space. Each is a second copy of the transform in src/ui/fx.js.`
-      : 'RESULT: clean — every inline px geometry write goes through anchorLocalBox or divides by --ui-zoom.'
-  );
-  return total ? 1 : 0;
+  if (raw) {
+    console.log(
+      total
+        ? `RESULT: ${total} write(s) carry a visual pixel into local space. Each is a second copy of the transform in src/ui/fx.js.`
+        : 'RESULT: clean — every inline px geometry write goes through anchorLocalBox or divides by --ui-zoom.'
+    );
+    return total ? 1 : 0;
+  }
+  console.log(`RESULT: ${held.length} carried, ${fresh.length} new, ${vanished.length} vanished.`);
+  if (fresh.length || vanished.length) {
+    console.log('        The carried set no longer describes the tree. Fix the new write, or');
+    console.log('        update the set — whichever is true — in the same commit.');
+    return 1;
+  }
+  console.log('        The set is exactly as recorded. This is NOT "clean": nine writes still');
+  console.log('        carry a visual pixel into local space and none of them is owned.');
+  return 0;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) process.exit(main(process.argv.slice(2)));
