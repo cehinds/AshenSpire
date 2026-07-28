@@ -1399,7 +1399,7 @@ const { setSpritesEnabled, classGlyph, setClassGlyphs } = require("src/ui/assets
 const { mountLobby } = require("src/ui/screens/lobby.js");
 const { mountCoop } = require("src/ui/screens/coop.js");
 const { lanInfo } = require("src/net/lan.js");
-const { setAnimSpeed } = require("src/ui/fx.js");
+const { setAnimSpeed, anchorLocalBox, clampBox } = require("src/ui/fx.js");
 const { sfx } = require("src/ui/sfx.js");
 const { initAudio } = require("src/ui/audio.js");
 
@@ -2319,14 +2319,40 @@ function poseFxShowcase() {
   const enemies = [...document.querySelectorAll('.combatant.enemy .sprite')];
   const player = document.querySelector('.combatant.player .sprite');
   if (!layer || !enemies.length || !player) return;
+  // Container: THE FX LAYER — these are `position: absolute` children of
+  // `.fx-layer`, so the layer is the containing block and the bound, NOT the
+  // viewport (the layer is `inset: 0` over the combat board only).
+  //
+  // EldenSpire#15 listed this site as "already differences a rect against the
+  // layer's own rect — may be correct." It was not. Differencing two visual rects
+  // gives a visual delta, and `style.left` reads local: byte-for-byte the deviant
+  // removed from tutorial.js in 3a0def9, missing only the `/ z`. Measured at seven
+  // viewports: the miss runs from −400 local px at zoom 0.62 to +822 at 1.70, dead
+  // on only at 1.00, and at 1.48 and above two of the five elements sat outside the
+  // layer entirely. Dev-only (`?shot=fx`) — so no player saw it, and every
+  // screenshot this repo has ever used as evidence did.
+  //
+  // `anchorLocalBox` is exactly this arithmetic with the conversion in it, so the
+  // hand-rolled copy goes and the one home takes it. The dx/dy extras were already
+  // local px, authored in the same space as fx.js floatNum's own −14, and stay.
+  const view = anchorLocalBox(layer, layer);
   const put = (cls, text, anchor, atMs, extra) => {
-    const lr = layer.getBoundingClientRect();
-    const ar = anchor.getBoundingClientRect();
+    const b = anchorLocalBox(layer, anchor);
     const el = document.createElement('div');
     el.className = cls;
     if (text) el.textContent = text;
-    el.style.left = `${ar.left - lr.left + ar.width / 2 + ((extra && extra.dx) || 0)}px`;
-    el.style.top = `${ar.top - lr.top + ar.height * 0.4 + ((extra && extra.dy) || 0)}px`;
+    const at = clampBox(
+      {
+        left: b.left + b.width / 2 + ((extra && extra.dx) || 0),
+        top: b.top + b.height * 0.4 + ((extra && extra.dy) || 0),
+        width: 0, // a point, not a box: these elements are centred by their own CSS
+        height: 0,
+      },
+      view,
+      { pad: 0 }
+    );
+    el.style.left = `${at.left}px`;
+    el.style.top = `${at.top}px`;
     el.style.animationDelay = `-${atMs}ms`; // jump mid-animation…
     el.style.animationPlayState = 'paused'; // …and hold the frame
     layer.appendChild(el);
@@ -13561,6 +13587,8 @@ Object.assign(module.exports, { mountTitle });
 "src/ui/components/tooltip.js": function (module, exports, require) {
 // src/ui/components/tooltip.js — one shared tooltip, ≤150 ms hover (SPEC §7.3)
 
+const { anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
+
 let tipEl = null;
 let showTimer = null;
 
@@ -13573,16 +13601,42 @@ function ensure() {
   return tipEl;
 }
 
+// Container: THE VIEWPORT. #tooltip is `position: fixed` (ui.css:5), so the
+// viewport is its containing block — the right bound for this one element, which
+// must be readable wherever the pointer is. That is not the default answer for a
+// positioned element and it is written down because it is a decision.
+//
+// EldenSpire#15 — and read the fix as an ORDER, not as an addition. The four
+// clamps below were already here, on both axes in both directions, and they were
+// arithmetically correct: they compared `innerWidth`/`innerHeight` against a
+// `getBoundingClientRect()`, all visual px, like with like. Then the result was
+// written into `style.left`, which <body>'s `zoom: var(--ui-zoom)` reads in LOCAL
+// px, and multiplied it back up. At 1920×1080 (zoom 1.48) the tooltip landed at
+// top 1406 in a 1080px viewport with not one pixel on screen: the hover fired, the
+// card lifted, and the explanation was simply nowhere the player could look. Right
+// arithmetic, wrong room.
+//
+// So every number below is converted to local FIRST, once, and only then compared.
+// `viewportLocalBox()` replaces the raw `innerWidth`/`innerHeight`, `b` replaces
+// the raw rect, and `pad`/`8`/`4` stay exactly the numbers they were — they were
+// always local px and always meant to be (Marina's Rule 3: px is admissible where
+// a value must not answer to the text-size setting; a hover gap is not read text).
 function position(x, y) {
   const el = ensure();
   const pad = 14;
-  const r = el.getBoundingClientRect();
-  let left = x + pad;
-  let top = y + pad;
-  if (left + r.width > innerWidth - 8) left = x - r.width - pad;
-  if (top + r.height > innerHeight - 8) top = y - r.height - pad;
-  el.style.left = `${Math.max(4, left)}px`;
-  el.style.top = `${Math.max(4, top)}px`;
+  const view = viewportLocalBox();
+  const b = anchorLocalBox(VIEWPORT_ORIGIN, el);
+  const c = anchorLocalBox(VIEWPORT_ORIGIN, { left: x, top: y, width: 0, height: 0 });
+  let left = c.left + pad;
+  let top = c.top + pad;
+  // Flip to the other side of the pointer rather than overhang the edge.
+  if (left + b.width > view.width - 8) left = c.left - b.width - pad;
+  if (top + b.height > view.height - 8) top = c.top - b.height - pad;
+  // …and then bound it regardless, so a wrong answer above is a misplaced tooltip
+  // and never an absent one. keep defaults to the whole box: this is text to read.
+  const at = clampBox({ left, top, width: b.width, height: b.height }, view);
+  el.style.left = `${at.left}px`;
+  el.style.top = `${at.top}px`;
 }
 
 /**
@@ -13631,6 +13685,642 @@ function esc(s) {
 
 
 Object.assign(module.exports, { attachTooltip, hideTooltip, esc });
+
+},
+"src/ui/fx.js": function (module, exports, require) {
+// src/ui/fx.js — feedback effects (SPEC §7.4)
+//
+// Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
+// skips to end-state; shake ≤4 px only for hits ≥15; Bleed bursts and
+// Staggers get the loud treatment (they're the theme).
+
+const { sfx } = require("src/ui/sfx.js");
+const { dlog } = require("src/ui/debuglog.js");
+
+const STEP_MS = 80;
+
+// ---------------------------------------------------------------------------
+// Animation speed (settings-driven; 'instant' collapses paced playback to the
+// classic fast-float behavior — also forced by reducedMotion).
+// ---------------------------------------------------------------------------
+
+const ANIM_SPEEDS = {
+  slow: { beatMs: 700, stepMs: 140, lungeMs: 340 },
+  normal: { beatMs: 400, stepMs: 90, lungeMs: 260 },
+  fast: { beatMs: 180, stepMs: 45, lungeMs: 160 },
+  instant: null,
+};
+
+let animSpeed = 'normal';
+function setAnimSpeed(v) {
+  animSpeed = ANIM_SPEEDS[v] === undefined ? 'normal' : v;
+}
+function getAnimSpeed() {
+  return animSpeed;
+}
+
+let pending = [];
+let flushRequested = false;
+
+// The whole UI is scaled by --ui-zoom (main.js applyUiScale). getBoundingClientRect
+// returns POST-zoom (visual) pixels, but a child's `style.left` is interpreted in
+// the layer's PRE-zoom local space — so a raw visual offset lands at offset×zoom,
+// pulling anchored FX toward the origin (worse the further right the target). This
+// converts an anchor's on-screen box into the layer's local coordinates so FX land
+// exactly on their target regardless of zoom.
+// `position: fixed` DOES NOT ESCAPE THIS (EldenSpire#15, Sunna). The zoom is on
+// <body>, and a fixed descendant of a zoomed box still has its lengths read in the
+// zoomed space — so the shared tooltip, the drag ghost and the card-fly ghost all
+// landed at offset×zoom too: correct at exactly --ui-zoom 1.00 and wrong in BOTH
+// directions away from it. At 1920×1080 the tooltip rendered at top 1406 in a
+// 1080px viewport. Card tooltips did not exist for a player on the commonest
+// desktop resolution. `transform: translate()` is the same space again (Marina
+// measured it: 100px under zoom 1.5 moves 150 visual), and zoomunits.mjs reads
+// neither `transform` nor `cssText` — so that half was, and stays, invisible to
+// the instrument.
+//
+// Those sites come through here now, which is why EITHER argument may be a plain
+// { left, top, width, height } of visual px instead of an element: a fixed
+// element's "layer" is the viewport, and VIEWPORT_ORIGIN names it.
+const rectOf = (o) => (o && typeof o.getBoundingClientRect === 'function' ? o.getBoundingClientRect() : o);
+
+// The containing block of a `position: fixed` element is the viewport itself,
+// whatever it is nested in — origin (0, 0), so only the zoom separates the spaces.
+const VIEWPORT_ORIGIN = { left: 0, top: 0, width: 0, height: 0 };
+
+function anchorLocalBox(layer, anchor) {
+  const lr = rectOf(layer);
+  const ar = rectOf(anchor);
+  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  return {
+    left: (ar.left - lr.left) / z,
+    top: (ar.top - lr.top) / z,
+    width: ar.width / z,
+    height: ar.height / z,
+  };
+}
+
+/**
+ * The visible screen, in the local space a `position: fixed` child writes in.
+ *
+ * This is the JS half of the `vw`-vs-`%` finding in Marina's ruling: `vw/vh`
+ * resolve against the UNZOOMED viewport and are then scaled, so a clamp written
+ * in them does not clamp. `innerWidth` has the same trap and the same cure — read
+ * it as visual px and convert, never write it into a local-space property raw.
+ */
+function viewportLocalBox() {
+  return anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: innerWidth, height: innerHeight });
+}
+
+/**
+ * clampBox(box, view, opts) → { left, top } — the bound, AFTER the conversion.
+ *
+ * Read the order, because it is the whole finding: tooltip.js already clamped all
+ * four edges on both axes, arithmetically correctly, and still rendered 329px
+ * below the bottom of the screen. It computed the clamp in visual space and wrote
+ * the result into local space. A bound is a claim about a coordinate space, not
+ * about arithmetic — so this function refuses to convert anything. Both arguments
+ * must ALREADY be in one space, and the caller names which container `view` is.
+ *
+ * What it buys, beyond today's four sites: the next bad write here degrades to
+ * "slightly misplaced" instead of "invisible" — a bug someone reports rather than
+ * a feature that silently does not exist for half the players. Same move as
+ * `.tut-veil { pointer-events: none }` in #7: delete the failure mode, not just
+ * this instance of it.
+ *
+ * `keep` = how much of the box must stay inside on each axis:
+ *   Infinity (default) — all of it. For anything a player has to READ.
+ *   a number           — at least that many px. For anything that TRACKS THE
+ *                        POINTER, which must be free to hang off the edge the
+ *                        pointer is against but must never vanish entirely.
+ * A box too big to fit pins to the low edge rather than sliding off the far one.
+ *
+ * Pure arithmetic, no DOM: unit-testable without a browser — which is the only
+ * part of Rule 2 that can be. The rest needs layout, and that is zoomplace.mjs.
+ */
+function clampBox(box, view, { pad = 4, keep = Infinity } = {}) {
+  const fit = (v, size, span) => {
+    const k = Math.min(keep, size);
+    const lo = pad + k - size;
+    const hi = span - pad - k;
+    return Math.min(Math.max(v, lo), Math.max(lo, hi));
+  };
+  return {
+    left: fit(box.left, box.width, view.width),
+    top: fit(box.top, box.height, view.height),
+  };
+}
+
+/** Spawn a floating number over an anchor element. */
+function floatNum(layer, anchor, text, cls) {
+  if (!layer || !anchor) return;
+  const b = anchorLocalBox(layer, anchor);
+  const el = document.createElement('div');
+  el.className = `float-num ${cls}`;
+  el.textContent = text;
+  el.style.left = `${b.left + b.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
+  el.style.top = `${b.top + b.height * 0.25}px`;
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), 600);
+}
+
+// Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
+function dmgClass(amount) {
+  if (amount >= 25) return 'dmg crit';
+  if (amount >= 15) return 'dmg heavy';
+  if (amount < 6) return 'dmg small';
+  return 'dmg';
+}
+
+/** Spawn a transient effect element (slash arc, cast glyph, block spark…). */
+function spawnFx(layer, anchor, cls, ms, text) {
+  if (!layer || !anchor) return;
+  const b = anchorLocalBox(layer, anchor);
+  const el = document.createElement('div');
+  el.className = cls;
+  if (text) el.textContent = text;
+  el.style.left = `${b.left + b.width / 2}px`;
+  el.style.top = `${b.top + b.height * 0.4}px`;
+  el.style.setProperty('--rot', `${Math.round(Math.random() * 50 - 25)}deg`);
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+
+function banner(layer, text, cls = '') {
+  if (!layer) return;
+  const el = document.createElement('div');
+  el.className = `fx-banner ${cls}`;
+  el.textContent = text;
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), 320);
+}
+
+function shake(combatEl) {
+  if (!combatEl) return;
+  // Honor the Screen shake setting (and reduced motion, which also drops it).
+  if (document.body.classList.contains('no-shake') || document.body.classList.contains('reduced-motion')) return;
+  combatEl.classList.remove('shake');
+  void combatEl.offsetWidth; // restart animation
+  combatEl.classList.add('shake');
+}
+
+// Add a short-lived CSS class (restarting its animation if already present).
+function flash(el, cls, ms = 300) {
+  if (!el) return;
+  // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
+  // numbers and HUD updates (which carry the actual info) are unaffected.
+  if (document.body.classList.contains('reduce-flashes')) return;
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), ms);
+}
+
+// Radial flare over an anchor (stance entries, big procs).
+function flare(layer, anchor, color) {
+  if (!layer || !anchor) return;
+  const b = anchorLocalBox(layer, anchor);
+  const el = document.createElement('div');
+  el.className = 'stance-flare';
+  el.style.left = `${b.left + b.width / 2 - 90}px`;
+  el.style.top = `${b.top + b.height / 2 - 90}px`;
+  el.style.background = `radial-gradient(circle, ${color} 0%, transparent 65%)`;
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), 320);
+}
+
+/**
+ * animateEvents(events, ctx, done)
+ *   ctx = { layer, combatEl, anchorFor(entityId) → element|null }
+ * Events are staggered STEP_MS apart; clicking anywhere flushes instantly.
+ */
+function animateEvents(events, ctx, done) {
+  flushRequested = false;
+  pending = events.filter((e) => visualFor(e) !== null);
+  const skip = () => {
+    flushRequested = true;
+  };
+  addEventListener('pointerdown', skip, { once: true, capture: true });
+
+  let i = 0;
+  const step = () => {
+    while (flushRequested && i < pending.length) {
+      // Flushed: fire remaining sounds silently-fast, no visuals backlog.
+      i++;
+    }
+    if (i >= pending.length) {
+      removeEventListener('pointerdown', skip, { capture: true });
+      if (done) done();
+      return;
+    }
+    const fn = visualFor(pending[i]);
+    if (fn) fn(ctx);
+    i++;
+    setTimeout(step, STEP_MS);
+  };
+  step();
+}
+
+// ---------------------------------------------------------------------------
+// Paced playback — one actor at a time (SPEC §7.4 extension).
+//
+// Groups a dispatch's event log into "beats": each card play, flask use, and
+// enemy move is its own beat, played as actor animation → effect visuals →
+// numbers → HUD update (ctx.onBeatApplied), before the next actor moves.
+// Turn boundaries become banner beats. Click skips to the end state.
+// ---------------------------------------------------------------------------
+
+function groupBeats(events) {
+  const beats = [];
+  let cur = { actorId: null, banner: null, kind: null, events: [] };
+  const push = () => {
+    if (cur.events.length || cur.banner || cur.actorId) beats.push(cur);
+  };
+  for (const e of events) {
+    switch (e.type) {
+      case 'cardPlayed':
+        push();
+        cur = { actorId: 'player', banner: null, kind: e.cardType === 'attack' ? 'attack' : 'act', events: [e] };
+        break;
+      case 'flaskUsed':
+        push();
+        cur = { actorId: 'player', banner: null, kind: 'act', events: [e] };
+        break;
+      case 'enemyMoveStarted':
+        push();
+        cur = { actorId: e.sourceId, banner: null, kind: e.kind === 'attack' ? 'attack' : 'act', events: [e] };
+        break;
+      case 'enemyTurnStart':
+        push();
+        cur = { actorId: null, banner: 'ENEMY TURN', kind: 'banner', events: [e] };
+        break;
+      case 'playerTurnStart':
+        push();
+        cur = { actorId: null, banner: 'YOUR TURN', kind: 'banner', events: [e] };
+        break;
+      case 'cardDrawn':
+        // Draws fire just before 'playerTurnStart' — split them out of the
+        // last enemy beat so the hand refills as its own step.
+        if (cur.actorId && cur.actorId !== 'player' && cur.kind !== 'draw') {
+          push();
+          cur = { actorId: null, banner: null, kind: 'draw', events: [] };
+        }
+        cur.events.push(e);
+        break;
+      default:
+        cur.events.push(e);
+    }
+  }
+  push();
+  return beats;
+}
+
+/**
+ * playTimeline(events, ctx, done)
+ *   ctx = animateEvents ctx + {
+ *     onBeatApplied(beat)  — apply this beat's events to the display state
+ *                            (HP/block bars, hand, statuses) AFTER its visuals,
+ *     onFlush()            — skip: jump display to true final state,
+ *   }
+ * Uses the module anim speed; 'instant' (or reducedMotion) falls back to
+ * animateEvents' classic behavior (final state + fast floats).
+ */
+// Debug lifecycle counters (window.__fx) — cheap, used to diagnose stuck-busy
+// reports: every timeline must end in exactly one finish (done/watchdog/flush).
+const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
+
+function playTimeline(events, ctx, done) {
+  const speed = ANIM_SPEEDS[animSpeed];
+  const reduced = document.body.classList.contains('reduced-motion');
+  if (!speed || reduced) {
+    if (ctx.onFlush) ctx.onFlush();
+    animateEvents(events, ctx, done);
+    return;
+  }
+  dbg.open = (dbg.open || 0) + 1;
+
+  const beats = groupBeats(events);
+  let flushed = false;
+  let finished = false;
+  const skip = () => {
+    flushed = true;
+  };
+  addEventListener('pointerdown', skip, { once: true, capture: true });
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    dbg.finished = (dbg.finished || 0) + 1;
+    clearTimeout(watchdog);
+    removeEventListener('pointerdown', skip, { capture: true });
+    if (done) done();
+  };
+  // Safety net: however playback ends (or a re-render throws mid-beat), never
+  // leave the caller's `busy` flag stuck — force completion after a bounded
+  // wall-clock budget. This is what prevents the "cards stop responding" hang.
+  const budget = 2000 + beats.length * (speed.beatMs + speed.lungeMs + 4 * speed.stepMs);
+  const watchdog = setTimeout(() => {
+    dbg.watchdog = (dbg.watchdog || 0) + 1;
+    console.warn('[fx] watchdog forced timeline completion');
+    dlog('fx', 'watchdog forced timeline completion', { open: dbg.open, finished: dbg.finished });
+    try {
+      if (ctx.onFlush) ctx.onFlush();
+    } catch (e) {
+      /* ignore */
+    }
+    finish();
+  }, budget);
+
+  const safe = (fn) => {
+    try {
+      if (fn) fn();
+    } catch (e) {
+      /* a render/visual error must not break the chain */
+    }
+  };
+
+  let bi = 0;
+  const nextBeat = () => {
+    if (finished) return;
+    if (flushed) {
+      safe(() => ctx.onFlush && ctx.onFlush());
+      finish();
+      return;
+    }
+    if (bi >= beats.length) {
+      finish();
+      return;
+    }
+    const beat = beats[bi++];
+
+    if (beat.banner) {
+      safe(() => banner(ctx.layer, beat.banner, 'turn'));
+      safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
+      setTimeout(nextBeat, Math.max(260, speed.beatMs));
+      return;
+    }
+
+    // 1) actor animation (lunge for attacks, glow-step otherwise)
+    const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
+    if (actorEl) safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
+
+    // 2) after the wind-up, the beat's effect visuals + numbers, staggered
+    const visuals = beat.events.map((e) => visualFor(e, beat.kind)).filter(Boolean);
+    // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
+    // glyph as their wind-up — attacks get the slash arc on impact instead.
+    if (actorEl && beat.kind !== 'attack' && beat.events.length) {
+      safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', 450, '✦'));
+    }
+    const windup = actorEl ? Math.round(speed.lungeMs * 0.55) : 0;
+    setTimeout(() => {
+      let vi = 0;
+      const stepV = () => {
+        if (finished) return;
+        if (flushed) {
+          nextBeat();
+          return;
+        }
+        if (vi < visuals.length) {
+          const v = visuals[vi++];
+          safe(() => v(ctx));
+          setTimeout(stepV, speed.stepMs);
+          return;
+        }
+        // 3) HUD updates for this beat, 4) inter-beat breath
+        safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
+        setTimeout(nextBeat, speed.beatMs);
+      };
+      stepV();
+    }, windup);
+  };
+  nextBeat();
+}
+
+function visualFor(e, beatKind) {
+  switch (e.type) {
+    case 'damageDealt':
+      // Fully blocked: a frost spark and a BLOCKED float — the armor held, so
+      // no flinch, no shake, no slash.
+      if (e.amount === 0 && e.blocked > 0) {
+        return (ctx) => {
+          sfx.play('block');
+          const anchor = ctx.anchorFor(e.targetId);
+          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
+          floatNum(ctx.layer, anchor, 'BLOCKED', 'blk small');
+        };
+      }
+      return (ctx) => {
+        sfx.play('hit');
+        const anchor = ctx.anchorFor(e.targetId);
+        const heavy = e.amount >= 15;
+        floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
+        // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
+        // recoil further (hit-heavy) and kick the screen.
+        if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
+        flash(anchor, 'hitflash', heavy ? 380 : 220);
+        if (heavy) {
+          flash(anchor, 'hit-heavy', 380);
+          shake(ctx.combatEl);
+        }
+      };
+    case 'blockGained':
+      return e.amount > 0
+        ? (ctx) => {
+            sfx.play('block');
+            floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk');
+          }
+        : null;
+    case 'hpLost':
+      return e.cause === 'effect'
+        ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst')
+        : null; // attack damage already shown by damageDealt
+    case 'healed':
+      return e.amount > 0
+        ? (ctx) => {
+            sfx.play('heal');
+            floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
+          }
+        : null;
+    case 'meterFilled':
+      return e.status === 'bleed'
+        ? (ctx) => {
+            sfx.play('bleedBurst');
+            banner(ctx.layer, 'BLEED BURST', 'blood');
+          }
+        : null;
+    case 'enemyStaggered':
+      return (ctx) => {
+        sfx.play('stagger');
+        banner(ctx.layer, 'STAGGERED');
+        const anchor = ctx.anchorFor(e.targetId);
+        flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
+        spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');
+        shake(ctx.combatEl);
+      };
+    case 'enemyDied':
+      return (ctx) => {
+        sfx.play('enemyDeath');
+        const anchor = ctx.anchorFor(e.targetId);
+        floatNum(ctx.layer, anchor, '✝', 'dmg heavy');
+        if (anchor) anchor.classList.add('crumble');
+      };
+    case 'stanceEntered':
+      return (ctx) => {
+        sfx.play('stance');
+        const color = e.stance === 'bulwark' ? 'rgba(127,168,201,.55)' : 'rgba(201,80,46,.55)';
+        flare(ctx.layer, ctx.anchorFor('player'), color);
+      };
+    case 'relicTriggered':
+      return (ctx) => {
+        sfx.play('relic');
+        if (ctx.relicAnchor) flash(ctx.relicAnchor(e.relicId), 'proc', 320);
+      };
+    case 'energySpent':
+    case 'energyGained':
+      return (ctx) => {
+        if (ctx.orb) flash(ctx.orb(), 'pulse', 260);
+      };
+    default:
+      return null;
+  }
+}
+
+
+Object.assign(module.exports, { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, VIEWPORT_ORIGIN, anchorLocalBox, viewportLocalBox, clampBox, animateEvents, playTimeline });
+
+},
+"src/ui/sfx.js": function (module, exports, require) {
+// src/ui/sfx.js — sound hooks (SPEC §7.4; §11: audio assets are a v1 non-goal)
+//
+// Every feedback moment calls sfx.play(id). v1 ships NO audio, so play() makes
+// no sound — but the hooks already exist at every call site (cardPlay, hit,
+// block, bleedBurst, stagger, enemyDeath, heal, stance, relic, flask, shrine,
+// buy, victory, youDied). That means an audio layer plugs in with zero call-site
+// changes: assign `sfx.sink = (id) => ...` (a WebAudio synth or sample bank).
+//
+// `recent` is a small ring buffer of the ids fired — it lets tests and QA verify
+// the wiring is live without shipping any audio.
+
+const sfx = {
+  sink: null, // future audio layer plugs in here; null = silent (v1)
+  recent: [], // last fired hook ids (bounded), for verification
+  play(id) {
+    this.recent.push(id);
+    if (this.recent.length > 32) this.recent.shift();
+    if (this.sink) this.sink(id);
+  },
+};
+
+
+Object.assign(module.exports, { sfx });
+
+},
+"src/ui/debuglog.js": function (module, exports, require) {
+// src/ui/debuglog.js — in-game command log (Settings → Advanced → Command log).
+//
+// A ring buffer of everything the UI asks the engine to do and everything that
+// comes back: dispatches, rejections, ignored inputs, timeline lifecycle, and
+// uncaught page errors. Exists so a stuck game can be diagnosed from inside the
+// game — open the log, read the last commands, copy them into a bug report.
+
+const MAX_ENTRIES = 300;
+const entries = [];
+
+/** Append one entry: dlog('dispatch', 'playCard strike_3 -> e1', {events: 12}) */
+function dlog(kind, msg, data) {
+  let detail = '';
+  if (data !== undefined) {
+    try {
+      detail = typeof data === 'string' ? data : JSON.stringify(data);
+    } catch (e) {
+      detail = String(data);
+    }
+  }
+  entries.push({ time: new Date(), kind, msg, detail });
+  if (entries.length > MAX_ENTRIES) entries.splice(0, entries.length - MAX_ENTRIES);
+}
+
+function getEntries() {
+  return entries;
+}
+
+// Uncaught errors are invisible in most consoles players look at — capture them
+// into the log so "it just stopped working" becomes a stack trace.
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (ev) => {
+    dlog('ERROR', String(ev.message || 'uncaught error'), ev.error && ev.error.stack ? String(ev.error.stack).split('\n').slice(0, 4).join(' | ') : '');
+  });
+  window.addEventListener('unhandledrejection', (ev) => {
+    dlog('ERROR', 'unhandled promise rejection', String((ev.reason && ev.reason.stack) || ev.reason).slice(0, 300));
+  });
+}
+
+function formatEntry(e) {
+  const hh = String(e.time.getHours()).padStart(2, '0');
+  const mm = String(e.time.getMinutes()).padStart(2, '0');
+  const ss = String(e.time.getSeconds()).padStart(2, '0');
+  return `${hh}:${mm}:${ss} [${e.kind}] ${e.msg}${e.detail ? ' :: ' + e.detail : ''}`;
+}
+
+/** The whole log as copyable text (plus live engine/fx state header). */
+function logText() {
+  const fx = typeof window !== 'undefined' && window.__fx ? JSON.stringify(window.__fx) : 'n/a';
+  const c = typeof window !== 'undefined' ? window.__combat : null;
+  const state = c ? `phase=${c.phase} result=${c.result} hand=${c.piles.hand.length} energy=${c.player.energy}` : 'no combat';
+  const head = `AshenSpire command log — ${new Date().toISOString()}\nstate: ${state}\ntimelines: ${fx}\n---`;
+  return [head, ...entries.map(formatEntry)].join('\n');
+}
+
+/** Open the log viewer modal (usable over the in-run overlay). */
+function openDebugLog() {
+  const veil = document.createElement('div');
+  veil.className = 'modal-veil';
+  veil.style.zIndex = '700'; // above the in-run overlay
+  veil.innerHTML = `
+    <div class="modal debug-modal">
+      <h2>COMMAND LOG</h2>
+      <p class="set-note">The last ${MAX_ENTRIES} commands and results between the interface and the engine, newest at the bottom. Copy this into a bug report if the game misbehaves.</p>
+      <pre class="debug-log-body"></pre>
+      <div class="set-actions" style="gap:8px">
+        <button class="subtle" id="dbg-copy">Copy</button>
+        <button class="subtle" id="dbg-refresh">Refresh</button>
+        <button id="dbg-close">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(veil);
+
+  const body = veil.querySelector('.debug-log-body');
+  const fill = () => {
+    body.textContent = logText();
+    body.scrollTop = body.scrollHeight;
+  };
+  fill();
+
+  veil.querySelector('#dbg-refresh').addEventListener('click', fill);
+  veil.querySelector('#dbg-copy').addEventListener('click', async () => {
+    const btn = veil.querySelector('#dbg-copy');
+    try {
+      await navigator.clipboard.writeText(logText());
+      btn.textContent = 'Copied';
+    } catch (e) {
+      // Clipboard blocked (e.g. file://): select the text for manual copy.
+      const range = document.createRange();
+      range.selectNodeContents(body);
+      const sel = getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      btn.textContent = 'Select+Ctrl C';
+    }
+    setTimeout(() => (btn.textContent = 'Copy'), 1500);
+  });
+  const close = () => veil.remove();
+  veil.querySelector('#dbg-close').addEventListener('click', close);
+  veil.addEventListener('click', (e) => {
+    if (e.target === veil) close();
+  });
+}
+
+
+Object.assign(module.exports, { dlog, getEntries, logText, openDebugLog });
 
 },
 "src/ui/screens/customize.js": function (module, exports, require) {
@@ -15676,115 +16366,6 @@ function openSettings({ meta, onChange }) {
 Object.assign(module.exports, { settingOn, renderSettings, openSettings });
 
 },
-"src/ui/debuglog.js": function (module, exports, require) {
-// src/ui/debuglog.js — in-game command log (Settings → Advanced → Command log).
-//
-// A ring buffer of everything the UI asks the engine to do and everything that
-// comes back: dispatches, rejections, ignored inputs, timeline lifecycle, and
-// uncaught page errors. Exists so a stuck game can be diagnosed from inside the
-// game — open the log, read the last commands, copy them into a bug report.
-
-const MAX_ENTRIES = 300;
-const entries = [];
-
-/** Append one entry: dlog('dispatch', 'playCard strike_3 -> e1', {events: 12}) */
-function dlog(kind, msg, data) {
-  let detail = '';
-  if (data !== undefined) {
-    try {
-      detail = typeof data === 'string' ? data : JSON.stringify(data);
-    } catch (e) {
-      detail = String(data);
-    }
-  }
-  entries.push({ time: new Date(), kind, msg, detail });
-  if (entries.length > MAX_ENTRIES) entries.splice(0, entries.length - MAX_ENTRIES);
-}
-
-function getEntries() {
-  return entries;
-}
-
-// Uncaught errors are invisible in most consoles players look at — capture them
-// into the log so "it just stopped working" becomes a stack trace.
-if (typeof window !== 'undefined') {
-  window.addEventListener('error', (ev) => {
-    dlog('ERROR', String(ev.message || 'uncaught error'), ev.error && ev.error.stack ? String(ev.error.stack).split('\n').slice(0, 4).join(' | ') : '');
-  });
-  window.addEventListener('unhandledrejection', (ev) => {
-    dlog('ERROR', 'unhandled promise rejection', String((ev.reason && ev.reason.stack) || ev.reason).slice(0, 300));
-  });
-}
-
-function formatEntry(e) {
-  const hh = String(e.time.getHours()).padStart(2, '0');
-  const mm = String(e.time.getMinutes()).padStart(2, '0');
-  const ss = String(e.time.getSeconds()).padStart(2, '0');
-  return `${hh}:${mm}:${ss} [${e.kind}] ${e.msg}${e.detail ? ' :: ' + e.detail : ''}`;
-}
-
-/** The whole log as copyable text (plus live engine/fx state header). */
-function logText() {
-  const fx = typeof window !== 'undefined' && window.__fx ? JSON.stringify(window.__fx) : 'n/a';
-  const c = typeof window !== 'undefined' ? window.__combat : null;
-  const state = c ? `phase=${c.phase} result=${c.result} hand=${c.piles.hand.length} energy=${c.player.energy}` : 'no combat';
-  const head = `AshenSpire command log — ${new Date().toISOString()}\nstate: ${state}\ntimelines: ${fx}\n---`;
-  return [head, ...entries.map(formatEntry)].join('\n');
-}
-
-/** Open the log viewer modal (usable over the in-run overlay). */
-function openDebugLog() {
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil';
-  veil.style.zIndex = '700'; // above the in-run overlay
-  veil.innerHTML = `
-    <div class="modal debug-modal">
-      <h2>COMMAND LOG</h2>
-      <p class="set-note">The last ${MAX_ENTRIES} commands and results between the interface and the engine, newest at the bottom. Copy this into a bug report if the game misbehaves.</p>
-      <pre class="debug-log-body"></pre>
-      <div class="set-actions" style="gap:8px">
-        <button class="subtle" id="dbg-copy">Copy</button>
-        <button class="subtle" id="dbg-refresh">Refresh</button>
-        <button id="dbg-close">Close</button>
-      </div>
-    </div>`;
-  document.body.appendChild(veil);
-
-  const body = veil.querySelector('.debug-log-body');
-  const fill = () => {
-    body.textContent = logText();
-    body.scrollTop = body.scrollHeight;
-  };
-  fill();
-
-  veil.querySelector('#dbg-refresh').addEventListener('click', fill);
-  veil.querySelector('#dbg-copy').addEventListener('click', async () => {
-    const btn = veil.querySelector('#dbg-copy');
-    try {
-      await navigator.clipboard.writeText(logText());
-      btn.textContent = 'Copied';
-    } catch (e) {
-      // Clipboard blocked (e.g. file://): select the text for manual copy.
-      const range = document.createRange();
-      range.selectNodeContents(body);
-      const sel = getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-      btn.textContent = 'Select+Ctrl C';
-    }
-    setTimeout(() => (btn.textContent = 'Copy'), 1500);
-  });
-  const close = () => veil.remove();
-  veil.querySelector('#dbg-close').addEventListener('click', close);
-  veil.addEventListener('click', (e) => {
-    if (e.target === veil) close();
-  });
-}
-
-
-Object.assign(module.exports, { dlog, getEntries, logText, openDebugLog });
-
-},
 "src/ui/audio.js": function (module, exports, require) {
 // src/ui/audio.js — procedural WebAudio engine (SPEC §7.4 audio).
 //
@@ -17221,7 +17802,7 @@ const { renderCard } = require("src/ui/components/card.js");
 const { openPileModal } = require("src/ui/components/piles.js");
 const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
-const { animateEvents, playTimeline } = require("src/ui/fx.js");
+const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
 const { intentBadge, intentTooltip, backdropClass } = require("src/ui/uiContent.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
@@ -17735,8 +18316,22 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
           document.body.appendChild(dragGhost);
         }
         if (dragging && dragGhost) {
-          dragGhost.style.left = `${mv.clientX - 70}px`;
-          dragGhost.style.top = `${mv.clientY - 100}px`;
+          // Container: THE VIEWPORT. The ghost is `position: fixed` and tracks the
+          // pointer, so nothing smaller is its bound. EldenSpire#15: `clientX` is
+          // visual px and `style.left` is local px, so the ghost ran away from the
+          // hand at every zoom but 1.00 — at 1920×1080 it sat 247 local px
+          // down-right of the cursor and clipped off the bottom edge, on the exact
+          // affordance the first-run tutorial teaches. The grip (70, 100) is
+          // unchanged: it was always meant as local px, into a 140×196 card.
+          const view = viewportLocalBox();
+          const g = anchorLocalBox(VIEWPORT_ORIGIN, dragGhost);
+          const at = anchorLocalBox(VIEWPORT_ORIGIN, { left: mv.clientX, top: mv.clientY, width: 0, height: 0 });
+          // keep:40, not the whole box — a card dragged to the edge of the screen
+          // SHOULD hang over it, the way it does in the hand. What must never
+          // happen is the ghost leaving entirely, which is what it did at 1.48.
+          const p = clampBox({ left: at.left - 70, top: at.top - 100, width: g.width, height: g.height }, view, { keep: 40 });
+          dragGhost.style.left = `${p.left}px`;
+          dragGhost.style.top = `${p.top}px`;
         }
       };
       const onUp = (up) => {
@@ -17967,18 +18562,49 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     const cardEl = app.querySelector(`.hand .card[data-instance-id="${instanceId}"]`);
     if (!cardEl) return;
     const dest = (targetId && fxCtx.anchorFor(targetId)) || fxCtx.anchorFor('player');
-    const from = cardEl.getBoundingClientRect();
-    const to = dest ? dest.getBoundingClientRect() : from;
+    // Container: THE VIEWPORT — `.card-ghost` is `position: fixed` (combat.css:364).
+    // EldenSpire#15: `from`/`to` are raw visual rects, so at 1920×1080 the ghost
+    // started 190 local px below the card it was a ghost of, entirely under the
+    // bottom edge, and flew to a point that was not the enemy.
+    //
+    // THE TRANSFORM IS THE SAME SPACE, and it is the half no instrument here can
+    // see: zoomunits.mjs reads neither `transform` nor `cssText` and says so in its
+    // own boundary block, so `dx`/`dy` below were never in the carried set and
+    // never could have been. Marina measured the mechanism — `translate(100px)`
+    // under `zoom: 1.5` moves 150 visual px — which is why the deltas convert too.
+    // Found by hand, on a screen. Not by the detector, which cannot.
+    const view = viewportLocalBox();
+    const b = anchorLocalBox(VIEWPORT_ORIGIN, cardEl);
+    const t = anchorLocalBox(VIEWPORT_ORIGIN, dest || cardEl);
     const ghost = cardEl.cloneNode(true);
     ghost.className = `${cardEl.className} card-ghost`;
-    ghost.style.left = `${from.left}px`;
-    ghost.style.top = `${from.top}px`;
-    ghost.style.width = `${from.width}px`;
+    // keep:40 — the start box is the card's own, already on screen, so this never
+    // fires in play; it is here so a future wrong `b` is a misplaced ghost rather
+    // than an invisible one.
+    const at = clampBox(b, view, { keep: 40 });
+    ghost.style.left = `${at.left}px`;
+    ghost.style.top = `${at.top}px`;
+    ghost.style.width = `${b.width}px`;
     ghost.style.margin = '0';
     document.body.appendChild(ghost);
     requestAnimationFrame(() => {
-      const dx = to.left + to.width / 2 - (from.left + from.width / 2);
-      const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+      // Centred on the CARD's box — the original model, kept. I tried measuring the
+      // ghost's own box here instead, since the ghost is the thing that flies, and
+      // it is worse: the clone inherits the card's class list including its entry
+      // animation, so a rect read inside this rAF catches that animation mid-frame
+      // (measured 203.59 tall against a 196 layout box — an 8.18 px offset that
+      // changes with WHEN you look). A number read off a running animation is not a
+      // measurement. The card's box holds still.
+      //
+      // What that leaves is a real ~3.5 local px approximation: the card carries
+      // `.hand .card.selected` — translateY(-56px) scale(1.32), combat.css:180 —
+      // and the ghost stops matching that selector the moment it is reparented to
+      // <body>. It is CONSTANT at every zoom, which is exactly how zoomplace.mjs
+      // separates it from the #15 defect, whose error is (1−1/z)·offset and runs
+      // from −207 to +403 local px across the dial. Cosmetic, pre-existing, and not
+      // this card's subject — named here so the next reader does not re-find it.
+      const dx = t.left + t.width / 2 - (at.left + b.width / 2);
+      const dy = t.top + t.height / 2 - (at.top + b.height / 2);
       ghost.style.transform = `translate(${dx}px, ${dy}px) scale(0.35) rotate(6deg)`;
       ghost.style.opacity = '0';
     });
@@ -18149,462 +18775,6 @@ function openPileModal(registries, title, cards, { shuffleForDisplay = false } =
 
 
 Object.assign(module.exports, { openPileModal });
-
-},
-"src/ui/fx.js": function (module, exports, require) {
-// src/ui/fx.js — feedback effects (SPEC §7.4)
-//
-// Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
-// skips to end-state; shake ≤4 px only for hits ≥15; Bleed bursts and
-// Staggers get the loud treatment (they're the theme).
-
-const { sfx } = require("src/ui/sfx.js");
-const { dlog } = require("src/ui/debuglog.js");
-
-const STEP_MS = 80;
-
-// ---------------------------------------------------------------------------
-// Animation speed (settings-driven; 'instant' collapses paced playback to the
-// classic fast-float behavior — also forced by reducedMotion).
-// ---------------------------------------------------------------------------
-
-const ANIM_SPEEDS = {
-  slow: { beatMs: 700, stepMs: 140, lungeMs: 340 },
-  normal: { beatMs: 400, stepMs: 90, lungeMs: 260 },
-  fast: { beatMs: 180, stepMs: 45, lungeMs: 160 },
-  instant: null,
-};
-
-let animSpeed = 'normal';
-function setAnimSpeed(v) {
-  animSpeed = ANIM_SPEEDS[v] === undefined ? 'normal' : v;
-}
-function getAnimSpeed() {
-  return animSpeed;
-}
-
-let pending = [];
-let flushRequested = false;
-
-// The whole UI is scaled by --ui-zoom (main.js applyUiScale). getBoundingClientRect
-// returns POST-zoom (visual) pixels, but a child's `style.left` is interpreted in
-// the layer's PRE-zoom local space — so a raw visual offset lands at offset×zoom,
-// pulling anchored FX toward the origin (worse the further right the target). This
-// converts an anchor's on-screen box into the layer's local coordinates so FX land
-// exactly on their target regardless of zoom.
-function anchorLocalBox(layer, anchor) {
-  const lr = layer.getBoundingClientRect();
-  const ar = anchor.getBoundingClientRect();
-  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
-  return {
-    left: (ar.left - lr.left) / z,
-    top: (ar.top - lr.top) / z,
-    width: ar.width / z,
-    height: ar.height / z,
-  };
-}
-
-/** Spawn a floating number over an anchor element. */
-function floatNum(layer, anchor, text, cls) {
-  if (!layer || !anchor) return;
-  const b = anchorLocalBox(layer, anchor);
-  const el = document.createElement('div');
-  el.className = `float-num ${cls}`;
-  el.textContent = text;
-  el.style.left = `${b.left + b.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
-  el.style.top = `${b.top + b.height * 0.25}px`;
-  layer.appendChild(el);
-  setTimeout(() => el.remove(), 600);
-}
-
-// Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
-function dmgClass(amount) {
-  if (amount >= 25) return 'dmg crit';
-  if (amount >= 15) return 'dmg heavy';
-  if (amount < 6) return 'dmg small';
-  return 'dmg';
-}
-
-/** Spawn a transient effect element (slash arc, cast glyph, block spark…). */
-function spawnFx(layer, anchor, cls, ms, text) {
-  if (!layer || !anchor) return;
-  const b = anchorLocalBox(layer, anchor);
-  const el = document.createElement('div');
-  el.className = cls;
-  if (text) el.textContent = text;
-  el.style.left = `${b.left + b.width / 2}px`;
-  el.style.top = `${b.top + b.height * 0.4}px`;
-  el.style.setProperty('--rot', `${Math.round(Math.random() * 50 - 25)}deg`);
-  layer.appendChild(el);
-  setTimeout(() => el.remove(), ms);
-}
-
-function banner(layer, text, cls = '') {
-  if (!layer) return;
-  const el = document.createElement('div');
-  el.className = `fx-banner ${cls}`;
-  el.textContent = text;
-  layer.appendChild(el);
-  setTimeout(() => el.remove(), 320);
-}
-
-function shake(combatEl) {
-  if (!combatEl) return;
-  // Honor the Screen shake setting (and reduced motion, which also drops it).
-  if (document.body.classList.contains('no-shake') || document.body.classList.contains('reduced-motion')) return;
-  combatEl.classList.remove('shake');
-  void combatEl.offsetWidth; // restart animation
-  combatEl.classList.add('shake');
-}
-
-// Add a short-lived CSS class (restarting its animation if already present).
-function flash(el, cls, ms = 300) {
-  if (!el) return;
-  // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
-  // numbers and HUD updates (which carry the actual info) are unaffected.
-  if (document.body.classList.contains('reduce-flashes')) return;
-  el.classList.remove(cls);
-  void el.offsetWidth;
-  el.classList.add(cls);
-  setTimeout(() => el.classList.remove(cls), ms);
-}
-
-// Radial flare over an anchor (stance entries, big procs).
-function flare(layer, anchor, color) {
-  if (!layer || !anchor) return;
-  const b = anchorLocalBox(layer, anchor);
-  const el = document.createElement('div');
-  el.className = 'stance-flare';
-  el.style.left = `${b.left + b.width / 2 - 90}px`;
-  el.style.top = `${b.top + b.height / 2 - 90}px`;
-  el.style.background = `radial-gradient(circle, ${color} 0%, transparent 65%)`;
-  layer.appendChild(el);
-  setTimeout(() => el.remove(), 320);
-}
-
-/**
- * animateEvents(events, ctx, done)
- *   ctx = { layer, combatEl, anchorFor(entityId) → element|null }
- * Events are staggered STEP_MS apart; clicking anywhere flushes instantly.
- */
-function animateEvents(events, ctx, done) {
-  flushRequested = false;
-  pending = events.filter((e) => visualFor(e) !== null);
-  const skip = () => {
-    flushRequested = true;
-  };
-  addEventListener('pointerdown', skip, { once: true, capture: true });
-
-  let i = 0;
-  const step = () => {
-    while (flushRequested && i < pending.length) {
-      // Flushed: fire remaining sounds silently-fast, no visuals backlog.
-      i++;
-    }
-    if (i >= pending.length) {
-      removeEventListener('pointerdown', skip, { capture: true });
-      if (done) done();
-      return;
-    }
-    const fn = visualFor(pending[i]);
-    if (fn) fn(ctx);
-    i++;
-    setTimeout(step, STEP_MS);
-  };
-  step();
-}
-
-// ---------------------------------------------------------------------------
-// Paced playback — one actor at a time (SPEC §7.4 extension).
-//
-// Groups a dispatch's event log into "beats": each card play, flask use, and
-// enemy move is its own beat, played as actor animation → effect visuals →
-// numbers → HUD update (ctx.onBeatApplied), before the next actor moves.
-// Turn boundaries become banner beats. Click skips to the end state.
-// ---------------------------------------------------------------------------
-
-function groupBeats(events) {
-  const beats = [];
-  let cur = { actorId: null, banner: null, kind: null, events: [] };
-  const push = () => {
-    if (cur.events.length || cur.banner || cur.actorId) beats.push(cur);
-  };
-  for (const e of events) {
-    switch (e.type) {
-      case 'cardPlayed':
-        push();
-        cur = { actorId: 'player', banner: null, kind: e.cardType === 'attack' ? 'attack' : 'act', events: [e] };
-        break;
-      case 'flaskUsed':
-        push();
-        cur = { actorId: 'player', banner: null, kind: 'act', events: [e] };
-        break;
-      case 'enemyMoveStarted':
-        push();
-        cur = { actorId: e.sourceId, banner: null, kind: e.kind === 'attack' ? 'attack' : 'act', events: [e] };
-        break;
-      case 'enemyTurnStart':
-        push();
-        cur = { actorId: null, banner: 'ENEMY TURN', kind: 'banner', events: [e] };
-        break;
-      case 'playerTurnStart':
-        push();
-        cur = { actorId: null, banner: 'YOUR TURN', kind: 'banner', events: [e] };
-        break;
-      case 'cardDrawn':
-        // Draws fire just before 'playerTurnStart' — split them out of the
-        // last enemy beat so the hand refills as its own step.
-        if (cur.actorId && cur.actorId !== 'player' && cur.kind !== 'draw') {
-          push();
-          cur = { actorId: null, banner: null, kind: 'draw', events: [] };
-        }
-        cur.events.push(e);
-        break;
-      default:
-        cur.events.push(e);
-    }
-  }
-  push();
-  return beats;
-}
-
-/**
- * playTimeline(events, ctx, done)
- *   ctx = animateEvents ctx + {
- *     onBeatApplied(beat)  — apply this beat's events to the display state
- *                            (HP/block bars, hand, statuses) AFTER its visuals,
- *     onFlush()            — skip: jump display to true final state,
- *   }
- * Uses the module anim speed; 'instant' (or reducedMotion) falls back to
- * animateEvents' classic behavior (final state + fast floats).
- */
-// Debug lifecycle counters (window.__fx) — cheap, used to diagnose stuck-busy
-// reports: every timeline must end in exactly one finish (done/watchdog/flush).
-const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
-
-function playTimeline(events, ctx, done) {
-  const speed = ANIM_SPEEDS[animSpeed];
-  const reduced = document.body.classList.contains('reduced-motion');
-  if (!speed || reduced) {
-    if (ctx.onFlush) ctx.onFlush();
-    animateEvents(events, ctx, done);
-    return;
-  }
-  dbg.open = (dbg.open || 0) + 1;
-
-  const beats = groupBeats(events);
-  let flushed = false;
-  let finished = false;
-  const skip = () => {
-    flushed = true;
-  };
-  addEventListener('pointerdown', skip, { once: true, capture: true });
-  const finish = () => {
-    if (finished) return;
-    finished = true;
-    dbg.finished = (dbg.finished || 0) + 1;
-    clearTimeout(watchdog);
-    removeEventListener('pointerdown', skip, { capture: true });
-    if (done) done();
-  };
-  // Safety net: however playback ends (or a re-render throws mid-beat), never
-  // leave the caller's `busy` flag stuck — force completion after a bounded
-  // wall-clock budget. This is what prevents the "cards stop responding" hang.
-  const budget = 2000 + beats.length * (speed.beatMs + speed.lungeMs + 4 * speed.stepMs);
-  const watchdog = setTimeout(() => {
-    dbg.watchdog = (dbg.watchdog || 0) + 1;
-    console.warn('[fx] watchdog forced timeline completion');
-    dlog('fx', 'watchdog forced timeline completion', { open: dbg.open, finished: dbg.finished });
-    try {
-      if (ctx.onFlush) ctx.onFlush();
-    } catch (e) {
-      /* ignore */
-    }
-    finish();
-  }, budget);
-
-  const safe = (fn) => {
-    try {
-      if (fn) fn();
-    } catch (e) {
-      /* a render/visual error must not break the chain */
-    }
-  };
-
-  let bi = 0;
-  const nextBeat = () => {
-    if (finished) return;
-    if (flushed) {
-      safe(() => ctx.onFlush && ctx.onFlush());
-      finish();
-      return;
-    }
-    if (bi >= beats.length) {
-      finish();
-      return;
-    }
-    const beat = beats[bi++];
-
-    if (beat.banner) {
-      safe(() => banner(ctx.layer, beat.banner, 'turn'));
-      safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
-      setTimeout(nextBeat, Math.max(260, speed.beatMs));
-      return;
-    }
-
-    // 1) actor animation (lunge for attacks, glow-step otherwise)
-    const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
-    if (actorEl) safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
-
-    // 2) after the wind-up, the beat's effect visuals + numbers, staggered
-    const visuals = beat.events.map((e) => visualFor(e, beat.kind)).filter(Boolean);
-    // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
-    // glyph as their wind-up — attacks get the slash arc on impact instead.
-    if (actorEl && beat.kind !== 'attack' && beat.events.length) {
-      safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', 450, '✦'));
-    }
-    const windup = actorEl ? Math.round(speed.lungeMs * 0.55) : 0;
-    setTimeout(() => {
-      let vi = 0;
-      const stepV = () => {
-        if (finished) return;
-        if (flushed) {
-          nextBeat();
-          return;
-        }
-        if (vi < visuals.length) {
-          const v = visuals[vi++];
-          safe(() => v(ctx));
-          setTimeout(stepV, speed.stepMs);
-          return;
-        }
-        // 3) HUD updates for this beat, 4) inter-beat breath
-        safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
-        setTimeout(nextBeat, speed.beatMs);
-      };
-      stepV();
-    }, windup);
-  };
-  nextBeat();
-}
-
-function visualFor(e, beatKind) {
-  switch (e.type) {
-    case 'damageDealt':
-      // Fully blocked: a frost spark and a BLOCKED float — the armor held, so
-      // no flinch, no shake, no slash.
-      if (e.amount === 0 && e.blocked > 0) {
-        return (ctx) => {
-          sfx.play('block');
-          const anchor = ctx.anchorFor(e.targetId);
-          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
-          floatNum(ctx.layer, anchor, 'BLOCKED', 'blk small');
-        };
-      }
-      return (ctx) => {
-        sfx.play('hit');
-        const anchor = ctx.anchorFor(e.targetId);
-        const heavy = e.amount >= 15;
-        floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
-        // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
-        // recoil further (hit-heavy) and kick the screen.
-        if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
-        flash(anchor, 'hitflash', heavy ? 380 : 220);
-        if (heavy) {
-          flash(anchor, 'hit-heavy', 380);
-          shake(ctx.combatEl);
-        }
-      };
-    case 'blockGained':
-      return e.amount > 0
-        ? (ctx) => {
-            sfx.play('block');
-            floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk');
-          }
-        : null;
-    case 'hpLost':
-      return e.cause === 'effect'
-        ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst')
-        : null; // attack damage already shown by damageDealt
-    case 'healed':
-      return e.amount > 0
-        ? (ctx) => {
-            sfx.play('heal');
-            floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
-          }
-        : null;
-    case 'meterFilled':
-      return e.status === 'bleed'
-        ? (ctx) => {
-            sfx.play('bleedBurst');
-            banner(ctx.layer, 'BLEED BURST', 'blood');
-          }
-        : null;
-    case 'enemyStaggered':
-      return (ctx) => {
-        sfx.play('stagger');
-        banner(ctx.layer, 'STAGGERED');
-        const anchor = ctx.anchorFor(e.targetId);
-        flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
-        spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');
-        shake(ctx.combatEl);
-      };
-    case 'enemyDied':
-      return (ctx) => {
-        sfx.play('enemyDeath');
-        const anchor = ctx.anchorFor(e.targetId);
-        floatNum(ctx.layer, anchor, '✝', 'dmg heavy');
-        if (anchor) anchor.classList.add('crumble');
-      };
-    case 'stanceEntered':
-      return (ctx) => {
-        sfx.play('stance');
-        const color = e.stance === 'bulwark' ? 'rgba(127,168,201,.55)' : 'rgba(201,80,46,.55)';
-        flare(ctx.layer, ctx.anchorFor('player'), color);
-      };
-    case 'relicTriggered':
-      return (ctx) => {
-        sfx.play('relic');
-        if (ctx.relicAnchor) flash(ctx.relicAnchor(e.relicId), 'proc', 320);
-      };
-    case 'energySpent':
-    case 'energyGained':
-      return (ctx) => {
-        if (ctx.orb) flash(ctx.orb(), 'pulse', 260);
-      };
-    default:
-      return null;
-  }
-}
-
-
-Object.assign(module.exports, { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, anchorLocalBox, animateEvents, playTimeline });
-
-},
-"src/ui/sfx.js": function (module, exports, require) {
-// src/ui/sfx.js — sound hooks (SPEC §7.4; §11: audio assets are a v1 non-goal)
-//
-// Every feedback moment calls sfx.play(id). v1 ships NO audio, so play() makes
-// no sound — but the hooks already exist at every call site (cardPlay, hit,
-// block, bleedBurst, stagger, enemyDeath, heal, stance, relic, flask, shrine,
-// buy, victory, youDied). That means an audio layer plugs in with zero call-site
-// changes: assign `sfx.sink = (id) => ...` (a WebAudio synth or sample bank).
-//
-// `recent` is a small ring buffer of the ids fired — it lets tests and QA verify
-// the wiring is live without shipping any audio.
-
-const sfx = {
-  sink: null, // future audio layer plugs in here; null = silent (v1)
-  recent: [], // last fired hook ids (bounded), for verification
-  play(id) {
-    this.recent.push(id);
-    if (this.recent.length > 32) this.recent.shift();
-    if (this.sink) this.sink(id);
-  },
-};
-
-
-Object.assign(module.exports, { sfx });
 
 },
 "src/ui/components/tutorial.js": function (module, exports, require) {

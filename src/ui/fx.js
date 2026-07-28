@@ -38,15 +38,86 @@ let flushRequested = false;
 // pulling anchored FX toward the origin (worse the further right the target). This
 // converts an anchor's on-screen box into the layer's local coordinates so FX land
 // exactly on their target regardless of zoom.
+// `position: fixed` DOES NOT ESCAPE THIS (EldenSpire#15, Sunna). The zoom is on
+// <body>, and a fixed descendant of a zoomed box still has its lengths read in the
+// zoomed space — so the shared tooltip, the drag ghost and the card-fly ghost all
+// landed at offset×zoom too: correct at exactly --ui-zoom 1.00 and wrong in BOTH
+// directions away from it. At 1920×1080 the tooltip rendered at top 1406 in a
+// 1080px viewport. Card tooltips did not exist for a player on the commonest
+// desktop resolution. `transform: translate()` is the same space again (Marina
+// measured it: 100px under zoom 1.5 moves 150 visual), and zoomunits.mjs reads
+// neither `transform` nor `cssText` — so that half was, and stays, invisible to
+// the instrument.
+//
+// Those sites come through here now, which is why EITHER argument may be a plain
+// { left, top, width, height } of visual px instead of an element: a fixed
+// element's "layer" is the viewport, and VIEWPORT_ORIGIN names it.
+const rectOf = (o) => (o && typeof o.getBoundingClientRect === 'function' ? o.getBoundingClientRect() : o);
+
+// The containing block of a `position: fixed` element is the viewport itself,
+// whatever it is nested in — origin (0, 0), so only the zoom separates the spaces.
+export const VIEWPORT_ORIGIN = { left: 0, top: 0, width: 0, height: 0 };
+
 export function anchorLocalBox(layer, anchor) {
-  const lr = layer.getBoundingClientRect();
-  const ar = anchor.getBoundingClientRect();
+  const lr = rectOf(layer);
+  const ar = rectOf(anchor);
   const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
   return {
     left: (ar.left - lr.left) / z,
     top: (ar.top - lr.top) / z,
     width: ar.width / z,
     height: ar.height / z,
+  };
+}
+
+/**
+ * The visible screen, in the local space a `position: fixed` child writes in.
+ *
+ * This is the JS half of the `vw`-vs-`%` finding in Marina's ruling: `vw/vh`
+ * resolve against the UNZOOMED viewport and are then scaled, so a clamp written
+ * in them does not clamp. `innerWidth` has the same trap and the same cure — read
+ * it as visual px and convert, never write it into a local-space property raw.
+ */
+export function viewportLocalBox() {
+  return anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: innerWidth, height: innerHeight });
+}
+
+/**
+ * clampBox(box, view, opts) → { left, top } — the bound, AFTER the conversion.
+ *
+ * Read the order, because it is the whole finding: tooltip.js already clamped all
+ * four edges on both axes, arithmetically correctly, and still rendered 329px
+ * below the bottom of the screen. It computed the clamp in visual space and wrote
+ * the result into local space. A bound is a claim about a coordinate space, not
+ * about arithmetic — so this function refuses to convert anything. Both arguments
+ * must ALREADY be in one space, and the caller names which container `view` is.
+ *
+ * What it buys, beyond today's four sites: the next bad write here degrades to
+ * "slightly misplaced" instead of "invisible" — a bug someone reports rather than
+ * a feature that silently does not exist for half the players. Same move as
+ * `.tut-veil { pointer-events: none }` in #7: delete the failure mode, not just
+ * this instance of it.
+ *
+ * `keep` = how much of the box must stay inside on each axis:
+ *   Infinity (default) — all of it. For anything a player has to READ.
+ *   a number           — at least that many px. For anything that TRACKS THE
+ *                        POINTER, which must be free to hang off the edge the
+ *                        pointer is against but must never vanish entirely.
+ * A box too big to fit pins to the low edge rather than sliding off the far one.
+ *
+ * Pure arithmetic, no DOM: unit-testable without a browser — which is the only
+ * part of Rule 2 that can be. The rest needs layout, and that is zoomplace.mjs.
+ */
+export function clampBox(box, view, { pad = 4, keep = Infinity } = {}) {
+  const fit = (v, size, span) => {
+    const k = Math.min(keep, size);
+    const lo = pad + k - size;
+    const hi = span - pad - k;
+    return Math.min(Math.max(v, lo), Math.max(lo, hi));
+  };
+  return {
+    left: fit(box.left, box.width, view.width),
+    top: fit(box.top, box.height, view.height),
   };
 }
 

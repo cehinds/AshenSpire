@@ -37,10 +37,13 @@
 // corpus that proves it (development.md SOP 3), not a line in a review checklist.
 //
 // THE CARRIED SET (added by Rune at the dev merge; Bjorn's instrument, his ruled
-// shape). Nine unconverted writes at four sites predate this check and none is
-// owned yet. Left as a bare red they made the suite permanently red, which trains
-// a reader to skip the line — and a red that is always there cannot tell you a
-// TENTH site just arrived. So the set below is recorded and asserted EXACTLY:
+// shape). It held nine unconverted writes at four sites that predated this check.
+// Left as a bare red they made the suite permanently red, which trains a reader to
+// skip the line — and a red that is always there cannot tell you a TENTH site just
+// arrived. **It is EMPTY as of 2026-07-28: all nine were fixed, not edited out
+// (EldenSpire#15 — see the set itself for what left and where it went).** The
+// mechanism stays because the next site to arrive needs somewhere to be counted.
+// The set is recorded and asserted EXACTLY:
 //
 //   a finding not in the set        → red. Something new carries the bug.
 //   an entry with no finding        → red. It was fixed or edited; delete its
@@ -52,7 +55,9 @@
 //                                     that will not resolve is UNKNOWN, not clean.
 //                                     (Vira's ratchet, ruled over a literal count:
 //                                     "carried" MEANS predates this change.)
-//   every entry matched, nothing new → 0, and all nine still print, every run.
+//   every entry matched, nothing new → 0, and every entry still prints, every run
+//                                     (`held.length`, never a literal — see the
+//                                     RESULT line at the foot of main()).
 //
 // Keyed on file + the write's own text, NEVER on line numbers: src/main.js moved
 // 79 lines between 082860c and this ref (#8's ?shot= gate, #10's ?shotSettings=
@@ -302,53 +307,29 @@ function boundary(scanned, skipped, mode = {}) {
 // notes are prose that this tool re-derives on every run rather than trusting.
 // Each note says why it is still here, because an entry with no reason is a site
 // nobody ever has to fix.
-const CARRIED = [
-  {
-    file: 'src/main.js',
-    text: 'el.style.left = `${ar.left - lr.left + ar.width / 2 + ((extra && extra.dx) || 0)}px`;',
-    note: 'poseFxShowcase — dev-only (?shot=fx), so no player sees it; it is the harness that generates this repo’s screenshot evidence, which is worse, not better. Byte-for-byte the deviant removed from tutorial.js in 3a0def9. Unowned.',
-  },
-  {
-    file: 'src/main.js',
-    text: 'el.style.top = `${ar.top - lr.top + ar.height * 0.4 + ((extra && extra.dy) || 0)}px`;',
-    note: 'poseFxShowcase, the y half of the same write. Unowned.',
-  },
-  {
-    file: 'src/ui/components/tooltip.js',
-    text: 'el.style.left = `${Math.max(4, left)}px`;',
-    note: 'the shared tooltip singleton, tainted through a reassigned `let` — the shape no grep finds. Player-facing at every zoom. Unowned.',
-  },
-  {
-    file: 'src/ui/components/tooltip.js',
-    text: 'el.style.top = `${Math.max(4, top)}px`;',
-    note: 'the same tooltip, y axis. Unowned.',
-  },
-  {
-    file: 'src/ui/screens/combat.js',
-    text: 'dragGhost.style.left = `${mv.clientX - 70}px`;',
-    note: 'drag-to-target ghost, straight from clientX. PLAYER-FACING on every zoomed desktop, on the affordance the tutorial itself teaches. The most consequential of the nine. Unowned.',
-  },
-  {
-    file: 'src/ui/screens/combat.js',
-    text: 'dragGhost.style.top = `${mv.clientY - 100}px`;',
-    note: 'the same drag ghost, y axis. Unowned.',
-  },
-  {
-    file: 'src/ui/screens/combat.js',
-    text: 'ghost.style.left = `${from.left}px`;',
-    note: 'flyCard’s ghost, from a raw rect. Player-facing. Unowned.',
-  },
-  {
-    file: 'src/ui/screens/combat.js',
-    text: 'ghost.style.top = `${from.top}px`;',
-    note: 'flyCard’s ghost, y axis. Unowned.',
-  },
-  {
-    file: 'src/ui/screens/combat.js',
-    text: 'ghost.style.width = `${from.width}px`;',
-    note: 'flyCard’s ghost, width. Unowned.',
-  },
-];
+// EMPTY, since 2026-07-28 (Rune, EldenSpire#15). All nine entries left because the
+// writes were FIXED — the only way the upkeep rule above lets an entry leave, and
+// the reason Vira ruled the ratchet over a literal count.
+//
+// Where they went, recorded because the set's entire purpose was to stop nine
+// known defects going quiet, and deleting the list without saying where is the
+// going-quiet:
+//
+//   src/main.js × 2                  poseFxShowcase — now anchorLocalBox(layer, …)
+//   src/ui/components/tooltip.js × 2 position() — converted, THEN clamped
+//   src/ui/screens/combat.js × 2     the drag ghost — same
+//   src/ui/screens/combat.js × 3     flyCard's ghost left/top/width — same
+//
+// Each was put on a screen before it was touched (tools/zoomplace.mjs: seven
+// viewports, red at six of them before, clean at seven after). That obligation is
+// what `#15` is, and it is the one thing this set never forced in the weeks it
+// printed all nine correctly, every run, while a player at 1920×1080 had no card
+// tooltips at all.
+//
+// AN EMPTY SET IS NOT THIS TOOL'S RETIREMENT. Its removal condition is at the top
+// of the file and "the repo went clean" is explicitly not on it. What an empty set
+// restores is the bare red: the next unconverted write has nothing to hide behind.
+const CARRIED = [];
 
 const norm = (s) => s.replace(/\s+/g, ' ').trim();
 
@@ -615,6 +596,18 @@ function main(argv) {
   // still said nine — a derived count and a literal for the same fact, two lines
   // apart, inside the tool that exists to catch two homes for one fact. I did not
   // reason that out when I wrote it; I typed the number I happened to be looking at.
+  // The empty set had to be split off, because the sentence below is FALSE at
+  // zero: it would have read `This is NOT "clean": 0 write(s) still carry a visual
+  // pixel … and none of them is owned`, on a tree where the answer is the opposite.
+  // The same disease as the literal "nine" above, one step further out — a line
+  // that was true for every state the set had ever been in, and nobody had put it
+  // in the state where it stops being true. Found by emptying the set (Rune).
+  if (!held.length) {
+    console.log('        The set is empty and the tree matches it: no inline px geometry write');
+    console.log('        carries a visual pixel into local space. This IS clean — and it is the');
+    console.log('        state this tool exists for, not a reason to delete it (see REMOVAL).');
+    return 0;
+  }
   console.log(`        The set is exactly as recorded. This is NOT "clean": ${held.length} write(s)`);
   console.log('        still carry a visual pixel into local space and none of them is owned.');
   return 0;
