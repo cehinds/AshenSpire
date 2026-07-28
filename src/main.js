@@ -175,11 +175,36 @@ let lastMusicFolder;
 // ('90'/'100'…) still resolve. Clamped so it never gets unusably tiny/huge.
 const UI_NAMED = UI.uiScale.named;
 
+// PROTOTYPE (EldenSpire#23, track B): TWO baselines, and the fit picks.
+//
+// The wide baseline (1200x730) is the board this game is drawn for. The narrow
+// one (430x780) is the portrait-phone board that styles/combat.css lays out
+// under its container query. Auto takes whichever wants the LARGER zoom, which
+// means no code anywhere asks "is this a phone" — a question with no honest
+// answer, since a desktop window can be 400px wide and a tablet can be 1200.
+//
+// The clamp is UNCHANGED and deliberately so. #23 reads as a floor bug and is
+// not one: at 390x844 the wide baseline wants 0.325, the floor gives 0.62, and
+// BOTH are wrong, because both are trying to fit a 1200px layout onto a 390px
+// screen. With a narrow baseline the wanted zoom is 0.907 and the floor never
+// binds. Lowering the floor would have been one line and would have shipped a
+// legible, unusable board.
 function computeAutoZoom() {
   if (typeof window === 'undefined') return 1;
   const z = UI.uiScale;
-  const fit = Math.min(window.innerWidth / z.designW, window.innerHeight / z.designH);
-  return Math.max(z.min, Math.min(z.max, Math.round(fit * 100) / 100));
+  const fitFor = (w, h) => Math.min(window.innerWidth / w, window.innerHeight / h);
+  let fit = fitFor(z.designW, z.designH);
+  if (z.narrowW && z.narrowH) fit = Math.max(fit, fitFor(z.narrowW, z.narrowH));
+  // FLOOR, not round. `Math.round` can hand back a zoom LARGER than the one
+  // that fits: at 390x844 the narrow fit is 0.907, round gives 0.91, and
+  // 0.91 x 430 = 391.3 local px demanded against 390 available. 1.3px, and it
+  // is #23's own invariant failing in miniature — the applied zoom asking for
+  // more space than the screen has. Nothing was observed bleeding at 390x844,
+  // so this is a latent defect and not a visible one; it is one word and it
+  // makes the invariant exact rather than nearly true.
+  // MEASURED COST: 1920x1080 goes 1.48 -> 1.47 (local 1297x730 -> 1306x734).
+  // 1200x730 is 1.00 either way — the non-regression edge does not move.
+  return Math.max(z.min, Math.min(z.max, Math.floor(fit * 100) / 100));
 }
 
 function resolveZoom(uiScale) {

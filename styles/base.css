@@ -59,7 +59,28 @@ body.readable-ui { --font-display: var(--font-body); }
 /* Root sizing anchor: 62.5% makes 1rem = 10px, so every rem in the stylesheets
    maps to px÷10 at rest. The text-size setting overrides this % on <html> to
    grow/shrink all rem-based type + dimensions at once (main.js). */
-html { height: 100%; overflow: hidden; font-size: 62.5%; }
+html { height: 100dvh; overflow: hidden; font-size: 62.5%; }
+/* PROTOTYPE (EldenSpire#23, track B) — 100dvh, and ONLY here.
+   `dvh` was pitched as a sweep. It is wrong everywhere except this one line,
+   and the reason is the one that has bitten this file all week. Measured under
+   `body { zoom: 0.62 }` at 390x844: 100dvh, 100svh, 100lvh AND 100vh all
+   compute to 843.98px and then render at 523 visual — vh-family units resolve
+   against the UNZOOMED viewport and are then scaled, so inside the app `dvh` is
+   exactly as wrong as `vh` (Marina's ruling, EldenSpire#15). `height: 100%`
+   computes 1361.29px = 844/0.62, which is correct, which is why base.css was
+   already right to use percent below <body> and still is.
+   <html> is the one element the zoom does not touch, so this is the one place a
+   viewport unit is evaluated in the room it means. `100%` here resolves against
+   the initial containing block, which on a phone tracks the LARGE viewport —
+   the tall one you get when the address bar is hidden — so the bottom of the
+   board sits under the bar whenever the bar is up. `100dvh` tracks the current
+   one.
+   UNVERIFIED, and I want that loud: headless Chromium has no moving address
+   bar, dvh/svh/lvh all measure identically here, and this harness therefore
+   cannot show this line doing anything at all. It is the one change on this
+   branch with no measurement behind it. On a desktop it is a no-op (measured:
+   1200x730 identical either way), which is why it is safe to leave in and
+   dishonest to call it verified. */
 
 /* UI size: the whole app is zoomed by --ui-zoom (Settings → UI size / Auto, set
    in main.js). Sizing uses PERCENT heights (not vh) everywhere below `body` so
@@ -79,7 +100,36 @@ body {
   height: 100%;
 }
 
-#app { height: 100%; display: flex; flex-direction: column; }
+/* PROTOTYPE (EldenSpire#23, track B) — the container the narrow layout asks.
+   WHY A CONTAINER QUERY AND NOT A MEDIA QUERY, measured rather than argued: at
+   390x844 with --ui-zoom 0.62, `@media (max-width: 520px)` MATCHES (it sees the
+   unzoomed 390) while `@container app (max-width: 520px)` does NOT (it sees the
+   629 local px the layout actually has). They disagree at all three portrait
+   shapes — and at 1200x730 with Settings -> UI size -> XL, where the layout has
+   828 local px and a media query still reads 1200. A media breakpoint here is a
+   length evaluated in the unzoomed room, which is EldenSpire#15 wearing a
+   different hat. tools/mobilefit.mjs prints both numbers at every shape.
+
+   THE COST I EXPECTED AND DID NOT FIND, written down because I was wrong and
+   the wrong version nearly shipped in this comment. I believed
+   `container-type: inline-size` would make #app a containing block for its
+   FIXED-positioned descendants — it computes to `contain: layout style
+   inline-size`, and layout containment does exactly that — which would have
+   moved #target-arrow (position:fixed, 100% x 100%, inside .combat) and put it
+   in the same class of bug as #15 and #18. Measured on Chromium 1194 instead
+   of reasoned: a `position: fixed; inset: 0` child of a 60%-wide element
+   measures 390x844 whether or not that element declares `container-type` —
+   identical, both directions, at 390x844 and 1200x730. It is not a fixed
+   containing block on this engine. Absolutely-positioned children are bounded
+   the same with and without it too (both by `position: relative`, which was
+   already there).
+   So the cost is NOT paid here — and the check stays anyway
+   (tools/mobilefit.mjs asserts #target-arrow still measures the viewport at
+   every shape), because that is a claim about one engine's current behaviour
+   and the spec is exactly ambiguous enough for WebKit to differ. NOT VERIFIED
+   ON WEBKIT. tools/zoomplace.mjs passes unchanged on this branch, which covers
+   the four sites fixed in #15/#18 and says so about the rest. */
+#app { height: 100%; display: flex; flex-direction: column; container-type: inline-size; container-name: app; }
 
 h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: 0.08em; }
 

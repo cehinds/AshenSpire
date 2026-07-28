@@ -97,6 +97,28 @@ export const balance = {
       designH: 730,
       min: 0.62,
       max: 1.7,
+      // PROTOTYPE (EldenSpire#23, track B). A SECOND design baseline, for the
+      // narrow layout in styles/combat.css. #23 reads as a clamp bug — the
+      // floor of 0.62 winning on every phone — and it is not: lowering the
+      // floor to 0.325 fits a 1200px layout onto a 390px screen and gives you
+      // glyphs you can read on a board you still cannot use. The wrong number
+      // is the BASELINE, which says every screen is 1200x730. Auto picks
+      // whichever of the two baselines wants the LARGER zoom, so nothing here
+      // decides "is this a phone" — the fit does, and the floor stops binding
+      // on its own without being touched.
+      //
+      // 430x780 is a portrait-phone board: at 390x844 it wants 0.907 (local
+      // 430x930), at 412x915 0.958, at 360x640 0.821 (local 438x780).
+      //
+      // THE BREAKPOINT ITSELF IS NOT HERE. `@container app (max-width: 520px)`
+      // in styles/combat.css is its one home: a container query condition
+      // cannot read a custom property, so a copy of 520 in this file would be a
+      // number nothing keeps in sync with the rule that uses it — the exact
+      // defect SOP 5 exists for. The three widths above all land under it, and
+      // a probe checks the layout ACTUALLY reflowed rather than checking a
+      // number against a number.
+      narrowW: 430,
+      narrowH: 780,
     },
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).
