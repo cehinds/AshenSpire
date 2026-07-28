@@ -27,9 +27,14 @@ for (const r of results) {
 // check nobody reads is not a check: the tutorial lockout it exists to catch
 // shipped past this suite while the suite was green the whole time.
 // Two lines, because they fail for different reasons and must not be conflated:
-//   35 — the check's own integrity (its corpus). Its failure is the check's fault.
-//   36 — findings in src/. Its failure is the code's state, not the check's.
+//   36 — the check's own integrity (its corpus). Its failure is the check's fault.
+//   37 — findings in src/. Its failure is the code's state, not the check's.
+// Numbered 36/37, not 35/36: dev's test 35 is Sunna's accessibility-defaults test
+// in engine.test.js. Two files, no git conflict, and a suite that would have
+// printed "35." twice — the collision a merge cannot see.
 let zoomExtra = 0;
+let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the same
+                    // two-homes defect these two lines exist to catch.
 {
   const { execFileSync } = await import('node:child_process');
   const { fileURLToPath } = await import('node:url');
@@ -45,21 +50,23 @@ let zoomExtra = 0;
 
   const self = run(['--selftest']);
   console.log(
-    `${self.code === 0 ? 'PASS' : 'FAIL'}  35. the zoom-unit check still catches its own known-bad corpus` +
+    `${self.code === 0 ? 'PASS' : 'FAIL'}  36. the zoom-unit check still catches its own known-bad corpus` +
       ` — recall ${grab(self.out, /known-bad recall\s+(\S+)/)}, known-good cleared ${grab(self.out, /known-good clear\s+(\S+)/)}`
   );
   if (self.code !== 0) zoomExtra++;
+  else zoomPassed++;
 
   const tree = run([]);
   console.log(
-    `${tree.code === 0 ? 'PASS' : 'FAIL'}  36. no inline px geometry write carries a visual pixel into local space` +
+    `${tree.code === 0 ? 'PASS' : 'FAIL'}  37. no inline px geometry write carries a visual pixel into local space` +
       ` — ${grab(tree.out, /(\d+) unconverted/)} unconverted (run \`node tools/zoomunits.mjs\` for file:line)`
   );
   if (tree.code !== 0) zoomExtra++;
+  else zoomPassed++;
 }
 
-console.log(`\n${passed} passed, ${failed + zoomExtra} failed`);
-console.log('BOUNDARY: 1–34 are engine and content invariants. 35–36 are a CONSISTENCY');
+console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
+console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
 console.log('          check over coordinate spaces — they prove a transform has two');
 console.log('          homes, never that a pixel renders wrong. Nothing here opens a');
 console.log('          browser, so no test in this file has seen the screen.');
