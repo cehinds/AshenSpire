@@ -131,7 +131,7 @@ const shapeName = (vp) => `${vp.w}x${vp.h}${vp.settings ? `-${Object.values(vp.s
 // argument for making the tool refuse rather than making the message better.
 // Exit 2 = usage, per the header — never a pass.
 if (only && !SHAPES.map(shapeName).includes(only)) {
-  console.error(`mobilefit: --only ${only} matches no shape — nothing would be tested, and a run that tests nothing is not a pass.`);
+  console.error(`mobilefit: --only ${only} matched no shape. Nothing would be tested, so this is unknown, not a pass.`);
   console.error(`  shapes: ${SHAPES.map(shapeName).join(', ')}`);
   process.exit(2);
 }
@@ -410,6 +410,23 @@ async function main() {
   const rows = [];
   const ceiling = {}; // per-control grid reading at the design baseline — the bar
   for (const vp of SHAPES) {
+    // THE REFERENCE SHAPE ALWAYS RUNS — Rune found this independently, six hours
+    // before I did, and called it "worse than the empty run, because it looks
+    // like a real one." He is right and that is the sentence worth keeping.
+    // Every control's bar is its own reading at the 1200x730 design baseline, so
+    // `--only 390x844` used to skip the shape that sets the bar and then print,
+    // for each of four controls, "no reference reading ... NOT asserted" —
+    // followed by PASS. A run that hit-tested every control and asserted nothing
+    // about any of them, reported as a pass.
+    //
+    // His control flow and mine agree on the behaviour and differ on where the
+    // refusal lives: his `matchedOnly` is decided inside the loop and checked
+    // after the browser has already booted and printed a full reference block;
+    // mine validates `--only` against the shape table BEFORE Chrome launches, so
+    // a typo costs a line instead of a browser and the error is the first thing
+    // on screen rather than the last. Kept mine for that, kept his words for the
+    // reason, and dropped his `matchedOnly = matchedOnly` self-assignment, which
+    // is a no-op the pre-flight check makes unreachable anyway.
     const name = shapeName(vp);
     const isForced = vp === forcedReference;
     if (only && only !== name && !isForced) continue;
@@ -540,7 +557,7 @@ async function main() {
   // kept because the guarantee should be "a green means shapes were measured",
   // not "a green means no failure was recorded".
   if (!rows.length) {
-    console.error(`\n  NOT A PASS — zero shapes were measured. A run that measured nothing has nothing to report.`);
+    console.error(`\n  Nothing was tested, so this is unknown, not a pass.`);
     cdp.close(); child.kill(); if (server) server.close();
     process.exit(2);
   }

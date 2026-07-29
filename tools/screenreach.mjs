@@ -136,7 +136,7 @@ function assertOnlyMatches(shapes, label) {
   if (!only) return;
   const names = shapes.map(label);
   if (names.includes(only)) return;
-  console.error(`screenreach: --only ${only} matches no shape — nothing would be tested, and a run that tests nothing is not a pass.`);
+  console.error(`screenreach: --only ${only} matched no shape. Nothing would be tested, so this is unknown, not a pass.`);
   console.error(`  shapes: ${names.join(', ')}`);
   process.exit(2);
 }
@@ -356,15 +356,30 @@ async function main() {
   control that appears only mid-interaction cannot be seen.
   An element under a non-identity transform can be reported off-screen and is
   NOT counted — see the note on transformed() above for why, and for the hole
-  that leaves.`);
+  that leaves.
+
+  AND THE SHAPE LIST IS STILL NOT THE OTHER TOOL'S — Rune's paragraph, kept
+  because it is still true. This runs five shapes; tools/mobilefit.mjs runs
+  nine, and neither list is a superset: 915x412, 844x344, 1920x1080 and the XL
+  setting are measured there and not here. A defect can live in that gap, and
+  one did — the covered map node at 412x915, at the one portrait shape this
+  tool did not test. 412x915 is now IN the list above; the four other widths
+  are not, and that is the live gap.`);
 
   // The second lock. assertOnlyMatches() catches the filter typo up front; this
   // catches every other way the loop can end up having measured nothing, and it
   // is what makes the guarantee "a green means shapes were tested" rather than
   // "a green means no failure was recorded."
+  //
+  // The word is Rune's, from the version of this fix he wrote in parallel six
+  // hours before mine, and it is better than the one I had: a run that tested
+  // nothing is `unknown`, which under SOP 2's silence guard BLOCKS — not merely
+  // "not a pass". He also named what it is a copy of, and that is the part worth
+  // keeping: development.md's own `verify-shipped: OK - 0 checks passed`
+  // fixture, reproduced in tools whose headers cite that discipline.
   const measured = ran ? ` over ${ran} shape(s), ${SCREENS.length} screen(s) each` : '';
   if (!ran) {
-    console.error(`\n  NOT A PASS — zero shapes were measured. A sweep that measured nothing has nothing to report.`);
+    console.error(`\n  Nothing was tested, so this is unknown, not a pass.`);
     cdp.close(); child.kill(); if (server) server.close();
     process.exit(2);
   }
