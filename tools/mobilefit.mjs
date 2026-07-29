@@ -80,6 +80,18 @@ const BROWSERS = [
 // is 35. A flat `hits === 45` called the orb broken in LANDSCAPE, where the
 // fight is fine and Sunna's own run says so. The reference reading is the
 // control's own geometry; a shape is judged against that, never against 45.
+// The five shapes the settings matrix is measured over, and the four fixed
+// sizes. Auto is not here: it is the plain entry for each shape in SHAPES.
+const MATRIX_SHAPES = [
+  { w: 1200, h: 730, d: 1, mobile: false, tag: 'desktop' },
+  { w: 390, h: 844, d: 3, mobile: true, tag: 'portrait' },
+  { w: 412, h: 915, d: 2.6, mobile: true, tag: 'portrait' },
+  { w: 360, h: 640, d: 2, mobile: true, tag: 'portrait' },
+  { w: 844, h: 390, d: 3, mobile: true, tag: 'landscape' },
+];
+const MATRIX = MATRIX_SHAPES.flatMap((v) =>
+  ['s', 'm', 'l', 'xl'].map((size) => ({ ...v, tag: `${v.tag}-${size}`, cell: true, known: {}, settings: { uiScale: size } })));
+
 const SHAPES = [
   { w: 1200, h: 730, d: 1, mobile: false, tag: 'desktop', reference: true, known: { endTurn: 45 } },
   { w: 390, h: 844, d: 3, mobile: true, tag: 'portrait', known: { endTurn: 0 } },
@@ -119,14 +131,21 @@ const SHAPES = [
                  why: 'Identical on dev at a48f8a6 (0.74 x 1200 = 888 > 885).' } },
   { w: 900, h: 1600, d: 2, mobile: true, tag: 'tablet', known: { endTurn: 45 } },
   { w: 1920, h: 1080, d: 1, mobile: false, tag: 'desktop', known: { endTurn: 45 } },
-  // The decisive case for WHICH primitive a reflow is written in. Settings ->
-  // UI size -> XL is zoom 1.45 on a 1200px screen, so the layout has 828 LOCAL
-  // px while a media query still reads 1200. Not a phone and not hypothetical:
-  // it is a shipped setting, and it is where a media-query breakpoint and a
-  // container-query breakpoint give different answers on the same screen.
-  { w: 1200, h: 730, d: 1, mobile: false, tag: 'desktop-XL', settings: { uiScale: 'xl' }, known: {},
-    knownOpen: { what: 'the named UI sizes skip the fit check entirely',
-                 why: 'resolveZoom() returns S/M/L/XL straight from balance data; only `auto` goes through computeAutoZoom and its clamp. At XL on a 1200px screen the layout gets 828x503 local and END TURN reads 14/45 — #21s mechanism with no phone in the room. Present on dev at bf18a2e. NOT fixed here on purpose: the fix changes what XL means for existing players, which is a Tier-2 call. Unfiled: Sunna to confirm, Marina to sequence.' } },
+  // EldenSpire#26 — THE SETTINGS MATRIX. Five shapes x five sizes. The Auto
+  // row is the five plain shapes above; these are the twenty fixed-size cells.
+  //
+  // The `1200x730-xl` knownOpen entry that used to sit here is DELETED, not
+  // amended — the card's own removal condition, because it had become false.
+  // It excused "the named UI sizes skip the fit check entirely", and they no
+  // longer do. An excuse that outlives its defect is how a suite goes green
+  // over a bug.
+  //
+  // Sunna measured 10 of 25 cells unreachable on 2c40fdb, with all four fixed
+  // sizes on landscape 844x390 total lockouts: turn the phone sideways, open
+  // Settings, pick anything but Auto, and the fight cannot be advanced. Her
+  // matrix is the discharge; this is the same grid inside the instrument so it
+  // is re-runnable rather than re-derived.
+  ...MATRIX,
 ];
 
 // The controls a fight cannot be advanced without. `.end-turn` is #21's subject;
@@ -538,7 +557,7 @@ async function main() {
     if (noneFailed) {
       ok(false, `${name}: RATCHET — this shape is marked KNOWN-OPEN and produced no failure. Either the defect is fixed and the expectation is stale, or the check went blind. ${vp.knownOpen.what}`);
     }
-    rows.push({ name, tag: vp.tag, z: fit.z, local: `${fit.localW}x${fit.localH}`, knownOpen: !!vp.knownOpen,
+    rows.push({ name, tag: vp.tag, cell: !!vp.cell, z: fit.z, local: `${fit.localW}x${fit.localH}`, knownOpen: !!vp.knownOpen,
       endTurn: et && et.rendered ? `${et.hits}/45` : 'n/r', advanced,
       bleed: n2(fit.worstBleed), scrollY: n2(fit.pageScrollY) });
   }
@@ -554,6 +573,14 @@ async function main() {
     console.error(`  shapes: ${SHAPES.map((v) => `${v.w}x${v.h}${v.settings ? '-' + Object.values(v.settings).join('-') : ''}`).join(', ')}`);
     cdp.close(); child.kill(); if (server) server.close();
     process.exit(2);
+  }
+  // EldenSpire#26's removal condition is a COUNT, so the tool prints the count
+  // rather than leaving a reader to tally 25 rows. Auto's five cells are the
+  // plain shapes; the twenty fixed-size cells carry `cell: true`.
+  const cells = rows.filter((r) => r.cell || MATRIX_SHAPES.some((m) => `${m.w}x${m.h}` === r.name));
+  const bad = cells.filter((r) => r.endTurn !== 'n/r' && parseInt(r.endTurn, 10) < 45);
+  if (cells.length) {
+    console.log(`\n  SETTINGS MATRIX (#26) — ${bad.length} of ${cells.length} cells unreachable` + (bad.length ? `: ${bad.map((r) => `${r.name} ${r.endTurn}`).join(', ')}` : ''));
   }
   console.log('\n  SUMMARY');
   console.log('  shape       kind       zoom  local space   END TURN  touch  worst bleed  page scrollY');

@@ -25,8 +25,8 @@ const ROWS = [
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size',
-    note: 'Auto flexes the whole interface with your window; S–XL is a fixed override.' },
+    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: true,
+    note: 'Auto flexes the whole interface with your window; S–XL asks for a fixed size and gets as much of it as fits.' },
   { cat: 'Display', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
     note: 'Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.' },
@@ -147,7 +147,7 @@ function rowHtml(settings, r) {
       .map((c) => `<button class="choice${c === cur ? ' on' : ''}" data-key="${r.key}" data-val="${c}">${c.toUpperCase()}</button>`)
       .join('');
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${r.applied ? appliedHtml(settings) : ''}</div>
         <div class="choice-group">${opts}</div>
       </div>`;
   }
@@ -159,6 +159,49 @@ function rowHtml(settings, r) {
         <span class="knob"></span>
       </button>
     </div>`;
+}
+
+// EldenSpire#26 — SHOW THE VALUE ACTUALLY APPLIED.
+//
+// Clamping the named sizes without this makes the control a liar: pick XL on a
+// 1200x730 window and the fit path holds it at 1.00, so the button lights up
+// and nothing on screen changes. balance.js records that exact complaint
+// landing once before, when Auto "looked dead" — a setting that bricks the
+// fight is a trap, one that silently shrinks is a liar, and only the pair is
+// neither. The clamp is Constantine's ruling; this half is why it is safe.
+//
+// IT READS --ui-zoom RATHER THAN RECOMPUTING THE FIT. main.js already resolved
+// it and wrote it to <html>; asking the same question a second way is how the
+// tablet lockout happened (#24), and a readout that disagrees with the screen
+// is worse than no readout. The requested value comes from the same balance
+// data main.js caps against, so "limited" is a comparison of one computed
+// number against one authored one, not of two computations.
+function appliedHtml(settings) {
+  if (typeof document === 'undefined') return '';
+  const applied = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'));
+  if (!applied) return '';
+  const key = String(settings.uiScale == null ? 'auto' : settings.uiScale).toLowerCase();
+  const asked = UI_DEFAULTS.uiScale.named[key];
+  const shown = `${applied.toFixed(2)}\u00d7`;
+  // A hundredth of slack: the fit path rounds to two decimals, so an exact
+  // grant can miss by 0.004 and must not be reported as a limit.
+  const limited = asked != null && applied < asked - 0.005;
+  return `<p class="set-applied${limited ? ' limited' : ''}" data-applied="uiScale">`
+    + (limited
+      ? `Showing ${shown} — the largest that fits this window (${key.toUpperCase()} is ${asked.toFixed(2)}\u00d7)`
+      : `Showing ${shown}`)
+    + `</p>`;
+}
+
+// Re-read after the orchestrator has applied the change, and on resize, because
+// Auto's applied value moves with the window while the chosen setting does not.
+function refreshApplied(container, settings) {
+  const el = container.querySelector('[data-applied="uiScale"]');
+  if (!el) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = appliedHtml(settings);
+  const next = tmp.firstElementChild;
+  if (next) el.replaceWith(next);
 }
 
 function isFullscreen() {
@@ -221,8 +264,24 @@ export function renderSettings(container, { settings, onChange, grouped = true }
       btn.parentElement.querySelectorAll('.choice').forEach((b) => b.classList.toggle('on', b === btn));
       settings[btn.dataset.key] = btn.dataset.val;
       onChange({ [btn.dataset.key]: btn.dataset.val });
+      // AFTER onChange, which is what applies the zoom. Reading before it would
+      // report the previous value and the readout would always be one click
+      // behind — a display that lies more quietly than the one it replaced.
+      if (btn.dataset.key === 'uiScale') refreshApplied(container, settings);
     });
   });
+
+  // Auto's applied value moves with the window even though the setting does not.
+  if (container.querySelector('[data-applied="uiScale"]')) {
+    const onResize = () => refreshApplied(container, settings);
+    window.addEventListener('resize', onResize);
+    // The settings container is rebuilt on every open, so the listener is
+    // dropped with it rather than accumulating one per visit.
+    const obs = new MutationObserver(() => {
+      if (!container.isConnected) { window.removeEventListener('resize', onResize); obs.disconnect(); }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
 
   container.querySelectorAll('.toggle').forEach((btn) => {
     btn.addEventListener('click', () => {

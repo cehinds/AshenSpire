@@ -221,56 +221,74 @@ const UI_NAMED = UI.uiScale.named;
 // The clamp is UNCHANGED. #23 reads as a floor bug and is not one: at 390x844
 // the wide baseline wants 0.325, the floor gives 0.62, and BOTH are wrong,
 // because both try to fit a 1200px layout onto a 390px screen.
-function autoLayout() {
+// EldenSpire#26 — ONE FIT PATH, and `auto` is the uncapped case of it.
+//
+// `resolveZoom()` used to return the named S/M/L/XL values straight from data
+// with no fit check at any viewport, so a fixed size could ask for more space
+// than the screen has. Sunna measured the extent rather than an instance: TEN
+// OF TWENTY-FIVE size x shape cells unreachable, and all four fixed sizes on
+// landscape 844x390 were TOTAL LOCKOUTS — turn the phone sideways, open
+// Settings, pick anything but Auto, and the fight cannot be advanced.
+// Constantine's ruling, verbatim: "clamp like auto."
+//
+// So a named size is now a CAP on the same computation, not a separate answer.
+// `layoutForCap(Infinity)` is `auto` and is byte-identical to 2c40fdb: with an
+// infinite cap every `Math.min(v, cap)` is `v`, and the recovery branch below
+// cannot be reached, because it needs the capped candidate to fail a test the
+// uncapped one passed. Vira's sweep is the proof, not this paragraph.
+//
+// WHY THE CAP CANNOT SIMPLY BE `Math.min(named, autoZoom)`. Lowering the zoom
+// RAISES the local width — localW = innerWidth / zoom — so a cap can push a
+// shape out of the narrow band and hand the WIDE layout a narrow-sized box.
+// That is #24's tablet lockout arriving through the settings screen: at
+// 500x800 the uncapped fit is 1.02 (narrow, 490 local px) and S = 0.85 would
+// give 588, above narrowMax, so the board drawn for 1200px would render into
+// 588. When the UNCAPPED fit would have been narrow, the mode wins over the
+// cap and the zoom settles at the smallest value that keeps the band.
+// The #24 property still holds on every return path, by construction:
+//   the zoom selects the narrow baseline  IFF  the narrow layout is active.
+function layoutForCap(cap) {
   if (typeof window === 'undefined') return { zoom: 1, narrow: false };
   const z = UI.uiScale;
   const w = window.innerWidth, h = window.innerHeight;
   const clamp = (v) => Math.max(z.min, Math.min(z.max, v));
   const fitFor = (dw, dh) => Math.min(w / dw, h / dh);
+  const capped = (v) => Math.min(v, cap);
 
-  // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE.
-  //
-  // The wide path keeps `Math.round` byte-for-byte, because every zoom every
-  // existing player sees comes out of it and this branch has no business
-  // moving them. The narrow path floors, because `Math.round` can hand back a
-  // zoom LARGER than the one that fits: at 390x844 the narrow fit is 0.907,
-  // round gives 0.91, and 0.91 x 430 = 391.3 local px demanded against 390
-  // available — #23's own invariant failing in miniature.
-  //
-  // I first floored BOTH, for the tidiness of one rule. It moved 1920x1080
-  // from 1.48 to 1.47 and 1280x800 from 1.07 to 1.06, and the second of those
-  // turned tools/tutorial-reach.mjs red — the guard on #7. Flooring only the
-  // new path leaves every existing value identical to dev (800x450 0.62,
-  // 1024x640 0.85, 1280x800 1.07, 1920x1080 1.48, 2560x1440 1.70).
-  const wideZoom = clamp(Math.round(fitFor(z.designW, z.designH) * 100) / 100);
+  // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE. The wide path keeps
+  // `Math.round` byte-for-byte, because every zoom every existing player sees
+  // comes out of it. The narrow path floors, because `Math.round` can hand back
+  // a zoom LARGER than the one that fits (at 390x844 the narrow fit is 0.907,
+  // round gives 0.91, and 0.91 x 430 = 391.3 px demanded against 390 available).
+  // Flooring BOTH moved 1280x800 from 1.07 to 1.06 and turned
+  // tools/tutorial-reach.mjs red — the guard on #7.
+  const wideZoom = clamp(capped(Math.round(fitFor(z.designW, z.designH) * 100) / 100));
   if (!(z.narrowW && z.narrowH && z.narrowMax)) return { zoom: wideZoom, narrow: false };
 
-  const narrowZoom = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
-  // Self-consistency, and it is the entire fix: the narrow baseline is
-  // admissible ONLY if the zoom it produces actually lands in the narrow band.
-  // Without this test 834x1194 takes narrowZoom 1.53, lands at 545 local px,
-  // and hands the WIDE layout a narrow-sized box.
+  const narrowFit = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
+  const narrowZoom = clamp(capped(narrowFit));
   if (w / narrowZoom <= z.narrowMax) return { zoom: narrowZoom, narrow: true };
+
+  // Recovery: the cap, not the screen, is what pushed this out of the narrow
+  // band. Unreachable when cap is Infinity — narrowZoom === narrowFit there, so
+  // this test is the one that just failed.
+  if (w / narrowFit <= z.narrowMax) {
+    const bandFloor = clamp(Math.ceil((w / z.narrowMax) * 100) / 100);
+    if (w / bandFloor <= z.narrowMax) return { zoom: bandFloor, narrow: true };
+  }
   return { zoom: wideZoom, narrow: false };
 }
 
-// A fixed size is the player's choice and is never overridden. The MODE still
-// has to be decided, because a fixed zoom in a small window leaves just as
-// little local space — and the property must hold there too, not only on Auto.
+// A named size is a CEILING the player asked for, not a value the app owes them
+// at any cost. Anything that is not a named size (incl. legacy numeric
+// '90'/'100'/'110'/'125') is Auto: the settings UI displays such values as Auto,
+// so behaving as fixed zoom made the control look dead ("scaling stopped
+// working") — balance.js records that complaint, and it is the reason the
+// settings screen now shows the value actually applied.
 function resolveLayout(uiScale) {
   const key = String(uiScale == null ? 'auto' : uiScale).toLowerCase();
-  // Anything not a named size (incl. legacy numeric '90'/'100'/'110'/'125') is
-  // Auto: the settings UI displays such values as Auto, so behaving as fixed
-  // zoom made the control look dead ("scaling stopped working").
-  if (key !== 'auto' && UI_NAMED[key] != null) {
-    const zoom = UI_NAMED[key];
-    const z = UI.uiScale;
-    const narrow = typeof window !== 'undefined' && z.narrowMax
-      ? window.innerWidth / zoom <= z.narrowMax
-      : false;
-    return { zoom, narrow };
-  }
-  return autoLayout();
+  const named = key !== 'auto' ? UI_NAMED[key] : null;
+  return layoutForCap(named != null ? named : Infinity);
 }
 
 function applyUiScale(settings) {
