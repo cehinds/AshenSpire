@@ -239,14 +239,25 @@ const UI_NAMED = UI.uiScale.named;
 //
 // WHY THE CAP CANNOT SIMPLY BE `Math.min(named, autoZoom)`. Lowering the zoom
 // RAISES the local width — localW = innerWidth / zoom — so a cap can push a
-// shape out of the narrow band and hand the WIDE layout a narrow-sized box.
-// That is #24's tablet lockout arriving through the settings screen: at
-// 500x800 the uncapped fit is 1.02 (narrow, 490 local px) and S = 0.85 would
-// give 588, above narrowMax, so the board drawn for 1200px would render into
-// 588. When the UNCAPPED fit would have been narrow, the mode wins over the
-// cap and the zoom settles at the smallest value that keeps the band.
-// The #24 property still holds on every return path, by construction:
-//   the zoom selects the narrow baseline  IFF  the narrow layout is active.
+// shape out of the narrow band. At 500x800 the uncapped fit is 1.02 (narrow,
+// 490 local px) and S = 0.85 gives 588, above narrowMax. When the UNCAPPED fit
+// would have been narrow, the recovery below settles the zoom at the smallest
+// value that keeps the band.
+//
+// WHAT THAT RECOVERY IS AND IS NOT FOR — corrected by Vira, who tested the
+// claim I had written instead of reading it. My comment implied the recovery is
+// what preserves #24's property. IT IS NOT. She deleted the branch and re-swept:
+//
+//   the zoom selects the narrow baseline  IFF  the narrow layout is active
+//
+// still holds at every cap without it, because the final unguarded return sets
+// `narrow: false` alongside a wide-baseline zoom and is therefore self-consistent
+// by arithmetic, not by that guard. What the recovery buys is OUTCOME QUALITY,
+// not the invariant: 500x800 with S gives 0.97 narrow with it and 0.62 wide
+// without, and BOTH satisfy #24 — one is usable and one is a 1200px board in
+// 806 local px. The property is upheld by every return path; the recovery is
+// upheld by nothing but its own usefulness, and that is the honest reason to
+// keep it.
 function layoutForCap(cap) {
   if (typeof window === 'undefined') return { zoom: 1, narrow: false };
   const z = UI.uiScale;
@@ -271,7 +282,10 @@ function layoutForCap(cap) {
 
   // Recovery: the cap, not the screen, is what pushed this out of the narrow
   // band. Unreachable when cap is Infinity — narrowZoom === narrowFit there, so
-  // this test is the one that just failed.
+  // this test is the one that just failed. THAT IS NOW MEASURED RATHER THAN
+  // ARGUED: Vira instrumented it and the counter enters 0 times at cap
+  // Infinity and 47,790-265,908 times under the named caps. Not load-bearing
+  // for #24's property — see the header — only for the quality of the answer.
   if (w / narrowFit <= z.narrowMax) {
     const bandFloor = clamp(Math.ceil((w / z.narrowMax) * 100) / 100);
     if (w / bandFloor <= z.narrowMax) return { zoom: bandFloor, narrow: true };
