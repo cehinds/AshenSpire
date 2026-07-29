@@ -175,24 +175,59 @@ let lastMusicFolder;
 // ('90'/'100'…) still resolve. Clamped so it never gets unusably tiny/huge.
 const UI_NAMED = UI.uiScale.named;
 
-// PROTOTYPE (EldenSpire#23, track B): TWO baselines, and the fit picks.
+// EldenSpire#23 — TWO baselines, ONE decider.
 //
 // The wide baseline (1200x730) is the board this game is drawn for. The narrow
-// one (430x780) is the portrait-phone board that styles/combat.css lays out
-// under its container query. Auto takes whichever wants the LARGER zoom, which
-// means no code anywhere asks "is this a phone" — a question with no honest
-// answer, since a desktop window can be 400px wide and a tablet can be 1200.
+// one (430x780) is the portrait-phone board styles/combat.css lays out. No code
+// here asks "is this a phone" — a question with no honest answer, since a
+// desktop window can be 400px wide and a tablet can be 1200. The fit decides.
 //
-// The clamp is UNCHANGED and deliberately so. #23 reads as a floor bug and is
-// not one: at 390x844 the wide baseline wants 0.325, the floor gives 0.62, and
-// BOTH are wrong, because both are trying to fit a 1200px layout onto a 390px
-// screen. With a narrow baseline the wanted zoom is 0.907 and the floor never
-// binds. Lowering the floor would have been one line and would have shipped a
-// legible, unusable board.
-function computeAutoZoom() {
-  if (typeof window === 'undefined') return 1;
+// WHY THIS IS ONE FUNCTION RETURNING TWO VALUES, AND NOT A CONTAINER QUERY.
+// It was a container query until Vira swept 7.8M viewports and found the band
+// this branch locked out (#24). The zoom took `max(wideFit, narrowFit)` and the
+// stylesheet independently asked whether the app's local width was <= 520. Two
+// deciders, on two different inputs, with nothing making them agree:
+//
+//   834x1194 (iPad Pro 11 portrait) — narrowFit is HEIGHT-limited, 1194/780 =
+//   1.53, so it wins; but 834/1.53 = 545 local px, which is > 520, so the
+//   stylesheet kept the WIDE layout. A board drawn for 1200px, rendered into
+//   545. END TURN under the hand: 45/45 on dev, 0/45 here. Three of four
+//   tablet shapes that work today, dead.
+//
+// The cliff sits at aspect ratio 2/3 exactly: when the narrow fit is
+// height-limited, localW = narrowH x w/h, which crosses 520 at w/h = 520/780.
+// 884/1326 = 0.66667 passes, 885/1326 = 0.66742 fails. A second door is the
+// 1.70 ceiling, which pins localW = w/1.70 > 520 for every w above 884.
+//
+// Vira's sentence, which is the whole lesson and is not paraphrased: WHEN A FIX
+// ADDS A SECOND DECIDER, THE DEFECT IS RARELY THE NEW VALUE. IT IS THAT NOTHING
+// MAKES THE TWO AGREE — AND NO SINGLE-HOME CHECK CAN SEE IT, BECAUSE THERE IS
+// NO DUPLICATED CONSTANT TO FIND. My 520 did have exactly one home. That was
+// true and it was not the point.
+//
+// So the second decider is gone rather than reconciled. This function picks the
+// mode AND the zoom together, and the stylesheet follows an attribute instead of
+// measuring anything: `:root[data-layout='narrow']`. Reconciling two deciders
+// would have needed 520 in the CSS *and* in here — the duplicated constant the
+// single-home rule exists to prevent. Removing one needs it in neither: it is
+// data, in balance.ui.uiScale, read once, right here.
+//
+// THE PROPERTY, and it is now true by construction rather than by care:
+//   the zoom selects the narrow baseline  IFF  the narrow layout is active.
+// A candidate is admissible only if it is self-consistent — the narrow baseline
+// only when the zoom it produces really does leave <= narrowMax local px, the
+// wide baseline otherwise. tools/mobilefit.mjs asserts it at every shape.
+//
+// The clamp is UNCHANGED. #23 reads as a floor bug and is not one: at 390x844
+// the wide baseline wants 0.325, the floor gives 0.62, and BOTH are wrong,
+// because both try to fit a 1200px layout onto a 390px screen.
+function autoLayout() {
+  if (typeof window === 'undefined') return { zoom: 1, narrow: false };
   const z = UI.uiScale;
-  const fitFor = (w, h) => Math.min(window.innerWidth / w, window.innerHeight / h);
+  const w = window.innerWidth, h = window.innerHeight;
+  const clamp = (v) => Math.max(z.min, Math.min(z.max, v));
+  const fitFor = (dw, dh) => Math.min(w / dw, h / dh);
+
   // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE.
   //
   // The wide path keeps `Math.round` byte-for-byte, because every zoom every
@@ -204,33 +239,49 @@ function computeAutoZoom() {
   //
   // I first floored BOTH, for the tidiness of one rule. It moved 1920x1080
   // from 1.48 to 1.47 and 1280x800 from 1.07 to 1.06, and the second of those
-  // turned tools/tutorial-reach.mjs red — the guard on #7, the tutorial
-  // lockout, which asserts the zoom re-flexes to a named value on resize. A
-  // one-word tidy-up with the widest blast radius in the diff, caught by
-  // somebody else's check. Flooring only the new path leaves every existing
-  // value identical to dev (verified: 800x450 0.62, 1024x640 0.85, 1280x800
-  // 1.07, 1920x1080 1.48, 2560x1440 1.70) and still makes the narrow fit exact.
-  const wideFit = Math.round(fitFor(z.designW, z.designH) * 100) / 100;
-  const narrowFit = (z.narrowW && z.narrowH) ? Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100 : 0;
-  return Math.max(z.min, Math.min(z.max, Math.max(wideFit, narrowFit)));
+  // turned tools/tutorial-reach.mjs red — the guard on #7. Flooring only the
+  // new path leaves every existing value identical to dev (800x450 0.62,
+  // 1024x640 0.85, 1280x800 1.07, 1920x1080 1.48, 2560x1440 1.70).
+  const wideZoom = clamp(Math.round(fitFor(z.designW, z.designH) * 100) / 100);
+  if (!(z.narrowW && z.narrowH && z.narrowMax)) return { zoom: wideZoom, narrow: false };
+
+  const narrowZoom = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
+  // Self-consistency, and it is the entire fix: the narrow baseline is
+  // admissible ONLY if the zoom it produces actually lands in the narrow band.
+  // Without this test 834x1194 takes narrowZoom 1.53, lands at 545 local px,
+  // and hands the WIDE layout a narrow-sized box.
+  if (w / narrowZoom <= z.narrowMax) return { zoom: narrowZoom, narrow: true };
+  return { zoom: wideZoom, narrow: false };
 }
 
-function resolveZoom(uiScale) {
+// A fixed size is the player's choice and is never overridden. The MODE still
+// has to be decided, because a fixed zoom in a small window leaves just as
+// little local space — and the property must hold there too, not only on Auto.
+function resolveLayout(uiScale) {
   const key = String(uiScale == null ? 'auto' : uiScale).toLowerCase();
-  if (key === 'auto') return computeAutoZoom();
-  if (UI_NAMED[key] != null) return UI_NAMED[key];
-  // Anything else (incl. legacy numeric '90'/'100'/'110'/'125') is Auto: the
-  // settings UI displays such values as Auto, so behaving as fixed zoom made
-  // the control look dead ("scaling stopped working").
-  return computeAutoZoom();
+  // Anything not a named size (incl. legacy numeric '90'/'100'/'110'/'125') is
+  // Auto: the settings UI displays such values as Auto, so behaving as fixed
+  // zoom made the control look dead ("scaling stopped working").
+  if (key !== 'auto' && UI_NAMED[key] != null) {
+    const zoom = UI_NAMED[key];
+    const z = UI.uiScale;
+    const narrow = typeof window !== 'undefined' && z.narrowMax
+      ? window.innerWidth / zoom <= z.narrowMax
+      : false;
+    return { zoom, narrow };
+  }
+  return autoLayout();
 }
 
 function applyUiScale(settings) {
-  const z = resolveZoom(settings.uiScale);
+  const { zoom, narrow } = resolveLayout(settings.uiScale);
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
-  document.documentElement.style.setProperty('--ui-zoom', String(z));
+  document.documentElement.style.setProperty('--ui-zoom', String(zoom));
+  // The layout mode, written by the same call that chose the zoom, so the two
+  // cannot disagree. The stylesheets key off this and measure nothing (#24).
+  document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
 }
 
 // Re-flex Auto sizing whenever the window changes. Only recomputes for Auto and
@@ -239,8 +290,12 @@ function applyUiScale(settings) {
 // which would otherwise freeze Auto at the clamp floor.
 let uiResizeTimer = null;
 function reflexAutoScale() {
-  const s = (saves.loadMeta().settings) || {};
-  if (String(s.uiScale == null ? 'auto' : s.uiScale).toLowerCase() === 'auto') applyUiScale(s);
+  // Re-applied for EVERY uiScale setting, not only Auto. The zoom does not move
+  // for a fixed size, but the MODE does: innerWidth changes on resize while the
+  // zoom stays put, so the local width crosses narrowMax with nothing else
+  // changing. Gating this on Auto left the attribute stale at exactly the
+  // shapes a fixed size is most likely to be small in (#24).
+  applyUiScale((saves.loadMeta().settings) || {});
 }
 if (typeof window !== 'undefined') {
   window.addEventListener('resize', () => {

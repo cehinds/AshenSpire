@@ -49,7 +49,6 @@
 .card .ctext .val.up { color: var(--green); }
 .card .ctext .val.down { color: var(--ember); }
 
-
 /* ---------- card TYPE: geometry + banner colour --------------------------- */
 /* Type reads as SHAPE first — attack squarest and chamfered, power roundest,
    skill between (radii come from balance.ui.cardTypes as --card-radius /
@@ -72,7 +71,6 @@
 /* Power: fully rounded, with a keep-line inside the art to read as ongoing. */
 .card.type-power .ctype { border-radius: 999px; }
 .card.type-power .art { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--card-type-color) 40%, transparent); }
-
 
 /* Card subtypes (content/source/cardTagging.csv). A quiet strip under the type
    banner — each chip takes its own registered colour, kept low-contrast so the
@@ -387,17 +385,32 @@ body.hide-hints .hint-bar { display: none; }
 
    A wrap was the other candidate and I measured it rather than argued it: at
    360x640 a second card row puts the Continue button past the bottom of a
-   screen with no vertical scroll, trading a lost card for a lost button. */
-@container app (max-width: 520px) {
-  .reward-row {
-    overflow-x: auto;
-    max-width: 100%;
-    gap: 0.8rem;
-    padding: 1.2rem 1.2rem 0.6rem;
-    scrollbar-width: thin;
-  }
-  .reward-row .card:hover { transform: scale(1.03); }
+   screen with no vertical scroll, trading a lost card for a lost button.
+
+   SELECTOR CHANGED AT ec53ffb, AND THIS WAS A SEMANTIC CONFLICT, NOT A TEXTUAL
+   ONE. Rune removed `container-type: inline-size` from #app to kill the second
+   decider behind the tablet lockout (#24) — two things independently deciding
+   "narrow", nothing making them agree. `@container app (max-width: 520px)` has
+   no container to resolve against any more, so this block would have merged
+   cleanly, read correctly, and NEVER FIRED. Both of the defects it closes would
+   have come back silently with the fix still sitting here looking right. That is
+   the worst shape a merge resolution can take, and the text gave no sign of it:
+   git reported a conflict in this file for reasons that had nothing to do with
+   the mechanism.
+   Following `data-layout` instead is not a port, it is joining the single
+   decider: main.js's autoLayout() now picks the mode and the zoom together, so
+   "the narrow baseline is in use" and "the narrow rules apply" are the same
+   fact rather than two that agree by care. Re-measured after the change rather
+   than carried across — see the numbers above, all of which were re-taken on
+   this tree. */
+:root[data-layout='narrow'] .reward-row {
+  overflow-x: auto;
+  max-width: 100%;
+  gap: 0.8rem;
+  padding: 1.2rem 1.2rem 0.6rem;
+  scrollbar-width: thin;
 }
+:root[data-layout='narrow'] .reward-row .card:hover { transform: scale(1.03); }
 
 /* ---------- save slots (title) ---------- */
 .slot-list { display: flex; flex-direction: column; gap: 1rem; width: 43rem; max-width: 92vw; animation: screenIn 500ms ease-out; }

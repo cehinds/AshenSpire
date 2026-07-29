@@ -107,36 +107,30 @@ body {
   height: 100%;
 }
 
-/* PROTOTYPE (EldenSpire#23, track B) — the container the narrow layout asks.
-   WHY A CONTAINER QUERY AND NOT A MEDIA QUERY, measured rather than argued: at
-   390x844 with --ui-zoom 0.62, `@media (max-width: 520px)` MATCHES (it sees the
-   unzoomed 390) while `@container app (max-width: 520px)` does NOT (it sees the
-   629 local px the layout actually has). They disagree at all three portrait
-   shapes — and at 1200x730 with Settings -> UI size -> XL, where the layout has
-   828 local px and a media query still reads 1200. A media breakpoint here is a
-   length evaluated in the unzoomed room, which is EldenSpire#15 wearing a
-   different hat. tools/mobilefit.mjs prints both numbers at every shape.
+/* EldenSpire#23/#24 — the narrow layout is selected by `data-layout` on <html>,
+   written by main.js's autoLayout() in the same call that chooses --ui-zoom.
+   The stylesheets measure nothing.
 
-   THE COST I EXPECTED AND DID NOT FIND, written down because I was wrong and
-   the wrong version nearly shipped in this comment. I believed
-   `container-type: inline-size` would make #app a containing block for its
-   FIXED-positioned descendants — it computes to `contain: layout style
-   inline-size`, and layout containment does exactly that — which would have
-   moved #target-arrow (position:fixed, 100% x 100%, inside .combat) and put it
-   in the same class of bug as #15 and #18. Measured on Chromium 1194 instead
-   of reasoned: a `position: fixed; inset: 0` child of a 60%-wide element
-   measures 390x844 whether or not that element declares `container-type` —
-   identical, both directions, at 390x844 and 1200x730. It is not a fixed
-   containing block on this engine. Absolutely-positioned children are bounded
-   the same with and without it too (both by `position: relative`, which was
-   already there).
-   So the cost is NOT paid here — and the check stays anyway
-   (tools/mobilefit.mjs asserts #target-arrow still measures the viewport at
-   every shape), because that is a claim about one engine's current behaviour
-   and the spec is exactly ambiguous enough for WebKit to differ. NOT VERIFIED
-   ON WEBKIT. tools/zoomplace.mjs passes unchanged on this branch, which covers
-   the four sites fixed in #15/#18 and says so about the rest. */
-#app { height: 100%; display: flex; flex-direction: column; container-type: inline-size; container-name: app; }
+   THIS WAS A CONTAINER QUERY AND THE MEASUREMENT THAT PUT IT THERE STILL
+   STANDS: at 390x844 with --ui-zoom 0.62, `@media (max-width: 520px)` MATCHES
+   (it sees the unzoomed 390) while a container query on #app does not (the app
+   has 629 local px). A media breakpoint here is a length evaluated in the
+   unzoomed room — EldenSpire#15 wearing a different hat, and that is why the
+   answer was never a media query.
+
+   The answer turned out not to be a container query either. Asking the question
+   in CSS at all made two deciders out of one decision — the zoom judging
+   innerWidth/innerHeight against 430x780, the stylesheet judging the container's
+   local width against 520 — and on a tablet they disagreed and the fight became
+   unadvanceable (#24, 834x1194: zoom picks narrow at 1.53, layout stays wide at
+   545 local px, END TURN 0/45 where dev is 45/45). An attribute has no room
+   problem because it carries no length, and it cannot disagree with the zoom
+   because the same function writes both.
+
+   Removing it also retires `container-type: inline-size` and with it the WebKit
+   unknown Sunna bounded on this branch — whether a query container becomes a
+   containing block for fixed descendants. Nothing here declares one now. */
+#app { height: 100%; display: flex; flex-direction: column; }
 
 h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: 0.08em; }
 
@@ -245,7 +239,6 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .card .ctext .val.up { color: var(--green); }
 .card .ctext .val.down { color: var(--ember); }
 
-
 /* ---------- card TYPE: geometry + banner colour --------------------------- */
 /* Type reads as SHAPE first — attack squarest and chamfered, power roundest,
    skill between (radii come from balance.ui.cardTypes as --card-radius /
@@ -268,7 +261,6 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 /* Power: fully rounded, with a keep-line inside the art to read as ongoing. */
 .card.type-power .ctype { border-radius: 999px; }
 .card.type-power .art { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--card-type-color) 40%, transparent); }
-
 
 /* Card subtypes (content/source/cardTagging.csv). A quiet strip under the type
    banner — each chip takes its own registered colour, kept low-contrast so the
@@ -583,17 +575,32 @@ body.hide-hints .hint-bar { display: none; }
 
    A wrap was the other candidate and I measured it rather than argued it: at
    360x640 a second card row puts the Continue button past the bottom of a
-   screen with no vertical scroll, trading a lost card for a lost button. */
-@container app (max-width: 520px) {
-  .reward-row {
-    overflow-x: auto;
-    max-width: 100%;
-    gap: 0.8rem;
-    padding: 1.2rem 1.2rem 0.6rem;
-    scrollbar-width: thin;
-  }
-  .reward-row .card:hover { transform: scale(1.03); }
+   screen with no vertical scroll, trading a lost card for a lost button.
+
+   SELECTOR CHANGED AT ec53ffb, AND THIS WAS A SEMANTIC CONFLICT, NOT A TEXTUAL
+   ONE. Rune removed `container-type: inline-size` from #app to kill the second
+   decider behind the tablet lockout (#24) — two things independently deciding
+   "narrow", nothing making them agree. `@container app (max-width: 520px)` has
+   no container to resolve against any more, so this block would have merged
+   cleanly, read correctly, and NEVER FIRED. Both of the defects it closes would
+   have come back silently with the fix still sitting here looking right. That is
+   the worst shape a merge resolution can take, and the text gave no sign of it:
+   git reported a conflict in this file for reasons that had nothing to do with
+   the mechanism.
+   Following `data-layout` instead is not a port, it is joining the single
+   decider: main.js's autoLayout() now picks the mode and the zoom together, so
+   "the narrow baseline is in use" and "the narrow rules apply" are the same
+   fact rather than two that agree by care. Re-measured after the change rather
+   than carried across — see the numbers above, all of which were re-taken on
+   this tree. */
+:root[data-layout='narrow'] .reward-row {
+  overflow-x: auto;
+  max-width: 100%;
+  gap: 0.8rem;
+  padding: 1.2rem 1.2rem 0.6rem;
+  scrollbar-width: thin;
 }
+:root[data-layout='narrow'] .reward-row .card:hover { transform: scale(1.03); }
 
 /* ---------- save slots (title) ---------- */
 .slot-list { display: flex; flex-direction: column; gap: 1rem; width: 43rem; max-width: 92vw; animation: screenIn 500ms ease-out; }
@@ -1393,53 +1400,51 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      already has exact numbers for the one baseline it targets. It would have
      been decoration. */
 
-@container app (max-width: 520px) {
-
   /* ---- top bar: two rows instead of one clipped one ---- */
-  .topbar {
+  :root[data-layout='narrow'] .topbar {
     height: auto; flex-wrap: wrap; row-gap: 0.4rem; gap: 1rem; padding: 0.6rem 1rem;
   }
-  .topbar .hpbar { width: 14rem; }
-  .topbar .who .nm { font-size: 1rem; }
+  :root[data-layout='narrow'] .topbar .hpbar { width: 14rem; }
+  :root[data-layout='narrow'] .topbar .who .nm { font-size: 1rem; }
   /* The seed string is dev information and it is what was overflowing the bar
      on a phone. It is not gone, and I checked rather than assuming when I
      wrote this the first time: overlay.js:163 puts Seed in the Stats panel,
      reachable from the menu button in this same bar, and gameover.js:17
      prints it on the run summary. Hidden here, present twice elsewhere. */
-  .topbar .fight-label { display: none; }
-  .topbar .relics { margin-left: 0; }
+  :root[data-layout='narrow'] .topbar .fight-label { display: none; }
+  :root[data-layout='narrow'] .topbar .relics { margin-left: 0; }
 
   /* The keyboard/gamepad hint bar is an affordance for a device that is not
      present. On a phone it costs a whole row and offers keys nobody can press.
      Hidden, not deleted — it is a `display` rule inside this block, so it comes
      back the moment the container is wide again. */
-  .hint-bar.hint-combat { display: none; }
+  :root[data-layout='narrow'] .hint-bar.hint-combat { display: none; }
 
   /* ---- battlefield: give the enemies the width ---- */
-  .field { padding: 0 1.2rem; }
-  .player-zone { width: 32%; padding-bottom: 1.2rem; }
+  :root[data-layout='narrow'] .field { padding: 0 1.2rem; }
+  :root[data-layout='narrow'] .player-zone { width: 32%; padding-bottom: 1.2rem; }
   /* The player sprite is sized from balance.ui.spriteTiers and does not know
      about the zone it stands in; at 390x844 it ran 9px past the left edge of
      the screen. Capped by width, height auto so it does not squash. */
-  .player-zone .combatant .sprite > img { max-width: 11rem; height: auto; }
-  .enemy-row { padding-bottom: 1.2rem; gap: 0.4rem; }
-  .combatant .meters { width: 9.4rem; }
-  .statuses { max-width: 10rem; min-height: 0; }
-  .backdrop::after { width: 30rem; height: 30rem; }
+  :root[data-layout='narrow'] .player-zone .combatant .sprite > img { max-width: 11rem; height: auto; }
+  :root[data-layout='narrow'] .enemy-row { padding-bottom: 1.2rem; gap: 0.4rem; }
+  :root[data-layout='narrow'] .combatant .meters { width: 9.4rem; }
+  :root[data-layout='narrow'] .statuses { max-width: 10rem; min-height: 0; }
+  :root[data-layout='narrow'] .backdrop::after { width: 30rem; height: 30rem; }
 
   /* ---- hand + controls: the actual reflow ----
      Two rows. The hand is a strip that scrolls sideways; the controls sit in
      their own row under it. .energy-orb and .end-turn stop being
      position:absolute — that absolute placement inside a 23rem box is what put
      the button under the hand at 0/45. */
-  .hand-area {
+  :root[data-layout='narrow'] .hand-area {
     height: auto; flex-shrink: 0;
     display: grid;
     grid-template-columns: auto 1fr;
     grid-template-areas: "hand hand" "orb  end";
     align-items: center; gap: 0.8rem; padding: 0 1rem 1rem;
   }
-  .hand {
+  :root[data-layout='narrow'] .hand {
     grid-area: hand; height: auto; padding: 1.2rem 0 1.6rem;
     justify-content: flex-start; overflow-x: auto; gap: 0.6rem;
     scrollbar-width: thin;
@@ -1447,25 +1452,26 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   /* No negative margin: cards in a scroller must not overlap, or the one on
      top eats the taps meant for the one beneath — the same mechanism as #21,
      one level down. */
-  .hand .card {
+  :root[data-layout='narrow'] .hand .card {
     margin: 0; width: 11.6rem; height: 17.4rem; padding: 2.2rem 0.6rem 0.6rem;
   }
-  .hand .card .art { width: 9.6rem; height: 5.2rem; font-size: 2.8rem; }
-  .hand .card .ctype { width: 9.6rem; }
-  .hand .card .ctext { font-size: 1rem; margin-top: 0.4rem; }
-  .hand .card .cname { font-size: 1.05rem; min-height: 2.4rem; }
+  :root[data-layout='narrow'] .hand .card .art { width: 9.6rem; height: 5.2rem; font-size: 2.8rem; }
+  :root[data-layout='narrow'] .hand .card .ctype { width: 9.6rem; }
+  :root[data-layout='narrow'] .hand .card .ctext { font-size: 1rem; margin-top: 0.4rem; }
+  :root[data-layout='narrow'] .hand .card .cname { font-size: 1.05rem; min-height: 2.4rem; }
   /* A lift of 56px inside an overflow container is clipped, and the container
      has to clip or it cannot scroll. So the selected card grows in place. */
-  .hand .card:hover, .hand .card.selected {
+  :root[data-layout='narrow'] .hand .card:hover,
+:root[data-layout='narrow'] .hand .card.selected {
     transform: translateY(-4px) scale(1.04) !important;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.8);
   }
 
-  .energy-orb {
+  :root[data-layout='narrow'] .energy-orb {
     grid-area: orb; position: static; left: auto; bottom: auto;
     width: 5.6rem; height: 5.6rem; font-size: 1.7rem;
   }
-  .end-turn {
+  :root[data-layout='narrow'] .end-turn {
     grid-area: end; position: static; right: auto; bottom: auto;
     min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
     /* NOT `width: 100%`: a grid item already stretches to its column, and
@@ -1487,11 +1493,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      Now they sit in the bottom band with the orb and END TURN, and END TURN
      reserves the width for all three so the row does not jump the first time
      an exhaust pile appears mid-fight. */
-  .pile { bottom: 1.6rem; top: auto; width: 4.2rem; height: 3.6rem; font-size: 1.1rem; z-index: 30; }
-  .pile.draw { left: auto; right: 9.6rem; }
-  .pile.discard { right: 0.8rem; }
-  .pile.exhaust { right: 5.2rem; }
-}
+  :root[data-layout='narrow'] .pile { bottom: 1.6rem; top: auto; width: 4.2rem; height: 3.6rem; font-size: 1.1rem; z-index: 30; }
+  :root[data-layout='narrow'] .pile.draw { left: auto; right: 9.6rem; }
+  :root[data-layout='narrow'] .pile.discard { right: 0.8rem; }
+  :root[data-layout='narrow'] .pile.exhaust { right: 5.2rem; }
 
   </style>
   <style data-src="styles/map.css">
@@ -1627,7 +1632,7 @@ body.hide-header-relics .map-substrip.no-flasks { display: none; }
 
    AND THE FIRST VERSION OF THIS BLOCK RESERVED THE BAND ON THE WRONG BOX, which
    is why it worked at 390x844 and 360x640 and failed at 412x915 — the one
-   portrait shape screenreach.mjs did not test until today. `padding-bottom` on
+   portrait shape screenreach.mjs did not test until then. `padding-bottom` on
    .map-canvas extends the CONTENT; .map-zoom is position:absolute against
    .map-scroll, so it is pinned to the SCROLLPORT. The canvas is taller than the
    viewport, so at rest the padding sits far below the fold and the buttons
@@ -1644,17 +1649,29 @@ body.hide-header-relics .map-substrip.no-flasks { display: none; }
      .map-zoom       resolves against .mapscreen and lands in that band
    3rem of button plus 0.8rem of offset is 3.8rem, inside 4.6rem with room for
    the focus ring. The canvas padding is REMOVED, not kept alongside: it was
-   buying 6.4rem of scroll travel past the end of the map for nothing. */
-@container app (max-width: 520px) {
-  .mapscreen { position: relative; }
-  .mapscreen .map-scroll { position: static; margin-bottom: 4.6rem; }
-  .map-zoom { flex-direction: row; right: 0.8rem; bottom: 0.8rem; gap: 0.8rem; }
-  .map-zoom .zbtn { width: 3rem; height: 3rem; font-size: 1.6rem; }
+   buying 6.4rem of scroll travel past the end of the map for nothing.
+
+   TWO CHANGES AT ec53ffb, one mechanical and one not.
+   Mechanical: `@container app (max-width: 520px)` is gone repo-wide — Rune
+   removed `container-type: inline-size` from #app to kill the second decider
+   behind the tablet lockout (#24) — so these rules follow `data-layout` like
+   every other narrow rule. Left as a container query they would have merged
+   clean, read right, and never fired, and the covered map node would have come
+   back with the fix still sitting here.
+   Not mechanical: ec53ffb still carries `.map-canvas { padding-bottom: 6.4rem }`
+   — the wrong-box fix — because his branch never had mine. It is DROPPED here,
+   not kept alongside. Keeping both would leave the content padding buying scroll
+   travel past the end of the map for nothing, and would leave two answers on
+   record for one question. Re-measured on this tree rather than carried across
+   it: 0 covered at all five shapes, 412x915 included. */
+  :root[data-layout='narrow'] .mapscreen { position: relative; }
+  :root[data-layout='narrow'] .mapscreen .map-scroll { position: static; margin-bottom: 4.6rem; }
+  :root[data-layout='narrow'] .map-zoom { flex-direction: row; right: 0.8rem; bottom: 0.8rem; gap: 0.8rem; }
+  :root[data-layout='narrow'] .map-zoom .zbtn { width: 3rem; height: 3rem; font-size: 1.6rem; }
   /* Same as the combat bar: the seed is dev information, it is what wraps the
      header on a phone, and it stays reachable at overlay.js:163 (Stats, from
      the menu button in this bar) and gameover.js:17. */
-  .map-header .mh-seed { display: none; }
-}
+  :root[data-layout='narrow'] .map-header .mh-seed { display: none; }
 
   </style>
 </head>
@@ -1833,24 +1850,59 @@ let lastMusicFolder;
 // ('90'/'100'…) still resolve. Clamped so it never gets unusably tiny/huge.
 const UI_NAMED = UI.uiScale.named;
 
-// PROTOTYPE (EldenSpire#23, track B): TWO baselines, and the fit picks.
+// EldenSpire#23 — TWO baselines, ONE decider.
 //
 // The wide baseline (1200x730) is the board this game is drawn for. The narrow
-// one (430x780) is the portrait-phone board that styles/combat.css lays out
-// under its container query. Auto takes whichever wants the LARGER zoom, which
-// means no code anywhere asks "is this a phone" — a question with no honest
-// answer, since a desktop window can be 400px wide and a tablet can be 1200.
+// one (430x780) is the portrait-phone board styles/combat.css lays out. No code
+// here asks "is this a phone" — a question with no honest answer, since a
+// desktop window can be 400px wide and a tablet can be 1200. The fit decides.
 //
-// The clamp is UNCHANGED and deliberately so. #23 reads as a floor bug and is
-// not one: at 390x844 the wide baseline wants 0.325, the floor gives 0.62, and
-// BOTH are wrong, because both are trying to fit a 1200px layout onto a 390px
-// screen. With a narrow baseline the wanted zoom is 0.907 and the floor never
-// binds. Lowering the floor would have been one line and would have shipped a
-// legible, unusable board.
-function computeAutoZoom() {
-  if (typeof window === 'undefined') return 1;
+// WHY THIS IS ONE FUNCTION RETURNING TWO VALUES, AND NOT A CONTAINER QUERY.
+// It was a container query until Vira swept 7.8M viewports and found the band
+// this branch locked out (#24). The zoom took `max(wideFit, narrowFit)` and the
+// stylesheet independently asked whether the app's local width was <= 520. Two
+// deciders, on two different inputs, with nothing making them agree:
+//
+//   834x1194 (iPad Pro 11 portrait) — narrowFit is HEIGHT-limited, 1194/780 =
+//   1.53, so it wins; but 834/1.53 = 545 local px, which is > 520, so the
+//   stylesheet kept the WIDE layout. A board drawn for 1200px, rendered into
+//   545. END TURN under the hand: 45/45 on dev, 0/45 here. Three of four
+//   tablet shapes that work today, dead.
+//
+// The cliff sits at aspect ratio 2/3 exactly: when the narrow fit is
+// height-limited, localW = narrowH x w/h, which crosses 520 at w/h = 520/780.
+// 884/1326 = 0.66667 passes, 885/1326 = 0.66742 fails. A second door is the
+// 1.70 ceiling, which pins localW = w/1.70 > 520 for every w above 884.
+//
+// Vira's sentence, which is the whole lesson and is not paraphrased: WHEN A FIX
+// ADDS A SECOND DECIDER, THE DEFECT IS RARELY THE NEW VALUE. IT IS THAT NOTHING
+// MAKES THE TWO AGREE — AND NO SINGLE-HOME CHECK CAN SEE IT, BECAUSE THERE IS
+// NO DUPLICATED CONSTANT TO FIND. My 520 did have exactly one home. That was
+// true and it was not the point.
+//
+// So the second decider is gone rather than reconciled. This function picks the
+// mode AND the zoom together, and the stylesheet follows an attribute instead of
+// measuring anything: `:root[data-layout='narrow']`. Reconciling two deciders
+// would have needed 520 in the CSS *and* in here — the duplicated constant the
+// single-home rule exists to prevent. Removing one needs it in neither: it is
+// data, in balance.ui.uiScale, read once, right here.
+//
+// THE PROPERTY, and it is now true by construction rather than by care:
+//   the zoom selects the narrow baseline  IFF  the narrow layout is active.
+// A candidate is admissible only if it is self-consistent — the narrow baseline
+// only when the zoom it produces really does leave <= narrowMax local px, the
+// wide baseline otherwise. tools/mobilefit.mjs asserts it at every shape.
+//
+// The clamp is UNCHANGED. #23 reads as a floor bug and is not one: at 390x844
+// the wide baseline wants 0.325, the floor gives 0.62, and BOTH are wrong,
+// because both try to fit a 1200px layout onto a 390px screen.
+function autoLayout() {
+  if (typeof window === 'undefined') return { zoom: 1, narrow: false };
   const z = UI.uiScale;
-  const fitFor = (w, h) => Math.min(window.innerWidth / w, window.innerHeight / h);
+  const w = window.innerWidth, h = window.innerHeight;
+  const clamp = (v) => Math.max(z.min, Math.min(z.max, v));
+  const fitFor = (dw, dh) => Math.min(w / dw, h / dh);
+
   // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE.
   //
   // The wide path keeps `Math.round` byte-for-byte, because every zoom every
@@ -1862,33 +1914,49 @@ function computeAutoZoom() {
   //
   // I first floored BOTH, for the tidiness of one rule. It moved 1920x1080
   // from 1.48 to 1.47 and 1280x800 from 1.07 to 1.06, and the second of those
-  // turned tools/tutorial-reach.mjs red — the guard on #7, the tutorial
-  // lockout, which asserts the zoom re-flexes to a named value on resize. A
-  // one-word tidy-up with the widest blast radius in the diff, caught by
-  // somebody else's check. Flooring only the new path leaves every existing
-  // value identical to dev (verified: 800x450 0.62, 1024x640 0.85, 1280x800
-  // 1.07, 1920x1080 1.48, 2560x1440 1.70) and still makes the narrow fit exact.
-  const wideFit = Math.round(fitFor(z.designW, z.designH) * 100) / 100;
-  const narrowFit = (z.narrowW && z.narrowH) ? Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100 : 0;
-  return Math.max(z.min, Math.min(z.max, Math.max(wideFit, narrowFit)));
+  // turned tools/tutorial-reach.mjs red — the guard on #7. Flooring only the
+  // new path leaves every existing value identical to dev (800x450 0.62,
+  // 1024x640 0.85, 1280x800 1.07, 1920x1080 1.48, 2560x1440 1.70).
+  const wideZoom = clamp(Math.round(fitFor(z.designW, z.designH) * 100) / 100);
+  if (!(z.narrowW && z.narrowH && z.narrowMax)) return { zoom: wideZoom, narrow: false };
+
+  const narrowZoom = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
+  // Self-consistency, and it is the entire fix: the narrow baseline is
+  // admissible ONLY if the zoom it produces actually lands in the narrow band.
+  // Without this test 834x1194 takes narrowZoom 1.53, lands at 545 local px,
+  // and hands the WIDE layout a narrow-sized box.
+  if (w / narrowZoom <= z.narrowMax) return { zoom: narrowZoom, narrow: true };
+  return { zoom: wideZoom, narrow: false };
 }
 
-function resolveZoom(uiScale) {
+// A fixed size is the player's choice and is never overridden. The MODE still
+// has to be decided, because a fixed zoom in a small window leaves just as
+// little local space — and the property must hold there too, not only on Auto.
+function resolveLayout(uiScale) {
   const key = String(uiScale == null ? 'auto' : uiScale).toLowerCase();
-  if (key === 'auto') return computeAutoZoom();
-  if (UI_NAMED[key] != null) return UI_NAMED[key];
-  // Anything else (incl. legacy numeric '90'/'100'/'110'/'125') is Auto: the
-  // settings UI displays such values as Auto, so behaving as fixed zoom made
-  // the control look dead ("scaling stopped working").
-  return computeAutoZoom();
+  // Anything not a named size (incl. legacy numeric '90'/'100'/'110'/'125') is
+  // Auto: the settings UI displays such values as Auto, so behaving as fixed
+  // zoom made the control look dead ("scaling stopped working").
+  if (key !== 'auto' && UI_NAMED[key] != null) {
+    const zoom = UI_NAMED[key];
+    const z = UI.uiScale;
+    const narrow = typeof window !== 'undefined' && z.narrowMax
+      ? window.innerWidth / zoom <= z.narrowMax
+      : false;
+    return { zoom, narrow };
+  }
+  return autoLayout();
 }
 
 function applyUiScale(settings) {
-  const z = resolveZoom(settings.uiScale);
+  const { zoom, narrow } = resolveLayout(settings.uiScale);
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
-  document.documentElement.style.setProperty('--ui-zoom', String(z));
+  document.documentElement.style.setProperty('--ui-zoom', String(zoom));
+  // The layout mode, written by the same call that chose the zoom, so the two
+  // cannot disagree. The stylesheets key off this and measure nothing (#24).
+  document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
 }
 
 // Re-flex Auto sizing whenever the window changes. Only recomputes for Auto and
@@ -1897,8 +1965,12 @@ function applyUiScale(settings) {
 // which would otherwise freeze Auto at the clamp floor.
 let uiResizeTimer = null;
 function reflexAutoScale() {
-  const s = (saves.loadMeta().settings) || {};
-  if (String(s.uiScale == null ? 'auto' : s.uiScale).toLowerCase() === 'auto') applyUiScale(s);
+  // Re-applied for EVERY uiScale setting, not only Auto. The zoom does not move
+  // for a fixed size, but the MODE does: innerWidth changes on resize while the
+  // zoom stays put, so the local width crosses narrowMax with nothing else
+  // changing. Gating this on Auto left the attribute stale at exactly the
+  // shapes a fixed size is most likely to be small in (#24).
+  applyUiScale((saves.loadMeta().settings) || {});
 }
 if (typeof window !== 'undefined') {
   window.addEventListener('resize', () => {
@@ -3062,15 +3134,23 @@ const balance = {
       // 430x780 is a portrait-phone board: at 390x844 it wants 0.907 (local
       // 430x930), at 412x915 0.958, at 360x640 0.821 (local 438x780).
       //
-      // THE BREAKPOINT ITSELF IS NOT HERE. `@container app (max-width: 520px)`
-      // in styles/combat.css is its one home: a container query condition
-      // cannot read a custom property, so a copy of 520 in this file would be a
-      // number nothing keeps in sync with the rule that uses it — the exact
-      // defect SOP 5 exists for. The three widths above all land under it, and
-      // a probe checks the layout ACTUALLY reflowed rather than checking a
-      // number against a number.
+      // narrowMax is the width, in LOCAL px, at or below which the narrow
+      // layout is used. It lives HERE and nowhere else.
+      //
+      // It used to live in styles/combat.css instead, as `@container app
+      // (max-width: 520px)`, because a container query condition cannot read a
+      // custom property. That was a correct single-home argument and Vira
+      // verified it — and it was not the point. The stylesheet asking the
+      // question at all made TWO deciders out of one decision: the zoom judged
+      // innerWidth/innerHeight against 430x780, the layout judged the
+      // container's local width against 520, and nothing made them agree. On a
+      // tablet they disagreed and the fight became unadvanceable (#24).
+      // main.js now decides once and writes `data-layout` on <html>; the
+      // stylesheets follow it and measure nothing. One decider, one home, and
+      // CSS needs no copy of this number.
       narrowW: 430,
       narrowH: 780,
+      narrowMax: 520,
     },
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).

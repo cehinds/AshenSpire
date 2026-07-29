@@ -107,6 +107,18 @@ const SHAPES = [
   { w: 412, h: 915, d: 2.6, mobile: true, tag: 'portrait' },
   { w: 360, h: 640, d: 2, mobile: true, tag: 'portrait' },
   { w: 844, h: 390, d: 3, mobile: true, tag: 'landscape' },
+  // 884x1326 — added after ec53ffb, and it is a NEW KIND of shape here rather
+  // than one more width. Rune's autoLayout() made the narrow layout reachable at
+  // TABLET size: this is the one shape in the table that takes zoom 1.70 and
+  // lands at exactly 520x780 local, so `data-layout=narrow` is set and every
+  // narrow rule on this branch fires — the reward row's scrollport, the map's
+  // button band — inside 520 local px, a room none of them were tuned for. They
+  // were written against 433-439.
+  //
+  // It is also Vira's cliff edge: 884/1326 passes the 520/780 aspect test and
+  // 885/1326 fails it, so the two live one pixel apart in different layouts. A
+  // sweep that tests neither has no reading on the boundary the fix moved.
+  { w: 884, h: 1326, d: 2, mobile: true, tag: 'tablet-narrow' },
 ];
 
 const args = process.argv.slice(2);
@@ -155,10 +167,38 @@ const PROBE = `(() => {
     const c = typeof e.className === 'string' ? e.className.trim().split(/\\s+/)[0] : '';
     return (t || '') + (c ? ' .' + c : ' ' + e.tagName);
   };
+  // THE NEAREST OVERFLOW ANCESTOR IS NOT ALWAYS THE SCROLLER. An absolutely
+  // positioned element is laid out against its CONTAINING BLOCK, not against
+  // whatever happens to have overflow between it and that block — so it does
+  // not scroll with a static ancestor, and measuring its position in that
+  // ancestor's scroll content is measuring a space it does not live in.
+  //
+  // Not hypothetical, and it is my own fix that produced it: .map-zoom is a DOM
+  // child of .map-scroll, but this branch makes .map-scroll position:static
+  // so the button stack anchors to .mapscreen and sits in a band beside the map
+  // instead of floating over it. The old walk still handed it .map-scroll, and
+  // all three zoom buttons reported "bottom edge past scrollable height" at
+  // every portrait shape — three controls the player can see and press, called
+  // lost, by a check I added to catch controls the player cannot reach.
+  //
+  // So the walk carries whether the subtree it is climbing out of is floating,
+  // and a floating subtree is only stopped by an ancestor that is a containing
+  // block for it (positioned, or transformed/filtered — the same list the spec
+  // uses).
   const scrollport = (e) => {
-    for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) {
+    let floating = false;
+    for (let n = e, p = e.parentElement; p && p !== document.body; n = p, p = p.parentElement) {
+      const np = getComputedStyle(n).position;
+      if (np === 'absolute' || np === 'fixed') floating = true;
       const cs = getComputedStyle(p);
-      if (['auto', 'scroll'].includes(cs.overflowX) || ['auto', 'scroll'].includes(cs.overflowY)) return p;
+      const scrolls = ['auto', 'scroll'].includes(cs.overflowX) || ['auto', 'scroll'].includes(cs.overflowY);
+      const isContainingBlock = cs.position !== 'static' || cs.transform !== 'none'
+        || cs.filter !== 'none' || cs.perspective !== 'none';
+      if (floating) {
+        if (isContainingBlock) { floating = false; if (scrolls) return p; }
+        continue; // a static ancestor cannot scroll a child it does not contain
+      }
+      if (scrolls) return p;
     }
     return null;
   };
@@ -181,11 +221,46 @@ const PROBE = `(() => {
   //
   // With no scroll ancestor the document IS the scroller, so the same arithmetic
   // covers both and there is no second rule to keep in step.
+  // TWO ROOMS, AND THIS FUNCTION IS WHERE THEY MEET — the defect this repo has
+  // now fixed four times (#15, zoomplace, the fx showcase, and here).
+  // getBoundingClientRect is VISUAL. scrollLeft/scrollWidth/scrollHeight are the
+  // element's OWN CSS px, and every scroller here lives inside the zoomed body,
+  // so they are LOCAL. Comparing one against the other is only correct at
+  // zoom 1.00, which is exactly where I tested it.
+  //
+  // It survived every shape on this branch because the portrait zooms are 0.82
+  // to 0.95 and the error stayed under the margins. ec53ffb added 884x1326 —
+  // zoom 1.70 — and the same arithmetic reported 44 map nodes lost at a shape
+  // where nothing is wrong: a visual bottom of 1326.5 against a LOCAL scrollable
+  // height of 934, when 934 local IS 1588 visual. I wrote a paragraph on this
+  // file's transform hole saying I would rather carry a named hole than a quiet
+  // local/visual conversion, and then shipped the quiet conversion one function
+  // above it.
+  //
+  // The zoom is not read from the custom property, because the property is not
+  // proof that this element is inside it. Each scroller reports its own factor:
+  // offsetWidth is layout px, the rect is painted px, and their ratio is
+  // whatever scaling actually applies here — self-measured, so a future zoom
+  // introduced somewhere else needs no change to this line.
+  const zoomOf = (el) => {
+    const w = el.offsetWidth, r = el.getBoundingClientRect().width;
+    return (w > 0 && r > 0) ? r / w : 1;
+  };
   const scrollerOf = (sp) => {
-    if (sp) { const b = sp.getBoundingClientRect();
-      return { ox: b.left, oy: b.top, sl: sp.scrollLeft, st: sp.scrollTop, sw: sp.scrollWidth, sh: sp.scrollHeight }; }
+    if (sp) {
+      const b = sp.getBoundingClientRect();
+      const z = zoomOf(sp); // local -> visual
+      return { ox: b.left, oy: b.top, sl: sp.scrollLeft * z, st: sp.scrollTop * z,
+               sw: sp.scrollWidth * z, sh: sp.scrollHeight * z };
+    }
+    // The document is the fallback scroller, and documentElement is OUTSIDE the
+    // zoomed body, so its metrics are already visual and take no factor. body's
+    // are inside it and do, which is why the two are converted separately rather
+    // than max()'d raw the way this line used to.
+    const zb = zoomOf(bd);
     return { ox: 0, oy: 0, sl: scrollX, st: scrollY,
-             sw: Math.max(de2.scrollWidth, bd.scrollWidth), sh: Math.max(de2.scrollHeight, bd.scrollHeight) };
+             sw: Math.max(de2.scrollWidth, bd.scrollWidth * zb),
+             sh: Math.max(de2.scrollHeight, bd.scrollHeight * zb) };
   };
   // A ROTATED ELEMENT'S RECT IS NOT ITS LAYOUT BOX, and this check would be
   // useless without the distinction. getBoundingClientRect returns the
