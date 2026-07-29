@@ -124,12 +124,33 @@ body.hide-header-relics .map-substrip.no-flasks { display: none; }
    nodes — measured, 2 controls COVERED at 390x844 where dev has none. The map
    is on the critical path to combat, so a fix that makes the fight reachable
    and the map not is not a fix.
-   The canvas gets a clear band at the bottom so no node can be laid out in
-   the corner the buttons occupy, and the stack turns into a row and shrinks:
-   three 3rem buttons in a row are 9.8rem of the bottom edge instead of 3.4rem
-   of the bottom-right corner, where the nodes are. */
+   The stack turns into a row and shrinks: three 3rem buttons in a row are
+   9.8rem of the bottom edge instead of 3.4rem of the bottom-right corner,
+   where the nodes are.
+
+   AND THE FIRST VERSION OF THIS BLOCK RESERVED THE BAND ON THE WRONG BOX, which
+   is why it worked at 390x844 and 360x640 and failed at 412x915 — the one
+   portrait shape screenreach.mjs did not test until today. `padding-bottom` on
+   .map-canvas extends the CONTENT; .map-zoom is position:absolute against
+   .map-scroll, so it is pinned to the SCROLLPORT. The canvas is taller than the
+   viewport, so at rest the padding sits far below the fold and the buttons
+   float over whatever node happens to be at the bottom of the screen right now.
+   Whether that is a node is a property of the shape, not of the fix. At 412x915
+   it was two: `2 covered — ? g <- + .zbtn`, on a branch that already claimed to
+   have fixed this exact defect once.
+
+   The band has to come off the SCROLLPORT, so the buttons sit beside the map
+   rather than over it at every scroll position and every shape:
+     .mapscreen      becomes the positioned ancestor
+     .map-scroll     goes static (its position:relative existed only to anchor
+                     the stack) and gives up 4.6rem of height
+     .map-zoom       resolves against .mapscreen and lands in that band
+   3rem of button plus 0.8rem of offset is 3.8rem, inside 4.6rem with room for
+   the focus ring. The canvas padding is REMOVED, not kept alongside: it was
+   buying 6.4rem of scroll travel past the end of the map for nothing. */
 @container app (max-width: 520px) {
-  .mapscreen .map-canvas { padding-bottom: 6.4rem; }
+  .mapscreen { position: relative; }
+  .mapscreen .map-scroll { position: static; margin-bottom: 4.6rem; }
   .map-zoom { flex-direction: row; right: 0.8rem; bottom: 0.8rem; gap: 0.8rem; }
   .map-zoom .zbtn { width: 3rem; height: 3rem; font-size: 1.6rem; }
   /* Same as the combat bar: the seed is dev information, it is what wraps the

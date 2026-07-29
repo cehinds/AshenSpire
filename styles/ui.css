@@ -312,6 +312,62 @@ body.hide-hints .hint-bar { display: none; }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 .heal-note { color: var(--green); font-size: 1.3rem; }
 
+/* CHOOSE A CARD, on a phone. This is the screen a player meets after EVERY
+   fight, and it is the one I withheld the portrait reflow over on 2026-07-29.
+   The row is a centred flex line with a 2.2rem gap, sized for a 1200px desk. In
+   433 local px it overflows, and a CENTRED overflowing flex line puts its first
+   item at a NEGATIVE offset — which nothing can scroll to, because scrollLeft
+   has a floor of 0. So the left card was not off-screen-for-now, it was gone:
+
+     390x844, three cards   left card 89.1% visible, cost badge 5.2px of 27
+     390x844, four cards    left card 31.2% visible, cost badge 0px of 27
+     412x915 / 360x640      the same within a pixel or two
+
+   Four is not hypothetical: rewards.cardChoices is 3 and an elite pays one more
+   to a run carrying feralEye. The cost badge is the number the whole screen is
+   asking the player to compare, and on the shape most people hold it was the
+   first thing amputated.
+
+   THREE DECLARATIONS DO THE WORK, NOT ONE — my commit message last night said
+   one rule and I was wrong. Each of these is load-bearing:
+     justify-content  moves the content origin off negative and onto 0. Without
+                      it the other two are decoration; with it alone the LAST
+                      card is merely clipped instead of the first being lost.
+     overflow-x       gives the row a scrollport, so anything past the right edge
+                      is recoverable by the gesture a strip already invites.
+     gap              makes three cards FIT at all three portrait shapes, so the
+                      ordinary case needs no gesture at all and the scroller is
+                      there only for the elite's fourth card.
+   A wrap was the other candidate and I measured it rather than argued it: at
+   360x640 a second card row puts the Continue button past the bottom of a screen
+   that has no vertical scroll, which trades a lost card for a lost button.
+
+   The hover lift is flattened for the same reason it was flattened in the combat
+   hand: overflow-x:auto computes overflow-y to auto as well, so a card that
+   rises 8px inside this row is clipped by the container doing the scrolling. It
+   grows in place instead. */
+@container app (max-width: 520px) {
+  .reward-row {
+    justify-content: flex-start;
+    overflow-x: auto;
+    gap: 0.8rem;
+    /* THE PADDING IS NOT BREATHING ROOM, IT IS THE BADGE'S SEAT. `.card .cost`
+       is position:absolute at top:-1rem/left:-1rem — it hangs OUTSIDE its own
+       card box. The moment this row becomes a scroller it starts clipping, and
+       my first pass here traded the viewport amputating the badge for the row
+       amputating it: 24.39x19 of 27x27 at 390x844, measured against the clip
+       box rather than the viewport, which is why measuring against the viewport
+       alone had just told me it was fine. 1.2rem holds the 1rem overhang with
+       2 local px to spare, on the top edge as well — overflow-x:auto computes
+       overflow-y to auto too, so the badge is clipped in both directions or
+       neither. */
+    padding: 1.2rem 1.2rem 0.6rem;
+    max-width: 100%;
+    scrollbar-width: thin;
+  }
+  .reward-row .card:hover { transform: scale(1.03); }
+}
+
 /* ---------- save slots (title) ---------- */
 .slot-list { display: flex; flex-direction: column; gap: 1rem; width: 43rem; max-width: 92vw; animation: screenIn 500ms ease-out; }
 .slot {

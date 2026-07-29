@@ -508,6 +508,62 @@ body.hide-hints .hint-bar { display: none; }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 .heal-note { color: var(--green); font-size: 1.3rem; }
 
+/* CHOOSE A CARD, on a phone. This is the screen a player meets after EVERY
+   fight, and it is the one I withheld the portrait reflow over on 2026-07-29.
+   The row is a centred flex line with a 2.2rem gap, sized for a 1200px desk. In
+   433 local px it overflows, and a CENTRED overflowing flex line puts its first
+   item at a NEGATIVE offset — which nothing can scroll to, because scrollLeft
+   has a floor of 0. So the left card was not off-screen-for-now, it was gone:
+
+     390x844, three cards   left card 89.1% visible, cost badge 5.2px of 27
+     390x844, four cards    left card 31.2% visible, cost badge 0px of 27
+     412x915 / 360x640      the same within a pixel or two
+
+   Four is not hypothetical: rewards.cardChoices is 3 and an elite pays one more
+   to a run carrying feralEye. The cost badge is the number the whole screen is
+   asking the player to compare, and on the shape most people hold it was the
+   first thing amputated.
+
+   THREE DECLARATIONS DO THE WORK, NOT ONE — my commit message last night said
+   one rule and I was wrong. Each of these is load-bearing:
+     justify-content  moves the content origin off negative and onto 0. Without
+                      it the other two are decoration; with it alone the LAST
+                      card is merely clipped instead of the first being lost.
+     overflow-x       gives the row a scrollport, so anything past the right edge
+                      is recoverable by the gesture a strip already invites.
+     gap              makes three cards FIT at all three portrait shapes, so the
+                      ordinary case needs no gesture at all and the scroller is
+                      there only for the elite's fourth card.
+   A wrap was the other candidate and I measured it rather than argued it: at
+   360x640 a second card row puts the Continue button past the bottom of a screen
+   that has no vertical scroll, which trades a lost card for a lost button.
+
+   The hover lift is flattened for the same reason it was flattened in the combat
+   hand: overflow-x:auto computes overflow-y to auto as well, so a card that
+   rises 8px inside this row is clipped by the container doing the scrolling. It
+   grows in place instead. */
+@container app (max-width: 520px) {
+  .reward-row {
+    justify-content: flex-start;
+    overflow-x: auto;
+    gap: 0.8rem;
+    /* THE PADDING IS NOT BREATHING ROOM, IT IS THE BADGE'S SEAT. `.card .cost`
+       is position:absolute at top:-1rem/left:-1rem — it hangs OUTSIDE its own
+       card box. The moment this row becomes a scroller it starts clipping, and
+       my first pass here traded the viewport amputating the badge for the row
+       amputating it: 24.39x19 of 27x27 at 390x844, measured against the clip
+       box rather than the viewport, which is why measuring against the viewport
+       alone had just told me it was fine. 1.2rem holds the 1rem overhang with
+       2 local px to spare, on the top edge as well — overflow-x:auto computes
+       overflow-y to auto too, so the badge is clipped in both directions or
+       neither. */
+    padding: 1.2rem 1.2rem 0.6rem;
+    max-width: 100%;
+    scrollbar-width: thin;
+  }
+  .reward-row .card:hover { transform: scale(1.03); }
+}
+
 /* ---------- save slots (title) ---------- */
 .slot-list { display: flex; flex-direction: column; gap: 1rem; width: 43rem; max-width: 92vw; animation: screenIn 500ms ease-out; }
 .slot {
@@ -1534,12 +1590,33 @@ body.hide-header-relics .map-substrip.no-flasks { display: none; }
    nodes — measured, 2 controls COVERED at 390x844 where dev has none. The map
    is on the critical path to combat, so a fix that makes the fight reachable
    and the map not is not a fix.
-   The canvas gets a clear band at the bottom so no node can be laid out in
-   the corner the buttons occupy, and the stack turns into a row and shrinks:
-   three 3rem buttons in a row are 9.8rem of the bottom edge instead of 3.4rem
-   of the bottom-right corner, where the nodes are. */
+   The stack turns into a row and shrinks: three 3rem buttons in a row are
+   9.8rem of the bottom edge instead of 3.4rem of the bottom-right corner,
+   where the nodes are.
+
+   AND THE FIRST VERSION OF THIS BLOCK RESERVED THE BAND ON THE WRONG BOX, which
+   is why it worked at 390x844 and 360x640 and failed at 412x915 — the one
+   portrait shape screenreach.mjs did not test until today. `padding-bottom` on
+   .map-canvas extends the CONTENT; .map-zoom is position:absolute against
+   .map-scroll, so it is pinned to the SCROLLPORT. The canvas is taller than the
+   viewport, so at rest the padding sits far below the fold and the buttons
+   float over whatever node happens to be at the bottom of the screen right now.
+   Whether that is a node is a property of the shape, not of the fix. At 412x915
+   it was two: `2 covered — ? g <- + .zbtn`, on a branch that already claimed to
+   have fixed this exact defect once.
+
+   The band has to come off the SCROLLPORT, so the buttons sit beside the map
+   rather than over it at every scroll position and every shape:
+     .mapscreen      becomes the positioned ancestor
+     .map-scroll     goes static (its position:relative existed only to anchor
+                     the stack) and gives up 4.6rem of height
+     .map-zoom       resolves against .mapscreen and lands in that band
+   3rem of button plus 0.8rem of offset is 3.8rem, inside 4.6rem with room for
+   the focus ring. The canvas padding is REMOVED, not kept alongside: it was
+   buying 6.4rem of scroll travel past the end of the map for nothing. */
 @container app (max-width: 520px) {
-  .mapscreen .map-canvas { padding-bottom: 6.4rem; }
+  .mapscreen { position: relative; }
+  .mapscreen .map-scroll { position: static; margin-bottom: 4.6rem; }
   .map-zoom { flex-direction: row; right: 0.8rem; bottom: 0.8rem; gap: 0.8rem; }
   .map-zoom .zbtn { width: 3rem; height: 3rem; font-size: 1.6rem; }
   /* Same as the combat bar: the seed is dev information, it is what wraps the
@@ -2693,7 +2770,51 @@ function coopCatchupShot() {
   return { actNumber: 1, floor: 6, seedString: 'SHOWCASE', endless: false, scene: { kind: 'map' }, reachableIds: [], map: null, party };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death') {
+// `?shot=reward[&shotCards=N]` — the post-fight card offer.
+//
+// WHY IT IS WORTH A STATE. mountRewards() is called from three sites inside the
+// combat EXIT path, so `?shot=combat` stops one screen short of it and every
+// sweep this repo owns has been blind to the screen a player meets after EVERY
+// fight. That blindness is not hypothetical: I withheld on `.reward-row` at
+// portrait shapes on 2026-07-29 and could only support the finding by hand,
+// because nothing could photograph it. Same reason `death` was added.
+//
+// `shotCards` exists so the two edges are one URL apart, and its ceiling is the
+// game's own: rewards.cardChoices is 3, and rollCardRewardIds() adds exactly one
+// more for an elite when the run carries eliteExtraCardReward — so 4 is the most
+// cards a player can ever be shown, and 0 is what a treasure/relic-only payout
+// shows. Anything outside 0..4 is a shape no player can reach, so it is clamped
+// rather than honoured: an instrument that can be pointed at an impossible board
+// reports failures nobody has to fix.
+//
+// The ids are taken off the class card pool in order, NOT rolled. The layout
+// question is `how many cards, how wide`, and a seeded roll would make the
+// answer move with the content stream for no gain. The COUNT is the real rule;
+// the identities are a showcase and this comment is where that is said.
+if (shotState === 'reward') {
+  const shotMeta = saves.loadMeta();
+  shotMeta.settings.seenTutorial = true;
+  saves.saveMeta(shotMeta);
+  newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
+  const asked = shotParams.get('shotCards');
+  const want = asked == null
+    ? registries.balance.rewards.cardChoices
+    : Math.max(0, Math.min(4, Number.isFinite(Number(asked)) ? Math.trunc(Number(asked)) : registries.balance.rewards.cardChoices));
+  mountRewards(app, {
+    registries,
+    run,
+    rewards: {
+      title: 'ELITE VANQUISHED',
+      cinders: 42,
+      cardIds: registries.classes.get(run.class).cardPool.slice(0, want),
+      // NOT the reaver's starting relic (forsakenMedallion) — mountRewards
+      // pushes what it is handed onto run.relics, and awarding a relic the run
+      // already carries would photograph a duplicate no fight can produce.
+      relicId: 'whetstoneFragment',
+    },
+    onDone: () => showMap(),
+  });
+} else if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;

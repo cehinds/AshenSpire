@@ -1143,7 +1143,51 @@ function coopCatchupShot() {
   return { actNumber: 1, floor: 6, seedString: 'SHOWCASE', endless: false, scene: { kind: 'map' }, reachableIds: [], map: null, party };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death') {
+// `?shot=reward[&shotCards=N]` — the post-fight card offer.
+//
+// WHY IT IS WORTH A STATE. mountRewards() is called from three sites inside the
+// combat EXIT path, so `?shot=combat` stops one screen short of it and every
+// sweep this repo owns has been blind to the screen a player meets after EVERY
+// fight. That blindness is not hypothetical: I withheld on `.reward-row` at
+// portrait shapes on 2026-07-29 and could only support the finding by hand,
+// because nothing could photograph it. Same reason `death` was added.
+//
+// `shotCards` exists so the two edges are one URL apart, and its ceiling is the
+// game's own: rewards.cardChoices is 3, and rollCardRewardIds() adds exactly one
+// more for an elite when the run carries eliteExtraCardReward — so 4 is the most
+// cards a player can ever be shown, and 0 is what a treasure/relic-only payout
+// shows. Anything outside 0..4 is a shape no player can reach, so it is clamped
+// rather than honoured: an instrument that can be pointed at an impossible board
+// reports failures nobody has to fix.
+//
+// The ids are taken off the class card pool in order, NOT rolled. The layout
+// question is `how many cards, how wide`, and a seeded roll would make the
+// answer move with the content stream for no gain. The COUNT is the real rule;
+// the identities are a showcase and this comment is where that is said.
+if (shotState === 'reward') {
+  const shotMeta = saves.loadMeta();
+  shotMeta.settings.seenTutorial = true;
+  saves.saveMeta(shotMeta);
+  newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
+  const asked = shotParams.get('shotCards');
+  const want = asked == null
+    ? registries.balance.rewards.cardChoices
+    : Math.max(0, Math.min(4, Number.isFinite(Number(asked)) ? Math.trunc(Number(asked)) : registries.balance.rewards.cardChoices));
+  mountRewards(app, {
+    registries,
+    run,
+    rewards: {
+      title: 'ELITE VANQUISHED',
+      cinders: 42,
+      cardIds: registries.classes.get(run.class).cardPool.slice(0, want),
+      // NOT the reaver's starting relic (forsakenMedallion) — mountRewards
+      // pushes what it is handed onto run.relics, and awarding a relic the run
+      // already carries would photograph a duplicate no fight can produce.
+      relicId: 'whetstoneFragment',
+    },
+    onDone: () => showMap(),
+  });
+} else if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;

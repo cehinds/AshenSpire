@@ -118,6 +118,35 @@ const only = argOf('--only');
 const shotsDir = argOf('--shots');
 const useDist = args.includes('--dist');
 
+// THE SHAPE NAME, computed once. It was inline in the loop and inline in nothing
+// else, which is why `--only` could not be validated before the run started.
+const shapeName = (vp) => `${vp.w}x${vp.h}${vp.settings ? `-${Object.values(vp.settings).join('-')}` : ''}`;
+
+// A FILTER THAT MATCHES NOTHING IS A USAGE ERROR, NOT A PASS. Same defect as
+// tools/screenreach.mjs and the same fix; both tools shipped it on the same
+// branch on the same night. Yesterday `node tools/mobilefit.mjs --only 999x999`
+// printed `PASS — every assertion held over 0 shape(s), 4 control(s) each` and
+// exited 0. The sentence even contains the zero. It still reads as a pass,
+// because nobody parses the count out of a green line — which is exactly the
+// argument for making the tool refuse rather than making the message better.
+// Exit 2 = usage, per the header — never a pass.
+if (only && !SHAPES.map(shapeName).includes(only)) {
+  console.error(`mobilefit: --only ${only} matches no shape — nothing would be tested, and a run that tests nothing is not a pass.`);
+  console.error(`  shapes: ${SHAPES.map(shapeName).join(', ')}`);
+  process.exit(2);
+}
+// AND THE QUIETER ONE, which the loud one was hiding. The 1200x730 reference row
+// sets `ceiling[sel]`, and every grid assertion at every other shape is judged
+// against it. `--only 390x844` skips the reference, so `bar == null`, so all four
+// control assertions are SKIPPED — the run measured a real shape, printed one
+// parenthesised note per control, and still ended in `PASS — every assertion
+// held`. The fit assertions do run, so this is a partial gate wearing a full
+// gate's word. The reference is now always measured; `--only` narrows what is
+// judged, never what the bar is made of.
+const forcedReference = only && !SHAPES.some((vp) => vp.reference && shapeName(vp) === only)
+  ? SHAPES.find((vp) => vp.reference)
+  : null;
+
 const fails = [];
 // A shape marked knownOpen carries a defect this branch does not own. Its
 // failures are reported at full volume and kept OUT of the exit code, so the
@@ -381,9 +410,10 @@ async function main() {
   const rows = [];
   const ceiling = {}; // per-control grid reading at the design baseline — the bar
   for (const vp of SHAPES) {
-    const name = `${vp.w}x${vp.h}${vp.settings ? `-${Object.values(vp.settings).join('-')}` : ''}`;
-    if (only && only !== name) continue;
-    console.log(`\n  ${name} @ dSF ${vp.d}  (${vp.tag})`);
+    const name = shapeName(vp);
+    const isForced = vp === forcedReference;
+    if (only && only !== name && !isForced) continue;
+    console.log(`\n  ${name} @ dSF ${vp.d}  (${vp.tag})${isForced ? `  [REFERENCE — measured because --only ${only} needs a bar to be judged against; its own assertions still count]` : ''}`);
     expectOpen = !!vp.knownOpen;
     if (vp.knownOpen) console.log(`    KNOWN-OPEN, not this branch's: ${vp.knownOpen.what}`);
     const openBefore = openFails.length;
@@ -503,6 +533,16 @@ async function main() {
     console.log(`  They are reported, not counted, and the run goes RED if any of them stops failing.`);
     for (const vp of SHAPES) if (vp.knownOpen) console.log(`    · ${vp.w}x${vp.h}${vp.settings ? ' ' + Object.values(vp.settings).join(' ') : ''} — ${vp.knownOpen.what}\n      ${vp.knownOpen.why}`);
     for (const f of openFails) console.log(`    - ${f}`);
+  }
+  // The second lock — see the --only guard at the top. A run that measured no
+  // shape has no finding to report in either direction, so it exits 2 (usage)
+  // rather than 0. Unreachable via `--only` now that the filter is validated;
+  // kept because the guarantee should be "a green means shapes were measured",
+  // not "a green means no failure was recorded".
+  if (!rows.length) {
+    console.error(`\n  NOT A PASS — zero shapes were measured. A run that measured nothing has nothing to report.`);
+    cdp.close(); child.kill(); if (server) server.close();
+    process.exit(2);
   }
   console.log(`\n  ${fails.length ? `FAIL — ${fails.length} assertion(s)` : 'PASS — every assertion held'} over ${rows.length} shape(s), ${CONTROLS.length} control(s) each${openFails.length ? `, plus ${openFails.length} known-open` : ''}.`);
   for (const f of fails) console.log(`    - ${f}`);
