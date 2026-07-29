@@ -196,9 +196,11 @@ async function main() {
   };
 
   const fails = [];
+  let shapesRun = 0;
   for (const vp of SHAPES) {
     const shape = `${vp.w}x${vp.h}`;
     if (only && only !== shape) continue;
+    shapesRun++;
     console.log(`\n  ${shape} @ dSF ${vp.d}  (${vp.tag})`);
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S);
     await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: vp.mobile, maxTouchPoints: 5 }, S);
@@ -217,12 +219,33 @@ async function main() {
     }
   }
 
+  // A CHECK THAT RAN NOTHING IS `unknown`, NEVER A PASS. This exact command —
+  // `--only 412x915` — printed "PASS — no covered controls" and exited 0 at the
+  // one shape where Sunna had measured a covered map node. It is
+  // development.md's `verify-shipped: OK - 0 checks passed` fixture, reproduced
+  // in a tool whose own header cites that discipline. She found it despite this
+  // tool rather than with it.
+  if (shapesRun === 0) {
+    console.error(`\nscreenreach: --only ${only} matched no shape. Nothing was tested, so this is unknown, not a pass.`);
+    console.error(`  shapes: ${SHAPES.map((v) => `${v.w}x${v.h}`).join(', ')}`);
+    cdp.close(); child.kill(); if (server) server.close();
+    process.exit(2);
+  }
+
   console.log(`\n  BOUNDARY — Linux headless Chromium only; emulation is not a phone. Only the
   screens with a ?shot= state are reached: title, map, combat, boss, death.
   CUSTOMIZE, SHOP, REST, REWARDS and every overlay have NO ?shot= and are not
   covered here or anywhere — and #23's own bleed evidence came from customize.
   Reachability at rest only: nothing is pressed, legibility is not judged, and a
-  control that appears only mid-interaction cannot be seen.`);
+  control that appears only mid-interaction cannot be seen.
+
+  AND THE SHAPE LIST IS NOT THE OTHER TOOL'S. This runs 1200x730, 390x844,
+  360x640, 844x390; tools/mobilefit.mjs runs nine, and neither list is a
+  superset. A defect can live in the gap, and one does: Sunna swept nine widths
+  by hand and found a covered map node at 412x915 — a shape THIS TOOL DOES NOT
+  TEST — that dev does not have. Closing the gap is a card, not a silent edit,
+  because adding that shape turns this red on a finding she carried without
+  blocking.`);
 
   console.log(`\n  ${fails.length ? `FAIL — ${fails.length}` : 'PASS — no covered controls'}`);
   for (const f of fails) console.log(`    - ${f}`);

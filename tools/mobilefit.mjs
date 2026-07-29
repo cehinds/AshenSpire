@@ -379,10 +379,20 @@ async function main() {
   };
 
   const rows = [];
+  let matchedOnly = false;
   const ceiling = {}; // per-control grid reading at the design baseline — the bar
   for (const vp of SHAPES) {
     const name = `${vp.w}x${vp.h}${vp.settings ? `-${Object.values(vp.settings).join('-')}` : ''}`;
-    if (only && only !== name) continue;
+    // THE REFERENCE SHAPE ALWAYS RUNS. Every control's bar is its own reading at
+    // the 1200x730 design baseline, so `--only 390x844` used to skip the shape
+    // that sets the bar and then print, for each of four controls, "no reference
+    // reading ... NOT asserted" — followed by PASS. A run that hit-tested every
+    // control and asserted nothing about any of them, reported as a pass. That
+    // is worse than the empty run below, because it looks like a real one.
+    const isRef = !!vp.reference;
+    if (only && only !== name && !isRef) continue;
+    if (only && only !== name && isRef) matchedOnly = matchedOnly; // fall through: run it for the bar
+    else if (only === name) matchedOnly = true;
     console.log(`\n  ${name} @ dSF ${vp.d}  (${vp.tag})`);
     expectOpen = !!vp.knownOpen;
     if (vp.knownOpen) console.log(`    KNOWN-OPEN, not this branch's: ${vp.knownOpen.what}`);
@@ -484,6 +494,18 @@ async function main() {
       bleed: n2(fit.worstBleed), scrollY: n2(fit.pageScrollY) });
   }
 
+  // A CHECK THAT RAN NOTHING IS `unknown`, NEVER A PASS. `--only` with a typo
+  // used to print "PASS - every assertion held over 0 shape(s)" and exit 0 —
+  // development.md's own `verify-shipped: OK - 0 checks passed` fixture,
+  // reproduced in a tool I wrote four hours after quoting that fixture. Sunna
+  // found it concretely: `screenreach --only 412x915` reported PASS at the exact
+  // shape where she had measured a covered map node.
+  if (only && !matchedOnly) {
+    console.error(`\nmobilefit: --only ${only} matched no shape. Nothing was tested, so this is unknown, not a pass.`);
+    console.error(`  shapes: ${SHAPES.map((v) => `${v.w}x${v.h}${v.settings ? '-' + Object.values(v.settings).join('-') : ''}`).join(', ')}`);
+    cdp.close(); child.kill(); if (server) server.close();
+    process.exit(2);
+  }
   console.log('\n  SUMMARY');
   console.log('  shape       kind       zoom  local space   END TURN  touch  worst bleed  page scrollY');
   for (const r of rows) {
