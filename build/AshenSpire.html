@@ -505,6 +505,29 @@ body.hide-hints .hint-bar { display: none; }
 
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
+
+/* EldenSpire#23 — Sunna's withhold. The reward screen is the first thing a
+   portrait player meets after every fight, and it only became reachable at all
+   because this branch fixed the fight. At 390x844 three cards need 417.6px in a
+   390px viewport: the row overflowed 13.8px each side, the left card's cost
+   badge showed 5.2px of 27, and — unlike every other bleed on this branch —
+   THERE WAS NO SCROLLPORT, so no swipe recovered it.
+
+   HER RULE WAS `overflow-x: auto`, AND ON ITS OWN IT CHANGES NOTHING. Measured:
+   bleed 13.8px unmoved, travel still 0, badge still 5.2/27. `.reward-row` is a
+   shrink-to-fit flex item inside `.screen`, which is `align-items: center` — so
+   it sizes to its 417.6px of content, and a scroll container exactly as wide as
+   its content has nothing to scroll. `.hand` got the same rule four lines away
+   and worked because it is a grid item that stretches to its column. Same rule,
+   different parent, opposite outcome.
+
+   `max-width: 100%` is what lets the rule bite. With both: bleed 0 at all three
+   portrait shapes, every cost badge fully visible, and 73-79px of real swipe
+   travel where there was none. 1200x730 and 844x390 are untouched — the
+   container query does not fire there, measured, 0 bleed and 0 travel both. */
+@container app (max-width: 520px) {
+  .reward-row { overflow-x: auto; max-width: 100%; }
+}
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 .heal-note { color: var(--green); font-size: 1.3rem; }
 
