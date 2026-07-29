@@ -624,6 +624,10 @@ body.hide-hints .hint-bar { display: none; }
    stops a clamp from reading as a dead control. */
 .set-applied { color: var(--muted); font-size: 1.1rem; margin-top: 0.3rem; font-variant-numeric: tabular-nums; }
 .set-applied.limited { color: var(--gold); }
+/* The hint stays muted even when the line around it is gold: the accent marks
+   "your request was held back", and the pointer to Text size is standing
+   advice, not part of that alarm. */
+.set-applied .set-applied-hint { color: var(--muted); display: block; }
 
 .set-actions { display: flex; justify-content: flex-end; margin-top: 1.6rem; }
 .toggle {
@@ -16487,7 +16491,7 @@ const ROWS = [
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: true,
-    note: 'Auto flexes the whole interface with your window; S–XL asks for a fixed size and gets as much of it as fits.' },
+    note: 'Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.' },
   { cat: 'Display', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
     note: 'Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.' },
@@ -16647,10 +16651,25 @@ function appliedHtml(settings) {
   // A hundredth of slack: the fit path rounds to two decimals, so an exact
   // grant can miss by 0.004 and must not be reported as a limit.
   const limited = asked != null && applied < asked - 0.005;
+  // "your screen", not "this window". Shown on three phone shapes, where a
+  // window is not a thing the player has; "your screen" is true on both.
+  // Sunna's, and the row's own note carries the same noun for the same reason.
+  //
+  // THE HINT IS UNCONDITIONAL, and that is the decision rather than an
+  // oversight. Its job is to reach one person: the player who sets XL BECAUSE
+  // SHE CANNOT READ THE GAME, gets 0.82x and a polite explanation, and is not
+  // helped at all — the clamp fixes reachability and does nothing for
+  // legibility, and the player who most needs XL is the one on the smallest
+  // screen. Every condition I drafted for showing it (limited-only, named-size
+  // only, L-and-XL-only) had a screen where she asks for bigger, is refused or
+  // under-served, and is told nothing. A five-word pointer to a sibling control
+  // cannot be wrong; a condition deciding when she deserves to see it can, and
+  // this week has been a week of conditions that were. Wording is Sunna's.
   return `<p class="set-applied${limited ? ' limited' : ''}" data-applied="uiScale">`
     + (limited
-      ? `Showing ${shown} — the largest that fits this window (${key.toUpperCase()} is ${asked.toFixed(2)}\u00d7)`
+      ? `Showing ${shown} — the largest that fits your screen (${key.toUpperCase()} is ${asked.toFixed(2)}\u00d7)`
       : `Showing ${shown}`)
+    + ` <span class="set-applied-hint">For bigger text, try Text size.</span>`
     + `</p>`;
 }
 

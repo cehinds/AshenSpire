@@ -434,6 +434,10 @@ body.hide-hints .hint-bar { display: none; }
    stops a clamp from reading as a dead control. */
 .set-applied { color: var(--muted); font-size: 1.1rem; margin-top: 0.3rem; font-variant-numeric: tabular-nums; }
 .set-applied.limited { color: var(--gold); }
+/* The hint stays muted even when the line around it is gold: the accent marks
+   "your request was held back", and the pointer to Text size is standing
+   advice, not part of that alarm. */
+.set-applied .set-applied-hint { color: var(--muted); display: block; }
 
 .set-actions { display: flex; justify-content: flex-end; margin-top: 1.6rem; }
 .toggle {
