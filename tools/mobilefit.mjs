@@ -95,6 +95,29 @@ const SHAPES = [
   { w: 844, h: 344, d: 3, mobile: true, tag: 'landscape-chrome', known: {},
     knownOpen: { what: 'landscape degrades as the browser chrome takes height',
                  why: 'END TURN 43/45 (2 points under .pile.discard), .energy-orb 36/45, .hand-area 17.27px past the bottom edge. Present on dev at bf18a2e and unchanged by the portrait work — this is the WIDE layout, which this branch does not touch. Unfiled: Sunna to confirm, Marina to sequence.' } },
+  // TABLET PORTRAIT — Vira's corpus, EldenSpire#24. Every portrait shape above
+  // is <=412px wide and there was NO portrait shape between 520 and 1200px, so
+  // the whole band where the zoom picks the narrow baseline and the layout
+  // declines to go narrow was untested by this file. Three of these four work
+  // on dev and were locked out by my own branch. 834x1194 is iPad Pro 11
+  // portrait; 884 vs 885 is the one-pixel edge of the region.
+  // The two `match` shapes carry a PRE-EXISTING overshoot, verified on dev
+  // rather than assumed: the wide path rounds, so 834x1194 takes zoom 0.70 and
+  // 0.70 x 1200 = 840 > 834 — 6px, and identical on a48f8a6 (885x1326: 888 >
+  // 885, 3px). Flooring the wide path fixes it and moves every existing
+  // player's zoom, which turned tools/tutorial-reach.mjs red once already.
+  // Excused BY ASSERTION, not by shape: everything else at these shapes —
+  // including the 45/45 Vira's discharge predicate requires — is asserted
+  // normally. A whole-shape excuse here would have silenced the exact reading
+  // she is waiting on.
+  { w: 834, h: 1194, d: 2, mobile: true, tag: 'tablet', known: { endTurn: 45 },
+    knownOpen: { match: '#23 (a) LITERAL', what: 'the wide path rounds up, so zoom x designW overshoots innerWidth by 6px',
+                 why: 'Identical on dev at a48f8a6 (0.70 x 1200 = 840 > 834). Fixing it means flooring the wide path, which moves every existing zoom.' } },
+  { w: 884, h: 1326, d: 2, mobile: true, tag: 'tablet', known: { endTurn: 45 } },
+  { w: 885, h: 1326, d: 2, mobile: true, tag: 'tablet', known: { endTurn: 45 },
+    knownOpen: { match: '#23 (a) LITERAL', what: 'the wide path rounds up, so zoom x designW overshoots innerWidth by 3px',
+                 why: 'Identical on dev at a48f8a6 (0.74 x 1200 = 888 > 885).' } },
+  { w: 900, h: 1600, d: 2, mobile: true, tag: 'tablet', known: { endTurn: 45 } },
   { w: 1920, h: 1080, d: 1, mobile: false, tag: 'desktop', known: { endTurn: 45 } },
   // The decisive case for WHICH primitive a reflow is written in. Settings ->
   // UI size -> XL is zoom 1.45 on a 1200px screen, so the layout has 828 LOCAL
@@ -130,10 +153,12 @@ const fails = [];
 // forced to revisit is how a suite goes green over a bug.
 let openFails = [];
 let expectOpen = false;
+let openMatch = null; // when set, ONLY assertions containing it are excused
 const ok = (cond, msg) => {
-  console.log(`    ${cond ? '\u2713' : '\u2717'}${!cond && expectOpen ? ' [KNOWN-OPEN]' : ''} ${msg}`);
+  const excused = expectOpen && (openMatch == null || msg.includes(openMatch));
+  console.log(`    ${cond ? '\u2713' : '\u2717'}${!cond && excused ? ' [KNOWN-OPEN]' : ''} ${msg}`);
   if (cond) return;
-  (expectOpen ? openFails : fails).push(msg);
+  (excused ? openFails : fails).push(msg);
 };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const n2 = (v) => (v == null ? 'n/a' : (Math.round(v * 100) / 100).toString());
@@ -229,6 +254,22 @@ const FIT = `(() => {
   // narrow rule turns .hand-area into a grid; nothing else in the sheet does.
   const ha = document.querySelector('.hand-area');
   const narrowActive = !!ha && getComputedStyle(ha).display === 'grid';
+  // MARINA'S PROPERTY (EldenSpire#24): the zoom selects the narrow baseline IFF
+  // the narrow layout is active. Zero exceptions. Three independent witnesses
+  // that must agree — the attribute main.js wrote, the arithmetic it claims to
+  // follow, and what the stylesheet ACTUALLY rendered. Any two agreeing while
+  // the third dissents is the defect that locked out three tablet shapes:
+  // there the arithmetic said narrow, the rendered layout said wide, and there
+  // was no attribute at all to catch the disagreement.
+  const attr = de.getAttribute('data-layout');
+  const nmax = ui && ui.narrowMax ? ui.narrowMax : null;
+  const impliedNarrow = nmax == null ? null : (innerWidth / z) <= nmax + 0.001;
+  const property = {
+    attr, impliedNarrow, rendered: narrowActive, localW: innerWidth / z, nmax,
+    agree: attr != null && impliedNarrow != null
+      && (attr === 'narrow') === impliedNarrow
+      && (attr === 'narrow') === narrowActive,
+  };
   // Observational bleed: every element the fight needs, measured against the
   // VISUAL viewport, which is the space a finger and an eye both live in.
   const need = ['.topbar', '.field', '.hand-area', '.end-turn', '.energy-orb', '.pile.draw', '.pile.discard'];
@@ -281,6 +322,7 @@ const FIT = `(() => {
     // the app is actually drawn for, and the tool names which one carried it.
     // On a tree with one baseline this is her sentence unchanged.
     narrowActive,
+    property,
     literal: designW == null ? null : (() => {
       const cands = [{ name: 'designW', w: designW }];
       // narrowW counts ONLY when the narrow layout is actually laid out. The
@@ -395,7 +437,8 @@ async function main() {
     else if (only === name) matchedOnly = true;
     console.log(`\n  ${name} @ dSF ${vp.d}  (${vp.tag})`);
     expectOpen = !!vp.knownOpen;
-    if (vp.knownOpen) console.log(`    KNOWN-OPEN, not this branch's: ${vp.knownOpen.what}`);
+    openMatch = vp.knownOpen ? (vp.knownOpen.match || null) : null;
+    if (vp.knownOpen) console.log(`    KNOWN-OPEN${openMatch ? ` (only assertions containing "${openMatch}")` : ''}, not this branch's: ${vp.knownOpen.what}`);
     const openBefore = openFails.length;
 
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S);
@@ -424,6 +467,12 @@ async function main() {
     console.log(`    ui-zoom ${fit.z} · viewport ${fit.vw}x${fit.vh} visual · app ${fit.localW}x${fit.localH} local · hand ${fit.hand ? fit.hand.cards : '?'} cards (${n2(fit.hand && fit.hand.w)} visual px)`);
     if (fit.arrow) ok(fit.arrow.matchesViewport, `${name}: #target-arrow (position:fixed inside the new container) still measures the viewport — ${n2(fit.arrow.w)}x${n2(fit.arrow.h)} vs ${fit.vw}x${fit.vh}`);
     console.log(`    narrow layout active: ${fit.narrowActive ? 'YES (.hand-area is a grid)' : 'no (wide layout)'}`);
+    if (fit.property && fit.property.attr != null) {
+      const P = fit.property;
+      ok(P.agree, `${name}: #24 PROPERTY — baseline and layout agree: data-layout=${P.attr} · arithmetic ${n2(P.localW)} <= ${P.nmax} is ${P.impliedNarrow} · rendered ${P.rendered ? 'narrow' : 'wide'}`);
+    } else {
+      ok(false, `${name}: #24 PROPERTY — <html data-layout> is absent, so nothing ties the zoom's baseline to the rendered layout`);
+    }
     console.log(`    breakpoint room: a 520px MEDIA query says ${fit.mq520 ? 'narrow' : 'wide'} (sees ${fit.vw}); a 520px CONTAINER query on #app says ${fit.localW <= 520 ? 'narrow' : 'wide'} (sees ${fit.localW})${fit.mq520 !== (fit.localW <= 520) ? '  <-- THEY DISAGREE' : ''}`);
     // If a gate is up, everything below is measuring the gate. Say so first and
     // switch what is asserted — otherwise track A's "0/45" and dev's "0/45"
@@ -485,7 +534,7 @@ async function main() {
     // marking a clean shape known-open printed the ratchet line and exited 0.
     // A check that reports without blocking is the whole disease.
     const noneFailed = vp.knownOpen && openFails.length === openBefore;
-    expectOpen = false;
+    expectOpen = false; openMatch = null;
     if (noneFailed) {
       ok(false, `${name}: RATCHET — this shape is marked KNOWN-OPEN and produced no failure. Either the defect is fixed and the expectation is stale, or the check went blind. ${vp.knownOpen.what}`);
     }

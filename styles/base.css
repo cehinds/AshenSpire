@@ -100,36 +100,30 @@ body {
   height: 100%;
 }
 
-/* PROTOTYPE (EldenSpire#23, track B) — the container the narrow layout asks.
-   WHY A CONTAINER QUERY AND NOT A MEDIA QUERY, measured rather than argued: at
-   390x844 with --ui-zoom 0.62, `@media (max-width: 520px)` MATCHES (it sees the
-   unzoomed 390) while `@container app (max-width: 520px)` does NOT (it sees the
-   629 local px the layout actually has). They disagree at all three portrait
-   shapes — and at 1200x730 with Settings -> UI size -> XL, where the layout has
-   828 local px and a media query still reads 1200. A media breakpoint here is a
-   length evaluated in the unzoomed room, which is EldenSpire#15 wearing a
-   different hat. tools/mobilefit.mjs prints both numbers at every shape.
+/* EldenSpire#23/#24 — the narrow layout is selected by `data-layout` on <html>,
+   written by main.js's autoLayout() in the same call that chooses --ui-zoom.
+   The stylesheets measure nothing.
 
-   THE COST I EXPECTED AND DID NOT FIND, written down because I was wrong and
-   the wrong version nearly shipped in this comment. I believed
-   `container-type: inline-size` would make #app a containing block for its
-   FIXED-positioned descendants — it computes to `contain: layout style
-   inline-size`, and layout containment does exactly that — which would have
-   moved #target-arrow (position:fixed, 100% x 100%, inside .combat) and put it
-   in the same class of bug as #15 and #18. Measured on Chromium 1194 instead
-   of reasoned: a `position: fixed; inset: 0` child of a 60%-wide element
-   measures 390x844 whether or not that element declares `container-type` —
-   identical, both directions, at 390x844 and 1200x730. It is not a fixed
-   containing block on this engine. Absolutely-positioned children are bounded
-   the same with and without it too (both by `position: relative`, which was
-   already there).
-   So the cost is NOT paid here — and the check stays anyway
-   (tools/mobilefit.mjs asserts #target-arrow still measures the viewport at
-   every shape), because that is a claim about one engine's current behaviour
-   and the spec is exactly ambiguous enough for WebKit to differ. NOT VERIFIED
-   ON WEBKIT. tools/zoomplace.mjs passes unchanged on this branch, which covers
-   the four sites fixed in #15/#18 and says so about the rest. */
-#app { height: 100%; display: flex; flex-direction: column; container-type: inline-size; container-name: app; }
+   THIS WAS A CONTAINER QUERY AND THE MEASUREMENT THAT PUT IT THERE STILL
+   STANDS: at 390x844 with --ui-zoom 0.62, `@media (max-width: 520px)` MATCHES
+   (it sees the unzoomed 390) while a container query on #app does not (the app
+   has 629 local px). A media breakpoint here is a length evaluated in the
+   unzoomed room — EldenSpire#15 wearing a different hat, and that is why the
+   answer was never a media query.
+
+   The answer turned out not to be a container query either. Asking the question
+   in CSS at all made two deciders out of one decision — the zoom judging
+   innerWidth/innerHeight against 430x780, the stylesheet judging the container's
+   local width against 520 — and on a tablet they disagreed and the fight became
+   unadvanceable (#24, 834x1194: zoom picks narrow at 1.53, layout stays wide at
+   545 local px, END TURN 0/45 where dev is 45/45). An attribute has no room
+   problem because it carries no length, and it cannot disagree with the zoom
+   because the same function writes both.
+
+   Removing it also retires `container-type: inline-size` and with it the WebKit
+   unknown Sunna bounded on this branch — whether a query container becomes a
+   containing block for fixed descendants. Nothing here declares one now. */
+#app { height: 100%; display: flex; flex-direction: column; }
 
 h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: 0.08em; }
 

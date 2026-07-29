@@ -110,15 +110,23 @@ export const balance = {
       // 430x780 is a portrait-phone board: at 390x844 it wants 0.907 (local
       // 430x930), at 412x915 0.958, at 360x640 0.821 (local 438x780).
       //
-      // THE BREAKPOINT ITSELF IS NOT HERE. `@container app (max-width: 520px)`
-      // in styles/combat.css is its one home: a container query condition
-      // cannot read a custom property, so a copy of 520 in this file would be a
-      // number nothing keeps in sync with the rule that uses it — the exact
-      // defect SOP 5 exists for. The three widths above all land under it, and
-      // a probe checks the layout ACTUALLY reflowed rather than checking a
-      // number against a number.
+      // narrowMax is the width, in LOCAL px, at or below which the narrow
+      // layout is used. It lives HERE and nowhere else.
+      //
+      // It used to live in styles/combat.css instead, as `@container app
+      // (max-width: 520px)`, because a container query condition cannot read a
+      // custom property. That was a correct single-home argument and Vira
+      // verified it — and it was not the point. The stylesheet asking the
+      // question at all made TWO deciders out of one decision: the zoom judged
+      // innerWidth/innerHeight against 430x780, the layout judged the
+      // container's local width against 520, and nothing made them agree. On a
+      // tablet they disagreed and the fight became unadvanceable (#24).
+      // main.js now decides once and writes `data-layout` on <html>; the
+      // stylesheets follow it and measure nothing. One decider, one home, and
+      // CSS needs no copy of this number.
       narrowW: 430,
       narrowH: 780,
+      narrowMax: 520,
     },
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).

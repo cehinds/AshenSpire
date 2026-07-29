@@ -128,12 +128,10 @@ body.hide-header-relics .map-substrip.no-flasks { display: none; }
    the corner the buttons occupy, and the stack turns into a row and shrinks:
    three 3rem buttons in a row are 9.8rem of the bottom edge instead of 3.4rem
    of the bottom-right corner, where the nodes are. */
-@container app (max-width: 520px) {
-  .mapscreen .map-canvas { padding-bottom: 6.4rem; }
-  .map-zoom { flex-direction: row; right: 0.8rem; bottom: 0.8rem; gap: 0.8rem; }
-  .map-zoom .zbtn { width: 3rem; height: 3rem; font-size: 1.6rem; }
+  :root[data-layout='narrow'] .mapscreen .map-canvas { padding-bottom: 6.4rem; }
+  :root[data-layout='narrow'] .map-zoom { flex-direction: row; right: 0.8rem; bottom: 0.8rem; gap: 0.8rem; }
+  :root[data-layout='narrow'] .map-zoom .zbtn { width: 3rem; height: 3rem; font-size: 1.6rem; }
   /* Same as the combat bar: the seed is dev information, it is what wraps the
      header on a phone, and it stays reachable at overlay.js:163 (Stats, from
      the menu button in this bar) and gameover.js:17. */
-  .map-header .mh-seed { display: none; }
-}
+  :root[data-layout='narrow'] .map-header .mh-seed { display: none; }
