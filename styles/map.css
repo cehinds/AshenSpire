@@ -117,3 +117,23 @@ body.hide-header-seed .map-header .mh-seed { display: none; }
 body.hide-header-relics .map-substrip .mh-relics,
 body.hide-header-relics .map-substrip .mh-div { display: none; }
 body.hide-header-relics .map-substrip.no-flasks { display: none; }
+
+/* PROTOTYPE -> shipped (EldenSpire#23): the act map at a portrait phone's
+   width. The narrow design baseline gives the app 433 local px instead of
+   629, and at that width the floating zoom stack landed on top of two map
+   nodes — measured, 2 controls COVERED at 390x844 where dev has none. The map
+   is on the critical path to combat, so a fix that makes the fight reachable
+   and the map not is not a fix.
+   The canvas gets a clear band at the bottom so no node can be laid out in
+   the corner the buttons occupy, and the stack turns into a row and shrinks:
+   three 3rem buttons in a row are 9.8rem of the bottom edge instead of 3.4rem
+   of the bottom-right corner, where the nodes are. */
+@container app (max-width: 520px) {
+  .mapscreen .map-canvas { padding-bottom: 6.4rem; }
+  .map-zoom { flex-direction: row; right: 0.8rem; bottom: 0.8rem; gap: 0.8rem; }
+  .map-zoom .zbtn { width: 3rem; height: 3rem; font-size: 1.6rem; }
+  /* Same as the combat bar: the seed is dev information, it is what wraps the
+     header on a phone, and it stays reachable at overlay.js:163 (Stats, from
+     the menu button in this bar) and gameover.js:17. */
+  .map-header .mh-seed { display: none; }
+}

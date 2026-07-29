@@ -193,18 +193,26 @@ function computeAutoZoom() {
   if (typeof window === 'undefined') return 1;
   const z = UI.uiScale;
   const fitFor = (w, h) => Math.min(window.innerWidth / w, window.innerHeight / h);
-  let fit = fitFor(z.designW, z.designH);
-  if (z.narrowW && z.narrowH) fit = Math.max(fit, fitFor(z.narrowW, z.narrowH));
-  // FLOOR, not round. `Math.round` can hand back a zoom LARGER than the one
-  // that fits: at 390x844 the narrow fit is 0.907, round gives 0.91, and
-  // 0.91 x 430 = 391.3 local px demanded against 390 available. 1.3px, and it
-  // is #23's own invariant failing in miniature — the applied zoom asking for
-  // more space than the screen has. Nothing was observed bleeding at 390x844,
-  // so this is a latent defect and not a visible one; it is one word and it
-  // makes the invariant exact rather than nearly true.
-  // MEASURED COST: 1920x1080 goes 1.48 -> 1.47 (local 1297x730 -> 1306x734).
-  // 1200x730 is 1.00 either way — the non-regression edge does not move.
-  return Math.max(z.min, Math.min(z.max, Math.floor(fit * 100) / 100));
+  // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE.
+  //
+  // The wide path keeps `Math.round` byte-for-byte, because every zoom every
+  // existing player sees comes out of it and this branch has no business
+  // moving them. The narrow path floors, because `Math.round` can hand back a
+  // zoom LARGER than the one that fits: at 390x844 the narrow fit is 0.907,
+  // round gives 0.91, and 0.91 x 430 = 391.3 local px demanded against 390
+  // available — #23's own invariant failing in miniature.
+  //
+  // I first floored BOTH, for the tidiness of one rule. It moved 1920x1080
+  // from 1.48 to 1.47 and 1280x800 from 1.07 to 1.06, and the second of those
+  // turned tools/tutorial-reach.mjs red — the guard on #7, the tutorial
+  // lockout, which asserts the zoom re-flexes to a named value on resize. A
+  // one-word tidy-up with the widest blast radius in the diff, caught by
+  // somebody else's check. Flooring only the new path leaves every existing
+  // value identical to dev (verified: 800x450 0.62, 1024x640 0.85, 1280x800
+  // 1.07, 1920x1080 1.48, 2560x1440 1.70) and still makes the narrow fit exact.
+  const wideFit = Math.round(fitFor(z.designW, z.designH) * 100) / 100;
+  const narrowFit = (z.narrowW && z.narrowH) ? Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100 : 0;
+  return Math.max(z.min, Math.min(z.max, Math.max(wideFit, narrowFit)));
 }
 
 function resolveZoom(uiScale) {

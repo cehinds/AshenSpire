@@ -437,8 +437,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   .topbar .hpbar { width: 14rem; }
   .topbar .who .nm { font-size: 1rem; }
   /* The seed string is dev information and it is what was overflowing the bar
-     on a phone. It is not gone — the pause menu and the history screen both
-     carry the seed. */
+     on a phone. It is not gone, and I checked rather than assuming when I
+     wrote this the first time: overlay.js:163 puts Seed in the Stats panel,
+     reachable from the menu button in this same bar, and gameover.js:17
+     prints it on the run summary. Hidden here, present twice elsewhere. */
   .topbar .fight-label { display: none; }
   .topbar .relics { margin-left: 0; }
 
@@ -500,15 +502,28 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   }
   .end-turn {
     grid-area: end; position: static; right: auto; bottom: auto;
-    width: 100%; min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
+    min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
+    /* NOT `width: 100%`: a grid item already stretches to its column, and
+       100% resolves against the column BEFORE the margin, so the button kept
+       its full width and slid left under the piles — 39/45, the same bug in
+       the other direction. Stretch plus a margin is the reservation.
+       Room for draw + discard + exhaust, held whether or not exhaust is
+       showing, so the row does not jump mid-fight. ~190 local px left over. */
+    margin-right: 13.8rem;
   }
 
-  /* The piles move out of the thumb row and up beside the top bar. They are
-     required controls (#21's re-open clause names them), so they are still
-     hit-tested; they are just no longer competing with END TURN for the one
-     band a thumb reaches. */
-  .pile { top: 0.6rem; bottom: auto; width: 4.4rem; height: 3.4rem; font-size: 1.1rem; z-index: 30; }
-  .pile.draw { left: auto; right: 10.2rem; }
-  .pile.discard { right: 5.4rem; }
-  .pile.exhaust { right: 0.6rem; }
+  /* The piles join the control row rather than moving up beside the top bar.
+     THE FIRST VERSION PUT THEM AT `top: 0.6rem` AND THAT WAS #21 AGAIN, BY MY
+     HAND: the piles are z-index 30 and the top bar is not, so .pile.draw
+     landed on top of the #combat-armoury button and hit-testing it returned
+     `div.pile.draw`. A screen sweep caught it — 1 covered control at 390x844
+     where dev has none on that element. Moving a control out from under the
+     hand and putting a different one under a pile is not a fix.
+     Now they sit in the bottom band with the orb and END TURN, and END TURN
+     reserves the width for all three so the row does not jump the first time
+     an exhaust pile appears mid-fight. */
+  .pile { bottom: 1.6rem; top: auto; width: 4.2rem; height: 3.6rem; font-size: 1.1rem; z-index: 30; }
+  .pile.draw { left: auto; right: 9.6rem; }
+  .pile.discard { right: 0.8rem; }
+  .pile.exhaust { right: 5.2rem; }
 }
