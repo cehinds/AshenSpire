@@ -108,6 +108,13 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   const { clampBox } = await import('../src/ui/fx.js');
   const view = { width: 1000, height: 800 };
   const inside = (b, w, h, pad) => b.left >= pad - 0.001 && b.top >= pad - 0.001 && b.left + w <= view.width - pad + 0.001 && b.top + h <= view.height - pad + 0.001;
+  // No `incl. …` summary of what these cover: the case NAMES below are that
+  // description and they are single-homed. The clause that used to sit in the PASS
+  // line was a second copy with nothing holding it to the array, and it drifted —
+  // delete the last case and it still claimed "a finite keep on BOTH far edges"
+  // beside "6/6 cases". Measured or absent; a coverage claim no one maintains is
+  // worse than none, because it reads as a guarantee. The failure path already
+  // names the cases that broke.
   const cases = [
     ['a box already inside is not moved', () => {
       const r = clampBox({ left: 100, top: 100, width: 200, height: 100 }, view);
@@ -133,11 +140,23 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
       const r = clampBox({ left: 9999, top: 9999, width: 20, height: 20 }, view, { keep: 500 });
       return inside(r, 20, 20, 4);
     }],
+    // The far edge of the SAME rule, because `lo` and `hi` are different
+    // expressions and the keep:40 case above exercises only `lo`. Its known-bad:
+    // mutate `hi = span - pad - k` to `span - pad - size` and all six cases above
+    // stay green while a pointer-tracked box loses its overhang (956 -> 796).
+    // A finite `keep` on the high edge is the one branch nothing else watches —
+    // no browser run reaches it — so this line is its only witness, and until now
+    // it was a one-sided one.
+    ['keep:40 overhangs the RIGHT/BOTTOM edge too, not just the left/top', () => {
+      const r = clampBox({ left: 9999, top: 9999, width: 200, height: 100 }, view, { keep: 40 });
+      return r.left + 200 > view.width - 4 && r.top + 100 > view.height - 4
+          && r.left <= view.width - 4 - 40 + 0.001 && r.top <= view.height - 4 - 40 + 0.001;
+    }],
   ];
   const bad = cases.filter(([, fn]) => !fn()).map(([n]) => n);
   console.log(
     `${bad.length ? 'FAIL' : 'PASS'}  38. clampBox keeps a box inside its named container` +
-      ` — ${bad.length ? `failed: ${bad.join('; ')}` : `${cases.length}/${cases.length} cases, incl. box>view and keep>box.`}` +
+      ` — ${bad.length ? `failed: ${bad.join('; ')}` : `${cases.length}/${cases.length} cases.`}` +
       ` (arithmetic only — the space it is computed in is what #15 was, and no unit test can see that)`
   );
   if (bad.length) zoomExtra++;
