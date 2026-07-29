@@ -59,7 +59,28 @@ body.readable-ui { --font-display: var(--font-body); }
 /* Root sizing anchor: 62.5% makes 1rem = 10px, so every rem in the stylesheets
    maps to px÷10 at rest. The text-size setting overrides this % on <html> to
    grow/shrink all rem-based type + dimensions at once (main.js). */
-html { height: 100%; overflow: hidden; font-size: 62.5%; }
+html { height: 100dvh; overflow: hidden; font-size: 62.5%; }
+/* PROTOTYPE (EldenSpire#23, track B) — 100dvh, and ONLY here.
+   `dvh` was pitched as a sweep. It is wrong everywhere except this one line,
+   and the reason is the one that has bitten this file all week. Measured under
+   `body { zoom: 0.62 }` at 390x844: 100dvh, 100svh, 100lvh AND 100vh all
+   compute to 843.98px and then render at 523 visual — vh-family units resolve
+   against the UNZOOMED viewport and are then scaled, so inside the app `dvh` is
+   exactly as wrong as `vh` (Marina's ruling, EldenSpire#15). `height: 100%`
+   computes 1361.29px = 844/0.62, which is correct, which is why base.css was
+   already right to use percent below <body> and still is.
+   <html> is the one element the zoom does not touch, so this is the one place a
+   viewport unit is evaluated in the room it means. `100%` here resolves against
+   the initial containing block, which on a phone tracks the LARGE viewport —
+   the tall one you get when the address bar is hidden — so the bottom of the
+   board sits under the bar whenever the bar is up. `100dvh` tracks the current
+   one.
+   UNVERIFIED, and I want that loud: headless Chromium has no moving address
+   bar, dvh/svh/lvh all measure identically here, and this harness therefore
+   cannot show this line doing anything at all. It is the one change on this
+   branch with no measurement behind it. On a desktop it is a no-op (measured:
+   1200x730 identical either way), which is why it is safe to leave in and
+   dishonest to call it verified. */
 
 /* UI size: the whole app is zoomed by --ui-zoom (Settings → UI size / Auto, set
    in main.js). Sizing uses PERCENT heights (not vh) everywhere below `body` so
@@ -79,6 +100,29 @@ body {
   height: 100%;
 }
 
+/* EldenSpire#23/#24 — the narrow layout is selected by `data-layout` on <html>,
+   written by main.js's autoLayout() in the same call that chooses --ui-zoom.
+   The stylesheets measure nothing.
+
+   THIS WAS A CONTAINER QUERY AND THE MEASUREMENT THAT PUT IT THERE STILL
+   STANDS: at 390x844 with --ui-zoom 0.62, `@media (max-width: 520px)` MATCHES
+   (it sees the unzoomed 390) while a container query on #app does not (the app
+   has 629 local px). A media breakpoint here is a length evaluated in the
+   unzoomed room — EldenSpire#15 wearing a different hat, and that is why the
+   answer was never a media query.
+
+   The answer turned out not to be a container query either. Asking the question
+   in CSS at all made two deciders out of one decision — the zoom judging
+   innerWidth/innerHeight against 430x780, the stylesheet judging the container's
+   local width against 520 — and on a tablet they disagreed and the fight became
+   unadvanceable (#24, 834x1194: zoom picks narrow at 1.53, layout stays wide at
+   545 local px, END TURN 0/45 where dev is 45/45). An attribute has no room
+   problem because it carries no length, and it cannot disagree with the zoom
+   because the same function writes both.
+
+   Removing it also retires `container-type: inline-size` and with it the WebKit
+   unknown Sunna bounded on this branch — whether a query container becomes a
+   containing block for fixed descendants. Nothing here declares one now. */
 #app { height: 100%; display: flex; flex-direction: column; }
 
 h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: 0.08em; }

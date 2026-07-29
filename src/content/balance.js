@@ -97,6 +97,36 @@ export const balance = {
       designH: 730,
       min: 0.62,
       max: 1.7,
+      // PROTOTYPE (EldenSpire#23, track B). A SECOND design baseline, for the
+      // narrow layout in styles/combat.css. #23 reads as a clamp bug — the
+      // floor of 0.62 winning on every phone — and it is not: lowering the
+      // floor to 0.325 fits a 1200px layout onto a 390px screen and gives you
+      // glyphs you can read on a board you still cannot use. The wrong number
+      // is the BASELINE, which says every screen is 1200x730. Auto picks
+      // whichever of the two baselines wants the LARGER zoom, so nothing here
+      // decides "is this a phone" — the fit does, and the floor stops binding
+      // on its own without being touched.
+      //
+      // 430x780 is a portrait-phone board: at 390x844 it wants 0.907 (local
+      // 430x930), at 412x915 0.958, at 360x640 0.821 (local 438x780).
+      //
+      // narrowMax is the width, in LOCAL px, at or below which the narrow
+      // layout is used. It lives HERE and nowhere else.
+      //
+      // It used to live in styles/combat.css instead, as `@container app
+      // (max-width: 520px)`, because a container query condition cannot read a
+      // custom property. That was a correct single-home argument and Vira
+      // verified it — and it was not the point. The stylesheet asking the
+      // question at all made TWO deciders out of one decision: the zoom judged
+      // innerWidth/innerHeight against 430x780, the layout judged the
+      // container's local width against 520, and nothing made them agree. On a
+      // tablet they disagreed and the fight became unadvanceable (#24).
+      // main.js now decides once and writes `data-layout` on <html>; the
+      // stylesheets follow it and measure nothing. One decider, one home, and
+      // CSS needs no copy of this number.
+      narrowW: 430,
+      narrowH: 780,
+      narrowMax: 520,
     },
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).

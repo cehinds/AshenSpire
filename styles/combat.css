@@ -395,3 +395,133 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
 .reduced-motion .combatant .sprite > img { animation: none; }
 .combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
+
+/* ==========================================================================
+   PROTOTYPE (EldenSpire#23, track B) — the narrow combat board.
+   ==========================================================================
+   Fires when #app has 520 LOCAL px or fewer. With the narrow design baseline
+   in balance.ui.uiScale, that is every portrait phone and nothing else: at
+   390x844 the app gets 430x930 local, at 412x915 430x955, at 360x640 438x780.
+   Landscape phones (1361x629), 1200x730 and 1920x1080 are all far above it and
+   this whole block is inert for them — which is the non-regression argument,
+   and it is checked by running the same tool at those shapes rather than by
+   this sentence.
+
+   WHAT REFLOW MEANS HERE, against what "scaling" would have done: the hand
+   stops being a fan of overlapping cards under an absolutely-positioned button
+   and becomes a horizontal strip with the controls in their own row beneath
+   it. END TURN is no longer over the hand at all — not moved a little, not
+   raised above it, out of it. That is the difference between shrinking a
+   1200px layout and laying out for 430.
+
+   NOT DONE HERE, deliberately:
+   - `touch-action` is not set on the strip. A horizontal scroller wants
+     `pan-x`, and setting it changes which gestures the browser claims, which
+     is EldenSpire#22's subject. #22 is a separate card with its own gate and I
+     am not folding it into a prototype. The strip scrolls on default
+     behaviour; a touch-drag from a card still fires pointercancel exactly as
+     it does on dev, unchanged and unfixed.
+   - No `clamp()`. It was pitched for type and spacing, and the useful form of
+     it is `clamp(a, Nvw, b)` — a vw length, which under `body { zoom }`
+     resolves in the unzoomed room and is the same defect as everything else on
+     this branch. `clamp()` over rem is just a min and a max, and this block
+     already has exact numbers for the one baseline it targets. It would have
+     been decoration. */
+
+  /* ---- top bar: two rows instead of one clipped one ---- */
+  :root[data-layout='narrow'] .topbar {
+    height: auto; flex-wrap: wrap; row-gap: 0.4rem; gap: 1rem; padding: 0.6rem 1rem;
+  }
+  :root[data-layout='narrow'] .topbar .hpbar { width: 14rem; }
+  :root[data-layout='narrow'] .topbar .who .nm { font-size: 1rem; }
+  /* The seed string is dev information and it is what was overflowing the bar
+     on a phone. It is not gone, and I checked rather than assuming when I
+     wrote this the first time: overlay.js:163 puts Seed in the Stats panel,
+     reachable from the menu button in this same bar, and gameover.js:17
+     prints it on the run summary. Hidden here, present twice elsewhere. */
+  :root[data-layout='narrow'] .topbar .fight-label { display: none; }
+  :root[data-layout='narrow'] .topbar .relics { margin-left: 0; }
+
+  /* The keyboard/gamepad hint bar is an affordance for a device that is not
+     present. On a phone it costs a whole row and offers keys nobody can press.
+     Hidden, not deleted — it is a `display` rule inside this block, so it comes
+     back the moment the container is wide again. */
+  :root[data-layout='narrow'] .hint-bar.hint-combat { display: none; }
+
+  /* ---- battlefield: give the enemies the width ---- */
+  :root[data-layout='narrow'] .field { padding: 0 1.2rem; }
+  :root[data-layout='narrow'] .player-zone { width: 32%; padding-bottom: 1.2rem; }
+  /* The player sprite is sized from balance.ui.spriteTiers and does not know
+     about the zone it stands in; at 390x844 it ran 9px past the left edge of
+     the screen. Capped by width, height auto so it does not squash. */
+  :root[data-layout='narrow'] .player-zone .combatant .sprite > img { max-width: 11rem; height: auto; }
+  :root[data-layout='narrow'] .enemy-row { padding-bottom: 1.2rem; gap: 0.4rem; }
+  :root[data-layout='narrow'] .combatant .meters { width: 9.4rem; }
+  :root[data-layout='narrow'] .statuses { max-width: 10rem; min-height: 0; }
+  :root[data-layout='narrow'] .backdrop::after { width: 30rem; height: 30rem; }
+
+  /* ---- hand + controls: the actual reflow ----
+     Two rows. The hand is a strip that scrolls sideways; the controls sit in
+     their own row under it. .energy-orb and .end-turn stop being
+     position:absolute — that absolute placement inside a 23rem box is what put
+     the button under the hand at 0/45. */
+  :root[data-layout='narrow'] .hand-area {
+    height: auto; flex-shrink: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "hand hand" "orb  end";
+    align-items: center; gap: 0.8rem; padding: 0 1rem 1rem;
+  }
+  :root[data-layout='narrow'] .hand {
+    grid-area: hand; height: auto; padding: 1.2rem 0 1.6rem;
+    justify-content: flex-start; overflow-x: auto; gap: 0.6rem;
+    scrollbar-width: thin;
+  }
+  /* No negative margin: cards in a scroller must not overlap, or the one on
+     top eats the taps meant for the one beneath — the same mechanism as #21,
+     one level down. */
+  :root[data-layout='narrow'] .hand .card {
+    margin: 0; width: 11.6rem; height: 17.4rem; padding: 2.2rem 0.6rem 0.6rem;
+  }
+  :root[data-layout='narrow'] .hand .card .art { width: 9.6rem; height: 5.2rem; font-size: 2.8rem; }
+  :root[data-layout='narrow'] .hand .card .ctype { width: 9.6rem; }
+  :root[data-layout='narrow'] .hand .card .ctext { font-size: 1rem; margin-top: 0.4rem; }
+  :root[data-layout='narrow'] .hand .card .cname { font-size: 1.05rem; min-height: 2.4rem; }
+  /* A lift of 56px inside an overflow container is clipped, and the container
+     has to clip or it cannot scroll. So the selected card grows in place. */
+  :root[data-layout='narrow'] .hand .card:hover,
+:root[data-layout='narrow'] .hand .card.selected {
+    transform: translateY(-4px) scale(1.04) !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.8);
+  }
+
+  :root[data-layout='narrow'] .energy-orb {
+    grid-area: orb; position: static; left: auto; bottom: auto;
+    width: 5.6rem; height: 5.6rem; font-size: 1.7rem;
+  }
+  :root[data-layout='narrow'] .end-turn {
+    grid-area: end; position: static; right: auto; bottom: auto;
+    min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
+    /* NOT `width: 100%`: a grid item already stretches to its column, and
+       100% resolves against the column BEFORE the margin, so the button kept
+       its full width and slid left under the piles — 39/45, the same bug in
+       the other direction. Stretch plus a margin is the reservation.
+       Room for draw + discard + exhaust, held whether or not exhaust is
+       showing, so the row does not jump mid-fight. ~190 local px left over. */
+    margin-right: 13.8rem;
+  }
+
+  /* The piles join the control row rather than moving up beside the top bar.
+     THE FIRST VERSION PUT THEM AT `top: 0.6rem` AND THAT WAS #21 AGAIN, BY MY
+     HAND: the piles are z-index 30 and the top bar is not, so .pile.draw
+     landed on top of the #combat-armoury button and hit-testing it returned
+     `div.pile.draw`. A screen sweep caught it — 1 covered control at 390x844
+     where dev has none on that element. Moving a control out from under the
+     hand and putting a different one under a pile is not a fix.
+     Now they sit in the bottom band with the orb and END TURN, and END TURN
+     reserves the width for all three so the row does not jump the first time
+     an exhaust pile appears mid-fight. */
+  :root[data-layout='narrow'] .pile { bottom: 1.6rem; top: auto; width: 4.2rem; height: 3.6rem; font-size: 1.1rem; z-index: 30; }
+  :root[data-layout='narrow'] .pile.draw { left: auto; right: 9.6rem; }
+  :root[data-layout='narrow'] .pile.discard { right: 0.8rem; }
+  :root[data-layout='narrow'] .pile.exhaust { right: 5.2rem; }
