@@ -1290,13 +1290,18 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 /* ==========================================================================
    PROTOTYPE (EldenSpire#23, track B) — the narrow combat board.
    ==========================================================================
-   Fires when #app has 520 LOCAL px or fewer. With the narrow design baseline
-   in balance.ui.uiScale, that is every portrait phone and nothing else: at
-   390x844 the app gets 430x930 local, at 412x915 430x955, at 360x640 438x780.
-   Landscape phones (1361x629), 1200x730 and 1920x1080 are all far above it and
-   this whole block is inert for them — which is the non-regression argument,
-   and it is checked by running the same tool at those shapes rather than by
-   this sentence.
+   Fires when main.js's resolveLayout() writes data-layout="narrow" on <html>.
+   THE CONDITION IS NOT RESTATED HERE ON PURPOSE. This block used to say "when
+   #app has 520 LOCAL px or fewer", which was true, and which was a second copy
+   of a rule that lives in resolveLayout() with nothing keeping the two in
+   agreement — the same shape as the defect that made this block a container
+   query and locked out three tablet shapes (#24). A comment that restates a
+   condition is a decider that cannot be executed and therefore cannot be
+   tested. Read the function.
+
+   What is safe to say here, because it is about THIS file: the block is inert
+   wherever the wide layout is on screen, and that is checked by running
+   tools/mobilefit.mjs at those shapes rather than by this sentence.
 
    WHAT REFLOW MEANS HERE, against what "scaling" would have done: the hand
    stops being a fan of overlapping cards under an absolutely-positioned button
