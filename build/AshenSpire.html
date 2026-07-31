@@ -582,6 +582,23 @@ body.hide-hints .hint-bar { display: none; }
 }
 
 /* ---------- character customization ---------- */
+
+/* EldenSpire#29 slice 1. These three rules were inline `style=` attributes on
+   the markup, which is why the screen could not respond to anything: an inline
+   declaration outranks every stylesheet selector short of !important, so no
+   narrow layout could reach them. The VALUES are unchanged — 34px, 560px,
+   150px, 10px — and deliberately still px rather than rem, because px does not
+   answer to the Text size setting and rem does; converting them would have
+   changed the wide layout at text size L/XL, which nothing here measures. */
+.cz-cols { display: flex; gap: 34px; align-items: flex-start; }
+.cz-fields { display: flex; flex-direction: column; gap: 14px; max-width: 560px; }
+.preview-pane { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.cz-name {
+  background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
+  border-radius: 8px; padding: 6px 10px; width: 150px; text-align: center;
+  font-family: var(--font-display); letter-spacing: 0.08em;
+}
+
 .cz-portrait {
   width: 13rem; height: 16rem; border-radius: 12px; background: #2a2418;
   border: 3px solid var(--gold); display: flex; align-items: center; justify-content: center;
@@ -910,6 +927,42 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ge-row { display: flex; justify-content: space-between; gap: 1.6rem; font-size: 1.3rem; }
 .ge-name { color: var(--parchment); }
 .ge-kind { color: var(--muted); text-transform: uppercase; font-size: 1.05rem; letter-spacing: 1px; }
+
+
+/* ==========================================================================
+   EldenSpire#29 slice 1 — character creation on a narrow screen.
+   ==========================================================================
+   Selected by main.js's resolveLayout() writing data-layout="narrow"; the
+   condition is not restated here (see styles/combat.css for why).
+
+   WHAT WAS WRONG, measured at 390x844 before any of this existed: the two
+   columns need 135 + 34 + 560 = 729 local px and the app has 433, and because
+   `.screen` centres its children the overflow is split BOTH ways. The preview
+   pane, the name field and the seed field sat at -139.8..-4.8 — not clipped,
+   ABSENT, with zero pixels on screen and `document.scrollWidth` equal to
+   clientWidth, so no scroll or swipe could reach them. Three controls
+   unreachable, and the player never sees the character they are making.
+
+   That is #15's shape one more time: the control is alive, hit-testable in the
+   DOM, and nowhere a player can look.
+
+   The fix is to stop asking for two columns. Everything below is a single
+   `flex-direction` change and the wrapping that follows from it. */
+:root[data-layout='narrow'] .cz-cols {
+  flex-direction: column; align-items: center; gap: 1.8rem; width: 100%;
+}
+:root[data-layout='narrow'] .cz-fields { max-width: 100%; width: 100%; }
+/* Three 19rem cards need 606 local px; wrapping puts two on a row at 433 and
+   keeps each card at its authored width rather than squeezing the text. */
+:root[data-layout='narrow'] .class-row { flex-wrap: wrap; justify-content: center; gap: 1.2rem; }
+/* Two per row rather than one. The authored card is 19rem, and two of those
+   plus the gap need 392 local px against the 385 the column actually has — so
+   they wrapped one-up and the class list alone ran 749 local px of scroll.
+   17rem fits two and halves that. Chosen by measuring the scroll height, not
+   by eye. */
+:root[data-layout='narrow'] .class-pick { width: 17rem; padding: 1.2rem; }
+:root[data-layout='narrow'] .cz-opts { flex-wrap: wrap; justify-content: center; }
+:root[data-layout='narrow'] .cz-keepsakes { width: 100%; }
 
   </style>
   <style data-src="styles/combat.css">
@@ -2331,7 +2384,9 @@ function finishRun(victory) {
 function showCustomize(slot = 1) {
   mountCustomize(app, {
     registries,
-    defaultSeedString: randomSeedString(),
+    // A ?shot= boot gets a fixed seed so the field photographs identically on
+    // every capture; a real boot still gets a random one.
+    defaultSeedString: shotState === 'customize' ? 'SHOWCASE' : randomSeedString(),
     onBack: showTitle,
     onStart: (config) => newRun({ ...config, slot }),
   });
@@ -2849,6 +2904,13 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   coopStubMount(coopShrineShot(), 'p1');
 } else if (shotState === 'coopcatchup') {
   coopStubMount(coopCatchupShot(), 'p1');
+} else if (shotState === 'customize') {
+  // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
+  // and #29's own boundary records what that cost: no sweep can open a screen
+  // it cannot reach, so customize went unexamined for the whole week combat
+  // was measured three times over. A seed is passed rather than randomised so
+  // the seed field photographs the same on every run.
+  showCustomize(1);
 } else {
   showTitle();
 }
@@ -14741,15 +14803,14 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
     <div class="screen customize" style="justify-content:flex-start;overflow-y:auto;gap:16px;padding-top:26px">
       <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">PREPARE YOUR FORSAKEN</h2>
 
-      <div style="display:flex;gap:34px;align-items:flex-start">
-        <div class="preview-pane" style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <div class="cz-cols">
+        <div class="preview-pane">
           <div id="cz-portrait" class="cz-portrait"></div>
-          <input id="cz-name" maxlength="16" spellcheck="false" value="Forsaken"
-            style="background:var(--panel);border:1px solid var(--line);color:var(--parchment);border-radius:8px;padding:6px 10px;width:150px;text-align:center;font-family:var(--font-display);letter-spacing:.08em">
+          <input id="cz-name" class="cz-name" maxlength="16" spellcheck="false" value="Forsaken">
           <div class="seed-line">Seed <input id="seed-input" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:14px;max-width:560px">
+        <div class="cz-fields">
           <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
           <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
           <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
