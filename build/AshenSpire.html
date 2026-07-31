@@ -898,6 +898,59 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ge-name { color: var(--parchment); }
 .ge-kind { color: var(--muted); text-transform: uppercase; font-size: 1.05rem; letter-spacing: 1px; }
 
+/* ---------- ☰ quick-nav list (the quick-menu experiment, EldenSpire#34) ----- */
+/* A `.modal-veil` on purpose and not for the dimming: input.js's scopeRoot()
+   scopes the focus cursor to the topmost veil, so a D-pad drives this list with
+   no new input code (Law 3 clause 6 — a vertical list takes the cursor, and the
+   bumpers stay with the tabs behind it). The veil is transparent and un-centred;
+   the panel places itself against its button, in local px, through fx.js. */
+.qn-veil { background: transparent; display: block; }
+.qn-panel {
+  position: fixed; width: 26rem; max-width: 92%;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  padding: 0.4rem 0; overflow-y: auto; color: var(--parchment);
+}
+.qn-cap {
+  padding: 0.7rem 1.6rem; margin-bottom: 0.2rem; border-bottom: 1px solid var(--line);
+  color: var(--muted); font-size: 1rem; line-height: 1.4; letter-spacing: 0.04em;
+}
+/* 4.4rem, which is 44 LOCAL px — the house unit for a tap target, and bigger
+   than the 27 px the topbar buttons measure on a phone today. Not `px`: a row
+   holding text must grow with the text-size setting (Law 2). */
+.qn-panel .qn-row {
+  display: flex; align-items: center; gap: 1.2rem; width: 100%;
+  min-height: 4.4rem; padding: 0.6rem 1.6rem; text-align: left;
+  background: transparent; border: 0; border-radius: 0; color: inherit;
+  font-family: inherit; font-size: 1.4rem; cursor: pointer;
+}
+.qn-panel .qn-row:hover { background: var(--bg-raise); }
+.qn-panel .qn-row.on { background: var(--bg-raise); color: var(--gold); }
+.qn-panel .qn-row.danger { color: var(--ember); }
+.qn-panel .qn-ic { width: 2rem; flex-shrink: 0; text-align: center; color: var(--muted); }
+.qn-panel .qn-row.on .qn-ic, .qn-panel .qn-row.danger .qn-ic { color: inherit; }
+.qn-panel .qn-label { flex: 1; }
+.qn-panel .qn-badge { color: var(--muted); font-size: 1.1rem; }
+.qn-sep { border-top: 1px solid var(--line); margin: 0.4rem 0; }
+
+/* Variant B: the whole tab strip, folded into one control that names where you
+   are. Same set, same order, same bumpers (Law 3 clause 1a). */
+.ov-switch {
+  min-height: 4.4rem; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;
+  background: var(--bg-raise); border: 1px solid var(--line); color: var(--gold);
+  font-size: 1.3rem; letter-spacing: 0.05em;
+}
+.ov-switch:hover { border-color: var(--gold); }
+.overlay-tabs[hidden] { display: none; }
+
+/* Sunna's tap-target finding, taken in the cheapest moment it will ever have —
+   and ONLY while the experiment is on, so "off" stays today exactly and the
+   control in this comparison is a real control. */
+:root[data-quicknav='mirror'] .topbar .topbar-btn,
+:root[data-quicknav='switcher'] .topbar .topbar-btn {
+  width: 4.4rem; height: 4.4rem; font-size: 1.8rem;
+}
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -1620,6 +1673,7 @@ const { mountHistory } = require("src/ui/screens/history.js");
 const { openSettings, settingOn } = require("src/ui/screens/settings.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
+const { setQuickNav } = require("src/ui/components/quicknav.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
 const { initInput, setBindings, setKeyBindings } = require("src/ui/input.js");
 const { setSpritesEnabled, classGlyph, setClassGlyphs } = require("src/ui/assets.js");
@@ -1943,6 +1997,11 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
   document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
+  // The quick-menu experiment. Handed to the component the same way input.js is
+  // handed its bindings, so no screen has to thread `meta` down just to ask which
+  // variant is running. `settingOn` because the store is sparse and the default
+  // is part of the answer (see its own docstring).
+  setQuickNav({ mode: settings.quickNav, fixedEnds: settingOn(settings, 'quickNavFixedEnds') });
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
   document.documentElement.dataset.ambient = amb;
@@ -2363,6 +2422,10 @@ function showMap() {
       persist();
       return activeSlot;
     },
+    onQuit: () => {
+      persist(); // the run is resumable from its slot via Continue
+      showTitle();
+    },
   });
 }
 
@@ -2499,6 +2562,14 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
     onMenu: showOverlay,
+    onSave: () => {
+      persist();
+      return activeSlot;
+    },
+    onQuit: () => {
+      persist();
+      showTitle();
+    },
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
       const meta = saves.loadMeta();
@@ -15960,7 +16031,8 @@ const { overlayIsOpen } = require("src/ui/components/overlay.js");
 const { matchAction, isEngaged, focusFirst } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
 const { classGlyph, tintCss } = require("src/ui/assets.js");
-const { nodeIcon, nodeBlurb, actTitle, legendEntries } = require("src/ui/uiContent.js");
+const { nodeIcon, nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
+const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 
 const COL_X = 95;
 const ROW_H = 46;
@@ -15974,7 +16046,7 @@ function defaultZoom(meta) {
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), 1.15);
 }
 
-function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMenu, onArmoury }) {
+function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -16098,17 +16170,17 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
     flaskWrap.appendChild(el);
   }
 
-  if (onMenu) app.querySelector('#open-menu').addEventListener('click', () => onMenu('deck'));
   const armouryBtn = app.querySelector('#open-armoury');
   if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
   else armouryBtn.remove();
 
   // Legend "?" popover: opens on click; a one-shot outside-click listener closes
-  // it (added only while open, so it never leaks across screens).
+  // it (added only while open, so it never leaks across screens). Lifted out of
+  // the listener so the quick-nav's "Map legend" row opens the SAME popover
+  // rather than growing a second copy of it.
   const legendBtn = app.querySelector('#map-legend');
   const legendPop = app.querySelector('.map-legend-pop');
-  legendBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
+  function toggleLegend() {
     const opening = legendPop.hidden;
     legendPop.hidden = !opening;
     if (opening) {
@@ -16120,7 +16192,46 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMe
       };
       document.addEventListener('click', off, true);
     }
+  }
+  legendBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleLegend();
   });
+
+  // ☰ — today it opens the overlay at Deck; under the quick-nav experiment it
+  // opens the list of everywhere this screen can go. Every row below calls a
+  // handler that already exists, so nothing here decides navigation state.
+  const menuBtn = app.querySelector('#open-menu');
+  if (onMenu) {
+    menuBtn.addEventListener('click', (e) => {
+      if (quickNavMode() === 'off') return onMenu('deck');
+      e.stopPropagation();
+      openQuickNav(menuBtn, 'map', {
+        counts: { deck: run.deck.length },
+        hasSave: !!(onSave || onQuit),
+        actions: {
+          tab: (id) => onMenu(id),
+          ...(onArmoury ? { armoury: () => onArmoury() } : {}),
+          legend: () => toggleLegend(),
+          ...(onSave ? { save: saveAction(onSave) } : {}),
+          ...(onQuit ? { quit: () => onQuit() } : {}),
+        },
+      });
+    });
+  }
+
+  // Law 3 clause 4 — a real tooltip, hover AND focus cursor, with its text from
+  // the same MENU table the rows read. `title=` alone (what these carried) is
+  // invisible to touch and to a pad.
+  for (const [sel, ctxAct] of [['#open-armoury', 'armoury'], ['#map-legend', 'legend']]) {
+    const el = app.querySelector(sel);
+    const row = (MENU.map || []).find((r) => r.act === ctxAct);
+    if (el && row) attachTooltip(el, () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
+  }
+  attachTooltip(menuBtn, () =>
+    `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
+      ? 'Deck, relics, stats, settings and saving.'
+      : 'Everywhere you can go from here.')}`);
 
   // ---- zoom + centering (SPEC §7.1 map UX) ----
   const scroll = app.querySelector('.map-scroll');
@@ -16277,7 +16388,9 @@ const { renderCard } = require("src/ui/components/card.js");
 const { renderSettings } = require("src/ui/screens/settings.js");
 const { renderControls } = require("src/ui/screens/controls.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
-const { isEngaged, focusFirst } = require("src/ui/input.js");
+const { isEngaged, focusFirst, setTabRing } = require("src/ui/input.js");
+const { menuTabs } = require("src/ui/uiContent.js");
+const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } = require("src/ui/components/quicknav.js");
 
 let openVeil = null;
 let escHandler = null;
@@ -16291,6 +16404,8 @@ function closeOverlay() {
   if (openVeil) {
     openVeil.remove();
     openVeil = null;
+    closeQuickNav(); // the mirrored list has nothing behind it any more
+    setTabRing(null); // the bumpers go back to their global bindings
   }
   if (escHandler) {
     removeEventListener('keydown', escHandler, true);
@@ -16304,27 +16419,31 @@ function closeOverlay() {
  */
 function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
   closeOverlay();
+  closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
 
   const hasSave = !!(onSave || onQuit || onExit);
-  const TABS = [
-    { id: 'deck', label: `Deck (${run.deck.length})` },
-    { id: 'relics', label: 'Relics & Flasks' },
-    { id: 'stats', label: 'Stats' },
-    ...(hasSave ? [{ id: 'save', label: 'Save' }] : []),
-    { id: 'settings', label: 'Settings' },
-    { id: 'controls', label: 'Controls' },
-  ];
+  // The strip is DERIVED, not restated. It and the quick-nav dropdown are two
+  // presentations of one table (uiContent.js MENU_TABS) — the hardcoded list
+  // that used to live here is exactly the second copy Law 1 catches.
+  const TABS = menuTabs({ hasSave, counts: { deck: run.deck.length } });
+  // Variant B, and the fold test is `data-layout` — the mode autoLayout()
+  // already chose. A width threshold of its own would be a second decider of
+  // what "narrow" means, which is the defect #24 was (Law 2).
+  const folded = quickNavFolds();
+  const mirrored = quickNavMode() === 'mirror';
 
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
   veil.innerHTML = `
     <div class="modal overlay-modal">
       <div class="overlay-head">
-        <div class="overlay-tabs">
-          ${TABS.map((t) => `<button class="ov-tab" data-tab="${t.id}">${t.label}</button>`).join('')}
+        <div class="overlay-tabs"${folded ? ' hidden' : ''}>
+          ${TABS.map((t) => `<button class="ov-tab" data-tab="${t.id}">${esc(t.label)}</button>`).join('')}
         </div>
+        ${folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="overlay-actions">
+          ${mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
           <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
         </div>
       </div>
@@ -16334,9 +16453,16 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
   openVeil = veil;
 
   const body = veil.querySelector('.overlay-body');
+  let currentTab = null;
 
   function selectTab(id) {
+    currentTab = id;
     veil.querySelectorAll('.ov-tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === id));
+    const sw = veil.querySelector('#ov-switch');
+    if (sw) {
+      const t = TABS.find((x) => x.id === id);
+      sw.textContent = `${t ? t.label : id} ▾`;
+    }
     body.innerHTML = '';
     if (id === 'deck') renderDeck(body);
     else if (id === 'relics') renderRelics(body);
@@ -16453,9 +16579,44 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
     if (e.target === veil) closeOverlay();
   });
 
+  // Law 3 clauses 1 + 1a: RB → next, LB → previous, WRAP AT BOTH ENDS, over the
+  // same set in the same order whether the strip is visible, wrapped to two rows,
+  // or folded into the switcher. The ring is the TABS array — one order, and the
+  // widget is not consulted.
+  const step = (d) => {
+    const i = TABS.findIndex((t) => t.id === currentTab);
+    const at = i < 0 ? 0 : i;
+    selectTab(TABS[(at + d + TABS.length) % TABS.length].id);
+  };
+  setTabRing({ prev: () => step(-1), next: () => step(1) });
+
+  // The quick-nav list, mirrored (A) or folded-into (B). Both open the SAME list
+  // over the SAME table; only which control opens it differs, which is the whole
+  // difference between the two variants at this one screen.
+  const openHere = (anchor) =>
+    openQuickNav(anchor, 'overlay', {
+      counts: { deck: run.deck.length },
+      current: currentTab,
+      hasSave,
+      actions: {
+        close: () => closeOverlay(),
+        tab: (id) => selectTab(id),
+        ...(onSave ? { save: saveAction(onSave) } : {}),
+        ...(onQuit ? { quit: () => { closeOverlay(); onQuit(); } } : {}),
+      },
+    });
+  const qnBtn = veil.querySelector('#ov-quicknav');
+  if (qnBtn) qnBtn.addEventListener('click', (e) => { e.stopPropagation(); openHere(qnBtn); });
+  const swBtn = veil.querySelector('#ov-switch');
+  if (swBtn) swBtn.addEventListener('click', (e) => { e.stopPropagation(); openHere(swBtn); });
+
   // Esc closes the overlay, captured before screen-level key handlers see it.
   escHandler = (ev) => {
     if (ev.key === 'Escape') {
+      // Esc peels ONE layer. With the mirrored list open over the overlay, the
+      // list is the layer the player is looking at; closing both would take away
+      // a screen they never asked to leave.
+      if (quickNavIsOpen()) return;
       ev.preventDefault();
       ev.stopPropagation();
       closeOverlay();
@@ -16528,6 +16689,25 @@ const ROWS = [
     note: 'Show the run seed in the map header bar.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
+
+  // THE QUICK-MENU EXPERIMENT (EldenSpire#34). Three things are compared by
+  // being PLAYED rather than looked at: today, and two readings of "the ☰ button
+  // should offer everywhere you can go from here".
+  //
+  // DEFAULT IS OFF, and off is today exactly — nobody who does not opt in sees a
+  // pixel move. It ships in the build rather than hiding behind a URL flag
+  // because the question it asks is a PHONE question (the menu's tab strip wraps
+  // to two rows at 390 px, measured), and a dev flag is not reachable on a phone.
+  //
+  // The note carries the way back, and so does the list itself: it names the
+  // variant and points here every time it opens. An experiment that outlives the
+  // memory of switching it on has stopped being an experiment and become a bug
+  // report.
+  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'off',
+    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu (test)',
+    note: 'A test — OFF is the game as it shipped. MIRROR: the ☰ button opens a list of everywhere you can go from this screen, and the menu keeps its row of tabs. SWITCHER: the same list, but on a narrow screen the menu\'s tab row folds into one button naming the tab you are on. The list says which one you picked, every time it opens.' },
+  { cat: 'Display', key: 'quickNavFixedEnds', def: true, label: 'Quick menu · fixed ends',
+    note: 'Only does anything while Quick menu is on. ON keeps rows in the same places on every screen — this screen\'s own tools at the top, Save and Save & Quit always last, everything else between. OFF orders the whole list by what the screen is, so a row can sit somewhere else in combat than it does on the map.' },
 
   { cat: 'Audio', key: 'muteAudio', def: false, label: 'Mute all audio',
     note: 'Silence music and sound effects.' },
@@ -17567,6 +17747,45 @@ function actionShort(id) {
   return a ? a.short || a.label : id;
 }
 
+// ---- the tab ring (Law 3: bumpers ride the tabs) ----------------------------
+//
+// A tabbed surface registers its own set here while it is open; the pad poller
+// and the keyboard handler below give buttons 4/5 and `[`/`]` to that set in
+// preference to whatever they are globally bound to. That preference is the
+// whole clause: EldenSpire's defaults already SPEND LB/RB on Relics and Stats
+// (ACTIONS above, defBtn 4 and 5), so without contextual precedence the two
+// bindings race and the winner is whoever notices first.
+//
+// It binds the SET, not the widget — a strip, a two-row wrapped strip, or one
+// folded "Deck ▾" switcher all register the same ring and cycle in the same
+// order (Law 3 clause 1a). Wrap is the ring's own job, and it is the edge that
+// breaks: last → first and first → last.
+//
+// `[` / `]` is Marina's proposed keyboard analogue and is NOT yet ratified —
+// Q/E was rejected because E is already End Turn. It earns its keep here beyond
+// the proposal: it is the only way to observe the wrap without a pad attached,
+// and no pad was attached when this was built.
+let tabRing = null; // { prev(), next() } | null
+
+/** setTabRing(ring | null) — a tabbed surface claims the bumpers while open. */
+function setTabRing(ring) {
+  tabRing = ring && typeof ring.next === 'function' && typeof ring.prev === 'function' ? ring : null;
+}
+
+const TAB_PREV_BTN = 4; // LB, standard mapping
+const TAB_NEXT_BTN = 5; // RB
+const TAB_PREV_KEY = '[';
+const TAB_NEXT_KEY = ']';
+
+/** True if this pad button was consumed by an open tab set. */
+function tabRingButton(i) {
+  if (!tabRing) return false;
+  if (i === TAB_PREV_BTN) tabRing.prev();
+  else if (i === TAB_NEXT_BTN) tabRing.next();
+  else return false;
+  return true;
+}
+
 const DEADZONE = 0.5;
 const REPEAT_MS = 180;
 const POLL_MS = 16; // ~60 Hz input polling (only while a pad is connected)
@@ -17864,6 +18083,16 @@ function onKeydown(ev) {
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === 'Enter')) {
     engaged = true;
   }
+  // Tab cycling, keyboard side. Ahead of everything else for the same reason
+  // the pad side is: while a tab set is open it owns these two, and no screen
+  // hotkey may take them first.
+  if (!typing && tabRing && (ev.key === TAB_PREV_KEY || ev.key === TAB_NEXT_KEY)) {
+    engaged = true;
+    ev.preventDefault();
+    if (ev.key === TAB_NEXT_KEY) tabRing.next();
+    else tabRing.prev();
+    return;
+  }
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
     // On a focused slider, horizontal arrows tune it rather than navigate.
     if (cur && cur.matches('input[type="range"]') && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
@@ -17916,6 +18145,10 @@ function pollPads() {
         cb(i);
         continue;
       }
+      // CONTEXTUAL PRECEDENCE (Law 3 clause 2), and the order is the rule:
+      // an open tab set takes LB/RB BEFORE actionForButton() can hand them to
+      // Relics/Stats. Without this line the defaults win and the law is prose.
+      if (tabRingButton(i)) continue;
       const a = actionForButton(i);
       if (a) doAction(a.id);
       // D-pad (12–15) navigates regardless of rebinds.
@@ -17999,7 +18232,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, actionShort, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, focusFirst, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, focusFirst, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/uiContent.js": function (module, exports, require) {
@@ -18130,6 +18363,152 @@ function backdropClass(actNumber) {
   return `backdrop act-${((n - 1) % BACKDROP_ACTS) + 1}`;
 }
 
+// ---- the in-run menu: ONE table, two widgets --------------------------------
+//
+// The overlay's tab strip and the ☰ quick-nav dropdown are two presentations of
+// the same set of destinations. They used to be one presentation and a hardcoded
+// list (`TABS` in overlay.js) — adding the dropdown beside that list would have
+// made it the second copy this file's header exists to prevent (Law 1).
+//
+// ROWS ARE LAUNCHERS, NOT STATE. `act` is a closed vocabulary the UI resolves to
+// a handler that already exists; `selectTab` in overlay.js stays the only thing
+// that knows which tab is current. The day a row knows something selectTab does
+// not, this is a second menu rather than a quick way into the one we have.
+//
+//   act: 'tab'     → open the overlay at `tab` (openOverlay/selectTab)
+//        'armoury' | 'legend' | 'draw' | 'discard'  → the screen's own handler
+//        'save' | 'quit' | 'close'                  → the orchestrator's
+//
+// TWO READINGS OF "CONTEXT-SPECIFIC", AND THE TABLE SERVES BOTH.
+// Constantine: "all buttons should be context-specific." Marina's dissent: the
+// ends are fixed, the middle is contextual, because a row whose meaning moves
+// between screens is a trap for a player who navigates by muscle memory. They
+// disagree in a way only play settles, so both orders come out of this one
+// table and a setting picks:
+//
+//   fixed ends (Marina)  — group by `band`: head, body, tail. Array order within
+//                          a band. Second row is Deck on every screen.
+//   all contextual (his) — rows marked `local` (they exist only on this screen)
+//                          come first, then the rest; `tail` still last, because
+//                          he fixed Save · Save & Quit as the last two by hand.
+//
+// The map row set is IDENTICAL under both — which is the honest shape of the
+// argument: it only bites where a screen has destinations of its own, and combat
+// is the screen that does.
+const MENU_TABS = [
+  { id: 'deck', label: 'Deck', icon: '🂠', count: 'deck', tip: 'Every card in the climb, not just the ones in hand.' },
+  { id: 'relics', label: 'Relics & Flasks', icon: '◆', tip: 'What you carry, and what each one does.' },
+  { id: 'stats', label: 'Stats', icon: '♜', tip: 'This run in numbers — floor, damage, seed.' },
+  { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
+  { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
+  { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' },
+];
+
+const TAIL = [
+  { act: 'save', icon: '💾', label: 'Save', band: 'tail', tip: 'Write the climb to its slot and stay here.' },
+  { act: 'quit', icon: '⏻', label: 'Save & Quit to Title', band: 'tail', tone: 'danger',
+    tip: 'Save, then back to the title. Continue picks the climb up again.' },
+];
+
+const MENU = {
+  map: [
+    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
+      tip: 'Weapons and armour — swap between fights for free.' },
+    { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
+      tip: 'What each mark on the act map means.' },
+    { act: 'tab', tab: 'deck', band: 'body' },
+    { act: 'tab', tab: 'relics', band: 'body' },
+    { act: 'tab', tab: 'stats', band: 'body' },
+    { act: 'tab', tab: 'settings', band: 'body' },
+    ...TAIL,
+  ],
+  // Draw and discard are real destinations that exist ONLY here (combat.js's
+  // pile modals) — the demonstration that context-specific means something.
+  combat: [
+    { act: 'armoury', icon: '⚒', label: 'Armaments', band: 'head', local: true,
+      tip: 'Your hand sets, mid-fight. Swapping costs energy.' },
+    { act: 'tab', tab: 'deck', label: 'Hand / Deck', band: 'body' },
+    { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
+      tip: 'What is still to come, shuffled for viewing.' },
+    { act: 'discard', icon: '✖', label: 'Discard pile', band: 'body', local: true, count: 'discard',
+      tip: 'What you have played and what was discarded.' },
+    { act: 'tab', tab: 'relics', band: 'body' },
+    { act: 'tab', tab: 'stats', band: 'body' },
+    { act: 'tab', tab: 'settings', band: 'body' },
+    ...TAIL,
+  ],
+  // The menu already open: the dropdown mirrors the strip behind it, current tab
+  // marked. Controls earns a row here (it is a tab) and not on map/combat, where
+  // it is one click away once you land.
+  overlay: [
+    { act: 'close', icon: '✕', label: 'Close menu', band: 'head', local: true,
+      tip: 'Back to the screen behind this one.' },
+    { act: 'tab', tab: 'deck', band: 'body' },
+    { act: 'tab', tab: 'relics', band: 'body' },
+    { act: 'tab', tab: 'stats', band: 'body' },
+    { act: 'tab', tab: 'settings', band: 'body' },
+    { act: 'tab', tab: 'controls', band: 'body' },
+    ...TAIL,
+  ],
+};
+
+const BANDS = ['head', 'body', 'tail'];
+
+/** The tab a `tab` row points at, resolved against MENU_TABS. */
+function tabDef(id) {
+  return MENU_TABS.find((t) => t.id === id) || null;
+}
+
+/**
+ * menuTabs({ hasSave }) → the overlay's tab strip, in order.
+ * The strip and the dropdown read the same table, so a tab cannot exist in one
+ * and not the other. `counts` supplies live numbers (deck size) for the label.
+ */
+function menuTabs({ hasSave = true, counts = {} } = {}) {
+  return MENU_TABS.filter((t) => hasSave || !t.needsSave).map((t) => ({
+    id: t.id,
+    label: t.count != null && counts[t.count] != null ? `${t.label} (${counts[t.count]})` : t.label,
+    icon: t.icon,
+    tip: t.tip,
+  }));
+}
+
+/**
+ * menuRows(context, { fixedEnds, hasSave, counts, current }) → resolved rows.
+ *
+ * Each row comes back with its icon, label, tooltip and a `sep` flag marking the
+ * first row of a new band (drawn as a rule under fixed ends, absent otherwise —
+ * the two readings look different, which is the point of being able to try both).
+ */
+function menuRows(context, { fixedEnds = true, hasSave = true, counts = {}, current = null } = {}) {
+  const src = (MENU[context] || []).filter((r) => (hasSave ? true : r.band !== 'tail'));
+  const ordered = fixedEnds
+    ? BANDS.flatMap((b) => src.filter((r) => r.band === b))
+    : [
+        ...src.filter((r) => r.local && r.band !== 'tail'),
+        ...src.filter((r) => !r.local && r.band !== 'tail'),
+        ...src.filter((r) => r.band === 'tail'),
+      ];
+  let prevBand = null;
+  return ordered.map((r) => {
+    const t = r.act === 'tab' ? tabDef(r.tab) : null;
+    const countKey = r.count || (t && t.count);
+    const sep = fixedEnds && prevBand !== null && r.band !== prevBand;
+    prevBand = r.band;
+    return {
+      act: r.act,
+      tab: r.tab || null,
+      icon: r.icon || (t && t.icon) || '',
+      label: r.label || (t && t.label) || '',
+      tip: r.tip || (t && t.tip) || '',
+      tone: r.tone || '',
+      badge: countKey != null && counts[countKey] != null ? String(counts[countKey]) : '',
+      on: !!(current && r.act === 'tab' && r.tab === current),
+      sep,
+    };
+  });
+}
+
 // ---- gamepad buttons --------------------------------------------------------
 // One table, two presentations. The hint bar wants a compact glyph and the
 // controls screen wants a readable word; these lived as two near-identical
@@ -18167,7 +18546,222 @@ function padName(btn) {
 }
 
 
-Object.assign(module.exports, { NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, PAD_BUTTONS, padGlyph, padName });
+Object.assign(module.exports, { NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, MENU_TABS, MENU, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName });
+
+},
+"src/ui/components/quicknav.js": function (module, exports, require) {
+// src/ui/components/quicknav.js — the ☰ quick-nav dropdown (EldenSpire#34).
+//
+// WHAT THIS IS, AND WHAT IT DELIBERATELY IS NOT.
+// It is a LAUNCHER: every row calls a handler that already exists — the screen's
+// ⚒/? buttons, openOverlay({initialTab}), the pile modals, onSave, onQuit. It
+// holds no navigation state at all, so `selectTab` in overlay.js stays the single
+// decider. The day a row knows something selectTab does not, this stopped being a
+// quick way into the menu and became a second menu.
+//
+// Rows come from the MENU table in uiContent.js — the same table the overlay's
+// tab strip is built from (Law 1). This file knows how to DRAW a list and where
+// to put it; it does not know what is in the list.
+//
+// LAW 3, CLAUSE 6 — the bumper answer, written out per context, because a
+// context-specific control that leaves one context undefined is a defect found by
+// the player's thumb:
+//
+//   dropdown open, overlay closed (map / combat)
+//       A vertical list is not a tab set. The list takes the FOCUS CURSOR
+//       (D-pad / stick + Confirm) — it is a `.modal-veil`, so input.js's
+//       scopeRoot() scopes the cursor to it with no new code. LB/RB keep their
+//       global bindings (Relics / Stats); either one opens the overlay, and
+//       openOverlay() closes this list on the way, so the bumpers never act on
+//       two surfaces at once.
+//   dropdown open, overlay open (mirror / switcher)
+//       Same list, same cursor. The bumpers belong to the TAB SET behind it and
+//       keep cycling it — including while the strip is folded into a switcher
+//       (Law 3 clause 1a: the law binds the set, not the widget).
+//   dropdown closed
+//       Nothing here; the bumpers stay with the tabs.
+//
+// LAW 2 — one coordinate space. The panel is `position: fixed`, so the viewport
+// is its containing block, and every number below is converted to LOCAL px ONCE,
+// through fx.js, before anything is compared or written. The anchor clamp is not
+// decoration: the combat topbar WRAPS on a phone and puts ☰ at the LEFT edge
+// (measured: `combat-menu @ 18,49` at 390×844), so "hang it off the top-right"
+// would have put the list off-screen on exactly the shape it is for.
+
+const { anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
+const { attachTooltip, esc, hideTooltip } = require("src/ui/components/tooltip.js");
+const { menuRows } = require("src/ui/uiContent.js");
+const { isEngaged, focusFirst } = require("src/ui/input.js");
+
+// The experiment's own state, set from applyDisplaySettings (main.js) the same
+// way input.js is handed its bindings — so screens never have to thread `meta`
+// down just to ask which variant is running.
+let mode = 'off'; // 'off' | 'mirror' | 'switcher'
+let fixedEnds = true;
+
+/** setQuickNav({ mode, fixedEnds }) — called by applyDisplaySettings. */
+function setQuickNav(opts) {
+  if (opts.mode != null) mode = ['mirror', 'switcher'].includes(opts.mode) ? opts.mode : 'off';
+  if (opts.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
+  if (typeof document !== 'undefined') {
+    document.documentElement.dataset.quicknav = mode;
+    if (mode === 'off') closeQuickNav();
+  }
+}
+
+/** 'off' | 'mirror' | 'switcher' — what the player is currently testing. */
+function quickNavMode() {
+  return mode;
+}
+
+/** True when the overlay's tab strip should fold into one switcher button.
+ *  The NARROW test is `data-layout`, which autoLayout() already owns — this
+ *  variant must not become a second decider of what "narrow" means (Law 2). */
+function quickNavFolds() {
+  return mode === 'switcher' && typeof document !== 'undefined'
+    && document.documentElement.getAttribute('data-layout') === 'narrow';
+}
+
+const MODE_NAMES = { mirror: 'Mirror', switcher: 'Switcher' };
+
+let openVeil = null;
+let escHandler = null;
+
+function closeQuickNav() {
+  if (openVeil) {
+    openVeil.remove();
+    openVeil = null;
+    hideTooltip();
+  }
+  if (escHandler) {
+    removeEventListener('keydown', escHandler, true);
+    escHandler = null;
+  }
+}
+
+function quickNavIsOpen() {
+  return !!openVeil;
+}
+
+/**
+ * saveAction(onSave) → the handler for the `save` row.
+ *
+ * Saves and says so IN PLACE ("Saved · Slot 2"), leaving the list open: the row
+ * exists to make saving two taps instead of three, and closing the menu to prove
+ * it worked would spend the tap it just saved. Exported because all three
+ * contexts need the identical behaviour, and three copies of it is three chances
+ * for one of them to quietly navigate away instead.
+ */
+function saveAction(onSave) {
+  return (_tab, btn) => {
+    const slot = onSave();
+    const lab = btn.querySelector('.qn-label');
+    const was = lab.textContent;
+    lab.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
+    setTimeout(() => { lab.textContent = was; }, 1500);
+    return 'keep';
+  };
+}
+
+/**
+ * openQuickNav(anchorEl, context, { actions, counts, current, hasSave })
+ *
+ * `actions` maps an `act` id from the MENU table to the handler that already
+ * does that thing. An act with no handler is dropped rather than drawn dead.
+ * Returns the panel element (or null when the variant is off).
+ */
+function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = null, hasSave = true } = {}) {
+  if (mode === 'off' || !anchorEl) return null;
+  closeQuickNav();
+
+  const rows = menuRows(context, { fixedEnds, hasSave, counts, current })
+    .filter((r) => typeof actions[r.act] === 'function');
+  if (!rows.length) return null;
+
+  const veil = document.createElement('div');
+  veil.className = 'modal-veil qn-veil';
+  const panel = document.createElement('div');
+  panel.className = 'qn-panel';
+
+  // THE CAPTION IS THE POINT OF SHIPPING THIS AT ALL. An experiment that
+  // outlives the memory of switching it on becomes a bug report — so the list
+  // says, every single time it opens, that it is a test, which variant is
+  // running, and where the way back is. It is a header, not a row: Save and
+  // Save & Quit are the last two rows, always (his constraint, fixed by hand).
+  const cap = document.createElement('div');
+  cap.className = 'qn-cap';
+  cap.textContent = `TEST · Quick menu: ${MODE_NAMES[mode]} — change or turn off in Settings ▸ Display`;
+  panel.appendChild(cap);
+
+  for (const r of rows) {
+    if (r.sep) panel.appendChild(Object.assign(document.createElement('div'), { className: 'qn-sep' }));
+    const b = document.createElement('button');
+    b.className = `qn-row${r.tone ? ` ${r.tone}` : ''}${r.on ? ' on' : ''}`;
+    b.dataset.act = r.act;
+    if (r.tab) b.dataset.tab = r.tab;
+    b.innerHTML = `<span class="qn-ic">${esc(r.icon)}</span><span class="qn-label">${esc(r.label)}</span>`
+      + (r.badge ? `<span class="qn-badge">${esc(r.badge)}</span>` : '');
+    // Law 3 clause 4: the tooltip fires for hover AND for the pad/keyboard focus
+    // cursor. `title=` alone is what the topbar has today, and touch and pad
+    // players never see it.
+    if (r.tip) attachTooltip(b, () => `<div class="tt-title">${esc(r.label)}</div>${esc(r.tip)}`);
+    b.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const fn = actions[r.act];
+      // A row that gives feedback in place (Save) keeps the list open and says
+      // so; everything else is a navigation and the list has done its job.
+      const inPlace = fn(r.tab, b);
+      if (inPlace !== 'keep') closeQuickNav();
+    });
+    panel.appendChild(b);
+  }
+
+  veil.appendChild(panel);
+  document.body.appendChild(veil);
+  openVeil = veil;
+  position(anchorEl, panel);
+
+  veil.addEventListener('click', (ev) => {
+    if (ev.target === veil) closeQuickNav();
+  });
+  escHandler = (ev) => {
+    if (ev.key === 'Escape') {
+      ev.preventDefault();
+      ev.stopPropagation();
+      closeQuickNav();
+    }
+  };
+  addEventListener('keydown', escHandler, true);
+
+  // Keyboard/pad players land on the list rather than nowhere — the same smart
+  // default openOverlay() uses, and the reason the vertical list needs no new
+  // input code: it IS the focus scope while it is open.
+  if (isEngaged()) setTimeout(() => focusFirst('.qn-row.on') || focusFirst('.qn-row'), 0);
+
+  return panel;
+}
+
+// Right-aligned under its button, then bounded regardless — see the header for
+// why the bound is not optional on a phone. `keep: Infinity`: this is a list of
+// words a player has to read, so all of it stays on screen.
+function position(anchorEl, panel) {
+  const view = viewportLocalBox();
+  const a = anchorLocalBox(VIEWPORT_ORIGIN, anchorEl);
+  const b = anchorLocalBox(VIEWPORT_ORIGIN, panel);
+  const gap = 6; // local px, and meant to be: a hairline gap is not read text
+  const at = clampBox(
+    { left: a.left + a.width - b.width, top: a.top + a.height + gap, width: b.width, height: b.height },
+    view
+  );
+  panel.style.left = `${at.left}px`;
+  panel.style.top = `${at.top}px`;
+  // A list taller than the screen scrolls inside itself rather than pinning its
+  // tail off the bottom — Save & Quit is the last row and must be reachable.
+  panel.style.maxHeight = `${Math.max(0, view.height - at.top - 8)}px`;
+}
+
+
+Object.assign(module.exports, { setQuickNav, quickNavMode, quickNavFolds, closeQuickNav, quickNavIsOpen, saveAction, openQuickNav });
 
 },
 "src/ui/components/hints.js": function (module, exports, require) {
@@ -18259,7 +18853,8 @@ const { openPileModal } = require("src/ui/components/piles.js");
 const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
-const { intentBadge, intentTooltip, backdropClass } = require("src/ui/uiContent.js");
+const { intentBadge, intentTooltip, backdropClass, MENU } = require("src/ui/uiContent.js");
+const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { overlayIsOpen } = require("src/ui/components/overlay.js");
@@ -18269,7 +18864,7 @@ const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { figureSpec } = require("src/model/loadout.js");
 
-function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
+function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   app.innerHTML = `
     <div class="combat">
       <header class="topbar">
@@ -19123,11 +19718,48 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     afterDispatch(out.events);
   });
 
-  $('.pile.draw').addEventListener('click', () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true }));
-  $('.pile.discard').addEventListener('click', () => openPileModal(registries, 'Discard pile', combat.piles.discard));
+  const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
+  const showDiscard = () => openPileModal(registries, 'Discard pile', combat.piles.discard);
+  $('.pile.draw').addEventListener('click', showDraw);
+  $('.pile.discard').addEventListener('click', showDiscard);
   $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
-  if (onMenu) $('#combat-menu').addEventListener('click', () => onMenu('deck'));
+  //
+  // Under the quick-nav experiment ☰ opens the list instead. Combat is the
+  // screen that MAKES "context-specific" mean something: the draw and discard
+  // piles are real destinations that exist nowhere else, and today the only way
+  // to them is two small corner targets a thumb has to find.
+  const menuBtn = $('#combat-menu');
+  if (onMenu) {
+    menuBtn.addEventListener('click', (e) => {
+      if (quickNavMode() === 'off') return onMenu('deck');
+      e.stopPropagation();
+      openQuickNav(menuBtn, 'combat', {
+        counts: { deck: run.deck.length, draw: combat.piles.draw.length, discard: combat.piles.discard.length },
+        hasSave: !!(onSave || onQuit),
+        actions: {
+          tab: (id) => onMenu(id),
+          armoury: () => $('#combat-armoury').click(), // the button's own handler, not a copy of it
+          draw: () => showDraw(),
+          discard: () => showDiscard(),
+          ...(onSave ? { save: saveAction(onSave) } : {}),
+          ...(onQuit ? { quit: () => onQuit() } : {}),
+        },
+      });
+    });
+  }
+
+  // Law 3 clause 4 — real tooltips on the two topbar buttons, text from the same
+  // MENU table. Note the label: the ⚒ glyph is "Armoury" on the map and
+  // "Armaments" here, and it was ALREADY context-specific before anyone asked.
+  {
+    const row = (MENU.combat || []).find((r) => r.act === 'armoury');
+    if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
+    attachTooltip(menuBtn, () =>
+      `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
+        ? 'Deck, relics, stats, settings and saving.'
+        : 'Everywhere you can go from here.')}`);
+  }
 
   // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
   // storage seal themselves, and picking another hand set routes through the

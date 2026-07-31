@@ -10,7 +10,8 @@ import { overlayIsOpen } from '../components/overlay.js';
 import { matchAction, isEngaged, focusFirst } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
-import { nodeIcon, nodeBlurb, actTitle, legendEntries } from '../uiContent.js';
+import { nodeIcon, nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
+import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 
 const COL_X = 95;
 const ROW_H = 46;
@@ -24,7 +25,7 @@ function defaultZoom(meta) {
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), 1.15);
 }
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onSettings, onMenu, onArmoury }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -148,17 +149,17 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
     flaskWrap.appendChild(el);
   }
 
-  if (onMenu) app.querySelector('#open-menu').addEventListener('click', () => onMenu('deck'));
   const armouryBtn = app.querySelector('#open-armoury');
   if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
   else armouryBtn.remove();
 
   // Legend "?" popover: opens on click; a one-shot outside-click listener closes
-  // it (added only while open, so it never leaks across screens).
+  // it (added only while open, so it never leaks across screens). Lifted out of
+  // the listener so the quick-nav's "Map legend" row opens the SAME popover
+  // rather than growing a second copy of it.
   const legendBtn = app.querySelector('#map-legend');
   const legendPop = app.querySelector('.map-legend-pop');
-  legendBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
+  function toggleLegend() {
     const opening = legendPop.hidden;
     legendPop.hidden = !opening;
     if (opening) {
@@ -170,7 +171,46 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
       };
       document.addEventListener('click', off, true);
     }
+  }
+  legendBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleLegend();
   });
+
+  // ☰ — today it opens the overlay at Deck; under the quick-nav experiment it
+  // opens the list of everywhere this screen can go. Every row below calls a
+  // handler that already exists, so nothing here decides navigation state.
+  const menuBtn = app.querySelector('#open-menu');
+  if (onMenu) {
+    menuBtn.addEventListener('click', (e) => {
+      if (quickNavMode() === 'off') return onMenu('deck');
+      e.stopPropagation();
+      openQuickNav(menuBtn, 'map', {
+        counts: { deck: run.deck.length },
+        hasSave: !!(onSave || onQuit),
+        actions: {
+          tab: (id) => onMenu(id),
+          ...(onArmoury ? { armoury: () => onArmoury() } : {}),
+          legend: () => toggleLegend(),
+          ...(onSave ? { save: saveAction(onSave) } : {}),
+          ...(onQuit ? { quit: () => onQuit() } : {}),
+        },
+      });
+    });
+  }
+
+  // Law 3 clause 4 — a real tooltip, hover AND focus cursor, with its text from
+  // the same MENU table the rows read. `title=` alone (what these carried) is
+  // invisible to touch and to a pad.
+  for (const [sel, ctxAct] of [['#open-armoury', 'armoury'], ['#map-legend', 'legend']]) {
+    const el = app.querySelector(sel);
+    const row = (MENU.map || []).find((r) => r.act === ctxAct);
+    if (el && row) attachTooltip(el, () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
+  }
+  attachTooltip(menuBtn, () =>
+    `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
+      ? 'Deck, relics, stats, settings and saving.'
+      : 'Everywhere you can go from here.')}`);
 
   // ---- zoom + centering (SPEC §7.1 map UX) ----
   const scroll = app.querySelector('.map-scroll');

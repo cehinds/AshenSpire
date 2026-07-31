@@ -45,6 +45,7 @@ import { mountHistory } from './ui/screens/history.js';
 import { openSettings, settingOn } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
+import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { initInput, setBindings, setKeyBindings } from './ui/input.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
@@ -368,6 +369,11 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
   document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
+  // The quick-menu experiment. Handed to the component the same way input.js is
+  // handed its bindings, so no screen has to thread `meta` down just to ask which
+  // variant is running. `settingOn` because the store is sparse and the default
+  // is part of the answer (see its own docstring).
+  setQuickNav({ mode: settings.quickNav, fixedEnds: settingOn(settings, 'quickNavFixedEnds') });
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
   document.documentElement.dataset.ambient = amb;
@@ -788,6 +794,10 @@ function showMap() {
       persist();
       return activeSlot;
     },
+    onQuit: () => {
+      persist(); // the run is resumable from its slot via Continue
+      showTitle();
+    },
   });
 }
 
@@ -924,6 +934,14 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
     onMenu: showOverlay,
+    onSave: () => {
+      persist();
+      return activeSlot;
+    },
+    onQuit: () => {
+      persist();
+      showTitle();
+    },
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
       const meta = saves.loadMeta();
