@@ -1235,7 +1235,20 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
   saves.saveMeta(shotMeta);
-  newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
+  // `?shotSeed=<string>` — ONE MAP IS NOT THE MAP (EldenSpire#28).
+  //
+  // Every reachability measurement this repo has taken of the act map was taken
+  // on the seed literal that used to sit here, so "0 covered at 390x844" was a
+  // fact about ONE map graph. Node positions are a function of the seed; a node
+  // trapped under a floating button is a coincidence between the two; and a
+  // coincidence measured once is an anecdote. tools/mapreach.mjs sweeps seeds
+  // because of this line, and the default is unchanged so every existing
+  // capture and every existing sweep still means what it meant.
+  //
+  // Read through `shotParams`, the single const declared beside pickStorage() —
+  // NOT a fresh location.search read, which the note up there forbids, for the
+  // reason it gives: that const IS the gate's reach.
+  newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
   if (shotState === 'death') {
     // A run that ended on floor 4 with a few fights behind it, so the stats
     // table has real numbers under the title instead of a row of zeroes.
