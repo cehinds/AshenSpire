@@ -428,6 +428,17 @@ body.hide-hints .hint-bar { display: none; }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 1rem 0; border-bottom: 1px solid var(--line-soft); }
 .set-row b { color: var(--parchment); font-size: 1.3rem; }
 .set-note { color: var(--muted); font-size: 1.1rem; margin-top: 0.3rem; max-width: 23rem; line-height: 1.4; }
+/* EldenSpire#26 — the value the UI-size control actually applied. Muted like a
+   note when the request was granted; accented when the fit had to hold it back,
+   because "you asked for XL and this window gets 1.00x" is the sentence that
+   stops a clamp from reading as a dead control. */
+.set-applied { color: var(--muted); font-size: 1.1rem; margin-top: 0.3rem; font-variant-numeric: tabular-nums; }
+.set-applied.limited { color: var(--gold); }
+/* The hint stays muted even when the line around it is gold: the accent marks
+   "your request was held back", and the pointer to Text size is standing
+   advice, not part of that alarm. */
+.set-applied .set-applied-hint { color: var(--muted); display: block; }
+
 .set-actions { display: flex; justify-content: flex-end; margin-top: 1.6rem; }
 .toggle {
   flex-shrink: 0; width: 4.6rem; height: 2.6rem; border-radius: 13px; background: var(--panel);

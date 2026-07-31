@@ -101,7 +101,7 @@ body {
 }
 
 /* EldenSpire#23/#24 — the narrow layout is selected by `data-layout` on <html>,
-   written by main.js's autoLayout() in the same call that chooses --ui-zoom.
+   written by main.js's resolveLayout() in the same call that chooses --ui-zoom.
    The stylesheets measure nothing.
 
    THIS WAS A CONTAINER QUERY AND THE MEASUREMENT THAT PUT IT THERE STILL

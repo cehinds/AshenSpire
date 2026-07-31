@@ -108,7 +108,7 @@ body {
 }
 
 /* EldenSpire#23/#24 — the narrow layout is selected by `data-layout` on <html>,
-   written by main.js's autoLayout() in the same call that chooses --ui-zoom.
+   written by main.js's resolveLayout() in the same call that chooses --ui-zoom.
    The stylesheets measure nothing.
 
    THIS WAS A CONTAINER QUERY AND THE MEASUREMENT THAT PUT IT THERE STILL
@@ -618,6 +618,17 @@ body.hide-hints .hint-bar { display: none; }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 1rem 0; border-bottom: 1px solid var(--line-soft); }
 .set-row b { color: var(--parchment); font-size: 1.3rem; }
 .set-note { color: var(--muted); font-size: 1.1rem; margin-top: 0.3rem; max-width: 23rem; line-height: 1.4; }
+/* EldenSpire#26 — the value the UI-size control actually applied. Muted like a
+   note when the request was granted; accented when the fit had to hold it back,
+   because "you asked for XL and this window gets 1.00x" is the sentence that
+   stops a clamp from reading as a dead control. */
+.set-applied { color: var(--muted); font-size: 1.1rem; margin-top: 0.3rem; font-variant-numeric: tabular-nums; }
+.set-applied.limited { color: var(--gold); }
+/* The hint stays muted even when the line around it is gold: the accent marks
+   "your request was held back", and the pointer to Text size is standing
+   advice, not part of that alarm. */
+.set-applied .set-applied-hint { color: var(--muted); display: block; }
+
 .set-actions { display: flex; justify-content: flex-end; margin-top: 1.6rem; }
 .toggle {
   flex-shrink: 0; width: 4.6rem; height: 2.6rem; border-radius: 13px; background: var(--panel);
@@ -1290,13 +1301,18 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 /* ==========================================================================
    PROTOTYPE (EldenSpire#23, track B) — the narrow combat board.
    ==========================================================================
-   Fires when #app has 520 LOCAL px or fewer. With the narrow design baseline
-   in balance.ui.uiScale, that is every portrait phone and nothing else: at
-   390x844 the app gets 430x930 local, at 412x915 430x955, at 360x640 438x780.
-   Landscape phones (1361x629), 1200x730 and 1920x1080 are all far above it and
-   this whole block is inert for them — which is the non-regression argument,
-   and it is checked by running the same tool at those shapes rather than by
-   this sentence.
+   Fires when main.js's resolveLayout() writes data-layout="narrow" on <html>.
+   THE CONDITION IS NOT RESTATED HERE ON PURPOSE. This block used to say "when
+   #app has 520 LOCAL px or fewer", which was true, and which was a second copy
+   of a rule that lives in resolveLayout() with nothing keeping the two in
+   agreement — the same shape as the defect that made this block a container
+   query and locked out three tablet shapes (#24). A comment that restates a
+   condition is a decider that cannot be executed and therefore cannot be
+   tested. Read the function.
+
+   What is safe to say here, because it is about THIS file: the block is inert
+   wherever the wide layout is on screen, and that is checked by running
+   tools/mobilefit.mjs at those shapes rather than by this sentence.
 
    WHAT REFLOW MEANS HERE, against what "scaling" would have done: the hand
    stops being a fan of overlapping cards under an absolutely-positioned button
@@ -1780,56 +1796,88 @@ const UI_NAMED = UI.uiScale.named;
 // The clamp is UNCHANGED. #23 reads as a floor bug and is not one: at 390x844
 // the wide baseline wants 0.325, the floor gives 0.62, and BOTH are wrong,
 // because both try to fit a 1200px layout onto a 390px screen.
-function autoLayout() {
+// EldenSpire#26 — ONE FIT PATH, and `auto` is the uncapped case of it.
+//
+// `resolveZoom()` used to return the named S/M/L/XL values straight from data
+// with no fit check at any viewport, so a fixed size could ask for more space
+// than the screen has. Sunna measured the extent rather than an instance: TEN
+// OF TWENTY-FIVE size x shape cells unreachable, and all four fixed sizes on
+// landscape 844x390 were TOTAL LOCKOUTS — turn the phone sideways, open
+// Settings, pick anything but Auto, and the fight cannot be advanced.
+// Constantine's ruling, verbatim: "clamp like auto."
+//
+// So a named size is now a CAP on the same computation, not a separate answer.
+// `layoutForCap(Infinity)` is `auto` and is byte-identical to 2c40fdb: with an
+// infinite cap every `Math.min(v, cap)` is `v`, and the recovery branch below
+// cannot be reached, because it needs the capped candidate to fail a test the
+// uncapped one passed. Vira's sweep is the proof, not this paragraph.
+//
+// WHY THE CAP CANNOT SIMPLY BE `Math.min(named, autoZoom)`. Lowering the zoom
+// RAISES the local width — localW = innerWidth / zoom — so a cap can push a
+// shape out of the narrow band. At 500x800 the uncapped fit is 1.02 (narrow,
+// 490 local px) and S = 0.85 gives 588, above narrowMax. When the UNCAPPED fit
+// would have been narrow, the recovery below settles the zoom at the smallest
+// value that keeps the band.
+//
+// WHAT THAT RECOVERY IS AND IS NOT FOR — corrected by Vira, who tested the
+// claim I had written instead of reading it. My comment implied the recovery is
+// what preserves #24's property. IT IS NOT. She deleted the branch and re-swept:
+//
+//   the zoom selects the narrow baseline  IFF  the narrow layout is active
+//
+// still holds at every cap without it, because the final unguarded return sets
+// `narrow: false` alongside a wide-baseline zoom and is therefore self-consistent
+// by arithmetic, not by that guard. What the recovery buys is OUTCOME QUALITY,
+// not the invariant: 500x800 with S gives 0.97 narrow with it and 0.62 wide
+// without, and BOTH satisfy #24 — one is usable and one is a 1200px board in
+// 806 local px. The property is upheld by every return path; the recovery is
+// upheld by nothing but its own usefulness, and that is the honest reason to
+// keep it.
+function layoutForCap(cap) {
   if (typeof window === 'undefined') return { zoom: 1, narrow: false };
   const z = UI.uiScale;
   const w = window.innerWidth, h = window.innerHeight;
   const clamp = (v) => Math.max(z.min, Math.min(z.max, v));
   const fitFor = (dw, dh) => Math.min(w / dw, h / dh);
+  const capped = (v) => Math.min(v, cap);
 
-  // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE.
-  //
-  // The wide path keeps `Math.round` byte-for-byte, because every zoom every
-  // existing player sees comes out of it and this branch has no business
-  // moving them. The narrow path floors, because `Math.round` can hand back a
-  // zoom LARGER than the one that fits: at 390x844 the narrow fit is 0.907,
-  // round gives 0.91, and 0.91 x 430 = 391.3 local px demanded against 390
-  // available — #23's own invariant failing in miniature.
-  //
-  // I first floored BOTH, for the tidiness of one rule. It moved 1920x1080
-  // from 1.48 to 1.47 and 1280x800 from 1.07 to 1.06, and the second of those
-  // turned tools/tutorial-reach.mjs red — the guard on #7. Flooring only the
-  // new path leaves every existing value identical to dev (800x450 0.62,
-  // 1024x640 0.85, 1280x800 1.07, 1920x1080 1.48, 2560x1440 1.70).
-  const wideZoom = clamp(Math.round(fitFor(z.designW, z.designH) * 100) / 100);
+  // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE. The wide path keeps
+  // `Math.round` byte-for-byte, because every zoom every existing player sees
+  // comes out of it. The narrow path floors, because `Math.round` can hand back
+  // a zoom LARGER than the one that fits (at 390x844 the narrow fit is 0.907,
+  // round gives 0.91, and 0.91 x 430 = 391.3 px demanded against 390 available).
+  // Flooring BOTH moved 1280x800 from 1.07 to 1.06 and turned
+  // tools/tutorial-reach.mjs red — the guard on #7.
+  const wideZoom = clamp(capped(Math.round(fitFor(z.designW, z.designH) * 100) / 100));
   if (!(z.narrowW && z.narrowH && z.narrowMax)) return { zoom: wideZoom, narrow: false };
 
-  const narrowZoom = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
-  // Self-consistency, and it is the entire fix: the narrow baseline is
-  // admissible ONLY if the zoom it produces actually lands in the narrow band.
-  // Without this test 834x1194 takes narrowZoom 1.53, lands at 545 local px,
-  // and hands the WIDE layout a narrow-sized box.
+  const narrowFit = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
+  const narrowZoom = clamp(capped(narrowFit));
   if (w / narrowZoom <= z.narrowMax) return { zoom: narrowZoom, narrow: true };
+
+  // Recovery: the cap, not the screen, is what pushed this out of the narrow
+  // band. Unreachable when cap is Infinity — narrowZoom === narrowFit there, so
+  // this test is the one that just failed. THAT IS NOW MEASURED RATHER THAN
+  // ARGUED: Vira instrumented it and the counter enters 0 times at cap
+  // Infinity and 47,790-265,908 times under the named caps. Not load-bearing
+  // for #24's property — see the header — only for the quality of the answer.
+  if (w / narrowFit <= z.narrowMax) {
+    const bandFloor = clamp(Math.ceil((w / z.narrowMax) * 100) / 100);
+    if (w / bandFloor <= z.narrowMax) return { zoom: bandFloor, narrow: true };
+  }
   return { zoom: wideZoom, narrow: false };
 }
 
-// A fixed size is the player's choice and is never overridden. The MODE still
-// has to be decided, because a fixed zoom in a small window leaves just as
-// little local space — and the property must hold there too, not only on Auto.
+// A named size is a CEILING the player asked for, not a value the app owes them
+// at any cost. Anything that is not a named size (incl. legacy numeric
+// '90'/'100'/'110'/'125') is Auto: the settings UI displays such values as Auto,
+// so behaving as fixed zoom made the control look dead ("scaling stopped
+// working") — balance.js records that complaint, and it is the reason the
+// settings screen now shows the value actually applied.
 function resolveLayout(uiScale) {
   const key = String(uiScale == null ? 'auto' : uiScale).toLowerCase();
-  // Anything not a named size (incl. legacy numeric '90'/'100'/'110'/'125') is
-  // Auto: the settings UI displays such values as Auto, so behaving as fixed
-  // zoom made the control look dead ("scaling stopped working").
-  if (key !== 'auto' && UI_NAMED[key] != null) {
-    const zoom = UI_NAMED[key];
-    const z = UI.uiScale;
-    const narrow = typeof window !== 'undefined' && z.narrowMax
-      ? window.innerWidth / zoom <= z.narrowMax
-      : false;
-    return { zoom, narrow };
-  }
-  return autoLayout();
+  const named = key !== 'auto' ? UI_NAMED[key] : null;
+  return layoutForCap(named != null ? named : Infinity);
 }
 
 function applyUiScale(settings) {
@@ -16456,8 +16504,8 @@ const ROWS = [
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size',
-    note: 'Auto flexes the whole interface with your window; S–XL is a fixed override.' },
+    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: true,
+    note: 'Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.' },
   { cat: 'Display', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
     note: 'Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.' },
@@ -16578,7 +16626,7 @@ function rowHtml(settings, r) {
       .map((c) => `<button class="choice${c === cur ? ' on' : ''}" data-key="${r.key}" data-val="${c}">${c.toUpperCase()}</button>`)
       .join('');
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${r.applied ? appliedHtml(settings) : ''}</div>
         <div class="choice-group">${opts}</div>
       </div>`;
   }
@@ -16590,6 +16638,64 @@ function rowHtml(settings, r) {
         <span class="knob"></span>
       </button>
     </div>`;
+}
+
+// EldenSpire#26 — SHOW THE VALUE ACTUALLY APPLIED.
+//
+// Clamping the named sizes without this makes the control a liar: pick XL on a
+// 1200x730 window and the fit path holds it at 1.00, so the button lights up
+// and nothing on screen changes. balance.js records that exact complaint
+// landing once before, when Auto "looked dead" — a setting that bricks the
+// fight is a trap, one that silently shrinks is a liar, and only the pair is
+// neither. The clamp is Constantine's ruling; this half is why it is safe.
+//
+// IT READS --ui-zoom RATHER THAN RECOMPUTING THE FIT. main.js already resolved
+// it and wrote it to <html>; asking the same question a second way is how the
+// tablet lockout happened (#24), and a readout that disagrees with the screen
+// is worse than no readout. The requested value comes from the same balance
+// data main.js caps against, so "limited" is a comparison of one computed
+// number against one authored one, not of two computations.
+function appliedHtml(settings) {
+  if (typeof document === 'undefined') return '';
+  const applied = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'));
+  if (!applied) return '';
+  const key = String(settings.uiScale == null ? 'auto' : settings.uiScale).toLowerCase();
+  const asked = UI_DEFAULTS.uiScale.named[key];
+  const shown = `${applied.toFixed(2)}\u00d7`;
+  // A hundredth of slack: the fit path rounds to two decimals, so an exact
+  // grant can miss by 0.004 and must not be reported as a limit.
+  const limited = asked != null && applied < asked - 0.005;
+  // "your screen", not "this window". Shown on three phone shapes, where a
+  // window is not a thing the player has; "your screen" is true on both.
+  // Sunna's, and the row's own note carries the same noun for the same reason.
+  //
+  // THE HINT IS UNCONDITIONAL, and that is the decision rather than an
+  // oversight. Its job is to reach one person: the player who sets XL BECAUSE
+  // SHE CANNOT READ THE GAME, gets 0.82x and a polite explanation, and is not
+  // helped at all — the clamp fixes reachability and does nothing for
+  // legibility, and the player who most needs XL is the one on the smallest
+  // screen. Every condition I drafted for showing it (limited-only, named-size
+  // only, L-and-XL-only) had a screen where she asks for bigger, is refused or
+  // under-served, and is told nothing. A five-word pointer to a sibling control
+  // cannot be wrong; a condition deciding when she deserves to see it can, and
+  // this week has been a week of conditions that were. Wording is Sunna's.
+  return `<p class="set-applied${limited ? ' limited' : ''}" data-applied="uiScale">`
+    + (limited
+      ? `Showing ${shown} — the largest that fits your screen (${key.toUpperCase()} is ${asked.toFixed(2)}\u00d7)`
+      : `Showing ${shown}`)
+    + ` <span class="set-applied-hint">For bigger text, try Text size.</span>`
+    + `</p>`;
+}
+
+// Re-read after the orchestrator has applied the change, and on resize, because
+// Auto's applied value moves with the window while the chosen setting does not.
+function refreshApplied(container, settings) {
+  const el = container.querySelector('[data-applied="uiScale"]');
+  if (!el) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = appliedHtml(settings);
+  const next = tmp.firstElementChild;
+  if (next) el.replaceWith(next);
 }
 
 function isFullscreen() {
@@ -16652,8 +16758,24 @@ function renderSettings(container, { settings, onChange, grouped = true }) {
       btn.parentElement.querySelectorAll('.choice').forEach((b) => b.classList.toggle('on', b === btn));
       settings[btn.dataset.key] = btn.dataset.val;
       onChange({ [btn.dataset.key]: btn.dataset.val });
+      // AFTER onChange, which is what applies the zoom. Reading before it would
+      // report the previous value and the readout would always be one click
+      // behind — a display that lies more quietly than the one it replaced.
+      if (btn.dataset.key === 'uiScale') refreshApplied(container, settings);
     });
   });
+
+  // Auto's applied value moves with the window even though the setting does not.
+  if (container.querySelector('[data-applied="uiScale"]')) {
+    const onResize = () => refreshApplied(container, settings);
+    window.addEventListener('resize', onResize);
+    // The settings container is rebuilt on every open, so the listener is
+    // dropped with it rather than accumulating one per visit.
+    const obs = new MutationObserver(() => {
+      if (!container.isConnected) { window.removeEventListener('resize', onResize); obs.disconnect(); }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
 
   container.querySelectorAll('.toggle').forEach((btn) => {
     btn.addEventListener('click', () => {
