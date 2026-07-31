@@ -424,6 +424,19 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .hint-bar.hint-pad kbd { border-radius: 999px; padding: 0.1rem 0.7rem; }
 body.hide-hints .hint-bar { display: none; }
 
+/* EldenSpire#29 slice 0 — the hint bar is an affordance for hardware that is
+   not present. On a phone it offers "E End Turn" to a device with no E, and it
+   costs a row of a screen that has none to spare.
+   GLOBAL, ON PURPOSE, AND THIS IS THE WHOLE POINT OF DOING IT FIRST. Combat
+   already hid it — but only inside combat's own narrow block, so it was hidden
+   there because combat happens to HAVE a narrow layout, not because the bar is
+   wrong on a phone. The map shows it today; customize and the rest will show it
+   the moment they get a narrow layout of their own. A per-screen rule is four
+   chances to remember and one to forget (Marina). One rule here, and every
+   later slice inherits it without knowing it exists.
+   `body.hide-hints` above is the player's own switch and is untouched. */
+:root[data-layout='narrow'] .hint-bar { display: none; }
+
 /* ---------- controls / rebinds ---------- */
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
@@ -1349,11 +1362,8 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .topbar .fight-label { display: none; }
   :root[data-layout='narrow'] .topbar .relics { margin-left: 0; }
 
-  /* The keyboard/gamepad hint bar is an affordance for a device that is not
-     present. On a phone it costs a whole row and offers keys nobody can press.
-     Hidden, not deleted — it is a `display` rule inside this block, so it comes
-     back the moment the container is wide again. */
-  :root[data-layout='narrow'] .hint-bar.hint-combat { display: none; }
+  /* The hint bar was hidden here. It is now hidden GLOBALLY for the narrow
+     layout in styles/ui.css — it was never a fact about combat (#29 slice 0). */
 
   /* ---- battlefield: give the enemies the width ---- */
   :root[data-layout='narrow'] .field { padding: 0 1.2rem; }

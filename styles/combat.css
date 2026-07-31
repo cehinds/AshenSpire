@@ -447,11 +447,8 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .topbar .fight-label { display: none; }
   :root[data-layout='narrow'] .topbar .relics { margin-left: 0; }
 
-  /* The keyboard/gamepad hint bar is an affordance for a device that is not
-     present. On a phone it costs a whole row and offers keys nobody can press.
-     Hidden, not deleted — it is a `display` rule inside this block, so it comes
-     back the moment the container is wide again. */
-  :root[data-layout='narrow'] .hint-bar.hint-combat { display: none; }
+  /* The hint bar was hidden here. It is now hidden GLOBALLY for the narrow
+     layout in styles/ui.css — it was never a fact about combat (#29 slice 0). */
 
   /* ---- battlefield: give the enemies the width ---- */
   :root[data-layout='narrow'] .field { padding: 0 1.2rem; }
