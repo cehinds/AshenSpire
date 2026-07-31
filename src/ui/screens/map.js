@@ -90,13 +90,33 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
             <g id="map-nodes"></g>
           </svg>
         </div>
-        <div class="map-zoom">
-          <button class="zbtn" id="zoom-out" title="Zoom out">−</button>
-          <button class="zbtn" id="zoom-reset" title="Reset / center">⊙</button>
-          <button class="zbtn" id="zoom-in" title="Zoom in">+</button>
-        </div>
       </div>
+      <!-- OUTSIDE .map-scroll, and that is the whole fix (EldenSpire#28).
+           These three buttons used to be the last child of the scrollport,
+           absolutely positioned over it, so they covered a piece of the
+           pannable canvas. WHICH piece is a coincidence of shape x map zoom x
+           pan offset x seed, and at 412x915 the coincidence was two map nodes a
+           player could see and could not tap. A sibling of .map-scroll is laid
+           out in the flow beside it, so the scrollport is smaller by exactly
+           the bar and there is no offset left for a node to be trapped at.
+           (No backticks in here: this block is inside a template literal, and
+           the first draft of it closed the string and took the screen down.) -->
+      <!-- The hint bar is ABOVE the zoom bar here, and the order is the fix for
+           a defect the first draft of this change introduced. .hint-bar is
+           position: fixed to the bottom of the VIEWPORT and centred, so once the
+           zoom buttons stopped floating and took the bottom of the map, the two
+           claimed the same band: at 390x844 and 412x915 the hint pill sat on top
+           of the − and the ⊙ and made them unreadable. It is pointer-events:
+           none, so nothing was unpressable and the reach sweep was right to stay
+           green — this was only ever visible to an eye. Both are in the flow
+           here (see .mapscreen .hint-bar in map.css), so the map's bottom chrome
+           is one stack with no reserved height anywhere. -->
       ${hintBarHtml('map')}
+      <div class="map-zoom">
+        <button class="zbtn" id="zoom-out" title="Zoom out">−</button>
+        <button class="zbtn" id="zoom-reset" title="Reset / center">⊙</button>
+        <button class="zbtn" id="zoom-in" title="Zoom in">+</button>
+      </div>
     </div>`;
 
   const g = app.querySelector('#map-nodes');
@@ -235,7 +255,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onSetting
   let sl = 0;
   let st = 0;
   scroll.addEventListener('pointerdown', (ev) => {
-    if (ev.target.closest('.map-node.reachable') || ev.target.closest('.map-zoom')) return;
+    // The `.map-zoom` half of this guard went with the overlay (EldenSpire#28).
+    // This listener is on .map-scroll and the buttons are no longer inside it,
+    // so a press on one cannot reach here to be excluded. Left in, it would be
+    // a line that reads like protection and can never run — and the next reader
+    // would take it as evidence the buttons are still in the scrollport.
+    if (ev.target.closest('.map-node.reachable')) return;
     panning = true;
     sx = ev.clientX;
     sy = ev.clientY;
