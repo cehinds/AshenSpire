@@ -23,15 +23,14 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     <div class="screen customize" style="justify-content:flex-start;overflow-y:auto;gap:16px;padding-top:26px">
       <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">PREPARE YOUR FORSAKEN</h2>
 
-      <div style="display:flex;gap:34px;align-items:flex-start">
-        <div class="preview-pane" style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <div class="cz-cols">
+        <div class="preview-pane">
           <div id="cz-portrait" class="cz-portrait"></div>
-          <input id="cz-name" maxlength="16" spellcheck="false" value="Forsaken"
-            style="background:var(--panel);border:1px solid var(--line);color:var(--parchment);border-radius:8px;padding:6px 10px;width:150px;text-align:center;font-family:var(--font-display);letter-spacing:.08em">
+          <input id="cz-name" class="cz-name" maxlength="16" spellcheck="false" value="Forsaken">
           <div class="seed-line">Seed <input id="seed-input" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:14px;max-width:560px">
+        <div class="cz-fields">
           <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
           <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
           <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>

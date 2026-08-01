@@ -752,7 +752,9 @@ function finishRun(victory) {
 function showCustomize(slot = 1) {
   mountCustomize(app, {
     registries,
-    defaultSeedString: randomSeedString(),
+    // A ?shot= boot gets a fixed seed so the field photographs identically on
+    // every capture; a real boot still gets a random one.
+    defaultSeedString: shotState === 'customize' ? 'SHOWCASE' : randomSeedString(),
     onBack: showTitle,
     onStart: (config) => newRun({ ...config, slot }),
   });
@@ -1295,6 +1297,13 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   coopStubMount(coopShrineShot(), 'p1');
 } else if (shotState === 'coopcatchup') {
   coopStubMount(coopCatchupShot(), 'p1');
+} else if (shotState === 'customize') {
+  // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
+  // and #29's own boundary records what that cost: no sweep can open a screen
+  // it cannot reach, so customize went unexamined for the whole week combat
+  // was measured three times over. A seed is passed rather than randomised so
+  // the seed field photographs the same on every run.
+  showCustomize(1);
 } else {
   showTitle();
 }

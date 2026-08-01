@@ -77,6 +77,12 @@ const SCREENS = [
   { name: 'map', q: '?shot=map', ready: `!!document.querySelector('.map-node')` },
   { name: 'combat', q: '?shot=combat', ready: `!!document.querySelector('.combat .hand .card')` },
   { name: 'death', q: '?shot=death', ready: `!!document.querySelector('#app button')` },
+  // EldenSpire#29 slice 1. Added the day the state existed. This file's own
+  // boundary has said since it was written that customize/shop/rest/rewards
+  // have no ?shot= and are therefore covered by nothing — and that is exactly
+  // why customize went unexamined for the week combat was measured three times
+  // over. One of the four is now swept; the boundary still names the other three.
+  { name: 'customize', q: '?shot=customize', ready: `!!document.querySelector('.cz-portrait')` },
   { name: 'boss', q: '?shot=boss', ready: `!!document.querySelector('.boss-intro')`, overlay: 'the boss splash covers the board on purpose and is dismissed on a timer' },
 ];
 
@@ -100,7 +106,13 @@ const PROBE = `(() => {
   const z = parseFloat(getComputedStyle(de).getPropertyValue('--ui-zoom')) || 1;
   // Everything a player can press. .map-node is an SVG <g>, so className is an
   // SVGAnimatedString and must never be string-formatted blindly.
-  const sel = 'button,[role=button],.pile,.map-node,.card,.choice,.opt,.zbtn,.topbar-btn';
+  // WIDENED FOR #29 slice 1, and the widening is the point. Adding customize to
+  // SCREENS without this reported "2 controls · 0 COVERED" and PASSED — the
+  // screen has 25, and the three that were unreachable (the name field, the
+  // seed field and a class card) were none of the two it looked at. A sweep
+  // that opens a screen and inspects 8% of it is the '0 checks passed' shape
+  // wearing a screen name.
+  const sel = 'button,[role=button],input,.pile,.map-node,.card,.choice,.opt,.zbtn,.topbar-btn,.cz-opt,.class-pick,.cz-keepsake';
   const name = (e) => {
     if (!e) return 'null';
     const t = (e.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 22);
@@ -127,8 +139,48 @@ const PROBE = `(() => {
     // Inside its own scrollport, or scrolled past the edge of it?
     const sp = scrollport(c);
     const box = sp ? sp.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
-    const outside = x < box.left - 0.5 || x > box.right + 0.5 || y < box.top - 0.5 || y > box.bottom + 0.5;
-    if (outside) { scrolledOut.push(name(c)); continue; }
+    const outX = x < box.left - 0.5 || x > box.right + 0.5;
+    const outY = y < box.top - 0.5 || y > box.bottom + 0.5;
+    if (outX || outY) {
+      // SCROLLED-OUT IS ONLY FINE IF SCROLLING CAN ACTUALLY GET THERE.
+      //
+      // The first version of this classifier stopped at "outside its
+      // scrollport" and called that recoverable. Run against the customize
+      // screen before #29 slice 1 fixed it, with the preview pane, the name
+      // field and the seed field sitting at x = -139.8 and no horizontal
+      // scroll anywhere on the page, it reported 0 COVERED and exited 0. The
+      // sweep could not see the defect it had just been added for.
+      //
+      // A container whose computed overflow is auto is not necessarily a
+      // container that scrolls: '.screen' sets overflow-y:auto, which makes
+      // overflow-x compute to auto too, so every horizontally-absent control
+      // on that screen looked recoverable. Ask the port for real travel on the
+      // axis that is actually short.
+      const port = sp || document.scrollingElement || document.documentElement;
+      // DIRECTION MATTERS, and the first version of this test missed it. It
+      // asked only whether the port had travel, and the customize screen HAD
+      // travel — the class row overflowed ~71px to the RIGHT — so a preview
+      // pane sitting 139px off the LEFT was called recoverable. You cannot
+      // scroll to a negative offset: in LTR, content laid out before the
+      // origin is unreachable no matter how wide the content is. Ask whether
+      // the port can move THE WAY THIS CONTROL IS.
+      const canGoLeft = port.scrollLeft > 1;
+      const canGoRight = port.scrollWidth - port.clientWidth - port.scrollLeft > 1;
+      const canGoUp = port.scrollTop > 1;
+      const canGoDown = port.scrollHeight - port.clientHeight - port.scrollTop > 1;
+      const offLeft = x < box.left - 0.5, offRight = x > box.right + 0.5;
+      const offTop = y < box.top - 0.5, offBottom = y > box.bottom + 0.5;
+      const recoverable =
+        (!offLeft || canGoLeft) && (!offRight || canGoRight)
+        && (!offTop || canGoUp) && (!offBottom || canGoDown);
+      const travelX = port.scrollWidth - port.clientWidth;
+      const travelY = port.scrollHeight - port.clientHeight;
+      if (recoverable) { scrolledOut.push(name(c)); continue; }
+      const dir = [offLeft && 'left', offRight && 'right', offTop && 'above', offBottom && 'below'].filter(Boolean).join('+');
+      covered.push(name(c) + '  <-  UNREACHABLE: ' + dir + ' of its scrollport, which cannot scroll that way'
+        + ' (travel ' + Math.round(travelX) + 'x' + Math.round(travelY) + ', at ' + Math.round(port.scrollLeft) + ',' + Math.round(port.scrollTop) + ')');
+      continue;
+    }
     covered.push(name(c) + '  <-  ' + name(hit));
   }
   return { z, local: app.clientWidth + 'x' + app.clientHeight, total: all.length,
@@ -234,8 +286,9 @@ async function main() {
 
   console.log(`\n  BOUNDARY — Linux headless Chromium only; emulation is not a phone. Only the
   screens with a ?shot= state are reached: title, map, combat, boss, death.
-  CUSTOMIZE, SHOP, REST, REWARDS and every overlay have NO ?shot= and are not
-  covered here or anywhere — and #23's own bleed evidence came from customize.
+  CUSTOMIZE now has one (#29 slice 1) and is swept. SHOP, REST, REWARDS and
+  every overlay still have NO ?shot= and are covered here or anywhere by
+  nothing.
   Reachability at rest only: nothing is pressed, legibility is not judged, and a
   control that appears only mid-interaction cannot be seen.
 
