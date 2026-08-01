@@ -54,7 +54,7 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
     const el = document.createElement('div');
     el.className = 'class-pick cr-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3><span class="chip">HP ${cls.maxHp}</span>`;
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><span class="chip">HP ${cls.maxHp}</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
       classes.querySelectorAll('.cr-class').forEach((x) => x.classList.toggle('chosen', x === el));

@@ -590,9 +590,96 @@ body.hide-hints .hint-bar { display: none; }
    150px, 10px — and deliberately still px rather than rem, because px does not
    answer to the Text size setting and rem does; converting them would have
    changed the wide layout at text size L/XL, which nothing here measures. */
-.cz-cols { display: flex; gap: 34px; align-items: flex-start; }
+/* `row-reverse`, and it is the one place on this screen where DOM order and
+   visual order disagree — so it is written down rather than discovered.
+   EldenSpire#29 slice 2 put `.cz-fields` FIRST in the markup, because on a
+   narrow screen the DOM order IS the reading order and the decisions have to
+   come before the identity pane (Sunna: 17% of the arrival screen went to a
+   name most players never change and a seed most never read, above the only
+   choice that changes the run). On wide there is no fold, nothing is hidden,
+   and the authored framing — portrait on the left — is Constantine's approved
+   screen, so it is kept by reversing the AXIS rather than the markup.
+   THE COST, stated: a sighted keyboard user on a wide screen tabs right-to-left
+   across these two blocks. It is two siblings and one inversion, on the layout
+   where every control is already visible. A screen reader follows the DOM and
+   therefore hears the better order on both. The alternative — reordering only
+   for narrow — needs a re-mount on every resize, which is a second layout
+   decider, which is #24 again. */
+.cz-cols { display: flex; flex-direction: row-reverse; gap: 34px; align-items: flex-start; }
 .cz-fields { display: flex; flex-direction: column; gap: 14px; max-width: 560px; }
 .preview-pane { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+/* ---------- EldenSpire#29 slice 2 — the way out is always on screen --------
+   Sunna's read of the FIXED screen, 2026-08-01: "reachable, and still not
+   finished." At 390x844 the arrival screen shows a portrait, a name, a seed and
+   three classes and then STOPS — it looks complete. BEGIN THE CLIMB was 374
+   device px below the fold (its bottom 410 px past it), inside 432 px of scroll
+   with no persistent footer, no scroll affordance and a 0 px scrollbar gutter.
+   A player who has picked a class has to GUESS that swiping is the way in.
+   The same defect exists on the desktop this screen was designed on, and was
+   written down there a week ago and not fixed: tools/tutorial-reach.mjs carries
+   the note "#cz-start lays out at top 1216 in a 1080px viewport, 136px below
+   the fold" and has to scrollIntoView to click it. One screen, one fix, both.
+
+   THERE IS NO RESERVED HEIGHT AND THAT IS THE POINT — the same reasoning as
+   .map-zoom (EldenSpire#28, styles/map.css; read its header). `.screen.customize`
+   stops being the scrollport, `.cz-scroll` becomes one, and `.cz-actions` is its
+   sibling — so the band the buttons occupy is the buttons' OWN computed height.
+   A reserved length here would be a second number that has to agree with the
+   button size, the text-size setting and --ui-zoom at once: three chances to
+   drift and nothing checking. `margin-top: auto` puts the row at the bottom when
+   the content is short, which is a bound and not a length.
+
+   ONE RULE, EVERY LAYOUT, not a narrow special case. Whether the button falls
+   below the fold is a coincidence of shape x --ui-zoom x text size x how many
+   classes and keepsakes the content tables happen to hold — and that last term
+   is Law 1's whole promise, so a fix aimed at today's row counts is a fix for
+   today's content. */
+.screen.customize { justify-content: flex-start; gap: 0; padding: 0; overflow: hidden; }
+.cz-scroll {
+  flex: 0 1 auto; min-height: 0; width: 100%; overflow-y: auto;
+  display: flex; flex-direction: column; align-items: center; gap: 1.6rem;
+  padding: 2.6rem 2.4rem 1.8rem;
+  /* Parity with .map-scroll, and honest about what it buys: under mobile
+     emulation — and on a real phone — scrollbars are OVERLAY, so the gutter is
+     0 px there either way, which is exactly what Sunna measured. This is the
+     desktop half. The phone's affordance is the opaque bar below, with the
+     content visibly passing under it. */
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.cz-actions {
+  position: relative; flex-shrink: 0; margin-top: auto; width: 100%;
+  display: flex; justify-content: center; align-items: center; gap: 1.4rem;
+  padding: 1rem 2.4rem;
+  background: var(--panel); border-top: 1px solid var(--line);
+}
+/* 4.4rem = 44 LOCAL px, the house tap-target unit (see .qn-panel .qn-row).
+   Not px: a control holding text must grow with the text-size setting (Law 2).
+   Said plainly because it is a gap and not a win — at --ui-zoom 0.9 that is
+   39.6 DEVICE px against the 44 a finger wants, and closing THAT gap is Sunna's
+   open card from 2026-07-31, which this rule does not close. */
+.cz-actions button { min-height: 4.4rem; }
+/* The cue that says "there is more above me." The bar is opaque, so without
+   this the content just ends at a hard edge — which reads as finished, the
+   exact failure this block exists to remove. Bounded by .cz-actions (position:
+   relative, above); pointer-events: none so it can never answer a hit-test in
+   place of a control. */
+.cz-actions::before {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: 1.8rem;
+  background: linear-gradient(to top, var(--panel), transparent);
+  pointer-events: none;
+}
+/* Moved off the markup, VALUE UNCHANGED (24px stays 24px) — same reason as the
+   note above: an inline `style=` outranks every stylesheet selector short of
+   !important, so anything left inline is a rule no layout can answer. Whether
+   this 24px ought to be rem so it tracks Text size is a live Law 2 question and
+   is deliberately NOT answered here: changing it would change the wide layout
+   at L/XL, which nothing in this repo measures. */
+.cz-title { color: var(--gold); font-size: 24px; letter-spacing: 0.2em; }
+/* The name field had no label element, no placeholder and no aria-label — so
+   the label is a real <label for>, not a styled <p>, because the gap it closes
+   is a screen reader announcing an unlabelled text field. */
+.preview-pane .cz-label { margin-bottom: 0; }
 .cz-name {
   background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
   border-radius: 8px; padding: 6px 10px; width: 150px; text-align: center;
@@ -948,19 +1035,76 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
    The fix is to stop asking for two columns. Everything below is a single
    `flex-direction` change and the wrapping that follows from it. */
+/* `column`, NOT `column-reverse` — and that is the whole point of slice 2's
+   markup change. The wide rule above is `row-reverse` only to keep the approved
+   desktop framing; here the DOM order is taken literally, so the reading order,
+   the tab order and the visual order are the same thing: decisions first,
+   identity after. */
 :root[data-layout='narrow'] .cz-cols {
   flex-direction: column; align-items: center; gap: 1.8rem; width: 100%;
 }
 :root[data-layout='narrow'] .cz-fields { max-width: 100%; width: 100%; }
-/* Three 19rem cards need 606 local px; wrapping puts two on a row at 433 and
-   keeps each card at its authored width rather than squeezing the text. */
-:root[data-layout='narrow'] .class-row { flex-wrap: wrap; justify-content: center; gap: 1.2rem; }
-/* Two per row rather than one. The authored card is 19rem, and two of those
-   plus the gap need 392 local px against the 385 the column actually has — so
-   they wrapped one-up and the class list alone ran 749 local px of scroll.
-   17rem fits two and halves that. Chosen by measuring the scroll height, not
-   by eye. */
-:root[data-layout='narrow'] .class-pick { width: 17rem; padding: 1.2rem; }
+/* ---------- EldenSpire#29 slice 3 — the orphaned class card -----------------
+   Sunna, 2026-08-01, naming a thing that had never been put in front of anyone:
+   three cards wrapped 2-then-1 and the lone card was centred under the pair.
+   "A lone centred card under two others is the grammar of THIS ONE IS SELECTED"
+   — and it isn't; the selected card is Reaver, top-left, with a full card height
+   between the gold border and where the eye lands. A layout that says something
+   false about state. Constantine opened it: "approved and get it done."
+
+   ~~ struck: the two rules this replaces, kept visible because their reasoning
+   was right and only their premise expired. ~~
+   ~~ .class-row { flex-wrap: wrap; justify-content: center }  — "wrapping puts
+      two on a row at 433 and keeps each card at its authored width" ~~
+   ~~ .class-pick { width: 17rem }  — "17rem fits two and halves the scroll.
+      Chosen by measuring the scroll height, not by eye." ~~
+   Both were honest measurements of how to make TWO cards share a row. The
+   orphan is what the third one does, and no width fixes that.
+
+   THE ORPHAN IS A PROPERTY OF THE COUNT, NOT OF THE WIDTH, which is why this is
+   one card per row and not a cleverer wrap. Three cards wrap 2+1; four wrap 2+2
+   and look fine; five wrap 2+2+1 and it is back. Law 1 promises Constantine can
+   add a class by adding a table row — so a layout that is only correct at
+   today's row count is a layout that breaks the next time content grows, and
+   nothing would catch it. One per row is count-agnostic by construction.
+
+   THE CARD TURNS SIDEWAYS RATHER THAN JUST GETTING WIDER, and that is the part
+   that had to be measured rather than assumed: a full-width card keeping the
+   big centred glyph on top is TALLER than half of a 2-up row, and would have
+   pushed KEEPSAKE back below the fold — undoing what slice 2 just bought. Laid
+   out as glyph-beside-text the description gets a wide measure, wraps in three
+   lines instead of six, and the whole CLASS block gets SHORTER. That is the
+   keepsake list's own shape, which is what Sunna pointed at: "the keepsake list
+   is the proof it works."
+
+   `.cp-body` is the only markup this needed — one wrapper so the glyph has a
+   single sibling to sit beside. It is a plain block on wide and changes nothing
+   there (measured: every wide rect identical). It is added in BOTH producers of
+   `.class-pick`, customize.js and customRun.js, because this rule is not scoped
+   to one screen — see below.
+
+   AND IT BINDS CUSTOM CLIMB TOO, ON PURPOSE AND NOT BY ACCIDENT. `.class-pick`
+   is customRun.js's card as well (`.cr-class`), with the same three classes and
+   the same 2-then-1 wrap and therefore the same false "selected" grammar. A rule
+   scoped to `.customize` would be the per-screen shape Marina already ruled
+   against on slice 0 — four chances to remember and one to forget. Its cards
+   carry no description, so they simply come out shorter; measured, not assumed.
+
+   No width, no height, no reserved anything: the row is a column, the card is
+   `auto`, the text column is `1fr`. The 17rem above was the last magic number on
+   this screen and it leaves with the wrap that needed it (Law 2). */
+:root[data-layout='narrow'] .class-row {
+  flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 1.2rem; width: 100%;
+}
+:root[data-layout='narrow'] .class-pick {
+  width: auto; padding: 1.2rem 1.6rem;
+  display: flex; align-items: center; gap: 1.6rem; text-align: left;
+}
+:root[data-layout='narrow'] .class-pick .glyph { margin-bottom: 0; flex-shrink: 0; }
+/* min-width: 0 or the text column refuses to shrink below its longest word and
+   the card overflows its own row — the flex default that has bitten this repo
+   before. It is a bound, not a length. */
+:root[data-layout='narrow'] .cp-body { flex: 1; min-width: 0; }
 :root[data-layout='narrow'] .cz-opts { flex-wrap: wrap; justify-content: center; }
 :root[data-layout='narrow'] .cz-keepsakes { width: 100%; }
 /* ---------- ☰ quick-nav list (the quick-menu experiment, EldenSpire#34) ----- */
@@ -14919,7 +15063,7 @@ Object.assign(module.exports, { dlog, getEntries, logText, openDebugLog });
 const { LOCKED_CLASSES } = require("src/content/index.js");
 const { KEEPSAKES } = require("src/content/keepsakes.js");
 const { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } = require("src/ui/assets.js");
-const { esc } = require("src/ui/components/tooltip.js");
+const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 
 function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -14931,27 +15075,64 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
     keepsakeId: 'none',
   };
 
+  // WHY THIS MARKUP LOOKS THE WAY IT DOES — EldenSpire#29 slice 2, out of
+  // Sunna's read of the fixed screen (2026-08-01): "reachable, and still not
+  // finished." Three shapes here, and each answers one of her findings.
+  //
+  // 1. THE SCREEN NO LONGER SCROLLS — a child does. `.cz-scroll` holds
+  //    everything that can go off the bottom and `.cz-actions` is its sibling,
+  //    so the way OUT of character creation is on screen the moment the screen
+  //    is. Measured before: BEGIN THE CLIMB arrived 374 device px below the fold
+  //    at 390x844 with no footer and no affordance, on a screen that looks
+  //    finished where it stops. The height of the bar is the buttons' own — see
+  //    styles/ui.css for why there is no reserved length anywhere.
+  //
+  // 2. THE ORDER IS THE DECISIONS FIRST. `.cz-fields` now runs CLASS, KEEPSAKE,
+  //    then the three cosmetics, and the identity pane (portrait + name + seed)
+  //    comes after all of it in the DOM. Sunna measured 17% of the arrival
+  //    screen going to a name most players never change and a seed most never
+  //    read, above the only choice that changes the run, with keepsakes last and
+  //    wholly below the fold. The wide layout keeps its authored framing
+  //    (portrait left) through `row-reverse` — the one place where DOM order and
+  //    visual order disagree, and it is named in the stylesheet, not hidden.
+  //
+  // 3. THE NAME FIELD HAS A NAME. It had no label element, no placeholder and no
+  //    aria-label — measured, not inferred — while displaying "Forsaken" under a
+  //    heading reading PREPARE YOUR FORSAKEN, so it read as an echo of the title
+  //    rather than something you type in. A real <label for>, a placeholder that
+  //    invites (the value starts EMPTY so the placeholder is actually reachable —
+  //    a blank field already resolves to 'Forsaken' below, so nothing is lost),
+  //    and `type="text"`, which is not cosmetic: input.js's FOCUS_SELECTOR
+  //    matches `input[type="text"]` by ATTRIBUTE, so neither text field on this
+  //    screen was reachable by the pad or keyboard cursor at all.
+  //
+  // NOT TOUCHED, deliberately: the 2-then-1 class card wrap. Sunna named it and
+  // it is gated on Constantine's word, which he has not given.
   app.innerHTML = `
-    <div class="screen customize" style="justify-content:flex-start;overflow-y:auto;gap:16px;padding-top:26px">
-      <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">PREPARE YOUR FORSAKEN</h2>
+    <div class="screen customize">
+      <div class="cz-scroll">
+        <h2 class="cz-title">PREPARE YOUR FORSAKEN</h2>
 
-      <div class="cz-cols">
-        <div class="preview-pane">
-          <div id="cz-portrait" class="cz-portrait"></div>
-          <input id="cz-name" class="cz-name" maxlength="16" spellcheck="false" value="Forsaken">
-          <div class="seed-line">Seed <input id="seed-input" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></div>
-        </div>
+        <div class="cz-cols">
+          <div class="cz-fields">
+            <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
+            <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
+            <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
+            <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
+            <div><p class="cz-label">SPRITE</p><div id="cz-styles" class="cz-opts"></div></div>
+          </div>
 
-        <div class="cz-fields">
-          <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
-          <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
-          <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
-          <div><p class="cz-label">SPRITE</p><div id="cz-styles" class="cz-opts"></div></div>
-          <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
+          <div class="preview-pane">
+            <div id="cz-portrait" class="cz-portrait"></div>
+            <label class="cz-label cz-name-label" for="cz-name">NAME</label>
+            <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false"
+                   autocomplete="off" placeholder="Forsaken" value="">
+            <label class="seed-line" for="seed-input">Seed <input id="seed-input" type="text" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></label>
+          </div>
         </div>
       </div>
 
-      <div style="display:flex;gap:14px">
+      <div class="cz-actions">
         <button class="subtle" id="cz-back">Back</button>
         <button id="cz-start">BEGIN THE CLIMB</button>
       </div>
@@ -14979,7 +15160,7 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
     const el = document.createElement('div');
     el.className = 'class-pick cz-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${cls.startingDeck.length} cards</span>`;
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${cls.startingDeck.length} cards</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
       classes.querySelectorAll('.cz-class').forEach((x) => x.classList.toggle('chosen', x === el));
@@ -14990,7 +15171,7 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
   for (const cls of LOCKED_CLASSES) {
     const el = document.createElement('div');
     el.className = 'class-pick locked';
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3><p>${esc(cls.description)}</p><span class="chip">ARRIVES IN ${esc(cls.milestone)}</span>`;
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description)}</p><span class="chip">ARRIVES IN ${esc(cls.milestone)}</span></div>`;
     classes.appendChild(el);
   }
   classes.querySelector('.cz-class').classList.add('chosen');
@@ -15013,7 +15194,12 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
     const b = document.createElement('div');
     b.className = `cz-opt tint${i === 0 ? ' chosen' : ''}`;
     b.style.background = t.css;
+    // Law 3 clause 4: a native `title=` does not satisfy the tooltip floor —
+    // touch and gamepad players never see one. A tint swatch is pure colour with
+    // no text of its own, so it is the one option row here that says NOTHING
+    // without this. `title` is kept for the desktop mouse habit, not relied on.
     b.title = t.name;
+    attachTooltip(b, () => esc(t.name));
     b.addEventListener('click', () => {
       state.tint = t.id;
       tintBox.querySelectorAll('.cz-opt').forEach((x) => x.classList.toggle('chosen', x === b));
@@ -15050,9 +15236,42 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
     ksBox.appendChild(el);
   });
 
-  $('#cz-name').addEventListener('input', (ev) => {
+  const nameEl = $('#cz-name');
+  nameEl.addEventListener('input', (ev) => {
     state.name = ev.target.value.trim() || 'Forsaken';
   });
+
+  // ---- the pinned action row: tooltips (Law 3 clause 4) ----
+  // Every one of these fires for hover AND for the pad/keyboard focus cursor —
+  // attachTooltip listens for the gpfocus/gpblur input.js dispatches, which is
+  // the half a native `title=` never reaches.
+  //
+  // THE BUMPER ANSWER, written down because clause 6 says an undefined context
+  // is a defect found by the player's thumb: this screen has NO tab set. There
+  // is no strip, no folded switcher, nothing that cycles. RB/LB therefore keep
+  // their global bindings here and the answer is "nothing here" — stated, not
+  // left to be discovered. The action row is two buttons reached by the focus
+  // cursor, exactly as a vertical list is (clause 6's corollary).
+  //
+  // The number in the name tooltip is READ OFF THE FIELD, never typed: maxlength
+  // lives in the markup above and a prose copy of it is a defect under Law 1
+  // clause 2 even in a tooltip.
+  attachTooltip(nameEl, () => `Your character's name — the one the death screen uses.<br>`
+    + `Up to ${nameEl.maxLength} characters. Leave it blank and you climb as Forsaken.`);
+  attachTooltip($('#seed-input'), () => 'The seed the whole climb is generated from.<br>'
+    + 'The same seed gives the same map, the same shops and the same cards. Change it for a different run.');
+  attachTooltip($('#cz-back'), () => 'Back to the title screen. Nothing here is saved.');
+  // Names, never numbers, and computed at show time — so the pinned row is also
+  // the answer to "what did I pick?" for a player whose choices have scrolled
+  // out of sight above it. That is half the affordance the bar is here to be.
+  attachTooltip($('#cz-start'), () => {
+    const cls = registries.classes.all().find((c) => c.id === state.classId);
+    const ks = KEEPSAKES.find((k) => k.id === state.keepsakeId);
+    return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
+      + (ks && ks.id !== 'none' ? `, carrying <b>${esc(ks.name)}</b>.` : ', carrying no keepsake.')
+      + '<br>Scroll up to change any of it.';
+  });
+
   $('#cz-back').addEventListener('click', onBack);
   $('#cz-start').addEventListener('click', () => {
     onStart({
@@ -15592,7 +15811,7 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     const el = document.createElement('div');
     el.className = 'class-pick cr-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3><span class="chip">HP ${cls.maxHp}</span>`;
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><span class="chip">HP ${cls.maxHp}</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
       classes.querySelectorAll('.cr-class').forEach((x) => x.classList.toggle('chosen', x === el));
