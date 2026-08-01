@@ -55,9 +55,19 @@
 name: ci
 
 on:
-  push:
-    branches: ['**']
-  pull_request:
+  # AUTOMATIC CI DISABLED 2026-08-01, at the repo owner's request — GitHub Actions
+  # minutes cost money on private repos, and this workflow is the most expensive
+  # one here: a 3-OS matrix on every push to every branch, where Windows bills at
+  # 2x and macOS at 10x the Linux rate.
+  #
+  # It now runs ONLY when started by hand: Actions tab -> "Run workflow".
+  # Nothing below this block changed; every job, guard and boundary is intact.
+  #
+  # TO RE-ENABLE, restore these three lines in place of `workflow_dispatch:`
+  #   push:
+  #     branches: ['**']
+  #   pull_request:
+  workflow_dispatch:
 
 # One in-flight run per ref; a superseded run's result is not evidence about HEAD.
 concurrency:
