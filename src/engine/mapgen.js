@@ -8,9 +8,7 @@
 // (content/mapconfig.js); randomness only from the seeded 'map' stream.
 // Headless: no document/window/localStorage/timers.
 
-import { resolveFloorPlan, NODE_TYPES } from '../model/floorplan.js';
-
-export { NODE_TYPES };
+import { resolveFloorPlan } from '../model/floorplan.js';
 
 const TYPING_RETRIES = 40;
 

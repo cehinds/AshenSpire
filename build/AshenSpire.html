@@ -3190,7 +3190,7 @@ function coopMapShot() {
     // Fenn has already voted for a start node; Wren (you) is still deciding.
     scene: { kind: 'map', votes: { p2: g.startIds[1] || g.startIds[0] } },
     reachableIds: g.startIds.slice(),
-    map: { floors: g.floors, startIds: g.startIds, bossId: g.bossId, nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })) },
+    map: { floors: g.floors, columns: g.columns, startIds: g.startIds, bossId: g.bossId, nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })) },
     party: [
       { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, catchupQueue: [] },
       { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, catchupQueue: [] },
@@ -8159,8 +8159,10 @@ Object.assign(module.exports, { classes, LOCKED_CLASSES });
 //   `minReachableElites` -> `minElites` (and the same for merchants).
 //       The old name promised reachability; mapgen counts the whole graph. It
 //       never measured what it claimed. The count is unchanged and honestly
-//       named; the reachability number is now MEASURED AND REPORTED by
-//       tools/mapplan.mjs (today: 8 of 104 starts at 15x7 can reach no Elite).
+//       named; the reachability number is MEASURED AND PRINTED by
+//       tools/mapplan.mjs on every run — deliberately not restated here,
+//       because a sample restated in prose drifts (Bjorn caught three homes
+//       carrying three different samples within a day).
 
 const ACT_SHAPE = {
   floors: 15,
@@ -14153,9 +14155,7 @@ Object.assign(module.exports, { emitEvent, fireOwnerHooks, findEntity, checkPhas
 // (content/mapconfig.js); randomness only from the seeded 'map' stream.
 // Headless: no document/window/localStorage/timers.
 
-const { resolveFloorPlan, NODE_TYPES } = require("src/model/floorplan.js");
-
-
+const { resolveFloorPlan } = require("src/model/floorplan.js");
 
 const TYPING_RETRIES = 40;
 
@@ -14338,7 +14338,7 @@ function clamp(v, lo, hi) {
 }
 
 
-Object.assign(module.exports, { NODE_TYPES, generateActMap });
+Object.assign(module.exports, { generateActMap });
 
 },
 "src/engine/save.js": function (module, exports, require) {
@@ -22636,7 +22636,19 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
     const nodes = map.nodes;
     const reachable = new Set(snap.reachableIds);
     const maxFloor = Math.max(...nodes.map((n) => n.floor));
-    const width = 7 * COL_X + 60;
+    // COLUMNS COME FROM THE SNAPSHOT, not from a literal — the same fix as
+    // map.js in this branch, found by Bjorn one view over: "the view and the
+    // generator cannot disagree" was one view short of true while this line
+    // read 7. Masked today because every act ships 7 columns; the day a host
+    // tunes columns, an unfixed parity renderer here would disagree with the
+    // host about where every node is. A snapshot from an older host lacks the
+    // field and gets the derived width, loudly.
+    let columns = map.columns;
+    if (typeof columns !== 'number') {
+      columns = Math.max(...nodes.map((n) => n.col)) + 1;
+      console.warn(`[coop] snapshot map has no \`columns\`; drawing ${columns} derived from the nodes in use.`);
+    }
+    const width = columns * COL_X + 60;
     const height = (maxFloor + 1) * ROW_H + 30;
     const x = (col) => 60 + col * COL_X;
     const y = (floor) => height - floor * ROW_H;

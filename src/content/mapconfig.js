@@ -43,8 +43,10 @@
 //   `minReachableElites` -> `minElites` (and the same for merchants).
 //       The old name promised reachability; mapgen counts the whole graph. It
 //       never measured what it claimed. The count is unchanged and honestly
-//       named; the reachability number is now MEASURED AND REPORTED by
-//       tools/mapplan.mjs (today: 8 of 104 starts at 15x7 can reach no Elite).
+//       named; the reachability number is MEASURED AND PRINTED by
+//       tools/mapplan.mjs on every run — deliberately not restated here,
+//       because a sample restated in prose drifts (Bjorn caught three homes
+//       carrying three different samples within a day).
 
 const ACT_SHAPE = {
   floors: 15,

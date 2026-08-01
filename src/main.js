@@ -1221,7 +1221,7 @@ function coopMapShot() {
     // Fenn has already voted for a start node; Wren (you) is still deciding.
     scene: { kind: 'map', votes: { p2: g.startIds[1] || g.startIds[0] } },
     reachableIds: g.startIds.slice(),
-    map: { floors: g.floors, startIds: g.startIds, bossId: g.bossId, nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })) },
+    map: { floors: g.floors, columns: g.columns, startIds: g.startIds, bossId: g.bossId, nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })) },
     party: [
       { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, catchupQueue: [] },
       { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, catchupQueue: [] },
