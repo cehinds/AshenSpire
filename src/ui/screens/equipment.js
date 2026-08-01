@@ -104,7 +104,39 @@ export function mountEquipment(host, {
   const eq = registries.equipment;
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   const unlocked = new Set(meta.unlocked || []);
-  let view = (meta.settings && meta.settings.equipView) || CFG().defaultView;
+  // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
+  // terms is the whole rule:
+  //   1. the player's own saved choice, always, on every shape;
+  //   2. otherwise the narrow default, if this is a narrow layout;
+  //   3. otherwise the desktop default.
+  // Sunna's ruling was "hybrid must not be what a phone OPENS" — opens, not
+  // shows. Someone who picked hybrid on a phone keeps it, and since #38 the
+  // stylesheet makes it fit, so honouring that choice is no longer a trap.
+  //
+  // `data-layout` is READ, never computed. autoLayout() writes it in the same
+  // call that chooses --ui-zoom, so mode and zoom cannot disagree; asking the
+  // width here would make a second decider, which is exactly the fight that
+  // became unadvanceable in #24. The value is validated against the content's
+  // own closed set rather than trusted, so a bad table entry degrades to the
+  // desktop default instead of rendering a view class that does not exist.
+  const CV = CFG();
+  const narrow = typeof document !== 'undefined'
+    && document.documentElement.getAttribute('data-layout') === 'narrow';
+  // LAW 1 CLAUSE 5 — bad data fails LOUD and names the entry. Vira's condition on
+  // #41: `narrowDefaultView: 'racks'` is a one-character typo that fell through
+  // to `hybrid` in silence, and tools/menufit.mjs stayed green because the other
+  // half of this PR had just made hybrid fit. THE TWO HALVES MASKED EACH OTHER —
+  // a silent fallback plus a check that asks "does it fit" rather than "is it the
+  // one the table names". A validated-then-discarded value is exactly the shape
+  // clause 5 exists to forbid.
+  const named = narrow ? CV.narrowDefaultView : CV.defaultView;
+  if (named != null && !CV.views.includes(named)) {
+    console.error(`[content] balance.equipment.${narrow ? 'narrowDefaultView' : 'defaultView'}`
+      + ` = ${JSON.stringify(named)} is not one of ${JSON.stringify(CV.views)}`
+      + ' — falling back, and this line is the defect, not the fallback.');
+  }
+  const shapeDefault = (named != null && CV.views.includes(named)) ? named : CV.defaultView;
+  let view = (meta.settings && meta.settings.equipView) || shapeDefault;
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 

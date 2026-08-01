@@ -6,6 +6,7 @@
 
 import { passiveFlag } from '../../model/registries.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
+import { relicText } from '../components/card.js';
 import { overlayIsOpen } from '../components/overlay.js';
 import { matchAction, isEngaged, focusFirst } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
@@ -155,7 +156,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     const el = document.createElement('div');
     el.className = 'relic';
     el.textContent = def.icon || '◆';
-    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate.replace(/[{}]/g, ''))}`);
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def))}`);
     strip.appendChild(el);
   }
 

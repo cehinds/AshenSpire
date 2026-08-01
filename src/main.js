@@ -166,6 +166,11 @@ const ACCENTS = UI.accents;
 // designW off disk is measuring the tree rather than the page in front of it —
 // which is the whole difference for dist/, one inlined file. Read-only.
 if (typeof window !== 'undefined') window.__uiScale = UI.uiScale;
+// Same species, same reason, added at EldenSpire#41 for Vira's condition: a check
+// that asks "is the opened Armoury view the one the table names" must READ the
+// table off the page, not hold its own copy (Law 1 clause 2). A tool typing
+// 'rack' would agree with a typo as happily as with the truth. Read-only.
+if (typeof window !== 'undefined') window.__equipCfg = registries.balance.equipment;
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;

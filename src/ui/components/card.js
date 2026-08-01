@@ -5,7 +5,7 @@
 // computeTokenBindings. No math happens here.
 
 import { resolveCard } from '../../model/registries.js';
-import { computeTokenBindings } from '../../model/validate.js';
+import { computeTokenBindings, relicTokens, tokenRe } from '../../model/validate.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { balance } from '../../content/balance.js';
 import { tagsFor } from '../../content/tags.js';
@@ -20,9 +20,34 @@ export function staticTokens(def) {
   return tokens;
 }
 
+/**
+ * relicText(def) → plain text with every {token} replaced by the number the
+ * relic's own data produces. EldenSpire#38.
+ *
+ * Beside fillTemplate() on purpose: that one is the card path (rich HTML, live
+ * combat previews, up/down colouring); this one is the relic/flask path, which
+ * is read in tooltips and list rows where the caller escapes the result itself.
+ * They share the token SYNTAX, so they live together — one place to look when
+ * the syntax changes — and they do not share a body, because one returns HTML
+ * and the other returns text and merging them would mean an escaping decision
+ * made in the wrong place.
+ *
+ * What replaced it: `textTemplate.replace(/[{}]/g, '')` at three call sites,
+ * which stripped the braces and showed the player the KEY. An unresolved token
+ * still renders as `{token}` here — braces and all — because a visible brace is
+ * a bug report and a bare key is a sentence that looks fine and lies.
+ */
+export function relicText(def) {
+  if (!def || !def.textTemplate) return '';
+  const tokens = relicTokens(def);
+  return def.textTemplate.replace(tokenRe(), (m, tok) => (
+    typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
+  ));
+}
+
 function fillTemplate(def, tokens, baseTokens) {
   let html = esc(def.textTemplate);
-  html = html.replace(/\{([A-Za-z][\w.]*)\}/g, (m, tok) => {
+  html = html.replace(tokenRe(), (m, tok) => {
     const v = tokens[tok];
     if (v == null) return m;
     let cls = 'val';

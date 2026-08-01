@@ -9,6 +9,7 @@ import { renderCard } from './card.js';
 import { renderSettings } from '../screens/settings.js';
 import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
+import { relicText } from './card.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
@@ -117,7 +118,7 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
       const def = registries.relics.get(rid);
       const el = document.createElement('div');
       el.className = 'ov-relic';
-      el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc((def.textTemplate || '').replace(/[{}]/g, ''))}</p></div>`;
+      el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def))}</p></div>`;
       rGrid.appendChild(el);
     }
     if (!run.relics.length) rGrid.innerHTML = '<div style="color:var(--muted)">None yet.</div>';

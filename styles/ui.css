@@ -137,18 +137,54 @@
 }
 .modal {
   background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 12px;
-  max-width: 90rem; max-height: 80vh; padding: 2.2rem; overflow: auto;
+  /* 80% NOT 80vh, and finding this is why the check measures the OUTCOME rather
+     than grepping for `vh`. The in-run overlay panel is `class="modal
+     overlay-modal"`, so this cap applies to it too. Fixing 74vh -> 74% on
+     .overlay-modal alone moved the measured share from 66.6% to 59.2% and no
+     further: this line had quietly become the binding constraint, because
+     80vh x zoom is what a percentage-based sibling now has to fit inside.
+     Sunna's original number (74% x --ui-zoom exactly) was the OTHER declaration
+     winning; one Law 2 breach was hiding a second one on the same element. */
+  max-width: 90rem; max-height: 80%; padding: 2.2rem; overflow: auto;
 }
 .modal h2 { color: var(--gold); font-size: 1.6rem; margin-bottom: 1.4rem; }
 .modal .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
 
 /* ---------- in-run tabbed overlay ---------- */
-.overlay-modal { width: 76rem; max-width: 92vw; height: 74vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+/* PERCENT, not vw/vh — and the reason was already written in this file, on the
+   .armoury panel forty lines down, which learned it first:
+     "the whole app is zoomed by --ui-zoom on <body>, and viewport units ignore
+      that zoom — which is exactly what pushed this panel off the corner"
+   The overlay never learned it, so the in-run menu rendered at 74vh x --ui-zoom
+   of the screen instead of the 74% its author wrote — and because Auto sizing
+   LOWERS the zoom as the phone gets smaller, the smallest phone got the smallest
+   menu. Measured by Sunna across six shapes and four text sizes: the share was
+   74% x --ui-zoom exactly, every row — 74.0% at zoom 1.0, 66.6% at 0.9, 60.7% at
+   0.82, 54.8% at 320x640. That is Constantine's "scaling not auto adjusting for
+   mobile" with a mechanism under it, and it is one rule in one place.
+   A percentage resolves against the ZOOMED box, so 74% is 74% at every zoom.
+   Law 2, and the second copy of a lesson this stylesheet already held.
+
+   `92vw -> 96%` CHANGES THE NUMBER AS WELL AS THE UNIT, and that was unexplained
+   in the first pass (Bjorn). 92vw was never 92% of anything the player sees: at
+   zoom 0.74 it resolved to 68% of the app box, so the panel had ~32% of the width
+   as dead margin on a phone. 96% is the value the sibling .armoury panel already
+   uses for the same job — one gutter, one number, and the two panels stop
+   disagreeing about how much edge a phone owes. */
+.overlay-modal { width: 76rem; max-width: 96%; height: 74%; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
 .overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line); background: var(--panel); }
 .overlay-tabs { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .overlay-tabs .ov-tab {
   padding: 0.7rem 1.4rem; border-radius: 8px 8px 0 0; font-size: 1.2rem; letter-spacing: 0.05em;
   background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer;
+  /* Law 4 (#37) applied where this work touches, ratchet-style, NOT swept.
+     These six tabs measured 20.3-35.8 DEVICE px against the 44 a finger wants,
+     and wrapped to 2, 3, and at 320x640 Text L/XL FOUR rows. --tap-floor is
+     Sunna's ruling expressed once: a floor of 44 device px measured AFTER zoom,
+     and a floor is not a ceiling — Text XL still makes the label bigger, it just
+     no longer decides how big a finger target is. See base.css for the unit. */
+  min-height: var(--tap-floor);
+  display: inline-flex; align-items: center;
 }
 .overlay-tabs .ov-tab:hover { color: var(--parchment); }
 .overlay-tabs .ov-tab.on { color: var(--gold); border-color: var(--line); border-bottom-color: transparent; background: var(--bg-raise); }
@@ -850,6 +886,43 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    desktop framing; here the DOM order is taken literally, so the reading order,
    the tab order and the visual order are the same thing: decisions first,
    identity after. */
+/* ---------- EldenSpire#38 — the Armoury's FIRST narrow layout ---------------
+   Constantine, from his own device: "it's hard to manage equip slots and other
+   characteristics from menus due to scaling not auto adjusting for mobile screen
+   very well." Sunna measured it: at 390x844 in the shipped default view the
+   third cell of Right Hand and of Left Hand sat at x 380.55..443.55 in a 390-wide
+   screen — 9.45 px of a 63 px box — and the screen cannot scroll sideways. Four
+   cells at Text L/XL. Two of your six weapon slots, gone.
+
+   Her note on the cause is the whole finding: this stylesheet contained exactly
+   ONE `data-layout='narrow'` block and it belonged to character creation. The
+   Armoury had never had a phone layout at all. It is not a regression; it is a
+   screen that was only ever drawn for a desktop.
+
+   .armoury-body was a two-column flex with a fixed 22rem figure, so the rack got
+   131.22 device px to lay out three 63 px cells needing ~216. On a phone the
+   figure and the slots stop competing for one row: the body stacks, the figure
+   stops being a fixed width, and the slots get the whole column. No reserved
+   height, no width threshold — `data-layout` is written by autoLayout(), which
+   already owns mode and zoom, and nothing here measures anything (Law 2, and the
+   second-decider scar from #24).
+
+   This makes ALL THREE views fit, including hybrid — which matters because a
+   player who has explicitly chosen hybrid keeps it (see equipment.js). What a
+   phone OPENS on is a separate question and is answered there, not here. */
+:root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; }
+:root[data-layout='narrow'] .armoury-left { width: 100%; overflow-y: visible; }
+:root[data-layout='narrow'] .armoury-right { width: 100%; overflow-y: visible; }
+/* The figure is `flex: 0 0 auto` with a fixed 22rem width in a ROW; in a column
+   that fixed width is just a cap, and 100% lets it use the phone. Height stays
+   authored so the sprite keeps its proportions. */
+:root[data-layout='narrow'] .armoury-figure { width: 100%; max-width: 22rem; align-self: center; }
+:root[data-layout='narrow'] .armoury.view-grid .armoury-figure { width: 100%; max-width: 26rem; }
+/* Slots wrap and centre rather than running off the right edge. */
+:root[data-layout='narrow'] .equip-slots { justify-content: center; width: 100%; }
+:root[data-layout='narrow'] .armoury.view-hybrid .equip-slots,
+:root[data-layout='narrow'] .armoury.view-rack .equip-slots { justify-content: center; }
+
 :root[data-layout='narrow'] .cz-cols {
   flex-direction: column; align-items: center; gap: 1.8rem; width: 100%;
 }
