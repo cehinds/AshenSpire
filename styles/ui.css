@@ -163,7 +163,14 @@
    0.82, 54.8% at 320x640. That is Constantine's "scaling not auto adjusting for
    mobile" with a mechanism under it, and it is one rule in one place.
    A percentage resolves against the ZOOMED box, so 74% is 74% at every zoom.
-   Law 2, and the second copy of a lesson this stylesheet already held. */
+   Law 2, and the second copy of a lesson this stylesheet already held.
+
+   `92vw -> 96%` CHANGES THE NUMBER AS WELL AS THE UNIT, and that was unexplained
+   in the first pass (Bjorn). 92vw was never 92% of anything the player sees: at
+   zoom 0.74 it resolved to 68% of the app box, so the panel had ~32% of the width
+   as dead margin on a phone. 96% is the value the sibling .armoury panel already
+   uses for the same job — one gutter, one number, and the two panels stop
+   disagreeing about how much edge a phone owes. */
 .overlay-modal { width: 76rem; max-width: 96%; height: 74%; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
 .overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line); background: var(--panel); }
 .overlay-tabs { display: flex; gap: 0.6rem; flex-wrap: wrap; }

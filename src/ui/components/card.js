@@ -5,7 +5,7 @@
 // computeTokenBindings. No math happens here.
 
 import { resolveCard } from '../../model/registries.js';
-import { computeTokenBindings, relicTokens } from '../../model/validate.js';
+import { computeTokenBindings, relicTokens, tokenRe } from '../../model/validate.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { balance } from '../../content/balance.js';
 import { tagsFor } from '../../content/tags.js';
@@ -40,14 +40,14 @@ export function staticTokens(def) {
 export function relicText(def) {
   if (!def || !def.textTemplate) return '';
   const tokens = relicTokens(def);
-  return def.textTemplate.replace(/\{([A-Za-z][\w.]*)\}/g, (m, tok) => (
+  return def.textTemplate.replace(tokenRe(), (m, tok) => (
     typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
   ));
 }
 
 function fillTemplate(def, tokens, baseTokens) {
   let html = esc(def.textTemplate);
-  html = html.replace(/\{([A-Za-z][\w.]*)\}/g, (m, tok) => {
+  html = html.replace(tokenRe(), (m, tok) => {
     const v = tokens[tok];
     if (v == null) return m;
     let cls = 'val';

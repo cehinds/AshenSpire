@@ -101,14 +101,29 @@ const only = argOf('--only');
 const useDist = args.includes('--dist');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// A RECT WITHOUT ITS CLIP BOX IS A RUMOUR. Sunna nearly filed the rack table as
+// wrong at #41 because her first probe read 7/7 for all three views:
+// getBoundingClientRect() reports where a box WOULD be and knows nothing about an
+// ancestor's overflow. Every count below is intersected with .armoury-body's own
+// box, which is the thing that actually scrolls.
+//
+// AND "REACHABLE BY SCROLLING" IS NOT "VISIBLE ON ARRIVAL". The first version of
+// this file measured only HORIZONTAL clipping — so the 7/7 vs 4/7 vs 0/7 table
+// that justifies narrowDefaultView: 'rack' was produced by a scratch script and
+// guarded by nothing. The branch's central claim, unchecked. Sunna's finding.
 const CELLS = `(() => { const n=(v)=>+(+v).toFixed(2);
-  const out=[]; let clipped=0, worst=100;
+  const out=[]; let clipped=0, worst=100, noScroll=0, total=0;
+  const body=document.querySelector('.armoury-body');
+  const port=body?body.getBoundingClientRect():{top:0,bottom:innerHeight};
   for (const e of document.querySelectorAll('.es-cell')) {
     const r=e.getBoundingClientRect(); if (r.width===0) continue;
+    total++;
     const vis=Math.max(0, Math.min(r.right, innerWidth)-Math.max(r.left, 0))/r.width*100;
     if (vis < 99.5) { clipped++; worst=Math.min(worst, vis);
-      out.push(((e.textContent||'').trim().replace(/\\s+/g,' ').slice(0,14))+' ['+n(r.left)+'..'+n(r.right)+'] '+n(vis)+'%'); } }
-  return { clipped, worst: clipped? n(worst): 100, eg: out.slice(0,2),
+      out.push(((e.textContent||'').trim().replace(/\\s+/g,' ').slice(0,14))+' ['+n(r.left)+'..'+n(r.right)+'] '+n(vis)+'%'); }
+    if (r.top>=port.top-0.5 && r.bottom<=port.bottom+0.5 && r.left>=-0.5 && r.right<=innerWidth+0.5) noScroll++;
+  }
+  return { clipped, worst: clipped? n(worst): 100, eg: out.slice(0,2), total, noScroll,
     view: (document.querySelector('.armoury')||{className:''}).className.replace(/.*view-(\\w+).*/,'$1') }; })()`;
 
 const OVERLAY = `(() => { const n=(v)=>+(+v).toFixed(2);
@@ -190,6 +205,13 @@ async function main() {
       await ev(`document.documentElement.style.fontSize='${v}'; 'ok'`);
       await wait(700); // auto-zoom re-flexes on a 150ms debounce
       const layout = await ev(`document.documentElement.getAttribute('data-layout')`);
+      // READ FROM THE RUNNING BUILD, never typed here — a tool holding its own
+      // copy of a content value is the second copy this house exists to catch
+      // (Law 1 clause 2). `null` if the bundle does not expose it, and the clause
+      // then reports `unknown` by not firing, which the boundary states.
+      const expectNarrowView = await ev(`(() => { try { return (window.__equipCfg
+        && window.__equipCfg.narrowDefaultView) || null; }
+        catch (e) { return null; } })()`);
 
       // --- the Armoury: the view it OPENS on, then every other view ---
       await ev(`document.querySelector('#open-armoury').click(); 'ok'`);
@@ -219,6 +241,33 @@ async function main() {
 
       cells++;
       const bad = [];
+      // CLAUSE 2, and it is the branch's CENTRAL claim rather than a nicety.
+      // Constantine's verb was MANAGE; a slot you have to go looking for is not
+      // managed. Narrow only — that is where the claim was made.
+      // COMPARATIVE, NOT ABSOLUTE — and the first draft of this clause was
+      // absolute and caught me with it. "Every cell without scrolling" is true of
+      // rack at Text S/M and FALSE at L/XL (3 of 7 at 390x844 XL), because at
+      // large text no view fits seven cells in one screen. My 7/7 figure was
+      // measured at the default text size and stated as if it were the property —
+      // the same shape of error Sunna withheld #36 for, found this time by the
+      // check rather than by her.
+      // The property that IS true and IS worth enforcing: a phone must not open on
+      // a view when another available view would show MORE of your slots at once.
+      // That survives every text size and still goes red on the known-bad, where
+      // hybrid shows 0 and rack shows 7.
+      const better = Object.entries(perView).filter(([, r]) => r.noScroll > opened.noScroll);
+      if (layout === 'narrow' && better.length) {
+        bad.push(`ARMOURY OPENS ON A WORSE VIEW — '${opened.view}' shows ${opened.noScroll}/${opened.total} equip cells without scrolling; `
+          + better.map(([n2, r]) => `'${n2}' shows ${r.noScroll}`).join(', '));
+      }
+      // CLAUSE 2b — IS IT THE VIEW THE TABLE NAMES? Vira's condition: a typo
+      // (`'racks'`) fell through to hybrid in silence and this check stayed green,
+      // because the CSS half of the same PR had just made hybrid fit. The two
+      // halves masked each other. "Does the opened view fit" and "is the opened
+      // view the one the data names" are two questions and only one was asked.
+      if (layout === 'narrow' && expectNarrowView && opened.view !== expectNarrowView) {
+        bad.push(`ARMOURY OPENED '${opened.view}' BUT balance.equipment.narrowDefaultView NAMES '${expectNarrowView}' — a silently-discarded content value`);
+      }
       if (opened.clipped) bad.push(`ARMOURY OPENS CLIPPED — view '${opened.view}', ${opened.clipped} equip cell(s), worst ${opened.worst}% on screen, e.g. ${opened.eg[0]}`);
       for (const [view, r] of Object.entries(perView)) {
         if (r.clipped) bad.push(`view '${view}' clips ${r.clipped} cell(s), worst ${r.worst}%`);
@@ -230,8 +279,8 @@ async function main() {
         if (ov.absent) bad.push(`${ov.absent} overlay tab(s) horizontally absent`);
         if (ov.tinyTabs) bad.push(`${ov.tinyTabs} tab(s) under the ${TAP_FLOOR} device-px floor, e.g. ${ov.tinyEg.join(', ')}`);
       }
-      const viewSummary = Object.entries(perView).map(([n2, r]) => `${n2}:${r.clipped}`).join(' ');
-      console.log(`    ${k.padEnd(3)} ${String(layout).padEnd(7)} opens='${String(opened.view).padEnd(6)}' clipped=${String(opened.clipped).padEnd(2)} ` +
+      const viewSummary = Object.entries(perView).map(([n2, r]) => `${n2}:${r.noScroll}/${r.total}`).join(' ');
+      console.log(`    ${k.padEnd(3)} ${String(layout).padEnd(7)} opens='${String(opened.view).padEnd(6)}' clipped=${String(opened.clipped).padEnd(2)} noScroll=${opened.noScroll}/${opened.total} ` +
         `[${viewSummary}]  overlay ${String(ov.share ?? '?').padStart(5)}% tabRows=${ov.tabRows ?? '?'} tiny=${ov.tinyTabs ?? '?'}` +
         (bad.length ? '\n         <-- ' + bad.join('\n         <-- ') : ''));
       for (const b of bad) fails.push(`${shape} text=${k}: ${b}`);

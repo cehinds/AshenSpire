@@ -1,3 +1,4 @@
+import { tokenRe } from './validate.js';
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
 // The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
@@ -255,7 +256,9 @@ export function runMods(registries, loadout, classId) {
 // Applying mods to a card
 // ---------------------------------------------------------------------------
 
-const TOKEN_RE = /\{([A-Za-z][\w.]*)\}/g;
+// One home: src/model/validate.js (EldenSpire#41). A fresh instance per use,
+// which is also why the defensive lastIndex resets below are now redundant.
+const TOKEN_RE = tokenRe();
 
 function firstIndexOfOp(effects, op) {
   return effects.findIndex((e) => e && e.op === op);

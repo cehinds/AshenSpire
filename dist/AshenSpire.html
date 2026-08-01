@@ -366,7 +366,14 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
    0.82, 54.8% at 320x640. That is Constantine's "scaling not auto adjusting for
    mobile" with a mechanism under it, and it is one rule in one place.
    A percentage resolves against the ZOOMED box, so 74% is 74% at every zoom.
-   Law 2, and the second copy of a lesson this stylesheet already held. */
+   Law 2, and the second copy of a lesson this stylesheet already held.
+
+   `92vw -> 96%` CHANGES THE NUMBER AS WELL AS THE UNIT, and that was unexplained
+   in the first pass (Bjorn). 92vw was never 92% of anything the player sees: at
+   zoom 0.74 it resolved to 68% of the app box, so the panel had ~32% of the width
+   as dead margin on a phone. 96% is the value the sibling .armoury panel already
+   uses for the same job — one gutter, one number, and the two panels stop
+   disagreeing about how much edge a phone owes. */
 .overlay-modal { width: 76rem; max-width: 96%; height: 74%; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
 .overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line); background: var(--panel); }
 .overlay-tabs { display: flex; gap: 0.6rem; flex-wrap: wrap; }
@@ -2128,6 +2135,11 @@ const ACCENTS = UI.accents;
 // designW off disk is measuring the tree rather than the page in front of it —
 // which is the whole difference for dist/, one inlined file. Read-only.
 if (typeof window !== 'undefined') window.__uiScale = UI.uiScale;
+// Same species, same reason, added at EldenSpire#41 for Vira's condition: a check
+// that asks "is the opened Armoury view the one the table names" must READ the
+// table off the page, not hold its own copy (Law 1 clause 2). A tool typing
+// 'rack' would agree with a typo as happily as with the truth. Read-only.
+if (typeof window !== 'undefined') window.__equipCfg = registries.balance.equipment;
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;
@@ -9394,43 +9406,57 @@ const KNOWN_BUNDLE_KEYS = new Set([
  * EldenSpire#38. Three call sites rendered relic text as
  * `textTemplate.replace(/[{}]/g, '')` — strip the braces, ship the key. Sunna
  * caught it on the ugliest one, "also deals poiseDamage Poise damage", and it
- * turned out to be 50 tokens across 54 relics: "gain block Block", "heal heal
+ * turned out to be 51 tokens across 46 token-carrying relics of 54: "gain block Block", "heal heal
  * HP", "draw draw extra card". The camelCase one was visible; the rest read as
  * clumsy English and hid in plain sight. EVERY relic number in the game was
  * invisible to the player.
+ *
+ * WHAT 51/51 IS AND IS NOT (Vira, #41): it is a fact about today's 54 entries,
+ * not about this function. `starstoneShard` already ships
+ * `stacks: { f: 'add', args: [1] }` — a formula, not a number — and any template
+ * binding it renders `{token}` unresolved. That is the honest degrade and not a
+ * silent one, but "every relic number resolves" is a census, and a census is not
+ * an invariant. The invariant belongs with validateRelicTemplate, which is the
+ * other decider of this same fact and should own it.
  *
  * Numbers only, and deliberately: a token bound to a non-number would render
  * "[object Object]", so an unresolved token is left as `{token}` for the caller
  * to decide about rather than papered over. Bad data stays visible (clause 5).
  */
+/**
+ * The template-token grammar, in ONE place. `{block}`, `{bleed}`, `{damage.2}`.
+ *
+ * EldenSpire#41, Bjorn's deletability review: this regex had FOUR copies —
+ * validate.js:150, loadout.js:258 (already named TOKEN_RE), and twice in
+ * card.js. A factory rather than a shared instance on purpose: a `g` regex
+ * carries `lastIndex`, so one exported object shared across modules is a
+ * cross-module mutable, and loadout.js was already resetting it defensively at
+ * three call sites. Each caller gets its own.
+ */
+const TOKEN_PATTERN = '\\{([A-Za-z][\\w.]*)\\}';
+const tokenRe = () => new RegExp(TOKEN_PATTERN, 'g');
+
 function relicTokens(def) {
+  // DELEGATES. It used to carry its own grammar — a `['amount','stacks','value',
+  // 'n']` scan plus status/id keying — and Bjorn's review found 3 of 4 synthetic
+  // relics built from DECLARED vocabulary rendering a raw token, with a green
+  // control. computeTokenBindings twelve lines up already owns this rule and
+  // owns it better: TOKENIZABLE_OPS gates it, `applyStatus` keys on the status
+  // and reads `stacks`, `loseMaxHpPct` reads `pct`, `damage` also binds `hits`,
+  // and a repeated op disambiguates to `{block.2}`. My version had none of that.
+  //
+  // What this function is FOR is the other half: a card carries a flat
+  // `effects` array and a relic carries ops spread across `triggers[].do`. So
+  // this flattens, and the grammar stays where it already lived.
+  const ops = [];
+  for (const t of def.triggers || []) for (const op of t.do || []) ops.push(op);
+  for (const op of def.effects || []) ops.push(op);
+  for (const op of def.do || []) ops.push(op);
   const tokens = {};
-  // TWO KINDS OF TOKEN, because the data has two shapes and only one of them is
-  // keyed by the opcode:
-  //   { op: 'block', amount: 2 }                    -> {block}
-  //   { op: 'applyStatus', status: 'bleed', stacks: 2 } -> {bleed}
-  // The second is the majority of the interesting ones — every Strength, Bleed,
-  // Weak and Vulnerable relic — and binding only the first left 17 of 51 tokens
-  // showing their key. The token is always the thing the SENTENCE names, which
-  // is the status where there is one and the opcode otherwise.
-  const bind = (key, v) => { if (typeof v === 'number' && tokens[key] == null) tokens[key] = v; };
-  const numberIn = (op) => {
-    for (const field of ['amount', 'stacks', 'value', 'n']) {
-      if (typeof op[field] === 'number') return op[field];
-    }
-    return null;
-  };
-  const take = (op) => {
-    if (!op || typeof op.op !== 'string') return;
-    const v = numberIn(op);
-    if (v == null) return;
-    if (typeof op.status === 'string') bind(op.status, v);
-    else if (typeof op.id === 'string') bind(op.id, v);
-    else bind(op.op, v);
-  };
-  for (const t of def.triggers || []) for (const op of t.do || []) take(op);
-  for (const op of def.effects || []) take(op);
-  for (const op of def.do || []) take(op);
+  for (const b of computeTokenBindings(ops)) {
+    const v = (ops[b.index] || {})[b.field];
+    if (typeof v === 'number') tokens[b.token] = v;
+  }
   return tokens;
 }
 
@@ -9458,7 +9484,7 @@ function computeTokenBindings(effects) {
 
 function extractTemplateTokens(template) {
   const tokens = [];
-  const re = /\{([A-Za-z][\w.]*)\}/g;
+  const re = tokenRe();
   let m;
   while ((m = re.exec(template)) !== null) tokens.push(m[1]);
   return tokens;
@@ -9967,7 +9993,7 @@ function usesScript(node) {
 }
 
 
-Object.assign(module.exports, { TOKENIZABLE_OPS, REQUIRED_TOKEN_OPS, relicTokens, computeTokenBindings, extractTemplateTokens, validateContent, validateEffects, validateTriggers, validatePredicate, validateFormula });
+Object.assign(module.exports, { TOKENIZABLE_OPS, REQUIRED_TOKEN_OPS, TOKEN_PATTERN, tokenRe, relicTokens, computeTokenBindings, extractTemplateTokens, validateContent, validateEffects, validateTriggers, validatePredicate, validateFormula });
 
 },
 "src/model/schemas.js": function (module, exports, require) {
@@ -10824,6 +10850,7 @@ Object.assign(module.exports, { deepFreeze, createRegistries, passiveMult, passi
 
 },
 "src/model/loadout.js": function (module, exports, require) {
+const { tokenRe } = require("src/model/validate.js");
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
 // The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
@@ -11081,7 +11108,9 @@ function runMods(registries, loadout, classId) {
 // Applying mods to a card
 // ---------------------------------------------------------------------------
 
-const TOKEN_RE = /\{([A-Za-z][\w.]*)\}/g;
+// One home: src/model/validate.js (EldenSpire#41). A fresh instance per use,
+// which is also why the defensive lastIndex resets below are now redundant.
+const TOKEN_RE = tokenRe();
 
 function firstIndexOfOp(effects, op) {
   return effects.findIndex((e) => e && e.op === op);
@@ -16098,7 +16127,7 @@ Object.assign(module.exports, { mountDraft });
 // computeTokenBindings. No math happens here.
 
 const { resolveCard } = require("src/model/registries.js");
-const { computeTokenBindings, relicTokens } = require("src/model/validate.js");
+const { computeTokenBindings, relicTokens, tokenRe } = require("src/model/validate.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { balance } = require("src/content/balance.js");
 const { tagsFor } = require("src/content/tags.js");
@@ -16133,14 +16162,14 @@ function staticTokens(def) {
 function relicText(def) {
   if (!def || !def.textTemplate) return '';
   const tokens = relicTokens(def);
-  return def.textTemplate.replace(/\{([A-Za-z][\w.]*)\}/g, (m, tok) => (
+  return def.textTemplate.replace(tokenRe(), (m, tok) => (
     typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
   ));
 }
 
 function fillTemplate(def, tokens, baseTokens) {
   let html = esc(def.textTemplate);
-  html = html.replace(/\{([A-Za-z][\w.]*)\}/g, (m, tok) => {
+  html = html.replace(tokenRe(), (m, tok) => {
     const v = tokens[tok];
     if (v == null) return m;
     let cls = 'val';
@@ -20670,8 +20699,20 @@ function mountEquipment(host, {
   const CV = CFG();
   const narrow = typeof document !== 'undefined'
     && document.documentElement.getAttribute('data-layout') === 'narrow';
-  const shapeDefault = (narrow && CV.views.includes(CV.narrowDefaultView))
-    ? CV.narrowDefaultView : CV.defaultView;
+  // LAW 1 CLAUSE 5 — bad data fails LOUD and names the entry. Vira's condition on
+  // #41: `narrowDefaultView: 'racks'` is a one-character typo that fell through
+  // to `hybrid` in silence, and tools/menufit.mjs stayed green because the other
+  // half of this PR had just made hybrid fit. THE TWO HALVES MASKED EACH OTHER —
+  // a silent fallback plus a check that asks "does it fit" rather than "is it the
+  // one the table names". A validated-then-discarded value is exactly the shape
+  // clause 5 exists to forbid.
+  const named = narrow ? CV.narrowDefaultView : CV.defaultView;
+  if (named != null && !CV.views.includes(named)) {
+    console.error(`[content] balance.equipment.${narrow ? 'narrowDefaultView' : 'defaultView'}`
+      + ` = ${JSON.stringify(named)} is not one of ${JSON.stringify(CV.views)}`
+      + ' — falling back, and this line is the defect, not the fallback.');
+  }
+  const shapeDefault = (named != null && CV.views.includes(named)) ? named : CV.defaultView;
   let view = (meta.settings && meta.settings.equipView) || shapeDefault;
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
@@ -20937,6 +20978,7 @@ Object.assign(module.exports, { mountEquipment });
 
 const { renderCard } = require("src/ui/components/card.js");
 const { esc } = require("src/ui/components/tooltip.js");
+const { relicText } = require("src/ui/components/card.js");
 const { sfx } = require("src/ui/sfx.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
 
@@ -20949,7 +20991,7 @@ function mountRewards(app, { registries, run, rewards, onDone }) {
   if (rewards.relicId) {
     run.relics.push(rewards.relicId);
     const def = registries.relics.get(rewards.relicId);
-    lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(def.textTemplate.replace(/[{}]/g, ''))}`);
+    lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def))}`);
   }
   if (rewards.flaskId) {
     const def = registries.flasks.get(rewards.flaskId);
@@ -21081,6 +21123,7 @@ Object.assign(module.exports, { mountRest });
 
 const { renderCard } = require("src/ui/components/card.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { relicText } = require("src/ui/components/card.js");
 const { sfx } = require("src/ui/sfx.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
 
@@ -21134,7 +21177,7 @@ function mountShop(app, { registries, run, onLeave, onChanged }) {
     const items = app.querySelector('#shop-items');
     stock.relics.forEach((item, i) => {
       const def = registries.relics.get(item.id);
-      items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, def.textTemplate.replace(/[{}]/g, ''), item.cost, run.cinders >= item.cost, () => {
+      items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def), item.cost, run.cinders >= item.cost, () => {
         run.cinders -= item.cost;
         run.relics.push(item.id);
         stock.relics.splice(i, 1);

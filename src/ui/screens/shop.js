@@ -6,6 +6,7 @@
 
 import { renderCard } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
+import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 
@@ -59,7 +60,7 @@ export function mountShop(app, { registries, run, onLeave, onChanged }) {
     const items = app.querySelector('#shop-items');
     stock.relics.forEach((item, i) => {
       const def = registries.relics.get(item.id);
-      items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, def.textTemplate.replace(/[{}]/g, ''), item.cost, run.cinders >= item.cost, () => {
+      items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def), item.cost, run.cinders >= item.cost, () => {
         run.cinders -= item.cost;
         run.relics.push(item.id);
         stock.relics.splice(i, 1);
