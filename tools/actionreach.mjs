@@ -29,6 +29,23 @@
 //      merely happens to fit today's content; (3) is the property.
 //   4. nothing on the screen is horizontally absent (EldenSpire#31's property,
 //      re-asserted here because this tool visits shapes screenreach does not)
+//   5. no wrapped set of equal-weight option cards ends in an ORPHAN ROW — a
+//      last row holding fewer items than the row above it.
+//
+// WIDENED to clause 5 at #29 slice 3, and the widening is deliberate rather
+// than convenient: BOTH defects are the arrival screen SAYING SOMETHING FALSE
+// ABOUT ITSELF. Clauses 1-3 catch "there is nothing more here" when there is.
+// Clause 5 catches "this one is chosen" when it isn't — three class cards
+// wrapping 2-then-1 leave a lone centred card under a pair, which is the
+// grammar of a selection, while the actually-selected card sat top-left with a
+// full card height between the gold border and where the eye lands (Sunna,
+// 2026-08-01). A player can check neither claim against anything on the screen.
+//
+// CLAUSE 5 IS ABOUT THE COUNT, WHICH IS WHY IT IS A CHECK AND NOT A ONE-OFF
+// MEASUREMENT. Three cards wrap 2+1 and orphan; four wrap 2+2 and look fine;
+// five wrap 2+2+1 and it is back. Law 1 promises a class is a table row, so the
+// count is content and moves without anyone touching CSS. The defect returns on
+// a data edit, and this is the only thing that would notice.
 //
 // TEXT SIZE IS NOT DECORATION. The row is sized in rem so it grows with the
 // setting (Law 2), which means the setting can push the content out — so S/M/L/XL
@@ -95,6 +112,11 @@ const SCREENS = [
     root: '.screen.customize',
     action: '#cz-start',
     port: '.cz-scroll',
+    // Clause 5's subject. Equal-weight option CARDS only — the sigil/tint/sprite
+    // swatches also wrap, and a lone small square does not read as "chosen" the
+    // way a lone card does, so they are deliberately out of scope rather than
+    // forgotten. Widening this list is a design call, not a tuning one.
+    optionSets: ['#cz-classes .class-pick', '#cz-keepsakes .cz-keepsake'],
   },
 ];
 
@@ -159,8 +181,34 @@ const probe = (sc) => `(() => {
       if (!offEg) offEg = ((e.textContent||'').trim().replace(/\\s+/g,' ').slice(0,16) || e.id) + ' [' + n(r.left) + '..' + n(r.right) + ']';
     }
   }
+  // Clause 5. Rows are found by GROUPING RENDERED TOPS, never by reading the
+  // flex rules — the question is what the player sees wrap, and a stylesheet
+  // cannot answer that at a given width and text size. 1 px of rounding
+  // tolerance because a taller card in a row shifts its neighbours' tops.
+  const orphans = [];
+  for (const sel of ${JSON.stringify(sc.optionSets || [])}) {
+    const items = [...root.querySelectorAll(sel)].filter((e) => {
+      const r = e.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    });
+    if (items.length < 2) continue;
+    const rows = [];
+    for (const e of items) {
+      const t = e.getBoundingClientRect().top;
+      const row = rows.find((r) => Math.abs(r.top - t) <= 1);
+      if (row) row.n++; else rows.push({ top: t, n: 1 });
+    }
+    rows.sort((a, b) => a.top - b.top);
+    const counts = rows.map((r) => r.n);
+    const widest = Math.max(...counts);
+    // A single row cannot orphan. A last row narrower than the widest is one.
+    if (rows.length > 1 && counts[counts.length - 1] < widest) {
+      orphans.push(sel + ' wraps ' + counts.join('-then-') + ' (' + items.length + ' items)');
+    }
+  }
+
   return { arrival, atBottom, topAtRest, topAtBottom, moved: n(topAtRest - topAtBottom),
-    btnH: n(go.getBoundingClientRect().height), off, offEg,
+    btnH: n(go.getBoundingClientRect().height), off, offEg, orphans,
     layout: document.documentElement.getAttribute('data-layout'),
     inPort: !!scrollerOf(go) };
 })()`;
@@ -254,8 +302,9 @@ async function main() {
         if (!r.atBottom) bad.push('not whole at the bottom of the scroll');
         if (r.moved !== 0) bad.push(`MOVED ${r.moved} px while the content scrolled — it is in the scrollport, not bounded by flow`);
         if (r.off) bad.push(`${r.off} control(s) horizontally absent, e.g. ${r.offEg}`);
+        for (const o of (r.orphans || [])) bad.push(`ORPHAN ROW — ${o}: a lone card under a full row reads as "this one is chosen"`);
         console.log(`    ${k.padEnd(3)} ${String(r.layout).padEnd(7)} arrival=${String(r.arrival).padEnd(5)} bottom=${String(r.atBottom).padEnd(5)} ` +
-          `top=${String(r.topAtRest).padEnd(8)} moved=${String(r.moved).padEnd(7)} btnH=${String(r.btnH).padEnd(6)} off=${r.off}` +
+          `top=${String(r.topAtRest).padEnd(8)} moved=${String(r.moved).padEnd(7)} btnH=${String(r.btnH).padEnd(6)} off=${r.off} orphan=${(r.orphans||[]).length}` +
           (bad.length ? '   <-- ' + bad.join(' · ') : ''));
         if (bad.length) fails.push(`${sc.name} ${shape} text=${k}: ${bad.join(' · ')}`);
       }
@@ -294,7 +343,7 @@ async function main() {
   gap is real and is Sunna's open card from 2026-07-31, not something a green
   here closes.`);
 
-  console.log(`\n  ${fails.length ? `FAIL — ${fails.length} finding(s) of ${cells} cell(s)` : `PASS — ${cells}/${cells} cells: the action is whole on arrival and does not move`}`);
+  console.log(`\n  ${fails.length ? `FAIL — ${fails.length} finding(s) of ${cells} cell(s)` : `PASS — ${cells}/${cells} cells: the action is whole on arrival, does not move, and no option set orphans a row`}`);
   for (const f of fails) console.log(`    - ${f}`);
   cdp.close(); child.kill(); if (server) server.close();
   process.exit(fails.length ? 1 : 0);

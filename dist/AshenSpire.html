@@ -1044,15 +1044,67 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   flex-direction: column; align-items: center; gap: 1.8rem; width: 100%;
 }
 :root[data-layout='narrow'] .cz-fields { max-width: 100%; width: 100%; }
-/* Three 19rem cards need 606 local px; wrapping puts two on a row at 433 and
-   keeps each card at its authored width rather than squeezing the text. */
-:root[data-layout='narrow'] .class-row { flex-wrap: wrap; justify-content: center; gap: 1.2rem; }
-/* Two per row rather than one. The authored card is 19rem, and two of those
-   plus the gap need 392 local px against the 385 the column actually has — so
-   they wrapped one-up and the class list alone ran 749 local px of scroll.
-   17rem fits two and halves that. Chosen by measuring the scroll height, not
-   by eye. */
-:root[data-layout='narrow'] .class-pick { width: 17rem; padding: 1.2rem; }
+/* ---------- EldenSpire#29 slice 3 — the orphaned class card -----------------
+   Sunna, 2026-08-01, naming a thing that had never been put in front of anyone:
+   three cards wrapped 2-then-1 and the lone card was centred under the pair.
+   "A lone centred card under two others is the grammar of THIS ONE IS SELECTED"
+   — and it isn't; the selected card is Reaver, top-left, with a full card height
+   between the gold border and where the eye lands. A layout that says something
+   false about state. Constantine opened it: "approved and get it done."
+
+   ~~ struck: the two rules this replaces, kept visible because their reasoning
+   was right and only their premise expired. ~~
+   ~~ .class-row { flex-wrap: wrap; justify-content: center }  — "wrapping puts
+      two on a row at 433 and keeps each card at its authored width" ~~
+   ~~ .class-pick { width: 17rem }  — "17rem fits two and halves the scroll.
+      Chosen by measuring the scroll height, not by eye." ~~
+   Both were honest measurements of how to make TWO cards share a row. The
+   orphan is what the third one does, and no width fixes that.
+
+   THE ORPHAN IS A PROPERTY OF THE COUNT, NOT OF THE WIDTH, which is why this is
+   one card per row and not a cleverer wrap. Three cards wrap 2+1; four wrap 2+2
+   and look fine; five wrap 2+2+1 and it is back. Law 1 promises Constantine can
+   add a class by adding a table row — so a layout that is only correct at
+   today's row count is a layout that breaks the next time content grows, and
+   nothing would catch it. One per row is count-agnostic by construction.
+
+   THE CARD TURNS SIDEWAYS RATHER THAN JUST GETTING WIDER, and that is the part
+   that had to be measured rather than assumed: a full-width card keeping the
+   big centred glyph on top is TALLER than half of a 2-up row, and would have
+   pushed KEEPSAKE back below the fold — undoing what slice 2 just bought. Laid
+   out as glyph-beside-text the description gets a wide measure, wraps in three
+   lines instead of six, and the whole CLASS block gets SHORTER. That is the
+   keepsake list's own shape, which is what Sunna pointed at: "the keepsake list
+   is the proof it works."
+
+   `.cp-body` is the only markup this needed — one wrapper so the glyph has a
+   single sibling to sit beside. It is a plain block on wide and changes nothing
+   there (measured: every wide rect identical). It is added in BOTH producers of
+   `.class-pick`, customize.js and customRun.js, because this rule is not scoped
+   to one screen — see below.
+
+   AND IT BINDS CUSTOM CLIMB TOO, ON PURPOSE AND NOT BY ACCIDENT. `.class-pick`
+   is customRun.js's card as well (`.cr-class`), with the same three classes and
+   the same 2-then-1 wrap and therefore the same false "selected" grammar. A rule
+   scoped to `.customize` would be the per-screen shape Marina already ruled
+   against on slice 0 — four chances to remember and one to forget. Its cards
+   carry no description, so they simply come out shorter; measured, not assumed.
+
+   No width, no height, no reserved anything: the row is a column, the card is
+   `auto`, the text column is `1fr`. The 17rem above was the last magic number on
+   this screen and it leaves with the wrap that needed it (Law 2). */
+:root[data-layout='narrow'] .class-row {
+  flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 1.2rem; width: 100%;
+}
+:root[data-layout='narrow'] .class-pick {
+  width: auto; padding: 1.2rem 1.6rem;
+  display: flex; align-items: center; gap: 1.6rem; text-align: left;
+}
+:root[data-layout='narrow'] .class-pick .glyph { margin-bottom: 0; flex-shrink: 0; }
+/* min-width: 0 or the text column refuses to shrink below its longest word and
+   the card overflows its own row — the flex default that has bitten this repo
+   before. It is a bound, not a length. */
+:root[data-layout='narrow'] .cp-body { flex: 1; min-width: 0; }
 :root[data-layout='narrow'] .cz-opts { flex-wrap: wrap; justify-content: center; }
 :root[data-layout='narrow'] .cz-keepsakes { width: 100%; }
 /* ---------- ☰ quick-nav list (the quick-menu experiment, EldenSpire#34) ----- */
@@ -15108,7 +15160,7 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
     const el = document.createElement('div');
     el.className = 'class-pick cz-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${cls.startingDeck.length} cards</span>`;
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${cls.startingDeck.length} cards</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
       classes.querySelectorAll('.cz-class').forEach((x) => x.classList.toggle('chosen', x === el));
@@ -15119,7 +15171,7 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
   for (const cls of LOCKED_CLASSES) {
     const el = document.createElement('div');
     el.className = 'class-pick locked';
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3><p>${esc(cls.description)}</p><span class="chip">ARRIVES IN ${esc(cls.milestone)}</span>`;
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description)}</p><span class="chip">ARRIVES IN ${esc(cls.milestone)}</span></div>`;
     classes.appendChild(el);
   }
   classes.querySelector('.cz-class').classList.add('chosen');
@@ -15759,7 +15811,7 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     const el = document.createElement('div');
     el.className = 'class-pick cr-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3><span class="chip">HP ${cls.maxHp}</span>`;
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><span class="chip">HP ${cls.maxHp}</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
       classes.querySelectorAll('.cr-class').forEach((x) => x.classList.toggle('chosen', x === el));
