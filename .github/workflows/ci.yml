@@ -7,8 +7,20 @@
 #
 # SOP 3's four requirements, and where each is honestly met or not:
 #
-#  1. RUNS ON EVERY PUSH AND PR — `on:` below covers every branch and every PR
-#     target. Not tags-only, not workflow_dispatch-only.  → MET
+#  1. RUNS ON EVERY PUSH AND PR — → NOT MET since `b55e078`. The `on:` block
+#     below is `workflow_dispatch:` alone: exactly the "workflow_dispatch-only"
+#     shape the old text here ruled out while still reading "→ MET". The edit
+#     that turned automatic runs off changed `on:` and said so; this header sits
+#     fifty lines above it and nobody edited it. That is how a second copy is
+#     born — one fact, two homes, nothing checking they agree. EldenSpire#35.
+#     Under SOP 2's silence guard a workflow that never fires is `unknown`, and
+#     unknown blocks. Every gate in this repo is now a seat's hand-run.
+#
+#     THE STANDING BOUNDARY, and it belongs here rather than on a card. Nothing
+#     in this repo is `verified-at` a CI ref while this holds. The permanent
+#     loss is requirement 2's four platform claims below: no seat hand-runs
+#     `windows-latest` or `macos-latest`, so those four are `unknown` and stay
+#     `unknown` — not green, and not red either. Aging is not a fix.
 #
 #  2. EVERY RUNNER THE CODE MAKES A PLATFORM-SPECIFIC CLAIM ON — this repo makes
 #     four, and they are not hypothetical:
@@ -21,7 +33,10 @@
 #         case-insensitive collation), so a Linux rebuild differed. windows-latest
 #         and macos-latest are literally the runners that produced the defect.
 #       · tools/screenshot.mjs carries Windows, macOS and Linux browser paths
-#     → MET, and see the honest warning on `reproducible` below.
+#     → the matrix below DECLARES all three runners, and declaring is not
+#       running. Gated on requirement 1: while that is NOT MET this reads
+#       `unknown`, not MET. The boundary is stated once, under requirement 1 —
+#       do not restate it here. See also the honest warning on `reproducible`.
 #
 #  3. A MACHINE CHECK FOR EACH RULE WE ENFORCE BY HAND — PARTIALLY MET, and I am
 #     not going to dress that up. Newly machine-checked here: the shipped artifact
@@ -63,10 +78,60 @@ on:
   # It now runs ONLY when started by hand: Actions tab -> "Run workflow".
   # Nothing below this block changed; every job, guard and boundary is intact.
   #
-  # TO RE-ENABLE, restore these three lines in place of `workflow_dispatch:`
-  #   push:
-  #     branches: ['**']
-  #   pull_request:
+  # DO NOT RE-ENABLE BY RESTORING WHAT WAS HERE. The old text told you to put
+  # back `push: branches: ['**']` + `pull_request:`. That pair is a measured
+  # defect, not last-known-good: it ran EVERY COMMIT TWICE. The `concurrency`
+  # block below does not dedupe them, because `github.ref` is `refs/heads/x` on
+  # the push event and `refs/pull/N/merge` on the pull_request event — two
+  # groups, two runs, same sha. Measured over 30 runs before the shutoff: 18
+  # distinct shas, 12 of which fired both events. EldenSpire#35.
+  #
+  # WHEN RE-ENABLING IS A DECISION SOMEONE MAKES (it is Constantine's — Tier 2,
+  # and nothing here takes it), take these three first. They remove no check and
+  # no runner. Each cost is stated because a CI cut with an unstated coverage
+  # loss is the receipt problem at the level of the whole gate.
+  #
+  #   (a) ONE RUN PER COMMIT. `push: branches: [dev, main, release]` +
+  #       `pull_request:`. A feature branch is covered by its PR.
+  #       COST, and it is not zero: a feature branch with NO PR OPEN gets no CI
+  #       at all, and SOP 3 wants CI on every push. The mitigation is SOP 3's own
+  #       path — open the draft PR early — which this makes load-bearing rather
+  #       than advisory.
+  #       ALTERNATIVE, cheaper to write and racier to reason about: leave
+  #       `branches: ['**']` and key concurrency to
+  #       `${{ github.event.pull_request.number || github.ref }}` so both events
+  #       share a group. But `cancel-in-progress: true` then has the two events
+  #       cancel each other, and a CANCELLED run is `unknown`, not a result —
+  #       you keep one run and cannot say which. Prefer (a).
+  #
+  #   (b) ONE JOB PER OS, NOT TWO. `test` and `reproducible` are the same 3-OS
+  #       matrix with a byte-identical prologue (autocrlf / checkout
+  #       fetch-depth:0 / setup-node 22). Merge them: 6 jobs -> 3. Nothing about
+  #       WHAT runs changes — only how many times per-job minute-rounding is
+  #       applied, and GitHub rounds each job up to a whole minute BEFORE the
+  #       runner multiplier (Linux x1, Windows x2, macOS x10). Three fewer jobs
+  #       is three fewer roundings, and one of them is a x10.
+  #       COST: the `reproducible` steps must then carry `if: always()`, or a
+  #       failing engine suite skips the artifact check that used to run in an
+  #       independent job. State it in the file or it is a silent loss.
+  #
+  #   (c) `boundary` IS A WHOLE JOB FOR ONE `echo`. Its own runner, one billable
+  #       minute, a few seconds of work.
+  #       COST, and it is the reason this is listed LAST rather than as free
+  #       money: the block's first line is `upstream results: test=...
+  #       reproducible=... browser-guard=...`, and that line exists ONLY because
+  #       this is a separate job with `needs:`. A step cannot read its own job's
+  #       result, so folding it deletes the one line that is most useful when a
+  #       run is red — and it survives a step failure but not a job cancellation.
+  #       Cheapest saving, highest information cost. Fold it or keep it on
+  #       purpose; do not fold it by reflex.
+  #
+  # The arithmetic above was measured at `8dfab2c` (run 30348520673, all eight
+  # jobs, from the API's own started_at/completed_at). Under SOP 2's drift clause
+  # that reading is `unknown (drifted)` against any newer tree — re-measure
+  # before anyone commits to a number. Every RATIO here is independent of the
+  # allowance; the allowance itself has never been read off this account's
+  # billing page by anyone.
   workflow_dispatch:
 
 # One in-flight run per ref; a superseded run's result is not evidence about HEAD.
