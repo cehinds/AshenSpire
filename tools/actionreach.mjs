@@ -59,7 +59,7 @@
 //   CHROME=/path/to/chrome node tools/actionreach.mjs
 //
 // Exit codes
-//   0  every action is whole on arrival and pinned
+//   0  every action is whole on arrival and pinned, and no option set orphans
 //   1  a finding
 //   2  usage / no browser / a screen that would not mount / NOTHING RUN — never a pass
 //
@@ -69,6 +69,16 @@
 // `moved` equal to the full scroll travel at every failing cell (432 px at
 // 390x844 Text M; 1038 px at 430x932 XL). It was watched failing before it was
 // allowed to count as coverage.
+//
+// OBSERVED RED FOR CLAUSE 5, on the widened grid above: run against
+// dist/AshenSpire.html as committed at 85edaef — the commit immediately before
+// the orphan fix, so clauses 1-4 pass on it EVERYWHERE and the red is the new
+// clause and nothing else — this reports FAIL, 23 findings of 60 cells, exit 1,
+// every one "#cz-classes .class-pick wraps 2-then-1 (3 items)". The fixed tree
+// is PASS 60/60. On the grid this file shipped with FIRST, the same known-bad
+// gave 10 of 40 and reported Text L and XL as never orphaning; both numbers are
+// superseded, and the older one is left standing in this comment because the
+// gap between them is the finding.
 //
 // THE ONE CELL THAT PASSED ON THE KNOWN-BAD IS THE REASON CLAUSE 3 EXISTS.
 // 390x508 at Text size S passed on the old build — the layout flips wide at
@@ -120,16 +130,44 @@ const SCREENS = [
   },
 ];
 
-// Nine shapes on purpose, and the list is NOT screenreach's four — a defect can
-// live in the gap between two tools' shape lists, and one already did (Sunna's
-// covered map node at 412x915, a shape screenreach does not test).
+// Fifteen shapes, and the list is NOT screenreach's four — a defect can live in
+// the gap between two tools' shape lists, and one already did (Sunna's covered
+// map node at 412x915, a shape screenreach does not test).
 // 390x508 is here on purpose and is not a device: it is 390x844 with 336 px
 // taken off the bottom, which is what an iOS-sized on-screen keyboard leaves
 // when it resizes the LAYOUT viewport. It is the only half of the keyboard
 // question this harness can ask (see the boundary at the end), and asking it is
 // how the before-tree's failure at that shape was found rather than argued.
+//
+// THE UPPER NARROW BAND — 480 THROUGH 600 — WAS MISSING, AND A DEFECT LIVED IN
+// THE GAP. Corrected at #29 slice 3 review, Sunna gating, and the paragraph two
+// above is why it stings: this file warns that a defect can live in the gap
+// between two tools' shape lists, and then left a gap inside its OWN list.
+// The list stopped at 430 while the narrow layout runs to about 580 (600 flips
+// wide) — the bottom quarter of the band it claimed to test. Re-run against the
+// same known-bad over the skipped widths, clause 5 goes from 10 findings of 40
+// cells to 24 of 48: orphans at Text L at 512/528/560/580 and at Text XL at
+// 560/580 — sizes the old list reported as never orphaning at all.
+//
+// AND IT COST A FALSE MECHANISM, not just missing rows. I wrote that at L/XL the
+// cards "were already too wide to pair." They are too wide to pair AT <= 496 px.
+// Give the viewport more width and they pair, and orphan, at every text size.
+// The shape of the grid had quietly become the shape of the claim.
+//
+// So the widths below are EDGES, not samples: 480 and 560 (the minimum the
+// re-run requires), 512 (where Text L first orphans), 580 (the top of the narrow
+// band) and 600 (the first wide shape — the far side of the flip, so the band's
+// end is measured rather than assumed).
+//
+// STILL NOT EXHAUSTIVE, and the reason is worth carrying: layoutForCap fits on
+// BOTH axes, so the flip is not a width. Sunna measured 528x900 narrow and
+// 540x720 WIDE, 580x900 narrow and 600x900 wide — same widths, opposite answers,
+// because the height moved. This list varies width at a near-constant height and
+// is SILENT about that. Closing it is layoutForCap's card, not this file's; it is
+// named here so the silence is visible rather than absent.
 const SHAPES = [
   [320, 640], [360, 640], [390, 508], [390, 844], [412, 915], [430, 932],
+  [480, 900], [512, 900], [560, 900], [580, 900], [600, 900],
   [844, 390], [1200, 730], [1366, 768], [1920, 1080],
 ];
 // balance.ui.textSize. Read from the bundle would be better; typed here is a
@@ -337,6 +375,19 @@ async function main() {
   exactly, which is why 390x508 is in the shape list; a VISUAL-resizing
   keyboard — the spec default for \`interactive-widget\` — is unknown here, in
   both directions, and 390x508 says NOTHING about it.
+
+  AND THE UNKNOWN IS NARROWER THAN IT WAS FIRST WRITTEN (Sunna, gating #36).
+  The action row is \`position: relative; margin-top: auto\` inside an
+  \`overflow: hidden\` screen — it is NOT \`position: fixed\`, so calling it "a
+  bottom-anchored footer" and reasoning from what those do was asserting a
+  mechanism this row does not have. What is measured: it sits at layout-y
+  795.41..835 at 390x844 and does not move when the content scrolls. Under a
+  visual-resizing keyboard the LAYOUT viewport does not move either, so the row
+  stays at that layout coordinate while the browser chooses where the visible
+  band sits inside it. Whether the row is on screen while the keys are up, and
+  which gesture brings it back, is therefore \`unknown\` — and so is any RANKING
+  against the pre-fix build, which was never measured in that mode either.
+  "No worse than before" was a comparison of two unmeasured things.
 
   4.4rem IS 44 LOCAL PX, NOT 44 DEVICE PX. btnH above is device px: at
   --ui-zoom 0.9 the row measures 39.59 and only clears 44 at Text size L. The
