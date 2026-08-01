@@ -30,7 +30,20 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
-  const width = 7 * COL_X + 60;
+  // COLUMNS COME FROM THE GRAPH, not from a literal. This read `7 * COL_X + 60`,
+  // so an act tuned to 6 or 9 columns drew its SVG at 7 regardless — a tunable
+  // map whose view ignores the tuning is not tunable (Marina made this a
+  // precondition of the config rework, not a footnote). generateActMap now puts
+  // `columns` on the graph, so the view and the generator read one value.
+  // A graph saved before that field existed falls back to the widest column it
+  // actually uses, and SAYS SO — a silent fallback here would re-open exactly
+  // the class of defect this change closes.
+  let columns = map.columns;
+  if (typeof columns !== 'number') {
+    columns = Math.max(...nodes.map((n) => n.col)) + 1;
+    console.warn(`[map] this run's graph predates \`columns\` on the map; drawing ${columns} derived from the nodes in use.`);
+  }
+  const width = columns * COL_X + 60;
   const height = (maxFloor + 1) * ROW_H + 30;
   const x = (col) => 60 + col * COL_X;
   const y = (floor) => height - floor * ROW_H;

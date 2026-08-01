@@ -83,6 +83,7 @@ src/
     triggers.js         event bus + declarative trigger wiring (§3.6)
     statuses.js         status-model interpreter: meters, decay, modifiers (§3.7)
     mapgen.js           procedural act-map generator (§3.8, §6)
+    floorplan.js        anchors → floors: the one home for what a floor rule MEANS (§6)
     encounters.js       encounter + reward rolls (§3.8)
     rng.js              mulberry32 + named streams (§3.11)
     save.js             localStorage, schema + content versioning (§3.12)
@@ -253,7 +254,7 @@ Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, 
 
 | Generator | Algorithm (code, in `src/engine/`) | Knobs (data, in `src/content/`) |
 |---|---|---|
-| Act map | StS path-walk + typing constraints (§6), `mapgen.js` | `mapconfig.js`: floors, columns, path count, type weights, per-floor rules |
+| Act map | StS path-walk + typing constraints (§6), `mapgen.js` + `floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
 | Encounters | weighted roll with no-repeat window, `encounters.js` | `encounters/actN.js`: pools, weights, elite/boss lists |
 | Rewards | rarity rolls + pity/decay counters, `encounters.js` | `balance.js`: odds tables, rune ranges, flask-drop decay |
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
@@ -530,9 +531,22 @@ Event definition = data object: `{ id, name, art, text, choices: [{ label, requi
 
 Faithful to StS's published algorithm, simplified where invisible to the player. Algorithm lives in `engine/mapgen.js`; every constant below comes from `content/mapconfig.js`:
 
-- Per act: **15 floors × 7 columns** grid. Floor 15 is always a single **Shrine** row; the Boss node sits above it.
+- Per act: **`floors` × `columns`** grid (shipped: 15 × 7). The **top floor is always a single Shrine** row and the Boss sits above it — typed by the generator before any rule runs, so the floors a rule can reach are **1..`floors`-1**. That band is called the **rollable band** and it is the denominator for every fraction below.
 - Generate **6 paths** bottom-to-top: each starts at a random column on floor 1 (first 2 paths must start at distinct columns); each step moves to column −1/0/+1 on the next floor; edges may merge but must not cross (swap targets when a crossing would occur — StS's rule).
-- **Node typing** (StS proportions): fixed — floor 1 all Monster, floor 9 all Treasure, floor 15 Shrine. Remaining nodes rolled: Monster 45%, Event(?) 22%, Elite 8%, Shrine 12%, Merchant 5%, remainder Monster; with constraints: no Elite/Shrine before floor 6, no Shrine on floor 14, no two identical non-Monster types adjacent along an edge, ≥2 Elites and ≥1 Merchant reachable per act (regenerate typing if violated, map RNG stream, bounded retries → relax weakest constraint).
+- **Every floor a rule names is an ANCHOR, never an index.** An absolute floor number is a constant whose *meaning* moves when `floors` changes while the constant does not — measured: `9: 'treasure'` deletes the treasure rank entirely below 10 floors (**4.00 → 0.00 nodes per act, 24 seeds**), `noEliteOrShrineBefore: 6` gates **36 % of a 15-floor act and 56 % of a 10-floor one**, and `15: 'shrine'` **never fired at any shipped act length** because floor 15 is not rollable. The closed set of anchor kinds lives in `model/floorplan.js` and a new kind is an engine change (Law 1):
+
+  | anchor | resolves to |
+  |---|---|
+  | `{ at: 'first' }` | floor 1 |
+  | `{ at: 'last' }` | the last rollable floor (`floors`-1) |
+  | `{ at: 'floor', index: n }` | `n` — **an error** if outside 1..`floors`-1 |
+  | `{ at: 'fraction', of: f }` | `round(f × rollable)`, `f` ∈ (0, 1] |
+
+  `resolveFloorPlan()` is the **only** place an anchor becomes a floor; the generator, the boot validator and `tools/mapplan.mjs` all read that one resolution, so they cannot disagree about what a rule meant. An anchor that will not resolve is a **boot error naming the entry** (Law 1 clause 5) and `mapgen` throws rather than generating an unauthored map.
+- **Node typing** (StS proportions): fixed ranks — Monster at `{ at: 'first' }`, Treasure at `{ at: 'fraction', of: 0.64 }` (floor 9 of 14 at the shipped shape). Remaining nodes rolled: Monster 45 %, Event(?) 22 %, Elite 8 %, Shrine 12 %, Merchant 5 %, remainder Monster; with constraints: no Elite/Shrine before `noEliteOrShrineBefore` (`{ at: 'fraction', of: 0.43 }` → floor 6), no Shrine on `noShrineOn` (`{ at: 'last' }` → floor 14), no two identical non-Monster types adjacent along an edge, **`minElites` ≥ 2 and `minMerchants` ≥ 1 per act** (regenerate typing if violated, map RNG stream, bounded retries → relax weakest constraint).
+- **`minElites` counts nodes in the graph; it is not a reachability promise.** It was called `minReachableElites` and never measured reachability: **6 of 102 starts can reach no Elite at 15×7, and 10 of 99 plus 27 of 99 with no Merchant at 10×6** — it degrades in the direction a shorter act goes. `tools/mapplan.mjs` measures and prints it; nothing gates on it, and making the generator honour it is an open design call.
+- **What a `?` node resolves to is `mapConfigs[act].unknownWeights`** — beside the geometry it describes, per act. It was `balance.unknownNode`, a flat global that could not vary per act while the map it belongs to does.
+- **Any claim about generated maps is a distribution, never a seed.** Node count is **59.2 mean over a 50–69 range** at the shipped shape; stops per run is exactly **`floors` + 1** at every shape measured. A tool that generates one map and reports a number has said nothing — the same green a tool gives when it checked nothing. `tools/mapplan.mjs` prints mean and range for every figure and refuses to report at all if its own seeds did not vary.
 - Player sees the full act map; only nodes connected by an edge from the current node are clickable. With **Stonesword Key** relic, `?` nodes render their resolved type.
 - Acts 2/3 reuse the generator with different encounter tables and elite/boss pools (data only).
 

@@ -44,7 +44,10 @@ export const balance = {
   shrine: { healPct: 35 },
 
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
-  unknownNode: { event: 55, fight: 25, shrine: 12, treasure: 8 },
+  // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,
+  // Freja's finding, Marina binding): what a `?` node resolves to is map geometry
+  // and belongs beside `typeWeights`, per act. A flat global here could not vary
+  // per act while the map it describes does, and nothing said so.
 
   // M1 gauntlet glue (kept for the headless bot test; the map flow is M2+).
   gauntlet: {

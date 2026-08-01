@@ -1,23 +1,76 @@
 // src/content/mapconfig.js — per-act map-generation knobs (SPEC §6)
-// Consumed by M2's engine/mapgen.js; authored now as data (SPEC §3.8).
+// Consumed by engine/mapgen.js through model/floorplan.js; authored as data
+// (SPEC §3.8, Law 1).
+//
+// EVERY FLOOR IS AN ANCHOR, NOT AN INDEX. Constantine: "make this configurable
+// by data driven tooling." An absolute floor number is not configurable — it is
+// a constant whose MEANING moves when `floors` changes while the constant does
+// not, which is SOP 2's drift clause applied to data. The four anchor kinds are
+// a closed set and live in `model/floorplan.js`:
+//
+//     { at: 'first' }                 floor 1
+//     { at: 'last' }                  the last ROLLABLE floor (floors - 1)
+//     { at: 'floor',    index: 9 }    absolute; an error if outside 1..floors-1
+//     { at: 'fraction', of: 0.64 }    64% of the way up the rollable band
+//
+// `node tools/mapplan.mjs` prints what each one resolves to at any act length.
+// Turn a knob, read the number: that is the whole feature.
+//
+// WHAT CHANGED AND WHY, so the next reader does not restore the old numbers:
+//
+//   `9: 'treasure'`  ->  { at: 'fraction', of: 0.64 }
+//       Absolute 9 is a cliff. Below 10 floors the rank simply does not exist
+//       and the act ships with NO treasure — 4.0 nodes per act to 0.0, 24 of 24
+//       seeds, in silence. 0.64 x 14 rounds to 9, so the 15-floor act is
+//       unchanged, and a 10-floor act gets its treasure at floor 6.
+//
+//   `15: 'shrine'`   ->  DELETED, because it never fired.
+//       The generator types the top floor as the lone Shrine and puts the Boss
+//       above it BEFORE any rule runs, so floor 15 was never rollable. Deleting
+//       it changes 0 of 24 seeds at 10, 12 and 15 floors (Freja, measured). It
+//       is not a rule we are dropping; it is a rule that was never a rule, and
+//       the schema now rejects it — an anchor outside 1..floors-1 is an error,
+//       which is exactly the check that would have caught it.
+//
+//   `noEliteOrShrineBefore: 6`  ->  { at: 'fraction', of: 0.43 }
+//       6 gates 36% of a 15-floor act and 56% of a 10-floor one. Same number,
+//       different game. The fraction keeps the SHAPE: 36% at 15 floors, 36% at
+//       12, 33% at 10.
+//
+//   `noShrineOn: 14`  ->  { at: 'last' }
+//       14 always meant "the last floor a rule can reach". Now it says so.
+//
+//   `minReachableElites` -> `minElites` (and the same for merchants).
+//       The old name promised reachability; mapgen counts the whole graph. It
+//       never measured what it claimed. The count is unchanged and honestly
+//       named; the reachability number is now MEASURED AND REPORTED by
+//       tools/mapplan.mjs (today: 8 of 104 starts at 15x7 can reach no Elite).
 
 const ACT_SHAPE = {
   floors: 15,
   columns: 7,
   pathCount: 6,
   typeWeights: { monster: 45, event: 22, shrine: 12, elite: 8, merchant: 5 },
+  // What a `?` node resolves to. HERE, beside the geometry it belongs to, and
+  // no longer in `balance.unknownNode` — a flat global could not differ per act
+  // while the map it describes is per act, and nothing said so (Freja).
+  unknownWeights: { event: 55, fight: 25, shrine: 12, treasure: 8 },
   floorRules: {
-    fixed: { 1: 'monster', 9: 'treasure', 15: 'shrine' },
-    noEliteOrShrineBefore: 6,
-    noShrineOn: 14,
-    minReachableElites: 2,
-    minReachableMerchants: 1,
+    fixed: [
+      { at: 'first', type: 'monster' },
+      { at: 'fraction', of: 0.64, type: 'treasure' },
+    ],
+    noEliteOrShrineBefore: { at: 'fraction', of: 0.43 },
+    noShrineOn: { at: 'last' },
+    minElites: 2,
+    minMerchants: 1,
   },
 };
 
 // All three acts share the SPEC §6 shape; per-act difficulty lives in the
 // encounter pools, not the map geometry. Distinct objects so future acts can
-// diverge without surprises.
+// diverge without surprises — and now they genuinely can, because the anchors
+// mean the same thing at any `floors` an act picks.
 export const mapConfigs = {
   1: { ...ACT_SHAPE },
   2: { ...ACT_SHAPE },

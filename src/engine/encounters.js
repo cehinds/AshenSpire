@@ -233,11 +233,17 @@ function rollShopCards(registries, rng, classId, count) {
 /**
  * resolveUnknownNode(registries, rng, { seenEvents }) →
  *   { kind: 'event', eventId } | { kind: 'fight'|'shrine'|'treasure' }
- * Odds from balance.unknownNode; events avoid repeats within a run while
- * unseen ones remain. Stream 'events' (SPEC §5.6).
+ * Odds from mapConfigs[act].unknownWeights — per act, beside the geometry they
+ * describe (they used to be `balance.unknownNode`, a flat global that could not
+ * differ per act while the map did). `act` is required: guessing act 1 would be
+ * a default nobody authored, which is the fallback this rework exists to remove.
+ * Events avoid repeats within a run while unseen ones remain. Stream 'events'
+ * (SPEC §5.6).
  */
-export function resolveUnknownNode(registries, rng, { seenEvents = [] } = {}) {
-  const odds = registries.balance.unknownNode;
+export function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {}) {
+  const cfg = registries.mapConfig(act);
+  const odds = cfg && cfg.unknownWeights;
+  if (!odds) throw new Error(`resolveUnknownNode: act ${JSON.stringify(act)} has no unknownWeights`);
   const total = Object.values(odds).reduce((a, b) => a + b, 0);
   let r = rng.float('events') * total;
   let kind = 'event';

@@ -2488,7 +2488,7 @@ function buildActMap() {
   const assigned = [];
   for (const node of Object.values(run.mapGraph.nodes)) {
     if (node.type === 'event') {
-      node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned });
+      node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, act: contentAct() });
       if (node.resolved.kind === 'event') assigned.push(node.resolved.eventId);
     }
   }
@@ -3395,7 +3395,10 @@ const balance = {
   shrine: { healPct: 35 },
 
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
-  unknownNode: { event: 55, fight: 25, shrine: 12, treasure: 8 },
+  // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,
+  // Freja's finding, Marina binding): what a `?` node resolves to is map geometry
+  // and belongs beside `typeWeights`, per act. A flat global here could not vary
+  // per act while the map it describes does, and nothing said so.
 
   // M1 gauntlet glue (kept for the headless bot test; the map flow is M2+).
   gauntlet: {
@@ -8112,25 +8115,78 @@ Object.assign(module.exports, { classes, LOCKED_CLASSES });
 },
 "src/content/mapconfig.js": function (module, exports, require) {
 // src/content/mapconfig.js — per-act map-generation knobs (SPEC §6)
-// Consumed by M2's engine/mapgen.js; authored now as data (SPEC §3.8).
+// Consumed by engine/mapgen.js through model/floorplan.js; authored as data
+// (SPEC §3.8, Law 1).
+//
+// EVERY FLOOR IS AN ANCHOR, NOT AN INDEX. Constantine: "make this configurable
+// by data driven tooling." An absolute floor number is not configurable — it is
+// a constant whose MEANING moves when `floors` changes while the constant does
+// not, which is SOP 2's drift clause applied to data. The four anchor kinds are
+// a closed set and live in `model/floorplan.js`:
+//
+//     { at: 'first' }                 floor 1
+//     { at: 'last' }                  the last ROLLABLE floor (floors - 1)
+//     { at: 'floor',    index: 9 }    absolute; an error if outside 1..floors-1
+//     { at: 'fraction', of: 0.64 }    64% of the way up the rollable band
+//
+// `node tools/mapplan.mjs` prints what each one resolves to at any act length.
+// Turn a knob, read the number: that is the whole feature.
+//
+// WHAT CHANGED AND WHY, so the next reader does not restore the old numbers:
+//
+//   `9: 'treasure'`  ->  { at: 'fraction', of: 0.64 }
+//       Absolute 9 is a cliff. Below 10 floors the rank simply does not exist
+//       and the act ships with NO treasure — 4.0 nodes per act to 0.0, 24 of 24
+//       seeds, in silence. 0.64 x 14 rounds to 9, so the 15-floor act is
+//       unchanged, and a 10-floor act gets its treasure at floor 6.
+//
+//   `15: 'shrine'`   ->  DELETED, because it never fired.
+//       The generator types the top floor as the lone Shrine and puts the Boss
+//       above it BEFORE any rule runs, so floor 15 was never rollable. Deleting
+//       it changes 0 of 24 seeds at 10, 12 and 15 floors (Freja, measured). It
+//       is not a rule we are dropping; it is a rule that was never a rule, and
+//       the schema now rejects it — an anchor outside 1..floors-1 is an error,
+//       which is exactly the check that would have caught it.
+//
+//   `noEliteOrShrineBefore: 6`  ->  { at: 'fraction', of: 0.43 }
+//       6 gates 36% of a 15-floor act and 56% of a 10-floor one. Same number,
+//       different game. The fraction keeps the SHAPE: 36% at 15 floors, 36% at
+//       12, 33% at 10.
+//
+//   `noShrineOn: 14`  ->  { at: 'last' }
+//       14 always meant "the last floor a rule can reach". Now it says so.
+//
+//   `minReachableElites` -> `minElites` (and the same for merchants).
+//       The old name promised reachability; mapgen counts the whole graph. It
+//       never measured what it claimed. The count is unchanged and honestly
+//       named; the reachability number is now MEASURED AND REPORTED by
+//       tools/mapplan.mjs (today: 8 of 104 starts at 15x7 can reach no Elite).
 
 const ACT_SHAPE = {
   floors: 15,
   columns: 7,
   pathCount: 6,
   typeWeights: { monster: 45, event: 22, shrine: 12, elite: 8, merchant: 5 },
+  // What a `?` node resolves to. HERE, beside the geometry it belongs to, and
+  // no longer in `balance.unknownNode` — a flat global could not differ per act
+  // while the map it describes is per act, and nothing said so (Freja).
+  unknownWeights: { event: 55, fight: 25, shrine: 12, treasure: 8 },
   floorRules: {
-    fixed: { 1: 'monster', 9: 'treasure', 15: 'shrine' },
-    noEliteOrShrineBefore: 6,
-    noShrineOn: 14,
-    minReachableElites: 2,
-    minReachableMerchants: 1,
+    fixed: [
+      { at: 'first', type: 'monster' },
+      { at: 'fraction', of: 0.64, type: 'treasure' },
+    ],
+    noEliteOrShrineBefore: { at: 'fraction', of: 0.43 },
+    noShrineOn: { at: 'last' },
+    minElites: 2,
+    minMerchants: 1,
   },
 };
 
 // All three acts share the SPEC §6 shape; per-act difficulty lives in the
 // encounter pools, not the map geometry. Distinct objects so future acts can
-// diverge without surprises.
+// diverge without surprises — and now they genuinely can, because the anchors
+// mean the same thing at any `floors` an act picks.
 const mapConfigs = {
   1: { ...ACT_SHAPE },
   2: { ...ACT_SHAPE },
@@ -9344,6 +9400,7 @@ Object.assign(module.exports, { unlocks });
 //
 // Headless: no document/window/localStorage/timers.
 
+const { resolveFloorPlan } = require("src/model/floorplan.js");
 const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, MODIFIER_KEYS, REGISTRY_TYPES } = require("src/model/schemas.js");
 const { FORMULA_OPS, FORMULA_OF, isFormula } = require("src/model/formulas.js");
 
@@ -9557,7 +9614,18 @@ function validateContent(bundle) {
       err('mapConfigs', 'mapConfigs must be an object keyed by act number');
     } else {
       for (const act of Object.keys(b.mapConfigs)) {
-        walkSchema(b.mapConfigs[act], SCHEMAS.mapConfig, `mapConfigs.${act}`, vctx);
+        const cfg = b.mapConfigs[act];
+        walkSchema(cfg, SCHEMAS.mapConfig, `mapConfigs.${act}`, vctx);
+        // THE SECOND LAYER — meaning, not shape. The schema cannot know whether
+        // floor 9 exists in THIS act; that needs `floors`, so it is asked here.
+        // This is the boot-time half of Law 1 clause 5: bad data fails loud and
+        // NAMES THE ENTRY, rather than being clamped, defaulted, or ignored.
+        // The corpus it has to turn red is in tools/mapplan.mjs --selftest.
+        if (cfg && typeof cfg === 'object' && !Array.isArray(cfg)) {
+          for (const e of resolveFloorPlan(cfg).errors) {
+            err(`mapConfigs.${act}.${e.key}`, e.msg);
+          }
+        }
       }
     }
   }
@@ -9996,6 +10064,256 @@ function usesScript(node) {
 Object.assign(module.exports, { TOKENIZABLE_OPS, REQUIRED_TOKEN_OPS, TOKEN_PATTERN, tokenRe, relicTokens, computeTokenBindings, extractTemplateTokens, validateContent, validateEffects, validateTriggers, validatePredicate, validateFormula });
 
 },
+"src/model/floorplan.js": function (module, exports, require) {
+// src/model/floorplan.js — what a floor rule MEANS in an act of a given length.
+//
+// WHY THIS FILE EXISTS. Constantine: "make this configurable by data driven
+// tooling." The blocker was that the map's knobs were absolute floor indices:
+//
+//     fixed: { 1: 'monster', 9: 'treasure', 15: 'shrine' }
+//     noEliteOrShrineBefore: 6
+//     noShrineOn: 14
+//
+// Every one of those numbers means something different when `floors` changes,
+// and nothing said so. Measured (Freja, 24 seeds):
+//
+//   - `9: 'treasure'` is a CLIFF. Shorten the act below 10 floors and floor 9
+//     does not exist, so the treasure rank is deleted — 4.0 treasure nodes per
+//     act becomes 0.0, across 24/24 seeds, silently.
+//   - `15: 'shrine'` HAS NEVER FIRED at any shipped act length. Deleting it
+//     changes 0 of 24 seeds at 10, 12 and 15 floors, because the top floor is
+//     typed by the generator before the rules run and is therefore not rollable.
+//     A rule that has never fired, sitting in the table looking load-bearing.
+//   - `noEliteOrShrineBefore: 6` gates 36% of a 15-floor act and 56% of a
+//     10-floor one. Same 6, different game.
+//
+// That is SOP 2's drift clause applied to data: a constant whose MEANING moves
+// while the constant does not. So the fix is not a longer table of magic
+// numbers — it is ANCHORS. A rule names a POSITION, and the position resolves
+// against the act it is in.
+//
+// AND THE RESOLUTION IS A READOUT, not just an internal step (Marina's ruling on
+// Constantine's reading 2): `describePlan()` prints "fixed treasure -> floor 9
+// of 14 rollable (fraction 0.64)". A knob you can turn and a number you can read
+// are the same feature; a knob without the readout is the thing that shipped.
+//
+// LAYERING: this is model/, imports nothing from engine/, and owns NODE_TYPES —
+// which mapgen.js used to export and nothing outside it consumed.
+// (`ui/uiContent.js` holds its own node-type map for icons and blurbs. That is a
+// second copy of the closed set and it is NOT swept here; named, not fixed.)
+
+/** The closed set of node types. One home; mapgen and the schema both read it. */
+const NODE_TYPES = Object.freeze([
+  'monster',
+  'event',
+  'elite',
+  'shrine',
+  'merchant',
+  'treasure',
+  'boss',
+]);
+
+/** The closed set of anchor kinds. A new kind is an engine change (Law 1). */
+const ANCHOR_KINDS = Object.freeze(['first', 'last', 'floor', 'fraction']);
+
+/**
+ * ROLLABLE FLOORS — the denominator for every fraction here, and it is NOT
+ * `floors`. The generator types the top floor as the lone Shrine and puts the
+ * Boss above it (SPEC §6) before any rule runs, so floors 1..floors-1 are the
+ * only ones a rule can reach. Getting this wrong is what made `15: 'shrine'`
+ * look like a rule for four months.
+ */
+function rollableFloors(config) {
+  return Math.max(0, (config.floors | 0) - 1);
+}
+
+/**
+ * resolveAnchor(anchor, config) → { floor } | { error }
+ *
+ * Never throws and never clamps silently into range: an anchor that lands
+ * outside the act is an ERROR the caller names, because that is precisely the
+ * defect this file exists to catch (Law 1 clause 5 — bad data fails loud and
+ * names the entry). `fraction` is the one form that clamps, and only into the
+ * band's own ends, because a fraction cannot be out of range by construction.
+ */
+function resolveAnchor(anchor, config) {
+  const band = rollableFloors(config);
+  if (band < 1) return { error: `act has ${config.floors} floor(s); no floor is rollable` };
+  if (!anchor || typeof anchor !== 'object' || Array.isArray(anchor)) {
+    return { error: `anchor must be an object like { at: 'fraction', of: 0.5 }, got ${JSON.stringify(anchor)}` };
+  }
+  switch (anchor.at) {
+    case 'first':
+      return { floor: 1, why: `first of ${band} rollable` };
+    case 'last':
+      return { floor: band, why: `last of ${band} rollable` };
+    case 'floor': {
+      const n = anchor.index;
+      if (!Number.isInteger(n)) return { error: `{ at: 'floor' } needs an integer 'index', got ${JSON.stringify(n)}` };
+      if (n < 1 || n > band) {
+        return { error: `floor ${n} is outside this act's rollable band 1..${band} (floors: ${config.floors})` };
+      }
+      return { floor: n, why: `absolute; band is 1..${band}` };
+    }
+    case 'fraction': {
+      const f = anchor.of;
+      if (typeof f !== 'number' || !Number.isFinite(f) || f <= 0 || f > 1) {
+        return { error: `{ at: 'fraction' } needs 'of' in (0, 1], got ${JSON.stringify(f)}` };
+      }
+      const floor = Math.min(band, Math.max(1, Math.round(f * band)));
+      return { floor, why: `fraction ${f} of ${band} rollable` };
+    }
+    default:
+      return { error: `unknown anchor kind ${JSON.stringify(anchor.at)} — one of ${ANCHOR_KINDS.join(', ')}` };
+  }
+}
+
+/**
+ * resolveFloorPlan(config) → { plan, errors, readout }
+ *
+ * The single place that turns authored rules into the numbers mapgen uses.
+ * mapgen consumes `plan` and asks nothing else about floors; the validator
+ * consumes `errors`; tools consume `readout`. One resolution, three readers —
+ * so a tool can never disagree with the generator about what a rule meant.
+ *
+ * NO `|| {}`. `floorRules` missing is a distinct, named outcome, not an empty
+ * object that generates a map nobody authored. (Viki: a graceful fallback is
+ * where a defect goes to be quiet.)
+ */
+function resolveFloorPlan(config) {
+  const errors = [];
+  const readout = [];
+  const band = rollableFloors(config);
+  const rules = config && config.floorRules;
+
+  if (rules == null) {
+    errors.push({ key: 'floorRules', msg: 'missing — an act with no floor rules is not a default, it is an unauthored map' });
+    return { plan: null, errors, readout };
+  }
+  if (typeof rules !== 'object' || Array.isArray(rules)) {
+    errors.push({ key: 'floorRules', msg: `must be an object, got ${Array.isArray(rules) ? 'an array' : typeof rules}` });
+    return { plan: null, errors, readout };
+  }
+
+  readout.push(`act: ${config.floors} floors · ${band} rollable (1..${band}) · top floor is the Shrine, Boss above it`);
+
+  // ---- fixed ranks -------------------------------------------------------
+  const fixed = {};
+  const list = rules.fixed;
+  if (list != null) {
+    if (!Array.isArray(list)) {
+      errors.push({ key: 'floorRules.fixed', msg: `must be an array of { at, type } anchors, got ${typeof list}` });
+    } else {
+      list.forEach((entry, i) => {
+        const at = `floorRules.fixed[${i}]`;
+        if (!entry || typeof entry !== 'object') {
+          errors.push({ key: at, msg: `must be an object like { at: 'first', type: 'monster' }` });
+          return;
+        }
+        if (!NODE_TYPES.includes(entry.type)) {
+          errors.push({ key: `${at}.type`, msg: `${JSON.stringify(entry.type)} is not a node type — one of ${NODE_TYPES.join(', ')}` });
+          return;
+        }
+        const r = resolveAnchor(entry, config);
+        if (r.error) {
+          errors.push({ key: at, msg: `${entry.type}: ${r.error}` });
+          return;
+        }
+        if (fixed[r.floor] != null && fixed[r.floor] !== entry.type) {
+          errors.push({ key: at, msg: `${entry.type} resolves to floor ${r.floor}, which ${JSON.stringify(fixed[r.floor])} already claims` });
+          return;
+        }
+        fixed[r.floor] = entry.type;
+        readout.push(`fixed ${entry.type} -> floor ${r.floor} (${r.why})`);
+      });
+    }
+  }
+
+  // ---- thresholds --------------------------------------------------------
+  const anchorRule = (key, fallbackFloor, label) => {
+    const a = rules[key];
+    if (a == null) { readout.push(`${key}: not set (${label})`); return fallbackFloor; }
+    const r = resolveAnchor(a, config);
+    if (r.error) { errors.push({ key: `floorRules.${key}`, msg: r.error }); return fallbackFloor; }
+    readout.push(`${key} -> floor ${r.floor} (${r.why})`);
+    return r.floor;
+  };
+  const eliteShrineFrom = anchorRule('noEliteOrShrineBefore', 1, 'elites and shrines allowed from floor 1');
+  const noShrineOn = anchorRule('noShrineOn', 0, 'no floor bars shrines');
+
+  if (band > 0 && eliteShrineFrom > band) {
+    errors.push({ key: 'floorRules.noEliteOrShrineBefore', msg: `resolves to ${eliteShrineFrom}, past the last rollable floor ${band} — no floor could ever hold an Elite or Shrine` });
+  }
+  if (band > 0) {
+    const gated = Math.max(0, eliteShrineFrom - 1);
+    readout.push(`  => ${gated} of ${band} rollable floors (${Math.round((gated / band) * 100)}%) bar Elite and Shrine`);
+  }
+
+  // ---- counts ------------------------------------------------------------
+  // RENAMED, and the rename IS the fix. These were `minReachableElites` /
+  // `minReachableMerchants` and they do not measure reachability: mapgen counts
+  // the whole graph (`countType`), which is a different promise. Freja measured
+  // the gap — 8 of 104 starts can reach no Elite at 15x7, and 16 of 100 at
+  // 10x6, plus 28 of 100 with no Merchant. It degrades in the direction we are
+  // shortening. The honest name is what it counts; the reachability number is
+  // now MEASURED AND REPORTED by tools/mapplan.mjs rather than promised here.
+  const count = (key, legacy) => {
+    const v = rules[key] != null ? rules[key] : rules[legacy];
+    if (v == null) return 0;
+    if (!Number.isInteger(v) || v < 0) {
+      errors.push({ key: `floorRules.${key}`, msg: `must be a non-negative integer, got ${JSON.stringify(v)}` });
+      return 0;
+    }
+    if (rules[legacy] != null) {
+      errors.push({ key: `floorRules.${legacy}`, msg: `renamed to '${key}' — it counts nodes in the whole graph, never reachability, and the old name promised the second` });
+    }
+    readout.push(`${key}: ${v}`);
+    return v;
+  };
+  const minElites = count('minElites', 'minReachableElites');
+  const minMerchants = count('minMerchants', 'minReachableMerchants');
+
+  // ---- unknown-node weights (moved here from balance.unknownNode) --------
+  // Freja's finding, Marina made it binding: what a `?` node resolves to is map
+  // geometry and belongs beside typeWeights, per act, not in the flat global
+  // balance table. One act could not have different `?` odds from another while
+  // it lived in `balance.*`, and nothing said so.
+  let unknownWeights = null;
+  if (config.unknownWeights != null) {
+    const w = config.unknownWeights;
+    if (typeof w !== 'object' || Array.isArray(w)) {
+      errors.push({ key: 'unknownWeights', msg: `must be an object of kind -> weight, got ${typeof w}` });
+    } else {
+      const total = Object.values(w).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
+      if (total <= 0) errors.push({ key: 'unknownWeights', msg: 'weights sum to 0 — every `?` node would resolve to the first key' });
+      unknownWeights = w;
+      readout.push(`unknownWeights: ${Object.entries(w).map(([k, v]) => `${k} ${Math.round((v / total) * 100)}%`).join(' · ')}`);
+    }
+  }
+
+  const plan = {
+    floors: config.floors,
+    band,
+    fixed,
+    eliteShrineFrom,
+    noShrineOn,
+    minElites,
+    minMerchants,
+    unknownWeights,
+  };
+  return { plan, errors, readout };
+}
+
+/** describePlan(config) → string[] — the readout, for tools and for humans. */
+function describePlan(config) {
+  const { errors, readout } = resolveFloorPlan(config);
+  return readout.concat(errors.map((e) => `ERROR ${e.key}: ${e.msg}`));
+}
+
+
+Object.assign(module.exports, { NODE_TYPES, ANCHOR_KINDS, rollableFloors, resolveAnchor, resolveFloorPlan, describePlan });
+
+},
 "src/model/schemas.js": function (module, exports, require) {
 // src/model/schemas.js — entity schemas + contractual closed sets (SPEC §3.3–§3.7)
 //
@@ -10021,6 +10339,8 @@ Object.assign(module.exports, { TOKENIZABLE_OPS, REQUIRED_TOKEN_OPS, TOKEN_PATTE
 // ---------------------------------------------------------------------------
 
 // Effect DSL opcodes (SPEC §3.4).
+const { NODE_TYPES, ANCHOR_KINDS } = require("src/model/floorplan.js");
+
 const COMBAT_OPCODES = Object.freeze([
   'damage',
   'block',
@@ -10245,6 +10565,17 @@ const ref = (reg) => ({ k: 'ref', reg });
 const union = (...anyOf) => ({ k: 'union', anyOf });
 const opt = (node) => ({ ...node, opt: true });
 
+// A FLOOR ANCHOR — the closed set in model/floorplan.js, as a schema node.
+// `index` and `of` are optional here because which one is required depends on
+// `at`, and walkSchema has no discriminated union; resolveFloorPlan names the
+// missing or out-of-range one with the act's own floor count in the message.
+const floorAnchor = (extra = {}) => obj({
+  at: en(...ANCHOR_KINDS),
+  index: opt(int),
+  of: opt(num),
+  ...extra,
+});
+
 const costNode = union(int, en('X'));
 
 const modifiersSchema = obj({
@@ -10404,7 +10735,13 @@ const SCHEMAS = Object.freeze({
     choices: arr(
       obj({
         label: str,
-        requires: opt(any),
+        // WAS `opt(any)` — the second instance of the same shape, in Viki's
+        // corpus for #43 so the corpus is not fitted to the one we found.
+        // `meets()` (ui/screens/event.js:14) understands exactly one key, so
+        // `requires: { hp: 50 }` type-checked, was silently ignored, and the
+        // choice was always affordable. The vocabulary is closed to what the
+        // evaluator can actually read; widening it is an engine change.
+        requires: opt(obj({ cinders: opt(int) })),
         effects,
         resultText: str,
       })
@@ -10439,7 +10776,31 @@ const SCHEMAS = Object.freeze({
     columns: int,
     pathCount: int,
     typeWeights: mapOf(num),
-    floorRules: opt(any),
+    // What a `?` node resolves to — beside the geometry, per act. Moved out of
+    // `balance.unknownNode`, which could not vary per act while the map does.
+    unknownWeights: opt(mapOf(num)),
+    // WAS `opt(any)`, WHICH IS NOT VALIDATION — it is the shape of a check that
+    // cannot go red (Marina). Six deliberately-broken inputs passed it: a bare
+    // string, a `fixed` index of 999, a node kind that does not exist, a
+    // negative index, the number 42, and `floors` halved to 8 while `fixed`
+    // still named 9 and 15. All six are red now.
+    //
+    // TWO LAYERS, ON PURPOSE. The schema below rules on SHAPE — is this an
+    // object, is `at` one of the four anchor kinds, is `type` a node type,
+    // is there a field nobody declared. It cannot rule on MEANING, because
+    // meaning needs `floors`: whether floor 9 exists in this act is a question
+    // about the act, not about the literal. `resolveFloorPlan`
+    // (model/floorplan.js) answers that half and validate.js reports it, so
+    // neither layer is asked a question it cannot see the inputs to.
+    floorRules: opt(
+      obj({
+        fixed: opt(arr(floorAnchor({ type: en(...NODE_TYPES) }))),
+        noEliteOrShrineBefore: opt(floorAnchor()),
+        noShrineOn: opt(floorAnchor()),
+        minElites: opt(int),
+        minMerchants: opt(int),
+      })
+    ),
   }),
 
   balance: any, // flat constants object; shape is content's concern (SPEC §3.3)
@@ -13781,15 +14142,9 @@ Object.assign(module.exports, { emitEvent, fireOwnerHooks, findEntity, checkPhas
 // (content/mapconfig.js); randomness only from the seeded 'map' stream.
 // Headless: no document/window/localStorage/timers.
 
-const NODE_TYPES = Object.freeze([
-  'monster',
-  'event',
-  'elite',
-  'shrine',
-  'merchant',
-  'treasure',
-  'boss',
-]);
+const { resolveFloorPlan, NODE_TYPES } = require("src/model/floorplan.js");
+
+
 
 const TYPING_RETRIES = 40;
 
@@ -13801,14 +14156,25 @@ const TYPING_RETRIES = 40;
  *   bossId,                          // boss node above the shrine
  * }
  *
- * config = { floors, columns, pathCount, typeWeights, floorRules } — see
- * content/mapconfig.js. floorRules = { fixed: {floor: type},
- * noEliteOrShrineBefore, noShrineOn, minReachableElites, minReachableMerchants }.
+ * config = { floors, columns, pathCount, typeWeights, unknownWeights,
+ * floorRules } — see content/mapconfig.js. Floor rules are ANCHORS; this
+ * function never reads them directly and never sees an absolute floor number
+ * that content typed. `resolveFloorPlan` (model/floorplan.js) is the one place
+ * that turns an anchor into a floor, so the generator, the validator and
+ * tools/mapplan.mjs cannot disagree about what a rule meant.
  */
 function generateActMap({ config, rng }) {
   const floors = config.floors;
   const cols = config.columns;
-  const rules = config.floorRules || {};
+  // NO `config.floorRules || {}`. That fallback generated an unauthored map
+  // from an empty object and called it a default — "where a defect goes to be
+  // quiet" (Viki). Bad config is loud, here and at boot in validate.js.
+  const { plan, errors } = resolveFloorPlan(config);
+  if (!plan || errors.length) {
+    throw new Error(`mapgen: this act's floor rules do not resolve — ${
+      errors.map((e) => `${e.key}: ${e.msg}`).join(' · ') || 'floorRules missing'}`);
+  }
+  const rules = plan;
   const nodeId = (floor, col) => `n${floor}_${col}`;
 
   // ---- 1. Path walk (floors 1..floors-1); floor `floors` is the lone shrine.
@@ -13878,20 +14244,20 @@ function generateActMap({ config, rng }) {
 
   // ---- 3. Node typing under constraints, bounded retries then relax.
   const rollable = Object.values(nodes).filter((n) => n.type === null);
-  const fixed = rules.fixed || {};
+  const fixed = plan.fixed;
   for (let attempt = 0; attempt < TYPING_RETRIES; attempt++) {
     for (const node of rollable) node.type = null;
     typeOnce(nodes, rollable, fixed, rules, config.typeWeights, rng, floors);
-    if (countType(nodes, 'elite') >= (rules.minReachableElites || 0) &&
-        countType(nodes, 'merchant') >= (rules.minReachableMerchants || 0)) {
-      return finish(nodes, starts, shrine.id, boss.id, floors);
+    if (countType(nodes, 'elite') >= plan.minElites &&
+        countType(nodes, 'merchant') >= plan.minMerchants) {
+      return finish(nodes, starts, shrine.id, boss.id, floors, cols);
     }
   }
   // Relax (SPEC §6): force-place what the rolls never produced, on eligible
   // monster nodes (weakest constraint gives way; counts are a hard promise).
-  relaxPlace(nodes, 'elite', rules.minReachableElites || 0, rules, rng);
-  relaxPlace(nodes, 'merchant', rules.minReachableMerchants || 0, rules, rng);
-  return finish(nodes, starts, shrine.id, boss.id, floors);
+  relaxPlace(nodes, 'elite', plan.minElites, plan, rng);
+  relaxPlace(nodes, 'merchant', plan.minMerchants, plan, rng);
+  return finish(nodes, starts, shrine.id, boss.id, floors, cols);
 }
 
 function typeOnce(nodes, rollable, fixed, rules, weights, rng, floors) {
@@ -13914,7 +14280,7 @@ function rollType(node, typedParents, rules, weights, rng) {
   const entries = Object.entries(weights).filter(([type, w]) => {
     if (w <= 0) return false;
     if (banned.has(type)) return false;
-    if ((type === 'elite' || type === 'shrine') && node.floor < (rules.noEliteOrShrineBefore || 0)) return false;
+    if ((type === 'elite' || type === 'shrine') && node.floor < rules.eliteShrineFrom) return false;
     if (type === 'shrine' && node.floor === rules.noShrineOn) return false;
     return true;
   });
@@ -13932,7 +14298,7 @@ function relaxPlace(nodes, type, min, rules, rng) {
   let have = countType(nodes, type);
   const eligible = Object.values(nodes).filter(
     (n) => n.type === 'monster' &&
-      !(type === 'elite' && n.floor < (rules.noEliteOrShrineBefore || 0))
+      !(type === 'elite' && n.floor < rules.eliteShrineFrom)
   );
   while (have < min && eligible.length > 0) {
     const idx = Math.floor(rng.float('map') * eligible.length);
@@ -13945,9 +14311,15 @@ function countType(nodes, type) {
   return Object.values(nodes).filter((n) => n.type === type).length;
 }
 
-function finish(nodes, startCols, shrineId, bossId, floors) {
+function finish(nodes, startCols, shrineId, bossId, floors, columns) {
   const startIds = [...new Set(startCols)].map((col) => `n1_${col}`);
-  return { nodes, startIds, shrineId, bossId, floors };
+  // `columns` travels WITH the graph. The map screen used to hardcode
+  // `7 * COL_X + 60` for its SVG width, so an act tuned to 6 or 9 columns drew
+  // at 7 regardless — a tunable map whose view ignores the tuning is not
+  // tunable (Marina made this a precondition of the rework, not a footnote).
+  // Putting it on the graph rather than re-reading the act config means the
+  // view and the generator cannot disagree, and it survives a save/load.
+  return { nodes, startIds, shrineId, bossId, floors, columns };
 }
 
 function clamp(v, lo, hi) {
@@ -14357,11 +14729,17 @@ function rollShopCards(registries, rng, classId, count) {
 /**
  * resolveUnknownNode(registries, rng, { seenEvents }) →
  *   { kind: 'event', eventId } | { kind: 'fight'|'shrine'|'treasure' }
- * Odds from balance.unknownNode; events avoid repeats within a run while
- * unseen ones remain. Stream 'events' (SPEC §5.6).
+ * Odds from mapConfigs[act].unknownWeights — per act, beside the geometry they
+ * describe (they used to be `balance.unknownNode`, a flat global that could not
+ * differ per act while the map did). `act` is required: guessing act 1 would be
+ * a default nobody authored, which is the fallback this rework exists to remove.
+ * Events avoid repeats within a run while unseen ones remain. Stream 'events'
+ * (SPEC §5.6).
  */
-function resolveUnknownNode(registries, rng, { seenEvents = [] } = {}) {
-  const odds = registries.balance.unknownNode;
+function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {}) {
+  const cfg = registries.mapConfig(act);
+  const odds = cfg && cfg.unknownWeights;
+  if (!odds) throw new Error(`resolveUnknownNode: act ${JSON.stringify(act)} has no unknownWeights`);
   const total = Object.values(odds).reduce((a, b) => a + b, 0);
   let r = rng.float('events') * total;
   let kind = 'event';
@@ -16595,7 +16973,20 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
-  const width = 7 * COL_X + 60;
+  // COLUMNS COME FROM THE GRAPH, not from a literal. This read `7 * COL_X + 60`,
+  // so an act tuned to 6 or 9 columns drew its SVG at 7 regardless — a tunable
+  // map whose view ignores the tuning is not tunable (Marina made this a
+  // precondition of the config rework, not a footnote). generateActMap now puts
+  // `columns` on the graph, so the view and the generator read one value.
+  // A graph saved before that field existed falls back to the widest column it
+  // actually uses, and SAYS SO — a silent fallback here would re-open exactly
+  // the class of defect this change closes.
+  let columns = map.columns;
+  if (typeof columns !== 'number') {
+    columns = Math.max(...nodes.map((n) => n.col)) + 1;
+    console.warn(`[map] this run's graph predates \`columns\` on the map; drawing ${columns} derived from the nodes in use.`);
+  }
+  const width = columns * COL_X + 60;
   const height = (maxFloor + 1) * ROW_H + 30;
   const x = (col) => 60 + col * COL_X;
   const y = (floor) => height - floor * ROW_H;
