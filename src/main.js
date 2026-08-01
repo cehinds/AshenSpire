@@ -45,6 +45,7 @@ import { mountHistory } from './ui/screens/history.js';
 import { openSettings, settingOn } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
+import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { initInput, setBindings, setKeyBindings } from './ui/input.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
@@ -368,6 +369,11 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
   document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
+  // The quick-menu experiment. Handed to the component the same way input.js is
+  // handed its bindings, so no screen has to thread `meta` down just to ask which
+  // variant is running. `settingOn` because the store is sparse and the default
+  // is part of the answer (see its own docstring).
+  setQuickNav({ mode: settings.quickNav, fixedEnds: settingOn(settings, 'quickNavFixedEnds') });
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
   document.documentElement.dataset.ambient = amb;
@@ -790,6 +796,10 @@ function showMap() {
       persist();
       return activeSlot;
     },
+    onQuit: () => {
+      persist(); // the run is resumable from its slot via Continue
+      showTitle();
+    },
   });
 }
 
@@ -926,6 +936,14 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
     onMenu: showOverlay,
+    onSave: () => {
+      persist();
+      return activeSlot;
+    },
+    onQuit: () => {
+      persist();
+      showTitle();
+    },
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
       const meta = saves.loadMeta();
@@ -1237,7 +1255,20 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
   saves.saveMeta(shotMeta);
-  newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
+  // `?shotSeed=<string>` — ONE MAP IS NOT THE MAP (EldenSpire#28).
+  //
+  // Every reachability measurement this repo has taken of the act map was taken
+  // on the seed literal that used to sit here, so "0 covered at 390x844" was a
+  // fact about ONE map graph. Node positions are a function of the seed; a node
+  // trapped under a floating button is a coincidence between the two; and a
+  // coincidence measured once is an anecdote. tools/mapreach.mjs sweeps seeds
+  // because of this line, and the default is unchanged so every existing
+  // capture and every existing sweep still means what it meant.
+  //
+  // Read through `shotParams`, the single const declared beside pickStorage() —
+  // NOT a fresh location.search read, which the note up there forbids, for the
+  // reason it gives: that const IS the gate's reach.
+  newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
   if (shotState === 'death') {
     // A run that ended on floor 4 with a few fights behind it, so the stats
     // table has real numbers under the title instead of a row of zeroes.

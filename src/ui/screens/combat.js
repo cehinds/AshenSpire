@@ -11,7 +11,8 @@ import { openPileModal } from '../components/piles.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { intentBadge, intentTooltip, backdropClass } from '../uiContent.js';
+import { intentBadge, intentTooltip, backdropClass, MENU } from '../uiContent.js';
+import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { overlayIsOpen } from '../components/overlay.js';
@@ -21,7 +22,7 @@ import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
 import { figureSpec } from '../../model/loadout.js';
 
-export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu }) {
+export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   app.innerHTML = `
     <div class="combat">
       <header class="topbar">
@@ -875,11 +876,48 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     afterDispatch(out.events);
   });
 
-  $('.pile.draw').addEventListener('click', () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true }));
-  $('.pile.discard').addEventListener('click', () => openPileModal(registries, 'Discard pile', combat.piles.discard));
+  const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
+  const showDiscard = () => openPileModal(registries, 'Discard pile', combat.piles.discard);
+  $('.pile.draw').addEventListener('click', showDraw);
+  $('.pile.discard').addEventListener('click', showDiscard);
   $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
-  if (onMenu) $('#combat-menu').addEventListener('click', () => onMenu('deck'));
+  //
+  // Under the quick-nav experiment ☰ opens the list instead. Combat is the
+  // screen that MAKES "context-specific" mean something: the draw and discard
+  // piles are real destinations that exist nowhere else, and today the only way
+  // to them is two small corner targets a thumb has to find.
+  const menuBtn = $('#combat-menu');
+  if (onMenu) {
+    menuBtn.addEventListener('click', (e) => {
+      if (quickNavMode() === 'off') return onMenu('deck');
+      e.stopPropagation();
+      openQuickNav(menuBtn, 'combat', {
+        counts: { deck: run.deck.length, draw: combat.piles.draw.length, discard: combat.piles.discard.length },
+        hasSave: !!(onSave || onQuit),
+        actions: {
+          tab: (id) => onMenu(id),
+          armoury: () => $('#combat-armoury').click(), // the button's own handler, not a copy of it
+          draw: () => showDraw(),
+          discard: () => showDiscard(),
+          ...(onSave ? { save: saveAction(onSave) } : {}),
+          ...(onQuit ? { quit: () => onQuit() } : {}),
+        },
+      });
+    });
+  }
+
+  // Law 3 clause 4 — real tooltips on the two topbar buttons, text from the same
+  // MENU table. Note the label: the ⚒ glyph is "Armoury" on the map and
+  // "Armaments" here, and it was ALREADY context-specific before anyone asked.
+  {
+    const row = (MENU.combat || []).find((r) => r.act === 'armoury');
+    if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
+    attachTooltip(menuBtn, () =>
+      `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
+        ? 'Deck, relics, stats, settings and saving.'
+        : 'Everywhere you can go from here.')}`);
+  }
 
   // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
   // storage seal themselves, and picking another hand set routes through the

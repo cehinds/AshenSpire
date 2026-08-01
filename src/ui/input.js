@@ -75,6 +75,45 @@ export function actionShort(id) {
   return a ? a.short || a.label : id;
 }
 
+// ---- the tab ring (Law 3: bumpers ride the tabs) ----------------------------
+//
+// A tabbed surface registers its own set here while it is open; the pad poller
+// and the keyboard handler below give buttons 4/5 and `[`/`]` to that set in
+// preference to whatever they are globally bound to. That preference is the
+// whole clause: EldenSpire's defaults already SPEND LB/RB on Relics and Stats
+// (ACTIONS above, defBtn 4 and 5), so without contextual precedence the two
+// bindings race and the winner is whoever notices first.
+//
+// It binds the SET, not the widget — a strip, a two-row wrapped strip, or one
+// folded "Deck ▾" switcher all register the same ring and cycle in the same
+// order (Law 3 clause 1a). Wrap is the ring's own job, and it is the edge that
+// breaks: last → first and first → last.
+//
+// `[` / `]` is Marina's proposed keyboard analogue and is NOT yet ratified —
+// Q/E was rejected because E is already End Turn. It earns its keep here beyond
+// the proposal: it is the only way to observe the wrap without a pad attached,
+// and no pad was attached when this was built.
+let tabRing = null; // { prev(), next() } | null
+
+/** setTabRing(ring | null) — a tabbed surface claims the bumpers while open. */
+export function setTabRing(ring) {
+  tabRing = ring && typeof ring.next === 'function' && typeof ring.prev === 'function' ? ring : null;
+}
+
+const TAB_PREV_BTN = 4; // LB, standard mapping
+const TAB_NEXT_BTN = 5; // RB
+const TAB_PREV_KEY = '[';
+const TAB_NEXT_KEY = ']';
+
+/** True if this pad button was consumed by an open tab set. */
+function tabRingButton(i) {
+  if (!tabRing) return false;
+  if (i === TAB_PREV_BTN) tabRing.prev();
+  else if (i === TAB_NEXT_BTN) tabRing.next();
+  else return false;
+  return true;
+}
+
 const DEADZONE = 0.5;
 const REPEAT_MS = 180;
 const POLL_MS = 16; // ~60 Hz input polling (only while a pad is connected)
@@ -372,6 +411,16 @@ function onKeydown(ev) {
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === 'Enter')) {
     engaged = true;
   }
+  // Tab cycling, keyboard side. Ahead of everything else for the same reason
+  // the pad side is: while a tab set is open it owns these two, and no screen
+  // hotkey may take them first.
+  if (!typing && tabRing && (ev.key === TAB_PREV_KEY || ev.key === TAB_NEXT_KEY)) {
+    engaged = true;
+    ev.preventDefault();
+    if (ev.key === TAB_NEXT_KEY) tabRing.next();
+    else tabRing.prev();
+    return;
+  }
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
     // On a focused slider, horizontal arrows tune it rather than navigate.
     if (cur && cur.matches('input[type="range"]') && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
@@ -424,6 +473,10 @@ function pollPads() {
         cb(i);
         continue;
       }
+      // CONTEXTUAL PRECEDENCE (Law 3 clause 2), and the order is the rule:
+      // an open tab set takes LB/RB BEFORE actionForButton() can hand them to
+      // Relics/Stats. Without this line the defaults win and the law is prose.
+      if (tabRingButton(i)) continue;
       const a = actionForButton(i);
       if (a) doAction(a.id);
       // D-pad (12–15) navigates regardless of rebinds.

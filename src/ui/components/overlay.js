@@ -9,7 +9,9 @@ import { renderCard } from './card.js';
 import { renderSettings } from '../screens/settings.js';
 import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
-import { isEngaged, focusFirst } from '../input.js';
+import { isEngaged, focusFirst, setTabRing } from '../input.js';
+import { menuTabs } from '../uiContent.js';
+import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 
 let openVeil = null;
 let escHandler = null;
@@ -23,6 +25,8 @@ export function closeOverlay() {
   if (openVeil) {
     openVeil.remove();
     openVeil = null;
+    closeQuickNav(); // the mirrored list has nothing behind it any more
+    setTabRing(null); // the bumpers go back to their global bindings
   }
   if (escHandler) {
     removeEventListener('keydown', escHandler, true);
@@ -36,27 +40,31 @@ export function closeOverlay() {
  */
 export function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
   closeOverlay();
+  closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
 
   const hasSave = !!(onSave || onQuit || onExit);
-  const TABS = [
-    { id: 'deck', label: `Deck (${run.deck.length})` },
-    { id: 'relics', label: 'Relics & Flasks' },
-    { id: 'stats', label: 'Stats' },
-    ...(hasSave ? [{ id: 'save', label: 'Save' }] : []),
-    { id: 'settings', label: 'Settings' },
-    { id: 'controls', label: 'Controls' },
-  ];
+  // The strip is DERIVED, not restated. It and the quick-nav dropdown are two
+  // presentations of one table (uiContent.js MENU_TABS) — the hardcoded list
+  // that used to live here is exactly the second copy Law 1 catches.
+  const TABS = menuTabs({ hasSave, counts: { deck: run.deck.length } });
+  // Variant B, and the fold test is `data-layout` — the mode autoLayout()
+  // already chose. A width threshold of its own would be a second decider of
+  // what "narrow" means, which is the defect #24 was (Law 2).
+  const folded = quickNavFolds();
+  const mirrored = quickNavMode() === 'mirror';
 
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
   veil.innerHTML = `
     <div class="modal overlay-modal">
       <div class="overlay-head">
-        <div class="overlay-tabs">
-          ${TABS.map((t) => `<button class="ov-tab" data-tab="${t.id}">${t.label}</button>`).join('')}
+        <div class="overlay-tabs"${folded ? ' hidden' : ''}>
+          ${TABS.map((t) => `<button class="ov-tab" data-tab="${t.id}">${esc(t.label)}</button>`).join('')}
         </div>
+        ${folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="overlay-actions">
+          ${mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
           <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
         </div>
       </div>
@@ -66,9 +74,16 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
   openVeil = veil;
 
   const body = veil.querySelector('.overlay-body');
+  let currentTab = null;
 
   function selectTab(id) {
+    currentTab = id;
     veil.querySelectorAll('.ov-tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === id));
+    const sw = veil.querySelector('#ov-switch');
+    if (sw) {
+      const t = TABS.find((x) => x.id === id);
+      sw.textContent = `${t ? t.label : id} ▾`;
+    }
     body.innerHTML = '';
     if (id === 'deck') renderDeck(body);
     else if (id === 'relics') renderRelics(body);
@@ -185,9 +200,44 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     if (e.target === veil) closeOverlay();
   });
 
+  // Law 3 clauses 1 + 1a: RB → next, LB → previous, WRAP AT BOTH ENDS, over the
+  // same set in the same order whether the strip is visible, wrapped to two rows,
+  // or folded into the switcher. The ring is the TABS array — one order, and the
+  // widget is not consulted.
+  const step = (d) => {
+    const i = TABS.findIndex((t) => t.id === currentTab);
+    const at = i < 0 ? 0 : i;
+    selectTab(TABS[(at + d + TABS.length) % TABS.length].id);
+  };
+  setTabRing({ prev: () => step(-1), next: () => step(1) });
+
+  // The quick-nav list, mirrored (A) or folded-into (B). Both open the SAME list
+  // over the SAME table; only which control opens it differs, which is the whole
+  // difference between the two variants at this one screen.
+  const openHere = (anchor) =>
+    openQuickNav(anchor, 'overlay', {
+      counts: { deck: run.deck.length },
+      current: currentTab,
+      hasSave,
+      actions: {
+        close: () => closeOverlay(),
+        tab: (id) => selectTab(id),
+        ...(onSave ? { save: saveAction(onSave) } : {}),
+        ...(onQuit ? { quit: () => { closeOverlay(); onQuit(); } } : {}),
+      },
+    });
+  const qnBtn = veil.querySelector('#ov-quicknav');
+  if (qnBtn) qnBtn.addEventListener('click', (e) => { e.stopPropagation(); openHere(qnBtn); });
+  const swBtn = veil.querySelector('#ov-switch');
+  if (swBtn) swBtn.addEventListener('click', (e) => { e.stopPropagation(); openHere(swBtn); });
+
   // Esc closes the overlay, captured before screen-level key handlers see it.
   escHandler = (ev) => {
     if (ev.key === 'Escape') {
+      // Esc peels ONE layer. With the mirrored list open over the overlay, the
+      // list is the layer the player is looking at; closing both would take away
+      // a screen they never asked to leave.
+      if (quickNavIsOpen()) return;
       ev.preventDefault();
       ev.stopPropagation();
       closeOverlay();

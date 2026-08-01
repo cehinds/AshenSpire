@@ -50,6 +50,25 @@ const ROWS = [
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
 
+  // THE QUICK-MENU EXPERIMENT (EldenSpire#34). Three things are compared by
+  // being PLAYED rather than looked at: today, and two readings of "the ☰ button
+  // should offer everywhere you can go from here".
+  //
+  // DEFAULT IS OFF, and off is today exactly — nobody who does not opt in sees a
+  // pixel move. It ships in the build rather than hiding behind a URL flag
+  // because the question it asks is a PHONE question (the menu's tab strip wraps
+  // to two rows at 390 px, measured), and a dev flag is not reachable on a phone.
+  //
+  // The note carries the way back, and so does the list itself: it names the
+  // variant and points here every time it opens. An experiment that outlives the
+  // memory of switching it on has stopped being an experiment and become a bug
+  // report.
+  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'off',
+    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu (test)',
+    note: 'A test — OFF is the game as it shipped. MIRROR: the ☰ button opens a list of everywhere you can go from this screen, and the menu keeps its row of tabs. SWITCHER: the same list, but on a narrow screen the menu\'s tab row folds into one button naming the tab you are on. The list says which one you picked, every time it opens.' },
+  { cat: 'Display', key: 'quickNavFixedEnds', def: true, label: 'Quick menu · fixed ends',
+    note: 'Only does anything while Quick menu is on. ON keeps rows in the same places on every screen — this screen\'s own tools at the top, Save and Save & Quit always last, everything else between. OFF orders the whole list by what the screen is, so a row can sit somewhere else in combat than it does on the map.' },
+
   { cat: 'Audio', key: 'muteAudio', def: false, label: 'Mute all audio',
     note: 'Silence music and sound effects.' },
   { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume',

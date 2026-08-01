@@ -773,3 +773,55 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .class-pick { width: 17rem; padding: 1.2rem; }
 :root[data-layout='narrow'] .cz-opts { flex-wrap: wrap; justify-content: center; }
 :root[data-layout='narrow'] .cz-keepsakes { width: 100%; }
+/* ---------- ☰ quick-nav list (the quick-menu experiment, EldenSpire#34) ----- */
+/* A `.modal-veil` on purpose and not for the dimming: input.js's scopeRoot()
+   scopes the focus cursor to the topmost veil, so a D-pad drives this list with
+   no new input code (Law 3 clause 6 — a vertical list takes the cursor, and the
+   bumpers stay with the tabs behind it). The veil is transparent and un-centred;
+   the panel places itself against its button, in local px, through fx.js. */
+.qn-veil { background: transparent; display: block; }
+.qn-panel {
+  position: fixed; width: 26rem; max-width: 92%;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  padding: 0.4rem 0; overflow-y: auto; color: var(--parchment);
+}
+.qn-cap {
+  padding: 0.7rem 1.6rem; margin-bottom: 0.2rem; border-bottom: 1px solid var(--line);
+  color: var(--muted); font-size: 1rem; line-height: 1.4; letter-spacing: 0.04em;
+}
+/* 4.4rem, which is 44 LOCAL px — the house unit for a tap target, and bigger
+   than the 27 px the topbar buttons measure on a phone today. Not `px`: a row
+   holding text must grow with the text-size setting (Law 2). */
+.qn-panel .qn-row {
+  display: flex; align-items: center; gap: 1.2rem; width: 100%;
+  min-height: 4.4rem; padding: 0.6rem 1.6rem; text-align: left;
+  background: transparent; border: 0; border-radius: 0; color: inherit;
+  font-family: inherit; font-size: 1.4rem; cursor: pointer;
+}
+.qn-panel .qn-row:hover { background: var(--bg-raise); }
+.qn-panel .qn-row.on { background: var(--bg-raise); color: var(--gold); }
+.qn-panel .qn-row.danger { color: var(--ember); }
+.qn-panel .qn-ic { width: 2rem; flex-shrink: 0; text-align: center; color: var(--muted); }
+.qn-panel .qn-row.on .qn-ic, .qn-panel .qn-row.danger .qn-ic { color: inherit; }
+.qn-panel .qn-label { flex: 1; }
+.qn-panel .qn-badge { color: var(--muted); font-size: 1.1rem; }
+.qn-sep { border-top: 1px solid var(--line); margin: 0.4rem 0; }
+
+/* Variant B: the whole tab strip, folded into one control that names where you
+   are. Same set, same order, same bumpers (Law 3 clause 1a). */
+.ov-switch {
+  min-height: 4.4rem; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;
+  background: var(--bg-raise); border: 1px solid var(--line); color: var(--gold);
+  font-size: 1.3rem; letter-spacing: 0.05em;
+}
+.ov-switch:hover { border-color: var(--gold); }
+.overlay-tabs[hidden] { display: none; }
+
+/* Sunna's tap-target finding, taken in the cheapest moment it will ever have —
+   and ONLY while the experiment is on, so "off" stays today exactly and the
+   control in this comparison is a real control. */
+:root[data-quicknav='mirror'] .topbar .topbar-btn,
+:root[data-quicknav='switcher'] .topbar .topbar-btn {
+  width: 4.4rem; height: 4.4rem; font-size: 1.8rem;
+}

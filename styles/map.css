@@ -1,8 +1,13 @@
 /* styles/map.css — act map screen (mockup: docs/mockups/map-screen.svg) */
 
 .mapscreen { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+/* `position` is deliberately NOT set here. It was `relative`, and the one thing
+   that used it was the floating zoom stack — now a sibling in the flow rather
+   than an overlay (EldenSpire#28; see .map-zoom). Restoring it re-arms nothing
+   by itself, but it is the anchor the next overlay would reach for, so the
+   absence is the note. */
 .mapscreen .map-scroll {
-  flex: 1; overflow: auto; position: relative;
+  flex: 1; overflow: auto;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
 }
 .mapscreen .map-scroll.grabbing { cursor: grabbing; }
@@ -13,8 +18,46 @@
 .mapscreen .map-canvas { display: flex; justify-content: center; min-width: min-content; min-height: min-content; }
 .mapscreen svg { display: block; }
 
-/* zoom controls */
-.map-zoom { position: absolute; right: 1.4rem; bottom: 1.4rem; display: flex; flex-direction: column; gap: 0.6rem; z-index: 5; }
+/* ---------- zoom controls: a bar BESIDE the map, never over it ----------
+   EldenSpire#28. This was `position: absolute; right/bottom` inside
+   .map-scroll — a floating stack over a pannable canvas — and two map nodes at
+   412x915 sat under it, visible and untappable, on dev and on every branch.
+   #24 tried to clear the corner with `padding-bottom` on .map-canvas: that pads
+   the CONTENT, while the buttons are pinned to the SCROLLPORT, so it only ever
+   helped at the scroll offset it was measured at. It is deleted here, not kept
+   alongside.
+
+   THERE IS NO RESERVED HEIGHT AND THAT IS THE POINT. The bar is a flex item of
+   .mapscreen, so the band is the buttons' own height, computed, and .map-scroll
+   (flex: 1) gets exactly the rest. A reserved length would be a second number
+   that has to agree with the button size — the drift this house keeps finding.
+   Constantine's law is bounded objects and no px unless necessary: the bound
+   here is the flow itself, and there is no number to put anywhere.
+
+   ONE RULE, EVERY LAYOUT — not a narrow special case. Whether a node is under
+   the buttons is a coincidence of shape x map zoom (the ladder these very
+   buttons drive, up to 2x) x pan offset x SEED, and every map measurement this
+   repo had ever taken was on one hardcoded seed. A fix aimed at the shapes
+   where the coincidence was observed is a fix for the anecdote. */
+.map-zoom {
+  flex-shrink: 0; display: flex; justify-content: flex-end; align-items: center;
+  gap: 0.6rem; padding: 0.6rem 1.4rem; background: var(--panel); border-top: 1px solid var(--line);
+}
+/* THE MAP'S HINT BAR JOINS THE FLOW, and only the map's.
+   .hint-bar (styles/ui.css) is `position: fixed` to the bottom of the VIEWPORT
+   and centred. That was invisible while the map's bottom edge belonged to a
+   floating overlay; the moment the zoom buttons became real layout, the fixed
+   pill sat on top of the − and the ⊙ at 390x844 and 412x915. Unreadable, and
+   not unreachable — the pill is pointer-events: none, so every reach sweep was
+   correctly green and only an eye could see it (Sunna's, on the shot).
+   In the flow it stacks above the zoom bar instead of over it, and the map's
+   bottom chrome ends up one column with NO reserved height on either side.
+   Scoped to .mapscreen: combat pins its own copy to the top (.hint-combat) and
+   every other screen keeps the fixed pill. `body.hide-hints` still wins. */
+.mapscreen .hint-bar {
+  position: static; transform: none; align-self: center;
+  margin: 0 auto 0.6rem; max-width: 96%;
+}
 .map-zoom .zbtn {
   width: 3.4rem; height: 3.4rem; border-radius: 8px; font-size: 1.8rem; line-height: 1;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--parchment);
@@ -119,17 +162,23 @@ body.hide-header-relics .map-substrip .mh-div { display: none; }
 body.hide-header-relics .map-substrip.no-flasks { display: none; }
 
 /* PROTOTYPE -> shipped (EldenSpire#23): the act map at a portrait phone's
-   width. The narrow design baseline gives the app 433 local px instead of
-   629, and at that width the floating zoom stack landed on top of two map
-   nodes — measured, 2 controls COVERED at 390x844 where dev has none. The map
-   is on the critical path to combat, so a fix that makes the fight reachable
-   and the map not is not a fix.
-   The canvas gets a clear band at the bottom so no node can be laid out in
-   the corner the buttons occupy, and the stack turns into a row and shrinks:
-   three 3rem buttons in a row are 9.8rem of the bottom edge instead of 3.4rem
-   of the bottom-right corner, where the nodes are. */
-  :root[data-layout='narrow'] .mapscreen .map-canvas { padding-bottom: 6.4rem; }
-  :root[data-layout='narrow'] .map-zoom { flex-direction: row; right: 0.8rem; bottom: 0.8rem; gap: 0.8rem; }
+   width. The narrow design baseline gives the app 433 local px instead of 629,
+   and at that width the floating zoom stack landed on top of two map nodes —
+   measured, 2 controls COVERED at 390x844 where dev had none. The map is on the
+   critical path to combat, so a fix that makes the fight reachable and the map
+   not is not a fix.
+
+   WHAT THAT FIX GOT WRONG, kept here because the wrong answer is the lesson
+   (EldenSpire#28, my hand both times). It read as "clear the corner the buttons
+   occupy" and did it with `padding-bottom` on .map-canvas — the CONTENT — while
+   the buttons were pinned to the SCROLLPORT. The two only line up at the bottom
+   of the scroll, so the fix held at the shape and the offset it was measured at
+   and nowhere else: at 412x915 two nodes were still trapped at rest, and at
+   390x844 panning the map moved the trap onto different nodes rather than
+   clearing it. Both lines are gone — the padding, and the row/offset override —
+   because .map-zoom is no longer an overlay at any layout. What is left below
+   is the only thing this shape actually needed: smaller buttons on a phone. */
+  :root[data-layout='narrow'] .map-zoom { gap: 0.8rem; padding: 0.5rem 0.8rem; }
   :root[data-layout='narrow'] .map-zoom .zbtn { width: 3rem; height: 3rem; font-size: 1.6rem; }
   /* Same as the combat bar: the seed is dev information, it is what wraps the
      header on a phone, and it stays reachable at overlay.js:163 (Stats, from
