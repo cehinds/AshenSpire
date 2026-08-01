@@ -199,6 +199,11 @@ const KNOWN_BAD = [
   // not an empty object that generates a map nobody authored.
   ['floorRules missing entirely', { ...BASE, floorRules: undefined }],
   ['unknownWeights summing to zero', { ...BASE, unknownWeights: { event: 0, fight: 0 } }],
+  // VIKI'S WITHHOLD, #anchors branch: the schema said opt, the resolver said
+  // nothing, and resolveUnknownNode THREW at act build — a clean boot and a
+  // crash at runtime, on the key this branch itself moved. The corpus went
+  // green on it, so it is a corpus gap too, and this row is its fixture.
+  ['unknownWeights missing entirely', (() => { const { unknownWeights, ...rest } = BASE; return rest; })()],
 ];
 
 function selftest() {

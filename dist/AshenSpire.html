@@ -10278,8 +10278,19 @@ function resolveFloorPlan(config) {
   // geometry and belongs beside typeWeights, per act, not in the flat global
   // balance table. One act could not have different `?` odds from another while
   // it lived in `balance.*`, and nothing said so.
+  // MISSING IS AN ERROR, exactly as floorRules above — Viki's withhold on this
+  // branch, and it was my own standard inverted: floorRules absent was a boot
+  // error ("not a default, an unauthored map") while unknownWeights absent was
+  // a clean boot and a THROW at act build (resolveUnknownNode requires it).
+  // The schema said opt, the resolver said nothing, the runtime said crash —
+  // each choice legal alone, the pair a coupling, in the commit whose purpose
+  // is closing couplings. Law 1 clause 5: the person who deletes this key
+  // while tuning hears about it at boot, with the entry named, not at the
+  // first `?` node of act 1.
   let unknownWeights = null;
-  if (config.unknownWeights != null) {
+  if (config.unknownWeights == null) {
+    errors.push({ key: 'unknownWeights', msg: 'missing — resolveUnknownNode requires it, so its absence is a crash at act build, not a default' });
+  } else {
     const w = config.unknownWeights;
     if (typeof w !== 'object' || Array.isArray(w)) {
       errors.push({ key: 'unknownWeights', msg: `must be an object of kind -> weight, got ${typeof w}` });
