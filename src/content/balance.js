@@ -193,6 +193,14 @@ export const balance = {
     storageSlots: 8, // pieces carried but not slotted; hand slots lock in combat
 
     defaultView: 'hybrid', // 'grid' | 'rack' | 'hybrid'
+    // What a NARROW layout opens on. Data, not a branch in the screen: the view
+    // list is content, and picking one in JS would put a second copy of the
+    // closed set below the content layer (Law 1 clause 3). EldenSpire#38 —
+    // 'hybrid' asks for a figure and three cells side by side and a phone has
+    // room for one of those, which is how two of six weapon slots went missing.
+    // A player's own saved equipView still wins over this; it is what a phone
+    // OPENS on, never what it is allowed to show.
+    narrowDefaultView: 'rack',
     views: ['grid', 'rack', 'hybrid'],
     spriteReacts: 'full', // 'none' | 'hands' | 'full'
 

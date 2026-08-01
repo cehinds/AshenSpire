@@ -104,7 +104,27 @@ export function mountEquipment(host, {
   const eq = registries.equipment;
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   const unlocked = new Set(meta.unlocked || []);
-  let view = (meta.settings && meta.settings.equipView) || CFG().defaultView;
+  // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
+  // terms is the whole rule:
+  //   1. the player's own saved choice, always, on every shape;
+  //   2. otherwise the narrow default, if this is a narrow layout;
+  //   3. otherwise the desktop default.
+  // Sunna's ruling was "hybrid must not be what a phone OPENS" — opens, not
+  // shows. Someone who picked hybrid on a phone keeps it, and since #38 the
+  // stylesheet makes it fit, so honouring that choice is no longer a trap.
+  //
+  // `data-layout` is READ, never computed. autoLayout() writes it in the same
+  // call that chooses --ui-zoom, so mode and zoom cannot disagree; asking the
+  // width here would make a second decider, which is exactly the fight that
+  // became unadvanceable in #24. The value is validated against the content's
+  // own closed set rather than trusted, so a bad table entry degrades to the
+  // desktop default instead of rendering a view class that does not exist.
+  const CV = CFG();
+  const narrow = typeof document !== 'undefined'
+    && document.documentElement.getAttribute('data-layout') === 'narrow';
+  const shapeDefault = (narrow && CV.views.includes(CV.narrowDefaultView))
+    ? CV.narrowDefaultView : CV.defaultView;
+  let view = (meta.settings && meta.settings.equipView) || shapeDefault;
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 

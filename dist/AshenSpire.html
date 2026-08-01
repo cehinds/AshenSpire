@@ -23,6 +23,19 @@
   --grace: #9fc3e8;
   --ember: #c9502e;
   --green: #7fd97f;
+  /* THE TAP-TARGET FLOOR, and it has one home because it is one fact.
+     Sunna's ruling under Law 4 (#37): "a floor of 44 device px measured after
+     zoom; a floor is not a ceiling." The whole app is scaled by `zoom:
+     var(--ui-zoom)` on <body>, so a length L below body renders at L x zoom
+     device px — dividing by the zoom here is what makes 44 mean 44 ON GLASS
+     rather than 44 in a coordinate space the finger has never heard of. It is
+     the same conversion the rest of the app does through fx.js, expressed as a
+     unit so a rule can just use it.
+     px, DELIBERATELY, and this is exactly the case Law 2 admits: a finger does
+     not get bigger when a player raises Text size. Law 4 is the other half of
+     the same sentence — text scaling must stop scaling non-text UI — so a
+     control that held text at 4.4rem was wrong in two directions at once. */
+  --tap-floor: calc(44px / var(--ui-zoom, 1));
   --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
   --font-body: Inter, 'Segoe UI', system-ui, sans-serif;
 }
@@ -327,18 +340,47 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 }
 .modal {
   background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 12px;
-  max-width: 90rem; max-height: 80vh; padding: 2.2rem; overflow: auto;
+  /* 80% NOT 80vh, and finding this is why the check measures the OUTCOME rather
+     than grepping for `vh`. The in-run overlay panel is `class="modal
+     overlay-modal"`, so this cap applies to it too. Fixing 74vh -> 74% on
+     .overlay-modal alone moved the measured share from 66.6% to 59.2% and no
+     further: this line had quietly become the binding constraint, because
+     80vh x zoom is what a percentage-based sibling now has to fit inside.
+     Sunna's original number (74% x --ui-zoom exactly) was the OTHER declaration
+     winning; one Law 2 breach was hiding a second one on the same element. */
+  max-width: 90rem; max-height: 80%; padding: 2.2rem; overflow: auto;
 }
 .modal h2 { color: var(--gold); font-size: 1.6rem; margin-bottom: 1.4rem; }
 .modal .grid { display: flex; flex-wrap: wrap; gap: 1.4rem; }
 
 /* ---------- in-run tabbed overlay ---------- */
-.overlay-modal { width: 76rem; max-width: 92vw; height: 74vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+/* PERCENT, not vw/vh — and the reason was already written in this file, on the
+   .armoury panel forty lines down, which learned it first:
+     "the whole app is zoomed by --ui-zoom on <body>, and viewport units ignore
+      that zoom — which is exactly what pushed this panel off the corner"
+   The overlay never learned it, so the in-run menu rendered at 74vh x --ui-zoom
+   of the screen instead of the 74% its author wrote — and because Auto sizing
+   LOWERS the zoom as the phone gets smaller, the smallest phone got the smallest
+   menu. Measured by Sunna across six shapes and four text sizes: the share was
+   74% x --ui-zoom exactly, every row — 74.0% at zoom 1.0, 66.6% at 0.9, 60.7% at
+   0.82, 54.8% at 320x640. That is Constantine's "scaling not auto adjusting for
+   mobile" with a mechanism under it, and it is one rule in one place.
+   A percentage resolves against the ZOOMED box, so 74% is 74% at every zoom.
+   Law 2, and the second copy of a lesson this stylesheet already held. */
+.overlay-modal { width: 76rem; max-width: 96%; height: 74%; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
 .overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line); background: var(--panel); }
 .overlay-tabs { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .overlay-tabs .ov-tab {
   padding: 0.7rem 1.4rem; border-radius: 8px 8px 0 0; font-size: 1.2rem; letter-spacing: 0.05em;
   background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer;
+  /* Law 4 (#37) applied where this work touches, ratchet-style, NOT swept.
+     These six tabs measured 20.3-35.8 DEVICE px against the 44 a finger wants,
+     and wrapped to 2, 3, and at 320x640 Text L/XL FOUR rows. --tap-floor is
+     Sunna's ruling expressed once: a floor of 44 device px measured AFTER zoom,
+     and a floor is not a ceiling — Text XL still makes the label bigger, it just
+     no longer decides how big a finger target is. See base.css for the unit. */
+  min-height: var(--tap-floor);
+  display: inline-flex; align-items: center;
 }
 .overlay-tabs .ov-tab:hover { color: var(--parchment); }
 .overlay-tabs .ov-tab.on { color: var(--gold); border-color: var(--line); border-bottom-color: transparent; background: var(--bg-raise); }
@@ -1040,6 +1082,43 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    desktop framing; here the DOM order is taken literally, so the reading order,
    the tab order and the visual order are the same thing: decisions first,
    identity after. */
+/* ---------- EldenSpire#38 — the Armoury's FIRST narrow layout ---------------
+   Constantine, from his own device: "it's hard to manage equip slots and other
+   characteristics from menus due to scaling not auto adjusting for mobile screen
+   very well." Sunna measured it: at 390x844 in the shipped default view the
+   third cell of Right Hand and of Left Hand sat at x 380.55..443.55 in a 390-wide
+   screen — 9.45 px of a 63 px box — and the screen cannot scroll sideways. Four
+   cells at Text L/XL. Two of your six weapon slots, gone.
+
+   Her note on the cause is the whole finding: this stylesheet contained exactly
+   ONE `data-layout='narrow'` block and it belonged to character creation. The
+   Armoury had never had a phone layout at all. It is not a regression; it is a
+   screen that was only ever drawn for a desktop.
+
+   .armoury-body was a two-column flex with a fixed 22rem figure, so the rack got
+   131.22 device px to lay out three 63 px cells needing ~216. On a phone the
+   figure and the slots stop competing for one row: the body stacks, the figure
+   stops being a fixed width, and the slots get the whole column. No reserved
+   height, no width threshold — `data-layout` is written by autoLayout(), which
+   already owns mode and zoom, and nothing here measures anything (Law 2, and the
+   second-decider scar from #24).
+
+   This makes ALL THREE views fit, including hybrid — which matters because a
+   player who has explicitly chosen hybrid keeps it (see equipment.js). What a
+   phone OPENS on is a separate question and is answered there, not here. */
+:root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; }
+:root[data-layout='narrow'] .armoury-left { width: 100%; overflow-y: visible; }
+:root[data-layout='narrow'] .armoury-right { width: 100%; overflow-y: visible; }
+/* The figure is `flex: 0 0 auto` with a fixed 22rem width in a ROW; in a column
+   that fixed width is just a cap, and 100% lets it use the phone. Height stays
+   authored so the sprite keeps its proportions. */
+:root[data-layout='narrow'] .armoury-figure { width: 100%; max-width: 22rem; align-self: center; }
+:root[data-layout='narrow'] .armoury.view-grid .armoury-figure { width: 100%; max-width: 26rem; }
+/* Slots wrap and centre rather than running off the right edge. */
+:root[data-layout='narrow'] .equip-slots { justify-content: center; width: 100%; }
+:root[data-layout='narrow'] .armoury.view-hybrid .equip-slots,
+:root[data-layout='narrow'] .armoury.view-rack .equip-slots { justify-content: center; }
+
 :root[data-layout='narrow'] .cz-cols {
   flex-direction: column; align-items: center; gap: 1.8rem; width: 100%;
 }
@@ -3453,6 +3532,14 @@ const balance = {
     storageSlots: 8, // pieces carried but not slotted; hand slots lock in combat
 
     defaultView: 'hybrid', // 'grid' | 'rack' | 'hybrid'
+    // What a NARROW layout opens on. Data, not a branch in the screen: the view
+    // list is content, and picking one in JS would put a second copy of the
+    // closed set below the content layer (Law 1 clause 3). EldenSpire#38 —
+    // 'hybrid' asks for a figure and three cells side by side and a phone has
+    // room for one of those, which is how two of six weapon slots went missing.
+    // A player's own saved equipView still wins over this; it is what a phone
+    // OPENS on, never what it is allowed to show.
+    narrowDefaultView: 'rack',
     views: ['grid', 'rack', 'hybrid'],
     spriteReacts: 'full', // 'none' | 'hands' | 'full'
 
@@ -9295,6 +9382,58 @@ const KNOWN_BUNDLE_KEYS = new Set([
  * `{base.2}`, `{base.3}` ... (SPEC §3.13). `hits` on a damage op binds as
  * `{hits}` (then `{hits.2}` ...). Shared by validation, previewCard, and the UI.
  */
+/**
+ * relicTokens(def) → { token: number }
+ *
+ * A relic's template says `{block}` and its data says `do: [{ op: 'block',
+ * amount: 2 }]`. The token IS the opcode and the value is the field the opcode
+ * carries, so the number a player reads is DERIVED from the entry that produces
+ * it — never a second copy typed into the prose (Law 1 clause 2, which calls a
+ * restatement a defect "even in tooltip prose").
+ *
+ * EldenSpire#38. Three call sites rendered relic text as
+ * `textTemplate.replace(/[{}]/g, '')` — strip the braces, ship the key. Sunna
+ * caught it on the ugliest one, "also deals poiseDamage Poise damage", and it
+ * turned out to be 50 tokens across 54 relics: "gain block Block", "heal heal
+ * HP", "draw draw extra card". The camelCase one was visible; the rest read as
+ * clumsy English and hid in plain sight. EVERY relic number in the game was
+ * invisible to the player.
+ *
+ * Numbers only, and deliberately: a token bound to a non-number would render
+ * "[object Object]", so an unresolved token is left as `{token}` for the caller
+ * to decide about rather than papered over. Bad data stays visible (clause 5).
+ */
+function relicTokens(def) {
+  const tokens = {};
+  // TWO KINDS OF TOKEN, because the data has two shapes and only one of them is
+  // keyed by the opcode:
+  //   { op: 'block', amount: 2 }                    -> {block}
+  //   { op: 'applyStatus', status: 'bleed', stacks: 2 } -> {bleed}
+  // The second is the majority of the interesting ones — every Strength, Bleed,
+  // Weak and Vulnerable relic — and binding only the first left 17 of 51 tokens
+  // showing their key. The token is always the thing the SENTENCE names, which
+  // is the status where there is one and the opcode otherwise.
+  const bind = (key, v) => { if (typeof v === 'number' && tokens[key] == null) tokens[key] = v; };
+  const numberIn = (op) => {
+    for (const field of ['amount', 'stacks', 'value', 'n']) {
+      if (typeof op[field] === 'number') return op[field];
+    }
+    return null;
+  };
+  const take = (op) => {
+    if (!op || typeof op.op !== 'string') return;
+    const v = numberIn(op);
+    if (v == null) return;
+    if (typeof op.status === 'string') bind(op.status, v);
+    else if (typeof op.id === 'string') bind(op.id, v);
+    else bind(op.op, v);
+  };
+  for (const t of def.triggers || []) for (const op of t.do || []) take(op);
+  for (const op of def.effects || []) take(op);
+  for (const op of def.do || []) take(op);
+  return tokens;
+}
+
 function computeTokenBindings(effects) {
   const counts = {};
   const out = [];
@@ -9828,7 +9967,7 @@ function usesScript(node) {
 }
 
 
-Object.assign(module.exports, { TOKENIZABLE_OPS, REQUIRED_TOKEN_OPS, computeTokenBindings, extractTemplateTokens, validateContent, validateEffects, validateTriggers, validatePredicate, validateFormula });
+Object.assign(module.exports, { TOKENIZABLE_OPS, REQUIRED_TOKEN_OPS, relicTokens, computeTokenBindings, extractTemplateTokens, validateContent, validateEffects, validateTriggers, validatePredicate, validateFormula });
 
 },
 "src/model/schemas.js": function (module, exports, require) {
@@ -15959,7 +16098,7 @@ Object.assign(module.exports, { mountDraft });
 // computeTokenBindings. No math happens here.
 
 const { resolveCard } = require("src/model/registries.js");
-const { computeTokenBindings } = require("src/model/validate.js");
+const { computeTokenBindings, relicTokens } = require("src/model/validate.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { balance } = require("src/content/balance.js");
 const { tagsFor } = require("src/content/tags.js");
@@ -15972,6 +16111,31 @@ function staticTokens(def) {
     if (typeof v === 'number') tokens[b.token] = v;
   }
   return tokens;
+}
+
+/**
+ * relicText(def) → plain text with every {token} replaced by the number the
+ * relic's own data produces. EldenSpire#38.
+ *
+ * Beside fillTemplate() on purpose: that one is the card path (rich HTML, live
+ * combat previews, up/down colouring); this one is the relic/flask path, which
+ * is read in tooltips and list rows where the caller escapes the result itself.
+ * They share the token SYNTAX, so they live together — one place to look when
+ * the syntax changes — and they do not share a body, because one returns HTML
+ * and the other returns text and merging them would mean an escaping decision
+ * made in the wrong place.
+ *
+ * What replaced it: `textTemplate.replace(/[{}]/g, '')` at three call sites,
+ * which stripped the braces and showed the player the KEY. An unresolved token
+ * still renders as `{token}` here — braces and all — because a visible brace is
+ * a bug report and a bare key is a sentence that looks fine and lies.
+ */
+function relicText(def) {
+  if (!def || !def.textTemplate) return '';
+  const tokens = relicTokens(def);
+  return def.textTemplate.replace(/\{([A-Za-z][\w.]*)\}/g, (m, tok) => (
+    typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
+  ));
 }
 
 function fillTemplate(def, tokens, baseTokens) {
@@ -16093,7 +16257,7 @@ function cardTooltip(registries, def, tokens) {
 }
 
 
-Object.assign(module.exports, { staticTokens, renderCard, upgradePreviewHtml });
+Object.assign(module.exports, { staticTokens, relicText, renderCard, upgradePreviewHtml });
 
 },
 "src/content/tags.js": function (module, exports, require) {
@@ -16378,6 +16542,7 @@ Object.assign(module.exports, { cardTagging });
 
 const { passiveFlag } = require("src/model/registries.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { relicText } = require("src/ui/components/card.js");
 const { overlayIsOpen } = require("src/ui/components/overlay.js");
 const { matchAction, isEngaged, focusFirst } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
@@ -16527,7 +16692,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     const el = document.createElement('div');
     el.className = 'relic';
     el.textContent = def.icon || '◆';
-    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate.replace(/[{}]/g, ''))}`);
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def))}`);
     strip.appendChild(el);
   }
 
@@ -16764,6 +16929,7 @@ const { renderCard } = require("src/ui/components/card.js");
 const { renderSettings } = require("src/ui/screens/settings.js");
 const { renderControls } = require("src/ui/screens/controls.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { relicText } = require("src/ui/components/card.js");
 const { isEngaged, focusFirst, setTabRing } = require("src/ui/input.js");
 const { menuTabs } = require("src/ui/uiContent.js");
 const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } = require("src/ui/components/quicknav.js");
@@ -16872,7 +17038,7 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
       const def = registries.relics.get(rid);
       const el = document.createElement('div');
       el.className = 'ov-relic';
-      el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc((def.textTemplate || '').replace(/[{}]/g, ''))}</p></div>`;
+      el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def))}</p></div>`;
       rGrid.appendChild(el);
     }
     if (!run.relics.length) rGrid.innerHTML = '<div style="color:var(--muted)">None yet.</div>';
@@ -19227,6 +19393,7 @@ const { resolveCard } = require("src/model/registries.js");
 const { renderCard } = require("src/ui/components/card.js");
 const { openPileModal } = require("src/ui/components/piles.js");
 const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
+const { relicText } = require("src/ui/components/card.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
 const { intentBadge, intentTooltip, backdropClass, MENU } = require("src/ui/uiContent.js");
@@ -19477,7 +19644,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       el.className = 'relic';
       el.dataset.relicId = rid;
       el.textContent = def.icon || '◆';
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate.replace(/[{}]/g, ''))}`);
+      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def))}`);
       relics.appendChild(el);
     }
     // Flask slots — click to drink; targeted flasks enter targeting mode.
@@ -20485,7 +20652,27 @@ function mountEquipment(host, {
   const eq = registries.equipment;
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   const unlocked = new Set(meta.unlocked || []);
-  let view = (meta.settings && meta.settings.equipView) || CFG().defaultView;
+  // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
+  // terms is the whole rule:
+  //   1. the player's own saved choice, always, on every shape;
+  //   2. otherwise the narrow default, if this is a narrow layout;
+  //   3. otherwise the desktop default.
+  // Sunna's ruling was "hybrid must not be what a phone OPENS" — opens, not
+  // shows. Someone who picked hybrid on a phone keeps it, and since #38 the
+  // stylesheet makes it fit, so honouring that choice is no longer a trap.
+  //
+  // `data-layout` is READ, never computed. autoLayout() writes it in the same
+  // call that chooses --ui-zoom, so mode and zoom cannot disagree; asking the
+  // width here would make a second decider, which is exactly the fight that
+  // became unadvanceable in #24. The value is validated against the content's
+  // own closed set rather than trusted, so a bad table entry degrades to the
+  // desktop default instead of rendering a view class that does not exist.
+  const CV = CFG();
+  const narrow = typeof document !== 'undefined'
+    && document.documentElement.getAttribute('data-layout') === 'narrow';
+  const shapeDefault = (narrow && CV.views.includes(CV.narrowDefaultView))
+    ? CV.narrowDefaultView : CV.defaultView;
+  let view = (meta.settings && meta.settings.equipView) || shapeDefault;
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 

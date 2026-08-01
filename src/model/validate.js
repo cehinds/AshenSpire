@@ -71,6 +71,58 @@ const KNOWN_BUNDLE_KEYS = new Set([
  * `{base.2}`, `{base.3}` ... (SPEC §3.13). `hits` on a damage op binds as
  * `{hits}` (then `{hits.2}` ...). Shared by validation, previewCard, and the UI.
  */
+/**
+ * relicTokens(def) → { token: number }
+ *
+ * A relic's template says `{block}` and its data says `do: [{ op: 'block',
+ * amount: 2 }]`. The token IS the opcode and the value is the field the opcode
+ * carries, so the number a player reads is DERIVED from the entry that produces
+ * it — never a second copy typed into the prose (Law 1 clause 2, which calls a
+ * restatement a defect "even in tooltip prose").
+ *
+ * EldenSpire#38. Three call sites rendered relic text as
+ * `textTemplate.replace(/[{}]/g, '')` — strip the braces, ship the key. Sunna
+ * caught it on the ugliest one, "also deals poiseDamage Poise damage", and it
+ * turned out to be 50 tokens across 54 relics: "gain block Block", "heal heal
+ * HP", "draw draw extra card". The camelCase one was visible; the rest read as
+ * clumsy English and hid in plain sight. EVERY relic number in the game was
+ * invisible to the player.
+ *
+ * Numbers only, and deliberately: a token bound to a non-number would render
+ * "[object Object]", so an unresolved token is left as `{token}` for the caller
+ * to decide about rather than papered over. Bad data stays visible (clause 5).
+ */
+export function relicTokens(def) {
+  const tokens = {};
+  // TWO KINDS OF TOKEN, because the data has two shapes and only one of them is
+  // keyed by the opcode:
+  //   { op: 'block', amount: 2 }                    -> {block}
+  //   { op: 'applyStatus', status: 'bleed', stacks: 2 } -> {bleed}
+  // The second is the majority of the interesting ones — every Strength, Bleed,
+  // Weak and Vulnerable relic — and binding only the first left 17 of 51 tokens
+  // showing their key. The token is always the thing the SENTENCE names, which
+  // is the status where there is one and the opcode otherwise.
+  const bind = (key, v) => { if (typeof v === 'number' && tokens[key] == null) tokens[key] = v; };
+  const numberIn = (op) => {
+    for (const field of ['amount', 'stacks', 'value', 'n']) {
+      if (typeof op[field] === 'number') return op[field];
+    }
+    return null;
+  };
+  const take = (op) => {
+    if (!op || typeof op.op !== 'string') return;
+    const v = numberIn(op);
+    if (v == null) return;
+    if (typeof op.status === 'string') bind(op.status, v);
+    else if (typeof op.id === 'string') bind(op.id, v);
+    else bind(op.op, v);
+  };
+  for (const t of def.triggers || []) for (const op of t.do || []) take(op);
+  for (const op of def.effects || []) take(op);
+  for (const op of def.do || []) take(op);
+  return tokens;
+}
+
 export function computeTokenBindings(effects) {
   const counts = {};
   const out = [];

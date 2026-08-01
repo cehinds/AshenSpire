@@ -9,6 +9,7 @@ import { resolveCard } from '../../model/registries.js';
 import { renderCard } from '../components/card.js';
 import { openPileModal } from '../components/piles.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
+import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { intentBadge, intentTooltip, backdropClass, MENU } from '../uiContent.js';
@@ -259,7 +260,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       el.className = 'relic';
       el.dataset.relicId = rid;
       el.textContent = def.icon || '◆';
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate.replace(/[{}]/g, ''))}`);
+      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def))}`);
       relics.appendChild(el);
     }
     // Flask slots — click to drink; targeted flasks enter targeting mode.
