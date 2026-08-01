@@ -330,13 +330,23 @@ async function main() {
       'first-run: a genuinely new player — no meta in durable storage at all'
     );
     await wait(400);
-    // Scroll the control into view first, then click where it actually is. That
-    // is not politeness — at 1920x1080 on the shipped defaults, #cz-start
-    // ("BEGIN THE CLIMB") lays out at top 1216 in a 1080px viewport, 136px below
-    // the fold with elementFromPoint returning null. The pane scrolls, so it is
-    // recoverable, unlike the tutorial lockout — but it is the same defect class
-    // (a required control off-screen at zoom > 1) on the screen BEFORE this one,
-    // and it is reported, not fixed, here: it is outside this branch's subject.
+    // Scroll the control into view first, then click where it actually is.
+    //
+    // WHAT THIS USED TO WORK AROUND, AND WHY THE NOTE IS NOW HISTORY. At
+    // 1920x1080 on the shipped defaults, #cz-start ("BEGIN THE CLIMB") laid out
+    // at top 1216 in a 1080px viewport — 136 px below the fold, elementFromPoint
+    // returning null — and this file measured that, printed it, scrolled past it
+    // and went green for a week. A tool that measures a defect and then works
+    // around it reports PASS forever; the phone half of the same defect was
+    // found by eye on a screenshot (Sunna, 2026-08-01), not by anything here.
+    //
+    // FIXED at EldenSpire#29 slice 2: customize's action row is bounded by flow
+    // rather than living in the scrollport (styles/ui.css, .cz-actions), so the
+    // `note:` below no longer fires for #cz-start — and its ABSENCE is evidence,
+    // because it printed on 3da9ca4 and does not print now. The property is
+    // guarded by tools/actionreach.mjs, which exists because this workaround was
+    // the wrong response to a measurement. clickSel stays general: map nodes
+    // live on a pannable canvas and legitimately need it.
     const clickSel = async (sel, label) => {
       const pt = await evalIn(`(() => {
         const e = document.querySelector(${JSON.stringify(sel)});

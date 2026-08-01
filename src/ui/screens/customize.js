@@ -7,7 +7,7 @@
 import { LOCKED_CLASSES } from '../../content/index.js';
 import { KEEPSAKES } from '../../content/keepsakes.js';
 import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
-import { esc } from '../components/tooltip.js';
+import { attachTooltip, esc } from '../components/tooltip.js';
 
 export function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -19,27 +19,64 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     keepsakeId: 'none',
   };
 
+  // WHY THIS MARKUP LOOKS THE WAY IT DOES — EldenSpire#29 slice 2, out of
+  // Sunna's read of the fixed screen (2026-08-01): "reachable, and still not
+  // finished." Three shapes here, and each answers one of her findings.
+  //
+  // 1. THE SCREEN NO LONGER SCROLLS — a child does. `.cz-scroll` holds
+  //    everything that can go off the bottom and `.cz-actions` is its sibling,
+  //    so the way OUT of character creation is on screen the moment the screen
+  //    is. Measured before: BEGIN THE CLIMB arrived 374 device px below the fold
+  //    at 390x844 with no footer and no affordance, on a screen that looks
+  //    finished where it stops. The height of the bar is the buttons' own — see
+  //    styles/ui.css for why there is no reserved length anywhere.
+  //
+  // 2. THE ORDER IS THE DECISIONS FIRST. `.cz-fields` now runs CLASS, KEEPSAKE,
+  //    then the three cosmetics, and the identity pane (portrait + name + seed)
+  //    comes after all of it in the DOM. Sunna measured 17% of the arrival
+  //    screen going to a name most players never change and a seed most never
+  //    read, above the only choice that changes the run, with keepsakes last and
+  //    wholly below the fold. The wide layout keeps its authored framing
+  //    (portrait left) through `row-reverse` — the one place where DOM order and
+  //    visual order disagree, and it is named in the stylesheet, not hidden.
+  //
+  // 3. THE NAME FIELD HAS A NAME. It had no label element, no placeholder and no
+  //    aria-label — measured, not inferred — while displaying "Forsaken" under a
+  //    heading reading PREPARE YOUR FORSAKEN, so it read as an echo of the title
+  //    rather than something you type in. A real <label for>, a placeholder that
+  //    invites (the value starts EMPTY so the placeholder is actually reachable —
+  //    a blank field already resolves to 'Forsaken' below, so nothing is lost),
+  //    and `type="text"`, which is not cosmetic: input.js's FOCUS_SELECTOR
+  //    matches `input[type="text"]` by ATTRIBUTE, so neither text field on this
+  //    screen was reachable by the pad or keyboard cursor at all.
+  //
+  // NOT TOUCHED, deliberately: the 2-then-1 class card wrap. Sunna named it and
+  // it is gated on Constantine's word, which he has not given.
   app.innerHTML = `
-    <div class="screen customize" style="justify-content:flex-start;overflow-y:auto;gap:16px;padding-top:26px">
-      <h2 style="color:var(--gold);font-size:24px;letter-spacing:.2em">PREPARE YOUR FORSAKEN</h2>
+    <div class="screen customize">
+      <div class="cz-scroll">
+        <h2 class="cz-title">PREPARE YOUR FORSAKEN</h2>
 
-      <div class="cz-cols">
-        <div class="preview-pane">
-          <div id="cz-portrait" class="cz-portrait"></div>
-          <input id="cz-name" class="cz-name" maxlength="16" spellcheck="false" value="Forsaken">
-          <div class="seed-line">Seed <input id="seed-input" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></div>
-        </div>
+        <div class="cz-cols">
+          <div class="cz-fields">
+            <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
+            <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
+            <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
+            <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
+            <div><p class="cz-label">SPRITE</p><div id="cz-styles" class="cz-opts"></div></div>
+          </div>
 
-        <div class="cz-fields">
-          <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
-          <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
-          <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
-          <div><p class="cz-label">SPRITE</p><div id="cz-styles" class="cz-opts"></div></div>
-          <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
+          <div class="preview-pane">
+            <div id="cz-portrait" class="cz-portrait"></div>
+            <label class="cz-label cz-name-label" for="cz-name">NAME</label>
+            <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false"
+                   autocomplete="off" placeholder="Forsaken" value="">
+            <label class="seed-line" for="seed-input">Seed <input id="seed-input" type="text" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></label>
+          </div>
         </div>
       </div>
 
-      <div style="display:flex;gap:14px">
+      <div class="cz-actions">
         <button class="subtle" id="cz-back">Back</button>
         <button id="cz-start">BEGIN THE CLIMB</button>
       </div>
@@ -101,7 +138,12 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     const b = document.createElement('div');
     b.className = `cz-opt tint${i === 0 ? ' chosen' : ''}`;
     b.style.background = t.css;
+    // Law 3 clause 4: a native `title=` does not satisfy the tooltip floor —
+    // touch and gamepad players never see one. A tint swatch is pure colour with
+    // no text of its own, so it is the one option row here that says NOTHING
+    // without this. `title` is kept for the desktop mouse habit, not relied on.
     b.title = t.name;
+    attachTooltip(b, () => esc(t.name));
     b.addEventListener('click', () => {
       state.tint = t.id;
       tintBox.querySelectorAll('.cz-opt').forEach((x) => x.classList.toggle('chosen', x === b));
@@ -138,9 +180,42 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     ksBox.appendChild(el);
   });
 
-  $('#cz-name').addEventListener('input', (ev) => {
+  const nameEl = $('#cz-name');
+  nameEl.addEventListener('input', (ev) => {
     state.name = ev.target.value.trim() || 'Forsaken';
   });
+
+  // ---- the pinned action row: tooltips (Law 3 clause 4) ----
+  // Every one of these fires for hover AND for the pad/keyboard focus cursor —
+  // attachTooltip listens for the gpfocus/gpblur input.js dispatches, which is
+  // the half a native `title=` never reaches.
+  //
+  // THE BUMPER ANSWER, written down because clause 6 says an undefined context
+  // is a defect found by the player's thumb: this screen has NO tab set. There
+  // is no strip, no folded switcher, nothing that cycles. RB/LB therefore keep
+  // their global bindings here and the answer is "nothing here" — stated, not
+  // left to be discovered. The action row is two buttons reached by the focus
+  // cursor, exactly as a vertical list is (clause 6's corollary).
+  //
+  // The number in the name tooltip is READ OFF THE FIELD, never typed: maxlength
+  // lives in the markup above and a prose copy of it is a defect under Law 1
+  // clause 2 even in a tooltip.
+  attachTooltip(nameEl, () => `Your character's name — the one the death screen uses.<br>`
+    + `Up to ${nameEl.maxLength} characters. Leave it blank and you climb as Forsaken.`);
+  attachTooltip($('#seed-input'), () => 'The seed the whole climb is generated from.<br>'
+    + 'The same seed gives the same map, the same shops and the same cards. Change it for a different run.');
+  attachTooltip($('#cz-back'), () => 'Back to the title screen. Nothing here is saved.');
+  // Names, never numbers, and computed at show time — so the pinned row is also
+  // the answer to "what did I pick?" for a player whose choices have scrolled
+  // out of sight above it. That is half the affordance the bar is here to be.
+  attachTooltip($('#cz-start'), () => {
+    const cls = registries.classes.all().find((c) => c.id === state.classId);
+    const ks = KEEPSAKES.find((k) => k.id === state.keepsakeId);
+    return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
+      + (ks && ks.id !== 'none' ? `, carrying <b>${esc(ks.name)}</b>.` : ', carrying no keepsake.')
+      + '<br>Scroll up to change any of it.';
+  });
+
   $('#cz-back').addEventListener('click', onBack);
   $('#cz-start').addEventListener('click', () => {
     onStart({
