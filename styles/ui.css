@@ -188,6 +188,21 @@
 }
 .overlay-tabs .ov-tab:hover { color: var(--parchment); }
 .overlay-tabs .ov-tab.on { color: var(--gold); border-color: var(--line); border-bottom-color: transparent; background: var(--bg-raise); }
+/* An ACT row in the strip (#42): same size and rhythm as a tab, told apart by
+   the ‹›-free chip look — it LEAVES this surface (Armoury / Armaments), so it
+   never carries the .on underline a tab does. */
+.overlay-tabs .ov-tab.ov-act { border: 1px solid var(--line-soft); border-radius: 8px; color: var(--parchment); }
+.overlay-tabs .ov-tab.ov-act:hover { border-color: var(--gold); color: var(--gold); }
+/* Controls-inside-Settings (#42): the entry row and the way back. Sized by its
+   own text plus the tap floor — no reserved anything. */
+.set-sub-link {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  width: 100%; min-height: var(--tap-floor); padding: 0.8rem 1.2rem; margin-bottom: 1rem;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px;
+  color: var(--parchment); font-size: 1.3rem; cursor: pointer; text-align: left;
+}
+.set-sub-link:hover { border-color: var(--gold); color: var(--gold); }
+.set-sub-link .chev { color: var(--muted); font-size: 1.6rem; }
 .overlay-actions { display: flex; gap: 0.8rem; align-items: center; }
 .overlay-body { flex: 1; overflow: auto; padding: 1.8rem; }
 .overlay-body .grid { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
@@ -774,6 +789,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; overflow-y: auto; }
 .armoury-right { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; overflow-y: auto; }
 .armoury.view-rack .armoury-left { display: none; }
+/* 'gear' (#42): the mirror of the rack rule one line up — rack folds the figure
+   away, gear folds the SLOT PANEL away, leaving figure + cards. One value in
+   balance.equipment.views, one rule here, and the mechanism (closed set,
+   rendered buttons, persisted equipView) is untouched: this is Law 1 clause 1's
+   "adding content never touches code", demonstrated on our own UI. */
+.armoury.view-gear .armoury-right { display: none; }
+.armoury.view-gear .armoury-left { flex: 1; }
 .armoury.view-grid .armoury-left { flex: 1; }
 .armoury.view-grid .armoury-right { max-width: 38rem; }
 

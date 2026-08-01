@@ -11,7 +11,7 @@ import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { relicText } from './card.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
-import { menuTabs } from '../uiContent.js';
+import { menuTabs, CONTROLS_ENTRY } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 
 let openVeil = null;
@@ -39,7 +39,7 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
+export function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck', context = 'map', actions = {} }) {
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
@@ -48,7 +48,9 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
   // The strip is DERIVED, not restated. It and the quick-nav dropdown are two
   // presentations of one table (uiContent.js MENU_TABS) — the hardcoded list
   // that used to live here is exactly the second copy Law 1 catches.
-  const TABS = menuTabs({ hasSave, counts: { deck: run.deck.length } });
+  // Context threads from the screen that opened us (map or combat) — without
+  // it the strip cannot carry a screen-local row, whatever the table says.
+  const TABS = menuTabs(context, { hasSave, counts: { deck: run.deck.length } });
   // Variant B, and the fold test is `data-layout` — the mode autoLayout()
   // already chose. A width threshold of its own would be a second decider of
   // what "narrow" means, which is the defect #24 was (Law 2).
@@ -61,7 +63,9 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     <div class="modal overlay-modal">
       <div class="overlay-head">
         <div class="overlay-tabs"${folded ? ' hidden' : ''}>
-          ${TABS.map((t) => `<button class="ov-tab" data-tab="${t.id}">${esc(t.label)}</button>`).join('')}
+          ${TABS.map((t) => (t.act
+            ? `<button class="ov-tab ov-act" data-act="${t.act}">${esc(t.icon)} ${esc(t.label)}</button>`
+            : `<button class="ov-tab" data-tab="${t.id}">${esc(t.label)}</button>`)).join('')}
         </div>
         ${folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="overlay-actions">
@@ -90,8 +94,36 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     else if (id === 'relics') renderRelics(body);
     else if (id === 'stats') renderStats(body);
     else if (id === 'save') renderSave(body);
-    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}) });
-    else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
+    else if (id === 'settings') renderSettingsWithControls(body);
+    else if (id === 'controls') renderControlsSub(body);
+  }
+
+  // Controls is a SUB-SETTING of Settings now (Constantine, #42) — one entry at
+  // the top of the Settings pane, rendered from CONTROLS_ENTRY so the label and
+  // tip keep their one home in uiContent.js. The strip highlight stays on
+  // Settings while Controls is open: the tab SET no longer contains controls,
+  // so the bumper ring cycles the five real tabs and this pane sits inside one
+  // of them (Law 3 clause 1a binds the set, not the widget).
+  function renderSettingsWithControls(container) {
+    const row = document.createElement('button');
+    row.className = 'set-sub-link';
+    row.innerHTML = `<span>${esc(CONTROLS_ENTRY.icon)} ${esc(CONTROLS_ENTRY.label)}</span><span class="chev">›</span>`;
+    attachTooltip(row, () => esc(CONTROLS_ENTRY.tip));
+    row.addEventListener('click', () => { body.innerHTML = ''; renderControlsSub(body); });
+    // renderSettings CLEARS the container (it owns its pane), so the entry row
+    // is prepended AFTER it runs — order in code is the opposite of order on
+    // screen here, and that is why this comment exists.
+    renderSettings(container, { settings, onChange: onSettingsChange || (() => {}) });
+    container.insertBefore(row, container.firstChild);
+  }
+  function renderControlsSub(container) {
+    const back = document.createElement('button');
+    back.className = 'set-sub-link set-sub-back';
+    back.innerHTML = `<span>‹ Settings</span>`;
+    attachTooltip(back, () => 'Back to Settings.');
+    back.addEventListener('click', () => selectTab('settings'));
+    renderControls(container, { settings, onChange: onSettingsChange || (() => {}) });
+    container.insertBefore(back, container.firstChild);
   }
 
   function renderDeck(container) {
@@ -195,7 +227,24 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     container.appendChild(el);
   }
 
-  veil.querySelectorAll('.ov-tab').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.tab)));
+  veil.querySelectorAll('.ov-tab').forEach((b) => {
+    // Two kinds of strip button since #42: a TAB selects a pane in here; an ACT
+    // row (Armoury / Armaments) leaves this surface for a screen-local one, so
+    // it closes the overlay first and fires the handler the screen passed in.
+    // An act with no handler is dropped at render, never drawn dead (same rule
+    // as the quick-nav list).
+    if (b.dataset.act) {
+      const act = b.dataset.act;
+      if (typeof actions[act] !== 'function') { b.remove(); return; }
+      const t = TABS.find((x) => x.act === act);
+      if (t && t.tip) attachTooltip(b, () => `<div class="tt-title">${esc(t.label)}</div>${esc(t.tip)}`);
+      b.addEventListener('click', () => { closeOverlay(); actions[act](); });
+      return;
+    }
+    const t = TABS.find((x) => x.id === b.dataset.tab);
+    if (t && t.tip) attachTooltip(b, () => `<div class="tt-title">${esc(t.label)}</div>${esc(t.tip)}`);
+    b.addEventListener('click', () => selectTab(b.dataset.tab));
+  });
   veil.querySelector('#ov-close').addEventListener('click', closeOverlay);
   veil.addEventListener('click', (e) => {
     if (e.target === veil) closeOverlay();
@@ -205,10 +254,15 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
   // same set in the same order whether the strip is visible, wrapped to two rows,
   // or folded into the switcher. The ring is the TABS array — one order, and the
   // widget is not consulted.
+  // The ring is the TAB set only — act rows are launchers that LEAVE this
+  // surface, and a bumper ring that fires a navigation as a side effect of
+  // cycling is a defect a thumb finds (Law 3 clause 6: the bumpers stay with
+  // the tabs; the act rows take the focus cursor like any button).
+  const RING = TABS.filter((t) => !t.act);
   const step = (d) => {
-    const i = TABS.findIndex((t) => t.id === currentTab);
+    const i = RING.findIndex((t) => t.id === currentTab);
     const at = i < 0 ? 0 : i;
-    selectTab(TABS[(at + d + TABS.length) % TABS.length].id);
+    selectTab(RING[(at + d + RING.length) % RING.length].id);
   };
   setTabRing({ prev: () => step(-1), next: () => step(1) });
 

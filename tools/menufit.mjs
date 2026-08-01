@@ -219,7 +219,12 @@ async function main() {
       await wait(700);
       const opened = await ev(CELLS);
       const perView = {};
-      for (const view of ['grid', 'rack', 'hybrid']) {
+      // Views read off the RUNNING PAGE, not typed here — a typed list skipped
+      // 'gear' silently the day it was added (#42), which is this tool's own
+      // "the corpus was the claim" failure one week on. Falls back to the three
+      // originals only if the debug handle is absent, and says nothing then.
+      const viewList = (await ev(`(window.__equipCfg && window.__equipCfg.views) || null`)) || ['grid', 'rack', 'hybrid'];
+      for (const view of viewList) {
         const hit = await ev(`(() => { const b=[...document.querySelectorAll('.armoury-views button')]
           .find(x=>new RegExp('^${view}$','i').test((x.textContent||'').trim())); if(!b) return false; b.click(); return true; })()`);
         if (!hit) { fails.push(`${shape} ${k}: no '${view}' view button`); continue; }

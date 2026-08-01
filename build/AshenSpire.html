@@ -391,6 +391,21 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 }
 .overlay-tabs .ov-tab:hover { color: var(--parchment); }
 .overlay-tabs .ov-tab.on { color: var(--gold); border-color: var(--line); border-bottom-color: transparent; background: var(--bg-raise); }
+/* An ACT row in the strip (#42): same size and rhythm as a tab, told apart by
+   the ‹›-free chip look — it LEAVES this surface (Armoury / Armaments), so it
+   never carries the .on underline a tab does. */
+.overlay-tabs .ov-tab.ov-act { border: 1px solid var(--line-soft); border-radius: 8px; color: var(--parchment); }
+.overlay-tabs .ov-tab.ov-act:hover { border-color: var(--gold); color: var(--gold); }
+/* Controls-inside-Settings (#42): the entry row and the way back. Sized by its
+   own text plus the tap floor — no reserved anything. */
+.set-sub-link {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  width: 100%; min-height: var(--tap-floor); padding: 0.8rem 1.2rem; margin-bottom: 1rem;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px;
+  color: var(--parchment); font-size: 1.3rem; cursor: pointer; text-align: left;
+}
+.set-sub-link:hover { border-color: var(--gold); color: var(--gold); }
+.set-sub-link .chev { color: var(--muted); font-size: 1.6rem; }
 .overlay-actions { display: flex; gap: 0.8rem; align-items: center; }
 .overlay-body { flex: 1; overflow: auto; padding: 1.8rem; }
 .overlay-body .grid { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
@@ -977,6 +992,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; overflow-y: auto; }
 .armoury-right { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; overflow-y: auto; }
 .armoury.view-rack .armoury-left { display: none; }
+/* 'gear' (#42): the mirror of the rack rule one line up — rack folds the figure
+   away, gear folds the SLOT PANEL away, leaving figure + cards. One value in
+   balance.equipment.views, one rule here, and the mechanism (closed set,
+   rendered buttons, persisted equipView) is untouched: this is Law 1 clause 1's
+   "adding content never touches code", demonstrated on our own UI. */
+.armoury.view-gear .armoury-right { display: none; }
+.armoury.view-gear .armoury-left { flex: 1; }
 .armoury.view-grid .armoury-left { flex: 1; }
 .armoury.view-grid .armoury-right { max-width: 38rem; }
 
@@ -1788,6 +1810,25 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    than an overlay (EldenSpire#28; see .map-zoom). Restoring it re-arms nothing
    by itself, but it is the anchor the next overlay would reach for, so the
    absence is the note. */
+/* ---------- the Map legend pane (#42, Viki's contract) --------------------
+   Constantine, four refinements in: a TOGGLEABLE PANE inside the map's own
+   container, to the right, labelled "Map legend" — not a dropdown item, not a
+   bare ?. The shape is #28/#33's: A FLOW SIBLING WITH NO RESERVED WIDTH. The
+   pane is its own content's size; .map-scroll (flex: 1) gets exactly the rest;
+   closed, it does not exist in layout at all. Preference: meta.settings
+   .mapLegend, default in balance.ui — the pane-preference contract, second
+   instance (equipView is the first). Reference content, NOT one-of-N with the
+   map: it composes, so the day a minimap arrives nothing here breaks.
+   Bumper answer (clause 6): nothing here — the bumpers stay with the tabs. */
+.map-row { flex: 1; display: flex; min-height: 0; }
+.map-legend-pane {
+  flex-shrink: 0; overflow-y: auto; padding: 1rem 1.4rem;
+  background: var(--panel); border-left: 1px solid var(--line);
+}
+.map-legend-pane h4 { color: var(--gold); font-size: 1.1rem; letter-spacing: 0.2em; margin-bottom: 0.8rem; }
+.map-legend-pane div { display: flex; gap: 0.8rem; align-items: center; padding: 0.3rem 0; font-size: 1.2rem; color: var(--parchment); white-space: nowrap; }
+.map-legend-pane .ic { width: 2rem; text-align: center; }
+
 .mapscreen .map-scroll {
   flex: 1; overflow: auto;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
@@ -2635,13 +2676,18 @@ function quitGame() {
 
 // The in-run tabbed overlay (Deck / Relics / Stats / Settings), shared by the
 // map and combat screens via their onMenu callback.
-function showOverlay(initialTab = 'deck') {
+function showOverlay(initialTab = 'deck', extra = {}) {
   if (!run) return;
   openOverlay({
     registries,
     run,
     meta: saves.loadMeta(),
     initialTab,
+    // Which screen opened us, and the handlers for that screen's own rows.
+    // Threaded from map.js / combat.js through onMenu — the strip cannot carry
+    // a screen-local row without knowing its screen (#42).
+    context: extra.context || 'map',
+    actions: extra.actions || {},
     onSettingsChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
@@ -2766,6 +2812,14 @@ function showMap() {
     onSettings: showSettings,
     onMenu: showOverlay,
     onArmoury: showArmoury,
+    // The pane-preference contract (#42): a named key in meta.settings, default
+    // declared in balance.ui, written back through the same meta path as
+    // everything else. mapLegend is the second instance; equipView is the first.
+    onPref: (change) => {
+      const meta = saves.loadMeta();
+      Object.assign(meta.settings, change);
+      saves.saveMeta(meta);
+    },
     onSave: () => {
       persist();
       return activeSlot;
@@ -2910,6 +2964,16 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
     onMenu: showOverlay,
+    // The Armoury-in-combat mount was a hand-built literal with no equipView and
+    // no onChange — the player's saved view was ignored and a change fired into
+    // undefined while the panel redrew locally, SO IT LOOKED LIKE IT WORKED
+    // (Viki's blocker, #42; observed red on the played path before this line).
+    getMeta: () => saves.loadMeta(),
+    onEquipSettings: (change) => {
+      const meta = saves.loadMeta();
+      Object.assign(meta.settings, change);
+      saves.saveMeta(meta);
+    },
     onSave: () => {
       persist();
       return activeSlot;
@@ -3481,6 +3545,10 @@ const balance = {
     },
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).
+    // The Map legend pane's default state (#42). The player's own choice lives
+    // in meta.settings.mapLegend and wins; this is only what a fresh profile
+    // sees. Closed set: true | false.
+    mapLegend: false,
     textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },
     // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
     // renderer emits them as rem (÷10).
@@ -3552,7 +3620,20 @@ const balance = {
     // A player's own saved equipView still wins over this; it is what a phone
     // OPENS on, never what it is allowed to show.
     narrowDefaultView: 'rack',
-    views: ['grid', 'rack', 'hybrid'],
+    // 'gear' (#42, Viki's contract): the card-pane collapse is NOT a new toggle —
+    // it is one more value in this same closed set. The buttons render from the
+    // array and print the raw value, so the token IS the player-facing label
+    // (Grid · Rack · Hybrid · Gear); an `armouryCardPane` boolean beside
+    // equipView would be two deciders for one question. Constantine may rename
+    // it in one word: it is one data token.
+    views: ['grid', 'rack', 'hybrid', 'gear'],
+    // Law 3 clause 4 — every view button carries a tooltip, from here, one home.
+    viewTips: {
+      grid: 'Figure and slots side by side, cards below.',
+      rack: 'Slots only — every hand and the armour in one column.',
+      hybrid: 'Figure beside the slots, cards below.',
+      gear: 'Figure and cards only — the slot panel folds away.',
+    },
     spriteReacts: 'full', // 'none' | 'hands' | 'full'
 
     // Floors of the mod system, so a piece can't be authored past the point
@@ -16591,7 +16672,7 @@ function defaultZoom(meta) {
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), 1.15);
 }
 
-function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
+function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury, onPref }) {
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -16640,15 +16721,13 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
           <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
         </div>
-        <div class="map-legend-pop" hidden>
-          ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
-        </div>
       </header>
       <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>
         <div class="mh-flasks"></div>
         ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
         <div class="relics mh-relics"></div>
       </div>
+      <div class="map-row">
       <div class="map-scroll">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -16657,6 +16736,11 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
             <g id="map-nodes"></g>
           </svg>
         </div>
+      </div>
+      <aside class="map-legend-pane" hidden aria-label="Map legend">
+        <h4>MAP LEGEND</h4>
+        ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
+      </aside>
       </div>
       <!-- OUTSIDE .map-scroll, and that is the whole fix (EldenSpire#28).
            These three buttons used to be the last child of the scrollport,
@@ -16743,20 +16827,19 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   // it (added only while open, so it never leaks across screens). Lifted out of
   // the listener so the quick-nav's "Map legend" row opens the SAME popover
   // rather than growing a second copy of it.
+  // The legend is a PANE now, not a popover (#42): a flow sibling of the map
+  // scrollport, toggled — no outside-click dismissal, because reference content
+  // you asked for should stay until you say otherwise. The open state persists
+  // through meta.settings.mapLegend (default in balance.ui.mapLegend — the
+  // pane-preference contract), so it is open the way you left it next visit.
   const legendBtn = app.querySelector('#map-legend');
-  const legendPop = app.querySelector('.map-legend-pop');
+  const legendPane = app.querySelector('.map-legend-pane');
+  const settings = (meta && meta.settings) || {};
+  const legendDefault = registries.balance.ui.mapLegend === true;
+  legendPane.hidden = !(settings.mapLegend != null ? settings.mapLegend === true : legendDefault);
   function toggleLegend() {
-    const opening = legendPop.hidden;
-    legendPop.hidden = !opening;
-    if (opening) {
-      const off = (ev) => {
-        if (ev.target !== legendBtn && !legendPop.contains(ev.target)) {
-          legendPop.hidden = true;
-          document.removeEventListener('click', off, true);
-        }
-      };
-      document.addEventListener('click', off, true);
-    }
+    legendPane.hidden = !legendPane.hidden;
+    if (onPref) onPref({ mapLegend: !legendPane.hidden });
   }
   legendBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -16769,13 +16852,14 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   const menuBtn = app.querySelector('#open-menu');
   if (onMenu) {
     menuBtn.addEventListener('click', (e) => {
-      if (quickNavMode() === 'off') return onMenu('deck');
+      const extra = { context: 'map', actions: { ...(onArmoury ? { armoury: () => onArmoury() } : {}) } };
+      if (quickNavMode() === 'off') return onMenu('deck', extra);
       e.stopPropagation();
       openQuickNav(menuBtn, 'map', {
         counts: { deck: run.deck.length },
         hasSave: !!(onSave || onQuit),
         actions: {
-          tab: (id) => onMenu(id),
+          tab: (id) => onMenu(id, extra),
           ...(onArmoury ? { armoury: () => onArmoury() } : {}),
           legend: () => toggleLegend(),
           ...(onSave ? { save: saveAction(onSave) } : {}),
@@ -16960,7 +17044,7 @@ const { renderControls } = require("src/ui/screens/controls.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { isEngaged, focusFirst, setTabRing } = require("src/ui/input.js");
-const { menuTabs } = require("src/ui/uiContent.js");
+const { menuTabs, CONTROLS_ENTRY } = require("src/ui/uiContent.js");
 const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } = require("src/ui/components/quicknav.js");
 
 let openVeil = null;
@@ -16988,7 +17072,7 @@ function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
+function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck', context = 'map', actions = {} }) {
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
@@ -16997,7 +17081,9 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
   // The strip is DERIVED, not restated. It and the quick-nav dropdown are two
   // presentations of one table (uiContent.js MENU_TABS) — the hardcoded list
   // that used to live here is exactly the second copy Law 1 catches.
-  const TABS = menuTabs({ hasSave, counts: { deck: run.deck.length } });
+  // Context threads from the screen that opened us (map or combat) — without
+  // it the strip cannot carry a screen-local row, whatever the table says.
+  const TABS = menuTabs(context, { hasSave, counts: { deck: run.deck.length } });
   // Variant B, and the fold test is `data-layout` — the mode autoLayout()
   // already chose. A width threshold of its own would be a second decider of
   // what "narrow" means, which is the defect #24 was (Law 2).
@@ -17010,7 +17096,9 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
     <div class="modal overlay-modal">
       <div class="overlay-head">
         <div class="overlay-tabs"${folded ? ' hidden' : ''}>
-          ${TABS.map((t) => `<button class="ov-tab" data-tab="${t.id}">${esc(t.label)}</button>`).join('')}
+          ${TABS.map((t) => (t.act
+            ? `<button class="ov-tab ov-act" data-act="${t.act}">${esc(t.icon)} ${esc(t.label)}</button>`
+            : `<button class="ov-tab" data-tab="${t.id}">${esc(t.label)}</button>`)).join('')}
         </div>
         ${folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="overlay-actions">
@@ -17039,8 +17127,36 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
     else if (id === 'relics') renderRelics(body);
     else if (id === 'stats') renderStats(body);
     else if (id === 'save') renderSave(body);
-    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}) });
-    else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
+    else if (id === 'settings') renderSettingsWithControls(body);
+    else if (id === 'controls') renderControlsSub(body);
+  }
+
+  // Controls is a SUB-SETTING of Settings now (Constantine, #42) — one entry at
+  // the top of the Settings pane, rendered from CONTROLS_ENTRY so the label and
+  // tip keep their one home in uiContent.js. The strip highlight stays on
+  // Settings while Controls is open: the tab SET no longer contains controls,
+  // so the bumper ring cycles the five real tabs and this pane sits inside one
+  // of them (Law 3 clause 1a binds the set, not the widget).
+  function renderSettingsWithControls(container) {
+    const row = document.createElement('button');
+    row.className = 'set-sub-link';
+    row.innerHTML = `<span>${esc(CONTROLS_ENTRY.icon)} ${esc(CONTROLS_ENTRY.label)}</span><span class="chev">›</span>`;
+    attachTooltip(row, () => esc(CONTROLS_ENTRY.tip));
+    row.addEventListener('click', () => { body.innerHTML = ''; renderControlsSub(body); });
+    // renderSettings CLEARS the container (it owns its pane), so the entry row
+    // is prepended AFTER it runs — order in code is the opposite of order on
+    // screen here, and that is why this comment exists.
+    renderSettings(container, { settings, onChange: onSettingsChange || (() => {}) });
+    container.insertBefore(row, container.firstChild);
+  }
+  function renderControlsSub(container) {
+    const back = document.createElement('button');
+    back.className = 'set-sub-link set-sub-back';
+    back.innerHTML = `<span>‹ Settings</span>`;
+    attachTooltip(back, () => 'Back to Settings.');
+    back.addEventListener('click', () => selectTab('settings'));
+    renderControls(container, { settings, onChange: onSettingsChange || (() => {}) });
+    container.insertBefore(back, container.firstChild);
   }
 
   function renderDeck(container) {
@@ -17144,7 +17260,24 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
     container.appendChild(el);
   }
 
-  veil.querySelectorAll('.ov-tab').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.tab)));
+  veil.querySelectorAll('.ov-tab').forEach((b) => {
+    // Two kinds of strip button since #42: a TAB selects a pane in here; an ACT
+    // row (Armoury / Armaments) leaves this surface for a screen-local one, so
+    // it closes the overlay first and fires the handler the screen passed in.
+    // An act with no handler is dropped at render, never drawn dead (same rule
+    // as the quick-nav list).
+    if (b.dataset.act) {
+      const act = b.dataset.act;
+      if (typeof actions[act] !== 'function') { b.remove(); return; }
+      const t = TABS.find((x) => x.act === act);
+      if (t && t.tip) attachTooltip(b, () => `<div class="tt-title">${esc(t.label)}</div>${esc(t.tip)}`);
+      b.addEventListener('click', () => { closeOverlay(); actions[act](); });
+      return;
+    }
+    const t = TABS.find((x) => x.id === b.dataset.tab);
+    if (t && t.tip) attachTooltip(b, () => `<div class="tt-title">${esc(t.label)}</div>${esc(t.tip)}`);
+    b.addEventListener('click', () => selectTab(b.dataset.tab));
+  });
   veil.querySelector('#ov-close').addEventListener('click', closeOverlay);
   veil.addEventListener('click', (e) => {
     if (e.target === veil) closeOverlay();
@@ -17154,10 +17287,15 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
   // same set in the same order whether the strip is visible, wrapped to two rows,
   // or folded into the switcher. The ring is the TABS array — one order, and the
   // widget is not consulted.
+  // The ring is the TAB set only — act rows are launchers that LEAVE this
+  // surface, and a bumper ring that fires a navigation as a side effect of
+  // cycling is a defect a thumb finds (Law 3 clause 6: the bumpers stay with
+  // the tabs; the act rows take the focus cursor like any button).
+  const RING = TABS.filter((t) => !t.act);
   const step = (d) => {
-    const i = TABS.findIndex((t) => t.id === currentTab);
+    const i = RING.findIndex((t) => t.id === currentTab);
     const at = i < 0 ? 0 : i;
-    selectTab(TABS[(at + d + TABS.length) % TABS.length].id);
+    selectTab(RING[(at + d + RING.length) % RING.length].id);
   };
   setTabRing({ prev: () => step(-1), next: () => step(1) });
 
@@ -18966,14 +19104,20 @@ function backdropClass(actNumber) {
 // The map row set is IDENTICAL under both — which is the honest shape of the
 // argument: it only bites where a screen has destinations of its own, and combat
 // is the screen that does.
+// REORDERED at EldenSpire#42, Constantine's items 5-6: Save goes LAST, and
+// Controls stops being a tab — it is a sub-setting inside Settings now
+// (overlay.js renders the entry from CONTROLS_ENTRY below, so the label and tip
+// keep one home here rather than growing a copy in the renderer).
 const MENU_TABS = [
   { id: 'deck', label: 'Deck', icon: '🂠', count: 'deck', tip: 'Every card in the climb, not just the ones in hand.' },
   { id: 'relics', label: 'Relics & Flasks', icon: '◆', tip: 'What you carry, and what each one does.' },
   { id: 'stats', label: 'Stats', icon: '♜', tip: 'This run in numbers — floor, damage, seed.' },
-  { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
   { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
-  { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' },
+  { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
 ];
+
+// Controls' one home, now that it lives inside Settings instead of the strip.
+const CONTROLS_ENTRY = { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' };
 
 const TAIL = [
   { act: 'save', icon: '💾', label: 'Save', band: 'tail', tip: 'Write the climb to its slot and stay here.' },
@@ -18983,7 +19127,7 @@ const TAIL = [
 
 const MENU = {
   map: [
-    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
+    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true, strip: true,
       tip: 'Weapons and armour — swap between fights for free.' },
     { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
       tip: 'What each mark on the act map means.' },
@@ -18996,7 +19140,7 @@ const MENU = {
   // Draw and discard are real destinations that exist ONLY here (combat.js's
   // pile modals) — the demonstration that context-specific means something.
   combat: [
-    { act: 'armoury', icon: '⚒', label: 'Armaments', band: 'head', local: true,
+    { act: 'armoury', icon: '⚒', label: 'Armaments', band: 'head', local: true, strip: true,
       tip: 'Your hand sets, mid-fight. Swapping costs energy.' },
     { act: 'tab', tab: 'deck', label: 'Hand / Deck', band: 'body' },
     { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
@@ -19035,13 +19179,26 @@ function tabDef(id) {
  * The strip and the dropdown read the same table, so a tab cannot exist in one
  * and not the other. `counts` supplies live numbers (deck size) for the label.
  */
-function menuTabs({ hasSave = true, counts = {} } = {}) {
-  return MENU_TABS.filter((t) => hasSave || !t.needsSave).map((t) => ({
-    id: t.id,
+// CONTEXT-AWARE since EldenSpire#42, and the missing argument was the finding:
+// menuRows(context, ...) always knew which screen it was on; menuTabs never
+// received one, so a `local` row had NO PATH into the strip however the table
+// was flagged. Constantine found the seam by feel — Armoury and Map legend
+// reachable only from the dropdown. His rule: nothing may be reachable ONLY
+// from the dropdown, surface chosen per entry — so `strip: true` on a local
+// row is that choice, made in the table (Law 1), and this function is where it
+// takes effect. A strip row carries `act` instead of selecting a tab.
+function menuTabs(context, { hasSave = true, counts = {} } = {}) {
+  const tabs = MENU_TABS.filter((t) => hasSave || !t.needsSave).map((t) => ({
+    id: t.id, act: null,
     label: t.count != null && counts[t.count] != null ? `${t.label} (${counts[t.count]})` : t.label,
     icon: t.icon,
     tip: t.tip,
   }));
+  const local = (MENU[context] || []).filter((r) => r.local && r.strip).map((r) => ({
+    id: r.act, act: r.act, label: r.label, icon: r.icon, tip: r.tip,
+  }));
+  // Local actions lead the strip: they are the rows that exist only here.
+  return [...local, ...tabs];
 }
 
 /**
@@ -19117,7 +19274,7 @@ function padName(btn) {
 }
 
 
-Object.assign(module.exports, { NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, MENU_TABS, MENU, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName });
+Object.assign(module.exports, { NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, MENU_TABS, CONTROLS_ENTRY, MENU, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName });
 
 },
 "src/ui/components/quicknav.js": function (module, exports, require) {
@@ -19436,7 +19593,7 @@ const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { figureSpec } = require("src/model/loadout.js");
 
-function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
+function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit, getMeta, onEquipSettings }) {
   app.innerHTML = `
     <div class="combat">
       <header class="topbar">
@@ -20304,13 +20461,14 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
   const menuBtn = $('#combat-menu');
   if (onMenu) {
     menuBtn.addEventListener('click', (e) => {
-      if (quickNavMode() === 'off') return onMenu('deck');
+      const extra = { context: 'combat', actions: { armoury: () => $('#combat-armoury').click() } };
+      if (quickNavMode() === 'off') return onMenu('deck', extra);
       e.stopPropagation();
       openQuickNav(menuBtn, 'combat', {
         counts: { deck: run.deck.length, draw: combat.piles.draw.length, discard: combat.piles.discard.length },
         hasSave: !!(onSave || onQuit),
         actions: {
-          tab: (id) => onMenu(id),
+          tab: (id) => onMenu(id, extra),
           armoury: () => $('#combat-armoury').click(), // the button's own handler, not a copy of it
           draw: () => showDraw(),
           discard: () => showDiscard(),
@@ -20341,8 +20499,17 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     const panel = mountEquipment(document.body, {
       registries,
       run,
-      meta: { settings: { customization: run.customization } },
+      // THE REAL META, not a hand-built literal. The literal carried only
+      // `customization`, so the saved equipView was ignored in combat and — with
+      // no onChange — a view change was discarded while the local redraw made it
+      // look kept. One feature, two mounts, one silently inert (#42).
+      meta: getMeta ? getMeta() : { settings: { customization: run.customization } },
       inCombat: true,
+      onChange: (loadout, settingChange) => {
+        // In combat the loadout routes through onSwap and the engine's intent;
+        // the only thing this callback may keep is the settings half.
+        if (settingChange && onEquipSettings) onEquipSettings(settingChange);
+      },
       onSwap: (slotId, setIndex) => {
         let out;
         try {
@@ -20597,7 +20764,7 @@ const { balance } = require("src/content/balance.js");
 const { resolveCard } = require("src/model/registries.js");
 const { canSwap, cycleSet, equipPiece, cardMods, runMods, loadoutTags, figureSpec, carriedIds } = require("src/model/loadout.js");
 const { renderCard } = require("src/ui/components/card.js");
-const { esc } = require("src/ui/components/tooltip.js");
+const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { playerSprite, equippedFigure } = require("src/ui/assets.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { sfx } = require("src/ui/sfx.js");
@@ -20947,6 +21114,9 @@ function mountEquipment(host, {
     notice = '';
     wrap.querySelector('.armoury-close').addEventListener('click', close);
     for (const b of wrap.querySelectorAll('[data-view]')) {
+      // Law 3 clause 4 — hover AND pad focus, text from balance (one home).
+      const tip = (CFG().viewTips || {})[b.dataset.view];
+      if (tip) attachTooltip(b, () => esc(tip));
       b.addEventListener('click', () => {
         view = b.dataset.view;
         if (onChange) onChange(run.loadout, { equipView: view });

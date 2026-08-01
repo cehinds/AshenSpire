@@ -26,7 +26,7 @@ function defaultZoom(meta) {
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), 1.15);
 }
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury, onPref }) {
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -75,15 +75,13 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
           <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
         </div>
-        <div class="map-legend-pop" hidden>
-          ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
-        </div>
       </header>
       <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>
         <div class="mh-flasks"></div>
         ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
         <div class="relics mh-relics"></div>
       </div>
+      <div class="map-row">
       <div class="map-scroll">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -92,6 +90,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
             <g id="map-nodes"></g>
           </svg>
         </div>
+      </div>
+      <aside class="map-legend-pane" hidden aria-label="Map legend">
+        <h4>MAP LEGEND</h4>
+        ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
+      </aside>
       </div>
       <!-- OUTSIDE .map-scroll, and that is the whole fix (EldenSpire#28).
            These three buttons used to be the last child of the scrollport,
@@ -178,20 +181,19 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // it (added only while open, so it never leaks across screens). Lifted out of
   // the listener so the quick-nav's "Map legend" row opens the SAME popover
   // rather than growing a second copy of it.
+  // The legend is a PANE now, not a popover (#42): a flow sibling of the map
+  // scrollport, toggled — no outside-click dismissal, because reference content
+  // you asked for should stay until you say otherwise. The open state persists
+  // through meta.settings.mapLegend (default in balance.ui.mapLegend — the
+  // pane-preference contract), so it is open the way you left it next visit.
   const legendBtn = app.querySelector('#map-legend');
-  const legendPop = app.querySelector('.map-legend-pop');
+  const legendPane = app.querySelector('.map-legend-pane');
+  const settings = (meta && meta.settings) || {};
+  const legendDefault = registries.balance.ui.mapLegend === true;
+  legendPane.hidden = !(settings.mapLegend != null ? settings.mapLegend === true : legendDefault);
   function toggleLegend() {
-    const opening = legendPop.hidden;
-    legendPop.hidden = !opening;
-    if (opening) {
-      const off = (ev) => {
-        if (ev.target !== legendBtn && !legendPop.contains(ev.target)) {
-          legendPop.hidden = true;
-          document.removeEventListener('click', off, true);
-        }
-      };
-      document.addEventListener('click', off, true);
-    }
+    legendPane.hidden = !legendPane.hidden;
+    if (onPref) onPref({ mapLegend: !legendPane.hidden });
   }
   legendBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -204,13 +206,14 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const menuBtn = app.querySelector('#open-menu');
   if (onMenu) {
     menuBtn.addEventListener('click', (e) => {
-      if (quickNavMode() === 'off') return onMenu('deck');
+      const extra = { context: 'map', actions: { ...(onArmoury ? { armoury: () => onArmoury() } : {}) } };
+      if (quickNavMode() === 'off') return onMenu('deck', extra);
       e.stopPropagation();
       openQuickNav(menuBtn, 'map', {
         counts: { deck: run.deck.length },
         hasSave: !!(onSave || onQuit),
         actions: {
-          tab: (id) => onMenu(id),
+          tab: (id) => onMenu(id, extra),
           ...(onArmoury ? { armoury: () => onArmoury() } : {}),
           legend: () => toggleLegend(),
           ...(onSave ? { save: saveAction(onSave) } : {}),

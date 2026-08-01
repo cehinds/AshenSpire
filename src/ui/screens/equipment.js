@@ -20,7 +20,7 @@ import {
   canSwap, cycleSet, equipPiece, cardMods, runMods, loadoutTags, figureSpec, carriedIds,
 } from '../../model/loadout.js';
 import { renderCard } from '../components/card.js';
-import { esc } from '../components/tooltip.js';
+import { attachTooltip, esc } from '../components/tooltip.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
@@ -370,6 +370,9 @@ export function mountEquipment(host, {
     notice = '';
     wrap.querySelector('.armoury-close').addEventListener('click', close);
     for (const b of wrap.querySelectorAll('[data-view]')) {
+      // Law 3 clause 4 — hover AND pad focus, text from balance (one home).
+      const tip = (CFG().viewTips || {})[b.dataset.view];
+      if (tip) attachTooltip(b, () => esc(tip));
       b.addEventListener('click', () => {
         view = b.dataset.view;
         if (onChange) onChange(run.loadout, { equipView: view });

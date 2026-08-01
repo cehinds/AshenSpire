@@ -130,6 +130,10 @@ export const balance = {
     },
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).
+    // The Map legend pane's default state (#42). The player's own choice lives
+    // in meta.settings.mapLegend and wins; this is only what a fresh profile
+    // sees. Closed set: true | false.
+    mapLegend: false,
     textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },
     // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
     // renderer emits them as rem (÷10).
@@ -201,7 +205,20 @@ export const balance = {
     // A player's own saved equipView still wins over this; it is what a phone
     // OPENS on, never what it is allowed to show.
     narrowDefaultView: 'rack',
-    views: ['grid', 'rack', 'hybrid'],
+    // 'gear' (#42, Viki's contract): the card-pane collapse is NOT a new toggle —
+    // it is one more value in this same closed set. The buttons render from the
+    // array and print the raw value, so the token IS the player-facing label
+    // (Grid · Rack · Hybrid · Gear); an `armouryCardPane` boolean beside
+    // equipView would be two deciders for one question. Constantine may rename
+    // it in one word: it is one data token.
+    views: ['grid', 'rack', 'hybrid', 'gear'],
+    // Law 3 clause 4 — every view button carries a tooltip, from here, one home.
+    viewTips: {
+      grid: 'Figure and slots side by side, cards below.',
+      rack: 'Slots only — every hand and the armour in one column.',
+      hybrid: 'Figure beside the slots, cards below.',
+      gear: 'Figure and cards only — the slot panel folds away.',
+    },
     spriteReacts: 'full', // 'none' | 'hands' | 'full'
 
     // Floors of the mod system, so a piece can't be authored past the point

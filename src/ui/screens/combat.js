@@ -23,7 +23,7 @@ import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
 import { figureSpec } from '../../model/loadout.js';
 
-export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
+export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit, getMeta, onEquipSettings }) {
   app.innerHTML = `
     <div class="combat">
       <header class="topbar">
@@ -891,13 +891,14 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   const menuBtn = $('#combat-menu');
   if (onMenu) {
     menuBtn.addEventListener('click', (e) => {
-      if (quickNavMode() === 'off') return onMenu('deck');
+      const extra = { context: 'combat', actions: { armoury: () => $('#combat-armoury').click() } };
+      if (quickNavMode() === 'off') return onMenu('deck', extra);
       e.stopPropagation();
       openQuickNav(menuBtn, 'combat', {
         counts: { deck: run.deck.length, draw: combat.piles.draw.length, discard: combat.piles.discard.length },
         hasSave: !!(onSave || onQuit),
         actions: {
-          tab: (id) => onMenu(id),
+          tab: (id) => onMenu(id, extra),
           armoury: () => $('#combat-armoury').click(), // the button's own handler, not a copy of it
           draw: () => showDraw(),
           discard: () => showDiscard(),
@@ -928,8 +929,17 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     const panel = mountEquipment(document.body, {
       registries,
       run,
-      meta: { settings: { customization: run.customization } },
+      // THE REAL META, not a hand-built literal. The literal carried only
+      // `customization`, so the saved equipView was ignored in combat and — with
+      // no onChange — a view change was discarded while the local redraw made it
+      // look kept. One feature, two mounts, one silently inert (#42).
+      meta: getMeta ? getMeta() : { settings: { customization: run.customization } },
       inCombat: true,
+      onChange: (loadout, settingChange) => {
+        // In combat the loadout routes through onSwap and the engine's intent;
+        // the only thing this callback may keep is the settings half.
+        if (settingChange && onEquipSettings) onEquipSettings(settingChange);
+      },
       onSwap: (slotId, setIndex) => {
         let out;
         try {

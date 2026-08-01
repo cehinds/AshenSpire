@@ -157,14 +157,20 @@ export function backdropClass(actNumber) {
 // The map row set is IDENTICAL under both — which is the honest shape of the
 // argument: it only bites where a screen has destinations of its own, and combat
 // is the screen that does.
+// REORDERED at EldenSpire#42, Constantine's items 5-6: Save goes LAST, and
+// Controls stops being a tab — it is a sub-setting inside Settings now
+// (overlay.js renders the entry from CONTROLS_ENTRY below, so the label and tip
+// keep one home here rather than growing a copy in the renderer).
 export const MENU_TABS = [
   { id: 'deck', label: 'Deck', icon: '🂠', count: 'deck', tip: 'Every card in the climb, not just the ones in hand.' },
   { id: 'relics', label: 'Relics & Flasks', icon: '◆', tip: 'What you carry, and what each one does.' },
   { id: 'stats', label: 'Stats', icon: '♜', tip: 'This run in numbers — floor, damage, seed.' },
-  { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
   { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
-  { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' },
+  { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
 ];
+
+// Controls' one home, now that it lives inside Settings instead of the strip.
+export const CONTROLS_ENTRY = { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' };
 
 const TAIL = [
   { act: 'save', icon: '💾', label: 'Save', band: 'tail', tip: 'Write the climb to its slot and stay here.' },
@@ -174,7 +180,7 @@ const TAIL = [
 
 export const MENU = {
   map: [
-    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
+    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true, strip: true,
       tip: 'Weapons and armour — swap between fights for free.' },
     { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
       tip: 'What each mark on the act map means.' },
@@ -187,7 +193,7 @@ export const MENU = {
   // Draw and discard are real destinations that exist ONLY here (combat.js's
   // pile modals) — the demonstration that context-specific means something.
   combat: [
-    { act: 'armoury', icon: '⚒', label: 'Armaments', band: 'head', local: true,
+    { act: 'armoury', icon: '⚒', label: 'Armaments', band: 'head', local: true, strip: true,
       tip: 'Your hand sets, mid-fight. Swapping costs energy.' },
     { act: 'tab', tab: 'deck', label: 'Hand / Deck', band: 'body' },
     { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
@@ -226,13 +232,26 @@ function tabDef(id) {
  * The strip and the dropdown read the same table, so a tab cannot exist in one
  * and not the other. `counts` supplies live numbers (deck size) for the label.
  */
-export function menuTabs({ hasSave = true, counts = {} } = {}) {
-  return MENU_TABS.filter((t) => hasSave || !t.needsSave).map((t) => ({
-    id: t.id,
+// CONTEXT-AWARE since EldenSpire#42, and the missing argument was the finding:
+// menuRows(context, ...) always knew which screen it was on; menuTabs never
+// received one, so a `local` row had NO PATH into the strip however the table
+// was flagged. Constantine found the seam by feel — Armoury and Map legend
+// reachable only from the dropdown. His rule: nothing may be reachable ONLY
+// from the dropdown, surface chosen per entry — so `strip: true` on a local
+// row is that choice, made in the table (Law 1), and this function is where it
+// takes effect. A strip row carries `act` instead of selecting a tab.
+export function menuTabs(context, { hasSave = true, counts = {} } = {}) {
+  const tabs = MENU_TABS.filter((t) => hasSave || !t.needsSave).map((t) => ({
+    id: t.id, act: null,
     label: t.count != null && counts[t.count] != null ? `${t.label} (${counts[t.count]})` : t.label,
     icon: t.icon,
     tip: t.tip,
   }));
+  const local = (MENU[context] || []).filter((r) => r.local && r.strip).map((r) => ({
+    id: r.act, act: r.act, label: r.label, icon: r.icon, tip: r.tip,
+  }));
+  // Local actions lead the strip: they are the rows that exist only here.
+  return [...local, ...tabs];
 }
 
 /**

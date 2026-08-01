@@ -666,13 +666,18 @@ function quitGame() {
 
 // The in-run tabbed overlay (Deck / Relics / Stats / Settings), shared by the
 // map and combat screens via their onMenu callback.
-function showOverlay(initialTab = 'deck') {
+function showOverlay(initialTab = 'deck', extra = {}) {
   if (!run) return;
   openOverlay({
     registries,
     run,
     meta: saves.loadMeta(),
     initialTab,
+    // Which screen opened us, and the handlers for that screen's own rows.
+    // Threaded from map.js / combat.js through onMenu — the strip cannot carry
+    // a screen-local row without knowing its screen (#42).
+    context: extra.context || 'map',
+    actions: extra.actions || {},
     onSettingsChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
@@ -797,6 +802,14 @@ function showMap() {
     onSettings: showSettings,
     onMenu: showOverlay,
     onArmoury: showArmoury,
+    // The pane-preference contract (#42): a named key in meta.settings, default
+    // declared in balance.ui, written back through the same meta path as
+    // everything else. mapLegend is the second instance; equipView is the first.
+    onPref: (change) => {
+      const meta = saves.loadMeta();
+      Object.assign(meta.settings, change);
+      saves.saveMeta(meta);
+    },
     onSave: () => {
       persist();
       return activeSlot;
@@ -941,6 +954,16 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
     onMenu: showOverlay,
+    // The Armoury-in-combat mount was a hand-built literal with no equipView and
+    // no onChange — the player's saved view was ignored and a change fired into
+    // undefined while the panel redrew locally, SO IT LOOKED LIKE IT WORKED
+    // (Viki's blocker, #42; observed red on the played path before this line).
+    getMeta: () => saves.loadMeta(),
+    onEquipSettings: (change) => {
+      const meta = saves.loadMeta();
+      Object.assign(meta.settings, change);
+      saves.saveMeta(meta);
+    },
     onSave: () => {
       persist();
       return activeSlot;

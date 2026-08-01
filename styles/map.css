@@ -6,6 +6,25 @@
    than an overlay (EldenSpire#28; see .map-zoom). Restoring it re-arms nothing
    by itself, but it is the anchor the next overlay would reach for, so the
    absence is the note. */
+/* ---------- the Map legend pane (#42, Viki's contract) --------------------
+   Constantine, four refinements in: a TOGGLEABLE PANE inside the map's own
+   container, to the right, labelled "Map legend" — not a dropdown item, not a
+   bare ?. The shape is #28/#33's: A FLOW SIBLING WITH NO RESERVED WIDTH. The
+   pane is its own content's size; .map-scroll (flex: 1) gets exactly the rest;
+   closed, it does not exist in layout at all. Preference: meta.settings
+   .mapLegend, default in balance.ui — the pane-preference contract, second
+   instance (equipView is the first). Reference content, NOT one-of-N with the
+   map: it composes, so the day a minimap arrives nothing here breaks.
+   Bumper answer (clause 6): nothing here — the bumpers stay with the tabs. */
+.map-row { flex: 1; display: flex; min-height: 0; }
+.map-legend-pane {
+  flex-shrink: 0; overflow-y: auto; padding: 1rem 1.4rem;
+  background: var(--panel); border-left: 1px solid var(--line);
+}
+.map-legend-pane h4 { color: var(--gold); font-size: 1.1rem; letter-spacing: 0.2em; margin-bottom: 0.8rem; }
+.map-legend-pane div { display: flex; gap: 0.8rem; align-items: center; padding: 0.3rem 0; font-size: 1.2rem; color: var(--parchment); white-space: nowrap; }
+.map-legend-pane .ic { width: 2rem; text-align: center; }
+
 .mapscreen .map-scroll {
   flex: 1; overflow: auto;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
