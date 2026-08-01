@@ -8,15 +8,7 @@
 // (content/mapconfig.js); randomness only from the seeded 'map' stream.
 // Headless: no document/window/localStorage/timers.
 
-export const NODE_TYPES = Object.freeze([
-  'monster',
-  'event',
-  'elite',
-  'shrine',
-  'merchant',
-  'treasure',
-  'boss',
-]);
+import { resolveFloorPlan } from '../model/floorplan.js';
 
 const TYPING_RETRIES = 40;
 
@@ -28,14 +20,25 @@ const TYPING_RETRIES = 40;
  *   bossId,                          // boss node above the shrine
  * }
  *
- * config = { floors, columns, pathCount, typeWeights, floorRules } — see
- * content/mapconfig.js. floorRules = { fixed: {floor: type},
- * noEliteOrShrineBefore, noShrineOn, minReachableElites, minReachableMerchants }.
+ * config = { floors, columns, pathCount, typeWeights, unknownWeights,
+ * floorRules } — see content/mapconfig.js. Floor rules are ANCHORS; this
+ * function never reads them directly and never sees an absolute floor number
+ * that content typed. `resolveFloorPlan` (model/floorplan.js) is the one place
+ * that turns an anchor into a floor, so the generator, the validator and
+ * tools/mapplan.mjs cannot disagree about what a rule meant.
  */
 export function generateActMap({ config, rng }) {
   const floors = config.floors;
   const cols = config.columns;
-  const rules = config.floorRules || {};
+  // NO `config.floorRules || {}`. That fallback generated an unauthored map
+  // from an empty object and called it a default — "where a defect goes to be
+  // quiet" (Viki). Bad config is loud, here and at boot in validate.js.
+  const { plan, errors } = resolveFloorPlan(config);
+  if (!plan || errors.length) {
+    throw new Error(`mapgen: this act's floor rules do not resolve — ${
+      errors.map((e) => `${e.key}: ${e.msg}`).join(' · ') || 'floorRules missing'}`);
+  }
+  const rules = plan;
   const nodeId = (floor, col) => `n${floor}_${col}`;
 
   // ---- 1. Path walk (floors 1..floors-1); floor `floors` is the lone shrine.
@@ -105,20 +108,20 @@ export function generateActMap({ config, rng }) {
 
   // ---- 3. Node typing under constraints, bounded retries then relax.
   const rollable = Object.values(nodes).filter((n) => n.type === null);
-  const fixed = rules.fixed || {};
+  const fixed = plan.fixed;
   for (let attempt = 0; attempt < TYPING_RETRIES; attempt++) {
     for (const node of rollable) node.type = null;
     typeOnce(nodes, rollable, fixed, rules, config.typeWeights, rng, floors);
-    if (countType(nodes, 'elite') >= (rules.minReachableElites || 0) &&
-        countType(nodes, 'merchant') >= (rules.minReachableMerchants || 0)) {
-      return finish(nodes, starts, shrine.id, boss.id, floors);
+    if (countType(nodes, 'elite') >= plan.minElites &&
+        countType(nodes, 'merchant') >= plan.minMerchants) {
+      return finish(nodes, starts, shrine.id, boss.id, floors, cols);
     }
   }
   // Relax (SPEC §6): force-place what the rolls never produced, on eligible
   // monster nodes (weakest constraint gives way; counts are a hard promise).
-  relaxPlace(nodes, 'elite', rules.minReachableElites || 0, rules, rng);
-  relaxPlace(nodes, 'merchant', rules.minReachableMerchants || 0, rules, rng);
-  return finish(nodes, starts, shrine.id, boss.id, floors);
+  relaxPlace(nodes, 'elite', plan.minElites, plan, rng);
+  relaxPlace(nodes, 'merchant', plan.minMerchants, plan, rng);
+  return finish(nodes, starts, shrine.id, boss.id, floors, cols);
 }
 
 function typeOnce(nodes, rollable, fixed, rules, weights, rng, floors) {
@@ -141,7 +144,7 @@ function rollType(node, typedParents, rules, weights, rng) {
   const entries = Object.entries(weights).filter(([type, w]) => {
     if (w <= 0) return false;
     if (banned.has(type)) return false;
-    if ((type === 'elite' || type === 'shrine') && node.floor < (rules.noEliteOrShrineBefore || 0)) return false;
+    if ((type === 'elite' || type === 'shrine') && node.floor < rules.eliteShrineFrom) return false;
     if (type === 'shrine' && node.floor === rules.noShrineOn) return false;
     return true;
   });
@@ -159,7 +162,7 @@ function relaxPlace(nodes, type, min, rules, rng) {
   let have = countType(nodes, type);
   const eligible = Object.values(nodes).filter(
     (n) => n.type === 'monster' &&
-      !(type === 'elite' && n.floor < (rules.noEliteOrShrineBefore || 0))
+      !(type === 'elite' && n.floor < rules.eliteShrineFrom)
   );
   while (have < min && eligible.length > 0) {
     const idx = Math.floor(rng.float('map') * eligible.length);
@@ -172,9 +175,15 @@ function countType(nodes, type) {
   return Object.values(nodes).filter((n) => n.type === type).length;
 }
 
-function finish(nodes, startCols, shrineId, bossId, floors) {
+function finish(nodes, startCols, shrineId, bossId, floors, columns) {
   const startIds = [...new Set(startCols)].map((col) => `n1_${col}`);
-  return { nodes, startIds, shrineId, bossId, floors };
+  // `columns` travels WITH the graph. The map screen used to hardcode
+  // `7 * COL_X + 60` for its SVG width, so an act tuned to 6 or 9 columns drew
+  // at 7 regardless — a tunable map whose view ignores the tuning is not
+  // tunable (Marina made this a precondition of the rework, not a footnote).
+  // Putting it on the graph rather than re-reading the act config means the
+  // view and the generator cannot disagree, and it survives a save/load.
+  return { nodes, startIds, shrineId, bossId, floors, columns };
 }
 
 function clamp(v, lo, hi) {

@@ -348,7 +348,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
     const nodes = map.nodes;
     const reachable = new Set(snap.reachableIds);
     const maxFloor = Math.max(...nodes.map((n) => n.floor));
-    const width = 7 * COL_X + 60;
+    // COLUMNS COME FROM THE SNAPSHOT, not from a literal — the same fix as
+    // map.js in this branch, found by Bjorn one view over: "the view and the
+    // generator cannot disagree" was one view short of true while this line
+    // read 7. Masked today because every act ships 7 columns; the day a host
+    // tunes columns, an unfixed parity renderer here would disagree with the
+    // host about where every node is. A snapshot from an older host lacks the
+    // field and gets the derived width, loudly.
+    let columns = map.columns;
+    if (typeof columns !== 'number') {
+      columns = Math.max(...nodes.map((n) => n.col)) + 1;
+      console.warn(`[coop] snapshot map has no \`columns\`; drawing ${columns} derived from the nodes in use.`);
+    }
+    const width = columns * COL_X + 60;
     const height = (maxFloor + 1) * ROW_H + 30;
     const x = (col) => 60 + col * COL_X;
     const y = (floor) => height - floor * ROW_H;

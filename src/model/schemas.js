@@ -22,6 +22,8 @@
 // ---------------------------------------------------------------------------
 
 // Effect DSL opcodes (SPEC §3.4).
+import { NODE_TYPES, ANCHOR_KINDS } from './floorplan.js';
+
 export const COMBAT_OPCODES = Object.freeze([
   'damage',
   'block',
@@ -246,6 +248,17 @@ const ref = (reg) => ({ k: 'ref', reg });
 const union = (...anyOf) => ({ k: 'union', anyOf });
 const opt = (node) => ({ ...node, opt: true });
 
+// A FLOOR ANCHOR — the closed set in model/floorplan.js, as a schema node.
+// `index` and `of` are optional here because which one is required depends on
+// `at`, and walkSchema has no discriminated union; resolveFloorPlan names the
+// missing or out-of-range one with the act's own floor count in the message.
+const floorAnchor = (extra = {}) => obj({
+  at: en(...ANCHOR_KINDS),
+  index: opt(int),
+  of: opt(num),
+  ...extra,
+});
+
 const costNode = union(int, en('X'));
 
 const modifiersSchema = obj({
@@ -405,7 +418,13 @@ export const SCHEMAS = Object.freeze({
     choices: arr(
       obj({
         label: str,
-        requires: opt(any),
+        // WAS `opt(any)` — the second instance of the same shape, in Viki's
+        // corpus for #43 so the corpus is not fitted to the one we found.
+        // `meets()` (ui/screens/event.js:14) understands exactly one key, so
+        // `requires: { hp: 50 }` type-checked, was silently ignored, and the
+        // choice was always affordable. The vocabulary is closed to what the
+        // evaluator can actually read; widening it is an engine change.
+        requires: opt(obj({ cinders: opt(int) })),
         effects,
         resultText: str,
       })
@@ -440,7 +459,31 @@ export const SCHEMAS = Object.freeze({
     columns: int,
     pathCount: int,
     typeWeights: mapOf(num),
-    floorRules: opt(any),
+    // What a `?` node resolves to — beside the geometry, per act. Moved out of
+    // `balance.unknownNode`, which could not vary per act while the map does.
+    unknownWeights: opt(mapOf(num)),
+    // WAS `opt(any)`, WHICH IS NOT VALIDATION — it is the shape of a check that
+    // cannot go red (Marina). Six deliberately-broken inputs passed it: a bare
+    // string, a `fixed` index of 999, a node kind that does not exist, a
+    // negative index, the number 42, and `floors` halved to 8 while `fixed`
+    // still named 9 and 15. All six are red now.
+    //
+    // TWO LAYERS, ON PURPOSE. The schema below rules on SHAPE — is this an
+    // object, is `at` one of the four anchor kinds, is `type` a node type,
+    // is there a field nobody declared. It cannot rule on MEANING, because
+    // meaning needs `floors`: whether floor 9 exists in this act is a question
+    // about the act, not about the literal. `resolveFloorPlan`
+    // (model/floorplan.js) answers that half and validate.js reports it, so
+    // neither layer is asked a question it cannot see the inputs to.
+    floorRules: opt(
+      obj({
+        fixed: opt(arr(floorAnchor({ type: en(...NODE_TYPES) }))),
+        noEliteOrShrineBefore: opt(floorAnchor()),
+        noShrineOn: opt(floorAnchor()),
+        minElites: opt(int),
+        minMerchants: opt(int),
+      })
+    ),
   }),
 
   balance: any, // flat constants object; shape is content's concern (SPEC §3.3)

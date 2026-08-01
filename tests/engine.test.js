@@ -11,6 +11,7 @@ import {
   extractTemplateTokens,
   computeTokenBindings,
 } from '../src/model/validate.js';
+import { resolveFloorPlan } from '../src/model/floorplan.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
@@ -390,6 +391,14 @@ export async function runTests({ artManifest = null } = {}) {
   // ---- 12. Map generation (SPEC §6, §8.12) -------------------------------------------
   test('12. map gen: fixed-seed snapshot; constraints over 200 seeds', () => {
     const config = contentBundle.mapConfigs[1];
+    // READ THE RESOLVED PLAN, never the raw rules. This test used to hardcode
+    // "floor 9 all treasure, floor 15 shrine" and read
+    // `config.floorRules.noEliteOrShrineBefore` as a number — a second decider
+    // for what a rule means, which drifts from the generator the moment the
+    // vocabulary changes. It also encoded `15: 'shrine'`, a rule that had never
+    // fired. One resolution, every reader (model/floorplan.js).
+    const { plan } = resolveFloorPlan(config);
+    assert(plan != null, 'act 1 floor rules resolve');
     const gen = (seed) => generateActMap({ config, rng: createRng(seed) });
 
     // Fixed seed → identical graph (determinism snapshot).
@@ -399,24 +408,35 @@ export async function runTests({ artManifest = null } = {}) {
       const map = gen(s * 2654435761);
       const nodes = Object.values(map.nodes);
 
-      // Fixed rows: floor 1 all monster, floor 9 all treasure, floor 15 shrine.
+      // Every fixed rank the plan resolved, whatever it resolved to.
       for (const n of nodes) {
-        if (n.floor === 1) eq(n.type, 'monster', `seed ${s}: floor-1 node ${n.id}`);
-        if (n.floor === 9) eq(n.type, 'treasure', `seed ${s}: floor-9 node ${n.id}`);
-        // No early elites/shrines; no floor-14 shrine (SPEC §6 constraints).
-        if (n.floor < config.floorRules.noEliteOrShrineBefore && n.floor > 1) {
+        const fixedType = plan.fixed[n.floor];
+        if (fixedType) eq(n.type, fixedType, `seed ${s}: fixed ${fixedType} node ${n.id} on floor ${n.floor}`);
+        // No early elites/shrines; none on the barred floor (SPEC §6).
+        if (n.floor < plan.eliteShrineFrom && !plan.fixed[n.floor]) {
           assert(n.type !== 'elite' && n.type !== 'shrine', `seed ${s}: early ${n.type} on floor ${n.floor}`);
         }
-        if (n.floor === config.floorRules.noShrineOn) {
-          assert(n.type !== 'shrine', `seed ${s}: shrine on floor 14`);
+        if (n.floor === plan.noShrineOn) {
+          assert(n.type !== 'shrine', `seed ${s}: shrine on the barred floor ${plan.noShrineOn}`);
         }
       }
+      // The plan's fixed ranks are not a formality — each must actually land.
+      for (const [floor, type] of Object.entries(plan.fixed)) {
+        assert(nodes.some((n) => n.floor === Number(floor) && n.type === type),
+          `seed ${s}: no ${type} on its fixed floor ${floor}`);
+      }
+      // `columns` travels with the graph, so the map screen can size its SVG.
+      eq(map.columns, config.columns, `seed ${s}: graph carries its column count`);
       eq(map.nodes[map.shrineId].type, 'shrine', `seed ${s}: pre-boss shrine`);
       eq(map.nodes[map.bossId].type, 'boss', `seed ${s}: boss node`);
 
       // Minimum counts (hard promise even via the relax path).
-      assert(nodes.filter((n) => n.type === 'elite').length >= config.floorRules.minReachableElites, `seed ${s}: elites`);
-      assert(nodes.filter((n) => n.type === 'merchant').length >= config.floorRules.minReachableMerchants, `seed ${s}: merchant`);
+      // NOTE THE NAMES. These were `minReachableElites` / `minReachableMerchants`
+      // and this test asserted a COUNT while the name promised REACHABILITY —
+      // two different claims, and the graph-wide count is the one that was ever
+      // true. Freja measured the gap: 6 of 102 starts reach no Elite at 15x7.
+      assert(nodes.filter((n) => n.type === 'elite').length >= plan.minElites, `seed ${s}: elites`);
+      assert(nodes.filter((n) => n.type === 'merchant').length >= plan.minMerchants, `seed ${s}: merchant`);
 
       // No crossing edges within the path floors.
       for (let floor = 1; floor < config.floors - 1; floor++) {
@@ -615,7 +635,7 @@ export async function runTests({ artManifest = null } = {}) {
         rollFlaskDrop(REG, r, rn),
         rollRelicReward(REG, r, ['forsakenMedallion']),
         buildShopStock(REG, r, rn),
-        resolveUnknownNode(REG, r, {}),
+        resolveUnknownNode(REG, r, { act: 1 }),
       ]);
     };
     eq(rollAll(), rollAll(), 'reward/shop/unknown rolls deterministic');

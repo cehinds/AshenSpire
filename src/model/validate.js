@@ -11,6 +11,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { resolveFloorPlan } from './floorplan.js';
 import {
   SCHEMAS,
   OPCODES,
@@ -234,7 +235,18 @@ export function validateContent(bundle) {
       err('mapConfigs', 'mapConfigs must be an object keyed by act number');
     } else {
       for (const act of Object.keys(b.mapConfigs)) {
-        walkSchema(b.mapConfigs[act], SCHEMAS.mapConfig, `mapConfigs.${act}`, vctx);
+        const cfg = b.mapConfigs[act];
+        walkSchema(cfg, SCHEMAS.mapConfig, `mapConfigs.${act}`, vctx);
+        // THE SECOND LAYER — meaning, not shape. The schema cannot know whether
+        // floor 9 exists in THIS act; that needs `floors`, so it is asked here.
+        // This is the boot-time half of Law 1 clause 5: bad data fails loud and
+        // NAMES THE ENTRY, rather than being clamped, defaulted, or ignored.
+        // The corpus it has to turn red is in tools/mapplan.mjs --selftest.
+        if (cfg && typeof cfg === 'object' && !Array.isArray(cfg)) {
+          for (const e of resolveFloorPlan(cfg).errors) {
+            err(`mapConfigs.${act}.${e.key}`, e.msg);
+          }
+        }
       }
     }
   }
