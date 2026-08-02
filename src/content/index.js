@@ -29,7 +29,7 @@ import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
 
 export const contentBundle = {
-  version: '0.2.0-ashen',
+  version: '0.4.0',
   balance,
   cards: [...reaverCards, ...starseerCards, ...heraldCards, ...colorlessCards, ...coopCards],
   relics,
