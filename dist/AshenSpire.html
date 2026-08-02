@@ -20066,12 +20066,17 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
           const wasDragging = dragging;
           dragging = false;
           if (!wasDragging) return; // plain click handled by 'click'
-          suppressClick = true; // whatever happens next, this drag is not a click
-          // A CANCELLED DRAG DROPS NOTHING. The browser taking the gesture —
-          // on narrow, the hand scroller claiming it — is the player NOT
-          // committing to a play. elementFromPoint on a cancel would aim the
-          // card at wherever the finger happened to die.
+          // A CANCELLED DRAG DROPS NOTHING — AND COSTS NOTHING. The cancelled
+          // return sits ABOVE the suppressClick arm, and the order is Vira's
+          // gate finding on this very fix: suppressClick guards a COMPLETED
+          // drag against double-firing as a click, but no click follows a
+          // cancel — armed here, the flag sat live and ate the card's next
+          // real tap (one tap swallowed, self-recovering, both shapes;
+          // introduced by the first version of this fix, on exactly the
+          // gesture the fix exists to make safe). elementFromPoint on a
+          // cancel would aim the card at wherever the finger happened to die.
           if (cancelled) return;
+          suppressClick = true; // whatever happens next, this drag is not a click
           const under = document.elementFromPoint(up.clientX, up.clientY);
           const enemyBox = under && under.closest ? under.closest('.enemy:not(.dead)') : null;
           if (pv.needsTarget) {
