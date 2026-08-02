@@ -13,6 +13,7 @@ import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
 import { nodeIcon, nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
+import { trackGesture } from '../gesture.js';
 
 const COL_X = 95;
 const ROW_H = 46;
@@ -308,15 +309,23 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     sl = scroll.scrollLeft;
     st = scroll.scrollTop;
     scroll.classList.add('grabbing');
-  });
-  addEventListener('pointermove', (ev) => {
-    if (!panning) return;
-    scroll.scrollLeft = sl - (ev.clientX - sx);
-    scroll.scrollTop = st - (ev.clientY - sy);
-  });
-  addEventListener('pointerup', () => {
-    panning = false;
-    scroll.classList.remove('grabbing');
+    // #22's lifecycle, same helper as the cards (src/ui/gesture.js). The old
+    // shape added THREE listeners to window per MOUNT and removed none — pan
+    // cleanup ran only on a pointerup that reached window, so a cancelled pan
+    // left `.grabbing` stuck and the stale movers stacked per visit (Vira's
+    // table). Listeners now live on the scroller and die with it; cancel ends
+    // the pan exactly as release does — a pan has nothing to abandon.
+    trackGesture(ev, {
+      onMove: (mv) => {
+        if (!panning) return;
+        scroll.scrollLeft = sl - (mv.clientX - sx);
+        scroll.scrollTop = st - (mv.clientY - sy);
+      },
+      onEnd: () => {
+        panning = false;
+        scroll.classList.remove('grabbing');
+      },
+    });
   });
 
   // Keyboard: M opens the menu overlay; + / − / 0 zoom; the overlay owns Esc
