@@ -80,6 +80,29 @@ body.readable-ui { --font-display: var(--font-body); }
    maps to px÷10 at rest. The text-size setting overrides this % on <html> to
    grow/shrink all rem-based type + dimensions at once (main.js). */
 html { height: 100dvh; overflow: hidden; font-size: 62.5%; }
+/* AIM AT THE FAR ENEMY, LEAVE THE GAME — Sunna's gate finding on #22, measured
+   both edges x3. The straight line from the leftmost card to the far-right
+   enemy runs at 38 deg, under the ~45-47 deg boundary where Chromium claims a
+   drag as horizontal scroll. The hand rests at scrollLeft 0, so the claimed
+   scroll has nothing to move and CHAINS TO THE VIEWPORT — and Chrome's
+   overscroll navigation goes BACK, out of combat, mid-fight. `pan-x` on the
+   cards is what routes the shallow aim into the horizontal machinery: the
+   known-bad survived the same swipe 3/3, the first cut of the fix survived 0/3.
+
+   THE RULE MUST SIT AT THE ROOT AND SHE MEASURED WHY: `overscroll-behavior-x:
+   contain` on .hand does NOT close it — at scrollLeft 0 the hand cannot scroll
+   rightward, so it is never the scroll target; the viewport is. Here, it closes
+   3/3 with hand scrolling intact (150->200).
+
+   BOTH AXES, DELIBERATELY, and the halves have different evidence: -x is
+   measured (her backnav.mjs, both edges). -y is the SAME mechanism pointed the
+   other way — pull-to-refresh reloading a live run off any vertical overscroll —
+   declared here because this app is a fullscreen game with overflow:hidden at
+   the root and NO surface where a browser navigation or refresh gesture is ever
+   the player's intent; there is nothing for `none` to take away. Headless
+   Chromium cannot raise pull-to-refresh, so the -y half ships as a declaration
+   with this named boundary, not as a measured green. */
+html, body { overscroll-behavior: none; }
 /* PROTOTYPE (EldenSpire#23, track B) — 100dvh, and ONLY here.
    `dvh` was pitched as a sweep. It is wrong everywhere except this one line,
    and the reason is the one that has bitten this file all week. Measured under
@@ -1669,13 +1692,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    raised above it, out of it. That is the difference between shrinking a
    1200px layout and laying out for 430.
 
-   NOT DONE HERE, deliberately:
-   - `touch-action` is not set on the strip. A horizontal scroller wants
-     `pan-x`, and setting it changes which gestures the browser claims, which
-     is EldenSpire#22's subject. #22 is a separate card with its own gate and I
-     am not folding it into a prototype. The strip scrolls on default
-     behaviour; a touch-drag from a card still fires pointercancel exactly as
-     it does on dev, unchanged and unfixed.
+   ~~NOT DONE HERE, deliberately: `touch-action` is not set on the strip~~ —
+   RESOLVED BY #22, which is the card this note was deferring to. The rule
+   lives below with the deferral kept for its reasoning: which gestures the
+   browser claims IS the design decision, and it is now made, per-axis.
    - No `clamp()`. It was pitched for type and spacing, and the useful form of
      it is `clamp(a, Nvw, b)` — a vw length, which under `body { zoom }`
      resolves in the unzoomed room and is the same defect as everything else on
@@ -1684,7 +1704,27 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      been decoration. */
 
   /* ---- top bar: two rows instead of one clipped one ---- */
-  :root[data-layout='narrow'] .topbar {
+  /* #22's design answer for the narrow hand, per-axis: the strip is a HORIZONTAL
+   scroller and a card drag is a VERTICAL aim, so the axes are split rather than
+   fought over. `pan-x` on the cards: a horizontal touch is the browser's (the
+   hand scrolls — through a card, which is where every touch starts, because
+   cards fill the strip), and a vertical touch stays with the JS drag (the
+   browser may not claim pan-y, so no cancel fires and the aim survives).
+   Vira measured the fight this replaces: five drag attempts on dev fired ZERO
+   card pointerdowns once the scroller owned the follow-through — the player
+   scrolled while trying to aim. Scoped to narrow: the wide hand is not a
+   scroller and its default behaviour is not in question. */
+:root[data-layout='narrow'] .hand .card { touch-action: pan-x; }
+/* And the WIDE half, found by the probe going red at 1200x730 where 390x844
+   passed: with default `touch-action: auto` Chrome claims ANY touch drag as a
+   potential scroll and fires pointercancel — even where nothing scrolls — so a
+   real aimed drag died mid-flight on the layout with no scroller at all. Wide
+   has nothing legitimate for the browser to claim on a card, so the answer is
+   none. NOT merged with the rule above into one `none`: on narrow the hand
+   scroller is real, and pan-x THROUGH the cards is how it stays reachable. */
+.hand .card { touch-action: none; }
+
+:root[data-layout='narrow'] .topbar {
     height: auto; flex-wrap: wrap; row-gap: 0.4rem; gap: 1rem; padding: 0.6rem 1rem;
   }
   :root[data-layout='narrow'] .topbar .hpbar { width: 14rem; }
@@ -16967,6 +17007,7 @@ const { hintBarHtml } = require("src/ui/components/hints.js");
 const { classGlyph, tintCss } = require("src/ui/assets.js");
 const { nodeIcon, nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
+const { trackGesture } = require("src/ui/gesture.js");
 
 const COL_X = 95;
 const ROW_H = 46;
@@ -17275,15 +17316,23 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     sl = scroll.scrollLeft;
     st = scroll.scrollTop;
     scroll.classList.add('grabbing');
-  });
-  addEventListener('pointermove', (ev) => {
-    if (!panning) return;
-    scroll.scrollLeft = sl - (ev.clientX - sx);
-    scroll.scrollTop = st - (ev.clientY - sy);
-  });
-  addEventListener('pointerup', () => {
-    panning = false;
-    scroll.classList.remove('grabbing');
+    // #22's lifecycle, same helper as the cards (src/ui/gesture.js). The old
+    // shape added THREE listeners to window per MOUNT and removed none — pan
+    // cleanup ran only on a pointerup that reached window, so a cancelled pan
+    // left `.grabbing` stuck and the stale movers stacked per visit (Vira's
+    // table). Listeners now live on the scroller and die with it; cancel ends
+    // the pan exactly as release does — a pan has nothing to abandon.
+    trackGesture(ev, {
+      onMove: (mv) => {
+        if (!panning) return;
+        scroll.scrollLeft = sl - (mv.clientX - sx);
+        scroll.scrollTop = st - (mv.clientY - sy);
+      },
+      onEnd: () => {
+        panning = false;
+        scroll.classList.remove('grabbing');
+      },
+    });
   });
 
   // Keyboard: M opens the menu overlay; + / − / 0 zoom; the overlay owns Esc
@@ -19812,6 +19861,76 @@ if (typeof window !== 'undefined') {
 Object.assign(module.exports, { setHintMode, hintBarHtml, refreshHintBars });
 
 },
+"src/ui/gesture.js": function (module, exports, require) {
+// src/ui/gesture.js — ONE answer to "the gesture ended, however it ended."
+//
+// EldenSpire#22, widened across combat.js and map.js after Vira measured the
+// blast radius (gamedesign/vira/log/2026/2026-08-01_combat-pointer-handling-
+// measured.md — the numbers there are this module's observed red):
+//
+//   A CANCELLED DRAG PLAYED A CARD ON THE NEXT TAP. combat's wireCardInput
+//   added pointermove/pointerup to WINDOW per drag and removed them only in
+//   onUp; there was no pointercancel path in the file. After the browser
+//   cancelled a drag, the stale onUp waited armed; one unrelated tap on an
+//   enemy — a DIFFERENT pointerId — fired it, elementFromPoint found the
+//   enemy, and the card the player had declined to play was played: discard
+//   0->1, energy 3->2, both shapes, reproduced twice. Five cancelled drags
+//   leaked window pairs 1->6. The map's pan had the same shape with a
+//   different consequence (pan roughens; .grabbing sticks).
+//
+// The three rules, each one a measured hole:
+//   1. CLEANUP RUNS ON pointerup AND pointercancel — "however it ended". A
+//      cancel is not an error; on a phone it is the NORMAL end of any drag the
+//      browser decides is a scroll, on the exact surface where card plays begin.
+//   2. POINTERID-SCOPED, every handler. The misplay fired from pointerId 2
+//      against the drag's pointerId 1 — an unscoped end handler answers to
+//      whichever finger arrives next.
+//   3. THE GESTURE OWNS THE POINTER: setPointerCapture on the element, so
+//      moves route to it even off-element and the listeners live on the
+//      ELEMENT, not window. Nothing is added to window, so there is nothing to
+//      leak when a teardown races a gesture — the element's listeners die with
+//      the element.
+//
+// What this module is NOT: a drag-and-drop framework. It does not know about
+// ghosts, thresholds, targets or scrolling. The caller keeps its own gesture
+// state; this owns only the lifecycle — begin, move, end-with-a-verdict.
+//
+// onEnd(ev, { cancelled }) is ALWAYS called exactly once, with cancelled: true
+// when the browser took the gesture (scroll claim, focus loss, touch palm
+// rejection…). The caller decides what a cancelled end abandons.
+
+function trackGesture(startEv, { onMove, onEnd } = {}) {
+  const id = startEv.pointerId;
+  const el = startEv.currentTarget;
+  // Capture can throw on a detached node or an exotic target; a gesture that
+  // cannot capture still gets scoped listeners and still cleans up — weaker
+  // (off-element moves may not arrive), never leaky.
+  try { el.setPointerCapture(id); } catch { /* tracked without capture */ }
+  let done = false;
+  const move = (ev) => {
+    if (ev.pointerId !== id || done) return;
+    if (onMove) onMove(ev);
+  };
+  const finish = (cancelled) => (ev) => {
+    if (ev.pointerId !== id || done) return;
+    done = true;
+    el.removeEventListener('pointermove', move);
+    el.removeEventListener('pointerup', up);
+    el.removeEventListener('pointercancel', cancel);
+    try { el.releasePointerCapture(id); } catch { /* already released */ }
+    if (onEnd) onEnd(ev, { cancelled });
+  };
+  const up = finish(false);
+  const cancel = finish(true);
+  el.addEventListener('pointermove', move);
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', cancel);
+}
+
+
+Object.assign(module.exports, { trackGesture });
+
+},
 "src/ui/screens/combat.js": function (module, exports, require) {
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
@@ -19837,6 +19956,7 @@ const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { figureSpec } = require("src/model/loadout.js");
+const { trackGesture } = require("src/ui/gesture.js");
 
 function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   app.innerHTML = `
@@ -20332,6 +20452,11 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       if (busy || !affordable || ev.button !== 0) return;
       startX = ev.clientX;
       startY = ev.clientY;
+      // The lifecycle lives in trackGesture (src/ui/gesture.js — #22): capture
+      // on the card, pointerId-scoped, and the end handler runs on pointerup
+      // AND pointercancel. The old shape — window listeners removed only in
+      // onUp — is the one that played a cancelled drag's card on the next tap
+      // (Vira's misplay: discard 0->1 from a tap on a DIFFERENT pointerId).
       const onMove = (mv) => {
         if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > 12) {
           dragging = true;
@@ -20359,23 +20484,33 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
           dragGhost.style.top = `${p.top}px`;
         }
       };
-      const onUp = (up) => {
-        removeEventListener('pointermove', onMove);
-        removeEventListener('pointerup', onUp);
-        if (dragGhost) dragGhost.remove();
-        if (!dragging) return; // plain click handled by 'click'
-        dragging = false;
-        suppressClick = true; // whatever happens next, this drag is not a click
-        const under = document.elementFromPoint(up.clientX, up.clientY);
-        const enemyBox = under && under.closest ? under.closest('.enemy:not(.dead)') : null;
-        if (pv.needsTarget) {
-          if (enemyBox) playCard(inst.instanceId, enemyBox.dataset.eid);
-        } else if (under && under.closest && under.closest('.field')) {
-          playCard(inst.instanceId, null);
-        }
-      };
-      addEventListener('pointermove', onMove);
-      addEventListener('pointerup', onUp);
+      trackGesture(ev, {
+        onMove,
+        onEnd: (up, { cancelled }) => {
+          if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+          const wasDragging = dragging;
+          dragging = false;
+          if (!wasDragging) return; // plain click handled by 'click'
+          // A CANCELLED DRAG DROPS NOTHING — AND COSTS NOTHING. The cancelled
+          // return sits ABOVE the suppressClick arm, and the order is Vira's
+          // gate finding on this very fix: suppressClick guards a COMPLETED
+          // drag against double-firing as a click, but no click follows a
+          // cancel — armed here, the flag sat live and ate the card's next
+          // real tap (one tap swallowed, self-recovering, both shapes;
+          // introduced by the first version of this fix, on exactly the
+          // gesture the fix exists to make safe). elementFromPoint on a
+          // cancel would aim the card at wherever the finger happened to die.
+          if (cancelled) return;
+          suppressClick = true; // whatever happens next, this drag is not a click
+          const under = document.elementFromPoint(up.clientX, up.clientY);
+          const enemyBox = under && under.closest ? under.closest('.enemy:not(.dead)') : null;
+          if (pv.needsTarget) {
+            if (enemyBox) playCard(inst.instanceId, enemyBox.dataset.eid);
+          } else if (under && under.closest && under.closest('.field')) {
+            playCard(inst.instanceId, null);
+          }
+        },
+      });
     });
 
     el.addEventListener('click', (ev) => {

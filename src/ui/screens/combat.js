@@ -22,6 +22,7 @@ import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
 import { figureSpec } from '../../model/loadout.js';
+import { trackGesture } from '../gesture.js';
 
 export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   app.innerHTML = `
@@ -517,6 +518,11 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       if (busy || !affordable || ev.button !== 0) return;
       startX = ev.clientX;
       startY = ev.clientY;
+      // The lifecycle lives in trackGesture (src/ui/gesture.js — #22): capture
+      // on the card, pointerId-scoped, and the end handler runs on pointerup
+      // AND pointercancel. The old shape — window listeners removed only in
+      // onUp — is the one that played a cancelled drag's card on the next tap
+      // (Vira's misplay: discard 0->1 from a tap on a DIFFERENT pointerId).
       const onMove = (mv) => {
         if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > 12) {
           dragging = true;
@@ -544,23 +550,33 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
           dragGhost.style.top = `${p.top}px`;
         }
       };
-      const onUp = (up) => {
-        removeEventListener('pointermove', onMove);
-        removeEventListener('pointerup', onUp);
-        if (dragGhost) dragGhost.remove();
-        if (!dragging) return; // plain click handled by 'click'
-        dragging = false;
-        suppressClick = true; // whatever happens next, this drag is not a click
-        const under = document.elementFromPoint(up.clientX, up.clientY);
-        const enemyBox = under && under.closest ? under.closest('.enemy:not(.dead)') : null;
-        if (pv.needsTarget) {
-          if (enemyBox) playCard(inst.instanceId, enemyBox.dataset.eid);
-        } else if (under && under.closest && under.closest('.field')) {
-          playCard(inst.instanceId, null);
-        }
-      };
-      addEventListener('pointermove', onMove);
-      addEventListener('pointerup', onUp);
+      trackGesture(ev, {
+        onMove,
+        onEnd: (up, { cancelled }) => {
+          if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+          const wasDragging = dragging;
+          dragging = false;
+          if (!wasDragging) return; // plain click handled by 'click'
+          // A CANCELLED DRAG DROPS NOTHING — AND COSTS NOTHING. The cancelled
+          // return sits ABOVE the suppressClick arm, and the order is Vira's
+          // gate finding on this very fix: suppressClick guards a COMPLETED
+          // drag against double-firing as a click, but no click follows a
+          // cancel — armed here, the flag sat live and ate the card's next
+          // real tap (one tap swallowed, self-recovering, both shapes;
+          // introduced by the first version of this fix, on exactly the
+          // gesture the fix exists to make safe). elementFromPoint on a
+          // cancel would aim the card at wherever the finger happened to die.
+          if (cancelled) return;
+          suppressClick = true; // whatever happens next, this drag is not a click
+          const under = document.elementFromPoint(up.clientX, up.clientY);
+          const enemyBox = under && under.closest ? under.closest('.enemy:not(.dead)') : null;
+          if (pv.needsTarget) {
+            if (enemyBox) playCard(inst.instanceId, enemyBox.dataset.eid);
+          } else if (under && under.closest && under.closest('.field')) {
+            playCard(inst.instanceId, null);
+          }
+        },
+      });
     });
 
     el.addEventListener('click', (ev) => {
