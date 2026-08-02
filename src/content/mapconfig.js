@@ -49,7 +49,7 @@
 //       carrying three different samples within a day).
 
 const ACT_SHAPE = {
-  floors: 15,
+  floors: 12,
   columns: 7,
   pathCount: 6,
   typeWeights: { monster: 45, event: 22, shrine: 12, elite: 8, merchant: 5 },
