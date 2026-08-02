@@ -80,6 +80,29 @@ body.readable-ui { --font-display: var(--font-body); }
    maps to px÷10 at rest. The text-size setting overrides this % on <html> to
    grow/shrink all rem-based type + dimensions at once (main.js). */
 html { height: 100dvh; overflow: hidden; font-size: 62.5%; }
+/* AIM AT THE FAR ENEMY, LEAVE THE GAME — Sunna's gate finding on #22, measured
+   both edges x3. The straight line from the leftmost card to the far-right
+   enemy runs at 38 deg, under the ~45-47 deg boundary where Chromium claims a
+   drag as horizontal scroll. The hand rests at scrollLeft 0, so the claimed
+   scroll has nothing to move and CHAINS TO THE VIEWPORT — and Chrome's
+   overscroll navigation goes BACK, out of combat, mid-fight. `pan-x` on the
+   cards is what routes the shallow aim into the horizontal machinery: the
+   known-bad survived the same swipe 3/3, the first cut of the fix survived 0/3.
+
+   THE RULE MUST SIT AT THE ROOT AND SHE MEASURED WHY: `overscroll-behavior-x:
+   contain` on .hand does NOT close it — at scrollLeft 0 the hand cannot scroll
+   rightward, so it is never the scroll target; the viewport is. Here, it closes
+   3/3 with hand scrolling intact (150->200).
+
+   BOTH AXES, DELIBERATELY, and the halves have different evidence: -x is
+   measured (her backnav.mjs, both edges). -y is the SAME mechanism pointed the
+   other way — pull-to-refresh reloading a live run off any vertical overscroll —
+   declared here because this app is a fullscreen game with overflow:hidden at
+   the root and NO surface where a browser navigation or refresh gesture is ever
+   the player's intent; there is nothing for `none` to take away. Headless
+   Chromium cannot raise pull-to-refresh, so the -y half ships as a declaration
+   with this named boundary, not as a measured green. */
+html, body { overscroll-behavior: none; }
 /* PROTOTYPE (EldenSpire#23, track B) — 100dvh, and ONLY here.
    `dvh` was pitched as a sweep. It is wrong everywhere except this one line,
    and the reason is the one that has bitten this file all week. Measured under
