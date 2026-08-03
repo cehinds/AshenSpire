@@ -1,0 +1,12 @@
+{
+  "name": "ashen-spire-desktop",
+  "version": "0.1.0",
+  "description": "Ashen Spire desktop wrapper spike (Electron)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^43.2.0"
+  }
+}

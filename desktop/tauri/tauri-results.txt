@@ -1,0 +1,19 @@
+=== run 1 (write save) ===
+SPIKE {"event":"playable","boot_to_playable_ms":1114,"page_perf_ms":356,"gamepad_api":true,"gamepad_events":true,"fullscreen_dom_enabled":true,"mode":"write","localStorage_keys":[],"persist_written":"rune-spike-sentinel"}
+SPIKE {"event":"fullscreen","enter_ok":true,"leave_ok":true,"inner_before":{"w":1280,"h":720},"inner_during":{"w":1280,"h":720},"inner_after":{"w":1280,"h":720}}
+SPIKE {"event":"quitting","quit_requested_at":1785768995588}
+SPIKE {"event":"process_exit","mode":"write","exit_code":0,"total_wall_ms":3114}
+=== run 2 (restart, read save) ===
+SPIKE {"event":"playable","boot_to_playable_ms":982,"page_perf_ms":228,"gamepad_api":true,"gamepad_events":true,"fullscreen_dom_enabled":true,"mode":"read","localStorage_keys":["spike_persist"],"persist_read":"rune-spike-sentinel","persist_survived":true}
+SPIKE {"event":"fullscreen","enter_ok":true,"leave_ok":true,"inner_before":{"w":1280,"h":720},"inner_during":{"w":1280,"h":720},"inner_after":{"w":1280,"h":720}}
+SPIKE {"event":"quitting","quit_requested_at":1785768998590}
+SPIKE {"event":"process_exit","mode":"read","exit_code":0,"total_wall_ms":2656}
+=== on-disk save location (WebKitGTK storage under app identifier) ===
+/root/.local/share/com.falk.ashenspire/hsts-storage.sqlite
+/root/.local/share/com.falk.ashenspire/WebKitCache/Version 17/salt
+/root/.local/share/com.falk.ashenspire/mediakeys/v1/salt
+/root/.local/share/com.falk.ashenspire/storage/salt
+/root/.local/share/com.falk.ashenspire/localstorage/tauri_localhost_0.localstorage-wal
+/root/.local/share/com.falk.ashenspire/localstorage/tauri_localhost_0.localstorage
+/root/.local/share/com.falk.ashenspire/localstorage/tauri_localhost_0.localstorage-shm
+/root/.local/share/com.falk.ashenspire/CacheStorage/salt
