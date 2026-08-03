@@ -24,8 +24,8 @@ const ROOT = resolve(__dirname, '..');
 // Audio is here BEFORE any audio exists, deliberately. Vira's finding: the sweep
 // skips unknown extensions silently, so the first .ogg anyone adds would be
 // dropped from the single-file build without a word — and we would rediscover
-// the art-less-build bug in a new medium. music.js already documents the hook
-// (SFX_MANIFEST / MUSIC_MANIFEST), so the day it gets used is coming.
+// the art-less-build bug in a new medium. sfx.js and music.js already document
+// the hooks (SFX_MANIFEST / MUSIC_MANIFEST), so the day they get used is coming.
 const MIME = {
   '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml',

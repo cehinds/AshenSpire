@@ -1548,6 +1548,57 @@ export async function runTests({ artManifest = null } = {}) {
     // from rendered pixels by `node tools/contrast-audit.mjs --gate`.
   });
 
+  // ---- 35b. SFX recipes are data, and a malformed recipe names itself (#46) -
+  // Numbered 35b, not 36: run-node.mjs already prints 36–38, and a duplicated
+  // test number is the two-homes defect its own comment warns about.
+  test('35b. SFX recipes are content; a malformed recipe fails naming its id (#46)', () => {
+    // The table itself: shipped, non-empty, carries the engine's fallback.
+    const sfx = contentBundle.sfx;
+    assert(sfx && typeof sfx === 'object', 'bundle carries sfx recipes');
+    assert(Array.isArray(sfx.default) && sfx.default.length > 0, "the audible 'default' fallback exists");
+    assert(Object.keys(sfx).length >= 16, `15 hook recipes + default expected, got ${Object.keys(sfx).length}`);
+
+    // Green on the shipped table (also covered by 15; asserted here so this
+    // test is readable alone).
+    assert(validateContent(contentBundle).ok, 'shipped sfx table validates');
+
+    // The known-bad corpus — each observed red at authoring time (2026-08-03)
+    // before being seeded here (the instrument rule). Every failure must NAME
+    // THE RECIPE in its path (Law 1 clause 5): a red that doesn't say which
+    // entry broke hands Constantine a treasure hunt, not an error.
+    const cases = [
+      ['unknown layer kind', { hit: [{ kind: 'chirp', dur: 0.1 }] }, 'sfx.hit', "Unknown layer kind 'chirp'"],
+      ['wave type outside the closed set', { buy: [{ kind: 'tone', type: 'pulse', freq: 700, dur: 0.16 }] }, 'sfx.buy', 'Expected one of'],
+      ['non-number peak', { hit: [{ kind: 'noise', dur: 0.16, peak: 'loud' }] }, 'sfx.hit', 'Expected number'],
+      ['undeclared field', { hit: [{ kind: 'noise', dur: 0.16, wobble: 3 }] }, 'sfx.hit', "Unknown field 'wobble'"],
+      ['zero dur (ramp would throw)', { uiClick: [{ kind: 'tone', freq: 420, dur: 0 }] }, 'sfx.uiClick', 'must be > 0'],
+      ['negative peak', { heal: [{ kind: 'tone', freq: 480, dur: 0.4, peak: -0.3 }] }, 'sfx.heal', 'must be > 0'],
+      ['negative t0', { victory: [{ kind: 'tone', freq: 392, dur: 0.5, t0: -0.1 }] }, 'sfx.victory', "'t0' must be >= 0"],
+      ['missing required freq', { shrine: [{ kind: 'tone', dur: 0.6 }] }, 'sfx.shrine', 'Missing required field'],
+      ['empty recipe', { relic: [] }, 'sfx.relic', 'non-empty array'],
+      ['recipe not an array', { flask: { kind: 'tone' } }, 'sfx.flask', 'non-empty array'],
+    ];
+    for (const [name, patch, wantPath, wantMsg] of cases) {
+      const r = validateContent({ ...contentBundle, sfx: { ...sfx, ...patch } });
+      assert(!r.ok, `known-bad '${name}' passed validation`);
+      const hit = r.errors.find((e) => e.path.startsWith(wantPath) && e.msg.includes(wantMsg));
+      assert(hit, `known-bad '${name}': no error at '${wantPath}*' mentioning '${wantMsg}' — got ${r.errors.slice(0, 3).map((e) => `${e.path}: ${e.msg}`).join(' | ')}`);
+    }
+    const noDefault = validateContent({ ...contentBundle, sfx: Object.fromEntries(Object.entries(sfx).filter(([k]) => k !== 'default')) });
+    assert(!noDefault.ok && noDefault.errors.some((e) => e.path === 'sfx.default'), "removing 'default' is caught by name");
+
+    // The tuning path this issue exists for: a value edit in the TABLE alone
+    // reaches what the engine plays — no code path filters or copies it. The
+    // engine spreads the layer into tone()/noise() (ui/audio.js synthSfx), so
+    // data-side identity is the headless half of that claim.
+    eq(sfx.hit.find((l) => l.kind === 'noise').peak, 0.5, "hit's peak lives in the table (was engine code at 70d35e2)");
+
+    // Boundary, said out loud: no WebAudio here — nothing in this suite HEARS
+    // a sound or proves synthSfx ran a layer. The runtime half is main.js's
+    // boot banner (validation) plus an ear. Whether each cue still SERVES the
+    // player at minute forty is Sunna's read, not this file's.
+  });
+
   const passed = results.filter((r) => r.ok).length;
   const failed = results.length - passed;
   return { passed, failed, results };

@@ -4,14 +4,13 @@
 // are is content. Adding a mood or a new screen's music is a data edit here,
 // with no change to the engine — same rule the cards and enemies follow.
 //
-// Sample manifests sit here too: naming a file for an id makes the engine play
-// that sample instead of synthesizing, and a missing/failed load falls back to
-// the synth, so this stays safe to point at art that doesn't exist yet.
+// The music sample manifest sits here too: naming a file for a context makes
+// the engine play that sample instead of synthesizing, and a missing/failed
+// load falls back to the synth, so this stays safe to point at art that
+// doesn't exist yet. (The SFX manifest + recipes live in content/sfx.js —
+// one home per medium.)
 
 // A real build can point these at files; missing/failed loads fall back to synth.
-export const SFX_MANIFEST = {
-  // cardPlay: 'assets/sfx/card.ogg',  ← example: drop a file here to override
-};
 export const MUSIC_MANIFEST = {
   // combat: 'assets/music/combat.ogg',
 };
