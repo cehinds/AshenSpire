@@ -22,6 +22,8 @@ import {
   CARD_TYPES,
   MODIFIER_KEYS,
   REGISTRY_TYPES,
+  SFX_LAYER_KINDS,
+  SFX_LAYER_SCHEMAS,
 } from './schemas.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 
@@ -62,6 +64,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'scripts',
   'equipment',
   'unlocks',
+  'sfx',
 ]);
 
 /**
@@ -251,6 +254,8 @@ export function validateContent(bundle) {
     }
   }
 
+  if (b.sfx != null) validateSfxRecipes(b.sfx, 'sfx', vctx);
+
   // ---- entity-specific cross checks ----------------------------------------
   for (const card of b.cards || []) {
     const path = `cards.${card.id}`;
@@ -301,6 +306,63 @@ export function validateContent(bundle) {
   };
 
   return { ok: errors.length === 0, errors, scriptReport };
+}
+
+// ---------------------------------------------------------------------------
+// SFX recipes (#46) — shape via the layer schemas, meaning via the ramp checks
+// ---------------------------------------------------------------------------
+
+/**
+ * A recipe is a non-empty array of layers; a layer is discriminated on `kind`
+ * FIRST so an error names the field that is wrong, not "matched no variant".
+ * The second layer here is meaning, not shape: WebAudio's exponential ramps
+ * throw on a target of 0 or below, so a freq/peak/dur a schema would accept
+ * as "a number" can still be a sound that dies at play time. Both layers
+ * report through `err`, so bad data fails loud and NAMES THE RECIPE
+ * (Law 1 clause 5) — at boot via main.js's banner, and in tests.
+ */
+function validateSfxRecipes(sfx, path, vctx) {
+  const { err } = vctx;
+  if (!isPlainObject(sfx)) {
+    err(path, `Expected an object map of recipe ids, got ${describe(sfx)}`);
+    return;
+  }
+  if (sfx.default === undefined) {
+    err(`${path}.default`, "Missing 'default' recipe — the audible fallback for an id with no entry");
+  }
+  for (const id of Object.keys(sfx)) {
+    const p = `${path}.${id}`;
+    const layers = sfx[id];
+    if (!Array.isArray(layers) || layers.length === 0) {
+      err(p, `Recipe must be a non-empty array of layers, got ${Array.isArray(layers) ? 'empty array' : describe(layers)}`);
+      continue;
+    }
+    layers.forEach((layer, i) => {
+      const lp = `${p}[${i}]`;
+      if (!isPlainObject(layer)) {
+        err(lp, `Layer must be an object, got ${describe(layer)}`);
+        return;
+      }
+      if (!SFX_LAYER_KINDS.includes(layer.kind)) {
+        err(`${lp}.kind`, `Unknown layer kind '${layer.kind}' (closed set: ${SFX_LAYER_KINDS.join(', ')})`);
+        return;
+      }
+      walkSchema(layer, SFX_LAYER_SCHEMAS[layer.kind], lp, vctx);
+      // Meaning: values the engine's ramps would throw on or render as
+      // silence. Finite is part of the claim, not a nicety — Infinity is
+      // typeof 'number', slides past the schema, and is exactly the class
+      // this comment promises to reject (Vira's gate finding on #46: the
+      // first version checked > 0 only, and Infinity > 0 is true).
+      for (const f of ['freq', 'to', 'dur', 'peak', 'hp', 'lp']) {
+        if (typeof layer[f] === 'number' && !(Number.isFinite(layer[f]) && layer[f] > 0)) {
+          err(`${lp}.${f}`, `'${f}' must be a finite number > 0, got ${layer[f]} (WebAudio's exponential ramps throw on 0 and on non-finite targets)`);
+        }
+      }
+      if (typeof layer.t0 === 'number' && !(Number.isFinite(layer.t0) && layer.t0 >= 0)) {
+        err(`${lp}.t0`, `'t0' must be a finite number >= 0, got ${layer.t0}`);
+      }
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -406,6 +468,9 @@ function walkSchema(value, node, path, vctx) {
 function describe(v) {
   if (v === null) return 'null';
   if (Array.isArray(v)) return 'array';
+  // NaN and ±Infinity JSON.stringify to "null", so without this branch a NaN
+  // red printed the riddle "Expected number, got number null" (Vira, #46).
+  if (typeof v === 'number' && !Number.isFinite(v)) return `number ${String(v)}`;
   return typeof v === 'object' ? 'object' : `${typeof v} ${JSON.stringify(v)}`;
 }
 

@@ -187,6 +187,13 @@ export const ENGINE_KEYWORDS = Object.freeze([
   'unplayable',
 ]);
 
+// SFX layer vocabulary (#46). A recipe (content/sfx.js) is a non-empty array
+// of layers; each layer is one of these two kinds, and the closed sets below
+// are the entire vocabulary a recipe may use — a new synthesis word (a third
+// kind, a new field) is an engine change (Law 1 clause 1).
+export const SFX_LAYER_KINDS = Object.freeze(['tone', 'noise']);
+export const SFX_WAVE_TYPES = Object.freeze(['sine', 'square', 'sawtooth', 'triangle']);
+
 // Registry type names (bundle keys holding arrays of defs).
 export const REGISTRY_TYPES = Object.freeze([
   'cards',
@@ -303,6 +310,30 @@ const enemyPhaseSchema = obj({
   if: opt({ k: 'predicate' }),
   do: effects,
   unlockMoves: opt(arr(str)), // checked against the enemy's own moves in validate.js
+});
+
+// SFX layer schemas (#46), keyed by `kind` — validate.js discriminates on the
+// kind first so an error lands on the field, not on "matched no variant".
+// Field semantics are documented where the data lives (content/sfx.js);
+// engine defaults for the optional fields live in ui/audio.js tone()/noise().
+export const SFX_LAYER_SCHEMAS = Object.freeze({
+  tone: obj({
+    kind: en('tone'),
+    type: opt(en(...SFX_WAVE_TYPES)),
+    freq: num,
+    to: opt(num),
+    t0: opt(num),
+    dur: num,
+    peak: opt(num),
+  }),
+  noise: obj({
+    kind: en('noise'),
+    dur: num,
+    peak: opt(num),
+    t0: opt(num),
+    hp: opt(num),
+    lp: opt(num),
+  }),
 });
 
 // ---------------------------------------------------------------------------

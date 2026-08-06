@@ -3350,6 +3350,7 @@ const { events } = require("src/content/events.js");
 const { classes, LOCKED_CLASSES } = require("src/content/classes.js");
 const { mapConfigs } = require("src/content/mapconfig.js");
 const { scripts } = require("src/content/scripts.js");
+const { SFX_RECIPES } = require("src/content/sfx.js");
 const { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } = require("src/content/equipment.js");
 const { equipTargets } = require("src/content/generated/equipTargets.js");
 const { unlocks } = require("src/content/generated/unlocks.js");
@@ -3369,6 +3370,9 @@ const contentBundle = {
   classes,
   mapConfigs,
   scripts,
+  // SFX recipes ride the bundle so validateContent rules on them at boot and
+  // in tests (#46); the audio engine imports the same table from content/sfx.js.
+  sfx: SFX_RECIPES,
   // Equipment rides in the bundle as plain tables (see model/registries.js).
   equipment: {
     armaments: ARMAMENTS,
@@ -8283,6 +8287,100 @@ function usesScript(def) {
 Object.assign(module.exports, { scripts });
 
 },
+"src/content/sfx.js": function (module, exports, require) {
+// src/content/sfx.js — the SFX recipes, as data (#46; design law §3.1, Law 1).
+//
+// The synth engine (src/ui/audio.js) knows how to say exactly two words —
+// 'tone' and 'noise' — and each recipe here is a list of layers spoken in that
+// closed vocabulary. Tuning a sound (hit too loud, click too shrill) is a
+// table edit here, never an engine edit: the same rule the music beds in
+// music.js and the cards follow. Schema: SFX_LAYER_SCHEMAS in
+// model/schemas.js; validated at boot and in tests via the content bundle
+// (model/validate.js), so a malformed layer fails naming its recipe id.
+//
+// Layer fields (all times in seconds, frequencies in Hz, peaks are gain 0–1):
+//   tone  — type (sine|square|sawtooth|triangle), freq, to? (glide target),
+//           dur, peak?, t0? (delay before onset)
+//   noise — dur, peak?, t0?, hp? (highpass Hz), lp? (lowpass Hz)
+//
+// `default` is required: it is what an id with no entry plays — a quiet,
+// audible beep, so a missing recipe is heard, never silent (Law 1 clause 5).
+
+// A real build can point these at files; missing/failed loads fall back to the
+// synth recipes below. (Moved here from music.js so all SFX content has one home.)
+const SFX_MANIFEST = {
+  // cardPlay: 'assets/sfx/card.ogg',  ← example: drop a file here to override
+};
+
+// One recipe per feedback hook. Kept short and characterful (dark fantasy).
+const SFX_RECIPES = {
+  cardPlay: [
+    { kind: 'tone', type: 'triangle', freq: 520, to: 380, dur: 0.12, peak: 0.35 },
+  ],
+  hit: [
+    { kind: 'noise', dur: 0.16, peak: 0.5, hp: 300, lp: 4200 },
+    { kind: 'tone', type: 'square', freq: 150, to: 60, dur: 0.14, peak: 0.35 },
+  ],
+  block: [
+    { kind: 'tone', type: 'sine', freq: 320, to: 520, dur: 0.14, peak: 0.4 },
+    { kind: 'noise', dur: 0.08, peak: 0.2, hp: 2000 },
+  ],
+  bleedBurst: [
+    { kind: 'tone', type: 'sawtooth', freq: 220, to: 70, dur: 0.5, peak: 0.5 },
+    { kind: 'noise', dur: 0.4, peak: 0.35, hp: 200, lp: 2600 },
+  ],
+  stagger: [
+    { kind: 'tone', type: 'square', freq: 90, to: 40, dur: 0.35, peak: 0.5 },
+    { kind: 'noise', dur: 0.22, peak: 0.4, hp: 120, lp: 1800 },
+  ],
+  enemyDeath: [
+    { kind: 'tone', type: 'sawtooth', freq: 240, to: 30, dur: 0.6, peak: 0.45 },
+  ],
+  heal: [
+    { kind: 'tone', type: 'sine', freq: 480, to: 720, dur: 0.4, peak: 0.35 },
+    { kind: 'tone', type: 'sine', freq: 720, to: 960, dur: 0.4, peak: 0.2, t0: 0.06 },
+  ],
+  stance: [
+    { kind: 'tone', type: 'triangle', freq: 300, to: 600, dur: 0.3, peak: 0.4 },
+  ],
+  relic: [
+    { kind: 'tone', type: 'sine', freq: 880, to: 1320, dur: 0.25, peak: 0.3 },
+  ],
+  flask: [
+    { kind: 'tone', type: 'sine', freq: 640, to: 400, dur: 0.18, peak: 0.3 },
+  ],
+  shrine: [
+    { kind: 'tone', type: 'sine', freq: 392, to: 588, dur: 0.6, peak: 0.3 },
+  ],
+  buy: [
+    { kind: 'tone', type: 'triangle', freq: 700, to: 1050, dur: 0.16, peak: 0.35 },
+  ],
+  nodeTravel: [
+    { kind: 'tone', type: 'triangle', freq: 300, to: 460, dur: 0.14, peak: 0.3 },
+  ],
+  uiClick: [
+    { kind: 'tone', type: 'square', freq: 420, to: 420, dur: 0.04, peak: 0.18 },
+  ],
+  victory: [
+    // A rising G–B–D–G arpeggio, one layer per note (was a forEach in engine code).
+    { kind: 'tone', type: 'triangle', freq: 392, dur: 0.5, peak: 0.32 },
+    { kind: 'tone', type: 'triangle', freq: 494, dur: 0.5, peak: 0.32, t0: 0.12 },
+    { kind: 'tone', type: 'triangle', freq: 587, dur: 0.5, peak: 0.32, t0: 0.24 },
+    { kind: 'tone', type: 'triangle', freq: 784, dur: 0.5, peak: 0.32, t0: 0.36 },
+  ],
+  youDied: [
+    { kind: 'tone', type: 'sawtooth', freq: 160, to: 40, dur: 1.2, peak: 0.5 },
+  ],
+  // The fallback for any id with no entry above — audible on purpose.
+  default: [
+    { kind: 'tone', type: 'sine', freq: 440, to: 440, dur: 0.05, peak: 0.15 },
+  ],
+};
+
+
+Object.assign(module.exports, { SFX_MANIFEST, SFX_RECIPES });
+
+},
 "src/content/equipment.js": function (module, exports, require) {
 // src/content/equipment.js — armaments, armour, slots, and the mod vocabulary.
 //
@@ -9447,7 +9545,7 @@ Object.assign(module.exports, { unlocks });
 // Headless: no document/window/localStorage/timers.
 
 const { resolveFloorPlan } = require("src/model/floorplan.js");
-const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, MODIFIER_KEYS, REGISTRY_TYPES } = require("src/model/schemas.js");
+const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, MODIFIER_KEYS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS } = require("src/model/schemas.js");
 const { FORMULA_OPS, FORMULA_OF, isFormula } = require("src/model/formulas.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -9487,6 +9585,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'scripts',
   'equipment',
   'unlocks',
+  'sfx',
 ]);
 
 /**
@@ -9676,6 +9775,8 @@ function validateContent(bundle) {
     }
   }
 
+  if (b.sfx != null) validateSfxRecipes(b.sfx, 'sfx', vctx);
+
   // ---- entity-specific cross checks ----------------------------------------
   for (const card of b.cards || []) {
     const path = `cards.${card.id}`;
@@ -9726,6 +9827,63 @@ function validateContent(bundle) {
   };
 
   return { ok: errors.length === 0, errors, scriptReport };
+}
+
+// ---------------------------------------------------------------------------
+// SFX recipes (#46) — shape via the layer schemas, meaning via the ramp checks
+// ---------------------------------------------------------------------------
+
+/**
+ * A recipe is a non-empty array of layers; a layer is discriminated on `kind`
+ * FIRST so an error names the field that is wrong, not "matched no variant".
+ * The second layer here is meaning, not shape: WebAudio's exponential ramps
+ * throw on a target of 0 or below, so a freq/peak/dur a schema would accept
+ * as "a number" can still be a sound that dies at play time. Both layers
+ * report through `err`, so bad data fails loud and NAMES THE RECIPE
+ * (Law 1 clause 5) — at boot via main.js's banner, and in tests.
+ */
+function validateSfxRecipes(sfx, path, vctx) {
+  const { err } = vctx;
+  if (!isPlainObject(sfx)) {
+    err(path, `Expected an object map of recipe ids, got ${describe(sfx)}`);
+    return;
+  }
+  if (sfx.default === undefined) {
+    err(`${path}.default`, "Missing 'default' recipe — the audible fallback for an id with no entry");
+  }
+  for (const id of Object.keys(sfx)) {
+    const p = `${path}.${id}`;
+    const layers = sfx[id];
+    if (!Array.isArray(layers) || layers.length === 0) {
+      err(p, `Recipe must be a non-empty array of layers, got ${Array.isArray(layers) ? 'empty array' : describe(layers)}`);
+      continue;
+    }
+    layers.forEach((layer, i) => {
+      const lp = `${p}[${i}]`;
+      if (!isPlainObject(layer)) {
+        err(lp, `Layer must be an object, got ${describe(layer)}`);
+        return;
+      }
+      if (!SFX_LAYER_KINDS.includes(layer.kind)) {
+        err(`${lp}.kind`, `Unknown layer kind '${layer.kind}' (closed set: ${SFX_LAYER_KINDS.join(', ')})`);
+        return;
+      }
+      walkSchema(layer, SFX_LAYER_SCHEMAS[layer.kind], lp, vctx);
+      // Meaning: values the engine's ramps would throw on or render as
+      // silence. Finite is part of the claim, not a nicety — Infinity is
+      // typeof 'number', slides past the schema, and is exactly the class
+      // this comment promises to reject (Vira's gate finding on #46: the
+      // first version checked > 0 only, and Infinity > 0 is true).
+      for (const f of ['freq', 'to', 'dur', 'peak', 'hp', 'lp']) {
+        if (typeof layer[f] === 'number' && !(Number.isFinite(layer[f]) && layer[f] > 0)) {
+          err(`${lp}.${f}`, `'${f}' must be a finite number > 0, got ${layer[f]} (WebAudio's exponential ramps throw on 0 and on non-finite targets)`);
+        }
+      }
+      if (typeof layer.t0 === 'number' && !(Number.isFinite(layer.t0) && layer.t0 >= 0)) {
+        err(`${lp}.t0`, `'t0' must be a finite number >= 0, got ${layer.t0}`);
+      }
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -9831,6 +9989,9 @@ function walkSchema(value, node, path, vctx) {
 function describe(v) {
   if (v === null) return 'null';
   if (Array.isArray(v)) return 'array';
+  // NaN and ±Infinity JSON.stringify to "null", so without this branch a NaN
+  // red printed the riddle "Expected number, got number null" (Vira, #46).
+  if (typeof v === 'number' && !Number.isFinite(v)) return `number ${String(v)}`;
   return typeof v === 'object' ? 'object' : `${typeof v} ${JSON.stringify(v)}`;
 }
 
@@ -10561,6 +10722,13 @@ const ENGINE_KEYWORDS = Object.freeze([
   'unplayable',
 ]);
 
+// SFX layer vocabulary (#46). A recipe (content/sfx.js) is a non-empty array
+// of layers; each layer is one of these two kinds, and the closed sets below
+// are the entire vocabulary a recipe may use — a new synthesis word (a third
+// kind, a new field) is an engine change (Law 1 clause 1).
+const SFX_LAYER_KINDS = Object.freeze(['tone', 'noise']);
+const SFX_WAVE_TYPES = Object.freeze(['sine', 'square', 'sawtooth', 'triangle']);
+
 // Registry type names (bundle keys holding arrays of defs).
 const REGISTRY_TYPES = Object.freeze([
   'cards',
@@ -10677,6 +10845,30 @@ const enemyPhaseSchema = obj({
   if: opt({ k: 'predicate' }),
   do: effects,
   unlockMoves: opt(arr(str)), // checked against the enemy's own moves in validate.js
+});
+
+// SFX layer schemas (#46), keyed by `kind` — validate.js discriminates on the
+// kind first so an error lands on the field, not on "matched no variant".
+// Field semantics are documented where the data lives (content/sfx.js);
+// engine defaults for the optional fields live in ui/audio.js tone()/noise().
+const SFX_LAYER_SCHEMAS = Object.freeze({
+  tone: obj({
+    kind: en('tone'),
+    type: opt(en(...SFX_WAVE_TYPES)),
+    freq: num,
+    to: opt(num),
+    t0: opt(num),
+    dur: num,
+    peak: opt(num),
+  }),
+  noise: obj({
+    kind: en('noise'),
+    dur: num,
+    peak: opt(num),
+    t0: opt(num),
+    hp: opt(num),
+    lp: opt(num),
+  }),
 });
 
 // ---------------------------------------------------------------------------
@@ -10864,7 +11056,7 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_KEYS, STACK_MODES, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, REGISTRY_TYPES, EFFECT_SPECS, SCHEMAS });
+Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_KEYS, STACK_MODES, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, SFX_LAYER_SCHEMAS, SCHEMAS });
 
 },
 "src/model/formulas.js": function (module, exports, require) {
@@ -18041,7 +18233,8 @@ Object.assign(module.exports, { settingOn, renderSettings, openSettings });
 // suspended (autoplay policy) and resumes on the first user gesture.
 
 const { balance } = require("src/content/balance.js");
-const { SFX_MANIFEST, MUSIC_MANIFEST, SCALES, BEDS } = require("src/content/music.js");
+const { MUSIC_MANIFEST, SCALES, BEDS } = require("src/content/music.js");
+const { SFX_MANIFEST, SFX_RECIPES } = require("src/content/sfx.js");
 
 // Default levels for a profile that has never touched the sliders — one source,
 // shared with ui/screens/settings.js.
@@ -18100,11 +18293,18 @@ function initAudio(settings = {}) {
   );
 
   // ---- SFX -----------------------------------------------------------------
+  // Both tables are plain object literals, so a bare [id] read inherits
+  // Object.prototype: sfx('toString') found a function, and iterating it as a
+  // recipe THREW where the old switch's default beeped (Vira's gate finding
+  // on #46). Own-property reads only — an inherited key is a missing entry.
+  const own = (table, id) => (Object.prototype.hasOwnProperty.call(table, id) ? table[id] : undefined);
+
   function sfx(id) {
     if (state.muted || state.sfxVol <= 0) return;
     resume();
-    if (SFX_MANIFEST[id]) {
-      playSample(SFX_MANIFEST[id], sfxBus);
+    const sample = own(SFX_MANIFEST, id);
+    if (sample) {
+      playSample(sample, sfxBus);
       return;
     }
     synthSfx(id);
@@ -18149,64 +18349,15 @@ function initAudio(settings = {}) {
     src.stop(start + dur + 0.02);
   }
 
-  // One recipe per feedback hook. Kept short and characterful (dark fantasy).
+  // The recipes are content (src/content/sfx.js, #46) — one entry per feedback
+  // hook, validated with the bundle. This engine speaks exactly two words,
+  // tone and noise; a recipe is a list of layers in that vocabulary, and an id
+  // with no entry plays the table's own `default` — audible, never silent.
   function synthSfx(id) {
-    switch (id) {
-      case 'cardPlay':
-        tone({ type: 'triangle', freq: 520, to: 380, dur: 0.12, peak: 0.35 });
-        break;
-      case 'hit':
-        noise({ dur: 0.16, peak: 0.5, hp: 300, lp: 4200 });
-        tone({ type: 'square', freq: 150, to: 60, dur: 0.14, peak: 0.35 });
-        break;
-      case 'block':
-        tone({ type: 'sine', freq: 320, to: 520, dur: 0.14, peak: 0.4 });
-        noise({ dur: 0.08, peak: 0.2, hp: 2000 });
-        break;
-      case 'bleedBurst':
-        tone({ type: 'sawtooth', freq: 220, to: 70, dur: 0.5, peak: 0.5 });
-        noise({ dur: 0.4, peak: 0.35, hp: 200, lp: 2600 });
-        break;
-      case 'stagger':
-        tone({ type: 'square', freq: 90, to: 40, dur: 0.35, peak: 0.5 });
-        noise({ dur: 0.22, peak: 0.4, hp: 120, lp: 1800 });
-        break;
-      case 'enemyDeath':
-        tone({ type: 'sawtooth', freq: 240, to: 30, dur: 0.6, peak: 0.45 });
-        break;
-      case 'heal':
-        tone({ type: 'sine', freq: 480, to: 720, dur: 0.4, peak: 0.35 });
-        tone({ type: 'sine', freq: 720, to: 960, dur: 0.4, peak: 0.2, t0: 0.06 });
-        break;
-      case 'stance':
-        tone({ type: 'triangle', freq: 300, to: 600, dur: 0.3, peak: 0.4 });
-        break;
-      case 'relic':
-        tone({ type: 'sine', freq: 880, to: 1320, dur: 0.25, peak: 0.3 });
-        break;
-      case 'flask':
-        tone({ type: 'sine', freq: 640, to: 400, dur: 0.18, peak: 0.3 });
-        break;
-      case 'shrine':
-        tone({ type: 'sine', freq: 392, to: 588, dur: 0.6, peak: 0.3 });
-        break;
-      case 'buy':
-        tone({ type: 'triangle', freq: 700, to: 1050, dur: 0.16, peak: 0.35 });
-        break;
-      case 'nodeTravel':
-        tone({ type: 'triangle', freq: 300, to: 460, dur: 0.14, peak: 0.3 });
-        break;
-      case 'uiClick':
-        tone({ type: 'square', freq: 420, to: 420, dur: 0.04, peak: 0.18 });
-        break;
-      case 'victory':
-        [392, 494, 587, 784].forEach((f, i) => tone({ type: 'triangle', freq: f, dur: 0.5, peak: 0.32, t0: i * 0.12 }));
-        break;
-      case 'youDied':
-        tone({ type: 'sawtooth', freq: 160, to: 40, dur: 1.2, peak: 0.5 });
-        break;
-      default:
-        tone({ type: 'sine', freq: 440, to: 440, dur: 0.05, peak: 0.15 });
+    const recipe = own(SFX_RECIPES, id) || SFX_RECIPES.default;
+    for (const { kind, ...params } of recipe) {
+      if (kind === 'noise') noise(params);
+      else tone(params);
     }
   }
 
@@ -18486,14 +18637,13 @@ Object.assign(module.exports, { AUDIO_DEFAULTS, initAudio });
 // are is content. Adding a mood or a new screen's music is a data edit here,
 // with no change to the engine — same rule the cards and enemies follow.
 //
-// Sample manifests sit here too: naming a file for an id makes the engine play
-// that sample instead of synthesizing, and a missing/failed load falls back to
-// the synth, so this stays safe to point at art that doesn't exist yet.
+// The music sample manifest sits here too: naming a file for a context makes
+// the engine play that sample instead of synthesizing, and a missing/failed
+// load falls back to the synth, so this stays safe to point at art that
+// doesn't exist yet. (The SFX manifest + recipes live in content/sfx.js —
+// one home per medium.)
 
 // A real build can point these at files; missing/failed loads fall back to synth.
-const SFX_MANIFEST = {
-  // cardPlay: 'assets/sfx/card.ogg',  ← example: drop a file here to override
-};
 const MUSIC_MANIFEST = {
   // combat: 'assets/music/combat.ogg',
 };
@@ -18568,7 +18718,7 @@ const BEDS = {
 };
 
 
-Object.assign(module.exports, { SFX_MANIFEST, MUSIC_MANIFEST, SCALES, BEDS });
+Object.assign(module.exports, { MUSIC_MANIFEST, SCALES, BEDS });
 
 },
 "src/ui/screens/controls.js": function (module, exports, require) {

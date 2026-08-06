@@ -24,6 +24,7 @@ import { events } from './events.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
 import { scripts } from './scripts.js';
+import { SFX_RECIPES } from './sfx.js';
 import { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
@@ -43,6 +44,9 @@ export const contentBundle = {
   classes,
   mapConfigs,
   scripts,
+  // SFX recipes ride the bundle so validateContent rules on them at boot and
+  // in tests (#46); the audio engine imports the same table from content/sfx.js.
+  sfx: SFX_RECIPES,
   // Equipment rides in the bundle as plain tables (see model/registries.js).
   equipment: {
     armaments: ARMAMENTS,

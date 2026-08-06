@@ -10,7 +10,8 @@
 // suspended (autoplay policy) and resumes on the first user gesture.
 
 import { balance } from '../content/balance.js';
-import { SFX_MANIFEST, MUSIC_MANIFEST, SCALES, BEDS } from '../content/music.js';
+import { MUSIC_MANIFEST, SCALES, BEDS } from '../content/music.js';
+import { SFX_MANIFEST, SFX_RECIPES } from '../content/sfx.js';
 
 // Default levels for a profile that has never touched the sliders — one source,
 // shared with ui/screens/settings.js.
@@ -69,11 +70,18 @@ export function initAudio(settings = {}) {
   );
 
   // ---- SFX -----------------------------------------------------------------
+  // Both tables are plain object literals, so a bare [id] read inherits
+  // Object.prototype: sfx('toString') found a function, and iterating it as a
+  // recipe THREW where the old switch's default beeped (Vira's gate finding
+  // on #46). Own-property reads only — an inherited key is a missing entry.
+  const own = (table, id) => (Object.prototype.hasOwnProperty.call(table, id) ? table[id] : undefined);
+
   function sfx(id) {
     if (state.muted || state.sfxVol <= 0) return;
     resume();
-    if (SFX_MANIFEST[id]) {
-      playSample(SFX_MANIFEST[id], sfxBus);
+    const sample = own(SFX_MANIFEST, id);
+    if (sample) {
+      playSample(sample, sfxBus);
       return;
     }
     synthSfx(id);
@@ -118,64 +126,15 @@ export function initAudio(settings = {}) {
     src.stop(start + dur + 0.02);
   }
 
-  // One recipe per feedback hook. Kept short and characterful (dark fantasy).
+  // The recipes are content (src/content/sfx.js, #46) — one entry per feedback
+  // hook, validated with the bundle. This engine speaks exactly two words,
+  // tone and noise; a recipe is a list of layers in that vocabulary, and an id
+  // with no entry plays the table's own `default` — audible, never silent.
   function synthSfx(id) {
-    switch (id) {
-      case 'cardPlay':
-        tone({ type: 'triangle', freq: 520, to: 380, dur: 0.12, peak: 0.35 });
-        break;
-      case 'hit':
-        noise({ dur: 0.16, peak: 0.5, hp: 300, lp: 4200 });
-        tone({ type: 'square', freq: 150, to: 60, dur: 0.14, peak: 0.35 });
-        break;
-      case 'block':
-        tone({ type: 'sine', freq: 320, to: 520, dur: 0.14, peak: 0.4 });
-        noise({ dur: 0.08, peak: 0.2, hp: 2000 });
-        break;
-      case 'bleedBurst':
-        tone({ type: 'sawtooth', freq: 220, to: 70, dur: 0.5, peak: 0.5 });
-        noise({ dur: 0.4, peak: 0.35, hp: 200, lp: 2600 });
-        break;
-      case 'stagger':
-        tone({ type: 'square', freq: 90, to: 40, dur: 0.35, peak: 0.5 });
-        noise({ dur: 0.22, peak: 0.4, hp: 120, lp: 1800 });
-        break;
-      case 'enemyDeath':
-        tone({ type: 'sawtooth', freq: 240, to: 30, dur: 0.6, peak: 0.45 });
-        break;
-      case 'heal':
-        tone({ type: 'sine', freq: 480, to: 720, dur: 0.4, peak: 0.35 });
-        tone({ type: 'sine', freq: 720, to: 960, dur: 0.4, peak: 0.2, t0: 0.06 });
-        break;
-      case 'stance':
-        tone({ type: 'triangle', freq: 300, to: 600, dur: 0.3, peak: 0.4 });
-        break;
-      case 'relic':
-        tone({ type: 'sine', freq: 880, to: 1320, dur: 0.25, peak: 0.3 });
-        break;
-      case 'flask':
-        tone({ type: 'sine', freq: 640, to: 400, dur: 0.18, peak: 0.3 });
-        break;
-      case 'shrine':
-        tone({ type: 'sine', freq: 392, to: 588, dur: 0.6, peak: 0.3 });
-        break;
-      case 'buy':
-        tone({ type: 'triangle', freq: 700, to: 1050, dur: 0.16, peak: 0.35 });
-        break;
-      case 'nodeTravel':
-        tone({ type: 'triangle', freq: 300, to: 460, dur: 0.14, peak: 0.3 });
-        break;
-      case 'uiClick':
-        tone({ type: 'square', freq: 420, to: 420, dur: 0.04, peak: 0.18 });
-        break;
-      case 'victory':
-        [392, 494, 587, 784].forEach((f, i) => tone({ type: 'triangle', freq: f, dur: 0.5, peak: 0.32, t0: i * 0.12 }));
-        break;
-      case 'youDied':
-        tone({ type: 'sawtooth', freq: 160, to: 40, dur: 1.2, peak: 0.5 });
-        break;
-      default:
-        tone({ type: 'sine', freq: 440, to: 440, dur: 0.05, peak: 0.15 });
+    const recipe = own(SFX_RECIPES, id) || SFX_RECIPES.default;
+    for (const { kind, ...params } of recipe) {
+      if (kind === 'noise') noise(params);
+      else tone(params);
     }
   }
 
