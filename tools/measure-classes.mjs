@@ -161,6 +161,54 @@ function botFight(run, rng, encounterId, stats, pickRandom) {
 
   // ---- passive instrumentation: read the log, touch nothing -----------------
   stats.combats++;
+  // #61 diagnosis walk — per-enemy bleed-meter replay (the meter math is
+  // statuses.js checkMeterFill verbatim: overflow carries, threshold grows
+  // ceil(×1.5) per fill — replayed here from events, never touched live) and
+  // stagger-window conversion. All from eventLog, zero extra RNG.
+  const enemies = {}; // targetId -> bleed/window tallies
+  const eTally = (t) => (enemies[t] || (enemies[t] = { applied: 0, fillPts: 0, fills: 0, window: null }));
+  for (const ev of combat.eventLog) {
+    if (ev.type === 'statusApplied' && ev.status === 'bleed' && ev.targetId !== 'player') {
+      eTally(ev.targetId).applied += ev.stacks;
+    }
+    if (ev.type === 'meterFilled' && ev.status === 'bleed') {
+      const e = eTally(ev.targetId); e.fills++; e.fillPts += ev.threshold;
+    }
+    if (ev.type === 'enemyStaggered') {
+      const e = eTally(ev.targetId);
+      if (!e.window) { e.window = { converted: false }; stats.winTotal++; }
+    }
+    if (ev.type === 'cardPlayed' && ev.targetId && enemies[ev.targetId] && enemies[ev.targetId].window
+        && !enemies[ev.targetId].window.converted
+        && hasStaggerPayoff(resolveCard(REG, { cardId: ev.cardId, upgraded: false }))) {
+      enemies[ev.targetId].window.converted = true; stats.winConverted++;
+    }
+    if (ev.type === 'statusExpired' && ev.status === 'staggered' && enemies[ev.targetId] && enemies[ev.targetId].window) {
+      if (!enemies[ev.targetId].window.converted) stats.winExpired++;
+      enemies[ev.targetId].window = null;
+    }
+    if (ev.type === 'enemyDied' && enemies[ev.targetId] && enemies[ev.targetId].window) {
+      if (!enemies[ev.targetId].window.converted) stats.winDiedOpen++;
+      enemies[ev.targetId].window = null;
+    }
+    if (ev.type === 'hpLost' && ev.targetId !== 'player' && ev.cause !== 'attack') {
+      // ALL effect-sourced enemy HP loss — for Reaver this is ≈ bleed bursts;
+      // for Herald it is ≈ crimsonBlight ticks. Named approximation, not an
+      // exact attribution (an enemy self-loseHp move would land here too).
+      stats.burstDmg += ev.amount;
+    }
+    if (ev.type === 'hpLost' && ev.targetId === 'player' && ev.cause !== 'attack') {
+      stats.selfTax += ev.amount; // Gorefire entry cost and kin — HP paid to the kit, not to enemies
+    }
+    if (ev.type === 'healed' && ev.targetId === 'player') {
+      stats.healed += ev.amount;
+    }
+  }
+  for (const e of Object.values(enemies)) {
+    stats.bleedApplied += e.applied;
+    stats.bleedFills += e.fills;
+    stats.bleedStranded += Math.max(0, e.applied - e.fillPts); // points that never burst — died or combat ended sub-threshold
+  }
   for (const ev of combat.eventLog) {
     if (ev.type === 'statusApplied' && ev.sourceId === 'player' && ev.targetId !== 'player') {
       stats.statusOut[ev.status] = (stats.statusOut[ev.status] || 0) + ev.stacks;
@@ -203,7 +251,10 @@ function simulateRun(classId, seed) {
   run.seenEvents = [];
   const rng = createRng(seed);
   const pickRandom = makeLcg(seed ^ 0x9e3779b9);
-  const stats = { combats: 0, statusOut: {}, statusSelf: {}, stanceEnters: 0, staggers: 0, dmgDealt: 0, dmgTaken: 0 };
+  const stats = { combats: 0, statusOut: {}, statusSelf: {}, stanceEnters: 0, staggers: 0, dmgDealt: 0, dmgTaken: 0,
+    bleedApplied: 0, bleedFills: 0, bleedStranded: 0, burstDmg: 0,
+    winTotal: 0, winConverted: 0, winExpired: 0, winDiedOpen: 0,
+    selfTax: 0, healed: 0, act1Curve: [] };
   const result = { classId, seed, victory: false, act: 1, floor: 0, deaths: null, stats };
 
   for (let act = 1; act <= 3; act++) {
@@ -235,8 +286,14 @@ function simulateRun(classId, seed) {
           if (run.combatEntered) {
             const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
             run.combatEntered = null;
-            if (botFight(run, rng, encId, stats, pickRandom) !== 'victory') { result.deaths = `ambush:${encId}`; return result; }
+            const hpIn = run.hp;
+            if (botFight(run, rng, encId, stats, pickRandom) !== 'victory') {
+              result.deaths = `ambush:${encId}`;
+              result.deathInfo = { act, floor: pick.floor, enc: encId, hpIn, maxHp: run.maxHp };
+              return result;
+            }
             afterVictory(run, rng, 'normal');
+            if (act === 1) stats.act1Curve.push([pick.floor, run.hp / run.maxHp]);
           }
           kind = null;
         } else kind = res.kind;
@@ -245,8 +302,14 @@ function simulateRun(classId, seed) {
       if (kind === 'monster' || kind === 'fight' || kind === 'elite' || kind === 'boss') {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
         const encId = rollEncounter(REG, rng, { pool, act });
-        if (botFight(run, rng, encId, stats, pickRandom) !== 'victory') { result.deaths = `${pool}:${encId}`; return result; }
+        const hpIn = run.hp;
+        if (botFight(run, rng, encId, stats, pickRandom) !== 'victory') {
+          result.deaths = `${pool}:${encId}`;
+          result.deathInfo = { act, floor: pick.floor, enc: encId, hpIn, maxHp: run.maxHp };
+          return result;
+        }
         afterVictory(run, rng, pool);
+        if (act === 1) stats.act1Curve.push([pick.floor, run.hp / run.maxHp]);
         if (pool === 'boss') {
           const boss = rollRelicReward(REG, rng, run.relics, { rarities: ['boss'] });
           if (boss) run.relics.push(boss);
@@ -341,6 +404,37 @@ for (const [id, { name, rows }] of Object.entries(perClass)) {
   console.log(`  deaths by act: ${[1, 2, 3].map((a) => `act${a}×${deathsByAct[a] || 0}`).join(' ')}  by pool: ${Object.entries(deathsByPool).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}×${v}`).join(' ')}`);
   console.log(`  top killers: ${Object.entries(killers).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k, v]) => `${k}×${v}`).join('  ')}`);
   console.log(`  dmg/combat dealt ${(agg((s) => s.dmgDealt) / combats).toFixed(1)} taken ${(agg((s) => s.dmgTaken) / combats).toFixed(1)}  kit: ${sigLine || '—'}${id === 'reaver' ? `  stanceEnters ${(agg((s) => s.stanceEnters) / N).toFixed(2)}/run (runs with ≥1: ${runsWithStance}/${N})` : ''}`);
+
+  // ---- #61 diagnosis block --------------------------------------------------
+  const applied = agg((s) => s.bleedApplied);
+  if (applied > 0) {
+    const fills = agg((s) => s.bleedFills);
+    const stranded = agg((s) => s.bleedStranded);
+    const burst = agg((s) => s.burstDmg);
+    console.log(`  bleed economy: applied ${(applied / combats).toFixed(2)} pts/combat → fills ${(fills / combats).toFixed(3)}/combat, effect dmg ${(burst / combats).toFixed(2)}/combat (≈bursts for Reaver, ≈DoT ticks for Herald) — stranded ${(stranded / combats).toFixed(2)} pts/combat = ${((stranded / applied) * 100).toFixed(1)}% of all applied bleed never burst`);
+  }
+  const wTot = agg((s) => s.winTotal);
+  if (wTot > 0) {
+    console.log(`  stagger windows: ${(wTot / N).toFixed(2)}/run — converted ${agg((s) => s.winConverted)}/${wTot} (${((agg((s) => s.winConverted) / wTot) * 100).toFixed(1)}%), expired unused ${agg((s) => s.winExpired)}, enemy died mid-window ${agg((s) => s.winDiedOpen)}`);
+  }
+  console.log(`  hp economy/combat: self-tax ${(agg((s) => s.selfTax) / combats).toFixed(2)} · healed ${(agg((s) => s.healed) / combats).toFixed(2)} · net attrition ${((agg((s) => s.dmgTaken) + agg((s) => s.selfTax) - agg((s) => s.healed)) / combats).toFixed(2)}`);
+  const a1d = rows.filter((r) => !r.victory && r.deathInfo && r.deathInfo.act === 1);
+  if (a1d.length) {
+    const byFloor = {}; const a1k = {};
+    let hpSum = 0;
+    for (const r of a1d) {
+      byFloor[r.deathInfo.floor] = (byFloor[r.deathInfo.floor] || 0) + 1;
+      a1k[r.deaths] = (a1k[r.deaths] || 0) + 1;
+      hpSum += r.deathInfo.hpIn / r.deathInfo.maxHp;
+    }
+    console.log(`  act1 deaths ${a1d.length}/${N}: by floor ${Object.entries(byFloor).sort((a, b) => a[0] - b[0]).map(([f, c]) => `f${f}×${c}`).join(' ')} — mean hp entering the fatal fight ${((hpSum / a1d.length) * 100).toFixed(1)}%`);
+    console.log(`  act1 killers: ${Object.entries(a1k).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => `${k}×${v}`).join('  ')}`);
+  }
+  const curve = {};
+  for (const r of rows) for (const [f, frac] of r.stats.act1Curve) { (curve[f] || (curve[f] = [])).push(frac); }
+  const curveLine = Object.entries(curve).sort((a, b) => a[0] - b[0])
+    .map(([f, v]) => `f${f} ${((v.reduce((x, y) => x + y, 0) / v.length) * 100).toFixed(0)}%`).join(' · ');
+  if (curveLine) console.log(`  act1 mean hp%% after each fight floor: ${curveLine}`);
   console.log();
 }
 
