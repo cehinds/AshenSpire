@@ -1,0 +1,24 @@
+measure-classes — 1000 runs/class, policy=skillfirst
+seeds: runsim's own formula (i*2654435761)>>>0, i=1..1000 — the 30-run datum is this set's prefix
+
+Reaver    wins  16/1000 = 1.6%  Wilson95 [1.0%, 2.6%]
+  deaths by act: act1×359 act2×594 act3×31  by pool: normal×479 elite×248 boss×235 ambush×21 event×1
+  top killers: elite:eliteWyrm×160  boss:a2_bossStitchedKing×131  normal:a2_procession×125  normal:a2_surgery×112  elite:a2_eliteDuelist×87
+  dmg/combat dealt 58.5 taken 51.9  kit: bleed 8.76/combat · poiseBreaks 0.09/combat  stanceEnters 8.49/run (runs with ≥1: 776/1000)
+
+Starseer  wins  61/1000 = 6.1%  Wilson95 [4.8%, 7.8%]
+  deaths by act: act1×311 act2×564 act3×64  by pool: normal×366 boss×302 elite×236 ambush×25 event×10
+  top killers: boss:a2_bossStitchedKing×181  elite:eliteWyrm×138  normal:a2_surgery×100  elite:a2_eliteDuelist×96  normal:a2_procession×90
+  dmg/combat dealt 64.4 taken 45.6  kit: starstoneCharge 9.69/combat
+
+Herald    wins 343/1000 = 34.3%  Wilson95 [31.4%, 37.3%]
+  deaths by act: act1×42 act2×504 act3×111  by pool: boss×293 normal×258 elite×100 ambush×6
+  top killers: boss:a2_bossStitchedKing×226  elite:a2_eliteDuelist×72  normal:a2_procession×69  normal:a2_surgery×63  boss:a3_bossRotValkyrie×58
+  dmg/combat dealt 62.3 taken 52.7  kit: crimsonBlight 6.07/combat
+
+pairwise two-proportion tests (pooled z, two-sided):
+  reaver 16/1000 vs starseer 61/1000: p = 1.70e-7
+  reaver 16/1000 vs herald 343/1000: p = 0.00
+  starseer 61/1000 vs herald 343/1000: p = 0.00
+
+boundary: naive-bot floor only — absolute rates say nothing about the spec band for experienced players (SPEC.md M3: ~35–50%).

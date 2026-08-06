@@ -36,12 +36,13 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { generateActMap } from '../src/engine/mapgen.js';
+import { buildActMap } from '../src/engine/actmap.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
+import { hasStatus } from '../src/engine/statuses.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward, resolveUnknownNode, shrineHealAmount,
+  rollRelicReward, shrineHealAmount,
 } from '../src/engine/encounters.js';
 
 const REG = createRegistries(contentBundle);
@@ -49,7 +50,7 @@ const argv = process.argv.slice(2);
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 500);
 const POLICY = (argv.find((a) => a.startsWith('--policy=')) || '--policy=greedy').slice(9);
 const CHECK = argv.includes('--check');
-if (!['greedy', 'skillfirst', 'random'].includes(POLICY)) {
+if (!['greedy', 'skillfirst', 'random', 'reaverkit'].includes(POLICY)) {
   console.error(`unknown policy '${POLICY}'`); process.exit(2);
 }
 
@@ -60,6 +61,56 @@ const SIGNATURE = {
   starseer: ['starstoneCharge'],
   herald: ['crimsonBlight'],
 };
+
+// ---- reaverkit: the #55 falsifier policy ------------------------------------
+// "A modestly kit-aware Reaver policy at n=1000; if he's still CI-below both,
+// the class-defect reading returns" — my own verdict's falsifier, built as
+// promised. MODEST means ordered heuristics a tired player would find in one
+// evening, not a solver. Classification is data-driven — it reads card
+// EFFECTS (enterStance / applyStatus bleed / poiseDamage / block / staggered
+// conditionals), never card ids, so a new Reaver card is picked up by shape
+// (Law 1 clause 3: data says what, engine decides how — this bot reads what).
+//
+// Decision rule, pre-registered before the run: Reaver under reaverkit at
+// n=1000 vs Starseer and Herald under their best-known policy at n=1000 —
+// if Reaver's Wilson upper bound is still below BOTH classes' lower bounds,
+// the class-defect card is filed; otherwise the split reads as sim skill
+// floor. The tools card lands either way.
+const hasEff = (def, pred) => (def.effects || []).some(pred);
+const appliesStatus = (def, status) => hasEff(def, (e) => e.op === 'applyStatus' && e.status === status);
+const hasStaggerPayoff = (def) => hasEff(def, (e) => e.if && e.if.p === 'hasStatus' && e.if.status === 'staggered');
+const entersStance = (def, stanceId) => hasEff(def, (e) => e.op === 'enterStance' && (!stanceId || e.stance === stanceId));
+const givesBlock = (def) => hasEff(def, (e) => e.op === 'block' && (e.target === 'self' || e.target === 'owner'));
+const doesPoiseDamage = (def) => hasEff(def, (e) => e.op === 'poiseDamage');
+
+function reaverkitPick(combat, affordable) {
+  const defs = affordable.map((h) => ({ h, def: resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded }) }));
+  const find = (pred) => { const x = defs.find((d) => pred(d.def)); return x && x.h; };
+  const hp = combat.player.hp / combat.player.maxHp;
+  // 1. No stance yet: enter one — Gorefire while healthy (it costs hp per
+  //    entry), Bulwark when hurting; any stance beats none.
+  if (!combat.player.stanceId) {
+    const pick = hp >= 0.5
+      ? (find((d) => entersStance(d, 'gorefire')) || find((d) => entersStance(d)))
+      : (find((d) => entersStance(d, 'bulwark')) || find((d) => entersStance(d)));
+    if (pick) return pick;
+  }
+  // 2. An enemy is staggered: spend the window on a stagger-payoff card.
+  const staggeredUp = combat.enemies.some((e) => e.alive && hasStatus(e, 'staggered'));
+  if (staggeredUp) {
+    const pick = find((d) => d.type === 'attack' && hasStaggerPayoff(d));
+    if (pick) return pick;
+  }
+  // 3. Hurting: block first (in Bulwark every skill is +2 block on top).
+  if (hp < 0.45) {
+    const pick = find((d) => d.type === 'skill' && givesBlock(d));
+    if (pick) return pick;
+  }
+  // 4. Bleed ramp; 5. poise pressure toward the next stagger; 6. greedy.
+  return find((d) => d.type === 'attack' && appliesStatus(d, 'bleed'))
+    || find((d) => d.type === 'attack' && doesPoiseDamage(d))
+    || affordable[0];
+}
 
 // Separate LCG for the random policy only — never the game's rng.
 function makeLcg(seed) {
@@ -92,6 +143,7 @@ function botFight(run, rng, encounterId, stats, pickRandom) {
     });
     let card;
     if (POLICY === 'greedy') card = affordable[0];
+    else if (POLICY === 'reaverkit') card = affordable.length ? reaverkitPick(combat, affordable) : undefined;
     else if (POLICY === 'skillfirst') {
       card = affordable.find((h) => resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded }).type !== 'attack') || affordable[0];
     } else { // random
@@ -157,14 +209,10 @@ function simulateRun(classId, seed) {
   for (let act = 1; act <= 3; act++) {
     run.actNumber = act;
     result.act = act;
-    const map = generateActMap({ config: REG.mapConfig(act), rng });
-    const assigned = [];
-    for (const n of Object.values(map.nodes)) {
-      if (n.type === 'event') {
-        n.resolved = resolveUnknownNode(REG, rng, { seenEvents: assigned, act });
-        if (n.resolved.kind === 'event') assigned.push(n.resolved.eventId);
-      }
-    }
+    // The ONE boot path (#54) — this tool was the fourth playable-act caller
+    // the actmap.js header warns about; it imports the module like the
+    // harnesses do. --check below proves the datum still nests seed-for-seed.
+    const map = buildActMap(REG, rng, act);
 
     let currentId = null;
     let nextIds = map.startIds;
