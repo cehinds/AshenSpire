@@ -1,4 +1,6 @@
-# Spire of the Erdtree — Detailed Specification
+# Ashen Spire — Detailed Specification
+
+*(Formerly "Spire of the Erdtree / EldenSpire" — renamed in the IP scrub, `95c3b87`; `docs/IP-SCRUB.md` maps every old name to its shipped one. This spec's in-game vocabulary below is still largely pre-scrub; the scrub doc is authoritative for shipped names until the document-wide rename lands.)*
 
 A single-player roguelike deckbuilder for the browser. Mechanically faithful to Slay the Spire; thematically inspired by (but legally distinct from) Elden Ring. Companion documents: [PROMPT.md](PROMPT.md) (the brief this spec expands), and — once implementation starts — `DEVELOPER.md` (how to extend) and `CREDITS.md` (asset licenses).
 
@@ -10,14 +12,14 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 
 | | |
 |---|---|
-| Working title | Spire of the Erdtree |
+| Title | **Ashen Spire** (`AshenSpire` — the bundle name; title screen `src/ui/screens/title.js:47`) |
 | Platform | Modern evergreen desktop browsers, 1280×720 minimum |
 | Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
 | Persistence | `localStorage` (run save + settings + run history) |
 | Entry point | `index.html` opened directly or via any static server |
 | Session length | One full run ≈ 45–90 minutes; one combat ≈ 2–5 minutes |
 
-A **run**: pick 1 of 3 classes → traverse a branching node map across 3 acts → fight monsters/elites/bosses, visit shrines/merchants/events → build a deck from ~75 class cards + colorless cards → win by defeating the Act 3 boss, or die and see the "YOU DIED" screen with seed and stats.
+A **run**: pick 1 of 3 classes → traverse a branching node map across 3 acts → fight monsters/elites/bosses, visit shrines/merchants/events → build a deck from ~75 class cards + colorless cards → win by defeating the Act 3 boss, or die and see the "YOU PERISHED" screen with seed and stats.
 
 ---
 
@@ -107,6 +109,7 @@ src/
     flasks.js
     events.js
     mapconfig.js        per-act map-generation knobs
+    music.js            the score as data: scales, per-context beds, sample manifests (§7.4)
     scripts.js          budgeted escape-hatch behaviors (<5% of content)
   ui/
     screens/title.js    title / continue / class select
@@ -121,8 +124,9 @@ src/
     components/tooltip.js
     components/piles.js pile viewer modal
     assets.js           asset id → URL/SVG map + placeholder generator
-    sfx.js              sound hooks (no-op stubs in v1)
-    fx.js               floating numbers, shake, flash (≤300 ms, skippable)
+    sfx.js              sound hook bus — sfx.play(id) at every call site, sink = audio.js
+    audio.js            procedural WebAudio engine: synth SFX + music beds (§7.4)
+    fx.js               floating numbers, shake, flash (skippable; paced by the animation-speed setting)
 tests/
   index.html            headless test runner page
   engine.test.js        assertions against model + engine
@@ -287,7 +291,7 @@ flaskUsed, relicTriggered(relicId)
 
 - `rng.js` implements **mulberry32**. A run seed (uint32, displayed base-35 like StS, e.g. `3LB6HXYD`) is rolled at run start or entered manually on the class-select screen.
 - **Named streams**, each independently derived from the seed + a stream salt + a monotonically increasing counter that is *saved with the run*:
-  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`.
+  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc` (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws).
 - Consequence (StS-faithful): re-fighting the same combat after reload produces the same shuffles; choosing a different path doesn't change what a later card reward would have been on another stream.
 
 ### 3.12 Save format
@@ -584,10 +588,10 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
 
 ### 7.4 Feedback & animation rules
 
-- Floating damage/heal/block numbers; brief target flash on hit; ≤4 px screen shake for hits ≥15 damage. **No animation exceeds 300 ms or blocks input**; queued events play out at ≤80 ms intervals and a click skips to end-state.
+- Floating damage/heal/block numbers; brief target flash on hit; ≤4 px screen shake for hits ≥15 damage. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`).
 - Bleed burst and Stagger get distinct, slightly bigger effects (they're the theme).
-- "YOU DIED" screen: dark fade, gold serif text, then stats card. Victory: "GREAT RUNE RESTORED".
-- Sound: `sfx.js` exposes `play(id)` — no-op in v1, so hooks exist everywhere (card play, hit, stagger, death) without shipping audio.
+- "YOU PERISHED" screen: dark fade, gold serif text, then stats card. Victory: "EMBER RESTORED". (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
+- Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the score *is* lives as content in `src/content/music.js` (scales, beds, sample manifests); volumes/mute are settings. No audio asset files ship, and the two override paths fail differently: a music folder with `manifest.json` (Settings) replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load is cached as a miss and plays **silence, not the synth**. `MUSIC_MANIFEST` is imported and never read — a dormant slot, not a path.
 
 ### 7.5 Visual style
 
@@ -654,4 +658,6 @@ Build: fx pass (floating numbers, shake, transitions), run-history screen, keybo
 
 ## 11. Non-goals (v1)
 
-No multiplayer, accounts, server, monetization, mobile layout, localization (strings live in content files, so l10n is possible later), mod loader, Steam-style achievements, or audio assets (hooks only).
+Still non-goals: accounts, monetization, localization (strings live in content files, so l10n is possible later), a mod loader, Steam-style achievements, and bundled audio asset files (the score and SFX are synthesized at runtime — §7.4; the manifests accept real files).
+
+Three things this list once excluded have since shipped and are no longer non-goals: **multiplayer** (Forsaken Together LAN co-op — `docs/MULTIPLAYER.md`, `src/net/lan.js`, served by the launcher's own Node server; the feature hides itself when no launcher is behind the page, so a `file://`-opened dist stays single-player), a **narrow/mobile layout** (`data-layout`, `balance.ui.uiScale`), and **audio** (§7.4).
