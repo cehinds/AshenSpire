@@ -16,7 +16,7 @@ import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
-import { generateActMap } from './engine/mapgen.js';
+import { buildActMap } from './engine/actmap.js';
 import { createSaveManager, createMemoryStorage } from './engine/save.js';
 import {
   rollEncounter,
@@ -25,7 +25,6 @@ import {
   rollFlaskDrop,
   rollRelicReward,
   buildShopStock,
-  resolveUnknownNode,
   rollArmamentDrop,
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
@@ -481,7 +480,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  buildActMap();
+  run.mapGraph = buildActMap(registries, rng, contentAct());
   persist();
   showMap();
 }
@@ -514,16 +513,8 @@ function contentAct() {
   return endlessOn() ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
 }
 
-function buildActMap() {
-  run.mapGraph = generateActMap({ config: registries.mapConfig(contentAct()), rng });
-  const assigned = [];
-  for (const node of Object.values(run.mapGraph.nodes)) {
-    if (node.type === 'event') {
-      node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, act: contentAct() });
-      if (node.resolved.kind === 'event') assigned.push(node.resolved.eventId);
-    }
-  }
-}
+// The map-build sequence itself lives in engine/actmap.js (the one boot path,
+// #54) — this file only decides which act and where the graph is stored.
 
 // Between acts: ember holds the spire together a little longer.
 function advanceAct() {
@@ -538,7 +529,7 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
-  buildActMap();
+  run.mapGraph = buildActMap(registries, rng, contentAct());
   persist();
   showMap();
 }

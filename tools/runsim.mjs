@@ -22,12 +22,12 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { generateActMap } from '../src/engine/mapgen.js';
+import { buildActMap } from '../src/engine/actmap.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward, resolveUnknownNode, shrineHealAmount,
+  rollRelicReward, shrineHealAmount,
 } from '../src/engine/encounters.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
 
@@ -109,15 +109,9 @@ function simulateRun(classId, seed) {
     const cm = loop > 0
       ? { hpMult: 1 + ENDLESS_HP_PER_LOOP * loop, enemyStatuses: [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop }] }
       : {};
-    const map = generateActMap({ config: REG.mapConfig(contentAct), rng });
-    // pre-roll unknowns like main.js does
-    const assigned = [];
-    for (const n of Object.values(map.nodes)) {
-      if (n.type === 'event') {
-        n.resolved = resolveUnknownNode(REG, rng, { seenEvents: assigned, act: contentAct });
-        if (n.resolved.kind === 'event') assigned.push(n.resolved.eventId);
-      }
-    }
+    // The ONE boot path (#54) — same module main.js and session.mjs use, so a
+    // signature change lands on the game and the harnesses in the same act.
+    const map = buildActMap(REG, rng, contentAct);
 
     let currentId = null;
     let nextIds = map.startIds;
