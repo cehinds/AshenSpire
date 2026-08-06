@@ -6,6 +6,18 @@
   --panel: #241d15;
   --line: #3a3226;
   --line-soft: #4a4034;
+  /* Map STRUCTURE — the roads and plain rings a player reads to plan a run
+     (#45, Sunna's ruling: 3:1 on each glyph's identifying boundary against each
+     adjacent rendered colour). --line-soft's atmospheric value measures 1.93
+     (edge vs field) / 1.72 (ring vs its own fill) from rendered pixels — below
+     every defensible floor — but its 27 other consumers are text-adjacent soft
+     lines that keep the atmospheric look ("atmospheric elsewhere"). So the map
+     graph rides its own token: #7a6b54 clears both adjacencies with margin
+     (rendered 3.78 vs field, 3.36 worst adjacency) while staying the visibly
+     dimmer sibling of high contrast's 4.19 — two settings, two looks.
+     Evidence: tools/contrast-audit.mjs --profile hi-contrast-off;
+     docs/proposal-45-atmospheric-map-structure.md (R2). */
+  --map-structure: #7a6b54;
   --parchment: #e8dcc0;
   --muted: #7a6f5a;
   --gold: #c9a227;
@@ -39,6 +51,7 @@ body.hi-contrast {
   --muted: #a89571;
   --line: #6a5b43;
   --line-soft: #85714f;
+  --map-structure: #85714f; /* unchanged shipped value — hi-contrast map keeps its exact look */
 }
 body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-keepsake p { color: #cdbf9e; }
 
