@@ -73,30 +73,63 @@ let layersChecked = 0;
 for (const id of Object.keys(SFX_RECIPES)) {
   gainTargets.length = 0;
   engine.sfx(id);
+  // MULTISET, not membership: each expected peak CONSUMES one occurrence from
+  // the pool. Vira's gate finding on #46: with `includes`, victory's four
+  // identical 0.32 peaks were alibied by any one of them — she planted a
+  // dropped third note and the probe stayed green. Counting closes it: four
+  // expected 0.32s now require four scheduled 0.32s.
+  const pool = [...gainTargets];
+  // --selftest, planted class 2: simulate victory's dropped note by removing
+  // one of its duplicate peaks from the pool — under `includes` this stayed
+  // green, so this plant is the regression test for the multiset itself.
+  if (selftest && id === 'victory') pool.splice(pool.indexOf(0.32), 1);
   for (const [i, layer] of SFX_RECIPES[id].entries()) {
     layersChecked++;
     let want = layer.peak !== undefined ? layer.peak : DEFAULT_PEAK[layer.kind];
-    // --selftest: claim one known-false target so the probe is SEEN red.
+    // --selftest, planted class 1: claim one known-false target.
     if (selftest && id === 'hit' && i === 0) want = 0.987654;
-    if (!gainTargets.includes(want)) {
+    const at = pool.indexOf(want);
+    if (at === -1) {
       misses++;
-      console.error(`MISS  sfx.${id}[${i}]: peak ${want} never reached a gain node (targets seen: ${[...new Set(gainTargets)].join(', ')})`);
+      console.error(`MISS  sfx.${id}[${i}]: peak ${want} not among the remaining gain targets (scheduled this recipe: ${[...new Set(gainTargets)].join(', ')})`);
+    } else {
+      pool.splice(at, 1);
     }
   }
 }
 
+// Prototype-safety of the engine's own lookups (Vira's gate finding on #46):
+// 'toString' is an inherited key on any plain object, so a bare [id] read
+// found a function and THREW where the old switch's default beeped. Both an
+// unknown id and an inherited key must play the table's audible `default`.
+const DEFAULT_LAYER_PEAK = SFX_RECIPES.default[0].peak;
+for (const probe of ['noSuchSound', 'toString']) {
+  gainTargets.length = 0;
+  try {
+    engine.sfx(probe);
+  } catch (e) {
+    misses++;
+    console.error(`MISS  sfx('${probe}') threw instead of playing default: ${e.message}`);
+    continue;
+  }
+  if (!gainTargets.includes(DEFAULT_LAYER_PEAK)) {
+    misses++;
+    console.error(`MISS  sfx('${probe}') did not schedule default's peak ${DEFAULT_LAYER_PEAK} (targets seen: ${[...new Set(gainTargets)].join(', ')})`);
+  }
+}
+
 if (selftest) {
-  if (misses === 1) {
-    console.log(`RESULT: selftest held — the planted false peak was the one miss in ${layersChecked} layers, so a table/engine disagreement goes red here.`);
+  if (misses === 2) {
+    console.log(`RESULT: selftest held — both plants (false peak, dropped duplicate note) were the only 2 misses in ${layersChecked} layers, so a disagreement and a dropped-note-behind-a-duplicate both go red here.`);
     process.exit(0);
   }
-  console.error(`RESULT: selftest FAILED — expected exactly 1 planted miss, saw ${misses}; this probe cannot be trusted either way.`);
+  console.error(`RESULT: selftest FAILED — expected exactly the 2 planted misses, saw ${misses}; this probe cannot be trusted either way.`);
   process.exit(1);
 }
 
 if (misses === 0) {
-  console.log(`RESULT: every peak in the table reached a live gain node — ${layersChecked} layers across ${Object.keys(SFX_RECIPES).length} recipes; a table edit IS the emitted gain. (Reachability only — nothing here has ears.)`);
+  console.log(`RESULT: every peak in the table reached a live gain node, counted not just found — ${layersChecked} layers across ${Object.keys(SFX_RECIPES).length} recipes, and unknown/inherited ids play default. (Reachability only — nothing here has ears.)`);
   process.exit(0);
 }
-console.error(`RESULT: ${misses} of ${layersChecked} layers never reached a gain node — the table is not the sound; see MISS lines above.`);
+console.error(`RESULT: ${misses} misses across ${layersChecked} layers + 2 fallback probes — the table is not the sound; see MISS lines above.`);
 process.exit(1);

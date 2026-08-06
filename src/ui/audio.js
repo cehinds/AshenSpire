@@ -70,11 +70,18 @@ export function initAudio(settings = {}) {
   );
 
   // ---- SFX -----------------------------------------------------------------
+  // Both tables are plain object literals, so a bare [id] read inherits
+  // Object.prototype: sfx('toString') found a function, and iterating it as a
+  // recipe THREW where the old switch's default beeped (Vira's gate finding
+  // on #46). Own-property reads only — an inherited key is a missing entry.
+  const own = (table, id) => (Object.prototype.hasOwnProperty.call(table, id) ? table[id] : undefined);
+
   function sfx(id) {
     if (state.muted || state.sfxVol <= 0) return;
     resume();
-    if (SFX_MANIFEST[id]) {
-      playSample(SFX_MANIFEST[id], sfxBus);
+    const sample = own(SFX_MANIFEST, id);
+    if (sample) {
+      playSample(sample, sfxBus);
       return;
     }
     synthSfx(id);
@@ -124,7 +131,7 @@ export function initAudio(settings = {}) {
   // tone and noise; a recipe is a list of layers in that vocabulary, and an id
   // with no entry plays the table's own `default` — audible, never silent.
   function synthSfx(id) {
-    const recipe = SFX_RECIPES[id] || SFX_RECIPES.default;
+    const recipe = own(SFX_RECIPES, id) || SFX_RECIPES.default;
     for (const { kind, ...params } of recipe) {
       if (kind === 'noise') noise(params);
       else tone(params);

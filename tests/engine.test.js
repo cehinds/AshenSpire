@@ -1556,7 +1556,7 @@ export async function runTests({ artManifest = null } = {}) {
     const sfx = contentBundle.sfx;
     assert(sfx && typeof sfx === 'object', 'bundle carries sfx recipes');
     assert(Array.isArray(sfx.default) && sfx.default.length > 0, "the audible 'default' fallback exists");
-    assert(Object.keys(sfx).length >= 16, `15 hook recipes + default expected, got ${Object.keys(sfx).length}`);
+    assert(Object.keys(sfx).length >= 17, `16 hook recipes + default expected, got ${Object.keys(sfx).length}`);
 
     // Green on the shipped table (also covered by 15; asserted here so this
     // test is readable alone).
@@ -1571,12 +1571,20 @@ export async function runTests({ artManifest = null } = {}) {
       ['wave type outside the closed set', { buy: [{ kind: 'tone', type: 'pulse', freq: 700, dur: 0.16 }] }, 'sfx.buy', 'Expected one of'],
       ['non-number peak', { hit: [{ kind: 'noise', dur: 0.16, peak: 'loud' }] }, 'sfx.hit', 'Expected number'],
       ['undeclared field', { hit: [{ kind: 'noise', dur: 0.16, wobble: 3 }] }, 'sfx.hit', "Unknown field 'wobble'"],
-      ['zero dur (ramp would throw)', { uiClick: [{ kind: 'tone', freq: 420, dur: 0 }] }, 'sfx.uiClick', 'must be > 0'],
-      ['negative peak', { heal: [{ kind: 'tone', freq: 480, dur: 0.4, peak: -0.3 }] }, 'sfx.heal', 'must be > 0'],
-      ['negative t0', { victory: [{ kind: 'tone', freq: 392, dur: 0.5, t0: -0.1 }] }, 'sfx.victory', "'t0' must be >= 0"],
+      ['zero dur (ramp would throw)', { uiClick: [{ kind: 'tone', freq: 420, dur: 0 }] }, 'sfx.uiClick', 'finite number > 0'],
+      ['negative peak', { heal: [{ kind: 'tone', freq: 480, dur: 0.4, peak: -0.3 }] }, 'sfx.heal', 'finite number > 0'],
+      ['negative t0', { victory: [{ kind: 'tone', freq: 392, dur: 0.5, t0: -0.1 }] }, 'sfx.victory', "'t0' must be a finite number >= 0"],
       ['missing required freq', { shrine: [{ kind: 'tone', dur: 0.6 }] }, 'sfx.shrine', 'Missing required field'],
       ['empty recipe', { relic: [] }, 'sfx.relic', 'non-empty array'],
       ['recipe not an array', { flask: { kind: 'tone' } }, 'sfx.flask', 'non-empty array'],
+      // Vira's gate finding: Infinity is typeof 'number' and Infinity > 0 is
+      // true, so the first meaning layer passed it — inside the exact class
+      // its comment claimed to reject. Finite is now part of the check.
+      ['Infinity freq', { hit: [{ kind: 'tone', freq: Infinity, dur: 0.14 }] }, 'sfx.hit', 'finite'],
+      ['Infinity dur', { buy: [{ kind: 'tone', freq: 700, dur: Infinity }] }, 'sfx.buy', 'finite'],
+      ['Infinity t0', { heal: [{ kind: 'tone', freq: 480, dur: 0.4, t0: Infinity }] }, 'sfx.heal', 'finite'],
+      ['-Infinity peak', { relic: [{ kind: 'tone', freq: 880, dur: 0.25, peak: -Infinity }] }, 'sfx.relic', 'finite'],
+      ['NaN freq', { shrine: [{ kind: 'tone', freq: NaN, dur: 0.6 }] }, 'sfx.shrine', 'got NaN'],
     ];
     for (const [name, patch, wantPath, wantMsg] of cases) {
       const r = validateContent({ ...contentBundle, sfx: { ...sfx, ...patch } });

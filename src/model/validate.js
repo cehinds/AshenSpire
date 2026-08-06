@@ -348,14 +348,18 @@ function validateSfxRecipes(sfx, path, vctx) {
         return;
       }
       walkSchema(layer, SFX_LAYER_SCHEMAS[layer.kind], lp, vctx);
-      // Meaning: values the engine's ramps would throw on or render as silence.
+      // Meaning: values the engine's ramps would throw on or render as
+      // silence. Finite is part of the claim, not a nicety — Infinity is
+      // typeof 'number', slides past the schema, and is exactly the class
+      // this comment promises to reject (Vira's gate finding on #46: the
+      // first version checked > 0 only, and Infinity > 0 is true).
       for (const f of ['freq', 'to', 'dur', 'peak', 'hp', 'lp']) {
-        if (typeof layer[f] === 'number' && !(layer[f] > 0)) {
-          err(`${lp}.${f}`, `'${f}' must be > 0, got ${layer[f]} (an exponential ramp to or from 0 throws in WebAudio)`);
+        if (typeof layer[f] === 'number' && !(Number.isFinite(layer[f]) && layer[f] > 0)) {
+          err(`${lp}.${f}`, `'${f}' must be a finite number > 0, got ${layer[f]} (WebAudio's exponential ramps throw on 0 and on non-finite targets)`);
         }
       }
-      if (typeof layer.t0 === 'number' && layer.t0 < 0) {
-        err(`${lp}.t0`, `'t0' must be >= 0, got ${layer.t0}`);
+      if (typeof layer.t0 === 'number' && !(Number.isFinite(layer.t0) && layer.t0 >= 0)) {
+        err(`${lp}.t0`, `'t0' must be a finite number >= 0, got ${layer.t0}`);
       }
     });
   }
@@ -464,6 +468,9 @@ function walkSchema(value, node, path, vctx) {
 function describe(v) {
   if (v === null) return 'null';
   if (Array.isArray(v)) return 'array';
+  // NaN and ±Infinity JSON.stringify to "null", so without this branch a NaN
+  // red printed the riddle "Expected number, got number null" (Vira, #46).
+  if (typeof v === 'number' && !Number.isFinite(v)) return `number ${String(v)}`;
   return typeof v === 'object' ? 'object' : `${typeof v} ${JSON.stringify(v)}`;
 }
 
