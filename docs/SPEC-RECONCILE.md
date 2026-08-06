@@ -26,7 +26,7 @@ work (#22/#24/#52 record). Other sections: later stages, appended below this one
 | Rewards | 15 | 12 | 3 | 0 |
 | **Total** | **32** | **25** | **6** | **1** |
 
-Three shipped verdicts carry a named boundary (marked ⚠ below) — the sentence is
+Four shipped verdicts carry a named boundary (marked ⚠ below: S8, W5, W12, W15) — the sentence is
 true of the mechanism and overbroad about its reach. A ⚠ is not a pass wave-through;
 it is the exact edge a later edit must not silently cross.
 
@@ -100,16 +100,25 @@ At `70d35e2` the same sentences are :590 and :657. Status before this branch:
 
 - §7.4 "Sound: … no-op in v1 … without shipping audio" — described nothing: a full
   procedural WebAudio engine ships (`src/ui/audio.js`, 445 lines — synth SFX per hook
-  id, per-context music beds incl. `shop` and `rest`, volume/mute settings, sample
-  manifests + music-folder override with synth fallback), wired `sfx.sink` in
-  `main.js:154-155`. **Rewritten to the shipped truth.**
+  id, per-context music beds incl. `shop` and `rest`, volume/mute settings), wired
+  `sfx.sink` in `main.js:154-155`. The two asset-override paths fail differently and
+  the spec now says so: music-folder tracks fall back to the synth bed on failure;
+  an `SFX_MANIFEST` entry short-circuits the synth and a failed load is a cached
+  miss that plays silence (`sfx()` → `playSample` → `if (!buf) return`); and
+  `MUSIC_MANIFEST` is imported but never read. **Rewritten to the shipped truth.**
+  *(First pass said "a missing/failed load falls back to the synth" for both paths —
+  the code's own comment, not the code; Sten's gate caught it — D1. Dormant today:
+  both manifests ship empty.)*
 - §7.4 "YOU DIED" / "GREAT RUNE RESTORED" — renamed at the IP scrub; shipped strings
   are YOU PERISHED / EMBER RESTORED (`gameover.js:9`). **Rewritten.**
-- §7.4 animation bullet — the ≤300 ms / ≤80 ms bounds are now the *default-speed*
-  truth: paced beat playback and the Animation speed setting scale them (slow beats
-  run 700 ms), and shake/flash honor the Screen shake / Reduced motion / Reduce
+- §7.4 animation bullet — the ≤300 ms / ≤80 ms bounds hold for *most* effects at the
+  default speed, and three big-moment effects are hardcoded past them (heavy hit
+  flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms — `fx.js:429-431,466,465`);
+  the Animation speed setting scales pacing (beat/step/lunge), never those fixed
+  durations, and shake/flash honor the Screen shake / Reduced motion / Reduce
   flashes settings. The invariants that actually held — nothing blocks input, a click
-  always skips — are now stated as the rule. **Rewritten.**
+  always skips — are now stated as the rule. **Rewritten.** *(First pass restated
+  the 300 ms bound as a default-speed truth; Sten's gate caught it — D2.)*
 - §3.2's `sfx.js  (no-op stubs in v1)` row — the same dead fact's second home.
   **Rewritten; `audio.js` and `content/music.js` rows added.**
 - §11 non-goals — three of nine clauses described shipped features: multiplayer
