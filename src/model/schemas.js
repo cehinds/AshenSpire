@@ -316,6 +316,36 @@ const enemyPhaseSchema = obj({
 // kind first so an error lands on the field, not on "matched no variant".
 // Field semantics are documented where the data lives (content/sfx.js);
 // engine defaults for the optional fields live in ui/audio.js tone()/noise().
+// THE SILENCE WORD (word 3 of the audio vocabulary; Sunna's lift condition).
+// Deliberate quiet in a music context is spelled with this exact string as the
+// context's whole bed value — `rest: 'silence'` — a word a human typed on
+// purpose. null, a missing key, [], {} and a zero gain are NOT silence: each
+// is a distinct malformation the validator rejects by name, so quiet-by-intent
+// can never be confused with quiet-by-bug. One home for the word: the engine
+// (ui/audio.js) and the validator both import it from here.
+export const MUSIC_SILENCE_WORD = 'silence';
+
+// A music bed object (content/music.js BEDS values that are not the silence
+// word). `wave` shares SFX_WAVE_TYPES — one closed set for every oscillator
+// timbre the engine can speak. `scale` is checked against the bundle's own
+// scales table in validate.js (a dangling scale was previously unchecked).
+export const MUSIC_BED_SCHEMA = Object.freeze(
+  obj({
+    drone: opt(bool),
+    gain: num,
+    pulse: opt(bool),
+    variants: arr(
+      obj({
+        root: num,
+        scale: str,
+        cadence: num,
+        wave: opt(en(...SFX_WAVE_TYPES)),
+        lift: opt(num),
+      })
+    ),
+  })
+);
+
 export const SFX_LAYER_SCHEMAS = Object.freeze({
   tone: obj({
     kind: en('tone'),

@@ -21,38 +21,10 @@
 // file's, and there is no recipe table left to inspect.
 
 // ---- minimal WebAudio stub -------------------------------------------------
-// Records every value scheduled on a GAIN param — both setValueAtTime and
-// exponentialRampToValueAtTime, because the engine uses both: tone() ramps up
-// to its peak, noise() sets its peak directly and ramps down. (The probe's own
-// first run missed all four noise layers by assuming ramps only, and mixed
-// frequency targets into the pool — both wrong models, caught by watching it
-// fail. Frequency params record nothing here so a freq can never alibi a peak.)
-const gainTargets = [];
-
-class FakeParam {
-  constructor(record) { this.value = 0; this.record = record; }
-  setValueAtTime(v) { this.value = v; if (this.record) gainTargets.push(v); }
-  exponentialRampToValueAtTime(v) { if (this.record) gainTargets.push(v); }
-  cancelScheduledValues() {}
-}
-class FakeNode {
-  constructor() { this.gain = new FakeParam(true); this.frequency = new FakeParam(false); }
-  connect(n) { return n; }
-  start() {}
-  stop() {}
-}
-class FakeCtx {
-  constructor() { this.currentTime = 0; this.sampleRate = 48000; this.state = 'running'; this.destination = new FakeNode(); }
-  createGain() { return new FakeNode(); }
-  createOscillator() { return new FakeNode(); }
-  createBiquadFilter() { return new FakeNode(); }
-  createBufferSource() { return new FakeNode(); }
-  createBuffer(ch, frames) { return { getChannelData: () => new Float32Array(frames) }; }
-  resume() {}
-}
-
-globalThis.window = { AudioContext: FakeCtx };
-globalThis.addEventListener = () => {};
+// One home for the stub and its hard-won model (why BOTH scheduling calls
+// record, why frequency params record nothing): tools/webaudio-stub.mjs.
+const { installWebAudioStub } = await import('./webaudio-stub.mjs');
+const gainTargets = installWebAudioStub();
 
 const { initAudio } = await import('../src/ui/audio.js');
 const { SFX_RECIPES } = await import('../src/content/sfx.js');

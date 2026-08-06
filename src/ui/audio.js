@@ -12,6 +12,7 @@
 import { balance } from '../content/balance.js';
 import { MUSIC_MANIFEST, SCALES, BEDS } from '../content/music.js';
 import { SFX_MANIFEST, SFX_RECIPES } from '../content/sfx.js';
+import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
 
 // Default levels for a profile that has never touched the sliders — one source,
 // shared with ui/screens/settings.js.
@@ -204,25 +205,48 @@ export function initAudio(settings = {}) {
     state.nodes.push({ osc: o, gain: g }, { osc: o2, gain: g }, { osc: lfo, gain: g });
   }
 
+  // Returns a disposition so a headless probe can tell WHY nothing (or
+  // something) is playing: 'bed' | 'external' | 'silence' (deliberate quiet,
+  // the word a human typed in BEDS) | 'unknown' (a context with no bed — the
+  // bug shape, warned loud) | 'muted' | 'unchanged'. Callers may ignore it.
   function music(context) {
-    if (state.context === context) return;
+    if (state.context === context) return 'unchanged';
     state.context = context;
     stopMusic();
-    const bed = BEDS[context];
-    if (!bed || state.muted) return;
+    const bed = own(BEDS, context);
+    if (bed === undefined) {
+      // Silence-by-bug, and it says so: a context nobody wrote a bed for is a
+      // mistake, never a decision (Law 1 clause 5). Deliberate quiet is the
+      // word — `<context>: 'silence'` in content/music.js BEDS.
+      console.warn(`[audio] music('${context}'): no bed with this name in content/music.js BEDS — playing nothing. Deliberate quiet is spelled '${MUSIC_SILENCE_WORD}'.`);
+      return 'unknown';
+    }
+    if (state.muted) return 'muted';
     resume();
-    // Prefer an external track for this context if the folder provided any;
-    // fall back to a procedural variant on missing/unplayable files.
+    // Prefer an external track for this context if the folder provided any —
+    // including over a shipped 'silence': the folder manifest is also a word a
+    // human typed on purpose, and the more specific intent wins.
     const ext = state.tracks[context];
     if (ext && ext.length) {
       playExternal(context, ext);
-      return;
+      return 'external';
     }
+    if (bed === MUSIC_SILENCE_WORD) return MUSIC_SILENCE_WORD;
     playProcedural(context, bed);
+    return 'bed';
+  }
+
+  // A failed external track falls back to what the SHIPPED table says — a bed
+  // plays, the silence word stays quiet. Without this guard the word itself
+  // would have been handed to playProcedural as if it were a bed object.
+  function proceduralFallback(context) {
+    const bed = own(BEDS, context);
+    if (bed && bed !== MUSIC_SILENCE_WORD) playProcedural(context, bed);
   }
 
   // Stream a random track from the context's list; when it ends, play another
-  // (fresh random pick → variety). Any load/decode error → procedural bed.
+  // (fresh random pick → variety). Any load/decode error → the shipped bed
+  // (or shipped silence) via proceduralFallback.
   function playExternal(context, urls) {
     const url = pickRandom(urls);
     let el;
@@ -236,7 +260,7 @@ export function initAudio(settings = {}) {
         state.mediaSources.set(el, src);
       }
     } catch (e) {
-      return playProcedural(context, BEDS[context]);
+      return proceduralFallback(context);
     }
     el.addEventListener('ended', () => {
       if (state.context === context) playExternal(context, urls);
@@ -244,7 +268,7 @@ export function initAudio(settings = {}) {
     el.addEventListener('error', () => {
       if (state.context === context) {
         state.mediaEl = null;
-        playProcedural(context, BEDS[context]);
+        proceduralFallback(context);
       }
     });
     const p = el.play();
