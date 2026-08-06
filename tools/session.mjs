@@ -129,7 +129,7 @@ export function createSession({ registries, seedString, endless = false, restore
     const assigned = [];
     for (const node of Object.values(session.mapGraph.nodes)) {
       if (node.type === 'event') {
-        node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned });
+        node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, act: contentAct() });
         if (node.resolved.kind === 'event') assigned.push(node.resolved.eventId);
       }
     }

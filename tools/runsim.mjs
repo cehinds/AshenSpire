@@ -114,7 +114,7 @@ function simulateRun(classId, seed) {
     const assigned = [];
     for (const n of Object.values(map.nodes)) {
       if (n.type === 'event') {
-        n.resolved = resolveUnknownNode(REG, rng, { seenEvents: assigned });
+        n.resolved = resolveUnknownNode(REG, rng, { seenEvents: assigned, act: contentAct });
         if (n.resolved.kind === 'event') assigned.push(n.resolved.eventId);
       }
     }
