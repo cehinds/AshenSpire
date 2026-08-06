@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ashen Spire — library hero</title>
+<link rel="stylesheet" href="store.css">
+<style>
+/* Library hero (3840x1240): artwork only — Steam requires NO words here; the
+   library logo is composited on top by the client. Vector + gradient carry the
+   canvas because the raster plates are 720px wide and would smear at 3840; the
+   plate rides as low texture only. */
+.plate { opacity: 0.35; filter: saturate(0.8) brightness(0.55) blur(2px); }
+.spire { height: 96%; opacity: 0.96; }
+.graph svg { transform: scale(1.02); }
+</style>
+</head>
+<body class="hi-contrast">
+<div class="board">
+  <div class="field"></div>
+  <div class="plate"></div>
+  <div class="spire"></div>
+  <div class="graph" id="graph"></div>
+  <div class="veil"></div>
+  <div class="embers"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+<script src="motif.js"></script>
+<script>
+  window.drawMotif(document.getElementById('graph'), { rows: 6, cols: 9, opacity: 0.5 });
+</script>
+</body>
+</html>

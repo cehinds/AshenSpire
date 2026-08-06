@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ashen Spire — store capsule</title>
+<link rel="stylesheet" href="store.css">
+<style>
+/* Per-canvas type sizing only — everything else is store.css's one hand.
+   Sizes are px deliberately: each capsule is a fixed-pixel artboard Steam
+   displays 1:1 or downscales; nothing here answers a text setting (Law 4 —
+   this is chrome, not UI text). */
+body[data-kind='header']   .wordmark { font-size: 92px; }
+body[data-kind='header']   .sub      { font-size: 19px; }
+body[data-kind='small']    .wordmark { font-size: 58px; letter-spacing: 0.04em; }
+body[data-kind='small']    .sub      { display: none; } /* Steam: small capsule is mostly logo */
+body[data-kind='small']    .graph,
+body[data-kind='small']    .plate,
+body[data-kind='small']    .spire    { display: none; }
+body[data-kind='main']     .wordmark { font-size: 132px; }
+body[data-kind='main']     .sub      { font-size: 26px; }
+body[data-kind='vertical'] .wordmark { font-size: 128px; }
+body[data-kind='vertical'] .sub      { font-size: 21px; }
+body[data-kind='library']  .wordmark { font-size: 104px; }
+body[data-kind='library']  .sub      { font-size: 17px; }
+/* Portrait canvases: lettering rides the upper third, spire fills below. */
+body[data-kind='vertical'] .stack,
+body[data-kind='library']  .stack { justify-content: flex-start; padding-top: 9%; }
+</style>
+</head>
+<body class="hi-contrast"><!-- the shipped default palette: highContrast defaults true -->
+<div class="board">
+  <div class="field"></div>
+  <div class="plate"></div>
+  <div class="spire"></div>
+  <div class="graph" id="graph"></div>
+  <div class="veil"></div>
+  <div class="embers"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="stack">
+    <div class="wordmark" id="wm">ASHEN SPIRE</div>
+    <div class="sub">A ROGUELIKE DECKBUILDER</div>
+  </div>
+</div>
+<script src="motif.js"></script>
+<script>
+  const kind = new URLSearchParams(location.search).get('kind') || 'header';
+  document.body.dataset.kind = kind;
+  const portrait = kind === 'vertical' || kind === 'library';
+  if (portrait) {
+    document.getElementById('wm').classList.add('stacked');
+    document.getElementById('wm').innerHTML = '<span>ASHEN</span><span>SPIRE</span>';
+  }
+  if (kind !== 'small') {
+    window.drawMotif(document.getElementById('graph'), {
+      rows: portrait ? 7 : 5,
+      cols: portrait ? 4 : 6,
+      opacity: 0.42,
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+/* store/templates/store.css — the store assets' shared surface.
+   One hand, one home: every colour here is a token from styles/base.css (the
+   game's real palette — imported, never copied), and every shared shape
+   (spire, veil, embers) is authored once in this file. The templates only
+   choose sizes and which layers a given canvas carries.
+   The compositions are vector + gradient first because the game's raster
+   plates are 720x430 and the library hero is 3840 wide — a stretched texture
+   lies about the game's crispness; the map-graph motif (store/templates/
+   motif.js) scales without loss because it is the same kind of drawing the
+   game itself makes. */
+
+@import url('../../styles/base.css');
+
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body { background: var(--bg); font-family: var(--font-body); }
+
+.board { position: absolute; inset: 0; overflow: hidden; background: var(--bg); }
+
+/* Texture layer: an act plate, darkened and soft — mood, never detail.
+   Only used on canvases where the 720px source stretches less than ~2x. */
+.plate {
+  position: absolute; inset: 0;
+  /* seated low: the plate's upper region holds a pale cloud mass that reads
+     as an accident when stretched behind the wordmark (seen at first render);
+     the lower dusk band is the texture that earns its place */
+  background: url('../../assets/bg/bg_act1.webp') center 82% / cover no-repeat;
+  filter: saturate(0.85) brightness(0.6);
+  opacity: 0.45;
+}
+
+/* Dusk field behind everything: warm ember glow low, night at the edges. */
+.field {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 72%, rgba(var(--accent-rgb), 0.16) 0%, rgba(var(--accent-rgb), 0) 60%),
+    radial-gradient(ellipse 120% 90% at 50% 45%, rgba(23, 19, 16, 0) 30%, var(--bg) 100%);
+}
+
+/* The spire: one silhouette, authored once. A dark mass rising off-centre,
+   jagged the way the map climbs — geometry lives only here. */
+.spire {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 88%;
+  background: linear-gradient(to top, #050403 0%, #12100b 55%, #241d15 100%);
+  clip-path: polygon(
+    18% 100%, 26% 74%, 31% 78%, 38% 46%, 43% 52%, 50% 12%,
+    55% 30%, 60% 24%, 66% 58%, 72% 50%, 79% 82%, 84% 76%, 92% 100%
+  );
+  opacity: 0.92;
+}
+
+/* Vignette that seats every composition into the store's dark chrome. */
+.veil {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(to top, var(--bg) 0%, rgba(13, 11, 8, 0.35) 26%, rgba(13, 11, 8, 0) 52%),
+    radial-gradient(ellipse 140% 110% at 50% 40%, rgba(13, 11, 8, 0) 55%, rgba(13, 11, 8, 0.75) 100%);
+}
+
+/* Embers: static, deliberate positions — a capture is one frame, so nothing
+   here animates; a mid-tween frame would be a random composition. */
+.embers { position: absolute; inset: 0; }
+.embers i {
+  position: absolute; display: block; border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 6px 2px rgba(var(--accent-rgb), 0.45);
+}
+.embers i:nth-child(1) { left: 22%; top: 64%; width: 3px; height: 3px; opacity: 0.9; }
+.embers i:nth-child(2) { left: 31%; top: 42%; width: 2px; height: 2px; opacity: 0.6; }
+.embers i:nth-child(3) { left: 47%; top: 28%; width: 3px; height: 3px; opacity: 0.8; }
+.embers i:nth-child(4) { left: 58%; top: 52%; width: 2px; height: 2px; opacity: 0.55; }
+.embers i:nth-child(5) { left: 68%; top: 34%; width: 3px; height: 3px; opacity: 0.75; }
+.embers i:nth-child(6) { left: 77%; top: 60%; width: 2px; height: 2px; opacity: 0.5; }
+.embers i:nth-child(7) { left: 40%; top: 70%; width: 2px; height: 2px; opacity: 0.65; }
+.embers i:nth-child(8) { left: 63%; top: 16%; width: 2px; height: 2px; opacity: 0.45; }
+
+/* The map-graph constellation (drawn by motif.js into this element). */
+.graph { position: absolute; inset: 0; }
+.graph svg { width: 100%; height: 100%; display: block; }
+.m-edge { stroke: var(--line-soft); stroke-width: 2; fill: none; }
+.m-traveled { stroke: var(--gold); stroke-width: 3; fill: none; }
+.m-ring { stroke: var(--line-soft); stroke-width: 2; fill: var(--panel); }
+.m-ring.lit { stroke: var(--gold); }
+
+/* The wordmark: the title screen's own treatment (.title-big — --font-display,
+   --gold, the same glow), sized per canvas by the template. */
+.stack {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 0.4em;
+}
+.wordmark {
+  font-family: var(--font-display); font-weight: 700;
+  color: var(--gold); letter-spacing: 0.06em; line-height: 0.98;
+  text-shadow: 0 0 40px rgba(var(--accent-rgb), 0.35), 0 2px 14px rgba(0, 0, 0, 0.7);
+}
+.wordmark.stacked span { display: block; }
+.sub {
+  font-family: var(--font-body); color: var(--parchment); opacity: 0.85;
+  letter-spacing: 0.34em; text-indent: 0.34em; /* re-centre the tracked line */
+}
