@@ -5,7 +5,9 @@
 //   node tools/contrast-audit.mjs --profile shipped-default
 //   node tools/contrast-audit.mjs --json          → machine-readable
 //   node tools/contrast-audit.mjs --gate          → exit 1 on a NEW or WORSENED
-//                                                   AA failure at default settings
+//                                                   AA failure at a gated profile
+//                                                   (default, + the #45 map rows
+//                                                   in hi-contrast-off)
 //
 // Why this reads pixels and not the stylesheet: a declared colour and a
 // delivered colour are two different facts. `.card .ctag` specs 4.67:1 at 8px —
@@ -126,7 +128,13 @@ const TARGETS = [
 // Failures that are KNOWN, MEASURED, and deliberately not fixed by the default
 // flip — each with the reason it was left and what would actually fix it. This
 // list exists so `--gate` can fail on a NEW failure without going red on the
-// three standing ones, because a gate that is always red is a gate nobody runs.
+// standing ones, because a gate that is always red is a gate nobody runs.
+//
+// Every entry names its PROFILE, and the gate keys the ledger on
+// `profile :: label` — an excused number in one palette must not silence the
+// same target in another (Vira's #45 finding: the gate judged `default` only,
+// highContrast defaults TRUE, so the atmospheric palette's map values — the
+// exact thing the #45 remedy ships — could regress to any depth at exit 0).
 //
 // Every entry is a Tier-2 card waiting to be written, not a shrug. Two of them
 // are the same shape: high contrast swaps the muted / parchment / line tokens
@@ -134,7 +142,7 @@ const TARGETS = [
 // outside its reach entirely.
 const KNOWN_BELOW = [
   {
-    label: 'map node body (fill vs bg)', render: 1.17, floor: 3.0,
+    label: 'map node body (fill vs bg)', profile: 'default', render: 1.17, floor: 3.0,
     why: '--panel on --bg, 1.17 in BOTH palettes — high contrast never touches --panel, '
        + 'so no toggle reaches this number. Sunna ruled the floor for non-text map glyphs '
        + '(#45): 3:1 on each glyph\'s IDENTIFYING BOUNDARY against each adjacent rendered '
@@ -148,7 +156,19 @@ const KNOWN_BELOW = [
        + 'the row goes red.',
   },
   {
-    label: 'YOU PERISHED', render: 1.97, floor: 3.0,
+    label: 'map node body (fill vs bg)', profile: 'hi-contrast-off', render: 1.17, floor: 3.0,
+    why: 'The same fact in the atmospheric palette: --panel on --bg is untouched by the '
+       + 'highContrast toggle, so the fill measures 1.17 here too, and Sunna\'s #45 ruling '
+       + 'answers it the same way — the ring is the identifying boundary, and since the '
+       + '--map-structure remedy (#7a6b54) it clears both adjacencies in THIS palette as '
+       + 'well: 3.78 edge, 3.36 ring judged, rendered. A separate entry because the ledger '
+       + 'is keyed per profile — the default entry excusing this number here would be the '
+       + 'exact cross-palette silence the per-profile keys exist to forbid.',
+    fix: 'Same condition as the default entry: the day the ring stops being the boundary, '
+       + 'delete this so the row goes red.',
+  },
+  {
+    label: 'YOU PERISHED', profile: 'default', render: 1.97, floor: 3.0,
     why: '--blood #8a1a1a on the death screen. High contrast does not touch --blood, so '
        + 'the flip cannot reach it. `colorblindSafe` does (4.77) but that is a different '
        + 'setting with a different meaning, and turning it on by default would repaint '
@@ -157,7 +177,7 @@ const KNOWN_BELOW = [
        + 'therefore Constantine\'s call, not a default flip.',
   },
   {
-    label: 'Blood card tag (label only)', render: 1.71, floor: 4.5,
+    label: 'Blood card tag (label only)', profile: 'default', render: 1.71, floor: 4.5,
     why: 'The worst contrast in the game, on the Reaver\'s staple card, and NO accessibility '
        + 'toggle can reach it: the tag colour is not --blood. It is the literal string '
        + '8A1A1A in the `color` column of content/source/cardTags.csv, applied inline as '
@@ -169,7 +189,7 @@ const KNOWN_BELOW = [
        + 'size: .ctag is 0.8rem, which is 6.8px at UI size S.',
   },
   {
-    label: 'fight label (combat)', render: 2.47, floor: 4.5,
+    label: 'fight label (combat)', profile: 'default', render: 2.47, floor: 4.5,
     why: 'Not a palette problem — an OCCLUSION bug, and high contrast cannot fix a veil. '
        + '.backdrop in styles/combat.css is `position:absolute; inset:0; z-index:0` inside '
        + '.combat with `opacity:0.55`, and .topbar carries no z-index at all — so the act '
@@ -656,13 +676,46 @@ if (asJson) {
 }
 
 if (gate) {
-  const measured = rows.filter((r) => r.profile === 'default' && !r.missing && r.inkPixels);
-  const known = new Map(KNOWN_BELOW.map((k) => [k.label, k]));
+  // WHICH ROWS THE GATE JUDGES — and why it is not just `default`. `default`
+  // judges every target: it is what a first-boot player receives. But
+  // highContrast defaults TRUE, so the ATMOSPHERIC palette's values ship only
+  // under `hi-contrast-off` — and until 2026-08-06 this gate filtered to
+  // `default` alone, which meant nine profiles rendered, one judged, and a
+  // sub-floor plant in --map-structure (the exact value the #45 remedy ships)
+  // exited 0. Observed red by Vira on the #45 branch before this map existed.
+  // So the #45 map-structure rows are additionally judged in `hi-contrast-off`.
+  const MAP45 = new Set([
+    'map edge (untraveled road)',
+    'map node ring (plain)',
+    'map node body (fill vs bg)',
+  ]);
+  const GATED = {
+    default: () => true,
+    'hi-contrast-off': (label) => MAP45.has(label),
+  };
+  // A partial run cannot gate: a `--profile` invocation that omits a gated
+  // profile would judge nothing there and exit 0 — the same silence this block
+  // exists to close. Absent is unknown, and unknown blocks (SOP 2).
+  const absent = Object.keys(GATED).filter((p) => !profiles[p]);
+  if (absent.length) {
+    console.error(`\ncontrast-audit --gate: gated profile(s) not rendered this run: ${absent.join(', ')}.`);
+    console.error(`  The gate judges ${Object.keys(GATED).join(' + ')} — run --gate without --profile.`);
+    process.exit(1);
+  }
+  const gated = rows.filter((r) => GATED[r.profile] && GATED[r.profile](r.label));
+  // A gated row with no pixels does not drop out silently: a selector that
+  // stops matching, or ink that stops rendering, is the gate going BLIND — the
+  // target did not go green, the instrument lost sight of it.
+  const blind = gated.filter((r) => r.missing || !r.inkPixels);
+  const measured = gated.filter((r) => !r.missing && r.inkPixels);
+  // The ledger is keyed per profile: an excused number in one palette must not
+  // silence the same target in another.
+  const known = new Map(KNOWN_BELOW.map((k) => [`${k.profile} :: ${k.label}`, k]));
   const newly = [];
   const worse = [];
   const stale = [];
   for (const r of measured) {
-    const k = known.get(r.label);
+    const k = known.get(`${r.profile} :: ${r.label}`);
     const v = r.judged ?? r.render; // the same number `pass` was decided on
     if (r.pass) { if (k) stale.push({ r, k }); continue; }
     if (!k) { newly.push(r); continue; }
@@ -670,17 +723,20 @@ if (gate) {
     if (v < k.render - 0.15) worse.push({ r, k });
   }
   if (newly.length) {
-    console.error(`\ncontrast-audit --gate: ${newly.length} NEW failure(s) at default settings:`);
-    for (const r of newly) console.error(`  ${r.label} — ${r.judged ?? r.render}:1 at ${r.fontPx}px (floor ${r.floor})`);
+    console.error(`\ncontrast-audit --gate: ${newly.length} NEW failure(s) at gated profiles:`);
+    for (const r of newly) console.error(`  ${r.label} [${r.profile}] — ${r.judged ?? r.render}:1 at ${r.fontPx}px (floor ${r.floor})`);
   }
   for (const { r, k } of worse) {
-    console.error(`\ncontrast-audit --gate: ${r.label} REGRESSED — ${r.judged ?? r.render}:1, was ${k.render}:1`);
+    console.error(`\ncontrast-audit --gate: ${r.label} [${r.profile}] REGRESSED — ${r.judged ?? r.render}:1, was ${k.render}:1`);
+  }
+  for (const r of blind) {
+    console.error(`\ncontrast-audit --gate: ${r.label} [${r.profile}] is BLIND — ${r.missing ? `selector not found: ${r.sel}` : 'no ink pixels (invisible or clipped)'}`);
   }
   for (const { r, k } of stale) {
-    console.log(`\ncontrast-audit --gate: ${r.label} now PASSES at ${r.judged ?? r.render}:1 (recorded ${k.render}).`);
+    console.log(`\ncontrast-audit --gate: ${r.label} [${r.profile}] now PASSES at ${r.judged ?? r.render}:1 (recorded ${k.render}).`);
     console.log(`  Fixed? Delete its KNOWN_BELOW entry in this file — a stale allowlist is how a`);
     console.log(`  gate goes quiet. Not failing the run for good news, but this line will not stop.`);
   }
-  if (newly.length || worse.length) process.exit(1);
+  if (newly.length || worse.length || blind.length) process.exit(1);
 }
 process.exit(0);
