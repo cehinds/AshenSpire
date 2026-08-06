@@ -24,6 +24,8 @@ import {
   REGISTRY_TYPES,
   SFX_LAYER_KINDS,
   SFX_LAYER_SCHEMAS,
+  MUSIC_SILENCE_WORD,
+  MUSIC_BED_SCHEMA,
 } from './schemas.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 
@@ -65,6 +67,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'equipment',
   'unlocks',
   'sfx',
+  'music',
 ]);
 
 /**
@@ -255,6 +258,7 @@ export function validateContent(bundle) {
   }
 
   if (b.sfx != null) validateSfxRecipes(b.sfx, 'sfx', vctx);
+  if (b.music != null) validateMusicBeds(b.music, 'music', vctx);
 
   // ---- entity-specific cross checks ----------------------------------------
   for (const card of b.cards || []) {
@@ -366,6 +370,97 @@ function validateSfxRecipes(sfx, path, vctx) {
 }
 
 // ---------------------------------------------------------------------------
+// Music beds + the silence word (word 3; Sunna's lift condition)
+// ---------------------------------------------------------------------------
+
+/**
+ * A context's bed value is either a bed object or the exact word 'silence'
+ * (MUSIC_SILENCE_WORD) — deliberate quiet a human typed on purpose. Everything
+ * that LOOKS like quiet but wasn't typed as the word is a distinct, named
+ * error: null, [], {}, a wrong or miscased word, a zero gain. That is the
+ * whole point of the word — quiet-by-intent is never confusable with
+ * quiet-by-bug, at boot (main.js banner) and in tests.
+ */
+function validateMusicBeds(music, path, vctx) {
+  const { err } = vctx;
+  if (!isPlainObject(music)) {
+    err(path, `Expected { scales, beds }, got ${describe(music)}`);
+    return;
+  }
+  for (const key of Object.keys(music)) {
+    if (key !== 'scales' && key !== 'beds') err(`${path}.${key}`, `Unknown field '${key}'`);
+  }
+  const scales = music.scales;
+  const scaleIds = new Set();
+  if (!isPlainObject(scales)) {
+    err(`${path}.scales`, `Expected an object map of scales, got ${describe(scales)}`);
+  } else {
+    for (const id of Object.keys(scales)) {
+      const s = scales[id];
+      if (!Array.isArray(s) || s.length === 0) {
+        err(`${path}.scales.${id}`, `Scale must be a non-empty array of semitone offsets, got ${Array.isArray(s) ? 'empty array' : describe(s)}`);
+        continue;
+      }
+      scaleIds.add(id);
+      s.forEach((v, i) => {
+        if (typeof v !== 'number' || !Number.isFinite(v)) err(`${path}.scales.${id}[${i}]`, `Expected finite number, got ${describe(v)}`);
+      });
+    }
+  }
+  const beds = music.beds;
+  if (!isPlainObject(beds)) {
+    err(`${path}.beds`, `Expected an object map of context beds, got ${describe(beds)}`);
+    return;
+  }
+  for (const context of Object.keys(beds)) {
+    const p = `${path}.beds.${context}`;
+    const bed = beds[context];
+    if (bed === MUSIC_SILENCE_WORD) continue; // deliberate quiet, spelled on purpose
+    if (bed === null) {
+      err(p, `null is not silence — deliberate quiet is spelled '${MUSIC_SILENCE_WORD}'; a null bed is a mistake, not a decision`);
+      continue;
+    }
+    if (typeof bed === 'string') {
+      err(p, `The only word for deliberate quiet is '${MUSIC_SILENCE_WORD}' (exact, lowercase), got '${bed}'`);
+      continue;
+    }
+    if (Array.isArray(bed)) {
+      err(p, `An array is not a bed and not silence — a bed is an object, deliberate quiet is '${MUSIC_SILENCE_WORD}'`);
+      continue;
+    }
+    walkSchema(bed, MUSIC_BED_SCHEMA, p, vctx);
+    if (!isPlainObject(bed)) continue;
+    // Meaning: quiet spelled as numbers, and refs the schema cannot see.
+    if (typeof bed.gain === 'number' && !(Number.isFinite(bed.gain) && bed.gain > 0)) {
+      err(`${p}.gain`, `'gain' must be a finite number > 0, got ${bed.gain} — a zero gain is silence spelled as a number; deliberate quiet is the word '${MUSIC_SILENCE_WORD}'`);
+    }
+    if (Array.isArray(bed.variants)) {
+      if (bed.variants.length === 0) err(`${p}.variants`, `'variants' must be non-empty — a bed with nothing to play is silence by accident; deliberate quiet is '${MUSIC_SILENCE_WORD}'`);
+      bed.variants.forEach((v, i) => {
+        if (!isPlainObject(v)) return; // schema pass reported it
+        for (const f of ['root', 'cadence']) {
+          if (typeof v[f] === 'number' && !(Number.isFinite(v[f]) && v[f] > 0)) {
+            err(`${p}.variants[${i}].${f}`, `'${f}' must be a finite number > 0, got ${v[f]}`);
+          }
+        }
+        // Vira's gate finding on word 3: 'lift' was missing from this sweep,
+        // and a validator-green `lift: Infinity` or `lift: -3` crashed the
+        // music loop per note (NaN / negative scale index → non-finite
+        // oscillator frequency). Integer, not just finite-positive: the
+        // stride INDEXES the scale, and a fractional stride reads
+        // scale[4.5] — the same NaN wearing a friendlier number.
+        if (typeof v.lift === 'number' && !(Number.isInteger(v.lift) && v.lift > 0)) {
+          err(`${p}.variants[${i}].lift`, `'lift' must be a positive integer, got ${v.lift} — the melodic stride indexes the scale, and a negative, fractional, or non-finite stride reads notes that do not exist`);
+        }
+        if (typeof v.scale === 'string' && !scaleIds.has(v.scale)) {
+          err(`${p}.variants[${i}].scale`, `Dangling reference: unknown scale '${v.scale}'`);
+        }
+      });
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Schema walker
 // ---------------------------------------------------------------------------
 
@@ -467,6 +562,7 @@ function walkSchema(value, node, path, vctx) {
 
 function describe(v) {
   if (v === null) return 'null';
+  if (v === undefined) return 'undefined'; // JSON.stringify(undefined) is undefined — 'undefined undefined' otherwise
   if (Array.isArray(v)) return 'array';
   // NaN and ±Infinity JSON.stringify to "null", so without this branch a NaN
   // red printed the riddle "Expected number, got number null" (Vira, #46).

@@ -1607,6 +1607,64 @@ export async function runTests({ artManifest = null } = {}) {
     // player at minute forty is Sunna's read, not this file's.
   });
 
+  // ---- 35c. The silence word: deliberate quiet is typed, mistakes are named -
+  // Word 3, under Sunna's lift condition: quiet must be a word a human typed
+  // on purpose ('silence' as a context's whole bed value), and every
+  // quiet-SHAPED mistake — null, [], {}, zero gain, wrong or miscased word,
+  // empty variants — is a distinct error naming its entry. 35c beside 35b for
+  // the same reason 35b sits beside 35: run-node.mjs owns 36–38.
+  test('35c. music beds validate; \'silence\' is the one word for deliberate quiet; quiet-shaped mistakes fail by name', () => {
+    const m = contentBundle.music;
+    assert(m && typeof m.beds === 'object' && !Array.isArray(m.beds) && typeof m.scales === 'object', 'bundle carries music { beds, scales }');
+    assert(validateContent(contentBundle).ok, 'shipped music validates');
+
+    // The word itself is legal at context level — a human typing
+    // `credits: 'silence'` has made a decision, not a mistake.
+    const silent = validateContent({ ...contentBundle, music: { scales: m.scales, beds: { ...m.beds, credits: 'silence' } } });
+    assert(silent.ok, `explicit 'silence' must validate: ${silent.errors.slice(0, 2).map((e) => `${e.path}: ${e.msg}`).join(' | ')}`);
+
+    // The known-bad corpus — each observed red at authoring time (2026-08-06)
+    // before being seeded here (the instrument rule). Every red names its
+    // entry, and the quiet-shaped ones point at the word.
+    const cases = [
+      ['null bed', { rest: null }, 'music.beds.rest', 'null is not silence'],
+      ['wrong word', { rest: 'quiet' }, 'music.beds.rest', "The only word for deliberate quiet is 'silence'"],
+      ['miscased word', { rest: 'Silence' }, 'music.beds.rest', "The only word for deliberate quiet is 'silence'"],
+      ['empty array bed', { rest: [] }, 'music.beds.rest', 'not a bed and not silence'],
+      ['empty object bed', { rest: {} }, 'music.beds.rest', 'Missing required field'],
+      ['empty variants', { rest: { gain: 0.3, variants: [] } }, 'music.beds.rest', 'silence by accident'],
+      ['zero gain', { rest: { gain: 0, variants: [{ root: 130, scale: 'calm', cadence: 3000 }] } }, 'music.beds.rest', 'silence spelled as a number'],
+      ['dangling scale', { rest: { gain: 0.3, variants: [{ root: 130, scale: 'noSuchScale', cadence: 3000 }] } }, 'music.beds.rest', "unknown scale 'noSuchScale'"],
+      ['Infinity root', { rest: { gain: 0.3, variants: [{ root: Infinity, scale: 'calm', cadence: 3000 }] } }, 'music.beds.rest', 'finite'],
+      ['unknown bed field', { rest: { gain: 0.3, volume: 9, variants: [{ root: 130, scale: 'calm', cadence: 3000 }] } }, 'music.beds.rest', "Unknown field 'volume'"],
+      // Vira's gate finding: 'lift' was missing from the sweep — a
+      // validator-green lift: Infinity NaN'd the oscillator frequency at note
+      // 1, lift: -3 read scale[-1] from step 1 (63/73 scheduled frequencies
+      // non-finite, driven through the real engine). Her two fixtures, plus
+      // the adjacent edges of the same class: a fractional stride reads
+      // scale[4.5] (same NaN, friendlier number), and lift: 0 is falsy so the
+      // engine would silently play stride 3 — a zero that means three is a
+      // lie, not a value.
+      ['Infinity lift', { rest: { gain: 0.3, variants: [{ root: 130, scale: 'calm', cadence: 3000, lift: Infinity }] } }, 'music.beds.rest', 'positive integer'],
+      ['negative lift', { rest: { gain: 0.3, variants: [{ root: 130, scale: 'calm', cadence: 3000, lift: -3 }] } }, 'music.beds.rest', 'positive integer'],
+      ['fractional lift', { rest: { gain: 0.3, variants: [{ root: 130, scale: 'calm', cadence: 3000, lift: 2.5 }] } }, 'music.beds.rest', 'positive integer'],
+      ['zero lift', { rest: { gain: 0.3, variants: [{ root: 130, scale: 'calm', cadence: 3000, lift: 0 }] } }, 'music.beds.rest', 'positive integer'],
+    ];
+    for (const [name, patch, wantPath, wantMsg] of cases) {
+      const r = validateContent({ ...contentBundle, music: { scales: m.scales, beds: { ...m.beds, ...patch } } });
+      assert(!r.ok, `known-bad '${name}' passed validation`);
+      const hit = r.errors.find((e) => e.path.startsWith(wantPath) && e.msg.includes(wantMsg));
+      assert(hit, `known-bad '${name}': no error at '${wantPath}*' mentioning '${wantMsg}' — got ${r.errors.slice(0, 3).map((e) => `${e.path}: ${e.msg}`).join(' | ')}`);
+    }
+    const noScales = validateContent({ ...contentBundle, music: { beds: m.beds } });
+    assert(!noScales.ok && noScales.errors.some((e) => e.path === 'music.scales'), 'a missing scales table is caught by name');
+
+    // Boundary, said out loud: whether the engine actually STOPS the bed and
+    // schedules nothing for a 'silence' context — and warns on an unknown one
+    // — is runtime behaviour with WebAudio in it: tools/music-silence-probe.mjs
+    // is the half that has run it, and nothing in this suite hears anything.
+  });
+
   const passed = results.filter((r) => r.ok).length;
   const failed = results.length - passed;
   return { passed, failed, results };

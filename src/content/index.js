@@ -25,6 +25,7 @@ import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
 import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
+import { SCALES, BEDS } from './music.js';
 import { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
@@ -47,6 +48,10 @@ export const contentBundle = {
   // SFX recipes ride the bundle so validateContent rules on them at boot and
   // in tests (#46); the audio engine imports the same table from content/sfx.js.
   sfx: SFX_RECIPES,
+  // The score rides the same way (word 3): beds are bed objects or the exact
+  // word 'silence' — deliberate quiet — and the validator rejects every
+  // quiet-shaped mistake (null, [], {}, zero gain, wrong word) by name.
+  music: { scales: SCALES, beds: BEDS },
   // Equipment rides in the bundle as plain tables (see model/registries.js).
   equipment: {
     armaments: ARMAMENTS,

@@ -3356,6 +3356,7 @@ const { classes, LOCKED_CLASSES } = require("src/content/classes.js");
 const { mapConfigs } = require("src/content/mapconfig.js");
 const { scripts } = require("src/content/scripts.js");
 const { SFX_RECIPES } = require("src/content/sfx.js");
+const { SCALES, BEDS } = require("src/content/music.js");
 const { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } = require("src/content/equipment.js");
 const { equipTargets } = require("src/content/generated/equipTargets.js");
 const { unlocks } = require("src/content/generated/unlocks.js");
@@ -3378,6 +3379,10 @@ const contentBundle = {
   // SFX recipes ride the bundle so validateContent rules on them at boot and
   // in tests (#46); the audio engine imports the same table from content/sfx.js.
   sfx: SFX_RECIPES,
+  // The score rides the same way (word 3): beds are bed objects or the exact
+  // word 'silence' — deliberate quiet — and the validator rejects every
+  // quiet-shaped mistake (null, [], {}, zero gain, wrong word) by name.
+  music: { scales: SCALES, beds: BEDS },
   // Equipment rides in the bundle as plain tables (see model/registries.js).
   equipment: {
     armaments: ARMAMENTS,
@@ -8386,6 +8391,106 @@ const SFX_RECIPES = {
 Object.assign(module.exports, { SFX_MANIFEST, SFX_RECIPES });
 
 },
+"src/content/music.js": function (module, exports, require) {
+// src/content/music.js — the procedural score, as data (SPEC §3.1(4), §7.4).
+//
+// The synth engine (src/ui/audio.js) knows how to PLAY a bed; what the beds
+// are is content. Adding a mood or a new screen's music is a data edit here,
+// with no change to the engine — same rule the cards and enemies follow.
+//
+// THE SILENCE WORD: a context that should be deliberately quiet is spelled
+// with the exact word 'silence' as its whole value — `credits: 'silence'` —
+// never null, never a missing key, never [] or a zero gain. Those are
+// mistakes and the validator rejects each by name (model/validate.js; the
+// word's one home is MUSIC_SILENCE_WORD in model/schemas.js). A quiet screen
+// must be a decision someone typed, because untyped quiet is how a broken
+// audio path hides. A user music folder naming tracks for a silence context
+// still plays them — the more specific typed intent wins.
+//
+// The music sample manifest sits here too: naming a file for a context makes
+// the engine play that sample instead of synthesizing, and a missing/failed
+// load falls back to the synth, so this stays safe to point at art that
+// doesn't exist yet. (The SFX manifest + recipes live in content/sfx.js —
+// one home per medium.)
+
+// A real build can point these at files; missing/failed loads fall back to synth.
+const MUSIC_MANIFEST = {
+  // combat: 'assets/music/combat.ogg',
+};
+
+// Minor / phrygian-ish scales (semitone offsets from the root) per mood.
+const SCALES = {
+  calm: [0, 3, 5, 7, 10, 12, 15],
+  tense: [0, 1, 5, 6, 7, 10, 12],
+  dread: [0, 2, 3, 7, 8, 10, 12],
+  hymn: [0, 2, 4, 7, 9, 12, 16], // warmer major-pentatonic-ish (shop/rest/victory)
+  veiled: [0, 3, 5, 6, 10, 12, 15], // dorian-flavored, wistful
+  wrath: [0, 1, 4, 5, 8, 11, 12], // jagged, aggressive (elite/boss)
+};
+
+// Music beds per context. Each context has a `gain`, a `drone` flag, and a set
+// of procedural VARIANTS (root frequency, scale, note cadence in ms) — one is
+// picked at random each time the context starts, so the score varies between a
+// handful of "tracks" even with zero audio files. Shop and Rest have their own
+// calmer sets; Boss/Elite their own darker ones.
+// Each variant may also set `wave` (oscillator timbre) and `lift` (melodic
+// stride through the scale) so variants differ in colour and contour, not just
+// key/tempo — more perceived variety from the same synth.
+const BEDS = {
+  title: { drone: true, gain: 0.5, variants: [
+    { root: 146.83, scale: 'calm', cadence: 2600, wave: 'triangle', lift: 3 },
+    { root: 130.81, scale: 'dread', cadence: 3000, wave: 'sine', lift: 2 },
+    { root: 164.81, scale: 'calm', cadence: 2400, wave: 'triangle', lift: 4 },
+    { root: 155.56, scale: 'veiled', cadence: 2800, wave: 'sine', lift: 3 },
+  ] },
+  map: { drone: true, gain: 0.42, variants: [
+    { root: 164.81, scale: 'calm', cadence: 2200, wave: 'triangle', lift: 3 },
+    { root: 155.56, scale: 'calm', cadence: 2500, wave: 'sine', lift: 4 },
+    { root: 174.61, scale: 'dread', cadence: 2000, wave: 'triangle', lift: 2 },
+    { root: 146.83, scale: 'veiled', cadence: 2350, wave: 'sine', lift: 3 },
+  ] },
+  combat: { drone: true, gain: 0.5, pulse: true, variants: [
+    { root: 130.81, scale: 'tense', cadence: 1500, wave: 'triangle', lift: 3 },
+    { root: 123.47, scale: 'dread', cadence: 1300, wave: 'square', lift: 2 },
+    { root: 146.83, scale: 'tense', cadence: 1400, wave: 'triangle', lift: 4 },
+    { root: 138.59, scale: 'tense', cadence: 1250, wave: 'sawtooth', lift: 3 },
+    { root: 130.81, scale: 'veiled', cadence: 1350, wave: 'triangle', lift: 5 },
+    { root: 155.56, scale: 'dread', cadence: 1200, wave: 'square', lift: 2 },
+  ] },
+  elite: { drone: true, gain: 0.55, pulse: true, variants: [
+    { root: 110.0, scale: 'tense', cadence: 1150, wave: 'sawtooth', lift: 3 },
+    { root: 103.83, scale: 'dread', cadence: 1050, wave: 'square', lift: 2 },
+    { root: 116.54, scale: 'wrath', cadence: 1100, wave: 'sawtooth', lift: 4 },
+    { root: 98.0, scale: 'wrath', cadence: 1000, wave: 'square', lift: 3 },
+  ] },
+  boss: { drone: true, gain: 0.6, pulse: true, variants: [
+    { root: 98.0, scale: 'dread', cadence: 1000, wave: 'sawtooth', lift: 2 },
+    { root: 92.5, scale: 'wrath', cadence: 900, wave: 'square', lift: 3 },
+    { root: 87.31, scale: 'wrath', cadence: 950, wave: 'sawtooth', lift: 4 },
+    { root: 82.41, scale: 'dread', cadence: 860, wave: 'square', lift: 2 },
+    { root: 103.83, scale: 'wrath', cadence: 920, wave: 'sawtooth', lift: 3 },
+  ] },
+  shop: { drone: true, gain: 0.4, variants: [
+    { root: 196.0, scale: 'hymn', cadence: 2200, wave: 'triangle', lift: 3 },
+    { root: 174.61, scale: 'calm', cadence: 2000, wave: 'sine', lift: 4 },
+    { root: 220.0, scale: 'hymn', cadence: 2400, wave: 'triangle', lift: 2 },
+  ] },
+  rest: { drone: true, gain: 0.34, variants: [
+    { root: 130.81, scale: 'calm', cadence: 3200, wave: 'sine', lift: 3 },
+    { root: 146.83, scale: 'hymn', cadence: 3000, wave: 'sine', lift: 2 },
+    { root: 123.47, scale: 'veiled', cadence: 3400, wave: 'triangle', lift: 3 },
+  ] },
+  victory: { drone: false, gain: 0.5, variants: [
+    { root: 196.0, scale: 'hymn', cadence: 1400, wave: 'triangle', lift: 3 },
+    { root: 220.0, scale: 'hymn', cadence: 1200, wave: 'triangle', lift: 4 },
+    { root: 246.94, scale: 'calm', cadence: 1300, wave: 'sine', lift: 2 },
+  ] },
+};
+
+
+Object.assign(module.exports, { MUSIC_MANIFEST, SCALES, BEDS });
+
+},
 "src/content/equipment.js": function (module, exports, require) {
 // src/content/equipment.js — armaments, armour, slots, and the mod vocabulary.
 //
@@ -9550,7 +9655,7 @@ Object.assign(module.exports, { unlocks });
 // Headless: no document/window/localStorage/timers.
 
 const { resolveFloorPlan } = require("src/model/floorplan.js");
-const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, MODIFIER_KEYS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS } = require("src/model/schemas.js");
+const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, MODIFIER_KEYS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA } = require("src/model/schemas.js");
 const { FORMULA_OPS, FORMULA_OF, isFormula } = require("src/model/formulas.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -9591,6 +9696,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'equipment',
   'unlocks',
   'sfx',
+  'music',
 ]);
 
 /**
@@ -9781,6 +9887,7 @@ function validateContent(bundle) {
   }
 
   if (b.sfx != null) validateSfxRecipes(b.sfx, 'sfx', vctx);
+  if (b.music != null) validateMusicBeds(b.music, 'music', vctx);
 
   // ---- entity-specific cross checks ----------------------------------------
   for (const card of b.cards || []) {
@@ -9892,6 +9999,97 @@ function validateSfxRecipes(sfx, path, vctx) {
 }
 
 // ---------------------------------------------------------------------------
+// Music beds + the silence word (word 3; Sunna's lift condition)
+// ---------------------------------------------------------------------------
+
+/**
+ * A context's bed value is either a bed object or the exact word 'silence'
+ * (MUSIC_SILENCE_WORD) — deliberate quiet a human typed on purpose. Everything
+ * that LOOKS like quiet but wasn't typed as the word is a distinct, named
+ * error: null, [], {}, a wrong or miscased word, a zero gain. That is the
+ * whole point of the word — quiet-by-intent is never confusable with
+ * quiet-by-bug, at boot (main.js banner) and in tests.
+ */
+function validateMusicBeds(music, path, vctx) {
+  const { err } = vctx;
+  if (!isPlainObject(music)) {
+    err(path, `Expected { scales, beds }, got ${describe(music)}`);
+    return;
+  }
+  for (const key of Object.keys(music)) {
+    if (key !== 'scales' && key !== 'beds') err(`${path}.${key}`, `Unknown field '${key}'`);
+  }
+  const scales = music.scales;
+  const scaleIds = new Set();
+  if (!isPlainObject(scales)) {
+    err(`${path}.scales`, `Expected an object map of scales, got ${describe(scales)}`);
+  } else {
+    for (const id of Object.keys(scales)) {
+      const s = scales[id];
+      if (!Array.isArray(s) || s.length === 0) {
+        err(`${path}.scales.${id}`, `Scale must be a non-empty array of semitone offsets, got ${Array.isArray(s) ? 'empty array' : describe(s)}`);
+        continue;
+      }
+      scaleIds.add(id);
+      s.forEach((v, i) => {
+        if (typeof v !== 'number' || !Number.isFinite(v)) err(`${path}.scales.${id}[${i}]`, `Expected finite number, got ${describe(v)}`);
+      });
+    }
+  }
+  const beds = music.beds;
+  if (!isPlainObject(beds)) {
+    err(`${path}.beds`, `Expected an object map of context beds, got ${describe(beds)}`);
+    return;
+  }
+  for (const context of Object.keys(beds)) {
+    const p = `${path}.beds.${context}`;
+    const bed = beds[context];
+    if (bed === MUSIC_SILENCE_WORD) continue; // deliberate quiet, spelled on purpose
+    if (bed === null) {
+      err(p, `null is not silence — deliberate quiet is spelled '${MUSIC_SILENCE_WORD}'; a null bed is a mistake, not a decision`);
+      continue;
+    }
+    if (typeof bed === 'string') {
+      err(p, `The only word for deliberate quiet is '${MUSIC_SILENCE_WORD}' (exact, lowercase), got '${bed}'`);
+      continue;
+    }
+    if (Array.isArray(bed)) {
+      err(p, `An array is not a bed and not silence — a bed is an object, deliberate quiet is '${MUSIC_SILENCE_WORD}'`);
+      continue;
+    }
+    walkSchema(bed, MUSIC_BED_SCHEMA, p, vctx);
+    if (!isPlainObject(bed)) continue;
+    // Meaning: quiet spelled as numbers, and refs the schema cannot see.
+    if (typeof bed.gain === 'number' && !(Number.isFinite(bed.gain) && bed.gain > 0)) {
+      err(`${p}.gain`, `'gain' must be a finite number > 0, got ${bed.gain} — a zero gain is silence spelled as a number; deliberate quiet is the word '${MUSIC_SILENCE_WORD}'`);
+    }
+    if (Array.isArray(bed.variants)) {
+      if (bed.variants.length === 0) err(`${p}.variants`, `'variants' must be non-empty — a bed with nothing to play is silence by accident; deliberate quiet is '${MUSIC_SILENCE_WORD}'`);
+      bed.variants.forEach((v, i) => {
+        if (!isPlainObject(v)) return; // schema pass reported it
+        for (const f of ['root', 'cadence']) {
+          if (typeof v[f] === 'number' && !(Number.isFinite(v[f]) && v[f] > 0)) {
+            err(`${p}.variants[${i}].${f}`, `'${f}' must be a finite number > 0, got ${v[f]}`);
+          }
+        }
+        // Vira's gate finding on word 3: 'lift' was missing from this sweep,
+        // and a validator-green `lift: Infinity` or `lift: -3` crashed the
+        // music loop per note (NaN / negative scale index → non-finite
+        // oscillator frequency). Integer, not just finite-positive: the
+        // stride INDEXES the scale, and a fractional stride reads
+        // scale[4.5] — the same NaN wearing a friendlier number.
+        if (typeof v.lift === 'number' && !(Number.isInteger(v.lift) && v.lift > 0)) {
+          err(`${p}.variants[${i}].lift`, `'lift' must be a positive integer, got ${v.lift} — the melodic stride indexes the scale, and a negative, fractional, or non-finite stride reads notes that do not exist`);
+        }
+        if (typeof v.scale === 'string' && !scaleIds.has(v.scale)) {
+          err(`${p}.variants[${i}].scale`, `Dangling reference: unknown scale '${v.scale}'`);
+        }
+      });
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Schema walker
 // ---------------------------------------------------------------------------
 
@@ -9993,6 +10191,7 @@ function walkSchema(value, node, path, vctx) {
 
 function describe(v) {
   if (v === null) return 'null';
+  if (v === undefined) return 'undefined'; // JSON.stringify(undefined) is undefined — 'undefined undefined' otherwise
   if (Array.isArray(v)) return 'array';
   // NaN and ±Infinity JSON.stringify to "null", so without this branch a NaN
   // red printed the riddle "Expected number, got number null" (Vira, #46).
@@ -10856,6 +11055,36 @@ const enemyPhaseSchema = obj({
 // kind first so an error lands on the field, not on "matched no variant".
 // Field semantics are documented where the data lives (content/sfx.js);
 // engine defaults for the optional fields live in ui/audio.js tone()/noise().
+// THE SILENCE WORD (word 3 of the audio vocabulary; Sunna's lift condition).
+// Deliberate quiet in a music context is spelled with this exact string as the
+// context's whole bed value — `rest: 'silence'` — a word a human typed on
+// purpose. null, a missing key, [], {} and a zero gain are NOT silence: each
+// is a distinct malformation the validator rejects by name, so quiet-by-intent
+// can never be confused with quiet-by-bug. One home for the word: the engine
+// (ui/audio.js) and the validator both import it from here.
+const MUSIC_SILENCE_WORD = 'silence';
+
+// A music bed object (content/music.js BEDS values that are not the silence
+// word). `wave` shares SFX_WAVE_TYPES — one closed set for every oscillator
+// timbre the engine can speak. `scale` is checked against the bundle's own
+// scales table in validate.js (a dangling scale was previously unchecked).
+const MUSIC_BED_SCHEMA = Object.freeze(
+  obj({
+    drone: opt(bool),
+    gain: num,
+    pulse: opt(bool),
+    variants: arr(
+      obj({
+        root: num,
+        scale: str,
+        cadence: num,
+        wave: opt(en(...SFX_WAVE_TYPES)),
+        lift: opt(num),
+      })
+    ),
+  })
+);
+
 const SFX_LAYER_SCHEMAS = Object.freeze({
   tone: obj({
     kind: en('tone'),
@@ -11061,7 +11290,7 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_KEYS, STACK_MODES, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, SFX_LAYER_SCHEMAS, SCHEMAS });
+Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_KEYS, STACK_MODES, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
 
 },
 "src/model/formulas.js": function (module, exports, require) {
@@ -18293,6 +18522,7 @@ Object.assign(module.exports, { settingOn, renderSettings, openSettings });
 const { balance } = require("src/content/balance.js");
 const { MUSIC_MANIFEST, SCALES, BEDS } = require("src/content/music.js");
 const { SFX_MANIFEST, SFX_RECIPES } = require("src/content/sfx.js");
+const { MUSIC_SILENCE_WORD } = require("src/model/schemas.js");
 
 // Default levels for a profile that has never touched the sliders — one source,
 // shared with ui/screens/settings.js.
@@ -18485,25 +18715,48 @@ function initAudio(settings = {}) {
     state.nodes.push({ osc: o, gain: g }, { osc: o2, gain: g }, { osc: lfo, gain: g });
   }
 
+  // Returns a disposition so a headless probe can tell WHY nothing (or
+  // something) is playing: 'bed' | 'external' | 'silence' (deliberate quiet,
+  // the word a human typed in BEDS) | 'unknown' (a context with no bed — the
+  // bug shape, warned loud) | 'muted' | 'unchanged'. Callers may ignore it.
   function music(context) {
-    if (state.context === context) return;
+    if (state.context === context) return 'unchanged';
     state.context = context;
     stopMusic();
-    const bed = BEDS[context];
-    if (!bed || state.muted) return;
+    const bed = own(BEDS, context);
+    if (bed === undefined) {
+      // Silence-by-bug, and it says so: a context nobody wrote a bed for is a
+      // mistake, never a decision (Law 1 clause 5). Deliberate quiet is the
+      // word — `<context>: 'silence'` in content/music.js BEDS.
+      console.warn(`[audio] music('${context}'): no bed with this name in content/music.js BEDS — playing nothing. Deliberate quiet is spelled '${MUSIC_SILENCE_WORD}'.`);
+      return 'unknown';
+    }
+    if (state.muted) return 'muted';
     resume();
-    // Prefer an external track for this context if the folder provided any;
-    // fall back to a procedural variant on missing/unplayable files.
+    // Prefer an external track for this context if the folder provided any —
+    // including over a shipped 'silence': the folder manifest is also a word a
+    // human typed on purpose, and the more specific intent wins.
     const ext = state.tracks[context];
     if (ext && ext.length) {
       playExternal(context, ext);
-      return;
+      return 'external';
     }
+    if (bed === MUSIC_SILENCE_WORD) return MUSIC_SILENCE_WORD;
     playProcedural(context, bed);
+    return 'bed';
+  }
+
+  // A failed external track falls back to what the SHIPPED table says — a bed
+  // plays, the silence word stays quiet. Without this guard the word itself
+  // would have been handed to playProcedural as if it were a bed object.
+  function proceduralFallback(context) {
+    const bed = own(BEDS, context);
+    if (bed && bed !== MUSIC_SILENCE_WORD) playProcedural(context, bed);
   }
 
   // Stream a random track from the context's list; when it ends, play another
-  // (fresh random pick → variety). Any load/decode error → procedural bed.
+  // (fresh random pick → variety). Any load/decode error → the shipped bed
+  // (or shipped silence) via proceduralFallback.
   function playExternal(context, urls) {
     const url = pickRandom(urls);
     let el;
@@ -18517,7 +18770,7 @@ function initAudio(settings = {}) {
         state.mediaSources.set(el, src);
       }
     } catch (e) {
-      return playProcedural(context, BEDS[context]);
+      return proceduralFallback(context);
     }
     el.addEventListener('ended', () => {
       if (state.context === context) playExternal(context, urls);
@@ -18525,7 +18778,7 @@ function initAudio(settings = {}) {
     el.addEventListener('error', () => {
       if (state.context === context) {
         state.mediaEl = null;
-        playProcedural(context, BEDS[context]);
+        proceduralFallback(context);
       }
     });
     const p = el.play();
@@ -18686,97 +18939,6 @@ function silentEngine() {
 
 
 Object.assign(module.exports, { AUDIO_DEFAULTS, initAudio });
-
-},
-"src/content/music.js": function (module, exports, require) {
-// src/content/music.js — the procedural score, as data (SPEC §3.1(4)).
-//
-// The synth engine (src/ui/audio.js) knows how to PLAY a bed; what the beds
-// are is content. Adding a mood or a new screen's music is a data edit here,
-// with no change to the engine — same rule the cards and enemies follow.
-//
-// The music sample manifest sits here too: naming a file for a context makes
-// the engine play that sample instead of synthesizing, and a missing/failed
-// load falls back to the synth, so this stays safe to point at art that
-// doesn't exist yet. (The SFX manifest + recipes live in content/sfx.js —
-// one home per medium.)
-
-// A real build can point these at files; missing/failed loads fall back to synth.
-const MUSIC_MANIFEST = {
-  // combat: 'assets/music/combat.ogg',
-};
-
-// Minor / phrygian-ish scales (semitone offsets from the root) per mood.
-const SCALES = {
-  calm: [0, 3, 5, 7, 10, 12, 15],
-  tense: [0, 1, 5, 6, 7, 10, 12],
-  dread: [0, 2, 3, 7, 8, 10, 12],
-  hymn: [0, 2, 4, 7, 9, 12, 16], // warmer major-pentatonic-ish (shop/rest/victory)
-  veiled: [0, 3, 5, 6, 10, 12, 15], // dorian-flavored, wistful
-  wrath: [0, 1, 4, 5, 8, 11, 12], // jagged, aggressive (elite/boss)
-};
-
-// Music beds per context. Each context has a `gain`, a `drone` flag, and a set
-// of procedural VARIANTS (root frequency, scale, note cadence in ms) — one is
-// picked at random each time the context starts, so the score varies between a
-// handful of "tracks" even with zero audio files. Shop and Rest have their own
-// calmer sets; Boss/Elite their own darker ones.
-// Each variant may also set `wave` (oscillator timbre) and `lift` (melodic
-// stride through the scale) so variants differ in colour and contour, not just
-// key/tempo — more perceived variety from the same synth.
-const BEDS = {
-  title: { drone: true, gain: 0.5, variants: [
-    { root: 146.83, scale: 'calm', cadence: 2600, wave: 'triangle', lift: 3 },
-    { root: 130.81, scale: 'dread', cadence: 3000, wave: 'sine', lift: 2 },
-    { root: 164.81, scale: 'calm', cadence: 2400, wave: 'triangle', lift: 4 },
-    { root: 155.56, scale: 'veiled', cadence: 2800, wave: 'sine', lift: 3 },
-  ] },
-  map: { drone: true, gain: 0.42, variants: [
-    { root: 164.81, scale: 'calm', cadence: 2200, wave: 'triangle', lift: 3 },
-    { root: 155.56, scale: 'calm', cadence: 2500, wave: 'sine', lift: 4 },
-    { root: 174.61, scale: 'dread', cadence: 2000, wave: 'triangle', lift: 2 },
-    { root: 146.83, scale: 'veiled', cadence: 2350, wave: 'sine', lift: 3 },
-  ] },
-  combat: { drone: true, gain: 0.5, pulse: true, variants: [
-    { root: 130.81, scale: 'tense', cadence: 1500, wave: 'triangle', lift: 3 },
-    { root: 123.47, scale: 'dread', cadence: 1300, wave: 'square', lift: 2 },
-    { root: 146.83, scale: 'tense', cadence: 1400, wave: 'triangle', lift: 4 },
-    { root: 138.59, scale: 'tense', cadence: 1250, wave: 'sawtooth', lift: 3 },
-    { root: 130.81, scale: 'veiled', cadence: 1350, wave: 'triangle', lift: 5 },
-    { root: 155.56, scale: 'dread', cadence: 1200, wave: 'square', lift: 2 },
-  ] },
-  elite: { drone: true, gain: 0.55, pulse: true, variants: [
-    { root: 110.0, scale: 'tense', cadence: 1150, wave: 'sawtooth', lift: 3 },
-    { root: 103.83, scale: 'dread', cadence: 1050, wave: 'square', lift: 2 },
-    { root: 116.54, scale: 'wrath', cadence: 1100, wave: 'sawtooth', lift: 4 },
-    { root: 98.0, scale: 'wrath', cadence: 1000, wave: 'square', lift: 3 },
-  ] },
-  boss: { drone: true, gain: 0.6, pulse: true, variants: [
-    { root: 98.0, scale: 'dread', cadence: 1000, wave: 'sawtooth', lift: 2 },
-    { root: 92.5, scale: 'wrath', cadence: 900, wave: 'square', lift: 3 },
-    { root: 87.31, scale: 'wrath', cadence: 950, wave: 'sawtooth', lift: 4 },
-    { root: 82.41, scale: 'dread', cadence: 860, wave: 'square', lift: 2 },
-    { root: 103.83, scale: 'wrath', cadence: 920, wave: 'sawtooth', lift: 3 },
-  ] },
-  shop: { drone: true, gain: 0.4, variants: [
-    { root: 196.0, scale: 'hymn', cadence: 2200, wave: 'triangle', lift: 3 },
-    { root: 174.61, scale: 'calm', cadence: 2000, wave: 'sine', lift: 4 },
-    { root: 220.0, scale: 'hymn', cadence: 2400, wave: 'triangle', lift: 2 },
-  ] },
-  rest: { drone: true, gain: 0.34, variants: [
-    { root: 130.81, scale: 'calm', cadence: 3200, wave: 'sine', lift: 3 },
-    { root: 146.83, scale: 'hymn', cadence: 3000, wave: 'sine', lift: 2 },
-    { root: 123.47, scale: 'veiled', cadence: 3400, wave: 'triangle', lift: 3 },
-  ] },
-  victory: { drone: false, gain: 0.5, variants: [
-    { root: 196.0, scale: 'hymn', cadence: 1400, wave: 'triangle', lift: 3 },
-    { root: 220.0, scale: 'hymn', cadence: 1200, wave: 'triangle', lift: 4 },
-    { root: 246.94, scale: 'calm', cadence: 1300, wave: 'sine', lift: 2 },
-  ] },
-};
-
-
-Object.assign(module.exports, { MUSIC_MANIFEST, SCALES, BEDS });
 
 },
 "src/ui/screens/controls.js": function (module, exports, require) {
