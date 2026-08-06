@@ -3554,8 +3554,12 @@ const balance = {
     cardMotifModes: ['off', 'wash', 'accent', 'band'],
     cardMotifStrength: { subtle: 0.06, normal: 0.10, strong: 0.17 },
     // Default audio levels for a profile that has never touched the sliders.
-    // Music is 0 (muted) while testing; sfx stays audible.
-    audio: { musicVolume: 0, sfxVolume: 75 },
+    // Music ships at 50, deliberately under SFX's 75: the score is ambience,
+    // the SFX are information, and the hit-confirm must read over any swell.
+    // The beds carry their own gain staging on top of this bus (music.js,
+    // gains 0.34–0.6), so 50 is clearly audible from first boot without
+    // crowding the feedback layer.
+    audio: { musicVolume: 50, sfxVolume: 75 },
   },
 
   // ---- Armaments & armour (equipment) ---------------------------------------
@@ -17734,7 +17738,7 @@ const ROWS = [
   { cat: 'Audio', key: 'muteAudio', def: false, label: 'Mute all audio',
     note: 'Silence music and sound effects.' },
   { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume',
-    note: 'Ambient score for the title, map, and battles. Defaults to 0 (muted) while testing — raise it to hear the score.' },
+    note: 'Ambient score for the title, map, and battles.' },
   { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects',
     note: 'Hits, blocks, bleed bursts, UI.' },
   { cat: 'Audio', key: 'musicFolder', type: 'text', def: '', label: 'Music folder',
