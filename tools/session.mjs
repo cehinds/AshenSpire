@@ -17,10 +17,10 @@
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
-import { generateActMap } from '../src/engine/mapgen.js';
+import { buildActMap } from '../src/engine/actmap.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward, resolveUnknownNode, shrineHealAmount,
+  rollRelicReward, shrineHealAmount,
 } from '../src/engine/encounters.js';
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
@@ -124,15 +124,9 @@ export function createSession({ registries, seedString, endless = false, restore
 
   // ---- run flow ------------------------------------------------------------
   function buildMap() {
-    session.mapGraph = generateActMap({ config: registries.mapConfig(contentAct()), rng });
-    // Pre-roll unknown nodes so outcomes are seed-determined (like main.js).
-    const assigned = [];
-    for (const node of Object.values(session.mapGraph.nodes)) {
-      if (node.type === 'event') {
-        node.resolved = resolveUnknownNode(registries, rng, { seenEvents: assigned, act: contentAct() });
-        if (node.resolved.kind === 'event') assigned.push(node.resolved.eventId);
-      }
-    }
+    // The ONE boot path (#54) — same module main.js and runsim.mjs use;
+    // unknowns come back pre-rolled, seed-determined at map birth.
+    session.mapGraph = buildActMap(registries, rng, contentAct());
     session.floor = 0;
     session.cursorId = null;
     session.reachableIds = session.mapGraph.startIds.slice();
