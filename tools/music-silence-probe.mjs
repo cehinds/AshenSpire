@@ -66,6 +66,17 @@ const newSound = gainTargets.filter((v) => v > 0.0001);
 if (d2 !== MUSIC_SILENCE_WORD) fail(`music('probeQuiet') reported '${d2}', expected '${MUSIC_SILENCE_WORD}'`);
 if (newSound.length > 0) fail(`explicit silence scheduled sound anyway: ${newSound.join(', ')}`);
 if (warns.length > w2) fail(`deliberate silence warned (${warns[w2]}) — intent must not look like a bug`);
+// THE STOP IS ASSERTED, not just claimed (Vira's minor on word 3: her
+// stopMusic no-op plant passed the first version, because the checks above
+// only prove nothing NEW played). The teardown ramps ARE the available
+// evidence: fading a live bed out schedules floor-level writes (≤ 0.0001) on
+// its gain nodes, so a silence switch that tears nothing down leaves shape
+// 2's pool EMPTY. Guarded on shape 1 having played — with no live bed there
+// is nothing whose stop could be witnessed.
+const teardown = gainTargets.filter((v) => v <= 0.0001);
+if (combatScheduled > 0 && teardown.length === 0) {
+  fail(`'${MUSIC_SILENCE_WORD}' scheduled no teardown writes — the running bed was never faded out, so the word did not STOP anything`);
+}
 
 // Shape 3 — an unwritten context is a bug, and it says which.
 gainTargets.length = 0;

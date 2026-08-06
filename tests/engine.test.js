@@ -1637,6 +1637,18 @@ export async function runTests({ artManifest = null } = {}) {
       ['dangling scale', { rest: { gain: 0.3, variants: [{ root: 130, scale: 'noSuchScale', cadence: 3000 }] } }, 'music.beds.rest', "unknown scale 'noSuchScale'"],
       ['Infinity root', { rest: { gain: 0.3, variants: [{ root: Infinity, scale: 'calm', cadence: 3000 }] } }, 'music.beds.rest', 'finite'],
       ['unknown bed field', { rest: { gain: 0.3, volume: 9, variants: [{ root: 130, scale: 'calm', cadence: 3000 }] } }, 'music.beds.rest', "Unknown field 'volume'"],
+      // Vira's gate finding: 'lift' was missing from the sweep — a
+      // validator-green lift: Infinity NaN'd the oscillator frequency at note
+      // 1, lift: -3 read scale[-1] from step 1 (63/73 scheduled frequencies
+      // non-finite, driven through the real engine). Her two fixtures, plus
+      // the adjacent edges of the same class: a fractional stride reads
+      // scale[4.5] (same NaN, friendlier number), and lift: 0 is falsy so the
+      // engine would silently play stride 3 — a zero that means three is a
+      // lie, not a value.
+      ['Infinity lift', { rest: { gain: 0.3, variants: [{ root: 130, scale: 'calm', cadence: 3000, lift: Infinity }] } }, 'music.beds.rest', 'positive integer'],
+      ['negative lift', { rest: { gain: 0.3, variants: [{ root: 130, scale: 'calm', cadence: 3000, lift: -3 }] } }, 'music.beds.rest', 'positive integer'],
+      ['fractional lift', { rest: { gain: 0.3, variants: [{ root: 130, scale: 'calm', cadence: 3000, lift: 2.5 }] } }, 'music.beds.rest', 'positive integer'],
+      ['zero lift', { rest: { gain: 0.3, variants: [{ root: 130, scale: 'calm', cadence: 3000, lift: 0 }] } }, 'music.beds.rest', 'positive integer'],
     ];
     for (const [name, patch, wantPath, wantMsg] of cases) {
       const r = validateContent({ ...contentBundle, music: { scales: m.scales, beds: { ...m.beds, ...patch } } });

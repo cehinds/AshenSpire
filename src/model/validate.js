@@ -443,6 +443,15 @@ function validateMusicBeds(music, path, vctx) {
             err(`${p}.variants[${i}].${f}`, `'${f}' must be a finite number > 0, got ${v[f]}`);
           }
         }
+        // Vira's gate finding on word 3: 'lift' was missing from this sweep,
+        // and a validator-green `lift: Infinity` or `lift: -3` crashed the
+        // music loop per note (NaN / negative scale index → non-finite
+        // oscillator frequency). Integer, not just finite-positive: the
+        // stride INDEXES the scale, and a fractional stride reads
+        // scale[4.5] — the same NaN wearing a friendlier number.
+        if (typeof v.lift === 'number' && !(Number.isInteger(v.lift) && v.lift > 0)) {
+          err(`${p}.variants[${i}].lift`, `'lift' must be a positive integer, got ${v.lift} — the melodic stride indexes the scale, and a negative, fractional, or non-finite stride reads notes that do not exist`);
+        }
         if (typeof v.scale === 'string' && !scaleIds.has(v.scale)) {
           err(`${p}.variants[${i}].scale`, `Dangling reference: unknown scale '${v.scale}'`);
         }
