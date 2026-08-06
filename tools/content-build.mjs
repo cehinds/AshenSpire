@@ -215,6 +215,34 @@ function sweepAssets(assetsRoot, bundle) {
   return { errors, bound, artless };
 }
 
+/**
+ * sweepStraySources(contentRoot) → errors
+ *
+ * The m5/S2 cell, made a check instead of a boundary (Vega's gate finding on
+ * #43: the old cell DESCRIBED the blindness — "the pipeline reads
+ * content/source only; a stray source file elsewhere is invisible" — without
+ * licensing it, and the person it bites is exactly the spreadsheet editor
+ * clause 5 protects: content/weapons.csv saved one level up compiles clean,
+ * ships nothing, caught nowhere). Same pattern as sweepAssets: walk, and fail
+ * BY NAME anything the compile will never read. compileDir reads exactly the
+ * TOP LEVEL of content/source — so both edges are stray: a *.csv/*.json one
+ * level UP (beside source/) and one level DEEP (a subfolder inside source/).
+ */
+function sweepStraySources(contentRoot) {
+  const errors = [];
+  (function walk(dir) {
+    if (!existsSync(dir)) return;
+    for (const ent of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+      const abs = join(dir, ent.name);
+      if (ent.isDirectory()) walk(abs);
+      else if (/\.(csv|json)$/i.test(ent.name) && dir !== join(contentRoot, 'source')) {
+        errors.push(`content/${relative(contentRoot, abs).split(sep).join('/')}: STRAY SOURCE FILE — the compile reads only the top level of content/source/; this file compiles to nothing and ships nowhere. Move it to content/source/${ent.name}`);
+      }
+    }
+  })(contentRoot);
+  return errors;
+}
+
 // ---------------------------------------------------------------------------
 // The smoke — shared plumbing
 // ---------------------------------------------------------------------------
@@ -297,6 +325,8 @@ async function selftest() {
     ok(compiled && !compiled.err && compiled.orphans.length === 0, 'no orphaned generated modules (every generated .js has a living source)');
     const sw0 = sweepAssets(join(ROOT, 'assets'), b);
     ok(sw0.errors.length === 0, `asset sweep clean: ${sw0.bound} sprite(s) bound by convention, ${sw0.artless.length} enemy(ies) art-less (licensed by Law 1 clause 4 — placeholder, not a defect)`);
+    const st0 = sweepStraySources(join(ROOT, 'content'));
+    ok(st0.length === 0, 'stray-source sweep clean: every *.csv/*.json under content/ sits exactly where the compile reads (content/source/, top level)');
 
     // ---- the Add edge (clause 6's first words) ----------------------------
     console.log('\nthe Add edge — one entry by table + asset alone, asserted on OUTCOME:');
@@ -409,6 +439,21 @@ async function selftest() {
       const pass = r.errors.length === 1 && r.errors[0].includes('NAMES NO ENEMY') && r.errors[0].includes('noSuchFoe');
       ok(pass, `K13 [S3 m1] sprite whose id names no enemy — ${pass ? r.errors[0] : 'NOT CAUGHT BY NAME'}`);
     }
+    {
+      // K14 — Vega's scenario verbatim, plus the same blindness one level the
+      // other way: compileDir reads only content/source top level, so BOTH
+      // misplacements must be red by name, with the legit file staying green.
+      const c = join(tmp, 'content-stray');
+      mkdirSync(join(c, 'source', 'sub'), { recursive: true });
+      writeFileSync(join(c, 'source', 'ok.csv'), 'a,b\n1,2\n');
+      writeFileSync(join(c, 'weapons.csv'), 'a,b\n1,2\n'); // saved one level UP
+      writeFileSync(join(c, 'source', 'sub', 'extra.json'), '{"a": 1}\n'); // one level DEEP
+      const r = sweepStraySources(c);
+      const up = r.find((m) => m.includes('content/weapons.csv'));
+      const deep = r.find((m) => m.includes('content/source/sub/extra.json'));
+      const pass = r.length === 2 && !!up && !!deep;
+      ok(pass, `K14 [S2 m5] stray source files — weapons.csv one level UP and source/sub/extra.json one level DEEP, each red by name, the legit file untouched\n      → ${pass ? up : `NOT CAUGHT BY NAME (${r.length} error(s): ${r.join(' | ') || 'none'})`}`);
+    }
 
     // ---- the matrix, every cell named (Vega's amendment) ------------------
     console.log(`
@@ -430,15 +475,14 @@ the matrix — 5 modes × 3 surfaces, every cell RUNS or says N/A BY NAME:
   m4 missing file     N/A — mapConfigs names   K11 (orphaned            N/A — a missing sprite is
                       no asset (Vega,          generated module)        LICENSED: Law 1 clause 4
                       measured on #43)                                  degrades to placeholder
-  m5 wrong folder     N/A — same referent-     N/A — the pipeline       K12 (planted in bg/)
-                      less cell as m4          reads content/source
-                                               only; a stray source
-                                               file elsewhere is
-                                               invisible (boundary)`);
+  m5 wrong folder     N/A — same referent-     K14 (stray source:       K12 (planted in bg/)
+                      less cell as m4          one level up OR deep;
+                                               also red in the plain
+                                               build and --check)`);
 
     printBoundary();
     if (bad) { console.error(`\ncontent-build --selftest: ${bad} check(s) failed.`); process.exit(1); }
-    console.log(`\ncontent-build --selftest: OK — baseline green, Add edge plays, 13 known-bads red by name, 15/15 matrix cells accounted for.`);
+    console.log(`\ncontent-build --selftest: OK — baseline green, Add edge plays, 14 known-bads red by name, 15/15 matrix cells accounted for.`);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -560,6 +604,12 @@ if (SELFTEST) {
   } catch (e) {
     if (e instanceof BuildError) fail(e.message);
     throw e;
+  }
+  // The stray-source sweep runs on EVERY plain build and --check — the person
+  // it protects runs exactly this command after saving a spreadsheet (m5/S2).
+  const stray = sweepStraySources(join(ROOT, 'content'));
+  if (stray.length) {
+    fail(`stray source file(s) the compile will never read:\n  ${stray.join('\n  ')}`);
   }
   if (CHECK && r.stale) {
     fail(`${r.stale} generated file(s) are out of date — run: node tools/content-build.mjs`);
