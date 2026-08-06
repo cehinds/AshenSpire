@@ -205,8 +205,12 @@ function sweepAssets(assetsRoot, bundle) {
   for (const f of files) {
     const m = /^enemy_(.+)\.webp$/.exec(f.base);
     if (!m) continue; // outside the swept convention — named in the boundary
-    if (!f.rel.startsWith('sprites/')) {
-      errors.push(`${f.rel}: conventionally-named sprite in the WRONG FOLDER — the convention reads assets/sprites/ only (src/ui/assets.js:42); this file will never be fetched`);
+    // Exact-flat, not startsWith (Vira's D2): the convention fetches
+    // assets/sprites/enemy_<id>.webp with no subfolders (src/ui/assets.js:42),
+    // so a sprite nested at sprites/nested/ is as unfetchable as one in bg/ —
+    // the old startsWith counted it BOUND while artless listed the same enemy.
+    if (f.rel !== `sprites/${f.base}`) {
+      errors.push(`${f.rel}: conventionally-named sprite in the WRONG FOLDER — the convention reads assets/sprites/ FLAT, no subfolders (src/ui/assets.js:42); this file will never be fetched`);
     } else if (!ids.has(m[1])) {
       errors.push(`${f.rel}: NAMES NO ENEMY — id '${m[1]}' is not in the bundle; the file will never be fetched (id typo, or art for a deleted entry)`);
     } else bound += 1;
@@ -263,6 +267,16 @@ async function loadGame() {
 
 const jclone = (v) => JSON.parse(JSON.stringify(v));
 
+// The eight doors validate.js leaves open (Vira's D1 on #43): a bundle missing
+// ANY of these keys validates GREEN — measured, all eight, node v22.22.2. The
+// old baseline held two (mapConfigs, sfx) and was silent on the other six;
+// balance-absent-green was the sharpest. This guard holds every door from
+// OUTSIDE the engine — nothing at boot does — and K15 keeps the door itself
+// measured, so it flips red the day validate.js closes one and the guard can
+// move inside.
+const BUNDLE_DOORS = ['version', 'balance', 'events', 'flasks', 'mapConfigs', 'sfx', 'equipment', 'unlocks'];
+const openDoors = (bundle) => BUNDLE_DOORS.filter((k) => bundle[k] == null);
+
 // The Add edge's two probe entries — table rows and one conventionally-named
 // file, no code. If either needs anything beyond this literal, clause 1 of
 // Law 1 has regressed and this smoke should be the thing that says so.
@@ -290,15 +304,23 @@ BOUNDARY — what this green does NOT cover (SOP 3, CI expectation 4):
     and file CONTENTS are opaque — a corrupt webp binds and still won't render.
   - legal is not tuned: this proves entries load, validate and play, never that
     they are balanced — runsim owns that claim.
-  - validate.js accepts a bundle whose mapConfigs or sfx key is absent entirely
-    ('!= null' guards, validate.js:236,257); the baseline below holds that door
-    from OUTSIDE the engine, nothing at boot does.
-  - not every syntax error names its file: node's dynamic import reports a pure
-    ESM SyntaxError with NO file reference (measured: a ',,' in mapconfig.js
-    → "Unexpected token ','", file named nowhere in message or stack). M1 is
-    caught by name only because a comma-drop takes the CJS-fallback path,
-    which does name the module. The boot surface (browser console names
-    file:line, but clause 5's reader has no devtools open) still owes this.`);
+  - validate.js accepts a bundle missing ANY of eight doored keys entirely
+    (version, balance, events, flasks, mapConfigs, sfx, equipment, unlocks —
+    measured GREEN when absent, every one, node v22.22.2). The baseline's
+    door guard and K15 hold those doors from OUTSIDE the engine; nothing at
+    boot does. K15 also keeps the balance door itself measured, so it flips
+    the day validate.js closes it.
+  - not every syntax error names its file, and the shape is PLATFORM-SHAPED
+    (re-measured for Vira's D3 — node v22.22.2, no package.json in this tree):
+    a ',,' in mapconfig.js IS caught by name here, because .js under no
+    package.json takes node's CJS translator, whose error names
+    './mapconfig.js'. The no-file shape is real but reproduces only under
+    forced ESM (the same ',,' in a .mjs → "Unexpected token ','", file named
+    nowhere in message or stack). M1's file-naming claim therefore leans on
+    the CJS-translator path: if this tree gains a package.json with
+    "type": "module", or content moves to .mjs, re-measure it — do not trust
+    it. The boot surface (browser console names file:line, but clause 5's
+    reader has no devtools open) still owes this either way.`);
 }
 
 // ---------------------------------------------------------------------------
@@ -318,7 +340,7 @@ async function selftest() {
     console.log('baseline — the shipped tree:');
     const v0 = G.validateContent(b);
     ok(v0.ok, `real bundle validates clean (${v0.ok ? 0 : v0.errors.length} errors)`);
-    ok(b.mapConfigs != null && b.sfx != null, 'bundle carries mapConfigs and sfx (the != null door validate.js leaves open)');
+    ok(openDoors(b).length === 0, `bundle carries all ${BUNDLE_DOORS.length} doored keys (${BUNDLE_DOORS.join(', ')}) — every one validates GREEN when absent, so this guard holds each door from outside (was: two of eight held — Vira's D1)`);
     let compiled = null;
     try { compiled = compileDir(SRC, OUT, { write: false }); } catch (e) { compiled = { err: e.message }; }
     ok(compiled && !compiled.err && compiled.stale === 0, `content/source compiles and generated files are current${compiled && compiled.err ? ` — ${compiled.err}` : ''}`);
@@ -454,6 +476,29 @@ async function selftest() {
       const pass = r.length === 2 && !!up && !!deep;
       ok(pass, `K14 [S2 m5] stray source files — weapons.csv one level UP and source/sub/extra.json one level DEEP, each red by name, the legit file untouched\n      → ${pass ? up : `NOT CAUGHT BY NAME (${r.length} error(s): ${r.join(' | ') || 'none'})`}`);
     }
+    {
+      // K15 — Vira's D1, the sharpest door: balance deleted from the bundle.
+      // validate.js stays GREEN (the open door, kept measured on purpose —
+      // this line flips red the day the door closes and the guard can move
+      // inside the engine); the door guard is what goes red, naming 'balance'.
+      const nb = { ...b }; delete nb.balance;
+      const v = G.validateContent(nb);
+      const doors = openDoors(nb);
+      const pass = v.ok && doors.length === 1 && doors[0] === 'balance';
+      ok(pass, `K15 [S1 doors] balance deleted from the bundle — validate.js green (door measured open), the guard red naming 'balance'${pass ? '' : ` (v.ok=${v.ok}, doors=[${doors.join(', ')}])`}`);
+    }
+    {
+      // K16 — Vira's D2: a real-named sprite NESTED inside sprites/ was
+      // counted BOUND at exit 0 (startsWith('sprites/') against an exact-flat
+      // convention, src/ui/assets.js) while the same enemy simultaneously
+      // listed artless — one run, two answers. Exact-flat now: nested is
+      // WRONG FOLDER by name.
+      const a = join(tmp, 'assets-nested'); mkdirSync(join(a, 'sprites', 'nested'), { recursive: true });
+      writeFileSync(join(a, 'sprites', 'nested', 'enemy_wanderingSoldier.webp'), 'x');
+      const r = sweepAssets(a, b);
+      const pass = r.errors.length === 1 && r.errors[0].includes('WRONG FOLDER') && r.errors[0].includes('sprites/nested/enemy_wanderingSoldier.webp') && r.bound === 0;
+      ok(pass, `K16 [S3 m5] real-named sprite nested in assets/sprites/nested/ — ${pass ? r.errors[0] : `NOT CAUGHT (errors: ${r.errors.join(' | ') || 'none'}; bound=${r.bound})`}`);
+    }
 
     // ---- the matrix, every cell named (Vega's amendment) ------------------
     console.log(`
@@ -482,7 +527,7 @@ the matrix — 5 modes × 3 surfaces, every cell RUNS or says N/A BY NAME:
 
     printBoundary();
     if (bad) { console.error(`\ncontent-build --selftest: ${bad} check(s) failed.`); process.exit(1); }
-    console.log(`\ncontent-build --selftest: OK — baseline green, Add edge plays, 14 known-bads red by name, 15/15 matrix cells accounted for.`);
+    console.log(`\ncontent-build --selftest: OK — baseline green, Add edge plays, 16 known-bads red by name, 15/15 matrix cells accounted for.`);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
