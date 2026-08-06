@@ -72,7 +72,7 @@ const ROWS = [
   { cat: 'Audio', key: 'muteAudio', def: false, label: 'Mute all audio',
     note: 'Silence music and sound effects.' },
   { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume',
-    note: 'Ambient score for the title, map, and battles. Defaults to 0 (muted) while testing — raise it to hear the score.' },
+    note: 'Ambient score for the title, map, and battles.' },
   { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects',
     note: 'Hits, blocks, bleed bursts, UI.' },
   { cat: 'Audio', key: 'musicFolder', type: 'text', def: '', label: 'Music folder',

@@ -163,8 +163,12 @@ export const balance = {
     cardMotifModes: ['off', 'wash', 'accent', 'band'],
     cardMotifStrength: { subtle: 0.06, normal: 0.10, strong: 0.17 },
     // Default audio levels for a profile that has never touched the sliders.
-    // Music is 0 (muted) while testing; sfx stays audible.
-    audio: { musicVolume: 0, sfxVolume: 75 },
+    // Music ships at 50, deliberately under SFX's 75: the score is ambience,
+    // the SFX are information, and the hit-confirm must read over any swell.
+    // The beds carry their own gain staging on top of this bus (music.js,
+    // gains 0.34–0.6), so 50 is clearly audible from first boot without
+    // crowding the feedback layer.
+    audio: { musicVolume: 50, sfxVolume: 75 },
   },
 
   // ---- Armaments & armour (equipment) ---------------------------------------
