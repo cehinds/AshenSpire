@@ -66,7 +66,7 @@
 .map-zoom .zbtn:hover { border-color: var(--gold); color: var(--gold); }
 
 .map-node { cursor: default; }
-.map-node circle { fill: var(--panel); stroke: var(--line-soft); stroke-width: 2; }
+.map-node circle { fill: var(--panel); stroke: var(--map-structure); stroke-width: 2; }
 .map-node text { fill: #8a7a5a; font-size: 13px; text-anchor: middle; dominant-baseline: central; }
 .map-node.elite circle { stroke: var(--blood); }
 .map-node.elite text { fill: var(--ember); }
@@ -105,7 +105,7 @@
 .reduced-motion .map-node.current circle { animation: none; }
 .map-node.revealed circle { stroke-dasharray: 5 3; }
 
-.map-edge { stroke: var(--line-soft); stroke-width: 2; fill: none; }
+.map-edge { stroke: var(--map-structure); stroke-width: 2; fill: none; }
 .map-edge.traveled { stroke: var(--gold); stroke-width: 3; }
 
 /* ---------- horizontal map header (matches the combat top bar) ---------- */

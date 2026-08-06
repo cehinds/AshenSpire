@@ -5,7 +5,9 @@
 //   node tools/contrast-audit.mjs --profile shipped-default
 //   node tools/contrast-audit.mjs --json          → machine-readable
 //   node tools/contrast-audit.mjs --gate          → exit 1 on a NEW or WORSENED
-//                                                   AA failure at default settings
+//                                                   AA failure at a gated profile
+//                                                   (default, + the #45 map rows
+//                                                   in hi-contrast-off)
 //
 // Why this reads pixels and not the stylesheet: a declared colour and a
 // delivered colour are two different facts. `.card .ctag` specs 4.67:1 at 8px —
@@ -86,6 +88,37 @@ const TARGETS = [
   { screen: 'map', sel: '.map-header .mh-seed', label: 'SEED' },
   { screen: 'map', sel: '.map-header #map-legend', label: 'topbar ? button' },
   { screen: 'map', sel: '.hint-bar .hint:first-child', label: 'keyboard hint' },
+  // Map STRUCTURE (#45): the graph itself — the roads and rings a player reads
+  // to plan a run. Non-text (WCAG 1.4.11 → 3.0 floor), SVG, so the ink property
+  // is stroke/fill rather than color. The selectors pin the PLAIN node and the
+  // untraveled edge deliberately: every state class (visited/reachable/current/
+  // elite/boss, .traveled) swaps the stroke to a token high contrast never
+  // touches (--gold 8.12:1, --blood, --parchment), so the states survive either
+  // palette — it is the bare --line-soft ring and road that the atmospheric
+  // palette (hi-contrast OFF) drops to 1.94:1 at the token, and antialiasing
+  // means the render sits at or below that, never above. ?shot=map boots
+  // shotSeed SHOWCASE (src/main.js) so the graph, and these selectors' matches,
+  // are the same every run.
+  // `adjacency`: judged on the boundary's worst adjacent rendered colour — the
+  // ring straddles its own fill and the field and must clear the floor against
+  // BOTH (Sunna's #45 ruling; the two clusters print beside the verdict).
+  { screen: 'map', sel: '.map-edge:not(.traveled)', label: 'map edge (untraveled road)', prop: 'stroke', box: true, adjacency: true },
+  {
+    screen: 'map',
+    sel: '.map-node:not(.elite):not(.boss):not(.visited):not(.current):not(.reachable) circle:not(.node-halo)',
+    label: 'map node ring (plain)', prop: 'stroke', box: true, adjacency: true,
+  },
+  // The fill is sampled from the CENTRAL HALF of the node (shrink: 0.5), for the
+  // same reason the text probe skips the emoji: when the fill is forced
+  // transparent, the ring's antialiased rim re-blends and registers as changed
+  // pixels, and the "best ink pixel" then reads the RIM's contrast (3.54 at
+  // default), not the fill's (1.17). A half-box on a circle contains no rim
+  // (corner distance 0.71r < r), so the fill is measured as itself.
+  {
+    screen: 'map',
+    sel: '.map-node:not(.elite):not(.boss):not(.visited):not(.current):not(.reachable) circle:not(.node-halo)',
+    label: 'map node body (fill vs bg)', prop: 'fill', box: true, shrink: 0.5, median: true,
+  },
   { screen: 'combat', sel: '.topbar .fight-label', label: 'fight label (combat)' },
   { screen: 'combat', sel: '.topbar .who .nm', label: 'hero name (combat)' },
   { screen: 'combat', sel: 'CTAG:Blood', label: 'Blood card tag (label only)' },
@@ -95,7 +128,13 @@ const TARGETS = [
 // Failures that are KNOWN, MEASURED, and deliberately not fixed by the default
 // flip — each with the reason it was left and what would actually fix it. This
 // list exists so `--gate` can fail on a NEW failure without going red on the
-// three standing ones, because a gate that is always red is a gate nobody runs.
+// standing ones, because a gate that is always red is a gate nobody runs.
+//
+// Every entry names its PROFILE, and the gate keys the ledger on
+// `profile :: label` — an excused number in one palette must not silence the
+// same target in another (Vira's #45 finding: the gate judged `default` only,
+// highContrast defaults TRUE, so the atmospheric palette's map values — the
+// exact thing the #45 remedy ships — could regress to any depth at exit 0).
 //
 // Every entry is a Tier-2 card waiting to be written, not a shrug. Two of them
 // are the same shape: high contrast swaps the muted / parchment / line tokens
@@ -103,7 +142,33 @@ const TARGETS = [
 // outside its reach entirely.
 const KNOWN_BELOW = [
   {
-    label: 'YOU PERISHED', render: 1.97, floor: 3.0,
+    label: 'map node body (fill vs bg)', profile: 'default', render: 1.17, floor: 3.0,
+    why: '--panel on --bg, 1.17 in BOTH palettes — high contrast never touches --panel, '
+       + 'so no toggle reaches this number. Sunna ruled the floor for non-text map glyphs '
+       + '(#45): 3:1 on each glyph\'s IDENTIFYING BOUNDARY against each adjacent rendered '
+       + 'colour. The node\'s identifying boundary is its RING, not its fill, and at '
+       + 'default the ring clears both adjacencies (4.18 vs field, 3.54 vs its fill — the '
+       + 'row above, judged on its worst). The fill owes no independent floor; the row '
+       + 'stays measured so a --panel/--bg drift is seen, and so the ring-vs-fill '
+       + 'adjacency keeps meaning what it says.',
+    fix: 'Nothing, while the ring exists. If the ring is ever removed or dropped to the '
+       + 'fill\'s colour, the fill BECOMES the boundary and this entry must be deleted so '
+       + 'the row goes red.',
+  },
+  {
+    label: 'map node body (fill vs bg)', profile: 'hi-contrast-off', render: 1.17, floor: 3.0,
+    why: 'The same fact in the atmospheric palette: --panel on --bg is untouched by the '
+       + 'highContrast toggle, so the fill measures 1.17 here too, and Sunna\'s #45 ruling '
+       + 'answers it the same way — the ring is the identifying boundary, and since the '
+       + '--map-structure remedy (#7a6b54) it clears both adjacencies in THIS palette as '
+       + 'well: 3.78 edge, 3.36 ring judged, rendered. A separate entry because the ledger '
+       + 'is keyed per profile — the default entry excusing this number here would be the '
+       + 'exact cross-palette silence the per-profile keys exist to forbid.',
+    fix: 'Same condition as the default entry: the day the ring stops being the boundary, '
+       + 'delete this so the row goes red.',
+  },
+  {
+    label: 'YOU PERISHED', profile: 'default', render: 1.97, floor: 3.0,
     why: '--blood #8a1a1a on the death screen. High contrast does not touch --blood, so '
        + 'the flip cannot reach it. `colorblindSafe` does (4.77) but that is a different '
        + 'setting with a different meaning, and turning it on by default would repaint '
@@ -112,7 +177,7 @@ const KNOWN_BELOW = [
        + 'therefore Constantine\'s call, not a default flip.',
   },
   {
-    label: 'Blood card tag (label only)', render: 1.71, floor: 4.5,
+    label: 'Blood card tag (label only)', profile: 'default', render: 1.71, floor: 4.5,
     why: 'The worst contrast in the game, on the Reaver\'s staple card, and NO accessibility '
        + 'toggle can reach it: the tag colour is not --blood. It is the literal string '
        + '8A1A1A in the `color` column of content/source/cardTags.csv, applied inline as '
@@ -124,7 +189,7 @@ const KNOWN_BELOW = [
        + 'size: .ctag is 0.8rem, which is 6.8px at UI size S.',
   },
   {
-    label: 'fight label (combat)', render: 2.47, floor: 4.5,
+    label: 'fight label (combat)', profile: 'default', render: 2.47, floor: 4.5,
     why: 'Not a palette problem — an OCCLUSION bug, and high contrast cannot fix a veil. '
        + '.backdrop in styles/combat.css is `position:absolute; inset:0; z-index:0` inside '
        + '.combat with `opacity:0.55`, and .topbar carries no z-index at all — so the act '
@@ -297,9 +362,21 @@ const PROBE = `(sel, opts) => {
     }
   }
   }
-  const r = box
+  let r = box
     ? { left: box.l, top: box.t, width: box.r - box.l, height: box.b - box.t }
     : el.getBoundingClientRect();
+  // Optional central sampling: scale the rect about its centre. Used by fill
+  // targets whose box is rimmed by a brighter stroke (see the map node body
+  // target) — the rim must not lend the fill its contrast.
+  if (o.shrink) {
+    const k = o.shrink;
+    r = {
+      left: r.left + (r.width * (1 - k)) / 2,
+      top: r.top + (r.height * (1 - k)) / 2,
+      width: r.width * k,
+      height: r.height * k,
+    };
+  }
   const cs = getComputedStyle(el);
   // Authored px is what the stylesheet says; RENDERED px is what WCAG's size
   // thresholds are about. The whole app sits under body { zoom: --ui-zoom }, and
@@ -312,7 +389,10 @@ const PROBE = `(sel, opts) => {
   return {
     x: Math.round(r.left), y: Math.round(r.top),
     w: Math.round(r.width), h: Math.round(r.height),
-    color: o.prop === 'border-color' ? cs.borderTopColor : cs.color,
+    color: o.prop === 'border-color' ? cs.borderTopColor
+      : o.prop === 'stroke' ? cs.stroke
+      : o.prop === 'fill' ? cs.fill
+      : cs.color,
     nonText: !!o.prop,
     authoredPx, zoom, fontPx: authoredPx * zoom, bold,
     text: (el.textContent || '').trim().slice(0, 40),
@@ -390,6 +470,12 @@ const MEASURE = `async (dataUrlA, dataUrlB, rect, colorStr) => {
   // Threshold of 6/255 per channel: below that it is capture noise, not ink.
   const ink = [];
   const bgL = [];
+  // Adjacency clusters (#45 — Sunna's ruling): a glyph's identifying boundary
+  // must clear the floor against EACH adjacent rendered colour, so a ring that
+  // straddles fill and field is judged twice. Backdrops quantize to 16-step
+  // buckets; each cluster keeps its own best-formed ink pixel. Sub-5% clusters
+  // are AA blend slivers at the fill/field seam, not an adjacency.
+  const clusters = new Map();
   let bestIdx = -1, bestR = -1;
   for (let i = 0; i < da.length; i += 4) {
     const d0 = Math.abs(da[i] - db[i]), d1 = Math.abs(da[i + 1] - db[i + 1]), d2 = Math.abs(da[i + 2] - db[i + 2]);
@@ -399,9 +485,17 @@ const MEASURE = `async (dataUrlA, dataUrlB, rect, colorStr) => {
     const r = ratio(p, q);
     ink.push(r);
     bgL.push(q);
+    const k = (q[0] >> 4) + ',' + (q[1] >> 4) + ',' + (q[2] >> 4);
+    const c = clusters.get(k) || { n: 0, bestR: -1, bg: q };
+    c.n++;
+    if (r > c.bestR) { c.bestR = r; c.bg = q; }
+    clusters.set(k, c);
     if (r > bestR) { bestR = r; bestIdx = ink.length - 1; }
   }
   if (!ink.length) return { inkPixels: 0 };
+  const adj = [...clusters.values()]
+    .filter((c) => c.n >= Math.max(8, ink.length * 0.05))
+    .sort((u, v) => v.n - u.n);
   ink.sort((u, v) => u - v);
   // Median backdrop under the ink, for the spec comparison.
   const bys = bgL.slice().sort((u, v) => L(u[0], u[1], u[2]) - L(v[0], v[1], v[2]));
@@ -416,6 +510,7 @@ const MEASURE = `async (dataUrlA, dataUrlB, rect, colorStr) => {
     spec: rd(ratio(spec, bg)),
     render: rd(bestR),
     renderP50: rd(ink[ink.length >> 1]),
+    adj: adj.map((c) => ({ bg: hex(c.bg), render: rd(c.bestR), n: c.n })),
     inkPixels: ink.length,
     boxPixels: W * H,
   };
@@ -486,7 +581,7 @@ try {
         writeFileSync(resolve(shotDir, `${pname}-${screen || 'title'}.png`), Buffer.from(dataUrlA.split(',')[1], 'base64'));
       }
       for (const t of targets) {
-        const probe = await evalIn(cdp, PROBE, [t.sel, { prop: t.prop, box: t.box }]);
+        const probe = await evalIn(cdp, PROBE, [t.sel, { prop: t.prop, box: t.box, shrink: t.shrink }]);
         if (!probe) { rows.push({ profile: pname, ...t, missing: true }); continue; }
         // Frame B: this target's own ink made transparent, everything else held.
         await evalIn(cdp, INK_OFF, [t.sel, true, t.prop]);
@@ -502,12 +597,26 @@ try {
         // 1.4.3 puts text at 4.5, or 3.0 once it is large (>=24px, or >=18.66 bold).
         const large = probe.nonText || probe.fontPx >= 24 || (probe.bold && probe.fontPx >= 18.66);
         const floor = large ? 3.0 : 4.5;
+        // What the floor judges, per target kind (#45 — Sunna's ruling):
+        //   adjacency — the boundary's WORST adjacent colour. A ring that clears
+        //               the field but melts into its own fill has no boundary on
+        //               that side, so every adjacency must clear on its own.
+        //   median    — solid fills. The best pixel of a solid region is an AA
+        //               blend against whatever overlaps it (here, the node
+        //               label's glyph edges re-blending when the fill goes
+        //               transparent read 3.54 while the fill itself sits at
+        //               1.17). Best-pixel generosity exists for antialiased
+        //               type; for paint, the median IS the fill.
+        const judged = t.median ? m.renderP50
+          : t.adjacency && m.adj && m.adj.length ? Math.min(...m.adj.map((a) => a.render))
+          : m.render;
         rows.push({
           profile: pname, label: t.label, screen: screen || 'title', sel: t.sel,
           text: probe.text, authoredPx: probe.authoredPx, zoom: probe.zoom,
           fontPx: Math.round(probe.fontPx * 10) / 10, large, floor,
           ...m,
-          pass: m.inkPixels ? m.render >= floor : null,
+          judged,
+          pass: m.inkPixels ? judged >= floor : null,
           specPass: m.inkPixels ? m.spec >= floor : null,
         });
       }
@@ -539,9 +648,13 @@ if (asJson) {
     // not antialiasing at all. So the note names the gap and refuses to diagnose.
     const drift = r.spec - r.render >= 0.4
       ? `  ← delivers ${(r.spec - r.render).toFixed(2)} less than declared` : '';
+    // Adjacency rows are judged on their worst adjacent colour, so the verdict
+    // can disagree with the render column — print the per-adjacency numbers.
+    const adjNote = r.adj && r.adj.length > 1 && r.judged !== r.render
+      ? `  ← judged ${r.judged} (worst adjacency: ${r.adj.map((a) => `${a.render} vs ${a.bg}`).join(', ')})` : '';
     console.log(
       `  ${mark} ${String(r.spec).padStart(6)} ${String(r.render).padStart(6)} ${String(r.renderP50).padStart(6)}`
-      + ` ${String(r.floor).padStart(6)} ${String(r.fontPx).padStart(5)}  ${r.label}${drift}`
+      + ` ${String(r.floor).padStart(6)} ${String(r.fontPx).padStart(5)}  ${r.label}${drift}${adjNote}`
     );
   }
   const measured = rows.filter((r) => !r.missing && r.inkPixels);
@@ -549,10 +662,12 @@ if (asJson) {
   console.log(`\n${measured.length} measured · ${fails.length} below the WCAG AA floor (best rendered pixel).`);
   // Named boundary, in the run's own output (SOP 3, CI expectation 4).
   console.log(
-    'Boundary: this measures TEXT contrast only, at one viewport, one font stack,\n'
-    + 'with hover/focus states unvisited. It says nothing about non-text contrast\n'
-    + '(borders, bars, map nodes), colour-blind confusability, motion, or whether any\n'
-    + 'of it is legible in motion. A green run is not an accessibility pass.\n'
+    'Boundary: this measures TEXT contrast plus the named non-text targets (button\n'
+    + 'rings; map structure since #45), at one viewport, one font stack, with\n'
+    + 'hover/focus states unvisited. Other non-text ink — bars, dividers, fog panels,\n'
+    + 'state-coloured nodes (elite/boss/visited/current ride tokens this never judges)\n'
+    + '— plus colour-blind confusability and motion stay unmeasured. A green run is\n'
+    + 'not an accessibility pass.\n'
     + 'This line said "one zoom (Auto)" until 2026-07-28. That was TRUE of every ?shot=\n'
     + 'screen, for the wrong reason: those screens ignored the profile entirely, so ui-S\n'
     + 'really did render at Auto while this table printed ui-S next to it. A boundary can\n'
@@ -561,30 +676,67 @@ if (asJson) {
 }
 
 if (gate) {
-  const measured = rows.filter((r) => r.profile === 'default' && !r.missing && r.inkPixels);
-  const known = new Map(KNOWN_BELOW.map((k) => [k.label, k]));
+  // WHICH ROWS THE GATE JUDGES — and why it is not just `default`. `default`
+  // judges every target: it is what a first-boot player receives. But
+  // highContrast defaults TRUE, so the ATMOSPHERIC palette's values ship only
+  // under `hi-contrast-off` — and until 2026-08-06 this gate filtered to
+  // `default` alone, which meant nine profiles rendered, one judged, and a
+  // sub-floor plant in --map-structure (the exact value the #45 remedy ships)
+  // exited 0. Observed red by Vira on the #45 branch before this map existed.
+  // So the #45 map-structure rows are additionally judged in `hi-contrast-off`.
+  const MAP45 = new Set([
+    'map edge (untraveled road)',
+    'map node ring (plain)',
+    'map node body (fill vs bg)',
+  ]);
+  const GATED = {
+    default: () => true,
+    'hi-contrast-off': (label) => MAP45.has(label),
+  };
+  // A partial run cannot gate: a `--profile` invocation that omits a gated
+  // profile would judge nothing there and exit 0 — the same silence this block
+  // exists to close. Absent is unknown, and unknown blocks (SOP 2).
+  const absent = Object.keys(GATED).filter((p) => !profiles[p]);
+  if (absent.length) {
+    console.error(`\ncontrast-audit --gate: gated profile(s) not rendered this run: ${absent.join(', ')}.`);
+    console.error(`  The gate judges ${Object.keys(GATED).join(' + ')} — run --gate without --profile.`);
+    process.exit(1);
+  }
+  const gated = rows.filter((r) => GATED[r.profile] && GATED[r.profile](r.label));
+  // A gated row with no pixels does not drop out silently: a selector that
+  // stops matching, or ink that stops rendering, is the gate going BLIND — the
+  // target did not go green, the instrument lost sight of it.
+  const blind = gated.filter((r) => r.missing || !r.inkPixels);
+  const measured = gated.filter((r) => !r.missing && r.inkPixels);
+  // The ledger is keyed per profile: an excused number in one palette must not
+  // silence the same target in another.
+  const known = new Map(KNOWN_BELOW.map((k) => [`${k.profile} :: ${k.label}`, k]));
   const newly = [];
   const worse = [];
   const stale = [];
   for (const r of measured) {
-    const k = known.get(r.label);
+    const k = known.get(`${r.profile} :: ${r.label}`);
+    const v = r.judged ?? r.render; // the same number `pass` was decided on
     if (r.pass) { if (k) stale.push({ r, k }); continue; }
     if (!k) { newly.push(r); continue; }
     // 0.15 of slack: font stacks and GPU-less rasterisation move the last digit.
-    if (r.render < k.render - 0.15) worse.push({ r, k });
+    if (v < k.render - 0.15) worse.push({ r, k });
   }
   if (newly.length) {
-    console.error(`\ncontrast-audit --gate: ${newly.length} NEW failure(s) at default settings:`);
-    for (const r of newly) console.error(`  ${r.label} — ${r.render}:1 at ${r.fontPx}px (floor ${r.floor})`);
+    console.error(`\ncontrast-audit --gate: ${newly.length} NEW failure(s) at gated profiles:`);
+    for (const r of newly) console.error(`  ${r.label} [${r.profile}] — ${r.judged ?? r.render}:1 at ${r.fontPx}px (floor ${r.floor})`);
   }
   for (const { r, k } of worse) {
-    console.error(`\ncontrast-audit --gate: ${r.label} REGRESSED — ${r.render}:1, was ${k.render}:1`);
+    console.error(`\ncontrast-audit --gate: ${r.label} [${r.profile}] REGRESSED — ${r.judged ?? r.render}:1, was ${k.render}:1`);
+  }
+  for (const r of blind) {
+    console.error(`\ncontrast-audit --gate: ${r.label} [${r.profile}] is BLIND — ${r.missing ? `selector not found: ${r.sel}` : 'no ink pixels (invisible or clipped)'}`);
   }
   for (const { r, k } of stale) {
-    console.log(`\ncontrast-audit --gate: ${r.label} now PASSES at ${r.render}:1 (recorded ${k.render}).`);
+    console.log(`\ncontrast-audit --gate: ${r.label} [${r.profile}] now PASSES at ${r.judged ?? r.render}:1 (recorded ${k.render}).`);
     console.log(`  Fixed? Delete its KNOWN_BELOW entry in this file — a stale allowlist is how a`);
     console.log(`  gate goes quiet. Not failing the run for good news, but this line will not stop.`);
   }
-  if (newly.length || worse.length) process.exit(1);
+  if (newly.length || worse.length || blind.length) process.exit(1);
 }
 process.exit(0);
