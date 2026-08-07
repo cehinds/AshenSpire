@@ -410,6 +410,45 @@ function applyDisplaySettings(settings) {
 }
 applyDisplaySettings(saves.loadMeta().settings);
 
+/**
+ * applyRestoredSettings(restored) — re-dress the running app in a profile that
+ * has just been swapped underneath it (#68 D22).
+ *
+ * A restore replaces the whole profile, so every setting the app applied at
+ * boot is now the OTHER profile's. Before this, renderProfileSection accepted
+ * an `onRestored` callback, called it — and nobody ever passed one, on either
+ * door. The screen kept the old profile's contrast, motion and text size while
+ * storage held the new ones: high contrast stored ON and off on screen,
+ * reduced motion stored OFF and on on screen, root font-size unmoved.
+ *
+ * Marina's framing is the one worth building to: THE PLAYER WHO MOST NEEDS
+ * THOSE SETTINGS IS THE PLAYER WHO JUST LOST A SAVE. Someone who restores a
+ * profile because they cannot read the game without high contrast should not
+ * have to find the toggle again from memory.
+ *
+ * Everything the boot path applies is re-applied here, from ONE list, so a new
+ * setting cannot be applied at boot and forgotten on restore.
+ */
+function applyRestoredSettings(restored) {
+  const settings = restored || {};
+  applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif
+  applyUiScale(settings);         // UI zoom / Auto fit
+  audio.setVolumes(settings);     // music, sfx, mute
+  audio.configureMusic({ folder: settings.musicFolder || '' });
+  lastMusicFolder = settings.musicFolder || '';
+  if (settings.bindings) setBindings(settings.bindings);
+  if (settings.keyBindings) setKeyBindings(settings.keyBindings);
+}
+
+
+// ONE HOME for the quarantine sentence (#68 D21). I wrote "ONE sentence, both
+// doors — two doors with two strings is how they drift" and then pasted the
+// string into both doors, which is the drift I was naming. Copy: Sunna,
+// 2026-08-07; her tail now names the crisis screen's own route, so it is true
+// wherever it is shown rather than only where Profile happens to sit below.
+const QUARANTINE_NOTICE =
+  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Settings \u2192 Profile, whenever you want to.';
+
 // ---- run state ----------------------------------------------------------------
 let run = null;
 let rng = null;
@@ -620,6 +659,10 @@ function showSettings() {
     // The Profile section (#67) needs the manager itself: it lists, exports and
     // restores archives. Without it the section does not render at all.
     saves,
+    // …and a restore swaps the whole profile, so the screen must be re-dressed
+    // in the RESTORED settings (#68 D22) — otherwise the player who just lost a
+    // save keeps the old profile's contrast, motion and text size.
+    onProfileRestored: (restored) => applyRestoredSettings(restored),
     onChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
@@ -632,12 +675,7 @@ function showSettings() {
       const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
       if (res && res.ok === false) {
-        // Copy: Sunna, 2026-08-07. Three facts in the order a tired player
-        // needs them — it worked / it won't last / here is where to deal with
-        // it — and no pressure to deal with it now. "Profile, below" is
-        // literally true: this notice prepends to the top of .set-body and
-        // Profile is the fourth of five categories (settings.js CATEGORIES).
-        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
+        showSettingsNotice(QUARANTINE_NOTICE);
       }
     },
   });
@@ -717,6 +755,7 @@ function showOverlay(initialTab = 'deck') {
     // turning those down mid-fight is the one who most needs them to still be
     // there tomorrow.
     saves,
+    onProfileRestored: (restored) => applyRestoredSettings(restored),
     onSettingsChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
@@ -724,10 +763,9 @@ function showOverlay(initialTab = 'deck') {
       applyDisplaySettings(meta.settings);
       if (changed.bindings) setBindings(changed.bindings);
       if (changed.keyBindings) setKeyBindings(changed.keyBindings);
-      // ONE sentence, both doors — two doors with two strings is how they
-      // drift, and Sunna wrote it to be true on either.
+      // ONE sentence, both doors — and now literally one: QUARANTINE_NOTICE.
       if (res && res.ok === false) {
-        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
+        showSettingsNotice(QUARANTINE_NOTICE);
       }
     },
     onSave: () => {

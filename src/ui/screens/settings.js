@@ -260,7 +260,7 @@ function toggleFullscreen() {
  * Fills `container` with the settings controls and wires change events.
  * grouped=true adds category headers.
  */
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onProfileRestored = null }) {
   let html = '';
   if (grouped) {
     for (const cat of CATEGORIES) {
@@ -279,7 +279,24 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.setAttribute('data-settings-host', '');
 
   const profileMount = container.querySelector('.set-profile-mount');
-  if (profileMount && saves) renderProfileSection(profileMount, { saves });
+  // onRestored was a parameter renderProfileSection accepted, called — and that
+  // NOBODY EVER PASSED, on either door (#68 D22). So a restore swapped the
+  // profile and left the screen wearing the old one's accessibility settings:
+  // high contrast stored on and off on screen, reduced motion stored off and on
+  // on screen, text size unmoved. The player who most needs those settings is
+  // the player who just lost a save.
+  if (profileMount && saves) {
+    renderProfileSection(profileMount, {
+      saves,
+      onRestored: () => {
+        // Re-read from the manager rather than trusting the closed-over
+        // `settings` object: the restore replaced the profile, so the settings
+        // this screen was built from are the OLD ones.
+        const restored = (saves.loadMeta().settings) || {};
+        if (onProfileRestored) onProfileRestored(restored);
+      },
+    });
+  }
 
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
@@ -373,7 +390,7 @@ export function showSettingsNotice(msg) {
   el.textContent = msg;
 }
 
-export function openSettings({ meta, onChange, saves = null }) {
+export function openSettings({ meta, onChange, saves = null, onProfileRestored = null }) {
   const settings = meta.settings || (meta.settings = {});
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
@@ -384,7 +401,7 @@ export function openSettings({ meta, onChange, saves = null }) {
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
-  renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
+  renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves, onProfileRestored });
 
   const close = () => veil.remove();
   veil.addEventListener('click', (e) => {

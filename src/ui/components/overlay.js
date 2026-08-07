@@ -39,7 +39,7 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
+export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onProfileRestored, onSave, onQuit, onExit, initialTab = 'deck' }) {
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
@@ -101,7 +101,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
     // surface, one sentence, both doors — that is Sunna's call and she is right
     // that two strings is how they drift. A restore here does not touch the run
     // save: runs live in their own slot keys.
-    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}), saves });
+    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}), saves, onProfileRestored });
     else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
   }
 
