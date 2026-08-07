@@ -12,7 +12,36 @@ const fs = require('fs');
 if (process.env.SPIKE_USERDATA) app.setPath('userData', process.env.SPIKE_USERDATA);
 const USER_DATA = app.getPath('userData');
 
-if (process.env.SPIKE_T0) app.disableHardwareAcceleration(); // Xvfb has no GL; keep timing noise down.
+// HARDWARE ACCELERATION — and the seam Bjorn found (#70). This used to read
+// `if (process.env.SPIKE_T0) app.disableHardwareAcceleration()`, so the wrapper
+// behaved ONE WAY UNDER TEST AND ANOTHER FOR A PLAYER: with the spike variable
+// set it ran, and a plain launch on a machine with no usable GPU hung forever
+// with no window and no message. Measured here: `xvfb-run AshenSpire` exits 124
+// on a 45s timeout; with the fallback below it boots.
+//
+// Keying real behaviour to a test-only variable is the defect, not the flag. So:
+// an explicit opt-out anybody can use, and — because a player will not know to
+// use it — an automatic, once-only relaunch when the GPU process actually dies.
+const GPU_OFF_ENV = 'ASHEN_DISABLE_GPU';
+const gpuOptOut = process.env[GPU_OFF_ENV] === '1' || process.argv.includes('--disable-gpu');
+if (gpuOptOut) app.disableHardwareAcceleration();
+
+// A GPU that never comes up produces no crash event, only silence, so silence
+// is what we time out on: if nothing has painted shortly after start, relaunch
+// once with acceleration off rather than leaving a player at a dead window.
+// ASHEN_GPU_RETRY guards against a relaunch loop — the second attempt either
+// works or fails visibly.
+const gpuRetried = process.env.ASHEN_GPU_RETRY === '1';
+function relaunchWithoutGpu(why) {
+  if (gpuOptOut || gpuRetried) return false;
+  console.warn(`[ashen] ${why} — relaunching once with hardware acceleration off`);
+  app.relaunch({ args: process.argv.slice(1).concat('--disable-gpu') , env: { ...process.env, ASHEN_GPU_RETRY: '1' } });
+  app.exit(0);
+  return true;
+}
+app.on('child-process-gone', (_e, details) => {
+  if (details && details.type === 'GPU') relaunchWithoutGpu('the GPU process went away');
+});
 
 // Packaged build carries the game beside main.js (dist-embed); the repo
 // checkout serves it from ../../dist.
@@ -39,6 +68,15 @@ function createWindow() {
   });
 
   win.loadFile(GAME_HTML);
+
+  // The watchdog: 'ready-to-show' is the first proof a frame exists. If it has
+  // not fired in time, the compositor never came up — that is the hang.
+  let painted = false;
+  win.once('ready-to-show', () => { painted = true; });
+  const paintDeadline = setTimeout(() => {
+    if (!painted) relaunchWithoutGpu('no frame after 12s');
+  }, 12000);
+  win.on('closed', () => clearTimeout(paintDeadline));
 
   // Measurement path only runs under the spike harness; a normal launch is
   // just the game in a window.
