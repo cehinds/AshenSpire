@@ -39,7 +39,7 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
+export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
@@ -90,12 +90,18 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     else if (id === 'relics') renderRelics(body);
     else if (id === 'stats') renderStats(body);
     else if (id === 'save') renderSave(body);
-    // No `saves` here ON PURPOSE, so the Profile section does not render in the
-    // in-run overlay (#67): restoring an archived profile replaces the live one,
-    // and offering that mid-run — three floors into a climb — is the opposite of
-    // the calm moment the surface exists for. Its home is the title screen's
-    // Settings. Do not "fix" this by passing the manager through.
-    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}) });
+    // `saves` IS passed now, and I am reversing my own earlier decision here
+    // rather than quietly leaving it (#67, Sunna's D18). I withheld it so the
+    // Profile section would not render mid-run, on the grounds that restoring a
+    // profile three floors into a climb is not a calm moment. Two things
+    // changed: replacePrimaryWith now archives whatever it replaces, so the
+    // hazard I was guarding against is recoverable rather than final; and
+    // withholding the manager silently broke the quarantine feedback on this
+    // door, which is the worse harm and the one a player actually meets. One
+    // surface, one sentence, both doors — that is Sunna's call and she is right
+    // that two strings is how they drift. A restore here does not touch the run
+    // save: runs live in their own slot keys.
+    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}), saves });
     else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
   }
 

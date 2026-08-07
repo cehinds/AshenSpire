@@ -2167,9 +2167,18 @@ const validation = validateContent(contentBundle);
 if (!validation.ok) {
   const banner = document.createElement('div');
   banner.className = 'validation-banner';
+  // The header said 34 and the list showed 12 and nothing said the list was cut
+  // (#67, Sunna's D19). A tuning pass that sweeps one field wrong makes exactly
+  // that shape: fix twelve, reload, get a fresh twelve, and never learn how
+  // deep the hole goes or that the console has the rest. Same family as the
+  // silent no-op — a number promising more than the screen shows. The
+  // truncation is fine; hiding it was not.
+  const shown = validation.errors.slice(0, 12);
+  const hidden = validation.errors.length - shown.length;
   banner.textContent =
     `CONTENT VALIDATION FAILED (${validation.errors.length} errors)\n` +
-    validation.errors.slice(0, 12).map((e) => ` · ${e.path}: ${e.msg}`).join('\n');
+    shown.map((e) => ` · ${e.path}: ${e.msg}`).join('\n') +
+    (hidden > 0 ? `\n · …and ${hidden} more — all ${validation.errors.length} are in the browser console.` : '');
   document.body.prepend(banner);
   console.error('Content validation errors:', validation.errors);
 }
@@ -2727,8 +2736,12 @@ function showSettings() {
       const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
       if (res && res.ok === false) {
-        // DRAFT COPY (Sunna's to replace).
-        showSettingsNotice('This change applies for now, but it won’t be remembered until your profile is sorted out — see Profile below.');
+        // Copy: Sunna, 2026-08-07. Three facts in the order a tired player
+        // needs them — it worked / it won't last / here is where to deal with
+        // it — and no pressure to deal with it now. "Profile, below" is
+        // literally true: this notice prepends to the top of .set-body and
+        // Profile is the fourth of five categories (settings.js CATEGORIES).
+        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
       }
     },
   });
@@ -2801,13 +2814,25 @@ function showOverlay(initialTab = 'deck') {
     run,
     meta: saves.loadMeta(),
     initialTab,
+    // The overlay gets the save manager too (#67, Sunna's D18). Without it this
+    // door discarded saveMeta's {ok:false} exactly as the modal used to, and
+    // this is the WORSE door: the settings people change mid-run are the
+    // comfort ones — pacing, reduced motion, flashes — and the person quietly
+    // turning those down mid-fight is the one who most needs them to still be
+    // there tomorrow.
+    saves,
     onSettingsChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
-      saves.saveMeta(meta);
+      const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
       if (changed.bindings) setBindings(changed.bindings);
       if (changed.keyBindings) setKeyBindings(changed.keyBindings);
+      // ONE sentence, both doors — two doors with two strings is how they
+      // drift, and Sunna wrote it to be true on either.
+      if (res && res.ok === false) {
+        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
+      }
     },
     onSave: () => {
       persist();
@@ -19205,7 +19230,7 @@ function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
+function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
@@ -19256,12 +19281,18 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
     else if (id === 'relics') renderRelics(body);
     else if (id === 'stats') renderStats(body);
     else if (id === 'save') renderSave(body);
-    // No `saves` here ON PURPOSE, so the Profile section does not render in the
-    // in-run overlay (#67): restoring an archived profile replaces the live one,
-    // and offering that mid-run — three floors into a climb — is the opposite of
-    // the calm moment the surface exists for. Its home is the title screen's
-    // Settings. Do not "fix" this by passing the manager through.
-    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}) });
+    // `saves` IS passed now, and I am reversing my own earlier decision here
+    // rather than quietly leaving it (#67, Sunna's D18). I withheld it so the
+    // Profile section would not render mid-run, on the grounds that restoring a
+    // profile three floors into a climb is not a calm moment. Two things
+    // changed: replacePrimaryWith now archives whatever it replaces, so the
+    // hazard I was guarding against is recoverable rather than final; and
+    // withholding the manager silently broke the quarantine feedback on this
+    // door, which is the worse harm and the one a player actually meets. One
+    // surface, one sentence, both doors — that is Sunna's call and she is right
+    // that two strings is how they drift. A restore here does not touch the run
+    // save: runs live in their own slot keys.
+    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}), saves });
     else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
   }
 
@@ -19709,6 +19740,7 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
     html = ROWS.map((r) => rowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
+  container.setAttribute('data-settings-host', '');
 
   const profileMount = container.querySelector('.set-profile-mount');
   if (profileMount && saves) renderProfileSection(profileMount, { saves });
@@ -19789,7 +19821,11 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
  * Settings is not open.
  */
 function showSettingsNotice(msg) {
-  const host = document.querySelector('.settings-modal .set-body');
+  // BOTH doors. This used to look only for the modal's own body, so on the
+  // in-run overlay it would have been a silent no-op — the very defect it
+  // exists to fix, one layer down (#67, Sunna's D18). renderSettings marks
+  // whatever container it filled, so the notice lands wherever Settings is.
+  const host = document.querySelector('[data-settings-host]');
   if (!host) return;
   let el = host.querySelector('.set-notice');
   if (!el) {
@@ -19945,14 +19981,29 @@ function renderProfileSection(container, { saves, onRestored }) {
     // curious rather than someone hurt.
     : '<p class="set-note prof-empty">Nothing has been set aside. That’s the good news — this fills when something couldn’t be read, and when you start a new profile and we keep the old one for you.</p>';
 
-  // If the drawer ever had to move a profile further aside to stay inside the
-  // browser's storage, the player is TOLD — that is the whole difference
-  // between a bounded drawer and a silent eviction (Saga's gate).
-  // DRAFT COPY (Sunna's to replace).
-  const notices = (saves.drawerNotices ? saves.drawerNotices() : [])
-    .filter((n) => n.kind === 'profile-salvaged')
-    .map((n) => `<p class="prof-notice">A set-aside profile from ${esc(humanTime(n.was) || 'earlier')} was moved further aside on ${esc(humanTime(n.at) || '')} to stay within this device’s storage. It was not deleted.</p>`)
-    .join('');
+  // The player is TOLD when the drawer had to move a profile further aside —
+  // that is the whole difference between a bounded drawer and a silent
+  // eviction (Saga's gate). Copy: Sunna, 2026-08-07.
+  //
+  // Structure is load-bearing: the explanation once, the dates once each. And
+  // the closing line stays — it is the only thing that stops "not deleted"
+  // from sending someone hunting through a list this profile is not in.
+  const salvaged = (saves.drawerNotices ? saves.drawerNotices() : [])
+    .filter((n) => n.kind === 'profile-salvaged');
+  const many = salvaged.length > 1;
+  const when = (n) => {
+    const was = humanTime(n.was);
+    const at = humanTime(n.at);
+    const subject = was ? `The profile set aside on ${was}` : 'A profile set aside earlier';
+    return at ? `${subject} was moved out on ${at}.` : `${subject} was moved out.`;
+  };
+  const notices = salvaged.length
+    ? `<div class="prof-notice">
+        <p>This drawer filled up, so ${many ? 'its oldest profiles were' : 'its oldest profile was'} moved out and kept ${many ? 'on their own' : 'on its own'}. Nothing was deleted, and the profile you’re playing now was never touched.</p>
+        ${salvaged.map((n) => `<p class="set-note">${esc(when(n))}</p>`).join('')}
+        <p class="set-note">${many ? 'They’re' : 'It’s'} still on this device, but ${many ? 'they’re' : 'it’s'} no longer in the list below.</p>
+      </div>`
+    : '';
 
   container.innerHTML = `
     <div class="prof-archive">

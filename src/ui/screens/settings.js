@@ -276,6 +276,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     html = ROWS.map((r) => rowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
+  container.setAttribute('data-settings-host', '');
 
   const profileMount = container.querySelector('.set-profile-mount');
   if (profileMount && saves) renderProfileSection(profileMount, { saves });
@@ -356,7 +357,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
  * Settings is not open.
  */
 export function showSettingsNotice(msg) {
-  const host = document.querySelector('.settings-modal .set-body');
+  // BOTH doors. This used to look only for the modal's own body, so on the
+  // in-run overlay it would have been a silent no-op — the very defect it
+  // exists to fix, one layer down (#67, Sunna's D18). renderSettings marks
+  // whatever container it filled, so the notice lands wherever Settings is.
+  const host = document.querySelector('[data-settings-host]');
   if (!host) return;
   let el = host.querySelector('.set-notice');
   if (!el) {

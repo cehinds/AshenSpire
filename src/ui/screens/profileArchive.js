@@ -117,14 +117,29 @@ export function renderProfileSection(container, { saves, onRestored }) {
     // curious rather than someone hurt.
     : '<p class="set-note prof-empty">Nothing has been set aside. That’s the good news — this fills when something couldn’t be read, and when you start a new profile and we keep the old one for you.</p>';
 
-  // If the drawer ever had to move a profile further aside to stay inside the
-  // browser's storage, the player is TOLD — that is the whole difference
-  // between a bounded drawer and a silent eviction (Saga's gate).
-  // DRAFT COPY (Sunna's to replace).
-  const notices = (saves.drawerNotices ? saves.drawerNotices() : [])
-    .filter((n) => n.kind === 'profile-salvaged')
-    .map((n) => `<p class="prof-notice">A set-aside profile from ${esc(humanTime(n.was) || 'earlier')} was moved further aside on ${esc(humanTime(n.at) || '')} to stay within this device’s storage. It was not deleted.</p>`)
-    .join('');
+  // The player is TOLD when the drawer had to move a profile further aside —
+  // that is the whole difference between a bounded drawer and a silent
+  // eviction (Saga's gate). Copy: Sunna, 2026-08-07.
+  //
+  // Structure is load-bearing: the explanation once, the dates once each. And
+  // the closing line stays — it is the only thing that stops "not deleted"
+  // from sending someone hunting through a list this profile is not in.
+  const salvaged = (saves.drawerNotices ? saves.drawerNotices() : [])
+    .filter((n) => n.kind === 'profile-salvaged');
+  const many = salvaged.length > 1;
+  const when = (n) => {
+    const was = humanTime(n.was);
+    const at = humanTime(n.at);
+    const subject = was ? `The profile set aside on ${was}` : 'A profile set aside earlier';
+    return at ? `${subject} was moved out on ${at}.` : `${subject} was moved out.`;
+  };
+  const notices = salvaged.length
+    ? `<div class="prof-notice">
+        <p>This drawer filled up, so ${many ? 'its oldest profiles were' : 'its oldest profile was'} moved out and kept ${many ? 'on their own' : 'on its own'}. Nothing was deleted, and the profile you’re playing now was never touched.</p>
+        ${salvaged.map((n) => `<p class="set-note">${esc(when(n))}</p>`).join('')}
+        <p class="set-note">${many ? 'They’re' : 'It’s'} still on this device, but ${many ? 'they’re' : 'it’s'} no longer in the list below.</p>
+      </div>`
+    : '';
 
   container.innerHTML = `
     <div class="prof-archive">

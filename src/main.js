@@ -63,9 +63,18 @@ const validation = validateContent(contentBundle);
 if (!validation.ok) {
   const banner = document.createElement('div');
   banner.className = 'validation-banner';
+  // The header said 34 and the list showed 12 and nothing said the list was cut
+  // (#67, Sunna's D19). A tuning pass that sweeps one field wrong makes exactly
+  // that shape: fix twelve, reload, get a fresh twelve, and never learn how
+  // deep the hole goes or that the console has the rest. Same family as the
+  // silent no-op — a number promising more than the screen shows. The
+  // truncation is fine; hiding it was not.
+  const shown = validation.errors.slice(0, 12);
+  const hidden = validation.errors.length - shown.length;
   banner.textContent =
     `CONTENT VALIDATION FAILED (${validation.errors.length} errors)\n` +
-    validation.errors.slice(0, 12).map((e) => ` · ${e.path}: ${e.msg}`).join('\n');
+    shown.map((e) => ` · ${e.path}: ${e.msg}`).join('\n') +
+    (hidden > 0 ? `\n · …and ${hidden} more — all ${validation.errors.length} are in the browser console.` : '');
   document.body.prepend(banner);
   console.error('Content validation errors:', validation.errors);
 }
@@ -623,8 +632,12 @@ function showSettings() {
       const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
       if (res && res.ok === false) {
-        // DRAFT COPY (Sunna's to replace).
-        showSettingsNotice('This change applies for now, but it won’t be remembered until your profile is sorted out — see Profile below.');
+        // Copy: Sunna, 2026-08-07. Three facts in the order a tired player
+        // needs them — it worked / it won't last / here is where to deal with
+        // it — and no pressure to deal with it now. "Profile, below" is
+        // literally true: this notice prepends to the top of .set-body and
+        // Profile is the fourth of five categories (settings.js CATEGORIES).
+        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
       }
     },
   });
@@ -697,13 +710,25 @@ function showOverlay(initialTab = 'deck') {
     run,
     meta: saves.loadMeta(),
     initialTab,
+    // The overlay gets the save manager too (#67, Sunna's D18). Without it this
+    // door discarded saveMeta's {ok:false} exactly as the modal used to, and
+    // this is the WORSE door: the settings people change mid-run are the
+    // comfort ones — pacing, reduced motion, flashes — and the person quietly
+    // turning those down mid-fight is the one who most needs them to still be
+    // there tomorrow.
+    saves,
     onSettingsChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
-      saves.saveMeta(meta);
+      const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
       if (changed.bindings) setBindings(changed.bindings);
       if (changed.keyBindings) setKeyBindings(changed.keyBindings);
+      // ONE sentence, both doors — two doors with two strings is how they
+      // drift, and Sunna wrote it to be true on either.
+      if (res && res.ok === false) {
+        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
+      }
     },
     onSave: () => {
       persist();

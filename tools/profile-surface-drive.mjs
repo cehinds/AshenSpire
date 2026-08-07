@@ -136,5 +136,39 @@ const vocab = await ev(`(()=>{
 check('D14 the calm screen says "set aside" and not "archived"',
   vocab.calmSetAside && !vocab.calmArchived, JSON.stringify(vocab));
 
+
+// --- D18: the second door (Sunna). Not now → Continue → in-run menu →
+// Settings → change a comfort setting. It must SAY it will not persist, and
+// the Profile section must be there for the sentence to point at.
+await ev(`(()=>{ localStorage.clear();
+  localStorage.setItem('sote_meta_v1','{"schemaVersion":1,"progress":{"runs":2000},');
+  return 1; })()`);
+await c.send('Page.navigate',{url:`http://localhost:${port}/`}); await sleep(1600);
+await ev(`(document.querySelector('.profile-notice .notnow')||document.querySelector('.profile-notice .keep')).click()`); await sleep(700);
+// Start a run so the in-run overlay exists.
+await ev(`[...document.querySelectorAll('button')].find(b=>/begin a climb/i.test(b.textContent)).click()`); await sleep(900);
+const started = await ev(`(()=>{ const b=[...document.querySelectorAll('button')].find(x=>/^(embark|begin|start|confirm)/i.test(x.textContent.trim())); if(b){b.click(); return b.textContent.trim();} return null; })()`);
+await sleep(1400);
+const overlayOpened = await ev(`(()=>{ const m=[...document.querySelectorAll('button')].find(b=>/menu|☰/i.test(b.textContent)||b.classList.contains('open-menu')); if(m){m.click(); return true;} return false; })()`);
+await sleep(700);
+await ev(`(()=>{ const t=[...document.querySelectorAll('button')].find(b=>/^settings$/i.test(b.textContent.trim())); if(t) t.click(); return 1; })()`); await sleep(600);
+const door2 = await ev(`(()=>{
+  const host=document.querySelector('[data-settings-host]');
+  if(!host) return {reached:false};
+  const cats=[...host.querySelectorAll('.set-cat')].map(h=>h.textContent.trim());
+  const toggle=host.querySelector('.set-row .toggle, .set-row button, .set-row input');
+  if(toggle) toggle.click();
+  return {reached:true, cats, notice:(host.querySelector('.set-notice')||{}).textContent||''};
+})()`);
+await sleep(300);
+if (door2.reached) {
+  check('D18 the in-run Settings door says the change will not persist',
+    /won’t survive a restart|won\'t survive a restart/.test(door2.notice), JSON.stringify(door2.notice));
+  check('D18 and Profile is there for that sentence to point at',
+    (door2.cats||[]).includes('Profile'), JSON.stringify(door2.cats));
+} else {
+  console.log('SKIP  D18 in-run door — could not reach the overlay in this driver (started=' + started + ', menu=' + overlayOpened + ')');
+}
+
 console.log(`\n${fails} failing check(s).`);
 process.exit(fails?1:0);

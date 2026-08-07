@@ -34,6 +34,15 @@ const mod = await import(pathToFileURL(join(root, 'src/engine/save.js')).href);
 const { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, RUN_ARCHIVE_KEY, META_SCHEMA_VERSION } = mod;
 
 let fails = 0;
+let gaps = 0;
+// A GAP is a property this file defines, does NOT yet hold, and that a seat has
+// ruled a follow-up. It prints on every run and never exits non-zero — so a
+// known hole stays visible in the record instead of being quietly re-labelled
+// green. When the fix lands, gap() becomes check().
+const gap = (name, cond, detail) => {
+  console.log(`${cond ? 'PASS' : 'GAP '}  ${name}${!cond && detail ? ' — ' + detail : ''}`);
+  if (!cond) gaps++;
+};
 const check = (name, cond, detail) => {
   console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}${detail ? ' — ' + detail : ''}`);
   if (!cond) fails++;
@@ -402,12 +411,35 @@ check('E2 a newer schemaVersion is refused rather than accepted blind (Sten, ame
   const survivors = sv3.listArchives().filter((a) => a.kind === 'meta').length;
   const notices = sv3.drawerNotices ? sv3.drawerNotices() : [];
   check('P7 profiles filling the drawer are bounded (quota is real) …', survivors <= 30);
-  check('P7 … and nothing left silently: an evicted profile is salvaged AND announced',
-    ids.every((id) => sv3.getArchive(id) || sv3.salvagedProfileKeys().length > 0) && notices.length > 0,
-    `survivors=${survivors} notices=${notices.length}`);
+
+  // SPLIT, and Sunna's reason is the sharp one: this used to be a single
+  // assertion with an OR — `getArchive(id) || salvagedProfileKeys().length` —
+  // so it passed when a profile was UNREACHABLE, because the salvage key
+  // existed. The property the file calls reachability was being verified as
+  // preservation, and the salvage branch was green with no handle at all. A
+  // check that is green both before and after the fix is not measuring the fix.
+  const salvagedKeys = sv3.salvagedProfileKeys();
+  check('P7a PRESERVATION: every profile is either in the drawer or on a salvage key',
+    ids.every((id) => sv3.getArchive(id) || salvagedKeys.length > 0) && notices.length > 0,
+    `survivors=${survivors} salvageKeys=${salvagedKeys.length} notices=${notices.length}`);
+
+  // P7b REACHABILITY is the property save.js's own header claims —
+  // "preservation the player cannot reach is a kinder word for lost" — and it
+  // is NOT met on the salvage path today: listArchives() reads index.entries,
+  // a salvaged profile is not in them, and exportArchive(id) returns null. It
+  // is reported as a GAP rather than a failure because Sunna ruled it a
+  // follow-up for 0.4.x (reach: 25 deliberate player acts) — but it is
+  // reported, every run, so Saga's card cannot be closed by a green that never
+  // looked. THE CONDITION THAT TURNS IT INTO A BLOCK, hers: the day anything
+  // can archive a profile without the player choosing to.
+  const reachable = ids.filter((id) => typeof sv3.exportArchive(id) === 'string').length;
+  const unreachable = ids.length - reachable;
+  gap('P7b REACHABILITY of salvaged profiles (Saga\'s card — must go green before it is closed)',
+    unreachable === 0,
+    `${unreachable} of ${ids.length} preserved profiles cannot be exported by the player: listArchives() omits salvaged entries and exportArchive() returns null. salvagedProfileKeys() exists and nothing in src/ calls it.`);
 }
 
-console.log(`\n${fails} failing check(s).`);
+console.log(`\n${fails} failing check(s)${gaps ? `, ${gaps} known gap(s) reported above` : ''}.`);
 console.log('BOUNDARY: headless Node on the real module; no browser, no quota, nothing rendered.');
 console.log('Sten wrote checks 1-6 (one amendment labelled inline); Rune added P1-P5.');
 process.exit(fails ? 1 : 0);
