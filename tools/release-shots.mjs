@@ -370,7 +370,12 @@ const UNENUMERATED_SETS = [
   const covered = new Set(SCREENS.map((s) => s.state).filter(Boolean));
   const gaps = app.filter((s) => !covered.has(s) && !EXCLUDED_STATES[s]);
   console.log(`DENOMINATOR 1 — top-level states · home: src/main.js (?shot= states)`);
-  console.log(`  ${app.length} states: ${covered.size} photographed, ${Object.keys(EXCLUDED_STATES).length} excluded by name, ${gaps.length} unaccounted`);
+  // "photographed" is a PAST TENSE about work that has not started — this block
+  // prints before the browser launches. It cost me a false claim in the session
+  // that added it: I reported a plant as photographing three views on a run that
+  // photographed none, because I read this line as a result. The denominators are
+  // DERIVED here; what was photographed is the verdict's to say, at the end.
+  console.log(`  ${app.length} states: ${covered.size} to photograph, ${Object.keys(EXCLUDED_STATES).length} excluded by name, ${gaps.length} unaccounted`);
   for (const s of app) {
     if (covered.has(s)) continue;
     console.log(`  EXCLUDED  ?shot=${s} — ${EXCLUDED_STATES[s] || 'NO REASON GIVEN'}`);
@@ -491,13 +496,13 @@ const ARTIFACT = readFileSync(resolve(ROOT, idOfArtifact), 'utf8');
       mine.push(id);
     }
     console.log(`  ${g.group.padEnd(9)} ${String(ids.length).padStart(2)} ${g.what} · home: ${g.home}`);
-    console.log(`            photographed: ${mine.join(', ')}`);
+    console.log(`            to photograph: ${mine.join(', ')}`);
     for (const id of ids) {
       const why = EXCLUDED_SUBSURFACES[`${g.group}:${id}`];
       if (why) console.log(`  EXCLUDED  ${g.group}:${id} — ${why}`);
     }
   }
-  console.log(`  ${total} sub-surfaces across ${SUB_SURFACE_GROUPS.length} homes: ${shot} photographed and asserted, ${excluded} excluded by name`);
+  console.log(`  ${total} sub-surfaces across ${SUB_SURFACE_GROUPS.length} homes: ${shot} derived to photograph, ${excluded} excluded by name`);
   for (const [name, why] of UNENUMERATED_SETS) {
     console.log(`  NOT ENUMERATED  ${name} — ${why}`);
   }
@@ -526,10 +531,71 @@ mkdirSync(OUT, { recursive: true });
 const { server, port } = await serve({ root: ROOT, port: 8231, open: false });
 const BASE = `http://localhost:${port}/dist/AshenSpire.html`;
 
-spawn('/opt/pw-browsers/chromium', [
+// ---------------------------------------------------------------------------
+// THE BROWSER THIS RUN MEASURES MUST BE THE BROWSER THIS RUN SPAWNED.
+//
+// Marina's ruling on my own best find, pointed at the browser: EVIDENCE MUST
+// COME FROM ONE ARTIFACT, NEVER TWO ASSUMED EQUAL. This tool used to spawn
+// chromium on a FIXED port 9431 and then `fetch('127.0.0.1:9431/json/list')` and
+// attach to whatever answered. Two failures, and they compound:
+//
+//   1. NOTHING EVER KILLED THE CHILD — no `child.kill()` on any path, success or
+//      failure. Every run leaked a browser tree. Vira found 81 orphans this
+//      afternoon; I reaped 152 on this port a few hours later.
+//   2. A second run cannot bind 9431, so its own chromium dies — and `cdp(9431)`
+//      then attaches to the PREVIOUS RUN'S BROWSER and drives that. The process
+//      spawned and the process measured were two browsers with nothing checking
+//      they were the same one. A run goes quiet instead of red, which is the
+//      worst way for an instrument to fail.
+//
+// Fixed BY CONSTRUCTION rather than by a check: `--remote-debugging-port=0` gets
+// a kernel-assigned port, and the endpoint is parsed off MY OWN CHILD'S stderr.
+// There is no shared name left to collide on, so "is this my browser?" stops
+// being a question the tool has to get right. `menufit` has done it this way all
+// along (`tools/menufit.mjs:161`) — I had the answer in the tree and did not use
+// it. This also ends a collision I did not own: `contrast-audit.mjs:545` picks
+// `9222 + (pid % 400)` = 9222…9621, a range that CONTAINS 9431, so it would
+// silently take this tool's browser about one run in four hundred.
+// ---------------------------------------------------------------------------
+const browser = spawn('/opt/pw-browsers/chromium', [
   '--headless=new', '--disable-gpu', '--no-sandbox',
-  '--remote-debugging-port=9431', 'about:blank',
-], { stdio: 'ignore' });
+  '--remote-debugging-port=0', 'about:blank',
+], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+// One reaper, on every path out — normal exit, refusal, throw, Ctrl-C. A tool
+// that leaks a browser per run is how the pile above gets built.
+let reaped = false;
+const reap = () => {
+  if (reaped) return;
+  reaped = true;
+  try { browser.kill('SIGKILL'); } catch { /* already gone */ }
+};
+process.on('exit', reap);
+for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { reap(); process.exit(130); });
+process.on('uncaughtException', (err) => { reap(); console.error(err); process.exit(2); });
+
+const BROWSER_WS = await new Promise((ok, no) => {
+  let buf = '';
+  const read = (d) => {
+    buf += d;
+    const m = /DevTools listening on (ws:\/\/\S+)/.exec(buf);
+    if (m) ok(m[1]);
+  };
+  browser.stderr.on('data', read);
+  browser.stdout.on('data', read);
+  browser.on('error', no);
+  browser.on('exit', (code) => no(new Error(`chromium exited (${code}) before naming an endpoint:\n${buf.slice(-400)}`)));
+  setTimeout(() => no(new Error(`chromium never printed a DevTools endpoint:\n${buf.slice(-400)}`)), 20000);
+}).catch((err) => { reap(); console.error(`\nrelease-shots: ${err.message}`); process.exit(2); });
+
+// The port is this child's and no one else's — derived from what it printed,
+// never typed here.
+const CDP_PORT = Number(new URL(BROWSER_WS.replace(/^ws:/, 'http:')).port);
+// Both shared names this run could have collided on, printed. serve() bumps to
+// the next free HTTP port, so two runs never share one; the CDP port is the
+// kernel's. A reader who suspects a crossed run can check these against another
+// run's line instead of taking my word for it.
+console.log(`  this run: browser pid ${browser.pid} · CDP port ${CDP_PORT} · HTTP port ${port} — both its own`);
 
 async function cdp(p) {
   let l;
@@ -547,7 +613,7 @@ async function cdp(p) {
   return { send: (m2, p2 = {}) => { const n = ++id; ws.send(JSON.stringify({ id: n, method: m2, params: p2 })); return new Promise((ok, no) => w.set(n, { ok, no })); } };
 }
 
-const c = await cdp(9431);
+const c = await cdp(CDP_PORT);
 await c.send('Page.enable');
 await c.send('Runtime.enable');
 // A screen that fails to mount because its boot THREW must say so. Without
@@ -716,6 +782,37 @@ for (const shape of SHAPES) {
 // Reported on green too: a property nobody sees hold is a property nobody will
 // notice stop holding.
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// NOTHING MEASURED — SAY THAT AND STOP. This gate is FIRST, above the property
+// block, the boundary block and the float summary, and its position is the
+// whole point.
+//
+// Marina's amended audit question, off Vira's sweep (2026-08-07): *a boundary
+// block is a claim about a run that HAPPENED. A run that measured nothing prints
+// its emptiness, not its boundaries.* `tutorial-reach --only 9999x9999` printed
+// `all checks passed` and then a boundary naming four other things as uncovered.
+//
+// This tool did the same and I only found it by tripping over it. My first
+// version of this guard sat down beside the verdict line, so a zero-shot run
+// still printed `PROPERTY —`, `BOUNDARY — what this green does NOT cover` (of a
+// green that did not exist) and `float-clip: OK … both shapes` — seventy lines
+// of confidence above the refusal. A guard written at one door is a door, not a
+// property; this one is at the top of the report.
+// ---------------------------------------------------------------------------
+if (!rows.length) {
+  console.error(`\nrelease-shots: ZERO shots were taken, so nothing was measured and this is NOT a pass.`);
+  console.error('No property was evaluated and no boundary is printed below — a boundary is a');
+  console.error('claim about a run that happened.');
+  if (only) {
+    console.error(`\n--only takes a SHOT NAME, not a shape. No shot is called ${JSON.stringify(only)}.`);
+    console.error(`Shapes are chosen with --shape (${SHAPES.map((x) => x.tag).join(', ')}); shot names are:`);
+    console.error('  ' + SCREENS.map((s) => s.name).join(', '));
+  } else {
+    console.error('No screen and no sub-surface produced a row. Both denominators are empty.');
+  }
+  server.close();
+  process.exit(1);
+}
 let propertyFails = 0;
 console.log(`\nPROPERTY — ${DISTINCT_PANELS}`);
 // --only narrows the run to one shot, so every other group has no members and
@@ -915,35 +1012,6 @@ if (misses || floatMisses || propertyFails) {
   // class of defect as a summary that misnames what failed.
   const where = [misses && 'MISS', floatMisses && 'OFF', propertyFails && 'PROPERTY'].filter(Boolean);
   console.error(`\nrelease-shots: ${parts.join(' · ')} — see the ${where.join('/')} line(s) above.`);
-  server.close();
-  process.exit(1);
-}
-// ZERO SHOTS IS NOT A PASS, and this tool has just been caught printing that it
-// was (2026-08-07, mine, found by using it). `--only` filters by SHOT NAME; I
-// handed it a SHAPE tag, nothing matched, and the run printed
-//
-//   release-shots: OK — 0 shots (0 top-level, 0 sub-surface), every landmark
-//   present, every sub-surface assertion true
-//
-// and exited 0. Every clause of that sentence is vacuously true and the whole of
-// it is a lie. It is the same empty-denominator failure I planted against for
-// `views = []` one commit ago — an empty set passes every for-loop ever written
-// — sitting unguarded in this tool's own shot loop. It also cost me a false
-// claim in the same session: I reported a plant "photographed grid, rack, hybrid"
-// on a run that photographed nothing, because the `photographed:` line is
-// printed from the DERIVED ids, above the browser that would take them.
-//
-// So: nothing photographed, nothing proven. Say which, and name the shots that
-// do exist, because the only way to reach here is a name that matches none.
-if (!rows.length) {
-  console.error(`\nrelease-shots: ZERO shots were taken, so nothing was proven and this is NOT a pass.`);
-  if (only) {
-    console.error(`--only takes a SHOT NAME, not a shape. No shot is called ${JSON.stringify(only)}.`);
-    console.error(`Shapes are chosen with --shape (${SHAPES.map((x) => x.tag).join(', ')}); shot names are:`);
-    console.error('  ' + SCREENS.map((s) => s.name).join(', '));
-  } else {
-    console.error('No screen and no sub-surface produced a row. Both denominators are empty.');
-  }
   server.close();
   process.exit(1);
 }
