@@ -206,6 +206,65 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (surfTree.code !== 0 || !surfTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // 41/42 — the screen census (Marina's ruling, 2026-08-07).
+  //
+  // WHY IT IS RUN HERE AND NOT BY A PERSON. `release-shots.mjs` did not start
+  // for a whole day. Four gates missed it, and the reason is one sentence:
+  // every one of them ran this suite, and that file is in nobody's suite — its
+  // first run would have been at upload, by whoever was tired. A census that
+  // reports the project's state to Constantine goes into exactly that category
+  // the moment it exists, so it is wired in on the day it is written rather
+  // than on the day it is missed.
+  //
+  // It CAN be, and that is the whole difference — no browser, no bundle, no
+  // port. It is a join between the screens directory, the import graph and the
+  // instrument sources. release-shots needs a built artifact and a browser and
+  // therefore still needs Bjorn's answer; this is not that answer and does not
+  // pretend to be one.
+  //
+  // Two lines for the same reason 36/37 and 39/40 are two: 41 is the CENSUS'S
+  // OWN integrity — seven plants, including the both-edges one where a fully
+  // watched tree must stop alarming. Its failure is the check's fault. 42 is
+  // the state of src/. Its failure is the code's.
+  //
+  // NO COUNT IN THIS COMMENT, deliberately — the tool's RESULT line carries
+  // every number with the ref it was counted at, and 42 quotes it whole. A
+  // number typed beside the thing that owns it is what the census exists to
+  // kill, and the top of commons/release-floor.md is why we know that.
+  //
+  // AND 42 PASSES WHILE SCREENS SIT UNWATCHED, on purpose. The exit code is
+  // the health of the DERIVATION — a home that stopped being readable, a screen
+  // nothing can mount. How many screens nobody watches is the state of the
+  // project, and whether that is fit to ship is Sten's judgement against his
+  // datum, not this suite's. The number is printed on every run so it cannot
+  // hide; nothing here grades it.
+  const runCensus = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/screen-census.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
+  const censSelf = runCensus(['--selftest']);
+  const censSelfV = quote(censSelf.out);
+  console.log(
+    `${censSelf.code === 0 && censSelfV.text ? 'PASS' : 'FAIL'}  41. the screen census still catches its own known-bad corpus` +
+      ` — ${censSelfV.text || `screen-census --selftest (exit ${censSelf.code}): ${censSelfV.why}`}`
+  );
+  if (censSelf.code !== 0 || !censSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const censTree = runCensus(['--raw']);
+  const censTreeV = quote(censTree.out);
+  console.log(
+    `${censTree.code === 0 && censTreeV.text ? 'PASS' : 'FAIL'}  42. every screen in the tree is mountable, and the census can still read it` +
+      ` — ${censTreeV.text || `screen-census (exit ${censTree.code}): ${censTreeV.why}`}` +
+      ` (\`node tools/screen-census.mjs\` for the checklist itself)`
+  );
+  if (censTree.code !== 0 || !censTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -220,4 +279,8 @@ console.log('          39–40 are a JOIN between two source lists: they prove e
 console.log('          declared navigable surface HAS a handler, never that the');
 console.log('          handler draws anything — release-shots is the half that has');
 console.log('          watched a panel paint.');
+console.log('          41–42 are a CENSUS, not a verdict: they prove every screen in');
+console.log('          src/ui/screens/ is mountable and that the census can still read');
+console.log('          its homes. A screen counted as reached is one an instrument NAMES');
+console.log('          a way into — not one anything ran, passed, or photographed.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);
