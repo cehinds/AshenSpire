@@ -27,12 +27,29 @@
 // BOUNDARY: this proves a screen RENDERED and that its landmark element is on
 // it. It does not prove the screen is legible (Sunna), correct (Vira), or that
 // the art reads (Freja). Two viewports only — 390x844 and 1200x730.
+//
+// TWO DENOMINATORS (Bjorn, 2026-08-07, Marina's ruling). Coverage used to be
+// counted against ONE list — the ?shot= states in src/main.js — which is the
+// set of TOP-LEVEL screens. A player also navigates INSIDE a state: six overlay
+// tabs, six settings categories, three armoury views. None of those has a
+// ?shot= state, so the old gate printed `0 unaccounted` while fifteen surfaces
+// went unphotographed. It proved the two lists agreed and was silent on whether
+// the surviving list was every surface — a check that could not fail.
+// So: denominator 1 = top-level states (unchanged), denominator 2 = navigable
+// sub-surfaces, DERIVED from the homes that actually define them. Both print,
+// each with what was and was not photographed.
 
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
+// DENOMINATOR 2's three homes, imported rather than parsed: the tool reads the
+// APP'S OWN VALUES, so there is no second list and no regex to rot. See
+// SUB_SURFACE_GROUPS below for why there are three of them and not one.
+import { menuTabs } from '../src/ui/uiContent.js';
+import { SETTINGS_CATEGORIES } from '../src/ui/screens/settings.js';
+import { balance } from '../src/content/balance.js';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -103,11 +120,10 @@ const SCREENS = [
     name: 'settings', query: '', landmark: '.settings, .set-body',
     drive: `[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`,
   },
-  {
-    name: 'settings-profile', query: '', landmark: '.set-body',
-    drive: `[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`,
-    after: `(()=>{const h=[...document.querySelectorAll('.set-body *')].find(e=>/profile/i.test(e.textContent||'')&&e.children.length===0);if(h)h.scrollIntoView({block:'center'});return !!h;})()`,
-  },
+  // (the hand-written `settings-profile` entry lived here and is DELETED: the
+  //  settings categories are now generated from SETTINGS_CATEGORIES, so Profile
+  //  is `settings-Profile` below and no longer a name anyone types. Collapsing a
+  //  duplicate that leaves nothing deletable is a patch, not a collapse.)
   // The crisis notice: seeded storage, never a patched bundle. Corrupt bytes
   // (truncated JSON) is the 'corrupt' state; a future schemaVersion is 'newer'.
   {
@@ -120,21 +136,206 @@ const SCREENS = [
   },
 ];
 
-// D2's gate: derived states vs what this file covers. Runs BEFORE the browser
-// so a coverage gap costs no time and cannot be mistaken for a render failure.
+// ---------------------------------------------------------------------------
+// DENOMINATOR 2 — the navigable sub-surfaces, and THE FINDING.
+//
+// THERE IS NO SINGLE HOME THAT DEFINES THE TAB LIST. I looked for one and it
+// does not exist. What exists is three homes in three different layers:
+//
+//   overlay tabs      src/ui/uiContent.js       MENU_TABS      (a UI content table)
+//   settings sections src/ui/screens/settings.js SETTINGS_CATEGORIES (a const in a screen)
+//   armoury views     src/content/balance.js     balance.equipment.views (game data)
+//
+// Each of those IS a single home for its own set — the overlay strip and the
+// quick-nav dropdown already derive from MENU_TABS, which is the shape we want.
+// What has no home is the set OF SETS. So this tool cannot ask the tree "what
+// tabbed surfaces exist"; it can only ask "what is in the three I was told
+// about." A fourth surface added tomorrow in a fourth place is invisible here,
+// and no amount of care in this file fixes that — the fix is upstream and is
+// stated in the report and in the BOUNDARY block at the end of this run.
+//
+// What I did NOT do, deliberately: hand-list the tabs here. A list of tabs in
+// the harness is a second home for the fact, which is the exact defect this
+// tool exists to catch, wearing my own hat. Below, each group names its home
+// and reads it; the ids are never retyped.
+//
+// `reach(id)` is a RECIPE FOR ANY MEMBER of the set, never a per-id table: it
+// is written once per group and knows nothing about which ids exist. That is
+// what makes the derivation load-bearing — add a row to MENU_TABS and it gets
+// photographed and asserted on the next run with no edit here.
+// ---------------------------------------------------------------------------
+const q = (s) => JSON.stringify(s);
+
+const SUB_SURFACE_GROUPS = [
+  {
+    group: 'overlay',
+    what: 'in-run menu tabs',
+    home: 'src/ui/uiContent.js — MENU_TABS, read through menuTabs()',
+    ids: () => menuTabs({ hasSave: true }).map((t) => t.id),
+    reach: (id) => ({
+      query: '?shot=combat',
+      landmark: '.overlay-body',
+      drive: `(() => {
+        const m = document.querySelector('#combat-menu');
+        if (!m) return 'no #combat-menu on the combat screen';
+        m.click();
+        const b = document.querySelector('.ov-tab[data-tab=${q(id)}]');
+        if (!b) return 'no tab button for ' + ${q(id)};
+        b.click();
+        return true;
+      })()`,
+      // The assertion that earns the shot. A tab that is SELECTED and renders an
+      // EMPTY body is the failure this group exists to catch: MENU_TABS is the
+      // home of the tab LIST, but overlay.js selectTab() is a hardcoded if-chain
+      // over the same ids — a second, implicit home of "which ids render".
+      assert: `(() => {
+        const on = document.querySelector('.ov-tab[data-tab=${q(id)}].on');
+        if (!on) return 'tab ' + ${q(id)} + ' never became the selected tab';
+        const body = document.querySelector('.overlay-body');
+        const len = body ? body.innerText.trim().length : 0;
+        if (!len) return 'tab ' + ${q(id)} + ' is selected and its panel is EMPTY';
+        return true;
+      })()`,
+    }),
+  },
+  {
+    group: 'settings',
+    what: 'settings categories',
+    home: 'src/ui/screens/settings.js — SETTINGS_CATEGORIES',
+    ids: () => SETTINGS_CATEGORIES.slice(),
+    reach: (id) => ({
+      query: '',
+      landmark: '.set-body',
+      drive: `(() => {
+        const btn = [...document.querySelectorAll('button')].find((b) => /settings/i.test(b.textContent));
+        if (!btn) return 'no Settings button on the title screen';
+        btn.click();
+        const h = [...document.querySelectorAll('.set-cat')].find((e) => e.textContent.trim() === ${q(id)});
+        if (!h) return 'no ' + ${q(id)} + ' heading in the settings screen';
+        h.scrollIntoView({ block: 'center' });
+        return true;
+      })()`,
+      // Same shape as the overlay's: SETTINGS_CATEGORIES is the home of the
+      // category LIST, and ROWS[].cat plus renderSettings()'s two special cases
+      // decide what actually appears under each heading. A heading with nothing
+      // under it is a surface that exists in the list and renders nothing.
+      assert: `(() => {
+        const h = [...document.querySelectorAll('.set-cat')].find((e) => e.textContent.trim() === ${q(id)});
+        if (!h) return 'category heading absent: ' + ${q(id)};
+        const r = h.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > innerHeight) return 'heading still off-screen after scrollIntoView';
+        let n = h.nextElementSibling, text = 0;
+        while (n && !n.classList.contains('set-cat')) { text += (n.innerText || '').trim().length; n = n.nextElementSibling; }
+        if (!text) return 'category ' + ${q(id)} + ' renders a heading and NOTHING under it';
+        return true;
+      })()`,
+    }),
+  },
+  {
+    group: 'armoury',
+    what: 'armoury layout views',
+    home: 'src/content/balance.js — balance.equipment.views',
+    ids: () => (balance.equipment.views || []).slice(),
+    reach: (id) => ({
+      query: '?shot=combat',
+      landmark: '.armoury',
+      drive: `(() => {
+        const a = document.querySelector('#combat-armoury');
+        if (!a) return 'no #combat-armoury on the combat screen';
+        a.click();
+        const b = document.querySelector('.armoury-views [data-view=${q(id)}]');
+        if (!b) return 'no view button for ' + ${q(id)};
+        b.click();
+        return true;
+      })()`,
+      assert: `(() => {
+        const el = document.querySelector('.armoury.view-' + ${q(id)});
+        if (!el) return 'armoury never carried view-' + ${q(id)};
+        const on = document.querySelector('.armoury-views [data-view=${q(id)}].on');
+        if (!on) return 'view ' + ${q(id)} + ' is not the selected view';
+        const body = document.querySelector('.armoury-body');
+        if (!body || !body.innerText.trim().length) return 'view ' + ${q(id)} + ' renders an EMPTY armoury body';
+        return true;
+      })()`,
+    }),
+  },
+];
+
+// Excluded sub-surfaces, keyed `group:id`, named exactly as the co-op states
+// are (SPEC §8 clause 5: a release-gating instrument prints what it did NOT
+// check). Empty today — every derived sub-surface is photographed.
+const EXCLUDED_SUBSURFACES = {};
+
+// Sub-surface SETS this tool knows exist and does NOT enumerate. This list is
+// the honest edge of denominator 2 and is printed with the run: it is the part
+// no derivation can close while the set-of-sets has no home.
+const UNENUMERATED_SETS = [
+  ['co-op seat tabs', 'src/ui/screens/coop.js renderSeatTabs() — one tab per connected player, built at runtime from the lobby; no static list exists and the whole co-op surface is excluded from the 0.4.x solo delivery set (see EXCLUDED_STATES)'],
+];
+
+// D2's gate: derived denominators vs what this file covers. Runs BEFORE the
+// browser so a coverage gap costs no time and cannot be mistaken for a render
+// failure.
 {
   const app = appShotStates();
   const covered = new Set(SCREENS.map((s) => s.state).filter(Boolean));
   const gaps = app.filter((s) => !covered.has(s) && !EXCLUDED_STATES[s]);
-  console.log(`coverage — ${app.length} ?shot= states in src/main.js: ${covered.size} photographed, ${Object.keys(EXCLUDED_STATES).length} excluded by name, ${gaps.length} unaccounted`);
+  console.log(`DENOMINATOR 1 — top-level states · home: src/main.js (?shot= states)`);
+  console.log(`  ${app.length} states: ${covered.size} photographed, ${Object.keys(EXCLUDED_STATES).length} excluded by name, ${gaps.length} unaccounted`);
   for (const s of app) {
-    const why = EXCLUDED_STATES[s];
     if (covered.has(s)) continue;
-    console.log(`  EXCLUDED  ?shot=${s} — ${why || 'NO REASON GIVEN'}`);
+    console.log(`  EXCLUDED  ?shot=${s} — ${EXCLUDED_STATES[s] || 'NO REASON GIVEN'}`);
   }
   if (gaps.length) {
     console.error(`\nrelease-shots: ${gaps.length} app shot state(s) neither photographed nor excluded: ${gaps.join(', ')}`);
     console.error('Add a SCREENS entry, or name it in EXCLUDED_STATES with the reason. A silent gap is the defect this tool exists to correct.');
+    process.exit(1);
+  }
+}
+
+// Denominator 2: derive, generate a shot per member, and REFUSE to report a
+// percentage of nothing.
+{
+  console.log(`\nDENOMINATOR 2 — navigable sub-surfaces · NO SINGLE HOME DEFINES THESE (see the header)`);
+  let total = 0, shot = 0, excluded = 0;
+  for (const g of SUB_SURFACE_GROUPS) {
+    const ids = g.ids();
+    // THE REFERENT GUARD (SOP 2's ⚙, and the reason this is not a percentage).
+    // An empty derivation and a fully-photographed set both print "0 missing".
+    // A home that stops resolving must go RED, never quietly shrink the
+    // denominator to zero and call the run complete.
+    if (!Array.isArray(ids) || !ids.length) {
+      console.error(`\nrelease-shots: sub-surface group '${g.group}' derived ZERO ids from ${g.home}.`);
+      console.error('An empty denominator is not full coverage — it is a home this tool can no longer read. Fix the import or the home.');
+      process.exit(1);
+    }
+    const mine = [];
+    for (const id of ids) {
+      const key = `${g.group}:${id}`;
+      total++;
+      if (EXCLUDED_SUBSURFACES[key]) { excluded++; mine.push(`${id} (EXCLUDED)`); continue; }
+      const r = g.reach(id);
+      SCREENS.push({ name: `${g.group}-${id}`, sub: key, ...r });
+      shot++;
+      mine.push(id);
+    }
+    console.log(`  ${g.group.padEnd(9)} ${String(ids.length).padStart(2)} ${g.what} · home: ${g.home}`);
+    console.log(`            photographed: ${mine.join(', ')}`);
+    for (const id of ids) {
+      const why = EXCLUDED_SUBSURFACES[`${g.group}:${id}`];
+      if (why) console.log(`  EXCLUDED  ${g.group}:${id} — ${why}`);
+    }
+  }
+  console.log(`  ${total} sub-surfaces across ${SUB_SURFACE_GROUPS.length} homes: ${shot} photographed and asserted, ${excluded} excluded by name`);
+  for (const [name, why] of UNENUMERATED_SETS) {
+    console.log(`  NOT ENUMERATED  ${name} — ${why}`);
+  }
+  // Every entry claiming a sub-surface must carry an assertion. A generated shot
+  // with no assert is a picture of the same settings screen six times: coverage
+  // that cannot fail, which is what this whole change is against.
+  const naked = SCREENS.filter((s) => s.sub && !s.assert).map((s) => s.name);
+  if (naked.length) {
+    console.error(`\nrelease-shots: sub-surface shot(s) with no assert: ${naked.join(', ')} — a shot that cannot fail is not coverage.`);
     process.exit(1);
   }
 }
@@ -262,6 +463,10 @@ for (const shape of SHAPES) {
       if (preWait === null) console.error(`  ${s.name}: base screen never mounted within 10s — drive will report the miss`);
       const d = await ev(s.drive);
       if (d && d.__err) console.error(`  drive failed on ${s.name}: ${d.__err}`);
+      // A generated sub-surface recipe returns a SENTENCE when the control it
+      // needs isn't there. Silence here would leave the shot to fail later on a
+      // landmark and blame the screen for the drive's problem.
+      else if (typeof d === 'string') console.error(`  drive failed on ${s.name}: ${d}`);
     }
     const waited = await waitFor(s.landmark, { deadline: 10000 });
     if (s.after) await ev(s.after);
@@ -285,18 +490,31 @@ for (const shape of SHAPES) {
       };
     })()`);
 
+    // The sub-surface assertion (denominator 2). Returns `true` or a SENTENCE
+    // saying what was wrong — a boolean-only assert tells you a tab failed and
+    // not which way, and the two failures here (never selected / selected and
+    // empty) want different people.
+    let assertOk = true, assertWhy = '';
+    if (s.assert) {
+      const a = await ev(s.assert);
+      assertOk = a === true;
+      if (!assertOk) assertWhy = typeof a === 'string' ? a : `assert returned ${JSON.stringify(a)}`;
+    }
+
     const file = `${OUT}/${s.name}-${shape.tag}.png`;
     const shot = await c.send('Page.captureScreenshot', { format: 'png' });
     writeFileSync(file, Buffer.from(shot.data, 'base64'));
 
-    const ok = seen && seen.landmark && !seen.banner && seen.textLen > 0;
+    const ok = seen && seen.landmark && !seen.banner && seen.textLen > 0 && assertOk;
     if (!ok) misses++;
-    rows.push({ shape: shape.tag, name: s.name, ok, seen, file, waited });
+    rows.push({ shape: shape.tag, name: s.name, sub: s.sub || null, ok, seen, file, waited });
     const why = seen && seen.banner
       ? 'VALIDATION BANNER: ' + seen.banner
       : seen && !seen.landmark
         ? `landmark '${s.landmark}' never appeared within 10000ms — url…${seen.url} ready=${seen.ready} text=${seen.textLen} on screen: "${seen.bodyHead}"${seen.bootErr ? ' BOOT ERROR: ' + seen.bootErr : ''}`
-        : '';
+        : !assertOk
+          ? `SUB-SURFACE ${s.sub}: ${assertWhy}`
+          : '';
     console.log(`${ok ? 'RENDERED' : 'MISS    '}  ${shape.tag.padEnd(9)} ${s.name.padEnd(18)} ${ok ? `${waited}ms` : why}`);
   }
 }
@@ -308,7 +526,16 @@ console.log(`\nBOUNDARY — what this green does NOT cover:
     and painted text, never that its numbers are right (Vira).
   - two shapes only (390x844, 1200x730); everything between is unphotographed.
   - the driven screens depend on a control's selector; if a button is renamed
-    the drive fails LOUD (a MISS), never silently photographs the wrong screen.`);
+    the drive fails LOUD (a MISS), never silently photographs the wrong screen.
+  - DENOMINATOR 2's edge, and it is the one worth reading: there is no single
+    home listing the tabbed SURFACES, only three homes each listing its own
+    members. This run enumerated the three it was told about. A fourth tabbed
+    surface added in a fourth place would not appear in any number above — it
+    would be missing, silently, exactly as the fifteen sub-surfaces were before
+    this change. The sets known to exist and not enumerated are printed as
+    NOT ENUMERATED at the top of this run.
+  - a sub-surface asserted is a panel that SELECTED and PAINTED TEXT. It is not
+    a panel whose contents are right (Vira) or readable (Sunna).`);
 
 // ---------------------------------------------------------------------------
 // FLOAT CENTRING / CLIP ASSERTION (#69) — Rune, re-applied onto the canonical
@@ -420,6 +647,8 @@ if (misses || floatMisses) {
   server.close();
   process.exit(1);
 }
-console.log(`\nrelease-shots: OK — ${rows.length} shots, every screen's landmark present, no validation banner. → ${OUT}`);
+const subShots = rows.filter((r) => r.sub).length;
+console.log(`\nrelease-shots: OK — ${rows.length} shots (${rows.length - subShots} top-level, ${subShots} sub-surface), `
+  + `every landmark present, every sub-surface assertion true, no validation banner. → ${OUT}`);
 server.close();
 process.exit(0);

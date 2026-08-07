@@ -749,7 +749,13 @@ spec rather than in tribal memory:
 | | photographs | coverage |
 |---|---|---|
 | `tools/screenshot.mjs` | the **source tree** over a local server | the `?shot=` states that existed when it was written — **structurally blind** to any surface without one |
-| `tools/release-shots.mjs` | the **built bundle** (`dist/AshenSpire.html`), at both shapes | coverage **derived from `main.js`'s shot states**, so a new state cannot be silently missed; surfaces with no `?shot=` are reached by real clicks and seeded storage; five co-op states are **excluded by name**; an unlisted state **fails before the browser starts** |
+| `tools/release-shots.mjs` | the **built bundle** (`dist/AshenSpire.html`), at both shapes | **two denominators, both printed.** (1) **Top-level states**, derived from `main.js`'s `?shot=` states, so a new state cannot be silently missed; five co-op states **excluded by name**. (2) **Navigable sub-surfaces** — the tabs and panels reachable *inside* a state — derived from the three homes that define them (`uiContent.js MENU_TABS`, `settings.js SETTINGS_CATEGORIES`, `balance.equipment.views`), one generated shot per member, each carrying an **assertion** that the surface both selected and painted. Surfaces with no `?shot=` are reached by real clicks and seeded storage; an unaccounted state, a **home that derives zero members**, or a sub-surface shot with no assertion all **fail before the browser starts** |
+
+**There is no single home that defines the tabbed surfaces**, only three homes each defining
+its own members — so denominator 2 enumerates the three sets the harness was told about, and
+prints the sets it knows exist and does not enumerate (co-op's per-player seat tabs). Closing
+that hole is a change to the tree, not to the harness: one declarative surface table, in the
+content layer beside `MENU_TABS`, naming every navigable set and its members.
 
 The artifact is **never modified** to reach a state — crisis states are produced by writing
 storage from outside and reloading, because a shot of a patched bundle is a shot of something

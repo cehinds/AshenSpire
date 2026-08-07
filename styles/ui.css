@@ -609,6 +609,24 @@ body.hide-hints .hint-bar { display: none; }
   padding: 0.5rem 0.9rem; font-size: 1rem; letter-spacing: 0.08em; border-radius: 6px;
   background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
   cursor: pointer; transition: color 160ms, border-color 160ms, background 160ms;
+  /* Law 4 clause 4, ratchet-style — the SAME two lines .ov-tab above already
+     carries, and for the same measured reason. Read at 390x844 on the shipped
+     bundle at the default UI size (--ui-zoom 0.90): every one of these 38
+     option buttons rendered 21 DEVICE px tall against the 44 a finger wants —
+     under half the floor, and the smallest thing a player is asked to hit in
+     this game. The floor is `min-height`, never `height`: the box keeps a
+     fixed ergonomic bottom and still grows on its own glyphs at Text L/XL, so
+     it can neither clip nor balloon. `--ui-zoom` is already inside --tap-floor
+     (base.css), so the 44 is honoured after zoom at every UI size.
+     Scope: `.choice` is authored only by src/ui/screens/settings.js — checked,
+     no other producer — so this reaches the settings option rows and nothing
+     else. The toggles (13), the two volume sliders and the ✕ buttons are ALSO
+     under the floor and are deliberately NOT touched here: each needs its own
+     fix (an absolutely-positioned knob, a UA pseudo-element, a shared class),
+     and Law 4 says a blanket conversion is a large risky diff nobody should
+     attempt on the strength of the law alone. They are filed, not swept. */
+  min-height: var(--tap-floor); min-width: var(--tap-floor);
+  display: inline-flex; align-items: center; justify-content: center;
 }
 .choice-group .choice.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); color: var(--gold); }
 .range-wrap { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
