@@ -1282,6 +1282,56 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   width: 4.4rem; height: 4.4rem; font-size: 1.8rem;
 }
 
+/* ---- profile notice (#67): the worst morning a person has with this game ----
+   Sunna's gate D7: button weight must be DESIGNED, not an accident of wrapping.
+   The destructive action sits on its own row, always subtle, in every state —
+   at 390 px it used to land alone by wrapping and read de-emphasised only by
+   luck of viewport. Box geometry is px (chrome — Law 4): it is a box, not text. */
+.profile-notice { max-width: 34rem; gap: 1.2rem; }
+.profile-notice h1 { font-size: 1.8rem; color: var(--gold); text-align: center; }
+.profile-notice .lead { text-align: center; line-height: 1.5; }
+.profile-notice .kept { text-align: center; color: var(--ink); font-weight: 600; }
+.profile-notice .where { text-align: center; color: var(--muted); font-size: 0.9rem; }
+.profile-notice .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.profile-notice .actions.destructive { margin-top: 4px; }
+.profile-notice button { min-height: 44px; padding: 0 14px; }
+.profile-notice .result { text-align: center; color: var(--muted); min-height: 22px; line-height: 1.4; }
+.profile-notice .support { color: var(--muted); font-size: 0.85rem; }
+.profile-notice .support code { word-break: break-word; }
+
+.confirm-fresh {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.72); z-index: 40; padding: 16px;
+}
+.confirm-fresh .confirm-box {
+  max-width: 26rem; background: var(--panel, #14110f); border: 2px solid var(--gold);
+  border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px;
+}
+.confirm-fresh .confirm-box h2 { font-size: 1.3rem; color: var(--gold); }
+.confirm-fresh .confirm-box p { line-height: 1.5; }
+.confirm-fresh .actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.confirm-fresh button { min-height: 44px; padding: 0 14px; }
+
+/* ---- Settings → Profile (#67): the calm-moment route to the archive -------
+   Box geometry in px (chrome — Law 4). Entry actions wrap on narrow screens
+   without the destructive-by-accident weighting Sunna caught on the notice. */
+.prof-archive { display: flex; flex-direction: column; gap: 10px; }
+.prof-state { font-weight: 600; }
+.prof-entry {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-start;
+  border: 1px solid var(--line, #33291f); border-radius: 6px; padding: 10px;
+}
+.prof-entry-what { flex: 1 1 14rem; min-width: 0; }
+.prof-entry-what .prof-why { opacity: 0.75; word-break: break-word; }
+.prof-entry-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.prof-entry-actions button { min-height: 44px; padding: 0 12px; }
+.prof-confirm { flex: 1 1 100%; border-top: 1px solid var(--line, #33291f); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.prof-confirm p { line-height: 1.5; }
+.prof-result { min-height: 20px; color: var(--muted); line-height: 1.4; }
+.prof-empty { line-height: 1.5; }
+.prof-notice { color: var(--muted); line-height: 1.4; border-left: 3px solid var(--gold); padding-left: 10px; }
+.set-notice { color: var(--gold); line-height: 1.4; margin-bottom: 8px; }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -2082,6 +2132,7 @@ const { buildActMap } = require("src/engine/actmap.js");
 const { createSaveManager, createMemoryStorage } = require("src/engine/save.js");
 const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, buildShopStock, rollArmamentDrop } = require("src/engine/encounters.js");
 const { mountTitle } = require("src/ui/screens/title.js");
+const { mountProfileNotice } = require("src/ui/screens/profileNotice.js");
 const { mountCustomize } = require("src/ui/screens/customize.js");
 const { mountCustomRun } = require("src/ui/screens/customRun.js");
 const { mountDraft } = require("src/ui/screens/draft.js");
@@ -2095,7 +2146,7 @@ const { mountShop } = require("src/ui/screens/shop.js");
 const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
-const { openSettings, settingOn } = require("src/ui/screens/settings.js");
+const { openSettings, settingOn, showSettingsNotice } = require("src/ui/screens/settings.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
@@ -2116,9 +2167,18 @@ const validation = validateContent(contentBundle);
 if (!validation.ok) {
   const banner = document.createElement('div');
   banner.className = 'validation-banner';
+  // The header said 34 and the list showed 12 and nothing said the list was cut
+  // (#67, Sunna's D19). A tuning pass that sweeps one field wrong makes exactly
+  // that shape: fix twelve, reload, get a fresh twelve, and never learn how
+  // deep the hole goes or that the console has the rest. Same family as the
+  // silent no-op — a number promising more than the screen shows. The
+  // truncation is fine; hiding it was not.
+  const shown = validation.errors.slice(0, 12);
+  const hidden = validation.errors.length - shown.length;
   banner.textContent =
     `CONTENT VALIDATION FAILED (${validation.errors.length} errors)\n` +
-    validation.errors.slice(0, 12).map((e) => ` · ${e.path}: ${e.msg}`).join('\n');
+    shown.map((e) => ` · ${e.path}: ${e.msg}`).join('\n') +
+    (hidden > 0 ? `\n · …and ${hidden} more — all ${validation.errors.length} are in the browser console.` : '');
   document.body.prepend(banner);
   console.error('Content validation errors:', validation.errors);
 }
@@ -2604,7 +2664,26 @@ function resumeRun(slot = 1) {
 }
 
 // ---- screens --------------------------------------------------------------------
+// #67 property 3/5: a profile that could not be read is a NAMED, VISIBLE state
+// with a reachable handle — never a fresh profile wearing the same filename.
+// This sits in front of the title because the title is where a player would
+// otherwise see "no saves" and draw their own conclusion.
+let profileNoticeShown = false;
+function showProfileNoticeIfNeeded() {
+  if (profileNoticeShown) return false;
+  const status = saves.profileStatus();
+  if (status.ok) return false;
+  profileNoticeShown = true;
+  mountProfileNotice(app, {
+    saves,
+    status,
+    onContinue: () => showTitle(),
+  });
+  return true;
+}
+
 function showTitle() {
+  if (showProfileNoticeIfNeeded()) return;
   audio.music('title');
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
@@ -2642,11 +2721,28 @@ function showTitle() {
 function showSettings() {
   openSettings({
     meta: saves.loadMeta(),
+    // The Profile section (#67) needs the manager itself: it lists, exports and
+    // restores archives. Without it the section does not render at all.
+    saves,
     onChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
-      saves.saveMeta(meta);
+      // saveMeta refuses while the profile is quarantined — correctly, it is
+      // protecting the original bytes. Nobody read that {ok:false}, so a player
+      // who pressed "Not now" and then turned the music down got a silent
+      // no-op: the change applies for this session and does not persist, and
+      // they were never told (Sunna's find, carried by Saga). Nothing is lost;
+      // saying so is the whole fix.
+      const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
+      if (res && res.ok === false) {
+        // Copy: Sunna, 2026-08-07. Three facts in the order a tired player
+        // needs them — it worked / it won't last / here is where to deal with
+        // it — and no pressure to deal with it now. "Profile, below" is
+        // literally true: this notice prepends to the top of .set-body and
+        // Profile is the fourth of five categories (settings.js CATEGORIES).
+        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
+      }
     },
   });
 }
@@ -2718,13 +2814,25 @@ function showOverlay(initialTab = 'deck') {
     run,
     meta: saves.loadMeta(),
     initialTab,
+    // The overlay gets the save manager too (#67, Sunna's D18). Without it this
+    // door discarded saveMeta's {ok:false} exactly as the modal used to, and
+    // this is the WORSE door: the settings people change mid-run are the
+    // comfort ones — pacing, reduced motion, flashes — and the person quietly
+    // turning those down mid-fight is the one who most needs them to still be
+    // there tomorrow.
+    saves,
     onSettingsChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
-      saves.saveMeta(meta);
+      const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
       if (changed.bindings) setBindings(changed.bindings);
       if (changed.keyBindings) setKeyBindings(changed.keyBindings);
+      // ONE sentence, both doors — two doors with two strings is how they
+      // drift, and Sunna wrote it to be true on either.
+      if (res && res.ok === false) {
+        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
+      }
     },
     onSave: () => {
       persist();
@@ -15733,15 +15841,52 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 // getItem/setItem/removeItem shape. Saves that can't be trusted (unknown
 // schemaVersion, corrupt JSON, dangling content ids after a content change)
 // are ARCHIVED — moved aside, never silently deleted — and load returns null.
+//
+// PROFILE DURABILITY (#67). The meta record is the durable one: settings, run
+// results, and the progress tally the unlocks are earned from — the thing that
+// will hold a 2000-run character. It used to be treated as a cache while runs
+// were treated as precious, forty lines apart in this file. Five properties now
+// hold for it, and each one is a check in tools/profile-durability-probe.mjs:
+//
+//   1. schemaVersion is WRITTEN AND READ. Older: migrated, or refused BY NAME.
+//      Newer: refused AND PRESERVED — an older build must never eat a profile
+//      a newer build wrote.
+//   2. Archives are KEYED and APPENDED, never overwritten — the second loss
+//      must not erase the first.
+//   3. A failed load is a NAMED, VISIBLE state (profileStatus()), never a fresh
+//      profile wearing the same filename.
+//   4. While a profile is unreadable the manager is QUARANTINED: no write may
+//      overwrite the original bytes, because those bytes are the evidence for
+//      every other failure.
+//   5. The drawer has a HANDLE: listArchives / getArchive / exportArchive /
+//      restoreProfile — preservation the player cannot reach is a kinder word
+//      for lost.
 
 const { serializeRun, deserializeRun } = require("src/model/state.js");
 const { createLoadout, stampDeck } = require("src/model/loadout.js");
 
 const RUN_KEY = 'sote_run_v1';
+// Legacy name, deliberately NOT renamed: this string is where archives already
+// live in players' browsers, and renaming it orphans every archive written
+// before today. It is now the archive INDEX for both kinds (run and meta) —
+// one home, one key, keyed entries inside it.
 const RUN_ARCHIVE_KEY = 'sote_run_archived';
 const META_KEY = 'sote_meta_v1';
+// The last-known-good mirror of META_KEY. Redundancy, not a second home: it is
+// only ever written FROM the primary after a verified read-back, never authored
+// independently, so the two cannot disagree about anything (Bjorn's rider).
+const META_BACKUP_KEY = 'sote_meta_backup_v1';
 const SLOTS = 3; // save slots, one run each
 const HISTORY_LIMIT = 20;
+// THE ONE HOME for the meta schema's version (the run schema's one home is
+// RUN_SCHEMA_VERSION in model/state.js — two schemas, one home each).
+const META_SCHEMA_VERSION = 1;
+const ARCHIVE_LIMIT = 12; // keep the last N RUN archives…
+// …and profiles are counted separately, because a run must never evict one
+// (Saga's gate). This cap is generous and exists only so the drawer cannot grow
+// without bound; reaching it salvages rather than deletes.
+const PROFILE_ARCHIVE_LIMIT = 24;
+const ARCHIVE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // …and nothing older than ~6 months
 
 // Slot 1 keeps the legacy key (backward compatible: existing saves are slot 1);
 // slots 2..N use suffixed keys. All slot-taking methods default to slot 1.
@@ -15758,9 +15903,228 @@ function createSaveManager(storage) {
     throw new Error('createSaveManager requires a storage with getItem/setItem/removeItem');
   }
 
+  // ---- the archive: keyed, appended, capped (property 2) ------------------
+  // Read the index, adopting the pre-#67 shape ({reason, save}) as one entry so
+  // an archive written by an older build is never dropped on the floor.
+  function readArchiveIndex() {
+    const raw = storage.getItem(RUN_ARCHIVE_KEY);
+    if (!raw) return { v: 1, entries: [] };
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      // An unreadable INDEX used to silently discard every archive it held —
+      // the drawer's own catalogue becoming the thing that loses the drawer
+      // (Vira, D4). Set the raw bytes aside under their own key first; a human
+      // or a later tool can still pick them apart.
+      const salvageKey = `${RUN_ARCHIVE_KEY}_salvage_${Date.now()}`;
+      try {
+        storage.setItem(salvageKey, raw);
+      } catch (e2) {
+        /* storage refused the salvage write; the fresh index below still lets the game run */
+      }
+      return { v: 1, entries: [], salvagedFrom: salvageKey };
+    }
+    if (parsed && Array.isArray(parsed.entries)) return parsed;
+    if (parsed && typeof parsed === 'object' && 'save' in parsed) {
+      return { v: 1, entries: [{ id: 'legacy-1', kind: 'run', slot: 1, reason: parsed.reason || 'archived by an earlier build', at: null, save: parsed.save }] };
+    }
+    return { v: 1, entries: [] };
+  }
+
+  // THE DRAWER'S PROMISE (Saga's gate). The calm screen tells every player
+  // "They are never deleted to make room for anything else" and the crisis
+  // dialog says they can come back "any time". Both were false: this function
+  // pruned by age and then by count, and the count prune was KIND-BLIND —
+  // `splice(0, len - 12)` drops the oldest entries whether they are a corrupt
+  // run or somebody's two thousand evenings. Twelve is not a freak number: a
+  // content patch can archive one run per slot, three slots, so four content
+  // updates reached it. Silently.
+  //
+  // Her fix, her preference, and mine: PRUNE RUNS ONLY. A profile is never
+  // aged out and never evicted by a run. The cap stays — an unbounded drawer
+  // hits quota and would threaten the live profile, which is the thing all of
+  // this exists to protect. The defect was never the cap; it was the promise.
+  function writeArchiveEntry(entry) {
+    const index = readArchiveIndex();
+    index.entries.push(entry);
+    const cutoff = Date.now() - ARCHIVE_MAX_AGE_MS;
+    const runs = index.entries.filter((e) => e.kind !== 'meta');
+    const profiles = index.entries.filter((e) => e.kind === 'meta');
+
+    // Runs age out and are capped. A legacy entry with no timestamp is never
+    // aged out, because we cannot prove it is old.
+    let keptRuns = runs.filter((e) => !e.at || Date.parse(e.at) >= cutoff);
+    if (keptRuns.length > ARCHIVE_LIMIT) {
+      keptRuns.splice(0, keptRuns.length - ARCHIVE_LIMIT);
+    }
+
+    // Profiles do not age out and are not touched by run pressure. If profiles
+    // ALONE ever fill the drawer — the case this fix creates, and it needs an
+    // answer that is not silent eviction — the oldest is MOVED to its own
+    // salvage key (the same courtesy the corrupt-index path already had) and a
+    // notice is recorded so the calm screen can say it happened. We never
+    // delete a profile; the browser's storage quota is the only real ceiling
+    // and that limit is named here rather than hidden.
+    let keptProfiles = profiles;
+    if (profiles.length > PROFILE_ARCHIVE_LIMIT) {
+      const evicted = profiles.slice(0, profiles.length - PROFILE_ARCHIVE_LIMIT);
+      keptProfiles = profiles.slice(evicted.length);
+      for (const e of evicted) {
+        const key = `${RUN_ARCHIVE_KEY}_profile_${e.id}`;
+        try {
+          storage.setItem(key, e.save);
+          index.notices = (index.notices || []).concat({
+            at: new Date().toISOString(),
+            kind: 'profile-salvaged',
+            id: e.id,
+            key,
+            was: e.at || null,
+          });
+        } catch (err) {
+          // Storage refused the salvage write (quota). Keep the profile in the
+          // drawer rather than dropping it: a full drawer is a problem we can
+          // tell someone about, a vanished profile is not.
+          keptProfiles = [e].concat(keptProfiles);
+        }
+      }
+    }
+
+    index.entries = [...keptRuns, ...keptProfiles].sort((a, b) => Date.parse(a.at || 0) - Date.parse(b.at || 0));
+    storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify(index));
+    return entry.id;
+  }
+
+  let archiveSeq = 0;
+  function makeArchiveId(kind, slot) {
+    archiveSeq += 1;
+    // Keyed by kind, slot and time: slot 2's archive can no longer land on
+    // slot 1's, and a second loss can no longer erase the first.
+    return `${kind}${kind === 'run' ? `-s${slot}` : ''}-${Date.now()}-${archiveSeq}`;
+  }
+
   function archive(json, reason, slot = 1) {
-    storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify({ reason, save: json }));
+    const id = makeArchiveId('run', slot);
+    writeArchiveEntry({ id, kind: 'run', slot, reason, at: new Date().toISOString(), save: json });
     storage.removeItem(runKey(slot));
+    return id;
+  }
+
+  // A profile archive NEVER removes the primary: the bytes are the evidence.
+  // De-duplicated by content: main.js calls loadMeta() eight times during one
+  // boot, and a per-call archive would fill the drawer with eight copies of one
+  // loss and push genuine older archives out of the cap. Same bytes → same
+  // entry, however many times we are asked.
+  function archiveMeta(json, reason) {
+    const index = readArchiveIndex();
+    const existing = index.entries.find((e) => e.kind === 'meta' && e.save === json);
+    if (existing) {
+      // Same bytes seen again: keep ONE entry (a boot reads loadMeta eight
+      // times), but record that it happened again and when. Merging the events
+      // entirely lost the second occurrence's time, which is the one fact a
+      // player asking "when did this start?" actually needs (Vira, D5).
+      existing.count = (existing.count || 1) + 1;
+      existing.lastSeenAt = new Date().toISOString();
+      storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify(index));
+      return existing.id;
+    }
+    const id = makeArchiveId('meta', null);
+    writeArchiveEntry({ id, kind: 'meta', slot: null, reason, at: new Date().toISOString(), count: 1, save: json });
+    return id;
+  }
+
+  // ---- profile load state (properties 3 and 4) ----------------------------
+  // `status` is the named, visible state a failed load leaves behind, and the
+  // quarantine flag is what stops the next ordinary settings write from
+  // destroying the original bytes.
+  let status = { ok: true, state: 'ok', reason: null, archiveId: null, recoveredFrom: null };
+  let quarantined = false;
+
+  function parseMeta(json) {
+    const meta = JSON.parse(json);
+    if (!meta || typeof meta !== 'object') throw new Error('profile is not an object');
+    return meta;
+  }
+
+  // Returns { meta } on success, or { error } naming what was wrong.
+  function readMetaFrom(key) {
+    const json = storage.getItem(key);
+    if (!json) return { empty: true };
+    let meta;
+    try {
+      meta = parseMeta(json);
+    } catch (e) {
+      return { json, error: e && e.message ? e.message : 'corrupt profile', kind: 'corrupt' };
+    }
+    const v = meta.schemaVersion;
+    if (v === undefined || v === META_SCHEMA_VERSION) return { json, meta };
+    if (typeof v === 'number' && v > META_SCHEMA_VERSION) {
+      return { json, meta, error: `profile schemaVersion ${v} is newer than this build (${META_SCHEMA_VERSION})`, kind: 'newer' };
+    }
+    // Older: migrate here when a migration exists; until one does, refuse BY
+    // NAME rather than guessing at a shape nobody wrote.
+    const migrated = migrateMeta(meta, v);
+    if (migrated) return { json, meta: migrated, migratedFrom: v };
+    return { json, meta, error: `profile schemaVersion ${v} is older than this build (${META_SCHEMA_VERSION}) and has no migration`, kind: 'older' };
+  }
+
+  // migrateMeta(meta, fromVersion) → meta | null. One switch, one home; every
+  // arm must be able to state what it changed.
+  function migrateMeta(meta, fromVersion) {
+    if (fromVersion === 0) {
+      // v0 = the pre-#67 unversioned/zero profile: shape is already compatible,
+      // it simply never carried a stamp. Adopt it and stamp it.
+      return { ...meta, schemaVersion: META_SCHEMA_VERSION };
+    }
+    return null;
+  }
+
+  function freshMeta() {
+    return { schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [] };
+  }
+
+  // The actual write, shared by saveMeta (updates the live profile) and
+  // replacePrimaryWith (swaps in a different one). Verify-then-rotate lives here
+  // so both paths get it.
+  function saveMetaInternal(meta) {
+    const json = JSON.stringify({ ...meta, schemaVersion: META_SCHEMA_VERSION });
+    storage.setItem(META_KEY, json);
+    // Verify the write survived (quota, a killed tab mid-write), then rotate
+    // the mirror. Backup AFTER a verified read-back, never before — a mirror
+    // of bytes we never proved readable is not a backup.
+    const check = readMetaFrom(META_KEY);
+    if (check.empty || check.error) {
+      const backup = readMetaFrom(META_BACKUP_KEY);
+      if (!backup.empty && !backup.error) storage.setItem(META_KEY, backup.json);
+      return { ok: false, reason: 'write did not read back cleanly; primary restored from the last known good' };
+    }
+    storage.setItem(META_BACKUP_KEY, json);
+    return { ok: true };
+  }
+
+  // ---- THE ONE PATH THAT REPLACES THE PRIMARY -----------------------------
+  // The rule is "no path may replace the primary without the old bytes being
+  // recoverable", and it has now been broken twice by the same mistake: the
+  // rule written in prose, enforced per-function, and the next path to arrive
+  // walks the gap. First startNewProfile (Vira's D1), then restoreProfile
+  // (Sunna's D12) — which destroyed the outgoing profile while its dialog
+  // promised it would be "set aside here in its place".
+  //
+  // So the rule stops being prose. Any code that replaces the live profile
+  // calls THIS, and archiving is not a step a caller can forget because it is
+  // not a caller's step. A new path that writes META_KEY directly is a defect
+  // findable by grep: this and saveMeta are the only two writers, and saveMeta
+  // never replaces a DIFFERENT profile — it updates the one already live.
+  function replacePrimaryWith(meta, reason) {
+    const outgoing = storage.getItem(META_KEY);
+    const archiveId = outgoing ? archiveMeta(outgoing, reason) : null;
+    quarantined = false; // an explicit, player-driven replacement clears the freeze
+    const res = saveMetaInternal(meta);
+    if (!res.ok) {
+      quarantined = true;
+      return { ...res, archiveId };
+    }
+    return { ok: true, archiveId };
   }
 
   return {
@@ -15845,30 +16209,216 @@ function createSaveManager(storage) {
       return out;
     },
 
-    // ---- meta: settings + last N run results (SPEC §3.12) -------------------
+    // ---- meta: the durable profile (SPEC §3.12, #67) ------------------------
+    /**
+     * loadMeta() → meta. ALWAYS returns a usable object so every caller that
+     * reads `.settings` keeps working — but when the profile could not be read
+     * it returns an empty one AND leaves a named state in profileStatus(),
+     * having first archived the bytes and quarantined writes. It never hands
+     * back a fresh profile as though nothing happened (property 3).
+     */
     loadMeta() {
-      try {
-        const meta = JSON.parse(storage.getItem(META_KEY) || 'null');
-        if (meta && typeof meta === 'object') return meta;
-      } catch (e) {
-        /* fall through to fresh meta */
+      const primary = readMetaFrom(META_KEY);
+
+      if (primary.empty) {
+        status = { ok: true, state: 'empty', reason: null, archiveId: null, recoveredFrom: null };
+        quarantined = false;
+        return freshMeta();
       }
-      return { settings: {}, results: [] };
+
+      if (!primary.error) {
+        status = {
+          ok: true,
+          state: primary.migratedFrom !== undefined ? 'migrated' : 'ok',
+          reason: primary.migratedFrom !== undefined ? `migrated from schemaVersion ${primary.migratedFrom}` : null,
+          archiveId: null,
+          recoveredFrom: null,
+        };
+        quarantined = false;
+        return primary.meta;
+      }
+
+      // A profile written by a NEWER build: refuse AND PRESERVE. Nothing is
+      // archived and nothing is moved — the bytes stay exactly where the newer
+      // build left them, and quarantine stops this build from overwriting them
+      // (Marina's kept clause: opening an old build must not cost the player
+      // everything).
+      if (primary.kind === 'newer') {
+        status = { ok: false, state: 'newer', reason: primary.error, archiveId: null, recoveredFrom: null };
+        quarantined = true;
+        return freshMeta();
+      }
+
+      // Corrupt, or older-with-no-migration: archive the bytes (keyed), then
+      // try the last-known-good mirror before giving up on the player.
+      const archiveId = archiveMeta(primary.json, primary.error);
+      const backup = readMetaFrom(META_BACKUP_KEY);
+      if (!backup.empty && !backup.error) {
+        // Recovered. Put the good bytes back in the primary so the next
+        // ordinary write has something true to build on, and say so.
+        storage.setItem(META_KEY, backup.json);
+        status = { ok: true, state: 'recovered', reason: primary.error, archiveId, recoveredFrom: META_BACKUP_KEY };
+        quarantined = false;
+        return backup.meta;
+      }
+
+      // Nothing left to recover from: named, visible, and writes are frozen so
+      // the evidence survives (property 4).
+      status = { ok: false, state: primary.kind === 'older' ? 'older' : 'corrupt', reason: primary.error, archiveId, recoveredFrom: null };
+      quarantined = true;
+      return freshMeta();
     },
 
+    /**
+     * profileStatus() → { ok, state, reason, archiveId, recoveredFrom }.
+     * state: 'ok' | 'empty' | 'migrated' | 'recovered' | 'corrupt' | 'older' |
+     * 'newer'. This is the named state property 3 requires; the UI speaks it.
+     */
+    profileStatus() {
+      return { ...status, quarantined };
+    },
+
+    /**
+     * saveMeta(meta) → { ok, reason? }. Refuses while quarantined: the original
+     * bytes are the evidence of the failure and the player's only copy, and one
+     * ordinary settings write used to destroy them silently.
+     */
     saveMeta(meta) {
-      storage.setItem(META_KEY, JSON.stringify(meta));
+      if (quarantined) {
+        return { ok: false, reason: `profile is quarantined (${status.state}); refusing to overwrite the original bytes` };
+      }
+      return saveMetaInternal(meta);
     },
-
     /** Append a run result (victory, floor, seed, class, …), capped at 20. */
     recordResult(result) {
       const meta = this.loadMeta();
+      meta.results = meta.results || [];
       meta.results.push(result);
       if (meta.results.length > HISTORY_LIMIT) {
         meta.results.splice(0, meta.results.length - HISTORY_LIMIT);
       }
       this.saveMeta(meta);
       return meta;
+    },
+
+    // ---- the handle on the drawer (property 5) ------------------------------
+    /**
+     * listArchives() → [{ id, kind, slot, reason, at, bytes }] newest last.
+     * Descriptors only — the saved bytes stay out of the list so a UI can show
+     * "something was set aside, here is when and why" cheaply.
+     */
+    listArchives() {
+      return readArchiveIndex().entries.map((e) => ({
+        id: e.id,
+        kind: e.kind,
+        slot: e.slot,
+        reason: e.reason,
+        at: e.at,
+        bytes: typeof e.save === 'string' ? e.save.length : 0,
+      }));
+    },
+
+    /**
+     * drawerNotices() → [{ at, kind, id, key, was }] — things the drawer had to
+     * do to itself, so the calm screen can say them out loud. Today the only
+     * notice is 'profile-salvaged'. An empty list is the normal state.
+     */
+    drawerNotices() {
+      return (readArchiveIndex().notices || []).slice();
+    },
+
+    /**
+     * salvagedProfileKeys() → storage keys holding profiles moved out of the
+     * drawer. Nothing here was deleted; it was set further aside.
+     */
+    salvagedProfileKeys() {
+      return (readArchiveIndex().notices || [])
+        .filter((n) => n.kind === 'profile-salvaged')
+        .map((n) => n.key);
+    },
+
+    /** getArchive(id) → the full entry (including `save`), or null. */
+    getArchive(id) {
+      return readArchiveIndex().entries.find((e) => e.id === id) || null;
+    },
+
+    /**
+     * exportArchive(id) → a string a player can save to a file, or null.
+     * The export is generated FROM the archive, never separately maintained.
+     */
+    exportArchive(id) {
+      const entry = this.getArchive(id);
+      if (!entry) return null;
+      return JSON.stringify({ exportedAt: new Date().toISOString(), game: 'Ashen Spire', archive: entry }, null, 2);
+    },
+
+    /**
+     * restoreProfile(id) → { ok, reason? }. Puts an archived profile back as
+     * the live one. Restoring may legitimately fail (the bytes were archived
+     * because they were bad) and it says so plainly instead of pretending.
+     */
+    restoreProfile(id) {
+      const entry = this.getArchive(id);
+      if (!entry) return { ok: false, reason: `no archive with id '${id}'` };
+      if (entry.kind !== 'meta') return { ok: false, reason: `archive '${id}' is a ${entry.kind}, not a profile` };
+      let meta;
+      try {
+        meta = parseMeta(entry.save);
+      } catch (e) {
+        return { ok: false, reason: `that archive still cannot be read: ${e && e.message ? e.message : 'corrupt'}` };
+      }
+      // Restoring REPLACES the live profile, so it goes through the one path
+      // that archives what it overwrites (below). Before this, restore was the
+      // path the rule did not cover: the outgoing profile was destroyed while
+      // the dialog promised it would be "set aside here in its place".
+      const res = replacePrimaryWith(meta, `set aside when you restored ${id}`);
+      if (!res.ok) return res;
+      status = { ok: true, state: 'ok', reason: `restored from archive ${id}`, archiveId: id, recoveredFrom: id };
+      return { ok: true, archiveId: res.archiveId };
+    },
+
+    /**
+     * startNewProfile() → { ok, archiveId }. The player's explicit consent to
+     * leave the old profile behind, and the only way out of quarantine that
+     * writes.
+     *
+     * THE INVARIANT (Vira's gate, D1): **no path may replace the primary
+     * without the old bytes being recoverable afterwards.** This used to be
+     * true only for `corrupt` — because that state had archived on the way in —
+     * and false for every state that had not: `newer` deliberately archives
+     * nothing, so consenting here destroyed a perfectly good 2000-run profile
+     * with no copy anywhere. The archive now happens HERE, where the
+     * replacement happens, so it holds for every state rather than for the one
+     * that happened to be tested. Content de-duplication keeps the corrupt path
+     * from writing a second copy of what it already archived.
+     */
+    startNewProfile() {
+      const res = replacePrimaryWith(freshMeta(), 'kept when you started a new profile');
+      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId: res.archiveId, recoveredFrom: null };
+      return res;
+    },
+
+    /**
+     * exportProfile() → a string a player can save to a file, or null when
+     * there is no profile at all.
+     *
+     * Reads the LIVE primary, which is what the `newer` state needs: those
+     * bytes are fine, they are just from the future, so nothing was archived
+     * and there is no archive to export. Before this existed the UI fell back
+     * to "the most recent archive", which in that state is somebody else's —
+     * it offered an unrelated old run under the words "save a copy of your
+     * profile" (Vira's gate, D2).
+     */
+    exportProfile() {
+      const json = storage.getItem(META_KEY);
+      if (!json) return null;
+      return JSON.stringify({
+        exportedAt: new Date().toISOString(),
+        game: 'Ashen Spire',
+        note: 'This is your profile exactly as it was stored.',
+        state: status.state,
+        profile: json,
+      }, null, 2);
     },
   };
 }
@@ -15884,7 +16434,7 @@ function createMemoryStorage() {
 }
 
 
-Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, SLOTS, createSaveManager, createMemoryStorage });
+Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, SLOTS, META_SCHEMA_VERSION, createSaveManager, createMemoryStorage });
 
 },
 "src/ui/screens/title.js": function (module, exports, require) {
@@ -16751,6 +17301,222 @@ function openDebugLog() {
 
 
 Object.assign(module.exports, { dlog, getEntries, logText, openDebugLog });
+
+},
+"src/ui/screens/profileNotice.js": function (module, exports, require) {
+// src/ui/screens/profileNotice.js — the handle on the drawer (#67, property 5).
+//
+// This is the screen a person sees on the worst morning they will ever have
+// with this game: the one where their profile would not read. Saga's floor
+// (commons/save-and-loss.md P1/P3/P4) is the contract.
+//
+// THE WORDS ARE SUNNA'S, pasted from her gate
+// (gamedesign/sunna/log/2026/2026-08-07_the-worst-morning-rendered.md). She
+// drove this screen at 390 px and found three blocking defects; where her copy
+// and my earlier draft disagreed, hers is what shipped. I own the structure and
+// which action is wired to what, and every fact on screen still comes from
+// saves.profileStatus() / listArchives() rather than being re-derived here.
+//
+// The three states this renders, and why they differ:
+//   corrupt/older — the bytes could not be read. Restore, export, not now.
+//   newer         — the bytes are FINE, just from the future. The correct
+//                   primary action is TO DO NOTHING, so that is the first
+//                   button and it is not destructive (Sunna D1).
+//   (empty/ok/migrated/recovered never reach this screen at all.)
+
+const { esc } = require("src/ui/components/tooltip.js");
+
+// Human time, not a log line: "7 August, 5:09 AM" (Sunna). Second-precision and
+// locale-ambiguous slashes read as machine output at the worst moment.
+function humanTime(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const date = d.toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
+  const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return `${date}, ${time}`;
+}
+
+function humanSize(bytes) {
+  if (!bytes) return null;
+  return bytes < 1024 ? `${bytes} bytes` : `${Math.round(bytes / 1024)} KB`;
+}
+
+/**
+ * mountProfileNotice(app, { saves, status, onContinue }) → void
+ * Rendered only when saves.profileStatus().ok === false.
+ */
+function mountProfileNotice(app, { saves, status, onContinue }) {
+  const isNewer = status.state === 'newer';
+
+  // ONLY this profile's own archive — never "the most recent archive in the
+  // drawer". That fallback offered an unrelated old run under the words "save a
+  // copy of your profile" (Vira D2). In the newer state there is deliberately
+  // no archive, and that is correct: the bytes are untouched where they are.
+  const mine = status.archiveId ? saves.getArchive(status.archiveId) : null;
+  const listed = status.archiveId
+    ? saves.listArchives().find((a) => a.id === status.archiveId)
+    : null;
+
+  // What survived, in the player's terms. Read from the archived bytes when
+  // they can be read at all — a partial read is still worth showing, because
+  // "something survived" is the difference between grief and panic (Saga P4b).
+  let kept = null;
+  if (mine) {
+    try {
+      const parsed = JSON.parse(mine.save);
+      const p = parsed && parsed.progress;
+      if (p) kept = { runs: p.runs, wins: p.wins, unlocked: (parsed.unlocked || []).length };
+    } catch (e) {
+      kept = null; // unreadable is the NORMAL case here; say nothing rather than guess
+    }
+  }
+
+  const when = humanTime(listed && listed.at);
+  const size = humanSize(listed ? listed.bytes : null);
+  // The screen must say WHERE (Sunna D6): the fact of preservation is the
+  // comfort, and it is thin if we can't point at anything.
+  const whereLine = isNewer
+    ? 'Stored with this game’s data on this device.'
+    : [when && `Set aside ${when}`, size, 'stored with this game’s data on this device.']
+        .filter(Boolean)
+        .join(' · ');
+
+  app.innerHTML = `
+    <div class="screen profile-notice">
+      <h1>${isNewer ? 'This profile is from a newer version' : 'We couldn’t read your profile'}</h1>
+      <p class="lead">${
+        isNewer
+          ? 'It was saved by a newer build of Ashen Spire. We’ve left it exactly as it is rather than risk changing it — nothing has been altered or deleted.<br><strong>Update Ashen Spire to open it again.</strong>'
+          : 'So we’ve set it aside instead of deleting it — it’s still here.'
+      }</p>
+      ${kept ? `<p class="kept">Saved: ${esc(String(kept.runs ?? '—'))} runs · ${esc(String(kept.wins ?? '—'))} wins · ${esc(String(kept.unlocked))} unlocks</p>` : ''}
+      <p class="where">${esc(whereLine)}</p>
+      <div class="actions">
+        ${isNewer
+          ? '<button class="keep">Keep it and close</button>'
+          : '<button class="restore">Try to restore</button>'}
+        <button class="export">Save a copy to a file</button>
+        ${isNewer ? '' : '<button class="notnow">Not now</button>'}
+      </div>
+      <div class="actions destructive">
+        <button class="fresh subtle">${isNewer ? 'Start a new profile anyway' : 'Start a new profile'}</button>
+      </div>
+      <p class="result" role="status"></p>
+      ${status.reason
+        ? `<details class="support"><summary>Details for support</summary><code>${esc(status.reason)}</code></details>`
+        : ''}
+    </div>
+  `;
+
+  const $ = (s) => app.querySelector(s);
+  const say = (msg) => { $('.result').textContent = msg; };
+
+  // "Not now" / "Keep it and close" — the non-destructive exit that did not
+  // exist (Sunna D1/D4). Nothing is written and the quarantine stays on, so a
+  // player who wants to close the game and think about it loses nothing by
+  // doing so.
+  const leave = $('.notnow') || $('.keep');
+  if (leave) leave.addEventListener('click', () => onContinue());
+
+  const restore = $('.restore');
+  if (restore) {
+    restore.addEventListener('click', () => {
+      const res = saves.restoreProfile(status.archiveId);
+      if (res.ok) { onContinue(); return; }
+      // Sunna's line, verbatim — the raw parser error goes to the support
+      // disclosure, never into the sentence (her D2).
+      say('That didn’t work — those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.');
+    });
+  }
+
+  // Export works in EVERY state: from the archive when there is one, from the
+  // live profile when there isn't (the newer case — where it matters most).
+  $('.export').addEventListener('click', () => {
+    const text = mine ? saves.exportArchive(mine.id) : saves.exportProfile();
+    if (!text) { say('There’s nothing to save to a file yet.'); return; }
+    const blob = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ashen-spire-profile-${(mine && mine.id) || status.state}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    say('Saved. Keep that file somewhere safe.');
+  });
+
+  // The one irreversible action, behind a second act (Sunna D3). It is offered
+  // to the reader least equipped to evaluate it, so it must be impossible to do
+  // by pressing the obvious button quickly.
+  $('.fresh').addEventListener('click', () => {
+    const wrap = document.createElement('div');
+    wrap.className = 'confirm-fresh';
+    wrap.innerHTML = `
+      <div class="confirm-box" role="dialog" aria-modal="true" aria-label="Start a new profile?">
+        <h2>Start a new profile?</h2>
+        <p>Your old one is set aside — this doesn’t delete it. You can come back to it any time from Settings → Profile.</p>
+        <div class="actions">
+          <button class="cancel">Not yet</button>
+          <button class="go subtle">Start fresh</button>
+        </div>
+      </div>`;
+    app.appendChild(wrap);
+    const cancel = wrap.querySelector('.cancel');
+
+    // A REAL focus trap (Sunna D9). The scrim stopped the mouse and nothing
+    // else: five focusables sat reachable behind the open dialog, Escape did
+    // nothing, and clicking the scrim did nothing. Nothing irreversible was
+    // reachable back there, so it was confusing rather than dangerous — but a
+    // dialog you can Tab out of is not a dialog.
+    const behind = [...app.querySelectorAll('.profile-notice button, .profile-notice a[href], .profile-notice [tabindex]')];
+    behind.forEach((el) => {
+      el.setAttribute('tabindex', '-1');
+      el.setAttribute('aria-hidden', 'true');
+    });
+    const close = () => {
+      behind.forEach((el) => {
+        el.removeAttribute('tabindex');
+        el.removeAttribute('aria-hidden');
+      });
+      document.removeEventListener('keydown', onKey, true);
+      wrap.remove();
+      $('.fresh').focus(); // the cursor comes back to where it left
+    };
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key !== 'Tab') return;
+      const stops = [...wrap.querySelectorAll('button')];
+      if (!stops.length) return;
+      const first = stops[0];
+      const last = stops[stops.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || !wrap.contains(active))) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (active === last || !wrap.contains(active))) { e.preventDefault(); first.focus(); }
+    }
+    document.addEventListener('keydown', onKey, true);
+    // Clicking the scrim — outside the box — dismisses, matching every other
+    // veil in the game.
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
+    cancel.addEventListener('click', close);
+    wrap.querySelector('.go').addEventListener('click', () => {
+      document.removeEventListener('keydown', onKey, true);
+      saves.startNewProfile(); // archives the old bytes first (save.js) — Vira D1
+      onContinue();
+    });
+    cancel.focus(); // the safe option holds the cursor
+  });
+
+  // Something is ALWAYS focused: in the newer state neither restore nor export
+  // used to exist, so keyboard and gamepad players had no entry point (Sunna
+  // D1). Order follows what she credited as holding — restore takes the cursor
+  // where it exists (the action that tries to give the profile back), and in
+  // the newer state that is "Keep it and close", which is the correct primary
+  // action there. The destructive button never takes focus in any state.
+  (restore || leave || $('.export')).focus();
+}
+
+
+Object.assign(module.exports, { mountProfileNotice });
 
 },
 "src/ui/screens/customize.js": function (module, exports, require) {
@@ -18464,7 +19230,7 @@ function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
+function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
@@ -18515,7 +19281,18 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
     else if (id === 'relics') renderRelics(body);
     else if (id === 'stats') renderStats(body);
     else if (id === 'save') renderSave(body);
-    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}) });
+    // `saves` IS passed now, and I am reversing my own earlier decision here
+    // rather than quietly leaving it (#67, Sunna's D18). I withheld it so the
+    // Profile section would not render mid-run, on the grounds that restoring a
+    // profile three floors into a climb is not a calm moment. Two things
+    // changed: replacePrimaryWith now archives whatever it replaces, so the
+    // hazard I was guarding against is recoverable rather than final; and
+    // withholding the manager silently broke the quarantine feedback on this
+    // door, which is the worse harm and the one a player actually meets. One
+    // surface, one sentence, both doors — that is Sunna's call and she is right
+    // that two strings is how they drift. A restore here does not touch the run
+    // save: runs live in their own slot keys.
+    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}), saves });
     else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
   }
 
@@ -18694,6 +19471,7 @@ Object.assign(module.exports, { overlayIsOpen, closeOverlay, openOverlay });
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 const { openDebugLog } = require("src/ui/debuglog.js");
+const { renderProfileSection } = require("src/ui/screens/profileArchive.js");
 const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
 const { balance } = require("src/content/balance.js");
 
@@ -18787,7 +19565,10 @@ const ROWS = [
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
 ];
 
-const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Advanced'];
+// 'Profile' is the calm-moment route to set-aside profiles and runs (#67).
+// It renders only when a save manager is passed in — a section that promises a
+// drawer it cannot open would be the same broken promise one layer down.
+const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced'];
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
@@ -18943,10 +19724,15 @@ function toggleFullscreen() {
  * Fills `container` with the settings controls and wires change events.
  * grouped=true adds category headers.
  */
-function renderSettings(container, { settings, onChange, grouped = true }) {
+function renderSettings(container, { settings, onChange, grouped = true, saves = null }) {
   let html = '';
   if (grouped) {
     for (const cat of CATEGORIES) {
+      if (cat === 'Profile') {
+        if (!saves) continue; // no manager, no promise
+        html += `<h3 class="set-cat">Profile</h3><div class="set-profile-mount"></div>`;
+        continue;
+      }
       const rows = ROWS.filter((r) => r.cat === cat);
       html += `<h3 class="set-cat">${cat}</h3>` + rows.map((r) => rowHtml(settings, r)).join('');
     }
@@ -18954,6 +19740,10 @@ function renderSettings(container, { settings, onChange, grouped = true }) {
     html = ROWS.map((r) => rowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
+  container.setAttribute('data-settings-host', '');
+
+  const profileMount = container.querySelector('.set-profile-mount');
+  if (profileMount && saves) renderProfileSection(profileMount, { saves });
 
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
@@ -19025,7 +19815,29 @@ function renderSettings(container, { settings, onChange, grouped = true }) {
   });
 }
 
-function openSettings({ meta, onChange }) {
+/**
+ * showSettingsNotice(msg) — say something in the open Settings modal. Exists so
+ * a refused write can answer instead of being a silent no-op (#67); no-op when
+ * Settings is not open.
+ */
+function showSettingsNotice(msg) {
+  // BOTH doors. This used to look only for the modal's own body, so on the
+  // in-run overlay it would have been a silent no-op — the very defect it
+  // exists to fix, one layer down (#67, Sunna's D18). renderSettings marks
+  // whatever container it filled, so the notice lands wherever Settings is.
+  const host = document.querySelector('[data-settings-host]');
+  if (!host) return;
+  let el = host.querySelector('.set-notice');
+  if (!el) {
+    el = document.createElement('p');
+    el.className = 'set-notice';
+    el.setAttribute('role', 'status');
+    host.prepend(el);
+  }
+  el.textContent = msg;
+}
+
+function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
@@ -19036,7 +19848,7 @@ function openSettings({ meta, onChange }) {
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
-  renderSettings(veil.querySelector('.set-body'), { settings, onChange });
+  renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
 
   const close = () => veil.remove();
   veil.addEventListener('click', (e) => {
@@ -19046,7 +19858,228 @@ function openSettings({ meta, onChange }) {
 }
 
 
-Object.assign(module.exports, { settingOn, renderSettings, openSettings });
+Object.assign(module.exports, { settingOn, renderSettings, showSettingsNotice, openSettings });
+
+},
+"src/ui/screens/profileArchive.js": function (module, exports, require) {
+// src/ui/screens/profileArchive.js — Settings → Profile (#67, Sunna's D8/D5).
+//
+// WHY THIS FILE EXISTS. The crisis dialog told the player "You can come back to
+// it any time from Settings → Profile" and Settings had Display, Audio,
+// Accessibility, Advanced — no Profile. The word "archive" appeared on no
+// screen in the game, and profileNotice.js was the only file that had ever
+// called listArchives/getArchive/exportArchive/restoreProfile. Constantine's
+// answer to that was one word — "build" — so the surface exists and the
+// sentence becomes true rather than being cut.
+//
+// It also closes Sunna's D5: the handle used to live only inside a dialog that
+// fires once per session, so past that screen by any route a player could never
+// reach their archived profile again. The drawer's handle was fitted to a door
+// that locks behind you. This is the calm-moment route — the person who needs
+// it on Tuesday is the whole point.
+//
+// HER MUSTS BIND HERE, and they shaped the decisions:
+//   · The comfort is the FACT of preservation, not its contents — so every
+//     entry shows what it is, when it was set aside and how big, even when the
+//     bytes themselves cannot be read (which is the normal case).
+//   · Nothing irreversible is forced, and "start a new profile" is NOT on this
+//     screen at all: on a calm day there is no reason to offer it, and its only
+//     honest home is the crisis dialog behind its confirm.
+//   · A failed restore never consumes the archive, and says so.
+//
+// PROSE IS DRAFT where Sunna has not written copy for this surface, and marked
+// so below; her replacements land verbatim as they did on the notice screen.
+
+const { esc } = require("src/ui/components/tooltip.js");
+
+// Human time, not a log line — same rule as the notice screen (Sunna).
+function humanTime(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+}
+
+function humanSize(bytes) {
+  if (!bytes) return null;
+  return bytes < 1024 ? `${bytes} bytes` : `${Math.round(bytes / 1024)} KB`;
+}
+
+// What an entry IS, in the player's words rather than ours. Two entries both
+// titled "Profile" with nothing telling them apart is the card Sunna raised:
+// the crisis screen already reads progress out of the bytes, and this screen
+// can do the same when they are readable.
+function describe(entry, saves) {
+  if (entry.kind !== 'meta') return entry.slot ? `Run · slot ${entry.slot}` : 'Run';
+  const full = saves.getArchive(entry.id);
+  try {
+    const p = JSON.parse(full.save).progress;
+    if (p && (p.runs != null || p.wins != null)) {
+      return `Profile · ${p.runs ?? 0} runs${p.wins != null ? `, ${p.wins} wins` : ''}`;
+    }
+  } catch (e) { /* unreadable is the normal case; fall through to the plain noun */ }
+  return 'Profile';
+}
+
+// Sunna's reason mapping — the body says what happened in words, and the raw
+// engine text lives behind "Details for support" (her D2, reopened on this
+// surface after it was closed on the notice screen).
+function humanReason(raw) {
+  const r = String(raw || '');
+  if (/could not be read|corrupt|JSON|Unexpected|Unterminated|position \d+/i.test(r)) return 'Couldn’t be read.';
+  if (/older than this build|older version/i.test(r)) return 'From an older version.';
+  if (/started a new profile|kept when you started/i.test(r)) return 'Kept when you started a new profile.';
+  if (/dangling id/i.test(r)) return 'From an older version of the game’s content.';
+  if (/restored/i.test(r)) return 'Set aside when you restored another profile.';
+  return r ? 'Set aside.' : '';
+}
+
+/**
+ * renderProfileSection(container, { saves, onRestored })
+ * Fills `container` with the Profile section. Every fact comes from
+ * saves.profileStatus() / listArchives() — nothing is re-derived here.
+ */
+function renderProfileSection(container, { saves, onRestored }) {
+  const status = saves.profileStatus();
+  const archives = saves.listArchives().slice().reverse(); // newest first
+
+  // DRAFT COPY (Sunna's to replace) — the state line. It exists so the screen
+  // answers "is my profile alright?" before it answers "what is in the drawer".
+  const stateLine = {
+    ok: 'Your profile is fine.',
+    empty: 'No profile yet — one is created when you finish your first run.',
+    migrated: 'Your profile was saved by an older version and has been brought forward.',
+    recovered: 'Your profile was restored from the backup copy after a bad read.',
+    corrupt: 'Your profile could not be read. It has been set aside — it is listed below.',
+    older: 'Your profile is from an older version we cannot open. It has been set aside — it is listed below.',
+    newer: 'Your profile is from a newer version. It has been left exactly as it is; update the game to open it.',
+  }[status.state] || 'Your profile is fine.';
+
+  const rows = archives.length
+    ? archives.map((a) => {
+        const when = humanTime(a.at);
+        const size = humanSize(a.bytes);
+        const again = a.count > 1 && a.lastSeenAt
+          ? ` · seen ${a.count} times, most recently ${humanTime(a.lastSeenAt)}`
+          : '';
+        return `
+          <div class="prof-entry" data-id="${esc(a.id)}">
+            <div class="prof-entry-what">
+              <b>${esc(describe(a, saves))}</b>
+              <p class="set-note">${esc([when && `Set aside ${when}`, size].filter(Boolean).join(' · '))}${esc(again)}</p>
+              <p class="set-note prof-why">${esc(humanReason(a.reason))}</p>
+              ${a.reason ? `<details class="support"><summary>Details for support</summary><code>${esc(a.reason)}</code></details>` : ''}
+            </div>
+            <div class="prof-entry-actions">
+              <button class="prof-export" data-id="${esc(a.id)}">Save a copy to a file</button>
+              ${a.kind === 'meta' ? `<button class="prof-restore subtle" data-id="${esc(a.id)}">Restore this profile</button>` : ''}
+            </div>
+          </div>`;
+      }).join('')
+    // DRAFT COPY: the empty state must not read as a failure — an empty drawer
+    // is the good outcome, and this screen is most often opened by someone
+    // curious rather than someone hurt.
+    : '<p class="set-note prof-empty">Nothing has been set aside. That’s the good news — this fills when something couldn’t be read, and when you start a new profile and we keep the old one for you.</p>';
+
+  // The player is TOLD when the drawer had to move a profile further aside —
+  // that is the whole difference between a bounded drawer and a silent
+  // eviction (Saga's gate). Copy: Sunna, 2026-08-07.
+  //
+  // Structure is load-bearing: the explanation once, the dates once each. And
+  // the closing line stays — it is the only thing that stops "not deleted"
+  // from sending someone hunting through a list this profile is not in.
+  const salvaged = (saves.drawerNotices ? saves.drawerNotices() : [])
+    .filter((n) => n.kind === 'profile-salvaged');
+  const many = salvaged.length > 1;
+  const when = (n) => {
+    const was = humanTime(n.was);
+    const at = humanTime(n.at);
+    const subject = was ? `The profile set aside on ${was}` : 'A profile set aside earlier';
+    return at ? `${subject} was moved out on ${at}.` : `${subject} was moved out.`;
+  };
+  const notices = salvaged.length
+    ? `<div class="prof-notice">
+        <p>This drawer filled up, so ${many ? 'its oldest profiles were' : 'its oldest profile was'} moved out and kept ${many ? 'on their own' : 'on its own'}. Nothing was deleted, and the profile you’re playing now was never touched.</p>
+        ${salvaged.map((n) => `<p class="set-note">${esc(when(n))}</p>`).join('')}
+        <p class="set-note">${many ? 'They’re' : 'It’s'} still on this device, but ${many ? 'they’re' : 'it’s'} no longer in the list below.</p>
+      </div>`
+    : '';
+
+  container.innerHTML = `
+    <div class="prof-archive">
+      <p class="prof-state">${esc(stateLine)}</p>
+      ${notices}
+      <p class="set-note">Set-aside profiles and runs are kept with this game’s data on this device. They are never deleted to make room for anything else.</p>
+      ${rows}
+      <p class="prof-result" role="status"></p>
+    </div>`;
+
+  const archiveOf = (id) => saves.listArchives().find((a) => a.id === id) || {};
+  const say = (msg) => { const el = container.querySelector('.prof-result'); if (el) el.textContent = msg; };
+
+  container.querySelectorAll('.prof-export').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const text = saves.exportArchive(btn.dataset.id);
+      if (!text) { say('That copy is no longer available.'); return; }
+      const blob = new Blob([text], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ashen-spire-${btn.dataset.id}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      say('Saved. Keep that file somewhere safe.');
+    });
+  });
+
+  container.querySelectorAll('.prof-restore').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      // The risk is stated BEFORE the click does anything, in the button's own
+      // confirmation — not after, and not in a tooltip nobody opens.
+      const entry = btn.closest('.prof-entry');
+      if (entry.querySelector('.prof-confirm')) return;
+      const box = document.createElement('div');
+      box.className = 'prof-confirm';
+      // DRAFT COPY (Sunna's to replace).
+      // Sunna's copy, split exactly as she wrote it: the second sentence is
+      // FALSE for a readable archive and it lied to her about a perfectly good
+      // 2000-run profile, so it appears only when this copy was set aside
+      // because it couldn't be read.
+      const unreadable = /Couldn’t be read\./.test(humanReason(archiveOf(btn.dataset.id).reason));
+      box.innerHTML = `
+        <p>Restore this profile? The profile you’re using now is set aside here in its place — not deleted.</p>
+        ${unreadable ? '<p>This copy couldn’t be read when we set it aside, so restoring it may not work. Nothing is lost by trying.</p>' : ''}
+        <div class="prof-entry-actions">
+          <button class="prof-cancel">Not yet</button>
+          <button class="prof-go subtle">Restore it</button>
+        </div>`;
+      entry.appendChild(box);
+      box.querySelector('.prof-cancel').addEventListener('click', () => box.remove());
+      box.querySelector('.prof-cancel').focus();
+      box.querySelector('.prof-go').addEventListener('click', () => {
+        const res = saves.restoreProfile(btn.dataset.id);
+        if (res.ok) {
+          // Re-render FIRST, then speak into the node that survives it. Saying
+          // it first wrote the message into an element the re-render replaced,
+          // so nothing visibly changed, the player pressed again — and with
+          // D12 open that ate a second profile (Sunna D13).
+          renderProfileSection(container, { saves, onRestored });
+          const el = container.querySelector('.prof-result');
+          if (el) el.textContent = 'Restored. This is your profile now — the one you were using is set aside below.';
+          if (onRestored) onRestored();
+          return;
+        }
+        // A failed restore NEVER consumes the archive, and says so — Sunna's
+        // must, and the same sentence the crisis screen uses.
+        box.remove();
+        say(`That didn’t work — those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.`);
+      });
+    });
+  });
+}
+
+
+Object.assign(module.exports, { renderProfileSection });
 
 },
 "src/ui/audio.js": function (module, exports, require) {

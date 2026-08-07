@@ -28,6 +28,7 @@ import {
   rollArmamentDrop,
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
+import { mountProfileNotice } from './ui/screens/profileNotice.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
@@ -41,7 +42,7 @@ import { mountShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
-import { openSettings, settingOn } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -62,9 +63,18 @@ const validation = validateContent(contentBundle);
 if (!validation.ok) {
   const banner = document.createElement('div');
   banner.className = 'validation-banner';
+  // The header said 34 and the list showed 12 and nothing said the list was cut
+  // (#67, Sunna's D19). A tuning pass that sweeps one field wrong makes exactly
+  // that shape: fix twelve, reload, get a fresh twelve, and never learn how
+  // deep the hole goes or that the console has the rest. Same family as the
+  // silent no-op — a number promising more than the screen shows. The
+  // truncation is fine; hiding it was not.
+  const shown = validation.errors.slice(0, 12);
+  const hidden = validation.errors.length - shown.length;
   banner.textContent =
     `CONTENT VALIDATION FAILED (${validation.errors.length} errors)\n` +
-    validation.errors.slice(0, 12).map((e) => ` · ${e.path}: ${e.msg}`).join('\n');
+    shown.map((e) => ` · ${e.path}: ${e.msg}`).join('\n') +
+    (hidden > 0 ? `\n · …and ${hidden} more — all ${validation.errors.length} are in the browser console.` : '');
   document.body.prepend(banner);
   console.error('Content validation errors:', validation.errors);
 }
@@ -550,7 +560,26 @@ function resumeRun(slot = 1) {
 }
 
 // ---- screens --------------------------------------------------------------------
+// #67 property 3/5: a profile that could not be read is a NAMED, VISIBLE state
+// with a reachable handle — never a fresh profile wearing the same filename.
+// This sits in front of the title because the title is where a player would
+// otherwise see "no saves" and draw their own conclusion.
+let profileNoticeShown = false;
+function showProfileNoticeIfNeeded() {
+  if (profileNoticeShown) return false;
+  const status = saves.profileStatus();
+  if (status.ok) return false;
+  profileNoticeShown = true;
+  mountProfileNotice(app, {
+    saves,
+    status,
+    onContinue: () => showTitle(),
+  });
+  return true;
+}
+
 function showTitle() {
+  if (showProfileNoticeIfNeeded()) return;
   audio.music('title');
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
@@ -588,11 +617,28 @@ function showTitle() {
 function showSettings() {
   openSettings({
     meta: saves.loadMeta(),
+    // The Profile section (#67) needs the manager itself: it lists, exports and
+    // restores archives. Without it the section does not render at all.
+    saves,
     onChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
-      saves.saveMeta(meta);
+      // saveMeta refuses while the profile is quarantined — correctly, it is
+      // protecting the original bytes. Nobody read that {ok:false}, so a player
+      // who pressed "Not now" and then turned the music down got a silent
+      // no-op: the change applies for this session and does not persist, and
+      // they were never told (Sunna's find, carried by Saga). Nothing is lost;
+      // saying so is the whole fix.
+      const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
+      if (res && res.ok === false) {
+        // Copy: Sunna, 2026-08-07. Three facts in the order a tired player
+        // needs them — it worked / it won't last / here is where to deal with
+        // it — and no pressure to deal with it now. "Profile, below" is
+        // literally true: this notice prepends to the top of .set-body and
+        // Profile is the fourth of five categories (settings.js CATEGORIES).
+        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
+      }
     },
   });
 }
@@ -664,13 +710,25 @@ function showOverlay(initialTab = 'deck') {
     run,
     meta: saves.loadMeta(),
     initialTab,
+    // The overlay gets the save manager too (#67, Sunna's D18). Without it this
+    // door discarded saveMeta's {ok:false} exactly as the modal used to, and
+    // this is the WORSE door: the settings people change mid-run are the
+    // comfort ones — pacing, reduced motion, flashes — and the person quietly
+    // turning those down mid-fight is the one who most needs them to still be
+    // there tomorrow.
+    saves,
     onSettingsChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
-      saves.saveMeta(meta);
+      const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
       if (changed.bindings) setBindings(changed.bindings);
       if (changed.keyBindings) setKeyBindings(changed.keyBindings);
+      // ONE sentence, both doors — two doors with two strings is how they
+      // drift, and Sunna wrote it to be true on either.
+      if (res && res.ok === false) {
+        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
+      }
     },
     onSave: () => {
       persist();

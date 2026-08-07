@@ -1042,3 +1042,53 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-quicknav='switcher'] .topbar .topbar-btn {
   width: 4.4rem; height: 4.4rem; font-size: 1.8rem;
 }
+
+/* ---- profile notice (#67): the worst morning a person has with this game ----
+   Sunna's gate D7: button weight must be DESIGNED, not an accident of wrapping.
+   The destructive action sits on its own row, always subtle, in every state —
+   at 390 px it used to land alone by wrapping and read de-emphasised only by
+   luck of viewport. Box geometry is px (chrome — Law 4): it is a box, not text. */
+.profile-notice { max-width: 34rem; gap: 1.2rem; }
+.profile-notice h1 { font-size: 1.8rem; color: var(--gold); text-align: center; }
+.profile-notice .lead { text-align: center; line-height: 1.5; }
+.profile-notice .kept { text-align: center; color: var(--ink); font-weight: 600; }
+.profile-notice .where { text-align: center; color: var(--muted); font-size: 0.9rem; }
+.profile-notice .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.profile-notice .actions.destructive { margin-top: 4px; }
+.profile-notice button { min-height: 44px; padding: 0 14px; }
+.profile-notice .result { text-align: center; color: var(--muted); min-height: 22px; line-height: 1.4; }
+.profile-notice .support { color: var(--muted); font-size: 0.85rem; }
+.profile-notice .support code { word-break: break-word; }
+
+.confirm-fresh {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.72); z-index: 40; padding: 16px;
+}
+.confirm-fresh .confirm-box {
+  max-width: 26rem; background: var(--panel, #14110f); border: 2px solid var(--gold);
+  border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px;
+}
+.confirm-fresh .confirm-box h2 { font-size: 1.3rem; color: var(--gold); }
+.confirm-fresh .confirm-box p { line-height: 1.5; }
+.confirm-fresh .actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.confirm-fresh button { min-height: 44px; padding: 0 14px; }
+
+/* ---- Settings → Profile (#67): the calm-moment route to the archive -------
+   Box geometry in px (chrome — Law 4). Entry actions wrap on narrow screens
+   without the destructive-by-accident weighting Sunna caught on the notice. */
+.prof-archive { display: flex; flex-direction: column; gap: 10px; }
+.prof-state { font-weight: 600; }
+.prof-entry {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-start;
+  border: 1px solid var(--line, #33291f); border-radius: 6px; padding: 10px;
+}
+.prof-entry-what { flex: 1 1 14rem; min-width: 0; }
+.prof-entry-what .prof-why { opacity: 0.75; word-break: break-word; }
+.prof-entry-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.prof-entry-actions button { min-height: 44px; padding: 0 12px; }
+.prof-confirm { flex: 1 1 100%; border-top: 1px solid var(--line, #33291f); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.prof-confirm p { line-height: 1.5; }
+.prof-result { min-height: 20px; color: var(--muted); line-height: 1.4; }
+.prof-empty { line-height: 1.5; }
+.prof-notice { color: var(--muted); line-height: 1.4; border-left: 3px solid var(--gold); padding-left: 10px; }
+.set-notice { color: var(--gold); line-height: 1.4; margin-bottom: 8px; }
