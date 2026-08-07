@@ -212,8 +212,11 @@ function patchTool(dir, find, replace) {
 // lines instead of assembling them from RUNTIME_OPEN, and dropping the
 // directive on the way past. This is drift the constant cannot prevent — only
 // detect.
-const RETYPE_OPEN = ['const runtime = `${RUNTIME_OPEN}  var __modules = {',
-  'const runtime = `(function () {\n  var __modules = {'];
+// (Anchor moved when the loader got one home in assembleRuntime(); the fixture
+// FAILED to plant rather than silently passing, which is the only reason this
+// was a one-line edit and not a green nobody could read.)
+const RETYPE_OPEN = ['return `${RUNTIME_OPEN}  var __modules = {',
+  'return `(function () {\n  var __modules = {'];
 // One ordinary IIFE preamble in an ordinary content file. Legal, harmless, and
 // the exact string #77's regex mistook for the runtime's own wrapper.
 const CONTENT_IIFE = '\n(function () {\n  "use strict";\n  // an ordinary preamble in an ordinary file\n})();\n';
@@ -292,7 +295,15 @@ const arity = (s) => (s.trim() === '' ? 0 : s.split(',').length);
 // as 0 — an instrument answering before it had found its subject.
 const declOf = (html) => /"src\/[^"]+": function \(([^)]*)\) \{/.exec(html);
 const callOf = (html) => /factory\(([^)]*)\);/.exec(html);
-const PROBE_PARAM = ["  ['require', 'require'],", "  ['require', 'require'],\n  ['__probe', '__probe'],"];
+// The argument is `null`, not `__probe`. The original fixture passed an
+// identifier that does not exist anywhere in the runtime, so the bundle it
+// built would have thrown ReferenceError on load — and the fixture never
+// noticed, because nothing executed what it built. The signature probe does
+// execute it, so the fixture had to become an honest signature to keep
+// testing what it claims to test (that a parameter added at the one home
+// reaches both sides). Its dishonest twin is 5h below, which asserts the
+// build now REFUSES it.
+const PROBE_PARAM = ["  ['require', 'require'],", "  ['require', 'require'],\n  ['__probe', 'null'],"];
 {
   const dir = sandbox();
   const ok = patchTool(dir, ...PROBE_PARAM);
@@ -338,6 +349,142 @@ const PROBE_PARAM = ["  ['require', 'require'],", "  ['require', 'require'],\n  
   check('5g: on an untouched tree the declaration and the call site agree',
     d && c && arity(d[1]) === arity(c[1]) && arity(d[1]) === 3,
     d && c ? `declared ${arity(d[1])} vs called ${arity(c[1])}` : 'not found');
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 5h. The ASYMMETRIC #77 shape: gate strict, runtime sloppy -------------
+// Bjorn ran this by hand at 7a03c6e and it worked, and nothing in the tree said
+// so — which makes it `unknown` the next time anyone asks. It is NOT 5c. 5c
+// empties STRICT_DIRECTIVE, so gate and runtime go sloppy TOGETHER; the real
+// #77 shape is one side moving. Here RUNTIME_OPEN is re-typed past its one home
+// while STRICT_DIRECTIVE stays exactly where it is, so the gate keeps compiling
+// strict and only the shipped runtime goes sloppy. It is the case the whole
+// design is for.
+const RETYPE_RUNTIME_OPEN = ['const RUNTIME_OPEN = `(function () {\\n  ${STRICT_DIRECTIVE}\\n`;',
+  'const RUNTIME_OPEN = `(function () {\\n`;'];
+{
+  const dir = sandbox();
+  const ok = patchTool(dir, ...RETYPE_RUNTIME_OPEN);
+  check('5h: fixture could re-type RUNTIME_OPEN past its one home', ok);
+  check('5h: and STRICT_DIRECTIVE is UNTOUCHED — this is the asymmetric shape, not 5c',
+    readFileSync(resolve(dir, 'tools/bundle.mjs'), 'utf8').includes(`const STRICT_DIRECTIVE = '"use strict";';`));
+  const r = build(dir);
+  check('5h: a sloppy runtime with a strict gate FAILS the build', r.status === 1, `exit ${r.status}: ${r.out.slice(0, 200)}`);
+  check('5h: the failure names the language, and points at RUNTIME_OPEN',
+    /does not put module bodies in strict mode/.test(r.out) && /RUNTIME_OPEN/.test(r.out), r.out.slice(0, 240));
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 5i. KNOWN-BAD: only the language probe catches 5h ---------------------
+// Without this, 5h is a green that could be coming from the position assertion
+// and nobody would know. `startsWith` is blind here BY CONSTRUCTION — the
+// runtime is assembled FROM RUNTIME_OPEN, so it agrees with whatever
+// RUNTIME_OPEN now says, including a sloppy opening.
+{
+  const dir = sandbox();
+  patchTool(dir, ...RETYPE_RUNTIME_OPEN);
+  const ok = patchTool(dir, 'if (!runtimeIsStrict) {', 'if (false) {');
+  check('5i: fixture could neutralise the language probe', ok);
+  const r = build(dir);
+  check('5i: KNOWN-BAD — with only the probe gone the build passes, so startsWith never saw it',
+    r.status === 0, `exit ${r.status}: ${r.out.slice(0, 200)}`);
+  const out = resolve(dir, 'build/AshenSpire.html');
+  check('5i: and what it passed really was a non-strict runtime',
+    existsSync(out) && /<script>\s*\(function \(\) \{\s*var __modules/.test(readFileSync(out, 'utf8')));
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 5j. The asymmetry itself, observed ------------------------------------
+// #77 in the mirror: there the gate was sloppy and the browser strict, so a
+// strict-only fault built clean and blanked the screen. Here the gate is strict
+// and the browser sloppy — the fault is still CAUGHT, and the danger is the
+// silent half: the runtime that would have shipped is not the language the gate
+// checked. This case is what makes 5h a statement about asymmetry rather than
+// about strictness in general.
+{
+  const dir = sandbox();
+  patchTool(dir, ...RETYPE_RUNTIME_OPEN);
+  patchTool(dir, 'if (!runtimeIsStrict) {', 'if (false) {');
+  const p = resolve(dir, 'src/content/balance.js');
+  writeFileSync(p, readFileSync(p, 'utf8').replace(/^  energy: 3,$/m, '  energy: 010,'), 'utf8');
+  const r = build(dir);
+  check('5j: the GATE is still strict — a strict-only fault reds even with the probe off',
+    r.status === 1 && /[Oo]ctal/.test(r.out), `exit ${r.status}: ${r.out.slice(0, 200)}`);
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 5k. ARGUMENT IDENTITY, not just arity ---------------------------------
+// Bjorn's second card, and his own line turned on my fix: a consistency check
+// is not a correctness check. MODULE_SIGNATURE proves the declaration and the
+// call site AGREE about the count; it cannot notice them agreeing on a wrong
+// answer. He planted ['exports', 'module'] at the one home: build exit 0,
+// shipped `factory(module, module, require);`, all 44 cases green. Latent only
+// because no module body reads bare `exports` today — the silent kind.
+const WRONG_ARG = ["  ['exports', 'module.exports'],", "  ['exports', 'module'],"];
+{
+  const dir = sandbox();
+  const ok = patchTool(dir, ...WRONG_ARG);
+  check('5k: fixture could plant Bjorn\'s wrong argument at the one home', ok);
+  const r = build(dir);
+  check('5k: a signature whose arguments lie FAILS the build', r.status === 1, `exit ${r.status}: ${r.out.slice(0, 200)}`);
+  check('5k: and it says which promise was broken',
+    /exports is not module\.exports/.test(r.out), r.out.slice(0, 300));
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 5l. KNOWN-BAD: the arity check is blind to it, exactly as shipped -----
+// Proves 5k reds for the NEW assertion and not for something the tree already
+// had. With the signature probe neutralised this reproduces Bjorn's finding
+// byte for byte: exit 0, `factory(module, module, require);`, and 5e/5g's
+// arity comparison still perfectly green.
+{
+  const dir = sandbox();
+  patchTool(dir, ...WRONG_ARG);
+  const ok = patchTool(dir, 'if (probeScope.__signatureProbeOK !== true) {', 'if (false) {');
+  check('5l: fixture could neutralise the signature probe', ok);
+  const r = build(dir);
+  check('5l: KNOWN-BAD — without the probe it builds clean (this is the defect)', r.status === 0, `exit ${r.status}`);
+  const html = readFileSync(resolve(dir, 'build/AshenSpire.html'), 'utf8');
+  const d = declOf(html), c = callOf(html);
+  check('5l: KNOWN-BAD — it shipped factory(module, module, require)',
+    /factory\(module, module, require\);/.test(html), (callOf(html) || ['none'])[0]);
+  check('5l: KNOWN-BAD — and the ARITY check stays green, which is why it was silent',
+    d && c && arity(d[1]) === arity(c[1]) && arity(d[1]) === 3,
+    d && c ? `declared ${arity(d[1])} vs called ${arity(c[1])}` : 'not found');
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 5m. An argument that names nothing ------------------------------------
+// This was 5e's own plant until this commit: ['__probe', '__probe'] passes an
+// identifier that exists nowhere in the runtime, so the bundle it built would
+// have thrown ReferenceError on load. The fixture never noticed because nothing
+// executed what it built. It does now.
+{
+  const dir = sandbox();
+  const ok = patchTool(dir, "  ['require', 'require'],", "  ['require', 'require'],\n  ['__probe', '__probe'],");
+  check('5m: fixture could plant an argument naming nothing', ok);
+  const r = build(dir);
+  check('5m: an argument the runtime cannot supply FAILS the build', r.status === 1, `exit ${r.status}: ${r.out.slice(0, 200)}`);
+  check('5m: and it names the identifier', /__probe is not defined/.test(r.out), r.out.slice(0, 300));
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 5n. Both edges: a DIFFERENT but correct signature still builds --------
+// The probe must check what the loader does, not match a remembered string. A
+// reordered signature is a legal one, and a golden-text check would red on it.
+{
+  const dir = sandbox();
+  const ok = patchTool(dir,
+    "  ['module', 'module'],\n  ['exports', 'module.exports'],",
+    "  ['exports', 'module.exports'],\n  ['module', 'module'],");
+  check('5n: fixture could reorder the signature', ok);
+  const r = build(dir);
+  check('5n: a reordered — but honest — signature still builds', r.status === 0, `exit ${r.status}: ${r.out.slice(0, 200)}`);
+  const html = readFileSync(resolve(dir, 'build/AshenSpire.html'), 'utf8');
+  check('5n: and both sides moved together',
+    /"src\/[^"]+": function \(exports, module, require\) \{/.test(html)
+    && /factory\(module\.exports, module, require\);/.test(html),
+    (declOf(html) || ['none'])[0] + ' / ' + (callOf(html) || ['none'])[0]);
   rmSync(dir, { recursive: true, force: true });
 }
 
@@ -428,12 +575,28 @@ for (const [label, plant] of REFUSALS) {
 
 // The dangling check used to run AFTER the write: `bundle.mjs: OK`, a full
 // playable game on disk, then exit 1. Both edges of one run were true.
-{
+//
+// EXTENDED ON THE UNION (2026-08-07). This used to plant the dangling reference
+// only, and that made the assertion a statement about ONE refusal path's
+// position. The signature probe arrived on the other branch and sits above the
+// write for the same reason — and I proved the gap rather than asserting it:
+// with the probe moved below the write and nothing else changed, this whole
+// file printed `0 failing case(s)` while a real refusal printed `bundle.mjs: OK`
+// above its own error. A hand-kept ordering is not a checked one. Every plant
+// below is a DIFFERENT check that must sit above the write.
+const NO_OK_BEFORE_ERROR = [
+  ['dangling literal asset reference', (dir) =>
+    appendFileSync(resolve(dir, 'src/content/balance.js'), `\nexport const __ghost = 'assets/nope/ghost.webp';\n`, 'utf8')],
+  ['module signature probe', (dir) =>
+    patchTool(dir, "  ['exports', 'module.exports'],", "  ['exports', 'module'],")],
+];
+for (const [label, plant] of NO_OK_BEFORE_ERROR) {
   const dir = sandbox();
-  appendFileSync(resolve(dir, 'src/content/balance.js'), `\nexport const __ghost = 'assets/nope/ghost.webp';\n`, 'utf8');
+  check(`6 ordering — ${label}: fixture could plant it`, plant(dir) !== false);
   const r = build(dir);
-  check('6: a refusing build never prints "bundle.mjs: OK"',
-    !r.out.includes('bundle.mjs: OK'), r.out.slice(0, 160));
+  check(`6 ordering — ${label}: the build refuses`, r.status === 1, `exit ${r.status}: ${r.out.slice(0, 200)}`);
+  check(`6 ordering — ${label}: and never prints "bundle.mjs: OK" above the error`,
+    !r.out.includes('bundle.mjs: OK'), r.out.slice(0, 200));
   rmSync(dir, { recursive: true, force: true });
 }
 
@@ -458,6 +621,24 @@ for (const [label, plant] of REFUSALS) {
 }
 
 // ---- 6y. The other edge: success must NOT write the refusal page ------------
+// Bjorn's card, taken here. This case used to prove "it wrote the game" with
+// `includes('id="app"')`, and he fed that predicate a TRUNCATED 600 KB bundle:
+// the string is at byte 136400, so it survives any cut past that, and the case
+// passed on a file with no closing </script> at all. A string test on a 1.9 MiB
+// artifact cannot tell a game from a fragment of one — and a success-check that
+// a fragment satisfies is the mirror of 6z's stale bundle, which is why it
+// belongs beside it rather than in a card of its own.
+//
+// So ask the parser about the FILE ON DISK. Not a golden string: it compares
+// against nothing, and any complete, parsable script passes whatever it holds.
+// It is also not a second copy of the tool's own gate — that compiles module
+// bodies and the runtime it holds in memory; this compiles what was written.
+const wholeGame = (html) => {
+  const m = /<script>([\s\S]*?)<\/script>/.exec(html);
+  if (!m) return { ok: false, why: 'no complete <script> block in the output' };
+  try { new vm.Script(m[1], { filename: 'built-bundle' }); } catch (err) { return { ok: false, why: err.message }; }
+  return { ok: true, why: '' };
+};
 {
   const dir = sandbox();
   const r = build(dir);
@@ -465,6 +646,54 @@ for (const [label, plant] of REFUSALS) {
   check('6y: a successful build writes the game, never the refusal page',
     r.status === 0 && out.includes('id="app"') && !out.includes('This build did not happen'),
     `exit ${r.status}, ${out.length} bytes`);
+  const w = wholeGame(out);
+  check('6y: and what it wrote is a WHOLE program, not a fragment that contains id="app"',
+    w.ok, w.why);
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 6v. KNOWN-BAD for 6y: a fragment must fail the check that a game passes -
+// Two truncations, because they fail for two different reasons and only the
+// second proves the PARSER is doing the work. Both keep `id="app"`, so both
+// satisfy the predicate 6y used to rely on — which is the finding, stated as a
+// fixture instead of as a sentence.
+{
+  const dir = sandbox();
+  build(dir);
+  const good = goodBundleOf(dir);
+  const close = good.indexOf('</script>');
+  const open = good.indexOf('<script>') + '<script>'.length;
+  check('6v: the good build is a whole program', wholeGame(good).ok);
+
+  // (a) Bjorn's cut: 600 KB, no closing tag at all.
+  const cut = good.slice(0, 600 * 1024);
+  check('6v: a 600 KB truncation still contains id="app" (this is why the old check passed)',
+    cut.includes('id="app"'));
+  const a = wholeGame(cut);
+  check('6v: KNOWN-BAD — and it is rejected as not a whole program', !a.ok, a.why);
+
+  // (b) The harder one: script body halved, closing tag and page tail intact,
+  //     so there IS a <script> block and only the parser can tell it is broken.
+  const half = good.slice(0, open) + good.slice(open, close).slice(0, (close - open) >> 1) + good.slice(close);
+  check('6v: (b) has a complete <script> block and id="app"',
+    /<script>[\s\S]*<\/script>/.test(half) && half.includes('id="app"'));
+  const b = wholeGame(half);
+  check('6v: KNOWN-BAD — a half-written script body is rejected BY THE PARSER',
+    !b.ok && b.why !== 'no complete <script> block in the output', b.why);
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 7. The tool prints its own boundary on SUCCESS -------------------------
+// SPEC §8 clause 5 — Marina's audit law, which was hers and unpaid in the tool
+// we hardened: bundle.mjs printed nine lines of what it did and nothing on what
+// it did not. This test exists because a boundary nothing checks rots the way
+// the required-coverage list in §8 rotted.
+{
+  const dir = sandbox();
+  const r = build(dir);
+  check('7: a successful build prints a BOUNDARY block', r.status === 0 && /^BOUNDARY:/m.test(r.out), r.out.slice(-200));
+  check('7: and it names the biggest hole — compiled, never run',
+    /COMPILED, never RUN/.test(r.out), r.out.slice(-300));
   rmSync(dir, { recursive: true, force: true });
 }
 
@@ -479,4 +708,16 @@ console.log('a kill signal. In both of those the previous bundle is still standi
 console.log('BOUNDARY (case 5): the one-home guards are proven against edits to THIS TOOL,');
 console.log('mutated in a sandbox. Nothing here says the shipped game plays correctly, and');
 console.log('no browser ran: strictness is asserted through the same parser the gate uses.');
+console.log('BOUNDARY (5k-5n): the signature probe runs ONE synthetic module through the real');
+console.log('loader. It proves the arguments are what their parameter names promise; it says');
+console.log('nothing about circular requires, load ORDER, or a factory that throws — no game');
+console.log('module is executed here. 5m covers an argument naming nothing; an argument that');
+console.log('names the WRONG existing thing is caught only where the probe touches it.');
+console.log('BOUNDARY (6v/6y): "a whole program" here means the written <script> COMPILES.');
+console.log('It is a real answer to "is this a game or a fragment of one" and it is not an');
+console.log('answer to "does this game run": nothing executed the 93 modules, so a bundle');
+console.log('that parses and throws on load passes 6y exactly as it passes the tool.');
+console.log('BOUNDARY (6 ordering): two refusal checks are pinned above the write by name.');
+console.log('A THIRD check added below the write would print OK above its own error and');
+console.log('nothing here would say so — this is a list, not a derived property.');
 process.exit(fails ? 1 : 0);
