@@ -38,6 +38,7 @@ import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, tagsFor, tagIdsFor, cardsWithTag } from '../src/content/tags.js';
+import { SFX_RECIPES, resolveRecipe } from '../src/content/sfx.js';
 import { cardTagging } from '../src/content/generated/cardTagging.js';
 import { weapons } from '../src/content/generated/weapons.js';
 import { KEEPSAKES } from '../src/content/keepsakes.js';
@@ -2030,6 +2031,50 @@ export async function runTests({ artManifest = null } = {}) {
   // quiet-SHAPED mistake — null, [], {}, zero gain, wrong or miscased word,
   // empty variants — is a distinct error naming its entry. 35c beside 35b for
   // the same reason 35b sits beside 35: run-node.mjs owns 36–38.
+  // ---- 35d. every id the game can COMPOSE resolves to a real sound (#66/D16)
+  // Sunna's finding: #65 started playing `procBurst_${status}` and no recipe
+  // answered, so bleed, frost AND insanity played the 440 Hz fallback blip
+  // through a release candidate while the settings screen named sounds the
+  // build did not make. This test is the composed half of the missing check —
+  // driven off the CONTENT (every status with a proc block), so a fourth proc
+  // status added by table alone is covered the day it is authored, not the day
+  // someone remembers to extend this list.
+  test('35d. composed sfx ids resolve to a real recipe; the family row covers unauthored statuses (#66)', () => {
+    const procStatuses = contentBundle.statuses.filter((s) => s.proc).map((s) => s.id);
+    assert(procStatuses.length >= 3, `expected the proc statuses to exist, got [${procStatuses.join(', ')}]`);
+
+    // THE DEFECT ITSELF: every composed id ui/fx.js can emit must land on a
+    // real row, never on `default`. Red on the pre-fix tree for all three.
+    for (const id of procStatuses) {
+      const r = resolveRecipe(`procBurst_${id}`);
+      assert(!r.fellBack, `procBurst_${id} fell back to the default blip — no recipe answers it (matched '${r.matched}')`);
+    }
+
+    // The family row is what makes a new proc status safe by table alone
+    // (Law 1 clause 3): an UNAUTHORED status still sounds like a burst.
+    const novel = resolveRecipe('procBurst_noSuchStatusYet');
+    assert(!novel.fellBack && novel.matched === 'procBurst', `an unauthored proc status must fall to the 'procBurst' family row, got '${novel.matched}'`);
+
+    // Both edges of the resolver, so the scheme itself is pinned:
+    eq(resolveRecipe('hit').matched, 'hit', 'a plain id matches its own row');
+    eq(resolveRecipe('procBurst_frost').matched, 'procBurst_frost', 'an authored specific row wins over its family');
+    assert(resolveRecipe('noSuchId').fellBack, 'a genuinely unknown id still reaches the audible default');
+    assert(resolveRecipe('toString').fellBack, 'an inherited key is a missing entry, not a function');
+    assert(resolveRecipe('_leading').fellBack, "a leading underscore names no family (indexOf('_') === 0)");
+
+    // ORPHANS — the other direction of the same defect (D10). The table must
+    // not promise a sound nothing plays: `bleedBurst` lost its caller when #65
+    // renamed the event, `uiClick` never had one.
+    for (const dead of ['bleedBurst', 'uiClick']) {
+      assert(!Object.prototype.hasOwnProperty.call(SFX_RECIPES, dead), `'${dead}' is an orphan row — no call site fires it, so the settings screen promises a sound the build never makes`);
+    }
+
+    // Boundary, said out loud: this checks the ids the CONTENT can compose. A
+    // static scan of every literal sfx.play('…') in src/ against this table —
+    // the general "ids-played == ids-in-table, both directions" check — is the
+    // follow-up card, and nothing here covers it.
+  });
+
   test('35c. music beds validate; \'silence\' is the one word for deliberate quiet; quiet-shaped mistakes fail by name', () => {
     const m = contentBundle.music;
     assert(m && typeof m.beds === 'object' && !Array.isArray(m.beds) && typeof m.scales === 'object', 'bundle carries music { beds, scales }');

@@ -75,7 +75,7 @@ const ROWS = [
   { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume',
     note: 'Ambient score for the title, map, and battles.' },
   { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects',
-    note: 'Hits, blocks, bleed bursts, UI.' },
+    note: 'Hits, blocks, status bursts, cards, and pickups.' },
   { cat: 'Audio', key: 'musicFolder', type: 'text', def: '', label: 'Music folder',
     placeholder: 'e.g. music/ or https://…',
     note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = built-in generated score.' },
