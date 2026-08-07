@@ -310,6 +310,103 @@ console.log(`\nBOUNDARY — what this green does NOT cover:
   - the driven screens depend on a control's selector; if a button is renamed
     the drive fails LOUD (a MISS), never silently photographs the wrong screen.`);
 
+// ---------------------------------------------------------------------------
+// FLOAT CENTRING / CLIP ASSERTION (#69) — Rune, re-applied onto the canonical
+// harness after Marina ruled Bjorn's copy canonical: mine carried fixed sleeps,
+// and a float assertion running under fixed sleeps against a possibly-stale
+// page is an assertion that can pass while blind. It now stands on this file's
+// own guarantees — waitForUrl (we are on the document we asked for) and
+// waitFor (the landmark exists) — instead of guessing at time.
+//
+// It spawns the exact strings Bjorn measured through the SHIPPED floatNum
+// (window.__fxProbe, dev-only, ?shot= URLs only) and reads the RENDERED rect.
+//
+// THREE THINGS THIS ASSERTION HAD TO LEARN, each after it lied once, kept here
+// because each is a way an instrument passes while blind:
+//  1. Anchor. The clip lives on the RIGHTMOST combatant; anchored to the
+//     leftmost it reported everything in-box and could not have failed.
+//  2. Jitter. floatNum offsets by Math.random()*26-13, so the defect is
+//     intermittent — a probe that rolls the dice reports the roll. Math.random
+//     is pinned to the worst case the shipped code can emit (+13 right, -13
+//     left).
+//  3. The measured quantity. Clipping only shows when a wide string meets a
+//     right-hand anchor, so a screen whose rightmost sprite sits 20px further
+//     in reads clean while the bug is fully present. The deterministic
+//     quantity — and the one Bjorn's per-string table reports — is the CENTRE
+//     ERROR: floats are meant to sit centred on their anchor, and floatNum
+//     centred them with a hardcoded half-width, so the error was
+//     (realHalfWidth - thatConstant). Clipping is its consequence, not its
+//     cause. And the rect must be read with the pop animation frozen, because
+//     num-pop animates scale() and a mid-animation read shrank a 139px string
+//     and a 15px one to the same 45px.
+// ---------------------------------------------------------------------------
+const FLOAT_STRINGS = [
+  ['-7', 'dmg small', 'last'],
+  ['+15', 'blk', 'last'],
+  ['BLOCKED', 'blk small', 'last'],
+  ['\u{1FA78} 12 RESISTED', 'blk small', 'last'],
+  ['\u{1FA78} 12 RESISTED', 'blk small', 'first'],
+];
+let floatMisses = 0;
+for (const shape of SHAPES) {
+  await c.send('Emulation.setDeviceMetricsOverride', {
+    width: shape.width, height: shape.height, deviceScaleFactor: shape.dsf, mobile: shape.mobile,
+  });
+  await c.send('Page.navigate', { url: `${BASE}?shot=combat` });
+  const onUrl = await waitForUrl('?shot=combat');
+  const mounted = onUrl == null ? null : await waitFor('.combat');
+  if (onUrl == null || mounted == null) {
+    console.log(`FLOAT MISS  ${shape.tag} — combat did not mount (url ${onUrl == null ? 'never matched' : 'ok'})`);
+    floatMisses++;
+    continue;
+  }
+  for (const [text, cls, which] of FLOAT_STRINGS) {
+    const m = await ev(`(() => {
+      document.querySelectorAll('.float-num').forEach((n) => n.remove());
+      if (!window.__fxProbe) return { noProbe: true };
+      const _rand = Math.random;
+      Math.random = () => (${JSON.stringify(which)} === 'first' ? 0 : 1);
+      try { window.__fxProbe(${JSON.stringify(text)}, ${JSON.stringify(cls)}, ${JSON.stringify(which)}); }
+      finally { Math.random = _rand; }
+      const el = document.querySelector('.float-num');
+      if (!el) return { noFloat: true };
+      el.style.animation = 'none';
+      const r = el.getBoundingClientRect();
+      const layer = document.querySelector('.fx-layer').getBoundingClientRect();
+      const hosts = [...document.querySelectorAll('[data-eid]')]
+        .sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+      const pick = (${JSON.stringify(which)} === 'first' ? hosts[0] : hosts[hosts.length - 1]);
+      const hb = (pick.querySelector('.sprite') || pick).getBoundingClientRect();
+      const jitter = (${JSON.stringify(which)} === 'first' ? -13 : 13);
+      const wantCentre = hb.left + hb.width / 2 + jitter;
+      const gotCentre = r.left + r.width / 2;
+      return {
+        right: Math.round(r.right), width: Math.round(r.width), vw: window.innerWidth,
+        centreErr: Math.round(gotCentre - wantCentre),
+        atEdge: Math.round(r.left - layer.left) <= 7 || Math.round(layer.right - r.right) <= 7,
+        overRight: Math.round(r.right - Math.min(window.innerWidth, layer.right)),
+        overLeft: Math.round(Math.max(0, layer.left) - r.left),
+      };
+    })()`);
+    // Never clipped, and centred unless the clamp is holding it at an edge —
+    // that shift is by design and is labelled CLAMPED, not passed silently.
+    const ok = m && !m.noProbe && !m.noFloat && m.overRight <= 0 && m.overLeft <= 0
+      && (Math.abs(m.centreErr) <= 1 || m.atEdge);
+    if (!ok) floatMisses++;
+    const tag = ok ? (m && m.atEdge && Math.abs(m.centreErr) > 1 ? 'CLAMPED ' : 'CENTRED ') : 'OFF     ';
+    console.log(`${tag}  ${shape.tag.padEnd(9)} ${JSON.stringify(text).padEnd(22)} ${which.padEnd(5)} ` +
+      (m && m.right != null
+        ? `off-centre=${m.centreErr > 0 ? '+' + m.centreErr : m.centreErr}px  w=${m.width} right=${m.right} vw=${m.vw}` +
+          `${m.overRight > 0 ? ` CLIPPED +${m.overRight}px` : ''}${m.overLeft > 0 ? ` CLIPPED LEFT +${m.overLeft}px` : ''}`
+        : JSON.stringify(m)));
+  }
+}
+console.log(floatMisses
+  ? `\nfloat-clip: ${floatMisses} float(s) off-centre or clipped — the half-width is a constant, not the string's own.`
+  : '\nfloat-clip: OK — every measured float is centred on its anchor and inside the layer, both shapes.');
+// A clipped float is unreachable text, so it fails the run like any MISS.
+misses += floatMisses;
+
 if (misses) {
   console.error(`\nrelease-shots: ${misses} screen(s) did not render as meant — see MISS lines.`);
   server.close();
