@@ -316,7 +316,54 @@ body.hide-hints .hint-bar { display: none; }
 .farewell .title-big { opacity: 0.9; }
 
 /* ---------- generic screens ---------- */
-.screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.8rem; padding: 2.4rem; }
+/* A SCREEN THAT OVERFLOWS BRINGS ITS OWN SCROLLER, AND STOPS CENTRING WHEN IT DOES.
+   Freja, 2026-08-07, EldenSpire#84. Constantine, playing: "upgrading cards, I
+   notice I can't scroll on portrait mobile phone." Bjorn reproduced it at
+   390x844 — 2402 px of Smith grid in an 844 px window, sixteen of twenty cards
+   under the bottom edge, `scrollableAncestor: null`, a dragged finger moving
+   nothing and the screenshots byte-identical.
+
+   `html`/`body` are `overflow: hidden` BY DESIGN — this is a fullscreen game,
+   not a document — so an overflowing screen has to carry its own scrollport.
+   `.reward-row` carries one for x, `.armoury-body` for y; `.screen` carried
+   none, and it is the container all sixteen mount into.
+
+   TWO DECLARATIONS, NOT ONE, AND THE SECOND IS THE POINT. `overflow-y` alone
+   makes this worse, measured: .screen is a flex item that today simply GROWS
+   past the app box (844 -> 2159 local px), so the overflow is one-directional
+   and the heading survives. Give it a scrollport and it stops growing — and
+   then `justify-content: center` centres the overflow, and the start-side half
+   of a centred overflow IS NOT SCROLLABLE. Measured on that one-line version:
+   the player lands at scrollTop 0 with SHRINE OF EMBER at top -635.89, six
+   cards already above the screen, and no gesture that can ever reach them.
+   The last card becomes reachable and the first thing becomes unreachable.
+
+   `safe center` is the whole fix for that: centred while it fits, start-aligned
+   the moment it does not, decided per render by the browser rather than by a
+   class anyone has to remember to add. The plain `center` before it is the
+   fallback for engines without `safe` — one property, two values, later wins
+   where understood; where it is not, screens are top-aligned, which is plain
+   and never broken.
+
+   WHY NOT `.deck-strip`: the strip is not what overflows. It wraps and grows,
+   and the screen it grew inside is what ran out of room. Put the scroller on
+   the grid and Shop's identical grid, the Rewards screen and the four other
+   screens nobody has photographed all still need their own. One property, one
+   container, sixteen screens.
+
+   BOTH EDGES, measured at 390x844 and 1200x730: a screen that FITS is
+   byte-identical before and after (the shrine before the grid opens, both
+   shapes, same sha256) and gains no scrollbar; a screen that OVERFLOWS keeps
+   every rect it had to three decimals — heading, first card, last card — and
+   gains only the ability to reach the end. `.screen.customize` sets its own
+   `overflow: hidden` and `flex-start` below and is unaffected. */
+.screen {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center;
+  justify-content: safe center;
+  gap: 1.8rem; padding: 2.4rem;
+}
 .screen .title-big { font-size: 4.4rem; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
 .screen .subtitle { color: var(--muted); letter-spacing: 0.3em; font-size: 1.2rem; }
 .seed-line { color: var(--muted); font-size: 1.2rem; }

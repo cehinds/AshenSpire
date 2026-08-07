@@ -1360,7 +1360,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -1391,6 +1391,23 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   } else if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');
+  } else if (shotState === 'rest') {
+    // A REACH STATE, not the denominator. Constantine could not scroll the
+    // Smith grid on a phone; the reason nobody caught it is that the Shrine is
+    // one of seven player-facing screens no instrument we own can open, so
+    // there was never a baseline to regress against. That COUNT — sixteen
+    // screens mounted against nine ?shot= states — is Bjorn's card and is not
+    // touched here. This is one state for the one screen being fixed, so the
+    // fix has a picture instead of an assertion.
+    //
+    // POSED MID-CLIMB ON PURPOSE, because the defect is a function of HOW MANY
+    // cards the grid holds and a fresh 10-card deck may not overflow at all.
+    // Ten more from the class's own authored pool, in authored order — no rng,
+    // so the grid photographs identically every run — gives the twenty-card
+    // deck the bug was reproduced on.
+    run.floor = 8;
+    run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
+    showRest();
   } else if (shotState === 'combat' || shotState === 'fx') {
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];

@@ -555,7 +555,54 @@ body.hide-hints .hint-bar { display: none; }
 .farewell .title-big { opacity: 0.9; }
 
 /* ---------- generic screens ---------- */
-.screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.8rem; padding: 2.4rem; }
+/* A SCREEN THAT OVERFLOWS BRINGS ITS OWN SCROLLER, AND STOPS CENTRING WHEN IT DOES.
+   Freja, 2026-08-07, EldenSpire#84. Constantine, playing: "upgrading cards, I
+   notice I can't scroll on portrait mobile phone." Bjorn reproduced it at
+   390x844 — 2402 px of Smith grid in an 844 px window, sixteen of twenty cards
+   under the bottom edge, `scrollableAncestor: null`, a dragged finger moving
+   nothing and the screenshots byte-identical.
+
+   `html`/`body` are `overflow: hidden` BY DESIGN — this is a fullscreen game,
+   not a document — so an overflowing screen has to carry its own scrollport.
+   `.reward-row` carries one for x, `.armoury-body` for y; `.screen` carried
+   none, and it is the container all sixteen mount into.
+
+   TWO DECLARATIONS, NOT ONE, AND THE SECOND IS THE POINT. `overflow-y` alone
+   makes this worse, measured: .screen is a flex item that today simply GROWS
+   past the app box (844 -> 2159 local px), so the overflow is one-directional
+   and the heading survives. Give it a scrollport and it stops growing — and
+   then `justify-content: center` centres the overflow, and the start-side half
+   of a centred overflow IS NOT SCROLLABLE. Measured on that one-line version:
+   the player lands at scrollTop 0 with SHRINE OF EMBER at top -635.89, six
+   cards already above the screen, and no gesture that can ever reach them.
+   The last card becomes reachable and the first thing becomes unreachable.
+
+   `safe center` is the whole fix for that: centred while it fits, start-aligned
+   the moment it does not, decided per render by the browser rather than by a
+   class anyone has to remember to add. The plain `center` before it is the
+   fallback for engines without `safe` — one property, two values, later wins
+   where understood; where it is not, screens are top-aligned, which is plain
+   and never broken.
+
+   WHY NOT `.deck-strip`: the strip is not what overflows. It wraps and grows,
+   and the screen it grew inside is what ran out of room. Put the scroller on
+   the grid and Shop's identical grid, the Rewards screen and the four other
+   screens nobody has photographed all still need their own. One property, one
+   container, sixteen screens.
+
+   BOTH EDGES, measured at 390x844 and 1200x730: a screen that FITS is
+   byte-identical before and after (the shrine before the grid opens, both
+   shapes, same sha256) and gains no scrollbar; a screen that OVERFLOWS keeps
+   every rect it had to three decimals — heading, first card, last card — and
+   gains only the ability to reach the end. `.screen.customize` sets its own
+   `overflow: hidden` and `flex-start` below and is unaffected. */
+.screen {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center;
+  justify-content: safe center;
+  gap: 1.8rem; padding: 2.4rem;
+}
 .screen .title-big { font-size: 4.4rem; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
 .screen .subtitle { color: var(--muted); letter-spacing: 0.3em; font-size: 1.2rem; }
 .seed-line { color: var(--muted); font-size: 1.2rem; }
@@ -3514,7 +3561,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -3545,6 +3592,23 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   } else if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');
+  } else if (shotState === 'rest') {
+    // A REACH STATE, not the denominator. Constantine could not scroll the
+    // Smith grid on a phone; the reason nobody caught it is that the Shrine is
+    // one of seven player-facing screens no instrument we own can open, so
+    // there was never a baseline to regress against. That COUNT — sixteen
+    // screens mounted against nine ?shot= states — is Bjorn's card and is not
+    // touched here. This is one state for the one screen being fixed, so the
+    // fix has a picture instead of an assertion.
+    //
+    // POSED MID-CLIMB ON PURPOSE, because the defect is a function of HOW MANY
+    // cards the grid holds and a fresh 10-card deck may not overflow at all.
+    // Ten more from the class's own authored pool, in authored order — no rng,
+    // so the grid photographs identically every run — gives the twenty-card
+    // deck the bug was reproduced on.
+    run.floor = 8;
+    run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
+    showRest();
   } else if (shotState === 'combat' || shotState === 'fx') {
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
@@ -12595,7 +12659,8 @@ function fitsSlot(slot, piece) {
  * validateEquipment(registries) → [] when sound, else human-readable problems.
  * Catches the mistakes CSV authoring actually makes: a misspelled field, a mod
  * aimed at a prefix no class maps to a card, a slot whose `kinds` gate matches
- * nothing, and armour that leaves a class with no starting set (or two).
+ * nothing, a hand named on one side and not the other, a piece no slot can
+ * hold, and armour that leaves a class with no starting set (or two).
  */
 function validateEquipment(registries) {
   const eq = registries.equipment || {};
@@ -13065,8 +13130,8 @@ function carriedIds(loadout) {
  * has written yet — walked straight past it. A caller that must remember to
  * check is not a gate (`bundle.mjs`, same week, same lesson). `registries` is
  * the first argument like everything else in this module, which is also what
- * makes every existing call site fail to compile rather than quietly skip the
- * check.
+ * makes a call site left on the old signature fail CLOSED — it equips nothing
+ * and the suite says so — rather than quietly skip the new check.
  */
 function equipPiece(registries, loadout, slotId, setIndex, itemId) {
   const ids = ((loadout || {}).sets || {})[slotId];
