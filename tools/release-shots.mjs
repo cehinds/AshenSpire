@@ -21,7 +21,7 @@
 // storage from outside and reloading, never by injecting script into the HTML.
 // A shot of a patched bundle is a shot of something we do not ship.
 //
-// Usage:  node tools/release-shots.mjs [--out DIR] [--only NAME]
+// Usage:  node tools/release-shots.mjs [--out DIR] [--only SHOT] [--shape TAG]
 // Exit 0 = every shot captured and its screen asserted present; 1 = any miss.
 //
 // BOUNDARY: this proves a screen RENDERED and that its landmark element is on
@@ -40,7 +40,7 @@
 // each with what was and was not photographed.
 
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
@@ -56,6 +56,9 @@ const args = process.argv.slice(2);
 const oi = args.indexOf('--out');
 const OUT = resolve(ROOT, oi >= 0 && args[oi + 1] ? args[oi + 1] : 'docs/release-shots');
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
+// --only takes a SHOT name. I reached for it with a SHAPE tag and got a green
+// zero-shot run, so the flag I wanted exists now rather than as a comment.
+const onlyShape = args.includes('--shape') ? args[args.indexOf('--shape') + 1] : null;
 
 const SHAPES = [
   { tag: '390x844', width: 390, height: 844, dsf: 2, mobile: true },
@@ -166,6 +169,46 @@ const SCREENS = [
 // ---------------------------------------------------------------------------
 const q = (s) => JSON.stringify(s);
 
+// ---------------------------------------------------------------------------
+// B1 (Vira's, and she was right). My first version asserted three things about
+// each armoury view — the `view-<id>` class, `[data-view=<id>].on`, and a
+// non-empty body — and ALL THREE are printed from the id the harness handed in.
+// She planted a fourth view, `kanban`, with no branch in equipment.js and no
+// rule in ui.css: 58 shots, every assertion true, exit 0. I reproduced it in my
+// own tree before touching this file. `kanban` renders HYBRID'S DOM (draw() is
+// `if (view === 'grid') … else …`, so every unknown id lands in the else) under
+// NEITHER view's CSS — a fourth alignment no rule in the tree authors. Six of my
+// fifty-six shots were the thing I wrote the naked-assert guard against.
+//
+// Her property, taken as offered: THE MEMBERS OF A SET ARE DISTINCT, so no two
+// ids may render the same panel. It consults the HANDLER instead of the id,
+// which is what the other two groups have by accident and this one did not.
+// Green today pairwise, red on kanban — measured, not reasoned.
+//
+// I add a second, INDEPENDENT detector for the armoury, because the two halves
+// of what she measured live in two different homes: the DOM comes from
+// equipment.js, the alignment from styles/ui.css. `authoredIn` asks the
+// STYLESHEET whether anyone authored this view. It needs no browser, so it runs
+// in the pre-browser gate and costs nothing.
+//
+// What neither of these is: a check that the view is CORRECT. Two distinct,
+// authored layouts can both be wrong. Consistency, not correctness — mine, said
+// about my own fix.
+// ---------------------------------------------------------------------------
+
+// One home for the signature, interpolated into each group's probe: the
+// normalised structure of a panel, with data-* stripped exactly as Vira's probe
+// stripped it, so this measures the same quantity her finding is about. Text is
+// included deliberately — hybrid and kanban are identical down to the character,
+// and a signature that excluded text would still separate them for the wrong
+// reason.
+const SIG_FN = `((html) => {
+  const s = String(html).replace(/\\sdata-[a-z-]+="[^"]*"/g, '');
+  let h = 7;
+  for (const ch of s) h = ((h * 31 + ch.charCodeAt(0)) >>> 0);
+  return s.length + ':' + h.toString(16);
+})`;
+
 const SUB_SURFACE_GROUPS = [
   {
     group: 'overlay',
@@ -195,6 +238,10 @@ const SUB_SURFACE_GROUPS = [
         const len = body ? body.innerText.trim().length : 0;
         if (!len) return 'tab ' + ${q(id)} + ' is selected and its panel is EMPTY';
         return true;
+      })()`,
+      probe: `(() => {
+        const b = document.querySelector('.overlay-body');
+        return b ? ${SIG_FN}(b.innerHTML) : null;
       })()`,
     }),
   },
@@ -229,13 +276,45 @@ const SUB_SURFACE_GROUPS = [
         if (!text) return 'category ' + ${q(id)} + ' renders a heading and NOTHING under it';
         return true;
       })()`,
+      probe: `(() => {
+        const h = [...document.querySelectorAll('.set-cat')].find((e) => e.textContent.trim() === ${q(id)});
+        if (!h) return null;
+        // The section is the run of siblings up to the next heading — the same
+        // span the assert walks, so the two agree about what "this category" is.
+        let n = h.nextElementSibling, html = '';
+        while (n && !n.classList.contains('set-cat')) { html += n.outerHTML; n = n.nextElementSibling; }
+        return ${SIG_FN}(html);
+      })()`,
     }),
   },
   {
     group: 'armoury',
     what: 'armoury layout views',
     home: 'src/content/balance.js — balance.equipment.views',
-    ids: () => (balance.equipment.views || []).slice(),
+    // The home holds a LIST OF NAMES; what a name is written as is the home's
+    // business, not this tool's. Today it is a bare string; EldenSpire#78 makes
+    // it `{ id, figure, slots }`, because two characteristics are the smallest
+    // honest description of three layouts. Both are read here, and ANYTHING ELSE
+    // STOPS THE RUN BY NAME — never `.filter(Boolean)`, which would drop the
+    // unreadable row and quietly shrink the denominator. That is Law 0 clause 5
+    // and it is the failure this whole file exists to make loud.
+    ids: () => (balance.equipment.views || []).map((v, i) => {
+      if (typeof v === 'string' && v) return v;
+      if (v && typeof v === 'object' && typeof v.id === 'string' && v.id) return v.id;
+      console.error(`\nrelease-shots: balance.equipment.views[${i}] is ${JSON.stringify(v)} —`);
+      console.error('this tool reads a view name as a string or as a row with a string `id`.');
+      console.error('Neither fits, so the armoury denominator cannot be derived and no number');
+      console.error('printed below it would mean anything. Fix the row, or teach this reader.');
+      return process.exit(1);
+    }),
+    // The second home of this closed set, and the one the DOM cannot see: a
+    // layout view IS a stylesheet rule. `kanban` renders under no rule at all,
+    // which is why its alignment was a value nobody authored. Pre-browser.
+    authoredIn: {
+      what: '`.view-<id>` rule in styles/',
+      dir: 'styles',
+      pattern: (id) => new RegExp(`\\.view-${id}\\b`),
+    },
     reach: (id) => ({
       query: '?shot=combat',
       landmark: '.armoury',
@@ -257,9 +336,19 @@ const SUB_SURFACE_GROUPS = [
         if (!body || !body.innerText.trim().length) return 'view ' + ${q(id)} + ' renders an EMPTY armoury body';
         return true;
       })()`,
+      // Every predicate above is the id read back to itself. THIS is the one
+      // that asks the handler what it built.
+      probe: `(() => {
+        const b = document.querySelector('.armoury-body');
+        return b ? ${SIG_FN}(b.innerHTML) : null;
+      })()`,
     }),
   },
 ];
+
+// The property, one sentence, checked per shape after the shots are taken:
+// two members of a set that render the same panel are not two members.
+const DISTINCT_PANELS = 'no two ids in a set render the same panel';
 
 // Excluded sub-surfaces, keyed `group:id`, named exactly as the co-op states
 // are (SPEC §8 clause 5: a release-gating instrument prints what it did NOT
@@ -279,9 +368,56 @@ const UNENUMERATED_SETS = [
 {
   const app = appShotStates();
   const covered = new Set(SCREENS.map((s) => s.state).filter(Boolean));
+  // -------------------------------------------------------------------------
+  // DENOMINATOR 1 GETS THE FLOOR I WROTE FOR DENOMINATOR 2 AND NEVER GAVE IT.
+  //
+  // Vira withheld b7c8142 on this and blocked with my own reasons, which is the
+  // right way to be caught. `appShotStates()` is a REGEX OVER src/main.js. She
+  // reformatted 18 comparisons from `shotState === 'x'` to `shotState==='x'` —
+  // pure whitespace, the game unaffected — and got:
+  //
+  //   0 states: 6 to photograph, 5 excluded by name, 0 unaccounted
+  //   release-shots: OK — 2 shots …                                    exit=0
+  //
+  // A line that contradicts itself in place, and nothing failed. `gaps` cannot
+  // save it: filtering an empty list gives an empty list, so the emptier the
+  // reader gets the cleaner the report looks. The per-home floor for D2 is
+  // eighteen lines below at `:407` and says exactly this — I wrote the sentence
+  // once and gave it to one of the two denominators.
+  //
+  // TWO checks, because a floor only catches TOTAL blindness. Her plant killed
+  // all 18 matches; an edit that kills three would slip under a floor and print
+  // a smaller, confident number — the partial case is the one that survives.
+  // -------------------------------------------------------------------------
+  if (!app.length) {
+    console.error(`\nrelease-shots: derived ZERO ?shot= states from src/main.js.`);
+    console.error('An empty denominator is not full coverage — it is a home this tool can no longer');
+    console.error('read. appShotStates() is a regex over source; if the source moved, the regex is');
+    console.error('the thing to fix, not the number to trust.');
+    server.close();
+    process.exit(1);
+  }
+  // The JOIN, and it is the partial-blindness half: every state the SCREENS
+  // table claims to cover must actually appear in what the reader derived. If
+  // this tool says it photographs `map` and the derivation cannot see `map`,
+  // one of the two is wrong and neither is allowed to be silent about it.
+  const unseen = [...covered].filter((s) => !app.includes(s));
+  if (unseen.length) {
+    console.error(`\nrelease-shots: SCREENS claims to cover state(s) the reader cannot find in src/main.js: ${unseen.join(', ')}.`);
+    console.error(`It derived ${app.length}: ${app.join(', ')}.`);
+    console.error('Either the state was renamed and this table is stale, or appShotStates() has gone');
+    console.error('partly blind. Both are defects; a smaller confident number is the worse one.');
+    server.close();
+    process.exit(1);
+  }
   const gaps = app.filter((s) => !covered.has(s) && !EXCLUDED_STATES[s]);
   console.log(`DENOMINATOR 1 — top-level states · home: src/main.js (?shot= states)`);
-  console.log(`  ${app.length} states: ${covered.size} photographed, ${Object.keys(EXCLUDED_STATES).length} excluded by name, ${gaps.length} unaccounted`);
+  // "photographed" is a PAST TENSE about work that has not started — this block
+  // prints before the browser launches. It cost me a false claim in the session
+  // that added it: I reported a plant as photographing three views on a run that
+  // photographed none, because I read this line as a result. The denominators are
+  // DERIVED here; what was photographed is the verdict's to say, at the end.
+  console.log(`  ${app.length} states: ${covered.size} to photograph, ${Object.keys(EXCLUDED_STATES).length} excluded by name, ${gaps.length} unaccounted`);
   for (const s of app) {
     if (covered.has(s)) continue;
     console.log(`  EXCLUDED  ?shot=${s} — ${EXCLUDED_STATES[s] || 'NO REASON GIVEN'}`);
@@ -292,6 +428,11 @@ const UNENUMERATED_SETS = [
     process.exit(1);
   }
 }
+
+// The artifact this run photographs, read ONCE and named, so the staleness
+// check below and the reader both know which file the shots are of.
+const idOfArtifact = 'dist/AshenSpire.html';
+const ARTIFACT = readFileSync(resolve(ROOT, idOfArtifact), 'utf8');
 
 // Denominator 2: derive, generate a shot per member, and REFUSE to report a
 // percentage of nothing.
@@ -309,6 +450,83 @@ const UNENUMERATED_SETS = [
       console.error('An empty denominator is not full coverage — it is a home this tool can no longer read. Fix the import or the home.');
       process.exit(1);
     }
+    // Pre-browser: is every derived member authored in its OTHER home? For the
+    // armoury that home is the stylesheet, and it is where `kanban` was absent.
+    //
+    // THIS CHECK READ THE FILE, NOT THE STYLESHEET, AND I FOUND IT BY RUNNING
+    // THE TOOL AGAINST #78 (2026-08-07). That branch converts every
+    // `.armoury.view-<id>` rule to `[data-figure]` / `[data-slots]` and leaves
+    // ONE comment behind naming the three ids it deleted:
+    //
+    //   /* … used to name an id (.view-grid / .view-rack / .view-hybrid), which
+    //      made the stylesheet a second, silent decider of the layout … */
+    //
+    // `pattern(id).test(css)` matched that comment. Every view passed. A gate
+    // whose whole job is "somebody authored a rule for this view" was satisfied
+    // by prose SAYING THE RULE WAS REMOVED — and unlike the other three couplings
+    // to that branch, this one does not crash and does not MISS. It goes green.
+    // Measured both edges on a `5c49fed` worktree: as Viki wrote it, the gate
+    // passes; delete six words from inside that comment and nothing else, and it
+    // reds on grid, rack and hybrid. A stylesheet whose RULES are byte-identical
+    // must not change this verdict.
+    //
+    // So the pattern is tested against SELECTOR TEXT ONLY: comments stripped,
+    // then everything before each `{` — which is the only place a rule can name
+    // a class. Declaration values and prose cannot answer for a selector.
+    const selectorTextOf = (css) => css
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')      // comments are not rules
+      .split('}')
+      .map((block) => block.split('{')[0])    // …and neither are declarations
+      .join('\n');
+    if (g.authoredIn) {
+      const dir = resolve(ROOT, g.authoredIn.dir);
+      const css = readdirSync(dir).filter((f) => f.endsWith('.css'))
+        .map((f) => readFileSync(resolve(dir, f), 'utf8')).join('\n');
+      if (!css.length) {
+        console.error(`\nrelease-shots: '${g.group}' declares authoredIn ${g.authoredIn.dir}/ and read ZERO bytes there.`);
+        console.error('An unreadable home is unknown, not authored. Fix the path.');
+        process.exit(1);
+      }
+      const selectors = selectorTextOf(css);
+      // A check that cannot fail is not a check — the same clause the armoury's
+      // `assert` already carries. If stripping left nothing, the reader is
+      // broken, and reporting "all authored" from an empty string is the exact
+      // green this whole block exists to stop.
+      if (!selectors.trim().length) {
+        console.error(`\nrelease-shots: '${g.group}' read ${css.length} bytes of CSS and found ZERO selector text.`);
+        console.error('The selector reader is broken; every member would pass for the wrong reason.');
+        process.exit(1);
+      }
+      const unauthored = ids.filter((id) => !EXCLUDED_SUBSURFACES[`${g.group}:${id}`]
+        && !g.authoredIn.pattern(id).test(selectors));
+      if (unauthored.length) {
+        console.error(`\nrelease-shots: ${g.group} member(s) with no ${g.authoredIn.what}: ${unauthored.join(', ')}`);
+        console.error(`A member of ${g.home} that nothing in ${g.authoredIn.dir}/ styles renders under whatever`);
+        console.error('rule happens to apply — a layout nobody authored. Author it, or name it in');
+        console.error('EXCLUDED_SUBSURFACES with the reason.');
+        process.exit(1);
+      }
+    }
+    // STALENESS. The denominators are derived from src/, and the photographs
+    // are of dist/AshenSpire.html — a COMMITTED artifact. Nothing made those
+    // the same build. I hit this on my own bench: a planted tab was still in
+    // dist/ after I had reverted src/, so a run derived 6 members and
+    // photographed a 7-tab bundle and printed OK. That is one fact with two
+    // homes, in the instrument that exists to find them.
+    // The dangerous direction is detectable and cheap: a member the source
+    // declares must appear in the artifact we are about to photograph. (The
+    // reverse — dist carrying something src no longer has — is verify-shipped's
+    // job, and the BOUNDARY block says so rather than pretending otherwise.)
+    for (const id of ids) {
+      if (EXCLUDED_SUBSURFACES[`${g.group}:${id}`]) continue;
+      if (!ARTIFACT.includes(JSON.stringify(id)) && !ARTIFACT.includes(`'${id}'`)) {
+        console.error(`\nrelease-shots: '${g.group}:${id}' is declared in ${g.home}`);
+        console.error(`but does not appear in ${idOfArtifact} — the bundle is OLDER than the source.`);
+        console.error('Rebuild (node tools/launch.mjs --build-only) before photographing; a shot of a stale');
+        console.error('artifact is evidence about a build nobody is shipping.');
+        process.exit(1);
+      }
+    }
     const mine = [];
     for (const id of ids) {
       const key = `${g.group}:${id}`;
@@ -320,13 +538,13 @@ const UNENUMERATED_SETS = [
       mine.push(id);
     }
     console.log(`  ${g.group.padEnd(9)} ${String(ids.length).padStart(2)} ${g.what} · home: ${g.home}`);
-    console.log(`            photographed: ${mine.join(', ')}`);
+    console.log(`            to photograph: ${mine.join(', ')}`);
     for (const id of ids) {
       const why = EXCLUDED_SUBSURFACES[`${g.group}:${id}`];
       if (why) console.log(`  EXCLUDED  ${g.group}:${id} — ${why}`);
     }
   }
-  console.log(`  ${total} sub-surfaces across ${SUB_SURFACE_GROUPS.length} homes: ${shot} photographed and asserted, ${excluded} excluded by name`);
+  console.log(`  ${total} sub-surfaces across ${SUB_SURFACE_GROUPS.length} homes: ${shot} derived to photograph, ${excluded} excluded by name`);
   for (const [name, why] of UNENUMERATED_SETS) {
     console.log(`  NOT ENUMERATED  ${name} — ${why}`);
   }
@@ -338,16 +556,91 @@ const UNENUMERATED_SETS = [
     console.error(`\nrelease-shots: sub-surface shot(s) with no assert: ${naked.join(', ')} — a shot that cannot fail is not coverage.`);
     process.exit(1);
   }
+  // And the same guard for the property. An assert can be satisfied by the id
+  // it was handed (B1: all three of the armoury's were), so the panel probe is
+  // the only per-group evidence that consults the handler. A group that ships
+  // without one is back where the armoury was.
+  const unprobed = SUB_SURFACE_GROUPS.filter((g) => !g.reach(g.ids()[0]).probe).map((g) => g.group);
+  if (unprobed.length) {
+    console.error(`\nrelease-shots: sub-surface group(s) with no panel probe: ${unprobed.join(', ')}`);
+    console.error(`Without one, '${DISTINCT_PANELS}' cannot be checked and the group's assertions may all be`);
+    console.error('derived from the id they were handed. That is what B1 was.');
+    process.exit(1);
+  }
 }
 
 mkdirSync(OUT, { recursive: true });
 const { server, port } = await serve({ root: ROOT, port: 8231, open: false });
 const BASE = `http://localhost:${port}/dist/AshenSpire.html`;
 
-spawn('/opt/pw-browsers/chromium', [
+// ---------------------------------------------------------------------------
+// THE BROWSER THIS RUN MEASURES MUST BE THE BROWSER THIS RUN SPAWNED.
+//
+// Marina's ruling on my own best find, pointed at the browser: EVIDENCE MUST
+// COME FROM ONE ARTIFACT, NEVER TWO ASSUMED EQUAL. This tool used to spawn
+// chromium on a FIXED port 9431 and then `fetch('127.0.0.1:9431/json/list')` and
+// attach to whatever answered. Two failures, and they compound:
+//
+//   1. NOTHING EVER KILLED THE CHILD — no `child.kill()` on any path, success or
+//      failure. Every run leaked a browser tree. Vira found 81 orphans this
+//      afternoon; I reaped 152 on this port a few hours later.
+//   2. A second run cannot bind 9431, so its own chromium dies — and `cdp(9431)`
+//      then attaches to the PREVIOUS RUN'S BROWSER and drives that. The process
+//      spawned and the process measured were two browsers with nothing checking
+//      they were the same one. A run goes quiet instead of red, which is the
+//      worst way for an instrument to fail.
+//
+// Fixed BY CONSTRUCTION rather than by a check: `--remote-debugging-port=0` gets
+// a kernel-assigned port, and the endpoint is parsed off MY OWN CHILD'S stderr.
+// There is no shared name left to collide on, so "is this my browser?" stops
+// being a question the tool has to get right. `menufit` has done it this way all
+// along (`tools/menufit.mjs:161`) — I had the answer in the tree and did not use
+// it. This also ends a collision I did not own: `contrast-audit.mjs:545` picks
+// `9222 + (pid % 400)` = 9222…9621, a range that CONTAINS 9431, so it would
+// silently take this tool's browser about one run in four hundred.
+// ---------------------------------------------------------------------------
+const browser = spawn('/opt/pw-browsers/chromium', [
   '--headless=new', '--disable-gpu', '--no-sandbox',
-  '--remote-debugging-port=9431', 'about:blank',
-], { stdio: 'ignore' });
+  '--remote-debugging-port=0', 'about:blank',
+], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+// One reaper, on every path out — normal exit, refusal, throw, Ctrl-C. A tool
+// that leaks a browser per run is how the pile above gets built.
+let reaped = false;
+const reap = () => {
+  if (reaped) return;
+  reaped = true;
+  try { browser.kill('SIGKILL'); } catch { /* already gone */ }
+};
+process.on('exit', reap);
+// SIGHUP too (Vira's word): a closed terminal is the commonest way a long run
+// ends, and it was the one signal that still leaked. SIGKILL cannot be caught
+// and that browser survives — an honest limit, not an oversight.
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { reap(); process.exit(130); });
+process.on('uncaughtException', (err) => { reap(); console.error(err); process.exit(2); });
+
+const BROWSER_WS = await new Promise((ok, no) => {
+  let buf = '';
+  const read = (d) => {
+    buf += d;
+    const m = /DevTools listening on (ws:\/\/\S+)/.exec(buf);
+    if (m) ok(m[1]);
+  };
+  browser.stderr.on('data', read);
+  browser.stdout.on('data', read);
+  browser.on('error', no);
+  browser.on('exit', (code) => no(new Error(`chromium exited (${code}) before naming an endpoint:\n${buf.slice(-400)}`)));
+  setTimeout(() => no(new Error(`chromium never printed a DevTools endpoint:\n${buf.slice(-400)}`)), 20000);
+}).catch((err) => { reap(); console.error(`\nrelease-shots: ${err.message}`); process.exit(2); });
+
+// The port is this child's and no one else's — derived from what it printed,
+// never typed here.
+const CDP_PORT = Number(new URL(BROWSER_WS.replace(/^ws:/, 'http:')).port);
+// Both shared names this run could have collided on, printed. serve() bumps to
+// the next free HTTP port, so two runs never share one; the CDP port is the
+// kernel's. A reader who suspects a crossed run can check these against another
+// run's line instead of taking my word for it.
+console.log(`  this run: browser pid ${browser.pid} · CDP port ${CDP_PORT} · HTTP port ${port} — both its own`);
 
 async function cdp(p) {
   let l;
@@ -365,7 +658,7 @@ async function cdp(p) {
   return { send: (m2, p2 = {}) => { const n = ++id; ws.send(JSON.stringify({ id: n, method: m2, params: p2 })); return new Promise((ok, no) => w.set(n, { ok, no })); } };
 }
 
-const c = await cdp(9431);
+const c = await cdp(CDP_PORT);
 await c.send('Page.enable');
 await c.send('Runtime.enable');
 // A screen that fails to mount because its boot THREW must say so. Without
@@ -432,6 +725,7 @@ let misses = 0;
 const rows = [];
 
 for (const shape of SHAPES) {
+  if (onlyShape && shape.tag !== onlyShape) continue;
   await c.send('Emulation.setDeviceMetricsOverride', {
     width: shape.width, height: shape.height, deviceScaleFactor: shape.dsf, mobile: shape.mobile,
   });
@@ -501,13 +795,19 @@ for (const shape of SHAPES) {
       if (!assertOk) assertWhy = typeof a === 'string' ? a : `assert returned ${JSON.stringify(a)}`;
     }
 
+    // The panel signature, read while we are standing on the surface. Compared
+    // against its siblings' after every shot is taken — a member cannot be
+    // compared to the others until the others exist.
+    let probeVal = null;
+    if (s.probe) probeVal = await ev(s.probe);
+
     const file = `${OUT}/${s.name}-${shape.tag}.png`;
     const shot = await c.send('Page.captureScreenshot', { format: 'png' });
     writeFileSync(file, Buffer.from(shot.data, 'base64'));
 
     const ok = seen && seen.landmark && !seen.banner && seen.textLen > 0 && assertOk;
     if (!ok) misses++;
-    rows.push({ shape: shape.tag, name: s.name, sub: s.sub || null, ok, seen, file, waited });
+    rows.push({ shape: shape.tag, name: s.name, sub: s.sub || null, ok, seen, file, waited, probe: probeVal });
     const why = seen && seen.banner
       ? 'VALIDATION BANNER: ' + seen.banner
       : seen && !seen.landmark
@@ -516,6 +816,97 @@ for (const shape of SHAPES) {
           ? `SUB-SURFACE ${s.sub}: ${assertWhy}`
           : '';
     console.log(`${ok ? 'RENDERED' : 'MISS    '}  ${shape.tag.padEnd(9)} ${s.name.padEnd(18)} ${ok ? `${waited}ms` : why}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// THE PROPERTY (B1) — checked per group per shape, after every shot is taken.
+// A per-shot assert only ever sees one surface, so it can be satisfied by facts
+// printed from the id. This is the one check that compares members to each
+// other, which is the only way to ask the handler what it actually built.
+// Reported on green too: a property nobody sees hold is a property nobody will
+// notice stop holding.
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// NOTHING MEASURED — SAY THAT AND STOP. This gate is FIRST, above the property
+// block, the boundary block and the float summary, and its position is the
+// whole point.
+//
+// Marina's amended audit question, off Vira's sweep (2026-08-07): *a boundary
+// block is a claim about a run that HAPPENED. A run that measured nothing prints
+// its emptiness, not its boundaries.* `tutorial-reach --only 9999x9999` printed
+// `all checks passed` and then a boundary naming four other things as uncovered.
+//
+// This tool did the same and I only found it by tripping over it. My first
+// version of this guard sat down beside the verdict line, so a zero-shot run
+// still printed `PROPERTY —`, `BOUNDARY — what this green does NOT cover` (of a
+// green that did not exist) and `float-clip: OK … both shapes` — seventy lines
+// of confidence above the refusal. A guard written at one door is a door, not a
+// property; this one is at the top of the report.
+// ---------------------------------------------------------------------------
+if (!rows.length) {
+  console.error(`\nrelease-shots: ZERO shots were taken, so nothing was measured and this is NOT a pass.`);
+  console.error('No property was evaluated and no boundary is printed below — a boundary is a');
+  console.error('claim about a run that happened.');
+  if (only) {
+    console.error(`\n--only takes a SHOT NAME, not a shape. No shot is called ${JSON.stringify(only)}.`);
+    console.error(`Shapes are chosen with --shape (${SHAPES.map((x) => x.tag).join(', ')}); shot names are:`);
+    console.error('  ' + SCREENS.map((s) => s.name).join(', '));
+  } else {
+    console.error('No screen and no sub-surface produced a row. Both denominators are empty.');
+  }
+  server.close();
+  process.exit(1);
+}
+let propertyFails = 0;
+console.log(`\nPROPERTY — ${DISTINCT_PANELS}`);
+// --only narrows the run to one shot, so every other group has no members and
+// the property has nothing to compare. Reporting that as VIOLATED would make
+// --only permanently red, which trains its reader to ignore the line — the same
+// harm as a green that means nothing, pointed the other way. It is NOT checked,
+// and the run says so instead of guessing.
+if (only) {
+  console.log(`  NOT CHECKED  --only ${only} photographs one shot; the property needs a whole set.`);
+  console.log('               Re-run without --only before citing this run as coverage.');
+}
+// Iterate the shapes that PRODUCED ROWS, not the shapes this file declares. I
+// added --shape and it made the property red at the shape it had deliberately
+// skipped — "no members photographed — unknown, not distinct", which is the
+// property behaving correctly against a list that no longer described the run.
+// The list of shapes measured is a fact about the run; deriving it from `rows`
+// means it cannot disagree with what happened.
+const shapesShot = SHAPES.filter((s) => rows.some((r) => r.shape === s.tag));
+for (const shape of only ? [] : shapesShot) {
+  for (const g of SUB_SURFACE_GROUPS) {
+    const mine = rows.filter((r) => r.shape === shape.tag && r.sub && r.sub.startsWith(`${g.group}:`));
+    const bySig = new Map();
+    let unread = 0;
+    for (const r of mine) {
+      if (r.probe == null || typeof r.probe !== 'string') { unread++; continue; }
+      if (!bySig.has(r.probe)) bySig.set(r.probe, []);
+      bySig.get(r.probe).push(r.sub.slice(g.group.length + 1));
+    }
+    // An unreadable panel is `unknown`, not distinct — the empty-referent rule
+    // applied to my own probe rather than to someone else's home.
+    if (unread || !mine.length) {
+      propertyFails++;
+      console.log(`  VIOLATED  ${shape.tag.padEnd(9)} ${g.group.padEnd(9)} ${mine.length ? `${unread} of ${mine.length} panels could not be read` : 'no members photographed'} — unknown, not distinct`);
+      continue;
+    }
+    const dupes = [...bySig.entries()].filter(([, ids]) => ids.length > 1);
+    if (dupes.length) {
+      propertyFails++;
+      for (const [, ids] of dupes) {
+        console.log(`  VIOLATED  ${shape.tag.padEnd(9)} ${g.group.padEnd(9)} ${ids.join(' and ')} render the SAME panel — they are not ${ids.length} members`);
+      }
+    } else if (mine.length < 2) {
+      // One member cannot be distinct from anything. Printing HOLDS here would
+      // be a green earned by having nothing to compare — vacuously true, and
+      // indistinguishable in the output from a set that actually passed.
+      console.log(`  n/a       ${shape.tag.padEnd(9)} ${g.group.padEnd(9)} 1 member — distinctness needs at least 2, nothing was compared`);
+    } else {
+      console.log(`  HOLDS     ${shape.tag.padEnd(9)} ${g.group.padEnd(9)} ${mine.length} members, ${bySig.size} distinct panels`);
+    }
   }
 }
 
@@ -534,8 +925,21 @@ console.log(`\nBOUNDARY — what this green does NOT cover:
     would be missing, silently, exactly as the fifteen sub-surfaces were before
     this change. The sets known to exist and not enumerated are printed as
     NOT ENUMERATED at the top of this run.
-  - a sub-surface asserted is a panel that SELECTED and PAINTED TEXT. It is not
-    a panel whose contents are right (Vira) or readable (Sunna).`);
+  - a sub-surface asserted is a panel that SELECTED, PAINTED TEXT, and rendered
+    something no sibling in its set renders. It is NOT a panel whose contents
+    are right (Vira) or readable (Sunna): Vira swapped the Stats tab's handler
+    for the Deck's and all 56 shots stayed green, because a wrong-but-non-empty
+    panel is distinct from its siblings and full of text. All thirty sub-surface
+    shots are blind to that, by construction, and it is why this block exists.
+  - the property compares members WITHIN a set. It cannot see a set whose every
+    member is wrong together, and it says nothing about correctness — two
+    distinct, authored layouts can both be bad.
+  - the denominators are read from src/ and the photographs are of
+    dist/AshenSpire.html. This run proves every DECLARED member exists in that
+    artifact, so the bundle is not older than the source in the way that hides
+    a surface. It does NOT prove the artifact matches src/ in general — a bundle
+    carrying something src/ no longer has passes here. That is
+    node tools/verify-shipped.mjs, and it is a separate command.`);
 
 // ---------------------------------------------------------------------------
 // FLOAT CENTRING / CLIP ASSERTION (#69) — Rune, re-applied onto the canonical
@@ -576,6 +980,7 @@ const FLOAT_STRINGS = [
 ];
 let floatMisses = 0;
 for (const shape of SHAPES) {
+  if (onlyShape && shape.tag !== onlyShape) continue;
   await c.send('Emulation.setDeviceMetricsOverride', {
     width: shape.width, height: shape.height, deviceScaleFactor: shape.dsf, mobile: shape.mobile,
   });
@@ -639,16 +1044,35 @@ console.log(floatMisses
 // A summary that misnames what failed is the same defect class as a check that
 // cannot fail: technically true, and it costs someone an hour. So the exit code
 // is shared and the sentence stays specific.
-if (misses || floatMisses) {
+if (misses || floatMisses || propertyFails) {
   const parts = [];
   if (misses) parts.push(`${misses} screen(s) did not render as meant`);
   if (floatMisses) parts.push(`${floatMisses} float(s) off-centre or clipped`);
-  console.error(`\nrelease-shots: ${parts.join(' · ')} — see the MISS/OFF lines above.`);
+  // Named separately for the same reason floats are: a property violation is
+  // not a broken screen, and a summary that misnames what failed costs someone
+  // an hour hunting screens that render perfectly.
+  if (propertyFails) parts.push(`${propertyFails} group/shape(s) violated '${DISTINCT_PANELS}'`);
+  // Point at the block that actually holds the evidence. A property violation
+  // prints no MISS line, and sending its reader to hunt for one is the same
+  // class of defect as a summary that misnames what failed.
+  const where = [misses && 'MISS', floatMisses && 'OFF', propertyFails && 'PROPERTY'].filter(Boolean);
+  console.error(`\nrelease-shots: ${parts.join(' · ')} — see the ${where.join('/')} line(s) above.`);
   server.close();
   process.exit(1);
 }
 const subShots = rows.filter((r) => r.sub).length;
 console.log(`\nrelease-shots: OK — ${rows.length} shots (${rows.length - subShots} top-level, ${subShots} sub-surface), `
-  + `every landmark present, every sub-surface assertion true, no validation banner. → ${OUT}`);
+  + `every landmark present, every sub-surface assertion true, `
+  // The summary must not claim a property the run did not evaluate. Under
+  // --only it was NOT CHECKED, and saying it held would be this tool asserting
+  // coverage it skipped — one line away from the defect the whole change is
+  // against, in the sentence a tired reader is most likely to read alone.
+  + (only
+    ? `and the panel property NOT CHECKED (--only), `
+    // "at both shapes" was typed into this sentence, so --shape made the verdict
+    // line claim two shapes on a one-shape run. The count comes from the run.
+    : `'${DISTINCT_PANELS}' holds in every group at ${shapesShot.length === SHAPES.length
+      ? 'both shapes' : `${shapesShot.map((s) => s.tag).join(' and ')} (--shape)`}, `)
+  + `no validation banner. → ${OUT}`);
 server.close();
 process.exit(0);
