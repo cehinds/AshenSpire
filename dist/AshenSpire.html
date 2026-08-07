@@ -16817,14 +16817,7 @@ function position(x, y) {
  * every tooltip a mouse would.
  */
 function attachTooltip(el, contentFn) {
-  const show = (x, y) => {
-    const html = contentFn();
-    if (!html) return;
-    const t = ensure();
-    t.innerHTML = html;
-    t.style.display = 'block';
-    position(x, y);
-  };
+  const show = (x, y) => showTooltipAt(x, y, contentFn());
   el.addEventListener('pointerenter', (ev) => {
     clearTimeout(showTimer);
     showTimer = setTimeout(() => show(ev.clientX, ev.clientY), 140);
@@ -16844,6 +16837,23 @@ function attachTooltip(el, contentFn) {
   el.addEventListener('gpblur', hideTooltip);
 }
 
+/**
+ * showTooltipAt(x, y, html) — put the one tooltip at a point, now.
+ *
+ * Hover and the focus cursor both arrive here through attachTooltip. A TAP has
+ * neither, and a tap is the whole of a phone: components/refusal.js calls this
+ * so a control that refuses can answer the finger that pressed it, at the place
+ * it was pressed. Empty html shows nothing rather than an empty box.
+ */
+function showTooltipAt(x, y, html) {
+  if (!html) return false;
+  const t = ensure();
+  t.innerHTML = html;
+  t.style.display = 'block';
+  position(x, y);
+  return true;
+}
+
 function hideTooltip() {
   clearTimeout(showTimer);
   if (tipEl) tipEl.style.display = 'none';
@@ -16854,7 +16864,7 @@ function esc(s) {
 }
 
 
-Object.assign(module.exports, { attachTooltip, hideTooltip, esc });
+Object.assign(module.exports, { attachTooltip, showTooltipAt, hideTooltip, esc });
 
 },
 "src/ui/fx.js": function (module, exports, require) {
@@ -23766,6 +23776,7 @@ const { canSwap, cycleSet, equipPiece, cardMods, runMods, loadoutTags, figureSpe
 
 const { renderCard } = require("src/ui/components/card.js");
 const { esc } = require("src/ui/components/tooltip.js");
+const { refuses } = require("src/ui/components/refusal.js");
 const { playerSprite, equippedFigure } = require("src/ui/assets.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { sfx } = require("src/ui/sfx.js");
@@ -24013,7 +24024,13 @@ function mountEquipment(host, {
         locked: piece.locked,
         hint: piece.hint,
       });
-      if (!piece.locked) {
+      if (piece.locked) {
+        // The reason travels WITH the mark (components/refusal.js). This chip
+        // used to get no handler at all: a tap on a weapon the player can see
+        // did nothing and said nothing, and its `🔒` line is below the fold on a
+        // phone with sixteen of these in the list.
+        refuses(chip, () => piece.hint);
+      } else {
         chip.addEventListener('click', () => {
           equipPiece(run.loadout, picking.slotId, picking.setIndex, piece.id);
           sfx.play('cardPlay');
@@ -24134,6 +24151,106 @@ function mountEquipment(host, {
 
 
 Object.assign(module.exports, { mountEquipment });
+
+},
+"src/ui/components/refusal.js": function (module, exports, require) {
+// src/ui/components/refusal.js — a control the player can SEE and cannot USE.
+//
+// Constantine, on his phone, 2026-08-07: "for armament, I can't select the empty
+// slot to equip available weapons." The slot opened. What opened was seventeen
+// armaments with sixteen locked, and A LOCKED CHIP HAD NO CLICK HANDLER AT ALL.
+// He tapped a weapon he could plainly see, nothing moved, and the lock reason was
+// a line of small text below the fold. A screen refusing without saying so reads
+// as a dead control — which is exactly what he reported it as.
+//
+// THE PROPERTY: a control a player can see and cannot use must say WHY, WHERE
+// THEY ARE LOOKING. Sunna's law failing at the moment it exists for.
+//
+// THE MECHANISM, and it is the shape of the thing rather than a fix for one
+// screen: the reason is an ARGUMENT, not an afterthought. There is no way to
+// mark a control as refusing without saying why, BECAUSE SAYING WHY IS HOW YOU
+// MARK IT. A future screen cannot forget the explanation the way this one did,
+// for the same reason a future refusal path in bundle.mjs cannot forget to leave
+// the page: it never has to remember. Binding to the act, not to the caller.
+//
+// WHAT IT DELIBERATELY DOES NOT DO: it does not set `disabled`. A disabled
+// button is unfocusable, untappable and silent — it cannot be asked. A refusing
+// control stays reachable by pointer, by keyboard and by the pad focus cursor
+// (input.js's FOCUS_SELECTOR takes `button:not([disabled])`), and answers all
+// three: hover and focus through the shared tooltip, tap through this module.
+// `aria-disabled` says the same thing to a screen reader WITHOUT removing the
+// control from the tree, which is the whole difference.
+
+const { attachTooltip, showTooltipAt, hideTooltip, esc } = require("src/ui/components/tooltip.js");
+
+/** How long a tapped reason stays up before it gets out of the way (ms). */
+const TAP_MS = 4000;
+let tapTimer = null;
+
+/**
+ * refuses(el, reason) → el
+ *
+ *   reason   a string, or a function returning one (read at show time, so a
+ *            reason that depends on live numbers stays true)
+ *
+ * Marks `el` as refusing and gives it its voice. Returns the element so it can
+ * be written inline where the control is built.
+ *
+ * An EMPTY reason is a defect, not a quiet default: this function is the only
+ * thing in the tree that may mark a control refusing, so a silent refusal can
+ * only be born here, and it says so on the console naming the control. It still
+ * marks the element — failing loud beats failing closed when the alternative is
+ * a control that looks usable and is not.
+ */
+function refuses(el, reason) {
+  if (!el) return el;
+  const why = typeof reason === 'function' ? reason : () => reason;
+  const now = String(why() == null ? '' : why()).trim();
+  if (!now) {
+    console.error(
+      'refuses(): a control was marked refusing with no reason —',
+      el.className || el.tagName, '/', (el.textContent || '').trim().slice(0, 40)
+    );
+  }
+  el.setAttribute('aria-disabled', 'true');
+  // The marker the audit reads (tools/refusal-audit.mjs). It carries the reason
+  // itself rather than a flag, so "is it marked" and "does it have a reason" are
+  // ONE fact with one home and cannot drift apart.
+  el.dataset.refusal = now;
+  attachTooltip(el, () => esc(String(why() == null ? '' : why())));
+  el.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    say(el, ev, why);
+  });
+  return el;
+}
+
+/** Put the reason where the finger landed, and take it away again. */
+function say(el, ev, why) {
+  const text = String(why() == null ? '' : why()).trim();
+  // A tap event carries no useful pointer position on some touch paths, so fall
+  // back to the control's own box — the reason must appear AT the control, and
+  // "we could not read the pointer" is not a licence to show nothing.
+  const r = el.getBoundingClientRect();
+  const x = ev && ev.clientX ? ev.clientX : r.left + r.width / 2;
+  const y = ev && ev.clientY ? ev.clientY : r.top + r.height / 2;
+  showTooltipAt(x, y, esc(text) || esc('This is not available yet.'));
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(hideTooltip, TAP_MS);
+}
+
+/**
+ * refusalOf(el) → the reason string, or null when the control does not refuse.
+ * One reader for anything that wants to ask (tests, the audit, a future screen).
+ */
+function refusalOf(el) {
+  if (!el || el.getAttribute('aria-disabled') !== 'true') return null;
+  return el.dataset ? (el.dataset.refusal || '') : '';
+}
+
+
+Object.assign(module.exports, { refuses, refusalOf });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {

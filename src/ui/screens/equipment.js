@@ -21,6 +21,7 @@ import {
 } from '../../model/loadout.js';
 import { renderCard } from '../components/card.js';
 import { esc } from '../components/tooltip.js';
+import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
@@ -268,7 +269,13 @@ export function mountEquipment(host, {
         locked: piece.locked,
         hint: piece.hint,
       });
-      if (!piece.locked) {
+      if (piece.locked) {
+        // The reason travels WITH the mark (components/refusal.js). This chip
+        // used to get no handler at all: a tap on a weapon the player can see
+        // did nothing and said nothing, and its `🔒` line is below the fold on a
+        // phone with sixteen of these in the list.
+        refuses(chip, () => piece.hint);
+      } else {
         chip.addEventListener('click', () => {
           equipPiece(run.loadout, picking.slotId, picking.setIndex, piece.id);
           sfx.play('cardPlay');

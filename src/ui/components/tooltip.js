@@ -60,14 +60,7 @@ function position(x, y) {
  * every tooltip a mouse would.
  */
 export function attachTooltip(el, contentFn) {
-  const show = (x, y) => {
-    const html = contentFn();
-    if (!html) return;
-    const t = ensure();
-    t.innerHTML = html;
-    t.style.display = 'block';
-    position(x, y);
-  };
+  const show = (x, y) => showTooltipAt(x, y, contentFn());
   el.addEventListener('pointerenter', (ev) => {
     clearTimeout(showTimer);
     showTimer = setTimeout(() => show(ev.clientX, ev.clientY), 140);
@@ -85,6 +78,23 @@ export function attachTooltip(el, contentFn) {
     showTimer = setTimeout(() => show(r.right, r.top), 160);
   });
   el.addEventListener('gpblur', hideTooltip);
+}
+
+/**
+ * showTooltipAt(x, y, html) — put the one tooltip at a point, now.
+ *
+ * Hover and the focus cursor both arrive here through attachTooltip. A TAP has
+ * neither, and a tap is the whole of a phone: components/refusal.js calls this
+ * so a control that refuses can answer the finger that pressed it, at the place
+ * it was pressed. Empty html shows nothing rather than an empty box.
+ */
+export function showTooltipAt(x, y, html) {
+  if (!html) return false;
+  const t = ensure();
+  t.innerHTML = html;
+  t.style.display = 'block';
+  position(x, y);
+  return true;
 }
 
 export function hideTooltip() {
