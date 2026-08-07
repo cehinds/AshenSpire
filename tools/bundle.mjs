@@ -398,14 +398,34 @@ function guardScript(s) {
 // failure names the FILE and the LINE, because clause 5's whole demand is that
 // bad data names the entry. Line numbers are exact because rewriteImport pads
 // its replacements to the original line count (see padLines).
+// ONE HOME for the module wrapper. Bjorn's defect: the comment below used to
+// claim each body was "compiled inside the same wrapper the runtime uses" while
+// the gate and the runtime were TWO COPIES with nothing checking they agree —
+// and they disagreed on the thing that matters. The runtime's factories sit
+// inside `"use strict"` (the IIFE below); the gate's did not. So the gate
+// parsed sloppy and the browser parsed strict, and a whole class walked
+// through: `energy: 010` built clean, exit 0, and handed over a blank screen
+// with only `Octal literals are not allowed in strict mode` in the console.
+// Duplicate parameter names, `with`, and `delete x` passed the same way.
+//
+// The hole was invisible for a specific reason worth keeping: src/ is ESM and
+// therefore ALREADY STRICT — and the transform strips the import/export that
+// made it so. The gate was the one place the strictness had to be restored by
+// hand, and it was the one place nobody did.
+//
+// This is Law 0's fourth clause pointed at the gate that enforces Law 1
+// clause 5, so the fix is not just "add the words": the signature has ONE home
+// and the runtime's strictness is ASSERTED below rather than assumed.
+const MODULE_FN = 'function (module, exports, require) {';
 const parseErrors = [];
 for (const id of order) {
   const body = transformed.get(id);
   try {
-    // Compiled inside the same wrapper the runtime uses, so a body that is only
-    // valid as a function body (a bare `return`, say) is judged the way the
-    // browser will judge it. Compiling never runs it.
-    new vm.Script(`(function (module, exports, require) {\n${body}\n})`, { filename: id });
+    // Same signature as the runtime (MODULE_FN, one home) and — the part that
+    // was missing — the same STRICTNESS. `"use strict";` shares the wrapper's
+    // opening line so the body still starts on line 2 and the -1 offset below
+    // stays exact. Compiling never runs it.
+    new vm.Script(`"use strict"; (${MODULE_FN}\n${body}\n})`, { filename: id });
   } catch (err) {
     // vm reports the line within the wrapper; subtract the line we added.
     const at = /:(\d+)\n/.exec(err.stack || '');
@@ -461,7 +481,7 @@ const entryId = idOf(entryAbs);
 const moduleEntries = order
   .map((id) => {
     const body = guardScript(transformed.get(id));
-    return `${JSON.stringify(id)}: function (module, exports, require) {\n${body}\n}`;
+    return `${JSON.stringify(id)}: ${MODULE_FN}\n${body}\n}`;
   })
   .join(',\n');
 
@@ -501,6 +521,21 @@ ${runtime}
 </body>
 </html>
 `;
+
+// The gate above compiles bodies as STRICT because the runtime runs them
+// strict. That is an assumption about a string built further up this same file,
+// and an unchecked assumption between two places is exactly what let the octal
+// class through. So it is checked: if the runtime ever stops being strict, the
+// gate is now lying and the build stops rather than shipping a check that
+// passes for the wrong reason.
+if (!/\(function \(\) \{\s*"use strict";/.test(runtime)) {
+  fail(
+    'the runtime IIFE is no longer strict, so the parse gate (which compiles every\n'
+    + '  module as strict) would now be checking a different language than the one the\n'
+    + '  browser runs. Restore "use strict" in the runtime, or change the gate to match\n'
+    + '  — but they must not disagree.'
+  );
+}
 
 const outDir = resolve(ROOT, 'build');
 mkdirSync(outDir, { recursive: true });
