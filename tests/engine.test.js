@@ -44,6 +44,7 @@ import { weapons } from '../src/content/generated/weapons.js';
 import { KEEPSAKES } from '../src/content/keepsakes.js';
 import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
+  figureSpec, fitsSlot, slotHand, pieceHand,
 } from '../src/model/loadout.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, emptyProgress, recordProgress, evaluateUnlocks, unlockView,
@@ -1509,9 +1510,9 @@ export async function runTests({ artManifest = null } = {}) {
     assert(run.loadout && run.loadout.sets.rightHand.length === 3, 'the right hand carries three sets');
     eq(run.loadout.sets.armor[0], 'default', 'the reaver starts in its one unlocked set');
 
-    equipPiece(run.loadout, 'rightHand', 0, 'dagger');
-    equipPiece(run.loadout, 'rightHand', 1, 'greatsword');
-    equipPiece(run.loadout, 'armor', 0, 'oathsworn');
+    equipPiece(REG, run.loadout, 'rightHand', 0, 'dagger');
+    equipPiece(REG, run.loadout, 'rightHand', 1, 'greatsword');
+    equipPiece(REG, run.loadout, 'armor', 0, 'oathsworn');
     stampDeck(REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
     eq(dmgOf(resolveCard(REG, aStrike)), 3, 'the deck itself is stamped with the dagger');
@@ -1560,6 +1561,118 @@ export async function runTests({ artManifest = null } = {}) {
     const healed = saves.loadRun(REG);
     assert(healed && healed.loadout, 'a pre-equipment save loads with a fresh loadout');
     eq(healed.loadout.sets.rightHand[0], null, 'the healed loadout starts bare-handed');
+  });
+
+  // ---- 28b. hands: the SLOT decides where, the PIECE only asks ------------
+  test("28b. which hand a piece is in is the slot's fact, not the piece's", () => {
+    // Bjorn's photograph on `dev`, 2026-08-07: Straight Sword in the LEFT hand,
+    // Greatsword in the RIGHT, and the figure holds ONE blade — the straight
+    // sword, on the right-hand layer. figureSpec() read `hand` off the PIECE, so
+    // both landed on spec.rightId and the second write won. Two weapons in, one
+    // weapon out, wrong hand, no error. One fact with two homes (Law 0 c4).
+    const run = createRunState({ seed: 3, classId: 'reaver', registries: REG });
+
+    // Written straight into the loadout, the way a SAVE arrives — this is a
+    // claim about where a piece is DRAWN, with the equip gate out of the way.
+    run.loadout.sets.leftHand[0] = 'straightSword';
+    run.loadout.sets.rightHand[0] = 'greatsword';
+    const both = figureSpec(REG, run.loadout, 'reaver');
+    eq(both.leftId, 'straightSword', 'the piece in the left slot is drawn in the left hand');
+    eq(both.rightId, 'greatsword', 'the piece in the right slot is drawn in the right hand');
+
+    // 'either' is still a real word: the dagger goes in either hand and is drawn
+    // in the one it is in, not in the one its row prefers.
+    run.loadout.sets.leftHand[0] = 'dagger';
+    eq(figureSpec(REG, run.loadout, 'reaver').leftId, 'dagger', "an 'either' piece in the left hand is drawn there");
+    run.loadout.sets.leftHand[0] = null;
+    run.loadout.sets.rightHand[0] = 'dagger';
+    eq(figureSpec(REG, run.loadout, 'reaver').rightId, 'dagger', '…and in the right hand when it is there');
+    eq(figureSpec(REG, run.loadout, 'reaver').leftId, null, 'and it is not in both at once');
+
+    // The two vocabularies read out of their own homes and no other.
+    eq(slotHand(REG.equipment.slots.find((s) => s.id === 'leftHand')), 'left', 'the left slot knows it is the left hand');
+    eq(slotHand(REG.equipment.slots.find((s) => s.id === 'armor')), null, 'armour is worn, not held');
+    eq(pieceHand(REG.equipment.armaments.find((a) => a.id === 'dagger')), null, "'either' constrains nothing");
+    eq(pieceHand(REG.equipment.armaments.find((a) => a.id === 'greatsword')), 'right', 'a right-handed weapon says so');
+
+    // The other edge of the same defect, on a slot the real table does not have
+    // yet: a slot that is NOT a hand is not a hand. A carried talisman used to
+    // arrive as a weapon layer in the right hand and overwrite the weapon.
+    const carried = {
+      equipment: {
+        slots: [
+          { id: 'rightHand', label: 'R', kinds: ['weapon'], hand: 'right', sets: 1, swap: 'combat' },
+          { id: 'charm', label: 'C', kinds: ['talisman'], hand: '', sets: 1, swap: 'outOfCombat' },
+        ],
+        armaments: [
+          { id: 'w', kind: 'weapon', hand: 'right', tags: [], mods: [] },
+          { id: 't', kind: 'talisman', hand: '', tags: [], mods: [] },
+        ],
+        armour: [],
+      },
+    };
+    const worn = { sets: { rightHand: ['w'], charm: ['t'] }, active: {}, storage: [] };
+    const drawn = figureSpec(carried, worn, 'reaver');
+    eq(drawn.rightId, 'w', 'the weapon keeps the right hand');
+    eq(drawn.leftId, null, 'and the talisman is drawn in no hand at all');
+
+    // ---- the gate is on the mutation, not on the screen -------------------
+    const fresh = createRunState({ seed: 4, classId: 'reaver', registries: REG });
+    assert(!equipPiece(REG, fresh.loadout, 'leftHand', 0, 'greatsword'), 'the left hand refuses a right-handed weapon');
+    eq(fresh.loadout.sets.leftHand[0], null, 'and a refusal leaves the slot exactly as it found it');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'buckler'), 'a left-hand piece goes in');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger'), "an 'either' piece goes in the left hand");
+    assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'dagger'), '…and in the right hand');
+    assert(!equipPiece(REG, fresh.loadout, 'rightHand', 0, 'buckler'), 'the kind gate still holds too');
+    eq(fresh.loadout.sets.rightHand[0], 'dagger', 'and that refusal changed nothing either');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, null), 'clearing a slot is always allowed');
+    eq(fresh.loadout.sets.leftHand[0], null, 'and it clears');
+
+    // The picker offers exactly what the mutation accepts. Not a claim about
+    // the screen — a claim that the two questions have ONE answer, which is
+    // what stops a slot from taking a click and then doing nothing.
+    const allPieces = [...REG.equipment.armaments, ...REG.equipment.armour];
+    let checked = 0; let offered = 0;
+    for (const slot of REG.equipment.slots) {
+      for (const piece of allPieces) {
+        const fits = fitsSlot(slot, piece);
+        const probe = { sets: { [slot.id]: [null] }, active: {}, storage: [] };
+        eq(equipPiece(REG, probe, slot.id, 0, piece.id), fits, `${slot.id} ← ${piece.id}: offer and mutation agree`);
+        checked += 1;
+        if (fits) offered += 1;
+      }
+    }
+    // An empty result set is never a pass, and neither is an all-false one: a
+    // predicate that refused everything would satisfy the loop above.
+    eq(checked, REG.equipment.slots.length * allPieces.length, 'every slot × piece pair was actually checked');
+    assert(offered > 0 && offered < checked, `the gate both admits and refuses (${offered} of ${checked})`);
+
+    // ---- the validator, watched going red, by name ------------------------
+    const clone = () => JSON.parse(JSON.stringify({
+      slots: REG.equipment.slots,
+      armaments: REG.equipment.armaments,
+      armour: REG.equipment.armour,
+      modFields: REG.equipment.modFields,
+      targets: REG.equipment.targets,
+      cardTargets: REG.equipment.cardTargets,
+    }));
+    const check = (mut) => {
+      const equipment = clone();
+      mut(equipment);
+      return validateEquipment({ equipment, classes: REG.classes, statuses: REG.statuses }).join('; ');
+    };
+    const slotRow = (e, id) => e.slots.find((s) => s.id === id);
+    const armRow = (e, id) => e.armaments.find((a) => a.id === id);
+
+    eq(check(() => {}), '', 'the control arm: an untouched copy of the real tables is sound');
+    assert(check((e) => { slotRow(e, 'leftHand').hand = ''; }).includes("slot 'leftHand' accepts"),
+      'a hand slot that names no hand fails, naming the slot and a piece it would swallow');
+    assert(check((e) => { slotRow(e, 'leftHand').hand = 'sideways'; }).includes('is not one of left|right'),
+      'a hand outside the closed set fails and prints the legal values');
+    assert(check((e) => { armRow(e, 'ashStaff').hand = 'left'; }).includes("no slot can hold 'ashStaff'"),
+      'a piece no slot can hold fails by its own id');
+    assert(check((e) => { slotRow(e, 'leftHand').kinds = ['staff']; }).includes("slot 'leftHand' can hold nothing"),
+      'a slot whose every matching piece names the other hand fails as an empty result set');
   });
 
   // ---- 30. unlocks are earned, remembered, and never taken back -------------
@@ -1680,7 +1793,7 @@ export async function runTests({ artManifest = null } = {}) {
     assert(!addToStorage(run.loadout, 'katana', 8), 'the same piece does not stack');
     assert(!addToStorage(run.loadout, 'dagger', 1), 'storage respects its cap');
     assert(carriedIds(run.loadout).includes('katana'), 'carried counts what is in storage');
-    equipPiece(run.loadout, 'rightHand', 0, 'greatsword');
+    equipPiece(REG, run.loadout, 'rightHand', 0, 'greatsword');
     assert(carriedIds(run.loadout).includes('greatsword'), 'and what is slotted');
   });
 

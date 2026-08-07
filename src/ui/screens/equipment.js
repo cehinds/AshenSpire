@@ -17,7 +17,7 @@
 import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
-  canSwap, cycleSet, equipPiece, cardMods, runMods, loadoutTags, figureSpec, carriedIds,
+  canSwap, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, carriedIds,
 } from '../../model/loadout.js';
 import { renderCard } from '../components/card.js';
 import { esc } from '../components/tooltip.js';
@@ -179,9 +179,11 @@ export function mountEquipment(host, {
   }
 
   function eligible(slot) {
+    // fitsSlot is the model's gate, and the same one equipPiece enforces — the
+    // picker must never offer a piece the mutation will refuse.
     const pool = slot.kinds.includes('armor')
-      ? (eq.armour || []).filter((o) => o.classId === run.class)
-      : (eq.armaments || []).filter((a) => slot.kinds.includes(a.kind));
+      ? (eq.armour || []).filter((o) => o.classId === run.class && fitsSlot(slot, o))
+      : (eq.armaments || []).filter((a) => fitsSlot(slot, a));
     return pool.map(gate).filter(Boolean);
   }
 
@@ -256,7 +258,7 @@ export function mountEquipment(host, {
     bare.className = 'equip-chip bare';
     bare.innerHTML = '<span class="ec-name">Bare</span><span class="ec-mods">Nothing at all</span>';
     bare.addEventListener('click', () => {
-      equipPiece(run.loadout, picking.slotId, picking.setIndex, null);
+      equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null);
       commit();
     });
     list.appendChild(bare);
@@ -270,7 +272,7 @@ export function mountEquipment(host, {
       });
       if (!piece.locked) {
         chip.addEventListener('click', () => {
-          equipPiece(run.loadout, picking.slotId, picking.setIndex, piece.id);
+          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id);
           sfx.play('cardPlay');
           commit();
         });

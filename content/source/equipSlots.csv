@@ -9,8 +9,18 @@
 #   outOfCombat   may only be changed on the map, at rest, or in a shop
 #
 # `kinds` gates which armament rows (weapons.csv `kind`) fit the slot.
-id,label,kinds,sets,swap,storage,order,blurb
-rightHand,Right Hand,weapon|staff,3,combat,true,1,"Your main armament. Rewrites Strike."
-leftHand,Left Hand,shield|weapon,3,combat,true,2,"Off-hand. Rewrites Defend."
-armor,Armour,armor,1,outOfCombat,false,3,"Your set. Repaints you and steadies the numbers."
-talisman,Talisman,talisman,3,outOfCombat,false,4,"Small charms. Empty until talismans are authored."
+#
+# `hand`   right | left | (empty)
+#          WHICH HAND A PIECE IS IN IS THIS COLUMN'S FACT, and only this one.
+#          weapons.csv also has a `hand`, and it means something different: the
+#          hand a piece MAY be held in (eligibility). This column says where a
+#          slot IS, so what the player put in it is drawn there. Empty means the
+#          slot is not a hand at all — armour is worn, a talisman is carried,
+#          and neither is drawn in a hand.
+#          A slot that accepts pieces naming a hand must name one itself, or
+#          validateEquipment() fails by name at that row.
+id,label,kinds,hand,sets,swap,storage,order,blurb
+rightHand,Right Hand,weapon|staff,right,3,combat,true,1,"Your main armament. Rewrites Strike."
+leftHand,Left Hand,shield|weapon,left,3,combat,true,2,"Off-hand. Rewrites Defend."
+armor,Armour,armor,,1,outOfCombat,false,3,"Your set. Repaints you and steadies the numbers."
+talisman,Talisman,talisman,,3,outOfCombat,false,4,"Small charms. Empty until talismans are authored."
