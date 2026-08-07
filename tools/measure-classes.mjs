@@ -4,10 +4,29 @@
 // This is runsim.mjs's exact bot and run loop (copied, not imported — runsim
 // exports nothing) plus passive instrumentation: after each combat it reads
 // combat.eventLog, which consumes no RNG and touches no state, so the default
-// policy reproduces runsim's runs seed-for-seed. `--check` asserts that: at
-// n=30 the wins must equal runsim's published datum (Reaver 1, Starseer 4,
-// Herald 6). If the check fails, this file has drifted from runsim and every
-// number it prints is about the drift, not the game.
+// policy reproduces runsim's runs seed-for-seed. `--check` asserts exactly
+// that, and nothing more.
+//
+// WHAT `--check` IS, said plainly: a CONSISTENCY check, never a correctness
+// one. It proves this file's copied bot still agrees with runsim's. It says
+// nothing about whether runsim is right, whether the bot is a good pilot, or
+// whether the game is balanced. Two implementations that agree can be wrong
+// together, and this check would print PASSED.
+//
+// HOW THE BASELINE IS OBTAINED, and why it is not a number in this file.
+// Until 2026-08-07 the comparison was a frozen constant — the wins runsim
+// happened to produce on the day the datum was collected. A frozen baseline is
+// a fact with a half-life: every legitimate balance edit moves the game away
+// from it, and the check then reports DRIFT while naming the wrong defendant
+// ("this file has drifted from runsim") when the two files agree perfectly. On
+// a healthy tree at 18aab6f it read 3/5/7 against a frozen 1/4/6 and failed all
+// three classes while the actual drift was ZERO. Updating the number would only
+// reset the clock on the same defect, so the constant is DELETED: the baseline
+// is now derived at run time by executing tools/runsim.mjs in this same tree
+// and reading its wins. Same tree, same commit, no stored fact to rot.
+// If runsim cannot be run or its output cannot be parsed, this check EXITS 2
+// as an error — it never degrades to a pass (Law 0 clause 5: a green that
+// could not do its own measurement is the dangerous failure).
 //
 // What it adds over runsim:
 //   - honest n (default 500/class; seeds are runsim's own formula, so any n
@@ -26,12 +45,19 @@
 //     If the class ranking holds across policies, the split is not an
 //     artifact of one card ordering.
 //
-// Run: node tools/measure-classes.mjs [runsPerClass=500] [--policy=greedy] [--check]
+// Run: node tools/measure-classes.mjs [runsPerClass=500] [--policy=greedy]
+//      node tools/measure-classes.mjs [n=30] --check        derive + compare
+//      node tools/measure-classes.mjs --selftest            observed red, built in
+//      node tools/measure-classes.mjs --mutate=<name>        one planted drift
 // Boundary this tool does NOT cover: it measures the naive bot only — no
 // combo piloting, no deck curation, no merchant. Absolute rates are the sim's
 // floor, never the game's difficulty; only the BETWEEN-CLASS split under an
-// identical policy is evidence about classes.
+// identical policy is evidence about classes. That boundary is printed in the
+// run output too, not only here (SPEC §8 clause 5) — a header is read by the
+// author, the output by whoever is about to trust the number.
 
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
@@ -50,8 +76,31 @@ const argv = process.argv.slice(2);
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 500);
 const POLICY = (argv.find((a) => a.startsWith('--policy=')) || '--policy=greedy').slice(9);
 const CHECK = argv.includes('--check');
+const SELFTEST = argv.includes('--selftest');
 if (!['greedy', 'skillfirst', 'random', 'reaverkit'].includes(POLICY)) {
   console.error(`unknown policy '${POLICY}'`); process.exit(2);
+}
+
+// ---- planted drift, for the observed red (SPEC §8 clause 4) -----------------
+// The defect class --check exists to catch is THIS file's copied bot silently
+// diverging from runsim's. Each mutation below reinstates one such divergence
+// at the exact site where the copy was made; each must be CAUGHT. Inverted
+// expectation, so the corpus is not one anybody has to take on trust.
+//
+// `rng` is the sharpest of the four: the header's central claim is that the
+// instrumentation consumes no RNG, so the runs nest seed-for-seed. `rng` burns
+// one draw per combat — the claim's own falsifier, failing for the right
+// reason rather than for a coincidence of win counts.
+const MUTATIONS = {
+  rng: 'instrumentation stops being passive — burns one misc draw per combat',
+  flask: 'flask threshold 0.55 → 0.75 (runsim drinks at 0.55)',
+  path: 'shrine-preference gate 0.55 → 0.95 (map pathing diverges)',
+  shrine: 'shrine rest gate 0.60 → 0.20 (rest/smith decision diverges)',
+};
+let MUTATE = (argv.find((a) => a.startsWith('--mutate=')) || '').slice(9) || null;
+if (MUTATE && !(MUTATE in MUTATIONS)) {
+  console.error(`unknown mutation '${MUTATE}'; known: ${Object.keys(MUTATIONS).join(', ')}`);
+  process.exit(2);
 }
 
 // Signature statuses per class — the kit the instrument rule says we must see
@@ -126,9 +175,10 @@ function botFight(run, rng, encounterId, stats, pickRandom) {
     player: { classId: run.class, maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds: run.relics, flasks: run.flasks },
     enemyIds: enc.enemies,
   });
+  if (MUTATE === 'rng') rng.float('misc'); // planted: the instrumentation is no longer passive
   let guard = 0;
   while (!combat.result && guard++ < 9000) {
-    if (combat.player.hp < combat.player.maxHp * 0.55 && combat.player.flasks.length) {
+    if (combat.player.hp < combat.player.maxHp * (MUTATE === 'flask' ? 0.75 : 0.55) && combat.player.flasks.length) {
       const fdef = REG.flasks.get(combat.player.flasks[0].flaskId);
       const ftgt = combat.enemies.find((e) => e.alive);
       try {
@@ -272,7 +322,7 @@ function simulateRun(classId, seed) {
     let nextIds = map.startIds;
     while (true) {
       const options = nextIds.map((id) => map.nodes[id]);
-      const hurt = run.hp < run.maxHp * 0.55;
+      const hurt = run.hp < run.maxHp * (MUTATE === 'path' ? 0.95 : 0.55);
       const pick = (hurt && options.find((n) => n.type === 'shrine')) || options[0];
       currentId = pick.id;
       result.floor = pick.floor;
@@ -319,7 +369,7 @@ function simulateRun(classId, seed) {
           break;
         }
       } else if (kind === 'shrine') {
-        if (run.hp < run.maxHp * 0.6) run.hp = Math.min(run.maxHp, run.hp + shrineHealAmount(REG, run));
+        if (run.hp < run.maxHp * (MUTATE === 'shrine' ? 0.2 : 0.6)) run.hp = Math.min(run.maxHp, run.hp + shrineHealAmount(REG, run));
         else { const c = run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true; }
       } else if (kind === 'treasure') {
         const r = rollRelicReward(REG, rng, run.relics);
@@ -359,28 +409,137 @@ function twoPropP(w1, n1, w2, n2) {
 }
 
 // ---- fleet ------------------------------------------------------------------
-console.log(`measure-classes — ${N} runs/class, policy=${POLICY}${CHECK ? ', CHECK mode' : ''}`);
-console.log(`seeds: runsim's own formula (i*2654435761)>>>0, i=1..${N} — the 30-run datum is this set's prefix\n`);
-
-const perClass = {};
-for (const cls of REG.classes.all()) {
-  const rows = [];
-  for (let i = 1; i <= N; i++) rows.push(simulateRun(cls.id, (i * 2654435761) >>> 0));
-  perClass[cls.id] = { name: cls.name, rows };
+function runFleet(n) {
+  const out = {};
+  for (const cls of REG.classes.all()) {
+    const rows = [];
+    for (let i = 1; i <= n; i++) rows.push(simulateRun(cls.id, (i * 2654435761) >>> 0));
+    out[cls.id] = { name: cls.name, rows };
+  }
+  return out;
 }
+const winsOf = (fleet, id) => fleet[id].rows.filter((r) => r.victory).length;
+
+// ---- the baseline, DERIVED — no constant lives in this file -----------------
+// Runs runsim.mjs in this same tree at the same n and reads its wins. Every
+// failure path here is an ERROR (exit 2), never a pass: a check that could not
+// perform its own measurement has produced `unknown`, and unknown blocks.
+const RUNSIM = fileURLToPath(new URL('runsim.mjs', import.meta.url));
+
+function deriveRunsimWins(n) {
+  const r = spawnSync(process.execPath, [RUNSIM, String(n)], { encoding: 'utf8' });
+  if (r.error) throw new Error(`could not run runsim.mjs: ${r.error.message}`);
+  if (r.status !== 0) {
+    throw new Error(`runsim.mjs exited ${r.status} — the baseline could not be derived.\n${(r.stderr || '').trim()}`);
+  }
+  // Class NAME → id from the registry, never a table typed here (Law 0
+  // clause 1: the machinery derives what the data already states).
+  const byName = new Map(REG.classes.all().map((c) => [c.name, c.id]));
+  const wins = {};
+  for (const line of String(r.stdout).split('\n')) {
+    const m = /^(.+?)\s+full-run wins\s+(\d+)\/(\d+)\b/.exec(line);
+    if (!m) continue;
+    const id = byName.get(m[1].trim());
+    if (!id) throw new Error(`runsim.mjs reported class '${m[1].trim()}', which is not in the registry`);
+    if (Number(m[3]) !== n) throw new Error(`runsim.mjs ran n=${m[3]}, this tool ran n=${n} — not comparable`);
+    wins[id] = Number(m[2]);
+  }
+  // "An empty result is not a zero" — prove the parse had a referent.
+  const missing = REG.classes.all().map((c) => c.id).filter((id) => !(id in wins));
+  if (missing.length) {
+    throw new Error(`parsed no wins line for ${missing.join(', ')} from runsim.mjs output — the baseline is unknown, not zero`);
+  }
+  return wins;
+}
+
+// Returns true when this file agrees with runsim across every class.
+function runCheck(n, baseline, { quiet = false } = {}) {
+  const fleet = runFleet(n);
+  let ok = true;
+  for (const cls of REG.classes.all()) {
+    const got = winsOf(fleet, cls.id);
+    const want = baseline[cls.id];
+    if (got !== want) ok = false;
+    if (!quiet) console.log(`  ${cls.id}: ${got}/${n} (runsim, derived just now: ${want}/${n}) ${got === want ? 'MATCH' : 'DRIFT'}`);
+  }
+  return ok;
+}
+
+function checkBoundary(n) {
+  console.log('\nwhat this check did NOT check (SPEC §8 clause 5):');
+  console.log('  · CONSISTENCY, not correctness — it proves this file agrees with runsim.mjs.');
+  console.log('    It says nothing about whether runsim is right. Both can be wrong together');
+  console.log('    and this check still prints PASSED.');
+  console.log(`  · the greedy policy at n=${n} only — nothing about skillfirst, random or reaverkit,`);
+  console.log('    and nothing about any seed outside i=1..' + n + '.');
+  console.log('  · not the game: no balance claim, no spec band, no statement about a human pilot.');
+  console.log('  · not the counters — the per-class kit/bleed/stagger tallies this tool adds over');
+  console.log('    runsim have no runsim counterpart, so agreement here leaves them unverified.');
+}
+
+if (SELFTEST) {
+  // Observed red, built in and re-runnable by anyone (SPEC §8 clause 4).
+  // The baseline is derived ONCE: a mutation perturbs only this file's
+  // in-process bot, never the runsim subprocess, so re-deriving per mutation
+  // would measure the same tree four times for the same answer.
+  const n = 30;
+  console.log(`measure-classes --selftest — ${Object.keys(MUTATIONS).length} planted drifts at n=${n}, each must be CAUGHT\n`);
+  let baseline;
+  try { baseline = deriveRunsimWins(n); } catch (e) {
+    console.error(`SELFTEST ERROR — ${e.message}`); process.exit(2);
+  }
+  console.log(`derived baseline from runsim.mjs: ${REG.classes.all().map((c) => `${c.id} ${baseline[c.id]}/${n}`).join(' · ')}\n`);
+  let failures = 0;
+  MUTATE = null;
+  if (!runCheck(n, baseline, { quiet: true })) {
+    console.log('  CLEAN     unmutated tree — NOT MATCHING runsim  ✘ (the check is red before any plant)');
+    failures++;
+  } else {
+    console.log('  CLEAN     unmutated tree — matches runsim  ✔');
+  }
+  for (const [name, why] of Object.entries(MUTATIONS)) {
+    MUTATE = name;
+    const agreed = runCheck(n, baseline, { quiet: true });
+    if (agreed) { console.log(`  ${name.padEnd(9)} NOT CAUGHT ✘ — ${why}`); failures++; }
+    else console.log(`  ${name.padEnd(9)} caught ✔ — ${why}`);
+  }
+  MUTATE = null;
+  console.log(failures === 0
+    ? `\nSELFTEST PASSED — clean tree agrees, all ${Object.keys(MUTATIONS).length} planted drifts were caught.`
+    : `\nSELFTEST FAILED — ${failures} case(s) went the wrong way. This check cannot be cited as coverage.`);
+  console.log('\nwhat this selftest did NOT check (SPEC §8 clause 5):');
+  console.log('  · that the four plants are the ONLY ways this file can drift from runsim.');
+  console.log('    They are the four sites where the copy was made; a fifth divergence nobody');
+  console.log('    thought to plant is not covered by a green here.');
+  console.log('  · anything about correctness — a caught plant proves the check can go red,');
+  console.log('    not that either implementation plays the game well.');
+  process.exit(failures === 0 ? 0 : 1);
+}
+
+console.log(`measure-classes — ${N} runs/class, policy=${POLICY}${CHECK ? ', CHECK mode' : ''}${MUTATE ? `, MUTATED (${MUTATE})` : ''}`);
+console.log(`seeds: runsim's own formula (i*2654435761)>>>0, i=1..${N} — any n nests a smaller n as its prefix\n`);
+if (MUTATE) console.log(`!! planted drift active: ${MUTATIONS[MUTATE]} — these numbers are about the plant, not the game\n`);
 
 if (CHECK) {
-  const expect = { reaver: 1, starseer: 4, herald: 6 };
-  if (N !== 30 || POLICY !== 'greedy') { console.error('CHECK requires n=30 --policy=greedy'); process.exit(2); }
-  let ok = true;
-  for (const [id, want] of Object.entries(expect)) {
-    const got = perClass[id].rows.filter((r) => r.victory).length;
-    console.log(`  ${id}: ${got}/30 (runsim datum ${want}/30) ${got === want ? 'MATCH' : 'DRIFT'}`);
-    if (got !== want) ok = false;
+  if (POLICY !== 'greedy') {
+    console.error('CHECK requires --policy=greedy — runsim.mjs has only the greedy bot, so any other policy has no baseline to compare against.');
+    process.exit(2);
   }
-  console.log(ok ? '\nCHECK PASSED — this tool is runsim, plus counters.' : '\nCHECK FAILED — drift from runsim; numbers untrustworthy.');
+  let baseline;
+  try { baseline = deriveRunsimWins(N); } catch (e) {
+    console.error(`CHECK ERROR — ${e.message}`);
+    console.error('The baseline is unknown, which blocks exactly as a red does. Not reporting a pass.');
+    process.exit(2);
+  }
+  const ok = runCheck(N, baseline);
+  console.log(ok
+    ? '\nCHECK PASSED — this tool is runsim, plus counters. (Consistency, not correctness.)'
+    : '\nCHECK FAILED — drift from runsim; numbers untrustworthy.');
+  checkBoundary(N);
   process.exit(ok ? 0 : 1);
 }
+
+const perClass = runFleet(N);
 
 for (const [id, { name, rows }] of Object.entries(perClass)) {
   const wins = rows.filter((r) => r.victory).length;
@@ -450,4 +609,15 @@ for (let a = 0; a < ids.length; a++) {
     console.log(`  ${ids[a]} ${wa}/${N} vs ${ids[b]} ${wb}/${N}: p = ${twoPropP(wa, N, wb, N).toPrecision(3)}`);
   }
 }
-console.log('\nboundary: naive-bot floor only — absolute rates say nothing about the spec band for experienced players (SPEC.md M3: ~35–50%).');
+console.log('\nwhat this run did NOT check (SPEC §8 clause 5):');
+console.log('  · this invocation ran NO check against runsim.mjs. These numbers are not');
+console.log('    consistency-verified — run `--check` (and `--selftest` to see it go red).');
+console.log('  · and --check would only prove CONSISTENCY with runsim, never correctness:');
+console.log('    two copies of one bot can agree and both be wrong about the game.');
+console.log(`  · naive-bot floor only under policy=${POLICY} — no combo piloting, no deck curation,`);
+console.log('    no merchant. Absolute rates say nothing about the spec band for experienced');
+console.log('    players (SPEC.md M3: ~35–50%); only the BETWEEN-CLASS split under an identical');
+console.log('    policy is evidence about classes.');
+console.log('  · the counters above (kit, bleed economy, stagger windows, hp economy) are read');
+console.log('    from the event log and have no independent oracle — nothing here cross-checks');
+console.log('    them against the engine\'s own accounting.');
