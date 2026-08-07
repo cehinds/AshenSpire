@@ -943,6 +943,43 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   border-bottom: 1px solid var(--ember); color: var(--parchment); font-size: 1.2rem;
 }
 
+/* ---------- EldenSpire#90 — the context pane folds, the subject never does ---
+   Every rule here keys off `[data-role]` / `[data-collapsed]`, which equipment.js
+   DERIVES from one authored field (`balance.equipment.subject`). Not one
+   selector names `.armoury-strip`, exactly as none of them names `.view-grid`
+   any more — move the subject and the fold moves with it, with no edit in this
+   file. The `.armoury-strip` rule above stays where it is: it is that pane's own
+   look, not its role.
+
+   LAW 4. `min-height` is the ergonomic floor and it is text-independent, the
+   caret and count grow with Text size because they are glyphs, and the header
+   grows INTRINSICALLY off its own content — a floor plus `height: auto`, never
+   a multiple of the text unit. LAW 3 CLAUSE 4 is answered in the markup: the
+   control carries `data-tip`, so touch and pad see it too. */
+.armoury [data-role='context'] > .region-head {
+  display: flex; align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+}
+.armoury [data-role='context'][data-collapsed='1'] > .region-head { border-bottom: none; }
+.region-fold {
+  display: flex; align-items: center; gap: 0.6rem; width: 100%;
+  min-height: 44px; height: auto; padding: 0.4rem 0;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-family: inherit; text-align: left;
+}
+.region-fold:hover, .region-fold:focus-visible { color: var(--gold); }
+.rf-caret { font-size: 1.1rem; }
+.rf-label { font-size: 1.15rem; letter-spacing: 0.08em; text-transform: uppercase; }
+/* A folded pane still SAYS how much is inside it — a pane that folds to a bare
+   arrow is decoration that decorates nothing, and the player cannot tell an
+   empty strip from a hidden one. */
+.rf-count { margin-left: auto; font-size: 1.05rem; color: var(--muted); }
+/* The fold itself: everything but the header goes, and the pane stops competing
+   for the height the subject wanted. `.armoury-body` is `flex: 1`, so the space
+   is handed to the subject by the layout that was already there. */
+.armoury [data-role='context'][data-collapsed='1'] > :not(.region-head) { display: none; }
+.armoury [data-role='context'][data-collapsed='1'] { flex: 0 0 auto; padding-top: 0; padding-bottom: 0; }
+
 /* Grid view: the figure between two columns of slots, hands on the side they
    are actually held. The picker moves to the right pane so the middle stays a
    picture of a person rather than a form. */

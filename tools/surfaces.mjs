@@ -128,6 +128,17 @@ async function selftest() {
     ['balance.equipment.views emptied — the ZERO-member edge', 'armouryView', null,
       () => { views.__saved = views.splice(0, views.length); },
       () => { views.push(...views.__saved); delete views.__saved; }],
+    // P12/P13 — #90. `subject` is a scalar read as a one-member set, so it
+    // inherits both edges the four sets above already have observed red. The
+    // typo names the wrong region; the omission names none. They are two edits
+    // and they get two sentences.
+    ['balance.equipment.subject naming a region that does not exist', 'armourySubject', 'slot',
+      () => { balance.equipment.subject = 'slot'; },
+      () => { balance.equipment.subject = 'slots'; }],
+    ['balance.equipment.subject removed — no subject, so every pane would fold', 'armourySubject', null,
+      () => { delete balance.equipment.subject; },
+      () => { balance.equipment.subject = 'slots'; }],
+
     ['a MENU row naming an act nobody implements', 'menuAct', 'journal',
       async () => { const { MENU } = await import('../src/ui/uiContent.js'); MENU.map.push({ act: 'journal', band: 'body' }); },
       async () => { const { MENU } = await import('../src/ui/uiContent.js'); MENU.map.pop(); }],

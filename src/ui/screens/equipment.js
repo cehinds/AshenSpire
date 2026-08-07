@@ -20,7 +20,7 @@ import {
   canSwap, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, carriedIds,
 } from '../../model/loadout.js';
 import { renderCard } from '../components/card.js';
-import { esc } from '../components/tooltip.js';
+import { esc, attachTooltip } from '../components/tooltip.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
@@ -117,6 +117,109 @@ export function viewLayout(id) {
   const cell = cellKey(row);
   if (!cell || !LAYOUTS[cell]) return null;
   return { figure: row.figure, slots: row.slots, cell };
+}
+
+// ---- the regions: which pane is the SUBJECT, and which is CONTEXT -----------
+//
+// EldenSpire#90. Constantine asked for the card list to be collapsible "so that
+// I can see the armory slots better", and the clause after "so that" is the
+// missing word, not the feature. `collapsible: true` on a pane states a
+// MECHANISM; what the screen did not carry is which pane you opened it FOR. You
+// collapse the context; you never collapse the subject.
+//
+// THIS SCREEN HAD ALREADY DECIDED IT, THREE TIMES, IN THREE MECHANISMS — which
+// is why this is a collapse and not a feature:
+//
+//   narrowDefaultView: 'rack'   a phone opens on the view with no figure
+//   `[data-slots='flank']:not(.picking) .armoury-right { display: none }`
+//                               a whole pane hidden at narrow, no control, no
+//                               trace, nothing a player can put back
+//   Freja's armoury ruling      "a picture before the controls is a wall"
+//
+// One fact — the slots are the subject — written three times with nothing
+// checking they agree. That is the second copy this seat exists to refuse.
+//
+// THE FIGURE IS DELIBERATELY NOT A REGION. `rack` already IS the figure's
+// collapse: a whole declared view whose only job is to remove it. Making the
+// figure collapsible too would be two mechanisms for one act, which is the
+// defect, not the feature.
+//
+// FLAT, AND SAID OUT LOUD SO NOBODY DISCOVERS IT. The regions are the armoury's
+// own children. Ordering INSIDE a region (Freja's figure-below-gear at narrow)
+// is one level down and does NOT fall out of this word — a region TREE is a
+// different word and I am not proposing one.
+const REGIONS = [
+  {
+    id: 'slots',
+    label: 'Slots',
+    sel: '.armoury-body',
+    count: (el) => el.querySelectorAll('.equip-slot').length,
+    unit: 'slot',
+  },
+  {
+    id: 'cards',
+    label: 'Cards',
+    sel: '.armoury-strip',
+    count: (el) => el.querySelectorAll('.equip-cards > .card').length,
+    unit: 'card',
+  },
+];
+
+/** Every region this screen has. The one enumeration. */
+export function regionIds() {
+  return REGIONS.map((r) => r.id);
+}
+
+/** A region by name, or null. The join's handler. */
+export function regionById(id) {
+  return REGIONS.find((r) => r.id === id) || null;
+}
+
+/**
+ * The subject EXACTLY AS THE AUTHOR WROTE IT — not resolved, not defaulted.
+ *
+ * The join needs the raw string so the finding can name the entry (Law 1 clause
+ * 5). Resolving first would hand it `null` and it would have to say *"the
+ * subject is missing"* for both a typo and an omission, which are two different
+ * edits and want two different sentences.
+ */
+export function authoredSubject() {
+  return CFG().subject;
+}
+
+/** The subject as a region, or null if the author named one that is not there. */
+export function subjectRegion() {
+  return regionById(CFG().subject);
+}
+
+/**
+ * The context regions — the COMPLEMENT of the subject, never authored.
+ *
+ * An unknown subject returns NOTHING rather than everything, and the direction
+ * is the point (Law 0 clause 5). Loud is assertSurfaces(), which fails the boot
+ * by name. Safe is here: a screen whose subject nobody can find collapses no
+ * pane at all — it degrades to how the armoury behaves today. The plausible
+ * failure would be the other way round, where a one-character typo quietly makes
+ * every pane foldable and the player can put the whole screen away.
+ */
+export function contextRegions() {
+  const s = subjectRegion();
+  return s ? REGIONS.filter((r) => r.id !== s.id) : [];
+}
+
+/**
+ * Does this region open collapsed?
+ *
+ * THE SAME THREE TERMS THE VIEW ALREADY USES, and reusing them is why this
+ * bought no new field (see mountEquipment below): the player's own stored
+ * choice, always, on every shape; otherwise the shape's default. The shape's
+ * default for CONTEXT is *collapsed on a phone* — which is the honest form of
+ * "which pane a phone opens on" once panes can fold.
+ */
+export function opensCollapsed(regionId, stored, narrow) {
+  const s = stored && stored[regionId];
+  if (typeof s === 'boolean') return s;
+  return !!narrow;
 }
 
 // ---- the builders ----------------------------------------------------------
@@ -280,6 +383,18 @@ export function mountEquipment(host, {
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
   let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
+  // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
+  // a preference, so it lives where preferences live — `meta.settings`, the same
+  // free bag `equipView` rides in, keyed by region id. NO SAVE-SCHEMA CHANGE:
+  // main.js already does `Object.assign(meta.settings, settingChange)`, so one
+  // more key costs nothing.
+  //
+  // THE LIMIT, STATED RATHER THAN HIDDEN: the IN-COMBAT mount (combat.js) passes
+  // a synthetic `meta` and no `onChange`, so there is nothing to read and nothing
+  // to write — collapse is per-mount there. That is not new and it is not mine:
+  // `equipView` is already per-mount at that call site for the same reason.
+  const storedFolds = (meta.settings && meta.settings.armouryCollapsed) || null;
+  const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, narrow)]));
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 
@@ -462,6 +577,78 @@ export function mountEquipment(host, {
     draw();
   }
 
+  /**
+   * Every region says what it is, and every CONTEXT region gets its control.
+   *
+   * DERIVED, NOT AUTHORED PER PANE. Nothing below names `cards` or `strip`: the
+   * subject is marked because the author pointed at it, and the control exists
+   * because a region is not the subject. Add a third region tomorrow and it is
+   * dressed the same way with no edit here — and if the author moves `subject`
+   * to it, the control moves with it.
+   *
+   * WHAT A COLLAPSED PANE MUST STILL SAY (Freja's floor, and the model's half of
+   * it): it keeps its own header, so it still names itself, still says how much
+   * is inside, and still carries the control that brings it back. A pane that
+   * folds to nothing is a pane the player cannot find again — *decoration that
+   * decorates nothing*, which is the live risk of this whole feature.
+   *
+   * The attributes are `data-region` / `data-role` / `data-collapsed`, NOT the
+   * #78 `data-surface` / `data-member` convention, and the reason is a finding
+   * rather than a preference: that convention is queried as
+   * `[data-surface=X] [data-member]` — a DESCENDANT query, which does not
+   * compose under nesting. `armouryView`'s host sits INSIDE `.armoury`, so a
+   * region surface on `.armoury` would enumerate the three view buttons as its
+   * own members. The convention has no answer for a set that contains another
+   * set, and the armoury is where that first bites.
+   */
+  function dressRegions() {
+    const subject = subjectRegion();
+    for (const r of REGIONS) {
+      const el = wrap.querySelector(r.sel);
+      if (!el) continue;
+      el.dataset.region = r.id;
+      const isSubject = !!subject && r.id === subject.id;
+      el.dataset.role = isSubject ? 'subject' : 'context';
+      if (isSubject) { delete el.dataset.collapsed; continue; }
+      const shut = folded.get(r.id) === true;
+      el.dataset.collapsed = shut ? '1' : '0';
+
+      const head = document.createElement('div');
+      head.className = 'region-head';
+      const n = r.count(el);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'region-fold';
+      btn.dataset.fold = r.id;
+      btn.setAttribute('aria-expanded', shut ? 'false' : 'true');
+      // LAW 3 CLAUSE 4 — a control ships with a contextual tooltip or it is a
+      // defect, and `title=` alone does NOT satisfy it: touch and gamepad players
+      // never see one. The law's own words, and I wrote `data-tip` here first —
+      // an attribute NOTHING in this tree reads, under a comment claiming the
+      // clause was met. attachTooltip is the mechanism (pointer AND the pad's
+      // gpfocus), so this is the mechanism, not an attribute that looks like it.
+      const say = () => `<div class="tt-title">${esc(shut ? `Show ${r.label}` : `Hide ${r.label}`)}</div>`
+        + esc(shut
+          ? `${r.count(el)} ${r.unit}${r.count(el) === 1 ? '' : 's'} in here.`
+          : `Folds away, so ${subject ? subject.label.toLowerCase() : 'the main pane'} get the room.`);
+      btn.title = shut ? `Show ${r.label.toLowerCase()}` : `Hide ${r.label.toLowerCase()}`;
+      attachTooltip(btn, say);
+      btn.innerHTML = `<span class="rf-caret">${shut ? '▸' : '▾'}</span>`
+        + `<span class="rf-label">${esc(r.label)}</span>`
+        + `<span class="rf-count">${n} ${esc(r.unit)}${n === 1 ? '' : 's'}</span>`;
+      btn.addEventListener('click', () => {
+        folded.set(r.id, !folded.get(r.id));
+        // The whole map goes back, not just the one that moved: a partial write
+        // would make `meta.settings.armouryCollapsed` disagree with the screen
+        // for every other region. One fact, one home.
+        if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
+        draw();
+      });
+      head.appendChild(btn);
+      el.insertBefore(head, el.firstChild);
+    }
+  }
+
   function draw() {
     // The layout is READ off the row, never inferred from the id. `data-surface`
     // / `data-member` are the house convention for a navigable set (#78): the
@@ -519,6 +706,7 @@ export function mountEquipment(host, {
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
 
     notice = '';
+    dressRegions();
     wrap.querySelector('.armoury-close').addEventListener('click', close);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {

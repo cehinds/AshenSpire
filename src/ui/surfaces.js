@@ -80,7 +80,9 @@ import {
 } from './uiContent.js';
 import { panelFor } from './components/overlay.js';
 import { filedCategories, CATEGORY_ORDER, categoryHandler } from './screens/settings.js';
-import { viewIds, viewLayout, viewCellsSay } from './screens/equipment.js';
+import {
+  viewIds, viewLayout, viewCellsSay, regionIds, authoredSubject, regionById,
+} from './screens/equipment.js';
 
 export const SURFACES = [
   {
@@ -162,6 +164,34 @@ export const SURFACES = [
       + ` ${viewCellsSay()} — in src/content/balance.js.`
       + ' A new combination is a new LAYOUT (a key in LAYOUTS + its rule in'
       + ' styles/ui.css), not a new row.',
+  },
+  {
+    id: 'armourySubject',
+    of: 'which armoury pane is the subject — the one that is never collapsed',
+    // A SCALAR IS A ONE-MEMBER SET, and reading it as one is the whole reason
+    // this row is four lines instead of a new guard. `subject` has exactly the
+    // two failures every set here has, and both already have observed-red
+    // machinery: naming NOTHING is the zero-member edge (the screen would have
+    // no subject, so every pane would be foldable and the player could put the
+    // whole armoury away); naming a region that does not exist is a declaration
+    // with no handler, which is what this file is for.
+    //
+    // WHY IT IS NOT `armouryRegion`. The regions are code — REGIONS in
+    // equipment.js draws them and declares them in the same table (#78's rule),
+    // so a region with no handler cannot exist. The only thing that CAN
+    // disagree is the one field an author writes, so that field is the set.
+    from: [
+      {
+        what: 'balance.equipment.subject',
+        file: 'src/content/balance.js',
+        declares: 'which pane the screen exists for — every other pane is context, and context is what collapses',
+        members: () => (authoredSubject() ? [authoredSubject()] : []),
+      },
+    ],
+    resolve: (id) => regionById(id),
+    fix: (id) => `${JSON.stringify(id)} is not a region of the armoury — it has`
+      + ` ${regionIds().map((r) => JSON.stringify(r)).join(', ')} (REGIONS in`
+      + ' src/ui/screens/equipment.js). A new region is a WORD, not a row.',
   },
   {
     id: 'menuAct',
