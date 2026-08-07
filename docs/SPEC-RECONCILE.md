@@ -164,3 +164,76 @@ engine paths (test 18) and build identity (`build/` ≡ `dist/` md5
 `e3ad80d4de9cb2a6b00250672c74788e`; `verify-shipped: OK — 4 checks`). Audio was
 verified as code + wiring, not with ears — Vega's seat, not mine. Play-feel of any
 of it is Sunna's.
+
+---
+
+# Stage 2 — SPEC true about what 0.4.x ships
+
+*Viki, 2026-08-07, at `dev` = `267397a` (release candidate). Track C of the 0.4.x
+sequencing. Stage 1's rows are unchanged and still hold; **Saga's disclosure §4 cites this
+file — the stage-1 section above was not renumbered or moved**, so that citation is intact.*
+
+## What stage 2 found, in one sentence
+
+**Stage 1's rot was dead paths; stage 2's rot is dead restatements — and the paths are now
+clean.** A path-resolution sweep over the whole document returns **zero unresolved** (two
+intentional placeholders: `encounters/actN.js`, an external `manifest.json`). Every defect
+below is a sentence that *restated a value which has a home elsewhere* and drifted while
+nobody edited it.
+
+> **The rule adopted in this pass, and the reason six sections changed shape:**
+> **a spec sentence states a CONTRACT (what must be true) or points at a HOME (what is
+> currently true). It never restates a value that has a home.** A contract is a rule and
+> cannot rot. A restated value is a cache with no write event — the thing this whole
+> reconciliation exists to delete.
+
+## Defects found and fixed
+
+| § | What it claimed | Shipped truth | Falsifying command |
+|---|---|---|---|
+| 3.2 | A 52-file inventory of the tree | **92 `.js` under `src/`; 4 of the 52 dead** (three pre-scrub class card files; `floorplan.js` filed under `engine/` while §6 correctly cited `model/` — SPEC disagreed with itself). `tools/`, `content/source/`, `build/`, `dist/` absent entirely | `find src -name '*.js' \| wc -l` → 92 |
+| 3.12 | Run keys + "settings and last 20 results"; field list restated in prose, carrying `runes` | **Three run slots; a durable profile with two schema versions (one home each), a verified-write mirror, a keyed archive index, quarantine, and a player-facing drawer** (#66/#67). Field list is data: `RUN_SHAPE` | `node tests/run-node.mjs` (profile-durability cases); `grep -n "RUN_SHAPE" src/model/state.js` |
+| 3.14 | Five validation checks | Plus pairing/range rules, and **Law 1 clause 6 is built** (#64) | `node tools/content-build.mjs --selftest` → *16 known-bads red by name* |
+| 4.4 | Bleed "**Threshold 12**", escalating ×1.5 | **Threshold 7, constant** — picked against the sim *after* this prose was written | `node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc).forEach(s=>console.log(s.id,JSON.stringify(s.proc))))"` |
+| 4.4 | A **Frostbite** status | **CUT — describes nothing.** No `frostbite` row ships | `…m.statuses.some(s=>s.id==='frostbite')` → `false` |
+| 4.4 | "Scarlet Rot"; no Burn row | `crimsonBlight` / **Crimson Blight**; `burn` ships unlisted | the same status dump |
+| 7.4 | Score + SFX content "lives in `music.js`" | **SFX recipes and `SFX_MANIFEST` moved to `content/sfx.js`** (#59/#46) — recipes are a table in a two-word closed vocabulary; a malformed layer names its recipe id | `grep -n "from '../content" src/ui/audio.js` → two content homes |
+| 7.4 | — | `MUSIC_MANIFEST` **still** imported and never read (stage-1 finding, unchanged) | `grep -c "MUSIC_MANIFEST" src/ui/audio.js` → 1 |
+| 7.5 | One palette, seven hexes | **Three palettes** — default, high-contrast, and `body.cb-safe` (Okabe-Ito) — plus `--map-structure` (#62/#45). Hexes no longer restated | `grep -nE "^\s*--" styles/base.css`; gate: `node tools/contrast-audit.mjs` |
+| 7.5 | "Self-host the woff2 files" | **TO BUILD** — fonts are **not bundled**; `CREDITS.md` says so and is the authoritative home | `ls assets/fonts` → does not exist |
+| 8 | 17 required tests; "**CI-less workflow**" | **47 passing cases across 43 declared test blocks**, two listed entries already false (test 7's threshold 12 / ×1.5; test 8's "Scarlet Rot"). **CI exists** | `node tests/run-node.mjs`; `ls .github/workflows/ci.yml` |
+| 1 | "desktop browsers, 1280×720 minimum" | Contradicted §11 — **a narrow layout ships**; 1280×720 is the layout *reference* | `grep -n "data-layout" src/main.js` |
+| 1 | Persistence = run save + settings + history | Understated the profile subsystem | §3.12 |
+
+**Counts, stage 2: 13 claims corrected — 11 rewritten to the shipped truth, 1 marked CUT
+(Frostbite), 1 marked TO-BUILD (self-hosted fonts).** Six sections (§1, §3.2, §3.12, §3.14,
+§4.4, §7.4, §7.5, §8) changed from restatement to contract-plus-pointer.
+
+## Verified unchanged (checked, not assumed)
+
+Path resolution across the document (0 unresolved); the **inward-import layer rule** now
+asserted in §3.2 — `content` imports nothing, `model`/`engine` never import `ui` — verified by
+grep before it was written down; `verify-shipped: OK`; suite green at the release SHA.
+
+## Standing debts, unchanged and named
+
+1. **Pre-scrub vocabulary, document-wide** — 24 remaining hits
+   (`grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`). One
+   deliberate rename act; now stated once in the header as **to-build** rather than
+   apologised for per section.
+2. **The dangling unlock refs** (`graveWardenUnlock`, `ashChildUnlock` → classes that do not
+   exist; green because the ref check is written per *known* kind) — **still open, and it is
+   a code/test defect, not a SPEC defect.** It does not belong in a documentation pass:
+   fixing it means changing a test's shape, which needs its own gate. **Vira's dispatch,
+   handed over deliberately** — she offered, it is her lens, and the check she would write
+   (unknown kind = error, not skip) is the general form, not the two rows.
+
+## Boundary of stage 2
+
+Read at `267397a` on one Linux runner. Suite and the named tools re-run by me; **nothing
+rendered and nothing played** — no screen was opened in this pass, so every UI claim above is
+a claim about source and settings wiring, not about pixels. Audio verified as code, not with
+ears (Vega's). The profile-durability properties are stated from source and the suite's own
+cases; I did not corrupt a real browser profile to watch the recovery surface behave — that is
+the one gap I would most want closed before the release SHA is called good, and it is Sunna's
+and Vira's ground, not mine.
