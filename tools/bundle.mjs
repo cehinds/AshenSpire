@@ -11,6 +11,7 @@
 // Usage: node tools/bundle.mjs
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -208,13 +209,23 @@ if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
 
 // Rewrite a single import statement (already isolated as `stmt`) into a require.
 // Returns the replacement string.
+// Keep the rewritten statement on the same number of lines as the original.
+// A multi-line `import { a,\n b } from '...'` collapsing to one line shifts
+// every line below it, and then a parse error's reported line points at the
+// wrong place — a check that names the wrong line is worse than one that names
+// none (#77 property 2).
+function padLines(original, replacement) {
+  const lost = original.split('\n').length - replacement.split('\n').length;
+  return lost > 0 ? replacement + '\n'.repeat(lost) : replacement;
+}
+
 function rewriteImport(stmt, fromAbs) {
   // Namespace import:  import * as N from '...'
   let m = /^([ \t]*)import\s+\*\s+as\s+([A-Za-z_$][\w$]*)\s+from\s*['"]([^'"]+)['"][ \t]*;?[ \t]*$/.exec(stmt);
   if (m) {
     const [, indent, name, spec] = m;
     const id = idOf(resolveSpecifier(fromAbs, spec));
-    return `${indent}const ${name} = require(${JSON.stringify(id)});`;
+    return padLines(stmt, `${indent}const ${name} = require(${JSON.stringify(id)});`);
   }
 
   // Named import (possibly multi-line):  import { a, b as c } from '...'
@@ -231,7 +242,7 @@ function rewriteImport(stmt, fromAbs) {
         if (am) return `${am[1]}: ${am[2]}`; // { a as c } -> { a: c }
         return s;
       });
-    return `${indent}const { ${parts.join(', ')} } = require(${JSON.stringify(id)});`;
+    return padLines(stmt, `${indent}const { ${parts.join(', ')} } = require(${JSON.stringify(id)});`);
   }
 
   // Side-effect-only import:  import '...'
@@ -239,7 +250,7 @@ function rewriteImport(stmt, fromAbs) {
   if (m) {
     const [, indent, spec] = m;
     const id = idOf(resolveSpecifier(fromAbs, spec));
-    return `${indent}require(${JSON.stringify(id)});`;
+    return padLines(stmt, `${indent}require(${JSON.stringify(id)});`);
   }
 
   fail('could not parse import statement in ' + idOf(fromAbs) + ':\n' + stmt);
@@ -368,6 +379,82 @@ const styleBlocks = cssHrefs.map((href) => {
 // splitting any literal "</script" occurrence (none expected, but be safe).
 function guardScript(s) {
   return s.replace(/<\/script/gi, '<\\/script');
+}
+
+// ---------------------------------------------------------------------------
+// PARSE GATE (#77) — refuse to write a bundle we could not parse.
+//
+// Law 1 clause 5 already named this failure in its own words: "a syntax error
+// that dies before the validator runs and hands Constantine a blank screen
+// violates this clause even while the validator is perfect." It was not a new
+// finding, it was an unpaid one. Reproduced on dev before this was written: one
+// dropped brace in src/content/statuses.js gave `bundle.mjs: OK`, exit 0,
+// `verify-shipped: OK — 4 checks passed`, and a game whose #app had ZERO
+// children. Only tests/run-node.mjs caught it, and the edit-and-run path does
+// not go through the suite.
+//
+// This file already reads every module; all it lacked was the nerve to check
+// what it read. Each transformed body is compiled — not executed — and a
+// failure names the FILE and the LINE, because clause 5's whole demand is that
+// bad data names the entry. Line numbers are exact because rewriteImport pads
+// its replacements to the original line count (see padLines).
+const parseErrors = [];
+for (const id of order) {
+  const body = transformed.get(id);
+  try {
+    // Compiled inside the same wrapper the runtime uses, so a body that is only
+    // valid as a function body (a bare `return`, say) is judged the way the
+    // browser will judge it. Compiling never runs it.
+    new vm.Script(`(function (module, exports, require) {\n${body}\n})`, { filename: id });
+  } catch (err) {
+    // vm reports the line within the wrapper; subtract the line we added.
+    const at = /:(\d+)\n/.exec(err.stack || '');
+    const line = at ? Math.max(1, Number(at[1]) - 1) : null;
+    parseErrors.push({ id, line, message: (err.message || String(err)).split('\n')[0] });
+  }
+}
+
+if (parseErrors.length) {
+  // PROPERTY 3: a refused write must not leave a stale bundle silently in
+  // place. Refusing and stopping would leave yesterday's build sitting at the
+  // output path, and the failure would change shape from "blank screen" to "my
+  // edit did nothing" — which is worse, because a blank screen at least tells
+  // you something happened. So the output is REPLACED by a page that states
+  // the failure. Opening the game after a failed build shows the error.
+  const rows = parseErrors
+    .map((e) => `  ${e.id}${e.line ? ':' + e.line : ''}  ${e.message}`)
+    .join('\n');
+  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const page = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Ashen Spire — build failed</title>
+<style>
+ body{background:#14110f;color:#e8dfd2;font:16px/1.5 ui-monospace,Menlo,Consolas,monospace;margin:0;padding:32px}
+ h1{color:#c9a227;font-size:20px;margin:0 0 8px}
+ p{margin:0 0 16px;max-width:60rem}
+ li{margin:0 0 6px}
+ code{color:#ff8f6b}
+</style></head><body>
+<h1>This build did not happen</h1>
+<p>A file could not be parsed, so no game was written. <strong>This page is standing
+where the game would be</strong> — you are not looking at an older build by mistake.
+Fix the file below and build again.</p>
+<ul>${parseErrors.map((e) => `<li><code>${esc(e.id)}${e.line ? ':' + e.line : ''}</code> — ${esc(e.message)}</li>`).join('')}</ul>
+<p>Built ${new Date().toISOString()}</p>
+</body></html>
+`;
+  const failDir = resolve(ROOT, 'build');
+  mkdirSync(failDir, { recursive: true });
+  writeFileSync(resolve(failDir, 'AshenSpire.html'), page, 'utf8');
+
+  console.error('bundle.mjs: ERROR — refusing to write a bundle that does not parse:');
+  console.error(rows);
+  console.error('  build/AshenSpire.html now holds a build-failed page, not a stale game.');
+  // dist/ is a committed artifact and this tool does not own it; say plainly
+  // that it is now older than the sources rather than quietly corrupting it.
+  if (existsSync(resolve(ROOT, 'dist/AshenSpire.html'))) {
+    console.error('  NOTE: dist/AshenSpire.html is untouched and therefore OLDER than these sources — do not run it and do not ship it until this builds.');
+  }
+  process.exit(1);
 }
 
 const entryId = idOf(entryAbs);
