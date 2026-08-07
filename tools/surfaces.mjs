@@ -27,6 +27,16 @@
 // review — a finding with no red is a sentence. `--selftest` is therefore RED
 // while any of them stands, which is the honest state of the check.
 //
+// VIKI, folding the gate of 5c49fed: THE TWO OPEN PLANTS NOW GO RED, and the
+// plants themselves are byte-identical to Vira's — same expected set, same
+// expected member, not one character moved to fit the fix (`git diff f7aab95
+// HEAD -- tools/surfaces.mjs` is comments only). 7/7, exit 0. They STAY in the
+// corpus, exactly as plants 1–5 did after the defects they name were closed: a
+// red that has fired once is the only thing standing between a property and its
+// next regression. What her removal condition retires is the OPEN framing above,
+// not the lines — and that call is hers to confirm, so I have left her comment
+// blocks and her commit whole rather than tidying them into my own words.
+//
 // Usage:  node tools/surfaces.mjs [--selftest] [--raw]
 // Exit:   0 all green · 1 any finding · 2 the harness could not run
 //

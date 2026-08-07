@@ -845,8 +845,17 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    rules and looked like hybrid. `data-figure` and `data-slots` are written by
    equipment.js straight off the row in balance.equipment.views, so a new view
    row is styled the moment it is authored. Specificity is unchanged — a class
-   and an attribute weigh the same — so the cascade here is exactly as it was. */
-.armoury[data-figure='0'] .armoury-left { display: none; }
+   and an attribute weigh the same — so the cascade here is exactly as it was.
+
+   THE RULE BELOW NAMES BOTH CHARACTERISTICS, and that is the tenth block Vira
+   caught. `.armoury.view-rack .armoury-left { display: none }` became
+   `[data-figure='0']` — 1:1 over the three rows that exist, and the WRONG RULE:
+   the left column holds only the figure in a LIST view, and the slot columns as
+   well in a flank one. A mapping proven over the current members is not a
+   mapping (Marina). Nothing renders differently today; the point is that the
+   rule now says what it means, so it cannot blank a layout nobody has written
+   yet. */
+.armoury[data-figure='0'][data-slots='list'] .armoury-left { display: none; }
 .armoury[data-slots='flank'] .armoury-left { flex: 1; }
 .armoury[data-slots='flank'] .armoury-right { max-width: 38rem; }
 

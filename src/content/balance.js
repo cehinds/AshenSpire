@@ -218,8 +218,16 @@ export const balance = {
     //   figure — is the dressed class figure on screen at all
     //   slots  — 'flank': slot blocks split either side of the figure
     //            'list':  slot blocks in one column beside it
-    // Both are CLOSED sets. An unknown value fails loud and names this row
-    // rather than falling through to something plausible (Law 1 clause 5).
+    //
+    // WHAT IS CLOSED IS THE COMBINATION, NOT EACH FIELD. Read that before
+    // inventing a row. The first pass said "both are closed sets", which is two
+    // closed sets and a product of FOUR cells — and only three are drawn. A row
+    // saying `figure: false, slots: 'flank'` used every legal word and rendered
+    // an EMPTY armoury in silence (Vira, #78). The three combinations below are
+    // the whole vocabulary; each one is a layout in LAYOUTS in equipment.js and
+    // that table is the only place the list lives. Anything else fails loud and
+    // names this row (Law 1 clause 5) — including a combination of two words
+    // that are each fine on their own.
     views: [
       { id: 'grid', figure: true, slots: 'flank' },
       { id: 'rack', figure: false, slots: 'list' },

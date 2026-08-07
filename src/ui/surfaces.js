@@ -20,7 +20,13 @@
 //                      (figure? slots flanking or listed?) and both the screen
 //                      and the stylesheet read those. Nothing anywhere knows the
 //                      word "grid". `resolve` here only checks the row is
-//                      written in the vocabulary the screen actually has.
+//                      written in the vocabulary the screen actually has — and
+//                      THAT VOCABULARY IS THE COMBINATION, not each field.
+//                      Declaring two characteristics closed separately left a
+//                      cell of their product legal and undrawn, which rendered
+//                      an EMPTY armoury in silence (Vira, gate of 5c49fed).
+//                      A closed set must stay closed under whatever
+//                      factorisation replaces it — Marina, and it is house-wide.
 //   settings categories the DECLARATION dissolved. A category exists because a
 //                      row is filed under it. What is still authored is the
 //                      order — and an ordered name nothing files under is what
@@ -34,28 +40,40 @@
 // nobody adds a row for. Nothing in a source tree can. That hole is answered on
 // the rendered page instead — every set marks its host `data-surface="<id>"` and
 // each control `data-member="<member>"`, so an instrument enumerates what the
-// game actually drew rather than what it was told to expect.
+// game actually drew rather than what it was told to expect. ALL FOUR SETS MARK
+// THEMSELVES NOW; `menuAct` did not, and it was the one set whose worst edge —
+// an act declared here that no context implements — is ONLY visible on the page.
+// The attributes are a CONVENTION, not a derivation: a set nobody registers is a
+// set nobody marks, and nothing checks the two agree. Saying so is the point.
 
-import { MENU_TABS, MENU } from './uiContent.js';
+import {
+  MENU_TABS, MENU, MENU_ACTS, menuTabRefs,
+} from './uiContent.js';
 import { panelFor } from './components/overlay.js';
 import { settingsCategories, categoryHandler } from './screens/settings.js';
-import { viewIds, viewLayout } from './screens/equipment.js';
-
-// The acts a MENU row may name. A launcher row is dropped when the CONTEXT does
-// not offer its act (map has no draw pile — correct), and that drop is why an
-// act nobody implements anywhere is invisible: same silence, one file over.
-// Membership here is the difference between "not on this screen" and "not a
-// word": the first is a design decision, the second is a defect.
-export const MENU_ACTS = ['tab', 'armoury', 'legend', 'draw', 'discard', 'save', 'quit', 'close'];
+import { viewIds, viewLayout, viewCellsSay } from './screens/equipment.js';
 
 export const SURFACES = [
   {
     id: 'overlayTab',
-    of: 'the in-run menu tabs',
-    home: 'MENU_TABS in src/ui/uiContent.js',
-    members: () => MENU_TABS.map((t) => t.id),
+    // A MEMBER IS A TAB THE GAME CAN BE PUT INTO, not a row of MENU_TABS —
+    // Vira's sixth kind, and the second half of the day's lesson. `MENU_TABS`
+    // DECLARES the strip; a MENU row saying `tab: 'jornal'` NAVIGATES to one,
+    // and members() read only the first home. A one-character typo there
+    // resolved to { icon:'', label:'', tip:'' }, was KEPT by quicknav's filter
+    // because `act:'tab'` is implemented, and gave the player an unlabelled
+    // button onto a tab with no panel. Where a declaration lives in two files,
+    // the member list is the union of both — and `fix` below tells them apart,
+    // because naming the wrong entry is worse than naming none (Law 1 cl. 5).
+    of: 'the in-run menu tabs — declared by MENU_TABS, navigated to by MENU rows',
+    home: 'MENU_TABS + every MENU row\'s tab: in src/ui/uiContent.js',
+    members: () => [...new Set([...MENU_TABS.map((t) => t.id), ...menuTabRefs()])],
     resolve: (id) => panelFor(id),
-    fix: (id) => `add ${JSON.stringify(id)} to PANELS in src/ui/components/overlay.js`,
+    fix: (id) => (MENU_TABS.some((t) => t.id === id)
+      ? `add ${JSON.stringify(id)} to PANELS in src/ui/components/overlay.js`
+      : `no MENU_TABS row declares ${JSON.stringify(id)} — a MENU row's \`tab:\` names it.`
+        + ` Fix that row, or declare the tab: MENU_TABS has ${MENU_TABS.map((t) => t.id).join(', ')}`
+        + ' (src/ui/uiContent.js)'),
   },
   {
     id: 'settingsCategory',
@@ -72,17 +90,26 @@ export const SURFACES = [
     home: 'balance.equipment.views in src/content/balance.js',
     members: () => viewIds(),
     resolve: (id) => viewLayout(id),
-    fix: (id) => `give ${JSON.stringify(id)} a layout its row can say:`
-      + ' figure: true|false and slots: \'flank\'|\'list\' (src/content/balance.js)',
+    // The fix ENUMERATES THE CELLS, never the factors. Saying "figure:
+    // true|false and slots: 'flank'|'list'" is what promised a product of two
+    // closed sets and delivered three of its four cells.
+    fix: (id) => `give ${JSON.stringify(id)} a combination the screen has —`
+      + ` ${viewCellsSay()} — in src/content/balance.js.`
+      + ' A new combination is a new LAYOUT (a key in LAYOUTS + its rule in'
+      + ' styles/ui.css), not a new row.',
   },
   {
     id: 'menuAct',
     of: 'the quick-menu launcher acts',
     home: 'the MENU table in src/ui/uiContent.js',
     members: () => [...new Set(Object.values(MENU).flat().map((r) => r.act))],
+    // MENU_ACTS now lives with the MENU table it governs, not here. This file's
+    // header promises it holds no members and this row held eight of them —
+    // *the fix for label drift carrying label drift* (Marina). The list is still
+    // hand-kept, and what that does and does not catch is stated at its new home.
     resolve: (act) => (MENU_ACTS.includes(act) ? act : null),
     fix: (act) => `${JSON.stringify(act)} is not a launcher act — add it to MENU_ACTS in`
-      + ' src/ui/surfaces.js and give every context that offers it a handler,'
+      + ' src/ui/uiContent.js and give every context that offers it a handler,'
       + ' or fix the typo in the MENU row',
   },
 ];
