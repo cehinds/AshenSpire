@@ -121,17 +121,50 @@ export function clampBox(box, view, { pad = 4, keep = Infinity } = {}) {
   };
 }
 
-/** Spawn a floating number over an anchor element. */
-function floatNum(layer, anchor, text, cls, tint) {
+/**
+ * Spawn a floating number over an anchor element.
+ *
+ * EXPORTED so an instrument can drive the SHIPPED function with the exact
+ * strings that were measured clipping, rather than a copy of it that would
+ * agree with itself (#69).
+ */
+export function floatNum(layer, anchor, text, cls, tint) {
   if (!layer || !anchor) return;
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
   el.textContent = text;
   if (tint) el.style.color = tint; // #61: proc floats carry their row's tint
-  el.style.left = `${b.left + b.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
-  el.style.top = `${b.top + b.height * 0.25}px`;
+  // CENTRED BY CSS, NOT BY ARITHMETIC. `left` is the float's CENTRE and
+  // `.float-num { translate: -50% 0 }` takes off its own half-width — so the
+  // width is the browser's to know and nobody's to maintain. It used to be
+  // `- 14`, a hardcoded half-width that the CSS owned and nothing checked, so
+  // every float sat off-centre by (realHalfWidth - 14): measured -6px for "-7",
+  // +31px for "BLOCKED", and worst for multi-codepoint text, which is exactly
+  // where a guess lies hardest. At 390 that pushed "BLOCKED" to right=412 —
+  // 22px off-screen, in a layer with no scrollport, so unreachable.
+  //
+  // `translate` is the standalone property on purpose: num-pop animates
+  // `transform`, and a `transform: translateX(-50%)` here would be overwritten
+  // by the first keyframe. The two compose.
+  const centre = b.left + b.width / 2 + (Math.random() * 26 - 13);
+  const top = b.top + b.height * 0.25;
+  el.style.left = `${centre}px`;
+  el.style.top = `${top}px`;
   layer.appendChild(el);
+  // In the DOM, so the size is REAL — emoji, ligatures and all, measured by
+  // layout rather than guessed from the string. offsetWidth is the untransformed
+  // box, so the running pop animation cannot skew it. Keep it inside the layer
+  // through the one home for that arithmetic (clampBox), then hand `left` back
+  // as a centre, which is what the CSS expects.
+  const half = el.offsetWidth / 2;
+  const view = anchorLocalBox(layer, layer);
+  const at = clampBox(
+    { left: centre - half, top, width: el.offsetWidth, height: el.offsetHeight },
+    view,
+    { pad: 6 }
+  );
+  el.style.left = `${at.left + half}px`;
   setTimeout(() => el.remove(), 600);
 }
 

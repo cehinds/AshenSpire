@@ -245,6 +245,11 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 /* ---------- fx ---------- */
 .fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }
 .float-num {
+  /* `left` is the float's CENTRE; this takes off its own half-width, so the
+     width is never a number anyone maintains (#69). Standalone `translate`
+     rather than `transform`, because num-pop animates transform and the two
+     must compose. */
+  translate: -50% 0;
   position: absolute; font-family: var(--font-display); font-weight: 800; font-size: 2.5rem;
   color: var(--parchment);
   /* A dark outline keeps numbers legible over any sprite. */

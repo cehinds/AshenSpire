@@ -52,7 +52,7 @@ import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
-import { setAnimSpeed, anchorLocalBox, clampBox } from './ui/fx.js';
+import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio } from './ui/audio.js';
 
@@ -1340,6 +1340,24 @@ function coopCatchupShot() {
     { type: 'treasure', act: 1, floor: 3, relicId: 'forsakenMedallion' },
   ];
   return { actNumber: 1, floor: 6, seedString: 'SHOWCASE', endless: false, scene: { kind: 'map' }, reachableIds: [], map: null, party };
+}
+
+// Dev-only float probe (#69). Screenshot modes are already dev-only, and this
+// hands the harness the REAL floatNum so a clipping assertion measures the
+// shipped path — including the multi-codepoint strings, where any width GUESS
+// lies worst. Never reachable without a ?shot= URL.
+if (shotState) {
+  // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
+  // the clipping lives — a probe anchored to the leftmost cannot reproduce the
+  // defect and would be a green that can't fail.
+  window.__fxProbe = (text, cls = 'dmg', which = 'last') => {
+    const layer = document.querySelector('.fx-layer');
+    const all = [...document.querySelectorAll('[data-eid]')]
+      .sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+    const host = which === 'first' ? all[0] : all[all.length - 1];
+    const anchorEl = host && (host.querySelector('.sprite') || host);
+    if (layer && anchorEl) fxFloatNum(layer, anchorEl, text, cls);
+  };
 }
 
 if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death') {
