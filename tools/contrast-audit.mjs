@@ -542,7 +542,28 @@ const browser = BROWSERS.find((p) => existsSync(p));
 if (!browser) { console.error('contrast-audit: no Chrome/Chromium found (set CHROME_PATH).'); process.exit(1); }
 
 const { server, port } = await serve({ root: ROOT, port: 8137, open: false });
-const dbg = 9222 + (process.pid % 400);
+// THE DEBUGGING PORT IS NOT GUESSED, AND THIS IS A CORRECTNESS FIX, NOT TIDINESS.
+//
+// This line was `const dbg = 9222 + (process.pid % 400)` — the range 9222..9621,
+// which CONTAINS 9431, the port tools/release-shots.mjs pins. One run in four
+// hundred, this tool picked that port while another seat's harness held it, and
+// the failure is silent and total: the spawn below cannot bind, its complaint
+// goes into the stderr handler that discards everything, and then connectCdp()
+// polls `http://127.0.0.1:9431/json/list` and CONNECTS TO THE OTHER SEAT'S
+// BROWSER. It then drives that browser, navigates it, toggles ink on its page
+// and reports contrast ratios measured on somebody else's run. Nothing in the
+// output says so. (Vira found the line; the property is Marina's — A RUN MUST
+// PROVE THE BROWSER IT MEASURED IS THE ONE IT STARTED.)
+//
+// Port 0 asks the OS for a free port and Chrome prints the endpoint it actually
+// got on its own stderr. Reading it from THIS child is the proof: there is no
+// number to collide on, and no way for this tool to reach a browser it did not
+// start. If the child never announces one, that is a hard exit — the old code's
+// way of "handling" it was to find a stranger's browser and carry on.
+//
+// This is the one-line half of the port work. The HARNESS half — release-shots
+// pinning 9431 while serve() bumps its HTTP port, so a second run drives the
+// first run's browser — is Bjorn's, in his file, and is not touched here.
 const child = spawn(browser, [
   '--headless=new', '--disable-gpu', '--no-sandbox', '--hide-scrollbars',
   // Both flags are load-bearing, not tidiness. Without --disable-lcd-text,
@@ -555,11 +576,25 @@ const child = spawn(browser, [
   // computed pixel — verified: #241d15 in, #241d15 out.
   '--disable-lcd-text', '--force-color-profile=srgb',
   `--window-size=${width},${height}`,
-  `--remote-debugging-port=${dbg}`,
+  '--remote-debugging-port=0',
   '--user-data-dir=' + resolve('/tmp', `ca-profile-${process.pid}`),
   'about:blank',
 ], { stdio: ['ignore', 'ignore', 'pipe'] });
-child.stderr.on('data', () => {});
+// The port this child actually got, read off the line it prints itself.
+const dbg = await new Promise((res, rej) => {
+  let buf = '';
+  const onData = (d) => {
+    buf += d;
+    const m = /DevTools listening on ws:\/\/[^:/]+:(\d+)\//.exec(buf);
+    if (m) { child.stderr.off('data', onData); child.stderr.on('data', () => {}); res(+m[1]); }
+  };
+  child.stderr.on('data', onData);
+  child.on('error', rej);
+  setTimeout(() => rej(new Error(`the browser announced no DevTools endpoint in 15s:\n${buf.slice(-400)}`)), 15000);
+}).catch((e) => {
+  console.error(`contrast-audit: ${e.message}`);
+  server.close(); child.kill(); process.exit(2);
+});
 
 const profiles = onlyProfile ? { [onlyProfile]: PROFILES[onlyProfile] } : PROFILES;
 if (onlyProfile && !PROFILES[onlyProfile]) {

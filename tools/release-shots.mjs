@@ -104,6 +104,38 @@ const SCREENS = [
   { name: 'boss', query: '?shot=boss', landmark: '.combat', state: 'boss' },
   { name: 'death', query: '?shot=death', landmark: '.stats-table', state: 'death' },
   { name: 'customize', query: '?shot=customize', landmark: '.customize', state: 'customize' },
+  // The Shrine — #84, and it is here rather than in EXCLUDED_STATES on purpose.
+  // Excluding it by name would have been one line and would have put back the
+  // exact condition the bug lived in: this is the screen Constantine could not
+  // scroll, and nothing we own had ever opened it. A state added so a fix could
+  // be photographed, then excluded from the photographs, is a state that earns
+  // nothing.
+  { name: 'shrine', query: '?shot=rest', landmark: '#smith-opt', state: 'rest' },
+  {
+    // AND THE GRID OPEN, driven, because the closed Shrine FITS. A baseline of
+    // the screen in the state that never overflowed could not have caught the
+    // defect it was created for — it would have gone green through the whole
+    // bug. The overflow only exists once the Smith grid is on screen.
+    //
+    // `#smith-grid .card`, and the first version of this line said
+    // `.deck-strip .mini` — WHICH NOTHING ON THIS SCREEN EMITS. renderCard()
+    // writes `card rarity-… cls-… type-…` and `opts.small` is a transform, not
+    // a class; `.mini` is hand-built by gameover.js and shop.js and lives
+    // nowhere near the Smith. Bjorn caught it on the first full run of my own
+    // check, an hour after I wrote it.
+    //
+    // What that cost is the lesson and it belongs next to the line: I DID
+    // measure byte-stability first — 3 runs x 2 shapes, six identical
+    // captures — and every one of those captures was taken AFTER a wait loop
+    // that had timed out on a selector that can never match. The pictures were
+    // right and the confirmation was vacuous, so the stability was real and
+    // proved nothing. A MISS still writes a photograph. Stability of a screen
+    // whose landmark never resolved is Bjorn's animated-title finding pointed
+    // the other way, and the instrument that catches it has to assert the
+    // landmark RESOLVED before it is allowed to hash anything.
+    name: 'shrine-smith', query: '?shot=rest', landmark: '#smith-grid .card',
+    drive: `document.querySelector('#smith-opt').click()`,
+  },
   // --- driven: no ?shot= state exists for any of these ---
   {
     name: 'armoury', query: '?shot=combat', landmark: '.armoury, .equip-screen, .equipment',
