@@ -1282,6 +1282,36 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   width: 4.4rem; height: 4.4rem; font-size: 1.8rem;
 }
 
+/* ---- profile notice (#67): the worst morning a person has with this game ----
+   Sunna's gate D7: button weight must be DESIGNED, not an accident of wrapping.
+   The destructive action sits on its own row, always subtle, in every state —
+   at 390 px it used to land alone by wrapping and read de-emphasised only by
+   luck of viewport. Box geometry is px (chrome — Law 4): it is a box, not text. */
+.profile-notice { max-width: 34rem; gap: 1.2rem; }
+.profile-notice h1 { font-size: 1.8rem; color: var(--gold); text-align: center; }
+.profile-notice .lead { text-align: center; line-height: 1.5; }
+.profile-notice .kept { text-align: center; color: var(--ink); font-weight: 600; }
+.profile-notice .where { text-align: center; color: var(--muted); font-size: 0.9rem; }
+.profile-notice .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.profile-notice .actions.destructive { margin-top: 4px; }
+.profile-notice button { min-height: 44px; padding: 0 14px; }
+.profile-notice .result { text-align: center; color: var(--muted); min-height: 22px; line-height: 1.4; }
+.profile-notice .support { color: var(--muted); font-size: 0.85rem; }
+.profile-notice .support code { word-break: break-word; }
+
+.confirm-fresh {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.72); z-index: 40; padding: 16px;
+}
+.confirm-fresh .confirm-box {
+  max-width: 26rem; background: var(--panel, #14110f); border: 2px solid var(--gold);
+  border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px;
+}
+.confirm-fresh .confirm-box h2 { font-size: 1.3rem; color: var(--gold); }
+.confirm-fresh .confirm-box p { line-height: 1.5; }
+.confirm-fresh .actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.confirm-fresh button { min-height: 44px; padding: 0 14px; }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -15821,7 +15851,17 @@ function createSaveManager(storage) {
     try {
       parsed = JSON.parse(raw);
     } catch (e) {
-      return { v: 1, entries: [] }; // unreadable index: start one, keep going
+      // An unreadable INDEX used to silently discard every archive it held —
+      // the drawer's own catalogue becoming the thing that loses the drawer
+      // (Vira, D4). Set the raw bytes aside under their own key first; a human
+      // or a later tool can still pick them apart.
+      const salvageKey = `${RUN_ARCHIVE_KEY}_salvage_${Date.now()}`;
+      try {
+        storage.setItem(salvageKey, raw);
+      } catch (e2) {
+        /* storage refused the salvage write; the fresh index below still lets the game run */
+      }
+      return { v: 1, entries: [], salvagedFrom: salvageKey };
     }
     if (parsed && Array.isArray(parsed.entries)) return parsed;
     if (parsed && typeof parsed === 'object' && 'save' in parsed) {
@@ -15865,10 +15905,20 @@ function createSaveManager(storage) {
   // loss and push genuine older archives out of the cap. Same bytes → same
   // entry, however many times we are asked.
   function archiveMeta(json, reason) {
-    const existing = readArchiveIndex().entries.find((e) => e.kind === 'meta' && e.save === json);
-    if (existing) return existing.id;
+    const index = readArchiveIndex();
+    const existing = index.entries.find((e) => e.kind === 'meta' && e.save === json);
+    if (existing) {
+      // Same bytes seen again: keep ONE entry (a boot reads loadMeta eight
+      // times), but record that it happened again and when. Merging the events
+      // entirely lost the second occurrence's time, which is the one fact a
+      // player asking "when did this start?" actually needs (Vira, D5).
+      existing.count = (existing.count || 1) + 1;
+      existing.lastSeenAt = new Date().toISOString();
+      storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify(index));
+      return existing.id;
+    }
     const id = makeArchiveId('meta', null);
-    writeArchiveEntry({ id, kind: 'meta', slot: null, reason, at: new Date().toISOString(), save: json });
+    writeArchiveEntry({ id, kind: 'meta', slot: null, reason, at: new Date().toISOString(), count: 1, save: json });
     return id;
   }
 
@@ -16167,15 +16217,53 @@ function createSaveManager(storage) {
     },
 
     /**
-     * startNewProfile() → { ok }. The player's explicit consent to leave the
-     * unreadable profile behind. It is the ONLY way out of quarantine that
-     * writes, and the old bytes remain in the archive afterwards.
+     * startNewProfile() → { ok, archiveId }. The player's explicit consent to
+     * leave the old profile behind, and the only way out of quarantine that
+     * writes.
+     *
+     * THE INVARIANT (Vira's gate, D1): **no path may replace the primary
+     * without the old bytes being recoverable afterwards.** This used to be
+     * true only for `corrupt` — because that state had archived on the way in —
+     * and false for every state that had not: `newer` deliberately archives
+     * nothing, so consenting here destroyed a perfectly good 2000-run profile
+     * with no copy anywhere. The archive now happens HERE, where the
+     * replacement happens, so it holds for every state rather than for the one
+     * that happened to be tested. Content de-duplication keeps the corrupt path
+     * from writing a second copy of what it already archived.
      */
     startNewProfile() {
+      const current = storage.getItem(META_KEY);
+      let archiveId = status.archiveId;
+      if (current) {
+        archiveId = archiveMeta(current, status.reason || `replaced by a new profile (was: ${status.state})`);
+      }
       quarantined = false;
       const res = this.saveMeta(freshMeta());
-      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId: status.archiveId, recoveredFrom: null };
-      return res;
+      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId, recoveredFrom: null };
+      return { ...res, archiveId };
+    },
+
+    /**
+     * exportProfile() → a string a player can save to a file, or null when
+     * there is no profile at all.
+     *
+     * Reads the LIVE primary, which is what the `newer` state needs: those
+     * bytes are fine, they are just from the future, so nothing was archived
+     * and there is no archive to export. Before this existed the UI fell back
+     * to "the most recent archive", which in that state is somebody else's —
+     * it offered an unrelated old run under the words "save a copy of your
+     * profile" (Vira's gate, D2).
+     */
+    exportProfile() {
+      const json = storage.getItem(META_KEY);
+      if (!json) return null;
+      return JSON.stringify({
+        exportedAt: new Date().toISOString(),
+        game: 'Ashen Spire',
+        note: 'This is your profile exactly as it was stored.',
+        state: status.state,
+        profile: json,
+      }, null, 2);
     },
   };
 }
@@ -17065,109 +17153,175 @@ Object.assign(module.exports, { dlog, getEntries, logText, openDebugLog });
 //
 // This is the screen a person sees on the worst morning they will ever have
 // with this game: the one where their profile would not read. Saga's floor
-// (commons/save-and-loss.md P1/P3/P4) is the contract this file implements:
+// (commons/save-and-loss.md P1/P3/P4) is the contract.
 //
-//   - don't blame the player
-//   - say what was kept, and where
-//   - offer the export BEFORE offering to start fresh
-//   - don't vanish: this is not a toast, it does not fade, and it cannot be
-//     dismissed by accident
+// THE WORDS ARE SUNNA'S, pasted from her gate
+// (gamedesign/sunna/log/2026/2026-08-07_the-worst-morning-rendered.md). She
+// drove this screen at 390 px and found three blocking defects; where her copy
+// and my earlier draft disagreed, hers is what shipped. I own the structure and
+// which action is wired to what, and every fact on screen still comes from
+// saves.profileStatus() / listArchives() rather than being re-derived here.
 //
-// PROSE IS DRAFT. Sunna owns every word a player reads and her edit beats mine
-// everywhere; the STRUCTURE (three actions in that order, nothing auto-
-// dismissing) is the part that is load-bearing.
-//
-// All numbers and reasons come from saves.profileStatus() / saves.listArchives()
-// — this screen states what the engine found, it never re-derives it.
+// The three states this renders, and why they differ:
+//   corrupt/older — the bytes could not be read. Restore, export, not now.
+//   newer         — the bytes are FINE, just from the future. The correct
+//                   primary action is TO DO NOTHING, so that is the first
+//                   button and it is not destructive (Sunna D1).
+//   (empty/ok/migrated/recovered never reach this screen at all.)
 
 const { esc } = require("src/ui/components/tooltip.js");
+
+// Human time, not a log line: "7 August, 5:09 AM" (Sunna). Second-precision and
+// locale-ambiguous slashes read as machine output at the worst moment.
+function humanTime(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const date = d.toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
+  const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return `${date}, ${time}`;
+}
+
+function humanSize(bytes) {
+  if (!bytes) return null;
+  return bytes < 1024 ? `${bytes} bytes` : `${Math.round(bytes / 1024)} KB`;
+}
 
 /**
  * mountProfileNotice(app, { saves, status, onContinue }) → void
  * Rendered only when saves.profileStatus().ok === false.
  */
 function mountProfileNotice(app, { saves, status, onContinue }) {
-  const archives = saves.listArchives().filter((a) => a.kind === 'meta');
-  const mine = status.archiveId ? archives.find((a) => a.id === status.archiveId) : archives[archives.length - 1];
+  const isNewer = status.state === 'newer';
 
-  // What survived, in the player's terms rather than ours. Read from the
-  // archived bytes if they can be read at all — a partial read is still worth
-  // showing, because "something survived" is the difference between grief and
-  // panic (Saga P4b).
+  // ONLY this profile's own archive — never "the most recent archive in the
+  // drawer". That fallback offered an unrelated old run under the words "save a
+  // copy of your profile" (Vira D2). In the newer state there is deliberately
+  // no archive, and that is correct: the bytes are untouched where they are.
+  const mine = status.archiveId ? saves.getArchive(status.archiveId) : null;
+  const listed = status.archiveId
+    ? saves.listArchives().find((a) => a.id === status.archiveId)
+    : null;
+
+  // What survived, in the player's terms. Read from the archived bytes when
+  // they can be read at all — a partial read is still worth showing, because
+  // "something survived" is the difference between grief and panic (Saga P4b).
   let kept = null;
   if (mine) {
-    const entry = saves.getArchive(mine.id);
     try {
-      const parsed = JSON.parse(entry.save);
+      const parsed = JSON.parse(mine.save);
       const p = parsed && parsed.progress;
       if (p) kept = { runs: p.runs, wins: p.wins, unlocked: (parsed.unlocked || []).length };
     } catch (e) {
-      kept = null; // unreadable is the normal case here; say nothing rather than guess
+      kept = null; // unreadable is the NORMAL case here; say nothing rather than guess
     }
   }
 
-  const when = mine && mine.at ? new Date(mine.at).toLocaleString() : null;
-  const isNewer = status.state === 'newer';
+  const when = humanTime(listed && listed.at);
+  const size = humanSize(listed ? listed.bytes : null);
+  // The screen must say WHERE (Sunna D6): the fact of preservation is the
+  // comfort, and it is thin if we can't point at anything.
+  const whereLine = isNewer
+    ? 'Stored with this game’s data on this device.'
+    : [when && `Set aside ${when}`, size, 'stored with this game’s data on this device.']
+        .filter(Boolean)
+        .join(' · ');
 
   app.innerHTML = `
     <div class="screen profile-notice">
-      <h1>${isNewer ? 'This profile is from a newer version' : "We couldn't read your profile"}</h1>
+      <h1>${isNewer ? 'This profile is from a newer version' : 'We couldn’t read your profile'}</h1>
       <p class="lead">${
         isNewer
-          ? 'It was saved by a newer build of Ashen Spire, so this version has left it completely untouched rather than risk overwriting it. Nothing has been changed or deleted.'
-          : "So we've set it aside instead of deleting it — it's still here."
+          ? 'It was saved by a newer build of Ashen Spire. We’ve left it exactly as it is rather than risk changing it — nothing has been altered or deleted.<br><strong>Update Ashen Spire to open it again.</strong>'
+          : 'So we’ve set it aside instead of deleting it — it’s still here.'
       }</p>
       ${kept ? `<p class="kept">Saved: ${esc(String(kept.runs ?? '—'))} runs · ${esc(String(kept.wins ?? '—'))} wins · ${esc(String(kept.unlocked))} unlocks</p>` : ''}
-      ${when ? `<p class="when">Set aside ${esc(when)}</p>` : ''}
-      <p class="why">${esc(status.reason || '')}</p>
+      <p class="where">${esc(whereLine)}</p>
       <div class="actions">
-        ${isNewer ? '' : '<button class="restore">Try to restore</button>'}
-        ${mine ? '<button class="export">Save a copy to a file</button>' : ''}
-        <button class="fresh ${isNewer ? 'subtle' : ''}">${isNewer ? 'Start a new profile anyway' : 'Start a new profile'}</button>
+        ${isNewer
+          ? '<button class="keep">Keep it and close</button>'
+          : '<button class="restore">Try to restore</button>'}
+        <button class="export">Save a copy to a file</button>
+        ${isNewer ? '' : '<button class="notnow">Not now</button>'}
+      </div>
+      <div class="actions destructive">
+        <button class="fresh subtle">${isNewer ? 'Start a new profile anyway' : 'Start a new profile'}</button>
       </div>
       <p class="result" role="status"></p>
+      ${status.reason
+        ? `<details class="support"><summary>Details for support</summary><code>${esc(status.reason)}</code></details>`
+        : ''}
     </div>
   `;
 
   const $ = (s) => app.querySelector(s);
   const say = (msg) => { $('.result').textContent = msg; };
 
+  // "Not now" / "Keep it and close" — the non-destructive exit that did not
+  // exist (Sunna D1/D4). Nothing is written and the quarantine stays on, so a
+  // player who wants to close the game and think about it loses nothing by
+  // doing so.
+  const leave = $('.notnow') || $('.keep');
+  if (leave) leave.addEventListener('click', () => onContinue());
+
   const restore = $('.restore');
   if (restore) {
     restore.addEventListener('click', () => {
-      const res = saves.restoreProfile(mine && mine.id);
-      // Restore may legitimately fail — the bytes were set aside because they
-      // were bad. Say so plainly instead of pretending (Saga P1).
-      if (res.ok) onContinue();
-      else say(`That didn't work: ${res.reason}. Your copy is still here, and you can still save it to a file.`);
+      const res = saves.restoreProfile(status.archiveId);
+      if (res.ok) { onContinue(); return; }
+      // Sunna's line, verbatim — the raw parser error goes to the support
+      // disclosure, never into the sentence (her D2).
+      say('That didn’t work — those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.');
     });
   }
 
-  const exportBtn = $('.export');
-  if (exportBtn) {
-    exportBtn.addEventListener('click', () => {
-      const text = saves.exportArchive(mine.id);
-      if (!text) { say('That copy is no longer available.'); return; }
-      const blob = new Blob([text], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ashen-spire-profile-${mine.id}.json`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      say('Saved. Keep that file somewhere safe — it is the only copy of those bytes.');
-    });
-  }
-
-  // Deliberately last, and deliberately not the default focus: starting fresh
-  // is the irreversible one, so it is never the easiest button to hit.
-  $('.fresh').addEventListener('click', () => {
-    saves.startNewProfile();
-    onContinue();
+  // Export works in EVERY state: from the archive when there is one, from the
+  // live profile when there isn't (the newer case — where it matters most).
+  $('.export').addEventListener('click', () => {
+    const text = mine ? saves.exportArchive(mine.id) : saves.exportProfile();
+    if (!text) { say('There’s nothing to save to a file yet.'); return; }
+    const blob = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ashen-spire-profile-${(mine && mine.id) || status.state}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    say('Saved. Keep that file somewhere safe.');
   });
 
-  if (restore) restore.focus();
-  else if (exportBtn) exportBtn.focus();
+  // The one irreversible action, behind a second act (Sunna D3). It is offered
+  // to the reader least equipped to evaluate it, so it must be impossible to do
+  // by pressing the obvious button quickly.
+  $('.fresh').addEventListener('click', () => {
+    const wrap = document.createElement('div');
+    wrap.className = 'confirm-fresh';
+    wrap.innerHTML = `
+      <div class="confirm-box" role="dialog" aria-modal="true" aria-label="Start a new profile?">
+        <h2>Start a new profile?</h2>
+        <p>Your old one stays archived — this doesn’t delete it. You can come back to it any time from Settings → Profile.</p>
+        <div class="actions">
+          <button class="cancel">Not yet</button>
+          <button class="go subtle">Start fresh</button>
+        </div>
+      </div>`;
+    app.appendChild(wrap);
+    const cancel = wrap.querySelector('.cancel');
+    cancel.addEventListener('click', () => wrap.remove());
+    wrap.querySelector('.go').addEventListener('click', () => {
+      saves.startNewProfile(); // archives the old bytes first (save.js) — Vira D1
+      onContinue();
+    });
+    cancel.focus(); // the safe option holds the cursor
+  });
+
+  // Something is ALWAYS focused: in the newer state neither restore nor export
+  // used to exist, so keyboard and gamepad players had no entry point (Sunna
+  // D1). Order follows what she credited as holding — restore takes the cursor
+  // where it exists (the action that tries to give the profile back), and in
+  // the newer state that is "Keep it and close", which is the correct primary
+  // action there. The destructive button never takes focus in any state.
+  (restore || leave || $('.export')).focus();
 }
 
 

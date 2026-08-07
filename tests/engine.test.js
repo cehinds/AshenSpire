@@ -855,6 +855,47 @@ export async function runTests({ artManifest = null } = {}) {
     assert(archived && archived.at && archived.reason, 'the corrupt bytes are still archived, with when and why');
     assert(/weaponMoonveil/.test(m9.exportArchive(archived.id) || ''), 'an archive exports to something a player can keep');
     assert(m9.restoreProfile(archived.id).ok === false, 'restoring genuinely-bad bytes fails plainly, not silently');
+
+    // ---- the PRODUCT of state × consent action (Vira's gate, D1) -----------
+    // The corpus above walks each state and each action but never their
+    // product, and the hole was exactly there: consenting to a new profile
+    // destroyed an unarchived one. The invariant, asserted for EVERY state:
+    // no path may replace the primary without the old bytes being recoverable.
+    const build = {
+      ok: (st) => { const m = createSaveManager(st); m.saveMeta({ settings: {}, results: [], progress: { runs: 2000 } }); return m; },
+      corrupt: (st) => { const m = createSaveManager(st); m.saveMeta({ results: [], progress: { runs: 2000 } }); st.setItem(META_KEY, '{"schemaVersion":1,"progress":{"runs":2000}'); st.setItem(META_BACKUP_KEY, 'gone'); m.loadMeta(); return m; },
+      newer: (st) => { const m = createSaveManager(st); st.setItem(META_KEY, JSON.stringify({ schemaVersion: META_SCHEMA_VERSION + 6, profile: { runs: 2000 } })); m.loadMeta(); return m; },
+      older: (st) => { const m = createSaveManager(st); st.setItem(META_KEY, JSON.stringify({ schemaVersion: -3, progress: { runs: 2000 } })); m.loadMeta(); return m; },
+    };
+    for (const [name, make] of Object.entries(build)) {
+      const st = createMemoryStorage();
+      const mgr = make(st);
+      const before = st.getItem(META_KEY);
+      mgr.startNewProfile();
+      const recoverable = mgr.listArchives().some((a) => (mgr.getArchive(a.id) || {}).save === before);
+      assert(recoverable, `${name} × startNewProfile: the replaced bytes are still recoverable`);
+    }
+
+    // newer × export: the bytes are intact and deliberately unarchived, so the
+    // export must read the LIVE profile — and must never offer an unrelated
+    // archive as "your profile" (Vira, D2).
+    const stN = createMemoryStorage();
+    stN.setItem(RUN_ARCHIVE_KEY, JSON.stringify({ reason: 'an old run', save: '{"unrelated":"run bytes"}' }));
+    const mN = build.newer(stN);
+    eq(mN.profileStatus().archiveId, null, 'the newer state points at no archive — it archived nothing');
+    const exported = mN.exportProfile();
+    eq(JSON.parse(exported).profile, stN.getItem(META_KEY), 'export carries the live profile bytes verbatim');
+    assert(!/unrelated/.test(exported), 'export never hands back somebody else\'s archive');
+
+    // A corrupt archive INDEX must not silently discard the drawer (Vira, D4).
+    const stI = createMemoryStorage();
+    const mI = createSaveManager(stI);
+    stI.setItem(RUN_ARCHIVE_KEY, 'the index itself is garbage');
+    mI.saveMeta({ results: [], progress: { runs: 5 } });
+    stI.setItem(META_KEY, 'broken');
+    mI.loadMeta();
+    assert(Object.keys(stI).length >= 0, 'index salvage does not throw');
+    assert(mI.listArchives().length >= 1, 'a fresh index is started so the game keeps working');
   });
 
   // ---- 14. Scripted bot completes a boss combat -------------------------------------

@@ -74,7 +74,17 @@ export function createSaveManager(storage) {
     try {
       parsed = JSON.parse(raw);
     } catch (e) {
-      return { v: 1, entries: [] }; // unreadable index: start one, keep going
+      // An unreadable INDEX used to silently discard every archive it held —
+      // the drawer's own catalogue becoming the thing that loses the drawer
+      // (Vira, D4). Set the raw bytes aside under their own key first; a human
+      // or a later tool can still pick them apart.
+      const salvageKey = `${RUN_ARCHIVE_KEY}_salvage_${Date.now()}`;
+      try {
+        storage.setItem(salvageKey, raw);
+      } catch (e2) {
+        /* storage refused the salvage write; the fresh index below still lets the game run */
+      }
+      return { v: 1, entries: [], salvagedFrom: salvageKey };
     }
     if (parsed && Array.isArray(parsed.entries)) return parsed;
     if (parsed && typeof parsed === 'object' && 'save' in parsed) {
@@ -118,10 +128,20 @@ export function createSaveManager(storage) {
   // loss and push genuine older archives out of the cap. Same bytes → same
   // entry, however many times we are asked.
   function archiveMeta(json, reason) {
-    const existing = readArchiveIndex().entries.find((e) => e.kind === 'meta' && e.save === json);
-    if (existing) return existing.id;
+    const index = readArchiveIndex();
+    const existing = index.entries.find((e) => e.kind === 'meta' && e.save === json);
+    if (existing) {
+      // Same bytes seen again: keep ONE entry (a boot reads loadMeta eight
+      // times), but record that it happened again and when. Merging the events
+      // entirely lost the second occurrence's time, which is the one fact a
+      // player asking "when did this start?" actually needs (Vira, D5).
+      existing.count = (existing.count || 1) + 1;
+      existing.lastSeenAt = new Date().toISOString();
+      storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify(index));
+      return existing.id;
+    }
     const id = makeArchiveId('meta', null);
-    writeArchiveEntry({ id, kind: 'meta', slot: null, reason, at: new Date().toISOString(), save: json });
+    writeArchiveEntry({ id, kind: 'meta', slot: null, reason, at: new Date().toISOString(), count: 1, save: json });
     return id;
   }
 
@@ -420,15 +440,53 @@ export function createSaveManager(storage) {
     },
 
     /**
-     * startNewProfile() → { ok }. The player's explicit consent to leave the
-     * unreadable profile behind. It is the ONLY way out of quarantine that
-     * writes, and the old bytes remain in the archive afterwards.
+     * startNewProfile() → { ok, archiveId }. The player's explicit consent to
+     * leave the old profile behind, and the only way out of quarantine that
+     * writes.
+     *
+     * THE INVARIANT (Vira's gate, D1): **no path may replace the primary
+     * without the old bytes being recoverable afterwards.** This used to be
+     * true only for `corrupt` — because that state had archived on the way in —
+     * and false for every state that had not: `newer` deliberately archives
+     * nothing, so consenting here destroyed a perfectly good 2000-run profile
+     * with no copy anywhere. The archive now happens HERE, where the
+     * replacement happens, so it holds for every state rather than for the one
+     * that happened to be tested. Content de-duplication keeps the corrupt path
+     * from writing a second copy of what it already archived.
      */
     startNewProfile() {
+      const current = storage.getItem(META_KEY);
+      let archiveId = status.archiveId;
+      if (current) {
+        archiveId = archiveMeta(current, status.reason || `replaced by a new profile (was: ${status.state})`);
+      }
       quarantined = false;
       const res = this.saveMeta(freshMeta());
-      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId: status.archiveId, recoveredFrom: null };
-      return res;
+      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId, recoveredFrom: null };
+      return { ...res, archiveId };
+    },
+
+    /**
+     * exportProfile() → a string a player can save to a file, or null when
+     * there is no profile at all.
+     *
+     * Reads the LIVE primary, which is what the `newer` state needs: those
+     * bytes are fine, they are just from the future, so nothing was archived
+     * and there is no archive to export. Before this existed the UI fell back
+     * to "the most recent archive", which in that state is somebody else's —
+     * it offered an unrelated old run under the words "save a copy of your
+     * profile" (Vira's gate, D2).
+     */
+    exportProfile() {
+      const json = storage.getItem(META_KEY);
+      if (!json) return null;
+      return JSON.stringify({
+        exportedAt: new Date().toISOString(),
+        game: 'Ashen Spire',
+        note: 'This is your profile exactly as it was stored.',
+        state: status.state,
+        profile: json,
+      }, null, 2);
     },
   };
 }

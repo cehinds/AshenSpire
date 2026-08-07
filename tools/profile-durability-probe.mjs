@@ -8,7 +8,8 @@
 // so). Both live under META_KEY and ship in 0.4.x. This probe asks the only
 // question that matters about a durable artifact: does it survive a bad byte?
 //
-// Run:  node profile-loss-e444d77.mjs <clone-root>
+// Run:  node tools/profile-durability-probe.mjs <clone-root>   (a bare run exits 2
+//       with usage — the argument is required, per Vira's branch note)
 //   <clone-root> = a checkout of the game repo (measured at dev = e444d77)
 // Exit 0 = the profile is protected. Exit 1 = it is not, and each red names how.
 //
@@ -263,6 +264,59 @@ check('E2 a newer schemaVersion is refused rather than accepted blind (Sten, ame
       return r.ok === true && sv3.profileStatus().quarantined === false && sv3.listArchives().length === archived;
     })());
   void goodBytes;
+}
+
+// =============================================================================
+// P6 — THE PRODUCT (Vira's gate, D1). The corpus above walks each STATE and each
+// CONSENT ACTION but never their product, and the hole was exactly there:
+// newer × startNewProfile destroyed an unarchived profile. The invariant this
+// section enforces is one sentence:
+//
+//   NO PATH MAY REPLACE THE PRIMARY WITHOUT THE OLD BYTES BEING RECOVERABLE.
+//
+// It is asserted for every state, not for the one that happened to be tested.
+// =============================================================================
+{
+  const states = {
+    ok: (st) => { const m = createSaveManager(st); m.saveMeta({ settings: {}, results: [], progress: { runs: 2000 } }); return m; },
+    corrupt: (st) => { const m = createSaveManager(st); m.saveMeta({ settings: {}, results: [], progress: { runs: 2000 } }); st.setItem(META_KEY, '{"schemaVersion":1,"progress":{"runs":2000}'); st.setItem(META_BACKUP_KEY, 'gone'); m.loadMeta(); return m; },
+    newer: (st) => { const m = createSaveManager(st); st.setItem(META_KEY, JSON.stringify({ schemaVersion: META_SCHEMA_VERSION + 6, profile: { runs: 2000 } })); m.loadMeta(); return m; },
+    older: (st) => { const m = createSaveManager(st); st.setItem(META_KEY, JSON.stringify({ schemaVersion: -3, progress: { runs: 2000 } })); m.loadMeta(); return m; },
+  };
+
+  for (const [name, build] of Object.entries(states)) {
+    const st = createMemoryStorage();
+    const mgr = build(st);
+    const before = st.getItem(META_KEY);
+    mgr.startNewProfile();
+    const after = st.getItem(META_KEY);
+    const recoverable = mgr.listArchives().some((a) => a.kind === 'meta' && a.id && (mgr.getArchive(a.id) || {}).save === before);
+    check(`P6 ${name} × startNewProfile: the replaced bytes are still recoverable`,
+      after === before || recoverable,
+      after === before ? '' : 'PRIMARY OVERWRITTEN WITH NO ARCHIVE — those bytes are gone');
+  }
+
+  // newer × export: the bytes are intact and must be exportable even though
+  // nothing was archived (they were deliberately left alone).
+  const stN = createMemoryStorage();
+  const mN = states.newer(stN);
+  const liveBytes = stN.getItem(META_KEY);
+  const liveExport = mN.exportProfile();
+  // The export must carry the profile's bytes VERBATIM — unparsed, because in
+  // the corrupt case they cannot be parsed and must survive anyway.
+  check('P6 newer × export: the profile can be saved to a file without an archive',
+    typeof liveExport === 'string' && JSON.parse(liveExport).profile === liveBytes,
+    String(liveExport).slice(0, 80));
+
+  // An unrelated archive must never be offered as "your profile".
+  const stU = createMemoryStorage();
+  stU.setItem(RUN_ARCHIVE_KEY, JSON.stringify({ reason: 'an old run', save: '{"unrelated":"run bytes"}' }));
+  const mU = states.newer(stU);
+  check('P6 newer: profileStatus does not point at somebody else\'s archive',
+    mU.profileStatus().archiveId === null, 'archiveId=' + mU.profileStatus().archiveId);
+  const exp = mU.exportProfile();
+  check('P6 newer × export with an unrelated archive present: exports the PROFILE, not the run',
+    /2000/.test(String(exp)) && !/unrelated/.test(String(exp)), String(exp).slice(0, 80));
 }
 
 console.log(`\n${fails} failing check(s).`);
