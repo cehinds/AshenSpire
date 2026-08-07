@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mockup — ascension select</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body class="hi-contrast">
+<div class="phone">
+  <div class="badge"><b>ILLUSTRATION</b> · numbers invented, see the note</div>
+
+  <div class="hdr">
+    <h1>ASCENSION</h1>
+    <span class="who">REAVER · 312 SUMMITS</span>
+  </div>
+
+  <!-- Vira's compounding question drawn instead of argued, and Sunna's
+       "matched inflation" warning is the same question from the other end:
+       if these two bars always move together, nothing changed but the digits. -->
+  <div class="sec">
+    <h2>WHAT YOU BRING vs WHAT IT BRINGS</h2>
+    <div class="compound">
+      <div class="row">
+        <span class="lab">YOUR GRANTS</span>
+        <span class="track"><i class="pow" style="width:58%"></i><span class="now" style="left:58%"></span></span>
+      </div>
+      <div class="row">
+        <span class="lab">A16 PRESSURE</span>
+        <span class="track"><i class="diff" style="width:64%"></i><span class="now" style="left:58%"></span></span>
+      </div>
+      <div class="note">
+        At A16 the climb runs <b style="color:var(--parchment)">a little ahead</b>
+        of what you carry — which is the point. If these two bars ever move
+        together exactly, the ladder is inflation, not difficulty.
+      </div>
+    </div>
+  </div>
+
+  <!-- SUNNA MUST 4 — a vertical LIST, not a tab set: focus cursor (D-pad/stick
+       + Confirm), and the bumpers stay with the tabs behind it (Law 3, clause 6
+       corollary). The cursor is drawn on the current row so the claim is
+       checkable rather than asserted. Tooltips on every rung (Law 3 clause 4). -->
+  <div class="sec">
+    <h2>THE LADDER · ONE LINE PER RUNG, ANY RUNG REPLAYABLE</h2>
+
+    <div class="rung done" title="Ascension 14 — elites on the first floor"><div class="num">14</div><div class="txt">
+      <div class="t1">Elites appear on the first floor</div>
+      <div class="rec">First beaten on <b>run 214</b>. <span class="flame">Beaten 46 times.</span></div></div></div>
+
+    <div class="rung done" title="Ascension 15 — shrines heal less"><div class="num">15</div><div class="txt">
+      <div class="t1">Shrines heal 25% less</div>
+      <div class="rec">First beaten on <b>run 1,902</b>. <span class="flame">Beaten 9 times.</span></div></div></div>
+
+    <div class="rung here cursor" title="Ascension 16 — bosses gain a second phase"><div class="num">16</div><div class="txt">
+      <div class="t1">Bosses gain a second phase</div>
+      <div class="rec">Reached 22 times. <b>Not yet beaten.</b></div></div></div>
+
+    <div class="rung locked" title="Ascension 17 — card removal costs double"><div class="num">17</div><div class="txt">
+      <div class="t1">Card removal costs double</div>
+      <div class="rec">Opens at 350 summits — <b>38 summits away</b></div></div></div>
+
+    <div class="rung locked" title="Ascension 18 — talismans start unattuned"><div class="num">18</div><div class="txt">
+      <div class="t1">Talismans start unattuned</div>
+      <div class="rec">Opens at 420 summits</div></div></div>
+
+    <div class="rung locked" title="Ascension 19 — a relic slot is sealed until Act II"><div class="num">19</div><div class="txt">
+      <div class="t1">One relic slot sealed until Act II</div>
+      <div class="rec">Opens at 500 summits</div></div></div>
+
+    <div class="rung locked" title="Ascension 20 — the Spire remembers your last defeat"><div class="num">20</div><div class="txt">
+      <div class="t1">The Spire remembers your last defeat</div>
+      <div class="rec">Opens at 600 summits</div></div></div>
+  </div>
+
+  <!-- SUNNA MUST 1 — what changes, IN WORDS, before you commit. A difficulty
+       number with no description is not a choice, it is a dare. -->
+  <div class="sec">
+    <h2>BEFORE YOU COMMIT</h2>
+    <div class="commit">
+      <div class="h">CLIMBING AT A16 MEANS</div>
+      <ul>
+        <li>Elites from Floor 1</li>
+        <li>Shrines heal 25% less</li>
+        <li>Bosses gain a second phase</li>
+      </ul>
+    </div>
+    <div style="display:flex;gap:9px;align-items:center;margin-top:11px">
+      <button style="flex:1;min-height:44px;background:var(--gold);color:var(--bg);border:0;border-radius:9px;font-family:var(--font-display);font-size:15px;letter-spacing:.08em">CLIMB AT A16</button>
+      <button style="min-height:44px;min-width:44px;background:var(--panel);color:var(--parchment);border:1px solid var(--line-soft);border-radius:9px;padding:0 14px;font-size:12px">A15</button>
+    </div>
+    <div class="foot" style="padding:9px 0 0">
+      A rung is never forced and never spent. Going back down is one tap, and
+      <b>an old rung can always be climbed again</b> — which is the mechanism
+      behind the doorframe on the sheet: a wall only falls if you are allowed
+      to go back and meet it.
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>Grammar test.</b> Seven rungs, one row shape; the rung text is a single
+    authored string and the record is three numbers off the profile. A new rung
+    is a table entry — number, one line, unlock threshold — needing no new
+    screen and no new art.
+  </div>
+</div>
+</body>
+</html>

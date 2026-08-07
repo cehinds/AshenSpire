@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mockup — the drop moment</title>
+<link rel="stylesheet" href="mockup.css">
+<style>
+  /* The banner sits ABOVE the hand and below the enemies: it never covers a
+     card, an HP bar, or End Turn. Sunna's "permanent drops must never block
+     the run" is a placement claim, so it is drawn against a real frame rather
+     than asserted. */
+  /* The captured frame is 390x844; the game paints ~758 of it and leaves the
+     rest blank. Cropping to the painted region is honest — padding it out
+     would put pixels in the shot the game never drew. */
+  .host { height: 758px; }
+  .drop { bottom: 262px; }
+  .squint { filter: grayscale(1) contrast(1.1); }
+  /* Stacked, not side by side: two four-tier strips in half of 390px each
+     clipped the comparison, which is the one thing this pair exists to show.
+     Side-by-side returns above 700px, where the width is real. */
+  .pair { display: flex; flex-direction: column; gap: 14px; }
+  .pair > div { flex: 1; }
+  @media (min-width: 700px) { .pair { flex-direction: row; } }
+  .pcap { font-size: 9px; letter-spacing: .14em; color: var(--muted); margin-bottom: 7px; }
+  .vs { display: flex; flex-direction: column; gap: 12px; }
+  .vs .drop { position: static; left: auto; right: auto; bottom: auto; }
+</style>
+</head>
+<body class="hi-contrast">
+<div class="phone">
+  <div class="badge"><b>COMPOSITE</b> · capture + illustration</div>
+
+  <div class="host">
+    <img src="shots/host-combat-390.png" alt="">
+    <!-- ILLUSTRATION: the banner. Everything under it is CAPTURE. -->
+    <div class="drop legendary keep">
+      <div class="r legendary"><i></i><em>⚔</em><s><b></b><b></b><b></b><b></b></s></div>
+      <div class="body">
+        <div class="tier">LEGENDARY</div>
+        <div class="nm">Cinderhusk Greatsword</div>
+        <div class="gr">Adds a card you have never held</div>
+        <span class="ribbon">YOURS — KEPT AFTER THIS RUN</span>
+      </div>
+      <div class="seal">🔒</div>
+    </div>
+  </div>
+
+  <div class="foot" style="border-bottom:1px solid var(--line)">
+    <b>CAPTURE</b> — the combat frame is the running game at <code>f7d0323</code>,
+    390×844, shipped defaults, seed SHOWCASE.
+    <b>ILLUSTRATION</b> — the banner is drawn. It does not exist.
+    The run is still live underneath it: cards, HP bars and End Turn are all
+    uncovered, which is the claim being drawn.
+  </div>
+
+  <!-- SUNNA MUST 3 — the cruellest available confusion, designed apart. Two
+       presentations, not one grammar with a word changed. -->
+  <div class="sec">
+    <h2>KEPT FOREVER vs THIS RUN ONLY</h2>
+    <div class="vs">
+      <div class="drop rare keep">
+        <div class="r rare"><i></i><em>◈</em><s><b></b><b></b></s></div>
+        <div class="body">
+          <div class="tier">RARE</div>
+          <div class="nm">Ember of the Second Wind</div>
+          <div class="gr">Grants a starting relic</div>
+          <span class="ribbon">YOURS — KEPT AFTER THIS RUN</span>
+        </div>
+        <div class="seal">🔒</div>
+      </div>
+
+      <div class="drop rare loan">
+        <div class="r rare"><i></i><em>◈</em><s><b></b><b></b></s></div>
+        <div class="body">
+          <div class="tier">FOUND IN THE SPIRE</div>
+          <div class="nm">Ember of the Second Wind</div>
+          <div class="gr">Grants a starting relic</div>
+          <span class="until">LEAVES WHEN THIS RUN ENDS</span>
+        </div>
+      </div>
+    </div>
+    <div class="foot" style="padding:10px 0 0">
+      Same item, same rarity, same words — <b>four structural differences</b>:
+      solid frame vs dashed, a sealed right edge vs an open one, a filled
+      gold ribbon vs an outlined tag, and the tier line replaced by where it
+      came from. Nothing here relies on the player reading "kept" vs "this
+      run". <span style="color:var(--muted)">The seal is the one mark that
+      only ever appears on something permanent — it is never decorative.</span>
+    </div>
+  </div>
+
+  <!-- SUNNA MUST 4 — interruption escalates with rarity; a common never blocks. -->
+  <div class="sec">
+    <h2>INTERRUPTION ESCALATES WITH RARITY</h2>
+    <div class="esc">
+      <div class="step">
+        <div class="lvl">COMMON · NO INTERRUPTION — A CHIP IN THE LOG</div>
+        <span class="inline-chip"><span class="r common"><i></i><em>⚔</em></span> Charred Cleaver — kept</span>
+      </div>
+      <div class="step">
+        <div class="lvl">RARE · BANNER, 4s, RUN CONTINUES</div>
+        <div class="drop rare keep" style="position:static;left:auto;right:auto;bottom:auto">
+          <div class="r rare"><i></i><em>⛊</em><s><b></b><b></b></s></div>
+          <div class="body">
+            <div class="tier">RARE</div>
+            <div class="nm">Ashen Plate</div>
+            <span class="ribbon">YOURS — KEPT AFTER THIS RUN</span>
+          </div>
+          <div class="seal">🔒</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="lvl">LEGENDARY · BANNER + HELD CORONA + STING — STILL NO MODAL</div>
+        <div class="drop legendary keep" style="position:static;left:auto;right:auto;bottom:auto">
+          <div class="r legendary"><i></i><em>⚔</em><s><b></b><b></b><b></b><b></b></s></div>
+          <div class="body">
+            <div class="tier">LEGENDARY</div>
+            <div class="nm">Cinderhusk Greatsword</div>
+            <span class="ribbon">YOURS — KEPT AFTER THIS RUN</span>
+          </div>
+          <div class="seal">🔒</div>
+        </div>
+      </div>
+    </div>
+    <div class="foot" style="padding:10px 0 0">
+      Duration, weight and sound are <b>columns on the rarity row</b>, not
+      hand-built per item: a new tier is a table entry that supplies its own
+      hold time and sting id. <span style="color:var(--muted)">Vega owns the
+      ear half — the sting and this colour must be authored together or they
+      will contradict each other.</span>
+    </div>
+  </div>
+
+  <!-- The claim under test: rarity readable BEFORE the words. -->
+  <div class="sec">
+    <h2>RARITY BEFORE READING · STRUCTURE, THEN COLOUR</h2>
+    <div class="pair">
+      <div>
+        <div class="pcap">AS SHIPPED</div>
+        <div class="ladderstrip">
+          <div class="one"><div class="r common"><i></i><em>⚔</em></div><div class="t">COMMON</div><div class="p">62%</div></div>
+          <div class="one"><div class="r uncommon"><i></i><em>⚔</em><s><b></b></s></div><div class="t">UNCOMMON</div><div class="p">28%</div></div>
+          <div class="one"><div class="r rare"><i></i><em>⚔</em><s><b></b><b></b></s></div><div class="t">RARE</div><div class="p">9%</div></div>
+          <div class="one"><div class="r legendary"><i></i><em>⚔</em><s><b></b><b></b><b></b><b></b></s></div><div class="t">LEGEND</div><div class="p">0.4%</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="pcap">COLOUR REMOVED</div>
+        <div class="ladderstrip squint">
+          <div class="one"><div class="r common"><i></i><em>⚔</em></div><div class="t">COMMON</div><div class="p">62%</div></div>
+          <div class="one"><div class="r uncommon"><i></i><em>⚔</em><s><b></b></s></div><div class="t">UNCOMMON</div><div class="p">28%</div></div>
+          <div class="one"><div class="r rare"><i></i><em>⚔</em><s><b></b><b></b></s></div><div class="t">RARE</div><div class="p">9%</div></div>
+          <div class="one"><div class="r legendary"><i></i><em>⚔</em><s><b></b><b></b><b></b><b></b></s></div><div class="t">LEGEND</div><div class="p">0.4%</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot" style="padding:10px 0 0">
+      Four channels carry the tier and none is colour alone: <b>ring weight</b>
+      (1→4px), <b>ring count</b> (one→two), <b>counted ember marks</b>
+      (0→1→2→4), <b>corner cut + dashed corona</b>. The right strip is the same
+      drawing with the hue removed — the ladder still reads, which is why the
+      colour-blind remap and the atmospheric palette need no second drop screen.
+    </div>
+  </div>
+
+  <!-- GRAMMAR LAW 4, at the drop: an unknown category still drops, at the right
+       rarity, with its own face. -->
+  <div class="sec">
+    <h2>A CATEGORY THIS SCREEN HAS NEVER HEARD OF</h2>
+    <div class="drop rare keep" style="position:static;left:auto;right:auto;bottom:auto">
+      <div class="r rare generic"><i></i><em>◆</em><s><b></b><b></b></s></div>
+      <div class="body">
+        <div class="tier">RARE</div>
+        <div class="nm">Oath of the Grave-Warden</div>
+        <div class="gr">Revive once per run at 1 HP</div>
+        <span class="ribbon">YOURS — KEPT AFTER THIS RUN</span>
+      </div>
+      <div class="seal">🔒</div>
+    </div>
+    <div class="loud" style="margin-top:10px">
+      <b>Acceptance test, drawn.</b> COVENANT is a category no UI here knows.
+      The row still drops, at its own rarity, with its own name, glyph and
+      effect text — dotted frame says <i>generic</i>. It never vanishes:
+      invisible is indistinguishable from never-added, and that is the silent
+      failure this rule exists to prevent.
+    </div>
+  </div>
+</div>
+</body>
+</html>

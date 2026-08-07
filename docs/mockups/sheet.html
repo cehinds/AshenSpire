@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mockup — the character sheet</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body class="hi-contrast">
+<div class="phone">
+  <div class="badge"><b>ILLUSTRATION</b> · nothing here is running code</div>
+
+  <div class="hdr">
+    <h1>THE FORSAKEN</h1>
+    <span class="who">REAVER · PROFILE</span>
+  </div>
+
+  <!-- SUNNA MUST 1 — THE DOORFRAME. Then and now on one surface, because the
+       curve she measured (0.1%/run) is below the game's own display resolution
+       and can only be felt as memory. This band is the whole reason the sheet
+       exists; it is deliberately the first thing on it. -->
+  <div class="sec">
+    <h2>THE DOORFRAME</h2>
+    <div class="door">
+      <div>
+        <div class="when">RUN 1 · TWO YEARS AGO</div>
+        <div class="big">Iron Reaver</div>
+        <div class="line">84 HP · <span>no talismans</span></div>
+        <div class="line"><span>Died on Floor 6, Act I</span></div>
+      </div>
+      <div>
+        <div class="when">RUN 2,047 · TODAY</div>
+        <div class="big">Cinderhusk</div>
+        <div class="line">129 HP · <span>3 talismans</span></div>
+        <div class="line"><span>Summited at A16</span></div>
+      </div>
+    </div>
+
+    <!-- HER STRONGEST IDEA, and she asked for it by name: the wall that fell.
+         This single line delivers more of his fantasy than the stat curve. -->
+    <div class="wall" style="margin-top:12px">
+      <div class="then">You first beat Ascension 0 on <b>run 3</b>.</div>
+      <div class="now">You beat it again on <b>run 1,400</b> — without taking damage.</div>
+    </div>
+  </div>
+
+  <!-- SUNNA MUST 2 — every number says what it DOES, in words, beside itself.
+       And the "was" is per-ERA, never per-run: she forbids per-run deltas
+       outright, because +0.3 STR after every run teaches the player, accurately,
+       that their progress is trivial. -->
+  <div class="sec">
+    <h2>STATS · WHAT EACH ONE DOES</h2>
+
+    <div class="statrow">
+      <div class="kv"><div class="k">VIGOR</div><div class="v">17</div><div class="was">WAS 10</div></div>
+      <div class="does">+45 max HP. <b>Guard</b> cards keep 1 Block into your next turn.</div>
+    </div>
+    <div class="statrow">
+      <div class="kv"><div class="k">STRENGTH</div><div class="v">24</div><div class="was">WAS 14</div></div>
+      <div class="does">+18% damage on <b>heavy</b> weapons. <b>Blade</b> cards deal +2.</div>
+    </div>
+    <div class="statrow">
+      <div class="kv"><div class="k">DEXTERITY</div><div class="v">11</div><div class="was">WAS 8</div></div>
+      <div class="does">+9% on <b>light</b> weapons. One extra card drawn every third turn.</div>
+    </div>
+    <div class="statrow">
+      <div class="kv"><div class="k">FAITH</div><div class="v">8</div><div class="was">WAS 8</div></div>
+      <div class="does"><b>Ember</b> cards heal 1 more. Nothing you carry scales with Faith yet.</div>
+    </div>
+    <div class="statrow">
+      <div class="kv"><div class="k">WEIGHT</div><div class="v">31</div><div class="was">OF 48</div></div>
+      <div class="does">Light load — dodge costs 1 less stamina. Over 48 you would roll slow.</div>
+    </div>
+    <div class="foot" style="padding:9px 0 0">
+      <b>Next:</b> Strength 25 opens the second Ash of War slot on heavy weapons.
+    </div>
+  </div>
+
+  <!-- THE GRAMMAR. Same row shape for every grant kind — and the last two rows
+       are the acceptance test drawn, not described. -->
+  <div class="sec">
+    <h2>EQUIPPED · ONE ROW SHAPE, ANY GRANT</h2>
+
+    <div class="slot">
+      <div class="r legendary"><i></i><em>⚔</em><s><b></b><b></b><b></b><b></b></s></div>
+      <div class="body">
+        <div class="nm">Cinderhusk Greatsword <span class="kind">WEAPON</span></div>
+        <div class="grant">Adds card: <b>Ash of War — Rolling Sparks</b></div>
+        <div class="tags"><span class="tag s-a">STR <b>A</b></span><span class="tag s-b">DEX <b>D</b></span><span class="tag">WGT <b>12</b></span></div>
+        <div class="cap">
+          <div class="lab"><span>SCALED ATTACK</span><span>187% OF BASE · CAP 300%</span></div>
+          <div class="bar"><i class="fill" style="width:62.3%"></i><span class="notch" style="left:calc(100% - 2px)"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="r rare"><i></i><em>⛊</em><s><b></b><b></b></s></div>
+      <div class="body">
+        <div class="nm">Ashen Plate <span class="kind">ARMOUR</span></div>
+        <div class="grant">+1 Block on the first card each turn</div>
+        <div class="tags"><span class="tag s-b">VIG <b>B</b></span><span class="tag">WGT <b>19</b></span></div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="r rare"><i></i><em>◈</em><s><b></b><b></b></s></div>
+      <div class="body">
+        <div class="nm">Ember of the Second Wind <span class="kind">TALISMAN</span></div>
+        <div class="grant">Starting relic: <b>Kindled Heart</b></div>
+        <div class="tags"><span class="tag">FTH <b>C</b></span></div>
+      </div>
+    </div>
+
+    <!-- GRAMMAR LAW 4 + her acceptance test, DRAWN: a row whose category the UI
+         has never heard of. It renders GENERIC — dotted frame, generic glyph,
+         its own name and its own effect text straight off the row — and it is
+         flagged, not hidden. Vanishing would look exactly like "never added". -->
+    <div class="slot">
+      <div class="r uncommon generic"><i></i><em>◆</em><s><b></b></s></div>
+      <div class="body">
+        <div class="nm">Oath of the Grave-Warden <span class="kind">COVENANT</span></div>
+        <div class="grant">Revive once per run at 1 HP</div>
+        <div class="tags"><span class="tag">FTH <b>B</b></span></div>
+        <div style="margin-top:5px"><span class="gnote">UNKNOWN CATEGORY · SHOWN GENERIC</span></div>
+      </div>
+    </div>
+
+    <div class="slot empty">
+      <div class="r common"><i></i><em>+</em></div>
+      <div class="body">
+        <div class="nm">A third talisman slot <span class="kind">NOT YET YOURS</span></div>
+        <div class="grant none">Opens at 350 summits — <b>38 summits away</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUNNA MUST 3 — a collection, never a fraction. What you HAVE, rendered
+       richly. The count of the unfound lives behind a control you choose to
+       press; "12 / 340" never appears on this screen. -->
+  <div class="sec">
+    <h2>FOUND · YOUR ARMOURY</h2>
+    <div class="coll">
+      <span class="r legendary"><i></i><em>⚔</em><s><b></b><b></b><b></b><b></b></s></span>
+      <span class="r rare"><i></i><em>⚔</em><s><b></b><b></b></s></span>
+      <span class="r rare"><i></i><em>⛊</em><s><b></b><b></b></s></span>
+      <span class="r rare"><i></i><em>◈</em><s><b></b><b></b></s></span>
+      <span class="r uncommon"><i></i><em>⚔</em><s><b></b></s></span>
+      <span class="r uncommon"><i></i><em>◈</em><s><b></b></s></span>
+      <span class="r uncommon"><i></i><em>⛊</em><s><b></b></s></span>
+      <span class="r uncommon generic"><i></i><em>◆</em><s><b></b></s></span>
+      <span class="r common"><i></i><em>⚔</em></span>
+      <span class="r common"><i></i><em>⛊</em></span>
+      <span class="r common"><i></i><em>◈</em></span>
+      <span class="r common"><i></i><em>⚔</em></span>
+    </div>
+    <div class="found-l">
+      <b>Cinderhusk Greatsword</b> — found on run 1,203, in the Ashen Crown.<br>
+      <b>Ashen Plate</b> — found on run 250, the guaranteed drop.
+    </div>
+    <button class="opt">▸ Also count what the Spire still keeps from me</button>
+  </div>
+
+  <div class="foot">
+    <b>Grammar test.</b> Six equipped rows, six different grant kinds — a card,
+    a combat rule, a starting relic, a revive, a slot, and a category this
+    screen has never heard of — and one row shape. A new grant row is a table
+    entry, never a screen.
+  </div>
+</div>
+</body>
+</html>

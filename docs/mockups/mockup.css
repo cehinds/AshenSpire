@@ -1,0 +1,362 @@
+/* docs/mockups/mockup.css — the shared surface for the meta-progression mockups.
+   NOT shipped UI: these are drawings, and every one of them is badged.
+   They import the game's real palette so the colours are the game's own and a
+   palette change repaints the mockups on the next render — the same discipline
+   as store/templates/. Nothing here is imported BY the game.
+
+   Two palettes, both real: `body.hi-contrast` is the shipped default
+   (highContrast defaults true); dropping the class gives the atmospheric
+   opt-out. Any rarity language that dies in one of them is a language that
+   fails half the players — #45's lesson, applied before it ships instead of
+   after. */
+
+@import url('../../styles/base.css');
+
+/* base.css pins `html { height: 100dvh; overflow: hidden }` — correct for a
+   fullscreen game, fatal for a document that is meant to scroll. Undone here,
+   and named because it cost me a false green: my capture tool asserted the PNG
+   height against documentElement.scrollHeight, and the clipped root reported
+   900 for a 2,000px page, so a crop matched a crop and the check passed. An
+   instrument that measures the same lie twice agrees with itself. */
+html { height: auto; overflow: visible; }
+
+body {
+  height: auto; overflow: visible;
+  background: var(--bg); color: var(--parchment);
+  font-family: var(--font-body); font-size: 14px; line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+.phone { width: 390px; min-height: 844px; margin: 0 auto; position: relative; }
+.wide { width: 100%; max-width: 1200px; margin: 0 auto; }
+
+/* ---- the badge. Every mockup carries one; no screen ships unlabelled. ----
+   CAPTURE = pixels the running game produced. ILLUSTRATION = pixels I drew of
+   something that does not exist yet. A composite names both layers. */
+.badge {
+  /* A static bar, not a floating corner tag: a badge that overlaps the screen
+     it is labelling is a badge someone will crop out. It reads before the
+     mockup does, on purpose. */
+  display: block; font-size: 10px; letter-spacing: .16em; padding: 6px 14px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--bg-raise); color: var(--muted);
+}
+.badge b { color: var(--parchment); font-weight: 600; }
+.badge.cap { border-color: var(--frost); color: var(--frost); }
+
+.hdr {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 12px 14px 10px; border-bottom: 1px solid var(--line);
+}
+.hdr h1 { font-family: var(--font-display); font-size: 19px; color: var(--gold); letter-spacing: .04em; }
+.hdr .who { margin-left: auto; font-size: 11px; letter-spacing: .12em; color: var(--muted); }
+
+.sec { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.sec > h2 {
+  font-size: 10px; letter-spacing: .2em; color: var(--muted);
+  font-weight: 600; margin-bottom: 9px;
+}
+
+/* ================= THE RARITY GRAMMAR — one language, four tiers ============
+   Rarity is carried by STRUCTURE first and colour second, on purpose:
+     · ring weight      1px → 2px → 3px → 4px
+     · ring count       one → one → two → two + segmented outer
+     · ember marks      0 → 1 → 2 → 4  (counted, not just brighter)
+     · corner cuts      none → none → cut → cut + corona
+   Squint, or drop the colour entirely, and the tier is still readable. Colour
+   (grey → frost → gold → ember) reinforces; it never carries alone. This is
+   the whole reason a colour-blind remap and the atmospheric palette do not
+   each need their own drop screen.
+   A NEW RARITY IS A NEW ROW IN THIS TABLE, not a new screen. */
+.r { position: relative; width: 44px; height: 44px; flex: 0 0 44px; }
+.r i {
+  position: absolute; inset: 0; border-radius: 9px;
+  border: 1px solid var(--line-soft); background: var(--panel);
+}
+.r em { /* the item glyph */
+  position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; font-style: normal; font-size: 19px; color: var(--parchment);
+}
+.r s { /* ember marks — counted, top edge */
+  position: absolute; top: -4px; left: 0; right: 0; height: 4px;
+  display: flex; gap: 3px; justify-content: center; text-decoration: none;
+}
+.r s b { width: 3px; height: 3px; border-radius: 50%; background: currentColor; display: block; }
+
+.r.common    { color: var(--muted); }
+.r.uncommon  { color: var(--frost); }
+.r.rare      { color: var(--gold); }
+.r.legendary { color: var(--ember); }
+
+.r.uncommon i { border-width: 2px; border-color: currentColor; }
+.r.rare i     { border-width: 3px; border-color: currentColor; border-radius: 9px 3px 9px 3px; }
+.r.legendary i{ border-width: 4px; border-color: currentColor; border-radius: 11px 2px 11px 2px; }
+/* second ring: rare and legendary only */
+.r.rare::after, .r.legendary::after {
+  content: ''; position: absolute; inset: 4px; border-radius: 6px;
+  border: 1px solid currentColor; opacity: .55;
+}
+/* corona: legendary only, and it is a shape, not just a glow */
+.r.legendary::before {
+  content: ''; position: absolute; inset: -6px; border-radius: 14px;
+  border: 1px dashed currentColor; opacity: .5;
+}
+
+/* ---- THE SLOT ROW — the grammar, and the point of the whole sheet ----------
+   Weapon, armour, talisman, relic, an empty slot, and anything a future grant
+   row invents all render as THIS row: rarity glyph · name · kind · scaling
+   tags · one grant line. A new grant type is a new ENTRY. If a row ever needs
+   its own layout, the vocabulary broke, not the screen. (Sunna's law from #65,
+   carried forward.) */
+.slot {
+  display: flex; gap: 11px; align-items: flex-start;
+  padding: 9px 0; border-bottom: 1px solid rgba(58, 50, 38, .55);
+  min-height: 44px; /* the tap floor, as a floor — content grows it */
+}
+.slot:last-child { border-bottom: 0; }
+.slot .body { min-width: 0; flex: 1; }
+.slot .nm { font-size: 14px; color: var(--parchment); display: flex; gap: 7px; align-items: baseline; }
+.slot .kind { font-size: 10px; letter-spacing: .14em; color: var(--muted); }
+.slot .grant { font-size: 12px; color: var(--gold); margin-top: 2px; }
+.slot .grant.none { color: var(--muted); font-style: italic; }
+.slot.empty .nm { color: var(--muted); font-style: italic; }
+.slot.empty .r i { border-style: dashed; background: transparent; }
+
+/* scaling tags — one chip per stat the item answers to */
+.tags { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+.tag {
+  font-size: 10px; letter-spacing: .1em; padding: 1px 6px; border-radius: 3px;
+  border: 1px solid var(--line-soft); color: var(--muted);
+}
+.tag b { color: var(--parchment); font-weight: 600; }
+.tag.s-a b { color: var(--gold); }
+.tag.s-b b { color: var(--frost); }
+
+/* ---- the 300% cap, made visible where it is earned ------------------------
+   Constantine's one hard number in the brief. A meter, not a sentence: the
+   filled part is what this weapon currently gets from stats + meta, the notch
+   is the cap. If the bar can ever cross the notch, Vira's falsifier failed. */
+.cap { margin-top: 7px; }
+.cap .lab { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: .1em; color: var(--muted); }
+.cap .bar {
+  position: relative; height: 6px; margin-top: 3px; border-radius: 3px;
+  background: var(--bg-raise); border: 1px solid var(--line-soft); overflow: hidden;
+}
+.cap .fill { position: absolute; inset: 0 auto 0 0; background: var(--gold); opacity: .8; }
+.cap .notch { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--parchment); }
+
+/* ---- stat chips — slow growth has to be VISIBLE or it is not felt --------- */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.stat {
+  border: 1px solid var(--line-soft); border-radius: 7px; padding: 7px 8px;
+  background: var(--panel); min-height: 44px;
+}
+.stat .k { font-size: 10px; letter-spacing: .16em; color: var(--muted); }
+.stat .v { font-size: 21px; font-family: var(--font-display); color: var(--parchment); line-height: 1.1; }
+.stat .to { height: 3px; margin-top: 5px; background: var(--bg-raise); border-radius: 2px; overflow: hidden; }
+.stat .to i { display: block; height: 100%; background: var(--gold); opacity: .75; }
+.stat .nx { font-size: 9px; letter-spacing: .08em; color: var(--muted); margin-top: 3px; }
+
+/* ---- 2000 runs, on a phone ------------------------------------------------
+   You cannot show two thousand runs. You show their SHAPE: totals, the last
+   forty as one strip, and the milestones that changed the character. */
+.tot { display: flex; gap: 14px; flex-wrap: wrap; }
+.tot div { min-width: 62px; }
+.tot .n { font-family: var(--font-display); font-size: 20px; color: var(--parchment); }
+.tot .l { font-size: 9px; letter-spacing: .14em; color: var(--muted); }
+.strip { display: flex; gap: 2px; margin-top: 10px; height: 26px; align-items: flex-end; }
+.strip i { flex: 1; background: var(--line-soft); border-radius: 1px; display: block; }
+.strip i.win { background: var(--gold); }
+.strip i.deep { background: var(--muted); }
+.strip-l { display: flex; justify-content: space-between; font-size: 9px; letter-spacing: .12em; color: var(--muted); margin-top: 4px; }
+
+.mile { display: flex; gap: 9px; align-items: baseline; padding: 5px 0; font-size: 12px; }
+.mile .at { font-size: 10px; letter-spacing: .1em; color: var(--muted); flex: 0 0 66px; }
+.mile .what { color: var(--parchment); }
+.mile .what b { color: var(--gold); font-weight: 600; }
+
+/* ---- ascension ladder ----------------------------------------------------- */
+.rung {
+  display: flex; gap: 11px; align-items: flex-start; padding: 8px 0;
+  border-bottom: 1px solid rgba(58, 50, 38, .55); min-height: 44px;
+}
+.rung .num {
+  flex: 0 0 38px; height: 38px; border-radius: 7px; border: 1px solid var(--line-soft);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 15px; color: var(--muted);
+  background: var(--panel);
+}
+.rung.done .num { color: var(--gold); border-color: var(--gold); }
+.rung.here .num { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+.rung.locked .num { border-style: dashed; color: var(--line-soft); }
+.rung .txt { flex: 1; min-width: 0; }
+.rung .t1 { font-size: 13px; color: var(--parchment); }
+.rung.locked .t1 { color: var(--muted); }
+.rung .t2 { font-size: 10px; letter-spacing: .1em; color: var(--muted); margin-top: 2px; }
+.rung.here { background: rgba(201, 162, 39, .06); }
+
+/* the compounding band — two knobs, drawn on one axis */
+.compound { border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; background: var(--panel); }
+.compound .row { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+.compound .row:last-child { margin-bottom: 0; }
+.compound .lab { flex: 0 0 84px; font-size: 10px; letter-spacing: .12em; color: var(--muted); }
+.compound .track { position: relative; flex: 1; height: 8px; background: var(--bg-raise); border-radius: 4px; border: 1px solid var(--line-soft); }
+.compound .track i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; display: block; }
+.compound .track i.pow { background: var(--frost); opacity: .8; }
+.compound .track i.diff { background: var(--ember); opacity: .8; }
+.compound .now { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--parchment); }
+.compound .note { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+/* ---- the drop moment ------------------------------------------------------ */
+.host { position: relative; overflow: hidden; background: var(--bg); }
+.host img { display: block; width: 100%; }
+.drop {
+  position: absolute; left: 10px; right: 10px; bottom: 84px;
+  display: flex; gap: 11px; align-items: center;
+  padding: 10px 12px; border-radius: 10px;
+  background: rgba(13, 11, 8, .93);
+  border: 1px solid var(--line-soft);
+}
+.drop.legendary { border-color: var(--ember); box-shadow: 0 0 0 1px rgba(201, 80, 46, .35), 0 8px 30px rgba(0,0,0,.7); }
+.drop.rare { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(201, 162, 39, .3), 0 8px 30px rgba(0,0,0,.7); }
+.drop .body { flex: 1; min-width: 0; }
+.drop .tier { font-size: 10px; letter-spacing: .22em; }
+.drop.legendary .tier { color: var(--ember); }
+.drop.rare .tier { color: var(--gold); }
+.drop .nm { font-size: 15px; color: var(--parchment); }
+.drop .gr { font-size: 11px; color: var(--gold); margin-top: 1px; }
+.drop .cta { font-size: 10px; letter-spacing: .14em; color: var(--muted); align-self: flex-end; }
+
+.ladderstrip { display: flex; gap: 10px; }
+.ladderstrip .one { flex: 1; text-align: center; }
+.ladderstrip .one .r { margin: 0 auto 6px; }
+.ladderstrip .one .t { font-size: 9px; letter-spacing: .12em; color: var(--muted); }
+.ladderstrip .one .p { font-size: 10px; color: var(--parchment); margin-top: 1px; }
+
+.foot { padding: 10px 14px 16px; font-size: 10px; color: var(--muted); line-height: 1.5; }
+.foot b { color: var(--parchment); font-weight: 600; }
+
+/* ================= ADDED FOR SUNNA'S PX MUSTS (2026-08-07) =================
+   Her read is the spec these drawings answer to; each block below names the
+   must it serves so a reviewer can check the drawing against the sentence. */
+
+/* MUST (sheet 1) — THE DOORFRAME. Then and now on ONE surface. Slow growth is
+   felt through memory, not sensation: nobody feels themselves getting taller,
+   they feel it standing next to a mark made a year ago. */
+.door { display: flex; gap: 0; border: 1px solid var(--line-soft); border-radius: 9px; overflow: hidden; }
+.door > div { flex: 1; padding: 9px 10px; }
+.door > div + div { border-left: 1px solid var(--line-soft); background: rgba(201, 162, 39, .05); }
+.door .when { font-size: 9px; letter-spacing: .16em; color: var(--muted); }
+.door .line { font-size: 12px; color: var(--parchment); margin-top: 5px; }
+.door .line span { color: var(--muted); }
+.door .big { font-family: var(--font-display); font-size: 17px; color: var(--gold); margin-top: 2px; }
+
+/* MUST (sheet 2) — every number says what it DOES, in words, beside itself.
+   A wall of digits with no stated effect is the thing this row exists to stop. */
+.statrow {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 8px 0; border-bottom: 1px solid rgba(58, 50, 38, .55); min-height: 44px;
+}
+.statrow:last-child { border-bottom: 0; }
+.statrow .kv { flex: 0 0 74px; }
+.statrow .k { font-size: 9px; letter-spacing: .18em; color: var(--muted); }
+.statrow .v { font-family: var(--font-display); font-size: 20px; color: var(--parchment); line-height: 1.15; }
+.statrow .was { font-size: 9px; letter-spacing: .1em; color: var(--muted); }
+.statrow .does { flex: 1; min-width: 0; font-size: 12px; color: var(--parchment); line-height: 1.45; }
+.statrow .does b { color: var(--gold); font-weight: 600; }
+
+/* MUST (sheet 3) — a collection, never a fraction. Found things render richly;
+   the unfound are a count, in a place the player opens on purpose. */
+.coll { display: flex; gap: 7px; flex-wrap: wrap; }
+.coll .r { width: 38px; height: 38px; flex: 0 0 38px; }
+.coll .r em { font-size: 16px; }
+.found-l { font-size: 11px; color: var(--muted); margin-top: 9px; }
+.found-l b { color: var(--parchment); font-weight: 600; }
+.opt {
+  margin-top: 9px; min-height: 44px; display: flex; align-items: center; gap: 8px;
+  border: 1px dashed var(--line-soft); border-radius: 8px; padding: 8px 10px;
+  font-size: 11px; color: var(--muted); background: transparent;
+}
+
+/* HER STRONGEST IDEA — the wall that fell. Given the loudest voice on the
+   sheet, because she said if one thing ships from her read, this is it. */
+.wall {
+  border-left: 3px solid var(--gold); padding: 9px 0 9px 11px;
+  background: rgba(201, 162, 39, .06); border-radius: 0 8px 8px 0;
+}
+.wall .then { font-size: 12px; color: var(--muted); }
+.wall .now { font-size: 14px; color: var(--parchment); margin-top: 3px; }
+.wall .now b { color: var(--gold); font-weight: 600; }
+
+/* MUST (drop 3) — the cruellest confusion, designed apart. KEPT and LOANED are
+   two presentations, not one grammar with a word changed: solid vs dashed
+   frame, sealed vs open corner, ribbon vs none, full-bleed vs inline chip. */
+.keep { border-style: solid; }
+.keep .ribbon {
+  display: block; margin-top: 5px; font-size: 9px; letter-spacing: .18em;
+  color: var(--bg); background: var(--gold); border-radius: 3px;
+  padding: 2px 7px; align-self: flex-start;
+}
+.seal {
+  flex: 0 0 26px; align-self: stretch; display: flex; align-items: center;
+  justify-content: center; font-size: 15px; color: var(--gold);
+  border-left: 1px solid rgba(201, 162, 39, .4);
+}
+.loan {
+  border-style: dashed !important; border-color: var(--line-soft) !important;
+  box-shadow: none !important; background: rgba(13, 11, 8, .88);
+}
+.loan .tier { color: var(--muted) !important; }
+.loan .until {
+  font-size: 9px; letter-spacing: .16em; color: var(--muted);
+  border: 1px dashed var(--line-soft); border-radius: 3px; padding: 1px 6px;
+  display: inline-block; margin-top: 4px;
+}
+
+/* MUST (drop 4) — interruption escalates with rarity. Three presentations of
+   the SAME data, drawn side by side so the escalation is reviewable. */
+.esc { display: flex; flex-direction: column; gap: 10px; }
+.esc .step { border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; }
+.esc .step > .lvl { font-size: 9px; letter-spacing: .16em; color: var(--muted); margin-bottom: 7px; }
+.inline-chip {
+  display: inline-flex; align-items: center; gap: 7px; font-size: 11px;
+  color: var(--muted); border: 1px solid var(--line-soft); border-radius: 20px;
+  padding: 3px 10px 3px 4px; background: rgba(13, 11, 8, .9);
+}
+.inline-chip .r { width: 22px; height: 22px; flex: 0 0 22px; }
+.inline-chip .r em { font-size: 11px; }
+.inline-chip .r s { display: none; }
+
+/* GRAMMAR LAW 4 — an unknown category renders GENERIC and never vanishes.
+   Visible and wrong beats invisible; same shape as the audible default. */
+.generic i { border-style: dotted !important; }
+.gnote {
+  font-size: 10px; letter-spacing: .1em; color: var(--frost);
+  border: 1px solid var(--frost); border-radius: 3px; padding: 1px 6px;
+  display: inline-block;
+}
+.loud {
+  font-size: 11px; color: var(--ember); border: 1px solid var(--ember);
+  border-radius: 6px; padding: 7px 9px; background: rgba(201, 80, 46, .08);
+  line-height: 1.5;
+}
+.loud b { color: var(--parchment); }
+
+/* MUST (ascension 2) — the per-rung record, which is where the wall that fell
+   is actually recorded. */
+.rec { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
+.rec b { color: var(--parchment); font-weight: 600; }
+.rec .flame { color: var(--gold); }
+/* MUST (ascension 1) — what changes, in words, before committing. */
+.commit {
+  border: 1px solid var(--gold); border-radius: 9px; padding: 10px;
+  background: rgba(201, 162, 39, .07);
+}
+.commit .h { font-size: 10px; letter-spacing: .16em; color: var(--gold); }
+.commit ul { margin: 7px 0 0 15px; font-size: 12px; color: var(--parchment); line-height: 1.6; }
+/* Law 3 clause 6 corollary — a vertical LIST takes the focus cursor; the
+   bumpers stay with the tabs behind it. Drawn, so the claim is checkable. */
+.cursor { position: relative; }
+.cursor::before {
+  content: '▸'; position: absolute; left: -13px; top: 50%; transform: translateY(-50%);
+  color: var(--gold); font-size: 12px;
+}
