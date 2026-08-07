@@ -280,16 +280,19 @@ export async function runTests({ artManifest = null } = {}) {
   // Pins Constantine's direction (2026-08-06): burst at the threshold as ITS
   // OWN PROC, build-up resets to zero (overflow dropped), threshold constant.
   // The pre-#61 contract this replaces: overflow carried, threshold ×1.5.
-  test('7. Bleed procs at 12 for clamp(15% maxHp, 8, 35) as its own event; resets to zero; threshold constant; +3 poise per proc', () => {
+  test('7. Bleed procs at its table threshold for clamp(15% maxHp, 8, 35) as its own event; resets to zero; threshold constant; +3 poise per proc', () => {
+    // Threshold-DERIVED, not pinned: the knob is PROVISIONAL and his to move
+    // (Constantine, "let rune pick the threshold against the sim") — the
+    // contract under test is the mechanism, not the current pick.
+    const T = REG.statuses.get('bleed').proc.threshold;
     const c = makeCombat({ deck: Array(6).fill('gorefireSlash') });
-    playFromHand(c, 'gorefireSlash');
-    playFromHand(c, 'gorefireSlash');
-    playFromHand(c, 'gorefireSlash'); // 9 bleed
-    eq(S.getStacks(getEntity(c, 'e1'), 'bleed'), 9, 'bleed accumulated, no decay');
+    const e1 = getEntity(c, 'e1');
+    S.applyStatus(c, e1, 'bleed', T - 3); // sub-threshold build-up
+    eq(S.getStacks(e1, 'bleed'), T - 3, 'bleed accumulated, no decay');
     dispatch(c, { type: 'endTurn' });
-    eq(S.getStacks(getEntity(c, 'e1'), 'bleed'), 9, 'bleed persists through turns');
-    const poiseBefore = getEntity(c, 'e1').poiseMeter.value;
-    playFromHand(c, 'gorefireSlash'); // 12 → proc
+    eq(S.getStacks(e1, 'bleed'), T - 3, 'bleed persists through turns');
+    const poiseBefore = e1.poiseMeter.value;
+    playFromHand(c, 'gorefireSlash'); // +3 → T exactly → proc
     // The own-proc invariant: the burst is its own damage-record entry —
     // a procBurst event plus its own hpLost — never folded into the
     // triggering hit's damageDealt.
@@ -301,24 +304,22 @@ export async function runTests({ artManifest = null } = {}) {
     const burst = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1' && e.cause === 'proc:bleed').pop();
     assert(burst, "burst hpLost carries cause 'proc:bleed' — attributable in the damage record");
     eq(burst.amount, 8, 'burst hpLost is its own entry');
-    eq(getEntity(c, 'e1').statuses.bleed.meter.value, 0, 'build-up RESET TO ZERO after proc');
-    eq(getEntity(c, 'e1').statuses.bleed.meter.max, 12, 'threshold CONSTANT — no ×1.5 (pre-#61 behavior gone)');
-    eq(getEntity(c, 'e1').poiseMeter.value, poiseBefore + 3, 'fixed 3 poise damage per proc (PROVISIONAL knob)');
+    eq(e1.statuses.bleed.meter.value, 0, 'build-up RESET TO ZERO after proc');
+    eq(e1.statuses.bleed.meter.max, T, 'threshold CONSTANT — no ×1.5 (pre-#61 behavior gone)');
+    eq(e1.poiseMeter.value, poiseBefore + 3, 'fixed 3 poise damage per proc (PROVISIONAL knob)');
 
-    const g = makeCombat({ deck: Array(6).fill('gorefireSlash'), enemies: ['tGiant'] });
-    for (let i = 0; i < 4; i++) {
-      if (g.player.energy === 0) dispatch(g, { type: 'endTurn' });
-      playFromHand(g, 'gorefireSlash');
-    }
+    const g = makeCombat({ deck: Array(8).fill('gorefireSlash'), enemies: ['tGiant'] });
+    S.applyStatus(g, getEntity(g, 'e1'), 'bleed', T - 3);
+    playFromHand(g, 'gorefireSlash'); // → T → proc on the giant
     const gb = logOf(g, 'procBurst').filter((e) => e.targetId === 'e1').pop();
     eq(gb.amount, 35, '15% of 400 = 60 → max-clamped to 35');
 
-    // Overflow is DROPPED at proc (reset-to-zero, his words) — 11 + 3 procs
-    // once and leaves 0, not 2. This is the anti-stranding delta measured by
-    // the #61 falsifier.
+    // Overflow is DROPPED at proc (reset-to-zero, his words) — (T-1) + 3
+    // procs once and leaves 0, not 2. This is the anti-stranding delta the
+    // #61 falsifier measures.
     const o = makeCombat({ deck: Array(6).fill('gorefireSlash') });
-    S.applyStatus(o, getEntity(o, 'e1'), 'bleed', 11);
-    playFromHand(o, 'gorefireSlash'); // 11 + 3 = 14 ≥ 12 → proc
+    S.applyStatus(o, getEntity(o, 'e1'), 'bleed', T - 1);
+    playFromHand(o, 'gorefireSlash'); // T-1+3 = T+2 ≥ T → proc
     eq(logOf(o, 'procBurst').filter((e) => e.targetId === 'e1').length, 1, 'single proc');
     eq(getEntity(o, 'e1').statuses.bleed.meter.value, 0, 'overflow dropped, not carried');
   });
@@ -359,10 +360,12 @@ export async function runTests({ artManifest = null } = {}) {
   test('7d. Bleed resistance: beast-tagged target gains Clotted after proc, points halve with a procResisted receipt, resist expires', () => {
     // Positive arm: tagged enemy → resist applied on proc. The proc fires
     // inside a dispatch (card play) so the enqueued resistance drains.
+    // Threshold-derived like test 7 — the knob is provisional.
+    const T = REG.statuses.get('bleed').proc.threshold;
     const c = makeCombat({ deck: Array(6).fill('gorefireSlash'), enemies: ['tBeast'] });
     const e1 = getEntity(c, 'e1');
-    S.applyStatus(c, e1, 'bleed', 9);
-    playFromHand(c, 'gorefireSlash'); // +3 → 12 → proc
+    S.applyStatus(c, e1, 'bleed', T - 3);
+    playFromHand(c, 'gorefireSlash'); // +3 → T → proc
     eq(S.getStacks(e1, 'bleedResist'), 1, 'Clotted applied — beast tag matched the gate');
     // Resistance halves the NEXT application, defender-favored rounding:
     // 3 points → blocked ceil(1.5)=2, applied 1 — with a visible receipt.
@@ -382,7 +385,7 @@ export async function runTests({ artManifest = null } = {}) {
     // Negative arm: untagged enemy → gate closed, no resist ever.
     const u = makeCombat({ deck: ['strike'] }); // tDummy, no tags
     const ue = getEntity(u, 'e1');
-    S.applyStatus(u, ue, 'bleed', 12);
+    S.applyStatus(u, ue, 'bleed', T);
     eq(S.getStacks(ue, 'bleedResist'), 0, 'untagged target gains no resistance');
     // Zero-bleed empty edge: applying 0 is a no-op, no proc, no crash.
     S.applyStatus(u, ue, 'bleed', 0);

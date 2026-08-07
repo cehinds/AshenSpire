@@ -78,7 +78,7 @@ export const statuses = [
     stackMode: 'add',
     decay: 'none',
     proc: {
-      threshold: 12, // PROVISIONAL (carried from the shipped meter)
+      threshold: 7, // PROVISIONAL — Rune's sim pick at Constantine's word ("let rune pick the threshold against the sim"): smallest value whose reaverkit n=1000 CI fully clears the [1.4, 3.2] datum band; sweep table in tools/results/sweep-bleed-threshold.md. Was 12 (carried from the shipped meter) — his hands stay free.
       burstPercent: 15, // PROVISIONAL — % of target max HP (carried)
       burstMin: 8, // PROVISIONAL (carried)
       burstMax: 35, // PROVISIONAL (carried)
