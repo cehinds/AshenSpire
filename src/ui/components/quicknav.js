@@ -130,6 +130,15 @@ export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, cur
   veil.className = 'modal-veil qn-veil';
   const panel = document.createElement('div');
   panel.className = 'qn-panel';
+  // #78 — the house convention for a navigable set: the host names the set, each
+  // control names its member. `menuAct` was the one registered set that did NOT
+  // mark itself (Vira: *the fourth set, the one she called the worst-behaved, is
+  // the one missing from the convention meant to catch sets like it*). It is
+  // also the only place the ORPHAN edge is observable: an act declared in
+  // MENU_ACTS that no context implements never appears here, and the difference
+  // between declared and drawn is exactly the defect. `data-act` / `data-tab`
+  // stay — they are behaviour, not enumeration, and something may read them.
+  panel.dataset.surface = 'menuAct';
 
   // THE CAPTION IS THE POINT OF SHIPPING THIS AT ALL. An experiment that
   // outlives the memory of switching it on becomes a bug report — so the list
@@ -146,6 +155,7 @@ export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, cur
     const b = document.createElement('button');
     b.className = `qn-row${r.tone ? ` ${r.tone}` : ''}${r.on ? ' on' : ''}`;
     b.dataset.act = r.act;
+    b.dataset.member = r.act;
     if (r.tab) b.dataset.tab = r.tab;
     b.innerHTML = `<span class="qn-ic">${esc(r.icon)}</span><span class="qn-label">${esc(r.label)}</span>`
       + (r.badge ? `<span class="qn-badge">${esc(r.badge)}</span>` : '');

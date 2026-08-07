@@ -208,7 +208,31 @@ export const balance = {
     // A player's own saved equipView still wins over this; it is what a phone
     // OPENS on, never what it is allowed to show.
     narrowDefaultView: 'rack',
-    views: ['grid', 'rack', 'hybrid'],
+    // A VIEW DESCRIBES ITSELF; the screen derives the layout (#78, Law 0 cl.1).
+    // These were three bare ids and `equipment.js` was `if (view === 'grid') …
+    // else …`, so a fourth id rendered AS HYBRID and said nothing — the author
+    // did the data-driven thing correctly and got a silently wrong screen.
+    //
+    // Two characteristics are the whole difference, and every rule in ui.css
+    // that used to key off `.view-<id>` keys off one of them now:
+    //   figure — is the dressed class figure on screen at all
+    //   slots  — 'flank': slot blocks split either side of the figure
+    //            'list':  slot blocks in one column beside it
+    //
+    // WHAT IS CLOSED IS THE COMBINATION, NOT EACH FIELD. Read that before
+    // inventing a row. The first pass said "both are closed sets", which is two
+    // closed sets and a product of FOUR cells — and only three are drawn. A row
+    // saying `figure: false, slots: 'flank'` used every legal word and rendered
+    // an EMPTY armoury in silence (Vira, #78). The three combinations below are
+    // the whole vocabulary; each one is a layout in LAYOUTS in equipment.js and
+    // that table is the only place the list lives. Anything else fails loud and
+    // names this row (Law 1 clause 5) — including a combination of two words
+    // that are each fine on their own.
+    views: [
+      { id: 'grid', figure: true, slots: 'flank' },
+      { id: 'rack', figure: false, slots: 'list' },
+      { id: 'hybrid', figure: true, slots: 'list' },
+    ],
     spriteReacts: 'full', // 'none' | 'hands' | 'full'
 
     // Floors of the mod system, so a piece can't be authored past the point

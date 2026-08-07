@@ -161,9 +161,9 @@ export function backdropClass(actNumber) {
 // that knows which tab is current. The day a row knows something selectTab does
 // not, this is a second menu rather than a quick way into the one we have.
 //
-//   act: 'tab'     → open the overlay at `tab` (openOverlay/selectTab)
-//        'armoury' | 'legend' | 'draw' | 'discard'  → the screen's own handler
-//        'save' | 'quit' | 'close'                  → the orchestrator's
+// The act vocabulary is MENU_ACTS, below — one home, not a list in this comment
+// as well. `act: 'tab'` is the one act that carries a second field: the tab it
+// opens, which is a member of MENU_TABS and joined to it by surfaces.js.
 //
 // TWO READINGS OF "CONTEXT-SPECIFIC", AND THE TABLE SERVES BOTH.
 // Constantine: "all buttons should be context-specific." Marina's dissent: the
@@ -240,9 +240,50 @@ export const MENU = {
 
 const BANDS = ['head', 'body', 'tail'];
 
+// The acts a MENU row may name — the vocabulary, beside the table it governs.
+// It lived in src/ui/surfaces.js, whose header promises THAT FILE HOLDS NO
+// MEMBERS; eight members later it was the second copy that file exists to
+// prevent (Vira, gate of 5c49fed).
+//
+// WHAT THIS CATCHES AND WHAT IT DOES NOT, because a hand-kept list should say
+// so out loud. A launcher row is dropped when the CONTEXT does not offer its act
+// (the map has no draw pile — correct, by design), so two different situations
+// wear the same silence:
+//
+//   TYPO      — `act: 'jorunal'`, not a word at all → not in this list → the
+//               boot check names it. Caught, and this list is why.
+//   ORPHAN    — a word in this list that NO context implements anywhere. Delete
+//               `legend:` from the actions bag in src/ui/screens/map.js — its
+//               only implementation — and the Map legend row silently vanishes
+//               with every check green. NOT CAUGHT HERE, and it cannot be: the
+//               actions bags are built inside a click handler, closed over live
+//               run state, so no source-level join can see them.
+//
+// The orphan edge is answered on the RENDERED PAGE instead, which is where the
+// implemented acts actually exist: quicknav marks its panel
+// `data-surface="menuAct"` and each row `data-member="<act>"`, so an instrument
+// that opens the three contexts can subtract what was drawn from what is
+// declared here. That instrument is Bjorn's lens and is not written yet — this
+// comment is the statement of the gap, not a claim it is closed.
+export const MENU_ACTS = ['tab', 'armoury', 'legend', 'draw', 'discard', 'save', 'quit', 'close'];
+
 /** The tab a `tab` row points at, resolved against MENU_TABS. */
 function tabDef(id) {
   return MENU_TABS.find((t) => t.id === id) || null;
+}
+
+/**
+ * menuTabRefs() → every tab id a MENU row NAVIGATES TO, across all contexts.
+ *
+ * The other half of a `{ act: 'tab', tab: … }` row. `menuRows()` resolves it to
+ * blank icon/label/tip when it names nothing, and quicknav keeps the row because
+ * the ACT is implemented — so the typo has to be caught by joining the tab, and
+ * this is the enumeration that lets surfaces.js do it.
+ */
+export function menuTabRefs() {
+  return [...new Set(Object.values(MENU).flat()
+    .filter((r) => r.act === 'tab' && typeof r.tab === 'string' && r.tab)
+    .map((r) => r.tab))];
 }
 
 /**

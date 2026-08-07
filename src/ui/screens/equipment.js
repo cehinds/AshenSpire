@@ -28,6 +28,137 @@ import { sfx } from '../sfx.js';
 
 const CFG = () => balance.equipment;
 
+// ---- the view set: a row DESCRIBES a layout, and the CELL is the vocabulary --
+//
+// EldenSpire#78, second pass. The first pass killed `if (view === 'grid') … else
+// …` — the id was the handler, so a fourth id fell into the else and rendered as
+// hybrid in silence. It replaced the id with two characteristics and declared
+// each of them closed ON ITS OWN:
+//
+//     VIEW_VOCAB = { figure: [true, false], slots: ['flank', 'list'] }
+//
+// THAT IS NOT A CLOSED SET. It is two closed sets whose PRODUCT is four cells,
+// and the screen drew three. Vira's gate found the fourth: one row of data,
+// `{ id:'ghost', figure:false, slots:'flank' }`, written entirely in words this
+// file declared legal — it passed viewLayout, took the flank branch (which
+// appended the figure without ever consulting `figure`), and was then blanked by
+// a ui.css rule whose real predicate was `figure:false AND slots:'list'`. Two
+// mistakes that cancelled into `bodyInk: 0`: an empty armoury, no error, no
+// banner, every instrument green. WORSE than the `else` it replaced, which at
+// least rendered hybrid. Marina's property, house-wide from today:
+//
+//     A CLOSED SET MUST STAY CLOSED UNDER WHATEVER FACTORISATION REPLACES IT.
+//
+// So the unit of the vocabulary here is the CELL, not the factor. `LAYOUTS`
+// below is keyed by the whole combination, and ITS KEYS ARE THE CLOSED SET — a
+// row whose combination is not a key fails by name at boot (surfaces.js) and in
+// the panel, exactly as an unknown word does. There is no second list of legal
+// cells anywhere to disagree with this one: THE TABLE THAT DRAWS A CELL IS THE
+// TABLE THAT DECLARES IT, and what an author may write is DERIVED from it
+// (`viewCells()`), never written beside it. A second declaration is precisely
+// how the fourth cell got in.
+//
+// This also answers the seam Vira left open — *"I proved the fourth cell renders
+// nothing; I did not prove there are only four cells that matter."* There is
+// nothing to enumerate: `slots: 'ring'` tomorrow makes the product six, and all
+// six of those cells are legal only if six keys exist. Adding a value to a
+// factor grants nothing on its own. That is the honest edge and it is now
+// structural rather than argued.
+
+/** The cell a row asks for — `figure:1|slots:flank` — or null if it is not one. */
+function cellKey(row) {
+  if (!row || typeof row.figure !== 'boolean' || typeof row.slots !== 'string' || !row.slots) return null;
+  return `figure:${row.figure ? 1 : 0}|slots:${row.slots}`;
+}
+
+// Every layout the armoury has. THE KEYS ARE THE VOCABULARY.
+//
+// NOT A CELL, and deliberately: `figure:false + slots:'flank'`. "Flank" means
+// the slot columns hang either side OF THE FIGURE; with no figure there is
+// nothing to flank, and two columns around a hole is a layout nobody designed —
+// shipping it to satisfy an arithmetic is the "renders something plausible"
+// failure one level up. A row asking for it now says so by name. Building it is
+// one key here plus its rule in ui.css: the DOM builder below already obeys
+// `figure` on both branches, so the table really is the only decider.
+const LAYOUTS = {
+  'figure:1|slots:flank': buildFlank, // 'grid'   — the person, kit hanging off them
+  'figure:1|slots:list': buildList, // 'hybrid' — the rack with the figure beside it
+  'figure:0|slots:list': buildList, // 'rack'   — the list, no figure
+};
+
+/** Every declared view id, in authored order. The one enumeration. */
+export function viewIds() {
+  return (CFG().views || []).map((v) => (v && typeof v === 'object' ? v.id : v));
+}
+
+/** The cells that exist, DERIVED from the layouts. What an author may write. */
+export function viewCells() {
+  return Object.keys(LAYOUTS).map((k) => {
+    const m = /^figure:([01])\|slots:(.+)$/.exec(k);
+    return { figure: m[1] === '1', slots: m[2] };
+  });
+}
+
+/** The same list as one line of English, for every message that has to say it. */
+export function viewCellsSay() {
+  return viewCells().map((c) => `figure: ${c.figure} + slots: '${c.slots}'`).join(' | ');
+}
+
+/**
+ * viewLayout(id) → { figure, slots, cell } the screen can actually draw, or null.
+ *
+ * Null is the honest answer for every shape of breakage — an id nobody declared,
+ * a row written in a word this file does not have, and a row written in a
+ * COMBINATION nothing draws. The caller decides how loudly to say so;
+ * assertSurfaces() says so at boot, by name.
+ */
+export function viewLayout(id) {
+  const row = (CFG().views || []).find((v) => v && typeof v === 'object' && v.id === id);
+  const cell = cellKey(row);
+  if (!cell || !LAYOUTS[cell]) return null;
+  return { figure: row.figure, slots: row.slots, cell };
+}
+
+// ---- the builders ----------------------------------------------------------
+//
+// Each takes the layout it was handed and a `ui` bag of the four things a
+// builder may touch. THE BUILDER OBEYS EVERY CHARACTERISTIC IT IS HANDED, even
+// where today's key set means it can only ever see one value — the flank branch
+// ignoring `figure` is half of the defect Vira found, and an error that is
+// currently unreachable is still an error. It is also what makes the sentence
+// above true: adding `figure:0|slots:flank` to LAYOUTS is one key and one rule
+// in ui.css, because nothing here would have to change.
+
+function buildFlank(L, ui) {
+  // The figure in the middle with its kit hanging off it, hands on the side they
+  // are actually held: the sprite carries the right-hand armament at screen
+  // right, so the Right Hand column is the right one.
+  const cols = { l: document.createElement('div'), r: document.createElement('div') };
+  cols.l.className = 'ag-col';
+  cols.r.className = 'ag-col';
+  ui.blocks.forEach(({ slot, el: b }, i) => {
+    const id = slot.id.toLowerCase();
+    const side = id.includes('right') ? 'r' : id.includes('left') ? 'l' : (i % 2 ? 'r' : 'l');
+    cols[side].appendChild(b);
+  });
+  ui.left.appendChild(cols.l);
+  if (L.figure) ui.left.appendChild(ui.figure());
+  ui.left.appendChild(cols.r);
+  ui.right.appendChild(ui.picker());
+}
+
+function buildList(L, ui) {
+  // One column of slots beside the figure — or without it, when the row says
+  // `figure: false`. The id is not consulted: 'rack' is simply the row that
+  // asks for no figure.
+  if (L.figure) ui.left.appendChild(ui.figure());
+  const slotWrap = document.createElement('div');
+  slotWrap.className = 'equip-slots';
+  for (const b of ui.blocks) slotWrap.appendChild(b.el);
+  ui.right.appendChild(slotWrap);
+  ui.right.appendChild(ui.picker());
+}
+
 /**
  * The figure, as layers: a bare-handed body in the armour set's palette with
  * each held armament stacked over it (see assets.js equippedFigure). Anything
@@ -131,13 +262,24 @@ export function mountEquipment(host, {
   // one the table names". A validated-then-discarded value is exactly the shape
   // clause 5 exists to forbid.
   const named = narrow ? CV.narrowDefaultView : CV.defaultView;
-  if (named != null && !CV.views.includes(named)) {
+  const IDS = viewIds();
+  if (named != null && !IDS.includes(named)) {
     console.error(`[content] balance.equipment.${narrow ? 'narrowDefaultView' : 'defaultView'}`
-      + ` = ${JSON.stringify(named)} is not one of ${JSON.stringify(CV.views)}`
+      + ` = ${JSON.stringify(named)} is not one of ${JSON.stringify(IDS)}`
       + ' — falling back, and this line is the defect, not the fallback.');
   }
-  const shapeDefault = (named != null && CV.views.includes(named)) ? named : CV.defaultView;
-  let view = (meta.settings && meta.settings.equipView) || shapeDefault;
+  const shapeDefault = (named != null && IDS.includes(named)) ? named : CV.defaultView;
+  // A STORED view the table no longer declares is not the defect this file
+  // guards — the player saved 'hybrid' and the set moved under their save. It
+  // degrades to the shape default and says so once. A DECLARED row that cannot
+  // be drawn is the defect, and assertSurfaces() fails the boot before any of
+  // this runs, so `viewLayout` below can only be null for the stored case.
+  const stored = meta.settings && meta.settings.equipView;
+  if (stored && !IDS.includes(stored)) {
+    console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
+      + ` — opening on ${JSON.stringify(shapeDefault)}.`);
+  }
+  let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 
@@ -321,12 +463,17 @@ export function mountEquipment(host, {
   }
 
   function draw() {
+    // The layout is READ off the row, never inferred from the id. `data-surface`
+    // / `data-member` are the house convention for a navigable set (#78): the
+    // host names the set, each control names its member, so an instrument can
+    // enumerate this from the rendered page without importing anything.
+    const L = viewLayout(view);
     wrap.innerHTML = `
-      <div class="armoury view-${esc(view)}${picking ? ' picking' : ''}">
+      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}">
         <header class="armoury-head">
           <h2>ARMOURY</h2>
-          <div class="armoury-views">
-            ${CFG().views.map((v) => `<button type="button" data-view="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
+          <div class="armoury-views" data-surface="armouryView">
+            ${viewIds().map((v) => `<button type="button" data-member="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
           </div>
           <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
         </header>
@@ -348,39 +495,34 @@ export function mountEquipment(host, {
       .filter((slot) => eligible(slot).length)
       .map((slot) => ({ slot, el: slotBlock(slot) }));
 
-    if (view === 'grid') {
-      // The figure in the middle with its kit hanging off it, hands on the side
-      // they are actually held: the sprite carries the right-hand armament at
-      // screen right, so the Right Hand column is the right one.
-      const cols = { l: document.createElement('div'), r: document.createElement('div') };
-      cols.l.className = 'ag-col';
-      cols.r.className = 'ag-col';
-      blocks.forEach(({ slot, el: b }, i) => {
-        const id = slot.id.toLowerCase();
-        const side = id.includes('right') ? 'r' : id.includes('left') ? 'l' : (i % 2 ? 'r' : 'l');
-        cols[side].appendChild(b);
+    // A LOOKUP, NOT A BRANCH. There is no `else` left to fall into: the cell
+    // either has a builder or it has none, and none is a named failure. The
+    // first pass turned the id into two characteristics and kept an if/else on
+    // ONE of them — which is how a legal combination of the other reached a
+    // branch that ignored it (Vira, gate of 5c49fed).
+    const build = L && LAYOUTS[L.cell];
+    if (build) {
+      build(L, {
+        left, right, blocks,
+        figure: () => figureFor(registries, run, cz),
+        picker: () => pickerBlock(),
       });
-      left.appendChild(cols.l);
-      left.appendChild(figureFor(registries, run, cz));
-      left.appendChild(cols.r);
-      right.appendChild(pickerBlock());
     } else {
-      // 'rack' drops the figure entirely for density; 'hybrid' keeps it beside
-      // the same list.
-      if (view !== 'rack') left.appendChild(figureFor(registries, run, cz));
-      const slotWrap = document.createElement('div');
-      slotWrap.className = 'equip-slots';
-      for (const b of blocks) slotWrap.appendChild(b.el);
-      right.appendChild(slotWrap);
-      right.appendChild(pickerBlock());
+      console.error(`[content] the armoury view ${JSON.stringify(view)} has no layout`
+        + ` — its row must ask for a combination the screen has: ${viewCellsSay()}`
+        + ' in src/content/balance.js. This line is the defect, not a fallback.');
+      const dead = document.createElement('p');
+      dead.className = 'armoury-notice';
+      dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
+      right.appendChild(dead);
     }
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
 
     notice = '';
     wrap.querySelector('.armoury-close').addEventListener('click', close);
-    for (const b of wrap.querySelectorAll('[data-view]')) {
+    for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
-        view = b.dataset.view;
+        view = b.dataset.member;
         if (onChange) onChange(run.loadout, { equipView: view });
         draw();
       });

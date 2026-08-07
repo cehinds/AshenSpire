@@ -1043,8 +1043,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .seat-hint { color: var(--muted); font-size: 1rem; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: 4px; padding: 0.1rem 0.6rem; }
 
 /* ---- Armoury (equipment) --------------------------------------------------
-   Three layouts over one loadout. The view class on .armoury does all the
-   rearranging, so the screen builds the same DOM every time and only CSS
+   Three layouts over one loadout. Two attributes on .armoury do all the
+   rearranging — `data-figure` and `data-slots`, read straight off the view's
+   own row — so the screen builds nearly the same DOM every time and CSS
    decides whether you are looking at a person or at a list. */
 .armoury-overlay {
   position: fixed; inset: 0; z-index: 60; display: flex;
@@ -1077,19 +1078,58 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury-body { flex: 1; display: flex; gap: 1.6rem; padding: 1.6rem; overflow: hidden; }
 .armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; overflow-y: auto; }
 .armoury-right { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; overflow-y: auto; }
-.armoury.view-rack .armoury-left { display: none; }
-.armoury.view-grid .armoury-left { flex: 1; }
-.armoury.view-grid .armoury-right { max-width: 38rem; }
+/* EldenSpire#78 — these key off WHAT THE VIEW IS, not what it is called. Every
+   rule below used to name an id (.view-grid / .view-rack / .view-hybrid), which
+   made the stylesheet a second, silent decider of the layout: a fourth id got no
+   rules and looked like hybrid. `data-figure` and `data-slots` are written by
+   equipment.js straight off the row in balance.equipment.views, so a new view
+   row is styled the moment it is authored. Specificity is unchanged — a class
+   and an attribute weigh the same — so the cascade here is exactly as it was.
+
+   THE RULE BELOW NAMES BOTH CHARACTERISTICS, and that is the tenth block Vira
+   caught. `.armoury.view-rack .armoury-left { display: none }` became
+   `[data-figure='0']` — 1:1 over the three rows that exist, and the WRONG RULE:
+   the left column holds only the figure in a LIST view, and the slot columns as
+   well in a flank one. A mapping proven over the current members is not a
+   mapping (Marina). Nothing renders differently today; the point is that the
+   rule now says what it means, so it cannot blank a layout nobody has written
+   yet. */
+.armoury[data-figure='0'][data-slots='list'] .armoury-left { display: none; }
+.armoury[data-slots='flank'] .armoury-left { flex: 1; }
+.armoury[data-slots='flank'] .armoury-right { max-width: 38rem; }
 
 /* flex:0 0 auto matters — the figure sits in a flex column and would otherwise
-   be squeezed to nothing by the slot blocks below it. */
-.armoury-figure { flex: 0 0 auto; width: 22rem; height: 28rem; position: relative; }
+   be squeezed to nothing by the slot blocks below it.
+
+   `--figure-w` IS THE FIGURE'S AUTHORED WIDTH, AND IT HAS ONE HOME (Viki,
+   2026-08-07). It was written twice: once here as a `width` for a row layout and
+   again in the narrow block at the bottom of this file as a `max-width` for a
+   column — each with its own `data-slots='flank'` override, so the fact "the
+   figure is wider when the slots flank it" existed in two places and nothing
+   kept them equal. In a row the property IS the width; in a column it is the
+   cap on a 100% width. Same number, one declaration, and the flank override is
+   now a single line instead of two.
+
+   THIS IS ALSO WHERE FREJA'S LINE WENT, and it is why she has nothing to delete.
+   Her armoury ruling (`freja/armoury-narrow-hierarchy`) stops offering a flank
+   view on a narrow layout, which made the narrow flank override unreachable
+   under it — a line she deliberately left rather than churn a branch inside a
+   gate, and named in her log so it would not be found later as rot. Deleting it
+   HERE would have been a live regression: this branch still offers flank at 390
+   and the cap really is 26rem today. Collapsed instead, so the number survives
+   while the second copy does not, and when her branch lands there is no
+   unreachable rule to remember — the cap is simply never 26rem where flank is
+   never offered. */
+.armoury-figure {
+  --figure-w: 22rem;
+  flex: 0 0 auto; width: var(--figure-w); height: 28rem; position: relative;
+}
 .armoury-figure img { width: 100%; height: 100%; object-fit: contain; }
 .armoury-figure > * { width: 100%; height: 100%; }
-.armoury.view-grid .armoury-figure { width: 26rem; height: 33rem; }
+.armoury[data-slots='flank'] .armoury-figure { --figure-w: 26rem; height: 33rem; }
 
 .equip-slots { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
-.armoury.view-hybrid .equip-slots, .armoury.view-rack .equip-slots { justify-content: flex-start; }
+.armoury[data-slots='list'] .equip-slots { justify-content: flex-start; }
 .equip-slot { border: 1px solid var(--line); border-radius: 4px; padding: 0.8rem; background: var(--panel); }
 .es-head { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 0.6rem; }
 .es-label { color: var(--gold); font-size: 1.1rem; letter-spacing: 1px; text-transform: uppercase; }
@@ -1145,14 +1185,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* Grid view: the figure between two columns of slots, hands on the side they
    are actually held. The picker moves to the right pane so the middle stays a
    picture of a person rather than a form. */
-.armoury.view-grid .armoury-left {
+.armoury[data-slots='flank'] .armoury-left {
   flex-direction: row; align-items: center; justify-content: center;
   gap: 2rem; flex: 1; flex-wrap: wrap; min-width: 0;
 }
-.armoury.view-grid .armoury-right { max-width: 40rem; }
+.armoury[data-slots='flank'] .armoury-right { max-width: 40rem; }
 /* Grid keeps the middle a picture of a person: the picker pane only takes
    space once a slot is actually being changed. */
-.armoury.view-grid:not(.picking) .armoury-right { display: none; }
+.armoury[data-slots='flank']:not(.picking) .armoury-right { display: none; }
 .ag-col { display: flex; flex-direction: column; gap: 1.2rem; }
 
 /* What a run earned you, shown where you find out you lost. */
@@ -1217,15 +1257,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; }
 :root[data-layout='narrow'] .armoury-left { width: 100%; overflow-y: visible; }
 :root[data-layout='narrow'] .armoury-right { width: 100%; overflow-y: visible; }
-/* The figure is `flex: 0 0 auto` with a fixed 22rem width in a ROW; in a column
-   that fixed width is just a cap, and 100% lets it use the phone. Height stays
-   authored so the sprite keeps its proportions. */
-:root[data-layout='narrow'] .armoury-figure { width: 100%; max-width: 22rem; align-self: center; }
-:root[data-layout='narrow'] .armoury.view-grid .armoury-figure { width: 100%; max-width: 26rem; }
+/* The figure has a fixed authored width in a ROW; in a column that width is just
+   a cap, and 100% lets it use the phone. Height stays authored so the sprite
+   keeps its proportions.
+
+   `--figure-w` is that authored width and it is declared once, up in the armoury
+   block — so this line no longer restates 22rem and there is no second line
+   restating the flank cell's 26rem. Whatever the cell asks for is what caps it
+   here, including a cell built tomorrow. */
+:root[data-layout='narrow'] .armoury-figure { width: 100%; max-width: var(--figure-w); align-self: center; }
 /* Slots wrap and centre rather than running off the right edge. */
 :root[data-layout='narrow'] .equip-slots { justify-content: center; width: 100%; }
-:root[data-layout='narrow'] .armoury.view-hybrid .equip-slots,
-:root[data-layout='narrow'] .armoury.view-rack .equip-slots { justify-content: center; }
+:root[data-layout='narrow'] .armoury[data-slots='list'] .equip-slots { justify-content: center; }
 
 :root[data-layout='narrow'] .cz-cols {
   flex-direction: column; align-items: center; gap: 1.8rem; width: 100%;
@@ -2256,6 +2299,7 @@ const { lanInfo } = require("src/net/lan.js");
 const { setAnimSpeed, anchorLocalBox, clampBox, floatNum: fxFloatNum } = require("src/ui/fx.js");
 const { sfx } = require("src/ui/sfx.js");
 const { initAudio } = require("src/ui/audio.js");
+const { surfaceReport } = require("src/ui/surfaces.js");
 
 const app = document.getElementById('app');
 
@@ -2278,6 +2322,28 @@ if (!validation.ok) {
     (hidden > 0 ? `\n · …and ${hidden} more — all ${validation.errors.length} are in the browser console.` : '');
   document.body.prepend(banner);
   console.error('Content validation errors:', validation.errors);
+}
+
+// ---- navigable surfaces: declared, and handled (#78) -----------------------
+// The same shape as the block above and for the same reason. A surface declared
+// in data with no handler used to render something PLAUSIBLE — a hybrid layout,
+// an empty panel, a lone heading — so it never reached a banner or a console.
+//
+// It does NOT throw here, deliberately. `assertSurfaces()` throws for the suite
+// and for tools/surfaces.mjs, where a hard exit is the point; on the boot path a
+// throw is the blank screen #77 was about, and a blank screen is a worse failure
+// than the one being reported. Banner, name, console — then the game runs.
+{
+  const missing = surfaceReport().filter((r) => r.missing.length);
+  if (missing.length) {
+    const banner = document.createElement('div');
+    banner.className = 'validation-banner';
+    banner.textContent = 'NAVIGABLE SURFACE DECLARED WITH NO HANDLER\n'
+      + missing.flatMap((r) => r.missing.map((m) => ` · ${r.id}${m.member ? ` · ${m.member}` : ''}`
+        + ` ${m.why} — ${m.fix}`)).join('\n');
+    document.body.prepend(banner);
+    console.error('[surfaces]', missing);
+  }
 }
 
 const registries = createRegistries(contentBundle);
@@ -3926,7 +3992,31 @@ const balance = {
     // A player's own saved equipView still wins over this; it is what a phone
     // OPENS on, never what it is allowed to show.
     narrowDefaultView: 'rack',
-    views: ['grid', 'rack', 'hybrid'],
+    // A VIEW DESCRIBES ITSELF; the screen derives the layout (#78, Law 0 cl.1).
+    // These were three bare ids and `equipment.js` was `if (view === 'grid') …
+    // else …`, so a fourth id rendered AS HYBRID and said nothing — the author
+    // did the data-driven thing correctly and got a silently wrong screen.
+    //
+    // Two characteristics are the whole difference, and every rule in ui.css
+    // that used to key off `.view-<id>` keys off one of them now:
+    //   figure — is the dressed class figure on screen at all
+    //   slots  — 'flank': slot blocks split either side of the figure
+    //            'list':  slot blocks in one column beside it
+    //
+    // WHAT IS CLOSED IS THE COMBINATION, NOT EACH FIELD. Read that before
+    // inventing a row. The first pass said "both are closed sets", which is two
+    // closed sets and a product of FOUR cells — and only three are drawn. A row
+    // saying `figure: false, slots: 'flank'` used every legal word and rendered
+    // an EMPTY armoury in silence (Vira, #78). The three combinations below are
+    // the whole vocabulary; each one is a layout in LAYOUTS in equipment.js and
+    // that table is the only place the list lives. Anything else fails loud and
+    // names this row (Law 1 clause 5) — including a combination of two words
+    // that are each fine on their own.
+    views: [
+      { id: 'grid', figure: true, slots: 'flank' },
+      { id: 'rack', figure: false, slots: 'list' },
+      { id: 'hybrid', figure: true, slots: 'list' },
+    ],
     spriteReacts: 'full', // 'none' | 'hands' | 'full'
 
     // Floors of the mod system, so a piece can't be authored past the point
@@ -19685,6 +19775,150 @@ const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds
 let openVeil = null;
 let escHandler = null;
 
+// ---- the panels: ONE name per tab, not two (#78) ---------------------------
+//
+// `selectTab` was `if (id === 'deck') … else if (id === 'relics') …`, which made
+// the if-chain a second, implicit home of WHICH TABS RENDER. MENU_TABS is the
+// home of the tab LIST; a row added there got a button, a bumper stop and a
+// quick-nav entry, and then showed an empty body — every derived thing worked
+// and the one thing that mattered was silent (Law 0 clause 5).
+//
+// Now the row's `id` IS the key into this table. There is no second list to
+// disagree with: a tab either has a panel here or it fails by name at boot
+// (assertSurfaces, src/ui/surfaces.js) — never at the click.
+//
+// A panel is CODE and that is the honest edge of the promise: a new tab costs a
+// row AND a function. What it no longer costs is a chance to forget the second
+// one. Each takes (container, ctx) — the same bag openOverlay builds once — so
+// they can live at module scope where the check can see them.
+const PANELS = {
+  deck: (host, ctx) => renderDeck(host, ctx),
+  relics: (host, ctx) => renderRelics(host, ctx),
+  stats: (host, ctx) => renderStats(host, ctx),
+  save: (host, ctx) => renderSave(host, ctx),
+  settings: (host, ctx) => renderSettings(host, {
+    settings: ctx.settings,
+    onChange: ctx.onSettingsChange || (() => {}),
+    saves: ctx.saves,
+    onProfileRestored: ctx.onProfileRestored,
+  }),
+  controls: (host, ctx) => renderControls(host, {
+    settings: ctx.settings,
+    onChange: ctx.onSettingsChange || (() => {}),
+  }),
+};
+
+/** panelFor(id) → the renderer for a tab, or undefined. The one join. */
+function panelFor(id) {
+  return PANELS[id];
+}
+
+// ---- the panel bodies, at module scope so PANELS can name them -------------
+// Each takes (container, ctx) and reads the bag openOverlay builds once. They
+// used to be closures inside openOverlay, which is where the if-chain could
+// hide: a function only reachable through a comparison on an id.
+
+function renderDeck(container, ctx) {
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  if (!ctx.run.deck.length) {
+    grid.innerHTML = '<div style="color:var(--muted);padding:20px">Empty.</div>';
+  } else {
+    for (const inst of ctx.run.deck) grid.appendChild(renderCard(ctx.registries, inst, { small: true }));
+  }
+  container.appendChild(grid);
+}
+
+function renderRelics(container, ctx) {
+  const wrap = document.createElement('div');
+  wrap.className = 'ov-relics';
+  const rTitle = document.createElement('h3');
+  rTitle.className = 'set-cat';
+  rTitle.textContent = `Relics (${ctx.run.relics.length})`;
+  wrap.appendChild(rTitle);
+  const rGrid = document.createElement('div');
+  rGrid.className = 'ov-relic-grid';
+  for (const rid of ctx.run.relics) {
+    const def = ctx.registries.relics.get(rid);
+    const el = document.createElement('div');
+    el.className = 'ov-relic';
+    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def))}</p></div>`;
+    rGrid.appendChild(el);
+  }
+  if (!ctx.run.relics.length) rGrid.innerHTML = '<div style="color:var(--muted)">None yet.</div>';
+  wrap.appendChild(rGrid);
+
+  const fTitle = document.createElement('h3');
+  fTitle.className = 'set-cat';
+  fTitle.textContent = `Flasks (${ctx.run.flasks.length})`;
+  wrap.appendChild(fTitle);
+  const fGrid = document.createElement('div');
+  fGrid.className = 'ov-relic-grid';
+  for (const f of ctx.run.flasks) {
+    const def = ctx.registries.flasks.get(f.flaskId);
+    const el = document.createElement('div');
+    el.className = 'ov-relic';
+    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '🧪')}</span><div><b>${esc(def.name)}</b><p>${esc(def.textTemplate || '')}</p></div>`;
+    fGrid.appendChild(el);
+  }
+  if (!ctx.run.flasks.length) fGrid.innerHTML = '<div style="color:var(--muted)">None.</div>';
+  wrap.appendChild(fGrid);
+  container.appendChild(wrap);
+}
+
+// Save tab: save to the current slot, save-and-quit to title, or quit the app.
+// (In-run slot switching is intentionally left to the title's Continue.)
+function renderSave(container, ctx) {
+  const wrap = document.createElement('div');
+  wrap.className = 'ov-save-tab';
+  wrap.innerHTML = `
+    <h3 class="set-cat">Save</h3>
+    <p class="set-note" style="max-width:420px">Your climb is written to its save slot. You can resume it later from the title screen's Continue.</p>
+    <div class="ov-save-actions">
+      ${ctx.onSave ? '<button class="subtle" id="ovs-save">Save now</button>' : ''}
+      ${ctx.onQuit ? '<button class="subtle" id="ovs-quit">Save &amp; Quit to Title</button>' : ''}
+      ${ctx.onExit ? '<button class="subtle danger" id="ovs-exit">Quit Game</button>' : ''}
+    </div>`;
+  container.appendChild(wrap);
+  const s = wrap.querySelector('#ovs-save');
+  if (s && ctx.onSave) {
+    s.addEventListener('click', () => {
+      const slot = ctx.onSave();
+      s.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
+      setTimeout(() => (s.textContent = 'Save now'), 1500);
+    });
+  }
+  const q = wrap.querySelector('#ovs-quit');
+  if (q && ctx.onQuit) q.addEventListener('click', () => { closeOverlay(); ctx.onQuit(); });
+  const e = wrap.querySelector('#ovs-exit');
+  if (e && ctx.onExit) e.addEventListener('click', () => { closeOverlay(); ctx.onExit(); });
+}
+
+function renderStats(container, ctx) {
+  const s = ctx.run.stats || {};
+  const cls = ctx.registries.classes.get(ctx.run.class);
+  const rows = [
+    ['Forsaken', (ctx.run.customization && ctx.run.customization.name) || cls.name],
+    ['Class', cls.name],
+    ['Seed', ctx.run.seedString],
+    ['Act', ctx.run.actNumber > 3 ? `${ctx.run.actNumber} (endless)` : `${ctx.run.actNumber} / 3`],
+    ['Floor', ctx.run.floor],
+    ['HP', `${ctx.run.hp} / ${ctx.run.maxHp}`],
+    ['Cinders', ctx.run.cinders],
+    ['Fights won', s.fightsWon || 0],
+    ['Damage dealt', s.damageDealt || 0],
+    ['Damage taken', s.damageTaken || 0],
+    ['Deck size', ctx.run.deck.length],
+    ['Relics', ctx.run.relics.length],
+  ];
+  const el = document.createElement('div');
+  el.className = 'ov-stats';
+  el.innerHTML = rows
+    .map(([k, v]) => `<div class="ov-stat"><span>${esc(String(k))}</span><b>${esc(String(v))}</b></div>`)
+    .join('');
+  container.appendChild(el);
+}
+
 /** True if the overlay is currently open (so callers can route Esc/hotkeys). */
 function overlayIsOpen() {
   return !!openVeil;
@@ -19728,8 +19962,8 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   veil.innerHTML = `
     <div class="modal overlay-modal">
       <div class="overlay-head">
-        <div class="overlay-tabs"${folded ? ' hidden' : ''}>
-          ${TABS.map((t) => `<button class="ov-tab" data-tab="${t.id}">${esc(t.label)}</button>`).join('')}
+        <div class="overlay-tabs" data-surface="overlayTab"${folded ? ' hidden' : ''}>
+          ${TABS.map((t) => `<button class="ov-tab" data-member="${t.id}">${esc(t.label)}</button>`).join('')}
         </div>
         ${folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="overlay-actions">
@@ -19745,136 +19979,50 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   const body = veil.querySelector('.overlay-body');
   let currentTab = null;
 
+  // ONE bag, built once, handed to whichever panel the tab names. Everything a
+  // panel could need is in it — so a panel is a plain function of (host, ctx)
+  // and can sit at module scope where the boot check can find it.
+  //
+  // `saves` IS passed now, and I am reversing my own earlier decision here
+  // rather than quietly leaving it (#67, Sunna's D18). I withheld it so the
+  // Profile section would not render mid-run, on the grounds that restoring a
+  // profile three floors into a climb is not a calm moment. Two things
+  // changed: replacePrimaryWith now archives whatever it replaces, so the
+  // hazard I was guarding against is recoverable rather than final; and
+  // withholding the manager silently broke the quarantine feedback on this
+  // door, which is the worse harm and the one a player actually meets. One
+  // surface, one sentence, both doors — that is Sunna's call and she is right
+  // that two strings is how they drift. A restore here does not touch the run
+  // save: runs live in their own slot keys.
+  const ctx = {
+    registries, run, meta, settings, saves,
+    onSettingsChange, onProfileRestored, onSave, onQuit, onExit,
+  };
+
   function selectTab(id) {
     currentTab = id;
-    veil.querySelectorAll('.ov-tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === id));
+    veil.querySelectorAll('.ov-tab').forEach((b) => b.classList.toggle('on', b.dataset.member === id));
     const sw = veil.querySelector('#ov-switch');
     if (sw) {
       const t = TABS.find((x) => x.id === id);
-      sw.textContent = `${t ? t.label : id} ▾`;
+      sw.textContent = `${t ? t.label : id} \u25be`;
     }
     body.innerHTML = '';
-    if (id === 'deck') renderDeck(body);
-    else if (id === 'relics') renderRelics(body);
-    else if (id === 'stats') renderStats(body);
-    else if (id === 'save') renderSave(body);
-    // `saves` IS passed now, and I am reversing my own earlier decision here
-    // rather than quietly leaving it (#67, Sunna's D18). I withheld it so the
-    // Profile section would not render mid-run, on the grounds that restoring a
-    // profile three floors into a climb is not a calm moment. Two things
-    // changed: replacePrimaryWith now archives whatever it replaces, so the
-    // hazard I was guarding against is recoverable rather than final; and
-    // withholding the manager silently broke the quarantine feedback on this
-    // door, which is the worse harm and the one a player actually meets. One
-    // surface, one sentence, both doors — that is Sunna's call and she is right
-    // that two strings is how they drift. A restore here does not touch the run
-    // save: runs live in their own slot keys.
-    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}), saves, onProfileRestored });
-    else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
-  }
-
-  function renderDeck(container) {
-    const grid = document.createElement('div');
-    grid.className = 'grid';
-    if (!run.deck.length) {
-      grid.innerHTML = '<div style="color:var(--muted);padding:20px">Empty.</div>';
-    } else {
-      for (const inst of run.deck) grid.appendChild(renderCard(registries, inst, { small: true }));
+    // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
+    // declared in MENU_TABS with no entry in PANELS names itself here, and
+    // assertSurfaces() has already failed the boot, so a player never meets it.
+    const panel = panelFor(id);
+    if (!panel) {
+      console.error(`[ui] menu tab ${JSON.stringify(id)} is declared in MENU_TABS`
+        + ' and has no panel in PANELS (src/ui/components/overlay.js) \u2014 the tab is'
+        + ' the declaration, the panel is the handler, and one of them is missing.');
+      body.innerHTML = `<div class="ov-dead">The <b>${esc(id)}</b> tab is declared and has no panel.</div>`;
+      return;
     }
-    container.appendChild(grid);
+    panel(body, ctx);
   }
 
-  function renderRelics(container) {
-    const wrap = document.createElement('div');
-    wrap.className = 'ov-relics';
-    const rTitle = document.createElement('h3');
-    rTitle.className = 'set-cat';
-    rTitle.textContent = `Relics (${run.relics.length})`;
-    wrap.appendChild(rTitle);
-    const rGrid = document.createElement('div');
-    rGrid.className = 'ov-relic-grid';
-    for (const rid of run.relics) {
-      const def = registries.relics.get(rid);
-      const el = document.createElement('div');
-      el.className = 'ov-relic';
-      el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def))}</p></div>`;
-      rGrid.appendChild(el);
-    }
-    if (!run.relics.length) rGrid.innerHTML = '<div style="color:var(--muted)">None yet.</div>';
-    wrap.appendChild(rGrid);
-
-    const fTitle = document.createElement('h3');
-    fTitle.className = 'set-cat';
-    fTitle.textContent = `Flasks (${run.flasks.length})`;
-    wrap.appendChild(fTitle);
-    const fGrid = document.createElement('div');
-    fGrid.className = 'ov-relic-grid';
-    for (const f of run.flasks) {
-      const def = registries.flasks.get(f.flaskId);
-      const el = document.createElement('div');
-      el.className = 'ov-relic';
-      el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '🧪')}</span><div><b>${esc(def.name)}</b><p>${esc(def.textTemplate || '')}</p></div>`;
-      fGrid.appendChild(el);
-    }
-    if (!run.flasks.length) fGrid.innerHTML = '<div style="color:var(--muted)">None.</div>';
-    wrap.appendChild(fGrid);
-    container.appendChild(wrap);
-  }
-
-  // Save tab: save to the current slot, save-and-quit to title, or quit the app.
-  // (In-run slot switching is intentionally left to the title's Continue.)
-  function renderSave(container) {
-    const wrap = document.createElement('div');
-    wrap.className = 'ov-save-tab';
-    wrap.innerHTML = `
-      <h3 class="set-cat">Save</h3>
-      <p class="set-note" style="max-width:420px">Your climb is written to its save slot. You can resume it later from the title screen's Continue.</p>
-      <div class="ov-save-actions">
-        ${onSave ? '<button class="subtle" id="ovs-save">Save now</button>' : ''}
-        ${onQuit ? '<button class="subtle" id="ovs-quit">Save &amp; Quit to Title</button>' : ''}
-        ${onExit ? '<button class="subtle danger" id="ovs-exit">Quit Game</button>' : ''}
-      </div>`;
-    container.appendChild(wrap);
-    const s = wrap.querySelector('#ovs-save');
-    if (s && onSave) {
-      s.addEventListener('click', () => {
-        const slot = onSave();
-        s.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
-        setTimeout(() => (s.textContent = 'Save now'), 1500);
-      });
-    }
-    const q = wrap.querySelector('#ovs-quit');
-    if (q && onQuit) q.addEventListener('click', () => { closeOverlay(); onQuit(); });
-    const e = wrap.querySelector('#ovs-exit');
-    if (e && onExit) e.addEventListener('click', () => { closeOverlay(); onExit(); });
-  }
-
-  function renderStats(container) {
-    const s = run.stats || {};
-    const cls = registries.classes.get(run.class);
-    const rows = [
-      ['Forsaken', (run.customization && run.customization.name) || cls.name],
-      ['Class', cls.name],
-      ['Seed', run.seedString],
-      ['Act', run.actNumber > 3 ? `${run.actNumber} (endless)` : `${run.actNumber} / 3`],
-      ['Floor', run.floor],
-      ['HP', `${run.hp} / ${run.maxHp}`],
-      ['Cinders', run.cinders],
-      ['Fights won', s.fightsWon || 0],
-      ['Damage dealt', s.damageDealt || 0],
-      ['Damage taken', s.damageTaken || 0],
-      ['Deck size', run.deck.length],
-      ['Relics', run.relics.length],
-    ];
-    const el = document.createElement('div');
-    el.className = 'ov-stats';
-    el.innerHTML = rows
-      .map(([k, v]) => `<div class="ov-stat"><span>${esc(String(k))}</span><b>${esc(String(v))}</b></div>`)
-      .join('');
-    container.appendChild(el);
-  }
-
-  veil.querySelectorAll('.ov-tab').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.tab)));
+  veil.querySelectorAll('.ov-tab').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.member)));
   veil.querySelector('#ov-close').addEventListener('click', closeOverlay);
   veil.addEventListener('click', (e) => {
     if (e.target === veil) closeOverlay();
@@ -19935,7 +20083,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
 }
 
 
-Object.assign(module.exports, { overlayIsOpen, closeOverlay, openOverlay });
+Object.assign(module.exports, { panelFor, overlayIsOpen, closeOverlay, openOverlay });
 
 },
 "src/ui/screens/settings.js": function (module, exports, require) {
@@ -19948,6 +20096,7 @@ Object.assign(module.exports, { overlayIsOpen, closeOverlay, openOverlay });
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 const { openDebugLog } = require("src/ui/debuglog.js");
+const { esc } = require("src/ui/components/tooltip.js");
 const { renderProfileSection } = require("src/ui/screens/profileArchive.js");
 const { renderAboutSection } = require("src/ui/screens/about.js");
 const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
@@ -20043,15 +20192,72 @@ const ROWS = [
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
 ];
 
-// 'Profile' is the calm-moment route to set-aside profiles and runs (#67).
-// It renders only when a save manager is passed in — a section that promises a
-// drawer it cannot open would be the same broken promise one layer down.
+// ---- categories: a heading is DERIVED from what is under it (#78) ----------
+//
+// This used to be a hand-written list of six names, and `renderSettings` looked
+// up `ROWS.filter(r => r.cat === cat)`. A name in that list with no rows and no
+// section rendered a LONE HEADING — the author did the data-driven thing and got
+// a promise with nothing behind it, in silence.
+//
+// So the list is no longer authored. A category EXISTS because something is
+// filed under it: a `cat:` on a row, or a section below. What stays authored is
+// the ORDER, which is a design decision and not derivable — and a name in the
+// order that nothing files under is a defect that fails by name at boot
+// (assertSurfaces, src/ui/surfaces.js), not a heading over nothing.
+//
+// Adding a settings row under a brand-new category needs NO edit here: the
+// heading appears, after the ordered ones, in the order its first row appears.
+//
+// SECTIONS are the two categories whose contents are code rather than rows.
+// 'Profile' is the calm-moment route to set-aside profiles and runs (#67); its
+// mount renders only when a save manager is passed in — a section that promises
+// a drawer it cannot open would be the same broken promise one layer down.
 // 'About' carries the AI-use acknowledgement, rendered from its one home in
 // src/content/aiDisclosure.js — the same text the store page shows (#69).
-// EXPORTED so the release harness can DERIVE the settings sub-surface list from
-// this one home instead of retyping it (tools/release-shots.mjs, denominator 2).
-// Exporting is not a second copy — it is what stops one being written.
-const SETTINGS_CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
+const SECTIONS = {
+  Profile: { mount: 'set-profile-mount', needs: 'saves' },
+  About: { mount: 'set-about-mount', needs: null },
+};
+
+const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
+
+/**
+ * categoryHandler(cat) → what will render under that heading, or null.
+ *
+ * Null is the whole point: it is the difference between a heading with contents
+ * and a heading with a promise. assertSurfaces() turns null into a named boot
+ * failure; nothing here guesses.
+ */
+function categoryHandler(cat) {
+  if (SECTIONS[cat]) return SECTIONS[cat];
+  const rows = ROWS.filter((r) => r.cat === cat);
+  return rows.length ? { rows } : null;
+}
+
+/**
+ * filedCategories() → every category something is actually FILED under: a row's
+ * `cat`, or a SECTIONS key. The DERIVED half of this set.
+ *
+ * Exported because it is one of the set's two homes and surfaces.js now asks
+ * each home for its own members rather than asking the set for a union (Vira,
+ * re-gate of #78: a guard proven over one home must be re-proven when the set
+ * gains a second — with one union, `CATEGORY_ORDER = []` left six categories,
+ * a green verdict, and the only authored fact about this screen silently gone).
+ * It is a read of the rows, not a copy of them: `settingsCategories()` below is
+ * derived from it, so the two cannot drift.
+ */
+function filedCategories() {
+  return [...new Set([...ROWS.map((r) => r.cat), ...Object.keys(SECTIONS)])];
+}
+
+/** Every category that exists, in the order it is drawn. Derived, one home. */
+function settingsCategories() {
+  const found = filedCategories();
+  // An authored name nothing files under is KEPT in place, not dropped: dropping
+  // it is the silence again. It renders its own defect and assertSurfaces names
+  // it. Anything filed under a name the order does not mention goes last.
+  return [...CATEGORY_ORDER, ...found.filter((c) => !CATEGORY_ORDER.includes(c))];
+}
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
@@ -20210,24 +20416,33 @@ function toggleFullscreen() {
 function renderSettings(container, { settings, onChange, grouped = true, saves = null, onProfileRestored = null }) {
   let html = '';
   if (grouped) {
-    for (const cat of SETTINGS_CATEGORIES) {
-      if (cat === 'Profile') {
-        if (!saves) continue; // no manager, no promise
-        html += `<h3 class="set-cat">Profile</h3><div class="set-profile-mount"></div>`;
+    // `data-member` on the heading is the house convention for a navigable set
+    // (#78): the host names the set, each member names itself, so an instrument
+    // reads this off the rendered page instead of importing three modules.
+    for (const cat of settingsCategories()) {
+      const h = categoryHandler(cat);
+      const head = `<h3 class="set-cat" data-member="${esc(cat)}">${esc(cat)}</h3>`;
+      if (!h) {
+        // The lone heading, made loud. It cannot reach a player — the boot
+        // assert fails first — so this is what a developer sees on the way.
+        html += head + `<p class="set-note">Nothing is filed under "${esc(cat)}".`
+          + ' Give it a row (<code>cat:</code>) or a section, or take it out of'
+          + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
         continue;
       }
-      if (cat === 'About') {
-        html += `<h3 class="set-cat">About</h3><div class="set-about-mount"></div>`;
+      if (h.needs === 'saves' && !saves) continue; // no manager, no promise
+      if (h.mount) {
+        html += head + `<div class="${h.mount}"></div>`;
         continue;
       }
-      const rows = ROWS.filter((r) => r.cat === cat);
-      html += `<h3 class="set-cat">${cat}</h3>` + rows.map((r) => rowHtml(settings, r)).join('');
+      html += head + h.rows.map((r) => rowHtml(settings, r)).join('');
     }
   } else {
     html = ROWS.map((r) => rowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
   container.setAttribute('data-settings-host', '');
+  if (grouped) container.setAttribute('data-surface', 'settingsCategory');
 
   const profileMount = container.querySelector('.set-profile-mount');
   // onRestored was a parameter renderProfileSection accepted, called — and that
@@ -20366,7 +20581,7 @@ function openSettings({ meta, onChange, saves = null, onProfileRestored = null }
 }
 
 
-Object.assign(module.exports, { SETTINGS_CATEGORIES, settingOn, renderSettings, showSettingsNotice, openSettings });
+Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, settingOn, renderSettings, showSettingsNotice, openSettings });
 
 },
 "src/ui/screens/profileArchive.js": function (module, exports, require) {
@@ -22116,9 +22331,9 @@ function backdropClass(actNumber) {
 // that knows which tab is current. The day a row knows something selectTab does
 // not, this is a second menu rather than a quick way into the one we have.
 //
-//   act: 'tab'     → open the overlay at `tab` (openOverlay/selectTab)
-//        'armoury' | 'legend' | 'draw' | 'discard'  → the screen's own handler
-//        'save' | 'quit' | 'close'                  → the orchestrator's
+// The act vocabulary is MENU_ACTS, below — one home, not a list in this comment
+// as well. `act: 'tab'` is the one act that carries a second field: the tab it
+// opens, which is a member of MENU_TABS and joined to it by surfaces.js.
 //
 // TWO READINGS OF "CONTEXT-SPECIFIC", AND THE TABLE SERVES BOTH.
 // Constantine: "all buttons should be context-specific." Marina's dissent: the
@@ -22195,9 +22410,50 @@ const MENU = {
 
 const BANDS = ['head', 'body', 'tail'];
 
+// The acts a MENU row may name — the vocabulary, beside the table it governs.
+// It lived in src/ui/surfaces.js, whose header promises THAT FILE HOLDS NO
+// MEMBERS; eight members later it was the second copy that file exists to
+// prevent (Vira, gate of 5c49fed).
+//
+// WHAT THIS CATCHES AND WHAT IT DOES NOT, because a hand-kept list should say
+// so out loud. A launcher row is dropped when the CONTEXT does not offer its act
+// (the map has no draw pile — correct, by design), so two different situations
+// wear the same silence:
+//
+//   TYPO      — `act: 'jorunal'`, not a word at all → not in this list → the
+//               boot check names it. Caught, and this list is why.
+//   ORPHAN    — a word in this list that NO context implements anywhere. Delete
+//               `legend:` from the actions bag in src/ui/screens/map.js — its
+//               only implementation — and the Map legend row silently vanishes
+//               with every check green. NOT CAUGHT HERE, and it cannot be: the
+//               actions bags are built inside a click handler, closed over live
+//               run state, so no source-level join can see them.
+//
+// The orphan edge is answered on the RENDERED PAGE instead, which is where the
+// implemented acts actually exist: quicknav marks its panel
+// `data-surface="menuAct"` and each row `data-member="<act>"`, so an instrument
+// that opens the three contexts can subtract what was drawn from what is
+// declared here. That instrument is Bjorn's lens and is not written yet — this
+// comment is the statement of the gap, not a claim it is closed.
+const MENU_ACTS = ['tab', 'armoury', 'legend', 'draw', 'discard', 'save', 'quit', 'close'];
+
 /** The tab a `tab` row points at, resolved against MENU_TABS. */
 function tabDef(id) {
   return MENU_TABS.find((t) => t.id === id) || null;
+}
+
+/**
+ * menuTabRefs() → every tab id a MENU row NAVIGATES TO, across all contexts.
+ *
+ * The other half of a `{ act: 'tab', tab: … }` row. `menuRows()` resolves it to
+ * blank icon/label/tip when it names nothing, and quicknav keeps the row because
+ * the ACT is implemented — so the typo has to be caught by joining the tab, and
+ * this is the enumeration that lets surfaces.js do it.
+ */
+function menuTabRefs() {
+  return [...new Set(Object.values(MENU).flat()
+    .filter((r) => r.act === 'tab' && typeof r.tab === 'string' && r.tab)
+    .map((r) => r.tab))];
 }
 
 /**
@@ -22287,7 +22543,7 @@ function padName(btn) {
 }
 
 
-Object.assign(module.exports, { statusTooltipText, NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, MENU_TABS, MENU, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName });
+Object.assign(module.exports, { statusTooltipText, NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, MENU_TABS, MENU, MENU_ACTS, menuTabRefs, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName });
 
 },
 "src/ui/components/quicknav.js": function (module, exports, require) {
@@ -22423,6 +22679,15 @@ function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = 
   veil.className = 'modal-veil qn-veil';
   const panel = document.createElement('div');
   panel.className = 'qn-panel';
+  // #78 — the house convention for a navigable set: the host names the set, each
+  // control names its member. `menuAct` was the one registered set that did NOT
+  // mark itself (Vira: *the fourth set, the one she called the worst-behaved, is
+  // the one missing from the convention meant to catch sets like it*). It is
+  // also the only place the ORPHAN edge is observable: an act declared in
+  // MENU_ACTS that no context implements never appears here, and the difference
+  // between declared and drawn is exactly the defect. `data-act` / `data-tab`
+  // stay — they are behaviour, not enumeration, and something may read them.
+  panel.dataset.surface = 'menuAct';
 
   // THE CAPTION IS THE POINT OF SHIPPING THIS AT ALL. An experiment that
   // outlives the memory of switching it on becomes a bug report — so the list
@@ -22439,6 +22704,7 @@ function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = 
     const b = document.createElement('button');
     b.className = `qn-row${r.tone ? ` ${r.tone}` : ''}${r.on ? ' on' : ''}`;
     b.dataset.act = r.act;
+    b.dataset.member = r.act;
     if (r.tab) b.dataset.tab = r.tab;
     b.innerHTML = `<span class="qn-ic">${esc(r.icon)}</span><span class="qn-label">${esc(r.label)}</span>`
       + (r.badge ? `<span class="qn-badge">${esc(r.badge)}</span>` : '');
@@ -23983,6 +24249,137 @@ const { sfx } = require("src/ui/sfx.js");
 
 const CFG = () => balance.equipment;
 
+// ---- the view set: a row DESCRIBES a layout, and the CELL is the vocabulary --
+//
+// EldenSpire#78, second pass. The first pass killed `if (view === 'grid') … else
+// …` — the id was the handler, so a fourth id fell into the else and rendered as
+// hybrid in silence. It replaced the id with two characteristics and declared
+// each of them closed ON ITS OWN:
+//
+//     VIEW_VOCAB = { figure: [true, false], slots: ['flank', 'list'] }
+//
+// THAT IS NOT A CLOSED SET. It is two closed sets whose PRODUCT is four cells,
+// and the screen drew three. Vira's gate found the fourth: one row of data,
+// `{ id:'ghost', figure:false, slots:'flank' }`, written entirely in words this
+// file declared legal — it passed viewLayout, took the flank branch (which
+// appended the figure without ever consulting `figure`), and was then blanked by
+// a ui.css rule whose real predicate was `figure:false AND slots:'list'`. Two
+// mistakes that cancelled into `bodyInk: 0`: an empty armoury, no error, no
+// banner, every instrument green. WORSE than the `else` it replaced, which at
+// least rendered hybrid. Marina's property, house-wide from today:
+//
+//     A CLOSED SET MUST STAY CLOSED UNDER WHATEVER FACTORISATION REPLACES IT.
+//
+// So the unit of the vocabulary here is the CELL, not the factor. `LAYOUTS`
+// below is keyed by the whole combination, and ITS KEYS ARE THE CLOSED SET — a
+// row whose combination is not a key fails by name at boot (surfaces.js) and in
+// the panel, exactly as an unknown word does. There is no second list of legal
+// cells anywhere to disagree with this one: THE TABLE THAT DRAWS A CELL IS THE
+// TABLE THAT DECLARES IT, and what an author may write is DERIVED from it
+// (`viewCells()`), never written beside it. A second declaration is precisely
+// how the fourth cell got in.
+//
+// This also answers the seam Vira left open — *"I proved the fourth cell renders
+// nothing; I did not prove there are only four cells that matter."* There is
+// nothing to enumerate: `slots: 'ring'` tomorrow makes the product six, and all
+// six of those cells are legal only if six keys exist. Adding a value to a
+// factor grants nothing on its own. That is the honest edge and it is now
+// structural rather than argued.
+
+/** The cell a row asks for — `figure:1|slots:flank` — or null if it is not one. */
+function cellKey(row) {
+  if (!row || typeof row.figure !== 'boolean' || typeof row.slots !== 'string' || !row.slots) return null;
+  return `figure:${row.figure ? 1 : 0}|slots:${row.slots}`;
+}
+
+// Every layout the armoury has. THE KEYS ARE THE VOCABULARY.
+//
+// NOT A CELL, and deliberately: `figure:false + slots:'flank'`. "Flank" means
+// the slot columns hang either side OF THE FIGURE; with no figure there is
+// nothing to flank, and two columns around a hole is a layout nobody designed —
+// shipping it to satisfy an arithmetic is the "renders something plausible"
+// failure one level up. A row asking for it now says so by name. Building it is
+// one key here plus its rule in ui.css: the DOM builder below already obeys
+// `figure` on both branches, so the table really is the only decider.
+const LAYOUTS = {
+  'figure:1|slots:flank': buildFlank, // 'grid'   — the person, kit hanging off them
+  'figure:1|slots:list': buildList, // 'hybrid' — the rack with the figure beside it
+  'figure:0|slots:list': buildList, // 'rack'   — the list, no figure
+};
+
+/** Every declared view id, in authored order. The one enumeration. */
+function viewIds() {
+  return (CFG().views || []).map((v) => (v && typeof v === 'object' ? v.id : v));
+}
+
+/** The cells that exist, DERIVED from the layouts. What an author may write. */
+function viewCells() {
+  return Object.keys(LAYOUTS).map((k) => {
+    const m = /^figure:([01])\|slots:(.+)$/.exec(k);
+    return { figure: m[1] === '1', slots: m[2] };
+  });
+}
+
+/** The same list as one line of English, for every message that has to say it. */
+function viewCellsSay() {
+  return viewCells().map((c) => `figure: ${c.figure} + slots: '${c.slots}'`).join(' | ');
+}
+
+/**
+ * viewLayout(id) → { figure, slots, cell } the screen can actually draw, or null.
+ *
+ * Null is the honest answer for every shape of breakage — an id nobody declared,
+ * a row written in a word this file does not have, and a row written in a
+ * COMBINATION nothing draws. The caller decides how loudly to say so;
+ * assertSurfaces() says so at boot, by name.
+ */
+function viewLayout(id) {
+  const row = (CFG().views || []).find((v) => v && typeof v === 'object' && v.id === id);
+  const cell = cellKey(row);
+  if (!cell || !LAYOUTS[cell]) return null;
+  return { figure: row.figure, slots: row.slots, cell };
+}
+
+// ---- the builders ----------------------------------------------------------
+//
+// Each takes the layout it was handed and a `ui` bag of the four things a
+// builder may touch. THE BUILDER OBEYS EVERY CHARACTERISTIC IT IS HANDED, even
+// where today's key set means it can only ever see one value — the flank branch
+// ignoring `figure` is half of the defect Vira found, and an error that is
+// currently unreachable is still an error. It is also what makes the sentence
+// above true: adding `figure:0|slots:flank` to LAYOUTS is one key and one rule
+// in ui.css, because nothing here would have to change.
+
+function buildFlank(L, ui) {
+  // The figure in the middle with its kit hanging off it, hands on the side they
+  // are actually held: the sprite carries the right-hand armament at screen
+  // right, so the Right Hand column is the right one.
+  const cols = { l: document.createElement('div'), r: document.createElement('div') };
+  cols.l.className = 'ag-col';
+  cols.r.className = 'ag-col';
+  ui.blocks.forEach(({ slot, el: b }, i) => {
+    const id = slot.id.toLowerCase();
+    const side = id.includes('right') ? 'r' : id.includes('left') ? 'l' : (i % 2 ? 'r' : 'l');
+    cols[side].appendChild(b);
+  });
+  ui.left.appendChild(cols.l);
+  if (L.figure) ui.left.appendChild(ui.figure());
+  ui.left.appendChild(cols.r);
+  ui.right.appendChild(ui.picker());
+}
+
+function buildList(L, ui) {
+  // One column of slots beside the figure — or without it, when the row says
+  // `figure: false`. The id is not consulted: 'rack' is simply the row that
+  // asks for no figure.
+  if (L.figure) ui.left.appendChild(ui.figure());
+  const slotWrap = document.createElement('div');
+  slotWrap.className = 'equip-slots';
+  for (const b of ui.blocks) slotWrap.appendChild(b.el);
+  ui.right.appendChild(slotWrap);
+  ui.right.appendChild(ui.picker());
+}
+
 /**
  * The figure, as layers: a bare-handed body in the armour set's palette with
  * each held armament stacked over it (see assets.js equippedFigure). Anything
@@ -24086,13 +24483,24 @@ function mountEquipment(host, {
   // one the table names". A validated-then-discarded value is exactly the shape
   // clause 5 exists to forbid.
   const named = narrow ? CV.narrowDefaultView : CV.defaultView;
-  if (named != null && !CV.views.includes(named)) {
+  const IDS = viewIds();
+  if (named != null && !IDS.includes(named)) {
     console.error(`[content] balance.equipment.${narrow ? 'narrowDefaultView' : 'defaultView'}`
-      + ` = ${JSON.stringify(named)} is not one of ${JSON.stringify(CV.views)}`
+      + ` = ${JSON.stringify(named)} is not one of ${JSON.stringify(IDS)}`
       + ' — falling back, and this line is the defect, not the fallback.');
   }
-  const shapeDefault = (named != null && CV.views.includes(named)) ? named : CV.defaultView;
-  let view = (meta.settings && meta.settings.equipView) || shapeDefault;
+  const shapeDefault = (named != null && IDS.includes(named)) ? named : CV.defaultView;
+  // A STORED view the table no longer declares is not the defect this file
+  // guards — the player saved 'hybrid' and the set moved under their save. It
+  // degrades to the shape default and says so once. A DECLARED row that cannot
+  // be drawn is the defect, and assertSurfaces() fails the boot before any of
+  // this runs, so `viewLayout` below can only be null for the stored case.
+  const stored = meta.settings && meta.settings.equipView;
+  if (stored && !IDS.includes(stored)) {
+    console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
+      + ` — opening on ${JSON.stringify(shapeDefault)}.`);
+  }
+  let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 
@@ -24276,12 +24684,17 @@ function mountEquipment(host, {
   }
 
   function draw() {
+    // The layout is READ off the row, never inferred from the id. `data-surface`
+    // / `data-member` are the house convention for a navigable set (#78): the
+    // host names the set, each control names its member, so an instrument can
+    // enumerate this from the rendered page without importing anything.
+    const L = viewLayout(view);
     wrap.innerHTML = `
-      <div class="armoury view-${esc(view)}${picking ? ' picking' : ''}">
+      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}">
         <header class="armoury-head">
           <h2>ARMOURY</h2>
-          <div class="armoury-views">
-            ${CFG().views.map((v) => `<button type="button" data-view="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
+          <div class="armoury-views" data-surface="armouryView">
+            ${viewIds().map((v) => `<button type="button" data-member="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
           </div>
           <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
         </header>
@@ -24303,39 +24716,34 @@ function mountEquipment(host, {
       .filter((slot) => eligible(slot).length)
       .map((slot) => ({ slot, el: slotBlock(slot) }));
 
-    if (view === 'grid') {
-      // The figure in the middle with its kit hanging off it, hands on the side
-      // they are actually held: the sprite carries the right-hand armament at
-      // screen right, so the Right Hand column is the right one.
-      const cols = { l: document.createElement('div'), r: document.createElement('div') };
-      cols.l.className = 'ag-col';
-      cols.r.className = 'ag-col';
-      blocks.forEach(({ slot, el: b }, i) => {
-        const id = slot.id.toLowerCase();
-        const side = id.includes('right') ? 'r' : id.includes('left') ? 'l' : (i % 2 ? 'r' : 'l');
-        cols[side].appendChild(b);
+    // A LOOKUP, NOT A BRANCH. There is no `else` left to fall into: the cell
+    // either has a builder or it has none, and none is a named failure. The
+    // first pass turned the id into two characteristics and kept an if/else on
+    // ONE of them — which is how a legal combination of the other reached a
+    // branch that ignored it (Vira, gate of 5c49fed).
+    const build = L && LAYOUTS[L.cell];
+    if (build) {
+      build(L, {
+        left, right, blocks,
+        figure: () => figureFor(registries, run, cz),
+        picker: () => pickerBlock(),
       });
-      left.appendChild(cols.l);
-      left.appendChild(figureFor(registries, run, cz));
-      left.appendChild(cols.r);
-      right.appendChild(pickerBlock());
     } else {
-      // 'rack' drops the figure entirely for density; 'hybrid' keeps it beside
-      // the same list.
-      if (view !== 'rack') left.appendChild(figureFor(registries, run, cz));
-      const slotWrap = document.createElement('div');
-      slotWrap.className = 'equip-slots';
-      for (const b of blocks) slotWrap.appendChild(b.el);
-      right.appendChild(slotWrap);
-      right.appendChild(pickerBlock());
+      console.error(`[content] the armoury view ${JSON.stringify(view)} has no layout`
+        + ` — its row must ask for a combination the screen has: ${viewCellsSay()}`
+        + ' in src/content/balance.js. This line is the defect, not a fallback.');
+      const dead = document.createElement('p');
+      dead.className = 'armoury-notice';
+      dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
+      right.appendChild(dead);
     }
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
 
     notice = '';
     wrap.querySelector('.armoury-close').addEventListener('click', close);
-    for (const b of wrap.querySelectorAll('[data-view]')) {
+    for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
-        view = b.dataset.view;
+        view = b.dataset.member;
         if (onChange) onChange(run.loadout, { equipView: view });
         draw();
       });
@@ -24352,7 +24760,7 @@ function mountEquipment(host, {
 }
 
 
-Object.assign(module.exports, { mountEquipment });
+Object.assign(module.exports, { viewIds, viewCells, viewCellsSay, viewLayout, mountEquipment });
 
 },
 "src/ui/components/refusal.js": function (module, exports, require) {
@@ -26012,6 +26420,379 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
 
 
 Object.assign(module.exports, { mountCoop });
+
+},
+"src/ui/surfaces.js": function (module, exports, require) {
+// src/ui/surfaces.js — every navigable set, and the join to its handler.
+//
+// EldenSpire#78. Bjorn found the same defect three times in shipped code:
+// VOCABULARY IN DATA, HANDLER IN CODE, NOTHING CHECKING THEY AGREE. A new
+// armoury view rendered as hybrid; a new overlay tab showed an empty panel; a
+// new settings category was a lone heading. Not one of them errored — the author
+// did the data-driven thing correctly and got a broken screen (Law 0 clause 5).
+//
+// THIS FILE HOLDS NO MEMBERS. That is the whole design. Each row below points at
+// the one home its set already has and asks it, at call time, so this table can
+// never be a second copy of anything — the failure mode Marina named when she
+// refused to split #78: *a new home nobody validates is a second copy waiting
+// for its first disagreement.* What lives here is the pair no single file could
+// hold: WHAT IS DECLARED and WHAT WILL HANDLE IT.
+//
+// Two of the three receipts needed no join in the end, and that is the better
+// half of the answer:
+//
+//   armoury views      the handler DISSOLVED. A view row now says what it is
+//                      (figure? slots flanking or listed?) and both the screen
+//                      and the stylesheet read those. Nothing anywhere knows the
+//                      word "grid". `resolve` here only checks the row is
+//                      written in the vocabulary the screen actually has — and
+//                      THAT VOCABULARY IS THE COMBINATION, not each field.
+//                      Declaring two characteristics closed separately left a
+//                      cell of their product legal and undrawn, which rendered
+//                      an EMPTY armoury in silence (Vira, gate of 5c49fed).
+//                      A closed set must stay closed under whatever
+//                      factorisation replaces it — Marina, and it is house-wide.
+//   settings categories the DECLARATION dissolved. A category exists because a
+//                      row is filed under it. What is still authored is the
+//                      order — and an ordered name nothing files under is what
+//                      fails below.
+//   overlay tabs       neither dissolves, honestly: a panel is code and there is
+//                      no vocabulary in which "the deck grid" is a row. So the
+//                      tab's id IS the key into PANELS, one name not two, and a
+//                      row without its function fails HERE, at boot, by name.
+//
+// WHAT THIS CANNOT DO, said out loud: it cannot see a fifth navigable set that
+// nobody adds a row for. Nothing in a source tree can. That hole is answered on
+// the rendered page instead — every set marks its host `data-surface="<id>"` and
+// each control `data-member="<member>"`, so an instrument enumerates what the
+// game actually drew rather than what it was told to expect. ALL FOUR SETS MARK
+// THEMSELVES NOW; `menuAct` did not, and it was the one set whose worst edge —
+// an act declared here that no context implements — is ONLY visible on the page.
+// The attributes are a CONVENTION, not a derivation: a set nobody registers is a
+// set nobody marks, and nothing checks the two agree. Saying so is the point.
+//
+// ---- A SET IS A LIST OF HOMES (Vira, re-gate of #78) ------------------------
+//
+// The first pass gave each row ONE `members()` and one prose `home`. When
+// `overlayTab` grew a second home — MENU_TABS DECLARES the strip, a MENU row's
+// `tab:` NAVIGATES to it — `members()` quietly became a union of the two and the
+// zero-member guard was left counting the union. So an entire home could go
+// empty and the check still reported full coverage: `MENU_TABS = []` and the tab
+// strip declares nothing, the folded switcher has nothing, Law 3's bumper ring
+// has nothing to cycle, and the member count drops 6 → 5 with the verdict `OK`.
+// A SHRINKING DENOMINATOR WITH A GREEN VERDICT. Vira's property, and it is
+// Marina's own one turn on:
+//
+//     A GUARD PROVEN OVER ONE HOME MUST BE RE-PROVEN WHEN THE SET GAINS A SECOND.
+//
+// So a row no longer says where its members come from in prose beside a function
+// that goes and gets them. IT LISTS ITS HOMES, each with its own `members()`,
+// and BOTH the member list and the `home` sentence are DERIVED from that list.
+// The guard runs per home. This is written for the class rather than for the tab
+// strip — `armouryView` and `menuAct` have one home each today and are the same
+// shape, so the day either of them is widened the guard widens with it and
+// nobody has to remember. A one-home set behaves exactly as it did.
+//
+// The line it draws is Law 0 clause 2 in miniature: THE HOMES ARE THE
+// VOCABULARY AND THE MEMBERS ARE THE DATA. Emptying a home is a data edit and
+// must fail by name; removing a home is a code edit here, reviewed like any
+// other word. That is why "every declared home declares at least one member" is
+// not too strict — the alternative is a home that exists in this file and
+// nowhere else, which is the second copy this table was built to refuse.
+
+const { MENU_TABS, MENU, MENU_ACTS, menuTabRefs } = require("src/ui/uiContent.js");
+
+
+const { panelFor } = require("src/ui/components/overlay.js");
+const { filedCategories, CATEGORY_ORDER, categoryHandler } = require("src/ui/screens/settings.js");
+const { viewIds, viewLayout, viewCellsSay } = require("src/ui/screens/equipment.js");
+
+const SURFACES = [
+  {
+    id: 'overlayTab',
+    // A MEMBER IS A TAB THE GAME CAN BE PUT INTO, not a row of MENU_TABS —
+    // Vira's sixth kind, and the second half of the day's lesson. `MENU_TABS`
+    // DECLARES the strip; a MENU row saying `tab: 'jornal'` NAVIGATES to one,
+    // and members() read only the first home. A one-character typo there
+    // resolved to { icon:'', label:'', tip:'' }, was KEPT by quicknav's filter
+    // because `act:'tab'` is implemented, and gave the player an unlabelled
+    // button onto a tab with no panel. Where a declaration lives in two homes,
+    // the member list is the union of both — and `fix` below tells them apart,
+    // because naming the wrong entry is worse than naming none (Law 1 cl. 5).
+    of: 'the in-run menu tabs — declared by MENU_TABS, navigated to by MENU rows',
+    from: [
+      {
+        what: 'MENU_TABS',
+        file: 'src/ui/uiContent.js',
+        declares: 'the tab strip, the folded switcher and the bumper ring',
+        members: () => MENU_TABS.map((t) => t.id),
+      },
+      {
+        what: 'every MENU row\'s tab:',
+        file: 'src/ui/uiContent.js',
+        declares: 'the quick-menu rows that navigate to a tab',
+        members: () => menuTabRefs(),
+      },
+    ],
+    resolve: (id) => panelFor(id),
+    fix: (id) => (MENU_TABS.some((t) => t.id === id)
+      ? `add ${JSON.stringify(id)} to PANELS in src/ui/components/overlay.js`
+      : `no MENU_TABS row declares ${JSON.stringify(id)} — a MENU row's \`tab:\` names it.`
+        + ` Fix that row, or declare the tab: MENU_TABS has ${MENU_TABS.map((t) => t.id).join(', ')}`
+        + ' (src/ui/uiContent.js)'),
+  },
+  {
+    id: 'settingsCategory',
+    of: 'the settings categories',
+    // Two homes, and only one of them is authored by a human — which is exactly
+    // why the union hid it. Emptying CATEGORY_ORDER left all six categories
+    // present (they are DERIVED from the rows), the verdict green, and the one
+    // design decision this screen carries silently gone, with Profile drifting
+    // behind Advanced. Milder than the tab strip and the same defect, which is
+    // how we know the per-home guard is the class and not a patch.
+    from: [
+      {
+        what: 'CATEGORY_ORDER',
+        file: 'src/ui/screens/settings.js',
+        declares: 'the order the headings are drawn in — the authored half',
+        members: () => CATEGORY_ORDER,
+      },
+      {
+        what: 'the rows',
+        file: 'src/ui/screens/settings.js',
+        declares: 'a heading exists because something is filed under it',
+        members: () => filedCategories(),
+      },
+    ],
+    resolve: (cat) => categoryHandler(cat),
+    fix: (cat) => `file something under ${JSON.stringify(cat)} — a row with cat: ${JSON.stringify(cat)},`
+      + ' or a SECTIONS entry — or take it out of CATEGORY_ORDER (src/ui/screens/settings.js)',
+  },
+  {
+    id: 'armouryView',
+    of: 'the armoury layout views',
+    from: [
+      {
+        what: 'balance.equipment.views',
+        file: 'src/content/balance.js',
+        declares: 'every view the armoury header offers',
+        members: () => viewIds(),
+      },
+    ],
+    resolve: (id) => viewLayout(id),
+    // The fix ENUMERATES THE CELLS, never the factors. Saying "figure:
+    // true|false and slots: 'flank'|'list'" is what promised a product of two
+    // closed sets and delivered three of its four cells.
+    fix: (id) => `give ${JSON.stringify(id)} a combination the screen has —`
+      + ` ${viewCellsSay()} — in src/content/balance.js.`
+      + ' A new combination is a new LAYOUT (a key in LAYOUTS + its rule in'
+      + ' styles/ui.css), not a new row.',
+  },
+  {
+    id: 'menuAct',
+    of: 'the quick-menu launcher acts',
+    from: [
+      {
+        what: 'the MENU table',
+        file: 'src/ui/uiContent.js',
+        declares: 'every act a launcher row names, in every context',
+        // Deduped INSIDE the home: `act: 'tab'` is meant to appear on many rows,
+        // so a repeat here is the table working. Across homes the duplicate
+        // check is off for the same reason; within a home it is on.
+        members: () => [...new Set(Object.values(MENU).flat().map((r) => r.act))],
+      },
+    ],
+    // MENU_ACTS now lives with the MENU table it governs, not here. This file's
+    // header promises it holds no members and this row held eight of them —
+    // *the fix for label drift carrying label drift* (Marina). The list is still
+    // hand-kept, and what that does and does not catch is stated at its new home.
+    resolve: (act) => (MENU_ACTS.includes(act) ? act : null),
+    fix: (act) => `${JSON.stringify(act)} is not a launcher act — add it to MENU_ACTS in`
+      + ' src/ui/uiContent.js and give every context that offers it a handler,'
+      + ' or fix the typo in the MENU row',
+  },
+];
+
+/** One home, named the way a person would say it: `MENU_TABS in src/ui/…`. */
+function homeOf(h) {
+  return `${h.what} in ${h.file}`;
+}
+
+/**
+ * attempt(fn) → { ok: true, value } | { ok: false, why } — every call this join
+ * makes into somebody else's file, made so that it cannot kill the reader.
+ *
+ * THIS IS THE READ PATH, and it is the half the first fold left out (Vira,
+ * re-gate of 3010a72). `surfaceReport()` is called bare on the boot path, and
+ * `main.js` says eleven lines above that call why it does not throw there:
+ * *"on the boot path a throw is the blank screen #77 was about."* That intent
+ * was implemented for the FINDINGS path only. A home that cannot be READ never
+ * reaches a finding, because the reader dies first — so
+ * `export const MENU_TABS = null;` produced no banner, no message, and an empty
+ * page in the artifact a player downloads. Law 1 clause 5, in its own words:
+ * a failure that dies before the validator runs is still this clause's.
+ *
+ * WHY IT IS HERE AND NOT SIX GUARDS. `viewIds()` guards its own read and the
+ * other five homes do not, which is the inconsistency that let this through.
+ * The cure is not to copy that guard five times — five copies of one guard is
+ * the defect this table exists to refuse, and `(x || [])` only answers `null`
+ * anyway, not a getter that throws or a table that is a string. **A home that
+ * cannot be read is a FACT ABOUT THE HOME**, so it belongs where every other
+ * fact about a home now lives: in the per-home report, named, alongside
+ * *declares ZERO members*. One guard, at the one place that reads homes,
+ * covering every shape of unreadable rather than the one shape someone guessed.
+ *
+ * And it wraps `resolve` and `fix` for the same reason, unasked: the finding was
+ * about `members()`, but the join makes three calls into other files per member
+ * and all three are on the boot path. Fixing the instance and leaving the class
+ * is the move that has cost this branch two gates already.
+ */
+function attempt(fn) {
+  try {
+    return { ok: true, value: fn() };
+  } catch (e) {
+    return { ok: false, why: (e && e.message) || String(e) };
+  }
+}
+
+/**
+ * The set's `home` sentence, DERIVED from its homes — never typed beside them.
+ *
+ * It used to be a string on the row, which is how `overlayTab` came to carry a
+ * hand-written "MENU_TABS + every MENU row's tab:" that nothing kept in step
+ * with the function that actually read them. The four sentences this produces
+ * are byte-identical to the four that were typed, which is the point: the fact
+ * did not change, its second copy went away.
+ */
+function homeLine(from) {
+  const files = [...new Set(from.map((h) => h.file))];
+  if (files.length === 1) return `${from.map((h) => h.what).join(' + ')} in ${files[0]}`;
+  return from.map(homeOf).join(' + ');
+}
+
+/**
+ * surfaceReport() → one row per navigable set:
+ * { id, of, home, homes, members, missing }.
+ *
+ * Pure, no throwing, so a tool can print the whole picture instead of the first
+ * complaint. `homes` is the per-home breakdown with each home's own member list;
+ * `members` is the union across them, in authored order, deduped. `missing` is
+ * every finding, each with its own fix.
+ *
+ * BOTH EDGES, AND THE ZERO EDGE IS PER HOME. Zero members is not full coverage —
+ * it is a home the reader can no longer read (Bjorn's `views = []` red is the
+ * precedent), and once a set has two homes, "the set has members" stops being
+ * that check. A union is a NEW SET, and every property proved about the old one
+ * is `unknown` until re-observed (Vira, re-gate of #78, who caught this file
+ * promising the guard in a docstring it no longer gave).
+ *
+ * DUPLICATES ARE PER HOME TOO, and for the mirror-image reason: the same tab
+ * appearing in MENU_TABS *and* in a MENU row's `tab:` is the two homes agreeing,
+ * which is correct and common. The same name twice INSIDE one home is a defect —
+ * and the old union deduped it away before anything could look.
+ *
+ * "PURE, NO THROWING" IS NOW TRUE RATHER THAN INTENDED. Every call out of this
+ * function goes through `attempt()`; see its note. A home has three honest
+ * outcomes and each is a finding that names the home:
+ *
+ *   could not be read      the read threw    — `MENU_TABS = null`
+ *   did not return a list  the read is not an array — `CATEGORY_ORDER = 'Display'`
+ *   declares ZERO members  the read is empty — `MENU_TABS = []`
+ *
+ * They are three sentences and not one because they are three different edits,
+ * and *naming the wrong entry is worse than naming none* (Law 1 clause 5) reads
+ * on the failure mode as much as on the member.
+ */
+function surfaceReport() {
+  return SURFACES.map((s) => {
+    const bad = [];
+    const members = [];
+    const union = new Set();
+    const homes = s.from.map((h) => {
+      const got = attempt(h.members);
+      if (!got.ok) {
+        bad.push({
+          member: null,
+          why: `could not be read in ${h.what} — ${got.why}`,
+          fix: `check ${homeOf(h)}`,
+        });
+        return { ...h, members: [] };
+      }
+      if (!Array.isArray(got.value)) {
+        bad.push({
+          member: null,
+          why: `did not return a list of members in ${h.what} — got ${got.value === null ? 'null' : typeof got.value}`,
+          fix: `check ${homeOf(h)}`,
+        });
+        return { ...h, members: [] };
+      }
+      const list = got.value;
+      if (list.length === 0) {
+        bad.push({
+          member: null,
+          why: `declares ZERO members in ${h.what}`,
+          fix: `check ${homeOf(h)}`,
+        });
+        return { ...h, members: [] };
+      }
+      const here = new Set();
+      for (const m of list) {
+        if (typeof m !== 'string' || !m) {
+          bad.push({ member: String(m), why: 'is not a name', fix: `check ${homeOf(h)}` });
+          continue;
+        }
+        if (here.has(m)) {
+          bad.push({ member: m, why: `is declared twice in ${h.what}`, fix: `check ${homeOf(h)}` });
+          continue;
+        }
+        here.add(m);
+        if (!union.has(m)) { union.add(m); members.push(m); }
+      }
+      return { ...h, members: list };
+    });
+    // The handler join is over the UNION: a tab declared in one home and
+    // navigated to from the other needs exactly one panel, not two.
+    //
+    // `resolve` and `fix` are on the boot path exactly as `members` is, so they
+    // get the same treatment. A `fix` message that throws must never be able to
+    // swallow the finding it was describing — the finding survives, in plainer
+    // words, and says that it did.
+    for (const m of members) {
+      const got = attempt(() => s.resolve(m));
+      if (!got.ok) {
+        bad.push({ member: m, why: `could not be resolved — ${got.why}`, fix: `check ${homeLine(s.from)}` });
+        continue;
+      }
+      if (got.value) continue;
+      const say = attempt(() => s.fix(m));
+      bad.push({
+        member: m,
+        why: 'has no handler',
+        fix: say.ok ? say.value : `check ${homeLine(s.from)} — and its fix message threw: ${say.why}`,
+      });
+    }
+    return { id: s.id, of: s.of, home: homeLine(s.from), homes, members, missing: bad };
+  });
+}
+
+/**
+ * assertSurfaces() — throws if any declared surface member has no handler.
+ *
+ * Called at boot (src/main.js) and by tools/surfaces.mjs. It throws rather than
+ * warns because the alternative is what #78 is about: a screen that renders
+ * something plausible for a member nobody implemented. A blank screen with a
+ * name on it is cheap; a hybrid layout wearing a stranger's id is not.
+ */
+function assertSurfaces() {
+  const found = surfaceReport().filter((r) => r.missing.length);
+  if (!found.length) return;
+  const lines = found.flatMap((r) => r.missing.map((m) => `  ${r.id}${m.member ? ` · ${m.member}` : ''}`
+    + ` ${m.why} — ${m.fix}`));
+  throw new Error(`[surfaces] a navigable surface is declared with no handler (#78):\n${lines.join('\n')}`);
+}
+
+
+Object.assign(module.exports, { SURFACES, surfaceReport, assertSurfaces });
 
 }
   };

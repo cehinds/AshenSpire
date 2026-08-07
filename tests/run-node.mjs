@@ -161,6 +161,51 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (bad.length) zoomExtra++;
   else zoomPassed++;
+
+  // 39/40 — every navigable surface declared in data has a handler (#78).
+  //
+  // Two lines for the same reason 36/37 are two: 39 is the CHECK'S OWN
+  // integrity — it plants every breakage an author could make by hand and must
+  // see all of them. Its failure is the check's fault. 40 is the state of src/.
+  // Its failure is the code's.
+  //
+  // NO COUNT IN THIS COMMENT, deliberately. It said "five" while the corpus held
+  // seven, and it would say seven now that it holds eleven — a number typed
+  // beside the list that owns it, which is the defect this whole card is about.
+  // The tool's own RESULT line carries the count and 39 quotes it whole.
+  //
+  // Here rather than in engine.test.js, and that is deliberate: this joins two
+  // lists that live in the UI layer, and engine.test.js is engine and content
+  // invariants with numbered names that two files cannot both hand out (see the
+  // note above 36). The verdict is the tool's own RESULT line, quoted whole —
+  // Bjorn's ruling, and the reason is that a recomposed verdict is a second copy
+  // of it.
+  const runSurf = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/surfaces.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
+  const surfSelf = runSurf(['--selftest']);
+  const surfSelfV = quote(surfSelf.out);
+  console.log(
+    `${surfSelf.code === 0 && surfSelfV.text ? 'PASS' : 'FAIL'}  39. the surface check still catches its own known-bad corpus` +
+      ` — ${surfSelfV.text || `surfaces --selftest (exit ${surfSelf.code}): ${surfSelfV.why}`}`
+  );
+  if (surfSelf.code !== 0 || !surfSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const surfTree = runSurf([]);
+  const surfTreeV = quote(surfTree.out);
+  console.log(
+    `${surfTree.code === 0 && surfTreeV.text ? 'PASS' : 'FAIL'}  40. every declared navigable surface has a handler` +
+      ` — ${surfTreeV.text || `surfaces (exit ${surfTree.code}): ${surfTreeV.why}`}` +
+      ` (\`node tools/surfaces.mjs\` for the sets, \`--selftest\` for the reds)`
+  );
+  if (surfTree.code !== 0 || !surfTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -171,4 +216,8 @@ console.log('          numbers a caller supplies, and the #15 defect was a corre
 console.log('          clamp computed in the wrong space, which 38 cannot detect.');
 console.log('          Nothing here opens a browser, so no test in this file has seen');
 console.log('          the screen. `node tools/zoomplace.mjs` is the half that has.');
+console.log('          39–40 are a JOIN between two source lists: they prove every');
+console.log('          declared navigable surface HAS a handler, never that the');
+console.log('          handler draws anything — release-shots is the half that has');
+console.log('          watched a panel paint.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

@@ -804,8 +804,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .seat-hint { color: var(--muted); font-size: 1rem; letter-spacing: .1em; border: 1px solid var(--line-soft); border-radius: 4px; padding: 0.1rem 0.6rem; }
 
 /* ---- Armoury (equipment) --------------------------------------------------
-   Three layouts over one loadout. The view class on .armoury does all the
-   rearranging, so the screen builds the same DOM every time and only CSS
+   Three layouts over one loadout. Two attributes on .armoury do all the
+   rearranging — `data-figure` and `data-slots`, read straight off the view's
+   own row — so the screen builds nearly the same DOM every time and CSS
    decides whether you are looking at a person or at a list. */
 .armoury-overlay {
   position: fixed; inset: 0; z-index: 60; display: flex;
@@ -838,19 +839,58 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury-body { flex: 1; display: flex; gap: 1.6rem; padding: 1.6rem; overflow: hidden; }
 .armoury-left { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; overflow-y: auto; }
 .armoury-right { flex: 1; display: flex; flex-direction: column; gap: 1.4rem; overflow-y: auto; }
-.armoury.view-rack .armoury-left { display: none; }
-.armoury.view-grid .armoury-left { flex: 1; }
-.armoury.view-grid .armoury-right { max-width: 38rem; }
+/* EldenSpire#78 — these key off WHAT THE VIEW IS, not what it is called. Every
+   rule below used to name an id (.view-grid / .view-rack / .view-hybrid), which
+   made the stylesheet a second, silent decider of the layout: a fourth id got no
+   rules and looked like hybrid. `data-figure` and `data-slots` are written by
+   equipment.js straight off the row in balance.equipment.views, so a new view
+   row is styled the moment it is authored. Specificity is unchanged — a class
+   and an attribute weigh the same — so the cascade here is exactly as it was.
+
+   THE RULE BELOW NAMES BOTH CHARACTERISTICS, and that is the tenth block Vira
+   caught. `.armoury.view-rack .armoury-left { display: none }` became
+   `[data-figure='0']` — 1:1 over the three rows that exist, and the WRONG RULE:
+   the left column holds only the figure in a LIST view, and the slot columns as
+   well in a flank one. A mapping proven over the current members is not a
+   mapping (Marina). Nothing renders differently today; the point is that the
+   rule now says what it means, so it cannot blank a layout nobody has written
+   yet. */
+.armoury[data-figure='0'][data-slots='list'] .armoury-left { display: none; }
+.armoury[data-slots='flank'] .armoury-left { flex: 1; }
+.armoury[data-slots='flank'] .armoury-right { max-width: 38rem; }
 
 /* flex:0 0 auto matters — the figure sits in a flex column and would otherwise
-   be squeezed to nothing by the slot blocks below it. */
-.armoury-figure { flex: 0 0 auto; width: 22rem; height: 28rem; position: relative; }
+   be squeezed to nothing by the slot blocks below it.
+
+   `--figure-w` IS THE FIGURE'S AUTHORED WIDTH, AND IT HAS ONE HOME (Viki,
+   2026-08-07). It was written twice: once here as a `width` for a row layout and
+   again in the narrow block at the bottom of this file as a `max-width` for a
+   column — each with its own `data-slots='flank'` override, so the fact "the
+   figure is wider when the slots flank it" existed in two places and nothing
+   kept them equal. In a row the property IS the width; in a column it is the
+   cap on a 100% width. Same number, one declaration, and the flank override is
+   now a single line instead of two.
+
+   THIS IS ALSO WHERE FREJA'S LINE WENT, and it is why she has nothing to delete.
+   Her armoury ruling (`freja/armoury-narrow-hierarchy`) stops offering a flank
+   view on a narrow layout, which made the narrow flank override unreachable
+   under it — a line she deliberately left rather than churn a branch inside a
+   gate, and named in her log so it would not be found later as rot. Deleting it
+   HERE would have been a live regression: this branch still offers flank at 390
+   and the cap really is 26rem today. Collapsed instead, so the number survives
+   while the second copy does not, and when her branch lands there is no
+   unreachable rule to remember — the cap is simply never 26rem where flank is
+   never offered. */
+.armoury-figure {
+  --figure-w: 22rem;
+  flex: 0 0 auto; width: var(--figure-w); height: 28rem; position: relative;
+}
 .armoury-figure img { width: 100%; height: 100%; object-fit: contain; }
 .armoury-figure > * { width: 100%; height: 100%; }
-.armoury.view-grid .armoury-figure { width: 26rem; height: 33rem; }
+.armoury[data-slots='flank'] .armoury-figure { --figure-w: 26rem; height: 33rem; }
 
 .equip-slots { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
-.armoury.view-hybrid .equip-slots, .armoury.view-rack .equip-slots { justify-content: flex-start; }
+.armoury[data-slots='list'] .equip-slots { justify-content: flex-start; }
 .equip-slot { border: 1px solid var(--line); border-radius: 4px; padding: 0.8rem; background: var(--panel); }
 .es-head { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 0.6rem; }
 .es-label { color: var(--gold); font-size: 1.1rem; letter-spacing: 1px; text-transform: uppercase; }
@@ -906,14 +946,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* Grid view: the figure between two columns of slots, hands on the side they
    are actually held. The picker moves to the right pane so the middle stays a
    picture of a person rather than a form. */
-.armoury.view-grid .armoury-left {
+.armoury[data-slots='flank'] .armoury-left {
   flex-direction: row; align-items: center; justify-content: center;
   gap: 2rem; flex: 1; flex-wrap: wrap; min-width: 0;
 }
-.armoury.view-grid .armoury-right { max-width: 40rem; }
+.armoury[data-slots='flank'] .armoury-right { max-width: 40rem; }
 /* Grid keeps the middle a picture of a person: the picker pane only takes
    space once a slot is actually being changed. */
-.armoury.view-grid:not(.picking) .armoury-right { display: none; }
+.armoury[data-slots='flank']:not(.picking) .armoury-right { display: none; }
 .ag-col { display: flex; flex-direction: column; gap: 1.2rem; }
 
 /* What a run earned you, shown where you find out you lost. */
@@ -978,15 +1018,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; }
 :root[data-layout='narrow'] .armoury-left { width: 100%; overflow-y: visible; }
 :root[data-layout='narrow'] .armoury-right { width: 100%; overflow-y: visible; }
-/* The figure is `flex: 0 0 auto` with a fixed 22rem width in a ROW; in a column
-   that fixed width is just a cap, and 100% lets it use the phone. Height stays
-   authored so the sprite keeps its proportions. */
-:root[data-layout='narrow'] .armoury-figure { width: 100%; max-width: 22rem; align-self: center; }
-:root[data-layout='narrow'] .armoury.view-grid .armoury-figure { width: 100%; max-width: 26rem; }
+/* The figure has a fixed authored width in a ROW; in a column that width is just
+   a cap, and 100% lets it use the phone. Height stays authored so the sprite
+   keeps its proportions.
+
+   `--figure-w` is that authored width and it is declared once, up in the armoury
+   block — so this line no longer restates 22rem and there is no second line
+   restating the flank cell's 26rem. Whatever the cell asks for is what caps it
+   here, including a cell built tomorrow. */
+:root[data-layout='narrow'] .armoury-figure { width: 100%; max-width: var(--figure-w); align-self: center; }
 /* Slots wrap and centre rather than running off the right edge. */
 :root[data-layout='narrow'] .equip-slots { justify-content: center; width: 100%; }
-:root[data-layout='narrow'] .armoury.view-hybrid .equip-slots,
-:root[data-layout='narrow'] .armoury.view-rack .equip-slots { justify-content: center; }
+:root[data-layout='narrow'] .armoury[data-slots='list'] .equip-slots { justify-content: center; }
 
 :root[data-layout='narrow'] .cz-cols {
   flex-direction: column; align-items: center; gap: 1.8rem; width: 100%;
