@@ -916,6 +916,28 @@ export async function runTests({ artManifest = null } = {}) {
     eq(JSON.parse(exported).profile, stN.getItem(META_KEY), 'export carries the live profile bytes verbatim');
     assert(!/unrelated/.test(exported), 'export never hands back somebody else\'s archive');
 
+    // THE DRAWER'S PROMISE (Saga's gate): "never deleted to make room for
+    // anything else" must be true. A profile is not evicted by later run
+    // losses, and is not aged out either — same promise, two routes.
+    const stD = createMemoryStorage();
+    const mD = createSaveManager(stD);
+    mD.saveMeta({ settings: {}, results: [], progress: { runs: 2000 } });
+    stD.setItem(META_KEY, '{"schemaVersion":1,"progress":{"runs":2000},');
+    mD.loadMeta();
+    const profileId = mD.profileStatus().archiveId;
+    for (let i = 0; i < 20; i++) {
+      stD.setItem(`${RUN_KEY}_s${(i % 2) + 2}`, '{"schemaVersion":1,broken' + i);
+      mD.loadRun(REG, (i % 2) + 2);
+    }
+    assert(mD.getArchive(profileId), 'a set-aside profile survives twenty later run losses');
+    assert(typeof mD.exportArchive(profileId) === 'string', 'and it is still exportable afterwards');
+    const idxD = JSON.parse(stD.getItem(RUN_ARCHIVE_KEY));
+    idxD.entries.forEach((e) => { e.at = new Date(Date.now() - 400 * 24 * 3600 * 1000).toISOString(); });
+    stD.setItem(RUN_ARCHIVE_KEY, JSON.stringify(idxD));
+    stD.setItem(RUN_KEY, '{"schemaVersion":1,broken');
+    mD.loadRun(REG, 1);
+    assert(mD.getArchive(profileId), 'a set-aside profile is not aged out of the drawer either');
+
     // A corrupt archive INDEX must not silently discard the drawer (Vira, D4).
     const stI = createMemoryStorage();
     const mI = createSaveManager(stI);

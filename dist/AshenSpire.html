@@ -1329,6 +1329,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .prof-confirm p { line-height: 1.5; }
 .prof-result { min-height: 20px; color: var(--muted); line-height: 1.4; }
 .prof-empty { line-height: 1.5; }
+.prof-notice { color: var(--muted); line-height: 1.4; border-left: 3px solid var(--gold); padding-left: 10px; }
+.set-notice { color: var(--gold); line-height: 1.4; margin-bottom: 8px; }
 
   </style>
   <style data-src="styles/combat.css">
@@ -2144,7 +2146,7 @@ const { mountShop } = require("src/ui/screens/shop.js");
 const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
-const { openSettings, settingOn } = require("src/ui/screens/settings.js");
+const { openSettings, settingOn, showSettingsNotice } = require("src/ui/screens/settings.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
@@ -2716,8 +2718,18 @@ function showSettings() {
     onChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
-      saves.saveMeta(meta);
+      // saveMeta refuses while the profile is quarantined — correctly, it is
+      // protecting the original bytes. Nobody read that {ok:false}, so a player
+      // who pressed "Not now" and then turned the music down got a silent
+      // no-op: the change applies for this session and does not persist, and
+      // they were never told (Sunna's find, carried by Saga). Nothing is lost;
+      // saying so is the whole fix.
+      const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
+      if (res && res.ok === false) {
+        // DRAFT COPY (Sunna's to replace).
+        showSettingsNotice('This change applies for now, but it won’t be remembered until your profile is sorted out — see Profile below.');
+      }
     },
   });
 }
@@ -15844,7 +15856,11 @@ const HISTORY_LIMIT = 20;
 // THE ONE HOME for the meta schema's version (the run schema's one home is
 // RUN_SCHEMA_VERSION in model/state.js — two schemas, one home each).
 const META_SCHEMA_VERSION = 1;
-const ARCHIVE_LIMIT = 12; // keep the last N archives…
+const ARCHIVE_LIMIT = 12; // keep the last N RUN archives…
+// …and profiles are counted separately, because a run must never evict one
+// (Saga's gate). This cap is generous and exists only so the drawer cannot grow
+// without bound; reaching it salvages rather than deletes.
+const PROFILE_ARCHIVE_LIMIT = 24;
 const ARCHIVE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // …and nothing older than ~6 months
 
 // Slot 1 keeps the legacy key (backward compatible: existing saves are slot 1);
@@ -15891,16 +15907,65 @@ function createSaveManager(storage) {
     return { v: 1, entries: [] };
   }
 
+  // THE DRAWER'S PROMISE (Saga's gate). The calm screen tells every player
+  // "They are never deleted to make room for anything else" and the crisis
+  // dialog says they can come back "any time". Both were false: this function
+  // pruned by age and then by count, and the count prune was KIND-BLIND —
+  // `splice(0, len - 12)` drops the oldest entries whether they are a corrupt
+  // run or somebody's two thousand evenings. Twelve is not a freak number: a
+  // content patch can archive one run per slot, three slots, so four content
+  // updates reached it. Silently.
+  //
+  // Her fix, her preference, and mine: PRUNE RUNS ONLY. A profile is never
+  // aged out and never evicted by a run. The cap stays — an unbounded drawer
+  // hits quota and would threaten the live profile, which is the thing all of
+  // this exists to protect. The defect was never the cap; it was the promise.
   function writeArchiveEntry(entry) {
     const index = readArchiveIndex();
     index.entries.push(entry);
     const cutoff = Date.now() - ARCHIVE_MAX_AGE_MS;
-    // Age first, then count — and an entry with no timestamp (legacy) is never
+    const runs = index.entries.filter((e) => e.kind !== 'meta');
+    const profiles = index.entries.filter((e) => e.kind === 'meta');
+
+    // Runs age out and are capped. A legacy entry with no timestamp is never
     // aged out, because we cannot prove it is old.
-    index.entries = index.entries.filter((e) => !e.at || Date.parse(e.at) >= cutoff);
-    if (index.entries.length > ARCHIVE_LIMIT) {
-      index.entries.splice(0, index.entries.length - ARCHIVE_LIMIT);
+    let keptRuns = runs.filter((e) => !e.at || Date.parse(e.at) >= cutoff);
+    if (keptRuns.length > ARCHIVE_LIMIT) {
+      keptRuns.splice(0, keptRuns.length - ARCHIVE_LIMIT);
     }
+
+    // Profiles do not age out and are not touched by run pressure. If profiles
+    // ALONE ever fill the drawer — the case this fix creates, and it needs an
+    // answer that is not silent eviction — the oldest is MOVED to its own
+    // salvage key (the same courtesy the corrupt-index path already had) and a
+    // notice is recorded so the calm screen can say it happened. We never
+    // delete a profile; the browser's storage quota is the only real ceiling
+    // and that limit is named here rather than hidden.
+    let keptProfiles = profiles;
+    if (profiles.length > PROFILE_ARCHIVE_LIMIT) {
+      const evicted = profiles.slice(0, profiles.length - PROFILE_ARCHIVE_LIMIT);
+      keptProfiles = profiles.slice(evicted.length);
+      for (const e of evicted) {
+        const key = `${RUN_ARCHIVE_KEY}_profile_${e.id}`;
+        try {
+          storage.setItem(key, e.save);
+          index.notices = (index.notices || []).concat({
+            at: new Date().toISOString(),
+            kind: 'profile-salvaged',
+            id: e.id,
+            key,
+            was: e.at || null,
+          });
+        } catch (err) {
+          // Storage refused the salvage write (quota). Keep the profile in the
+          // drawer rather than dropping it: a full drawer is a problem we can
+          // tell someone about, a vanished profile is not.
+          keptProfiles = [e].concat(keptProfiles);
+        }
+      }
+    }
+
+    index.entries = [...keptRuns, ...keptProfiles].sort((a, b) => Date.parse(a.at || 0) - Date.parse(b.at || 0));
     storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify(index));
     return entry.id;
   }
@@ -16226,6 +16291,25 @@ function createSaveManager(storage) {
         at: e.at,
         bytes: typeof e.save === 'string' ? e.save.length : 0,
       }));
+    },
+
+    /**
+     * drawerNotices() → [{ at, kind, id, key, was }] — things the drawer had to
+     * do to itself, so the calm screen can say them out loud. Today the only
+     * notice is 'profile-salvaged'. An empty list is the normal state.
+     */
+    drawerNotices() {
+      return (readArchiveIndex().notices || []).slice();
+    },
+
+    /**
+     * salvagedProfileKeys() → storage keys holding profiles moved out of the
+     * drawer. Nothing here was deleted; it was set further aside.
+     */
+    salvagedProfileKeys() {
+      return (readArchiveIndex().notices || [])
+        .filter((n) => n.kind === 'profile-salvaged')
+        .map((n) => n.key);
     },
 
     /** getArchive(id) → the full entry (including `save`), or null. */
@@ -19699,6 +19783,24 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
   });
 }
 
+/**
+ * showSettingsNotice(msg) — say something in the open Settings modal. Exists so
+ * a refused write can answer instead of being a silent no-op (#67); no-op when
+ * Settings is not open.
+ */
+function showSettingsNotice(msg) {
+  const host = document.querySelector('.settings-modal .set-body');
+  if (!host) return;
+  let el = host.querySelector('.set-notice');
+  if (!el) {
+    el = document.createElement('p');
+    el.className = 'set-notice';
+    el.setAttribute('role', 'status');
+    host.prepend(el);
+  }
+  el.textContent = msg;
+}
+
 function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
   const veil = document.createElement('div');
@@ -19720,7 +19822,7 @@ function openSettings({ meta, onChange, saves = null }) {
 }
 
 
-Object.assign(module.exports, { settingOn, renderSettings, openSettings });
+Object.assign(module.exports, { settingOn, renderSettings, showSettingsNotice, openSettings });
 
 },
 "src/ui/screens/profileArchive.js": function (module, exports, require) {
@@ -19843,9 +19945,19 @@ function renderProfileSection(container, { saves, onRestored }) {
     // curious rather than someone hurt.
     : '<p class="set-note prof-empty">Nothing has been set aside. That’s the good news — this fills when something couldn’t be read, and when you start a new profile and we keep the old one for you.</p>';
 
+  // If the drawer ever had to move a profile further aside to stay inside the
+  // browser's storage, the player is TOLD — that is the whole difference
+  // between a bounded drawer and a silent eviction (Saga's gate).
+  // DRAFT COPY (Sunna's to replace).
+  const notices = (saves.drawerNotices ? saves.drawerNotices() : [])
+    .filter((n) => n.kind === 'profile-salvaged')
+    .map((n) => `<p class="prof-notice">A set-aside profile from ${esc(humanTime(n.was) || 'earlier')} was moved further aside on ${esc(humanTime(n.at) || '')} to stay within this device’s storage. It was not deleted.</p>`)
+    .join('');
+
   container.innerHTML = `
     <div class="prof-archive">
       <p class="prof-state">${esc(stateLine)}</p>
+      ${notices}
       <p class="set-note">Set-aside profiles and runs are kept with this game’s data on this device. They are never deleted to make room for anything else.</p>
       ${rows}
       <p class="prof-result" role="status"></p>

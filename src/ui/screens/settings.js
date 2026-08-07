@@ -350,6 +350,24 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 }
 
+/**
+ * showSettingsNotice(msg) — say something in the open Settings modal. Exists so
+ * a refused write can answer instead of being a silent no-op (#67); no-op when
+ * Settings is not open.
+ */
+export function showSettingsNotice(msg) {
+  const host = document.querySelector('.settings-modal .set-body');
+  if (!host) return;
+  let el = host.querySelector('.set-notice');
+  if (!el) {
+    el = document.createElement('p');
+    el.className = 'set-notice';
+    el.setAttribute('role', 'status');
+    host.prepend(el);
+  }
+  el.textContent = msg;
+}
+
 export function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
   const veil = document.createElement('div');

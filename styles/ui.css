@@ -1090,3 +1090,5 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .prof-confirm p { line-height: 1.5; }
 .prof-result { min-height: 20px; color: var(--muted); line-height: 1.4; }
 .prof-empty { line-height: 1.5; }
+.prof-notice { color: var(--muted); line-height: 1.4; border-left: 3px solid var(--gold); padding-left: 10px; }
+.set-notice { color: var(--gold); line-height: 1.4; margin-bottom: 8px; }

@@ -42,7 +42,7 @@ import { mountShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
-import { openSettings, settingOn } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -614,8 +614,18 @@ function showSettings() {
     onChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
-      saves.saveMeta(meta);
+      // saveMeta refuses while the profile is quarantined — correctly, it is
+      // protecting the original bytes. Nobody read that {ok:false}, so a player
+      // who pressed "Not now" and then turned the music down got a silent
+      // no-op: the change applies for this session and does not persist, and
+      // they were never told (Sunna's find, carried by Saga). Nothing is lost;
+      // saying so is the whole fix.
+      const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
+      if (res && res.ok === false) {
+        // DRAFT COPY (Sunna's to replace).
+        showSettingsNotice('This change applies for now, but it won’t be remembered until your profile is sorted out — see Profile below.');
+      }
     },
   });
 }

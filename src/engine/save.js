@@ -46,7 +46,11 @@ const HISTORY_LIMIT = 20;
 // THE ONE HOME for the meta schema's version (the run schema's one home is
 // RUN_SCHEMA_VERSION in model/state.js — two schemas, one home each).
 export const META_SCHEMA_VERSION = 1;
-const ARCHIVE_LIMIT = 12; // keep the last N archives…
+const ARCHIVE_LIMIT = 12; // keep the last N RUN archives…
+// …and profiles are counted separately, because a run must never evict one
+// (Saga's gate). This cap is generous and exists only so the drawer cannot grow
+// without bound; reaching it salvages rather than deletes.
+const PROFILE_ARCHIVE_LIMIT = 24;
 const ARCHIVE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // …and nothing older than ~6 months
 
 // Slot 1 keeps the legacy key (backward compatible: existing saves are slot 1);
@@ -93,16 +97,65 @@ export function createSaveManager(storage) {
     return { v: 1, entries: [] };
   }
 
+  // THE DRAWER'S PROMISE (Saga's gate). The calm screen tells every player
+  // "They are never deleted to make room for anything else" and the crisis
+  // dialog says they can come back "any time". Both were false: this function
+  // pruned by age and then by count, and the count prune was KIND-BLIND —
+  // `splice(0, len - 12)` drops the oldest entries whether they are a corrupt
+  // run or somebody's two thousand evenings. Twelve is not a freak number: a
+  // content patch can archive one run per slot, three slots, so four content
+  // updates reached it. Silently.
+  //
+  // Her fix, her preference, and mine: PRUNE RUNS ONLY. A profile is never
+  // aged out and never evicted by a run. The cap stays — an unbounded drawer
+  // hits quota and would threaten the live profile, which is the thing all of
+  // this exists to protect. The defect was never the cap; it was the promise.
   function writeArchiveEntry(entry) {
     const index = readArchiveIndex();
     index.entries.push(entry);
     const cutoff = Date.now() - ARCHIVE_MAX_AGE_MS;
-    // Age first, then count — and an entry with no timestamp (legacy) is never
+    const runs = index.entries.filter((e) => e.kind !== 'meta');
+    const profiles = index.entries.filter((e) => e.kind === 'meta');
+
+    // Runs age out and are capped. A legacy entry with no timestamp is never
     // aged out, because we cannot prove it is old.
-    index.entries = index.entries.filter((e) => !e.at || Date.parse(e.at) >= cutoff);
-    if (index.entries.length > ARCHIVE_LIMIT) {
-      index.entries.splice(0, index.entries.length - ARCHIVE_LIMIT);
+    let keptRuns = runs.filter((e) => !e.at || Date.parse(e.at) >= cutoff);
+    if (keptRuns.length > ARCHIVE_LIMIT) {
+      keptRuns.splice(0, keptRuns.length - ARCHIVE_LIMIT);
     }
+
+    // Profiles do not age out and are not touched by run pressure. If profiles
+    // ALONE ever fill the drawer — the case this fix creates, and it needs an
+    // answer that is not silent eviction — the oldest is MOVED to its own
+    // salvage key (the same courtesy the corrupt-index path already had) and a
+    // notice is recorded so the calm screen can say it happened. We never
+    // delete a profile; the browser's storage quota is the only real ceiling
+    // and that limit is named here rather than hidden.
+    let keptProfiles = profiles;
+    if (profiles.length > PROFILE_ARCHIVE_LIMIT) {
+      const evicted = profiles.slice(0, profiles.length - PROFILE_ARCHIVE_LIMIT);
+      keptProfiles = profiles.slice(evicted.length);
+      for (const e of evicted) {
+        const key = `${RUN_ARCHIVE_KEY}_profile_${e.id}`;
+        try {
+          storage.setItem(key, e.save);
+          index.notices = (index.notices || []).concat({
+            at: new Date().toISOString(),
+            kind: 'profile-salvaged',
+            id: e.id,
+            key,
+            was: e.at || null,
+          });
+        } catch (err) {
+          // Storage refused the salvage write (quota). Keep the profile in the
+          // drawer rather than dropping it: a full drawer is a problem we can
+          // tell someone about, a vanished profile is not.
+          keptProfiles = [e].concat(keptProfiles);
+        }
+      }
+    }
+
+    index.entries = [...keptRuns, ...keptProfiles].sort((a, b) => Date.parse(a.at || 0) - Date.parse(b.at || 0));
     storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify(index));
     return entry.id;
   }
@@ -428,6 +481,25 @@ export function createSaveManager(storage) {
         at: e.at,
         bytes: typeof e.save === 'string' ? e.save.length : 0,
       }));
+    },
+
+    /**
+     * drawerNotices() → [{ at, kind, id, key, was }] — things the drawer had to
+     * do to itself, so the calm screen can say them out loud. Today the only
+     * notice is 'profile-salvaged'. An empty list is the normal state.
+     */
+    drawerNotices() {
+      return (readArchiveIndex().notices || []).slice();
+    },
+
+    /**
+     * salvagedProfileKeys() → storage keys holding profiles moved out of the
+     * drawer. Nothing here was deleted; it was set further aside.
+     */
+    salvagedProfileKeys() {
+      return (readArchiveIndex().notices || [])
+        .filter((n) => n.kind === 'profile-salvaged')
+        .map((n) => n.key);
     },
 
     /** getArchive(id) → the full entry (including `save`), or null. */

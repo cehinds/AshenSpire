@@ -341,6 +341,67 @@ check('E2 a newer schemaVersion is refused rather than accepted blind (Sten, ame
     /2000/.test(String(exp)) && !/unrelated/.test(String(exp)), String(exp).slice(0, 80));
 }
 
+// =============================================================================
+// P7 — THE DRAWER'S PROMISE (Saga's gate). The calm screen says "They are never
+// deleted to make room for anything else" and the crisis dialog says a player
+// can come back "any time". Both were false: writeArchiveEntry pruned by age
+// then count, and the count prune was KIND-BLIND — twelve later run losses
+// evicted somebody's profile, silently, with no salvage key even though the
+// index-corruption path has one. Her scenario, and the age route she read but
+// did not drive.
+// =============================================================================
+{
+  // (a) A profile must not be evicted by later RUN losses.
+  const st = createMemoryStorage();
+  const sv = createSaveManager(st);
+  sv.saveMeta({ settings: {}, results: [], progress: { runs: 2000 } });
+  st.setItem(META_KEY, '{"schemaVersion":1,"progress":{"runs":2000},'); // corrupt it
+  sv.loadMeta();
+  const profileId = sv.profileStatus().archiveId;
+  const reg = { contentVersion: 'x', cards: { has: () => true }, relics: { has: () => true }, flasks: { has: () => true } };
+  for (let i = 0; i < 20; i++) {
+    st.setItem(`sote_run_v1_s${(i % 3) + 2}`, '{"schemaVersion":1,broken' + i);
+    sv.loadRun(reg, (i % 3) + 2);
+  }
+  const profileKept = !!sv.getArchive(profileId) && typeof sv.exportArchive(profileId) === 'string';
+  check('P7 a set-aside profile survives twenty later run losses', profileKept,
+    profileKept ? '' : 'the profile is GONE — evicted by runs to make room, which the screen promises never happens');
+
+  // (b) …and is not aged out either. Same broken promise, different route.
+  const st2 = createMemoryStorage();
+  const sv2 = createSaveManager(st2);
+  sv2.saveMeta({ settings: {}, results: [], progress: { runs: 2000 } });
+  st2.setItem(META_KEY, '{"schemaVersion":1,"progress":{"runs":2000},');
+  sv2.loadMeta();
+  const oldId = sv2.profileStatus().archiveId;
+  const idx = JSON.parse(st2.getItem(RUN_ARCHIVE_KEY));
+  idx.entries.forEach((e) => { e.at = new Date(Date.now() - 400 * 24 * 3600 * 1000).toISOString(); });
+  st2.setItem(RUN_ARCHIVE_KEY, JSON.stringify(idx));
+  st2.setItem('sote_run_v1', '{"schemaVersion":1,broken');
+  sv2.loadRun(reg, 1); // any archive write triggers the prune
+  const notAged = !!sv2.getArchive(oldId);
+  check('P7 a set-aside profile is not aged out of the drawer', notAged,
+    notAged ? '' : 'the profile aged out — "never deleted" was false by the age route');
+
+  // (c) If PROFILES alone fill the drawer, the eviction must not be silent —
+  // the case this fix creates, and it needs an answer.
+  const st3 = createMemoryStorage();
+  const sv3 = createSaveManager(st3);
+  const ids = [];
+  for (let i = 0; i < 30; i++) {
+    sv3.saveMeta({ settings: {}, results: [], progress: { runs: i } });
+    sv3.startNewProfile();
+    const a = sv3.listArchives().filter((x) => x.kind === 'meta');
+    ids.push(a[a.length - 1].id);
+  }
+  const survivors = sv3.listArchives().filter((a) => a.kind === 'meta').length;
+  const notices = sv3.drawerNotices ? sv3.drawerNotices() : [];
+  check('P7 profiles filling the drawer are bounded (quota is real) …', survivors <= 30);
+  check('P7 … and nothing left silently: an evicted profile is salvaged AND announced',
+    ids.every((id) => sv3.getArchive(id) || sv3.salvagedProfileKeys().length > 0) && notices.length > 0,
+    `survivors=${survivors} notices=${notices.length}`);
+}
+
 console.log(`\n${fails} failing check(s).`);
 console.log('BOUNDARY: headless Node on the real module; no browser, no quota, nothing rendered.');
 console.log('Sten wrote checks 1-6 (one amendment labelled inline); Rune added P1-P5.');

@@ -117,9 +117,19 @@ export function renderProfileSection(container, { saves, onRestored }) {
     // curious rather than someone hurt.
     : '<p class="set-note prof-empty">Nothing has been set aside. That’s the good news — this fills when something couldn’t be read, and when you start a new profile and we keep the old one for you.</p>';
 
+  // If the drawer ever had to move a profile further aside to stay inside the
+  // browser's storage, the player is TOLD — that is the whole difference
+  // between a bounded drawer and a silent eviction (Saga's gate).
+  // DRAFT COPY (Sunna's to replace).
+  const notices = (saves.drawerNotices ? saves.drawerNotices() : [])
+    .filter((n) => n.kind === 'profile-salvaged')
+    .map((n) => `<p class="prof-notice">A set-aside profile from ${esc(humanTime(n.was) || 'earlier')} was moved further aside on ${esc(humanTime(n.at) || '')} to stay within this device’s storage. It was not deleted.</p>`)
+    .join('');
+
   container.innerHTML = `
     <div class="prof-archive">
       <p class="prof-state">${esc(stateLine)}</p>
+      ${notices}
       <p class="set-note">Set-aside profiles and runs are kept with this game’s data on this device. They are never deleted to make room for anything else.</p>
       ${rows}
       <p class="prof-result" role="status"></p>
