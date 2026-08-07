@@ -416,16 +416,61 @@ function guardScript(s) {
 // This is Law 0's fourth clause pointed at the gate that enforces Law 1
 // clause 5, so the fix is not just "add the words": the signature has ONE home
 // and the runtime's strictness is ASSERTED below rather than assumed.
-const MODULE_FN = 'function (module, exports, require) {';
+//
+// #77 left two more copies of exactly this shape behind, and both are closed
+// here. They are one class, not two bugs: a second copy IS an instrument that
+// cannot fail, because nothing is checking the copies against each other.
+//
+//   1. The runtime-strictness guard below was a REGEX over `runtime` — and
+//      `runtime` is this template AFTER all 93 module bodies are interpolated
+//      into it. So any content file containing the most ordinary preamble in
+//      JavaScript, `(function () { "use strict"; … })()`, satisfied it.
+//      Reproduced at 18aab6f: runtime directive removed plus one such preamble
+//      in src/content/balance.js gave `bundle.mjs: OK`, exit 0, and a shipped
+//      runtime whose IIFE was not strict. The regex is DELETED, not tightened:
+//      a regex that "looks right" is an instrument that cannot fail, and no
+//      amount of tightening changes where it looks. The wrapper's opening text
+//      is a named constant and the assertion is `startsWith` against it —
+//      content lives after position 0 and can never satisfy that.
+//   2. The loader's `factory(module, module.exports, require)` call was a
+//      second copy of MODULE_FN's parameter list. Reproduced at 18aab6f: give
+//      MODULE_FN a fourth parameter the way Bjorn did and the emitted bundle
+//      declares four and is called with three, exit 0, nothing said so. The
+//      parameters and the arguments now come from ONE table.
+//
+// STRICT_DIRECTIVE is one home for a THIRD copy, and it is load-bearing rather
+// than tidy: `startsWith(RUNTIME_OPEN)` cannot see a hand that edits
+// RUNTIME_OPEN itself, so hoisting alone would have traded the regex's
+// false-pass for a blind spot the regex did not have. With the gate's prologue
+// and the runtime's opening built from the same token, gate-sloppy /
+// browser-strict — #77's whole defect — is not expressible.
+const STRICT_DIRECTIVE = '"use strict";';
+
+// The module factory's signature, one home: [parameter name, the argument the
+// loader passes for it]. Both the declaration and the call site are derived
+// from this, so an added parameter reaches both or neither.
+const MODULE_SIGNATURE = [
+  ['module', 'module'],
+  ['exports', 'module.exports'],
+  ['require', 'require'],
+];
+const MODULE_FN = `function (${MODULE_SIGNATURE.map(([param]) => param).join(', ')}) {`;
+const MODULE_CALL = `factory(${MODULE_SIGNATURE.map(([, arg]) => arg).join(', ')});`;
+
+// The runtime IIFE's opening — the text the strictness assertion checks, and
+// the reason it can be checked at all.
+const RUNTIME_OPEN = `(function () {\n  ${STRICT_DIRECTIVE}\n`;
+
 const parseErrors = [];
 for (const id of order) {
   const body = transformed.get(id);
   try {
     // Same signature as the runtime (MODULE_FN, one home) and — the part that
-    // was missing — the same STRICTNESS. `"use strict";` shares the wrapper's
-    // opening line so the body still starts on line 2 and the -1 offset below
-    // stays exact. Compiling never runs it.
-    new vm.Script(`"use strict"; (${MODULE_FN}\n${body}\n})`, { filename: id });
+    // was missing — the same STRICTNESS, now from the same token the runtime
+    // opens with (STRICT_DIRECTIVE, one home). The directive shares the
+    // wrapper's opening line so the body still starts on line 2 and the -1
+    // offset below stays exact. Compiling never runs it.
+    new vm.Script(`${STRICT_DIRECTIVE} (${MODULE_FN}\n${body}\n})`, { filename: id });
   } catch (err) {
     // vm reports the line within the wrapper; subtract the line we added.
     const at = /:(\d+)\n/.exec(err.stack || '');
@@ -485,9 +530,7 @@ const moduleEntries = order
   })
   .join(',\n');
 
-const runtime = `(function () {
-  "use strict";
-  var __modules = {
+const runtime = `${RUNTIME_OPEN}  var __modules = {
 ${moduleEntries}
   };
   var __cache = {};
@@ -497,7 +540,7 @@ ${moduleEntries}
     if (!factory) throw new Error("Module not found: " + id);
     var module = { exports: {} };
     __cache[id] = module;
-    factory(module, module.exports, require);
+    ${MODULE_CALL}
     return module.exports;
   }
   require(${JSON.stringify(entryId)});
@@ -525,15 +568,41 @@ ${runtime}
 // The gate above compiles bodies as STRICT because the runtime runs them
 // strict. That is an assumption about a string built further up this same file,
 // and an unchecked assumption between two places is exactly what let the octal
-// class through. So it is checked: if the runtime ever stops being strict, the
-// gate is now lying and the build stops rather than shipping a check that
-// passes for the wrong reason.
-if (!/\(function \(\) \{\s*"use strict";/.test(runtime)) {
+// class through. So it is checked — twice, because the two ways this can rot
+// are not the same failure and one assertion catches only one of them.
+//
+// (1) POSITION. The assembled runtime must OPEN with the wrapper, not merely
+//     contain it somewhere. This is where the previous regex could not fail:
+//     it searched all of `runtime`, which by this line holds every module body
+//     in the game, so one `(function () { "use strict"; })()` in any content
+//     file answered a question about the wrapper. `startsWith` asks about
+//     position 0, and content is never at position 0.
+if (!runtime.startsWith(RUNTIME_OPEN)) {
   fail(
-    'the runtime IIFE is no longer strict, so the parse gate (which compiles every\n'
-    + '  module as strict) would now be checking a different language than the one the\n'
-    + '  browser runs. Restore "use strict" in the runtime, or change the gate to match\n'
-    + '  — but they must not disagree.'
+    'the runtime no longer opens with RUNTIME_OPEN, so the parse gate (which\n'
+    + '  compiles every module as strict) would now be checking a different language\n'
+    + '  than the one the browser runs. The runtime must be assembled from\n'
+    + '  RUNTIME_OPEN — do not re-type its opening lines.'
+  );
+}
+
+// (2) LANGUAGE. `startsWith` is blind to a hand that edits RUNTIME_OPEN
+//     itself — it would agree with any opening, including a sloppy one. So ask
+//     the parser, not the text: put a strict-only fault where a module body
+//     goes and require it to be REJECTED. Nothing in the bundle can satisfy
+//     this one, because the probe is synthesised here rather than read.
+let runtimeIsStrict = false;
+try {
+  new vm.Script(`${RUNTIME_OPEN}var __strictProbe = 010;\n})();`);
+} catch {
+  runtimeIsStrict = true;
+}
+if (!runtimeIsStrict) {
+  fail(
+    'RUNTIME_OPEN does not put module bodies in strict mode — an octal literal was\n'
+    + '  accepted where a module body goes. The gate compiles every module as strict,\n'
+    + '  so it would now be checking a different language than the one the browser\n'
+    + '  runs. Restore the strict directive in RUNTIME_OPEN.'
   );
 }
 
