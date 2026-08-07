@@ -502,6 +502,13 @@ export function mountEquipment(host, {
     const box = document.createElement('div');
     box.className = 'equip-picker';
     if (!picking) {
+      // DERIVED FROM STATE, NOT AUTHORED (#90 follow-on, Freja). The picker with
+      // no selection holds one italic line and, once the context pane folds, up
+      // to 420 CSS px of nothing under it. `data-empty` is that condition said
+      // once, here, where it is already known — the stylesheet then gives the
+      // region a shape instead of a top edge. It cannot be set when a list is
+      // present, which is the whole reason it is not a class someone maintains.
+      box.dataset.empty = '1';
       box.innerHTML = inCombat
         ? '<p class="ep-hint">Storage is sealed in combat. Cycle between the sets you brought.</p>'
         : '<p class="ep-hint">Pick a slot above to change what is in it.</p>';

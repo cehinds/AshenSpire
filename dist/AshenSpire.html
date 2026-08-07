@@ -1149,6 +1149,30 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .equip-picker { border-top: 1px solid var(--line); padding-top: 1.2rem; }
 .equip-picker h4 { color: var(--gold); font-size: 1.2rem; margin-bottom: 0.8rem; letter-spacing: 1px; }
 .ep-hint { color: var(--muted); font-size: 1.2rem; font-style: italic; }
+/* ---- THE EMPTY PICKER IS A STATE, NOT A CAPTION --------------------------
+   Freja, out of #90. Folding the context pane hands its height to the subject,
+   and the subject had nothing to do with it: measured on the shipped bundle,
+   420 CSS px of unbroken nothing at 390x844 (57% of the visible panel) and
+   394 at 1200x730, between the picker's one italic line and the folded bar.
+   The fold did not cause that. It revealed that this pane never had a bottom —
+   everything under the slots used to be the card strip's problem.
+
+   A line at the TOP of a void reads as a caption for the void; the same line
+   CENTRED in it reads as the state of the region. That is the whole change, and
+   in a palette this dark it is the difference between "waiting for you" and
+   "something failed to load".
+
+   ONLY WHEN EMPTY, and that boundary is not taste — it is my own #87 ruling
+   turned on myself. Centring content that overflows amputates its start edge,
+   and the moment a slot is picked this pane holds a scrolling list of every
+   eligible piece. `[data-empty]` is written by equipment.js only on the branch
+   that has no list, so the centring can never meet content taller than the box.
+   The picker keeps `overflow` from `.armoury-right` either way. */
+.equip-picker[data-empty] {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+}
+.equip-picker[data-empty] .ep-hint { max-width: 34rem; }
 .ep-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .equip-chip {
   display: grid; grid-template-columns: 3.6rem 1fr auto; grid-template-rows: auto auto;
@@ -1212,7 +1236,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* A folded pane still SAYS how much is inside it — a pane that folds to a bare
    arrow is decoration that decorates nothing, and the player cannot tell an
    empty strip from a hidden one. */
-.rf-count { margin-left: auto; font-size: 1.05rem; color: var(--muted); }
+/* ~~ `margin-left: auto` struck, 2026-08-07, Freja — and the reasoning above it
+   is right, which is why only the placement moved. The button is the full width
+   of the panel because it is a tap target; the auto margin made its CONTENT the
+   full width too, so at 1200x730 the caret sat at x=130 and "3 cards" at x=1790.
+   Sixteen hundred pixels apart is not a control, it is two fragments a reader
+   has to assemble, and the count is the half that stops looking like it belongs
+   to the label. Sat beside its label it is one phrase — "CARDS, 3 cards" — at
+   every width, and the hit area is untouched. ~~ */
+.rf-count { margin-left: 0.9rem; font-size: 1.05rem; color: var(--muted); }
 /* The fold itself: everything but the header goes, and the pane stops competing
    for the height the subject wanted. `.armoury-body` is `flex: 1`, so the space
    is handed to the subject by the layout that was already there. */
@@ -24781,6 +24813,13 @@ function mountEquipment(host, {
     const box = document.createElement('div');
     box.className = 'equip-picker';
     if (!picking) {
+      // DERIVED FROM STATE, NOT AUTHORED (#90 follow-on, Freja). The picker with
+      // no selection holds one italic line and, once the context pane folds, up
+      // to 420 CSS px of nothing under it. `data-empty` is that condition said
+      // once, here, where it is already known — the stylesheet then gives the
+      // region a shape instead of a top edge. It cannot be set when a list is
+      // present, which is the whole reason it is not a class someone maintains.
+      box.dataset.empty = '1';
       box.innerHTML = inCombat
         ? '<p class="ep-hint">Storage is sealed in combat. Cycle between the sets you brought.</p>'
         : '<p class="ep-hint">Pick a slot above to change what is in it.</p>';
