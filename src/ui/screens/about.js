@@ -23,9 +23,23 @@ export function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {
     )
     .join('');
 
+  // Sunna's non-blocking push: the lead ran 14 unbroken lines. It is PARAGRAPHED
+  // here, never rewritten — the string stays byte-identical to the one the store
+  // form uses (that is what `--check` matches), and only the presentation
+  // changes. Sentences are grouped 2/2/1 so the claim that matters most — no AI
+  // while you play — lands in its own paragraph.
+  const sentences = disclosure.storeForm.split(/(?<=\.)\s+/);
+  const groups = sentences.length >= 4
+    ? [sentences.slice(0, 2), sentences.slice(2, 4), sentences.slice(4)]
+    : [sentences];
+  const lead = groups
+    .filter((g) => g.length)
+    .map((g) => `<p class="about-lead">${esc(g.join(' '))}</p>`)
+    .join('');
+
   container.innerHTML = `
     <div class="about-ai">
-      <p class="about-lead">${esc(disclosure.storeForm)}</p>
+      ${lead}
       ${sections}
       <div class="about-actions">
         <button class="about-copy">Save this to a file</button>
