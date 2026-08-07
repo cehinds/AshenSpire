@@ -125,7 +125,9 @@ export const statuses = [
     // binding them would break the madness relics. Flagged for the collapse
     // check at review.
     id: 'insanity',
-    tint: 'var(--gold)',
+    // Deliberately NOT var(--gold): the poise bar is gold, and an insanity
+    // meter sitting beside it read as a second poise bar (Sunna's PX flag).
+    tint: '#a06bd0',
     name: 'Insanity',
     icon: '🌀',
     stackMode: 'add',
@@ -198,7 +200,7 @@ export const statuses = [
   },
   {
     id: 'insanityExposed',
-    tint: 'var(--gold)',
+    tint: '#a06bd0', // matches its parent proc row, and stays off the poise gold
     name: 'Unraveled',
     icon: '🕳',
     stackMode: 'refresh',
