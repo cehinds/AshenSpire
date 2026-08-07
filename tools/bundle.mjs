@@ -34,14 +34,93 @@ const MIME = {
   '.m4a': 'audio/mp4', '.woff2': 'font/woff2',
 };
 
-function fail(msg) {
-  console.error('bundle.mjs: ERROR — ' + msg);
-  process.exit(1);
-}
-
 // Repo-relative POSIX id for a file (e.g. "src/main.js"), used as module key.
 function idOf(absPath) {
   return relative(ROOT, absPath).split(/[\\/]/).join('/');
+}
+
+// ---------------------------------------------------------------------------
+// REFUSAL — one home for the output path, one home for the page, and the write
+// is bound to the EXIT CODE rather than to any particular refusal path.
+//
+// #77 shipped property 3 — "a refused write must not leave a stale bundle
+// silently in place" — on the parse path ONLY. Measured at d51b8e0, SEVEN of
+// eight refusal paths left the previous good bundle standing at the output,
+// byte-identical (d7373dde…) before and after: the strictness assertions, the
+// language probe, an unresolved import, a non-relative import, an unhandled
+// export form, a missing stylesheet. And the dangling-literal-asset check —
+// which runs AFTER the write — printed `bundle.mjs: OK`, wrote a full 1.9 MiB
+// PLAYABLE game, and then exited 1. A refusal that ships is worse than a
+// refusal that leaves yesterday's build, and both are worse than the blank
+// screen #77 already fixed, because Constantine's edit reads as "nothing
+// happened" instead of as something visibly broken.
+//
+// WHY THE EXIT CODE AND NOT fail(). The obvious collapse is "whatever refuses
+// writes the page" — put the write inside fail(). That closes today's seven and
+// still lets tomorrow's eighth forget, because it only binds paths that go
+// through fail(): a bare `process.exit(2)`, a throw, an assertion library, a
+// future author who writes his own error exit. Binding to a NON-ZERO EXIT binds
+// to the one thing every refusal has in common and none of them can route
+// around. fail() below records a reason; it does not write. There is exactly
+// one writer of this page, it sits on the way out, and a new refusal path
+// cannot forget it because it never has to remember it.
+// ---------------------------------------------------------------------------
+const OUT_DIR = resolve(ROOT, 'build');
+const OUT_PATH = resolve(OUT_DIR, 'AshenSpire.html');
+
+// Reasons collected by fail(). May legitimately be empty — a throw or a bare
+// exit has none — and the page says so rather than inventing one.
+const refusals = [];
+
+function refusalPage(items, code) {
+  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const body = items.length
+    ? `<ul>${items
+        .map((e) => `<li>${e.id ? `<code>${esc(e.id)}${e.line ? ':' + e.line : ''}</code> — ` : ''}${esc(e.message)}</li>`)
+        .join('')}</ul>`
+    : `<ul><li>The build exited <code>${esc(code)}</code> without naming a reason. Run
+       <code>node tools/bundle.mjs</code> in a terminal and read what it printed.</li></ul>`;
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Ashen Spire — build failed</title>
+<style>
+ body{background:#14110f;color:#e8dfd2;font:16px/1.5 ui-monospace,Menlo,Consolas,monospace;margin:0;padding:32px}
+ h1{color:#c9a227;font-size:20px;margin:0 0 8px}
+ p{margin:0 0 16px;max-width:60rem}
+ li{margin:0 0 6px}
+ code{color:#ff8f6b}
+</style></head><body>
+<h1>This build did not happen</h1>
+<p>The build refused, so no game was written. <strong>This page is standing
+where the game would be</strong> — you are not looking at an older build by mistake.
+Fix what it names below and build again.</p>
+${body}
+<p>Built ${new Date().toISOString()}</p>
+</body></html>
+`;
+}
+
+process.on('exit', (code) => {
+  if (code === 0) return;
+  try {
+    mkdirSync(OUT_DIR, { recursive: true });
+    writeFileSync(OUT_PATH, refusalPage(refusals, code), 'utf8');
+    console.error('  ' + idOf(OUT_PATH) + ' now holds a build-failed page, not a game.');
+  } catch (err) {
+    // Never mask the original failure with the failure to report it.
+    console.error('  bundle.mjs: could not replace ' + idOf(OUT_PATH) + ' (' + err.message + ')'
+      + ' — whatever is there now is NOT this build.');
+  }
+  // dist/ is a committed artifact and this tool does not own it; say plainly
+  // that it is now older than the sources rather than quietly corrupting it.
+  if (existsSync(resolve(ROOT, 'dist/AshenSpire.html'))) {
+    console.error('  NOTE: dist/AshenSpire.html is untouched and therefore OLDER than these sources — do not run it and do not ship it until this builds.');
+  }
+});
+
+function fail(msg, items) {
+  console.error('bundle.mjs: ERROR — ' + msg);
+  refusals.push(...(items && items.length ? items : [{ message: msg }]));
+  process.exit(1);
 }
 
 // ---------------------------------------------------------------------------
@@ -480,46 +559,15 @@ for (const id of order) {
 }
 
 if (parseErrors.length) {
-  // PROPERTY 3: a refused write must not leave a stale bundle silently in
-  // place. Refusing and stopping would leave yesterday's build sitting at the
-  // output path, and the failure would change shape from "blank screen" to "my
-  // edit did nothing" — which is worse, because a blank screen at least tells
-  // you something happened. So the output is REPLACED by a page that states
-  // the failure. Opening the game after a failed build shows the error.
+  // PROPERTY 3, and it is no longer this path's private business. The page,
+  // the output path and the dist/ note used to be written HERE, which is why
+  // the other seven refusal paths did not have them. They live at the one home
+  // above now; this path only supplies the rows, which is the one thing it
+  // knows that the exit hook does not.
   const rows = parseErrors
     .map((e) => `  ${e.id}${e.line ? ':' + e.line : ''}  ${e.message}`)
     .join('\n');
-  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  const page = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Ashen Spire — build failed</title>
-<style>
- body{background:#14110f;color:#e8dfd2;font:16px/1.5 ui-monospace,Menlo,Consolas,monospace;margin:0;padding:32px}
- h1{color:#c9a227;font-size:20px;margin:0 0 8px}
- p{margin:0 0 16px;max-width:60rem}
- li{margin:0 0 6px}
- code{color:#ff8f6b}
-</style></head><body>
-<h1>This build did not happen</h1>
-<p>A file could not be parsed, so no game was written. <strong>This page is standing
-where the game would be</strong> — you are not looking at an older build by mistake.
-Fix the file below and build again.</p>
-<ul>${parseErrors.map((e) => `<li><code>${esc(e.id)}${e.line ? ':' + e.line : ''}</code> — ${esc(e.message)}</li>`).join('')}</ul>
-<p>Built ${new Date().toISOString()}</p>
-</body></html>
-`;
-  const failDir = resolve(ROOT, 'build');
-  mkdirSync(failDir, { recursive: true });
-  writeFileSync(resolve(failDir, 'AshenSpire.html'), page, 'utf8');
-
-  console.error('bundle.mjs: ERROR — refusing to write a bundle that does not parse:');
-  console.error(rows);
-  console.error('  build/AshenSpire.html now holds a build-failed page, not a stale game.');
-  // dist/ is a committed artifact and this tool does not own it; say plainly
-  // that it is now older than the sources rather than quietly corrupting it.
-  if (existsSync(resolve(ROOT, 'dist/AshenSpire.html'))) {
-    console.error('  NOTE: dist/AshenSpire.html is untouched and therefore OLDER than these sources — do not run it and do not ship it until this builds.');
-  }
-  process.exit(1);
+  fail('refusing to write a bundle that does not parse:\n' + rows, parseErrors);
 }
 
 const entryId = idOf(entryAbs);
@@ -606,29 +654,6 @@ if (!runtimeIsStrict) {
   );
 }
 
-const outDir = resolve(ROOT, 'build');
-mkdirSync(outDir, { recursive: true });
-const outPath = resolve(outDir, 'AshenSpire.html');
-writeFileSync(outPath, html, 'utf8');
-
-// ---------------------------------------------------------------------------
-// Summary
-// ---------------------------------------------------------------------------
-const bytes = Buffer.byteLength(html, 'utf8');
-const kib = (bytes / 1024).toFixed(1);
-console.log('bundle.mjs: OK');
-console.log('  entry            : ' + entryId);
-console.log('  modules bundled  : ' + order.length);
-console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
-console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
-console.log('  art inlined      : ' + mapEntries + ' files (' + Math.round(mapBytes / 1024) + ' KiB raw)');
-if (skipped.length) {
-  console.log('  skipped (no MIME): ' + skipped.length + ' — ' + skipped.slice(0, 4).join(', ') + (skipped.length > 4 ? ' …' : ''));
-}
-if (mapEntries === 0) {
-  console.log('  WARNING          : no art inlined — the standalone build will show fallbacks');
-}
-
 // ---------------------------------------------------------------------------
 // Dangling literal asset references.
 //
@@ -643,6 +668,14 @@ if (mapEntries === 0) {
 // as a dangling reference is the same error as counting an unfired branch as a
 // missing key — which is exactly the false positive Vira caught in her own audit
 // an hour ago.
+//
+// MOVED ABOVE THE WRITE (2026-08-07). It used to run after it, so a dangling
+// reference printed `bundle.mjs: OK`, wrote a full 1.9 MiB playable game, and
+// THEN exited 1. Both "the build refused" and "the build wrote the game" were
+// true of the same run. The exit hook now replaces that file, so the property
+// held either way — but a refusal should not first do the thing it is refusing
+// to do, and `OK` above an error is a line that lies to whoever reads it.
+// It reads only `sources`, so it never needed to be down there.
 // ---------------------------------------------------------------------------
 {
   const LITERAL = /['"`](assets\/[A-Za-z0-9_\-./]+\.[a-z0-9]{2,5})['"`]/g;
@@ -666,8 +699,32 @@ if (mapEntries === 0) {
       'repo lacks fails silently at runtime.'
     );
   }
-  console.log('  literal refs     : all resolve');
 }
-console.log('  output           : ' + idOf(outPath));
+
+// The success write and the refusal write must aim at the same file or the
+// whole property is a second copy of a path. OUT_DIR / OUT_PATH, one home.
+mkdirSync(OUT_DIR, { recursive: true });
+writeFileSync(OUT_PATH, html, 'utf8');
+
+// ---------------------------------------------------------------------------
+// Summary
+// ---------------------------------------------------------------------------
+const bytes = Buffer.byteLength(html, 'utf8');
+const kib = (bytes / 1024).toFixed(1);
+console.log('bundle.mjs: OK');
+console.log('  entry            : ' + entryId);
+console.log('  modules bundled  : ' + order.length);
+console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
+console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
+console.log('  art inlined      : ' + mapEntries + ' files (' + Math.round(mapBytes / 1024) + ' KiB raw)');
+if (skipped.length) {
+  console.log('  skipped (no MIME): ' + skipped.length + ' — ' + skipped.slice(0, 4).join(', ') + (skipped.length > 4 ? ' …' : ''));
+}
+if (mapEntries === 0) {
+  console.log('  WARNING          : no art inlined — the standalone build will show fallbacks');
+}
+
+console.log('  literal refs     : all resolve');
+console.log('  output           : ' + idOf(OUT_PATH));
 console.log('  output size      : ' + bytes + ' bytes (' + kib + ' KiB)');
 process.exit(0);

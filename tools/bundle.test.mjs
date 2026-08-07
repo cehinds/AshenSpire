@@ -341,10 +341,141 @@ const PROBE_PARAM = ["  ['require', 'require'],", "  ['require', 'require'],\n  
   rmSync(dir, { recursive: true, force: true });
 }
 
+// ---- 6. REFUSAL COMPLETENESS ----------------------------------------------
+// #77's property 3 in Marina's own words: "a refused write must not leave a
+// stale bundle silently in place." It shipped on the parse path only. Measured
+// at d51b8e0: SEVEN of eight refusal paths exited 1 and left the previous good
+// bundle standing at the output, byte-identical (d7373dde…) before and after —
+// and the dangling-asset check, which ran after the write, printed
+// `bundle.mjs: OK`, wrote a full playable game, and then exited 1.
+//
+// The property is "EVERY refusal path replaces the output", so the cases below
+// are the ones that exist today AND two that do not: a refusal path invented
+// after the fix, and a refusal that never calls fail() at all. Pinning only
+// today's seven would fix the instance and leave the class open.
+const goodBundleOf = (dir) => {
+  const p = resolve(dir, 'build/AshenSpire.html');
+  return existsSync(p) ? readFileSync(p, 'utf8') : '';
+};
+// Each plant is a DIFFERENT refusal path in bundle.mjs. Content edits are the
+// ones Constantine can cause; tool edits are the ones we can.
+const REFUSALS = [
+  ['strictness: the directive left its one home', (dir) =>
+    patchTool(dir, `const STRICT_DIRECTIVE = '"use strict";';`, `const STRICT_DIRECTIVE = '';`)],
+  ['language probe: RUNTIME_OPEN re-typed sloppy', (dir) =>
+    patchTool(dir, 'const RUNTIME_OPEN = `(function () {\\n  ${STRICT_DIRECTIVE}\\n`;',
+      'const RUNTIME_OPEN = `(function () {\\n`;')],
+  ['unresolved import in content', (dir) => {
+    const p = resolve(dir, 'src/content/statuses.js');
+    writeFileSync(p, `import { nope } from './does-not-exist.js';\n` + readFileSync(p, 'utf8'), 'utf8');
+    return true;
+  }],
+  ['non-relative import in content', (dir) => {
+    const p = resolve(dir, 'src/content/statuses.js');
+    writeFileSync(p, `import { nope } from 'lodash';\n` + readFileSync(p, 'utf8'), 'utf8');
+    return true;
+  }],
+  ['dangling literal asset reference', (dir) => {
+    appendFileSync(resolve(dir, 'src/content/balance.js'), `\nexport const __ghost = 'assets/nope/ghost.webp';\n`, 'utf8');
+    return true;
+  }],
+  ['unhandled export form', (dir) => {
+    appendFileSync(resolve(dir, 'src/content/balance.js'), `\nexport default 1;\n`, 'utf8');
+    return true;
+  }],
+  ['missing stylesheet', (dir) => {
+    const p = resolve(dir, 'index.html');
+    writeFileSync(p, readFileSync(p, 'utf8').replace('<head>', '<head>\n  <link rel="stylesheet" href="styles/nope.css">'), 'utf8');
+    return true;
+  }],
+  ['a refusal path invented AFTER this fix', (dir) =>
+    patchTool(dir, `writeFileSync(OUT_PATH, html, 'utf8');`,
+      `fail('a refusal path invented after the fix');\nwriteFileSync(OUT_PATH, html, 'utf8');`)],
+  ['a refusal that never calls fail() — a bare throw', (dir) =>
+    patchTool(dir, `writeFileSync(OUT_PATH, html, 'utf8');`,
+      `throw new Error('a refusal that never calls fail()');\nwriteFileSync(OUT_PATH, html, 'utf8');`)],
+];
+for (const [label, plant] of REFUSALS) {
+  const dir = sandbox();
+  build(dir); // establish a GOOD bundle at the output first — that is the thing
+  const before = goodBundleOf(dir); // a stale-bundle failure would leave behind
+  const planted = plant(dir);
+  const r = build(dir);
+  const after = goodBundleOf(dir);
+  check(`6 ${label}: fixture could plant it`, planted !== false);
+  check(`6 ${label}: the build refuses`, r.status !== 0, `exit ${r.status}: ${r.out.slice(0, 200)}`);
+  check(`6 ${label}: the output is the refusal page`,
+    after.includes('This build did not happen') && !after.includes('id="app"'),
+    after ? after.slice(0, 90) : '(no output file)');
+  check(`6 ${label}: and it is NOT the previous good bundle`,
+    after !== before && before.length > 500000, `changed=${after !== before} hadGoodBundle=${before.length > 500000}`);
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// A refusal with no reason recorded must say so, not invent one. This is the
+// throw case's own edge: the page is standing where the game was, and it is
+// honest that it cannot name the fault.
+{
+  const dir = sandbox();
+  patchTool(dir, `writeFileSync(OUT_PATH, html, 'utf8');`,
+    `throw new Error('a refusal that never calls fail()');\nwriteFileSync(OUT_PATH, html, 'utf8');`);
+  build(dir);
+  const page = goodBundleOf(dir);
+  check('6: a refusal that named no reason says exactly that on the page',
+    /without naming a reason/.test(page), page.slice(0, 120));
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// The dangling check used to run AFTER the write: `bundle.mjs: OK`, a full
+// playable game on disk, then exit 1. Both edges of one run were true.
+{
+  const dir = sandbox();
+  appendFileSync(resolve(dir, 'src/content/balance.js'), `\nexport const __ghost = 'assets/nope/ghost.webp';\n`, 'utf8');
+  const r = build(dir);
+  check('6: a refusing build never prints "bundle.mjs: OK"',
+    !r.out.includes('bundle.mjs: OK'), r.out.slice(0, 160));
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 6z. KNOWN-BAD: disable the exit hook and the stale bundle comes back ---
+// Without this, case 6 is a green nobody has watched fail. The hook is the ONLY
+// writer of the refusal page now, so neutralising its one guard clause restores
+// exactly the d51b8e0 behaviour.
+{
+  const dir = sandbox();
+  build(dir);
+  const before = goodBundleOf(dir);
+  const ok = patchTool(dir, '  if (code === 0) return;', '  return;');
+  check('6z: fixture could disable the refusal writer', ok);
+  patchTool(dir, `const STRICT_DIRECTIVE = '"use strict";';`, `const STRICT_DIRECTIVE = '';`);
+  const r = build(dir);
+  const after = goodBundleOf(dir);
+  check('6z: KNOWN-BAD — with the writer disabled the build still refuses', r.status === 1, `exit ${r.status}`);
+  check('6z: KNOWN-BAD — and the previous good bundle is still standing (this is the defect)',
+    after === before && before.length > 500000 && !after.includes('This build did not happen'),
+    `identical=${after === before}`);
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 6y. The other edge: success must NOT write the refusal page ------------
+{
+  const dir = sandbox();
+  const r = build(dir);
+  const out = goodBundleOf(dir);
+  check('6y: a successful build writes the game, never the refusal page',
+    r.status === 0 && out.includes('id="app"') && !out.includes('This build did not happen'),
+    `exit ${r.status}, ${out.length} bytes`);
+  rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${fails} failing case(s).`);
 console.log('BOUNDARY: this proves the bundler REFUSES and names the fault. It does not');
 console.log('prove the game is correct — only that a build which cannot parse never ships,');
 console.log('and never leaves a previous build standing where the new one should be.');
+console.log('BOUNDARY (case 6): refusal completeness is proven for nine paths, two of which');
+console.log('did not exist before the fix. It is NOT proven for a failure that never reaches');
+console.log('the exit hook: a syntax error in bundle.mjs itself (node never runs the file), or');
+console.log('a kill signal. In both of those the previous bundle is still standing.');
 console.log('BOUNDARY (case 5): the one-home guards are proven against edits to THIS TOOL,');
 console.log('mutated in a sandbox. Nothing here says the shipped game plays correctly, and');
 console.log('no browser ran: strictness is asserted through the same parser the gate uses.');
