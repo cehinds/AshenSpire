@@ -1048,7 +1048,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    The destructive action sits on its own row, always subtle, in every state —
    at 390 px it used to land alone by wrapping and read de-emphasised only by
    luck of viewport. Box geometry is px (chrome — Law 4): it is a box, not text. */
-.profile-notice { max-width: 34rem; gap: 1.2rem; }
+/* max-width makes this the only .screen narrower than its container, and a box
+   that names no horizontal placement is placed by whatever the container
+   happens to do — Law 2's "every positioned element names its container". It
+   hugged the left edge: measured -42px off centre at 390 and -430px at 1200,
+   on both doors, in the shipped release (Bjorn). margin-inline names the
+   placement; he falsified this remedy before I applied it. */
+.profile-notice { max-width: 34rem; margin-inline: auto; gap: 1.2rem; }
 .profile-notice h1 { font-size: 1.8rem; color: var(--gold); text-align: center; }
 .profile-notice .lead { text-align: center; line-height: 1.5; }
 .profile-notice .kept { text-align: center; color: var(--ink); font-weight: 600; }
