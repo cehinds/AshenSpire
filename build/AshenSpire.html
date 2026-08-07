@@ -1332,6 +1332,19 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .prof-notice { color: var(--muted); line-height: 1.4; border-left: 3px solid var(--gold); padding-left: 10px; }
 .set-notice { color: var(--gold); line-height: 1.4; margin-bottom: 8px; }
 
+/* Settings → About: the AI-use acknowledgement, rendered from
+   src/content/aiDisclosure.js (#69). Reading text, not chrome — measure kept
+   short and the lead separated so a tired reader can stop after one paragraph
+   and still have been told the truth. */
+.about-ai { display: flex; flex-direction: column; gap: 0.9rem; }
+.about-ai .about-lead { line-height: 1.5; max-width: 62ch; }
+.about-ai .about-block { display: flex; flex-direction: column; gap: 0.15rem; }
+.about-ai .about-block b { font-size: 0.95em; letter-spacing: 0.02em; }
+.about-ai .about-block .set-note { line-height: 1.45; max-width: 62ch; }
+.about-ai .about-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.about-ai .about-result:empty { display: none; }
+.about-ai .about-ver { opacity: 0.75; }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -19677,6 +19690,7 @@ Object.assign(module.exports, { overlayIsOpen, closeOverlay, openOverlay });
 
 const { openDebugLog } = require("src/ui/debuglog.js");
 const { renderProfileSection } = require("src/ui/screens/profileArchive.js");
+const { renderAboutSection } = require("src/ui/screens/about.js");
 const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
 const { balance } = require("src/content/balance.js");
 
@@ -19773,7 +19787,9 @@ const ROWS = [
 // 'Profile' is the calm-moment route to set-aside profiles and runs (#67).
 // It renders only when a save manager is passed in — a section that promises a
 // drawer it cannot open would be the same broken promise one layer down.
-const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced'];
+// 'About' carries the AI-use acknowledgement, rendered from its one home in
+// src/content/aiDisclosure.js — the same text the store page shows (#69).
+const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
@@ -19938,6 +19954,10 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
         html += `<h3 class="set-cat">Profile</h3><div class="set-profile-mount"></div>`;
         continue;
       }
+      if (cat === 'About') {
+        html += `<h3 class="set-cat">About</h3><div class="set-about-mount"></div>`;
+        continue;
+      }
       const rows = ROWS.filter((r) => r.cat === cat);
       html += `<h3 class="set-cat">${cat}</h3>` + rows.map((r) => rowHtml(settings, r)).join('');
     }
@@ -19966,6 +19986,10 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
       },
     });
   }
+
+  // The acknowledgement needs no manager and no settings — it always renders.
+  const aboutMount = container.querySelector('.set-about-mount');
+  if (aboutMount) renderAboutSection(aboutMount);
 
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
@@ -20302,6 +20326,192 @@ function renderProfileSection(container, { saves, onRestored }) {
 
 
 Object.assign(module.exports, { renderProfileSection });
+
+},
+"src/ui/screens/about.js": function (module, exports, require) {
+// src/ui/screens/about.js — Settings → About: the in-product AI acknowledgement.
+//
+// Every word here comes from src/content/aiDisclosure.js. This file renders and
+// does not author: if you want to change what the game says about how it was
+// made, change that module and both this screen and the store text change with
+// it. A sentence typed into this file would be the second copy the arrangement
+// exists to prevent.
+//
+// Follows the Profile section's pattern (profileArchive.js): a section rendered
+// into the Settings modal rather than a screen of its own.
+
+const { esc } = require("src/ui/components/tooltip.js");
+const { AI_DISCLOSURE, disclosureAsText } = require("src/content/aiDisclosure.js");
+
+function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
+  const sections = disclosure.sections
+    .map(
+      (s) => `
+        <div class="about-block">
+          <b>${esc(s.heading)}</b>
+          <p class="set-note">${esc(s.body)}</p>
+        </div>`
+    )
+    .join('');
+
+  container.innerHTML = `
+    <div class="about-ai">
+      <p class="about-lead">${esc(disclosure.storeForm)}</p>
+      ${sections}
+      <div class="about-actions">
+        <button class="about-copy">Save this to a file</button>
+      </div>
+      <p class="about-result" role="status"></p>
+      <p class="set-note about-ver">Ashen Spire ${esc(disclosure.version)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
+    </div>`;
+
+  // The player can keep a copy of what they were told. Same instinct as the
+  // profile export: a claim you can save is a claim you can hold us to.
+  container.querySelector('.about-copy').addEventListener('click', () => {
+    const say = (m) => { container.querySelector('.about-result').textContent = m; };
+    try {
+      const blob = new Blob([disclosureAsText(disclosure)], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ashen-spire-ai-acknowledgement.txt';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      say('Saved.');
+    } catch (e) {
+      say('Couldn’t save the file here — the text above is the whole of it.');
+    }
+  });
+}
+
+
+Object.assign(module.exports, { renderAboutSection });
+
+},
+"src/content/aiDisclosure.js": function (module, exports, require) {
+// src/content/aiDisclosure.js — THE ONE HOME of the AI-use acknowledgement.
+//
+// Two surfaces render from this file and neither retypes it:
+//   · in-product  — Settings → About (src/ui/screens/about.js)
+//   · the store   — Steam's AI-disclosure field, printed by
+//                   `node tools/ai-disclosure.mjs` and pasted from that output
+//
+// WHY IT LIVES HERE AND NOT IN A DOCUMENT. The same acknowledgement appearing
+// in two places, maintained by hand, is one fact with two homes: the day they
+// disagree, a player comparing the store page to the game is reading two
+// different claims about the same thing and we cannot say which is true.
+// So the text has one home — this file — and everything else renders it.
+// `node tools/ai-disclosure.mjs --check` fails if a shipped bundle has drifted
+// from this module, which is what makes that a fact rather than an intention.
+//
+// APPROVAL: the final wording is Constantine's call at release (`approved`
+// below). An edit here lands on both surfaces in the same act, which is the
+// entire point of the arrangement.
+//
+// Headless-safe: data only, no document, no storage, no timers.
+
+const AI_DISCLOSURE = Object.freeze({
+  version: '0.4.x',
+  updated: '2026-08-07',
+
+  // FALSE until Constantine approves the final wording at release. Nothing in
+  // the game reads this to decide whether to render — the acknowledgement
+  // always shows. It marks whose words these currently are.
+  approved: false,
+
+  /**
+   * storeForm — the text pasted into Steam's AI-disclosure field, and the lead
+   * paragraph of the in-product acknowledgement. ONE string, both surfaces.
+   */
+  // ONE UNBROKEN LITERAL, DELIBERATELY. `tools/ai-disclosure.mjs --check`
+  // string-matches this value inside the shipped bundles to prove they are not
+  // stale, and the bundler preserves source literals as written — so splitting
+  // this across lines with `+` puts a concatenation in the bundle, the match
+  // fails, and the check goes red for a reason that has nothing to do with a
+  // stale bundle. (It did exactly that on first build. Kept as one line so the
+  // check fails only for the thing it is watching.) Long line: intended.
+  storeForm: `Ashen Spire was built by AI under human direction. The game’s code, design, writing, and art were authored by AI assistants (Anthropic’s Claude) working under the human developer’s instruction, review, and testing. All shipped art is generated by code — the game’s own placeholder renderer and AI-written 3D rendering pipelines; no AI image-generation models were used. The soundtrack and sound effects are synthesized by AI-written code at runtime; this release ships no pre-recorded audio files, and any audio added later is itemized with its provenance in the game’s credits. No AI runs while you play: nothing in the game is AI-generated at runtime, and the game contacts no AI service.`,
+
+  /**
+   * sections — the fuller acknowledgement, shown under the lead in-product.
+   * Each is one honest answer to "what did the AI actually do here".
+   */
+  sections: Object.freeze([
+    Object.freeze({
+      heading: 'Code and design',
+      body:
+        'The engine, interface, tools, and the design specification were written by AI ' +
+        'assistants working as a team of specialist personas, under the direction of the ' +
+        'human developer — who set the goals, reviewed the work, played the builds, and ' +
+        'holds final approval on everything that ships.',
+    }),
+    Object.freeze({
+      heading: 'Writing',
+      body:
+        'All game text — card names and rules text, interface copy, flavour — was ' +
+        'AI-authored under that same direction.',
+    }),
+    Object.freeze({
+      heading: 'Art',
+      body:
+        'Every visual is generated by code. Sprites, icons and panels are drawn at runtime ' +
+        'by the game itself; the class figures, act backdrops and equipment art are ' +
+        'pre-rendered by procedural Blender scripts that the AI wrote. No image-generation ' +
+        'model was used at any point — the art is rendered, and the AI-authored part is ' +
+        'the code that renders it.',
+    }),
+    Object.freeze({
+      heading: 'Audio',
+      body:
+        'The score and every sound effect are synthesized as you play, by AI-written code — ' +
+        'this release ships no audio files at all. If recorded music or effects are added in ' +
+        'a later version, each file is listed in CREDITS with how it was made and who made it.',
+    }),
+    Object.freeze({
+      heading: 'While you play',
+      body:
+        'No AI model runs in this game, on your machine or anywhere else. Nothing is ' +
+        'generated while you play, and the game never contacts an AI service. The only ' +
+        'network features are optional local co-op and an optional folder of your own music.',
+    }),
+    Object.freeze({
+      heading: 'Your saves',
+      body:
+        'Your profile and runs are yours. When something cannot be read, it is set aside ' +
+        'rather than deleted, and Settings → Profile lists everything that has been set ' +
+        'aside — with a button to save any of it to a file. Nothing is ever deleted to ' +
+        'make room for anything else.',
+    }),
+  ]),
+
+  /**
+   * runtimeCheck — how a sceptic re-runs the "no AI at runtime" claim. Kept
+   * beside the claim so the two cannot drift apart, and printed by the tool.
+   */
+  runtimeCheck: Object.freeze({
+    command:
+      "grep -rniE 'anthropic|openai|claude|gpt-|llm|api[_-]?key|completions|/v1/messages' src/",
+    expect: 'no matches',
+    networkNote:
+      'A second grep for network primitives returns exactly two sites, both local and ' +
+      'neither AI: src/net/lan.js (LAN co-op against the game’s own launcher) and ' +
+      'src/ui/audio.js (the player’s own configured music folder).',
+  }),
+});
+
+/** The in-product acknowledgement as plain text — the export/copy path. */
+function disclosureAsText(d = AI_DISCLOSURE) {
+  return [
+    `Ashen Spire — AI use acknowledgement (${d.version})`,
+    '',
+    d.storeForm,
+    '',
+    ...d.sections.map((s) => `${s.heading}\n${s.body}\n`),
+  ].join('\n');
+}
+
+
+Object.assign(module.exports, { AI_DISCLOSURE, disclosureAsText });
 
 },
 "src/ui/audio.js": function (module, exports, require) {

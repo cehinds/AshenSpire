@@ -1092,3 +1092,16 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .prof-empty { line-height: 1.5; }
 .prof-notice { color: var(--muted); line-height: 1.4; border-left: 3px solid var(--gold); padding-left: 10px; }
 .set-notice { color: var(--gold); line-height: 1.4; margin-bottom: 8px; }
+
+/* Settings → About: the AI-use acknowledgement, rendered from
+   src/content/aiDisclosure.js (#69). Reading text, not chrome — measure kept
+   short and the lead separated so a tired reader can stop after one paragraph
+   and still have been told the truth. */
+.about-ai { display: flex; flex-direction: column; gap: 0.9rem; }
+.about-ai .about-lead { line-height: 1.5; max-width: 62ch; }
+.about-ai .about-block { display: flex; flex-direction: column; gap: 0.15rem; }
+.about-ai .about-block b { font-size: 0.95em; letter-spacing: 0.02em; }
+.about-ai .about-block .set-note { line-height: 1.45; max-width: 62ch; }
+.about-ai .about-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.about-ai .about-result:empty { display: none; }
+.about-ai .about-ver { opacity: 0.75; }

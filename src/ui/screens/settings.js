@@ -8,6 +8,7 @@
 
 import { openDebugLog } from '../debuglog.js';
 import { renderProfileSection } from './profileArchive.js';
+import { renderAboutSection } from './about.js';
 import { AUDIO_DEFAULTS } from '../audio.js';
 import { balance } from '../../content/balance.js';
 
@@ -104,7 +105,9 @@ const ROWS = [
 // 'Profile' is the calm-moment route to set-aside profiles and runs (#67).
 // It renders only when a save manager is passed in — a section that promises a
 // drawer it cannot open would be the same broken promise one layer down.
-const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced'];
+// 'About' carries the AI-use acknowledgement, rendered from its one home in
+// src/content/aiDisclosure.js — the same text the store page shows (#69).
+const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
@@ -269,6 +272,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         html += `<h3 class="set-cat">Profile</h3><div class="set-profile-mount"></div>`;
         continue;
       }
+      if (cat === 'About') {
+        html += `<h3 class="set-cat">About</h3><div class="set-about-mount"></div>`;
+        continue;
+      }
       const rows = ROWS.filter((r) => r.cat === cat);
       html += `<h3 class="set-cat">${cat}</h3>` + rows.map((r) => rowHtml(settings, r)).join('');
     }
@@ -297,6 +304,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       },
     });
   }
+
+  // The acknowledgement needs no manager and no settings — it always renders.
+  const aboutMount = container.querySelector('.set-about-mount');
+  if (aboutMount) renderAboutSection(aboutMount);
 
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
