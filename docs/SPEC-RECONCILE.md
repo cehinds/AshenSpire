@@ -237,3 +237,64 @@ ears (Vega's). The profile-durability properties are stated from source and the 
 cases; I did not corrupt a real browser profile to watch the recovery surface behave — that is
 the one gap I would most want closed before the release SHA is called good, and it is Sunna's
 and Vira's ground, not mine.
+
+---
+
+# Stage 2b — rebased onto the merged release tree
+
+*Viki, 2026-08-07. Stage 2 was written at `267397a`; five branches merged before it landed, so
+it is rebased onto `dev` = `2c0a716` and every falsifier re-run against the tree that will
+actually ship. Last in Marina's release order on purpose — so the spec describes the merged
+tree rather than a state that never existed.*
+
+## Re-run at `2c0a716`: every stage-2 falsifier still holds — except my own counts
+
+| Falsifier | Result |
+|---|---|
+| Path resolution, whole document | **0 unresolved** (two intentional placeholders) |
+| `frostbite` status exists? | `false` — the CUT verdict stands |
+| `MUSIC_MANIFEST` uses in `audio.js` | **1** (the import; zero reads) — unchanged through three audio moves |
+| `ls assets/fonts` | absent — fonts still TO-BUILD |
+| Pre-scrub vocabulary debt | **24** — unchanged |
+| Suite / `verify-shipped` / `content-build --selftest` | 48/0 · OK, 4 checks · 16 known-bads red by name |
+
+**And the three that moved were mine.** `src/` went 92 → **94**, the suite 47 → **48**, test
+blocks 43 → **44**, in four days. I had written those counts into the prose that *explains why
+counts do not belong in prose*.
+
+> **Fixed by naming the expiry, not by bumping the number.** Both now read as dated
+> measurements — *"52 listed against 92 shipped, measured at `267397a`; `src/` held 94 two
+> commits later, which is the point"* — because a measurement pinned to a SHA is a historical
+> observation and cannot rot, while a bare count is the next cache. Same discipline the CI
+> header ruling used: a number that names its own expiry is the opposite of the header it
+> fixes.
+
+## What the five merged branches changed in SPEC
+
+| Merge | SPEC effect |
+|---|---|
+| **#71** sfx orphan ids | **§7.4 rewritten a third time.** "One recipe per hook id" is now false: ids are **composed**, and `resolveRecipe` is one pure function with three steps — **exact → family (segment before the first `_`) → `default`** — so `procBurst_bleed` plays its own row, an unauthored proc still sounds like a burst, and the fallback **warns once per unknown id**. Authoring a family is one row, no engine change, no registration list. *Falsified by:* `resolveRecipe('procBurst_nosuch')` → matched `procBurst`, `fellBack: false` (run; it does). |
+| **#73** disclosure one home | **New §2.1** — the second shipped subsystem this reconciliation found with no SPEC home (after profile durability). One home (`src/content/aiDisclosure.js`), two surfaces (Settings → About; the Steam field printed by `tools/ai-disclosure.mjs`), a drift gate that fails on a stale bundle, and the runtime claim as a **single named string** given to both the player and the falsifier. **`approved: false` is stated, because the spec says what is true** — it records whose words these are, is read by nothing at render time, and is a release gate rather than a display condition. |
+| **#69/#72** release shots | **§8 gains the harness distinction.** `screenshot.mjs` photographs the **source tree** and is structurally blind to any surface without a `?shot=` state; `release-shots.mjs` photographs the **built bundle**, derives coverage from `main.js`'s states so a new one cannot be silently missed, excludes five co-op states **by name**, and **fails before the browser starts** on an unlisted state. The artifact is never modified to reach a state. Failure lines name floats and screens separately. |
+| **#70** float clamp | No SPEC claim moved — §7.4's floating-number bullet states the behaviour, never the width. The CSS owning the width is exactly what the section already implied. Recorded as *checked, unchanged*. |
+
+## The instrument law — now §8's clause 5
+
+**Marina's audit trigger fired on three lying greens in one week**: a harness blind to five
+player-facing surfaces, a driver returning exit 0 against broken code, and a disclosure check
+covering one text of seven. Each was accurate about what it measured and silent about its own
+hole. The law shipping out of it is now written where this project says how it knows things:
+
+> **Every release-gating instrument prints what it did NOT check, in its run output — not only
+> in its header.**
+
+It belongs in §8 rather than in a log because §8 is the section a person reads when deciding
+whether a green means anything. **A boundary in a file header is read by the author; a boundary
+in the output is read by whoever is about to trust the result.**
+
+## Boundary of stage 2b
+
+Rebased and re-run on one Linux runner. **Nothing rendered:** I did not run
+`release-shots.mjs` or open a browser, so §8's description of it is read from its source and
+its own header, not watched. The disclosure gate I *did* run (`--check`, exit 0, 8 texts × 2
+bundles). The profile-recovery gap named in stage 2 is still open and still not mine.

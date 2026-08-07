@@ -45,6 +45,31 @@ These override everything else in the spec.
 4. Every image is referenced through `src/ui/assets.js` (an id → URL/inline-SVG map). Game code never hardcodes an asset path. Missing art falls back to a generated placeholder (colored rounded rect + icon glyph + name) so the game is fully playable with zero downloaded assets.
 5. Third-party **code** may be vendored only if MIT/BSD/Apache/CC0, kept in `src/vendor/`, attributed in `CREDITS.md`. Expected: none beyond possibly a PRNG snippet (mulberry32 is public domain).
 
+### 2.1 The AI-use acknowledgement — one home, two surfaces
+
+The game was built by AI under human direction, and says so. **The text has exactly one home,
+`src/content/aiDisclosure.js`, and nothing retypes it** — the two surfaces render it:
+
+- **In-product:** Settings → **About** (`src/ui/screens/about.js`).
+- **The store:** `node tools/ai-disclosure.mjs` prints the identical string for Steam's
+  AI-disclosure field; the value pasted there is that output, not a paraphrase.
+
+One fact with two hand-maintained copies is a player comparing the store page to the game and
+reading two different claims about the same thing. So the arrangement is enforced rather than
+intended: **`node tools/ai-disclosure.mjs --check` fails when a shipped bundle has drifted from
+the module**, and the load-bearing runtime claim (*no AI runs while you play*) is a **single
+named string** that both the player and the falsifier are given — it previously existed twice,
+in different words, so no comparison could ever have caught them diverging.
+
+**`approved: false` — and this spec says so because it is true.** The wording is Constantine's
+call at release; the flag records whose words these currently are and **nothing reads it to
+decide whether to render** — the acknowledgement always shows. Approval is a release gate
+(§9), not a display condition.
+
+*Falsify:* `node tools/ai-disclosure.mjs --check` after the last bundle rebuild — a stale
+bundle ships an acknowledgement that disagrees with the store page. The runtime claim carries
+its own two-command falsifier, stated in the module beside the sentence it defends.
+
 ---
 
 ## 3. Architecture — data- and model-driven, procedural where it counts
@@ -74,10 +99,13 @@ Design laws (contractual):
 
 **This section states where a thing BELONGS. It does not list what exists** — that list has a
 home (the tree) and a command, and the previous edition of this section was a hand-maintained
-copy of it that drifted to **52 files listed against 92 shipped, four of them dead paths**
-(the three pre-scrub class card files, renamed; and `floorplan.js`, filed under `engine/`
-while it lives in `model/` — §6 cited the right path all along, so the spec disagreed with
-itself) while `tools/`, `content/source/`, `build/` and `dist/` were absent entirely. A restatement of the tree is a cache with no write event; it rots while nobody edits
+copy of it that had drifted to **52 files listed against 92 shipped, four of them dead paths**
+— the three pre-scrub class card files, renamed, and `floorplan.js` filed under `engine/`
+while it lives in `model/` (§6 cited the right path all along, so the spec disagreed with
+itself) — while `tools/`, `content/source/`, `build/` and `dist/` were absent entirely.
+**That count was measured at `267397a` and `src/` held 94 two commits later**, which is the
+point: an inventory is a cache, and even the sentence describing its rot has to name its own
+expiry or it becomes the next one. A restatement of the tree is a cache with no write event; it rots while nobody edits
 it. Print the real one:
 
 ```
@@ -650,7 +678,9 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
 - Floating damage/heal/block numbers; brief target flash on hit; ≤4 px screen shake for hits ≥15 damage. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`).
 - Bleed burst and Stagger get distinct, slightly bigger effects (they're the theme).
 - "YOU PERISHED" screen: dark fade, gold serif text, then stats card. Victory: "EMBER RESTORED". (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
-- Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the sound *is* lives as content in two files, one home each: **`src/content/music.js`** (scales, per-context beds, `MUSIC_MANIFEST`) and **`src/content/sfx.js`** (`SFX_RECIPES` — one recipe per hook id, plus `SFX_MANIFEST`). A recipe is a list of layers in the engine's **two-word closed vocabulary, `tone` and `noise`** (schema `SFX_LAYER_SCHEMAS`, `model/schemas.js`), so retuning a sound is a table edit and never an engine edit; a malformed layer fails validation **naming its recipe id**, and an id with no recipe plays the required `default` — audible, never silent (Law 1 clause 5). Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. No audio asset files ship, and the two override paths fail differently: a music folder with `manifest.json` (Settings) replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load is cached as a miss and plays **silence, not the synth**. `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
+- Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the sound *is* lives as content in two files, one home each: **`src/content/music.js`** (scales, per-context beds, `MUSIC_MANIFEST`) and **`src/content/sfx.js`** (`SFX_RECIPES` plus `SFX_MANIFEST`). A recipe is a list of layers in the engine's **two-word closed vocabulary, `tone` and `noise`** (schema `SFX_LAYER_SCHEMAS`, `model/schemas.js`), so retuning a sound is a table edit and never an engine edit, and a malformed layer fails validation **naming its recipe id**.
+
+  **Ids are composed, and resolution is one pure function with three steps** (`resolveRecipe`, `content/sfx.js`): **exact id → the FAMILY row** (the segment before the first `_`) **→ `default`**. So `procBurst_bleed` plays its own row, a proc with no row of its own falls to the `procBurst` family and still sounds like a burst, and anything unrecognised plays the required `default` — audible, never silent (Law 1 clause 5) — while **the fallback warns once per unknown id**, so an orphan is reported without becoming a per-frame noise. Authoring a new family is one row named for the segment before the underscore; **no engine change and no registration list.** *(Falsify: `node -e "import('./src/content/sfx.js').then(m=>console.log(m.resolveRecipe('procBurst_nosuch')))"` → matched `procBurst`, `fellBack: false`.)* Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. No audio asset files ship, and the two override paths fail differently: a music folder with `manifest.json` (Settings) replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load is cached as a miss and plays **silence, not the synth**. `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
 
 ### 7.5 Visual style
 
@@ -681,9 +711,9 @@ imports**, so nothing in this file has seen a screen; the suite says so in its o
 block when it finishes.
 
 **The required-coverage list that used to live here is gone, and deliberately.** It named 17
-tests against a suite whose node runner now reports **47 passing cases across 43 declared test
-blocks**, and two of its entries had gone false without
-anybody editing them — test 7 restated Bleed's threshold as `12` with an escalating `×1.5`
+tests against a suite that had already grown past it — **47 cases over 43 declared blocks at
+`267397a`, 48 over 44 two commits later, and it will have moved again by the time you read
+this** — and two of its entries had gone false without anybody editing them — test 7 restated Bleed's threshold as `12` with an escalating `×1.5`
 (both superseded by the constant-threshold proc vocabulary, §4.4) and test 8 named "Scarlet
 Rot", renamed at the IP scrub. **A hand-kept index of tests is a cache of `grep`**, and this
 one rotted exactly the way §3.2's file inventory did. The list has a home:
@@ -704,14 +734,35 @@ grep -n "test('" tests/engine.test.js         # the index, derived
    `--selftest` (a known-bad corpus, every case must fail for its named reason) and `--mutate`
    (reinstate the defect N ways, each must be caught), carried by the `tools/` instruments and
    wired in `.github/workflows/ci.yml`.
-5. **Every instrument states the boundary of what it did not check**, in its own output — not
-   only in its header.
+5. **Every release-gating instrument prints what it did NOT check, in its run output — not
+   only in its header.** *(House law, adopted 2026-08-07 out of the instrument audit. It was
+   triggered by three greens that lied in one week: a screenshot harness blind to five
+   player-facing surfaces, a driver returning exit 0 against broken code, and a disclosure
+   check that covered one text of seven. Each was accurate about what it measured and silent
+   about its own hole — and a boundary in a file header is read by the author, while a
+   boundary in the output is read by whoever is about to trust the green.)*
+
+**The release capture set is `tools/release-shots.mjs`, and it is not
+`tools/screenshot.mjs`.** The distinction is the third lying green above, so it belongs in a
+spec rather than in tribal memory:
+
+| | photographs | coverage |
+|---|---|---|
+| `tools/screenshot.mjs` | the **source tree** over a local server | the `?shot=` states that existed when it was written — **structurally blind** to any surface without one |
+| `tools/release-shots.mjs` | the **built bundle** (`dist/AshenSpire.html`), at both shapes | coverage **derived from `main.js`'s shot states**, so a new state cannot be silently missed; surfaces with no `?shot=` are reached by real clicks and seeded storage; five co-op states are **excluded by name**; an unlisted state **fails before the browser starts** |
+
+The artifact is **never modified** to reach a state — crisis states are produced by writing
+storage from outside and reloading, because a shot of a patched bundle is a shot of something
+we do not ship. Failure lines name **floats and screens separately**, so a red says which
+thing broke.
 
 **The browser-facing gates that the suite cannot reach**, each a command rather than a
 promise: `node tools/verify-shipped.mjs` (the bundle matches source), `node tools/mapplan.mjs`
 (map distributions at the current shape), `node tools/content-build.mjs --selftest --mutate`
-(§3.14), `node tools/contrast-audit.mjs` (palette targets), `node tools/screenreach.mjs`,
-`tools/zoomplace.mjs`, `tools/mapreach.mjs`.
+(§3.14), `node tools/contrast-audit.mjs` (palette targets), `node tools/release-shots.mjs` (the release
+capture set — see above), `node tools/ai-disclosure.mjs --check` (§2.1),
+`node tools/screenreach.mjs`, `tools/zoomplace.mjs`, `tools/mapreach.mjs`,
+`tools/sfx-loudness.mjs`.
 
 *(The previous edition of this section ended "CI-less workflow: opening `tests/index.html`
 must show all green before any milestone is called done." **CI exists** —
