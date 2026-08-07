@@ -45,12 +45,41 @@
 // an act declared here that no context implements — is ONLY visible on the page.
 // The attributes are a CONVENTION, not a derivation: a set nobody registers is a
 // set nobody marks, and nothing checks the two agree. Saying so is the point.
+//
+// ---- A SET IS A LIST OF HOMES (Vira, re-gate of #78) ------------------------
+//
+// The first pass gave each row ONE `members()` and one prose `home`. When
+// `overlayTab` grew a second home — MENU_TABS DECLARES the strip, a MENU row's
+// `tab:` NAVIGATES to it — `members()` quietly became a union of the two and the
+// zero-member guard was left counting the union. So an entire home could go
+// empty and the check still reported full coverage: `MENU_TABS = []` and the tab
+// strip declares nothing, the folded switcher has nothing, Law 3's bumper ring
+// has nothing to cycle, and the member count drops 6 → 5 with the verdict `OK`.
+// A SHRINKING DENOMINATOR WITH A GREEN VERDICT. Vira's property, and it is
+// Marina's own one turn on:
+//
+//     A GUARD PROVEN OVER ONE HOME MUST BE RE-PROVEN WHEN THE SET GAINS A SECOND.
+//
+// So a row no longer says where its members come from in prose beside a function
+// that goes and gets them. IT LISTS ITS HOMES, each with its own `members()`,
+// and BOTH the member list and the `home` sentence are DERIVED from that list.
+// The guard runs per home. This is written for the class rather than for the tab
+// strip — `armouryView` and `menuAct` have one home each today and are the same
+// shape, so the day either of them is widened the guard widens with it and
+// nobody has to remember. A one-home set behaves exactly as it did.
+//
+// The line it draws is Law 0 clause 2 in miniature: THE HOMES ARE THE
+// VOCABULARY AND THE MEMBERS ARE THE DATA. Emptying a home is a data edit and
+// must fail by name; removing a home is a code edit here, reviewed like any
+// other word. That is why "every declared home declares at least one member" is
+// not too strict — the alternative is a home that exists in this file and
+// nowhere else, which is the second copy this table was built to refuse.
 
 import {
   MENU_TABS, MENU, MENU_ACTS, menuTabRefs,
 } from './uiContent.js';
 import { panelFor } from './components/overlay.js';
-import { settingsCategories, categoryHandler } from './screens/settings.js';
+import { filedCategories, CATEGORY_ORDER, categoryHandler } from './screens/settings.js';
 import { viewIds, viewLayout, viewCellsSay } from './screens/equipment.js';
 
 export const SURFACES = [
@@ -62,12 +91,24 @@ export const SURFACES = [
     // and members() read only the first home. A one-character typo there
     // resolved to { icon:'', label:'', tip:'' }, was KEPT by quicknav's filter
     // because `act:'tab'` is implemented, and gave the player an unlabelled
-    // button onto a tab with no panel. Where a declaration lives in two files,
+    // button onto a tab with no panel. Where a declaration lives in two homes,
     // the member list is the union of both — and `fix` below tells them apart,
     // because naming the wrong entry is worse than naming none (Law 1 cl. 5).
     of: 'the in-run menu tabs — declared by MENU_TABS, navigated to by MENU rows',
-    home: 'MENU_TABS + every MENU row\'s tab: in src/ui/uiContent.js',
-    members: () => [...new Set([...MENU_TABS.map((t) => t.id), ...menuTabRefs()])],
+    from: [
+      {
+        what: 'MENU_TABS',
+        file: 'src/ui/uiContent.js',
+        declares: 'the tab strip, the folded switcher and the bumper ring',
+        members: () => MENU_TABS.map((t) => t.id),
+      },
+      {
+        what: 'every MENU row\'s tab:',
+        file: 'src/ui/uiContent.js',
+        declares: 'the quick-menu rows that navigate to a tab',
+        members: () => menuTabRefs(),
+      },
+    ],
     resolve: (id) => panelFor(id),
     fix: (id) => (MENU_TABS.some((t) => t.id === id)
       ? `add ${JSON.stringify(id)} to PANELS in src/ui/components/overlay.js`
@@ -78,8 +119,26 @@ export const SURFACES = [
   {
     id: 'settingsCategory',
     of: 'the settings categories',
-    home: 'CATEGORY_ORDER + the rows in src/ui/screens/settings.js',
-    members: () => settingsCategories(),
+    // Two homes, and only one of them is authored by a human — which is exactly
+    // why the union hid it. Emptying CATEGORY_ORDER left all six categories
+    // present (they are DERIVED from the rows), the verdict green, and the one
+    // design decision this screen carries silently gone, with Profile drifting
+    // behind Advanced. Milder than the tab strip and the same defect, which is
+    // how we know the per-home guard is the class and not a patch.
+    from: [
+      {
+        what: 'CATEGORY_ORDER',
+        file: 'src/ui/screens/settings.js',
+        declares: 'the order the headings are drawn in — the authored half',
+        members: () => CATEGORY_ORDER,
+      },
+      {
+        what: 'the rows',
+        file: 'src/ui/screens/settings.js',
+        declares: 'a heading exists because something is filed under it',
+        members: () => filedCategories(),
+      },
+    ],
     resolve: (cat) => categoryHandler(cat),
     fix: (cat) => `file something under ${JSON.stringify(cat)} — a row with cat: ${JSON.stringify(cat)},`
       + ' or a SECTIONS entry — or take it out of CATEGORY_ORDER (src/ui/screens/settings.js)',
@@ -87,8 +146,14 @@ export const SURFACES = [
   {
     id: 'armouryView',
     of: 'the armoury layout views',
-    home: 'balance.equipment.views in src/content/balance.js',
-    members: () => viewIds(),
+    from: [
+      {
+        what: 'balance.equipment.views',
+        file: 'src/content/balance.js',
+        declares: 'every view the armoury header offers',
+        members: () => viewIds(),
+      },
+    ],
     resolve: (id) => viewLayout(id),
     // The fix ENUMERATES THE CELLS, never the factors. Saying "figure:
     // true|false and slots: 'flank'|'list'" is what promised a product of two
@@ -101,8 +166,17 @@ export const SURFACES = [
   {
     id: 'menuAct',
     of: 'the quick-menu launcher acts',
-    home: 'the MENU table in src/ui/uiContent.js',
-    members: () => [...new Set(Object.values(MENU).flat().map((r) => r.act))],
+    from: [
+      {
+        what: 'the MENU table',
+        file: 'src/ui/uiContent.js',
+        declares: 'every act a launcher row names, in every context',
+        // Deduped INSIDE the home: `act: 'tab'` is meant to appear on many rows,
+        // so a repeat here is the table working. Across homes the duplicate
+        // check is off for the same reason; within a home it is on.
+        members: () => [...new Set(Object.values(MENU).flat().map((r) => r.act))],
+      },
+    ],
     // MENU_ACTS now lives with the MENU table it governs, not here. This file's
     // header promises it holds no members and this row held eight of them —
     // *the fix for label drift carrying label drift* (Marina). The list is still
@@ -114,37 +188,84 @@ export const SURFACES = [
   },
 ];
 
+/** One home, named the way a person would say it: `MENU_TABS in src/ui/…`. */
+function homeOf(h) {
+  return `${h.what} in ${h.file}`;
+}
+
 /**
- * surfaceReport() → one row per navigable set: { id, of, home, members, missing }.
+ * The set's `home` sentence, DERIVED from its homes — never typed beside them.
+ *
+ * It used to be a string on the row, which is how `overlayTab` came to carry a
+ * hand-written "MENU_TABS + every MENU row's tab:" that nothing kept in step
+ * with the function that actually read them. The four sentences this produces
+ * are byte-identical to the four that were typed, which is the point: the fact
+ * did not change, its second copy went away.
+ */
+function homeLine(from) {
+  const files = [...new Set(from.map((h) => h.file))];
+  if (files.length === 1) return `${from.map((h) => h.what).join(' + ')} in ${files[0]}`;
+  return from.map(homeOf).join(' + ');
+}
+
+/**
+ * surfaceReport() → one row per navigable set:
+ * { id, of, home, homes, members, missing }.
  *
  * Pure, no throwing, so a tool can print the whole picture instead of the first
- * complaint. `missing` is the members with no handler, each with its own fix.
+ * complaint. `homes` is the per-home breakdown with each home's own member list;
+ * `members` is the union across them, in authored order, deduped. `missing` is
+ * every finding, each with its own fix.
+ *
+ * BOTH EDGES, AND THE ZERO EDGE IS PER HOME. Zero members is not full coverage —
+ * it is a home the reader can no longer read (Bjorn's `views = []` red is the
+ * precedent), and once a set has two homes, "the set has members" stops being
+ * that check. A union is a NEW SET, and every property proved about the old one
+ * is `unknown` until re-observed (Vira, re-gate of #78, who caught this file
+ * promising the guard in a docstring it no longer gave).
+ *
+ * DUPLICATES ARE PER HOME TOO, and for the mirror-image reason: the same tab
+ * appearing in MENU_TABS *and* in a MENU row's `tab:` is the two homes agreeing,
+ * which is correct and common. The same name twice INSIDE one home is a defect —
+ * and the old union deduped it away before anything could look.
  */
 export function surfaceReport() {
   return SURFACES.map((s) => {
-    const members = s.members();
     const bad = [];
-    // BOTH EDGES. Zero members is not full coverage — it is a home the reader
-    // can no longer read, and it is the edge that passes silently in every
-    // coverage tool ever written (Bjorn's `views = []` red is the precedent).
-    if (!Array.isArray(members) || members.length === 0) {
-      bad.push({ member: null, why: 'declares ZERO members', fix: `check ${s.home}` });
-    } else {
-      const seen = new Set();
-      for (const m of members) {
-        if (typeof m !== 'string' || !m) {
-          bad.push({ member: String(m), why: 'is not a name', fix: `check ${s.home}` });
-          continue;
-        }
-        if (seen.has(m)) {
-          bad.push({ member: m, why: 'is declared twice', fix: `check ${s.home}` });
-          continue;
-        }
-        seen.add(m);
-        if (!s.resolve(m)) bad.push({ member: m, why: 'has no handler', fix: s.fix(m) });
+    const members = [];
+    const union = new Set();
+    const homes = s.from.map((h) => {
+      const got = h.members();
+      const list = Array.isArray(got) ? got : null;
+      if (!list || list.length === 0) {
+        bad.push({
+          member: null,
+          why: `declares ZERO members in ${h.what}`,
+          fix: `check ${homeOf(h)}`,
+        });
+        return { ...h, members: [] };
       }
+      const here = new Set();
+      for (const m of list) {
+        if (typeof m !== 'string' || !m) {
+          bad.push({ member: String(m), why: 'is not a name', fix: `check ${homeOf(h)}` });
+          continue;
+        }
+        if (here.has(m)) {
+          bad.push({ member: m, why: `is declared twice in ${h.what}`, fix: `check ${homeOf(h)}` });
+          continue;
+        }
+        here.add(m);
+        if (!union.has(m)) { union.add(m); members.push(m); }
+      }
+      return { ...h, members: list };
+    });
+    // The handler join is over the UNION: a tab declared in one home and
+    // navigated to from the other needs exactly one panel, not two.
+    for (const m of members) {
+      if (!s.resolve(m)) bad.push({ member: m, why: 'has no handler', fix: s.fix(m) });
     }
-    return { id: s.id, of: s.of, home: s.home, members, missing: bad };
+    return { id: s.id, of: s.of, home: homeLine(s.from), homes, members, missing: bad };
   });
 }
 

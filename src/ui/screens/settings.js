@@ -145,9 +145,25 @@ export function categoryHandler(cat) {
   return rows.length ? { rows } : null;
 }
 
+/**
+ * filedCategories() → every category something is actually FILED under: a row's
+ * `cat`, or a SECTIONS key. The DERIVED half of this set.
+ *
+ * Exported because it is one of the set's two homes and surfaces.js now asks
+ * each home for its own members rather than asking the set for a union (Vira,
+ * re-gate of #78: a guard proven over one home must be re-proven when the set
+ * gains a second — with one union, `CATEGORY_ORDER = []` left six categories,
+ * a green verdict, and the only authored fact about this screen silently gone).
+ * It is a read of the rows, not a copy of them: `settingsCategories()` below is
+ * derived from it, so the two cannot drift.
+ */
+export function filedCategories() {
+  return [...new Set([...ROWS.map((r) => r.cat), ...Object.keys(SECTIONS)])];
+}
+
 /** Every category that exists, in the order it is drawn. Derived, one home. */
 export function settingsCategories() {
-  const found = [...new Set([...ROWS.map((r) => r.cat), ...Object.keys(SECTIONS)])];
+  const found = filedCategories();
   // An authored name nothing files under is KEPT in place, not dropped: dropping
   // it is the silence again. It renders its own defect and assertSurfaces names
   // it. Anything filed under a name the order does not mention goes last.

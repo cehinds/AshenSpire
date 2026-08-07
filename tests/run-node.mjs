@@ -165,9 +165,14 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   // 39/40 — every navigable surface declared in data has a handler (#78).
   //
   // Two lines for the same reason 36/37 are two: 39 is the CHECK'S OWN
-  // integrity — it plants five breakages an author could make by hand and must
-  // see all five. Its failure is the check's fault. 40 is the state of src/.
+  // integrity — it plants every breakage an author could make by hand and must
+  // see all of them. Its failure is the check's fault. 40 is the state of src/.
   // Its failure is the code's.
+  //
+  // NO COUNT IN THIS COMMENT, deliberately. It said "five" while the corpus held
+  // seven, and it would say seven now that it holds eleven — a number typed
+  // beside the list that owns it, which is the defect this whole card is about.
+  // The tool's own RESULT line carries the count and 39 quotes it whole.
   //
   // Here rather than in engine.test.js, and that is deliberate: this joins two
   // lists that live in the UI layer, and engine.test.js is engine and content

@@ -9,9 +9,12 @@
 // thing correctly and got a broken screen in silence (Law 0 clause 5).
 //
 // WHAT IT ASSERTS, over every row of src/ui/surfaces.js:
-//   S1  the set declares at least one member — ZERO IS NOT FULL COVERAGE, it is
-//       a home the reader can no longer read (Bjorn's `views = []` red)
-//   S2  every member is a name, and no name is declared twice
+//   S1  EVERY HOME OF THE SET declares at least one member — ZERO IS NOT FULL
+//       COVERAGE, it is a home the reader can no longer read (Bjorn's
+//       `views = []` red). Per home, not per set: a set with two homes and one
+//       guard can lose a whole home and still report coverage (Vira's P8)
+//   S2  every member is a name, and no name is declared twice WITHIN ONE HOME —
+//       across homes a repeat is the two homes agreeing, which is the point
 //   S3  every member RESOLVES to a handler, and the failure names the member
 //       and the file to fix
 //
@@ -36,6 +39,17 @@
 // next regression. What her removal condition retires is the OPEN framing above,
 // not the lines — and that call is hers to confirm, so I have left her comment
 // blocks and her commit whole rather than tidying them into my own words.
+//
+// VIKI AGAIN, folding her RE-GATE: P8 NOW GOES RED TOO — 8/8. Same discipline,
+// and it matters more the second time: her plant block below is untouched, her
+// commit is underneath mine with her name on it, and the plants array in this
+// file has not changed by one character in either fold. What did change here is
+// mine and only mine: the S1/S2 lines above, this paragraph, and the printer,
+// which now shows EACH HOME'S OWN COUNT under any set that has more than one.
+// That last is not decoration — her breadcrumb is *"watch for a member count
+// that goes DOWN while the verdict stays OK"*, and a per-set total is precisely
+// the number that cannot show it. Her P8 comment still says the plant MISSes on
+// purpose. It no longer does; the sentence is hers to retire, not mine to edit.
 //
 // Usage:  node tools/surfaces.mjs [--selftest] [--raw]
 // Exit:   0 all green · 1 any finding · 2 the harness could not run
@@ -67,6 +81,16 @@ function printReport(label) {
     for (const r of rows) {
       const n = Array.isArray(r.members) ? r.members.length : 0;
       console.log(`  ${r.missing.length ? 'MISS' : ' OK '}  ${r.id} — ${n} member${n === 1 ? '' : 's'} · ${r.home}`);
+      // PER-HOME COUNTS, for a set that has more than one home. A total cannot
+      // show a home emptying — the union covers for it — which is the whole of
+      // Vira's P8. The machine check is S1-per-home in surfaces.js; this is the
+      // same fact where a human reading the output can see it move.
+      if (r.homes.length > 1) {
+        for (const h of r.homes) {
+          const k = h.members.length;
+          console.log(`          ${k} · ${h.what} — ${h.declares}`);
+        }
+      }
       for (const m of r.missing) {
         console.log(`        ${m.member ? `${m.member} ` : ''}${m.why} — ${m.fix}`);
       }
@@ -84,6 +108,7 @@ async function selftest() {
   const { CATEGORY_ORDER } = await import('../src/ui/screens/settings.js');
   const { balance } = await import('../src/content/balance.js');
   const views = balance.equipment.views;
+  let savedMenu = null; // P9's stash — see the note at that plant for why it is here
 
   const plants = [
     ['a 7th row in MENU_TABS (journal) with no panel', 'overlayTab', 'journal',
@@ -173,6 +198,64 @@ async function selftest() {
       'overlayTab', null,
       async () => { const { MENU_TABS } = await import('../src/ui/uiContent.js'); MENU_TABS.__saved = MENU_TABS.splice(0, MENU_TABS.length); },
       async () => { const { MENU_TABS } = await import('../src/ui/uiContent.js'); MENU_TABS.push(...MENU_TABS.__saved); delete MENU_TABS.__saved; }],
+
+    // ---- VIKI, folding her re-gate: THE CLASS, NOT THE TAB STRIP ------------
+    //
+    // Her discharge was *"emptying EITHER home of a multi-home set fails by
+    // name"*, and she wrote down in the same breath that `overlayTab` is the
+    // first instance of a class rather than a one-off. P8 above proves one home
+    // of one set. These three are the rest of that sentence, because the fix I
+    // wrote claims all of it and a claim with no red is a sentence.
+    //
+    // P9. THE OTHER HOME OF THE SAME SET. Delete every `act: 'tab'` row from
+    // every context and the quick menu offers no way into any tab at all —
+    // while MENU_TABS still declares six and the union is still six. Her plant
+    // empties the DECLARING home; this one empties the NAVIGATING home, and
+    // "either" is a word a check earns by going red both ways.
+    ['every MENU row\'s `tab:` removed — the launcher offers no tab and the union hides it',
+      'overlayTab', null,
+      async () => {
+        const { MENU } = await import('../src/ui/uiContent.js');
+        // Stashed in a local, NOT on MENU: `menuAct.members()` maps every value
+        // of that object, so a stash hung there becomes a member called
+        // `undefined` and the plant would go red for its own bookkeeping.
+        savedMenu = {};
+        for (const k of Object.keys(MENU)) {
+          savedMenu[k] = MENU[k].slice();
+          MENU[k] = MENU[k].filter((r) => r.act !== 'tab');
+        }
+      },
+      async () => {
+        const { MENU } = await import('../src/ui/uiContent.js');
+        for (const k of Object.keys(savedMenu)) MENU[k] = savedMenu[k];
+        savedMenu = null;
+      }],
+
+    // P10. THE SECOND SET — Vira's seam, and the reason the fix is per home for
+    // every row rather than a special case for the tab strip. She swept this one
+    // because it cost a command and did not plant it: empty CATEGORY_ORDER, and
+    // settingsCategory is STILL SIX MEMBERS AND STILL GREEN, because the
+    // categories are derived from the rows and only the ORDER is authored. So
+    // the one design decision that screen carries stops existing in silence and
+    // Profile drifts behind Advanced. Milder than the tab strip and exactly the
+    // same defect — which is how we know it is a class.
+    ['CATEGORY_ORDER emptied — the only authored fact about settings, gone quietly',
+      'settingsCategory', null,
+      () => { CATEGORY_ORDER.__saved = CATEGORY_ORDER.splice(0, CATEGORY_ORDER.length); },
+      () => { CATEGORY_ORDER.push(...CATEGORY_ORDER.__saved); delete CATEGORY_ORDER.__saved; }],
+
+    // P11. THE SAME UNION HID A DUPLICATE, and I found this one while writing
+    // the fix rather than being handed it. `members()` used to dedupe ACROSS the
+    // homes with one `new Set`, which is right — a tab that is declared and also
+    // navigated to is the two homes agreeing. But the same Set also deduped
+    // WITHIN a home, so S2 ("no name is declared twice") could not fire on this
+    // set at all: two `deck` rows in MENU_TABS drew two identical buttons onto
+    // one panel and every check was green. Duplicates are now per home for the
+    // mirror-image reason that zero members is.
+    ['MENU_TABS declaring `deck` twice — two buttons, one panel, and S2 could not see it',
+      'overlayTab', 'deck',
+      () => { MENU_TABS.push({ id: 'deck', label: 'Deck', icon: '🂠', tip: 'x' }); },
+      () => { MENU_TABS.pop(); }],
   ];
 
   let reds = 0;

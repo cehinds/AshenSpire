@@ -860,11 +860,34 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury[data-slots='flank'] .armoury-right { max-width: 38rem; }
 
 /* flex:0 0 auto matters — the figure sits in a flex column and would otherwise
-   be squeezed to nothing by the slot blocks below it. */
-.armoury-figure { flex: 0 0 auto; width: 22rem; height: 28rem; position: relative; }
+   be squeezed to nothing by the slot blocks below it.
+
+   `--figure-w` IS THE FIGURE'S AUTHORED WIDTH, AND IT HAS ONE HOME (Viki,
+   2026-08-07). It was written twice: once here as a `width` for a row layout and
+   again in the narrow block at the bottom of this file as a `max-width` for a
+   column — each with its own `data-slots='flank'` override, so the fact "the
+   figure is wider when the slots flank it" existed in two places and nothing
+   kept them equal. In a row the property IS the width; in a column it is the
+   cap on a 100% width. Same number, one declaration, and the flank override is
+   now a single line instead of two.
+
+   THIS IS ALSO WHERE FREJA'S LINE WENT, and it is why she has nothing to delete.
+   Her armoury ruling (`freja/armoury-narrow-hierarchy`) stops offering a flank
+   view on a narrow layout, which made the narrow flank override unreachable
+   under it — a line she deliberately left rather than churn a branch inside a
+   gate, and named in her log so it would not be found later as rot. Deleting it
+   HERE would have been a live regression: this branch still offers flank at 390
+   and the cap really is 26rem today. Collapsed instead, so the number survives
+   while the second copy does not, and when her branch lands there is no
+   unreachable rule to remember — the cap is simply never 26rem where flank is
+   never offered. */
+.armoury-figure {
+  --figure-w: 22rem;
+  flex: 0 0 auto; width: var(--figure-w); height: 28rem; position: relative;
+}
 .armoury-figure img { width: 100%; height: 100%; object-fit: contain; }
 .armoury-figure > * { width: 100%; height: 100%; }
-.armoury[data-slots='flank'] .armoury-figure { width: 26rem; height: 33rem; }
+.armoury[data-slots='flank'] .armoury-figure { --figure-w: 26rem; height: 33rem; }
 
 .equip-slots { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .armoury[data-slots='list'] .equip-slots { justify-content: flex-start; }
@@ -995,11 +1018,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; }
 :root[data-layout='narrow'] .armoury-left { width: 100%; overflow-y: visible; }
 :root[data-layout='narrow'] .armoury-right { width: 100%; overflow-y: visible; }
-/* The figure is `flex: 0 0 auto` with a fixed 22rem width in a ROW; in a column
-   that fixed width is just a cap, and 100% lets it use the phone. Height stays
-   authored so the sprite keeps its proportions. */
-:root[data-layout='narrow'] .armoury-figure { width: 100%; max-width: 22rem; align-self: center; }
-:root[data-layout='narrow'] .armoury[data-slots='flank'] .armoury-figure { width: 100%; max-width: 26rem; }
+/* The figure has a fixed authored width in a ROW; in a column that width is just
+   a cap, and 100% lets it use the phone. Height stays authored so the sprite
+   keeps its proportions.
+
+   `--figure-w` is that authored width and it is declared once, up in the armoury
+   block — so this line no longer restates 22rem and there is no second line
+   restating the flank cell's 26rem. Whatever the cell asks for is what caps it
+   here, including a cell built tomorrow. */
+:root[data-layout='narrow'] .armoury-figure { width: 100%; max-width: var(--figure-w); align-self: center; }
 /* Slots wrap and centre rather than running off the right edge. */
 :root[data-layout='narrow'] .equip-slots { justify-content: center; width: 100%; }
 :root[data-layout='narrow'] .armoury[data-slots='list'] .equip-slots { justify-content: center; }
