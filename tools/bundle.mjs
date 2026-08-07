@@ -578,8 +578,12 @@ const moduleEntries = order
   })
   .join(',\n');
 
-const runtime = `${RUNTIME_OPEN}  var __modules = {
-${moduleEntries}
+// ONE HOME for the loader. The real runtime and the signature probe below are
+// the SAME code with a different registry — a probe against a re-typed copy of
+// the loader would be a check on my transcription, not on what ships.
+function assembleRuntime(entries, rootId) {
+  return `${RUNTIME_OPEN}  var __modules = {
+${entries}
   };
   var __cache = {};
   function require(id) {
@@ -591,8 +595,11 @@ ${moduleEntries}
     ${MODULE_CALL}
     return module.exports;
   }
-  require(${JSON.stringify(entryId)});
+  require(${JSON.stringify(rootId)});
 })();`;
+}
+
+const runtime = assembleRuntime(moduleEntries, entryId);
 
 const title = (/<title>([\s\S]*?)<\/title>/i.exec(indexHtml) || [, 'AshenSpire'])[1].trim();
 
@@ -652,6 +659,56 @@ if (!runtimeIsStrict) {
     + '  so it would now be checking a different language than the one the browser\n'
     + '  runs. Restore the strict directive in RUNTIME_OPEN.'
   );
+}
+
+// (3) ARGUMENTS. MODULE_SIGNATURE gives the declaration and the call site one
+//     home, so they cannot disagree about the COUNT. They can still agree on a
+//     wrong answer: Bjorn planted ['exports', 'module'] at the one home, the
+//     build exited 0, it shipped `factory(module, module, require);`, and all
+//     44 cases stayed green. It is latent only because no module body reads
+//     bare `exports` today (94 of 95 occurrences are `module.exports`; the
+//     95th is the parameter list) — which is what makes it the silent kind.
+//     His own sentence, turned on my fix: a consistency check is not a
+//     correctness check.
+//
+//     So ask the loader to DO ITS JOB rather than to look right. A synthetic
+//     module is run through the real loader — assembleRuntime, one home, so
+//     this is the code that ships — and it writes an export under each of the
+//     two names a body may use, then requires itself back. If `exports` is not
+//     `module.exports`, one of the two writes lands on an object nobody will
+//     ever read, and that is precisely the silent breakage. The probe is
+//     synthesised here, never read from the tree, so no content file can
+//     satisfy it. It executes only this synthetic module — no game code runs.
+const SIGNATURE_PROBE_ID = '__signature_probe__';
+const probeEntries = `${JSON.stringify(SIGNATURE_PROBE_ID)}: ${MODULE_FN}
+  if (typeof require !== 'function') throw new Error('the loader did not pass a callable require');
+  if (!module || typeof module !== 'object') throw new Error('the loader did not pass a module object');
+  if (!module.exports || typeof module.exports !== 'object') throw new Error('module.exports is not an object');
+  exports.viaExports = 'e';
+  module.exports.viaModule = 'm';
+  var back = require(${JSON.stringify(SIGNATURE_PROBE_ID)});
+  if (back.viaModule !== 'm') throw new Error('require() did not return module.exports');
+  if (back.viaExports !== 'e') throw new Error('exports is not module.exports — a body assigning to bare exports would be dropped');
+  globalThis.__signatureProbeOK = true;
+}`;
+{
+  const probeScope = { __signatureProbeOK: false };
+  let why = null;
+  try {
+    vm.runInNewContext(assembleRuntime(probeEntries, SIGNATURE_PROBE_ID), probeScope,
+      { filename: 'module-signature-probe' });
+  } catch (err) {
+    why = (err && err.message) || String(err);
+  }
+  if (probeScope.__signatureProbeOK !== true) {
+    fail(
+      'the module signature does not deliver what its parameter names promise:\n'
+      + '    ' + (why || 'the probe did not finish, and did not say why') + '\n'
+      + '  MODULE_SIGNATURE gives the declaration and the call site one home, which proves\n'
+      + '  they AGREE — not that they are RIGHT. Each pair is [parameter, argument]; check\n'
+      + '  that the argument really is the thing the parameter is named after.'
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -727,4 +784,20 @@ if (mapEntries === 0) {
 console.log('  literal refs     : all resolve');
 console.log('  output           : ' + idOf(OUT_PATH));
 console.log('  output size      : ' + bytes + ' bytes (' + kib + ' KiB)');
+
+// ---------------------------------------------------------------------------
+// What this OK does not cover. SPEC §8 clause 5, and it was unpaid in the tool
+// we just spent two commits hardening: nine lines of what the build did and
+// nothing on what it did not. A boundary in a file header is read by whoever
+// edits the tool; a boundary in the run's output is read by whoever is about
+// to trust the green — and that is the person who needs it.
+// ---------------------------------------------------------------------------
+console.log('BOUNDARY: every module was COMPILED, never RUN. A file that parses and throws');
+console.log('          on load builds clean here — that is node tests/run-node.mjs and the');
+console.log('          browser. Strictness and the module signature are asserted through');
+console.log('          node\'s parser and node\'s vm, so no browser has seen this bundle.');
+console.log('          Only LITERAL asset paths were resolved; paths built at runtime');
+console.log('          (`assets/x_${id}.webp`) are unchecked here — Vira audits those');
+console.log('          against the CSVs. dist/ is not this tool\'s to check: that is');
+console.log('          node tools/verify-shipped.mjs. Nothing above says the game plays.');
 process.exit(0);
