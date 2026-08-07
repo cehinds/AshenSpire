@@ -368,6 +368,48 @@ const UNENUMERATED_SETS = [
 {
   const app = appShotStates();
   const covered = new Set(SCREENS.map((s) => s.state).filter(Boolean));
+  // -------------------------------------------------------------------------
+  // DENOMINATOR 1 GETS THE FLOOR I WROTE FOR DENOMINATOR 2 AND NEVER GAVE IT.
+  //
+  // Vira withheld b7c8142 on this and blocked with my own reasons, which is the
+  // right way to be caught. `appShotStates()` is a REGEX OVER src/main.js. She
+  // reformatted 18 comparisons from `shotState === 'x'` to `shotState==='x'` —
+  // pure whitespace, the game unaffected — and got:
+  //
+  //   0 states: 6 to photograph, 5 excluded by name, 0 unaccounted
+  //   release-shots: OK — 2 shots …                                    exit=0
+  //
+  // A line that contradicts itself in place, and nothing failed. `gaps` cannot
+  // save it: filtering an empty list gives an empty list, so the emptier the
+  // reader gets the cleaner the report looks. The per-home floor for D2 is
+  // eighteen lines below at `:407` and says exactly this — I wrote the sentence
+  // once and gave it to one of the two denominators.
+  //
+  // TWO checks, because a floor only catches TOTAL blindness. Her plant killed
+  // all 18 matches; an edit that kills three would slip under a floor and print
+  // a smaller, confident number — the partial case is the one that survives.
+  // -------------------------------------------------------------------------
+  if (!app.length) {
+    console.error(`\nrelease-shots: derived ZERO ?shot= states from src/main.js.`);
+    console.error('An empty denominator is not full coverage — it is a home this tool can no longer');
+    console.error('read. appShotStates() is a regex over source; if the source moved, the regex is');
+    console.error('the thing to fix, not the number to trust.');
+    server.close();
+    process.exit(1);
+  }
+  // The JOIN, and it is the partial-blindness half: every state the SCREENS
+  // table claims to cover must actually appear in what the reader derived. If
+  // this tool says it photographs `map` and the derivation cannot see `map`,
+  // one of the two is wrong and neither is allowed to be silent about it.
+  const unseen = [...covered].filter((s) => !app.includes(s));
+  if (unseen.length) {
+    console.error(`\nrelease-shots: SCREENS claims to cover state(s) the reader cannot find in src/main.js: ${unseen.join(', ')}.`);
+    console.error(`It derived ${app.length}: ${app.join(', ')}.`);
+    console.error('Either the state was renamed and this table is stale, or appShotStates() has gone');
+    console.error('partly blind. Both are defects; a smaller confident number is the worse one.');
+    server.close();
+    process.exit(1);
+  }
   const gaps = app.filter((s) => !covered.has(s) && !EXCLUDED_STATES[s]);
   console.log(`DENOMINATOR 1 — top-level states · home: src/main.js (?shot= states)`);
   // "photographed" is a PAST TENSE about work that has not started — this block
@@ -571,7 +613,10 @@ const reap = () => {
   try { browser.kill('SIGKILL'); } catch { /* already gone */ }
 };
 process.on('exit', reap);
-for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { reap(); process.exit(130); });
+// SIGHUP too (Vira's word): a closed terminal is the commonest way a long run
+// ends, and it was the one signal that still leaked. SIGKILL cannot be caught
+// and that browser survives — an honest limit, not an oversight.
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { reap(); process.exit(130); });
 process.on('uncaughtException', (err) => { reap(); console.error(err); process.exit(2); });
 
 const BROWSER_WS = await new Promise((ok, no) => {
