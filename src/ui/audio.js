@@ -11,7 +11,7 @@
 
 import { balance } from '../content/balance.js';
 import { MUSIC_MANIFEST, SCALES, BEDS } from '../content/music.js';
-import { SFX_MANIFEST, SFX_RECIPES } from '../content/sfx.js';
+import { SFX_MANIFEST, SFX_RECIPES, resolveRecipe } from '../content/sfx.js';
 import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
 
 // Default levels for a profile that has never touched the sliders — one source,
@@ -131,8 +131,26 @@ export function initAudio(settings = {}) {
   // hook, validated with the bundle. This engine speaks exactly two words,
   // tone and noise; a recipe is a list of layers in that vocabulary, and an id
   // with no entry plays the table's own `default` — audible, never silent.
+  // Ids the fallback has already named once — the warning is for whoever is
+  // building, not a per-frame spam channel (`hit` fires dozens of times a
+  // combat, and a warning nobody can read is the same silence in a new coat).
+  const warnedFallback = new Set();
+
   function synthSfx(id) {
-    const recipe = own(SFX_RECIPES, id) || SFX_RECIPES.default;
+    const { recipe, fellBack } = resolveRecipe(id);
+    if (fellBack && !warnedFallback.has(id)) {
+      // THE FALLBACK NAMES ITSELF (Sunna's finding at #66): music() has warned
+      // by name and pointed at its own file since word 3, while synthSfx —
+      // eleven lines away — degraded in total silence. That asymmetry is how
+      // three composed ids played the 440 Hz blip through a whole release
+      // candidate with nobody's console saying a word.
+      warnedFallback.add(id);
+      console.warn(
+        `[audio] sfx('${id}'): no recipe answers this id — playing the default blip. ` +
+          `Author a row named '${id}', or a family row named '${String(id).split('_')[0]}', ` +
+          `in src/content/sfx.js.`
+      );
+    }
     for (const { kind, ...params } of recipe) {
       if (kind === 'noise') noise(params);
       else tone(params);
