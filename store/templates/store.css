@@ -28,6 +28,42 @@ body { background: var(--bg); font-family: var(--font-body); }
   opacity: 0.45;
 }
 
+/* ── FLAG 1: the plume (store/templates/taste.js → plume) ───────────────────
+   Sunna read the plate's cloud-mass as "a pale cloud, never smoke from the
+   spire." All three answers are authored here; the body attribute chooses.
+   Geometry note: .spire is 88% tall against the bottom and its clip-path puts
+   the apex at 50% x, 12% down its own box — 22.6% down the board. The plume is
+   anchored to THAT point, so it has a source instead of being weather that
+   happens to be there.
+   The headroom is the constraint and it is small: the apex sits 22.6% down, so
+   on a 430px header there are ~97px of sky above it. A column drawn taller than
+   that gets cut by the board and reads as a wedge — seen, at first render. So
+   the plume is BILLOWS, not a cone: stacked ellipses that widen and cool as
+   they climb, with a mask that dissolves the top before any edge can be cut.
+   No clip-path anywhere — a clipped edge is a straight line, and smoke has
+   none. */
+body[data-plume='off']   .plate,
+body[data-plume='smoke'] .plate { display: none; }
+body[data-plume='cloud'] .plume,
+body[data-plume='off']   .plume { display: none; }
+
+.plume {
+  position: absolute; left: 50%; bottom: 76%;
+  width: 78%; height: 30%;
+  transform: translateX(-50%);
+  /* lit from below by the ember at the peak, ash-cold as it drifts */
+  background:
+    radial-gradient(ellipse 9% 30% at 50% 100%, rgba(var(--accent-rgb), 0.34) 0%, rgba(var(--accent-rgb), 0) 72%),
+    radial-gradient(ellipse 12% 26% at 49% 88%, rgba(206, 196, 176, 0.30) 0%, rgba(206, 196, 176, 0) 74%),
+    radial-gradient(ellipse 18% 26% at 55% 64%, rgba(196, 186, 166, 0.24) 0%, rgba(196, 186, 166, 0) 74%),
+    radial-gradient(ellipse 26% 26% at 43% 44%, rgba(184, 174, 156, 0.18) 0%, rgba(184, 174, 156, 0) 76%),
+    radial-gradient(ellipse 36% 26% at 58% 22%, rgba(170, 162, 146, 0.12) 0%, rgba(170, 162, 146, 0) 78%);
+  filter: blur(9px);
+  /* dissolve before the canvas edge, so nothing is ever cut */
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 34%, rgba(0, 0, 0, 0) 92%);
+  mask-image: linear-gradient(to top, #000 0%, #000 34%, rgba(0, 0, 0, 0) 92%);
+}
+
 /* Dusk field behind everything: warm ember glow low, night at the edges. */
 .field {
   position: absolute; inset: 0;
@@ -76,9 +112,14 @@ body { background: var(--bg); font-family: var(--font-body); }
 /* The map-graph constellation (drawn by motif.js into this element). */
 .graph { position: absolute; inset: 0; }
 .graph svg { width: 100%; height: 100%; display: block; }
-.m-edge { stroke: var(--line-soft); stroke-width: 2; fill: none; }
+/* Map structure rides --map-structure, not --line-soft: since #45 the game's
+   roads and plain rings have their own token (styles/base.css), and the store
+   speaks the game's language or it speaks a copy. Identical pixels under
+   hi-contrast (both #85714f) — verified, the capsules came back byte-identical;
+   the difference appears only if the palette flag ever moves to 'atmospheric'. */
+.m-edge { stroke: var(--map-structure); stroke-width: 2; fill: none; }
 .m-traveled { stroke: var(--gold); stroke-width: 3; fill: none; }
-.m-ring { stroke: var(--line-soft); stroke-width: 2; fill: var(--panel); }
+.m-ring { stroke: var(--map-structure); stroke-width: 2; fill: var(--panel); }
 .m-ring.lit { stroke: var(--gold); }
 
 /* The wordmark: the title screen's own treatment (.title-big — --font-display,

@@ -14,9 +14,13 @@ html, body { background: transparent; }
 .wordmark { font-size: 168px; text-shadow: 0 0 46px rgba(var(--accent-rgb), 0.4), 0 3px 16px rgba(0, 0, 0, 0.8); }
 </style>
 </head>
-<body class="hi-contrast">
+<body>
 <div class="stack">
   <div class="wordmark">ASHEN SPIRE</div>
 </div>
+<script type="module">
+  import { TASTE } from './taste.js';
+  if (TASTE.palette === 'hi-contrast') document.body.classList.add('hi-contrast');
+</script>
 </body>
 </html>

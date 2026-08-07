@@ -5,26 +5,39 @@
 <title>Ashen Spire — library hero</title>
 <link rel="stylesheet" href="store.css">
 <style>
-/* Library hero (3840x1240): artwork only — Steam requires NO words here; the
-   library logo is composited on top by the client. Vector + gradient carry the
-   canvas because the raster plates are 720px wide and would smear at 3840; the
-   plate rides as low texture only. */
+/* Library hero (3840x1240): artwork only — Steam requires NO words here
+   ("There should be no words at all in this asset", /doc/store/assets/rules);
+   the library logo is composited on top by the client. Vector + gradient carry
+   the canvas because the raster plates are 720px wide and would smear at 3840;
+   the plate rides as low texture only.
+
+   THE SAFE AREA, re-read at the primary 2026-08-07: a centred 860x380 region
+   stays uncropped at every client window size — 22.4% x 30.6% of this canvas.
+   Everything load-bearing (the spire apex, the plume's source, the lit node)
+   sits inside it; the composition extends past it because Steam crops from the
+   edges inward, never from the middle.
+   The same file is re-rendered at 1438x810 as the optional store Page
+   Background — ambient artwork, no words, which is exactly this canvas's job. */
 .plate { opacity: 0.35; filter: saturate(0.8) brightness(0.55) blur(2px); }
 .spire { height: 96%; opacity: 0.96; }
 .graph svg { transform: scale(1.02); }
 </style>
 </head>
-<body class="hi-contrast">
+<body>
 <div class="board">
   <div class="field"></div>
   <div class="plate"></div>
+  <div class="plume"></div>
   <div class="spire"></div>
   <div class="graph" id="graph"></div>
   <div class="veil"></div>
   <div class="embers"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
 </div>
 <script src="motif.js"></script>
-<script>
+<script type="module">
+  import { TASTE } from './taste.js';
+  document.body.dataset.plume = TASTE.plume;
+  if (TASTE.palette === 'hi-contrast') document.body.classList.add('hi-contrast');
   window.drawMotif(document.getElementById('graph'), { rows: 6, cols: 9, opacity: 0.5 });
 </script>
 </body>

@@ -12,9 +12,9 @@
 body[data-kind='header']   .wordmark { font-size: 92px; }
 body[data-kind='header']   .sub      { font-size: 19px; }
 body[data-kind='small']    .wordmark { font-size: 58px; letter-spacing: 0.04em; }
-body[data-kind='small']    .sub      { display: none; } /* Steam: small capsule is mostly logo */
 body[data-kind='small']    .graph,
 body[data-kind='small']    .plate,
+body[data-kind='small']    .plume,
 body[data-kind='small']    .spire    { display: none; }
 body[data-kind='main']     .wordmark { font-size: 132px; }
 body[data-kind='main']     .sub      { font-size: 26px; }
@@ -25,31 +25,68 @@ body[data-kind='library']  .sub      { font-size: 17px; }
 /* Portrait canvases: lettering rides the upper third, spire fills below. */
 body[data-kind='vertical'] .stack,
 body[data-kind='library']  .stack { justify-content: flex-start; padding-top: 9%; }
+
+/* FLAG 3 — the distinct library header (taste.js → libraryHeader:'distinct').
+   Steam's guidance for this slot is branding, not key art: "focus on the
+   branding of your product ... make sure the logo is clearly legible"
+   (/doc/store/assets/libraryassets). So: wordmark larger and seated left the
+   way the client stacks it, constellation off, spire quiet behind. Same
+   920x430 artboard, different job.
+   The plate goes with it: dropping the spire to 74% uncovers the act-1 sky,
+   and the pale mass Sunna flagged then floats free and reads as an OBJECT over
+   the ridge (seen, at first render of this variant) — the clearest picture yet
+   of why flag 1 exists. Branding-forward means no raster to misread. */
+body[data-kind='library-header'] .graph,
+body[data-kind='library-header'] .plate { display: none; }
+body[data-kind='library-header'] .spire { height: 74%; opacity: 0.7; }
+body[data-kind='library-header'] .stack { align-items: flex-start; padding-left: 6%; text-align: left; }
+body[data-kind='library-header'] .wordmark { font-size: 104px; }
+body[data-kind='library-header'] .sub { font-size: 19px; }
+
+/* FLAG 2 — the descriptor line. The generator decides per asset from the
+   narrowest width Steam ever DISPLAYS that asset at (the table lives in
+   tools/store-assets.mjs) against taste.js → subtitleMinWidth, and passes the
+   answer as ?sub=. A missing param renders no descriptor on purpose: a
+   template that shows more than the shipped PNG is a preview that lies. */
+body[data-sub='off'] .sub { display: none; }
 </style>
 </head>
-<body class="hi-contrast"><!-- the shipped default palette: highContrast defaults true -->
+<body>
 <div class="board">
   <div class="field"></div>
   <div class="plate"></div>
+  <div class="plume"></div>
   <div class="spire"></div>
   <div class="graph" id="graph"></div>
   <div class="veil"></div>
   <div class="embers"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="stack">
     <div class="wordmark" id="wm">ASHEN SPIRE</div>
-    <div class="sub">A ROGUELIKE DECKBUILDER</div>
+    <div class="sub" id="sub"></div>
   </div>
 </div>
 <script src="motif.js"></script>
-<script>
-  const kind = new URLSearchParams(location.search).get('kind') || 'header';
-  document.body.dataset.kind = kind;
+<script type="module">
+  import { TASTE } from './taste.js';
+  const q = new URLSearchParams(location.search);
+  const kind = q.get('kind') || 'header';
+  const body = document.body;
+
+  body.dataset.kind = kind;
+  body.dataset.plume = TASTE.plume;
+  body.dataset.sub = q.get('sub') === 'on' ? 'on' : 'off';
+  // The palette is a body class, exactly as the game applies it: hi-contrast
+  // is the shipped default (highContrast defaults true), atmospheric is the
+  // bare :root. See taste.js → palette for why the store ships one.
+  if (TASTE.palette === 'hi-contrast') body.classList.add('hi-contrast');
+  document.getElementById('sub').textContent = TASTE.subtitleText;
+
   const portrait = kind === 'vertical' || kind === 'library';
   if (portrait) {
     document.getElementById('wm').classList.add('stacked');
     document.getElementById('wm').innerHTML = '<span>ASHEN</span><span>SPIRE</span>';
   }
-  if (kind !== 'small') {
+  if (kind !== 'small' && kind !== 'library-header') {
     window.drawMotif(document.getElementById('graph'), {
       rows: portrait ? 7 : 5,
       cols: portrait ? 4 : 6,

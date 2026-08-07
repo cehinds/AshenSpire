@@ -5,25 +5,35 @@
 <title>Ashen Spire — icon</title>
 <link rel="stylesheet" href="store.css">
 <style>
-/* Community icon (184x184) and client icon (32x32): one mark, no letters —
-   a spire peak with its ember, ringed the way a map node is ringed. Vector,
-   so both sizes come from the same drawing; at 32px the ring thickens via
-   ?tiny=1 so the mark survives (a hairline ring at 32px is under a pixel).
+/* The two icons Steam actually asks for (/doc/store/assets/community,
+   re-read at the primary 2026-08-07):
+     · Shortcut Icon — 256x256 or 512x512, PNG or ICO, alpha kept. Steam
+       generates the .ico itself from the PNG.
+     · App Icon — 184x184 JPG, shown small (library list, chat favourites,
+       notifications, Deck). No alpha channel exists in a JPEG, and when Steam
+       derives this icon from the shortcut icon it replaces alpha with SOLID
+       BLACK — so this one is authored on an opaque ground (?opaque=1) rather
+       than left to a format's default.
+   One mark, no letters: a spire peak with its ember, ringed the way a map node
+   is ringed. Vector, so every size comes from the same drawing — the ring is
+   3 units in a 0..100 viewBox, i.e. 3% of the canvas at any size, so it can
+   never fall under a pixel at a size we ship. (The old ?tiny=1 thickening
+   existed for a 32x32 asset; the primary source has no such size, and the
+   asset it served is gone.)
    All ink is tokens — the same palette the game resolves. */
 html, body { background: transparent; }
+body.opaque, body.opaque .mark { background: var(--bg); }
 .mark { position: absolute; inset: 0; }
 .mark svg { width: 100%; height: 100%; display: block; }
 .i-field { fill: var(--bg); }
 .i-ring { fill: none; stroke: var(--gold); stroke-width: 3; }
-body.tiny .i-ring { stroke-width: 6; }
 .i-spire-far { fill: var(--panel); }
 .i-spire-near { fill: var(--bg-raise); }
 .i-ember { fill: var(--gold); }
 .i-halo { fill: none; stroke: var(--gold); stroke-opacity: 0.35; }
-body.tiny .i-halo { display: none; }
 </style>
 </head>
-<body class="hi-contrast">
+<body>
 <div class="mark">
   <svg viewBox="0 0 100 100">
     <rect class="i-field" x="2" y="2" width="96" height="96" rx="18"/>
@@ -36,8 +46,10 @@ body.tiny .i-halo { display: none; }
     <circle class="i-halo" cx="52" cy="16" r="8"/>
   </svg>
 </div>
-<script>
-  if (new URLSearchParams(location.search).get('tiny') === '1') document.body.classList.add('tiny');
+<script type="module">
+  import { TASTE } from './taste.js';
+  if (TASTE.palette === 'hi-contrast') document.body.classList.add('hi-contrast');
+  if (new URLSearchParams(location.search).get('opaque') === '1') document.body.classList.add('opaque');
 </script>
 </body>
 </html>
