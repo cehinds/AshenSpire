@@ -55,6 +55,7 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio } from './ui/audio.js';
+import { surfaceReport } from './ui/surfaces.js';
 
 const app = document.getElementById('app');
 
@@ -77,6 +78,28 @@ if (!validation.ok) {
     (hidden > 0 ? `\n · …and ${hidden} more — all ${validation.errors.length} are in the browser console.` : '');
   document.body.prepend(banner);
   console.error('Content validation errors:', validation.errors);
+}
+
+// ---- navigable surfaces: declared, and handled (#78) -----------------------
+// The same shape as the block above and for the same reason. A surface declared
+// in data with no handler used to render something PLAUSIBLE — a hybrid layout,
+// an empty panel, a lone heading — so it never reached a banner or a console.
+//
+// It does NOT throw here, deliberately. `assertSurfaces()` throws for the suite
+// and for tools/surfaces.mjs, where a hard exit is the point; on the boot path a
+// throw is the blank screen #77 was about, and a blank screen is a worse failure
+// than the one being reported. Banner, name, console — then the game runs.
+{
+  const missing = surfaceReport().filter((r) => r.missing.length);
+  if (missing.length) {
+    const banner = document.createElement('div');
+    banner.className = 'validation-banner';
+    banner.textContent = 'NAVIGABLE SURFACE DECLARED WITH NO HANDLER\n'
+      + missing.flatMap((r) => r.missing.map((m) => ` · ${r.id}${m.member ? ` · ${m.member}` : ''}`
+        + ` ${m.why} — ${m.fix}`)).join('\n');
+    document.body.prepend(banner);
+    console.error('[surfaces]', missing);
+  }
 }
 
 const registries = createRegistries(contentBundle);

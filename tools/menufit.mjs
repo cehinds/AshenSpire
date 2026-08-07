@@ -124,7 +124,12 @@ const CELLS = `(() => { const n=(v)=>+(+v).toFixed(2);
     if (r.top>=port.top-0.5 && r.bottom<=port.bottom+0.5 && r.left>=-0.5 && r.right<=innerWidth+0.5) noScroll++;
   }
   return { clipped, worst: clipped? n(worst): 100, eg: out.slice(0,2), total, noScroll,
-    view: (document.querySelector('.armoury')||{className:''}).className.replace(/.*view-(\\w+).*/,'$1') }; })()`;
+    view: (document.querySelector('.armoury')||{dataset:{}}).dataset.view || '?' }; })()`;
+// data-view on .armoury, not a view-<id> class. The class was the id spelled
+// into the stylesheet, which is what #78 removed — the layout is now said by
+// [data-figure]/[data-slots] and the id names only which row is on. NOTE the old
+// regex had no failure case: with no match String.replace returns the subject, so
+// this tool printed opens='armoury' and read the element's class as a view name.
 
 const OVERLAY = `(() => { const n=(v)=>+(+v).toFixed(2);
   const veil=document.querySelector('.modal-veil'); if(!veil) return {error:'no overlay'};

@@ -208,7 +208,23 @@ export const balance = {
     // A player's own saved equipView still wins over this; it is what a phone
     // OPENS on, never what it is allowed to show.
     narrowDefaultView: 'rack',
-    views: ['grid', 'rack', 'hybrid'],
+    // A VIEW DESCRIBES ITSELF; the screen derives the layout (#78, Law 0 cl.1).
+    // These were three bare ids and `equipment.js` was `if (view === 'grid') …
+    // else …`, so a fourth id rendered AS HYBRID and said nothing — the author
+    // did the data-driven thing correctly and got a silently wrong screen.
+    //
+    // Two characteristics are the whole difference, and every rule in ui.css
+    // that used to key off `.view-<id>` keys off one of them now:
+    //   figure — is the dressed class figure on screen at all
+    //   slots  — 'flank': slot blocks split either side of the figure
+    //            'list':  slot blocks in one column beside it
+    // Both are CLOSED sets. An unknown value fails loud and names this row
+    // rather than falling through to something plausible (Law 1 clause 5).
+    views: [
+      { id: 'grid', figure: true, slots: 'flank' },
+      { id: 'rack', figure: false, slots: 'list' },
+      { id: 'hybrid', figure: true, slots: 'list' },
+    ],
     spriteReacts: 'full', // 'none' | 'hands' | 'full'
 
     // Floors of the mod system, so a piece can't be authored past the point

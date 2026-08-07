@@ -7,6 +7,7 @@
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { openDebugLog } from '../debuglog.js';
+import { esc } from '../components/tooltip.js';
 import { renderProfileSection } from './profileArchive.js';
 import { renderAboutSection } from './about.js';
 import { AUDIO_DEFAULTS } from '../audio.js';
@@ -102,15 +103,56 @@ const ROWS = [
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
 ];
 
-// 'Profile' is the calm-moment route to set-aside profiles and runs (#67).
-// It renders only when a save manager is passed in — a section that promises a
-// drawer it cannot open would be the same broken promise one layer down.
+// ---- categories: a heading is DERIVED from what is under it (#78) ----------
+//
+// This used to be a hand-written list of six names, and `renderSettings` looked
+// up `ROWS.filter(r => r.cat === cat)`. A name in that list with no rows and no
+// section rendered a LONE HEADING — the author did the data-driven thing and got
+// a promise with nothing behind it, in silence.
+//
+// So the list is no longer authored. A category EXISTS because something is
+// filed under it: a `cat:` on a row, or a section below. What stays authored is
+// the ORDER, which is a design decision and not derivable — and a name in the
+// order that nothing files under is a defect that fails by name at boot
+// (assertSurfaces, src/ui/surfaces.js), not a heading over nothing.
+//
+// Adding a settings row under a brand-new category needs NO edit here: the
+// heading appears, after the ordered ones, in the order its first row appears.
+//
+// SECTIONS are the two categories whose contents are code rather than rows.
+// 'Profile' is the calm-moment route to set-aside profiles and runs (#67); its
+// mount renders only when a save manager is passed in — a section that promises
+// a drawer it cannot open would be the same broken promise one layer down.
 // 'About' carries the AI-use acknowledgement, rendered from its one home in
 // src/content/aiDisclosure.js — the same text the store page shows (#69).
-// EXPORTED so the release harness can DERIVE the settings sub-surface list from
-// this one home instead of retyping it (tools/release-shots.mjs, denominator 2).
-// Exporting is not a second copy — it is what stops one being written.
-export const SETTINGS_CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
+const SECTIONS = {
+  Profile: { mount: 'set-profile-mount', needs: 'saves' },
+  About: { mount: 'set-about-mount', needs: null },
+};
+
+export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
+
+/**
+ * categoryHandler(cat) → what will render under that heading, or null.
+ *
+ * Null is the whole point: it is the difference between a heading with contents
+ * and a heading with a promise. assertSurfaces() turns null into a named boot
+ * failure; nothing here guesses.
+ */
+export function categoryHandler(cat) {
+  if (SECTIONS[cat]) return SECTIONS[cat];
+  const rows = ROWS.filter((r) => r.cat === cat);
+  return rows.length ? { rows } : null;
+}
+
+/** Every category that exists, in the order it is drawn. Derived, one home. */
+export function settingsCategories() {
+  const found = [...new Set([...ROWS.map((r) => r.cat), ...Object.keys(SECTIONS)])];
+  // An authored name nothing files under is KEPT in place, not dropped: dropping
+  // it is the silence again. It renders its own defect and assertSurfaces names
+  // it. Anything filed under a name the order does not mention goes last.
+  return [...CATEGORY_ORDER, ...found.filter((c) => !CATEGORY_ORDER.includes(c))];
+}
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
@@ -269,24 +311,33 @@ function toggleFullscreen() {
 export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onProfileRestored = null }) {
   let html = '';
   if (grouped) {
-    for (const cat of SETTINGS_CATEGORIES) {
-      if (cat === 'Profile') {
-        if (!saves) continue; // no manager, no promise
-        html += `<h3 class="set-cat">Profile</h3><div class="set-profile-mount"></div>`;
+    // `data-member` on the heading is the house convention for a navigable set
+    // (#78): the host names the set, each member names itself, so an instrument
+    // reads this off the rendered page instead of importing three modules.
+    for (const cat of settingsCategories()) {
+      const h = categoryHandler(cat);
+      const head = `<h3 class="set-cat" data-member="${esc(cat)}">${esc(cat)}</h3>`;
+      if (!h) {
+        // The lone heading, made loud. It cannot reach a player — the boot
+        // assert fails first — so this is what a developer sees on the way.
+        html += head + `<p class="set-note">Nothing is filed under "${esc(cat)}".`
+          + ' Give it a row (<code>cat:</code>) or a section, or take it out of'
+          + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
         continue;
       }
-      if (cat === 'About') {
-        html += `<h3 class="set-cat">About</h3><div class="set-about-mount"></div>`;
+      if (h.needs === 'saves' && !saves) continue; // no manager, no promise
+      if (h.mount) {
+        html += head + `<div class="${h.mount}"></div>`;
         continue;
       }
-      const rows = ROWS.filter((r) => r.cat === cat);
-      html += `<h3 class="set-cat">${cat}</h3>` + rows.map((r) => rowHtml(settings, r)).join('');
+      html += head + h.rows.map((r) => rowHtml(settings, r)).join('');
     }
   } else {
     html = ROWS.map((r) => rowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
   container.setAttribute('data-settings-host', '');
+  if (grouped) container.setAttribute('data-surface', 'settingsCategory');
 
   const profileMount = container.querySelector('.set-profile-mount');
   // onRestored was a parameter renderProfileSection accepted, called — and that

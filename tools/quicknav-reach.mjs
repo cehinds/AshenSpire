@@ -288,13 +288,17 @@ try {
         }
 
         // R5 — the ring wraps at BOTH ends, over the same set either way.
+        // The strip's member id is read from data-member, not data-tab: #78 put
+        // every navigable set on one convention — data-surface on the host,
+        // data-member on each control — so an instrument can enumerate a set off
+        // the rendered page instead of importing the module that declared it.
         const tabIds = await ev(`(() => {
           const s = window.__qnTabs; return s || null; })()`);
         void tabIds;
         const order = [];
         const cur = async () => ev(`(() => {
           const on = document.querySelector('.ov-tab.on');
-          if (on) return on.dataset.tab;
+          if (on) return on.dataset.member;
           const sw = document.querySelector('#ov-switch');
           return sw ? sw.textContent.replace(/\\s*▾\\s*$/, '').replace(/\\s*\\(\\d+\\)\\s*$/, '') : null;
         })()`);
