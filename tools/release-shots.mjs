@@ -288,12 +288,27 @@ const SUB_SURFACE_GROUPS = [
     group: 'armoury',
     what: 'armoury layout views',
     home: 'src/content/balance.js — balance.equipment.views',
-    ids: () => (balance.equipment.views || []).slice(),
+    // The home holds a LIST OF NAMES; what a name is written as is the home's
+    // business, not this tool's. Today it is a bare string; EldenSpire#78 makes
+    // it `{ id, figure, slots }`, because two characteristics are the smallest
+    // honest description of three layouts. Both are read here, and ANYTHING ELSE
+    // STOPS THE RUN BY NAME — never `.filter(Boolean)`, which would drop the
+    // unreadable row and quietly shrink the denominator. That is Law 0 clause 5
+    // and it is the failure this whole file exists to make loud.
+    ids: () => (balance.equipment.views || []).map((v, i) => {
+      if (typeof v === 'string' && v) return v;
+      if (v && typeof v === 'object' && typeof v.id === 'string' && v.id) return v.id;
+      console.error(`\nrelease-shots: balance.equipment.views[${i}] is ${JSON.stringify(v)} —`);
+      console.error('this tool reads a view name as a string or as a row with a string `id`.');
+      console.error('Neither fits, so the armoury denominator cannot be derived and no number');
+      console.error('printed below it would mean anything. Fix the row, or teach this reader.');
+      return process.exit(1);
+    }),
     // The second home of this closed set, and the one the DOM cannot see: a
     // layout view IS a stylesheet rule. `kanban` renders under no rule at all,
     // which is why its alignment was a value nobody authored. Pre-browser.
     authoredIn: {
-      what: 'a `.view-<id>` rule in styles/',
+      what: '`.view-<id>` rule in styles/',
       dir: 'styles',
       pattern: (id) => new RegExp(`\\.view-${id}\\b`),
     },
@@ -387,6 +402,32 @@ const ARTIFACT = readFileSync(resolve(ROOT, idOfArtifact), 'utf8');
     }
     // Pre-browser: is every derived member authored in its OTHER home? For the
     // armoury that home is the stylesheet, and it is where `kanban` was absent.
+    //
+    // THIS CHECK READ THE FILE, NOT THE STYLESHEET, AND I FOUND IT BY RUNNING
+    // THE TOOL AGAINST #78 (2026-08-07). That branch converts every
+    // `.armoury.view-<id>` rule to `[data-figure]` / `[data-slots]` and leaves
+    // ONE comment behind naming the three ids it deleted:
+    //
+    //   /* … used to name an id (.view-grid / .view-rack / .view-hybrid), which
+    //      made the stylesheet a second, silent decider of the layout … */
+    //
+    // `pattern(id).test(css)` matched that comment. Every view passed. A gate
+    // whose whole job is "somebody authored a rule for this view" was satisfied
+    // by prose SAYING THE RULE WAS REMOVED — and unlike the other three couplings
+    // to that branch, this one does not crash and does not MISS. It goes green.
+    // Measured both edges on a `5c49fed` worktree: as Viki wrote it, the gate
+    // passes; delete six words from inside that comment and nothing else, and it
+    // reds on grid, rack and hybrid. A stylesheet whose RULES are byte-identical
+    // must not change this verdict.
+    //
+    // So the pattern is tested against SELECTOR TEXT ONLY: comments stripped,
+    // then everything before each `{` — which is the only place a rule can name
+    // a class. Declaration values and prose cannot answer for a selector.
+    const selectorTextOf = (css) => css
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')      // comments are not rules
+      .split('}')
+      .map((block) => block.split('{')[0])    // …and neither are declarations
+      .join('\n');
     if (g.authoredIn) {
       const dir = resolve(ROOT, g.authoredIn.dir);
       const css = readdirSync(dir).filter((f) => f.endsWith('.css'))
@@ -396,8 +437,18 @@ const ARTIFACT = readFileSync(resolve(ROOT, idOfArtifact), 'utf8');
         console.error('An unreadable home is unknown, not authored. Fix the path.');
         process.exit(1);
       }
+      const selectors = selectorTextOf(css);
+      // A check that cannot fail is not a check — the same clause the armoury's
+      // `assert` already carries. If stripping left nothing, the reader is
+      // broken, and reporting "all authored" from an empty string is the exact
+      // green this whole block exists to stop.
+      if (!selectors.trim().length) {
+        console.error(`\nrelease-shots: '${g.group}' read ${css.length} bytes of CSS and found ZERO selector text.`);
+        console.error('The selector reader is broken; every member would pass for the wrong reason.');
+        process.exit(1);
+      }
       const unauthored = ids.filter((id) => !EXCLUDED_SUBSURFACES[`${g.group}:${id}`]
-        && !g.authoredIn.pattern(id).test(css));
+        && !g.authoredIn.pattern(id).test(selectors));
       if (unauthored.length) {
         console.error(`\nrelease-shots: ${g.group} member(s) with no ${g.authoredIn.what}: ${unauthored.join(', ')}`);
         console.error(`A member of ${g.home} that nothing in ${g.authoredIn.dir}/ styles renders under whatever`);
