@@ -10186,15 +10186,33 @@ function validateContent(bundle) {
   // Every red names its row and, for tag errors, lists the legal tags — a
   // wrong tag teaches the vocabulary instead of just refusing (silence-word
   // standard).
+  //
+  // finitePositive is the SHARED gate for every numeric knob in this layer
+  // (Vira's gate finding 1 — the recurring class: `typeof x === 'number' &&
+  // x > 0` waves Infinity through, and Infinity validates green then
+  // multiplies damage at play). One helper, every site, instead of a fourth
+  // hand-written patch.
+  const finitePositive = (v) => typeof v === 'number' && Number.isFinite(v) && v > 0;
+  const finitePositiveInt = (v) => Number.isInteger(v) && v > 0; // isInteger already rejects ±Infinity/NaN
+  const finitePercent = (v) => finitePositive(v) && v <= 100;
   for (const st of b.statuses || []) {
     const path = `statuses.${st.id}`;
     if (st.proc) {
       const p = st.proc;
-      if (!(Number.isInteger(p.threshold) && p.threshold > 0)) {
-        err(`${path}.proc.threshold`, `threshold must be an integer > 0, got ${JSON.stringify(p.threshold)}`);
+      if (!finitePositiveInt(p.threshold)) {
+        err(`${path}.proc.threshold`, `threshold must be a finite integer > 0, got ${JSON.stringify(p.threshold)}`);
       }
-      if (!(typeof p.burstPercent === 'number' && p.burstPercent > 0 && p.burstPercent <= 100)) {
-        err(`${path}.proc.burstPercent`, `burstPercent must be a number in (0, 100], got ${JSON.stringify(p.burstPercent)}`);
+      if (!finitePercent(p.burstPercent)) {
+        err(`${path}.proc.burstPercent`, `burstPercent must be a finite number in (0, 100], got ${JSON.stringify(p.burstPercent)}`);
+      }
+      // The burst band is a damage floor/ceiling: negatives validate a proc
+      // that fires and silently no-ops (loseHp clamps at 0) — a dead row in
+      // burst clothing (Vira's finding 1, second half).
+      if (!(Number.isInteger(p.burstMin) && p.burstMin >= 0)) {
+        err(`${path}.proc.burstMin`, `burstMin must be a finite integer ≥ 0, got ${JSON.stringify(p.burstMin)}`);
+      }
+      if (!finitePositiveInt(p.burstMax)) {
+        err(`${path}.proc.burstMax`, `burstMax must be a finite integer > 0 — a 0-or-negative cap is a proc that silently no-ops, got ${JSON.stringify(p.burstMax)}`);
       }
       if (Number.isInteger(p.burstMin) && Number.isInteger(p.burstMax) && p.burstMin > p.burstMax) {
         err(`${path}.proc`, `burstMin ${p.burstMin} exceeds burstMax ${p.burstMax}`);
@@ -10208,6 +10226,12 @@ function validateContent(bundle) {
             err(`${path}.proc.resistance.tags`, `unknown creature tag '${tag}' (legal: ${CREATURE_TAGS.join(', ')})`);
           }
         }
+        // Empty tag list = a resistance the proc can never grant — same dead
+        // shape as an empty taggedVulnerability list, held to the same red
+        // (Vira's finding 3: one screen, one rule).
+        if (!(p.resistance.tags || []).length) {
+          err(`${path}.proc.resistance.tags`, 'tag list must be non-empty — a resistance no creature tag can trigger is a dead row; omit resistance instead');
+        }
         const resistDef = (b.statuses || []).find((s) => s && s.id === p.resistance.status);
         if (resistDef && !resistDef.resists) {
           err(`${path}.proc.resistance.status`, `'${p.resistance.status}' has no resists block — a proc's resistance status must declare what it resists`);
@@ -10215,8 +10239,14 @@ function validateContent(bundle) {
       }
     }
     if (st.resists) {
-      if (!(typeof st.resists.percent === 'number' && st.resists.percent > 0 && st.resists.percent <= 100)) {
-        err(`${path}.resists.percent`, `resist percent must be a number in (0, 100], got ${JSON.stringify(st.resists.percent)}`);
+      if (!finitePercent(st.resists.percent)) {
+        err(`${path}.resists.percent`, `resist percent must be a finite number in (0, 100], got ${JSON.stringify(st.resists.percent)}`);
+      }
+      // Reverse-direction check (Vira's finding 2): a resist row naming a
+      // status that never procs is consulted by nobody — dead, silently.
+      const resisted = (b.statuses || []).find((s) => s && s.id === st.resists.status);
+      if (resisted && !resisted.proc) {
+        err(`${path}.resists.status`, `'${st.resists.status}' is not a threshold-proc status — this resist row would never be consulted`);
       }
       if (!(st.decay && typeof st.decay === 'object' && Number.isInteger(st.decay.duration) && st.decay.duration > 0)) {
         err(`${path}.decay`, `a resist row needs decay {duration: int > 0} — its duration is a table knob, got ${JSON.stringify(st.decay)}`);
@@ -10229,8 +10259,8 @@ function validateContent(bundle) {
           err(`${path}.taggedVulnerability.tags`, `unknown effect tag '${tag}' (legal: ${[...tagIds].join(', ')})`);
         }
       }
-      if (!(typeof tv.mult === 'number' && tv.mult > 0)) {
-        err(`${path}.taggedVulnerability.mult`, `mult must be a number > 0, got ${JSON.stringify(tv.mult)}`);
+      if (!finitePositive(tv.mult)) {
+        err(`${path}.taggedVulnerability.mult`, `mult must be a finite number > 0, got ${JSON.stringify(tv.mult)}`);
       }
       if (!(tv.tags || []).length) {
         err(`${path}.taggedVulnerability.tags`, 'tag list must be non-empty — an unscoped extra vulnerability is plain Vulnerable, use modifiers instead');

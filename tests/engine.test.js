@@ -86,6 +86,10 @@ const TEST_CARDS = [
   { id: 'tInsanity14', name: 'T Insanity', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'applyStatus', target: 'enemy', status: 'insanity', stacks: 14 }], textTemplate: 'Apply {insanity} Insanity.' },
   { id: 'tStarHit', name: 'T Star Hit', class: 'colorless', rarity: 'special', cost: 0, type: 'attack', keywords: [], effects: [{ op: 'damage', target: 'enemy', amount: 10, tags: ['starstone'] }], textTemplate: 'Deal {damage} damage.' },
   { id: 'tPlainHit', name: 'T Plain Hit', class: 'colorless', rarity: 'special', cost: 0, type: 'attack', keywords: [], effects: [{ op: 'damage', target: 'enemy', amount: 10 }], textTemplate: 'Deal {damage} damage.' },
+  // 7g collision fixture (Vira's drive, made display-conformant: tokens bind
+  // both applications — her probe card's bare 'Collide.' was the one
+  // non-conformance her gate note named).
+  { id: 'tCollide', name: 'T Collide', class: 'colorless', rarity: 'special', cost: 1, type: 'skill', keywords: [], effects: [{ op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 12 }, { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 10 }], textTemplate: 'Apply {bleed} Bleed and {frost} Frost.' },
 ];
 
 const TEST_ENEMIES = [
@@ -462,8 +466,57 @@ export async function runTests({ artManifest = null } = {}) {
       withStatus({ ...base, id: 'zzProc7', proc: { threshold: 12, burstPercent: 15, burstMin: 40, burstMax: 35 } }),
       'statuses.zzProc7.proc', 'burstMin 40 exceeds burstMax 35', 'min > max'
     );
+    // Vira's gate, finding 1 — the recurring finite class, closed by ONE
+    // shared helper (finitePositive in validate.js), not a fourth patch.
+    // Both were OBSERVED GREEN at ab33e41 before the helper landed.
+    expectRed(
+      withStatus({ ...base, id: 'zzProc8', taggedVulnerability: { tags: ['starstone'], mult: Infinity, stacking: 'multiplicative' } }),
+      'statuses.zzProc8.taggedVulnerability.mult', 'finite', 'mult Infinity (damage *= Infinity at play)'
+    );
+    expectRed(
+      withStatus({ ...base, id: 'zzProc9', proc: { threshold: 12, burstPercent: 15, burstMin: -10, burstMax: -5 } }),
+      'statuses.zzProc9.proc.burstMin', '≥ 0', 'negative burst band (a proc that fires and silently no-ops)'
+    );
+    // Finding 2 — reverse-direction: a resist row naming a non-proc status is
+    // consulted by nobody.
+    expectRed(
+      withStatus({ ...base, id: 'zzProc10', decay: { duration: 2 }, stackMode: 'refresh', resists: { status: 'weak', percent: 50 } }),
+      'statuses.zzProc10.resists.status', 'never be consulted', 'resist row pointing at a non-proc status'
+    );
+    // Finding 3 — empty resistance.tags held to the same red as empty
+    // taggedVulnerability.tags: one screen, one rule.
+    expectRed(
+      withStatus({ ...base, id: 'zzProc11', proc: { threshold: 12, burstPercent: 15, burstMin: 8, burstMax: 35, resistance: { status: 'bleedResist', tags: [] } } }),
+      'statuses.zzProc11.proc.resistance.tags', 'non-empty', 'empty resistance tag gate (a resistance no creature can trigger)'
+    );
     // Both shipped edges stay green: the real bundle validates.
     assert(validateContent(contentBundle).ok, 'shipped bundle stays green');
+  });
+
+  // ---- 7g. The collision drive (#61, Marina's rider — Vira drove it at the
+  // gate, this is her drive as a fixture): two procs, one card play, one
+  // beast-tagged target. Everything must hold at once: both bursts attributed,
+  // both resets exact, both resistances granted. -------------------------------
+  test('7g. bleed 12 + frost 10 in one play on a beast: both proc, 8+4 attributed, both reset, both resistances land', () => {
+    const c = makeCombat({ deck: ['tCollide'], enemies: ['tBeast'] });
+    const e1 = getEntity(c, 'e1');
+    playFromHand(c, 'tCollide');
+    const procs = logOf(c, 'procBurst').filter((e) => e.targetId === 'e1');
+    eq(procs.length, 2, 'both procs fired from one card play');
+    eq(procs.filter((e) => e.status === 'bleed')[0].amount, 8, 'bleed burst min-clamped to 8');
+    eq(procs.filter((e) => e.status === 'frost')[0].amount, 4, 'frost burst min-clamped to 4');
+    // Attribution: each burst is its own hpLost with its own cause — 8+4,
+    // never a merged 12 (the own-proc invariant under collision).
+    const losses = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1');
+    eq(losses.filter((e) => e.cause === 'proc:bleed').reduce((s, e) => s + e.amount, 0), 8, 'bleed loss attributed proc:bleed');
+    eq(losses.filter((e) => e.cause === 'proc:frost').reduce((s, e) => s + e.amount, 0), 4, 'frost loss attributed proc:frost');
+    eq(e1.hp, 30 - 12, 'total 12 landed, as two entries');
+    eq(e1.statuses.bleed.meter.value, 0, 'bleed build-up reset exactly to zero');
+    eq(e1.statuses.frost.meter.value, 0, 'frost build-up reset exactly to zero');
+    eq(S.getStacks(e1, 'bleedResist'), 1, 'Clotted granted — beast matched bleed\'s gate');
+    eq(S.getStacks(e1, 'frostResist'), 1, 'Weathered granted — beast matched frost\'s gate');
+    eq(S.getStacks(e1, 'weak'), 1, 'frost\'s Weak landed through the collision');
+    eq(S.getStacks(e1, 'frostExposed'), 1, 'frost\'s exposure landed through the collision');
   });
 
   // ---- 8. Crimson Blight: tick / expire after 3 / refresh ---------------------------
