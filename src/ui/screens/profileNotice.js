@@ -156,8 +156,44 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
       </div>`;
     app.appendChild(wrap);
     const cancel = wrap.querySelector('.cancel');
-    cancel.addEventListener('click', () => wrap.remove());
+
+    // A REAL focus trap (Sunna D9). The scrim stopped the mouse and nothing
+    // else: five focusables sat reachable behind the open dialog, Escape did
+    // nothing, and clicking the scrim did nothing. Nothing irreversible was
+    // reachable back there, so it was confusing rather than dangerous — but a
+    // dialog you can Tab out of is not a dialog.
+    const behind = [...app.querySelectorAll('.profile-notice button, .profile-notice a[href], .profile-notice [tabindex]')];
+    behind.forEach((el) => {
+      el.setAttribute('tabindex', '-1');
+      el.setAttribute('aria-hidden', 'true');
+    });
+    const close = () => {
+      behind.forEach((el) => {
+        el.removeAttribute('tabindex');
+        el.removeAttribute('aria-hidden');
+      });
+      document.removeEventListener('keydown', onKey, true);
+      wrap.remove();
+      $('.fresh').focus(); // the cursor comes back to where it left
+    };
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key !== 'Tab') return;
+      const stops = [...wrap.querySelectorAll('button')];
+      if (!stops.length) return;
+      const first = stops[0];
+      const last = stops[stops.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || !wrap.contains(active))) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (active === last || !wrap.contains(active))) { e.preventDefault(); first.focus(); }
+    }
+    document.addEventListener('keydown', onKey, true);
+    // Clicking the scrim — outside the box — dismisses, matching every other
+    // veil in the game.
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
+    cancel.addEventListener('click', close);
     wrap.querySelector('.go').addEventListener('click', () => {
+      document.removeEventListener('keydown', onKey, true);
       saves.startNewProfile(); // archives the old bytes first (save.js) — Vira D1
       onContinue();
     });

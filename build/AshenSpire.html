@@ -1312,6 +1312,24 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .confirm-fresh .actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 .confirm-fresh button { min-height: 44px; padding: 0 14px; }
 
+/* ---- Settings → Profile (#67): the calm-moment route to the archive -------
+   Box geometry in px (chrome — Law 4). Entry actions wrap on narrow screens
+   without the destructive-by-accident weighting Sunna caught on the notice. */
+.prof-archive { display: flex; flex-direction: column; gap: 10px; }
+.prof-state { font-weight: 600; }
+.prof-entry {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-start;
+  border: 1px solid var(--line, #33291f); border-radius: 6px; padding: 10px;
+}
+.prof-entry-what { flex: 1 1 14rem; min-width: 0; }
+.prof-entry-what .prof-why { opacity: 0.75; word-break: break-word; }
+.prof-entry-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.prof-entry-actions button { min-height: 44px; padding: 0 12px; }
+.prof-confirm { flex: 1 1 100%; border-top: 1px solid var(--line, #33291f); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.prof-confirm p { line-height: 1.5; }
+.prof-result { min-height: 20px; color: var(--muted); line-height: 1.4; }
+.prof-empty { line-height: 1.5; }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -2692,6 +2710,9 @@ function showTitle() {
 function showSettings() {
   openSettings({
     meta: saves.loadMeta(),
+    // The Profile section (#67) needs the manager itself: it lists, exports and
+    // restores archives. Without it the section does not render at all.
+    saves,
     onChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
@@ -17307,8 +17328,44 @@ function mountProfileNotice(app, { saves, status, onContinue }) {
       </div>`;
     app.appendChild(wrap);
     const cancel = wrap.querySelector('.cancel');
-    cancel.addEventListener('click', () => wrap.remove());
+
+    // A REAL focus trap (Sunna D9). The scrim stopped the mouse and nothing
+    // else: five focusables sat reachable behind the open dialog, Escape did
+    // nothing, and clicking the scrim did nothing. Nothing irreversible was
+    // reachable back there, so it was confusing rather than dangerous — but a
+    // dialog you can Tab out of is not a dialog.
+    const behind = [...app.querySelectorAll('.profile-notice button, .profile-notice a[href], .profile-notice [tabindex]')];
+    behind.forEach((el) => {
+      el.setAttribute('tabindex', '-1');
+      el.setAttribute('aria-hidden', 'true');
+    });
+    const close = () => {
+      behind.forEach((el) => {
+        el.removeAttribute('tabindex');
+        el.removeAttribute('aria-hidden');
+      });
+      document.removeEventListener('keydown', onKey, true);
+      wrap.remove();
+      $('.fresh').focus(); // the cursor comes back to where it left
+    };
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key !== 'Tab') return;
+      const stops = [...wrap.querySelectorAll('button')];
+      if (!stops.length) return;
+      const first = stops[0];
+      const last = stops[stops.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || !wrap.contains(active))) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (active === last || !wrap.contains(active))) { e.preventDefault(); first.focus(); }
+    }
+    document.addEventListener('keydown', onKey, true);
+    // Clicking the scrim — outside the box — dismisses, matching every other
+    // veil in the game.
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
+    cancel.addEventListener('click', close);
     wrap.querySelector('.go').addEventListener('click', () => {
+      document.removeEventListener('keydown', onKey, true);
       saves.startNewProfile(); // archives the old bytes first (save.js) — Vira D1
       onContinue();
     });
@@ -19090,6 +19147,11 @@ function openOverlay({ registries, run, meta, onSettingsChange, onSave, onQuit, 
     else if (id === 'relics') renderRelics(body);
     else if (id === 'stats') renderStats(body);
     else if (id === 'save') renderSave(body);
+    // No `saves` here ON PURPOSE, so the Profile section does not render in the
+    // in-run overlay (#67): restoring an archived profile replaces the live one,
+    // and offering that mid-run — three floors into a climb — is the opposite of
+    // the calm moment the surface exists for. Its home is the title screen's
+    // Settings. Do not "fix" this by passing the manager through.
     else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}) });
     else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
   }
@@ -19269,6 +19331,7 @@ Object.assign(module.exports, { overlayIsOpen, closeOverlay, openOverlay });
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 const { openDebugLog } = require("src/ui/debuglog.js");
+const { renderProfileSection } = require("src/ui/screens/profileArchive.js");
 const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
 const { balance } = require("src/content/balance.js");
 
@@ -19362,7 +19425,10 @@ const ROWS = [
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
 ];
 
-const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Advanced'];
+// 'Profile' is the calm-moment route to set-aside profiles and runs (#67).
+// It renders only when a save manager is passed in — a section that promises a
+// drawer it cannot open would be the same broken promise one layer down.
+const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced'];
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
@@ -19518,10 +19584,15 @@ function toggleFullscreen() {
  * Fills `container` with the settings controls and wires change events.
  * grouped=true adds category headers.
  */
-function renderSettings(container, { settings, onChange, grouped = true }) {
+function renderSettings(container, { settings, onChange, grouped = true, saves = null }) {
   let html = '';
   if (grouped) {
     for (const cat of CATEGORIES) {
+      if (cat === 'Profile') {
+        if (!saves) continue; // no manager, no promise
+        html += `<h3 class="set-cat">Profile</h3><div class="set-profile-mount"></div>`;
+        continue;
+      }
       const rows = ROWS.filter((r) => r.cat === cat);
       html += `<h3 class="set-cat">${cat}</h3>` + rows.map((r) => rowHtml(settings, r)).join('');
     }
@@ -19529,6 +19600,9 @@ function renderSettings(container, { settings, onChange, grouped = true }) {
     html = ROWS.map((r) => rowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
+
+  const profileMount = container.querySelector('.set-profile-mount');
+  if (profileMount && saves) renderProfileSection(profileMount, { saves });
 
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
@@ -19600,7 +19674,7 @@ function renderSettings(container, { settings, onChange, grouped = true }) {
   });
 }
 
-function openSettings({ meta, onChange }) {
+function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
@@ -19611,7 +19685,7 @@ function openSettings({ meta, onChange }) {
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
-  renderSettings(veil.querySelector('.set-body'), { settings, onChange });
+  renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
 
   const close = () => veil.remove();
   veil.addEventListener('click', (e) => {
@@ -19622,6 +19696,167 @@ function openSettings({ meta, onChange }) {
 
 
 Object.assign(module.exports, { settingOn, renderSettings, openSettings });
+
+},
+"src/ui/screens/profileArchive.js": function (module, exports, require) {
+// src/ui/screens/profileArchive.js — Settings → Profile (#67, Sunna's D8/D5).
+//
+// WHY THIS FILE EXISTS. The crisis dialog told the player "You can come back to
+// it any time from Settings → Profile" and Settings had Display, Audio,
+// Accessibility, Advanced — no Profile. The word "archive" appeared on no
+// screen in the game, and profileNotice.js was the only file that had ever
+// called listArchives/getArchive/exportArchive/restoreProfile. Constantine's
+// answer to that was one word — "build" — so the surface exists and the
+// sentence becomes true rather than being cut.
+//
+// It also closes Sunna's D5: the handle used to live only inside a dialog that
+// fires once per session, so past that screen by any route a player could never
+// reach their archived profile again. The drawer's handle was fitted to a door
+// that locks behind you. This is the calm-moment route — the person who needs
+// it on Tuesday is the whole point.
+//
+// HER MUSTS BIND HERE, and they shaped the decisions:
+//   · The comfort is the FACT of preservation, not its contents — so every
+//     entry shows what it is, when it was set aside and how big, even when the
+//     bytes themselves cannot be read (which is the normal case).
+//   · Nothing irreversible is forced, and "start a new profile" is NOT on this
+//     screen at all: on a calm day there is no reason to offer it, and its only
+//     honest home is the crisis dialog behind its confirm.
+//   · A failed restore never consumes the archive, and says so.
+//
+// PROSE IS DRAFT where Sunna has not written copy for this surface, and marked
+// so below; her replacements land verbatim as they did on the notice screen.
+
+const { esc } = require("src/ui/components/tooltip.js");
+
+// Human time, not a log line — same rule as the notice screen (Sunna).
+function humanTime(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+}
+
+function humanSize(bytes) {
+  if (!bytes) return null;
+  return bytes < 1024 ? `${bytes} bytes` : `${Math.round(bytes / 1024)} KB`;
+}
+
+// What an entry IS, in the player's words rather than ours.
+function describe(entry) {
+  if (entry.kind === 'meta') return 'Profile';
+  return entry.slot ? `Run · slot ${entry.slot}` : 'Run';
+}
+
+/**
+ * renderProfileSection(container, { saves, onRestored })
+ * Fills `container` with the Profile section. Every fact comes from
+ * saves.profileStatus() / listArchives() — nothing is re-derived here.
+ */
+function renderProfileSection(container, { saves, onRestored }) {
+  const status = saves.profileStatus();
+  const archives = saves.listArchives().slice().reverse(); // newest first
+
+  // DRAFT COPY (Sunna's to replace) — the state line. It exists so the screen
+  // answers "is my profile alright?" before it answers "what is in the drawer".
+  const stateLine = {
+    ok: 'Your profile is fine.',
+    empty: 'No profile yet — one is created when you finish your first run.',
+    migrated: 'Your profile was saved by an older version and has been brought forward.',
+    recovered: 'Your profile was restored from the backup copy after a bad read.',
+    corrupt: 'Your profile could not be read. It has been set aside — it is listed below.',
+    older: 'Your profile is from an older version we cannot open. It has been set aside — it is listed below.',
+    newer: 'Your profile is from a newer version. It has been left exactly as it is; update the game to open it.',
+  }[status.state] || 'Your profile is fine.';
+
+  const rows = archives.length
+    ? archives.map((a) => {
+        const when = humanTime(a.at);
+        const size = humanSize(a.bytes);
+        const again = a.count > 1 && a.lastSeenAt
+          ? ` · seen ${a.count} times, most recently ${humanTime(a.lastSeenAt)}`
+          : '';
+        return `
+          <div class="prof-entry" data-id="${esc(a.id)}">
+            <div class="prof-entry-what">
+              <b>${esc(describe(a))}</b>
+              <p class="set-note">${esc([when && `Set aside ${when}`, size].filter(Boolean).join(' · '))}${esc(again)}</p>
+              <p class="set-note prof-why">${esc(a.reason || '')}</p>
+            </div>
+            <div class="prof-entry-actions">
+              <button class="prof-export" data-id="${esc(a.id)}">Save a copy to a file</button>
+              ${a.kind === 'meta' ? `<button class="prof-restore subtle" data-id="${esc(a.id)}">Restore this profile</button>` : ''}
+            </div>
+          </div>`;
+      }).join('')
+    // DRAFT COPY: the empty state must not read as a failure — an empty drawer
+    // is the good outcome, and this screen is most often opened by someone
+    // curious rather than someone hurt.
+    : '<p class="set-note prof-empty">Nothing has been set aside. That is the good news — this list fills only when a profile or a run could not be read.</p>';
+
+  container.innerHTML = `
+    <div class="prof-archive">
+      <p class="prof-state">${esc(stateLine)}</p>
+      <p class="set-note">Set-aside profiles and runs are kept with this game’s data on this device. They are never deleted to make room for anything else.</p>
+      ${rows}
+      <p class="prof-result" role="status"></p>
+    </div>`;
+
+  const say = (msg) => { const el = container.querySelector('.prof-result'); if (el) el.textContent = msg; };
+
+  container.querySelectorAll('.prof-export').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const text = saves.exportArchive(btn.dataset.id);
+      if (!text) { say('That copy is no longer available.'); return; }
+      const blob = new Blob([text], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ashen-spire-${btn.dataset.id}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      say('Saved. Keep that file somewhere safe.');
+    });
+  });
+
+  container.querySelectorAll('.prof-restore').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      // The risk is stated BEFORE the click does anything, in the button's own
+      // confirmation — not after, and not in a tooltip nobody opens.
+      const entry = btn.closest('.prof-entry');
+      if (entry.querySelector('.prof-confirm')) return;
+      const box = document.createElement('div');
+      box.className = 'prof-confirm';
+      // DRAFT COPY (Sunna's to replace).
+      box.innerHTML = `
+        <p>Restore this profile? It replaces the profile you are using now — which will be set aside here in its place, not deleted.
+        This copy was set aside because it could not be read, so restoring it may not work. Nothing is lost by trying.</p>
+        <div class="prof-entry-actions">
+          <button class="prof-cancel">Not yet</button>
+          <button class="prof-go subtle">Restore it</button>
+        </div>`;
+      entry.appendChild(box);
+      box.querySelector('.prof-cancel').addEventListener('click', () => box.remove());
+      box.querySelector('.prof-cancel').focus();
+      box.querySelector('.prof-go').addEventListener('click', () => {
+        const res = saves.restoreProfile(btn.dataset.id);
+        if (res.ok) {
+          say('Restored. Your profile is the one you just chose.');
+          renderProfileSection(container, { saves, onRestored });
+          if (onRestored) onRestored();
+          return;
+        }
+        // A failed restore NEVER consumes the archive, and says so — Sunna's
+        // must, and the same sentence the crisis screen uses.
+        box.remove();
+        say(`That didn’t work — those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.`);
+      });
+    });
+  });
+}
+
+
+Object.assign(module.exports, { renderProfileSection });
 
 },
 "src/ui/audio.js": function (module, exports, require) {

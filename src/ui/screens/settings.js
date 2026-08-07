@@ -7,6 +7,7 @@
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { openDebugLog } from '../debuglog.js';
+import { renderProfileSection } from './profileArchive.js';
 import { AUDIO_DEFAULTS } from '../audio.js';
 import { balance } from '../../content/balance.js';
 
@@ -100,7 +101,10 @@ const ROWS = [
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
 ];
 
-const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Advanced'];
+// 'Profile' is the calm-moment route to set-aside profiles and runs (#67).
+// It renders only when a save manager is passed in — a section that promises a
+// drawer it cannot open would be the same broken promise one layer down.
+const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced'];
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
@@ -256,10 +260,15 @@ function toggleFullscreen() {
  * Fills `container` with the settings controls and wires change events.
  * grouped=true adds category headers.
  */
-export function renderSettings(container, { settings, onChange, grouped = true }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null }) {
   let html = '';
   if (grouped) {
     for (const cat of CATEGORIES) {
+      if (cat === 'Profile') {
+        if (!saves) continue; // no manager, no promise
+        html += `<h3 class="set-cat">Profile</h3><div class="set-profile-mount"></div>`;
+        continue;
+      }
       const rows = ROWS.filter((r) => r.cat === cat);
       html += `<h3 class="set-cat">${cat}</h3>` + rows.map((r) => rowHtml(settings, r)).join('');
     }
@@ -267,6 +276,9 @@ export function renderSettings(container, { settings, onChange, grouped = true }
     html = ROWS.map((r) => rowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
+
+  const profileMount = container.querySelector('.set-profile-mount');
+  if (profileMount && saves) renderProfileSection(profileMount, { saves });
 
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
@@ -338,7 +350,7 @@ export function renderSettings(container, { settings, onChange, grouped = true }
   });
 }
 
-export function openSettings({ meta, onChange }) {
+export function openSettings({ meta, onChange, saves = null }) {
   const settings = meta.settings || (meta.settings = {});
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
@@ -349,7 +361,7 @@ export function openSettings({ meta, onChange }) {
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
-  renderSettings(veil.querySelector('.set-body'), { settings, onChange });
+  renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
 
   const close = () => veil.remove();
   veil.addEventListener('click', (e) => {

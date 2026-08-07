@@ -608,6 +608,9 @@ function showTitle() {
 function showSettings() {
   openSettings({
     meta: saves.loadMeta(),
+    // The Profile section (#67) needs the manager itself: it lists, exports and
+    // restores archives. Without it the section does not render at all.
+    saves,
     onChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);

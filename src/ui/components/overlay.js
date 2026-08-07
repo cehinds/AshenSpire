@@ -90,6 +90,11 @@ export function openOverlay({ registries, run, meta, onSettingsChange, onSave, o
     else if (id === 'relics') renderRelics(body);
     else if (id === 'stats') renderStats(body);
     else if (id === 'save') renderSave(body);
+    // No `saves` here ON PURPOSE, so the Profile section does not render in the
+    // in-run overlay (#67): restoring an archived profile replaces the live one,
+    // and offering that mid-run — three floors into a climb — is the opposite of
+    // the calm moment the surface exists for. Its home is the title screen's
+    // Settings. Do not "fix" this by passing the manager through.
     else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}) });
     else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
   }

@@ -1072,3 +1072,21 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .confirm-fresh .confirm-box p { line-height: 1.5; }
 .confirm-fresh .actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 .confirm-fresh button { min-height: 44px; padding: 0 14px; }
+
+/* ---- Settings → Profile (#67): the calm-moment route to the archive -------
+   Box geometry in px (chrome — Law 4). Entry actions wrap on narrow screens
+   without the destructive-by-accident weighting Sunna caught on the notice. */
+.prof-archive { display: flex; flex-direction: column; gap: 10px; }
+.prof-state { font-weight: 600; }
+.prof-entry {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-start;
+  border: 1px solid var(--line, #33291f); border-radius: 6px; padding: 10px;
+}
+.prof-entry-what { flex: 1 1 14rem; min-width: 0; }
+.prof-entry-what .prof-why { opacity: 0.75; word-break: break-word; }
+.prof-entry-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.prof-entry-actions button { min-height: 44px; padding: 0 12px; }
+.prof-confirm { flex: 1 1 100%; border-top: 1px solid var(--line, #33291f); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.prof-confirm p { line-height: 1.5; }
+.prof-result { min-height: 20px; color: var(--muted); line-height: 1.4; }
+.prof-empty { line-height: 1.5; }
