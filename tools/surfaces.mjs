@@ -139,6 +139,40 @@ async function selftest() {
     ['a MENU row whose `tab:` names a tab nobody declares', 'overlayTab', 'jornal',
       async () => { const { MENU } = await import('../src/ui/uiContent.js'); MENU.map.push({ act: 'tab', tab: 'jornal', band: 'body' }); },
       async () => { const { MENU } = await import('../src/ui/uiContent.js'); MENU.map.pop(); }],
+
+    // ---- OPEN, and it goes MISS on purpose (Vira, re-gate of 918a9a8) -------
+    //
+    // P8. THE EMPTY EDGE WENT OUT WITH THE FIX FOR P7, and it is the same
+    // species as the defect that fix closed. `overlayTab.members()` is now the
+    // UNION of two homes — MENU_TABS (which DECLARES the strip) and
+    // menuTabRefs() (which NAVIGATES to it). That union is right and it is what
+    // catches `tab: 'jornal'`. But S1 guards the union, so the set can lose an
+    // entire home and still report coverage: empty MENU_TABS and members() is
+    // still the five tabs the MENU rows point at, every one of them resolving
+    // through PANELS. `RESULT: … 0 declared with no handler`, exit 0, suite 50
+    // passed — while the overlay strip declares NOTHING, the folded switcher has
+    // nothing, and Law 3's bumper ring has nothing to cycle. The member count
+    // drops 6 → 5 and the verdict stays OK: a shrinking denominator with a green
+    // verdict, which is the finding this whole card came from.
+    //
+    // Observed as a REGRESSION, not a standing gap: the identical plant against
+    // this branch's own parent 08f1037 prints `declares ZERO members`.
+    //
+    // The guard's own docstring above still says *"Zero members is not full
+    // coverage — it is a home the reader can no longer read (Bjorn's
+    // `views = []` red is the precedent)"*. With two homes and one union that
+    // sentence is no longer true of this set, and a comment promising a guard
+    // the code does not give is how the next reader trusts it.
+    //
+    // The property, and it is Marina's own mirrored: A GUARD PROVEN OVER ONE
+    // HOME MUST BE RE-PROVEN WHEN THE SET GAINS A SECOND. Closes when emptying
+    // either home of a multi-home set fails by name — S1 per home rather than
+    // per union. I have not written that; the shape of it is `members()`
+    // becoming a list of homes, and the choice is the file owner's.
+    ['MENU_TABS emptied — the strip declares nothing and the union hides it',
+      'overlayTab', null,
+      async () => { const { MENU_TABS } = await import('../src/ui/uiContent.js'); MENU_TABS.__saved = MENU_TABS.splice(0, MENU_TABS.length); },
+      async () => { const { MENU_TABS } = await import('../src/ui/uiContent.js'); MENU_TABS.push(...MENU_TABS.__saved); delete MENU_TABS.__saved; }],
   ];
 
   let reds = 0;
