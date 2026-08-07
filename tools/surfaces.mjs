@@ -9,6 +9,11 @@
 // thing correctly and got a broken screen in silence (Law 0 clause 5).
 //
 // WHAT IT ASSERTS, over every row of src/ui/surfaces.js:
+//   S0  EVERY HOME CAN BE READ AT ALL — the read is attempted, never trusted, and
+//       a home that throws or hands back something that is not a list is a
+//       FINDING NAMING THAT HOME, not an exception. S1 counts members; a home
+//       that cannot be read never produces one, and on the boot path that was a
+//       blank page in the shipped bundle (Vira's P12)
 //   S1  EVERY HOME OF THE SET declares at least one member — ZERO IS NOT FULL
 //       COVERAGE, it is a home the reader can no longer read (Bjorn's
 //       `views = []` red). Per home, not per set: a set with two homes and one
@@ -256,6 +261,35 @@ async function selftest() {
       'overlayTab', 'deck',
       () => { MENU_TABS.push({ id: 'deck', label: 'Deck', icon: '🂠', tip: 'x' }); },
       () => { MENU_TABS.pop(); }],
+
+    // P12. THE READ PATH — Vira again, at the re-gate of 3010a72, and it is her
+    // own P8 one keystroke further with a strictly worse outcome. S1 counts
+    // members; a home that cannot be READ never produces a member, because the
+    // reader dies first. `export const MENU_TABS = null;` threw straight through
+    // `main.js:93` and the shipped bundle booted to an EMPTY PAGE — no banner, no
+    // message, no game — eleven lines under a comment explaining that this check
+    // does not throw on the boot path because *"a throw is the blank screen #77
+    // was about."* The intent was right and it was implemented for the findings
+    // path only.
+    //
+    // Her plant is a SOURCE edit (`= null` on a const export). This one is the
+    // same defect reachable in memory, and it is an authoring act of the same
+    // size: null out one context of the MENU table, the way someone does while
+    // commenting a screen's rows out. Two sets read that table, so TWO go red —
+    // `overlayTab`'s navigating home and `menuAct`'s only home — which is right,
+    // and is the per-home report saying exactly which reads broke.
+    ['MENU.map nulled — a home that cannot be READ, which used to blank the page',
+      'overlayTab', null,
+      async () => {
+        const { MENU } = await import('../src/ui/uiContent.js');
+        savedMenu = { map: MENU.map };
+        MENU.map = null;
+      },
+      async () => {
+        const { MENU } = await import('../src/ui/uiContent.js');
+        MENU.map = savedMenu.map;
+        savedMenu = null;
+      }],
   ];
 
   let reds = 0;
