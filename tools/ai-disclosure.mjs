@@ -20,7 +20,7 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { AI_DISCLOSURE, disclosureAsText } from '../src/content/aiDisclosure.js';
+import { AI_DISCLOSURE, DISCLOSURE_PARTS, disclosureAsText } from '../src/content/aiDisclosure.js';
 
 const SURFACES = ['build/AshenSpire.html', 'dist/AshenSpire.html'];
 
@@ -41,10 +41,20 @@ const EVIDENCE = [
 
 const shellForm = (e) => `grep ${e.argv.map((a) => (/[\s|]/.test(a) ? `'${a}'` : a)).join(' ')}`;
 
-/** Every text the game shows, each of which must survive into the bundles. */
+/**
+ * Every text that must survive into the bundles, as the ATOMS they are written
+ * as. `storeForm` is assembled from two of them, so binding the assembled
+ * string would look for text the bundle never contains — the parts are what the
+ * bundler carries, and binding the parts binds the whole.
+ *
+ * The runtime claim is in this list deliberately: it is `runtimeCheck.claim`,
+ * the sentence `--evidence` prints as the thing the falsifier proves. It used
+ * to be a second, differently-worded copy that nothing rendered and nothing
+ * bound — the one sentence in the file with no reader (Bjorn's find).
+ */
 function allTexts(d = AI_DISCLOSURE) {
   return [
-    { name: 'storeForm', text: d.storeForm },
+    ...DISCLOSURE_PARTS.map((p) => ({ name: p.name, text: p.text })),
     ...d.sections.map((s) => ({ name: `section: ${s.heading}`, text: s.body })),
   ];
 }
