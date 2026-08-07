@@ -58,12 +58,18 @@ export const SFX_RECIPES = {
   // own sounds like a burst, not like a missing sound. The three per-status
   // rows below are the flourish — same gesture, different material, so a
   // player learns which threshold blew without reading the banner.
-  // (This family row IS the old `bleedBurst`, kept whole: that id had no
-  // caller left after #65 renamed the event, and a table entry nothing fires
-  // is the second copy this house kills. Promoted rather than deleted.)
+  // (This row was promoted from the old `bleedBurst`, which lost its caller at
+  // #65. RETUNED at Sunna's gate: promoting it verbatim made the family row
+  // and `procBurst_bleed` the same sound — 0.5 dB apart A-weighted, measured —
+  // so the FOURTH proc status would have been heard as bleed. A false
+  // identity costs a tired player more than a generic one, so the family is
+  // now the GESTURE WITHOUT THE MATERIAL: mid-register triangle, mid-band
+  // noise, no wet low-mid. It should read "a threshold blew" and claim no
+  // element. Each sibling owns a different timbre AND a different register —
+  // bleed sawtooth/low, insanity squares beating, frost triangle/high.)
   procBurst: [
-    { kind: 'tone', type: 'sawtooth', freq: 220, to: 70, dur: 0.5, peak: 0.5 },
-    { kind: 'noise', dur: 0.4, peak: 0.35, hp: 200, lp: 2600 },
+    { kind: 'tone', type: 'triangle', freq: 340, to: 130, dur: 0.42, peak: 0.45 },
+    { kind: 'noise', dur: 0.32, peak: 0.33, hp: 700, lp: 4000 },
   ],
   // Bleed — wet and low: the family gesture with the noise band dropped and
   // widened, so it reads as fluid rather than brittle.
@@ -73,10 +79,26 @@ export const SFX_RECIPES = {
   ],
   // Frost — brittle and high: a short glassy crack over a thin high-passed
   // hiss. Same shape, opposite end of the spectrum from bleed.
+  //
+  // RETUNED at Sunna's gate — DISTRIBUTION ONLY, and the level half is
+  // deliberately NOT closed. Her render measured frost 10 dB under its
+  // siblings; my analytic meter (tools/sfx-loudness.mjs) measures it 9 dB
+  // OVER them. Two instruments, opposite signs, so I changed nothing whose
+  // justification depends on which is right — a level edit I cannot defend in
+  // either direction is a guess wearing a decimal.
+  //
+  // What BOTH instruments agree on is where the energy sits, and that is what
+  // moved: the sub-bass body halves (peak .28 -> .14, shorter), because it is
+  // the part a laptop or phone cannot reproduce and A-weighting says the ear
+  // barely counts; the hiss reaches DOWN to 1.8 kHz (from 2600) so it lands in
+  // the band that survives a bed instead of above it; and the glassy tone
+  // glides to 700 rather than 520 so it stays bright instead of falling into
+  // the mids. Peaks are untouched. Centroid 925 -> 1216 Hz on my meter;
+  // identity-band SNR over the bed +11.8 dB at 1.8-4 kHz on hers.
   procBurst_frost: [
-    { kind: 'tone', type: 'triangle', freq: 1180, to: 520, dur: 0.35, peak: 0.4 },
-    { kind: 'noise', dur: 0.3, peak: 0.3, hp: 2600, lp: 9000 },
-    { kind: 'tone', type: 'sine', freq: 160, to: 80, dur: 0.4, peak: 0.28, t0: 0.02 },
+    { kind: 'tone', type: 'triangle', freq: 1180, to: 700, dur: 0.3, peak: 0.4 },
+    { kind: 'noise', dur: 0.34, peak: 0.3, hp: 1800, lp: 9000 },
+    { kind: 'tone', type: 'sine', freq: 150, to: 90, dur: 0.28, peak: 0.14, t0: 0.02 },
   ],
   // Insanity — unstable: two detuned squares beating against each other, so
   // the burst sounds wrong on purpose rather than merely loud.

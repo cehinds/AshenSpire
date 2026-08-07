@@ -145,10 +145,17 @@ export function initAudio(settings = {}) {
       // three composed ids played the 440 Hz blip through a whole release
       // candidate with nobody's console saying a word.
       warnedFallback.add(id);
+      // Name the family ONLY when the id actually has one — for a plain id,
+      // split('_')[0] is the id itself and the advice read "author 'x', or a
+      // family row named 'x'", which is one row wearing two names (Sunna's
+      // nit at #66).
+      const cut = String(id).indexOf('_');
+      const family = cut > 0 ? String(id).slice(0, cut) : null;
       console.warn(
         `[audio] sfx('${id}'): no recipe answers this id — playing the default blip. ` +
-          `Author a row named '${id}', or a family row named '${String(id).split('_')[0]}', ` +
-          `in src/content/sfx.js.`
+          `Author a row named '${id}'` +
+          (family ? `, or a family row named '${family}' that covers every '${family}_*' id` : '') +
+          `, in src/content/sfx.js.`
       );
     }
     for (const { kind, ...params } of recipe) {
