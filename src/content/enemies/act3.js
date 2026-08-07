@@ -14,6 +14,7 @@ export const act3Enemies = [
     name: 'Ash Revenant',
     hp: [34, 38],
     poiseMax: 10,
+    tags: ['undead', 'spirit'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🌋',
     moves: {
       cinderSlash: { intent: 'attack', damage: 12, weight: 55, maxConsecutive: 2 },
@@ -33,6 +34,7 @@ export const act3Enemies = [
     name: 'Ember-Starved Pilgrim',
     hp: [28, 32],
     poiseMax: 8,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🧎',
     moves: {
       desperateClaw: { intent: 'attack', damage: 9, weight: 60 },
@@ -52,6 +54,7 @@ export const act3Enemies = [
     name: 'Valkyrie Shade',
     hp: [40, 44],
     poiseMax: 14,
+    tags: ['spirit'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🪶',
     moves: {
       spiralLance: { intent: 'attack', damage: 5, hits: 2, weight: 50 },
@@ -68,6 +71,7 @@ export const act3Enemies = [
     name: 'Charred Colossus',
     hp: [55, 60],
     poiseMax: 30,
+    tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🗿',
     moves: {
       smash: { intent: 'attack', damage: 16, weight: 50, maxConsecutive: 2 },
@@ -87,6 +91,7 @@ export const act3Enemies = [
     name: 'Wyrm Lord',
     hp: [130, 140],
     poiseMax: 30,
+    tags: ['beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐉',
     firstMove: 'consecration',
     moves: {
@@ -114,6 +119,7 @@ export const act3Enemies = [
     name: 'The Blighted Valkyrie',
     hp: [250, 250],
     poiseMax: 36,
+    tags: ['humanoid', 'spirit'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🦋',
     firstMove: 'spiralThrust',
     moves: {

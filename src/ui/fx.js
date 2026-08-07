@@ -122,12 +122,13 @@ export function clampBox(box, view, { pad = 4, keep = Infinity } = {}) {
 }
 
 /** Spawn a floating number over an anchor element. */
-function floatNum(layer, anchor, text, cls) {
+function floatNum(layer, anchor, text, cls, tint) {
   if (!layer || !anchor) return;
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
   el.textContent = text;
+  if (tint) el.style.color = tint; // #61: proc floats carry their row's tint
   el.style.left = `${b.left + b.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
   el.style.top = `${b.top + b.height * 0.25}px`;
   layer.appendChild(el);
@@ -440,6 +441,14 @@ function visualFor(e, beatKind) {
           }
         : null;
     case 'hpLost':
+      // #61 M2a: a proc burst's number is ITS OWN float, in the row's tint,
+      // with the row's glyph — separate from and after the hit that tipped it.
+      if (typeof e.cause === 'string' && e.cause.startsWith('proc:')) {
+        return (ctx) => {
+          const info = ctx.statusInfo && ctx.statusInfo(e.cause.slice(5));
+          floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} -${e.amount}`, 'burst', info && info.tint);
+        };
+      }
       return e.cause === 'effect'
         ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst')
         : null; // attack damage already shown by damageDealt
@@ -450,13 +459,39 @@ function visualFor(e, beatKind) {
             floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
           }
         : null;
+    // #61 M2: the proc moment, three beats — banner + per-status SFX row here,
+    // the visible drain on the meter bar, then the tinted number (the proc:
+    // hpLost above, next on the queue's own cadence). The old bleed-only
+    // meterFilled banner generalized: any threshold row procs through this one
+    // grammar, tint and name from its own data (M4).
+    case 'procBurst':
+      return (ctx) => {
+        const info = ctx.statusInfo && ctx.statusInfo(e.status);
+        // Per-status SFX row by name — an unauthored id degrades to the sfx
+        // table's own default (audible, never silent), until the audio seat
+        // authors procBurst_<status> rows.
+        sfx.play(`procBurst_${e.status}`);
+        banner(ctx.layer, `${((info && info.name) || e.status).toUpperCase()} BURST`, 'blood');
+        // M2b: the drain is SEEN — the live bar transitions to empty before
+        // the re-render replaces it.
+        const anchor = ctx.anchorFor(e.targetId);
+        const card = anchor && anchor.closest ? anchor.closest('[data-eid]') : null;
+        const bar = card && card.querySelector(`.procbar[data-status="${e.status}"] .fill`);
+        if (bar) {
+          bar.style.transition = 'width 250ms ease-out';
+          bar.style.width = '0%';
+        }
+      };
+    // #61 M3: refusal has feedback — points blocked by an active resistance
+    // answer with a gray tick, so a bleed card into resistance never reads as
+    // the game eating the card.
+    case 'procResisted':
+      return (ctx) => {
+        const info = ctx.statusInfo && ctx.statusInfo(e.status);
+        floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} ${e.blocked} RESISTED`, 'blk small');
+      };
     case 'meterFilled':
-      return e.status === 'bleed'
-        ? (ctx) => {
-            sfx.play('bleedBurst');
-            banner(ctx.layer, 'BLEED BURST', 'blood');
-          }
-        : null;
+      return null; // poise fills speak through enemyStaggered below
     case 'enemyStaggered':
       return (ctx) => {
         sfx.play('stagger');

@@ -1368,6 +1368,37 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .combatant .poisebar.full .fill { animation: pulse-gold 600ms infinite alternate; }
 .combatant .bleedbar { height: 0.6rem; }
 .combatant .bleedbar .fill { background: var(--ember); }
+
+/* #61 — the one threshold-proc meter grammar (M1/M4). Chrome geometry in px
+   (Law 4): the bar is a box, not text. Tint rides --proc-tint from the row's
+   own data; the glyph nub keeps hue from being the only channel. */
+.combatant .procbar { height: 8px; min-height: 8px; position: relative; }
+.combatant .procbar .fill { background: var(--proc-tint, var(--muted)); }
+.combatant .procbar .glyph {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 8px;
+  line-height: 1;
+  pointer-events: none;
+}
+/* S2: an active resistance dims the meter — state reads without a tooltip. */
+.combatant .procbar.resisted { opacity: 0.45; }
+.combatant .procbar.resisted .fill {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--proc-tint, var(--muted)) 0 4px,
+    transparent 4px 8px
+  );
+}
+/* M4 display cap: collapsed proc meters render as ring-fill pips (conic fill
+   set inline from the row's tint); keep the glyph readable over the ring. */
+.status-icon.proc-pip { color: var(--ink, #fff); text-shadow: 0 0 2px #000; }
+
+/* M5: a matched tag-scoped vulnerability lights the boosted preview number in
+   the status row's tint. */
+.card.tag-boost .ctext .val.up { color: var(--boost-tint); }
 .combatant .nm { font-size: 1.2rem; }
 .combatant.dead { opacity: 0.25; filter: grayscale(1); pointer-events: none; }
 
@@ -3354,6 +3385,7 @@ const { act3Encounters } = require("src/content/encounters/act3.js");
 const { events } = require("src/content/events.js");
 const { classes, LOCKED_CLASSES } = require("src/content/classes.js");
 const { mapConfigs } = require("src/content/mapconfig.js");
+const { cardTags } = require("src/content/generated/cardTags.js");
 const { scripts } = require("src/content/scripts.js");
 const { SFX_RECIPES } = require("src/content/sfx.js");
 const { SCALES, BEDS } = require("src/content/music.js");
@@ -3393,6 +3425,9 @@ const contentBundle = {
     cardTargets: CARD_TARGETS,
   },
   unlocks,
+  // The card-tag registry rides the bundle so effect `tags` and
+  // taggedVulnerability lists validate against ONE vocabulary home (#61).
+  tags: cardTags,
 };
 
 // Not part of the bundle (UI-only data / M1 flow):
@@ -3710,7 +3745,20 @@ const statuses = [
     tooltip: 'Gains 25% less Block from cards. 1 stack expires each turn.',
   },
 
-  // ---- Elden Ring layer (SPEC §4.4 — build-up, not spam) -------------------
+  // ---- Elden Ring layer: threshold-proc rows (SPEC §4.4, #61 direction) ----
+  // Constantine's words, 2026-08-06: build-up to a threshold → percent-based
+  // damage as ITS OWN PROC → the build-up resets to zero → tag-gated
+  // resistance for a period. EVERY number below is PROVISIONAL — a first pick
+  // made against the sim (falsifier: --policy=reaverkit n=1000), marked so
+  // his hands can reach it. Readings stated where a word allowed more than
+  // one: burstPercent is percent of the PROC TARGET'S max HP (the reading the
+  // old meter already shipped); poiseDamage is a fixed amount PER PROC (the
+  // per-application alternative is a knob away if his intent differs).
+  //
+  // DELTA vs the shipped meter, stated: the old bleed carried overflow and
+  // escalated its threshold ×1.5 per burst; the proc vocabulary resets the
+  // build-up to zero (overflow dropped) at a CONSTANT threshold — "then the
+  // threshold resets to zero", his words.
   {
     id: 'bleed',
     tint: 'var(--ember)',
@@ -3718,19 +3766,138 @@ const statuses = [
     icon: '💧',
     stackMode: 'add',
     decay: 'none',
-    meter: {
-      max: 12,
-      growthMult: 1.5,
-      onFill: [
-        {
-          op: 'loseHp',
-          target: 'self',
-          amount: { f: 'percentMaxHp', of: 'owner', pct: 15, min: 8, max: 35 },
-        },
-      ],
+    proc: {
+      threshold: 12, // PROVISIONAL (carried from the shipped meter)
+      burstPercent: 15, // PROVISIONAL — % of target max HP (carried)
+      burstMin: 8, // PROVISIONAL (carried)
+      burstMax: 35, // PROVISIONAL (carried)
+      poiseDamage: 3, // PROVISIONAL — fixed poise damage per proc (new, his direction)
+      resistance: {
+        status: 'bleedResist',
+        tags: ['beast', 'humanoid'], // PROVISIONAL — flesh clots; undead/construct/spirit don't
+      },
     },
     tooltip:
-      'Build-up: points do not decay. At the threshold, burst for 15% of max HP (min 8, max 35), ignoring Block. Each burst raises the threshold ×1.5.',
+      'Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, plus {proc.poiseDamage} Poise damage — then the build-up resets to zero. Fleshy targets briefly resist further Bleed after a burst.',
+  },
+  {
+    id: 'frost',
+    tint: '#7fa8c9', // the frost swatch already in balance.palette
+    name: 'Frost',
+    icon: '❄',
+    stackMode: 'add',
+    decay: 'none',
+    proc: {
+      threshold: 10, // PROVISIONAL
+      burstPercent: 8, // PROVISIONAL — smaller than bleed, his direction
+      burstMin: 4, // PROVISIONAL
+      burstMax: 20, // PROVISIONAL
+      effects: [
+        // His direction: damage debuff + vulnerability/weakness to tagged
+        // (non-physical) attacks. Weak is the shipped damage debuff; the
+        // exposure row carries the tag-scoped vulnerability.
+        { op: 'applyStatus', target: 'self', status: 'weak', stacks: 1 },
+        { op: 'applyStatus', target: 'self', status: 'frostExposed', stacks: 1 },
+      ],
+      resistance: {
+        status: 'frostResist',
+        tags: ['beast', 'humanoid'], // PROVISIONAL — warm-blooded shake it off
+      },
+    },
+    tooltip:
+      'Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, and the target is left Weak and Frost-Exposed — then the build-up resets to zero.',
+  },
+  {
+    // 'insanity' is NOT 'madness' (below): madness is a player economy
+    // drawback (relic cost — lose HP, gain Energy, clears); insanity is an
+    // enemy-affliction threshold proc. Two words, two mechanics, on purpose —
+    // binding them would break the madness relics. Flagged for the collapse
+    // check at review.
+    id: 'insanity',
+    tint: 'var(--gold)',
+    name: 'Insanity',
+    icon: '🌀',
+    stackMode: 'add',
+    decay: 'none',
+    proc: {
+      threshold: 14, // PROVISIONAL — hardest to fill of the three
+      burstPercent: 18, // PROVISIONAL — highest percent, his direction
+      burstMin: 10, // PROVISIONAL
+      burstMax: 40, // PROVISIONAL
+      poiseDamage: 8, // PROVISIONAL — highest poise damage, his direction
+      stagger: true, // direct stagger on proc — guaranteed, bypasses the bar
+      effects: [
+        { op: 'applyStatus', target: 'self', status: 'insanityExposed', stacks: 1 },
+      ],
+      resistance: {
+        status: 'insanityResist',
+        tags: ['humanoid', 'spirit'], // PROVISIONAL — minds harden; beasts/constructs have none to break
+      },
+    },
+    tooltip:
+      'Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, with {proc.poiseDamage} Poise damage and a guaranteed Stagger — then the build-up resets to zero.',
+  },
+
+  // ---- Proc resistance rows (#61): strength here, duration in decay --------
+  {
+    id: 'bleedResist',
+    tint: 'var(--muted)',
+    name: 'Clotted',
+    icon: '🩹',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL — turns of resistance
+    resists: { status: 'bleed', percent: 50 }, // PROVISIONAL — blocks half of incoming points
+    tooltip: 'Just burst — hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns.',
+  },
+  {
+    id: 'frostResist',
+    tint: 'var(--muted)',
+    name: 'Weathered',
+    icon: '🧣',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL
+    resists: { status: 'frost', percent: 50 }, // PROVISIONAL
+    tooltip: 'Just burst — hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns.',
+  },
+  {
+    id: 'insanityResist',
+    tint: 'var(--muted)',
+    name: 'Resolute',
+    icon: '🛡',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL
+    resists: { status: 'insanity', percent: 50 }, // PROVISIONAL
+    tooltip: 'Just burst — hardened against Insanity: incoming build-up reduced {resists.percent}% for {decay.duration} turns.',
+  },
+
+  // ---- Exposure rows (#61): tag-scoped vulnerability the procs leave -------
+  {
+    id: 'frostExposed',
+    tint: '#7fa8c9',
+    name: 'Frost-Exposed',
+    icon: '🫧',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL
+    taggedVulnerability: {
+      tags: ['starstone'], // PROVISIONAL — the frost-adjacent magic school
+      mult: 1.25, // PROVISIONAL
+      stacking: 'multiplicative', // declared, validated — composes like every shipped *Mult
+    },
+    tooltip: 'Takes {tv.pct}% more damage from starstone attacks. Stacks with Vulnerable. {decay.duration} turns.',
+  },
+  {
+    id: 'insanityExposed',
+    tint: 'var(--gold)',
+    name: 'Unraveled',
+    icon: '🕳',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL
+    taggedVulnerability: {
+      tags: ['ritual', 'blight'], // PROVISIONAL — the mind-adjacent schools
+      mult: 1.3, // PROVISIONAL
+      stacking: 'multiplicative',
+    },
+    tooltip: 'Takes {tv.pct}% more damage from ritual and blight attacks. Stacks with Vulnerable. {decay.duration} turns.',
   },
   {
     id: 'crimsonBlight',
@@ -3906,7 +4073,9 @@ const statuses = [
     stackMode: 'unique',
     decay: 'none',
     modifiers: { meterMaxGrowthDisabled: true },
-    tooltip: 'Build-up thresholds (Bleed and Poise) no longer increase after filling.',
+    // #61: bleed thresholds are now CONSTANT by design, so this freeze binds
+    // only Poise — prose updated to match; the modifier is untouched.
+    tooltip: 'Poise thresholds no longer increase after filling.',
   },
   {
     // Sanguine Pact power: Bleed bursts feed Strength — the Reaver's answer to
@@ -4760,7 +4929,7 @@ const reaverCards = [
     id: 'goreblood', name: "Goreblood", class: 'reaver', rarity: 'rare', cost: 3, type: 'power',
     keywords: [], icon: '♛',
     effects: [{ op: 'applyStatus', target: 'self', status: 'goreblood', stacks: one }],
-    textTemplate: 'Bleed and Poise thresholds no longer increase after filling.',
+    textTemplate: 'Poise thresholds no longer increase after filling.',
     upgrade: { cost: 2 },
   },
   {
@@ -7088,6 +7257,7 @@ const act1Enemies = [
     name: 'Wandering Soldier',
     hp: [22, 26],
     poiseMax: 10,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '⚔',
     moves: {
       slash: { intent: 'attack', damage: 7, weight: 45, maxConsecutive: 2 },
@@ -7105,6 +7275,7 @@ const act1Enemies = [
     name: 'Blight Hound',
     hp: [12, 15],
     poiseMax: 6,
+    tags: ['beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐕',
     moves: {
       bite: { intent: 'attack', damage: 6, weight: 60 },
@@ -7117,6 +7288,7 @@ const act1Enemies = [
     name: 'Husk Brute',
     hp: [30, 34],
     poiseMax: 16,
+    tags: ['undead', 'humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🪨',
     moves: {
       club: { intent: 'attack', damage: 9, weight: 50 },
@@ -7134,6 +7306,7 @@ const act1Enemies = [
     name: 'Grave Wisp',
     hp: [10, 12],
     poiseMax: 4,
+    tags: ['spirit'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '👻',
     moves: {
       curse: {
@@ -7155,6 +7328,7 @@ const act1Enemies = [
     name: 'Wyrm Aspirant',
     hp: [68, 72],
     poiseMax: 24,
+    tags: ['beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐲',
     firstMove: 'consecrate',
     moves: {
@@ -7182,6 +7356,7 @@ const act1Enemies = [
     name: 'The Fell Warden',
     hp: [120, 120],
     poiseMax: 30,
+    tags: ['humanoid', 'undead'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '👁',
     firstMove: 'caneStrike',
     moves: {
@@ -7232,6 +7407,7 @@ const act2Enemies = [
     name: 'Gilded Knight',
     hp: [42, 46],
     poiseMax: 18,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '♞',
     moves: {
       thrust: { intent: 'attack', damage: 11, weight: 50, maxConsecutive: 2 },
@@ -7249,6 +7425,7 @@ const act2Enemies = [
     name: 'Court Surgeon',
     hp: [30, 34],
     poiseMax: 10,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '⚕',
     moves: {
       scalpel: { intent: 'attack', damage: 7, weight: 40 },
@@ -7272,6 +7449,7 @@ const act2Enemies = [
     name: 'Stitched Hound',
     hp: [24, 28],
     poiseMax: 8,
+    tags: ['undead', 'beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐩',
     moves: {
       maul: { intent: 'attack', damage: 4, hits: 2, weight: 60 },
@@ -7289,6 +7467,7 @@ const act2Enemies = [
     name: 'Court Marionette',
     hp: [16, 18],
     poiseMax: 6,
+    tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🪆',
     moves: {
       dart: { intent: 'attack', damage: 4, hits: 2, weight: 50 },
@@ -7305,6 +7484,7 @@ const act2Enemies = [
     name: 'Living Armor',
     hp: [36, 40],
     poiseMax: 22,
+    tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🛡',
     moves: {
       slam: { intent: 'attack', damage: 10, weight: 40 },
@@ -7321,6 +7501,7 @@ const act2Enemies = [
     name: 'Duelist of the Court',
     hp: [90, 96],
     poiseMax: 26,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🤺',
     firstMove: 'enGarde',
     moves: {
@@ -7342,6 +7523,7 @@ const act2Enemies = [
     name: 'The Stitched King',
     hp: [195, 195],
     poiseMax: 34,
+    tags: ['undead', 'humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '👑',
     firstMove: 'courtlyDecree',
     moves: {
@@ -7388,6 +7570,7 @@ const act3Enemies = [
     name: 'Ash Revenant',
     hp: [34, 38],
     poiseMax: 10,
+    tags: ['undead', 'spirit'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🌋',
     moves: {
       cinderSlash: { intent: 'attack', damage: 12, weight: 55, maxConsecutive: 2 },
@@ -7407,6 +7590,7 @@ const act3Enemies = [
     name: 'Ember-Starved Pilgrim',
     hp: [28, 32],
     poiseMax: 8,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🧎',
     moves: {
       desperateClaw: { intent: 'attack', damage: 9, weight: 60 },
@@ -7426,6 +7610,7 @@ const act3Enemies = [
     name: 'Valkyrie Shade',
     hp: [40, 44],
     poiseMax: 14,
+    tags: ['spirit'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🪶',
     moves: {
       spiralLance: { intent: 'attack', damage: 5, hits: 2, weight: 50 },
@@ -7442,6 +7627,7 @@ const act3Enemies = [
     name: 'Charred Colossus',
     hp: [55, 60],
     poiseMax: 30,
+    tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🗿',
     moves: {
       smash: { intent: 'attack', damage: 16, weight: 50, maxConsecutive: 2 },
@@ -7461,6 +7647,7 @@ const act3Enemies = [
     name: 'Wyrm Lord',
     hp: [130, 140],
     poiseMax: 30,
+    tags: ['beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐉',
     firstMove: 'consecration',
     moves: {
@@ -7488,6 +7675,7 @@ const act3Enemies = [
     name: 'The Blighted Valkyrie',
     hp: [250, 250],
     poiseMax: 36,
+    tags: ['humanoid', 'spirit'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🦋',
     firstMove: 'spiralThrust',
     moves: {
@@ -8255,6 +8443,94 @@ const mapConfigs = {
 
 
 Object.assign(module.exports, { mapConfigs });
+
+},
+"src/content/generated/cardTags.js": function (module, exports, require) {
+// GENERATED by tools/content-build.mjs from content/source/cardTags.csv
+// Do not edit by hand — edit the source file and re-run the build.
+
+const cardTags = [
+  {
+    "id": "blade",
+    "label": "Blade",
+    "color": "C9502E",
+    "glyph": "⚔",
+    "blurb": "Steel and edge — direct weapon work."
+  },
+  {
+    "id": "guard",
+    "label": "Guard",
+    "color": "7FA8C9",
+    "glyph": "🛡",
+    "blurb": "Bracing, blocking, holding the line."
+  },
+  {
+    "id": "blood",
+    "label": "Blood",
+    "color": "8A1A1A",
+    "glyph": "🩸",
+    "blurb": "Bleed, and the letting of it."
+  },
+  {
+    "id": "gorefire",
+    "label": "Gorefire",
+    "color": "C9502E",
+    "glyph": "🔥",
+    "blurb": "The blood-and-flame stance."
+  },
+  {
+    "id": "starstone",
+    "label": "Starstone",
+    "color": "7FA8C9",
+    "glyph": "✦",
+    "blurb": "Astral sorcery — charges and combos."
+  },
+  {
+    "id": "ritual",
+    "label": "Ritual",
+    "color": "C9A227",
+    "glyph": "◈",
+    "blurb": "Rites, offerings, and faith work."
+  },
+  {
+    "id": "blight",
+    "label": "Blight",
+    "color": "B5541C",
+    "glyph": "☣",
+    "blurb": "Creeping decay."
+  },
+  {
+    "id": "oath",
+    "label": "Oath",
+    "color": "C9A227",
+    "glyph": "✚",
+    "blurb": "Binding, lasting commitments."
+  },
+  {
+    "id": "flourish",
+    "label": "Flourish",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "Finesse — footwork and multi-hit."
+  },
+  {
+    "id": "ash",
+    "label": "Ash",
+    "color": "7A6F5A",
+    "glyph": "•",
+    "blurb": "Spent once, then gone to ash."
+  },
+  {
+    "id": "heavy",
+    "label": "Heavy",
+    "color": "C9A227",
+    "glyph": "◆",
+    "blurb": "Slow, committed, and hard to stop."
+  }
+];
+
+
+Object.assign(module.exports, { cardTags });
 
 },
 "src/content/scripts.js": function (module, exports, require) {
@@ -9655,7 +9931,7 @@ Object.assign(module.exports, { unlocks });
 // Headless: no document/window/localStorage/timers.
 
 const { resolveFloorPlan } = require("src/model/floorplan.js");
-const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, MODIFIER_KEYS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA } = require("src/model/schemas.js");
+const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, MODIFIER_KEYS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, CREATURE_TAGS } = require("src/model/schemas.js");
 const { FORMULA_OPS, FORMULA_OF, isFormula } = require("src/model/formulas.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -9697,6 +9973,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'unlocks',
   'sfx',
   'music',
+  'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
 ]);
 
 /**
@@ -9832,7 +10109,10 @@ function validateContent(bundle) {
     });
   }
 
-  const vctx = { ids, err };
+  // Effect-tag vocabulary: the card-tag registry rides the bundle so effect
+  // `tags` and taggedVulnerability lists validate against ONE home (#61).
+  const tagIds = new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => t && t.id).filter(Boolean));
+  const vctx = { ids, err, tagIds };
 
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {
@@ -9902,8 +10182,69 @@ function validateContent(bundle) {
     validateRelicTemplate(relic, `relics.${relic.id}`, err);
   }
 
+  // ---- threshold-proc second layer (#61): meaning, not shape ---------------
+  // Every red names its row and, for tag errors, lists the legal tags — a
+  // wrong tag teaches the vocabulary instead of just refusing (silence-word
+  // standard).
+  for (const st of b.statuses || []) {
+    const path = `statuses.${st.id}`;
+    if (st.proc) {
+      const p = st.proc;
+      if (!(Number.isInteger(p.threshold) && p.threshold > 0)) {
+        err(`${path}.proc.threshold`, `threshold must be an integer > 0, got ${JSON.stringify(p.threshold)}`);
+      }
+      if (!(typeof p.burstPercent === 'number' && p.burstPercent > 0 && p.burstPercent <= 100)) {
+        err(`${path}.proc.burstPercent`, `burstPercent must be a number in (0, 100], got ${JSON.stringify(p.burstPercent)}`);
+      }
+      if (Number.isInteger(p.burstMin) && Number.isInteger(p.burstMax) && p.burstMin > p.burstMax) {
+        err(`${path}.proc`, `burstMin ${p.burstMin} exceeds burstMax ${p.burstMax}`);
+      }
+      if (p.poiseDamage != null && !(Number.isInteger(p.poiseDamage) && p.poiseDamage >= 0)) {
+        err(`${path}.proc.poiseDamage`, `poiseDamage must be an integer ≥ 0, got ${JSON.stringify(p.poiseDamage)}`);
+      }
+      if (p.resistance) {
+        for (const tag of p.resistance.tags || []) {
+          if (!CREATURE_TAGS.includes(tag)) {
+            err(`${path}.proc.resistance.tags`, `unknown creature tag '${tag}' (legal: ${CREATURE_TAGS.join(', ')})`);
+          }
+        }
+        const resistDef = (b.statuses || []).find((s) => s && s.id === p.resistance.status);
+        if (resistDef && !resistDef.resists) {
+          err(`${path}.proc.resistance.status`, `'${p.resistance.status}' has no resists block — a proc's resistance status must declare what it resists`);
+        }
+      }
+    }
+    if (st.resists) {
+      if (!(typeof st.resists.percent === 'number' && st.resists.percent > 0 && st.resists.percent <= 100)) {
+        err(`${path}.resists.percent`, `resist percent must be a number in (0, 100], got ${JSON.stringify(st.resists.percent)}`);
+      }
+      if (!(st.decay && typeof st.decay === 'object' && Number.isInteger(st.decay.duration) && st.decay.duration > 0)) {
+        err(`${path}.decay`, `a resist row needs decay {duration: int > 0} — its duration is a table knob, got ${JSON.stringify(st.decay)}`);
+      }
+    }
+    if (st.taggedVulnerability) {
+      const tv = st.taggedVulnerability;
+      for (const tag of tv.tags || []) {
+        if (!tagIds.has(tag)) {
+          err(`${path}.taggedVulnerability.tags`, `unknown effect tag '${tag}' (legal: ${[...tagIds].join(', ')})`);
+        }
+      }
+      if (!(typeof tv.mult === 'number' && tv.mult > 0)) {
+        err(`${path}.taggedVulnerability.mult`, `mult must be a number > 0, got ${JSON.stringify(tv.mult)}`);
+      }
+      if (!(tv.tags || []).length) {
+        err(`${path}.taggedVulnerability.tags`, 'tag list must be non-empty — an unscoped extra vulnerability is plain Vulnerable, use modifiers instead');
+      }
+    }
+  }
+
   for (const enemy of b.enemies || []) {
     const path = `enemies.${enemy.id}`;
+    for (const tag of enemy.tags || []) {
+      if (!CREATURE_TAGS.includes(tag)) {
+        err(`${path}.tags`, `unknown creature tag '${tag}' (legal: ${CREATURE_TAGS.join(', ')})`);
+      }
+    }
     const moveIds = new Set(Object.keys(enemy.moves || {}));
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);
@@ -10254,6 +10595,20 @@ function validateEffects(effects, path, vctx) {
       if (typeof v === 'string' && !vctx.ids[reg].has(v)) {
         err(`${p}.${field}`, `Dangling reference: unknown ${reg} id '${v}'`);
       }
+    }
+    if (eff.op === 'damage' && eff.tags !== undefined) {
+      if (!Array.isArray(eff.tags) || !eff.tags.length) {
+        err(`${p}.tags`, 'damage tags must be a non-empty array of effect-tag ids');
+      } else {
+        for (const tag of eff.tags) {
+          if (!vctx.tagIds.has(tag)) {
+            err(`${p}.tags`, `unknown effect tag '${tag}' (legal: ${[...vctx.tagIds].join(', ')})`);
+          }
+        }
+      }
+    }
+    if (eff.op === 'stagger' && ['self', 'player', 'owner', 'ally'].includes(eff.target)) {
+      err(`${p}.target`, `stagger targets enemies only, got '${eff.target}'`);
     }
     if (eff.op === 'addCard') {
       if (eff.pile !== undefined && !['draw', 'hand', 'discard', 'exhaust'].includes(eff.pile)) {
@@ -10778,6 +11133,7 @@ const COMBAT_OPCODES = Object.freeze([
   'shuffleDiscardIntoDraw',
   'enterStance',
   'poiseDamage',
+  'stagger',
 ]);
 
 const RUN_OPCODES = Object.freeze([
@@ -10832,6 +11188,12 @@ const EVENTS = Object.freeze([
   'enemySpawned',
   'enemyDied',
   'enemyStaggered',
+  // Threshold-proc vocabulary (#61 direction): the burst is ITS OWN event in
+  // the damage record — never folded into the triggering hit (checkable
+  // invariant). procResisted is the refusal receipt: applying points into an
+  // active resistance answers visibly, never silently.
+  'procBurst',
+  'procResisted',
   'energyGained',
   'energySpent',
   'flaskUsed',
@@ -10906,6 +11268,36 @@ const MODIFIER_KEYS = Object.freeze([
 
 const STACK_MODES = Object.freeze(['add', 'refresh', 'unique']);
 
+// ---------------------------------------------------------------------------
+// Threshold-proc vocabulary (#61 direction, Constantine's words 2026-08-06)
+// ---------------------------------------------------------------------------
+// A proc status builds points to a fixed threshold; at the threshold the
+// target takes percent-based damage as ITS OWN PROC (own event, own damage
+// record entry — never folded into the triggering hit), the build-up RESETS
+// TO ZERO (overflow dropped, threshold constant — deliberate delta vs the
+// legacy `meter` block, which carried overflow and escalated ×1.5), and, if
+// the target carries a listed creature tag, it gains a post-proc resistance
+// status. Bleed, frost, and insanity are the first three rows.
+//
+// How the tag-scoped vulnerability composes with regular Vulnerable is a
+// NAMED, VALIDATED rule per row, not an accident of arithmetic order:
+//   multiplicative — dmg *= mult (composes like every shipped *Mult:
+//                    flat per status, stack-count-invariant, sources multiply)
+//   additive       — (mult−1) sums across additive sources, applied once.
+const VULN_STACKING = Object.freeze(['additive', 'multiplicative']);
+
+// Creature tags — the closed vocabulary proc resistance may gate on. An
+// enemy's `tags` and a proc row's `resistance.tags` must both draw from this
+// set. Distinct from card/effect tags (content/tags.js): creature identity vs
+// attack school — two concepts, deliberately two vocabularies.
+const CREATURE_TAGS = Object.freeze([
+  'beast',
+  'humanoid',
+  'undead',
+  'construct',
+  'spirit',
+]);
+
 const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']);
 const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
 const RELIC_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
@@ -10951,7 +11343,10 @@ const REGISTRY_TYPES = Object.freeze([
 // registry its value must resolve in. Common fields allowed on any opcode:
 // op, target, amount, if, repeat (SPEC §3.4).
 const EFFECT_SPECS = Object.freeze({
-  damage: { allowed: ['hits'], required: ['amount'], refs: {} },
+  // `tags` scopes the hit for tag-scoped vulnerability (frost/insanity
+  // exposure): values must exist in the card-tag registry (one vocabulary,
+  // two carriers — card chips for display, effect tags for combat).
+  damage: { allowed: ['hits', 'tags'], required: ['amount'], refs: {} },
   block: { allowed: [], required: ['amount'], refs: {} },
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status'], required: ['status'], refs: { status: 'statuses' } },
@@ -10960,11 +11355,14 @@ const EFFECT_SPECS = Object.freeze({
   exhaust: { allowed: ['random'], required: [], refs: {} },
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
-  loseHp: { allowed: [], required: ['amount'], refs: {} },
+  loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
   enterStance: { allowed: ['stance'], required: ['stance'], refs: { stance: 'stances' } },
   poiseDamage: { allowed: [], required: ['amount'], refs: {} },
+  // Direct stagger (insanity's proc): breaks the target's next move outright,
+  // bypassing the poise bar. Enemy targets only — validated in validate.js.
+  stagger: { allowed: [], required: [], refs: {} },
   addCinders: { allowed: [], required: ['amount'], refs: {} },
   addCardToDeck: { allowed: ['card'], required: ['card'], refs: { card: 'cards' } },
   removeCardFromDeck: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },
@@ -11160,10 +11558,47 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     icon: opt(str),
-    tint: opt(str), // status-pip accent CSS color (display)
+    tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
     stackMode: en(...STACK_MODES),
     decay: union(en('none', 'perTurnEnd', 'onConsume'), obj({ duration: int })),
     meter: opt(obj({ max: int, growthMult: num, onFill: effects })),
+    // Threshold-proc block (#61 vocabulary; see VULN_STACKING header above).
+    // Every number is a table knob. burstPercent is a percent of the PROC
+    // TARGET'S max HP (the reading the shipped bleed already used —
+    // percentMaxHp of the meter carrier — kept for continuity; big enemies
+    // burst for more absolute damage from the same table). Value-range rules
+    // (threshold > 0, 0 < burstPercent ≤ 100, burstMin ≤ burstMax, …) are
+    // enforced in validate.js with row-naming messages.
+    proc: opt(
+      obj({
+        threshold: int,
+        burstPercent: num,
+        burstMin: int,
+        burstMax: int,
+        poiseDamage: opt(int), // fixed poise damage PER PROC (reading stated in content row)
+        stagger: opt(bool), // direct stagger on proc (insanity)
+        effects: opt(effects), // additional proc payload (frost/insanity debuffs)
+        resistance: opt(
+          obj({
+            status: ref('statuses'), // the resist row applied post-proc
+            tags: arr(str), // creature-tag gate, ⊆ CREATURE_TAGS (validated)
+          })
+        ),
+      })
+    ),
+    // A resist row declares what it resists; strength lives here, duration
+    // lives in the row's own decay — one home per knob.
+    resists: opt(obj({ status: ref('statuses'), percent: num })),
+    // Tag-scoped extra vulnerability (frost/insanity exposure): applies only
+    // to attack damage whose effect `tags` intersect this list; composes with
+    // regular Vulnerable per the declared stacking rule (closed enum).
+    taggedVulnerability: opt(
+      obj({
+        tags: arr(str), // ⊆ card-tag registry (validated)
+        mult: num,
+        stacking: en(...VULN_STACKING),
+      })
+    ),
     modifiers: opt(modifiersSchema),
     hooks: opt(triggersNode),
     tooltip: opt(str),
@@ -11192,6 +11627,7 @@ const SCHEMAS = Object.freeze({
     name: str,
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
+    tags: opt(arr(str)), // creature tags ⊆ CREATURE_TAGS — gates proc resistance
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),
@@ -11290,7 +11726,7 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_KEYS, STACK_MODES, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
+Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_KEYS, STACK_MODES, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
 
 },
 "src/model/formulas.js": function (module, exports, require) {
@@ -13407,12 +13843,26 @@ function previewCard(combat, cardInstanceId, targetId) {
     switch (eff.op) {
       case 'damage': {
         const base = evalPreview(combat, action, eff.amount, primary);
-        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base);
+        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, eff.tags);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         for (const e of living) {
           const b = evalPreview(combat, action, eff.amount, e);
-          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b);
+          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, eff.tags);
+        }
+        // #61 M5: when the aimed target's tag-scoped vulnerability matches
+        // this hit's tags, name the matched row's tint so the hand can accent
+        // the boosted number. Engine states the fact; display reads it.
+        if (eff.tags && primary && primary.kind === 'enemy') {
+          for (const [sid, inst] of Object.entries(primary.statuses || {})) {
+            if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
+            const sdef = combat.registries.statuses.get(sid);
+            const tv = sdef && sdef.taggedVulnerability;
+            if (tv && tv.tags.some((t) => eff.tags.includes(t))) {
+              entry.boostTint = sdef.tint || null;
+              break;
+            }
+          }
         }
         break;
       }
@@ -13549,11 +13999,30 @@ const { evalPredicate, checkPhases } = require("src/engine/triggers.js");
  * computeAttackDamage(ctx, source, target|null, base) → final integer damage.
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
-function computeAttackDamage(ctx, source, target, base) {
+function computeAttackDamage(ctx, source, target, base, attackTags) {
   let dmg = base;
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
+  // Tag-scoped extra vulnerability (#61): statuses whose taggedVulnerability
+  // tags intersect the hit's effect tags. Composition is the row's DECLARED
+  // stacking rule (closed enum, validated): 'multiplicative' sources multiply
+  // in like every shipped *Mult (flat per status, stack-count-invariant);
+  // 'additive' sources pool (mult − 1) and apply once. Both lanes are
+  // stack-invariant, so the ceiling is the closed-form product of DISTINCT
+  // table mults — stacks can never raise it.
+  if (target && attackTags && attackTags.length) {
+    let addPool = 0;
+    for (const [id, inst] of Object.entries(target.statuses || {})) {
+      if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
+      const def = ctx.registries.statuses.get(id);
+      const tv = def && def.taggedVulnerability;
+      if (!tv || !tv.tags.some((t) => attackTags.includes(t))) continue;
+      if (tv.stacking === 'multiplicative') dmg *= tv.mult;
+      else addPool += tv.mult - 1;
+    }
+    if (addPool > 0) dmg *= 1 + addPool;
+  }
   dmg = Math.floor(dmg);
   return dmg < 0 ? 0 : dmg;
 }
@@ -13563,9 +14032,9 @@ function computeAttackDamage(ctx, source, target, base) {
  * §4.2 math, block absorption first, then HP. Emits damageDealt (+ hpLost if
  * HP was touched), handles deaths and phase checks. Returns final damage.
  */
-function applyAttackDamage(ctx, source, target, base) {
+function applyAttackDamage(ctx, source, target, base, attackTags) {
   if (!target || !target.alive) return 0;
-  const dmg = computeAttackDamage(ctx, source, target, base);
+  const dmg = computeAttackDamage(ctx, source, target, base, attackTags);
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
   const hpLoss = dmg - blocked;
@@ -13650,6 +14119,23 @@ function afterHpChange(ctx, target) {
  * enqueued (owner = the enemy), and poiseMax grows by balance.poise.growthMult
  * (default 1.25, rounded up) unless growth is disabled.
  */
+/**
+ * staggerEnemy(ctx, enemy) — break the enemy's next move: cancel what it was
+ * winding up, mark the skip, and emit enemyStaggered. One home for the break
+ * itself; callers decide HOW it was earned — the poise bar filling
+ * (dealPoiseDamage) or a direct proc (the 'stagger' opcode, insanity's row).
+ * The direct path deliberately bypasses the bar: a guaranteed break that
+ * neither consumes nor grows the poise meter.
+ */
+function staggerEnemy(ctx, enemy) {
+  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
+  const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
+  enemy.pendingMove = null;
+  enemy.skipNextTurn = true;
+  enemy.intent = { kind: 'staggered', moveId: null };
+  ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled });
+}
+
 function dealPoiseDamage(ctx, enemy, amount) {
   if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
   const n = Math.max(0, Math.floor(amount));
@@ -13659,12 +14145,8 @@ function dealPoiseDamage(ctx, enemy, amount) {
   while (enemy.poiseMeter.value >= enemy.poiseMeter.max) {
     if (++guard > 100) throw new Error('Poise meter fill loop did not terminate');
     enemy.poiseMeter.value -= enemy.poiseMeter.max;
-    const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
-    enemy.pendingMove = null;
-    enemy.skipNextTurn = true;
-    enemy.intent = { kind: 'staggered', moveId: null };
     ctx.emit('meterFilled', { targetId: enemy.id, meter: 'poise', threshold: enemy.poiseMeter.max });
-    ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled });
+    staggerEnemy(ctx, enemy);
     for (const eff of cfg.onFill || []) {
       ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
     }
@@ -13839,7 +14321,7 @@ function runOpcode(ctx, action, eff) {
         for (const t of targets) {
           if (!t.alive) continue;
           const base = evalNum(ctx, action, eff.amount, 0, t);
-          applyAttackDamage(ctx, action.source, t, base);
+          applyAttackDamage(ctx, action.source, t, base, eff.tags);
         }
       }
       break;
@@ -13915,7 +14397,9 @@ function runOpcode(ctx, action, eff) {
     }
     case 'loseHp': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        applyLoseHp(ctx, t, evalNum(ctx, action, eff.amount, 0, t));
+        // `cause` labels the hpLost event (e.g. 'proc:bleed') so the damage
+        // record can attribute the loss — display + instruments read it.
+        applyLoseHp(ctx, t, evalNum(ctx, action, eff.amount, 0, t), eff.cause || 'effect');
       }
       break;
     }
@@ -13946,6 +14430,12 @@ function runOpcode(ctx, action, eff) {
     case 'poiseDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         dealPoiseDamage(ctx, t, evalNum(ctx, action, eff.amount, 0, t));
+      }
+      break;
+    }
+    case 'stagger': {
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        staggerEnemy(ctx, t);
       }
       break;
     }
@@ -14092,7 +14582,7 @@ function executeRunEffects({ run, registries, rng }, effects) {
 }
 
 
-Object.assign(module.exports, { computeAttackDamage, applyAttackDamage, computeBlockGain, gainBlock, applyLoseHp, applyHeal, dealPoiseDamage, drawCards, reshuffleDiscardIntoDraw, resolveTargets, formulaCtxFor, executeAction, executeRunEffects });
+Object.assign(module.exports, { computeAttackDamage, applyAttackDamage, computeBlockGain, gainBlock, applyLoseHp, applyHeal, staggerEnemy, dealPoiseDamage, drawCards, reshuffleDiscardIntoDraw, resolveTargets, formulaCtxFor, executeAction, executeRunEffects });
 
 },
 "src/engine/statuses.js": function (module, exports, require) {
@@ -14137,13 +14627,36 @@ function hasStatus(entity, statusId) {
 function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
   const def = ctx.registries.statuses.get(statusId);
   if (!target || !target.alive) return;
-  const amount = Math.floor(stacks);
+  let amount = Math.floor(stacks);
   if (amount <= 0 && def.stackMode !== 'unique') return;
+
+  // Threshold-proc resistance (#61): a carried resist status blocks part of
+  // every incoming application of the status it names. The blocked portion is
+  // ceil(amount × percent / 100) — resistance rounds in the defender's favor.
+  // Refusal has a receipt: procResisted fires whenever anything was blocked,
+  // so applying into resistance answers visibly, never silently.
+  if (def.proc) {
+    let blocked = 0;
+    for (const [otherId, otherInst] of Object.entries(target.statuses)) {
+      if (!otherInst || (otherInst.meter ? otherInst.meter.value : otherInst.stacks) <= 0) continue;
+      const otherDef = ctx.registries.statuses.get(otherId);
+      if (otherDef && otherDef.resists && otherDef.resists.status === statusId) {
+        blocked += Math.ceil(amount * otherDef.resists.percent / 100);
+      }
+    }
+    if (blocked > 0) {
+      blocked = Math.min(blocked, amount);
+      amount -= blocked;
+      ctx.emit('procResisted', { targetId: target.id, status: statusId, blocked, applied: amount });
+      if (amount <= 0) return;
+    }
+  }
 
   let inst = target.statuses[statusId];
   if (!inst) {
     inst = target.statuses[statusId] = { stacks: 0 };
     if (def.meter) inst.meter = { value: 0, max: def.meter.max };
+    else if (def.proc) inst.meter = { value: 0, max: def.proc.threshold };
   }
 
   switch (def.stackMode) {
@@ -14176,7 +14689,47 @@ function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
     total: getStacks(target, statusId),
   });
 
-  if (inst.meter) checkMeterFill(ctx, target, statusId, def, inst);
+  if (def.proc) checkProcFill(ctx, target, statusId, def, inst);
+  else if (inst.meter) checkMeterFill(ctx, target, statusId, def, inst);
+}
+
+// Threshold-proc fill (#61, Constantine's direction 2026-08-06). Deliberate
+// deltas vs checkMeterFill below: the build-up RESETS TO ZERO after the proc
+// (overflow dropped — "then the threshold resets to zero") and the threshold
+// is CONSTANT (no ×1.5 escalation). A single application larger than the
+// threshold procs exactly once and drops the rest, so no fill loop exists.
+//
+// THE OWN-PROC INVARIANT (checkable): the burst is its own damage-record
+// entry — procBurst + its own hpLost — never folded into the triggering
+// hit's damageDealt. Payload order downstream is the fixed causal sentence:
+// burst → poise chunk → stagger → extra effects → resistance.
+function checkProcFill(ctx, entity, statusId, def, inst) {
+  if (inst.meter.value < inst.meter.max) return;
+  const p = def.proc;
+  inst.meter.value = 0; // reset to zero — overflow dropped, threshold constant
+  const pct = Math.floor((entity.maxHp * p.burstPercent) / 100);
+  const burst = Math.max(p.burstMin, Math.min(p.burstMax, pct));
+  ctx.emit('procBurst', {
+    targetId: entity.id,
+    status: statusId,
+    amount: burst,
+    threshold: inst.meter.max,
+    poiseDamage: p.poiseDamage || 0,
+    stagger: !!p.stagger,
+  });
+  const enq = (effect) => ctx.enqueue({ effect, source: entity, owner: entity, target: entity, meta: {} });
+  enq({ op: 'loseHp', target: 'self', amount: burst, cause: `proc:${statusId}` });
+  if (p.poiseDamage > 0 && entity.kind === 'enemy') enq({ op: 'poiseDamage', amount: p.poiseDamage });
+  if (p.stagger && entity.kind === 'enemy') enq({ op: 'stagger' });
+  for (const eff of p.effects || []) enq(eff);
+  if (p.resistance) {
+    // Tag-gated post-proc resistance: creature tags live on the enemy def.
+    const enemyDef = entity.kind === 'enemy' && ctx.registries.enemies.get(entity.enemyId);
+    const tags = (enemyDef && enemyDef.tags) || [];
+    if (tags.some((t) => p.resistance.tags.includes(t))) {
+      enq({ op: 'applyStatus', target: 'self', status: p.resistance.status, stacks: 1 });
+    }
+  }
 }
 
 // Build-up meter fill loop: emit meterFilled, enqueue onFill effects (owner =
@@ -15622,12 +16175,13 @@ function clampBox(box, view, { pad = 4, keep = Infinity } = {}) {
 }
 
 /** Spawn a floating number over an anchor element. */
-function floatNum(layer, anchor, text, cls) {
+function floatNum(layer, anchor, text, cls, tint) {
   if (!layer || !anchor) return;
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
   el.textContent = text;
+  if (tint) el.style.color = tint; // #61: proc floats carry their row's tint
   el.style.left = `${b.left + b.width / 2 - 14 + (Math.random() * 26 - 13)}px`;
   el.style.top = `${b.top + b.height * 0.25}px`;
   layer.appendChild(el);
@@ -15940,6 +16494,14 @@ function visualFor(e, beatKind) {
           }
         : null;
     case 'hpLost':
+      // #61 M2a: a proc burst's number is ITS OWN float, in the row's tint,
+      // with the row's glyph — separate from and after the hit that tipped it.
+      if (typeof e.cause === 'string' && e.cause.startsWith('proc:')) {
+        return (ctx) => {
+          const info = ctx.statusInfo && ctx.statusInfo(e.cause.slice(5));
+          floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} -${e.amount}`, 'burst', info && info.tint);
+        };
+      }
       return e.cause === 'effect'
         ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst')
         : null; // attack damage already shown by damageDealt
@@ -15950,13 +16512,39 @@ function visualFor(e, beatKind) {
             floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
           }
         : null;
+    // #61 M2: the proc moment, three beats — banner + per-status SFX row here,
+    // the visible drain on the meter bar, then the tinted number (the proc:
+    // hpLost above, next on the queue's own cadence). The old bleed-only
+    // meterFilled banner generalized: any threshold row procs through this one
+    // grammar, tint and name from its own data (M4).
+    case 'procBurst':
+      return (ctx) => {
+        const info = ctx.statusInfo && ctx.statusInfo(e.status);
+        // Per-status SFX row by name — an unauthored id degrades to the sfx
+        // table's own default (audible, never silent), until the audio seat
+        // authors procBurst_<status> rows.
+        sfx.play(`procBurst_${e.status}`);
+        banner(ctx.layer, `${((info && info.name) || e.status).toUpperCase()} BURST`, 'blood');
+        // M2b: the drain is SEEN — the live bar transitions to empty before
+        // the re-render replaces it.
+        const anchor = ctx.anchorFor(e.targetId);
+        const card = anchor && anchor.closest ? anchor.closest('[data-eid]') : null;
+        const bar = card && card.querySelector(`.procbar[data-status="${e.status}"] .fill`);
+        if (bar) {
+          bar.style.transition = 'width 250ms ease-out';
+          bar.style.width = '0%';
+        }
+      };
+    // #61 M3: refusal has feedback — points blocked by an active resistance
+    // answer with a gray tick, so a bleed card into resistance never reads as
+    // the game eating the card.
+    case 'procResisted':
+      return (ctx) => {
+        const info = ctx.statusInfo && ctx.statusInfo(e.status);
+        floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} ${e.blocked} RESISTED`, 'blk small');
+      };
     case 'meterFilled':
-      return e.status === 'bleed'
-        ? (ctx) => {
-            sfx.play('bleedBurst');
-            banner(ctx.layer, 'BLEED BURST', 'blood');
-          }
-        : null;
+      return null; // poise fills speak through enemyStaggered below
     case 'enemyStaggered':
       return (ctx) => {
         sfx.play('stagger');
@@ -17146,6 +17734,16 @@ function renderCard(registries, ref, opts = {}) {
       : '') +
     `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
 
+  // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
+  // number in the status row's own tint — "these cards just lit up" instead
+  // of set-intersection math. Non-matching cards get nothing (absence = no
+  // bonus; never a "+0%" badge).
+  const boost = opts.preview && (opts.preview.values || []).find((v) => v.boostTint);
+  if (boost) {
+    el.classList.add('tag-boost');
+    el.style.setProperty('--boost-tint', boost.boostTint);
+  }
+
   // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
   attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
   if (opts.small) {
@@ -17256,94 +17854,6 @@ function hasTag(id) {
 
 
 Object.assign(module.exports, { TAGS, tagsFor, tagIdsFor, cardsWithTag, hasTag });
-
-},
-"src/content/generated/cardTags.js": function (module, exports, require) {
-// GENERATED by tools/content-build.mjs from content/source/cardTags.csv
-// Do not edit by hand — edit the source file and re-run the build.
-
-const cardTags = [
-  {
-    "id": "blade",
-    "label": "Blade",
-    "color": "C9502E",
-    "glyph": "⚔",
-    "blurb": "Steel and edge — direct weapon work."
-  },
-  {
-    "id": "guard",
-    "label": "Guard",
-    "color": "7FA8C9",
-    "glyph": "🛡",
-    "blurb": "Bracing, blocking, holding the line."
-  },
-  {
-    "id": "blood",
-    "label": "Blood",
-    "color": "8A1A1A",
-    "glyph": "🩸",
-    "blurb": "Bleed, and the letting of it."
-  },
-  {
-    "id": "gorefire",
-    "label": "Gorefire",
-    "color": "C9502E",
-    "glyph": "🔥",
-    "blurb": "The blood-and-flame stance."
-  },
-  {
-    "id": "starstone",
-    "label": "Starstone",
-    "color": "7FA8C9",
-    "glyph": "✦",
-    "blurb": "Astral sorcery — charges and combos."
-  },
-  {
-    "id": "ritual",
-    "label": "Ritual",
-    "color": "C9A227",
-    "glyph": "◈",
-    "blurb": "Rites, offerings, and faith work."
-  },
-  {
-    "id": "blight",
-    "label": "Blight",
-    "color": "B5541C",
-    "glyph": "☣",
-    "blurb": "Creeping decay."
-  },
-  {
-    "id": "oath",
-    "label": "Oath",
-    "color": "C9A227",
-    "glyph": "✚",
-    "blurb": "Binding, lasting commitments."
-  },
-  {
-    "id": "flourish",
-    "label": "Flourish",
-    "color": "9FC3E8",
-    "glyph": "✧",
-    "blurb": "Finesse — footwork and multi-hit."
-  },
-  {
-    "id": "ash",
-    "label": "Ash",
-    "color": "7A6F5A",
-    "glyph": "•",
-    "blurb": "Spent once, then gone to ash."
-  },
-  {
-    "id": "heavy",
-    "label": "Heavy",
-    "color": "C9A227",
-    "glyph": "◆",
-    "blurb": "Slow, committed, and hard to stop."
-  }
-];
-
-
-Object.assign(module.exports, { cardTags });
 
 },
 "src/content/generated/cardTagging.js": function (module, exports, require) {
@@ -19641,6 +20151,30 @@ Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, isEngaged, set
 
 const { balance } = require("src/content/balance.js");
 
+// ---- status tooltip tokens (#61) --------------------------------------------
+// Status tooltips carry {tokens} bound to the row's OWN knobs, so the prose
+// can never restate a number the table holds (Law 1 clause 2 — a literal in
+// tooltip prose is a copy nothing syncs). One substitution home; a token that
+// resolves to nothing stays visible as its literal '{...}' — a loud defect,
+// not a silent blank.
+function statusTooltipText(def) {
+  let t = def.tooltip || '';
+  const sub = (token, v) => {
+    if (v != null) t = t.split(`{${token}}`).join(String(v));
+  };
+  if (def.proc) {
+    sub('proc.threshold', def.proc.threshold);
+    sub('proc.burstPercent', def.proc.burstPercent);
+    sub('proc.burstMin', def.proc.burstMin);
+    sub('proc.burstMax', def.proc.burstMax);
+    sub('proc.poiseDamage', def.proc.poiseDamage);
+  }
+  if (def.resists) sub('resists.percent', def.resists.percent);
+  if (def.taggedVulnerability) sub('tv.pct', Math.round((def.taggedVulnerability.mult - 1) * 100));
+  if (def.decay && typeof def.decay === 'object') sub('decay.duration', def.decay.duration);
+  return t;
+}
+
 // ---- map node types ---------------------------------------------------------
 const NODE_TYPES = {
   monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
@@ -19942,7 +20476,7 @@ function padName(btn) {
 }
 
 
-Object.assign(module.exports, { NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, MENU_TABS, MENU, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName });
+Object.assign(module.exports, { statusTooltipText, NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, MENU_TABS, MENU, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName });
 
 },
 "src/ui/components/quicknav.js": function (module, exports, require) {
@@ -20320,7 +20854,7 @@ const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.j
 const { relicText } = require("src/ui/components/card.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
-const { intentBadge, intentTooltip, backdropClass, MENU } = require("src/ui/uiContent.js");
+const { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
@@ -20377,6 +20911,9 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
     relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
     orb: () => app.querySelector('.energy-orb'),
+    // #61: fx beats read a proc row's display data (name/tint/icon) through
+    // this accessor — one home, the status def itself.
+    statusInfo: (sid) => registries.statuses.get(sid),
   };
 
   let selected = null; // card instanceId in click-targeting mode
@@ -20605,21 +21142,55 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     });
   }
 
+  // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a
+  // fourth row needs zero new UI. Display cap is a RULE: at most two proc
+  // meters render as bars (the two closest to threshold); the rest collapse
+  // to ring-fill pips in the status row — same fill semantics, smaller
+  // grammar, independent of how many rows content ships.
+  function procDisplayPlan(entity) {
+    const live = Object.entries(entity.statuses)
+      .filter(([sid, inst]) => {
+        const def = registries.statuses.get(sid);
+        return def && def.proc && inst.meter && inst.meter.value > 0;
+      })
+      .sort((a, b) => b[1].meter.value / b[1].meter.max - a[1].meter.value / a[1].meter.max);
+    return { bars: live.slice(0, 2).map(([sid]) => sid), pips: live.slice(2).map(([sid]) => sid) };
+  }
+
+  function hasResistAgainst(entity, statusId) {
+    return Object.entries(entity.statuses).some(([sid, inst]) => {
+      const d = registries.statuses.get(sid);
+      return d && d.resists && d.resists.status === statusId && (inst.meter ? inst.meter.value : inst.stacks) > 0;
+    });
+  }
+
   function statusRow(entity) {
     const row = document.createElement('div');
     row.className = 'statuses';
+    const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
     for (const [sid, inst] of Object.entries(entity.statuses)) {
       const def = registries.statuses.get(sid);
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const el = document.createElement('div');
       el.className = 'status-icon';
       el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
-      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
+      // Collapsed proc meter (M4 display cap): ring-fill pip — the pip's own
+      // background is a conic fill in the row's tint, same value/threshold
+      // semantics as the bar it stands in for.
+      if (plan.pips.includes(sid)) {
+        const fillPct = Math.min(100, (inst.meter.value / inst.meter.max) * 100);
+        el.classList.add('proc-pip');
+        el.style.background = `conic-gradient(${def.tint || 'var(--muted)'} ${fillPct}%, transparent ${fillPct}%)`;
+      }
+      // A resistance pip's number is its countdown (M3 — the receipt reads in
+      // turns); every other pip keeps its stack count.
+      const shown = def.resists && inst.duration != null ? inst.duration : stacks;
+      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${shown}</span>`;
       attachTooltip(el, () => {
         let extra = '';
         if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
         if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
-        return `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(def.tooltip || '')}${extra}`;
+        return `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(statusTooltipText(def))}${extra}`;
       });
       row.appendChild(el);
     }
@@ -20643,14 +21214,26 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
       attachTooltip(poise, () => `<div class="tt-title">Poise</div>${entity.poiseMeter.value} / ${entity.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
-      const bleedInst = entity.statuses.bleed;
-      if (bleedInst && bleedInst.meter && bleedInst.meter.value > 0) {
-        const bl = document.createElement('div');
-        bl.className = 'bar bleedbar';
-        bl.innerHTML = `<div class="fill" style="width:${Math.min(100, (bleedInst.meter.value / bleedInst.meter.max) * 100)}%"></div>`;
-        const bleedDef = registries.statuses.get('bleed');
-        attachTooltip(bl, () => `<div class="tt-title">${esc(bleedDef.name)}</div>${bleedInst.meter.value} / ${bleedInst.meter.max}. ${esc(bleedDef.tooltip || '')}`);
-        wrap.appendChild(bl);
+      // #61 M1/M4: the shipped bleedbar, generalized into the one grammar —
+      // a thin bar per threshold-proc row (max two, procDisplayPlan's cap),
+      // tint + glyph nub from the row's own data, absent at zero. Numbers
+      // live in the tooltip; the bar's job is HOW CLOSE, at a glance.
+      const plan = procDisplayPlan(entity);
+      for (const sid of plan.bars) {
+        const inst = entity.statuses[sid];
+        const def = registries.statuses.get(sid);
+        const bar = document.createElement('div');
+        bar.className = 'bar procbar';
+        bar.dataset.status = sid;
+        // S2: an active resistance dims the meter — the state reads without
+        // opening a tooltip.
+        if (hasResistAgainst(entity, sid)) bar.classList.add('resisted');
+        bar.style.setProperty('--proc-tint', def.tint || 'var(--muted)');
+        bar.innerHTML =
+          `<div class="fill" style="width:${Math.min(100, (inst.meter.value / inst.meter.max) * 100)}%"></div>` +
+          `<span class="glyph">${esc(def.icon || '?')}</span>`; // hue is never the only channel
+        attachTooltip(bar, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
+        wrap.appendChild(bar);
       }
     }
     return wrap;

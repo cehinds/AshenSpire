@@ -26,6 +26,7 @@ import {
   SFX_LAYER_SCHEMAS,
   MUSIC_SILENCE_WORD,
   MUSIC_BED_SCHEMA,
+  CREATURE_TAGS,
 } from './schemas.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 
@@ -68,6 +69,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'unlocks',
   'sfx',
   'music',
+  'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
 ]);
 
 /**
@@ -203,7 +205,10 @@ export function validateContent(bundle) {
     });
   }
 
-  const vctx = { ids, err };
+  // Effect-tag vocabulary: the card-tag registry rides the bundle so effect
+  // `tags` and taggedVulnerability lists validate against ONE home (#61).
+  const tagIds = new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => t && t.id).filter(Boolean));
+  const vctx = { ids, err, tagIds };
 
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {
@@ -273,8 +278,69 @@ export function validateContent(bundle) {
     validateRelicTemplate(relic, `relics.${relic.id}`, err);
   }
 
+  // ---- threshold-proc second layer (#61): meaning, not shape ---------------
+  // Every red names its row and, for tag errors, lists the legal tags — a
+  // wrong tag teaches the vocabulary instead of just refusing (silence-word
+  // standard).
+  for (const st of b.statuses || []) {
+    const path = `statuses.${st.id}`;
+    if (st.proc) {
+      const p = st.proc;
+      if (!(Number.isInteger(p.threshold) && p.threshold > 0)) {
+        err(`${path}.proc.threshold`, `threshold must be an integer > 0, got ${JSON.stringify(p.threshold)}`);
+      }
+      if (!(typeof p.burstPercent === 'number' && p.burstPercent > 0 && p.burstPercent <= 100)) {
+        err(`${path}.proc.burstPercent`, `burstPercent must be a number in (0, 100], got ${JSON.stringify(p.burstPercent)}`);
+      }
+      if (Number.isInteger(p.burstMin) && Number.isInteger(p.burstMax) && p.burstMin > p.burstMax) {
+        err(`${path}.proc`, `burstMin ${p.burstMin} exceeds burstMax ${p.burstMax}`);
+      }
+      if (p.poiseDamage != null && !(Number.isInteger(p.poiseDamage) && p.poiseDamage >= 0)) {
+        err(`${path}.proc.poiseDamage`, `poiseDamage must be an integer ≥ 0, got ${JSON.stringify(p.poiseDamage)}`);
+      }
+      if (p.resistance) {
+        for (const tag of p.resistance.tags || []) {
+          if (!CREATURE_TAGS.includes(tag)) {
+            err(`${path}.proc.resistance.tags`, `unknown creature tag '${tag}' (legal: ${CREATURE_TAGS.join(', ')})`);
+          }
+        }
+        const resistDef = (b.statuses || []).find((s) => s && s.id === p.resistance.status);
+        if (resistDef && !resistDef.resists) {
+          err(`${path}.proc.resistance.status`, `'${p.resistance.status}' has no resists block — a proc's resistance status must declare what it resists`);
+        }
+      }
+    }
+    if (st.resists) {
+      if (!(typeof st.resists.percent === 'number' && st.resists.percent > 0 && st.resists.percent <= 100)) {
+        err(`${path}.resists.percent`, `resist percent must be a number in (0, 100], got ${JSON.stringify(st.resists.percent)}`);
+      }
+      if (!(st.decay && typeof st.decay === 'object' && Number.isInteger(st.decay.duration) && st.decay.duration > 0)) {
+        err(`${path}.decay`, `a resist row needs decay {duration: int > 0} — its duration is a table knob, got ${JSON.stringify(st.decay)}`);
+      }
+    }
+    if (st.taggedVulnerability) {
+      const tv = st.taggedVulnerability;
+      for (const tag of tv.tags || []) {
+        if (!tagIds.has(tag)) {
+          err(`${path}.taggedVulnerability.tags`, `unknown effect tag '${tag}' (legal: ${[...tagIds].join(', ')})`);
+        }
+      }
+      if (!(typeof tv.mult === 'number' && tv.mult > 0)) {
+        err(`${path}.taggedVulnerability.mult`, `mult must be a number > 0, got ${JSON.stringify(tv.mult)}`);
+      }
+      if (!(tv.tags || []).length) {
+        err(`${path}.taggedVulnerability.tags`, 'tag list must be non-empty — an unscoped extra vulnerability is plain Vulnerable, use modifiers instead');
+      }
+    }
+  }
+
   for (const enemy of b.enemies || []) {
     const path = `enemies.${enemy.id}`;
+    for (const tag of enemy.tags || []) {
+      if (!CREATURE_TAGS.includes(tag)) {
+        err(`${path}.tags`, `unknown creature tag '${tag}' (legal: ${CREATURE_TAGS.join(', ')})`);
+      }
+    }
     const moveIds = new Set(Object.keys(enemy.moves || {}));
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);
@@ -625,6 +691,20 @@ export function validateEffects(effects, path, vctx) {
       if (typeof v === 'string' && !vctx.ids[reg].has(v)) {
         err(`${p}.${field}`, `Dangling reference: unknown ${reg} id '${v}'`);
       }
+    }
+    if (eff.op === 'damage' && eff.tags !== undefined) {
+      if (!Array.isArray(eff.tags) || !eff.tags.length) {
+        err(`${p}.tags`, 'damage tags must be a non-empty array of effect-tag ids');
+      } else {
+        for (const tag of eff.tags) {
+          if (!vctx.tagIds.has(tag)) {
+            err(`${p}.tags`, `unknown effect tag '${tag}' (legal: ${[...vctx.tagIds].join(', ')})`);
+          }
+        }
+      }
+    }
+    if (eff.op === 'stagger' && ['self', 'player', 'owner', 'ally'].includes(eff.target)) {
+      err(`${p}.target`, `stagger targets enemies only, got '${eff.target}'`);
     }
     if (eff.op === 'addCard') {
       if (eff.pile !== undefined && !['draw', 'hand', 'discard', 'exhaust'].includes(eff.pile)) {

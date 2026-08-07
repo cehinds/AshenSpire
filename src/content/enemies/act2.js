@@ -13,6 +13,7 @@ export const act2Enemies = [
     name: 'Gilded Knight',
     hp: [42, 46],
     poiseMax: 18,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '♞',
     moves: {
       thrust: { intent: 'attack', damage: 11, weight: 50, maxConsecutive: 2 },
@@ -30,6 +31,7 @@ export const act2Enemies = [
     name: 'Court Surgeon',
     hp: [30, 34],
     poiseMax: 10,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '⚕',
     moves: {
       scalpel: { intent: 'attack', damage: 7, weight: 40 },
@@ -53,6 +55,7 @@ export const act2Enemies = [
     name: 'Stitched Hound',
     hp: [24, 28],
     poiseMax: 8,
+    tags: ['undead', 'beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🐩',
     moves: {
       maul: { intent: 'attack', damage: 4, hits: 2, weight: 60 },
@@ -70,6 +73,7 @@ export const act2Enemies = [
     name: 'Court Marionette',
     hp: [16, 18],
     poiseMax: 6,
+    tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🪆',
     moves: {
       dart: { intent: 'attack', damage: 4, hits: 2, weight: 50 },
@@ -86,6 +90,7 @@ export const act2Enemies = [
     name: 'Living Armor',
     hp: [36, 40],
     poiseMax: 22,
+    tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🛡',
     moves: {
       slam: { intent: 'attack', damage: 10, weight: 40 },
@@ -102,6 +107,7 @@ export const act2Enemies = [
     name: 'Duelist of the Court',
     hp: [90, 96],
     poiseMax: 26,
+    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🤺',
     firstMove: 'enGarde',
     moves: {
@@ -123,6 +129,7 @@ export const act2Enemies = [
     name: 'The Stitched King',
     hp: [195, 195],
     poiseMax: 34,
+    tags: ['undead', 'humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '👑',
     firstMove: 'courtlyDecree',
     moves: {

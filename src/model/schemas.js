@@ -39,6 +39,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'shuffleDiscardIntoDraw',
   'enterStance',
   'poiseDamage',
+  'stagger',
 ]);
 
 export const RUN_OPCODES = Object.freeze([
@@ -93,6 +94,12 @@ export const EVENTS = Object.freeze([
   'enemySpawned',
   'enemyDied',
   'enemyStaggered',
+  // Threshold-proc vocabulary (#61 direction): the burst is ITS OWN event in
+  // the damage record — never folded into the triggering hit (checkable
+  // invariant). procResisted is the refusal receipt: applying points into an
+  // active resistance answers visibly, never silently.
+  'procBurst',
+  'procResisted',
   'energyGained',
   'energySpent',
   'flaskUsed',
@@ -167,6 +174,36 @@ export const MODIFIER_KEYS = Object.freeze([
 
 export const STACK_MODES = Object.freeze(['add', 'refresh', 'unique']);
 
+// ---------------------------------------------------------------------------
+// Threshold-proc vocabulary (#61 direction, Constantine's words 2026-08-06)
+// ---------------------------------------------------------------------------
+// A proc status builds points to a fixed threshold; at the threshold the
+// target takes percent-based damage as ITS OWN PROC (own event, own damage
+// record entry — never folded into the triggering hit), the build-up RESETS
+// TO ZERO (overflow dropped, threshold constant — deliberate delta vs the
+// legacy `meter` block, which carried overflow and escalated ×1.5), and, if
+// the target carries a listed creature tag, it gains a post-proc resistance
+// status. Bleed, frost, and insanity are the first three rows.
+//
+// How the tag-scoped vulnerability composes with regular Vulnerable is a
+// NAMED, VALIDATED rule per row, not an accident of arithmetic order:
+//   multiplicative — dmg *= mult (composes like every shipped *Mult:
+//                    flat per status, stack-count-invariant, sources multiply)
+//   additive       — (mult−1) sums across additive sources, applied once.
+export const VULN_STACKING = Object.freeze(['additive', 'multiplicative']);
+
+// Creature tags — the closed vocabulary proc resistance may gate on. An
+// enemy's `tags` and a proc row's `resistance.tags` must both draw from this
+// set. Distinct from card/effect tags (content/tags.js): creature identity vs
+// attack school — two concepts, deliberately two vocabularies.
+export const CREATURE_TAGS = Object.freeze([
+  'beast',
+  'humanoid',
+  'undead',
+  'construct',
+  'spirit',
+]);
+
 export const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']);
 export const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
 export const RELIC_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
@@ -212,7 +249,10 @@ export const REGISTRY_TYPES = Object.freeze([
 // registry its value must resolve in. Common fields allowed on any opcode:
 // op, target, amount, if, repeat (SPEC §3.4).
 export const EFFECT_SPECS = Object.freeze({
-  damage: { allowed: ['hits'], required: ['amount'], refs: {} },
+  // `tags` scopes the hit for tag-scoped vulnerability (frost/insanity
+  // exposure): values must exist in the card-tag registry (one vocabulary,
+  // two carriers — card chips for display, effect tags for combat).
+  damage: { allowed: ['hits', 'tags'], required: ['amount'], refs: {} },
   block: { allowed: [], required: ['amount'], refs: {} },
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status'], required: ['status'], refs: { status: 'statuses' } },
@@ -221,11 +261,14 @@ export const EFFECT_SPECS = Object.freeze({
   exhaust: { allowed: ['random'], required: [], refs: {} },
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
-  loseHp: { allowed: [], required: ['amount'], refs: {} },
+  loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
   enterStance: { allowed: ['stance'], required: ['stance'], refs: { stance: 'stances' } },
   poiseDamage: { allowed: [], required: ['amount'], refs: {} },
+  // Direct stagger (insanity's proc): breaks the target's next move outright,
+  // bypassing the poise bar. Enemy targets only — validated in validate.js.
+  stagger: { allowed: [], required: [], refs: {} },
   addCinders: { allowed: [], required: ['amount'], refs: {} },
   addCardToDeck: { allowed: ['card'], required: ['card'], refs: { card: 'cards' } },
   removeCardFromDeck: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },
@@ -421,10 +464,47 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     icon: opt(str),
-    tint: opt(str), // status-pip accent CSS color (display)
+    tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
     stackMode: en(...STACK_MODES),
     decay: union(en('none', 'perTurnEnd', 'onConsume'), obj({ duration: int })),
     meter: opt(obj({ max: int, growthMult: num, onFill: effects })),
+    // Threshold-proc block (#61 vocabulary; see VULN_STACKING header above).
+    // Every number is a table knob. burstPercent is a percent of the PROC
+    // TARGET'S max HP (the reading the shipped bleed already used —
+    // percentMaxHp of the meter carrier — kept for continuity; big enemies
+    // burst for more absolute damage from the same table). Value-range rules
+    // (threshold > 0, 0 < burstPercent ≤ 100, burstMin ≤ burstMax, …) are
+    // enforced in validate.js with row-naming messages.
+    proc: opt(
+      obj({
+        threshold: int,
+        burstPercent: num,
+        burstMin: int,
+        burstMax: int,
+        poiseDamage: opt(int), // fixed poise damage PER PROC (reading stated in content row)
+        stagger: opt(bool), // direct stagger on proc (insanity)
+        effects: opt(effects), // additional proc payload (frost/insanity debuffs)
+        resistance: opt(
+          obj({
+            status: ref('statuses'), // the resist row applied post-proc
+            tags: arr(str), // creature-tag gate, ⊆ CREATURE_TAGS (validated)
+          })
+        ),
+      })
+    ),
+    // A resist row declares what it resists; strength lives here, duration
+    // lives in the row's own decay — one home per knob.
+    resists: opt(obj({ status: ref('statuses'), percent: num })),
+    // Tag-scoped extra vulnerability (frost/insanity exposure): applies only
+    // to attack damage whose effect `tags` intersect this list; composes with
+    // regular Vulnerable per the declared stacking rule (closed enum).
+    taggedVulnerability: opt(
+      obj({
+        tags: arr(str), // ⊆ card-tag registry (validated)
+        mult: num,
+        stacking: en(...VULN_STACKING),
+      })
+    ),
     modifiers: opt(modifiersSchema),
     hooks: opt(triggersNode),
     tooltip: opt(str),
@@ -453,6 +533,7 @@ export const SCHEMAS = Object.freeze({
     name: str,
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
+    tags: opt(arr(str)), // creature tags ⊆ CREATURE_TAGS — gates proc resistance
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),

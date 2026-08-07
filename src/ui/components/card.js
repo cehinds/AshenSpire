@@ -112,6 +112,16 @@ export function renderCard(registries, ref, opts = {}) {
       : '') +
     `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
 
+  // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
+  // number in the status row's own tint — "these cards just lit up" instead
+  // of set-intersection math. Non-matching cards get nothing (absence = no
+  // bonus; never a "+0%" badge).
+  const boost = opts.preview && (opts.preview.values || []).find((v) => v.boostTint);
+  if (boost) {
+    el.classList.add('tag-boost');
+    el.style.setProperty('--boost-tint', boost.boostTint);
+  }
+
   // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
   attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
   if (opts.small) {
