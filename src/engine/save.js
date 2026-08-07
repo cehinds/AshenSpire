@@ -195,6 +195,50 @@ export function createSaveManager(storage) {
     return { schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [] };
   }
 
+  // The actual write, shared by saveMeta (updates the live profile) and
+  // replacePrimaryWith (swaps in a different one). Verify-then-rotate lives here
+  // so both paths get it.
+  function saveMetaInternal(meta) {
+    const json = JSON.stringify({ ...meta, schemaVersion: META_SCHEMA_VERSION });
+    storage.setItem(META_KEY, json);
+    // Verify the write survived (quota, a killed tab mid-write), then rotate
+    // the mirror. Backup AFTER a verified read-back, never before — a mirror
+    // of bytes we never proved readable is not a backup.
+    const check = readMetaFrom(META_KEY);
+    if (check.empty || check.error) {
+      const backup = readMetaFrom(META_BACKUP_KEY);
+      if (!backup.empty && !backup.error) storage.setItem(META_KEY, backup.json);
+      return { ok: false, reason: 'write did not read back cleanly; primary restored from the last known good' };
+    }
+    storage.setItem(META_BACKUP_KEY, json);
+    return { ok: true };
+  }
+
+  // ---- THE ONE PATH THAT REPLACES THE PRIMARY -----------------------------
+  // The rule is "no path may replace the primary without the old bytes being
+  // recoverable", and it has now been broken twice by the same mistake: the
+  // rule written in prose, enforced per-function, and the next path to arrive
+  // walks the gap. First startNewProfile (Vira's D1), then restoreProfile
+  // (Sunna's D12) — which destroyed the outgoing profile while its dialog
+  // promised it would be "set aside here in its place".
+  //
+  // So the rule stops being prose. Any code that replaces the live profile
+  // calls THIS, and archiving is not a step a caller can forget because it is
+  // not a caller's step. A new path that writes META_KEY directly is a defect
+  // findable by grep: this and saveMeta are the only two writers, and saveMeta
+  // never replaces a DIFFERENT profile — it updates the one already live.
+  function replacePrimaryWith(meta, reason) {
+    const outgoing = storage.getItem(META_KEY);
+    const archiveId = outgoing ? archiveMeta(outgoing, reason) : null;
+    quarantined = false; // an explicit, player-driven replacement clears the freeze
+    const res = saveMetaInternal(meta);
+    if (!res.ok) {
+      quarantined = true;
+      return { ...res, archiveId };
+    }
+    return { ok: true, archiveId };
+  }
+
   return {
     /** Persist after every committed choice (SPEC §3.12). Stamps RNG counters. */
     saveRun(run, rng, slot = 1) {
@@ -355,21 +399,8 @@ export function createSaveManager(storage) {
       if (quarantined) {
         return { ok: false, reason: `profile is quarantined (${status.state}); refusing to overwrite the original bytes` };
       }
-      const json = JSON.stringify({ ...meta, schemaVersion: META_SCHEMA_VERSION });
-      storage.setItem(META_KEY, json);
-      // Verify the write survived (quota, a killed tab mid-write), then rotate
-      // the mirror. Backup AFTER a verified read-back, never before — a mirror
-      // of bytes we never proved readable is not a backup.
-      const check = readMetaFrom(META_KEY);
-      if (check.empty || check.error) {
-        const backup = readMetaFrom(META_BACKUP_KEY);
-        if (!backup.empty && !backup.error) storage.setItem(META_KEY, backup.json);
-        return { ok: false, reason: 'write did not read back cleanly; primary restored from the last known good' };
-      }
-      storage.setItem(META_BACKUP_KEY, json);
-      return { ok: true };
+      return saveMetaInternal(meta);
     },
-
     /** Append a run result (victory, floor, seed, class, …), capped at 20. */
     recordResult(result) {
       const meta = this.loadMeta();
@@ -429,14 +460,14 @@ export function createSaveManager(storage) {
       } catch (e) {
         return { ok: false, reason: `that archive still cannot be read: ${e && e.message ? e.message : 'corrupt'}` };
       }
-      quarantined = false; // an explicit, player-driven act clears the freeze
-      const res = this.saveMeta(meta);
-      if (!res.ok) {
-        quarantined = true;
-        return res;
-      }
+      // Restoring REPLACES the live profile, so it goes through the one path
+      // that archives what it overwrites (below). Before this, restore was the
+      // path the rule did not cover: the outgoing profile was destroyed while
+      // the dialog promised it would be "set aside here in its place".
+      const res = replacePrimaryWith(meta, `set aside when you restored ${id}`);
+      if (!res.ok) return res;
       status = { ok: true, state: 'ok', reason: `restored from archive ${id}`, archiveId: id, recoveredFrom: id };
-      return { ok: true };
+      return { ok: true, archiveId: res.archiveId };
     },
 
     /**
@@ -455,15 +486,9 @@ export function createSaveManager(storage) {
      * from writing a second copy of what it already archived.
      */
     startNewProfile() {
-      const current = storage.getItem(META_KEY);
-      let archiveId = status.archiveId;
-      if (current) {
-        archiveId = archiveMeta(current, status.reason || `replaced by a new profile (was: ${status.state})`);
-      }
-      quarantined = false;
-      const res = this.saveMeta(freshMeta());
-      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId, recoveredFrom: null };
-      return { ...res, archiveId };
+      const res = replacePrimaryWith(freshMeta(), 'kept when you started a new profile');
+      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId: res.archiveId, recoveredFrom: null };
+      return res;
     },
 
     /**

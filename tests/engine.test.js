@@ -867,14 +867,43 @@ export async function runTests({ artManifest = null } = {}) {
       newer: (st) => { const m = createSaveManager(st); st.setItem(META_KEY, JSON.stringify({ schemaVersion: META_SCHEMA_VERSION + 6, profile: { runs: 2000 } })); m.loadMeta(); return m; },
       older: (st) => { const m = createSaveManager(st); st.setItem(META_KEY, JSON.stringify({ schemaVersion: -3, progress: { runs: 2000 } })); m.loadMeta(); return m; },
     };
+    // EVERY path that replaces the primary, not the one that was tested. The
+    // rule held twice and its COVERAGE was per-function twice: startNewProfile
+    // (Vira D1), then restoreProfile (Sunna D12), which destroyed the outgoing
+    // profile while its dialog promised to set it aside.
+    const seedArchive = (st, runs) => {
+      const other = JSON.stringify({ schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], progress: { runs } });
+      const idx = JSON.parse(st.getItem(RUN_ARCHIVE_KEY) || '{"v":1,"entries":[]}');
+      idx.entries.push({ id: 'meta-seeded', kind: 'meta', slot: null, reason: 'seeded', at: new Date().toISOString(), count: 1, save: other });
+      st.setItem(RUN_ARCHIVE_KEY, JSON.stringify(idx));
+    };
+    const replacers = {
+      startNewProfile: (mgr) => mgr.startNewProfile(),
+      restoreProfile: (mgr, st) => { seedArchive(st, 111); return mgr.restoreProfile('meta-seeded'); },
+    };
     for (const [name, make] of Object.entries(build)) {
-      const st = createMemoryStorage();
-      const mgr = make(st);
-      const before = st.getItem(META_KEY);
-      mgr.startNewProfile();
-      const recoverable = mgr.listArchives().some((a) => (mgr.getArchive(a.id) || {}).save === before);
-      assert(recoverable, `${name} × startNewProfile: the replaced bytes are still recoverable`);
+      for (const [action, run] of Object.entries(replacers)) {
+        const st = createMemoryStorage();
+        const mgr = make(st);
+        const before = st.getItem(META_KEY);
+        run(mgr, st);
+        const recoverable = mgr.listArchives().some((a) => (mgr.getArchive(a.id) || {}).save === before);
+        assert(!before || recoverable, `${name} × ${action}: the replaced bytes are still recoverable`);
+      }
     }
+
+    // The named case, with values worth noticing: 777 out, 111 in, and BOTH
+    // must be in the drawer afterwards — a restore consumes nothing.
+    const stR = createMemoryStorage();
+    const mR = createSaveManager(stR);
+    mR.saveMeta({ settings: {}, results: [], progress: { runs: 777 } });
+    seedArchive(stR, 111);
+    eq(mR.restoreProfile('meta-seeded').ok, true, 'a readable archive restores');
+    eq(mR.loadMeta().progress.runs, 111, 'the restored profile is live');
+    const inDrawer = mR.listArchives()
+      .map((a) => { try { return JSON.parse(mR.getArchive(a.id).save).progress.runs; } catch (e) { return null; } });
+    assert(inDrawer.includes(777), 'the profile that was replaced is set aside, not destroyed');
+    assert(inDrawer.includes(111), 'the archive it restored from is still there');
 
     // newer × export: the bytes are intact and deliberately unarchived, so the
     // export must read the LIVE profile — and must never offer an unrelated

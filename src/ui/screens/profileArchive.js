@@ -41,10 +41,33 @@ function humanSize(bytes) {
   return bytes < 1024 ? `${bytes} bytes` : `${Math.round(bytes / 1024)} KB`;
 }
 
-// What an entry IS, in the player's words rather than ours.
-function describe(entry) {
-  if (entry.kind === 'meta') return 'Profile';
-  return entry.slot ? `Run · slot ${entry.slot}` : 'Run';
+// What an entry IS, in the player's words rather than ours. Two entries both
+// titled "Profile" with nothing telling them apart is the card Sunna raised:
+// the crisis screen already reads progress out of the bytes, and this screen
+// can do the same when they are readable.
+function describe(entry, saves) {
+  if (entry.kind !== 'meta') return entry.slot ? `Run · slot ${entry.slot}` : 'Run';
+  const full = saves.getArchive(entry.id);
+  try {
+    const p = JSON.parse(full.save).progress;
+    if (p && (p.runs != null || p.wins != null)) {
+      return `Profile · ${p.runs ?? 0} runs${p.wins != null ? `, ${p.wins} wins` : ''}`;
+    }
+  } catch (e) { /* unreadable is the normal case; fall through to the plain noun */ }
+  return 'Profile';
+}
+
+// Sunna's reason mapping — the body says what happened in words, and the raw
+// engine text lives behind "Details for support" (her D2, reopened on this
+// surface after it was closed on the notice screen).
+function humanReason(raw) {
+  const r = String(raw || '');
+  if (/could not be read|corrupt|JSON|Unexpected|Unterminated|position \d+/i.test(r)) return 'Couldn’t be read.';
+  if (/older than this build|older version/i.test(r)) return 'From an older version.';
+  if (/started a new profile|kept when you started/i.test(r)) return 'Kept when you started a new profile.';
+  if (/dangling id/i.test(r)) return 'From an older version of the game’s content.';
+  if (/restored/i.test(r)) return 'Set aside when you restored another profile.';
+  return r ? 'Set aside.' : '';
 }
 
 /**
@@ -78,9 +101,10 @@ export function renderProfileSection(container, { saves, onRestored }) {
         return `
           <div class="prof-entry" data-id="${esc(a.id)}">
             <div class="prof-entry-what">
-              <b>${esc(describe(a))}</b>
+              <b>${esc(describe(a, saves))}</b>
               <p class="set-note">${esc([when && `Set aside ${when}`, size].filter(Boolean).join(' · '))}${esc(again)}</p>
-              <p class="set-note prof-why">${esc(a.reason || '')}</p>
+              <p class="set-note prof-why">${esc(humanReason(a.reason))}</p>
+              ${a.reason ? `<details class="support"><summary>Details for support</summary><code>${esc(a.reason)}</code></details>` : ''}
             </div>
             <div class="prof-entry-actions">
               <button class="prof-export" data-id="${esc(a.id)}">Save a copy to a file</button>
@@ -91,7 +115,7 @@ export function renderProfileSection(container, { saves, onRestored }) {
     // DRAFT COPY: the empty state must not read as a failure — an empty drawer
     // is the good outcome, and this screen is most often opened by someone
     // curious rather than someone hurt.
-    : '<p class="set-note prof-empty">Nothing has been set aside. That is the good news — this list fills only when a profile or a run could not be read.</p>';
+    : '<p class="set-note prof-empty">Nothing has been set aside. That’s the good news — this fills when something couldn’t be read, and when you start a new profile and we keep the old one for you.</p>';
 
   container.innerHTML = `
     <div class="prof-archive">
@@ -101,6 +125,7 @@ export function renderProfileSection(container, { saves, onRestored }) {
       <p class="prof-result" role="status"></p>
     </div>`;
 
+  const archiveOf = (id) => saves.listArchives().find((a) => a.id === id) || {};
   const say = (msg) => { const el = container.querySelector('.prof-result'); if (el) el.textContent = msg; };
 
   container.querySelectorAll('.prof-export').forEach((btn) => {
@@ -127,9 +152,14 @@ export function renderProfileSection(container, { saves, onRestored }) {
       const box = document.createElement('div');
       box.className = 'prof-confirm';
       // DRAFT COPY (Sunna's to replace).
+      // Sunna's copy, split exactly as she wrote it: the second sentence is
+      // FALSE for a readable archive and it lied to her about a perfectly good
+      // 2000-run profile, so it appears only when this copy was set aside
+      // because it couldn't be read.
+      const unreadable = /Couldn’t be read\./.test(humanReason(archiveOf(btn.dataset.id).reason));
       box.innerHTML = `
-        <p>Restore this profile? It replaces the profile you are using now — which will be set aside here in its place, not deleted.
-        This copy was set aside because it could not be read, so restoring it may not work. Nothing is lost by trying.</p>
+        <p>Restore this profile? The profile you’re using now is set aside here in its place — not deleted.</p>
+        ${unreadable ? '<p>This copy couldn’t be read when we set it aside, so restoring it may not work. Nothing is lost by trying.</p>' : ''}
         <div class="prof-entry-actions">
           <button class="prof-cancel">Not yet</button>
           <button class="prof-go subtle">Restore it</button>
@@ -140,8 +170,13 @@ export function renderProfileSection(container, { saves, onRestored }) {
       box.querySelector('.prof-go').addEventListener('click', () => {
         const res = saves.restoreProfile(btn.dataset.id);
         if (res.ok) {
-          say('Restored. Your profile is the one you just chose.');
+          // Re-render FIRST, then speak into the node that survives it. Saying
+          // it first wrote the message into an element the re-render replaced,
+          // so nothing visibly changed, the player pressed again — and with
+          // D12 open that ate a second profile (Sunna D13).
           renderProfileSection(container, { saves, onRestored });
+          const el = container.querySelector('.prof-result');
+          if (el) el.textContent = 'Restored. This is your profile now — the one you were using is set aside below.';
           if (onRestored) onRestored();
           return;
         }

@@ -148,7 +148,7 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
     wrap.innerHTML = `
       <div class="confirm-box" role="dialog" aria-modal="true" aria-label="Start a new profile?">
         <h2>Start a new profile?</h2>
-        <p>Your old one stays archived — this doesn’t delete it. You can come back to it any time from Settings → Profile.</p>
+        <p>Your old one is set aside — this doesn’t delete it. You can come back to it any time from Settings → Profile.</p>
         <div class="actions">
           <button class="cancel">Not yet</button>
           <button class="go subtle">Start fresh</button>

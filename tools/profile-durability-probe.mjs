@@ -284,16 +284,38 @@ check('E2 a newer schemaVersion is refused rather than accepted blind (Sten, ame
     older: (st) => { const m = createSaveManager(st); st.setItem(META_KEY, JSON.stringify({ schemaVersion: -3, progress: { runs: 2000 } })); m.loadMeta(); return m; },
   };
 
-  for (const [name, build] of Object.entries(states)) {
-    const st = createMemoryStorage();
-    const mgr = build(st);
-    const before = st.getItem(META_KEY);
-    mgr.startNewProfile();
-    const after = st.getItem(META_KEY);
-    const recoverable = mgr.listArchives().some((a) => a.kind === 'meta' && a.id && (mgr.getArchive(a.id) || {}).save === before);
-    check(`P6 ${name} × startNewProfile: the replaced bytes are still recoverable`,
-      after === before || recoverable,
-      after === before ? '' : 'PRIMARY OVERWRITTEN WITH NO ARCHIVE — those bytes are gone');
+  // EVERY path that replaces the primary, not the one that was tested. The
+  // rule was right both times and its COVERAGE was per-function both times:
+  // startNewProfile (Vira D1), then restoreProfile (Sunna D12), which
+  // destroyed the outgoing profile while promising to set it aside.
+  const replacers = {
+    startNewProfile: (mgr) => mgr.startNewProfile(),
+    restoreProfile: (mgr) => {
+      // Seed a readable archive to restore FROM, so the outgoing profile is
+      // the thing under test.
+      const other = JSON.stringify({ schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], progress: { runs: 111 } });
+      const idx = JSON.parse(storageOf(mgr).getItem(RUN_ARCHIVE_KEY) || '{"v":1,"entries":[]}');
+      idx.entries.push({ id: 'meta-seeded', kind: 'meta', slot: null, reason: 'seeded', at: new Date().toISOString(), count: 1, save: other });
+      storageOf(mgr).setItem(RUN_ARCHIVE_KEY, JSON.stringify(idx));
+      return mgr.restoreProfile('meta-seeded');
+    },
+  };
+  const storageMap = new WeakMap();
+  const storageOf = (mgr) => storageMap.get(mgr);
+
+  for (const [stateName, build] of Object.entries(states)) {
+    for (const [actionName, run] of Object.entries(replacers)) {
+      const st = createMemoryStorage();
+      const mgr = build(st);
+      storageMap.set(mgr, st);
+      const before = st.getItem(META_KEY);
+      run(mgr);
+      const after = st.getItem(META_KEY);
+      const recoverable = mgr.listArchives().some((a) => (mgr.getArchive(a.id) || {}).save === before);
+      check(`P6 ${stateName} × ${actionName}: the replaced bytes are still recoverable`,
+        !before || after === before || recoverable,
+        after === before ? '' : 'PRIMARY REPLACED WITH NO ARCHIVE — those bytes are gone');
+    }
   }
 
   // newer × export: the bytes are intact and must be exportable even though

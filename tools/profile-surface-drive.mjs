@@ -96,25 +96,45 @@ const after = await ev(`(()=>({entries:document.querySelectorAll('.prof-entry').
 check('a failed restore does not consume the archive', after.entries === beforeCount, `${beforeCount} → ${after.entries}`);
 check('a failed restore says nothing was lost', /nothing was lost/i.test(after.msg), after.msg);
 
-// A GOOD archive really does come back.
+// A GOOD archive really does come back — AND the profile it replaces survives.
+//
+// The previous version of this check tested /"runs":1/ against an archive it
+// had itself seeded with "runs":1234, so it matched its own planted entry and
+// COULD NOT FAIL — while the very claim it pretended to cover (the outgoing
+// profile is set aside, not destroyed) was false. Sunna found that; it is the
+// sharpest note I have been handed. The two profiles now carry values I would
+// notice missing, and the assertion is about the DRAWER, not the message.
 await ev(`(()=>{ localStorage.clear();
-  localStorage.setItem('sote_meta_v1', JSON.stringify({schemaVersion:1,settings:{},results:[],progress:{runs:1234}}));
+  localStorage.setItem('sote_meta_v1', JSON.stringify({schemaVersion:1,settings:{},results:[],progress:{runs:777}}));
   return 1; })()`);
 await c.send('Page.navigate',{url:`http://localhost:${port}/`}); await sleep(1500);
-await ev(`(()=>{ // set aside a good profile by hand, then corrupt the live one
-  const good = localStorage.getItem('sote_meta_v1');
-  localStorage.setItem('sote_run_archived', JSON.stringify({v:1,entries:[{id:'meta-good',kind:'meta',slot:null,reason:'set aside by hand for this drive',at:new Date().toISOString(),count:1,save:good}]}));
-  localStorage.setItem('sote_meta_v1', JSON.stringify({schemaVersion:1,settings:{},results:[],progress:{runs:1}}));
+await ev(`(()=>{ // a readable archive holding a DIFFERENT number
+  localStorage.setItem('sote_run_archived', JSON.stringify({v:1,entries:[{id:'meta-good',kind:'meta',slot:null,
+    reason:'set aside by hand for this drive',at:new Date().toISOString(),count:1,
+    save: JSON.stringify({schemaVersion:1,settings:{},results:[],progress:{runs:111}})}]}));
   return 1; })()`);
 await c.send('Page.navigate',{url:`http://localhost:${port}/`}); await sleep(1500);
 await ev(`[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`); await sleep(600);
 await ev(`document.querySelector('.prof-restore').click()`); await sleep(200);
-await ev(`document.querySelector('.prof-go').click()`); await sleep(400);
-check('restoring a readable archive really restores it',
-  await ev(`JSON.parse(localStorage.getItem('sote_meta_v1')).progress.runs === 1234`),
-  await ev(`localStorage.getItem('sote_meta_v1')`));
-check('and the profile it replaced is now in the drawer too',
-  await ev(`JSON.parse(localStorage.getItem('sote_run_archived')).entries.some(e=>/\"runs\":1/.test(e.save))`));
+await ev(`document.querySelector('.prof-go').click()`); await sleep(500);
+
+const live = await ev(`JSON.parse(localStorage.getItem('sote_meta_v1')).progress.runs`);
+check('restoring a readable archive really restores it (111 in the drawer → live)', live === 111, 'live runs = ' + live);
+const drawer = await ev(`JSON.parse(localStorage.getItem('sote_run_archived')).entries.map(e=>{try{return JSON.parse(e.save).progress.runs}catch(x){return 'unreadable'}})`);
+check('THE OUTGOING PROFILE SURVIVES: 777 is in the drawer after the restore',
+  Array.isArray(drawer) && drawer.includes(777), 'drawer holds: ' + JSON.stringify(drawer));
+check('and the archive it restored FROM is still there too (a restore consumes nothing)',
+  Array.isArray(drawer) && drawer.includes(111), 'drawer holds: ' + JSON.stringify(drawer));
+const msg = await ev(`document.querySelector('.prof-result')?.textContent || ''`);
+check('D13 the screen says it worked, after the re-render', /restored/i.test(msg) && /set aside below/i.test(msg), JSON.stringify(msg));
+
+// D14 — one concept, one word, across both screens.
+const vocab = await ev(`(()=>{
+  const calm=document.querySelector('.prof-archive')?.innerText||'';
+  return {calmSetAside:/set aside/i.test(calm), calmArchived:/archiv/i.test(calm.replace(/Details for support[\s\S]*/,''))};
+})()`);
+check('D14 the calm screen says "set aside" and not "archived"',
+  vocab.calmSetAside && !vocab.calmArchived, JSON.stringify(vocab));
 
 console.log(`\n${fails} failing check(s).`);
 process.exit(fails?1:0);
