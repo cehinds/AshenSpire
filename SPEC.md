@@ -367,9 +367,24 @@ Common (StS layer):
 
 Elden Ring layer (the thematic differentiator — these must feel distinct):
 
+**Threshold-proc statuses** *(#61, Constantine's direction 2026-08-06 — supersedes the
+earlier Bleed row; every number is a PROVISIONAL table knob in the row itself)*: a proc
+status builds points toward a **constant** threshold; points do not decay. At the
+threshold the target takes percent-of-its-max-HP damage as **its own proc** — its own
+event and damage-record entry, never folded into the triggering hit — then the build-up
+**resets to zero** (overflow dropped; the old carry-and-escalate ×1.5 is gone), and, if
+the target carries a listed creature tag, it gains a short resistance status (strength on
+the resist row, duration in its decay, gate in the proc row). Declared per row:
+`threshold, burstPercent (of target max HP), burstMin/burstMax, poiseDamage (per proc),
+stagger (direct), effects, resistance {status, tags}`. Schema + validator enforce every
+knob (`model/schemas.js`, `model/validate.js`); tag-scoped extra vulnerability composes
+by a declared `stacking` rule (closed enum: additive | multiplicative).
+
 | Status | Mechanic |
 |---|---|
-| **Bleed (build-up)** | A meter on each enemy, threshold starts at **12**. Cards add Bleed points; points do **not** decay during combat. On reaching threshold: burst `loseHp` = **15% of target's max HP (min 8, max 35)**, meter resets, threshold ×1.5 (rounded up). Ignores block. |
+| **Bleed (threshold-proc)** | Threshold 12; burst 15% of target max HP (min 8, max 35), ignores block; **+3 Poise damage per proc**; fleshy targets (beast/humanoid) gain Clotted (bleed resist) after a burst. All PROVISIONAL. |
+| **Frost (threshold-proc)** | Threshold 10; burst 8% (min 4, max 20) — smaller than Bleed by design; proc leaves **Weak** + **Frost-Exposed** (+25% from `starstone`-tagged effects, multiplicative with Vulnerable). PROVISIONAL. |
+| **Insanity (threshold-proc)** | Threshold 14; burst 18% (min 10, max 40) — the highest; **+8 Poise damage** and a **direct Stagger** on proc (bypasses the bar); leaves Unraveled (+30% from `ritual`/`blight`-tagged effects). NOT the player-side Madness below — two words, two mechanics. PROVISIONAL. |
 | **Scarlet Rot** | DoT on enemy: take N `loseHp` at its turn start. Unlike StS Poison, stacks **do not tick down** — instead Rot has a duration of **3 of its turns**, then expires entirely. Re-applying adds stacks and refreshes duration. Ignores block. |
 | **Frostbite** | On enemy: next time it takes attack damage ≥ 10 in one hit, it takes +30% (floored) and Frostbite is consumed. One stack max. |
 | **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 energy per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |

@@ -82,6 +82,37 @@
 .combatant .poisebar.full .fill { animation: pulse-gold 600ms infinite alternate; }
 .combatant .bleedbar { height: 0.6rem; }
 .combatant .bleedbar .fill { background: var(--ember); }
+
+/* #61 — the one threshold-proc meter grammar (M1/M4). Chrome geometry in px
+   (Law 4): the bar is a box, not text. Tint rides --proc-tint from the row's
+   own data; the glyph nub keeps hue from being the only channel. */
+.combatant .procbar { height: 8px; min-height: 8px; position: relative; }
+.combatant .procbar .fill { background: var(--proc-tint, var(--muted)); }
+.combatant .procbar .glyph {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 8px;
+  line-height: 1;
+  pointer-events: none;
+}
+/* S2: an active resistance dims the meter — state reads without a tooltip. */
+.combatant .procbar.resisted { opacity: 0.45; }
+.combatant .procbar.resisted .fill {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--proc-tint, var(--muted)) 0 4px,
+    transparent 4px 8px
+  );
+}
+/* M4 display cap: collapsed proc meters render as ring-fill pips (conic fill
+   set inline from the row's tint); keep the glyph readable over the ring. */
+.status-icon.proc-pip { color: var(--ink, #fff); text-shadow: 0 0 2px #000; }
+
+/* M5: a matched tag-scoped vulnerability lights the boosted preview number in
+   the status row's tint. */
+.card.tag-boost .ctext .val.up { color: var(--boost-tint); }
 .combatant .nm { font-size: 1.2rem; }
 .combatant.dead { opacity: 0.25; filter: grayscale(1); pointer-events: none; }
 

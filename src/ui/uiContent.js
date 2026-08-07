@@ -7,6 +7,30 @@
 
 import { balance } from '../content/balance.js';
 
+// ---- status tooltip tokens (#61) --------------------------------------------
+// Status tooltips carry {tokens} bound to the row's OWN knobs, so the prose
+// can never restate a number the table holds (Law 1 clause 2 — a literal in
+// tooltip prose is a copy nothing syncs). One substitution home; a token that
+// resolves to nothing stays visible as its literal '{...}' — a loud defect,
+// not a silent blank.
+export function statusTooltipText(def) {
+  let t = def.tooltip || '';
+  const sub = (token, v) => {
+    if (v != null) t = t.split(`{${token}}`).join(String(v));
+  };
+  if (def.proc) {
+    sub('proc.threshold', def.proc.threshold);
+    sub('proc.burstPercent', def.proc.burstPercent);
+    sub('proc.burstMin', def.proc.burstMin);
+    sub('proc.burstMax', def.proc.burstMax);
+    sub('proc.poiseDamage', def.proc.poiseDamage);
+  }
+  if (def.resists) sub('resists.percent', def.resists.percent);
+  if (def.taggedVulnerability) sub('tv.pct', Math.round((def.taggedVulnerability.mult - 1) * 100));
+  if (def.decay && typeof def.decay === 'object') sub('decay.duration', def.decay.duration);
+  return t;
+}
+
 // ---- map node types ---------------------------------------------------------
 export const NODE_TYPES = {
   monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },

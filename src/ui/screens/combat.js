@@ -12,7 +12,7 @@ import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { intentBadge, intentTooltip, backdropClass, MENU } from '../uiContent.js';
+import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -69,6 +69,9 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
     relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
     orb: () => app.querySelector('.energy-orb'),
+    // #61: fx beats read a proc row's display data (name/tint/icon) through
+    // this accessor — one home, the status def itself.
+    statusInfo: (sid) => registries.statuses.get(sid),
   };
 
   let selected = null; // card instanceId in click-targeting mode
@@ -182,11 +185,32 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   // the HUD updates one actor at a time instead of jumping to the outcome.
   let disp = null;
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
-  function takeSnapshot() {
-    const ents = {
-      player: { hp: combat.player.hp, block: combat.player.block, alive: true },
+  // The snapshot is the PACED state the whole HUD renders from. It must carry
+  // every value the board draws, or that layer silently renders post-state
+  // while the rest plays back (Sunna's PX gate: meters were missing, so the
+  // proc bar blinked out at play time — which reads as "bleed broke" — and
+  // the drain animation targeted a bar the re-render had already removed).
+  // Statuses and poise ride along; applyBeatToDisp advances them per beat.
+  function snapEnt(e, alive) {
+    const statuses = {};
+    for (const [sid, inst] of Object.entries(e.statuses || {})) {
+      statuses[sid] = {
+        stacks: inst.stacks,
+        duration: inst.duration,
+        meter: inst.meter ? { value: inst.meter.value, max: inst.meter.max } : null,
+      };
+    }
+    return {
+      hp: e.hp,
+      block: e.block,
+      alive,
+      statuses,
+      poiseMeter: e.poiseMeter ? { value: e.poiseMeter.value, max: e.poiseMeter.max } : null,
     };
-    for (const e of combat.enemies) ents[e.id] = { hp: e.hp, block: e.block, alive: e.alive };
+  }
+  function takeSnapshot() {
+    const ents = { player: snapEnt(combat.player, true) };
+    for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
     return { ents, hand: [...combat.piles.hand] };
   }
   function findInst(instanceId) {
@@ -218,6 +242,46 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
             t.alive = false;
             t.hp = 0;
           }
+          break;
+        // ---- meter/status playback (#61, Sunna's PX gate) -------------------
+        // Each beat moves the snapshot the way the engine moved the entity, so
+        // the bar the player watches fills and drains ON the beat that caused
+        // it — not one frame ahead of the whole cascade.
+        case 'statusApplied':
+          if (t) {
+            const cur = t.statuses[e.status] || (t.statuses[e.status] = { stacks: 0, duration: undefined, meter: null });
+            const live = getEntity(combat, e.targetId);
+            const liveInst = live && live.statuses && live.statuses[e.status];
+            if (liveInst && liveInst.meter) {
+              // Meter row: `total` is the meter value (getStacks), and the max
+              // is whatever the live row carries (constant for proc rows).
+              cur.meter = cur.meter || { value: 0, max: liveInst.meter.max };
+              cur.meter.max = liveInst.meter.max;
+              cur.meter.value = e.total;
+            } else {
+              cur.stacks = e.total;
+              if (liveInst && liveInst.duration != null) cur.duration = liveInst.duration;
+            }
+          }
+          break;
+        case 'procBurst':
+          // M2b: the drain happens HERE, on the burst beat — the fx code
+          // animates the bar to empty and the next render agrees with it.
+          if (t && t.statuses[e.status] && t.statuses[e.status].meter) {
+            t.statuses[e.status].meter.value = 0;
+          }
+          // M7: the poise chunk visibly comes FROM the burst. Per-point poise
+          // has no event of its own, so the burst's own payload moves it here;
+          // any other poise source catches up when playback ends.
+          if (t && t.poiseMeter && e.poiseDamage > 0) {
+            t.poiseMeter.value = Math.min(t.poiseMeter.max, t.poiseMeter.value + e.poiseDamage);
+          }
+          break;
+        case 'meterFilled':
+          if (t && e.meter === 'poise' && t.poiseMeter) t.poiseMeter.value = 0;
+          break;
+        case 'statusExpired':
+          if (t) delete t.statuses[e.status];
           break;
         case 'cardDrawn': {
           const inst = findInst(e.cardInstanceId);
@@ -297,21 +361,60 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     });
   }
 
+  // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a
+  // fourth row needs zero new UI. Display cap is a RULE: at most two proc
+  // meters render as bars (the two closest to threshold); the rest collapse
+  // to ring-fill pips in the status row — same fill semantics, smaller
+  // grammar, independent of how many rows content ships.
+  // All three read the PACED view (dv) — the snapshot during playback, the
+  // live entity otherwise — so meters move on their own beat (Sunna's gate).
+  function procDisplayPlan(entity) {
+    const live = Object.entries(dv(entity).statuses || {})
+      .filter(([sid, inst]) => {
+        const def = registries.statuses.get(sid);
+        return def && def.proc && inst.meter && inst.meter.value > 0;
+      })
+      .sort((a, b) => b[1].meter.value / b[1].meter.max - a[1].meter.value / a[1].meter.max);
+    return { bars: live.slice(0, 2).map(([sid]) => sid), pips: live.slice(2).map(([sid]) => sid) };
+  }
+
+  function hasResistAgainst(entity, statusId) {
+    return Object.entries(dv(entity).statuses || {}).some(([sid, inst]) => {
+      const d = registries.statuses.get(sid);
+      return d && d.resists && d.resists.status === statusId && (inst.meter ? inst.meter.value : inst.stacks) > 0;
+    });
+  }
+
   function statusRow(entity) {
     const row = document.createElement('div');
     row.className = 'statuses';
-    for (const [sid, inst] of Object.entries(entity.statuses)) {
+    const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
+    for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
       const def = registries.statuses.get(sid);
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
+      // M1's "absent at zero", applied to pips too: a spent proc row (💧0
+      // after a burst) is an empty frame, not information (Sunna's S-flag).
+      if (def.proc && stacks <= 0) continue;
       const el = document.createElement('div');
       el.className = 'status-icon';
       el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
-      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
+      // Collapsed proc meter (M4 display cap): ring-fill pip — the pip's own
+      // background is a conic fill in the row's tint, same value/threshold
+      // semantics as the bar it stands in for.
+      if (plan.pips.includes(sid)) {
+        const fillPct = Math.min(100, (inst.meter.value / inst.meter.max) * 100);
+        el.classList.add('proc-pip');
+        el.style.background = `conic-gradient(${def.tint || 'var(--muted)'} ${fillPct}%, transparent ${fillPct}%)`;
+      }
+      // A resistance pip's number is its countdown (M3 — the receipt reads in
+      // turns); every other pip keeps its stack count.
+      const shown = def.resists && inst.duration != null ? inst.duration : stacks;
+      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${shown}</span>`;
       attachTooltip(el, () => {
         let extra = '';
         if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
         if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
-        return `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(def.tooltip || '')}${extra}`;
+        return `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(statusTooltipText(def))}${extra}`;
       });
       row.appendChild(el);
     }
@@ -327,22 +430,39 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     hp.innerHTML = `<div class="fill" style="width:${(v.hp / entity.maxHp) * 100}%"></div><div class="label">${v.hp} / ${entity.maxHp}</div>`;
     wrap.appendChild(hp);
     if (entity.kind === 'enemy') {
+      // Poise reads the paced view too, so M7's poise chunk lands on the
+      // burst's own beat instead of a frame ahead of the cascade.
+      const pm = v.poiseMeter || entity.poiseMeter;
       const poise = document.createElement('div');
-      poise.className = `bar poisebar${entity.poiseMeter.value >= entity.poiseMeter.max * 0.75 ? ' full' : ''}`;
-      poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (entity.poiseMeter.value / entity.poiseMeter.max) * 100)}%"></div>`;
+      poise.className = `bar poisebar${pm.value >= pm.max * 0.75 ? ' full' : ''}`;
+      poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (pm.value / pm.max) * 100)}%"></div>`;
       // Meter-bar tooltips render the STATUS def's own text (data) so they can't
       // drift from the balance/formula numbers.
       const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
-      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${entity.poiseMeter.value} / ${entity.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
+      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${pm.value} / ${pm.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
-      const bleedInst = entity.statuses.bleed;
-      if (bleedInst && bleedInst.meter && bleedInst.meter.value > 0) {
-        const bl = document.createElement('div');
-        bl.className = 'bar bleedbar';
-        bl.innerHTML = `<div class="fill" style="width:${Math.min(100, (bleedInst.meter.value / bleedInst.meter.max) * 100)}%"></div>`;
-        const bleedDef = registries.statuses.get('bleed');
-        attachTooltip(bl, () => `<div class="tt-title">${esc(bleedDef.name)}</div>${bleedInst.meter.value} / ${bleedInst.meter.max}. ${esc(bleedDef.tooltip || '')}`);
-        wrap.appendChild(bl);
+      // #61 M1/M4: the shipped bleedbar, generalized into the one grammar —
+      // a thin bar per threshold-proc row (max two, procDisplayPlan's cap),
+      // tint + glyph nub from the row's own data, absent at zero. Numbers
+      // live in the tooltip; the bar's job is HOW CLOSE, at a glance.
+      const plan = procDisplayPlan(entity);
+      for (const sid of plan.bars) {
+        // v, not entity: the bar is the thing the drain animates, so it must
+        // read the paced snapshot like every other meter on this card.
+        const inst = v.statuses[sid];
+        const def = registries.statuses.get(sid);
+        const bar = document.createElement('div');
+        bar.className = 'bar procbar';
+        bar.dataset.status = sid;
+        // S2: an active resistance dims the meter — the state reads without
+        // opening a tooltip.
+        if (hasResistAgainst(entity, sid)) bar.classList.add('resisted');
+        bar.style.setProperty('--proc-tint', def.tint || 'var(--muted)');
+        bar.innerHTML =
+          `<div class="fill" style="width:${Math.min(100, (inst.meter.value / inst.meter.max) * 100)}%"></div>` +
+          `<span class="glyph">${esc(def.icon || '?')}</span>`; // hue is never the only channel
+        attachTooltip(bar, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
+        wrap.appendChild(bar);
       }
     }
     return wrap;

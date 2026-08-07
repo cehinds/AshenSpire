@@ -675,12 +675,26 @@ export function previewCard(combat, cardInstanceId, targetId) {
     switch (eff.op) {
       case 'damage': {
         const base = evalPreview(combat, action, eff.amount, primary);
-        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base);
+        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, eff.tags);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         for (const e of living) {
           const b = evalPreview(combat, action, eff.amount, e);
-          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b);
+          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, eff.tags);
+        }
+        // #61 M5: when the aimed target's tag-scoped vulnerability matches
+        // this hit's tags, name the matched row's tint so the hand can accent
+        // the boosted number. Engine states the fact; display reads it.
+        if (eff.tags && primary && primary.kind === 'enemy') {
+          for (const [sid, inst] of Object.entries(primary.statuses || {})) {
+            if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
+            const sdef = combat.registries.statuses.get(sid);
+            const tv = sdef && sdef.taggedVulnerability;
+            if (tv && tv.tags.some((t) => eff.tags.includes(t))) {
+              entry.boostTint = sdef.tint || null;
+              break;
+            }
+          }
         }
         break;
       }

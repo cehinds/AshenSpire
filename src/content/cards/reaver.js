@@ -369,7 +369,7 @@ export const reaverCards = [
     id: 'goreblood', name: "Goreblood", class: 'reaver', rarity: 'rare', cost: 3, type: 'power',
     keywords: [], icon: '♛',
     effects: [{ op: 'applyStatus', target: 'self', status: 'goreblood', stacks: one }],
-    textTemplate: 'Bleed and Poise thresholds no longer increase after filling.',
+    textTemplate: 'Poise thresholds no longer increase after filling.',
     upgrade: { cost: 2 },
   },
   {

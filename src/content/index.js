@@ -23,6 +23,7 @@ import { act3Encounters } from './encounters/act3.js';
 import { events } from './events.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
+import { cardTags } from './generated/cardTags.js';
 import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
@@ -62,6 +63,9 @@ export const contentBundle = {
     cardTargets: CARD_TARGETS,
   },
   unlocks,
+  // The card-tag registry rides the bundle so effect `tags` and
+  // taggedVulnerability lists validate against ONE vocabulary home (#61).
+  tags: cardTags,
 };
 
 // Not part of the bundle (UI-only data / M1 flow):

@@ -67,6 +67,13 @@ const TEST_STATUSES = [
     modifiers: { attackDamageAdd: 1 },
     hooks: [{ on: 'ownerTurnStart', do: [{ op: 'draw', amount: 1 }] }],
   },
+  {
+    // #61 tests: an ADDITIVE-stacking tagged vulnerability, to prove the
+    // declared-stacking enum drives composition (the shipped rows are all
+    // multiplicative).
+    id: 'tAddVuln', name: 'T Add Vuln', stackMode: 'add', decay: 'none',
+    taggedVulnerability: { tags: ['starstone'], mult: 1.5, stacking: 'additive' },
+  },
 ];
 
 const TEST_CARDS = [
@@ -74,10 +81,21 @@ const TEST_CARDS = [
   { id: 'tKeep', name: 'T Keep', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['retain'], effects: [], textTemplate: 'Retain.' },
   { id: 'tPoise', name: 'T Poise', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'poiseDamage', target: 'enemy', amount: 10 }], textTemplate: '{poiseDamage} Poise damage.' },
   { id: 'tCharge', name: 'T Charge', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['innate'], effects: [{ op: 'applyStatus', target: 'self', status: 'testCharge', stacks: 3 }], textTemplate: 'Gain {testCharge} Charge.' },
+  // #61 fixtures: proc appliers + a tagged hit for the vulnerability lane.
+  { id: 'tFrost10', name: 'T Frost', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 10 }], textTemplate: 'Apply {frost} Frost.' },
+  { id: 'tInsanity14', name: 'T Insanity', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'applyStatus', target: 'enemy', status: 'insanity', stacks: 14 }], textTemplate: 'Apply {insanity} Insanity.' },
+  { id: 'tStarHit', name: 'T Star Hit', class: 'colorless', rarity: 'special', cost: 0, type: 'attack', keywords: [], effects: [{ op: 'damage', target: 'enemy', amount: 10, tags: ['starstone'] }], textTemplate: 'Deal {damage} damage.' },
+  { id: 'tPlainHit', name: 'T Plain Hit', class: 'colorless', rarity: 'special', cost: 0, type: 'attack', keywords: [], effects: [{ op: 'damage', target: 'enemy', amount: 10 }], textTemplate: 'Deal {damage} damage.' },
+  // 7g collision fixture (Vira's drive, made display-conformant: tokens bind
+  // both applications — her probe card's bare 'Collide.' was the one
+  // non-conformance her gate note named).
+  { id: 'tCollide', name: 'T Collide', class: 'colorless', rarity: 'special', cost: 1, type: 'skill', keywords: [], effects: [{ op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 12 }, { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 10 }], textTemplate: 'Apply {bleed} Bleed and {frost} Frost.' },
 ];
 
 const TEST_ENEMIES = [
   { id: 'tDummy', name: 'T Dummy', hp: [30, 30], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
+  // #61: tagged twin of tDummy — the resistance gate's positive arm.
+  { id: 'tBeast', name: 'T Beast', hp: [30, 30], poiseMax: 99, tags: ['beast'], moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tGiant', name: 'T Giant', hp: [400, 400], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tHitter', name: 'T Hitter', hp: [50, 50], poiseMax: 99, moves: { hit: { intent: 'attack', damage: 10, weight: 1 } } },
   { id: 'tRegen', name: 'T Regen', hp: [50, 50], poiseMax: 99, moves: { regen: { intent: 'buff', weight: 1, effects: [{ op: 'heal', target: 'self', amount: 4 }] } } },
@@ -257,38 +275,251 @@ export async function runTests({ artManifest = null } = {}) {
     eq(resolveCard(REG, { cardId: 'hemorrhage', upgraded: true }).keywords.length, 0, 'Hemorrhage+ removed Exhaust');
   });
 
-  // ---- 7. Bleed: accumulate / burst / clamp / threshold growth / freeze --------
-  test('7. Bleed bursts at 12 for clamp(15% maxHp, 8, 35); threshold ×1.5; Lord\'s Blood freezes', () => {
+  // ---- 7. Bleed threshold-proc (#61): accumulate / own-proc burst / clamp /
+  // reset-to-zero / constant threshold / per-proc poise ------------------------
+  // Pins Constantine's direction (2026-08-06): burst at the threshold as ITS
+  // OWN PROC, build-up resets to zero (overflow dropped), threshold constant.
+  // The pre-#61 contract this replaces: overflow carried, threshold ×1.5.
+  test('7. Bleed procs at its table threshold for clamp(15% maxHp, 8, 35) as its own event; resets to zero; threshold constant; +3 poise per proc', () => {
+    // Threshold-DERIVED, not pinned: the knob is PROVISIONAL and his to move
+    // (Constantine, "let rune pick the threshold against the sim") — the
+    // contract under test is the mechanism, not the current pick.
+    const T = REG.statuses.get('bleed').proc.threshold;
     const c = makeCombat({ deck: Array(6).fill('gorefireSlash') });
-    playFromHand(c, 'gorefireSlash');
-    playFromHand(c, 'gorefireSlash');
-    playFromHand(c, 'gorefireSlash'); // 9 bleed
-    eq(S.getStacks(getEntity(c, 'e1'), 'bleed'), 9, 'bleed accumulated, no decay');
+    const e1 = getEntity(c, 'e1');
+    S.applyStatus(c, e1, 'bleed', T - 3); // sub-threshold build-up
+    eq(S.getStacks(e1, 'bleed'), T - 3, 'bleed accumulated, no decay');
     dispatch(c, { type: 'endTurn' });
-    eq(S.getStacks(getEntity(c, 'e1'), 'bleed'), 9, 'bleed persists through turns');
-    playFromHand(c, 'gorefireSlash'); // 12 → burst
-    const burst = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1' && e.cause === 'effect').pop();
-    assert(burst, 'burst happened');
-    eq(burst.amount, 8, '15% of 30 = 4.5 → min-clamped to 8');
-    eq(getEntity(c, 'e1').statuses.bleed.meter.max, 18, 'threshold grew ×1.5');
+    eq(S.getStacks(e1, 'bleed'), T - 3, 'bleed persists through turns');
+    const poiseBefore = e1.poiseMeter.value;
+    playFromHand(c, 'gorefireSlash'); // +3 → T exactly → proc
+    // The own-proc invariant: the burst is its own damage-record entry —
+    // a procBurst event plus its own hpLost — never folded into the
+    // triggering hit's damageDealt.
+    const proc = logOf(c, 'procBurst').filter((e) => e.targetId === 'e1').pop();
+    assert(proc, 'procBurst emitted as its own event');
+    eq(proc.amount, 8, '15% of 30 = 4.5 → min-clamped to 8');
+    const hit = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1' && e.isAttack).pop();
+    eq(hit.amount, 5, "triggering hit's damageDealt stays the card's own 5 — burst not folded in");
+    const burst = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1' && e.cause === 'proc:bleed').pop();
+    assert(burst, "burst hpLost carries cause 'proc:bleed' — attributable in the damage record");
+    eq(burst.amount, 8, 'burst hpLost is its own entry');
+    eq(e1.statuses.bleed.meter.value, 0, 'build-up RESET TO ZERO after proc');
+    eq(e1.statuses.bleed.meter.max, T, 'threshold CONSTANT — no ×1.5 (pre-#61 behavior gone)');
+    eq(e1.poiseMeter.value, poiseBefore + 3, 'fixed 3 poise damage per proc (PROVISIONAL knob)');
 
-    const g = makeCombat({ deck: Array(6).fill('gorefireSlash'), enemies: ['tGiant'] });
-    for (let i = 0; i < 4; i++) {
-      if (g.player.energy === 0) dispatch(g, { type: 'endTurn' });
-      playFromHand(g, 'gorefireSlash');
-    }
-    const gb = logOf(g, 'hpLost').filter((e) => e.targetId === 'e1' && e.cause === 'effect').pop();
+    const g = makeCombat({ deck: Array(8).fill('gorefireSlash'), enemies: ['tGiant'] });
+    S.applyStatus(g, getEntity(g, 'e1'), 'bleed', T - 3);
+    playFromHand(g, 'gorefireSlash'); // → T → proc on the giant
+    const gb = logOf(g, 'procBurst').filter((e) => e.targetId === 'e1').pop();
     eq(gb.amount, 35, '15% of 400 = 60 → max-clamped to 35');
 
-    const l = makeCombat({ deck: ['goreblood', ...Array(6).fill('gorefireSlash')] });
-    const lb = l.piles.hand.find((x) => x.cardId === 'goreblood');
-    if (lb) dispatch(l, { type: 'playCard', cardInstanceId: lb.instanceId });
-    else throw new Error('goreblood not in opening hand (6-card deck draws 5; adjust seed)');
-    for (let i = 0; i < 4; i++) {
-      if (l.player.energy === 0) dispatch(l, { type: 'endTurn' });
-      playFromHand(l, 'gorefireSlash');
-    }
-    eq(getEntity(l, 'e1').statuses.bleed.meter.max, 12, "Goreblood froze the threshold");
+    // Overflow is DROPPED at proc (reset-to-zero, his words) — (T-1) + 3
+    // procs once and leaves 0, not 2. This is the anti-stranding delta the
+    // #61 falsifier measures.
+    const o = makeCombat({ deck: Array(6).fill('gorefireSlash') });
+    S.applyStatus(o, getEntity(o, 'e1'), 'bleed', T - 1);
+    playFromHand(o, 'gorefireSlash'); // T-1+3 = T+2 ≥ T → proc
+    eq(logOf(o, 'procBurst').filter((e) => e.targetId === 'e1').length, 1, 'single proc');
+    eq(getEntity(o, 'e1').statuses.bleed.meter.value, 0, 'overflow dropped, not carried');
+  });
+
+  // ---- 7b. Frost proc (#61): smaller percent, leaves Weak + Frost-Exposed ----
+  test('7b. Frost procs at 10 for clamp(8% maxHp, 4, 20); leaves Weak and Frost-Exposed; no poise, no stagger', () => {
+    const c = makeCombat({ deck: ['tFrost10', 'tPlainHit'] });
+    const e1 = getEntity(c, 'e1');
+    const poiseBefore = e1.poiseMeter.value;
+    playFromHand(c, 'tFrost10'); // 10 ≥ threshold 10 → proc
+    const proc = logOf(c, 'procBurst').filter((e) => e.targetId === 'e1' && e.status === 'frost').pop();
+    assert(proc, 'frost procBurst emitted');
+    eq(proc.amount, 4, '8% of 30 = 2.4 → min-clamped to 4');
+    eq(e1.statuses.frost.meter.value, 0, 'frost build-up reset to zero');
+    eq(S.getStacks(e1, 'weak'), 1, 'proc left Weak (the damage debuff)');
+    eq(S.getStacks(e1, 'frostExposed'), 1, 'proc left Frost-Exposed');
+    eq(e1.poiseMeter.value, poiseBefore, 'frost has no poiseDamage knob set');
+    assert(!e1.skipNextTurn, 'frost does not stagger');
+  });
+
+  // ---- 7c. Insanity proc (#61): highest percent, poise, guaranteed stagger ---
+  test('7c. Insanity procs at 14 for clamp(18% maxHp, 10, 40); +8 poise; direct stagger bypasses the bar', () => {
+    const c = makeCombat({ deck: ['tInsanity14'] });
+    const e1 = getEntity(c, 'e1');
+    const poiseBefore = e1.poiseMeter.value;
+    playFromHand(c, 'tInsanity14'); // 14 ≥ threshold 14 → proc
+    const proc = logOf(c, 'procBurst').filter((e) => e.status === 'insanity').pop();
+    assert(proc, 'insanity procBurst emitted');
+    eq(proc.amount, 10, '18% of 30 = 5.4 → min-clamped to 10');
+    eq(e1.poiseMeter.value, poiseBefore + 8, '+8 poise per proc (PROVISIONAL, highest of the three)');
+    assert(e1.skipNextTurn, 'staggered DIRECTLY — poiseMax 99 bar nowhere near full');
+    assert(logOf(c, 'enemyStaggered').some((e) => e.targetId === 'e1'), 'enemyStaggered emitted');
+    eq(e1.intent.kind, 'staggered', 'intent shows the break');
+    eq(S.getStacks(e1, 'insanityExposed'), 1, 'proc left Unraveled (tag-scoped vulnerability)');
+  });
+
+  // ---- 7d. Post-proc resistance (#61): tag-gated, halves points, expires -----
+  test('7d. Bleed resistance: beast-tagged target gains Clotted after proc, points halve with a procResisted receipt, resist expires', () => {
+    // Positive arm: tagged enemy → resist applied on proc. The proc fires
+    // inside a dispatch (card play) so the enqueued resistance drains.
+    // Threshold-derived like test 7 — the knob is provisional.
+    const T = REG.statuses.get('bleed').proc.threshold;
+    const c = makeCombat({ deck: Array(6).fill('gorefireSlash'), enemies: ['tBeast'] });
+    const e1 = getEntity(c, 'e1');
+    S.applyStatus(c, e1, 'bleed', T - 3);
+    playFromHand(c, 'gorefireSlash'); // +3 → T → proc
+    eq(S.getStacks(e1, 'bleedResist'), 1, 'Clotted applied — beast tag matched the gate');
+    // Resistance halves the NEXT application, defender-favored rounding:
+    // 3 points → blocked ceil(1.5)=2, applied 1 — with a visible receipt.
+    S.applyStatus(c, e1, 'bleed', 3);
+    const receipt = logOf(c, 'procResisted').filter((e) => e.targetId === 'e1').pop();
+    assert(receipt, 'procResisted receipt emitted — refusal is visible, never silent');
+    eq(receipt.blocked, 2, 'blocked ceil(3×50%)=2');
+    eq(e1.statuses.bleed.meter.value, 1, 'only 1 of 3 points landed');
+    // Expiry: duration 2 decays at the owner's turn end ×2 → resist gone,
+    // full points land again.
+    dispatch(c, { type: 'endTurn' });
+    dispatch(c, { type: 'endTurn' });
+    eq(S.getStacks(e1, 'bleedResist'), 0, 'Clotted expired after its duration');
+    S.applyStatus(c, e1, 'bleed', 3);
+    eq(e1.statuses.bleed.meter.value, 1 + 3, 'post-expiry application lands in full');
+
+    // Negative arm: untagged enemy → gate closed, no resist ever.
+    const u = makeCombat({ deck: ['strike'] }); // tDummy, no tags
+    const ue = getEntity(u, 'e1');
+    S.applyStatus(u, ue, 'bleed', T);
+    eq(S.getStacks(ue, 'bleedResist'), 0, 'untagged target gains no resistance');
+    // Zero-bleed empty edge: applying 0 is a no-op, no proc, no crash.
+    S.applyStatus(u, ue, 'bleed', 0);
+    eq(logOf(u, 'procBurst').filter((e) => e.status === 'bleed').length, 1, 'zero application cannot proc');
+  });
+
+  // ---- 7e. Tag-scoped vulnerability (#61): declared stacking + the ceiling ---
+  test('7e. Frost-Exposed boosts only tagged hits; declared stacking composes; the ceiling is stack-invariant', () => {
+    const c = makeCombat({ deck: ['tStarHit', 'tPlainHit', 'tStarHit', 'tPlainHit', 'tStarHit'], enemies: ['tGiant'] });
+    const e1 = getEntity(c, 'e1');
+    S.applyStatus(c, e1, 'frostExposed', 1);
+    playFromHand(c, 'tPlainHit');
+    let last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
+    eq(last.amount, 10, 'untagged hit unaffected by Frost-Exposed');
+    playFromHand(c, 'tStarHit');
+    last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
+    eq(last.amount, 12, 'starstone hit ×1.25 (multiplicative row)');
+    // Composes with regular Vulnerable multiplicatively: 10 × 1.5 × 1.25 = 18.75 → 18.
+    S.applyStatus(c, e1, 'vulnerable', 1);
+    playFromHand(c, 'tStarHit');
+    last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
+    eq(last.amount, 18, 'stacks WITH Vulnerable: floor(10 × 1.5 × 1.25)');
+    // THE CEILING (known-bad probe answered): every vulnerability lane is
+    // flat-per-status and stack-count-invariant, so max compose is the
+    // closed-form product of DISTINCT table mults — stacks cannot raise it.
+    S.applyStatus(c, e1, 'frostExposed', 99);
+    S.applyStatus(c, e1, 'vulnerable', 99);
+    if (c.player.energy === 0) dispatch(c, { type: 'endTurn' });
+    playFromHand(c, 'tStarHit');
+    last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
+    eq(last.amount, 18, '99 stacks of both: SAME 18 — the ceiling is the table, not the stacks');
+    // Additive lane: declared 'additive' pools (mult−1). tAddVuln 1.5-additive
+    // + frostExposed 1.25-mult on the same tagged hit:
+    // 10 × 1.25 × (1 + 0.5) = 18.75 → 18.
+    const a = makeCombat({ deck: ['tStarHit'], enemies: ['tGiant'] });
+    const ae = getEntity(a, 'e1');
+    S.applyStatus(a, ae, 'frostExposed', 1);
+    S.applyStatus(a, ae, 'tAddVuln', 1);
+    playFromHand(a, 'tStarHit');
+    const al = logOf(a, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
+    eq(al.amount, 18, 'additive lane pools once, multiplicative lane per source');
+  });
+
+  // ---- 7f. Known-bads through the REAL bundle (#61): each red names its row --
+  test('7f. proc vocabulary known-bads: bad threshold, bad percent, unknown tag, bad duration, bad stacking — red, naming rows', () => {
+    const withStatus = (row) => ({ ...contentBundle, statuses: [...contentBundle.statuses, row] });
+    const base = { name: 'ZZ', stackMode: 'add', decay: 'none' };
+    const expectRed = (bundle, rowPath, needle, label) => {
+      const v = validateContent(bundle);
+      assert(!v.ok, `${label}: bundle must fail`);
+      assert(
+        v.errors.some((e) => e.path.startsWith(rowPath) && e.msg.includes(needle)),
+        `${label}: red names ${rowPath} (got: ${v.errors.map((e) => `${e.path}: ${e.msg}`).join(' | ')})`
+      );
+    };
+    expectRed(
+      withStatus({ ...base, id: 'zzProc1', proc: { threshold: 0, burstPercent: 15, burstMin: 8, burstMax: 35 } }),
+      'statuses.zzProc1.proc.threshold', 'integer > 0', 'threshold 0'
+    );
+    expectRed(
+      withStatus({ ...base, id: 'zzProc2', proc: { threshold: 12, burstPercent: 150, burstMin: 8, burstMax: 35 } }),
+      'statuses.zzProc2.proc.burstPercent', '(0, 100]', 'percent 150'
+    );
+    expectRed(
+      withStatus({ ...base, id: 'zzProc3', proc: { threshold: 12, burstPercent: 15, burstMin: 8, burstMax: 35, resistance: { status: 'bleedResist', tags: ['dragon'] } } }),
+      'statuses.zzProc3.proc.resistance.tags', "unknown creature tag 'dragon' (legal:", 'unknown creature tag — message lists the legal set'
+    );
+    expectRed(
+      withStatus({ ...base, id: 'zzProc4', decay: 'none', resists: { status: 'bleed', percent: 50 } }),
+      'statuses.zzProc4.decay', 'duration', 'resist row without a duration'
+    );
+    expectRed(
+      withStatus({ ...base, id: 'zzProc5', taggedVulnerability: { tags: ['starstone'], mult: 1.25, stacking: 'banana' } }),
+      'statuses.zzProc5', 'banana', 'stacking outside the closed enum'
+    );
+    expectRed(
+      withStatus({ ...base, id: 'zzProc6', taggedVulnerability: { tags: ['dragonfire'], mult: 1.25, stacking: 'additive' } }),
+      'statuses.zzProc6.taggedVulnerability.tags', "unknown effect tag 'dragonfire' (legal:", 'unknown effect tag — message lists the legal set'
+    );
+    expectRed(
+      withStatus({ ...base, id: 'zzProc7', proc: { threshold: 12, burstPercent: 15, burstMin: 40, burstMax: 35 } }),
+      'statuses.zzProc7.proc', 'burstMin 40 exceeds burstMax 35', 'min > max'
+    );
+    // Vira's gate, finding 1 — the recurring finite class, closed by ONE
+    // shared helper (finitePositive in validate.js), not a fourth patch.
+    // Both were OBSERVED GREEN at ab33e41 before the helper landed.
+    expectRed(
+      withStatus({ ...base, id: 'zzProc8', taggedVulnerability: { tags: ['starstone'], mult: Infinity, stacking: 'multiplicative' } }),
+      'statuses.zzProc8.taggedVulnerability.mult', 'finite', 'mult Infinity (damage *= Infinity at play)'
+    );
+    expectRed(
+      withStatus({ ...base, id: 'zzProc9', proc: { threshold: 12, burstPercent: 15, burstMin: -10, burstMax: -5 } }),
+      'statuses.zzProc9.proc.burstMin', '≥ 0', 'negative burst band (a proc that fires and silently no-ops)'
+    );
+    // Finding 2 — reverse-direction: a resist row naming a non-proc status is
+    // consulted by nobody.
+    expectRed(
+      withStatus({ ...base, id: 'zzProc10', decay: { duration: 2 }, stackMode: 'refresh', resists: { status: 'weak', percent: 50 } }),
+      'statuses.zzProc10.resists.status', 'never be consulted', 'resist row pointing at a non-proc status'
+    );
+    // Finding 3 — empty resistance.tags held to the same red as empty
+    // taggedVulnerability.tags: one screen, one rule.
+    expectRed(
+      withStatus({ ...base, id: 'zzProc11', proc: { threshold: 12, burstPercent: 15, burstMin: 8, burstMax: 35, resistance: { status: 'bleedResist', tags: [] } } }),
+      'statuses.zzProc11.proc.resistance.tags', 'non-empty', 'empty resistance tag gate (a resistance no creature can trigger)'
+    );
+    // Both shipped edges stay green: the real bundle validates.
+    assert(validateContent(contentBundle).ok, 'shipped bundle stays green');
+  });
+
+  // ---- 7g. The collision drive (#61, Marina's rider — Vira drove it at the
+  // gate, this is her drive as a fixture): two procs, one card play, one
+  // beast-tagged target. Everything must hold at once: both bursts attributed,
+  // both resets exact, both resistances granted. -------------------------------
+  test('7g. bleed 12 + frost 10 in one play on a beast: both proc, 8+4 attributed, both reset, both resistances land', () => {
+    const c = makeCombat({ deck: ['tCollide'], enemies: ['tBeast'] });
+    const e1 = getEntity(c, 'e1');
+    playFromHand(c, 'tCollide');
+    const procs = logOf(c, 'procBurst').filter((e) => e.targetId === 'e1');
+    eq(procs.length, 2, 'both procs fired from one card play');
+    eq(procs.filter((e) => e.status === 'bleed')[0].amount, 8, 'bleed burst min-clamped to 8');
+    eq(procs.filter((e) => e.status === 'frost')[0].amount, 4, 'frost burst min-clamped to 4');
+    // Attribution: each burst is its own hpLost with its own cause — 8+4,
+    // never a merged 12 (the own-proc invariant under collision).
+    const losses = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1');
+    eq(losses.filter((e) => e.cause === 'proc:bleed').reduce((s, e) => s + e.amount, 0), 8, 'bleed loss attributed proc:bleed');
+    eq(losses.filter((e) => e.cause === 'proc:frost').reduce((s, e) => s + e.amount, 0), 4, 'frost loss attributed proc:frost');
+    eq(e1.hp, 30 - 12, 'total 12 landed, as two entries');
+    eq(e1.statuses.bleed.meter.value, 0, 'bleed build-up reset exactly to zero');
+    eq(e1.statuses.frost.meter.value, 0, 'frost build-up reset exactly to zero');
+    eq(S.getStacks(e1, 'bleedResist'), 1, 'Clotted granted — beast matched bleed\'s gate');
+    eq(S.getStacks(e1, 'frostResist'), 1, 'Weathered granted — beast matched frost\'s gate');
+    eq(S.getStacks(e1, 'weak'), 1, 'frost\'s Weak landed through the collision');
+    eq(S.getStacks(e1, 'frostExposed'), 1, 'frost\'s exposure landed through the collision');
   });
 
   // ---- 8. Crimson Blight: tick / expire after 3 / refresh ---------------------------
@@ -801,8 +1032,8 @@ export async function runTests({ artManifest = null } = {}) {
     // Player-side Bleed meter bursts exactly like an enemy's (SPEC §10 seam).
     S.applyStatus(v, v.player, 'bleed', 10); // 2 + 10 = 12 → fill (effects enqueued)
     dispatch(v, { type: 'endTurn' }); // drains the queue
-    const burst = logOf(v, 'hpLost').filter((e) => e.targetId === 'player' && e.cause === 'effect').pop();
-    assert(burst, 'player bleed burst');
+    const burst = logOf(v, 'hpLost').filter((e) => e.targetId === 'player' && e.cause === 'proc:bleed').pop();
+    assert(burst, 'player bleed burst (attributed proc:bleed in the record)');
     eq(burst.amount, Math.floor((78 * 15) / 100), 'burst = 15% of player max HP (11)');
 
     // Stitched King: ≤50% HP grafts new limbs — unlocks thousandHands, buffs, Frails you.

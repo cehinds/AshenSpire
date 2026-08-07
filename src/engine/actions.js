@@ -36,11 +36,30 @@ import { evalPredicate, checkPhases } from './triggers.js';
  * computeAttackDamage(ctx, source, target|null, base) → final integer damage.
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
-export function computeAttackDamage(ctx, source, target, base) {
+export function computeAttackDamage(ctx, source, target, base, attackTags) {
   let dmg = base;
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
+  // Tag-scoped extra vulnerability (#61): statuses whose taggedVulnerability
+  // tags intersect the hit's effect tags. Composition is the row's DECLARED
+  // stacking rule (closed enum, validated): 'multiplicative' sources multiply
+  // in like every shipped *Mult (flat per status, stack-count-invariant);
+  // 'additive' sources pool (mult − 1) and apply once. Both lanes are
+  // stack-invariant, so the ceiling is the closed-form product of DISTINCT
+  // table mults — stacks can never raise it.
+  if (target && attackTags && attackTags.length) {
+    let addPool = 0;
+    for (const [id, inst] of Object.entries(target.statuses || {})) {
+      if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
+      const def = ctx.registries.statuses.get(id);
+      const tv = def && def.taggedVulnerability;
+      if (!tv || !tv.tags.some((t) => attackTags.includes(t))) continue;
+      if (tv.stacking === 'multiplicative') dmg *= tv.mult;
+      else addPool += tv.mult - 1;
+    }
+    if (addPool > 0) dmg *= 1 + addPool;
+  }
   dmg = Math.floor(dmg);
   return dmg < 0 ? 0 : dmg;
 }
@@ -50,9 +69,9 @@ export function computeAttackDamage(ctx, source, target, base) {
  * §4.2 math, block absorption first, then HP. Emits damageDealt (+ hpLost if
  * HP was touched), handles deaths and phase checks. Returns final damage.
  */
-export function applyAttackDamage(ctx, source, target, base) {
+export function applyAttackDamage(ctx, source, target, base, attackTags) {
   if (!target || !target.alive) return 0;
-  const dmg = computeAttackDamage(ctx, source, target, base);
+  const dmg = computeAttackDamage(ctx, source, target, base, attackTags);
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
   const hpLoss = dmg - blocked;
@@ -137,6 +156,23 @@ function afterHpChange(ctx, target) {
  * enqueued (owner = the enemy), and poiseMax grows by balance.poise.growthMult
  * (default 1.25, rounded up) unless growth is disabled.
  */
+/**
+ * staggerEnemy(ctx, enemy) — break the enemy's next move: cancel what it was
+ * winding up, mark the skip, and emit enemyStaggered. One home for the break
+ * itself; callers decide HOW it was earned — the poise bar filling
+ * (dealPoiseDamage) or a direct proc (the 'stagger' opcode, insanity's row).
+ * The direct path deliberately bypasses the bar: a guaranteed break that
+ * neither consumes nor grows the poise meter.
+ */
+export function staggerEnemy(ctx, enemy) {
+  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
+  const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
+  enemy.pendingMove = null;
+  enemy.skipNextTurn = true;
+  enemy.intent = { kind: 'staggered', moveId: null };
+  ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled });
+}
+
 export function dealPoiseDamage(ctx, enemy, amount) {
   if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
   const n = Math.max(0, Math.floor(amount));
@@ -146,12 +182,8 @@ export function dealPoiseDamage(ctx, enemy, amount) {
   while (enemy.poiseMeter.value >= enemy.poiseMeter.max) {
     if (++guard > 100) throw new Error('Poise meter fill loop did not terminate');
     enemy.poiseMeter.value -= enemy.poiseMeter.max;
-    const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
-    enemy.pendingMove = null;
-    enemy.skipNextTurn = true;
-    enemy.intent = { kind: 'staggered', moveId: null };
     ctx.emit('meterFilled', { targetId: enemy.id, meter: 'poise', threshold: enemy.poiseMeter.max });
-    ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled });
+    staggerEnemy(ctx, enemy);
     for (const eff of cfg.onFill || []) {
       ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
     }
@@ -326,7 +358,7 @@ function runOpcode(ctx, action, eff) {
         for (const t of targets) {
           if (!t.alive) continue;
           const base = evalNum(ctx, action, eff.amount, 0, t);
-          applyAttackDamage(ctx, action.source, t, base);
+          applyAttackDamage(ctx, action.source, t, base, eff.tags);
         }
       }
       break;
@@ -402,7 +434,9 @@ function runOpcode(ctx, action, eff) {
     }
     case 'loseHp': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        applyLoseHp(ctx, t, evalNum(ctx, action, eff.amount, 0, t));
+        // `cause` labels the hpLost event (e.g. 'proc:bleed') so the damage
+        // record can attribute the loss — display + instruments read it.
+        applyLoseHp(ctx, t, evalNum(ctx, action, eff.amount, 0, t), eff.cause || 'effect');
       }
       break;
     }
@@ -433,6 +467,12 @@ function runOpcode(ctx, action, eff) {
     case 'poiseDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         dealPoiseDamage(ctx, t, evalNum(ctx, action, eff.amount, 0, t));
+      }
+      break;
+    }
+    case 'stagger': {
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        staggerEnemy(ctx, t);
       }
       break;
     }

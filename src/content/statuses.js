@@ -56,7 +56,20 @@ export const statuses = [
     tooltip: 'Gains 25% less Block from cards. 1 stack expires each turn.',
   },
 
-  // ---- Elden Ring layer (SPEC §4.4 — build-up, not spam) -------------------
+  // ---- Elden Ring layer: threshold-proc rows (SPEC §4.4, #61 direction) ----
+  // Constantine's words, 2026-08-06: build-up to a threshold → percent-based
+  // damage as ITS OWN PROC → the build-up resets to zero → tag-gated
+  // resistance for a period. EVERY number below is PROVISIONAL — a first pick
+  // made against the sim (falsifier: --policy=reaverkit n=1000), marked so
+  // his hands can reach it. Readings stated where a word allowed more than
+  // one: burstPercent is percent of the PROC TARGET'S max HP (the reading the
+  // old meter already shipped); poiseDamage is a fixed amount PER PROC (the
+  // per-application alternative is a knob away if his intent differs).
+  //
+  // DELTA vs the shipped meter, stated: the old bleed carried overflow and
+  // escalated its threshold ×1.5 per burst; the proc vocabulary resets the
+  // build-up to zero (overflow dropped) at a CONSTANT threshold — "then the
+  // threshold resets to zero", his words.
   {
     id: 'bleed',
     tint: 'var(--ember)',
@@ -64,19 +77,140 @@ export const statuses = [
     icon: '💧',
     stackMode: 'add',
     decay: 'none',
-    meter: {
-      max: 12,
-      growthMult: 1.5,
-      onFill: [
-        {
-          op: 'loseHp',
-          target: 'self',
-          amount: { f: 'percentMaxHp', of: 'owner', pct: 15, min: 8, max: 35 },
-        },
-      ],
+    proc: {
+      threshold: 7, // PROVISIONAL — Rune's sim pick at Constantine's word ("let rune pick the threshold against the sim"): smallest value whose reaverkit n=1000 CI fully clears the [1.4, 3.2] datum band; sweep table in tools/results/sweep-bleed-threshold.md. Was 12 (carried from the shipped meter) — his hands stay free.
+      burstPercent: 15, // PROVISIONAL — % of target max HP (carried)
+      burstMin: 8, // PROVISIONAL (carried)
+      burstMax: 35, // PROVISIONAL (carried)
+      poiseDamage: 3, // PROVISIONAL — fixed poise damage per proc (new, his direction)
+      resistance: {
+        status: 'bleedResist',
+        tags: ['beast', 'humanoid'], // PROVISIONAL — flesh clots; undead/construct/spirit don't
+      },
     },
     tooltip:
-      'Build-up: points do not decay. At the threshold, burst for 15% of max HP (min 8, max 35), ignoring Block. Each burst raises the threshold ×1.5.',
+      'Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, plus {proc.poiseDamage} Poise damage — then the build-up resets to zero. Fleshy targets briefly resist further Bleed after a burst.',
+  },
+  {
+    id: 'frost',
+    tint: '#7fa8c9', // the frost swatch already in balance.palette
+    name: 'Frost',
+    icon: '❄',
+    stackMode: 'add',
+    decay: 'none',
+    proc: {
+      threshold: 10, // PROVISIONAL
+      burstPercent: 8, // PROVISIONAL — smaller than bleed, his direction
+      burstMin: 4, // PROVISIONAL
+      burstMax: 20, // PROVISIONAL
+      effects: [
+        // His direction: damage debuff + vulnerability/weakness to tagged
+        // (non-physical) attacks. Weak is the shipped damage debuff; the
+        // exposure row carries the tag-scoped vulnerability.
+        { op: 'applyStatus', target: 'self', status: 'weak', stacks: 1 },
+        { op: 'applyStatus', target: 'self', status: 'frostExposed', stacks: 1 },
+      ],
+      resistance: {
+        status: 'frostResist',
+        tags: ['beast', 'humanoid'], // PROVISIONAL — warm-blooded shake it off
+      },
+    },
+    tooltip:
+      'Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, and the target is left Weak and Frost-Exposed — then the build-up resets to zero.',
+  },
+  {
+    // 'insanity' is NOT 'madness' (below): madness is a player economy
+    // drawback (relic cost — lose HP, gain Energy, clears); insanity is an
+    // enemy-affliction threshold proc. Two words, two mechanics, on purpose —
+    // binding them would break the madness relics. Flagged for the collapse
+    // check at review.
+    id: 'insanity',
+    // Deliberately NOT var(--gold): the poise bar is gold, and an insanity
+    // meter sitting beside it read as a second poise bar (Sunna's PX flag).
+    tint: '#a06bd0',
+    name: 'Insanity',
+    icon: '🌀',
+    stackMode: 'add',
+    decay: 'none',
+    proc: {
+      threshold: 14, // PROVISIONAL — hardest to fill of the three
+      burstPercent: 18, // PROVISIONAL — highest percent, his direction
+      burstMin: 10, // PROVISIONAL
+      burstMax: 40, // PROVISIONAL
+      poiseDamage: 8, // PROVISIONAL — highest poise damage, his direction
+      stagger: true, // direct stagger on proc — guaranteed, bypasses the bar
+      effects: [
+        { op: 'applyStatus', target: 'self', status: 'insanityExposed', stacks: 1 },
+      ],
+      resistance: {
+        status: 'insanityResist',
+        tags: ['humanoid', 'spirit'], // PROVISIONAL — minds harden; beasts/constructs have none to break
+      },
+    },
+    tooltip:
+      'Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, with {proc.poiseDamage} Poise damage and a guaranteed Stagger — then the build-up resets to zero.',
+  },
+
+  // ---- Proc resistance rows (#61): strength here, duration in decay --------
+  {
+    id: 'bleedResist',
+    tint: 'var(--muted)',
+    name: 'Clotted',
+    icon: '🩹',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL — turns of resistance
+    resists: { status: 'bleed', percent: 50 }, // PROVISIONAL — blocks half of incoming points
+    tooltip: 'Just burst — hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns.',
+  },
+  {
+    id: 'frostResist',
+    tint: 'var(--muted)',
+    name: 'Weathered',
+    icon: '🧣',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL
+    resists: { status: 'frost', percent: 50 }, // PROVISIONAL
+    tooltip: 'Just burst — hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns.',
+  },
+  {
+    id: 'insanityResist',
+    tint: 'var(--muted)',
+    name: 'Resolute',
+    icon: '🛡',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL
+    resists: { status: 'insanity', percent: 50 }, // PROVISIONAL
+    tooltip: 'Just burst — hardened against Insanity: incoming build-up reduced {resists.percent}% for {decay.duration} turns.',
+  },
+
+  // ---- Exposure rows (#61): tag-scoped vulnerability the procs leave -------
+  {
+    id: 'frostExposed',
+    tint: '#7fa8c9',
+    name: 'Frost-Exposed',
+    icon: '🫧',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL
+    taggedVulnerability: {
+      tags: ['starstone'], // PROVISIONAL — the frost-adjacent magic school
+      mult: 1.25, // PROVISIONAL
+      stacking: 'multiplicative', // declared, validated — composes like every shipped *Mult
+    },
+    tooltip: 'Takes {tv.pct}% more damage from starstone attacks. Stacks with Vulnerable. {decay.duration} turns.',
+  },
+  {
+    id: 'insanityExposed',
+    tint: '#a06bd0', // matches its parent proc row, and stays off the poise gold
+    name: 'Unraveled',
+    icon: '🕳',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL
+    taggedVulnerability: {
+      tags: ['ritual', 'blight'], // PROVISIONAL — the mind-adjacent schools
+      mult: 1.3, // PROVISIONAL
+      stacking: 'multiplicative',
+    },
+    tooltip: 'Takes {tv.pct}% more damage from ritual and blight attacks. Stacks with Vulnerable. {decay.duration} turns.',
   },
   {
     id: 'crimsonBlight',
@@ -252,7 +386,9 @@ export const statuses = [
     stackMode: 'unique',
     decay: 'none',
     modifiers: { meterMaxGrowthDisabled: true },
-    tooltip: 'Build-up thresholds (Bleed and Poise) no longer increase after filling.',
+    // #61: bleed thresholds are now CONSTANT by design, so this freeze binds
+    // only Poise — prose updated to match; the modifier is untouched.
+    tooltip: 'Poise thresholds no longer increase after filling.',
   },
   {
     // Sanguine Pact power: Bleed bursts feed Strength — the Reaver's answer to

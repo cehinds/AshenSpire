@@ -39,13 +39,36 @@ export function hasStatus(entity, statusId) {
 export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
   const def = ctx.registries.statuses.get(statusId);
   if (!target || !target.alive) return;
-  const amount = Math.floor(stacks);
+  let amount = Math.floor(stacks);
   if (amount <= 0 && def.stackMode !== 'unique') return;
+
+  // Threshold-proc resistance (#61): a carried resist status blocks part of
+  // every incoming application of the status it names. The blocked portion is
+  // ceil(amount × percent / 100) — resistance rounds in the defender's favor.
+  // Refusal has a receipt: procResisted fires whenever anything was blocked,
+  // so applying into resistance answers visibly, never silently.
+  if (def.proc) {
+    let blocked = 0;
+    for (const [otherId, otherInst] of Object.entries(target.statuses)) {
+      if (!otherInst || (otherInst.meter ? otherInst.meter.value : otherInst.stacks) <= 0) continue;
+      const otherDef = ctx.registries.statuses.get(otherId);
+      if (otherDef && otherDef.resists && otherDef.resists.status === statusId) {
+        blocked += Math.ceil(amount * otherDef.resists.percent / 100);
+      }
+    }
+    if (blocked > 0) {
+      blocked = Math.min(blocked, amount);
+      amount -= blocked;
+      ctx.emit('procResisted', { targetId: target.id, status: statusId, blocked, applied: amount });
+      if (amount <= 0) return;
+    }
+  }
 
   let inst = target.statuses[statusId];
   if (!inst) {
     inst = target.statuses[statusId] = { stacks: 0 };
     if (def.meter) inst.meter = { value: 0, max: def.meter.max };
+    else if (def.proc) inst.meter = { value: 0, max: def.proc.threshold };
   }
 
   switch (def.stackMode) {
@@ -78,7 +101,47 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
     total: getStacks(target, statusId),
   });
 
-  if (inst.meter) checkMeterFill(ctx, target, statusId, def, inst);
+  if (def.proc) checkProcFill(ctx, target, statusId, def, inst);
+  else if (inst.meter) checkMeterFill(ctx, target, statusId, def, inst);
+}
+
+// Threshold-proc fill (#61, Constantine's direction 2026-08-06). Deliberate
+// deltas vs checkMeterFill below: the build-up RESETS TO ZERO after the proc
+// (overflow dropped — "then the threshold resets to zero") and the threshold
+// is CONSTANT (no ×1.5 escalation). A single application larger than the
+// threshold procs exactly once and drops the rest, so no fill loop exists.
+//
+// THE OWN-PROC INVARIANT (checkable): the burst is its own damage-record
+// entry — procBurst + its own hpLost — never folded into the triggering
+// hit's damageDealt. Payload order downstream is the fixed causal sentence:
+// burst → poise chunk → stagger → extra effects → resistance.
+function checkProcFill(ctx, entity, statusId, def, inst) {
+  if (inst.meter.value < inst.meter.max) return;
+  const p = def.proc;
+  inst.meter.value = 0; // reset to zero — overflow dropped, threshold constant
+  const pct = Math.floor((entity.maxHp * p.burstPercent) / 100);
+  const burst = Math.max(p.burstMin, Math.min(p.burstMax, pct));
+  ctx.emit('procBurst', {
+    targetId: entity.id,
+    status: statusId,
+    amount: burst,
+    threshold: inst.meter.max,
+    poiseDamage: p.poiseDamage || 0,
+    stagger: !!p.stagger,
+  });
+  const enq = (effect) => ctx.enqueue({ effect, source: entity, owner: entity, target: entity, meta: {} });
+  enq({ op: 'loseHp', target: 'self', amount: burst, cause: `proc:${statusId}` });
+  if (p.poiseDamage > 0 && entity.kind === 'enemy') enq({ op: 'poiseDamage', amount: p.poiseDamage });
+  if (p.stagger && entity.kind === 'enemy') enq({ op: 'stagger' });
+  for (const eff of p.effects || []) enq(eff);
+  if (p.resistance) {
+    // Tag-gated post-proc resistance: creature tags live on the enemy def.
+    const enemyDef = entity.kind === 'enemy' && ctx.registries.enemies.get(entity.enemyId);
+    const tags = (enemyDef && enemyDef.tags) || [];
+    if (tags.some((t) => p.resistance.tags.includes(t))) {
+      enq({ op: 'applyStatus', target: 'self', status: p.resistance.status, stacks: 1 });
+    }
+  }
 }
 
 // Build-up meter fill loop: emit meterFilled, enqueue onFill effects (owner =
