@@ -48,7 +48,13 @@ import { serve } from './serve.mjs';
 // APP'S OWN VALUES, so there is no second list and no regex to rot. See
 // SUB_SURFACE_GROUPS below for why there are three of them and not one.
 import { menuTabs } from '../src/ui/uiContent.js';
-import { SETTINGS_CATEGORIES } from '../src/ui/screens/settings.js';
+// #88 dissolved SETTINGS_CATEGORIES: a category now EXISTS because a row is
+// filed under it, and `settingsCategories()` is the derived union — "every
+// category that exists, in the order it is drawn. Derived, one home."
+// NOT `CATEGORY_ORDER`, which is the surviving authored half: Viki measured
+// that emptying it leaves all six categories rendering, so an order is not a
+// denominator. This tool wants what the screen draws.
+import { settingsCategories } from '../src/ui/screens/settings.js';
 import { balance } from '../src/content/balance.js';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -156,7 +162,7 @@ const SCREENS = [
     drive: `[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`,
   },
   // (the hand-written `settings-profile` entry lived here and is DELETED: the
-  //  settings categories are now generated from SETTINGS_CATEGORIES, so Profile
+  //  settings categories are now generated from settingsCategories(), so Profile
   //  is `settings-Profile` below and no longer a name anyone types. Collapsing a
   //  duplicate that leaves nothing deletable is a patch, not a collapse.)
   // The crisis notice: seeded storage, never a patched bundle. Corrupt bytes
@@ -178,7 +184,7 @@ const SCREENS = [
 // does not exist. What exists is three homes in three different layers:
 //
 //   overlay tabs      src/ui/uiContent.js       MENU_TABS      (a UI content table)
-//   settings sections src/ui/screens/settings.js SETTINGS_CATEGORIES (a const in a screen)
+//   settings sections src/ui/screens/settings.js settingsCategories() (derived from the rows)
 //   armoury views     src/content/balance.js     balance.equipment.views (game data)
 //
 // Each of those IS a single home for its own set — the overlay strip and the
@@ -219,9 +225,9 @@ const q = (s) => JSON.stringify(s);
 //
 // I add a second, INDEPENDENT detector for the armoury, because the two halves
 // of what she measured live in two different homes: the DOM comes from
-// equipment.js, the alignment from styles/ui.css. `authoredIn` asks the
-// STYLESHEET whether anyone authored this view. It needs no browser, so it runs
-// in the pre-browser gate and costs nothing.
+// equipment.js, the alignment from styles/ui.css. That second decider is GONE
+// as of #88 — the stylesheet keys off characteristics written off the row — so
+// the check that guarded it is gone too, and the note is kept to say why.
 //
 // What neither of these is: a check that the view is CORRECT. Two distinct,
 // authored layouts can both be wrong. Consistency, not correctness — mine, said
@@ -254,7 +260,7 @@ const SUB_SURFACE_GROUPS = [
         const m = document.querySelector('#combat-menu');
         if (!m) return 'no #combat-menu on the combat screen';
         m.click();
-        const b = document.querySelector('.ov-tab[data-tab=${q(id)}]');
+        const b = document.querySelector('[data-surface="overlayTab"] [data-member=${q(id)}]');
         if (!b) return 'no tab button for ' + ${q(id)};
         b.click();
         return true;
@@ -264,7 +270,7 @@ const SUB_SURFACE_GROUPS = [
       // home of the tab LIST, but overlay.js selectTab() is a hardcoded if-chain
       // over the same ids — a second, implicit home of "which ids render".
       assert: `(() => {
-        const on = document.querySelector('.ov-tab[data-tab=${q(id)}].on');
+        const on = document.querySelector('[data-surface="overlayTab"] [data-member=${q(id)}].on');
         if (!on) return 'tab ' + ${q(id)} + ' never became the selected tab';
         const body = document.querySelector('.overlay-body');
         const len = body ? body.innerText.trim().length : 0;
@@ -280,8 +286,8 @@ const SUB_SURFACE_GROUPS = [
   {
     group: 'settings',
     what: 'settings categories',
-    home: 'src/ui/screens/settings.js — SETTINGS_CATEGORIES',
-    ids: () => SETTINGS_CATEGORIES.slice(),
+    home: 'src/ui/screens/settings.js — settingsCategories(), derived from the filed rows',
+    ids: () => settingsCategories().slice(),
     reach: (id) => ({
       query: '',
       landmark: '.set-body',
@@ -294,7 +300,7 @@ const SUB_SURFACE_GROUPS = [
         h.scrollIntoView({ block: 'center' });
         return true;
       })()`,
-      // Same shape as the overlay's: SETTINGS_CATEGORIES is the home of the
+      // Same shape as the overlay's: settingsCategories() is the home of the
       // category LIST, and ROWS[].cat plus renderSettings()'s two special cases
       // decide what actually appears under each heading. A heading with nothing
       // under it is a surface that exists in the list and renders nothing.
@@ -339,14 +345,16 @@ const SUB_SURFACE_GROUPS = [
       console.error('printed below it would mean anything. Fix the row, or teach this reader.');
       return process.exit(1);
     }),
-    // The second home of this closed set, and the one the DOM cannot see: a
-    // layout view IS a stylesheet rule. `kanban` renders under no rule at all,
-    // which is why its alignment was a value nobody authored. Pre-browser.
-    authoredIn: {
-      what: '`.view-<id>` rule in styles/',
-      dir: 'styles',
-      pattern: (id) => new RegExp(`\\.view-${id}\\b`),
-    },
+    // NO `authoredIn` ANY MORE, and its absence is the point. It asked the
+    // stylesheet whether anyone had authored a `.view-<id>` rule, because the
+    // stylesheet was a SECOND, SILENT DECIDER of the layout — `kanban` rendered
+    // under no rule at all. #88 dissolved that home: `ui.css` now keys off
+    // `[data-figure]`/`[data-slots]`, written by equipment.js straight off the
+    // row, so there is no id-named rule left to be missing. The property it
+    // held — a view the tree cannot draw must fail by name — is held better and
+    // earlier by `viewLayout()` returning null and `assertSurfaces()` throwing
+    // at boot. Deleting it is the answer to "did anything become deletable?";
+    // keeping it would be a check guarding a home that no longer exists.
     reach: (id) => ({
       query: '?shot=combat',
       landmark: '.armoury',
@@ -354,15 +362,20 @@ const SUB_SURFACE_GROUPS = [
         const a = document.querySelector('#combat-armoury');
         if (!a) return 'no #combat-armoury on the combat screen';
         a.click();
-        const b = document.querySelector('.armoury-views [data-view=${q(id)}]');
+        const b = document.querySelector('[data-surface="armouryView"] [data-member=${q(id)}]');
         if (!b) return 'no view button for ' + ${q(id)};
         b.click();
         return true;
       })()`,
+      // The `.armoury.view-<id>` class is gone (#88) and its absence is correct:
+      // the screen is described by WHAT THE VIEW IS, not what it is called. The
+      // host still carries `data-view`, but that is the id read back to itself
+      // and is not evidence — the selected state and the painted body are.
+      // (This note sits OUT here because the assert is a template literal: my
+      // first attempt put it inside, where `//` is text and a `<` is a syntax
+      // error. The tool told me immediately, which is the arrangement working.)
       assert: `(() => {
-        const el = document.querySelector('.armoury.view-' + ${q(id)});
-        if (!el) return 'armoury never carried view-' + ${q(id)};
-        const on = document.querySelector('.armoury-views [data-view=${q(id)}].on');
+        const on = document.querySelector('[data-surface="armouryView"] [data-member=${q(id)}].on');
         if (!on) return 'view ' + ${q(id)} + ' is not the selected view';
         const body = document.querySelector('.armoury-body');
         if (!body || !body.innerText.trim().length) return 'view ' + ${q(id)} + ' renders an EMPTY armoury body';
@@ -485,60 +498,6 @@ const ARTIFACT = readFileSync(resolve(ROOT, idOfArtifact), 'utf8');
     // Pre-browser: is every derived member authored in its OTHER home? For the
     // armoury that home is the stylesheet, and it is where `kanban` was absent.
     //
-    // THIS CHECK READ THE FILE, NOT THE STYLESHEET, AND I FOUND IT BY RUNNING
-    // THE TOOL AGAINST #78 (2026-08-07). That branch converts every
-    // `.armoury.view-<id>` rule to `[data-figure]` / `[data-slots]` and leaves
-    // ONE comment behind naming the three ids it deleted:
-    //
-    //   /* … used to name an id (.view-grid / .view-rack / .view-hybrid), which
-    //      made the stylesheet a second, silent decider of the layout … */
-    //
-    // `pattern(id).test(css)` matched that comment. Every view passed. A gate
-    // whose whole job is "somebody authored a rule for this view" was satisfied
-    // by prose SAYING THE RULE WAS REMOVED — and unlike the other three couplings
-    // to that branch, this one does not crash and does not MISS. It goes green.
-    // Measured both edges on a `5c49fed` worktree: as Viki wrote it, the gate
-    // passes; delete six words from inside that comment and nothing else, and it
-    // reds on grid, rack and hybrid. A stylesheet whose RULES are byte-identical
-    // must not change this verdict.
-    //
-    // So the pattern is tested against SELECTOR TEXT ONLY: comments stripped,
-    // then everything before each `{` — which is the only place a rule can name
-    // a class. Declaration values and prose cannot answer for a selector.
-    const selectorTextOf = (css) => css
-      .replace(/\/\*[\s\S]*?\*\//g, ' ')      // comments are not rules
-      .split('}')
-      .map((block) => block.split('{')[0])    // …and neither are declarations
-      .join('\n');
-    if (g.authoredIn) {
-      const dir = resolve(ROOT, g.authoredIn.dir);
-      const css = readdirSync(dir).filter((f) => f.endsWith('.css'))
-        .map((f) => readFileSync(resolve(dir, f), 'utf8')).join('\n');
-      if (!css.length) {
-        console.error(`\nrelease-shots: '${g.group}' declares authoredIn ${g.authoredIn.dir}/ and read ZERO bytes there.`);
-        console.error('An unreadable home is unknown, not authored. Fix the path.');
-        process.exit(1);
-      }
-      const selectors = selectorTextOf(css);
-      // A check that cannot fail is not a check — the same clause the armoury's
-      // `assert` already carries. If stripping left nothing, the reader is
-      // broken, and reporting "all authored" from an empty string is the exact
-      // green this whole block exists to stop.
-      if (!selectors.trim().length) {
-        console.error(`\nrelease-shots: '${g.group}' read ${css.length} bytes of CSS and found ZERO selector text.`);
-        console.error('The selector reader is broken; every member would pass for the wrong reason.');
-        process.exit(1);
-      }
-      const unauthored = ids.filter((id) => !EXCLUDED_SUBSURFACES[`${g.group}:${id}`]
-        && !g.authoredIn.pattern(id).test(selectors));
-      if (unauthored.length) {
-        console.error(`\nrelease-shots: ${g.group} member(s) with no ${g.authoredIn.what}: ${unauthored.join(', ')}`);
-        console.error(`A member of ${g.home} that nothing in ${g.authoredIn.dir}/ styles renders under whatever`);
-        console.error('rule happens to apply — a layout nobody authored. Author it, or name it in');
-        console.error('EXCLUDED_SUBSURFACES with the reason.');
-        process.exit(1);
-      }
-    }
     // STALENESS. The denominators are derived from src/, and the photographs
     // are of dist/AshenSpire.html — a COMMITTED artifact. Nothing made those
     // the same build. I hit this on my own bench: a planted tab was still in
