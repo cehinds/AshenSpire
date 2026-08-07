@@ -213,8 +213,9 @@ check('E2 a newer schemaVersion is refused rather than accepted blind (Sten, ame
   const before = st.getItem(META_KEY);
   const res = sv.saveMeta({ settings: { uiScale: 1.1 }, results: [] });
   check('P4 the settings write is refused while quarantined', res.ok === false, res.reason || '');
-  check('P4 the original bytes are byte-identical afterwards', st.getItem(META_KEY) === before,
-    'the evidence was overwritten');
+  const intact = st.getItem(META_KEY) === before;
+  check('P4 the original bytes are byte-identical afterwards', intact,
+    intact ? '' : 'the evidence was overwritten');
   check('P4 recordResult cannot sneak past the quarantine either',
     (sv.recordResult({ victory: false }), st.getItem(META_KEY) === before));
 }
@@ -312,9 +313,13 @@ check('E2 a newer schemaVersion is refused rather than accepted blind (Sten, ame
       run(mgr);
       const after = st.getItem(META_KEY);
       const recoverable = mgr.listArchives().some((a) => (mgr.getArchive(a.id) || {}).save === before);
-      check(`P6 ${stateName} × ${actionName}: the replaced bytes are still recoverable`,
-        !before || after === before || recoverable,
-        after === before ? '' : 'PRIMARY REPLACED WITH NO ARCHIVE — those bytes are gone');
+      // The detail is gated on the CHECK'S OWN condition. It used to be gated
+      // on `after === before`, which is the inverse of the failing case, so all
+      // eight passing pairs printed "those bytes are gone" (Vira's ruling,
+      // Saga found it). A check's testimony is part of the check.
+      const held = !before || after === before || recoverable;
+      check(`P6 ${stateName} × ${actionName}: the replaced bytes are still recoverable`, held,
+        held ? '' : 'PRIMARY REPLACED WITH NO ARCHIVE — those bytes are gone');
     }
   }
 
