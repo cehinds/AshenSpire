@@ -2514,6 +2514,45 @@ function applyDisplaySettings(settings) {
 }
 applyDisplaySettings(saves.loadMeta().settings);
 
+/**
+ * applyRestoredSettings(restored) — re-dress the running app in a profile that
+ * has just been swapped underneath it (#68 D22).
+ *
+ * A restore replaces the whole profile, so every setting the app applied at
+ * boot is now the OTHER profile's. Before this, renderProfileSection accepted
+ * an `onRestored` callback, called it — and nobody ever passed one, on either
+ * door. The screen kept the old profile's contrast, motion and text size while
+ * storage held the new ones: high contrast stored ON and off on screen,
+ * reduced motion stored OFF and on on screen, root font-size unmoved.
+ *
+ * Marina's framing is the one worth building to: THE PLAYER WHO MOST NEEDS
+ * THOSE SETTINGS IS THE PLAYER WHO JUST LOST A SAVE. Someone who restores a
+ * profile because they cannot read the game without high contrast should not
+ * have to find the toggle again from memory.
+ *
+ * Everything the boot path applies is re-applied here, from ONE list, so a new
+ * setting cannot be applied at boot and forgotten on restore.
+ */
+function applyRestoredSettings(restored) {
+  const settings = restored || {};
+  applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif
+  applyUiScale(settings);         // UI zoom / Auto fit
+  audio.setVolumes(settings);     // music, sfx, mute
+  audio.configureMusic({ folder: settings.musicFolder || '' });
+  lastMusicFolder = settings.musicFolder || '';
+  if (settings.bindings) setBindings(settings.bindings);
+  if (settings.keyBindings) setKeyBindings(settings.keyBindings);
+}
+
+
+// ONE HOME for the quarantine sentence (#68 D21). I wrote "ONE sentence, both
+// doors — two doors with two strings is how they drift" and then pasted the
+// string into both doors, which is the drift I was naming. Copy: Sunna,
+// 2026-08-07; her tail now names the crisis screen's own route, so it is true
+// wherever it is shown rather than only where Profile happens to sit below.
+const QUARANTINE_NOTICE =
+  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Settings \u2192 Profile, whenever you want to.';
+
 // ---- run state ----------------------------------------------------------------
 let run = null;
 let rng = null;
@@ -2724,6 +2763,10 @@ function showSettings() {
     // The Profile section (#67) needs the manager itself: it lists, exports and
     // restores archives. Without it the section does not render at all.
     saves,
+    // …and a restore swaps the whole profile, so the screen must be re-dressed
+    // in the RESTORED settings (#68 D22) — otherwise the player who just lost a
+    // save keeps the old profile's contrast, motion and text size.
+    onProfileRestored: (restored) => applyRestoredSettings(restored),
     onChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
@@ -2736,12 +2779,7 @@ function showSettings() {
       const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
       if (res && res.ok === false) {
-        // Copy: Sunna, 2026-08-07. Three facts in the order a tired player
-        // needs them — it worked / it won't last / here is where to deal with
-        // it — and no pressure to deal with it now. "Profile, below" is
-        // literally true: this notice prepends to the top of .set-body and
-        // Profile is the fourth of five categories (settings.js CATEGORIES).
-        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
+        showSettingsNotice(QUARANTINE_NOTICE);
       }
     },
   });
@@ -2821,6 +2859,7 @@ function showOverlay(initialTab = 'deck') {
     // turning those down mid-fight is the one who most needs them to still be
     // there tomorrow.
     saves,
+    onProfileRestored: (restored) => applyRestoredSettings(restored),
     onSettingsChange: (changed) => {
       const meta = saves.loadMeta();
       Object.assign(meta.settings, changed);
@@ -2828,10 +2867,9 @@ function showOverlay(initialTab = 'deck') {
       applyDisplaySettings(meta.settings);
       if (changed.bindings) setBindings(changed.bindings);
       if (changed.keyBindings) setKeyBindings(changed.keyBindings);
-      // ONE sentence, both doors — two doors with two strings is how they
-      // drift, and Sunna wrote it to be true on either.
+      // ONE sentence, both doors — and now literally one: QUARANTINE_NOTICE.
       if (res && res.ok === false) {
-        showSettingsNotice('This works right now, but it won’t survive a restart — your profile is set aside and we’re not writing over it. Profile, below, can restore it or save a copy, whenever you want to.');
+        showSettingsNotice(QUARANTINE_NOTICE);
       }
     },
     onSave: () => {
@@ -19230,7 +19268,7 @@ function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, onExit, initialTab = 'deck' }) {
+function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onProfileRestored, onSave, onQuit, onExit, initialTab = 'deck' }) {
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
@@ -19292,7 +19330,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
     // surface, one sentence, both doors — that is Sunna's call and she is right
     // that two strings is how they drift. A restore here does not touch the run
     // save: runs live in their own slot keys.
-    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}), saves });
+    else if (id === 'settings') renderSettings(body, { settings, onChange: onSettingsChange || (() => {}), saves, onProfileRestored });
     else if (id === 'controls') renderControls(body, { settings, onChange: onSettingsChange || (() => {}) });
   }
 
@@ -19724,7 +19762,7 @@ function toggleFullscreen() {
  * Fills `container` with the settings controls and wires change events.
  * grouped=true adds category headers.
  */
-function renderSettings(container, { settings, onChange, grouped = true, saves = null }) {
+function renderSettings(container, { settings, onChange, grouped = true, saves = null, onProfileRestored = null }) {
   let html = '';
   if (grouped) {
     for (const cat of CATEGORIES) {
@@ -19743,7 +19781,24 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
   container.setAttribute('data-settings-host', '');
 
   const profileMount = container.querySelector('.set-profile-mount');
-  if (profileMount && saves) renderProfileSection(profileMount, { saves });
+  // onRestored was a parameter renderProfileSection accepted, called — and that
+  // NOBODY EVER PASSED, on either door (#68 D22). So a restore swapped the
+  // profile and left the screen wearing the old one's accessibility settings:
+  // high contrast stored on and off on screen, reduced motion stored off and on
+  // on screen, text size unmoved. The player who most needs those settings is
+  // the player who just lost a save.
+  if (profileMount && saves) {
+    renderProfileSection(profileMount, {
+      saves,
+      onRestored: () => {
+        // Re-read from the manager rather than trusting the closed-over
+        // `settings` object: the restore replaced the profile, so the settings
+        // this screen was built from are the OLD ones.
+        const restored = (saves.loadMeta().settings) || {};
+        if (onProfileRestored) onProfileRestored(restored);
+      },
+    });
+  }
 
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
@@ -19837,7 +19892,7 @@ function showSettingsNotice(msg) {
   el.textContent = msg;
 }
 
-function openSettings({ meta, onChange, saves = null }) {
+function openSettings({ meta, onChange, saves = null, onProfileRestored = null }) {
   const settings = meta.settings || (meta.settings = {});
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
@@ -19848,7 +19903,7 @@ function openSettings({ meta, onChange, saves = null }) {
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
-  renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
+  renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves, onProfileRestored });
 
   const close = () => veil.remove();
   veil.addEventListener('click', (e) => {
