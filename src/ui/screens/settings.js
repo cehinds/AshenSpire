@@ -107,7 +107,10 @@ const ROWS = [
 // drawer it cannot open would be the same broken promise one layer down.
 // 'About' carries the AI-use acknowledgement, rendered from its one home in
 // src/content/aiDisclosure.js — the same text the store page shows (#69).
-const CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
+// EXPORTED so the release harness can DERIVE the settings sub-surface list from
+// this one home instead of retyping it (tools/release-shots.mjs, denominator 2).
+// Exporting is not a second copy — it is what stops one being written.
+export const SETTINGS_CATEGORIES = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
@@ -266,7 +269,7 @@ function toggleFullscreen() {
 export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onProfileRestored = null }) {
   let html = '';
   if (grouped) {
-    for (const cat of CATEGORIES) {
+    for (const cat of SETTINGS_CATEGORIES) {
       if (cat === 'Profile') {
         if (!saves) continue; // no manager, no promise
         html += `<h3 class="set-cat">Profile</h3><div class="set-profile-mount"></div>`;
