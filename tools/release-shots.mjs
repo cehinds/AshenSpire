@@ -404,11 +404,19 @@ for (const shape of SHAPES) {
 console.log(floatMisses
   ? `\nfloat-clip: ${floatMisses} float(s) off-centre or clipped — the half-width is a constant, not the string's own.`
   : '\nfloat-clip: OK — every measured float is centred on its anchor and inside the layer, both shapes.');
-// A clipped float is unreachable text, so it fails the run like any MISS.
-misses += floatMisses;
-
-if (misses) {
-  console.error(`\nrelease-shots: ${misses} screen(s) did not render as meant — see MISS lines.`);
+// Rune's call, and it is the right one: a clipped float is unreachable text and
+// fails the run like any MISS. But the two counts must not merge into one NOUN.
+// Folded into `misses` alone, a run with 28 perfect screens and 10 bad floats
+// printed "10 screen(s) did not render as meant" — measured, on the red run I
+// watched — and sends its reader hunting ten broken screens that do not exist.
+// A summary that misnames what failed is the same defect class as a check that
+// cannot fail: technically true, and it costs someone an hour. So the exit code
+// is shared and the sentence stays specific.
+if (misses || floatMisses) {
+  const parts = [];
+  if (misses) parts.push(`${misses} screen(s) did not render as meant`);
+  if (floatMisses) parts.push(`${floatMisses} float(s) off-centre or clipped`);
+  console.error(`\nrelease-shots: ${parts.join(' · ')} — see the MISS/OFF lines above.`);
   server.close();
   process.exit(1);
 }
