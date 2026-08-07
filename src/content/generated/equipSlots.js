@@ -9,6 +9,7 @@ export const equipSlots = [
       "weapon",
       "staff"
     ],
+    "hand": "right",
     "sets": 3,
     "swap": "combat",
     "storage": true,
@@ -22,6 +23,7 @@ export const equipSlots = [
       "shield",
       "weapon"
     ],
+    "hand": "left",
     "sets": 3,
     "swap": "combat",
     "storage": true,
@@ -32,6 +34,7 @@ export const equipSlots = [
     "id": "armor",
     "label": "Armour",
     "kinds": "armor",
+    "hand": "",
     "sets": 1,
     "swap": "outOfCombat",
     "storage": false,
@@ -42,6 +45,7 @@ export const equipSlots = [
     "id": "talisman",
     "label": "Talisman",
     "kinds": "talisman",
+    "hand": "",
     "sets": 3,
     "swap": "outOfCombat",
     "storage": false,

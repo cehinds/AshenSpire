@@ -14,6 +14,14 @@ import { tokenRe } from './validate.js';
 //   equipTargets.csv  which card each mod prefix rewrites, per class
 //
 // Everything here is headless and pure: no document, no timers, no randomness.
+//
+// HANDS — one fact, one home (Law 0 clause 4). Which hand a piece is IN is the
+// SLOT's fact: the player put it there. The piece's own `hand` column says only
+// which hand it MAY be held in — eligibility, never location. Those are two
+// different facts and they used to be read out of one field, which is how two
+// weapons could go in and one come out (Bjorn, 2026-08-07). slotHand() is the
+// only answer to "which hand is this", pieceHand() the only answer to "which
+// hand may this go in", and fitsSlot() is the only gate between them.
 
 // ---------------------------------------------------------------------------
 // Mod strings
@@ -35,11 +43,59 @@ export function parseMod(str) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Hands
+// ---------------------------------------------------------------------------
+
+/** The closed set. A third hand is a new word — engine, one act (Law 1 c1). */
+export const HANDS = Object.freeze(['left', 'right']);
+
+/**
+ * slotHand(slot) → 'left' | 'right' | null — WHERE A SLOT IS.
+ *
+ * The one home. `null` is not "unknown", it is "this slot is not a hand":
+ * armour is worn and a talisman is carried, so neither is held in one and
+ * neither is drawn in one. equipSlots.csv `hand` is the only input, on purpose
+ * — the id used to be sniffed for the substring 'left', which meant renaming
+ * the slot moved the sprite and said nothing.
+ */
+export function slotHand(slot) {
+  const h = slot && slot.hand;
+  return HANDS.includes(h) ? h : null;
+}
+
+/**
+ * pieceHand(piece) → 'left' | 'right' | null — WHERE A PIECE MAY GO.
+ *
+ * Eligibility, and only eligibility. `either` and a piece with no `hand` at all
+ * (every armour set) are unconstrained, and read as null.
+ */
+export function pieceHand(piece) {
+  const h = piece && piece.hand;
+  return HANDS.includes(h) ? h : null;
+}
+
+/**
+ * fitsSlot(slot, piece) → boolean — may this piece go in this slot?
+ *
+ * Two gates, both of them data: the slot's `kinds` and the piece's `hand`. The
+ * only predicate in the tree that answers this, so the picker cannot offer what
+ * equipPiece() refuses — offering a piece and then silently not taking it is
+ * the exact shape of a player saying "the slot won't accept it".
+ */
+export function fitsSlot(slot, piece) {
+  if (!slot || !piece) return false;
+  if (!(slot.kinds || []).includes(piece.kind)) return false;
+  const may = pieceHand(piece);
+  return may === null || may === slotHand(slot);
+}
+
 /**
  * validateEquipment(registries) → [] when sound, else human-readable problems.
  * Catches the mistakes CSV authoring actually makes: a misspelled field, a mod
  * aimed at a prefix no class maps to a card, a slot whose `kinds` gate matches
- * nothing, and armour that leaves a class with no starting set (or two).
+ * nothing, a hand named on one side and not the other, a piece no slot can
+ * hold, and armour that leaves a class with no starting set (or two).
  */
 export function validateEquipment(registries) {
   const eq = registries.equipment || {};
@@ -71,13 +127,56 @@ export function validateEquipment(registries) {
     }
   }
 
-  const kinds = new Set(pieces.map((p) => p.kind));
   for (const slot of eq.slots || []) {
     if (slot.kinds.length === 0) problems.push(`slot '${slot.id}' gates on no kinds`);
   }
-  for (const kind of kinds) {
-    const fits = (eq.slots || []).some((s) => s.kinds.includes(kind));
-    if (!fits) problems.push(`no slot accepts pieces of kind '${kind}'`);
+
+  // ---- hands: the slot owns the location, the piece owns the eligibility ---
+  // Both vocabularies are closed, and a value outside one names its own row.
+  for (const slot of eq.slots || []) {
+    const h = slot.hand;
+    if (h != null && h !== '' && !HANDS.includes(h)) {
+      problems.push(`slot '${slot.id}': hand '${h}' is not one of ${HANDS.join('|')} (or empty for a slot that is not a hand)`);
+    }
+  }
+  for (const piece of pieces) {
+    const h = piece.hand;
+    if (h != null && h !== '' && h !== 'either' && !HANDS.includes(h)) {
+      problems.push(`${piece.id}: hand '${h}' is not one of ${HANDS.join('|')}|either`);
+    }
+  }
+  // A slot holding pieces that name a hand must name one itself. Without this,
+  // a slot authored with an empty `hand` takes a weapon and draws it nowhere —
+  // wrong, reasonable-looking, and silent (Law 0 clause 5).
+  for (const slot of eq.slots || []) {
+    if (slotHand(slot)) continue;
+    const handed = pieces.filter((p) => (slot.kinds || []).includes(p.kind) && pieceHand(p));
+    if (handed.length) {
+      problems.push(
+        `slot '${slot.id}' accepts ${handed.length} piece(s) that name a hand (e.g. '${handed[0].id}') ` +
+        `but names no hand itself — set hand=${HANDS.join('|')} on that row in equipSlots.csv`
+      );
+    }
+  }
+  // Every piece has somewhere to go — kind AND hand. This replaces the old
+  // kind-only check, which passed a left-handed staff no slot could ever hold.
+  for (const piece of pieces) {
+    if (!(eq.slots || []).some((s) => fitsSlot(s, piece))) {
+      problems.push(`no slot can hold '${piece.id}' (kind '${piece.kind}', hand '${piece.hand || '—'}')`);
+    }
+  }
+  // …and the other edge: a slot whose kinds match pieces, every one of which
+  // names the other hand, is a square the player can open onto an empty list.
+  // A slot matching NO piece by kind is a slot authored ahead of its content
+  // (talismans today) and is not this defect.
+  for (const slot of eq.slots || []) {
+    const byKind = pieces.filter((p) => (slot.kinds || []).includes(p.kind));
+    if (byKind.length && !byKind.some((p) => fitsSlot(slot, p))) {
+      problems.push(
+        `slot '${slot.id}' can hold nothing: ${byKind.length} piece(s) match kinds ` +
+        `'${(slot.kinds || []).join('|')}' and every one of them names the other hand`
+      );
+    }
   }
 
   for (const classId of registries.classes.ids()) {
@@ -146,9 +245,16 @@ export function equippedPieces(registries, loadout, classId) {
  * figureSpec(registries, loadout, classId) → { armourId, rightId, leftId }
  *
  * What the sprite layers should be, derived rather than stored. Slots declare
- * their own `kinds`, so this finds the armour slot and the two hands by what
- * they accept instead of hard-coding 'rightHand'/'leftHand' — a renamed slot
- * keeps working, and a fourth hand would too.
+ * their own `kinds`, so this finds the armour slot by what it accepts instead
+ * of hard-coding 'armor', and the hands by slotHand() — a renamed slot keeps
+ * working, and a fourth hand would too.
+ *
+ * A piece is drawn in THE SLOT IT IS IN. It used to be drawn in the hand its
+ * own row named, so a right-handed weapon put in the left hand was drawn in the
+ * right — and two of them at once collapsed onto one layer, last writer
+ * winning: two weapons equipped, one weapon on the figure, no error anywhere
+ * (Bjorn photographed it on `dev`, 2026-08-07). Nothing here reads piece.hand;
+ * that field gates equipping (fitsSlot), which is a different question.
  */
 export function figureSpec(registries, loadout, classId) {
   const slots = (registries.equipment || {}).slots || [];
@@ -156,15 +262,16 @@ export function figureSpec(registries, loadout, classId) {
   if (!loadout) return spec;
   for (const slot of slots) {
     const piece = equippedIn(registries, loadout, classId, slot.id);
+    if (!piece) continue;
     if (slot.kinds.includes('armor')) {
-      if (piece) spec.armourId = piece.id;
-    } else if (piece) {
-      // 'right'/'left' is the piece's own property (weapons.csv `hand`), with
-      // the slot as the tiebreaker for anything usable in either.
-      const hand = piece.hand === 'either' ? (slot.id.toLowerCase().includes('left') ? 'left' : 'right') : piece.hand;
-      if (hand === 'left') spec.leftId = piece.id;
-      else spec.rightId = piece.id;
+      spec.armourId = piece.id;
+      continue;
     }
+    const hand = slotHand(slot);
+    if (hand === 'right') spec.rightId = piece.id;
+    else if (hand === 'left') spec.leftId = piece.id;
+    // No hand: this slot is not held (a talisman), so there is nothing to draw
+    // in a hand for it. It used to land in the right hand as a weapon layer.
   }
   return spec;
 }
@@ -448,10 +555,35 @@ export function carriedIds(loadout) {
   return out;
 }
 
-/** equipPiece — put a piece id into a specific set of a slot (null clears). */
-export function equipPiece(loadout, slotId, setIndex, itemId) {
-  const ids = (loadout.sets || {})[slotId];
+/**
+ * equipPiece(registries, loadout, slotId, setIndex, itemId) → boolean.
+ * Put a piece id into a specific set of a slot; `null` clears it.
+ *
+ * The gate is HERE, on the mutation, and not in the screen that calls it. The
+ * picker used to be the only thing deciding what may go where, so every other
+ * way into a slot — a save file, a drop, a future drag, a gamepad path nobody
+ * has written yet — walked straight past it. A caller that must remember to
+ * check is not a gate (`bundle.mjs`, same week, same lesson). `registries` is
+ * the first argument like everything else in this module, which is also what
+ * makes a call site left on the old signature fail CLOSED — it equips nothing
+ * and the suite says so — rather than quietly skip the new check.
+ */
+export function equipPiece(registries, loadout, slotId, setIndex, itemId) {
+  const ids = ((loadout || {}).sets || {})[slotId];
   if (!ids || setIndex < 0 || setIndex >= ids.length) return false;
-  ids[setIndex] = itemId || null;
+  if (!itemId) {
+    ids[setIndex] = null;
+    return true;
+  }
+  const eq = (registries || {}).equipment || {};
+  const slot = (eq.slots || []).find((s) => s.id === slotId);
+  if (!slot) return false;
+  // Armour ids repeat across classes; the class gate is armourById's, and this
+  // one only asks whether the piece may live in this slot at all.
+  const piece = slot.kinds.includes('armor')
+    ? (eq.armour || []).find((o) => o.id === itemId)
+    : (eq.armaments || []).find((a) => a.id === itemId);
+  if (!piece || !fitsSlot(slot, piece)) return false;
+  ids[setIndex] = itemId;
   return true;
 }
