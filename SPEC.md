@@ -1,6 +1,14 @@
 # Ashen Spire — Detailed Specification
 
-*(Formerly "Spire of the Erdtree / EldenSpire" — renamed in the IP scrub, `95c3b87`; `docs/IP-SCRUB.md` maps every old name to its shipped one. This spec's in-game vocabulary below is still largely pre-scrub; the scrub doc is authoritative for shipped names until the document-wide rename lands.)*
+*(Formerly "Spire of the Erdtree / EldenSpire" — renamed in the IP scrub, `95c3b87`.)*
+
+> **KNOWN DEBT, stated once here rather than apologised for per section: this spec's in-game
+> vocabulary is still largely pre-scrub.** It says runes/Vagabond/Astrologer/Prophet/Erdtree
+> where the tree ships cinders/Reaver/Starseer/Herald/Goldbough. **`docs/IP-SCRUB.md` is the
+> authoritative old→new map** and every name in it is a shipped fact. This is **to-build**: one
+> deliberate rename act, not per-section nibbles, which would leave the spec disagreeing with
+> itself mid-document. Measure the remaining debt:
+> `grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`.
 
 A single-player roguelike deckbuilder for the browser. Mechanically faithful to Slay the Spire; thematically inspired by (but legally distinct from) Elden Ring. Companion documents: [PROMPT.md](PROMPT.md) (the brief this spec expands), and — once implementation starts — `DEVELOPER.md` (how to extend) and `CREDITS.md` (asset licenses).
 
@@ -13,9 +21,9 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | | |
 |---|---|
 | Title | **Ashen Spire** (`AshenSpire` — the bundle name; title screen `src/ui/screens/title.js:47`) |
-| Platform | Modern evergreen desktop browsers, 1280×720 minimum |
+| Platform | Modern evergreen browsers. 1280×720 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
 | Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
-| Persistence | `localStorage` (run save + settings + run history) |
+| Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open at Settings → Profile (§3.12) |
 | Entry point | `index.html` opened directly or via any static server |
 | Session length | One full run ≈ 45–90 minutes; one combat ≈ 2–5 minutes |
 
@@ -36,6 +44,31 @@ These override everything else in the spec.
    - **Google Fonts** (OFL) — display serif (e.g. *Cinzel*) + body sans (e.g. *Inter*).
 4. Every image is referenced through `src/ui/assets.js` (an id → URL/inline-SVG map). Game code never hardcodes an asset path. Missing art falls back to a generated placeholder (colored rounded rect + icon glyph + name) so the game is fully playable with zero downloaded assets.
 5. Third-party **code** may be vendored only if MIT/BSD/Apache/CC0, kept in `src/vendor/`, attributed in `CREDITS.md`. Expected: none beyond possibly a PRNG snippet (mulberry32 is public domain).
+
+### 2.1 The AI-use acknowledgement — one home, two surfaces
+
+The game was built by AI under human direction, and says so. **The text has exactly one home,
+`src/content/aiDisclosure.js`, and nothing retypes it** — the two surfaces render it:
+
+- **In-product:** Settings → **About** (`src/ui/screens/about.js`).
+- **The store:** `node tools/ai-disclosure.mjs` prints the identical string for Steam's
+  AI-disclosure field; the value pasted there is that output, not a paraphrase.
+
+One fact with two hand-maintained copies is a player comparing the store page to the game and
+reading two different claims about the same thing. So the arrangement is enforced rather than
+intended: **`node tools/ai-disclosure.mjs --check` fails when a shipped bundle has drifted from
+the module**, and the load-bearing runtime claim (*no AI runs while you play*) is a **single
+named string** that both the player and the falsifier are given — it previously existed twice,
+in different words, so no comparison could ever have caught them diverging.
+
+**`approved: false` — and this spec says so because it is true.** The wording is Constantine's
+call at release; the flag records whose words these currently are and **nothing reads it to
+decide whether to render** — the acknowledgement always shows. Approval is a release gate
+(§9), not a display condition.
+
+*Falsify:* `node tools/ai-disclosure.mjs --check` after the last bundle rebuild — a stale
+bundle ships an acknowledgement that disagrees with the store page. The runtime claim carries
+its own two-command falsifier, stated in the module beside the sentence it defends.
 
 ---
 
@@ -62,77 +95,41 @@ Design laws (contractual):
 5. **Headless engine.** Nothing under `src/engine/` or `src/model/` references `document`, `window`, `localStorage`, or timers. A combat runs to completion from `tests/index.html` with no UI imports.
 6. **Budgeted escape hatch.** `content/scripts.js` is a registry of named custom behaviors for what the DSL can't express. Target <5% of content; every entry carries a comment justifying why the DSL couldn't do it. A script pattern appearing twice gets promoted to a DSL primitive (engine PR).
 
-### 3.2 File tree
+### 3.2 File tree — the layer contract, not an inventory
+
+**This section states where a thing BELONGS. It does not list what exists** — that list has a
+home (the tree) and a command, and the previous edition of this section was a hand-maintained
+copy of it that had drifted to **52 files listed against 92 shipped, four of them dead paths**
+— the three pre-scrub class card files, renamed, and `floorplan.js` filed under `engine/`
+while it lives in `model/` (§6 cited the right path all along, so the spec disagreed with
+itself) — while `tools/`, `content/source/`, `build/` and `dist/` were absent entirely.
+**That count was measured at `267397a` and `src/` held 94 two commits later**, which is the
+point: an inventory is a cache, and even the sentence describing its rot has to name its own
+expiry or it becomes the next one. A restatement of the tree is a cache with no write event; it rots while nobody edits
+it. Print the real one:
 
 ```
-index.html              boot + <main id="app">, loads src/main.js as module
-styles/
-  base.css              reset, palette variables, typography
-  combat.css            combat screen
-  map.css               map screen
-  ui.css                tooltips, buttons, modals, piles
-src/
-  main.js               boot: validate content (dev), load save, mount router
-  model/
-    schemas.js          entity schemas for every content type
-    registries.js       typed id → definition registries, frozen at load
-    formulas.js         structured formula evaluator (§3.5)
-    validate.js         content validation (boot in dev mode, and from tests)
-    state.js            run/combat state factories + (de)serialization
-  engine/
-    combat.js           action queue + turn loop (generic interpreter)
-    actions.js          opcode implementations (§3.4)
-    triggers.js         event bus + declarative trigger wiring (§3.6)
-    statuses.js         status-model interpreter: meters, decay, modifiers (§3.7)
-    mapgen.js           procedural act-map generator (§3.8, §6)
-    floorplan.js        anchors → floors: the one home for what a floor rule MEANS (§6)
-    encounters.js       encounter + reward rolls (§3.8)
-    rng.js              mulberry32 + named streams (§3.11)
-    save.js             localStorage, schema + content versioning (§3.12)
-  content/
-    balance.js          every global tuning constant
-    classes.js          class defs: starting deck, relic, HP, card pool ids
-    cards/vagabond.js   card defs (pure data)
-    cards/astrologer.js
-    cards/prophet.js
-    cards/colorless.js  colorless + curses + statuses (the card kind)
-    statuses.js         ALL combat statuses as data — incl. Bleed/Rot/Poise
-    stances.js          stance defs (same trigger/modifier shapes)
-    keywords.js         keyword names + tooltip text (semantics: §3.7 note)
-    enemies/act1.js     enemy defs incl. move tables and phase triggers
-    enemies/act2.js
-    enemies/act3.js
-    encounters/act1.js  weighted encounter pools, elite + boss lists
-    encounters/act2.js
-    encounters/act3.js
-    relics.js
-    flasks.js
-    events.js
-    mapconfig.js        per-act map-generation knobs
-    music.js            the score as data: scales, per-context beds, sample manifests (§7.4)
-    scripts.js          budgeted escape-hatch behaviors (<5% of content)
-  ui/
-    screens/title.js    title / continue / class select
-    screens/map.js
-    screens/combat.js
-    screens/reward.js   card reward, chest, boss reward
-    screens/shop.js
-    screens/event.js
-    screens/rest.js
-    screens/gameover.js death + victory
-    components/card.js  card renderer (DOM, not canvas)
-    components/tooltip.js
-    components/piles.js pile viewer modal
-    assets.js           asset id → URL/SVG map + placeholder generator
-    sfx.js              sound hook bus — sfx.play(id) at every call site, sink = audio.js
-    audio.js            procedural WebAudio engine: synth SFX + music beds (§7.4)
-    fx.js               floating numbers, shake, flash (skippable; paced by the animation-speed setting)
-tests/
-  index.html            headless test runner page
-  engine.test.js        assertions against model + engine
-DEVELOPER.md
-CREDITS.md
+find src tools content/source styles tests -type f | sort      # what exists
+node tools/dirorder.mjs --selftest                             # the shape check, watched red first
 ```
+
+| Directory | Contract — what may live here |
+|---|---|
+| `index.html` · `styles/` | Boot page and stylesheets. `base.css` owns the palette tokens, the root sizing anchor and `--ui-zoom`; `combat.css` / `map.css` / `ui.css` are screen-scoped and **measure nothing** — `main.js` decides layout once and writes `data-layout` (§7.2). |
+| `src/model/` | Shape and meaning, no behaviour: schemas, registries, the formula evaluator, content validation, run/combat state + its persisted-shape declaration, `floorplan.js` (what a floor rule MEANS, §6), `loadout.js`, `unlocks.js`. Headless. |
+| `src/engine/` | Behaviour over that shape, still headless — no DOM, storage, timers or randomness beyond the seeded streams: turn loop, opcodes, triggers, the status-model interpreter, mapgen, `actmap.js` (the one act-boot path — game and both harnesses import it, §6), encounters, rng, save. |
+| `src/content/` | Pure data, no logic: cards, statuses, stances, relics, flasks, events, enemies, encounters, keywords, tags, classes, keepsakes, equipment, balance, mapconfig, music beds, SFX recipes, and the budgeted `scripts.js` hatch (<5%). `generated/` is compiled from `content/source/*.csv` — **never hand-edited**. |
+| `src/ui/` | Everything that touches the DOM, and nothing the engine imports: screens, components, fx, audio, input/gesture, asset maps. |
+| `src/net/` | LAN co-op client (§11). Absent behind the launcher → the feature hides itself. |
+| `content/source/` | The authoring spreadsheets (CSV) that compile into `src/content/generated/`. |
+| `tools/` | Node-run instruments and harnesses. The observed-red idiom (`--selftest` / `--mutate`) lives here and is wired in `.github/workflows/ci.yml`. |
+| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). Assertions against model + engine only — no UI imports. |
+| `build/` · `dist/` | The single-file bundle emitted by `tools/bundle.mjs` and its shipped copy. Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
+
+**The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
+`engine`, `model` and `content`; `engine` may import `model` and `content`; `model` may import
+`content`; **`content` imports nothing.** A content file that imports from `engine` is the
+defect this layering exists to catch.
 
 ### 3.3 Domain model, registries, and state
 
@@ -294,12 +291,58 @@ flaskUsed, relicTriggered(relicId)
   `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc` (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws).
 - Consequence (StS-faithful): re-fighting the same combat after reload produces the same shuffles; choosing a different path doesn't change what a later card reward would have been on another stream.
 
-### 3.12 Save format
+### 3.12 Save format, and the durable profile
 
-- Key `sote_run_v1` — run state JSON: `{ schemaVersion, contentVersion, seed, streamCounters, class, floor, mapNodeId, hp, maxHp, runes, deck[], relics[], flasks[], mapGraph, actNumber, combatEntered?, history[] }`. Instances by id only (§3.3).
-- Saved after **every** committed player choice (node chosen, reward taken). **Mid-combat**: only `combatEntered: nodeId` is saved — reload restarts that combat from its start with the same shuffle-stream state (StS behavior). Abandoning mid-combat = same.
-- Key `sote_meta_v1` — settings + last 20 run results for the history screen.
-- `save.js` refuses (and archives) saves with an unknown `schemaVersion`; a `contentVersion` mismatch warns and re-validates the deck/relic ids against current registries (unknown ids → refuse and archive).
+**Two schemas, one home each — this is the contract, and the values are not restated here.**
+`RUN_SCHEMA_VERSION` lives in `src/model/state.js`; `META_SCHEMA_VERSION` lives in
+`src/engine/save.js`. Neither number appears anywhere else, and a second copy of either is a
+defect.
+
+**The run.** Key `sote_run_v1`, **three slots, one run each** (`SLOTS`, `save.js`). The
+persisted field list is **declared as data** — `RUN_SHAPE` in `model/state.js`, with
+`validateRunShape()` checking it — so the save contract is a table, not whatever
+`createRunState` happens to set, and this spec points at it rather than carrying a copy that
+drifts. It is a **floor, not a whitelist**: unlisted keys pass through untouched. Instances by
+id only (§3.3).
+
+- Saved after **every** committed player choice (node chosen, reward taken). **Mid-combat**:
+  only `combatEntered` is saved — reload restarts that combat from its start with the same
+  shuffle-stream state (StS behaviour). Abandoning mid-combat = same.
+- An unknown `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
+  with a dangling id → the save is **refused and archived**, never silently repaired. A run
+  saved before equipment existed is the one healed case: it gets a fresh loadout and a
+  re-stamped deck rather than being thrown away.
+
+**The profile** — key `sote_meta_v1`: settings, unlocks, durable progress, found armaments,
+and the last 20 run results. **It is the one artifact a player cannot re-earn**, so it carries
+five durability properties (#66/#67), each of which is a claim a command can falsify:
+
+1. **Versioned both ways.** An older `schemaVersion` migrates or refuses **by name**; a
+   **newer** one refuses and **preserves** — the case a stamp alone cannot catch, and the one
+   that silently destroys a profile when a player opens an old build after a new one.
+2. **A verified write, then a mirror.** `sote_meta_backup_v1` is rotated **only after the
+   primary is read back cleanly** — a mirror of bytes never proved readable is not a backup.
+   A write that fails read-back restores the primary from the last known good.
+3. **Archives are keyed and appended, never overwritten** — `sote_run_archived` is the index
+   for both kinds, entries keyed by kind, slot and time. **Runs** age out and are capped;
+   **profiles are never deleted, never aged out, and never evicted by run pressure**, and a
+   profile archive **never removes the primary** (the bytes are the evidence). If profiles
+   alone ever fill the drawer, the oldest is **moved to its own salvage key with a recorded
+   notice** — not silently dropped — so the browser's storage quota is the only real ceiling
+   and it is named rather than hidden.
+4. **Never silently empty.** A failed load is a **named, visible state** (`profileStatus()`,
+   surfaced by `ui/screens/profileNotice.js`), never a fresh profile wearing the same
+   filename. While in that state the profile is **quarantined**: the next ordinary settings
+   write cannot overwrite the original bytes, which are the evidence of every other failure.
+5. **The drawer has a handle.** `listArchives()` / `getArchive()` / `exportArchive()` /
+   `replacePrimaryWith()` are reachable by the player at **Settings → Profile**
+   (`ui/screens/profileArchive.js`): inspect, export to a file, or promote an archive back to
+   primary — which archives the outgoing one and clears the quarantine. An archive nothing can
+   open is a promise, not a feature.
+
+*Falsify the set:* `node tests/run-node.mjs` (the profile-durability cases: no profile, corrupt
+profile, older version, **newer** version, two archives in a row) — and the drawer's own
+notices (`drawerNotices()`) are how the screen reports what it had to do to itself.
 
 ### 3.13 Card text templating
 
@@ -314,6 +357,23 @@ Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Blee
 3. Every opcode, formula op, event name, and predicate used anywhere is in the closed sets of §3.4–§3.6.
 4. Every text-template token binds (§3.13).
 5. `scripts.js` budget report: script-using content is listed; the count must stay <5% of total content objects.
+6. Value-range and pairing rules that a field-wise check cannot see — a floor anchor outside
+   its act's rollable band, a proc row whose `burstMin` exceeds its `burstMax`, a music bed
+   that is quiet by accident rather than by the declared silence word (§7.4) — each failing
+   **naming the entry**, per Law 1 clause 5.
+
+**Law 1 clause 6 — the content smoke — is built and runnable** (#64). Validation only covers
+failures *downstream of itself*, so the standing check is over observable outcome, in the
+repo's existing observed-red idiom:
+
+```
+node tools/content-build.mjs --selftest    # the known-bad corpus: every case fails for its named reason
+node tools/content-build.mjs --mutate      # reinstate each defect N ways; each must be caught
+```
+
+Both edges, in clause 6's own words: **one entry added by table + asset alone appears and
+plays; one deliberately broken entry fails with its id printed.** A corpus nobody has watched
+go red is `unknown`, not green.
 
 ---
 
@@ -380,13 +440,25 @@ stagger (direct), effects, resistance {status, tags}`. Schema + validator enforc
 knob (`model/schemas.js`, `model/validate.js`); tag-scoped extra vulnerability composes
 by a declared `stacking` rule (closed enum: additive | multiplicative).
 
+**The numbers are deliberately NOT restated in this spec.** Every knob above is marked
+PROVISIONAL in its own row and is expected to move — Bleed's threshold was picked against the
+sim after this section was first written, and the prose here said `12` while the shipped row
+said `7` until this pass caught it. A restated provisional value is a cache guaranteed to rot;
+§6 already refuses to restate its samples for the same reason. **Read them from the rows:**
+
+```
+node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc)\
+  .forEach(s=>console.log(s.id, JSON.stringify(s.proc))))"
+```
+
 | Status | Mechanic |
 |---|---|
-| **Bleed (threshold-proc)** | Threshold 12; burst 15% of target max HP (min 8, max 35), ignores block; **+3 Poise damage per proc**; fleshy targets (beast/humanoid) gain Clotted (bleed resist) after a burst. All PROVISIONAL. |
-| **Frost (threshold-proc)** | Threshold 10; burst 8% (min 4, max 20) — smaller than Bleed by design; proc leaves **Weak** + **Frost-Exposed** (+25% from `starstone`-tagged effects, multiplicative with Vulnerable). PROVISIONAL. |
-| **Insanity (threshold-proc)** | Threshold 14; burst 18% (min 10, max 40) — the highest; **+8 Poise damage** and a **direct Stagger** on proc (bypasses the bar); leaves Unraveled (+30% from `ritual`/`blight`-tagged effects). NOT the player-side Madness below — two words, two mechanics. PROVISIONAL. |
-| **Scarlet Rot** | DoT on enemy: take N `loseHp` at its turn start. Unlike StS Poison, stacks **do not tick down** — instead Rot has a duration of **3 of its turns**, then expires entirely. Re-applying adds stacks and refreshes duration. Ignores block. |
-| **Frostbite** | On enemy: next time it takes attack damage ≥ 10 in one hit, it takes +30% (floored) and Frostbite is consumed. One stack max. |
+| **Bleed (threshold-proc)** | The build-up the Reaver's kit is written around; fleshy targets (beast/humanoid) gain a bleed-resist status after a burst. Adds Poise damage per proc. |
+| **Frost (threshold-proc)** | Deliberately the smallest burst of the three; the proc leaves **Weak** plus a tag-scoped exposure that raises `starstone`-tagged damage. |
+| **Insanity (threshold-proc)** | The largest burst and the hardest to fill; adds Poise damage **and a direct Stagger** that bypasses the meter, and leaves an exposure on `ritual`/`blight`-tagged damage. **Not** the player-side Madness below — two words, two mechanics, on purpose. |
+| **Crimson Blight** *(`crimsonBlight`; "Scarlet Rot" pre-scrub)* | DoT on enemy: take N `loseHp` at its turn start. Unlike StS Poison, stacks **do not tick down** — instead it has a duration of **3 of its turns**, then expires entirely. Re-applying adds stacks and refreshes duration. Ignores block. |
+| **Burn** *(`burn`)* | The third damage-over-time row, applied by `burn`-tagged effects and by equipment mods (`equipMods.csv`). |
+| ~~Frostbite~~ | **CUT — describes nothing.** No `frostbite` status ships; the frost identity is carried by the **Frost** threshold-proc row above and its `frostExposed` exposure. Falsify: `node -e "import('./src/content/statuses.js').then(m=>console.log(m.statuses.some(s=>s.id==='frostbite')))"` → `false`. |
 | **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 energy per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |
 | **Poise / Stagger** | Every enemy has `poiseMax` (8–40 by enemy). `poiseDamage` fills the meter (shown under HP). When full: enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), it takes +50% attack damage until the end of the *player's* next turn, then meter empties and `poiseMax` ×1.25 (rounded up). Poise meter does not decay. |
 
@@ -606,39 +678,96 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
 - Floating damage/heal/block numbers; brief target flash on hit; ≤4 px screen shake for hits ≥15 damage. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`).
 - Bleed burst and Stagger get distinct, slightly bigger effects (they're the theme).
 - "YOU PERISHED" screen: dark fade, gold serif text, then stats card. Victory: "EMBER RESTORED". (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
-- Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the score *is* lives as content in `src/content/music.js` (scales, beds, sample manifests); volumes/mute are settings. A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. No audio asset files ship, and the two override paths fail differently: a music folder with `manifest.json` (Settings) replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load is cached as a miss and plays **silence, not the synth**. `MUSIC_MANIFEST` is imported and never read — a dormant slot, not a path.
+- Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the sound *is* lives as content in two files, one home each: **`src/content/music.js`** (scales, per-context beds, `MUSIC_MANIFEST`) and **`src/content/sfx.js`** (`SFX_RECIPES` plus `SFX_MANIFEST`). A recipe is a list of layers in the engine's **two-word closed vocabulary, `tone` and `noise`** (schema `SFX_LAYER_SCHEMAS`, `model/schemas.js`), so retuning a sound is a table edit and never an engine edit, and a malformed layer fails validation **naming its recipe id**.
+
+  **Ids are composed, and resolution is one pure function with three steps** (`resolveRecipe`, `content/sfx.js`): **exact id → the FAMILY row** (the segment before the first `_`) **→ `default`**. So `procBurst_bleed` plays its own row, a proc with no row of its own falls to the `procBurst` family and still sounds like a burst, and anything unrecognised plays the required `default` — audible, never silent (Law 1 clause 5) — while **the fallback warns once per unknown id**, so an orphan is reported without becoming a per-frame noise. Authoring a new family is one row named for the segment before the underscore; **no engine change and no registration list.** *(Falsify: `node -e "import('./src/content/sfx.js').then(m=>console.log(m.resolveRecipe('procBurst_nosuch')))"` → matched `procBurst`, `fellBack: false`.)* Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. No audio asset files ship, and the two override paths fail differently: a music folder with `manifest.json` (Settings) replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load is cached as a miss and plays **silence, not the synth**. `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
 
 ### 7.5 Visual style
 
-- Palette (CSS variables in `base.css`): near-black `#0d0b08` background, parchment `#e8dcc0` text, Erdtree gold `#c9a227` accents, blood red `#8a1a1a`, rot crimson-orange `#b5541c`, frost `#7fa8c9`, grace blue `#9fc3e8`.
-- Cards: DOM elements (not canvas) — rounded rect, rarity-colored frame (grey/blue/gold), icon art from game-icons.net, cost orb top-left, type banner.
-- Fonts: Cinzel (titles/card names), Inter (body/tooltips). Self-host the woff2 files, list in CREDITS.md.
+- **Palette: semantic tokens in `base.css`, and there are THREE of them, not one** — the
+  default dark set, a **high-contrast** variant, and `body.cb-safe`, a colourblind-safe
+  remap on Okabe-Ito hues (danger→vermillion, heal→bluish-green, frost→sky, blight→orange).
+  Map structure has its own token, `--map-structure`, so roads and rings can be re-levelled
+  without touching text colour. **The hex values are not restated here** — a colour restated
+  in prose is a copy nothing syncs, and any variant would make it wrong in two directions
+  at once. Read them: `grep -nE "^\s*--" styles/base.css`. The gate that says they *pass* is
+  `node tools/contrast-audit.mjs`, which carries targets for both palettes.
+- Cards: DOM elements (not canvas) — rounded rect, rarity-coloured frame, cost orb top-left,
+  type banner. Type presentation (geometry + banner colour per card type) is data:
+  `balance.ui.cardTypes`.
+- **Fonts — TO BUILD, and the shipped state is the opposite of what this line used to
+  claim.** Cinzel (display) / Inter (body) are named in `font-family` **with system fallbacks
+  (Georgia / system-ui) and are NOT bundled**; `CREDITS.md` is the authoritative home and says
+  so. Self-hosting the `woff2` under `assets/fonts/` is unfinished work, not a shipped fact.
+  Falsify: `ls assets/fonts` and `grep -n "not bundled" CREDITS.md`.
 
 ---
 
 ## 8. Testing
 
-`tests/index.html` loads `engine.test.js` (tiny `assert(name, cond)` helper, results as a DOM list + console). Required coverage (all headless, no UI imports):
+**Two runners, one suite:** `tests/index.html` in a browser, `node tests/run-node.mjs`
+headless — both load `engine.test.js`. All assertions are against model + engine with **no UI
+imports**, so nothing in this file has seen a screen; the suite says so in its own boundary
+block when it finishes.
 
-1. Damage order: 6 base + 2 Str, Weak, Vulnerable → `floor(floor(8×0.75)×1.5)` = 9. Edge: negative → 0.
-2. Block absorbs before HP; block expires at player turn start; Unbreakable power keeps it (cap applied).
-3. Frail + Dexterity block math.
-4. Draw 5 with 3 in draw pile → reshuffle discard, order from seeded stream is deterministic (fixed seed snapshot).
-5. Hand-limit: drawn cards beyond 10 go to discard.
-6. Exhaust, Ethereal-at-end-of-turn, Retain, Innate-on-top, X-cost consumes all energy and scales via `energySpent`.
-7. Bleed: accumulation, burst at 12, damage clamp, threshold ×1.5, Lord's Blood freezes threshold — all driven purely by the `content/statuses.js` data.
-8. Scarlet Rot: ticks at enemy turn start, expires after 3, refresh on re-apply.
-9. Poise: fill → Stagger skips enemy move, +50% damage window, poiseMax growth; Stagger cancels Held Blade.
-10. Stances: exclusivity, Bloodflame per-hit Bleed on multi-hit, Bulwark on-Skill block.
-11. Intent constraint: with a forced RNG stream, `maxConsecutive` is never violated over 1000 rolls.
-12. Map gen: fixed seed → snapshot graph; constraints hold over 200 random seeds (no early elites, no crossing edges, boss reachable from every floor-1 node).
-13. Save round-trip: serialize → deserialize → identical state; unknown schemaVersion refused and archived; contentVersion mismatch with a dangling card id refused and archived.
-14. Full headless auto-run: a scripted bot (plays leftmost affordable card, ends turn) completes a seeded M1 combat without throwing.
-15. **Content validation (§3.14):** every shipped content object passes its schema; every id cross-reference resolves; every opcode/formula op/event/predicate used is in the closed sets; `scripts.js` budget < 5%.
-16. **Text templating (§3.13):** every template token binds to an effect value; no player-visible numeric effect lacks a token; Strike's preview shows 9 with +3 Strength and 6 under Weak via the shared evaluator.
-17. **Status-model generality:** define a throwaway status (in test code, not shipped content) with a meter + hook + modifier; verify it behaves per schema with zero engine changes — proving law §3.1(2).
+**The required-coverage list that used to live here is gone, and deliberately.** It named 17
+tests against a suite that had already grown past it — **47 cases over 43 declared blocks at
+`267397a`, 48 over 44 two commits later, and it will have moved again by the time you read
+this** — and two of its entries had gone false without anybody editing them — test 7 restated Bleed's threshold as `12` with an escalating `×1.5`
+(both superseded by the constant-threshold proc vocabulary, §4.4) and test 8 named "Scarlet
+Rot", renamed at the IP scrub. **A hand-kept index of tests is a cache of `grep`**, and this
+one rotted exactly the way §3.2's file inventory did. The list has a home:
 
-CI-less workflow: opening `tests/index.html` must show all green before any milestone is called done.
+```
+node tests/run-node.mjs                       # the whole suite + its boundary block
+grep -n "test('" tests/engine.test.js         # the index, derived
+```
+
+**What this section states instead is the contract a test must meet, which cannot rot:**
+
+1. **Headless and UI-free.** A test that needs a DOM belongs in `tools/`, not here.
+2. **Both edges** — the empty/zero case and the cap/overflow case (Charter quality gate).
+3. **Content-driven mechanics are asserted through their data**, never against a number
+   hard-coded in the test: a status test drives `content/statuses.js` rows, so retuning a knob
+   moves the test with it instead of breaking it.
+4. **A check is trusted only after it has been watched to fail.** The observed-red idiom is
+   `--selftest` (a known-bad corpus, every case must fail for its named reason) and `--mutate`
+   (reinstate the defect N ways, each must be caught), carried by the `tools/` instruments and
+   wired in `.github/workflows/ci.yml`.
+5. **Every release-gating instrument prints what it did NOT check, in its run output — not
+   only in its header.** *(House law, adopted 2026-08-07 out of the instrument audit. It was
+   triggered by three greens that lied in one week: a screenshot harness blind to five
+   player-facing surfaces, a driver returning exit 0 against broken code, and a disclosure
+   check that covered one text of seven. Each was accurate about what it measured and silent
+   about its own hole — and a boundary in a file header is read by the author, while a
+   boundary in the output is read by whoever is about to trust the green.)*
+
+**The release capture set is `tools/release-shots.mjs`, and it is not
+`tools/screenshot.mjs`.** The distinction is the third lying green above, so it belongs in a
+spec rather than in tribal memory:
+
+| | photographs | coverage |
+|---|---|---|
+| `tools/screenshot.mjs` | the **source tree** over a local server | the `?shot=` states that existed when it was written — **structurally blind** to any surface without one |
+| `tools/release-shots.mjs` | the **built bundle** (`dist/AshenSpire.html`), at both shapes | coverage **derived from `main.js`'s shot states**, so a new state cannot be silently missed; surfaces with no `?shot=` are reached by real clicks and seeded storage; five co-op states are **excluded by name**; an unlisted state **fails before the browser starts** |
+
+The artifact is **never modified** to reach a state — crisis states are produced by writing
+storage from outside and reloading, because a shot of a patched bundle is a shot of something
+we do not ship. Failure lines name **floats and screens separately**, so a red says which
+thing broke.
+
+**The browser-facing gates that the suite cannot reach**, each a command rather than a
+promise: `node tools/verify-shipped.mjs` (the bundle matches source), `node tools/mapplan.mjs`
+(map distributions at the current shape), `node tools/content-build.mjs --selftest --mutate`
+(§3.14), `node tools/contrast-audit.mjs` (palette targets), `node tools/release-shots.mjs` (the release
+capture set — see above), `node tools/ai-disclosure.mjs --check` (§2.1),
+`node tools/screenreach.mjs`, `tools/zoomplace.mjs`, `tools/mapreach.mjs`,
+`tools/sfx-loudness.mjs`.
+
+*(The previous edition of this section ended "CI-less workflow: opening `tests/index.html`
+must show all green before any milestone is called done." **CI exists** —
+`.github/workflows/ci.yml` — and the sentence had been false since it landed. What survives is
+the standard: all green before a milestone is called done, on whichever runner you used.)*
 
 ---
 
