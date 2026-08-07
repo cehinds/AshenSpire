@@ -21,7 +21,7 @@
 // storage from outside and reloading, never by injecting script into the HTML.
 // A shot of a patched bundle is a shot of something we do not ship.
 //
-// Usage:  node tools/release-shots.mjs [--out DIR] [--only NAME]
+// Usage:  node tools/release-shots.mjs [--out DIR] [--only SHOT] [--shape TAG]
 // Exit 0 = every shot captured and its screen asserted present; 1 = any miss.
 //
 // BOUNDARY: this proves a screen RENDERED and that its landmark element is on
@@ -56,6 +56,9 @@ const args = process.argv.slice(2);
 const oi = args.indexOf('--out');
 const OUT = resolve(ROOT, oi >= 0 && args[oi + 1] ? args[oi + 1] : 'docs/release-shots');
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
+// --only takes a SHOT name. I reached for it with a SHAPE tag and got a green
+// zero-shot run, so the flag I wanted exists now rather than as a comment.
+const onlyShape = args.includes('--shape') ? args[args.indexOf('--shape') + 1] : null;
 
 const SHAPES = [
   { tag: '390x844', width: 390, height: 844, dsf: 2, mobile: true },
@@ -611,6 +614,7 @@ let misses = 0;
 const rows = [];
 
 for (const shape of SHAPES) {
+  if (onlyShape && shape.tag !== onlyShape) continue;
   await c.send('Emulation.setDeviceMetricsOverride', {
     width: shape.width, height: shape.height, deviceScaleFactor: shape.dsf, mobile: shape.mobile,
   });
@@ -723,7 +727,14 @@ if (only) {
   console.log(`  NOT CHECKED  --only ${only} photographs one shot; the property needs a whole set.`);
   console.log('               Re-run without --only before citing this run as coverage.');
 }
-for (const shape of only ? [] : SHAPES) {
+// Iterate the shapes that PRODUCED ROWS, not the shapes this file declares. I
+// added --shape and it made the property red at the shape it had deliberately
+// skipped — "no members photographed — unknown, not distinct", which is the
+// property behaving correctly against a list that no longer described the run.
+// The list of shapes measured is a fact about the run; deriving it from `rows`
+// means it cannot disagree with what happened.
+const shapesShot = SHAPES.filter((s) => rows.some((r) => r.shape === s.tag));
+for (const shape of only ? [] : shapesShot) {
   for (const g of SUB_SURFACE_GROUPS) {
     const mine = rows.filter((r) => r.shape === shape.tag && r.sub && r.sub.startsWith(`${g.group}:`));
     const bySig = new Map();
@@ -827,6 +838,7 @@ const FLOAT_STRINGS = [
 ];
 let floatMisses = 0;
 for (const shape of SHAPES) {
+  if (onlyShape && shape.tag !== onlyShape) continue;
   await c.send('Emulation.setDeviceMetricsOverride', {
     width: shape.width, height: shape.height, deviceScaleFactor: shape.dsf, mobile: shape.mobile,
   });
@@ -906,6 +918,35 @@ if (misses || floatMisses || propertyFails) {
   server.close();
   process.exit(1);
 }
+// ZERO SHOTS IS NOT A PASS, and this tool has just been caught printing that it
+// was (2026-08-07, mine, found by using it). `--only` filters by SHOT NAME; I
+// handed it a SHAPE tag, nothing matched, and the run printed
+//
+//   release-shots: OK — 0 shots (0 top-level, 0 sub-surface), every landmark
+//   present, every sub-surface assertion true
+//
+// and exited 0. Every clause of that sentence is vacuously true and the whole of
+// it is a lie. It is the same empty-denominator failure I planted against for
+// `views = []` one commit ago — an empty set passes every for-loop ever written
+// — sitting unguarded in this tool's own shot loop. It also cost me a false
+// claim in the same session: I reported a plant "photographed grid, rack, hybrid"
+// on a run that photographed nothing, because the `photographed:` line is
+// printed from the DERIVED ids, above the browser that would take them.
+//
+// So: nothing photographed, nothing proven. Say which, and name the shots that
+// do exist, because the only way to reach here is a name that matches none.
+if (!rows.length) {
+  console.error(`\nrelease-shots: ZERO shots were taken, so nothing was proven and this is NOT a pass.`);
+  if (only) {
+    console.error(`--only takes a SHOT NAME, not a shape. No shot is called ${JSON.stringify(only)}.`);
+    console.error(`Shapes are chosen with --shape (${SHAPES.map((x) => x.tag).join(', ')}); shot names are:`);
+    console.error('  ' + SCREENS.map((s) => s.name).join(', '));
+  } else {
+    console.error('No screen and no sub-surface produced a row. Both denominators are empty.');
+  }
+  server.close();
+  process.exit(1);
+}
 const subShots = rows.filter((r) => r.sub).length;
 console.log(`\nrelease-shots: OK — ${rows.length} shots (${rows.length - subShots} top-level, ${subShots} sub-surface), `
   + `every landmark present, every sub-surface assertion true, `
@@ -915,7 +956,10 @@ console.log(`\nrelease-shots: OK — ${rows.length} shots (${rows.length - subSh
   // against, in the sentence a tired reader is most likely to read alone.
   + (only
     ? `and the panel property NOT CHECKED (--only), `
-    : `'${DISTINCT_PANELS}' holds in every group at both shapes, `)
+    // "at both shapes" was typed into this sentence, so --shape made the verdict
+    // line claim two shapes on a one-shape run. The count comes from the run.
+    : `'${DISTINCT_PANELS}' holds in every group at ${shapesShot.length === SHAPES.length
+      ? 'both shapes' : `${shapesShot.map((s) => s.tag).join(' and ')} (--shape)`}, `)
   + `no validation banner. → ${OUT}`);
 server.close();
 process.exit(0);
