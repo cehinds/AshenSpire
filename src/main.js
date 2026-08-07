@@ -28,6 +28,7 @@ import {
   rollArmamentDrop,
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
+import { mountProfileNotice } from './ui/screens/profileNotice.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
@@ -550,7 +551,26 @@ function resumeRun(slot = 1) {
 }
 
 // ---- screens --------------------------------------------------------------------
+// #67 property 3/5: a profile that could not be read is a NAMED, VISIBLE state
+// with a reachable handle — never a fresh profile wearing the same filename.
+// This sits in front of the title because the title is where a player would
+// otherwise see "no saves" and draw their own conclusion.
+let profileNoticeShown = false;
+function showProfileNoticeIfNeeded() {
+  if (profileNoticeShown) return false;
+  const status = saves.profileStatus();
+  if (status.ok) return false;
+  profileNoticeShown = true;
+  mountProfileNotice(app, {
+    saves,
+    status,
+    onContinue: () => showTitle(),
+  });
+  return true;
+}
+
 function showTitle() {
+  if (showProfileNoticeIfNeeded()) return;
   audio.music('title');
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over

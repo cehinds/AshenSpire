@@ -17,7 +17,7 @@ import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '.
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap } from '../src/engine/mapgen.js';
-import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY } from '../src/engine/save.js';
+import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 import { createRunState, RUN_SCHEMA_VERSION, validateRunShape } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
@@ -761,6 +761,100 @@ export async function runTests({ artManifest = null } = {}) {
     storage.setItem(RUN_KEY, JSON.stringify(run));
     for (let i = 0; i < 25; i++) saves.recordResult({ victory: i % 2 === 0, seed: i });
     eq(saves.loadMeta().results.length, 20, 'history capped at 20');
+  });
+
+  // ---- 13b. Profile durability (#67) — the five properties --------------------
+  // A 2000-run profile is somebody's history. Each assertion below was observed
+  // RED at dev e444d77 before the fix; the standalone instrument with the full
+  // corpus is tools/profile-durability-probe.mjs (Sten's probe, extended).
+  test('13b. profile: stamped and read, newer refused AND preserved, archives keyed, never silently empty, evidence survives the next write, drawer has a handle', () => {
+    // P1 — the stamp is written AND something branches on it.
+    const s1 = createMemoryStorage();
+    const m1 = createSaveManager(s1);
+    m1.saveMeta({ settings: {}, results: [], progress: { runs: 2000 } });
+    eq(JSON.parse(s1.getItem(META_KEY)).schemaVersion, META_SCHEMA_VERSION, 'profile is stamped on write');
+
+    // P1 — NEWER: refused and PRESERVED (an old build must not eat a new profile).
+    const s2 = createMemoryStorage();
+    const m2 = createSaveManager(s2);
+    const newerBytes = JSON.stringify({ schemaVersion: META_SCHEMA_VERSION + 6, profile: { runs: 2000 } });
+    s2.setItem(META_KEY, newerBytes);
+    m2.loadMeta();
+    eq(m2.profileStatus().state, 'newer', 'a newer profile is refused by name');
+    eq(s2.getItem(META_KEY), newerBytes, 'newer profile bytes are preserved untouched');
+    eq(m2.saveMeta({ settings: { uiScale: 1.1 } }).ok, false, 'writes are refused while quarantined');
+    eq(s2.getItem(META_KEY), newerBytes, 'and the bytes are STILL untouched after that write');
+
+    // P1 — OLDER: migrated when we have a migration, refused BY NAME when we don't.
+    const s3 = createMemoryStorage();
+    const m3 = createSaveManager(s3);
+    s3.setItem(META_KEY, JSON.stringify({ schemaVersion: 0, results: [], progress: { runs: 7 } }));
+    eq(m3.loadMeta().progress.runs, 7, 'a v0 profile is migrated, not discarded');
+    eq(m3.profileStatus().state, 'migrated', 'and the migration is named');
+    const s4 = createMemoryStorage();
+    const m4 = createSaveManager(s4);
+    s4.setItem(META_KEY, JSON.stringify({ schemaVersion: -3, progress: { runs: 9 } }));
+    m4.loadMeta();
+    assert(/schemaVersion -3/.test(m4.profileStatus().reason || ''), 'an un-migratable older profile is refused BY NAME');
+
+    // P2 — archives are keyed and appended: the second loss keeps the first.
+    const s5 = createMemoryStorage();
+    const m5 = createSaveManager(s5);
+    s5.setItem(META_KEY, '{"schemaVersion":1,"progress":{"runs":111},');
+    m5.loadMeta();
+    m5.startNewProfile();
+    m5.saveMeta({ settings: {}, results: [], progress: { runs: 222 } });
+    s5.setItem(META_KEY, '{"schemaVersion":1,"progress":{"runs":222},');
+    m5.loadMeta();
+    const metaArchives = m5.listArchives().filter((a) => a.kind === 'meta');
+    eq(metaArchives.length, 2, 'two losses produce two archives');
+    assert(/111/.test(m5.getArchive(metaArchives[0].id).save), 'the first loss was not overwritten by the second');
+    // …and repeated reads of one bad profile do not fill the drawer with copies.
+    m5.loadMeta(); m5.loadMeta(); m5.loadMeta();
+    eq(m5.listArchives().filter((a) => a.kind === 'meta').length, 2, 'repeat loads de-duplicate by content');
+    // Run archives are keyed by SLOT — slot 2 no longer lands on slot 1.
+    const s6 = createMemoryStorage();
+    const m6 = createSaveManager(s6);
+    s6.setItem(RUN_KEY, '{"schemaVersion":1,broken');
+    s6.setItem(`${RUN_KEY}_s2`, '{"schemaVersion":1,alsobroken');
+    m6.loadRun(REG, 1);
+    m6.loadRun(REG, 2);
+    const runArchives = m6.listArchives().filter((a) => a.kind === 'run');
+    eq(runArchives.length, 2, 'both slots archived separately');
+    assert(runArchives.some((a) => a.slot === 1) && runArchives.some((a) => a.slot === 2), 'archives carry their slot');
+
+    // P3 + P4 — never silently empty, and the next write cannot destroy the evidence.
+    const s7 = createMemoryStorage();
+    const m7 = createSaveManager(s7);
+    m7.saveMeta({ settings: {}, results: [], progress: { runs: 2000 } });
+    s7.setItem(META_KEY, 'not json at all');
+    s7.setItem(META_BACKUP_KEY, 'the mirror is gone too');
+    const loaded = m7.loadMeta();
+    const st7 = m7.profileStatus();
+    assert(st7.ok === false && st7.state === 'corrupt' && !!st7.reason, 'a failed load is a named state');
+    assert(loaded.progress === undefined && st7.quarantined, 'empty is returned, but the state says why');
+    const evidence = s7.getItem(META_KEY);
+    m7.saveMeta({ settings: { uiScale: 1.1 } });
+    m7.recordResult({ victory: false });
+    eq(s7.getItem(META_KEY), evidence, 'the original bytes survive the next write AND recordResult');
+    // A first boot is 'empty', not loss — the two must never look alike.
+    const m8 = createSaveManager(createMemoryStorage());
+    m8.loadMeta();
+    assert(m8.profileStatus().state === 'empty' && m8.profileStatus().ok, 'a first-ever boot is not a loss');
+
+    // P5 — the drawer has a handle, and a readable mirror means it is never opened.
+    const s9 = createMemoryStorage();
+    const m9 = createSaveManager(s9);
+    m9.saveMeta({ settings: {}, results: [], progress: { runs: 1234 }, unlocked: ['weaponMoonveil'] });
+    const goodBytes = s9.getItem(META_KEY);
+    s9.setItem(META_KEY, goodBytes.slice(0, goodBytes.length - 9));
+    m9.loadMeta();
+    eq(m9.profileStatus().state, 'recovered', 'the last-known-good mirror recovers the profile');
+    eq(JSON.parse(s9.getItem(META_KEY)).progress.runs, 1234, 'and the primary is put back');
+    const archived = m9.listArchives().find((a) => a.kind === 'meta');
+    assert(archived && archived.at && archived.reason, 'the corrupt bytes are still archived, with when and why');
+    assert(/weaponMoonveil/.test(m9.exportArchive(archived.id) || ''), 'an archive exports to something a player can keep');
+    assert(m9.restoreProfile(archived.id).ok === false, 'restoring genuinely-bad bytes fails plainly, not silently');
   });
 
   // ---- 14. Scripted bot completes a boss combat -------------------------------------

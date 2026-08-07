@@ -6,15 +6,48 @@
 // getItem/setItem/removeItem shape. Saves that can't be trusted (unknown
 // schemaVersion, corrupt JSON, dangling content ids after a content change)
 // are ARCHIVED — moved aside, never silently deleted — and load returns null.
+//
+// PROFILE DURABILITY (#67). The meta record is the durable one: settings, run
+// results, and the progress tally the unlocks are earned from — the thing that
+// will hold a 2000-run character. It used to be treated as a cache while runs
+// were treated as precious, forty lines apart in this file. Five properties now
+// hold for it, and each one is a check in tools/profile-durability-probe.mjs:
+//
+//   1. schemaVersion is WRITTEN AND READ. Older: migrated, or refused BY NAME.
+//      Newer: refused AND PRESERVED — an older build must never eat a profile
+//      a newer build wrote.
+//   2. Archives are KEYED and APPENDED, never overwritten — the second loss
+//      must not erase the first.
+//   3. A failed load is a NAMED, VISIBLE state (profileStatus()), never a fresh
+//      profile wearing the same filename.
+//   4. While a profile is unreadable the manager is QUARANTINED: no write may
+//      overwrite the original bytes, because those bytes are the evidence for
+//      every other failure.
+//   5. The drawer has a HANDLE: listArchives / getArchive / exportArchive /
+//      restoreProfile — preservation the player cannot reach is a kinder word
+//      for lost.
 
 import { serializeRun, deserializeRun } from '../model/state.js';
 import { createLoadout, stampDeck } from '../model/loadout.js';
 
 export const RUN_KEY = 'sote_run_v1';
+// Legacy name, deliberately NOT renamed: this string is where archives already
+// live in players' browsers, and renaming it orphans every archive written
+// before today. It is now the archive INDEX for both kinds (run and meta) —
+// one home, one key, keyed entries inside it.
 export const RUN_ARCHIVE_KEY = 'sote_run_archived';
 export const META_KEY = 'sote_meta_v1';
+// The last-known-good mirror of META_KEY. Redundancy, not a second home: it is
+// only ever written FROM the primary after a verified read-back, never authored
+// independently, so the two cannot disagree about anything (Bjorn's rider).
+export const META_BACKUP_KEY = 'sote_meta_backup_v1';
 export const SLOTS = 3; // save slots, one run each
 const HISTORY_LIMIT = 20;
+// THE ONE HOME for the meta schema's version (the run schema's one home is
+// RUN_SCHEMA_VERSION in model/state.js — two schemas, one home each).
+export const META_SCHEMA_VERSION = 1;
+const ARCHIVE_LIMIT = 12; // keep the last N archives…
+const ARCHIVE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // …and nothing older than ~6 months
 
 // Slot 1 keeps the legacy key (backward compatible: existing saves are slot 1);
 // slots 2..N use suffixed keys. All slot-taking methods default to slot 1.
@@ -31,9 +64,115 @@ export function createSaveManager(storage) {
     throw new Error('createSaveManager requires a storage with getItem/setItem/removeItem');
   }
 
+  // ---- the archive: keyed, appended, capped (property 2) ------------------
+  // Read the index, adopting the pre-#67 shape ({reason, save}) as one entry so
+  // an archive written by an older build is never dropped on the floor.
+  function readArchiveIndex() {
+    const raw = storage.getItem(RUN_ARCHIVE_KEY);
+    if (!raw) return { v: 1, entries: [] };
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      return { v: 1, entries: [] }; // unreadable index: start one, keep going
+    }
+    if (parsed && Array.isArray(parsed.entries)) return parsed;
+    if (parsed && typeof parsed === 'object' && 'save' in parsed) {
+      return { v: 1, entries: [{ id: 'legacy-1', kind: 'run', slot: 1, reason: parsed.reason || 'archived by an earlier build', at: null, save: parsed.save }] };
+    }
+    return { v: 1, entries: [] };
+  }
+
+  function writeArchiveEntry(entry) {
+    const index = readArchiveIndex();
+    index.entries.push(entry);
+    const cutoff = Date.now() - ARCHIVE_MAX_AGE_MS;
+    // Age first, then count — and an entry with no timestamp (legacy) is never
+    // aged out, because we cannot prove it is old.
+    index.entries = index.entries.filter((e) => !e.at || Date.parse(e.at) >= cutoff);
+    if (index.entries.length > ARCHIVE_LIMIT) {
+      index.entries.splice(0, index.entries.length - ARCHIVE_LIMIT);
+    }
+    storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify(index));
+    return entry.id;
+  }
+
+  let archiveSeq = 0;
+  function makeArchiveId(kind, slot) {
+    archiveSeq += 1;
+    // Keyed by kind, slot and time: slot 2's archive can no longer land on
+    // slot 1's, and a second loss can no longer erase the first.
+    return `${kind}${kind === 'run' ? `-s${slot}` : ''}-${Date.now()}-${archiveSeq}`;
+  }
+
   function archive(json, reason, slot = 1) {
-    storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify({ reason, save: json }));
+    const id = makeArchiveId('run', slot);
+    writeArchiveEntry({ id, kind: 'run', slot, reason, at: new Date().toISOString(), save: json });
     storage.removeItem(runKey(slot));
+    return id;
+  }
+
+  // A profile archive NEVER removes the primary: the bytes are the evidence.
+  // De-duplicated by content: main.js calls loadMeta() eight times during one
+  // boot, and a per-call archive would fill the drawer with eight copies of one
+  // loss and push genuine older archives out of the cap. Same bytes → same
+  // entry, however many times we are asked.
+  function archiveMeta(json, reason) {
+    const existing = readArchiveIndex().entries.find((e) => e.kind === 'meta' && e.save === json);
+    if (existing) return existing.id;
+    const id = makeArchiveId('meta', null);
+    writeArchiveEntry({ id, kind: 'meta', slot: null, reason, at: new Date().toISOString(), save: json });
+    return id;
+  }
+
+  // ---- profile load state (properties 3 and 4) ----------------------------
+  // `status` is the named, visible state a failed load leaves behind, and the
+  // quarantine flag is what stops the next ordinary settings write from
+  // destroying the original bytes.
+  let status = { ok: true, state: 'ok', reason: null, archiveId: null, recoveredFrom: null };
+  let quarantined = false;
+
+  function parseMeta(json) {
+    const meta = JSON.parse(json);
+    if (!meta || typeof meta !== 'object') throw new Error('profile is not an object');
+    return meta;
+  }
+
+  // Returns { meta } on success, or { error } naming what was wrong.
+  function readMetaFrom(key) {
+    const json = storage.getItem(key);
+    if (!json) return { empty: true };
+    let meta;
+    try {
+      meta = parseMeta(json);
+    } catch (e) {
+      return { json, error: e && e.message ? e.message : 'corrupt profile', kind: 'corrupt' };
+    }
+    const v = meta.schemaVersion;
+    if (v === undefined || v === META_SCHEMA_VERSION) return { json, meta };
+    if (typeof v === 'number' && v > META_SCHEMA_VERSION) {
+      return { json, meta, error: `profile schemaVersion ${v} is newer than this build (${META_SCHEMA_VERSION})`, kind: 'newer' };
+    }
+    // Older: migrate here when a migration exists; until one does, refuse BY
+    // NAME rather than guessing at a shape nobody wrote.
+    const migrated = migrateMeta(meta, v);
+    if (migrated) return { json, meta: migrated, migratedFrom: v };
+    return { json, meta, error: `profile schemaVersion ${v} is older than this build (${META_SCHEMA_VERSION}) and has no migration`, kind: 'older' };
+  }
+
+  // migrateMeta(meta, fromVersion) → meta | null. One switch, one home; every
+  // arm must be able to state what it changed.
+  function migrateMeta(meta, fromVersion) {
+    if (fromVersion === 0) {
+      // v0 = the pre-#67 unversioned/zero profile: shape is already compatible,
+      // it simply never carried a stamp. Adopt it and stamp it.
+      return { ...meta, schemaVersion: META_SCHEMA_VERSION };
+    }
+    return null;
+  }
+
+  function freshMeta() {
+    return { schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [] };
   }
 
   return {
@@ -118,30 +257,178 @@ export function createSaveManager(storage) {
       return out;
     },
 
-    // ---- meta: settings + last N run results (SPEC §3.12) -------------------
+    // ---- meta: the durable profile (SPEC §3.12, #67) ------------------------
+    /**
+     * loadMeta() → meta. ALWAYS returns a usable object so every caller that
+     * reads `.settings` keeps working — but when the profile could not be read
+     * it returns an empty one AND leaves a named state in profileStatus(),
+     * having first archived the bytes and quarantined writes. It never hands
+     * back a fresh profile as though nothing happened (property 3).
+     */
     loadMeta() {
-      try {
-        const meta = JSON.parse(storage.getItem(META_KEY) || 'null');
-        if (meta && typeof meta === 'object') return meta;
-      } catch (e) {
-        /* fall through to fresh meta */
+      const primary = readMetaFrom(META_KEY);
+
+      if (primary.empty) {
+        status = { ok: true, state: 'empty', reason: null, archiveId: null, recoveredFrom: null };
+        quarantined = false;
+        return freshMeta();
       }
-      return { settings: {}, results: [] };
+
+      if (!primary.error) {
+        status = {
+          ok: true,
+          state: primary.migratedFrom !== undefined ? 'migrated' : 'ok',
+          reason: primary.migratedFrom !== undefined ? `migrated from schemaVersion ${primary.migratedFrom}` : null,
+          archiveId: null,
+          recoveredFrom: null,
+        };
+        quarantined = false;
+        return primary.meta;
+      }
+
+      // A profile written by a NEWER build: refuse AND PRESERVE. Nothing is
+      // archived and nothing is moved — the bytes stay exactly where the newer
+      // build left them, and quarantine stops this build from overwriting them
+      // (Marina's kept clause: opening an old build must not cost the player
+      // everything).
+      if (primary.kind === 'newer') {
+        status = { ok: false, state: 'newer', reason: primary.error, archiveId: null, recoveredFrom: null };
+        quarantined = true;
+        return freshMeta();
+      }
+
+      // Corrupt, or older-with-no-migration: archive the bytes (keyed), then
+      // try the last-known-good mirror before giving up on the player.
+      const archiveId = archiveMeta(primary.json, primary.error);
+      const backup = readMetaFrom(META_BACKUP_KEY);
+      if (!backup.empty && !backup.error) {
+        // Recovered. Put the good bytes back in the primary so the next
+        // ordinary write has something true to build on, and say so.
+        storage.setItem(META_KEY, backup.json);
+        status = { ok: true, state: 'recovered', reason: primary.error, archiveId, recoveredFrom: META_BACKUP_KEY };
+        quarantined = false;
+        return backup.meta;
+      }
+
+      // Nothing left to recover from: named, visible, and writes are frozen so
+      // the evidence survives (property 4).
+      status = { ok: false, state: primary.kind === 'older' ? 'older' : 'corrupt', reason: primary.error, archiveId, recoveredFrom: null };
+      quarantined = true;
+      return freshMeta();
     },
 
+    /**
+     * profileStatus() → { ok, state, reason, archiveId, recoveredFrom }.
+     * state: 'ok' | 'empty' | 'migrated' | 'recovered' | 'corrupt' | 'older' |
+     * 'newer'. This is the named state property 3 requires; the UI speaks it.
+     */
+    profileStatus() {
+      return { ...status, quarantined };
+    },
+
+    /**
+     * saveMeta(meta) → { ok, reason? }. Refuses while quarantined: the original
+     * bytes are the evidence of the failure and the player's only copy, and one
+     * ordinary settings write used to destroy them silently.
+     */
     saveMeta(meta) {
-      storage.setItem(META_KEY, JSON.stringify(meta));
+      if (quarantined) {
+        return { ok: false, reason: `profile is quarantined (${status.state}); refusing to overwrite the original bytes` };
+      }
+      const json = JSON.stringify({ ...meta, schemaVersion: META_SCHEMA_VERSION });
+      storage.setItem(META_KEY, json);
+      // Verify the write survived (quota, a killed tab mid-write), then rotate
+      // the mirror. Backup AFTER a verified read-back, never before — a mirror
+      // of bytes we never proved readable is not a backup.
+      const check = readMetaFrom(META_KEY);
+      if (check.empty || check.error) {
+        const backup = readMetaFrom(META_BACKUP_KEY);
+        if (!backup.empty && !backup.error) storage.setItem(META_KEY, backup.json);
+        return { ok: false, reason: 'write did not read back cleanly; primary restored from the last known good' };
+      }
+      storage.setItem(META_BACKUP_KEY, json);
+      return { ok: true };
     },
 
     /** Append a run result (victory, floor, seed, class, …), capped at 20. */
     recordResult(result) {
       const meta = this.loadMeta();
+      meta.results = meta.results || [];
       meta.results.push(result);
       if (meta.results.length > HISTORY_LIMIT) {
         meta.results.splice(0, meta.results.length - HISTORY_LIMIT);
       }
       this.saveMeta(meta);
       return meta;
+    },
+
+    // ---- the handle on the drawer (property 5) ------------------------------
+    /**
+     * listArchives() → [{ id, kind, slot, reason, at, bytes }] newest last.
+     * Descriptors only — the saved bytes stay out of the list so a UI can show
+     * "something was set aside, here is when and why" cheaply.
+     */
+    listArchives() {
+      return readArchiveIndex().entries.map((e) => ({
+        id: e.id,
+        kind: e.kind,
+        slot: e.slot,
+        reason: e.reason,
+        at: e.at,
+        bytes: typeof e.save === 'string' ? e.save.length : 0,
+      }));
+    },
+
+    /** getArchive(id) → the full entry (including `save`), or null. */
+    getArchive(id) {
+      return readArchiveIndex().entries.find((e) => e.id === id) || null;
+    },
+
+    /**
+     * exportArchive(id) → a string a player can save to a file, or null.
+     * The export is generated FROM the archive, never separately maintained.
+     */
+    exportArchive(id) {
+      const entry = this.getArchive(id);
+      if (!entry) return null;
+      return JSON.stringify({ exportedAt: new Date().toISOString(), game: 'Ashen Spire', archive: entry }, null, 2);
+    },
+
+    /**
+     * restoreProfile(id) → { ok, reason? }. Puts an archived profile back as
+     * the live one. Restoring may legitimately fail (the bytes were archived
+     * because they were bad) and it says so plainly instead of pretending.
+     */
+    restoreProfile(id) {
+      const entry = this.getArchive(id);
+      if (!entry) return { ok: false, reason: `no archive with id '${id}'` };
+      if (entry.kind !== 'meta') return { ok: false, reason: `archive '${id}' is a ${entry.kind}, not a profile` };
+      let meta;
+      try {
+        meta = parseMeta(entry.save);
+      } catch (e) {
+        return { ok: false, reason: `that archive still cannot be read: ${e && e.message ? e.message : 'corrupt'}` };
+      }
+      quarantined = false; // an explicit, player-driven act clears the freeze
+      const res = this.saveMeta(meta);
+      if (!res.ok) {
+        quarantined = true;
+        return res;
+      }
+      status = { ok: true, state: 'ok', reason: `restored from archive ${id}`, archiveId: id, recoveredFrom: id };
+      return { ok: true };
+    },
+
+    /**
+     * startNewProfile() → { ok }. The player's explicit consent to leave the
+     * unreadable profile behind. It is the ONLY way out of quarantine that
+     * writes, and the old bytes remain in the archive afterwards.
+     */
+    startNewProfile() {
+      quarantined = false;
+      const res = this.saveMeta(freshMeta());
+      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId: status.archiveId, recoveredFrom: null };
+      return res;
     },
   };
 }
