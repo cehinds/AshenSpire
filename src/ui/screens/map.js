@@ -42,6 +42,15 @@ import {
 } from '../../model/mapview.js';
 
 /**
+ * THE HALO'S OWN REACH, in SVG units — the pulsing ring a reachable node wears
+ * (`r + HALO_PAD`), and the breathing room the entrance frame leaves around the
+ * two ends so that ring is not sliced by the screen edge. One home, because the
+ * two are the same number for the same reason: the second one exists to keep
+ * the first one on screen.
+ */
+const HALO_PAD = 6;
+
+/**
  * The player's zoom as a NUMBER, or null when they asked the map to compute one.
  *
  * A PERCENTAGE IS THE DEFAULT AND `Fit` IS THE OPT-IN — Sunna's ruling on #107,
@@ -351,7 +360,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     const r = nodeRadius(n.type);
     // Reachable nodes get a rhythmic pulsing halo so the next choices read at
     // a glance; the halo is inert when reduced-motion is set (CSS handles it).
-    const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
+    const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + HALO_PAD}"/>` : '';
     el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>`;
     if (isReachable) el.addEventListener('click', () => onPick(n.id));
     attachTooltip(el, () => nodeTooltip(shownType, n, revealed));
@@ -487,8 +496,34 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // THE RULE, one sentence: the scrollable content is the painted ink, grown by
   // half a viewport on every side so that ANY painted point can be brought to
   // the centre — and nothing beyond it. That makes the scroll extents exactly
-  // the ink extents on both axes (`overflow = ink`), so the map scrolls the axis
-  // the act is long on and stops scrolling the one it is not.
+  // the ink extents on both axes (`overflow = ink`).
+  //
+  // ~~so the map scrolls the axis the act is long on and stops scrolling the one
+  // it is not.~~ STRUCK 2026-08-08 by Sunna, and struck rather than reworded,
+  // because it is the sentence a reader would cite as Law 5 coverage. IT IS NOT
+  // TRUE. Measured on this branch, `.map-scroll` horizontal travel, 390x844,
+  // shipped zoom, headless Chromium on one Linux box:
+  //
+  //   fog, entrance      65  (SHOWCASE)  ..  385  (VIRA4, BJORN1, SAGA11)
+  //   fog, mid-climb    166  ..  385     (4 seeds x floors 1/4/7/10, 16 cells)
+  //   path, entrance    704  (SHOWCASE)
+  //
+  // For scale, Law 5's own known-bad is this same container at 401 px on `dev`
+  // cd3da94 — so the entrance improved on ONE seed and the shipped `path` mode
+  // got worse. The two fog-entrance numbers are the same code on two seeds:
+  // travel across is `inkWidth * zoom` AND NOTHING ELSE, because the ink is
+  // grown by a full viewport whether or not it already fits inside one. A door
+  // and a boss in the same column give 65; three columns apart give 385.
+  //
+  // A number that swings 320 px on the seed is not an axis the layout has
+  // stopped scrolling — it is one nobody is measuring. Law 5 clause 1 wants
+  // ZERO and clause 2 says a threshold is not an exemption. So the honest state
+  // of this expression: the VERTICAL axis was the defect it was written to fix
+  // and it fixed it (19 -> 692 px of travel, which is what makes centring
+  // possible at all), and the HORIZONTAL axis is unpaid. `tools/axisfit.mjs` is
+  // the machine that owns that number; it is not this comment's to claim, and
+  // the entrance aim below does not move it — aiming changes where the camera
+  // looks, never how far the content reaches.
   //
   // IT IS THE viewBox, NOT PADDING, AND THAT IS DELIBERATE. #24 padded
   // `.map-canvas` to clear the zoom buttons and the fix only held at the scroll
@@ -585,6 +620,96 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     return out;
   }
 
+  // THE ENTRANCE FRAME — the ONE position where the aim is not a node the player
+  // is standing on, because there isn't one yet.
+  //
+  //   "when the act starts it show the start node and the end node"
+  //                                        — Constantine, quoted in mapknowledge.js
+  //
+  // THE FOG ALREADY OBEYED THAT SENTENCE AND THE CAMERA THEN UNDID IT. The boss
+  // is lit from the first frame — `mapfog --selftest` holds that property and
+  // has watched it go red — and the camera aimed at the door, which put the
+  // boss 261 px above the top of a 390x844 screen on 12 of 12 seeds. Both
+  // halves were doing their job. Nothing owned the sentence they add up to,
+  // and `tools/actends.mjs` is the check that can now say so out loud: 0 of 24
+  // cells at 89ec151, and — this is the part that is not about one branch —
+  // 0 of 12 DESKTOP cells on `dev` before the camera changed at all.
+  //
+  // WHY THIS IS AIM AND NOT ZOOM. My own gate note said the two ends "span 692
+  // local px against a 680 px port" and therefore needed ~2% of zoom-out on top
+  // of the aim. THAT WAS A UNIT ERROR AND THE FIX IS SMALLER THAN I SAID: 692 is
+  // LOCAL px (the map's own space, past `--ui-zoom`) and 680 is DEVICE px. In one
+  // space it is 692 local against a 756-local port at 390x844 — it fits, with 64
+  // px to spare, and aiming is the whole of it. Nothing here touches the zoom, so
+  // the player's ladder is never overridden and no tap target shrinks.
+  //
+  // 1200x730 IS NOT THE SAME CAUSE AND IS DELIBERATELY NOT FIXED HERE. Same aim
+  // defect, plus a second one underneath it: that port is 549 local px and the
+  // ends span 692, so no aim can show both. Nor can any legal zoom — the ladder
+  // floors at 100%, which still spans 603 px, and the zoom that WOULD fit (0.79)
+  // delivers a 34 px map node against a 44 px tap floor. Showing both ends on a
+  // 730-tall window is a LAYOUT question (that screen spends 165 px on chrome),
+  // not a camera one, and it wants its own card rather than a camera that
+  // quietly breaks the tap floor. So when the pair does not fit, this returns to
+  // the shipped behaviour — the door centred — and SAYS SO in `data-entrance-*`
+  // rather than failing the way it used to, which was silently.
+  //
+  // It is not in tension with "the current node should be centered on the screen
+  // both vertically and horizontally": at the entrance there IS no current node.
+  // The doors stand in for it, and the moment the player takes one step `cur`
+  // exists and this function is never called again for that act.
+  // AND THE ACT'S NAME IS PART OF THE ESTABLISHING SHOT, not a decoration on top
+  // of it. My first draft framed the two ends and left `ACT I — THE FALLOW
+  // MARCHES` HALF CUT BY THE TOP EDGE — photographed, 390x844, every seed: the
+  // title's own band is y 99..119 device and the scrollport starts at 110. A
+  // clipped word is worse than an absent one, and it is the same complaint that
+  // put this whole task on the board. So the frame is chosen from a PREFERENCE
+  // LADDER, widest first, and each rung is taken only if it fits at this zoom:
+  //
+  //   1. the title, the doors and the far end     the act, named, both ends
+  //   2. the doors and the far end                his sentence, no caption
+  //   3. the doors                                the shipped behaviour
+  //
+  // Rung 3 is what 1200x730 lands on and it is not a failure mode bolted on — it
+  // is today's frame, unchanged, plus a camera that now says it missed.
+  function entranceFrame(fs, box) {
+    const starts = fs.filter((n) => (map.startIds || []).includes(n.id));
+    const doorNodes = starts.length ? starts : fs;
+    const doors = framingBox(doorNodes, height) || box;
+    // The far end of the climb, and only if it is PAINTED — `isDrawn` is the same
+    // predicate the node loop, the edges and the look-ahead use, so the camera
+    // can never frame a node nobody drew.
+    const end = nodes.find((n) => n.type === 'boss' && isDrawn(n.id));
+    if (!end) return { aim: doors, end: null };
+    const endBox = framingBox([end], height);
+    const ends = framingBox([...doorNodes, end], height);
+    const fits = (b) => b.w * zoom <= scroll.clientWidth && b.h * zoom <= scroll.clientHeight;
+    // Grown by the halo's own reach, because the halo is a painted thing this
+    // box does not otherwise know about, and at the entrance it rings the ONE
+    // node on screen asking to be tapped. The title needs no such margin — text
+    // carries its own — so the top is grown only when the top is a circle.
+    const grow = (b, top) => {
+      const g = { x0: b.x0 - HALO_PAD, y0: b.y0 - top, x1: b.x1 + HALO_PAD, y1: b.y1 + HALO_PAD };
+      g.w = g.x1 - g.x0;
+      g.h = g.y1 - g.y0;
+      return g;
+    };
+    // MEASURED, NOT ASSUMED. The title is `<text>` at a fixed SVG font-size, so
+    // its band is whatever the font actually renders — asking the element is one
+    // call and a literal here would be a second copy of a metric nothing syncs.
+    let band = null;
+    try {
+      const b = titleEl && titleEl.getBBox();
+      if (b && b.height > 0) band = { y0: b.y, y1: b.y + b.height };
+    } catch { /* not laid out yet — rung 1 simply isn't offered */ }
+    if (band) {
+      const titled = grow({ x0: ends.x0, y0: Math.min(ends.y0, band.y0), x1: ends.x1, y1: ends.y1 }, 0);
+      if (fits(titled)) return { aim: titled, end: endBox };
+    }
+    const both = grow(ends, HALO_PAD);
+    return { aim: fits(both) ? both : doors, end: endBox };
+  }
+
   // Scroll so the framing set sits in the middle of the viewport, and — when the
   // zoom is computed — pick the zoom that makes it fit first.
   //
@@ -636,7 +761,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     // centre of the doors — which `entries: 1` has made a single door, so on a
     // new game this is one node and not an average of several.
     const cur = run.mapNodeId && map.nodes[run.mapNodeId] ? map.nodes[run.mapNodeId] : null;
-    const aim = cur ? framingBox([cur], height) : framingBox(fs.filter((n) => (map.startIds || []).includes(n.id)), height) || box;
+    const entrance = cur ? null : entranceFrame(fs, box);
+    const aim = cur ? framingBox([cur], height) : entrance.aim;
     // Local px from the CONTENT origin, which is no longer the canvas origin.
     const aimX = (aim.x0 + aim.x1) / 2;
     // THE ACT TITLE FOLLOWS THE AIM, and this is a fix for something that was
@@ -679,6 +805,36 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     scroll.scrollLeft = Math.min(maxLeft, Math.max(0, left));
     scroll.scrollTop = Math.min(maxTop, Math.max(0, top));
     report(box, fs.length);
+    reportEntrance(entrance);
+  }
+
+  // THE CAMERA SAYS WHETHER THE ACT'S FAR END IS ON SCREEN, and it is a SECOND
+  // confession rather than a wider first one on purpose. `data-framing` answers
+  // "is the DECISION on screen" and tools/mapfit.mjs cross-checks it against a
+  // photograph on 120 framings; folding a different promise into that one field
+  // would have moved a number three instruments read. This one is additive:
+  // absent before, `n/a` past the first step, and at the entrance `fit` or
+  // `clipped` with the miss in local px beside it — the same idiom, one field
+  // over. Measured after the scroll has landed, from the same scrollTop the
+  // browser now holds, so it is a reading and not a prediction.
+  function reportEntrance(entrance) {
+    const d = scroll.dataset;
+    if (!entrance) { d.entranceEnds = 'n/a'; d.entranceMiss = '0'; return; }
+    if (!entrance.end) { d.entranceEnds = 'none'; d.entranceMiss = '0'; return; }
+    const e = entrance.end;
+    const l = (e.x0 - content.x0) * zoom;
+    const r = (e.x1 - content.x0) * zoom;
+    const t = (e.y0 - content.y0) * zoom;
+    const b = (e.y1 - content.y0) * zoom;
+    const over = Math.max(
+      0,
+      scroll.scrollLeft - l,
+      r - (scroll.scrollLeft + scroll.clientWidth),
+      scroll.scrollTop - t,
+      b - (scroll.scrollTop + scroll.clientHeight)
+    );
+    d.entranceEnds = over > 0.5 ? 'clipped' : 'fit';
+    d.entranceMiss = String(Math.round(over));
   }
 
   // THE CAMERA SAYS WHETHER IT MISSED. This is the half that never existed: the
