@@ -235,6 +235,42 @@ export function validateContent(bundle) {
   if (b.balance != null && (typeof b.balance !== 'object' || Array.isArray(b.balance))) {
     err('balance', 'balance must be a plain object of constants');
   }
+  // balance.ui.holdConfirm — THE DIAL THAT DISABLES A SAFETY FEATURE WHEN IT IS
+  // WRONG, so it is the last thing that may fail quiet. Vira's finding: it
+  // validated against NOTHING. `steps: { normal: 'abc' }` reaches
+  // `Number('abc') || 0` in ui/components/holdconfirm.js, resolves to 0 ms, and
+  // the hold silently does not exist — while `validateContent` returns ok:true
+  // with zero errors naming it. Law 1 clause 5 failing quiet, on the one control
+  // whose failure is invisible by construction: nothing on the screen looks
+  // different, the bars just commit on a tap again.
+  //
+  // Meaning, not shape, which is why it is here and not in SCHEMAS: whether
+  // `def` names a step that EXISTS needs two fields to ask.
+  if (b.balance && b.balance.ui && b.balance.ui.holdConfirm != null) {
+    const hc = b.balance.ui.holdConfirm;
+    if (typeof hc !== 'object' || Array.isArray(hc)) {
+      err('balance.ui.holdConfirm', 'must be an object { def, steps }');
+    } else {
+      const steps = hc.steps;
+      if (typeof steps !== 'object' || steps == null || Array.isArray(steps)) {
+        err('balance.ui.holdConfirm.steps', 'must be an object of name -> milliseconds');
+      } else {
+        const names = Object.keys(steps);
+        if (!names.length) err('balance.ui.holdConfirm.steps', 'must offer at least one position');
+        for (const k of names) {
+          const v = steps[k];
+          if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) {
+            err(`balance.ui.holdConfirm.steps.${k}`, `must be a non-negative number of milliseconds — got ${JSON.stringify(v)}. `
+              + `A value the code cannot read resolves to 0 ms, which silently turns the confirm step OFF.`);
+          }
+        }
+        if (!Object.hasOwn(steps, hc.def)) {
+          err('balance.ui.holdConfirm.def', `${JSON.stringify(hc.def)} is not one of the steps offered (${names.join(', ')}) — `
+            + `the default position must exist, or every player starts on a setting the row cannot show.`);
+        }
+      }
+    }
+  }
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {
     const p = b.balance.poise;

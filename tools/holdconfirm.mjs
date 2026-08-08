@@ -55,6 +55,7 @@
 //   node tools/holdconfirm.mjs --mutate        must catch the falsified wiring
 //   node tools/holdconfirm.mjs --new-entry     Law 0 falsifier, content only
 //   node tools/holdconfirm.mjs --fail-closed   Viki's gate: unknown op must hold
+//   node tools/holdconfirm.mjs --schema        the dial's boot refusal, on 5 known-bads
 //   CHROME=/path/to/chrome node tools/holdconfirm.mjs
 //
 // Exit codes
@@ -84,6 +85,7 @@ const useDist = args.includes('--dist');
 const mutate = args.includes('--mutate');
 const newEntry = args.includes('--new-entry');
 const failClosed = args.includes('--fail-closed');
+const schema = args.includes('--schema');
 
 printArtifactProvenance(useDist ? resolve(ROOT, 'dist/AshenSpire.html') : resolve(ROOT, 'index.html'), ROOT);
 
@@ -155,6 +157,13 @@ async function main() {
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: SHAPE.w, height: SHAPE.h, deviceScaleFactor: 2, mobile: true }, sessionId);
 
   const findings = [];
+  // WHAT THIS RUN COULD NOT ASK, BY NAME. Vira: `--dist` skipped two checks and
+  // still printed PASS — "the gate this commit exists to satisfy is never asked
+  // of the file that ships." A skip folded into a pass is the silence SOP 2
+  // calls unknown, and unknown blocks. So skips are collected here, named in
+  // the verdict, and they take the exit code with them.
+  const notAsked = [];
+  const skip = (name, why) => { notAsked.push(`${name} (${why})`); console.log(`    skip  ${name} — ${why}`); };
   let checks = 0;
   const ok = (name, cond, detail) => {
     checks++;
@@ -162,8 +171,8 @@ async function main() {
     if (!cond) findings.push(`${name}${detail ? `: ${detail}` : ''}`);
   };
 
-  async function open(dial, { entry = false } = {}) {
-    const q = [`shot=event`, `shotEvent=${encodeURIComponent(entry ? 'sunnaFalsifierRite' : EVENT)}`];
+  async function open(dial, { id = null } = {}) {
+    const q = [`shot=event`, `shotEvent=${encodeURIComponent(id || EVENT)}`];
     if (dial) q.push(`shotSettings=${encodeURIComponent(JSON.stringify({ holdConfirm: dial }))}`);
     await cdp.send('Page.navigate', { url: `${base}?${q.join('&')}` }, sessionId);
     for (let i = 0; i < 80; i++) { if (await ev(`!!document.querySelector('#choices button')`)) break; await wait(120); }
@@ -186,30 +195,43 @@ async function main() {
   console.log(`\nholdconfirm — ${useDist ? 'dist/AshenSpire.html' : 'source tree'} · ${SHAPE.w}x${SHAPE.h} · event '${EVENT}'`
     + `${mutate ? '  ·  --mutate: the binding bars are rewired to commit on a pointer click' : ''}`);
 
-  // ---- 3. NOBODY IS LOCKED OUT (content, no browser needed for the truth,
-  // but read through the page so it is the SHIPPED content being asked).
+  // ---- 3. NOBODY IS LOCKED OUT — DRIVEN ON THE ARTIFACT UNDER TEST, not
+  // imported from it. This used to import events.js and consequence.js, which a
+  // single inlined dist file has no module graph for, so the one property the
+  // debug-page placement RESTS ON was never asked of the thing that ships.
+  //
+  // It now mounts every event and reads the SCREEN: a free door is a bar that is
+  // neither `data-binding` nor disabled. The ids come from the source tree at
+  // this ref because a bundle cannot be asked what it contains — and that gap is
+  // itself worth checking, so an id that will not mount on the artifact is a
+  // finding rather than a skipped row.
   console.log(`\n  lockout — every event must leave a door for a player who cannot hold`);
-  await open('normal');
-  const lock = await ev(`(async () => {
-    const m = await import('./src/content/events.js').catch(() => null);
-    const c = await import('./src/model/consequence.js').catch(() => null);
-    const i = await import('./src/content/index.js').catch(() => null);
-    const g = await import('./src/model/registries.js').catch(() => null);
-    if (!m || !c || !i || !g) return { skip: 'modules not importable at this base (expected under --dist)' };
-    // The tool builds its own registries from the SHIPPED content rather than
-    // reaching for a debug handle — no window global was added to main.js so an
-    // instrument could be convenient.
-    const reg = g.createRegistries(i.contentBundle);
-    const bad = [];
-    for (const e of m.events) {
-      const free = e.choices.filter((ch) => !ch.requires && !c.isBindingChoice(ch, reg));
-      if (!free.length) bad.push(e.id);
+  const ids = await (async () => {
+    try {
+      const m = await import(pathToFileURL(resolve(ROOT, 'src/content/events.js')).href);
+      return m.events.map((e) => e.id);
+    } catch { return null; }
+  })();
+  if (!ids || !ids.length) {
+    skip('lockout', 'could not read the event ids from src/content/events.js at this ref');
+  } else {
+    const noDoor = [];
+    const wontMount = [];
+    for (const id of ids) {
+      await open('normal', { id });
+      const r = await ev(`(() => {
+        const bars = [...document.querySelectorAll('button.ev-choice')];
+        if (!bars.length) return null;
+        return { bars: bars.length, free: bars.filter((b) => b.dataset.binding !== '1' && !b.disabled).length };
+      })()`);
+      if (!r) { wontMount.push(id); continue; }
+      if (!r.free) noDoor.push(id);
     }
-    return { total: m.events.length, bad };
-  })()`);
-  if (lock && lock.skip) console.log(`    skip  ${lock.skip}`);
-  else ok('every event has an unconditional non-binding choice', lock && lock.bad && lock.bad.length === 0,
-    lock ? `${lock.total} events, ${lock.bad.length} without one${lock.bad.length ? `: ${lock.bad.join(', ')}` : ''}` : 'no answer');
+    ok(`every event leaves a door that needs no hold`, noDoor.length === 0,
+      `${ids.length} events driven on ${useDist ? 'dist/AshenSpire.html' : 'the source tree'}, ${noDoor.length} without one${noDoor.length ? `: ${noDoor.join(', ')}` : ''}`);
+    ok(`every event the source declares mounts on the artifact under test`, wontMount.length === 0,
+      `${wontMount.length} would not mount${wontMount.length ? `: ${wontMount.join(', ')}` : ''}`);
+  }
 
   // ---- the dial's four positions, and what each one wires.
   for (const dial of ['off', 'short', 'normal', 'long']) {
@@ -309,7 +331,7 @@ async function main() {
       const c = await import('./src/model/consequence.js').catch(() => null);
       const i = await import('./src/content/index.js').catch(() => null);
       const g = await import('./src/model/registries.js').catch(() => null);
-      if (!c || !i || !g) return { skip: 'not importable under --dist' };
+      if (!c || !i || !g) return { skip: 'the shipped bundle has no module graph to import' };
       const reg = g.createRegistries(i.contentBundle);
       // A brand-new entry, authored the way content is authored: a label, some
       // effects, a card that declares itself a curse. Nothing registers it as
@@ -320,7 +342,7 @@ async function main() {
                free: c.isBindingChoice(safe, reg),
                why: c.bindingReasons(choice, reg) };
     })()`);
-    if (res && res.skip) console.log(`    skip  ${res.skip}`);
+    if (res && res.skip) skip('--new-entry', res.skip);
     else {
       ok(`a never-seen entry with a curse arrives holding`, res && res.binding === true, `reasons ${JSON.stringify(res && res.why)}`);
       ok(`a never-seen entry with no cost does not`, res && res.free === false, `free=${res && res.free}`);
@@ -354,9 +376,10 @@ async function main() {
     const fc = await ev(`(async () => {
       const c = await import('./src/model/consequence.js').catch(() => null);
       const sc = await import('./src/model/schemas.js').catch(() => null);
+      const evs = await import('./src/content/events.js').catch(() => null);
       const i = await import('./src/content/index.js').catch(() => null);
       const g = await import('./src/model/registries.js').catch(() => null);
-      if (!c || !sc || !i || !g) return { skip: 'not importable under --dist' };
+      if (!c || !sc || !i || !g || !evs) return { skip: 'the shipped bundle has no module graph to import' };
       const reg = g.createRegistries(i.contentBundle);
       const unknown = { label: 'x', effects: [{ op: 'sunnaNeverHeardOfThis' }], resultText: '.' };
       // Viki's own example: a permanent COMBAT op borrowed by an event. The
@@ -368,17 +391,65 @@ async function main() {
         borrowed: c.isBindingChoice(borrowed, reg), borrowedWhy: c.bindingReasons(borrowed, reg),
         spend: c.isBindingChoice(spend, reg),
         wouldHold: c.failClosedOps(sc.OPCODES), declared: sc.OPCODES.length,
+        premise: c.cinderPremise(evs.events, i.contentBundle.balance.rewards.cinders),
+        worstSpend: 60, bestReward: Math.max(...Object.values(i.contentBundle.balance.rewards.cinders).map((b) => b[b.length - 1])),
+        proto: c.failClosedOps(['toString', 'constructor', 'valueOf', 'hasOwnProperty', '__proto__', 'isPrototypeOf']).length,
       };
     })()`);
-    if (fc && fc.skip) console.log(`    skip  ${fc.skip}`);
+    if (fc && fc.skip) skip('--fail-closed', fc.skip);
     else {
       ok(`an op nobody has ruled on holds`, fc.unknown === true, JSON.stringify(fc.unknownWhy));
+      // Vira's word: `in` walks the prototype chain, so six inherited names came
+      // back non-binding from the function whose job is the opposite.
+      ok(`inherited Object names hold too (Object.hasOwn, not \`in\`)`, fc.proto === 6, `${fc.proto} of 6 held`);
       ok(`a permanent COMBAT op borrowed by an event holds`, fc.borrowed === true, JSON.stringify(fc.borrowedWhy));
-      // Stated as a check so the exception is VISIBLE rather than silent — if
-      // this ever flips it should flip on purpose, with the reason rewritten.
+      // THE PREMISE, NOT THE EXCEPTION. Vira: asserting `spend === false` stays
+      // green the day the faucet is deleted — the same correction I made one
+      // layer up and then failed to apply to myself. Her derivable form: the
+      // largest cinder spend must not exceed the largest single encounter
+      // reward. Above that line a mis-tap costs more than any one fight returns
+      // and "tempo, not state" stops being true.
       ok(`a cinder spend is ruled safe on purpose (the one cost with a faucet)`, fc.spend === false, `binding=${fc.spend}`);
+      ok(`and the faucet that justifies it still runs`, fc.premise === null,
+        fc.premise ? `worst spend ${fc.premise.worstSpend} > best single reward ${fc.premise.bestReward}` : `worst spend ${fc.worstSpend} vs best single reward ${fc.bestReward}`);
       console.log(`    ---- ${fc.wouldHold.length} of ${fc.declared} declared opcodes would hold if an event used them:`);
       console.log(`         ${fc.wouldHold.join(', ')}`);
+    }
+  }
+
+  // ---- 8. THE DIAL REFUSES BAD DATA AT BOOT, observed red on its own corpus.
+  // Vira: `balance.ui.holdConfirm` validated against NOTHING, so
+  // `steps: { normal: 'abc' }` resolved to 0 ms and silently turned the confirm
+  // step OFF while validateContent returned ok:true. Law 1 clause 5 failing
+  // quiet on the one control whose failure is invisible — nothing on screen
+  // looks different, the bars just commit on a tap again.
+  if (schema) {
+    console.log(`\n  --schema — the dial's boot refusal against five known-bads`);
+    await open('normal');
+    const sr = await ev(`(async () => {
+      const v = await import('./src/model/validate.js').catch(() => null);
+      const i = await import('./src/content/index.js').catch(() => null);
+      if (!v || !i) return { skip: 'the shipped bundle has no module graph to import' };
+      const base = i.contentBundle;
+      const plant = (hc) => {
+        const b = { ...base, balance: { ...base.balance, ui: { ...base.balance.ui, holdConfirm: hc } } };
+        return v.validateContent(b).errors.filter((e) => /holdConfirm/.test(JSON.stringify(e))).map((e) => e.key || e.path);
+      };
+      return {
+        clean: v.validateContent(base).ok,
+        bads: [
+          ['a duration the code cannot read', plant({ def: 'normal', steps: { normal: 'abc' } })],
+          ['a default naming no step', plant({ def: 'nope', steps: { off: 0, normal: 600 } })],
+          ['no positions at all', plant({ def: 'normal', steps: {} })],
+          ['a negative duration', plant({ def: 'normal', steps: { normal: -5 } })],
+          ['not an object', plant('x')],
+        ],
+      };
+    })()`);
+    if (sr && sr.skip) skip('--schema', sr.skip);
+    else {
+      ok(`the clean tree still validates`, sr.clean === true, `ok=${sr.clean}`);
+      for (const [name, keys] of sr.bads) ok(`refuses: ${name}`, keys.length > 0, keys.join(', ') || 'GREEN — nothing named it');
     }
   }
 
@@ -406,9 +477,16 @@ async function main() {
       background and no ::before overlays the bar; it has not compared one
       rendered label against another. Bjorn's 6.87-7.49:1 is the read that has.
   (e) NOT 'verified-at' ANY CI REF — hand-run, like everything on this repo.`);
-  console.log(`\n  ${findings.length ? `FAIL — ${findings.length} finding(s) over ${checks} check(s)` : `PASS — ${checks} checks`}`);
+  if (notAsked.length) {
+    console.log(`\n  NOT ASKED OF THIS ARTIFACT — ${notAsked.length}:`);
+    for (const n of notAsked) console.log(`    - ${n}`);
+    console.log(`  A skip folded into a PASS is silence, and silence is unknown, which blocks (SOP 2).`);
+  }
+  console.log(`\n  ${findings.length ? `FAIL — ${findings.length} finding(s) over ${checks} check(s)`
+    : notAsked.length ? `INCOMPLETE — ${checks} checks held, ${notAsked.length} could not be asked. NOT a pass.`
+    : `PASS — ${checks} checks`}`);
   for (const f of findings) console.log(`    - ${f}`);
-  process.exit(findings.length ? 1 : 0);
+  process.exit(findings.length ? 1 : notAsked.length ? 2 : 0);
 }
 
 main().catch((e) => { console.error(`holdconfirm: ${e.message}`); process.exit(2); });
