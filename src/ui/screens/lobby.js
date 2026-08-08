@@ -10,6 +10,8 @@
 import { lanInfo, lanHost, lanUnhost, lanConnect } from '../../net/lan.js';
 import { classGlyph, PORTRAIT_TINTS, SPRITE_STYLES, tintCss } from '../assets.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
+import { refusesWhen } from '../components/refusal.js';
+import { attachSeedField } from '../components/seedfield.js';
 
 const NAME_KEY = 'sote_lan_name';
 const TINT_KEY = 'sote_lan_tint';
@@ -177,7 +179,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
         </div>
         ${iAmHost
           ? `<div id="lb-resume-wrap"></div>
-             <div class="seed-line">Seed <input id="lb-seed" maxlength="10" spellcheck="false" value="${esc(state.seedString)}"></div>
+             <div class="seed-line">Seed <input id="lb-seed" type="text" value="${esc(state.seedString)}"></div>
              <button id="lb-start" ${state.players.length && allReady ? '' : 'disabled'}>BEGIN THE CLIMB${allReady ? '' : ' (waiting for ready)'}</button>`
           : `<button id="lb-ready">${state.ready ? '✓ READY — WAITING FOR THE HOST' : 'READY UP'}</button>`}
         <button class="subtle" id="lb-leave">Leave</button>
@@ -277,12 +279,27 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
     });
     app.querySelector('#lb-leave').addEventListener('click', () => back());
     if (iAmHost) {
+      // THE THIRD SEED FIELD, and the only one whose value crosses a wire.
+      // Measured before this change: a host typing `MY-SEED` did not get six
+      // different maps like the solo screens — every guest got the SAME map,
+      // because tools/session.mjs's safeSeed() caught the throw and substituted
+      // GOLDBOUGH. Two different unusable seeds produced one identical climb,
+      // and the roster went on displaying what the host typed. The same law
+      // broken from the other side, so it gets the same component.
+      const seed = attachSeedField(app.querySelector('#lb-seed'));
+      const startBtn = app.querySelector('#lb-start');
+      const seedRefusal = refusesWhen(startBtn, () => seed.problem(),
+        () => 'Start the climb — everyone at the fire launches this seed.');
+      seed.onChange(() => seedRefusal());
       app.querySelector('#lb-seed').addEventListener('change', (e) => {
+        // A seed the run cannot use is never broadcast: the roster must not
+        // show the party a seed their climb will not be generated from.
+        if (seed.problem()) return;
         state.seedString = e.target.value.trim();
         conn.send({ t: 'seed', seedString: state.seedString });
       });
-      const startBtn = app.querySelector('#lb-start');
       if (startBtn) startBtn.addEventListener('click', () => {
+        if (seed.problem()) return; // the refusal already said why, at the button
         conn.send({ t: 'seed', seedString: state.seedString });
         conn.send({ t: 'start' });
       });

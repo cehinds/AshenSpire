@@ -12,7 +12,7 @@ import {
   computeTokenBindings,
 } from '../src/model/validate.js';
 import { resolveFloorPlan } from '../src/model/floorplan.js';
-import { createRng } from '../src/engine/rng.js';
+import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
@@ -3016,6 +3016,90 @@ export async function runTests({ artManifest = null } = {}) {
     // read and Bjorn confirms the render. It also does not exercise the picker:
     // that both withheld states still show a REASON there (not a silhouette) is
     // a rendered fact, photographed, not asserted here.
+  });
+
+  test('48. a typed seed is refused by name, and the sentence cannot disagree with the alphabet', () => {
+    // The defect: SEED_ALPHABET has no hyphen, seedFromString threw, and
+    // main.js caught the throw and substituted Math.random() — so the tooltip
+    // printed on the field ("the same seed gives the same map") was broken by
+    // the line that hid the mistake. Six boots of one URL, six different maps.
+    //
+    // What is testable HERE is the vocabulary and the sentence. That the
+    // refusal RENDERS, on three screens, is tools/seedrefuses.mjs, and a green
+    // here is silent about it.
+
+    // ONE PASS, TWO CALLERS. seedProblem() and seedFromString() are the same
+    // scan, so the sentence a player reads at the field and the error the
+    // engine throws are one string. Asserted exhaustively over ASCII plus the
+    // shapes Marina measured, because "they agree today" is not the claim —
+    // "they cannot disagree" is.
+    let bothWays = 0;
+    const sample = [];
+    for (let c = 32; c <= 126; c++) sample.push(String.fromCharCode(c));
+    sample.push('é', 'Å', 'ß', 'ö', '—', ' ');
+    for (const ch of sample) {
+      const why = seedProblem(ch);
+      let threw = null;
+      try { seedFromString(ch); } catch (e) { threw = e.message; }
+      eq(threw, why, `${JSON.stringify(ch)}: the throw and the field's sentence are one string`);
+      bothWays++;
+    }
+    assert(bothWays >= 100, `the join ran over a real sample (${bothWays})`);
+
+    // MARINA'S MEASURED SET — every one of these silently rerolled at 346f4fa.
+    for (const bad of ['MY-SEED', 'MY SEED', 'A_B', 'café', 'ELDEN!', '2026/08/08', 'ÅSA']) {
+      const why = seedProblem(bad);
+      assert(!!why, `${bad} is refused`);
+      // Law 1 clause 5 — it NAMES the entry. The offending character is in the
+      // sentence, quoted, not merely "invalid input".
+      const offender = [...bad.toUpperCase()].find((ch) => why.includes(`“${ch}”`));
+      assert(offender, `${bad}: the refusal names the character — got ${JSON.stringify(why)}`);
+    }
+    for (const good of ['ELDEN', 'elden', 'OO', 'GOLDBOUGH', 'SHOWCASE', '0', '']) {
+      eq(seedProblem(good), null, `${JSON.stringify(good)} is a seed and is not refused`);
+    }
+
+    // THE SENTENCE IS DERIVED FROM THE ALPHABET, and this holds it to that.
+    // Read the vocabulary the refusal CLAIMS, then check the code obeys its own
+    // claim: every character in a claimed range is accepted, and every letter
+    // the sentence says is folded actually folds. A prose copy of a closed set
+    // is the second copy this refuses to become (Law 1 clause 2).
+    const say = seedProblem('-');
+    const ranges = [...say.matchAll(/([0-9A-Z])–([0-9A-Z])/g)];
+    assert(ranges.length === 2, `the refusal states its ranges — got ${JSON.stringify(say)}`);
+    let claimed = 0;
+    for (const [, lo, hi] of ranges) {
+      for (let c = lo.charCodeAt(0); c <= hi.charCodeAt(0); c++) {
+        const ch = String.fromCharCode(c);
+        eq(seedProblem(ch), null, `the sentence claims ${lo}–${hi}, so ${ch} must be accepted`);
+        claimed++;
+      }
+    }
+    eq(claimed, 36, 'the two claimed ranges cover 0–9 and A–Z');
+    for (const [, typed, meant] of say.matchAll(/([0-9A-Z]) reads as ([0-9A-Z])/g)) {
+      eq(seedFromString(typed), seedFromString(meant), `the sentence says ${typed} reads as ${meant}, and it does`);
+    }
+
+    // THE PROMISE, at the level this suite can see it: one seed, one number,
+    // every time — and the header's round-trip lands back on the same map.
+    for (const s of ['ELDEN', 'GOLDBOUGH', 'SHOWCASE']) {
+      const n = seedFromString(s);
+      eq(seedFromString(s), n, `${s} is one number every time`);
+      eq(seedFromString(seedToString(n)), n, `${s} → header "${seedToString(n)}" → the same map`);
+    }
+    // …and BOTH EDGES of the vocabulary itself.
+    eq(seedFromString(''), 0, 'empty edge: the empty string is zero, not a reroll');
+    eq(seedToString(0), '0', '…and zero prints');
+    const widest = 'ZZZZZZZZZZ'.slice(0, SEED_MAX_LEN);
+    eq(seedFromString(widest), seedFromString(widest), `max edge: ${SEED_MAX_LEN} characters is deterministic`);
+    assert(SEED_MAX_LEN > 0, 'the field bound has a home in rng.js, not in three markup strings');
+
+    // BOUNDARY. This is the vocabulary and the sentence. It does NOT prove the
+    // note renders, that BEGIN THE CLIMB refuses, that the refusal lets go
+    // again, or that anything at all happens on the co-op wire — those are
+    // tools/seedrefuses.mjs (rendered, three screens) and tools/lan.mjs's own
+    // boundary check. It is also silent on `ß`, which upper-cases to `SS` and
+    // is therefore accepted as two S's exactly as it always has been.
   });
 
   const passed = results.filter((r) => r.ok).length;

@@ -85,6 +85,65 @@ function say(el, ev, why) {
 }
 
 /**
+ * refusesWhen(el, reasonFn, otherwise) → refresh()
+ *
+ * The same property as refuses(), for a control that refuses SOMETIMES: BEGIN
+ * THE CLIMB with an unusable seed typed into the field beside it. `reasonFn` is
+ * read at every refresh and at every click.
+ *
+ *   reasonFn()  a string → the control refuses and this is why
+ *               null/undefined → the control is usable; nothing is marked
+ *   otherwise   the tooltip while it is usable (a function or a string).
+ *               Required in spirit: this control has a tooltip either way, and
+ *               attachTooltip may only be called once per element, so the two
+ *               texts have to arrive together.
+ *
+ * WHY THIS IS A SIBLING AND NOT A REWRITE OF refuses(). The two disagree about
+ * what "no reason" means, and the disagreement is real, not cosmetic. For
+ * refuses() an empty reason is a DEFECT — the control refuses regardless and
+ * says so on the console, which is what makes a silent refusal impossible to
+ * write. For refusesWhen() an absent reason is the ordinary case: it means the
+ * control works. Folding them would make one of those two meanings unsayable.
+ *
+ * It does NOT block the click on its own. It says why, and the screen's own
+ * handler asks reasonFn the same question — one home for the condition, and no
+ * dependence on which listener happens to be registered first.
+ */
+export function refusesWhen(el, reasonFn, otherwise) {
+  if (!el) return () => {};
+  const why = () => {
+    const r = reasonFn();
+    return r == null ? null : String(r);
+  };
+  const other = typeof otherwise === 'function' ? otherwise : () => String(otherwise == null ? '' : otherwise);
+
+  function refresh() {
+    const now = why();
+    if (now) {
+      el.setAttribute('aria-disabled', 'true');
+      el.dataset.refusal = now;
+    } else {
+      el.removeAttribute('aria-disabled');
+      delete el.dataset.refusal;
+    }
+  }
+
+  attachTooltip(el, () => {
+    const now = why();
+    return now ? esc(now) : other();
+  });
+  el.addEventListener('click', (ev) => {
+    const now = why();
+    if (!now) return; // usable — the screen's own handler runs
+    ev.preventDefault();
+    ev.stopPropagation();
+    say(el, ev, () => now);
+  });
+  refresh();
+  return refresh;
+}
+
+/**
  * refusalOf(el) → the reason string, or null when the control does not refuse.
  * One reader for anything that wants to ask (tests, the audit, a future screen).
  */

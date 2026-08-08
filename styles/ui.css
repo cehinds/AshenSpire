@@ -391,6 +391,24 @@ body.hide-hints .hint-bar { display: none; }
   border-radius: 6px; padding: 0.4rem 0.8rem; width: 11rem; font-family: monospace; text-align: center;
 }
 
+/* The seed refusal — a typed seed the run cannot be generated from names the
+   character that stopped it, at the field, the moment it lands
+   (ui/components/seedfield.js writes this element; no screen builds it).
+
+   THE COLOUR IS ON THE BORDER AND NOT ON THE SENTENCE, and that is measured,
+   not a preference: `--ember` (#c9502e) reaches 4.37:1 on `--bg` and 3.70:1 on
+   `--panel` — under AA for text, over the 3:1 a UI component needs. So the
+   BORDER carries the ember (it says WHERE) and the SENTENCE is `--parchment`
+   at 14.44:1 (it says WHAT). Colour is never the only signal: the words are.
+
+   Law 4 — `font-size`/`line-height` are text metrics and take the text unit;
+   `margin-top` and `max-width` are box geometry and do not answer Text size. */
+.seed-line .seed-problem {
+  display: block; color: var(--parchment); font-size: 1.1rem; line-height: 1.4;
+  margin-top: 6px; max-width: 320px;
+}
+.seed-line input[aria-invalid='true'] { border-color: var(--ember); }
+
 .class-row { display: flex; gap: 1.8rem; }
 .class-pick {
   width: 19rem; padding: 1.6rem; border: 2px solid var(--line-soft); border-radius: 12px;

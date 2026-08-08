@@ -10,6 +10,8 @@ import {
 } from '../../content/customMods.js';
 import { classGlyph } from '../assets.js';
 import { esc } from '../components/tooltip.js';
+import { refusesWhen } from '../components/refusal.js';
+import { attachSeedField } from '../components/seedfield.js';
 
 export function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -37,7 +39,7 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
         <div><p class="cz-label">CHAOS</p><div id="cr-chaos" class="mod-grid"></div></div>
         <div><p class="cz-label">STARTING DECK</p><div id="cr-deck" class="mod-grid"></div></div>
 
-        <div class="seed-line">Seed <input id="cr-seed" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></div>
+        <div class="seed-line">Seed <input id="cr-seed" type="text" value="${esc(defaultSeedString)}"></div>
       </div>
 
       <div style="display:flex;gap:14px;padding-bottom:24px">
@@ -121,8 +123,21 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
     deckBox.appendChild(el);
   });
 
+  // Custom Climb is the screen Constantine asked for so a short run could be
+  // REPEATED, and this field is what makes a run repeatable. Same component,
+  // same sentence, same refusal as the ordinary new-run screen — the vocabulary
+  // is not retyped here, and there is no second place for it to drift.
+  const seed = attachSeedField($('#cr-seed'));
+  const seedRefusal = refusesWhen($('#cr-start'), () => seed.problem(), () => {
+    const cls = registries.classes.all().find((c) => c.id === state.classId);
+    return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
+      + ` at <b>Ascension ${state.ascension}</b>.<br>Results are kept out of win-rate stats.`;
+  });
+  seed.onChange(() => seedRefusal());
+
   $('#cr-back').addEventListener('click', onBack);
   $('#cr-start').addEventListener('click', () => {
+    if (seed.problem()) return; // the refusal already said why, at the button
     onStart({
       classId: state.classId,
       seedString: $('#cr-seed').value.trim(),
