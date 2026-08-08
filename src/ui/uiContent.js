@@ -373,11 +373,15 @@ export function padName(btn) {
 }
 
 // ---- why a piece is not yours, in the player's words ------------------------
-// `pieceReveal` (src/model/unlocks.js) names the GATE; the sentence is UI copy
-// and lives here because TWO screens say it — the Armoury picker and the
-// Compendium. It was a literal inside equipment.js's `gate()`, which was fine
-// while one screen existed and becomes a copy nothing syncs the moment a second
-// one asks the same question (Law 1 clause 2, pointed at prose).
+// `ownership().why()` (src/model/loadout.js) names the GATE and declares the
+// closed set of them as OWNERSHIP_GATES; the sentence is UI copy and lives here.
+// It was a literal inside equipment.js's `gate()`, which was fine while one
+// screen existed and becomes a copy nothing syncs the moment a second one asks
+// the same question (Law 1 clause 2, pointed at prose).
+//
+// DECLARED AND HANDLED: the suite asserts these keys are exactly OWNERSHIP_GATES
+// — a route the model can return with no sentence here renders an empty reason,
+// which is the quiet graceful failure rather than the loud one.
 //
 // A row's own `hint` from unlocks.csv always wins over LOCK_COPY.unearned —
 // that is the whole point of the hint column. This is what is said when the

@@ -291,8 +291,27 @@ export function fromDropPool(piece) {
   return !!piece && piece.kind !== 'armor';
 }
 
+// TWO QUESTIONS, ONE LADDER OF IFS — added when the Compendium arrived (#90
+// sibling). `has()` answers *is this piece yours*; a screen that draws what is
+// NOT yours needs a second thing — *which of the two routes withheld it* — so
+// it can say why without guessing. Freja's `pieceReveal` derived that route a
+// second time, off `piece.kind` and a caller-built `available` set, and the
+// second derivation agreed with this one only by coincidence of today's data.
+//
+// So the route is returned FROM HERE, by the same `if` ladder that decides the
+// boolean. `has` is `why(piece) === null` and cannot disagree with it — not
+// "checked to agree", unable to differ. A third route tomorrow is one branch in
+// one function, and OWNERSHIP_GATES below is what makes the screens notice it.
+//
+// The set is CLOSED and DECLARED, and the test asserts every member of it has a
+// sentence in LOCK_COPY — the same declared-and-handled join #88 uses. A route
+// with no words is the "graceful" empty tooltip my card warns about.
+
+/** Why a piece is not yours. Closed; every member needs a sentence in LOCK_COPY. */
+export const OWNERSHIP_GATES = Object.freeze(['unearned', 'unfound']);
+
 /**
- * ownership(registries, { meta, loadout }) → { has(piece) }
+ * ownership(registries, { meta, loadout }) → { has(piece), why(piece) }
  *
  * The one predicate. A PIECE, not an id: armour ids repeat across classes
  * ("`id` is unique per class, not globally"), so an id set would say the Reaver
@@ -309,13 +328,24 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
     ...(cfg.persistence !== 'perRun' ? meta.found || [] : []),
     ...(cfg.persistence !== 'unlocked' ? carriedIds(loadout) : []),
   ]);
+  // A missing piece resolves to 'unearned' rather than to a fourth value: there
+  // is no row to read a hint from, and 'unearned' is the route whose sentence is
+  // generic. 'unfound' would promise the player it turns up in treasure, which
+  // is a lie about a piece that does not exist. `has(null)` stays false either
+  // way, which is the behaviour every caller already had.
+  const why = (piece) => {
+    if (!piece) return 'unearned';
+    if (piece.unlock !== '' && piece.unlock != null) {
+      return unlocked.has(piece.unlock) ? null : 'unearned';
+    }
+    if (fromDropPool(piece) && drops.requireFound) {
+      return found.has(piece.id) ? null : 'unfound';
+    }
+    return null;
+  };
   return {
-    has(piece) {
-      if (!piece) return false;
-      if (piece.unlock !== '' && piece.unlock != null) return unlocked.has(piece.unlock);
-      if (fromDropPool(piece) && drops.requireFound) return found.has(piece.id);
-      return true;
-    },
+    why,
+    has(piece) { return !!piece && why(piece) === null; },
   };
 }
 
