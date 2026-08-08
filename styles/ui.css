@@ -390,6 +390,15 @@ body.hide-hints .hint-bar { display: none; }
 .rs-readout b { color: var(--gold); font-size: 2rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .rs-readout span { color: var(--muted); font-size: 1.05rem; line-height: 1.4; }
 .rs-readout .rs-boundary { color: var(--muted); font-size: 0.95rem; opacity: 0.85; }
+/* The one place in this panel that goes loud. `--parchment` at 14.44:1 carries
+   the WORDS and `--ember` carries the RULE, for the reason base.css and the seed
+   refusal both give: ember measures 3.70:1 on --panel — over the 3:1 a UI
+   component needs, under AA for text — so colour marks WHERE and never says
+   WHAT. */
+.rs-readout .rs-boundary.warn {
+  color: var(--parchment); opacity: 1;
+  border-left: 2px solid var(--ember); padding-left: 8px; margin-top: 4px;
+}
 
 /* THREE TIERS, and the gaps are what say so. A 44 px slider box already carries
    most of the air a row needs, so the spacing here is doing HIERARCHY, not

@@ -9,7 +9,7 @@ import {
   DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, activeMods,
 } from '../../content/customMods.js';
 import { MAP_SHAPE_LIMITS } from '../../content/mapconfig.js';
-import { applyRunShape, minViableFloors } from '../../model/floorplan.js';
+import { applyRunShape, minViableFloors, resolveFloorPlan } from '../../model/floorplan.js';
 import { sampleActShape } from '../../engine/mapgen.js';
 import { classGlyph } from '../assets.js';
 import { esc } from '../components/tooltip.js';
@@ -343,7 +343,32 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
         sub.textContent = `over ${per.length} act${per.length === 1 ? '' : 's'}`
           + ` · range ${lo}–${hi} · default is ≈ ${Math.round(defaultTotal)}`
           + (entry ? ` · ${Math.round((1 - climb / defaultTotal) * 100)}% shorter` : '');
-        bound.textContent = `nodes across ${ESTIMATE_SEEDS} seeds — the driver of run length, not minutes`;
+
+        // A SHORT ACT CAN BREAK A PROMISE THE ACT MAKES TO ITSELF, and it does
+        // so silently. `minElites: 2` is kept by force-placing into eligible
+        // Monster nodes; squeeze the act to 4x2 and there are not enough of
+        // them, so relaxPlace runs out and stops. Measured: 1.87 elites and
+        // 0.54 merchants a map at floors=4 columns=2, against promises of 2 and
+        // 1. That is not a reason to refuse the shape — a 20-stop climb is
+        // exactly what he asked for — but it is a reason to SAY it. Derived by
+        // sampling, because how many nodes a 4x2 act has is a distribution and
+        // not a formula, so nothing can answer it from the config alone.
+        const shortfalls = [];
+        resolved.forEach((r, i) => {
+          const minima = (resolveFloorPlan(r.config).plan || {}).minima || {};
+          for (const [t, want] of Object.entries(minima)) {
+            const got = per[i].byType[t] || 0;
+            // TWO DECIMALS, and it is not fussiness: at one decimal a mean of
+            // 1.99 prints "2.0 of 2", which reads as the promise being KEPT in
+            // the sentence saying it is broken.
+            if (want > 0 && got < want) shortfalls.push(`${t} ${got.toFixed(2)} of ${want}`);
+          }
+        });
+        bound.textContent = shortfalls.length
+          ? `nodes across ${ESTIMATE_SEEDS} seeds — the driver of run length, not minutes.`
+            + ` This act is too small to keep its own guarantees: ${[...new Set(shortfalls)].join(', ')} per map.`
+          : `nodes across ${ESTIMATE_SEEDS} seeds — the driver of run length, not minutes`;
+        bound.classList.toggle('warn', shortfalls.length > 0);
       }
 
       seedRefusal();
