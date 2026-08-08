@@ -683,6 +683,24 @@ body.hide-hints .hint-bar { display: none; }
   border-radius: 6px; padding: 0.4rem 0.8rem; width: 11rem; font-family: monospace; text-align: center;
 }
 
+/* The seed refusal — a typed seed the run cannot be generated from names the
+   character that stopped it, at the field, the moment it lands
+   (ui/components/seedfield.js writes this element; no screen builds it).
+
+   THE COLOUR IS ON THE BORDER AND NOT ON THE SENTENCE, and that is measured,
+   not a preference: `--ember` (#c9502e) reaches 4.37:1 on `--bg` and 3.70:1 on
+   `--panel` — under AA for text, over the 3:1 a UI component needs. So the
+   BORDER carries the ember (it says WHERE) and the SENTENCE is `--parchment`
+   at 14.44:1 (it says WHAT). Colour is never the only signal: the words are.
+
+   Law 4 — `font-size`/`line-height` are text metrics and take the text unit;
+   `margin-top` and `max-width` are box geometry and do not answer Text size. */
+.seed-line .seed-problem {
+  display: block; color: var(--parchment); font-size: 1.1rem; line-height: 1.4;
+  margin-top: 6px; max-width: 320px;
+}
+.seed-line input[aria-invalid='true'] { border-color: var(--ember); }
+
 .class-row { display: flex; gap: 1.8rem; }
 .class-pick {
   width: 19rem; padding: 1.6rem; border: 2px solid var(--line-soft); border-radius: 12px;
@@ -2933,7 +2951,7 @@ const { createRunState, createDeck, createIdGen } = require("src/model/state.js"
 const { runMods, stampDeck, addToStorage, carriedIds } = require("src/model/loadout.js");
 const { recordProgress, evaluateUnlocks } = require("src/model/unlocks.js");
 const { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } = require("src/content/customMods.js");
-const { createRng, seedToString, seedFromString } = require("src/engine/rng.js");
+const { createRng, seedToString, seedFromString, seedProblem } = require("src/engine/rng.js");
 const { createCombat } = require("src/engine/combat.js");
 const { buildActMap } = require("src/engine/actmap.js");
 const { createSaveManager, createMemoryStorage } = require("src/engine/save.js");
@@ -3474,13 +3492,39 @@ function randomSeedString() {
 }
 
 function newRun({ classId, seedString, customization, keepsakeId, custom, slot = 1 }) {
-  activeSlot = slot;
-  let seed;
-  try {
-    seed = seedFromString(seedString || randomSeedString());
-  } catch (e) {
-    seed = seedFromString(randomSeedString()); // invalid chars → fresh seed
+  // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
+  // change. It read:
+  //
+  //     try  { seed = seedFromString(seedString || randomSeedString()); }
+  //     catch { seed = seedFromString(randomSeedString()); }  // invalid chars → fresh seed
+  //
+  // A throw swallowed and replaced with Math.random(). Six boots of one URL,
+  // six different maps, nothing said — while the tooltip on the very field the
+  // seed was typed into promised "the same seed gives the same map, the same
+  // shops and the same cards." Constantine asked for repeatable short runs; a
+  // seed with a hyphen in it was never one.
+  //
+  // The three seed fields refuse before this is reached (ui/components/
+  // seedfield.js), so a problem arriving HERE means a caller that bypassed a
+  // field — which is precisely the thing that has to be visible rather than
+  // absorbed. It banners by name and starts NO run: starting the wrong run is
+  // the failure being fixed, and a reroll is how it hid.
+  //
+  // It banners rather than throwing, for the reason stated at the surfaces
+  // check at the top of this file: an uncaught throw on a boot/start path is
+  // the blank screen of #77, and a blank screen is a worse failure than the one
+  // it reports. Banner, name, console — and the screen the player is on stays.
+  const asked = seedString || randomSeedString();
+  const why = seedProblem(asked);
+  if (why) {
+    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN',
+      ` · ${JSON.stringify(String(seedString))} — ${why}\n`
+      + ' · No run was started, and nothing was rerolled: a different map under the same seed is the defect this refuses.');
+    console.error('[seed] refused at newRun:', { seedString, why });
+    return;
   }
+  activeSlot = slot;
+  const seed = seedFromString(asked);
   run = createRunState({ seed, classId, registries });
   run.seedString = seedToString(seed);
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
@@ -16054,6 +16098,84 @@ function createRng(seed, counters = {}) {
 
 const SEED_ALPHABET = '0123456789ABCDEFGHIJKLMNPQRSTUVWXYZ'; // 35 chars, no O
 
+/**
+ * The homoglyph table: characters that are a SECOND SPELLING of a character
+ * the alphabet already has. `O` is not in the alphabet and never was — it has
+ * always been silently rewritten to `0`, and that is correct, because the two
+ * are one character wearing two shapes and nothing is lost.
+ *
+ * It is a table rather than an inline `.replace()` because the sentence a
+ * player reads about it is DERIVED FROM IT (seedVocabulary below). Before
+ * this, the rule lived in seedFromString and the explanation lived nowhere —
+ * so the day someone widens the alphabet, the rule and the sentence move
+ * together or not at all.
+ */
+const SEED_HOMOGLYPHS = [['O', '0']]; // [typed, meant]
+
+/**
+ * How many characters a seed FIELD accepts. This is a UI bound and says so:
+ * the engine below imposes no length at all (a longer string just wraps mod
+ * 2^32 and is still perfectly deterministic). It lives here because it is a
+ * fact about the seed vocabulary, and it lives here ONCE — the three player-
+ * facing seed fields used to spell it `maxlength="10"` in three markup
+ * strings, which is three copies of one number with nothing keeping them
+ * equal (Law 1 clause 2).
+ */
+const SEED_MAX_LEN = 10;
+
+/**
+ * The vocabulary in the words a player reads — DERIVED FROM THE ALPHABET,
+ * never retyped. Widen SEED_ALPHABET tomorrow and this sentence, the field's
+ * refusal and the engine's throw all change together, because there is one of
+ * them. That is the whole reason this function exists instead of a string.
+ */
+function seedVocabulary() {
+  const chars = new Set(SEED_ALPHABET);
+  const digits = [...SEED_ALPHABET].filter((c) => c >= '0' && c <= '9');
+  const letters = [...SEED_ALPHABET].filter((c) => c >= 'A' && c <= 'Z');
+  const range = (a) => (a.length ? `${a[0]}–${a[a.length - 1]}` : '');
+  // Only homoglyphs the alphabet actually lacks are worth a word: the day `O`
+  // joins the alphabet, this clause disappears on its own.
+  const folded = SEED_HOMOGLYPHS.filter(([typed]) => !chars.has(typed))
+    .map(([typed, meant]) => `${typed} reads as ${meant}`);
+  return `seeds are ${range(digits)} and ${range(letters)}`
+    + (folded.length ? `, and ${folded.join(', ')}` : '');
+}
+
+/**
+ * scanSeed(str) — the ONE pass over a typed seed. `seedProblem` and
+ * `seedFromString` are both this function, so the sentence a player reads at
+ * the field and the error the engine throws are the same sentence and cannot
+ * drift apart. Two loops over one alphabet is the second copy this seat exists
+ * to refuse.
+ *
+ * Normalisation is unchanged and is deliberately narrow: trim, upper-case, and
+ * O→0. Those are HOMOGLYPH identities — two spellings of one character — so
+ * they lose nothing. Dropping a hyphen would not be that; it would be a
+ * silent, plausible derivation (Law 0 clause 5), which is why this refuses
+ * instead. (`ß` upper-cases to `SS` and is therefore accepted as two S's,
+ * exactly as it has been since the first commit — named, not changed.)
+ */
+function scanSeed(str) {
+  let cleaned = String(str).trim().toUpperCase();
+  for (const [typed, meant] of SEED_HOMOGLYPHS) cleaned = cleaned.split(typed).join(meant);
+  for (const ch of cleaned) {
+    if (SEED_ALPHABET.indexOf(ch) < 0) {
+      return { cleaned, bad: ch, why: `A seed cannot contain “${ch}” — ${seedVocabulary()}.` };
+    }
+  }
+  return { cleaned, bad: null, why: null };
+}
+
+/**
+ * seedProblem(str) → null when the string is a seed, or ONE sentence naming
+ * the character that stops it being one (Law 1 clause 5: bad data fails loud
+ * and names the entry). Callers: the seed fields, and seedFromString below.
+ */
+function seedProblem(str) {
+  return scanSeed(str).why;
+}
+
 function seedToString(seed) {
   let n = seed >>> 0;
   if (n === 0) return '0';
@@ -16066,18 +16188,15 @@ function seedToString(seed) {
 }
 
 function seedFromString(str) {
-  const cleaned = String(str).trim().toUpperCase().replace(/O/g, '0');
+  const { cleaned, why } = scanSeed(str);
+  if (why) throw new Error(why);
   let n = 0;
-  for (const ch of cleaned) {
-    const v = SEED_ALPHABET.indexOf(ch);
-    if (v < 0) throw new Error(`Invalid seed character '${ch}'`);
-    n = (n * 35 + v) >>> 0;
-  }
+  for (const ch of cleaned) n = (n * 35 + SEED_ALPHABET.indexOf(ch)) >>> 0;
   return n >>> 0;
 }
 
 
-Object.assign(module.exports, { STREAM_NAMES, mulberry32, createRng, seedToString, seedFromString });
+Object.assign(module.exports, { STREAM_NAMES, mulberry32, createRng, SEED_MAX_LEN, seedProblem, seedToString, seedFromString });
 
 },
 "src/engine/combat.js": function (module, exports, require) {
@@ -20598,6 +20717,8 @@ const { LOCKED_CLASSES } = require("src/content/index.js");
 const { KEEPSAKES } = require("src/content/keepsakes.js");
 const { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } = require("src/ui/assets.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { refusesWhen } = require("src/ui/components/refusal.js");
+const { attachSeedField } = require("src/ui/components/seedfield.js");
 
 function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -20661,7 +20782,7 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
             <label class="cz-label cz-name-label" for="cz-name">NAME</label>
             <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false"
                    autocomplete="off" placeholder="Forsaken" value="">
-            <label class="seed-line" for="seed-input">Seed <input id="seed-input" type="text" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></label>
+            <label class="seed-line" for="seed-input">Seed <input id="seed-input" type="text" value="${esc(defaultSeedString)}"></label>
           </div>
         </div>
       </div>
@@ -20792,22 +20913,32 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
   // clause 2 even in a tooltip.
   attachTooltip(nameEl, () => `Your character's name — the one the death screen uses.<br>`
     + `Up to ${nameEl.maxLength} characters. Leave it blank and you climb as Forsaken.`);
-  attachTooltip($('#seed-input'), () => 'The seed the whole climb is generated from.<br>'
-    + 'The same seed gives the same map, the same shops and the same cards. Change it for a different run.');
+  // The seed field's rules — length, vocabulary, the promise above, and the
+  // refusal when the promise cannot be kept — all live in components/seedfield.js
+  // and are read from engine/rng.js. The tooltip that used to be typed here is
+  // now SEED_PROMISE, said by all three seed fields instead of one.
+  const seed = attachSeedField($('#seed-input'));
   attachTooltip($('#cz-back'), () => 'Back to the title screen. Nothing here is saved.');
   // Names, never numbers, and computed at show time — so the pinned row is also
   // the answer to "what did I pick?" for a player whose choices have scrolled
   // out of sight above it. That is half the affordance the bar is here to be.
-  attachTooltip($('#cz-start'), () => {
+  // BEGIN THE CLIMB refuses while the seed is not a seed, and the reason is the
+  // field's own sentence — one home, so the button and the field can never say
+  // two different things. It is marked with `aria-disabled` + `data-refusal`
+  // (never `disabled`, which would make it unfocusable and unaskable) so a
+  // player who presses it hears why at the place they pressed.
+  const seedRefusal = refusesWhen($('#cz-start'), () => seed.problem(), () => {
     const cls = registries.classes.all().find((c) => c.id === state.classId);
     const ks = KEEPSAKES.find((k) => k.id === state.keepsakeId);
     return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
       + (ks && ks.id !== 'none' ? `, carrying <b>${esc(ks.name)}</b>.` : ', carrying no keepsake.')
       + '<br>Scroll up to change any of it.';
   });
+  seed.onChange(() => seedRefusal());
 
   $('#cz-back').addEventListener('click', onBack);
   $('#cz-start').addEventListener('click', () => {
+    if (seed.problem()) return; // the refusal already said why, at the button
     onStart({
       classId: state.classId,
       seedString: $('#seed-input').value.trim(),
@@ -21290,6 +21421,293 @@ function assetsAreInlined() {
 Object.assign(module.exports, { ASSET_MAP, assetUrl, assetsAreInlined });
 
 },
+"src/ui/components/refusal.js": function (module, exports, require) {
+// src/ui/components/refusal.js — a control the player can SEE and cannot USE.
+//
+// Constantine, on his phone, 2026-08-07: "for armament, I can't select the empty
+// slot to equip available weapons." The slot opened. What opened was seventeen
+// armaments with sixteen locked, and A LOCKED CHIP HAD NO CLICK HANDLER AT ALL.
+// He tapped a weapon he could plainly see, nothing moved, and the lock reason was
+// a line of small text below the fold. A screen refusing without saying so reads
+// as a dead control — which is exactly what he reported it as.
+//
+// THE PROPERTY: a control a player can see and cannot use must say WHY, WHERE
+// THEY ARE LOOKING. Sunna's law failing at the moment it exists for.
+//
+// THE MECHANISM, and it is the shape of the thing rather than a fix for one
+// screen: the reason is an ARGUMENT, not an afterthought. There is no way to
+// mark a control as refusing without saying why, BECAUSE SAYING WHY IS HOW YOU
+// MARK IT. A future screen cannot forget the explanation the way this one did,
+// for the same reason a future refusal path in bundle.mjs cannot forget to leave
+// the page: it never has to remember. Binding to the act, not to the caller.
+//
+// WHAT IT DELIBERATELY DOES NOT DO: it does not set `disabled`. A disabled
+// button is unfocusable, untappable and silent — it cannot be asked. A refusing
+// control stays reachable by pointer, by keyboard and by the pad focus cursor
+// (input.js's FOCUS_SELECTOR takes `button:not([disabled])`), and answers all
+// three: hover and focus through the shared tooltip, tap through this module.
+// `aria-disabled` says the same thing to a screen reader WITHOUT removing the
+// control from the tree, which is the whole difference.
+
+const { attachTooltip, showTooltipAt, hideTooltip, esc } = require("src/ui/components/tooltip.js");
+
+/** How long a tapped reason stays up before it gets out of the way (ms). */
+const TAP_MS = 4000;
+let tapTimer = null;
+
+/**
+ * refuses(el, reason) → el
+ *
+ *   reason   a string, or a function returning one (read at show time, so a
+ *            reason that depends on live numbers stays true)
+ *
+ * Marks `el` as refusing and gives it its voice. Returns the element so it can
+ * be written inline where the control is built.
+ *
+ * An EMPTY reason is a defect, not a quiet default: this function is the only
+ * thing in the tree that may mark a control refusing, so a silent refusal can
+ * only be born here, and it says so on the console naming the control. It still
+ * marks the element — failing loud beats failing closed when the alternative is
+ * a control that looks usable and is not.
+ */
+function refuses(el, reason) {
+  if (!el) return el;
+  const why = typeof reason === 'function' ? reason : () => reason;
+  const now = String(why() == null ? '' : why()).trim();
+  if (!now) {
+    console.error(
+      'refuses(): a control was marked refusing with no reason —',
+      el.className || el.tagName, '/', (el.textContent || '').trim().slice(0, 40)
+    );
+  }
+  el.setAttribute('aria-disabled', 'true');
+  // The marker the audit reads (tools/refusal-audit.mjs). It carries the reason
+  // itself rather than a flag, so "is it marked" and "does it have a reason" are
+  // ONE fact with one home and cannot drift apart.
+  el.dataset.refusal = now;
+  attachTooltip(el, () => esc(String(why() == null ? '' : why())));
+  el.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    say(el, ev, why);
+  });
+  return el;
+}
+
+/** Put the reason where the finger landed, and take it away again. */
+function say(el, ev, why) {
+  const text = String(why() == null ? '' : why()).trim();
+  // A tap event carries no useful pointer position on some touch paths, so fall
+  // back to the control's own box — the reason must appear AT the control, and
+  // "we could not read the pointer" is not a licence to show nothing.
+  const r = el.getBoundingClientRect();
+  const x = ev && ev.clientX ? ev.clientX : r.left + r.width / 2;
+  const y = ev && ev.clientY ? ev.clientY : r.top + r.height / 2;
+  showTooltipAt(x, y, esc(text) || esc('This is not available yet.'));
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(hideTooltip, TAP_MS);
+}
+
+/**
+ * refusesWhen(el, reasonFn, otherwise) → refresh()
+ *
+ * The same property as refuses(), for a control that refuses SOMETIMES: BEGIN
+ * THE CLIMB with an unusable seed typed into the field beside it. `reasonFn` is
+ * read at every refresh and at every click.
+ *
+ *   reasonFn()  a string → the control refuses and this is why
+ *               null/undefined → the control is usable; nothing is marked
+ *   otherwise   the tooltip while it is usable (a function or a string).
+ *               Required in spirit: this control has a tooltip either way, and
+ *               attachTooltip may only be called once per element, so the two
+ *               texts have to arrive together.
+ *
+ * WHY THIS IS A SIBLING AND NOT A REWRITE OF refuses(). The two disagree about
+ * what "no reason" means, and the disagreement is real, not cosmetic. For
+ * refuses() an empty reason is a DEFECT — the control refuses regardless and
+ * says so on the console, which is what makes a silent refusal impossible to
+ * write. For refusesWhen() an absent reason is the ordinary case: it means the
+ * control works. Folding them would make one of those two meanings unsayable.
+ *
+ * It does NOT block the click on its own. It says why, and the screen's own
+ * handler asks reasonFn the same question — one home for the condition, and no
+ * dependence on which listener happens to be registered first.
+ */
+function refusesWhen(el, reasonFn, otherwise) {
+  if (!el) return () => {};
+  const why = () => {
+    const r = reasonFn();
+    return r == null ? null : String(r);
+  };
+  const other = typeof otherwise === 'function' ? otherwise : () => String(otherwise == null ? '' : otherwise);
+
+  function refresh() {
+    const now = why();
+    if (now) {
+      el.setAttribute('aria-disabled', 'true');
+      el.dataset.refusal = now;
+    } else {
+      el.removeAttribute('aria-disabled');
+      delete el.dataset.refusal;
+    }
+  }
+
+  attachTooltip(el, () => {
+    const now = why();
+    return now ? esc(now) : other();
+  });
+  el.addEventListener('click', (ev) => {
+    const now = why();
+    if (!now) return; // usable — the screen's own handler runs
+    ev.preventDefault();
+    ev.stopPropagation();
+    say(el, ev, () => now);
+  });
+  refresh();
+  return refresh;
+}
+
+/**
+ * refusalOf(el) → the reason string, or null when the control does not refuse.
+ * One reader for anything that wants to ask (tests, the audit, a future screen).
+ */
+function refusalOf(el) {
+  if (!el || el.getAttribute('aria-disabled') !== 'true') return null;
+  return el.dataset ? (el.dataset.refusal || '') : '';
+}
+
+
+Object.assign(module.exports, { refuses, refusesWhen, refusalOf });
+
+},
+"src/ui/components/seedfield.js": function (module, exports, require) {
+// src/ui/components/seedfield.js — the seed field, and the one place that knows
+// what a seed is allowed to be.
+//
+// THE DEFECT THIS EXISTS FOR. `customize.js` printed, on the seed field itself:
+// "The same seed gives the same map, the same shops and the same cards." Type a
+// hyphen into that field and `seedFromString` threw, `main.js` CAUGHT the throw
+// and substituted `Math.random()`, and one URL booted six times gave six
+// different maps — measured, `MY-SEED` · `MY SEED` · `A_B` · `café` · `ELDEN!` ·
+// `2026/08/08` · `ÅSA` all silently rerolled. The screen made a promise in
+// writing and the catch broke it in silence. Constantine asked for repeatable
+// short runs; a seed with a hyphen in it was never one.
+//
+// THREE FIELDS, ONE VOCABULARY. There are three player-facing seed fields —
+// `#seed-input` (customize), `#cr-seed` (Custom Climb), `#lb-seed` (the co-op
+// lobby) — and before this each one re-stated the seed's rules in its own
+// markup: `maxlength="10"` typed three times, the alphabet typed zero times,
+// and the promise typed once on one of the three. A character set retyped in
+// the UI is the second copy this seat exists to refuse. Everything below is
+// READ from `engine/rng.js`: the length, the vocabulary, the sentence.
+//
+// WHY IT REFUSES AND DOES NOT WIDEN OR NORMALISE — the three options, and the
+// two that were rejected on evidence rather than on taste:
+//
+//   WIDEN the alphabet so a hyphen is legal. `seedFromString` is a positional
+//   base-35 number and THE ALPHABET IS THE RADIX. Add one character and every
+//   seed string ever written down, saved, or printed on a death screen names a
+//   different map. It would break "the same seed gives the same map" for every
+//   seed that works, to rescue the ones that never did.
+//
+//   NORMALISE — strip what does not fit, so `MY-SEED` becomes `MYSEED`. That is
+//   the same silence one notch quieter: `café`, `cafe` and `caf` would all be
+//   one map and the player is told nothing where the mistake is made. Law 0
+//   clause 5 — a generated thing that is wrong but reasonable is invisible.
+//   (The narrow folding that DOES happen — trim, upper-case, O→0 — stays, and
+//   is a different act: those are homoglyphs, two spellings of one character,
+//   and they lose nothing. rng.js's SEED_HOMOGLYPHS names them.)
+//
+//   REFUSE — Law 1 clause 5, bad data fails loud and names the entry. The
+//   character is named, at the field, the moment it lands, and BEGIN THE CLIMB
+//   will not start a run the seed cannot reproduce.
+//
+// WHAT IT DELIBERATELY DOES NOT DO: it does not swallow the keystroke. A field
+// that silently eats what you typed is normalising by the back door — and a
+// paste of `MY-SEED` would land as `MYSEED` with nothing said. The character
+// STAYS VISIBLE so the player can see the one being complained about. Whether
+// the character should be refused earlier than that is a legibility call and
+// belongs to the Player-experience seat, not to this module.
+
+const { SEED_MAX_LEN, seedProblem } = require("src/engine/rng.js");
+const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+
+/**
+ * The promise, once. It used to live as prose on one of the three fields; the
+ * other two said nothing at all. Now all three make the same promise, and it
+ * is a promise the field keeps.
+ */
+const SEED_PROMISE = 'The seed the whole climb is generated from.'
+  + '<br>The same seed gives the same map, the same shops and the same cards. Change it for a different run.';
+
+/**
+ * attachSeedField(input) → { problem, refresh, onChange }
+ *
+ *   problem()    null, or the one sentence naming why this value is not a seed
+ *   refresh()    re-read the field and re-render the refusal (call after
+ *                setting `.value` from code — e.g. a seed arriving on the wire)
+ *   onChange(fn) fn(problem) after every edit, so the screen's START button can
+ *                refuse from the SAME sentence rather than a second copy of it
+ *
+ * The note element is created here, not in the screens' markup, for the same
+ * reason the reason is an argument in components/refusal.js: a screen that has
+ * to remember to add the error line is a screen that will forget.
+ */
+function attachSeedField(input, { promise = SEED_PROMISE } = {}) {
+  if (!input) return { problem: () => null, refresh: () => {}, onChange: () => {} };
+
+  // The length bound, read from its home instead of typed into the markup.
+  input.maxLength = SEED_MAX_LEN;
+  input.setAttribute('spellcheck', 'false');
+  input.setAttribute('autocomplete', 'off');
+  // input.js's FOCUS_SELECTOR matches `input[type="text"]` BY ATTRIBUTE, so a
+  // field without it is unreachable by the pad and keyboard focus cursor —
+  // #cr-seed and #lb-seed both shipped without one (#29's finding, one screen
+  // over). Set here so a fourth seed field cannot repeat it.
+  if (!input.getAttribute('type')) input.setAttribute('type', 'text');
+
+  const note = document.createElement('span');
+  note.className = 'seed-problem';
+  note.setAttribute('role', 'alert');
+  note.hidden = true;
+  (input.closest('.seed-line') || input.parentElement || input).appendChild(note);
+
+  let listener = null;
+
+  const problem = () => seedProblem(input.value);
+
+  function refresh() {
+    const why = problem();
+    note.textContent = why || '';
+    note.hidden = !why;
+    if (why) input.setAttribute('aria-invalid', 'true');
+    else input.removeAttribute('aria-invalid');
+    if (listener) listener(why);
+  }
+
+  // Hover AND the pad/keyboard focus cursor (Law 3 clause 4) — and when the
+  // value is bad the tooltip says the same sentence the note does, because
+  // there is one sentence.
+  attachTooltip(input, () => {
+    const why = problem();
+    return why ? esc(why) : promise;
+  });
+
+  input.addEventListener('input', refresh);
+  input.addEventListener('change', refresh);
+  refresh();
+
+  return {
+    problem,
+    refresh,
+    onChange(fn) { listener = fn; if (fn) fn(problem()); },
+  };
+}
+
+
+Object.assign(module.exports, { SEED_PROMISE, attachSeedField });
+
+},
 "src/ui/screens/customRun.js": function (module, exports, require) {
 // src/ui/screens/customRun.js — Custom Climb setup (SPEC §10 ascension seam).
 //
@@ -21303,6 +21721,8 @@ const { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION,
 
 const { classGlyph } = require("src/ui/assets.js");
 const { esc } = require("src/ui/components/tooltip.js");
+const { refusesWhen } = require("src/ui/components/refusal.js");
+const { attachSeedField } = require("src/ui/components/seedfield.js");
 
 function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -21330,7 +21750,7 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
         <div><p class="cz-label">CHAOS</p><div id="cr-chaos" class="mod-grid"></div></div>
         <div><p class="cz-label">STARTING DECK</p><div id="cr-deck" class="mod-grid"></div></div>
 
-        <div class="seed-line">Seed <input id="cr-seed" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></div>
+        <div class="seed-line">Seed <input id="cr-seed" type="text" value="${esc(defaultSeedString)}"></div>
       </div>
 
       <div style="display:flex;gap:14px;padding-bottom:24px">
@@ -21414,8 +21834,21 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     deckBox.appendChild(el);
   });
 
+  // Custom Climb is the screen Constantine asked for so a short run could be
+  // REPEATED, and this field is what makes a run repeatable. Same component,
+  // same sentence, same refusal as the ordinary new-run screen — the vocabulary
+  // is not retyped here, and there is no second place for it to drift.
+  const seed = attachSeedField($('#cr-seed'));
+  const seedRefusal = refusesWhen($('#cr-start'), () => seed.problem(), () => {
+    const cls = registries.classes.all().find((c) => c.id === state.classId);
+    return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
+      + ` at <b>Ascension ${state.ascension}</b>.<br>Results are kept out of win-rate stats.`;
+  });
+  seed.onChange(() => seedRefusal());
+
   $('#cr-back').addEventListener('click', onBack);
   $('#cr-start').addEventListener('click', () => {
+    if (seed.problem()) return; // the refusal already said why, at the button
     onStart({
       classId: state.classId,
       seedString: $('#cr-seed').value.trim(),
@@ -26187,106 +26620,6 @@ function mountEquipment(host, {
 Object.assign(module.exports, { viewIds, viewCells, viewCellsSay, viewLayout, regionIds, regionById, authoredSubject, subjectRegion, contextRegions, opensCollapsed, mountEquipment });
 
 },
-"src/ui/components/refusal.js": function (module, exports, require) {
-// src/ui/components/refusal.js — a control the player can SEE and cannot USE.
-//
-// Constantine, on his phone, 2026-08-07: "for armament, I can't select the empty
-// slot to equip available weapons." The slot opened. What opened was seventeen
-// armaments with sixteen locked, and A LOCKED CHIP HAD NO CLICK HANDLER AT ALL.
-// He tapped a weapon he could plainly see, nothing moved, and the lock reason was
-// a line of small text below the fold. A screen refusing without saying so reads
-// as a dead control — which is exactly what he reported it as.
-//
-// THE PROPERTY: a control a player can see and cannot use must say WHY, WHERE
-// THEY ARE LOOKING. Sunna's law failing at the moment it exists for.
-//
-// THE MECHANISM, and it is the shape of the thing rather than a fix for one
-// screen: the reason is an ARGUMENT, not an afterthought. There is no way to
-// mark a control as refusing without saying why, BECAUSE SAYING WHY IS HOW YOU
-// MARK IT. A future screen cannot forget the explanation the way this one did,
-// for the same reason a future refusal path in bundle.mjs cannot forget to leave
-// the page: it never has to remember. Binding to the act, not to the caller.
-//
-// WHAT IT DELIBERATELY DOES NOT DO: it does not set `disabled`. A disabled
-// button is unfocusable, untappable and silent — it cannot be asked. A refusing
-// control stays reachable by pointer, by keyboard and by the pad focus cursor
-// (input.js's FOCUS_SELECTOR takes `button:not([disabled])`), and answers all
-// three: hover and focus through the shared tooltip, tap through this module.
-// `aria-disabled` says the same thing to a screen reader WITHOUT removing the
-// control from the tree, which is the whole difference.
-
-const { attachTooltip, showTooltipAt, hideTooltip, esc } = require("src/ui/components/tooltip.js");
-
-/** How long a tapped reason stays up before it gets out of the way (ms). */
-const TAP_MS = 4000;
-let tapTimer = null;
-
-/**
- * refuses(el, reason) → el
- *
- *   reason   a string, or a function returning one (read at show time, so a
- *            reason that depends on live numbers stays true)
- *
- * Marks `el` as refusing and gives it its voice. Returns the element so it can
- * be written inline where the control is built.
- *
- * An EMPTY reason is a defect, not a quiet default: this function is the only
- * thing in the tree that may mark a control refusing, so a silent refusal can
- * only be born here, and it says so on the console naming the control. It still
- * marks the element — failing loud beats failing closed when the alternative is
- * a control that looks usable and is not.
- */
-function refuses(el, reason) {
-  if (!el) return el;
-  const why = typeof reason === 'function' ? reason : () => reason;
-  const now = String(why() == null ? '' : why()).trim();
-  if (!now) {
-    console.error(
-      'refuses(): a control was marked refusing with no reason —',
-      el.className || el.tagName, '/', (el.textContent || '').trim().slice(0, 40)
-    );
-  }
-  el.setAttribute('aria-disabled', 'true');
-  // The marker the audit reads (tools/refusal-audit.mjs). It carries the reason
-  // itself rather than a flag, so "is it marked" and "does it have a reason" are
-  // ONE fact with one home and cannot drift apart.
-  el.dataset.refusal = now;
-  attachTooltip(el, () => esc(String(why() == null ? '' : why())));
-  el.addEventListener('click', (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-    say(el, ev, why);
-  });
-  return el;
-}
-
-/** Put the reason where the finger landed, and take it away again. */
-function say(el, ev, why) {
-  const text = String(why() == null ? '' : why()).trim();
-  // A tap event carries no useful pointer position on some touch paths, so fall
-  // back to the control's own box — the reason must appear AT the control, and
-  // "we could not read the pointer" is not a licence to show nothing.
-  const r = el.getBoundingClientRect();
-  const x = ev && ev.clientX ? ev.clientX : r.left + r.width / 2;
-  const y = ev && ev.clientY ? ev.clientY : r.top + r.height / 2;
-  showTooltipAt(x, y, esc(text) || esc('This is not available yet.'));
-  clearTimeout(tapTimer);
-  tapTimer = setTimeout(hideTooltip, TAP_MS);
-}
-
-/**
- * refusalOf(el) → the reason string, or null when the control does not refuse.
- * One reader for anything that wants to ask (tests, the audit, a future screen).
- */
-function refusalOf(el) {
-  if (!el || el.getAttribute('aria-disabled') !== 'true') return null;
-  return el.dataset ? (el.dataset.refusal || '') : '';
-}
-
-
-Object.assign(module.exports, { refuses, refusalOf });
-
-},
 "src/ui/screens/reward.js": function (module, exports, require) {
 // src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1)
 //
@@ -29829,6 +30162,8 @@ Object.assign(module.exports, { showBossIntro });
 const { lanInfo, lanHost, lanUnhost, lanConnect } = require("src/net/lan.js");
 const { classGlyph, PORTRAIT_TINTS, SPRITE_STYLES, tintCss } = require("src/ui/assets.js");
 const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
+const { refusesWhen } = require("src/ui/components/refusal.js");
+const { attachSeedField } = require("src/ui/components/seedfield.js");
 
 const NAME_KEY = 'sote_lan_name';
 const TINT_KEY = 'sote_lan_tint';
@@ -29996,7 +30331,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
         </div>
         ${iAmHost
           ? `<div id="lb-resume-wrap"></div>
-             <div class="seed-line">Seed <input id="lb-seed" maxlength="10" spellcheck="false" value="${esc(state.seedString)}"></div>
+             <div class="seed-line">Seed <input id="lb-seed" type="text" value="${esc(state.seedString)}"></div>
              <button id="lb-start" ${state.players.length && allReady ? '' : 'disabled'}>BEGIN THE CLIMB${allReady ? '' : ' (waiting for ready)'}</button>`
           : `<button id="lb-ready">${state.ready ? '✓ READY — WAITING FOR THE HOST' : 'READY UP'}</button>`}
         <button class="subtle" id="lb-leave">Leave</button>
@@ -30096,12 +30431,27 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
     });
     app.querySelector('#lb-leave').addEventListener('click', () => back());
     if (iAmHost) {
+      // THE THIRD SEED FIELD, and the only one whose value crosses a wire.
+      // Measured before this change: a host typing `MY-SEED` did not get six
+      // different maps like the solo screens — every guest got the SAME map,
+      // because tools/session.mjs's safeSeed() caught the throw and substituted
+      // GOLDBOUGH. Two different unusable seeds produced one identical climb,
+      // and the roster went on displaying what the host typed. The same law
+      // broken from the other side, so it gets the same component.
+      const seed = attachSeedField(app.querySelector('#lb-seed'));
+      const startBtn = app.querySelector('#lb-start');
+      const seedRefusal = refusesWhen(startBtn, () => seed.problem(),
+        () => 'Start the climb — everyone at the fire launches this seed.');
+      seed.onChange(() => seedRefusal());
       app.querySelector('#lb-seed').addEventListener('change', (e) => {
+        // A seed the run cannot use is never broadcast: the roster must not
+        // show the party a seed their climb will not be generated from.
+        if (seed.problem()) return;
         state.seedString = e.target.value.trim();
         conn.send({ t: 'seed', seedString: state.seedString });
       });
-      const startBtn = app.querySelector('#lb-start');
       if (startBtn) startBtn.addEventListener('click', () => {
+        if (seed.problem()) return; // the refusal already said why, at the button
         conn.send({ t: 'seed', seedString: state.seedString });
         conn.send({ t: 'start' });
       });
