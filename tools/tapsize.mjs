@@ -59,6 +59,7 @@ import { existsSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 
 import { join, resolve, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { printArtifactProvenance } from './artifact-provenance.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const argv = process.argv.slice(2);
@@ -68,7 +69,15 @@ const val = (n, d) => { const i = argv.indexOf(n); return i >= 0 && argv[i + 1] 
 const TREE = resolve(val('--tree', ROOT));
 const QUICK = flag('--quick');
 const LEGACY = flag('--legacy');
-const SHAPES = QUICK ? [[390, 844]] : [[390, 844], [320, 640], [1200, 730]];
+// MOBILE FIRST, and the order is the ruling rather than a habit. Constantine,
+// 2026-08-08: "mobile might need to be the priority for now." So the phone
+// shapes are measured FIRST and the desktop shape LAST — a run cut short for
+// time has still measured the shape that counts, and `--mobile` drops the
+// desktop cells outright and says so in its own boundary line.
+const MOBILE_ONLY = flag('--mobile');
+const SHAPES = QUICK ? [[390, 844]]
+  : MOBILE_ONLY ? [[390, 844], [320, 640]]
+  : [[390, 844], [320, 640], [1200, 730]];
 const UISIZES = QUICK ? ['Auto'] : ['Auto', 'S', 'M', 'L', 'XL'];
 const TEXT = QUICK ? ['M'] : ['M', 'XL'];
 
@@ -276,6 +285,10 @@ if (!existsSync(resolve(TREE, 'dist/AshenSpire.html'))) {
   console.error(`tapsize: no dist/AshenSpire.html under ${TREE} — run node tools/launch.mjs --build-only first`);
   process.exit(1);
 }
+// WHICH TREE DID THIS SEE. --tree means this tool routinely measures a bundle
+// that is NOT the one beside it, which is exactly the case where naming the
+// file says least. Provenance is of TREE, never of ROOT.
+printArtifactProvenance(resolve(TREE, 'dist/AshenSpire.html'), TREE);
 
 const findings = LEGACY ? [] : [...stylesheetHoldsNoConstant(SIZES)];
 const rows = [];
@@ -403,7 +416,8 @@ console.log(`\n  ${findings.length ? `FAIL — ${findings.length} finding(s) of 
 for (const f of findings) console.log(`    - ${f}`);
 console.log(`
 BOUNDARY: headless Chromium on Linux, dist/AshenSpire.html, ${SHAPES.length} shape(s)
-          x ${UISIZES.length} UI size(s) x ${TEXT.length} text size(s). Every height is a
+          x ${UISIZES.length} UI size(s) x ${TEXT.length} text size(s), phone shapes first
+          (his ordering, 2026-08-08)${MOBILE_ONLY ? '; --mobile, so 1200x730 was NOT measured and this run is silent about desktop' : ''}. Every height is a
           RENDERED rect; the floor is a probe element the browser sized, never
           a parsed calc() token. It says nothing about Windows, about a real
           finger on real glass, about whether ${MIN} is WISE rather than legal,

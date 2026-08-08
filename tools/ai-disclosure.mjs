@@ -21,6 +21,11 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { AI_DISCLOSURE, DISCLOSURE_PARTS, disclosureAsText } from '../src/content/aiDisclosure.js';
+// WHICH BYTES DID THIS CHECK? This tool already says STALE when a text is
+// missing — but a bundle two merges behind that happens to still carry all
+// seven passes silently, and the whole product here is credibility. One home:
+// tools/artifact-provenance.mjs. Facts only; it never fails a run.
+import { printArtifactProvenance } from './artifact-provenance.mjs';
 
 const SURFACES = ['build/AshenSpire.html', 'dist/AshenSpire.html'];
 
@@ -83,6 +88,7 @@ if (process.argv[2] === '--check') {
   for (const file of SURFACES) {
     if (!existsSync(file)) { console.log(`SKIP  ${file} — not built here`); continue; }
     bundlesChecked += 1;
+    printArtifactProvenance(file, process.cwd());
     const html = readFileSync(file, 'utf8');
     for (const { name, text } of texts) {
       const ok = html.includes(text);
