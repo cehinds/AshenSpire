@@ -3577,6 +3577,14 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
     console.error('[seed] refused at newRun:', { seedString, why });
     return;
   }
+  // THE PROFILE IS OLDER THAN THE CLIMB (M7 — "profile should be able to be
+  // created before first run, not after"). Here, not on the customize screen's
+  // first click: that screen's own Back button promises "Nothing here is saved",
+  // and a profile written when a class card is highlighted would make its
+  // tooltip a lie. BEGIN THE CLIMB is where a character stops being a preview,
+  // and it is one line above the run being made, so the write order is the ask.
+  // A refused seed returns above and creates nothing.
+  saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
   run = createRunState({ seed, classId, registries });
@@ -4673,7 +4681,7 @@ const { flasks } = require("src/content/flasks.js");
 const { act1Enemies } = require("src/content/enemies/act1.js");
 const { act2Enemies } = require("src/content/enemies/act2.js");
 const { act3Enemies } = require("src/content/enemies/act3.js");
-const { act1Encounters, M1_GAUNTLET } = require("src/content/encounters/act1.js");
+const { act1Encounters } = require("src/content/encounters/act1.js");
 const { act2Encounters } = require("src/content/encounters/act2.js");
 const { act3Encounters } = require("src/content/encounters/act3.js");
 const { events } = require("src/content/events.js");
@@ -4728,7 +4736,7 @@ const contentBundle = {
 
 
 
-Object.assign(module.exports, { contentBundle, M1_GAUNTLET, LOCKED_CLASSES });
+Object.assign(module.exports, { contentBundle, LOCKED_CLASSES });
 
 },
 "src/content/balance.js": function (module, exports, require) {
@@ -9145,7 +9153,7 @@ Object.assign(module.exports, { act3Enemies });
 
 },
 "src/content/encounters/act1.js": function (module, exports, require) {
-// src/content/encounters/act1.js — Act 1 encounter pools + the M1 gauntlet
+// src/content/encounters/act1.js — Act 1 encounter pools
 
 const act1Encounters = [
   { id: 'loneSoldier', enemies: ['wanderingSoldier'], weight: 20, pool: 'normal' },
@@ -9157,11 +9165,15 @@ const act1Encounters = [
   { id: 'bossOmen', enemies: ['fellWarden'], weight: 1, pool: 'boss' },
 ];
 
-// M1 acceptance gauntlet (SPEC §9 M1): 2 monsters → elite → boss.
-const M1_GAUNTLET = ['patrol', 'packHunt', 'eliteWyrm', 'bossOmen'];
+// (`M1_GAUNTLET = ['patrol','packHunt','eliteWyrm','bossOmen']` — the M1
+// acceptance walk, SPEC §9 M1 — stood here and in the content barrel with no
+// reader anywhere in the tree, found by tools/closedsets.mjs. Deleted: the map
+// flow has been the real thing since M2, the headless bot test runs off
+// `balance.gauntlet`, and four ids nothing resolves are four ids that rot when
+// an encounter is renamed. SPEC §9 M1's prose is the record of that acceptance.)
 
 
-Object.assign(module.exports, { act1Encounters, M1_GAUNTLET });
+Object.assign(module.exports, { act1Encounters });
 
 },
 "src/content/encounters/act2.js": function (module, exports, require) {
@@ -11526,7 +11538,8 @@ Object.assign(module.exports, { unlocks });
 
 const { resolveFloorPlan } = require("src/model/floorplan.js");
 const { viewRefusals, geometryRefusals } = require("src/model/mapview.js");
-const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, MODIFIER_KEYS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, CREATURE_TAGS } = require("src/model/schemas.js");
+const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, PILES, PILE_POSITIONS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, CREATURE_TAGS } = require("src/model/schemas.js");
+
 
 
 
@@ -12317,11 +12330,17 @@ function validateEffects(effects, path, vctx) {
       err(`${p}.target`, `stagger targets enemies only, got '${eff.target}'`);
     }
     if (eff.op === 'addCard') {
-      if (eff.pile !== undefined && !['draw', 'hand', 'discard', 'exhaust'].includes(eff.pile)) {
-        err(`${p}.pile`, `Unknown pile '${eff.pile}'`);
+      // PILES / PILE_POSITIONS, not the same words typed again. Both sets were
+      // declared closed in schemas.js and read by NOBODY, while these two lines
+      // re-typed them as literals and did the actual refusing — the vocabulary
+      // an author would edit was decoration, the copy nobody would think to edit
+      // was the law. The legal values in the message come off the set too, so a
+      // new pile cannot be legal and unmentioned.
+      if (eff.pile !== undefined && !PILES.includes(eff.pile)) {
+        err(`${p}.pile`, `Unknown pile '${eff.pile}' (legal: ${PILES.join(', ')})`);
       }
-      if (eff.position !== undefined && !['top', 'bottom', 'random'].includes(eff.position)) {
-        err(`${p}.position`, `Unknown position '${eff.position}'`);
+      if (eff.position !== undefined && !PILE_POSITIONS.includes(eff.position)) {
+        err(`${p}.position`, `Unknown position '${eff.position}' (legal: ${PILE_POSITIONS.join(', ')})`);
       }
     }
   });
@@ -13564,17 +13583,29 @@ const PASSIVE_KEYS = Object.freeze([
 //   blockCap            — number: hard cap on owner's total block (max of caps wins).
 //   meterMaxGrowthDisabled — bool: while ANY combatant has it, meter thresholds
 //                            (status meters and poise) do not grow on fill.
-const MODIFIER_KEYS = Object.freeze([
-  'damageDealtMult',
-  'damageTakenMult',
-  'blockGainedMult',
-  'attackDamageAdd',
-  'blockAdd',
-  'skipTurn',
-  'retainBlock',
-  'blockCap',
-  'meterMaxGrowthDisabled',
-]);
+//
+// THE SET AND THE SCHEMA WERE TWO COPIES AND ONLY ONE OF THEM ENFORCED
+// ANYTHING — the same shape as the relic passives, found by tools/closedsets.mjs
+// rather than by eye. `MODIFIER_KEYS` was a frozen list whose only mention in
+// the tree was an import into validate.js that used it for nothing, while
+// `modifiersSchema` below re-typed the same nine names by hand and did the
+// actual refusing. So the types come here, the list is derived from them, the
+// schema is built from the same object, and the engine's lookups check against
+// it (engine/statuses.js): adding a modifier is one row, and the three cannot
+// disagree about what exists.
+const MODIFIER_TYPES = Object.freeze({
+  damageDealtMult: 'num',
+  damageTakenMult: 'num',
+  blockGainedMult: 'num',
+  attackDamageAdd: 'num',
+  blockAdd: 'num',
+  skipTurn: 'bool',
+  retainBlock: 'bool',
+  blockCap: 'num',
+  meterMaxGrowthDisabled: 'bool',
+});
+
+const MODIFIER_KEYS = Object.freeze(Object.keys(MODIFIER_TYPES));
 
 const STACK_MODES = Object.freeze(['add', 'refresh', 'unique']);
 
@@ -13715,17 +13746,12 @@ const floorAnchor = (extra = {}) => obj({
 
 const costNode = union(int, en('X'));
 
-const modifiersSchema = obj({
-  damageDealtMult: opt(num),
-  damageTakenMult: opt(num),
-  blockGainedMult: opt(num),
-  attackDamageAdd: opt(num),
-  blockAdd: opt(num),
-  skipTurn: opt(bool),
-  retainBlock: opt(bool),
-  blockCap: opt(num),
-  meterMaxGrowthDisabled: opt(bool),
-});
+// DERIVED FROM MODIFIER_TYPES, never re-typed. `obj` is strict about unknown
+// keys, so this node is what actually refuses a mis-spelled modifier — which is
+// exactly why it must not be a second list.
+const modifiersSchema = obj(Object.fromEntries(
+  Object.entries(MODIFIER_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
+));
 
 const enemyMoveSchema = obj({
   intent: en(...INTENT_KINDS),
@@ -14041,7 +14067,7 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_KEYS, STACK_MODES, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
+Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
 
 },
 "src/model/formulas.js": function (module, exports, require) {
@@ -14229,7 +14255,7 @@ Object.assign(module.exports, { FORMULA_OPS, FORMULA_OF, isFormula, evaluate });
 //
 // Headless: no document/window/localStorage/timers.
 
-const { REGISTRY_TYPES } = require("src/model/schemas.js");
+const { REGISTRY_TYPES, PASSIVE_KEYS } = require("src/model/schemas.js");
 const { applyCardMods } = require("src/model/loadout.js");
 
 /** Recursively freeze a value in place (functions and frozen values skipped). */
@@ -14344,10 +14370,27 @@ function createRegistries(contentBundle) {
 
 // ---------------------------------------------------------------------------
 // Relic passives (SPEC PASSIVE_KEYS) — data lookups over owned relic defs.
+//
+// The key is a string typed at nine call sites and a mis-typed one returns
+// 1 / 0 / false — a defect that behaves exactly like a relic whose passive is
+// simply not very good. PASSIVE_KEYS says which strings are real, so it does the
+// saying: named once, with the legal set, and the caller still gets its default
+// rather than a thrown boot. Until this the set had NO reader in the whole tree
+// (tools/closedsets.mjs) — the vocabulary was decoration while the relic
+// schema's hand-typed copy was the law.
 // ---------------------------------------------------------------------------
+
+const PASSIVE_SET = new Set(PASSIVE_KEYS);
+const unknownPassives = new Set();
+function knownPassive(key) {
+  if (PASSIVE_SET.has(key) || unknownPassives.has(key)) return;
+  unknownPassives.add(key);
+  console.error(`[passives] '${key}' is not a relic passive — it will always read as the default. Legal: ${PASSIVE_KEYS.join(', ')}`);
+}
 
 /** Product of a multiplicative passive across owned relics (default 1). */
 function passiveMult(registries, relicIds, key) {
+  knownPassive(key);
   let m = 1;
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
@@ -14358,6 +14401,7 @@ function passiveMult(registries, relicIds, key) {
 
 /** Sum of an additive passive across owned relics (default 0). */
 function passiveSum(registries, relicIds, key) {
+  knownPassive(key);
   let s = 0;
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
@@ -14368,6 +14412,7 @@ function passiveSum(registries, relicIds, key) {
 
 /** True if any owned relic sets the boolean passive. */
 function passiveFlag(registries, relicIds, key) {
+  knownPassive(key);
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
     if (p && p[key] === true) return true;
@@ -16054,7 +16099,10 @@ const ASCENSION_ORDER = [
 ];
 const MAX_ASCENSION = ASCENSION_ORDER.length;
 
-const ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS];
+// (`ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS]` stood here with no reader in
+// src/, tools/ or tests/ — a union kept in case somebody wanted one. Deleted
+// rather than documented: nothing re-typed it, so there is nothing to collapse
+// into, and the day a screen needs both groups it can spell the spread itself.)
 
 // True when a run carries any non-default rule (so it is flagged + excluded
 // from win-rate telemetry).
@@ -16086,7 +16134,7 @@ function activeMods(custom) {
 }
 
 
-Object.assign(module.exports, { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, ALL_MODS, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP, endlessActInfo, activeMods });
+Object.assign(module.exports, { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP, endlessActInfo, activeMods });
 
 },
 "src/engine/rng.js": function (module, exports, require) {
@@ -17789,6 +17837,8 @@ Object.assign(module.exports, { computeAttackDamage, applyAttackDamage, computeB
 //
 // Headless: no document/window/localStorage/timers.
 
+const { MODIFIER_KEYS } = require("src/model/schemas.js");
+
 function getStatusInstance(entity, statusId) {
   return (entity && entity.statuses && entity.statuses[statusId]) || null;
 }
@@ -17988,6 +18038,21 @@ function isDurationDecay(decay) {
 //   blockCap— max of declared caps (the most generous wins).
 // ---------------------------------------------------------------------------
 
+// EVERY ONE OF THESE READS IS A STRING TYPED AT A CALL SITE, and a mis-typed
+// one used to return 1 / 0 / false — the graceful default that makes a defect
+// quiet. `MODIFIER_KEYS` is the closed set that says which strings are real, so
+// it does the saying: an unknown key is named once, with the legal set beside
+// it, and the caller still gets its default so a typo cannot black out a fight.
+// This is also what gives that vocabulary a reader — it had none, and a closed
+// set nothing reads is decoration a future author edits INSTEAD of the schema.
+const MODIFIER_SET = new Set(MODIFIER_KEYS);
+const unknownModifiers = new Set();
+function knownModifier(key) {
+  if (MODIFIER_SET.has(key) || unknownModifiers.has(key)) return;
+  unknownModifiers.add(key);
+  console.error(`[modifiers] '${key}' is not a modifier key — it will always read as the default. Legal: ${MODIFIER_KEYS.join(', ')}`);
+}
+
 function* modifierSources(ctx, entity) {
   for (const statusId of Object.keys(entity.statuses)) {
     const def = ctx.registries.statuses.get(statusId);
@@ -18001,6 +18066,7 @@ function* modifierSources(ctx, entity) {
 
 /** Product of flat multipliers for `key` ('damageDealtMult', ...). */
 function getMult(ctx, entity, key) {
+  knownModifier(key);
   let m = 1;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') m *= src.modifiers[key];
@@ -18010,6 +18076,7 @@ function getMult(ctx, entity, key) {
 
 /** Sum of per-stack adders for `key` ('attackDamageAdd', 'blockAdd'). */
 function getAdd(ctx, entity, key) {
+  knownModifier(key);
   let a = 0;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') a += src.modifiers[key] * src.stacks;
@@ -18019,6 +18086,7 @@ function getAdd(ctx, entity, key) {
 
 /** True if any status/stance on the entity sets boolean modifier `key`. */
 function getFlag(ctx, entity, key) {
+  knownModifier(key);
   for (const src of modifierSources(ctx, entity)) {
     if (src.modifiers[key] === true) return true;
   }
@@ -18027,6 +18095,7 @@ function getFlag(ctx, entity, key) {
 
 /** Max declared numeric value for `key` (e.g. blockCap), or null if none. */
 function getCap(ctx, entity, key) {
+  knownModifier(key);
   let cap = null;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') {
@@ -18038,6 +18107,7 @@ function getCap(ctx, entity, key) {
 
 /** True if ANY living combatant carries boolean modifier `key`. */
 function anyCombatantFlag(ctx, key) {
+  knownModifier(key);
   if (ctx.player && ctx.player.alive && getFlag(ctx, ctx.player, key)) return true;
   for (const e of ctx.enemies || []) {
     if (e.alive && getFlag(ctx, e, key)) return true;
@@ -19195,10 +19265,51 @@ function createSaveManager(storage) {
     return { ok: true, archiveId };
   }
 
+  // ---- THE PROFILE EXISTS BEFORE THE FIRST RUN DOES (M7) -------------------
+  // His ask: "profile should be able to be created before first run, not after".
+  // What shipped did the opposite. `loadMeta()` SYNTHESIZES a profile in memory
+  // for every caller (freshMeta) and writes nothing, so a player who cleared
+  // storage, picked a class and pressed BEGIN THE CLIMB had `sote_run_v1` and no
+  // `sote_meta_v1` — a run with no player behind it — and Settings → Profile
+  // printed his own sentence back at him as the behaviour (Bjorn's M7 walk,
+  // 2026-08-08). Two states for one concept: the profile that exists because
+  // every read gets an object, and the profile that exists on disk.
+  //
+  // This is the collapse. `ensureProfile()` is the only way a profile comes into
+  // being unasked, it is idempotent, and it never touches one that is already
+  // there. It is called at two places and they are one rule each:
+  //
+  //   · at the class-pick commit (main.js newRun) — HIS ask, and it lands
+  //     BEFORE the run is created, so the profile is older than the climb.
+  //   · inside saveRun/loadRun below — A STORED RUN IMPLIES A STORED PROFILE.
+  //     That is the structural half: it cannot be forgotten by a future start
+  //     path the way the first one was, and it is what repairs the players who
+  //     ALREADY have runs and no profile, with no migration to write.
+  //
+  // It refuses while quarantined for the same reason every other write does:
+  // those bytes are the evidence (property 4).
+  function ensureProfile() {
+    if (storage.getItem(META_KEY) != null) return { created: false, ok: true };
+    if (quarantined) {
+      return { created: false, ok: false, reason: `profile is quarantined (${status.state}); refusing to write` };
+    }
+    const res = saveMetaInternal(freshMeta());
+    if (!res.ok) return { created: false, ...res };
+    status = { ok: true, state: 'ok', reason: 'created before the first run', archiveId: null, recoveredFrom: null };
+    return { created: true, ok: true };
+  }
+
   return {
+    /**
+     * ensureProfile() → { created, ok, reason? }. Creates the durable profile if
+     * this browser has none; a no-op when one exists. See the block above.
+     */
+    ensureProfile,
+
     /** Persist after every committed choice (SPEC §3.12). Stamps RNG counters. */
     saveRun(run, rng, slot = 1) {
       if (rng) run.streamCounters = rng.getCounters();
+      ensureProfile(); // a stored run implies a stored profile — never the other way round
       storage.setItem(runKey(slot), serializeRun(run));
     },
 
@@ -19235,6 +19346,13 @@ function createSaveManager(storage) {
         run.loadout = createLoadout(registries, run.class);
         stampDeck(registries, run);
       }
+      // A run that LOADS is a player too, and this is the edge Bjorn could not
+      // reach: everyone who started a climb on a build before this one has runs
+      // and no profile. Waiting for their next autosave would leave Settings →
+      // Profile lying to them for as long as they stood on the map, so the
+      // profile appears the moment their run does. Failed loads return above and
+      // create nothing — an archived corrupt save is not a player arriving.
+      ensureProfile();
       return run;
     },
 
@@ -19462,7 +19580,13 @@ function createSaveManager(storage) {
      */
     startNewProfile() {
       const res = replacePrimaryWith(freshMeta(), 'kept when you started a new profile');
-      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId: res.archiveId, recoveredFrom: null };
+      // 'ok', NOT 'empty' — and this is the same defect as M7 wearing another
+      // hat. This path WRITES a fresh profile (replacePrimaryWith → META_KEY),
+      // so 'empty' told the calm screen there was no profile while one sat in
+      // storage, and it printed "No profile yet — one is created when you finish
+      // your first run" at a player who had just made one. 'empty' means NO
+      // BYTES, and after this call there are bytes.
+      status = { ok: true, state: 'ok', reason: 'player started a new profile', archiveId: res.archiveId, recoveredFrom: null };
       return res;
     },
 
@@ -29454,9 +29578,18 @@ function renderProfileSection(container, { saves, onRestored }) {
 
   // DRAFT COPY (Sunna's to replace) — the state line. It exists so the screen
   // answers "is my profile alright?" before it answers "what is in the drawer".
+  //
+  // THE `empty` LINE IS THE ASK, PRINTED BACK AT HIM (M7). It read "one is
+  // created when you finish your first run" — which was true of the build and
+  // was the exact behaviour Constantine had asked us to change, quoted to him in
+  // bold on the screen where he went looking for the profile. The behaviour is
+  // fixed in engine/save.js (`ensureProfile`, created at the class-pick commit),
+  // so this sentence is rewritten rather than deleted: the state is still
+  // reachable — someone who opens Settings before they have ever begun a climb —
+  // and it must say what will actually happen to them.
   const stateLine = {
     ok: 'Your profile is fine.',
-    empty: 'No profile yet — one is created when you finish your first run.',
+    empty: 'No profile yet — one is created the moment you begin your first climb.',
     migrated: 'Your profile was saved by an older version and has been brought forward.',
     recovered: 'Your profile was restored from the backup copy after a bad read.',
     corrupt: 'Your profile could not be read. It has been set aside — it is listed below.',
