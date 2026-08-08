@@ -292,10 +292,51 @@ export function createSaveManager(storage) {
     return { ok: true, archiveId };
   }
 
+  // ---- THE PROFILE EXISTS BEFORE THE FIRST RUN DOES (M7) -------------------
+  // His ask: "profile should be able to be created before first run, not after".
+  // What shipped did the opposite. `loadMeta()` SYNTHESIZES a profile in memory
+  // for every caller (freshMeta) and writes nothing, so a player who cleared
+  // storage, picked a class and pressed BEGIN THE CLIMB had `sote_run_v1` and no
+  // `sote_meta_v1` — a run with no player behind it — and Settings → Profile
+  // printed his own sentence back at him as the behaviour (Bjorn's M7 walk,
+  // 2026-08-08). Two states for one concept: the profile that exists because
+  // every read gets an object, and the profile that exists on disk.
+  //
+  // This is the collapse. `ensureProfile()` is the only way a profile comes into
+  // being unasked, it is idempotent, and it never touches one that is already
+  // there. It is called at two places and they are one rule each:
+  //
+  //   · at the class-pick commit (main.js newRun) — HIS ask, and it lands
+  //     BEFORE the run is created, so the profile is older than the climb.
+  //   · inside saveRun/loadRun below — A STORED RUN IMPLIES A STORED PROFILE.
+  //     That is the structural half: it cannot be forgotten by a future start
+  //     path the way the first one was, and it is what repairs the players who
+  //     ALREADY have runs and no profile, with no migration to write.
+  //
+  // It refuses while quarantined for the same reason every other write does:
+  // those bytes are the evidence (property 4).
+  function ensureProfile() {
+    if (storage.getItem(META_KEY) != null) return { created: false, ok: true };
+    if (quarantined) {
+      return { created: false, ok: false, reason: `profile is quarantined (${status.state}); refusing to write` };
+    }
+    const res = saveMetaInternal(freshMeta());
+    if (!res.ok) return { created: false, ...res };
+    status = { ok: true, state: 'ok', reason: 'created before the first run', archiveId: null, recoveredFrom: null };
+    return { created: true, ok: true };
+  }
+
   return {
+    /**
+     * ensureProfile() → { created, ok, reason? }. Creates the durable profile if
+     * this browser has none; a no-op when one exists. See the block above.
+     */
+    ensureProfile,
+
     /** Persist after every committed choice (SPEC §3.12). Stamps RNG counters. */
     saveRun(run, rng, slot = 1) {
       if (rng) run.streamCounters = rng.getCounters();
+      ensureProfile(); // a stored run implies a stored profile — never the other way round
       storage.setItem(runKey(slot), serializeRun(run));
     },
 
@@ -332,6 +373,13 @@ export function createSaveManager(storage) {
         run.loadout = createLoadout(registries, run.class);
         stampDeck(registries, run);
       }
+      // A run that LOADS is a player too, and this is the edge Bjorn could not
+      // reach: everyone who started a climb on a build before this one has runs
+      // and no profile. Waiting for their next autosave would leave Settings →
+      // Profile lying to them for as long as they stood on the map, so the
+      // profile appears the moment their run does. Failed loads return above and
+      // create nothing — an archived corrupt save is not a player arriving.
+      ensureProfile();
       return run;
     },
 
@@ -559,7 +607,13 @@ export function createSaveManager(storage) {
      */
     startNewProfile() {
       const res = replacePrimaryWith(freshMeta(), 'kept when you started a new profile');
-      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId: res.archiveId, recoveredFrom: null };
+      // 'ok', NOT 'empty' — and this is the same defect as M7 wearing another
+      // hat. This path WRITES a fresh profile (replacePrimaryWith → META_KEY),
+      // so 'empty' told the calm screen there was no profile while one sat in
+      // storage, and it printed "No profile yet — one is created when you finish
+      // your first run" at a player who had just made one. 'empty' means NO
+      // BYTES, and after this call there are bytes.
+      status = { ok: true, state: 'ok', reason: 'player started a new profile', archiveId: res.archiveId, recoveredFrom: null };
       return res;
     },
 
