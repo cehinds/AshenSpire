@@ -1855,6 +1855,123 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .about-ai .about-result:empty { display: none; }
 .about-ai .about-ver { opacity: 0.75; }
 
+/* ---- THE COMPENDIUM (Freja) ------------------------------------------------
+   Constantine: *"...its own menu on the main menu that keeps most things
+   hidden."* The whole look is one decision — LIGHT IS THE HIERARCHY. The grid
+   never moves; what you hold is the only lit thing in it, so the eye reaches
+   yours first without a single reorder.
+
+   LAW 4: every box here is text-independent (px, and --tap-floor for the one
+   ergonomic floor) and every glyph is rem. The art box is chrome — an icon that
+   grows with the text setting is Law 4 clause 3 exactly. The cell's own height
+   is a FLOOR with intrinsic growth (clause 4), so a long name at XL pushes the
+   cell taller instead of clipping, and nothing balloons.
+   LAW 2: no vw/vh below body; the scroller names its container.            */
+.compendium {
+  /* HOW PRESENT A SILHOUETTE IS, and this number is measured, not chosen. It was
+     0.26 with a `body.hi-contrast` override of 0.5, and BOTH halves of that were
+     wrong. High contrast is ON by default, so 0.26 never rendered in a single
+     shot I took — I authored a value and shipped it unseen, which is the exact
+     failure my own card names third. Measured across all 19 silhouettes at
+     1200x730 (freja-cp-probe.mjs, luminance of the inked pixels against the
+     panel): 0.26 → median 1.99:1, UNDER the 3:1 floor for a non-text graphic.
+     0.50 → median 4.10:1 but the thinnest staff at 1.76:1, still under.
+     ONE VALUE, NOT TWO: high contrast swaps text and line tokens and leaves the
+     panel alone, so both modes sit on the same background and the override was
+     a second home answering a question that never differed. */
+  --cp-ghost: 0.72;
+  justify-content: flex-start; gap: 14px; padding-top: 44px;
+}
+.compendium .title-big { font-size: 3.2rem; }
+/* The one number that turns absence into scale. A grid of dark shapes with no
+   count is a room; with the count it is a horizon. */
+.compendium .subtitle { color: var(--gold); letter-spacing: 0.28em; }
+
+.cp-scroll { width: 100%; max-width: 980px; overflow-y: auto; padding: 0 16px 8px; }
+.cp-sections { display: flex; flex-direction: column; gap: 20px; }
+.cp-head {
+  display: flex; align-items: baseline; gap: 10px;
+  font-family: var(--font-display); font-size: 1.25rem; letter-spacing: 0.2em;
+  color: var(--muted); border-bottom: 1px solid var(--line);
+  padding-bottom: 6px; margin-bottom: 10px;
+}
+/* Beside its heading, not flung to the far edge — one phrase at every width.
+   (My own #90 finding: `margin-left:auto` put a caret and its count 1600 px
+   apart at 1200 wide, which is two fragments a reader assembles.) */
+.cp-count { font-family: var(--font-body); font-size: 1.05rem; color: var(--gold); letter-spacing: 0.08em; }
+
+.cp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.cp-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  min-height: var(--tap-floor); padding: 8px 4px;
+  border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
+  color: var(--parchment); font-family: var(--font-body); cursor: pointer;
+  text-align: center;
+}
+.cp-cell:hover { border-color: var(--line-soft); }
+.cp-art { width: 68px; height: 68px; display: flex; align-items: center; justify-content: center; }
+.cp-art img { width: 100%; height: 100%; object-fit: contain; }
+/* TWO LINES, ALWAYS RESERVED — and this is what makes the grid rigid. Measured
+   before: 'Gorefire Brand' and 'Emberlight Sceptre' wrap, and a grid row takes
+   the height of its tallest cell, so ONE long name made the STAVES row 110 px
+   against 97 for the others. My whole thesis is that the grid never moves and
+   only what is LIT changes; a row that grows when you find something is that
+   thesis falsified by its own screenshot.
+   `em` and not `rem`, deliberately: 2 lines x 1.25 line-height of THIS text is a
+   glyph metric, which is the one thing Law 4 says may track the text setting.
+   A box whose job is to hold exactly two lines of its own text is not chrome. */
+.cp-name {
+  font-size: 1.05rem; line-height: 1.25; min-height: 2.5em;
+  overflow-wrap: anywhere;
+}
+
+/* RARITY is the one thing a silhouette is allowed to tell you — the desire axis,
+   and it says how rare a hole is without saying what fills it. Same left-edge
+   language as the Armoury chips, so the two screens read as one hand.
+   THE SELECTOR STATES THE RULE, and it does not depend on source order — I
+   wrote this twice by ordering instead of saying, and got it wrong both times:
+   first the rarity stripe survived onto held cells where it means nothing, then
+   the dashed withheld border turned the stripe itself into a dashed segment,
+   which is noise where a band was the point. Named states, higher specificity,
+   no ordering to reason about.
+   WITHHELD ONLY, deliberately: on a piece that is yours the rarity is in the
+   tooltip and in the thing itself; on a withheld one it is one of only two facts
+   you get. The mark is kept exactly where it is load-bearing and dropped where
+   it is not, which is the whole of what my seat is for. */
+.cp-cell.state-teased.rarity-rare,
+.cp-cell.state-listed.rarity-rare { border-left: 3px solid var(--gold); }
+.cp-cell.state-teased.rarity-uncommon,
+.cp-cell.state-listed.rarity-uncommon { border-left: 3px solid var(--frost); }
+
+/* HELD — the lit plate. The separation is in the CELL'S GROUND, never in the
+   art: raising the silhouettes to clear the 3:1 legibility floor cost me most of
+   the luminance gap that was carrying the hierarchy, and the tempting repair is
+   to brighten the held icons — which is repainting someone else's authored
+   palette to win an argument about layout. So the held cell gets a lighter plate
+   (--panel over the screen's --bg) and a solid gold edge against the withheld
+   cells' dashed line, and the art of every piece is left exactly as drawn.
+   Sunna's floor is higher than my ceiling wherever they touch; this is what
+   paying that costs and where I put the cost. */
+.cp-cell.state-held { background: var(--panel); border: 1px solid var(--gold); }
+.cp-cell.state-held .cp-name { color: var(--parchment); }
+
+/* WITHHELD — the piece's OWN icon, painted out. No second asset, no new column:
+   the alpha channel already holds the shape, so this is the same file the
+   Armoury draws in colour, seen with the identity removed. Lifted to ash rather
+   than crushed to black, because black-on-near-black is a shape only I can see
+   in the file I authored it from. */
+.cp-cell.state-teased, .cp-cell.state-listed { background: transparent; border-style: dashed; }
+.cp-cell.state-teased .cp-art img, .cp-cell.state-listed .cp-art img {
+  filter: brightness(0) invert(1);
+  opacity: var(--cp-ghost);
+}
+.cp-cell.state-listed .cp-name { color: var(--muted); font-style: italic; }
+
+
+@media (prefers-reduced-motion: no-preference) {
+  .cp-cell { transition: border-color 120ms ease, background 120ms ease; }
+}
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -2682,6 +2799,7 @@ const { mountShop } = require("src/ui/screens/shop.js");
 const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
+const { mountCompendium } = require("src/ui/screens/compendium.js");
 const { openSettings, settingOn, showSettingsNotice, resolveTapSize } = require("src/ui/screens/settings.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
@@ -3338,6 +3456,7 @@ function showTitle() {
       showTitle();
     },
     onHistory: showHistory,
+    onCompendium: showCompendium,
     onSettings: showSettings,
     onQuit: quitGame,
     onCustom: () => {
@@ -3407,6 +3526,14 @@ function showArmoury() {
 
 function showHistory() {
   mountHistory(app, { meta: saves.loadMeta(), onBack: showTitle });
+}
+
+/**
+ * The Compendium — every armament the Spire keeps, most of it withheld.
+ * A PROFILE surface: no run, no class, so `meta.found` is the whole of "yours".
+ */
+function showCompendium() {
+  mountCompendium(app, { registries, meta: saves.loadMeta(), onBack: showTitle });
 }
 
 // Quit the game entirely. In a real browser tab window.close() is usually
@@ -4140,6 +4267,18 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   coopStubMount(coopShrineShot(), 'p1');
 } else if (shotState === 'coopcatchup') {
   coopStubMount(coopCatchupShot(), 'p1');
+} else if (shotState === 'compendium') {
+  // A ?shot= STATE, AND THAT IS THE POINT (Marina's condition on #78, and Rune's
+  // census). tools/release-shots.mjs derives its denominator from the states
+  // this file declares, and tools/screenreach.mjs can only reach a screen that
+  // has one — so a new screen without a shot state is a screen no instrument
+  // owns, which is the eight the census already counts. The seeded variant
+  // (?shot=compendium&shotFound=…) photographs the other edge: what the screen
+  // looks like once pieces are yours. Both edges, both shapes.
+  const found = new URLSearchParams(location.search).get('shotFound');
+  const meta = saves.loadMeta();
+  if (found != null) meta.found = found ? found.split(',') : [];
+  mountCompendium(app, { registries, meta, onBack: showTitle });
 } else if (shotState === 'customize') {
   // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
   // and #29's own boundary records what that cost: no sweep can open a screen
@@ -4536,6 +4675,22 @@ const balance = {
       // for testing the mod system without playing for it).
       requireFound: true,
       permanentOnFind: true,
+      // HOW MUCH OF THE UNKNOWN THE PLAYER SEES — the Compendium's whole dial,
+      // and one word. Constantine: *"the potential weapons to unlock should be
+      // in its own menu on the main menu that keeps most things hidden."* The
+      // vocabulary is not new: it is `REVEAL_MODES` from unlocks.csv, applied to
+      // the OTHER gate. An armament is withheld by not being found rather than
+      // by an unearned condition, so it has no unlock row to read a reveal from,
+      // and this is where that answer lives — one home, tunable, no code.
+      //   'teased'  silhouette, rarity, hand. No name, no tags, no numbers.
+      //   'listed'  the above plus its name and why it is not yours.
+      //   'hidden'  the Compendium is empty until you find something.
+      // 'teased' is the shipped line: shape is a promise, a name is the item
+      // delivered without the climb. A piece that wants a different answer names
+      // an unlock row, whose own `reveal` wins (Law 0 clause 3 — the override is
+      // data). The Armoury picker is unaffected by this word: an offer you
+      // cannot take shows its reason either way.
+      reveal: 'teased',
       // Chance a node of each kind yields an armament, and the rarity odds when
       // it does. Bosses always drop; their table is weighted to the good stuff.
       chance: { treasure: 60, elite: 30, boss: 100, shop: 0 },
@@ -13488,8 +13643,27 @@ function fromDropPool(piece) {
   return !!piece && piece.kind !== 'armor';
 }
 
+// TWO QUESTIONS, ONE LADDER OF IFS — added when the Compendium arrived (#90
+// sibling). `has()` answers *is this piece yours*; a screen that draws what is
+// NOT yours needs a second thing — *which of the two routes withheld it* — so
+// it can say why without guessing. Freja's `pieceReveal` derived that route a
+// second time, off `piece.kind` and a caller-built `available` set, and the
+// second derivation agreed with this one only by coincidence of today's data.
+//
+// So the route is returned FROM HERE, by the same `if` ladder that decides the
+// boolean. `has` is `why(piece) === null` and cannot disagree with it — not
+// "checked to agree", unable to differ. A third route tomorrow is one branch in
+// one function, and OWNERSHIP_GATES below is what makes the screens notice it.
+//
+// The set is CLOSED and DECLARED, and the test asserts every member of it has a
+// sentence in LOCK_COPY — the same declared-and-handled join #88 uses. A route
+// with no words is the "graceful" empty tooltip my card warns about.
+
+/** Why a piece is not yours. Closed; every member needs a sentence in LOCK_COPY. */
+const OWNERSHIP_GATES = Object.freeze(['unearned', 'unfound']);
+
 /**
- * ownership(registries, { meta, loadout }) → { has(piece) }
+ * ownership(registries, { meta, loadout }) → { has(piece), why(piece) }
  *
  * The one predicate. A PIECE, not an id: armour ids repeat across classes
  * ("`id` is unique per class, not globally"), so an id set would say the Reaver
@@ -13506,13 +13680,24 @@ function ownership(registries, { meta = {}, loadout = null } = {}) {
     ...(cfg.persistence !== 'perRun' ? meta.found || [] : []),
     ...(cfg.persistence !== 'unlocked' ? carriedIds(loadout) : []),
   ]);
+  // A missing piece resolves to 'unearned' rather than to a fourth value: there
+  // is no row to read a hint from, and 'unearned' is the route whose sentence is
+  // generic. 'unfound' would promise the player it turns up in treasure, which
+  // is a lie about a piece that does not exist. `has(null)` stays false either
+  // way, which is the behaviour every caller already had.
+  const why = (piece) => {
+    if (!piece) return 'unearned';
+    if (piece.unlock !== '' && piece.unlock != null) {
+      return unlocked.has(piece.unlock) ? null : 'unearned';
+    }
+    if (fromDropPool(piece) && drops.requireFound) {
+      return found.has(piece.id) ? null : 'unfound';
+    }
+    return null;
+  };
   return {
-    has(piece) {
-      if (!piece) return false;
-      if (piece.unlock !== '' && piece.unlock != null) return unlocked.has(piece.unlock);
-      if (fromDropPool(piece) && drops.requireFound) return found.has(piece.id);
-      return true;
-    },
+    why,
+    has(piece) { return !!piece && why(piece) === null; },
   };
 }
 
@@ -14256,7 +14441,7 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, slotHand, pieceHand, fitsSlot, validateEquipment, fromDropPool, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, slotHand, pieceHand, fitsSlot, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
 
 },
 "src/model/state.js": function (module, exports, require) {
@@ -14509,6 +14694,112 @@ const UNLOCK_CONDITIONS = Object.freeze({
 /** How an unearned unlock is allowed to present itself. */
 const REVEAL_MODES = Object.freeze(['teased', 'hidden', 'listed']);
 
+// ---- WHAT A THING LOOKS LIKE BEFORE IT IS YOURS -----------------------------
+//
+// `reveal` is a CLOSED SET OF THREE and until now only two behaviours existed:
+// 'hidden' dropped out, 'teased' and 'listed' were drawn identically. The
+// distinction unlocks.csv documents in its own header — *teased = silhouette,
+// listed = shown greyed with the hint* — had no screen that drew it, because the
+// screen it was written for did not exist. The Compendium is that screen
+// (Constantine: *"the potential weapons to unlock should be in its own menu on
+// the main menu that keeps most things hidden"*), and the words were already in
+// the table.
+//
+// ONE DECIDER, and that is why it is here rather than in either screen. Two
+// things ask this question — `unlockView` below and the Compendium — and each
+// used to carry its own copy of "'hidden' means absent". Two copies of one rule
+// in two files with nothing checking they agree is the defect this house has
+// spent two days killing; the Compendium would have been the third copy.
+//
+// AND `unlockView` HAS NO CALLERS IN src/ — measured at 77a02b9, e79e1cd and
+// 52e0bc1. It is a dead truth function, and by my own rule that is not clutter,
+// it is half of a fact whose other half is somewhere worse. Its living copy was
+// `gate()` in equipment.js, which #90 deleted; nothing replaced it for armour.
+// Routing it through revealState is still right — one home is one home whether
+// or not anyone is home — but nobody should read "two callers" as coverage.
+//
+// `earned` is the caller's word for "this is already yours", whatever earning
+// means for that kind of thing — an unlock condition met, or a piece found.
+//
+// ---- TWO AXES, AND THIS FILE OWNS EXACTLY ONE OF THEM (Viki, #90 sibling) ----
+//
+// This branch was authored at 77a02b9 and #90 landed under it. As written,
+// `pieceReveal` answered TWO questions from one ladder of ifs: *is this piece
+// yours* and *how much of what is not yours may be shown*. The first now has a
+// home — `ownership()` in model/loadout.js — and re-deriving it here made a
+// SECOND DEFINITION OF WHAT YOU OWN, in different words (`piece.kind !== 'armor'`
+// against `fromDropPool`, a caller-built `available` against the model's `found`).
+// Not a copy written twice by one hand: a copy written once on each side of a
+// merge, which is the direction nothing was watching.
+//
+// ASK WHAT THE PREDICATE'S SUBJECT IS. Possession's subject is the PROFILE —
+// what does this save hold. Disclosure's subject is the CATALOGUE ROW — how much
+// of this entry may someone who does not hold it see. Different subject, two
+// axes, two homes; the same test that kept fog and `revealUnknown` apart on the
+// map. They meet in ONE join, below, which owns no condition of its own.
+//
+// The divergence was already representable, not hypothetical: `ownership()`
+// honours `balance.equipment.persistence`, and this file's `available` set did
+// not. At `persistence: 'perRun'` the model says you own nothing off-run and the
+// old Compendium said you own your whole found list. One balance value apart.
+
+/** Everything a thing can be on a screen: yours, or one of the three modes. */
+const PRESENT_STATES = Object.freeze(['held', ...REVEAL_MODES]);
+
+/**
+ * revealState(mode, earned, where) → 'held' | 'teased' | 'listed' | 'hidden'
+ *
+ * LAW 1 CLAUSE 5, and the degrade is chosen rather than convenient. `reveal` has
+ * no schema — content-build copies the CSV column through untouched — so a typo
+ * ('teasd', 'hiden') reaches here as a live value. Of the three modes, 'teased'
+ * is the only safe wrong answer: 'listed' would PUBLISH a name the author may
+ * have meant to keep secret, and 'hidden' would DELETE an entry in silence,
+ * which is the quiet failure Law 0 clause 5 names as the dangerous one. So it
+ * errors by name — including which table the bad value came from — and draws
+ * the shape without the identity.
+ */
+function revealState(mode, earned, where = 'a reveal') {
+  if (earned) return 'held';
+  if (REVEAL_MODES.includes(mode)) return mode;
+  console.error(`[content] reveal ${JSON.stringify(mode)} at ${where} is not one of `
+    + `${REVEAL_MODES.join(' | ')} — drawing it as 'teased' (shape, no name).`
+    + ' This line is the defect, not the fallback.');
+  return 'teased';
+}
+
+/**
+ * pieceReveal(piece, { owned, unlockById, drops }) → { state, hint, gate }
+ *
+ * THE JOIN, and it decides nothing. `owned` is an `ownership()` handle from
+ * model/loadout.js: it says whether the piece is yours and, when it is not,
+ * which of the two routes withheld it. This function reads that verdict and
+ * answers only the disclosure question — WHICH TABLE NAMES THE REVEAL MODE.
+ *
+ * There is no `if` on `piece.kind` and no second `found` set here, on purpose:
+ * anything of that shape would be possession asked a second time. Delete the
+ * two lines below that pick a table and this file has nothing left to say.
+ *
+ * A CONDITION unlock is something you achieve; being FOUND is something you pick
+ * up. That distinction still decides which reveal mode applies — an unearned
+ * piece reads its own unlock row (Law 0 clause 3: the override is data), an
+ * unfound one reads `balance.equipment.drops.reveal`, one word for the whole
+ * pool. What changed is that the distinction is now READ, not re-derived.
+ *
+ * `gate` is passed straight through so a screen can pick its own sentence. The
+ * sentences are UI copy in src/ui/uiContent.js, keyed by OWNERSHIP_GATES — one
+ * home, and the suite asserts every route has words.
+ */
+function pieceReveal(piece, { owned, unlockById, drops = {} }) {
+  const gate = owned.why(piece);
+  if (!gate) return { state: 'held', hint: '', gate: null };
+  const u = gate === 'unearned' ? unlockById.get(piece && piece.unlock) : null;
+  const mode = gate === 'unearned' ? (u && u.reveal) : drops.reveal;
+  const where = gate === 'unearned'
+    ? `unlocks.csv row ${JSON.stringify(piece && piece.unlock)}`
+    : 'balance.equipment.drops.reveal';
+  return { state: revealState(mode, false, where), hint: (u && u.hint) || '', gate };
+}
+
 /** A fresh, empty progress tally. */
 function emptyProgress() {
   return { runs: 0, wins: 0, maxAct: 1, bosses: [], wonClasses: [] };
@@ -14565,20 +14856,27 @@ function evaluateUnlocks(unlocks, meta) {
  * 'listed' and 'teased' appear locked with their hint (something to chase),
  * 'hidden' is dropped entirely — a genuine secret should not advertise the
  * shape of its own hole.
+ *
+ * The filter reads `revealState` rather than testing the string itself: the
+ * rule "'hidden' means absent" now has ONE home and this is a caller of it, not
+ * a second copy. `state` rides along so a caller can draw the teased/listed
+ * distinction the modes have always described.
  */
 function unlockView(unlocks, meta) {
   const earned = new Set((meta && meta.unlocked) || []);
   return (unlocks || [])
-    .filter((u) => earned.has(u.id) || u.reveal !== 'hidden')
-    .map((u) => ({
+    .map((u) => ({ u, state: revealState(u.reveal, earned.has(u.id), `unlocks.csv row ${JSON.stringify(u.id)}`) }))
+    .filter(({ state }) => state !== 'hidden')
+    .map(({ u, state }) => ({
       ...u,
+      state,
       earned: earned.has(u.id),
       hint: earned.has(u.id) ? '' : u.hint,
     }));
 }
 
 
-Object.assign(module.exports, { UNLOCK_CONDITIONS, REVEAL_MODES, emptyProgress, recordProgress, evaluateUnlocks, unlockView });
+Object.assign(module.exports, { UNLOCK_CONDITIONS, REVEAL_MODES, PRESENT_STATES, revealState, pieceReveal, emptyProgress, recordProgress, evaluateUnlocks, unlockView });
 
 },
 "src/content/customMods.js": function (module, exports, require) {
@@ -17990,7 +18288,7 @@ Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_
 
 const { esc } = require("src/ui/components/tooltip.js");
 
-function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan }) {
+function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan, onCompendium }) {
   // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
   const EMBER_COUNT = { off: 0, low: 3, normal: 7, high: 14 };
   const emberN = EMBER_COUNT[document.documentElement.dataset.ambient] ?? 7;
@@ -18034,6 +18332,7 @@ function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSett
       <div class="title-menu">
         <button class="subtle" id="lan-play" hidden>FORSAKEN TOGETHER</button>
         <button class="subtle" id="custom-climb">CUSTOM CLIMB</button>
+        <button class="subtle" id="armaments">ARMAMENTS</button>
         <button class="subtle" id="run-history">RUN HISTORY</button>
         <button class="subtle" id="settings">SETTINGS</button>
         <button class="subtle" id="quit-game">QUIT</button>
@@ -18045,6 +18344,11 @@ function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSett
   app.querySelector('#settings').addEventListener('click', onSettings);
   if (onQuit) app.querySelector('#quit-game').addEventListener('click', onQuit);
   if (onCustom) app.querySelector('#custom-climb').addEventListener('click', onCustom);
+  // ARMAMENTS — the Compendium. NAMED, not "Armoury": the Armoury is the screen
+  // where you equip things and it is only reachable inside a run. Two screens
+  // one letter apart in a menu is a naming call, and naming is Viki's lens —
+  // this is my proposal, hers to overrule on sight.
+  if (onCompendium) app.querySelector('#armaments').addEventListener('click', onCompendium);
   // LAN play only exists when the launcher's server is behind the page — the
   // orchestrator un-hides the button once /api/lan/info answers.
   if (onLan) app.querySelector('#lan-play').addEventListener('click', onLan);
@@ -23037,8 +23341,44 @@ function padName(btn) {
   return b ? b.name : `Btn ${btn}`;
 }
 
+// ---- why a piece is not yours, in the player's words ------------------------
+// `ownership().why()` (src/model/loadout.js) names the GATE and declares the
+// closed set of them as OWNERSHIP_GATES; the sentence is UI copy and lives here.
+// It was a literal inside equipment.js's `gate()`, which was fine while one
+// screen existed and becomes a copy nothing syncs the moment a second one asks
+// the same question (Law 1 clause 2, pointed at prose).
+//
+// DECLARED AND HANDLED: the suite asserts these keys are exactly OWNERSHIP_GATES
+// — a route the model can return with no sentence here renders an empty reason,
+// which is the quiet graceful failure rather than the loud one.
+//
+// A row's own `hint` from unlocks.csv always wins over LOCK_COPY.unearned —
+// that is the whole point of the hint column. This is what is said when the
+// table has nothing to say.
+const LOCK_COPY = Object.freeze({
+  unearned: 'Not yet earned.',
+  unfound: 'Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them.',
+});
 
-Object.assign(module.exports, { statusTooltipText, NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, MENU_TABS, MENU, MENU_ACTS, menuTabRefs, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName });
+// ---- what a kind of armament is called in the plural ------------------------
+// The Compendium's section headings. A LABEL is a word, not a derivation:
+// 'staff' → 'STAVES' is not a rule any pluraliser gets right, and inventing one
+// is how a screen ends up saying STAFFS. So the irregulars are listed and
+// everything else derives, WITH A WARNING — a new kind gets a plausible heading
+// rather than a broken screen, and says so in the console so the plausible one
+// is not mistaken for an authored one (Law 0 clause 5: a generated thing that is
+// wrong but reasonable is the invisible failure).
+const ARMAMENT_KIND_LABELS = { weapon: 'WEAPONS', shield: 'SHIELDS', staff: 'STAVES' };
+function armamentKindLabel(kind) {
+  const known = ARMAMENT_KIND_LABELS[kind];
+  if (known) return known;
+  console.warn(`[content] armament kind ${JSON.stringify(kind)} has no heading in`
+    + ' src/ui/uiContent.js ARMAMENT_KIND_LABELS — showing a derived one.');
+  return `${String(kind || '').toUpperCase()}S`;
+}
+
+
+Object.assign(module.exports, { statusTooltipText, NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, MENU_TABS, MENU, MENU_ACTS, menuTabRefs, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName, LOCK_COPY, armamentKindLabel });
 
 },
 "src/ui/screens/profileArchive.js": function (module, exports, require) {
@@ -27155,6 +27495,232 @@ function mountHistory(app, { meta, onBack }) {
 
 
 Object.assign(module.exports, { mountHistory });
+
+},
+"src/ui/screens/compendium.js": function (module, exports, require) {
+// src/ui/screens/compendium.js — the Compendium: everything the Spire keeps.
+//
+// Constantine, verbatim: *"the potential weapons to unlock should be in its own
+// menu on the main menu that keeps most things hidden."*
+//
+// THE LAST CLAUSE IS THE DESIGN, not decoration. This is a screen whose subject
+// is the shape of what you do NOT have, and the honest failure modes sit either
+// side of it: show everything and the surprise of finding a Twinblade is spent
+// in a menu on turn one; show nothing and it is an empty room with a title. So
+// the line, and it is one sentence:
+//
+//     A LOCKED ENTRY GIVES YOU ITS SHAPE AND ITS RARITY AND NOTHING ELSE.
+//
+// Shape is enough to want it. A name and a stat line is the item delivered
+// without the climb. The silhouette is the piece's OWN icon painted to black —
+// no second asset, no new column, nothing for an author to draw twice (Law 1
+// clause 4: assets bind by name, and this binds to the same name).
+//
+// ---- WHY IT IS NOT ORGANISED BY WHAT YOU HAVE -------------------------------
+//
+// The obvious build is two bands: YOURS, then the rest. I refused it. Two bands
+// makes the screen's shape a function of your progress — on a fresh profile band
+// one is empty and the whole page is a list of things you failed to get, and
+// every find reflows the grid under you.
+//
+// So the structure is the COLLECTION's shape and it never moves: one section per
+// armament kind, in the order the table declares them, every cell always in the
+// same place. What changes is how much of it is LIT. In a palette this dark,
+// LIGHT IS THE HIERARCHY — the eye lands on what is yours because it is the only
+// bright thing in the grid, and I do not have to reorder anything to put it
+// first. A constant grid that fills in reads as a map of what exists; a
+// re-sorting list reads as a scoreboard.
+//
+// ---- WHAT AN AUTHOR WRITES, AND WHAT DERIVES (Law 0 clause 1) ---------------
+//
+// NOTHING. There is no compendium table and there must never be one. A row here
+// IS a row of content/source/weapons.csv seen from another angle, and everything
+// this screen draws comes off the characteristics already on it:
+//
+//   which section    `kind`            the section exists because a row is filed
+//                                      under it — no authored list of sections
+//   the silhouette   `id`              assets/equipment/icon_<id>.webp, the same
+//                                      file the Armoury already binds by name
+//   the rarity ring  `rarity`
+//   is it yours      `unlock` + the found gate → ownership() in model/loadout.js
+//   how much shows   that gate's reveal mode  → pieceReveal() in model/unlocks.js
+//
+// Two homes, and the split is the point (Viki, resolving the #90 merge): the
+// first is a fact about your PROFILE, the second about the CATALOGUE ROW. This
+// screen authors neither and asks both.
+//
+// A second list of unlockables would be the defect this house has spent two days
+// killing, and it is the easiest one to commit here: this screen wants a table
+// of "things to chase" so badly that writing one feels like the feature.
+//
+// ---- WHAT THIS SCREEN IS NOT ------------------------------------------------
+//
+// It is not the Armoury and it does not equip anything: it is reached from the
+// title, where there is no run, no class, and therefore no armour — armour is
+// `classId`-scoped and has no subject outside a run. THAT IS WHY THE SCREEN IS
+// ARMAMENTS ONLY, and the reason is where he put it, not my taste.
+//
+// ~~Armour's unlocks are already visible, with their hints, in the Armoury
+// picker.~~ STRUCK BY THE MERGE, not by its author (Viki). That was true at
+// 77a02b9 and #90 falsified it underneath this branch: the picker now offers
+// only what you own, so an unearned armour set is ABSENT there rather than
+// locked-with-a-hint. Nine of twelve armour rows carry an unlock, and as of dev
+// no screen in the game says they exist — `unlockView()` below, whose whole job
+// is "what the wardrobe should draw", has ZERO callers in src/ at every ref I
+// checked (77a02b9, e79e1cd, 52e0bc1).
+//
+// THE HOLE IS #90'S, NOT THIS SCREEN'S, and this branch neither opens nor closes
+// it. Recorded here because the sentence it replaces gave a REASON for excluding
+// armour, and that reason has expired: whether armour joins this screen is a
+// design call for Freja and Constantine ("weapons" was his word), not a
+// resolution I take while merging someone else's branch.
+//
+// LAW 3: this screen declares NO TAB SET. Three sections in one scroll are a
+// list, not tabs (clause 6's corollary), so the bumpers stay with whatever owns
+// them and there is nothing here to cycle — stated rather than left undefined,
+// because clause 6 makes an unanswered context the defect. Every cell is a
+// control and carries a tooltip for hover AND the focus cursor (clause 4), which
+// is also where a locked cell's reason lives: printing "not yet found" twenty
+// three times IS the wall of grey, and the wall is the thing to avoid.
+
+const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
+const { assetUrl } = require("src/ui/assetmap.js");
+const { pieceReveal } = require("src/model/unlocks.js");
+const { ownership } = require("src/model/loadout.js");
+const { LOCK_COPY, armamentKindLabel } = require("src/ui/uiContent.js");
+
+/** A piece's mods, written the way a player reads them. */
+function modSummary(modFields, piece) {
+  const parts = [];
+  for (const raw of piece.mods || []) {
+    const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
+    if (!m) continue;
+    const spec = (modFields || {})[m[2]];
+    if (!spec) continue;
+    const where = m[1] === 'self' ? '' : `${m[1][0].toUpperCase()}${m[1].slice(1)} `;
+    const sign = m[3][0] === '+' || m[3][0] === '-' ? m[3] : `= ${m[3]}`;
+    parts.push(`${where}${spec.label} ${sign}`);
+  }
+  return parts;
+}
+
+/**
+ * The sections, DERIVED. A kind exists because a row is filed under it, in the
+ * order the table first mentions it — the same shape #88 gave settings
+ * categories. There is no list of sections to fall out of step with the table,
+ * so a new kind of armament appears here the day it is authored and an emptied
+ * kind takes its heading with it. A heading over nothing is the defect one level
+ * up from the fourth cell, and this is how it cannot happen.
+ */
+function sections(rows) {
+  const order = [];
+  const by = new Map();
+  for (const r of rows) {
+    if (!by.has(r.kind)) { by.set(r.kind, []); order.push(r.kind); }
+    by.get(r.kind).push(r);
+  }
+  return order.map((kind) => ({ kind, label: armamentKindLabel(kind), rows: by.get(kind) }));
+}
+
+function cell(piece, { state, hint, gate }, modFields) {
+  const held = state === 'held';
+  const named = held || state === 'listed';
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = `cp-cell rarity-${piece.rarity || 'common'} state-${state}`;
+  el.dataset.member = piece.id;
+  // A held piece is announced by name; a withheld one is announced as what it
+  // is, which is a shape you do not have. Screen readers get the same deal the
+  // eye does — the alternative is an accessible label that leaks every name the
+  // picture is deliberately hiding.
+  el.setAttribute('aria-label', named ? piece.name : `Unknown ${piece.kind}`);
+  el.innerHTML =
+    `<span class="cp-art"><img src="${esc(assetUrl(`assets/equipment/icon_${piece.id}.webp`))}" alt=""></span>`
+    + `<span class="cp-name">${named ? esc(piece.name) : ''}</span>`;
+  const art = el.querySelector('img');
+  art.addEventListener('error', () => art.remove());
+
+  attachTooltip(el, () => {
+    if (held) {
+      const mods = modSummary(modFields, piece);
+      return `<b>${esc(piece.name)}</b><br>${esc(piece.rarity)} · ${esc(piece.hand)} hand`
+        + ((piece.tags || []).length ? `<br>${(piece.tags || []).map(esc).join(' · ')}` : '')
+        + (mods.length ? `<br>${mods.map(esc).join(' · ')}` : '')
+        + (piece.blurb ? `<br><i>${esc(piece.blurb)}</i>` : '');
+    }
+    // WITHHELD, and the tooltip is held to the same line the picture is. It says
+    // the rarity and the hand — which the ring and the section already say, so
+    // it reveals nothing new — and then why it is not yours. It does NOT say the
+    // name, the tags, the mods or the blurb, because a tooltip is not a loophole
+    // in the design; it is the same decision at a different magnification.
+    const head = named ? `<b>${esc(piece.name)}</b><br>` : '';
+    return `${head}${esc(piece.rarity)} · ${esc(piece.hand)} hand<br><i>${esc(hint || LOCK_COPY[gate] || '')}</i>`;
+  });
+  return el;
+}
+
+/**
+ * mountCompendium(app, { registries, meta, onBack })
+ *
+ * `meta.found` is the profile's permanent record of what it has ever held, and
+ * off-run it is the whole of "yours" — there is no loadout to carry anything.
+ * That makes this a PROFILE surface rather than a run surface, which is what
+ * being on the title menu already meant.
+ */
+function mountCompendium(app, { registries, meta = {}, onBack }) {
+  const eq = registries.equipment || {};
+  // WHAT IS YOURS IS NOT THIS SCREEN'S QUESTION (Viki, resolving the #90 merge).
+  // This read `meta.found` directly and built its own unlocked/available sets —
+  // a second definition of ownership, correct today and wrong the moment
+  // `balance.equipment.persistence` is not 'both'. One home, asked here:
+  // `loadout: null`, because off the title menu there is no run to carry
+  // anything, and the model already knows what that means for each persistence.
+  // Reading `registries.balance` rather than the imported module is the same
+  // narrowing — it is the object `ownership()` itself was handed.
+  const drops = (((registries.balance || {}).equipment || {}).drops) || {};
+  const owned = ownership(registries, { meta, loadout: null });
+  const unlockById = new Map((registries.unlocks || []).map((u) => [u.id, u]));
+
+  // The drawn set, and the denominator comes FROM IT rather than from the table.
+  // A 'hidden' piece is absent AND uncounted on purpose: "1 of 25" over
+  // twenty-four cells is the count advertising the shape of the hole the
+  // silhouettes were careful not to show. The two halves of one secret have to
+  // agree, so only one of them is allowed to do the arithmetic.
+  const drawn = [];
+  for (const piece of eq.armaments || []) {
+    const r = pieceReveal(piece, { owned, unlockById, drops });
+    if (r.state === 'hidden') continue;
+    drawn.push({ piece, r });
+  }
+  const total = drawn.length;
+  const heldCount = drawn.filter(({ r }) => r.state === 'held').length;
+
+  app.innerHTML = `
+    <div class="screen compendium" data-surface="compendium">
+      <h1 class="title-big">ARMAMENTS</h1>
+      <p class="subtitle">${heldCount} OF ${total} HELD</p>
+      <div class="cp-scroll"><div class="cp-sections"></div></div>
+      <button id="cp-back">BACK</button>
+    </div>`;
+
+  const host = app.querySelector('.cp-sections');
+  for (const sec of sections(drawn.map(({ piece }) => piece))) {
+    const mine = drawn.filter(({ piece }) => piece.kind === sec.kind);
+    const have = mine.filter(({ r }) => r.state === 'held').length;
+    const box = document.createElement('section');
+    box.className = 'cp-section';
+    box.innerHTML = `<h2 class="cp-head">${esc(sec.label)}<span class="cp-count">${have}/${mine.length}</span></h2>`
+      + '<div class="cp-grid"></div>';
+    const grid = box.querySelector('.cp-grid');
+    for (const { piece, r } of mine) grid.appendChild(cell(piece, r, eq.modFields));
+    host.appendChild(box);
+  }
+
+  app.querySelector('#cp-back').addEventListener('click', onBack);
+}
+
+
+Object.assign(module.exports, { mountCompendium });
 
 },
 "src/ui/components/intro.js": function (module, exports, require) {
