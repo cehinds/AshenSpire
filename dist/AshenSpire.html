@@ -621,6 +621,146 @@ body.hide-hints .hint-bar { display: none; }
 .mod-chip.forced { cursor: not-allowed; opacity: 0.85; }
 .mod-chip.forced::after { content: 'ASCENSION'; font-size: 0.8rem; letter-spacing: 0.12em; color: var(--ember); margin-top: 0.2rem; }
 .customrun .cz-label { color: var(--muted); font-size: 1.1rem; letter-spacing: 0.18em; margin-bottom: 0.6rem; }
+
+/* ---------- custom climb · run shape (the debug knobs) ----------
+   Freja, 2026-08-08. Constantine: "I only have the patience for 30 min runs.
+   perhaps add an advanced debug feature to limit the amount of max columns,
+   rows, and or columns with percent chance of certain nodes being more likely".
+
+   THE COMPOSITION CALL, stated because it is the part that is mine. This panel
+   sits below CLASS and ASCENSION and must not compete with them: it is folded
+   shut, its head is a quiet line, and the only bright thing inside it is the
+   NUMBER — one gold figure the eye lands on and watches move while a slider is
+   dragged. Everything else in here is muted on purpose. A debug panel that
+   shouts is a debug panel that gets read as the game.
+
+   LAW 5 — one axis. There is no horizontal strip anywhere in this panel and no
+   width-keyed variant of it: every row is a column (head line, then a full-width
+   slider), so the narrow shape IS the wide shape and there is no second
+   composition to drift. Nothing here can produce horizontal travel because
+   nothing here has a minimum width — the one flexible track is `minmax(0, 1fr)`
+   by construction.
+
+   LAW 4 — text metrics take the text unit; boxes do not. `font-size` and
+   `line-height` are rem. The tap floor, the track and the thumb are px through
+   `--tap-floor`, because a finger does not grow when Text size does. */
+.runshape { border: 1px solid var(--line); border-radius: 8px; background: rgba(0, 0, 0, 0.18); }
+.runshape-toggle {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  min-height: var(--tap-floor); height: auto;
+  padding: 6px 12px; text-align: left; cursor: pointer;
+  background: none; border: 0; border-radius: 8px; color: var(--muted);
+}
+.runshape-toggle:hover { color: var(--parchment); }
+.runshape .rs-title { font-size: 1.1rem; letter-spacing: 0.18em; flex: 1 1 auto; min-width: 0; }
+.runshape .rs-state {
+  font-size: 0.95rem; letter-spacing: 0.12em; color: var(--muted);
+  border: 1px solid var(--line-soft); border-radius: 4px; padding: 1px 5px;
+}
+.runshape.shaped .rs-state { color: var(--gold); border-color: var(--gold); }
+.runshape.shaped .rs-title { color: var(--gold); }
+.runshape .rs-caret { transition: transform 140ms; flex: 0 0 auto; }
+.runshape.open .rs-caret { transform: rotate(180deg); }
+/* THE GAP BETWEEN KNOBS IS BIGGER THAN THE AIR INSIDE ONE, and it has to be
+   stated as a number rather than left to taste: a 44 px slider box carries ~20 px
+   of empty track above and below its ink, so at the first draft's 14 px each
+   knob's own NOTE sat closer to the NEXT knob's label than to the slider it
+   describes. Read off the photograph, not the stylesheet.
+   px, not rem, throughout this block's box geometry — Law 4 clause 3, applied as
+   the ratchet it is: new writes take it, the tree is not swept. */
+.runshape-body { display: flex; flex-direction: column; gap: 26px; padding: 0 12px 14px; }
+.runshape .rs-intro { max-width: none; }
+
+/* The readout — the whole feature. A knob without a number is the thing that
+   shipped last time (mapconfig.js says the same sentence about the act length).
+   `tabular-nums` so the figure does not jitter sideways while it is dragged. */
+.rs-readout {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 10px 12px; border-radius: 6px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+}
+.rs-readout b { color: var(--gold); font-size: 2rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.rs-readout span { color: var(--muted); font-size: 1.05rem; line-height: 1.4; }
+.rs-readout .rs-boundary { color: var(--muted); font-size: 0.95rem; opacity: 0.85; }
+
+/* THREE TIERS, and the gaps are what say so. A 44 px slider box already carries
+   most of the air a row needs, so the spacing here is doing HIERARCHY, not
+   breathing room: `gap: 0` inside a knob binds its head, track and note into one
+   object; the body's `gap` between knobs is what separates them. The first draft
+   used one gap everywhere and the five weight rows read as an undifferentiated
+   stack with "Node odds" indistinguishable from "Monster" — measured by looking
+   at the photograph, which is the only way that class of mistake is ever found. */
+.rs-knob { display: flex; flex-direction: column; gap: 0; }
+.rs-knob-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  color: var(--parchment); font-size: 1.2rem;
+}
+.rs-knob-head .rs-val { color: var(--gold); font-variant-numeric: tabular-nums; }
+.rs-knob .rs-why { max-width: none; }
+/* Tier up: five weights are a GROUP, so their head reads as a section label and
+   not as a sixth control name. Same treatment `.cz-label` gives the sections
+   above it, so the panel borrows the screen's own hierarchy rather than a new one. */
+.rs-group-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  color: var(--muted); font-size: 1.1rem; letter-spacing: 0.18em;
+  padding-bottom: 4px; border-bottom: 1px solid var(--line);
+}
+.rs-group-head .rs-val { color: var(--muted); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.rs-group .rs-why { padding-top: 6px; }
+
+/* One slider rule for the panel. The BOX is the tap target (44 device px tall,
+   full width); the INK is small. Sunna's floor is about what a thumb can hit,
+   never about how loud a control looks — so the whole strip is draggable and
+   only the handle is drawn. */
+.rs-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; min-width: 0;
+  min-height: var(--tap-floor); height: var(--tap-floor);
+  background: none; cursor: pointer;
+}
+.rs-slider:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
+.rs-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--line-soft); }
+.rs-slider::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line-soft); }
+.rs-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 18px; height: 18px; margin-top: -7px; border-radius: 50%;
+  background: var(--gold); border: 1px solid var(--bg);
+}
+.rs-slider::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--gold); border: 1px solid var(--bg);
+}
+
+/* Name and share on one line, the track on the row under it — two lines at
+   EVERY width, so the narrow shape is the wide shape (Law 5 note above). The
+   head is a flex row whose only flexible child is `minmax(0, …)` by way of
+   `min-width: 0`, so a long node type wraps instead of pushing the row wide. */
+.rs-weights { display: flex; flex-direction: column; padding-top: 6px; }
+.rs-wrow { display: flex; flex-direction: column; }
+.rs-whead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rs-wrow .rs-wname {
+  color: var(--parchment); font-size: 1.1rem; text-transform: capitalize;
+  flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere;
+}
+.rs-wrow .rs-wpct {
+  color: var(--gold); font-size: 1.1rem; font-variant-numeric: tabular-nums; flex: 0 0 auto;
+}
+/* A zeroed weight reads as muted AND says "0%" — the word is the signal, the
+   colour is not (base.css: colour is never the only signal). */
+.rs-wrow .rs-wpct.zero { color: var(--muted); }
+/* `button.rs-reset`, not `.rs-reset` — MEASURED, not read. `button.subtle` in
+   base.css is (0,1,1) and a bare class is (0,1,0), so the first version of this
+   rule lost to it silently and the control came back 111.7 x 24.8 device px on a
+   390x844 phone: 56% of the floor it is supposed to clear, in a panel where the
+   thing beside it starts a run. Same specificity trap `button.ev-choice` above
+   is annotated for, found the same way — by photographing it, not by reading.
+   Law 4 clause 4: a fixed floor, `height: auto`, so it can neither clip at Text
+   XL nor balloon; px because a finger does not grow with Text size. */
+button.rs-reset {
+  align-self: flex-start;
+  min-height: var(--tap-floor); height: auto;
+  padding: 8px 20px;
+}
 .draft-grid { gap: 1.6rem; }
 .hx-custom { display: inline-block; margin-left: 0.6rem; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.9rem; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
 .farewell { gap: 2.2rem; }
@@ -3612,7 +3752,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  run.mapGraph = buildActMap(registries, rng, contentAct());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
   persist();
   showMap();
 }
@@ -3645,6 +3785,14 @@ function contentAct() {
   return endlessOn() ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
 }
 
+// The Custom Climb debug shape (floors cap, columns cap, node weights) or null
+// for an ordinary run. It rides on `run.custom`, so it is saved and reloaded
+// with everything else the run chose — a resumed short run stays short, and act
+// 2 is generated at the same shape act 1 was.
+function runMapShape() {
+  return (run.custom && run.custom.mapShape) || null;
+}
+
 // The map-build sequence itself lives in engine/actmap.js (the one boot path,
 // #54) — this file only decides which act and where the graph is stored.
 
@@ -3661,7 +3809,7 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
-  run.mapGraph = buildActMap(registries, rng, contentAct());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
   persist();
   showMap();
 }
@@ -9877,6 +10025,43 @@ const ACT_SHAPE = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// THE DEBUG RUN SHAPE — Constantine, 2026-08-08, verbatim:
+//
+//   "need to do a full run, but I only have the patience for 30 min runs.
+//    perhaps add an advanced debug feature to limit the amount of max columns,
+//    rows, and or columns with percent chance of certain nodes being more
+//    likely"
+//
+// Three knobs, and the entry below is the ONLY thing this feature adds to
+// content. Everything else about it is DERIVED (Law 0 clause 1):
+//
+//   floors cap    max = whatever THIS act authors above; min = the shortest act
+//                 this act's own floorRules can describe, found by ASKING
+//                 resolveFloorPlan (model/floorplan.js `minViableFloors`). Edit
+//                 the anchors above and the slider's low end moves on its own.
+//   columns cap   max = authored; min = the one number below, because "a
+//                 corridor is not a map" is a design call and not arithmetic.
+//   type weights  ONE SLIDER PER KEY OF `typeWeights` ABOVE. The Custom Climb
+//                 screen reads that object and builds its controls from it, so
+//                 adding a node type to the act adds a knob with zero UI edits.
+//                 That is this feature's Law 0 falsifier and it is testable.
+//
+// A CAP, not a setting: the effective value is min(authored, cap), so a cap
+// above the authored number does nothing — and the readout SAYS SO rather than
+// letting it look like it did something (Law 0 clause 5).
+const MAP_SHAPE_LIMITS = Object.freeze({
+  // Two columns is the floor because ONE column is a corridor: every walker
+  // lands on the same node, the act has zero choices, and the shape is
+  // identical every seed (Viki measured exactly this at pathCount 1 — 13 nodes,
+  // no decisions, 300 seeds). A short run is the ask; a run with no map is not.
+  minColumns: 2,
+  // The largest weight a knob may set. Weights are RELATIVE — the odds a type
+  // is rolled are its weight over the total — so this number is a slider end,
+  // not a percentage. The screen prints the derived share beside each one.
+  maxWeight: 100,
+});
+
 // All three acts share the SPEC §6 shape; per-act difficulty lives in the
 // encounter pools, not the map geometry. Distinct objects so future acts can
 // diverge without surprises — and now they genuinely can, because the anchors
@@ -9888,7 +10073,7 @@ const mapConfigs = {
 };
 
 
-Object.assign(module.exports, { mapConfigs });
+Object.assign(module.exports, { MAP_SHAPE_LIMITS, mapConfigs });
 
 },
 "src/content/generated/cardTags.js": function (module, exports, require) {
@@ -12782,6 +12967,14 @@ function resolveFloorPlan(config) {
     noShrineOn,
     minElites,
     minMerchants,
+    // THE SAME TWO NUMBERS, KEYED BY THE TYPE THEY FORCE — and it is a
+    // derivation of the pair above, not a second copy of them. mapgen honours
+    // these by FORCE-PLACING (relaxPlace) when the rolls do not produce them,
+    // which means a type named here cannot be rolled out of the act. Anything
+    // that wants to say so — applyRunShape's readout, a tool — needs the map
+    // rather than two hardcoded names, or it silently stops covering the third
+    // minimum the day one is added.
+    minima: { elite: minElites, merchant: minMerchants },
     unknownWeights,
   };
   return { plan, errors, readout };
@@ -12793,8 +12986,207 @@ function describePlan(config) {
   return readout.concat(errors.map((e) => `ERROR ${e.key}: ${e.msg}`));
 }
 
+/* ------------------------------------------------------------ THE RUN SHAPE --
+ *
+ * Constantine asked for a debug feature that caps floors and columns and biases
+ * the node roll, so a full run fits the patience he actually has. The knobs are
+ * data (`MAP_SHAPE_LIMITS` and the act's own `typeWeights`, content/mapconfig.js);
+ * this is the machinery that DERIVES an act from them.
+ *
+ * IT LIVES HERE AND NOT IN A NEW FILE ON PURPOSE. This module is already the one
+ * place that turns authored map data into the numbers the generator uses — "one
+ * resolution, three readers" is written at resolveFloorPlan above. A per-run
+ * override resolved anywhere else would be a second answer to "what does this
+ * act's config mean", which is the exact defect the anchors were built to end.
+ */
 
-Object.assign(module.exports, { NODE_TYPES, ANCHOR_KINDS, rollableFloors, resolveAnchor, resolveFloorPlan, describePlan });
+/** The closed set of things a run shape may say. A new key is an engine change. */
+const MAP_SHAPE_KEYS = Object.freeze(['floors', 'columns', 'typeWeights']);
+
+/**
+ * minViableFloors(config) → { floors } | { error }
+ *
+ * The shortest act THIS act's own floor rules can describe, found by asking
+ * rather than typing. At the shipped rules the answer is 4, and the reason is
+ * worth reading: at 3 floors the band is 2, `{ fraction: 0.64 }` rounds to
+ * floor 1, and floor 1 is already claimed by the fixed Monster — two rules
+ * collide and resolveFloorPlan refuses. A typed `min: 4` would be a constant
+ * whose MEANING moves when someone retunes 0.64 while the constant does not,
+ * which is the drift this file was written against.
+ */
+function minViableFloors(config) {
+  const ceiling = Number.isInteger(config && config.floors) ? config.floors : 0;
+  for (let f = 2; f <= ceiling; f++) {
+    if (resolveFloorPlan({ ...config, floors: f }).errors.length === 0) return { floors: f };
+  }
+  return { error: `no act length from 2 to ${ceiling} resolves this act's floor rules` };
+}
+
+/**
+ * applyRunShape(config, shape, limits) → { config, errors, readout, changed }
+ *
+ *   shape   { floors?, columns?, typeWeights?: { [nodeType]: number } } or null
+ *   limits  MAP_SHAPE_LIMITS from content — passed in, never imported, so this
+ *           model file keeps its "imports nothing" property and a tool can ask
+ *           the question against limits the game does not ship.
+ *
+ * `errors` is non-empty ⇒ THE SHAPE IS REFUSED and `config` comes back as the
+ * authored one, unchanged. Nothing here clamps a wrong value into a working
+ * one: a knob that quietly became a different knob is worse than a knob that
+ * says no (Law 1 clause 5).
+ *
+ * ON `viewRefusals` (model/mapview.js), which is NOT called here and it is a
+ * deliberate omission with a reason, not an oversight. That function refuses a
+ * `columns` value too WIDE to frame on a phone. This resolver can only ever
+ * SHRINK columns — the cap is `min(authored, cap)` — and both `maxFanoutSpan`
+ * (floor(columns/2)+1) and `spanWidth` are monotone non-decreasing in columns,
+ * so no shrink can newly fire a width refusal that the authored act did not
+ * already fire at boot. Importing the view into the generator's path to ask a
+ * question whose answer is fixed by construction is a coupling bought for
+ * nothing. If this ever grows a knob that WIDENS the act, that argument dies
+ * with it and the import becomes required.
+ */
+function applyRunShape(config, shape, limits) {
+  const errors = [];
+  const readout = [];
+  // NOTES are the subset of the readout a PLAYER has to read — the sentences
+  // that say "this knob did something other than what it looks like it did".
+  // They are pushed to both, so the screen prints the resolver's own words and
+  // there is no second wording of a caveat to drift (Law 1 clause 2).
+  const notes = [];
+  const note = (s) => { notes.push(s); readout.push(s); };
+  const lim = limits || {};
+  const refuse = () => ({ config, errors, readout, notes, changed: false });
+
+  if (shape == null) return { config, errors, readout, notes, changed: false };
+  if (typeof shape !== 'object' || Array.isArray(shape)) {
+    errors.push({ key: 'mapShape', msg: `must be an object like { floors: 8, columns: 5, typeWeights: { elite: 30 } }, got ${Array.isArray(shape) ? 'an array' : typeof shape}` });
+    return refuse();
+  }
+  for (const key of Object.keys(shape)) {
+    if (!MAP_SHAPE_KEYS.includes(key)) {
+      errors.push({ key: `mapShape.${key}`, msg: `is not a run-shape knob — one of ${MAP_SHAPE_KEYS.join(', ')}` });
+    }
+  }
+
+  // ---- the two caps ------------------------------------------------------
+  const cap = (key, min, whyMin) => {
+    const authored = config[key];
+    const v = shape[key];
+    if (v == null) { readout.push(`${key}: uncapped — the act's own ${authored}`); return authored; }
+    if (!Number.isInteger(v)) {
+      errors.push({ key: `mapShape.${key}`, msg: `must be a whole number of ${key}, got ${JSON.stringify(v)}` });
+      return authored;
+    }
+    if (min != null && v < min) {
+      errors.push({ key: `mapShape.${key}`, msg: `${v} is below ${min} — ${whyMin}` });
+      return authored;
+    }
+    if (v > authored) {
+      // Not an error: min() is the semantics and a cap above the act is simply
+      // slack. It is PRINTED, because a knob that silently did nothing is the
+      // failure this feature is most likely to ship with.
+      readout.push(`${key}: cap ${v} is above the ${authored} this act authors — NOT BINDING, the act keeps ${authored}`);
+      return authored;
+    }
+    readout.push(`${key}: ${authored} capped to ${v}`);
+    return v;
+  };
+
+  const mv = minViableFloors(config);
+  if (mv.error) errors.push({ key: 'mapShape.floors', msg: mv.error });
+  const floors = cap(
+    'floors',
+    mv.floors,
+    mv.floors == null ? 'this act has no viable length' :
+      `${mv.floors} is the shortest act this act's own floor rules resolve at (ask tools/mapplan.mjs --floors ${(mv.floors || 2) - 1} and read the collision)`
+  );
+  const columns = cap(
+    'columns',
+    lim.minColumns,
+    `${lim.minColumns} columns is the floor — one column is a corridor: every walker lands on the same node and the act has no choices in it`
+  );
+
+  // ---- the weights -------------------------------------------------------
+  // The knobs are DERIVED from the act's own typeWeights keys. An unknown key
+  // is refused by name and the legal set is printed, so the day a node type is
+  // added to the act the message changes with it and nothing here is retyped.
+  let typeWeights = config.typeWeights;
+  const authoredWeights = config.typeWeights;
+  if (shape.typeWeights != null) {
+    const w = shape.typeWeights;
+    if (typeof w !== 'object' || Array.isArray(w)) {
+      errors.push({ key: 'mapShape.typeWeights', msg: `must be an object of node type -> weight, got ${Array.isArray(w) ? 'an array' : typeof w}` });
+    } else if (!authoredWeights || typeof authoredWeights !== 'object') {
+      errors.push({ key: 'mapShape.typeWeights', msg: 'this act authors no typeWeights, so there is nothing to re-weight' });
+    } else {
+      const merged = { ...authoredWeights };
+      for (const [type, v] of Object.entries(w)) {
+        if (!Object.prototype.hasOwnProperty.call(authoredWeights, type)) {
+          errors.push({ key: `mapShape.typeWeights.${type}`, msg: `is not a node type this act rolls — one of ${Object.keys(authoredWeights).join(', ')}` });
+          continue;
+        }
+        if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) {
+          errors.push({ key: `mapShape.typeWeights.${type}`, msg: `must be a weight of 0 or more, got ${JSON.stringify(v)}` });
+          continue;
+        }
+        if (lim.maxWeight != null && v > lim.maxWeight) {
+          errors.push({ key: `mapShape.typeWeights.${type}`, msg: `${v} is above the ${lim.maxWeight} a run-shape knob may set` });
+          continue;
+        }
+        merged[type] = v;
+      }
+      const total = Object.values(merged).reduce((a, b) => a + b, 0);
+      if (total <= 0) {
+        errors.push({ key: 'mapShape.typeWeights', msg: 'every weight is zero — no type could ever be rolled and every node would fall back to Monster. Raise at least one above zero.' });
+      } else {
+        typeWeights = merged;
+        readout.push(`typeWeights: ${Object.entries(merged).map(([k, v]) => `${k} ${((v / total) * 100).toFixed(0)}%`).join(' · ')}`);
+        // THE ONE HONEST FOOTNOTE ON THIS KNOB, and it is not a bug: mapgen's
+        // rollType returns 'monster' when a node's every other type is barred
+        // (a floor rule, or the no-same-type-adjacent ban). So Monster at 0
+        // does not mean zero Monsters — it means Monster is never CHOSEN, only
+        // fallen back to. Said here rather than discovered on the map.
+        if (merged.monster === 0) {
+          note('Monster 0 — a node whose every other type is barred by a floor rule or the no-repeat-neighbour ban still falls back to Monster, so Monsters do not reach zero.');
+        }
+      }
+    }
+  }
+
+  if (errors.length) return refuse();
+
+  const next = { ...config, floors, columns, typeWeights };
+  const changed = floors !== config.floors || columns !== config.columns || typeWeights !== config.typeWeights;
+  if (!changed) return { config, errors, readout, notes, changed: false };
+
+  // The shortened act must still resolve its OWN rules — the anchors move with
+  // `floors`, so this is not a formality: it is the check that makes the cap
+  // safe to expose to a slider. One resolution, and it is the same one the
+  // generator will run.
+  const { plan, errors: planErrors, readout: planReadout } = resolveFloorPlan(next);
+  for (const e of planErrors) errors.push({ key: `mapShape -> ${e.key}`, msg: e.msg });
+  if (errors.length) return refuse();
+
+  // A WEIGHT OF ZERO THAT STILL PRODUCES THE TYPE, SAID OUT LOUD. Found by the
+  // test that asserted it reached zero and did not: `minElites: 2` is a hard
+  // promise the generator keeps by FORCE-PLACING elites when the rolls never
+  // made one, so Elite at weight 0 still lands two per act. That is correct
+  // behaviour and it is exactly the shape of Law 0 clause 5 — the knob looks
+  // ignored. It is not ignored; it is outranked, and the reader is told which.
+  for (const [type, floorCount] of Object.entries(plan.minima || {})) {
+    if (floorCount > 0 && typeWeights[type] === 0) {
+      note(`${type[0].toUpperCase()}${type.slice(1)} 0 — but this act promises at least ${floorCount} a map, so ${floorCount} are force-placed. Zero weight means never ROLLED, not never present.`);
+    }
+  }
+
+  readout.push(...planReadout.map((l) => `  ${l}`));
+
+  return { config: next, errors, readout, notes, changed: true };
+}
+
+
+Object.assign(module.exports, { NODE_TYPES, ANCHOR_KINDS, rollableFloors, resolveAnchor, resolveFloorPlan, describePlan, MAP_SHAPE_KEYS, minViableFloors, applyRunShape });
 
 },
 "src/model/mapview.js": function (module, exports, require) {
@@ -16062,6 +16454,10 @@ function isCustomRun(custom) {
   if (!custom) return false;
   if (custom.ascension > 0) return true;
   if (custom.deckMode && custom.deckMode !== 'standard') return true;
+  // A run whose map was capped or re-weighted is not the game the win rate is
+  // about. Missing this line would have let a deliberately-shortened debug run
+  // count as a win against the real climb — the whole point of the flag.
+  if (custom.mapShape && Object.keys(custom.mapShape).length) return true;
   return !!(custom.mods && Object.values(custom.mods).some(Boolean));
 }
 
@@ -16306,6 +16702,26 @@ function seedProblem(str) {
   return scanSeed(str).why;
 }
 
+/**
+ * sweepSeed(i) → a uint32 that is genuinely different for every i.
+ *
+ * THE ONE HOME FOR "give me the i-th seed of a sweep", and it exists because
+ * getting it wrong is invisible. `createRng('mapplan-3')` is `'mapplan-3' >>> 0`,
+ * which is 0 — for EVERY i. tools/mapplan.mjs's first run reported 24 seeds with
+ * a range of 52-52 and nearly shipped: that was ONE seed measured 24 times,
+ * wearing a distribution's clothes, and it was caught only because a count read
+ * exactly 52.00 twenty-four times.
+ *
+ * Knuth's multiplicative hash on (i + 1), so index 0 is not seed 0. Every sweep
+ * in the tree — the tool, the tests, and the live estimate the Custom Climb
+ * screen prints while a knob is dragged — draws from this function, so a
+ * distribution measured in one of them is the same distribution in the others.
+ * A caller that writes its own is reintroducing the defect this export deletes.
+ */
+function sweepSeed(i) {
+  return Math.imul((i | 0) + 1, 2654435761) >>> 0;
+}
+
 function seedToString(seed) {
   let n = seed >>> 0;
   if (n === 0) return '0';
@@ -16326,7 +16742,7 @@ function seedFromString(str) {
 }
 
 
-Object.assign(module.exports, { STREAM_NAMES, mulberry32, createRng, SEED_MAX_LEN, seedProblem, seedToString, seedFromString });
+Object.assign(module.exports, { STREAM_NAMES, mulberry32, createRng, SEED_MAX_LEN, seedProblem, sweepSeed, seedToString, seedFromString });
 
 },
 "src/engine/combat.js": function (module, exports, require) {
@@ -18377,9 +18793,11 @@ Object.assign(module.exports, { emitEvent, fireOwnerHooks, findEntity, checkPhas
 
 const { generateActMap } = require("src/engine/mapgen.js");
 const { resolveUnknownNode } = require("src/engine/encounters.js");
+const { applyRunShape } = require("src/model/floorplan.js");
+const { MAP_SHAPE_LIMITS } = require("src/content/mapconfig.js");
 
 /**
- * buildActMap(registries, rng, act) → mapGraph
+ * buildActMap(registries, rng, act, mapShape) → mapGraph
  *
  * `act` is the CONTENT act (the caller answers Endless looping — main.js and
  * the tools pass their contentAct), required for the same reason
@@ -18387,9 +18805,26 @@ const { resolveUnknownNode } = require("src/engine/encounters.js");
  * authored. Unknown (?) nodes come back with `.resolved` already set, so a
  * node's outcome is seed-determined at map birth and the Sealstone Key can
  * reveal it (SPEC §6).
+ *
+ * `mapShape` is the Custom Climb debug shape (`run.custom.mapShape`) or null.
+ * It is applied HERE, in the one act-boot path, for exactly the reason this file
+ * exists: a per-run override applied at each of the four call sites would be
+ * four copies of one fact, and the fourth would be the one that forgets. Absent
+ * ⇒ byte-for-byte today's act, so every existing seed replays unchanged.
+ *
+ * A shape that does not resolve THROWS and names the knob. The screen refuses
+ * it before the run starts (ui/screens/customRun.js), so reaching this throw
+ * means a shape arrived from somewhere the screen does not guard — a hand-edited
+ * save, a future caller. That is precisely when a loud failure is worth its cost.
  */
-function buildActMap(registries, rng, act) {
-  const map = generateActMap({ config: registries.mapConfig(act), rng });
+function buildActMap(registries, rng, act, mapShape = null) {
+  const authored = registries.mapConfig(act);
+  const shaped = applyRunShape(authored, mapShape, MAP_SHAPE_LIMITS);
+  if (shaped.errors.length) {
+    throw new Error(`buildActMap: this run's map shape does not resolve — ${
+      shaped.errors.map((e) => `${e.key}: ${e.msg}`).join(' · ')}`);
+  }
+  const map = generateActMap({ config: shaped.config, rng });
   const assigned = [];
   for (const node of Object.values(map.nodes)) {
     if (node.type === 'event') {
@@ -18416,8 +18851,46 @@ Object.assign(module.exports, { buildActMap });
 // Headless: no document/window/localStorage/timers.
 
 const { resolveFloorPlan } = require("src/model/floorplan.js");
+const { createRng, sweepSeed } = require("src/engine/rng.js");
 
 const TYPING_RETRIES = 40;
+
+/**
+ * sampleActShape(config, seeds) → { seeds, nodes: {mean,min,max}, byType: {...} }
+ *
+ * HOW BIG IS AN ACT AT THIS CONFIG, over a distribution and never on one seed.
+ *
+ * Constantine asked for a 30-minute run, and the thing that drives run length is
+ * how many nodes he has to stop on. He cannot be handed a knob and a promise —
+ * he has to be handed the number, and it has to move while he drags. So this is
+ * the ONE sampler: the Custom Climb screen prints it live, tools/mapplan.mjs
+ * prints it in the before/after table, and the tests assert on it. Three readers,
+ * one measurement, so a screen can never quote a figure the tool disagrees with.
+ *
+ * Seeds come from `sweepSeed` (engine/rng.js) for the reason written there: a
+ * sweep whose seeds all collapse to 0 prints a perfect distribution of one graph.
+ *
+ * WHAT IT IS NOT: wall-clock. Nobody in this tree can measure minutes. Node count
+ * is the driver of run length, not run length, and every caller says so out loud.
+ */
+function sampleActShape(config, seeds = 24) {
+  const counts = [];
+  const byType = {};
+  for (let i = 0; i < seeds; i++) {
+    const g = generateActMap({ config, rng: createRng(sweepSeed(i)) });
+    const all = Object.values(g.nodes);
+    counts.push(all.length);
+    for (const n of all) byType[n.type] = (byType[n.type] || 0) + 1;
+  }
+  const stat = (xs) => ({
+    mean: Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 100) / 100,
+    min: Math.min(...xs),
+    max: Math.max(...xs),
+  });
+  const perAct = {};
+  for (const [t, n] of Object.entries(byType)) perAct[t] = Math.round((n / seeds) * 100) / 100;
+  return { seeds, nodes: stat(counts), byType: perAct };
+}
 
 /**
  * generateActMap({ config, rng }) → {
@@ -18622,7 +19095,7 @@ function clamp(v, lo, hi) {
 }
 
 
-Object.assign(module.exports, { generateActMap });
+Object.assign(module.exports, { sampleActShape, generateActMap });
 
 },
 "src/engine/encounters.js": function (module, exports, require) {
@@ -21849,10 +22322,16 @@ Object.assign(module.exports, { SEED_PROMISE, attachSeedField });
 const { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, activeMods } = require("src/content/customMods.js");
 
 
+const { MAP_SHAPE_LIMITS } = require("src/content/mapconfig.js");
+const { applyRunShape, minViableFloors } = require("src/model/floorplan.js");
+const { sampleActShape } = require("src/engine/mapgen.js");
 const { classGlyph } = require("src/ui/assets.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { refusesWhen } = require("src/ui/components/refusal.js");
 const { attachSeedField } = require("src/ui/components/seedfield.js");
+
+/** How many seeds the live estimate averages. Named, because it is printed. */
+const ESTIMATE_SEEDS = 24;
 
 function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -21861,6 +22340,71 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     mods: {}, // explicit toggles (on top of ascension-enabled rules)
     deckMode: 'standard',
   };
+
+  // ---- the run shape: every bound below is DERIVED from the acts themselves --
+  // Nothing about the three knobs is typed on this screen. `acts` is whatever
+  // content authors; the floors slider's low end is what those acts' own floor
+  // rules resolve at; the weight rows ARE the keys of `typeWeights`. Add a node
+  // type to content/mapconfig.js and a slider appears here with no edit to this
+  // file — that is the Law 0 falsifier for this feature, and it is why the loop
+  // below reads the act instead of a list.
+  const acts = Object.entries(registries.mapConfigs || {})
+    .map(([act, cfg]) => ({ act: Number(act), cfg }))
+    .sort((a, b) => a.act - b.act);
+  const baseCfg = acts.length ? acts[0].cfg : null;
+  const shapeable = !!(baseCfg && baseCfg.typeWeights);
+  const floorsMax = shapeable ? Math.max(...acts.map((a) => a.cfg.floors)) : 0;
+  const colsMax = shapeable ? Math.max(...acts.map((a) => a.cfg.columns)) : 0;
+  // The shortest act every act's own rules survive — the strictest of them, so
+  // a cap the slider offers cannot break act 3 while act 1 is fine.
+  const floorsMin = shapeable
+    ? acts.reduce((worst, a) => {
+      const m = minViableFloors(a.cfg);
+      return m.error ? Math.max(worst, floorsMax) : Math.max(worst, m.floors);
+    }, 2)
+    : 0;
+  const weightKeys = shapeable ? Object.keys(baseCfg.typeWeights) : [];
+  // Live knob positions start ON the authored values, so an untouched section
+  // emits no shape at all and every existing seed replays byte for byte.
+  const shape = {
+    floors: floorsMax,
+    columns: colsMax,
+    weights: shapeable ? { ...baseCfg.typeWeights } : {},
+  };
+
+  /**
+   * The entry this screen hands the orchestrator — ONLY what differs from the
+   * authored act. A shape of `{}` is `null`: "he opened the panel and changed
+   * nothing" and "he never opened it" must produce the same run.
+   */
+  function mapShapeEntry() {
+    if (!shapeable) return null;
+    const out = {};
+    if (shape.floors < floorsMax) out.floors = shape.floors;
+    if (shape.columns < colsMax) out.columns = shape.columns;
+    const w = {};
+    for (const k of weightKeys) if (shape.weights[k] !== baseCfg.typeWeights[k]) w[k] = shape.weights[k];
+    if (Object.keys(w).length) out.typeWeights = w;
+    return Object.keys(out).length ? out : null;
+  }
+
+  /** Every act resolved at the current shape — the one place the screen asks. */
+  function resolveShape() {
+    const entry = mapShapeEntry();
+    return acts.map(({ act, cfg }) => ({ act, entry, ...applyRunShape(cfg, entry, MAP_SHAPE_LIMITS) }));
+  }
+
+  /**
+   * The refusal sentence, or null. The SAME resolver the generator will run, so
+   * a shape this screen accepts cannot throw at act build and a shape it refuses
+   * names the same knob the engine would have named.
+   */
+  function shapeProblem() {
+    for (const r of resolveShape()) {
+      if (r.errors.length) return `Act ${r.act}: ${r.errors.map((e) => `${e.key} — ${e.msg}`).join(' · ')}`;
+    }
+    return null;
+  }
 
   app.innerHTML = `
     <div class="screen customrun" style="justify-content:flex-start;overflow-y:auto;gap:16px;padding-top:26px">
@@ -21879,6 +22423,50 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
         <div><p class="cz-label">DIFFICULTY RULES</p><div id="cr-diff" class="mod-grid"></div></div>
         <div><p class="cz-label">CHAOS</p><div id="cr-chaos" class="mod-grid"></div></div>
         <div><p class="cz-label">STARTING DECK</p><div id="cr-deck" class="mod-grid"></div></div>
+
+        ${shapeable ? `
+        <div class="runshape" id="cr-shape">
+          <button class="runshape-toggle" id="cr-shape-toggle" aria-expanded="false" aria-controls="cr-shape-body">
+            <span class="rs-title">ADVANCED · DEBUG — RUN SHAPE</span>
+            <span class="rs-state" id="cr-shape-state">off</span>
+            <span class="rs-caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="runshape-body" id="cr-shape-body" hidden>
+            <p class="set-note rs-intro">Shorten the climb. Caps the act, and biases what the map rolls — for testing a full run in one sitting.</p>
+
+            <div class="rs-readout">
+              <b id="cr-shape-big">—</b>
+              <span id="cr-shape-sub"></span>
+              <span class="rs-boundary" id="cr-shape-bound"></span>
+            </div>
+
+            <div class="rs-knob">
+              <label class="rs-knob-head" for="cr-shape-floors">
+                <span>Floors per act</span><span class="rs-val" id="cr-shape-floors-val">${floorsMax}</span>
+              </label>
+              <input class="rs-slider" id="cr-shape-floors" type="range"
+                     min="${floorsMin}" max="${floorsMax}" step="1" value="${floorsMax}">
+              <p class="set-note rs-why" id="cr-shape-floors-why"></p>
+            </div>
+
+            <div class="rs-knob">
+              <label class="rs-knob-head" for="cr-shape-cols">
+                <span>Map width</span><span class="rs-val" id="cr-shape-cols-val">${colsMax}</span>
+              </label>
+              <input class="rs-slider" id="cr-shape-cols" type="range"
+                     min="${MAP_SHAPE_LIMITS.minColumns}" max="${colsMax}" step="1" value="${colsMax}">
+              <p class="set-note rs-why">Columns the walkers may spread across. Narrower is a shorter, straighter act.</p>
+            </div>
+
+            <div class="rs-knob rs-group">
+              <p class="rs-group-head"><span>NODE ODDS</span><span class="rs-val" id="cr-shape-odds-val"></span></p>
+              <div class="rs-weights" id="cr-shape-weights"></div>
+              <p class="set-note rs-why" id="cr-shape-weights-why"></p>
+            </div>
+
+            <button class="subtle rs-reset" id="cr-shape-reset">Reset run shape</button>
+          </div>
+        </div>` : ''}
 
         <div class="seed-line">Seed <input id="cr-seed" type="text" value="${esc(defaultSeedString)}"></div>
       </div>
@@ -21964,12 +22552,130 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     deckBox.appendChild(el);
   });
 
+  // ---- the run shape: controls, and the number that answers the ask --------
+  //
+  // "I only have the patience for 30 min runs." NOBODY IN THIS TREE CAN MEASURE
+  // MINUTES, and a knob handed over with a promise attached is the shape of
+  // every feature this family has had to go back and check. What CAN be
+  // measured is the thing that drives the length: how many nodes he has to stop
+  // on. So the readout is the feature, and it moves while he drags — one live
+  // sample, `sampleActShape`, the same function tools/mapplan.mjs prints from.
+  let refreshShape = () => {};
+  if (shapeable) {
+    const weightsBox = $('#cr-shape-weights');
+    const sliders = {};
+    for (const key of weightKeys) {
+      const row = document.createElement('div');
+      row.className = 'rs-wrow';
+      row.innerHTML = `<span class="rs-whead">`
+        + `<span class="rs-wname">${esc(key)}</span>`
+        + `<span class="rs-wpct" data-pct="${esc(key)}">—</span></span>`
+        + `<input class="rs-slider" type="range" min="0" max="${MAP_SHAPE_LIMITS.maxWeight}" step="1"`
+        + ` value="${baseCfg.typeWeights[key]}" data-weight="${esc(key)}"`
+        + ` aria-label="${esc(key)} roll weight">`;
+      const input = row.querySelector('input');
+      input.addEventListener('input', () => {
+        shape.weights[key] = Number(input.value);
+        refreshShape();
+      });
+      sliders[key] = input;
+      weightsBox.appendChild(row);
+    }
+
+    const floorsEl = $('#cr-shape-floors');
+    const colsEl = $('#cr-shape-cols');
+    floorsEl.addEventListener('input', () => { shape.floors = Number(floorsEl.value); refreshShape(); });
+    colsEl.addEventListener('input', () => { shape.columns = Number(colsEl.value); refreshShape(); });
+
+    const toggle = $('#cr-shape-toggle');
+    const body = $('#cr-shape-body');
+    toggle.addEventListener('click', () => {
+      const open = body.hasAttribute('hidden');
+      if (open) body.removeAttribute('hidden'); else body.setAttribute('hidden', '');
+      toggle.setAttribute('aria-expanded', String(open));
+      $('#cr-shape').classList.toggle('open', open);
+    });
+
+    $('#cr-shape-reset').addEventListener('click', () => {
+      shape.floors = floorsMax;
+      shape.columns = colsMax;
+      for (const k of weightKeys) shape.weights[k] = baseCfg.typeWeights[k];
+      floorsEl.value = String(floorsMax);
+      colsEl.value = String(colsMax);
+      for (const k of weightKeys) sliders[k].value = String(baseCfg.typeWeights[k]);
+      refreshShape();
+    });
+
+    // The DEFAULT climb, measured once at mount — the reference the shaped
+    // number is read against. Measured, never typed: the day an act's shape
+    // changes, this moves with it.
+    const defaultTotal = acts.reduce(
+      (sum, a) => sum + sampleActShape(a.cfg, ESTIMATE_SEEDS).nodes.mean, 0
+    );
+
+    refreshShape = () => {
+      const resolved = resolveShape();
+      const entry = mapShapeEntry();
+      $('#cr-shape-floors-val').textContent = String(shape.floors);
+      $('#cr-shape-cols-val').textContent = String(shape.columns);
+      $('#cr-shape-state').textContent = entry ? 'on' : 'off';
+      $('#cr-shape').classList.toggle('shaped', !!entry);
+
+      // The derived share beside every weight — the "percent chance" he asked
+      // for, computed from the weights rather than restated as one.
+      const total = weightKeys.reduce((a, k) => a + shape.weights[k], 0);
+      for (const key of weightKeys) {
+        const cell = weightsBox.querySelector(`[data-pct="${key}"]`);
+        cell.textContent = total > 0 ? `${Math.round((shape.weights[key] / total) * 100)}%` : '—';
+        cell.classList.toggle('zero', shape.weights[key] === 0);
+      }
+      $('#cr-shape-odds-val').textContent = total > 0 ? `${total} total weight` : 'no weight';
+      // THE CAVEATS ARE THE RESOLVER'S OWN SENTENCES, not this screen's. Every
+      // way a weight can mean less than it looks — Monster's fallback, a type
+      // the act force-places to keep a minimum — is written once, in
+      // applyRunShape, and printed here. A second wording on the screen is a
+      // second copy of a fact, and it would be the copy that goes stale.
+      const notes = resolved.flatMap((r) => r.notes || []);
+      $('#cr-shape-weights-why').textContent =
+        ['Share of the roll, not of the finished map — floor rules and the no-repeat-neighbour ban still override it.']
+          .concat([...new Set(notes)]).join(' ');
+
+      const problem = resolved.find((r) => r.errors.length);
+      const big = $('#cr-shape-big');
+      const sub = $('#cr-shape-sub');
+      const bound = $('#cr-shape-bound');
+      if (problem) {
+        big.textContent = '—';
+        sub.textContent = `Act ${problem.act}: ${problem.errors[0].msg}`;
+        bound.textContent = '';
+      } else {
+        const per = resolved.map((r) => sampleActShape(r.config, ESTIMATE_SEEDS));
+        const climb = per.reduce((a, s) => a + s.nodes.mean, 0);
+        const lo = per.reduce((a, s) => a + s.nodes.min, 0);
+        const hi = per.reduce((a, s) => a + s.nodes.max, 0);
+        big.textContent = `≈ ${Math.round(climb)} stops`;
+        sub.textContent = `over ${per.length} act${per.length === 1 ? '' : 's'}`
+          + ` · range ${lo}–${hi} · default is ≈ ${Math.round(defaultTotal)}`
+          + (entry ? ` · ${Math.round((1 - climb / defaultTotal) * 100)}% shorter` : '');
+        bound.textContent = `nodes across ${ESTIMATE_SEEDS} seeds — the driver of run length, not minutes`;
+      }
+
+      seedRefusal();
+    };
+  }
+
   // Custom Climb is the screen Constantine asked for so a short run could be
   // REPEATED, and this field is what makes a run repeatable. Same component,
   // same sentence, same refusal as the ordinary new-run screen — the vocabulary
   // is not retyped here, and there is no second place for it to drift.
   const seed = attachSeedField($('#cr-seed'));
-  const seedRefusal = refusesWhen($('#cr-start'), () => seed.problem(), () => {
+  // ONE reason function for the one button. The seed field and the run shape
+  // both refuse here, and they refuse through the same component for the same
+  // reason: a control a player can see and cannot use has to say why, where
+  // they are looking. Two independent guards on one button would be two chances
+  // to disagree about whether it is usable.
+  const startProblem = () => seed.problem() || shapeProblem();
+  const seedRefusal = refusesWhen($('#cr-start'), startProblem, () => {
     const cls = registries.classes.all().find((c) => c.id === state.classId);
     return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
       + ` at <b>Ascension ${state.ascension}</b>.<br>Results are kept out of win-rate stats.`;
@@ -21978,15 +22684,28 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
 
   $('#cr-back').addEventListener('click', onBack);
   $('#cr-start').addEventListener('click', () => {
-    if (seed.problem()) return; // the refusal already said why, at the button
+    if (startProblem()) return; // the refusal already said why, at the button
+    const mapShape = mapShapeEntry();
     onStart({
       classId: state.classId,
       seedString: $('#cr-seed').value.trim(),
-      custom: { ascension: state.ascension, mods: { ...state.mods }, deckMode: state.deckMode },
+      custom: {
+        ascension: state.ascension,
+        mods: { ...state.mods },
+        deckMode: state.deckMode,
+        // Absent, not null, when untouched — `custom` keeps the exact shape it
+        // has always had for an ordinary Custom Climb.
+        ...(mapShape ? { mapShape } : {}),
+      },
     });
   });
 
   refreshModChips();
+  if (shapeable) {
+    $('#cr-shape-floors-why').textContent =
+      `${floorsMin} is the shortest act this content's own floor rules resolve at — below it two fixed ranks land on the same floor.`;
+    refreshShape();
+  }
 }
 
 
