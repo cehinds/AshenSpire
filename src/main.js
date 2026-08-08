@@ -1454,6 +1454,29 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // NOT a fresh location.search read, which the note up there forbids, for the
   // reason it gives: that const IS the gate's reach.
   newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
+  // `?shotAt=<nodeId|floor:N>` — STAND SOMEWHERE ON THE MAP.
+  //
+  // A REACH STATE, same shape and same reason as `?shotEvent` above. Every map
+  // measurement this repo has ever taken was taken at the entrance row, because
+  // that is the only map position any instrument could open — so "the framing
+  // hides a next-step option" was 12 numbers about one screen out of thirteen.
+  // The framing MID-CLIMB is a different problem with a different shape (the
+  // fan-out from one node, not the spread of the doors), and it could not be
+  // measured at all. `floor:N` picks a node on that floor rather than naming an
+  // id, so a sweep can walk the act without knowing the graph first.
+  const shotAt = shotState === 'map' ? shotParams.get('shotAt') : null;
+  if (shotAt) {
+    const g = run.mapGraph;
+    const byFloor = /^floor:(\d+)$/.exec(shotAt);
+    const at = byFloor
+      ? Object.values(g.nodes).filter((n) => n.floor === Number(byFloor[1])).map((n) => n.id)[0]
+      : (g.nodes[shotAt] ? shotAt : null);
+    if (!at) throw new Error(`?shotAt=${shotAt}: no such node in this act. Use a node id (n4_2) or floor:N — a silent fallback here would report a framing measured somewhere else.`);
+    run.mapNodeId = at;
+    run.floor = g.nodes[at].floor;
+    run.path = [at];
+    showMap();
+  }
   if (shotState === 'death') {
     // A run that ended on floor 4 with a few fights behind it, so the stats
     // table has real numbers under the title instead of a row of zeroes.
