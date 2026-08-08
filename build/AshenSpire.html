@@ -14320,21 +14320,36 @@ function canEquip(registries, slotId, ctx) {
  * screen draws what `openedSets` opens and this refuses what it does not, so the
  * two cannot disagree about a cell.
  *
- * OPEN, FOUND BY VIRA GATING #98, AND CARDED AS ITS OWN ACT — read this before
- * adding a slot. THIS SIGNATURE HAS NO `inCombat` AT ALL, so the question is not
- * whether it checks the swap rule but whether it CAN: `canSwap` is enforced by
- * both callers and by neither of them structurally. That is a different failure
- * from a second copy — a duplicate fails by divergence, an unenforced gate fails
- * by bypass — and it has a live cell: `talisman` (`swap=outOfCombat`, `sets=3`)
- * MOVES mid-fight, against its own data. Every test of this function uses
- * `rightHand`, where the missing gate is vacuous, which is why nothing was red.
- * It is dormant only because talismans are unauthored — one CSV row under Law 1
- * clause 1 wakes it. The fixture that proves any fix is the same wide, rung-less
- * talisman slot `engine.test.js` already builds for the too-few-rungs check, and
- * nobody had connected the two; that act should build it once and hang both
- * gates on it. NOT taken here: closing it changes this signature, and this
- * signature is on the engine's priced swap path (`doSwapArmament`), which is the
- * one thing #95 and #98 deliberately did not touch.
+ * THE SWAP RULE IS ASKED HERE NOW, AND THAT IS THE WHOLE CHANGE (#104, Vira,
+ * found while gating #98 and carded as its own act). This signature used to have
+ * no `inCombat` at all, so the question was never whether it CHECKED the swap
+ * rule but whether it COULD: `canSwap` was enforced by both callers and by
+ * neither of them structurally. **A second copy fails by divergence; an
+ * unenforced gate fails by bypass** — different defects, and only the second one
+ * was here. It had a live cell: `talisman` (`swap=outOfCombat`, `sets=3`) MOVED
+ * mid-fight, against its own data, and every test of this function used
+ * `rightHand`, where the missing gate is vacuous — which is why nothing was red.
+ * Dormant only because talismans are unauthored: one CSV row under Law 1 clause 1
+ * wakes it, so this is a content fact away from live, not a hypothetical.
+ *
+ * IT ASKS `canSwap`; IT DOES NOT RESTATE IT. The rule keeps its one home — no
+ * `slot.swap` comparison is written in this function, and the sentence a player
+ * reads is not typed here. `doSwapArmament` still calls `canSwap` itself because
+ * it needs the REASON to throw before it charges the price; that is the same
+ * function answering two questions (may I / what do I tell them), not two copies
+ * of the rule. Both callers and the mutation now agree by construction.
+ *
+ * `inCombat` IS REQUIRED AND FAILS CLOSED, exactly as `equipPiece`'s is and for
+ * the reason written there: a context defaulting to "not in combat" makes
+ * SILENCE MEAN PERMISSION, which is how every hole in this module got in. The
+ * check is on the VALUE, not the key — `{ inCombat: undefined }` is what a caller
+ * produces by forwarding a variable that was never set, and it refuses too.
+ *
+ * WHAT THIS DOES NOT CLOSE, said plainly because the next act needs it: the
+ * PRICE. `balance.equipment.swapCost` is charged in `doSwapArmament`, outside
+ * this function, so a caller reaching here directly still moves a `swap=combat`
+ * slot mid-fight for 0 Energy instead of 2. The gate above stops the sealed slots
+ * only. The cost is the next act and it hangs on this argument.
  *
  * `registries` moves to the front like everything else in this module, which is
  * also what makes a call site left on the old signature fail CLOSED: the old
@@ -14348,18 +14363,20 @@ function cycleSet(registries, loadout, slotId, index, ctx) {
   if (!slot) {
     console.error(
       `cycleSet('${slotId}', ${index}): no such slot in registries.equipment — refusing.`
-      + ' Call it as cycleSet(registries, loadout, slotId, index, { meta }).'
+      + ' Call it as cycleSet(registries, loadout, slotId, index, { meta, inCombat }).'
       + ' This line is the defect, not the refusal.'
     );
     return false;
   }
-  if (!ctx || typeof ctx !== 'object') {
+  if (!ctx || typeof ctx !== 'object' || typeof ctx.inCombat !== 'boolean') {
     console.error(
-      `cycleSet('${slotId}', ${index}): called with no ladder context — refusing.`
-      + ' Pass { meta } so the bound is openedSets() and not the raw array.'
+      `cycleSet('${slotId}', ${index}): no boolean \`inCombat\` in the context — refusing.`
+      + ` Got ${JSON.stringify(ctx)}. Pass { meta, inCombat } so the bound is`
+      + ' openedSets() and the seal is canSwap(). This line is the defect, not the refusal.'
     );
     return false;
   }
+  if (!canSwap(registries, slotId, { inCombat: ctx.inCombat }).ok) return false;
   if (index >= openedSets(registries, slot, { meta: ctx.meta || {}, loadout })) return false;
   loadout.active[slotId] = index;
   return true;
@@ -15679,7 +15696,11 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // `equipView` and the fold, not a new one: an earned-but-EMPTY set is not
   // reachable mid-fight. Making it reachable means giving combat the profile,
   // which is a different card and not one to open inside a gate.
-  if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, { meta: {} })) {
+  // AND `inCombat` IS NOW REQUIRED THERE TOO (#104, Vira). The `canSwap` above
+  // is kept — it supplies the REASON this throws with, before the price is
+  // charged — but it is no longer the only thing enforcing the seal: the
+  // mutation asks the same function. Two questions, one home, no second copy.
+  if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, { meta: {}, inCombat: true })) {
     throw new Error(`No set ${setIndex} on '${slotId}'`);
   }
 
@@ -26823,7 +26844,7 @@ function mountEquipment(host, {
             if (refused) { notice = refused; draw(); }
             return;
           }
-          cycleSet(registries, run.loadout, slot.id, i, { meta });
+          cycleSet(registries, run.loadout, slot.id, i, { meta, inCombat });
           sfx.play('cardPlay');
           commit();
         } else {
