@@ -12,6 +12,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { resolveFloorPlan } from './floorplan.js';
+import { assertTableSane } from './secondbeat.js';
 import { viewRefusals, geometryRefusals } from './mapview.js';
 import {
   SCHEMAS,
@@ -271,6 +272,15 @@ export function validateContent(bundle) {
       }
     }
   }
+  // THE SECOND-BEAT TABLE, checked at the same boot and for the same reason as
+  // the dial above. It is CODE, not content, so it can never be a row a
+  // designer breaks — but it is a table, and a table whose row is malformed
+  // resolves to a plausible 'none' and takes a safety step off a button with
+  // nothing on the screen looking different. That is Law 0 clause 5 exactly:
+  // the dangerous failure is the silent plausible derivation, so the derivation
+  // is asked to prove itself out loud on every boot that validates anything.
+  for (const complaint of assertTableSane()) err('secondBeat', complaint);
+
   // THE MAP'S VERTICAL MARGIN, and it belongs here because it has exactly one
   // data input. `balance.ui.tapSize.def` is what the map node's radius is SOLVED
   // FROM (model/mapview.js), so raising it grows the target and eats the space

@@ -991,10 +991,16 @@ button.ev-choice {
       no box; Law 4 clause 5 — it is inline typographic adornment sitting in
       the line of text it belongs to, so it tracks Text size on purpose while
       the bar's `min-height: var(--tap-floor)` above stays text-independent. */
-button.ev-choice.ev-hold {
+/* `.beat-hold`, not `.ev-hold`, AND NOT ON `button.ev-choice`. The class was
+   named for the event screen because the event screen was the only caller —
+   which is the same fact, spelled in CSS, that lost "same with ending turn".
+   The selector is now the CLASS ALONE so that every control the machinery arms
+   is dressed the same: an event bar, End Turn, the Shrine's Rest panel, a flask
+   icon. A rule that names a screen can only ever dress that screen. */
+.beat-hold {
   /* THE FILL IS A BACKGROUND, NOT A PSEUDO-ELEMENT, AND THAT IS BJORN'S FINDING
      PAID BACK. The first version was a `::before` plus
-     `button.ev-choice.ev-hold > * { position: relative; }` to lift the label
+     `button.ev-choice.beat-hold > * { position: relative; }` to lift the label
      above it — and `> *` reaches ELEMENT children, while the label on these
      bars is a BARE TEXT NODE. He repainted the ::before opaque for one frame:
      the label vanished and only `HOLD` (a real <span>) survived. The picture
@@ -1014,7 +1020,7 @@ button.ev-choice.ev-hold {
      — the one frame where the picture must tell the truth instantly. */
   background-size: calc(var(--hold, 0) * 100%) 100%;
 }
-button.ev-choice.ev-hold[data-hold='holding'] { border-color: var(--gold); }
+.beat-hold[data-hold='holding'] { border-color: var(--gold); }
 
 /* `--accent-rgb` is the accent theme's own channel triple (base.css:24), so the
    fill follows the palette the player chose. IT DOES NOT FOLLOW THE
@@ -1038,6 +1044,46 @@ button.ev-choice.ev-hold[data-hold='holding'] { border-color: var(--gold); }
   color: var(--gold); opacity: 0.75;
 }
 button.ev-choice.gp-focus .hold-hint { display: none; }
+/* THE WORD DOES NOT FIT ON AN ICON. A flask slot is a 🧪 in a crowded topbar;
+   three letters of `HOLD` beside it is not an instruction, it is a mess. The
+   fill still runs (it is the same background rule above) and the tooltip says
+   "Hold to drink." — and it says it by READING `data-beat` off the element the
+   machinery dressed, so the sentence and the gesture cannot drift. */
+.flask-slot .hold-hint { display: none; }
+
+/* ---- THE CONFIRM FORM (the Smith, the merchant's brazier) -----------------
+   The other second beat, for the other mistake. A hold answers a finger that
+   MISSED; this answers a finger that landed exactly where it aimed on the
+   WRONG OBJECT — and the only thing that helps there is seeing what the action
+   actually does before it happens.
+
+   THE PANEL CARRIES THE PREVIEW. #105 shipped the Smith's upgrade preview as a
+   hover tooltip, and a phone has no hover: the touch player's preview was
+   nothing at all. `.beat-detail` is where the same preview goes, rendered from
+   the same `upgradePreviewHtml` — one home, no second copy.
+
+   LAW 4 CLAUSE 4 ON BOTH BUTTONS: a fixed floor and intrinsic growth, never a
+   multiple of the text unit. LAW 5: the row WRAPS, so a narrow shape spends
+   height instead of running the CANCEL button off the side. */
+.beat-confirm {
+  flex-basis: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+  margin: 6px 0 2px; padding: 10px 12px;
+  border: 1px solid var(--gold); border-radius: 6px;
+  background: var(--panel);
+  max-width: 34rem;
+}
+.beat-confirm .beat-q { color: var(--parchment); font-size: 1.2rem; text-align: center; margin: 0; }
+.beat-confirm .beat-detail { color: var(--muted); font-size: 1.1rem; text-align: center; }
+.beat-confirm .beat-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.beat-confirm .beat-actions button {
+  min-height: var(--tap-floor); height: auto;
+  min-width: var(--tap-floor);
+  padding: 8px 18px; font-size: 1.2rem;
+}
+/* The armed control stays visible and stays IDENTIFIED — the player has to be
+   able to see which card the question is about. */
+.beat-armed { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 .choice-group[data-resizes-while-pressed] .choice {
   min-height: var(--tap-floor-default); min-width: var(--tap-floor-default);
