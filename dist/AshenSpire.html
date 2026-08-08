@@ -2817,6 +2817,60 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .map-edge { stroke: var(--map-structure); stroke-width: 2; fill: none; }
 .map-edge.traveled { stroke: var(--gold); stroke-width: 3; }
 
+/* ---------------------------- fog of war (Settings → Display · Map reveal) ---
+   Everything here is inert unless .mapscreen carries .map-fog, so `path` mode is
+   byte-for-byte the screen that shipped.
+
+   NOTHING IN THIS BLOCK HIDES A NODE. A node the fog covers is never appended to
+   the DOM at all (src/ui/screens/map.js) — a `display:none` fog is one devtools
+   toggle away from being no fog, and the point of the mode is that the player
+   does not know what is out there.
+
+   THE GROUND IS A PLACEHOLDER, AND THIS IS WHERE THAT IS SAID.
+   Constantine asked for "vague map art similar to Elden Ring's undiscovered
+   map." What is below is NOT that: it is a flat parchment wash, one tone per
+   act, standing in until FREJA authors the three plates
+   (assets/map/parchment_act1..3.webp — the <image> above this layer binds them
+   by name, and resolves to nothing while they are absent). Generated art was
+   refused on Law 0: derived from the graph, it would move the day `floors` or
+   `columns` is turned to shorten a run.
+   `px` and not `rem` throughout: these are SVG-space geometry inside a canvas
+   that is scaled by the zoom ladder, not text (Law 2 rule 3, Law 4 clause 3). */
+.map-fog-ground rect {
+  fill: var(--fog-parchment, #17130d);
+}
+.map-fog-ground image { opacity: 0.55; }
+/* Three acts, three washes. Deliberately close to each other and to the panel
+   colour — the ground is meant to read as "nothing legible here", not as a
+   feature competing with the nodes drawn on top of it. */
+.map-scroll.parch-1 { --fog-parchment: #17130d; }
+.map-scroll.parch-2 { --fog-parchment: #14140f; }
+.map-scroll.parch-3 { --fog-parchment: #191009; }
+
+/* The lit region gets its warmth from the nodes themselves; the fog gets a
+   slight lift so the parchment reads as material rather than as absence. */
+.mapscreen.map-fog .map-scroll { background: var(--fog-parchment, #17130d); }
+
+/* A `placed` node — "something is here, you do not know what."
+
+   SCOPED TO FOG, AND THAT IS THE POINT. Unscoped, this rule put a dashed ring on
+   every unresolved `?` on the SHIPPED map — measured in a screenshot, not
+   reasoned about — which broke the one promise the toggle makes: nobody who does
+   not opt in sees a pixel move. It also collided with `.revealed`'s dash (5 3),
+   so the map would have carried two dash patterns meaning two different things
+   with nothing saying which was which. The rung is derived in both modes; only
+   fog paints it differently. */
+.mapscreen.map-fog .map-node.k-placed circle { stroke-dasharray: 3 4; stroke-opacity: 0.8; }
+
+/* Under fog the trail behind you is the strongest thing on the board after the
+   split in front of you: it is the only record of where the act has taken you,
+   and there is no full map to fall back on. */
+.mapscreen.map-fog .map-node.visited circle { stroke-opacity: 1; }
+.mapscreen.map-fog .map-edge.traveled { stroke-width: 3.5; }
+/* An untraveled edge inside the light is a step you are choosing, not structure
+   you are reading past — the fog map has far fewer of them, so they carry more. */
+.mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
+
 /* ---------- horizontal map header (matches the combat top bar) ---------- */
 /* Reuses .topbar/.portrait/.who/.hpbar/.relics from combat.css; these rules add
    the map-specific stats, wrapping, and the legend popover. Items are flex so
@@ -3660,6 +3714,7 @@ function showSettings() {
       // saying so is the whole fix.
       const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
+      remountMapIfShowing(changed);
       if (res && res.ok === false) {
         showSettingsNotice(QUARANTINE_NOTICE);
       }
@@ -3755,6 +3810,7 @@ function showOverlay(initialTab = 'deck') {
       Object.assign(meta.settings, changed);
       const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
+      remountMapIfShowing(changed);
       if (changed.bindings) setBindings(changed.bindings);
       if (changed.keyBindings) setKeyBindings(changed.keyBindings);
       // ONE sentence, both doors — and now literally one: QUARANTINE_NOTICE.
@@ -3866,6 +3922,35 @@ function showDraft() {
       startClimb();
     },
   });
+}
+
+/**
+ * SETTINGS THAT ONLY THE MAP CAN SHOW YOU — redraw it under the open menu.
+ *
+ * Both settings doors apply their change immediately (`applyDisplaySettings`),
+ * and that reaches everything expressed as a class or a custom property. The map
+ * is not: its zoom and now its reveal mode are read ONCE, at mount, by
+ * `mountMap`. So flipping Map reveal used to take effect on the next screen
+ * change — which for the one setting whose whole purpose is a side-by-side is
+ * the same as not working.
+ *
+ * Marina's ruling put the toggle in Settings precisely because that is the only
+ * surface reachable while you are looking at the thing you are judging. This
+ * function is what makes that sentence true. The overlay and the modal both
+ * mount on `document.body`, so the map re-renders behind them and is there when
+ * they close.
+ *
+ * NAMED KEYS, NOT "any settings change": a blanket re-mount would redraw the act
+ * on every volume nudge, and `mountMap` re-runs the framing camera. The list is
+ * the map's own reads — grep `meta.settings` in ui/screens/map.js and
+ * model/mapknowledge.js and it is these two.
+ */
+const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom'];
+function remountMapIfShowing(changed) {
+  if (!run || !changed) return;
+  if (!MAP_REMOUNT_KEYS.some((k) => k in changed)) return;
+  if (!app.querySelector('.mapscreen')) return;
+  showMap();
 }
 
 function showMap() {
@@ -4399,6 +4484,46 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.path = [at];
     showMap();
   }
+  // `?shotWalk=<n>` — STAND SOMEWHERE WITH A TRAIL BEHIND YOU.
+  //
+  // A REACH STATE, and the third of the same shape (`?shotEvent`, `?shotAt`).
+  // `?shotAt` teleports: it sets `run.path = [at]`, a path of length one, which
+  // is the right answer for a FRAMING measurement and the wrong one for
+  // everything about fog. Fog is a function of the trail — "previously visited
+  // locations remain revealed" — so a map posed with no history can only ever
+  // photograph the first frame of it, and the one claim worth photographing is
+  // that the light MOVES and the trail STAYS.
+  //
+  // It walks the graph rather than naming nodes: from the first entrance, take
+  // the lowest-numbered `next` each step, n times. Deterministic given the seed,
+  // so two runs of the camera produce the same picture; and it uses the graph's
+  // own edges, so a walk this produces is a walk a player could have taken —
+  // a hand-written path list would eventually name an edge that does not exist
+  // and pose a state the game cannot reach.
+  const shotWalk = shotState === 'map' ? shotParams.get('shotWalk') : null;
+  if (shotWalk != null) {
+    if (shotAt) throw new Error('?shotWalk and ?shotAt both set: they pose the same thing two ways. Use one — shotAt teleports, shotWalk leaves a trail.');
+    const steps = Number(shotWalk);
+    if (!Number.isInteger(steps) || steps < 1) {
+      throw new Error(`?shotWalk=${shotWalk}: needs a positive whole number of steps. A silent fallback would photograph a different map than the one asked for.`);
+    }
+    const g = run.mapGraph;
+    let id = [...g.startIds].sort()[0];
+    const walked = [id];
+    for (let i = 1; i < steps; i++) {
+      const next = [...(g.nodes[id].next || [])].sort();
+      // Running out of graph is LOUD. A walk that quietly stopped short would
+      // hand back a screenshot of floor 4 labelled floor 9, and the reader would
+      // have no way to tell.
+      if (!next.length) throw new Error(`?shotWalk=${steps}: this act runs out at step ${i} (${id} has nowhere to go). The boss is the last node; ask for fewer steps.`);
+      id = next[0];
+      walked.push(id);
+    }
+    run.mapNodeId = id;
+    run.floor = g.nodes[id].floor;
+    run.path = walked;
+    showMap();
+  }
   if (shotState === 'death') {
     // A run that ended on floor 4 with a few fights behind it, so the stats
     // table has real numbers under the title instead of a row of zeroes.
@@ -4773,6 +4898,11 @@ const balance = {
     // How many act backdrop plates exist (assets/bg/bg_act*.webp). Endless acts
     // past this cycle back through them.
     backdropActs: 3,
+    // How many map-parchment plates exist (assets/map/parchment_act*.webp) — the
+    // undiscovered ground the fog map draws on. Same rule as backdropActs, its
+    // own row because the two sets are authored separately and one may grow
+    // first. A row, so a fourth plate is a file plus this number and no code.
+    parchmentActs: 3,
     // Card colour motif (Settings → Display). Cards carry two independent
     // colour axes: the owning class (each class def's cardTint) and the
     // player's accent. `cardMotif` picks how the class one is expressed;
@@ -21862,9 +21992,22 @@ Object.assign(module.exports, { cardTagging });
 "src/ui/screens/map.js": function (module, exports, require) {
 // src/ui/screens/map.js — the act map (SPEC §7.1, mockup: map-screen.svg)
 //
-// Full act visible; only edge-connected nodes from the current position are
-// clickable; traveled path in gold. With the Sealstone Key passive, '?'
-// nodes render their pre-rolled resolution (dashed ring marks a reveal).
+// TWO MODES, and the toggle is Settings → Display · Map reveal:
+//
+//   path  the game as it shipped — the whole act drawn, only edge-connected
+//         nodes from the current position clickable, traveled path in gold.
+//   fog   the doors, the boss, the trail behind you and the split in front of
+//         you. Everything else is unlit parchment.
+//
+// WHAT IS DRAWN IS NOT WHAT IS CLICKABLE, and keeping those two apart is the
+// whole of this change. `reachable` has always governed CLICKS and still does,
+// untouched. Fog governs DRAWING, and it asks a different question of a
+// different set — the ladder in model/mapknowledge.js. Read that file's header
+// before touching either: collapsing them is the trap it was written to close.
+//
+// The Sealstone Key is no longer a case this screen checks for. It is the
+// operator that lifts a node from `placed` to `known`, in both modes, and it
+// lives with the ladder.
 
 const { passiveFlag } = require("src/model/registries.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
@@ -21873,9 +22016,13 @@ const { veilIsOpen } = require("src/ui/components/veil.js");
 const { matchAction, isEngaged, focusFirst } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
 const { classGlyph, tintCss } = require("src/ui/assets.js");
-const { nodeIcon, nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
+const { assetUrl } = require("src/ui/assetmap.js");
+const { nodeIcon, nodeBlurb, actTitle, legendEntries, MENU, parchmentAsset, parchmentClass } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { trackGesture } = require("src/ui/gesture.js");
+const { mapKnowledge, nodeReading, resolveMapMode, HIDDEN, KNOWN } = require("src/model/mapknowledge.js");
+
+
 // GEOMETRY AND THE LADDER LIVE IN model/mapview.js NOW, with the arithmetic that
 // turns them into "does this act fit on a phone" — read by this screen, by the
 // boot validator, and by tools/mapfit.mjs. Read its header before changing a
@@ -21944,7 +22091,29 @@ function snapToLadder(z) {
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), ZOOM_MIN);
 }
 
+/**
+ * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
+ * one listener that was left out of it.
+ *
+ * The handler below removes itself when `.mapscreen` is gone. That is correct
+ * for map → combat → map and WRONG for map → map: the second mount puts a
+ * `.mapscreen` back, so the first handler's guard passes forever and both run.
+ * `+` steps the zoom twice, and the stale one drives a detached `<svg>`.
+ *
+ * It was latent before tonight (nothing re-mounted the map in place) and it is a
+ * live path now: flipping Map reveal in Settings redraws the map underneath the
+ * still-open overlay, which is the entire point of putting the toggle there. So
+ * the mount owns the teardown rather than the handler guessing at it.
+ */
+let liveMapKeys = null;
+
 function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
+  // Before anything is drawn: the previous mount's keyboard handler, if this is
+  // a re-mount. See `liveMapKeys` above.
+  if (liveMapKeys) {
+    removeEventListener('keydown', liveMapKeys);
+    liveMapKeys = null;
+  }
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -21976,17 +22145,69 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   const traveled = new Set(run.path || []);
   const reveal = passiveFlag(registries, run.relics, 'revealUnknown');
 
+  // WHAT THE PLAYER KNOWS, derived once and read by everything below — the node
+  // loop, the edges, and the camera's look-ahead. Deriving it twice is how a
+  // camera comes to frame a node nobody painted.
+  const mode = resolveMapMode(meta);
+  const fog = mode === 'fog';
+  // `mapFogForks` is the UNDECIDED half and is deliberately NOT a settings row —
+  // see FOG_KEEP_FORKS in model/mapknowledge.js. It is read here so the camera
+  // can photograph both readings of his sentence for him to choose between; the
+  // day he chooses, this expression and that constant both go.
+  const keepForks = ((meta && meta.settings) || {}).mapFogForks === true;
+  const know = mapKnowledge({ graph: map, run, mode, reveal, keepForks });
+  const isDrawn = (id) => know.drawn.has(id);
+
   // ---- edges (a traveled edge = consecutive pair in run.path) ----
+  //
+  // AN EDGE NEEDS BOTH ITS ENDS. Under fog the nodes one step past the split are
+  // hidden, so their edges are not drawn either — the line stops where the light
+  // does, which is what makes the screen read as a path running into fog rather
+  // than as a lattice with holes punched in it. In `path` mode nothing is hidden
+  // and this filter is the identity, so the shipped screen is byte-identical.
   let edgeSvg = '';
   const path = run.path || [];
   for (const n of nodes) {
+    if (!isDrawn(n.id)) continue;
     for (const toId of n.next) {
+      if (!isDrawn(toId)) continue;
       const to = map.nodes[toId];
       const ia = path.indexOf(n.id);
       const isTraveled = ia >= 0 && path[ia + 1] === toId;
       edgeSvg += `<line class="map-edge${isTraveled ? ' traveled' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
     }
   }
+
+  // ---- the undiscovered ground -------------------------------------------
+  //
+  // THREE AUTHORED LOOKS, ONE PER ACT, BOUND BY NAME (uiContent.js
+  // `parchmentAsset`).
+  //
+  // THE PLATE IS NOT IN THIS MARKUP, AND THAT IS A BUG FIX, NOT A STYLE.
+  // The first draft emitted `<image href="assets/map/parchment_act1.webp">`
+  // straight into the SVG on the reasoning that SVG "draws no broken-image
+  // glyph". PHOTOGRAPHED, IT DOES: with the three plates absent — which is the
+  // state this commit ships in — headless Chromium painted its own missing-image
+  // graphic across the entire 725x674 canvas, a blurred hillside under a sky,
+  // and the act map was drawn on top of it. Every node still rendered, every
+  // check still passed, and the screen was unusable. Law 1 clause 4 asks a
+  // missing asset to degrade "visibly but gracefully"; that was visible and the
+  // opposite of graceful, and only a screenshot could say so.
+  //
+  // So the plate is ATTACHED ON A SUCCESSFUL LOAD and never before (see
+  // `attachParchment` below): no file, no element, and the wash beneath it
+  // stands alone. Freja can drop a `.webp` into `assets/map/` and reload.
+  //
+  // THE WASH IS A PLACEHOLDER AND THIS COMMENT IS NOT WHERE THAT IS SAID —
+  // `.map-fog-ground` in styles/map.css carries it, next to the colour it
+  // describes. It is deliberately NOT drawn from the graph: art derived from
+  // `mapgen` would move the day Constantine turns `floors` to shorten a run
+  // (Law 0 clause 5). FREJA OWNS THE ACTUAL LOOK; this ships the structure.
+  const groundSvg = fog
+    ? `<g class="map-fog-ground" aria-hidden="true">`
+      + `<rect x="0" y="0" width="${width}" height="${height}"/>`
+      + `</g>`
+    : '';
 
   const cz = run.customization || {};
   const hpPct = Math.max(0, Math.min(100, Math.round((run.hp / Math.max(1, run.maxHp)) * 100)));
@@ -21996,7 +22217,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   const hasFlasks = run.flasks.length > 0;
 
   app.innerHTML = `
-    <div class="mapscreen">
+    <div class="mapscreen${fog ? ' map-fog' : ''}">
       <header class="topbar map-header">
         <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
         <div class="who">
@@ -22020,9 +22241,14 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
         ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
         <div class="relics mh-relics"></div>
       </div>
-      <div class="map-scroll">
+      <!-- The per-act parchment tone rides the SCROLLPORT, not the <g> inside
+           the SVG: a custom property inherits DOWN, and both the ground rect and
+           the scrollport's own background need to read it. One home for the
+           tone, two readers, no second literal. -->
+      <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+            ${groundSvg}
             <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(run.actNumber)}</text>
             ${edgeSvg}
             <g id="map-nodes"></g>
@@ -22076,17 +22302,26 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     </div>`;
 
   const g = app.querySelector('#map-nodes');
+  let drawnCount = 0;
   for (const n of nodes) {
+    // HIDDEN IS NOT `display:none` — the element is never created. A node the
+    // player is not meant to know exists must not be in the DOM for a curious
+    // one to read, and an absent element cannot be un-hidden by a stylesheet.
+    const rung = know.rung.get(n.id);
+    if (rung === HIDDEN) continue;
+    drawnCount++;
     const isReachable = reachable.has(n.id);
-    let shownType = n.type;
-    let revealed = false;
-    if (n.type === 'event' && reveal && n.resolved) {
-      shownType = n.resolved.kind === 'event' ? 'event' : n.resolved.kind;
-      revealed = n.resolved.kind !== 'event';
-    }
+    // PRESENTATION KEYS ON THE RUNG, NEVER ON THE TYPE. A `placed` node draws the
+    // unknown mark whatever it actually is, so the day the ladder gains a reason
+    // to place a node that is not an `event` — a penumbra, a map fragment — its
+    // true kind cannot leak through the icon or the tooltip by omission.
+    const rd = nodeReading(n, { reveal });
+    const shownType = rung === KNOWN ? rd.shownType : 'event';
+    const revealed = rung === KNOWN && rd.revealed;
     const cls = [
       'map-node',
       shownType,
+      `k-${rung}`,
       traveled.has(n.id) || n.id === run.mapNodeId ? 'visited' : '',
       n.id === run.mapNodeId ? 'current' : '',
       isReachable ? 'reachable' : '',
@@ -22094,6 +22329,17 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     ].filter(Boolean).join(' ');
     const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     el.setAttribute('class', cls);
+    // The node's id on the element — so an instrument can compare the SET the
+    // page drew against the set the ladder says it should have, rather than
+    // comparing two counts and calling that agreement. It leaks nothing a fogged
+    // player must not have: only DRAWN nodes get an element at all, and the id is
+    // a floor and a column, never a type.
+    el.dataset.node = n.id;
+    // THE RADIUS IS STILL THE NODE'S OWN, and that is a promise, not an
+    // oversight: fog changes WHICH nodes are drawn and never HOW BIG one is, so
+    // the tap floor, both map margins and `mapplan --selftest`'s census are the
+    // same numbers in both modes. A fogged node with a different radius would
+    // have quietly forked every one of them.
     const r = nodeRadius(n.type);
     // Reachable nodes get a rhythmic pulsing halo so the next choices read at
     // a glance; the halo is inert when reduced-motion is set (CSS handles it).
@@ -22103,6 +22349,21 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     attachTooltip(el, () => nodeTooltip(shownType, n, revealed));
     g.appendChild(el);
   }
+
+  // THE SCREEN SAYS WHAT IT DREW, in the same idiom as `data-framing` two
+  // hundred lines down and for the same reason: a fog that cannot report its own
+  // census cannot be caught covering the wrong thing. `tools/mapfog.mjs` reads
+  // these against the ladder's own answer, and a disagreement between the two is
+  // a finding in its own right — the count here is the DOM's, counted while
+  // appending, never re-derived from the ladder it is meant to check.
+  const scrollEl = app.querySelector('.map-scroll');
+  if (fog) {
+    attachParchment(app.querySelector('.map-fog-ground'), assetUrl(parchmentAsset(run.actNumber)), width, height);
+  }
+  scrollEl.dataset.nodesDrawn = String(drawnCount);
+  scrollEl.dataset.nodesTotal = String(nodes.length);
+  scrollEl.dataset.nodesHidden = String(know.counts.hidden);
+  scrollEl.dataset.nodesPlaced = String(know.counts.placed);
 
   const strip = app.querySelector('.mh-relics');
   for (const rid of run.relics) {
@@ -22217,13 +22478,22 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   // the act stops looking like a climb. This set is a PREFERENCE, never a
   // promise: the zoom fits it when it can, and the guarantee stays the framing
   // set, because the zoom that fits a superset always fits the set inside it.
+  //
+  // AND UNDER FOG THE LOOK-AHEAD IS EMPTY, BY CONSTRUCTION AND ON PURPOSE. The
+  // nodes one step past the split are exactly the ones the fog is covering, so
+  // aiming the camera at them would frame blank parchment and push the decision
+  // off centre — a camera that knows more than the screen does. `isDrawn` is the
+  // same predicate the node loop and the edges use, so there is one answer to
+  // "is this on screen" rather than three. In `path` mode nothing is hidden and
+  // the filter is the identity: the shipped framing is unchanged, which is what
+  // keeps `tools/mapfit.mjs`'s numbers comparable across this commit.
   function contextNodes() {
     const fs = framingNodes();
     const seen = new Set(fs.map((n) => n.id));
     const out = [...fs];
     for (const n of fs) {
       for (const id of n.next) {
-        if (!seen.has(id) && map.nodes[id]) { seen.add(id); out.push(map.nodes[id]); }
+        if (!seen.has(id) && map.nodes[id] && isDrawn(id)) { seen.add(id); out.push(map.nodes[id]); }
       }
     }
     return out;
@@ -22410,8 +22680,12 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   // the menu keys stayed live under the settings modal and the quick-nav list.
   // Not the hand-losing one, and the same defect: components/veil.js.
   const mapKeys = (ev) => {
+    // Still a backstop for map → anywhere-else, where nothing calls mountMap
+    // again to do the tidying. The re-mount case is owned at the top of this
+    // function; this branch can no longer be reached by a second map.
     if (!app.querySelector('.mapscreen')) {
       removeEventListener('keydown', mapKeys);
+      if (liveMapKeys === mapKeys) liveMapKeys = null;
       return;
     }
     if (veilIsOpen()) return;
@@ -22432,6 +22706,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     }
   };
   addEventListener('keydown', mapKeys);
+  liveMapKeys = mapKeys;
 
   applyZoom(false);
   // Auto-center the camera on the current node. The flex container may report
@@ -22457,6 +22732,42 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   // Backstop in case the observer never fires (e.g. instant layout): re-center
   // shortly after mount. Cheap and idempotent.
   setTimeout(centerAndFocus, 120);
+}
+
+/**
+ * attachParchment(host, path, w, h) — put the act's plate on the ground layer,
+ * but ONLY once the file has actually decoded.
+ *
+ * The load is probed with a plain `Image`, not by inserting the `<image>` and
+ * hoping: a decode failure then costs nothing, because nothing was ever added to
+ * the document. See the note at `groundSvg` for what the eager version did to
+ * the screen when the plate was missing — which is the state this ships in, and
+ * the reason this function exists at all rather than three lines of markup.
+ *
+ * Fire-and-forget by design. A plate that arrives 40 ms after the map does is a
+ * background fading in; a map that waits for one is a map that never opens when
+ * the file is absent.
+ */
+function attachParchment(host, path, w, h) {
+  if (!host || typeof Image === 'undefined') return;
+  const probe = new Image();
+  probe.onload = () => {
+    if (!host.isConnected) return; // the player left the map while it loaded
+    const el = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+    el.setAttribute('href', path);
+    el.setAttribute('x', '0');
+    el.setAttribute('y', '0');
+    el.setAttribute('width', String(w));
+    el.setAttribute('height', String(h));
+    el.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+    host.appendChild(el);
+  };
+  // No `onerror` handler on purpose: the absent plate is the SHIPPING state
+  // today, and a console warning per map mount would be noise about a thing
+  // everyone already knows. The moment the three files exist, a missing one is
+  // a 404 in the network panel, which is the loud channel Law 1 clause 5 wants
+  // and the one a person actually looks at when art does not appear.
+  probe.src = path;
 }
 
 function nodeTooltip(type, node, revealed) {
@@ -23297,9 +23608,14 @@ const ACT_NAMES = {
   3: 'ACT III — THE ASHEN CROWN',
 };
 // Endless Spire: acts past 3 reuse the act 1-3 names with a "· CYCLE n" marker.
+// The cycling arithmetic is `actPlate` (below, with the per-act art it now also
+// serves) and the count is the NUMBER OF NAMES WRITTEN, asked rather than typed —
+// this line held a literal `3` beside a table of three, which is one fact in two
+// places and would have gone wrong the day a fourth act was named.
+const ACT_NAME_COUNT = Object.keys(ACT_NAMES).length;
 function actTitle(actNumber) {
-  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
-  const loop = Math.floor((actNumber - 1) / 3);
+  const base = ACT_NAMES[actPlate(actNumber, ACT_NAME_COUNT)] || `ACT ${actNumber}`;
+  const loop = Math.floor((actNumber - 1) / ACT_NAME_COUNT);
   return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
 }
 
@@ -23352,8 +23668,51 @@ function intentTooltip(iv, { victim = 'you' } = {}) {
 // act cycles back through the three plates rather than rendering art-less.
 const BACKDROP_ACTS = balance.ui.backdropActs;
 function backdropClass(actNumber) {
+  return `backdrop act-${actPlate(actNumber, BACKDROP_ACTS)}`;
+}
+
+// ---- map parchment (the fog's undiscovered ground) --------------------------
+//
+// THREE AUTHORED LOOKS, ONE PER ACT, BOUND BY NAME — Law 1 clause 4, and the
+// backdrop plates directly above are the precedent this copies rather than
+// invents. `assets/map/parchment_act1.webp`, `_act2`, `_act3`; no registration
+// list anywhere, so Freja drops a file in and the act wears it.
+//
+// GENERATED PARCHMENT WAS REFUSED, and on Law 0 rather than on budget: art
+// derived from the graph COUPLES THE FLAVOUR LAYER TO `mapgen`, and Constantine
+// now turns `floors` and `columns` himself — so a knob he reaches for to shorten
+// a run would silently change the art. A tunable that moves a thing its turner
+// was not thinking about is exactly clause 5's silent-plausible-derivation.
+//
+// UNTIL THE ART EXISTS THE GROUND IS A DERIVED PLACEHOLDER and the screen says
+// so rather than this comment: `.map-fog-ground` in styles/map.css is a flat
+// parchment wash with a vignette, keyed by act, and the `<image>` above it
+// resolves to nothing while the file is absent. FREJA OWNS THE ACTUAL LOOK. What
+// ships here is the STRUCTURE — the layer, the name, the per-act key — so her
+// three files are the whole of her change.
+const PARCHMENT_ACTS = balance.ui.parchmentActs;
+function parchmentAsset(actNumber) {
+  return `assets/map/parchment_act${actPlate(actNumber, PARCHMENT_ACTS)}.webp`;
+}
+function parchmentClass(actNumber) {
+  return `parch-${actPlate(actNumber, PARCHMENT_ACTS)}`;
+}
+
+/**
+ * actPlate(actNumber, plates) → 1..plates — WHICH OF N AUTHORED PLATES AN ACT
+ * WEARS, once, for every set of per-act art.
+ *
+ * Endless Spire runs past act 3, so every per-act art set has to answer "what
+ * does act 7 look like" and every one of them answers it the same way: cycle.
+ * This was written out twice (backdrops here, `actTitle` above) before the
+ * parchment would have made it three — and three copies of a modulo is how act 7
+ * comes to show plate 1 and be called ACT I · CYCLE 3 while a fourth set shows
+ * plate 3, with nothing in the tree able to notice.
+ */
+function actPlate(actNumber, plates) {
   const n = Number(actNumber) > 0 ? Math.floor(Number(actNumber)) : 1;
-  return `backdrop act-${((n - 1) % BACKDROP_ACTS) + 1}`;
+  const p = Number.isInteger(plates) && plates > 0 ? plates : 1;
+  return ((n - 1) % p) + 1;
 }
 
 // ---- the in-run menu: ONE table, two widgets --------------------------------
@@ -23616,7 +23975,7 @@ function armamentKindLabel(kind) {
 }
 
 
-Object.assign(module.exports, { statusTooltipText, NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, MENU_TABS, MENU, MENU_ACTS, menuTabRefs, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName, LOCK_COPY, armamentKindLabel });
+Object.assign(module.exports, { statusTooltipText, NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, ACT_NAME_COUNT, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, PARCHMENT_ACTS, parchmentAsset, parchmentClass, actPlate, MENU_TABS, MENU, MENU_ACTS, menuTabRefs, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName, LOCK_COPY, armamentKindLabel });
 
 },
 "src/ui/components/hints.js": function (module, exports, require) {
@@ -23987,6 +24346,257 @@ function trackGesture(startEv, { onMove, onEnd } = {}) {
 
 
 Object.assign(module.exports, { trackGesture });
+
+},
+"src/model/mapknowledge.js": function (module, exports, require) {
+// src/model/mapknowledge.js — HOW MUCH THE PLAYER KNOWS ABOUT A MAP NODE,
+// derived, on one ladder, for every map mode.
+//
+// WHY THIS FILE EXISTS, and it is Viki's collapse rather than my feature.
+// Constantine asked for fog of war. The obvious build is a fourth flag on the
+// map screen beside the three it already had, and that build is wrong:
+//
+//   n.type vs shownType   an `event` node draws `?` — "there is a place here,
+//                         I do not know what kind"
+//   `revealed`            the Sealstone Key resolves that `?` into its real kind
+//   `visited` / `current` where the player has already stood
+//
+// Three spellings of ONE question — *how much do you know about this node* — and
+// fog is a fourth spelling of the same question, not a new subject. So the flag
+// does not get built. The question gets a ladder:
+//
+//   hidden   you do not know the place is there. NOTHING is drawn.
+//   placed   you know a place is there, not what it is. The `?` mark.
+//   known    you know what it is. Its own icon.
+//
+// WHAT THAT BUYS, and it is the test of whether the collapse was real: the
+// Sealstone Key STOPS BEING A SPECIAL CASE. It is no longer "a relic the map
+// screen checks for"; it is the one operator that lifts a node from `placed` to
+// `known`, and it reads identically in both map modes because it always answered
+// a different question from fog. Viki measured the trap before I built it:
+//
+//   `revealUnknown` answers WHAT KIND OF PLACE IS THAT about a node already
+//   drawn. Fog answers IS IT DRAWN AT ALL. Two axes, not one lever.
+//
+// So fog moves a node between `hidden` and the rest; the relic moves it between
+// `placed` and `known`; and neither knows the other exists. The cost is real and
+// is a BALANCE finding, not a defect: over 300 seeds the relic goes from 7.56
+// actionable nodes to 1.30 under fog (Viki). Fog starves it. That number is
+// handed to the checking and player-experience seats, not answered here — see
+// the note on `revealUnknown` below.
+//
+// NOT THE COMPENDIUM'S LADDER, deliberately. The compendium has a reveal ladder
+// that is rung-for-rung the same shape over a different subject (what the
+// PROFILE has met, across runs, forever) and Viki's ruling is that nothing
+// between them must ever agree: a shared home would tie an act's fog to a
+// player's lifetime bestiary the first time either grew a rung. Same Pattern,
+// two homes, on purpose. Do not merge them.
+//
+// PURE AND HEADLESS on purpose — no document, no settings object beyond the one
+// it is handed — so `tools/mapfog.mjs --selftest` can turn it red without a
+// browser, and so the map screen and that instrument cannot disagree about what
+// the player was shown.
+
+/* ------------------------------------------------------------- the ladder -- */
+
+const HIDDEN = 'hidden';
+const PLACED = 'placed';
+const KNOWN = 'known';
+
+/** Low to high. Index into this IS the rung's height; nothing else orders them. */
+const RUNGS = Object.freeze([HIDDEN, PLACED, KNOWN]);
+
+/** rungHeight('placed') → 1. Used by the corpus to assert fog only ever LOWERS. */
+function rungHeight(rung) {
+  return RUNGS.indexOf(rung);
+}
+
+/* --------------------------------------------------------------- the mode -- */
+
+/**
+ * The two map modes, and `path` is the default — the game exactly as it shipped.
+ *
+ * THE COMPARISON IS THE DELIVERABLE, NOT THE ANSWER. Constantine asked for "a
+ * debug mode to toggle between the current path mode and the suggested adventurer
+ * fog of war node approach so I can try each and decide", and the toggle lives in
+ * Settings → Display rather than in Custom Climb — Marina's ruling, reversed from
+ * Custom Climb on the argument that Settings is the only surface reachable WHILE
+ * YOU ARE LOOKING AT THE THING YOU ARE JUDGING. Custom Climb gets nothing new:
+ * fog cannot be A/B'd mid-run, because once you have seen the map you cannot
+ * unsee it, so the A/B is its existing seed field plus this toggle.
+ */
+const MAP_MODES = Object.freeze(['path', 'fog']);
+const MAP_MODE_DEFAULT = 'path';
+
+/**
+ * resolveMapMode(meta) → 'path' | 'fog'.
+ *
+ * Unset, or a value this build cannot read, is the SHIPPING DEFAULT — the same
+ * rule `savedZoom` and `resolveTapSize` use one screen away, and for the same
+ * reason: a hand-edited save or an older build's value must behave exactly as an
+ * absent one. The settings row reads `MAP_MODES` and `MAP_MODE_DEFAULT` from
+ * here, so the row and this resolver cannot disagree about what exists.
+ */
+function resolveMapMode(meta) {
+  const m = ((meta && meta.settings) || {}).mapMode;
+  return MAP_MODES.includes(m) ? m : MAP_MODE_DEFAULT;
+}
+
+/* ------------------------------------------------------- the type reading -- */
+
+/**
+ * nodeReading(node, { reveal }) → { shownType, revealed, knowsType }
+ *
+ * The `placed → known` axis ALONE. Byte-for-byte the rule the map screen carried
+ * inline before this file existed, including its quiet corner: with the Sealstone
+ * Key, an `event` node whose pre-roll resolved to an actual EVENT still reads `?`,
+ * because "it is an event" is what `?` already said. Only a resolution into a
+ * fight, a shrine or a treasure is new knowledge.
+ *
+ * `revealed` is the dashed ring — "you are seeing this because of a relic" — and
+ * is presentation, kept here so the screen never re-derives it.
+ */
+function nodeReading(node, { reveal = false } = {}) {
+  if (!node) return { shownType: 'event', revealed: false, knowsType: false };
+  if (node.type !== 'event') return { shownType: node.type, revealed: false, knowsType: true };
+  if (reveal && node.resolved && node.resolved.kind !== 'event') {
+    return { shownType: node.resolved.kind, revealed: true, knowsType: true };
+  }
+  return { shownType: 'event', revealed: false, knowsType: false };
+}
+
+/* ------------------------------------------------------------- the light -- */
+
+/**
+ * TWO READINGS OF ONE SENTENCE, AND CONSTANTINE PICKS — not me, and not by
+ * argument. This is the only thing about the fog that is genuinely undecided,
+ * so it is one boolean with both answers photographed rather than a choice made
+ * quietly in a function.
+ *
+ *   `false` — HIS WORDS, ASKED FOR BY NAME: "only next node and all previous
+ *             nodes." The trail behind you, the split in front of you, the doors
+ *             and the boss. A fork you stood at three floors ago closes again
+ *             once you are past it, because its siblings were never *previous
+ *             nodes* — you looked at them and did not go.
+ *   `true`  — the wider reading of "previously visited locations remain
+ *             revealed": everything that has EVER been lit stays lit, so the
+ *             known ground widens into a cone behind the frontier. Elden Ring's
+ *             undiscovered map behaves this way.
+ *
+ * BOTH KEEP THE TRAIL. Neither ever re-fogs a node the player stood on; they
+ * differ only about the roads not taken. `tools/mapfog.mjs --selftest` asserts
+ * the trail clause against both and the wider clause only against `true`, which
+ * is the honest shape — asserting one-wayness over everything would have been an
+ * instrument enforcing my reading of his sentence.
+ *
+ * NOT ON THE SETTINGS DIAL, deliberately: he asked for one A/B (path vs fog) and
+ * a second dial would make the first one harder to judge. It is reachable for
+ * the camera as `?shotSettings={"mapMode":"fog","mapFogForks":true}`, and the
+ * day he picks one this constant and the flag both DIE — the loser is deleted,
+ * not left as an option nobody chose.
+ */
+const FOG_KEEP_FORKS = false;
+
+/**
+ * litNodes({ graph, run, keepForks }) → Set of ids the fog is not covering.
+ *
+ * THE TRAIL IS STICKY, AND THAT IS THE FIXED PART OF THIS FUNCTION.
+ *
+ *   "flashlight is nice but previously visited locations remain revealed"
+ *
+ * The "but" is the instruction: a pure flashlight — dark the moment you step
+ * past — is the thing being corrected. So a node the player has STOOD ON never
+ * goes dark again, under either reading of `keepForks`, and this function is
+ * monotone over `run.path` by construction rather than by promise.
+ *
+ * FOUR SOURCES, each one clause of the ask:
+ *
+ *   the trail        every node in `run.path`. Where you have been.
+ *   the split        `next` of the node you are standing on. "the path splits and
+ *                    the player only sees those next options." Exactly one step —
+ *                    no penumbra, which is the ask read literally. A penumbra is
+ *                    a second argument to this function and nothing else; the
+ *                    ladder already holds the rung for it (`placed`).
+ *                    With `keepForks`, the splits of every EARLIER path node too.
+ *   the doors        every entrance, for the whole act. Before the first move
+ *                    they ARE the split.
+ *   the end          the boss. "when the act starts it show the start node and
+ *                    the end node." The shrine below it is not a landmark and
+ *                    stays fogged until it is reached — the boss is what the
+ *                    climb is aimed at; the shrine is a stop on the way.
+ *
+ * NOTHING IS STORED, and the stickiness is why that is worth saying twice. A
+ * cumulative reveal is the obvious candidate for a `run.seen` array, and a
+ * `run.seen` would be a SECOND COPY OF THE TRAIL — the day it disagreed with
+ * `run.path` the map would lie about where the player had been, and it would
+ * need a migration for every save written before it existed. Instead the whole
+ * history is replayed from `run.path`, which already persists: fog survives a
+ * save/load with no new field, no migration, and nothing to drift.
+ */
+function litNodes({ graph, run, keepForks = FOG_KEEP_FORKS }) {
+  const lit = new Set();
+  if (!graph || !graph.nodes) return lit;
+  const add = (id) => { if (id && graph.nodes[id]) lit.add(id); };
+  // A node, and one step past it — the light as it stood when the player was there.
+  const shine = (id) => {
+    const n = graph.nodes[id];
+    if (!n) return;
+    lit.add(id);
+    for (const to of n.next || []) add(to);
+  };
+
+  for (const id of (graph.startIds || [])) add(id);
+  add(graph.bossId);
+  const path = (run && run.path) || [];
+  for (const id of path) { if (keepForks) shine(id); else add(id); }
+  // Belt and braces: in play `mapNodeId` is always the last element of `path`
+  // (`enterNode` pushes it), but `?shotAt` poses a node without a history and a
+  // hand-edited save could too. Standing somewhere always lights it AND its split.
+  if (run && run.mapNodeId) shine(run.mapNodeId);
+  return lit;
+}
+
+/* -------------------------------------------------------------- the join -- */
+
+/**
+ * mapKnowledge({ graph, run, mode, reveal }) → {
+ *   mode, rung: Map(id → rung), drawn: Set(ids), counts: { hidden, placed, known }
+ * }
+ *
+ * The ONE derivation the map screen, the framing camera and the instrument all
+ * read. Two callers deriving "is this drawn" separately is how a camera comes to
+ * frame a node nobody painted.
+ *
+ * In `path` mode NOTHING is hidden, and that is not a special case in the code —
+ * the light is simply every node. So the shipped screen is this ladder with its
+ * bottom rung empty, which is the proof the collapse was real rather than a
+ * branch wearing a ladder's name (Bjorn's criterion, from the legend).
+ */
+function mapKnowledge({ graph, run, mode = MAP_MODE_DEFAULT, reveal = false, keepForks = FOG_KEEP_FORKS }) {
+  const rung = new Map();
+  const drawn = new Set();
+  const counts = { hidden: 0, placed: 0, known: 0 };
+  if (!graph || !graph.nodes) return { mode, rung, drawn, counts };
+
+  const fog = mode === 'fog';
+  const lit = fog ? litNodes({ graph, run, keepForks }) : null;
+
+  for (const node of Object.values(graph.nodes)) {
+    let r;
+    if (fog && !lit.has(node.id)) {
+      r = HIDDEN;
+    } else {
+      r = nodeReading(node, { reveal }).knowsType ? KNOWN : PLACED;
+    }
+    rung.set(node.id, r);
+    counts[r]++;
+    if (r !== HIDDEN) drawn.add(node.id);
+  }
+  return { mode, rung, drawn, counts };
+}
+
+
+Object.assign(module.exports, { HIDDEN, PLACED, KNOWN, RUNGS, rungHeight, MAP_MODES, MAP_MODE_DEFAULT, resolveMapMode, nodeReading, FOG_KEEP_FORKS, litNodes, mapKnowledge });
 
 },
 "src/ui/screens/combat.js": function (module, exports, require) {
@@ -27500,6 +28110,7 @@ const { renderAboutSection } = require("src/ui/screens/about.js");
 const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
 const { balance } = require("src/content/balance.js");
 const { ZOOM_STEPS, MAP_ZOOM_DEFAULT } = require("src/model/mapview.js");
+const { MAP_MODES, MAP_MODE_DEFAULT } = require("src/model/mapknowledge.js");
 
 const UI_DEFAULTS = balance.ui;
 
@@ -27537,6 +28148,22 @@ const ROWS = [
   { cat: 'Display', key: 'mapZoom', type: 'choice', def: MAP_ZOOM_DEFAULT,
     choices: ['Fit', ...ZOOM_STEPS.map((z) => String(Math.round(z * 100)))], label: 'Map zoom',
     note: 'Fit opens the map close enough that your current node and every node it connects to are on screen. A percentage fixes the zoom instead; + / − and ⊙ still work in the map.' },
+  // THE FOG A/B, and it sits HERE rather than in Custom Climb — Marina's ruling,
+  // reversed from Custom Climb on the argument that Settings is the only surface
+  // reachable WHILE YOU ARE LOOKING AT THE THING YOU ARE JUDGING. Fog cannot be
+  // A/B'd mid-run: once you have seen the map you cannot unsee it. So the
+  // comparison is Custom Climb's existing seed field plus this row — same seed,
+  // same act, two readings — and Custom Climb grows nothing new.
+  //
+  // DEFAULT IS `path`, which is today exactly: nobody who does not opt in sees a
+  // pixel move. The COMPARISON is the deliverable, not the answer.
+  //
+  // `choices` and `def` are the ladder's own, never a second list (the row three
+  // above learned this the hard way — it carried four of the zoom ladder's six
+  // steps for a night).
+  { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
+    choices: MAP_MODES, label: 'Map reveal (test)',
+    note: 'A test — PATH is the game as it shipped: the whole act is drawn. FOG draws only the doors you started from, the boss, everywhere you have been, and the places you can step to next; the rest is unlit parchment. Fog never closes behind you — somewhere you have seen stays seen. Switching redraws the map straight away, so you can hold the two against the same seed.' },
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
