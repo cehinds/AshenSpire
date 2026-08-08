@@ -38,11 +38,18 @@ export const act3Enemies = [
     art: '🧎',
     moves: {
       desperateClaw: { intent: 'attack', damage: 9, weight: 60 },
+      // The player-side door into Insanity (Rune, 2026-08-08). An
+      // ember-starved pilgrim wailing at you is the one move in the tree that
+      // was already ABOUT the mind, and Insanity had no applier anywhere. The
+      // pilgrim is `humanoid`, which IS in Insanity's resistance tags — it
+      // resists what it inflicts, which is the joke and also the reason this
+      // is the right row. Numbers PROVISIONAL, like the row's.
       wail: {
         intent: 'debuff', weight: 40, maxConsecutive: 1,
         effects: [
           { op: 'applyStatus', target: 'player', status: 'weak', stacks: 1 },
           { op: 'applyStatus', target: 'player', status: 'frail', stacks: 1 },
+          { op: 'applyStatus', target: 'player', status: 'insanity', stacks: 3 },
         ],
       },
     },

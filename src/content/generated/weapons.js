@@ -339,7 +339,8 @@ export const weapons = [
     "tags": "starstone",
     "mods": [
       "power.potency=+2",
-      "strike.damage=-1"
+      "strike.damage=-1",
+      "strike.frost=+2"
     ],
     "unlock": "",
     "blurb": "The stone hums before you do."
@@ -456,7 +457,8 @@ export const weapons = [
     ],
     "mods": [
       "power.potency=+2",
-      "strike.poise=+2"
+      "strike.poise=+2",
+      "strike.insanity=+2"
     ],
     "unlock": "",
     "blurb": "Taken from something that objected."

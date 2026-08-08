@@ -18,7 +18,7 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 2 | Court Surgeon | 32 | 2.8 | 2.4 | 10 | normal |
 | 2 | Stitched Hound | 26 | 7.2 | — | 8 | normal |
 | 2 | Court Marionette | 17 | 5.5 | — | 6 | normal |
-| 2 | Living Armor | 38 | 7.5 | — | 22 | normal |
+| 2 | Living Armor | 38 | 7.8 | — | 22 | normal |
 | 2 | Duelist of the Court | 93 | 10.2 | — | 26 | elite |
 | 2 | The Stitched King | 195 | 8.9 | — | 34 | boss |
 | 3 | Ash Revenant | 36 | 6.6 | 2.7 | 10 | normal |
@@ -43,7 +43,7 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 2 | a2_surgery | normal | 2 | 49 | 8.3 | 2.4 |
 | 2 | a2_kennel | normal | 2 | 52 | 14.4 | — |
 | 2 | a2_procession | normal | 2 | 61 | 11 | — |
-| 2 | a2_vault | normal | 2 | 70 | 10.3 | 2.4 |
+| 2 | a2_vault | normal | 2 | 70 | 10.6 | 2.4 |
 | 2 | a2_eliteDuelist | elite | 1 | 93 | 10.2 | — |
 | 2 | a2_bossStitchedKing | boss | 1 | 195 | 8.9 | — |
 | 3 | a3_revenant | normal | 1 | 36 | 6.6 | 2.7 |
@@ -94,27 +94,27 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 
 | Class | Encounter | Win % | Avg HP lost (of max) |
 |-------|-----------|------:|---------------------:|
-| Reaver | loneSoldier (normal) | 100 | 1.9 / 84 |
-| Reaver | patrol (normal) | 100 | 10.7 / 84 |
-| Reaver | packHunt (normal) | 100 | 10.8 / 84 |
-| Reaver | twinPatrol (normal) | 100 | 10.7 / 84 |
-| Reaver | bruiser (normal) | 100 | 9.6 / 84 |
-| Reaver | eliteWyrm (elite) | 100 | 37.4 / 84 |
-| Reaver | bossOmen (boss) | 97.7 | 59 / 84 |
+| Reaver | loneSoldier (normal) | 100 | 2 / 84 |
+| Reaver | patrol (normal) | 100 | 10.8 / 84 |
+| Reaver | packHunt (normal) | 100 | 10.5 / 84 |
+| Reaver | twinPatrol (normal) | 100 | 11.4 / 84 |
+| Reaver | bruiser (normal) | 100 | 10.2 / 84 |
+| Reaver | eliteWyrm (elite) | 100 | 34.9 / 84 |
+| Reaver | bossOmen (boss) | 99 | 56.7 / 84 |
 | Starseer | loneSoldier (normal) | 100 | 1.8 / 72 |
-| Starseer | patrol (normal) | 100 | 9.6 / 72 |
-| Starseer | packHunt (normal) | 100 | 8.7 / 72 |
-| Starseer | twinPatrol (normal) | 100 | 9.7 / 72 |
-| Starseer | bruiser (normal) | 100 | 9.1 / 72 |
-| Starseer | eliteWyrm (elite) | 100 | 36.4 / 72 |
-| Starseer | bossOmen (boss) | 71.3 | 63.9 / 72 |
-| Herald | loneSoldier (normal) | 100 | 1.6 / 78 |
-| Herald | patrol (normal) | 100 | 8.2 / 78 |
-| Herald | packHunt (normal) | 100 | 7.4 / 78 |
-| Herald | twinPatrol (normal) | 100 | 7.5 / 78 |
-| Herald | bruiser (normal) | 100 | 6.8 / 78 |
-| Herald | eliteWyrm (elite) | 100 | 35.4 / 78 |
-| Herald | bossOmen (boss) | 94.3 | 57.1 / 78 |
+| Starseer | patrol (normal) | 100 | 9.8 / 72 |
+| Starseer | packHunt (normal) | 100 | 8.9 / 72 |
+| Starseer | twinPatrol (normal) | 100 | 10.1 / 72 |
+| Starseer | bruiser (normal) | 100 | 8.9 / 72 |
+| Starseer | eliteWyrm (elite) | 100 | 36.5 / 72 |
+| Starseer | bossOmen (boss) | 72.3 | 63.2 / 72 |
+| Herald | loneSoldier (normal) | 100 | 1.4 / 78 |
+| Herald | patrol (normal) | 100 | 7.7 / 78 |
+| Herald | packHunt (normal) | 100 | 7.1 / 78 |
+| Herald | twinPatrol (normal) | 100 | 7.6 / 78 |
+| Herald | bruiser (normal) | 100 | 7.2 / 78 |
+| Herald | eliteWyrm (elite) | 99.3 | 36.4 / 78 |
+| Herald | bossOmen (boss) | 94.7 | 58 / 78 |
 
 ## 6. Findings (first pass)
 

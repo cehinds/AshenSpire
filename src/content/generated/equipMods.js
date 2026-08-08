@@ -102,6 +102,28 @@ export const equipMods = [
     "blurb": "Burn the card applies."
   },
   {
+    "field": "frost",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "frost",
+    "label": "Frost",
+    "clause": "Apply {frost} Frost.",
+    "blurb": "Frost build-up the card applies."
+  },
+  {
+    "field": "insanity",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "insanity",
+    "label": "Insanity",
+    "clause": "Apply {insanity} Insanity.",
+    "blurb": "Insanity build-up the card applies."
+  },
+  {
     "field": "strength",
     "scope": "run",
     "apply": "startStatus",

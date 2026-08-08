@@ -86,11 +86,29 @@ export const heraldCards = [
     },
   },
   {
+    // THE HERALD IS WHERE INSANITY LIVES (Rune, 2026-08-08). The Insanity row
+    // shipped complete — threshold 14, the biggest burst, +8 Poise, a
+    // guaranteed Stagger, `insanityExposed` — and NOTHING in the game applied
+    // it. It belongs to this class and not to the Reaver or the Starseer for a
+    // reason already in the data: insanityExposed raises `ritual`- and
+    // `blight`-tagged damage, and those two tags are the Herald's
+    // (content/source/cardTagging.csv). A chant repeated until the mind gives
+    // is the cheapest, slowest door in; 14 is deliberately the hardest
+    // threshold to fill, so a common has to be able to start it.
+    // Numbers PROVISIONAL, like the row's.
     id: 'litany', name: 'Litany', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '📿',
-    effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 }],
-    textTemplate: 'Apply {weak} Weak.',
-    upgrade: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 }] },
+    effects: [
+      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 },
+      { op: 'applyStatus', target: 'enemy', status: 'insanity', stacks: 3 },
+    ],
+    textTemplate: 'Apply {weak} Weak and {insanity} Insanity.',
+    upgrade: {
+      effects: [
+        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 },
+        { op: 'applyStatus', target: 'enemy', status: 'insanity', stacks: 4 },
+      ],
+    },
   },
   {
     id: 'graveOffering', name: 'Grave Offering', class: 'herald', rarity: 'common', cost: 2, type: 'attack',
