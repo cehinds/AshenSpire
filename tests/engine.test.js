@@ -136,6 +136,24 @@ const OWNS_EVERYTHING = { has: () => true };
 const AT_CAMP = { inCombat: false };
 const MID_FIGHT = { inCombat: true };
 
+// #104 — THE WIDE, SEALED SLOT, WOKEN ONCE. `talisman` is the only row in
+// equipSlots.csv that is BOTH multi-set (`sets=3`) and `swap=outOfCombat`, so it
+// is the only cell where the swap seal and the set ladder can be told apart —
+// every other multi-set slot is combat-swappable, which is exactly why a whole
+// gate could go unenforced with the suite green. It is empty in shipped content,
+// so two checks have to wake it: 31b's too-few-rungs fuse and 31e's mid-fight
+// seal. **Waking it twice would be the second copy**, and the dormancy is one
+// CSV row deep either way (Law 1 clause 1) — so it is authored here, once, as
+// test-only content that is never shipped.
+const TEST_CHARM = {
+  id: 'testCharm', name: 'Charm', kind: 'talisman', hand: '',
+  rarity: 'common', tags: [], mods: [], unlock: '',
+};
+const REG_CHARM = {
+  ...REG,
+  equipment: { ...REG.equipment, armaments: [...REG.equipment.armaments, TEST_CHARM] },
+};
+
 // deck: array of cardId strings or { id, up: true }
 function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, relicIds = [], flasks = [] } = {}) {
   const rng = createRng(seed >>> 0);
@@ -1958,19 +1976,15 @@ export async function runTests({ artManifest = null } = {}) {
     // 3 sets, authors 0 rungs, derives 1 forever, and nothing goes red because
     // nothing goes wrong — the screen simply never draws them. Law 0 clause 5.
     // It is dormant only because talismans are unauthored, so the fixture gives
-    // one a piece and watches the fuse blow.
+    // one a piece and watches the fuse blow. THE FIXTURE IS NO LONGER BUILT HERE
+    // (#104): `REG_CHARM` at the top of this file is the one home for the woken
+    // talisman, because 31e needs the identical row and two copies of a fixture
+    // drift exactly like two copies of anything else.
     const talisman = eq_.slots.find((s) => s.id === 'talisman');
     assert(talisman && talisman.sets > 1, 'the fixture needs a wide, rung-less slot');
     eq(slotRungs(REG, 'talisman').length, 0, 'talisman authors no rungs today');
     eq(validateEquipment(REG).join(' | '), '', '…and is silent while nothing fits it');
-    const withCharm = {
-      ...REG,
-      equipment: {
-        ...REG.equipment,
-        armaments: [...REG.equipment.armaments,
-          { id: 'testCharm', name: 'Charm', kind: 'talisman', hand: '', rarity: 'common', tags: [], mods: [], unlock: '' }],
-      },
-    };
+    const withCharm = REG_CHARM;
     const fuse = validateEquipment(withCharm).join(' | ');
     assert(fuse.includes("'talisman'") && fuse.includes('3 sets') && fuse.includes('only 1 can ever open'),
       `the day a talisman exists, the unreachable sets are named — got: ${fuse || '(nothing)'}`);
@@ -1998,11 +2012,17 @@ export async function runTests({ artManifest = null } = {}) {
     const rungs = slotRungs(REG, 'rightHand');
     assert(rungs.length >= 2, `the right hand has rungs (${rungs.length})`);
 
+    // THE CAMP CONTEXT IS NOW DECLARED, NOT ASSUMED (#104). This block is about
+    // the LADDER, and it always was at camp; `inCombat` became required on
+    // cycleSet for the same reason it is required on equipPiece, so the blocks
+    // that predate it say the thing they were silently relying on. The seal
+    // itself is 31e's subject, on the one slot where asking is not vacuous —
+    // `rightHand` is `swap=combat`, so nothing here could ever have caught it.
     // EDGE 1 — fresh profile. The defect: openedSets said 1, cycleSet took 3.
     const meta = { unlocked: [] };
     const fresh = createLoadout(REG, 'reaver');
     eq(openedSets(REG, rightHand, { meta, loadout: fresh }), 1, 'one set open on a fresh profile');
-    const accepts = (m, lo) => [0, 1, 2].filter((i) => cycleSet(REG, structuredClone(lo), 'rightHand', i, { meta: m })).length;
+    const accepts = (m, lo) => [0, 1, 2].filter((i) => cycleSet(REG, structuredClone(lo), 'rightHand', i, { meta: m, ...AT_CAMP })).length;
     eq(accepts(meta, fresh), 1, 'and the mutation accepts exactly one — not the raw array width');
 
     // …and it is a GATE, not a blanket refusal: earning rungs opens indices.
@@ -2017,7 +2037,7 @@ export async function runTests({ artManifest = null } = {}) {
     legacy.sets.rightHand[2] = 'katana';
     const last = legacy.sets.rightHand.length - 1;
     eq(openedSets(REG, rightHand, { meta, loadout: legacy }), 3, 'a held piece raises the floor');
-    assert(cycleSet(REG, legacy, 'rightHand', last, { meta }), 'and the mutation lets the player reach it');
+    assert(cycleSet(REG, legacy, 'rightHand', last, { meta, ...AT_CAMP }), 'and the mutation lets the player reach it');
     eq(legacy.active.rightHand, last, 'and it actually switched');
 
     // ONE TRUTH FUNCTION, TWO CONSUMERS — the whole point of the fix. Whatever
@@ -2032,7 +2052,113 @@ export async function runTests({ artManifest = null } = {}) {
 
     // A stale call site fails CLOSED rather than skipping the check: the old
     // first argument was a loadout, so the slot cannot resolve.
-    assert(!cycleSet(fresh, 'rightHand', 0, { meta }), 'the pre-#90 signature cycles nothing');
+    assert(!cycleSet(fresh, 'rightHand', 0, { meta, ...AT_CAMP }), 'the pre-#90 signature cycles nothing');
+  });
+
+  // ---- 31e. the swap rule is asked by the MUTATION, not only by its callers --
+  test('31e. cycleSet asks the slot’s own swap rule, on the slot where asking is not vacuous', () => {
+    // THE DEFECT THIS REPLACES WAS A VACUOUS TEST, NOT A MISSING ONE. `cycleSet`
+    // had no `inCombat` in its signature at all, so `canSwap` was enforced by
+    // both of its callers and by neither of them structurally — a second copy
+    // fails by divergence, an unenforced gate fails by BYPASS, and only the
+    // second was here. Every existing test of the function used `rightHand`,
+    // which is `swap=combat`, where the missing gate cannot fail. Green over an
+    // absent rule (`31c` above, and test 28's swap block) — the house shorthand
+    // is *green wasn't clearance*, and this is that with a slot name on it.
+    const slots = REG_CHARM.equipment.slots;
+    const talisman = slots.find((s) => s.id === 'talisman');
+
+    // ---- 0. the fixture IS the finding — state it before leaning on it -----
+    assert(talisman && talisman.sets > 1 && talisman.swap !== 'combat',
+      `the fixture needs a wide, SEALED slot — got sets=${talisman && talisman.sets}, swap=${talisman && talisman.swap}`);
+    eq(slots.filter((s) => s.sets > 1 && s.swap !== 'combat').map((s) => s.id).join(','), 'talisman',
+      'and it is the only one in the table, which is why one vacuous choice hid a whole gate');
+    eq(slotRungs(REG_CHARM, 'talisman').length, 0, 'it authors no rungs, so the ladder alone opens exactly one cell');
+
+    // A carried charm raises the ladder floor to 2 — `openedSets`' legacy path,
+    // and the second way this test could have been vacuous: unless index 1 is
+    // LADDER-OPEN, a refusal proves only that the ladder still works.
+    const carried = createLoadout(REG_CHARM, 'reaver');
+    carried.sets.talisman[1] = TEST_CHARM.id;
+    eq(openedSets(REG_CHARM, talisman, { meta: {}, loadout: carried }), 2,
+      'the carried charm opens the second cell, so the ladder is not what refuses below');
+
+    // ---- 1. THE CONTROL, FIRST — a counted refusal is not a located one ----
+    // The same call, the same index, the same loadout: accepted at camp. So
+    // when it is refused mid-fight the only thing that changed is the fight.
+    const atCamp = structuredClone(carried);
+    assert(cycleSet(REG_CHARM, atCamp, 'talisman', 1, { meta: {}, ...AT_CAMP }),
+      'at camp the carried charm can be made active');
+    eq(atCamp.active.talisman, 1, 'and it actually moved');
+
+    // ---- 2. THE DEFECT. Measured true at c392e13: this returned true --------
+    const midFight = structuredClone(carried);
+    eq(cycleSet(REG_CHARM, midFight, 'talisman', 1, { meta: {}, ...MID_FIGHT }), false,
+      'a slot its own row seals may not be cycled mid-fight');
+    eq(midFight.active.talisman, 0, 'and the refusal left the active set exactly as it was');
+
+    // ---- 3. THE CAPABILITY THAT MUST SURVIVE -------------------------------
+    // Sealing every slot would satisfy line 2 and delete a shipped, PRICED
+    // mechanic (balance.equipment.swapCost, test 28). The cheap pass is refuse
+    // everything, so the cheap pass is what this line makes red.
+    const hands = createLoadout(REG_CHARM, 'reaver');
+    hands.sets.rightHand[1] = 'greatsword';
+    assert(cycleSet(REG_CHARM, hands, 'rightHand', 1, { meta: {}, ...MID_FIGHT }),
+      'a slot its row calls combat-swappable still cycles mid-fight');
+    eq(hands.active.rightHand, 1, 'and that one really moves');
+
+    // ---- 4. THE INVARIANT, over every slot and both edges of the fight ------
+    // Identity against `canSwap`'s own answer, never against a rule typed here:
+    // the mutation accepts exactly what the truth function permits. A second
+    // copy of `slot.swap !== 'combat'` written inside cycleSet would pass 1–3
+    // and go wrong only once the two drifted; this is the line that makes that
+    // unrepresentable, and it contains no sentence a player reads.
+    let permitted = 0;
+    for (const slot of slots) {
+      for (const fight of [AT_CAMP, MID_FIGHT]) {
+        const lo = createLoadout(REG_CHARM, 'reaver');   // index 0 is always ladder-open
+        const allowed = canSwap(REG_CHARM, slot.id, fight).ok;
+        eq(cycleSet(REG_CHARM, lo, slot.id, 0, { meta: {}, ...fight }), allowed,
+          `${slot.id} @ inCombat=${fight.inCombat}: the mutation and canSwap agree`);
+        if (allowed) permitted += 1;
+      }
+    }
+    // THE POPULATION FLOOR, not just the findings floor: if the sweep ever saw
+    // one answer repeated, the identity above would hold while proving nothing.
+    assert(permitted > 0 && permitted < slots.length * 2,
+      `the sweep saw BOTH answers, not one repeated (${permitted} permitted of ${slots.length * 2})`);
+
+    // ---- 5. FAIL CLOSED — silence is not permission ------------------------
+    // The reason `inCombat` is required rather than defaulted, and it is the
+    // same reason equipPiece's is: a default of "not in combat" means every
+    // call site written after today swaps a sealed slot by saying nothing.
+    // The check is on the VALUE — `{ inCombat: undefined }` is what a caller
+    // produces by forwarding a variable that was never set.
+    const hush = console.error;
+    const heard = [];
+    console.error = (...a) => { heard.push(a.join(' ')); };
+    let took = [];
+    try {
+      for (const ctx of [undefined, {}, { meta: {} }, { meta: {}, inCombat: undefined }, { meta: {}, inCombat: 'yes' }]) {
+        const lo = structuredClone(carried);
+        took.push(cycleSet(REG_CHARM, lo, 'talisman', 1, ctx));
+        took.push(lo.active.talisman);
+      }
+    } finally { console.error = hush; }
+    eq(took.join(','), 'false,0,false,0,false,0,false,0,false,0',
+      'every under-specified context refuses AND mutates nothing');
+    eq(heard.length, 5, 'and each one is named rather than swallowed');
+    assert(heard.every((s) => s.includes('inCombat') && s.includes('talisman')),
+      `…naming the slot and what it wanted — got: ${heard[0] || '(nothing)'}`);
+
+    // ---- 6. THE BOUNDARY, asserted so it cannot be read as more than it is --
+    // This closes the SEAL, not the PRICE. `swapCost` is charged in
+    // doSwapArmament, outside this function, so a caller reaching cycleSet
+    // directly still moves a combat-swappable slot for free. That is the next
+    // act; line 3 above is the same call, and it is deliberately still true.
+    eq(REG_CHARM.balance.equipment.swapCostKind, 'energy', 'the price is live and is energy');
+    assert(REG_CHARM.balance.equipment.swapCost > 0,
+      `…and it is a real number (${REG_CHARM.balance.equipment.swapCost}), which is what makes the remaining bypass worth an act`);
   });
 
   // ---- 31d. the inventory is VISIBLE in combat and the slots are SEALED ----
