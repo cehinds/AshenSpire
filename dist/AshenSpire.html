@@ -1244,6 +1244,47 @@ button.ev-choice {
   padding: 8px 20px;
 }
 
+/* ---- HOLD TO CONFIRM (Sunna, at Constantine's "yes press and hold") --------
+   The bars are 44/44/44 and the GAPS are 9-9.7 px at every dial setting, so a
+   thumb that lands low lands on the neighbour — and the neighbour is a
+   permanent curse. The fill is the answer: the player watches the WRONG WORDS
+   filling under their finger and lets go, inside the same gesture as the
+   mistake.
+
+   THREE THINGS THIS RULE IS CAREFUL ABOUT.
+
+   1. THE FILL IS STATE, NOT DECORATION, so it survives reduced-motion. It is a
+      width driven from `--hold` per frame by holdconfirm.js, never a CSS
+      animation — a player who turned motion off still has to be able to see
+      how far they have got, and hiding a progress bar from them would hide the
+      only thing that makes the gesture abortable.
+   2. NO `transition` ON THE WIDTH. A 160 ms ease would keep painting after the
+      finger lifts, so the bar would still be growing during the abort — the
+      one frame where the picture must tell the truth instantly.
+   3. THE FLOOR AND THE GLYPHS ARE UNTOUCHED. `.hold-hint` sets no height and
+      no box; Law 4 clause 5 — it is inline typographic adornment sitting in
+      the line of text it belongs to, so it tracks Text size on purpose while
+      the bar's `min-height: var(--tap-floor)` above stays text-independent. */
+button.ev-choice.ev-hold { position: relative; overflow: hidden; }
+button.ev-choice.ev-hold::before {
+  content: ''; position: absolute; inset: 0 auto 0 0;
+  width: calc(var(--hold, 0) * 100%);
+  /* `--accent-rgb` is the accent theme's own channel triple (base.css:24) and
+     it is swapped by the Accent color row — so the fill follows the palette the
+     player chose instead of hard-coding gold, and the high-contrast profile
+     moves it too. Alpha, never a solid: the label under it must stay readable
+     at every point of the fill, which is the whole reason to watch it. */
+  background: rgba(var(--accent-rgb), 0.30);
+  pointer-events: none;
+}
+/* The label has to stay on top of its own fill. */
+button.ev-choice.ev-hold > * { position: relative; }
+button.ev-choice.ev-hold[data-hold='holding'] { border-color: var(--gold); }
+.hold-hint {
+  margin-left: 0.6em; font-size: 0.75em; letter-spacing: 0.14em;
+  color: var(--gold); opacity: 0.75;
+}
+
 .choice-group[data-resizes-while-pressed] .choice {
   min-height: var(--tap-floor-default); min-width: var(--tap-floor-default);
 }
@@ -4074,6 +4115,9 @@ function showEvent(eventId) {
   mountEvent(app, {
     registries,
     run,
+    // The hold-to-confirm dial lives in meta.settings; the screen reads it the
+    // same way every other screen reads a display setting.
+    meta: saves.loadMeta(),
     rng,
     eventId,
     onDone: () => {
@@ -4636,6 +4680,38 @@ const balance = {
       def: 44,
       sizes: [44, 36, 30, 24],
       missRate: { 44: '1 in 30', 24: '1 tap in 7' },
+    },
+    // HOLD TO CONFIRM (Settings → Advanced). THE ONE HOME OF THE DURATIONS.
+    //
+    // WHAT IT IS FOR, and the number that made it necessary. The event screen's
+    // three choice bars are 44/44/44 across sixteen cells — the size is fixed
+    // and it did not help, because THE GAPS ARE 9-9.7 px at every dial setting
+    // and nothing in this game reads a gap. Targets grow, the space between
+    // them does not, so a thumb that lands 9 px low lands on the NEIGHBOUR —
+    // and on this screen the neighbour is "permanent curse", with no confirm
+    // and no undo. Constantine, asked: "yes press and hold".
+    //
+    // WHY A HOLD AND NOT A MODAL, because that choice is the whole design and
+    // it is not a preference: the held control FILLS, so the player watches the
+    // wrong words filling under their finger and lets go IN TIME. A modal asks
+    // "are you sure?" AFTER the commit, when the eye has already moved on. The
+    // hold puts the question in the same moment as the mistake.
+    //
+    // `steps` IS THE CLOSED SET, in dial order, and `off` is first because it
+    // is the A/B — the same "let me try each and decide" he asked for on the
+    // map. The Advanced row derives its `choices` and its `def` from these keys
+    // and nothing restates them; ADDING A FIFTH SPEED IS A ROW HERE AND NOTHING
+    // ELSE. That is the falsifier for Law 0 on this control, and it is the same
+    // sentence tapSize above already ships.
+    //
+    // The durations: 600 ms is the default because a long-press people already
+    // know is ~400-500 ms (Android's own threshold) and a CONFIRM wants to sit
+    // just past reflex without becoming a chore. `short` is for players who
+    // find the wait irritating, `long` for hands that need the room. `off` is
+    // 0 and means the pre-hold behaviour, byte for byte: one tap commits.
+    holdConfirm: {
+      def: 'normal',
+      steps: { off: 0, short: 350, normal: 600, long: 1000 },
     },
     // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
     // renderer emits them as rem (÷10).
@@ -22462,6 +22538,37 @@ const ROWS = [
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
   { cat: 'Advanced', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
+  // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
+  // debugging settings as enum drop down". Advanced is the debugging surface,
+  // which is where he put it and where it stays.
+  //
+  // IT IS A CHIP ROW AND NOT A `<select>`, AND THAT IS AN ANSWER, NOT A
+  // SHORTCUT. This game has no dropdown anywhere; `.choice-group` IS its enum
+  // control. A native `<select>` would be the only one in the build, and it
+  // would arrive outside everything this row gets for free: `--tap-floor` has
+  // no relationship to a UA-drawn select, the accent theme and the
+  // high-contrast profile do not reach inside one, it renders as three
+  // different surfaces (iOS wheel / Android sheet / desktop popup) and none of
+  // the three can be photographed or measured by any instrument in this repo —
+  // `tools/tapsize.mjs` and `tools/settingsreach.mjs` both count `.choice`, so
+  // they would read this row as ABSENT, which is silence, which is `unknown`.
+  // Four chips is also the shape I measured safe tonight: Combat pacing is four
+  // and renders 92.1 px tall at 390x844, where the seven-chip Map zoom row runs
+  // to 301.2 px and puts its last chip off the viewport.
+  //   IF HE MEANT THE NATIVE WIDGET SPECIFICALLY, that is one word and I will
+  // swap it — but adding the game's only `<select>` on a guess, on the one page
+  // no instrument here can see, is not a thing to do quietly.
+  //
+  // `choices` and `def` are DERIVED from balance.ui.holdConfirm. Adding a fifth
+  // speed is a row there and nothing here.
+  { cat: 'Advanced', key: 'holdConfirm', type: 'choice', def: UI_DEFAULTS.holdConfirm.def,
+    choices: Object.keys(UI_DEFAULTS.holdConfirm.steps), label: 'Hold to confirm',
+    // SHORT ON PURPOSE, and I measured why. My own ruling on the Map zoom row
+    // tonight was that a long note plus a chip strip squeezes the text column
+    // to a ribbon; the first draft of THIS note ran three sentences and took
+    // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
+    // else to on a Thursday holds on my own row on the same Thursday.
+    note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
 ];
 
 // ---- categories: a heading is DERIVED from what is under it (#78) ----------
@@ -28164,9 +28271,15 @@ Object.assign(module.exports, { mountShop });
 const { executeRunEffects } = require("src/engine/actions.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
+const { isBindingChoice } = require("src/model/consequence.js");
+const { armHold, holdMs } = require("src/ui/components/holdconfirm.js");
 
-function mountEvent(app, { registries, run, rng, eventId, onDone }) {
+function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
   const def = registries.events.get(eventId);
+  // The dial, read once per mount. `holdConfirm` lives in balance.ui and this
+  // screen restates none of it.
+  const hold = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
+  const disarmers = [];
 
   function meets(requires) {
     if (!requires) return true;
@@ -28202,10 +28315,28 @@ function mountEvent(app, { registries, run, rng, eventId, onDone }) {
       btn.disabled = true;
       btn.textContent += ' (cannot afford)';
     } else {
-      btn.addEventListener('click', () => {
+      const commit = () => {
         executeRunEffects({ run, registries, rng }, choice.effects);
         showResult(choice.resultText);
-      });
+      };
+      // WHICH BARS GET THE HOLD IS DERIVED, never listed. `isBindingChoice`
+      // reads this choice's own ops and the cards they name; author a
+      // twenty-first event with a curse in it and the hold is already there.
+      const binding = isBindingChoice(choice, registries);
+      if (binding && hold > 0) {
+        // THE INSTRUCTION IS ON SCREEN, not announced and not discovered. A
+        // gesture a tired player has to find is a gesture they will fight; the
+        // word is three letters and it costs the bar nothing.
+        const hint = document.createElement('span');
+        hint.className = 'hold-hint';
+        hint.textContent = 'HOLD';
+        btn.appendChild(hint);
+        btn.dataset.binding = '1';
+        disarmers.push(armHold(btn, { ms: hold, onConfirm: commit }));
+      } else {
+        if (binding) btn.dataset.binding = '1';
+        btn.addEventListener('click', commit);
+      }
     }
     box.appendChild(btn);
   });
@@ -28214,6 +28345,11 @@ function mountEvent(app, { registries, run, rng, eventId, onDone }) {
   if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
 
   function showResult(text) {
+    // Every armed bar is torn down before the box is emptied. `box.innerHTML =
+    // ''` drops the buttons but NOT the window-level Escape listener each hold
+    // owns, and a listener outliving its button is exactly the leak #22 was
+    // about — one screen's worth is nothing, thirteen floors of it is not.
+    while (disarmers.length) disarmers.pop()();
     box.innerHTML = '';
     const p = document.createElement('p');
     p.style.cssText = 'max-width:560px;text-align:center;line-height:1.7;color:var(--muted);font-style:italic';
@@ -28229,6 +28365,262 @@ function mountEvent(app, { registries, run, rng, eventId, onDone }) {
 
 
 Object.assign(module.exports, { mountEvent });
+
+},
+"src/model/consequence.js": function (module, exports, require) {
+// src/model/consequence.js — DOES THIS CHOICE LEAVE A MARK THE RUN CANNOT TAKE
+// BACK? One home for that question, and it is asked of the entry's own
+// characteristics, never of a list of event ids.
+//
+// WHY IT IS NOT A LIST. The obvious build for "hold to confirm the dangerous
+// ones" is a set of event ids somewhere in the UI. That set is wrong the day
+// someone authors the twenty-first event: the new curse ships with no hold and
+// nothing goes red, because a hand-kept list cannot know what it was not told.
+// Law 0 clause 1 says the entry DESCRIBES and the machinery DERIVES, and this
+// is that sentence applied to danger: a choice is binding because of the ops it
+// runs and the cards those ops name — both of which the author already wrote.
+//
+// THE FALSIFIER, and it is the same one Law 0 ships everywhere: author one
+// fictional event whose only interesting property is `addCardToDeck` of a card
+// whose `type` is `curse`, in content, with ZERO code commits. It gets the
+// hold. `node tools/holdconfirm.mjs --new-entry` runs exactly that.
+//
+// WHOSE THIS IS. The *characteristic* — what makes a consequence heavy, and
+// whether "binding" is even the right axis — was dispatched to VIKI (collapsing
+// two concepts so a duplicate cannot be born). This module is the stand-in the
+// hold needed tonight, written conservatively so that being wrong is being
+// CAUTIOUS: it can ask for a hold nobody needed, and the cost of that is one
+// held thumb. It cannot silently skip one, because the three ops below are the
+// only ops in RUN_OPCODES that write something the run has no way to undo.
+// Viki may replace the body and keep the name; every caller reads this function
+// and nothing re-derives it.
+//
+// Readers (Law 0 clause 4, one home, three consumers):
+//   ui/screens/event.js      arms the hold on a binding choice, and only there
+//   tools/holdconfirm.mjs    sweeps the shipped content and the shipped screen
+//   (Viki)                   the characteristic, when it lands
+
+/**
+ * The run ops that write something this run can never take back.
+ *
+ * NOT `addRelic`, `addFlask`, `upgradeCard`, `addCinders`: permanent, and the
+ * player wanted them. NOT `startCombat`: a fight can kill you, but you fight it
+ * with everything you still have, and every one of the twenty events reaches it
+ * through a choice that reads as a risk rather than a cost. `damage`/`heal` are
+ * combat ops the run layer borrows and they move a number that moves back.
+ *
+ * The axis is `cannot be undone AND was paid, not gained` — which is why
+ * `upgradeCard` is absent even though it is as permanent as anything here.
+ */
+const BINDING_OPS = Object.freeze(['removeCardFromDeck', 'loseMaxHpPct']);
+
+/**
+ * `addCardToDeck` is the one op that is binding OR NOT depending on what it
+ * names — the same opcode hands you a blessing or a Guilt. So it reads the
+ * CARD's own declared `type`, which content already writes and `CARD_TYPES`
+ * already closes. A card the registry does not know is treated as binding:
+ * unknown is not "fine" (SOP 2), and the safe direction here is one extra hold.
+ */
+const BINDING_CARD_TYPES = Object.freeze(['curse', 'status']);
+
+/**
+ * bindingReasons(choice, registries) -> string[]
+ *
+ * Empty means "a tap is enough". Non-empty is why, in the player's terms, and
+ * the strings are for an instrument and a log — never rendered raw at a player.
+ */
+function bindingReasons(choice, registries) {
+  const out = [];
+  if (!choice || !Array.isArray(choice.effects)) return out;
+  for (const eff of choice.effects) {
+    if (!eff || typeof eff !== 'object') continue;
+    if (BINDING_OPS.includes(eff.op)) { out.push(eff.op); continue; }
+    if (eff.op === 'addCardToDeck') {
+      // `random: true` adds a card nobody named. It is not knowably a curse, so
+      // it is not knowably safe either — and this function's whole contract is
+      // that it never says "safe" about something it did not check.
+      if (eff.random || eff.card == null) { out.push('addCardToDeck:unnamed'); continue; }
+      const def = registries && registries.cards && registries.cards.get
+        ? registries.cards.get(eff.card) : null;
+      const type = def ? def.type : null;
+      if (type == null || BINDING_CARD_TYPES.includes(type)) {
+        out.push(`addCardToDeck:${type || 'unknown'}`);
+      }
+    }
+  }
+  return out;
+}
+
+/** The one predicate every caller asks. */
+function isBindingChoice(choice, registries) {
+  return bindingReasons(choice, registries).length > 0;
+}
+
+
+Object.assign(module.exports, { BINDING_OPS, BINDING_CARD_TYPES, bindingReasons, isBindingChoice });
+
+},
+"src/ui/components/holdconfirm.js": function (module, exports, require) {
+// src/ui/components/holdconfirm.js — PRESS AND HOLD, for the choices a run
+// cannot take back. Constantine, asked whether to build it: "yes press and
+// hold".
+//
+// THE DEFECT IT ANSWERS, in one number. The event screen's three bars are
+// 44/44/44 across sixteen cells — the SIZE was fixed and it did not help,
+// because the GAPS are 9-9.7 px at every dial setting and nothing in this game
+// reads a gap. A thumb that lands 9 px low lands on the neighbour, and on that
+// screen the neighbour is a permanent curse with no confirm and no undo.
+//
+// WHY A HOLD RATHER THAN A MODAL, and this is the whole design rather than a
+// preference: the control FILLS UNDER THE FINGER. The player reads the words
+// that are filling, sees they are the wrong ones, and LETS GO — the correction
+// happens inside the same gesture as the mistake. A modal asks "are you sure?"
+// after the commit, when the eye has already moved to the next screen and the
+// answer is always yes.
+//
+// THE FIVE THINGS IT MUST NEVER DO, each one a way this shape goes wrong:
+//
+//   1. COMMIT ON A RELEASE. Releasing early is the abort, so a pointer `click`
+//      on a held control NEVER commits — the completed hold is the only pointer
+//      path there is. Get this backwards and the safety feature becomes a
+//      second way to fire the thing.
+//   2. COMMIT TWICE. It fires the instant the fill lands, then disarms; the
+//      trailing pointerup and its click find nothing armed.
+//   3. LOCK ANYONE OUT. `ev.detail === 0` — a keyboard Enter on a focused
+//      button, and the synthetic click ui/input.js dispatches for the gamepad
+//      cursor — commits immediately, with no hold. That is not a loophole, it
+//      is the scope: this answers a POINTING failure, a 9 px gap only a finger
+//      can fall into. A focus cursor selects a NAMED element and cannot land
+//      between two bars, so charging it a hold would be ceremony billed to a
+//      player who cannot make the mistake. Named boundary, not silence: pad and
+//      keyboard players get no confirm step.
+//   4. TRAP A SCROLL. Moving more than SLOP px abandons, so a drag that was
+//      trying to scroll the screen never becomes a commit.
+//   5. GO INVISIBLE. The fill is state, not decoration, so it survives
+//      reduced-motion; it is a width driven per frame, not an animation.
+//
+// Cancellation is not hand-rolled: trackGesture (#22, ui/gesture.js) calls
+// onEnd exactly once however the gesture ended — pointerup, pointercancel,
+// palm rejection, focus loss — pointerId-scoped, listeners on the element,
+// nothing on window. Vira measured the hole that module exists to fill; a hold
+// that reinvented it would reinvent the hole.
+
+const { trackGesture } = require("src/ui/gesture.js");
+
+/** How far a finger may wander before the hold is read as a drag. */
+const SLOP = 12;
+
+/**
+ * armHold(btn, { ms, onConfirm }) -> disarm()
+ *
+ * `ms <= 0` wires a plain click and returns: the "off" position of the dial is
+ * the pre-hold behaviour byte for byte, not a hold with a zero timer.
+ */
+function armHold(btn, { ms, onConfirm }) {
+  if (!(ms > 0)) {
+    btn.addEventListener('click', onConfirm);
+    return () => btn.removeEventListener('click', onConfirm);
+  }
+
+  btn.classList.add('ev-hold');
+  // Two states an instrument and a screenshot can both read, so the tool never
+  // re-derives what the screen already knows (Law 0 clause 4).
+  btn.dataset.hold = 'idle';
+  btn.dataset.holdMs = String(ms);
+  btn.style.setProperty('--hold', '0');
+
+  let raf = 0;
+  let armed = false;
+  let fired = false;
+
+  const paint = (p) => {
+    btn.style.setProperty('--hold', String(p));
+    btn.dataset.holdProgress = p.toFixed(3);
+  };
+
+  function stop(state) {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    armed = false;
+    btn.dataset.hold = state;
+    paint(0);
+  }
+
+  function begin(ev) {
+    if (fired || armed) return;
+    armed = true;
+    fired = false;
+    btn.dataset.hold = 'holding';
+    const t0 = performance.now();
+    const x0 = ev.clientX;
+    const y0 = ev.clientY;
+
+    const tick = (now) => {
+      if (!armed) return;
+      const p = Math.min(1, (now - t0) / ms);
+      paint(p);
+      if (p >= 1) {
+        // FIRE AT FULL, not at release. The player feels it land while their
+        // thumb is still down, which is the confirmation; waiting for the lift
+        // would make a completed hold feel like it did nothing.
+        fired = true;
+        stop('done');
+        onConfirm(ev);
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    trackGesture(ev, {
+      onMove: (mv) => {
+        if (!armed) return;
+        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) stop('idle');
+      },
+      // However it ended — lift, cancel, palm, focus loss. If the fill never
+      // reached the end, nothing happened, and that IS the feature.
+      onEnd: () => { if (armed) stop('idle'); },
+    });
+  }
+
+  // A pointer click never commits. See rule 1 — the early release IS the abort,
+  // so the click it generates must die here rather than become a second door.
+  const onClick = (ev) => {
+    if (ev.detail === 0) { onConfirm(ev); return; } // rule 3: keyboard / pad cursor
+    ev.preventDefault();
+    ev.stopPropagation();
+  };
+
+  const onKeyEsc = (ev) => { if (ev.key === 'Escape' && armed) stop('idle'); };
+
+  btn.addEventListener('pointerdown', begin);
+  btn.addEventListener('click', onClick);
+  addEventListener('keydown', onKeyEsc);
+
+  return function disarm() {
+    stop('idle');
+    fired = true;
+    btn.removeEventListener('pointerdown', begin);
+    btn.removeEventListener('click', onClick);
+    removeEventListener('keydown', onKeyEsc);
+  };
+}
+
+/**
+ * The dial position -> milliseconds, in one place, reading the one home
+ * (`balance.ui.holdConfirm`). An unknown stored value resolves to the DEFAULT
+ * rather than to 0: a settings string nobody recognises must not quietly
+ * disable a safety step.
+ */
+function holdMs(settings, holdConfirm) {
+  const steps = (holdConfirm && holdConfirm.steps) || {};
+  const raw = settings && settings.holdConfirm;
+  const key = Object.prototype.hasOwnProperty.call(steps, raw) ? raw : holdConfirm.def;
+  return Number(steps[key]) || 0;
+}
+
+
+Object.assign(module.exports, { armHold, holdMs });
 
 },
 "src/ui/screens/gameover.js": function (module, exports, require) {
