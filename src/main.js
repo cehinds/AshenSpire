@@ -1157,6 +1157,9 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     run,
     combat,
     label,
+    // The second-beat dial lives in meta.settings, and combat has two actions
+    // in the table (End Turn, drinking a flask). Same read as the event screen.
+    meta: saves.loadMeta(),
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
     onMenu: showOverlay,
@@ -1278,6 +1281,7 @@ function showRest() {
     registries,
     run,
     healMult,
+    meta: saves.loadMeta(),
     onDone: () => {
       persist();
       showMap();
@@ -1290,6 +1294,7 @@ function showShop() {
   mountShop(app, {
     registries,
     run,
+    meta: saves.loadMeta(),
     onChanged: () => persist(),
     onLeave: () => {
       run.shopStock = null;
@@ -1495,7 +1500,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -1622,7 +1627,33 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.floor = 8;
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
     showRest();
+  } else if (shotState === 'shop') {
+    // A REACH STATE, and the fourth of the same shape (`?shotEvent`, `?shotAt`,
+    // `?shot=rest`). The merchant is one of the screens no instrument this repo
+    // owns can open, which is why "burn a card out of the deck for good, one
+    // tap, no confirm" sat in shipped code with nobody's number against it —
+    // the same reason the Shrine's Smith grid overflowed a phone unseen.
+    //
+    // POSED WITH A DECK WORTH REMOVING FROM and a purse that can pay: the
+    // remove grid only renders at `cinders >= removeCost && deck.length > 1`,
+    // so a fresh run (0 cinders) mounts the screen with the one control this
+    // state exists to reach ABSENT — a green on nothing, which is the
+    // wrong-place empty SOP 2 calls malformed.
+    run.floor = 8;
+    run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
+    run.cinders = 999;
+    run.shopStock = buildShopStock(registries, rng, run);
+    showShop();
   } else if (shotState === 'combat' || shotState === 'fx') {
+    // TWO FLASKS IN THE POSE, ONE OF EACH KIND, AND IT IS NOT DRESSING. A
+    // drunk flask does not come back this climb, and `useFlask` is a row in the
+    // second-beat table — but a board with an EMPTY flask row draws no flask
+    // control at all, so the census could not tell "this action is not wired"
+    // from "this pose has nothing to press". Those two readings are opposite
+    // and looked identical. An untargeted flask owes a hold, a targeted one
+    // does not (it enters aim mode, which is already a second beat), so the
+    // pose carries one of each and the check sees both cells of the row.
+    run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
     enterNode(startId);

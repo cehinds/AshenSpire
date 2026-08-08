@@ -8,13 +8,16 @@ import { executeRunEffects } from '../../engine/actions.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { isBindingChoice } from '../../model/consequence.js';
-import { armHold, holdMs } from '../components/holdconfirm.js';
+import { beatArmer } from '../components/holdconfirm.js';
 
 export function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
   const def = registries.events.get(eventId);
-  // The dial, read once per mount. `holdConfirm` lives in balance.ui and this
-  // screen restates none of it.
-  const hold = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
+  // THE ONE DOOR. This screen no longer knows what a hold is, what the dial
+  // says, or which choices deserve one — it names the action and hands over the
+  // commit. `secondbeat.js` rules; `holdconfirm.js` performs. That is the whole
+  // point of tonight: `armHold` used to have exactly one caller and it was this
+  // line, which is how "same with ending turn" was lost.
+  const arm = beatArmer(meta, registries);
   const disarmers = [];
 
   function meets(requires) {
@@ -101,20 +104,14 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
         executeRunEffects({ run, registries, rng }, choice.effects);
         showResult(choice.resultText);
       };
-      if (binding && hold > 0) {
-        // THE INSTRUCTION IS ON SCREEN, not announced and not discovered. A
-        // gesture a tired player has to find is a gesture they will fight; the
-        // word is three letters and it costs the bar nothing. It stays inside
-        // the branch on purpose — a bar that cannot be pressed must not be told
-        // to hold.
-        const hint = document.createElement('span');
-        hint.className = 'hold-hint';
-        hint.textContent = 'HOLD';
-        btn.appendChild(hint);
-        disarmers.push(armHold(btn, { ms: hold, onConfirm: commit }));
-      } else {
-        btn.addEventListener('click', commit);
-      }
+      // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
+      // CHARACTERISTIC of the choice, derived from its own ops
+      // (model/consequence.js); the beat is derived from that characteristic
+      // (model/secondbeat.js). The HOLD hint, the fill, the dial and the "off"
+      // position all moved into the machinery with it — a bar that cannot be
+      // pressed still never gets armed, because this branch is the affordable
+      // one and always was.
+      disarmers.push(arm(btn, 'eventChoice', { ctx: { binding }, onConfirm: commit }));
     }
     box.appendChild(btn);
   });
