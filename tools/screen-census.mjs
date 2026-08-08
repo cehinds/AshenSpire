@@ -647,7 +647,25 @@ if (c.fatal) {
   console.log(`  No counts, no pointers and no boundary follow: a report about a tree this tool`);
   console.log(`  could not read would be a confident zero, which is worse than an error.`);
   console.log(`RESULT: the census could not be taken at ${ref.label} — ${c.fatal}`);
-  process.exit(1);
+  // EXIT 2, NOT 1 — this file's own contract, twelve lines from the top: "0 the
+  // census was taken · 1 a finding · 2 the harness could not run". A floor that
+  // fires is the harness saying it could not run, and it was exiting 1, which is
+  // the code for a finding about the GAME. Observed before the change: the
+  // screens directory emptied exited 1 and a source that could not be read
+  // exited 1, while a tree with no git — the same class of failure — exited 2.
+  //
+  // NOT PART OF EITHER OF VIRA'S FINDINGS, and separated into its own commit for
+  // that reason. It came out of her boundary note that a census defect fails the
+  // test slot labelled for a code defect, and it is the same shape as both of
+  // them: a sentence in this file claiming a property the file did not implement.
+  //
+  // WHAT IT CHANGES FOR THE SUITE: nothing. Test 42 reads `code !== 0`, so a
+  // fatal failed it before and fails it now. What changes is that a person
+  // reading the exit code can tell "this tree is not censusable" from "this tree
+  // has a finding". The split is NOT clean and I will not claim it is: the
+  // `unreadable` per-row floor is a census defect that still exits 1, because it
+  // is a finding — one that names the census as its owner in its own text.
+  process.exit(2);
 }
 
 let tally;

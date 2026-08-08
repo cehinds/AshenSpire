@@ -228,6 +228,24 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   // where a fully watched tree must stop alarming. Its failure is the check's
   // fault. 42 is the state of src/.
   //
+  // THIS COMMENT USED TO SAY "42's failure is the code's" AND THAT WAS NOT TRUE.
+  // Vira measured it while gating this pair: a census that cannot read one of
+  // its homes, and the per-row `unreadable` floor, both land on 42 — so the slot
+  // labelled for a defect in the game was also catching defects in the check.
+  // The exit codes now carry as much of the split as they honestly can, and this
+  // is what they actually implement:
+  //
+  //   42 red, exit 2 — the census could not be taken. A home stopped being
+  //                    readable. THE CHECK'S FAULT, or the tree's, never the
+  //                    game's; no counts are printed at all.
+  //   42 red, exit 1 — a finding. Usually the game's (a screen nothing in src/
+  //                    imports), sometimes still the census's (a module it can
+  //                    derive no way to recognise). THE FINDING LINE NAMES ITS
+  //                    OWNER, and that is the part a reader must use.
+  //
+  // The residue is deliberate and stated rather than smoothed: one exit code
+  // cannot carry a distinction the findings list makes per row.
+  //
   // NO PLANT COUNT HERE. This comment said "seven plants" and the corpus is now
   // larger; a count typed beside a list that lives in another file is the same
   // second-home defect this pair exists to catch, and it went stale the first
