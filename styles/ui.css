@@ -970,20 +970,73 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   width: 108rem; max-width: 96%; height: 92%; display: flex; flex-direction: column;
   background: var(--bg-raise); border: 1px solid var(--line); border-radius: 6px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); overflow: hidden;
+  /* THE CONTAINER THE EXIT NAMES (Law 2: every positioned element names its
+     container). `.armoury-close` is absolute against THIS box and not against
+     the head, deliberately — the head's height is a function of whether its
+     content wrapped, and an exit whose position depends on that is the defect
+     below wearing a smaller hat. */
+  position: relative;
 }
+/* THE HEAD WRAPS, AND THE EXIT DOES NOT WRAP WITH IT.
+   The trap: at 390x844 in combat this was a NON-WRAPPING flex row whose every
+   item is sized in text units, so at Text L the ✕ rendered at x 351.7-419.9
+   against a 390 viewport and at XL at 381.3-455.7. `.armoury` is
+   `overflow: hidden`, so the head overflowed its own box (scrollWidth >
+   clientWidth) and the panel clipped it: elementFromPoint at the button's own
+   centre returns nothing, the backdrop does not close this overlay, and a phone
+   has no Escape key. The panel was a dead end, and only for players who RAISED
+   THEIR TEXT SIZE — the ones who told us their eyes need help.
+
+   TWO DECISIONS, and only the second one is taste:
+
+   1. `flex-wrap: wrap` (Sunna demonstrated this closes it at all four sizes).
+      With `justify-content: space-between` and no `margin-left: auto`, a row
+      that FITS is byte-identical to what shipped — title left, views right —
+      and a row that WRAPS puts the views under the title on the same left
+      margin, so the wrap reads as a column edge rather than as a ragged one.
+
+   2. THE ✕ LEAVES THE FLOW ENTIRELY. Wrapping alone would have carried it to
+      the left of a second row at M and XL, and where the exit lands is not a
+      thing that may vary. Every other control in this head is about the
+      CONTENT; the ✕ is about the CONTAINER, and the one control that answers
+      "get me out" cannot have an x-position that is the sum of everything to
+      its left — which is precisely how this broke. So it is pinned to the
+      panel's own top-right corner: same place at every text size, both shapes,
+      wrapped or not. It stays a corner ✕ because the failure was never that
+      players did not recognise it; it was that it was not on the screen.
+
+   The head reserves that corner in TEXT-INDEPENDENT units so nothing can ever
+   slide under the button — a reservation measured in rem would shrink relative
+   to the glyphs it is holding back, which is the same bug through the other
+   door. gap and padding here are box geometry (Law 4 clause 3), ratcheted on a
+   rule this change is rewriting anyway; the h2 and the chips keep their rem
+   font-sizes, because those decide how big a LETTER is. */
 .armoury-head {
-  display: flex; align-items: center; gap: 1.6rem; padding: 1.2rem 1.6rem;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 12px 16px;
+  padding-right: calc(var(--tap-floor) + 16px);
   border-bottom: 1px solid var(--line); background: var(--panel);
 }
 .armoury-head h2 { color: var(--gold); font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 2px; }
-.armoury-views { display: flex; gap: 0.4rem; margin-left: auto; }
+.armoury-views { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .armoury-views button {
   background: none; border: 1px solid var(--line); color: var(--muted);
   padding: 0.4rem 1.1rem; border-radius: 3px; cursor: pointer;
   font-size: 1.2rem; text-transform: capitalize; font-family: var(--font-body);
 }
 .armoury-views button.on { color: var(--gold); border-color: var(--gold); background: var(--bg); }
-.armoury-close { background: none; border: none; color: var(--muted); font-size: 1.8rem; cursor: pointer; }
+/* --tap-floor is 44 device px measured AFTER --ui-zoom (base.css) — the same
+   unit .choice and .ov-tab use, because a finger is the same size on every
+   screen. It is a min, never a height: the glyph inside still grows with Text
+   size, so the box can neither clip it nor balloon (Law 4 clause 4). Measured
+   before this change at 1200x730: 62x38 device px at Text S and 69x42 at M —
+   under the floor on a desktop where the button was never off-screen at all. */
+.armoury-close {
+  position: absolute; top: 0; right: 0; z-index: 1;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--muted); font-size: 1.8rem; cursor: pointer;
+}
 .armoury-close:hover { color: var(--parchment); }
 
 .armoury-body { flex: 1; display: flex; gap: 1.6rem; padding: 1.6rem; overflow: hidden; }
