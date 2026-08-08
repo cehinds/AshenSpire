@@ -952,9 +952,46 @@ body.hide-hints .hint-bar { display: none; }
 /* THREE CHANNELS on the selected tab — fill, border colour, label colour — for
    the same reason the overlay strip carries three: an accent-only answer dies
    for a colourblind player, and --gold is rewritten from balance.ui when a
-   player picks Crimson, so hue alone is not a constant either. */
+   player picks Crimson, so hue alone is not a constant either.
+
+   AND THE FILL CHANNEL WAS NOT ONE. This rule declared `background:
+   var(--bg-raise)` while its parent `.set-tabs` declares the SAME token, so the
+   selected tab was painted the exact colour of the strip behind it: a channel
+   the stylesheet lists and no player can see. Sunna measured it off painted
+   pixels at 390x844 — mean |Δ| RGB inside the pill against the ring outside it
+   — and the current tab was the QUIETEST selected thing on the settings screen,
+   quieter than an UNSELECTED chip beside it. It reproduces on a second
+   instrument (freja-pill-ink.mjs, ring convention stated in its header):
+
+                               dev     this branch BEFORE   after
+     selected tab `Display`    11.99         12.18            35.19
+     unselected chip `SLOW`    16.89         16.92            16.92
+     selected chip `NORMAL`    34.58         34.60            34.60
+
+   The selected tab lands at 35.19 against the selected chip's 34.60 — level
+   with it, which is what "matched" has meant at every one of the five moves.
+   Identical to the digit from styles/ui.css and from the single-file
+   dist/AshenSpire.html, so the artifact a player double-clicks carries it too.
+
+   It is NOT caused by the size change that ships with it — dev reads 11.99 and
+   the strip's own diff reads 12.18, the same number. The size change only
+   removed the difference that was HIDING it, which is this morning's finding
+   landing on me: every equalising constraint is also a mask.
+
+   So the fill takes the CHIP'S OWN value, and this is the fifth matching move,
+   not a sixth arbitrary number — font, padX and radius already came down to the
+   chip's, and this matches the selected-state fill (`.choice-group .choice.on`,
+   below). Two pills on one screen, one set of numbers.
+
+   THE LITERAL IS DELIBERATE AND IT IS ALSO A SEAM I AM NAMING, NOT FIXING.
+   `rgba(201, 162, 39, 0.25)` is frozen gold while `border-color` and `color`
+   here ride `--gold`, which main.js rewrites for the Crimson/Frost/Verdant/
+   Violet accents. The chip has carried that disagreement since it was written
+   (`.toggle.on` and `.mod-chip.on` too); matching means matching, and swapping
+   in `rgba(var(--accent-rgb), 0.25)` would make this tab the only pill on the
+   screen that themes — divergence dressed as a fix. Filed as its own act. */
 .set-tabs .set-tab.on {
-  color: var(--gold); border-color: var(--gold); background: var(--bg-raise);
+  color: var(--gold); border-color: var(--gold); background: rgba(201, 162, 39, 0.25);
   font-weight: 600;
 }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 1rem 0; border-bottom: 1px solid var(--line-soft); }
