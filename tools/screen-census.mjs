@@ -312,6 +312,69 @@ function census(reader) {
 }
 
 // ---------------------------------------------------------------------------
+// THE WATCHER COLUMN — one cell per instrument, as the READER sees it.
+//
+// IT IS A FUNCTION BECAUSE THE DEFECT LIVES AT THE PRINT. Vira found that `[x]`
+// was unfalsifiable: `watchers[].why` — the exact token each instrument matched
+// on — was derived at the join and dropped here, so a reader was handed a
+// FILENAME and no way to check it. She reproduced this tool's own first bug on a
+// fresh tree with one comment reading "this tool deliberately does NOT touch
+// mountBeta", and got `[x] beta 2`. I reproduced it too, on my own synthetic
+// tree, with the same sentence. A comment saying a tool does not touch a screen
+// still counts as the tool touching it — my self-exclusion fixed the INSTANCE
+// and left the CLASS, and the class is one file away in any tree.
+//
+// Printing the token does not prevent a false match. It makes one FINDABLE by
+// whoever reads the report, which is the whole of the ask.
+//
+// AND THIS IS WHY IT IS EXTRACTED RATHER THAN INLINED. Vira planted the property
+// on the MODEL — every `watchers[].why` non-empty — and wrote that its falsifier
+// was "delete `why` from the join, OR STOP PRINTING IT". The second half does not
+// hold, and I checked before adopting rather than after: with her print reverted
+// to the bare filename in her own clone, her corpus still reads 10/10 red and
+// `[x] map 7` still prints `contrast-audit · mapreach · …`. A property planted on
+// the model cannot see the print. So the cell is a named function, the plant
+// calls the same function the report calls, and D2 cannot come back silently.
+// ---------------------------------------------------------------------------
+function watcherCells(r) {
+  if (!r.readable) return ['UNREADABLE — this census cannot recognise it (see findings)'];
+  if (!r.watchers.length) return ['nothing names it'];
+  return r.watchers.map((w) => `${w.file.replace(/^tools\//, '').replace(/\.mjs$/, '')}:${w.why.join('+')}`);
+}
+
+// The one typed number in the report, and it decides nothing about the game: how
+// wide a line may be before it wraps. Constantine reads this output, so a row is
+// WRAPPED, never TRUNCATED — a truncated reason is D2 again wearing a layout
+// costume, and "+3 more" would be the same unfalsifiable claim with a number on
+// it. A cell is never split either: half a token is not greppable, and the point
+// of the token is that a reader can go and check it. A single cell longer than
+// the budget therefore overhangs on purpose.
+//
+// Measured before adopting: with the tokens inline and no wrap, this report's
+// widest row is 244 columns (settings), 7 rows clear 100, median 57. That is the
+// artifact he actually reads.
+const ROW_WIDTH = 100;
+
+function wrapCells(prefix, cells, width = ROW_WIDTH) {
+  const pad = ' '.repeat(prefix.length); // derived from the prefix, never typed twice
+  const lines = [];
+  let cur = prefix;
+  let empty = true;
+  for (const cell of cells) {
+    const sep = empty ? '' : ' · ';
+    if (!empty && cur.length + sep.length + cell.length > width) {
+      lines.push(cur);
+      cur = pad + cell;
+    } else {
+      cur += sep + cell;
+      empty = false;
+    }
+  }
+  lines.push(cur);
+  return lines;
+}
+
+// ---------------------------------------------------------------------------
 // THE REPORT — the artifact Constantine reads. Legible at a glance is a
 // requirement, not a preference.
 // ---------------------------------------------------------------------------
@@ -342,12 +405,8 @@ function printReport(c, ref) {
     console.log(label);
     for (const r of rows.slice().sort((a, b) => (b.watchers.length - a.watchers.length) || a.id.localeCompare(b.id))) {
       const box = !r.readable ? '[?]' : r.watchers.length ? '[x]' : '[~]';
-      const who = !r.readable
-        ? 'UNREADABLE — this census cannot recognise it (see findings)'
-        : r.watchers.length
-          ? r.watchers.map((w) => w.file.replace(/^tools\//, '').replace(/\.mjs$/, '')).join(' · ')
-          : 'nothing names it';
-      console.log(`  ${box} ${r.id.padEnd(15)}${String(r.watchers.length).padStart(2)}  ${who}`);
+      const prefix = `  ${box} ${r.id.padEnd(15)}${String(r.watchers.length).padStart(2)}  `;
+      for (const line of wrapCells(prefix, watcherCells(r))) console.log(line);
     }
     console.log('');
   };
@@ -506,6 +565,31 @@ function selftest() {
         },
       }),
       (c) => !c.fatal && c.rows.filter((r) => !r.watchers.length && r.readable).length === 0],
+
+    // NOT A BREAKAGE — A PROPERTY, and the one plant here that reads the REPORT
+    // rather than the model. Vira's finding and Vira's property; the subject is
+    // mine, because hers sat on `c.rows` and D2 was a defect of the PRINT. Proven
+    // rather than argued: with her print reverted to the bare filename, her
+    // corpus still read 10/10 red while `[x] map 7` printed seven filenames and
+    // no reasons — the exact output she withheld the branch over.
+    //
+    // Falsifier, and this one holds: drop `why` from the join, OR stop rendering
+    // it in watcherCells(), OR truncate the cells, and this goes MISS.
+    ['EVERY [x] PRINTS THE TOKEN IT RESTS ON — the claim a reader can go and check',
+      () => fsReader(),
+      (c) => {
+        if (c.fatal) return false;
+        const lit = c.rows.filter((r) => r.watchers.length);
+        if (!lit.length) return false; // vacuous truth is not evidence
+        return lit.every((r) => {
+          const cells = watcherCells(r);
+          return cells.length === r.watchers.length && r.watchers.every((w, i) => {
+            if (!w.why.length) return false;
+            const rendered = cells[i].slice(cells[i].indexOf(':') + 1).split('+');
+            return w.why.every((t) => rendered.includes(t));
+          });
+        });
+      }],
 
     ['a NEW screen module nobody registered anywhere — Law 0\'s falsifier, one file',
       () => overlay({
