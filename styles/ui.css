@@ -42,12 +42,23 @@
   font-size: 0.9rem; letter-spacing: 3px; text-align: center; padding: 0.3rem 0;
   font-family: var(--font-display);
 }
+/* Two facts were tangled in one selector, and the tangle is what broke the
+   Smith preview. `.card .ctext` is HOW THE CARD FACE LAYS OUT ITS TEXT BLOCK —
+   it belongs to the card and stays keyed to it. The five rules below are HOW
+   CARD TEXT MARKS ITSELF: they style the spans fillTemplate() emits, and
+   fillTemplate() is one function whose output is drawn in two places — the card
+   face, and the Smith/coop upgrade preview inside #tooltip. Keying the marks to
+   `.card` keyed them to one of the two drawing sites, so the preview computed
+   exactly which numbers moved and then drew them like ordinary prose.
+   So they are keyed to `.ctext` — "this element holds card text" — and BOTH
+   drawing sites wear it. This is a re-key, not a widening: copying these five
+   rules under `#tooltip` would give every mark a second home to drift from. */
 .card .ctext { font-size: 1.1rem; text-align: center; line-height: 1.4; margin-top: 0.6rem; }
-.card .ctext .kw { color: var(--gold); }
-.card .ctext .st-bleed { color: var(--ember); font-weight: 600; }
-.card .ctext .val { font-weight: 700; }
-.card .ctext .val.up { color: var(--green); }
-.card .ctext .val.down { color: var(--ember); }
+.ctext .kw { color: var(--gold); }
+.ctext .st-bleed { color: var(--ember); font-weight: 600; }
+.ctext .val { font-weight: 700; }
+.ctext .val.up { color: var(--green); }
+.ctext .val.down { color: var(--ember); }
 
 /* ---------- card TYPE: geometry + banner colour --------------------------- */
 /* Type reads as SHAPE first — attack squarest and chamfered, power roundest,
