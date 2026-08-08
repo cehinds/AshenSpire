@@ -271,6 +271,40 @@ export function validateContent(bundle) {
       }
     }
   }
+  // balance.ui.holdBeat — THE SAME FAILURE SHAPE AS holdConfirm, one control
+  // over. The beat is the only feedback a held control has once a thumb is on
+  // top of the fill, and every way this row can be wrong is SILENT: a fraction
+  // of 1.4 never arrives, a NaN compares false against every progress value, a
+  // descending list fires the late tick first and then never again, and a
+  // duplicate fires two ticks in one frame that a player hears as one. In all
+  // four the screen is unchanged and the sound simply is not there — which is
+  // the exact state the beat exists to distinguish from a tap that missed.
+  //
+  // An EMPTY array is legal and means "no ticks, commit only": turning the
+  // train off is a tuning decision, and refusing it here would make the row a
+  // lie about what one edit can do.
+  if (b.balance && b.balance.ui && b.balance.ui.holdBeat != null) {
+    const hb = b.balance.ui.holdBeat;
+    if (typeof hb !== 'object' || Array.isArray(hb)) {
+      err('balance.ui.holdBeat', 'must be an object { at: [fractions] }');
+    } else if (!Array.isArray(hb.at)) {
+      err('balance.ui.holdBeat.at', `must be an array of fractions of the fill (0 <= f < 1) — got ${JSON.stringify(hb.at)}. `
+        + `A value the beat cannot read fires no ticks, and a hold with no ticks is the defect this row exists for.`);
+    } else {
+      let prev = -1;
+      hb.at.forEach((f, i) => {
+        if (typeof f !== 'number' || !Number.isFinite(f) || f < 0 || f >= 1) {
+          err(`balance.ui.holdBeat.at[${i}]`, `must be a number in [0, 1) — got ${JSON.stringify(f)}. `
+            + `1.0 is not a tick: the arrival is the 'holdCommit' recipe, and putting it here would give the landing two homes.`);
+        } else if (f <= prev) {
+          err(`balance.ui.holdBeat.at[${i}]`, `must be strictly greater than at[${i - 1}] (${prev}) — got ${f}. `
+            + `The fill only ever runs forward, so an out-of-order or duplicated fraction is a tick that fires twice in one frame or never fires at all.`);
+        } else {
+          prev = f;
+        }
+      });
+    }
+  }
   // THE MAP'S VERTICAL MARGIN, and it belongs here because it has exactly one
   // data input. `balance.ui.tapSize.def` is what the map node's radius is SOLVED
   // FROM (model/mapview.js), so raising it grows the target and eats the space

@@ -198,6 +198,49 @@ export const balance = {
       def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
     },
+    // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
+    // fractions; the sounds themselves are recipes in content/sfx.js and the
+    // durations are holdConfirm above. Three facts, three homes, none restated.
+    //
+    // WHY THE HOLD NEEDS ONE AT ALL, and it is a measurement rather than a
+    // taste. The fill is the only feedback the hold has, and on the event
+    // screen it works: the bar is 378x44 at 390x844 and a thumb covers a
+    // fraction of it. END TURN IS 190.2x50.4 AT y=784.6 OF AN 844 px VIEWPORT
+    // — a control roughly the size of the contact patch, in the bottom 60 px,
+    // approached from below. The hand that presses it is on top of the only
+    // thing telling the player the press was received. A hold with no beat is
+    // then indistinguishable from a tap that did not register, and the player
+    // presses again — so the guard fires the thing twice.
+    //
+    // `at` IS THE CLOSED SET, as fractions of the fill, ascending, and 1.0 is
+    // NOT in it: the arrival is `holdCommit`, a different sound with a
+    // different job, and putting it here would give the landing two homes.
+    //
+    // THE SPACING IS THE MESSAGE, not decoration. The gaps shorten (0.42,
+    // 0.36, 0.22) so the train ACCELERATES toward the commit: a player hears
+    // "approaching" without counting anything, and an abort at 0.5 has heard a
+    // train that was speeding up and then stopped, which is the true sentence
+    // about what happened. An evenly spaced train is a metronome, and a
+    // metronome says only "time is passing".
+    //
+    // ACCELERATION AND NOT PITCH, which is a composition decision with a
+    // maintenance reason. A rising train would need one recipe per tick
+    // (`holdTick_1..3`), and the day someone adds a fourth fraction here the
+    // fourth tick has no row and the rise breaks — the row edit this comment
+    // promises would stop being enough. Identical ticks getting closer
+    // together is the same signal, and a fourth fraction just works.
+    //
+    // WHY THREE. One tick cannot rise. Two can, barely. Four plus a commit is
+    // five sounds on every confirmation and this fires many times a run — the
+    // cost of a charming sound is paid at hold #200, not hold #1. Three is the
+    // fewest that reads as a gesture. TUNING IS THIS ROW: an empty array is
+    // legal and means the ticks are off with the commit intact.
+    //
+    // The first tick is at 0.00 on purpose — it is the "pressed" report, and a
+    // report that arrives at 180 ms has already let the player wonder.
+    holdBeat: {
+      at: [0, 0.42, 0.78],
+    },
     // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
     // renderer emits them as rem (÷10).
     spriteTiers: {

@@ -56,6 +56,7 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio } from './ui/audio.js';
+import { installHoldBeat } from './ui/components/holdbeat.js';
 import { surfaceReport } from './ui/surfaces.js';
 // failureBanner is the ONE home for "the game says something is structurally
 // wrong" — the two boot checks below used to build that element by hand, and a
@@ -210,6 +211,13 @@ if (typeof window !== 'undefined') window.__uiScale = UI.uiScale;
 // table off the page, not hold its own copy (Law 1 clause 2). A tool typing
 // 'rack' would agree with a typo as happily as with the truth. Read-only.
 if (typeof window !== 'undefined') window.__equipCfg = registries.balance.equipment;
+
+// THE HOLD'S BEAT (ui/components/holdbeat.js). Installed once, here, and never
+// mentioned again: it rides `data-hold` / `data-hold-progress`, the two facts
+// armHold already publishes on every held control, so nothing at any call site
+// wires it and a control that starts holding LATER is covered the day it does.
+// `at` is the one home of the fractions; the sounds are content/sfx.js.
+installHoldBeat({ root: document, at: (UI.holdBeat || {}).at || [] });
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;
