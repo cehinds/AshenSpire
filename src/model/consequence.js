@@ -99,9 +99,67 @@ export const SAFE_OPS = Object.freeze({
  */
 export const BINDING_CARD_TYPES = Object.freeze(['curse', 'status']);
 
+/**
+ * `Object.hasOwn`, NEVER `in` — and this is Vira's finding, in the commit whose
+ * whole subject was the fail-closed default.
+ *
+ * `'toString' in SAFE_OPS` is TRUE. So is `constructor`, `valueOf`,
+ * `hasOwnProperty`, `__proto__`, `isPrototypeOf`. `in` walks the prototype
+ * chain, so six inherited names came back NON-BINDING from the two functions
+ * whose entire job is the opposite:
+ *
+ *   failClosedOps(['toString','constructor','valueOf','hasOwnProperty',
+ *                  '__proto__','exhaust','burnRelic'])   ->  ['exhaust','burnRelic']
+ *
+ * Five of seven reported safe. Latent — no declared opcode is named any of
+ * those — and latent is not fixed. Her sentence: A FAIL-CLOSED DEFAULT THAT
+ * FAILS OPEN ON SIX INPUTS. One word, and it is this one.
+ */
+const isSafeOp = (op) => Object.hasOwn(SAFE_OPS, op);
+
 /** Which of a declared vocabulary this file would hold. For the instrument. */
 export function failClosedOps(opcodes) {
-  return (opcodes || []).filter((op) => !(op in SAFE_OPS) && op !== 'addCardToDeck');
+  return (opcodes || []).filter((op) => !isSafeOp(op) && op !== 'addCardToDeck');
+}
+
+/**
+ * THE PREMISE UNDER THE CINDER EXCEPTION, DERIVED SO A THIRD PARTY CAN RUN IT.
+ *
+ * Vira again, and it is the same correction I made one layer up and then failed
+ * to apply to myself: my check asserted THE EXCEPTION (`spend === false`), which
+ * stays green the day the faucet is deleted. It has to assert THE PREMISE.
+ *
+ * The faucet is not an assertion, it is in the data: `balance.rewards.cinders`
+ * pays 15-25 normal, 35-50 elite, 75-90 boss, and 13 event choices grant against
+ * 3 that spend. So the honest predicate is hers:
+ *
+ *   THE LARGEST CINDER SPEND MUST NOT EXCEED THE LARGEST SINGLE ENCOUNTER
+ *   REWARD — today 60 against 90.
+ *
+ * Above that line a mis-tap costs more than any one fight can return, and
+ * "tempo, not state" stops being true. My written overturn condition — "a cost
+ * the player cannot earn back before the thing it was needed for" — was not a
+ * predicate anyone could run, because that fact is stored nowhere. This one is.
+ *
+ * Returns null when it holds, or the failing numbers.
+ */
+export function cinderPremise(events, rewardCinders) {
+  let worstSpend = 0;
+  for (const e of events || []) {
+    for (const ch of e.choices || []) {
+      for (const eff of ch.effects || []) {
+        if (eff && eff.op === 'addCinders' && Number(eff.amount) < 0) {
+          worstSpend = Math.max(worstSpend, -Number(eff.amount));
+        }
+      }
+    }
+  }
+  let bestReward = 0;
+  for (const band of Object.values(rewardCinders || {})) {
+    if (Array.isArray(band)) bestReward = Math.max(bestReward, Number(band[band.length - 1]) || 0);
+  }
+  if (worstSpend <= bestReward) return null;
+  return { worstSpend, bestReward };
 }
 
 /**
@@ -113,7 +171,15 @@ export function failClosedOps(opcodes) {
  */
 export function bindingReasons(choice, registries) {
   const out = [];
-  if (!choice || !Array.isArray(choice.effects)) return out;
+  // A MALFORMED EFFECTS ARRAY BINDS, and it used to return safe — Vira's second
+  // finding on the same function, and it was inconsistent with itself: a
+  // malformed EFFECT already bound while a malformed effects ARRAY came back
+  // "a tap is enough". `effects: undefined` on a choice with a label is a
+  // half-authored entry, and half-authored is the state this file exists to be
+  // careful about. An intentionally empty list is `effects: []`, which is a
+  // real array and stays free — that is the Leave door on all twenty events.
+  if (!choice || typeof choice !== 'object') return ['malformed-choice'];
+  if (!Array.isArray(choice.effects)) return ['malformed-effects-list'];
   for (const eff of choice.effects) {
     // A malformed effect is not a safe effect.
     if (!eff || typeof eff !== 'object' || typeof eff.op !== 'string') { out.push('malformed-effect'); continue; }
@@ -130,7 +196,7 @@ export function bindingReasons(choice, registries) {
     }
 
     // THE DEFAULT, and it is the whole correction: unrecognised is binding.
-    if (!(eff.op in SAFE_OPS)) out.push(`unrecognised-op:${eff.op}`);
+    if (!isSafeOp(eff.op)) out.push(`unrecognised-op:${eff.op}`);
   }
   return out;
 }
