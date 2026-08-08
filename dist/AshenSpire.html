@@ -13956,8 +13956,28 @@ function stampDeck(registries, run, cards) {
 function canSwap(registries, slotId, { inCombat = false } = {}) {
   const slot = ((registries.equipment || {}).slots || []).find((s) => s.id === slotId);
   if (!slot) return { ok: false, word: 'unknown', reason: `No slot '${slotId}'` };
+  // THE WORDING IS MINE (Sunna, #98). Two changes, and the second is the reason
+  // for the first.
+  //
+  // `sealed` → `fastened`. Not a synonym swap. "Sealed" is an ABSOLUTE word over
+  // a PARTIAL rule — it says *shut*, while the fact it carries is only that THIS
+  // slot cannot change its active set, and two slots beside it can. A total word
+  // over a partial fact is how it collided with the screen-wide seal in the first
+  // place, and re-keying the string without changing its register would leave the
+  // reader in the same place Bjorn found them. "Fastened" is a STATE, not a
+  // verdict: it says the armour is done up, which is why it cannot come off, and
+  // it cannot be read as the re-arm rule below.
+  //
+  // AND IT HAS TO STAND ALONE, which is the part I could not fix here. This badge
+  // carries its reason in a `title=`, and Law 3 clause 4 is explicit that a native
+  // title alone does not satisfy — a touch or pad player never sees it. Measured
+  // at 390x844: the badge renders 23.6-33.1 px wide with NO reachable explanation
+  // at any text size. So the word is the whole message on the shape Constantine
+  // just made the priority, and I picked one that survives being alone. The
+  // reason wants to be on the glass; that is markup, not a string, and it is
+  // filed rather than smuggled in here.
   if (inCombat && slot.swap !== 'combat') {
-    return { ok: false, word: 'sealed', reason: `${slot.label} can only be changed outside combat.` };
+    return { ok: false, word: 'fastened', reason: `${slot.label} stays fastened until the fight ends.` };
   }
   return { ok: true, word: '', reason: '' };
 }
@@ -14006,8 +14026,33 @@ function canSwap(registries, slotId, { inCombat = false } = {}) {
  * was extracted to remove. A truth function that cannot be told whether a fight
  * is on refuses, and names the caller that failed to say.
  */
-/** The one sentence, so the two refusing paths below cannot drift apart. */
-const SEALED_MID_FIGHT = 'You cannot re-arm mid-fight — cycle between the sets you brought.';
+/**
+ * The one sentence, so the two refusing paths below cannot drift apart.
+ *
+ * REWORDED BY SUNNA (#98), AND THE OLD ONE HAD THE SAME DEFECT IT WAS REPAIRED
+ * FOR, one clause further along. It read:
+ *
+ *     "You cannot re-arm mid-fight — cycle between the sets you brought."
+ *
+ * The front was fixed: it stopped naming the slot, because no slot may be
+ * re-armed. **The back was not.** "Cycle between the sets you brought" is a
+ * PER-SLOT promise — hands cycle, armour does not — and this sentence is printed
+ * under armour too, where it is simply false. A screen-wide truth stopped
+ * wearing a per-slot label and kept offering a per-slot consolation. Same defect,
+ * quieter half, and the check could not see it because it only asserts the
+ * sentence names no slot.
+ *
+ * So it says one thing that is true everywhere and offers nothing it cannot
+ * keep. It is also 53 characters against 64, which matters: measured at 390x844
+ * this line wraps to two lines from Text M upward, and a refusal a player reads
+ * mid-fight should not be a paragraph.
+ *
+ * WHAT IT DELIBERATELY NO LONGER DOES: point at the way out. That is right for a
+ * screen-wide string and wrong for the screen — a refusal that names no
+ * alternative is a dead end, and the alternative here is per-slot, so it belongs
+ * beside the slot that has one. Filed, not silently dropped.
+ */
+const SEALED_MID_FIGHT = 'Nothing goes in or out of a set once the fight starts.';
 
 function canEquip(registries, slotId, ctx) {
   const slot = (((registries || {}).equipment || {}).slots || []).find((s) => s.id === slotId);
