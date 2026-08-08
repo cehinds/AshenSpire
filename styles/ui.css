@@ -52,10 +52,18 @@
    exactly which numbers moved and then drew them like ordinary prose.
    So they are keyed to `.ctext` — "this element holds card text" — and BOTH
    drawing sites wear it. This is a re-key, not a widening: copying these five
-   rules under `#tooltip` would give every mark a second home to drift from. */
+   rules under `#tooltip` would give every mark a second home to drift from.
+   COMPLETING THE RE-KEY (Sunna): five moved, and a SIXTH rule styling the same
+   span stayed behind on `.card` because it carried a hardcoded hex and had
+   nowhere else to live — `body.cb-safe .card .ctext .st-bleed`. Every rule
+   keyed to a TOKEN followed for free; the one keyed to a LITERAL did not, and
+   under Colorblind-friendly the same word read reddish-purple on a card face
+   and vermillion in the preview. `.st-bleed` now reads `--bleed` (base.css),
+   the palette override lives in the token block, and this rule needs no
+   palette clause at all. */
 .card .ctext { font-size: 1.1rem; text-align: center; line-height: 1.4; margin-top: 0.6rem; }
 .ctext .kw { color: var(--gold); }
-.ctext .st-bleed { color: var(--ember); font-weight: 600; }
+.ctext .st-bleed { color: var(--bleed); font-weight: 600; }
 .ctext .val { font-weight: 700; }
 .ctext .val.up { color: var(--green); }
 .ctext .val.down { color: var(--ember); }

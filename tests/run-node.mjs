@@ -288,6 +288,50 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (censTree.code !== 0 || !censTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // 43–44 — CARD TEXT MARKS HAVE ONE HOME (Sunna). Same two-line shape as 36/37
+  // and 41/42, and for the same reason: 43 is the check's own integrity, 44 is
+  // the tree's state, and conflating them makes a broken check look like a clean
+  // stylesheet.
+  //
+  // The defect: fillTemplate() emits the marks a player reads to see what an
+  // upgrade changes, and its output is drawn in TWO containers — the card face
+  // and the Smith/coop preview inside #tooltip. Every rule styling them was
+  // keyed to `.card`, so the preview drew a number it had just computed as
+  // CHANGED in the same colour and weight as the prose beside it. Constantine:
+  // "I've never seen the upgrade preview before."
+  //
+  // Five rules were re-keyed at 60935d9. A sixth did not follow, because it
+  // carried a hardcoded hex and the selector was the only place that hex could
+  // live — every rule keyed to a TOKEN came through for free. That is why this
+  // is a check and not a note: one rule surviving a re-key is an instance, a
+  // rule that CAN survive one is a class.
+  const runMark = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/markhome.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
+  const markSelf = runMark(['--selftest']);
+  const markSelfV = quote(markSelf.out);
+  console.log(
+    `${markSelf.code === 0 && markSelfV.text ? 'PASS' : 'FAIL'}  43. the card-text mark check still catches its own known-bad corpus` +
+      ` — ${markSelfV.text || `markhome --selftest (exit ${markSelf.code}): ${markSelfV.why}`}`
+  );
+  if (markSelf.code !== 0 || !markSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const markTree = runMark(['--raw']);
+  const markTreeV = quote(markTree.out);
+  console.log(
+    `${markTree.code === 0 && markTreeV.text ? 'PASS' : 'FAIL'}  44. every card-text mark rule reaches both places card text is drawn` +
+      ` — ${markTreeV.text || `markhome (exit ${markTree.code}): ${markTreeV.why}`}` +
+      ` (\`node tools/markhome.mjs\` for the ledger)`
+  );
+  if (markTree.code !== 0 || !markTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -306,4 +350,9 @@ console.log('          41–42 are a CENSUS, not a verdict: they prove every scr
 console.log('          src/ui/screens/ is mountable and that the census can still read');
 console.log('          its homes. A screen counted as reached is one an instrument NAMES');
 console.log('          a way into — not one anything ran, passed, or photographed.');
+console.log('          43–44 read SELECTORS, not pixels. They prove no card-text mark');
+console.log('          rule is keyed to one of the two containers card text is drawn');
+console.log('          in; they are silent on what colour it ends up, on inline styles,');
+console.log('          and on any other route to one container only. The render');
+console.log('          comparison that would close that has no home in this suite.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);
