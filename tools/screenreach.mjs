@@ -89,6 +89,12 @@ const SCREENS = [
   // over. One of the four is now swept; the boundary still names the other three.
   { name: 'customize', q: '?shot=customize', ready: `!!document.querySelector('.cz-portrait')` },
   { name: 'boss', q: '?shot=boss', ready: `!!document.querySelector('.boss-intro')`, overlay: 'the boss splash covers the board on purpose and is dismissed on a timer' },
+  // The Compendium (Freja). Twenty-four buttons in a scrolling grid on a phone
+  // is what this sweep is FOR, and a new screen that skips it is the eight
+  // screens Rune's census counts as owned by no instrument. It is added in the
+  // act that creates the screen for the same reason customize was added late
+  // and cost a week.
+  { name: 'compendium', q: '?shot=compendium', ready: `!!document.querySelector('.cp-cell')` },
 ];
 
 const SHAPES = [
@@ -289,11 +295,15 @@ async function main() {
     process.exit(2);
   }
 
+  // The list of swept screens is DERIVED from SCREENS rather than retyped. It
+  // was a hand-written sentence, and a boundary that has to be edited by hand
+  // when the list grows is a second copy of the list — it had already stopped
+  // naming customize in its first clause while sweeping it in the next. A
+  // boundary that lies about its own scope is worse than none.
   console.log(`\n  BOUNDARY — Linux headless Chromium only; emulation is not a phone. Only the
-  screens with a ?shot= state are reached: title, map, combat, boss, death.
-  CUSTOMIZE now has one (#29 slice 1) and is swept. SHOP, REST, REWARDS and
-  every overlay still have NO ?shot= and are covered here or anywhere by
-  nothing.
+  screens with a ?shot= state are reached: ${SCREENS.map((s) => s.name).join(', ')}.
+  SHOP, REST, REWARDS and every overlay still have NO ?shot= and are covered
+  here or anywhere by nothing.
   Reachability at rest only: nothing is pressed, legibility is not judged, and a
   control that appears only mid-interaction cannot be seen.
 
