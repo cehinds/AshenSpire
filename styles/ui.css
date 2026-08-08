@@ -837,6 +837,21 @@ body.hide-hints .hint-bar { display: none; }
 }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 1rem 0; border-bottom: 1px solid var(--line-soft); }
 .set-row b { color: var(--parchment); font-size: 1.3rem; }
+/* THE TEXT COLUMN HAS A FLOOR NOW, and a row that cannot honour it wraps.
+   #107, Sunna: the Map zoom row offers seven chips, `.choice-group` was
+   `flex-shrink: 0`, and nothing else in the row was allowed to push back — so
+   the group took the width it wanted, `200`'s right edge went PAST THE DOCUMENT
+   at 390x844, and the note explaining the feature rendered in a 35 px column as
+   sixteen lines of one to three words, 301 px tall against 92 for the row above
+   it. The row that offered the most values made its last value unreachable and
+   its own explanation unreadable.
+   Three declarations, and each one is load-bearing: the text column may shrink
+   but not below 14rem, the chips may wrap onto a second line instead of
+   overflowing, and a row too narrow for both puts the chips underneath. This is
+   a fix to the SHARED row, not to one row — Accent color's five chips were one
+   longer word from the same failure. */
+.set-row > :first-child { flex: 1 1 14rem; min-width: min(14rem, 100%); }
+.set-row { flex-wrap: wrap; row-gap: 0.8rem; }
 .set-note { color: var(--muted); font-size: 1.1rem; margin-top: 0.3rem; max-width: 23rem; line-height: 1.4; }
 /* EldenSpire#26 — the value the UI-size control actually applied. Muted like a
    note when the request was granted; accented when the fit had to hold it back,
@@ -861,7 +876,12 @@ body.hide-hints .hint-bar { display: none; }
 }
 .toggle.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); }
 .toggle.on .knob { left: 2.2rem; background: var(--gold); }
-.choice-group { display: flex; gap: 0.4rem; flex-shrink: 0; }
+/* `flex-wrap: wrap` and `justify-content: flex-end` are the other half of the
+   #107 fix above: chips fold onto a second line at the right-hand edge rather
+   than running off the page. `flex-shrink: 0` stays on the CHIPS (below) — a
+   chip that shrinks is a tap target that shrinks, which is Law 4's business —
+   but the GROUP may now shrink, which is what gives the note its column back. */
+.choice-group { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
 /* THE ONE CONTROL EXEMPT FROM THE FLOOR IT SETS.
 
    Marina's ruling, and the reason is deliberately the narrowest one available so
@@ -957,6 +977,11 @@ button.ev-choice {
      attempt on the strength of the law alone. They are filed, not swept. */
   min-height: var(--tap-floor); min-width: var(--tap-floor);
   display: inline-flex; align-items: center; justify-content: center;
+  /* #107: the GROUP is allowed to shrink and wrap now, so say here that the
+     CHIP is not. A flex item can be squeezed below its content width, and a
+     chip squeezed is a tap target squeezed — the floor two lines up would
+     survive on paper while the box got narrower than it. */
+  flex-shrink: 0;
 }
 .choice-group .choice.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); color: var(--gold); }
 .range-wrap { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
