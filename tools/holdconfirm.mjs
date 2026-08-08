@@ -83,9 +83,13 @@ const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
 const useDist = args.includes('--dist');
 const mutate = args.includes('--mutate');
-const newEntry = args.includes('--new-entry');
-const failClosed = args.includes('--fail-closed');
-const schema = args.includes('--schema');
+// NO OPTIONAL GATES. These were flags because the tool grew that way, and a
+// gate you have to remember to pass is one that will be forgotten — which is
+// the `unasked` bucket below, self-inflicted. They all run every time now; the
+// flags are still accepted so nobody's habit breaks.
+const newEntry = true;
+const failClosed = true;
+const schema = true;
 
 printArtifactProvenance(useDist ? resolve(ROOT, 'dist/AshenSpire.html') : resolve(ROOT, 'index.html'), ROOT);
 
@@ -162,8 +166,27 @@ async function main() {
   // of the file that ships." A skip folded into a pass is the silence SOP 2
   // calls unknown, and unknown blocks. So skips are collected here, named in
   // the verdict, and they take the exit code with them.
+  // AND IT SAYS WHICH KIND, which is Vira's answer to my `--accept-skips`
+  // question and it is better than the flag I asked for. She refused the flag
+  // for a reason worth keeping: A FLAG MOVES THE RECORD OF WHAT WAS NOT ASKED
+  // OUT OF THE RUN'S OUTPUT AND INTO THE RUNNER'S COMMAND LINE. The output is
+  // what gets pasted into a PR and read a week later; the invocation is not.
+  // That is `verified-at` with the ref left off.
+  //
+  // But she granted the annoyance is real: these skips are STRUCTURAL AND
+  // PERMANENT — no amount of running discharges them — and a gate that is red
+  // forever for a reason nobody can fix is the shape people learn to step over.
+  // So the fix is a WORD, not a flag:
+  //
+  //   structural  this surface cannot be asked at all (a single inlined file
+  //               has no module graph), and no run will ever change that
+  //   unasked     nobody ran it — a real gap, and a runnable one
+  //
+  // Same exit code, same floored denominator. What changes is that a reader can
+  // finally tell "I could not look" from "I did not look". The floor goes under
+  // the POPULATION, never the findings list.
   const notAsked = [];
-  const skip = (name, why) => { notAsked.push(`${name} (${why})`); console.log(`    skip  ${name} — ${why}`); };
+  const skip = (name, kind, why) => { notAsked.push({ name, kind, why }); console.log(`    skip  ${name} [${kind}] — ${why}`); };
   let checks = 0;
   const ok = (name, cond, detail) => {
     checks++;
@@ -213,22 +236,33 @@ async function main() {
     } catch { return null; }
   })();
   if (!ids || !ids.length) {
-    skip('lockout', 'could not read the event ids from src/content/events.js at this ref');
+    skip('lockout', 'unasked', 'could not read the event ids from src/content/events.js at this ref');
   } else {
     const noDoor = [];
     const wontMount = [];
     for (const id of ids) {
       await open('normal', { id });
+      // A FREE DOOR IS: NO HOLD AND NO PRICE. Not "not disabled" — that was a
+      // fact about the one state this sweep mounts (startingCinders is 0, so it
+      // mounts poor), and it agreed with the property only by a number in
+      // balance.js that nothing tied to it. `data-requires` is the content fact
+      // the screen now publishes, so this verdict does not depend on what the
+      // player can afford and there is no purse to state.
       const r = await ev(`(() => {
         const bars = [...document.querySelectorAll('button.ev-choice')];
         if (!bars.length) return null;
-        return { bars: bars.length, free: bars.filter((b) => b.dataset.binding !== '1' && !b.disabled).length };
+        return {
+          bars: bars.length,
+          free: bars.filter((b) => b.dataset.binding !== '1' && b.dataset.requires !== '1').length,
+          priced: bars.filter((b) => b.dataset.requires === '1').length,
+        };
       })()`);
       if (!r) { wontMount.push(id); continue; }
       if (!r.free) noDoor.push(id);
     }
-    ok(`every event leaves a door that needs no hold`, noDoor.length === 0,
-      `${ids.length} events driven on ${useDist ? 'dist/AshenSpire.html' : 'the source tree'}, ${noDoor.length} without one${noDoor.length ? `: ${noDoor.join(', ')}` : ''}`);
+    ok(`every event leaves a door that needs no hold AND no price`, noDoor.length === 0,
+      `${ids.length} events driven on ${useDist ? 'dist/AshenSpire.html' : 'the source tree'}, ${noDoor.length} without one${noDoor.length ? `: ${noDoor.join(', ')}` : ''}`
+      + ` — purse-independent: the door must carry neither data-binding nor data-requires`);
     ok(`every event the source declares mounts on the artifact under test`, wontMount.length === 0,
       `${wontMount.length} would not mount${wontMount.length ? `: ${wontMount.join(', ')}` : ''}`);
   }
@@ -342,7 +376,7 @@ async function main() {
                free: c.isBindingChoice(safe, reg),
                why: c.bindingReasons(choice, reg) };
     })()`);
-    if (res && res.skip) skip('--new-entry', res.skip);
+    if (res && res.skip) skip('new-entry', 'structural', res.skip);
     else {
       ok(`a never-seen entry with a curse arrives holding`, res && res.binding === true, `reasons ${JSON.stringify(res && res.why)}`);
       ok(`a never-seen entry with no cost does not`, res && res.free === false, `free=${res && res.free}`);
@@ -396,7 +430,7 @@ async function main() {
         proto: c.failClosedOps(['toString', 'constructor', 'valueOf', 'hasOwnProperty', '__proto__', 'isPrototypeOf']).length,
       };
     })()`);
-    if (fc && fc.skip) skip('--fail-closed', fc.skip);
+    if (fc && fc.skip) skip('fail-closed', 'structural', fc.skip);
     else {
       ok(`an op nobody has ruled on holds`, fc.unknown === true, JSON.stringify(fc.unknownWhy));
       // Vira's word: `in` walks the prototype chain, so six inherited names came
@@ -446,7 +480,7 @@ async function main() {
         ],
       };
     })()`);
-    if (sr && sr.skip) skip('--schema', sr.skip);
+    if (sr && sr.skip) skip('schema', 'structural', sr.skip);
     else {
       ok(`the clean tree still validates`, sr.clean === true, `ok=${sr.clean}`);
       for (const [name, keys] of sr.bads) ok(`refuses: ${name}`, keys.length > 0, keys.join(', ') || 'GREEN — nothing named it');
@@ -478,12 +512,18 @@ async function main() {
       rendered label against another. Bjorn's 6.87-7.49:1 is the read that has.
   (e) NOT 'verified-at' ANY CI REF — hand-run, like everything on this repo.`);
   if (notAsked.length) {
+    const structural = notAsked.filter((n) => n.kind === 'structural');
     console.log(`\n  NOT ASKED OF THIS ARTIFACT — ${notAsked.length}:`);
-    for (const n of notAsked) console.log(`    - ${n}`);
+    for (const n of notAsked) console.log(`    - ${n.name} [${n.kind}] — ${n.why}`);
     console.log(`  A skip folded into a PASS is silence, and silence is unknown, which blocks (SOP 2).`);
+    if (structural.length === notAsked.length) {
+      console.log(`  All ${structural.length} are STRUCTURAL: this surface cannot be asked them, and no`);
+      console.log(`  re-run will change that. Ask them of the source tree — same ref, same commit.`);
+    }
   }
   console.log(`\n  ${findings.length ? `FAIL — ${findings.length} finding(s) over ${checks} check(s)`
-    : notAsked.length ? `INCOMPLETE — ${checks} checks held, ${notAsked.length} could not be asked. NOT a pass.`
+    : notAsked.length ? `INCOMPLETE — ${checks} checks held, ${notAsked.length} not asked `
+        + `(${notAsked.filter((n) => n.kind === 'structural').length} structural, ${notAsked.filter((n) => n.kind === 'unasked').length} unasked). NOT a pass.`
     : `PASS — ${checks} checks`}`);
   for (const f of findings) console.log(`    - ${f}`);
   process.exit(findings.length ? 1 : notAsked.length ? 2 : 0);
