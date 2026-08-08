@@ -672,8 +672,20 @@ body.hide-hints .hint-bar { display: none; }
    scalable with ui or both." Measured across the entire UI-size space (5 sizes
    x 2 text sizes x 2 shapes = 20 cells, freja-tabs-probe.mjs):
 
-     tab height        44.0 in ALL TWENTY. Zero variance. It is --tap-floor and
-                       he has ruled that floor: never below 44.
+     tab height        44.0 in ALL TWENTY. Zero variance. It is --tap-floor.
+                       THE FLOOR IS NOT FIXED, AND THIS BLOCK CLAIMED IT WAS.
+                       It attributed a permanent 44 minimum to Constantine; he
+                       had already reversed that the same day, in his words:
+                       "actually, I think it should b eable to go smaller than
+                       44px." The MEASUREMENT is untouched — 44.0 in every cell
+                       is what this tree renders today. What was refuted is the
+                       claim about what he RULED, and the refuted wording is
+                       deleted rather than quoted back: a stylesheet is not a
+                       dated record, the next reader takes whatever it says as
+                       current, and a sentence anyone can still grep out of the
+                       shipped file has not been withdrawn. It matters right
+                       here — a movable floor is what turns the next line from a
+                       curiosity into the number a smaller floor would land on.
      what it wants     23.2-31.0. The floor is adding 13-21px nothing asked for,
                        and no vertical number can touch that.
      padY / gap        5.1-6.0 across the whole space.
@@ -696,11 +708,19 @@ body.hide-hints .hint-bar { display: none; }
    pills on one screen is the second copy this house keeps killing, and matching
    lands inside "about 20%" for a reason instead of by rounding.
 
-   PROMINENCE MOVES TO THE SELECTED TAB, WHERE IT BELONGS. `.set-tab.on` already
-   carries three channels plus font-weight 600; the strip is distinguished by its
-   sticky band and its border-bottom, not by making all six loud. And nothing
-   here is a height: the floor is untouched by construction, which is the whole
-   reason this is the axis that had room. */
+   PROMINENCE MOVES TO THE SELECTED TAB, WHERE IT BELONGS — and when I wrote
+   that line it was ASPIRATION I HAD MISREAD AS DESCRIPTION. I justified it with
+   "`.set-tab.on` already carries three channels plus font-weight 600". One of
+   the three was null: its fill declared var(--bg-raise) on a parent declaring
+   var(--bg-raise), ratio 1.00, so the selected tab was the QUIETEST selected
+   thing on this screen — quieter than an unselected chip. Sunna found it in
+   painted pixels; the control says the defect predates this branch and that
+   making the strip lighter only unmasked it. THE SENTENCE IS TRUE NOW, and it
+   is true by the rule below rather than by having been asserted here: 35.19
+   against the selected chip's 34.60 (evidence at `.set-tab.on`). The strip is
+   distinguished by its sticky band and its border-bottom, not by making all six
+   loud. And nothing here is a height: the floor is untouched by construction,
+   which is the whole reason this is the axis that had room. */
 .set-tabs .set-tab {
   padding: 6px 9px; border-radius: 6px;
   font-size: 1rem; letter-spacing: 0.05em;
