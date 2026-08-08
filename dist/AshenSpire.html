@@ -6671,18 +6671,22 @@ const starseerCards = [
     upgrade: { effects: [{ op: 'draw', amount: 3 }, GAIN_CHARGE] },
   },
   {
+    // FROST, not Weak (#127-adjacent, Rune 2026-08-08). The Frost row's own
+    // proc LEAVES Weak — so a frost card that also applied Weak directly paid
+    // the same debuff twice and made the build-up pointless. The card seeds the
+    // build-up; the proc pays the Weak. Numbers PROVISIONAL, like the row's.
     id: 'frostVeil', name: 'Frost Veil', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '🌫',
     effects: [
       { op: 'block', target: 'self', amount: 4 },
-      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3 },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Gain {block} Block. Apply {weak} Weak.',
+    textTemplate: 'Gain {block} Block. Apply {frost} Frost.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 6 },
-        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4 },
         GAIN_CHARGE,
       ],
     },
@@ -6756,20 +6760,27 @@ const starseerCards = [
     },
   },
   {
+    // THE CARD NAMED FROST NOVA NOW APPLIES FROST (Rune, 2026-08-08). It
+    // applied `weak` + `vulnerable` and nothing in the game applied `frost` at
+    // all — a complete threshold-proc row (threshold, burst, Frost-Exposed, a
+    // resist row and its own SFX row) that no player could reach. Weak and
+    // Vulnerable are what the Frost PROC leaves behind; this is the card that
+    // fills the meter, and it is the Starseer's because frostExposed raises
+    // `starstone`-tagged damage. Numbers PROVISIONAL, like the row's.
     id: 'frostNova', name: 'Frost Nova', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '❄',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
-      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
-      { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1, if: CHARGED },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4 },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Apply {weak} Weak. Starstone: apply {vulnerable} Vulnerable.',
+    textTemplate: 'Deal {damage} damage. Apply {frost} Frost. Starstone: apply {frost.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 6 },
-        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
-        { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1, if: CHARGED },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 5 },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4, if: CHARGED },
         GAIN_CHARGE,
       ],
     },
@@ -7252,11 +7263,29 @@ const heraldCards = [
     },
   },
   {
+    // THE HERALD IS WHERE INSANITY LIVES (Rune, 2026-08-08). The Insanity row
+    // shipped complete — threshold 14, the biggest burst, +8 Poise, a
+    // guaranteed Stagger, `insanityExposed` — and NOTHING in the game applied
+    // it. It belongs to this class and not to the Reaver or the Starseer for a
+    // reason already in the data: insanityExposed raises `ritual`- and
+    // `blight`-tagged damage, and those two tags are the Herald's
+    // (content/source/cardTagging.csv). A chant repeated until the mind gives
+    // is the cheapest, slowest door in; 14 is deliberately the hardest
+    // threshold to fill, so a common has to be able to start it.
+    // Numbers PROVISIONAL, like the row's.
     id: 'litany', name: 'Litany', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '📿',
-    effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 }],
-    textTemplate: 'Apply {weak} Weak.',
-    upgrade: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 }] },
+    effects: [
+      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 },
+      { op: 'applyStatus', target: 'enemy', status: 'insanity', stacks: 3 },
+    ],
+    textTemplate: 'Apply {weak} Weak and {insanity} Insanity.',
+    upgrade: {
+      effects: [
+        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 },
+        { op: 'applyStatus', target: 'enemy', status: 'insanity', stacks: 4 },
+      ],
+    },
   },
   {
     id: 'graveOffering', name: 'Grave Offering', class: 'herald', rarity: 'common', cost: 2, type: 'attack',
@@ -8913,9 +8942,20 @@ const act2Enemies = [
     tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🛡',
     moves: {
-      slam: { intent: 'attack', damage: 10, weight: 40 },
-      fortify: { intent: 'block', block: 12, weight: 35, maxConsecutive: 1 },
-      crush: { intent: 'attack', damage: 14, weight: 25, maxConsecutive: 1 },
+      slam: { intent: 'attack', damage: 10, weight: 30 },
+      fortify: { intent: 'block', block: 12, weight: 25, maxConsecutive: 1 },
+      crush: { intent: 'attack', damage: 14, weight: 20, maxConsecutive: 1 },
+      // The player-side door into Frost (Rune, 2026-08-08). This act's own
+      // header already states the design — "the first enemies that turn YOUR
+      // mechanics against you (Bleed and Blight applied to the player)" — and
+      // Frost was the one build-up with no enemy behind it. Living Armor is
+      // already tinted var(--frost) and is `construct`, which is NOT in Frost's
+      // resistance tags, so it can seed the meter without shrugging it off
+      // itself. Numbers PROVISIONAL, like the row's.
+      rimeCrush: {
+        intent: 'attack', damage: 8, weight: 25, maxConsecutive: 1,
+        effects: [{ op: 'applyStatus', target: 'player', status: 'frost', stacks: 3 }],
+      },
     },
   },
 
@@ -9020,11 +9060,18 @@ const act3Enemies = [
     art: '🧎',
     moves: {
       desperateClaw: { intent: 'attack', damage: 9, weight: 60 },
+      // The player-side door into Insanity (Rune, 2026-08-08). An
+      // ember-starved pilgrim wailing at you is the one move in the tree that
+      // was already ABOUT the mind, and Insanity had no applier anywhere. The
+      // pilgrim is `humanoid`, which IS in Insanity's resistance tags — it
+      // resists what it inflicts, which is the joke and also the reason this
+      // is the right row. Numbers PROVISIONAL, like the row's.
       wail: {
         intent: 'debuff', weight: 40, maxConsecutive: 1,
         effects: [
           { op: 'applyStatus', target: 'player', status: 'weak', stacks: 1 },
           { op: 'applyStatus', target: 'player', status: 'frail', stacks: 1 },
+          { op: 'applyStatus', target: 'player', status: 'insanity', stacks: 3 },
         ],
       },
     },
@@ -10758,7 +10805,8 @@ const weapons = [
     "tags": "starstone",
     "mods": [
       "power.potency=+2",
-      "strike.damage=-1"
+      "strike.damage=-1",
+      "strike.frost=+2"
     ],
     "unlock": "",
     "blurb": "The stone hums before you do."
@@ -10875,7 +10923,8 @@ const weapons = [
     ],
     "mods": [
       "power.potency=+2",
-      "strike.poise=+2"
+      "strike.poise=+2",
+      "strike.insanity=+2"
     ],
     "unlock": "",
     "blurb": "Taken from something that objected."
@@ -11262,6 +11311,28 @@ const equipMods = [
     "label": "Burn",
     "clause": "Apply {burn} Burn.",
     "blurb": "Burn the card applies."
+  },
+  {
+    "field": "frost",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "frost",
+    "label": "Frost",
+    "clause": "Apply {frost} Frost.",
+    "blurb": "Frost build-up the card applies."
+  },
+  {
+    "field": "insanity",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "insanity",
+    "label": "Insanity",
+    "clause": "Apply {insanity} Insanity.",
+    "blurb": "Insanity build-up the card applies."
   },
   {
     "field": "strength",
