@@ -586,6 +586,14 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
     console.error('[seed] refused at newRun:', { seedString, why });
     return;
   }
+  // THE PROFILE IS OLDER THAN THE CLIMB (M7 — "profile should be able to be
+  // created before first run, not after"). Here, not on the customize screen's
+  // first click: that screen's own Back button promises "Nothing here is saved",
+  // and a profile written when a class card is highlighted would make its
+  // tooltip a lie. BEGIN THE CLIMB is where a character stops being a preview,
+  // and it is one line above the run being made, so the write order is the ask.
+  // A refused seed returns above and creates nothing.
+  saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
   run = createRunState({ seed, classId, registries });

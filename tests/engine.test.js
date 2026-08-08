@@ -992,6 +992,126 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     assert(mI.listArchives().length >= 1, 'a fresh index is started so the game keeps working');
   });
 
+  // ---- 13c. The profile exists BEFORE the first run (M7) ----------------------
+  // His ask: "profile should be able to be created before first run, not after".
+  // Bjorn's walk on the shipped bundle at cd3da94: cleared storage, picked a
+  // class, typed a name, pressed BEGIN THE CLIMB — `sote_run_v1` written,
+  // `sote_meta_v1` absent, and Settings → Profile printing his own sentence back
+  // at him. Every assertion below was observed RED at dev cd3da94 by running
+  // this file against that tree; the screen half — the same walk in a real
+  // browser, on the shipped bundle — is tools/profile-first-run.mjs.
+  test('13c. a profile exists before the run does, is written first, survives an abandon, and never overwrites one that is there', () => {
+    // A storage that REMEMBERS THE ORDER of writes. "Before" is the whole ask,
+    // and a test that only checks both keys exist at the end cannot tell the
+    // ask from its opposite.
+    const logged = () => {
+      const inner = createMemoryStorage();
+      const writes = [];
+      return {
+        writes,
+        getItem: (k) => inner.getItem(k),
+        setItem: (k, v) => { writes.push(k); return inner.setItem(k, v); },
+        removeItem: (k) => inner.removeItem(k),
+      };
+    };
+    const aRun = () => {
+      const r = createRunState({ seed: 0xc1a55, classId: 'reaver', registries: REG });
+      r.floor = 1;
+      return r;
+    };
+
+    // 1 — the class-pick commit. main.js calls ensureProfile() one line above
+    // createRunState, so this is that call, and the run write follows it.
+    const s1 = logged();
+    const m1 = createSaveManager(s1);
+    eq(s1.getItem(META_KEY), null, 'a cleared browser starts with no profile');
+    const made = m1.ensureProfile();
+    assert(made.created && made.ok, 'ensureProfile creates one when there is none');
+    assert(s1.getItem(META_KEY) != null, 'and it is REAL BYTES, not an object a reader synthesized');
+    eq(m1.profileStatus().state, 'ok', 'the named state says a profile is there');
+    eq(JSON.parse(s1.getItem(META_KEY)).schemaVersion, META_SCHEMA_VERSION, 'stamped like any other profile');
+    m1.saveRun(aRun(), null, 1);
+    assert(s1.writes.indexOf(META_KEY) < s1.writes.indexOf(RUN_KEY), 'the profile is written BEFORE the run, not after');
+
+    // 2 — the structural half, on its own: a start path that forgets to ask.
+    // A STORED RUN IMPLIES A STORED PROFILE.
+    const s2 = logged();
+    const m2 = createSaveManager(s2);
+    m2.saveRun(aRun(), null, 1);
+    assert(s2.getItem(META_KEY) != null, 'saveRun alone still leaves a profile behind');
+    assert(s2.writes.indexOf(META_KEY) < s2.writes.indexOf(RUN_KEY), 'and still in that order');
+
+    // 3 — THE EDGE BJORN COULD NOT REACH: a player who already has runs and no
+    // profile. That is everybody who started a climb on a build before this one.
+    const s3 = createMemoryStorage();
+    const m3 = createSaveManager(s3);
+    s3.setItem(RUN_KEY, JSON.stringify(aRun()));
+    eq(s3.getItem(META_KEY), null, 'the shipped population: a run, no profile');
+    const resumed = m3.loadRun(REG, 1);
+    assert(resumed != null, 'their run still loads');
+    assert(s3.getItem(META_KEY) != null, 'and their profile appears with it — no migration to run');
+    eq(m3.profileStatus().state, 'ok', 'Settings would no longer tell them they have no profile');
+
+    // …and a run that FAILS to load is not a player arriving.
+    const s3b = createMemoryStorage();
+    const m3b = createSaveManager(s3b);
+    s3b.setItem(RUN_KEY, '{"schemaVersion":1,broken');
+    eq(m3b.loadRun(REG, 1), null, 'a corrupt run is still refused');
+    eq(s3b.getItem(META_KEY), null, 'and creates no profile out of nothing');
+
+    // 4 — ABANDON BEFORE THE FIRST FIGHT. Begin a climb, then delete the save
+    // from the title screen (onDelete → clearRun). The character is gone; the
+    // player is not.
+    const s4 = createMemoryStorage();
+    const m4 = createSaveManager(s4);
+    m4.ensureProfile();
+    m4.saveRun(aRun(), null, 1);
+    m4.clearRun(1);
+    eq(s4.getItem(RUN_KEY), null, 'the abandoned run is gone');
+    assert(s4.getItem(META_KEY) != null, 'the profile it created is not');
+
+    // 5 — IDEMPOTENT, and it never touches a profile that is already there.
+    // This is the edge that would turn a fix into a data loss.
+    const s5 = createMemoryStorage();
+    const m5 = createSaveManager(s5);
+    m5.saveMeta({ settings: { textSize: 'xl' }, results: [], progress: { runs: 2000 } });
+    const before = s5.getItem(META_KEY);
+    const again = m5.ensureProfile();
+    eq(again.created, false, 'a second call creates nothing');
+    eq(s5.getItem(META_KEY), before, 'and the 2000-run profile is byte-identical afterwards');
+    m5.saveRun(aRun(), null, 1);
+    m5.loadRun(REG, 1);
+    eq(s5.getItem(META_KEY), before, 'neither does saving or loading a run');
+    eq(m5.listArchives().length, 0, 'nothing was set aside, because nothing was replaced');
+
+    // 6 — QUARANTINE WINS. The bytes of an unreadable profile are the evidence
+    // (property 4), so the new writer refuses exactly as saveMeta does.
+    const s6 = createMemoryStorage();
+    const m6 = createSaveManager(s6);
+    s6.setItem(META_KEY, JSON.stringify({ schemaVersion: META_SCHEMA_VERSION + 6, progress: { runs: 2000 } }));
+    m6.loadMeta();
+    assert(m6.profileStatus().quarantined, 'a newer profile quarantines this build');
+    const futureBytes = s6.getItem(META_KEY);
+    m6.saveRun(aRun(), null, 1);
+    eq(s6.getItem(META_KEY), futureBytes, 'starting a run does not write over a profile from the future');
+    eq(m6.ensureProfile().created, false, 'and ensureProfile says no rather than pretending');
+
+    // 7 — the sentence's own condition, both edges. 'empty' must still be
+    // reachable (someone who has never begun a climb) and must no longer be the
+    // state a player is left in after starting a new profile — which is where
+    // "No profile yet — one is created when you finish your first run" was the
+    // second lie, printed over bytes that existed.
+    const m7a = createSaveManager(createMemoryStorage());
+    m7a.loadMeta();
+    eq(m7a.profileStatus().state, 'empty', 'a browser that has never played still reads empty');
+    const s7b = createMemoryStorage();
+    const m7b = createSaveManager(s7b);
+    m7b.saveMeta({ settings: {}, results: [], progress: { runs: 9 } });
+    m7b.startNewProfile();
+    assert(s7b.getItem(META_KEY) != null, 'starting a new profile writes one');
+    eq(m7b.profileStatus().state, 'ok', 'so the state is ok, not empty');
+  });
+
   // ---- 14. Scripted bot completes a boss combat -------------------------------------
   test('14. bot (leftmost affordable, end turn) finishes a seeded boss fight without throwing', () => {
     const deck = REG.classes.get('reaver').startingDeck.map((id, i) => ({ instanceId: `c${i}`, cardId: id, upgraded: false }));
