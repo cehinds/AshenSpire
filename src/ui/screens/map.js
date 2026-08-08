@@ -102,7 +102,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const width = svgWidth(columns);
   const height = svgHeight(maxFloor);
   const x = (col) => nodeX(col);
-  const y = (floor) => nodeY(floor, height);
+  // IT TAKES THE NODE, NOT THE FLOOR, and that is deliberate. The boss sits on
+  // its own row pitch (`BOSS_ROW_H`, model/mapview.js), so a y that only knows
+  // the floor draws the boss back on top of the shrine — the exact defect this
+  // shape exists to prevent, and the sort a helper signature can make impossible
+  // instead of remembered. Same reason `nodeRadius` takes the type.
+  const y = (node) => nodeY(node.floor, height, node.type);
   // `null` here means "the frame decides", and it is resolved on the first
   // layout that has a non-zero viewport — never from the device width, because
   // `--ui-zoom` sits between the device and this canvas.
@@ -122,7 +127,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       const to = map.nodes[toId];
       const ia = path.indexOf(n.id);
       const isTraveled = ia >= 0 && path[ia + 1] === toId;
-      edgeSvg += `<line class="map-edge${isTraveled ? ' traveled' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
+      edgeSvg += `<line class="map-edge${isTraveled ? ' traveled' : ''}" x1="${x(n.col)}" y1="${y(n)}" x2="${x(to.col)}" y2="${y(to)}"/>`;
     }
   }
 
@@ -235,8 +240,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     const r = nodeRadius(n.type);
     // Reachable nodes get a rhythmic pulsing halo so the next choices read at
     // a glance; the halo is inert when reduced-motion is set (CSS handles it).
-    const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
-    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>`;
+    const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n)}" r="${r + 6}"/>` : '';
+    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n)}" r="${r}"/><text x="${x(n.col)}" y="${y(n)}">${nodeIcon(shownType)}</text>`;
     if (isReachable) el.addEventListener('click', () => onPick(n.id));
     attachTooltip(el, () => nodeTooltip(shownType, n, revealed));
     g.appendChild(el);
