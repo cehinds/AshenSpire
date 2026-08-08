@@ -1129,6 +1129,21 @@ body.hide-hints .hint-bar { display: none; }
 }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 1rem 0; border-bottom: 1px solid var(--line-soft); }
 .set-row b { color: var(--parchment); font-size: 1.3rem; }
+/* THE TEXT COLUMN HAS A FLOOR NOW, and a row that cannot honour it wraps.
+   #107, Sunna: the Map zoom row offers seven chips, `.choice-group` was
+   `flex-shrink: 0`, and nothing else in the row was allowed to push back — so
+   the group took the width it wanted, `200`'s right edge went PAST THE DOCUMENT
+   at 390x844, and the note explaining the feature rendered in a 35 px column as
+   sixteen lines of one to three words, 301 px tall against 92 for the row above
+   it. The row that offered the most values made its last value unreachable and
+   its own explanation unreadable.
+   Three declarations, and each one is load-bearing: the text column may shrink
+   but not below 14rem, the chips may wrap onto a second line instead of
+   overflowing, and a row too narrow for both puts the chips underneath. This is
+   a fix to the SHARED row, not to one row — Accent color's five chips were one
+   longer word from the same failure. */
+.set-row > :first-child { flex: 1 1 14rem; min-width: min(14rem, 100%); }
+.set-row { flex-wrap: wrap; row-gap: 0.8rem; }
 .set-note { color: var(--muted); font-size: 1.1rem; margin-top: 0.3rem; max-width: 23rem; line-height: 1.4; }
 /* EldenSpire#26 — the value the UI-size control actually applied. Muted like a
    note when the request was granted; accented when the fit had to hold it back,
@@ -1153,7 +1168,12 @@ body.hide-hints .hint-bar { display: none; }
 }
 .toggle.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); }
 .toggle.on .knob { left: 2.2rem; background: var(--gold); }
-.choice-group { display: flex; gap: 0.4rem; flex-shrink: 0; }
+/* `flex-wrap: wrap` and `justify-content: flex-end` are the other half of the
+   #107 fix above: chips fold onto a second line at the right-hand edge rather
+   than running off the page. `flex-shrink: 0` stays on the CHIPS (below) — a
+   chip that shrinks is a tap target that shrinks, which is Law 4's business —
+   but the GROUP may now shrink, which is what gives the note its column back. */
+.choice-group { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
 /* THE ONE CONTROL EXEMPT FROM THE FLOOR IT SETS.
 
    Marina's ruling, and the reason is deliberately the narrowest one available so
@@ -1249,6 +1269,11 @@ button.ev-choice {
      attempt on the strength of the law alone. They are filed, not swept. */
   min-height: var(--tap-floor); min-width: var(--tap-floor);
   display: inline-flex; align-items: center; justify-content: center;
+  /* #107: the GROUP is allowed to shrink and wrap now, so say here that the
+     CHIP is not. A flex item can be squeezed below its content width, and a
+     chip squeezed is a tap target squeezed — the floor two lines up would
+     survive on paper while the box got narrower than it. */
+  flex-shrink: 0;
 }
 .choice-group .choice.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); color: var(--gold); }
 .range-wrap { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
@@ -9504,6 +9529,26 @@ const ACT_SHAPE = {
   floors: 12,
   columns: 7,
   pathCount: 6,
+  // ONE MAP ENTRANCE — Constantine, 2026-08-08, verbatim and unqualified.
+  //
+  // `entries` and `pathCount` are two knobs and this line is why they had to be.
+  // The act is entered from ONE column; six walkers still climb it, so the
+  // routes behind that door are unchanged in number. Measured literally, "one
+  // path" would have been a corridor — 13 nodes and zero choices in a whole act
+  // (Viki, 300 seeds) — which is not what he described.
+  //
+  // WHAT IT COSTS AND WHAT IT BUYS, both measured at 300 seeds before it shipped:
+  //   entrance row      5.92 columns wide  ->  1
+  //   nodes per act     46.26              ->  35.88   (22% smaller)
+  //   next step hidden  9 of 12 seeds      ->  0 of 12 at 390x844 (tools/mapfit.mjs)
+  // The act is smaller. That is the trade he chose and it is the whole reason
+  // the shrinkage is stated here rather than discovered later.
+  //
+  // EVERY SEED IN THE GAME IS A DIFFERENT MAP NOW. That is not a side effect of
+  // this line, it IS this line: the walkers' first roll moved, so every graph
+  // downstream of it moved. No save is invalidated (graphs are stored per run),
+  // but a seed screenshotted before today no longer reproduces.
+  entries: 1,
   typeWeights: { monster: 45, event: 22, shrine: 12, elite: 8, merchant: 5 },
   // What a `?` node resolves to. HERE, beside the geometry it belongs to, and
   // no longer in `balance.unknownNode` — a flat global could not differ per act
@@ -12436,6 +12481,23 @@ const ZOOM_MIN = ZOOM_STEPS[0];
 const ZOOM_MAX = ZOOM_STEPS[ZOOM_STEPS.length - 1];
 
 /**
+ * WHAT THE MAP OPENS AT WHEN THE PLAYER HAS NOT CHOSEN — the settings row's `def`
+ * and the map screen's fallback read this one const, so they cannot disagree.
+ *
+ * `'115'` (a percentage) or `'Fit'` (the computed frame). It says `'115'` because
+ * SUNNA HELD #107 on exactly this token: the computed frame is correct arithmetic
+ * and, arriving on its own, reads as a map that has been cropped — 43 of 48
+ * mid-climb cells land at 1.968-2.000x, which shows 8-9 of 13 floors and never
+ * the boss, against 13 of 13 and the boss on every cell at 115%. The dark that
+ * makes a close frame read as intended (fog, parchment) is not on this branch.
+ *
+ * FLIPPING IT IS THE WHOLE CHANGE: `'Fit'` here makes the computed frame the
+ * default everywhere, and nothing else moves. Do it when the fog lands, or on
+ * Constantine's word — it is his A/B and nobody's first run is the experiment.
+ */
+const MAP_ZOOM_DEFAULT = '115';
+
+/**
  * THE REFERENCE PHONE VIEWPORT, in LOCAL px, measured off `.map-scroll` — never
  * inferred from device width, because `--ui-zoom` sits between the two and the
  * map lives on its far side. Measured at dev: 390x844 -> 433, 320x640 -> 432.
@@ -12584,7 +12646,7 @@ function viewRefusals(config) {
 }
 
 
-Object.assign(module.exports, { COL_X, ROW_H, NODE_R, BOSS_R, ZOOM_STEPS, ZOOM_MIN, ZOOM_MAX, PHONE_VIEW_W, nodeRadius, svgWidth, svgHeight, nodeX, nodeY, clampZoom, framingBox, fitZoom, spanWidth, maxFanoutSpan, maxFittingColumns, viewRefusals });
+Object.assign(module.exports, { COL_X, ROW_H, NODE_R, BOSS_R, ZOOM_STEPS, ZOOM_MIN, ZOOM_MAX, MAP_ZOOM_DEFAULT, PHONE_VIEW_W, nodeRadius, svgWidth, svgHeight, nodeX, nodeY, clampZoom, framingBox, fitZoom, spanWidth, maxFanoutSpan, maxFittingColumns, viewRefusals });
 
 },
 "src/model/schemas.js": function (module, exports, require) {
@@ -21219,27 +21281,47 @@ const { trackGesture } = require("src/ui/gesture.js");
 // turns them into "does this act fit on a phone" — read by this screen, by the
 // boot validator, and by tools/mapfit.mjs. Read its header before changing a
 // number here: `columns` refuses at boot against these same values.
-const { ZOOM_STEPS, ZOOM_MIN, clampZoom, framingBox, fitZoom, nodeRadius, nodeX, nodeY, svgWidth, svgHeight } = require("src/model/mapview.js");
+const { ZOOM_STEPS, ZOOM_MIN, MAP_ZOOM_DEFAULT, clampZoom, framingBox, fitZoom, nodeRadius, nodeX, nodeY, svgWidth, svgHeight } = require("src/model/mapview.js");
 
 
 
 
 /**
- * The player's SAVED zoom, or null for "compute it".
+ * The player's zoom as a NUMBER, or null when they asked the map to compute one.
  *
- * COMPUTED IS THE DEFAULT; THE LADDER AND THIS SETTING ARE THE OVERRIDE, and
- * `⊙` returns to computed (Marina's resolution of the collision between
- * Constantine's "open zoomed in close enough that the current node and its
- * connecting nodes fit" and the zoom that already ships). `Fit` is a real value
- * of the setting rather than an absence, so a player who chose 130% and wants
- * the frame back has a row to choose, not a preference to clear.
+ * A PERCENTAGE IS THE DEFAULT AND `Fit` IS THE OPT-IN — Sunna's ruling on #107,
+ * and the reversal of what this file said for one night. The machinery below is
+ * unchanged and correct: given a viewport it finds the zoom at which the current
+ * node and everything it connects to are on screen, which is what Constantine
+ * asked for. Her hold is about what that zoom LOOKS like when it arrives alone.
+ *
+ * Measured, `mapfit --only 390x844`, 60 cells: 52 sit on a ladder bound, and
+ * 43 of 48 MID-CLIMB cells sit at 1.968-2.000. Mid-climb the decision is two or
+ * three nodes, so "fit the decision" is arithmetic for "maximum zoom": 8-9 of 13
+ * floors, 2-3 of 7 columns, and THE BOSS IS NEVER ON SCREEN — against 13 of 13
+ * floors and the boss on every mid-climb cell at 115%, same code, same cells.
+ *
+ *   "It reads as a map that has been CROPPED, and nothing on screen says the
+ *    crop was a choice. The camera arrived without the dark."   — Sunna
+ *
+ * Fog and parchment are what make a close frame read as intended and they are
+ * not on this branch, so the A/B Constantine asked for cannot be run yet and
+ * NOBODY'S FIRST RUN IS THE EXPERIMENT. Flip `def` in the settings row when the
+ * fog lands, or on his word — one token, and this comment is the reason.
+ *
+ * `Fit` stays a REAL VALUE of the setting rather than an absence, so choosing it
+ * is a row and not a cleared preference, and `⊙` returns to it once chosen.
  */
 function savedZoom(meta) {
-  const raw = ((meta && meta.settings) || {}).mapZoom;
-  if (raw == null || raw === 'Fit') return null;
-  const pct = Number(raw);
-  if (!Number.isFinite(pct) || pct <= 0) return null;
-  const z = pct / 100;
+  const stored = ((meta && meta.settings) || {}).mapZoom;
+  // Unset, or a value this ladder cannot read, is the SHIPPING DEFAULT and never
+  // the computed frame. MAP_ZOOM_DEFAULT is the one home for which that is — the
+  // settings row reads the same const for its `def`, so the two cannot disagree
+  // and the flip described above is one token in model/mapview.js.
+  const raw = stored == null ? MAP_ZOOM_DEFAULT : stored;
+  if (raw === 'Fit') return null;
+  const z = Number(raw) / 100;
+  if (!Number.isFinite(z) || z <= 0) return MAP_ZOOM_DEFAULT === 'Fit' ? null : ZOOM_MIN;
   // Snap to the nearest step so +/- stays on the ladder.
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), ZOOM_MIN);
 }
@@ -22067,7 +22149,7 @@ const { renderProfileSection } = require("src/ui/screens/profileArchive.js");
 const { renderAboutSection } = require("src/ui/screens/about.js");
 const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
 const { balance } = require("src/content/balance.js");
-const { ZOOM_STEPS } = require("src/model/mapview.js");
+const { ZOOM_STEPS, MAP_ZOOM_DEFAULT } = require("src/model/mapview.js");
 
 const UI_DEFAULTS = balance.ui;
 
@@ -22081,13 +22163,30 @@ const ROWS = [
   // they were a second copy of the zoom ladder that had already drifted: the
   // ladder has six steps and this row offered four of them, so 175% and 200%
   // were reachable with the in-map + button and unreachable as a default.
-  // `Fit` is the new default and it is the whole point of the row — the map
-  // opens framed on the current node and everything it connects to, computed
-  // from the act's own width (Constantine's ask; model/mapview.js does the
-  // arithmetic). A percentage is the override, and ⊙ comes back to Fit.
-  { cat: 'Display', key: 'mapZoom', type: 'choice', def: 'Fit',
+  //
+  // `def` IS MAP_ZOOM_DEFAULT AND NOT A LITERAL. It reads '115' today because
+  // Sunna held #107 on that token; the map screen reads the same const, so the
+  // default cannot be flipped in one place and stay in the other.
+  //
+  // THE NOTE PROMISES PLAINLY AGAIN, AND ONLY BECAUSE THE PROMISE IS NOW TRUE.
+  //
+  // It said this sentence for one night while 8 of 12 seeds broke it at the
+  // entrance row — the first map of every run — which is a settings note the
+  // game could not keep, and Sunna held #107 partly on that. I had already
+  // bounded it ("gets as close as it can and you pan for the rest"). Then
+  // Constantine shipped one map entrance, and the honest move is to re-measure
+  // the sentence rather than keep a hedge that has stopped being true:
+  //
+  //   node tools/mapfit.mjs --dist --zoom Fit   ->  0 of 120 framings hide a
+  //   next step; 390x844 and 1200x730, 12 seeds, entrance + four mid-climb rows.
+  //
+  // A hedge nobody needs teaches a player the game is unsure of itself. The
+  // BOUNDARY still exists and still belongs to a maintainer, not to this string:
+  // 120 measured cells is not every seed, so the map keeps reporting a frame it
+  // could not fit (`.map-scroll[data-framing]`, and the warning it logs).
+  { cat: 'Display', key: 'mapZoom', type: 'choice', def: MAP_ZOOM_DEFAULT,
     choices: ['Fit', ...ZOOM_STEPS.map((z) => String(Math.round(z * 100)))], label: 'Map zoom',
-    note: 'Fit opens the map close enough that your current node and every node it connects to are on screen. A percentage overrides it; the in-map ⊙ button comes back to Fit.' },
+    note: 'Fit opens the map close enough that your current node and every node it connects to are on screen. A percentage fixes the zoom instead; + / − and ⊙ still work in the map.' },
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
