@@ -712,6 +712,33 @@ body.hide-hints .hint-bar { display: none; }
   padding: 0.8rem 1.6rem; font-size: 1.2rem; font-family: monospace; white-space: pre-wrap;
 }
 
+/* The Command log door — the ONE control this banner offers, and until now the
+   only one in the game with no floor under it. Measured on the shipped bundle,
+   default UI size, with the banner raised by a real thrown click: 33.19 x 126.59
+   device px at 390x844 Text S against a --tap-floor of 44, and UNDER THE FLOOR
+   IN SIX OF EIGHT shape x text cells (both phone shapes at all four text sizes,
+   1200x730 at S and M). The two lines below are the same two `.choice`,
+   `.ov-tab` and the armoury ✕ already carry, for the same reason and read off
+   the same single home.
+
+   `min-height`, never `height` — Law 4 clause 4: the floor is an ergonomic
+   constant and the growth is granted by the glyphs actually in the label, so it
+   can neither clip at XL nor balloon. `--ui-zoom` is already inside --tap-floor
+   (base.css), so 44 means 44 AFTER zoom at every UI size.
+
+   `inline-flex` + centring is what makes the floor visible rather than merely
+   declared: a min-height on an inline-block leaves the label sitting on the
+   baseline with the extra height hanging under it, which is a bigger hit box
+   around a label that looks unchanged — and a control whose look and whose
+   target disagree is the class of defect this whole banner exists to end.
+   The top margin is box geometry (Law 4 clause 3), so it is px: the button must
+   not crowd the stack line above it, and that gap is not a letter. */
+.validation-banner .vb-log {
+  min-height: var(--tap-floor); min-width: var(--tap-floor); height: auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 6px;
+}
+
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
@@ -18935,6 +18962,28 @@ function getEntries() {
 
 const banners = new Map();
 
+// AND THE SCREEN IS FINITE — the half the dedupe does not cover. Deduping on
+// the message string is right and it only reaches IDENTICAL messages; a message
+// carrying a varying number ("reading 'card7'") never repeats, so N distinct
+// failures are N banners, prepended down the page. Measured on the shipped
+// bundle at 390x844, Text XL, six banners standing: THE TOPBAR SAT AT y=830.06
+// IN AN 844 px VIEWPORT. The banner's own body sentence says "the game is still
+// running", and there was fourteen pixels of it left to see.
+//
+// So the stack has a ceiling, and the overflow sentence is NOT a new idea: it
+// is the one main.js already uses when the validation list is longer than the
+// screen ("…and N more — all N are in the browser console.", #67, Sunna's D19).
+// One truncation vocabulary in this game, not two. The door it names is the
+// Command log rather than the console, because that is the door a PLAYER has.
+//
+// THREE is measured, not chosen: at the worst cell above three banners stand
+// ~452 px tall, which leaves the topbar and the top of the map on screen. A
+// fourth kind of failure becomes a number on the NEWEST banner — which is the
+// topmost one, because these are prepended — and every one of them is still in
+// the log that banner opens.
+const MAX_BANNERS = 3;
+const overflowed = new Set();
+
 /**
  * failureBanner(key, title, body) → the banner element.
  *
@@ -18951,6 +19000,18 @@ function failureBanner(key, title, body) {
     seen.head.textContent = `${title} (×${seen.n})`;
     return seen.el;
   }
+  const standing = [...banners.values()].filter((b) => b.el.isConnected);
+  if (standing.length >= MAX_BANNERS) {
+    overflowed.add(key);
+    const last = standing[standing.length - 1];
+    if (!last.more) {
+      last.more = document.createElement('div');
+      last.el.insertBefore(last.more, last.open);
+    }
+    const n = overflowed.size;
+    last.more.textContent = ` · …and ${n} more kind${n === 1 ? '' : 's'} of failure — all of them are in the Command log.`;
+    return last.el;
+  }
   const el = document.createElement('div');
   el.className = 'validation-banner';
   const head = document.createElement('div');
@@ -18964,7 +19025,7 @@ function failureBanner(key, title, body) {
   open.addEventListener('click', () => openDebugLog());
   el.append(head, text, open);
   document.body.prepend(el);
-  banners.set(key, { el, head, n: 1 });
+  banners.set(key, { el, head, open, more: null, n: 1 });
   return el;
 }
 
