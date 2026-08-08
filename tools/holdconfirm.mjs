@@ -621,15 +621,26 @@ async function main() {
   let table = null;
   {
     console.log(`\n  the set — every action, every cell of every state-dependent row`);
-    table = await ev(`(async () => {
-      const b = await import('./src/model/secondbeat.js').catch(() => null);
-      if (!b) return { skip: 'the shipped bundle has no module graph to import' };
-      return { rows: b.enumerateBeats(), owed: b.beatsOwed(), sane: b.assertTableSane(),
-               ids: Object.keys(b.ACTIONS) };
-    })()`);
+    // READ IN NODE, NOT IN THE PAGE, and that is a correction rather than a
+    // convenience. Importing it through the page made the whole census
+    // STRUCTURALLY UNASKABLE of `--dist` — a single inlined file has no module
+    // graph — so the one artifact a player is handed got the hold physics and
+    // none of the set, and one check went FAIL rather than skip because a null
+    // import is not a form. The table is source at this ref; what ties it to
+    // the artifact under test is tools/verify-shipped.mjs (dist === build ===
+    // this source), and that chain is named here rather than assumed.
+    table = await (async () => {
+      try {
+        const b = await import(pathToFileURL(resolve(ROOT, 'src/model/secondbeat.js')).href);
+        return { rows: b.enumerateBeats(), owed: b.beatsOwed(), sane: b.assertTableSane(),
+                 ids: Object.keys(b.ACTIONS), noBeatWhenSpent: b.beatFor('endTurn', { forfeits: false }).form };
+      } catch (e) { return { skip: `could not read src/model/secondbeat.js at this ref: ${e.message}` }; }
+    })();
     if (table && table.skip) skip('the-set', 'structural', table.skip);
     else {
       ok(`the table is well formed`, table.sane.length === 0, table.sane.join(' | ') || `${table.ids.length} actions declared`);
+      if (useDist) console.log(`    ---- the table is read from the SOURCE TREE at this ref; tools/verify-shipped.mjs`
+        + ` is what says the artifact under test was built from it.`);
       // A ZERO-ROW TABLE IS NOT A CLEAN TABLE. Every check below iterates it, so
       // an empty one turns this whole section green by having nothing to ask —
       // the wrong-place empty SOP 2 calls malformed.
@@ -771,17 +782,10 @@ async function main() {
         return { turn: c.turn };
       })()`);
       if (!c0) skip('end-turn spent edge', 'unasked', 'no combat handle');
+      else if (!table || table.skip) skip('end-turn spent edge', 'unasked', 'the table could not be read at this ref');
       else {
-        // A render is what re-reads the state; a card play is the cheapest way
-        // to provoke one that the screen itself drives.
-        await ev(`(() => { const c = window.__combat; c.player.energy = 0; })()`);
-        await ev(`(() => { window.dispatchEvent(new Event('resize')); })()`);
-        const spent = await ev(`(async () => {
-          const b = await import('./src/model/secondbeat.js').catch(() => null);
-          if (!b) return null;
-          return b.beatFor('endTurn', { forfeits: false }).form;
-        })()`);
-        ok(`with nothing left to spend, the table owes NO beat`, spent === 'none', `form=${spent}`);
+        ok(`with nothing left to spend, the table owes NO beat`, table.noBeatWhenSpent === 'none',
+          `beatFor('endTurn', { forfeits: false }) = ${table.noBeatWhenSpent}`);
       }
     }
   }
