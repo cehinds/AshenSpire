@@ -45,6 +45,8 @@ import { KEEPSAKES } from '../src/content/keepsakes.js';
 import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
+  ownership, fromDropPool, slotRungs, openedSets, visibleSets, rungFor, setCellState,
+  SLOT_RUNG_KIND, createLoadout, cycleSet,
 } from '../src/model/loadout.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, emptyProgress, recordProgress, evaluateUnlocks, unlockView,
@@ -118,6 +120,13 @@ function testBundle() {
 }
 
 const REG = createRegistries(testBundle());
+
+// #90 — equipPiece now gates on OWNERSHIP as well as fit, and the argument is
+// required so a stale call site fails closed rather than skipping the check.
+// The blocks below that predate #90 are about the FIT gate, so they hand it an
+// owner that has everything: the ownership gate has its own block (41) and
+// mixing the two would make either failure look like the other.
+const OWNS_EVERYTHING = { has: () => true };
 
 // deck: array of cardId strings or { id, up: true }
 function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, relicIds = [], flasks = [] } = {}) {
@@ -1510,9 +1519,9 @@ export async function runTests({ artManifest = null } = {}) {
     assert(run.loadout && run.loadout.sets.rightHand.length === 3, 'the right hand carries three sets');
     eq(run.loadout.sets.armor[0], 'default', 'the reaver starts in its one unlocked set');
 
-    equipPiece(REG, run.loadout, 'rightHand', 0, 'dagger');
-    equipPiece(REG, run.loadout, 'rightHand', 1, 'greatsword');
-    equipPiece(REG, run.loadout, 'armor', 0, 'oathsworn');
+    equipPiece(REG, run.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING);
+    equipPiece(REG, run.loadout, 'rightHand', 1, 'greatsword', OWNS_EVERYTHING);
+    equipPiece(REG, run.loadout, 'armor', 0, 'oathsworn', OWNS_EVERYTHING);
     stampDeck(REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
     eq(dmgOf(resolveCard(REG, aStrike)), 3, 'the deck itself is stamped with the dagger');
@@ -1618,14 +1627,14 @@ export async function runTests({ artManifest = null } = {}) {
 
     // ---- the gate is on the mutation, not on the screen -------------------
     const fresh = createRunState({ seed: 4, classId: 'reaver', registries: REG });
-    assert(!equipPiece(REG, fresh.loadout, 'leftHand', 0, 'greatsword'), 'the left hand refuses a right-handed weapon');
+    assert(!equipPiece(REG, fresh.loadout, 'leftHand', 0, 'greatsword', OWNS_EVERYTHING), 'the left hand refuses a right-handed weapon');
     eq(fresh.loadout.sets.leftHand[0], null, 'and a refusal leaves the slot exactly as it found it');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'buckler'), 'a left-hand piece goes in');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger'), "an 'either' piece goes in the left hand");
-    assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'dagger'), '…and in the right hand');
-    assert(!equipPiece(REG, fresh.loadout, 'rightHand', 0, 'buckler'), 'the kind gate still holds too');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'buckler', OWNS_EVERYTHING), 'a left-hand piece goes in');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger', OWNS_EVERYTHING), "an 'either' piece goes in the left hand");
+    assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING), '…and in the right hand');
+    assert(!equipPiece(REG, fresh.loadout, 'rightHand', 0, 'buckler', OWNS_EVERYTHING), 'the kind gate still holds too');
     eq(fresh.loadout.sets.rightHand[0], 'dagger', 'and that refusal changed nothing either');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, null), 'clearing a slot is always allowed');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, null, OWNS_EVERYTHING), 'clearing a slot is always allowed');
     eq(fresh.loadout.sets.leftHand[0], null, 'and it clears');
 
     // The picker offers exactly what the mutation accepts. Not a claim about
@@ -1637,7 +1646,7 @@ export async function runTests({ artManifest = null } = {}) {
       for (const piece of allPieces) {
         const fits = fitsSlot(slot, piece);
         const probe = { sets: { [slot.id]: [null] }, active: {}, storage: [] };
-        eq(equipPiece(REG, probe, slot.id, 0, piece.id), fits, `${slot.id} ← ${piece.id}: offer and mutation agree`);
+        eq(equipPiece(REG, probe, slot.id, 0, piece.id, OWNS_EVERYTHING), fits, `${slot.id} ← ${piece.id}: offer and mutation agree`);
         checked += 1;
         if (fits) offered += 1;
       }
@@ -1793,8 +1802,206 @@ export async function runTests({ artManifest = null } = {}) {
     assert(!addToStorage(run.loadout, 'katana', 8), 'the same piece does not stack');
     assert(!addToStorage(run.loadout, 'dagger', 1), 'storage respects its cap');
     assert(carriedIds(run.loadout).includes('katana'), 'carried counts what is in storage');
-    equipPiece(REG, run.loadout, 'rightHand', 0, 'greatsword');
+    equipPiece(REG, run.loadout, 'rightHand', 0, 'greatsword', OWNS_EVERYTHING);
     assert(carriedIds(run.loadout).includes('greatsword'), 'and what is slotted');
+  });
+
+  // ---- 31b. the armoury is an INVENTORY, and the ladder is arithmetic ------
+  //
+  // EldenSpire#90, Constantine: *"the armory is more like an empty inventory,
+  // but starts with slots locked (but only shows the next locked thing) … as for
+  // weapons, I should only see an inventory of the weapons I've collected."*
+  //
+  // Two properties, and both are about things NOT being offered, which is the
+  // hard direction to test: an absence looks the same as a bug. So every count
+  // below is checked against a denominator that is also asserted, and each
+  // property is watched going the other way.
+  test('31b. the picker offers only what the profile owns, and the slot ladder shows exactly one step ahead', () => {
+    const eq_ = REG.equipment;
+    const rightHand = eq_.slots.find((s) => s.id === 'rightHand');
+    const armorSlot = eq_.slots.find((s) => s.id === 'armor');
+    const fits = (slot, pool) => pool.filter((p) => fitsSlot(slot, p));
+
+    // ---- the denominator, so "0 offered" cannot pass by being empty --------
+    const rightPool = fits(rightHand, eq_.armaments);
+    assert(rightPool.length > 1, `the right hand has a pool to filter (${rightPool.length})`);
+
+    // ---- 1. a fresh profile owns nothing droppable ------------------------
+    const fresh = createLoadout(REG, 'reaver');
+    const none = ownership(REG, { meta: {}, loadout: fresh });
+    eq(rightPool.filter((p) => none.has(p)).length, 0,
+      `a fresh profile is offered 0 of ${rightPool.length} armaments — an inventory, not a catalogue`);
+
+    // ---- 2. …and what it finds, it is offered, and ONLY that --------------
+    const two = ownership(REG, { meta: { found: ['dagger'] }, loadout: fresh });
+    const offered = rightPool.filter((p) => two.has(p)).map((p) => p.id);
+    eq(offered.join(','), 'dagger',
+      'one weapon found is one option offered — his "starting weapon and a scimitar" case');
+
+    // ---- 3. the OTHER direction: the sandbox still opens everything --------
+    // requireFound did not change meaning; turning it off still means everything
+    // is owned. Proving that keeps this from being "the filter always says no".
+    const sandboxReg = { ...REG, balance: { ...REG.balance, equipment: { ...REG.balance.equipment, drops: { ...REG.balance.equipment.drops, requireFound: false } } } };
+    const all = ownership(sandboxReg, { meta: {}, loadout: fresh });
+    eq(rightPool.filter((p) => all.has(p)).length, rightPool.length,
+      'with requireFound off every armament is owned — the documented sandbox survives');
+
+    // ---- 4. armour answers to the OTHER route, and it is not a kind test ---
+    const armourPool = fits(armorSlot, eq_.armour.filter((o) => o.classId === 'reaver'));
+    assert(armourPool.length > 1, `the reaver has an armour pool (${armourPool.length})`);
+    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default',
+      'a fresh profile is offered exactly its one starting set');
+    const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
+    eq(armourPool.filter((p) => earned.has(p)).length, 2, 'earning one unlock adds exactly one set');
+    assert(!fromDropPool(armourPool[0]) && fromDropPool(rightPool[0]),
+      'the pool question is asked of the piece, not spelled as an if on its kind');
+
+    // ---- 5. the gate is on the MUTATION, not the view ---------------------
+    // The measured defect at 77a02b9: this returned true for an unowned piece,
+    // because the only ownership check in the tree was the picker declining to
+    // attach a click handler.
+    const probe = createLoadout(REG, 'reaver');
+    assert(!equipPiece(REG, probe, 'rightHand', 0, 'greatsword', none),
+      'an unowned armament cannot be equipped even when it fits');
+    eq(probe.sets.rightHand[0], null, 'and the refusal left the slot alone');
+    assert(equipPiece(REG, probe, 'rightHand', 0, 'dagger', two), 'an owned one goes in');
+
+    // ---- 6. the ladder: three states from two integers --------------------
+    const rungs = slotRungs(REG, 'rightHand');
+    assert(rungs.length >= 2, `the right hand has rungs to climb (${rungs.length})`);
+    eq(rungs.every((u) => u.kind === SLOT_RUNG_KIND && u.ref === 'rightHand'), true, 'and they name it');
+
+    const ladder = (meta, loadout = createLoadout(REG, 'reaver')) => {
+      const opened = openedSets(REG, rightHand, { meta, loadout });
+      const visible = visibleSets(REG, rightHand, { meta, loadout });
+      return Array.from({ length: rightHand.sets }, (_, i) => setCellState(i, opened, visible)).join(',');
+    };
+    eq(ladder({}), 'open,next,hidden',
+      'turn one: one open, the next locked and visible, and nothing beyond it');
+    eq(ladder({ unlocked: [rungs[0].id] }), 'open,open,next',
+      'earning the first rung opens it and reveals exactly one more');
+    eq(ladder({ unlocked: rungs.map((u) => u.id) }), 'open,open,open',
+      'with every rung earned there is nothing left to reveal');
+
+    // ---- 7. the state a per-cell field would have allowed is unreachable ---
+    // Two locked steps, a hidden cell before an open one, a slot with no open
+    // cell: not invalid — UNREPRESENTABLE, because nothing is written per cell.
+    for (const meta of [{}, { unlocked: [rungs[0].id] }, { unlocked: rungs.map((u) => u.id) }, { unlocked: ['nonsense'] }]) {
+      const seq = ladder(meta).split(',');
+      eq(seq.filter((s) => s === 'next').length <= 1, true, 'never two locked steps');
+      eq(seq[0], 'open', 'the first cell is always usable');
+      eq(seq.join(','), [...seq].sort((a, b) => ['open', 'next', 'hidden'].indexOf(a) - ['open', 'next', 'hidden'].indexOf(b)).join(','),
+        'and the three states are always in that order');
+    }
+
+    // ---- 8. THE EDGE MY CHANGE INVENTS: a legacy save with a stranded piece -
+    // Every loadout written before #90 had all its sets reachable. Without the
+    // loadout floor in openedSets, a weapon parked in set 3 sits in a cell the
+    // player cannot see while still stamping their deck.
+    const legacy = createLoadout(REG, 'reaver');
+    legacy.sets.rightHand[2] = 'katana';
+    eq(ladder({}, legacy), 'open,open,open', 'what you are already holding is by definition open');
+    assert(carriedIds(legacy).includes('katana'), 'and it is still carried, in a cell you can now reach');
+
+    // ---- 9. a rung with no slot fails LOUD and by name --------------------
+    const bad = { ...REG, unlocks: [...REG.unlocks, { id: 'ghostRung', kind: SLOT_RUNG_KIND, ref: 'rihgtHand', name: 'x', condition: 'winRuns', param: 1, reveal: 'listed', hint: 'x' }] };
+    const said = validateEquipment(bad).join(' | ');
+    assert(said.includes('ghostRung') && said.includes('rihgtHand'),
+      `a dangling rung names its own row and its bad ref — got: ${said || '(nothing)'}`);
+    eq(validateEquipment(REG).join(' | '), '', 'and the shipped content is clean');
+
+    // ---- 9b. …and the OTHER direction of the same join (Vira, at gate) ----
+    // Too MANY rungs was checked; too FEW is the silent one. `talisman` declares
+    // 3 sets, authors 0 rungs, derives 1 forever, and nothing goes red because
+    // nothing goes wrong — the screen simply never draws them. Law 0 clause 5.
+    // It is dormant only because talismans are unauthored, so the fixture gives
+    // one a piece and watches the fuse blow.
+    const talisman = eq_.slots.find((s) => s.id === 'talisman');
+    assert(talisman && talisman.sets > 1, 'the fixture needs a wide, rung-less slot');
+    eq(slotRungs(REG, 'talisman').length, 0, 'talisman authors no rungs today');
+    eq(validateEquipment(REG).join(' | '), '', '…and is silent while nothing fits it');
+    const withCharm = {
+      ...REG,
+      equipment: {
+        ...REG.equipment,
+        armaments: [...REG.equipment.armaments,
+          { id: 'testCharm', name: 'Charm', kind: 'talisman', hand: '', rarity: 'common', tags: [], mods: [], unlock: '' }],
+      },
+    };
+    const fuse = validateEquipment(withCharm).join(' | ');
+    assert(fuse.includes("'talisman'") && fuse.includes('3 sets') && fuse.includes('only 1 can ever open'),
+      `the day a talisman exists, the unreachable sets are named — got: ${fuse || '(nothing)'}`);
+
+    // ABSENT IS NOT ZERO. A registry with no unlocks table cannot answer this,
+    // and a check that cannot know must say nothing rather than something false.
+    const blind = { ...withCharm };
+    delete blind.unlocks;
+    eq(validateEquipment(blind).join(' | ').includes('can ever open'), false,
+      'with no unlocks table the too-few check stays silent instead of condemning every slot');
+
+    // ---- 10. no rung authored → no locked cell, so no reasonless refusal ---
+    // refuses() errors on an empty reason, and the reason IS the rung's hint.
+    // A slot with nothing to earn must therefore show no locked cell at all.
+    const noRungs = { ...REG, unlocks: REG.unlocks.filter((u) => u.kind !== SLOT_RUNG_KIND) };
+    const openedN = openedSets(noRungs, rightHand, { meta: {}, loadout: fresh });
+    const visibleN = visibleSets(noRungs, rightHand, { meta: {}, loadout: fresh });
+    eq(Array.from({ length: rightHand.sets }, (_, i) => setCellState(i, openedN, visibleN)).join(','),
+      'open,hidden,hidden', 'with nothing to earn there is nothing to lock');
+    eq(rungFor(REG, rightHand, 1).id, rungs[0].id, 'and the visible lock always has a rung to name');
+  });
+
+  // ---- 31c. the ladder gates the MUTATION, not just the screen ------------
+  //
+  // VIRA'S GATE OF #90, and her property in her words:
+  //
+  //     a set index the player may ACTIVATE must be one openedSets() calls open.
+  //
+  // It lands here rather than in tools/probes/ because she asked for exactly
+  // that: *"whoever fixes it deletes this file in the same act, because a
+  // property that lives beside the code that satisfies it is the second copy."*
+  // Her probe found 6 of 13 pairs at c43c908; both of its edges are below, and
+  // the third case (a rung actually earned) is mine — a bound that refuses
+  // everything would have satisfied her edge 1 on its own.
+  test('31c. cycleSet refuses a set the ladder has not opened, and never strands a held one', () => {
+    const rightHand = REG.equipment.slots.find((s) => s.id === 'rightHand');
+    const rungs = slotRungs(REG, 'rightHand');
+    assert(rungs.length >= 2, `the right hand has rungs (${rungs.length})`);
+
+    // EDGE 1 — fresh profile. The defect: openedSets said 1, cycleSet took 3.
+    const meta = { unlocked: [] };
+    const fresh = createLoadout(REG, 'reaver');
+    eq(openedSets(REG, rightHand, { meta, loadout: fresh }), 1, 'one set open on a fresh profile');
+    const accepts = (m, lo) => [0, 1, 2].filter((i) => cycleSet(REG, structuredClone(lo), 'rightHand', i, { meta: m })).length;
+    eq(accepts(meta, fresh), 1, 'and the mutation accepts exactly one — not the raw array width');
+
+    // …and it is a GATE, not a blanket refusal: earning rungs opens indices.
+    eq(accepts({ unlocked: [rungs[0].id] }, fresh), 2, 'one rung earned opens the second');
+    eq(accepts({ unlocked: rungs.map((u) => u.id) }, fresh), 3, 'every rung earned opens them all');
+
+    // EDGE 2 — HER edge, and the one that makes this not "just add a bound".
+    // A save from before #90 has sets full-width with a piece already in the
+    // last cell and no rungs earned. Over-tight strands that weapon behind a
+    // lock that did not exist when the player put it there.
+    const legacy = createLoadout(REG, 'reaver');
+    legacy.sets.rightHand[2] = 'katana';
+    const last = legacy.sets.rightHand.length - 1;
+    eq(openedSets(REG, rightHand, { meta, loadout: legacy }), 3, 'a held piece raises the floor');
+    assert(cycleSet(REG, legacy, 'rightHand', last, { meta }), 'and the mutation lets the player reach it');
+    eq(legacy.active.rightHand, last, 'and it actually switched');
+
+    // ONE TRUTH FUNCTION, TWO CONSUMERS — the whole point of the fix. Whatever
+    // the screen would draw as `open`, the mutation accepts, and nothing else.
+    for (const m of [{ unlocked: [] }, { unlocked: [rungs[0].id] }, { unlocked: rungs.map((u) => u.id) }]) {
+      for (const lo of [fresh, legacy]) {
+        const open = openedSets(REG, rightHand, { meta: m, loadout: lo });
+        const drawn = [0, 1, 2].filter((i) => setCellState(i, open, open) === 'open').length;
+        eq(accepts(m, lo), drawn, 'the cells drawn open and the indices accepted are the same set');
+      }
+    }
+
+    // A stale call site fails CLOSED rather than skipping the check: the old
+    // first argument was a loadout, so the slot cannot resolve.
+    assert(!cycleSet(fresh, 'rightHand', 0, { meta }), 'the pre-#90 signature cycles nothing');
   });
 
   // ---- 32. no dead armaments (property, not a snapshot) --------------------

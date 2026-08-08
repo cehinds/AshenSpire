@@ -55,17 +55,31 @@ const SHAPES = [[390, 844], [1200, 730]].filter((s) => !ONLY_SHAPE || `${s[0]}x$
 
 // The screens this walk reaches. `drive` is what turns a ?shot= boot into the
 // surface a player is actually looking at — the Armoury has no ?shot= state of
-// its own, so it is reached the way Constantine reached it: from the map. Both
-// pickers are walked on purpose: the armament one refuses for `requireFound`,
-// the armour one for an UNLOCK, and a generic reason in either would be a lie.
-const ARMOUR_CELL = `(() => {
-  const b = [...document.querySelectorAll('.equip-slot')]
-    .find((x) => (x.querySelector('.es-label') || {}).textContent === 'Armour');
-  if (!b) throw new Error('no Armour slot block');
-  b.querySelector('.es-cell.on').click();
-  return true;
-})()`;
-
+// its own, so it is reached the way Constantine reached it: from the map.
+//
+// THIS TABLE HELD A PROBE WHOSE SUBJECT #90 DELETED, and the deletion is the
+// finding, not the repair. It read:
+//
+//   "Both pickers are walked on purpose: the armament one refuses for
+//    `requireFound`, the armour one for an UNLOCK, and a generic reason in
+//    either would be a lie."
+//
+// Both premises are now false. The picker offers only what the profile owns, so
+// it refuses for NOTHING: measured at 77a02b9 the two pickers held 28 refusing
+// chips between them (17/16 right hand, 10/9 left, 5/3 armour); after #90 they
+// hold 0. The `armoury-armour` route waited on
+// `.equip-picker .equip-chip.locked` and could only ever time out — an
+// unsatisfiable wait is a red instrument, not a red screen, and it must not be
+// left for someone to read as the latter.
+//
+// So that route is removed rather than re-aimed: the surviving refusal on this
+// screen is the slot ladder's next cell, and `armoury-armaments` already walks
+// it — it reports both locked cells SPEAKING their rung's own hint. Re-pointing
+// the armour route at the same control would be one subject probed twice.
+//
+// VIKI'S, #90, AND OFFERED AS A FINDING WITH A PATCH RATHER THAN TAKEN: this
+// file is not mine. Adopt or refuse it; if refused, the route needs a subject
+// that still exists, because it has none today.
 const ROUTE = [
   { name: 'title', query: '', wait: 'document.querySelector("#app")' },
   { name: 'map', query: '?shot=map', wait: 'document.querySelector("#open-armoury")' },
@@ -79,26 +93,22 @@ const ROUTE = [
     ],
     probe: true,
   },
-  {
-    name: 'armoury-armour',
-    query: '?shot=map',
-    wait: 'document.querySelector("#open-armoury")',
-    drive: [
-      { click: '#open-armoury', wait: 'document.querySelector(".equip-slot")' },
-      { js: ARMOUR_CELL, wait: 'document.querySelector(".equip-picker .equip-chip.locked")' },
-    ],
-    probe: true,
-  },
   { name: 'combat', query: '?shot=combat', wait: 'document.querySelector(".hand")' },
 ];
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// WHAT "LOOKS REFUSING" MEANS — ONE STRING, read by both halves of this tool.
+// It was written twice, and the census and the tap probe drifting apart is what
+// let one run print two reasons and report zero (#90, Vira's gate). A predicate
+// with two homes is the defect this whole file exists to find, one level up.
+const REFUSING_SEL = '[disabled],[aria-disabled="true"],.locked';
+
 // Everything that LOOKS refusing, and whether a player can find out why. Read
 // off the live DOM: a source grep answers prose as readily as code.
 const CENSUS = `(() => {
   const out = [];
-  for (const el of document.querySelectorAll('[disabled],[aria-disabled="true"],.locked')) {
+  for (const el of document.querySelectorAll('${REFUSING_SEL}')) {
     const r = el.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) continue;      // not on screen: not seen, not counted
     const reason = el.dataset ? (el.dataset.refusal || '') : '';
@@ -113,20 +123,40 @@ const CENSUS = `(() => {
   return out;
 })()`;
 
-// BOTH EDGES, on the screen itself. A refusing chip must ANSWER THE TAP — that
-// is the whole defect, and a reason merely attached to an element nobody can
-// reach would satisfy a weaker check. A usable chip must NOT gain a refusal.
+// BOTH EDGES, on the screen itself. A refusing control must ANSWER THE TAP —
+// that is the whole defect, and a reason merely attached to an element nobody
+// can reach would satisfy a weaker check. A usable control must NOT gain a
+// refusal.
+//
+// THIS PROBE AND THE CENSUS ABOVE USED TO READ TWO DIFFERENT POPULATIONS AND
+// PRODUCE ONE VERDICT (Vira, gating #90). The census asks the real question —
+// `[disabled],[aria-disabled],.locked`, anywhere, visible — while the probe
+// asked only about `.equip-picker .equip-chip`. So long as every refusal on the
+// screen happened to be a chip the two agreed by luck, and the moment #90 moved
+// the refusal from a picker chip to a rack cell they came apart: the SAME RUN
+// printed two distinct reasons through the census and reported zero through the
+// probe, then failed on its own arithmetic. **A tool whose two halves count
+// different things cannot be red for a reason you can act on.**
+//
+// So the probe now draws from the census's predicate, scoped to the surface it
+// is standing on. The scope is the point: the property is "a control you can see
+// and cannot use must say why, WHERE YOU ARE LOOKING", and that was never a
+// claim about chips. `.armoury` is the only surface any route marks `probe`,
+// and falling back to the document keeps a future route from silently measuring
+// nothing.
 const TAP_PROBE = `(() => {
-  const chips = [...document.querySelectorAll('.equip-picker .equip-chip')];
-  const refusing = chips.filter((c) => c.getAttribute('aria-disabled') === 'true' || c.classList.contains('locked'));
-  const usable = chips.filter((c) => !refusing.includes(c));
+  const root = document.querySelector('.armoury') || document;
+  const seen = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+  const refusing = [...root.querySelectorAll('${REFUSING_SEL}')].filter(seen);
+  const controls = [...root.querySelectorAll('button,[role="button"]')].filter(seen);
+  const usable = controls.filter((c) => !refusing.includes(c));
   const marked = usable.filter((c) => c.getAttribute('aria-disabled') || (c.dataset && c.dataset.refusal !== undefined));
   const tip0 = document.getElementById('tooltip');
   const before = tip0 ? tip0.style.display : 'none';
   if (refusing.length) refusing[0].click();          // no clientX: the fallback path
   const tip = document.getElementById('tooltip');
   return {
-    chips: chips.length,
+    controls: controls.length,
     refusing: refusing.length,
     usable: usable.length,
     usableMarked: marked.length,
@@ -216,14 +246,14 @@ async function main() {
       if (step.probe) {
         const p = await ev(TAP_PROBE);
         const at = `${step.name} @ ${w}x${h}`;
-        console.log(`  PROBE   ${at}  ${p.chips} chips, ${p.refusing} refusing, ${p.usable} usable` +
+        console.log(`  PROBE   ${at}  ${p.controls} controls, ${p.refusing} refusing, ${p.usable} usable` +
           `  · tap → ${p.tipShown ? `"${p.tipText}"` : 'NOTHING'}`);
         // Denominators first, and floored: a probe with nothing to refuse and
         // nothing to accept proves neither edge and must not read as a pass.
-        if (!p.refusing) probeFails.push(`${at}: no refusing chip to tap — this probe measured nothing`);
-        if (!p.usable) probeFails.push(`${at}: no usable chip — the other edge was never tested`);
-        if (p.usableMarked) probeFails.push(`${at}: ${p.usableMarked} usable chip(s) carry a refusal they should not`);
-        if (p.refusing && !p.tipShown) probeFails.push(`${at}: tapping a refusing chip said NOTHING — the defect itself`);
+        if (!p.refusing) probeFails.push(`${at}: no refusing control to tap — this probe measured nothing`);
+        if (!p.usable) probeFails.push(`${at}: no usable control — the other edge was never tested`);
+        if (p.usableMarked) probeFails.push(`${at}: ${p.usableMarked} usable control(s) carry a refusal they should not`);
+        if (p.refusing && !p.tipShown) probeFails.push(`${at}: tapping a refusing control said NOTHING — the defect itself`);
         reasonsSeen.push(...p.reasons.filter(Boolean));
       }
       const rows = await ev(CENSUS);
@@ -247,11 +277,19 @@ async function main() {
 
   console.log(`\n  screens walked: ${visited.join(' · ')}`);
   console.log(`  distinct refusal reasons seen: ${reasonsSeen.length ? [...new Set(reasonsSeen)].map((r) => `"${r}…"`).join(' · ') : 'NONE'}`);
-  // Two pickers refuse for two different reasons. One reason across both would
-  // mean a generic sentence had replaced the true one, which is the same silence
-  // wearing words.
-  if (new Set(reasonsSeen).size < 2) {
-    probeFails.push(`only ${new Set(reasonsSeen).size} distinct reason(s) across both pickers — a refusal that cannot say WHICH rule stopped it is generic`);
+  // A surface that refuses more than once must refuse for more than one reason —
+  // one sentence covering every refusal is a generic sentence that has replaced
+  // the true one, which is the same silence wearing words.
+  //
+  // THE FLOOR IS DERIVED, NOT THE CONSTANT 2 IT WAS. That constant meant "two
+  // pickers, two rules", which stopped being a fact about the game the moment
+  // #90 emptied the pickers — a hand-set floor over a population that moved.
+  // It now floors against what was actually counted, so it cannot outlive the
+  // arrangement that produced it: refuse in N places, say N different things.
+  const distinct = new Set(reasonsSeen).size;
+  if (distinct < Math.min(2, reasonsSeen.length)) {
+    probeFails.push(`${reasonsSeen.length} refusal(s) seen but only ${distinct} distinct reason(s)`
+      + ' — a refusal that cannot say WHICH rule stopped it is generic');
   }
   if (probeFails.length) {
     console.error(`\nrefusal-audit: FAILED — ${probeFails.length} probe finding(s):`);
