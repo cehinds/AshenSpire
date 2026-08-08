@@ -24,6 +24,10 @@
 //   node tools/mapplan.mjs --floors 10 --columns 6 --paths 6
 //   node tools/mapplan.mjs --seeds 48           widen the distribution
 //   node tools/mapplan.mjs --selftest           the known-bad corpus, only
+//   node tools/mapplan.mjs --shape floors=8,columns=4,elite=40
+//                                               DEFAULT vs SHAPED — the debug
+//                                               run-shape knobs, asserted
+//   node tools/mapplan.mjs --shape-selftest     the run-shape known-bad corpus
 //
 // Exit codes
 //   0  every act resolves, and every promise holds across the distribution
@@ -778,6 +782,22 @@ function runShapeMode(shapeStr, seeds, { quiet = false, rngFor = rng2 } = {}) {
         && types.every((t) => (d.perAct[t] || 0) === (s.perAct[t] || 0));
       if (same) {
         findings.push(`act ${a.act}: the shape resolved to a CHANGED config and produced an identical population — the knob is read and does nothing`);
+      }
+    }
+
+    // ---- THE ACT'S OWN PROMISES, at the shape he chose. REPORTED, NEVER A
+    // FINDING: `minElites: 2` is kept by force-placing into eligible Monster
+    // nodes, and a 4x2 act does not have enough of them, so relaxPlace runs out
+    // and stops. Measured 1.87 elites and 0.54 merchants a map at floors=4
+    // columns=2. That is not the tool's to refuse — a 20-stop climb is exactly
+    // what was asked for — but a promise breaking in silence is nobody's idea
+    // of a debug knob, so it prints here and in the panel.
+    const shaped = resolveFloorPlan(a.shaped.config).plan || {};
+    for (const [t, want] of Object.entries(shaped.minima || {})) {
+      const got = s.perAct[t] || 0;
+      if (want > 0 && got < want) {
+        say(`    ^ SHORTFALL: this act promises at least ${want} ${t} a map and this shape delivers ${got.toFixed(2)}.`
+          + ` Not a finding — it is the shape you asked for — but it is not silent either.`);
       }
     }
 
