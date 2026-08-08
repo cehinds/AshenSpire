@@ -140,16 +140,23 @@ export function upgradePreviewHtml(registries, ref) {
   const upg = resolveCard(registries, { cardId: ref.cardId, upgraded: true });
   const baseTokens = staticTokens(base);
   const upgTokens = { ...baseTokens, ...staticTokens(upg) };
+  // Both lines are CARD TEXT, so both wear `.ctext` — the class the mark rules
+  // are keyed to (ui.css). Without it the preview drew the number it had just
+  // computed as changed in the same colour and weight as the word beside it.
+  // `.ctext` carries the marks only; the card face's block layout stays on
+  // `.card .ctext` and does not follow the text into the tooltip.
   let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
-  html += `<div style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
-  html += `<div style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
+  html += `<div class="ctext" style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
+  html += `<div class="ctext" style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
   if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
   return html;
 }
 
 function cardTooltip(registries, def, tokens) {
   let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)}</div>`;
-  html += `<div>${fillTemplate(def, tokens, null)}</div>`;
+  // Card text here too — same function, same marks, same class. The in-play
+  // card tooltip had the identical defect; it is one fix, not two.
+  html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
