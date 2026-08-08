@@ -63,10 +63,35 @@ export function initAudio(settings = {}) {
   }
 
   // The context begins suspended; the first gesture resumes it.
+  //
+  // THE LIST USED TO BE ['pointerdown', 'keydown'] AND THAT IS A TOUCH BUG.
+  // Measured, headless Chromium, 390x844, CDP touch, `navigator.userActivation`
+  // sampled inside each listener on a fresh load:
+  //
+  //   touch:  pointerdown false · touchstart false · pointerup TRUE · touchend TRUE
+  //   mouse:  pointerdown TRUE
+  //
+  // Chromium grants user activation for a TOUCH at the lift, not at the press —
+  // deliberately, so that a scroll or a long-press is not an activation. A
+  // resume() called with no activation returns a promise that simply does not
+  // settle. So on a phone the whole of the first press-and-hold ran against a
+  // SUSPENDED context: measured on the shipped event screen, peak amplitude
+  // 0.000 across 209 sampled frames of a completed hold, while the same hold
+  // driven by a mouse resumed at the press. The one platform named as the
+  // priority is the one where it failed, and it failed only on the first
+  // gesture of a page — which is why nobody found it by playing.
+  //
+  // Adding the lift events does NOT make the page's very first hold audible;
+  // nothing can, because the browser will not start a context during a gesture
+  // it has not yet counted. What it fixes is everything after: any tap that
+  // ends anywhere now starts the audio, so the window in which the game is
+  // silently mute is one gesture wide instead of open-ended. In real play the
+  // title screen is tapped before any hold exists, so that window is normally
+  // already closed — `?shot=` boots are where it is not.
   function resume() {
     if (ctx.state === 'suspended') ctx.resume();
   }
-  ['pointerdown', 'keydown'].forEach((ev) =>
+  ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach((ev) =>
     addEventListener(ev, resume, { once: false, capture: true })
   );
 
@@ -80,6 +105,27 @@ export function initAudio(settings = {}) {
   function sfx(id) {
     if (state.muted || state.sfxVol <= 0) return;
     resume();
+    // A CUE THAT ARRIVES AFTER THE THING IT REPORTS IS A LIE, SO IT IS DROPPED.
+    //
+    // A suspended context does not advance its clock, so anything scheduled at
+    // `now()` sits there and fires the instant the context starts. Measured on
+    // the shipped event screen, 390x844, fresh load, CDP touch: the whole of a
+    // press-and-hold ran suspended (a touch is not an activation until the
+    // lift), and all four sounds of the beat — three ticks spread over 600 ms
+    // and an arrival — came out AS ONE 0.1687 PEAK AFTER THE FINGER LIFTED.
+    // Not lost. Piled up, in the wrong order, describing a gesture that was
+    // already over. A player would read that as the game reacting to their
+    // RELEASE, which is the opposite of what happened.
+    //
+    // Silence is the honest answer for the one gesture the browser has not yet
+    // counted. This costs the very first cue of a session on desktop too (the
+    // resume promise has not settled inside the same listener that called it)
+    // and that is the right price: one missing tick beats a phrase that lies
+    // about when it happened.
+    //
+    // MUSIC IS DELIBERATELY NOT DROPPED — a bed that starts a beat late is a
+    // bed, not a report about an event, and music() keeps its own path.
+    if (ctx.state !== 'running') return;
     const sample = own(SFX_MANIFEST, id);
     if (sample) {
       playSample(sample, sfxBus);

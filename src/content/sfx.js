@@ -107,6 +107,70 @@ export const SFX_RECIPES = {
     { kind: 'tone', type: 'square', freq: 296, to: 112, dur: 0.5, peak: 0.3, t0: 0.015 },
     { kind: 'noise', dur: 0.34, peak: 0.26, hp: 700, lp: 3400 },
   ],
+  // ---- the hold family: a press-and-hold has a BEAT ------------------------
+  //
+  // THE SCORE, written out because this house has no ears and a sound nobody
+  // can check is decoration. Four sounds make ONE PHRASE, and the phrase is
+  // "approach, approach, approach, arrive":
+  //
+  //   tick   tick  tick      COMMIT
+  //   A3     A3    A3        A3 -> E4, with A4 over it
+  //   |------|-----|---|
+  //   0.00   0.42  0.78  1.0        (fractions of the fill; balance.ui.holdBeat)
+  //
+  // Every tick is the SAME NOTE. Nothing rises in pitch — the gaps shorten, and
+  // that is the whole progress signal (the reason is in balance.ui.holdBeat, one
+  // home). The commit is that same A arriving UP: 220 glides to 330 (a fifth)
+  // with a quiet 440 (the octave) laid over it 25 ms later. So the landing is
+  // heard as the ticks resolving rather than as a fifth unrelated event, and a
+  // player learns the phrase in one run without being told anything.
+  //
+  // WHY A3 = 220 Hz. It is an octave under `cardPlay` (520->380) and two under
+  // `relic`, so a confirmation never competes with the sound of the thing being
+  // confirmed. A phone speaker rolls off hard below ~500 Hz, so on the shape
+  // that matters the fundamental is barely there and the TRIANGLE'S ODD
+  // HARMONICS (660, 1100, 1540...) are what actually arrives — which is why the
+  // tick is a triangle and not a sine. A 35 ms sine has no transient to hear.
+  //
+  // WHY NOT THE OTHER TIMBRES: square reads as an error tone (it is `stagger`
+  // and half of `procBurst_insanity`); sawtooth is the bleed/death material;
+  // noise is impact, and a confirmation is not an impact. The tick is the only
+  // dry, unfiltered, single-layer row in this table on purpose.
+  //
+  // THE LEVELS, AND THE TRADE I TOOK. `holdTick` peak 0.10 is the QUIETEST row
+  // here — under `default`'s 0.15 — and 35 ms is the shortest. It fires three
+  // times per confirmation and hundreds of times a run, so it is the one sound
+  // in the game whose cost is paid at hold #200 rather than hold #1. It is
+  // audible because it is dry and transient against a sustained bed, NOT
+  // because it is loud; buying audibility with gain would be the wrong fix and
+  // the mix would be the thing at fault.
+  //
+  // `holdCommit` peak 0.30 sits UNDER `cardPlay`'s 0.35, deliberately and at a
+  // cost: the more satisfying sound is louder. But a confirmation is not a
+  // bigger event than the card it confirms, and a mix where the guard
+  // out-shouts the action is lying about what mattered.
+  //
+  // THERE IS NO `holdAbort`, AND THE ABSENCE IS THE DECISION. Letting go is
+  // nothing happening, and the honest sound for nothing happening is nothing.
+  // It is also the COMMON case — releasing early IS the feature — so a cue
+  // there would become the most-fired sound in the game while reporting a
+  // non-event. The train stopping already says it.
+  //
+  // COMPOSED PER ACTION, exactly like `procBurst_<status>` above:
+  //   holdCommit_endTurn -> the exact row if some future author writes one
+  //                      -> else `holdCommit`, this family row
+  // So the day an action becomes one that "takes a second beat", it already
+  // sounds right with no engine edit and no content edit. A per-action row is
+  // an OPTIONAL flourish. None is authored here on purpose: this table deleted
+  // `uiClick` for being a shipped sound with no caller, and a `holdCommit_x`
+  // for an x that does not hold yet would be the same lie in a new coat.
+  holdTick: [
+    { kind: 'tone', type: 'triangle', freq: 220, dur: 0.035, peak: 0.1 },
+  ],
+  holdCommit: [
+    { kind: 'tone', type: 'triangle', freq: 220, to: 330, dur: 0.14, peak: 0.3 },
+    { kind: 'tone', type: 'sine', freq: 440, dur: 0.16, peak: 0.16, t0: 0.025 },
+  ],
   stagger: [
     { kind: 'tone', type: 'square', freq: 90, to: 40, dur: 0.35, peak: 0.5 },
     { kind: 'noise', dur: 0.22, peak: 0.4, hp: 120, lp: 1800 },
