@@ -61,6 +61,28 @@ export function getEntries() {
 
 const banners = new Map();
 
+// AND THE SCREEN IS FINITE — the half the dedupe does not cover. Deduping on
+// the message string is right and it only reaches IDENTICAL messages; a message
+// carrying a varying number ("reading 'card7'") never repeats, so N distinct
+// failures are N banners, prepended down the page. Measured on the shipped
+// bundle at 390x844, Text XL, six banners standing: THE TOPBAR SAT AT y=830.06
+// IN AN 844 px VIEWPORT. The banner's own body sentence says "the game is still
+// running", and there was fourteen pixels of it left to see.
+//
+// So the stack has a ceiling, and the overflow sentence is NOT a new idea: it
+// is the one main.js already uses when the validation list is longer than the
+// screen ("…and N more — all N are in the browser console.", #67, Sunna's D19).
+// One truncation vocabulary in this game, not two. The door it names is the
+// Command log rather than the console, because that is the door a PLAYER has.
+//
+// THREE is measured, not chosen: at the worst cell above three banners stand
+// ~452 px tall, which leaves the topbar and the top of the map on screen. A
+// fourth kind of failure becomes a number on the NEWEST banner — which is the
+// topmost one, because these are prepended — and every one of them is still in
+// the log that banner opens.
+const MAX_BANNERS = 3;
+const overflowed = new Set();
+
 /**
  * failureBanner(key, title, body) → the banner element.
  *
@@ -77,6 +99,18 @@ export function failureBanner(key, title, body) {
     seen.head.textContent = `${title} (×${seen.n})`;
     return seen.el;
   }
+  const standing = [...banners.values()].filter((b) => b.el.isConnected);
+  if (standing.length >= MAX_BANNERS) {
+    overflowed.add(key);
+    const last = standing[standing.length - 1];
+    if (!last.more) {
+      last.more = document.createElement('div');
+      last.el.insertBefore(last.more, last.open);
+    }
+    const n = overflowed.size;
+    last.more.textContent = ` · …and ${n} more kind${n === 1 ? '' : 's'} of failure — all of them are in the Command log.`;
+    return last.el;
+  }
   const el = document.createElement('div');
   el.className = 'validation-banner';
   const head = document.createElement('div');
@@ -90,7 +124,7 @@ export function failureBanner(key, title, body) {
   open.addEventListener('click', () => openDebugLog());
   el.append(head, text, open);
   document.body.prepend(el);
-  banners.set(key, { el, head, n: 1 });
+  banners.set(key, { el, head, open, more: null, n: 1 });
   return el;
 }
 
