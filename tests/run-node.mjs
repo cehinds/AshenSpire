@@ -224,9 +224,14 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   // pretend to be one.
   //
   // Two lines for the same reason 36/37 and 39/40 are two: 41 is the CENSUS'S
-  // OWN integrity — seven plants, including the both-edges one where a fully
-  // watched tree must stop alarming. Its failure is the check's fault. 42 is
-  // the state of src/. Its failure is the code's.
+  // OWN integrity — its whole known-bad corpus, including the both-edges plant
+  // where a fully watched tree must stop alarming. Its failure is the check's
+  // fault. 42 is the state of src/.
+  //
+  // NO PLANT COUNT HERE. This comment said "seven plants" and the corpus is now
+  // larger; a count typed beside a list that lives in another file is the same
+  // second-home defect this pair exists to catch, and it went stale the first
+  // time the corpus grew. The tool's own RESULT line prints the count.
   //
   // NO COUNT IN THIS COMMENT, deliberately — the tool's RESULT line carries
   // every number with the ref it was counted at, and 42 quotes it whole. A

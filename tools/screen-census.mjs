@@ -185,8 +185,39 @@ function census(reader) {
 
   // FLOOR 1 — the other denominator, and the one that would produce the
   // spectacular false alarm. With no instrument files read, EVERY screen reads
-  // unwatched and the report is a confident, total lie. Floored at the same
-  // height as the screens.
+  // unwatched and the report is a confident, total lie.
+  //
+  // FLOORED PER SOURCE, NEVER ON THE AGGREGATE. The finding is VIRA'S, gating
+  // this file on 2026-08-08; the reason it is worth a paragraph is that I had
+  // floored the TOTAL and wrapped each directory's walk in `catch { return [] }`,
+  // so losing ONE of the two sources was silent. Reproduced by me on a synthetic
+  // two-screen tree before adopting it — `tests/` moved aside, `tools/` emptied,
+  // both directions:
+  //
+  //     2 modules · 1 reachable · 1 by nothing · 0 findings · EXIT 0
+  //     "THE [~] LIST … Nobody has watched these work:  beta"
+  //
+  // and `beta` was watched, by the file the census had just stopped reading.
+  // THAT IS A FALSE CLAIM ABOUT THE GAME, PRINTED AT EXIT 0, CAUSED BY A DEFECT
+  // IN THE CHECK — the worst thing an instrument can do, in the tool written to
+  // stop instruments doing it. The only trace was `1 instrument files read` in
+  // the header: a bare number with nothing to compare it against.
+  //
+  // Why it survived my own known-bad corpus: the plant I wrote emptied BOTH
+  // directories, so the floor had been watched going red and read as observed.
+  // The case that actually happens is one step smaller — a renamed directory, a
+  // partial checkout, a clone made narrow. A plant that fires does not prove the
+  // floor is at the right HEIGHT.
+  //
+  // It adds no baseline and no frozen constant: zero is derived every run, not
+  // remembered. (Vira's queue-properties.md P1, written about a queue on the 7th
+  // and landing on a census on the 8th.)
+  //
+  // TWO FAILURES, NOT ONE, and the second is the one my `catch` swallowed: a
+  // source can come back EMPTY, or it can THROW. A directory that is GONE throws
+  // — which is exactly how I reproduced it — so the throw path gets its own
+  // named fatal and its own plant, rather than sharing the empty one's.
+  //
   // SELF-EXCLUSION, and the first thing this tool caught was itself. The very
   // first run printed `[x] shop — 1 · screen-census`, on the strength of the
   // comment eleven lines above identRe() reading "`mountShop` must not match
@@ -196,11 +227,20 @@ function census(reader) {
   // that may cite itself is a self-confirming green — the purest form of the
   // lying instrument, in the tool whose whole job is to not be one.
   const SELF = 'tools/screen-census.mjs';
-  const instrumentFiles = INSTRUMENT_DIRS.flatMap((d) => {
-    try { return walkJs(reader, d); } catch { return []; }
-  }).filter((p) => p !== SELF);
-  if (!instrumentFiles.length) {
-    return { fatal: `read ZERO instrument files from ${INSTRUMENT_DIRS.join('/ and ')}/. With no instruments there is nothing to be watched BY, and every screen would report unwatched — a total false alarm, not a census.` };
+  const sources = [];
+  const instrumentFiles = [];
+  for (const d of INSTRUMENT_DIRS) {
+    let files;
+    try {
+      files = walkJs(reader, d).filter((p) => p !== SELF);
+    } catch (e) {
+      return { fatal: `instrument source ${d}/ COULD NOT BE READ — ${e && e.message}. Every screen that only ${d}/ reaches would report unwatched, and the [~] list would name it as something nobody has watched work. That is a false claim about the game caused by a defect in the check, so no census is taken.` };
+    }
+    if (!files.length) {
+      return { fatal: `instrument source ${d}/ returned ZERO files. Every screen that only ${d}/ reaches would report unwatched, and the [~] list would name it as something nobody has watched work. That is a false claim about the game caused by a defect in the check, so no census is taken.` };
+    }
+    sources.push({ dir: d, count: files.length });
+    instrumentFiles.push(...files);
   }
 
   const srcFiles = walkJs(reader, SRC_DIR);
@@ -268,7 +308,7 @@ function census(reader) {
     });
   }
 
-  return { rows, findings, instrumentCount: instrumentFiles.length, srcCount: srcFiles.length };
+  return { rows, findings, sources, instrumentCount: instrumentFiles.length, srcCount: srcFiles.length };
 }
 
 // ---------------------------------------------------------------------------
@@ -283,7 +323,15 @@ function printReport(c, ref) {
 
   console.log(`SCREEN CENSUS — every player-facing screen in the tree, and what can reach it`);
   console.log(`  ref ${ref.label} · committed ${ref.date}${ref.dirty ? '  (WORKING TREE IS DIRTY — these numbers are of files on disk, not of that commit)' : ''}`);
-  console.log(`  ${c.rows.length} screen modules · ${c.instrumentCount} instrument files read · every line below is derived\n`);
+  console.log(`  ${c.rows.length} screen modules · ${c.instrumentCount} instrument files read · every line below is derived`);
+  // THE SOURCES, ONE LINE EACH, ABOVE ANY COUNT DERIVED FROM THEM — Vira's, and
+  // I am keeping her sentence for it because it is the argument: a reader who
+  // can see `tests/ 1 file` where there were 7 can see the census lost a source;
+  // a reader given only the total cannot. Each is floored at zero and at a read
+  // failure above, so a source that vanishes is a fatal rather than a smaller
+  // number — this line is what makes a source that merely SHRANK visible too,
+  // which no floor can do.
+  console.log(`  sources:  ${c.sources.map((s) => `${s.dir}/ ${s.count} file${s.count === 1 ? '' : 's'}`).join('  ·  ')}  ·  ${SRC_DIR}/ ${c.srcCount} files\n`);
 
   console.log(`  [x] ${String(watched.length).padStart(2)}  built, and at least one instrument can reach it`);
   console.log(`  [~] ${String(dark.length).padStart(2)}  built, and NOTHING in tools/ or tests/ can reach it`);
@@ -368,9 +416,16 @@ function printBoundary(c, ref) {
 // make, applied to the READER in memory, and the tree is re-censused clean after
 // every one.
 //
-// Plant 6 is the OTHER edge and it is the one I would have skipped: a tree where
-// every screen IS reachable must print no alarm. A checker that only ever fires
-// has not been shown to stop firing.
+// THE OTHER EDGE is the plant I would have skipped: a tree where every screen IS
+// reachable must print no alarm. A checker that only ever fires has not been
+// shown to stop firing.
+//
+// PLANTS ARE NAMED, NEVER NUMBERED, in this comment and in every comment that
+// cites one. An index into a list is a positional identifier — insert a plant in
+// the middle and every sentence naming "plant 6" is quietly about a different
+// plant, with nothing going red. That happened to this comment the moment Vira's
+// three source plants landed above, which is how I know it is not hypothetical.
+// It is the same defect as a hand-numbered test, one file over.
 // ---------------------------------------------------------------------------
 function selftest() {
   const base = fsReader();
@@ -395,7 +450,36 @@ function selftest() {
 
     ['tools/ and tests/ emptied — the edge where EVERY screen reads unwatched',
       () => overlay({ list: (d) => (INSTRUMENT_DIRS.includes(d) ? [] : undefined) }),
-      (c) => Boolean(c.fatal && /ZERO instrument files/.test(c.fatal))],
+      (c) => Boolean(c.fatal && /instrument source \w+\/ returned ZERO files/.test(c.fatal))],
+
+    // PLANTS 3, 4 AND 5 — ONE SOURCE LOST, NOT BOTH. Vira's finding, and plants
+    // 3 and 4 are hers. The plant above is now the SUBSUMED case: with the floor
+    // per source it fires on whichever source is checked first, so it can no
+    // longer tell me the floor is at the right height. These can.
+    //
+    // Both directions on purpose: `tools/` is first in INSTRUMENT_DIRS, so a
+    // floor that checked only the first source would still pass the tools/ plant
+    // and fail the tests/ one. One of these two is load-bearing and I cannot say
+    // in advance which, so both stay.
+    //
+    // PLANT 5 IS MINE AND IT IS THE ONE MY REPRODUCTION ACTUALLY USED. A source
+    // that is GONE does not come back empty — `readdirSync` THROWS. The old code
+    // swallowed exactly that throw in `catch { return [] }`, so the throw path is
+    // the branch that shipped the defect, and a fix whose evidence only covers
+    // the empty path leaves the guilty branch unwatched. A detector nobody has
+    // watched go red is unknown, not green — including a detector that replaced
+    // one somebody did watch.
+    ['ONLY tests/ emptied — one source lost, and the other one still answers',
+      () => overlay({ list: (d) => (d === 'tests' ? [] : undefined) }),
+      (c) => Boolean(c.fatal && /instrument source tests\/ returned ZERO files/.test(c.fatal))],
+
+    ['ONLY tools/ emptied — the same, from the other side',
+      () => overlay({ list: (d) => (d === 'tools' ? [] : undefined) }),
+      (c) => Boolean(c.fatal && /instrument source tools\/ returned ZERO files/.test(c.fatal))],
+
+    ['tests/ GONE, not empty — the throw path, which is how a lost source really fails',
+      () => overlay({ list: (d) => { if (d !== 'tests') return undefined; const e = new Error(`ENOENT: no such file or directory, scandir '${d}'`); e.code = 'ENOENT'; throw e; } }),
+      (c) => Boolean(c.fatal && /instrument source tests\/ COULD NOT BE READ/.test(c.fatal) && /ENOENT/.test(c.fatal))],
 
     ['a screen stripped of its exports and its DOM names — unrecognisable, NOT unwatched',
       () => overlay({ read: (p) => (p === `${SCREEN_DIR}/shop.js` ? '// nothing at all\n' : undefined) }),
@@ -512,7 +596,9 @@ process.exit(c.findings.length ? 1 : 0);
 //   which instruments can reach it, and by which token · its three-state box ·
 //   every count · the ref every count was counted at.
 //
-//   THE FALSIFIER, and it is run rather than promised: plant 7 of --selftest
-//   adds one fictional screen module and one import, ZERO edits to this file,
-//   and the census reports it as a screen nobody watches.
+//   THE FALSIFIER, and it is run rather than promised: the --selftest plant
+//   named "a NEW screen module nobody registered anywhere" adds one fictional
+//   screen module and one import, ZERO edits to this file, and the census
+//   reports it as a screen nobody watches. Named, not numbered — see the note
+//   above selftest().
 // ---------------------------------------------------------------------------
