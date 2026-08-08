@@ -31,12 +31,11 @@
 // (`.map-scroll[data-framing="clipped"]`), so the optimistic half is watched by
 // the pessimistic half.
 
+import { balance } from '../content/balance.js';
+
 /** Column pitch and floor pitch of the SVG, in SVG units. */
 export const COL_X = 95;
 export const ROW_H = 46;
-/** Node radii. `boss` is the one bigger circle (map.js draws it). */
-export const NODE_R = 15;
-export const BOSS_R = 20;
 
 /**
  * The zoom ladder — the manual control, and the bounds the computed zoom is
@@ -65,6 +64,63 @@ export const ZOOM_MAX = ZOOM_STEPS[ZOOM_STEPS.length - 1];
  * Constantine's word — it is his A/B and nobody's first run is the experiment.
  */
 export const MAP_ZOOM_DEFAULT = '115';
+
+/**
+ * THE REFERENCE UI ZOOM — `--ui-zoom` at the shape that decides, measured, not
+ * assumed. 390x844 resolves to 0.90; 320x640 to 0.74. Mobile decides, so 0.90 is
+ * the number the geometry below is solved at, and the smaller phone's shortfall
+ * is a thing the screen SAYS rather than a thing this file pretends away.
+ */
+export const PHONE_UI_ZOOM = 0.9;
+
+/**
+ * nodeRadiusFor(tapPx, zoom, uiZoom) -> the SVG radius that DELIVERS `tapPx`.
+ * deliveredNodePx(r, zoom, uiZoom) -> what a radius actually delivers.
+ *
+ * One equation, both directions, and every consumer asks it rather than carrying
+ * a number: `2 * r * zoom * uiZoom` device px. The map node is the smallest
+ * thing this game asks a player to hit and a mis-tap on it starts a fight nobody
+ * chose, so the size is solved from the floor instead of drawn and hoped for.
+ */
+export function nodeRadiusFor(tapPx, zoom, uiZoom) {
+  return tapPx / (2 * zoom * uiZoom);
+}
+export function deliveredNodePx(r, zoom, uiZoom) {
+  return 2 * r * zoom * uiZoom;
+}
+
+/**
+ * NODE RADII, DERIVED — `15` and `20` were drawn-and-hoped-for, and what they
+ * delivered was 25.5 device px at 320x640 and 22.2 at the ladder's floor: under
+ * `balance.ui.tapSize`'s SMALLEST offering of 24, on the screen where a mis-tap
+ * starts a fight nobody chose. Nothing measured it because the tap floor and the
+ * map's geometry had never been in the same file.
+ *
+ * Solved at the default tap target, the shipping map zoom and the deciding
+ * phone: 44 / (2 x 1.15 x 0.90) = 21.3. Turn the ladder, the reference shape or
+ * `balance.ui.tapSize.def` and this number MOVES — that is the point of deriving
+ * it, and it is why the boss keeps its proportion by ratio instead of by a
+ * second literal that would drift the first time this one changed.
+ *
+ * It is not a promise at every shape and the screen says so rather than this
+ * comment: at 320x640 the same radius delivers 36 px, and `mountMap` states that
+ * where the player is, silent whenever the floor is met.
+ */
+/**
+ * THE TAP TARGET THIS SOLVES FOR, read from content and never retyped —
+ * `balance.ui.tapSize.def`, the same datum `applyTapSize()` writes into
+ * `--tap-target` and `resolveTapSize()` resolves the setting against. Adding a
+ * fifth size there is still a row and nothing else; this file asks for the
+ * default rather than restating one of the four.
+ */
+export const TAP_TARGET_DEFAULT = balance.ui.tapSize.def;
+
+export const BOSS_RATIO = 20 / 15;
+export const NODE_R = Math.round(
+  nodeRadiusFor(TAP_TARGET_DEFAULT, Number(MAP_ZOOM_DEFAULT) / 100, PHONE_UI_ZOOM) * 10
+) / 10;
+export const BOSS_R = Math.round(NODE_R * BOSS_RATIO * 10) / 10;
+
 
 /**
  * THE REFERENCE PHONE VIEWPORT, in LOCAL px, measured off `.map-scroll` — never
@@ -142,11 +198,24 @@ export function spanWidth(cols) {
 }
 
 /**
- * The widest fan-out one node can present, in columns, at a given act width.
- * MEASURED, not reasoned: `node tools/mapplan.mjs --spans --seeds 300`. See the
- * header for why this is a floor under the worst case rather than a ceiling.
+ * The widest fan-out one node can present, in columns, for a given ACT.
+ *
+ * MEASURED, not reasoned: `node tools/mapplan.mjs --spans`. See the header for
+ * why an observed maximum is a floor under the worst case and never a ceiling.
+ *
+ * IT TAKES THE ACT AND NOT A NUMBER, and that is the fix rather than the style —
+ * Vira, #107. The closed form is in `columns` alone, but the QUANTITY depends on
+ * three knobs: `columns` bounds the spread, `pathCount` decides how many walkers
+ * can merge into one node, and `floors` decides how many chances the walk has to
+ * do it. A signature taking a bare number let every caller forget the other two
+ * existed, and `--spans` swept only the first — so the formula was validated on
+ * one line through a three-dimensional space and nothing said so. The sweep is
+ * the grid now, and this signature is why a caller cannot hand it less than the
+ * act it is asking about.
  */
-export function maxFanoutSpan(columns) {
+export function maxFanoutSpan(config) {
+  const columns = config && typeof config === 'object' ? config.columns : config;
+  if (!Number.isInteger(columns) || columns < 1) return 1;
   return Math.floor(columns / 2) + 1;
 }
 
@@ -158,7 +227,7 @@ export function maxFanoutSpan(columns) {
 export function maxFittingColumns() {
   let best = 1;
   for (let c = 1; c <= 64; c++) {
-    if (PHONE_VIEW_W / spanWidth(maxFanoutSpan(c)) >= ZOOM_MIN) best = c;
+    if (PHONE_VIEW_W / spanWidth(maxFanoutSpan({ columns: c })) >= ZOOM_MIN) best = c;
   }
   return best;
 }
@@ -181,7 +250,7 @@ export function viewRefusals(config) {
   const { columns, pathCount, entries } = config;
 
   if (Number.isInteger(columns) && columns > 0) {
-    const span = maxFanoutSpan(columns);
+    const span = maxFanoutSpan(config);
     const need = spanWidth(span);
     const z = PHONE_VIEW_W / need;
     if (z < ZOOM_MIN) {

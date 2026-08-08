@@ -21,6 +21,7 @@ import { trackGesture } from '../gesture.js';
 import {
   ZOOM_STEPS, ZOOM_MIN, MAP_ZOOM_DEFAULT,
   clampZoom, framingBox, fitZoom, nodeRadius, nodeX, nodeY, svgWidth, svgHeight,
+  NODE_R, TAP_TARGET_DEFAULT, deliveredNodePx,
 } from '../../model/mapview.js';
 
 /**
@@ -51,15 +52,33 @@ import {
  */
 function savedZoom(meta) {
   const stored = ((meta && meta.settings) || {}).mapZoom;
-  // Unset, or a value this ladder cannot read, is the SHIPPING DEFAULT and never
+  // Unset, OR A VALUE THIS LADDER CANNOT READ, is the SHIPPING DEFAULT and never
   // the computed frame. MAP_ZOOM_DEFAULT is the one home for which that is — the
   // settings row reads the same const for its `def`, so the two cannot disagree
   // and the flip described above is one token in model/mapview.js.
+  //
+  // THE SECOND CLAUSE USED TO BE A LIE — Vira, #107. The comment said unreadable
+  // input lands on the shipping default; the code returned `ZOOM_MIN`, which is
+  // 100% and not the 115% that ships. A false comment over correct-looking code
+  // is the worse half of that pair: the code was defensible and the sentence
+  // above it sent the next reader somewhere else. Both roads led somewhere
+  // legal, so nothing would ever have failed. Fixed by making the CODE match the
+  // sentence rather than the sentence match the code, because a hand-edited save
+  // or an older build's value should behave exactly as an absent one — which is
+  // `resolveTapSize`'s rule for the same situation, one screen away.
   const raw = stored == null ? MAP_ZOOM_DEFAULT : stored;
   if (raw === 'Fit') return null;
   const z = Number(raw) / 100;
-  if (!Number.isFinite(z) || z <= 0) return MAP_ZOOM_DEFAULT === 'Fit' ? null : ZOOM_MIN;
+  if (!Number.isFinite(z) || z <= 0) {
+    if (MAP_ZOOM_DEFAULT === 'Fit') return null;
+    const d = Number(MAP_ZOOM_DEFAULT) / 100;
+    return Number.isFinite(d) && d > 0 ? snapToLadder(d) : ZOOM_MIN;
+  }
   // Snap to the nearest step so +/- stays on the ladder.
+  return snapToLadder(z);
+}
+
+function snapToLadder(z) {
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), ZOOM_MIN);
 }
 
@@ -169,6 +188,24 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
            here (see .mapscreen .hint-bar in map.css), so the map's bottom chrome
            is one stack with no reserved height anywhere. -->
       ${hintBarHtml('map')}
+      <!-- THE DELIVERED TAP SIZE, SAID WHERE THE PLAYER IS — and SILENT whenever
+           the promise is kept. Sunna's rule, in her own words about her own
+           proposal: "a line that says the same thing every time you open the
+           screen is not a warning, it is decoration with a worried face." So
+           this is empty and hidden at 390x844, where a node delivers 44.1 px
+           against a 44 px floor, and it appears at 320x640, where the same
+           radius delivers 36.3 and the floor is not met.
+           Every number in it is READ, never typed: the radius from
+           model/mapview.js, the zoom from this screen, and the two custom
+           properties the app applied (ui-zoom, tap-target) off the document.
+           Nothing here restates a constant, so nothing here can disagree with
+           one. (And no backticks in this block either — the warning four
+           comments up is not decoration. I put two in here, they closed the
+           template literal, and the tree stopped linking. node --check said the
+           file was fine; tools/linkcheck.mjs, which landed in dev tonight, is
+           what caught it.)
+           NOT the zoom buttons — those are Sunna's #117 and are not touched. -->
+      <p class="map-tapnote" hidden></p>
       <div class="map-zoom">
         <button class="zbtn" id="zoom-out" title="Zoom out">−</button>
         <button class="zbtn" id="zoom-reset" title="Reset / center">⊙</button>
@@ -403,6 +440,34 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         + `${Math.round(over)} px of the choice is off screen and only panning reaches it. `
         + `This act is ${columns} columns wide.`);
     }
+    reportTapSize();
+  }
+
+  // WHAT A MAP NODE ACTUALLY DELIVERS TO A THUMB, at this zoom on this screen.
+  //
+  // The radius is now solved from the tap floor rather than drawn and hoped for
+  // (model/mapview.js), and it is solved at ONE reference — 44 px at the default
+  // map zoom on a 390x844 phone. It cannot be a promise at every shape, and the
+  // honest thing is not a comment claiming otherwise: it is the screen saying
+  // the number where the player is, and saying NOTHING when the floor is met.
+  //
+  // Both values are READ rather than recomputed. `--ui-zoom` and `--tap-target`
+  // are what the app actually applied (main.js applyUiScale / applyTapSize), so
+  // if either ever stops being written, this line reports the truth about the
+  // broken state instead of a re-derivation that agrees with itself.
+  const tapNote = app.querySelector('.map-tapnote');
+  function reportTapSize() {
+    const cs = getComputedStyle(document.documentElement);
+    const uiZoom = Number(cs.getPropertyValue('--ui-zoom')) || 1;
+    const target = parseFloat(cs.getPropertyValue('--tap-target')) || TAP_TARGET_DEFAULT;
+    const px = deliveredNodePx(NODE_R, zoom, uiZoom);
+    scroll.dataset.nodePx = px.toFixed(1);
+    scroll.dataset.tapTarget = String(target);
+    if (!tapNote) return;
+    const meets = px + 0.5 >= target;
+    tapNote.hidden = meets;
+    tapNote.textContent = meets ? ''
+      : `Map nodes are ${Math.round(px)} px here — under your ${target} px minimum tap size. Zoom in (+) to grow them.`;
   }
 
   function setZoom(next, keepCenter = true) {
