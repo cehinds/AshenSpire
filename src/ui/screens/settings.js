@@ -14,7 +14,7 @@ import { renderAboutSection } from './about.js';
 import { AUDIO_DEFAULTS } from '../audio.js';
 import { balance } from '../../content/balance.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
-import { MAP_MODES, MAP_MODE_DEFAULT } from '../../model/mapknowledge.js';
+import { MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE } from '../../model/mapknowledge.js';
 
 const UI_DEFAULTS = balance.ui;
 
@@ -59,15 +59,25 @@ const ROWS = [
   // comparison is Custom Climb's existing seed field plus this row — same seed,
   // same act, two readings — and Custom Climb grows nothing new.
   //
-  // DEFAULT IS `path`, which is today exactly: nobody who does not opt in sees a
-  // pixel move. The COMPARISON is the deliverable, not the answer.
+  // DEFAULT IS `fog` since 2026-08-08 — his word, and the one token is in
+  // model/mapknowledge.js so this row cannot disagree with the resolver.
+  //
+  // AND THE TRAIL SENTENCE IS NOT TYPED HERE ANY MORE. It read "Fog never closes
+  // behind you — somewhere you have seen stays seen" — the WIDE reading, written
+  // beside code running the narrow one, and measured false on 144 of 156 screens
+  // (Bjorn). Constantine has since answered the fork question the wide way, so
+  // the sentence is true; it moved to `FOG_TRAIL_CLAUSE`, beside the function
+  // that makes it true, because a promise typed on the screen it is displayed on
+  // is a promise nothing can check. Sunna's ruling, and it could not wait: fog
+  // is the default, so this is the first thing a new player reads about the mode
+  // they are already in.
   //
   // `choices` and `def` are the ladder's own, never a second list (the row three
   // above learned this the hard way — it carried four of the zoom ladder's six
   // steps for a night).
   { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
-    choices: MAP_MODES, label: 'Map reveal (test)',
-    note: 'A test — PATH is the game as it shipped: the whole act is drawn. FOG draws only the doors you started from, the boss, everywhere you have been, and the places you can step to next; the rest is unlit parchment. Fog never closes behind you — somewhere you have seen stays seen. Switching redraws the map straight away, so you can hold the two against the same seed.' },
+    choices: MAP_MODES, label: 'Map reveal',
+    note: `FOG is the climb as it is meant to be read: only the door you started from, the boss, everywhere you have been, and the places you can step to next are drawn — the rest is unlit parchment. ${FOG_TRAIL_CLAUSE} PATH draws the whole act at once, the way the map looked before the fog. Switching redraws the map straight away, so you can hold the two against the same seed.` },
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },

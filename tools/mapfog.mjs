@@ -136,7 +136,7 @@ function build({ graph, lit, reveal, demote = null, mode = 'fog' }) {
 const MUTANTS = [
   ['SHIPPED (must survive)', null],
   ['flashlight only — the fog closes behind you',
-    ({ graph, run, reveal, mode, keepForks }) => {
+    ({ graph, run, reveal, mode }) => {
       if (mode !== 'fog') return build({ graph, lit: null, reveal, mode });
       const lit = new Set(graph.startIds);
       lit.add(graph.bossId);
@@ -144,13 +144,16 @@ const MUTANTS = [
       if (cur) { lit.add(cur.id); for (const t of cur.next) lit.add(t); }
       return build({ graph, lit, reveal, mode });
     }],
-  // NOT A MUTANT UNDER THE NARROW READING — it IS the shipped rule there, and
-  // that is worth having in the table rather than deleting: the two readings of
-  // his sentence differ by exactly this rule, so the row is the difference,
-  // executable. It is a mutant only on the `+forks` cells, and the `keepForks`
-  // property is the only thing that kills it.
-  ['the trail, but the roads not taken re-fog (= shipped, narrow reading)',
-    ({ graph, run, reveal, mode, keepForks }) => {
+  // THE READING HE DID NOT PICK, AND ITS NEW HOME IS HERE. Until 2026-08-08 this
+  // was the shipped rule on half the corpus — the narrow reading of "only next
+  // node and all previous nodes" — and it was a mutant only on the `+forks`
+  // cells. He answered: a fork stays lit once you are past it. So the boolean
+  // and its shot flag are deleted from the game (model/mapknowledge.js) and the
+  // losing reading is DEMOTED to a known-bad, red on every cell now, killed by
+  // the monotone property below. A reading we chose against belongs in the
+  // instrument, not in a setting nobody selected.
+  ['the trail, but the roads not taken re-fog (the reading he did not pick)',
+    ({ graph, run, reveal, mode }) => {
       if (mode !== 'fog') return build({ graph, lit: null, reveal, mode });
       const lit = new Set(run.path || []);
       for (const id of graph.startIds) lit.add(id);
@@ -160,22 +163,22 @@ const MUTANTS = [
       return build({ graph, lit, reveal, mode });
     }],
   ['no boss — the end of the act is never shown',
-    ({ graph, run, reveal, mode, keepForks }) => {
+    ({ graph, run, reveal, mode }) => {
       if (mode !== 'fog') return build({ graph, lit: null, reveal, mode });
-      const lit = litNodes({ graph, run, keepForks }); lit.delete(graph.bossId);
+      const lit = litNodes({ graph, run }); lit.delete(graph.bossId);
       return build({ graph, lit, reveal, mode });
     }],
   ['no doors — the act opens on nothing',
-    ({ graph, run, reveal, mode, keepForks }) => {
+    ({ graph, run, reveal, mode }) => {
       if (mode !== 'fog') return build({ graph, lit: null, reveal, mode });
-      const lit = litNodes({ graph, run, keepForks });
+      const lit = litNodes({ graph, run });
       for (const id of graph.startIds) lit.delete(id);
       return build({ graph, lit, reveal, mode });
     }],
   ['fog eats the split — your own next options are covered',
-    ({ graph, run, reveal, mode, keepForks }) => {
+    ({ graph, run, reveal, mode }) => {
       if (mode !== 'fog') return build({ graph, lit: null, reveal, mode });
-      const lit = litNodes({ graph, run, keepForks });
+      const lit = litNodes({ graph, run });
       const cur = run.mapNodeId && graph.nodes[run.mapNodeId];
       if (cur) for (const t of cur.next) lit.delete(t);
       return build({ graph, lit, reveal, mode });
@@ -189,12 +192,12 @@ const MUTANTS = [
   // move a node between `known` and `placed`, which is the relic's axis, and the
   // relic would be a special case again with nothing able to say so.
   ['fog demotes — an unvisited node reads `?` even when its kind is known',
-    ({ graph, run, reveal, mode, keepForks }) => {
+    ({ graph, run, reveal, mode }) => {
       if (mode !== 'fog') return build({ graph, lit: null, reveal, mode });
       const seen = new Set(run.path || []);
       return build({
         graph, reveal, mode,
-        lit: litNodes({ graph, run, keepForks }),
+        lit: litNodes({ graph, run }),
         demote: (n) => !seen.has(n.id) && n.id !== graph.bossId,
       });
     }],
@@ -202,13 +205,13 @@ const MUTANTS = [
   // the game as it shipped, and "nobody who does not opt in sees a pixel move"
   // is a claim that needs something able to falsify it.
   ['fog leaks into `path` — the unreached half of the act goes dark for everyone',
-    ({ graph, run, reveal, mode, keepForks }) => build({ graph, reveal, mode, lit: litNodes({ graph, run, keepForks }) })],
+    ({ graph, run, reveal, mode }) => build({ graph, reveal, mode, lit: litNodes({ graph, run }) })],
 ];
 
 /** Knowledge under a mutant; `null` uses the shipped ladder. */
-function knowledgeUnder(mutantFn, { graph, run, reveal, mode, keepForks }) {
-  if (!mutantFn) return mapKnowledge({ graph, run, mode, reveal, keepForks });
-  return mutantFn({ graph, run, reveal, mode, keepForks });
+function knowledgeUnder(mutantFn, { graph, run, reveal, mode }) {
+  if (!mutantFn) return mapKnowledge({ graph, run, mode, reveal });
+  return mutantFn({ graph, run, reveal, mode });
 }
 
 /**
@@ -227,13 +230,12 @@ const PROPERTIES = [
       }
       return null;
     }],
-  // THE TRAIL CLAUSE, and it is the one that binds under BOTH readings of his
-  // sentence. A node the player has stood on never goes dark again — that is
+  // THE TRAIL CLAUSE — a node the player has stood on never goes dark again.
   // "previously visited locations remain revealed" with nothing added to it.
-  // The WIDER claim (nothing ever lit goes dark, including the roads not taken)
-  // is `keepForks`'s, and is asserted separately below, only where it is meant
-  // to hold. Asserting it over everything would be this instrument enforcing my
-  // reading of his words rather than checking the code against them.
+  // It is kept as its own row even though the wider clause below now subsumes
+  // it: this is the half of his sentence that was never in question, and a
+  // property that survives the day the other one is re-argued is worth having
+  // separately.
   ['the TRAIL never re-fogs — a node you stood on stays drawn',
     (cells) => {
       for (const c of cells) {
@@ -243,11 +245,17 @@ const PROPERTIES = [
       }
       return null;
     }],
-  ['with keepForks, NOTHING ever lit goes dark — the drawn set only grows',
+  // UNCONDITIONAL SINCE 2026-08-08, and that is the upgrade rather than a
+  // widening. It used to run on the `+forks` half of the corpus only, because
+  // the other half was a legal reading of his sentence where it must NOT hold.
+  // He picked the wide reading, so this is now the whole rule — and it is the
+  // check standing behind `FOG_TRAIL_CLAUSE`, the sentence the settings screen
+  // shows a player. A promise on a screen with no property behind it is the
+  // defect this row was written out of.
+  ['NOTHING ever lit goes dark — the drawn set only grows',
     (cells) => {
       const bySeed = new Map();
       for (const c of cells) {
-        if (!c.keepForks) continue;
         const prev = bySeed.get(c.seed);
         if (prev) {
           for (const id of prev.fog.drawn) {
@@ -304,18 +312,18 @@ function sweepCells(seeds, stepList, reveal) {
   const cells = [];
   for (const seed of seeds) {
     const graph = actGraph(seed);
-    // BOTH READINGS ARE SWEPT. The undecided boolean is a state the shipped code
-    // can be in, so a corpus that only ever asks about one of them is a corpus
-    // with a hole exactly the size of the open question.
-    for (const keepForks of [false, true]) {
-      for (const steps of stepList) {
-        const path = walkOf(graph, steps);
-        const run = { path, mapNodeId: path[path.length - 1] };
-        const cur = graph.nodes[run.mapNodeId];
-        const framing = [run.mapNodeId, ...(cur ? cur.next : [])];
-        cells.push({ seed, steps, graph, run, framing, keepForks, reveal,
-          label: `${seed}@${steps}${keepForks ? '+forks' : ''}` });
-      }
+    // ONE READING NOW, AND THE CORPUS IS HALF THE SIZE IT WAS. It used to sweep
+    // both answers to the fork question because the shipped code could be in
+    // either state. It cannot any more — the boolean is deleted — so a second
+    // axis here would be sweeping a state the game has no way to reach, which
+    // is a corpus lying about its own coverage. The reading he did not pick is
+    // still exercised, as a mutant.
+    for (const steps of stepList) {
+      const path = walkOf(graph, steps);
+      const run = { path, mapNodeId: path[path.length - 1] };
+      const cur = graph.nodes[run.mapNodeId];
+      const framing = [run.mapNodeId, ...(cur ? cur.next : [])];
+      cells.push({ seed, steps, graph, run, framing, reveal, label: `${seed}@${steps}` });
     }
   }
   return cells;
@@ -336,8 +344,8 @@ function runSelftest() {
   const table = MUTANTS.map(([label, fn]) => {
     const cells = base.map((c) => ({
       ...c,
-      fog: knowledgeUnder(fn, { graph: c.graph, run: c.run, reveal, mode: 'fog', keepForks: c.keepForks }),
-      path: knowledgeUnder(fn, { graph: c.graph, run: c.run, reveal, mode: 'path', keepForks: c.keepForks }),
+      fog: knowledgeUnder(fn, { graph: c.graph, run: c.run, reveal, mode: 'fog' }),
+      path: knowledgeUnder(fn, { graph: c.graph, run: c.run, reveal, mode: 'path' }),
     }));
     const verdicts = PROPERTIES.map(([, p]) => {
       try { return p(cells); } catch (e) { return `threw: ${e.message}`; }
@@ -384,7 +392,19 @@ function runSelftest() {
     ['no meta at all resolves to the default', resolveMapMode(null) === MAP_MODE_DEFAULT],
     ['every declared mode round-trips', MAP_MODES.every((m) => resolveMapMode({ settings: { mapMode: m } }) === m)],
     ['the default is a declared mode', MAP_MODES.includes(MAP_MODE_DEFAULT)],
-    ['the default is `path` — nobody\'s first run is the experiment', MAP_MODE_DEFAULT === 'path'],
+    // THIS ROW WAS PINNED TO A VALUE AND THE TREE REACHED IT. It read "the
+    // default is `path` — nobody's first run is the experiment", and it was a
+    // correct guard for exactly as long as that sentence was the ruling. On
+    // 2026-08-08 Constantine said "the fog needs to be the default", and the row
+    // went red on the commit that obeyed him: a check pinned to a value does not
+    // find a defect the day the value moves, it becomes one.
+    //
+    // It is re-pinned rather than deleted, because the thing it guards is real:
+    // a default is not a preference, it is the only reading most runs will ever
+    // get, and it should not drift by accident. The value is HIS, and the row
+    // now names whose it is — so the next person to move it has to argue with
+    // him rather than with me.
+    ['the default is `fog` — Constantine, 2026-08-08, and a default is not an accident', MAP_MODE_DEFAULT === 'fog'],
     ['the ladder has three rungs, low to high', RUNGS.length === 3 && rungHeight(HIDDEN) === 0 && rungHeight(KNOWN) === 2],
   ];
   let modeOk = true;
@@ -476,11 +496,11 @@ async function runRendered() {
   const seeds = (argOf('--seeds') || 'FOG1,FOG2,FOG3').split(',').map((s) => s.trim()).filter(Boolean);
   const stepList = (argOf('--steps') || '1,3,5,7,9').split(',').map(Number).filter(Number.isInteger);
   const shape = { w: 390, h: 844, d: 3 }; // mobile decides — the shape Constantine looks at
-  // THREE CELLS PER POSITION, and the third is the open question rather than a
-  // feature: `path` is today, `fog` is his words read narrowly ("only next node
-  // and all previous nodes"), `fog+forks` is the wider reading where the roads
-  // not taken stay open too. He picks; nothing here argues.
-  const MODE_CELLS = [['path', false], ['fog', false], ['fog', true]];
+  // TWO CELLS PER POSITION. It was three while the fork question was open — the
+  // third posed the wider reading through `mapFogForks`. He answered on
+  // 2026-08-08 and that flag is deleted, so asking for it here would pose a
+  // state the build cannot be in and quietly measure the default twice.
+  const MODE_CELLS = ['path', 'fog'];
 
   let base;
   let stop = () => {};
@@ -532,12 +552,12 @@ async function runRendered() {
       if (steps > 0 && walk.length < steps) { console.log(`  (skipped ${seed}@${steps}: the act runs out at ${walk.length})`); continue; }
       const run = { path: walk, mapNodeId: walk.length ? walk[walk.length - 1] : null };
 
-      for (const [mode, keepForks] of MODE_CELLS) {
+      for (const mode of MODE_CELLS) {
         const q = [
           'shot=map',
           `shotSeed=${encodeURIComponent(seed)}`,
           ...(steps > 0 ? [`shotWalk=${steps}`] : []),
-          `shotSettings=${encodeURIComponent(JSON.stringify({ mapMode: mode, ...(keepForks ? { mapFogForks: true } : {}) }))}`,
+          `shotSettings=${encodeURIComponent(JSON.stringify({ mapMode: mode }))}`,
         ];
         await cdp.send('Page.navigate', { url: `${base}?${q.join('&')}` }, sessionId);
         let up = false;
@@ -559,9 +579,9 @@ async function runRendered() {
         if (r && r.error) { findings.push(`${seed}@${steps} ${mode}: ${r.error}`); continue; }
         cells++;
 
-        const expect = mapKnowledge({ graph, run, mode, reveal: false, keepForks });
+        const expect = mapKnowledge({ graph, run, mode, reveal: false });
         const domSet = new Set(r.drawn);
-        const label = `${seed}@${steps} ${mode}${keepForks ? '+forks' : ''}`;
+        const label = `${seed}@${steps} ${mode}`;
 
         if (r.mode !== mode) findings.push(`${label}: the page says it is in '${r.mode}' mode`);
         // SET against SET.
@@ -581,13 +601,14 @@ async function runRendered() {
           if (!r.ground) findings.push(`${label}: fog mode drew no parchment ground`);
           if (!domSet.has(graph.bossId)) findings.push(`${label}: the boss is not on the board`);
           if (r.drawn.length >= r.saidTotal) findings.push(`${label}: fog covered nothing — ${r.drawn.length} of ${r.saidTotal} drawn`);
-          // THE TRAIL CLAUSE, ON THE RENDERED PAGE. Only the walked nodes, because
-          // under the narrow reading the roads not taken are MEANT to close.
+          // THE TRAIL CLAUSE, ON THE RENDERED PAGE — and the wider one under it,
+          // which used to be checked only on the `+forks` cell and is now the
+          // rule everywhere: nothing that was on the board comes off it.
           for (const id of run.path) if (!domSet.has(id)) findings.push(`${label}: ${id} is on the walked path and is not on the board`);
-          if (prevDrawn && keepForks) {
+          if (prevDrawn) {
             for (const id of prevDrawn) if (!domSet.has(id)) findings.push(`${label}: ${id} was on the board earlier in this walk and has been fogged again`);
           }
-          if (keepForks) prevDrawn = domSet;
+          prevDrawn = domSet;
           console.log(`  ${label.padEnd(20)} drawn ${String(r.drawn.length).padStart(2)}/${r.saidTotal}`
             + `  known ${String(r.known.length).padStart(2)}  placed ${String(r.placed.length).padStart(2)}`
             + `  trail ${String(r.visited.length).padStart(2)}  next ${r.reachable.length}  framing:${r.framing}`);
@@ -597,7 +618,7 @@ async function runRendered() {
 
         if (shotsDir) {
           const png = await cdp.send('Page.captureScreenshot', { format: 'png' }, sessionId);
-          const tag = mode === 'fog' ? (keepForks ? 'fog-wide' : 'fog') : 'path';
+          const tag = mode;
           const name = `${String(steps).padStart(2, '0')}-${tag}-${seed}.png`;
           writeFileSync(resolve(ROOT, shotsDir, name), Buffer.from(png.data, 'base64'));
           shots.push(name);

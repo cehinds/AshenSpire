@@ -158,12 +158,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // camera comes to frame a node nobody painted.
   const mode = resolveMapMode(meta);
   const fog = mode === 'fog';
-  // `mapFogForks` is the UNDECIDED half and is deliberately NOT a settings row —
-  // see FOG_KEEP_FORKS in model/mapknowledge.js. It is read here so the camera
-  // can photograph both readings of his sentence for him to choose between; the
-  // day he chooses, this expression and that constant both go.
-  const keepForks = ((meta && meta.settings) || {}).mapFogForks === true;
-  const know = mapKnowledge({ graph: map, run, mode, reveal, keepForks });
+  // `mapFogForks` USED TO BE READ HERE — the shot flag that posed the other
+  // reading of his sentence for the camera. He answered on 2026-08-08 (a fork
+  // stays lit once you are past it), so the flag and its constant are deleted
+  // rather than parked: an option nobody chose is a second behaviour nothing
+  // tests. The losing reading survives as a mutant in tools/mapfog.mjs.
+  const know = mapKnowledge({ graph: map, run, mode, reveal });
   const isDrawn = (id) => know.drawn.has(id);
 
   // ---- edges (a traveled edge = consecutive pair in run.path) ----
@@ -257,7 +257,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
             ${groundSvg}
-            <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(run.actNumber)}</text>
+            <text class="map-act-title" x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(run.actNumber)}</text>
             ${edgeSvg}
             <g id="map-nodes"></g>
           </svg>
@@ -460,11 +460,89 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const scroll = app.querySelector('.map-scroll');
   const svgEl = app.querySelector('.map-scroll svg');
 
-  // The svg scales by setting its pixel width/height (viewBox unchanged), so
-  // the scroll container grows and native scrollbars appear.
-  function sizeSvg() {
-    svgEl.style.width = `${width * zoom}px`;
-    svgEl.style.height = `${height * zoom}px`;
+  // WHAT THE PLAYER CAN SCROLL TO IS DERIVED FROM WHAT IS PAINTED — the ink,
+  // never the column grid. Two of Constantine's instructions land on this one
+  // expression, and they had the same cause from opposite sides.
+  //
+  //   "the current node should be centered on the screen both vertically and
+  //    horizontally"
+  //   "for mobile, I should only be scrolling up and down, rarely left and
+  //    right … rearrange things to keep everything visible in the vertical
+  //    dimension"
+  //
+  // MEASURED AT dev (cd3da94), 390x844, the shipped default zoom: the scrollport
+  // is 433x756 local px and the canvas was 834x775 — 401 px of scroll ACROSS,
+  // the axis he has just banned, and 19 px DOWN, the axis he wants centred. The
+  // vertical camera was not merely inaccurate, it was arithmetically impossible:
+  // the entrance sits 293 px below the viewport centre and there were 19 px of
+  // travel to close it with. Clamping (#…, my own last commit) made that
+  // failure REPORTABLE. It could not make it succeed.
+  //
+  // BOTH NUMBERS COME FROM ONE MISTAKE: the scrollable area was `columns * COL_X
+  // + 60` tall and wide — the shape of the ACT — while the shape of what is
+  // DRAWN is 259 px wide under fog and the full 623 px of the climb tall. So the
+  // player was given a canvas whose empty half was pannable and whose full half
+  // was not.
+  //
+  // THE RULE, one sentence: the scrollable content is the painted ink, grown by
+  // half a viewport on every side so that ANY painted point can be brought to
+  // the centre — and nothing beyond it. That makes the scroll extents exactly
+  // the ink extents on both axes (`overflow = ink`), so the map scrolls the axis
+  // the act is long on and stops scrolling the one it is not.
+  //
+  // IT IS THE viewBox, NOT PADDING, AND THAT IS DELIBERATE. #24 padded
+  // `.map-canvas` to clear the zoom buttons and the fix only held at the scroll
+  // offset it was measured at (see styles/map.css). Padding moves the content
+  // inside the scrollport; this moves the SCROLLPORT'S IDEA OF THE CONTENT, so
+  // there is no offset at which it disagrees with itself. Node coordinates are
+  // untouched — the viewBox carries the origin — so every rect, edge and label
+  // in the markup is where it always was.
+  const titleEl = svgEl.querySelector('.map-act-title');
+  const inkBox = framingBox(nodes.filter((n) => isDrawn(n.id)), height) || { x0: 0, y0: 0, x1: width, y1: height };
+  // The content box last APPLIED to the element, in SVG units. Read by the
+  // camera and by `report`, so the three cannot disagree about where zero is.
+  let content = { x0: 0, y0: 0, w: width, h: height };
+  // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
+  // Applying a content box can add or remove a CLASSIC scrollbar (this
+  // scrollport asks for `scrollbar-width: thin`, not overlay), and a scrollbar
+  // takes layout width — which is the very number the pads were computed from.
+  // One pass would centre against a viewport that no longer exists by the time
+  // it lands, off by the scrollbar, on desktop only, silently. The second pass
+  // reads the settled viewport; a third has nothing left to change, because the
+  // pad is linear in the viewport and a scrollbar is a two-state thing.
+  function sizeSvg() { apply(); apply(); }
+  function apply() {
+    // Before the first layout the viewport is 0 and there is no half-viewport to
+    // grow by; the plain canvas is the honest fallback and the ResizeObserver
+    // below re-runs this the moment a real size exists.
+    const padX = scroll.clientWidth > 0 ? scroll.clientWidth / (2 * zoom) : 0;
+    const padY = scroll.clientHeight > 0 ? scroll.clientHeight / (2 * zoom) : 0;
+    const x0 = inkBox.x0 - padX;
+    const y0 = inkBox.y0 - padY;
+    const w = (inkBox.x1 - inkBox.x0) + 2 * padX;
+    const h = (inkBox.y1 - inkBox.y0) + 2 * padY;
+    content = { x0, y0, w, h };
+    svgEl.setAttribute('viewBox', `${x0} ${y0} ${w} ${h}`);
+    svgEl.style.width = `${w * zoom}px`;
+    svgEl.style.height = `${h * zoom}px`;
+    // THE GROUND IS THE VIEWBOX, not the act's canvas. The wash and the act
+    // plate were sized `0 0 width height`; grown content would have ended the
+    // parchment in the middle of the screen with the scrollport's background
+    // carrying on in the same tone — invisible today, and a seam the day Freja's
+    // plates land. One `<rect>` is the home; the plate copies it (attachParchment).
+    for (const el of svgEl.querySelectorAll('.map-fog-ground > rect, .map-fog-ground > image')) {
+      el.setAttribute('x', String(x0));
+      el.setAttribute('y', String(y0));
+      el.setAttribute('width', String(w));
+      el.setAttribute('height', String(h));
+    }
+    // The act title rides the CONTENT's centre line, not the act's — the camera
+    // moves it to the column the player is standing in a moment later
+    // (`centerOnCurrent`), and this is the value it holds before the first
+    // centring. Under fog a door and a boss can share one column: the ink is
+    // then ~57 SVG units wide, and a title pinned to `width / 2` would have
+    // fallen outside the viewBox and simply not drawn.
+    if (titleEl) titleEl.setAttribute('x', String(x0 + w / 2));
   }
   function applyZoom(center) {
     sizeSvg();
@@ -525,6 +603,19 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   //      and land inside it, so the browser has nothing left to correct, and
   //      then we measure the framing box against what is actually on screen and
   //      publish the answer (see `report`).
+  //
+  // AND WHAT CHANGED TONIGHT — Constantine, 2026-08-08: "the current node should
+  // be centered on the screen both vertically and horizontally." The aim was the
+  // BOX of the decision (current + every step out of it), which is the right
+  // frame and is not what he asked for: the box centre sits about half a row
+  // above the node the player is standing on, and at the entrance row the box IS
+  // the door, so the camera aimed at a point the player was not. THE AIM IS NOW
+  // THE CURRENT NODE ITSELF, and the entrances only stand in for it before the
+  // first move, when there is no current node to aim at.
+  //
+  // It is exact on both axes now because `sizeSvg` gives it the travel (above),
+  // not because the arithmetic here got smarter. The two halves are one change
+  // and neither works alone.
   function centerOnCurrent() {
     const fs = framingNodes();
     if (!fs.length) { report(null, null); return; }
@@ -535,20 +626,58 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       const zDecision = fitZoom(framingBox(fs, height), scroll.clientWidth, scroll.clientHeight);
       const zContext = fitZoom(framingBox(contextNodes(), height), scroll.clientWidth, scroll.clientHeight);
       const z = clampZoom(Math.min(zDecision, zContext));
-      if (Math.abs(z - zoom) > 0.0005) { zoom = z; sizeSvg(); }
+      if (Math.abs(z - zoom) > 0.0005) zoom = z;
     }
+    // ALWAYS, not only when the zoom moved: the content box is a function of the
+    // viewport as well as the zoom, and this is the first call after a resize.
+    sizeSvg();
     const box = framingBox(fs, height);
-    // Aim at the wider box when it fits at this zoom — the look-ahead then sits
-    // in frame instead of half off the top — and fall back to the decision box
-    // the moment it does not, which is what a hand on the ladder does.
-    const ctx = framingBox(contextNodes(), height);
-    const aim = (ctx.w * zoom <= scroll.clientWidth && ctx.h * zoom <= scroll.clientHeight) ? ctx : box;
-    const cx = ((aim.x0 + aim.x1) / 2) * zoom;
-    const cy = ((aim.y0 + aim.y1) / 2) * zoom;
+    // THE AIM. The node under the player's feet; before the first move, the
+    // centre of the doors — which `entries: 1` has made a single door, so on a
+    // new game this is one node and not an average of several.
+    const cur = run.mapNodeId && map.nodes[run.mapNodeId] ? map.nodes[run.mapNodeId] : null;
+    const aim = cur ? framingBox([cur], height) : framingBox(fs.filter((n) => (map.startIds || []).includes(n.id)), height) || box;
+    // Local px from the CONTENT origin, which is no longer the canvas origin.
+    const aimX = (aim.x0 + aim.x1) / 2;
+    // THE ACT TITLE FOLLOWS THE AIM, and this is a fix for something that was
+    // already broken rather than for something I broke. `ACT I · THE FALLOW
+    // MARCHES` was pinned to the middle of the act's canvas while the camera
+    // looked wherever the player was, so it arrived cut off at a screen edge —
+    // "ALLOW MARCHES" in the shot of `dev` I took before touching any of this.
+    // The camera knows where it is pointing; the title is one attribute away
+    // from being centred over it, and it costs nothing now that the content box
+    // is wide enough to hold it.
+    if (titleEl) titleEl.setAttribute('x', String(aimX));
+    const cx = (aimX - content.x0) * zoom;
+    const cy = ((aim.y0 + aim.y1) / 2 - content.y0) * zoom;
+    let left = cx - scroll.clientWidth / 2;
+    let top = cy - scroll.clientHeight / 2;
+
+    // CENTRED UNLESS CENTRING WOULD HIDE THE CHOICE — and this clause exists
+    // because the first draft of tonight's change did exactly that, measured.
+    // Aiming at the current node instead of the decision box is right almost
+    // everywhere and wrong at the top of the act, where the last floors fan in
+    // from columns three apart: at floor 11, walked, 390x844, the node was dead
+    // centre and the step out of it was off screen — 0 of 30 such cells on dev,
+    // several on my own branch. His instruction and Bjorn's hidden-step defect
+    // pointed opposite ways for one cell in ten, and the camera said `clipped`,
+    // which is how I found it rather than how he would have.
+    //
+    // So the centre is a TARGET and the decision is a FLOOR: nudge by the
+    // smallest amount that puts the framing box back on screen, and only when it
+    // fits at this zoom — when it cannot fit, nothing here can save it, the node
+    // under the player's feet stays centred, and `report` says so.
+    const bl = (box.x0 - content.x0) * zoom;
+    const br = (box.x1 - content.x0) * zoom;
+    const bt = (box.y0 - content.y0) * zoom;
+    const bb = (box.y1 - content.y0) * zoom;
+    if (br - bl <= scroll.clientWidth) left = Math.min(bl, Math.max(br - scroll.clientWidth, left));
+    if (bb - bt <= scroll.clientHeight) top = Math.min(bt, Math.max(bb - scroll.clientHeight, top));
+
     const maxLeft = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
     const maxTop = Math.max(0, scroll.scrollHeight - scroll.clientHeight);
-    scroll.scrollLeft = Math.min(maxLeft, Math.max(0, cx - scroll.clientWidth / 2));
-    scroll.scrollTop = Math.min(maxTop, Math.max(0, cy - scroll.clientHeight / 2));
+    scroll.scrollLeft = Math.min(maxLeft, Math.max(0, left));
+    scroll.scrollTop = Math.min(maxTop, Math.max(0, top));
     report(box, fs.length);
   }
 
@@ -561,12 +690,21 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   function report(box, count) {
     const d = scroll.dataset;
     if (!box) { d.framing = 'none'; d.framingMiss = '0'; return; }
+    // EVERY TERM IS RELATIVE TO THE CONTENT ORIGIN, which stopped being the
+    // canvas origin when the scroll extent became the ink (see `sizeSvg`).
+    // Leaving these as `box.x0 * zoom` would have made the confession wrong by
+    // exactly the pad — a camera lying in a new direction — and
+    // `tools/mapfit.mjs`'s cross-check is what would have caught it.
+    const l = (box.x0 - content.x0) * zoom;
+    const r = (box.x1 - content.x0) * zoom;
+    const t = (box.y0 - content.y0) * zoom;
+    const b = (box.y1 - content.y0) * zoom;
     const over = Math.max(
       0,
-      scroll.scrollLeft - box.x0 * zoom,
-      box.x1 * zoom - (scroll.scrollLeft + scroll.clientWidth),
-      scroll.scrollTop - box.y0 * zoom,
-      box.y1 * zoom - (scroll.scrollTop + scroll.clientHeight)
+      scroll.scrollLeft - l,
+      r - (scroll.scrollLeft + scroll.clientWidth),
+      scroll.scrollTop - t,
+      b - (scroll.scrollTop + scroll.clientHeight)
     );
     d.framing = over > 0.5 ? 'clipped' : 'fit';
     d.framingMiss = String(Math.round(over));
@@ -763,10 +901,16 @@ function attachParchment(host, path, w, h) {
     if (!host.isConnected) return; // the player left the map while it loaded
     const el = document.createElementNS('http://www.w3.org/2000/svg', 'image');
     el.setAttribute('href', path);
-    el.setAttribute('x', '0');
-    el.setAttribute('y', '0');
-    el.setAttribute('width', String(w));
-    el.setAttribute('height', String(h));
+    // THE PLATE COPIES THE WASH, and the fallback is the act's canvas. The wash
+    // rect is sized to the live viewBox by `sizeSvg` (the scroll extent is the
+    // ink now, not the column grid), and a plate that arrives 40 ms later must
+    // land on the same ground rather than on the geometry this function was
+    // handed at mount — one home, and the plate is its second reader.
+    const bg = host.querySelector('rect');
+    el.setAttribute('x', bg ? bg.getAttribute('x') : '0');
+    el.setAttribute('y', bg ? bg.getAttribute('y') : '0');
+    el.setAttribute('width', bg ? bg.getAttribute('width') : String(w));
+    el.setAttribute('height', bg ? bg.getAttribute('height') : String(h));
     el.setAttribute('preserveAspectRatio', 'xMidYMid slice');
     host.appendChild(el);
   };
