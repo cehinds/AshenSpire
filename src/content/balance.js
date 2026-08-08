@@ -233,6 +233,27 @@ export const balance = {
       { id: 'rack', figure: false, slots: 'list' },
       { id: 'hybrid', figure: true, slots: 'list' },
     ],
+    // WHICH PANE IS THE SUBJECT. One field, and it is the whole of "collapsible"
+    // (#90). Constantine: *"I still want the armoury card list to be collapsable
+    // SO THAT I CAN SEE THE ARMORY SLOTS BETTER."* The clause after "so that" is
+    // the datum — on this screen the slots are what you came for and everything
+    // else is what helps you decide. `collapsible: true` written on a pane is
+    // that fact spelled as a mechanism, and it is a special case in a
+    // characteristic's clothes.
+    //
+    // NOT A FLAG PER PANE, and this is the #78 lesson one screen over. A
+    // two-valued `role` on each pane is a closed set per pane whose PRODUCT has
+    // cells nobody built: NO subject (every pane collapsible — you can fold the
+    // whole screen away) and TWO subjects (nothing to order by, nothing that
+    // must stay open). A POINTER has no product. One field, one value, and
+    // context is the COMPLEMENT — derived, never authored.
+    //
+    // The regions themselves are the vocabulary and live where they are drawn
+    // (REGIONS in src/ui/screens/equipment.js), exactly as LAYOUTS holds the
+    // view cells. A name here that is not a region fails BY NAME at boot with
+    // the list printed; naming none fails the same way.
+    subject: 'slots',
+
     spriteReacts: 'full', // 'none' | 'hands' | 'full'
 
     // Floors of the mod system, so a piece can't be authored past the point

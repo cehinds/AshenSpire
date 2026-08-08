@@ -910,6 +910,30 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .equip-picker { border-top: 1px solid var(--line); padding-top: 1.2rem; }
 .equip-picker h4 { color: var(--gold); font-size: 1.2rem; margin-bottom: 0.8rem; letter-spacing: 1px; }
 .ep-hint { color: var(--muted); font-size: 1.2rem; font-style: italic; }
+/* ---- THE EMPTY PICKER IS A STATE, NOT A CAPTION --------------------------
+   Freja, out of #90. Folding the context pane hands its height to the subject,
+   and the subject had nothing to do with it: measured on the shipped bundle,
+   420 CSS px of unbroken nothing at 390x844 (57% of the visible panel) and
+   394 at 1200x730, between the picker's one italic line and the folded bar.
+   The fold did not cause that. It revealed that this pane never had a bottom —
+   everything under the slots used to be the card strip's problem.
+
+   A line at the TOP of a void reads as a caption for the void; the same line
+   CENTRED in it reads as the state of the region. That is the whole change, and
+   in a palette this dark it is the difference between "waiting for you" and
+   "something failed to load".
+
+   ONLY WHEN EMPTY, and that boundary is not taste — it is my own #87 ruling
+   turned on myself. Centring content that overflows amputates its start edge,
+   and the moment a slot is picked this pane holds a scrolling list of every
+   eligible piece. `[data-empty]` is written by equipment.js only on the branch
+   that has no list, so the centring can never meet content taller than the box.
+   The picker keeps `overflow` from `.armoury-right` either way. */
+.equip-picker[data-empty] {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+}
+.equip-picker[data-empty] .ep-hint { max-width: 34rem; }
 .ep-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .equip-chip {
   display: grid; grid-template-columns: 3.6rem 1fr auto; grid-template-rows: auto auto;
@@ -942,6 +966,69 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   padding: 0.7rem 1.6rem; background: rgba(201, 80, 46, 0.14);
   border-bottom: 1px solid var(--ember); color: var(--parchment); font-size: 1.2rem;
 }
+
+/* ---------- EldenSpire#90 — the context pane folds, the subject never does ---
+   Every rule here keys off `[data-role]` / `[data-collapsed]`, which equipment.js
+   DERIVES from one authored field (`balance.equipment.subject`). Not one
+   selector names `.armoury-strip`, exactly as none of them names `.view-grid`
+   any more — move the subject and the fold moves with it, with no edit in this
+   file. The `.armoury-strip` rule above stays where it is: it is that pane's own
+   look, not its role.
+
+   LAW 4. `min-height` is the ergonomic floor and it is text-independent, the
+   caret and count grow with Text size because they are glyphs, and the header
+   grows INTRINSICALLY off its own content — a floor plus `height: auto`, never
+   a multiple of the text unit.
+
+   LAW 3 CLAUSE 4 is answered by `attachTooltip(btn, …)` in equipment.js, and
+   this comment said `data-tip` until 2026-08-08 — Sunna. Nothing in this tree
+   reads that attribute. Viki caught the same sentence in the JS, fixed the
+   mechanism there, and the CSS kept the retracted claim: one fact, two homes,
+   and the copy that was not rebuilt is the one that stayed wrong. Named here
+   rather than silently swapped, because a stale comment asserting a control is
+   accessible is the failure mode this clause exists for. */
+.armoury [data-role='context'] > .region-head {
+  display: flex; align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+}
+.armoury [data-role='context'][data-collapsed='1'] > .region-head { border-bottom: none; }
+.region-fold {
+  display: flex; align-items: center; gap: 0.6rem; width: 100%;
+  /* `var(--tap-floor)`, not a bare `44px` — Sunna, 2026-08-08, and this is my
+     own #37 ruling applied to the control that carries it. The whole app is
+     scaled by `zoom: var(--ui-zoom)` on <body>, so a bare 44px below body is 44
+     LOCAL px and renders at 44 x zoom on glass. Measured on the shipped bundle
+     before this line changed: 44.00 device px at 1200x730 (zoom 1.00), 39.59 at
+     390x844 (0.90), 32.55 at 320x640 (0.74) — the smallest phone got the
+     smallest target, which is the same shape of defect menufit was written for.
+     --tap-floor divides the 44 by the zoom in base.css, so the floor means 44 ON
+     GLASS at every UI size; it is the identical two-line fix .ov-tab and
+     .choice-group .choice already carry. A floor is not a ceiling: `height:
+     auto` is untouched, so Text XL still grows the bar on its own glyphs. */
+  min-height: var(--tap-floor); height: auto; padding: 0.4rem 0;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-family: inherit; text-align: left;
+}
+.region-fold:hover, .region-fold:focus-visible { color: var(--gold); }
+.rf-caret { font-size: 1.1rem; }
+.rf-label { font-size: 1.15rem; letter-spacing: 0.08em; text-transform: uppercase; }
+/* A folded pane still SAYS how much is inside it — a pane that folds to a bare
+   arrow is decoration that decorates nothing, and the player cannot tell an
+   empty strip from a hidden one. */
+/* ~~ `margin-left: auto` struck, 2026-08-07, Freja — and the reasoning above it
+   is right, which is why only the placement moved. The button is the full width
+   of the panel because it is a tap target; the auto margin made its CONTENT the
+   full width too, so at 1200x730 the caret sat at x=130 and "3 cards" at x=1790.
+   Sixteen hundred pixels apart is not a control, it is two fragments a reader
+   has to assemble, and the count is the half that stops looking like it belongs
+   to the label. Sat beside its label it is one phrase — "CARDS, 3 cards" — at
+   every width, and the hit area is untouched. ~~ */
+.rf-count { margin-left: 0.9rem; font-size: 1.05rem; color: var(--muted); }
+/* The fold itself: everything but the header goes, and the pane stops competing
+   for the height the subject wanted. `.armoury-body` is `flex: 1`, so the space
+   is handed to the subject by the layout that was already there. */
+.armoury [data-role='context'][data-collapsed='1'] > :not(.region-head) { display: none; }
+.armoury [data-role='context'][data-collapsed='1'] { flex: 0 0 auto; padding-top: 0; padding-bottom: 0; }
 
 /* Grid view: the figure between two columns of slots, hands on the side they
    are actually held. The picker moves to the right pane so the middle stays a
