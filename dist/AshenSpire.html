@@ -13688,23 +13688,95 @@ function stampDeck(registries, run, cards) {
 // ---------------------------------------------------------------------------
 
 /**
- * canSwap(registries, slotId, { inCombat }) → { ok, reason }.
+ * canSwap(registries, slotId, { inCombat }) → { ok, word, reason }.
  * The rule lives in equipSlots.csv (`swap`): hands may be changed mid-fight at
- * a price, armour and talismans may not. Storage is sealed in combat too — you
- * cycle between the sets you brought, you don't rummage.
+ * a price, armour and talismans may not.
+ *
+ * `word` IS THE BADGE, AND IT LIVES HERE BECAUSE THE COLLISION DID (#98, Bjorn).
+ * The screen used to type the literal 'sealed' into the slot header while this
+ * function supplied only the tooltip — so the one word a player actually reads
+ * had no home, and nothing could compare it to anything. It collided: the
+ * ARMOUR header said "sealed" (this function, about the ACTIVE SET) while two
+ * rows below the picker said "Right Hand is sealed in combat" (canEquip, about
+ * a set's CONTENTS), on a Right Hand carrying no badge at all. Both sentences
+ * were true. **One word carrying two facts, with the copies visibly
+ * disagreeing** — his framing, and it is worse than a second copy, because a
+ * second copy at least says the same thing twice.
+ *
+ * So the badge word sits beside the reason it belongs to, and test 31d asserts
+ * canEquip's sentence contains neither this word nor any slot label. A future
+ * edit that reintroduces the collision goes red, which is the point: the
+ * brittleness IS the check. The wording is Sunna's whenever she wants it —
+ * both strings are one line each and neither is derived from the other.
  */
 function canSwap(registries, slotId, { inCombat = false } = {}) {
   const slot = ((registries.equipment || {}).slots || []).find((s) => s.id === slotId);
-  if (!slot) return { ok: false, reason: `No slot '${slotId}'` };
+  if (!slot) return { ok: false, word: 'unknown', reason: `No slot '${slotId}'` };
   if (inCombat && slot.swap !== 'combat') {
-    return { ok: false, reason: `${slot.label} can only be changed outside combat.` };
+    return { ok: false, word: 'sealed', reason: `${slot.label} can only be changed outside combat.` };
   }
-  return { ok: true, reason: '' };
+  return { ok: true, word: '', reason: '' };
 }
 
-/** canDrawFromStorage — storage is sealed once a fight starts. */
-function canUseStorage({ inCombat = false } = {}) {
-  return !inCombat;
+/**
+ * canEquip(registries, slotId, { inCombat }) → { ok, reason }.
+ *
+ * MAY WHAT IS IN THIS SET CHANGE RIGHT NOW — the sibling question to canSwap,
+ * and the one nothing in the model answered. `canSwap` asks whether the ACTIVE
+ * set may change; this asks whether a set's CONTENTS may. In a fight the answer
+ * is no for every slot, and it is derived rather than authored (below).
+ *
+ * IT REPLACES `canUseStorage`, WHICH HAD ZERO CALLERS IN THE WHOLE TREE. That is
+ * the second copy this seat exists to refuse, in its quietest form: the fact
+ * "you cannot re-arm mid-fight" was written twice — once in the model, where
+ * nothing read it, and once as `} else if (!inCombat) {` in the armoury's click
+ * handler, where it was the only thing actually enforcing anything. The dead
+ * copy is deleted and the live one moves onto the mutation (equipPiece below).
+ * Same defect as #90's ownership hole, one function over, found by asking who
+ * reads each of these two.
+ *
+ * WHY IT IS DERIVED AND NOT A COLUMN. The obvious form is an `equip` column in
+ * equipSlots.csv beside `swap`. It is #78 again: a second two-valued field per
+ * slot makes the vocabulary the PRODUCT of the two, and that product holds cells
+ * nobody built — a slot you may re-arm but not cycle, an armour slot a row could
+ * declare re-armable mid-fight while storage stays sealed under it. Changing
+ * what a set HOLDS is strictly more than changing which set is ACTIVE, so the
+ * answer follows from the fight, not from a row. An author writes nothing new
+ * and nothing can fall out of the set (Law 0 clause 1).
+ *
+ * THE SENTENCE DOES NOT NAME THE SLOT, and that is the repair of my own defect
+ * (#98, Bjorn). I composed it from the slot's label because canSwap does — but
+ * canSwap's fact IS per slot (hands cycle, armour does not) and this one is not:
+ * in a fight NO slot may be re-armed. Naming the slot made a screen-wide truth
+ * wear a per-slot voice, so "Right Hand is sealed in combat" read as a claim
+ * about the Right Hand, sitting under a Right Hand header with no badge on it
+ * while ARMOUR had one. The label was doing the opposite of its job. It says
+ * what is actually true instead, once, about the act rather than the slot — and
+ * it borrows no word from canSwap, so the two refusals cannot be read as the
+ * same rule. The picker's own `<h4>` says which slot you are looking at; this
+ * line never needed to.
+ *
+ * NO CONTEXT MEANS SEALED, not "not in combat" (#98, Vira). The old signature
+ * defaulted `inCombat` to false, so a caller that said nothing was told it may
+ * re-arm — silence meaning permission, which is the whole defect this function
+ * was extracted to remove. A truth function that cannot be told whether a fight
+ * is on refuses, and names the caller that failed to say.
+ */
+/** The one sentence, so the two refusing paths below cannot drift apart. */
+const SEALED_MID_FIGHT = 'You cannot re-arm mid-fight — cycle between the sets you brought.';
+
+function canEquip(registries, slotId, ctx) {
+  const slot = (((registries || {}).equipment || {}).slots || []).find((s) => s.id === slotId);
+  if (!slot) return { ok: false, reason: `No slot '${slotId}'` };
+  if (!ctx || typeof ctx !== 'object' || typeof ctx.inCombat !== 'boolean') {
+    console.error(
+      `canEquip('${slotId}'): no boolean \`inCombat\` in the context — refusing.`
+      + ` Got ${JSON.stringify(ctx)}. This line is the defect, not the refusal.`
+    );
+    return { ok: false, reason: SEALED_MID_FIGHT };
+  }
+  if (ctx.inCombat) return { ok: false, reason: SEALED_MID_FIGHT };
+  return { ok: true, reason: '' };
 }
 
 /**
@@ -13733,6 +13805,22 @@ function canUseStorage({ inCombat = false } = {}) {
  * it there — worse than the defect. **One truth function, two consumers**: the
  * screen draws what `openedSets` opens and this refuses what it does not, so the
  * two cannot disagree about a cell.
+ *
+ * OPEN, FOUND BY VIRA GATING #98, AND CARDED AS ITS OWN ACT — read this before
+ * adding a slot. THIS SIGNATURE HAS NO `inCombat` AT ALL, so the question is not
+ * whether it checks the swap rule but whether it CAN: `canSwap` is enforced by
+ * both callers and by neither of them structurally. That is a different failure
+ * from a second copy — a duplicate fails by divergence, an unenforced gate fails
+ * by bypass — and it has a live cell: `talisman` (`swap=outOfCombat`, `sets=3`)
+ * MOVES mid-fight, against its own data. Every test of this function uses
+ * `rightHand`, where the missing gate is vacuous, which is why nothing was red.
+ * It is dormant only because talismans are unauthored — one CSV row under Law 1
+ * clause 1 wakes it. The fixture that proves any fix is the same wide, rung-less
+ * talisman slot `engine.test.js` already builds for the too-few-rungs check, and
+ * nobody had connected the two; that act should build it once and hang both
+ * gates on it. NOT taken here: closing it changes this signature, and this
+ * signature is on the engine's priced swap path (`doSwapArmament`), which is the
+ * one thing #95 and #98 deliberately did not touch.
  *
  * `registries` moves to the front like everything else in this module, which is
  * also what makes a call site left on the old signature fail CLOSED: the old
@@ -13767,7 +13855,7 @@ function cycleSet(registries, loadout, slotId, index, ctx) {
  * addToStorage(loadout, itemId, cap) → true when it went in.
  *
  * Where a found armament lands. Storage is what you are carrying but not
- * holding; hand slots are sealed against it once a fight starts (canUseStorage).
+ * holding; hand slots are sealed against it once a fight starts (canEquip).
  * A duplicate is refused rather than stacking — you either have a Katana or
  * you don't.
  */
@@ -13791,7 +13879,7 @@ function carriedIds(loadout) {
 }
 
 /**
- * equipPiece(registries, loadout, slotId, setIndex, itemId, owned) → boolean.
+ * equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) → boolean.
  * Put a piece id into a specific set of a slot; `null` clears it.
  *
  * The gate is HERE, on the mutation, and not in the screen that calls it. The
@@ -13812,10 +13900,46 @@ function carriedIds(loadout) {
  * `registries` argument above, for the same reason.
  *
  * Clearing a slot needs no ownership: putting a thing down is always allowed.
+ * IT DOES NOT NEED THE COMBAT GATE ANY LESS, and the order of the two checks
+ * below is where that is said. Putting a weapon down mid-fight is re-arming with
+ * nothing; the ownership check has no opinion about it and the seal does. So the
+ * seal is asked FIRST, above the `!itemId` return, and ownership second.
+ *
+ * `ctx` — `{ inCombat }` — is REQUIRED, for the reason the two arguments above
+ * it are (#95). A context that defaults to "not in combat" fails OPEN: every
+ * call site written after today would equip mid-fight by saying nothing, which
+ * is how the ownership hole survived #90 in the first place. `cycleSet` above
+ * already takes a required trailing context for the ladder, so this is that
+ * pattern, not a new one.
+ *
+ * THE CHECK IS ON THE VALUE, NOT THE KEY (#98, Vira). It read `'inCombat' in
+ * ctx`, which answers whether the key was TYPED — so `{ inCombat: undefined }`
+ * and `{ inCombat: null }` were taken, and both are what a caller produces by
+ * forwarding a variable that was never set. That is the same defect one notch
+ * quieter than the one this argument exists to close: absent read as permission.
+ * A boolean, or it refuses and prints what it was actually handed.
  */
-function equipPiece(registries, loadout, slotId, setIndex, itemId, owned) {
+function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
   const ids = ((loadout || {}).sets || {})[slotId];
   if (!ids || setIndex < 0 || setIndex >= ids.length) return false;
+  if (!ctx || typeof ctx !== 'object' || typeof ctx.inCombat !== 'boolean') {
+    console.error(
+      `equipPiece('${slotId}', '${itemId}'): no boolean \`inCombat\` in the context — refusing.`
+      + ` Got ${JSON.stringify(ctx)}. Pass { inCombat } as the seventh argument.`
+      + ' This line is the defect, not the refusal.'
+    );
+    return false;
+  }
+  // THE GATE IS HERE, ON THE MUTATION, and the screen no longer holds a copy of
+  // it. Before #95 the only thing stopping a mid-fight re-arm was the armoury
+  // declining to open its picker — a screen, not a gate, so a save file, a drop,
+  // a drag, a gamepad path or a second surface walked straight past it. Measured
+  // at 98fedde: equipPiece on a live combat loadout returned true.
+  // Passed through, NOT coerced. `!!ctx.inCombat` would turn a value this
+  // function had just refused into a legal one, so if the check above is ever
+  // loosened canEquip's own check is a real second gate rather than an echo.
+  const seal = canEquip(registries, slotId, { inCombat: ctx.inCombat });
+  if (!seal.ok) return false;
   if (!itemId) {
     ids[setIndex] = null;
     return true;
@@ -13843,7 +13967,7 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned) {
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, slotHand, pieceHand, fitsSlot, validateEquipment, fromDropPool, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, canUseStorage, cycleSet, addToStorage, carriedIds, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, slotHand, pieceHand, fitsSlot, validateEquipment, fromDropPool, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
 
 },
 "src/model/state.js": function (module, exports, require) {
@@ -25050,7 +25174,7 @@ Object.assign(module.exports, { mountTutorial });
 
 const { balance } = require("src/content/balance.js");
 const { resolveCard } = require("src/model/registries.js");
-const { canSwap, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, ownership, openedSets, visibleSets, rungFor, setCellState } = require("src/model/loadout.js");
+const { canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, ownership, openedSets, visibleSets, rungFor, setCellState } = require("src/model/loadout.js");
 
 
 
@@ -25373,8 +25497,31 @@ function pieceChip(registries, piece, { selected }) {
  *             route the change through the engine intent that charges for it
  */
 function mountEquipment(host, {
-  registries, run, meta = {}, inCombat = false, onClose, onChange, onSwap,
+  registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap,
 }) {
+  // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
+  // `inCombat = false`. #95 moved the gate off the screen and onto the mutation
+  // — and left the screen holding the one value that gate is asked about, with a
+  // permissive default. A third mount that forgot the flag would have re-armed
+  // mid-fight while every model test stayed green, because the model would have
+  // been told the truth about a lie. Both existing mounts already pass it
+  // explicitly (main.js:716 `false`, combat.js:1068 `true`), so there is no
+  // behaviour to change here — only the silence to close.
+  //
+  // IT FAILS LOUD AND CLOSED, in that order. A mount that cannot say whether a
+  // fight is on is sealed: a visibly inert picker with a named cause on the
+  // console beats a picker that quietly lets you re-arm. Law 1 clause 5 —
+  // bad input fails by name, and the name here is the caller.
+  if (typeof inCombatArg !== 'boolean') {
+    console.error(
+      `mountEquipment(): no boolean \`inCombat\` — got ${JSON.stringify(inCombatArg)}.`
+      + ' Sealing the picker. This line is the defect, not the seal.'
+    );
+  }
+  // ONE NAME IN THE BODY. The argument is validated once, here, and everything
+  // below reads `inCombat` — a second name for the same fact is the defect this
+  // seat is for, and it would be a strange one to introduce while closing this.
+  const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
   const eq = registries.equipment;
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
@@ -25484,7 +25631,11 @@ function mountEquipment(host, {
     const rule = canSwap(registries, slot.id, { inCombat });
     box.innerHTML =
       `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>` +
-      (rule.ok ? '' : `<span class="es-sealed" title="${esc(rule.reason)}">sealed</span>`) +
+      // The badge word comes from the verdict it belongs to (#98). It was the
+      // literal 'sealed' typed here while canSwap supplied only the tooltip, so
+      // the one word a player reads had no home and nothing could compare it to
+      // canEquip's sentence — which is exactly how the two came to share it.
+      (rule.ok ? '' : `<span class="es-sealed" title="${esc(rule.reason)}">${esc(rule.word)}</span>`) +
       `</div><div class="es-sets"></div>`;
     const sets = box.querySelector('.es-sets');
 
@@ -25545,7 +25696,15 @@ function mountEquipment(host, {
           cycleSet(registries, run.loadout, slot.id, i, { meta });
           sfx.play('cardPlay');
           commit();
-        } else if (!inCombat) {
+        } else {
+          // OPENING THE PICKER IS NOT A MUTATION (#95). Constantine: "I think you
+          // should be able to see your inventory in combat, just have the slots
+          // locked in combat only." This branch used to read `else if (!inCombat)`
+          // — the picker simply never opened mid-fight, so the inventory was not
+          // hidden by a rule, it was hidden by an omission, and the same omission
+          // was the ONLY thing stopping a mid-fight re-arm. Both halves are now
+          // separated: the panel opens and shows you everything you own, and the
+          // seal lives on the mutation (canEquip → equipPiece in model/loadout.js).
           picking = picking && picking.slotId === slot.id && picking.setIndex === i ? null : { slotId: slot.id, setIndex: i };
           draw();
         }
@@ -25567,36 +25726,69 @@ function mountEquipment(host, {
       // present, which is the whole reason it is not a class someone maintains.
       box.dataset.empty = '1';
       box.innerHTML = inCombat
-        ? '<p class="ep-hint">Storage is sealed in combat. Cycle between the sets you brought.</p>'
+        ? '<p class="ep-hint">Pick a slot above to see what you are carrying.</p>'
         : '<p class="ep-hint">Pick a slot above to change what is in it.</p>';
       return box;
     }
     const slot = eq.slots.find((s) => s.id === picking.slotId);
-    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4><div class="ep-list"></div>`;
+    // ONE SENTENCE, ONE HOME. The seal's words are the model's (canEquip), the
+    // same place the mutation reads them from, so the reason a chip gives when
+    // it is tapped and the reason printed over the list cannot come apart. This
+    // header line is the sentence said ONCE for the whole list — sixteen chips
+    // each repeating it is a wall, and the chips still answer a tap individually
+    // through refuses(), which is the property that actually failed on his phone.
+    const seal = canEquip(registries, picking.slotId, { inCombat });
+    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4>`
+      + (seal.ok ? '' : `<p class="ep-hint">${esc(seal.reason)}</p>`)
+      + '<div class="ep-list"></div>';
     const list = box.querySelector('.ep-list');
+
+    // A CHIP IS DRAWN THE SAME WAY WHETHER OR NOT IT REFUSES, and the refusal is
+    // added here rather than passed in. #90 deleted pieceChip's `locked`/`hint`
+    // arguments because a dead argument is a second copy of a decision; putting
+    // them back would be that copy with a caller. So pieceChip still only knows
+    // how to draw a piece, and this function — which is where the seal is known —
+    // decorates. `.equip-chip.locked` in styles/ui.css has styled nothing since
+    // #90; it is the rule for "a chip you can see and cannot use", which is
+    // exactly this, so it is reused rather than joined by a second one.
+    const sealChip = (el) => {
+      el.classList.add('locked');
+      refuses(el, () => seal.reason);
+      return el;
+    };
 
     const bare = document.createElement('button');
     bare.type = 'button';
     bare.className = 'equip-chip bare';
     bare.innerHTML = '<span class="ec-name">Bare</span><span class="ec-mods">Nothing at all</span>';
-    bare.addEventListener('click', () => {
-      equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null);
-      commit();
-    });
+    if (seal.ok) {
+      bare.addEventListener('click', () => {
+        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null, owned(), { inCombat });
+        commit();
+      });
+    } else sealChip(bare);
     list.appendChild(bare);
 
-    // EVERY CHIP HERE IS EQUIPPABLE (#90). There is no locked branch left: a
-    // piece you do not own is not in `eligible()`, so it is not a chip. What
-    // used to be sixteen refusing chips on the right hand is now nothing at all,
-    // and the one refusal this screen still has is the ladder's next cell.
+    // EVERY CHIP HERE IS OWNED (#90) — a piece you do not own is not in
+    // `eligible()`, so it is not a chip. WHETHER YOU MAY ACT ON IT IS A SECOND
+    // QUESTION (#95) and it is the fight's, not the profile's. The two states
+    // must not read alike or the screen lies about why it said no:
+    //   · a rung you have not earned  → a CELL in the rack, 🔒 and the rung's
+    //     name, refusing with the rung's own hint out of unlocks.csv;
+    //   · a piece sealed by a fight   → a CHIP in the picker, the piece's own art
+    //     and name, dimmed, refusing with the slot's seal sentence.
+    // Different container, different content, different sentence, different
+    // author of the sentence. Nothing here says "locked" at the player.
     const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
     for (const piece of eligible(slot)) {
       const chip = pieceChip(registries, piece, { selected: piece.id === current });
-      chip.addEventListener('click', () => {
-        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned());
-        sfx.play('cardPlay');
-        commit();
-      });
+      if (seal.ok) {
+        chip.addEventListener('click', () => {
+          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned(), { inCombat });
+          sfx.play('cardPlay');
+          commit();
+        });
+      } else sealChip(chip);
       list.appendChild(chip);
     }
     return box;
