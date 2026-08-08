@@ -205,13 +205,32 @@ async function main() {
       // THE MUTATION: put the old door back. The bar keeps its class, its hint
       // and its fill — only the wiring changes, so the screen looks identical
       // and the abort silently commits.
-      await ev(`(() => {
-        for (const b of [...document.querySelectorAll('button.ev-choice')].filter(x => x.dataset.binding === '1')) {
+      //
+      // AND IT COUNTS WHAT IT REWIRED, which is not bookkeeping. Rune's finding
+      // tonight, and it is general: A KNOWN-BAD PINNED TO A VALUE DIES THE DAY
+      // THE TREE REACHES THAT VALUE — AND IT DIES GREEN. His framing mutation
+      // hardcoded `data-framing = 'fit'`, `entries: 1` made every frame fit, and
+      // a lie that had become true reported NOT CAUGHT. Mine is pinned to a
+      // different value: that this event still HAS a binding bar to falsify.
+      // Author the curse out of `rotPriestOffer` and the mutation rewires
+      // nothing, the abort correctly commits nothing, and `--mutate` passes
+      // having proved that a screen with no hold on it does not break. So it
+      // refuses instead, by name, at exit 2 — which is where `unknown` goes.
+      const rewired = await ev(`(() => {
+        const bars = [...document.querySelectorAll('button.ev-choice')].filter(x => x.dataset.binding === '1');
+        for (const b of bars) {
           const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
           c.addEventListener('click', () => { document.querySelector('#choices').innerHTML = '<p>mutated commit</p>'; });
         }
-        return 1;
+        return bars.length;
       })()`);
+      if (dial !== 'off' && !rewired) {
+        console.error(`\nholdconfirm --mutate: '${EVENT}' has no binding bar at dial '${dial}', so the mutation `
+          + `rewired NOTHING and every check below would pass by having nothing to break. `
+          + `That is unknown, not a caught mutation — pick an event with a binding choice (--event <id>).`);
+        cdp.close(); child.kill(); stop(); process.exit(2);
+      }
+      if (dial !== 'off') console.log(`    (mutation rewired ${rewired} binding bar(s))`);
     }
     const before = await ev(STATE);
     if (before && before.error) { findings.push(`dial ${dial}: ${before.error}`); continue; }
@@ -219,6 +238,15 @@ async function main() {
     if (dial === 'off') {
       ok(`off wires no hold`, before.held === 0 && before.hints === 0, `${before.held} held bar(s), ${before.hints} hint(s)`);
       const p = await barPoint(0);
+      // Same refusal as the mutation's, one dial position earlier: an event
+      // with no binding choice cannot say anything about what `off` does to a
+      // binding choice. An exception here would read as a broken tool; this
+      // reads as the absence it is.
+      if (!p) {
+        console.error(`\nholdconfirm: '${EVENT}' has no binding choice, so nothing on this run measures the feature. `
+          + `That is unknown, not a pass — pick an event with one (--event <id>).`);
+        cdp.close(); child.kill(); stop(); process.exit(2);
+      }
       await touch('touchStart', p); await wait(40); await touch('touchEnd', p);
       await wait(220);
       const after = await ev(STATE);
