@@ -1356,6 +1356,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    rearranging — `data-figure` and `data-slots`, read straight off the view's
    own row — so the screen builds nearly the same DOM every time and CSS
    decides whether you are looking at a person or at a list. */
+/* This element also carries `.modal-veil` now (equipment.js — read the block
+   above the class assignment for why). Every declaration below is an OVERRIDE
+   of one `.modal-veil` sets, and it wins on source order alone: same
+   specificity, later in this file. THAT IS THE FRAGILE PART — move this block
+   above line 153 and the armoury silently paints at z-index 500 with the wrong
+   dim. Nothing errors. If this ever needs to move, the six lines below have to
+   become more specific in the same act. The two extra declarations are the
+   armoury's own look, overriding nothing: the warmer dim and the blur. */
 .armoury-overlay {
   position: fixed; inset: 0; z-index: 60; display: flex;
   align-items: center; justify-content: center;
@@ -26160,14 +26168,61 @@ function mountEquipment(host, {
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 
+  // A `.modal-veil`, and not for the dimming — the same sentence `.qn-veil`
+  // carries four files away, for the same reason. This panel mounts on <body>,
+  // a SIBLING of #app, so input.js's scopeRoot() — which scopes the focus
+  // cursor to the topmost `.modal-veil`, else #app — never saw it. Measured
+  // before this line at ?shot=combat: ten focusable chips inside the open
+  // panel, and forty-five arrow presses across four directions visited TWO
+  // controls, both of them combat cards BEHIND it. A pad player could open
+  // the Armoury and then drive the fight underneath it.
+  //
+  // It costs no pixels, and that is checkable rather than hopeful:
+  // `.armoury-overlay` (ui.css) restates every one of `.modal-veil`'s six
+  // declarations — position, inset, background, z-index, display, and the two
+  // centring lines — and sits LATER in the same file, so it wins all six.
+  // Measured both ways: veil and panel rects identical to the pixel.
+  //
+  // THE ONE THING THAT IS NOW LIVE AND WAS NOT: scopeRoot() picks the topmost
+  // veil by DOM ORDER, and this one paints at z-index 60 while every other
+  // veil is 500. No path today opens a 500 veil under an open Armoury — both
+  // mounts (main.js showArmoury, combat.js #combat-armoury) run with nothing
+  // else standing, and the quick-nav's armoury row closes itself after the
+  // mount — so paint order and DOM order agree everywhere I could reach. If a
+  // future screen opens one over the other, the focus cursor will drive the
+  // panel underneath. Named here because the class is what makes it possible.
   const wrap = document.createElement('div');
-  wrap.className = 'armoury-overlay';
+  wrap.className = 'modal-veil armoury-overlay';
   host.appendChild(wrap);
 
   const close = () => {
     wrap.remove();
     if (onClose) onClose();
   };
+
+  // Tap outside to close — the same three lines the other FIVE veils in this
+  // game carry, verbatim (piles.js:36, quicknav.js:182, overlay.js:269,
+  // settings.js:860, debuglog.js:214). The Armoury was the sixth and the only
+  // one that did not, so a habit the game teaches on five panels failed on the
+  // one opened mid-fight.
+  //
+  // I nearly ruled the other way, and the measurement is why I did not.
+  // Against it: on a phone there is barely any backdrop to tap — 7.8 px of
+  // veil down each side and a 33.77 px band top and bottom at 390x844, all
+  // four under the tap floor, so this is NOT the phone's exit. The ✕ is, and
+  // it is pinned and floored. For it: the same measurement says the accident
+  // it risks is just as small, on desktop the strips are 24-60 px and a mouse
+  // hits them on purpose, and — the part that decided it — ESCAPE ALREADY
+  // CLOSES THIS PANEL WITH NO CONFIRMATION. The game already treats leaving
+  // the Armoury as free. This adds no new loss; it gives the same free act a
+  // channel a phone and a mouse have and a keyboard does not.
+  //
+  // `ev.target === wrap` is load-bearing: a click that started on the panel
+  // and bubbled must not close it.
+  wrap.addEventListener('click', (ev) => {
+    if (ev.target === wrap) close();
+  });
+
 
   // THE ARMOURY IS AN INVENTORY (#90). What the picker offers is what the
   // profile HAS, and that is one predicate with one home in the model — the
