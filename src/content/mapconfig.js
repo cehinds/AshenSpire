@@ -89,6 +89,43 @@ const ACT_SHAPE = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// THE DEBUG RUN SHAPE — Constantine, 2026-08-08, verbatim:
+//
+//   "need to do a full run, but I only have the patience for 30 min runs.
+//    perhaps add an advanced debug feature to limit the amount of max columns,
+//    rows, and or columns with percent chance of certain nodes being more
+//    likely"
+//
+// Three knobs, and the entry below is the ONLY thing this feature adds to
+// content. Everything else about it is DERIVED (Law 0 clause 1):
+//
+//   floors cap    max = whatever THIS act authors above; min = the shortest act
+//                 this act's own floorRules can describe, found by ASKING
+//                 resolveFloorPlan (model/floorplan.js `minViableFloors`). Edit
+//                 the anchors above and the slider's low end moves on its own.
+//   columns cap   max = authored; min = the one number below, because "a
+//                 corridor is not a map" is a design call and not arithmetic.
+//   type weights  ONE SLIDER PER KEY OF `typeWeights` ABOVE. The Custom Climb
+//                 screen reads that object and builds its controls from it, so
+//                 adding a node type to the act adds a knob with zero UI edits.
+//                 That is this feature's Law 0 falsifier and it is testable.
+//
+// A CAP, not a setting: the effective value is min(authored, cap), so a cap
+// above the authored number does nothing — and the readout SAYS SO rather than
+// letting it look like it did something (Law 0 clause 5).
+export const MAP_SHAPE_LIMITS = Object.freeze({
+  // Two columns is the floor because ONE column is a corridor: every walker
+  // lands on the same node, the act has zero choices, and the shape is
+  // identical every seed (Viki measured exactly this at pathCount 1 — 13 nodes,
+  // no decisions, 300 seeds). A short run is the ask; a run with no map is not.
+  minColumns: 2,
+  // The largest weight a knob may set. Weights are RELATIVE — the odds a type
+  // is rolled are its weight over the total — so this number is a slider end,
+  // not a percentage. The screen prints the derived share beside each one.
+  maxWeight: 100,
+});
+
 // All three acts share the SPEC §6 shape; per-act difficulty lives in the
 // encounter pools, not the map geometry. Distinct objects so future acts can
 // diverge without surprises — and now they genuinely can, because the anchors

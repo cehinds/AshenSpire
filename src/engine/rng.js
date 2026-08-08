@@ -214,6 +214,26 @@ export function seedProblem(str) {
   return scanSeed(str).why;
 }
 
+/**
+ * sweepSeed(i) → a uint32 that is genuinely different for every i.
+ *
+ * THE ONE HOME FOR "give me the i-th seed of a sweep", and it exists because
+ * getting it wrong is invisible. `createRng('mapplan-3')` is `'mapplan-3' >>> 0`,
+ * which is 0 — for EVERY i. tools/mapplan.mjs's first run reported 24 seeds with
+ * a range of 52-52 and nearly shipped: that was ONE seed measured 24 times,
+ * wearing a distribution's clothes, and it was caught only because a count read
+ * exactly 52.00 twenty-four times.
+ *
+ * Knuth's multiplicative hash on (i + 1), so index 0 is not seed 0. Every sweep
+ * in the tree — the tool, the tests, and the live estimate the Custom Climb
+ * screen prints while a knob is dragged — draws from this function, so a
+ * distribution measured in one of them is the same distribution in the others.
+ * A caller that writes its own is reintroducing the defect this export deletes.
+ */
+export function sweepSeed(i) {
+  return Math.imul((i | 0) + 1, 2654435761) >>> 0;
+}
+
 export function seedToString(seed) {
   let n = seed >>> 0;
   if (n === 0) return '0';

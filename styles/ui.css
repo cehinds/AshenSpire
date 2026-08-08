@@ -335,6 +335,146 @@ body.hide-hints .hint-bar { display: none; }
 .mod-chip.forced { cursor: not-allowed; opacity: 0.85; }
 .mod-chip.forced::after { content: 'ASCENSION'; font-size: 0.8rem; letter-spacing: 0.12em; color: var(--ember); margin-top: 0.2rem; }
 .customrun .cz-label { color: var(--muted); font-size: 1.1rem; letter-spacing: 0.18em; margin-bottom: 0.6rem; }
+
+/* ---------- custom climb · run shape (the debug knobs) ----------
+   Freja, 2026-08-08. Constantine: "I only have the patience for 30 min runs.
+   perhaps add an advanced debug feature to limit the amount of max columns,
+   rows, and or columns with percent chance of certain nodes being more likely".
+
+   THE COMPOSITION CALL, stated because it is the part that is mine. This panel
+   sits below CLASS and ASCENSION and must not compete with them: it is folded
+   shut, its head is a quiet line, and the only bright thing inside it is the
+   NUMBER — one gold figure the eye lands on and watches move while a slider is
+   dragged. Everything else in here is muted on purpose. A debug panel that
+   shouts is a debug panel that gets read as the game.
+
+   LAW 5 — one axis. There is no horizontal strip anywhere in this panel and no
+   width-keyed variant of it: every row is a column (head line, then a full-width
+   slider), so the narrow shape IS the wide shape and there is no second
+   composition to drift. Nothing here can produce horizontal travel because
+   nothing here has a minimum width — the one flexible track is `minmax(0, 1fr)`
+   by construction.
+
+   LAW 4 — text metrics take the text unit; boxes do not. `font-size` and
+   `line-height` are rem. The tap floor, the track and the thumb are px through
+   `--tap-floor`, because a finger does not grow when Text size does. */
+.runshape { border: 1px solid var(--line); border-radius: 8px; background: rgba(0, 0, 0, 0.18); }
+.runshape-toggle {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  min-height: var(--tap-floor); height: auto;
+  padding: 6px 12px; text-align: left; cursor: pointer;
+  background: none; border: 0; border-radius: 8px; color: var(--muted);
+}
+.runshape-toggle:hover { color: var(--parchment); }
+.runshape .rs-title { font-size: 1.1rem; letter-spacing: 0.18em; flex: 1 1 auto; min-width: 0; }
+.runshape .rs-state {
+  font-size: 0.95rem; letter-spacing: 0.12em; color: var(--muted);
+  border: 1px solid var(--line-soft); border-radius: 4px; padding: 1px 5px;
+}
+.runshape.shaped .rs-state { color: var(--gold); border-color: var(--gold); }
+.runshape.shaped .rs-title { color: var(--gold); }
+.runshape .rs-caret { transition: transform 140ms; flex: 0 0 auto; }
+.runshape.open .rs-caret { transform: rotate(180deg); }
+/* THE GAP BETWEEN KNOBS IS BIGGER THAN THE AIR INSIDE ONE, and it has to be
+   stated as a number rather than left to taste: a 44 px slider box carries ~20 px
+   of empty track above and below its ink, so at the first draft's 14 px each
+   knob's own NOTE sat closer to the NEXT knob's label than to the slider it
+   describes. Read off the photograph, not the stylesheet.
+   px, not rem, throughout this block's box geometry — Law 4 clause 3, applied as
+   the ratchet it is: new writes take it, the tree is not swept. */
+.runshape-body { display: flex; flex-direction: column; gap: 26px; padding: 0 12px 14px; }
+.runshape .rs-intro { max-width: none; }
+
+/* The readout — the whole feature. A knob without a number is the thing that
+   shipped last time (mapconfig.js says the same sentence about the act length).
+   `tabular-nums` so the figure does not jitter sideways while it is dragged. */
+.rs-readout {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 10px 12px; border-radius: 6px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+}
+.rs-readout b { color: var(--gold); font-size: 2rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.rs-readout span { color: var(--muted); font-size: 1.05rem; line-height: 1.4; }
+.rs-readout .rs-boundary { color: var(--muted); font-size: 0.95rem; opacity: 0.85; }
+
+/* THREE TIERS, and the gaps are what say so. A 44 px slider box already carries
+   most of the air a row needs, so the spacing here is doing HIERARCHY, not
+   breathing room: `gap: 0` inside a knob binds its head, track and note into one
+   object; the body's `gap` between knobs is what separates them. The first draft
+   used one gap everywhere and the five weight rows read as an undifferentiated
+   stack with "Node odds" indistinguishable from "Monster" — measured by looking
+   at the photograph, which is the only way that class of mistake is ever found. */
+.rs-knob { display: flex; flex-direction: column; gap: 0; }
+.rs-knob-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  color: var(--parchment); font-size: 1.2rem;
+}
+.rs-knob-head .rs-val { color: var(--gold); font-variant-numeric: tabular-nums; }
+.rs-knob .rs-why { max-width: none; }
+/* Tier up: five weights are a GROUP, so their head reads as a section label and
+   not as a sixth control name. Same treatment `.cz-label` gives the sections
+   above it, so the panel borrows the screen's own hierarchy rather than a new one. */
+.rs-group-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  color: var(--muted); font-size: 1.1rem; letter-spacing: 0.18em;
+  padding-bottom: 4px; border-bottom: 1px solid var(--line);
+}
+.rs-group-head .rs-val { color: var(--muted); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.rs-group .rs-why { padding-top: 6px; }
+
+/* One slider rule for the panel. The BOX is the tap target (44 device px tall,
+   full width); the INK is small. Sunna's floor is about what a thumb can hit,
+   never about how loud a control looks — so the whole strip is draggable and
+   only the handle is drawn. */
+.rs-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; min-width: 0;
+  min-height: var(--tap-floor); height: var(--tap-floor);
+  background: none; cursor: pointer;
+}
+.rs-slider:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
+.rs-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--line-soft); }
+.rs-slider::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line-soft); }
+.rs-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 18px; height: 18px; margin-top: -7px; border-radius: 50%;
+  background: var(--gold); border: 1px solid var(--bg);
+}
+.rs-slider::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--gold); border: 1px solid var(--bg);
+}
+
+/* Name and share on one line, the track on the row under it — two lines at
+   EVERY width, so the narrow shape is the wide shape (Law 5 note above). The
+   head is a flex row whose only flexible child is `minmax(0, …)` by way of
+   `min-width: 0`, so a long node type wraps instead of pushing the row wide. */
+.rs-weights { display: flex; flex-direction: column; padding-top: 6px; }
+.rs-wrow { display: flex; flex-direction: column; }
+.rs-whead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rs-wrow .rs-wname {
+  color: var(--parchment); font-size: 1.1rem; text-transform: capitalize;
+  flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere;
+}
+.rs-wrow .rs-wpct {
+  color: var(--gold); font-size: 1.1rem; font-variant-numeric: tabular-nums; flex: 0 0 auto;
+}
+/* A zeroed weight reads as muted AND says "0%" — the word is the signal, the
+   colour is not (base.css: colour is never the only signal). */
+.rs-wrow .rs-wpct.zero { color: var(--muted); }
+/* `button.rs-reset`, not `.rs-reset` — MEASURED, not read. `button.subtle` in
+   base.css is (0,1,1) and a bare class is (0,1,0), so the first version of this
+   rule lost to it silently and the control came back 111.7 x 24.8 device px on a
+   390x844 phone: 56% of the floor it is supposed to clear, in a panel where the
+   thing beside it starts a run. Same specificity trap `button.ev-choice` above
+   is annotated for, found the same way — by photographing it, not by reading.
+   Law 4 clause 4: a fixed floor, `height: auto`, so it can neither clip at Text
+   XL nor balloon; px because a finger does not grow with Text size. */
+button.rs-reset {
+  align-self: flex-start;
+  min-height: var(--tap-floor); height: auto;
+  padding: 8px 20px;
+}
 .draft-grid { gap: 1.6rem; }
 .hx-custom { display: inline-block; margin-left: 0.6rem; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.9rem; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
 .farewell { gap: 2.2rem; }

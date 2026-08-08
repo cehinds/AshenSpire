@@ -23,9 +23,11 @@
 
 import { generateActMap } from './mapgen.js';
 import { resolveUnknownNode } from './encounters.js';
+import { applyRunShape } from '../model/floorplan.js';
+import { MAP_SHAPE_LIMITS } from '../content/mapconfig.js';
 
 /**
- * buildActMap(registries, rng, act) → mapGraph
+ * buildActMap(registries, rng, act, mapShape) → mapGraph
  *
  * `act` is the CONTENT act (the caller answers Endless looping — main.js and
  * the tools pass their contentAct), required for the same reason
@@ -33,9 +35,26 @@ import { resolveUnknownNode } from './encounters.js';
  * authored. Unknown (?) nodes come back with `.resolved` already set, so a
  * node's outcome is seed-determined at map birth and the Sealstone Key can
  * reveal it (SPEC §6).
+ *
+ * `mapShape` is the Custom Climb debug shape (`run.custom.mapShape`) or null.
+ * It is applied HERE, in the one act-boot path, for exactly the reason this file
+ * exists: a per-run override applied at each of the four call sites would be
+ * four copies of one fact, and the fourth would be the one that forgets. Absent
+ * ⇒ byte-for-byte today's act, so every existing seed replays unchanged.
+ *
+ * A shape that does not resolve THROWS and names the knob. The screen refuses
+ * it before the run starts (ui/screens/customRun.js), so reaching this throw
+ * means a shape arrived from somewhere the screen does not guard — a hand-edited
+ * save, a future caller. That is precisely when a loud failure is worth its cost.
  */
-export function buildActMap(registries, rng, act) {
-  const map = generateActMap({ config: registries.mapConfig(act), rng });
+export function buildActMap(registries, rng, act, mapShape = null) {
+  const authored = registries.mapConfig(act);
+  const shaped = applyRunShape(authored, mapShape, MAP_SHAPE_LIMITS);
+  if (shaped.errors.length) {
+    throw new Error(`buildActMap: this run's map shape does not resolve — ${
+      shaped.errors.map((e) => `${e.key}: ${e.msg}`).join(' · ')}`);
+  }
+  const map = generateActMap({ config: shaped.config, rng });
   const assigned = [];
   for (const node of Object.values(map.nodes)) {
     if (node.type === 'event') {

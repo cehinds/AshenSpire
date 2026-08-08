@@ -629,7 +629,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  run.mapGraph = buildActMap(registries, rng, contentAct());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
   persist();
   showMap();
 }
@@ -662,6 +662,14 @@ function contentAct() {
   return endlessOn() ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
 }
 
+// The Custom Climb debug shape (floors cap, columns cap, node weights) or null
+// for an ordinary run. It rides on `run.custom`, so it is saved and reloaded
+// with everything else the run chose — a resumed short run stays short, and act
+// 2 is generated at the same shape act 1 was.
+function runMapShape() {
+  return (run.custom && run.custom.mapShape) || null;
+}
+
 // The map-build sequence itself lives in engine/actmap.js (the one boot path,
 // #54) — this file only decides which act and where the graph is stored.
 
@@ -678,7 +686,7 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
-  run.mapGraph = buildActMap(registries, rng, contentAct());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
   persist();
   showMap();
 }

@@ -5,20 +5,22 @@
 // reported as skipped placeholders.
 
 import { contentBundle } from '../src/content/index.js';
+import { MAP_SHAPE_LIMITS } from '../src/content/mapconfig.js';
+import { buildActMap } from '../src/engine/actmap.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import {
   validateContent,
   extractTemplateTokens,
   computeTokenBindings,
 } from '../src/model/validate.js';
-import { resolveFloorPlan } from '../src/model/floorplan.js';
-import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN } from '../src/engine/rng.js';
+import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from '../src/model/floorplan.js';
+import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
-import { generateActMap } from '../src/engine/mapgen.js';
+import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
-import { createRunState, RUN_SCHEMA_VERSION, validateRunShape } from '../src/model/state.js';
+import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun } from '../src/model/state.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
@@ -3380,6 +3382,152 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     // not that the single-file build carries it — tools/bundle.mjs sweeps
     // assets/ wholesale for that, and `node tools/parchment.mjs --check` is what
     // says the plates are still what the generator makes.
+  });
+
+  test('49. the run-shape knobs cap the act, move the roll, and refuse bad values by name', () => {
+    // Constantine: "I only have the patience for 30 min runs. perhaps add an
+    // advanced debug feature to limit the amount of max columns, rows, and or
+    // columns with percent chance of certain nodes being more likely."
+    //
+    // THE ONE THING THIS TEST EXISTS FOR is the third knob. A weighting table
+    // that is read and never changes what the generator produces would pass
+    // every structural check in this file, so the assertion below is on the
+    // POPULATION over a seed sweep, not on the table.
+    const base = contentBundle.mapConfigs[1];
+
+    // ---- the sweep's own referent. A sweep whose seeds collapse to one value
+    // prints a flawless distribution of a single graph — it happened to
+    // mapplan's first run (24 seeds, range 52-52). Prove the seeds differ
+    // before believing anything measured with them.
+    const seeds = new Set(Array.from({ length: 60 }, (_, i) => sweepSeed(i)));
+    eq(seeds.size, 60, '60 sweep indices give 60 distinct seeds');
+    assert(!seeds.has(sweepSeed(0) + 1) || sweepSeed(0) !== 0, 'index 0 is not seed 0');
+
+    // ---- the caps SHORTEN, and the shortened act still resolves its own rules
+    const capped = applyRunShape(base, { floors: 6, columns: 4 }, MAP_SHAPE_LIMITS);
+    eq(capped.errors.length, 0, `floors=6 columns=4 resolves — ${JSON.stringify(capped.errors)}`);
+    eq(capped.config.floors, 6, 'the floors cap binds');
+    eq(capped.config.columns, 4, 'the columns cap binds');
+    const wide = sampleActShape(base, 60);
+    const short = sampleActShape(capped.config, 60);
+    assert(short.nodes.max < wide.nodes.min,
+      `every capped act is smaller than every default act — ${short.nodes.min}-${short.nodes.max} vs ${wide.nodes.min}-${wide.nodes.max}`);
+
+    // ---- BOTH EDGES of the caps. The low edge is DERIVED, so ask for it.
+    const mv = minViableFloors(base);
+    assert(mv.floors >= 2, `this act has a viable minimum length — ${JSON.stringify(mv)}`);
+    eq(applyRunShape(base, { floors: mv.floors }, MAP_SHAPE_LIMITS).errors.length, 0,
+      `${mv.floors} floors is accepted (it is the derived minimum)`);
+    assert(applyRunShape(base, { floors: mv.floors - 1 }, MAP_SHAPE_LIMITS).errors.length > 0,
+      `${mv.floors - 1} floors is refused (one below the derived minimum)`);
+    // The high edge: a cap above the act is slack, not an error — and it says so.
+    const slack = applyRunShape(base, { floors: base.floors + 5 }, MAP_SHAPE_LIMITS);
+    eq(slack.errors.length, 0, 'a cap above the act is not an error');
+    eq(slack.changed, false, '…and changes nothing');
+    assert(slack.readout.some((l) => l.includes('NOT BINDING')), '…and the readout SAYS it did nothing');
+
+    // ---- THE WEIGHTING KNOB ACTUALLY MOVES THE DISTRIBUTION.
+    // Floors and columns held at the act's own values, so nothing but the
+    // weight can be what moved the share. Both directions, on one sweep.
+    const shareOf = (cfg, type) => {
+      const s = sampleActShape(cfg, 60);
+      const total = Object.values(s.byType).reduce((a, b) => a + b, 0);
+      return (s.byType[type] || 0) / total;
+    };
+    const type = 'elite';
+    const authored = base.typeWeights[type];
+    const up = applyRunShape(base, { typeWeights: { [type]: MAP_SHAPE_LIMITS.maxWeight } }, MAP_SHAPE_LIMITS);
+    const down = applyRunShape(base, { typeWeights: { [type]: 0 } }, MAP_SHAPE_LIMITS);
+    eq(up.errors.length, 0, 'a maxed weight is accepted');
+    eq(down.errors.length, 0, 'a zeroed weight is accepted');
+    const sBase = shareOf(base, type);
+    const sUp = shareOf(up.config, type);
+    const sDown = shareOf(down.config, type);
+    assert(sUp > sBase * 1.5,
+      `${type} at weight ${MAP_SHAPE_LIMITS.maxWeight} is markedly more common than at ${authored} — ${(sBase * 100).toFixed(1)}% → ${(sUp * 100).toFixed(1)}%`);
+    assert(sDown < sBase,
+      `${type} at weight 0 is rarer than at ${authored} — ${(sBase * 100).toFixed(1)}% → ${(sDown * 100).toFixed(1)}%`);
+
+    // …AND A WEIGHT OF ZERO THAT DOES NOT REACH ZERO SAYS SO. This assertion is
+    // here because the first version of this test claimed `sDown === 0` and was
+    // WRONG: `minElites: 2` is a hard promise mapgen keeps by force-placing, so
+    // Elite at weight 0 still lands two a map. Correct behaviour that looks
+    // exactly like an ignored knob — Law 0 clause 5 — so the resolver names it.
+    assert(sDown > 0, `${type} is force-placed by minElites even at weight 0 — ${(sDown * 100).toFixed(1)}%`);
+    // Asserted on `notes`, not on `readout`: notes are the subset the SCREEN
+    // prints, so this holds the caveat to reaching a player and not merely to
+    // existing in a tool's output.
+    assert(down.notes.some((l) => l.toLowerCase().includes(type) && l.includes('force-placed')),
+      `…and the note the screen prints says so — got ${JSON.stringify(down.notes)}`);
+
+    // A type nothing forces DOES reach zero, which is what makes the sentence
+    // above a real distinction rather than an excuse for a knob that half works.
+    const free = 'event';
+    const zeroed = applyRunShape(base, { typeWeights: { [free]: 0 } }, MAP_SHAPE_LIMITS);
+    eq(zeroed.errors.length, 0, `${free} at 0 is accepted`);
+    eq(shareOf(zeroed.config, free), 0, `${free} at weight 0 never appears — nothing forces it`);
+    assert(shareOf(base, free) > 0, `…and it is common at its authored weight ${base.typeWeights[free]}`);
+
+    // ---- BAD DATA FAILS LOUD AND NAMES THE ENTRY (Law 1 clause 5).
+    const named = (entry, needle) => {
+      const r = applyRunShape(base, entry, MAP_SHAPE_LIMITS);
+      assert(r.errors.length > 0, `${JSON.stringify(entry)} is refused`);
+      const text = r.errors.map((e) => `${e.key}: ${e.msg}`).join(' · ');
+      assert(text.toLowerCase().includes(needle.toLowerCase()),
+        `…and the refusal says ${JSON.stringify(needle)} — got ${JSON.stringify(text)}`);
+      // A refused shape never half-applies: the act comes back untouched.
+      eq(r.config, base, `…and ${JSON.stringify(entry)} left the act unchanged`);
+    };
+    named({ columns: 1 }, 'corridor');
+    named({ columns: MAP_SHAPE_LIMITS.minColumns - 1 }, 'is below');
+    named({ floors: 0 }, 'is below');
+    named({ floors: 8.5 }, 'whole number');
+    named({ typeWeights: Object.fromEntries(Object.keys(base.typeWeights).map((k) => [k, 0])) }, 'every weight is zero');
+    named({ typeWeights: { notAType: 10 } }, 'is not a node type');
+    named({ typeWeights: { [type]: -1 } }, 'weight of 0 or more');
+    named({ typeWeights: { [type]: MAP_SHAPE_LIMITS.maxWeight + 1 } }, 'is above the');
+    named({ rows: 8 }, 'is not a run-shape knob');
+    named('eight floors', 'must be an object');
+
+    // ---- THE KNOBS ARE DERIVED FROM CONTENT, not typed on the screen.
+    // The screen builds one weight slider per key of `typeWeights`; this is the
+    // property that makes that true, and it is Law 0's falsifier for this
+    // feature: add a node type to the act and a knob appears with no UI edit.
+    for (const key of Object.keys(base.typeWeights)) {
+      eq(applyRunShape(base, { typeWeights: { [key]: 30 } }, MAP_SHAPE_LIMITS).errors.length, 0,
+        `'${key}' is a knob because the act rolls it`);
+    }
+    eq(MAP_SHAPE_KEYS.length, 3, 'three knobs, and the set is closed');
+
+    // ---- IT REACHES THE GAME. The one act-boot path applies it, an absent
+    // shape leaves every existing seed byte-for-byte identical, and a shaped
+    // run is flagged out of win-rate telemetry.
+    const reg = createRegistries(contentBundle);
+    const graphOf = (shape) => JSON.stringify(buildActMap(reg, createRng(0x715e), 1, shape));
+    eq(graphOf(null), graphOf(undefined), 'no shape and an absent shape are the same run');
+    assert(graphOf(null) !== graphOf({ floors: 6 }), 'a shape reaches the generator through buildActMap');
+    let threw = null;
+    try { buildActMap(reg, createRng(1), 1, { columns: 1 }); } catch (e) { threw = e.message; }
+    assert(threw && threw.includes('corridor'), `a bad shape throws at act boot and names the knob — got ${threw}`);
+    assert(isCustomRun({ mapShape: { floors: 6 } }), 'a shaped run is kept out of win-rate stats');
+    assert(!isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard' }), '…and an unshaped one is not');
+
+    // IT SURVIVES A SAVE. The shape rides on `run.custom`, so a resumed short
+    // run stays short and act 2 is generated at the shape act 1 was — the claim
+    // buildActMap's header makes, asserted rather than assumed.
+    const saved = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+    saved.custom = { ascension: 0, mods: {}, deckMode: 'standard', mapShape: { floors: 6, columns: 4 } };
+    const revived = JSON.parse(serializeRun(saved));
+    eq(JSON.stringify(revived.custom.mapShape), JSON.stringify({ floors: 6, columns: 4 }),
+      'the run shape round-trips through the save');
+
+    // BOUNDARY. This is the generator and the resolver. It proves NOTHING about
+    // the screen: that the panel opens, that the sliders reach 44 device px,
+    // that the live readout prints the same number this sampler returns, or
+    // that a phone can scroll it in one axis. Those are rendered facts —
+    // tools/tapsize.mjs, tools/axisfit.mjs and a photograph, not this file.
+    // It is also silent on MINUTES: node count is the driver of run length and
+    // nothing in this tree can measure a clock.
   });
 
   const passed = results.filter((r) => r.ok).length;
