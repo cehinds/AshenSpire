@@ -1,8 +1,21 @@
 // src/ui/screens/map.js — the act map (SPEC §7.1, mockup: map-screen.svg)
 //
-// Full act visible; only edge-connected nodes from the current position are
-// clickable; traveled path in gold. With the Sealstone Key passive, '?'
-// nodes render their pre-rolled resolution (dashed ring marks a reveal).
+// TWO MODES, and the toggle is Settings → Display · Map reveal:
+//
+//   path  the game as it shipped — the whole act drawn, only edge-connected
+//         nodes from the current position clickable, traveled path in gold.
+//   fog   the doors, the boss, the trail behind you and the split in front of
+//         you. Everything else is unlit parchment.
+//
+// WHAT IS DRAWN IS NOT WHAT IS CLICKABLE, and keeping those two apart is the
+// whole of this change. `reachable` has always governed CLICKS and still does,
+// untouched. Fog governs DRAWING, and it asks a different question of a
+// different set — the ladder in model/mapknowledge.js. Read that file's header
+// before touching either: collapsing them is the trap it was written to close.
+//
+// The Sealstone Key is no longer a case this screen checks for. It is the
+// operator that lifts a node from `placed` to `known`, in both modes, and it
+// lives with the ladder.
 
 import { passiveFlag } from '../../model/registries.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
@@ -11,9 +24,13 @@ import { veilIsOpen } from '../components/veil.js';
 import { matchAction, isEngaged, focusFirst } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
-import { nodeIcon, nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
+import { assetUrl } from '../assetmap.js';
+import { nodeIcon, nodeBlurb, actTitle, legendEntries, MENU, parchmentAsset, parchmentClass } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { trackGesture } from '../gesture.js';
+import {
+  mapKnowledge, nodeReading, resolveMapMode, HIDDEN, KNOWN,
+} from '../../model/mapknowledge.js';
 // GEOMETRY AND THE LADDER LIVE IN model/mapview.js NOW, with the arithmetic that
 // turns them into "does this act fit on a phone" — read by this screen, by the
 // boot validator, and by tools/mapfit.mjs. Read its header before changing a
@@ -82,7 +99,29 @@ function snapToLadder(z) {
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), ZOOM_MIN);
 }
 
+/**
+ * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
+ * one listener that was left out of it.
+ *
+ * The handler below removes itself when `.mapscreen` is gone. That is correct
+ * for map → combat → map and WRONG for map → map: the second mount puts a
+ * `.mapscreen` back, so the first handler's guard passes forever and both run.
+ * `+` steps the zoom twice, and the stale one drives a detached `<svg>`.
+ *
+ * It was latent before tonight (nothing re-mounted the map in place) and it is a
+ * live path now: flipping Map reveal in Settings redraws the map underneath the
+ * still-open overlay, which is the entire point of putting the toggle there. So
+ * the mount owns the teardown rather than the handler guessing at it.
+ */
+let liveMapKeys = null;
+
 export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
+  // Before anything is drawn: the previous mount's keyboard handler, if this is
+  // a re-mount. See `liveMapKeys` above.
+  if (liveMapKeys) {
+    removeEventListener('keydown', liveMapKeys);
+    liveMapKeys = null;
+  }
   const map = run.mapGraph;
   const nodes = Object.values(map.nodes);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -114,17 +153,69 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const traveled = new Set(run.path || []);
   const reveal = passiveFlag(registries, run.relics, 'revealUnknown');
 
+  // WHAT THE PLAYER KNOWS, derived once and read by everything below — the node
+  // loop, the edges, and the camera's look-ahead. Deriving it twice is how a
+  // camera comes to frame a node nobody painted.
+  const mode = resolveMapMode(meta);
+  const fog = mode === 'fog';
+  // `mapFogForks` is the UNDECIDED half and is deliberately NOT a settings row —
+  // see FOG_KEEP_FORKS in model/mapknowledge.js. It is read here so the camera
+  // can photograph both readings of his sentence for him to choose between; the
+  // day he chooses, this expression and that constant both go.
+  const keepForks = ((meta && meta.settings) || {}).mapFogForks === true;
+  const know = mapKnowledge({ graph: map, run, mode, reveal, keepForks });
+  const isDrawn = (id) => know.drawn.has(id);
+
   // ---- edges (a traveled edge = consecutive pair in run.path) ----
+  //
+  // AN EDGE NEEDS BOTH ITS ENDS. Under fog the nodes one step past the split are
+  // hidden, so their edges are not drawn either — the line stops where the light
+  // does, which is what makes the screen read as a path running into fog rather
+  // than as a lattice with holes punched in it. In `path` mode nothing is hidden
+  // and this filter is the identity, so the shipped screen is byte-identical.
   let edgeSvg = '';
   const path = run.path || [];
   for (const n of nodes) {
+    if (!isDrawn(n.id)) continue;
     for (const toId of n.next) {
+      if (!isDrawn(toId)) continue;
       const to = map.nodes[toId];
       const ia = path.indexOf(n.id);
       const isTraveled = ia >= 0 && path[ia + 1] === toId;
       edgeSvg += `<line class="map-edge${isTraveled ? ' traveled' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
     }
   }
+
+  // ---- the undiscovered ground -------------------------------------------
+  //
+  // THREE AUTHORED LOOKS, ONE PER ACT, BOUND BY NAME (uiContent.js
+  // `parchmentAsset`).
+  //
+  // THE PLATE IS NOT IN THIS MARKUP, AND THAT IS A BUG FIX, NOT A STYLE.
+  // The first draft emitted `<image href="assets/map/parchment_act1.webp">`
+  // straight into the SVG on the reasoning that SVG "draws no broken-image
+  // glyph". PHOTOGRAPHED, IT DOES: with the three plates absent — which is the
+  // state this commit ships in — headless Chromium painted its own missing-image
+  // graphic across the entire 725x674 canvas, a blurred hillside under a sky,
+  // and the act map was drawn on top of it. Every node still rendered, every
+  // check still passed, and the screen was unusable. Law 1 clause 4 asks a
+  // missing asset to degrade "visibly but gracefully"; that was visible and the
+  // opposite of graceful, and only a screenshot could say so.
+  //
+  // So the plate is ATTACHED ON A SUCCESSFUL LOAD and never before (see
+  // `attachParchment` below): no file, no element, and the wash beneath it
+  // stands alone. Freja can drop a `.webp` into `assets/map/` and reload.
+  //
+  // THE WASH IS A PLACEHOLDER AND THIS COMMENT IS NOT WHERE THAT IS SAID —
+  // `.map-fog-ground` in styles/map.css carries it, next to the colour it
+  // describes. It is deliberately NOT drawn from the graph: art derived from
+  // `mapgen` would move the day Constantine turns `floors` to shorten a run
+  // (Law 0 clause 5). FREJA OWNS THE ACTUAL LOOK; this ships the structure.
+  const groundSvg = fog
+    ? `<g class="map-fog-ground" aria-hidden="true">`
+      + `<rect x="0" y="0" width="${width}" height="${height}"/>`
+      + `</g>`
+    : '';
 
   const cz = run.customization || {};
   const hpPct = Math.max(0, Math.min(100, Math.round((run.hp / Math.max(1, run.maxHp)) * 100)));
@@ -134,7 +225,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const hasFlasks = run.flasks.length > 0;
 
   app.innerHTML = `
-    <div class="mapscreen">
+    <div class="mapscreen${fog ? ' map-fog' : ''}">
       <header class="topbar map-header">
         <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
         <div class="who">
@@ -158,9 +249,14 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
         <div class="relics mh-relics"></div>
       </div>
-      <div class="map-scroll">
+      <!-- The per-act parchment tone rides the SCROLLPORT, not the <g> inside
+           the SVG: a custom property inherits DOWN, and both the ground rect and
+           the scrollport's own background need to read it. One home for the
+           tone, two readers, no second literal. -->
+      <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+            ${groundSvg}
             <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(run.actNumber)}</text>
             ${edgeSvg}
             <g id="map-nodes"></g>
@@ -214,17 +310,26 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     </div>`;
 
   const g = app.querySelector('#map-nodes');
+  let drawnCount = 0;
   for (const n of nodes) {
+    // HIDDEN IS NOT `display:none` — the element is never created. A node the
+    // player is not meant to know exists must not be in the DOM for a curious
+    // one to read, and an absent element cannot be un-hidden by a stylesheet.
+    const rung = know.rung.get(n.id);
+    if (rung === HIDDEN) continue;
+    drawnCount++;
     const isReachable = reachable.has(n.id);
-    let shownType = n.type;
-    let revealed = false;
-    if (n.type === 'event' && reveal && n.resolved) {
-      shownType = n.resolved.kind === 'event' ? 'event' : n.resolved.kind;
-      revealed = n.resolved.kind !== 'event';
-    }
+    // PRESENTATION KEYS ON THE RUNG, NEVER ON THE TYPE. A `placed` node draws the
+    // unknown mark whatever it actually is, so the day the ladder gains a reason
+    // to place a node that is not an `event` — a penumbra, a map fragment — its
+    // true kind cannot leak through the icon or the tooltip by omission.
+    const rd = nodeReading(n, { reveal });
+    const shownType = rung === KNOWN ? rd.shownType : 'event';
+    const revealed = rung === KNOWN && rd.revealed;
     const cls = [
       'map-node',
       shownType,
+      `k-${rung}`,
       traveled.has(n.id) || n.id === run.mapNodeId ? 'visited' : '',
       n.id === run.mapNodeId ? 'current' : '',
       isReachable ? 'reachable' : '',
@@ -232,6 +337,17 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     ].filter(Boolean).join(' ');
     const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     el.setAttribute('class', cls);
+    // The node's id on the element — so an instrument can compare the SET the
+    // page drew against the set the ladder says it should have, rather than
+    // comparing two counts and calling that agreement. It leaks nothing a fogged
+    // player must not have: only DRAWN nodes get an element at all, and the id is
+    // a floor and a column, never a type.
+    el.dataset.node = n.id;
+    // THE RADIUS IS STILL THE NODE'S OWN, and that is a promise, not an
+    // oversight: fog changes WHICH nodes are drawn and never HOW BIG one is, so
+    // the tap floor, both map margins and `mapplan --selftest`'s census are the
+    // same numbers in both modes. A fogged node with a different radius would
+    // have quietly forked every one of them.
     const r = nodeRadius(n.type);
     // Reachable nodes get a rhythmic pulsing halo so the next choices read at
     // a glance; the halo is inert when reduced-motion is set (CSS handles it).
@@ -241,6 +357,21 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     attachTooltip(el, () => nodeTooltip(shownType, n, revealed));
     g.appendChild(el);
   }
+
+  // THE SCREEN SAYS WHAT IT DREW, in the same idiom as `data-framing` two
+  // hundred lines down and for the same reason: a fog that cannot report its own
+  // census cannot be caught covering the wrong thing. `tools/mapfog.mjs` reads
+  // these against the ladder's own answer, and a disagreement between the two is
+  // a finding in its own right — the count here is the DOM's, counted while
+  // appending, never re-derived from the ladder it is meant to check.
+  const scrollEl = app.querySelector('.map-scroll');
+  if (fog) {
+    attachParchment(app.querySelector('.map-fog-ground'), assetUrl(parchmentAsset(run.actNumber)), width, height);
+  }
+  scrollEl.dataset.nodesDrawn = String(drawnCount);
+  scrollEl.dataset.nodesTotal = String(nodes.length);
+  scrollEl.dataset.nodesHidden = String(know.counts.hidden);
+  scrollEl.dataset.nodesPlaced = String(know.counts.placed);
 
   const strip = app.querySelector('.mh-relics');
   for (const rid of run.relics) {
@@ -355,13 +486,22 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // the act stops looking like a climb. This set is a PREFERENCE, never a
   // promise: the zoom fits it when it can, and the guarantee stays the framing
   // set, because the zoom that fits a superset always fits the set inside it.
+  //
+  // AND UNDER FOG THE LOOK-AHEAD IS EMPTY, BY CONSTRUCTION AND ON PURPOSE. The
+  // nodes one step past the split are exactly the ones the fog is covering, so
+  // aiming the camera at them would frame blank parchment and push the decision
+  // off centre — a camera that knows more than the screen does. `isDrawn` is the
+  // same predicate the node loop and the edges use, so there is one answer to
+  // "is this on screen" rather than three. In `path` mode nothing is hidden and
+  // the filter is the identity: the shipped framing is unchanged, which is what
+  // keeps `tools/mapfit.mjs`'s numbers comparable across this commit.
   function contextNodes() {
     const fs = framingNodes();
     const seen = new Set(fs.map((n) => n.id));
     const out = [...fs];
     for (const n of fs) {
       for (const id of n.next) {
-        if (!seen.has(id) && map.nodes[id]) { seen.add(id); out.push(map.nodes[id]); }
+        if (!seen.has(id) && map.nodes[id] && isDrawn(id)) { seen.add(id); out.push(map.nodes[id]); }
       }
     }
     return out;
@@ -548,8 +688,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // the menu keys stayed live under the settings modal and the quick-nav list.
   // Not the hand-losing one, and the same defect: components/veil.js.
   const mapKeys = (ev) => {
+    // Still a backstop for map → anywhere-else, where nothing calls mountMap
+    // again to do the tidying. The re-mount case is owned at the top of this
+    // function; this branch can no longer be reached by a second map.
     if (!app.querySelector('.mapscreen')) {
       removeEventListener('keydown', mapKeys);
+      if (liveMapKeys === mapKeys) liveMapKeys = null;
       return;
     }
     if (veilIsOpen()) return;
@@ -570,6 +714,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     }
   };
   addEventListener('keydown', mapKeys);
+  liveMapKeys = mapKeys;
 
   applyZoom(false);
   // Auto-center the camera on the current node. The flex container may report
@@ -595,6 +740,42 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // Backstop in case the observer never fires (e.g. instant layout): re-center
   // shortly after mount. Cheap and idempotent.
   setTimeout(centerAndFocus, 120);
+}
+
+/**
+ * attachParchment(host, path, w, h) — put the act's plate on the ground layer,
+ * but ONLY once the file has actually decoded.
+ *
+ * The load is probed with a plain `Image`, not by inserting the `<image>` and
+ * hoping: a decode failure then costs nothing, because nothing was ever added to
+ * the document. See the note at `groundSvg` for what the eager version did to
+ * the screen when the plate was missing — which is the state this ships in, and
+ * the reason this function exists at all rather than three lines of markup.
+ *
+ * Fire-and-forget by design. A plate that arrives 40 ms after the map does is a
+ * background fading in; a map that waits for one is a map that never opens when
+ * the file is absent.
+ */
+function attachParchment(host, path, w, h) {
+  if (!host || typeof Image === 'undefined') return;
+  const probe = new Image();
+  probe.onload = () => {
+    if (!host.isConnected) return; // the player left the map while it loaded
+    const el = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+    el.setAttribute('href', path);
+    el.setAttribute('x', '0');
+    el.setAttribute('y', '0');
+    el.setAttribute('width', String(w));
+    el.setAttribute('height', String(h));
+    el.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+    host.appendChild(el);
+  };
+  // No `onerror` handler on purpose: the absent plate is the SHIPPING state
+  // today, and a console warning per map mount would be noise about a thing
+  // everyone already knows. The moment the three files exist, a missing one is
+  // a 404 in the network panel, which is the loud channel Law 1 clause 5 wants
+  // and the one a person actually looks at when art does not appear.
+  probe.src = path;
 }
 
 function nodeTooltip(type, node, revealed) {

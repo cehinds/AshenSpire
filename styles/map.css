@@ -127,6 +127,60 @@
 .map-edge { stroke: var(--map-structure); stroke-width: 2; fill: none; }
 .map-edge.traveled { stroke: var(--gold); stroke-width: 3; }
 
+/* ---------------------------- fog of war (Settings → Display · Map reveal) ---
+   Everything here is inert unless .mapscreen carries .map-fog, so `path` mode is
+   byte-for-byte the screen that shipped.
+
+   NOTHING IN THIS BLOCK HIDES A NODE. A node the fog covers is never appended to
+   the DOM at all (src/ui/screens/map.js) — a `display:none` fog is one devtools
+   toggle away from being no fog, and the point of the mode is that the player
+   does not know what is out there.
+
+   THE GROUND IS A PLACEHOLDER, AND THIS IS WHERE THAT IS SAID.
+   Constantine asked for "vague map art similar to Elden Ring's undiscovered
+   map." What is below is NOT that: it is a flat parchment wash, one tone per
+   act, standing in until FREJA authors the three plates
+   (assets/map/parchment_act1..3.webp — the <image> above this layer binds them
+   by name, and resolves to nothing while they are absent). Generated art was
+   refused on Law 0: derived from the graph, it would move the day `floors` or
+   `columns` is turned to shorten a run.
+   `px` and not `rem` throughout: these are SVG-space geometry inside a canvas
+   that is scaled by the zoom ladder, not text (Law 2 rule 3, Law 4 clause 3). */
+.map-fog-ground rect {
+  fill: var(--fog-parchment, #17130d);
+}
+.map-fog-ground image { opacity: 0.55; }
+/* Three acts, three washes. Deliberately close to each other and to the panel
+   colour — the ground is meant to read as "nothing legible here", not as a
+   feature competing with the nodes drawn on top of it. */
+.map-scroll.parch-1 { --fog-parchment: #17130d; }
+.map-scroll.parch-2 { --fog-parchment: #14140f; }
+.map-scroll.parch-3 { --fog-parchment: #191009; }
+
+/* The lit region gets its warmth from the nodes themselves; the fog gets a
+   slight lift so the parchment reads as material rather than as absence. */
+.mapscreen.map-fog .map-scroll { background: var(--fog-parchment, #17130d); }
+
+/* A `placed` node — "something is here, you do not know what."
+
+   SCOPED TO FOG, AND THAT IS THE POINT. Unscoped, this rule put a dashed ring on
+   every unresolved `?` on the SHIPPED map — measured in a screenshot, not
+   reasoned about — which broke the one promise the toggle makes: nobody who does
+   not opt in sees a pixel move. It also collided with `.revealed`'s dash (5 3),
+   so the map would have carried two dash patterns meaning two different things
+   with nothing saying which was which. The rung is derived in both modes; only
+   fog paints it differently. */
+.mapscreen.map-fog .map-node.k-placed circle { stroke-dasharray: 3 4; stroke-opacity: 0.8; }
+
+/* Under fog the trail behind you is the strongest thing on the board after the
+   split in front of you: it is the only record of where the act has taken you,
+   and there is no full map to fall back on. */
+.mapscreen.map-fog .map-node.visited circle { stroke-opacity: 1; }
+.mapscreen.map-fog .map-edge.traveled { stroke-width: 3.5; }
+/* An untraveled edge inside the light is a step you are choosing, not structure
+   you are reading past — the fog map has far fewer of them, so they carry more. */
+.mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
+
 /* ---------- horizontal map header (matches the combat top bar) ---------- */
 /* Reuses .topbar/.portrait/.who/.hpbar/.relics from combat.css; these rules add
    the map-specific stats, wrapping, and the legend popover. Items are flex so

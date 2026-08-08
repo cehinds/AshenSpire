@@ -741,6 +741,7 @@ function showSettings() {
       // saying so is the whole fix.
       const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
+      remountMapIfShowing(changed);
       if (res && res.ok === false) {
         showSettingsNotice(QUARANTINE_NOTICE);
       }
@@ -836,6 +837,7 @@ function showOverlay(initialTab = 'deck') {
       Object.assign(meta.settings, changed);
       const res = saves.saveMeta(meta);
       applyDisplaySettings(meta.settings);
+      remountMapIfShowing(changed);
       if (changed.bindings) setBindings(changed.bindings);
       if (changed.keyBindings) setKeyBindings(changed.keyBindings);
       // ONE sentence, both doors — and now literally one: QUARANTINE_NOTICE.
@@ -947,6 +949,35 @@ function showDraft() {
       startClimb();
     },
   });
+}
+
+/**
+ * SETTINGS THAT ONLY THE MAP CAN SHOW YOU — redraw it under the open menu.
+ *
+ * Both settings doors apply their change immediately (`applyDisplaySettings`),
+ * and that reaches everything expressed as a class or a custom property. The map
+ * is not: its zoom and now its reveal mode are read ONCE, at mount, by
+ * `mountMap`. So flipping Map reveal used to take effect on the next screen
+ * change — which for the one setting whose whole purpose is a side-by-side is
+ * the same as not working.
+ *
+ * Marina's ruling put the toggle in Settings precisely because that is the only
+ * surface reachable while you are looking at the thing you are judging. This
+ * function is what makes that sentence true. The overlay and the modal both
+ * mount on `document.body`, so the map re-renders behind them and is there when
+ * they close.
+ *
+ * NAMED KEYS, NOT "any settings change": a blanket re-mount would redraw the act
+ * on every volume nudge, and `mountMap` re-runs the framing camera. The list is
+ * the map's own reads — grep `meta.settings` in ui/screens/map.js and
+ * model/mapknowledge.js and it is these two.
+ */
+const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom'];
+function remountMapIfShowing(changed) {
+  if (!run || !changed) return;
+  if (!MAP_REMOUNT_KEYS.some((k) => k in changed)) return;
+  if (!app.querySelector('.mapscreen')) return;
+  showMap();
 }
 
 function showMap() {
@@ -1478,6 +1509,46 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.mapNodeId = at;
     run.floor = g.nodes[at].floor;
     run.path = [at];
+    showMap();
+  }
+  // `?shotWalk=<n>` — STAND SOMEWHERE WITH A TRAIL BEHIND YOU.
+  //
+  // A REACH STATE, and the third of the same shape (`?shotEvent`, `?shotAt`).
+  // `?shotAt` teleports: it sets `run.path = [at]`, a path of length one, which
+  // is the right answer for a FRAMING measurement and the wrong one for
+  // everything about fog. Fog is a function of the trail — "previously visited
+  // locations remain revealed" — so a map posed with no history can only ever
+  // photograph the first frame of it, and the one claim worth photographing is
+  // that the light MOVES and the trail STAYS.
+  //
+  // It walks the graph rather than naming nodes: from the first entrance, take
+  // the lowest-numbered `next` each step, n times. Deterministic given the seed,
+  // so two runs of the camera produce the same picture; and it uses the graph's
+  // own edges, so a walk this produces is a walk a player could have taken —
+  // a hand-written path list would eventually name an edge that does not exist
+  // and pose a state the game cannot reach.
+  const shotWalk = shotState === 'map' ? shotParams.get('shotWalk') : null;
+  if (shotWalk != null) {
+    if (shotAt) throw new Error('?shotWalk and ?shotAt both set: they pose the same thing two ways. Use one — shotAt teleports, shotWalk leaves a trail.');
+    const steps = Number(shotWalk);
+    if (!Number.isInteger(steps) || steps < 1) {
+      throw new Error(`?shotWalk=${shotWalk}: needs a positive whole number of steps. A silent fallback would photograph a different map than the one asked for.`);
+    }
+    const g = run.mapGraph;
+    let id = [...g.startIds].sort()[0];
+    const walked = [id];
+    for (let i = 1; i < steps; i++) {
+      const next = [...(g.nodes[id].next || [])].sort();
+      // Running out of graph is LOUD. A walk that quietly stopped short would
+      // hand back a screenshot of floor 4 labelled floor 9, and the reader would
+      // have no way to tell.
+      if (!next.length) throw new Error(`?shotWalk=${steps}: this act runs out at step ${i} (${id} has nowhere to go). The boss is the last node; ask for fewer steps.`);
+      id = next[0];
+      walked.push(id);
+    }
+    run.mapNodeId = id;
+    run.floor = g.nodes[id].floor;
+    run.path = walked;
     showMap();
   }
   if (shotState === 'death') {

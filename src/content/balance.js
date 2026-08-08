@@ -208,6 +208,11 @@ export const balance = {
     // How many act backdrop plates exist (assets/bg/bg_act*.webp). Endless acts
     // past this cycle back through them.
     backdropActs: 3,
+    // How many map-parchment plates exist (assets/map/parchment_act*.webp) — the
+    // undiscovered ground the fog map draws on. Same rule as backdropActs, its
+    // own row because the two sets are authored separately and one may grow
+    // first. A row, so a fourth plate is a file plus this number and no code.
+    parchmentActs: 3,
     // Card colour motif (Settings → Display). Cards carry two independent
     // colour axes: the owning class (each class def's cardTint) and the
     // player's accent. `cardMotif` picks how the class one is expressed;
