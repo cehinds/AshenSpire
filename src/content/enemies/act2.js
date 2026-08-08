@@ -93,9 +93,20 @@ export const act2Enemies = [
     tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🛡',
     moves: {
-      slam: { intent: 'attack', damage: 10, weight: 40 },
-      fortify: { intent: 'block', block: 12, weight: 35, maxConsecutive: 1 },
-      crush: { intent: 'attack', damage: 14, weight: 25, maxConsecutive: 1 },
+      slam: { intent: 'attack', damage: 10, weight: 30 },
+      fortify: { intent: 'block', block: 12, weight: 25, maxConsecutive: 1 },
+      crush: { intent: 'attack', damage: 14, weight: 20, maxConsecutive: 1 },
+      // The player-side door into Frost (Rune, 2026-08-08). This act's own
+      // header already states the design — "the first enemies that turn YOUR
+      // mechanics against you (Bleed and Blight applied to the player)" — and
+      // Frost was the one build-up with no enemy behind it. Living Armor is
+      // already tinted var(--frost) and is `construct`, which is NOT in Frost's
+      // resistance tags, so it can seed the meter without shrugging it off
+      // itself. Numbers PROVISIONAL, like the row's.
+      rimeCrush: {
+        intent: 'attack', damage: 8, weight: 25, maxConsecutive: 1,
+        effects: [{ op: 'applyStatus', target: 'player', status: 'frost', stacks: 3 }],
+      },
     },
   },
 
