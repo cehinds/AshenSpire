@@ -45,7 +45,7 @@ import { KEEPSAKES } from '../src/content/keepsakes.js';
 import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
-  ownership, fromDropPool, slotRungs, openedSets, visibleSets, rungFor, setCellState,
+  ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
 } from '../src/model/loadout.js';
 import {
@@ -58,6 +58,10 @@ import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
 import { settingOn, resolveTapSize } from '../src/ui/screens/settings.js';
+// The second UI import, and the same deliberateness: LOCK_COPY is the words for
+// a closed set the MODEL declares, so "every route has a sentence" is a join
+// this suite can check. uiContent.js is data and touches no DOM at module scope.
+import { LOCK_COPY } from '../src/ui/uiContent.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -2736,17 +2740,35 @@ export async function runTests({ artManifest = null } = {}) {
     // is the half that has run it, and nothing in this suite hears anything.
   });
 
-  test('41. the Compendium withholds by ONE rule, and a planted row tells the rule from the table', () => {
+  // 47, NOT 41 (Viki, resolving the merge). This branch was numbered 41 at
+  // 77a02b9 and the harness has since grown a 41 of its own — the screen census.
+  // Two lines printed `41.` with 60 green underneath, which is one id written
+  // twice with nothing checking they agree, one level up from the code. 45 and
+  // 46 are left for #102, which published them before this branch merges.
+  // THE REAL DEFECT IS THAT THESE NUMBERS ARE AUTHORED AT ALL — engine.test.js
+  // and run-node.mjs each type their own and nothing joins them. Named, not
+  // fixed: a derived index is a tool change and this is a merge resolution.
+  test('47. the Compendium withholds by ONE rule, and a planted row tells the rule from the table', () => {
     // Freja, the Compendium. The screen is a picture and this suite has never
     // seen one; what is testable here is the DECISION the picture obeys, and
     // that decision has one home — src/model/unlocks.js. The rendered half is
     // tools/release-shots.mjs (compendium-empty / compendium-held).
-    const ctx = (over = {}) => ({
-      unlockById: new Map((REG.unlocks || []).map((u) => [u.id, u])),
-      unlocked: new Set(over.unlocked || []),
-      available: new Set(over.available || []),
-      drops: { requireFound: true, reveal: 'teased', ...(over.drops || {}) },
-    });
+    // `owned` is the REAL ownership() handle, not a hand-built set. That is the
+    // whole of Viki's merge ruling: possession has one home and this screen is a
+    // reader of it. Building the sets here would re-create the second definition
+    // the resolution removed, inside the test meant to prove it is gone.
+    const ctx = (over = {}) => {
+      const drops = { requireFound: true, reveal: 'teased', ...(over.drops || {}) };
+      const reg = {
+        balance: { equipment: { drops, persistence: over.persistence || 'both' } },
+      };
+      const meta = { unlocked: over.unlocked || [], found: over.available || [] };
+      return {
+        owned: ownership(reg, { meta, loadout: over.loadout || null }),
+        unlockById: new Map((REG.unlocks || []).map((u) => [u.id, u])),
+        drops,
+      };
+    };
     const dagger = REG.equipment.armaments.find((a) => a.id === 'dagger');
     assert(dagger, 'the dagger is still in the table');
 
@@ -2810,10 +2832,45 @@ export async function runTests({ artManifest = null } = {}) {
       'the drawable states are the reveal modes plus held, and nothing else');
 
     // ONE HOME, and this is the assertion that keeps it one: `unlockView` and
-    // the Armoury picker both route "hidden means absent" through revealState.
-    // If a second copy is ever reintroduced, this and the picker disagree first.
+    // the Compendium both route "hidden means absent" through revealState.
+    // If a second copy is ever reintroduced, this and unlockView disagree first.
     eq(revealState('hidden', false), 'hidden', 'unearned obeys its mode');
     eq(revealState('hidden', true), 'held', 'earned outranks the mode');
+
+    // ---- TWO AXES, ONE HOME EACH (Viki, resolving the #90 merge) ------------
+    //
+    // POSSESSION. `pieceReveal` must agree with `ownership().has` on every piece
+    // and every persistence, because it no longer has its own opinion. This is
+    // the assertion that goes red if the second definition ever comes back — and
+    // 'perRun' is the value that made the old code and the model DISAGREE, not a
+    // hypothetical: the branch read `meta.found` directly and the model does not.
+    for (const persistence of ['both', 'unlocked', 'perRun']) {
+      const c = ctx({ available: ['dagger'], persistence });
+      for (const a of REG.equipment.armaments || []) {
+        eq(pieceReveal(a, c).state === 'held', c.owned.has(a),
+          `${a.id} at persistence '${persistence}': the screen and the model agree on what is yours`);
+      }
+    }
+    // And they genuinely differ across that value, so the loop above is not
+    // vacuously true for three copies of one case.
+    eq(ctx({ available: ['dagger'], persistence: 'both' }).owned.has(dagger), true,
+      "'both' counts the profile's found list");
+    eq(ctx({ available: ['dagger'], persistence: 'perRun' }).owned.has(dagger), false,
+      "'perRun' does not — the case the old Compendium got wrong");
+
+    // DISCLOSURE. The join owns no condition of its own, so `gate` is exactly
+    // what the model returned — never re-derived from `piece.kind`.
+    for (const [row, want] of [[dagger, 'unfound'], [plant[1], 'unearned'], [plant[3], null]]) {
+      eq(pieceReveal(row, ctx()).gate, ctx().owned.why(row),
+        `${row.id}: the reason is READ from ownership(), not re-derived`);
+      eq(pieceReveal(row, ctx()).gate, want, `${row.id} is withheld by ${want}`);
+    }
+
+    // DECLARED AND HANDLED. Every route the model can return has words. A route
+    // with no sentence renders an empty reason — the quiet graceful failure.
+    eq([...OWNERSHIP_GATES].sort().join(','), Object.keys(LOCK_COPY).sort().join(','),
+      'every ownership gate has a sentence, and no sentence is orphaned');
+    for (const g of OWNERSHIP_GATES) assert(LOCK_COPY[g] && LOCK_COPY[g].trim(), `${g} says something`);
 
     // BOUNDARY: this is the decision, not the drawing. Nothing here proves a
     // silhouette is visible against the panel, that the count reads as a promise
