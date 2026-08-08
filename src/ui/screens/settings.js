@@ -13,7 +13,7 @@ import { renderProfileSection } from './profileArchive.js';
 import { renderAboutSection } from './about.js';
 import { AUDIO_DEFAULTS } from '../audio.js';
 import { balance } from '../../content/balance.js';
-import { ZOOM_STEPS } from '../../model/mapview.js';
+import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
 
 const UI_DEFAULTS = balance.ui;
 
@@ -27,13 +27,30 @@ const ROWS = [
   // they were a second copy of the zoom ladder that had already drifted: the
   // ladder has six steps and this row offered four of them, so 175% and 200%
   // were reachable with the in-map + button and unreachable as a default.
-  // `Fit` is the new default and it is the whole point of the row — the map
-  // opens framed on the current node and everything it connects to, computed
-  // from the act's own width (Constantine's ask; model/mapview.js does the
-  // arithmetic). A percentage is the override, and ⊙ comes back to Fit.
-  { cat: 'Display', key: 'mapZoom', type: 'choice', def: 'Fit',
+  //
+  // `def` IS MAP_ZOOM_DEFAULT AND NOT A LITERAL. It reads '115' today because
+  // Sunna held #107 on that token; the map screen reads the same const, so the
+  // default cannot be flipped in one place and stay in the other.
+  //
+  // THE NOTE PROMISES PLAINLY AGAIN, AND ONLY BECAUSE THE PROMISE IS NOW TRUE.
+  //
+  // It said this sentence for one night while 8 of 12 seeds broke it at the
+  // entrance row — the first map of every run — which is a settings note the
+  // game could not keep, and Sunna held #107 partly on that. I had already
+  // bounded it ("gets as close as it can and you pan for the rest"). Then
+  // Constantine shipped one map entrance, and the honest move is to re-measure
+  // the sentence rather than keep a hedge that has stopped being true:
+  //
+  //   node tools/mapfit.mjs --dist --zoom Fit   ->  0 of 120 framings hide a
+  //   next step; 390x844 and 1200x730, 12 seeds, entrance + four mid-climb rows.
+  //
+  // A hedge nobody needs teaches a player the game is unsure of itself. The
+  // BOUNDARY still exists and still belongs to a maintainer, not to this string:
+  // 120 measured cells is not every seed, so the map keeps reporting a frame it
+  // could not fit (`.map-scroll[data-framing]`, and the warning it logs).
+  { cat: 'Display', key: 'mapZoom', type: 'choice', def: MAP_ZOOM_DEFAULT,
     choices: ['Fit', ...ZOOM_STEPS.map((z) => String(Math.round(z * 100)))], label: 'Map zoom',
-    note: 'Fit opens the map close enough that your current node and every node it connects to are on screen. A percentage overrides it; the in-map ⊙ button comes back to Fit.' },
+    note: 'Fit opens the map close enough that your current node and every node it connects to are on screen. A percentage fixes the zoom instead; + / − and ⊙ still work in the map.' },
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },

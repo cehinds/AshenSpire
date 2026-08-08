@@ -19,26 +19,46 @@ import { trackGesture } from '../gesture.js';
 // boot validator, and by tools/mapfit.mjs. Read its header before changing a
 // number here: `columns` refuses at boot against these same values.
 import {
-  ZOOM_STEPS, ZOOM_MIN,
+  ZOOM_STEPS, ZOOM_MIN, MAP_ZOOM_DEFAULT,
   clampZoom, framingBox, fitZoom, nodeRadius, nodeX, nodeY, svgWidth, svgHeight,
 } from '../../model/mapview.js';
 
 /**
- * The player's SAVED zoom, or null for "compute it".
+ * The player's zoom as a NUMBER, or null when they asked the map to compute one.
  *
- * COMPUTED IS THE DEFAULT; THE LADDER AND THIS SETTING ARE THE OVERRIDE, and
- * `⊙` returns to computed (Marina's resolution of the collision between
- * Constantine's "open zoomed in close enough that the current node and its
- * connecting nodes fit" and the zoom that already ships). `Fit` is a real value
- * of the setting rather than an absence, so a player who chose 130% and wants
- * the frame back has a row to choose, not a preference to clear.
+ * A PERCENTAGE IS THE DEFAULT AND `Fit` IS THE OPT-IN — Sunna's ruling on #107,
+ * and the reversal of what this file said for one night. The machinery below is
+ * unchanged and correct: given a viewport it finds the zoom at which the current
+ * node and everything it connects to are on screen, which is what Constantine
+ * asked for. Her hold is about what that zoom LOOKS like when it arrives alone.
+ *
+ * Measured, `mapfit --only 390x844`, 60 cells: 52 sit on a ladder bound, and
+ * 43 of 48 MID-CLIMB cells sit at 1.968-2.000. Mid-climb the decision is two or
+ * three nodes, so "fit the decision" is arithmetic for "maximum zoom": 8-9 of 13
+ * floors, 2-3 of 7 columns, and THE BOSS IS NEVER ON SCREEN — against 13 of 13
+ * floors and the boss on every mid-climb cell at 115%, same code, same cells.
+ *
+ *   "It reads as a map that has been CROPPED, and nothing on screen says the
+ *    crop was a choice. The camera arrived without the dark."   — Sunna
+ *
+ * Fog and parchment are what make a close frame read as intended and they are
+ * not on this branch, so the A/B Constantine asked for cannot be run yet and
+ * NOBODY'S FIRST RUN IS THE EXPERIMENT. Flip `def` in the settings row when the
+ * fog lands, or on his word — one token, and this comment is the reason.
+ *
+ * `Fit` stays a REAL VALUE of the setting rather than an absence, so choosing it
+ * is a row and not a cleared preference, and `⊙` returns to it once chosen.
  */
 function savedZoom(meta) {
-  const raw = ((meta && meta.settings) || {}).mapZoom;
-  if (raw == null || raw === 'Fit') return null;
-  const pct = Number(raw);
-  if (!Number.isFinite(pct) || pct <= 0) return null;
-  const z = pct / 100;
+  const stored = ((meta && meta.settings) || {}).mapZoom;
+  // Unset, or a value this ladder cannot read, is the SHIPPING DEFAULT and never
+  // the computed frame. MAP_ZOOM_DEFAULT is the one home for which that is — the
+  // settings row reads the same const for its `def`, so the two cannot disagree
+  // and the flip described above is one token in model/mapview.js.
+  const raw = stored == null ? MAP_ZOOM_DEFAULT : stored;
+  if (raw === 'Fit') return null;
+  const z = Number(raw) / 100;
+  if (!Number.isFinite(z) || z <= 0) return MAP_ZOOM_DEFAULT === 'Fit' ? null : ZOOM_MIN;
   // Snap to the nearest step so +/- stays on the ladder.
   return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), ZOOM_MIN);
 }

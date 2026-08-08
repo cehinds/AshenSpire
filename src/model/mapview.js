@@ -50,6 +50,23 @@ export const ZOOM_MIN = ZOOM_STEPS[0];
 export const ZOOM_MAX = ZOOM_STEPS[ZOOM_STEPS.length - 1];
 
 /**
+ * WHAT THE MAP OPENS AT WHEN THE PLAYER HAS NOT CHOSEN — the settings row's `def`
+ * and the map screen's fallback read this one const, so they cannot disagree.
+ *
+ * `'115'` (a percentage) or `'Fit'` (the computed frame). It says `'115'` because
+ * SUNNA HELD #107 on exactly this token: the computed frame is correct arithmetic
+ * and, arriving on its own, reads as a map that has been cropped — 43 of 48
+ * mid-climb cells land at 1.968-2.000x, which shows 8-9 of 13 floors and never
+ * the boss, against 13 of 13 and the boss on every cell at 115%. The dark that
+ * makes a close frame read as intended (fog, parchment) is not on this branch.
+ *
+ * FLIPPING IT IS THE WHOLE CHANGE: `'Fit'` here makes the computed frame the
+ * default everywhere, and nothing else moves. Do it when the fog lands, or on
+ * Constantine's word — it is his A/B and nobody's first run is the experiment.
+ */
+export const MAP_ZOOM_DEFAULT = '115';
+
+/**
  * THE REFERENCE PHONE VIEWPORT, in LOCAL px, measured off `.map-scroll` — never
  * inferred from device width, because `--ui-zoom` sits between the two and the
  * map lives on its far side. Measured at dev: 390x844 -> 433, 320x640 -> 432.
