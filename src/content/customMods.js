@@ -56,6 +56,10 @@ export function isCustomRun(custom) {
   if (!custom) return false;
   if (custom.ascension > 0) return true;
   if (custom.deckMode && custom.deckMode !== 'standard') return true;
+  // A run whose map was capped or re-weighted is not the game the win rate is
+  // about. Missing this line would have let a deliberately-shortened debug run
+  // count as a win against the real climb — the whole point of the flag.
+  if (custom.mapShape && Object.keys(custom.mapShape).length) return true;
   return !!(custom.mods && Object.values(custom.mods).some(Boolean));
 }
 
