@@ -425,14 +425,38 @@ export function mountEquipment(host, {
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 
+  // A `.modal-veil`, and not for the dimming — the same sentence `.qn-veil`
+  // carries four files away, for the same reason. This panel mounts on <body>,
+  // a SIBLING of #app, so input.js's scopeRoot() — which scopes the focus
+  // cursor to the topmost `.modal-veil`, else #app — never saw it. Measured
+  // before this line at ?shot=combat: ten focusable chips inside the open
+  // panel, and forty-five arrow presses across four directions visited TWO
+  // controls, both of them combat cards BEHIND it. A pad player could open
+  // the Armoury and then drive the fight underneath it.
+  //
+  // It costs no pixels, and that is checkable rather than hopeful:
+  // `.armoury-overlay` (ui.css) restates every one of `.modal-veil`'s six
+  // declarations — position, inset, background, z-index, display, and the two
+  // centring lines — and sits LATER in the same file, so it wins all six.
+  // Measured both ways: veil and panel rects identical to the pixel.
+  //
+  // THE ONE THING THAT IS NOW LIVE AND WAS NOT: scopeRoot() picks the topmost
+  // veil by DOM ORDER, and this one paints at z-index 60 while every other
+  // veil is 500. No path today opens a 500 veil under an open Armoury — both
+  // mounts (main.js showArmoury, combat.js #combat-armoury) run with nothing
+  // else standing, and the quick-nav's armoury row closes itself after the
+  // mount — so paint order and DOM order agree everywhere I could reach. If a
+  // future screen opens one over the other, the focus cursor will drive the
+  // panel underneath. Named here because the class is what makes it possible.
   const wrap = document.createElement('div');
-  wrap.className = 'armoury-overlay';
+  wrap.className = 'modal-veil armoury-overlay';
   host.appendChild(wrap);
 
   const close = () => {
     wrap.remove();
     if (onClose) onClose();
   };
+
 
   // THE ARMOURY IS AN INVENTORY (#90). What the picker offers is what the
   // profile HAS, and that is one predicate with one home in the model — the
