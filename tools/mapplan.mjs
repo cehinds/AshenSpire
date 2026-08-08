@@ -44,6 +44,7 @@ import { resolveFloorPlan, describePlan, rollableFloors } from '../src/model/flo
 import { generateActMap } from '../src/engine/mapgen.js';
 import { createRng } from '../src/engine/rng.js';
 import { viewRefusals, spanWidth, maxFanoutSpan, PHONE_VIEW_W, ZOOM_MIN } from '../src/model/mapview.js';
+import { validateContent } from '../src/model/validate.js';
 
 const args = process.argv.slice(2);
 const argOf = (f, d = null) => { const i = args.indexOf(f); return i >= 0 && args[i + 1] != null ? args[i + 1] : d; };
@@ -273,8 +274,40 @@ const KNOWN_BAD = [
   ['unknownWeights missing entirely', (() => { const { unknownWeights, ...rest } = BASE; return rest; })()],
 ];
 
+// THE SECOND CORPUS, AND IT DID NOT EXIST — Vira, #107. Every row above
+// exercises `resolveFloorPlan`; `viewRefusals` had 215 lines, two knobs and a
+// derived refusal edge, and NOTHING ANYWHERE FALSIFIED IT. The suite has no
+// reference to model/mapview.js, and validate.js points at this corpus for its
+// known-bad while the row it needed was not in it. A refusal nobody has watched
+// go red is `unknown`, not green, whatever it prints (the instrument rule).
+//
+// The pairs matter more than the rows: each bad value sits next to the largest
+// value that must STILL BE ACCEPTED, because a refusal that fires one step early
+// is the same defect wearing the other face — and `columns: 9` is exactly the
+// edge `maxFittingColumns()` derives, so the pair proves the derivation rather
+// than the constant.
+const VIEW_KNOWN_BAD = [
+  ['columns 10 — past the derived edge', { ...BASE, columns: 10 }, 'columns'],
+  ['columns 12 — well past it', { ...BASE, columns: 12 }, 'columns'],
+  ['entries 0', { ...BASE, entries: 0 }, 'entries'],
+  ['entries -1', { ...BASE, entries: -1 }, 'entries'],
+  ['entries 1.5 — not an integer', { ...BASE, entries: 1.5 }, 'entries'],
+  ['entries as a string', { ...BASE, entries: '1' }, 'entries'],
+  ['entries 7 — more doors than walkers', { ...BASE, pathCount: 6, entries: 7 }, 'entries'],
+  ['entries 8 — more doors than columns', { ...BASE, columns: 7, pathCount: 9, entries: 8 }, 'entries'],
+];
+// AND THE OTHER FACE. A refusal that fires one step early is as broken as one
+// that never fires, and neither shows up in a corpus of bad inputs alone.
+const VIEW_MUST_ACCEPT = [
+  ['columns 9 — the derived edge itself', { ...BASE, columns: 9 }],
+  ['columns 7 — what ships', { ...BASE, columns: 7 }],
+  ['entries 1 — what ships', { ...BASE, entries: 1 }],
+  ['entries 6 — one door per walker', { ...BASE, pathCount: 6, entries: 6 }],
+  ['entries absent', (() => { const { entries, ...rest } = BASE; return rest; })()],
+];
+
 function selftest() {
-  console.log('mapplan --selftest — the corpus `floorRules: opt(any)` accepted in silence\n');
+  console.log('mapplan --selftest — two corpora: the one `floorRules: opt(any)` accepted in silence, and the one `viewRefusals` never had\n');
   let red = 0;
   for (const [label, cfg] of KNOWN_BAD) {
     const { errors } = resolveFloorPlan(cfg);
@@ -286,38 +319,98 @@ function selftest() {
   // broken in the other direction. The shipped config must stay clean.
   const clean = resolveFloorPlan(mapConfigs[1]).errors.length === 0;
   console.log(`\n  ${clean ? 'CLEAN' : 'RED  '}  shipped mapConfigs[1] (the control — a checker that reds everything is not a checker)`);
-  const pass = red === KNOWN_BAD.length && clean;
-  console.log(`\n  ${pass ? `PASS — ${red}/${KNOWN_BAD.length} known-bad observed red, control clean`
-    : `FAIL — ${red}/${KNOWN_BAD.length} red, control ${clean ? 'clean' : 'DIRTY'}`}`);
+
+  console.log(`\n  --- viewRefusals: the view knobs, and BOTH faces of each edge ---\n`);
+  let vred = 0;
+  for (const [label, cfg, key] of VIEW_KNOWN_BAD) {
+    const errs = viewRefusals(cfg);
+    const ok = errs.length > 0 && errs.some((e) => e.key === key);
+    if (ok) vred++;
+    console.log(`  ${ok ? 'RED ' : 'GREEN'}  ${label.padEnd(42)} ${ok ? errs.find((e) => e.key === key).msg.slice(0, 96) : `<-- ACCEPTED, nothing named for '${key}'`}`);
+  }
+  let vclean = 0;
+  for (const [label, cfg] of VIEW_MUST_ACCEPT) {
+    const errs = viewRefusals(cfg);
+    const ok = errs.length === 0;
+    if (ok) vclean++;
+    console.log(`  ${ok ? 'CLEAN' : 'RED  '} ${label.padEnd(42)} ${ok ? '' : `<-- REFUSED, and it must not be: ${errs[0].msg.slice(0, 80)}`}`);
+  }
+  // THE VALIDATOR IS THE CONSUMER, so the corpus is run through the door the
+  // game actually uses as well as through the function. A refusal that exists in
+  // `viewRefusals` and never reaches validate.js is a check with no reader, and
+  // that gap is exactly what this row's absence hid for a night.
+  // Only the mapConfigs branch is fed, so the bundle is otherwise empty and the
+  // validator will name plenty of other absences — irrelevant. What is asserted
+  // is narrow and is the whole question: does an error carrying THIS row's path
+  // come out of the door the game boots through.
+  const wired = VIEW_KNOWN_BAD.every(([, cfg, key]) => {
+    const res = validateContent({ mapConfigs: { 1: cfg } });
+    const list = (res && res.errors) || [];
+    return list.some((e) => String(e.path || '').startsWith(`mapConfigs.1.${key}`));
+  });
+  console.log(`\n  ${wired ? 'WIRED' : 'LOOSE'}  every view known-bad also fails the BOOT VALIDATOR, not just the function`);
+
+  const pass = red === KNOWN_BAD.length && clean
+    && vred === VIEW_KNOWN_BAD.length && vclean === VIEW_MUST_ACCEPT.length && wired;
+  console.log(`\n  ${pass ? `PASS — ${red}/${KNOWN_BAD.length} floor-rule known-bad red, ${vred}/${VIEW_KNOWN_BAD.length} view known-bad red, ${vclean}/${VIEW_MUST_ACCEPT.length} must-accept clean, validator wired, control clean`
+    : `FAIL — floor ${red}/${KNOWN_BAD.length} · view ${vred}/${VIEW_KNOWN_BAD.length} · must-accept ${vclean}/${VIEW_MUST_ACCEPT.length} · validator ${wired ? 'wired' : 'LOOSE'} · control ${clean ? 'clean' : 'DIRTY'}`}`);
   return pass ? 0 : 1;
 }
 
 // ------------------------------------------------------------------- driver
 // ------------------------------------------------------------------- spans
 // THE MEASUREMENT model/mapview.js's `maxFanoutSpan` IS, and the reason it is a
-// function there rather than a number. It sweeps act widths and reports the
-// widest framing the generator can ask the camera to draw, then checks the
-// formula against what it just measured. An observed maximum is a FLOOR under
-// the true worst case, so this run can only ever falsify the formula, never
-// confirm it — and that asymmetry is the point: the day a width produces a
-// wider fan-out than the formula claims, this goes red and the refusal edge
-// moves rather than quietly becoming optimistic.
+// function there rather than a number. It sweeps acts, reports the widest
+// framing the generator can ask the camera to draw, and checks the formula
+// against what it just measured. An observed maximum is a FLOOR under the true
+// worst case, so this run can only ever falsify the formula, never confirm it —
+// and that asymmetry is the point: the day an act produces a wider fan-out than
+// the formula claims, this goes red and the refusal edge moves rather than
+// quietly becoming optimistic.
+//
+// IT SWEEPS A GRID NOW, NOT A LINE — Vira, #107. The formula is closed in
+// `columns`, but the quantity depends on three knobs: `columns` bounds the
+// spread, `pathCount` decides how many walkers can merge into one node, and
+// `floors` decides how many chances the walk gets to do it. Sweeping only
+// `columns` validated a one-knob claim along one line of a three-dimensional
+// space and printed a confident PASS. The other two are swept here, and the
+// verdict line says how many cells the pass covers rather than how many widths.
+const SWEEP_PATHS = [2, 4, 6, 9];
+const SWEEP_FLOORS = [6, 12, 18];
+
 function spans() {
-  console.log(`mapplan --spans · ${SEEDS} seeds per width · framing span in COLUMNS, and what it costs in zoom\n`);
+  const cols = [4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const cells = cols.length * SWEEP_PATHS.length * SWEEP_FLOORS.length;
+  console.log(`mapplan --spans · ${cells} acts x ${SEEDS} seeds = ${cells * SEEDS} graphs\n`);
+  console.log(`  columns ${cols[0]}-${cols[cols.length - 1]}  x  pathCount ${SWEEP_PATHS.join('/')}  x  floors ${SWEEP_FLOORS.join('/')}`);
   console.log(`  viewport ${PHONE_VIEW_W} local px (.map-scroll at 390x844) · ladder floor ${ZOOM_MIN}x\n`);
   console.log('  cols  entrance row        widest fan-out      formula  fan-out px  wants   verdict');
   let bad = 0;
-  for (let columns = 4; columns <= 12; columns++) {
-    const cfg = { ...mapConfigs[1], columns };
+  let run = 0;
+  for (const columns of cols) {
+    // Reported per WIDTH because that is what the refusal keys on, but the
+    // maximum behind each row is taken over every pathCount and floors in the
+    // grid — so a row that says 4 means "4 was the widest anything in this
+    // column produced", not "4 at the one act shape that ships".
     const st = [];
     const fan = [];
-    for (let i = 0; i < SEEDS; i++) {
-      const g = generateActMap({ config: cfg, rng: rng2(i) });
-      st.push(colSpan(g, g.startIds));
-      fan.push(Math.max(...Object.values(g.nodes).filter((n) => n.next.length).map((n) => colSpan(g, [n.id, ...n.next]))));
+    for (const pathCount of SWEEP_PATHS) {
+      for (const floors of SWEEP_FLOORS) {
+        const cfg = { ...mapConfigs[1], columns, pathCount, floors };
+        // An act shape the floor rules cannot resolve is not a fan-out finding;
+        // skip it by name rather than crashing the sweep on it.
+        if (resolveFloorPlan(cfg).errors.length) continue;
+        for (let i = 0; i < SEEDS; i++) {
+          const g = generateActMap({ config: cfg, rng: rng2(i) });
+          run++;
+          st.push(colSpan(g, g.startIds));
+          fan.push(Math.max(...Object.values(g.nodes).filter((n) => n.next.length).map((n) => colSpan(g, [n.id, ...n.next]))));
+        }
+      }
     }
+    if (!fan.length) continue;
     const obs = Math.max(...fan);
-    const formula = maxFanoutSpan(columns);
+    const formula = maxFanoutSpan({ columns });
     const px = spanWidth(obs);
     const wants = PHONE_VIEW_W / px;
     const over = obs > formula;
@@ -327,9 +420,10 @@ function spans() {
       + `  ${wants.toFixed(2)}x  ${over ? 'FORMULA TOO LOW' : wants >= ZOOM_MIN ? 'fits' : 'REFUSED at boot'}`);
   }
   console.log(`\n  The entrance row is the wider frame and it is NOT what the refusal is about:`);
-  console.log(`  it is a graph fact, not a camera fact — 6 walkers landing on up to 'columns'`);
-  console.log(`  distinct doors. \`--entries 1\` collapses it to 1 column. See engine/mapgen.js.`);
-  console.log(`\n  ${bad ? `FAIL — maxFanoutSpan is below the observed maximum at ${bad} width(s)` : `PASS — maxFanoutSpan matched the observed maximum at every width`}`);
+  console.log(`  it is a graph fact, not a camera fact — walkers landing on up to 'columns'`);
+  console.log(`  distinct doors. \`entries: 1\` collapses it to 1 column, and that is what ships.`);
+  console.log(`\n  ${bad ? `FAIL — maxFanoutSpan is below the observed maximum at ${bad} width(s)`
+    : `PASS — maxFanoutSpan matched the observed maximum over ${run} graphs across all three knobs`}`);
   return bad ? 1 : 0;
 }
 
