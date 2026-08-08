@@ -735,18 +735,34 @@ export function stampDeck(registries, run, cards) {
 // ---------------------------------------------------------------------------
 
 /**
- * canSwap(registries, slotId, { inCombat }) → { ok, reason }.
+ * canSwap(registries, slotId, { inCombat }) → { ok, word, reason }.
  * The rule lives in equipSlots.csv (`swap`): hands may be changed mid-fight at
- * a price, armour and talismans may not. Storage is sealed in combat too — you
- * cycle between the sets you brought, you don't rummage.
+ * a price, armour and talismans may not.
+ *
+ * `word` IS THE BADGE, AND IT LIVES HERE BECAUSE THE COLLISION DID (#98, Bjorn).
+ * The screen used to type the literal 'sealed' into the slot header while this
+ * function supplied only the tooltip — so the one word a player actually reads
+ * had no home, and nothing could compare it to anything. It collided: the
+ * ARMOUR header said "sealed" (this function, about the ACTIVE SET) while two
+ * rows below the picker said "Right Hand is sealed in combat" (canEquip, about
+ * a set's CONTENTS), on a Right Hand carrying no badge at all. Both sentences
+ * were true. **One word carrying two facts, with the copies visibly
+ * disagreeing** — his framing, and it is worse than a second copy, because a
+ * second copy at least says the same thing twice.
+ *
+ * So the badge word sits beside the reason it belongs to, and test 31d asserts
+ * canEquip's sentence contains neither this word nor any slot label. A future
+ * edit that reintroduces the collision goes red, which is the point: the
+ * brittleness IS the check. The wording is Sunna's whenever she wants it —
+ * both strings are one line each and neither is derived from the other.
  */
 export function canSwap(registries, slotId, { inCombat = false } = {}) {
   const slot = ((registries.equipment || {}).slots || []).find((s) => s.id === slotId);
-  if (!slot) return { ok: false, reason: `No slot '${slotId}'` };
+  if (!slot) return { ok: false, word: 'unknown', reason: `No slot '${slotId}'` };
   if (inCombat && slot.swap !== 'combat') {
-    return { ok: false, reason: `${slot.label} can only be changed outside combat.` };
+    return { ok: false, word: 'sealed', reason: `${slot.label} can only be changed outside combat.` };
   }
-  return { ok: true, reason: '' };
+  return { ok: true, word: '', reason: '' };
 }
 
 /**
@@ -775,18 +791,38 @@ export function canSwap(registries, slotId, { inCombat = false } = {}) {
  * answer follows from the fight, not from a row. An author writes nothing new
  * and nothing can fall out of the set (Law 0 clause 1).
  *
- * The reason is composed from the slot's own label, exactly as canSwap does it,
- * so the two sentences on this screen come from one place and read as siblings.
+ * THE SENTENCE DOES NOT NAME THE SLOT, and that is the repair of my own defect
+ * (#98, Bjorn). I composed it from the slot's label because canSwap does — but
+ * canSwap's fact IS per slot (hands cycle, armour does not) and this one is not:
+ * in a fight NO slot may be re-armed. Naming the slot made a screen-wide truth
+ * wear a per-slot voice, so "Right Hand is sealed in combat" read as a claim
+ * about the Right Hand, sitting under a Right Hand header with no badge on it
+ * while ARMOUR had one. The label was doing the opposite of its job. It says
+ * what is actually true instead, once, about the act rather than the slot — and
+ * it borrows no word from canSwap, so the two refusals cannot be read as the
+ * same rule. The picker's own `<h4>` says which slot you are looking at; this
+ * line never needed to.
+ *
+ * NO CONTEXT MEANS SEALED, not "not in combat" (#98, Vira). The old signature
+ * defaulted `inCombat` to false, so a caller that said nothing was told it may
+ * re-arm — silence meaning permission, which is the whole defect this function
+ * was extracted to remove. A truth function that cannot be told whether a fight
+ * is on refuses, and names the caller that failed to say.
  */
-export function canEquip(registries, slotId, { inCombat = false } = {}) {
+/** The one sentence, so the two refusing paths below cannot drift apart. */
+export const SEALED_MID_FIGHT = 'You cannot re-arm mid-fight — cycle between the sets you brought.';
+
+export function canEquip(registries, slotId, ctx) {
   const slot = (((registries || {}).equipment || {}).slots || []).find((s) => s.id === slotId);
   if (!slot) return { ok: false, reason: `No slot '${slotId}'` };
-  if (inCombat) {
-    return {
-      ok: false,
-      reason: `${slot.label} is sealed in combat — you cycle between the sets you brought.`,
-    };
+  if (!ctx || typeof ctx !== 'object' || typeof ctx.inCombat !== 'boolean') {
+    console.error(
+      `canEquip('${slotId}'): no boolean \`inCombat\` in the context — refusing.`
+      + ` Got ${JSON.stringify(ctx)}. This line is the defect, not the refusal.`
+    );
+    return { ok: false, reason: SEALED_MID_FIGHT };
   }
+  if (ctx.inCombat) return { ok: false, reason: SEALED_MID_FIGHT };
   return { ok: true, reason: '' };
 }
 
@@ -816,6 +852,22 @@ export function canEquip(registries, slotId, { inCombat = false } = {}) {
  * it there — worse than the defect. **One truth function, two consumers**: the
  * screen draws what `openedSets` opens and this refuses what it does not, so the
  * two cannot disagree about a cell.
+ *
+ * OPEN, FOUND BY VIRA GATING #98, AND CARDED AS ITS OWN ACT — read this before
+ * adding a slot. THIS SIGNATURE HAS NO `inCombat` AT ALL, so the question is not
+ * whether it checks the swap rule but whether it CAN: `canSwap` is enforced by
+ * both callers and by neither of them structurally. That is a different failure
+ * from a second copy — a duplicate fails by divergence, an unenforced gate fails
+ * by bypass — and it has a live cell: `talisman` (`swap=outOfCombat`, `sets=3`)
+ * MOVES mid-fight, against its own data. Every test of this function uses
+ * `rightHand`, where the missing gate is vacuous, which is why nothing was red.
+ * It is dormant only because talismans are unauthored — one CSV row under Law 1
+ * clause 1 wakes it. The fixture that proves any fix is the same wide, rung-less
+ * talisman slot `engine.test.js` already builds for the too-few-rungs check, and
+ * nobody had connected the two; that act should build it once and hang both
+ * gates on it. NOT taken here: closing it changes this signature, and this
+ * signature is on the engine's priced swap path (`doSwapArmament`), which is the
+ * one thing #95 and #98 deliberately did not touch.
  *
  * `registries` moves to the front like everything else in this module, which is
  * also what makes a call site left on the old signature fail CLOSED: the old
@@ -900,22 +952,27 @@ export function carriedIds(loadout) {
  * nothing; the ownership check has no opinion about it and the seal does. So the
  * seal is asked FIRST, above the `!itemId` return, and ownership second.
  *
- * `ctx` — `{ inCombat }` — is REQUIRED and presence-checked, for the reason the
- * two arguments above it are (#95). A context that defaults to "not in combat"
- * fails OPEN: every call site written after today would equip mid-fight by
- * saying nothing, which is how the ownership hole survived #90 in the first
- * place. A bag missing the key is refused rather than read as false, because a
- * missing key and `false` are indistinguishable and mean the opposite things.
- * `cycleSet` above already takes a required trailing context for the ladder, so
- * this is that pattern, not a new one.
+ * `ctx` — `{ inCombat }` — is REQUIRED, for the reason the two arguments above
+ * it are (#95). A context that defaults to "not in combat" fails OPEN: every
+ * call site written after today would equip mid-fight by saying nothing, which
+ * is how the ownership hole survived #90 in the first place. `cycleSet` above
+ * already takes a required trailing context for the ladder, so this is that
+ * pattern, not a new one.
+ *
+ * THE CHECK IS ON THE VALUE, NOT THE KEY (#98, Vira). It read `'inCombat' in
+ * ctx`, which answers whether the key was TYPED — so `{ inCombat: undefined }`
+ * and `{ inCombat: null }` were taken, and both are what a caller produces by
+ * forwarding a variable that was never set. That is the same defect one notch
+ * quieter than the one this argument exists to close: absent read as permission.
+ * A boolean, or it refuses and prints what it was actually handed.
  */
 export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
   const ids = ((loadout || {}).sets || {})[slotId];
   if (!ids || setIndex < 0 || setIndex >= ids.length) return false;
-  if (!ctx || typeof ctx !== 'object' || !('inCombat' in ctx)) {
+  if (!ctx || typeof ctx !== 'object' || typeof ctx.inCombat !== 'boolean') {
     console.error(
-      `equipPiece('${slotId}', '${itemId}'): called with no combat context — refusing.`
-      + ' Pass { inCombat } as the seventh argument.'
+      `equipPiece('${slotId}', '${itemId}'): no boolean \`inCombat\` in the context — refusing.`
+      + ` Got ${JSON.stringify(ctx)}. Pass { inCombat } as the seventh argument.`
       + ' This line is the defect, not the refusal.'
     );
     return false;
@@ -925,7 +982,10 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   // declining to open its picker — a screen, not a gate, so a save file, a drop,
   // a drag, a gamepad path or a second surface walked straight past it. Measured
   // at 98fedde: equipPiece on a live combat loadout returned true.
-  const seal = canEquip(registries, slotId, { inCombat: !!ctx.inCombat });
+  // Passed through, NOT coerced. `!!ctx.inCombat` would turn a value this
+  // function had just refused into a legal one, so if the check above is ever
+  // loosened canEquip's own check is a real second gate rather than an echo.
+  const seal = canEquip(registries, slotId, { inCombat: ctx.inCombat });
   if (!seal.ok) return false;
   if (!itemId) {
     ids[setIndex] = null;

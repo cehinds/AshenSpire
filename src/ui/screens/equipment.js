@@ -339,8 +339,31 @@ function pieceChip(registries, piece, { selected }) {
  *             route the change through the engine intent that charges for it
  */
 export function mountEquipment(host, {
-  registries, run, meta = {}, inCombat = false, onClose, onChange, onSwap,
+  registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap,
 }) {
+  // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
+  // `inCombat = false`. #95 moved the gate off the screen and onto the mutation
+  // — and left the screen holding the one value that gate is asked about, with a
+  // permissive default. A third mount that forgot the flag would have re-armed
+  // mid-fight while every model test stayed green, because the model would have
+  // been told the truth about a lie. Both existing mounts already pass it
+  // explicitly (main.js:716 `false`, combat.js:1068 `true`), so there is no
+  // behaviour to change here — only the silence to close.
+  //
+  // IT FAILS LOUD AND CLOSED, in that order. A mount that cannot say whether a
+  // fight is on is sealed: a visibly inert picker with a named cause on the
+  // console beats a picker that quietly lets you re-arm. Law 1 clause 5 —
+  // bad input fails by name, and the name here is the caller.
+  if (typeof inCombatArg !== 'boolean') {
+    console.error(
+      `mountEquipment(): no boolean \`inCombat\` — got ${JSON.stringify(inCombatArg)}.`
+      + ' Sealing the picker. This line is the defect, not the seal.'
+    );
+  }
+  // ONE NAME IN THE BODY. The argument is validated once, here, and everything
+  // below reads `inCombat` — a second name for the same fact is the defect this
+  // seat is for, and it would be a strange one to introduce while closing this.
+  const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
   const eq = registries.equipment;
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
@@ -450,7 +473,11 @@ export function mountEquipment(host, {
     const rule = canSwap(registries, slot.id, { inCombat });
     box.innerHTML =
       `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>` +
-      (rule.ok ? '' : `<span class="es-sealed" title="${esc(rule.reason)}">sealed</span>`) +
+      // The badge word comes from the verdict it belongs to (#98). It was the
+      // literal 'sealed' typed here while canSwap supplied only the tooltip, so
+      // the one word a player reads had no home and nothing could compare it to
+      // canEquip's sentence — which is exactly how the two came to share it.
+      (rule.ok ? '' : `<span class="es-sealed" title="${esc(rule.reason)}">${esc(rule.word)}</span>`) +
       `</div><div class="es-sets"></div>`;
     const sets = box.querySelector('.es-sets');
 
