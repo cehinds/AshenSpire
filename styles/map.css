@@ -58,8 +58,27 @@
   position: static; transform: none; align-self: center;
   margin: 0 auto 0.6rem; max-width: 96%;
 }
+/* THE MAP'S OWN CONTROLS WERE THE SMALLEST TAP TARGETS IN THE GAME, and they
+   were sized in the wrong unit besides. Measured at 390x844, --ui-zoom 0.90,
+   Text M: the + / (.) / - buttons render 27 DEVICE px tall against the 44 px
+   floor `--tap-floor` sets — 61% of it — and at 320x640 (--ui-zoom 0.74) they
+   are 22.2. Named twice on the family thread and taken by nobody; it is mine
+   both times, because a tap floor is legibility and Law 4 is my law.
+   TWO DEFECTS, ONE LINE. `width/height: 3.4rem` (3rem on a phone) is a BOX
+   sized as a multiple of the TEXT unit, which Law 4 clause 4 names exactly:
+   proportional scaling wearing a content-fit costume. It shrank at Text S and
+   ballooned at XL while answering the wrong control the whole time — the UI
+   size dial is what should move a button, and --tap-floor already carries
+   --ui-zoom inside it.
+   So: an ergonomic FLOOR that does not answer Text size, and a glyph that
+   still does (clause 5 — the +/- are typographic marks inside their box). The
+   box can only grow from here, never clip and never balloon. The bar sits
+   BELOW the map since #28, so the ~17 px it gains on a phone comes out of
+   chrome, not out of a node's hiding place. */
 .map-zoom .zbtn {
-  width: 3.4rem; height: 3.4rem; border-radius: 8px; font-size: 1.8rem; line-height: 1;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  width: auto; height: auto; padding: 0 0.4rem;
+  border-radius: 8px; font-size: 1.8rem; line-height: 1;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--parchment);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
@@ -179,7 +198,10 @@ body.hide-header-relics .map-substrip.no-flasks { display: none; }
    because .map-zoom is no longer an overlay at any layout. What is left below
    is the only thing this shape actually needed: smaller buttons on a phone. */
   :root[data-layout='narrow'] .map-zoom { gap: 0.8rem; padding: 0.5rem 0.8rem; }
-  :root[data-layout='narrow'] .map-zoom .zbtn { width: 3rem; height: 3rem; font-size: 1.6rem; }
+  /* The phone override kept its smaller GLYPH and lost its smaller BOX: 3rem
+     was below the floor at every text size, and "smaller buttons on a phone"
+     is the one place a floor exists to refuse. */
+  :root[data-layout='narrow'] .map-zoom .zbtn { font-size: 1.6rem; }
   /* Same as the combat bar: the seed is dev information, it is what wraps the
      header on a phone, and it stays reachable at overlay.js:163 (Stats, from
      the menu button in this bar) and gameover.js:17. */
