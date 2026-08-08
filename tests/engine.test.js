@@ -2023,7 +2023,13 @@ export async function runTests({ artManifest = null } = {}) {
       eq(canEquip(REG, slot.id, { inCombat: false }).ok, true, `${slot.id}: at camp a set may be re-armed`);
       const seal = canEquip(REG, slot.id, { inCombat: true });
       eq(seal.ok, false, `${slot.id}: mid-fight it may not`);
-      assert(seal.reason.includes(slot.label), `${slot.id}: and the refusal names the slot — got: ${seal.reason || '(nothing)'}`);
+      // INVERTED AT #98, and the old assertion is the defect it was written to
+      // hold. It read `seal.reason.includes(slot.label)` — I made a screen-wide
+      // fact wear a per-slot voice and then asserted it did. No slot may be
+      // re-armed mid-fight; saying "Right Hand is sealed" under a Right Hand
+      // header carrying no badge said the opposite of what is true.
+      assert(!seal.reason.includes(slot.label),
+        `${slot.id}: the seal is not a fact about one slot and must not name one — got: ${seal.reason}`);
       sealed += 1;
       if (canSwap(REG, slot.id, { inCombat: true }).ok) cyclable += 1;
     }
@@ -2060,8 +2066,8 @@ export async function runTests({ artManifest = null } = {}) {
       took = equipPiece(REG, held, 'rightHand', 0, 'dagger', OWNS_EVERYTHING);
     } finally { console.error = quiet; }
     eq(took, false, 'no combat context → it equips nothing');
-    assert(said.includes('combat context') && said.includes('rightHand'),
-      `…and says so, naming the slot — got: ${said || '(nothing)'}`);
+    assert(said.includes('inCombat') && said.includes('rightHand'),
+      `…and says so, naming the slot and what it wanted — got: ${said || '(nothing)'}`);
     eq(held.sets.rightHand[0], null, 'and the loadout is untouched');
 
     // ---- 5. a slot the registries do not have is named, not guessed -------
@@ -2090,14 +2096,82 @@ export async function runTests({ artManifest = null } = {}) {
     }
     eq(tookAll, pool.length, `and every one of them goes in at camp — the control group`);
 
-    // ---- 6. the two sentences on the screen are siblings, not twins -------
-    // A rung's refusal comes from unlocks.csv; the seal's comes from the slot.
-    // If they ever became one string the screen would stop saying WHICH rule
-    // stopped the player, which is the property refusal-audit floors.
+    // ---- 6. the three refusals on this screen share no word ---------------
+    // Bjorn, #98: the ARMOUR header said "sealed" (canSwap, about the ACTIVE
+    // SET) while the picker said "Right Hand is sealed in combat" (canEquip,
+    // about a set's CONTENTS) under a Right Hand header with no badge. BOTH
+    // WERE TRUE. Not one fact written twice — ONE WORD CARRYING TWO FACTS, with
+    // the copies visibly disagreeing, which is worse: a duplicate at least says
+    // the same thing twice.
+    //
+    // THE BRITTLENESS IS THE CHECK. A future edit that reintroduces the shared
+    // word goes red, and that is correct — this is the one property a reader on
+    // the glass can actually be misled by, and it has no other home.
     const rungHint = rungFor(REG, REG.equipment.slots.find((s) => s.id === 'rightHand'), 1).hint;
     const sealSaid = canEquip(REG, 'rightHand', { inCombat: true }).reason;
-    assert(rungHint && sealSaid && rungHint !== sealSaid,
-      `the ladder and the seal must not say the same thing — "${rungHint}" vs "${sealSaid}"`);
+    const badge = canSwap(REG, 'armor', { inCombat: true });
+    eq(badge.ok, false, 'armour carries a badge mid-fight');
+    assert(badge.word, `and the badge has a word to print — got: ${JSON.stringify(badge.word)}`);
+    assert(rungHint && sealSaid, 'both other refusals have something to say');
+    for (const [name, said] of [['the rung hint', rungHint], ['the seal', sealSaid]]) {
+      assert(!said.toLowerCase().includes(badge.word.toLowerCase()),
+        `${name} must not borrow the badge's word "${badge.word}" — got: "${said}"`);
+    }
+    assert(rungHint !== sealSaid, 'and the ladder and the seal are not one string');
+
+    // ---- 7. no context is SEALED, never "not in combat" -------------------
+    // The old signature defaulted inCombat to false, so a caller that said
+    // nothing was told it may re-arm. Silence meaning permission is the whole
+    // defect the required argument exists to close, and it was still sitting in
+    // the truth function's own default.
+    const hush = console.error;
+    let heard = '';
+    console.error = (...a) => { heard = a.join(' '); };
+    let blind;
+    let nulled;
+    try {
+      blind = canEquip(REG, 'rightHand');
+      nulled = canEquip(REG, 'rightHand', { inCombat: null });
+    } finally { console.error = hush; }
+    eq(blind.ok, false, 'no context at all → sealed');
+    eq(nulled.ok, false, 'a null flag is not a false one → sealed');
+    assert(heard.includes('inCombat'), `and it names what it wanted — got: ${heard || '(nothing)'}`);
+
+    // ---- 8. the VALUE is checked, not the key -----------------------------
+    // `'inCombat' in ctx` answered whether the key was TYPED, so a forwarded
+    // variable that was never set walked through. Both shapes below are what a
+    // caller actually produces by accident.
+    const hush2 = console.error;
+    console.error = () => {};
+    const shapes = [{}, { inCombat: undefined }, { inCombat: null }, { inCombat: 'yes' }, { inCombat: 0 }, null];
+    let refusedShapes = 0;
+    const shapeProbe = createLoadout(REG, 'reaver');
+    try {
+      for (const bad of shapes) {
+        if (!equipPiece(REG, shapeProbe, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, bad)) refusedShapes += 1;
+      }
+    } finally { console.error = hush2; }
+    eq(refusedShapes, shapes.length, `every one of ${shapes.length} non-boolean contexts is refused`);
+    eq(shapeProbe.sets.rightHand[0], null, 'and none of them moved a piece');
+
+    // WHICH LAYER REFUSED, and this assertion exists because the plant for it
+    // stayed GREEN. `canEquip` also refuses a non-boolean, so with only the
+    // count above, reverting equipPiece's check to `'inCombat' in ctx` changes
+    // nothing a test can see — defence in depth hiding the removal of one of
+    // its own layers. So the layer is named: equipPiece must refuse `undefined`
+    // ITSELF, before it ever asks canEquip.
+    const hush3 = console.error;
+    let byWhom = '';
+    console.error = (...a) => { byWhom = a.join(' '); };
+    try {
+      equipPiece(REG, shapeProbe, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, { inCombat: undefined });
+    } finally { console.error = hush3; }
+    assert(byWhom.startsWith('equipPiece('),
+      `the mutation refuses a typed-but-unset flag on its own, not by way of canEquip — got: ${byWhom || '(nothing)'}`);
+    // The control group: the two REAL shapes still work, so the check above is
+    // not green because everything refuses.
+    assert(equipPiece(REG, shapeProbe, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, { inCombat: false }), 'a real false still equips');
+    assert(!equipPiece(REG, shapeProbe, 'rightHand', 1, 'dagger', OWNS_EVERYTHING, { inCombat: true }), 'a real true still refuses');
   });
 
   // ---- 31c. the ladder gates the MUTATION, not just the screen ------------
