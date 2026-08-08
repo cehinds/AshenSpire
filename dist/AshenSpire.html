@@ -28392,7 +28392,35 @@ function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
     // So the fact goes on the element, like `data-binding` beside it: a door
     // behind a price is not a door you can count on, at any purse, and the
     // instrument reads that off the screen instead of re-deriving it.
+    // ---- BOTH CONTENT FACTS ARE WRITTEN HERE, ABOVE THE BRANCH, and the second
+    // one is Vira handing me my own sentence back a second time: LATENT IS NOT
+    // FIXED. I hoisted `data-requires` out of the affordability branch and
+    // walked straight past its neighbour three lines below, in the same
+    // function. `data-binding` was set only inside the AFFORDABLE branch, so an
+    // unaffordable binding choice published NO `data-binding` — the screen
+    // saying "not binding" about a choice that is.
+    //
+    // It changes nothing today: she checked rather than assumed, and the
+    // priced-and-binding overlap is EMPTY across all 54 shipped choices; the
+    // free-door test was safe regardless, because such a bar carries
+    // `data-requires`. It is still the same defect, and the reason it is worth
+    // the hoist is her breadcrumb, which I am keeping verbatim:
+    //
+    //   WHEN A FACT MOVES FROM A MODULE ONTO A SCREEN, ASK AT WHAT MOMENT IT IS
+    //   WRITTEN. A `data-` attribute set inside a conditional branch is a STATE
+    //   FACT WEARING A CONTENT FACT'S CLOTHES.
+    //
+    // So: whether this choice is priced, and whether it binds, are properties of
+    // the ENTRY and are published unconditionally. What stays inside the branch
+    // is only what is genuinely about this moment — the disabling, and the
+    // arming of a gesture on a button nobody can press.
     if (choice.requires) btn.dataset.requires = '1';
+    // WHICH BARS BIND IS DERIVED, never listed. `isBindingChoice` reads this
+    // choice's own ops and the cards they name; author a twenty-first event with
+    // a curse in it and the hold is already there.
+    const binding = isBindingChoice(choice, registries);
+    if (binding) btn.dataset.binding = '1';
+
     if (!meets(choice.requires)) {
       btn.disabled = true;
       btn.textContent += ' (cannot afford)';
@@ -28401,22 +28429,18 @@ function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
         executeRunEffects({ run, registries, rng }, choice.effects);
         showResult(choice.resultText);
       };
-      // WHICH BARS GET THE HOLD IS DERIVED, never listed. `isBindingChoice`
-      // reads this choice's own ops and the cards they name; author a
-      // twenty-first event with a curse in it and the hold is already there.
-      const binding = isBindingChoice(choice, registries);
       if (binding && hold > 0) {
         // THE INSTRUCTION IS ON SCREEN, not announced and not discovered. A
         // gesture a tired player has to find is a gesture they will fight; the
-        // word is three letters and it costs the bar nothing.
+        // word is three letters and it costs the bar nothing. It stays inside
+        // the branch on purpose — a bar that cannot be pressed must not be told
+        // to hold.
         const hint = document.createElement('span');
         hint.className = 'hold-hint';
         hint.textContent = 'HOLD';
         btn.appendChild(hint);
-        btn.dataset.binding = '1';
         disarmers.push(armHold(btn, { ms: hold, onConfirm: commit }));
       } else {
-        if (binding) btn.dataset.binding = '1';
         btn.addEventListener('click', commit);
       }
     }
