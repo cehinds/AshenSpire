@@ -21028,10 +21028,12 @@ const AI_DISCLOSURE = Object.freeze({
   version: '0.4.x',
   updated: '2026-08-07',
 
-  // FALSE until Constantine approves the final wording at release. Nothing in
-  // the game reads this to decide whether to render — the acknowledgement
-  // always shows. It marks whose words these currently are.
-  approved: false,
+  // TRUE since 2026-08-07: Constantine approved this wording — "I approve the ai
+  // disclosure." Nothing in the game reads this to decide whether to render — the
+  // acknowledgement always shows. It marks whose words these are, and they are now
+  // his as well as ours. Any edit to the text below returns this to `false`; the
+  // flag is about THIS wording, not about disclosure in general.
+  approved: true,
 
   /**
    * storeForm — the text pasted into Steam's AI-disclosure field, and the lead
