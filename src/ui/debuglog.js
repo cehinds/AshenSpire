@@ -26,14 +26,94 @@ export function getEntries() {
   return entries;
 }
 
+// ---------------------------------------------------------------------------
+// A CONTROL THAT STOPS WORKING TELLS SOMEONE
+// ---------------------------------------------------------------------------
+//
+// The ☰ button died and the game said nothing. Measured on six channels at
+// once: the TypeError is REAL and it IS emitted — CDP Runtime.exceptionThrown,
+// a page `error` listener installed before navigation, the same listener
+// installed after load, and the log below all carry it, identically over
+// http:// and over the file:// bundle. Nothing swallows it and no listener is
+// late. It is invisible to exactly two audiences, and they are the two that
+// matter: THE PLAYER, who sees no change at all, and EVERY INSTRUMENT THIS
+// HOUSE OWNS — not one tool in tools/ subscribes to an error channel.
+//
+// The game already captured it. This file has held the `error` listener below
+// since long before anyone looked. THE RECORD WAS THERE THE WHOLE TIME, AND THE
+// ONLY DOOR TO IT WAS THE THING THAT BROKE: mid-run, Settings → Advanced →
+// Command log is reachable only through the overlay, because `onSettings` is
+// handed to mountMap and mountCombat and read by neither. When the overlay is
+// the control that died, the account of why it died is behind it.
+//
+// SO THE FIX IS NOT A FOURTH SUBSCRIBER. It is one banner, and the collapse is
+// that it is the banner ALREADY IN THE TREE: main.js hand-built `.validation-
+// banner` twice, for content validation and the surface join, and a third
+// hand-built copy is exactly the defect I exist to catch. Both are gone; all
+// three call failureBanner().
+//
+// AND IT IS WORTH MORE THAN A GUARD ON menuTabs() BECAUSE THE FAILURE IS NOW IN
+// THE PAGE. tools/release-shots.mjs has ALWAYS scored a `.validation-banner` as
+// a MISS. So it sees a throwing screen through an assertion it already had —
+// and so does any other instrument that looks at a rendered page, with no
+// subscription, no wiring, and nothing per-tool to rot. One report, two
+// audiences.
+
+const banners = new Map();
+
+/**
+ * failureBanner(key, title, body) → the banner element.
+ *
+ * One banner per distinct failure, DEDUPED BY KEY, because a person presses a
+ * dead button more than once and three identical red blocks is not three facts.
+ * A repeat bumps a count instead. Every banner carries the Command log door,
+ * including the two boot checks, whose wording is unchanged.
+ */
+export function failureBanner(key, title, body) {
+  if (typeof document === 'undefined' || !document.body) return null;
+  const seen = banners.get(key);
+  if (seen && seen.el.isConnected) {
+    seen.n += 1;
+    seen.head.textContent = `${title} (×${seen.n})`;
+    return seen.el;
+  }
+  const el = document.createElement('div');
+  el.className = 'validation-banner';
+  const head = document.createElement('div');
+  head.textContent = title;
+  const text = document.createElement('div');
+  text.textContent = body;
+  const open = document.createElement('button');
+  open.type = 'button';
+  open.className = 'vb-log';
+  open.textContent = 'Command log';
+  open.addEventListener('click', () => openDebugLog());
+  el.append(head, text, open);
+  document.body.prepend(el);
+  banners.set(key, { el, head, n: 1 });
+  return el;
+}
+
 // Uncaught errors are invisible in most consoles players look at — capture them
-// into the log so "it just stopped working" becomes a stack trace.
+// into the log so "it just stopped working" becomes a stack trace, AND raise the
+// banner so it becomes something a player and an instrument can both see.
+//
+// `ev.message` is the filter, deliberately: an <img> that 404s is not a script
+// error and must not raise this. Measured — a resource 404 was present in both
+// the red and the green run and raised nothing.
 if (typeof window !== 'undefined') {
+  const where = (ev) => (ev.filename ? ` at ${String(ev.filename).split('/').pop()}:${ev.lineno}` : '');
   window.addEventListener('error', (ev) => {
-    dlog('ERROR', String(ev.message || 'uncaught error'), ev.error && ev.error.stack ? String(ev.error.stack).split('\n').slice(0, 4).join(' | ') : '');
+    if (!ev.message) return;
+    dlog('ERROR', String(ev.message), ev.error && ev.error.stack ? String(ev.error.stack).split('\n').slice(0, 4).join(' | ') : '');
+    failureBanner(`uncaught:${ev.message}`, 'SOMETHING JUST STOPPED WORKING',
+      `${ev.message}${where(ev)}\nThe game is still running. What you last pressed did not.`);
   });
   window.addEventListener('unhandledrejection', (ev) => {
+    const msg = String((ev.reason && ev.reason.message) || ev.reason || 'unhandled promise rejection');
     dlog('ERROR', 'unhandled promise rejection', String((ev.reason && ev.reason.stack) || ev.reason).slice(0, 300));
+    failureBanner(`rejection:${msg}`, 'SOMETHING JUST STOPPED WORKING',
+      `${msg}\nThe game is still running. What you last asked for did not finish.`);
   });
 }
 
