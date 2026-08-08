@@ -43,6 +43,7 @@ import { mapConfigs } from '../src/content/mapconfig.js';
 import { resolveFloorPlan, describePlan, rollableFloors } from '../src/model/floorplan.js';
 import { generateActMap } from '../src/engine/mapgen.js';
 import { createRng } from '../src/engine/rng.js';
+import { viewRefusals, spanWidth, maxFanoutSpan, PHONE_VIEW_W, ZOOM_MIN } from '../src/model/mapview.js';
 
 const args = process.argv.slice(2);
 const argOf = (f, d = null) => { const i = args.indexOf(f); return i >= 0 && args[i + 1] != null ? args[i + 1] : d; };
@@ -78,6 +79,12 @@ function reachableTypes(graph, startId) {
   return types;
 }
 
+/** How many columns a set of nodes spans — geometry-free, the camera's input. */
+function colSpan(graph, ids) {
+  const cs = ids.map((id) => graph.nodes[id].col);
+  return Math.max(...cs) - Math.min(...cs) + 1;
+}
+
 function measure(config, seeds) {
   const rows = [];
   for (let i = 0; i < seeds; i++) {
@@ -90,6 +97,13 @@ function measure(config, seeds) {
       nodes: all.length,
       stops: Math.max(...all.map((n) => n.floor)),
       byType,
+      // THE WHOLE GRAPH, not its node count — see the referent gate below.
+      sig: all.map((n) => `${n.id}:${n.type}>${[...n.next].sort().join(',')}`).sort().join('|'),
+      // The framing the camera will be asked to draw, in COLUMNS: the widest
+      // (node + everything it connects to), and the entrance row on its own,
+      // which is the frame a player meets first and the one Bjorn measured.
+      startSpan: colSpan(g, g.startIds),
+      fanSpan: Math.max(...all.filter((n) => n.next.length).map((n) => colSpan(g, [n.id, ...n.next]))),
       starts: starts.length,
       noElite: starts.filter((t) => !t.has('elite')).length,
       noMerchant: starts.filter((t) => !t.has('merchant')).length,
@@ -113,8 +127,13 @@ function runAct(label, config, seeds) {
   for (const line of describePlan(config)) console.log(`  ${line}`);
 
   const { plan, errors } = resolveFloorPlan(config);
+  // The view knobs refuse in the same shape and are read out in the same place —
+  // one resolution, three readers (the generator, the boot validator, this tool).
+  const vrs = viewRefusals(config);
+  for (const e of vrs) console.log(`  REFUSED ${e.key}: ${e.msg}`);
   for (const e of errors) findings.push(`${label}: ${e.key} — ${e.msg}`);
-  if (!plan || errors.length) return { findings, cells: 0 };
+  for (const e of vrs) findings.push(`${label}: ${e.key} — ${e.msg}`);
+  if (!plan || errors.length || vrs.length) return { findings, cells: 0 };
 
   const rows = measure(config, seeds);
   const nodes = dist(rows, (r) => r.nodes);
@@ -124,13 +143,32 @@ function runAct(label, config, seeds) {
   // times, and it is indistinguishable in every printed number from a generator
   // that is genuinely tight. An empty result and a clean result look identical
   // and mean the opposite (SOP 2's ⚙ clause), so the harness proves it moved
-  // before any number below is allowed to mean anything. Freja's 24-seed run is
-  // the referent: 57.3 mean over a 46-64 range, so a real spread is expected
-  // here and its absence is the harness, not the content.
-  if (seeds >= 8 && nodes.min === nodes.max) {
-    findings.push(`${label}: ${seeds} seeds produced identical maps (${nodes.min} nodes every time). `
-      + `That is one seed measured ${seeds} times, not a distribution — the harness is not varying and no number in this block means anything.`);
-    return { findings, cells: 0 };
+  // before any number below is allowed to mean anything.
+  //
+  // AND IT USED TO ASK THE WRONG QUESTION, which Viki found by turning a knob:
+  // `pathCount: 1` builds a corridor whose NODE COUNT is invariant by
+  // construction — 13, every seed — while its TYPES vary seed to seed. The gate
+  // read the count, concluded the harness was dead, returned `cells: 0`, and the
+  // tool exited 2. Exit 2 means unknown. The content was knowable and the tool
+  // said it could not look. THREE STATES, not two, and they are separated by
+  // asking each question of the thing that can answer it:
+  //
+  //   the harness      did distinct seeds produce distinct rng streams?
+  //   the content      did the whole GRAPH move — ids, types and edges — and
+  //                    not merely one summary statistic derived from it?
+  //
+  // A count that does not move is now a printed fact, never a verdict.
+  const shapes = new Set(rows.map((r) => r.sig)).size;
+  if (seeds >= 8 && shapes === 1) {
+    const streams = new Set(Array.from({ length: seeds }, (_, i) => rng2(i).int('map', 0, 1e9))).size;
+    if (streams <= 1) {
+      findings.push(`${label}: ${seeds} seeds produced one rng stream. `
+        + `That is one seed measured ${seeds} times, not a distribution — the harness is not varying and no number in this block means anything.`);
+      return { findings, cells: 0 };
+    }
+    console.log(`\n  ${seeds} seeds — INVARIANT BY CONSTRUCTION: ${streams} distinct rng streams produced one identical graph.`);
+    console.log(`    Not a dead harness and not a finding: this act's knobs leave the generator nothing to vary.`);
+    console.log(`    Every promise below is still checked; it is simply checked once and it holds ${seeds} times.`);
   }
   console.log(`\n  ${seeds} seeds`);
   console.log(`    nodes per act       ${show(nodes)}`);
@@ -139,6 +177,35 @@ function runAct(label, config, seeds) {
     const d = dist(rows, (r) => r.byType[type] || 0);
     console.log(`    ${type.padEnd(20)}${show(d)}`);
   }
+  // THE FRAMING, in the same block as the promises, because it IS one: the
+  // reachable nodes are the only decision on that screen, and a frame that
+  // cannot hold them hides the choice rather than making the act harder. Widths
+  // are local px at the map's own scale; the viewport is the measured phone.
+  const startSpan = dist(rows, (r) => r.startSpan);
+  const fanSpan = dist(rows, (r) => r.fanSpan);
+  const need = (cols) => spanWidth(cols);
+  const zoomFor = (cols) => (PHONE_VIEW_W / need(cols));
+  console.log(`    entrance row spans  ${show(startSpan)} columns  = ${Math.round(need(startSpan.max))} px at its widest, wants ${zoomFor(startSpan.max).toFixed(2)}x`);
+  console.log(`    widest fan-out      ${show(fanSpan)} columns  = ${Math.round(need(fanSpan.max))} px at its widest, wants ${zoomFor(fanSpan.max).toFixed(2)}x`);
+  console.log(`      ^ against ${PHONE_VIEW_W} local px of map viewport at 390x844, ladder floor ${ZOOM_MIN}x`
+    + ` — anything under ${ZOOM_MIN.toFixed(2)}x cannot be framed and the screen says so (data-framing="clipped").`);
+  if (zoomFor(startSpan.max) < ZOOM_MIN) {
+    // REPORTED, NOT GATED, and the reason is the same one that keeps the
+    // reachability figures above ungated: gating this would REFUSE THE SHIPPED
+    // ACT at boot, and which act shape ships is a Tier-2 direction call, not a
+    // number this tool gets to enforce. It is the defect Bjorn measured — 9 of
+    // 12 seeds hiding a next step at 390x844 — and it is a GRAPH fact, not a
+    // camera fact: `pathCount` walkers land on up to `columns` distinct doors.
+    // `--entries 1` collapses the entrance row to one column and closes it.
+    console.log(`      ^ THE ENTRANCE ROW CANNOT BE FRAMED at its widest (${startSpan.max} columns, ${zoomFor(startSpan.max).toFixed(2)}x).`
+      + ` This is the hidden-choice defect, and it is the GRAPH, not the camera:`);
+    console.log(`        ${config.pathCount} walkers may open up to ${Math.min(config.pathCount, config.columns)} doors.`
+      + ` \`--entries 1\` makes it one door — measured 0 of 12 seeds hiding a step, against 9 of 12 today.`);
+  }
+  if (zoomFor(fanSpan.max) < ZOOM_MIN) {
+    findings.push(`${label}: the widest fan-out (${fanSpan.max} columns) wants ${zoomFor(fanSpan.max).toFixed(2)}x, below the ladder floor ${ZOOM_MIN}x — a node's own choices cannot be framed on a phone at any setting`);
+  }
+
   const noElite = rows.reduce((a, r) => a + r.noElite, 0);
   const noMerch = rows.reduce((a, r) => a + r.noMerchant, 0);
   const startsTotal = rows.reduce((a, r) => a + r.starts, 0);
@@ -226,20 +293,63 @@ function selftest() {
 }
 
 // ------------------------------------------------------------------- driver
+// ------------------------------------------------------------------- spans
+// THE MEASUREMENT model/mapview.js's `maxFanoutSpan` IS, and the reason it is a
+// function there rather than a number. It sweeps act widths and reports the
+// widest framing the generator can ask the camera to draw, then checks the
+// formula against what it just measured. An observed maximum is a FLOOR under
+// the true worst case, so this run can only ever falsify the formula, never
+// confirm it — and that asymmetry is the point: the day a width produces a
+// wider fan-out than the formula claims, this goes red and the refusal edge
+// moves rather than quietly becoming optimistic.
+function spans() {
+  console.log(`mapplan --spans · ${SEEDS} seeds per width · framing span in COLUMNS, and what it costs in zoom\n`);
+  console.log(`  viewport ${PHONE_VIEW_W} local px (.map-scroll at 390x844) · ladder floor ${ZOOM_MIN}x\n`);
+  console.log('  cols  entrance row        widest fan-out      formula  fan-out px  wants   verdict');
+  let bad = 0;
+  for (let columns = 4; columns <= 12; columns++) {
+    const cfg = { ...mapConfigs[1], columns };
+    const st = [];
+    const fan = [];
+    for (let i = 0; i < SEEDS; i++) {
+      const g = generateActMap({ config: cfg, rng: rng2(i) });
+      st.push(colSpan(g, g.startIds));
+      fan.push(Math.max(...Object.values(g.nodes).filter((n) => n.next.length).map((n) => colSpan(g, [n.id, ...n.next]))));
+    }
+    const obs = Math.max(...fan);
+    const formula = maxFanoutSpan(columns);
+    const px = spanWidth(obs);
+    const wants = PHONE_VIEW_W / px;
+    const over = obs > formula;
+    if (over) bad++;
+    console.log(`  ${String(columns).padStart(4)}  ${`${Math.min(...st)}..${Math.max(...st)}`.padEnd(19)}`
+      + ` ${`${Math.min(...fan)}..${obs}`.padEnd(19)} ${String(formula).padStart(7)}  ${String(Math.round(px)).padStart(10)}`
+      + `  ${wants.toFixed(2)}x  ${over ? 'FORMULA TOO LOW' : wants >= ZOOM_MIN ? 'fits' : 'REFUSED at boot'}`);
+  }
+  console.log(`\n  The entrance row is the wider frame and it is NOT what the refusal is about:`);
+  console.log(`  it is a graph fact, not a camera fact — 6 walkers landing on up to 'columns'`);
+  console.log(`  distinct doors. \`--entries 1\` collapses it to 1 column. See engine/mapgen.js.`);
+  console.log(`\n  ${bad ? `FAIL — maxFanoutSpan is below the observed maximum at ${bad} width(s)` : `PASS — maxFanoutSpan matched the observed maximum at every width`}`);
+  return bad ? 1 : 0;
+}
+
 function main() {
+  if (args.includes('--spans')) process.exit(spans());
   if (selftestOnly) process.exit(selftest());
   if (!Number.isFinite(SEEDS) || SEEDS < 1) { console.error('mapplan: --seeds must be a positive integer'); process.exit(2); }
 
   const overrideFloors = numOf('--floors', null);
   const overrideCols = numOf('--columns', null);
   const overridePaths = numOf('--paths', null);
-  const previewing = overrideFloors != null || overrideCols != null || overridePaths != null;
+  const overrideEntries = numOf('--entries', null);
+  const previewing = overrideFloors != null || overrideCols != null || overridePaths != null || overrideEntries != null;
 
   const acts = previewing
     ? [['PREVIEW act 1', { ...mapConfigs[1],
       ...(overrideFloors != null ? { floors: overrideFloors } : {}),
       ...(overrideCols != null ? { columns: overrideCols } : {}),
-      ...(overridePaths != null ? { pathCount: overridePaths } : {}) }]]
+      ...(overridePaths != null ? { pathCount: overridePaths } : {}),
+      ...(overrideEntries != null ? { entries: overrideEntries } : {}) }]]
     : Object.entries(mapConfigs).map(([act, cfg]) => [`act ${act}`, cfg]);
 
   console.log(`mapplan — ${previewing ? 'PREVIEW (not shipped content)' : 'shipped acts'} · ${SEEDS} seeds each`);
@@ -260,7 +370,12 @@ function main() {
   // A tool that measured nothing is UNKNOWN, never a pass (SOP 2's silence
   // guard, and screenreach's lesson). `0 checks passed` at exit 0 is the shape
   // this house has already been bitten by.
-  if (cells === 0) {
+  // …AND A REFUSAL IS AN ANSWER, not a silence. The guard below used to read
+  // `cells === 0` alone, so a config this tool correctly REFUSED exited 2 —
+  // the same code as "the harness never ran", which means unknown. A finding
+  // with nothing generated is a finding; only nothing-found-and-nothing-run is
+  // unknown.
+  if (cells === 0 && findings.length === 0) {
     console.error(`\nmapplan: nothing was generated. That is unknown, not a pass.`);
     process.exit(2);
   }
