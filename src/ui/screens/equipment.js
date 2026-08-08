@@ -21,6 +21,8 @@ import {
 } from '../../model/loadout.js';
 import { renderCard } from '../components/card.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
+import { pieceReveal } from '../../model/unlocks.js';
+import { LOCK_COPY } from '../uiContent.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
@@ -422,18 +424,18 @@ export function mountEquipment(host, {
     ...(persistence !== 'unlocked' ? carriedIds(run.loadout) : []),
   ]);
   function gate(piece) {
-    // Two independent gates. A CONDITION unlock is something you achieve; being
-    // FOUND is something you pick up. Armour uses the first, armaments the
-    // second, and a piece could one day use both.
-    if (piece.unlock !== '' && !unlocked.has(piece.unlock)) {
-      const u = unlockById.get(piece.unlock);
-      if (u && u.reveal === 'hidden') return null;
-      return { ...piece, locked: true, hint: (u && u.hint) || 'Not yet earned.' };
-    }
-    if (piece.kind !== 'armor' && drops.requireFound && !available.has(piece.id)) {
-      return { ...piece, locked: true, hint: 'Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them.' };
-    }
-    return { ...piece, locked: false };
+    // The two gates moved to src/model/unlocks.js (`pieceReveal`) when the
+    // Compendium became a second screen asking the same question. NOTHING ABOUT
+    // THIS PICKER CHANGED: it still has exactly two outcomes, because a piece
+    // you cannot choose is a piece you cannot choose whether it is 'teased' or
+    // 'listed'. The three-way distinction is a COMPENDIUM distinction — that
+    // screen may show you the shape of a thing without its name; this one is
+    // offering you a choice, and a choice you can't take needs its reason, not
+    // its silhouette.
+    const r = pieceReveal(piece, { unlockById, unlocked, available, drops });
+    if (r.state === 'hidden') return null;
+    if (r.state === 'held') return { ...piece, locked: false };
+    return { ...piece, locked: true, hint: r.hint || LOCK_COPY[r.gate] };
   }
 
   function eligible(slot) {

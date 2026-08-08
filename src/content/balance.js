@@ -271,6 +271,22 @@ export const balance = {
       // for testing the mod system without playing for it).
       requireFound: true,
       permanentOnFind: true,
+      // HOW MUCH OF THE UNKNOWN THE PLAYER SEES — the Compendium's whole dial,
+      // and one word. Constantine: *"the potential weapons to unlock should be
+      // in its own menu on the main menu that keeps most things hidden."* The
+      // vocabulary is not new: it is `REVEAL_MODES` from unlocks.csv, applied to
+      // the OTHER gate. An armament is withheld by not being found rather than
+      // by an unearned condition, so it has no unlock row to read a reveal from,
+      // and this is where that answer lives — one home, tunable, no code.
+      //   'teased'  silhouette, rarity, hand. No name, no tags, no numbers.
+      //   'listed'  the above plus its name and why it is not yours.
+      //   'hidden'  the Compendium is empty until you find something.
+      // 'teased' is the shipped line: shape is a promise, a name is the item
+      // delivered without the climb. A piece that wants a different answer names
+      // an unlock row, whose own `reveal` wins (Law 0 clause 3 — the override is
+      // data). The Armoury picker is unaffected by this word: an offer you
+      // cannot take shows its reason either way.
+      reveal: 'teased',
       // Chance a node of each kind yields an armament, and the rarity odds when
       // it does. Bosses always drop; their table is weighted to the good stuff.
       chance: { treasure: 60, elite: 30, boss: 100, shop: 0 },

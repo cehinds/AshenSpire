@@ -371,3 +371,35 @@ export function padName(btn) {
   const b = PAD_BUTTONS[btn];
   return b ? b.name : `Btn ${btn}`;
 }
+
+// ---- why a piece is not yours, in the player's words ------------------------
+// `pieceReveal` (src/model/unlocks.js) names the GATE; the sentence is UI copy
+// and lives here because TWO screens say it — the Armoury picker and the
+// Compendium. It was a literal inside equipment.js's `gate()`, which was fine
+// while one screen existed and becomes a copy nothing syncs the moment a second
+// one asks the same question (Law 1 clause 2, pointed at prose).
+//
+// A row's own `hint` from unlocks.csv always wins over LOCK_COPY.unearned —
+// that is the whole point of the hint column. This is what is said when the
+// table has nothing to say.
+export const LOCK_COPY = Object.freeze({
+  unearned: 'Not yet earned.',
+  unfound: 'Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them.',
+});
+
+// ---- what a kind of armament is called in the plural ------------------------
+// The Compendium's section headings. A LABEL is a word, not a derivation:
+// 'staff' → 'STAVES' is not a rule any pluraliser gets right, and inventing one
+// is how a screen ends up saying STAFFS. So the irregulars are listed and
+// everything else derives, WITH A WARNING — a new kind gets a plausible heading
+// rather than a broken screen, and says so in the console so the plausible one
+// is not mistaken for an authored one (Law 0 clause 5: a generated thing that is
+// wrong but reasonable is the invisible failure).
+const ARMAMENT_KIND_LABELS = { weapon: 'WEAPONS', shield: 'SHIELDS', staff: 'STAVES' };
+export function armamentKindLabel(kind) {
+  const known = ARMAMENT_KIND_LABELS[kind];
+  if (known) return known;
+  console.warn(`[content] armament kind ${JSON.stringify(kind)} has no heading in`
+    + ' src/ui/uiContent.js ARMAMENT_KIND_LABELS — showing a derived one.');
+  return `${String(kind || '').toUpperCase()}S`;
+}

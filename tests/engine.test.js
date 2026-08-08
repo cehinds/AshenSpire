@@ -47,7 +47,8 @@ import {
   figureSpec, fitsSlot, slotHand, pieceHand,
 } from '../src/model/loadout.js';
 import {
-  UNLOCK_CONDITIONS, REVEAL_MODES, emptyProgress, recordProgress, evaluateUnlocks, unlockView,
+  UNLOCK_CONDITIONS, REVEAL_MODES, PRESENT_STATES, emptyProgress, recordProgress, evaluateUnlocks,
+  unlockView, revealState, pieceReveal,
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 // The one UI import in this suite, and it is deliberate: `settingOn` is where a
@@ -2238,6 +2239,93 @@ export async function runTests({ artManifest = null } = {}) {
     // schedules nothing for a 'silence' context — and warns on an unknown one
     // — is runtime behaviour with WebAudio in it: tools/music-silence-probe.mjs
     // is the half that has run it, and nothing in this suite hears anything.
+  });
+
+  test('41. the Compendium withholds by ONE rule, and a planted row tells the rule from the table', () => {
+    // Freja, the Compendium. The screen is a picture and this suite has never
+    // seen one; what is testable here is the DECISION the picture obeys, and
+    // that decision has one home — src/model/unlocks.js. The rendered half is
+    // tools/release-shots.mjs (compendium-empty / compendium-held).
+    const ctx = (over = {}) => ({
+      unlockById: new Map((REG.unlocks || []).map((u) => [u.id, u])),
+      unlocked: new Set(over.unlocked || []),
+      available: new Set(over.available || []),
+      drops: { requireFound: true, reveal: 'teased', ...(over.drops || {}) },
+    });
+    const dagger = REG.equipment.armaments.find((a) => a.id === 'dagger');
+    assert(dagger, 'the dagger is still in the table');
+
+    // BOTH EDGES OF THE SCREEN'S SUBJECT.
+    // Empty: nothing found, so every armament is a shape and no name shows.
+    const emptyStates = (REG.equipment.armaments || [])
+      .map((a) => pieceReveal(a, ctx()).state);
+    eq(emptyStates.filter((s) => s === 'held').length, 0, 'a fresh profile holds nothing');
+    assert(emptyStates.every((s) => s === 'teased'),
+      `a fresh profile shows only silhouettes — got ${[...new Set(emptyStates)].join(',')}`);
+    // Full: everything found, so nothing is withheld and the grid is all lit.
+    const allIds = (REG.equipment.armaments || []).map((a) => a.id);
+    const fullStates = (REG.equipment.armaments || [])
+      .map((a) => pieceReveal(a, ctx({ available: allIds })).state);
+    assert(fullStates.every((s) => s === 'held'), 'with everything found nothing is withheld');
+    // And the found gate is the ONLY thing between them.
+    eq(pieceReveal(dagger, ctx({ drops: { requireFound: false } })).state, 'held',
+      'requireFound:false is the sandbox — every armament is yours');
+
+    // THE PLANTED ROWS. Not one armament in the shipped table carries an
+    // `unlock`, so every condition branch below is unexercised by the data and
+    // a rule that only ever sees found-gating is indistinguishable from
+    // `return 'teased'`. Four rows in words the tables already have:
+    const plant = [
+      { id: 'p_hidden', kind: 'weapon', rarity: 'rare', unlock: 'ashChildUnlock' }, // reveal: hidden
+      { id: 'p_listed', kind: 'weapon', rarity: 'common', unlock: 'winTwice' }, // reveal: listed
+      { id: 'p_teased', kind: 'weapon', rarity: 'common', unlock: 'graveWardenUnlock' }, // reveal: teased
+      { id: 'p_armour', kind: 'armor', rarity: 'common', unlock: '' }, // armour skips the found gate
+    ];
+    const st = (row, over) => pieceReveal(row, ctx(over)).state;
+    eq(st(plant[0]), 'hidden', "a 'hidden' unlock is absent — a secret must not advertise its own hole");
+    eq(st(plant[1]), 'listed', "a 'listed' unlock shows its name and why");
+    eq(st(plant[2]), 'teased', "a 'teased' unlock shows the shape only");
+    eq(st(plant[3]), 'held', 'armour is condition-gated, never found-gated');
+    // Earned beats every reveal mode, including hidden.
+    eq(st(plant[0], { unlocked: ['ashChildUnlock'], available: ['p_hidden'] }), 'held',
+      'once earned, the secret is simply yours');
+    // The unlock gate outranks the found gate: an unearned piece you somehow
+    // hold is still not offered. Order matters and this is the case that shows it.
+    eq(st(plant[1], { available: ['p_listed'] }), 'listed',
+      'an unearned unlock wins over having found it');
+    // The hint comes from the TABLE, never from this file.
+    eq(pieceReveal(plant[1], ctx()).hint, 'Win two runs.', 'the hint is the unlock row\'s own words');
+    eq(pieceReveal(dagger, ctx()).gate, 'unfound', 'the gate names why, so a screen picks its own sentence');
+
+    // LAW 1 CLAUSE 5 — `reveal` has no schema, so a typo reaches the screen as a
+    // live value. It must fail LOUD and degrade to the safe wrong answer:
+    // 'listed' would publish a name that may be a secret, 'hidden' would delete
+    // an entry in silence. 'teased' shows the shape and no identity.
+    const errs = [];
+    const realError = console.error;
+    console.error = (...a) => errs.push(a.join(' '));
+    let bad;
+    try {
+      bad = pieceReveal(dagger, ctx({ drops: { reveal: 'teasd' } })).state;
+    } finally { console.error = realError; }
+    eq(bad, 'teased', 'a bad reveal draws the shape, never the name and never nothing');
+    assert(errs.some((e) => e.includes('teasd') && e.includes('balance.equipment.drops.reveal')),
+      `the bad value and its home are both named — got ${JSON.stringify(errs)}`);
+    assert(REVEAL_MODES.every((m) => PRESENT_STATES.includes(m)) && PRESENT_STATES.includes('held'),
+      'the drawable states are the reveal modes plus held, and nothing else');
+
+    // ONE HOME, and this is the assertion that keeps it one: `unlockView` and
+    // the Armoury picker both route "hidden means absent" through revealState.
+    // If a second copy is ever reintroduced, this and the picker disagree first.
+    eq(revealState('hidden', false), 'hidden', 'unearned obeys its mode');
+    eq(revealState('hidden', true), 'held', 'earned outranks the mode');
+
+    // BOUNDARY: this is the decision, not the drawing. Nothing here proves a
+    // silhouette is visible against the panel, that the count reads as a promise
+    // rather than a verdict, or that the screen fits a phone — Sunna gates the
+    // read and Bjorn confirms the render. It also does not exercise the picker:
+    // that both withheld states still show a REASON there (not a silhouette) is
+    // a rendered fact, photographed, not asserted here.
   });
 
   const passed = results.filter((r) => r.ok).length;

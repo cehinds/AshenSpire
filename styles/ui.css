@@ -1365,3 +1365,120 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .about-ai .about-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .about-ai .about-result:empty { display: none; }
 .about-ai .about-ver { opacity: 0.75; }
+
+/* ---- THE COMPENDIUM (Freja) ------------------------------------------------
+   Constantine: *"...its own menu on the main menu that keeps most things
+   hidden."* The whole look is one decision — LIGHT IS THE HIERARCHY. The grid
+   never moves; what you hold is the only lit thing in it, so the eye reaches
+   yours first without a single reorder.
+
+   LAW 4: every box here is text-independent (px, and --tap-floor for the one
+   ergonomic floor) and every glyph is rem. The art box is chrome — an icon that
+   grows with the text setting is Law 4 clause 3 exactly. The cell's own height
+   is a FLOOR with intrinsic growth (clause 4), so a long name at XL pushes the
+   cell taller instead of clipping, and nothing balloons.
+   LAW 2: no vw/vh below body; the scroller names its container.            */
+.compendium {
+  /* HOW PRESENT A SILHOUETTE IS, and this number is measured, not chosen. It was
+     0.26 with a `body.hi-contrast` override of 0.5, and BOTH halves of that were
+     wrong. High contrast is ON by default, so 0.26 never rendered in a single
+     shot I took — I authored a value and shipped it unseen, which is the exact
+     failure my own card names third. Measured across all 19 silhouettes at
+     1200x730 (freja-cp-probe.mjs, luminance of the inked pixels against the
+     panel): 0.26 → median 1.99:1, UNDER the 3:1 floor for a non-text graphic.
+     0.50 → median 4.10:1 but the thinnest staff at 1.76:1, still under.
+     ONE VALUE, NOT TWO: high contrast swaps text and line tokens and leaves the
+     panel alone, so both modes sit on the same background and the override was
+     a second home answering a question that never differed. */
+  --cp-ghost: 0.72;
+  justify-content: flex-start; gap: 14px; padding-top: 44px;
+}
+.compendium .title-big { font-size: 3.2rem; }
+/* The one number that turns absence into scale. A grid of dark shapes with no
+   count is a room; with the count it is a horizon. */
+.compendium .subtitle { color: var(--gold); letter-spacing: 0.28em; }
+
+.cp-scroll { width: 100%; max-width: 980px; overflow-y: auto; padding: 0 16px 8px; }
+.cp-sections { display: flex; flex-direction: column; gap: 20px; }
+.cp-head {
+  display: flex; align-items: baseline; gap: 10px;
+  font-family: var(--font-display); font-size: 1.25rem; letter-spacing: 0.2em;
+  color: var(--muted); border-bottom: 1px solid var(--line);
+  padding-bottom: 6px; margin-bottom: 10px;
+}
+/* Beside its heading, not flung to the far edge — one phrase at every width.
+   (My own #90 finding: `margin-left:auto` put a caret and its count 1600 px
+   apart at 1200 wide, which is two fragments a reader assembles.) */
+.cp-count { font-family: var(--font-body); font-size: 1.05rem; color: var(--gold); letter-spacing: 0.08em; }
+
+.cp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.cp-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  min-height: var(--tap-floor); padding: 8px 4px;
+  border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
+  color: var(--parchment); font-family: var(--font-body); cursor: pointer;
+  text-align: center;
+}
+.cp-cell:hover { border-color: var(--line-soft); }
+.cp-art { width: 68px; height: 68px; display: flex; align-items: center; justify-content: center; }
+.cp-art img { width: 100%; height: 100%; object-fit: contain; }
+/* TWO LINES, ALWAYS RESERVED — and this is what makes the grid rigid. Measured
+   before: 'Gorefire Brand' and 'Emberlight Sceptre' wrap, and a grid row takes
+   the height of its tallest cell, so ONE long name made the STAVES row 110 px
+   against 97 for the others. My whole thesis is that the grid never moves and
+   only what is LIT changes; a row that grows when you find something is that
+   thesis falsified by its own screenshot.
+   `em` and not `rem`, deliberately: 2 lines x 1.25 line-height of THIS text is a
+   glyph metric, which is the one thing Law 4 says may track the text setting.
+   A box whose job is to hold exactly two lines of its own text is not chrome. */
+.cp-name {
+  font-size: 1.05rem; line-height: 1.25; min-height: 2.5em;
+  overflow-wrap: anywhere;
+}
+
+/* RARITY is the one thing a silhouette is allowed to tell you — the desire axis,
+   and it says how rare a hole is without saying what fills it. Same left-edge
+   language as the Armoury chips, so the two screens read as one hand.
+   THE SELECTOR STATES THE RULE, and it does not depend on source order — I
+   wrote this twice by ordering instead of saying, and got it wrong both times:
+   first the rarity stripe survived onto held cells where it means nothing, then
+   the dashed withheld border turned the stripe itself into a dashed segment,
+   which is noise where a band was the point. Named states, higher specificity,
+   no ordering to reason about.
+   WITHHELD ONLY, deliberately: on a piece that is yours the rarity is in the
+   tooltip and in the thing itself; on a withheld one it is one of only two facts
+   you get. The mark is kept exactly where it is load-bearing and dropped where
+   it is not, which is the whole of what my seat is for. */
+.cp-cell.state-teased.rarity-rare,
+.cp-cell.state-listed.rarity-rare { border-left: 3px solid var(--gold); }
+.cp-cell.state-teased.rarity-uncommon,
+.cp-cell.state-listed.rarity-uncommon { border-left: 3px solid var(--frost); }
+
+/* HELD — the lit plate. The separation is in the CELL'S GROUND, never in the
+   art: raising the silhouettes to clear the 3:1 legibility floor cost me most of
+   the luminance gap that was carrying the hierarchy, and the tempting repair is
+   to brighten the held icons — which is repainting someone else's authored
+   palette to win an argument about layout. So the held cell gets a lighter plate
+   (--panel over the screen's --bg) and a solid gold edge against the withheld
+   cells' dashed line, and the art of every piece is left exactly as drawn.
+   Sunna's floor is higher than my ceiling wherever they touch; this is what
+   paying that costs and where I put the cost. */
+.cp-cell.state-held { background: var(--panel); border: 1px solid var(--gold); }
+.cp-cell.state-held .cp-name { color: var(--parchment); }
+
+/* WITHHELD — the piece's OWN icon, painted out. No second asset, no new column:
+   the alpha channel already holds the shape, so this is the same file the
+   Armoury draws in colour, seen with the identity removed. Lifted to ash rather
+   than crushed to black, because black-on-near-black is a shape only I can see
+   in the file I authored it from. */
+.cp-cell.state-teased, .cp-cell.state-listed { background: transparent; border-style: dashed; }
+.cp-cell.state-teased .cp-art img, .cp-cell.state-listed .cp-art img {
+  filter: brightness(0) invert(1);
+  opacity: var(--cp-ghost);
+}
+.cp-cell.state-listed .cp-name { color: var(--muted); font-style: italic; }
+
+
+@media (prefers-reduced-motion: no-preference) {
+  .cp-cell { transition: border-color 120ms ease, background 120ms ease; }
+}

@@ -142,6 +142,17 @@ const SCREENS = [
     name: 'shrine-smith', query: '?shot=rest', landmark: '#smith-grid .card',
     drive: `document.querySelector('#smith-opt').click()`,
   },
+  // THE COMPENDIUM — photographed in the act that creates it (Marina's condition
+  // carried from #78's first commit), and at BOTH EDGES, because this screen's
+  // whole subject is the ratio between them:
+  //   empty   nothing found — twenty-four silhouettes and a 0. The state the
+  //           screen is in the first time anyone opens it, and the one where
+  //           "most things hidden" either reads as a promise or as a failure.
+  //   held    pieces found — the grid does not reflow, it LIGHTS. Seeded through
+  //           `?shotFound=`, which reads the same meta.found a real profile
+  //           writes; the artifact is never modified.
+  { name: 'compendium-empty', query: '?shot=compendium&shotFound=', landmark: '.compendium .cp-cell', state: 'compendium' },
+  { name: 'compendium-held', query: '?shot=compendium&shotFound=' + encodeURIComponent('dagger,towerShield,gorefireBrand,katana'), landmark: '.compendium .cp-cell.state-held' },
   // --- driven: no ?shot= state exists for any of these ---
   {
     name: 'armoury', query: '?shot=combat', landmark: '.armoury, .equip-screen, .equipment',
