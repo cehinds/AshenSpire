@@ -184,3 +184,14 @@ body.hide-header-relics .map-substrip.no-flasks { display: none; }
      header on a phone, and it stays reachable at overlay.js:163 (Stats, from
      the menu button in this bar) and gameover.js:17. */
   :root[data-layout='narrow'] .map-header .mh-seed { display: none; }
+
+/* THE DELIVERED TAP SIZE, when the floor is not met (#107). It sits in the
+   bottom stack with the hint bar and the zoom bar — in the flow, never floating,
+   for the reason map.js's header gives about .map-zoom — and it is `hidden`
+   whenever the promise holds, so it costs no height on the shape it was solved
+   for. Law 4: this is TEXT, so it is the text unit and nothing else here is. */
+.mapscreen .map-tapnote {
+  margin: 0; text-align: center; color: var(--gold);
+  font-size: 1.1rem; line-height: 1.4; padding: 0.2rem 1rem;
+}
+.mapscreen .map-tapnote[hidden] { display: none; }
