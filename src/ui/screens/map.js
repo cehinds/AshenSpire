@@ -14,17 +14,33 @@ import { classGlyph, tintCss } from '../assets.js';
 import { nodeIcon, nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { trackGesture } from '../gesture.js';
+// GEOMETRY AND THE LADDER LIVE IN model/mapview.js NOW, with the arithmetic that
+// turns them into "does this act fit on a phone" — read by this screen, by the
+// boot validator, and by tools/mapfit.mjs. Read its header before changing a
+// number here: `columns` refuses at boot against these same values.
+import {
+  ZOOM_STEPS, ZOOM_MIN,
+  clampZoom, framingBox, fitZoom, nodeRadius, nodeX, nodeY, svgWidth, svgHeight,
+} from '../../model/mapview.js';
 
-const COL_X = 95;
-const ROW_H = 46;
-
-// Map zoom levels (%) selectable in-view and defaulted from settings.
-const ZOOM_STEPS = [1, 1.15, 1.3, 1.5, 1.75, 2];
-function defaultZoom(meta) {
-  const pct = Number(((meta && meta.settings) || {}).mapZoom);
-  const z = pct ? pct / 100 : 1.15;
+/**
+ * The player's SAVED zoom, or null for "compute it".
+ *
+ * COMPUTED IS THE DEFAULT; THE LADDER AND THIS SETTING ARE THE OVERRIDE, and
+ * `⊙` returns to computed (Marina's resolution of the collision between
+ * Constantine's "open zoomed in close enough that the current node and its
+ * connecting nodes fit" and the zoom that already ships). `Fit` is a real value
+ * of the setting rather than an absence, so a player who chose 130% and wants
+ * the frame back has a row to choose, not a preference to clear.
+ */
+function savedZoom(meta) {
+  const raw = ((meta && meta.settings) || {}).mapZoom;
+  if (raw == null || raw === 'Fit') return null;
+  const pct = Number(raw);
+  if (!Number.isFinite(pct) || pct <= 0) return null;
+  const z = pct / 100;
   // Snap to the nearest step so +/- stays on the ladder.
-  return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), 1.15);
+  return ZOOM_STEPS.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a), ZOOM_MIN);
 }
 
 export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
@@ -44,11 +60,16 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     columns = Math.max(...nodes.map((n) => n.col)) + 1;
     console.warn(`[map] this run's graph predates \`columns\` on the map; drawing ${columns} derived from the nodes in use.`);
   }
-  const width = columns * COL_X + 60;
-  const height = (maxFloor + 1) * ROW_H + 30;
-  const x = (col) => 60 + col * COL_X;
-  const y = (floor) => height - floor * ROW_H;
-  let zoom = defaultZoom(meta);
+  const width = svgWidth(columns);
+  const height = svgHeight(maxFloor);
+  const x = (col) => nodeX(col);
+  const y = (floor) => nodeY(floor, height);
+  // `null` here means "the frame decides", and it is resolved on the first
+  // layout that has a non-zero viewport — never from the device width, because
+  // `--ui-zoom` sits between the device and this canvas.
+  const saved = savedZoom(meta);
+  let framing = saved == null ? 'fit' : 'saved';
+  let zoom = saved == null ? ZOOM_MIN : saved;
 
   const reachable = new Set(run.mapNodeId ? map.nodes[run.mapNodeId].next : map.startIds);
   const traveled = new Set(run.path || []);
@@ -154,7 +175,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     ].filter(Boolean).join(' ');
     const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     el.setAttribute('class', cls);
-    const r = n.type === 'boss' ? 20 : 15;
+    const r = nodeRadius(n.type);
     // Reachable nodes get a rhythmic pulsing halo so the next choices read at
     // a glance; the halo is inert when reduced-motion is set (CSS handles it).
     const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
@@ -253,35 +274,130 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
 
   // The svg scales by setting its pixel width/height (viewBox unchanged), so
   // the scroll container grows and native scrollbars appear.
-  function applyZoom(center) {
+  function sizeSvg() {
     svgEl.style.width = `${width * zoom}px`;
     svgEl.style.height = `${height * zoom}px`;
+  }
+  function applyZoom(center) {
+    sizeSvg();
     if (center) centerOnCurrent();
   }
 
-  // Scroll so the current node sits in the middle of the viewport. At run
-  // start there is no current node yet, so frame the reachable start nodes
-  // (their centroid) — the requested default framing.
-  function centerOnCurrent() {
-    let fx;
-    let fy;
-    if (run.mapNodeId && map.nodes[run.mapNodeId]) {
-      const f = map.nodes[run.mapNodeId];
-      fx = x(f.col);
-      fy = y(f.floor);
-    } else {
-      const rs = nodes.filter((n) => reachable.has(n.id));
-      if (!rs.length) return;
-      fx = rs.reduce((a, n) => a + x(n.col), 0) / rs.length;
-      fy = rs.reduce((a, n) => a + y(n.floor), 0) / rs.length;
+  // THE FRAMING SET — the decision on this screen, and nothing else. The node
+  // the player stands on, plus every node they can move to. At run start there
+  // is no current node, so it is the entrances themselves.
+  function framingNodes() {
+    const rs = nodes.filter((n) => reachable.has(n.id));
+    const cur = run.mapNodeId && map.nodes[run.mapNodeId] ? map.nodes[run.mapNodeId] : null;
+    return cur ? [cur, ...rs] : rs;
+  }
+
+  // ONE FLOOR OF LOOK-AHEAD — where each of those choices leads. Fitting the
+  // decision ALONE is correct and reads like a microscope: mid-climb the framing
+  // set is two or three nodes, so the fit pins the ladder at its 2x ceiling and
+  // the act stops looking like a climb. This set is a PREFERENCE, never a
+  // promise: the zoom fits it when it can, and the guarantee stays the framing
+  // set, because the zoom that fits a superset always fits the set inside it.
+  function contextNodes() {
+    const fs = framingNodes();
+    const seen = new Set(fs.map((n) => n.id));
+    const out = [...fs];
+    for (const n of fs) {
+      for (const id of n.next) {
+        if (!seen.has(id) && map.nodes[id]) { seen.add(id); out.push(map.nodes[id]); }
+      }
     }
-    scroll.scrollTop = Math.max(0, fy * zoom - scroll.clientHeight / 2);
-    scroll.scrollLeft = Math.max(0, fx * zoom - scroll.clientWidth / 2);
+    return out;
+  }
+
+  // Scroll so the framing set sits in the middle of the viewport, and — when the
+  // zoom is computed — pick the zoom that makes it fit first.
+  //
+  // WHAT CHANGED AND WHY, because the old shape was correct-looking and broken.
+  // It framed a CENTROID and assigned `Math.max(0, …)`: the low end was clamped,
+  // NOTHING clamped the high end, and the browser clamped that silently. Asked
+  // for scrollTop 263 it got 1, on 39 of 39 nodes at both shapes (Bjorn) — and
+  // the function had no way to know, because a write it cannot read back is a
+  // camera that cannot miss. Two fixes, and the second is the one that matters:
+  //
+  //   1. FIT, THEN CENTRE. The centroid was never wrong; the canvas was 834 px
+  //      against a 390 viewport and nothing fitted the framing to the content.
+  //      A box centre also beats a centroid — a centroid drifts toward whichever
+  //      side has more nodes and pushes the lonely one off the edge.
+  //   2. CLAMP OURSELVES, THEN SAY WHETHER IT WORKED. We compute the legal range
+  //      and land inside it, so the browser has nothing left to correct, and
+  //      then we measure the framing box against what is actually on screen and
+  //      publish the answer (see `report`).
+  function centerOnCurrent() {
+    const fs = framingNodes();
+    if (!fs.length) { report(null, null); return; }
+    if (framing === 'fit' && scroll.clientWidth > 0 && scroll.clientHeight > 0) {
+      // The decision must fit; the look-ahead is fitted too when it costs
+      // nothing, and `min` is what makes that safe — the context box contains
+      // the decision box, so the zoom that fits it fits the decision as well.
+      const zDecision = fitZoom(framingBox(fs, height), scroll.clientWidth, scroll.clientHeight);
+      const zContext = fitZoom(framingBox(contextNodes(), height), scroll.clientWidth, scroll.clientHeight);
+      const z = clampZoom(Math.min(zDecision, zContext));
+      if (Math.abs(z - zoom) > 0.0005) { zoom = z; sizeSvg(); }
+    }
+    const box = framingBox(fs, height);
+    // Aim at the wider box when it fits at this zoom — the look-ahead then sits
+    // in frame instead of half off the top — and fall back to the decision box
+    // the moment it does not, which is what a hand on the ladder does.
+    const ctx = framingBox(contextNodes(), height);
+    const aim = (ctx.w * zoom <= scroll.clientWidth && ctx.h * zoom <= scroll.clientHeight) ? ctx : box;
+    const cx = ((aim.x0 + aim.x1) / 2) * zoom;
+    const cy = ((aim.y0 + aim.y1) / 2) * zoom;
+    const maxLeft = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
+    const maxTop = Math.max(0, scroll.scrollHeight - scroll.clientHeight);
+    scroll.scrollLeft = Math.min(maxLeft, Math.max(0, cx - scroll.clientWidth / 2));
+    scroll.scrollTop = Math.min(maxTop, Math.max(0, cy - scroll.clientHeight / 2));
+    report(box, fs.length);
+  }
+
+  // THE CAMERA SAYS WHETHER IT MISSED. This is the half that never existed: the
+  // framing could fail on 9 of 12 seeds at 390x844 and every line of code
+  // involved reported success. `data-framing` is `fit` or `clipped`, with the
+  // overflow in local px beside it, so a player-facing warning, a screenshot and
+  // tools/mapfit.mjs all read one fact instead of three re-derivations.
+  let warnedClipped = false;
+  function report(box, count) {
+    const d = scroll.dataset;
+    if (!box) { d.framing = 'none'; d.framingMiss = '0'; return; }
+    const over = Math.max(
+      0,
+      scroll.scrollLeft - box.x0 * zoom,
+      box.x1 * zoom - (scroll.scrollLeft + scroll.clientWidth),
+      scroll.scrollTop - box.y0 * zoom,
+      box.y1 * zoom - (scroll.scrollTop + scroll.clientHeight)
+    );
+    d.framing = over > 0.5 ? 'clipped' : 'fit';
+    d.framingMiss = String(Math.round(over));
+    d.framingZoom = zoom.toFixed(3);
+    d.framingCount = String(count);
+    if (over > 0.5 && !warnedClipped) {
+      warnedClipped = true;
+      console.warn(`[map] the framing does not fit: ${count} node(s) of choice need `
+        + `${Math.round(box.w)}x${Math.round(box.h)} local px, the map viewport is `
+        + `${scroll.clientWidth}x${scroll.clientHeight}, and the zoom ladder floors at ${ZOOM_MIN}x — `
+        + `${Math.round(over)} px of the choice is off screen and only panning reaches it. `
+        + `This act is ${columns} columns wide.`);
+    }
   }
 
   function setZoom(next, keepCenter = true) {
-    zoom = Math.min(ZOOM_STEPS[ZOOM_STEPS.length - 1], Math.max(ZOOM_STEPS[0], next));
+    // A hand on the ladder is an override, and it OUTLIVES the next re-centre —
+    // otherwise the computed frame would quietly undo the player's own choice
+    // the first time anything called centerOnCurrent() again.
+    framing = 'manual';
+    zoom = clampZoom(next);
     applyZoom(keepCenter);
+  }
+  // ⊙ — "Reset / center", and now it means it: back to the computed frame from
+  // wherever the ladder, the wheel or the saved setting left us.
+  function resetFraming() {
+    framing = 'fit';
+    centerOnCurrent();
   }
   const stepZoom = (dir) => {
     const i = ZOOM_STEPS.findIndex((z) => Math.abs(z - zoom) < 0.001);
@@ -290,7 +406,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   };
   app.querySelector('#zoom-in').addEventListener('click', () => stepZoom(1));
   app.querySelector('#zoom-out').addEventListener('click', () => stepZoom(-1));
-  app.querySelector('#zoom-reset').addEventListener('click', () => centerOnCurrent());
+  app.querySelector('#zoom-reset').addEventListener('click', () => resetFraming());
 
   // Ctrl/⌘ + wheel zooms toward the pointer-ish center; plain wheel scrolls.
   scroll.addEventListener(
@@ -362,7 +478,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     } else if (ev.key === '-' || ev.key === '_') {
       stepZoom(-1);
     } else if (ev.key === '0') {
-      centerOnCurrent();
+      resetFraming();
     }
   };
   addEventListener('keydown', mapKeys);

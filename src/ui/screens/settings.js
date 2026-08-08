@@ -13,6 +13,7 @@ import { renderProfileSection } from './profileArchive.js';
 import { renderAboutSection } from './about.js';
 import { AUDIO_DEFAULTS } from '../audio.js';
 import { balance } from '../../content/balance.js';
+import { ZOOM_STEPS } from '../../model/mapview.js';
 
 const UI_DEFAULTS = balance.ui;
 
@@ -22,9 +23,17 @@ const ROWS = [
   { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',
     choices: ['slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',
     note: 'How deliberately actions play out — one actor at a time, or instant.' },
-  { cat: 'Display', key: 'mapZoom', type: 'choice', def: '115',
-    choices: ['100', '115', '130', '150'], label: 'Map zoom %',
-    note: 'Default zoom when the act map opens. In-map + / − buttons override per view.' },
+  // `choices` and `def` are DERIVED. The four numbers here used to be typed, and
+  // they were a second copy of the zoom ladder that had already drifted: the
+  // ladder has six steps and this row offered four of them, so 175% and 200%
+  // were reachable with the in-map + button and unreachable as a default.
+  // `Fit` is the new default and it is the whole point of the row — the map
+  // opens framed on the current node and everything it connects to, computed
+  // from the act's own width (Constantine's ask; model/mapview.js does the
+  // arithmetic). A percentage is the override, and ⊙ comes back to Fit.
+  { cat: 'Display', key: 'mapZoom', type: 'choice', def: 'Fit',
+    choices: ['Fit', ...ZOOM_STEPS.map((z) => String(Math.round(z * 100)))], label: 'Map zoom',
+    note: 'Fit opens the map close enough that your current node and every node it connects to are on screen. A percentage overrides it; the in-map ⊙ button comes back to Fit.' },
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
