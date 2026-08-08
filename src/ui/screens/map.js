@@ -7,7 +7,7 @@
 import { passiveFlag } from '../../model/registries.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
-import { overlayIsOpen } from '../components/overlay.js';
+import { veilIsOpen } from '../components/veil.js';
 import { matchAction, isEngaged, focusFirst } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
@@ -341,14 +341,17 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     });
   });
 
-  // Keyboard: M opens the menu overlay; + / − / 0 zoom; the overlay owns Esc
-  // while open. Removed when the screen is torn down (app.innerHTML replaced).
+  // Keyboard: M opens the menu overlay; + / − / 0 zoom; a standing veil owns
+  // the keys while it is up. Removed when the screen is torn down (app.innerHTML
+  // replaced). This guard read `overlayIsOpen()` — one veil of six — so zoom and
+  // the menu keys stayed live under the settings modal and the quick-nav list.
+  // Not the hand-losing one, and the same defect: components/veil.js.
   const mapKeys = (ev) => {
     if (!app.querySelector('.mapscreen')) {
       removeEventListener('keydown', mapKeys);
       return;
     }
-    if (overlayIsOpen()) return;
+    if (veilIsOpen()) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
     if (matchAction(ev, 'menu') || matchAction(ev, 'deck')) {
