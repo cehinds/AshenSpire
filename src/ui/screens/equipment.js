@@ -17,7 +17,7 @@
 import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
-  canSwap, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
+  canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
   ownership, openedSets, visibleSets, rungFor, setCellState,
 } from '../../model/loadout.js';
 import { renderCard } from '../components/card.js';
@@ -511,7 +511,15 @@ export function mountEquipment(host, {
           cycleSet(registries, run.loadout, slot.id, i, { meta });
           sfx.play('cardPlay');
           commit();
-        } else if (!inCombat) {
+        } else {
+          // OPENING THE PICKER IS NOT A MUTATION (#95). Constantine: "I think you
+          // should be able to see your inventory in combat, just have the slots
+          // locked in combat only." This branch used to read `else if (!inCombat)`
+          // — the picker simply never opened mid-fight, so the inventory was not
+          // hidden by a rule, it was hidden by an omission, and the same omission
+          // was the ONLY thing stopping a mid-fight re-arm. Both halves are now
+          // separated: the panel opens and shows you everything you own, and the
+          // seal lives on the mutation (canEquip → equipPiece in model/loadout.js).
           picking = picking && picking.slotId === slot.id && picking.setIndex === i ? null : { slotId: slot.id, setIndex: i };
           draw();
         }
@@ -533,36 +541,69 @@ export function mountEquipment(host, {
       // present, which is the whole reason it is not a class someone maintains.
       box.dataset.empty = '1';
       box.innerHTML = inCombat
-        ? '<p class="ep-hint">Storage is sealed in combat. Cycle between the sets you brought.</p>'
+        ? '<p class="ep-hint">Pick a slot above to see what you are carrying.</p>'
         : '<p class="ep-hint">Pick a slot above to change what is in it.</p>';
       return box;
     }
     const slot = eq.slots.find((s) => s.id === picking.slotId);
-    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4><div class="ep-list"></div>`;
+    // ONE SENTENCE, ONE HOME. The seal's words are the model's (canEquip), the
+    // same place the mutation reads them from, so the reason a chip gives when
+    // it is tapped and the reason printed over the list cannot come apart. This
+    // header line is the sentence said ONCE for the whole list — sixteen chips
+    // each repeating it is a wall, and the chips still answer a tap individually
+    // through refuses(), which is the property that actually failed on his phone.
+    const seal = canEquip(registries, picking.slotId, { inCombat });
+    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4>`
+      + (seal.ok ? '' : `<p class="ep-hint">${esc(seal.reason)}</p>`)
+      + '<div class="ep-list"></div>';
     const list = box.querySelector('.ep-list');
+
+    // A CHIP IS DRAWN THE SAME WAY WHETHER OR NOT IT REFUSES, and the refusal is
+    // added here rather than passed in. #90 deleted pieceChip's `locked`/`hint`
+    // arguments because a dead argument is a second copy of a decision; putting
+    // them back would be that copy with a caller. So pieceChip still only knows
+    // how to draw a piece, and this function — which is where the seal is known —
+    // decorates. `.equip-chip.locked` in styles/ui.css has styled nothing since
+    // #90; it is the rule for "a chip you can see and cannot use", which is
+    // exactly this, so it is reused rather than joined by a second one.
+    const sealChip = (el) => {
+      el.classList.add('locked');
+      refuses(el, () => seal.reason);
+      return el;
+    };
 
     const bare = document.createElement('button');
     bare.type = 'button';
     bare.className = 'equip-chip bare';
     bare.innerHTML = '<span class="ec-name">Bare</span><span class="ec-mods">Nothing at all</span>';
-    bare.addEventListener('click', () => {
-      equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null);
-      commit();
-    });
+    if (seal.ok) {
+      bare.addEventListener('click', () => {
+        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null, owned(), { inCombat });
+        commit();
+      });
+    } else sealChip(bare);
     list.appendChild(bare);
 
-    // EVERY CHIP HERE IS EQUIPPABLE (#90). There is no locked branch left: a
-    // piece you do not own is not in `eligible()`, so it is not a chip. What
-    // used to be sixteen refusing chips on the right hand is now nothing at all,
-    // and the one refusal this screen still has is the ladder's next cell.
+    // EVERY CHIP HERE IS OWNED (#90) — a piece you do not own is not in
+    // `eligible()`, so it is not a chip. WHETHER YOU MAY ACT ON IT IS A SECOND
+    // QUESTION (#95) and it is the fight's, not the profile's. The two states
+    // must not read alike or the screen lies about why it said no:
+    //   · a rung you have not earned  → a CELL in the rack, 🔒 and the rung's
+    //     name, refusing with the rung's own hint out of unlocks.csv;
+    //   · a piece sealed by a fight   → a CHIP in the picker, the piece's own art
+    //     and name, dimmed, refusing with the slot's seal sentence.
+    // Different container, different content, different sentence, different
+    // author of the sentence. Nothing here says "locked" at the player.
     const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
     for (const piece of eligible(slot)) {
       const chip = pieceChip(registries, piece, { selected: piece.id === current });
-      chip.addEventListener('click', () => {
-        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned());
-        sfx.play('cardPlay');
-        commit();
-      });
+      if (seal.ok) {
+        chip.addEventListener('click', () => {
+          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned(), { inCombat });
+          sfx.play('cardPlay');
+          commit();
+        });
+      } else sealChip(chip);
       list.appendChild(chip);
     }
     return box;

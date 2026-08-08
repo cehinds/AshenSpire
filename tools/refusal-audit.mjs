@@ -32,7 +32,9 @@
 //
 // WHAT A GREEN HERE DOES NOT MEAN: it is a claim about the screens this run
 // REACHED, listed by name below the verdict, and nothing at all about the ones
-// it did not. The game mounts sixteen screens; this walks four.
+// it did not. It walks the routes in ROUTE below and prints that count from the
+// table itself; how many screens the game HAS is tools/screen-census.mjs's
+// number and is never restated here.
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync } from 'node:fs';
@@ -94,6 +96,28 @@ const ROUTE = [
     probe: true,
   },
   { name: 'combat', query: '?shot=combat', wait: 'document.querySelector(".hand")' },
+  // #95 — THE SURFACE THAT HAD NO INSTRUMENT AT ALL. The armoury mid-fight is
+  // the same panel told `inCombat: true`, and until today nothing in tools/ or
+  // tests/ opened it: `screenreach` boots `?shot=combat` and hit-tests at rest
+  // without pressing anything, and this file stopped at the map's armoury. So
+  // the one surface whose whole job is to refuse was the one nothing walked.
+  //
+  // It also earns its place by SUBJECT rather than by coverage, which is the bar
+  // the route above it failed after #90: the refusals here are the combat seal
+  // (the slot's own sentence, from canEquip) and, on a fresh profile, the
+  // ladder's next cell (the rung's sentence, from unlocks.csv). Two rules, two
+  // sentences, on one screen — which is exactly what the distinct-reason floor
+  // at the bottom of this file exists to check, and it could not check it before.
+  {
+    name: 'combat-armoury',
+    query: '?shot=combat',
+    wait: 'document.querySelector("#combat-armoury")',
+    drive: [
+      { click: '#combat-armoury', wait: 'document.querySelector(".equip-slot")' },
+      { click: '.equip-slot .es-cell.on', wait: 'document.querySelector(".equip-picker .equip-chip")' },
+    ],
+    probe: true,
+  },
 ];
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -306,8 +330,15 @@ async function main() {
 
   console.log(`\nrefusal-audit: OK — ${examined} refusing controls examined, every one of them says why.`);
   console.log('\nBOUNDARY — what this green does NOT mean:');
-  console.log('  · it is about the screens listed above and no others. The game mounts sixteen;');
-  console.log('    this walk reaches four, and the Smith — where he hit both bugs — is not one.');
+  // DERIVED, NOT TYPED (#95). This read "this walk reaches four" and the route
+  // table had four rows; adding a fifth made the tool's own boundary a lie in
+  // the same commit. The route count is the one number this file can derive, so
+  // it derives it; the DENOMINATOR — how many screens the game has — belongs to
+  // tools/screen-census.mjs and is pointed at rather than copied, because a
+  // second screen count is the defect that census exists to kill.
+  console.log(`  · it is about the ${ROUTE.length} routes listed above and no others.`);
+  console.log('    How many screens the game HAS is not this tool\'s number: node tools/screen-census.mjs.');
+  console.log('    The Smith — where he hit both bugs — is not among them.');
   console.log('  · "says why" means a reason is ATTACHED and readable. Nothing here read it aloud,');
   console.log('    measured whether it fits on screen, or judged whether the sentence is any good.');
   console.log('  · a control that is invisible (zero-sized) is not counted, so a refusal hidden by');
