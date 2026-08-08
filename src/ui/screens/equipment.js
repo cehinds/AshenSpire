@@ -457,6 +457,29 @@ export function mountEquipment(host, {
     if (onClose) onClose();
   };
 
+  // Tap outside to close — the same three lines the other FIVE veils in this
+  // game carry, verbatim (piles.js:36, quicknav.js:182, overlay.js:269,
+  // settings.js:860, debuglog.js:214). The Armoury was the sixth and the only
+  // one that did not, so a habit the game teaches on five panels failed on the
+  // one opened mid-fight.
+  //
+  // I nearly ruled the other way, and the measurement is why I did not.
+  // Against it: on a phone there is barely any backdrop to tap — 7.8 px of
+  // veil down each side and a 33.77 px band top and bottom at 390x844, all
+  // four under the tap floor, so this is NOT the phone's exit. The ✕ is, and
+  // it is pinned and floored. For it: the same measurement says the accident
+  // it risks is just as small, on desktop the strips are 24-60 px and a mouse
+  // hits them on purpose, and — the part that decided it — ESCAPE ALREADY
+  // CLOSES THIS PANEL WITH NO CONFIRMATION. The game already treats leaving
+  // the Armoury as free. This adds no new loss; it gives the same free act a
+  // channel a phone and a mouse have and a keyboard does not.
+  //
+  // `ev.target === wrap` is load-bearing: a click that started on the panel
+  // and bubbled must not close it.
+  wrap.addEventListener('click', (ev) => {
+    if (ev.target === wrap) close();
+  });
+
 
   // THE ARMOURY IS AN INVENTORY (#90). What the picker offers is what the
   // profile HAS, and that is one predicate with one home in the model — the
