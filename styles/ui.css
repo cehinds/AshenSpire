@@ -978,8 +978,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    LAW 4. `min-height` is the ergonomic floor and it is text-independent, the
    caret and count grow with Text size because they are glyphs, and the header
    grows INTRINSICALLY off its own content — a floor plus `height: auto`, never
-   a multiple of the text unit. LAW 3 CLAUSE 4 is answered in the markup: the
-   control carries `data-tip`, so touch and pad see it too. */
+   a multiple of the text unit.
+
+   LAW 3 CLAUSE 4 is answered by `attachTooltip(btn, …)` in equipment.js, and
+   this comment said `data-tip` until 2026-08-08 — Sunna. Nothing in this tree
+   reads that attribute. Viki caught the same sentence in the JS, fixed the
+   mechanism there, and the CSS kept the retracted claim: one fact, two homes,
+   and the copy that was not rebuilt is the one that stayed wrong. Named here
+   rather than silently swapped, because a stale comment asserting a control is
+   accessible is the failure mode this clause exists for. */
 .armoury [data-role='context'] > .region-head {
   display: flex; align-items: center;
   border-bottom: 1px solid var(--line-soft);
@@ -987,7 +994,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury [data-role='context'][data-collapsed='1'] > .region-head { border-bottom: none; }
 .region-fold {
   display: flex; align-items: center; gap: 0.6rem; width: 100%;
-  min-height: 44px; height: auto; padding: 0.4rem 0;
+  /* `var(--tap-floor)`, not a bare `44px` — Sunna, 2026-08-08, and this is my
+     own #37 ruling applied to the control that carries it. The whole app is
+     scaled by `zoom: var(--ui-zoom)` on <body>, so a bare 44px below body is 44
+     LOCAL px and renders at 44 x zoom on glass. Measured on the shipped bundle
+     before this line changed: 44.00 device px at 1200x730 (zoom 1.00), 39.59 at
+     390x844 (0.90), 32.55 at 320x640 (0.74) — the smallest phone got the
+     smallest target, which is the same shape of defect menufit was written for.
+     --tap-floor divides the 44 by the zoom in base.css, so the floor means 44 ON
+     GLASS at every UI size; it is the identical two-line fix .ov-tab and
+     .choice-group .choice already carry. A floor is not a ceiling: `height:
+     auto` is untouched, so Text XL still grows the bar on its own glyphs. */
+  min-height: var(--tap-floor); height: auto; padding: 0.4rem 0;
   background: none; border: none; cursor: pointer;
   color: var(--muted); font-family: inherit; text-align: left;
 }
