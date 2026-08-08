@@ -134,6 +134,38 @@ export const balance = {
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).
     textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },
+    // MINIMUM TAP SIZE (Settings → Accessibility). THE ONE HOME OF THE 44.
+    //
+    // It used to be the literal `44px` inside `--tap-floor` in styles/base.css.
+    // Constantine: "just make the tabs about 20% smaller or the size
+    // configurable or scalable with UI or both" — and then, on the 44 floor,
+    // "actually, I think it should be able to go smaller than 44px." Sunna
+    // measured why the second half of the first sentence could never answer
+    // him: `calc(44px / var(--ui-zoom))` under `body { zoom }` renders
+    // 44 x zoom / zoom, so the floored controls are the one part of the
+    // interface UI size cannot reach — 44.00 device px in all 20 UI-size x
+    // shape cells, zero variance. So it is configurable, and this is the data.
+    //
+    // `sizes` IS THE CLOSED SET, largest first — that order is the order the
+    // chips draw in and the order the row reads. The settings row derives its
+    // `choices` and its `def` from here; nothing restates them.
+    //
+    // `missRate` is what the RESEARCH says, and ONLY where it says anything.
+    // Two points exist: WCAG 2.1 AAA (SC 2.5.5) is 44x44 CSS px, WCAG 2.2 AA
+    // (SC 2.5.8) is 24x24. 36 and 30 sit between them and carry no entry ON
+    // PURPOSE — an interpolated statistic is a fabricated one, and the cost
+    // line below 44 says less about them rather than inventing a number
+    // (Sunna's ruling; Law 0 clause 5 is the same sentence about derivation).
+    //
+    // ADDING A FIFTH SIZE IS A ROW HERE AND NOTHING ELSE: it appears as a chip,
+    // it applies, and it gets a cost line with no percentage unless someone
+    // adds one. Removing `missRate` for a size removes the percentage and keeps
+    // the sentence. That is the falsifier for Law 0 on this control.
+    tapSize: {
+      def: 44,
+      sizes: [44, 36, 30, 24],
+      missRate: { 44: '1 in 30', 24: '1 tap in 7' },
+    },
     // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
     // renderer emits them as rem (÷10).
     spriteTiers: {

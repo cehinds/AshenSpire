@@ -56,7 +56,7 @@ import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize } from '../src/ui/screens/settings.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -2467,6 +2467,76 @@ export async function runTests({ artManifest = null } = {}) {
     // settingOn (no DOM here, so applyDisplaySettings is unreachable from this
     // suite), and that the resulting palette clears WCAG. The second is measured
     // from rendered pixels by `node tools/contrast-audit.mjs --gate`.
+  });
+
+  // ---- 35a. Minimum tap size: one home, both edges, and bad data is loud ----
+  //
+  // Numbered 35a because it is the same subject as 35 — a default that must
+  // resolve from ONE home — for the setting that gives the 44 in `--tap-floor`
+  // a home at all. The headless half: the closed set, the sparse store, and
+  // the refusal. The RENDERED half is `node tools/tapsize.mjs`, which is the
+  // only thing that can say a control actually measured 24 device px, and this
+  // test cannot and does not claim it.
+  test('35a. the tap floor is one home, defaults to 44, and a bad stored value is refused by name', () => {
+    const spec = REG.balance.ui.tapSize;
+
+    // ONE HOME. The four sizes and the default are content, not code: the row
+    // derives `choices` and `def` from here. If someone re-types them in
+    // settings.js this test still passes — what it can prove is that the
+    // content home exists, is the closed set the resolver enforces, and holds
+    // the default the resolver returns.
+    assert(Array.isArray(spec.sizes) && spec.sizes.length >= 2, 'balance.ui.tapSize.sizes is the closed set');
+    eq(spec.def, 44, 'the default is 44 — today, to the pixel');
+    eq(spec.sizes[0], Math.max(...spec.sizes), 'sizes are listed largest first (the order the chips draw)');
+    eq(spec.def, Math.max(...spec.sizes), 'the default is the largest size — nobody who never opens it sees a pixel move');
+    for (const s of spec.sizes) eq(Number.isFinite(s) && s > 0, true, `size ${s} is a positive number`);
+
+    // EDGE 1 — the player who never touches it. An empty store is exactly what
+    // a first-boot player has in sote_meta_v1.
+    eq(resolveTapSize({}).px, 44, 'first boot gets 44');
+    eq(resolveTapSize({}).bad, false, 'an absent key is not bad data — a sparse store is the normal state');
+    eq(resolveTapSize(undefined).px, 44, 'no settings object at all still resolves');
+
+    // EDGE 2 — every value in the closed set applies, including the smallest.
+    for (const s of spec.sizes) {
+      const r = resolveTapSize({ tapFloor: String(s) });
+      eq(r.px, s, `chosen ${s} applies as ${s}`);
+      eq(r.bad, false, `${s} is in the closed set`);
+    }
+    eq(resolveTapSize({ tapFloor: '24' }).px, 24, 'the bottom of the dial is a real value, not a clamp back to 44');
+
+    // BAD DATA IS LOUD (Law 1 clause 5). A hand-edited save, an older build, a
+    // restored profile from a tree with a different set. It renders the
+    // default because it must render something — and it must NOT do that
+    // silently, which is what `bad` exists to carry to both callers.
+    for (const junk of ['32', '0', '-24', '44px', 'large', 'S', {}, [], true, NaN]) {
+      const r = resolveTapSize({ tapFloor: junk });
+      eq(r.px, 44, `junk ${JSON.stringify(junk)} still renders something`);
+      eq(r.bad, true, `junk ${JSON.stringify(junk)} is reported as bad, not silently defaulted`);
+    }
+    // A NUMBER IS NOT JUNK, and I got that wrong on the first pass: I asserted
+    // numeric 44 would be refused, and it is accepted, because the resolver
+    // normalises with String() before testing membership. Accepting it is the
+    // right behaviour and the comment was the defect — the chips write strings
+    // into the store, but an older build or a hand-edited save can hold a
+    // number, and 24 typed as a number is an unambiguous ask. Bad data is a
+    // value OUTSIDE the set, never a value spelled in a different type.
+    for (const s of spec.sizes) {
+      const r = resolveTapSize({ tapFloor: s });
+      eq(r.px, s, `numeric ${s} normalises to ${s}`);
+      eq(r.bad, false, `numeric ${s} is not bad data`);
+    }
+
+    // THE PERCENTAGES ARE ONLY WHERE RESEARCH IS. WCAG 2.1 AAA (2.5.5) is
+    // 44x44 and WCAG 2.2 AA (2.5.8) is 24x24; the sizes between them have no
+    // measurement, and an interpolated statistic is a fabricated one.
+    const rated = Object.keys(spec.missRate).map(Number).sort((a, b) => b - a);
+    eq(rated.join(','), '44,24', 'exactly the two sizes with research carry a rate');
+    for (const s of rated) assert(spec.sizes.includes(s), `a rate is only attached to a real size (${s})`);
+
+    // What this does NOT check, said out loud: that main.js writes
+    // `--tap-target` (no DOM here), that the stylesheet reads it, or that any
+    // control rendered at any height. All three are `node tools/tapsize.mjs`.
   });
 
   // ---- 35b. SFX recipes are data, and a malformed recipe names itself (#46) -

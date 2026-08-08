@@ -42,7 +42,7 @@ import { mountShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
-import { openSettings, settingOn, showSettingsNotice } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, resolveTapSize } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -56,6 +56,7 @@ import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from '
 import { sfx } from './ui/sfx.js';
 import { initAudio } from './ui/audio.js';
 import { surfaceReport } from './ui/surfaces.js';
+import { dlog } from './ui/debuglog.js';
 
 const app = document.getElementById('app');
 
@@ -354,6 +355,32 @@ function applyUiScale(settings) {
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
 }
 
+// MINIMUM TAP SIZE → `--tap-target` on <html>, read by `--tap-floor` in
+// base.css and through it by every floored rule (`.set-tab`, `.ov-tab`,
+// `.choice`, `.region-fold`). Written HERE, beside applyUiScale, because the
+// two custom properties are the same species: one number the player chose,
+// resolved once by the app and handed to the stylesheets, which measure
+// nothing. The stylesheet holds no copy of the constant — see base.css.
+//
+// LOUD ON BAD DATA (Law 1 clause 5). resolveTapSize distinguishes ABSENT (the
+// sparse store's normal state — the default, nothing to say) from PRESENT AND
+// NOT IN THE CLOSED SET (a hand-edited save, an older build, a profile
+// restored from a tree with a different set). The second still has to render
+// something and renders the default — but it says so, by name, with the value
+// it refused, in the log the player can copy out of Settings → Advanced. A
+// rejected setting that silently becomes 44 is the "it doesn't stick" bug
+// nobody can ever reproduce.
+function applyTapSize(settings) {
+  const { px, stored, bad } = resolveTapSize(settings);
+  document.documentElement.style.setProperty('--tap-target', `${px}px`);
+  if (bad) {
+    const msg = `settings.tapFloor: stored value ${JSON.stringify(stored)} is not one of `
+      + `${UI.tapSize.sizes.join(', ')} — applying the default ${px} and saying so`;
+    dlog('ERROR', msg);
+    console.warn(msg);
+  }
+}
+
 // Re-flex Auto sizing whenever the window changes. Only recomputes for Auto and
 // only touches the zoom, so it's cheap. Also re-applies shortly after boot and
 // on `load` — some environments report tiny window dims until layout settles,
@@ -421,6 +448,10 @@ function applyDisplaySettings(settings) {
   root.setProperty('--accent-rgb', accent.rgb);
   // UI size — zoom the whole app (see applyUiScale). Auto flexes with the window.
   applyUiScale(settings);
+  // Minimum tap size — the floor every floored rule is measured from. AFTER
+  // applyUiScale for readability only: `--tap-floor` divides one by the other
+  // at use time, so neither write depends on the other's order.
+  applyTapSize(settings);
   setAnimSpeed(settings.animSpeed || 'normal');
   audio.setVolumes(settings);
   // Re-point external music only when the folder actually changed (avoids

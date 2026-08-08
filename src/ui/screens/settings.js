@@ -29,7 +29,7 @@ const ROWS = [
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: true,
+    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: appliedHtml,
     note: 'Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.' },
   { cat: 'Display', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
@@ -94,6 +94,29 @@ const ROWS = [
   { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'M',
     choices: ['S', 'M', 'L', 'XL'], label: 'Text size',
     note: 'Scale all interface text and sizing together (sets the root size). M is default; L/XL aid readability. Stacks with UI size.' },
+  // Constantine, twice: "just make the tabs about 20% smaller or the size
+  // configurable or scalable with UI or both", then "actually, I think it
+  // should be able to go smaller than 44px." Range 24–44 is Marina's call, and
+  // it is told to him as a choice we made rather than a limit he ran into: we
+  // let it go below 44 as asked and stopped at 24, WCAG 2.2 AA's minimum. His
+  // no is free.
+  //
+  // NUMBERS, NOT S/M/L/XL. Text size is S/M/L/XL and UI size is S/M/L/XL, both
+  // within a few rows of this one. A third four-letter ladder doing a third job
+  // is Law 4's defect — two controls with one job, the weaker reading as broken
+  // — with better manners. These are the numbers he typed.
+  //
+  // ACCESSIBILITY, NOT DISPLAY: it sits with Text size, High contrast and
+  // Reduced motion because it is an ergonomic floor, not a look.
+  //
+  // DEFAULT 44 = TODAY, TO THE PIXEL. Nobody who never opens this sees anything
+  // move — the same principle `quickNav: def 'off'` already carries above.
+  // `choices` and `def` are DERIVED from balance.ui.tapSize; the four numbers
+  // are not written here, or the closed set would have two homes.
+  { cat: 'Accessibility', key: 'tapFloor', type: 'choice', def: String(UI_DEFAULTS.tapSize.def),
+    choices: UI_DEFAULTS.tapSize.sizes.map(String), label: 'Minimum tap size',
+    applied: tapCostHtml,
+    note: 'How small a button, tab, or option is allowed to get. 44 is the size a fingertip reliably hits; smaller fits more on screen.' },
   { cat: 'Accessibility', key: 'colorblindSafe', def: false, label: 'Colorblind-friendly',
     note: 'Shift danger/heal/blight/frost colors to a more distinguishable palette.' },
   { cat: 'Accessibility', key: 'reduceFlashes', def: false, label: 'Reduce flashes',
@@ -270,7 +293,7 @@ function rowHtml(settings, r) {
       .map((c) => `<button class="choice${c === cur ? ' on' : ''}" data-key="${r.key}" data-val="${c}">${c.toUpperCase()}</button>`)
       .join('');
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${r.applied ? appliedHtml(settings) : ''}</div>
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
         <div class="choice-group">${opts}</div>
       </div>`;
   }
@@ -282,6 +305,100 @@ function rowHtml(settings, r) {
         <span class="knob"></span>
       </button>
     </div>`;
+}
+
+// ---- the line under a row that says what the choice actually means ---------
+//
+// `applied:` USED TO BE `true` AND MEANT ONE FUNCTION. One row had it, and
+// `rowHtml` called `appliedHtml` by name — a flag whose only legal value stood
+// for a function the flag could not name. The second row that wants a line
+// under it (Minimum tap size) would have made that an `if` per key, which is
+// exactly the shape Law 1 clause 3 forbids one layer down: `if (key === …)`
+// deciding behaviour that the row could have declared.
+//
+// So the field HOLDS THE FUNCTION. That is Law 0 clause 2 said honestly — a
+// row that wants a derived line under it is data, and the derivation is a word,
+// authored in code, joined here by the row that asks for it. It is the same
+// declaration/handler join `src/ui/surfaces.js` makes for navigable sets, at
+// one row's scale.
+//
+// THE SLOT IS ALWAYS RENDERED, even when the line is empty. A function may
+// legitimately say nothing (Minimum tap size is SILENT at 44 — Sunna: "a state
+// that needs no words needs silence"), and a slot that only exists while it has
+// something to say is a slot `refreshApplied` cannot find the moment it starts
+// having something to say. Empty div, no padding, no margin: zero height, no
+// stylesheet change.
+function appliedSlot(settings, r) {
+  if (!r.applied) return '';
+  return `<div class="set-applied-slot" data-applied="${r.key}">${r.applied(settings, r) || ''}</div>`;
+}
+
+/**
+ * resolveTapSize(settings) → { px, stored, bad }
+ *
+ * THE ONE HOME FOR "what tap floor is in force", asked by the settings row and
+ * by applyTapSize() in src/main.js. The closed set and the default are read off
+ * the row, which reads them off `balance.ui.tapSize` — so the four numbers are
+ * written once, in content, and nothing here restates them.
+ *
+ * `bad` IS THE POINT, and it is Law 1 clause 5. A sparse store is normal — an
+ * untouched key is simply absent, and absent resolves to the default with
+ * nothing to report. A key that is PRESENT and not in the closed set is bad
+ * data: a hand-edited save, an older build's value, a restored profile from a
+ * tree where the set was different. It still has to render something, so it
+ * renders the default — but it must not do that SILENTLY, which is the failure
+ * that gets called "the setting doesn't stick". `bad` is what lets both callers
+ * say so: main.js writes it into the command log by name, and the row prints
+ * the rejected value where the choice is made.
+ */
+export function resolveTapSize(settings) {
+  const row = ROWS.find((r) => r.key === 'tapFloor');
+  const def = Number(row.def);
+  const stored = (settings || {}).tapFloor;
+  if (stored === undefined || stored === null || stored === '') {
+    return { px: def, stored: null, bad: false };
+  }
+  const s = String(stored);
+  if (row.choices.includes(s)) return { px: Number(s), stored: s, bad: false };
+  return { px: def, stored: s, bad: true };
+}
+
+// THE COST LINE. Sunna's ruling, and it is her own rule from the day before
+// aimed at her own proposal: "a line that says the same thing every time you
+// open the screen is not a warning, it is decoration with a worried face." So
+// the NOTE is constant and carries no percentages, and THIS line appears only
+// below the largest size, and changes with the value chosen.
+//
+// THE PERCENTAGES ARE NOT WRITTEN HERE. `balance.ui.tapSize.missRate` carries
+// one entry per size that has research behind it — 44 and 24, the two points
+// WCAG gives us — and this function prints a number only where an entry exists.
+// 36 and 30 get the sentence and no statistic, because interpolating between
+// two measured points would be fabricating one, and a fabricated number in a
+// player-facing line is the worst place this house could put one.
+//
+// The leading "NN px —" is the one thing I added to Sunna's wording: the
+// dispatch asks the line to NAME THE VALUE CHOSEN, and without it 36 and 30
+// render the identical sentence — a line that does not change when the setting
+// does, which is the test she set for it. Her sentence is untouched underneath.
+function tapCostHtml(settings) {
+  const { px, stored, bad } = resolveTapSize(settings);
+  const sizes = UI_DEFAULTS.tapSize.sizes;
+  const max = Math.max(...sizes);
+  // Bad data is loud HERE too, not only in the log: the player who typed 32
+  // into a save file is the one person who needs to be told 32 is not a size.
+  const badLine = bad
+    ? `<p class="set-applied limited">Stored value ${esc(String(stored))} is not one of `
+      + `${esc(sizes.join(', '))} — using ${px}.</p>`
+    : '';
+  if (px >= max) return badLine;
+  const rate = UI_DEFAULTS.tapSize.missRate;
+  const here = rate[px];
+  const there = rate[max];
+  const tail = here && there
+    ? `: about ${here} misses here, against ${there} at ${max}`
+    : '';
+  return `${badLine}<p class="set-applied">${px} px — below the size a fingertip`
+    + ` reliably hits${tail}.</p>`;
 }
 
 // EldenSpire#26 — SHOW THE VALUE ACTUALLY APPLIED.
@@ -323,7 +440,11 @@ function appliedHtml(settings) {
   // under-served, and is told nothing. A five-word pointer to a sibling control
   // cannot be wrong; a condition deciding when she deserves to see it can, and
   // this week has been a week of conditions that were. Wording is Sunna's.
-  return `<p class="set-applied${limited ? ' limited' : ''}" data-applied="uiScale">`
+  // `data-applied` lives on the SLOT now (appliedSlot, above), not on this
+  // paragraph — one row, one slot, one key, whether or not the line has
+  // anything to say this frame. A selector of `[data-applied="uiScale"]` still
+  // resolves; it lands on the wrapper instead of the paragraph inside it.
+  return `<p class="set-applied${limited ? ' limited' : ''}">`
     + (limited
       ? `Showing ${shown} — the largest that fits your screen (${key.toUpperCase()} is ${asked.toFixed(2)}\u00d7)`
       : `Showing ${shown}`)
@@ -333,13 +454,20 @@ function appliedHtml(settings) {
 
 // Re-read after the orchestrator has applied the change, and on resize, because
 // Auto's applied value moves with the window while the chosen setting does not.
+//
+// EVERY SLOT ON THE PANEL, not a named one. It used to replace the uiScale
+// paragraph by selector, which meant the second row with a derived line under
+// it would need this function to learn its key. It reads the slots the panel
+// actually drew and asks each row's own function — so a third row costs nothing
+// here, and a line that is EMPTY this frame (Minimum tap size at 44) still has
+// a slot to come back into. Refilling rather than replacing is what makes the
+// empty case work at all.
 function refreshApplied(container, settings) {
-  const el = container.querySelector('[data-applied="uiScale"]');
-  if (!el) return;
-  const tmp = document.createElement('div');
-  tmp.innerHTML = appliedHtml(settings);
-  const next = tmp.firstElementChild;
-  if (next) el.replaceWith(next);
+  container.querySelectorAll('[data-applied]').forEach((slot) => {
+    const row = ROWS.find((r) => r.key === slot.dataset.applied);
+    if (!row || !row.applied) return;
+    slot.innerHTML = row.applied(settings, row) || '';
+  });
 }
 
 function isFullscreen() {
@@ -512,7 +640,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // AFTER onChange, which is what applies the zoom. Reading before it would
       // report the previous value and the readout would always be one click
       // behind — a display that lies more quietly than the one it replaced.
-      if (btn.dataset.key === 'uiScale') refreshApplied(container, settings);
+      //
+      // Unconditional, over every slot on the panel. The old `if (key ===
+      // 'uiScale')` was the row's identity written a second time in the wiring,
+      // and the second row with a derived line under it would have been a
+      // second clause. There are at most two slots on a panel; asking both is
+      // cheaper than remembering which one moved.
+      refreshApplied(container, settings);
     });
   });
 
