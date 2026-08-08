@@ -28,6 +28,24 @@
   --grace: #9fc3e8;
   --ember: #c9502e;
   --green: #7fd97f;
+  /* THE KEYWORD TINT CARD TEXT USES, and it is a token because it is a fact
+     about a WORD, not about a container. It had no token, so the one palette
+     that wanted a different answer had nowhere to put it and put it in a
+     SELECTOR instead (`body.cb-safe .card .ctext .st-bleed`, deleted below).
+     When the five mark rules re-keyed `.card .ctext` → `.ctext` so the Smith
+     preview could wear them too, every token-based rule came through for free
+     and that one hardcoded hex stayed behind on the old container — so under
+     Colorblind-friendly the SAME WORD read reddish-purple on a card face and
+     vermillion in the preview. The hex was the reason it could not follow.
+     Derived from --ember, not restated: in the default palette Bleed wears the
+     ember hue TODAY, and that is a derivation, not a copy — one home for the
+     value. Colorblind-friendly overrides it once, below, which is the only
+     place the two diverge.
+     OPEN, AND FREJA'S, NOT MINE: whether the DEFAULT palette should diverge
+     too. It does not today — a Bleed keyword and a number the upgrade made
+     WORSE both render rgb(201,80,46) on every screen, one hue doing two jobs
+     on one line. Colorblind-friendly already answers that question `yes`. */
+  --bleed: var(--ember);
   /* THE TAP-TARGET FLOOR, and it has one home because it is one fact.
      Sunna's ruling under Law 4 (#37): "a floor of 44 device px measured after
      zoom; a floor is not a ceiling." The whole app is scaled by `zoom:
@@ -70,8 +88,13 @@ body.cb-safe {
   --frost: #56b4e9;
   --grace: #56b4e9;
   --rot: #e69f00;
+  /* Okabe-Ito reddish-purple — the SAME VALUE this palette already shipped,
+     moved out of a selector and into the token block where a palette decision
+     belongs. It now reaches card text wherever card text is drawn, which is
+     the whole change: the card face is byte-identical and the Smith/coop
+     upgrade preview stops calling a keyword by the danger hue. */
+  --bleed: #cc79a7;
 }
-body.cb-safe .card .ctext .st-bleed { color: #cc79a7; }
 
 /* Accessibility: readable headings swap the decorative serif for the UI sans. */
 body.readable-ui { --font-display: var(--font-body); }
