@@ -22,9 +22,28 @@
 //      (a) is Sunna's card verbatim. (b) is the thing (a) is a proxy FOR, and it
 //      survives a design baseline that changes. A fix that satisfies (a) by
 //      redefining designW and still bleeds is caught by (b), and only by (b).
-//   3. #23's second, independent mechanism: page-level scroll travel. Reported,
-//      never asserted — whether a phone SHOULD scroll the board is a design call
-//      and not this tool's to make.
+//   3. #23's second, independent mechanism: page-level scroll travel, PAGE-LEVEL
+//      AND NOTHING ELSE. It is still reported below and it is still not this
+//      tool's assertion — but read the next paragraph before citing it.
+//
+// WHAT THIS TOOL'S HORIZONTAL NUMBER IS NOT. `docOverflowX` is
+// `documentElement.scrollWidth - clientWidth`, and this app is `overflow:
+// hidden` at the root, so it is ZERO BY CONSTRUCTION — measured across 14
+// surfaces x 5 shapes at cd3da94, the document never once appeared as a
+// scroller. The `clipped()` walk below then deliberately skips any element with
+// a scrolling ancestor, and the bleed set is `.combat *`. So a green here is
+// SILENCE about whether a scroller three elements down moves sideways, not
+// coverage of it — the act map scrolls 401px across at 390x844 on the same tree
+// where every number in this file is green. That axis has its own home and its
+// own law: tools/axisfit.mjs, per SCROLL CONTAINER, over every ?shot= surface.
+// This file keeps bleed; that one keeps travel; neither restates the other.
+//
+// The sentence that used to sit at item 3 — "whether a phone SHOULD scroll the
+// board is a design call and not this tool's to make" — is DELETED, not
+// amended. Constantine made the design call on 2026-08-08 and the family wrote
+// it down as Law 5 (commons/laws.md, canonical, not restated here). An excuse
+// that outlives its defect is how a suite goes green over a bug, and this file
+// already deleted one knownOpen entry for exactly that reason.
 //
 // WHY LOCAL PX APPEAR NEXT TO VISUAL PX EVERYWHERE BELOW
 //   The app is zoomed by `body { zoom: var(--ui-zoom) }`. Hit-testing and
@@ -509,10 +528,13 @@ async function main() {
         const shown = fit.literal.all.map((c) => `${c.name} ${c.w} -> ${n2(c.lhs)}${c.fits ? ' FITS' : ''}`).join(' · ');
         ok(fit.literal.holds, `${name}: #23 (a) LITERAL — the applied zoom ${fit.z} fits a baseline the app is drawn for: ${shown} <= innerWidth ${fit.literal.rhs}`);
       }
-      ok(fit.docOverflowX <= 0.5, `${name}: #23 (b) OBSERVATIONAL — nothing overflows the document horizontally (scrollWidth - clientWidth = ${n2(fit.docOverflowX)})`);
+      // KEPT, AND NAMED FOR WHAT IT IS. This assertion is about the DOCUMENT.
+      // It cannot fail while the root is overflow:hidden, so passing it is not
+      // evidence about any scroller inside the app — tools/axisfit.mjs owns that.
+      ok(fit.docOverflowX <= 0.5, `${name}: #23 (b) OBSERVATIONAL — nothing overflows the DOCUMENT horizontally (scrollWidth - clientWidth = ${n2(fit.docOverflowX)}; says nothing about a scroll container inside it — axisfit.mjs)`);
       ok(fit.bleed.length === 0, `${name}: #23 (b) OBSERVATIONAL — no required element crosses a viewport edge${fit.bleed.length ? ` (${fit.bleed.map((b) => `${b.sel} by ${n2(b.worst)}px`).join(', ')})` : ''}`);
     }
-    console.log(`    page scroll travel: ${n2(fit.pageScrollY)}px vertical, ${n2(fit.docOverflowX)}px horizontal · worst horizontal bleed on the board: ${n2(fit.worstBleed)}px (${fit.worstBleedSel})`);
+    console.log(`    page scroll travel: ${n2(fit.pageScrollY)}px vertical, ${n2(fit.docOverflowX)}px horizontal (DOCUMENT ONLY — zero by construction here; per-container travel is tools/axisfit.mjs) · worst horizontal bleed on the board: ${n2(fit.worstBleed)}px (${fit.worstBleedSel})`);
 
     const grids = {};
     for (const sel of CONTROLS) {
