@@ -659,11 +659,11 @@ async function cdp(p) {
 const c = await cdp(CDP_PORT);
 await c.send('Page.enable');
 await c.send('Runtime.enable');
-// A screen that fails to mount because its boot THREW must say so. Without
-// this a MISS reads as "slow" and gets waited on harder, which is how a real
-// error hides behind a longer deadline.
-const pageErrors = [];
-c.onEvent = (m) => {};
+// A screen that fails to mount because its boot THREW must say so — and it now
+// DOES, in the page: an uncaught error raises `.validation-banner`
+// (src/ui/debuglog.js), which the assertion below has always scored as a MISS.
+// So this file needs no error subscription at all, and the three dead variables
+// that pretended to be one are gone. See the note at the console block.
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ev = async (e) => {
   const r = await c.send('Runtime.evaluate', { expression: e, returnByValue: true });
@@ -713,11 +713,22 @@ async function waitFor(selector, { deadline = 8000, quiet = 220 } = {}) {
   return null; // caller reports it as a MISS, with the deadline named
 }
 
-// Console errors are part of "rendered as meant": a screen that paints while
-// throwing is not a green. Collected per shot, reported with it.
-let consoleErrors = [];
-await c.send('Log.enable').catch(() => {});
-await c.send('Runtime.consoleAPICalled', {}).catch(() => {});
+// A SUBSCRIPTION TO THE WRONG CHANNEL IS WORSE THAN NONE, BECAUSE IT READS AS
+// COVERAGE. Deleted from here: `const pageErrors = []`, `c.onEvent = (m) => {}`,
+// `let consoleErrors = []`, and two comments promising that "a screen that
+// paints while throwing is not a green — collected per shot, reported with it."
+// NOTHING EVER WROTE TO THOSE ARRAYS AND NOTHING EVER READ THEM.
+//
+// `c.send('Runtime.consoleAPICalled', {})` was an EVENT NAME USED AS A COMMAND,
+// its protocol error swallowed by `.catch(() => {})`. And `Log.enable` was the
+// worst of the three because it is a REAL, well-formed subscription — to a
+// channel measured, on this exact failure, to carry none of it: six channels
+// watched at once, and `Log.entryAdded` recorded nothing while four others had
+// the TypeError with its stack. A tool wired to `Log` reports clean while the
+// button is dead.
+//
+// What replaces it is not a fourth subscriber. The failure is now IN THE PAGE,
+// and `!seen.banner` below already reads it.
 
 let misses = 0;
 const rows = [];
@@ -729,7 +740,6 @@ for (const shape of SHAPES) {
   });
   for (const s of SCREENS) {
     if (only && s.name !== only) continue;
-    consoleErrors = [];
     // Clear storage before EVERY shot. Without this the crisis seed survives
     // into the next shot's boot and photographs the notice under another
     // screen's name — measured: `title` passed at 390x844 and "failed" at
