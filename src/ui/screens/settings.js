@@ -113,9 +113,15 @@ const ROWS = [
   // move — the same principle `quickNav: def 'off'` already carries above.
   // `choices` and `def` are DERIVED from balance.ui.tapSize; the four numbers
   // are not written here, or the closed set would have two homes.
+  //
+  // `selfUndo` — THIS ROW'S CHIPS ARE SIZED BY THE VALUE THIS ROW SETS. Press
+  // 24 and the way back to 44 is a 24 px target. Sunna's rule, out of Marina's
+  // default: a control that can shrink itself must never shrink its own undo.
+  // Declared as a CHARACTERISTIC rather than handled by name, so the stylesheet
+  // keys on the property and not on `tapFloor` (Law 1 clause 3, one layer up).
   { cat: 'Accessibility', key: 'tapFloor', type: 'choice', def: String(UI_DEFAULTS.tapSize.def),
     choices: UI_DEFAULTS.tapSize.sizes.map(String), label: 'Minimum tap size',
-    applied: tapCostHtml,
+    applied: tapCostHtml, selfUndo: true,
     note: 'How small a button, tab, or option is allowed to get. 44 is the size a fingertip reliably hits; smaller fits more on screen.' },
   { cat: 'Accessibility', key: 'colorblindSafe', def: false, label: 'Colorblind-friendly',
     note: 'Shift danger/heal/blight/frost colors to a more distinguishable palette.' },
@@ -294,7 +300,7 @@ function rowHtml(settings, r) {
       .join('');
     return `<div class="set-row">
         <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
-        <div class="choice-group">${opts}</div>
+        <div class="choice-group"${r.selfUndo ? ' data-self-undo="1"' : ''}>${opts}</div>
       </div>`;
   }
   // 'action' rows (e.g. fullscreen) render as a live toggle reflecting state.
@@ -470,6 +476,54 @@ function refreshApplied(container, settings) {
   });
 }
 
+/**
+ * anchorPressed(container, btn, wasAt) — keep the pressed control where the
+ * finger left it.
+ *
+ * SUNNA'S FLOOR, and it is a property this build has to satisfy rather than a
+ * nicety: *a control that changes layout must still be under the finger that
+ * changed it.* Minimum tap size is the case that produced the rule — its own
+ * chips are floored by the value it sets, and so is every floored control above
+ * it, so choosing a smaller size lifts the whole row up the page and the finger
+ * ends on empty background. Measured before this existed: pressing 36 moved the
+ * chip 36.4 device px, and 3 of 4 transitions left the chip behind.
+ *
+ * THE MECHANISM IS HERS: give the difference back through the scrolling pane's
+ * `scrollTop`, so nothing about the layout is faked and no element is moved.
+ *
+ * THE BOUNDARY IS HERS TOO AND SHE STATED IT UNPROMPTED: at `scrollTop 0` with
+ * SHRINKING content there is nothing to give back — you cannot scroll above the
+ * top of a pane. That is not a bug in this function, it is the arithmetic, and
+ * it is exactly where the 44 and 36 steps land when the panel is already at the
+ * top. This function reports nothing; `underfinger.mjs` measures which
+ * transitions it rescues and which fall in that hole, and the residual is handed
+ * back rather than papered over.
+ *
+ * Applied to EVERY choice row, not to this one by name. A row that changes no
+ * layout produces a delta of zero and pays nothing — cheaper than a list of
+ * which keys move the page, and a list is a second copy of a fact the layout
+ * already knows.
+ */
+function anchorPressed(container, btn, wasAt) {
+  if (typeof document === 'undefined' || !btn.isConnected) return;
+  const delta = btn.getBoundingClientRect().top - wasAt;
+  if (!delta) return;
+  // The nearest ancestor that can actually scroll. Asked of the live boxes, not
+  // assumed to be `.set-panel`: both doors mount this container differently and
+  // the modal scrolls at a different level than the in-run overlay.
+  for (let el = btn.parentElement; el; el = el.parentElement) {
+    const canScroll = el.scrollHeight > el.clientHeight + 1;
+    if (canScroll) {
+      const before = el.scrollTop;
+      el.scrollTop = before + delta;
+      // It moved as far as it could, which may be zero. Whatever is left is the
+      // hole Sunna named, and it belongs to the measurement, not to a retry.
+      if (el.scrollTop !== before) return;
+    }
+    if (el === container) break;
+  }
+}
+
 function isFullscreen() {
   return !!(document.fullscreenElement || document.webkitFullscreenElement);
 }
@@ -634,6 +688,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   container.querySelectorAll('.choice').forEach((btn) => {
     btn.addEventListener('click', () => {
+      // SUNNA'S FLOOR: a control that changes layout must still be under the
+      // finger that changed it. Read where the pressed chip is BEFORE the change
+      // lands, so the anchor below has something to aim at.
+      const wasAt = btn.getBoundingClientRect().top;
       btn.parentElement.querySelectorAll('.choice').forEach((b) => b.classList.toggle('on', b === btn));
       settings[btn.dataset.key] = btn.dataset.val;
       onChange({ [btn.dataset.key]: btn.dataset.val });
@@ -647,6 +705,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // second clause. There are at most two slots on a panel; asking both is
       // cheaper than remembering which one moved.
       refreshApplied(container, settings);
+      // ANCHOR LAST, and the order is load-bearing — it cost me a measurement.
+      // I anchored straight after onChange first, and the 44 step still lost the
+      // finger by 16.25 device px: the cost line above had not gone silent yet,
+      // so the anchor aimed at a layout that was one paragraph taller than the
+      // one the player ends up looking at. Everything that moves the page in
+      // response to this press has to have moved before the correction is read.
+      anchorPressed(container, btn, wasAt);
     });
   });
 
