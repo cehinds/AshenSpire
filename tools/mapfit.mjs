@@ -39,7 +39,17 @@
 //   node tools/mapfit.mjs --seeds BJORN1,BJORN2  --floors 1,4,7,10
 //   node tools/mapfit.mjs --quick              one shape, three seeds, entrance only
 //   node tools/mapfit.mjs --mutate             REINSTATE the defect; must go red
+//   node tools/mapfit.mjs --zoom Fit           sweep the COMPUTED frame
+//   node tools/mapfit.mjs --zoom 115           sweep one percentage
 //   CHROME=/path/to/chrome node tools/mapfit.mjs
+//
+// WITH NO --zoom THIS SWEEPS WHAT SHIPS, which since #107 is a percentage: Sunna
+// held the computed frame as the default because, arriving without the fog and
+// parchment that make a close frame read as intended, it reads as a map that has
+// been cropped. So the default row of this table is the game as played, and the
+// `Fit` row is what the player gets if they choose it. Both are worth a number
+// and they are not the same number — reporting only one would have been the
+// second copy of the mistake this tool was written to catch.
 //
 // OBSERVED RED, AND THE TWO HALVES NEEDED DIFFERENT KNOWN-BADS.
 //
@@ -88,6 +98,19 @@ const useDist = args.includes('--dist');
 const quick = args.includes('--quick');
 const mutate = args.includes('--mutate');
 const only = argOf('--only');
+// `--zoom Fit` / `--zoom 115` — WHICH MAP ZOOM IS UNDER TEST.
+//
+// Sunna's ruling on #107 put the shipping default back to a percentage and made
+// `Fit` a row the player chooses. Without this flag the tool would only ever
+// sweep whatever ships, and the computed frame — a code path a player can turn
+// on — would go unmeasured the moment it stopped being the default. Unset means
+// "sweep the default", which is the honest thing for a gate to do; naming a
+// value sweeps that value.
+const zoom = argOf('--zoom');
+if (zoom != null && zoom !== 'Fit' && !/^\d+$/.test(zoom)) {
+  console.error(`mapfit: --zoom takes 'Fit' or a percentage like 115, not '${zoom}'.`);
+  process.exit(2);
+}
 
 // PROVENANCE AFTER THE ARGUMENTS, NOT AT MODULE SCOPE. Eleven banners in this
 // tools/ directory name dist/AshenSpire.html from module scope — before `--dist`
@@ -215,6 +238,7 @@ async function main() {
   const findings = [];
   let cells = 0;
   console.log(`\nmapfit — ${useDist ? 'dist/AshenSpire.html' : 'source tree'} · ${shapes.length} shape(s) x ${seeds.length} seed(s) x ${positions.length} position(s)`
+    + `  ·  Map zoom: ${zoom == null ? 'the shipping default (no shotSettings)' : `'${zoom}' via shotSettings`}`
     + `${mutate ? '  ·  --mutate: the framing report is falsified after each frame settles' : ''}`);
 
   for (const shape of shapes) {
@@ -224,6 +248,7 @@ async function main() {
       for (const pos of positions) {
         const q = [`shot=map`, `shotSeed=${encodeURIComponent(seed)}`];
         if (pos !== 'entrance') q.push(`shotAt=${encodeURIComponent(pos)}`);
+        if (zoom != null) q.push(`shotSettings=${encodeURIComponent(JSON.stringify({ mapZoom: zoom }))}`);
 
         await cdp.send('Page.navigate', { url: `${base}?${q.join('&')}` }, sessionId);
         let up = false;
