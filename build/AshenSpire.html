@@ -20927,6 +20927,27 @@ const AI_DISCLOSURE = Object.freeze({
   // flag is about THIS wording, not about disclosure in general.
   approved: true,
 
+  // WHICH wording he approved — the sentence above says "any edit to the text
+  // below returns this to false", and until now nothing could tell whether that
+  // had happened. This is that sentence made checkable: the SHA-256 of every
+  // text in this file, in `allTexts()` order, as it stood when he approved it.
+  //
+  // It is NOT a second copy of the text. A second copy can drift in silence;
+  // this one exists in order to disagree, and `node tools/ai-disclosure.mjs
+  // --check` fails the moment it does. Saga found the flag's twin defect from
+  // the other side on 2026-08-07 — a stale `approved: false` in dist/ that no
+  // instrument in the tree could see — and named it rather than patch around
+  // it. Same hole, forward direction: edit a section body, forget the flag, and
+  // `approved: true` starts telling the record that Constantine signed off on
+  // words he has never read. Nothing else in the tree would notice.
+  //
+  // The digest is computed by the TOOL, not here: this module is data only, and
+  // importing node:crypto would put a Node core module in the browser bundle.
+  // To re-approve after an intended edit: `node tools/ai-disclosure.mjs
+  // --fingerprint` prints the new value, and changing it is the act of saying
+  // out loud that the wording moved.
+  approvedWording: 'sha256:adb8fd95ccef98b7d43338ae3d1366b8ffb4a67252fa878c9d93c7c0560ebb1c',
+
   /**
    * storeForm — the text pasted into Steam's AI-disclosure field, and the lead
    * paragraph of the in-product acknowledgement. ONE string, both surfaces.

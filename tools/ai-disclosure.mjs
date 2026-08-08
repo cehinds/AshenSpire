@@ -7,7 +7,11 @@
 //   node tools/ai-disclosure.mjs --full      print the whole in-product text
 //   node tools/ai-disclosure.mjs --evidence  print the verbatim commands a sceptic runs
 //   node tools/ai-disclosure.mjs --check     run everything: all seven texts × every
-//                                            shipped bundle, plus the runtime claim
+//                                            shipped bundle, the runtime claim, and
+//                                            whether `approved` still names THIS wording
+//   node tools/ai-disclosure.mjs --fingerprint
+//                                            print the digest to record in
+//                                            `approvedWording` after an approved edit
 //
 // WHY THE SEARCH PATTERNS LIVE HERE AND NOT BESIDE THE CLAIM. The disclosure
 // module names the AI vendor it discloses, so a pattern stored there matches its
@@ -20,6 +24,7 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { AI_DISCLOSURE, DISCLOSURE_PARTS, disclosureAsText } from '../src/content/aiDisclosure.js';
 
 const SURFACES = ['build/AshenSpire.html', 'dist/AshenSpire.html'];
@@ -57,6 +62,38 @@ function allTexts(d = AI_DISCLOSURE) {
     ...DISCLOSURE_PARTS.map((p) => ({ name: p.name, text: p.text })),
     ...d.sections.map((s) => ({ name: `section: ${s.heading}`, text: s.body })),
   ];
+}
+
+/**
+ * wordingFingerprint(d) → `sha256:…` over every text in `allTexts()` order.
+ *
+ * WHAT IT IS FOR. `approved` records that Constantine signed off on a wording.
+ * The module says, beside it, that any edit to the text returns the flag to
+ * false — and until this function existed that was a promise kept by memory.
+ * `--check` below is the only thing that can catch it being forgotten, and a
+ * forgotten flag does not look broken: the About screen still renders, the
+ * bundles still match the module, every existing check stays green, and the
+ * record quietly claims he approved words he has never read.
+ *
+ * It hashes exactly what allTexts() returns, which is what the bundle check
+ * already binds — one list, two uses, so a text that escapes the fingerprint
+ * escapes the bundle check too and is caught there.
+ *
+ * NOT A SECOND COPY of the text. A second copy drifts in silence; this exists
+ * in order to disagree out loud, and it holds no words of its own.
+ */
+export function wordingFingerprint(d = AI_DISCLOSURE) {
+  const blob = allTexts(d).map(({ name, text }) => `${name}\n${text}`).join('\n\n');
+  return `sha256:${createHash('sha256').update(blob, 'utf8').digest('hex')}`;
+}
+
+if (process.argv[2] === '--fingerprint') {
+  console.log(wordingFingerprint());
+  console.log('');
+  console.log('Paste this into `approvedWording` in src/content/aiDisclosure.js ONLY when the');
+  console.log('current wording is the wording that was approved. Changing it is the act of');
+  console.log('saying out loud that the text moved — it is not a build step.');
+  process.exit(0);
 }
 
 if (process.argv[2] === '--evidence') {
@@ -111,8 +148,36 @@ if (process.argv[2] === '--check') {
     }
   }
 
+  // (3) THE APPROVAL AND THE WORDING IT APPROVES. Saga found this hole from the
+  // other side: `--check` did not cover `approved`, so dist/ shipped a stale
+  // `false` and nothing in the tree could see it. This is the same hole facing
+  // forward — edit a section body, forget the flag, and `approved: true` claims
+  // he signed off on words he has never read, with every other check green.
+  // Three states, and the middle one is the one that used to be invisible.
+  const fp = wordingFingerprint();
+  if (!AI_DISCLOSURE.approved) {
+    console.log(`PASS  approved=false — no wording is claimed as approved, so nothing to bind`);
+  } else if (!AI_DISCLOSURE.approvedWording) {
+    failing += 1;
+    console.log(`FAIL  approved=true but approvedWording is missing — the flag names no wording,`);
+    console.log(`      so it records nothing. Set approvedWording to ${fp}`);
+    console.log(`      only if the text below it is the text that was approved.`);
+  } else if (AI_DISCLOSURE.approvedWording !== fp) {
+    failing += 1;
+    console.log(`FAIL  THE WORDING CHANGED AFTER IT WAS APPROVED — approved=true is now a claim`);
+    console.log(`      about text nobody signed off on.`);
+    console.log(`      approved: ${AI_DISCLOSURE.approvedWording}`);
+    console.log(`      current:  ${fp}`);
+    console.log(`      Either restore the wording, or set approved:false and ask again — and if`);
+    console.log(`      the edit IS approved, \`node tools/ai-disclosure.mjs --fingerprint\` prints`);
+    console.log(`      the value to record.`);
+  } else {
+    console.log(`PASS  approved=true binds THIS wording (${fp.slice(0, 23)}…)`);
+  }
+
   console.log('');
-  console.log(`${failing} failing check(s). ${texts.length} texts × ${bundlesChecked} bundle(s), plus ${EVIDENCE.length} runtime commands.`);
+  console.log(`${failing} failing check(s). ${texts.length} texts × ${bundlesChecked} bundle(s), plus ${EVIDENCE.length} runtime commands`);
+  console.log(`and the approval-to-wording binding.`);
   console.log('BOUNDARY: this covers every text the game renders and the runtime claim, on this');
   console.log('tree. It does NOT check the Steam store page — that text is pasted from this tool');
   console.log('by a human, and the human is the one link in the chain no check here covers. It');
