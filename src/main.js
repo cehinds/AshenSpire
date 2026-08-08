@@ -56,14 +56,16 @@ import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from '
 import { sfx } from './ui/sfx.js';
 import { initAudio } from './ui/audio.js';
 import { surfaceReport } from './ui/surfaces.js';
+// failureBanner is the ONE home for "the game says something is structurally
+// wrong" — the two boot checks below used to build that element by hand, and a
+// third hand-built copy is the defect this import exists to prevent.
+import { failureBanner } from './ui/debuglog.js';
 
 const app = document.getElementById('app');
 
 // ---- content validation at boot (SPEC §3.14) — loud, on-screen -------------
 const validation = validateContent(contentBundle);
 if (!validation.ok) {
-  const banner = document.createElement('div');
-  banner.className = 'validation-banner';
   // The header said 34 and the list showed 12 and nothing said the list was cut
   // (#67, Sunna's D19). A tuning pass that sweeps one field wrong makes exactly
   // that shape: fix twelve, reload, get a fresh twelve, and never learn how
@@ -72,11 +74,15 @@ if (!validation.ok) {
   // truncation is fine; hiding it was not.
   const shown = validation.errors.slice(0, 12);
   const hidden = validation.errors.length - shown.length;
-  banner.textContent =
-    `CONTENT VALIDATION FAILED (${validation.errors.length} errors)\n` +
+  // Wording unchanged; the ELEMENT is no longer built here. failureBanner() is
+  // the one home for "the game says something is structurally wrong", and this
+  // banner now carries the Command log door the uncaught-error one does.
+  failureBanner(
+    'boot:content',
+    `CONTENT VALIDATION FAILED (${validation.errors.length} errors)`,
     shown.map((e) => ` · ${e.path}: ${e.msg}`).join('\n') +
-    (hidden > 0 ? `\n · …and ${hidden} more — all ${validation.errors.length} are in the browser console.` : '');
-  document.body.prepend(banner);
+      (hidden > 0 ? `\n · …and ${hidden} more — all ${validation.errors.length} are in the browser console.` : '')
+  );
   console.error('Content validation errors:', validation.errors);
 }
 
@@ -92,12 +98,12 @@ if (!validation.ok) {
 {
   const missing = surfaceReport().filter((r) => r.missing.length);
   if (missing.length) {
-    const banner = document.createElement('div');
-    banner.className = 'validation-banner';
-    banner.textContent = 'NAVIGABLE SURFACE DECLARED WITH NO HANDLER\n'
-      + missing.flatMap((r) => r.missing.map((m) => ` · ${r.id}${m.member ? ` · ${m.member}` : ''}`
-        + ` ${m.why} — ${m.fix}`)).join('\n');
-    document.body.prepend(banner);
+    failureBanner(
+      'boot:surfaces',
+      'NAVIGABLE SURFACE DECLARED WITH NO HANDLER',
+      missing.flatMap((r) => r.missing.map((m) => ` · ${r.id}${m.member ? ` · ${m.member}` : ''}`
+        + ` ${m.why} — ${m.fix}`)).join('\n')
+    );
     console.error('[surfaces]', missing);
   }
 }
