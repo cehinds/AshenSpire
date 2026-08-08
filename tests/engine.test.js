@@ -46,7 +46,7 @@ import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, slotRungs, openedSets, visibleSets, rungFor, setCellState,
-  SLOT_RUNG_KIND, createLoadout, cycleSet,
+  SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
 } from '../src/model/loadout.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, emptyProgress, recordProgress, evaluateUnlocks, unlockView,
@@ -127,6 +127,14 @@ const REG = createRegistries(testBundle());
 // owner that has everything: the ownership gate has its own block (41) and
 // mixing the two would make either failure look like the other.
 const OWNS_EVERYTHING = { has: () => true };
+
+// #95 — the same shape one argument later. equipPiece also gates on WHETHER A
+// FIGHT IS ON, and that context is required for the same reason: a default of
+// "not in combat" fails OPEN, so every call site written after today would
+// re-arm mid-fight by saying nothing. Blocks that predate #95 are about the fit
+// and ownership gates, so they declare the context they were always assuming.
+const AT_CAMP = { inCombat: false };
+const MID_FIGHT = { inCombat: true };
 
 // deck: array of cardId strings or { id, up: true }
 function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, relicIds = [], flasks = [] } = {}) {
@@ -1519,9 +1527,9 @@ export async function runTests({ artManifest = null } = {}) {
     assert(run.loadout && run.loadout.sets.rightHand.length === 3, 'the right hand carries three sets');
     eq(run.loadout.sets.armor[0], 'default', 'the reaver starts in its one unlocked set');
 
-    equipPiece(REG, run.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING);
-    equipPiece(REG, run.loadout, 'rightHand', 1, 'greatsword', OWNS_EVERYTHING);
-    equipPiece(REG, run.loadout, 'armor', 0, 'oathsworn', OWNS_EVERYTHING);
+    equipPiece(REG, run.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, AT_CAMP);
+    equipPiece(REG, run.loadout, 'rightHand', 1, 'greatsword', OWNS_EVERYTHING, AT_CAMP);
+    equipPiece(REG, run.loadout, 'armor', 0, 'oathsworn', OWNS_EVERYTHING, AT_CAMP);
     stampDeck(REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
     eq(dmgOf(resolveCard(REG, aStrike)), 3, 'the deck itself is stamped with the dagger');
@@ -1627,14 +1635,14 @@ export async function runTests({ artManifest = null } = {}) {
 
     // ---- the gate is on the mutation, not on the screen -------------------
     const fresh = createRunState({ seed: 4, classId: 'reaver', registries: REG });
-    assert(!equipPiece(REG, fresh.loadout, 'leftHand', 0, 'greatsword', OWNS_EVERYTHING), 'the left hand refuses a right-handed weapon');
+    assert(!equipPiece(REG, fresh.loadout, 'leftHand', 0, 'greatsword', OWNS_EVERYTHING, AT_CAMP), 'the left hand refuses a right-handed weapon');
     eq(fresh.loadout.sets.leftHand[0], null, 'and a refusal leaves the slot exactly as it found it');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'buckler', OWNS_EVERYTHING), 'a left-hand piece goes in');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger', OWNS_EVERYTHING), "an 'either' piece goes in the left hand");
-    assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING), '…and in the right hand');
-    assert(!equipPiece(REG, fresh.loadout, 'rightHand', 0, 'buckler', OWNS_EVERYTHING), 'the kind gate still holds too');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'buckler', OWNS_EVERYTHING, AT_CAMP), 'a left-hand piece goes in');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), "an 'either' piece goes in the left hand");
+    assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, AT_CAMP), '…and in the right hand');
+    assert(!equipPiece(REG, fresh.loadout, 'rightHand', 0, 'buckler', OWNS_EVERYTHING, AT_CAMP), 'the kind gate still holds too');
     eq(fresh.loadout.sets.rightHand[0], 'dagger', 'and that refusal changed nothing either');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, null, OWNS_EVERYTHING), 'clearing a slot is always allowed');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'clearing a slot is always allowed');
     eq(fresh.loadout.sets.leftHand[0], null, 'and it clears');
 
     // The picker offers exactly what the mutation accepts. Not a claim about
@@ -1646,7 +1654,7 @@ export async function runTests({ artManifest = null } = {}) {
       for (const piece of allPieces) {
         const fits = fitsSlot(slot, piece);
         const probe = { sets: { [slot.id]: [null] }, active: {}, storage: [] };
-        eq(equipPiece(REG, probe, slot.id, 0, piece.id, OWNS_EVERYTHING), fits, `${slot.id} ← ${piece.id}: offer and mutation agree`);
+        eq(equipPiece(REG, probe, slot.id, 0, piece.id, OWNS_EVERYTHING, AT_CAMP), fits, `${slot.id} ← ${piece.id}: offer and mutation agree`);
         checked += 1;
         if (fits) offered += 1;
       }
@@ -1802,7 +1810,7 @@ export async function runTests({ artManifest = null } = {}) {
     assert(!addToStorage(run.loadout, 'katana', 8), 'the same piece does not stack');
     assert(!addToStorage(run.loadout, 'dagger', 1), 'storage respects its cap');
     assert(carriedIds(run.loadout).includes('katana'), 'carried counts what is in storage');
-    equipPiece(REG, run.loadout, 'rightHand', 0, 'greatsword', OWNS_EVERYTHING);
+    equipPiece(REG, run.loadout, 'rightHand', 0, 'greatsword', OWNS_EVERYTHING, AT_CAMP);
     assert(carriedIds(run.loadout).includes('greatsword'), 'and what is slotted');
   });
 
@@ -1861,10 +1869,10 @@ export async function runTests({ artManifest = null } = {}) {
     // because the only ownership check in the tree was the picker declining to
     // attach a click handler.
     const probe = createLoadout(REG, 'reaver');
-    assert(!equipPiece(REG, probe, 'rightHand', 0, 'greatsword', none),
+    assert(!equipPiece(REG, probe, 'rightHand', 0, 'greatsword', none, AT_CAMP),
       'an unowned armament cannot be equipped even when it fits');
     eq(probe.sets.rightHand[0], null, 'and the refusal left the slot alone');
-    assert(equipPiece(REG, probe, 'rightHand', 0, 'dagger', two), 'an owned one goes in');
+    assert(equipPiece(REG, probe, 'rightHand', 0, 'dagger', two, AT_CAMP), 'an owned one goes in');
 
     // ---- 6. the ladder: three states from two integers --------------------
     const rungs = slotRungs(REG, 'rightHand');
@@ -1950,18 +1958,6 @@ export async function runTests({ artManifest = null } = {}) {
     eq(rungFor(REG, rightHand, 1).id, rungs[0].id, 'and the visible lock always has a rung to name');
   });
 
-  // ---- 31c. the ladder gates the MUTATION, not just the screen ------------
-  //
-  // VIRA'S GATE OF #90, and her property in her words:
-  //
-  //     a set index the player may ACTIVATE must be one openedSets() calls open.
-  //
-  // It lands here rather than in tools/probes/ because she asked for exactly
-  // that: *"whoever fixes it deletes this file in the same act, because a
-  // property that lives beside the code that satisfies it is the second copy."*
-  // Her probe found 6 of 13 pairs at c43c908; both of its edges are below, and
-  // the third case (a rung actually earned) is mine — a bound that refuses
-  // everything would have satisfied her edge 1 on its own.
   test('31c. cycleSet refuses a set the ladder has not opened, and never strands a held one', () => {
     const rightHand = REG.equipment.slots.find((s) => s.id === 'rightHand');
     const rungs = slotRungs(REG, 'rightHand');
@@ -2003,6 +1999,119 @@ export async function runTests({ artManifest = null } = {}) {
     // first argument was a loadout, so the slot cannot resolve.
     assert(!cycleSet(fresh, 'rightHand', 0, { meta }), 'the pre-#90 signature cycles nothing');
   });
+
+  // ---- 31d. the inventory is VISIBLE in combat and the slots are SEALED ----
+  test('31d. a fight seals what a set holds without sealing which set is active', () => {
+    // Constantine, 2026-08-08: "I think you should be able to see your inventory
+    // in combat, just have the slots locked in combat only."
+    //
+    // THE WHOLE DISTINCTION IS TWO MUTATIONS, NOT ONE, and this block exists to
+    // keep them apart. A slot has N sets; a set holds a piece.
+    //   cycleSet   — which set is ACTIVE. A designed, PRICED mid-fight mechanic
+    //                (balance.equipment.swapCost), per-slot in equipSlots.csv.
+    //                Test 28 owns it and #95 does not touch it.
+    //   equipPiece — what a set HOLDS. Sealed for every slot once a fight is on.
+    // Sealing the first would delete a shipped feature; sealing only the screen
+    // would leave the second enforced by nothing.
+    const slots = (REG.equipment.slots || []);
+    assert(slots.length > 0, 'the fixture has slots to examine');
+
+    // ---- 1. both edges, over every slot, with the denominator asserted -----
+    let sealed = 0;
+    let cyclable = 0;
+    for (const slot of slots) {
+      eq(canEquip(REG, slot.id, { inCombat: false }).ok, true, `${slot.id}: at camp a set may be re-armed`);
+      const seal = canEquip(REG, slot.id, { inCombat: true });
+      eq(seal.ok, false, `${slot.id}: mid-fight it may not`);
+      assert(seal.reason.includes(slot.label), `${slot.id}: and the refusal names the slot — got: ${seal.reason || '(nothing)'}`);
+      sealed += 1;
+      if (canSwap(REG, slot.id, { inCombat: true }).ok) cyclable += 1;
+    }
+    eq(sealed, slots.length, 'every slot in the table was examined, not a lucky subset');
+    // THE CAPABILITY THAT MUST SURVIVE, asserted as a floor rather than assumed:
+    // if this ever reaches zero the priced swap has been deleted and test 28 is
+    // passing over a mechanic no slot can use.
+    assert(cyclable > 0, `at least one slot still cycles mid-fight (${cyclable} of ${slots.length})`);
+
+    // ---- 2. the gate is on the MUTATION, not on the screen ----------------
+    // Measured at 98fedde, before this change: this call returned true.
+    const held = createLoadout(REG, 'reaver');
+    assert(equipPiece(REG, held, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, AT_CAMP), 'it goes in at camp');
+    assert(!equipPiece(REG, held, 'rightHand', 0, 'greatsword', OWNS_EVERYTHING, MID_FIGHT),
+      'a piece you own and that fits is still refused mid-fight');
+    eq(held.sets.rightHand[0], 'dagger', 'and the refusal left the slot exactly as it was');
+
+    // ---- 3. putting a thing DOWN is re-arming too --------------------------
+    // Ownership has no opinion about clearing; the seal does. The order of the
+    // two checks inside equipPiece is what makes this true, so it is asserted.
+    assert(!equipPiece(REG, held, 'rightHand', 0, null, OWNS_EVERYTHING, MID_FIGHT),
+      'a slot cannot be emptied mid-fight either');
+    eq(held.sets.rightHand[0], 'dagger', 'and that refusal left it alone as well');
+    assert(equipPiece(REG, held, 'rightHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'at camp it empties');
+
+    // ---- 4. a call site that says nothing fails CLOSED --------------------
+    // The reason the context is required rather than defaulted: a default of
+    // "not in combat" makes silence mean permission.
+    const quiet = console.error;
+    let said = '';
+    console.error = (...a) => { said = a.join(' '); };
+    let took;
+    try {
+      took = equipPiece(REG, held, 'rightHand', 0, 'dagger', OWNS_EVERYTHING);
+    } finally { console.error = quiet; }
+    eq(took, false, 'no combat context → it equips nothing');
+    assert(said.includes('combat context') && said.includes('rightHand'),
+      `…and says so, naming the slot — got: ${said || '(nothing)'}`);
+    eq(held.sets.rightHand[0], null, 'and the loadout is untouched');
+
+    // ---- 5. a slot the registries do not have is named, not guessed -------
+    const ghost = canEquip(REG, 'rihgtHand', { inCombat: true });
+    eq(ghost.ok, false, 'an unknown slot refuses');
+    assert(ghost.reason.includes('rihgtHand'), `and prints the id it was given — got: ${ghost.reason}`);
+
+    // ---- 5b. MAX EDGE: a profile that owns everything still owns nothing it
+    // can act on mid-fight. One piece proves the gate fires; the whole pool
+    // proves nothing slips past it, and the denominator is asserted so an empty
+    // pool cannot pass by being empty.
+    const pool = (REG.equipment.armaments || []).filter((p) => fitsSlot(REG.equipment.slots.find((s) => s.id === 'rightHand'), p));
+    assert(pool.length > 1, `the right hand has a pool to sweep (${pool.length})`);
+    const rich = createLoadout(REG, 'reaver');
+    let refusedAll = 0;
+    for (const piece of pool) {
+      if (!equipPiece(REG, rich, 'rightHand', 0, piece.id, OWNS_EVERYTHING, MID_FIGHT)) refusedAll += 1;
+    }
+    eq(refusedAll, pool.length, `every one of ${pool.length} owned, fitting pieces is refused mid-fight`);
+    eq(rich.sets.rightHand[0], null, 'and after the whole sweep the slot is still as it started');
+    // …and the same sweep at camp is the control group. If BOTH sides refused,
+    // the count above would be green for the wrong reason.
+    let tookAll = 0;
+    for (const piece of pool) {
+      if (equipPiece(REG, rich, 'rightHand', 0, piece.id, OWNS_EVERYTHING, AT_CAMP)) tookAll += 1;
+    }
+    eq(tookAll, pool.length, `and every one of them goes in at camp — the control group`);
+
+    // ---- 6. the two sentences on the screen are siblings, not twins -------
+    // A rung's refusal comes from unlocks.csv; the seal's comes from the slot.
+    // If they ever became one string the screen would stop saying WHICH rule
+    // stopped the player, which is the property refusal-audit floors.
+    const rungHint = rungFor(REG, REG.equipment.slots.find((s) => s.id === 'rightHand'), 1).hint;
+    const sealSaid = canEquip(REG, 'rightHand', { inCombat: true }).reason;
+    assert(rungHint && sealSaid && rungHint !== sealSaid,
+      `the ladder and the seal must not say the same thing — "${rungHint}" vs "${sealSaid}"`);
+  });
+
+  // ---- 31c. the ladder gates the MUTATION, not just the screen ------------
+  //
+  // VIRA'S GATE OF #90, and her property in her words:
+  //
+  //     a set index the player may ACTIVATE must be one openedSets() calls open.
+  //
+  // It lands here rather than in tools/probes/ because she asked for exactly
+  // that: *"whoever fixes it deletes this file in the same act, because a
+  // property that lives beside the code that satisfies it is the second copy."*
+  // Her probe found 6 of 13 pairs at c43c908; both of its edges are below, and
+  // the third case (a rung actually earned) is mine — a bound that refuses
+  // everything would have satisfied her edge 1 on its own.
 
   // ---- 32. no dead armaments (property, not a snapshot) --------------------
   test('32. no armament is strictly dominated by one of equal or lower rarity', () => {
