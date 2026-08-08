@@ -57,6 +57,10 @@ async function door(name, openSettings) {
   const before = await ev(readScreen);
   await openSettings();
   await sleep(600);
+  // #90: the categories are tabs, so Profile is one click in. Click the tab if
+  // it is there; the restore button is unreachable without it.
+  await ev(`(()=>{const t=[...document.querySelectorAll('.set-tab')].find(e=>e.dataset.member==='Profile'); if(t){t.click(); return true;} return false;})()`);
+  await sleep(300);
   const found = await ev(`(()=>{const b=document.querySelector('.prof-restore'); if(b){b.click(); return true;} return false;})()`);
   if (!found) { console.log(`SKIP  ${name} — no restore button reached`); return; }
   await sleep(250);

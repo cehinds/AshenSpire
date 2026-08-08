@@ -7,7 +7,8 @@
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { openDebugLog } from '../debuglog.js';
-import { esc } from '../components/tooltip.js';
+import { esc, attachTooltip } from '../components/tooltip.js';
+import { setTabRing, hasTabRing } from '../input.js';
 import { renderProfileSection } from './profileArchive.js';
 import { renderAboutSection } from './about.js';
 import { AUDIO_DEFAULTS } from '../audio.js';
@@ -125,10 +126,22 @@ const ROWS = [
 // a drawer it cannot open would be the same broken promise one layer down.
 // 'About' carries the AI-use acknowledgement, rendered from its one home in
 // src/content/aiDisclosure.js — the same text the store page shows (#69).
+//
+// `tip` IS THE ONE THING A SECTION HAS TO WRITE, and it is the honest edge of
+// clause 7 on this screen. A category made of rows derives its tooltip from the
+// rows filed under it — the author writes nothing. A section has no rows to
+// read, so its one sentence is authored here, where its code already is. That
+// is Law 0 clause 2 exactly: a section is a WORD, not a row, and a word costs
+// an edit. Say it out loud rather than pretend the whole screen is free.
 const SECTIONS = {
-  Profile: { mount: 'set-profile-mount', needs: 'saves' },
-  About: { mount: 'set-about-mount', needs: null },
+  Profile: { mount: 'set-profile-mount', needs: 'saves',
+    tip: 'Set-aside profiles and runs — export, restore, start fresh.' },
+  About: { mount: 'set-about-mount', needs: null,
+    tip: 'Version, credits, and how AI was used to make this game.' },
 };
+
+/** The key the chosen category rides in. `meta.settings` is a free bag. */
+const CAT_KEY = 'settingsCategory';
 
 export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
 
@@ -168,6 +181,29 @@ export function settingsCategories() {
   // it is the silence again. It renders its own defect and assertSurfaces names
   // it. Anything filed under a name the order does not mention goes last.
   return [...CATEGORY_ORDER, ...found.filter((c) => !CATEGORY_ORDER.includes(c))];
+}
+
+/**
+ * categoryTip(cat) → the sentence a tab says on hover AND on the pad's focus
+ * cursor (Law 3 clause 4). DERIVED for a category of rows, authored for a
+ * section.
+ *
+ * It answers the question the tabs create. Six names hide five sixths of the
+ * screen, and the player's question stops being "what is under this heading"
+ * and becomes "WHICH TAB HOLDS THE THING I CAME FOR". Counting the rows and
+ * naming the first few of them answers exactly that, and it costs an author
+ * nothing — the labels are already written, once, on the rows.
+ *
+ * Three labels, then an ellipsis: enough to recognise, short enough to finish.
+ */
+export function categoryTip(cat) {
+  const h = categoryHandler(cat);
+  if (!h) return `Nothing is filed under "${cat}".`;
+  if (h.mount) return h.tip || `The ${cat} section.`;
+  const labels = h.rows.map((r) => r.label);
+  const n = labels.length;
+  const shown = labels.slice(0, 3).join(', ');
+  return `${n} setting${n === 1 ? '' : 's'} — ${shown}${n > 3 ? '…' : ''}`;
 }
 
 // Resolve a stored value against its default (defaults keep settings sparse).
@@ -319,42 +355,106 @@ function toggleFullscreen() {
   }
 }
 
+/** The categories that will actually DRAW, given whether a save manager exists.
+ *  A section that needs `saves` and has none renders nothing, so it must not
+ *  get a tab either — a tab onto an empty panel is the lone heading with a
+ *  bigger promise. This is the one place `saves` narrows the set. */
+function shownCategories(saves) {
+  return settingsCategories().filter((cat) => {
+    const h = categoryHandler(cat);
+    return !(h && h.needs === 'saves' && !saves);
+  });
+}
+
+/** The body of one category, as HTML. */
+function categoryHtml(cat, settings, saves) {
+  const h = categoryHandler(cat);
+  if (!h) {
+    // The lone heading, made loud — now a lone TAB, which is louder still: it
+    // is on screen from the moment Settings opens instead of 2000px down. It
+    // cannot reach a player (the boot assert fails first), so this is what a
+    // developer sees on the way.
+    return `<p class="set-note">Nothing is filed under "${esc(cat)}".`
+      + ' Give it a row (<code>cat:</code>) or a section, or take it out of'
+      + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
+  }
+  if (h.mount) return `<div class="${h.mount}"></div>`;
+  return h.rows.map((r) => rowHtml(settings, r)).join('');
+}
+
 /**
  * renderSettings(container, { settings, onChange, grouped })
  * Fills `container` with the settings controls and wires change events.
- * grouped=true adds category headers.
+ * grouped=true draws the category TAB STRIP and one category at a time.
+ *
+ * SIX SECTIONS USED TO BE SIX HEADINGS DOWN ONE SCROLLING COLUMN. One name was
+ * on screen when Settings opened, at every shape and every text size measured;
+ * AUDIO sat 1848px below DISPLAY at 390/Text M, and the last section was five
+ * thumb-drags away — eight at Text XL, and six at 1200x730, so it was never
+ * only a phone. A gold, letter-spaced, uppercase heading promises a taxonomy;
+ * hiding five sixths of it is the promise broken in silence.
+ *
+ * BOTH EDGES, because a tab strip can break this in the other direction:
+ *   - six sections must not become six screens a player has to HUNT — so the
+ *     whole strip is on screen at once and wraps rather than scrolling
+ *     sideways. All six names are readable before the first tap.
+ *   - a section that scrolls internally must STILL SCROLL — the panel keeps
+ *     the container's overflow, so Display's sixteen rows are all reachable.
+ *
+ * NOTHING NEW IS AUTHORED to add a seventh. `settingsCategories()` already
+ * derives the set from what is filed; a tab, its tooltip, its bumper stop and
+ * its place in the ring all follow from that one list.
  */
 export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onProfileRestored = null }) {
   let html = '';
+  let cats = [];
+  let current = null;
   if (grouped) {
-    // `data-member` on the heading is the house convention for a navigable set
-    // (#78): the host names the set, each member names itself, so an instrument
-    // reads this off the rendered page instead of importing three modules.
-    for (const cat of settingsCategories()) {
-      const h = categoryHandler(cat);
-      const head = `<h3 class="set-cat" data-member="${esc(cat)}">${esc(cat)}</h3>`;
-      if (!h) {
-        // The lone heading, made loud. It cannot reach a player — the boot
-        // assert fails first — so this is what a developer sees on the way.
-        html += head + `<p class="set-note">Nothing is filed under "${esc(cat)}".`
-          + ' Give it a row (<code>cat:</code>) or a section, or take it out of'
-          + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
-        continue;
-      }
-      if (h.needs === 'saves' && !saves) continue; // no manager, no promise
-      if (h.mount) {
-        html += head + `<div class="${h.mount}"></div>`;
-        continue;
-      }
-      html += head + h.rows.map((r) => rowHtml(settings, r)).join('');
+    cats = shownCategories(saves);
+    // A stored category that no longer exists must not blank the screen. Fail
+    // SAFE and visibly: fall back to the first tab, which is where a player who
+    // never chose one lands anyway.
+    const stored = settings[CAT_KEY];
+    current = cats.includes(stored) ? stored : cats[0] || null;
+    if (!cats.length) {
+      // Nothing is filed anywhere. assertSurfaces fails the boot before a
+      // player can meet this, so it is a developer's message, not a player's.
+      html = '<p class="set-note">No settings categories exist —'
+        + ' nothing is filed under any name in src/ui/screens/settings.js.</p>';
+    } else {
+      // `data-member` on each TAB is the house convention for a navigable set
+      // (#78): the host names the set, each member names itself, so an
+      // instrument reads this off the rendered page instead of importing three
+      // modules. It moved from the heading to the tab because the tab is now
+      // what a player navigates — the heading is gone, since the selected tab
+      // IS the heading and printing the name twice costs a phone a line it
+      // does not have.
+      //
+      // role=tab / tablist / tabpanel / aria-selected are the FIRST in this
+      // repo. Before tonight a screen reader had no tabs on any surface here,
+      // including the overlay's six — that half is still open and is not mine
+      // to fix in this file.
+      const tabs = cats.map((cat) => `<button class="set-tab${cat === current ? ' on' : ''}"`
+        + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"`
+        + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(cat)}</button>`).join('');
+      html = `<div class="set-tabs" role="tablist" aria-label="Settings sections"`
+        + ` data-surface="settingsCategory">${tabs}</div>`
+        + `<div class="set-panel" id="set-panel" role="tabpanel"`
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div>`;
     }
   } else {
     html = ROWS.map((r) => rowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
   container.setAttribute('data-settings-host', '');
-  if (grouped) container.setAttribute('data-surface', 'settingsCategory');
 
+  // ---- everything below wires ONE PANEL'S controls -------------------------
+  // It used to run once over the whole column, because the whole column was on
+  // screen. With one category at a time it has to run again after every tab
+  // switch — the old nodes go with the innerHTML that replaced them, so nothing
+  // accumulates. The one listener that is NOT per-panel (the resize handler for
+  // the applied-zoom readout) is installed once per open, below.
+  const wire = () => {
   const profileMount = container.querySelector('.set-profile-mount');
   // onRestored was a parameter renderProfileSection accepted, called — and that
   // NOBODY EVER PASSED, on either door (#68 D22). So a restore swapped the
@@ -416,18 +516,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  // Auto's applied value moves with the window even though the setting does not.
-  if (container.querySelector('[data-applied="uiScale"]')) {
-    const onResize = () => refreshApplied(container, settings);
-    window.addEventListener('resize', onResize);
-    // The settings container is rebuilt on every open, so the listener is
-    // dropped with it rather than accumulating one per visit.
-    const obs = new MutationObserver(() => {
-      if (!container.isConnected) { window.removeEventListener('resize', onResize); obs.disconnect(); }
-    });
-    obs.observe(document.body, { childList: true, subtree: true });
-  }
-
   container.querySelectorAll('.toggle').forEach((btn) => {
     btn.addEventListener('click', () => {
       if (btn.dataset.action) {
@@ -447,6 +535,88 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       onChange({ [btn.dataset.key]: now });
     });
   });
+  }; // ---- end wire() ---------------------------------------------------
+
+  wire();
+
+  // Declared before the observer that reads it: the early return below skips
+  // the claim, and a `let` read before its declaration is a crash, not a false.
+  let claimedRing = false;
+
+  // Auto's applied value moves with the window even though the setting does not.
+  // ONE listener per open, not one per tab switch: the readout lives on a row
+  // inside Display, so a player who visits Display four times would otherwise
+  // collect four handlers that all write the same number.
+  const onResize = () => refreshApplied(container, settings);
+  window.addEventListener('resize', onResize);
+  // The settings container is rebuilt on every open, so the listener is dropped
+  // with it rather than accumulating one per visit. Same observer releases the
+  // bumpers if this strip took them.
+  const obs = new MutationObserver(() => {
+    if (container.isConnected) return;
+    window.removeEventListener('resize', onResize);
+    if (claimedRing) setTabRing(null);
+    obs.disconnect();
+  });
+  if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (!grouped || !cats.length) return;
+
+  // ---- the strip: selection, tooltips, and the ring ------------------------
+
+  function selectCategory(cat) {
+    if (!cats.includes(cat) || cat === current) return;
+    current = cat;
+    settings[CAT_KEY] = cat;
+    // Persisted through the same free bag every other setting rides in
+    // (`meta.settings`) — no save-schema change. IN COMBAT IT DOES NOT PERSIST
+    // and cannot: that mount passes a synthetic meta with no onChange, so the
+    // choice is per-mount there. Stated, not hidden — and not new: the armoury
+    // view has always been per-mount at that same call site.
+    onChange({ [CAT_KEY]: cat });
+    container.querySelectorAll('.set-tab').forEach((b) => {
+      const on = b.dataset.member === cat;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+    const panel = container.querySelector('.set-panel');
+    if (!panel) return;
+    panel.innerHTML = categoryHtml(cat, settings, saves);
+    panel.setAttribute('aria-labelledby', `set-tab-${cat}`);
+    // A tab switch is a new screenful. Start it at the top, or the player lands
+    // mid-way down a section they have never seen.
+    panel.scrollTop = 0;
+    if (panel.parentElement) panel.parentElement.scrollTop = 0;
+    wire();
+  }
+
+  container.querySelectorAll('.set-tab').forEach((b) => {
+    b.addEventListener('click', () => selectCategory(b.dataset.member));
+    // Law 3 clause 4: hover AND the pad/keyboard focus cursor. `title=` alone
+    // does not satisfy it — touch and gamepad players never see one.
+    attachTooltip(b, () => `<b>${esc(b.dataset.member)}</b><br>${esc(categoryTip(b.dataset.member))}`);
+  });
+
+  // Law 3 clauses 1 + 1a: RB → next, LB → previous, wrap at BOTH ends, over the
+  // same set in the same order. The ring is the `cats` array — one order, and
+  // the widget is not consulted.
+  //
+  // CLAIMED ONLY IF FREE. See hasTabRing() in input.js for the ruling: on the
+  // in-run overlay this strip sits INSIDE another tab set, and the bumpers stay
+  // with the outer one so RB never changes meaning between two tabs of the same
+  // menu. Nothing is passed in; the answer is derived from whether a ring is
+  // already held.
+  if (!hasTabRing()) {
+    claimedRing = true;
+    const step = (d) => {
+      const i = cats.indexOf(current);
+      const at = i < 0 ? 0 : i;
+      selectCategory(cats[(at + d + cats.length) % cats.length]);
+    };
+    setTabRing({ prev: () => step(-1), next: () => step(1) });
+  }
 }
 
 /**

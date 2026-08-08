@@ -100,6 +100,32 @@ export function setTabRing(ring) {
   tabRing = ring && typeof ring.next === 'function' && typeof ring.prev === 'function' ? ring : null;
 }
 
+/**
+ * hasTabRing() → is a tab set already holding the bumpers?
+ *
+ * LAW 3 CLAUSE 6, FOR TWO TAB SETS AND ONE PAIR OF BUMPERS. Settings now has
+ * its own tab strip, and Settings is ALSO one tab of the in-run overlay — so on
+ * that door two strips are on screen at once and RB has to mean one thing.
+ *
+ * THE ANSWER IS THE OUTER STRIP, and it is a legibility call, not a technical
+ * one. A player who learns "RB moves the menu tabs" on the Deck tab must not
+ * find that the same button means something else two tabs later; a global
+ * button whose meaning changes with where you are standing is the defect clause
+ * 6 exists to prevent. The inner strip is reached by the focus cursor and by
+ * touch — which is clause 6's own corollary, one level down.
+ *
+ * It is DERIVED, not declared: a strip claims the bumpers only if nothing holds
+ * them. openOverlay claims before it renders any panel, so the overlay's
+ * Settings tab finds them taken and the title-screen modal finds them free. No
+ * caller passes a flag, and nobody has to remember which door they are on.
+ *
+ * NOT A STACK, deliberately. Push/pop would hand the bumpers to the innermost
+ * strip, which is the behaviour this rejects.
+ */
+export function hasTabRing() {
+  return !!tabRing;
+}
+
 const TAB_PREV_BTN = 4; // LB, standard mapping
 const TAB_NEXT_BTN = 5; // RB
 const TAB_PREV_KEY = '[';
