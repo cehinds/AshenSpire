@@ -246,6 +246,40 @@ const PLANTS = [
   { name: 'a default import from a module with no default export',
     expect: /does not provide an export named 'default'/,
     apply: (t) => prepend(t, 'src/main.js', `import notADefault from './ui/surfaces.js';\n`) },
+  // A SYNTAX ERROR — THE CLASS THIS TOOL WAS CATCHING BY ACCIDENT AND HAD NOT
+  // DECLARED. Every plant above is a RESOLUTION failure: a name that does not
+  // exist. Parsing is the step before that, and nothing in this corpus said
+  // this tool could go red on it, so the class was `unknown` — not covered
+  // (`development.md`, *The instrument rule*). It went red for a real defect on
+  // 2026-08-08 (#128: four backticks in an HTML comment INSIDE a template
+  // literal closed the string, the screen stopped mounting, and every other
+  // instrument reported did-not-mount rather than a syntax error). A check that
+  // catches a class its corpus never claimed is one silent refactor away from
+  // not catching it, and nobody would learn that from a green.
+  //
+  // AND THE OBVIOUS CHEAPER SUBSTITUTE IS A DEAD INSTRUMENT HERE. `node --check`
+  // exits 0 on ANY syntax error in a `.js` file that uses ESM syntax when the
+  // tree has no `package.json` — measured on node v22.22.2, 2026-08-08:
+  //
+  //     printf 'export const a=1;\nconst y = 1 +;\n' > /tmp/b.js
+  //     node --check /tmp/b.js ; echo $?     ->  0
+  //     cp /tmp/b.js /tmp/b.mjs
+  //     node --check /tmp/b.mjs ; echo $?    ->  1
+  //
+  // It is not blind to backticks; it is blind to EVERYTHING in that shape, and
+  // 104 of 104 files under `src/` are that shape. `tools/` is `.mjs` and is
+  // fine. So on the half of this tree a person edits most, this plant is the
+  // only thing standing between a parse error and a blank screen.
+  //
+  // ANCHORED ON `<g id="map-nodes">` DELIBERATELY: mapboard.js names that id as
+  // its PUBLIC HANDLE (two instruments key on it), so this plant is pinned to a
+  // declared contract rather than to prose that may be reworded. The day it
+  // moves anyway, `edit` throws and this prints UNPLANTABLE, which blocks — the
+  // safe direction, and the reason no plant here is allowed to no-op quietly.
+  { name: 'a SYNTAX error: backticks in a comment inside a template literal',
+    expect: /missing \) after argument list/,
+    apply: (t) => edit(t, 'src/ui/components/mapboard.js',
+      /(\n(\s*))(<g id="map-nodes")/, '$1<!-- `map.js` -->$1$3') },
 ];
 
 function copyTree() {
