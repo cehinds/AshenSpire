@@ -65,6 +65,7 @@ import {
   pairAir, maxTapDefault, NODE_AIR_MIN_PX, BOOT_GATED_PAIRS, COL_X, ROW_H, NODE_R, REF_ZOOM,
   ZOOM_STEPS, MAP_ZOOM_DEFAULT, mapZoomDefaultIsLegal,
   PHONE_UI_ZOOM, PHONE_UI_ZOOM_MIN, TAP_TARGET_DEFAULT,
+  BOSS_RATIO, BOSS_R, BOSS_ROW_H, BOSS_RISE, nodeY, svgHeight,
 } from '../src/model/mapview.js';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -175,6 +176,8 @@ function printPairAir(pad = '  ', opts = {}) {
   }
   console.log(`${pad}PAIR CENSUS   circles solved from balance.ui.tapSize.def = ${a.tapPx} at REF_ZOOM ${a.refZoom}:`
     + ` node r ${a.r}, boss r ${a.bossR}. Floor ${NODE_AIR_MIN_PX} device px of air at 320x640.`);
+  console.log(`${pad}  ^ row pitch ${a.rowH} SVG; the BOSS row is ${a.bossRowH} — its own pitch, ROW_H x BOSS_RATIO,`
+    + ` because a pitch between CENTRES cannot space a pair whose radii differ (Freja, 2026-08-08).`);
   let bad = 0;
   for (const p of a.pairs) {
     if (!p.ok) bad++;
@@ -419,9 +422,16 @@ const AIR_MUST_ACCEPT = [
 // reach is a check nobody has watched PASS, which is the same silence one face
 // over (the instrument rule, read in both directions).
 const PAIR_PLANTS = [
-  ['boss pair as it ships — RED, rendered, since #107', {}, 'floor-boss', false],
+  ['boss pair as it ships — CLEARS since BOSS_ROW_H', {}, 'floor-boss', true],
+  // THE SHIPPED DEFECT, KEPT AS THE KNOWN-BAD. `bossRowH: ROW_H` is not an
+  // invented input: it is byte-for-byte the geometry that rendered in every act
+  // and every seed from #107 until tonight, -3.7 SVG. A red face nobody can
+  // reach any more is a check with one observed face, so the pair the fix
+  // deleted stays here as the thing the fix is measured against.
+  ['boss pair on the OLD uniform pitch — the shipped overlap', { bossRowH: ROW_H }, 'floor-boss', false],
   ['boss pair with the pre-#107 ratio restored', { bossRatio: 1 }, 'floor-boss', true],
   ['boss pair with room made in the pitch', { rowH: 56 }, 'floor-boss', true],
+  ['boss pair with a tap default that overlaps every pair', { tapPx: 96 }, 'floor-boss', false],
   ['live pair with the columns closed up', { colX: 43 }, 'live', false],
   ['live pair as it ships', {}, 'live', true],
 ];
@@ -483,13 +493,52 @@ const PROPERTIES = [
     const a = pairAir({ refZoom: ZOOM_MIN });
     return a.pairs.find((p) => p.id === 'floor-node').gap < 0;
   }],
-  // ---- THE LATCH ON THE BOOT EXEMPTION --------------------------------------
-  // An excused row is worse than a red one, because nobody re-reads an excuse.
-  // `floor-boss` is out of the boot door only while it is red; the day someone
-  // clears it this fails and names the exemption to delete.
-  ['the boot exemption still has its reason — floor-boss is RED, so leaving it ungated is honest', () => {
-    const p = pairAir().pairs.find((x) => x.id === 'floor-boss');
-    return !p.ok && !BOOT_GATED_PAIRS.includes('floor-boss');
+  // ---- WHAT REPLACED THE LATCH ----------------------------------------------
+  // Rune's latch held `floor-boss` out of the boot door only while it was red,
+  // and asserted it was STILL RED so the excuse could not outlive its reason.
+  // Freja cleared the pair (`BOSS_ROW_H`), the latch fired, and the exemption is
+  // deleted. What stands in its place is the general form, because the next
+  // exemption will be for a different pair: EVERY pair the census reports must
+  // be gated at boot. A pair added tomorrow is gated the day it is born.
+  ['no pair is exempt from the boot door — every pair the census reports is gated', () => {
+    const ids = pairAir().pairs.map((p) => p.id);
+    return ids.length > 0 && ids.every((id) => BOOT_GATED_PAIRS.includes(id));
+  }],
+  // ---- THE BOSS'S OWN ROW, AND WHY THE COLLISION CANNOT COME BACK BY RATIO ---
+  // The old geometry spaced a two-radius pair with a one-radius pitch, so
+  // drawing a bigger boss closed the boss's own gap. Now the pitch carries the
+  // same ratio the radius does and the air is `ratio * (ROW_H - NODE_R) -
+  // NODE_R`: monotone in the ratio. This is the property, not the arithmetic —
+  // it re-derives nothing and would catch a `bossRowH` that stopped tracking.
+  ['a BIGGER boss moves further away — floor-boss air is monotone in BOSS_RATIO', () => {
+    const air = (ratio) => pairAir({ bossRatio: ratio }).pairs.find((p) => p.id === 'floor-boss').gap;
+    return [1, 1.2, BOSS_RATIO, 1.6, 2, 3].every((r, i, a) => i === 0 || air(r) > air(a[i - 1]));
+  }],
+  ['the boss row is never TIGHTER than an ordinary row', () => {
+    const ps = pairAir().pairs;
+    return ps.find((p) => p.id === 'floor-boss').gap >= ps.find((p) => p.id === 'floor-node').gap;
+  }],
+  // The canvas must CONTAIN the boss where the boss is drawn. `svgHeight` and
+  // `nodeY` both carry the rise; if either forgets, the boss is clipped by the
+  // top of its own SVG on every act. Asked of the geometry, not of a render.
+  ['the canvas contains the risen boss — its circle is inside the SVG box', () => {
+    // Written wrong the first time and caught here rather than on a screen: I
+    // compared circle TOPS and expected the difference to be BOSS_RISE, which is
+    // the rise plus the radius difference (22.4, not 15.3). The rise is a fact
+    // about CENTRES; the containment is a fact about edges. Two clauses now,
+    // because they were two claims wearing one line.
+    const h = svgHeight(13);
+    const centreRise = nodeY(13, h) - nodeY(13, h, 'boss');
+    const top = nodeY(13, h, 'boss') - BOSS_R;
+    return top > 0 && Math.abs(centreRise - BOSS_RISE) < 1e-9;
+  }],
+  ['the rise buys real air — the boss circle clears the shrine circle below it', () => {
+    const h = svgHeight(13);
+    return (nodeY(12, h) - NODE_R) - (nodeY(13, h, 'boss') + BOSS_R) > 0;
+  }],
+  ["a caller that forgets the type draws the boss on the shrine — so nodeY's answers differ", () => {
+    const h = svgHeight(13);
+    return nodeY(13, h, 'boss') !== nodeY(13, h) && nodeY(12, h, 'monster') === nodeY(12, h);
   }],
 ];
 
@@ -631,8 +680,11 @@ function selftest() {
   console.log(`  on the shipped act shape only; \`node tools/mapplan.mjs --spans\` is the grid, and it is`);
   console.log(`  the thing this corpus stands on. Nothing here was rendered — but the pair census is NOT`);
   console.log(`  optimistic arithmetic: Sunna's rendered readings match it to the hundredth on all three`);
-  console.log(`  pairs, and my earlier caveat to the contrary was written against a rounded 2.9. What is`);
-  console.log(`  still outside every row here is whether the boss/shrine overlap READS as broken — Freja's.`);
+  console.log(`  pairs, and my earlier caveat to the contrary was written against a rounded 2.9.`);
+  console.log(`  WHETHER THE OVERLAP READ AS BROKEN WAS ANSWERED — Freja, 2026-08-08, on the render: yes,`);
+  console.log(`  and worse than the geometry said (-7.2 painted px, the shrine's ring cutting the boss's`);
+  console.log(`  outline). What is STILL outside every row here: these are GEOMETRIC radii. The paint adds`);
+  console.log(`  half a stroke each side (up to 5.5 on the current node), and no row below knows that.`);
   return pass ? 0 : 1;
 }
 
@@ -719,11 +771,14 @@ function spans() {
 // which is a question about the tree. They are two subjects and the night I
 // merged them into one exit code is the night one of them stops being readable.
 //
-// IT EXITS 1 TODAY. That is not a regression I introduced — the boss/shrine
-// overlap has been rendered in every act and every seed since #107 gave the
-// radii their derivation, and it had 11 SVG units of air before that. What is
-// new is that something says so. The fix is a proportion Freja owns; I am not
-// picking a boss ratio at 4am to make my own instrument green.
+// IT EXITED 1 THE NIGHT IT WAS WRITTEN, and that was the point: the boss/shrine
+// overlap had rendered in every act and every seed since #107 gave the radii
+// their derivation, against 11 SVG units of air before it, and nothing said so.
+// Rune left the fix alone because it was a proportion Freja owned. She took it
+// the same night — the boss has its own row pitch now (`BOSS_ROW_H`) and this
+// command exits 0. The known-bad it was written against is kept as a planted
+// fixture in `--selftest`, so the red this command was born printing can still
+// be observed rather than only remembered.
 function margins() {
   console.log(`mapplan --margins — every pair of circles this map draws next to each other\n`);
   printFanoutMargin(mapConfigs[1], '  ');
@@ -731,9 +786,11 @@ function margins() {
   const bad = printPairAir('  ');
   console.log(`\n  ${bad ? `FAIL — ${bad} pair(s) below the ${NODE_AIR_MIN_PX} px floor` : 'PASS — every pair clears the floor'}`);
   console.log(`\n  BOUNDARY — arithmetic over the constants, and it agrees with Sunna's rendered readings to`);
-  console.log(`  the hundredth on all three pairs. It is silent on whether an overlap READS as broken`);
-  console.log(`  (Freja), on anything the generator can place that is not one of these three pairs, and`);
-  console.log(`  on every shape between 320x640 and 390x844 — those two are the reference, not the range.`);
+  console.log(`  the hundredth on all three pairs. THESE ARE GEOMETRIC RADII: the paint adds half a stroke`);
+  console.log(`  on each side — 3 on the boss, up to 5.5 on the current node — so the eye meets ~3.4 SVG`);
+  console.log(`  less air than any number here, and the reachable HALO (r + 6) is outside it entirely.`);
+  console.log(`  It is silent on anything the generator can place that is not one of these three pairs,`);
+  console.log(`  and on every shape between 320x640 and 390x844 — those two are the reference, not the range.`);
   return bad ? 1 : 0;
 }
 

@@ -279,12 +279,13 @@ export function validateContent(bundle) {
   // choice bars weeks ago and true here too: nothing in this game read a gap.
   // A refusal that prints a verdict and not a margin cannot be watched.
   //
-  // It rules on the pairs a content edit is answerable for. The boss/shrine pair
-  // is RED at the shipped default — rendered, every act, since #107 — and is
-  // deliberately NOT gated here, because a boot banner the player cannot act on
-  // is a worse failure than the overlap. That exemption carries a latch:
-  // `mapplan --selftest` asserts the pair is still red, so the excuse cannot
-  // outlive its reason. `node tools/mapplan.mjs --margins` is where it is red.
+  // IT RULES ON EVERY PAIR NOW. It held one exemption for a night — the
+  // boss/shrine pair, red at the shipped default since #107, ungated because a
+  // boot banner the player cannot act on is a worse failure than the overlap.
+  // The exemption carried a latch asserting the pair was still red; Freja gave
+  // the boss its own row pitch, the latch fired, and the hole is closed
+  // (`BOOT_GATED_PAIRS`, model/mapview.js). `node tools/mapplan.mjs --margins`
+  // is the census, and it exits 0.
   //
   // Asked ONCE of the bundle rather than per act: it does not vary with
   // mapConfigs, and three identical errors would be three copies of one fact.

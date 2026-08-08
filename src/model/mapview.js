@@ -177,6 +177,76 @@ export const BOSS_RATIO = 20 / 15;
 export const NODE_R = nodeRadiusFromTap(TAP_TARGET_DEFAULT);
 export const BOSS_R = Math.round(NODE_R * BOSS_RATIO * 10) / 10;
 
+/**
+ * THE BOSS'S OWN ROW PITCH — and it is the composition call, not arithmetic that
+ * fell out of something else. Freja, 2026-08-08.
+ *
+ * WHAT WAS WRONG. `ROW_H` is a pitch between CENTRES. Every pair of circles it
+ * spaces is two `NODE_R` circles, so centre pitch and edge air were the same
+ * decision — until #107 derived the radii and the boss became the one pair on
+ * this screen with two DIFFERENT radii in it. Then the one number stopped
+ * answering: the boss and the top shrine overlapped by 3.7 SVG geometrically and
+ * by 7.0 on the PAINT (their strokes are 3 and up to 5.5), and the two fused
+ * into one figure-eight at the top of every act, every seed. It is the shape a
+ * uniform pitch makes of a non-uniform pair.
+ *
+ * THE RULE I AM WRITING DOWN, because it is the thing that was never stated: on
+ * this map a HALO may graze, a SILHOUETTE may not be cut. Measured at 390x844,
+ * pulse frozen at its most visible frame: an ordinary reachable node's halo
+ * already crosses its vertical neighbours by 2.0 SVG and reads as light, because
+ * the circles under it stay 1.15 SVG apart and each keeps its own outline. The
+ * boss pair is the only place on the map where an outline is cut, and that is
+ * exactly where the eye stops for the wrong reason.
+ *
+ * WHY NOT SHRINK `BOSS_RATIO` — and this is arithmetic, not taste. To give the
+ * boss pair the same PAINTED air an ordinary pair has (1.15 SVG) at `ROW_H` 46,
+ * the boss's painted edge may reach 22.3 SVG, so `BOSS_R` <= 20.8 — SMALLER THAN
+ * `NODE_R` (21.3), and 19.3 against the top shrine's fattest current-node ring.
+ * The lever cannot reach the answer: a boss that clears by ratio alone is a boss
+ * that is no longer the biggest circle on its own map. (Rune's 2-device-px
+ * geometric floor is cheaper and still damning: ratio <= 1.05, a boss 5% bigger
+ * than a monster.)
+ *
+ * WHY NOT RAISE `ROW_H` — it works and it overpays. Parity needs `ROW_H` >= 55.1,
+ * +20%, and all fourteen rows pay 9.1 SVG for a defect that lives in one pair:
+ * the canvas goes 674 -> 801 SVG (+19%), which is a change to how the whole climb
+ * reads, not a fix. `floor-node` air is also the tightest thing on this axis
+ * (3.52 / 2.89 device px against a floor of 2), so `ROW_H` is load-bearing in the
+ * other direction and spending it here is spending it twice.
+ *
+ * SO THE BOSS GETS ITS OWN PITCH, AND THE PITCH IS DERIVED FROM THE PROPORTION
+ * THE BOSS ALREADY CARRIES: the boss's row is bigger than a row by exactly as
+ * much as the boss is bigger than a node. One ratio, two uses, no second
+ * literal — which is the same reason `BOSS_R` is a ratio and not a number.
+ *
+ * IT IS A JUDGEMENT AND IT HAS A WITNESS. 61.3 leaves 11.6 SVG of air between
+ * the two circles; the map was AUTHORED with 11.0 (NODE_R 15, BOSS_R 20, ROW_H
+ * 46) and nobody ever called that broken. #107 took it to -3.7 as a side effect
+ * of solving the radii for a thumb. This restores the air the composition was
+ * drawn with, and restores it as a derivation, so the next change to the tap
+ * floor or the ratio carries it instead of breaking it.
+ *
+ * AND IT MAKES THE COLLISION UNREACHABLE BY THE RATIO, which the old geometry
+ * could not claim. The boss pair's air is now `BOSS_RATIO * (ROW_H - NODE_R) -
+ * NODE_R` — strictly increasing in the ratio. Draw a bigger boss and it moves
+ * further away; it can never again close its own gap. A property in
+ * `mapplan --selftest` holds that.
+ *
+ * COST, stated rather than buried: the canvas grows by `BOSS_RISE` (15.3 SVG,
+ * 674 -> 689.3, +2.3%) and the extra lands at the TOP, above the boss, so every
+ * other node keeps its position relative to the bottom of the map and the boss
+ * keeps its distance from the top of the canvas (46.4 SVG, measured before and
+ * after). Nothing horizontal moves; no radius moves; no tap target moves.
+ */
+export const BOSS_ROW_H = Math.round(ROW_H * BOSS_RATIO * 10) / 10;
+
+/**
+ * How much further from the floor below the boss sits than an ordinary node
+ * would. Derived, never typed — it is the only thing `svgHeight` and `nodeY`
+ * need, and they must not each recompute it (one home).
+ */
+export const BOSS_RISE = Math.round((BOSS_ROW_H - ROW_H) * 10) / 10;
+
 
 /**
  * THE REFERENCE PHONE VIEWPORT, in LOCAL px, measured off `.map-scroll` — never
@@ -194,16 +264,28 @@ export function nodeRadius(type) {
 export function svgWidth(columns) {
   return columns * COL_X + 60;
 }
+/**
+ * The canvas has to CONTAIN the boss where the boss actually is, so the rise is
+ * in here too. Every node's distance from the BOTTOM is `floor * ROW_H` and does
+ * not move, so the extra lands at the top — which is where the boss went.
+ */
 export function svgHeight(maxFloor) {
-  return (maxFloor + 1) * ROW_H + 30;
+  return (maxFloor + 1) * ROW_H + BOSS_RISE + 30;
 }
 
 /** Where a node sits in SVG units. Floor 0 is the bottom; y grows downward. */
 export function nodeX(col) {
   return 60 + col * COL_X;
 }
-export function nodeY(floor, height) {
-  return height - floor * ROW_H;
+/**
+ * `type` is not optional decoration: the boss sits on `BOSS_ROW_H`, not `ROW_H`,
+ * so a caller that forgets it draws the boss back on top of the shrine. It takes
+ * the type for the same reason `nodeRadius` does — the boss is the one node
+ * whose geometry is not the common case, and both facts about it are asked here
+ * rather than remembered by each caller.
+ */
+export function nodeY(floor, height, type) {
+  return height - floor * ROW_H - (type === 'boss' ? BOSS_RISE : 0);
 }
 
 /** Keep a zoom inside the ladder's own range. One home for the bounds. */
@@ -228,7 +310,7 @@ export function framingBox(nodes, height) {
   for (const n of nodes) {
     const r = nodeRadius(n.type);
     const cx = nodeX(n.col);
-    const cy = nodeY(n.floor, height);
+    const cy = nodeY(n.floor, height, n.type);
     if (cx - r < x0) x0 = cx - r;
     if (cx + r > x1) x1 = cx + r;
     if (cy - r < y0) y0 = cy - r;
@@ -491,7 +573,10 @@ export function maxSafeColumns() {
  *              Never both live. Legibility only.
  *   floor-boss adjacent floors, the boss above the lone top shrine
  *              (`engine/mapgen.js` puts it there in every act) —
- *              `ROW_H - BOSS_R - NODE_R`. Never both live. RED TODAY.
+ *              `BOSS_ROW_H - BOSS_R - NODE_R`. Never both live. It reads
+ *              `BOSS_ROW_H` and not `ROW_H` since Freja gave the boss its own
+ *              pitch (2026-08-08): a pitch between CENTRES cannot space a pair
+ *              whose radii differ, which is what made this the red row.
  *
  * Every input is a parameter with the module's const as its default, so the
  * corpus can plant both faces of every pair — a red the fixtures cannot reach is
@@ -508,8 +593,14 @@ export function pairAir(opts = {}) {
     rowH = ROW_H,
     colX = COL_X,
     bossRatio = BOSS_RATIO,
+    // DERIVED FROM THE OVERRIDES, NOT FROM THE MODULE. If this defaulted to
+    // `BOSS_ROW_H` a fixture that plants `rowH` would move one half of the boss
+    // pair and not the other, and the planted geometry would be a shape the game
+    // cannot draw. Still overridable on its own, because the pre-fix collision
+    // (`bossRowH: ROW_H`) is the known-bad worth keeping.
+    bossRowH = Math.round(rowH * bossRatio * 10) / 10,
   } = opts;
-  const base = { tapPx, refZoom, rowH, colX, bossRatio, floorPx: NODE_AIR_MIN_PX };
+  const base = { tapPx, refZoom, rowH, colX, bossRatio, bossRowH, floorPx: NODE_AIR_MIN_PX };
   if (!Number.isFinite(refZoom) || refZoom <= 0) return { ...base, why: 'no-reference-zoom', pairs: [], worst: null };
   if (!Number.isFinite(tapPx) || tapPx <= 0) return { ...base, why: 'no-tap-target', pairs: [], worst: null };
 
@@ -538,34 +629,31 @@ export function pairAir(opts = {}) {
   const pairs = [
     pair('live', 'two LIVE doors — same floor, adjacent columns', 'horizontal', colX, r, r),
     pair('floor-node', 'two ordinary nodes on adjacent floors', 'vertical', rowH, r, r),
-    pair('floor-boss', 'the boss above the top shrine', 'vertical', rowH, bossR, r),
+    pair('floor-boss', 'the boss above the top shrine', 'vertical', bossRowH, bossR, r),
   ];
   const worst = pairs.reduce((a, b) => (b.px320 < a.px320 ? b : a));
   return { ...base, why: worst.ok ? null : 'collision', r, bossR, pairs, worst };
 }
 
 /**
- * The pair a CONTENT edit is answerable for, and the reason the other one is not.
+ * EVERY PAIR IS GATED AT BOOT. There is no exemption here any more, and the
+ * absence is the point of this const rather than an omission from it.
  *
- * `floor-boss` is red at the shipped default and has been since #107 gave the
- * radii their derivation: -3.7 SVG units, -3.83 device px at 390 and -3.15 at
- * 320, rendered in every act and every seed, against 11 SVG units of air before
- * it. It is caused by `BOSS_RATIO x NODE_R` against `ROW_H` — a ratio and two
- * code constants — and its fix is a proportion Freja owns.
+ * IT HELD ONE, AND THE LATCH ON IT FIRED AS DESIGNED. Rune left `floor-boss` out
+ * of this list on 2026-08-08 because it was red at the shipped default and a boot
+ * banner the player cannot act on is a worse failure than the overlap — Sunna's
+ * floor. He latched the hole shut with a property asserting the pair was STILL
+ * RED, so the excuse could not outlive its reason. Freja cleared the pair the
+ * same night (`BOSS_ROW_H`, above), the property went red exactly as written, and
+ * this is the deletion it asked for. **A latch that is never collected is an
+ * excuse with a comment on it** — recording that this one was collected, on the
+ * first occasion it could be, is worth more than the two words it replaced.
  *
- * SO IT IS NOT GATED AT BOOT, AND THAT IS A DELIBERATE HOLE WITH A LATCH ON IT. A
- * boot banner is player-facing: shipping one that fires on every launch for a
- * defect the player cannot act on is a worse failure than the overlap, and it is
- * Sunna's floor that says so. The red lives in `mapplan --margins`, which exits 1
- * today, rather than in a banner nobody can clear.
- *
- * THE LATCH, because an excused row is worse than a red one — nobody re-reads an
- * excuse (Sten, tonight, withdrawing his own clause for exactly this). A property
- * in `mapplan --selftest` asserts this pair is STILL RED. The day it clears, that
- * property fails and tells whoever cleared it to delete this exemption and let
- * the boot door take the pair. The exemption cannot outlive its own reason.
+ * WHAT REPLACES IT, so the shape cannot come back quietly: `mapplan --selftest`
+ * now holds that EVERY pair `pairAir` reports appears in this list. A pair added
+ * to the census tomorrow is gated the day it is born, or the selftest says so.
  */
-export const BOOT_GATED_PAIRS = Object.freeze(['live', 'floor-node']);
+export const BOOT_GATED_PAIRS = Object.freeze(['live', 'floor-node', 'floor-boss']);
 
 /**
  * The largest `balance.ui.tapSize.def` that still clears every BOOT-GATED pair —
@@ -595,8 +683,9 @@ export function maxTapDefault(opts = {}) {
  * bundle, not once per `mapConfigs` key, and three identical errors would be
  * three copies of one fact.
  *
- * It rules on `BOOT_GATED_PAIRS` and NOT on `floor-boss` — the reason, and the
- * latch that stops the exemption outliving itself, are on that const above.
+ * It rules on `BOOT_GATED_PAIRS`, which is now every pair the census reports —
+ * the one exemption it carried, and how its latch collected it, are on that
+ * const above.
  *
  * The corpus it has to turn red is `node tools/mapplan.mjs --selftest` — the same
  * corpus validate.js already points at, with rows for this refusal in it, so this
