@@ -835,6 +835,33 @@ body.hide-hints .hint-bar { display: none; }
 .toggle.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); }
 .toggle.on .knob { left: 2.2rem; background: var(--gold); }
 .choice-group { display: flex; gap: 0.4rem; flex-shrink: 0; }
+/* THE UNDO THAT CANNOT SHRINK (Sunna's rule, Marina's default). A group marked
+   `data-self-undo` is one whose own value decides how big its chips are — today
+   that is Minimum tap size and nothing else. The chip PAINTS at the chosen size
+   and HIT-TESTS at the default, so the way back is always pressable.
+
+   KEYED ON A CHARACTERISTIC, NEVER ON THE ROW'S ID. `[data-key='tapFloor']`
+   would be `if (id === …)` written in CSS — the thing Law 1 clause 3 forbids one
+   layer down. The row DECLARES `selfUndo: true` (settings.js) and the machinery
+   derives the rest, so the next control with this property gets it free.
+
+   VERTICAL ONLY, and that is a decision rather than an oversight. Height is the
+   axis that shrinks dangerously — 44 to 24 — and above and below this row is the
+   row's own padding, so a taller hit area overlaps nothing. Widening to 44 would
+   make neighbouring chips' hit areas OVERLAP at the small sizes (they sit 0.4rem
+   apart), and a press on 30 landing on 24 is a worse failure than the one being
+   fixed. The chip is 28.6 device px wide at the 24 setting, measured; the
+   horizontal axis is named as not covered rather than quietly claimed.
+
+   pointer-events is untouched: the pseudo-element is a box inside the button, so
+   a press in the overhang resolves to the button itself. Measured with
+   elementFromPoint, not assumed. */
+.choice-group[data-self-undo] .choice { position: relative; }
+.choice-group[data-self-undo] .choice::after {
+  content: ''; position: absolute; left: 0; right: 0;
+  top: 50%; transform: translateY(-50%);
+  height: var(--tap-undo);
+}
 .choice-group .choice {
   padding: 0.5rem 0.9rem; font-size: 1rem; letter-spacing: 0.08em; border-radius: 6px;
   background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
