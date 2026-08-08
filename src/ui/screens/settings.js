@@ -114,14 +114,17 @@ const ROWS = [
   // `choices` and `def` are DERIVED from balance.ui.tapSize; the four numbers
   // are not written here, or the closed set would have two homes.
   //
-  // `selfUndo` — THIS ROW'S CHIPS ARE SIZED BY THE VALUE THIS ROW SETS. Press
-  // 24 and the way back to 44 is a 24 px target. Sunna's rule, out of Marina's
-  // default: a control that can shrink itself must never shrink its own undo.
+  // `resizesWhilePressed` — THE ONE CONTROL EXEMPT FROM THE FLOOR IT SETS.
+  // Marina's ruling, on the narrowest reason available so it cannot spread:
+  // this is the only control in the game whose resizing happens WHILE IT IS
+  // BEING PRESSED. Measured cause: at the 44 step the pressed chip landed 61.44
+  // device px from the finger because the whole group re-lays-out, which is
+  // wider than a fingertip and which no `scrollTop` can answer.
   // Declared as a CHARACTERISTIC rather than handled by name, so the stylesheet
   // keys on the property and not on `tapFloor` (Law 1 clause 3, one layer up).
   { cat: 'Accessibility', key: 'tapFloor', type: 'choice', def: String(UI_DEFAULTS.tapSize.def),
     choices: UI_DEFAULTS.tapSize.sizes.map(String), label: 'Minimum tap size',
-    applied: tapCostHtml, selfUndo: true,
+    applied: tapCostHtml, resizesWhilePressed: true,
     note: 'How small a button, tab, or option is allowed to get. 44 is the size a fingertip reliably hits; smaller fits more on screen.' },
   { cat: 'Accessibility', key: 'colorblindSafe', def: false, label: 'Colorblind-friendly',
     note: 'Shift danger/heal/blight/frost colors to a more distinguishable palette.' },
@@ -300,7 +303,7 @@ function rowHtml(settings, r) {
       .join('');
     return `<div class="set-row">
         <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
-        <div class="choice-group"${r.selfUndo ? ' data-self-undo="1"' : ''}>${opts}</div>
+        <div class="choice-group"${r.resizesWhilePressed ? ' data-resizes-while-pressed="1"' : ''}>${opts}</div>
       </div>`;
   }
   // 'action' rows (e.g. fullscreen) render as a live toggle reflecting state.

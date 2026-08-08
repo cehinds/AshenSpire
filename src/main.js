@@ -373,12 +373,12 @@ function applyUiScale(settings) {
 function applyTapSize(settings) {
   const { px, stored, bad } = resolveTapSize(settings);
   document.documentElement.style.setProperty('--tap-target', `${px}px`);
-  // THE UNDO NEVER MOVES. `--tap-undo-target` is the DEFAULT, not the choice:
-  // the control whose value sizes its own chips must keep the way back
-  // pressable at any setting (Sunna's rule, Marina's default). Written from the
-  // same `def` the row reads, so this is the same 44 asked a second question
+  // THE EXEMPT FLOOR NEVER MOVES. `--tap-floor-default-target` is the DEFAULT,
+  // not the choice: the one control whose resizing happens while it is being
+  // pressed holds still at it (Marina's ruling). Written from the same `def`
+  // the row's own default reads, so this is the same 44 asked a second question
   // and not a second copy of it. See styles/base.css for the pair.
-  document.documentElement.style.setProperty('--tap-undo-target', `${UI.tapSize.def}px`);
+  document.documentElement.style.setProperty('--tap-floor-default-target', `${UI.tapSize.def}px`);
   if (bad) {
     const msg = `settings.tapFloor: stored value ${JSON.stringify(stored)} is not one of `
       + `${UI.tapSize.sizes.join(', ')} — applying the default ${px} and saying so`;
