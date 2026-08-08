@@ -973,25 +973,53 @@ button.ev-choice {
       no box; Law 4 clause 5 — it is inline typographic adornment sitting in
       the line of text it belongs to, so it tracks Text size on purpose while
       the bar's `min-height: var(--tap-floor)` above stays text-independent. */
-button.ev-choice.ev-hold { position: relative; overflow: hidden; }
-button.ev-choice.ev-hold::before {
-  content: ''; position: absolute; inset: 0 auto 0 0;
-  width: calc(var(--hold, 0) * 100%);
-  /* `--accent-rgb` is the accent theme's own channel triple (base.css:24) and
-     it is swapped by the Accent color row — so the fill follows the palette the
-     player chose instead of hard-coding gold, and the high-contrast profile
-     moves it too. Alpha, never a solid: the label under it must stay readable
-     at every point of the fill, which is the whole reason to watch it. */
-  background: rgba(var(--accent-rgb), 0.30);
-  pointer-events: none;
+button.ev-choice.ev-hold {
+  /* THE FILL IS A BACKGROUND, NOT A PSEUDO-ELEMENT, AND THAT IS BJORN'S FINDING
+     PAID BACK. The first version was a `::before` plus
+     `button.ev-choice.ev-hold > * { position: relative; }` to lift the label
+     above it — and `> *` reaches ELEMENT children, while the label on these
+     bars is a BARE TEXT NODE. He repainted the ::before opaque for one frame:
+     the label vanished and only `HOLD` (a real <span>) survived. The picture
+     shipped fine anyway — 6.87-7.49:1 across all five accents against 15.46
+     outside the fill — but it was fine because the 0.30 alpha carried it ALONE,
+     and the line I believed was protecting it was doing nothing at all. A
+     comment that describes a mechanism which is not running is worse than no
+     comment: the next person tunes the alpha up trusting a guard that isn't
+     there.
+     A background-image cannot have that bug. Backgrounds paint UNDER text by
+     definition — no stacking context, no pseudo-element, nothing to lift, and
+     it works on a bare text node because there is nothing to reach. */
+  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+  background-repeat: no-repeat;
+  /* No `transition` on the size, deliberately: an eased width keeps painting
+     after the finger lifts, so the bar would still be growing during the abort
+     — the one frame where the picture must tell the truth instantly. */
+  background-size: calc(var(--hold, 0) * 100%) 100%;
 }
-/* The label has to stay on top of its own fill. */
-button.ev-choice.ev-hold > * { position: relative; }
 button.ev-choice.ev-hold[data-hold='holding'] { border-color: var(--gold); }
+
+/* `--accent-rgb` is the accent theme's own channel triple (base.css:24), so the
+   fill follows the palette the player chose. IT DOES NOT FOLLOW THE
+   HIGH-CONTRAST PROFILE — I wrote that it did, and Bjorn verified both ways
+   that it does not. The contrast the label keeps through the fill comes from
+   the 0.30 alpha and nothing else, measured at 6.87-7.49:1. Anyone raising that
+   alpha is spending the only margin there is. */
+
+/* THE HINT IS ABOUT A THUMB, SO IT LEAVES WHEN A THUMB ISN'T DRIVING.
+   Bjorn, driving the pad: shipped, `detail=0`, bars 3->0, no hold; with that
+   line removed, five presses and bars 3->3 — so the pad's immediate confirm is
+   not a loophole, it is THE ONLY WAY a pad player takes a binding choice. His
+   one thing back: "the bar the focus ring lands on still says HOLD." It said a
+   thing that was false for the person reading it.
+   `.gp-focus` is the class input.js puts on the focused element, so the word
+   leaves exactly the bar the cursor is on and comes back the moment a finger
+   is used instead. One line, no JS, correct in both directions and self-
+   correcting when the player switches input mid-screen. */
 .hold-hint {
   margin-left: 0.6em; font-size: 0.75em; letter-spacing: 0.14em;
   color: var(--gold); opacity: 0.75;
 }
+button.ev-choice.gp-focus .hold-hint { display: none; }
 
 .choice-group[data-resizes-while-pressed] .choice {
   min-height: var(--tap-floor-default); min-width: var(--tap-floor-default);

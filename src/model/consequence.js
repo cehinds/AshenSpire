@@ -7,76 +7,130 @@
 // someone authors the twenty-first event: the new curse ships with no hold and
 // nothing goes red, because a hand-kept list cannot know what it was not told.
 // Law 0 clause 1 says the entry DESCRIBES and the machinery DERIVES, and this
-// is that sentence applied to danger: a choice is binding because of the ops it
-// runs and the cards those ops name — both of which the author already wrote.
+// is that sentence applied to danger.
 //
-// THE FALSIFIER, and it is the same one Law 0 ships everywhere: author one
-// fictional event whose only interesting property is `addCardToDeck` of a card
-// whose `type` is `curse`, in content, with ZERO code commits. It gets the
-// hold. `node tools/holdconfirm.mjs --new-entry` runs exactly that.
+// ---------------------------------------------------------------------------
+// IT FAILS CLOSED, AND THE FIRST DRAFT DID NOT. Viki's gate, and both halves of
+// it were right:
 //
-// WHOSE THIS IS. The *characteristic* — what makes a consequence heavy, and
-// whether "binding" is even the right axis — was dispatched to VIKI (collapsing
-// two concepts so a duplicate cannot be born). This module is the stand-in the
-// hold needed tonight, written conservatively so that being wrong is being
-// CAUTIOUS: it can ask for a hold nobody needed, and the cost of that is one
-// held thumb. It cannot silently skip one, because the three ops below are the
-// only ops in RUN_OPCODES that write something the run has no way to undo.
-// Viki may replace the body and keep the name; every caller reads this function
-// and nothing re-derives it.
+//   (1) SIGN-BLINDNESS. `addCinders` was excluded categorically, but a spend is
+//       `{ op: 'addCinders', amount: -50 }` and three shipped choices do exactly
+//       that. Under this file's own axis they qualified, and the answer came
+//       back "a tap is enough".
+//   (2) THE CLOSURE WAS OVER THE WRONG SET, and this is the sharper one. The
+//       claim was bounded by `RUN_OPCODES`. Event effect lists DEMONSTRABLY
+//       LEAVE IT — `damage` and `heal` ship in events today — because
+//       `executeRunEffects` runs the whole `OPCODES` vocabulary through a
+//       player facade. Nothing bleeds yet; the argument was simply unsound. An
+//       event that borrows a permanent combat op (`exhaust`) would be invisible
+//       with nothing red.
 //
-// Readers (Law 0 clause 4, one home, three consumers):
-//   ui/screens/event.js      arms the hold on a binding choice, and only there
-//   tools/holdconfirm.mjs    sweeps the shipped content and the shipped screen
-//   (Viki)                   the characteristic, when it lands
+// His verdict, and it is the fix in one line: THE ENUMERATION WAS LOAD-BEARING
+// WHERE A DEFAULT SHOULD BE. So the enumeration flipped. There is no list of
+// dangerous ops any more. There is a list of ops POSITIVELY KNOWN TO BE SAFE,
+// and everything else — every op nobody has ruled on, every opcode added after
+// this file was written, every typo — is binding. Being wrong now costs one
+// held thumb and is visible on screen; before, it cost a curse and was silent.
+// ---------------------------------------------------------------------------
+//
+// THE FALSIFIERS, both run by tools/holdconfirm.mjs:
+//   --new-entry   author one fictional event with a curse, content only, ZERO
+//                 code commits: it arrives holding.
+//   --fail-closed a choice carrying an op this file has never heard of holds,
+//                 and the run prints every declared opcode that would.
+//
+// WHOSE THIS IS. The *characteristic* — what makes a consequence heavy — was
+// dispatched to VIKI. Viki may replace the body and keep the name; every caller
+// reads these functions and nothing re-derives them.
 
 /**
- * The run ops that write something this run can never take back.
+ * THE AXIS: a choice is binding when it writes something this run has no way to
+ * get back and the player did not want it. Everything below is the SAFE side of
+ * that line, stated positively, with the reason each one is here — because an
+ * unexplained entry on a fail-open list is how (1) and (2) happened.
  *
- * NOT `addRelic`, `addFlask`, `upgradeCard`, `addCinders`: permanent, and the
- * player wanted them. NOT `startCombat`: a fight can kill you, but you fight it
- * with everything you still have, and every one of the twenty events reaches it
- * through a choice that reads as a risk rather than a cost. `damage`/`heal` are
- * combat ops the run layer borrows and they move a number that moves back.
- *
- * The axis is `cannot be undone AND was paid, not gained` — which is why
- * `upgradeCard` is absent even though it is as permanent as anything here.
+ * A word not in this set is BINDING. That is the whole design.
  */
-export const BINDING_OPS = Object.freeze(['removeCardFromDeck', 'loseMaxHpPct']);
+export const SAFE_OPS = Object.freeze({
+  // Gains. Permanent, and the player reached for them.
+  addRelic: 'a relic is a gain, and permanence is the point of it',
+  addFlask: 'a flask is a gain',
+  upgradeCard: 'as permanent as anything here, and wanted — the axis is "paid, not gained"',
+
+  // Numbers that move back.
+  damage: 'HP moves both ways; a rest, a flask or a heal undoes it',
+  heal: 'a gain, and the same number',
+  loseHp: 'the combat spelling of `damage` — same number, same faucet',
+  block: 'lives and dies inside one turn',
+  gainEnergy: 'lives and dies inside one turn',
+
+  // THE ONE COST WITH A FAUCET, and it is a named exception rather than a
+  // silence — Viki asked for the line and the reason, so here they are.
+  //
+  // Cinders are ruled SAFE AT EVERY SIGN, spend included. Every other binding
+  // op writes to something the run cannot refill: a card gone, max HP gone, a
+  // curse in the deck for good. Cinders come back — combat pays, treasure pays,
+  // events pay. So a mis-tapped spend costs TEMPO, not STATE, and tempo is what
+  // the rest of the run is for.
+  //
+  // NOT justified by "every shipped spend buys something in the same effect
+  // list" — which is true today (-50 + addRelic, -30 + heal, -60 + addRelic) and
+  // is exactly the kind of property that dies green the day content moves. The
+  // faucet is the reason; the pairing is a coincidence I am deliberately not
+  // leaning on.
+  //
+  // OVERTURN THIS the day a spend can strand a run — a cost the player cannot
+  // earn back before the thing it was needed for.
+  addCinders: 'the one cost with a faucet: play refills it, so a mis-tap costs tempo, not state',
+
+  // A RISK IS NOT A COST, and this one needs saying out loud because it is the
+  // most common shape in the file — 7 of the 20 shipped events reach a fight.
+  // You enter a fight with everything you still have; nothing has been spent at
+  // the moment of the tap. Holding all seven would put ceremony on the ordinary
+  // case, which is how a safety step teaches players to rush past it.
+  startCombat: 'a risk taken with everything still in hand, not a cost paid',
+});
 
 /**
- * `addCardToDeck` is the one op that is binding OR NOT depending on what it
- * names — the same opcode hands you a blessing or a Guilt. So it reads the
- * CARD's own declared `type`, which content already writes and `CARD_TYPES`
- * already closes. A card the registry does not know is treated as binding:
- * unknown is not "fine" (SOP 2), and the safe direction here is one extra hold.
+ * `addCardToDeck` is the one op that is binding OR NOT depending on WHAT IT
+ * NAMES — the same opcode hands you a blessing or a Guilt. So it is not in
+ * SAFE_OPS at all; it is decided below from the CARD's own declared `type`,
+ * which content already writes and `CARD_TYPES` already closes.
  */
 export const BINDING_CARD_TYPES = Object.freeze(['curse', 'status']);
+
+/** Which of a declared vocabulary this file would hold. For the instrument. */
+export function failClosedOps(opcodes) {
+  return (opcodes || []).filter((op) => !(op in SAFE_OPS) && op !== 'addCardToDeck');
+}
 
 /**
  * bindingReasons(choice, registries) -> string[]
  *
- * Empty means "a tap is enough". Non-empty is why, in the player's terms, and
- * the strings are for an instrument and a log — never rendered raw at a player.
+ * Empty means "a tap is enough" — and it now means it only for ops this file
+ * has positively ruled safe. Non-empty is why, for an instrument and a log;
+ * never rendered raw at a player.
  */
 export function bindingReasons(choice, registries) {
   const out = [];
   if (!choice || !Array.isArray(choice.effects)) return out;
   for (const eff of choice.effects) {
-    if (!eff || typeof eff !== 'object') continue;
-    if (BINDING_OPS.includes(eff.op)) { out.push(eff.op); continue; }
+    // A malformed effect is not a safe effect.
+    if (!eff || typeof eff !== 'object' || typeof eff.op !== 'string') { out.push('malformed-effect'); continue; }
+
     if (eff.op === 'addCardToDeck') {
-      // `random: true` adds a card nobody named. It is not knowably a curse, so
-      // it is not knowably safe either — and this function's whole contract is
-      // that it never says "safe" about something it did not check.
+      // `random: true` adds a card nobody named. Not knowably a curse, so not
+      // knowably safe either — and this function never says "safe" about
+      // something it did not check.
       if (eff.random || eff.card == null) { out.push('addCardToDeck:unnamed'); continue; }
-      const def = registries && registries.cards && registries.cards.get
-        ? registries.cards.get(eff.card) : null;
+      const def = registries && registries.cards && registries.cards.get ? registries.cards.get(eff.card) : null;
       const type = def ? def.type : null;
-      if (type == null || BINDING_CARD_TYPES.includes(type)) {
-        out.push(`addCardToDeck:${type || 'unknown'}`);
-      }
+      if (type == null || BINDING_CARD_TYPES.includes(type)) out.push(`addCardToDeck:${type || 'unknown'}`);
+      continue;
     }
+
+    // THE DEFAULT, and it is the whole correction: unrecognised is binding.
+    if (!(eff.op in SAFE_OPS)) out.push(`unrecognised-op:${eff.op}`);
   }
   return out;
 }
