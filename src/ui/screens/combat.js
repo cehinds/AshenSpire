@@ -1034,12 +1034,16 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
 
   // "SAME WITH ENDING TURN." — Constantine, in the sentence that also asked for
   // the hold, and the half of it that was dropped. It is not wired here by
-  // hand: `endTurn` is a row in model/secondbeat.js whose stakes depend on
-  // whether this turn still has a play in it, and the machinery reads the row.
-  // Nothing on this line says "hold", and adding a third action to this screen
-  // would say even less.
+  // hand: `endTurn` is a row in model/secondbeat.js and the machinery reads the
+  // row. Nothing on this line says "hold", and adding a third action to this
+  // screen would say even less.
+  //
+  // NO `ctx` — the row is unconditional now (Sunna's ruling: every turn). A
+  // screen that kept passing `forfeits` would be stating a dependence the table
+  // no longer has, which is a comment describing a mechanism that is not
+  // running, one field over. `endTurnForfeits()` stays: it is the gold pulse's
+  // predicate and always was.
   endTurnBeat = arm($('.end-turn'), 'endTurn', {
-    ctx: () => ({ forfeits: endTurnForfeits() }),
     onConfirm: () => {
     if (busy || combat.result || combat.phase !== 'player') {
       const why = { busy, result: combat.result, phase: combat.phase };

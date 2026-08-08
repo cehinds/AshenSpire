@@ -134,18 +134,34 @@ export const ACTIONS = Object.freeze({
     lives: 'src/ui/screens/combat.js',
     surface: 'combat',
     // HIS SENTENCE, AND THE HALF OF IT THAT WAS DROPPED: "same with ending
-    // turn." What it costs is state-dependent and THE GAME ALREADY KNOWS THE
-    // ANSWER — `renderControls` has pulsed the button on
-    // `energy > 0 && anyPlayable` since long before the hold existed. Ending a
-    // turn with nothing left to spend forfeits nothing, and a beat there would
-    // be ceremony on the most-pressed button in the game; ending one with
-    // energy and a playable card throws both away and hands the enemy the turn.
-    // The pulse and the beat now read the same predicate, so they cannot
-    // disagree.
-    stakes: (c) => (c.forfeits ? 'turn' : 'nothing'),
+    // turn." EVERY TURN — Sunna's ruling, accepted 2026-08-08, and it overrules
+    // the state-dependent row this file first shipped with.
+    //
+    // The first version read `(c) => (c.forfeits ? 'turn' : 'nothing')`, on the
+    // reasoning that a turn with nothing left to spend forfeits nothing and a
+    // beat there is ceremony. That reasoning is about the COST of the press and
+    // it is correct about the cost. It is wrong about the PLAYER, and this is
+    // the one place in the table where those two answers differ:
+    //
+    //   A GESTURE THAT CHANGES UNDER THE SAME FINGER IS NOT A GESTURE, IT IS A
+    //   COIN FLIP. Measured on the shipped bundle at 390x844: turn 1 the button
+    //   reads `END TURN E HOLD` and commits on a 600 ms fill; three cards later,
+    //   same fight, same button, same pixels, it reads `END TURN E` and commits
+    //   on a tap. Nothing announced the change and nothing could — the word
+    //   simply leaves. A player learns "this one holds" on the turns it holds,
+    //   then taps on the turns it does not and has learned nothing at all. The
+    //   cheapest turn in the game is where the habit is formed, and a habit
+    //   formed on the cheap turn is spent on the expensive one.
+    //
+    // So the stakes are what ending a turn COSTS AS AN ACT, not what this
+    // particular turn happens to have left in it: the hand goes, the energy
+    // goes, and the enemy acts next. `endTurnForfeits()` still lives in
+    // combat.js and still drives the gold pulse, which is the right home for
+    // "you still have a play" — that is a HINT about this turn, and a hint may
+    // change every turn. A GESTURE MAY NOT.
+    stakes: 'turn',
     undo: 'none',
     hazard: 'pointing',
-    edges: { forfeits: [true, false] },
     note: 'the button sits at the edge of a hand a thumb is already dragging cards out of',
   },
   useFlask: {

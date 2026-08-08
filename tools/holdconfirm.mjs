@@ -55,10 +55,14 @@
 //      DREW, both directions: a declared action that draws no control is a
 //      declaration with no handler; a control armed under an id nobody declared
 //      is a gap. Neither is visible from a source tree.
-//   9. END TURN HOLDS — the half of Constantine's sentence that was dropped
-//      ("same with ending turn"), driven on a real board with real touch, at
-//      both edges: with a play still in hand it holds and an early release does
-//      not end the turn; with nothing left to spend the table owes no beat.
+//   9. END TURN HOLDS, EVERY TURN — the half of Constantine's sentence that was
+//      dropped ("same with ending turn"), driven on a real board with real
+//      touch, at both edges: with a play still in hand it holds and an early
+//      release does not end the turn; and with the energy spent THROUGH THE
+//      HAND it still holds and still says HOLD. Sunna's ruling, accepted
+//      2026-08-08 — a gesture that changes under the same finger is not a
+//      gesture. The spent edge used to assert the opposite and asserted it in
+//      node, without ever reading the button.
 //  10. THE SMITH CONFIRMS, and the confirm carries the preview. #105 shipped
 //      that preview as a HOVER tooltip and a phone has no hover, so the touch
 //      player's preview was nothing at all. One tap ARMS, CANCEL takes it back,
@@ -633,7 +637,7 @@ async function main() {
       try {
         const b = await import(pathToFileURL(resolve(ROOT, 'src/model/secondbeat.js')).href);
         return { rows: b.enumerateBeats(), owed: b.beatsOwed(), sane: b.assertTableSane(),
-                 ids: Object.keys(b.ACTIONS), noBeatWhenSpent: b.beatFor('endTurn', { forfeits: false }).form };
+                 ids: Object.keys(b.ACTIONS) };
       } catch (e) { return { skip: `could not read src/model/secondbeat.js at this ref: ${e.message}` }; }
     })();
     if (table && table.skip) skip('the-set', 'structural', table.skip);
@@ -746,11 +750,15 @@ async function main() {
       ok(`with a play still in hand, End Turn owes a HOLD`, a.beat === 'hold' && a.holdMs > 0,
         `beat=${a.beat} ms=${a.holdMs} energy=${a.energy} pulse=${a.pulse}`);
       ok(`and it SAYS so on the button`, a.hint === true, `HOLD hint present=${a.hint}`);
-      // THE PULSE AND THE BEAT READ ONE PREDICATE. If these two ever disagree
-      // the button is pulsing "you still have a play" while committing on a tap,
-      // or holding while claiming there is nothing to lose.
-      ok(`the gold pulse and the beat agree`, a.pulse === (a.beat === 'hold'),
-        `pulse=${a.pulse} beat=${a.beat}`);
+      // THE PULSE IS NOT THE BEAT AND IS NO LONGER ASSERTED AGAINST IT. This
+      // read `ok('the gold pulse and the beat agree', a.pulse === (a.beat ===
+      // 'hold'))` while the row was state-dependent and the two shared one
+      // predicate. Under Sunna's ruling the beat is unconditional, so that
+      // equality holds at FULL ENERGY BY COINCIDENCE and breaks on any board
+      // with energy and no playable card — a check that is green because of
+      // where it happens to stand is worse than no check. Reported, not
+      // asserted: the pulse is a hint about this turn, the beat is a gesture.
+      console.log(`    ---- pulse=${a.pulse} beat=${a.beat} — reported, not asserted (see below)`);
 
       const p = await pointOf('.end-turn');
       if (!p) ok(`End Turn is pressable`, false, 'the button has no box');
@@ -770,22 +778,50 @@ async function main() {
           `turn ${a.turn} -> ${b2 && b2.turn}, phase ${a.phase} -> ${b2 && b2.phase}`);
       }
 
-      // 3. THE OTHER EDGE, AND IT IS THE ONE THAT KEEPS THIS FROM BEING
-      // CEREMONY. A turn with nothing left to spend forfeits nothing, so the
-      // beat is not owed and the button takes a tap. Energy is set to 0 through
-      // the debug handle and the screen re-rendered the way the game does.
+      // 3. THE OTHER EDGE, AND IT IS THE ONE THIS RULING TURNED OVER.
+      //
+      // WHAT IT USED TO ASSERT: "with nothing left to spend, the table owes NO
+      // beat" — and it asserted it by importing the table in NODE and calling
+      // `beatFor('endTurn', { forfeits: false })`. It set `energy = 0` on the
+      // debug handle first and then dispatched `new Event('nothing')`, which no
+      // listener answers, so THE PAGE WAS NEVER RE-RENDERED AND WAS NEVER READ.
+      // The check would have printed the same green with the button untouched
+      // behind it. That is the shape development.md now names: a known-bad that
+      // enters below the defect — the defect this section exists for lives in
+      // the DRESSING of a button, and the assertion never looked at a button.
+      //
+      // WHAT IT ASSERTS NOW: Sunna's ruling, accepted 2026-08-08 — END TURN
+      // HOLDS EVERY TURN. A gesture that changes under the same finger is not a
+      // gesture. So the spent edge is no longer the exemption that keeps this
+      // from being ceremony; it is the edge where the button must NOT change.
+      //
+      // AND IT ENTERS BY THE PLAYER'S DOOR: energy reaches 0 by CARDS BEING
+      // PLAYED with real touch, tap-to-select then tap-the-enemy, which is how
+      // a phone spends energy — so the re-render is the game's own, not a
+      // synthesised one, and what is read back is the button on the page.
       await openShot('combat');
-      const c0 = await ev(`(() => {
-        const c = window.__combat; if (!c) return null;
-        c.player.energy = 0;
-        document.querySelector('.end-turn').dispatchEvent(new Event('nothing'));
-        return { turn: c.turn };
-      })()`);
-      if (!c0) skip('end-turn spent edge', 'unasked', 'no combat handle');
-      else if (!table || table.skip) skip('end-turn spent edge', 'unasked', 'the table could not be read at this ref');
+      let spent = null;
+      for (let i = 0; i < 8; i++) {
+        const e = await ev(`(() => { const c = window.__combat; return c ? c.player.energy : null; })()`);
+        if (e === null) break;
+        if (e === 0) { spent = await st(); break; }
+        const card = await pointOf('.hand .card');
+        const foe = await pointOf('.enemy');
+        if (!card || !foe) break;
+        await press(card, 60); await wait(350);
+        await press(foe, 60); await wait(750);
+      }
+      if (!spent) skip('end-turn spent edge', 'unasked', 'could not spend this board\'s energy through the hand in 8 plays');
       else {
-        ok(`with nothing left to spend, the table owes NO beat`, table.noBeatWhenSpent === 'none',
-          `beatFor('endTurn', { forfeits: false }) = ${table.noBeatWhenSpent}`);
+        ok(`with nothing left to spend, the button STILL holds`, spent.beat === 'hold' && spent.holdMs > 0,
+          `beat=${spent.beat} ms=${spent.holdMs} energy=${spent.energy} — read off the page after real plays`);
+        ok(`and it still SAYS so — the word does not leave mid-fight`, spent.hint === true,
+          `HOLD hint present=${spent.hint} (it was ${a.hint} on the same button at full energy)`);
+        // THE PULSE IS ALLOWED TO DISAGREE NOW, AND THAT IS THE POINT. It is a
+        // HINT about this turn; the beat is a GESTURE. The earlier check that
+        // required them equal is gone with the row it was reading.
+        console.log(`    ---- the gold pulse is off here (pulse=${spent.pulse}) and the hold is on: a hint may`
+          + ` change every turn, a gesture may not.`);
       }
     }
   }
