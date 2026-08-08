@@ -969,7 +969,9 @@ body.hide-hints .hint-bar { display: none; }
    scalable with ui or both." Measured across the entire UI-size space (5 sizes
    x 2 text sizes x 2 shapes = 20 cells, freja-tabs-probe.mjs):
 
-     tab height        44.0 in ALL TWENTY. Zero variance. It is --tap-floor.
+     tab height        44.0 in ALL TWENTY at the DEFAULT floor. Zero variance
+                       across UI size — it is --tap-floor, and --tap-floor
+                       answers the Minimum tap size setting, not this block.
                        THE FLOOR IS NOT FIXED, AND THIS BLOCK CLAIMED IT WAS.
                        It attributed a permanent 44 minimum to Constantine; he
                        had already reversed that the same day, in his words:
@@ -983,12 +985,24 @@ body.hide-hints .hint-bar { display: none; }
                        shipped file has not been withdrawn. It matters right
                        here — a movable floor is what turns the next line from a
                        curiosity into the number a smaller floor would land on.
-     what it wants     23.2-31.0. The floor is adding 13-21px nothing asked for,
-                       and no vertical number can touch that.
+     what it wants     23.2-31.0. At the default floor of 44 that is 13-21px of
+                       height nothing in this block asked for — and the four
+                       numbers below are not what governs it. THE FLOOR
+                       GOVERNS IT, and the floor is now a control: Settings →
+                       Accessibility → Minimum tap size, 44 / 36 / 30 / 24,
+                       written as `--tap-target` (src/content/balance.js is the
+                       one home; base.css holds no constant).
      padY / gap        5.1-6.0 across the whole space.
      font              10.2-14.4.
 
-   So none of the four can move the height, and the height is not the finding.
+   So the height answers ONE thing, and it is not any of the four above — it is
+   the player's own floor. Measured on this tree at 390x844 Text M, headless
+   Chromium, `node tools/tapsize.mjs`: this rule renders 44.0 at the default and
+   24.0 at the bottom of that dial, where the tab's own glyphs finally take over.
+   THE WEIGHT IS STILL THE FINDING OF THIS BLOCK, and that is why the numbers
+   below stand unchanged: they are about how LOUD the tab is, which no floor
+   moves in either direction.
+
    THE FINDING IS THE COMPARISON. On this same screen, measured in the same
    moment, the 34 `.choice` chips a player sees directly under the strip:
 
