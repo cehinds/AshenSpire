@@ -122,6 +122,27 @@ const SCREENS = [
   // be photographed, then excluded from the photographs, is a state that earns
   // nothing.
   { name: 'shrine', query: '?shot=rest', landmark: '#smith-opt', state: 'rest' },
+  // The event screen. Rune added `?shot=event` in the tap-size work (#104) and
+  // did not register it here, so THIS TOOL REFUSED TO RUN at `52e0bc1` —
+  // "1 app shot state neither photographed nor excluded: event" — and
+  // Constantine's shots that night came from screenshot.mjs instead. The refusal
+  // was correct and it is the whole point of the derivation above: a state the
+  // app has and this list does not is a silent gap, and the tool would rather
+  // stop than photograph around one.
+  //
+  // A SCREENS entry and NOT an EXCLUDED_STATES line, for the reason written
+  // eight lines above about the Shrine: the state exists BECAUSE the fix needed
+  // a picture instead of an assertion (main.js — "a state so anyone can see
+  // them", and 24 of 24 choice bars sat under the tap floor with nothing ever
+  // regressing against it). Excluding it by name would be one line and would put
+  // back the exact condition the defect lived in.
+  //
+  // `.ev-choice` and not `.event-art`: the landmark has to prove the thing the
+  // state was added FOR actually rendered. The art is a glyph that draws whether
+  // or not the choice bars exist; the bars are the subject. main.js boots this
+  // state on `graveOfTheNameless` — three choices, the last one "Leave" — so the
+  // photograph shows the adjacency the fix is about.
+  { name: 'event', query: '?shot=event', landmark: '.ev-choice', state: 'event' },
   {
     // AND THE GRID OPEN, driven, because the closed Shrine FITS. A baseline of
     // the screen in the state that never overflowed could not have caught the
