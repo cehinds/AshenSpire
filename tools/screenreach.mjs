@@ -95,6 +95,16 @@ const SCREENS = [
   // act that creates the screen for the same reason customize was added late
   // and cost a week.
   { name: 'compendium', q: '?shot=compendium', ready: `!!document.querySelector('.cp-cell')` },
+  // THE SHRINE AND THE MERCHANT. The boundary below said for weeks that REST
+  // has no `?shot=` state — and it HAS had one since the Smith grid was fixed;
+  // the sentence went stale the moment somebody added the state and did not add
+  // the row. A boundary that lies about its own scope is worse than none (this
+  // file's own words, about this file). Both screens now carry a second-beat
+  // control apiece (Rest holds, the Smith confirms, the brazier confirms), and
+  // a confirm panel that pushes a CANCEL button off a 360 px screen is exactly
+  // the class this sweep exists to catch.
+  { name: 'rest', q: '?shot=rest', ready: `!!document.querySelector('#rest-opt')` },
+  { name: 'shop', q: '?shot=shop', ready: `!!document.querySelector('#leave-shop')` },
 ];
 
 const SHAPES = [
@@ -302,8 +312,10 @@ async function main() {
   // boundary that lies about its own scope is worse than none.
   console.log(`\n  BOUNDARY — Linux headless Chromium only; emulation is not a phone. Only the
   screens with a ?shot= state are reached: ${SCREENS.map((s) => s.name).join(', ')}.
-  SHOP, REST, REWARDS and every overlay still have NO ?shot= and are covered
-  here or anywhere by nothing.
+  REWARDS, the DRAFT and every overlay still have NO ?shot= and are covered
+  here or anywhere by nothing. Neither is a second-beat surface today
+  (rewardPick and draftPick are declared 'none' in src/model/secondbeat.js), so
+  what is unmeasured there is their reach, not a confirm step.
   Reachability at rest only: nothing is pressed, legibility is not judged, and a
   control that appears only mid-interaction cannot be seen.
 
