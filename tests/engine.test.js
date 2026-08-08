@@ -1556,18 +1556,42 @@ export async function runTests({ artManifest = null } = {}) {
     } catch (e) {
       refused = e.message;
     }
-    // ASSERTED AGAINST THE VERDICT, NOT AGAINST THE PROSE (Sunna, #98). This
-    // line read `refused.includes('outside combat')` — a substring of canSwap's
-    // reason, typed here. So the player-facing wording had a second home in a
-    // test that does not care about wording, and rewording the refusal turned
-    // this red while the rule it names was untouched. A test that fails when a
-    // sentence improves is a test that argues for bad sentences.
-    // What it actually means to check is that the dispatch REFUSED and that the
-    // model is the one refusing it — both, so a throw for any other reason
-    // cannot pass as this rule.
-    assert(refused, 'armour cannot be swapped mid-fight — the dispatch threw');
+    // ASSERTED AGAINST THE VERDICT, NOT AGAINST THE PROSE (Sunna, #98; the
+    // identity is Vira's, #104). This line read
+    // `refused.includes('outside combat')` — a substring of canSwap's reason,
+    // typed here. So the player-facing wording had a second home in a test that
+    // does not care about wording, and rewording the refusal turned this red
+    // while the rule it names was untouched. A test that fails when a sentence
+    // improves is a test that argues for bad sentences.
+    //
+    // MY FIRST REPLACEMENT WAS TWO INDEPENDENT FACTS AND VIRA MEASURED THE GAP.
+    // `assert(refused)` plus `canSwap(...).ok === false` never established the
+    // LINK between them: `doSwapArmament` throws for five other reasons (phase,
+    // equipment disabled, no loadout, no swaps/energy left, no such set), and any
+    // of them makes both true. She planted `'No swaps left this turn'` ABOVE the
+    // canSwap gate — so the rule never runs — and my pair passed 58/0 while the
+    // old prose substring caught it 57/1. A counted refusal is not a located one.
+    //
+    // THE IDENTITY IS THE LINK: the message the dispatch threw IS the string the
+    // model returns, compared against the model's own return rather than a
+    // literal typed here. The string keeps its single home in `canSwap`, so the
+    // wording stays free to improve, and no other throw site can wear this
+    // refusal's name. Under her plant: 57/1, caught. Reworded `fastened` →
+    // `buckled down`: 58/0.
+    eq(refused, canSwap(REG, 'armor', { inCombat: true }).reason,
+      'armour is refused mid-fight, in the words the model itself refuses in');
+    // AND THE FLOOR UNDER IT, which the identity alone does not carry: if canSwap
+    // ever stopped refusing, `reason` would be '' and the dispatch would not
+    // throw, so `'' === ''` would pass over a rule that had been deleted. An
+    // empty result is not a pass — this is the denominator, and it is measured,
+    // not argued. Planted the rule out of `canSwap` AND the price gate out of
+    // `doSwapArmament`, so the armour swap actually succeeds: with this line,
+    // 56/2 and 28 names it; without it, 28 PASSES on '' === '' and only 31d goes
+    // red. The deletion does not escape the SUITE — it escapes the one test whose
+    // whole subject is that armour is refused mid-fight, which is the same defect
+    // Vira just caught in my pair, reporting on something it never observed.
     eq(canSwap(REG, 'armor', { inCombat: true }).ok, false,
-      '…and the model is where that no comes from');
+      '…and the refusal exists at all, so the identity is not two empty strings');
 
     // Combat works on COPIES of the deck instances, so the orchestrator
     // re-stamps the run's own copies when the fight ends (main.js onCombatEnd).
