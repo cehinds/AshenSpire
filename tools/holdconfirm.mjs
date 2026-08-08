@@ -229,9 +229,20 @@ async function main() {
   // itself worth checking, so an id that will not mount on the artifact is a
   // finding rather than a skipped row.
   console.log(`\n  lockout — every event must leave a door for a player who cannot hold`);
+  let overlapCount = null;
   const ids = await (async () => {
     try {
       const m = await import(pathToFileURL(resolve(ROOT, 'src/content/events.js')).href);
+      // How much of the priced-AND-binding class shipped content can exercise.
+      // Stated, never assumed — a check whose population is zero is green for
+      // the wrong reason and must say so.
+      try {
+        const c = await import(pathToFileURL(resolve(ROOT, 'src/model/consequence.js')).href);
+        const g = await import(pathToFileURL(resolve(ROOT, 'src/model/registries.js')).href);
+        const i = await import(pathToFileURL(resolve(ROOT, 'src/content/index.js')).href);
+        const reg = g.createRegistries(i.contentBundle);
+        overlapCount = m.events.reduce((n, e) => n + e.choices.filter((ch) => ch.requires && c.isBindingChoice(ch, reg)).length, 0);
+      } catch { overlapCount = null; }
       return m.events.map((e) => e.id);
     } catch { return null; }
   })();
@@ -265,6 +276,40 @@ async function main() {
       + ` — purse-independent: the door must carry neither data-binding nor data-requires`);
     ok(`every event the source declares mounts on the artifact under test`, wontMount.length === 0,
       `${wontMount.length} would not mount${wontMount.length ? `: ${wontMount.join(', ')}` : ''}`);
+  }
+
+  // ---- 3b. THE CONTENT FACTS SURVIVE THE UNAFFORDABLE BRANCH. Vira's second
+  // hand-back: `data-binding` used to be written only inside the AFFORDABLE
+  // branch, so an unaffordable binding choice published nothing and the screen
+  // said "not binding" about a choice that is. Both facts are hoisted above the
+  // branch now, and this drives the one shipped event that renders a bar the
+  // player cannot pay for (startingCinders is 0).
+  //
+  // THE POPULATION IS STATED RATHER THAN THE VERDICT ASSUMED: the
+  // priced-AND-binding overlap is empty across shipped content, so the exact
+  // combination that was broken has no case to drive. A green here is about the
+  // WRITE POSITION, which is the thing that was wrong, and the number below
+  // says how much of the class the content can actually exercise.
+  {
+    console.log(`\n  content facts vs the unaffordable branch`);
+    await open('normal', { id: 'weepingPilgrim' });
+    const r = await ev(`(() => {
+      const bars = [...document.querySelectorAll('button.ev-choice')];
+      const priced = bars.filter((b) => b.dataset.requires === '1');
+      return {
+        bars: bars.length,
+        priced: priced.length,
+        pricedDisabled: priced.filter((b) => b.disabled).length,
+        pricedKeptFact: priced.filter((b) => b.dataset.requires === '1').length,
+      };
+    })()`);
+    ok(`a bar the player cannot pay for still publishes its price`,
+      r.priced > 0 && r.pricedDisabled === r.priced && r.pricedKeptFact === r.priced,
+      `${r.priced} priced bar(s), ${r.pricedDisabled} disabled, all still carrying data-requires`);
+    if (overlapCount != null) {
+      console.log(`    ---- priced AND binding across shipped content: ${overlapCount} choice(s).`
+        + `${overlapCount === 0 ? ' The exact combination that was broken has no case to drive — the write POSITION is what is proven here.' : ''}`);
+    }
   }
 
   // ---- the dial's four positions, and what each one wires.
@@ -517,7 +562,7 @@ async function main() {
     for (const n of notAsked) console.log(`    - ${n.name} [${n.kind}] — ${n.why}`);
     console.log(`  A skip folded into a PASS is silence, and silence is unknown, which blocks (SOP 2).`);
     if (structural.length === notAsked.length) {
-      console.log(`  All ${structural.length} are STRUCTURAL: this surface cannot be asked them, and no`);
+      console.log(`  All ${structural.length} are STRUCTURAL: this surface cannot answer them, and no`);
       console.log(`  re-run will change that. Ask them of the source tree — same ref, same commit.`);
     }
   }
