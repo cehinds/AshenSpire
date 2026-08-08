@@ -97,7 +97,34 @@ const SHAPES = [
 // balance.ui.textSize. Typed here is a second copy and it is the ONE value in
 // this file that can drift (Law 1 clause 2), so it is called out, not hidden.
 const TEXT = { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' };
-const TAP_FLOOR = 44; // device px, AFTER --ui-zoom. Sunna's ruling, card #37.
+// THE FLOOR IS NOT A CONSTANT HERE ANY MORE, AND IT MAY NOT BECOME ONE.
+// `const TAP_FLOOR = 44` stood here until Constantine turned the floor into a
+// control (Settings -> Accessibility -> Minimum tap size, 44/36/30/24). Sten
+// made it a RED rather than a named-not-fixed, discharged only by this tool
+// reading the floor from the game's own home — never by editing the 44 to some
+// other constant, which would be the identical defect one value later.
+//
+// So it is read off the PAGE THIS TOOL JUST MEASURED, which is the strictest
+// available reading of "the game's own home": not a copy of the number, not
+// even a second read of the data that produces it, but the floor actually in
+// force in the shape under test. A probe element sized by `var(--tap-floor)`
+// and measured — never `getPropertyValue('--tap-floor')`, which returns the
+// literal `calc(...)` token and parses to NaN.
+//
+// The floor travels with each reading, so this file holds no tap number at all
+// and a run at a non-default Minimum tap size reports against the floor that
+// run actually had. `node tools/tapsize.mjs` is the tool that sweeps the whole
+// dial; this one enforces whatever the dial is set to.
+// The probe itself lives inline in OVERLAY below, beside the rects it is
+// compared against, so the floor and the heights come off the same frame.
+
+// Every distinct floor this run actually measured. Printed rather than assumed:
+// if two shapes disagree the report says so instead of picking one, and an empty
+// set means nothing was measured and the sentence says THAT.
+const floorsSeen = new Set();
+const floorSentence = () => (floorsSeen.size === 0 ? 'UNMEASURED (no cell reported one)'
+  : floorsSeen.size === 1 ? [...floorsSeen][0]
+  : `VARYING (${[...floorsSeen].sort((a, b) => a - b).join(', ')}) across this run's cells`);
 
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
@@ -144,15 +171,24 @@ const OVERLAY = `(() => { const n=(v)=>+(+v).toFixed(2);
   // The author wrote 74% of the app box. Measured in ONE space: both rects are
   // post-zoom device px, so the ratio is zoom-free and comparable across shapes.
   const share=n(pr.height/ar.height*100);
+  // The floor this run is actually held to, measured in the page rather than
+  // injected from Node — see the block above for why there is no constant.
+  const probe=document.createElement('div');
+  probe.style.cssText='position:absolute;left:-9999px;top:0;width:1px;padding:0;border:0;height:var(--tap-floor)';
+  document.body.appendChild(probe); const floor=n(probe.getBoundingClientRect().height); probe.remove();
   let absent=0, tiny=[];
   for (const e of veil.querySelectorAll('.ov-tab')) {
     const r=e.getBoundingClientRect(); if(r.width===0&&r.height===0) continue;
     if (r.right<=0||r.left>=innerWidth) absent++;
-    if (r.height < ${TAP_FLOOR}) tiny.push(((e.textContent||'').trim().slice(0,10))+' '+n(r.height)); }
+    // 0.51 of slack: the floor and the rect are both device px off the same
+    // frame, and a sub-pixel rounding difference is not a control a finger
+    // misses. A floor of 0 means the property never resolved, which is a
+    // different failure and is reported as one below.
+    if (floor > 0 && r.height < floor - 0.51) tiny.push(((e.textContent||'').trim().slice(0,10))+' '+n(r.height)); }
   const rows=[]; for (const t of veil.querySelectorAll('.ov-tab')) {
     const q=t.getBoundingClientRect(); const rr=rows.find(z=>Math.abs(z.t-q.top)<=1);
     if(rr) rr.n++; else rows.push({t:q.top,n:1}); }
-  return { share, panelH:n(pr.height), appH:n(ar.height), absent,
+  return { share, panelH:n(pr.height), appH:n(ar.height), absent, floor,
     tabRows: rows.length, tinyTabs: tiny.length, tinyEg: tiny.slice(0,2) }; })()`;
 
 function connectCdp(wsUrl) {
@@ -287,11 +323,17 @@ async function main() {
         // The author wrote 74%. 1.5 points of tolerance for border/rounding.
         if (Math.abs(ov.share - 74) > 1.5) bad.push(`OVERLAY GETS ${ov.share}% of the app box where its author wrote 74% (panel ${ov.panelH} of ${ov.appH})`);
         if (ov.absent) bad.push(`${ov.absent} overlay tab(s) horizontally absent`);
-        if (ov.tinyTabs) bad.push(`${ov.tinyTabs} tab(s) under the ${TAP_FLOOR} device-px floor, e.g. ${ov.tinyEg.join(', ')}`);
+        // A floor that did not resolve is its own finding, and it is the one
+        // this file used to be structurally unable to have: with a constant
+        // typed here, a missing `--tap-target` would have been measured against
+        // 44 and reported as fine.
+        if (!ov.floor) bad.push('--tap-floor did not resolve on this page — the tap floor is UNKNOWN, and every tab height below is measured against nothing');
+        else if (ov.tinyTabs) bad.push(`${ov.tinyTabs} tab(s) under the ${ov.floor} device-px floor in force here, e.g. ${ov.tinyEg.join(', ')}`);
+        floorsSeen.add(ov.floor);
       }
       const viewSummary = Object.entries(perView).map(([n2, r]) => `${n2}:${r.noScroll}/${r.total}`).join(' ');
       console.log(`    ${k.padEnd(3)} ${String(layout).padEnd(7)} opens='${String(opened.view).padEnd(6)}' clipped=${String(opened.clipped).padEnd(2)} noScroll=${opened.noScroll}/${opened.total} ` +
-        `[${viewSummary}]  overlay ${String(ov.share ?? '?').padStart(5)}% tabRows=${ov.tabRows ?? '?'} tiny=${ov.tinyTabs ?? '?'}` +
+        `[${viewSummary}]  overlay ${String(ov.share ?? '?').padStart(5)}% tabRows=${ov.tabRows ?? '?'} floor=${ov.floor ?? '?'} tiny=${ov.tinyTabs ?? '?'}` +
         (bad.length ? '\n         <-- ' + bad.join('\n         <-- ') : ''));
       for (const b of bad) fails.push(`${shape} text=${k}: ${b}`);
     }
@@ -316,7 +358,7 @@ async function main() {
       rather than left to be discovered.
   (c) LEGIBILITY. It measures whether a control is on screen and how big it is.
       Whether the phone view is a GOOD view is Sunna's call and no number here.
-  (d) The ${TAP_FLOOR} device-px floor is ENFORCED only on the overlay tab strip —
+  (d) The ${floorSentence()} device-px floor is ENFORCED only on the overlay tab strip —
       the surface this work touches. Every other control is measured and reported
       but cannot fail this tool. Widening that is Marina's decision (Law 4, #37),
       deliberately not taken by a tool author mid-fix.`);
