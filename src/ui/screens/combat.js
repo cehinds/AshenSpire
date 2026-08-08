@@ -16,7 +16,7 @@ import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText } fr
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
-import { overlayIsOpen } from '../components/overlay.js';
+import { veilIsOpen } from '../components/veil.js';
 import { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad } from '../input.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
@@ -742,7 +742,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    if (overlayIsOpen()) return; // the overlay owns input while open
+    // ANY veil owns input while it stands — not the menu overlay alone. This
+    // line read `overlayIsOpen()`, which knew about one of six, so with the
+    // draw pile open E ended the turn and the hand went 5 -> 0 under the panel
+    // the player was reading. Measured on the draw pile, the discard pile and
+    // the in-combat Armoury, both shapes: tools/veil-owns-input.mjs.
+    if (veilIsOpen()) return;
 
     // Dedicated (rebindable) overlay keys: Menu → Deck, plus jump-to-tab keys.
     for (const [id, tab] of [['menu', 'deck'], ['deck', 'deck'], ['relics', 'relics'], ['stats', 'stats']]) {
