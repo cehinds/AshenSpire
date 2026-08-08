@@ -225,6 +225,33 @@ integration bug; the win rate is a completability **floor**, not a balance
 target (the bot can't pilot combos or curate a deck). Baseline at 30 runs/class:
 zero crashes, and the Herald completes full 3-act runs even naively.
 
+## "Shipped" vs "somebody opened it" — `tools/watched.mjs`
+
+A merge landing on `dev` proves the code is there. It proves nothing about
+reachable, defaulted-on, or correct — and that gap is not theoretical here: the
+fog shipped, was reported as *"it exists, it walks"*, and reached the player
+**switched off** behind a setting nobody had mentioned.
+
+`node tools/watched.mjs --ledger <path-to-asks.json>` closes it. The
+**population is derived** from the family's ledger of Constantine's asks (an
+input path — this repo never holds a copy), filtered to the states that claim to
+be in the build. For each row it opens `dist/AshenSpire.html` at **390×844**,
+drives real clicks to the screen the control lives on, asserts the control is
+there, and writes a PNG. Verdicts: `watched` · `not-there` · `there-but-wrong` ·
+`unreachable` · `unaccounted` · `no-screen`.
+
+The hand-held half is `tools/watched-probes.json`: per row, which screen, how to
+reach it, what makes it there — each probe signed `by` and carrying `read`, the
+source file its selector came out of. **A ledger row with no probe is `unaccounted`
+and red; a probe for a row the ledger dropped is stale and red.** Absence is never
+silence in either direction.
+
+`node tools/watched.mjs --selftest --ledger …` runs the known-bad corpus: nine
+plants (a control that cannot be there, a door that does not exist, a row with no
+probe, a stale probe, a state expectation that must fail, a content pattern that
+cannot match, and three floors) each driven through the real tool and required to
+go red. A green from this file means nothing until that prints nine reds.
+
 ## M1 known deviations (tracked for M2/M3)
 
 1. **Frostbite** is specced (SPEC §4.4) but not shipped — its

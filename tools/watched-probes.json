@@ -1,0 +1,1092 @@
+{
+ "_": "tools/watched-probes.json — the HAND-HELD half of tools/watched.mjs. Bjorn, 2026-08-08. The POPULATION is derived from Saga's ledger and never typed here; this file is a person saying, per row, WHICH SCREEN the control lives on, HOW to reach it, and WHAT makes it there. Every probe names `by` (who drew the edge) and `read` (the source file the selector was read out of, never guessed). A ledger row with no probe here comes out RED as `unaccounted`; a probe here for a row the ledger no longer carries comes out RED as stale. Absence is never silence in either direction.",
+ "_shape": "Authored against 390x844 — his words, 'mobile might need to be the priority for now'.",
+ "probes": [
+  {
+   "id": "P1",
+   "by": "Bjorn",
+   "read": "src/ui/screens/combat.js:445 (procbar) · src/content/statuses.js:74 (bleed.proc.threshold = 7)",
+   "screen": "combat › the enemy's build-up meter",
+   "why-drive": "No ?shot= state poses a status, so the game is PLAYED: the Reaver's own starter card Gorefire Slash applies 3 Bleed. A drive is the only honest way to photograph a mechanic.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat",
+     "ms": 2600
+    },
+    {
+     "op": "js",
+     "ms": 900,
+     "code": "for (let t=0;t<14;t++){ const c=[...document.querySelectorAll('.card')].find(e=>/Gorefire|Serrated|Rend|Crimson/i.test(e.innerText||'')); if(c){ c.click(); await sleep(250); if(document.querySelector('.card.selected')){ const en=document.querySelector('.combatant.enemy[data-eid]'); if(en) en.click(); } await sleep(700); } else { const et=document.querySelector('.end-turn'); if(et){ et.click(); await sleep(2200);} } if(document.querySelector('.procbar[data-status=\"bleed\"]')) break; } return true;"
+    }
+   ],
+   "focus": ".procbar[data-status=\"bleed\"]",
+   "expect": {
+    "present": {
+     "the bleed build-up meter": ".procbar[data-status=\"bleed\"]",
+     "the bleed pip": ".status-icon"
+    },
+    "measure": {
+     "fill": "document.querySelector('.procbar[data-status=\"bleed\"] .fill').style.width",
+     "pip": "document.querySelector('.status-icon').innerText.replace(/\\s+/g,'')"
+    }
+   }
+  },
+  {
+   "id": "P2",
+   "by": "Bjorn",
+   "read": "src/content/statuses.js:80-92 (burst is its own effect, ignoring Block) · src/ui/fx.js float",
+   "screen": "combat › the burst, as a damage event of its own",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat",
+     "ms": 2600
+    },
+    {
+     "op": "js",
+     "ms": 200,
+     "code": "window.__floats=[]; const obs=new MutationObserver((ms)=>{for(const m of ms) for(const n of m.addedNodes) if(n.innerText) window.__floats.push(n.innerText.trim());}); const l=document.querySelector('.fx-layer'); if(l) obs.observe(l,{childList:true}); for (let t=0;t<30;t++){ const c=[...document.querySelectorAll('.card')].find(e=>/Gorefire|Serrated|Rend|Crimson/i.test(e.innerText||'')); if(c){ c.click(); await sleep(220); if(document.querySelector('.card.selected')){ const en=document.querySelector('.combatant.enemy[data-eid]'); if(en) en.click(); } await sleep(500); } else { const et=document.querySelector('.end-turn'); if(et){ et.click(); await sleep(2200);} } if([...document.querySelectorAll('.status-icon')].some(e=>/🩹/.test(e.innerText))) break; if(!document.querySelector('.combatant.enemy[data-eid]')) break; } return true;"
+    }
+   ],
+   "focus": ".combatant.enemy",
+   "expect": {
+    "present": {
+     "the post-burst resist pip (the burst's own receipt on screen)": ".status-icon"
+    },
+    "measure": {
+     "floats": "(window.__floats||[]).join(' ')",
+     "pips": "[...document.querySelectorAll('.status-icon')].map(e=>e.innerText.replace(/\\s+/g,'')).join(' ')"
+    },
+    "wrong": [
+     {
+      "js": "![...document.querySelectorAll('.status-icon')].some(e=>/🩹/.test(e.innerText))",
+      "why": "drove the fight to the end and never reached a bleed burst — the proc's own damage row was never on the screen"
+     }
+    ]
+   }
+  },
+  {
+   "id": "P3",
+   "by": "Bjorn",
+   "read": "src/content/statuses.js:95 (frost is a full proc row, threshold 10) · the grep below is the finding",
+   "screen": "combat › nowhere. Frost has no applier in shipped content",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat",
+     "ms": 2600
+    }
+   ],
+   "focus": ".combat",
+   "expect": {
+    "present": {
+     "the combat board": ".combat"
+    },
+    "source": [
+     {
+      "in": "src/content",
+      "pattern": "applyStatus[^}]*status:\\s*'frost'",
+      "min": 1,
+      "why": "NOTHING IN THE SHIPPED CONTENT APPLIES FROST — not a card, not an enemy, not a relic, not a weapon mod. Frost is a complete threshold-proc row (threshold 10, burst, Frost-Exposed, a resist row, its own SFX row) that no player can ever see. Bleed has 21 appliers by the same grep. Appliers of frost"
+     }
+    ]
+   }
+  },
+  {
+   "id": "P4",
+   "by": "Bjorn",
+   "read": "src/content/statuses.js:80 (proc.poiseDamage) · src/ui/screens/combat.js poisebar",
+   "screen": "combat › the poise bar at the moment bleed bursts",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat",
+     "ms": 2600
+    },
+    {
+     "op": "js",
+     "ms": 200,
+     "code": "const poise=()=>{const b=document.querySelector('.poisebar .fill'); return b?parseFloat(b.style.width)||0:0;}; window.__poise=[]; for (let t=0;t<30;t++){ const c=[...document.querySelectorAll('.card')].find(e=>/Gorefire|Serrated|Rend|Crimson/i.test(e.innerText||'')); if(c){ c.click(); await sleep(220); if(document.querySelector('.card.selected')){ const en=document.querySelector('.combatant.enemy[data-eid]'); if(en) en.click(); } await sleep(600); window.__poise.push(poise()); } else { const et=document.querySelector('.end-turn'); if(et){ et.click(); await sleep(2200);} } if([...document.querySelectorAll('.status-icon')].some(e=>/🩹/.test(e.innerText))) break; if(!document.querySelector('.combatant.enemy[data-eid]')) break; } return true;"
+    }
+   ],
+   "focus": ".poisebar",
+   "expect": {
+    "present": {
+     "the poise bar": ".poisebar"
+    },
+    "measure": {
+     "poiseTrace": "(window.__poise||[]).join('→')"
+    },
+    "wrong": [
+     {
+      "js": "!(window.__poise||[]).length || Math.max(...window.__poise) <= window.__poise[0]",
+      "why": "the poise bar never rose across the burst — bleed's fixed poise damage was not visible on the screen"
+     }
+    ]
+   }
+  },
+  {
+   "id": "P5",
+   "by": "Bjorn",
+   "read": "src/content/statuses.js:127 (insanity, threshold 14) · the grep below is the finding",
+   "screen": "combat › nowhere. Insanity has no applier in shipped content",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat",
+     "ms": 2600
+    }
+   ],
+   "focus": ".combat",
+   "expect": {
+    "present": {
+     "the combat board": ".combat"
+    },
+    "source": [
+     {
+      "in": "src/content",
+      "pattern": "applyStatus[^}]*status:\\s*'insanity'",
+      "min": 1,
+      "why": "ZERO appliers of insanity anywhere in shipped content. Threshold 14, a burst with a guaranteed Stagger, a resist row and its own SFX row — and no card, enemy or relic that can put one point on a target. Appliers of insanity"
+     }
+    ]
+   }
+  },
+  {
+   "id": "M2",
+   "by": "Bjorn",
+   "read": "src/ui/screens/profileArchive.js (the drawer) · src/ui/screens/settings.js:243 (Profile category)",
+   "screen": "Settings › Profile",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Profile\"]"
+    }
+   ],
+   "focus": "#set-profile-mount, .set-panel",
+   "expect": {
+    "present": {
+     "the profile drawer": "#set-profile-mount, .set-panel"
+    },
+    "measure": {
+     "stateLine": "document.querySelector('.set-panel').innerText.split('\\n')[0].slice(0,80)"
+    }
+   }
+  },
+  {
+   "id": "M7",
+   "by": "Bjorn",
+   "read": "src/ui/screens/profileArchive.js:86 (the empty state line) · src/main.js:943 finishRun() is the only first write of the profile",
+   "screen": "Settings › Profile, on a device that has never played",
+   "why-drive": "localStorage is cleared and the game booted fresh — the exact state a new player opens it in. Then the run is STARTED (class, name, BEGIN THE CLIMB) and storage is read again.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "js",
+     "code": "localStorage.clear(); sessionStorage.setItem('__m7',''); return true;"
+    },
+    {
+     "op": "goto",
+     "q": "",
+     "ms": 1600
+    },
+    {
+     "op": "js",
+     "code": "sessionStorage.setItem('__m7','boot:['+Object.keys(localStorage).join('+')+']'); return true;"
+    },
+    {
+     "op": "click",
+     "sel": ".slot-new",
+     "ms": 800
+    },
+    {
+     "op": "js",
+     "code": "sessionStorage.setItem('__m7',sessionStorage.getItem('__m7')+' | at the naming screen:['+Object.keys(localStorage).join('+')+']'); return true;"
+    },
+    {
+     "op": "click",
+     "sel": "#cz-start",
+     "ms": 1500
+    },
+    {
+     "op": "js",
+     "code": "sessionStorage.setItem('__m7',sessionStorage.getItem('__m7')+' | RUN STARTED:['+Object.keys(localStorage).join('+')+']'); sessionStorage.setItem('__m7profile', String(localStorage.getItem('sote_meta_v1')!==null)); return true;"
+    },
+    {
+     "op": "goto",
+     "q": "",
+     "ms": 1600
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Profile\"]"
+    }
+   ],
+   "focus": ".set-panel",
+   "expect": {
+    "present": {
+     "the Profile section": ".set-panel"
+    },
+    "measure": {
+     "storageTrace": "sessionStorage.getItem('__m7')",
+     "profileExistedWhenTheRunBegan": "sessionStorage.getItem('__m7profile')",
+     "whatTheScreenSays": "document.querySelector('.set-panel').innerText.split('\\n')[0].slice(0,95)"
+    },
+    "wrong": [
+     {
+      "js": "sessionStorage.getItem('__m7profile') !== 'true'",
+      "why": "THE CLIMB BEGAN AND THERE IS NO PROFILE. After class, name and BEGIN THE CLIMB, localStorage holds sote_run_v1 and no sote_meta_v1 — the profile is still not created"
+     },
+     {
+      "js": "/finish your first run/.test(document.querySelector('.set-panel').innerText)",
+      "why": "and the screen says it out loud: 'No profile yet - one is created when you finish your first run.' That sentence IS the behaviour he asked us to change, printed back at him"
+     }
+    ]
+   }
+  },
+  {
+   "id": "L3",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a house law",
+   "why": "Law 0 in commons/laws.md. It binds how we build every project; there is no control for it on any screen, and its falsifier (one fictional entry of a new kind, zero code commits) is a separate act nobody has run tonight.",
+   "evidence": "commons/laws.md Law 0"
+  },
+  {
+   "id": "A1",
+   "by": "Bjorn",
+   "read": "src/ui/screens/equipment.js:667 (the picker's chips) · src/model/loadout.js owned()",
+   "screen": "the Armoury › a hand slot's picker",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    },
+    {
+     "op": "click",
+     "sel": ".es-cell.on.empty"
+    }
+   ],
+   "focus": ".equip-chip",
+   "expect": {
+    "present": {
+     "the picker, listing what you own": ".equip-chip"
+    },
+    "measure": {
+     "chips": "[...document.querySelectorAll('.equip-chip')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,30)).join(' | ')"
+    }
+   }
+  },
+  {
+   "id": "A2",
+   "by": "Bjorn",
+   "read": "src/model/loadout.js:352-397 (the slot ladder, his sentence quoted at the code) · .es-cell.locked",
+   "screen": "the Armoury › the slot ladder",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    }
+   ],
+   "focus": ".es-cell.locked",
+   "expect": {
+    "present": {
+     "exactly the next locked slot": ".es-cell.locked"
+    },
+    "measure": {
+     "perSlot": "[...document.querySelectorAll('.equip-slot')].map(s=>(s.querySelector('.es-label')||{}).textContent+':'+s.querySelectorAll('.es-cell.locked').length+' locked').join(' | ')"
+    },
+    "wrong": [
+     {
+      "js": "[...document.querySelectorAll('.equip-slot')].some(s=>s.querySelectorAll('.es-cell.locked').length>1)",
+      "why": "a slot block shows more than one locked rung — the ladder is showing more than the NEXT locked thing"
+     }
+    ]
+   }
+  },
+  {
+   "id": "A3",
+   "by": "Bjorn",
+   "read": "src/ui/screens/compendium.js (.cp-cell, state-teased) · src/ui/screens/title.js:54 (#armaments)",
+   "screen": "ARMAMENTS (the Compendium), from the main menu",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#armaments",
+     "ms": 900
+    }
+   ],
+   "focus": ".cp-cell",
+   "expect": {
+    "present": {
+     "its own menu entry, and the shape of what you don't have": ".cp-cell"
+    },
+    "count": [
+     {
+      "sel": ".cp-cell",
+      "min": 4
+     }
+    ],
+    "measure": {
+     "cells": "__all('.cp-cell').length",
+     "teased": "__all('.cp-cell.state-teased').length",
+     "revealed": "__all('.cp-cell:not(.state-teased)').length"
+    }
+   }
+  },
+  {
+   "id": "A4",
+   "by": "Bjorn",
+   "read": "src/ui/screens/equipment.js:758 (btn.className = 'region-fold'), :760 aria-expanded",
+   "screen": "the Armoury › the CARDS pane's fold",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    }
+   ],
+   "focus": ".region-fold",
+   "expect": {
+    "present": {
+     "a fold control on the cards pane": ".region-fold"
+    },
+    "measure": {
+     "label": "document.querySelector('.region-fold').innerText.replace(/\\s+/g,' ')",
+     "expanded": "document.querySelector('.region-fold').getAttribute('aria-expanded')"
+    }
+   }
+  },
+  {
+   "id": "A5",
+   "by": "Bjorn",
+   "read": "src/ui/screens/equipment.js:424 opensCollapsed(..., narrow) — the phone opens the context pane FOLDED",
+   "screen": "the Armoury › the fold, opened and closed",
+   "why-drive": "His sentence was 'so that I can see the armory slots better' — so the edge that matters is that a phone OPENS folded, and that the fold still opens. Both edges are driven.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    },
+    {
+     "op": "js",
+     "ms": 400,
+     "code": "const b=document.querySelector('.region-fold'); window.__first=b.getAttribute('aria-expanded'); b.click(); await sleep(400); window.__second=(document.querySelector('.region-fold')||{}).getAttribute?document.querySelector('.region-fold').getAttribute('aria-expanded'):'gone'; return true;"
+    }
+   ],
+   "focus": ".region-fold",
+   "expect": {
+    "present": {
+     "the fold, after being toggled": ".region-fold"
+    },
+    "measure": {
+     "openedAs": "window.__first",
+     "afterTap": "window.__second"
+    },
+    "wrong": [
+     {
+      "js": "window.__first !== 'false'",
+      "why": "the phone does NOT open the cards pane folded — the slots do not get the room his sentence asked for"
+     },
+     {
+      "js": "window.__second !== 'true'",
+      "why": "tapping the fold did not expand it — collapsible without expandable"
+     }
+    ]
+   }
+  },
+  {
+   "id": "A6",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — an answer of his that settled a scope question",
+   "why": "'all together for armory shelf with settings to configure this' was ANSWERED: the found-set is global, which is what save.js already did. The SETTING he described is row A7 and is not-started, so there is nothing on any screen for this row to be. Photographing the armoury here would photograph A7's absence and call it A6's presence.",
+   "evidence": "commons/decisions/directions.md (his answer) · A7 is the open half"
+  },
+  {
+   "id": "A9",
+   "by": "Bjorn",
+   "read": "src/ui/components/refusal.js · src/ui/screens/equipment.js:527 (.es-sealed) · the locked cell's own tooltip",
+   "screen": "the Armoury › a locked slot, touched",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    },
+    {
+     "op": "js",
+     "ms": 400,
+     "code": "const c=document.querySelector('.es-cell.locked'); c.dispatchEvent(new PointerEvent('pointerenter',{bubbles:true,clientX:20,clientY:20})); await sleep(420); c.click(); await sleep(300); return true;"
+    }
+   ],
+   "focus": ".es-cell.locked",
+   "expect": {
+    "present": {
+     "the locked cell": ".es-cell.locked",
+     "a refusal that says why": "#tooltip"
+    },
+    "measure": {
+     "says": "(document.getElementById('tooltip')||{}).innerText"
+    },
+    "wrong": [
+     {
+      "js": "!((document.getElementById('tooltip')||{}).innerText||'').trim()",
+      "why": "the locked slot refuses in silence — no reason where the finger landed"
+     }
+    ]
+   }
+  },
+  {
+   "id": "S1",
+   "by": "Bjorn",
+   "read": "src/ui/screens/rest.js:52 (tooltipFn: upgradePreviewHtml) · src/ui/components/tooltip.js:148 (pointerenter / gpfocus)",
+   "screen": "the Shrine › Smith, a card previewed",
+   "why-drive": "The preview is a TOOLTIP, so it has to be fired the way a finger fires it. pointerenter is what a tap dispatches first on this browser.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=rest",
+     "ms": 2200
+    },
+    {
+     "op": "click",
+     "sel": "#smith-opt"
+    },
+    {
+     "op": "js",
+     "ms": 400,
+     "code": "const c=document.querySelector('#smith-grid .card'); c.scrollIntoView({block:'center'}); c.dispatchEvent(new PointerEvent('pointerenter',{bubbles:true,clientX:20,clientY:20})); await sleep(420); return true;"
+    }
+   ],
+   "focus": "#tooltip",
+   "expect": {
+    "present": {
+     "the upgrade preview": "#tooltip",
+     "the smith grid": "#smith-grid .card"
+    },
+    "measure": {
+     "preview": "(document.getElementById('tooltip')||{}).innerText.replace(/\\s+/g,' ').slice(0,110)"
+    },
+    "wrong": [
+     {
+      "js": "!/→|becomes|upgrade/i.test((document.getElementById('tooltip')||{}).innerText||'')",
+      "why": "the tooltip fired but says nothing about what the upgrade CHANGES — he asked to see the upgrade, not the card"
+     }
+    ]
+   }
+  },
+  {
+   "id": "S3",
+   "by": "Bjorn",
+   "read": "src/ui/screens/settings.js:203 (the holdConfirm row, choices derived from balance.ui.holdConfirm)",
+   "screen": "Settings › Advanced › Hold to confirm",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Advanced\"]"
+    }
+   ],
+   "focus": "[data-key=\"holdConfirm\"]",
+   "expect": {
+    "present": {
+     "the hold-to-confirm ladder": "[data-key=\"holdConfirm\"]"
+    },
+    "count": [
+     {
+      "sel": "[data-key=\"holdConfirm\"]",
+      "min": 3
+     }
+    ],
+    "measure": {
+     "steps": "[...document.querySelectorAll('[data-key=\\\"holdConfirm\\\"]')].map(e=>e.textContent).join('/')",
+     "on": "(document.querySelector('[data-key=\\\"holdConfirm\\\"].on')||{}).textContent"
+    }
+   }
+  },
+  {
+   "id": "S5",
+   "by": "Bjorn",
+   "read": "src/ui/screens/settings.js:696-702 (.set-tabs, role=tablist, one .set-tab per category)",
+   "screen": "Settings › the tab strip",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    }
+   ],
+   "focus": ".set-tabs",
+   "expect": {
+    "present": {
+     "tabs for sections": ".set-tabs .set-tab",
+     "a tablist a screen reader can hear": "[role=\"tablist\"]"
+    },
+    "count": [
+     {
+      "sel": ".set-tab",
+      "min": 4
+     }
+    ],
+    "measure": {
+     "tabs": "[...document.querySelectorAll('.set-tab')].map(e=>e.textContent).join(' · ')"
+    }
+   }
+  },
+  {
+   "id": "T1",
+   "by": "Bjorn",
+   "read": "styles/ui.css (#84/#87 — a screen that overflows brings its own scroller) · src/main.js ?shot=rest poses a 20-card grid",
+   "screen": "the Shrine › Smith grid, the screen he could not scroll",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=rest",
+     "ms": 2200
+    },
+    {
+     "op": "click",
+     "sel": "#smith-opt"
+    }
+   ],
+   "focus": "#smith-grid",
+   "expect": {
+    "present": {
+     "the grid that overflowed": "#smith-grid .card"
+    },
+    "measure": {
+     "scrollport": "(()=>{const s=document.querySelector('.screen');return s.scrollHeight+' over '+s.clientHeight;})()",
+     "lastCardArrivesBy": "(()=>{const s=document.querySelector('.screen');s.scrollTop=s.scrollHeight;const cs=[...document.querySelectorAll('#smith-grid .card')];const l=cs[cs.length-1];return +(s.getBoundingClientRect().bottom-l.getBoundingClientRect().bottom).toFixed(1);})()"
+    },
+    "wrong": [
+     {
+      "js": "(()=>{const s=document.querySelector('.screen');return !(s.scrollHeight>s.clientHeight+1);})()",
+      "why": "the overflowing screen carries no scrollport — the finger moves nothing, which is the defect he reported"
+     },
+     {
+      "js": "(()=>{const s=document.querySelector('.screen');s.scrollTop=s.scrollHeight;const cs=[...document.querySelectorAll('#smith-grid .card')];const l=cs[cs.length-1];return l.getBoundingClientRect().bottom > s.getBoundingClientRect().bottom+1;})()",
+      "why": "scrolled to the end and the last card is STILL below the edge — cards he cannot reach"
+     }
+    ]
+   }
+  },
+  {
+   "id": "T2",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — an answer of his, later reversed by his own T3",
+   "why": "'for the 44 device lpx, I default to no' is a decision, not a control. What it produced IS on a screen and is row T3 (Minimum tap size), which is walked. Both his answers stand unstruck in directions.md D8.1 / D8.1b; that he changed his mind is the datum.",
+   "evidence": "commons/decisions/directions.md D8.1 / D8.1b · T3 is the built half"
+  },
+  {
+   "id": "T3",
+   "by": "Bjorn",
+   "read": "src/ui/screens/settings.js (tapFloor row) · balance.ui tap ladder 44/36/30/24",
+   "screen": "Settings › Accessibility › Minimum tap size",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Accessibility\"]"
+    }
+   ],
+   "focus": "[data-key=\"tapFloor\"]",
+   "expect": {
+    "present": {
+     "the tap-size ladder": "[data-key=\"tapFloor\"]"
+    },
+    "count": [
+     {
+      "sel": "[data-key=\"tapFloor\"]",
+      "min": 4
+     }
+    ],
+    "measure": {
+     "steps": "[...document.querySelectorAll('[data-key=\\\"tapFloor\\\"]')].map(e=>e.textContent).join('/')",
+     "on": "(document.querySelector('[data-key=\\\"tapFloor\\\"].on')||{}).textContent"
+    },
+    "wrong": [
+     {
+      "js": "(document.querySelector('[data-key=\\\"tapFloor\\\"].on')||{}).textContent !== '44'",
+      "why": "the default is not 44 — his floor moved without him moving it"
+     }
+    ]
+   }
+  },
+  {
+   "id": "T4",
+   "by": "Bjorn",
+   "read": "styles/ui.css (#100 — the tab takes the chip's weight) · settings.js .set-tabs",
+   "screen": "Settings › the tab strip, measured",
+   "why-tolerance": "NO tolerance is asserted here and that is deliberate: WHICH of four numbers his '20% smaller' named is DEC-9 and undecided, so a threshold typed here would be me deciding it. What is asserted is the tap floor (44, card #37) and one row; the height is REPORTED.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    }
+   ],
+   "focus": ".set-tabs",
+   "expect": {
+    "present": {
+     "the strip": ".set-tabs"
+    },
+    "measure": {
+     "tabHeightDevicePx": "+(document.querySelector('.set-tab').getBoundingClientRect().height*devicePixelRatio).toFixed(1)",
+     "tabHeightCssPx": "+document.querySelector('.set-tab').getBoundingClientRect().height.toFixed(1)",
+     "stripRows": "new Set([...document.querySelectorAll('.set-tab')].map(e=>Math.round(e.getBoundingClientRect().top))).size",
+     "stripOverflowX": "document.querySelector('.set-tabs').scrollWidth-document.querySelector('.set-tabs').clientWidth"
+    },
+    "wrong": [
+     {
+      "js": "document.querySelector('.set-tab').getBoundingClientRect().height*devicePixelRatio + 0.5 < 44",
+      "why": "a tab is now under the 44 device-px tap floor — smaller went past the floor"
+     }
+    ]
+   }
+  },
+  {
+   "id": "T5",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a ranking rule",
+   "why": "'mobile might need to be the priority for now' is the rule this whole audit is run under: every probe in this file is authored at 390x844. It has no control. Its evidence is that this run exists at that shape.",
+   "evidence": "commons/conversations/all/thread.md · and the --shape default of tools/watched.mjs"
+  },
+  {
+   "id": "G2",
+   "by": "Bjorn",
+   "read": "src/ui/screens/map.js (visited / traveled classes) · src/main.js:1556 ?shotWalk leaves a trail",
+   "screen": "the act map, four steps in",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=4",
+     "ms": 2000
+    }
+   ],
+   "focus": ".map-node.visited",
+   "expect": {
+    "present": {
+     "nodes that stay revealed behind you": ".map-node.visited",
+     "the trail": ".map-edge.traveled"
+    },
+    "count": [
+     {
+      "sel": ".map-node.visited",
+      "min": 2
+     }
+    ],
+    "measure": {
+     "visited": "__all('.map-node.visited').length",
+     "traveled": "__all('.map-edge.traveled').length"
+    }
+   }
+  },
+  {
+   "id": "G4",
+   "by": "Bjorn",
+   "read": "src/model/mapview.js (the computed framing) · src/ui/screens/map.js:534",
+   "screen": "the act map, framed on the choice",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=4",
+     "ms": 2000
+    }
+   ],
+   "focus": ".map-node.current",
+   "expect": {
+    "present": {
+     "the node you are on": ".map-node.current"
+    },
+    "measure": {
+     "currentInFrame": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();const r=document.querySelector('.map-node.current').getBoundingClientRect();return r.top>=s.top-1&&r.bottom<=s.bottom+1&&r.left>=s.left-1&&r.right<=s.right+1;})()",
+     "nextsInFrame": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();const ns=[...document.querySelectorAll('.map-node.reachable')];return ns.filter(n=>{const r=n.getBoundingClientRect();return r.top>=s.top-1&&r.bottom<=s.bottom+1&&r.left>=s.left-1&&r.right<=s.right+1;}).length+'/'+ns.length;})()",
+     "horizontalScrollTravelPx": "document.querySelector('.map-scroll').scrollWidth-document.querySelector('.map-scroll').clientWidth"
+    },
+    "wrong": [
+     {
+      "js": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();const ns=[...document.querySelectorAll('.map-node.reachable')];return ns.some(n=>{const r=n.getBoundingClientRect();return !(r.top>=s.top-1&&r.bottom<=s.bottom+1&&r.left>=s.left-1&&r.right<=s.right+1);});})()",
+      "why": "a next step he can take is outside the frame the map opened on"
+     }
+    ]
+   }
+  },
+  {
+   "id": "G5",
+   "by": "Bjorn",
+   "read": "src/ui/screens/map.js:305-308 (.map-zoom, #zoom-out / #zoom-reset / #zoom-in)",
+   "screen": "the act map › the zoom bar",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map",
+     "ms": 1800
+    }
+   ],
+   "focus": ".map-zoom",
+   "expect": {
+    "present": {
+     "zoom out": "#zoom-out",
+     "refocus on current": "#zoom-reset",
+     "zoom in": "#zoom-in"
+    },
+    "measure": {
+     "panner": "(()=>{const s=document.querySelector('.map-scroll');return getComputedStyle(s).overflow;})()",
+     "tapPx": "+(document.querySelector('#zoom-in').getBoundingClientRect().height*devicePixelRatio).toFixed(1)"
+    }
+   }
+  },
+  {
+   "id": "G6",
+   "by": "Bjorn",
+   "read": "src/ui/screens/settings.js:68 (the mapMode A/B, ruled here and NOT on Custom Climb) · src/ui/screens/customRun.js (which grows nothing new)",
+   "screen": "Settings › Display › Map reveal (test)",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Display\"]"
+    }
+   ],
+   "focus": "[data-key=\"mapMode\"]",
+   "expect": {
+    "present": {
+     "the A/B toggle": "[data-key=\"mapMode\"]"
+    },
+    "count": [
+     {
+      "sel": "[data-key=\"mapMode\"]",
+      "eq": 2
+     }
+    ],
+    "measure": {
+     "sides": "[...document.querySelectorAll('[data-key=\\\"mapMode\\\"]')].map(e=>e.textContent).join('/')",
+     "on": "(document.querySelector('[data-key=\\\"mapMode\\\"].on')||{}).textContent"
+    }
+   }
+  },
+  {
+   "id": "G7",
+   "by": "Bjorn",
+   "read": "src/model/mapknowledge.js:78 MAP_MODE_DEFAULT='path' · src/ui/screens/map.js:215 .map-fog-ground · main.js ?shotSettings",
+   "screen": "the act map, in the state he opens it in",
+   "why-drive": "Two boots on purpose: the DEFAULT one (what he gets) and the switched-on one (what exists). The verdict is about the first; the second is photographed so nobody reads this row as 'the fog was never built'.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=4",
+     "ms": 2000
+    }
+   ],
+   "focus": ".map-scroll",
+   "expect": {
+    "present": {
+     "the map": ".map-scroll"
+    },
+    "measure": {
+     "modeHeGets": "document.querySelector('.map-scroll').dataset.mapMode",
+     "unlitNodes": "__all('.map-node.k-hidden, .map-node.k-unknown').length",
+     "fogPlate": "__all('.map-fog-ground').length"
+    },
+    "wrong": [
+     {
+      "js": "document.querySelector('.map-scroll').dataset.mapMode !== 'fog'",
+      "why": "HE OPENS THE MAP AND THERE IS NO FOG. data-map-mode is 'path' — the whole act is drawn, exactly as before. The fog is in the bundle and switched off behind Settings › Display › Map reveal"
+     }
+    ]
+   }
+  },
+  {
+   "id": "G7b",
+   "extra": true,
+   "by": "Bjorn",
+   "read": "same row, the other edge — ?shotSettings={\"mapMode\":\"fog\"} (src/main.js:173)",
+   "screen": "the act map with Map reveal turned ON — the edge that proves the fog exists",
+   "_note": "NOT a ledger row, and DECLARED as such rather than smuggled in: `extra: true` is the only exemption from the stale floor in this file. It exists so G7's verdict cannot be misread as 'the fog was never built'.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=4&shotSettings=%7B%22mapMode%22%3A%22fog%22%7D",
+     "ms": 2000
+    }
+   ],
+   "focus": ".map-scroll",
+   "expect": {
+    "present": {
+     "the map, fogged": ".map-scroll"
+    },
+    "measure": {
+     "mode": "document.querySelector('.map-scroll').dataset.mapMode",
+     "fogPlate": "__all('.map-fog-ground').length"
+    }
+   }
+  },
+  {
+   "id": "G10",
+   "by": "Bjorn",
+   "read": "src/content/mapconfig.js:74 (entries: 1)",
+   "screen": "the act map, floor 1",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map",
+     "ms": 1800
+    }
+   ],
+   "focus": ".map-node.current",
+   "expect": {
+    "present": {
+     "the one starting node": ".map-node.current, .map-node.reachable"
+    },
+    "measure": {
+     "entranceRow": "(()=>{const ns=[...document.querySelectorAll('.map-node')];const ys=ns.map(n=>Math.round(n.getBoundingClientRect().top));const max=Math.max(...ys);return ys.filter(y=>y===max).length;})()"
+    },
+    "wrong": [
+     {
+      "js": "(()=>{const ns=[...document.querySelectorAll('.map-node')];const ys=ns.map(n=>Math.round(n.getBoundingClientRect().top));const max=Math.max(...ys);return ys.filter(y=>y===max).length!==1;})()",
+      "why": "the bottom row of the act has more than one node — a new game does not start from ONE starting node"
+     }
+    ]
+   }
+  },
+  {
+   "id": "G12",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a scheduling fact",
+   "why": "'make it a priority!' is a claim about the board, not a control. It is true or false about what the family did that hour, and no screenshot can settle it. Marina's board is its evidence.",
+   "evidence": "commons/conversations/all/thread.md · Marina's board"
+  },
+  {
+   "id": "C1",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a family artifact",
+   "why": "The status checklist is a thing we write for him, not a thing in the game. Its evidence is Saga's ledger and Marina's board — and this very audit is the answer to the part of the ask that a board could not give him.",
+   "evidence": "commons/decisions/asks-ledger.md · gamedesign/marina/log/2026"
+  },
+  {
+   "id": "C2",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — the shape of our updates to him",
+   "why": "Checklist, screenshots, preview build, one-line actions with the why. A format for our writing; nothing in the game renders it.",
+   "evidence": "gamedesign/marina/log/2026/2026-08-08_he-took-the-pen-back-and-handed-it-to-me.md"
+  },
+  {
+   "id": "C3",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — who speaks to him",
+   "why": "'marina, you should be coordinating and giving me feedback' is a rule about the family, enforced in SOP 1. No screen.",
+   "evidence": "commons/decisions/directions.md · commons/development.md SOP 1"
+  },
+  {
+   "id": "C4",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — who approves drafts",
+   "why": "A delegation of his approval, recorded as a decision. No control.",
+   "evidence": "commons/decisions/directions.md"
+  },
+  {
+   "id": "C7",
+   "by": "Bjorn",
+   "read": "src/ui/screens/about.js:41 (.about-ai) · src/content/aiDisclosure.js · settings.js CATEGORY_ORDER 'About'",
+   "screen": "Settings › About › the AI acknowledgement",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"About\"]"
+    }
+   ],
+   "focus": ".about-ai",
+   "expect": {
+    "present": {
+     "the disclosure, in the product": ".about-ai",
+     "its lead sentences": ".about-lead",
+     "a way to keep a copy": ".about-copy"
+    },
+    "measure": {
+     "version": "(document.querySelector('.about-ver')||{}).innerText",
+     "lead": "(document.querySelector('.about-lead')||{}).innerText.slice(0,80)"
+    }
+   }
+  },
+  {
+   "id": "C8",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — and deliberately not photographed",
+   "why": "His one statement about money. The ruling on it is that it must not be raised at him again; this audit therefore records the row as declared and looks no further. Nothing about runners or billing is in scope here.",
+   "evidence": "commons/conversations/all/thread.md (not reprinted, by ruling)"
+  },
+  {
+   "id": "C9",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a deliverable of ours",
+   "why": "'give me screenshots of the ideas' is answered by frames we render FOR him, not by a control in the game. He read them and answered with wave 4, which is the evidence. This audit is the same ask applied to shipped features rather than ideas.",
+   "evidence": "gamedesign/marina/log/2026/2026-08-08_the-systems-brainstorm-read-before-drawn.md"
+  },
+  {
+   "id": "C10",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — how the house convenes",
+   "why": "'multiple agents working on several different aspects' is a fact about our sessions. What he is naming is that it be VISIBLE to him, and visibility lives in the update format (C2), not in the game.",
+   "evidence": "commons/SUMMON.md"
+  },
+  {
+   "id": "G6b",
+   "extra": true,
+   "by": "Bjorn",
+   "read": "src/ui/screens/customRun.js (the whole file — 149 lines, and neither `floors` nor `columns` nor `mapMode` occurs in it)",
+   "screen": "CUSTOM CLIMB — the screen two false reports have been made about",
+   "_note": "NOT a ledger row. Marina named Custom Climb as one of the four cheapest lies, and the honest way to answer that is to photograph the screen and say what IS on it. G6's A/B was RULED off this screen and lives in Settings; R1's floors/columns knobs were REPORTED as 'three knobs on a screen that exists' and are not started. Both are correctly recorded in the ledger — this picture is so nobody has to take that on trust again.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#custom-climb",
+     "ms": 900
+    }
+   ],
+   "focus": "#cr-seed",
+   "expect": {
+    "present": {
+     "the ascension slider": "#cr-asc",
+     "the difficulty rules": "#cr-diff .mod-chip",
+     "the seed field": "#cr-seed",
+     "begin": "#cr-start"
+    },
+    "absent": {
+     "a map-reveal control (ruled into Settings instead — G6)": "[data-key=\"mapMode\"]",
+     "a floors/rows knob (R1, not-started — and once reported as shipped)": "#cr-floors, [data-key=\"floors\"], [name=\"floors\"]",
+     "a columns knob (R1, not-started)": "#cr-columns, [data-key=\"columns\"], [name=\"columns\"]"
+    },
+    "measure": {
+     "controlsOnThisScreen": "[...document.querySelectorAll('.customrun input,.customrun button')].map(e=>(e.id||e.className)).join(' | ')"
+    }
+   }
+  },
+  {
+   "id": "G4b",
+   "extra": true,
+   "by": "Bjorn",
+   "read": "src/main.js:1516 ?shotSeed — one map is not the map (EldenSpire#28)",
+   "screen": "the act map on a SECOND seed, at the entrance row",
+   "_note": "NOT a ledger row. G4 is watched on ONE seed at one position, and my own 12-seed sweep at 8a780c8 found a next-step option off screen in 9 of 12. This walks one more seed at the position that sweep measured, so G4's boundary is sampled rather than only written down.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotSeed=BJORN3",
+     "ms": 2000
+    }
+   ],
+   "focus": ".map-scroll",
+   "expect": {
+    "present": {
+     "the map": ".map-scroll"
+    },
+    "measure": {
+     "stepsInFrame": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();const ns=[...document.querySelectorAll('.map-node.reachable, .map-node.current')];return ns.filter(n=>{const r=n.getBoundingClientRect();return r.top>=s.top-1&&r.bottom<=s.bottom+1&&r.left>=s.left-1&&r.right<=s.right+1;}).length+'/'+ns.length;})()",
+     "horizontalScrollTravelPx": "document.querySelector('.map-scroll').scrollWidth-document.querySelector('.map-scroll').clientWidth"
+    },
+    "wrong": [
+     {
+      "js": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();return [...document.querySelectorAll('.map-node.reachable, .map-node.current')].some(n=>{const r=n.getBoundingClientRect();return !(r.top>=s.top-1&&r.bottom<=s.bottom+1&&r.left>=s.left-1&&r.right<=s.right+1);});})()",
+      "why": "on seed BJORN3 a step he can take is outside the frame the map opened on — G4 is green on SHOWCASE and is not a claim about every map"
+     }
+    ]
+   }
+  },
+  {
+   "id": "N1",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a sentence of HIS about himself, not a control",
+   "why": "'I've never seen the upgrade preview before' is Constantine reporting what he has and has not looked at. No machine can photograph a thing a person has not seen. The CONTROL it is about is walked as S1 (the Shrine's Smith, preview fired the way a finger fires it) — and S1's own why already carries the same fact in Saga's words. Declared here rather than skipped, because Saga declared it in the ledger rather than dropping it, and an unclaimed row must be somebody's.",
+   "evidence": "commons/decisions/directions.md D8 · and row S1, which walks the screen"
+  }
+ ]
+}
