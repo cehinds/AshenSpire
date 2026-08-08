@@ -7,9 +7,15 @@
 import { executeRunEffects } from '../../engine/actions.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
+import { isBindingChoice } from '../../model/consequence.js';
+import { armHold, holdMs } from '../components/holdconfirm.js';
 
-export function mountEvent(app, { registries, run, rng, eventId, onDone }) {
+export function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
   const def = registries.events.get(eventId);
+  // The dial, read once per mount. `holdConfirm` lives in balance.ui and this
+  // screen restates none of it.
+  const hold = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
+  const disarmers = [];
 
   function meets(requires) {
     if (!requires) return true;
@@ -45,10 +51,28 @@ export function mountEvent(app, { registries, run, rng, eventId, onDone }) {
       btn.disabled = true;
       btn.textContent += ' (cannot afford)';
     } else {
-      btn.addEventListener('click', () => {
+      const commit = () => {
         executeRunEffects({ run, registries, rng }, choice.effects);
         showResult(choice.resultText);
-      });
+      };
+      // WHICH BARS GET THE HOLD IS DERIVED, never listed. `isBindingChoice`
+      // reads this choice's own ops and the cards they name; author a
+      // twenty-first event with a curse in it and the hold is already there.
+      const binding = isBindingChoice(choice, registries);
+      if (binding && hold > 0) {
+        // THE INSTRUCTION IS ON SCREEN, not announced and not discovered. A
+        // gesture a tired player has to find is a gesture they will fight; the
+        // word is three letters and it costs the bar nothing.
+        const hint = document.createElement('span');
+        hint.className = 'hold-hint';
+        hint.textContent = 'HOLD';
+        btn.appendChild(hint);
+        btn.dataset.binding = '1';
+        disarmers.push(armHold(btn, { ms: hold, onConfirm: commit }));
+      } else {
+        if (binding) btn.dataset.binding = '1';
+        btn.addEventListener('click', commit);
+      }
     }
     box.appendChild(btn);
   });
@@ -57,6 +81,11 @@ export function mountEvent(app, { registries, run, rng, eventId, onDone }) {
   if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
 
   function showResult(text) {
+    // Every armed bar is torn down before the box is emptied. `box.innerHTML =
+    // ''` drops the buttons but NOT the window-level Escape listener each hold
+    // owns, and a listener outliving its button is exactly the leak #22 was
+    // about — one screen's worth is nothing, thirteen floors of it is not.
+    while (disarmers.length) disarmers.pop()();
     box.innerHTML = '';
     const p = document.createElement('p');
     p.style.cssText = 'max-width:560px;text-align:center;line-height:1.7;color:var(--muted);font-style:italic';
