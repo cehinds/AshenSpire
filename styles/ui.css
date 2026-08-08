@@ -835,32 +835,33 @@ body.hide-hints .hint-bar { display: none; }
 .toggle.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); }
 .toggle.on .knob { left: 2.2rem; background: var(--gold); }
 .choice-group { display: flex; gap: 0.4rem; flex-shrink: 0; }
-/* THE UNDO THAT CANNOT SHRINK (Sunna's rule, Marina's default). A group marked
-   `data-self-undo` is one whose own value decides how big its chips are — today
-   that is Minimum tap size and nothing else. The chip PAINTS at the chosen size
-   and HIT-TESTS at the default, so the way back is always pressable.
+/* THE ONE CONTROL EXEMPT FROM THE FLOOR IT SETS.
+
+   Marina's ruling, and the reason is deliberately the narrowest one available so
+   the exemption cannot spread: THIS IS THE ONLY CONTROL IN THE GAME WHOSE
+   RESIZING HAPPENS WHILE IT IS BEING PRESSED. Everything else on this screen
+   still resizes under the player's eye, so nothing is lost by holding these four
+   chips still.
+
+   WHY IT IS AN EXEMPTION AND NOT AN ANCHOR. Measured: at the 44 step the pressed
+   chip ended 61.44 device px to the LEFT of the finger, because every chip in the
+   group re-lays-out when they all change width. That is wider than a fingertip,
+   and `scrollTop` cannot answer a horizontal reflow — a row that re-lays-out is
+   not a row that scrolled. A rule that holds on one axis is not held.
 
    KEYED ON A CHARACTERISTIC, NEVER ON THE ROW'S ID. `[data-key='tapFloor']`
-   would be `if (id === …)` written in CSS — the thing Law 1 clause 3 forbids one
-   layer down. The row DECLARES `selfUndo: true` (settings.js) and the machinery
-   derives the rest, so the next control with this property gets it free.
+   would be `if (id === …)` written in CSS — what Law 1 clause 3 forbids one layer
+   down. The row DECLARES `resizesWhilePressed: true` (settings.js); this derives
+   from it, so a future control with the same property is covered without an edit
+   and a control WITHOUT it can never quietly acquire the exemption.
 
-   VERTICAL ONLY, and that is a decision rather than an oversight. Height is the
-   axis that shrinks dangerously — 44 to 24 — and above and below this row is the
-   row's own padding, so a taller hit area overlaps nothing. Widening to 44 would
-   make neighbouring chips' hit areas OVERLAP at the small sizes (they sit 0.4rem
-   apart), and a press on 30 landing on 24 is a worse failure than the one being
-   fixed. The chip is 28.6 device px wide at the 24 setting, measured; the
-   horizontal axis is named as not covered rather than quietly claimed.
-
-   pointer-events is untouched: the pseudo-element is a box inside the button, so
-   a press in the overhang resolves to the button itself. Measured with
-   elementFromPoint, not assumed. */
-.choice-group[data-self-undo] .choice { position: relative; }
-.choice-group[data-self-undo] .choice::after {
-  content: ''; position: absolute; left: 0; right: 0;
-  top: 50%; transform: translateY(-50%);
-  height: var(--tap-undo);
+   `--tap-floor-default` is the floor frozen at `balance.ui.tapSize.def` — the same
+   `def` the row's own default reads, so this is not a second copy of 44, it is the
+   same 44 asked a second question. `--ui-zoom` is divided out inside it exactly as
+   it is for `--tap-floor`; an exempt control that a small phone shrinks anyway
+   would be an exemption in name only. */
+.choice-group[data-resizes-while-pressed] .choice {
+  min-height: var(--tap-floor-default); min-width: var(--tap-floor-default);
 }
 .choice-group .choice {
   padding: 0.5rem 0.9rem; font-size: 1rem; letter-spacing: 0.08em; border-radius: 6px;
