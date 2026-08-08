@@ -12,6 +12,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { resolveFloorPlan } from './floorplan.js';
+import { viewRefusals } from './mapview.js';
 import {
   SCHEMAS,
   OPCODES,
@@ -255,6 +256,14 @@ export function validateContent(bundle) {
         // The corpus it has to turn red is in tools/mapplan.mjs --selftest.
         if (cfg && typeof cfg === 'object' && !Array.isArray(cfg)) {
           for (const e of resolveFloorPlan(cfg).errors) {
+            err(`mapConfigs.${act}.${e.key}`, e.msg);
+          }
+          // AND THE SAME LAYER FOR THE KNOBS WHOSE FAILURE IS A VIEW FAILURE.
+          // `floors: 2` already refused by name; `columns: 10` did not, and it
+          // makes Constantine's "the current node and its connecting nodes fit"
+          // unsatisfiable at every zoom the ladder has — a knob that hands him a
+          // broken climb instead of a reason (Law 1 clause 5).
+          for (const e of viewRefusals(cfg)) {
             err(`mapConfigs.${act}.${e.key}`, e.msg);
           }
         }

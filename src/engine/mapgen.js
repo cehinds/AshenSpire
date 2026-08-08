@@ -20,7 +20,7 @@ const TYPING_RETRIES = 40;
  *   bossId,                          // boss node above the shrine
  * }
  *
- * config = { floors, columns, pathCount, typeWeights, unknownWeights,
+ * config = { floors, columns, pathCount, entries?, typeWeights, unknownWeights,
  * floorRules } — see content/mapconfig.js. Floor rules are ANCHORS; this
  * function never reads them directly and never sees an absolute floor number
  * that content typed. `resolveFloorPlan` (model/floorplan.js) is the one place
@@ -47,12 +47,36 @@ export function generateActMap({ config, rng }) {
   const edges = Array.from({ length: pathFloors }, () => new Map());
   const usedCols = Array.from({ length: pathFloors + 1 }, () => new Set()); // 1-based floors
 
+  // ---- ENTRANCES vs WALKERS, and they were the same thing until now.
+  //
+  // Constantine asked for one path. Measured literally that is a CORRIDOR: 13
+  // nodes, ZERO choices in the whole act, identical shape every seed (Viki, 300
+  // seeds). What he described is one ENTRANCE with several routes behind it —
+  // and mapgen forbade exactly that, in the line this replaces: a guard that
+  // re-rolled walker 2 onto a DIFFERENT column, which is the opposite of the ask.
+  //
+  //   entries: 1        one door, `pathCount` routes behind it
+  //   entries: n        n doors, every walker enters through one of them
+  //   entries: unset    TODAY'S RULE, byte for byte — walkers 1 and 2 are forced
+  //                     apart and the rest land wherever they land
+  //
+  // UNSET IS THE DEFAULT ON PURPOSE. Setting this number re-rolls every seed in
+  // the game, and which number it should be is a design call with his question
+  // already on the board — not something to change under him tonight. The unset
+  // branch draws from the rng in exactly the order it always did, so every
+  // existing seed is unchanged; `tools/mapplan.mjs --entries 1` prints what the
+  // other answer costs before anyone commits to it.
+  const entries = Number.isInteger(config.entries) ? config.entries : null;
   const starts = [];
   for (let p = 0; p < config.pathCount; p++) {
     let col = rng.int('map', 0, cols - 1);
-    if (p === 1) {
+    if (entries == null ? p === 1 : p < entries) {
+      // A door this act has not opened yet.
       let guard = 0;
-      while (col === starts[0] && ++guard < 50) col = rng.int('map', 0, cols - 1);
+      while (starts.includes(col) && ++guard < 50) col = rng.int('map', 0, cols - 1);
+    } else if (entries != null) {
+      // Every later walker comes in through a door that already exists.
+      col = starts[rng.int('map', 0, entries - 1)];
     }
     starts.push(col);
     usedCols[1].add(col);
