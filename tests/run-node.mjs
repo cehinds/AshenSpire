@@ -332,6 +332,61 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (markTree.code !== 0 || !markTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // 45–46 — EVERY NAMED IMPORT RESOLVES TO A REAL EXPORT.
+  //
+  // #88 renamed an export and left tools/release-shots.mjs standing. That tool
+  // is the canonical release capture set and the release floor cited it as
+  // green; it exited 1 before a browser launched. NOT A FAILED CHECK — A FAILED
+  // LOAD, and the first thing that would have noticed was a person, at delivery
+  // time. This suite's own BOUNDARY block below names release-shots as the half
+  // covering what these tests cannot, and had never LOADED it once.
+  //
+  // Eleven instruments here are started by a human typing. linkcheck links every
+  // module graph under src/, tools/ and tests/ WITHOUT EVALUATING ONE LINE — a
+  // missing named export is an instantiation error, raised during linking — so
+  // the whole class is caught for the price of no browser and no port.
+  //
+  // TWO LINES FOR THE SAME REASON 36/37, 39/40, 41/42 AND 43/44 ARE TWO: 45 is
+  // the check's own integrity against its planted corpus, 46 is the state of the
+  // tree. A tool that cannot go red is `unknown`, not green, whatever it prints.
+  //
+  // NO PLANT COUNT IN THIS COMMENT. The corpus lives in linkcheck.mjs and its
+  // RESULT line carries the count; a number typed beside a list that lives in
+  // another file is the second copy this suite exists to kill (see 41–42, which
+  // deleted its own "seven plants" for the same reason).
+  //
+  // 45 HAS THREE RESULTS, NOT TWO, and the third is why it can be trusted:
+  // caught / MISSED / UNPLANTABLE. UNTESTABLE covers the denominator — a tree
+  // already carrying a broken import cannot score a corpus. UNPLANTABLE covers
+  // the numerator — a plant whose edit did not land measures nothing, and a
+  // silent no-op must never be reported as a catch or as a miss.
+  const runLink = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/linkcheck.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
+  const linkSelf = runLink(['--selftest']);
+  const linkSelfV = quote(linkSelf.out);
+  console.log(
+    `${linkSelf.code === 0 && linkSelfV.text ? 'PASS' : 'FAIL'}  45. the link check still catches its own known-bad corpus` +
+      ` — ${linkSelfV.text || `linkcheck --selftest (exit ${linkSelf.code}): ${linkSelfV.why}`}`
+  );
+  if (linkSelf.code !== 0 || !linkSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const linkTree = runLink(['--raw']);
+  const linkTreeV = quote(linkTree.out);
+  console.log(
+    `${linkTree.code === 0 && linkTreeV.text ? 'PASS' : 'FAIL'}  46. every named import in the tree resolves to a real export` +
+      ` — ${linkTreeV.text || `linkcheck (exit ${linkTree.code}): ${linkTreeV.why}`}` +
+      ` (\`node tools/linkcheck.mjs\` names the file and the error)`
+  );
+  if (linkTree.code !== 0 || !linkTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -355,4 +410,9 @@ console.log('          rule is keyed to one of the two containers card text is d
 console.log('          in; they are silent on what colour it ends up, on inline styles,');
 console.log('          and on any other route to one container only. The render');
 console.log('          comparison that would close that has no home in this suite.');
+console.log('          45–46 LINK, THEY DO NOT RUN. Every named import resolves to a real');
+console.log('          export and not one module body was executed — so they prove the');
+console.log('          eleven hand-started instruments START, never that any of them');
+console.log('          WORKS. A name that exists but is wrong links green, and');
+console.log('          release-shots must still be RUN by a person before a delivery.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);
