@@ -7,7 +7,7 @@
 
 import { esc } from '../components/tooltip.js';
 
-export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan }) {
+export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan, onCompendium }) {
   // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
   const EMBER_COUNT = { off: 0, low: 3, normal: 7, high: 14 };
   const emberN = EMBER_COUNT[document.documentElement.dataset.ambient] ?? 7;
@@ -51,6 +51,7 @@ export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory,
       <div class="title-menu">
         <button class="subtle" id="lan-play" hidden>FORSAKEN TOGETHER</button>
         <button class="subtle" id="custom-climb">CUSTOM CLIMB</button>
+        <button class="subtle" id="armaments">ARMAMENTS</button>
         <button class="subtle" id="run-history">RUN HISTORY</button>
         <button class="subtle" id="settings">SETTINGS</button>
         <button class="subtle" id="quit-game">QUIT</button>
@@ -62,6 +63,11 @@ export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory,
   app.querySelector('#settings').addEventListener('click', onSettings);
   if (onQuit) app.querySelector('#quit-game').addEventListener('click', onQuit);
   if (onCustom) app.querySelector('#custom-climb').addEventListener('click', onCustom);
+  // ARMAMENTS — the Compendium. NAMED, not "Armoury": the Armoury is the screen
+  // where you equip things and it is only reachable inside a run. Two screens
+  // one letter apart in a menu is a naming call, and naming is Viki's lens —
+  // this is my proposal, hers to overrule on sight.
+  if (onCompendium) app.querySelector('#armaments').addEventListener('click', onCompendium);
   // LAN play only exists when the launcher's server is behind the page — the
   // orchestrator un-hides the button once /api/lan/info answers.
   if (onLan) app.querySelector('#lan-play').addEventListener('click', onLan);

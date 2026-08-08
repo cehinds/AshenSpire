@@ -42,6 +42,7 @@ import { mountShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
+import { mountCompendium } from './ui/screens/compendium.js';
 import { openSettings, settingOn, showSettingsNotice, resolveTapSize } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
@@ -703,6 +704,7 @@ function showTitle() {
       showTitle();
     },
     onHistory: showHistory,
+    onCompendium: showCompendium,
     onSettings: showSettings,
     onQuit: quitGame,
     onCustom: () => {
@@ -772,6 +774,14 @@ function showArmoury() {
 
 function showHistory() {
   mountHistory(app, { meta: saves.loadMeta(), onBack: showTitle });
+}
+
+/**
+ * The Compendium — every armament the Spire keeps, most of it withheld.
+ * A PROFILE surface: no run, no class, so `meta.found` is the whole of "yours".
+ */
+function showCompendium() {
+  mountCompendium(app, { registries, meta: saves.loadMeta(), onBack: showTitle });
 }
 
 // Quit the game entirely. In a real browser tab window.close() is usually
@@ -1505,6 +1515,18 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   coopStubMount(coopShrineShot(), 'p1');
 } else if (shotState === 'coopcatchup') {
   coopStubMount(coopCatchupShot(), 'p1');
+} else if (shotState === 'compendium') {
+  // A ?shot= STATE, AND THAT IS THE POINT (Marina's condition on #78, and Rune's
+  // census). tools/release-shots.mjs derives its denominator from the states
+  // this file declares, and tools/screenreach.mjs can only reach a screen that
+  // has one — so a new screen without a shot state is a screen no instrument
+  // owns, which is the eight the census already counts. The seeded variant
+  // (?shot=compendium&shotFound=…) photographs the other edge: what the screen
+  // looks like once pieces are yours. Both edges, both shapes.
+  const found = new URLSearchParams(location.search).get('shotFound');
+  const meta = saves.loadMeta();
+  if (found != null) meta.found = found ? found.split(',') : [];
+  mountCompendium(app, { registries, meta, onBack: showTitle });
 } else if (shotState === 'customize') {
   // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
   // and #29's own boundary records what that cost: no sweep can open a screen
