@@ -14,7 +14,7 @@ import { createRunState, createDeck, createIdGen } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds } from './model/loadout.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
-import { createRng, seedToString, seedFromString } from './engine/rng.js';
+import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
 import { buildActMap } from './engine/actmap.js';
 import { createSaveManager, createMemoryStorage } from './engine/save.js';
@@ -555,13 +555,39 @@ function randomSeedString() {
 }
 
 function newRun({ classId, seedString, customization, keepsakeId, custom, slot = 1 }) {
-  activeSlot = slot;
-  let seed;
-  try {
-    seed = seedFromString(seedString || randomSeedString());
-  } catch (e) {
-    seed = seedFromString(randomSeedString()); // invalid chars → fresh seed
+  // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
+  // change. It read:
+  //
+  //     try  { seed = seedFromString(seedString || randomSeedString()); }
+  //     catch { seed = seedFromString(randomSeedString()); }  // invalid chars → fresh seed
+  //
+  // A throw swallowed and replaced with Math.random(). Six boots of one URL,
+  // six different maps, nothing said — while the tooltip on the very field the
+  // seed was typed into promised "the same seed gives the same map, the same
+  // shops and the same cards." Constantine asked for repeatable short runs; a
+  // seed with a hyphen in it was never one.
+  //
+  // The three seed fields refuse before this is reached (ui/components/
+  // seedfield.js), so a problem arriving HERE means a caller that bypassed a
+  // field — which is precisely the thing that has to be visible rather than
+  // absorbed. It banners by name and starts NO run: starting the wrong run is
+  // the failure being fixed, and a reroll is how it hid.
+  //
+  // It banners rather than throwing, for the reason stated at the surfaces
+  // check at the top of this file: an uncaught throw on a boot/start path is
+  // the blank screen of #77, and a blank screen is a worse failure than the one
+  // it reports. Banner, name, console — and the screen the player is on stays.
+  const asked = seedString || randomSeedString();
+  const why = seedProblem(asked);
+  if (why) {
+    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN',
+      ` · ${JSON.stringify(String(seedString))} — ${why}\n`
+      + ' · No run was started, and nothing was rerolled: a different map under the same seed is the defect this refuses.');
+    console.error('[seed] refused at newRun:', { seedString, why });
+    return;
   }
+  activeSlot = slot;
+  const seed = seedFromString(asked);
   run = createRunState({ seed, classId, registries });
   run.seedString = seedToString(seed);
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };

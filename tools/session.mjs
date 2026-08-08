@@ -44,7 +44,7 @@ export function restoreSession(registries, data) {
 
 export function createSession({ registries, seedString, endless = false, restore = null }) {
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
-  const seed = restore ? (restore.seed >>> 0) : safeSeed(seedString);
+  const seed = restore ? (restore.seed >>> 0) : seedOf(seedString);
   const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
   const members = new Map(); // id → member
   let order = restore ? restore.order : 0;
@@ -572,10 +572,23 @@ export function createSession({ registries, seedString, endless = false, restore
   };
 }
 
-function safeSeed(seedString) {
-  try {
-    return seedFromString(seedString || 'GOLDBOUGH');
-  } catch {
-    return seedFromString('GOLDBOUGH');
-  }
+// THE SECOND COPY OF main.js's CATCH, and it failed the other way round.
+// It read:
+//
+//     try  { return seedFromString(seedString || 'GOLDBOUGH'); }
+//     catch { return seedFromString('GOLDBOUGH'); }
+//
+// so a host who typed `MY-SEED` in the lobby did not get a fresh random map
+// like the solo screens — every unusable seed produced the SAME climb, the
+// GOLDBOUGH one, while the roster went on displaying what the host typed.
+// Two different typed seeds, one identical run: the same law broken from the
+// other side, and worse, because it looks reproducible.
+//
+// No catch, and no substitution. `GOLDBOUGH` survives only as the DEFAULT for
+// an ABSENT seed, which is a different act from replacing a wrong one. A bad
+// seed throws here and is refused at the boundary it came through
+// (tools/lan.mjs, the `seed` message), so this line is now unreachable from a
+// conforming client and says so loudly when it is not.
+function seedOf(seedString) {
+  return seedFromString(seedString || 'GOLDBOUGH');
 }

@@ -8,6 +8,8 @@ import { LOCKED_CLASSES } from '../../content/index.js';
 import { KEEPSAKES } from '../../content/keepsakes.js';
 import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
+import { refusesWhen } from '../components/refusal.js';
+import { attachSeedField } from '../components/seedfield.js';
 
 export function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -71,7 +73,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
             <label class="cz-label cz-name-label" for="cz-name">NAME</label>
             <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false"
                    autocomplete="off" placeholder="Forsaken" value="">
-            <label class="seed-line" for="seed-input">Seed <input id="seed-input" type="text" maxlength="10" spellcheck="false" value="${esc(defaultSeedString)}"></label>
+            <label class="seed-line" for="seed-input">Seed <input id="seed-input" type="text" value="${esc(defaultSeedString)}"></label>
           </div>
         </div>
       </div>
@@ -202,22 +204,32 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
   // clause 2 even in a tooltip.
   attachTooltip(nameEl, () => `Your character's name — the one the death screen uses.<br>`
     + `Up to ${nameEl.maxLength} characters. Leave it blank and you climb as Forsaken.`);
-  attachTooltip($('#seed-input'), () => 'The seed the whole climb is generated from.<br>'
-    + 'The same seed gives the same map, the same shops and the same cards. Change it for a different run.');
+  // The seed field's rules — length, vocabulary, the promise above, and the
+  // refusal when the promise cannot be kept — all live in components/seedfield.js
+  // and are read from engine/rng.js. The tooltip that used to be typed here is
+  // now SEED_PROMISE, said by all three seed fields instead of one.
+  const seed = attachSeedField($('#seed-input'));
   attachTooltip($('#cz-back'), () => 'Back to the title screen. Nothing here is saved.');
   // Names, never numbers, and computed at show time — so the pinned row is also
   // the answer to "what did I pick?" for a player whose choices have scrolled
   // out of sight above it. That is half the affordance the bar is here to be.
-  attachTooltip($('#cz-start'), () => {
+  // BEGIN THE CLIMB refuses while the seed is not a seed, and the reason is the
+  // field's own sentence — one home, so the button and the field can never say
+  // two different things. It is marked with `aria-disabled` + `data-refusal`
+  // (never `disabled`, which would make it unfocusable and unaskable) so a
+  // player who presses it hears why at the place they pressed.
+  const seedRefusal = refusesWhen($('#cz-start'), () => seed.problem(), () => {
     const cls = registries.classes.all().find((c) => c.id === state.classId);
     const ks = KEEPSAKES.find((k) => k.id === state.keepsakeId);
     return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
       + (ks && ks.id !== 'none' ? `, carrying <b>${esc(ks.name)}</b>.` : ', carrying no keepsake.')
       + '<br>Scroll up to change any of it.';
   });
+  seed.onChange(() => seedRefusal());
 
   $('#cz-back').addEventListener('click', onBack);
   $('#cz-start').addEventListener('click', () => {
+    if (seed.problem()) return; // the refusal already said why, at the button
     onStart({
       classId: state.classId,
       seedString: $('#seed-input').value.trim(),

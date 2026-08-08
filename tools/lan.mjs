@@ -21,6 +21,7 @@ import { join } from 'node:path';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createSession, restoreSession } from './session.mjs';
+import { SEED_MAX_LEN, seedProblem } from '../src/engine/rng.js';
 
 const REG = createRegistries(contentBundle);
 
@@ -279,11 +280,27 @@ export function attachLan(server, { port, root }) {
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
         break;
       }
-      case 'seed':
+      case 'seed': {
         if (!pl.isHost) return;
-        session.seedString = String(msg.seedString || '').slice(0, 10);
+        // THE WIRE BOUNDARY. The slice used to be the only thing checked here,
+        // and `10` was a fourth copy of the field's `maxlength` — it now reads
+        // the one home in engine/rng.js, like the fields do.
+        //
+        // A seed the run cannot be generated from is NOT STORED and NOT
+        // BROADCAST: the roster must never show the party a seed their climb
+        // will not use. The host's own field refuses before this, so arriving
+        // here means a client that does not (an older build, another tool), and
+        // that client learns nothing on its own screen — stated, not hidden.
+        const asked = String(msg.seedString || '').slice(0, SEED_MAX_LEN);
+        const why = seedProblem(asked);
+        if (why) {
+          console.error(`[lan] refused seed ${JSON.stringify(asked)} — ${why}`);
+          return;
+        }
+        session.seedString = asked;
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
         break;
+      }
       case 'endless':
         if (!pl.isHost) return;
         session.endless = !!msg.on;
@@ -357,7 +374,13 @@ export function attachLan(server, { port, root }) {
           continue;
         }
         if (f.opcode !== 1) continue;
-        try { onLobbyMessage(sock, pl, JSON.parse(f.payload.toString('utf8'))); } catch { /* bad msg */ }
+        // This catch used to be `catch { /* bad msg */ }` — silent, and it
+        // swallowed EVERY throw from the whole lobby, not just a malformed
+        // frame: the host presses START, the handler throws, nothing happens
+        // and nothing is said, forever. A guard that fails loud upstream is
+        // worthless behind a catch that eats it, so the reason is printed.
+        try { onLobbyMessage(sock, pl, JSON.parse(f.payload.toString('utf8'))); }
+        catch (e) { console.error('[lan] lobby message failed:', (e && e.message) || e); }
       }
     });
     const drop = () => {
