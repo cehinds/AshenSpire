@@ -100,6 +100,37 @@
 // a reviewer reads it in the diff.
 //
 // ---------------------------------------------------------------------------
+// THE FLOORS, AND THE ONE THAT WAS MISSING — Vira, 2026-08-08, checking gate.
+//
+// Bjorn floored the DENOMINATOR (zero derived states) and the SCOPE (zero narrow
+// cells). He did not floor the thing actually judged. Observed on this tree, at
+// dd11e38, no edit to the app:
+//
+//     $ node tools/axisfit.mjs --dist --only death
+//     PASS — every assertion held over 0 asserted container(s) in 4 narrow cell(s).
+//     $ echo $?
+//     0
+//
+// Four narrow cells cleared the scope floor; `death` has no scroll container, so
+// nothing was judged, and the tool printed a green. That is this file's OWN
+// fixture — `verify-shipped: OK — 0 checks passed` — reproduced by the file that
+// names it in its own comments. `--only` is the cheapest way to see it; it is
+// NOT the dangerous way. The dangerous way needs no flag: the day the app stops
+// using native scrollers, or `data-scroll-axis` moves, or the overflow filter
+// below stops matching the app's technique, EVERY container vanishes from the
+// scan, all 68 narrow cells still count, and the full sweep prints PASS at
+// exit 0 over nothing. Measured, not argued: one line changed in SCAN's overflow
+// filter turns `FAIL — 41 assertions over 61 containers` into a clean green.
+//
+// So the floors are now ONE function, `floorVerdict()`, and --selftest calls the
+// SAME function main() does — Bjorn's own discipline for judge(), which the two
+// population selftests (P1, P3) did not follow: they re-stated their mechanism
+// rather than calling it, so they could drift green while main() was red.
+//
+// A zero-assertion run is `unknown`, and unknown blocks (SOP 2's silence guard).
+// It is not a softer bucket than red and it is not a pass.
+//
+// ---------------------------------------------------------------------------
 // KNOWN-BAD FIRST (development.md, The instrument rule). Nothing needed
 // authoring to make this falsifiable — the defect was already shipped:
 //
@@ -128,6 +159,13 @@
 // REMOVAL CONDITION (SOP 1's corollary): delete this file the day EldenSpire
 // ships no narrow shape — then `data-layout="narrow"` never renders, the scope
 // filter selects nothing, and the run says so out loud instead of passing.
+//
+// REMOVAL CONDITION FOR THE FLOORS (Vira, 2026-08-08, and it is their falsifier):
+// floorVerdict() is CUT if ten runs pass with no arm of it ever firing on a real
+// invocation — that is the Charter's decoration test, counted rather than judged.
+// It is WRONG, and is rewritten rather than deleted, the first time a run this
+// file calls green turns out to have judged nothing that mattered: the floor
+// counts containers, and a container count is a proxy for coverage, not coverage.
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
@@ -147,6 +185,26 @@ const useDist = args.includes('--dist');
 const SELFTEST = args.includes('--selftest');
 const only = argOf('--only');
 const textSize = argOf('--text') || null;
+
+// TEXT SIZE IS A CLOSED SET, AND IT IS THE APP'S, NOT MINE (Law 0 clause 1 —
+// the machinery derives; Law 1 clause 3 — the vocabulary is the app's).
+//
+// Bjorn named this trap in a comment further down and left it as prose:
+// `?shotSettings.textSize` is looked up CASE-SENSITIVE in balance.ui.textSize
+// and anything not in that object silently becomes M. Observed at dd11e38:
+//
+//   --text XL      -> html font 12px   (XL: really swept)
+//   --text xl      -> html font 10px   header says "Text size xl"      — M
+//   --text banana  -> html font 10px   header says "Text size banana"  — M
+//
+// A run that PRINTS a cell it did not measure is worse than one that skips it:
+// the boundary block below then names a swept axis that was never swept. So the
+// value is checked against the app's own home before the browser costs anything.
+function appTextSizes() {
+  const src = readFileSync(resolve(ROOT, 'src', 'content', 'balance.js'), 'utf8');
+  const m = /textSize:\s*\{([^}]*)\}/.exec(src);
+  return m ? [...m[1].matchAll(/([A-Za-z]+)\s*:/g)].map((x) => x[1]) : [];
+}
 
 const BROWSERS = [
   process.env.CHROME,
@@ -191,7 +249,17 @@ const DRIVEN = [
   },
   {
     name: 'overlay-menu', from: '?shot=combat',
-    why: 'the in-run overlay and its six tabs — a tabbed surface, so Law 3 lives here too',
+    // CLAIM CORRECTED to what is measured — Vira, 2026-08-08. This read "the
+    // in-run overlay and its six tabs"; the opener clicks Menu and reads
+    // whichever tab opens first, and the Settings entry below reaches one more.
+    // FOUR of the six are never opened (relics, stats, save, controls), and
+    // boundary (e) covers them only as a generic "not looked at". The tab set is
+    // NOT typed anywhere — it is MENU_TABS in src/ui/uiContent.js, one home, the
+    // same shape appShotStates() already reads. So the one population Bjorn
+    // called his weakest edge is the one that could be half-derived and is not.
+    // Left as a finding rather than fixed here: deriving it changes what this
+    // tool sweeps, and that is the author's call, not the checker's.
+    why: 'the in-run overlay — the DEFAULT tab only; 4 of the 6 in MENU_TABS are never opened',
     open: `(async () => {
       const m = [...document.querySelectorAll('button')].find((x) => /^(menu|\\u2630)$/i.test(x.textContent.trim()));
       if (!m) return 'no Menu button on the combat board';
@@ -294,11 +362,34 @@ const SCAN = `(() => {
   };
   const containers = [];
   for (const e of document.querySelectorAll('*')) {
+    // A DECLARED CONTAINER IS ALWAYS COLLECTED, whatever it measures — Vira,
+    // 2026-08-08. The two filters below are right for FINDING scrollers and
+    // wrong for AUDITING an exemption, and A4 (the ratchet) is an audit.
+    //
+    // OBSERVED at dd11e38: declare data-scroll-axis="x" on .map-scroll at 401px
+    // (collected, EXCUSED), then let the reason die the way clause 3 authorises
+    // — rearrange until it no longer overflows. hx and hy both reach 0, the two
+    // filters below drop the element, and judge() NEVER SEES IT. The stale
+    // exemption sits in the DOM with nothing that can force a revisit, which is
+    // the precise failure A4 exists to prevent.
+    //
+    // The selftest could not catch this because mechanism 5 hands judge() a
+    // synthetic hx:0/hy:200 object and never goes through SCAN — a re-statement
+    // of the mechanism instead of the mechanism, the drift this file's own
+    // comment above judge() warns about.
+    // AND THAT INCLUDES A HIDDEN ONE, deliberately: a declaration on a container
+    // this surface no longer renders is a reason that died by a different route,
+    // and it reaches A4 as a ratchet failure rather than disappearing. Zero
+    // exemptions ship today, so this is latent — named here so the first seat to
+    // declare one is not surprised by it.
+    const declared = e.hasAttribute('data-scroll-axis');
     const hx = e.scrollWidth - e.clientWidth, hy = e.scrollHeight - e.clientHeight;
-    if (hx <= 0 && hy <= 0) continue;
-    const cs = getComputedStyle(e);
-    if (!/auto|scroll/.test(cs.overflowX) && !/auto|scroll/.test(cs.overflowY)) continue;
-    if (!e.getClientRects().length) continue;
+    if (!declared) {
+      if (hx <= 0 && hy <= 0) continue;
+      const cs = getComputedStyle(e);
+      if (!/auto|scroll/.test(cs.overflowX) && !/auto|scroll/.test(cs.overflowY)) continue;
+      if (!e.getClientRects().length) continue;
+    }
     containers.push(read(e));
   }
   return {
@@ -385,19 +476,73 @@ export function judge(c) {
   return { verdict: 'EXCUSED', why: `${Math.round(c.hx)}px, exempt under Law 5 clause 2: ${c.why}` };
 }
 
+// --------------------------------------------------------------- the floors
+//
+// EVERY WAY THIS RUN CAN BE `unknown` RATHER THAN A RESULT, IN ONE PLACE, as a
+// pure function of the counts — so --selftest exercises the SAME code main()
+// does rather than a re-statement of it (Vira, 2026-08-08; the discipline is
+// Bjorn's own, stated above judge() and not applied to the population floors).
+//
+// Returns null when the run is a real result, or { code, lines } when it is not.
+// Ordered widest-first: an empty denominator explains an empty scope, which
+// explains an empty assertion count, and reporting the innermost symptom of an
+// outer failure sends the reader to the wrong place.
+export function floorVerdict({ derived, narrowCells, asserted, only, matchedOnly, surfaces }) {
+  if (!derived) return { code: 1, lines: [
+    'axisfit: derived ZERO ?shot= states from src/main.js.',
+    'An empty denominator is not full coverage — it is a home this tool can no longer read.',
+  ] };
+  if (only && !matchedOnly) return { code: 2, lines: [
+    `axisfit: --only ${only} matched no surface. Nothing was tested, so this is unknown, not a pass.`,
+    `  surfaces: ${(surfaces || []).join(', ')}`,
+  ] };
+  if (!narrowCells) return { code: 1, lines: [
+    'axisfit: no shape rendered data-layout="narrow", so ZERO containers were asserted.',
+    "Either the narrow layout is gone (in which case this file's removal condition has fired",
+    'and it should be deleted), or the attribute moved and the scope filter has gone blind.',
+  ] };
+  // THE FLOOR THAT WAS MISSING. Narrow cells are the SCOPE; asserted containers
+  // are the JUDGEMENT. A run can clear the first and do none of the second, and
+  // until this line existed it printed "PASS — every assertion held over 0
+  // asserted container(s)" at exit 0. Zero judgements is `unknown`, and unknown
+  // blocks exactly as red does — it is never the softer bucket (SOP 2).
+  if (!asserted) return { code: 1, lines: [
+    `axisfit: ${narrowCells} narrow cell(s) were in scope and ZERO scroll containers were judged.`,
+    'Nothing was asserted, so this run is `unknown` — it is NOT a pass, whatever the count above says.',
+    'Either every narrow surface here genuinely has no scroller (say so by name and re-scope the run),',
+    'or the scan stopped recognising the app\'s scrollers — SCAN requires computed overflow auto|scroll',
+    'on some axis, so a move to transform-panning or overflow:clip empties it silently.',
+  ] };
+  return null;
+}
+
 // ---------------------------------------------------------------------- main
 async function main() {
   if (!browserPath) { console.error('axisfit: no Chrome/Edge found — pass --browser PATH or set $CHROME'); process.exit(2); }
 
   printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
 
+  // ---- the text cell is checked against the app's own closed set, first ----
+  if (textSize) {
+    const known = appTextSizes();
+    if (!known.length) {
+      console.error('\naxisfit: read ZERO text sizes out of src/content/balance.js (ui.textSize).');
+      console.error('That home is how --text is validated; unread, every --text value would be taken on trust.');
+      process.exit(1);
+    }
+    if (!known.includes(textSize)) {
+      console.error(`\naxisfit: --text ${textSize} is not one of the app's text sizes (${known.join(', ')}).`);
+      console.error('The lookup in balance.ui.textSize is CASE-SENSITIVE and falls back to M in silence, so this');
+      console.error('run would have printed "Text size ' + textSize + '" in its header and measured M.');
+      console.error('A cell named but not swept is worse than one skipped — the boundary block would name it as covered.');
+      process.exit(2);
+    }
+  }
+
   // ---- population, derived and floored, BEFORE the browser costs anything ----
   const derived = appShotStates();
-  if (!derived.length) {
-    console.error('\naxisfit: derived ZERO ?shot= states from src/main.js.');
-    console.error('An empty denominator is not full coverage — it is a home this tool can no longer read.');
-    process.exit(1);
-  }
+  const derivedFloor = floorVerdict({ derived: derived.length, narrowCells: 1, asserted: 1 });
+  if (derivedFloor) { console.error(''); for (const l of derivedFloor.lines) console.error(l); process.exit(derivedFloor.code); }
   const excluded = Object.keys(EXCLUDED_STATES);
   const surfaces = derived.filter((s) => !EXCLUDED_STATES[s]);
   console.log(`\nPOPULATION 1 — surfaces · home: src/main.js (?shot= states), DERIVED`);
@@ -510,7 +655,16 @@ async function main() {
       if (!r.containers.length) { console.log(`    ${job.label.padEnd(17)} no scroll container`); continue; }
       for (const c of r.containers) {
         const j = judge(c);
-        const line = `${job.label} · ${c.path} · H ${Math.round(c.hx)}px / V ${Math.round(c.hy)}px`;
+        // THE SHAPE IS PART OF THE ADDRESS. Without it a finding names a surface
+        // and a selector and not the cell it was found in, and the closing digest
+        // is a list of refusals nobody can navigate to — a counted refusal is not
+        // a located one. OBSERVED, not argued: at Text XL on this tree `.hand` is
+        // 326px at BOTH 390x844 and 412x915, `.reward-row` 181px at both, and the
+        // event screen 22px at both, so 43 findings printed 34 distinct lines and
+        // NINE were byte-identical duplicates. At the default Text M every number
+        // happens to differ and the digest looks fine — the defect is invisible in
+        // the cell that is run by default and real in one a player can select.
+        const line = `${shapeName} · ${job.label} · ${c.path} · H ${Math.round(c.hx)}px / V ${Math.round(c.hy)}px`;
         if (!narrow) {
           console.log(`    ${job.label.padEnd(17)} ${c.hx > 0 ? 'H' : ' '}${c.hy > 0 ? 'V' : ' '} ${String(Math.round(c.hx)).padStart(4)}/${String(Math.round(c.hy)).padStart(4)}  ${c.path}   (not asserted — wide layout)`);
           continue;
@@ -524,20 +678,16 @@ async function main() {
     }
   }
 
-  if (only && !matchedOnly) {
-    console.error(`\naxisfit: --only ${only} matched no surface. Nothing was tested, so this is unknown, not a pass.`);
-    console.error(`  surfaces: ${[...surfaces, ...DRIVEN.map((d) => d.name)].join(', ')}`);
-    return done(2);
-  }
-  // A run that asserted nothing is `unknown`, never a pass — the house's own
-  // `verify-shipped: OK — 0 checks passed` fixture, which this repo has now
-  // reproduced in three separate tools.
-  if (!narrowCells) {
-    console.error(`\naxisfit: no shape rendered data-layout="narrow", so ZERO containers were asserted.`);
-    console.error('Either the narrow layout is gone (in which case this file\'s removal condition has fired');
-    console.error('and it should be deleted), or the attribute moved and the scope filter has gone blind.');
-    return done(1);
-  }
+  // ---- every way this run is `unknown` rather than a result, in one call ----
+  // The house's own `verify-shipped: OK — 0 checks passed` fixture lives in the
+  // `asserted` arm; this repo had reproduced it in three tools before this one
+  // reproduced it a fourth time. The floors run BEFORE the summary, so a run
+  // that judged nothing never reaches the line that would call it a pass.
+  const floor = floorVerdict({
+    derived: derived.length, narrowCells, asserted, only, matchedOnly,
+    surfaces: [...surfaces, ...DRIVEN.map((d) => d.name)],
+  });
+  if (floor) { console.error(''); for (const l of floor.lines) console.error(l); return done(floor.code); }
 
   // ------------------------------------------------------------------- summary
   const narrowRows = rows.filter((r) => r.narrow);
@@ -560,7 +710,17 @@ async function main() {
       thumb and no OS gesture layer. Nothing here says a scroller is REACHABLE
       or usable — only which way it moves.
   (e) DRIVEN SURFACES ARE A TYPED LIST OF ${DRIVEN.length}. Anything reachable only by a
-      click that is not in it was not looked at.`);
+      click that is not in it was not looked at. Specifically: the in-run overlay
+      has SIX tabs (MENU_TABS, src/ui/uiContent.js) and this reaches TWO — the
+      default and Settings. relics · stats · save · controls are UNSWEPT.
+  (f) EVERY SURFACE IS POSED BY ?shot=, at ONE point in a run. ?shot=map and
+      ?shot=combat run a real seeded climb, so these are the app's own numbers,
+      not a fixture's — but they are the numbers at the ENTRANCE with a starting
+      deck. A late-run hand, a full relic shelf or a deeper act is more content
+      in the same box and this sweeps none of them. The map is exempt from that
+      worry and it was checked, not assumed: .map-scroll is 401px across 13
+      seeds at 390x844, because its width is the act's column count and not the
+      node placement. (Vira, 2026-08-08 — a boundary cleared, not a defect.)`);
 
   if (notes.length) {
     console.log(`\n  EXEMPT — ${notes.length} container(s) declared themselves a horizontal run under Law 5 clause 2.`);
@@ -622,22 +782,74 @@ async function selftest(evalIn, cdp, S, base, settingsQ) {
   expect('A4  declared, zero travel (RATCHET)',
     judge({ hx: 0, hy: 200, axis: 'x', why: 'a card hand', path: '.hand' }).verdict, 'FAIL');
 
+  // 5b — THE RATCHET, THROUGH SCAN RATHER THAN AROUND IT (Vira, 2026-08-08).
+  // 5 hands judge() a synthetic object and proves only that judge() is right.
+  // The run never calls judge() on anything SCAN did not hand it, so this plants
+  // the whole path: declare the exemption while it travels, then kill the reason
+  // the way clause 3 authorises, and require the finding to SURVIVE THE SCAN.
+  // Before the fix in SCAN above, the element vanished here and A4 never fired.
+  await plant({ 'data-scroll-axis': 'x', 'data-scroll-axis-why': 'the act map is a horizontal run (planted)' });
+  await evalIn(`(() => { const e = document.querySelector('.map-scroll');
+    e.style.overflow = 'visible'; e.style.width = '100%';
+    for (const k of e.querySelectorAll('*')) k.style.minWidth = '0';
+    const c = e.firstElementChild; if (c) { c.style.width = 'auto'; c.style.minWidth = '0'; c.style.transform = 'none'; }
+    return true; })()`);
+  await wait(300);
+  const dead = (await evalIn(SCAN)).containers.find((x) => x.path.endsWith('.map-scroll'));
+  expect('A4  the reason died and SCAN still collected it', dead ? 'COLLECTED' : 'VANISHED', 'COLLECTED');
+  expect('A4  ...and the ratchet fired on it', dead ? judge(dead).verdict : 'NEVER JUDGED', 'FAIL');
+  await cdp.send('Page.navigate', { url: `${base}?shot=map${settingsQ}` }, S);
+  await wait(1600);
+
   // 6 — the other GREEN half: a plain vertical scroller must not be a finding.
   expect('A0  no travel, no declaration (must go GREEN)',
     judge({ hx: 0, hy: 510, axis: null, why: null, path: '.cp-scroll' }).verdict, 'PASS');
 
   // 7 — the surface denominator's floor, exercised on a string rather than by
-  // editing src/main.js: the regex, run over a source that no longer matches.
+  // editing src/main.js: the regex, run over a source that no longer matches,
+  // and then FED TO THE FLOOR main() CALLS rather than eyeballed.
   const blinded = [...new Set([...'if (shotState===\'map\') {}'.matchAll(/shotState === '([a-z]+)'/g)].map((m) => m[1]))];
   expect('P1  a reformatted src/main.js blinds the reader', blinded.length ? 'SAW' : 'ZERO', 'ZERO');
-  console.log('        (zero derived states exits 1 in main(); Vira killed release-shots the same way with whitespace)');
+  expect('P1  ...and floorVerdict() refuses it',
+    String(floorVerdict({ derived: blinded.length, narrowCells: 68, asserted: 61 })?.code), '1');
 
   // 8 — the shape second-copy guard, planted by removing a row.
   const mineShort = new Set(DEVICE_SHAPES.slice(1).map((s) => `${s.w}x${s.h}@${s.d}`));
   const missed = shapesInMobilefit().filter((s) => !mineShort.has(s));
   expect('P3  a shape dropped here but shipped in mobilefit', missed.length ? 'CAUGHT' : 'MISSED', 'CAUGHT');
 
-  console.log(`\n  ${fails.length ? `SELFTEST FAIL — ${fails.length} mechanism(s) did not behave` : 'SELFTEST PASS — 8 mechanisms, 2 green and 6 red, each observed'}`);
+  // ---------------------------------------------------------------------------
+  // 9-13 — VIRA'S FLOORS, 2026-08-08. Four red and one GREEN, and they call the
+  // same floorVerdict() main() calls, so a floor cannot drift green here while
+  // the run is blind. Mechanism 9 is the defect this repair exists for.
+
+  // 9 — THE MISSING FLOOR. Scope cleared, nothing judged. Was a PASS at exit 0.
+  expect('P4  68 narrow cells, ZERO containers judged (the defect)',
+    String(floorVerdict({ derived: 14, narrowCells: 68, asserted: 0 })?.code), '1');
+  console.log('        (observed at dd11e38: `--only death` printed PASS/exit 0 over 0 asserted containers,');
+  console.log('         and ONE line changed in SCAN\'s overflow filter turned the whole 41-failure sweep green)');
+
+  // 10 — the scope floor, unchanged, now through the shared function.
+  expect('P5  no shape rendered narrow',
+    String(floorVerdict({ derived: 14, narrowCells: 0, asserted: 0 })?.code), '1');
+
+  // 11 — an --only that matched nothing is usage-red, not a pass.
+  expect('P6  --only matched no surface',
+    String(floorVerdict({ derived: 14, narrowCells: 0, asserted: 0, only: 'nosuch', matchedOnly: false })?.code), '2');
+
+  // 12 — THE GREEN HALF, and it is the half that matters: a healthy population
+  // must pass the floors untouched, or the floors block every real run and the
+  // first person to meet them deletes them.
+  expect('P7  a real population passes the floors  (must go GREEN)',
+    String(floorVerdict({ derived: 14, narrowCells: 68, asserted: 61 })), 'null');
+
+  // 13 — the text cell is the app's closed set, read from the app's own home.
+  // `xl` is the exact value that silently became M and printed "Text size xl".
+  const known = appTextSizes();
+  expect('P8  balance.ui.textSize is readable and closed',
+    known.includes('XL') && known.includes('M') && !known.includes('xl') ? 'CLOSED' : `READ ${known.join('|') || 'NOTHING'}`, 'CLOSED');
+
+  console.log(`\n  ${fails.length ? `SELFTEST FAIL — ${fails.length} mechanism(s) did not behave` : 'SELFTEST PASS — 15 mechanisms, 3 green and 12 red, each observed'}`);
   for (const f of fails) console.log(`    - ${f}`);
 }
 
