@@ -1420,7 +1420,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -1451,6 +1451,22 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   } else if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');
+  } else if (shotState === 'event') {
+    // A REACH STATE, and the precedent is `rest` directly below — added for the
+    // identical reason and quoting its own words: "one state for the one screen
+    // being fixed, so the fix has a picture instead of an assertion." The event
+    // screen is one of the screens no instrument this repo owns can open, which
+    // is why 24 of 24 of its choice bars sat under the tap floor with nothing
+    // ever regressing against it (Sunna's run-loop sweep). That COUNT is the
+    // census card and is not touched here.
+    //
+    // `graveOfTheNameless` on purpose: three choices, and the last one is
+    // "Leave" sitting 9-11 px under a choice with a real and irreversible
+    // consequence. It is the exact adjacency the fix is about, so the picture
+    // shows the thing rather than a friendlier event that happens to have three
+    // bars. `?shotEvent=<id>` overrides it, through the one `shotParams` const.
+    const evId = shotParams.get('shotEvent') || 'graveOfTheNameless';
+    showEvent(evId);
   } else if (shotState === 'rest') {
     // A REACH STATE, not the denominator. Constantine could not scroll the
     // Smith grid on a phone; the reason nobody caught it is that the Shrine is
