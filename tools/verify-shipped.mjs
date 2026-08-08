@@ -46,6 +46,11 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+// WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
+// tool measured a two-merge-stale bundle and printed OK once already. One home:
+// tools/artifact-provenance.mjs. Facts only; it never fails a run.
+import { printArtifactProvenance } from './artifact-provenance.mjs';
+printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
 const args = process.argv.slice(2);
 const SELFTEST = args.includes('--selftest');
 
