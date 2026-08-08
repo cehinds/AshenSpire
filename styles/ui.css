@@ -420,6 +420,33 @@ body.hide-hints .hint-bar { display: none; }
   padding: 0.8rem 1.6rem; font-size: 1.2rem; font-family: monospace; white-space: pre-wrap;
 }
 
+/* The Command log door — the ONE control this banner offers, and until now the
+   only one in the game with no floor under it. Measured on the shipped bundle,
+   default UI size, with the banner raised by a real thrown click: 33.19 x 126.59
+   device px at 390x844 Text S against a --tap-floor of 44, and UNDER THE FLOOR
+   IN SIX OF EIGHT shape x text cells (both phone shapes at all four text sizes,
+   1200x730 at S and M). The two lines below are the same two `.choice`,
+   `.ov-tab` and the armoury ✕ already carry, for the same reason and read off
+   the same single home.
+
+   `min-height`, never `height` — Law 4 clause 4: the floor is an ergonomic
+   constant and the growth is granted by the glyphs actually in the label, so it
+   can neither clip at XL nor balloon. `--ui-zoom` is already inside --tap-floor
+   (base.css), so 44 means 44 AFTER zoom at every UI size.
+
+   `inline-flex` + centring is what makes the floor visible rather than merely
+   declared: a min-height on an inline-block leaves the label sitting on the
+   baseline with the extra height hanging under it, which is a bigger hit box
+   around a label that looks unchanged — and a control whose look and whose
+   target disagree is the class of defect this whole banner exists to end.
+   The top margin is box geometry (Law 4 clause 3), so it is px: the button must
+   not crowd the stack line above it, and that gap is not a letter. */
+.validation-banner .vb-log {
+  min-height: var(--tap-floor); min-width: var(--tap-floor); height: auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 6px;
+}
+
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
