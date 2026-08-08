@@ -35,19 +35,67 @@
   --grace: #9fc3e8;
   --ember: #c9502e;
   --green: #7fd97f;
+  /* THE KEYWORD TINT CARD TEXT USES, and it is a token because it is a fact
+     about a WORD, not about a container. It had no token, so the one palette
+     that wanted a different answer had nowhere to put it and put it in a
+     SELECTOR instead (`body.cb-safe .card .ctext .st-bleed`, deleted below).
+     When the five mark rules re-keyed `.card .ctext` → `.ctext` so the Smith
+     preview could wear them too, every token-based rule came through for free
+     and that one hardcoded hex stayed behind on the old container — so under
+     Colorblind-friendly the SAME WORD read reddish-purple on a card face and
+     vermillion in the preview. The hex was the reason it could not follow.
+     Derived from --ember, not restated: in the default palette Bleed wears the
+     ember hue TODAY, and that is a derivation, not a copy — one home for the
+     value. Colorblind-friendly overrides it once, below, which is the only
+     place the two diverge.
+     OPEN, AND FREJA'S, NOT MINE: whether the DEFAULT palette should diverge
+     too. It does not today — a Bleed keyword and a number the upgrade made
+     WORSE both render rgb(201,80,46) on every screen, one hue doing two jobs
+     on one line. Colorblind-friendly already answers that question `yes`. */
+  --bleed: var(--ember);
   /* THE TAP-TARGET FLOOR, and it has one home because it is one fact.
-     Sunna's ruling under Law 4 (#37): "a floor of 44 device px measured after
+     Sunna's ruling under Law 4 (#37): "a floor of N device px measured after
      zoom; a floor is not a ceiling." The whole app is scaled by `zoom:
      var(--ui-zoom)` on <body>, so a length L below body renders at L x zoom
-     device px — dividing by the zoom here is what makes 44 mean 44 ON GLASS
-     rather than 44 in a coordinate space the finger has never heard of. It is
+     device px — dividing by the zoom here is what makes N mean N ON GLASS
+     rather than N in a coordinate space the finger has never heard of. It is
      the same conversion the rest of the app does through fx.js, expressed as a
      unit so a rule can just use it.
      px, DELIBERATELY, and this is exactly the case Law 2 admits: a finger does
      not get bigger when a player raises Text size. Law 4 is the other half of
      the same sentence — text scaling must stop scaling non-text UI — so a
-     control that held text at 4.4rem was wrong in two directions at once. */
-  --tap-floor: calc(44px / var(--ui-zoom, 1));
+     control that held text at 4.4rem was wrong in two directions at once.
+
+     `--tap-target` IS THE CONSTANT, AND IT IS NOT WRITTEN HERE. It is the
+     player's Minimum tap size (Settings → Accessibility, default 44), written
+     onto <html> by applyTapSize() in src/main.js exactly where applyUiScale()
+     already writes `--ui-zoom`. This calc keeps its shape; only the number
+     moved out of it, to `balance.ui.tapSize` — the one place a number a player
+     can tune is allowed to live (Law 1 clause 2).
+
+     AND THERE IS NO `, 44px` FALLBACK IN THIS LINE, deliberately. A literal
+     here would agree with balance.ui.tapSize.def today and be synchronised by
+     nothing — the second copy this house exists to catch, planted in the very
+     line whose job is to hold one home. If `--tap-target` is ever unwritten
+     the floor vanishes and every floored control drops to 21–31 device px,
+     which is loud on the screen and is what `node tools/tapsize.mjs` measures.
+     A quietly-correct-looking 44 is the failure Law 0 clause 5 names; a
+     missing floor is not quiet. */
+  --tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));
+  /* THE FLOOR, FROZEN AT THE DEFAULT — for the one control that is exempt from
+     the floor it sets. Marina's ruling: Minimum tap size is the only control in
+     the game whose resizing happens WHILE IT IS BEING PRESSED, so its own four
+     chips hold still at the default and everything else on the screen still
+     resizes under the player's eye. Measured cause: at the 44 step the pressed
+     chip landed 61.44 device px from the finger, because the whole group
+     re-lays-out — wider than a fingertip, and no `scrollTop` answers a
+     horizontal reflow.
+     Same single datum: applyTapSize() writes `--tap-floor-default-target` from
+     balance.ui.tapSize.def, the same `def` the row's own default reads — not a
+     second copy of 44, the same 44 asked a second question. Divided by the zoom
+     for the reason --tap-floor is: an exempt control a small phone shrinks
+     anyway is an exemption in name only. */
+  --tap-floor-default: calc(var(--tap-floor-default-target) / var(--ui-zoom, 1));
   --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
   --font-body: Inter, 'Segoe UI', system-ui, sans-serif;
 }
@@ -77,8 +125,13 @@ body.cb-safe {
   --frost: #56b4e9;
   --grace: #56b4e9;
   --rot: #e69f00;
+  /* Okabe-Ito reddish-purple — the SAME VALUE this palette already shipped,
+     moved out of a selector and into the token block where a palette decision
+     belongs. It now reaches card text wherever card text is drawn, which is
+     the whole change: the card face is byte-identical and the Smith/coop
+     upgrade preview stops calling a keyword by the danger hue. */
+  --bleed: #cc79a7;
 }
-body.cb-safe .card .ctext .st-bleed { color: #cc79a7; }
 
 /* Accessibility: readable headings swap the decorative serif for the UI sans. */
 body.readable-ui { --font-display: var(--font-body); }
@@ -281,12 +334,31 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
   font-size: 0.9rem; letter-spacing: 3px; text-align: center; padding: 0.3rem 0;
   font-family: var(--font-display);
 }
+/* Two facts were tangled in one selector, and the tangle is what broke the
+   Smith preview. `.card .ctext` is HOW THE CARD FACE LAYS OUT ITS TEXT BLOCK —
+   it belongs to the card and stays keyed to it. The five rules below are HOW
+   CARD TEXT MARKS ITSELF: they style the spans fillTemplate() emits, and
+   fillTemplate() is one function whose output is drawn in two places — the card
+   face, and the Smith/coop upgrade preview inside #tooltip. Keying the marks to
+   `.card` keyed them to one of the two drawing sites, so the preview computed
+   exactly which numbers moved and then drew them like ordinary prose.
+   So they are keyed to `.ctext` — "this element holds card text" — and BOTH
+   drawing sites wear it. This is a re-key, not a widening: copying these five
+   rules under `#tooltip` would give every mark a second home to drift from.
+   COMPLETING THE RE-KEY (Sunna): five moved, and a SIXTH rule styling the same
+   span stayed behind on `.card` because it carried a hardcoded hex and had
+   nowhere else to live — `body.cb-safe .card .ctext .st-bleed`. Every rule
+   keyed to a TOKEN followed for free; the one keyed to a LITERAL did not, and
+   under Colorblind-friendly the same word read reddish-purple on a card face
+   and vermillion in the preview. `.st-bleed` now reads `--bleed` (base.css),
+   the palette override lives in the token block, and this rule needs no
+   palette clause at all. */
 .card .ctext { font-size: 1.1rem; text-align: center; line-height: 1.4; margin-top: 0.6rem; }
-.card .ctext .kw { color: var(--gold); }
-.card .ctext .st-bleed { color: var(--ember); font-weight: 600; }
-.card .ctext .val { font-weight: 700; }
-.card .ctext .val.up { color: var(--green); }
-.card .ctext .val.down { color: var(--ember); }
+.ctext .kw { color: var(--gold); }
+.ctext .st-bleed { color: var(--bleed); font-weight: 600; }
+.ctext .val { font-weight: 700; }
+.ctext .val.up { color: var(--green); }
+.ctext .val.down { color: var(--ember); }
 
 /* ---------- card TYPE: geometry + banner colour --------------------------- */
 /* Type reads as SHAPE first — attack squarest and chamfered, power roundest,
@@ -640,6 +712,33 @@ body.hide-hints .hint-bar { display: none; }
   padding: 0.8rem 1.6rem; font-size: 1.2rem; font-family: monospace; white-space: pre-wrap;
 }
 
+/* The Command log door — the ONE control this banner offers, and until now the
+   only one in the game with no floor under it. Measured on the shipped bundle,
+   default UI size, with the banner raised by a real thrown click: 33.19 x 126.59
+   device px at 390x844 Text S against a --tap-floor of 44, and UNDER THE FLOOR
+   IN SIX OF EIGHT shape x text cells (both phone shapes at all four text sizes,
+   1200x730 at S and M). The two lines below are the same two `.choice`,
+   `.ov-tab` and the armoury ✕ already carry, for the same reason and read off
+   the same single home.
+
+   `min-height`, never `height` — Law 4 clause 4: the floor is an ergonomic
+   constant and the growth is granted by the glyphs actually in the label, so it
+   can neither clip at XL nor balloon. `--ui-zoom` is already inside --tap-floor
+   (base.css), so 44 means 44 AFTER zoom at every UI size.
+
+   `inline-flex` + centring is what makes the floor visible rather than merely
+   declared: a min-height on an inline-block leaves the label sitting on the
+   baseline with the extra height hanging under it, which is a bigger hit box
+   around a label that looks unchanged — and a control whose look and whose
+   target disagree is the class of defect this whole banner exists to end.
+   The top margin is box geometry (Law 4 clause 3), so it is px: the button must
+   not crowd the stack line above it, and that gap is not a letter. */
+.validation-banner .vb-log {
+  min-height: var(--tap-floor); min-width: var(--tap-floor); height: auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 6px;
+}
+
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
@@ -911,7 +1010,9 @@ body.hide-hints .hint-bar { display: none; }
    scalable with ui or both." Measured across the entire UI-size space (5 sizes
    x 2 text sizes x 2 shapes = 20 cells, freja-tabs-probe.mjs):
 
-     tab height        44.0 in ALL TWENTY. Zero variance. It is --tap-floor.
+     tab height        44.0 in ALL TWENTY at the DEFAULT floor. Zero variance
+                       across UI size — it is --tap-floor, and --tap-floor
+                       answers the Minimum tap size setting, not this block.
                        THE FLOOR IS NOT FIXED, AND THIS BLOCK CLAIMED IT WAS.
                        It attributed a permanent 44 minimum to Constantine; he
                        had already reversed that the same day, in his words:
@@ -925,12 +1026,24 @@ body.hide-hints .hint-bar { display: none; }
                        shipped file has not been withdrawn. It matters right
                        here — a movable floor is what turns the next line from a
                        curiosity into the number a smaller floor would land on.
-     what it wants     23.2-31.0. The floor is adding 13-21px nothing asked for,
-                       and no vertical number can touch that.
+     what it wants     23.2-31.0. At the default floor of 44 that is 13-21px of
+                       height nothing in this block asked for — and the four
+                       numbers below are not what governs it. THE FLOOR
+                       GOVERNS IT, and the floor is now a control: Settings →
+                       Accessibility → Minimum tap size, 44 / 36 / 30 / 24,
+                       written as `--tap-target` (src/content/balance.js is the
+                       one home; base.css holds no constant).
      padY / gap        5.1-6.0 across the whole space.
      font              10.2-14.4.
 
-   So none of the four can move the height, and the height is not the finding.
+   So the height answers ONE thing, and it is not any of the four above — it is
+   the player's own floor. Measured on this tree at 390x844 Text M, headless
+   Chromium, `node tools/tapsize.mjs`: this rule renders 44.0 at the default and
+   24.0 at the bottom of that dial, where the tab's own glyphs finally take over.
+   THE WEIGHT IS STILL THE FINDING OF THIS BLOCK, and that is why the numbers
+   below stand unchanged: they are about how LOUD the tab is, which no floor
+   moves in either direction.
+
    THE FINDING IS THE COMPARISON. On this same screen, measured in the same
    moment, the 34 `.choice` chips a player sees directly under the strip:
 
@@ -1041,6 +1154,79 @@ body.hide-hints .hint-bar { display: none; }
 .toggle.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); }
 .toggle.on .knob { left: 2.2rem; background: var(--gold); }
 .choice-group { display: flex; gap: 0.4rem; flex-shrink: 0; }
+/* THE ONE CONTROL EXEMPT FROM THE FLOOR IT SETS.
+
+   Marina's ruling, and the reason is deliberately the narrowest one available so
+   the exemption cannot spread: THIS IS THE ONLY CONTROL IN THE GAME WHOSE
+   RESIZING HAPPENS WHILE IT IS BEING PRESSED. Everything else on this screen
+   still resizes under the player's eye, so nothing is lost by holding these four
+   chips still.
+
+   WHY IT IS AN EXEMPTION AND NOT AN ANCHOR. Measured: at the 44 step the pressed
+   chip ended 61.44 device px to the LEFT of the finger, because every chip in the
+   group re-lays-out when they all change width. That is wider than a fingertip,
+   and `scrollTop` cannot answer a horizontal reflow — a row that re-lays-out is
+   not a row that scrolled. A rule that holds on one axis is not held.
+
+   KEYED ON A CHARACTERISTIC, NEVER ON THE ROW'S ID. `[data-key='tapFloor']`
+   would be `if (id === …)` written in CSS — what Law 1 clause 3 forbids one layer
+   down. The row DECLARES `resizesWhilePressed: true` (settings.js); this derives
+   from it, so a future control with the same property is covered without an edit
+   and a control WITHOUT it can never quietly acquire the exemption.
+
+   `--tap-floor-default` is the floor frozen at `balance.ui.tapSize.def` — the same
+   `def` the row's own default reads, so this is not a second copy of 44, it is the
+   same 44 asked a second question. `--ui-zoom` is divided out inside it exactly as
+   it is for `--tap-floor`; an exempt control that a small phone shrinks anyway
+   would be an exemption in name only. */
+/* THE EVENT SCREEN'S THREE BARS — Sunna's sweep of the run loop, handed over
+   rather than patched because the variable this floor reads is the one this
+   branch introduces.
+
+   WHAT SHE MEASURED: 24 of 24 choice-instances under the floor, both shapes,
+   all four text sizes. 23.6 / 25.8 / 27.9 / 30.1 device px on the phone — it
+   never reaches 44 anywhere, and at phone Text S it is under 24, the most
+   permissive step Minimum tap size is about to offer.
+
+   WHY IT IS DANGEROUS AND NOT MERELY SMALL, which is her finding and the reason
+   this is not a cosmetic fix: the three bars are ADJACENT with 9-11 px gaps, so
+   a missed tap does not land on nothing — IT LANDS ON THE NEIGHBOURING CHOICE.
+   Between "Pray" and "Leave" that is a permanent curse instead of walking away,
+   with no confirm step, one-handed, mid-run.
+
+   LAW 4 WAS INVERTED HERE ON BOTH CLAUSES AND THE FIX IS THREE LINES:
+     clause 1  the label was an inline `13px` — it did NOT answer Text size.
+               1.3rem is that same size at Text M (root 62.5%), so M is
+               unchanged to the pixel and S/L/XL now move the letters.
+     clause 3  the box was `.subtle`'s `padding: 0.6rem 1.4rem` — it DID answer
+               Text size. px here, because a finger does not get bigger when a
+               player raises Text size.
+     clause 4  a floor, and `height: auto` so the box still grows on its own
+               glyphs. It can neither clip nor balloon.
+
+   SCOPE, said out loud: `.subtle`'s rem padding is untouched everywhere else.
+   Converting it globally is the blanket diff Law 4 tells nobody to attempt on
+   the strength of the law alone, and this is a ratchet on a screen already
+   open. THE FLOOR IS THE SIZE FIX AND NOT THE CONSEQUENCE FIX — adjacency and
+   the missing confirm step are Sunna's, and bigger targets do not make a curse
+   reversible. */
+/* `button.ev-choice`, not `.ev-choice` — AND I FOUND THAT BY MEASURING, NOT BY
+   READING. `button.subtle` in base.css is (0,1,1) and a bare class is (0,1,0),
+   so the first version of this rule lost BOTH the font-size and the padding to
+   it silently: the label came back 12px at Text M where the old inline value
+   was 13, and the box was still growing on `.subtle`'s rem padding. The floor
+   applied, so the table looked fixed while two thirds of the fix was not there.
+   A specificity loss is the quietest possible failure — nothing errors, the
+   rule is simply not the one that won. */
+button.ev-choice {
+  min-height: var(--tap-floor); height: auto;
+  font-size: 1.3rem;
+  padding: 8px 20px;
+}
+
+.choice-group[data-resizes-while-pressed] .choice {
+  min-height: var(--tap-floor-default); min-width: var(--tap-floor-default);
+}
 .choice-group .choice {
   padding: 0.5rem 0.9rem; font-size: 1rem; letter-spacing: 0.08em; border-radius: 6px;
   background: var(--panel); border: 1px solid var(--line-soft); color: var(--muted);
@@ -2523,7 +2709,7 @@ const { mountShop } = require("src/ui/screens/shop.js");
 const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
-const { openSettings, settingOn, showSettingsNotice } = require("src/ui/screens/settings.js");
+const { openSettings, settingOn, showSettingsNotice, resolveTapSize } = require("src/ui/screens/settings.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
@@ -2540,7 +2726,7 @@ const { surfaceReport } = require("src/ui/surfaces.js");
 // failureBanner is the ONE home for "the game says something is structurally
 // wrong" — the two boot checks below used to build that element by hand, and a
 // third hand-built copy is the defect this import exists to prevent.
-const { failureBanner } = require("src/ui/debuglog.js");
+const { dlog, failureBanner } = require("src/ui/debuglog.js");
 
 const app = document.getElementById('app');
 
@@ -2841,6 +3027,38 @@ function applyUiScale(settings) {
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
 }
 
+// MINIMUM TAP SIZE → `--tap-target` on <html>, read by `--tap-floor` in
+// base.css and through it by every floored rule (`.set-tab`, `.ov-tab`,
+// `.choice`, `.region-fold`). Written HERE, beside applyUiScale, because the
+// two custom properties are the same species: one number the player chose,
+// resolved once by the app and handed to the stylesheets, which measure
+// nothing. The stylesheet holds no copy of the constant — see base.css.
+//
+// LOUD ON BAD DATA (Law 1 clause 5). resolveTapSize distinguishes ABSENT (the
+// sparse store's normal state — the default, nothing to say) from PRESENT AND
+// NOT IN THE CLOSED SET (a hand-edited save, an older build, a profile
+// restored from a tree with a different set). The second still has to render
+// something and renders the default — but it says so, by name, with the value
+// it refused, in the log the player can copy out of Settings → Advanced. A
+// rejected setting that silently becomes 44 is the "it doesn't stick" bug
+// nobody can ever reproduce.
+function applyTapSize(settings) {
+  const { px, stored, bad } = resolveTapSize(settings);
+  document.documentElement.style.setProperty('--tap-target', `${px}px`);
+  // THE EXEMPT FLOOR NEVER MOVES. `--tap-floor-default-target` is the DEFAULT,
+  // not the choice: the one control whose resizing happens while it is being
+  // pressed holds still at it (Marina's ruling). Written from the same `def`
+  // the row's own default reads, so this is the same 44 asked a second question
+  // and not a second copy of it. See styles/base.css for the pair.
+  document.documentElement.style.setProperty('--tap-floor-default-target', `${UI.tapSize.def}px`);
+  if (bad) {
+    const msg = `settings.tapFloor: stored value ${JSON.stringify(stored)} is not one of `
+      + `${UI.tapSize.sizes.join(', ')} — applying the default ${px} and saying so`;
+    dlog('ERROR', msg);
+    console.warn(msg);
+  }
+}
+
 // Re-flex Auto sizing whenever the window changes. Only recomputes for Auto and
 // only touches the zoom, so it's cheap. Also re-applies shortly after boot and
 // on `load` — some environments report tiny window dims until layout settles,
@@ -2908,6 +3126,10 @@ function applyDisplaySettings(settings) {
   root.setProperty('--accent-rgb', accent.rgb);
   // UI size — zoom the whole app (see applyUiScale). Auto flexes with the window.
   applyUiScale(settings);
+  // Minimum tap size — the floor every floored rule is measured from. AFTER
+  // applyUiScale for readability only: `--tap-floor` divides one by the other
+  // at use time, so neither write depends on the other's order.
+  applyTapSize(settings);
   setAnimSpeed(settings.animSpeed || 'normal');
   audio.setVolumes(settings);
   // Re-point external music only when the folder actually changed (avoids
@@ -3870,7 +4092,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -3901,6 +4123,22 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   } else if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');
+  } else if (shotState === 'event') {
+    // A REACH STATE, and the precedent is `rest` directly below — added for the
+    // identical reason and quoting its own words: "one state for the one screen
+    // being fixed, so the fix has a picture instead of an assertion." The event
+    // screen is one of the screens no instrument this repo owns can open, which
+    // is why 24 of 24 of its choice bars sat under the tap floor with nothing
+    // ever regressing against it (Sunna's run-loop sweep). That COUNT is the
+    // census card and is not touched here.
+    //
+    // `graveOfTheNameless` on purpose: three choices, and the last one is
+    // "Leave" sitting 9-11 px under a choice with a real and irreversible
+    // consequence. It is the exact adjacency the fix is about, so the picture
+    // shows the thing rather than a friendlier event that happens to have three
+    // bars. `?shotEvent=<id>` overrides it, through the one `shotParams` const.
+    const evId = shotParams.get('shotEvent') || 'graveOfTheNameless';
+    showEvent(evId);
   } else if (shotState === 'rest') {
     // A REACH STATE, not the denominator. Constantine could not scroll the
     // Smith grid on a phone; the reason nobody caught it is that the Shrine is
@@ -4161,6 +4399,38 @@ const balance = {
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).
     textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },
+    // MINIMUM TAP SIZE (Settings → Accessibility). THE ONE HOME OF THE 44.
+    //
+    // It used to be the literal `44px` inside `--tap-floor` in styles/base.css.
+    // Constantine: "just make the tabs about 20% smaller or the size
+    // configurable or scalable with UI or both" — and then, on the 44 floor,
+    // "actually, I think it should be able to go smaller than 44px." Sunna
+    // measured why the second half of the first sentence could never answer
+    // him: `calc(44px / var(--ui-zoom))` under `body { zoom }` renders
+    // 44 x zoom / zoom, so the floored controls are the one part of the
+    // interface UI size cannot reach — 44.00 device px in all 20 UI-size x
+    // shape cells, zero variance. So it is configurable, and this is the data.
+    //
+    // `sizes` IS THE CLOSED SET, largest first — that order is the order the
+    // chips draw in and the order the row reads. The settings row derives its
+    // `choices` and its `def` from here; nothing restates them.
+    //
+    // `missRate` is what the RESEARCH says, and ONLY where it says anything.
+    // Two points exist: WCAG 2.1 AAA (SC 2.5.5) is 44x44 CSS px, WCAG 2.2 AA
+    // (SC 2.5.8) is 24x24. 36 and 30 sit between them and carry no entry ON
+    // PURPOSE — an interpolated statistic is a fabricated one, and the cost
+    // line below 44 says less about them rather than inventing a number
+    // (Sunna's ruling; Law 0 clause 5 is the same sentence about derivation).
+    //
+    // ADDING A FIFTH SIZE IS A ROW HERE AND NOTHING ELSE: it appears as a chip,
+    // it applies, and it gets a cost line with no percentage unless someone
+    // adds one. Removing `missRate` for a size removes the percentage and keeps
+    // the sentence. That is the falsifier for Law 0 on this control.
+    tapSize: {
+      def: 44,
+      sizes: [44, 36, 30, 24],
+      missRate: { 44: '1 in 30', 24: '1 tap in 7' },
+    },
     // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
     // renderer emits them as rem (÷10).
     spriteTiers: {
@@ -13694,23 +13964,95 @@ function stampDeck(registries, run, cards) {
 // ---------------------------------------------------------------------------
 
 /**
- * canSwap(registries, slotId, { inCombat }) → { ok, reason }.
+ * canSwap(registries, slotId, { inCombat }) → { ok, word, reason }.
  * The rule lives in equipSlots.csv (`swap`): hands may be changed mid-fight at
- * a price, armour and talismans may not. Storage is sealed in combat too — you
- * cycle between the sets you brought, you don't rummage.
+ * a price, armour and talismans may not.
+ *
+ * `word` IS THE BADGE, AND IT LIVES HERE BECAUSE THE COLLISION DID (#98, Bjorn).
+ * The screen used to type the literal 'sealed' into the slot header while this
+ * function supplied only the tooltip — so the one word a player actually reads
+ * had no home, and nothing could compare it to anything. It collided: the
+ * ARMOUR header said "sealed" (this function, about the ACTIVE SET) while two
+ * rows below the picker said "Right Hand is sealed in combat" (canEquip, about
+ * a set's CONTENTS), on a Right Hand carrying no badge at all. Both sentences
+ * were true. **One word carrying two facts, with the copies visibly
+ * disagreeing** — his framing, and it is worse than a second copy, because a
+ * second copy at least says the same thing twice.
+ *
+ * So the badge word sits beside the reason it belongs to, and test 31d asserts
+ * canEquip's sentence contains neither this word nor any slot label. A future
+ * edit that reintroduces the collision goes red, which is the point: the
+ * brittleness IS the check. The wording is Sunna's whenever she wants it —
+ * both strings are one line each and neither is derived from the other.
  */
 function canSwap(registries, slotId, { inCombat = false } = {}) {
   const slot = ((registries.equipment || {}).slots || []).find((s) => s.id === slotId);
-  if (!slot) return { ok: false, reason: `No slot '${slotId}'` };
+  if (!slot) return { ok: false, word: 'unknown', reason: `No slot '${slotId}'` };
   if (inCombat && slot.swap !== 'combat') {
-    return { ok: false, reason: `${slot.label} can only be changed outside combat.` };
+    return { ok: false, word: 'sealed', reason: `${slot.label} can only be changed outside combat.` };
   }
-  return { ok: true, reason: '' };
+  return { ok: true, word: '', reason: '' };
 }
 
-/** canDrawFromStorage — storage is sealed once a fight starts. */
-function canUseStorage({ inCombat = false } = {}) {
-  return !inCombat;
+/**
+ * canEquip(registries, slotId, { inCombat }) → { ok, reason }.
+ *
+ * MAY WHAT IS IN THIS SET CHANGE RIGHT NOW — the sibling question to canSwap,
+ * and the one nothing in the model answered. `canSwap` asks whether the ACTIVE
+ * set may change; this asks whether a set's CONTENTS may. In a fight the answer
+ * is no for every slot, and it is derived rather than authored (below).
+ *
+ * IT REPLACES `canUseStorage`, WHICH HAD ZERO CALLERS IN THE WHOLE TREE. That is
+ * the second copy this seat exists to refuse, in its quietest form: the fact
+ * "you cannot re-arm mid-fight" was written twice — once in the model, where
+ * nothing read it, and once as `} else if (!inCombat) {` in the armoury's click
+ * handler, where it was the only thing actually enforcing anything. The dead
+ * copy is deleted and the live one moves onto the mutation (equipPiece below).
+ * Same defect as #90's ownership hole, one function over, found by asking who
+ * reads each of these two.
+ *
+ * WHY IT IS DERIVED AND NOT A COLUMN. The obvious form is an `equip` column in
+ * equipSlots.csv beside `swap`. It is #78 again: a second two-valued field per
+ * slot makes the vocabulary the PRODUCT of the two, and that product holds cells
+ * nobody built — a slot you may re-arm but not cycle, an armour slot a row could
+ * declare re-armable mid-fight while storage stays sealed under it. Changing
+ * what a set HOLDS is strictly more than changing which set is ACTIVE, so the
+ * answer follows from the fight, not from a row. An author writes nothing new
+ * and nothing can fall out of the set (Law 0 clause 1).
+ *
+ * THE SENTENCE DOES NOT NAME THE SLOT, and that is the repair of my own defect
+ * (#98, Bjorn). I composed it from the slot's label because canSwap does — but
+ * canSwap's fact IS per slot (hands cycle, armour does not) and this one is not:
+ * in a fight NO slot may be re-armed. Naming the slot made a screen-wide truth
+ * wear a per-slot voice, so "Right Hand is sealed in combat" read as a claim
+ * about the Right Hand, sitting under a Right Hand header with no badge on it
+ * while ARMOUR had one. The label was doing the opposite of its job. It says
+ * what is actually true instead, once, about the act rather than the slot — and
+ * it borrows no word from canSwap, so the two refusals cannot be read as the
+ * same rule. The picker's own `<h4>` says which slot you are looking at; this
+ * line never needed to.
+ *
+ * NO CONTEXT MEANS SEALED, not "not in combat" (#98, Vira). The old signature
+ * defaulted `inCombat` to false, so a caller that said nothing was told it may
+ * re-arm — silence meaning permission, which is the whole defect this function
+ * was extracted to remove. A truth function that cannot be told whether a fight
+ * is on refuses, and names the caller that failed to say.
+ */
+/** The one sentence, so the two refusing paths below cannot drift apart. */
+const SEALED_MID_FIGHT = 'You cannot re-arm mid-fight — cycle between the sets you brought.';
+
+function canEquip(registries, slotId, ctx) {
+  const slot = (((registries || {}).equipment || {}).slots || []).find((s) => s.id === slotId);
+  if (!slot) return { ok: false, reason: `No slot '${slotId}'` };
+  if (!ctx || typeof ctx !== 'object' || typeof ctx.inCombat !== 'boolean') {
+    console.error(
+      `canEquip('${slotId}'): no boolean \`inCombat\` in the context — refusing.`
+      + ` Got ${JSON.stringify(ctx)}. This line is the defect, not the refusal.`
+    );
+    return { ok: false, reason: SEALED_MID_FIGHT };
+  }
+  if (ctx.inCombat) return { ok: false, reason: SEALED_MID_FIGHT };
+  return { ok: true, reason: '' };
 }
 
 /**
@@ -13739,6 +14081,22 @@ function canUseStorage({ inCombat = false } = {}) {
  * it there — worse than the defect. **One truth function, two consumers**: the
  * screen draws what `openedSets` opens and this refuses what it does not, so the
  * two cannot disagree about a cell.
+ *
+ * OPEN, FOUND BY VIRA GATING #98, AND CARDED AS ITS OWN ACT — read this before
+ * adding a slot. THIS SIGNATURE HAS NO `inCombat` AT ALL, so the question is not
+ * whether it checks the swap rule but whether it CAN: `canSwap` is enforced by
+ * both callers and by neither of them structurally. That is a different failure
+ * from a second copy — a duplicate fails by divergence, an unenforced gate fails
+ * by bypass — and it has a live cell: `talisman` (`swap=outOfCombat`, `sets=3`)
+ * MOVES mid-fight, against its own data. Every test of this function uses
+ * `rightHand`, where the missing gate is vacuous, which is why nothing was red.
+ * It is dormant only because talismans are unauthored — one CSV row under Law 1
+ * clause 1 wakes it. The fixture that proves any fix is the same wide, rung-less
+ * talisman slot `engine.test.js` already builds for the too-few-rungs check, and
+ * nobody had connected the two; that act should build it once and hang both
+ * gates on it. NOT taken here: closing it changes this signature, and this
+ * signature is on the engine's priced swap path (`doSwapArmament`), which is the
+ * one thing #95 and #98 deliberately did not touch.
  *
  * `registries` moves to the front like everything else in this module, which is
  * also what makes a call site left on the old signature fail CLOSED: the old
@@ -13773,7 +14131,7 @@ function cycleSet(registries, loadout, slotId, index, ctx) {
  * addToStorage(loadout, itemId, cap) → true when it went in.
  *
  * Where a found armament lands. Storage is what you are carrying but not
- * holding; hand slots are sealed against it once a fight starts (canUseStorage).
+ * holding; hand slots are sealed against it once a fight starts (canEquip).
  * A duplicate is refused rather than stacking — you either have a Katana or
  * you don't.
  */
@@ -13797,7 +14155,7 @@ function carriedIds(loadout) {
 }
 
 /**
- * equipPiece(registries, loadout, slotId, setIndex, itemId, owned) → boolean.
+ * equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) → boolean.
  * Put a piece id into a specific set of a slot; `null` clears it.
  *
  * The gate is HERE, on the mutation, and not in the screen that calls it. The
@@ -13818,10 +14176,46 @@ function carriedIds(loadout) {
  * `registries` argument above, for the same reason.
  *
  * Clearing a slot needs no ownership: putting a thing down is always allowed.
+ * IT DOES NOT NEED THE COMBAT GATE ANY LESS, and the order of the two checks
+ * below is where that is said. Putting a weapon down mid-fight is re-arming with
+ * nothing; the ownership check has no opinion about it and the seal does. So the
+ * seal is asked FIRST, above the `!itemId` return, and ownership second.
+ *
+ * `ctx` — `{ inCombat }` — is REQUIRED, for the reason the two arguments above
+ * it are (#95). A context that defaults to "not in combat" fails OPEN: every
+ * call site written after today would equip mid-fight by saying nothing, which
+ * is how the ownership hole survived #90 in the first place. `cycleSet` above
+ * already takes a required trailing context for the ladder, so this is that
+ * pattern, not a new one.
+ *
+ * THE CHECK IS ON THE VALUE, NOT THE KEY (#98, Vira). It read `'inCombat' in
+ * ctx`, which answers whether the key was TYPED — so `{ inCombat: undefined }`
+ * and `{ inCombat: null }` were taken, and both are what a caller produces by
+ * forwarding a variable that was never set. That is the same defect one notch
+ * quieter than the one this argument exists to close: absent read as permission.
+ * A boolean, or it refuses and prints what it was actually handed.
  */
-function equipPiece(registries, loadout, slotId, setIndex, itemId, owned) {
+function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
   const ids = ((loadout || {}).sets || {})[slotId];
   if (!ids || setIndex < 0 || setIndex >= ids.length) return false;
+  if (!ctx || typeof ctx !== 'object' || typeof ctx.inCombat !== 'boolean') {
+    console.error(
+      `equipPiece('${slotId}', '${itemId}'): no boolean \`inCombat\` in the context — refusing.`
+      + ` Got ${JSON.stringify(ctx)}. Pass { inCombat } as the seventh argument.`
+      + ' This line is the defect, not the refusal.'
+    );
+    return false;
+  }
+  // THE GATE IS HERE, ON THE MUTATION, and the screen no longer holds a copy of
+  // it. Before #95 the only thing stopping a mid-fight re-arm was the armoury
+  // declining to open its picker — a screen, not a gate, so a save file, a drop,
+  // a drag, a gamepad path or a second surface walked straight past it. Measured
+  // at 98fedde: equipPiece on a live combat loadout returned true.
+  // Passed through, NOT coerced. `!!ctx.inCombat` would turn a value this
+  // function had just refused into a legal one, so if the check above is ever
+  // loosened canEquip's own check is a real second gate rather than an echo.
+  const seal = canEquip(registries, slotId, { inCombat: ctx.inCombat });
+  if (!seal.ok) return false;
   if (!itemId) {
     ids[setIndex] = null;
     return true;
@@ -13849,7 +14243,7 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned) {
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, slotHand, pieceHand, fitsSlot, validateEquipment, fromDropPool, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, canUseStorage, cycleSet, addToStorage, carriedIds, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, slotHand, pieceHand, fitsSlot, validateEquipment, fromDropPool, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
 
 },
 "src/model/state.js": function (module, exports, require) {
@@ -17702,22 +18096,102 @@ function ensure() {
 // the raw rect, and `pad`/`8`/`4` stay exactly the numbers they were — they were
 // always local px and always meant to be (Marina's Rule 3: px is admissible where
 // a value must not answer to the text-size setting; a hover gap is not read text).
-function position(x, y) {
+//
+// BESIDE THE ANCHOR, NEVER OVER IT — and the anchor is a BOX, because a point
+// is a box with no extent and that is the only difference between the two ways
+// a tooltip gets summoned.
+//
+// This function had two callers giving it two different answers for the same
+// question. Hover passed the POINTER, so the tooltip appeared 14px inside a
+// card the pointer was sitting on and covered the thing it was explaining; the
+// gamepad focus cursor passed the ELEMENT'S RIGHT EDGE and did not. One
+// tooltip, one element, two positions depending on which device you held.
+// Measured on the Smith preview at 1200x730: the hover tooltip covered 16.53%
+// of the card face on 15 of 20 candidates.
+//
+// So there is one answer now: put the box beside the anchor's box. A tap has no
+// element — refusal.js answers a finger at the point it pressed — and passes a
+// zero-size box, for which every line below reduces to exactly the arithmetic
+// that was here before (left = x + pad, top = y + pad, and both flips
+// subtracting the pad). That is deliberate: the tap path is unchanged, and it
+// is unchanged by ARITHMETIC rather than by a second branch.
+function place(anchor) {
   const el = ensure();
   const pad = 14;
   const view = viewportLocalBox();
+  // MEASURE ITS NATURAL BOX, NOT THE ONE ITS LAST POSITION SQUEEZED IT INTO.
+  // #tooltip is `position: fixed` with a max-width and no width, so it is laid
+  // out in the space between style.left and the right edge: parked at left 384
+  // in a 433-wide room it gets 49px, wraps tall and narrow, and THAT is the box
+  // the next placement is computed from. Where it was decided how big it is,
+  // which decided where it goes next — the same tooltip measured 280x220 or
+  // 171x384 depending only on what you hovered before it. Predates this change
+  // (the old code read the same rect the same way) and it only became visible
+  // once placement started depending on the box's size on both axes. Zeroing
+  // first costs one layout and makes the measurement a property of the CONTENT.
+  el.style.left = '0px';
+  el.style.top = '0px';
   const b = anchorLocalBox(VIEWPORT_ORIGIN, el);
-  const c = anchorLocalBox(VIEWPORT_ORIGIN, { left: x, top: y, width: 0, height: 0 });
-  let left = c.left + pad;
-  let top = c.top + pad;
-  // Flip to the other side of the pointer rather than overhang the edge.
-  if (left + b.width > view.width - 8) left = c.left - b.width - pad;
-  if (top + b.height > view.height - 8) top = c.top - b.height - pad;
+  const a = anchorLocalBox(VIEWPORT_ORIGIN, anchor);
+  const fits = (p) => p.left >= 4 && p.top >= 4
+    && p.left + b.width <= view.width - 8 && p.top + b.height <= view.height - 8;
+
+  let at0;
+  if (a.width || a.height) {
+    // FOUR sides, not two. "Beside it" is not a special case of right-and-left:
+    // at 390 the tooltip is 252 local px wide and a card is ~104, so for most of
+    // the hand there is no horizontal room on EITHER side and a left/right-only
+    // rule lands back on the card via the clamp. Measured: 5 of 80 tooltips
+    // still covered their control until below/above were in the list.
+    //
+    // ONLY THE SEPARATING AXIS IS PINNED. A tooltip below a control has to be
+    // below it; it does not have to be left-aligned with it, and pinning the
+    // free axis as well is what made three of them fail — the below/above
+    // candidates were being rejected for horizontal overflow while the vertical
+    // room they existed to use was sitting there empty.
+    const slideX = Math.min(Math.max(4, a.left), Math.max(4, view.width - 8 - b.width));
+    const slideY = Math.min(Math.max(4, a.top), Math.max(4, view.height - 8 - b.height));
+    at0 = [
+      { left: a.left + a.width + pad, top: slideY },      // right of it
+      { left: a.left - b.width - pad, top: slideY },      // left of it
+      { left: slideX, top: a.top + a.height + pad },      // below it
+      { left: slideX, top: a.top - b.height - pad },      // above it
+    ].find(fits) || { left: a.left + a.width + pad, top: slideY };
+  } else {
+    // A POINT has no sides to be outside of, so "outside the anchor" degenerates
+    // to the offset-from-the-pointer rule — which is what a tap wants anyway
+    // (refusal.js answers the finger where it pressed). The four lines below are
+    // the ORIGINAL arithmetic, unchanged, including the independent per-axis
+    // flip: this path is not being retuned, and keeping it verbatim is how that
+    // is checkable rather than asserted.
+    let left = a.left + pad;
+    let top = a.top + pad;
+    if (left + b.width > view.width - 8) left = a.left - b.width - pad;
+    if (top + b.height > view.height - 8) top = a.top - b.height - pad;
+    at0 = { left, top };
+  }
   // …and then bound it regardless, so a wrong answer above is a misplaced tooltip
   // and never an absent one. keep defaults to the whole box: this is text to read.
-  const at = clampBox({ left, top, width: b.width, height: b.height }, view);
+  // When no side fits, this is what puts it back on screen — ON the control,
+  // which is the right trade: unreadable beats misplaced, absent beats neither.
+  const at = clampBox({ left: at0.left, top: at0.top, width: b.width, height: b.height }, view);
   el.style.left = `${at.left}px`;
   el.style.top = `${at.top}px`;
+}
+
+/**
+ * The one way the tooltip is ever shown: fill it, reveal it, place it beside
+ * its anchor. Both entry points below are this function plus an anchor — the
+ * element for hover and the focus cursor, a zero-size box for a tap — so the
+ * "how" cannot drift between them while the "where" differs.
+ */
+function showWith(html, anchor) {
+  if (!html) return false;
+  const t = ensure();
+  t.innerHTML = html;
+  t.style.display = 'block';
+  place(anchor);
+  return true;
 }
 
 /**
@@ -17728,13 +18202,14 @@ function position(x, y) {
  * every tooltip a mouse would.
  */
 function attachTooltip(el, contentFn) {
-  const show = (x, y) => showTooltipAt(x, y, contentFn());
-  el.addEventListener('pointerenter', (ev) => {
+  // Both input paths anchor to the ELEMENT, which is what they are both
+  // explaining. The pointermove listener that used to drag the tooltip back
+  // under the cursor is gone with the pointer anchor it served: a tooltip that
+  // follows the pointer across a card is a tooltip that sits on the card.
+  const show = () => showWith(contentFn(), el.getBoundingClientRect());
+  el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
-    showTimer = setTimeout(() => show(ev.clientX, ev.clientY), 140);
-  });
-  el.addEventListener('pointermove', (ev) => {
-    if (tipEl && tipEl.style.display === 'block') position(ev.clientX, ev.clientY);
+    showTimer = setTimeout(show, 140);
   });
   el.addEventListener('pointerleave', () => {
     clearTimeout(showTimer);
@@ -17742,8 +18217,7 @@ function attachTooltip(el, contentFn) {
   });
   el.addEventListener('gpfocus', () => {
     clearTimeout(showTimer);
-    const r = el.getBoundingClientRect();
-    showTimer = setTimeout(() => show(r.right, r.top), 160);
+    showTimer = setTimeout(show, 160);
   });
   el.addEventListener('gpblur', hideTooltip);
 }
@@ -17751,18 +18225,17 @@ function attachTooltip(el, contentFn) {
 /**
  * showTooltipAt(x, y, html) — put the one tooltip at a point, now.
  *
- * Hover and the focus cursor both arrive here through attachTooltip. A TAP has
- * neither, and a tap is the whole of a phone: components/refusal.js calls this
- * so a control that refuses can answer the finger that pressed it, at the place
- * it was pressed. Empty html shows nothing rather than an empty box.
+ * A TAP has no element to sit beside, and a tap is the whole of a phone:
+ * components/refusal.js calls this so a control that refuses can answer the
+ * finger that pressed it, at the place it was pressed. The point becomes a
+ * zero-size anchor box, which place() resolves to the exact offsets this path
+ * has always used. Empty html shows nothing rather than an empty box.
+ *
+ * Hover and the focus cursor no longer come through here — they anchor to their
+ * element inside attachTooltip. This entry point is the POINT case only.
  */
 function showTooltipAt(x, y, html) {
-  if (!html) return false;
-  const t = ensure();
-  t.innerHTML = html;
-  t.style.display = 'block';
-  position(x, y);
-  return true;
+  return showWith(html, { left: x, top: y, width: 0, height: 0 });
 }
 
 function hideTooltip() {
@@ -18444,6 +18917,28 @@ function getEntries() {
 
 const banners = new Map();
 
+// AND THE SCREEN IS FINITE — the half the dedupe does not cover. Deduping on
+// the message string is right and it only reaches IDENTICAL messages; a message
+// carrying a varying number ("reading 'card7'") never repeats, so N distinct
+// failures are N banners, prepended down the page. Measured on the shipped
+// bundle at 390x844, Text XL, six banners standing: THE TOPBAR SAT AT y=830.06
+// IN AN 844 px VIEWPORT. The banner's own body sentence says "the game is still
+// running", and there was fourteen pixels of it left to see.
+//
+// So the stack has a ceiling, and the overflow sentence is NOT a new idea: it
+// is the one main.js already uses when the validation list is longer than the
+// screen ("…and N more — all N are in the browser console.", #67, Sunna's D19).
+// One truncation vocabulary in this game, not two. The door it names is the
+// Command log rather than the console, because that is the door a PLAYER has.
+//
+// THREE is measured, not chosen: at the worst cell above three banners stand
+// ~452 px tall, which leaves the topbar and the top of the map on screen. A
+// fourth kind of failure becomes a number on the NEWEST banner — which is the
+// topmost one, because these are prepended — and every one of them is still in
+// the log that banner opens.
+const MAX_BANNERS = 3;
+const overflowed = new Set();
+
 /**
  * failureBanner(key, title, body) → the banner element.
  *
@@ -18460,6 +18955,18 @@ function failureBanner(key, title, body) {
     seen.head.textContent = `${title} (×${seen.n})`;
     return seen.el;
   }
+  const standing = [...banners.values()].filter((b) => b.el.isConnected);
+  if (standing.length >= MAX_BANNERS) {
+    overflowed.add(key);
+    const last = standing[standing.length - 1];
+    if (!last.more) {
+      last.more = document.createElement('div');
+      last.el.insertBefore(last.more, last.open);
+    }
+    const n = overflowed.size;
+    last.more.textContent = ` · …and ${n} more kind${n === 1 ? '' : 's'} of failure — all of them are in the Command log.`;
+    return last.el;
+  }
   const el = document.createElement('div');
   el.className = 'validation-banner';
   const head = document.createElement('div');
@@ -18473,7 +18980,7 @@ function failureBanner(key, title, body) {
   open.addEventListener('click', () => openDebugLog());
   el.append(head, text, open);
   document.body.prepend(el);
-  banners.set(key, { el, head, n: 1 });
+  banners.set(key, { el, head, open, more: null, n: 1 });
   return el;
 }
 
@@ -19828,16 +20335,23 @@ function upgradePreviewHtml(registries, ref) {
   const upg = resolveCard(registries, { cardId: ref.cardId, upgraded: true });
   const baseTokens = staticTokens(base);
   const upgTokens = { ...baseTokens, ...staticTokens(upg) };
+  // Both lines are CARD TEXT, so both wear `.ctext` — the class the mark rules
+  // are keyed to (ui.css). Without it the preview drew the number it had just
+  // computed as changed in the same colour and weight as the word beside it.
+  // `.ctext` carries the marks only; the card face's block layout stays on
+  // `.card .ctext` and does not follow the text into the tooltip.
   let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
-  html += `<div style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
-  html += `<div style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
+  html += `<div class="ctext" style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
+  html += `<div class="ctext" style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
   if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
   return html;
 }
 
 function cardTooltip(registries, def, tokens) {
   let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)}</div>`;
-  html += `<div>${fillTemplate(def, tokens, null)}</div>`;
+  // Card text here too — same function, same marks, same class. The in-play
+  // card tooltip had the identical defect; it is one fix, not two.
+  html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
@@ -20819,7 +21333,7 @@ const ROWS = [
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: true,
+    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: appliedHtml,
     note: 'Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.' },
   { cat: 'Display', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
@@ -20884,6 +21398,38 @@ const ROWS = [
   { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'M',
     choices: ['S', 'M', 'L', 'XL'], label: 'Text size',
     note: 'Scale all interface text and sizing together (sets the root size). M is default; L/XL aid readability. Stacks with UI size.' },
+  // Constantine, twice: "just make the tabs about 20% smaller or the size
+  // configurable or scalable with UI or both", then "actually, I think it
+  // should be able to go smaller than 44px." Range 24–44 is Marina's call, and
+  // it is told to him as a choice we made rather than a limit he ran into: we
+  // let it go below 44 as asked and stopped at 24, WCAG 2.2 AA's minimum. His
+  // no is free.
+  //
+  // NUMBERS, NOT S/M/L/XL. Text size is S/M/L/XL and UI size is S/M/L/XL, both
+  // within a few rows of this one. A third four-letter ladder doing a third job
+  // is Law 4's defect — two controls with one job, the weaker reading as broken
+  // — with better manners. These are the numbers he typed.
+  //
+  // ACCESSIBILITY, NOT DISPLAY: it sits with Text size, High contrast and
+  // Reduced motion because it is an ergonomic floor, not a look.
+  //
+  // DEFAULT 44 = TODAY, TO THE PIXEL. Nobody who never opens this sees anything
+  // move — the same principle `quickNav: def 'off'` already carries above.
+  // `choices` and `def` are DERIVED from balance.ui.tapSize; the four numbers
+  // are not written here, or the closed set would have two homes.
+  //
+  // `resizesWhilePressed` — THE ONE CONTROL EXEMPT FROM THE FLOOR IT SETS.
+  // Marina's ruling, on the narrowest reason available so it cannot spread:
+  // this is the only control in the game whose resizing happens WHILE IT IS
+  // BEING PRESSED. Measured cause: at the 44 step the pressed chip landed 61.44
+  // device px from the finger because the whole group re-lays-out, which is
+  // wider than a fingertip and which no `scrollTop` can answer.
+  // Declared as a CHARACTERISTIC rather than handled by name, so the stylesheet
+  // keys on the property and not on `tapFloor` (Law 1 clause 3, one layer up).
+  { cat: 'Accessibility', key: 'tapFloor', type: 'choice', def: String(UI_DEFAULTS.tapSize.def),
+    choices: UI_DEFAULTS.tapSize.sizes.map(String), label: 'Minimum tap size',
+    applied: tapCostHtml, resizesWhilePressed: true,
+    note: 'How small a button, tab, or option is allowed to get. 44 is the size a fingertip reliably hits; smaller fits more on screen.' },
   { cat: 'Accessibility', key: 'colorblindSafe', def: false, label: 'Colorblind-friendly',
     note: 'Shift danger/heal/blight/frost colors to a more distinguishable palette.' },
   { cat: 'Accessibility', key: 'reduceFlashes', def: false, label: 'Reduce flashes',
@@ -21060,8 +21606,8 @@ function rowHtml(settings, r) {
       .map((c) => `<button class="choice${c === cur ? ' on' : ''}" data-key="${r.key}" data-val="${c}">${c.toUpperCase()}</button>`)
       .join('');
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${r.applied ? appliedHtml(settings) : ''}</div>
-        <div class="choice-group">${opts}</div>
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
+        <div class="choice-group"${r.resizesWhilePressed ? ' data-resizes-while-pressed="1"' : ''}>${opts}</div>
       </div>`;
   }
   // 'action' rows (e.g. fullscreen) render as a live toggle reflecting state.
@@ -21072,6 +21618,100 @@ function rowHtml(settings, r) {
         <span class="knob"></span>
       </button>
     </div>`;
+}
+
+// ---- the line under a row that says what the choice actually means ---------
+//
+// `applied:` USED TO BE `true` AND MEANT ONE FUNCTION. One row had it, and
+// `rowHtml` called `appliedHtml` by name — a flag whose only legal value stood
+// for a function the flag could not name. The second row that wants a line
+// under it (Minimum tap size) would have made that an `if` per key, which is
+// exactly the shape Law 1 clause 3 forbids one layer down: `if (key === …)`
+// deciding behaviour that the row could have declared.
+//
+// So the field HOLDS THE FUNCTION. That is Law 0 clause 2 said honestly — a
+// row that wants a derived line under it is data, and the derivation is a word,
+// authored in code, joined here by the row that asks for it. It is the same
+// declaration/handler join `src/ui/surfaces.js` makes for navigable sets, at
+// one row's scale.
+//
+// THE SLOT IS ALWAYS RENDERED, even when the line is empty. A function may
+// legitimately say nothing (Minimum tap size is SILENT at 44 — Sunna: "a state
+// that needs no words needs silence"), and a slot that only exists while it has
+// something to say is a slot `refreshApplied` cannot find the moment it starts
+// having something to say. Empty div, no padding, no margin: zero height, no
+// stylesheet change.
+function appliedSlot(settings, r) {
+  if (!r.applied) return '';
+  return `<div class="set-applied-slot" data-applied="${r.key}">${r.applied(settings, r) || ''}</div>`;
+}
+
+/**
+ * resolveTapSize(settings) → { px, stored, bad }
+ *
+ * THE ONE HOME FOR "what tap floor is in force", asked by the settings row and
+ * by applyTapSize() in src/main.js. The closed set and the default are read off
+ * the row, which reads them off `balance.ui.tapSize` — so the four numbers are
+ * written once, in content, and nothing here restates them.
+ *
+ * `bad` IS THE POINT, and it is Law 1 clause 5. A sparse store is normal — an
+ * untouched key is simply absent, and absent resolves to the default with
+ * nothing to report. A key that is PRESENT and not in the closed set is bad
+ * data: a hand-edited save, an older build's value, a restored profile from a
+ * tree where the set was different. It still has to render something, so it
+ * renders the default — but it must not do that SILENTLY, which is the failure
+ * that gets called "the setting doesn't stick". `bad` is what lets both callers
+ * say so: main.js writes it into the command log by name, and the row prints
+ * the rejected value where the choice is made.
+ */
+function resolveTapSize(settings) {
+  const row = ROWS.find((r) => r.key === 'tapFloor');
+  const def = Number(row.def);
+  const stored = (settings || {}).tapFloor;
+  if (stored === undefined || stored === null || stored === '') {
+    return { px: def, stored: null, bad: false };
+  }
+  const s = String(stored);
+  if (row.choices.includes(s)) return { px: Number(s), stored: s, bad: false };
+  return { px: def, stored: s, bad: true };
+}
+
+// THE COST LINE. Sunna's ruling, and it is her own rule from the day before
+// aimed at her own proposal: "a line that says the same thing every time you
+// open the screen is not a warning, it is decoration with a worried face." So
+// the NOTE is constant and carries no percentages, and THIS line appears only
+// below the largest size, and changes with the value chosen.
+//
+// THE PERCENTAGES ARE NOT WRITTEN HERE. `balance.ui.tapSize.missRate` carries
+// one entry per size that has research behind it — 44 and 24, the two points
+// WCAG gives us — and this function prints a number only where an entry exists.
+// 36 and 30 get the sentence and no statistic, because interpolating between
+// two measured points would be fabricating one, and a fabricated number in a
+// player-facing line is the worst place this house could put one.
+//
+// The leading "NN px —" is the one thing I added to Sunna's wording: the
+// dispatch asks the line to NAME THE VALUE CHOSEN, and without it 36 and 30
+// render the identical sentence — a line that does not change when the setting
+// does, which is the test she set for it. Her sentence is untouched underneath.
+function tapCostHtml(settings) {
+  const { px, stored, bad } = resolveTapSize(settings);
+  const sizes = UI_DEFAULTS.tapSize.sizes;
+  const max = Math.max(...sizes);
+  // Bad data is loud HERE too, not only in the log: the player who typed 32
+  // into a save file is the one person who needs to be told 32 is not a size.
+  const badLine = bad
+    ? `<p class="set-applied limited">Stored value ${esc(String(stored))} is not one of `
+      + `${esc(sizes.join(', '))} — using ${px}.</p>`
+    : '';
+  if (px >= max) return badLine;
+  const rate = UI_DEFAULTS.tapSize.missRate;
+  const here = rate[px];
+  const there = rate[max];
+  const tail = here && there
+    ? `: about ${here} misses here, against ${there} at ${max}`
+    : '';
+  return `${badLine}<p class="set-applied">${px} px — below the size a fingertip`
+    + ` reliably hits${tail}.</p>`;
 }
 
 // EldenSpire#26 — SHOW THE VALUE ACTUALLY APPLIED.
@@ -21113,7 +21753,11 @@ function appliedHtml(settings) {
   // under-served, and is told nothing. A five-word pointer to a sibling control
   // cannot be wrong; a condition deciding when she deserves to see it can, and
   // this week has been a week of conditions that were. Wording is Sunna's.
-  return `<p class="set-applied${limited ? ' limited' : ''}" data-applied="uiScale">`
+  // `data-applied` lives on the SLOT now (appliedSlot, above), not on this
+  // paragraph — one row, one slot, one key, whether or not the line has
+  // anything to say this frame. A selector of `[data-applied="uiScale"]` still
+  // resolves; it lands on the wrapper instead of the paragraph inside it.
+  return `<p class="set-applied${limited ? ' limited' : ''}">`
     + (limited
       ? `Showing ${shown} — the largest that fits your screen (${key.toUpperCase()} is ${asked.toFixed(2)}\u00d7)`
       : `Showing ${shown}`)
@@ -21123,13 +21767,68 @@ function appliedHtml(settings) {
 
 // Re-read after the orchestrator has applied the change, and on resize, because
 // Auto's applied value moves with the window while the chosen setting does not.
+//
+// EVERY SLOT ON THE PANEL, not a named one. It used to replace the uiScale
+// paragraph by selector, which meant the second row with a derived line under
+// it would need this function to learn its key. It reads the slots the panel
+// actually drew and asks each row's own function — so a third row costs nothing
+// here, and a line that is EMPTY this frame (Minimum tap size at 44) still has
+// a slot to come back into. Refilling rather than replacing is what makes the
+// empty case work at all.
 function refreshApplied(container, settings) {
-  const el = container.querySelector('[data-applied="uiScale"]');
-  if (!el) return;
-  const tmp = document.createElement('div');
-  tmp.innerHTML = appliedHtml(settings);
-  const next = tmp.firstElementChild;
-  if (next) el.replaceWith(next);
+  container.querySelectorAll('[data-applied]').forEach((slot) => {
+    const row = ROWS.find((r) => r.key === slot.dataset.applied);
+    if (!row || !row.applied) return;
+    slot.innerHTML = row.applied(settings, row) || '';
+  });
+}
+
+/**
+ * anchorPressed(container, btn, wasAt) — keep the pressed control where the
+ * finger left it.
+ *
+ * SUNNA'S FLOOR, and it is a property this build has to satisfy rather than a
+ * nicety: *a control that changes layout must still be under the finger that
+ * changed it.* Minimum tap size is the case that produced the rule — its own
+ * chips are floored by the value it sets, and so is every floored control above
+ * it, so choosing a smaller size lifts the whole row up the page and the finger
+ * ends on empty background. Measured before this existed: pressing 36 moved the
+ * chip 36.4 device px, and 3 of 4 transitions left the chip behind.
+ *
+ * THE MECHANISM IS HERS: give the difference back through the scrolling pane's
+ * `scrollTop`, so nothing about the layout is faked and no element is moved.
+ *
+ * THE BOUNDARY IS HERS TOO AND SHE STATED IT UNPROMPTED: at `scrollTop 0` with
+ * SHRINKING content there is nothing to give back — you cannot scroll above the
+ * top of a pane. That is not a bug in this function, it is the arithmetic, and
+ * it is exactly where the 44 and 36 steps land when the panel is already at the
+ * top. This function reports nothing; `underfinger.mjs` measures which
+ * transitions it rescues and which fall in that hole, and the residual is handed
+ * back rather than papered over.
+ *
+ * Applied to EVERY choice row, not to this one by name. A row that changes no
+ * layout produces a delta of zero and pays nothing — cheaper than a list of
+ * which keys move the page, and a list is a second copy of a fact the layout
+ * already knows.
+ */
+function anchorPressed(container, btn, wasAt) {
+  if (typeof document === 'undefined' || !btn.isConnected) return;
+  const delta = btn.getBoundingClientRect().top - wasAt;
+  if (!delta) return;
+  // The nearest ancestor that can actually scroll. Asked of the live boxes, not
+  // assumed to be `.set-panel`: both doors mount this container differently and
+  // the modal scrolls at a different level than the in-run overlay.
+  for (let el = btn.parentElement; el; el = el.parentElement) {
+    const canScroll = el.scrollHeight > el.clientHeight + 1;
+    if (canScroll) {
+      const before = el.scrollTop;
+      el.scrollTop = before + delta;
+      // It moved as far as it could, which may be zero. Whatever is left is the
+      // hole Sunna named, and it belongs to the measurement, not to a retry.
+      if (el.scrollTop !== before) return;
+    }
+    if (el === container) break;
+  }
 }
 
 function isFullscreen() {
@@ -21296,13 +21995,30 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
 
   container.querySelectorAll('.choice').forEach((btn) => {
     btn.addEventListener('click', () => {
+      // SUNNA'S FLOOR: a control that changes layout must still be under the
+      // finger that changed it. Read where the pressed chip is BEFORE the change
+      // lands, so the anchor below has something to aim at.
+      const wasAt = btn.getBoundingClientRect().top;
       btn.parentElement.querySelectorAll('.choice').forEach((b) => b.classList.toggle('on', b === btn));
       settings[btn.dataset.key] = btn.dataset.val;
       onChange({ [btn.dataset.key]: btn.dataset.val });
       // AFTER onChange, which is what applies the zoom. Reading before it would
       // report the previous value and the readout would always be one click
       // behind — a display that lies more quietly than the one it replaced.
-      if (btn.dataset.key === 'uiScale') refreshApplied(container, settings);
+      //
+      // Unconditional, over every slot on the panel. The old `if (key ===
+      // 'uiScale')` was the row's identity written a second time in the wiring,
+      // and the second row with a derived line under it would have been a
+      // second clause. There are at most two slots on a panel; asking both is
+      // cheaper than remembering which one moved.
+      refreshApplied(container, settings);
+      // ANCHOR LAST, and the order is load-bearing — it cost me a measurement.
+      // I anchored straight after onChange first, and the 44 step still lost the
+      // finger by 16.25 device px: the cost line above had not gone silent yet,
+      // so the anchor aimed at a layout that was one paragraph taller than the
+      // one the player ends up looking at. Everything that moves the page in
+      // response to this press has to have moved before the correction is read.
+      anchorPressed(container, btn, wasAt);
     });
   });
 
@@ -21452,7 +22168,7 @@ function openSettings({ meta, onChange, saves = null, onProfileRestored = null }
 }
 
 
-Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, renderSettings, showSettingsNotice, openSettings });
+Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, resolveTapSize, renderSettings, showSettingsNotice, openSettings });
 
 },
 "src/ui/input.js": function (module, exports, require) {
@@ -25136,7 +25852,7 @@ Object.assign(module.exports, { mountTutorial });
 
 const { balance } = require("src/content/balance.js");
 const { resolveCard } = require("src/model/registries.js");
-const { canSwap, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, ownership, openedSets, visibleSets, rungFor, setCellState } = require("src/model/loadout.js");
+const { canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, ownership, openedSets, visibleSets, rungFor, setCellState } = require("src/model/loadout.js");
 
 
 
@@ -25459,8 +26175,31 @@ function pieceChip(registries, piece, { selected }) {
  *             route the change through the engine intent that charges for it
  */
 function mountEquipment(host, {
-  registries, run, meta = {}, inCombat = false, onClose, onChange, onSwap,
+  registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap,
 }) {
+  // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
+  // `inCombat = false`. #95 moved the gate off the screen and onto the mutation
+  // — and left the screen holding the one value that gate is asked about, with a
+  // permissive default. A third mount that forgot the flag would have re-armed
+  // mid-fight while every model test stayed green, because the model would have
+  // been told the truth about a lie. Both existing mounts already pass it
+  // explicitly (main.js:716 `false`, combat.js:1068 `true`), so there is no
+  // behaviour to change here — only the silence to close.
+  //
+  // IT FAILS LOUD AND CLOSED, in that order. A mount that cannot say whether a
+  // fight is on is sealed: a visibly inert picker with a named cause on the
+  // console beats a picker that quietly lets you re-arm. Law 1 clause 5 —
+  // bad input fails by name, and the name here is the caller.
+  if (typeof inCombatArg !== 'boolean') {
+    console.error(
+      `mountEquipment(): no boolean \`inCombat\` — got ${JSON.stringify(inCombatArg)}.`
+      + ' Sealing the picker. This line is the defect, not the seal.'
+    );
+  }
+  // ONE NAME IN THE BODY. The argument is validated once, here, and everything
+  // below reads `inCombat` — a second name for the same fact is the defect this
+  // seat is for, and it would be a strange one to introduce while closing this.
+  const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
   const eq = registries.equipment;
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
@@ -25570,7 +26309,11 @@ function mountEquipment(host, {
     const rule = canSwap(registries, slot.id, { inCombat });
     box.innerHTML =
       `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>` +
-      (rule.ok ? '' : `<span class="es-sealed" title="${esc(rule.reason)}">sealed</span>`) +
+      // The badge word comes from the verdict it belongs to (#98). It was the
+      // literal 'sealed' typed here while canSwap supplied only the tooltip, so
+      // the one word a player reads had no home and nothing could compare it to
+      // canEquip's sentence — which is exactly how the two came to share it.
+      (rule.ok ? '' : `<span class="es-sealed" title="${esc(rule.reason)}">${esc(rule.word)}</span>`) +
       `</div><div class="es-sets"></div>`;
     const sets = box.querySelector('.es-sets');
 
@@ -25631,7 +26374,15 @@ function mountEquipment(host, {
           cycleSet(registries, run.loadout, slot.id, i, { meta });
           sfx.play('cardPlay');
           commit();
-        } else if (!inCombat) {
+        } else {
+          // OPENING THE PICKER IS NOT A MUTATION (#95). Constantine: "I think you
+          // should be able to see your inventory in combat, just have the slots
+          // locked in combat only." This branch used to read `else if (!inCombat)`
+          // — the picker simply never opened mid-fight, so the inventory was not
+          // hidden by a rule, it was hidden by an omission, and the same omission
+          // was the ONLY thing stopping a mid-fight re-arm. Both halves are now
+          // separated: the panel opens and shows you everything you own, and the
+          // seal lives on the mutation (canEquip → equipPiece in model/loadout.js).
           picking = picking && picking.slotId === slot.id && picking.setIndex === i ? null : { slotId: slot.id, setIndex: i };
           draw();
         }
@@ -25653,36 +26404,69 @@ function mountEquipment(host, {
       // present, which is the whole reason it is not a class someone maintains.
       box.dataset.empty = '1';
       box.innerHTML = inCombat
-        ? '<p class="ep-hint">Storage is sealed in combat. Cycle between the sets you brought.</p>'
+        ? '<p class="ep-hint">Pick a slot above to see what you are carrying.</p>'
         : '<p class="ep-hint">Pick a slot above to change what is in it.</p>';
       return box;
     }
     const slot = eq.slots.find((s) => s.id === picking.slotId);
-    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4><div class="ep-list"></div>`;
+    // ONE SENTENCE, ONE HOME. The seal's words are the model's (canEquip), the
+    // same place the mutation reads them from, so the reason a chip gives when
+    // it is tapped and the reason printed over the list cannot come apart. This
+    // header line is the sentence said ONCE for the whole list — sixteen chips
+    // each repeating it is a wall, and the chips still answer a tap individually
+    // through refuses(), which is the property that actually failed on his phone.
+    const seal = canEquip(registries, picking.slotId, { inCombat });
+    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4>`
+      + (seal.ok ? '' : `<p class="ep-hint">${esc(seal.reason)}</p>`)
+      + '<div class="ep-list"></div>';
     const list = box.querySelector('.ep-list');
+
+    // A CHIP IS DRAWN THE SAME WAY WHETHER OR NOT IT REFUSES, and the refusal is
+    // added here rather than passed in. #90 deleted pieceChip's `locked`/`hint`
+    // arguments because a dead argument is a second copy of a decision; putting
+    // them back would be that copy with a caller. So pieceChip still only knows
+    // how to draw a piece, and this function — which is where the seal is known —
+    // decorates. `.equip-chip.locked` in styles/ui.css has styled nothing since
+    // #90; it is the rule for "a chip you can see and cannot use", which is
+    // exactly this, so it is reused rather than joined by a second one.
+    const sealChip = (el) => {
+      el.classList.add('locked');
+      refuses(el, () => seal.reason);
+      return el;
+    };
 
     const bare = document.createElement('button');
     bare.type = 'button';
     bare.className = 'equip-chip bare';
     bare.innerHTML = '<span class="ec-name">Bare</span><span class="ec-mods">Nothing at all</span>';
-    bare.addEventListener('click', () => {
-      equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null);
-      commit();
-    });
+    if (seal.ok) {
+      bare.addEventListener('click', () => {
+        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null, owned(), { inCombat });
+        commit();
+      });
+    } else sealChip(bare);
     list.appendChild(bare);
 
-    // EVERY CHIP HERE IS EQUIPPABLE (#90). There is no locked branch left: a
-    // piece you do not own is not in `eligible()`, so it is not a chip. What
-    // used to be sixteen refusing chips on the right hand is now nothing at all,
-    // and the one refusal this screen still has is the ladder's next cell.
+    // EVERY CHIP HERE IS OWNED (#90) — a piece you do not own is not in
+    // `eligible()`, so it is not a chip. WHETHER YOU MAY ACT ON IT IS A SECOND
+    // QUESTION (#95) and it is the fight's, not the profile's. The two states
+    // must not read alike or the screen lies about why it said no:
+    //   · a rung you have not earned  → a CELL in the rack, 🔒 and the rung's
+    //     name, refusing with the rung's own hint out of unlocks.csv;
+    //   · a piece sealed by a fight   → a CHIP in the picker, the piece's own art
+    //     and name, dimmed, refusing with the slot's seal sentence.
+    // Different container, different content, different sentence, different
+    // author of the sentence. Nothing here says "locked" at the player.
     const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
     for (const piece of eligible(slot)) {
       const chip = pieceChip(registries, piece, { selected: piece.id === current });
-      chip.addEventListener('click', () => {
-        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned());
-        sfx.play('cardPlay');
-        commit();
-      });
+      if (seal.ok) {
+        chip.addEventListener('click', () => {
+          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned(), { inCombat });
+          sfx.play('cardPlay');
+          commit();
+        });
+      } else sealChip(chip);
       list.appendChild(chip);
     }
     return box;
@@ -26294,8 +27078,17 @@ function mountEvent(app, { registries, run, rng, eventId, onDone }) {
   const box = app.querySelector('#choices');
   def.choices.forEach((choice, i) => {
     const btn = document.createElement('button');
-    btn.className = 'subtle';
-    btn.style.fontSize = '13px';
+    // `ev-choice`, not a bare `.subtle`: these three bars are the only control
+    // on this screen and the floor belongs to THEM, not to every subtle button
+    // in the game. Law 4 is a ratchet, not a sweep — flooring `.subtle` would
+    // be the blanket conversion the law tells nobody to attempt.
+    btn.className = 'subtle ev-choice';
+    // `style.fontSize = '13px'` was here, and it was Law 4 clause 1 backwards:
+    // a px label does NOT answer the Text size control, while `.subtle`'s
+    // `padding: 0.6rem` meant the BOX did. Text that will not grow inside a box
+    // that will. The size now lives in the stylesheet in rem, where the one
+    // question it answers is "how big is a letter".
+    btn.dataset.choice = String(i);
     btn.style.animationDelay = `${i * 70}ms`; // staggered entrance
     btn.textContent = choice.label;
     if (!meets(choice.requires)) {
