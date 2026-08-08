@@ -28,6 +28,8 @@
 //                                               DEFAULT vs SHAPED — the debug
 //                                               run-shape knobs, asserted
 //   node tools/mapplan.mjs --shape-selftest     the run-shape known-bad corpus
+//   node tools/mapplan.mjs --selftest           the known-bad corpora, only
+//   node tools/mapplan.mjs --margins            the pair census; exit 1 on a collision
 //
 // Exit codes
 //   0  every act resolves, and every promise holds across the distribution
@@ -41,12 +43,18 @@
 // instance, so it is not fitted to the one case we happened to find.
 //
 // AND THE MARGINS, 2026-08-08. A derived refusal that prints a VERDICT and not a
-// MARGIN cannot be watched: `columns ≤ 9` said accepted, never "by 2%", and the
-// node that grew to meet the tap floor closed the air between two adjacent taps
-// to under 3 px in the same stroke. Both axes now compute a margin with a floor
-// that can go red, both floors sit below today's values, and the rows that
-// falsify them are in this file — the corpus `model/validate.js` already points
-// at, so the pointer it carries is not a second dangling one.
+// MARGIN cannot be watched: `columns ≤ 9` said accepted and never "by 2%", and
+// the circles that grew to meet the tap floor closed the space between them in
+// the same stroke. Both axes compute a margin with a floor that can go red now,
+// and the rows that falsify them are in this file — the corpus
+// `model/validate.js` already points at, so its pointer is not a dangling one.
+//
+// THE PAIR CENSUS IS THE PART THAT CAUGHT SOMETHING REAL, and it caught it only
+// after Sunna corrected the shape: the first version measured `ROW_H - 2*NODE_R`,
+// two identical circles, on a screen whose one colliding pair is the BOSS over
+// the top shrine — different radius, so the invariant could not express the pair
+// that was actually red. `--margins` ranges over the pairs that exist and EXITS 1
+// TODAY on that overlap: -3.7 SVG units, rendered in every act since #107.
 //
 // REMOVAL CONDITION: deleted the day floor rules carry no anchors (nothing to
 // resolve, so no readout to print), or on Constantine's word.
@@ -59,9 +67,12 @@ import { createRng, sweepSeed } from '../src/engine/rng.js';
 import {
   viewRefusals, geometryRefusals, spanWidth, maxFanoutSpan, PHONE_VIEW_W, ZOOM_MIN,
   fanoutMargin, maxFittingColumns, maxSafeColumns, FANOUT_SLACK_MIN,
-  nodeAir, maxTapDefault, NODE_AIR_MIN_PX, COL_X, ROW_H, NODE_R, REF_ZOOM,
+  pairAir, maxTapDefault, NODE_AIR_MIN_PX, BOOT_GATED_PAIRS, COL_X, ROW_H, NODE_R, REF_ZOOM,
+  ZOOM_STEPS, MAP_ZOOM_DEFAULT, mapZoomDefaultIsLegal,
   PHONE_UI_ZOOM, PHONE_UI_ZOOM_MIN, TAP_TARGET_DEFAULT,
 } from '../src/model/mapview.js';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { validateContent } from '../src/model/validate.js';
 
 const args = process.argv.slice(2);
@@ -162,18 +173,33 @@ function printFanoutMargin(config, pad = '  ') {
   console.log(`${pad}  ^ COL_X may reach ${m.maxColX.toFixed(1)} before this width loses its last spare column (today ${COL_X}).`);
 }
 
-function printAirMargin(tapPx = TAP_TARGET_DEFAULT, pad = '  ') {
-  const a = nodeAir(tapPx);
-  if (!Number.isFinite(a.gap)) {
-    console.log(`${pad}MARGIN vertical     UNANSWERABLE (${a.why}) — reference zoom ${a.refZoom}, tap default ${JSON.stringify(tapPx)}.`);
-    return;
+// THE PAIR CENSUS — every pair of circles this map draws next to each other, not
+// the one pair the formula assumed. Sunna found the boss/shrine overlap RENDERED
+// while my invariant computed `ROW_H - 2 * NODE_R` and could not express it.
+// Returns the number of pairs below the floor, so a caller can exit on it rather
+// than print red and return zero.
+function printPairAir(pad = '  ', opts = {}) {
+  const a = pairAir(opts);
+  if (!a.pairs.length) {
+    console.log(`${pad}PAIR CENSUS   UNANSWERABLE (${a.why}) — reference zoom ${a.refZoom}, tap default ${JSON.stringify(a.tapPx)}.`);
+    return 1;
   }
-  console.log(`${pad}MARGIN vertical     ${a.gap.toFixed(1)} SVG units of air between two adjacent floors`
-    + ` · ${a.px390.toFixed(2)} device px at 390x844, ${a.px320.toFixed(2)} at 320x640, floor ${NODE_AIR_MIN_PX}`
-    + `${a.ok ? '' : '  <-- BELOW THE FLOOR'}`);
-  console.log(`${pad}  ^ node r ${a.r} solved from balance.ui.tapSize.def = ${tapPx} at ${(a.refZoom * 100).toFixed(0)}% zoom; row pitch ROW_H = ${ROW_H} does not move with it.`);
-  console.log(`${pad}  ^ the default may reach ${maxTapDefault()} px, and ROW_H may fall to ${a.minPitch.toFixed(2)}, before this goes red.`);
-  console.log(`${pad}  ^ DERIVED air only; tools/mapspacing.mjs owns rendered centre pitch at both phone shapes.`);
+  console.log(`${pad}PAIR CENSUS   circles solved from balance.ui.tapSize.def = ${a.tapPx} at REF_ZOOM ${a.refZoom}:`
+    + ` node r ${a.r}, boss r ${a.bossR}. Floor ${NODE_AIR_MIN_PX} device px of air at 320x640.`);
+  let bad = 0;
+  for (const p of a.pairs) {
+    if (!p.ok) bad++;
+    const gated = BOOT_GATED_PAIRS.includes(p.id);
+    console.log(`${pad}  ${p.ok ? 'ok  ' : 'RED '} ${p.id.padEnd(11)} ${p.label.padEnd(46)}`
+      + ` ${p.gap.toFixed(1).padStart(6)} SVG · ${p.px390.toFixed(2).padStart(6)} px @390 · ${p.px320.toFixed(2).padStart(6)} px @320`
+      + `${gated ? '' : '  [not gated at boot]'}`);
+  }
+  console.log(`${pad}  ^ the tap default may reach ${maxTapDefault()} px before a BOOT-GATED pair goes red.`);
+  console.log(`${pad}  ^ 'live' is the only pair that can both be clickable at once — every edge runs floor -> floor+1,`);
+  console.log(`${pad}    so a reachable set is one floor (Sunna: 987 live pairs over 2,601 decision moments, all on one floor).`);
+  console.log(`${pad}  ^ this arithmetic MATCHES THE RENDERED PAINT to the hundredth on all three pairs. My earlier`);
+  console.log(`${pad}    "derivation is the optimistic half" was written against a rounded 2.9 and is withdrawn.`);
+  return bad;
 }
 
 // ------------------------------------------------------------------- the run
@@ -377,11 +403,11 @@ const VIEW_MUST_ACCEPT = [
   ['entries absent', (() => { const { entries, ...rest } = BASE; return rest; })()],
 ];
 
-// ------------------------------------------------- THE THIRD CORPUS: THE AIR
-// The vertical axis's known-bad, and it is a BALANCE bundle rather than a map
-// config because the node radius is solved from `balance.ui.tapSize.def` — one
-// data entry, and turning it up grows the target and closes the gap between two
-// adjacent targets in the same stroke (Sunna, 2026-08-08).
+// ---------------------------------------- THE THIRD CORPUS: CIRCLES COLLIDING
+// The collision known-bad, and it is a BALANCE bundle rather than a map config
+// because every radius on this map is solved from `balance.ui.tapSize.def` — one
+// data entry, and turning it up grows every circle while the pitches they are
+// measured against do not move.
 //
 // `maxTapDefault() + 1` is the derived edge; `96` is a literal far past it that
 // no plausible arithmetic bug can make fit, and `0` is the unanswerable input.
@@ -396,6 +422,19 @@ const AIR_MUST_ACCEPT = [
   ['what ships', TAP_TARGET_DEFAULT],
   ['the derived edge itself', maxTapDefault()],
   ['the smallest size the dial offers', Math.min(...balance.ui.tapSize.sizes)],
+];
+
+// AND BOTH FACES OF THE PAIR THE FIRST VERSION COULD NOT EXPRESS. `pairAir` takes
+// every geometry input as a parameter precisely so the boss pair can be planted
+// green as well as observed red — a pair that is red at every input a fixture can
+// reach is a check nobody has watched PASS, which is the same silence one face
+// over (the instrument rule, read in both directions).
+const PAIR_PLANTS = [
+  ['boss pair as it ships — RED, rendered, since #107', {}, 'floor-boss', false],
+  ['boss pair with the pre-#107 ratio restored', { bossRatio: 1 }, 'floor-boss', true],
+  ['boss pair with room made in the pitch', { rowH: 56 }, 'floor-boss', true],
+  ['live pair with the columns closed up', { colX: 43 }, 'live', false],
+  ['live pair as it ships', {}, 'live', true],
 ];
 
 // --------------------------------------------- THE ANCHORS, AND WHY THEY EXIST
@@ -414,6 +453,7 @@ const AIR_MUST_ACCEPT = [
 //               108-cell grid; this does it on the shipped shape, cheaply, so a
 //               green selftest cannot coexist with a formula that under-reports
 //               on the act we actually ship.
+const gated = (a) => a.pairs.filter((p) => BOOT_GATED_PAIRS.includes(p.id));
 const PROPERTIES = [
   ['spanWidth is monotone in columns', () => [1, 2, 3, 4, 5, 6, 7, 8].every((n) => spanWidth(n + 1) > spanWidth(n))],
   ['the horizontal slack IS its definition, recomputed independently', () => {
@@ -425,14 +465,42 @@ const PROPERTIES = [
     const e = maxSafeColumns();
     return e >= 1 && fanoutMargin({ columns: e }).ok && !fanoutMargin({ columns: e + 1 }).ok;
   }],
-  ['air shrinks as the tap default grows', () => nodeAir(TAP_TARGET_DEFAULT + 8).gap < nodeAir(TAP_TARGET_DEFAULT).gap],
+  ['air shrinks on EVERY pair as the tap default grows', () => {
+    const a = pairAir(), b = pairAir({ tapPx: TAP_TARGET_DEFAULT + 8 });
+    return a.pairs.every((p, i) => b.pairs[i].gap < p.gap);
+  }],
   ['the tap edge is an EDGE — it clears and edge+1 does not', () => {
     const t = maxTapDefault();
-    return t >= 1 && nodeAir(t).ok && !nodeAir(t + 1).ok;
+    return t >= 1 && gated(pairAir({ tapPx: t })).every((p) => p.ok)
+      && gated(pairAir({ tapPx: t + 1 })).some((p) => !p.ok);
   }],
   ['a reference zoom that is not a number is NAMED, never NaN-shaped', () => {
-    const a = nodeAir(TAP_TARGET_DEFAULT, Number('Fit') / 100);
-    return a.ok === false && a.why === 'no-reference-zoom';
+    const a = pairAir({ refZoom: Number('Fit') / 100 });
+    return a.pairs.length === 0 && a.why === 'no-reference-zoom';
+  }],
+  // ---- SUNNA'S SPLIT, AND THE CHECKS THAT KEEP IT TRUE ----------------------
+  // "The fix is what makes the comment true; the check is what keeps it true."
+  ['REF_ZOOM is finite and a rung the ladder actually has', () => Number.isFinite(REF_ZOOM) && ZOOM_STEPS.includes(REF_ZOOM)],
+  ['MAP_ZOOM_DEFAULT is a legal token — Fit, or a ladder rung', () => mapZoomDefaultIsLegal()],
+  ["the geometry does NOT read the map-zoom default — flipping it to 'Fit' leaves every derived constant finite", () => {
+    // A SOURCE CHECK, and it says so: the runtime cannot flip a module const, so
+    // the only way to prove the geometry never learns the word is to read the
+    // file. Her fixture asked for the flip; this is the half that survives it.
+    const src = readFileSync(fileURLToPath(new URL('../src/model/mapview.js', import.meta.url)), 'utf8');
+    const reads = /Number\s*\(\s*MAP_ZOOM_DEFAULT\s*\)/.test(src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, ''));
+    return !reads && Number.isFinite(NODE_R) && Number.isFinite(REF_ZOOM) && pairAir().pairs.every((p) => Number.isFinite(p.gap));
+  }],
+  ["solving the geometry at the ladder FLOOR collides — which is why 'Fit' cannot be a reference", () => {
+    const a = pairAir({ refZoom: ZOOM_MIN });
+    return a.pairs.find((p) => p.id === 'floor-node').gap < 0;
+  }],
+  // ---- THE LATCH ON THE BOOT EXEMPTION --------------------------------------
+  // An excused row is worse than a red one, because nobody re-reads an excuse.
+  // `floor-boss` is out of the boot door only while it is red; the day someone
+  // clears it this fails and names the exemption to delete.
+  ['the boot exemption still has its reason — floor-boss is RED, so leaving it ungated is honest', () => {
+    const p = pairAir().pairs.find((x) => x.id === 'floor-boss');
+    return !p.ok && !BOOT_GATED_PAIRS.includes('floor-boss');
   }],
 ];
 
@@ -497,9 +565,22 @@ function selftest() {
 
   // --- THE MARGINS: the air corpus, both faces, and the same validator door ---
   let absentRed = false;
-  console.log(`\n  --- the margins: air between two adjacent taps, and BOTH faces of its edge ---\n`);
+  console.log(`\n  --- the margins: every pair of circles this map draws next to each other, both faces of each ---\n`);
   printFanoutMargin(mapConfigs[1], '  ');
-  printAirMargin(TAP_TARGET_DEFAULT, '  ');
+  printPairAir('  ');
+  console.log('');
+  // BOTH FACES OF EVERY PAIR, PLANTED. The boss pair is red at every input a
+  // corpus of tap defaults can reach, so without planting the geometry it is a
+  // check nobody has watched go GREEN — and a check with one observed face is
+  // half an instrument.
+  let plants = 0;
+  for (const [label, opts, id, want] of PAIR_PLANTS) {
+    const p = pairAir(opts).pairs.find((x) => x.id === id);
+    const got = !!(p && p.ok);
+    if (got === want) plants++;
+    console.log(`  ${got === want ? 'AS TOLD' : 'WRONG  '}  ${label.padEnd(46)} ${id} ${got ? 'clears' : 'collides'}`
+      + `${p ? ` at ${p.gap.toFixed(1)} SVG` : ''}${got === want ? '' : `  <-- expected it to ${want ? 'clear' : 'collide'}`}`);
+  }
   console.log('');
   // The absent-entry row is separate because it is not a `def` VALUE — it is the
   // shape of a check dying green, and it must be watched from both doors too.
@@ -547,18 +628,24 @@ function selftest() {
   const pass = red === KNOWN_BAD.length && clean
     && vred === VIEW_KNOWN_BAD.length && vclean === VIEW_MUST_ACCEPT.length && wired
     && ared === AIR_KNOWN_BAD.length && aclean === AIR_MUST_ACCEPT.length && airWired && absentRed
+    && plants === PAIR_PLANTS.length
     && props === PROPERTIES.length && anchor.ok;
   console.log(`\n  ${pass ? `PASS — ${red}/${KNOWN_BAD.length} floor-rule known-bad red, ${vred}/${VIEW_KNOWN_BAD.length} view known-bad red, ${vclean}/${VIEW_MUST_ACCEPT.length} must-accept clean, `
     + `${ared}/${AIR_KNOWN_BAD.length} air known-bad red (+ the absent entry), ${aclean}/${AIR_MUST_ACCEPT.length} air must-accept clean, `
+    + `${plants}/${PAIR_PLANTS.length} planted pairs behaved, `
     + `${props}/${PROPERTIES.length} properties hold, the formula anchor holds, both validator doors wired, control clean`
     : `FAIL — floor ${red}/${KNOWN_BAD.length} · view ${vred}/${VIEW_KNOWN_BAD.length} · must-accept ${vclean}/${VIEW_MUST_ACCEPT.length} · `
-    + `air ${ared}/${AIR_KNOWN_BAD.length} · air must-accept ${aclean}/${AIR_MUST_ACCEPT.length} · properties ${props}/${PROPERTIES.length} · `
+    + `air ${ared}/${AIR_KNOWN_BAD.length} · air must-accept ${aclean}/${AIR_MUST_ACCEPT.length} · plants ${plants}/${PAIR_PLANTS.length} · properties ${props}/${PROPERTIES.length} · `
     + `anchor ${anchor.ok ? 'holds' : 'BROKE'} · validators ${wired ? 'wired' : 'LOOSE'}/${airWired ? 'wired' : 'LOOSE'} · control ${clean ? 'clean' : 'DIRTY'}`}`);
   console.log(`\n  BOUNDARY — the horizontal rows all route through \`maxFanoutSpan\`, so a formula that`);
   console.log(`  UNDER-reports greens every one of them at once. The generative anchor above closes that`);
   console.log(`  on the shipped act shape only; \`node tools/mapplan.mjs --spans\` is the grid, and it is`);
   console.log(`  the thing this corpus stands on. Nothing here was rendered: the vertical margin is`);
   console.log(`  arithmetic; tools/mapspacing.mjs owns rendered centre pitch at both phone shapes.`);
+  console.log(`  the thing this corpus stands on. Nothing here was rendered — but the pair census is NOT`);
+  console.log(`  optimistic arithmetic: Sunna's rendered readings match it to the hundredth on all three`);
+  console.log(`  pairs, and my earlier caveat to the contrary was written against a rounded 2.9. What is`);
+  console.log(`  still outside every row here is whether the boss/shrine overlap READS as broken — Freja's.`);
   return pass ? 0 : 1;
 }
 
@@ -885,6 +972,30 @@ function shapeSelftest() {
   console.log(`\n  ${bad ? `FAIL — ${bad} of ${rows.length} rows did not behave` : `PASS — all ${rows.length} rows behaved: every known-bad refused by name, the gates fire, the control is clean`}`);
   return bad ? 1 : 0;
 }
+// --------------------------------------------------------------- the census
+// A COMMAND WHOSE EXIT CODE IS THE GEOMETRY, and it is separate from everything
+// else on purpose. `--selftest` asks "do the refusals fire on their known-bads",
+// which is a question about the instrument; this asks "does the tree collide",
+// which is a question about the tree. They are two subjects and the night I
+// merged them into one exit code is the night one of them stops being readable.
+//
+// IT EXITS 1 TODAY. That is not a regression I introduced — the boss/shrine
+// overlap has been rendered in every act and every seed since #107 gave the
+// radii their derivation, and it had 11 SVG units of air before that. What is
+// new is that something says so. The fix is a proportion Freja owns; I am not
+// picking a boss ratio at 4am to make my own instrument green.
+function margins() {
+  console.log(`mapplan --margins — every pair of circles this map draws next to each other\n`);
+  printFanoutMargin(mapConfigs[1], '  ');
+  console.log('');
+  const bad = printPairAir('  ');
+  console.log(`\n  ${bad ? `FAIL — ${bad} pair(s) below the ${NODE_AIR_MIN_PX} px floor` : 'PASS — every pair clears the floor'}`);
+  console.log(`\n  BOUNDARY — arithmetic over the constants, and it agrees with Sunna's rendered readings to`);
+  console.log(`  the hundredth on all three pairs. It is silent on whether an overlap READS as broken`);
+  console.log(`  (Freja), on anything the generator can place that is not one of these three pairs, and`);
+  console.log(`  on every shape between 320x640 and 390x844 — those two are the reference, not the range.`);
+  return bad ? 1 : 0;
+}
 
 function main() {
   if (args.includes('--spans')) process.exit(spans());
@@ -901,6 +1012,7 @@ function main() {
     console.log(`\n  PASS — the shape resolves, the harness varies, and every named weight moved its share the way it was pushed`);
     process.exit(0);
   }
+  if (args.includes('--margins')) process.exit(margins());
   if (selftestOnly) process.exit(selftest());
   if (!Number.isFinite(SEEDS) || SEEDS < 1) { console.error('mapplan: --seeds must be a positive integer'); process.exit(2); }
 
@@ -924,9 +1036,18 @@ function main() {
     console.log(`  base act 1: ${base.floors} floors x ${base.columns} columns, ${base.pathCount} paths`
       + ` · rollable band ${rollableFloors(base)}`);
   }
-  // THE VERTICAL MARGIN IS NOT PER-ACT — it has one data input, the tap default,
-  // so it prints once here for the same reason the boot validator asks it once.
-  printAirMargin(TAP_TARGET_DEFAULT, '  ');
+  // THE PAIR CENSUS IS NOT PER-ACT — one data input, the tap default — so it
+  // prints once here for the same reason the boot validator asks it once. It is
+  // NOT folded into `findings`: the collision it reports today is a code
+  // constant's, and this run's exit code is about content promises. `--margins`
+  // is the command whose exit code IS the census.
+  {
+    const bad = printPairAir('  ');
+    // AND A RED HERE IS NOT CLEARED BY THIS RUN'S EXIT CODE — say so, rather
+    // than letting a reader take `exit 0` for the whole verdict.
+    if (bad) console.log(`  ^ ${bad} pair(s) BELOW THE FLOOR. This run's exit code is about content promises`
+      + ` and does not cover them: \`node tools/mapplan.mjs --margins\` is the command whose exit code does.`);
+  }
 
 
   const findings = [];

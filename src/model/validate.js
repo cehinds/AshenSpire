@@ -369,6 +369,20 @@ export function validateContent(bundle) {
   // node against a 47.0 px row pitch at 390x844, under 3 px of air between taps
   // both start a fight nobody can undo (Sunna, 2026-08-08). Nothing was watching
   // that number; a refusal that prints a verdict and not a margin cannot be.
+  // THE MAP'S COLLISION MARGIN, and it belongs here because it has exactly one
+  // data input. `balance.ui.tapSize.def` is what EVERY map circle's radius is
+  // SOLVED FROM (model/mapview.js), so raising it grows every circle while the
+  // pitches they are measured against do not move — targets grow, the space
+  // between them does not. Sunna's sentence, written about the event screen's
+  // choice bars weeks ago and true here too: nothing in this game read a gap.
+  // A refusal that prints a verdict and not a margin cannot be watched.
+  //
+  // It rules on the pairs a content edit is answerable for. The boss/shrine pair
+  // is RED at the shipped default — rendered, every act, since #107 — and is
+  // deliberately NOT gated here, because a boot banner the player cannot act on
+  // is a worse failure than the overlap. That exemption carries a latch:
+  // `mapplan --selftest` asserts the pair is still red, so the excuse cannot
+  // outlive its reason. `node tools/mapplan.mjs --margins` is where it is red.
   //
   // Asked ONCE of the bundle rather than per act: it does not vary with
   // mapConfigs, and three identical errors would be three copies of one fact.
