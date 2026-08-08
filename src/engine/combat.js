@@ -494,7 +494,11 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // `equipView` and the fold, not a new one: an earned-but-EMPTY set is not
   // reachable mid-fight. Making it reachable means giving combat the profile,
   // which is a different card and not one to open inside a gate.
-  if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, { meta: {} })) {
+  // AND `inCombat` IS NOW REQUIRED THERE TOO (#104, Vira). The `canSwap` above
+  // is kept — it supplies the REASON this throws with, before the price is
+  // charged — but it is no longer the only thing enforcing the seal: the
+  // mutation asks the same function. Two questions, one home, no second copy.
+  if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, { meta: {}, inCombat: true })) {
     throw new Error(`No set ${setIndex} on '${slotId}'`);
   }
 
