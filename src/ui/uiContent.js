@@ -90,9 +90,14 @@ export const ACT_NAMES = {
   3: 'ACT III — THE ASHEN CROWN',
 };
 // Endless Spire: acts past 3 reuse the act 1-3 names with a "· CYCLE n" marker.
+// The cycling arithmetic is `actPlate` (below, with the per-act art it now also
+// serves) and the count is the NUMBER OF NAMES WRITTEN, asked rather than typed —
+// this line held a literal `3` beside a table of three, which is one fact in two
+// places and would have gone wrong the day a fourth act was named.
+export const ACT_NAME_COUNT = Object.keys(ACT_NAMES).length;
 export function actTitle(actNumber) {
-  const base = ACT_NAMES[((actNumber - 1) % 3) + 1] || `ACT ${actNumber}`;
-  const loop = Math.floor((actNumber - 1) / 3);
+  const base = ACT_NAMES[actPlate(actNumber, ACT_NAME_COUNT)] || `ACT ${actNumber}`;
+  const loop = Math.floor((actNumber - 1) / ACT_NAME_COUNT);
   return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
 }
 
@@ -145,8 +150,51 @@ export function intentTooltip(iv, { victim = 'you' } = {}) {
 // act cycles back through the three plates rather than rendering art-less.
 export const BACKDROP_ACTS = balance.ui.backdropActs;
 export function backdropClass(actNumber) {
+  return `backdrop act-${actPlate(actNumber, BACKDROP_ACTS)}`;
+}
+
+// ---- map parchment (the fog's undiscovered ground) --------------------------
+//
+// THREE AUTHORED LOOKS, ONE PER ACT, BOUND BY NAME — Law 1 clause 4, and the
+// backdrop plates directly above are the precedent this copies rather than
+// invents. `assets/map/parchment_act1.webp`, `_act2`, `_act3`; no registration
+// list anywhere, so Freja drops a file in and the act wears it.
+//
+// GENERATED PARCHMENT WAS REFUSED, and on Law 0 rather than on budget: art
+// derived from the graph COUPLES THE FLAVOUR LAYER TO `mapgen`, and Constantine
+// now turns `floors` and `columns` himself — so a knob he reaches for to shorten
+// a run would silently change the art. A tunable that moves a thing its turner
+// was not thinking about is exactly clause 5's silent-plausible-derivation.
+//
+// UNTIL THE ART EXISTS THE GROUND IS A DERIVED PLACEHOLDER and the screen says
+// so rather than this comment: `.map-fog-ground` in styles/map.css is a flat
+// parchment wash with a vignette, keyed by act, and the `<image>` above it
+// resolves to nothing while the file is absent. FREJA OWNS THE ACTUAL LOOK. What
+// ships here is the STRUCTURE — the layer, the name, the per-act key — so her
+// three files are the whole of her change.
+export const PARCHMENT_ACTS = balance.ui.parchmentActs;
+export function parchmentAsset(actNumber) {
+  return `assets/map/parchment_act${actPlate(actNumber, PARCHMENT_ACTS)}.webp`;
+}
+export function parchmentClass(actNumber) {
+  return `parch-${actPlate(actNumber, PARCHMENT_ACTS)}`;
+}
+
+/**
+ * actPlate(actNumber, plates) → 1..plates — WHICH OF N AUTHORED PLATES AN ACT
+ * WEARS, once, for every set of per-act art.
+ *
+ * Endless Spire runs past act 3, so every per-act art set has to answer "what
+ * does act 7 look like" and every one of them answers it the same way: cycle.
+ * This was written out twice (backdrops here, `actTitle` above) before the
+ * parchment would have made it three — and three copies of a modulo is how act 7
+ * comes to show plate 1 and be called ACT I · CYCLE 3 while a fourth set shows
+ * plate 3, with nothing in the tree able to notice.
+ */
+export function actPlate(actNumber, plates) {
   const n = Number(actNumber) > 0 ? Math.floor(Number(actNumber)) : 1;
-  return `backdrop act-${((n - 1) % BACKDROP_ACTS) + 1}`;
+  const p = Number.isInteger(plates) && plates > 0 ? plates : 1;
+  return ((n - 1) % p) + 1;
 }
 
 // ---- the in-run menu: ONE table, two widgets --------------------------------

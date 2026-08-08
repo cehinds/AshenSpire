@@ -14,6 +14,7 @@ import { renderAboutSection } from './about.js';
 import { AUDIO_DEFAULTS } from '../audio.js';
 import { balance } from '../../content/balance.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
+import { MAP_MODES, MAP_MODE_DEFAULT } from '../../model/mapknowledge.js';
 
 const UI_DEFAULTS = balance.ui;
 
@@ -51,6 +52,22 @@ const ROWS = [
   { cat: 'Display', key: 'mapZoom', type: 'choice', def: MAP_ZOOM_DEFAULT,
     choices: ['Fit', ...ZOOM_STEPS.map((z) => String(Math.round(z * 100)))], label: 'Map zoom',
     note: 'Fit opens the map close enough that your current node and every node it connects to are on screen. A percentage fixes the zoom instead; + / − and ⊙ still work in the map.' },
+  // THE FOG A/B, and it sits HERE rather than in Custom Climb — Marina's ruling,
+  // reversed from Custom Climb on the argument that Settings is the only surface
+  // reachable WHILE YOU ARE LOOKING AT THE THING YOU ARE JUDGING. Fog cannot be
+  // A/B'd mid-run: once you have seen the map you cannot unsee it. So the
+  // comparison is Custom Climb's existing seed field plus this row — same seed,
+  // same act, two readings — and Custom Climb grows nothing new.
+  //
+  // DEFAULT IS `path`, which is today exactly: nobody who does not opt in sees a
+  // pixel move. The COMPARISON is the deliverable, not the answer.
+  //
+  // `choices` and `def` are the ladder's own, never a second list (the row three
+  // above learned this the hard way — it carried four of the zoom ladder's six
+  // steps for a night).
+  { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
+    choices: MAP_MODES, label: 'Map reveal (test)',
+    note: 'A test — PATH is the game as it shipped: the whole act is drawn. FOG draws only the doors you started from, the boss, everywhere you have been, and the places you can step to next; the rest is unlit parchment. Fog never closes behind you — somewhere you have seen stays seen. Switching redraws the map straight away, so you can hold the two against the same seed.' },
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
