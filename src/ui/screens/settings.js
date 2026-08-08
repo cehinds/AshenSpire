@@ -160,6 +160,37 @@ const ROWS = [
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
   { cat: 'Advanced', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
+  // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
+  // debugging settings as enum drop down". Advanced is the debugging surface,
+  // which is where he put it and where it stays.
+  //
+  // IT IS A CHIP ROW AND NOT A `<select>`, AND THAT IS AN ANSWER, NOT A
+  // SHORTCUT. This game has no dropdown anywhere; `.choice-group` IS its enum
+  // control. A native `<select>` would be the only one in the build, and it
+  // would arrive outside everything this row gets for free: `--tap-floor` has
+  // no relationship to a UA-drawn select, the accent theme and the
+  // high-contrast profile do not reach inside one, it renders as three
+  // different surfaces (iOS wheel / Android sheet / desktop popup) and none of
+  // the three can be photographed or measured by any instrument in this repo —
+  // `tools/tapsize.mjs` and `tools/settingsreach.mjs` both count `.choice`, so
+  // they would read this row as ABSENT, which is silence, which is `unknown`.
+  // Four chips is also the shape I measured safe tonight: Combat pacing is four
+  // and renders 92.1 px tall at 390x844, where the seven-chip Map zoom row runs
+  // to 301.2 px and puts its last chip off the viewport.
+  //   IF HE MEANT THE NATIVE WIDGET SPECIFICALLY, that is one word and I will
+  // swap it — but adding the game's only `<select>` on a guess, on the one page
+  // no instrument here can see, is not a thing to do quietly.
+  //
+  // `choices` and `def` are DERIVED from balance.ui.holdConfirm. Adding a fifth
+  // speed is a row there and nothing here.
+  { cat: 'Advanced', key: 'holdConfirm', type: 'choice', def: UI_DEFAULTS.holdConfirm.def,
+    choices: Object.keys(UI_DEFAULTS.holdConfirm.steps), label: 'Hold to confirm',
+    // SHORT ON PURPOSE, and I measured why. My own ruling on the Map zoom row
+    // tonight was that a long note plus a chip strip squeezes the text column
+    // to a ribbon; the first draft of THIS note ran three sentences and took
+    // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
+    // else to on a Thursday holds on my own row on the same Thursday.
+    note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
 ];
 
 // ---- categories: a heading is DERIVED from what is under it (#78) ----------

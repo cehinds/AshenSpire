@@ -952,6 +952,47 @@ button.ev-choice {
   padding: 8px 20px;
 }
 
+/* ---- HOLD TO CONFIRM (Sunna, at Constantine's "yes press and hold") --------
+   The bars are 44/44/44 and the GAPS are 9-9.7 px at every dial setting, so a
+   thumb that lands low lands on the neighbour — and the neighbour is a
+   permanent curse. The fill is the answer: the player watches the WRONG WORDS
+   filling under their finger and lets go, inside the same gesture as the
+   mistake.
+
+   THREE THINGS THIS RULE IS CAREFUL ABOUT.
+
+   1. THE FILL IS STATE, NOT DECORATION, so it survives reduced-motion. It is a
+      width driven from `--hold` per frame by holdconfirm.js, never a CSS
+      animation — a player who turned motion off still has to be able to see
+      how far they have got, and hiding a progress bar from them would hide the
+      only thing that makes the gesture abortable.
+   2. NO `transition` ON THE WIDTH. A 160 ms ease would keep painting after the
+      finger lifts, so the bar would still be growing during the abort — the
+      one frame where the picture must tell the truth instantly.
+   3. THE FLOOR AND THE GLYPHS ARE UNTOUCHED. `.hold-hint` sets no height and
+      no box; Law 4 clause 5 — it is inline typographic adornment sitting in
+      the line of text it belongs to, so it tracks Text size on purpose while
+      the bar's `min-height: var(--tap-floor)` above stays text-independent. */
+button.ev-choice.ev-hold { position: relative; overflow: hidden; }
+button.ev-choice.ev-hold::before {
+  content: ''; position: absolute; inset: 0 auto 0 0;
+  width: calc(var(--hold, 0) * 100%);
+  /* `--accent-rgb` is the accent theme's own channel triple (base.css:24) and
+     it is swapped by the Accent color row — so the fill follows the palette the
+     player chose instead of hard-coding gold, and the high-contrast profile
+     moves it too. Alpha, never a solid: the label under it must stay readable
+     at every point of the fill, which is the whole reason to watch it. */
+  background: rgba(var(--accent-rgb), 0.30);
+  pointer-events: none;
+}
+/* The label has to stay on top of its own fill. */
+button.ev-choice.ev-hold > * { position: relative; }
+button.ev-choice.ev-hold[data-hold='holding'] { border-color: var(--gold); }
+.hold-hint {
+  margin-left: 0.6em; font-size: 0.75em; letter-spacing: 0.14em;
+  color: var(--gold); opacity: 0.75;
+}
+
 .choice-group[data-resizes-while-pressed] .choice {
   min-height: var(--tap-floor-default); min-width: var(--tap-floor-default);
 }

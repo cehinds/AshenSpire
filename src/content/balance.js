@@ -166,6 +166,38 @@ export const balance = {
       sizes: [44, 36, 30, 24],
       missRate: { 44: '1 in 30', 24: '1 tap in 7' },
     },
+    // HOLD TO CONFIRM (Settings → Advanced). THE ONE HOME OF THE DURATIONS.
+    //
+    // WHAT IT IS FOR, and the number that made it necessary. The event screen's
+    // three choice bars are 44/44/44 across sixteen cells — the size is fixed
+    // and it did not help, because THE GAPS ARE 9-9.7 px at every dial setting
+    // and nothing in this game reads a gap. Targets grow, the space between
+    // them does not, so a thumb that lands 9 px low lands on the NEIGHBOUR —
+    // and on this screen the neighbour is "permanent curse", with no confirm
+    // and no undo. Constantine, asked: "yes press and hold".
+    //
+    // WHY A HOLD AND NOT A MODAL, because that choice is the whole design and
+    // it is not a preference: the held control FILLS, so the player watches the
+    // wrong words filling under their finger and lets go IN TIME. A modal asks
+    // "are you sure?" AFTER the commit, when the eye has already moved on. The
+    // hold puts the question in the same moment as the mistake.
+    //
+    // `steps` IS THE CLOSED SET, in dial order, and `off` is first because it
+    // is the A/B — the same "let me try each and decide" he asked for on the
+    // map. The Advanced row derives its `choices` and its `def` from these keys
+    // and nothing restates them; ADDING A FIFTH SPEED IS A ROW HERE AND NOTHING
+    // ELSE. That is the falsifier for Law 0 on this control, and it is the same
+    // sentence tapSize above already ships.
+    //
+    // The durations: 600 ms is the default because a long-press people already
+    // know is ~400-500 ms (Android's own threshold) and a CONFIRM wants to sit
+    // just past reflex without becoming a chore. `short` is for players who
+    // find the wait irritating, `long` for hands that need the room. `off` is
+    // 0 and means the pre-hold behaviour, byte for byte: one tap commits.
+    holdConfirm: {
+      def: 'normal',
+      steps: { off: 0, short: 350, normal: 600, long: 1000 },
+    },
     // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
     // renderer emits them as rem (÷10).
     spriteTiers: {

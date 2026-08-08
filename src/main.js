@@ -1246,6 +1246,9 @@ function showEvent(eventId) {
   mountEvent(app, {
     registries,
     run,
+    // The hold-to-confirm dial lives in meta.settings; the screen reads it the
+    // same way every other screen reads a display setting.
+    meta: saves.loadMeta(),
     rng,
     eventId,
     onDone: () => {
