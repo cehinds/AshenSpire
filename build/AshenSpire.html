@@ -906,9 +906,43 @@ body.hide-hints .hint-bar { display: none; }
   padding: 2px 0 8px; margin-bottom: 10px;
   border-bottom: 1px solid var(--line);
 }
+/* THE TAB IS NOT TALL, IT IS LOUD — and that is the whole of what reads as big.
+   Constantine: "make the tabs about 20% smaller or the size configurable or
+   scalable with ui or both." Measured across the entire UI-size space (5 sizes
+   x 2 text sizes x 2 shapes = 20 cells, freja-tabs-probe.mjs):
+
+     tab height        44.0 in ALL TWENTY. Zero variance. It is --tap-floor and
+                       he has ruled that floor: never below 44.
+     what it wants     23.2-31.0. The floor is adding 13-21px nothing asked for,
+                       and no vertical number can touch that.
+     padY / gap        5.1-6.0 across the whole space.
+     font              10.2-14.4.
+
+   So none of the four can move the height, and the height is not the finding.
+   THE FINDING IS THE COMPARISON. On this same screen, measured in the same
+   moment, the 34 `.choice` chips a player sees directly under the strip:
+
+     height   tab 44.0  ·  chip 44.0   IDENTICAL, to the pixel, at both shapes
+     font     tab 12.0  ·  chip 10.0   the tab is EXACTLY 1.2x
+     padX     tab 12.0  ·  chip  9.0   1.33x
+     radius   tab  8.0  ·  chip  6.0   1.33x
+     width    tab 70.9  ·  chip 56.5   1.25x
+
+   The tab is the same height as everything beneath it and 20-33% heavier in
+   every other number. That is what "big" is: six names shouting over the panel
+   they label. So the three weight numbers come down to the chip's — not cut by
+   an arithmetic 20%, MATCHED, because two arbitrary sets of numbers for two
+   pills on one screen is the second copy this house keeps killing, and matching
+   lands inside "about 20%" for a reason instead of by rounding.
+
+   PROMINENCE MOVES TO THE SELECTED TAB, WHERE IT BELONGS. `.set-tab.on` already
+   carries three channels plus font-weight 600; the strip is distinguished by its
+   sticky band and its border-bottom, not by making all six loud. And nothing
+   here is a height: the floor is untouched by construction, which is the whole
+   reason this is the axis that had room. */
 .set-tabs .set-tab {
-  padding: 6px 12px; border-radius: 8px;
-  font-size: 1.2rem; letter-spacing: 0.05em;
+  padding: 6px 9px; border-radius: 6px;
+  font-size: 1rem; letter-spacing: 0.05em;
   background: var(--bg); border: 1px solid var(--line-soft); color: var(--muted);
   cursor: pointer;
   min-height: var(--tap-floor);
