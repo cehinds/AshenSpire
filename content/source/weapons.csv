@@ -6,11 +6,22 @@
 # and how it rewrites your starting cards (mods).
 #
 # hand   right | left | either   (staves are right; shields left; daggers either)
+#
+# tags   free-form characteristics, pipe-separated. Two of them are read by the
+#        rules rather than only by flavour, and neither is a new column:
+#          heavy / flourish  the swap-cost category (balance.equipment,
+#                            swapCostByCategory) — a greatsword is slow to draw
+#                            because it IS heavy, not because a cost was typed
+#          basic             everybody's: this piece is on the shelf without
+#                            being found (balance.equipment.basicTag). One plain
+#                            row per kind carries it, so every class can arm
+#                            itself on a fresh profile. A `basic` row that also
+#                            names an `unlock` is refused by name at validation.
 # geom   the Blender archetype the renderer builds (tools/equipment-blender.py)
 # mods   card rewrites, pipe-separated:  strike.damage=3|strike.hits=2|self.strength=+2
 #        '=' replaces, '+/-' adjusts. Empty = no card change.
 id,name,kind,hand,rarity,geom,scale,metal,accent,tags,mods,unlock,blurb
-straightSword,Straight Sword,weapon,right,common,sword,1.00,B8B0A0,C9A227,blade,strike.damage=+1,,"Honest steel. It asks nothing clever of you."
+straightSword,Straight Sword,weapon,right,common,sword,1.00,B8B0A0,C9A227,blade|basic,strike.damage=+1,,"Honest steel. It asks nothing clever of you."
 greatsword,Greatsword,weapon,right,uncommon,colossal,1.00,B8B0A0,C9A227,blade|heavy,strike.damage=+4|strike.cost=+1|strike.poise=+3,,"Slow, and it does not care."
 dagger,Dagger,weapon,either,common,dagger,1.00,C0B8A6,C9A227,blade|flourish,strike.damage=3|strike.hits=2,,"Two cuts where one would do."
 katana,Katana,weapon,right,uncommon,curved,1.00,C6BEAC,C9502E,blade|blood|flourish,strike.damage=-1|strike.bleed=+2,,"A long curve, and a long grudge."
@@ -21,12 +32,12 @@ battleaxe,Battleaxe,weapon,right,common,axe,1.00,A8A090,C9502E,blade|heavy,strik
 buckler,Buckler,shield,left,common,round,0.80,8E8678,C9A227,guard|flourish,defend.block=+2,,"Small enough to be quick with."
 kiteShield,Kite Shield,shield,left,common,kite,1.00,8E8678,C9A227,guard,defend.block=+3|strike.damage=-1,,"A wall you can carry. Your arm knows it."
 towerShield,Tower Shield,shield,left,rare,tower,1.00,7E766A,C9A227,guard|heavy,defend.block=+6|strike.damage=-2,,"You will not be moved. You will not move."
-roundShield,Round Shield,shield,left,common,round,1.00,8E8678,7FA8C9,guard,defend.block=+2,,"Plain, round, and enough."
+roundShield,Round Shield,shield,left,common,round,1.00,8E8678,7FA8C9,guard|basic,defend.block=+2,,"Plain, round, and enough."
 spikedShield,Spiked Shield,shield,left,uncommon,spiked,1.00,8E8678,C9502E,guard|blade,defend.block=+2|strike.damage=+1,,"Defence with an opinion."
 lantern,Lantern,shield,left,common,lantern,0.85,6B5D45,C9A227,guard,defend.block=+1|self.regen=+1,,"Light enough to see what is coming."
 torch,Torch,shield,left,common,torch,0.90,6B5D45,C9502E,gorefire,strike.burn=+2,,"Fire remembers what steel forgets."
 parryDagger,Parrying Dagger,shield,left,uncommon,dagger,0.85,C0B8A6,7FA8C9,guard|flourish,defend.block=+1|strike.poise=+2,,"Held wrong on purpose."
-ashStaff,Ash Staff,staff,right,common,staffOrb,1.00,6B5D45,C9A227,ritual,power.potency=+1,,"Grey wood, warm at the grip."
+ashStaff,Ash Staff,staff,right,common,staffOrb,1.00,6B5D45,C9A227,ritual|basic,power.potency=+1,,"Grey wood, warm at the grip."
 starstoneStaff,Starstone Staff,staff,right,uncommon,staffCrystal,1.00,6B5D45,7FA8C9,starstone,power.potency=+2|strike.damage=-1,,"The stone hums before you do."
 boneSceptre,Bone Sceptre,staff,right,uncommon,staffSkull,1.00,B8AE98,B5541C,ritual|blight,power.potency=+1|strike.blight=+2,,"Someone knelt for this once."
 emberlightSceptre,Emberlight Sceptre,staff,right,rare,staffFlame,1.00,6B5D45,C9A227,ritual|oath,power.potency=+3,,"It keeps a little of the guiding flame."

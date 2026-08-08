@@ -12,7 +12,10 @@ export const weapons = [
     "scale": 1,
     "metal": "B8B0A0",
     "accent": "C9A227",
-    "tags": "blade",
+    "tags": [
+      "blade",
+      "basic"
+    ],
     "mods": "strike.damage=+1",
     "unlock": "",
     "blurb": "Honest steel. It asks nothing clever of you."
@@ -231,7 +234,10 @@ export const weapons = [
     "scale": 1,
     "metal": "8E8678",
     "accent": "7FA8C9",
-    "tags": "guard",
+    "tags": [
+      "guard",
+      "basic"
+    ],
     "mods": "defend.block=+2",
     "unlock": "",
     "blurb": "Plain, round, and enough."
@@ -321,7 +327,10 @@ export const weapons = [
     "scale": 1,
     "metal": "6B5D45",
     "accent": "C9A227",
-    "tags": "ritual",
+    "tags": [
+      "ritual",
+      "basic"
+    ],
     "mods": "power.potency=+1",
     "unlock": "",
     "blurb": "Grey wood, warm at the grip."

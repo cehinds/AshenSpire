@@ -17,6 +17,7 @@ import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
 import { MAP_MODES, MAP_MODE_DEFAULT } from '../../model/mapknowledge.js';
 
 const UI_DEFAULTS = balance.ui;
+const EQ_DEFAULTS = balance.equipment;
 
 const ROWS = [
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
@@ -208,6 +209,27 @@ const ROWS = [
     // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
     // else to on a Thursday holds on my own row on the same Thursday.
     note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
+
+  // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
+  // 2026-08-08: *"let's default to costing 2 actions. alternatively, or by a
+  // setting, different weapon categories have weapon swap costs. THAT WAY I CAN
+  // TRY EACH."* He asked to feel three prices, so the row is the way to feel
+  // them; the rules themselves are rows in balance.equipment.swapCostRules.
+  //
+  // ADVANCED, because Advanced is this game's debugging surface and that is
+  // where the last knob he asked to "try" went (Hold to confirm, same
+  // category). It is a tuning question he wants to answer by playing, not a
+  // preference the game should be asking a first-time player.
+  //
+  // `choices` and `def` are DERIVED, never typed. The zoom row two screens up
+  // carried four of a six-step ladder for a night because someone typed the
+  // list; a fourth rule row is a row in balance.js and nothing here.
+  { cat: 'Advanced', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
+    choices: (EQ_DEFAULTS.swapCostRules || []).map((r) => r.id), label: 'Weapon swap cost',
+    // ONE SENTENCE PER RULE AND NO MORE, on the measurement in the row above:
+    // a long note squeezes the text column beside a chip strip. Three chips,
+    // three clauses.
+    note: 'What switching armament sets costs mid-fight. FLAT charges the same for every weapon; TALISMAN & RELIC starts there and lets your gear make it dearer or cheaper; WEAPON CATEGORY prices it by the weapon you are drawing — a heavy one is slow, a quick one is not. Takes effect on the next fight.' },
 ];
 
 // ---- categories: a heading is DERIVED from what is under it (#78) ----------
