@@ -36,14 +36,28 @@
 // is Vira's from the #43 audit and Viki's `requires: opt(any)` is its second
 // instance, so it is not fitted to the one case we happened to find.
 //
+// AND THE MARGINS, 2026-08-08. A derived refusal that prints a VERDICT and not a
+// MARGIN cannot be watched: `columns ≤ 9` said accepted, never "by 2%", and the
+// node that grew to meet the tap floor closed the air between two adjacent taps
+// to under 3 px in the same stroke. Both axes now compute a margin with a floor
+// that can go red, both floors sit below today's values, and the rows that
+// falsify them are in this file — the corpus `model/validate.js` already points
+// at, so the pointer it carries is not a second dangling one.
+//
 // REMOVAL CONDITION: deleted the day floor rules carry no anchors (nothing to
 // resolve, so no readout to print), or on Constantine's word.
 
 import { mapConfigs } from '../src/content/mapconfig.js';
+import { balance } from '../src/content/balance.js';
 import { resolveFloorPlan, describePlan, rollableFloors } from '../src/model/floorplan.js';
 import { generateActMap } from '../src/engine/mapgen.js';
 import { createRng } from '../src/engine/rng.js';
-import { viewRefusals, spanWidth, maxFanoutSpan, PHONE_VIEW_W, ZOOM_MIN } from '../src/model/mapview.js';
+import {
+  viewRefusals, geometryRefusals, spanWidth, maxFanoutSpan, PHONE_VIEW_W, ZOOM_MIN,
+  fanoutMargin, maxFittingColumns, maxSafeColumns, FANOUT_SLACK_MIN,
+  nodeAir, maxTapDefault, NODE_AIR_MIN_PX, COL_X, ROW_H, NODE_R, REF_ZOOM,
+  PHONE_UI_ZOOM, PHONE_UI_ZOOM_MIN, TAP_TARGET_DEFAULT,
+} from '../src/model/mapview.js';
 import { validateContent } from '../src/model/validate.js';
 
 const args = process.argv.slice(2);
@@ -121,6 +135,37 @@ function dist(rows, pick) {
 }
 const show = (d) => `${String(d.mean).padStart(6)}  (range ${d.min}-${d.max})`;
 
+// ----------------------------------------------------------------- margins
+// Two readouts, one per axis, and they print on the ACCEPTED path — which is the
+// whole finding. `columns ≤ 9` said "accepted" and never said "by 2%, with no
+// spare column"; `NODE_R` grew to meet the tap floor and closed the gap between
+// two adjacent taps to under 3 px, correctly and in silence. A verdict has no
+// derivative; a margin does, so both are printed with the NEXT VALUE that takes
+// them red beside them.
+function printFanoutMargin(config, pad = '  ') {
+  const m = fanoutMargin(config);
+  if (!m) return;
+  console.log(`${pad}MARGIN horizontal   ${(m.headroom * 100).toFixed(1)}% of zoom above the floor`
+    + ` · ${m.slack} spare column(s), floor ${m.slackFloor}${m.ok ? '' : '  <-- BELOW THE FLOOR'}`);
+  console.log(`${pad}  ^ the ${m.span}-column fan-out MEASURED here survives ${m.slack} more;`
+    + ` ${m.span + m.slack + 1} columns needs ${m.nextFit.toFixed(2)}x against a ${ZOOM_MIN}x floor.`);
+  console.log(`${pad}  ^ COL_X may reach ${m.maxColX.toFixed(1)} before this width loses its last spare column (today ${COL_X}).`);
+}
+
+function printAirMargin(tapPx = TAP_TARGET_DEFAULT, pad = '  ') {
+  const a = nodeAir(tapPx);
+  if (!Number.isFinite(a.gap)) {
+    console.log(`${pad}MARGIN vertical     UNANSWERABLE (${a.why}) — reference zoom ${a.refZoom}, tap default ${JSON.stringify(tapPx)}.`);
+    return;
+  }
+  console.log(`${pad}MARGIN vertical     ${a.gap.toFixed(1)} SVG units of air between two adjacent floors`
+    + ` · ${a.px390.toFixed(2)} device px at 390x844, ${a.px320.toFixed(2)} at 320x640, floor ${NODE_AIR_MIN_PX}`
+    + `${a.ok ? '' : '  <-- BELOW THE FLOOR'}`);
+  console.log(`${pad}  ^ node r ${a.r} solved from balance.ui.tapSize.def = ${tapPx} at ${(a.refZoom * 100).toFixed(0)}% zoom; row pitch ROW_H = ${ROW_H} does not move with it.`);
+  console.log(`${pad}  ^ the default may reach ${maxTapDefault()} px, and ROW_H may fall to ${a.minPitch.toFixed(2)}, before this goes red.`);
+  console.log(`${pad}  ^ DERIVED, and derivation is the optimistic half: Sunna MEASURED 2.9 px at 390 where this arithmetic says ${a.px390.toFixed(2)}.`);
+}
+
 // ------------------------------------------------------------------- the run
 function runAct(label, config, seeds) {
   const findings = [];
@@ -190,6 +235,10 @@ function runAct(label, config, seeds) {
   console.log(`    widest fan-out      ${show(fanSpan)} columns  = ${Math.round(need(fanSpan.max))} px at its widest, wants ${zoomFor(fanSpan.max).toFixed(2)}x`);
   console.log(`      ^ against ${PHONE_VIEW_W} local px of map viewport at 390x844, ladder floor ${ZOOM_MIN}x`
     + ` — anything under ${ZOOM_MIN.toFixed(2)}x cannot be framed and the screen says so (data-framing="clipped").`);
+  // THE MARGIN, PRINTED ON THE ACCEPTED PATH TOO. A refusal only speaks when it
+  // fires; the number that matters is how close an ACCEPTED width is to firing,
+  // and that number had no reader anywhere (Vira, 2026-08-08).
+  printFanoutMargin(config, '    ');
   if (zoomFor(startSpan.max) < ZOOM_MIN) {
     // REPORTED, NOT GATED, and the reason is the same one that keeps the
     // reachability figures above ungated: gating this would REFUSE THE SHIPPED
@@ -286,9 +335,21 @@ const KNOWN_BAD = [
 // is the same defect wearing the other face — and `columns: 9` is exactly the
 // edge `maxFittingColumns()` derives, so the pair proves the derivation rather
 // than the constant.
+//
+// THE COLUMNS ROWS ARE DERIVED NOW, AND THAT IS THE SECOND HALF OF THE FIX.
+// `columns 9 — the derived edge itself` was a PINNED known-good: it names the
+// edge as a literal, so the day a constant moves the edge it goes red for being
+// out of date rather than for being wrong, somebody edits the 9, and the fixture
+// has quietly stopped testing anything. That is the same hazard that made my own
+// `--mutate` run report NOT CAUGHT, 0 of 24 earlier tonight. The pairs below ask
+// `maxSafeColumns()` and `maxSafeColumns() + 1` instead, so they move with the
+// constants and can never need editing — and the LITERAL far-out rows stay,
+// because a corpus made entirely of derived rows is one a broken derivation can
+// green in both directions.
 const VIEW_KNOWN_BAD = [
-  ['columns 10 — past the derived edge', { ...BASE, columns: 10 }, 'columns'],
-  ['columns 12 — well past it', { ...BASE, columns: 12 }, 'columns'],
+  ['columns one past the derived safe edge', { ...BASE, columns: maxSafeColumns() + 1 }, 'columns'],
+  ['columns at the OLD edge — fits, zero spare columns', { ...BASE, columns: maxFittingColumns() }, 'columns'],
+  ['columns 12 — literal, immune to a derivation bug', { ...BASE, columns: 12 }, 'columns'],
   ['entries 0', { ...BASE, entries: 0 }, 'entries'],
   ['entries -1', { ...BASE, entries: -1 }, 'entries'],
   ['entries 1.5 — not an integer', { ...BASE, entries: 1.5 }, 'entries'],
@@ -299,15 +360,89 @@ const VIEW_KNOWN_BAD = [
 // AND THE OTHER FACE. A refusal that fires one step early is as broken as one
 // that never fires, and neither shows up in a corpus of bad inputs alone.
 const VIEW_MUST_ACCEPT = [
-  ['columns 9 — the derived edge itself', { ...BASE, columns: 9 }],
+  ['columns at the derived safe edge', { ...BASE, columns: maxSafeColumns() }],
   ['columns 7 — what ships', { ...BASE, columns: 7 }],
   ['entries 1 — what ships', { ...BASE, entries: 1 }],
   ['entries 6 — one door per walker', { ...BASE, pathCount: 6, entries: 6 }],
   ['entries absent', (() => { const { entries, ...rest } = BASE; return rest; })()],
 ];
 
+// ------------------------------------------------- THE THIRD CORPUS: THE AIR
+// The vertical axis's known-bad, and it is a BALANCE bundle rather than a map
+// config because the node radius is solved from `balance.ui.tapSize.def` — one
+// data entry, and turning it up grows the target and closes the gap between two
+// adjacent targets in the same stroke (Sunna, 2026-08-08).
+//
+// `maxTapDefault() + 1` is the derived edge; `96` is a literal far past it that
+// no plausible arithmetic bug can make fit, and `0` is the unanswerable input.
+// Derived rows prove there is no off-by-one; literal rows survive a broken
+// derivation. Neither kind alone is a corpus.
+const AIR_KNOWN_BAD = [
+  ['tap default one past the derived edge', maxTapDefault() + 1],
+  ['tap default 96 — the circles overlap outright', 96],
+  ['tap default 0 — no radius can be solved', 0],
+];
+const AIR_MUST_ACCEPT = [
+  ['what ships', TAP_TARGET_DEFAULT],
+  ['the derived edge itself', maxTapDefault()],
+  ['the smallest size the dial offers', Math.min(...balance.ui.tapSize.sizes)],
+];
+
+// --------------------------------------------- THE ANCHORS, AND WHY THEY EXIST
+// A corpus of inputs proves a check FIRES. It cannot prove the check is asking a
+// real question — every row above routes through `maxFanoutSpan` or
+// `nodeRadiusFromTap`, and a derivation that under-reports greens all of them at
+// once. Earlier tonight my own `--mutate` came back NOT CAUGHT 0 of 24 because
+// `entries: 1` had made a mutation stop being a lie; this is the same failure
+// asked in advance. Two kinds of answer:
+//
+//   PROPERTIES  relations that must hold WHATEVER the constants are, so they
+//               cannot rot into a number that stopped being true.
+//   GENERATIVE  the only anchor that leaves the arithmetic entirely: generate
+//               real graphs and check the observed fan-out against the formula
+//               the horizontal margin is built on. `--spans` does this over a
+//               108-cell grid; this does it on the shipped shape, cheaply, so a
+//               green selftest cannot coexist with a formula that under-reports
+//               on the act we actually ship.
+const PROPERTIES = [
+  ['spanWidth is monotone in columns', () => [1, 2, 3, 4, 5, 6, 7, 8].every((n) => spanWidth(n + 1) > spanWidth(n))],
+  ['the horizontal slack IS its definition, recomputed independently', () => {
+    const m = fanoutMargin(mapConfigs[1]);
+    return PHONE_VIEW_W / spanWidth(m.span + m.slack) >= ZOOM_MIN
+      && PHONE_VIEW_W / spanWidth(m.span + m.slack + 1) < ZOOM_MIN;
+  }],
+  ['the safe column edge is an EDGE — it clears and edge+1 does not', () => {
+    const e = maxSafeColumns();
+    return e >= 1 && fanoutMargin({ columns: e }).ok && !fanoutMargin({ columns: e + 1 }).ok;
+  }],
+  ['air shrinks as the tap default grows', () => nodeAir(TAP_TARGET_DEFAULT + 8).gap < nodeAir(TAP_TARGET_DEFAULT).gap],
+  ['the tap edge is an EDGE — it clears and edge+1 does not', () => {
+    const t = maxTapDefault();
+    return t >= 1 && nodeAir(t).ok && !nodeAir(t + 1).ok;
+  }],
+  ['a reference zoom that is not a number is NAMED, never NaN-shaped', () => {
+    const a = nodeAir(TAP_TARGET_DEFAULT, Number('Fit') / 100);
+    return a.ok === false && a.why === 'no-reference-zoom';
+  }],
+];
+
+function fanoutAnchor(seeds = 24) {
+  const cfg = mapConfigs[1];
+  let obs = 0;
+  for (let i = 0; i < seeds; i++) {
+    const g = generateActMap({ config: cfg, rng: rng2(i) });
+    for (const n of Object.values(g.nodes)) {
+      if (n.next.length) obs = Math.max(obs, colSpan(g, [n.id, ...n.next]));
+    }
+  }
+  const formula = maxFanoutSpan(cfg);
+  return { obs, formula, seeds, ok: obs <= formula && obs >= 1 };
+}
+
 function selftest() {
-  console.log('mapplan --selftest — two corpora: the one `floorRules: opt(any)` accepted in silence, and the one `viewRefusals` never had\n');
+  console.log('mapplan --selftest — three corpora and their anchors: the one `floorRules: opt(any)` accepted in silence,\n'
+    + '  the one `viewRefusals` never had, and the one THE MARGINS never had — plus the properties and the\n'
+    + '  generative check that stop all three from going green together.\n');
   let red = 0;
   for (const [label, cfg] of KNOWN_BAD) {
     const { errors } = resolveFloorPlan(cfg);
@@ -350,10 +485,70 @@ function selftest() {
   });
   console.log(`\n  ${wired ? 'WIRED' : 'LOOSE'}  every view known-bad also fails the BOOT VALIDATOR, not just the function`);
 
+  // --- THE MARGINS: the air corpus, both faces, and the same validator door ---
+  let absentRed = false;
+  console.log(`\n  --- the margins: air between two adjacent taps, and BOTH faces of its edge ---\n`);
+  printFanoutMargin(mapConfigs[1], '  ');
+  printAirMargin(TAP_TARGET_DEFAULT, '  ');
+  console.log('');
+  // The absent-entry row is separate because it is not a `def` VALUE — it is the
+  // shape of a check dying green, and it must be watched from both doors too.
+  {
+    const errs = geometryRefusals({ ui: {} });
+    const ok = errs.some((e) => e.key === 'balance.ui.tapSize.def');
+    const res = validateContent({ balance: { ui: {} } });
+    const door = ((res && res.errors) || []).some((e) => String(e.path || '').startsWith('balance.ui.tapSize.def'));
+    absentRed = ok && door;
+    console.log(`  ${absentRed ? 'RED ' : 'GREEN'}  ${'tapSize absent entirely'.padEnd(42)} ${ok ? errs[0].msg.slice(0, 96) : '<-- ACCEPTED, and NODE_R is NaN'}`);
+  }
+  let ared = 0;
+  for (const [label, def] of AIR_KNOWN_BAD) {
+    const errs = geometryRefusals({ ui: { tapSize: { def } } });
+    const ok = errs.some((e) => e.key === 'balance.ui.tapSize.def');
+    if (ok) ared++;
+    console.log(`  ${ok ? 'RED ' : 'GREEN'}  ${`${label} (def ${def})`.padEnd(42)} ${ok ? errs[0].msg.slice(0, 96) : '<-- ACCEPTED, nothing named'}`);
+  }
+  let aclean = 0;
+  for (const [label, def] of AIR_MUST_ACCEPT) {
+    const errs = geometryRefusals({ ui: { tapSize: { def } } });
+    const ok = errs.length === 0;
+    if (ok) aclean++;
+    console.log(`  ${ok ? 'CLEAN' : 'RED  '} ${`${label} (def ${def})`.padEnd(42)} ${ok ? '' : `<-- REFUSED, and it must not be: ${errs[0].msg.slice(0, 80)}`}`);
+  }
+  const airWired = AIR_KNOWN_BAD.every(([, def]) => {
+    const res = validateContent({ balance: { ui: { tapSize: { def } } } });
+    return ((res && res.errors) || []).some((e) => String(e.path || '').startsWith('balance.ui.tapSize.def'));
+  });
+  console.log(`\n  ${airWired ? 'WIRED' : 'LOOSE'}  every air known-bad also fails the BOOT VALIDATOR, not just the function`);
+
+  // --- the anchors: a corpus proves a check FIRES, not that it asks anything ---
+  console.log(`\n  --- anchors: what stops all of the above from dying green together ---\n`);
+  let props = 0;
+  for (const [label, fn] of PROPERTIES) {
+    let ok = false;
+    try { ok = fn() === true; } catch { ok = false; }
+    if (ok) props++;
+    console.log(`  ${ok ? 'HOLDS' : 'BROKE'}  ${label}`);
+  }
+  const anchor = fanoutAnchor();
+  console.log(`  ${anchor.ok ? 'HOLDS' : 'BROKE'}  the formula the horizontal margin is built on, against ${anchor.seeds} REAL graphs`
+    + ` — observed fan-out ${anchor.obs} columns, maxFanoutSpan says ${anchor.formula}`);
+
   const pass = red === KNOWN_BAD.length && clean
-    && vred === VIEW_KNOWN_BAD.length && vclean === VIEW_MUST_ACCEPT.length && wired;
-  console.log(`\n  ${pass ? `PASS — ${red}/${KNOWN_BAD.length} floor-rule known-bad red, ${vred}/${VIEW_KNOWN_BAD.length} view known-bad red, ${vclean}/${VIEW_MUST_ACCEPT.length} must-accept clean, validator wired, control clean`
-    : `FAIL — floor ${red}/${KNOWN_BAD.length} · view ${vred}/${VIEW_KNOWN_BAD.length} · must-accept ${vclean}/${VIEW_MUST_ACCEPT.length} · validator ${wired ? 'wired' : 'LOOSE'} · control ${clean ? 'clean' : 'DIRTY'}`}`);
+    && vred === VIEW_KNOWN_BAD.length && vclean === VIEW_MUST_ACCEPT.length && wired
+    && ared === AIR_KNOWN_BAD.length && aclean === AIR_MUST_ACCEPT.length && airWired && absentRed
+    && props === PROPERTIES.length && anchor.ok;
+  console.log(`\n  ${pass ? `PASS — ${red}/${KNOWN_BAD.length} floor-rule known-bad red, ${vred}/${VIEW_KNOWN_BAD.length} view known-bad red, ${vclean}/${VIEW_MUST_ACCEPT.length} must-accept clean, `
+    + `${ared}/${AIR_KNOWN_BAD.length} air known-bad red (+ the absent entry), ${aclean}/${AIR_MUST_ACCEPT.length} air must-accept clean, `
+    + `${props}/${PROPERTIES.length} properties hold, the formula anchor holds, both validator doors wired, control clean`
+    : `FAIL — floor ${red}/${KNOWN_BAD.length} · view ${vred}/${VIEW_KNOWN_BAD.length} · must-accept ${vclean}/${VIEW_MUST_ACCEPT.length} · `
+    + `air ${ared}/${AIR_KNOWN_BAD.length} · air must-accept ${aclean}/${AIR_MUST_ACCEPT.length} · properties ${props}/${PROPERTIES.length} · `
+    + `anchor ${anchor.ok ? 'holds' : 'BROKE'} · validators ${wired ? 'wired' : 'LOOSE'}/${airWired ? 'wired' : 'LOOSE'} · control ${clean ? 'clean' : 'DIRTY'}`}`);
+  console.log(`\n  BOUNDARY — the horizontal rows all route through \`maxFanoutSpan\`, so a formula that`);
+  console.log(`  UNDER-reports greens every one of them at once. The generative anchor above closes that`);
+  console.log(`  on the shipped act shape only; \`node tools/mapplan.mjs --spans\` is the grid, and it is`);
+  console.log(`  the thing this corpus stands on. Nothing here was rendered: the vertical margin is`);
+  console.log(`  arithmetic, and the screen delivers LESS than it (2.9 measured against 3.52 derived).`);
   return pass ? 0 : 1;
 }
 
@@ -384,7 +579,7 @@ function spans() {
   console.log(`mapplan --spans · ${cells} acts x ${SEEDS} seeds = ${cells * SEEDS} graphs\n`);
   console.log(`  columns ${cols[0]}-${cols[cols.length - 1]}  x  pathCount ${SWEEP_PATHS.join('/')}  x  floors ${SWEEP_FLOORS.join('/')}`);
   console.log(`  viewport ${PHONE_VIEW_W} local px (.map-scroll at 390x844) · ladder floor ${ZOOM_MIN}x\n`);
-  console.log('  cols  entrance row        widest fan-out      formula  fan-out px  wants   verdict');
+  console.log('  cols  entrance row        widest fan-out      formula  fan-out px  wants   spare  verdict');
   let bad = 0;
   let run = 0;
   for (const columns of cols) {
@@ -415,9 +610,15 @@ function spans() {
     const wants = PHONE_VIEW_W / px;
     const over = obs > formula;
     if (over) bad++;
+    // THE VERDICT READS THE MARGIN, not the cliff. It used to print `fits` for
+    // every width at or above the ladder floor, so 8 and 9 came back `fits`
+    // while the boot validator refused them — a tool contradicting the refusal
+    // it exists to explain, which is the same defect one layer up.
+    const m = fanoutMargin({ columns });
     console.log(`  ${String(columns).padStart(4)}  ${`${Math.min(...st)}..${Math.max(...st)}`.padEnd(19)}`
       + ` ${`${Math.min(...fan)}..${obs}`.padEnd(19)} ${String(formula).padStart(7)}  ${String(Math.round(px)).padStart(10)}`
-      + `  ${wants.toFixed(2)}x  ${over ? 'FORMULA TOO LOW' : wants >= ZOOM_MIN ? 'fits' : 'REFUSED at boot'}`);
+      + `  ${wants.toFixed(2)}x  ${String(m.slack).padStart(5)}  `
+      + `${over ? 'FORMULA TOO LOW' : m.ok ? 'fits' : wants >= ZOOM_MIN ? `REFUSED — no spare column` : 'REFUSED — cannot be framed'}`);
   }
   console.log(`\n  The entrance row is the wider frame and it is NOT what the refusal is about:`);
   console.log(`  it is a graph fact, not a camera fact — walkers landing on up to 'columns'`);
@@ -452,6 +653,10 @@ function main() {
     console.log(`  base act 1: ${base.floors} floors x ${base.columns} columns, ${base.pathCount} paths`
       + ` · rollable band ${rollableFloors(base)}`);
   }
+  // THE VERTICAL MARGIN IS NOT PER-ACT — it has one data input, the tap default,
+  // so it prints once here for the same reason the boot validator asks it once.
+  printAirMargin(TAP_TARGET_DEFAULT, '  ');
+
 
   const findings = [];
   let cells = 0;
