@@ -17,6 +17,8 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { MODIFIER_KEYS } from '../model/schemas.js';
+
 export function getStatusInstance(entity, statusId) {
   return (entity && entity.statuses && entity.statuses[statusId]) || null;
 }
@@ -216,6 +218,21 @@ function isDurationDecay(decay) {
 //   blockCap— max of declared caps (the most generous wins).
 // ---------------------------------------------------------------------------
 
+// EVERY ONE OF THESE READS IS A STRING TYPED AT A CALL SITE, and a mis-typed
+// one used to return 1 / 0 / false — the graceful default that makes a defect
+// quiet. `MODIFIER_KEYS` is the closed set that says which strings are real, so
+// it does the saying: an unknown key is named once, with the legal set beside
+// it, and the caller still gets its default so a typo cannot black out a fight.
+// This is also what gives that vocabulary a reader — it had none, and a closed
+// set nothing reads is decoration a future author edits INSTEAD of the schema.
+const MODIFIER_SET = new Set(MODIFIER_KEYS);
+const unknownModifiers = new Set();
+function knownModifier(key) {
+  if (MODIFIER_SET.has(key) || unknownModifiers.has(key)) return;
+  unknownModifiers.add(key);
+  console.error(`[modifiers] '${key}' is not a modifier key — it will always read as the default. Legal: ${MODIFIER_KEYS.join(', ')}`);
+}
+
 function* modifierSources(ctx, entity) {
   for (const statusId of Object.keys(entity.statuses)) {
     const def = ctx.registries.statuses.get(statusId);
@@ -229,6 +246,7 @@ function* modifierSources(ctx, entity) {
 
 /** Product of flat multipliers for `key` ('damageDealtMult', ...). */
 export function getMult(ctx, entity, key) {
+  knownModifier(key);
   let m = 1;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') m *= src.modifiers[key];
@@ -238,6 +256,7 @@ export function getMult(ctx, entity, key) {
 
 /** Sum of per-stack adders for `key` ('attackDamageAdd', 'blockAdd'). */
 export function getAdd(ctx, entity, key) {
+  knownModifier(key);
   let a = 0;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') a += src.modifiers[key] * src.stacks;
@@ -247,6 +266,7 @@ export function getAdd(ctx, entity, key) {
 
 /** True if any status/stance on the entity sets boolean modifier `key`. */
 export function getFlag(ctx, entity, key) {
+  knownModifier(key);
   for (const src of modifierSources(ctx, entity)) {
     if (src.modifiers[key] === true) return true;
   }
@@ -255,6 +275,7 @@ export function getFlag(ctx, entity, key) {
 
 /** Max declared numeric value for `key` (e.g. blockCap), or null if none. */
 export function getCap(ctx, entity, key) {
+  knownModifier(key);
   let cap = null;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') {
@@ -266,6 +287,7 @@ export function getCap(ctx, entity, key) {
 
 /** True if ANY living combatant carries boolean modifier `key`. */
 export function anyCombatantFlag(ctx, key) {
+  knownModifier(key);
   if (ctx.player && ctx.player.alive && getFlag(ctx, ctx.player, key)) return true;
   for (const e of ctx.enemies || []) {
     if (e.alive && getFlag(ctx, e, key)) return true;

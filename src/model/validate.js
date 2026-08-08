@@ -21,7 +21,8 @@ import {
   TRIGGER_EVENTS,
   PREDICATES,
   CARD_TYPES,
-  MODIFIER_KEYS,
+  PILES,
+  PILE_POSITIONS,
   REGISTRY_TYPES,
   SFX_LAYER_KINDS,
   SFX_LAYER_SCHEMAS,
@@ -849,11 +850,17 @@ export function validateEffects(effects, path, vctx) {
       err(`${p}.target`, `stagger targets enemies only, got '${eff.target}'`);
     }
     if (eff.op === 'addCard') {
-      if (eff.pile !== undefined && !['draw', 'hand', 'discard', 'exhaust'].includes(eff.pile)) {
-        err(`${p}.pile`, `Unknown pile '${eff.pile}'`);
+      // PILES / PILE_POSITIONS, not the same words typed again. Both sets were
+      // declared closed in schemas.js and read by NOBODY, while these two lines
+      // re-typed them as literals and did the actual refusing — the vocabulary
+      // an author would edit was decoration, the copy nobody would think to edit
+      // was the law. The legal values in the message come off the set too, so a
+      // new pile cannot be legal and unmentioned.
+      if (eff.pile !== undefined && !PILES.includes(eff.pile)) {
+        err(`${p}.pile`, `Unknown pile '${eff.pile}' (legal: ${PILES.join(', ')})`);
       }
-      if (eff.position !== undefined && !['top', 'bottom', 'random'].includes(eff.position)) {
-        err(`${p}.position`, `Unknown position '${eff.position}'`);
+      if (eff.position !== undefined && !PILE_POSITIONS.includes(eff.position)) {
+        err(`${p}.position`, `Unknown position '${eff.position}' (legal: ${PILE_POSITIONS.join(', ')})`);
       }
     }
   });
