@@ -540,6 +540,13 @@ export function createSession({ registries, seedString, endless = false, restore
     const map = g
       ? {
           floors: g.floors,
+          // `columns` TRAVELS WITH THE GRAPH, and the client has been asking for
+          // it since the act-map view stopped hardcoding 7. This producer never
+          // sent it, so every real co-op session fell through the client's
+          // derived-width fallback while `?shot=coopmap` handed it a canned
+          // snapshot that DID carry the field — the harness was green about a
+          // value the host had never sent. One field, one home.
+          columns: g.columns,
           startIds: g.startIds,
           bossId: g.bossId,
           nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })),
