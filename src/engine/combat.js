@@ -20,7 +20,7 @@ import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
-import { canSwap, cycleSet, stampDeck } from '../model/loadout.js';
+import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule } from '../model/loadout.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -41,7 +41,16 @@ const QUEUE_GUARD = 10000;
  * first player turn starts (energy set, 5 drawn, playerTurnStart triggers).
  * Setup events are in combat.eventLog.
  */
-export function createCombat({ registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [] }) {
+export function createCombat({
+  registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [],
+  // WHICH SWAP-COST RULE THIS FIGHT IS UNDER (A8). Resolved once here rather
+  // than per swap, for the reason `hpMult` is: a fight's rules must not change
+  // under the player halfway through it. Omitted resolves to the shipping
+  // default, so every existing caller — and every test — keeps the price it
+  // already had, and `resolveSwapCostRule(registries, meta)` is the one place
+  // his Settings choice is read.
+  swapCostRule = null,
+}) {
   const bal = registries.balance || {};
   const classMaxMana = registries.classes.get(player.classId).maxMana;
   const maxMana = player.maxMana != null ? player.maxMana : classMaxMana;
@@ -67,6 +76,7 @@ export function createCombat({ registries, rng, player, enemyIds, hpMult = 1, en
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
     // still swapped when the fight ends.
     loadout: player.loadout || null,
+    swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
     queue: [],
@@ -478,10 +488,26 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   if (!allowed.ok) throw new Error(allowed.reason);
 
   const p = combat.player;
+  // THE PRICE IS DERIVED, NOT READ (A8). `cfg.swapCost` is one rung of a chain
+  // now — the default — and which rungs are live is `combat.swapCostRule`, a row
+  // of `balance.equipment.swapCostRules` resolved once at createCombat from his
+  // Settings choice. The whole derivation comes back so the throw can name the
+  // real number and the event can carry it; the relic half is summed here
+  // because relic passives are this file's vocabulary (see `effectiveCost`
+  // below, same shape) and model/loadout.js must not import back into
+  // model/registries.js.
+  const price = swapCostFor(combat.registries, {
+    rule: combat.swapCostRule,
+    loadout: combat.loadout,
+    classId: p.classId,
+    slotId,
+    setIndex,
+    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta'),
+  });
   if (cfg.swapCostKind === 'allowance') {
     if ((combat.swapsLeft || 0) < 1) throw new Error('No swaps left this turn');
-  } else if (p.energy < cfg.swapCost) {
-    throw new Error(`Swapping costs ${cfg.swapCost} Energy`);
+  } else if (p.energy < price.cost) {
+    throw new Error(`Swapping costs ${price.cost} Energy`);
   }
 
   // THE LADDER BINDS HERE TOO (#90, Vira's gate), and combat has no profile —
@@ -507,7 +533,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   }
 
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
-  else p.energy -= cfg.swapCost;
+  else p.energy -= price.cost;
 
   // The new numbers reach the draw and discard piles always; the hand only if
   // the config says a swap re-arms what you are already holding.
@@ -516,7 +542,9 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   const run = { deck: [], loadout: combat.loadout, class: p.classId };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
-  combat.emit('armamentSwapped', { slotId, setIndex });
+  // The event carries what it COST and under which rule — a price nobody can
+  // read back is a price nobody can check, and "try each" is a comparison.
+  combat.emit('armamentSwapped', { slotId, setIndex, cost: price.cost, rule: price.ruleId });
   if (cfg.swapEndsTurn) doEndTurn(combat);
 }
 

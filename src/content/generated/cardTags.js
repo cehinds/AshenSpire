@@ -78,5 +78,12 @@ export const cardTags = [
     "color": "C9A227",
     "glyph": "◆",
     "blurb": "Slow, committed, and hard to stop."
+  },
+  {
+    "id": "basic",
+    "label": "Basic",
+    "color": "7A6F5A",
+    "glyph": "○",
+    "blurb": "Everybody's — on the shelf without being found."
   }
 ];

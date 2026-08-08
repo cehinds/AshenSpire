@@ -146,7 +146,7 @@ defect this layering exists to catch.
 | Entity | Key fields |
 |---|---|
 | Card | `id, class, rarity, cost (int \| 'X'), type, keywords[], effects[], textTemplate, upgrade` (partial override object) |
-| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult (`runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction`) |
+| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult, and it has **one home**: `PASSIVE_TYPES` in `src/model/schemas.js`, which the relic schema's `passives` node is BUILT FROM rather than restating (the two were separate hand-typed lists until A8, and only the schema enforced anything). Today: `runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction, swapCostDelta` |
 | Status | `id, name, icon, stackMode, decay, meter?, modifiers?, hooks?` (§3.7) |
 | Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
 | Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
@@ -269,6 +269,24 @@ Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, 
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
 
 Every generator is a pure function of `(config, rngStream, runState)` → snapshot-testable with fixed seeds (§8).
+
+**Armaments: what a swap costs, and what is on the shelf** *(A8/A7, Constantine 2026-08-08)*
+
+Two closed vocabularies, both in `balance.equipment`, both derived rather than authored per row:
+
+| Question | Word | Chain |
+|---|---|---|
+| what does a mid-fight set-swap cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** `base: 'category'` prices by the DRAWN piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js` and it returns the whole derivation; `engine/combat.js` charges it and the `armamentSwapped` event carries the number. |
+| which pieces need no finding | `basicTag` | A piece carrying that tag answers the **found** gate for free (`ownership()`). It has no opinion about the **earned** gate; a row carrying both is refused by name. `persistence` remains the only scope word — profile-wide (`both`, the shipped default) vs this-run-only (`perRun`). |
+
+**A weapon's category is its tags** — `heavy`, `flourish` — never a `swapCost` column, because a
+column would compel an author to restate what the tags already imply (Law 0 clause 1). The two
+rule fields are closed and **their product is total**: all four cells price a swap, and a fourth
+rule is one row of `swapCostRules` with no code (proven by test 28q).
+
+`apply` in `equipMods.csv` is a closed set **per scope** — `CARD_MOD_APPLIES` / `RUN_MOD_APPLIES`
+in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
+validation failure; before A8 it validated clean and silently did nothing.
 
 ### 3.9 Action queue
 

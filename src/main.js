@@ -11,7 +11,7 @@ import { contentBundle } from './content/index.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
-import { runMods, stampDeck, addToStorage, carriedIds } from './model/loadout.js';
+import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
@@ -1159,6 +1159,11 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     enemyIds: enc.enemies,
     hpMult: cm.hpMult,
     enemyStatuses: cm.enemyStatuses,
+    // WHICH SWAP PRICE THIS FIGHT IS UNDER (A8). Read once, here, at the same
+    // point the other per-fight rules are decided — Settings → Advanced changes
+    // it for the NEXT fight, which is what the row's note promises, and is why
+    // there is no live re-read inside the swap.
+    swapCostRule: resolveSwapCostRule(registries, saves.loadMeta()),
     // `self.*` mods (Strength from an oathsworn set, Regen from a warm habit)
     // enter through the same door Custom Climb buffs already used — the engine
     // has no equipment code, only statuses applied at combat start.

@@ -16,6 +16,14 @@
 #         status       set/adjust the stacks of an applyStatus for `status`
 #         startStatus  apply `status` to the player at the start of each fight
 #         maxHp        added to run max HP (and current HP) at run creation
+#         swapCost     added to what a mid-fight armament swap costs (signed;
+#                      the total is floored at 0). A talisman is the piece this
+#                      exists for; any piece may carry it.
+#
+# `apply` IS A CLOSED SET PER SCOPE and model/loadout.js names the two lists.
+# It was neither closed nor checked until A8: a row reading `apply=swapcost`
+# validated clean, collected nothing, and did nothing, forever. Bad data fails
+# loud (Law 1 clause 5), so an `apply` no consumer handles now names this row.
 #
 # clause  appended to the card's rules text when the mod introduces a token
 #         the text does not already mention. Blank = nothing to say.
@@ -37,3 +45,4 @@ strength,run,startStatus,,,strength,Strength,,"Strength you begin every fight wi
 dexterity,run,startStatus,,,dexterity,Dexterity,,"Dexterity you begin every fight with."
 regen,run,startStatus,,,regen,Regen,,"HP recovered at the start of each turn."
 maxHp,run,maxHp,,,,Max HP,,"Added to your maximum HP for the run."
+swapCost,run,swapCost,,,,Swap cost,,"Changed cost to switch armament sets mid-fight."

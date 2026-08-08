@@ -50,6 +50,7 @@ import {
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
+  swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES,
 } from '../src/model/loadout.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, PRESENT_STATES, emptyProgress, recordProgress, evaluateUnlocks,
@@ -1854,6 +1855,273 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     eq(healed.loadout.sets.rightHand[0], null, 'the healed loadout starts bare-handed');
   });
 
+  // ---- 28p. the swap PRICE: three rules, three measured numbers -----------
+  test('28p. his three swap prices are data, and they really are three different prices', () => {
+    // Constantine, 2026-08-08: *"switching sets should cost actions. perhaps
+    // this action costs more or less depending on Talisman or starting relic…
+    // let's default to costing 2 actions. alternatively, or by a setting,
+    // different weapon categories have weapon swap costs. THAT WAY I CAN TRY
+    // EACH."*
+    //
+    // THE SUBJECT OF THIS TEST IS THE WORD "DIFFERENT". A settings key nothing
+    // can be observed to change is not a knob, it is a comment, and "I can try
+    // each" is a comparison — so this measures the same swap, on the same
+    // loadout, under each rule, and asserts the numbers are not all equal.
+    // Every price below is READ BACK OFF THE PLAYER'S ENERGY after a real
+    // dispatch, never off the derivation that produced it.
+    const rules = REG.balance.equipment.swapCostRules;
+    const byId = (id) => rules.find((r) => r.id === id);
+    eq(rules.map((r) => r.id).join(','), 'flat,gear,category', 'his three options are the authored rows');
+
+    // A hand that is heavy in one set and quick in the other, so 'category' has
+    // something to say and the two directions are both reachable.
+    const armed = () => {
+      const run = createRunState({ seed: 5, classId: 'reaver', registries: REG });
+      run.loadout.sets.rightHand[0] = 'straightSword'; // no category tag → the default
+      run.loadout.sets.rightHand[1] = 'greatsword';    // heavy   → 3
+      run.loadout.sets.rightHand[2] = 'twinblade';     // flourish → 1
+      return run;
+    };
+
+    /** Swap to `setIndex` under `rule` and report what the player actually paid. */
+    const paid = (rule, setIndex, { relicIds = [] } = {}) => {
+      const run = armed();
+      const combat = createCombat({
+        registries: REG,
+        rng: createRng(11),
+        player: { classId: 'reaver', maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds, loadout: run.loadout },
+        enemyIds: ['fellWarden'],
+        swapCostRule: rule,
+      });
+      const before = combat.player.energy;
+      const { events } = dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex });
+      const swapped = events.find((e) => e.type === 'armamentSwapped');
+      const spent = before - combat.player.energy;
+      // The event must AGREE with the wallet, or one of the two is decoration.
+      eq(swapped.cost, spent, `the event's cost is what the player actually paid (${swapped.cost} vs ${spent})`);
+      return spent;
+    };
+
+    // ---- 1. THE MEASUREMENT, and the table it prints -----------------------
+    //   rule       → greatsword (heavy)   twinblade (flourish)
+    //   flat       → 2                    2
+    //   category   → 3                    1
+    const table = {
+      'flat/heavy': paid(byId('flat'), 1),
+      'flat/flourish': paid(byId('flat'), 2),
+      'category/heavy': paid(byId('category'), 1),
+      'category/flourish': paid(byId('category'), 2),
+    };
+    eq(table['flat/heavy'], 2, 'flat charges the balance default for a greatsword');
+    eq(table['flat/flourish'], 2, '…and the same for a twinblade — that is what flat means');
+    eq(table['category/heavy'], 3, 'category charges the heavy row for a greatsword');
+    eq(table['category/flourish'], 1, '…and the flourish row for a twinblade');
+    assert(new Set(Object.values(table)).size > 1,
+      `the rules produce DIFFERENT prices, not one price wearing three names — ${JSON.stringify(table)}`);
+
+    // A piece whose tags match no category row falls through to the default,
+    // which is deliberate and is the third cell of the category rule.
+    const straightUnder = swapCostFor(REG, {
+      rule: byId('category'), loadout: armed().loadout, classId: 'reaver', slotId: 'rightHand', setIndex: 0, relicDelta: 0,
+    });
+    eq(straightUnder.cost, REG.balance.equipment.swapCost, 'an uncategorised weapon falls through to the default');
+    eq(straightUnder.categoryTag, null, '…and says so rather than inventing a category');
+
+    // ---- 2. THE GEAR RUNG — the talisman half, with a piece it authors -----
+    // The talisman slot ships with zero rows, so waiting for content would mean
+    // shipping a rung nobody has watched work. This adds one armament carrying
+    // `self.swapCost=+2` — a CSV row's worth of data, no code — and equips it.
+    const withCharm = {
+      ...REG,
+      equipment: {
+        ...REG.equipment,
+        armaments: [...REG.equipment.armaments,
+          { id: 'testCharm', name: 'Heavy Charm', kind: 'weapon', hand: 'right', rarity: 'common',
+            tags: [], mods: ['self.swapCost=+2'], unlock: '' }],
+      },
+    };
+    const charmRun = createRunState({ seed: 5, classId: 'reaver', registries: REG });
+    charmRun.loadout.sets.rightHand[0] = 'testCharm';
+    charmRun.loadout.sets.rightHand[1] = 'greatsword';
+    eq(runMods(withCharm, charmRun.loadout, 'reaver').swapCostDelta, 2,
+      'a worn piece contributes its swap-cost delta through the same self.* door every other run mod uses');
+    const gearOn = swapCostFor(withCharm, { rule: byId('gear'), loadout: charmRun.loadout, classId: 'reaver', slotId: 'rightHand', setIndex: 1, relicDelta: 0 });
+    const gearOff = swapCostFor(withCharm, { rule: byId('flat'), loadout: charmRun.loadout, classId: 'reaver', slotId: 'rightHand', setIndex: 1, relicDelta: 0 });
+    eq(gearOn.cost, 4, 'the gear rule charges default 2 + the charm’s 2');
+    eq(gearOff.cost, 2, '…and the flat rule charges 2, because gear is off for it');
+    // THE IGNORED DELTA IS REPORTED, NOT SWALLOWED. A talisman doing nothing
+    // under a gear-off rule is correct; a talisman doing nothing SILENTLY is
+    // the graceful fallback my own card warns about.
+    eq(gearOff.gearIgnored, 2, 'a rule that declines the gear rung says what it declined');
+    eq(gearOn.gearIgnored, 0, '…and a rule that takes it has nothing left over');
+
+    // The relic half is the same rung, summed by the engine (module boundary).
+    const relicOn = swapCostFor(REG, { rule: byId('gear'), loadout: armed().loadout, classId: 'reaver', slotId: 'rightHand', setIndex: 1, relicDelta: -1 });
+    eq(relicOn.cost, 1, 'a relic passive of -1 makes the swap cheaper — "more OR LESS", his words');
+    const floored = swapCostFor(REG, { rule: byId('gear'), loadout: armed().loadout, classId: 'reaver', slotId: 'rightHand', setIndex: 1, relicDelta: -9 });
+    eq(floored.cost, 0, 'the total floors at 0 rather than paying the player Energy');
+    eq(floored.floored, true, '…and the clamp is visible, not quiet');
+
+    // ---- 3. FAIL CLOSED — a missing relicDelta is named, never guessed -----
+    const hush = console.error;
+    const heard = [];
+    console.error = (...a) => { heard.push(a.join(' ')); };
+    let quiet;
+    try {
+      quiet = swapCostFor(REG, { rule: byId('gear'), loadout: armed().loadout, classId: 'reaver', slotId: 'rightHand', setIndex: 1 });
+    } finally { console.error = hush; }
+    eq(quiet.cost, 2, 'a caller that forgets the relic sum still gets a price…');
+    eq(heard.length, 1, '…and is named for it rather than silently charged as "no relics"');
+    assert(heard[0].includes('relicDelta') && heard[0].includes('rightHand'),
+      `the complaint names what was missing and where — got: ${heard[0] || '(nothing)'}`);
+  });
+
+  // ---- 28q. a fourth rule is a ROW — Law 0's falsifier, on a rule ---------
+  test('28q. a swap-cost rule this build has never seen works with zero code', () => {
+    // Law 0's falsifier is *one fictional entry of a brand-new kind, plus its
+    // asset, ZERO code commits — it appears and works.* Applied to A8: the two
+    // fields of a rule row are closed, so their product is FOUR cells and only
+    // three ship. This is the fourth, added the way he would add it — one row
+    // in balance.js — and nothing else.
+    //
+    // AND IT IS THE #78 LESSON PAID BACK. I once declared two characteristics
+    // closed separately and shipped three ids for a four-cell product; the
+    // fourth cell was legal data that drew an empty screen and every check I
+    // owned said green. So this test is not a nicety, it is the check that
+    // would have caught me: the product is TOTAL or this goes red.
+    const fourth = { id: 'both', label: 'Category + gear', base: 'category', gear: true };
+    const REG4 = {
+      ...REG,
+      balance: {
+        ...REG.balance,
+        equipment: { ...REG.balance.equipment, swapCostRules: [...REG.balance.equipment.swapCostRules, fourth] },
+      },
+    };
+    eq(validateEquipment(REG4).length, 0, 'the new row validates — it used only words the schema already had');
+
+    const run = createRunState({ seed: 5, classId: 'reaver', registries: REG });
+    run.loadout.sets.rightHand[0] = 'straightSword';
+    run.loadout.sets.rightHand[1] = 'greatsword'; // heavy → base 3
+    const price = swapCostFor(REG4, {
+      rule: resolveSwapCostRule(REG4, { settings: { swapCostRule: 'both' } }),
+      loadout: run.loadout, classId: 'reaver', slotId: 'rightHand', setIndex: 1, relicDelta: -1,
+    });
+    eq(price.ruleId, 'both', 'the settings value selects the row that was never in a build before');
+    eq(price.base, 'category', '…it takes the category base…');
+    eq(price.cost, 2, '…and the gear rung on top: heavy 3, relic −1, paid 2');
+
+    // EVERY cell of the product computes a real number. Four ids, four prices,
+    // no unrepresentable corner and no empty screen.
+    const cells = [['default', false], ['default', true], ['category', false], ['category', true]]
+      .map(([base, gear]) => swapCostFor(REG4, {
+        rule: { id: `${base}/${gear}`, base, gear },
+        loadout: run.loadout, classId: 'reaver', slotId: 'rightHand', setIndex: 1, relicDelta: 1,
+      }).cost);
+    eq(cells.join(','), '2,3,3,4', 'all four cells of the product price a swap: default/gear × off/on');
+
+    // An unknown rule id is the SHIPPING DEFAULT, never a crash and never a
+    // free swap — the same rule resolveMapMode uses for a hand-edited save.
+    eq(resolveSwapCostRule(REG, { settings: { swapCostRule: 'nonsense' } }).id,
+      REG.balance.equipment.swapCostRule, 'an unreadable saved rule falls back to the shipped default');
+  });
+
+  // ---- 28r. bad data fails loud and names the row -------------------------
+  test('28r. every way to author the swap price wrong is refused BY NAME', () => {
+    // Law 1 clause 5. Each of these is a plausible edit that would otherwise be
+    // SILENT — the game keeps charging 2 and nobody can tell a setting that is
+    // off from one that is broken. Observed red here before being cited:
+    // `validateEquipment(REG)` is 0 on the real tree (asserted first), so every
+    // count below is caused by the plant and nothing else.
+    eq(validateEquipment(REG).length, 0, 'the shipped tree is clean, so a count of 1 below means the plant');
+
+    const bend = (equipment) => ({ ...REG, balance: { ...REG.balance, equipment: { ...REG.balance.equipment, ...equipment } } });
+    const oneProblem = (reg, needle, what) => {
+      const found = validateEquipment(reg);
+      eq(found.length, 1, `${what}: exactly one complaint (got ${found.length}: ${found.join(' | ')})`);
+      assert(found[0].includes(needle), `${what}: the complaint names '${needle}' — got: ${found[0]}`);
+    };
+
+    oneProblem(bend({ swapCost: -1 }), 'swapCost', 'a negative default');
+    oneProblem(bend({ swapCost: 1.5 }), 'swapCost', 'a fractional default');
+    oneProblem(bend({ swapCostByCategory: [{ tag: 'heavy', cost: -2 }] }), 'heavy', 'a negative category cost');
+    oneProblem(bend({ swapCostByCategory: [{ tag: 'chunky', cost: 3 }] }), 'chunky', 'a category no armament carries');
+    oneProblem(bend({ swapCostRule: 'fastest' }), 'fastest', 'a live rule that is not a row');
+    oneProblem(bend({ swapCostRules: [{ id: 'flat', base: 'vibes', gear: false }], swapCostRule: 'flat' }),
+      'vibes', 'a rule whose base is outside the closed set');
+    oneProblem(bend({ swapCostRules: [{ id: 'flat', base: 'default', gear: 'yes' }], swapCostRule: 'flat' }),
+      'gear', 'a rule whose gear rung is not a boolean');
+
+    // ---- the shelf's own three, same standard (A7) -------------------------
+    oneProblem(bend({ basicTag: 'starter' }), 'starter', 'a basicTag no armament carries');
+    const withEarnedBasic = {
+      ...bend({}),
+      equipment: {
+        ...REG.equipment,
+        armaments: REG.equipment.armaments.map((a) => (a.id === 'straightSword' ? { ...a, unlock: 'winAsReaver' } : a)),
+      },
+    };
+    oneProblem(withEarnedBasic, 'straightSword', 'a row that is both everybody\'s and earned');
+    const basicArmour = {
+      ...bend({}),
+      equipment: {
+        ...REG.equipment,
+        armour: REG.equipment.armour.map((o) => (o.id === 'default' && o.classId === 'reaver'
+          ? { ...o, tags: [...(o.tags || []), 'basic'] } : o)),
+      },
+    };
+    oneProblem(basicArmour, 'never drops', 'a basic tag on a kind that never drops');
+
+    // ---- the `apply` vocabulary, which nothing checked before A8 -----------
+    // A row reading `apply=swapcost` used to validate clean, be collected by
+    // nobody and change nothing, forever.
+    const typoApply = {
+      ...bend({}),
+      equipment: {
+        ...REG.equipment,
+        modFields: { ...REG.equipment.modFields, maxHp: { ...REG.equipment.modFields.maxHp, apply: 'maxhp' } },
+      },
+    };
+    oneProblem(typoApply, 'maxhp', 'an apply value no consumer handles');
+
+    // ---- DECLARED AND HANDLED, both directions ----------------------------
+    // The validator above proves nothing outside the list gets in. This proves
+    // nothing INSIDE the list is inert — which is the direction that rots,
+    // because adding a word to a closed set and forgetting the consumer reads
+    // exactly like adding a word and remembering. Every member changes an
+    // observable field of runMods' return, or it is decoration.
+    const probeRun = (apply) => {
+      const reg = {
+        ...REG,
+        equipment: {
+          ...REG.equipment,
+          modFields: { ...REG.equipment.modFields, probe: { field: 'probe', scope: 'run', apply, status: 'strength' } },
+          armaments: [...REG.equipment.armaments,
+            { id: 'probePiece', name: 'Probe', kind: 'weapon', hand: 'right', rarity: 'common', tags: [], mods: ['self.probe=+3'], unlock: '' }],
+        },
+      };
+      const lo = createLoadout(reg, 'reaver');
+      lo.sets.rightHand[0] = 'probePiece';
+      return JSON.stringify(runMods(reg, lo, 'reaver'));
+    };
+    const inert = probeRun('__nothing__');
+    for (const apply of RUN_MOD_APPLIES) {
+      assert(probeRun(apply) !== inert, `RUN_MOD_APPLIES member '${apply}' actually changes runMods' answer`);
+    }
+
+    // Same join on the other closed set: every base a rule row may name has to
+    // price a swap, or it is a legal word with no meaning.
+    const priceRun = createRunState({ seed: 5, classId: 'reaver', registries: REG });
+    priceRun.loadout.sets.rightHand[1] = 'greatsword';
+    for (const base of SWAP_COST_BASES) {
+      const p = swapCostFor(REG, {
+        rule: { id: `probe-${base}`, base, gear: false },
+        loadout: priceRun.loadout, classId: 'reaver', slotId: 'rightHand', setIndex: 1, relicDelta: 0,
+      });
+      assert(Number.isInteger(p.cost) && p.cost >= 0, `SWAP_COST_BASES member '${base}' prices a swap (got ${p.cost})`);
+      eq(p.base, base, `…and reports the base it used, so '${base}' cannot silently become 'default'`);
+    }
+  });
+
   // ---- 28b. hands: the SLOT decides where, the PIECE only asks ------------
   test("28b. which hand a piece is in is the slot's fact, not the piece's", () => {
     // Bjorn's photograph on `dev`, 2026-08-07: Straight Sword in the LEFT hand,
@@ -2108,17 +2376,38 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const rightPool = fits(rightHand, eq_.armaments);
     assert(rightPool.length > 1, `the right hand has a pool to filter (${rightPool.length})`);
 
-    // ---- 1. a fresh profile owns nothing droppable ------------------------
+    // ---- 1. a fresh profile owns nothing droppable EXCEPT THE BASICS -------
+    // AMENDED BY HIM, NOT BY US (A7, Viki). This line read `0 of 16 — an
+    // inventory, not a catalogue`, and it was the right assertion for the
+    // sentence it was written from (*"I should only see an inventory of the
+    // weapons I've collected"*, #90). On 2026-08-08 he added the other half:
+    // *"everything else is profile specific but maybe A FEW BASIC WEAPONS
+    // BECOME AVAILABLE FOR ALL."* So the number is no longer 0 — and the claim
+    // this test defends is unchanged and is the one that matters: what a fresh
+    // profile is offered is EXACTLY a named, derivable set and nothing else.
+    // A catalogue would still fail here.
     const fresh = createLoadout(REG, 'reaver');
     const none = ownership(REG, { meta: {}, loadout: fresh });
-    eq(rightPool.filter((p) => none.has(p)).length, 0,
-      `a fresh profile is offered 0 of ${rightPool.length} armaments — an inventory, not a catalogue`);
+    const basicTag = REG.balance.equipment.basicTag;
+    const basicsRight = rightPool.filter((p) => (p.tags || []).includes(basicTag)).map((p) => p.id);
+    assert(basicsRight.length > 0 && basicsRight.length < rightPool.length,
+      `the basics are a FEW of the pool, not none and not all (${basicsRight.length} of ${rightPool.length})`);
+    eq(rightPool.filter((p) => none.has(p)).map((p) => p.id).join(','), basicsRight.join(','),
+      `a fresh profile is offered exactly the '${basicTag}' rows (${basicsRight.join(', ')}) of ${rightPool.length} armaments`);
+
+    // ---- 1b. …and the TAG is the mechanism, observed both ways -------------
+    // A knob read but never watched to change the outcome has not been built.
+    // Same registries, same profile, `basicTag` cleared: the shelf goes back to
+    // the pre-A7 number, which is the measurement the line above used to be.
+    const noBasics = { ...REG, balance: { ...REG.balance, equipment: { ...REG.balance.equipment, basicTag: '' } } };
+    eq(rightPool.filter((p) => ownership(noBasics, { meta: {}, loadout: fresh }).has(p)).length, 0,
+      'with basicTag cleared a fresh profile is offered 0 again — the tag, not a hard-coded list');
 
     // ---- 2. …and what it finds, it is offered, and ONLY that --------------
     const two = ownership(REG, { meta: { found: ['dagger'] }, loadout: fresh });
     const offered = rightPool.filter((p) => two.has(p)).map((p) => p.id);
-    eq(offered.join(','), 'dagger',
-      'one weapon found is one option offered — his "starting weapon and a scimitar" case');
+    eq(offered.join(','), [...basicsRight, 'dagger'].sort((a, b) => rightPool.findIndex((p) => p.id === a) - rightPool.findIndex((p) => p.id === b)).join(','),
+      'one weapon found is one option ADDED to the basics — his "starting weapon and a scimitar" case, plus the few that are everybody\'s');
 
     // ---- 3. the OTHER direction: the sandbox still opens everything --------
     // requireFound did not change meaning; turning it off still means everything

@@ -166,5 +166,16 @@ export const equipMods = [
     "label": "Max HP",
     "clause": "",
     "blurb": "Added to your maximum HP for the run."
+  },
+  {
+    "field": "swapCost",
+    "scope": "run",
+    "apply": "swapCost",
+    "op": "",
+    "effTarget": "",
+    "status": "",
+    "label": "Swap cost",
+    "clause": "",
+    "blurb": "Changed cost to switch armament sets mid-fight."
   }
 ];

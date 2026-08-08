@@ -275,10 +275,39 @@ export const balance = {
   equipment: {
     enabled: true,
 
+    // WHAT THE SHELF IS SCOPED TO, and it is this word — there is no second one.
     // 'perRun'   what you find is yours for this run only
     // 'unlocked' pieces are permanent once unlocked, chosen before a run
     // 'both'     unlocked pieces are choosable AND drops apply for the run
+    //
+    // Constantine, 2026-08-08: *"maybe the armament menu on the main menu might
+    // update, but everything else is profile specific but maybe a few basic
+    // weapons become available for all. so all together for armory shelf with
+    // settings to configure this."* The DEFAULT half of that is decided —
+    // profile-wide, which is `both` and is what already shipped (directions.md
+    // D15). The SETTING half is this line, and it did not need inventing: a
+    // `shelfScope` word beside `persistence` would be two settings answering one
+    // question, which is the defect this house is named for (Law 1 clause 2).
+    // What `persistence` genuinely cannot say is the other half of his sentence
+    // — the few pieces that are nobody's to FIND because they are everybody's —
+    // and that is `basicTag` below.
     persistence: 'both',
+
+    // ---- A FEW BASIC WEAPONS, AVAILABLE FOR ALL --------------------------
+    // The tag that means "this is everybody's". It answers the FOUND gate only
+    // (drops.requireFound): a basic piece never has to turn up in treasure. It
+    // has no opinion about the EARNED gate, so the two compose instead of
+    // racing, and a row that carries both is refused by name at validation
+    // rather than quietly preferring one.
+    //
+    // NOTHING NEW IS AUTHORED (Law 0 clause 1). `tags` is a column weapons.csv
+    // has always had; three plain rows now carry `basic` and the shelf follows.
+    // Moving the line between "for all" and "profile specific" is editing that
+    // column — no code, which is the whole promise. Set it to '' to switch the
+    // universal shelf off entirely; a value naming a tag no armament carries is
+    // a hard validation failure, because a setting that silently does nothing
+    // is the one failure mode worse than a missing one.
+    basicTag: 'basic',
 
     // Swapping a hand mid-fight. 'energy' spends from the turn's pool;
     // 'allowance' gives a separate per-turn budget that energy never touches.
@@ -286,6 +315,51 @@ export const balance = {
     swapCost: 2,
     swapAllowancePerTurn: 1, // only consulted when swapCostKind === 'allowance'
     swapEndsTurn: false,
+
+    // ---- WHAT A SWAP COSTS: three prices he can try, one chain ------------
+    // Constantine, 2026-08-08: *"switching sets should cost actions. perhaps
+    // this action costs more or less depending on Talisman or starting relic,
+    // or some other reason. let's default to costing 2 actions. alternatively,
+    // or by a setting, different weapon categories have weapon swap costs.
+    // THAT WAY I CAN TRY EACH."*
+    //
+    // He named three prices and asked to FEEL them, so the three are ROWS and
+    // the live one is a WORD — never three branches in the engine. One chain,
+    // always the same, and the row says which of its rungs are live:
+    //
+    //   base 'category' → the drawn piece's category cost, falling through to
+    //                     `swapCost` when its tags match no row below
+    //   base 'default'  → `swapCost` for everything
+    //   gear true       → talisman and relic deltas adjust that base
+    //
+    // THE PRODUCT IS TOTAL, AND THAT IS THE PART I GOT WRONG LAST TIME (#78).
+    // Two closed fields make FOUR cells; I once shipped three ids for a product
+    // whose fourth cell nobody had built, and one row of legal data drew an
+    // empty screen. Here every one of the four computes a real price. The
+    // fourth — category AND gear — is deliberately not shipped, because he named
+    // three; it is one row away and needs no code, which is what test 28c
+    // measures (Law 0's falsifier, applied to a rule instead of a card).
+    //
+    // The default is 'flat', which is the game exactly as it shipped: nobody who
+    // does not opt in pays a different price. Settings → Advanced switches it.
+    swapCostRule: 'flat',
+    swapCostRules: [
+      { id: 'flat', label: 'Flat', base: 'default', gear: false },
+      { id: 'gear', label: 'Talisman & relic', base: 'default', gear: true },
+      { id: 'category', label: 'Weapon category', base: 'category', gear: false },
+    ],
+    // A WEAPON'S CATEGORY IS ITS TAGS. `heavy` and `flourish` are already on the
+    // rows because a greatsword IS heavy — a `swapCost` column on weapons.csv
+    // would compel an author to restate what the tags already imply, which is a
+    // breach of Law 0 clause 1 even though every value would sit in a table.
+    //
+    // ORDERED, FIRST MATCH WINS. A twinblade is `blade|flourish` and a halberd
+    // is `blade|heavy`; which tag rules is the order of these rows, not a max()
+    // nobody can see. A tag no armament carries fails validation by name.
+    swapCostByCategory: [
+      { tag: 'heavy', cost: 3 },
+      { tag: 'flourish', cost: 1 },
+    ],
 
     // true  → swapping rewrites the Strikes/Defends already in your hand
     // false → only cards drawn after the swap carry the new numbers
