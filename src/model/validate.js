@@ -12,7 +12,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { resolveFloorPlan } from './floorplan.js';
-import { viewRefusals } from './mapview.js';
+import { viewRefusals, geometryRefusals } from './mapview.js';
 import {
   SCHEMAS,
   OPCODES,
@@ -271,6 +271,24 @@ export function validateContent(bundle) {
       }
     }
   }
+  // THE MAP'S VERTICAL MARGIN, and it belongs here because it has exactly one
+  // data input. `balance.ui.tapSize.def` is what the map node's radius is SOLVED
+  // FROM (model/mapview.js), so raising it grows the target and eats the space
+  // BETWEEN two adjacent targets in the same stroke — 44.09 px of node against a
+  // 47.0 px row pitch at 390x844 today, under 3 px of air between two taps that
+  // both start a fight nobody can undo (Sunna, 2026-08-08). Nothing was watching
+  // that number; a refusal that prints a verdict and not a margin cannot be.
+  //
+  // Asked ONCE of the bundle rather than per act: it does not vary with
+  // mapConfigs, and three identical errors would be three copies of one fact.
+  // The corpus it has to turn red is `node tools/mapplan.mjs --selftest` — the
+  // same corpus the mapConfigs block below points at, and its rows for this
+  // refusal are in it, so neither pointer dangles.
+  // Guarded on `balance` and NOT on `balance.ui.tapSize`, deliberately: guarding
+  // on the entry means deleting the entry silences the check that watches it.
+  if (b.balance != null && typeof b.balance === 'object' && !Array.isArray(b.balance)) {
+    for (const e of geometryRefusals(b.balance)) err(e.key, e.msg);
+  }
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {
     const p = b.balance.poise;
@@ -299,6 +317,10 @@ export function validateContent(bundle) {
           // makes Constantine's "the current node and its connecting nodes fit"
           // unsatisfiable at every zoom the ladder has — a knob that hands him a
           // broken climb instead of a reason (Law 1 clause 5).
+          //
+          // AND EVERY ONE OF THESE NOW CARRIES ITS MARGIN, not just its verdict.
+          // `columns: 9` was accepted at 1.02x with zero spare columns and the
+          // word "accepted" was the whole answer (Vira, 2026-08-08).
           for (const e of viewRefusals(cfg)) {
             err(`mapConfigs.${act}.${e.key}`, e.msg);
           }
