@@ -52,6 +52,26 @@ const ACT_SHAPE = {
   floors: 12,
   columns: 7,
   pathCount: 6,
+  // ONE MAP ENTRANCE — Constantine, 2026-08-08, verbatim and unqualified.
+  //
+  // `entries` and `pathCount` are two knobs and this line is why they had to be.
+  // The act is entered from ONE column; six walkers still climb it, so the
+  // routes behind that door are unchanged in number. Measured literally, "one
+  // path" would have been a corridor — 13 nodes and zero choices in a whole act
+  // (Viki, 300 seeds) — which is not what he described.
+  //
+  // WHAT IT COSTS AND WHAT IT BUYS, both measured at 300 seeds before it shipped:
+  //   entrance row      5.92 columns wide  ->  1
+  //   nodes per act     46.26              ->  35.88   (22% smaller)
+  //   next step hidden  9 of 12 seeds      ->  0 of 12 at 390x844 (tools/mapfit.mjs)
+  // The act is smaller. That is the trade he chose and it is the whole reason
+  // the shrinkage is stated here rather than discovered later.
+  //
+  // EVERY SEED IN THE GAME IS A DIFFERENT MAP NOW. That is not a side effect of
+  // this line, it IS this line: the walkers' first roll moved, so every graph
+  // downstream of it moved. No save is invalidated (graphs are stored per run),
+  // but a seed screenshotted before today no longer reproduces.
+  entries: 1,
   typeWeights: { monster: 45, event: 22, shrine: 12, elite: 8, merchant: 5 },
   // What a `?` node resolves to. HERE, beside the geometry it belongs to, and
   // no longer in `balance.unknownNode` — a flat global could not differ per act
