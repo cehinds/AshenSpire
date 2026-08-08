@@ -14,7 +14,7 @@
 // takes clicks). Even with every callout mispositioned, the player can play.
 
 import { anchorLocalBox } from '../fx.js';
-import { overlayIsOpen } from './overlay.js';
+import { veilIsOpen } from './veil.js';
 
 const STEPS = [
   { sel: '.energy-orb', title: 'Energy', text: 'Three energy each turn. Cards cost energy to play — spend it wisely.' },
@@ -106,12 +106,19 @@ export function mountTutorial(root, { onDone }) {
 
   // Escape ends the tutorial. Captured (before the combat screen's own Esc, which
   // would otherwise only cancel targeting) so exactly one thing answers the key —
-  // but an open overlay owns input while it's open, same rule as combat.js.
+  // but a standing veil owns input while it's up, same rule as combat.js.
+  //
+  // THIS FILE IS A CALLER OF THE PREDICATE, NEVER A SUBJECT OF IT, and that is
+  // the whole reason `.tut-veil` is not a `.modal-veil`. The veil this file
+  // mounts is `pointer-events: none`: the tutorial coaches the player THROUGH
+  // playing the board, so the board beneath must keep answering keys. Asking is
+  // the other direction — a veil over the tutorial takes Escape from it. Both
+  // halves are stated in components/veil.js so neither is rediscovered as a bug.
   function onKey(ev) {
     if (ev.key !== 'Escape' || ev.metaKey || ev.ctrlKey || ev.altKey) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    if (overlayIsOpen()) return;
+    if (veilIsOpen()) return;
     ev.preventDefault();
     ev.stopPropagation();
     finish();

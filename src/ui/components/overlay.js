@@ -161,10 +161,17 @@ function renderStats(container, ctx) {
   container.appendChild(el);
 }
 
-/** True if the overlay is currently open (so callers can route Esc/hotkeys). */
-export function overlayIsOpen() {
-  return !!openVeil;
-}
+// `overlayIsOpen()` USED TO LIVE HERE and is deleted rather than widened.
+//
+// It read this module's own `openVeil` handle, so it answered for ONE of the
+// game's six veils — and combat.js, map.js and tutorial.js all called it meaning
+// "is ANY veil standing". With the draw pile open, E ended the turn: hand 5 -> 0.
+// Widening it would have made this module the home of a fact about five veils it
+// does not own, so the predicate moved out instead: components/veil.js,
+// `veilIsOpen()`, asked of the DOM the way input.js's scopeRoot() always did.
+//
+// `openVeil` below is NOT that fact and stays — it is this overlay's handle on
+// its own element, which is how closeOverlay() knows what to remove.
 
 export function closeOverlay() {
   if (openVeil) {

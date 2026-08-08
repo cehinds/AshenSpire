@@ -14,6 +14,7 @@
 // module adds navigation + controller parity on top without touching them.
 
 import { padGlyph } from './uiContent.js';
+import { topVeil } from './components/veil.js';
 
 const FOCUS_SELECTOR = [
   'button:not([disabled])',
@@ -244,10 +245,16 @@ function visible(el) {
   return cs.visibility !== 'hidden' && cs.display !== 'none';
 }
 
-// The active focus scope: the topmost open modal/overlay if any, else the app.
+// The active focus scope: the topmost open veil if any, else the app.
+//
+// The selector and the "which one is topmost" rule used to live here, inline —
+// which made this function the SECOND home of a question overlay.js also
+// answered, in different words and about one veil only. Both now ask
+// components/veil.js; read the header there for what counts as a veil, why
+// `.tut-veil` deliberately does not, and why topmost is paint order rather
+// than DOM order.
 function scopeRoot() {
-  const modals = document.querySelectorAll('.modal-veil');
-  return modals.length ? modals[modals.length - 1] : document.getElementById('app') || document.body;
+  return topVeil() || document.getElementById('app') || document.body;
 }
 
 function focusables() {
