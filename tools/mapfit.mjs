@@ -261,12 +261,28 @@ async function main() {
         // after both, because measuring the frame before the camera has finished
         // moving is a number about the wrong moment.
         await wait(400);
-        // THE MUTATION: make the screen claim a frame it did not achieve. It is
-        // applied AFTER the frame has settled and touches nothing but the
-        // report, so the geometry this tool measures is the real one and only
-        // the confession is false — which is exactly the failure the cross-check
-        // exists for.
-        if (mutate) await evaluate(`(() => { const s = document.querySelector('.map-scroll'); if (s) { s.dataset.framing = 'fit'; s.dataset.framingMiss = '0'; } return 1; })()`);
+        // THE MUTATION: make the screen's report CONTRADICT ITSELF — whatever it
+        // said, say the other thing. Applied after the frame has settled and
+        // touching nothing but the report, so the geometry this tool measures is
+        // the real one and only the confession is false, which is exactly the
+        // failure the cross-check exists for.
+        //
+        // IT USED TO HARDCODE 'fit' AND THAT WAS THE SAME BUG TWICE IN ONE NIGHT.
+        // A mutation that pins one value is a known-bad only while the tree
+        // happens to hold the other one. The first draft pinned Map zoom to 115%
+        // and went green because mid-climb framing was never broken; this draft
+        // pinned the report to `fit` and went green the moment `entries: 1` made
+        // every frame genuinely fit — a no-op wearing a test's clothes, passing
+        // for the reason that should have failed it. Inverting whatever is there
+        // is a lie in both directions and stays one at any state of the tree:
+        // `fit` on a clipped frame is a camera hiding a miss, `clipped` on a
+        // whole frame is a camera crying wolf, and the cross-check catches both
+        // by construction rather than by luck.
+        if (mutate) await evaluate(`(() => { const s = document.querySelector('.map-scroll'); if (!s) return 0;`
+          + ` const was = s.dataset.framing;`
+          + ` s.dataset.framing = was === 'clipped' ? 'fit' : 'clipped';`
+          + ` s.dataset.framingMiss = was === 'clipped' ? '0' : '999';`
+          + ` return 1; })()`);
         const r = await evaluate(PROBE);
         if (r && r.error) { findings.push(`${shape.w}x${shape.h} ${seed} ${pos}: ${r.error}`); continue; }
         cells++;
