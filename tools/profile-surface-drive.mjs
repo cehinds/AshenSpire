@@ -65,9 +65,14 @@ check('D9 clicking the scrim dismisses it', await ev(`!document.querySelector('.
 // --- D8: Settings → Profile is a real route to the archive ---
 await ev(`(document.querySelector('.profile-notice .notnow')||document.querySelector('.profile-notice .keep')).click()`); await sleep(900);
 await ev(`[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`); await sleep(700);
+// #90: the categories are TABS, so the Profile section is one click in rather
+// than always on screen — and the check is now that the ROUTE exists and works,
+// which is what D8 was ever about.
 const st = await ev(`(()=>{
   const body=document.querySelector('.set-body'); if(!body) return {no:true};
-  const cats=[...body.querySelectorAll('.set-cat')].map(h=>h.textContent.trim());
+  const cats=[...body.querySelectorAll('.set-tab')].map(h=>h.dataset.member);
+  const tab=[...body.querySelectorAll('.set-tab')].find(h=>h.dataset.member==='Profile');
+  if(tab) tab.click();
   const txt=body.innerText;
   return {cats, hasProfile:cats.includes('Profile'), text:txt,
     entryButtons:[...body.querySelectorAll('.prof-archive button')].map(b=>b.textContent.trim())};
@@ -155,7 +160,7 @@ await ev(`(()=>{ const t=[...document.querySelectorAll('button')].find(b=>/^sett
 const door2 = await ev(`(()=>{
   const host=document.querySelector('[data-settings-host]');
   if(!host) return {reached:false};
-  const cats=[...host.querySelectorAll('.set-cat')].map(h=>h.textContent.trim());
+  const cats=[...host.querySelectorAll('.set-tab')].map(h=>h.dataset.member);
   const toggle=host.querySelector('.set-row .toggle, .set-row button, .set-row input');
   if(toggle) toggle.click();
   return {reached:true, cats, notice:(host.querySelector('.set-notice')||{}).textContent||''};

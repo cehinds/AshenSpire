@@ -291,37 +291,39 @@ const SUB_SURFACE_GROUPS = [
     reach: (id) => ({
       query: '',
       landmark: '.set-body',
+      // #90: the categories are a TAB STRIP now, not six headings down one
+      // column, so the drive CLICKS instead of scrolling. This is the harness
+      // following the surface, which is the point of driving a control rather
+      // than photographing a coordinate — a scrollIntoView on a heading that no
+      // longer exists would have failed LOUD, and did.
       drive: `(() => {
         const btn = [...document.querySelectorAll('button')].find((b) => /settings/i.test(b.textContent));
         if (!btn) return 'no Settings button on the title screen';
         btn.click();
-        const h = [...document.querySelectorAll('.set-cat')].find((e) => e.textContent.trim() === ${q(id)});
-        if (!h) return 'no ' + ${q(id)} + ' heading in the settings screen';
-        h.scrollIntoView({ block: 'center' });
+        const t = [...document.querySelectorAll('.set-tab')].find((e) => e.dataset.member === ${q(id)});
+        if (!t) return 'no ' + ${q(id)} + ' tab in the settings screen';
+        t.click();
         return true;
       })()`,
       // Same shape as the overlay's: settingsCategories() is the home of the
       // category LIST, and ROWS[].cat plus renderSettings()'s two special cases
-      // decide what actually appears under each heading. A heading with nothing
-      // under it is a surface that exists in the list and renders nothing.
+      // decide what actually appears in the panel. A tab whose panel is empty
+      // is a surface that exists in the list and renders nothing.
       assert: `(() => {
-        const h = [...document.querySelectorAll('.set-cat')].find((e) => e.textContent.trim() === ${q(id)});
-        if (!h) return 'category heading absent: ' + ${q(id)};
-        const r = h.getBoundingClientRect();
-        if (r.bottom < 0 || r.top > innerHeight) return 'heading still off-screen after scrollIntoView';
-        let n = h.nextElementSibling, text = 0;
-        while (n && !n.classList.contains('set-cat')) { text += (n.innerText || '').trim().length; n = n.nextElementSibling; }
-        if (!text) return 'category ' + ${q(id)} + ' renders a heading and NOTHING under it';
+        const t = [...document.querySelectorAll('.set-tab')].find((e) => e.dataset.member === ${q(id)});
+        if (!t) return 'category tab absent: ' + ${q(id)};
+        if (!t.classList.contains('on')) return 'tab ' + ${q(id)} + ' did not select';
+        if (t.getAttribute('aria-selected') !== 'true') return 'tab ' + ${q(id)} + ' is on but not aria-selected';
+        const r = t.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > innerHeight) return 'tab off-screen: ' + ${q(id)};
+        const p = document.querySelector('.set-panel');
+        if (!p) return 'no settings panel';
+        if (!(p.innerText || '').trim().length) return 'category ' + ${q(id)} + ' selected its tab and its panel is EMPTY';
         return true;
       })()`,
       probe: `(() => {
-        const h = [...document.querySelectorAll('.set-cat')].find((e) => e.textContent.trim() === ${q(id)});
-        if (!h) return null;
-        // The section is the run of siblings up to the next heading — the same
-        // span the assert walks, so the two agree about what "this category" is.
-        let n = h.nextElementSibling, html = '';
-        while (n && !n.classList.contains('set-cat')) { html += n.outerHTML; n = n.nextElementSibling; }
-        return ${SIG_FN}(html);
+        const p = document.querySelector('.set-panel');
+        return p ? ${SIG_FN}(p.innerHTML) : null;
       })()`,
     }),
   },

@@ -624,7 +624,66 @@ body.hide-hints .hint-bar { display: none; }
 .go-actions { display: flex; gap: 1.2rem; align-items: center; }
 
 /* ---------- settings modal ---------- */
-.settings-modal { min-width: 36rem; }
+/* `height`, not just `min-width` — and it is a Sunna call with a measured
+   reason, not tidiness. With the sections drawn as TABS the modal is auto-height
+   and vertically centred, so a one-row section (Advanced) collapsed it and the
+   whole tab strip jumped: 174.54 device px at 390x844 and 141.22 at 1200x730,
+   measured across all six sections. A control that MOVES AFTER YOU PRESS IT is
+   what makes a tired hand mis-tap the next one, and it is the defect this whole
+   change exists to remove, reintroduced one layer up.
+   The cost is stated: a short section now sits above empty space. Stability wins
+   — empty space is calm, a jumping strip is not.
+   80% matches `.modal`'s own max-height, resolved against the same containing
+   block (`.modal-veil`, fixed inset:0) — one space, one number, and NOT `vh`
+   (Law 2, and the comment on .modal says why that distinction is load-bearing
+   here). */
+.settings-modal { min-width: 36rem; height: 80%; }
+
+/* The settings SECTION TABS (Sunna, EldenSpire#90). Six sections used to be six
+   headings down one scrolling column: one name on screen at open, AUDIO 1848px
+   below DISPLAY at 390/Text M, five thumb-drags to the last section and eight
+   at Text XL — and six drags at 1200x730, so it was never only a phone.
+
+   STICKY, and that is the load-bearing line rather than a nicety. The scroller
+   here is `.modal` (title door) or `.overlay-body` (in-run door), and a strip
+   that scrolls away with the rows puts the taxonomy back out of sight the
+   moment the player reads past the first screenful — which is the defect, not
+   a smaller version of it. `top: 0` sticks it to whichever of those two is the
+   scrolling ancestor; one rule, both doors.
+
+   WRAPS, never scrolls sideways. A horizontally-scrolling strip hides tabs
+   again and hides them worse — off the edge, with no gold heading to even
+   promise they exist. Wrapping costs height and shows all six names.
+
+   Law 4, ratchet on a new write: box geometry in px (padding, gap, radius,
+   border) so Text size grows the LETTERS and the box follows intrinsically;
+   the label's own font-size is the one rem. --tap-floor is 44 device px
+   measured AFTER --ui-zoom (base.css) — the same unit .ov-tab and .choice use,
+   because a finger is the same size on every screen. */
+.set-tabs {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  position: sticky; top: 0; z-index: 2;
+  background: var(--bg-raise);
+  padding: 2px 0 8px; margin-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.set-tabs .set-tab {
+  padding: 6px 12px; border-radius: 8px;
+  font-size: 1.2rem; letter-spacing: 0.05em;
+  background: var(--bg); border: 1px solid var(--line-soft); color: var(--muted);
+  cursor: pointer;
+  min-height: var(--tap-floor);
+  display: inline-flex; align-items: center;
+}
+.set-tabs .set-tab:hover { color: var(--parchment); }
+/* THREE CHANNELS on the selected tab — fill, border colour, label colour — for
+   the same reason the overlay strip carries three: an accent-only answer dies
+   for a colourblind player, and --gold is rewritten from balance.ui when a
+   player picks Crimson, so hue alone is not a constant either. */
+.set-tabs .set-tab.on {
+  color: var(--gold); border-color: var(--gold); background: var(--bg-raise);
+  font-weight: 600;
+}
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 1rem 0; border-bottom: 1px solid var(--line-soft); }
 .set-row b { color: var(--parchment); font-size: 1.3rem; }
 .set-note { color: var(--muted); font-size: 1.1rem; margin-top: 0.3rem; max-width: 23rem; line-height: 1.4; }
