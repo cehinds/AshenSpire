@@ -63,19 +63,30 @@ export function rungHeight(rung) {
 /* --------------------------------------------------------------- the mode -- */
 
 /**
- * The two map modes, and `path` is the default — the game exactly as it shipped.
+ * The two map modes. `fog` IS THE GAME NOW — Constantine, 2026-08-08: "ok, the
+ * fog needs to be the default".
  *
- * THE COMPARISON IS THE DELIVERABLE, NOT THE ANSWER. Constantine asked for "a
- * debug mode to toggle between the current path mode and the suggested adventurer
- * fog of war node approach so I can try each and decide", and the toggle lives in
- * Settings → Display rather than in Custom Climb — Marina's ruling, reversed from
- * Custom Climb on the argument that Settings is the only surface reachable WHILE
- * YOU ARE LOOKING AT THE THING YOU ARE JUDGING. Custom Climb gets nothing new:
- * fog cannot be A/B'd mid-run, because once you have seen the map you cannot
- * unsee it, so the A/B is its existing seed field plus this toggle.
+ * WHAT THIS TOKEN USED TO SAY, AND WHY IT WAS WRONG IN EXACTLY ONE WAY. It said
+ * `path`, and the reasoning under it was Sunna's and mine and it was sound:
+ * NOBODY'S FIRST RUN IS THE EXPERIMENT, and an A/B needs a control. It is also
+ * precisely how he came to open a build, see every node, and be told the fog was
+ * done. A default is not a neutral position — it is the only reading most runs
+ * will ever get, and we shipped the one he had asked us to replace.
+ *
+ * SO ONE THING MOVED AND THE REST STANDS. His word closes the DEFAULT. It does
+ * not close Ruling 1: `path` stays a real, reachable value of the setting and
+ * must keep working byte-for-byte, because the comparison is still the thing he
+ * is judging — it is now reached by choosing it rather than by doing nothing.
+ *
+ * THE COMPARISON IS STILL THE DELIVERABLE. The toggle lives in Settings →
+ * Display rather than in Custom Climb — Marina's ruling, on the argument that
+ * Settings is the only surface reachable WHILE YOU ARE LOOKING AT THE THING YOU
+ * ARE JUDGING. Custom Climb gets nothing new: fog cannot be A/B'd mid-run,
+ * because once you have seen the map you cannot unsee it, so the A/B is its
+ * existing seed field plus this toggle.
  */
 export const MAP_MODES = Object.freeze(['path', 'fog']);
-export const MAP_MODE_DEFAULT = 'path';
+export const MAP_MODE_DEFAULT = 'fog';
 
 /**
  * resolveMapMode(meta) → 'path' | 'fog'.
@@ -117,37 +128,53 @@ export function nodeReading(node, { reveal = false } = {}) {
 /* ------------------------------------------------------------- the light -- */
 
 /**
- * TWO READINGS OF ONE SENTENCE, AND CONSTANTINE PICKS — not me, and not by
- * argument. This is the only thing about the fog that is genuinely undecided,
- * so it is one boolean with both answers photographed rather than a choice made
- * quietly in a function.
+ * HE PICKED, AND THE LOSER IS GONE — Constantine, 2026-08-08: a fork stays lit
+ * once you are past it. The wide reading of "previously visited locations
+ * remain revealed": everything that has EVER been lit stays lit, so the known
+ * ground widens into a cone behind the frontier, the way Elden Ring's
+ * undiscovered map behaves.
  *
- *   `false` — HIS WORDS, ASKED FOR BY NAME: "only next node and all previous
- *             nodes." The trail behind you, the split in front of you, the doors
- *             and the boss. A fork you stood at three floors ago closes again
- *             once you are past it, because its siblings were never *previous
- *             nodes* — you looked at them and did not go.
- *   `true`  — the wider reading of "previously visited locations remain
- *             revealed": everything that has EVER been lit stays lit, so the
- *             known ground widens into a cone behind the frontier. Elden Ring's
- *             undiscovered map behaves this way.
+ * WHAT USED TO BE HERE was `FOG_KEEP_FORKS`, one boolean holding both readings
+ * of his sentence with both answers photographed, and a `mapFogForks` shot flag
+ * to reach the other one. Its own comment promised that "the day he picks one
+ * this constant and the flag both DIE — the loser is deleted, not left as an
+ * option nobody chose." He picked. They are deleted, both of them, and this
+ * paragraph is the receipt rather than a third state.
  *
- * BOTH KEEP THE TRAIL. Neither ever re-fogs a node the player stood on; they
- * differ only about the roads not taken. `tools/mapfog.mjs --selftest` asserts
- * the trail clause against both and the wider clause only against `true`, which
- * is the honest shape — asserting one-wayness over everything would have been an
- * instrument enforcing my reading of his sentence.
+ * THE LOSING READING IS NOT LOST, IT IS DEMOTED. It lives on in
+ * `tools/mapfog.mjs` as a MUTANT — "the trail, but the roads not taken re-fog" —
+ * where it used to be a legal cell of the sweep. That is the right home for a
+ * reading we deliberately do not ship: something the instrument must catch, not
+ * something the game can be talked into.
  *
- * NOT ON THE SETTINGS DIAL, deliberately: he asked for one A/B (path vs fog) and
- * a second dial would make the first one harder to judge. It is reachable for
- * the camera as `?shotSettings={"mapMode":"fog","mapFogForks":true}`, and the
- * day he picks one this constant and the flag both DIE — the loser is deleted,
- * not left as an option nobody chose.
+ * WHAT MAKES THE PROMISE BELOW TRUE, and it is structure rather than a value:
+ * `run.path` only grows, and `litNodes` shines every node in it, so the lit set
+ * is monotone BY CONSTRUCTION. `--selftest` asserts that unconditionally now
+ * (it used to assert it only on the `+forks` half of the corpus), so the
+ * sentence has a check that can go red rather than a boolean it agrees with.
  */
-export const FOG_KEEP_FORKS = false;
 
 /**
- * litNodes({ graph, run, keepForks }) → Set of ids the fog is not covering.
+ * FOG_TRAIL_CLAUSE — the ONE sentence the Map-reveal row may promise about what
+ * stays lit, homed beside the function whose behaviour it describes.
+ *
+ * THE ROW WAS LYING, IN PROSE, ON THE SHIPPED BUILD. It read "Fog never closes
+ * behind you — somewhere you have seen stays seen": the wide reading, typed by
+ * hand into a settings string, beside code running the narrow one. Bjorn
+ * measured that promise FALSE on 144 of 156 screens. A sentence and a rule that
+ * disagree is the second copy this house exists to catch, and it survived
+ * because prose is not compiled and nothing could fail on it.
+ *
+ * His answer makes the sentence TRUE — the derivation is what keeps it true, not
+ * what makes it true (Sunna's ruling, 2026-08-08). It is one home, one reader,
+ * and the monotone property in `--selftest` is the thing that can falsify it.
+ * It matters tonight rather than eventually: fog is the DEFAULT now, so this is
+ * the first thing a new player reads about the mode they are already in.
+ */
+export const FOG_TRAIL_CLAUSE = 'Fog never closes behind you — anywhere you have seen stays seen.';
+
+/**
+ * litNodes({ graph, run }) → Set of ids the fog is not covering.
  *
  * THE TRAIL IS STICKY, AND THAT IS THE FIXED PART OF THIS FUNCTION.
  *
@@ -155,8 +182,10 @@ export const FOG_KEEP_FORKS = false;
  *
  * The "but" is the instruction: a pure flashlight — dark the moment you step
  * past — is the thing being corrected. So a node the player has STOOD ON never
- * goes dark again, under either reading of `keepForks`, and this function is
- * monotone over `run.path` by construction rather than by promise.
+ * goes dark again, and neither does anything that node ever lit: `run.path` only
+ * grows and every element of it is shone, so this function is monotone by
+ * CONSTRUCTION rather than by promise. That is what makes `FOG_TRAIL_CLAUSE`
+ * true above, and `--selftest` asserts it over the whole corpus.
  *
  * FOUR SOURCES, each one clause of the ask:
  *
@@ -166,7 +195,9 @@ export const FOG_KEEP_FORKS = false;
  *                    no penumbra, which is the ask read literally. A penumbra is
  *                    a second argument to this function and nothing else; the
  *                    ladder already holds the rung for it (`placed`).
- *                    With `keepForks`, the splits of every EARLIER path node too.
+ *                    And the splits of every EARLIER path node too — his answer
+ *                    of 2026-08-08, so the known ground widens into a cone
+ *                    behind the frontier instead of closing at the forks.
  *   the doors        every entrance, for the whole act. Before the first move
  *                    they ARE the split.
  *   the end          the boss. "when the act starts it show the start node and
@@ -182,7 +213,7 @@ export const FOG_KEEP_FORKS = false;
  * history is replayed from `run.path`, which already persists: fog survives a
  * save/load with no new field, no migration, and nothing to drift.
  */
-export function litNodes({ graph, run, keepForks = FOG_KEEP_FORKS }) {
+export function litNodes({ graph, run }) {
   const lit = new Set();
   if (!graph || !graph.nodes) return lit;
   const add = (id) => { if (id && graph.nodes[id]) lit.add(id); };
@@ -197,7 +228,7 @@ export function litNodes({ graph, run, keepForks = FOG_KEEP_FORKS }) {
   for (const id of (graph.startIds || [])) add(id);
   add(graph.bossId);
   const path = (run && run.path) || [];
-  for (const id of path) { if (keepForks) shine(id); else add(id); }
+  for (const id of path) shine(id);
   // Belt and braces: in play `mapNodeId` is always the last element of `path`
   // (`enterNode` pushes it), but `?shotAt` poses a node without a history and a
   // hand-edited save could too. Standing somewhere always lights it AND its split.
@@ -221,14 +252,14 @@ export function litNodes({ graph, run, keepForks = FOG_KEEP_FORKS }) {
  * bottom rung empty, which is the proof the collapse was real rather than a
  * branch wearing a ladder's name (Bjorn's criterion, from the legend).
  */
-export function mapKnowledge({ graph, run, mode = MAP_MODE_DEFAULT, reveal = false, keepForks = FOG_KEEP_FORKS }) {
+export function mapKnowledge({ graph, run, mode = MAP_MODE_DEFAULT, reveal = false }) {
   const rung = new Map();
   const drawn = new Set();
   const counts = { hidden: 0, placed: 0, known: 0 };
   if (!graph || !graph.nodes) return { mode, rung, drawn, counts };
 
   const fog = mode === 'fog';
-  const lit = fog ? litNodes({ graph, run, keepForks }) : null;
+  const lit = fog ? litNodes({ graph, run }) : null;
 
   for (const node of Object.values(graph.nodes)) {
     let r;

@@ -17,7 +17,23 @@ try {
   console.warn('  (no art manifest — test 33 will skip; run tools/equipment-blender.py)');
 }
 
-const { passed, failed, results } = await runTests({ artManifest });
+// THE FILESYSTEM, HANDED IN RATHER THAN IMPORTED — same reason as the manifest
+// above: engine.test.js also runs in tests/index.html, where there is no `fs`,
+// and an import of `node:fs` in that file would take the browser harness down
+// entirely. Test 49 asks this whether a path the game CONSTRUCTS resolves to a
+// real file; in the browser it is null and the test skips loudly.
+let assetExists = null;
+try {
+  const { existsSync } = await import('node:fs');
+  const { resolve, dirname } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  assetExists = (rel) => existsSync(resolve(root, rel));
+} catch {
+  console.warn('  (no filesystem — test 49 will skip)');
+}
+
+const { passed, failed, results } = await runTests({ artManifest, assetExists });
 for (const r of results) {
   const tag = r.skipped ? 'SKIP' : r.ok ? 'PASS' : 'FAIL';
   console.log(`${tag}  ${r.name}${r.detail ? ` — ${r.detail}` : ''}`);

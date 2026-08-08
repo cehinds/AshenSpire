@@ -6,9 +6,31 @@
    than an overlay (EldenSpire#28; see .map-zoom). Restoring it re-arms nothing
    by itself, but it is the anchor the next overlay would reach for, so the
    absence is the note. */
+/* The box the scrollport and its overlay share. It exists so the vignette has
+   something to be bounded BY (Law 2 — every positioned element names its
+   container): `inset: 0` against this, never against the viewport, so there is
+   no shape at which it covers a control that is not the map. `min-height: 0` is
+   the flex-item clamp the scrollport needs to be allowed to shrink — without it
+   a tall canvas pushes the zoom bar off the bottom. */
+.mapscreen .map-frame { position: relative; flex: 1; display: flex; min-height: 0; min-width: 0; }
 .mapscreen .map-scroll {
   flex: 1; overflow: auto;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+/* THE UNLIT GROUND IS A LANTERN, NOT A FIELD. Fog-only, decorative, and inert:
+   it takes no pointer events, so it cannot repeat #28's untappable nodes, and
+   tools/mapreach.mjs is what proves that. In px because a vignette must NOT
+   track text size (Law 2 rule 3, Law 4 clause 3) — it is not a box that holds
+   text, it is light. */
+.mapscreen.map-fog .map-vignette {
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background: radial-gradient(ellipse 78% 58% at 50% 46%, rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.72) 100%);
+}
+/* The reduced-motion class already means "less spectacle"; a heavy vignette is
+   spectacle for anyone who finds the screen busy, so it lightens rather than
+   disappears — the paper still needs an edge. */
+.reduced-motion .mapscreen.map-fog .map-vignette {
+  background: radial-gradient(ellipse 85% 68% at 50% 46%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.45) 100%);
 }
 .mapscreen .map-scroll.grabbing { cursor: grabbing; }
 .mapscreen .map-scroll::-webkit-scrollbar { width: 1.2rem; height: 1.2rem; }
@@ -104,7 +126,16 @@
   animation: reachStroke 1.4s ease-in-out infinite alternate;
 }
 @keyframes reachStroke { from { stroke-opacity: 0.7; } to { stroke-opacity: 1; } }
-/* rhythmic pulsing halo — the strong "go here next" cue */
+/* rhythmic pulsing halo — the strong "go here next" cue.
+
+   `--halo-peak` IS THE WIDEST THIS RING EVER PAINTS, and it is a custom property
+   because the camera has to know it. The entrance frame pads its box by the
+   halo's painted reach so the ring is not sliced by the screen edge, and it was
+   wrong by exactly this factor on its first draft: I padded for scale 1 and
+   tools/mapreach.mjs went red at 3 cells, because a node's rect is what it
+   PAINTS and this one paints 35% wider than its own radius eight times a
+   second. One home, two readers (the keyframe below, and mountMap). */
+.mapscreen { --halo-peak: 1.35; }
 .map-node .node-halo {
   fill: none; stroke: var(--gold); stroke-width: 2.5;
   transform-box: fill-box; transform-origin: center;
@@ -112,7 +143,7 @@
 }
 @keyframes haloPulse {
   0% { stroke-opacity: 0.55; transform: scale(0.9); }
-  50% { stroke-opacity: 0; transform: scale(1.35); }
+  50% { stroke-opacity: 0; transform: scale(var(--halo-peak)); }
   100% { stroke-opacity: 0.55; transform: scale(0.9); }
 }
 .map-node.reachable:hover circle:not(.node-halo) { fill: #2e2517; stroke: var(--gold); }
@@ -149,7 +180,14 @@
 .map-fog-ground rect {
   fill: var(--fog-parchment, #17130d);
 }
-.map-fog-ground image { opacity: 0.55; }
+/* THE PLATE IS TEXTURE, NOT COLOUR — it is generated grey (tools/parchment.mjs)
+   and `soft-light` is what makes that a promise rather than a hope: a 50% grey
+   pixel changes nothing, so the per-act tone above stays the ONE home for the
+   colour and the plate can only add grain, fibre and blotch on top of it. Swap
+   the blend for `normal` and the sheet would paint its own grey over his act
+   tone — which is precisely what my first draft did, photographed: the map read
+   as flat concrete. */
+.map-fog-ground image { opacity: 1; mix-blend-mode: soft-light; }
 /* Three acts, three washes. Deliberately close to each other and to the panel
    colour — the ground is meant to read as "nothing legible here", not as a
    feature competing with the nodes drawn on top of it. */

@@ -166,15 +166,40 @@ export function backdropClass(actNumber) {
 // a run would silently change the art. A tunable that moves a thing its turner
 // was not thinking about is exactly clause 5's silent-plausible-derivation.
 //
-// UNTIL THE ART EXISTS THE GROUND IS A DERIVED PLACEHOLDER and the screen says
-// so rather than this comment: `.map-fog-ground` in styles/map.css is a flat
-// parchment wash with a vignette, keyed by act, and the `<image>` above it
-// resolves to nothing while the file is absent. FREJA OWNS THE ACTUAL LOOK. What
-// ships here is the STRUCTURE — the layer, the name, the per-act key — so her
-// three files are the whole of her change.
+// ~~UNTIL THE ART EXISTS THE GROUND IS A DERIVED PLACEHOLDER and the screen says
+// so rather than this comment~~ — STRUCK 2026-08-08 by Sunna. It did not say so.
+// The three files NEVER EXISTED, the `<image>` resolved to nothing exactly as
+// this paragraph promised, and what a player got under fog was a flat wash: no
+// paper, no grain, no border, on a screen that is 95% ground. A missing thing
+// that renders as "fine, just flat" is invisible, and this one was invisible for
+// as long as the hook has existed.
+//
+// THE PLATES NOW EXIST AND ARE GENERATED, on Constantine's standing constraint
+// ("no billing, keep everything free"): `tools/parchment.mjs` writes three
+// feTurbulence sheets — blotch, fibre, grain — about two kilobytes each, from
+// the plate INDEX and nothing else. The refusal above is untouched and still
+// binds: the only input is the index, never the graph, so no knob he turns to
+// shorten a run can move the paper.
+//
+// THE PER-ACT TONE IS STILL CSS'S AND THE PLATES CARRY NO COLOUR — one home for
+// that datum (`--fog-parchment`), one reader that paints it, one grey texture
+// laid over it. FREJA STILL OWNS THE ACTUAL LOOK: these are the same three
+// filenames, so authored art replaces them by overwriting, and nothing else in
+// the tree moves.
 export const PARCHMENT_ACTS = balance.ui.parchmentActs;
+/**
+ * THE PLATE'S FILE TYPE, one home and one token.
+ *
+ * `.svg` because the plate has to EXIST and that is the medium this repo can
+ * generate for free (`tools/parchment.mjs`). It is a const rather than a
+ * literal in the template below because the day authored `.webp` plates land,
+ * the whole of that change should be this line plus three files — and because a
+ * literal here would be a second copy of a fact `tools/parchment.mjs`,
+ * `tools/bundle.mjs`'s MIME table and the act-plate test all depend on.
+ */
+export const PARCHMENT_EXT = '.svg';
 export function parchmentAsset(actNumber) {
-  return `assets/map/parchment_act${actPlate(actNumber, PARCHMENT_ACTS)}.webp`;
+  return `assets/map/parchment_act${actPlate(actNumber, PARCHMENT_ACTS)}${PARCHMENT_EXT}`;
 }
 export function parchmentClass(actNumber) {
   return `parch-${actPlate(actNumber, PARCHMENT_ACTS)}`;
