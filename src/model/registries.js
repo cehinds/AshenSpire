@@ -6,7 +6,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { REGISTRY_TYPES } from './schemas.js';
+import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { applyCardMods } from './loadout.js';
 
 /** Recursively freeze a value in place (functions and frozen values skipped). */
@@ -121,10 +121,27 @@ export function createRegistries(contentBundle) {
 
 // ---------------------------------------------------------------------------
 // Relic passives (SPEC PASSIVE_KEYS) — data lookups over owned relic defs.
+//
+// The key is a string typed at nine call sites and a mis-typed one returns
+// 1 / 0 / false — a defect that behaves exactly like a relic whose passive is
+// simply not very good. PASSIVE_KEYS says which strings are real, so it does the
+// saying: named once, with the legal set, and the caller still gets its default
+// rather than a thrown boot. Until this the set had NO reader in the whole tree
+// (tools/closedsets.mjs) — the vocabulary was decoration while the relic
+// schema's hand-typed copy was the law.
 // ---------------------------------------------------------------------------
+
+const PASSIVE_SET = new Set(PASSIVE_KEYS);
+const unknownPassives = new Set();
+function knownPassive(key) {
+  if (PASSIVE_SET.has(key) || unknownPassives.has(key)) return;
+  unknownPassives.add(key);
+  console.error(`[passives] '${key}' is not a relic passive — it will always read as the default. Legal: ${PASSIVE_KEYS.join(', ')}`);
+}
 
 /** Product of a multiplicative passive across owned relics (default 1). */
 export function passiveMult(registries, relicIds, key) {
+  knownPassive(key);
   let m = 1;
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
@@ -135,6 +152,7 @@ export function passiveMult(registries, relicIds, key) {
 
 /** Sum of an additive passive across owned relics (default 0). */
 export function passiveSum(registries, relicIds, key) {
+  knownPassive(key);
   let s = 0;
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
@@ -145,6 +163,7 @@ export function passiveSum(registries, relicIds, key) {
 
 /** True if any owned relic sets the boolean passive. */
 export function passiveFlag(registries, relicIds, key) {
+  knownPassive(key);
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
     if (p && p[key] === true) return true;

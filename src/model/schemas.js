@@ -160,17 +160,29 @@ export const PASSIVE_KEYS = Object.freeze([
 //   blockCap            — number: hard cap on owner's total block (max of caps wins).
 //   meterMaxGrowthDisabled — bool: while ANY combatant has it, meter thresholds
 //                            (status meters and poise) do not grow on fill.
-export const MODIFIER_KEYS = Object.freeze([
-  'damageDealtMult',
-  'damageTakenMult',
-  'blockGainedMult',
-  'attackDamageAdd',
-  'blockAdd',
-  'skipTurn',
-  'retainBlock',
-  'blockCap',
-  'meterMaxGrowthDisabled',
-]);
+//
+// THE SET AND THE SCHEMA WERE TWO COPIES AND ONLY ONE OF THEM ENFORCED
+// ANYTHING — the same shape as the relic passives, found by tools/closedsets.mjs
+// rather than by eye. `MODIFIER_KEYS` was a frozen list whose only mention in
+// the tree was an import into validate.js that used it for nothing, while
+// `modifiersSchema` below re-typed the same nine names by hand and did the
+// actual refusing. So the types come here, the list is derived from them, the
+// schema is built from the same object, and the engine's lookups check against
+// it (engine/statuses.js): adding a modifier is one row, and the three cannot
+// disagree about what exists.
+export const MODIFIER_TYPES = Object.freeze({
+  damageDealtMult: 'num',
+  damageTakenMult: 'num',
+  blockGainedMult: 'num',
+  attackDamageAdd: 'num',
+  blockAdd: 'num',
+  skipTurn: 'bool',
+  retainBlock: 'bool',
+  blockCap: 'num',
+  meterMaxGrowthDisabled: 'bool',
+});
+
+export const MODIFIER_KEYS = Object.freeze(Object.keys(MODIFIER_TYPES));
 
 export const STACK_MODES = Object.freeze(['add', 'refresh', 'unique']);
 
@@ -311,17 +323,12 @@ const floorAnchor = (extra = {}) => obj({
 
 const costNode = union(int, en('X'));
 
-const modifiersSchema = obj({
-  damageDealtMult: opt(num),
-  damageTakenMult: opt(num),
-  blockGainedMult: opt(num),
-  attackDamageAdd: opt(num),
-  blockAdd: opt(num),
-  skipTurn: opt(bool),
-  retainBlock: opt(bool),
-  blockCap: opt(num),
-  meterMaxGrowthDisabled: opt(bool),
-});
+// DERIVED FROM MODIFIER_TYPES, never re-typed. `obj` is strict about unknown
+// keys, so this node is what actually refuses a mis-spelled modifier — which is
+// exactly why it must not be a second list.
+const modifiersSchema = obj(Object.fromEntries(
+  Object.entries(MODIFIER_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
+));
 
 const enemyMoveSchema = obj({
   intent: en(...INTENT_KINDS),
