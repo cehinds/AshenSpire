@@ -10554,6 +10554,46 @@ const unlocks = [
     "param": 2,
     "reveal": "listed",
     "hint": "Reach the Stitched Court."
+  },
+  {
+    "id": "rack2Right",
+    "kind": "slot",
+    "ref": "rightHand",
+    "name": "Second Rack Slot",
+    "condition": "reachAct",
+    "param": 2,
+    "reveal": "listed",
+    "hint": "Reach the Stitched Court."
+  },
+  {
+    "id": "rack3Right",
+    "kind": "slot",
+    "ref": "rightHand",
+    "name": "Third Rack Slot",
+    "condition": "winRuns",
+    "param": 1,
+    "reveal": "listed",
+    "hint": "Win a run."
+  },
+  {
+    "id": "rack2Left",
+    "kind": "slot",
+    "ref": "leftHand",
+    "name": "Second Off-hand Slot",
+    "condition": "reachAct",
+    "param": 3,
+    "reveal": "listed",
+    "hint": "Reach the Ashen Crown."
+  },
+  {
+    "id": "rack3Left",
+    "kind": "slot",
+    "ref": "leftHand",
+    "name": "Third Off-hand Slot",
+    "condition": "winRuns",
+    "param": 2,
+    "reveal": "listed",
+    "hint": "Win two runs."
   }
 ];
 
@@ -13008,7 +13048,244 @@ function validateEquipment(registries) {
       problems.push(`class '${classId}' has ${starting.length} starting armour sets (need exactly 1)`);
     }
   }
+  // The ladder's one join, and it dangles the way every join dangles: a rung
+  // naming a slot that is not there. Law 1 clause 5 — fail loud, name the
+  // entry, and print what the author could have meant. `registries.unlocks` is
+  // absent in the partial-registry call sites (tests), and an absent table is
+  // "no rungs", not a defect.
+  for (const u of registries.unlocks || []) {
+    if (u.kind !== SLOT_RUNG_KIND) continue;
+    if (!(eq.slots || []).some((s) => s.id === u.ref)) {
+      problems.push(
+        `unlocks.csv row '${u.id}' is a ${SLOT_RUNG_KIND} rung whose ref '${u.ref}' is not a slot — `
+        + `equipSlots.csv has ${(eq.slots || []).map((s) => `'${s.id}'`).join(', ') || '(none)'}`
+      );
+    }
+  }
+  // THE LADDER'S JOIN, CHECKED IN BOTH DIRECTIONS — and the second direction is
+  // Vira's finding at gate. The first draft only asked whether there were too
+  // MANY rungs; too FEW is the silent one, and it is exactly Law 0 clause 5:
+  // `talisman` declares 3 sets, authors 0 rungs, derives 1 forever, and every
+  // instrument stays green while two thirds of a declared slot are unreachable.
+  // Nothing wrong is printed because nothing wrong happens — the screen simply
+  // never draws them. That is a generated result that is wrong but reasonable.
+  //
+  // THE CARVE-OUT IS THE FILE'S OWN, NOT A NEW ONE: a slot matching no piece by
+  // kind is authored ahead of its content (talismans today) and is not this
+  // defect — the same sentence the empty-slot check above already makes. So this
+  // fires the day a talisman row exists, which is the day the gap becomes real.
+  for (const slot of eq.slots || []) {
+    const rungs = slotRungs(registries, slot.id);
+    const cap = Math.max(1, Number(slot.sets) || 1);
+    if (1 + rungs.length > cap) {
+      problems.push(
+        `slot '${slot.id}' carries ${cap} set(s) but unlocks.csv authors ${rungs.length} rung(s) for it `
+        + `(${rungs.map((r) => `'${r.id}'`).join(', ')}) — a rung past the last set can never be climbed to; `
+        + `raise \`sets\` on that row in equipSlots.csv or drop a rung`
+      );
+    }
+    // AND IT ONLY FIRES WHEN THE TABLE IS THERE TO BE READ. `slotRungs` treats a
+    // missing `registries.unlocks` as "no rungs", which is safe for the
+    // too-MANY direction (zero can never exceed a cap) and is a lie in this one:
+    // a partial registry would be told every multi-set slot is unreachable, when
+    // the truth is that this check has nothing to check against. **Absent is not
+    // zero.** A run that cannot know says nothing rather than something false.
+    const knowable = Array.isArray((registries || {}).unlocks);
+    if (knowable && 1 + rungs.length < cap && pieces.some((p) => (slot.kinds || []).includes(p.kind))) {
+      problems.push(
+        `slot '${slot.id}' declares ${cap} sets but only ${1 + rungs.length} can ever open `
+        + `(1 free + ${rungs.length} rung(s) in unlocks.csv) — the other `
+        + `${cap - 1 - rungs.length} would never be reachable; add a rung with `
+        + `kind='${SLOT_RUNG_KIND}' ref='${slot.id}' or lower \`sets\` in equipSlots.csv`
+      );
+    }
+  }
   return problems;
+}
+
+// ---------------------------------------------------------------------------
+// WHAT IS YOURS — one predicate, one home (EldenSpire#90)
+// ---------------------------------------------------------------------------
+//
+// Constantine: *"as for weapons, I should only see an inventory of the weapons
+// I've collected for that character's profile. so, if I only have my starting
+// weapon and a scimitar, I should only see those options."*
+//
+// The armoury was a CATALOGUE PRETENDING TO BE AN INVENTORY: the right-hand
+// picker opened 17 chips with 16 of them locked, and the only act available on
+// turn one was "Bare". The fix is not a better lock icon. It is that a thing you
+// do not have is not an option.
+//
+// THE COLLAPSE, which is why this lives here and not in the screen. "May I have
+// this?" was answered THREE TIMES, all three inside one function in a UI file,
+// with three different renderings:
+//
+//   unlock + meta.unlocked           → a locked chip with the unlock's hint
+//   unlock + reveal:'hidden'         → dropped from the list
+//   drops.requireFound + meta.found  → a locked chip with a sentence hardcoded
+//                                      in the screen
+//
+// One fact — is this piece mine — written three ways, none of them where the
+// MUTATION lives. So the picker was the only thing enforcing it, and it enforced
+// it by not attaching a click handler. Measured at 77a02b9, before this change:
+//
+//     equipPiece(R, createLoadout(R,'reaver'), 'rightHand', 0, 'greatsword')
+//     → true, on a profile that has never found a greatsword.
+//
+// A gate only a view holds is not a gate — the same sentence already written
+// above equipPiece, about the same function, for a different check. Filtering
+// the chip out WITHOUT this would have made ownership LESS enforced while
+// looking stricter, because absence would be the only guard left. That is the
+// direction my seat is meant to fail in and it is named rather than discovered.
+//
+// TWO ROUTES, AND THEY ARE NOT A TEST ON `kind`. A piece is yours because you
+// EARNED it (a condition — `unlock`) or because you FOUND it (a pickup —
+// `drops.requireFound`). Which route applies is a fact about where the piece
+// comes from: only pieces the drop table can produce can be found, and the drop
+// table draws from armaments. The screen used to ask `piece.kind !== 'armor'`
+// directly, which is an `if` on a content value below the content layer (Law 1
+// clause 3) that happens to be correct today because every one of the 16
+// armaments has `unlock: ''` and every armour row has one. A coincidence of the
+// data, not a rule — so it is written here as the pool question it actually is.
+
+/** Can this piece turn up as a drop? Only the drop pool answers to requireFound. */
+function fromDropPool(piece) {
+  return !!piece && piece.kind !== 'armor';
+}
+
+/**
+ * ownership(registries, { meta, loadout }) → { has(piece) }
+ *
+ * The one predicate. A PIECE, not an id: armour ids repeat across classes
+ * ("`id` is unique per class, not globally"), so an id set would say the Reaver
+ * owns the Starseer's habit.
+ */
+function ownership(registries, { meta = {}, loadout = null } = {}) {
+  const cfg = ((registries || {}).balance || {}).equipment || {};
+  const drops = cfg.drops || {};
+  const unlocked = new Set(meta.unlocked || []);
+  // `persistence` decides what counts as found: what this run picked up, what
+  // the profile has ever held, or both (the default — a climb that ends badly
+  // still widens the wardrobe).
+  const found = new Set([
+    ...(cfg.persistence !== 'perRun' ? meta.found || [] : []),
+    ...(cfg.persistence !== 'unlocked' ? carriedIds(loadout) : []),
+  ]);
+  return {
+    has(piece) {
+      if (!piece) return false;
+      if (piece.unlock !== '' && piece.unlock != null) return unlocked.has(piece.unlock);
+      if (fromDropPool(piece) && drops.requireFound) return found.has(piece.id);
+      return true;
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// THE SLOT LADDER — three states, and NOT a three-valued field (EldenSpire#90)
+// ---------------------------------------------------------------------------
+//
+// Constantine: *"starts with slots locked (but only shows the next locked
+// thing). so for weapon slots, it may start with just 1 with the second one
+// shows a locked icon, but the third one doesn't show until the second is
+// unlocked."*
+//
+// THE OBVIOUS FORM IS A THREE-VALUED FIELD PER CELL AND IT IS #78 AGAIN. A
+// closed set of `open|next|hidden` written on each cell is a closed set PER
+// CELL, so the vocabulary is the PRODUCT over cells — and that product is full
+// of things nobody built: a ladder with two locked steps, a hidden cell BEFORE
+// an open one, a slot with no open cell at all. Marina's property, house-wide:
+// A CLOSED SET MUST STAY CLOSED UNDER WHATEVER FACTORISATION REPLACES IT.
+//
+// SO THE STATES ARE A DERIVATION, NOT A VOCABULARY. There is exactly one number
+// — how many sets of this slot are open — and the three states are arithmetic
+// on it against the cell's index. Out-of-order and two-locked are not invalid,
+// they are UNREPRESENTABLE, which is the stronger thing and the same move as
+// #91's `subject` pointer. Nothing here is authored per cell, so there is
+// nothing for an author to write and therefore nothing to fall out of the set.
+//
+// AND THE NUMBER IS NOT A NEW SAVE KEY EITHER. A rung is something you EARN, and
+// this game already has one home for earned things: `meta.unlocked`, filled by
+// evaluateUnlocks from unlocks.csv. A rung is a ROW there — `kind` is already a
+// column, and **the EARNING path never reads it**: `evaluateUnlocks` tests
+// `condition` against progress and returns ids, so a new `kind` value is earned
+// with no engine change at all (Law 0 clause 2). What is new is the CONSUMER,
+// and that is this file: one word, one act, schema-free.
+//
+// *(Corrected by Vira at gate: the first draft of this comment said "nothing in
+// the tree branches on its value", and `slotRungs` two screens down branches on
+// it in the same commit that shipped the sentence. It was true of the earning
+// path and false of the tree, and the difference is the whole claim — so it now
+// says which path it is talking about.)*
+//
+//     id,kind,ref,name,condition,param,reveal,hint
+//     rack2,slot,rightHand,Second Rack Slot,reachAct,2,listed,Reach the Stitched Court.
+//
+// A "TURN ONE" LADDER THAT NOTHING CAN CLIMB WOULD BE A REFUSAL WITH NO REASON.
+// The next cell is shown only when a rung exists that would open it — so a slot
+// with no rungs authored shows its open cells and stops, and refuses(){} is
+// never asked to mark a control whose reason is the empty string. The reason a
+// locked cell gives IS that rung's own `hint`, which is content. No sentence
+// about locks is written in this file or in the screen.
+
+/** The unlocks.csv `kind` that opens a set slot. One string, one home. */
+const SLOT_RUNG_KIND = 'slot';
+
+/** The rungs of one slot's ladder, in authored order. Rung N opens set N+1. */
+function slotRungs(registries, slotId) {
+  return ((registries || {}).unlocks || [])
+    .filter((u) => u && u.kind === SLOT_RUNG_KIND && u.ref === slotId);
+}
+
+/**
+ * openedSets(registries, slot, { meta, loadout }) → how many sets are USABLE.
+ *
+ * One open always: a slot you cannot use at all is not a slot, it is an absence,
+ * and `sets` already says the slot exists.
+ *
+ * THE LEGACY FLOOR IS THE EDGE THAT WILL ACTUALLY BITE, and it is the state my
+ * change INVENTS. Every loadout written before today has `sets` full-width and
+ * all of it reachable, so a save can hold a weapon in set 3 with zero rungs
+ * earned. Without this line that weapon is in a cell the player cannot see,
+ * still counted by carriedIds, still stamping their deck — a piece stranded
+ * behind a lock that did not exist when they put it there. So the loadout's own
+ * contents raise the floor: what you are already holding is by definition open.
+ */
+function openedSets(registries, slot, { meta = {}, loadout = null } = {}) {
+  const cap = Math.max(1, Number(slot && slot.sets) || 1);
+  const earned = new Set((meta && meta.unlocked) || []);
+  let opened = 1;
+  for (const u of slotRungs(registries, slot.id)) if (earned.has(u.id)) opened += 1;
+  const ids = ((loadout && loadout.sets) || {})[slot.id] || [];
+  for (let i = 0; i < ids.length; i += 1) if (ids[i]) opened = Math.max(opened, i + 1);
+  return Math.min(cap, opened);
+}
+
+/**
+ * visibleSets(...) → how many cells the slot DRAWS: the open ones, plus the one
+ * step ahead when there is a rung left to earn. Exactly one lookahead, because
+ * it is `+1` and not a range.
+ */
+function visibleSets(registries, slot, ctx = {}) {
+  const cap = Math.max(1, Number(slot && slot.sets) || 1);
+  const opened = openedSets(registries, slot, ctx);
+  const ceiling = Math.min(cap, 1 + slotRungs(registries, slot.id).length);
+  return opened < ceiling ? opened + 1 : opened;
+}
+
+/** The rung that would open cell `index`, or null if nothing can. */
+function rungFor(registries, slot, index) {
+  return slotRungs(registries, slot.id)[index - 1] || null;
+}
+
+/**
+ * setCellState(index, opened, visible) → 'open' | 'next' | 'hidden'.
+ * Total, ordered, and derived — the whole closed set, in three comparisons.
+ */
+function setCellState(index, opened, visible) {
+  if (index < opened) return 'open';
+  if (index < visible) return 'next';
+  return 'hidden';
 }
 
 // ---------------------------------------------------------------------------
@@ -13340,12 +13617,57 @@ function canUseStorage({ inCombat = false } = {}) {
 }
 
 /**
- * cycleSet(loadout, slotId, index) → mutates the active set index.
- * Returns false when the slot or index doesn't exist.
+ * cycleSet(registries, loadout, slotId, index, { meta }) → mutates the active
+ * set index. Returns false when the slot, the index, or the LADDER says no.
+ *
+ * VIRA'S GATE OF #90, AND SHE IS RIGHT THAT IT IS THE SAME DEFECT. `equipPiece`
+ * above carried a comment claiming the gate was on the mutation; #90 proved that
+ * sentence was about `fitsSlot` and had never been true of ownership, and moved
+ * the gate. **This function was three functions below it, in the same file, in
+ * the same commit, still bounding on `ids.length` — the raw array — while
+ * `openedSets()` shipped directly above it already knowing the answer.** So the
+ * ladder's gate was in the screen: the exact arrangement the commit spent itself
+ * disproving. A truth function written in the same act is not a follow-up.
+ *
+ * Measured at `c43c908`, her falsifier, before this change: fresh profile,
+ * `openedSets 1 · cycleSet accepts 3` on every multi-set slot — **6 of 13
+ * (slot, index) pairs.**
+ *
+ * THE BOUND IS `openedSets()` AND NEVER `1 + rungs earned`, which is her edge 2
+ * and the reason this is not "just add a comparison". A save from before today
+ * has `sets` full-width with pieces already in the last cell and no rungs
+ * earned; `openedSets` raises its floor to what the loadout is already holding,
+ * on purpose. A bound that recomputed the ladder from the rungs alone would
+ * strand a legacy player's weapon behind a lock that did not exist when they put
+ * it there — worse than the defect. **One truth function, two consumers**: the
+ * screen draws what `openedSets` opens and this refuses what it does not, so the
+ * two cannot disagree about a cell.
+ *
+ * `registries` moves to the front like everything else in this module, which is
+ * also what makes a call site left on the old signature fail CLOSED: the old
+ * first argument was a loadout, `registries.equipment.slots` is then undefined,
+ * the slot does not resolve, and it cycles nothing and says so.
  */
-function cycleSet(loadout, slotId, index) {
-  const ids = (loadout.sets || {})[slotId];
+function cycleSet(registries, loadout, slotId, index, ctx) {
+  const ids = ((loadout || {}).sets || {})[slotId];
   if (!ids || index < 0 || index >= ids.length) return false;
+  const slot = (((registries || {}).equipment || {}).slots || []).find((s) => s.id === slotId);
+  if (!slot) {
+    console.error(
+      `cycleSet('${slotId}', ${index}): no such slot in registries.equipment — refusing.`
+      + ' Call it as cycleSet(registries, loadout, slotId, index, { meta }).'
+      + ' This line is the defect, not the refusal.'
+    );
+    return false;
+  }
+  if (!ctx || typeof ctx !== 'object') {
+    console.error(
+      `cycleSet('${slotId}', ${index}): called with no ladder context — refusing.`
+      + ' Pass { meta } so the bound is openedSets() and not the raw array.'
+    );
+    return false;
+  }
+  if (index >= openedSets(registries, slot, { meta: ctx.meta || {}, loadout })) return false;
   loadout.active[slotId] = index;
   return true;
 }
@@ -13378,7 +13700,7 @@ function carriedIds(loadout) {
 }
 
 /**
- * equipPiece(registries, loadout, slotId, setIndex, itemId) → boolean.
+ * equipPiece(registries, loadout, slotId, setIndex, itemId, owned) → boolean.
  * Put a piece id into a specific set of a slot; `null` clears it.
  *
  * The gate is HERE, on the mutation, and not in the screen that calls it. The
@@ -13389,8 +13711,18 @@ function carriedIds(loadout) {
  * the first argument like everything else in this module, which is also what
  * makes a call site left on the old signature fail CLOSED — it equips nothing
  * and the suite says so — rather than quietly skip the new check.
+ *
+ * `owned` is that same sentence, one check later, and the reason it is REQUIRED
+ * rather than optional (#90). Whether the piece FITS was gated here; whether it
+ * is YOURS was gated only by the picker declining to attach a click handler to
+ * a locked chip. #90 removes those chips, so an optional argument would have
+ * left ownership enforced by nothing at all while the screen looked stricter.
+ * Missing `owned` refuses and says so — the same fail-closed shape as the
+ * `registries` argument above, for the same reason.
+ *
+ * Clearing a slot needs no ownership: putting a thing down is always allowed.
  */
-function equipPiece(registries, loadout, slotId, setIndex, itemId) {
+function equipPiece(registries, loadout, slotId, setIndex, itemId, owned) {
   const ids = ((loadout || {}).sets || {})[slotId];
   if (!ids || setIndex < 0 || setIndex >= ids.length) return false;
   if (!itemId) {
@@ -13406,12 +13738,21 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId) {
     ? (eq.armour || []).find((o) => o.id === itemId)
     : (eq.armaments || []).find((a) => a.id === itemId);
   if (!piece || !fitsSlot(slot, piece)) return false;
+  if (!owned || typeof owned.has !== 'function') {
+    console.error(
+      `equipPiece('${slotId}', '${itemId}'): called with no ownership — refusing.`
+      + ' Pass ownership(registries, { meta, loadout }) as the sixth argument.'
+      + ' This line is the defect, not the refusal.'
+    );
+    return false;
+  }
+  if (!owned.has(piece)) return false;
   ids[setIndex] = itemId;
   return true;
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, slotHand, pieceHand, fitsSlot, validateEquipment, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, canUseStorage, cycleSet, addToStorage, carriedIds, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, slotHand, pieceHand, fitsSlot, validateEquipment, fromDropPool, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, canUseStorage, cycleSet, addToStorage, carriedIds, equipPiece });
 
 },
 "src/model/state.js": function (module, exports, require) {
@@ -14470,7 +14811,23 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     throw new Error(`Swapping costs ${cfg.swapCost} Energy`);
   }
 
-  if (!cycleSet(combat.loadout, slotId, setIndex)) throw new Error(`No set ${setIndex} on '${slotId}'`);
+  // THE LADDER BINDS HERE TOO (#90, Vira's gate), and combat has no profile —
+  // `createCombat` is handed registries, rng, player and enemies, and nothing
+  // that knows which rungs have been earned. So the bound here is
+  // `openedSets(meta: {})`, which is "one, plus whatever this loadout is already
+  // holding": in a fight you cycle between the sets you BROUGHT, and what you
+  // brought is in the loadout.
+  //
+  // THIS MAKES THE ENGINE AGREE WITH THE SCREEN RATHER THAN NARROWING IT. The
+  // in-combat armoury mount already passes a synthetic `meta` (equipment.js), so
+  // the panel already draws only that many cells — the engine was the half that
+  // still accepted any index. The limit is the SAME one already stated there for
+  // `equipView` and the fold, not a new one: an earned-but-EMPTY set is not
+  // reachable mid-fight. Making it reachable means giving combat the profile,
+  // which is a different card and not one to open inside a gate.
+  if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, { meta: {} })) {
+    throw new Error(`No set ${setIndex} on '${slotId}'`);
+  }
 
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
   else p.energy -= cfg.swapCost;
@@ -24602,7 +24959,8 @@ Object.assign(module.exports, { mountTutorial });
 
 const { balance } = require("src/content/balance.js");
 const { resolveCard } = require("src/model/registries.js");
-const { canSwap, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, carriedIds } = require("src/model/loadout.js");
+const { canSwap, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, ownership, openedSets, visibleSets, rungFor, setCellState } = require("src/model/loadout.js");
+
 
 
 const { renderCard } = require("src/ui/components/card.js");
@@ -24896,17 +25254,21 @@ function modSummary(registries, piece) {
   return parts;
 }
 
-function pieceChip(registries, piece, { selected, locked, hint }) {
+// EVERY CHIP IN THE PICKER IS ONE YOU OWN (#90), so there is no `locked` here
+// any more and no `hint` to carry. The parameters were removed rather than
+// passed as false: a dead argument is a second copy of a decision, and the next
+// author to see `locked: false` at every call site would reasonably conclude the
+// picker still has a locked state to reach.
+function pieceChip(registries, piece, { selected }) {
   const el = document.createElement('button');
-  el.className = `equip-chip rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}${locked ? ' locked' : ''}`;
+  el.className = `equip-chip rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
   el.type = 'button';
   const mods = modSummary(registries, piece);
   el.innerHTML =
     `<img class="ec-art" src="${esc(thumbSrc(piece))}" alt="">` +
     `<span class="ec-name">${esc(piece.name)}</span>` +
     `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>` +
-    `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>` +
-    (locked ? `<span class="ec-lock">🔒 ${esc(hint || 'Locked')}</span>` : '');
+    `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>`;
   const art = el.querySelector('.ec-art');
   art.addEventListener('error', () => art.remove());
   return el;
@@ -24924,7 +25286,6 @@ function mountEquipment(host, {
 }) {
   const eq = registries.equipment;
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
-  const unlocked = new Set(meta.unlocked || []);
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
   // terms is the whole rule:
   //   1. the player's own saved choice, always, on every shape;
@@ -24993,42 +25354,37 @@ function mountEquipment(host, {
     if (onClose) onClose();
   };
 
-  // A piece gated behind an unlock shows locked with that unlock's HINT — the
-  // thing you'd have to do — rather than its flavour blurb. A 'hidden' unlock
-  // drops out of the list entirely: a genuine secret should not advertise the
-  // shape of its own hole.
-  const unlockById = new Map((registries.unlocks || []).map((u) => [u.id, u]));
-  // `persistence` decides what counts as yours: what this run has picked up,
-  // what the profile has ever held, or both (the default — a climb that ends
-  // badly still widens the wardrobe).
-  const drops = CFG().drops || {};
-  const persistence = CFG().persistence;
-  const available = new Set([
-    ...(persistence !== 'perRun' ? meta.found || [] : []),
-    ...(persistence !== 'unlocked' ? carriedIds(run.loadout) : []),
-  ]);
-  function gate(piece) {
-    // Two independent gates. A CONDITION unlock is something you achieve; being
-    // FOUND is something you pick up. Armour uses the first, armaments the
-    // second, and a piece could one day use both.
-    if (piece.unlock !== '' && !unlocked.has(piece.unlock)) {
-      const u = unlockById.get(piece.unlock);
-      if (u && u.reveal === 'hidden') return null;
-      return { ...piece, locked: true, hint: (u && u.hint) || 'Not yet earned.' };
-    }
-    if (piece.kind !== 'armor' && drops.requireFound && !available.has(piece.id)) {
-      return { ...piece, locked: true, hint: 'Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them.' };
-    }
-    return { ...piece, locked: false };
-  }
+  // THE ARMOURY IS AN INVENTORY (#90). What the picker offers is what the
+  // profile HAS, and that is one predicate with one home in the model — the
+  // three gates that used to live in this file (unlock, reveal:'hidden',
+  // requireFound) collapse into `owned.has(piece)`. Read the block above
+  // `ownership()` in model/loadout.js for why it moved rather than shrank.
+  //
+  // `requireFound` DID NOT CHANGE MEANING and that is deliberate. It has always
+  // said "you must have found it to own it"; what changed is what the screen
+  // does with a piece you do not own, which was never that field's business.
+  // Turning it off is still the sandbox it was documented as: everything is
+  // owned, so the picker offers everything, with no second field to remember.
+  //
+  // Recomputed per draw, not per mount: `carriedIds` feeds it, and equipping
+  // moves ids between storage and sets while this panel is open.
+  const owned = () => ownership(registries, { meta, loadout: run.loadout });
+  const ladderCtx = () => ({ meta, loadout: run.loadout });
 
-  function eligible(slot) {
-    // fitsSlot is the model's gate, and the same one equipPiece enforces — the
-    // picker must never offer a piece the mutation will refuse.
-    const pool = slot.kinds.includes('armor')
+  /** Every piece the CONTENT has for this slot, owned or not. Does it exist? */
+  function authoredFor(slot) {
+    return slot.kinds.includes('armor')
       ? (eq.armour || []).filter((o) => o.classId === run.class && fitsSlot(slot, o))
       : (eq.armaments || []).filter((a) => fitsSlot(slot, a));
-    return pool.map(gate).filter(Boolean);
+  }
+
+  /** Every piece you may put in it right now. Do you have it? */
+  function eligible(slot) {
+    // fitsSlot is the model's gate, and the same one equipPiece enforces — the
+    // picker must never offer a piece the mutation will refuse. Ownership is now
+    // the second half of that same sentence.
+    const mine = owned();
+    return authoredFor(slot).filter((p) => mine.has(p));
   }
 
   function slotBlock(slot) {
@@ -25041,7 +25397,31 @@ function mountEquipment(host, {
       `</div><div class="es-sets"></div>`;
     const sets = box.querySelector('.es-sets');
 
+    // THE LADDER (#90). `open` · `next` · `hidden`, derived from two integers
+    // against the cell's index — never written on a cell. The model owns the
+    // arithmetic (setCellState); this loop only draws what it is told, which is
+    // why there is no state here that the model cannot produce.
+    const opened = openedSets(registries, slot, ladderCtx());
+    const visible = visibleSets(registries, slot, ladderCtx());
+
     (run.loadout.sets[slot.id] || []).forEach((itemId, i) => {
+      const state = setCellState(i, opened, visible);
+      if (state === 'hidden') return;
+      if (state === 'next') {
+        // THE ONE REFUSAL LEFT IN THIS SCREEN once the picker holds only what
+        // you own. Its words are the RUNG'S OWN — `name` and `hint` from
+        // unlocks.csv — because a reason invented here would be a sentence with
+        // no author and no home. visibleSets() only shows this cell when a rung
+        // exists, so refuses() can never be handed an empty reason.
+        const rung = rungFor(registries, slot, i);
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'es-cell locked';
+        cell.innerHTML = `<span class="es-lock">🔒</span><span>${esc(rung.name)}</span>`;
+        refuses(cell, () => rung.hint);
+        sets.appendChild(cell);
+        return;
+      }
       const active = (run.loadout.active[slot.id] || 0) === i;
       const piece = itemId
         ? (slot.kinds.includes('armor')
@@ -25071,7 +25451,7 @@ function mountEquipment(host, {
             if (refused) { notice = refused; draw(); }
             return;
           }
-          cycleSet(run.loadout, slot.id, i);
+          cycleSet(registries, run.loadout, slot.id, i, { meta });
           sfx.play('cardPlay');
           commit();
         } else if (!inCombat) {
@@ -25114,26 +25494,18 @@ function mountEquipment(host, {
     });
     list.appendChild(bare);
 
+    // EVERY CHIP HERE IS EQUIPPABLE (#90). There is no locked branch left: a
+    // piece you do not own is not in `eligible()`, so it is not a chip. What
+    // used to be sixteen refusing chips on the right hand is now nothing at all,
+    // and the one refusal this screen still has is the ladder's next cell.
     const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
     for (const piece of eligible(slot)) {
-      const chip = pieceChip(registries, piece, {
-        selected: piece.id === current,
-        locked: piece.locked,
-        hint: piece.hint,
+      const chip = pieceChip(registries, piece, { selected: piece.id === current });
+      chip.addEventListener('click', () => {
+        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned());
+        sfx.play('cardPlay');
+        commit();
       });
-      if (piece.locked) {
-        // The reason travels WITH the mark (components/refusal.js). This chip
-        // used to get no handler at all: a tap on a weapon the player can see
-        // did nothing and said nothing, and its `🔒` line is below the fold on a
-        // phone with sixteen of these in the list.
-        refuses(chip, () => piece.hint);
-      } else {
-        chip.addEventListener('click', () => {
-          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id);
-          sfx.play('cardPlay');
-          commit();
-        });
-      }
       list.appendChild(chip);
     }
     return box;
@@ -25272,7 +25644,21 @@ function mountEquipment(host, {
       // in equipSlots.csv but has no pieces authored, and three empty squares
       // read as broken rather than as a promise. It appears the day a talisman
       // row exists.
-      .filter((slot) => eligible(slot).length)
+      //
+      // AND THIS TEST HAD TO SPLIT IN TWO (#90). It used to ask `eligible(slot)`,
+      // which then meant "pieces that fit, locked ones included". Once eligible()
+      // means "pieces you OWN", the same line hides the Right Hand from a fresh
+      // profile — because an empty inventory owns nothing — and the armoury
+      // Constantine called *"more like an empty inventory"* would render with no
+      // inventory in it. Two different questions had been sharing one call:
+      //
+      //   is this slot AUTHORED?  → does any piece in the content fit it
+      //   what may go in it NOW?  → what the profile owns
+      //
+      // The first decides whether the square exists; the second fills the picker.
+      // An empty square is the point of the screen; a square for a kind of thing
+      // that does not exist yet is the defect the original line was written for.
+      .filter((slot) => authoredFor(slot).length)
       .map((slot) => ({ slot, el: slotBlock(slot) }));
 
     // A LOOKUP, NOT A BRANCH. There is no `else` left to fall into: the cell
