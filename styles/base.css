@@ -47,18 +47,34 @@
      on one line. Colorblind-friendly already answers that question `yes`. */
   --bleed: var(--ember);
   /* THE TAP-TARGET FLOOR, and it has one home because it is one fact.
-     Sunna's ruling under Law 4 (#37): "a floor of 44 device px measured after
+     Sunna's ruling under Law 4 (#37): "a floor of N device px measured after
      zoom; a floor is not a ceiling." The whole app is scaled by `zoom:
      var(--ui-zoom)` on <body>, so a length L below body renders at L x zoom
-     device px — dividing by the zoom here is what makes 44 mean 44 ON GLASS
-     rather than 44 in a coordinate space the finger has never heard of. It is
+     device px — dividing by the zoom here is what makes N mean N ON GLASS
+     rather than N in a coordinate space the finger has never heard of. It is
      the same conversion the rest of the app does through fx.js, expressed as a
      unit so a rule can just use it.
      px, DELIBERATELY, and this is exactly the case Law 2 admits: a finger does
      not get bigger when a player raises Text size. Law 4 is the other half of
      the same sentence — text scaling must stop scaling non-text UI — so a
-     control that held text at 4.4rem was wrong in two directions at once. */
-  --tap-floor: calc(44px / var(--ui-zoom, 1));
+     control that held text at 4.4rem was wrong in two directions at once.
+
+     `--tap-target` IS THE CONSTANT, AND IT IS NOT WRITTEN HERE. It is the
+     player's Minimum tap size (Settings → Accessibility, default 44), written
+     onto <html> by applyTapSize() in src/main.js exactly where applyUiScale()
+     already writes `--ui-zoom`. This calc keeps its shape; only the number
+     moved out of it, to `balance.ui.tapSize` — the one place a number a player
+     can tune is allowed to live (Law 1 clause 2).
+
+     AND THERE IS NO `, 44px` FALLBACK IN THIS LINE, deliberately. A literal
+     here would agree with balance.ui.tapSize.def today and be synchronised by
+     nothing — the second copy this house exists to catch, planted in the very
+     line whose job is to hold one home. If `--tap-target` is ever unwritten
+     the floor vanishes and every floored control drops to 21–31 device px,
+     which is loud on the screen and is what `node tools/tapsize.mjs` measures.
+     A quietly-correct-looking 44 is the failure Law 0 clause 5 names; a
+     missing floor is not quiet. */
+  --tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));
   --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
   --font-body: Inter, 'Segoe UI', system-ui, sans-serif;
 }
