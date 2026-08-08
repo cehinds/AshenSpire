@@ -749,9 +749,45 @@ export function canSwap(registries, slotId, { inCombat = false } = {}) {
   return { ok: true, reason: '' };
 }
 
-/** canDrawFromStorage — storage is sealed once a fight starts. */
-export function canUseStorage({ inCombat = false } = {}) {
-  return !inCombat;
+/**
+ * canEquip(registries, slotId, { inCombat }) → { ok, reason }.
+ *
+ * MAY WHAT IS IN THIS SET CHANGE RIGHT NOW — the sibling question to canSwap,
+ * and the one nothing in the model answered. `canSwap` asks whether the ACTIVE
+ * set may change; this asks whether a set's CONTENTS may. In a fight the answer
+ * is no for every slot, and it is derived rather than authored (below).
+ *
+ * IT REPLACES `canUseStorage`, WHICH HAD ZERO CALLERS IN THE WHOLE TREE. That is
+ * the second copy this seat exists to refuse, in its quietest form: the fact
+ * "you cannot re-arm mid-fight" was written twice — once in the model, where
+ * nothing read it, and once as `} else if (!inCombat) {` in the armoury's click
+ * handler, where it was the only thing actually enforcing anything. The dead
+ * copy is deleted and the live one moves onto the mutation (equipPiece below).
+ * Same defect as #90's ownership hole, one function over, found by asking who
+ * reads each of these two.
+ *
+ * WHY IT IS DERIVED AND NOT A COLUMN. The obvious form is an `equip` column in
+ * equipSlots.csv beside `swap`. It is #78 again: a second two-valued field per
+ * slot makes the vocabulary the PRODUCT of the two, and that product holds cells
+ * nobody built — a slot you may re-arm but not cycle, an armour slot a row could
+ * declare re-armable mid-fight while storage stays sealed under it. Changing
+ * what a set HOLDS is strictly more than changing which set is ACTIVE, so the
+ * answer follows from the fight, not from a row. An author writes nothing new
+ * and nothing can fall out of the set (Law 0 clause 1).
+ *
+ * The reason is composed from the slot's own label, exactly as canSwap does it,
+ * so the two sentences on this screen come from one place and read as siblings.
+ */
+export function canEquip(registries, slotId, { inCombat = false } = {}) {
+  const slot = (((registries || {}).equipment || {}).slots || []).find((s) => s.id === slotId);
+  if (!slot) return { ok: false, reason: `No slot '${slotId}'` };
+  if (inCombat) {
+    return {
+      ok: false,
+      reason: `${slot.label} is sealed in combat — you cycle between the sets you brought.`,
+    };
+  }
+  return { ok: true, reason: '' };
 }
 
 /**
@@ -814,7 +850,7 @@ export function cycleSet(registries, loadout, slotId, index, ctx) {
  * addToStorage(loadout, itemId, cap) → true when it went in.
  *
  * Where a found armament lands. Storage is what you are carrying but not
- * holding; hand slots are sealed against it once a fight starts (canUseStorage).
+ * holding; hand slots are sealed against it once a fight starts (canEquip).
  * A duplicate is refused rather than stacking — you either have a Katana or
  * you don't.
  */
@@ -838,7 +874,7 @@ export function carriedIds(loadout) {
 }
 
 /**
- * equipPiece(registries, loadout, slotId, setIndex, itemId, owned) → boolean.
+ * equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) → boolean.
  * Put a piece id into a specific set of a slot; `null` clears it.
  *
  * The gate is HERE, on the mutation, and not in the screen that calls it. The
@@ -859,10 +895,38 @@ export function carriedIds(loadout) {
  * `registries` argument above, for the same reason.
  *
  * Clearing a slot needs no ownership: putting a thing down is always allowed.
+ * IT DOES NOT NEED THE COMBAT GATE ANY LESS, and the order of the two checks
+ * below is where that is said. Putting a weapon down mid-fight is re-arming with
+ * nothing; the ownership check has no opinion about it and the seal does. So the
+ * seal is asked FIRST, above the `!itemId` return, and ownership second.
+ *
+ * `ctx` — `{ inCombat }` — is REQUIRED and presence-checked, for the reason the
+ * two arguments above it are (#95). A context that defaults to "not in combat"
+ * fails OPEN: every call site written after today would equip mid-fight by
+ * saying nothing, which is how the ownership hole survived #90 in the first
+ * place. A bag missing the key is refused rather than read as false, because a
+ * missing key and `false` are indistinguishable and mean the opposite things.
+ * `cycleSet` above already takes a required trailing context for the ladder, so
+ * this is that pattern, not a new one.
  */
-export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned) {
+export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
   const ids = ((loadout || {}).sets || {})[slotId];
   if (!ids || setIndex < 0 || setIndex >= ids.length) return false;
+  if (!ctx || typeof ctx !== 'object' || !('inCombat' in ctx)) {
+    console.error(
+      `equipPiece('${slotId}', '${itemId}'): called with no combat context — refusing.`
+      + ' Pass { inCombat } as the seventh argument.'
+      + ' This line is the defect, not the refusal.'
+    );
+    return false;
+  }
+  // THE GATE IS HERE, ON THE MUTATION, and the screen no longer holds a copy of
+  // it. Before #95 the only thing stopping a mid-fight re-arm was the armoury
+  // declining to open its picker — a screen, not a gate, so a save file, a drop,
+  // a drag, a gamepad path or a second surface walked straight past it. Measured
+  // at 98fedde: equipPiece on a live combat loadout returned true.
+  const seal = canEquip(registries, slotId, { inCombat: !!ctx.inCombat });
+  if (!seal.ok) return false;
   if (!itemId) {
     ids[setIndex] = null;
     return true;
