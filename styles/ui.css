@@ -1064,6 +1064,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    rearranging — `data-figure` and `data-slots`, read straight off the view's
    own row — so the screen builds nearly the same DOM every time and CSS
    decides whether you are looking at a person or at a list. */
+/* This element also carries `.modal-veil` now (equipment.js — read the block
+   above the class assignment for why). Every declaration below is an OVERRIDE
+   of one `.modal-veil` sets, and it wins on source order alone: same
+   specificity, later in this file. THAT IS THE FRAGILE PART — move this block
+   above line 153 and the armoury silently paints at z-index 500 with the wrong
+   dim. Nothing errors. If this ever needs to move, the six lines below have to
+   become more specific in the same act. The two extra declarations are the
+   armoury's own look, overriding nothing: the warmer dim and the blur. */
 .armoury-overlay {
   position: fixed; inset: 0; z-index: 60; display: flex;
   align-items: center; justify-content: center;
