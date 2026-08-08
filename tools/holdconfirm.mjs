@@ -25,7 +25,19 @@
 //      property that makes "the off switch lives on a debug page" safe, and it
 //      is checked against the content rather than assumed.
 //   4. `off` IS THE OLD BEHAVIOUR, byte for byte: one tap commits.
-//   5. THE DERIVATION IS NOT A LIST. `--new-entry` authors a fictional event
+//   5. IT FAILS CLOSED. `--fail-closed` hands the module an op it has never
+//      heard of and requires a hold, and prints every opcode the game declares
+//      that would now hold. Viki's gate: the first draft enumerated the
+//      DANGEROUS ops and defaulted to safe, and its closure was over
+//      `RUN_OPCODES` while event effect lists demonstrably leave it. The
+//      enumeration was load-bearing where a default should be.
+//   6. THE LABEL SURVIVES THE FILL. Bjorn repainted the fill opaque for one
+//      frame and the label vanished — `> *` reaches element children and the
+//      label is a bare text node, so the line meant to lift it did nothing and
+//      only the 0.30 alpha was holding. The fill is a background now, which
+//      cannot have that bug, and this asserts the construction rather than
+//      trusting the comment.
+//   7. THE DERIVATION IS NOT A LIST. `--new-entry` authors a fictional event
 //      whose only interesting property is a curse, injects it as CONTENT with
 //      no code change, and requires that it arrive holding. That is Law 0's
 //      falsifier for this control.
@@ -42,6 +54,7 @@
 //   node tools/holdconfirm.mjs --dist          dist/AshenSpire.html over file://
 //   node tools/holdconfirm.mjs --mutate        must catch the falsified wiring
 //   node tools/holdconfirm.mjs --new-entry     Law 0 falsifier, content only
+//   node tools/holdconfirm.mjs --fail-closed   Viki's gate: unknown op must hold
 //   CHROME=/path/to/chrome node tools/holdconfirm.mjs
 //
 // Exit codes
@@ -70,6 +83,7 @@ const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : 
 const useDist = args.includes('--dist');
 const mutate = args.includes('--mutate');
 const newEntry = args.includes('--new-entry');
+const failClosed = args.includes('--fail-closed');
 
 printArtifactProvenance(useDist ? resolve(ROOT, 'dist/AshenSpire.html') : resolve(ROOT, 'index.html'), ROOT);
 
@@ -313,6 +327,61 @@ async function main() {
     }
   }
 
+  // ---- 6. THE LABEL SURVIVES THE FILL (Bjorn's finding, made a check).
+  // It asserts CONSTRUCTION, not pixels: a background-image paints under text
+  // by definition, and a generated ::before is the shape that overlaid it. A
+  // pixel comparison would be the stronger check and this repo has no home for
+  // one; stated rather than implied.
+  {
+    console.log(`\n  the fill paints under the label`);
+    await open('normal');
+    const paint = await ev(`(() => {
+      const b = document.querySelector('button.ev-choice.ev-hold');
+      if (!b) return { error: 'no held bar' };
+      const cs = getComputedStyle(b);
+      const bef = getComputedStyle(b, '::before');
+      return { bg: cs.backgroundImage, beforeContent: bef.content, beforePos: bef.position };
+    })()`);
+    ok(`the fill is a background, not an overlay`,
+      !paint.error && /gradient/.test(paint.bg) && (paint.beforeContent === 'none' || paint.beforeContent === 'normal'),
+      `background-image=${paint.bg ? 'gradient' : 'none'}, ::before content=${paint.beforeContent}`);
+  }
+
+  // ---- 5. IT FAILS CLOSED (Viki's gate).
+  if (failClosed) {
+    console.log(`\n  --fail-closed — an op this module has never heard of must hold`);
+    await open('normal');
+    const fc = await ev(`(async () => {
+      const c = await import('./src/model/consequence.js').catch(() => null);
+      const sc = await import('./src/model/schemas.js').catch(() => null);
+      const i = await import('./src/content/index.js').catch(() => null);
+      const g = await import('./src/model/registries.js').catch(() => null);
+      if (!c || !sc || !i || !g) return { skip: 'not importable under --dist' };
+      const reg = g.createRegistries(i.contentBundle);
+      const unknown = { label: 'x', effects: [{ op: 'sunnaNeverHeardOfThis' }], resultText: '.' };
+      // Viki's own example: a permanent COMBAT op borrowed by an event. The
+      // first draft's closure was over RUN_OPCODES, so this was invisible.
+      const borrowed = { label: 'x', effects: [{ op: 'exhaust' }], resultText: '.' };
+      const spend = { label: 'x', effects: [{ op: 'addCinders', amount: -50 }], resultText: '.' };
+      return {
+        unknown: c.isBindingChoice(unknown, reg), unknownWhy: c.bindingReasons(unknown, reg),
+        borrowed: c.isBindingChoice(borrowed, reg), borrowedWhy: c.bindingReasons(borrowed, reg),
+        spend: c.isBindingChoice(spend, reg),
+        wouldHold: c.failClosedOps(sc.OPCODES), declared: sc.OPCODES.length,
+      };
+    })()`);
+    if (fc && fc.skip) console.log(`    skip  ${fc.skip}`);
+    else {
+      ok(`an op nobody has ruled on holds`, fc.unknown === true, JSON.stringify(fc.unknownWhy));
+      ok(`a permanent COMBAT op borrowed by an event holds`, fc.borrowed === true, JSON.stringify(fc.borrowedWhy));
+      // Stated as a check so the exception is VISIBLE rather than silent — if
+      // this ever flips it should flip on purpose, with the reason rewritten.
+      ok(`a cinder spend is ruled safe on purpose (the one cost with a faucet)`, fc.spend === false, `binding=${fc.spend}`);
+      console.log(`    ---- ${fc.wouldHold.length} of ${fc.declared} declared opcodes would hold if an event used them:`);
+      console.log(`         ${fc.wouldHold.join(', ')}`);
+    }
+  }
+
   cdp.close(); child.kill(); stop();
 
   if (!checks) { console.error(`\nholdconfirm: nothing was measured. That is unknown, not a pass.`); process.exit(2); }
@@ -333,6 +402,9 @@ async function main() {
   (c) ONE MACHINE, headless Chromium, 390x844, one event.
   (d) NOTHING ABOUT THE 9 px GAP ITSELF, which is unchanged and still nobody's
       measurement to read — this makes the miss survivable, not impossible.
+  (d2) THE FILL CHECK IS CONSTRUCTION, NOT PIXELS. It proves the fill is a
+      background and no ::before overlays the bar; it has not compared one
+      rendered label against another. Bjorn's 6.87-7.49:1 is the read that has.
   (e) NOT 'verified-at' ANY CI REF — hand-run, like everything on this repo.`);
   console.log(`\n  ${findings.length ? `FAIL — ${findings.length} finding(s) over ${checks} check(s)` : `PASS — ${checks} checks`}`);
   for (const f of findings) console.log(`    - ${f}`);
