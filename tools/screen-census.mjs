@@ -185,8 +185,22 @@ function census(reader) {
 
   // FLOOR 1 — the other denominator, and the one that would produce the
   // spectacular false alarm. With no instrument files read, EVERY screen reads
-  // unwatched and the report is a confident, total lie. Floored at the same
-  // height as the screens.
+  // unwatched and the report is a confident, total lie.
+  //
+  // FLOORED PER SOURCE, NOT IN AGGREGATE — Vira, 2026-08-08, gating this file.
+  // It was floored only on the TOTAL, and the walk of each directory was wrapped
+  // in `catch { return [] }`. Measured on a synthetic tree at 9527059: remove
+  // `tests/` and the census prints `1 reachable, 1 by nothing, 0 findings`,
+  // exit 0, with the [~] block stating in prose "Nobody has watched these work"
+  // — a FALSE claim about the game, caused by the census losing one of its own
+  // two sources. The header's `N instrument files read` is the only trace, and
+  // it is a bare number with nothing to compare it to.
+  //
+  // This is queue-properties.md P1, applied where it was written to apply:
+  // one line per source, each with its OWN count, and a source that returns
+  // zero is a RED, not a quiet row. It adds no recorded baseline and no frozen
+  // constant — zero is the floor, and zero is derived, not remembered.
+  //
   // SELF-EXCLUSION, and the first thing this tool caught was itself. The very
   // first run printed `[x] shop — 1 · screen-census`, on the strength of the
   // comment eleven lines above identRe() reading "`mountShop` must not match
@@ -196,12 +210,20 @@ function census(reader) {
   // that may cite itself is a self-confirming green — the purest form of the
   // lying instrument, in the tool whose whole job is to not be one.
   const SELF = 'tools/screen-census.mjs';
-  const instrumentFiles = INSTRUMENT_DIRS.flatMap((d) => {
-    try { return walkJs(reader, d); } catch { return []; }
-  }).filter((p) => p !== SELF);
-  if (!instrumentFiles.length) {
-    return { fatal: `read ZERO instrument files from ${INSTRUMENT_DIRS.join('/ and ')}/. With no instruments there is nothing to be watched BY, and every screen would report unwatched — a total false alarm, not a census.` };
+  const sources = [];
+  for (const d of INSTRUMENT_DIRS) {
+    let files;
+    try {
+      files = walkJs(reader, d).filter((p) => p !== SELF);
+    } catch (e) {
+      return { fatal: `instrument source ${d}/ could not be read — ${e && e.message}. A census that silently drops one of its own sources reports the screens that source watched as watched by NOTHING, which is a false claim about the game made by a defect in the check.` };
+    }
+    if (!files.length) {
+      return { fatal: `instrument source ${d}/ returned ZERO files. Every screen only that source reaches would read unwatched, and the [~] list would name them as things nobody has watched work — a confident false alarm about the game, caused by the census.` };
+    }
+    sources.push({ dir: d, count: files.length });
   }
+  const instrumentFiles = INSTRUMENT_DIRS.flatMap((d) => walkJs(reader, d)).filter((p) => p !== SELF);
 
   const srcFiles = walkJs(reader, SRC_DIR);
   const srcText = srcFiles.map((p) => [p, reader.read(p)]);
@@ -268,7 +290,7 @@ function census(reader) {
     });
   }
 
-  return { rows, findings, instrumentCount: instrumentFiles.length, srcCount: srcFiles.length };
+  return { rows, findings, sources, instrumentCount: instrumentFiles.length, srcCount: srcFiles.length };
 }
 
 // ---------------------------------------------------------------------------
@@ -283,7 +305,12 @@ function printReport(c, ref) {
 
   console.log(`SCREEN CENSUS — every player-facing screen in the tree, and what can reach it`);
   console.log(`  ref ${ref.label} · committed ${ref.date}${ref.dirty ? '  (WORKING TREE IS DIRTY — these numbers are of files on disk, not of that commit)' : ''}`);
-  console.log(`  ${c.rows.length} screen modules · ${c.instrumentCount} instrument files read · every line below is derived\n`);
+  console.log(`  ${c.rows.length} screen modules · ${c.instrumentCount} instrument files read · every line below is derived`);
+  // THE SOURCES, ONE LINE EACH, before any count derived from them. A reader who
+  // can see `tests/ 1 file` where there were 14 can see the census lost a source;
+  // a reader given only the total cannot. Each is floored at zero above, so a
+  // source that vanishes is a fatal, not a smaller number.
+  console.log(`  sources:  ${c.sources.map((s) => `${s.dir}/ ${s.count} file${s.count === 1 ? '' : 's'}`).join('  ·  ')}  ·  ${SRC_DIR}/ ${c.srcCount} files\n`);
 
   console.log(`  [x] ${String(watched.length).padStart(2)}  built, and at least one instrument can reach it`);
   console.log(`  [~] ${String(dark.length).padStart(2)}  built, and NOTHING in tools/ or tests/ can reach it`);
@@ -294,10 +321,19 @@ function printReport(c, ref) {
     console.log(label);
     for (const r of rows.slice().sort((a, b) => (b.watchers.length - a.watchers.length) || a.id.localeCompare(b.id))) {
       const box = !r.readable ? '[?]' : r.watchers.length ? '[x]' : '[~]';
+      // THE TOKEN THAT MATCHED IS PRINTED — Vira, 2026-08-08, gating this file.
+      // `why` was derived at the join and thrown away at the print, so `[x]` was
+      // an unfalsifiable claim: a reader was given the watcher's FILENAME and no
+      // way to check it. That is the exact shape of this tool's own first bug,
+      // and self-exclusion fixed the instance, not the class — reproduced on a
+      // fresh tree at 9527059 with one comment reading "this tool deliberately
+      // does NOT touch mountBeta", which printed `[x] beta 2`. Printing the
+      // token does not prevent a false match; it makes one findable by whoever
+      // reads the report, which is the whole of P0's second clause.
       const who = !r.readable
         ? 'UNREADABLE — this census cannot recognise it (see findings)'
         : r.watchers.length
-          ? r.watchers.map((w) => w.file.replace(/^tools\//, '').replace(/\.mjs$/, '')).join(' · ')
+          ? r.watchers.map((w) => `${w.file.replace(/^tools\//, '').replace(/\.mjs$/, '')}:${w.why.join('+')}`).join(' · ')
           : 'nothing names it';
       console.log(`  ${box} ${r.id.padEnd(15)}${String(r.watchers.length).padStart(2)}  ${who}`);
     }
@@ -395,7 +431,21 @@ function selftest() {
 
     ['tools/ and tests/ emptied — the edge where EVERY screen reads unwatched',
       () => overlay({ list: (d) => (INSTRUMENT_DIRS.includes(d) ? [] : undefined) }),
-      (c) => Boolean(c.fatal && /ZERO instrument files/.test(c.fatal))],
+      (c) => Boolean(c.fatal && /instrument source tools\/ returned ZERO files/.test(c.fatal))],
+
+    // PLANTS 8 AND 9 — Vira, 2026-08-08. ONE source lost, not both. This is the
+    // plant that was missing, and its absence is why the aggregate floor read as
+    // sufficient: with both sources gone the tool was watched going red, so the
+    // floor looked observed. Losing one is the case that actually happens — a
+    // renamed directory, a partial checkout — and it printed a confident,
+    // wrong census at exit 0.
+    ['ONLY tests/ emptied — one source lost, and the other one still answers',
+      () => overlay({ list: (d) => (d === 'tests' ? [] : undefined) }),
+      (c) => Boolean(c.fatal && /instrument source tests\/ returned ZERO files/.test(c.fatal))],
+
+    ['ONLY tools/ emptied — the same, from the other side',
+      () => overlay({ list: (d) => (d === 'tools' ? [] : undefined) }),
+      (c) => Boolean(c.fatal && /instrument source tools\/ returned ZERO files/.test(c.fatal))],
 
     ['a screen stripped of its exports and its DOM names — unrecognisable, NOT unwatched',
       () => overlay({ read: (p) => (p === `${SCREEN_DIR}/shop.js` ? '// nothing at all\n' : undefined) }),
@@ -422,6 +472,17 @@ function selftest() {
         },
       }),
       (c) => !c.fatal && c.rows.filter((r) => !r.watchers.length && r.readable).length === 0],
+
+    // PLANT 10 — Vira, 2026-08-08. Not a breakage: a PROPERTY, planted so it
+    // cannot be quietly lost. Every `[x]` must carry the token that produced it,
+    // because a watcher recorded with no reason is a claim a reader cannot check
+    // — and an unfalsifiable [x] is what this tool's own first bug looked like
+    // from the outside. Falsifier: delete `why` from the join, or stop printing
+    // it, and this goes MISS.
+    ['EVERY watcher carries the token it matched on — an [x] a reader can check',
+      () => fsReader(),
+      (c) => !c.fatal && c.rows.every((r) => r.watchers.every((w) => w.why.length > 0))
+        && c.rows.some((r) => r.watchers.length > 0)],
 
     ['a NEW screen module nobody registered anywhere — Law 0\'s falsifier, one file',
       () => overlay({
