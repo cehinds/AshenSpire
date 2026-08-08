@@ -39,9 +39,17 @@
    buttons drive, up to 2x) x pan offset x SEED, and every map measurement this
    repo had ever taken was on one hardcoded seed. A fix aimed at the shapes
    where the coincidence was observed is a fix for the anecdote. */
+/* LAW 4 CLAUSE 3 — box geometry does not answer to Text size. `gap` and
+   `padding` were `rem`, so the whole bar grew with the text setting: measured
+   S -> XL it moved up to 5.3 device px and pushed the map's scrollport up with
+   it (Bjorn, 2026-08-08). Converted at 1rem = 10px (the M root, `62.5%`), so M
+   is byte-identical and S/L/XL stop drifting. `font-size` below STAYS in `rem`
+   and that is the law, not an oversight: the glyph in the button is text and
+   Text size is exactly the control that should grow it. The box holds it with a
+   tap floor and `auto` growth, which is clause 4's shape. */
 .map-zoom {
   flex-shrink: 0; display: flex; justify-content: flex-end; align-items: center;
-  gap: 0.6rem; padding: 0.6rem 1.4rem; background: var(--panel); border-top: 1px solid var(--line);
+  gap: 6px; padding: 6px 14px; background: var(--panel); border-top: 1px solid var(--line);
 }
 /* THE MAP'S HINT BAR JOINS THE FLOW, and only the map's.
    .hint-bar (styles/ui.css) is `position: fixed` to the bottom of the VIEWPORT
@@ -77,7 +85,7 @@
    chrome, not out of a node's hiding place. */
 .map-zoom .zbtn {
   min-width: var(--tap-floor); min-height: var(--tap-floor);
-  width: auto; height: auto; padding: 0 0.4rem;
+  width: auto; height: auto; padding: 0 4px;
   border-radius: 8px; font-size: 1.8rem; line-height: 1;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--parchment);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -197,7 +205,12 @@ body.hide-header-relics .map-substrip.no-flasks { display: none; }
    clearing it. Both lines are gone — the padding, and the row/offset override —
    because .map-zoom is no longer an overlay at any layout. What is left below
    is the only thing this shape actually needed: smaller buttons on a phone. */
-  :root[data-layout='narrow'] .map-zoom { gap: 0.8rem; padding: 0.5rem 0.8rem; }
+  /* Law 4 clause 3, same conversion as the base rule and THE ONE THAT ACTUALLY
+     APPLIES ON A PHONE — I converted the base rule first, re-measured, and the
+     bar drifted exactly as before, because this override was winning at every
+     mobile shape. A fix measured on the rule that does not apply is not a fix.
+     1rem = 10px at the M root, so M is byte-identical. */
+  :root[data-layout='narrow'] .map-zoom { gap: 8px; padding: 5px 8px; }
   /* The phone override kept its smaller GLYPH and lost its smaller BOX: 3rem
      was below the floor at every text size, and "smaller buttons on a phone"
      is the one place a floor exists to refuse. */
