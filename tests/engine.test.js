@@ -1556,7 +1556,18 @@ export async function runTests({ artManifest = null } = {}) {
     } catch (e) {
       refused = e.message;
     }
-    assert(refused.includes('outside combat'), 'armour cannot be swapped mid-fight');
+    // ASSERTED AGAINST THE VERDICT, NOT AGAINST THE PROSE (Sunna, #98). This
+    // line read `refused.includes('outside combat')` — a substring of canSwap's
+    // reason, typed here. So the player-facing wording had a second home in a
+    // test that does not care about wording, and rewording the refusal turned
+    // this red while the rule it names was untouched. A test that fails when a
+    // sentence improves is a test that argues for bad sentences.
+    // What it actually means to check is that the dispatch REFUSED and that the
+    // model is the one refusing it — both, so a throw for any other reason
+    // cannot pass as this rule.
+    assert(refused, 'armour cannot be swapped mid-fight — the dispatch threw');
+    eq(canSwap(REG, 'armor', { inCombat: true }).ok, false,
+      '…and the model is where that no comes from');
 
     // Combat works on COPIES of the deck instances, so the orchestrator
     // re-stamps the run's own copies when the fight ends (main.js onCombatEnd).
