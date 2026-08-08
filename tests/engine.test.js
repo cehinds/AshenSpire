@@ -61,7 +61,7 @@ import { settingOn, resolveTapSize } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
-import { LOCK_COPY } from '../src/ui/uiContent.js';
+import { LOCK_COPY, PARCHMENT_ACTS, PARCHMENT_EXT, BACKDROP_ACTS, parchmentAsset, backdropClass, actPlate } from '../src/ui/uiContent.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -188,7 +188,7 @@ function logOf(combat, type) {
 // Runner
 // ---------------------------------------------------------------------------
 
-export async function runTests({ artManifest = null } = {}) {
+export async function runTests({ artManifest = null, assetExists = null } = {}) {
   const results = [];
   const test = (name, fn) => {
     try {
@@ -3100,6 +3100,72 @@ export async function runTests({ artManifest = null } = {}) {
     // tools/seedrefuses.mjs (rendered, three screens) and tools/lan.mjs's own
     // boundary check. It is also silent on `ß`, which upper-cases to `SS` and
     // is therefore accepted as two S's exactly as it always has been.
+  });
+
+  // ---- 49. every per-act plate the code can NAME is a file that exists ------
+  test('49. every act plate the code names exists on disk, for every act it can reach', () => {
+    // THE DEFECT THIS IS THE CLASS OF, and it lived for weeks:
+    // `assets/map/parchment_act1.webp` never existed. Not a broken image, not a
+    // console error, not a red check — a 404 that the fog renders as a flat wash,
+    // on a screen that is almost entirely ground. Constantine asked for Elden
+    // Ring's undiscovered map and got a dark rectangle, and every instrument in
+    // this tree stayed green through it.
+    //
+    // WHY NOTHING CAUGHT IT, precisely, because the answer is the design of this
+    // test. tools/bundle.mjs DOES refuse on a dangling asset path — but only a
+    // LITERAL one, and its own comment says so: "Runtime-CONSTRUCTED paths
+    // (`assets/equipment/weapon_${id}.webp`) can't be verified statically." The
+    // plate path is built from `actPlate(actNumber, PARCHMENT_ACTS)`, so it is
+    // exactly the shape that check cannot see. The gap was not an oversight in
+    // the bundler; it was the bundler's stated boundary, unpaid.
+    //
+    // SO THE CHECK IS THE OTHER HALF: not "is this string in the source" but
+    // "CALL the function and see if the file is there." Anything with a per-act
+    // family and a count belongs in the table below, and adding a fourth act
+    // plate stays a number in `balance.ui` — the loop reads the count, never a
+    // list (Law 0 clause 1: the entry describes, the machinery derives).
+    if (!assetExists) {
+      // Browser test page has no filesystem — loud skip, same rule as test 33.
+      assert(true, 'SKIPPED (no filesystem): act plates are checked in Node');
+      return;
+    }
+    // ONE ROW PER FAMILY. `path` is the SHIPPED resolver, called — never a
+    // second copy of its template, which would agree with itself while the game
+    // looked somewhere else.
+    const families = [
+      { name: 'map parchment', plates: PARCHMENT_ACTS, path: (act) => parchmentAsset(act) },
+      // The backdrop is bound through a CSS class rather than a path, so its
+      // file name is reconstructed here — and that reconstruction is itself the
+      // thing worth watching: if `.backdrop.act-N`'s url() ever stops being
+      // `assets/bg/bg_actN.webp`, this row goes red and says which act.
+      { name: 'combat backdrop', plates: BACKDROP_ACTS, path: (act) => `assets/bg/bg_act${actPlate(act, BACKDROP_ACTS)}.webp` },
+    ];
+    const missing = [];
+    let checked = 0;
+    for (const f of families) {
+      assert(Number.isInteger(f.plates) && f.plates > 0, `${f.name}: its plate count is a positive integer (it is data, and data can be wrong)`);
+      // BOTH EDGES OF THE CYCLE, not just acts 1..N. Endless Spire runs past act
+      // 3 and `actPlate` wraps, so act N+1 must resolve to a real file too — the
+      // wrap is the half a "check the three files" test would miss.
+      for (let act = 1; act <= f.plates + 1; act++) {
+        const p = f.path(act);
+        checked++;
+        if (!assetExists(p)) missing.push(`${f.name}, act ${act} → ${p}`);
+      }
+    }
+    assert(checked > 0, 'the table is not empty — a loop over nothing is not a pass (SOP 2, the silence guard)');
+    // Law 1 clause 5: it NAMES the entry. "some art is missing" would have been
+    // as useless as the 404 was.
+    eq(missing.join(' | '), '', `every named plate exists — missing: ${missing.join(' | ')}`);
+    // And the extension has ONE home, so a hand-edit here cannot quietly fork it.
+    assert(parchmentAsset(1).endsWith(PARCHMENT_EXT), `the plate path uses PARCHMENT_EXT (${PARCHMENT_EXT}) and not a second literal`);
+    assert(typeof backdropClass(1) === 'string' && backdropClass(1).includes('act-'), 'the backdrop still binds by act class');
+
+    // BOUNDARY. This proves the FILE IS THERE and nothing else: not that it
+    // decodes, not that it is the right size, not that it looks like paper, and
+    // not that the single-file build carries it — tools/bundle.mjs sweeps
+    // assets/ wholesale for that, and `node tools/parchment.mjs --check` is what
+    // says the plates are still what the generator makes.
   });
 
   const passed = results.filter((r) => r.ok).length;

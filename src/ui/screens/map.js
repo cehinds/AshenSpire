@@ -262,6 +262,29 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
            the SVG: a custom property inherits DOWN, and both the ground rect and
            the scrollport's own background need to read it. One home for the
            tone, two readers, no second literal. -->
+      <!-- THE LANTERN, and it needs a frame to hang in. The vignette has to sit
+           OVER the map and STAY WITH THE SCREEN while the map scrolls under it,
+           which is three things CSS cannot give a scroll container by itself: a
+           background paints under the content, an inset shadow paints under it
+           too, and an absolutely positioned child of a scroller scrolls with the
+           content. So .map-frame is the positioned box and the overlay is its
+           sibling, laid out over the scrollport and nothing else.
+
+           IT IS pointer-events: none AND THAT IS NOT A DETAIL. The last thing
+           put over this pannable canvas took two map nodes with it at 412x915 —
+           visible, untappable, on dev and every branch (EldenSpire#28, the
+           comment below). This one cannot: it takes no clicks, and
+           tools/mapreach.mjs is the machine that says so rather than this
+           sentence. It is also fog-only, so path mode is the screen that
+           shipped, unchanged.
+
+           (No backticks in here either. I wrote one around the word path, the
+           template literal closed on it, and the map screen went blank — the
+           exact defect the comment forty lines down already warns about, walked
+           into by the person quoting it. It cost one run of actends, which
+           reported NOTHING SWEPT rather than a pass, which is the only reason
+           this sentence is a note and not a shipped blank screen.) -->
+      <div class="map-frame">
       <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -271,6 +294,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
             <g id="map-nodes"></g>
           </svg>
         </div>
+      </div>
+        ${fog ? '<div class="map-vignette" aria-hidden="true"></div>' : ''}
       </div>
       <!-- OUTSIDE .map-scroll, and that is the whole fix (EldenSpire#28).
            These three buttons used to be the last child of the scrollport,
@@ -684,12 +709,26 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     const endBox = framingBox([end], height);
     const ends = framingBox([...doorNodes, end], height);
     const fits = (b) => b.w * zoom <= scroll.clientWidth && b.h * zoom <= scroll.clientHeight;
-    // Grown by the halo's own reach, because the halo is a painted thing this
-    // box does not otherwise know about, and at the entrance it rings the ONE
-    // node on screen asking to be tapped. The title needs no such margin — text
-    // carries its own — so the top is grown only when the top is a circle.
+    // THE MARGIN IS WHAT THE HALO PAINTS, NOT WHAT IT MEASURES, and my first
+    // draft got that wrong in a way only a machine caught: I padded by HALO_PAD
+    // and tools/mapreach.mjs went red at 3 cells that were green at 89ec151.
+    // The ring pulses to `--halo-peak` (styles/map.css) eight times a second, so
+    // its painted reach past a node's own edge is `(r + HALO_PAD) * peak - r` —
+    // 15.6 units at the door's radius, not 6. The peak is READ from the
+    // stylesheet that animates it rather than retyped here.
+    // ONLY THE HALO-WEARERS ARE ASKED. `.reachable` is what puts a ring on a
+    // node (see the node loop), and at the entrance that is the doors and never
+    // the boss — so padding by the boss's radius would buy margin for a ring
+    // nothing paints. It is not free: it costs 2.5 units, and at 390x844 the
+    // title rung fits by THREE, so the generous version silently dropped the act
+    // title on every seed. Measured, not reasoned about.
+    const reach = (n) => {
+      const r = nodeRadius(n.type);
+      return Math.max(0, (r + HALO_PAD) * haloPeak() - r);
+    };
+    const pad = Math.max(0, ...doorNodes.map(reach));
     const grow = (b, top) => {
-      const g = { x0: b.x0 - HALO_PAD, y0: b.y0 - top, x1: b.x1 + HALO_PAD, y1: b.y1 + HALO_PAD };
+      const g = { x0: b.x0 - pad, y0: b.y0 - top, x1: b.x1 + pad, y1: b.y1 + pad };
       g.w = g.x1 - g.x0;
       g.h = g.y1 - g.y0;
       return g;
@@ -703,11 +742,39 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       if (b && b.height > 0) band = { y0: b.y, y1: b.y + b.height };
     } catch { /* not laid out yet — rung 1 simply isn't offered */ }
     if (band) {
-      const titled = grow({ x0: ends.x0, y0: Math.min(ends.y0, band.y0), x1: ends.x1, y1: ends.y1 }, 0);
-      if (fits(titled)) return { aim: titled, end: endBox };
+      // The title's own band caps the top: text carries its own margin, and the
+      // halo pad above it would only push a rung that already fits by 3 px off
+      // the ladder.
+      const titled = grow(ends, pad);
+      titled.y0 = Math.min(titled.y0, band.y0);
+      titled.h = titled.y1 - titled.y0;
+      if (fits(titled)) { showTitle(true); return { aim: titled, end: endBox }; }
     }
-    const both = grow(ends, HALO_PAD);
+    // AND WHEN THE TITLE DOES NOT FIT IT IS HIDDEN, NOT LEFT HALF IN. This is
+    // the whole reason the rung exists. The frame is centred, so a box smaller
+    // than the port leaves margin on both sides, and the title sits in exactly
+    // that margin — which is how it came to be sliced at y 99..119 against a
+    // port starting at 110. A word cut in half is worse than a word that is not
+    // there, and "sometimes sliced, depending on the shape" is worse than
+    // either. Mid-climb is untouched: `cur` exists, this function is not called,
+    // and the title's visibility is restored the moment it is.
+    showTitle(false);
+    const both = grow(ends, pad);
     return { aim: fits(both) ? both : doors, end: endBox };
+  }
+  // One home for "is the act's name on the board", so the two callers cannot
+  // disagree about whose turn it is to put it back.
+  function showTitle(on) {
+    if (titleEl) titleEl.style.visibility = on ? '' : 'hidden';
+  }
+  // The widest the reachable halo ever paints, read from the stylesheet that
+  // animates it (`--halo-peak`, styles/map.css). A number retyped here would be
+  // a second copy of a keyframe — and it would be the copy that goes stale,
+  // because nothing on screen changes when the camera's idea of the halo is
+  // wrong; only mapreach notices.
+  function haloPeak() {
+    const v = parseFloat(getComputedStyle(scroll).getPropertyValue('--halo-peak'));
+    return Number.isFinite(v) && v >= 1 ? v : 1;
   }
 
   // Scroll so the framing set sits in the middle of the viewport, and — when the
@@ -761,6 +828,10 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     // centre of the doors — which `entries: 1` has made a single door, so on a
     // new game this is one node and not an average of several.
     const cur = run.mapNodeId && map.nodes[run.mapNodeId] ? map.nodes[run.mapNodeId] : null;
+    // Past the first step the act's name goes back on the board unconditionally
+    // — mid-climb framing is not this change's subject and must be byte-for-byte
+    // what it was.
+    if (cur) showTitle(true);
     const entrance = cur ? null : entranceFrame(fs, box);
     const aim = cur ? framingBox([cur], height) : entrance.aim;
     // Local px from the CONTENT origin, which is no longer the canvas origin.
@@ -1053,7 +1124,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
 function attachParchment(host, path, w, h) {
   if (!host || typeof Image === 'undefined') return;
   const probe = new Image();
+  // One reader for both outcomes, so "which scrollport am I reporting on" is
+  // answered once rather than twice.
+  const port = () => (host.closest ? host.closest('.map-scroll') : null);
   probe.onload = () => {
+    const sc = port();
+    if (sc) sc.dataset.mapPlate = 'ok';
     if (!host.isConnected) return; // the player left the map while it loaded
     const el = document.createElementNS('http://www.w3.org/2000/svg', 'image');
     el.setAttribute('href', path);
@@ -1070,11 +1146,37 @@ function attachParchment(host, path, w, h) {
     el.setAttribute('preserveAspectRatio', 'xMidYMid slice');
     host.appendChild(el);
   };
-  // No `onerror` handler on purpose: the absent plate is the SHIPPING state
-  // today, and a console warning per map mount would be noise about a thing
-  // everyone already knows. The moment the three files exist, a missing one is
-  // a 404 in the network panel, which is the loud channel Law 1 clause 5 wants
-  // and the one a person actually looks at when art does not appear.
+  // ~~No `onerror` handler on purpose: the absent plate is the SHIPPING state
+  // today … a missing one is a 404 in the network panel, which is the loud
+  // channel Law 1 clause 5 wants and the one a person actually looks at when art
+  // does not appear.~~ STRUCK 2026-08-08 by Sunna.
+  //
+  // IT WAS TRUE AND IT WAS ALSO THE HOLE. The plates were absent for the whole
+  // life of this hook and the loud channel was a network panel nobody had open,
+  // on a screen that renders the miss as "fine, just flat". Weeks. The clause
+  // says fail loud and NAME THE ENTRY; a 404 in devtools names it only to
+  // whoever is already looking, which is the definition of the failure being
+  // invisible.
+  //
+  // THREE CHANNELS NOW, one per kind of reader, and none of them is the player:
+  //   console.error   — the person with the build open, with the path in it
+  //   data-map-plate  — the DOM, so a screenshot tool or probe can see it
+  //   the unit suite  — tests/engine.test.js, which is the one that FAILS,
+  //                     because a channel nobody is required to read is the
+  //                     same defect one layer up
+  //
+  // THE PLAYER STILL GETS THE WASH. Law 1 clause 4 wants a missing asset to
+  // degrade visibly but gracefully, and clause 5 wants it loud; those are not in
+  // tension once you notice they address different people. Nothing here draws a
+  // broken-image glyph — that was measured and it was unusable (see `groundSvg`).
+  probe.onerror = () => {
+    const sc = port();
+    if (sc) { sc.dataset.mapPlate = 'missing'; sc.dataset.mapPlatePath = path; }
+    console.error(
+      `[map] act plate missing: ${path} — the fog is drawing its placeholder wash instead. `
+      + 'Run `node tools/parchment.mjs` to regenerate the plates, or drop the authored art at that exact path.'
+    );
+  };
   probe.src = path;
 }
 
