@@ -47,6 +47,24 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
     btn.dataset.choice = String(i);
     btn.style.animationDelay = `${i * 70}ms`; // staggered entrance
     btn.textContent = choice.label;
+    // A PRICE IS A CONTENT FACT AND THE SCREEN PUBLISHES IT, whether or not the
+    // player can pay today. Vira's finding, and it is my own sentence back at
+    // me — latent is not fixed.
+    //
+    // The lockout property is "a player who cannot perform a hold can still
+    // leave every event screen", and that has to hold at EVERY purse. My
+    // instrument was reading `disabled`, which is a fact about ONE MOUNTED
+    // STATE: `meets()` below disables only an UNAFFORDABLE requirement, and
+    // `balance.startingCinders` is 0, so the sweep mounts poor and the two
+    // predicates happen to agree. They agreed via a number in balance.js that
+    // nothing tied to them. Raise the purse and they diverge on three choices
+    // (weepingPilgrim, sleepingSmith, merchantsGhost) — no verdict moved, which
+    // is luck, not a guarantee.
+    //
+    // So the fact goes on the element, like `data-binding` beside it: a door
+    // behind a price is not a door you can count on, at any purse, and the
+    // instrument reads that off the screen instead of re-deriving it.
+    if (choice.requires) btn.dataset.requires = '1';
     if (!meets(choice.requires)) {
       btn.disabled = true;
       btn.textContent += ' (cannot afford)';
