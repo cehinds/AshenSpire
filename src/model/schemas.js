@@ -600,6 +600,11 @@ export const SCHEMAS = Object.freeze({
     floors: int,
     columns: int,
     pathCount: int,
+    // How many DISTINCT columns the act may be entered from. Absent = today's
+    // rule (see engine/mapgen.js). Whether the number is reachable at all —
+    // more doors than walkers, more doors than columns — needs two fields to
+    // ask, so it is model/mapview.js's `viewRefusals`, not the schema's.
+    entries: opt(int),
     typeWeights: mapOf(num),
     // What a `?` node resolves to — beside the geometry, per act. Moved out of
     // `balance.unknownNode`, which could not vary per act while the map does.
