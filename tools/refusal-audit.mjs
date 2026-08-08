@@ -55,17 +55,31 @@ const SHAPES = [[390, 844], [1200, 730]].filter((s) => !ONLY_SHAPE || `${s[0]}x$
 
 // The screens this walk reaches. `drive` is what turns a ?shot= boot into the
 // surface a player is actually looking at — the Armoury has no ?shot= state of
-// its own, so it is reached the way Constantine reached it: from the map. Both
-// pickers are walked on purpose: the armament one refuses for `requireFound`,
-// the armour one for an UNLOCK, and a generic reason in either would be a lie.
-const ARMOUR_CELL = `(() => {
-  const b = [...document.querySelectorAll('.equip-slot')]
-    .find((x) => (x.querySelector('.es-label') || {}).textContent === 'Armour');
-  if (!b) throw new Error('no Armour slot block');
-  b.querySelector('.es-cell.on').click();
-  return true;
-})()`;
-
+// its own, so it is reached the way Constantine reached it: from the map.
+//
+// THIS TABLE HELD A PROBE WHOSE SUBJECT #90 DELETED, and the deletion is the
+// finding, not the repair. It read:
+//
+//   "Both pickers are walked on purpose: the armament one refuses for
+//    `requireFound`, the armour one for an UNLOCK, and a generic reason in
+//    either would be a lie."
+//
+// Both premises are now false. The picker offers only what the profile owns, so
+// it refuses for NOTHING: measured at 77a02b9 the two pickers held 28 refusing
+// chips between them (17/16 right hand, 10/9 left, 5/3 armour); after #90 they
+// hold 0. The `armoury-armour` route waited on
+// `.equip-picker .equip-chip.locked` and could only ever time out — an
+// unsatisfiable wait is a red instrument, not a red screen, and it must not be
+// left for someone to read as the latter.
+//
+// So that route is removed rather than re-aimed: the surviving refusal on this
+// screen is the slot ladder's next cell, and `armoury-armaments` already walks
+// it — it reports both locked cells SPEAKING their rung's own hint. Re-pointing
+// the armour route at the same control would be one subject probed twice.
+//
+// VIKI'S, #90, AND OFFERED AS A FINDING WITH A PATCH RATHER THAN TAKEN: this
+// file is not mine. Adopt or refuse it; if refused, the route needs a subject
+// that still exists, because it has none today.
 const ROUTE = [
   { name: 'title', query: '', wait: 'document.querySelector("#app")' },
   { name: 'map', query: '?shot=map', wait: 'document.querySelector("#open-armoury")' },
@@ -76,16 +90,6 @@ const ROUTE = [
     drive: [
       { click: '#open-armoury', wait: 'document.querySelector(".equip-slot")' },
       { click: '.equip-slot .es-cell.on', wait: 'document.querySelector(".equip-picker .equip-chip")' },
-    ],
-    probe: true,
-  },
-  {
-    name: 'armoury-armour',
-    query: '?shot=map',
-    wait: 'document.querySelector("#open-armoury")',
-    drive: [
-      { click: '#open-armoury', wait: 'document.querySelector(".equip-slot")' },
-      { js: ARMOUR_CELL, wait: 'document.querySelector(".equip-picker .equip-chip.locked")' },
     ],
     probe: true,
   },

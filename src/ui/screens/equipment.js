@@ -17,7 +17,8 @@
 import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
-  canSwap, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, carriedIds,
+  canSwap, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
+  ownership, openedSets, visibleSets, rungFor, setCellState,
 } from '../../model/loadout.js';
 import { renderCard } from '../components/card.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
@@ -310,17 +311,21 @@ function modSummary(registries, piece) {
   return parts;
 }
 
-function pieceChip(registries, piece, { selected, locked, hint }) {
+// EVERY CHIP IN THE PICKER IS ONE YOU OWN (#90), so there is no `locked` here
+// any more and no `hint` to carry. The parameters were removed rather than
+// passed as false: a dead argument is a second copy of a decision, and the next
+// author to see `locked: false` at every call site would reasonably conclude the
+// picker still has a locked state to reach.
+function pieceChip(registries, piece, { selected }) {
   const el = document.createElement('button');
-  el.className = `equip-chip rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}${locked ? ' locked' : ''}`;
+  el.className = `equip-chip rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
   el.type = 'button';
   const mods = modSummary(registries, piece);
   el.innerHTML =
     `<img class="ec-art" src="${esc(thumbSrc(piece))}" alt="">` +
     `<span class="ec-name">${esc(piece.name)}</span>` +
     `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>` +
-    `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>` +
-    (locked ? `<span class="ec-lock">🔒 ${esc(hint || 'Locked')}</span>` : '');
+    `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>`;
   const art = el.querySelector('.ec-art');
   art.addEventListener('error', () => art.remove());
   return el;
@@ -338,7 +343,6 @@ export function mountEquipment(host, {
 }) {
   const eq = registries.equipment;
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
-  const unlocked = new Set(meta.unlocked || []);
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
   // terms is the whole rule:
   //   1. the player's own saved choice, always, on every shape;
@@ -407,42 +411,37 @@ export function mountEquipment(host, {
     if (onClose) onClose();
   };
 
-  // A piece gated behind an unlock shows locked with that unlock's HINT — the
-  // thing you'd have to do — rather than its flavour blurb. A 'hidden' unlock
-  // drops out of the list entirely: a genuine secret should not advertise the
-  // shape of its own hole.
-  const unlockById = new Map((registries.unlocks || []).map((u) => [u.id, u]));
-  // `persistence` decides what counts as yours: what this run has picked up,
-  // what the profile has ever held, or both (the default — a climb that ends
-  // badly still widens the wardrobe).
-  const drops = CFG().drops || {};
-  const persistence = CFG().persistence;
-  const available = new Set([
-    ...(persistence !== 'perRun' ? meta.found || [] : []),
-    ...(persistence !== 'unlocked' ? carriedIds(run.loadout) : []),
-  ]);
-  function gate(piece) {
-    // Two independent gates. A CONDITION unlock is something you achieve; being
-    // FOUND is something you pick up. Armour uses the first, armaments the
-    // second, and a piece could one day use both.
-    if (piece.unlock !== '' && !unlocked.has(piece.unlock)) {
-      const u = unlockById.get(piece.unlock);
-      if (u && u.reveal === 'hidden') return null;
-      return { ...piece, locked: true, hint: (u && u.hint) || 'Not yet earned.' };
-    }
-    if (piece.kind !== 'armor' && drops.requireFound && !available.has(piece.id)) {
-      return { ...piece, locked: true, hint: 'Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them.' };
-    }
-    return { ...piece, locked: false };
-  }
+  // THE ARMOURY IS AN INVENTORY (#90). What the picker offers is what the
+  // profile HAS, and that is one predicate with one home in the model — the
+  // three gates that used to live in this file (unlock, reveal:'hidden',
+  // requireFound) collapse into `owned.has(piece)`. Read the block above
+  // `ownership()` in model/loadout.js for why it moved rather than shrank.
+  //
+  // `requireFound` DID NOT CHANGE MEANING and that is deliberate. It has always
+  // said "you must have found it to own it"; what changed is what the screen
+  // does with a piece you do not own, which was never that field's business.
+  // Turning it off is still the sandbox it was documented as: everything is
+  // owned, so the picker offers everything, with no second field to remember.
+  //
+  // Recomputed per draw, not per mount: `carriedIds` feeds it, and equipping
+  // moves ids between storage and sets while this panel is open.
+  const owned = () => ownership(registries, { meta, loadout: run.loadout });
+  const ladderCtx = () => ({ meta, loadout: run.loadout });
 
-  function eligible(slot) {
-    // fitsSlot is the model's gate, and the same one equipPiece enforces — the
-    // picker must never offer a piece the mutation will refuse.
-    const pool = slot.kinds.includes('armor')
+  /** Every piece the CONTENT has for this slot, owned or not. Does it exist? */
+  function authoredFor(slot) {
+    return slot.kinds.includes('armor')
       ? (eq.armour || []).filter((o) => o.classId === run.class && fitsSlot(slot, o))
       : (eq.armaments || []).filter((a) => fitsSlot(slot, a));
-    return pool.map(gate).filter(Boolean);
+  }
+
+  /** Every piece you may put in it right now. Do you have it? */
+  function eligible(slot) {
+    // fitsSlot is the model's gate, and the same one equipPiece enforces — the
+    // picker must never offer a piece the mutation will refuse. Ownership is now
+    // the second half of that same sentence.
+    const mine = owned();
+    return authoredFor(slot).filter((p) => mine.has(p));
   }
 
   function slotBlock(slot) {
@@ -455,7 +454,31 @@ export function mountEquipment(host, {
       `</div><div class="es-sets"></div>`;
     const sets = box.querySelector('.es-sets');
 
+    // THE LADDER (#90). `open` · `next` · `hidden`, derived from two integers
+    // against the cell's index — never written on a cell. The model owns the
+    // arithmetic (setCellState); this loop only draws what it is told, which is
+    // why there is no state here that the model cannot produce.
+    const opened = openedSets(registries, slot, ladderCtx());
+    const visible = visibleSets(registries, slot, ladderCtx());
+
     (run.loadout.sets[slot.id] || []).forEach((itemId, i) => {
+      const state = setCellState(i, opened, visible);
+      if (state === 'hidden') return;
+      if (state === 'next') {
+        // THE ONE REFUSAL LEFT IN THIS SCREEN once the picker holds only what
+        // you own. Its words are the RUNG'S OWN — `name` and `hint` from
+        // unlocks.csv — because a reason invented here would be a sentence with
+        // no author and no home. visibleSets() only shows this cell when a rung
+        // exists, so refuses() can never be handed an empty reason.
+        const rung = rungFor(registries, slot, i);
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'es-cell locked';
+        cell.innerHTML = `<span class="es-lock">🔒</span><span>${esc(rung.name)}</span>`;
+        refuses(cell, () => rung.hint);
+        sets.appendChild(cell);
+        return;
+      }
       const active = (run.loadout.active[slot.id] || 0) === i;
       const piece = itemId
         ? (slot.kinds.includes('armor')
@@ -528,26 +551,18 @@ export function mountEquipment(host, {
     });
     list.appendChild(bare);
 
+    // EVERY CHIP HERE IS EQUIPPABLE (#90). There is no locked branch left: a
+    // piece you do not own is not in `eligible()`, so it is not a chip. What
+    // used to be sixteen refusing chips on the right hand is now nothing at all,
+    // and the one refusal this screen still has is the ladder's next cell.
     const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
     for (const piece of eligible(slot)) {
-      const chip = pieceChip(registries, piece, {
-        selected: piece.id === current,
-        locked: piece.locked,
-        hint: piece.hint,
+      const chip = pieceChip(registries, piece, { selected: piece.id === current });
+      chip.addEventListener('click', () => {
+        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned());
+        sfx.play('cardPlay');
+        commit();
       });
-      if (piece.locked) {
-        // The reason travels WITH the mark (components/refusal.js). This chip
-        // used to get no handler at all: a tap on a weapon the player can see
-        // did nothing and said nothing, and its `🔒` line is below the fold on a
-        // phone with sixteen of these in the list.
-        refuses(chip, () => piece.hint);
-      } else {
-        chip.addEventListener('click', () => {
-          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id);
-          sfx.play('cardPlay');
-          commit();
-        });
-      }
       list.appendChild(chip);
     }
     return box;
@@ -686,7 +701,21 @@ export function mountEquipment(host, {
       // in equipSlots.csv but has no pieces authored, and three empty squares
       // read as broken rather than as a promise. It appears the day a talisman
       // row exists.
-      .filter((slot) => eligible(slot).length)
+      //
+      // AND THIS TEST HAD TO SPLIT IN TWO (#90). It used to ask `eligible(slot)`,
+      // which then meant "pieces that fit, locked ones included". Once eligible()
+      // means "pieces you OWN", the same line hides the Right Hand from a fresh
+      // profile — because an empty inventory owns nothing — and the armoury
+      // Constantine called *"more like an empty inventory"* would render with no
+      // inventory in it. Two different questions had been sharing one call:
+      //
+      //   is this slot AUTHORED?  → does any piece in the content fit it
+      //   what may go in it NOW?  → what the profile owns
+      //
+      // The first decides whether the square exists; the second fills the picker.
+      // An empty square is the point of the screen; a square for a kind of thing
+      // that does not exist yet is the defect the original line was written for.
+      .filter((slot) => authoredFor(slot).length)
       .map((slot) => ({ slot, el: slotBlock(slot) }));
 
     // A LOOKUP, NOT A BRANCH. There is no `else` left to fall into: the cell
