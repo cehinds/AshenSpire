@@ -9,9 +9,17 @@ import { attachTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
+import { beatArmer } from '../components/holdconfirm.js';
 
-export function mountShop(app, { registries, run, onLeave, onChanged }) {
+export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
   const stock = run.shopStock;
+  // BUYING AND BURNING ARE NOT THE SAME ACTION and the table says why: a
+  // purchase spends cinders, which the run refills (`shopBuy`: tempo, faucet —
+  // the same ruling consequence.js makes about every cinder spend). Removing a
+  // card takes something out of the deck for good, from a wrapped grid of small
+  // cards, one tap. Nobody asked for this one; it is here because the Smith's
+  // machinery answers it for free and it is the same mistake.
+  const arm = beatArmer(meta, registries);
   const slotsFree = () => run.flasks.length < (registries.balance.flaskSlots || 3);
 
   function render() {
@@ -41,13 +49,21 @@ export function mountShop(app, { registries, run, onLeave, onChanged }) {
       tag.textContent = `${item.cost} cinders`;
       tag.style.color = run.cinders >= item.cost ? 'var(--gold)' : 'var(--muted)';
       if (run.cinders >= item.cost) {
-        el.addEventListener('click', () => {
-          run.cinders -= item.cost;
-          run.deck.push({ instanceId: `s${run.deck.length}_${item.id}`, cardId: item.id, upgraded: false });
-          stock.cards.splice(i, 1);
-          sfx.play('buy');
-          onChanged();
-          render();
+        // ROUTED THROUGH THE MACHINERY EVEN THOUGH IT OWES NO BEAT, and that is
+        // the falsifier for Law 0 on this control rather than a formality:
+        // change `shopBuy`'s characteristics in model/secondbeat.js — say the
+        // day a purse can strand a run — and a purchase starts asking, with
+        // ZERO commits outside that table. An action wired with a bare
+        // `addEventListener` can only ever be changed by editing this line.
+        arm(el, 'shopBuy', {
+          onConfirm: () => {
+            run.cinders -= item.cost;
+            run.deck.push({ instanceId: `s${run.deck.length}_${item.id}`, cardId: item.id, upgraded: false });
+            stock.cards.splice(i, 1);
+            sfx.play('buy');
+            onChanged();
+            render();
+          },
         });
       } else {
         el.classList.add('unaffordable');
@@ -92,14 +108,19 @@ export function mountShop(app, { registries, run, onLeave, onChanged }) {
         grid.style.justifyContent = 'center';
         run.deck.forEach((inst, idx) => {
           const el = renderCard(registries, inst, { small: true });
-          el.addEventListener('click', () => {
-            run.cinders -= stock.removeCost;
-            run.deck.splice(idx, 1);
-            run.removesPurchased = (run.removesPurchased || 0) + 1;
-            stock.removeCost = registries.balance.shop.removeBase + registries.balance.shop.removeStep * run.removesPurchased;
-            sfx.play('buy');
-            onChanged();
-            render();
+          const def = registries.cards.get(inst.cardId);
+          arm(el, 'shopRemove', {
+            question: `Burn ${def.name} out of the deck? ${stock.removeCost} cinders, and the card is gone.`,
+            confirmLabel: 'BURN IT',
+            onConfirm: () => {
+              run.cinders -= stock.removeCost;
+              run.deck.splice(idx, 1);
+              run.removesPurchased = (run.removesPurchased || 0) + 1;
+              stock.removeCost = registries.balance.shop.removeBase + registries.balance.shop.removeStep * run.removesPurchased;
+              sfx.play('buy');
+              onChanged();
+              render();
+            },
           });
           grid.appendChild(el);
         });

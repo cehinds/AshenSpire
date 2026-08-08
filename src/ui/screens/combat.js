@@ -25,8 +25,18 @@ import { figureSpec } from '../../model/loadout.js';
 import { trackGesture } from '../gesture.js';
 import { resourceBars, markFlooredBars } from '../components/resbars.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
+import { beatArmer } from '../components/holdconfirm.js';
 
-export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
+export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
+  // THE ONE DOOR for every action on this screen that the second-beat table has
+  // ruled on. This screen names actions; it does not know what a hold is and it
+  // does not decide which of its buttons deserve one (model/secondbeat.js).
+  const arm = beatArmer(meta, registries);
+  // Declared here, assigned where End Turn is wired. `renderControls` re-dresses
+  // it every frame and runs before that line on the first paint, so it must be
+  // a `let` that reads null rather than a `const` in its temporal dead zone —
+  // which throws, and would throw on the FIRST RENDER OF EVERY FIGHT.
+  let endTurnBeat = null;
   app.innerHTML = `
     <div class="combat">
       <!-- THE MAIN HUD, TWO ROWS, HIS ASSIGNMENT (D10 wave 4):
@@ -381,16 +391,30 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
         kb.textContent = hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
         el.appendChild(kb);
       }
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}${def.targeted ? '<br><i>Click, then choose a target.</i>' : '<br><i>Click to drink.</i>'}`);
-      el.addEventListener('click', () => {
-        if (busy || combat.result) return;
-        if (def.targeted) {
-          selectedFlask = selectedFlask === slot ? null : slot;
-          selected = null;
-          render();
-        } else {
-          useFlask(slot, null);
-        }
+      // THE LABEL READS THE BEAT, IT DOES NOT RESTATE IT. `data-beat` is written
+      // by the machinery from the table, so the sentence a player reads and the
+      // gesture the button actually wants cannot drift — and the icon is far too
+      // small for the HOLD word the event bars carry (hidden in ui.css).
+      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`
+        + (def.targeted ? '<br><i>Click, then choose a target.</i>'
+          : el.dataset.beat === 'hold' ? '<br><i>Hold to drink.</i>' : '<br><i>Click to drink.</i>'));
+      // A DRUNK FLASK DOES NOT COME BACK THIS CLIMB, and nobody asked for this
+      // one — it is in the table because a set is the thing that makes a gap
+      // visible, and it is wired because the machinery already existed by the
+      // time it was found. A TARGETED flask owes no beat and the row says why:
+      // it enters aim mode, so the second beat is already in the gesture.
+      arm(el, 'useFlask', {
+        ctx: { targeted: !!def.targeted },
+        onConfirm: () => {
+          if (busy || combat.result) return;
+          if (def.targeted) {
+            selectedFlask = selectedFlask === slot ? null : slot;
+            selected = null;
+            render();
+          } else {
+            useFlask(slot, null);
+          }
+        },
       });
       flasks.appendChild(el);
     });
@@ -653,18 +677,29 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     return (resolveCard(registries, inst).keywords || []).includes('unplayable');
   }
 
+  /** The pulse reports that the player still has an affordable play. */
+  function endTurnHasPlayable() {
+    const anyPlayable = combat.piles.hand.some((inst) => {
+      const def = resolveCard(registries, inst);
+      if ((def.keywords || []).includes('unplayable')) return false;
+      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost)
+        && combat.player.mana >= (def.manaCost || 0);
+    });
+    return combat.player.energy > 0 && anyPlayable;
+  }
+
   function renderControls() {
     $('.energy-orb').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
     $('.end-turn').innerHTML = `END TURN <kbd class="et-key">${esc(etKey)}</kbd>`;
-    const anyPlayable = combat.piles.hand.some((inst) => {
-      const def = resolveCard(registries, inst);
-      if ((def.keywords || []).includes('unplayable')) return false;
-      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost) && combat.player.mana >= (def.manaCost || 0);
-    });
-    $('.end-turn').classList.toggle('pulse', combat.player.energy > 0 && anyPlayable);
+    $('.end-turn').classList.toggle('pulse', endTurnHasPlayable());
+    // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
+    // re-reads the action's state and re-dresses the button — and it is the
+    // reason a beat can live on a control its own screen repaints every frame
+    // without any screen tracking the dressing.
+    if (endTurnBeat) endTurnBeat.refresh();
     $('.pile.draw .n').textContent = combat.piles.draw.length;
     $('.pile.discard .n').textContent = combat.piles.discard.length;
     const ex = $('.pile.exhaust');
@@ -1039,7 +1074,14 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     afterDispatch(out.events);
   }
 
-  $('.end-turn').addEventListener('click', () => {
+  // "SAME WITH ENDING TURN." — Constantine, in the sentence that also asked for
+  // the hold, and the half of it that was dropped. It is not wired here by
+  // hand: `endTurn` is a row in model/secondbeat.js, and the ruling is that it
+  // always takes the configured second beat.
+  // Nothing on this line says "hold", and adding a third action to this screen
+  // would say even less.
+  endTurnBeat = arm($('.end-turn'), 'endTurn', {
+    onConfirm: () => {
     if (busy || combat.result || combat.phase !== 'player') {
       const why = { busy, result: combat.result, phase: combat.phase };
       console.debug('[combat] endTurn ignored:', JSON.stringify(why));
@@ -1062,7 +1104,9 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     dlog('dispatch', 'endTurn', { events: out.events.length });
     busy = true;
     afterDispatch(out.events);
+    },
   });
+  endTurnBeat.refresh();
 
   const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
   const showDiscard = () => openPileModal(registries, 'Discard pile', combat.piles.discard);
