@@ -682,6 +682,15 @@ body.hide-hints .hint-bar { display: none; }
 .rs-readout b { color: var(--gold); font-size: 2rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .rs-readout span { color: var(--muted); font-size: 1.05rem; line-height: 1.4; }
 .rs-readout .rs-boundary { color: var(--muted); font-size: 0.95rem; opacity: 0.85; }
+/* The one place in this panel that goes loud. `--parchment` at 14.44:1 carries
+   the WORDS and `--ember` carries the RULE, for the reason base.css and the seed
+   refusal both give: ember measures 3.70:1 on --panel — over the 3:1 a UI
+   component needs, under AA for text — so colour marks WHERE and never says
+   WHAT. */
+.rs-readout .rs-boundary.warn {
+  color: var(--parchment); opacity: 1;
+  border-left: 2px solid var(--ember); padding-left: 8px; margin-top: 4px;
+}
 
 /* THREE TIERS, and the gaps are what say so. A 44 px slider box already carries
    most of the air a row needs, so the spacing here is doing HIERARCHY, not
@@ -22323,7 +22332,7 @@ const { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION,
 
 
 const { MAP_SHAPE_LIMITS } = require("src/content/mapconfig.js");
-const { applyRunShape, minViableFloors } = require("src/model/floorplan.js");
+const { applyRunShape, minViableFloors, resolveFloorPlan } = require("src/model/floorplan.js");
 const { sampleActShape } = require("src/engine/mapgen.js");
 const { classGlyph } = require("src/ui/assets.js");
 const { esc } = require("src/ui/components/tooltip.js");
@@ -22657,7 +22666,32 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
         sub.textContent = `over ${per.length} act${per.length === 1 ? '' : 's'}`
           + ` · range ${lo}–${hi} · default is ≈ ${Math.round(defaultTotal)}`
           + (entry ? ` · ${Math.round((1 - climb / defaultTotal) * 100)}% shorter` : '');
-        bound.textContent = `nodes across ${ESTIMATE_SEEDS} seeds — the driver of run length, not minutes`;
+
+        // A SHORT ACT CAN BREAK A PROMISE THE ACT MAKES TO ITSELF, and it does
+        // so silently. `minElites: 2` is kept by force-placing into eligible
+        // Monster nodes; squeeze the act to 4x2 and there are not enough of
+        // them, so relaxPlace runs out and stops. Measured: 1.87 elites and
+        // 0.54 merchants a map at floors=4 columns=2, against promises of 2 and
+        // 1. That is not a reason to refuse the shape — a 20-stop climb is
+        // exactly what he asked for — but it is a reason to SAY it. Derived by
+        // sampling, because how many nodes a 4x2 act has is a distribution and
+        // not a formula, so nothing can answer it from the config alone.
+        const shortfalls = [];
+        resolved.forEach((r, i) => {
+          const minima = (resolveFloorPlan(r.config).plan || {}).minima || {};
+          for (const [t, want] of Object.entries(minima)) {
+            const got = per[i].byType[t] || 0;
+            // TWO DECIMALS, and it is not fussiness: at one decimal a mean of
+            // 1.99 prints "2.0 of 2", which reads as the promise being KEPT in
+            // the sentence saying it is broken.
+            if (want > 0 && got < want) shortfalls.push(`${t} ${got.toFixed(2)} of ${want}`);
+          }
+        });
+        bound.textContent = shortfalls.length
+          ? `nodes across ${ESTIMATE_SEEDS} seeds — the driver of run length, not minutes.`
+            + ` This act is too small to keep its own guarantees: ${[...new Set(shortfalls)].join(', ')} per map.`
+          : `nodes across ${ESTIMATE_SEEDS} seeds — the driver of run length, not minutes`;
+        bound.classList.toggle('warn', shortfalls.length > 0);
       }
 
       seedRefusal();
