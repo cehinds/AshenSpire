@@ -508,7 +508,7 @@ export function mountEquipment(host, {
             if (refused) { notice = refused; draw(); }
             return;
           }
-          cycleSet(run.loadout, slot.id, i);
+          cycleSet(registries, run.loadout, slot.id, i, { meta });
           sfx.play('cardPlay');
           commit();
         } else if (!inCombat) {

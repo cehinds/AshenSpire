@@ -200,6 +200,18 @@ export function validateEquipment(registries) {
       );
     }
   }
+  // THE LADDER'S JOIN, CHECKED IN BOTH DIRECTIONS — and the second direction is
+  // Vira's finding at gate. The first draft only asked whether there were too
+  // MANY rungs; too FEW is the silent one, and it is exactly Law 0 clause 5:
+  // `talisman` declares 3 sets, authors 0 rungs, derives 1 forever, and every
+  // instrument stays green while two thirds of a declared slot are unreachable.
+  // Nothing wrong is printed because nothing wrong happens — the screen simply
+  // never draws them. That is a generated result that is wrong but reasonable.
+  //
+  // THE CARVE-OUT IS THE FILE'S OWN, NOT A NEW ONE: a slot matching no piece by
+  // kind is authored ahead of its content (talismans today) and is not this
+  // defect — the same sentence the empty-slot check above already makes. So this
+  // fires the day a talisman row exists, which is the day the gap becomes real.
   for (const slot of eq.slots || []) {
     const rungs = slotRungs(registries, slot.id);
     const cap = Math.max(1, Number(slot.sets) || 1);
@@ -208,6 +220,21 @@ export function validateEquipment(registries) {
         `slot '${slot.id}' carries ${cap} set(s) but unlocks.csv authors ${rungs.length} rung(s) for it `
         + `(${rungs.map((r) => `'${r.id}'`).join(', ')}) — a rung past the last set can never be climbed to; `
         + `raise \`sets\` on that row in equipSlots.csv or drop a rung`
+      );
+    }
+    // AND IT ONLY FIRES WHEN THE TABLE IS THERE TO BE READ. `slotRungs` treats a
+    // missing `registries.unlocks` as "no rungs", which is safe for the
+    // too-MANY direction (zero can never exceed a cap) and is a lie in this one:
+    // a partial registry would be told every multi-set slot is unreachable, when
+    // the truth is that this check has nothing to check against. **Absent is not
+    // zero.** A run that cannot know says nothing rather than something false.
+    const knowable = Array.isArray((registries || {}).unlocks);
+    if (knowable && 1 + rungs.length < cap && pieces.some((p) => (slot.kinds || []).includes(p.kind))) {
+      problems.push(
+        `slot '${slot.id}' declares ${cap} sets but only ${1 + rungs.length} can ever open `
+        + `(1 free + ${rungs.length} rung(s) in unlocks.csv) — the other `
+        + `${cap - 1 - rungs.length} would never be reachable; add a rung with `
+        + `kind='${SLOT_RUNG_KIND}' ref='${slot.id}' or lower \`sets\` in equipSlots.csv`
       );
     }
   }
@@ -318,9 +345,16 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
 // AND THE NUMBER IS NOT A NEW SAVE KEY EITHER. A rung is something you EARN, and
 // this game already has one home for earned things: `meta.unlocked`, filled by
 // evaluateUnlocks from unlocks.csv. A rung is a ROW there — `kind` is already a
-// column and nothing in the tree branches on its value, so a new value costs no
-// engine change on the earning side (Law 0 clause 2). What is new is the
-// CONSUMER, and that is this file: one word, one act, schema-free.
+// column, and **the EARNING path never reads it**: `evaluateUnlocks` tests
+// `condition` against progress and returns ids, so a new `kind` value is earned
+// with no engine change at all (Law 0 clause 2). What is new is the CONSUMER,
+// and that is this file: one word, one act, schema-free.
+//
+// *(Corrected by Vira at gate: the first draft of this comment said "nothing in
+// the tree branches on its value", and `slotRungs` two screens down branches on
+// it in the same commit that shipped the sentence. It was true of the earning
+// path and false of the tree, and the difference is the whole claim — so it now
+// says which path it is talking about.)*
 //
 //     id,kind,ref,name,condition,param,reveal,hint
 //     rack2,slot,rightHand,Second Rack Slot,reachAct,2,listed,Reach the Stitched Court.
@@ -721,12 +755,57 @@ export function canUseStorage({ inCombat = false } = {}) {
 }
 
 /**
- * cycleSet(loadout, slotId, index) → mutates the active set index.
- * Returns false when the slot or index doesn't exist.
+ * cycleSet(registries, loadout, slotId, index, { meta }) → mutates the active
+ * set index. Returns false when the slot, the index, or the LADDER says no.
+ *
+ * VIRA'S GATE OF #90, AND SHE IS RIGHT THAT IT IS THE SAME DEFECT. `equipPiece`
+ * above carried a comment claiming the gate was on the mutation; #90 proved that
+ * sentence was about `fitsSlot` and had never been true of ownership, and moved
+ * the gate. **This function was three functions below it, in the same file, in
+ * the same commit, still bounding on `ids.length` — the raw array — while
+ * `openedSets()` shipped directly above it already knowing the answer.** So the
+ * ladder's gate was in the screen: the exact arrangement the commit spent itself
+ * disproving. A truth function written in the same act is not a follow-up.
+ *
+ * Measured at `c43c908`, her falsifier, before this change: fresh profile,
+ * `openedSets 1 · cycleSet accepts 3` on every multi-set slot — **6 of 13
+ * (slot, index) pairs.**
+ *
+ * THE BOUND IS `openedSets()` AND NEVER `1 + rungs earned`, which is her edge 2
+ * and the reason this is not "just add a comparison". A save from before today
+ * has `sets` full-width with pieces already in the last cell and no rungs
+ * earned; `openedSets` raises its floor to what the loadout is already holding,
+ * on purpose. A bound that recomputed the ladder from the rungs alone would
+ * strand a legacy player's weapon behind a lock that did not exist when they put
+ * it there — worse than the defect. **One truth function, two consumers**: the
+ * screen draws what `openedSets` opens and this refuses what it does not, so the
+ * two cannot disagree about a cell.
+ *
+ * `registries` moves to the front like everything else in this module, which is
+ * also what makes a call site left on the old signature fail CLOSED: the old
+ * first argument was a loadout, `registries.equipment.slots` is then undefined,
+ * the slot does not resolve, and it cycles nothing and says so.
  */
-export function cycleSet(loadout, slotId, index) {
-  const ids = (loadout.sets || {})[slotId];
+export function cycleSet(registries, loadout, slotId, index, ctx) {
+  const ids = ((loadout || {}).sets || {})[slotId];
   if (!ids || index < 0 || index >= ids.length) return false;
+  const slot = (((registries || {}).equipment || {}).slots || []).find((s) => s.id === slotId);
+  if (!slot) {
+    console.error(
+      `cycleSet('${slotId}', ${index}): no such slot in registries.equipment — refusing.`
+      + ' Call it as cycleSet(registries, loadout, slotId, index, { meta }).'
+      + ' This line is the defect, not the refusal.'
+    );
+    return false;
+  }
+  if (!ctx || typeof ctx !== 'object') {
+    console.error(
+      `cycleSet('${slotId}', ${index}): called with no ladder context — refusing.`
+      + ' Pass { meta } so the bound is openedSets() and not the raw array.'
+    );
+    return false;
+  }
+  if (index >= openedSets(registries, slot, { meta: ctx.meta || {}, loadout })) return false;
   loadout.active[slotId] = index;
   return true;
 }

@@ -480,7 +480,23 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     throw new Error(`Swapping costs ${cfg.swapCost} Energy`);
   }
 
-  if (!cycleSet(combat.loadout, slotId, setIndex)) throw new Error(`No set ${setIndex} on '${slotId}'`);
+  // THE LADDER BINDS HERE TOO (#90, Vira's gate), and combat has no profile —
+  // `createCombat` is handed registries, rng, player and enemies, and nothing
+  // that knows which rungs have been earned. So the bound here is
+  // `openedSets(meta: {})`, which is "one, plus whatever this loadout is already
+  // holding": in a fight you cycle between the sets you BROUGHT, and what you
+  // brought is in the loadout.
+  //
+  // THIS MAKES THE ENGINE AGREE WITH THE SCREEN RATHER THAN NARROWING IT. The
+  // in-combat armoury mount already passes a synthetic `meta` (equipment.js), so
+  // the panel already draws only that many cells — the engine was the half that
+  // still accepted any index. The limit is the SAME one already stated there for
+  // `equipView` and the fold, not a new one: an earned-but-EMPTY set is not
+  // reachable mid-fight. Making it reachable means giving combat the profile,
+  // which is a different card and not one to open inside a gate.
+  if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, { meta: {} })) {
+    throw new Error(`No set ${setIndex} on '${slotId}'`);
+  }
 
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
   else p.energy -= cfg.swapCost;

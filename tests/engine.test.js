@@ -46,7 +46,7 @@ import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, slotRungs, openedSets, visibleSets, rungFor, setCellState,
-  SLOT_RUNG_KIND, createLoadout,
+  SLOT_RUNG_KIND, createLoadout, cycleSet,
 } from '../src/model/loadout.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, emptyProgress, recordProgress, evaluateUnlocks, unlockView,
@@ -1910,6 +1910,35 @@ export async function runTests({ artManifest = null } = {}) {
       `a dangling rung names its own row and its bad ref — got: ${said || '(nothing)'}`);
     eq(validateEquipment(REG).join(' | '), '', 'and the shipped content is clean');
 
+    // ---- 9b. …and the OTHER direction of the same join (Vira, at gate) ----
+    // Too MANY rungs was checked; too FEW is the silent one. `talisman` declares
+    // 3 sets, authors 0 rungs, derives 1 forever, and nothing goes red because
+    // nothing goes wrong — the screen simply never draws them. Law 0 clause 5.
+    // It is dormant only because talismans are unauthored, so the fixture gives
+    // one a piece and watches the fuse blow.
+    const talisman = eq_.slots.find((s) => s.id === 'talisman');
+    assert(talisman && talisman.sets > 1, 'the fixture needs a wide, rung-less slot');
+    eq(slotRungs(REG, 'talisman').length, 0, 'talisman authors no rungs today');
+    eq(validateEquipment(REG).join(' | '), '', '…and is silent while nothing fits it');
+    const withCharm = {
+      ...REG,
+      equipment: {
+        ...REG.equipment,
+        armaments: [...REG.equipment.armaments,
+          { id: 'testCharm', name: 'Charm', kind: 'talisman', hand: '', rarity: 'common', tags: [], mods: [], unlock: '' }],
+      },
+    };
+    const fuse = validateEquipment(withCharm).join(' | ');
+    assert(fuse.includes("'talisman'") && fuse.includes('3 sets') && fuse.includes('only 1 can ever open'),
+      `the day a talisman exists, the unreachable sets are named — got: ${fuse || '(nothing)'}`);
+
+    // ABSENT IS NOT ZERO. A registry with no unlocks table cannot answer this,
+    // and a check that cannot know must say nothing rather than something false.
+    const blind = { ...withCharm };
+    delete blind.unlocks;
+    eq(validateEquipment(blind).join(' | ').includes('can ever open'), false,
+      'with no unlocks table the too-few check stays silent instead of condemning every slot');
+
     // ---- 10. no rung authored → no locked cell, so no reasonless refusal ---
     // refuses() errors on an empty reason, and the reason IS the rung's hint.
     // A slot with nothing to earn must therefore show no locked cell at all.
@@ -1919,6 +1948,60 @@ export async function runTests({ artManifest = null } = {}) {
     eq(Array.from({ length: rightHand.sets }, (_, i) => setCellState(i, openedN, visibleN)).join(','),
       'open,hidden,hidden', 'with nothing to earn there is nothing to lock');
     eq(rungFor(REG, rightHand, 1).id, rungs[0].id, 'and the visible lock always has a rung to name');
+  });
+
+  // ---- 31c. the ladder gates the MUTATION, not just the screen ------------
+  //
+  // VIRA'S GATE OF #90, and her property in her words:
+  //
+  //     a set index the player may ACTIVATE must be one openedSets() calls open.
+  //
+  // It lands here rather than in tools/probes/ because she asked for exactly
+  // that: *"whoever fixes it deletes this file in the same act, because a
+  // property that lives beside the code that satisfies it is the second copy."*
+  // Her probe found 6 of 13 pairs at c43c908; both of its edges are below, and
+  // the third case (a rung actually earned) is mine — a bound that refuses
+  // everything would have satisfied her edge 1 on its own.
+  test('31c. cycleSet refuses a set the ladder has not opened, and never strands a held one', () => {
+    const rightHand = REG.equipment.slots.find((s) => s.id === 'rightHand');
+    const rungs = slotRungs(REG, 'rightHand');
+    assert(rungs.length >= 2, `the right hand has rungs (${rungs.length})`);
+
+    // EDGE 1 — fresh profile. The defect: openedSets said 1, cycleSet took 3.
+    const meta = { unlocked: [] };
+    const fresh = createLoadout(REG, 'reaver');
+    eq(openedSets(REG, rightHand, { meta, loadout: fresh }), 1, 'one set open on a fresh profile');
+    const accepts = (m, lo) => [0, 1, 2].filter((i) => cycleSet(REG, structuredClone(lo), 'rightHand', i, { meta: m })).length;
+    eq(accepts(meta, fresh), 1, 'and the mutation accepts exactly one — not the raw array width');
+
+    // …and it is a GATE, not a blanket refusal: earning rungs opens indices.
+    eq(accepts({ unlocked: [rungs[0].id] }, fresh), 2, 'one rung earned opens the second');
+    eq(accepts({ unlocked: rungs.map((u) => u.id) }, fresh), 3, 'every rung earned opens them all');
+
+    // EDGE 2 — HER edge, and the one that makes this not "just add a bound".
+    // A save from before #90 has sets full-width with a piece already in the
+    // last cell and no rungs earned. Over-tight strands that weapon behind a
+    // lock that did not exist when the player put it there.
+    const legacy = createLoadout(REG, 'reaver');
+    legacy.sets.rightHand[2] = 'katana';
+    const last = legacy.sets.rightHand.length - 1;
+    eq(openedSets(REG, rightHand, { meta, loadout: legacy }), 3, 'a held piece raises the floor');
+    assert(cycleSet(REG, legacy, 'rightHand', last, { meta }), 'and the mutation lets the player reach it');
+    eq(legacy.active.rightHand, last, 'and it actually switched');
+
+    // ONE TRUTH FUNCTION, TWO CONSUMERS — the whole point of the fix. Whatever
+    // the screen would draw as `open`, the mutation accepts, and nothing else.
+    for (const m of [{ unlocked: [] }, { unlocked: [rungs[0].id] }, { unlocked: rungs.map((u) => u.id) }]) {
+      for (const lo of [fresh, legacy]) {
+        const open = openedSets(REG, rightHand, { meta: m, loadout: lo });
+        const drawn = [0, 1, 2].filter((i) => setCellState(i, open, open) === 'open').length;
+        eq(accepts(m, lo), drawn, 'the cells drawn open and the indices accepted are the same set');
+      }
+    }
+
+    // A stale call site fails CLOSED rather than skipping the check: the old
+    // first argument was a loadout, so the slot cannot resolve.
+    assert(!cycleSet(fresh, 'rightHand', 0, { meta }), 'the pre-#90 signature cycles nothing');
   });
 
   // ---- 32. no dead armaments (property, not a snapshot) --------------------
