@@ -1152,6 +1152,51 @@ body.hide-hints .hint-bar { display: none; }
    same 44 asked a second question. `--ui-zoom` is divided out inside it exactly as
    it is for `--tap-floor`; an exempt control that a small phone shrinks anyway
    would be an exemption in name only. */
+/* THE EVENT SCREEN'S THREE BARS — Sunna's sweep of the run loop, handed over
+   rather than patched because the variable this floor reads is the one this
+   branch introduces.
+
+   WHAT SHE MEASURED: 24 of 24 choice-instances under the floor, both shapes,
+   all four text sizes. 23.6 / 25.8 / 27.9 / 30.1 device px on the phone — it
+   never reaches 44 anywhere, and at phone Text S it is under 24, the most
+   permissive step Minimum tap size is about to offer.
+
+   WHY IT IS DANGEROUS AND NOT MERELY SMALL, which is her finding and the reason
+   this is not a cosmetic fix: the three bars are ADJACENT with 9-11 px gaps, so
+   a missed tap does not land on nothing — IT LANDS ON THE NEIGHBOURING CHOICE.
+   Between "Pray" and "Leave" that is a permanent curse instead of walking away,
+   with no confirm step, one-handed, mid-run.
+
+   LAW 4 WAS INVERTED HERE ON BOTH CLAUSES AND THE FIX IS THREE LINES:
+     clause 1  the label was an inline `13px` — it did NOT answer Text size.
+               1.3rem is that same size at Text M (root 62.5%), so M is
+               unchanged to the pixel and S/L/XL now move the letters.
+     clause 3  the box was `.subtle`'s `padding: 0.6rem 1.4rem` — it DID answer
+               Text size. px here, because a finger does not get bigger when a
+               player raises Text size.
+     clause 4  a floor, and `height: auto` so the box still grows on its own
+               glyphs. It can neither clip nor balloon.
+
+   SCOPE, said out loud: `.subtle`'s rem padding is untouched everywhere else.
+   Converting it globally is the blanket diff Law 4 tells nobody to attempt on
+   the strength of the law alone, and this is a ratchet on a screen already
+   open. THE FLOOR IS THE SIZE FIX AND NOT THE CONSEQUENCE FIX — adjacency and
+   the missing confirm step are Sunna's, and bigger targets do not make a curse
+   reversible. */
+/* `button.ev-choice`, not `.ev-choice` — AND I FOUND THAT BY MEASURING, NOT BY
+   READING. `button.subtle` in base.css is (0,1,1) and a bare class is (0,1,0),
+   so the first version of this rule lost BOTH the font-size and the padding to
+   it silently: the label came back 12px at Text M where the old inline value
+   was 13, and the box was still growing on `.subtle`'s rem padding. The floor
+   applied, so the table looked fixed while two thirds of the fix was not there.
+   A specificity loss is the quietest possible failure — nothing errors, the
+   rule is simply not the one that won. */
+button.ev-choice {
+  min-height: var(--tap-floor); height: auto;
+  font-size: 1.3rem;
+  padding: 8px 20px;
+}
+
 .choice-group[data-resizes-while-pressed] .choice {
   min-height: var(--tap-floor-default); min-width: var(--tap-floor-default);
 }
@@ -4015,7 +4060,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -4046,6 +4091,22 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   } else if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');
+  } else if (shotState === 'event') {
+    // A REACH STATE, and the precedent is `rest` directly below — added for the
+    // identical reason and quoting its own words: "one state for the one screen
+    // being fixed, so the fix has a picture instead of an assertion." The event
+    // screen is one of the screens no instrument this repo owns can open, which
+    // is why 24 of 24 of its choice bars sat under the tap floor with nothing
+    // ever regressing against it (Sunna's run-loop sweep). That COUNT is the
+    // census card and is not touched here.
+    //
+    // `graveOfTheNameless` on purpose: three choices, and the last one is
+    // "Leave" sitting 9-11 px under a choice with a real and irreversible
+    // consequence. It is the exact adjacency the fix is about, so the picture
+    // shows the thing rather than a friendlier event that happens to have three
+    // bars. `?shotEvent=<id>` overrides it, through the one `shotParams` const.
+    const evId = shotParams.get('shotEvent') || 'graveOfTheNameless';
+    showEvent(evId);
   } else if (shotState === 'rest') {
     // A REACH STATE, not the denominator. Constantine could not scroll the
     // Smith grid on a phone; the reason nobody caught it is that the Shrine is
@@ -26871,8 +26932,17 @@ function mountEvent(app, { registries, run, rng, eventId, onDone }) {
   const box = app.querySelector('#choices');
   def.choices.forEach((choice, i) => {
     const btn = document.createElement('button');
-    btn.className = 'subtle';
-    btn.style.fontSize = '13px';
+    // `ev-choice`, not a bare `.subtle`: these three bars are the only control
+    // on this screen and the floor belongs to THEM, not to every subtle button
+    // in the game. Law 4 is a ratchet, not a sweep — flooring `.subtle` would
+    // be the blanket conversion the law tells nobody to attempt.
+    btn.className = 'subtle ev-choice';
+    // `style.fontSize = '13px'` was here, and it was Law 4 clause 1 backwards:
+    // a px label does NOT answer the Text size control, while `.subtle`'s
+    // `padding: 0.6rem` meant the BOX did. Text that will not grow inside a box
+    // that will. The size now lives in the stylesheet in rem, where the one
+    // question it answers is "how big is a letter".
+    btn.dataset.choice = String(i);
     btn.style.animationDelay = `${i * 70}ms`; // staggered entrance
     btn.textContent = choice.label;
     if (!meets(choice.requires)) {

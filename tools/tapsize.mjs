@@ -279,6 +279,15 @@ const MAX = Math.max(...SIZES);
 // must fail rather than report a clean sweep over a shrunken space.
 const EXPECT_CELLS = SHAPES.length * UISIZES.length * TEXT.length * SIZES.length;
 const MIN_CELLS = EXPECT_CELLS;
+// THE FULL SPACE, ALWAYS COMPUTED, so a narrowed run can say what it narrowed
+// FROM. Vira's finding on the arm below: `--quick` shrinks the space AND the
+// expectation together, so the headline read `PASS — 4/4 cells` over a tenth of
+// the space. Every number was honest; the defect was an ASYMMETRY — `--mobile`
+// earned a named boundary sentence and `--quick` earned only numbers, so the
+// two narrowings did not cost the same to state. Derived from the same arrays,
+// never typed, so it cannot drift from what a full run would actually measure.
+const FULL_CELLS = 3 * 5 * 2 * SIZES.length; // 3 shapes x 5 UI sizes x 2 text sizes
+const NARROWED = [QUICK ? '--quick' : null, MOBILE_ONLY ? '--mobile' : null].filter(Boolean).join(' + ');
 
 const href = pathToFileURL(resolve(TREE, 'dist/AshenSpire.html')).href;
 if (!existsSync(resolve(TREE, 'dist/AshenSpire.html'))) {
@@ -308,7 +317,7 @@ try {
 // ---- the denominator, before any verdict ----------------------------------
 console.log(`\ntapsize — ${TREE}`);
 console.log(`  space          : ${SHAPES.length} shape(s) x ${UISIZES.length} UI size(s) x ${TEXT.length} text size(s) x ${SIZES.length} tap size(s)`);
-console.log(`  cells expected : ${EXPECT_CELLS}`);
+console.log(`  cells expected : ${EXPECT_CELLS}${NARROWED ? ` of ${FULL_CELLS} in the full space (${NARROWED})` : ''}`);
 console.log(`  cells measured : ${rows.length}`);
 if (rows.length < MIN_CELLS) {
   console.log(`\n  EMPTY OR SHORT — measured ${rows.length} of ${EXPECT_CELLS} cells. Nothing below is a verdict.`);
@@ -417,7 +426,7 @@ for (const f of findings) console.log(`    - ${f}`);
 console.log(`
 BOUNDARY: headless Chromium on Linux, dist/AshenSpire.html, ${SHAPES.length} shape(s)
           x ${UISIZES.length} UI size(s) x ${TEXT.length} text size(s), phone shapes first
-          (his ordering, 2026-08-08)${MOBILE_ONLY ? '; --mobile, so 1200x730 was NOT measured and this run is silent about desktop' : ''}. Every height is a
+          (his ordering, 2026-08-08)${MOBILE_ONLY ? '; --mobile, so 1200x730 was NOT measured and this run is silent about desktop' : ''}${QUICK ? `; --quick, so this is ${EXPECT_CELLS} of ${FULL_CELLS} cells and a PASS here is a pass over a TENTH of the space, not over it` : ''}. Every height is a
           RENDERED rect; the floor is a probe element the browser sized, never
           a parsed calc() token. It says nothing about Windows, about a real
           finger on real glass, about whether ${MIN} is WISE rather than legal,

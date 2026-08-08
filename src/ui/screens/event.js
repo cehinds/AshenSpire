@@ -28,8 +28,17 @@ export function mountEvent(app, { registries, run, rng, eventId, onDone }) {
   const box = app.querySelector('#choices');
   def.choices.forEach((choice, i) => {
     const btn = document.createElement('button');
-    btn.className = 'subtle';
-    btn.style.fontSize = '13px';
+    // `ev-choice`, not a bare `.subtle`: these three bars are the only control
+    // on this screen and the floor belongs to THEM, not to every subtle button
+    // in the game. Law 4 is a ratchet, not a sweep — flooring `.subtle` would
+    // be the blanket conversion the law tells nobody to attempt.
+    btn.className = 'subtle ev-choice';
+    // `style.fontSize = '13px'` was here, and it was Law 4 clause 1 backwards:
+    // a px label does NOT answer the Text size control, while `.subtle`'s
+    // `padding: 0.6rem` meant the BOX did. Text that will not grow inside a box
+    // that will. The size now lives in the stylesheet in rem, where the one
+    // question it answers is "how big is a letter".
+    btn.dataset.choice = String(i);
     btn.style.animationDelay = `${i * 70}ms`; // staggered entrance
     btn.textContent = choice.label;
     if (!meets(choice.requires)) {
