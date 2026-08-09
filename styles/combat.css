@@ -2,19 +2,52 @@
 
 .combat { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
 
-/* ---------- top bar ---------- */
+/* ---------- top bar: TWO ROWS (D10 wave 4) ----------
+   Row 1 — the resource bar stack, then the armament and menu buttons.
+   Row 2 — "the other hud items": portrait, name, cinders, flasks, relics.
+
+   Law 4, and this block is CONVERTED rather than carried: the old
+   `height: 5.2rem` made the whole HUD's box answer the Text-size control. The
+   header is a box; it gets a px-under-zoom floor and grows intrinsically from
+   what is in it, so it never clips at XL and never balloons. (Ratchet, not
+   sweep — converted because this rule is being rewritten anyway.) */
 .topbar {
-  height: 5.2rem; background: var(--bg-raise); border-bottom: 1px solid var(--line);
+  min-height: calc(52px / var(--ui-zoom, 1)); height: auto;
+  background: var(--bg-raise); border-bottom: 1px solid var(--line);
   display: flex; align-items: center; gap: 1.6rem; padding: 0 1.6rem; flex-shrink: 0;
+}
+/* `.topbar` is SHARED SKIN — the map header wears it too (styles/map.css:223,
+   src/ui/screens/map.js:239) and is still a single row of its own items. Only
+   the COMBAT HUD is the two-row shape he specified, so the restructure is
+   scoped to `.combat-hud` and the map is untouched by it. Checked, not assumed:
+   the map header is the only other `.topbar` in the tree. */
+.topbar.combat-hud {
+  flex-direction: column; align-items: stretch; justify-content: center;
+  gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
+}
+/* Kept for the map header, which still draws a .who column with an .hpbar in
+   it. The combat HUD has neither any more, so these are inert there. */
+.topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
+.topbar .hpbar { width: 19rem; height: 1.4rem; }
+.topbar .hpbar .fill { background: var(--blood); }
+/* THE TOP ROW, AND THE WHOLE OF HIS SCALING RULE IS THIS ONE LINE OF LAYOUT.
+   `.resbars-host` is `flex: 1; min-width: 0`; the two buttons are
+   `flex-shrink: 0`. So the bar track = row width − padding − buttons − gaps,
+   DERIVED by the browser. Nothing types a ceiling; a bar asking for 100 % gets
+   exactly the row he means by "filling up the full top row", at any width, any
+   zoom, and after a third button is ever added. */
+.topbar.combat-hud .hud-top { display: flex; align-items: center; gap: 1rem; }
+.topbar.combat-hud .resbars-host { flex: 1 1 auto; min-width: 0; }
+.topbar.combat-hud .hud-bottom {
+  display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;
+  row-gap: calc(4px / var(--ui-zoom, 1));
 }
 .topbar .portrait {
   width: 3.8rem; height: 3.8rem; border-radius: 50%; background: var(--panel);
   border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 2rem;
+  flex-shrink: 0;
 }
-.topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
-.topbar .who .nm { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.15em; }
-.topbar .hpbar { width: 19rem; height: 1.4rem; }
-.topbar .hpbar .fill { background: var(--blood); }
+.topbar .nm { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.15em; }
 .topbar .relics { display: flex; gap: 0.6rem; margin-left: 0.8rem; }
 .topbar .relic {
   width: 2.6rem; height: 2.6rem; border-radius: 6px; background: var(--panel);
@@ -28,6 +61,108 @@
   transition: border-color 140ms, color 140ms;
 }
 .topbar .topbar-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* THE TWO BUTTONS HE PUT AT THE END OF THE TOP ROW, AT THE TAP FLOOR.
+   Measured, and the premise I was handed was wrong: the brief said these were
+   "already at the floor". They are not, and never were — `width/height: 3rem`
+   renders 27 device px against a 44 px floor at 390x844, IDENTICALLY on
+   dev = 08e184a before any of this change (tools/hudbars.mjs A5, run against
+   both trees). Marina's 44.1 was a number from her mock, not from the shipped
+   button, and it travelled.
+   Fixed here because he assigned this row its contents in the same sentence,
+   so the row is this change's to get right. SCOPED TO COMBAT deliberately: the
+   map header wears the same `.topbar-btn` with THREE of them in a row plus a
+   substrip, and growing those is a Law 5 width question on a different screen
+   that belongs to whoever opens it — named in the log, not silently swept.
+   Law 4 clause 4: a floor plus intrinsic growth, never a text multiple. */
+.topbar.combat-hud .topbar-btn {
+  width: auto; height: auto;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+}
+
+/* ---------- resource bars (content/resources.js + model/resources.js) ----------
+   ONE stylesheet block for both HUDs. The stack is left-aligned so unequal
+   lengths read as a ragged right edge — which IS the information: a longer bar
+   is a bigger pool, at a glance, without a number. Elden Ring's HUD, his
+   reference, does exactly this. */
+.resbars { display: flex; flex-direction: column; align-items: flex-start; gap: calc(3px / var(--ui-zoom, 1)); }
+
+.resbar {
+  /* Chrome geometry: px under zoom, never rem — Law 4 clause 3. A bar is a box.
+     Its inline size is set from data (the trough length); its block size is an
+     ergonomic constant. */
+  height: calc(14px / var(--ui-zoom, 1));
+  container-type: inline-size;
+  flex-shrink: 0;
+
+  /* ---- THE MINIMUM-WIDTH CLAUSE ----
+     His rule ("length scales with max") is right and needs a floor under it.
+     Marina rendered maxMana = 2 at 48 px and watched the label collide with
+     itself; below that the failure gets worse, not better — at a 4-poise mob on
+     a 9.4rem strip the trough asks for 11 px, which is narrower than its own
+     two 1 px borders plus a legible fill.
+
+     WHY A FLOOR IS LEGITIMATE AND NOT A CHEAT. The bar's claim is "you can read
+     the maximum off the length". Below the floor nobody can read a length
+     difference anyway, so preserving the encoding there costs legibility and
+     buys no information. What is NOT legitimate is a floored bar that still
+     looks to scale — two different maxima render identically down there, and
+     that is a lie unless the bar admits it. So:
+
+     THE FLOOR IS MARKED. A floored trough is drawn DASHED — the broken-axis
+     mark, the same grammar a chart uses for a truncated scale — and its exact
+     maximum is always in the tooltip. The bar stops encoding and says so.
+
+     16 px, in px under zoom because a minimum perceivable bar length must not
+     track the Text-size control (Law 2 rule 3, Law 4 clause 3).
+
+     MEASURED, not chosen by eye. `node tools/hudbars.mjs --floor` renders a
+     half-empty bar at each candidate and reports the FILL, at 390x844:
+         floor  8 -> fill 3 px   (thinner than the corner radius; reads as noise)
+         floor 10 -> fill 4 px       floor 12 -> fill  5 px
+         floor 14 -> fill 6 px       floor 16 -> fill  7 px
+         floor 20 -> fill 9 px       floor 32 -> fill 15 px
+     14 is the smallest that clears 6 px. 16 ships, one step above it, because
+     the fill is also the thing that must survive a rounded corner and a 1 px
+     border on a real screen and that margin is not free. If --floor and this
+     number ever disagree, --floor is right and this is a stale copy. */
+  --resbar-min: calc(16px / var(--ui-zoom, 1));
+  min-width: var(--resbar-min);
+}
+.resbar > .fill { background: var(--res-tint, var(--muted)); }
+/* "poise (very skinny bar)" — his words, and skinny is a row's `weight`, so a
+   future resource is skinny by writing the word, not by editing this file. */
+.resbar-skinny { height: calc(5px / var(--ui-zoom, 1)); }
+.resbar.full > .fill { animation: pulse-gold 600ms infinite alternate; }
+.reduced-motion .resbar.full > .fill { animation: none; }
+
+/* The broken-axis mark: this trough is at its floor and no longer to scale. */
+.resbar[data-floored] { border-style: dashed; }
+
+/* ---- LABEL DEGRADATION, BY MEASURED FIT ----
+   Three variants ride in the DOM; the container query picks the widest that
+   fits its own trough. Thresholds are in `em`, which inside @container resolves
+   against the container's font-size — so "does the word fit" answers the
+   player's Text-size setting, which is the only thing that question depends on.
+   This is not Law 4 chrome-scaling: the BOX above is text-independent px. */
+.resbar > .label {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: calc(10px / var(--ui-zoom, 1)); line-height: 1; padding: 0;
+  letter-spacing: 0.06em; color: var(--parchment); text-shadow: 0 1px 2px #000;
+  white-space: nowrap; overflow: hidden; pointer-events: none;
+}
+.resbar .l-full, .resbar .l-num, .resbar .l-glyph { display: none; }
+@container (min-width: 2.4em) { .resbar .l-glyph { display: inline; } }
+@container (min-width: 5.5em) { .resbar .l-glyph { display: none; } .resbar .l-num { display: inline; } }
+@container (min-width: 11em)  { .resbar .l-num { display: none; } .resbar .l-full { display: inline; } }
+/* A skinny bar carries NO label at any width — "poise (very skinny bar)" is
+   5 px tall and nothing legible fits in it; the tooltip and the aria-label
+   carry the numbers. LAST, and deliberately so: it has the same specificity as
+   the `.resbar > .label` block above and must win on order. It did not, in the
+   first draft — the poise label rendered a 4 px-tall "0/10" inside a 6 px
+   trough and I found it by rendering, not by reading the cascade. */
+.resbar-skinny > .label { display: none; }
 
 /* ---------- act backdrop ---------- */
 /* One rendered plate per act (tools/backdrops-blender.py → assets/bg/*.webp,
@@ -74,7 +209,23 @@
 
 .combatant { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; position: relative; }
 .combatant .sprite { position: relative; display: flex; align-items: flex-end; justify-content: center; }
+/* The under-model strip. Its bars are the SAME component as the main HUD's —
+   the old .hpbar/.poisebar pair here was two more homes for one grammar, and
+   they are gone rather than kept in parallel (Law 0 clause 4). What survives is
+   the track width, which is this surface's own container. */
 .combatant .meters { width: 13rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.combatant .resbars { width: 100%; }
+/* The bar heights differ by surface — under a model there is less room and no
+   label to hold — so the surface overrides the component's default. */
+.combatant .resbar { height: calc(12px / var(--ui-zoom, 1)); }
+.combatant .resbar-skinny { height: calc(6px / var(--ui-zoom, 1)); }
+/* STILL LIVE, and for a reason worth naming rather than deleting quietly:
+   src/ui/screens/coop.js:177 has its OWN meterBars() drawing `.bar hpbar` and
+   `.bar poisebar` inside `.combatant`. That is a second renderer for one
+   grammar — a pre-existing Law 0 clause 4 breach (the same "second map
+   renderer nobody owns" Law 5 already lists) — and converting it is not this
+   change. These two rules are what keeps co-op's strip from collapsing to
+   zero height. Delete them the day coop.js calls resbars.js. */
 .combatant .hpbar { height: 1.2rem; }
 .combatant .hpbar .fill { background: var(--blood); }
 .combatant .poisebar { height: 0.6rem; }
@@ -490,8 +641,19 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 :root[data-layout='narrow'] .topbar {
     height: auto; flex-wrap: wrap; row-gap: 0.4rem; gap: 1rem; padding: 0.6rem 1rem;
   }
+  :root[data-layout='narrow'] .topbar.combat-hud {
+    flex-wrap: nowrap; gap: calc(5px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1rem;
+  }
+  /* Law 5 clause 4 — the bottom row spends HEIGHT, not width. It wraps rather
+     than pushing the seed label off the side; the fight label is hidden below
+     for the reason its own comment gives. */
+  :root[data-layout='narrow'] .topbar.combat-hud .hud-bottom { gap: 0.8rem; }
+  /* Still the MAP header's bar — combat's is gone. The old rule typed the
+     combat health bar at 14rem on a phone, a constant that could not tell 72
+     max HP from 84; combat's track is derived from the row now, so the narrow
+     shape needs nothing said about it. */
   :root[data-layout='narrow'] .topbar .hpbar { width: 14rem; }
-  :root[data-layout='narrow'] .topbar .who .nm { font-size: 1rem; }
+  :root[data-layout='narrow'] .topbar .nm { font-size: 1rem; }
   /* The seed string is dev information and it is what was overflowing the bar
      on a phone. It is not gone, and I checked rather than assuming when I
      wrote this the first time: overlay.js:163 puts Seed in the Stats panel,

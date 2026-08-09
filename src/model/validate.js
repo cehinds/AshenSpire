@@ -29,6 +29,7 @@ import {
   MUSIC_BED_SCHEMA,
   CREATURE_TAGS,
 } from './schemas.js';
+import { RESOURCE_SOURCES, RESOURCE_SOURCE_IDS } from './resources.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -214,6 +215,7 @@ export function validateContent(bundle) {
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {
     cards: SCHEMAS.card,
+    resources: SCHEMAS.resource,
     relics: SCHEMAS.relic,
     statuses: SCHEMAS.status,
     stances: SCHEMAS.stance,
@@ -230,6 +232,33 @@ export function validateContent(bundle) {
       const path = `${type}.${(def && def.id) || '?'}`;
       walkSchema(def, typeToSchema[type], path, vctx);
     });
+  }
+
+  // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
+  // The shape walk above already rejects a missing `source`. This rejects a
+  // source the engine cannot READ — the defect that would otherwise ship a
+  // trough reading 0/0 forever on Constantine's HUD, looking finished.
+  //
+  // THIS IS THE REFUSAL THE FEATURE WAS BUILT AROUND. Wave 4 of D10 asks for
+  // stamina and mana bars; neither resource exists in this tree. Adding
+  // `{ id: 'stamina', source: 'stamina', ... }` to content/resources.js dies
+  // HERE, at boot, naming the row and printing the sources that do exist —
+  // instead of drawing an empty bar nobody can tell from a broken one.
+  for (const row of (Array.isArray(b.resources) ? b.resources : [])) {
+    if (!row || typeof row.source !== 'string') continue; // shape walk owns this
+    if (!Object.hasOwn(RESOURCE_SOURCES, row.source)) {
+      err(`resources.${row.id || '?'}`, `source ${JSON.stringify(row.source)} has no reader — `
+        + `the engine cannot get a value for it, so this bar would render an empty trough forever. `
+        + `Readable sources are: ${RESOURCE_SOURCE_IDS.join(', ')}. `
+        + `Adding one is an engine change (a reader in model/resources.js), not a row.`);
+    }
+    if (row.domainMax != null && !(Number.isFinite(row.domainMax) && row.domainMax > 0)) {
+      err(`resources.${row.id || '?'}.domainMax`, `must be a positive number when present — got ${JSON.stringify(row.domainMax)}. `
+        + `It is the bar's full-row ceiling; a zero or negative one divides the length by nothing.`);
+    }
+    if (Array.isArray(row.surfaces) && row.surfaces.length === 0) {
+      err(`resources.${row.id || '?'}.surfaces`, 'names no surface, so this row can never draw — omit the row or give it a surface.');
+    }
   }
 
   if (b.balance != null && (typeof b.balance !== 'object' || Array.isArray(b.balance))) {

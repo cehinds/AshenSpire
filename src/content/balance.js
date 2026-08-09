@@ -84,6 +84,31 @@ export const balance = {
   // slider can't drift apart — they previously lived in two files and silently
   // disagreed.
   ui: {
+    // HUD resource bars, per surface (content/resources.js holds the rows).
+    //
+    // `scaleByMax` is HIS RULE — "the size of that bar should scale depending on
+    // the max total ... with the max size filling up the full top row". It is on
+    // for the main HUD, which is the surface he said it about.
+    //
+    // It is OFF under the character models, and that is a call worth stating
+    // rather than burying: he assigned that surface its CONTENTS ("really just
+    // health and poise"), not a scaling rule. Turning it on there is defensible
+    // and informative — the act-3 boss carries 250 HP against a 12 HP wisp —
+    // but the under-model track is 84.6 px at 390x844, so most of the roster
+    // lands on the 16 px floor and stops encoding anything.
+    //
+    // MEASURED, all 19 enemies, `node tools/hudbars.mjs --model-scale`:
+    // 15 of 38 bars (39 %) sit ON the floor, and 13 of the 19 HP bars (68 %) do
+    // — every enemy at or under 60 HP renders the same length as every other.
+    // A scale two thirds of whose values are pinned to its minimum is not a
+    // scale. That is the reason for the false, and it is a number rather than
+    // a preference.
+    //
+    // Flipping either boolean is a one-number data edit and needs no code.
+    hudBars: {
+      main: { scaleByMax: true },
+      model: { scaleByMax: false },
+    },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
       gold: { hex: '#c9a227', rgb: '201, 162, 39' },

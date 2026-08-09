@@ -6,6 +6,7 @@
 import { balance } from './balance.js';
 import { statuses } from './statuses.js';
 import { stances } from './stances.js';
+import { resources } from './resources.js';
 import { keywords } from './keywords.js';
 import { reaverCards } from './cards/reaver.js';
 import { starseerCards } from './cards/starseer.js';
@@ -38,6 +39,8 @@ export const contentBundle = {
   relics,
   statuses,
   stances,
+  // HUD resource bars — one row per bar (Law 0: add a row, a bar appears).
+  resources,
   keywords,
   enemies: [...act1Enemies, ...act2Enemies, ...act3Enemies],
   encounters: [...act1Encounters, ...act2Encounters, ...act3Encounters],
