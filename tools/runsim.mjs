@@ -27,13 +27,24 @@ import { createRunState, createIdGen } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward, shrineHealAmount,
+  rollRelicReward, shrineHealAmount, applyGraceRefill,
 } from '../src/engine/encounters.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
 
 const REG = createRegistries(contentBundle);
 const argv = process.argv.slice(2);
 const ENDLESS = argv.includes('--endless');
+// THE GRACE REFILL A/B (Sten, 2026-08-08). Constantine flagged the cost himself
+// — "However, that would mean making combat harder" — and a nod is not an
+// answer. `--grace-ab` runs the whole fleet twice, refill OFF then ON, same
+// seeds, and prints the delta. OFF is the tree as it was at dev = 08e184a: the
+// bot's shrine behaviour is untouched, only the refill is withheld.
+const GRACE_AB = argv.includes('--grace-ab');
+let GRACE_ON = !argv.includes('--no-grace-refill');
+// How many flasks a grace actually poured, across the fleet — the mechanism's
+// own counter, so a green win-rate cannot be read as "the refill happened".
+let poured = 0;
+let graces = 0;
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
 const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
 
@@ -153,6 +164,10 @@ function simulateRun(classId, seed) {
           break; // act cleared
         }
       } else if (kind === 'shrine') {
+        // AUTOMATIC AND BEFORE THE CHOICE, exactly as src/main.js showRest does
+        // — a run that comes to smith is refilled like a run that comes to rest.
+        graces++;
+        if (GRACE_ON) poured += applyGraceRefill(REG, run).total;
         if (run.hp < run.maxHp * 0.6) run.hp = Math.min(run.maxHp, run.hp + shrineHealAmount(REG, run));
         else { const c = run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true; }
       } else if (kind === 'treasure') {
@@ -170,8 +185,11 @@ function simulateRun(classId, seed) {
 }
 
 // ---- fleet -------------------------------------------------------------------
-console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot\n`);
+function fleet() {
+console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot`);
+console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}\n`);
 let crash = null;
+const tally = { wins: 0, runs: 0, acts: 0 };
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;
   const deaths = {};
@@ -185,6 +203,7 @@ for (const cls of REG.classes.all()) {
       break;
     }
     if (r.victory) wins++;
+    tally.runs++; if (r.victory) tally.wins++; tally.acts += r.act;
     acts += r.act; floors += r.floor; maxAct = Math.max(maxAct, r.act);
     if (r.deaths) deaths[r.deaths.split(':')[0]] = (deaths[r.deaths.split(':')[0]] || 0) + 1;
   }
@@ -199,4 +218,30 @@ for (const cls of REG.classes.all()) {
   );
 }
 if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }
-console.log('\nNo crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.');
+console.log(`\ngraces visited ${graces}, flasks poured ${poured}` + (GRACE_ON && graces && !poured ? '  <-- REFILL RAN DEAD' : ''));
+console.log('No crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.');
+return { ...tally, graces, poured };
+}
+
+if (!GRACE_AB) {
+  fleet();
+} else {
+  // A/B. Same seeds both sides (simulateRun derives its seed from the class and
+  // the index, not from a global rng), so the delta is the refill and nothing
+  // else. Reported as counts, never as a verdict: whether this is the right
+  // difficulty is Marina's and Sunna's, not a simulator's.
+  GRACE_ON = false; graces = 0; poured = 0;
+  const off = fleet();
+  console.log('\n' + '-'.repeat(72) + '\n');
+  GRACE_ON = true; graces = 0; poured = 0;
+  const on = fleet();
+  const pct = (t) => `${((t.wins / t.runs) * 100).toFixed(1)}%`;
+  console.log('\nGRACE REFILL A/B — same seeds, refill the only difference');
+  console.log(`  OFF  wins ${off.wins}/${off.runs} (${pct(off)})  avg act ${(off.acts / off.runs).toFixed(2)}`);
+  console.log(`  ON   wins ${on.wins}/${on.runs} (${pct(on)})  avg act ${(on.acts / on.runs).toFixed(2)}  |  ${on.poured} flasks poured over ${on.graces} graces`);
+  console.log(`  DELTA  ${(((on.wins / on.runs) - (off.wins / off.runs)) * 100).toFixed(1)} percentage points, ${((on.acts / on.runs) - (off.acts / off.runs)).toFixed(2)} acts`);
+  console.log('\nBOUNDARY: one greedy bot that drinks slot 0 below 55% HP and hoards nothing else,');
+  console.log(`  ${N} seeds per class, three classes. It measures SUSTAIN, not play. A human curates`);
+  console.log('  a deck and saves a flask for a boss; this bot does neither, so read the sign and');
+  console.log('  the order of magnitude, not the decimal. It is a number to argue from, not a verdict.');
+}

@@ -26,6 +26,7 @@ import {
   rollRelicReward,
   buildShopStock,
   rollArmamentDrop,
+  applyGraceRefill,
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
@@ -43,7 +44,7 @@ import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, resolveTapSize } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -1298,10 +1299,24 @@ function shopPriceMult() {
 function showRest() {
   audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+  // AUTOMATIC, AND IT HAPPENS BEFORE THE CHOICE. Constantine: "flasks should
+  // refill automatically at graces". Not a third option beside Rest and Smith —
+  // arriving is the trigger, so a run that comes to smith is refilled exactly
+  // like a run that comes to rest. The counts come from balance.graceRefill
+  // through the Advanced debug rows; `bad` is a stored override that is not on
+  // the ladder, and it is named in the command log rather than swallowed
+  // (the same treatment applyTapSize gives a bad tapFloor).
+  const { counts, bad } = resolveGraceRefill(saves.loadMeta().settings || {});
+  for (const b of bad) {
+    dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
+  }
+  const refill = applyGraceRefill(registries, run, { counts });
+  if (refill.total) persist();
   mountRest(app, {
     registries,
     run,
     healMult,
+    refill,
     onDone: () => {
       persist();
       showMap();

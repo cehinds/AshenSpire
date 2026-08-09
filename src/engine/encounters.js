@@ -4,13 +4,16 @@
 // Procedural systems: seeded algorithms whose every knob comes from content
 // (balance.js, encounters/*.js). Pure functions of (registries, rng, args) —
 // run mutation is limited to explicitly documented counters (flask pity,
-// removal price). Stream usage: encounters → 'enemyAI', card rewards →
+// removal price) plus `applyGraceRefill`, which is the one function here that
+// puts something IN the run — flasks, at a grace, from a pure plan it does not
+// itself compute. Stream usage: encounters → 'enemyAI', card rewards →
 // 'cardRewards', relics → 'relicRewards', flasks → 'flaskRewards',
 // unknown nodes + events → 'events', shop stock → 'shop', cinders → 'misc'.
 //
 // Headless: no document/window/localStorage/timers.
 
 import { passiveMult, passiveFlag } from '../model/registries.js';
+import { graceRefillPlan } from '../model/gracerefill.js';
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -259,6 +262,29 @@ export function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {
   if (!pool.length) pool = registries.events.ids();
   if (!pool.length) return { kind: 'fight' }; // no events shipped: fall back
   return { kind: 'event', eventId: rng.pick('events', pool) };
+}
+
+/**
+ * applyGraceRefill(registries, run, { counts }) → the plan it just applied.
+ *
+ * THE ONE MUTATION, and it is listed in this file's header beside flask pity
+ * and the removal price. Everything that decides WHAT to hand over is pure and
+ * lives in model/gracerefill.js, so a screen, a settings row and a sim can each
+ * ask what a grace would do without one of them having to do it.
+ *
+ * AUTOMATIC, NOT A CHOICE. Constantine: "flasks should refill automatically at
+ * graces". The caller fires this on ARRIVAL at the shrine, before Rest or Smith
+ * is offered — resting is one of the two things you can then spend the stop on,
+ * and the flasks are not the price of either.
+ *
+ * IDEMPOTENT BY CONSTRUCTION, which is what makes a re-entry safe: the plan is
+ * a TOP-UP to `count`, so calling it twice at one shrine grants nothing the
+ * second time. A resumed save that re-mounts the shrine cannot double-pour.
+ */
+export function applyGraceRefill(registries, run, opts = {}) {
+  const plan = graceRefillPlan(registries, run, opts);
+  for (const flaskId of plan.grants) run.flasks.push({ flaskId });
+  return plan;
 }
 
 /** Shrine rest heal (SPEC shrine.healPct × shrineHealMult passives, floored). */

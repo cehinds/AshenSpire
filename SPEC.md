@@ -619,7 +619,23 @@ Relic behavior uses the trigger DSL (§3.6) — the same declarative form as pow
 
 ### 5.5 Flasks (potions)
 
-3 slots. Found from combats (~35% drop, decaying like StS's potion chance: −10% per drop, +10% per miss), shops, events.
+3 slots (`balance.flaskSlots`). Found from combats (~35% drop, decaying like StS's potion chance: −10% per drop, +10% per miss), shops, events — **and refilled at every grace** (§5.5.1).
+
+**Kind.** Every flask has a `kind` from the closed set `FLASK_KINDS` (`hp`, `mana`, `utility`, `model/schemas.js`). It is **derived, not authored** (`model/gracerefill.js` `flaskKindOf`): a flask whose effects include `heal` is `hp`, everything else is `utility`, and an explicit `kind:` on the entry overrides the derivation. **`mana` is never derived** — there is no mana resource in this build, and reading Cerulean Flask's `gainEnergy` as mana would be a plausible-invisible derivation (Law 0 clause 5). The only way an entry becomes `mana` is by saying so.
+
+#### 5.5.1 The grace refill
+
+> Constantine, 2026-08-08: *"at every grace all characters should restore 3 hp flasks, and 3 mana flasks (this should be configurable in teh debug settings and be data driven)"*.
+
+**The grace is the Shrine of Emberlight** — this game has no separate `grace` node type and does not invent one.
+
+- **Automatic, on arrival, before the Rest/Smith choice.** A run that comes to smith is refilled exactly like a run that comes to rest. Co-op refills every living member at `enterShrine`.
+- **Data driven.** `balance.graceRefill` is a table of `{ kind, count, flaskId? }` rows. A row names a KIND; the kind resolves to its first authored member (`flaskId` overrides which one). Adding a refilled kind is a row plus one word in `FLASK_KINDS`; adding a second HP flask is neither.
+- **A top-up, not a grant.** A grace brings you **up to** `count` of the kind — arriving with two Crimson Flasks gets you one. Therefore idempotent: a re-mounted shrine cannot double-pour.
+- **Configurable in the debug settings.** Settings ▸ Advanced carries **one chip row per table row**, generated from the table, with the ladder `0 … balance.flaskSlots` derived from the carry cap. Nothing about those rows is authored in `settings.js`.
+- **The `mana` row ships declared and inert.** No entry carries `kind: 'mana'`, so it restores nothing and says **NOT BINDING** in its own debug row and in `tools/gracerefill.mjs`. It is declared so the refill starts working the day a mana flask is authored, with no code change.
+- **Refusals** (`graceRefillRefusals`, run from `validateContent` at boot; corpus `node tools/gracerefill.mjs --selftest`): a kind outside the closed set · two rows for one kind · a non-numeric, negative or fractional count · a count above the carry cap · a `flaskId` override that dangles or is of another kind · **and the aggregate** — satisfiable rows summing past `balance.flaskSlots`, which names `balance.flaskSlots` as the fix.
+- **Cost, measured not asserted:** `node tools/runsim.mjs 200 --grace-ab` at this writing — greedy bot, 600 runs per side, same seeds — **9.2% → 24.8% full-run win rate, +15.7 points**. That is a difficulty call, not a build claim, and it belongs to the balance seat.
 
 | Flask | Effect |
 |---|---|
@@ -682,7 +698,7 @@ Title ──► Class Select (+ seed entry) ──► Map ──► [Combat | Sh
 Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► Title
 ```
 
-Screen router in `main.js`; each screen module exports `mount(state, dispatch)` / `unmount()`.
+Screen router in `main.js`; each screen module exports `mount(state, dispatch)` / `unmount()`. **Arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1); the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
 
 ### 7.2 Combat layout (1280×720 reference)
 

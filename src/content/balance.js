@@ -43,6 +43,46 @@ export const balance = {
 
   shrine: { healPct: 35 },
 
+  // ---- what a grace hands back (Constantine, 2026-08-08) --------------------
+  //
+  // "at every grace all characters should restore 3 hp flasks, and 3 mana
+  // flasks (this should be configurable in teh debug settings and be data
+  // driven)". The grace is the Shrine of Emberlight; the machinery is
+  // model/gracerefill.js and one line in engine/encounters.js.
+  //
+  // A TABLE, NOT TWO CONSTANTS. Rows name a KIND, and a kind resolves to the
+  // first flask entry that carries it (content/flasks.js, derived from its
+  // effects). Adding a third refilled kind is a row here plus one word in
+  // FLASK_KINDS; adding a second HP flask is neither.
+  //
+  // THE mana ROW IS DECLARED AND INERT, DELIBERATELY. No entry carries kind
+  // 'mana' — there is no mana resource in this build — so it restores nothing
+  // and says NOT BINDING on the shrine screen and in its own debug row. It is
+  // here because the day a mana flask is authored, the refill he asked for is
+  // already declared and starts working with no code change. Its count is his
+  // number, 3, held rather than guessed at.
+  //
+  // COUNTS ARE A TOP-UP, NOT A GRANT: a grace brings you UP TO `count` of the
+  // kind. Arriving with two Crimson Flasks gets you one, not three.
+  //
+  // THE CAP IS balance.flaskSlots ABOVE, and boot validation refuses a table
+  // whose satisfiable rows sum past it (model/gracerefill.js
+  // graceRefillRefusals). Today: hp 3 + mana 0-because-inert = 3 into 3 slots.
+  // Author a mana flask without raising flaskSlots and the game refuses to boot
+  // by name — which is the balance question arriving out loud, on purpose.
+  graceRefill: [
+    { kind: 'hp', count: 3 },
+    { kind: 'mana', count: 3 },
+  ],
+
+  // "and each character should start with those" — the fourth clause of his
+  // flask sentence, BUILT and shipped OFF. See model/state.js createRunState for
+  // why it is off: his live instruction tonight was about GRACES, and the grace
+  // refill alone already moves the bot's win rate 9.2% -> 24.8%
+  // (`node tools/runsim.mjs 200 --grace-ab`). Turning it on is this one word and
+  // no code — which is the whole point of it being here rather than nowhere.
+  graceRefillAtRunStart: false,
+
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
   // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,
   // Freja's finding, Marina binding): what a `?` node resolves to is map geometry

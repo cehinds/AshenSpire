@@ -540,6 +540,22 @@ button.rs-reset {
 }
 .screen .title-big { font-size: 4.4rem; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
 .screen .subtitle { color: var(--muted); letter-spacing: 0.3em; font-size: 1.2rem; }
+/* The grace-refill sentence on the Shrine (Sten, 2026-08-08). NOT `.subtitle`:
+   that rule's 0.3em tracking is right for a three-word banner and wrong for a
+   sentence — at 390x844 it pushed the first draft of this line to six lines
+   over the Rest button. Normal tracking, one measure, and it sits under the
+   banner rather than pretending to be one.
+   LAW 4: `font-size` in rem because it decides how big a letter is; the measure
+   and the gaps are text-independent, so the box does not grow with Text size —
+   and there is no fixed height, so the letters push it taller on their own. */
+.screen .rest-refill {
+  color: var(--gold);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  max-width: 34ch;
+  margin: 0 auto 10px;
+  text-align: center;
+}
 .seed-line { color: var(--muted); font-size: 1.2rem; }
 .seed-line input {
   background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
