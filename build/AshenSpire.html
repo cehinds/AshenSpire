@@ -677,6 +677,22 @@ body.hide-hints .hint-bar { display: none; }
 }
 .screen .title-big { font-size: 4.4rem; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
 .screen .subtitle { color: var(--muted); letter-spacing: 0.3em; font-size: 1.2rem; }
+/* The grace-refill sentence on the Shrine (Sten, 2026-08-08). NOT `.subtitle`:
+   that rule's 0.3em tracking is right for a three-word banner and wrong for a
+   sentence — at 390x844 it pushed the first draft of this line to six lines
+   over the Rest button. Normal tracking, one measure, and it sits under the
+   banner rather than pretending to be one.
+   LAW 4: `font-size` in rem because it decides how big a letter is; the measure
+   and the gaps are text-independent, so the box does not grow with Text size —
+   and there is no fixed height, so the letters push it taller on their own. */
+.screen .rest-refill {
+  color: var(--gold);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  max-width: 34ch;
+  margin: 0 auto 10px;
+  text-align: center;
+}
 .seed-line { color: var(--muted); font-size: 1.2rem; }
 .seed-line input {
   background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
@@ -3047,7 +3063,8 @@ const { createRng, seedToString, seedFromString, seedProblem } = require("src/en
 const { createCombat } = require("src/engine/combat.js");
 const { buildActMap } = require("src/engine/actmap.js");
 const { createSaveManager, createMemoryStorage } = require("src/engine/save.js");
-const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, buildShopStock, rollArmamentDrop } = require("src/engine/encounters.js");
+const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, buildShopStock, rollArmamentDrop, applyGraceRefill } = require("src/engine/encounters.js");
+
 
 
 
@@ -3072,7 +3089,7 @@ const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
 const { mountCompendium } = require("src/ui/screens/compendium.js");
-const { openSettings, settingOn, showSettingsNotice, resolveTapSize } = require("src/ui/screens/settings.js");
+const { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill } = require("src/ui/screens/settings.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
@@ -4303,10 +4320,24 @@ function shopPriceMult() {
 function showRest() {
   audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+  // AUTOMATIC, AND IT HAPPENS BEFORE THE CHOICE. Constantine: "flasks should
+  // refill automatically at graces". Not a third option beside Rest and Smith —
+  // arriving is the trigger, so a run that comes to smith is refilled exactly
+  // like a run that comes to rest. The counts come from balance.graceRefill
+  // through the Advanced debug rows; `bad` is a stored override that is not on
+  // the ladder, and it is named in the command log rather than swallowed
+  // (the same treatment applyTapSize gives a bad tapFloor).
+  const { counts, bad } = resolveGraceRefill(saves.loadMeta().settings || {});
+  for (const b of bad) {
+    dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
+  }
+  const refill = applyGraceRefill(registries, run, { counts });
+  if (refill.total) persist();
   mountRest(app, {
     registries,
     run,
     healMult,
+    refill,
     onDone: () => {
       persist();
       showMap();
@@ -4814,6 +4845,46 @@ const balance = {
   },
 
   shrine: { healPct: 35 },
+
+  // ---- what a grace hands back (Constantine, 2026-08-08) --------------------
+  //
+  // "at every grace all characters should restore 3 hp flasks, and 3 mana
+  // flasks (this should be configurable in teh debug settings and be data
+  // driven)". The grace is the Shrine of Emberlight; the machinery is
+  // model/gracerefill.js and one line in engine/encounters.js.
+  //
+  // A TABLE, NOT TWO CONSTANTS. Rows name a KIND, and a kind resolves to the
+  // first flask entry that carries it (content/flasks.js, derived from its
+  // effects). Adding a third refilled kind is a row here plus one word in
+  // FLASK_KINDS; adding a second HP flask is neither.
+  //
+  // THE mana ROW IS DECLARED AND INERT, DELIBERATELY. No entry carries kind
+  // 'mana' — there is no mana resource in this build — so it restores nothing
+  // and says NOT BINDING on the shrine screen and in its own debug row. It is
+  // here because the day a mana flask is authored, the refill he asked for is
+  // already declared and starts working with no code change. Its count is his
+  // number, 3, held rather than guessed at.
+  //
+  // COUNTS ARE A TOP-UP, NOT A GRANT: a grace brings you UP TO `count` of the
+  // kind. Arriving with two Crimson Flasks gets you one, not three.
+  //
+  // THE CAP IS balance.flaskSlots ABOVE, and boot validation refuses a table
+  // whose satisfiable rows sum past it (model/gracerefill.js
+  // graceRefillRefusals). Today: hp 3 + mana 0-because-inert = 3 into 3 slots.
+  // Author a mana flask without raising flaskSlots and the game refuses to boot
+  // by name — which is the balance question arriving out loud, on purpose.
+  graceRefill: [
+    { kind: 'hp', count: 3 },
+    { kind: 'mana', count: 3 },
+  ],
+
+  // "and each character should start with those" — the fourth clause of his
+  // flask sentence, BUILT and shipped OFF. See model/state.js createRunState for
+  // why it is off: his live instruction tonight was about GRACES, and the grace
+  // refill alone already moves the bot's win rate 9.2% -> 24.8%
+  // (`node tools/runsim.mjs 200 --grace-ab`). Turning it on is this one word and
+  // no code — which is the whole point of it being here rather than nowhere.
+  graceRefillAtRunStart: false,
 
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
   // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,
@@ -11564,6 +11635,7 @@ Object.assign(module.exports, { unlocks });
 
 const { resolveFloorPlan } = require("src/model/floorplan.js");
 const { viewRefusals, geometryRefusals } = require("src/model/mapview.js");
+const { graceRefillRefusals } = require("src/model/gracerefill.js");
 const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, MODIFIER_KEYS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, CREATURE_TAGS } = require("src/model/schemas.js");
 
 
@@ -11840,6 +11912,18 @@ function validateContent(bundle) {
   if (b.balance != null && typeof b.balance === 'object' && !Array.isArray(b.balance)) {
     for (const e of geometryRefusals(b.balance)) err(e.key, e.msg);
   }
+  // balance.graceRefill — what a grace hands back (Constantine, 2026-08-08).
+  //
+  // TAKES THE WHOLE BUNDLE, not `b.balance`, and that is the point: three of its
+  // eight refusals can only be asked with the flask ENTRIES in hand (does this
+  // kind have a member, does this override resolve, is the override of the kind
+  // the row claims). A refusal that could only see `balance` would be checking
+  // the half that was never in doubt.
+  //
+  // Its corpus is `node tools/gracerefill.mjs --selftest`, which plants each
+  // refusal into the real bundle and watches this call go red.
+  for (const e of graceRefillRefusals(b)) err(e.key, e.msg);
+
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {
     const p = b.balance.poise;
@@ -13439,6 +13523,351 @@ function viewRefusals(config) {
 Object.assign(module.exports, { COL_X, ROW_H, ZOOM_STEPS, ZOOM_MIN, ZOOM_MAX, MAP_ZOOM_DEFAULT, PHONE_UI_ZOOM, PHONE_UI_ZOOM_MIN, nodeRadiusFor, deliveredNodePx, TAP_TARGET_DEFAULT, REF_ZOOM, nodeRadiusFromTap, BOSS_RATIO, NODE_R, BOSS_R, PHONE_VIEW_W, nodeRadius, svgWidth, svgHeight, nodeX, nodeY, clampZoom, framingBox, fitZoom, spanWidth, maxFanoutSpan, maxFittingColumns, FANOUT_SLACK_MIN, NODE_AIR_MIN_PX, fanoutMargin, maxSafeColumns, nodeAir, maxTapDefault, geometryRefusals, viewRefusals });
 
 },
+"src/model/gracerefill.js": function (module, exports, require) {
+// src/model/gracerefill.js — what a grace hands back, and what it refuses.
+//
+// Constantine, 2026-08-08: "flasks should refill automatically at graces", and
+// the longer form the same evening: "at every grace all characters should
+// restore 3 hp flasks, and 3 mana flasks (this should be configurable in teh
+// debug settings and be data driven, and each character should start with
+// those)."
+//
+// THE GRACE IS THE SHRINE OF EMBERLIGHT. There is no node type called `grace`
+// in this tree and none is invented here: `shrine` is the rest node (SPEC §7.1,
+// NODE_TYPES in model/floorplan.js), it is the only place a run stops to
+// recover, and it is what his sentence is about. Naming a second word for it
+// would be the second copy this house exists to catch.
+//
+// TWO NOUNS THAT ARE NOT THE SAME NOUN, and this file exists on the seam.
+// His flask is Elden Ring's: one vessel, N charges, refilled at a grace.
+// THIS GAME'S flask is Slay the Spire's potion: `run.flasks` is up to
+// `balance.flaskSlots` SLOTS, each holding a distinct content entry with its
+// own effects (content/flasks.js). "Restore 3 hp flasks" therefore has to mean
+// something in the second model, and the only honest reading is: TOP THE SLOTS
+// UP TO THREE OF THAT KIND. Said out loud because the reading is ours, not his.
+//
+// LAYERING: model/, imports nothing from engine/. Pure. `graceRefillPlan` never
+// mutates — the mutation is one line in engine/encounters.js, so the same plan
+// can be shown on a screen, printed by a settings row, and measured by a sim
+// without any of the three having to apply it to find out what it says.
+
+const { FLASK_KINDS } = require("src/model/schemas.js");
+
+/**
+ * flaskKindOf(def) → one of FLASK_KINDS.
+ *
+ * LAW 0 CLAUSE 1 — an entry DESCRIBES, the machinery DERIVES. No flask in
+ * content/flasks.js was edited to gain a kind: Crimson Flask heals, so it is
+ * `hp`, and it says so by carrying a `heal` op and nothing else. An author who
+ * writes a new healing flask writes no new field.
+ *
+ * LAW 0 CLAUSE 3 — the derivation is overridable, and the override is data. An
+ * explicit `kind:` on the row wins over everything below, so a flask that heals
+ * as a side effect but is not the healing flask can say so without code.
+ *
+ * `mana` IS NEVER DERIVED, and that is deliberate rather than an omission.
+ * There is no mana resource in this build (zero matches for `mana` across
+ * `src/` at 08e184a) and therefore no opcode that could imply the kind. Reading
+ * Azure Flask's `gainEnergy` as "mana" is exactly the plausible-invisible
+ * derivation Law 0 clause 5 names: Energy is the per-turn combat resource that
+ * already exists, mana is a per-run resource that does not, and a rule that
+ * quietly equates them would look right and be wrong at every value. The only
+ * way an entry becomes `mana` is by saying `kind: 'mana'` out loud.
+ */
+function flaskKindOf(def) {
+  if (!def || typeof def !== 'object') return 'utility';
+  if (typeof def.kind === 'string') return def.kind; // override wins, validated at boot
+  const effects = Array.isArray(def.effects) ? def.effects : [];
+  if (effects.some((e) => e && e.op === 'heal')) return 'hp';
+  return 'utility';
+}
+
+/**
+ * firstFlaskOfKind(defs, kind) → the def a kind resolves to, or null.
+ *
+ * THE ONE HOME for "which flask does 'hp' mean". It takes a plain array of
+ * defs rather than registries so that all three callers can share it: the plan
+ * (registries.flasks.all()), boot validation (the raw bundle, before any
+ * registry exists), and the settings row (the content array, in a module that
+ * is never handed registries). One rule, three doors, no second copy.
+ *
+ * FIRST AUTHORED, NEVER RANDOM. A grace that hands over a different flask on a
+ * re-run is a grace nothing can measure.
+ */
+function firstFlaskOfKind(defs, kind) {
+  for (const d of defs || []) if (flaskKindOf(d) === kind) return d;
+  return null;
+}
+
+/** Every flask id of a kind, in registry (authored) order. */
+function flasksOfKind(registries, kind) {
+  return registries.flasks.all().filter((d) => flaskKindOf(d) === kind).map((d) => d.id);
+}
+
+/** The refill table, as authored. Absent = no refill, which is a legal state. */
+function graceRefillTable(balance) {
+  const t = balance && balance.graceRefill;
+  return Array.isArray(t) ? t : [];
+}
+
+/** The carry cap. One home: `balance.flaskSlots`, same default the UI uses. */
+function flaskSlotCap(balance) {
+  const n = balance && balance.flaskSlots;
+  return typeof n === 'number' && Number.isFinite(n) ? n : 3;
+}
+
+/**
+ * graceRefillLadder(balance) → ['0','1',...,String(cap)]
+ *
+ * The debug control's choices, DERIVED from the carry cap rather than typed.
+ * Raising `flaskSlots` lengthens every one of those chip rows with no edit to
+ * the settings screen. The strings are strings because `type: 'choice'` rows
+ * store strings (settings.js `rowHtml`), and a number stored where a string is
+ * compared is how a setting silently stops sticking.
+ */
+function graceRefillLadder(balance) {
+  const cap = flaskSlotCap(balance);
+  const n = Number.isInteger(cap) && cap >= 0 ? cap : 3;
+  return Array.from({ length: n + 1 }, (_, i) => String(i));
+}
+
+/**
+ * graceRefillPlan(registries, run, { counts }) → what a grace would hand over.
+ *
+ * PURE. Returns the whole reckoning — including everything it could NOT do and
+ * why — so that no caller has to apply it to find out. `counts` is the debug
+ * override, `{ [kind]: number }`; anything absent falls back to the authored
+ * row, which is the one home for the number.
+ *
+ *   {
+ *     cap, held, free,                       // slots
+ *     rows: [{ kind, count, flaskId, have, want, granted, short, binding, why }],
+ *     grants: [flaskId, ...],                // in the order they would be added
+ *     total,                                 // grants.length
+ *     shortfalls: [{ kind, short, why }],    // what it refused to pretend it did
+ *   }
+ *
+ * `binding: false` is the inert row and it is the point of the `why` string:
+ * a knob whose value is plausibly ignored is worse than no knob, so the row
+ * that restores nothing SAYS it restores nothing, by name, wherever it is
+ * drawn.
+ */
+function graceRefillPlan(registries, run, { counts = {} } = {}) {
+  const balance = registries.balance || {};
+  const cap = flaskSlotCap(balance);
+  const held = Array.isArray(run && run.flasks) ? run.flasks : [];
+  const kindOfHeld = held.map((f) => {
+    if (!f || !registries.flasks.has(f.flaskId)) return null;
+    return flaskKindOf(registries.flasks.get(f.flaskId));
+  });
+
+  let free = Math.max(0, cap - held.length);
+  const rows = [];
+  const grants = [];
+  const shortfalls = [];
+
+  for (const raw of graceRefillTable(balance)) {
+    const kind = raw && raw.kind;
+    // THE OVERRIDE, AND IT IS READ HERE OR THE WHOLE DEBUG CONTROL IS THEATRE.
+    // This line was missing for one commit: the parameter was declared, the
+    // settings row was drawn, the shrine passed `counts` in, and the plan
+    // silently used the authored number anyway — a knob whose value is ignored,
+    // the exact failure Law 0 clause 5 names, shipped inside the feature that
+    // exists to avoid it. It was found by `tools/gracerefill.mjs --selftest`
+    // (behaviour plant `counts { hp: 0 }`) and by nothing else, which is why
+    // that plant enters at the shrine and not at this function.
+    const authored = raw && typeof raw.count === 'number' ? raw.count : 0;
+    const override = counts && Object.hasOwn(counts, kind) ? counts[kind] : undefined;
+    const count = typeof override === 'number' && Number.isFinite(override) && override >= 0
+      ? Math.floor(override)
+      : authored;
+    const members = flasksOfKind(registries, kind);
+    // An explicit `flaskId` on the row wins; otherwise the kind's first
+    // authored member. Registry order, never rng — a grace that hands over a
+    // different flask on a re-run is a grace nothing can measure.
+    const flaskId = (raw && raw.flaskId) || members[0] || null;
+    const have = kindOfHeld.filter((k) => k === kind).length;
+    const want = Math.max(0, count - have);
+
+    if (!flaskId) {
+      rows.push({
+        kind, count, flaskId: null, have, want: 0, granted: 0, short: 0, binding: false,
+        why: `NOT BINDING — no flask entry declares kind '${kind}', so this restores nothing. `
+          + `The row is declared on purpose: the day an entry carries kind: '${kind}', this refill starts working with no code change.`,
+      });
+      continue;
+    }
+
+    const granted = Math.min(want, free);
+    for (let i = 0; i < granted; i++) grants.push(flaskId);
+    free -= granted;
+    const short = want - granted;
+    if (short > 0) {
+      shortfalls.push({
+        kind, short,
+        why: `${short} ${kind} flask${short === 1 ? '' : 's'} not given — all ${cap} flask slot${cap === 1 ? '' : 's'} are full.`,
+      });
+    }
+    rows.push({
+      kind, count, flaskId, have, want, granted, short, binding: true,
+      why: short > 0 ? shortfalls[shortfalls.length - 1].why : '',
+    });
+  }
+
+  return { cap, held: held.length, free, rows, grants, total: grants.length, shortfalls };
+}
+
+/**
+ * graceRefillRefusals(bundle) → [{ key, msg }]
+ *
+ * LAW 1 CLAUSE 5, at boot, naming the entry. Shaped exactly like
+ * `geometryRefusals` in model/mapview.js and consumed the same way from
+ * model/validate.js, because one refusal shape in one place is cheaper than two
+ * that agree today.
+ *
+ * IT TAKES THE BUNDLE, NOT THE BALANCE, and that is load-bearing: three of the
+ * eight refusals below can only be asked with the flask entries in hand — does
+ * this kind have a member, is this override a real id, is that override of the
+ * kind the row claims. A refusal that could only see `balance` would be the
+ * half of the question that was never in doubt.
+ *
+ * WHAT IS DELIBERATELY *NOT* A REFUSAL: a row whose kind has no members. That
+ * is the inert row, it is legal, and it reports itself as NOT BINDING wherever
+ * it is drawn. Refusing it at boot would make `mana` unspeakable until a mana
+ * flask exists, which is the opposite of declaring it early.
+ */
+function graceRefillRefusals(bundle) {
+  const out = [];
+  const b = bundle || {};
+  const balance = b.balance;
+  if (!balance || typeof balance !== 'object' || Array.isArray(balance)) return out;
+  if (balance.graceRefill == null) return out; // no table = no refill; legal.
+
+  if (!Array.isArray(balance.graceRefill)) {
+    out.push({
+      key: 'balance.graceRefill',
+      msg: `must be an array of { kind, count } rows — got ${JSON.stringify(balance.graceRefill)}. `
+        + `It is a table so that a new flask kind is a ROW and not an edit to the shrine.`,
+    });
+    return out;
+  }
+
+  const cap = flaskSlotCap(balance);
+  const defs = Array.isArray(b.flasks) ? b.flasks : [];
+  const byId = new Map(defs.filter((d) => d && typeof d.id === 'string').map((d) => [d.id, d]));
+  const membersOf = (kind) => defs.filter((d) => flaskKindOf(d) === kind).length;
+
+  const seen = new Map();
+  let satisfiable = 0;
+  const satisfiableRows = [];
+
+  balance.graceRefill.forEach((row, i) => {
+    const at = `balance.graceRefill[${i}]`;
+    if (!row || typeof row !== 'object' || Array.isArray(row)) {
+      out.push({ key: at, msg: `must be an object { kind, count } — got ${JSON.stringify(row)}.` });
+      return;
+    }
+    const { kind, count } = row;
+
+    // 1. A kind nothing carries — the closed set, named, with the legal values.
+    if (typeof kind !== 'string' || !FLASK_KINDS.includes(kind)) {
+      out.push({
+        key: `${at}.kind`,
+        msg: `${JSON.stringify(kind)} is not a flask kind — one of ${FLASK_KINDS.join(', ')}. `
+          + `A kind is a WORD (Law 0 clause 2): adding one is an edit to FLASK_KINDS in model/schemas.js, `
+          + `not a row here, and this refusal is what stops a typo from becoming a silent no-op.`,
+      });
+      return;
+    }
+
+    // 2. One home per number. Two rows for one kind is two answers to one question.
+    if (seen.has(kind)) {
+      out.push({
+        key: `${at}.kind`,
+        msg: `'${kind}' is already refilled by balance.graceRefill[${seen.get(kind)}] — two rows for one kind are two homes `
+          + `for one number, and only the first would ever be read. Keep one row.`,
+      });
+      return;
+    }
+    seen.set(kind, i);
+
+    // 3-5. The count. Each refusal says what the bad value would have DONE.
+    if (typeof count !== 'number' || !Number.isFinite(count)) {
+      out.push({ key: `${at}.count`, msg: `must be a number of flasks — got ${JSON.stringify(count)}.` });
+      return;
+    }
+    if (count < 0) {
+      out.push({
+        key: `${at}.count`,
+        msg: `${count} is negative — a grace restores flasks, it never takes them. `
+          + `A negative count reaches Math.max(0, count - have) and resolves to "give nothing", which is a knob that looks set and does nothing.`,
+      });
+      return;
+    }
+    if (!Number.isInteger(count)) {
+      out.push({
+        key: `${at}.count`,
+        msg: `${count} is fractional — a slot holds a whole flask. `
+          + `A fractional count would floor into a different number than the one written here, on a screen that prints the one written here.`,
+      });
+      return;
+    }
+
+    // 6. A row that can never be satisfied even alone.
+    if (count > cap) {
+      out.push({
+        key: `${at}.count`,
+        msg: `${count} '${kind}' flasks cannot be carried — balance.flaskSlots is ${cap}. `
+          + `Raise balance.flaskSlots or lower this count; a refill above the carry cap is a promise the inventory cannot keep.`,
+      });
+      return;
+    }
+
+    // 7. An explicit flaskId override must resolve, and must be of this kind.
+    if (row.flaskId != null) {
+      if (!byId.has(row.flaskId)) {
+        out.push({ key: `${at}.flaskId`, msg: `${JSON.stringify(row.flaskId)} is not a flask id.` });
+        return;
+      }
+      const actual = flaskKindOf(byId.get(row.flaskId));
+      if (actual !== kind) {
+        out.push({
+          key: `${at}.flaskId`,
+          msg: `'${row.flaskId}' is a '${actual}' flask but this row refills '${kind}'. `
+            + `The override picks WHICH flask of the kind is handed over, never what the kind means.`,
+        });
+        return;
+      }
+    }
+
+    if (membersOf(kind) > 0 || row.flaskId != null) {
+      satisfiable += count;
+      satisfiableRows.push(`${kind}×${count}`);
+    }
+  });
+
+  // 8. The aggregate. It is asked of the SATISFIABLE rows only, so a declared
+  //    inert kind costs nothing today — and turns this red the day someone
+  //    authors a member for it without raising the cap. That is the balance
+  //    question arriving loudly instead of silently, and it is the intended
+  //    behaviour, not a side effect: whoever adds the first mana flask is
+  //    exactly the person who has to answer "how many can you carry now".
+  if (satisfiable > cap) {
+    out.push({
+      key: 'balance.graceRefill',
+      msg: `a grace would hand over ${satisfiable} flasks (${satisfiableRows.join(' + ')}) into ${cap} slot${cap === 1 ? '' : 's'}. `
+        + `Raise balance.flaskSlots to ${satisfiable} or lower the counts. Left alone, the last rows in the table would silently `
+        + `restore nothing while the debug control still showed their number — a knob whose value is ignored.`,
+    });
+  }
+
+  return out;
+}
+
+
+Object.assign(module.exports, { flaskKindOf, firstFlaskOfKind, flasksOfKind, graceRefillTable, flaskSlotCap, graceRefillLadder, graceRefillPlan, graceRefillRefusals });
+
+},
 "src/model/schemas.js": function (module, exports, require) {
 // src/model/schemas.js — entity schemas + contractual closed sets (SPEC §3.3–§3.7)
 //
@@ -13650,6 +14079,19 @@ const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']
 const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
 const RELIC_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
 const FLASK_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
+// What a flask IS, as opposed to how rare it is. The grace refill table
+// (balance.graceRefill) names kinds, never ids, so "restore 3 hp flasks" keeps
+// meaning the same thing when a second healing flask is authored.
+//
+// DERIVED, NOT AUTHORED, for every flask shipped today — model/gracerefill.js
+// `flaskKindOf` reads the effects and only falls back to an explicit `kind:`
+// override. Nothing in content/flasks.js carries this field.
+//
+// 'mana' HAS NO MEMBERS AND THAT IS THE HONEST STATE. Constantine asked for
+// mana flasks at a grace in the same sentence as hp flasks; mana does not
+// exist in this build. The kind is declared so the refill row can be declared,
+// and both say NOT BINDING out loud until an entry claims the kind.
+const FLASK_KINDS = Object.freeze(['hp', 'mana', 'utility']);
 const INTENT_KINDS = Object.freeze(['attack', 'block', 'buff', 'debuff', 'unknown']);
 const ENCOUNTER_POOLS = Object.freeze(['normal', 'elite', 'boss']);
 const PILES = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
@@ -14019,6 +14461,10 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     rarity: en(...FLASK_RARITIES),
+    // OPTIONAL because it is derived (model/gracerefill.js flaskKindOf). Present
+    // only on an entry whose effects would derive the wrong answer — Law 0
+    // clause 3, and the override is data.
+    kind: opt(en(...FLASK_KINDS)),
     targeted: opt(bool),
     effects,
     icon: opt(str),
@@ -14079,7 +14525,7 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_KEYS, STACK_MODES, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
+Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_KEYS, STACK_MODES, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, FLASK_KINDS, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
 
 },
 "src/model/formulas.js": function (module, exports, require) {
@@ -15605,6 +16051,7 @@ Object.assign(module.exports, { parseMod, HANDS, slotHand, pieceHand, fitsSlot, 
 // Headless: no document/window/localStorage/timers.
 
 const { createLoadout, runMods, stampDeck } = require("src/model/loadout.js");
+const { graceRefillPlan } = require("src/model/gracerefill.js");
 
 const RUN_SCHEMA_VERSION = 1;
 
@@ -15661,6 +16108,22 @@ function createRunState({ seed, classId, registries }) {
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // "and each character should start with those" — Constantine, 2026-08-08, the
+  // FOURTH clause of the flask parenthesis, and it is here because it was very
+  // nearly lost. His sentence was quoted to me tonight with this clause missing
+  // from the quote; the ledger (`commons/decisions/directions.md` D10) has it.
+  //
+  // IT SHIPS OFF, AND THAT IS A RULING, NOT AN OVERSIGHT. His LIVE instruction
+  // was "flasks should refill automatically at graces" — graces. Starting the
+  // run with the same set is a second balance change stacked on one already
+  // measured at +15.7 points of win rate (`tools/runsim.mjs --grace-ab`), and
+  // deciding that inside a branch he asked to be about shrines would be a build
+  // settling a balance question. So: BUILT, DECLARED, and OFF by one boolean —
+  // `balance.graceRefillAtRunStart`. Nothing is dropped and nothing is decided.
+  // Flipping it is a data edit and no code; the selftest proves the flip works.
+  if (registries.balance && registries.balance.graceRefillAtRunStart === true) {
+    for (const flaskId of graceRefillPlan(registries, run).grants) run.flasks.push({ flaskId });
+  }
   // Stamp the starting deck with whatever the loadout says. Bare-handed this
   // is a no-op; in an armour set with `defend.block=+2` it is already true of
   // the very first Defend you draw.
@@ -18670,13 +19133,16 @@ Object.assign(module.exports, { generateActMap });
 // Procedural systems: seeded algorithms whose every knob comes from content
 // (balance.js, encounters/*.js). Pure functions of (registries, rng, args) —
 // run mutation is limited to explicitly documented counters (flask pity,
-// removal price). Stream usage: encounters → 'enemyAI', card rewards →
+// removal price) plus `applyGraceRefill`, which is the one function here that
+// puts something IN the run — flasks, at a grace, from a pure plan it does not
+// itself compute. Stream usage: encounters → 'enemyAI', card rewards →
 // 'cardRewards', relics → 'relicRewards', flasks → 'flaskRewards',
 // unknown nodes + events → 'events', shop stock → 'shop', cinders → 'misc'.
 //
 // Headless: no document/window/localStorage/timers.
 
 const { passiveMult, passiveFlag } = require("src/model/registries.js");
+const { graceRefillPlan } = require("src/model/gracerefill.js");
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -18927,6 +19393,29 @@ function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {}) {
   return { kind: 'event', eventId: rng.pick('events', pool) };
 }
 
+/**
+ * applyGraceRefill(registries, run, { counts }) → the plan it just applied.
+ *
+ * THE ONE MUTATION, and it is listed in this file's header beside flask pity
+ * and the removal price. Everything that decides WHAT to hand over is pure and
+ * lives in model/gracerefill.js, so a screen, a settings row and a sim can each
+ * ask what a grace would do without one of them having to do it.
+ *
+ * AUTOMATIC, NOT A CHOICE. Constantine: "flasks should refill automatically at
+ * graces". The caller fires this on ARRIVAL at the shrine, before Rest or Smith
+ * is offered — resting is one of the two things you can then spend the stop on,
+ * and the flasks are not the price of either.
+ *
+ * IDEMPOTENT BY CONSTRUCTION, which is what makes a re-entry safe: the plan is
+ * a TOP-UP to `count`, so calling it twice at one shrine grants nothing the
+ * second time. A resumed save that re-mounts the shrine cannot double-pour.
+ */
+function applyGraceRefill(registries, run, opts = {}) {
+  const plan = graceRefillPlan(registries, run, opts);
+  for (const flaskId of plan.grants) run.flasks.push({ flaskId });
+  return plan;
+}
+
 /** Shrine rest heal (SPEC shrine.healPct × shrineHealMult passives, floored). */
 function shrineHealAmount(registries, run) {
   const pct = registries.balance.shrine.healPct;
@@ -18935,7 +19424,7 @@ function shrineHealAmount(registries, run) {
 }
 
 
-Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, rollArmamentDrop, buildShopStock, resolveUnknownNode, shrineHealAmount });
+Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, rollArmamentDrop, buildShopStock, resolveUnknownNode, applyGraceRefill, shrineHealAmount });
 
 },
 "src/engine/save.js": function (module, exports, require) {
@@ -27818,7 +28307,42 @@ const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { sfx } = require("src/ui/sfx.js");
 
-function mountRest(app, { registries, run, onDone, healMult = 1 }) {
+// THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
+// arrival — this screen reports, it never decides, and it is passed the plan
+// rather than re-deriving it so the sentence cannot disagree with the flasks.
+//
+// IT SAYS WHAT IT COULD NOT DO — but only the half a PLAYER is owed. Two things
+// go on this screen: what you were handed, and what the shrine could not hand
+// you because your slots were full. Silence on the second is the real failure
+// mode: a player given nothing and told nothing concludes the shrine is broken.
+//
+// AND THE `NOT BINDING` DECLARATION IS DELIBERATELY *NOT* HERE, which is a
+// ruling and not an oversight. The first draft printed it and I photographed
+// it: six letter-spaced lines at 390x844 about a resource that does not exist,
+// over a Rest button. A player has never heard of a mana flask and is owed
+// nothing about one. The inert row still names itself — in the Advanced debug
+// row's own line, and in `node tools/gracerefill.mjs` — which is where the
+// person who needs that sentence is standing. Audience, not censorship: the
+// same fact, at the door the reader who needs it comes through.
+//
+// NOTHING AT ALL when the plan granted nothing and had nothing to confess (a
+// table of zeroes, the feature switched off in Advanced). Sunna's rule: a state
+// that needs no words needs silence.
+function refillLineHtml(registries, refill) {
+  if (!refill) return '';
+  const said = [];
+  if (refill.total) {
+    const byId = new Map();
+    for (const id of refill.grants) byId.set(id, (byId.get(id) || 0) + 1);
+    const named = [...byId].map(([id, n]) => `${n} × ${esc(registries.flasks.get(id).name)}`);
+    said.push(`Flasks refilled: ${named.join(', ')}.`);
+  }
+  for (const s of refill.shortfalls) said.push(`Flask slots full — ${s.short} not given.`);
+  if (!said.length) return '';
+  return `<p class="rest-refill">${said.join(' ')}</p>`;
+}
+
+function mountRest(app, { registries, run, onDone, healMult = 1, refill = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
@@ -27827,6 +28351,7 @@ function mountRest(app, { registries, run, onDone, healMult = 1 }) {
     <div class="screen">
       <h2 style="color:var(--gold);font-size:26px">SHRINE OF EMBER</h2>
       <p class="subtitle">THE GOLD LIGHT HOLDS, FOR NOW</p>
+      ${refillLineHtml(registries, refill)}
       <div class="class-row">
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
@@ -28943,8 +29468,57 @@ const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
 const { balance } = require("src/content/balance.js");
 const { ZOOM_STEPS, MAP_ZOOM_DEFAULT } = require("src/model/mapview.js");
 const { MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE } = require("src/model/mapknowledge.js");
+const { flasks } = require("src/content/flasks.js");
+const { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } = require("src/model/gracerefill.js");
 
 const UI_DEFAULTS = balance.ui;
+
+// ---- the grace-refill rows: DERIVED, one per row of the table --------------
+//
+// Constantine asked for the flask refill to be "configurable in teh debug
+// settings and be data driven" in one breath, and this is the only shape that
+// is both at once. These rows are not authored. `balance.graceRefill` is walked
+// and each row becomes one Advanced chip strip, so a third refilled kind is a
+// row in content and NOTHING here — which is the Law 0 falsifier for this
+// feature, and `tools/gracerefill.mjs --selftest` runs it.
+//
+// THE LADDER IS DERIVED TOO: 0 … balance.flaskSlots, from graceRefillLadder.
+// Raising the carry cap lengthens every strip with no edit here, and 0 is a
+// real position — his own debug switch for turning the whole thing off.
+//
+// FIVE CHIPS AT flaskSlots: 3. Marina measured four chips at 92.1 px tall on
+// 390x844 and seven at 301.2 px with the last chip off-viewport; five is inside
+// that, and tools/axisfit.mjs is what says so rather than this comment.
+//
+// KEY SHAPE `graceRefill.<kind>`: one key per kind, so a stored override
+// survives a table reorder. `settingOn` is not involved — these are choices.
+const GRACE_REFILL_KEY = (kind) => `graceRefill.${kind}`;
+
+// What a kind is CALLED to a human. A kind with no entry here falls back to the
+// id, so a new kind gets a working row before anyone writes it prose — the row
+// appears ugly rather than not at all.
+const KIND_LABELS = { hp: 'HP', mana: 'Mana', utility: 'Utility' };
+const kindLabel = (k) => KIND_LABELS[k] || k;
+
+function graceRefillRows() {
+  const cap = flaskSlotCap(balance);
+  return graceRefillTable(balance).map((row) => ({
+    cat: 'Advanced',
+    key: GRACE_REFILL_KEY(row.kind),
+    type: 'choice',
+    def: String(row.count),
+    choices: graceRefillLadder(balance),
+    label: `Grace refill — ${kindLabel(row.kind)} flasks`,
+    applied: graceRefillAppliedHtml,
+    graceRefillKind: row.kind,
+    // SHORT, and Marina's own measurement is why: a long note beside a chip
+    // strip squeezes the text column to a ribbon (she took one row from 92.1 px
+    // to 216.9 px proving it). What the row DOES is one clause; what it
+    // RESOLVES TO is the applied line below, which changes with the value and
+    // therefore earns its space.
+    note: `Topped up automatically on arrival at a shrine. 0 is off; ${cap} slots in total.`,
+  }));
+}
 
 const ROWS = [
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
@@ -29146,6 +29720,10 @@ const ROWS = [
     // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
     // else to on a Thursday holds on my own row on the same Thursday.
     note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
+  // Advanced is the debugging surface — his word, and where Hold to confirm
+  // already lives. These rows are generated from balance.graceRefill; see the
+  // block above the ROWS array.
+  ...graceRefillRows(),
 ];
 
 // ---- categories: a heading is DERIVED from what is under it (#78) ----------
@@ -29352,6 +29930,82 @@ function rowHtml(settings, r) {
 function appliedSlot(settings, r) {
   if (!r.applied) return '';
   return `<div class="set-applied-slot" data-applied="${r.key}">${r.applied(settings, r) || ''}</div>`;
+}
+
+/**
+ * resolveGraceRefill(settings) → { counts, bad: [{ key, kind, stored, used }] }
+ *
+ * THE ONE HOME FOR "how many flasks does a grace give", asked by the shrine
+ * (main.js showRest), by the co-op session, and by the row below that prints
+ * it. The authored numbers are `balance.graceRefill`; this only ever layers a
+ * stored override on top, and the override has to be a position on the row's
+ * own ladder.
+ *
+ * `bad` IS THE POINT, exactly as it is for resolveTapSize: a sparse store is
+ * normal and absence means "use the authored count" with nothing to report. A
+ * key that is PRESENT and not on the ladder is bad data — a hand-edited save, a
+ * restored profile from a tree with a smaller carry cap — and it still has to
+ * resolve to something, so it resolves to the authored count and SAYS SO. A
+ * refill that quietly ignores the number on the screen is the failure this
+ * whole feature is supposed to be the opposite of.
+ */
+function resolveGraceRefill(settings) {
+  const s = settings || {};
+  const counts = {};
+  const bad = [];
+  for (const r of ROWS) {
+    if (!r.graceRefillKind) continue;
+    const def = Number(r.def);
+    const stored = s[r.key];
+    if (stored === undefined || stored === null || stored === '') {
+      counts[r.graceRefillKind] = def;
+      continue;
+    }
+    const v = String(stored);
+    if (r.choices.includes(v)) {
+      counts[r.graceRefillKind] = Number(v);
+    } else {
+      counts[r.graceRefillKind] = def;
+      bad.push({ key: r.key, kind: r.graceRefillKind, stored: v, used: def });
+    }
+  }
+  return { counts, bad };
+}
+
+// THE LINE UNDER A GRACE-REFILL ROW. It exists to make two states impossible to
+// miss and one impossible to fake:
+//
+//   NOT BINDING — the kind has no flask entry, so whatever number is showing,
+//   this restores nothing. Freja's pattern, and the reason it is not silence:
+//   a chip strip reading 3 over a refill that gives 0 is a knob whose value is
+//   ignored, which Law 0 clause 5 calls the dangerous failure.
+//
+//   the rejected stored value — same sentence resolveTapSize's row prints.
+//
+//   0 says "off" in words, because a lone 0 chip is ambiguous between "off"
+//   and "not set".
+//
+// It names the flask a kind resolves to, at the value chosen, so the derivation
+// is visible on the screen the choice is made on rather than inferable from
+// content/flasks.js.
+function graceRefillAppliedHtml(settings, r) {
+  const { counts, bad } = resolveGraceRefill(settings);
+  const kind = r.graceRefillKind;
+  const n = counts[kind];
+  const rejected = bad.find((b) => b.kind === kind);
+  const lead = rejected
+    ? `<b>${esc(rejected.stored)}</b> is not one of these — using ${rejected.used}. `
+    : '';
+  // Asked of the content array rather than the registry: this module is UI and
+  // is never handed registries. The RULE is `firstFlaskOfKind`, one home,
+  // shared with the plan and with boot validation.
+  const entry = firstFlaskOfKind(flasks, kind);
+  if (!entry) {
+    return `${lead}<b>NOT BINDING</b> — nothing declares kind “${esc(kind)}”, so a grace restores none. `
+      + `Declared so it works the day something does.`;
+  }
+  if (n === 0) return `${lead}Off — a grace tops up no ${esc(kindLabel(kind))} flasks.`;
+  return `${lead}A grace tops you up to ${n} × ${esc(entry.name)}.`;
 }
 
 /**
@@ -29876,7 +30530,7 @@ function openSettings({ meta, onChange, saves = null, onProfileRestored = null }
 }
 
 
-Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, resolveTapSize, renderSettings, showSettingsNotice, openSettings });
+Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, resolveGraceRefill, resolveTapSize, renderSettings, showSettingsNotice, openSettings });
 
 },
 "src/ui/screens/profileArchive.js": function (module, exports, require) {
