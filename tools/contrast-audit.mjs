@@ -120,7 +120,12 @@ const TARGETS = [
     label: 'map node body (fill vs bg)', prop: 'fill', box: true, shrink: 0.5, median: true,
   },
   { screen: 'combat', sel: '.topbar .fight-label', label: 'fight label (combat)' },
-  { screen: 'combat', sel: '.topbar .who .nm', label: 'hero name (combat)' },
+  // The combat HUD is two rows now (D10 wave 4) and the hero name sits directly
+  // in the bottom row — `.who` is the MAP header's wrapper and combat has none.
+  // Re-pointed rather than left to match nothing: a probe whose selector has no
+  // referent reports a clean sheet about a thing it never looked at.
+  { screen: 'combat', sel: '.topbar .nm', label: 'hero name (combat)' },
+  { screen: 'combat', sel: '.resbar .label', label: 'resource bar label (combat)' },
   { screen: 'combat', sel: 'CTAG:Blood', label: 'Blood card tag (label only)' },
   { screen: 'death', sel: '.title-big', label: 'YOU PERISHED' },
 ];

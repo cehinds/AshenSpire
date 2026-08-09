@@ -23,6 +23,10 @@
 
 // Effect DSL opcodes (SPEC §3.4).
 import { NODE_TYPES, ANCHOR_KINDS } from './floorplan.js';
+// The bar vocabulary lives with the readers it describes (model/resources.js),
+// so the schema and the engine cannot drift into two homes. resources.js
+// imports nothing — no cycle.
+import { RESOURCE_WEIGHTS, HUD_SURFACES } from './resources.js';
 
 export const COMBAT_OPCODES = Object.freeze([
   'damage',
@@ -234,6 +238,10 @@ export const SFX_WAVE_TYPES = Object.freeze(['sine', 'square', 'sawtooth', 'tria
 // Registry type names (bundle keys holding arrays of defs).
 export const REGISTRY_TYPES = Object.freeze([
   'cards',
+  // HUD resource bars as data (content/resources.js). A registry, not a balance
+  // sub-object, because a bar is an entry with an id — and because that is what
+  // makes "add a row, a bar appears" the same act as adding any other content.
+  'resources',
   'relics',
   'statuses',
   'stances',
@@ -509,6 +517,22 @@ export const SCHEMAS = Object.freeze({
     hooks: opt(triggersNode),
     tooltip: opt(str),
     script: opt(ref('scripts')),
+  }),
+
+  // A HUD resource bar. `source` is validated against the CLOSED READER SET in
+  // model/resources.js — not here — because whether a source can be READ is a
+  // fact about the engine, and a row naming one that cannot is the exact defect
+  // this table exists to refuse (validate.js prints the row id and the set).
+  resource: obj({
+    id: str,
+    name: str,
+    glyph: opt(str),
+    tint: str,
+    weight: en(...RESOURCE_WEIGHTS),
+    order: num,
+    surfaces: arr(en(...HUD_SURFACES)),
+    source: str,
+    domainMax: opt(num),
   }),
 
   stance: obj({

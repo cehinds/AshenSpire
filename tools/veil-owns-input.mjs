@@ -152,7 +152,7 @@ async function main() {
     // enemy acts on the way back, which is the second, independent trace.
     const state = `(() => ({ hand: document.querySelectorAll('.combat .hand .card').length,
       discard: +(document.querySelector('.pile.discard .n')||{textContent:'0'}).textContent,
-      hp: ((document.querySelector('.hpbar .label')||{}).textContent||'').trim(),
+      hp: ((document.querySelector('.combat .resbar[data-res="hp"]')||{dataset:{}}).dataset.cur||''),
       veils: document.querySelectorAll('.modal-veil').length }))()`;
     const closeAll = `(() => { for (const v of document.querySelectorAll('.modal-veil')) v.remove(); return 1; })()`;
     // FRESH BOARD PER ROUTE, and this is a correction to this file's own first

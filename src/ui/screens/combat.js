@@ -23,22 +23,35 @@ import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
 import { figureSpec } from '../../model/loadout.js';
 import { trackGesture } from '../gesture.js';
+import { resourceBars, markFlooredBars } from '../components/resbars.js';
+import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 
 export function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   app.innerHTML = `
     <div class="combat">
-      <header class="topbar">
-        <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
-        <div class="who">
-          <span class="nm">${esc(((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase())} · ${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
-          <div class="bar hpbar"><div class="fill"></div><div class="label"></div></div>
+      <!-- THE MAIN HUD, TWO ROWS, HIS ASSIGNMENT (D10 wave 4):
+           "the size of those bars to scale depending on max value ... with the
+            max size filling up the full top row, with the menu and armament
+            buttons at the end of that row, at the bottom of the hud should be
+            the other hud items."
+           Top row: the bar stack + the two buttons, nothing else. The stack is
+           flex:1 with min-width:0, so ITS TRACK IS DERIVED — row width minus the
+           buttons, minus padding and gaps. No width is typed anywhere, which is
+           what lets a bar's length be an honest statement about a maximum. -->
+      <header class="topbar combat-hud">
+        <div class="hud-top">
+          <div class="resbars-host"></div>
+          <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
+          <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
         </div>
-        <span class="cinders" style="color:var(--gold);font-size:13px">⛁ ${run.cinders}</span>
-        <div class="flasks" style="display:flex;gap:6px"></div>
-        <div class="relics"></div>
-        <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
-        <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
-        <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
+        <div class="hud-bottom">
+          <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
+          <span class="nm">${esc(((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase())} · ${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
+          <span class="cinders" style="color:var(--gold);font-size:13px">⛁ ${run.cinders}</span>
+          <div class="flasks" style="display:flex;gap:6px"></div>
+          <div class="relics"></div>
+          <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
+        </div>
       </header>
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field">
@@ -62,6 +75,10 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
+  // The bar ceilings, DERIVED from the content (classes + equipment for the
+  // player surface, plus every enemy for the under-model one) rather than typed.
+  // Once per mount: it is a fact about the content, not about the frame.
+  const resDomains = resourceDomains(registries);
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
   const fxCtx = {
     layer: $('.fx-layer'),
@@ -314,9 +331,20 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
   function renderTopbar() {
     const p = combat.player;
     const pv = dv(p);
-    const hp = $('.topbar .hpbar');
-    hp.querySelector('.fill').style.width = `${(pv.hp / p.maxHp) * 100}%`;
-    hp.querySelector('.label').textContent = `${pv.hp} / ${p.maxHp}`;
+    // THE MAIN HUD BAR STACK — health, then whatever rows sit under it, then
+    // poise. Which rows those are is content/resources.js's business, not this
+    // screen's: this call is the whole of the main HUD's meter code and it does
+    // not change when a resource is added.
+    //
+    // The player has NO poise meter (state.js:204 — poiseMeter is created on
+    // enemies only), so the poise row's reader returns null and the bar is
+    // ABSENT. Not a 0/0 trough. That refusal is the same one a stamina row
+    // would hit today, and it is visible on this screen right now.
+    const host = $('.topbar .resbars-host');
+    host.innerHTML = '';
+    const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
+    host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTooltipExtra }));
+    markFlooredBars(host, host);
     const relics = $('.topbar .relics');
     relics.innerHTML = '';
     for (const rid of p.relicIds) {
@@ -421,26 +449,37 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     return row;
   }
 
+  // Stagger's own text, from the status def (data), so a poise tooltip cannot
+  // drift from the balance numbers. Passed INTO the renderer rather than known
+  // by it — resbars.js must not learn what poise is.
+  function poiseTooltipExtra(bar) {
+    if (bar.id !== 'poise') return '';
+    const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+    return `Fill it to Stagger. ${esc(stagDesc)}`;
+  }
+
   function meterBars(entity) {
     const v = dv(entity);
     const wrap = document.createElement('div');
     wrap.className = 'meters';
-    const hp = document.createElement('div');
-    hp.className = 'bar hpbar';
-    hp.innerHTML = `<div class="fill" style="width:${(v.hp / entity.maxHp) * 100}%"></div><div class="label">${v.hp} / ${entity.maxHp}</div>`;
-    wrap.appendChild(hp);
+    // THE UNDER-MODEL HUD — "should really just show health and poise", his
+    // words. Same renderer, same table, different surface: the rows carry which
+    // surfaces they appear on, so the two-HUD split he drew is DATA and neither
+    // screen decides it. Poise is absent under the player for the same reason
+    // it is absent from his main HUD — the player has no poise meter — and
+    // present under every enemy.
+    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains);
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTooltipExtra });
+    // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
+    // on this screen rather than moving into the shared renderer.
+    for (const bar of plan) {
+      if (bar.id === 'poise' && bar.cur >= bar.max * 0.75) {
+        const el = bars.querySelector('[data-res="poise"]');
+        if (el) el.classList.add('full');
+      }
+    }
+    while (bars.firstChild) wrap.appendChild(bars.firstChild);
     if (entity.kind === 'enemy') {
-      // Poise reads the paced view too, so M7's poise chunk lands on the
-      // burst's own beat instead of a frame ahead of the cascade.
-      const pm = v.poiseMeter || entity.poiseMeter;
-      const poise = document.createElement('div');
-      poise.className = `bar poisebar${pm.value >= pm.max * 0.75 ? ' full' : ''}`;
-      poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (pm.value / pm.max) * 100)}%"></div>`;
-      // Meter-bar tooltips render the STATUS def's own text (data) so they can't
-      // drift from the balance/formula numbers.
-      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
-      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${pm.value} / ${pm.max} — fill it to Stagger. ${stagDesc}`);
-      wrap.appendChild(poise);
       // #61 M1/M4: the shipped bleedbar, generalized into the one grammar —
       // a thin bar per threshold-proc row (max two, procDisplayPlan's cap),
       // tint + glyph nub from the row's own data, absent at zero. Numbers

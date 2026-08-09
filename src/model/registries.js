@@ -52,6 +52,7 @@ function makeRegistry(typeName, defs) {
 // Bundle key → registry property + singular type name for error messages.
 const TYPE_SINGULAR = {
   cards: 'card',
+  resources: 'resource',
   relics: 'relic',
   statuses: 'status',
   stances: 'stance',

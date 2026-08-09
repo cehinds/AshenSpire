@@ -1623,6 +1623,25 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
     showRest();
   } else if (shotState === 'combat' || shotState === 'fx') {
+    // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.
+    //
+    // A REACH STATE, exactly the shape and reason as ?shotAt and ?shotEvent
+    // above. His bar-scaling rule ("the size of that bar should scale depending
+    // on the max total") is a claim about how the HUD behaves ACROSS maxima,
+    // and no instrument could vary a maximum: every capture this repo has ever
+    // taken of the combat HUD was taken at the reaver's 84. One max is not the
+    // scale, in the same way one map is not the map. This is the lever
+    // tools/hudbars.mjs sweeps, and the proof that the bar length tracks the
+    // number is worth nothing without it.
+    //
+    // It moves the RUN's maxHp, which is the same field a curse and an armour
+    // mod move (actions.js:549, loadout.js runMods) — so the value enters
+    // through the door a real maximum enters, not through the renderer.
+    const shotMaxHp = Number(shotParams.get('shotMaxHp'));
+    if (Number.isFinite(shotMaxHp) && shotMaxHp > 0) {
+      run.maxHp = Math.floor(shotMaxHp);
+      run.hp = Math.min(run.hp, run.maxHp);
+    }
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
     enterNode(startId);
