@@ -54,12 +54,14 @@
 // number travels — run creation, combat entity creation, the paced snapshot,
 // the resource table, the plan, the DOM — runs exactly as it does in play.
 //
-// `--selfcheck` prints this door and refuses to report if the sweep produced
-// fewer than MIN_POINTS distinct rendered widths: measuring one max N times is
-// how a sweep goes dead, and this repo has done it (a sweep that measured one
-// seed 24 times, 2026-08-08).
+// AND THE DENOMINATOR IS GUARDED ON EVERY RUN, not behind a flag. A1 fails if
+// the sweep produced fewer than MIN_POINTS distinct rendered widths: measuring
+// one maximum N times is how a sweep goes dead, and this repo has done exactly
+// that (a sweep that measured one seed 24 times, 2026-08-08). The DOOR line at
+// the foot of every run says where the input entered.
 //
 //   node tools/hudbars.mjs                  → the sweep, human table
+//   node tools/hudbars.mjs --falsifier      → Law 0: one reader + one row, zero UI
 //   node tools/hudbars.mjs --scales         → what a curved transpose would do
 //   node tools/hudbars.mjs --model-scale    → every enemy, if the under-model
 //                                             surface scaled by max
@@ -319,6 +321,81 @@ function trackOf(rows, max) {
 }
 
 // ---------------------------------------------------------------------------
+// --falsifier — LAW 0's TEST FOR THIS FEATURE, run rather than asserted.
+//
+// The claim: a resource that exists on the combat entity becomes a bar for ONE
+// READER plus ONE ROW, and ZERO UI CODE. Not "just a row" — the reader is an
+// engine change and Law 0 clause 2 says so; the half that is genuinely free is
+// the UI, and that is the half this measures.
+//
+// It edits the two real source files, REBUILDS THE BUNDLE, renders, and looks
+// for a third bar. The known-bad enters by the door content enters. `energy` is
+// used because it is a real resource with a real current and max on the player
+// (state.js: energy / energyMax) that has no bar today, so nothing is faked.
+//
+// Restores both files in a finally, and prints the diff it made either way.
+async function runFalsifier(href) {
+  const RES_MODEL = resolve(TREE, 'src/model/resources.js');
+  const RES_DATA = resolve(TREE, 'src/content/resources.js');
+  const before = { model: readFileSync(RES_MODEL, 'utf8'), data: readFileSync(RES_DATA, 'utf8') };
+  const READER = `  energy: Object.freeze({
+    read: (view, entity) => {
+      const max = entity && entity.energyMax;
+      if (!Number.isFinite(max) || max <= 0) return null;
+      return { cur: (view && view.energy) != null ? view.energy : entity.energy, max };
+    },
+    domain: () => 5,
+  }),
+`;
+  const ROW = `  {
+    id: 'energy',
+    name: 'ENERGY',
+    glyph: '◆',
+    tint: 'var(--gold)',
+    weight: 'normal',
+    order: 50,
+    surfaces: ['main'],
+    source: 'energy',
+  },
+`;
+  let b = null;
+  try {
+    writeFileSync(RES_MODEL, before.model.replace('export const RESOURCE_SOURCES = Object.freeze({\n', `export const RESOURCE_SOURCES = Object.freeze({\n${READER}`));
+    writeFileSync(RES_DATA, before.data.replace('export const resources = [\n', `export const resources = [\n${ROW}`));
+    console.log('\n  FALSIFIER — added 1 reader (engine) + 1 row (data). ZERO UI files touched.');
+    console.log(`    edited: ${['src/model/resources.js', 'src/content/resources.js'].join(', ')}`);
+    const built = spawn(process.execPath, [resolve(TREE, 'tools/launch.mjs'), '--build-only'], { cwd: TREE, stdio: 'ignore' });
+    await new Promise((res, rej) => { built.on('exit', (c) => (c === 0 ? res() : rej(new Error(`build failed (${c})`)))); built.on('error', rej); });
+    b = await open();
+    await b.cdp.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false }, b.S);
+    await b.cdp.send('Page.navigate', { url: `${href}?shot=combat` }, b.S);
+    await b.until(`!!document.querySelector('.combat .topbar .resbar')`, 'combat');
+    await wait(400);
+    const bars = await b.ev(`JSON.stringify([...document.querySelectorAll('.combat .topbar .resbar')].map((e) => ({ id: e.dataset.res, w: Math.round(e.getBoundingClientRect().width * 100) / 100, cur: e.dataset.cur, max: e.dataset.max })))`);
+    const parsed = JSON.parse(bars);
+    console.log(`    rendered bars: ${parsed.map((x) => `${x.id} ${x.cur}/${x.max} @ ${x.w}px`).join('  ·  ')}`);
+    const got = parsed.find((x) => x.id === 'energy');
+    if (!got) {
+      console.log('\n    FALSIFIED — the row was added and NO bar appeared. Law 0 clause 1 is not satisfied by this design.');
+      return 1;
+    }
+    console.log(`\n    PASSES — an ENERGY bar appeared at ${got.w} px reading ${got.cur}/${got.max}, from a reader and a row.
+    No file under src/ui/ was edited. The renderer, the stylesheet and the combat
+    screen are byte-identical to the shipped ones. THE ENGINE COST IS REAL AND IS
+    NOT HIDDEN: the reader is 7 lines in model/resources.js and it is why this
+    report does not say stamina is "just a row".`);
+    return 0;
+  } finally {
+    if (b) b.close();
+    writeFileSync(RES_MODEL, before.model);
+    writeFileSync(RES_DATA, before.data);
+    const rebuilt = spawn(process.execPath, [resolve(TREE, 'tools/launch.mjs'), '--build-only'], { cwd: TREE, stdio: 'ignore' });
+    await new Promise((res) => rebuilt.on('exit', res));
+    console.log('    (both files and the bundle restored)');
+  }
+}
+
+// ---------------------------------------------------------------------------
 // --scales — WHAT CHANGES IF HE ANSWERS "CURVED".
 // Printed from the tree's OWN resourceScale(), plus the two candidates, so the
 // table in model/resources.js cannot drift from the function it describes.
@@ -431,6 +508,7 @@ async function main() {
   const href = pathToFileURL(artifact).href;
 
   if (flag('--model-scale')) { await printModelScale(); return; }
+  if (flag('--falsifier')) { process.exit(await runFalsifier(href)); }
 
   const b = await open();
   if (flag('--scales') || flag('--floor')) {
