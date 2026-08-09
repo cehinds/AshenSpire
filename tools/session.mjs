@@ -20,7 +20,7 @@ import { createRunState } from '../src/model/state.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward, shrineHealAmount,
+  rollRelicReward, shrineHealAmount, applyGraceRefill,
 } from '../src/engine/encounters.js';
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
@@ -420,6 +420,16 @@ export function createSession({ registries, seedString, endless = false, restore
 
   // ---- shrine / treasure / event (per-member, simplified for S2) -----------
   function enterShrine() {
+    // "at every grace ALL CHARACTERS should restore 3 hp flasks" — his word,
+    // and in co-op "all characters" is the party, not whoever taps first. Every
+    // LIVING member is refilled on arrival, connected or not: a member who is
+    // away does not lose a grace they were standing at, and the top-up is
+    // idempotent so their catchup queue has nothing to replay.
+    //
+    // No settings override here on purpose. The server is authoritative and has
+    // no browser to read `meta.settings` from; the counts are the authored
+    // table. A per-session override is a lobby setting and a separate subject.
+    for (const m of livingMembers()) applyGraceRefill(registries, m.run);
     session.scene = { kind: 'shrine', done: {} };
     return { ok: true };
   }

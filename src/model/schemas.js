@@ -208,6 +208,19 @@ export const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 's
 export const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
 export const RELIC_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
 export const FLASK_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
+// What a flask IS, as opposed to how rare it is. The grace refill table
+// (balance.graceRefill) names kinds, never ids, so "restore 3 hp flasks" keeps
+// meaning the same thing when a second healing flask is authored.
+//
+// DERIVED, NOT AUTHORED, for every flask shipped today — model/gracerefill.js
+// `flaskKindOf` reads the effects and only falls back to an explicit `kind:`
+// override. Nothing in content/flasks.js carries this field.
+//
+// 'mana' HAS NO MEMBERS AND THAT IS THE HONEST STATE. Constantine asked for
+// mana flasks at a grace in the same sentence as hp flasks; mana does not
+// exist in this build. The kind is declared so the refill row can be declared,
+// and both say NOT BINDING out loud until an entry claims the kind.
+export const FLASK_KINDS = Object.freeze(['hp', 'mana', 'utility']);
 export const INTENT_KINDS = Object.freeze(['attack', 'block', 'buff', 'debuff', 'unknown']);
 export const ENCOUNTER_POOLS = Object.freeze(['normal', 'elite', 'boss']);
 export const PILES = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
@@ -577,6 +590,10 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     rarity: en(...FLASK_RARITIES),
+    // OPTIONAL because it is derived (model/gracerefill.js flaskKindOf). Present
+    // only on an entry whose effects would derive the wrong answer — Law 0
+    // clause 3, and the override is data.
+    kind: opt(en(...FLASK_KINDS)),
     targeted: opt(bool),
     effects,
     icon: opt(str),

@@ -8,6 +8,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { createLoadout, runMods, stampDeck } from './loadout.js';
+import { graceRefillPlan } from './gracerefill.js';
 
 export const RUN_SCHEMA_VERSION = 1;
 
@@ -64,6 +65,22 @@ export function createRunState({ seed, classId, registries }) {
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // "and each character should start with those" — Constantine, 2026-08-08, the
+  // FOURTH clause of the flask parenthesis, and it is here because it was very
+  // nearly lost. His sentence was quoted to me tonight with this clause missing
+  // from the quote; the ledger (`commons/decisions/directions.md` D10) has it.
+  //
+  // IT SHIPS OFF, AND THAT IS A RULING, NOT AN OVERSIGHT. His LIVE instruction
+  // was "flasks should refill automatically at graces" — graces. Starting the
+  // run with the same set is a second balance change stacked on one already
+  // measured at +15.7 points of win rate (`tools/runsim.mjs --grace-ab`), and
+  // deciding that inside a branch he asked to be about shrines would be a build
+  // settling a balance question. So: BUILT, DECLARED, and OFF by one boolean —
+  // `balance.graceRefillAtRunStart`. Nothing is dropped and nothing is decided.
+  // Flipping it is a data edit and no code; the selftest proves the flip works.
+  if (registries.balance && registries.balance.graceRefillAtRunStart === true) {
+    for (const flaskId of graceRefillPlan(registries, run).grants) run.flasks.push({ flaskId });
+  }
   // Stamp the starting deck with whatever the loadout says. Bare-handed this
   // is a no-op; in an armour set with `defend.block=+2` it is already true of
   // the very first Defend you draw.

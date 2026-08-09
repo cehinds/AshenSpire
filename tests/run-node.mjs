@@ -403,6 +403,44 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (linkTree.code !== 0 || !linkTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // ---- 50-51: the grace refill (Constantine, 2026-08-08) -------------------
+  //
+  // TWO LINES FOR THE SAME REASON 45/46 ARE TWO: 50 is the check's own
+  // integrity against its planted corpus, 51 is the state of the shipped table.
+  // A refusal nobody has watched fail is `unknown`, not green.
+  //
+  // AND THE PLANTS ENTER BY THE DOOR THE REAL INPUT USES — a deep copy of the
+  // real contentBundle handed to the real validateContent, and registries built
+  // by createRegistries driving the real applyGraceRefill. The tool's header
+  // says which door each plant uses; this comment does not restate the corpus,
+  // and the count lives in its RESULT line, not here.
+  const runGrace = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/gracerefill.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
+  const graceSelf = runGrace(['--selftest']);
+  const graceSelfV = quote(graceSelf.out);
+  console.log(
+    `${graceSelf.code === 0 && graceSelfV.text ? 'PASS' : 'FAIL'}  50. the grace-refill refusals still catch their own known-bad corpus` +
+      ` — ${graceSelfV.text || `gracerefill --selftest (exit ${graceSelf.code}): ${graceSelfV.why}`}`
+  );
+  if (graceSelf.code !== 0 || !graceSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const graceTree = runGrace([]);
+  const graceTreeV = quote(graceTree.out);
+  console.log(
+    `${graceTree.code === 0 && graceTreeV.text ? 'PASS' : 'FAIL'}  51. a grace pours what balance.graceRefill says it pours` +
+      ` — ${graceTreeV.text || `gracerefill (exit ${graceTree.code}): ${graceTreeV.why}`}` +
+      ` (\`node tools/gracerefill.mjs\` names each row and what it resolves to)`
+  );
+  if (graceTree.code !== 0 || !graceTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -431,4 +469,11 @@ console.log('          export and not one module body was executed — so they p
 console.log('          eleven hand-started instruments START, never that any of them');
 console.log('          WORKS. A name that exists but is wrong links green, and');
 console.log('          release-shots must still be RUN by a person before a delivery.');
+console.log('          50-51 NEVER OPEN A BROWSER. 50 proves the boot refusals fire and the');
+console.log('          shrine pours, through the real bundle and the real registry; 51 reports');
+console.log('          the shipped table. Neither has seen the settings row, its NOT BINDING');
+console.log('          line, or the sentence on the shrine screen — those are photographed');
+console.log('          (`?shot=rest`), not asserted. And neither says one word about whether');
+console.log('          three flasks a grace is the right number: that is');
+console.log('          `node tools/runsim.mjs --grace-ab`, and a person rules on it.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

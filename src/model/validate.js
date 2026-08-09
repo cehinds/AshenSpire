@@ -13,6 +13,7 @@
 
 import { resolveFloorPlan } from './floorplan.js';
 import { viewRefusals, geometryRefusals } from './mapview.js';
+import { graceRefillRefusals } from './gracerefill.js';
 import {
   SCHEMAS,
   OPCODES,
@@ -289,6 +290,18 @@ export function validateContent(bundle) {
   if (b.balance != null && typeof b.balance === 'object' && !Array.isArray(b.balance)) {
     for (const e of geometryRefusals(b.balance)) err(e.key, e.msg);
   }
+  // balance.graceRefill — what a grace hands back (Constantine, 2026-08-08).
+  //
+  // TAKES THE WHOLE BUNDLE, not `b.balance`, and that is the point: three of its
+  // eight refusals can only be asked with the flask ENTRIES in hand (does this
+  // kind have a member, does this override resolve, is the override of the kind
+  // the row claims). A refusal that could only see `balance` would be checking
+  // the half that was never in doubt.
+  //
+  // Its corpus is `node tools/gracerefill.mjs --selftest`, which plants each
+  // refusal into the real bundle and watches this call go red.
+  for (const e of graceRefillRefusals(b)) err(e.key, e.msg);
+
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {
     const p = b.balance.poise;
