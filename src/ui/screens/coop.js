@@ -400,7 +400,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
           <div class="coop-partybar"></div>
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
-        <div class="map-scroll"><div class="map-canvas">
+        <div class="map-scroll" data-scroll-axis="x" data-scroll-axis-why="the act map is a horizontal route"><div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
             <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${esc(actTitle(snap.actNumber))}</text>
             ${edgeSvg}

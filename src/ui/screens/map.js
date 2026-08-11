@@ -303,7 +303,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
            this sentence is a note and not a shipped blank screen.) -->
       ${entranceOrientation}
       <div class="map-frame">
-      <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}">
+      <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}" data-scroll-axis="x" data-scroll-axis-why="the act map is a horizontal route">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
             ${groundSvg}

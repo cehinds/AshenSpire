@@ -93,11 +93,11 @@
 //       went blind. Both need a person. An excuse nobody can be forced to
 //       revisit is how a suite goes green over a bug.
 //
-// THE TREE SHIPS WITH ZERO EXEMPTIONS DECLARED, DELIBERATELY. `.hand` at 200px
-// is a card hand and is very probably the real one — that is a DESIGN call, and
-// design calls are not mine to make from inside an instrument. It stays red
-// until the seat that owns that surface writes the reason on the element, where
-// a reviewer reads it in the diff.
+// THE ACT MAP SHIPS WITH ONE SCOPED DECLARATION because its horizontal route is
+// the content. Other scrollers remain undecided by design; `.hand`, for example,
+// receives no exemption from this instrument. A reviewer can read the map's
+// reason on the element, and A4 forces its owner to remove the declaration when
+// horizontal travel dies.
 //
 // ---------------------------------------------------------------------------
 // THE FLOORS, AND THE ONE THAT WAS MISSING — Vira, 2026-08-08, checking gate.
@@ -134,8 +134,8 @@
 // KNOWN-BAD FIRST (development.md, The instrument rule). Nothing needed
 // authoring to make this falsifiable — the defect was already shipped:
 //
-//     .map-scroll = 401px horizontal / 19px vertical at 390x844
-//     dev = cd3da94, dist/AshenSpire.html sha256 d3925545a6ad
+//     .map-scroll = 65px horizontal at 390x844, declaration removed in memory
+//     integrated milestone = 328d592, dist sha256 89acfa0b15d5
 //
 // A check whose failing case nobody has watched fail is `unknown`, not green.
 // `--selftest` plants all eight of this file's mechanisms in memory and prints
@@ -311,6 +311,12 @@ function shapesInMobilefit() {
   const src = readFileSync(resolve(ROOT, 'tools', 'mobilefit.mjs'), 'utf8');
   return [...new Set([...src.matchAll(/\{\s*w:\s*(\d+),\s*h:\s*(\d+),\s*d:\s*([\d.]+)/g)]
     .map((m) => `${m[1]}x${m[2]}@${m[3]}`))].sort();
+}
+
+function mapScrollFrom(scan) {
+  const found = scan.containers.find((c) => c.path.split(' > ').pop().split('.').includes('map-scroll'));
+  if (!found) throw new Error('axisfit selftest: .map-scroll was not collected by SCAN');
+  return found;
 }
 
 // ------------------------------------------------------------------ assertions
@@ -718,9 +724,10 @@ async function main() {
       not a fixture's — but they are the numbers at the ENTRANCE with a starting
       deck. A late-run hand, a full relic shelf or a deeper act is more content
       in the same box and this sweeps none of them. The map is exempt from that
-      worry and it was checked, not assumed: .map-scroll is 401px across 13
-      seeds at 390x844, because its width is the act's column count and not the
-      node placement. (Vira, 2026-08-08 — a boundary cleared, not a defect.)`);
+      worry and it was checked, not assumed: .map-scroll remains a horizontal
+      run across the 13-seed check because its width is the act's column count,
+      not node placement. Travel varies with framing and is printed above.
+      (Vira, 2026-08-08 — a boundary cleared, not a defect.)`);
 
   if (notes.length) {
     console.log(`\n  EXEMPT — ${notes.length} container(s) declared themselves a horizontal run under Law 5 clause 2.`);
@@ -750,7 +757,7 @@ async function selftest(evalIn, cdp, S, base, settingsQ) {
       : Object.entries(attrs).map(([k, v]) => `e.setAttribute(${JSON.stringify(k)}, ${JSON.stringify(v)});`).join(' ');
     await evalIn(`(() => { const e = document.querySelector('.map-scroll'); if (!e) throw new Error('no .map-scroll'); ${set} return true; })()`);
     const r = await evalIn(SCAN);
-    return r.containers.find((c) => c.path.endsWith('.map-scroll'));
+    return mapScrollFrom(r);
   };
   const expect = (label, got, want) => {
     const good = got === want;
@@ -758,10 +765,11 @@ async function selftest(evalIn, cdp, S, base, settingsQ) {
     if (!good) fails.push(`selftest: ${label} gave ${got}, expected ${want}`);
   };
 
-  // 1 — THE FREE KNOWN-BAD, unplanted. 401px, no declaration.
+  // 1 — remove the shipped map declaration in memory. Real travel must still
+  // fail, so the scoped contract cannot turn into an allow-list in this tool.
   let c = await plant(null);
-  console.log(`    (the tree as it ships: .map-scroll H ${Math.round(c.hx)}px / V ${Math.round(c.hy)}px)`);
-  expect('A1  travel, no declaration', judge(c).verdict, 'FAIL');
+  console.log(`    (declaration removed: .map-scroll H ${Math.round(c.hx)}px / V ${Math.round(c.hy)}px)`);
+  expect('A1  travel, declaration removed', judge(c).verdict, 'FAIL');
 
   // 2 — the exemption honoured. This is the GREEN half.
   c = await plant({ 'data-scroll-axis': 'x', 'data-scroll-axis-why': 'the act map is a horizontal run (planted)' });
@@ -771,7 +779,7 @@ async function selftest(evalIn, cdp, S, base, settingsQ) {
   c = await plant({ 'data-scroll-axis': 'x', 'data-scroll-axis-why': '   ' });
   expect('A2  declared, blank reason', judge(c).verdict, 'FAIL');
   await evalIn(`document.querySelector('.map-scroll').removeAttribute('data-scroll-axis-why')`);
-  c = (await evalIn(SCAN)).containers.find((x) => x.path.endsWith('.map-scroll'));
+  c = mapScrollFrom(await evalIn(SCAN));
   expect('A2  declared, reason absent', judge(c).verdict, 'FAIL');
 
   // 4 — a word outside the closed vocabulary.
@@ -795,7 +803,7 @@ async function selftest(evalIn, cdp, S, base, settingsQ) {
     const c = e.firstElementChild; if (c) { c.style.width = 'auto'; c.style.minWidth = '0'; c.style.transform = 'none'; }
     return true; })()`);
   await wait(300);
-  const dead = (await evalIn(SCAN)).containers.find((x) => x.path.endsWith('.map-scroll'));
+  const dead = mapScrollFrom(await evalIn(SCAN));
   expect('A4  the reason died and SCAN still collected it', dead ? 'COLLECTED' : 'VANISHED', 'COLLECTED');
   expect('A4  ...and the ratchet fired on it', dead ? judge(dead).verdict : 'NEVER JUDGED', 'FAIL');
   await cdp.send('Page.navigate', { url: `${base}?shot=map${settingsQ}` }, S);
