@@ -20,17 +20,21 @@
 //   domainMax  OPTIONAL override of the derived ceiling (Law 0 clause 3).
 //              Omit it and the ceiling is derived from the content itself.
 //
-// WHY THERE IS NO stamina OR mana ROW HERE
-// He asked for both. Neither exists: `stamina` matches 0 times in src/, and all
-// 9 matches for `mana` are the word "manager". There is no stat system to derive
-// them from either (constitution 0, charisma 0). Writing the rows anyway would
-// put two troughs on his screen that read 0/0 for the rest of the project, which
-// is worse than an absent bar because it looks finished. The rows below are the
-// resources the game actually has; the machinery is built so that the day
-// stamina exists on the combat entity it is one reader + one row, and the
-// screenshot of what that looks like is in the report rather than in the tree.
+// Stamina remains absent because no stamina model exists. Mana is present below
+// because this branch adds the complete state path: class ceiling, run/save,
+// combat spending, shrine/flask restoration, and solo/co-op serialization.
 
 export const resources = [
+  {
+    id: 'mana',
+    name: 'MANA',
+    glyph: '◆',
+    tint: '#3f73c9',
+    weight: 'normal',
+    order: 30,
+    surfaces: ['main'],
+    source: 'mana',
+  },
   {
     id: 'hp',
     name: 'HEALTH',

@@ -219,6 +219,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     }
     return {
       hp: e.hp,
+      mana: e.mana,
       block: e.block,
       alive,
       statuses,
@@ -253,6 +254,12 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
           break;
         case 'blockGained':
           if (t) t.block += e.amount;
+          break;
+        case 'manaSpent':
+          if (disp.ents.player) disp.ents.player.mana = Math.max(0, disp.ents.player.mana - e.amount);
+          break;
+        case 'manaRestored':
+          if (disp.ents.player) disp.ents.player.mana = Math.min(combat.player.maxMana, disp.ents.player.mana + e.amount);
           break;
         case 'enemyDied':
           if (t) {
@@ -623,7 +630,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       } catch (e) {
         console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
       }
-      const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && !isUnplayable(inst);
+      const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
       const el = renderCard(registries, inst, pv ? { preview: pv, affordable } : { affordable });
       const spread = Math.min(6, n) * 1.2;
       el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
@@ -655,7 +662,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
     const anyPlayable = combat.piles.hand.some((inst) => {
       const def = resolveCard(registries, inst);
       if ((def.keywords || []).includes('unplayable')) return false;
-      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost);
+      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost) && combat.player.mana >= (def.manaCost || 0);
     });
     $('.end-turn').classList.toggle('pulse', combat.player.energy > 0 && anyPlayable);
     $('.pile.draw .n').textContent = combat.piles.draw.length;
@@ -854,7 +861,7 @@ export function mountCombat(app, { registries, run, combat, label, onEnd, showTu
       const inst = combat.piles.hand[cardIdx];
       if (!inst) return;
       const pv = previewCard(combat, inst.instanceId);
-      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && !isUnplayable(inst);
+      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
       if (!affordable) return;
       if (pv.needsTarget) {
         const living = combat.enemies.filter((e) => e.alive);

@@ -43,6 +43,7 @@ export const TOKENIZABLE_OPS = Object.freeze([
   'poiseDamage',
   'draw',
   'gainEnergy',
+  'restoreMana',
   'addCinders',
   'loseMaxHpPct',
 ]);
@@ -58,6 +59,7 @@ export const REQUIRED_TOKEN_OPS = Object.freeze([
   'poiseDamage',
   'draw',
   'gainEnergy',
+  'restoreMana',
 ]);
 
 const KNOWN_BUNDLE_KEYS = new Set([
@@ -205,6 +207,20 @@ export function validateContent(bundle) {
       else if (ids[type].has(def.id)) err(`${type}.${def.id}`, `Duplicate id '${def.id}'`);
       else ids[type].add(def.id);
     });
+  }
+
+  // Resource ceilings and costs are semantic bounds, not merely integer
+  // shapes. A zero maximum would make a 0/0 bar; a negative cost would mint
+  // mana when a card is played. Both are refused at the content door.
+  for (const cls of Array.isArray(b.classes) ? b.classes : []) {
+    if (cls && Number.isInteger(cls.maxMana) && cls.maxMana <= 0) {
+      err(`classes.${cls.id || '?'}.maxMana`, 'must be > 0');
+    }
+  }
+  for (const card of Array.isArray(b.cards) ? b.cards : []) {
+    if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
+      err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
+    }
   }
 
   // Effect-tag vocabulary: the card-tag registry rides the bundle so effect

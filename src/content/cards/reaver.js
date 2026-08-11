@@ -31,7 +31,7 @@ export const reaverCards = [
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 8 }] },
   },
   {
-    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, type: 'attack',
+    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 10, type: 'attack',
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },

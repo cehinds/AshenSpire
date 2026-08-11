@@ -19,6 +19,7 @@ import * as S from '../src/engine/statuses.js';
 import { generateActMap } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 import { createRunState, RUN_SCHEMA_VERSION, validateRunShape } from '../src/model/state.js';
+import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter,
@@ -1008,7 +1009,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
         const def = resolveCard(REG, inst);
         if ((def.keywords || []).includes('unplayable')) return false;
         const cost = def.cost === 'X' ? 0 : def.cost;
-        return c.player.energy >= cost;
+        return c.player.energy >= cost && c.player.mana >= (def.manaCost || 0);
       });
       if (playable && target) {
         dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
@@ -1227,13 +1228,76 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
         const playable = c.piles.hand.find((inst) => {
           const def = resolveCard(REG, inst);
           if ((def.keywords || []).includes('unplayable')) return false;
-          return c.player.energy >= (def.cost === 'X' ? 0 : def.cost);
+          return c.player.energy >= (def.cost === 'X' ? 0 : def.cost) && c.player.mana >= (def.manaCost || 0);
         });
         if (playable && target) dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
         else dispatch(c, { type: 'endTurn' });
       }
       assert(c.result === 'victory' || c.result === 'defeat', `${classId} elite fight concluded (${c.result})`);
     }
+  });
+
+  test('20b. Mana is real state: validated maxima, spend/refuse/restore, save migration, and zero/max HUD plans', () => {
+    const fresh = createRunState({ seed: 0x6d616e61, classId: 'reaver', registries: REG });
+    eq(fresh.mana, 40, 'run starts at its class-authored mana maximum');
+    eq(fresh.maxMana, 40, 'Reaver maximum comes from class data');
+    assert(validateRunShape(fresh).length === 0, 'the new run shape accepts a sound mana pool');
+    assert(validateRunShape({ ...fresh, mana: 41 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
+
+    const badMax = validateContent({
+      ...contentBundle,
+      classes: contentBundle.classes.map((c) => c.id === 'reaver' ? { ...c, maxMana: 0 } : c),
+    });
+    assert(!badMax.ok && badMax.errors.some((e) => e.path === 'classes.reaver.maxMana'), 'zero class maxMana is refused at the content door');
+    const badCost = validateContent({
+      ...contentBundle,
+      cards: contentBundle.cards.map((c) => c.id === 'gorefireSlash' ? { ...c, manaCost: -1 } : c),
+    });
+    assert(!badCost.ok && badCost.errors.some((e) => e.path === 'cards.gorefireSlash.manaCost'), 'negative manaCost cannot mint mana');
+
+    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'] });
+    const sig = spend.piles.hand[0];
+    const pv = previewCard(spend, sig.instanceId);
+    eq(pv.manaCost, 10, 'preview exposes the same mana cost execution charges');
+    dispatch(spend, { type: 'playCard', cardInstanceId: sig.instanceId, targetId: 'e1' });
+    eq(spend.player.mana, 30, 'signature starter spends 10 mana');
+    assert(logOf(spend, 'manaSpent').some((e) => e.amount === 10), 'mana spend emits a receipt');
+
+    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'] });
+    empty.player.mana = 9;
+    const beforeHand = empty.piles.hand.length;
+    let refused = '';
+    try { dispatch(empty, { type: 'playCard', cardInstanceId: empty.piles.hand[0].instanceId, targetId: 'e1' }); }
+    catch (e) { refused = e.message; }
+    assert(refused.includes('Not enough mana'), 'under-cost play is refused by name');
+    eq(empty.player.mana, 9, 'refusal spends no mana');
+    eq(empty.piles.hand.length, beforeHand, 'refusal moves no card');
+
+    const flask = makeCombat({ deck: Array(5).fill('strike'), flasks: [{ flaskId: 'azureFlask' }] });
+    flask.player.mana = 25;
+    dispatch(flask, { type: 'useFlask', slot: 0 });
+    eq(flask.player.mana, 40, 'Azure Flask restores and clamps at maxMana');
+    assert(logOf(flask, 'manaRestored').some((e) => e.amount === 15), 'restoration receipt reports the amount actually gained');
+
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    const old = { ...fresh };
+    delete old.mana;
+    delete old.maxMana;
+    storage.setItem(RUN_KEY, JSON.stringify(old));
+    const migrated = saves.loadRun(REG);
+    eq(migrated.mana, 40, 'pre-mana save migrates to full current mana');
+    eq(migrated.maxMana, 40, 'pre-mana save derives its class maximum');
+
+    const domains = resourceDomains(REG);
+    const zero = { ...empty.player, mana: 0 };
+    const atZero = resourceBarPlan(REG, 'main', zero, zero, domains).find((b) => b.id === 'mana');
+    eq(atZero.cur, 0, 'zero edge is a real empty mana plan');
+    eq(atZero.pct, 0, 'zero edge has zero fill');
+    const star = { maxHp: 72, hp: 72, maxMana: 80, mana: 80 };
+    const atMax = resourceBarPlan(REG, 'main', star, star, domains).find((b) => b.id === 'mana');
+    eq(atMax.pct, 100, 'max edge fills the mana trough');
+    eq(atMax.lengthPct, 100, 'largest authored maxMana fills the derived row track');
   });
 
   // ---- 21. M3 phase 2: Acts II–III mechanics ------------------------------------------------
@@ -1289,7 +1353,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       const playable = f.piles.hand.find((inst) => {
         const def = resolveCard(REG, inst);
         if ((def.keywords || []).includes('unplayable')) return false;
-        return f.player.energy >= (def.cost === 'X' ? 0 : def.cost);
+        return f.player.energy >= (def.cost === 'X' ? 0 : def.cost) && f.player.mana >= (def.manaCost || 0);
       });
       if (playable && target) dispatch(f, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
       else dispatch(f, { type: 'endTurn' });

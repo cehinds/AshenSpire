@@ -38,6 +38,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'exhaust',
   'addCard',
   'gainEnergy',
+  'restoreMana',
   'loseHp',
   'heal',
   'shuffleDiscardIntoDraw',
@@ -106,6 +107,8 @@ export const EVENTS = Object.freeze([
   'procResisted',
   'energyGained',
   'energySpent',
+  'manaRestored',
+  'manaSpent',
   'flaskUsed',
   'relicTriggered',
 ]);
@@ -269,6 +272,7 @@ export const EFFECT_SPECS = Object.freeze({
   exhaust: { allowed: ['random'], required: [], refs: {} },
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
+  restoreMana: { allowed: [], required: ['amount'], refs: {} },
   loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
@@ -428,6 +432,7 @@ export const SCHEMAS = Object.freeze({
     class: str, // a class id or 'colorless' (checked in validate.js)
     rarity: en(...CARD_RARITIES),
     cost: costNode,
+    manaCost: opt(int),
     type: en(...CARD_TYPES),
     keywords: arr(ref('keywords')),
     effects,
@@ -612,6 +617,7 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
+    maxMana: int,
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),

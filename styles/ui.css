@@ -29,6 +29,12 @@
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 1.4rem; color: var(--parchment);
 }
+.card .mana-cost {
+  position: absolute; top: -0.7rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
+  border-radius: 999px; padding: 0 0.6rem; background: #111b35; border: 2px solid #4f82d8;
+  display: flex; align-items: center; justify-content: center; gap: 0.25rem;
+  font-weight: 700; font-size: 1rem; color: #cfe1ff;
+}
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
 .card .cname { font-family: var(--font-display); font-size: 1.15rem; text-align: center; line-height: 1.15; min-height: 2.6rem; }
 .card.upgraded .cname { color: var(--green); }

@@ -432,6 +432,13 @@ function runOpcode(ctx, action, eff) {
       ctx.emit('energyGained', { amount: n });
       break;
     }
+    case 'restoreMana': {
+      const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      const before = ctx.player.mana;
+      ctx.player.mana = Math.min(ctx.player.maxMana, ctx.player.mana + n);
+      ctx.emit('manaRestored', { amount: ctx.player.mana - before });
+      break;
+    }
     case 'loseHp': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         // `cause` labels the hpLost event (e.g. 'proc:bleed') so the damage

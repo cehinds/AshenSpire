@@ -43,6 +43,8 @@ const QUEUE_GUARD = 10000;
  */
 export function createCombat({ registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [] }) {
   const bal = registries.balance || {};
+  const classMaxMana = registries.classes.get(player.classId).maxMana;
+  const maxMana = player.maxMana != null ? player.maxMana : classMaxMana;
   const combat = {
     registries,
     rng,
@@ -55,6 +57,8 @@ export function createCombat({ registries, rng, player, enemyIds, hpMult = 1, en
       classId: player.classId,
       maxHp: player.maxHp,
       hp: player.hp,
+      maxMana,
+      mana: player.mana != null ? player.mana : maxMana,
       relicIds: player.relicIds || [],
       flasks: player.flasks || [],
       energyMax: bal.energy != null ? bal.energy : 3,
@@ -544,7 +548,9 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(combat, def);
+  const manaCost = def.manaCost || 0;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
+  if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
 
   let target = null;
   if (targetId != null) {
@@ -558,6 +564,8 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   // Pay cost (X-cost consumes ALL energy — SPEC §4.3).
   p.energy -= cost;
   if (cost > 0 || isX) combat.emit('energySpent', { amount: cost });
+  p.mana -= manaCost;
+  if (manaCost > 0) combat.emit('manaSpent', { amount: manaCost });
 
   // Remove from hand; bump counters (used by predicates + formulas).
   combat.piles.hand.splice(idx, 1);
@@ -565,6 +573,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   p.counters.cardsPlayedThisCombat += 1;
   const meta = {
     energySpent: cost,
+    manaSpent: manaCost,
     ordinalThisTurn: p.counters.cardsPlayedThisTurn,
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
@@ -588,6 +597,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat,
     energySpent: cost,
+    manaSpent: manaCost,
   });
   drainQueue(combat);
 
@@ -731,6 +741,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
       case 'loseHp':
       case 'draw':
       case 'gainEnergy':
+      case 'restoreMana':
       case 'poiseDamage':
       case 'addCinders': {
         entry.value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);
@@ -763,6 +774,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     type: def.type,
     cost: shownCost,
     costIsX: isX,
+    manaCost: def.manaCost || 0,
     needsTarget: needsEnemyTarget(def),
     values,
     tokens,

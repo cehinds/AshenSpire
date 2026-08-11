@@ -74,7 +74,7 @@
 // LINEAR scale is the one he meant, or about any screen that is not combat.
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -86,8 +86,9 @@ const flag = (n) => argv.includes(n);
 const val = (n, d) => { const i = argv.indexOf(n); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
 
 const TREE = resolve(val('--tree', ROOT));
-const SHAPES = flag('--desktop') ? [[390, 844], [1200, 730]] : [[390, 844]];
+const SHAPES = flag('--desktop') ? [[320, 640], [390, 844], [1200, 730]] : [[320, 640], [390, 844]];
 const JSON_OUT = val('--json', null);
+const SHOTS_OUT = val('--shots', null);
 
 // THE SWEEP. Real maxima, and the range is not invented: 40 is a cursed reaver
 // (actions.js loseMaxHpPct halves it), 72/78/84 are the three shipped classes,
@@ -221,6 +222,18 @@ async function sweepShape(b, href, [w, h]) {
     rows.push({ max, ...r });
   }
   return rows;
+}
+
+async function captureShape(b, href, [w, h]) {
+  const outDir = resolve(SHOTS_OUT);
+  mkdirSync(outDir, { recursive: true });
+  await b.cdp.send('Page.navigate', { url: `${href}?shot=combat&shotMana=20` }, b.S);
+  await b.until(`!!document.querySelector('.combat .topbar .resbar[data-res="mana"]')`, `mana bar @ ${w}x${h}`);
+  await wait(320);
+  const shot = await b.cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, b.S);
+  const out = join(outDir, `mana-hud-${w}x${h}.png`);
+  writeFileSync(out, Buffer.from(shot.data, 'base64'));
+  console.log(`    shot   ${out}`);
 }
 
 function judge(shape, rows) {
@@ -539,6 +552,7 @@ async function main() {
           + `${String(hp ? hp.labelW : '—').padStart(5)}   ${hp && hp.floored ? 'yes' : 'no'}`);
       }
       judge(shape, rows);
+      if (SHOTS_OUT) await captureShape(b, href, shape);
     }
   } finally {
     b.close();
@@ -555,8 +569,8 @@ async function main() {
 KNOWN-BAD: this tool's failing case is the SHIPPED PRE-CHANGE TREE, where the combat health bar was
       \`.topbar .hpbar { width: 19rem }\` — a constant. Run with --tree against a checkout at dev and
       A1 goes red on real code. Nothing was authored to make it fail.
-BOUNDARY: headless Chromium on Linux, dist/AshenSpire.html, ${SHAPES.length} shape(s), the reaver class,
-      one seed, Text size M, UI size Auto. Silent about Windows, about a real finger, about whether
+BOUNDARY: headless Chromium on ${process.platform}, dist/AshenSpire.html, ${SHAPES.length} shape(s), the reaver class,
+      one seed, Text size M, UI size Auto. Silent about packaged desktop builds, about a real finger, about whether
       LINEAR is the transpose scale he meant, and about every screen that is not combat.`);
   console.log(fails.length ? `\nRESULT: ${fails.length} FAILING` : `\nRESULT: ${notes.length} assertions ok`);
   process.exit(fails.length ? 1 : 0);

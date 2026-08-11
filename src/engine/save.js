@@ -332,6 +332,13 @@ export function createSaveManager(storage) {
         run.loadout = createLoadout(registries, run.class);
         stampDeck(registries, run);
       }
+      // Pre-mana v1 saves remain valid: the absent optional fields mean the
+      // climb began before this resource existed, so it enters at its class's
+      // authored full pool. Present-but-malformed values were refused earlier.
+      if (run.maxMana === undefined && run.mana === undefined) {
+        run.maxMana = registries.classes.get(run.class).maxMana;
+        run.mana = run.maxMana;
+      }
       return run;
     },
 
