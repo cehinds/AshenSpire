@@ -509,10 +509,9 @@ console.log('          WORKS. A name that exists but is wrong links green, and')
 console.log('          release-shots must still be RUN by a person before a delivery.');
 console.log('          50–51 prove a status has a DOOR, never that the door opens on');
 console.log('          anything. They read definitions: nothing here says a card is in');
-console.log('          a pool, that a run can draw it, that the numbers are balanced, or');
-console.log('          that the status DOES anything once applied — frostExposed and');
-console.log('          insanityExposed are reachable and inert today, and statusreach');
-console.log('          prints that in its own boundary rather than hiding it.');
+console.log('          a pool, that a run can draw it, or that the numbers are balanced.');
+console.log('          Cases 7e2 and 7e3 separately exercise one real tagged hit for');
+console.log('          each exposure; they do not prove broader card coverage.');
 console.log('          52–53 ASK ONE QUESTION: is each exported closed set READ anywhere.');
 console.log('          They are silent on whether a set has a second, hand-typed copy');
 console.log('          somewhere — the defect that made the question worth asking. Green');

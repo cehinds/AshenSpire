@@ -472,6 +472,36 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     eq(al.amount, 18, 'additive lane pools once, multiplicative lane per source');
   });
 
+  // These two falsifiers use SHIPPED cards whose tags exist only in the
+  // generated cardTagging.csv index. Neither damage effect carries a copied
+  // `tags` field, so green here proves the real card door derives the hit's
+  // identity rather than preserving the old test-only tagged-effect fixture.
+  test('7e2. Frost-Exposed changes a real Starstone hit through cardTagging.csv', () => {
+    const c = makeCombat({ deck: ['starstonePebble'], enemies: ['tGiant'] });
+    const e1 = getEntity(c, 'e1');
+    const def = REG.cards.get('starstonePebble');
+    assert(def.effects.filter((eff) => eff.op === 'damage').every((eff) => eff.tags === undefined), 'Starstone Pebble damage does not hand-copy CSV tags');
+    assert(tagIdsFor('starstonePebble').includes('starstone'), 'CSV index names Starstone Pebble as starstone');
+    S.applyStatus(c, e1, 'frostExposed', 1);
+    const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
+    eq(pv.values.find((v) => v.op === 'damage').value, 7, 'preview derives starstone: floor(6 × 1.25)');
+    playFromHand(c, 'starstonePebble');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same starstone hit');
+  });
+
+  test('7e3. Unraveled changes a real Blight hit through cardTagging.csv', () => {
+    const c = makeCombat({ deck: ['blightTouch'], enemies: ['tGiant'] });
+    const e1 = getEntity(c, 'e1');
+    const def = REG.cards.get('blightTouch');
+    assert(def.effects.filter((eff) => eff.op === 'damage').every((eff) => eff.tags === undefined), 'Blight Touch damage does not hand-copy CSV tags');
+    assert(tagIdsFor('blightTouch').includes('blight'), 'CSV index names Blight Touch as blight');
+    S.applyStatus(c, e1, 'insanityExposed', 1);
+    const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
+    eq(pv.values.find((v) => v.op === 'damage').value, 6, 'preview derives blight: floor(5 × 1.3)');
+    playFromHand(c, 'blightTouch');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 6, 'execution derives the same blight hit');
+  });
+
   // ---- 7f. Known-bads through the REAL bundle (#61): each red names its row --
   test('7f. proc vocabulary known-bads: bad threshold, bad percent, unknown tag, bad duration, bad stacking — red, naming rows', () => {
     const withStatus = (row) => ({ ...contentBundle, statuses: [...contentBundle.statuses, row] });

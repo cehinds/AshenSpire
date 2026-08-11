@@ -689,6 +689,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     source: p,
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
+    card: { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type },
     meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
   };
 
@@ -704,23 +705,24 @@ export function previewCard(combat, cardInstanceId, targetId) {
     const primary = firstResolvedTarget(combat, action, eff);
     switch (eff.op) {
       case 'damage': {
+        const attackTags = A.attackTagsFor(action, eff);
         const base = evalPreview(combat, action, eff.amount, primary);
-        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, eff.tags);
+        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         for (const e of living) {
           const b = evalPreview(combat, action, eff.amount, e);
-          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, eff.tags);
+          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, attackTags);
         }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent
         // the boosted number. Engine states the fact; display reads it.
-        if (eff.tags && primary && primary.kind === 'enemy') {
+        if (attackTags.length && primary && primary.kind === 'enemy') {
           for (const [sid, inst] of Object.entries(primary.statuses || {})) {
             if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
             const sdef = combat.registries.statuses.get(sid);
             const tv = sdef && sdef.taggedVulnerability;
-            if (tv && tv.tags.some((t) => eff.tags.includes(t))) {
+            if (tv && tv.tags.some((t) => attackTags.includes(t))) {
               entry.boostTint = sdef.tint || null;
               break;
             }

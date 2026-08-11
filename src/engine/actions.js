@@ -27,6 +27,7 @@ import { COMBAT_OPCODES, RUN_OPCODES } from '../model/schemas.js';
 import { evaluate, isFormula } from '../model/formulas.js';
 import * as statuses from './statuses.js';
 import { evalPredicate, checkPhases } from './triggers.js';
+import { damageTagIds } from '../content/tags.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -62,6 +63,11 @@ export function computeAttackDamage(ctx, source, target, base, attackTags) {
   }
   dmg = Math.floor(dmg);
   return dmg < 0 ? 0 : dmg;
+}
+
+/** One derivation for live actions and previews: card identity comes from CSV. */
+export function attackTagsFor(action, effect) {
+  return damageTagIds(action.card && action.card.cardId, effect.tags);
 }
 
 /**
@@ -351,6 +357,7 @@ function runOpcode(ctx, action, eff) {
     case 'damage': {
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
+      const attackTags = attackTagsFor(action, eff);
       for (let h = 0; h < hits; h++) {
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
@@ -358,7 +365,7 @@ function runOpcode(ctx, action, eff) {
         for (const t of targets) {
           if (!t.alive) continue;
           const base = evalNum(ctx, action, eff.amount, 0, t);
-          applyAttackDamage(ctx, action.source, t, base, eff.tags);
+          applyAttackDamage(ctx, action.source, t, base, attackTags);
         }
       }
       break;

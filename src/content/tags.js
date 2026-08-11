@@ -39,6 +39,18 @@ export function tagIdsFor(cardId) {
   return BY_CARD.get(cardId) || [];
 }
 
+/**
+ * damageTagIds(cardId, effectTags) → [tagId]
+ *
+ * A card hit inherits the card's CSV-authored identity. `effectTags` remains a
+ * fallback for non-card effects and isolated engine fixtures; it never
+ * overrides a card row, because that would restore two homes for one tag.
+ */
+export function damageTagIds(cardId, effectTags) {
+  const derived = cardId ? tagIdsFor(cardId) : [];
+  return derived.length ? derived : (Array.isArray(effectTags) ? effectTags : []);
+}
+
 /** Every card id that carries a given tag (e.g. "all Blade cards"). */
 export function cardsWithTag(tagId) {
   const out = [];

@@ -160,7 +160,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -357,13 +357,10 @@ go GREEN — a check that can only go red proves as little as one that cannot.`;
 const BOUNDARY = `
 BOUNDARY — what a green from this tool does NOT mean:
   · REACHED IS NOT EFFECTIVE. This proves something APPLIES the status, never
-    that applying it does anything. Measured, and it is a live finding today:
-    frostExposed and insanityExposed raise damage whose EFFECT carries a
-    matching tag, and ZERO shipped effects carry a \`tags\` field at all
-    (grep "tags: \\[" over src/content/cards, relics, flasks → 0). Both exposure
-    rows are reachable and inert. The fix is derivation from cardTagging.csv,
-    which is a model change, not a content one — so it is named here and not
-    done here.
+    that applying it changes a hit. Frost-Exposed and Unraveled now consume
+    cardTagging.csv identity through the action engine, and tests 7e2/7e3 play
+    real shipped cards through both preview and execution. This tool runs none
+    of that damage path; it stays silent about effectiveness by construction.
   · REACHED IS NOT DRAWABLE. A card with an applier still has to be in a class
     pool, a rewardable rarity, and a run's RNG. This reads the definition, not
     the run. tools/runsim.mjs is the half that plays.
@@ -569,6 +566,6 @@ async function main() {
   return r.exitCode;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   main().then((code) => process.exit(code), (e) => { console.error(e); process.exit(2); });
 }
