@@ -165,7 +165,12 @@ function compileDir(srcDir, outDir, { write } = {}) {
     produced.add(`${name}.js`);
     const dest = join(outDir, `${name}.js`);
     const prev = existsSync(dest) ? readFileSync(dest, 'utf8') : null;
-    if (prev !== code) {
+    // Git's Windows checkout may materialize the generated module with CRLF
+    // while emit() is deliberately platform-neutral LF. That is not stale
+    // content: compare one canonical newline form so --check still measures
+    // authored data drift rather than the machine that checked it out.
+    const comparable = prev == null ? null : prev.replace(/\r\n/g, '\n');
+    if (comparable !== code) {
       stale += 1;
       if (write) writeFileSync(dest, code);
     }
