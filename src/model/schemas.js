@@ -280,6 +280,8 @@ export const SFX_WAVE_TYPES = Object.freeze(['sine', 'square', 'sawtooth', 'tria
 
 // Registry type names (bundle keys holding arrays of defs).
 export const REGISTRY_TYPES = Object.freeze([
+  'attributes',
+  'creationModes',
   'cards',
   // HUD resource bars as data (content/resources.js). A registry, not a balance
   // sub-object, because a bar is an entry with an id — and because that is what
@@ -461,6 +463,26 @@ export const SFX_LAYER_SCHEMAS = Object.freeze({
 // ---------------------------------------------------------------------------
 
 export const SCHEMAS = Object.freeze({
+  attribute: obj({
+    id: str,
+    label: str,
+    shortLabel: str,
+    order: int,
+  }),
+  creationMode: obj({
+    id: str,
+    label: str,
+    baseline: int,
+    bonusPool: int,
+    minimum: int,
+    maximum: int,
+    belowBaseline: en('forbid'),
+    redistribution: en('fixedTotal'),
+  }),
+  attributeRules: obj({
+    defaultMode: ref('creationModes'),
+    presets: mapOf(mapOf(mapOf(int))),
+  }),
   card: obj({
     id: str,
     name: str,

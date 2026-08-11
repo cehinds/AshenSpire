@@ -31,6 +31,7 @@ import { SCALES, BEDS } from './music.js';
 import { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
+import { attributes, creationModes, attributeRules } from './attributes.js';
 
 export const contentBundle = {
   version: '0.4.0',
@@ -69,6 +70,9 @@ export const contentBundle = {
   // The card-tag registry rides the bundle so effect `tags` and
   // taggedVulnerability lists validate against ONE vocabulary home (#61).
   tags: cardTags,
+  attributes,
+  creationModes,
+  attributeRules,
 };
 
 // Not part of the bundle (UI-only data / M1 flow):

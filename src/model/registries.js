@@ -51,6 +51,8 @@ function makeRegistry(typeName, defs) {
 
 // Bundle key → registry property + singular type name for error messages.
 const TYPE_SINGULAR = {
+  attributes: 'attribute',
+  creationModes: 'creation mode',
   cards: 'card',
   resources: 'resource',
   relics: 'relic',
@@ -96,6 +98,7 @@ export function createRegistries(contentBundle) {
   }
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
 
   const mapConfigs = deepFreeze({ ...(bundle.mapConfigs || {}) });
   registries.mapConfigs = mapConfigs;

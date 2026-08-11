@@ -29,6 +29,7 @@
 
 import { serializeRun, deserializeRun } from '../model/state.js';
 import { createLoadout, stampDeck } from '../model/loadout.js';
+import { normalizeRunAttributes } from '../model/attributes.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -351,6 +352,7 @@ export function createSaveManager(storage) {
       let run;
       try {
         run = deserializeRun(json);
+        normalizeRunAttributes(run, registries);
       } catch (e) {
         archive(json, e && e.message ? e.message : 'corrupt save', slot);
         return null;

@@ -136,6 +136,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     id: p.id,
     name: p.name || p.id,
     classId: p.classId,
+    attributeMode: p.attributeMode,
+    attributes: p.attributes ? { ...p.attributes } : undefined,
     entity,
     piles: { draw: [...innate, ...rest], hand: [], discard: [], exhaust: [] },
     connected: true,

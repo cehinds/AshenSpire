@@ -9,6 +9,7 @@
 
 import { createLoadout, runMods, stampDeck } from './loadout.js';
 import { graceRefillPlan } from './gracerefill.js';
+import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 
 export const RUN_SCHEMA_VERSION = 1;
 
@@ -36,8 +37,14 @@ export function createDeck(cardIds, idGen = createIdGen('d')) {
  * Starting deck/relic/HP come from the class def; cinders from
  * balance.startingCinders (default 0).
  */
-export function createRunState({ seed, classId, registries }) {
+export function createRunState({ seed, classId, registries, attributeMode = undefined, attributes: requestedAttributes = undefined }) {
   const classDef = registries.classes.get(classId);
+  const selectedAttributeMode = attributeMode === undefined
+    ? defaultCreationModeId(registries)
+    : attributeMode;
+  const attributes = requestedAttributes === undefined
+    ? classAttributePreset(registries, classId, selectedAttributeMode)
+    : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const idGen = createIdGen('rc');
   const loadout = createLoadout(registries, classId);
   // Armour can carry `self.maxHp`, so the pool it sets has to be known before
@@ -50,6 +57,8 @@ export function createRunState({ seed, classId, registries }) {
     seed: seed >>> 0,
     streamCounters: {},
     class: classId,
+    attributeMode: selectedAttributeMode,
+    attributes,
     floor: 0,
     actNumber: 1,
     mapNodeId: null,
@@ -99,6 +108,9 @@ export const RUN_SHAPE = [
   { key: 'seed', type: 'number' },
   { key: 'streamCounters', type: 'object' },
   { key: 'class', type: 'string' },
+  // Optional as a pair only so pre-attribute saves can migrate as one block.
+  { key: 'attributeMode', type: 'string', optional: true },
+  { key: 'attributes', type: 'object', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
@@ -142,6 +154,14 @@ export function validateRunShape(run) {
       continue;
     }
     if (!typeOk(v, f.type)) problems.push(`'${f.key}' should be ${f.type}`);
+  }
+  const modeAbsent = run.attributeMode === undefined;
+  const attributesAbsent = run.attributes === undefined;
+  if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');
+  if (!attributesAbsent && typeOk(run.attributes, 'object')) {
+    for (const [id, value] of Object.entries(run.attributes)) {
+      if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
+    }
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.

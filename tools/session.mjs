@@ -17,6 +17,7 @@
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
+import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
@@ -67,6 +68,10 @@ export function createSession({ registries, seedString, endless = false, restore
   // Restore members (disconnected until they re-attach by rejoinId).
   if (restore) {
     for (const md of restore.members) {
+      if (md.classId !== md.run.class) {
+        throw new Error(`Session member '${md.id}' class '${md.classId}' disagrees with run class '${md.run.class}'`);
+      }
+      normalizeRunAttributes(md.run, registries);
       if (md.run.maxMana === undefined && md.run.mana === undefined) {
         md.run.maxMana = registries.classes.get(md.classId).maxMana;
         md.run.mana = md.run.maxMana;
@@ -87,9 +92,9 @@ export function createSession({ registries, seedString, endless = false, restore
     return endless ? Math.floor((session.actNumber - 1) / LAST_ACT) : 0;
   }
 
-  function addMember({ id, name, classId, tint, spriteStyle }) {
+  function addMember({ id, name, classId, tint, spriteStyle, attributeMode = undefined, attributes = undefined }) {
     const index = order++;
-    const run = createRunState({ seed, classId, registries });
+    const run = createRunState({ seed, classId, registries, attributeMode, attributes });
     const m = {
       id,
       name: String(name || 'Forsaken').slice(0, 18),
@@ -241,6 +246,7 @@ export function createSession({ registries, seedString, endless = false, restore
       id: m.id, name: m.name, classId: m.classId,
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
       maxMana: m.run.maxMana, mana: m.run.mana,
+      attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       relicIds: m.run.relics, flasks: m.run.flasks,
     };
   }
@@ -286,6 +292,7 @@ export function createSession({ registries, seedString, endless = false, restore
       players: [...c.players.values()].map((P) => ({
         id: P.id, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         mana: P.entity.mana, maxMana: P.entity.maxMana,
+        attributeMode: P.attributeMode, attributes: { ...P.attributes },
         energy: P.entity.energy, energyMax: P.entity.energyMax,
         connected: P.connected, alive: P.entity.alive, ended: P.ended,
         statuses: P.entity.statuses, stanceId: P.entity.stanceId,
@@ -524,6 +531,7 @@ export function createSession({ registries, seedString, endless = false, restore
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
       mana: m.run.mana, maxMana: m.run.maxMana,
+      attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       deck: m.run.deck.map((c) => ({ instanceId: c.instanceId, cardId: c.cardId, upgraded: c.upgraded })),
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,
       catchup: m.catchup.length,

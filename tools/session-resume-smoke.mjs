@@ -6,6 +6,7 @@
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { validateContent } from '../src/model/validate.js';
 import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession, restoreSession } from './session.mjs';
 
@@ -74,8 +75,66 @@ try {
   ok(after.cursorId === before.cursorId, 'restored map cursor matches');
   ok(JSON.stringify(after.reachableIds) === JSON.stringify(before.reachableIds), 'restored reachable nodes match');
   ok(after.party.length === 2, 'restored party has both members');
+  ok(after.party.every((p) => p.attributeMode && p.attributes), 'restored snapshot preserves each member\'s creation mode + attributes');
+  ok(JSON.stringify(after.party.map((p) => p.attributes)) === JSON.stringify(before.party.map((p) => p.attributes)), 'attribute allocations survive session JSON round-trip exactly');
   ok(R.session.members.get('p2').run.deck.length === p2DeckBefore, 'restored p2 deck size matches (build preserved)');
   ok(after.party.every((p) => !p.connected), 'restored members start disconnected (players re-attach by rejoinId)');
+
+  const legacyData = JSON.parse(json);
+  for (const md of legacyData.members) {
+    delete md.run.attributeMode;
+    delete md.run.attributes;
+  }
+  const legacyRestored = restoreSession(REG, legacyData).snapshot();
+  ok(legacyRestored.party.every((p) => p.attributeMode === contentBundle.attributeRules.defaultMode), 'legacy session members migrate the whole attribute block through the authored default mode');
+  ok(legacyRestored.party.every((p) => JSON.stringify(p.attributes) === JSON.stringify(contentBundle.attributeRules.presets[p.attributeMode][p.classId])), 'legacy session members migrate to their authored class presets');
+
+  const restoreRefused = (mutate, label) => {
+    const bad = JSON.parse(json);
+    mutate(bad.members[0].run);
+    let threw = false;
+    try { restoreSession(REG, bad); } catch { threw = true; }
+    ok(threw, label);
+  };
+  restoreRefused((run) => { delete run.attributes; }, 'partial session attribute block is refused');
+  restoreRefused((run) => { run.attributeMode = 'ghost'; }, 'unknown session creation mode is refused');
+  restoreRefused((run) => { run.attributes.wisdom = 10.5; }, 'fractional session allocation is refused');
+  restoreRefused((run) => { run.attributes.wisdom = 99; }, 'out-of-range session allocation is refused');
+  restoreRefused((run) => { run.attributes.wisdom += 1; }, 'wrong-total session allocation is refused');
+  {
+    const contradictory = JSON.parse(json);
+    contradictory.members[0].classId = contradictory.members[0].run.class === 'reaver' ? 'starseer' : 'reaver';
+    let threw = false;
+    try { restoreSession(REG, contradictory); } catch { threw = true; }
+    ok(threw, 'contradictory member/run class authorities are refused');
+  }
+
+  // A synthetic authored mode must propagate through member creation,
+  // snapshots, serialization, and restore—not merely through run defaults.
+  const mutant = {
+    ...contentBundle,
+    attributes: structuredClone(contentBundle.attributes).map((a, i, all) => ({ ...a, order: all.length - i })),
+    creationModes: structuredClone(contentBundle.creationModes),
+    attributeRules: structuredClone(contentBundle.attributeRules),
+  };
+  const mutantMode = { id: 'testMode', label: 'Test Mode', baseline: 7, bonusPool: 3, minimum: 7, maximum: 10, belowBaseline: 'forbid', redistribution: 'fixedTotal' };
+  mutant.creationModes.push(mutantMode);
+  mutant.attributeRules.defaultMode = mutantMode.id;
+  mutant.attributeRules.presets[mutantMode.id] = {
+    reaver: { strength: 10, dexterity: 7, constitution: 7, wisdom: 7, intelligence: 7 },
+    starseer: { strength: 7, dexterity: 8, constitution: 7, wisdom: 7, intelligence: 9 },
+    herald: { strength: 7, dexterity: 7, constitution: 8, wisdom: 9, intelligence: 7 },
+  };
+  ok(validateContent(mutant).ok, 'mutated session content validates');
+  const mutantRegistries = createRegistries(mutant);
+  const mutantAllocation = { ...mutant.attributeRules.presets.testMode.reaver, strength: 9, dexterity: 8 };
+  const MS = createSession({ registries: mutantRegistries, seedString: 'GOLDBOUGH' });
+  MS.addMember({ id: 'mx', name: 'Mutant', classId: 'reaver', attributeMode: mutantMode.id, attributes: mutantAllocation });
+  const expectedMutant = Object.fromEntries(mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => [a.id, mutantAllocation[a.id]]));
+  const mutantSnapshot = MS.snapshot().party[0];
+  ok(mutantSnapshot.attributeMode === mutantMode.id && JSON.stringify(mutantSnapshot.attributes) === JSON.stringify(expectedMutant), 'mutated allocation reaches member creation and snapshot in authored order');
+  const mutantRoundTrip = restoreSession(mutantRegistries, JSON.parse(JSON.stringify(MS.serialize()))).snapshot().party[0];
+  ok(mutantRoundTrip.attributeMode === mutantMode.id && JSON.stringify(mutantRoundTrip.attributes) === JSON.stringify(expectedMutant), 'mutated allocation survives session serialize/restore');
 
   // A live fight must NOT be persisted (resume lands at the pre-combat node).
   R.chooseNode('p1', R.session.reachableIds[0]);

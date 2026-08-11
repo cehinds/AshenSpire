@@ -73,6 +73,7 @@ try {
   S.start();
   ok(S.scene.kind === 'map', 'start → shared map scene');
   ok(S.snapshot().party.length === 2, 'snapshot shows a 2-member party');
+  ok(S.snapshot().party.every((p) => p.attributeMode && p.attributes), 'party snapshot transports creation mode + inert attributes');
 
   // --- fork voting: one vote holds the party; a tie breaks toward the host ---
   const opts = S.session.reachableIds;
@@ -114,11 +115,24 @@ try {
   }
   ok(S.scene.kind === 'combat', 'party reaches a live shared combat');
   ok(S.scene.players.length === 2 && S.scene.enemies.length >= 1, 'combat scene exposes both players + shared enemies');
+  ok(S.scene.players.every((p) => p.attributeMode && p.attributes), 'combat snapshot transports each seat\'s inert attributes');
   const twoPMult = coopHpMult(2);
   ok(S.live && Math.abs(S.live.combat.baseHpMult - twoPMult) < 1e-9, 'enemies scaled to the 2-player headcount');
 
+  const p1AttributesBefore = JSON.stringify({
+    attributeMode: S.session.members.get('p1').run.attributeMode,
+    attributes: S.session.members.get('p1').run.attributes,
+  });
+  // Combat carries an inert copy for snapshots. Even if that copy is damaged,
+  // the run remains the sole authority and no combat outcome writes it back.
+  S.live.combat.players.get('p1').attributeMode = 'ghost';
+  S.live.combat.players.get('p1').attributes.strength = 999;
   const p2DeckBefore = S.session.members.get('p2').run.deck.length;
   S.autoResolveCombat(botTurn);
+  ok(JSON.stringify({
+    attributeMode: S.session.members.get('p1').run.attributeMode,
+    attributes: S.session.members.get('p1').run.attributes,
+  }) === p1AttributesBefore, 'combat snapshot copies cannot mutate or overwrite the authoritative run allocation');
   ok(S.scene.kind === 'reward' || S.scene.kind === 'complete', 'shared combat settles into rewards (or run end)');
   if (S.scene.kind === 'reward') {
     ok(!!S.scene.offers.p1 && !!S.scene.offers.p2, 'both present members get their own reward offer');

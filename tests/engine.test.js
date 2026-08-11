@@ -3819,6 +3819,139 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     // nothing in this tree can measure a clock.
   });
 
+  // ---- 50. Phase 1 attributes are authored data, not engine defaults --------
+  test('50. five-stat creation vocabulary and class presets come from one complete content product', () => {
+    assert(Array.isArray(contentBundle.attributes), 'attribute definitions are a content table');
+    assert(Array.isArray(contentBundle.creationModes), 'creation modes are a content table');
+    assert(contentBundle.attributeRules && typeof contentBundle.attributeRules === 'object', 'attribute creation rules are content');
+    const attrs = contentBundle.attributes.slice().sort((a, b) => a.order - b.order);
+    const modes = contentBundle.creationModes;
+    const classes = contentBundle.classes;
+    eq(attrs.map((a) => a.id).join(','), 'strength,dexterity,constitution,wisdom,intelligence', 'the five stable ids ship in authored order');
+    eq(attrs.map((a) => a.shortLabel).join(','), 'STR,DEX,CON,WIS,INT', 'all five short labels ship from the same rows');
+    const standard = contentBundle.creationModes.find((m) => m.id === contentBundle.attributeRules.defaultMode);
+    assert(!!standard, 'the default mode resolves');
+    eq(`${standard.baseline}/${standard.bonusPool}/${standard.minimum}/${standard.maximum}`, '10/5/10/15', 'standard creation bounds are authored');
+    eq(
+      classes.map((c) => attrs.map((a) => contentBundle.attributeRules.presets.standard[c.id][a.id]).join('/')).join('|'),
+      '13/10/12/10/10|10/11/10/10/14|10/10/12/13/10',
+      'all three standard class presets are exact in the authored attribute order'
+    );
+
+    // The product is derived from its three axes. This is not a three-class
+    // snapshot: every mode/class/stat cell in whatever content ships is walked.
+    let cells = 0;
+    for (const mode of modes) {
+      const expectedTotal = mode.baseline * attrs.length + mode.bonusPool;
+      for (const cls of classes) {
+        const preset = contentBundle.attributeRules.presets[mode.id][cls.id];
+        eq(Object.keys(preset).sort().join(','), attrs.map((a) => a.id).sort().join(','), `${mode.id}/${cls.id} has exactly the authored stat vocabulary`);
+        eq(attrs.reduce((sum, a) => sum + preset[a.id], 0), expectedTotal, `${mode.id}/${cls.id} total derives from baseline × count + pool`);
+        for (const attr of attrs) {
+          assert(Number.isInteger(preset[attr.id]) && preset[attr.id] >= mode.minimum && preset[attr.id] <= mode.maximum, `${mode.id}/${cls.id}/${attr.id} is an in-range integer`);
+          cells++;
+        }
+      }
+    }
+    eq(cells, modes.length * classes.length * attrs.length, 'the complete mode × class × stat product was checked');
+
+    const clone = () => ({
+      ...contentBundle,
+      attributes: structuredClone(contentBundle.attributes),
+      creationModes: structuredClone(contentBundle.creationModes),
+      attributeRules: structuredClone(contentBundle.attributeRules),
+    });
+    const rejected = (mutate, path, label) => {
+      const b = clone(); mutate(b);
+      const v = validateContent(b);
+      assert(!v.ok && v.errors.some((e) => e.path.includes(path)), `${label} is refused and names ${path}`);
+    };
+    rejected((b) => { delete b.attributes[0].id; }, 'attributes', 'missing attribute id');
+    rejected((b) => { b.attributes[1].id = b.attributes[0].id; }, 'attributes', 'duplicate attribute id');
+    rejected((b) => { delete b.attributes[0].order; }, 'attributes', 'missing order');
+    rejected((b) => { b.attributes[1].order = b.attributes[0].order; }, 'order', 'duplicate order');
+    rejected((b) => { b.attributes[0].order = 1.5; }, 'order', 'fractional order');
+    rejected((b) => { b.attributes[0].order = -1; }, 'order', 'negative order');
+    rejected((b) => { b.attributes[0].order = Number.NaN; }, 'order', 'NaN order');
+    rejected((b) => { b.attributes[0].unknown = true; }, 'unknown', 'unknown attribute field');
+    rejected((b) => { b.creationModes.push({ ...b.creationModes[0] }); }, 'creationModes', 'duplicate creation mode id');
+    rejected((b) => { b.creationModes[0].unknown = true; }, 'unknown', 'unknown creation mode field');
+    rejected((b) => { b.creationModes[0].minimum = b.creationModes[0].baseline + 1; }, 'creationModes', 'minimum above baseline');
+    rejected((b) => { b.creationModes[0].maximum = b.creationModes[0].baseline - 1; }, 'creationModes', 'baseline above maximum');
+    rejected((b) => { b.creationModes[0].bonusPool = -1; }, 'bonusPool', 'negative bonus pool');
+    rejected((b) => { b.attributeRules.defaultMode = 'missing'; }, 'defaultMode', 'dangling default mode');
+    rejected((b) => { delete b.attributeRules.presets.standard.reaver.strength; }, 'strength', 'missing stat product cell');
+    rejected((b) => { b.attributeRules.presets.standard.reaver.luck = 10; }, 'luck', 'extra stat cell');
+    rejected((b) => { b.attributeRules.presets.standard.ghost = { ...b.attributeRules.presets.standard.reaver }; }, 'ghost', 'unknown class cell');
+    rejected((b) => { b.attributeRules.presets.ghost = {}; }, 'ghost', 'unknown mode cell');
+    rejected((b) => { b.attributeRules.presets.standard.reaver.strength = 10.5; }, 'strength', 'fractional preset value');
+    rejected((b) => { b.attributeRules.presets.standard.reaver.strength = standard.maximum + 1; }, 'strength', 'out-of-range preset value');
+    rejected((b) => { b.attributeRules.presets.standard.reaver.strength -= 1; }, 'reaver', 'wrong fixed total');
+
+    const fresh = createRunState({ seed: 50, classId: 'herald', registries: REG });
+    eq(fresh.attributeMode, contentBundle.attributeRules.defaultMode, 'new run selects the authored default mode');
+    eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
+    for (const mode of modes) {
+      const selected = createRunState({ seed: 50, classId: 'reaver', registries: REG, attributeMode: mode.id });
+      eq(selected.attributeMode, mode.id, `creation accepts authored mode '${mode.id}'`);
+    }
+    const allocated = { ...contentBundle.attributeRules.presets.standard.reaver, strength: 12, dexterity: 11 };
+    const custom = createRunState({ seed: 50, classId: 'reaver', registries: REG, attributeMode: 'standard', attributes: allocated });
+    eq(JSON.stringify(custom.attributes), JSON.stringify(allocated), 'creation accepts a valid player allocation through the shared validator');
+
+    // Whole-block legacy migration is allowed; any half-block is corruption.
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    const legacy = { ...fresh };
+    delete legacy.attributeMode;
+    delete legacy.attributes;
+    storage.setItem(RUN_KEY, JSON.stringify(legacy));
+    const migrated = saves.loadRun(REG);
+    eq(JSON.stringify(migrated.attributes), JSON.stringify(contentBundle.attributeRules.presets[migrated.attributeMode].herald), 'legacy run migrates to its content-selected class preset as one whole block');
+    for (const malformed of [
+      { ...fresh, attributeMode: undefined },
+      { ...fresh, attributes: undefined },
+      { ...fresh, attributes: { ...fresh.attributes, luck: 10 } },
+      { ...fresh, attributes: { ...fresh.attributes, wisdom: undefined } },
+      { ...fresh, attributeMode: 'ghost' },
+      { ...fresh, attributes: { ...fresh.attributes, wisdom: 10.5 } },
+      { ...fresh, attributes: { ...fresh.attributes, wisdom: standard.maximum + 1 } },
+      { ...fresh, attributes: { ...fresh.attributes, wisdom: fresh.attributes.wisdom + 1 } },
+    ]) {
+      storage.setItem(RUN_KEY, JSON.stringify(malformed));
+      eq(saves.loadRun(REG), null, 'partial/unknown attribute save fails closed');
+    }
+
+    // A synthetic second mode changes order, every numeric rule, defaultMode,
+    // and a class preset. Readers must follow it without a system default.
+    const mutant = clone();
+    mutant.attributes = mutant.attributes.map((a, i) => ({ ...a, order: mutant.attributes.length - i }));
+    const testMode = { id: 'testMode', label: 'Test Mode', baseline: 7, bonusPool: 3, minimum: 7, maximum: 10, belowBaseline: 'forbid', redistribution: 'fixedTotal' };
+    mutant.creationModes.push(testMode);
+    mutant.attributeRules.defaultMode = testMode.id;
+    mutant.attributeRules.presets.testMode = {
+      reaver: { strength: 10, dexterity: 7, constitution: 7, wisdom: 7, intelligence: 7 },
+      starseer: { strength: 7, dexterity: 8, constitution: 7, wisdom: 7, intelligence: 9 },
+      herald: { strength: 7, dexterity: 7, constitution: 8, wisdom: 9, intelligence: 7 },
+    };
+    assert(validateContent(mutant).ok, 'mutant content remains valid after every derived input changes');
+    const MR = createRegistries(mutant);
+    const mr = createRunState({ seed: 51, classId: 'reaver', registries: MR });
+    eq(mr.attributeMode, 'testMode', 'creation follows mutated default mode');
+    eq(Object.keys(mr.attributes).join(','), mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => a.id).join(','), 'run allocation key order follows mutated authored order');
+    eq(Object.values(mr.attributes).reduce((a, b) => a + b, 0), testMode.baseline * mutant.attributes.length + testMode.bonusPool, 'run total follows mutated baseline/count/pool');
+    const mutantAllocation = { ...mutant.attributeRules.presets.testMode.reaver, strength: 9, dexterity: 8 };
+    const ma = createRunState({ seed: 52, classId: 'reaver', registries: MR, attributeMode: testMode.id, attributes: mutantAllocation });
+    eq(JSON.stringify(ma.attributes), JSON.stringify(Object.fromEntries(mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => [a.id, mutantAllocation[a.id]]))), 'creation input follows mutated vocabulary/order/rules');
+    const mutantLegacy = { ...ma }; delete mutantLegacy.attributeMode; delete mutantLegacy.attributes;
+    const mutantStorage = createMemoryStorage();
+    mutantStorage.setItem(RUN_KEY, JSON.stringify(mutantLegacy));
+    const mutantMigrated = createSaveManager(mutantStorage).loadRun(MR);
+    eq(mutantMigrated.attributeMode, mutant.attributeRules.defaultMode, 'legacy migration follows the mutated default mode');
+    const expectedMutantPreset = Object.fromEntries(mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => [a.id, mutant.attributeRules.presets[mutantMigrated.attributeMode].reaver[a.id]]));
+    eq(JSON.stringify(mutantMigrated.attributes), JSON.stringify(expectedMutantPreset), 'legacy migration follows the mutated class preset and authored order');
+  });
+
   const passed = results.filter((r) => r.ok).length;
   const failed = results.length - passed;
   return { passed, failed, results };
