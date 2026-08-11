@@ -261,7 +261,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       box.appendChild(sprite);
       const nm = document.createElement('div');
       nm.className = 'coop-seat-name';
-      nm.innerHTML = `<span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''} · ⚡${p.energy}/${p.energyMax} · ◆${p.mana}/${p.maxMana} <span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
+      nm.innerHTML =
+        `<span class="coop-seat-player"><span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''}</span>` +
+        `<span class="coop-seat-vitals"><span title="Energy">⚡${p.energy}/${p.energyMax}</span><span title="Mana">◆${p.mana}/${p.maxMana}</span></span>` +
+        `<span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
       box.appendChild(nm);
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;

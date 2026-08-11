@@ -62,7 +62,9 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
     fill.style.width = `${bar.pct.toFixed(2)}%`;
     el.appendChild(fill);
 
-    // THE LABEL DEGRADES BY MEASURED FIT, not by a typed threshold.
+    // THE LABEL DEGRADES BY MEASURED FIT, not by a typed threshold. The compact
+    // form keeps the resource glyph beside its numbers: a bare `20/40` still
+    // reports quantity, but on a two-row HUD it withholds WHICH pool it is.
     // Marina rendered `maxMana = 2` at 48 px and watched "MANA" collide with
     // "1/2". Three variants ride in the DOM and CSS container queries pick the
     // widest that fits — in `em`, so the choice tracks the player's Text size
@@ -73,7 +75,7 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
     label.className = 'label';
     label.innerHTML =
       `<span class="l-full">${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
-      `<span class="l-num">${bar.cur}/${bar.max}</span>` +
+      `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
       `<span class="l-glyph">${esc(bar.glyph)}</span>`;
     el.appendChild(label);
 

@@ -79,6 +79,7 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
+import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const argv = process.argv.slice(2);
@@ -224,14 +225,50 @@ async function sweepShape(b, href, [w, h]) {
   return rows;
 }
 
-async function captureShape(b, href, [w, h]) {
+async function captureLayoutPage(b, href, [w, h], state, tree) {
   const outDir = resolve(SHOTS_OUT);
   mkdirSync(outDir, { recursive: true });
-  await b.cdp.send('Page.navigate', { url: `${href}?shot=combat&shotMana=20` }, b.S);
-  await b.until(`!!document.querySelector('.combat .topbar .resbar[data-res="mana"]')`, `mana bar @ ${w}x${h}`);
+  const query = state === 'solo' ? 'shot=combat&shotMana=20' : 'shot=coop';
+  const ready = state === 'solo'
+    ? `!!document.querySelector('.combat .topbar .resbar[data-res="mana"]')`
+    : `document.querySelectorAll('.combat.coop .coop-seat-name').length === 2`;
+  await b.cdp.send('Page.navigate', { url: `${href}?${query}` }, b.S);
+  await b.until(ready, `${tree} ${state} @ ${w}x${h}`);
   await wait(320);
+
+  if (state === 'solo') {
+    const compact = await b.ev(`(() => {
+      const bar = document.querySelector('.combat .topbar .resbar[data-res="mana"]');
+      const visible = [...bar.querySelectorAll('.label > span')].find((s) => getComputedStyle(s).display !== 'none');
+      return visible ? visible.textContent.trim() : '';
+    })()`);
+    if (!compact.includes('◆') || !compact.includes('20/40')) {
+      fail('A7', `${tree} ${w}x${h}: compact Mana identity is "${compact}"; expected glyph and 20/40`);
+    } else {
+      notes.push(`A7 ${tree} ${w}x${h}: MANA IDENTITY ok — visible compact label is "${compact}"`);
+    }
+  } else {
+    const seats = await b.ev(`(() => {
+      const n = (r) => ({ left: r.left, right: r.right, width: r.width });
+      return [...document.querySelectorAll('.combat.coop .coop-seat')].map((seat) => {
+        const line = seat.querySelector('.coop-seat-name');
+        const player = seat.querySelector('.coop-seat-player');
+        return { seat: n(seat.getBoundingClientRect()), line: n(line.getBoundingClientRect()), player: n(player.getBoundingClientRect()), text: player.textContent.trim(), viewport: innerWidth };
+      });
+    })()`);
+    for (const seat of seats) {
+      if (seat.line.left < -0.5 || seat.line.right > seat.viewport + 0.5 || seat.player.left < -0.5 || seat.player.right > seat.viewport + 0.5) {
+        fail('A8', `${tree} ${w}x${h}: co-op seat "${seat.text}" leaves the viewport (${seat.line.left.toFixed(1)}..${seat.line.right.toFixed(1)} of ${seat.viewport})`);
+      }
+    }
+    if (!seats.some((seat) => seat.text.includes('Wren'))) fail('A8', `${tree} ${w}x${h}: Wren's seat identity is absent`);
+    else if (!fails.some((f) => f.startsWith('A8') && f.includes(`${tree} ${w}x${h}`))) {
+      notes.push(`A8 ${tree} ${w}x${h}: SEAT CONTAINMENT ok — Wren and both seat lines stay inside the viewport`);
+    }
+  }
+
   const shot = await b.cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, b.S);
-  const out = join(outDir, `mana-hud-${w}x${h}.png`);
+  const out = join(outDir, `${tree}-${state}-${w}x${h}.png`);
   writeFileSync(out, Buffer.from(shot.data, 'base64'));
   console.log(`    shot   ${out}`);
 }
@@ -539,6 +576,7 @@ async function main() {
     return;
   }
   const all = {};
+  const source = SHOTS_OUT ? await serve({ root: TREE, port: 8317, open: false }) : null;
   try {
     for (const shape of SHAPES) {
       const rows = await sweepShape(b, href, shape);
@@ -552,10 +590,16 @@ async function main() {
           + `${String(hp ? hp.labelW : '—').padStart(5)}   ${hp && hp.floored ? 'yes' : 'no'}`);
       }
       judge(shape, rows);
-      if (SHOTS_OUT) await captureShape(b, href, shape);
+      if (SHOTS_OUT) {
+        await captureLayoutPage(b, source.url, shape, 'solo', 'source');
+        await captureLayoutPage(b, source.url, shape, 'coop', 'source');
+        await captureLayoutPage(b, href, shape, 'solo', 'dist');
+        await captureLayoutPage(b, href, shape, 'coop', 'dist');
+      }
     }
   } finally {
     b.close();
+    if (source) source.server.close();
   }
   if (JSON_OUT) writeFileSync(JSON_OUT, JSON.stringify(all, null, 2));
 
