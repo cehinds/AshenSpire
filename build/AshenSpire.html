@@ -1422,14 +1422,24 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .coop-take { border-color: var(--gold); }
 
 /* multiple player seats sit side-by-side in the combat player-zone */
-.combat.coop .player-zone { display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.4rem; align-items: flex-end; justify-content: center; }
+.combat.coop .player-zone {
+  display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.4rem;
+  min-width: 13rem; align-items: flex-end; justify-content: center;
+}
 .combat.coop .combatant.player { position: relative; }
 .combat.coop .combatant.player.me .sprite { filter: drop-shadow(0 0 6px rgba(200,160,70,.55)); }
 .combat.coop .combatant.player.ended { opacity: .62; }
 .combat.coop .combatant.player.down { filter: grayscale(1); opacity: .45; }
 .combat.coop .combatant.player.away { opacity: .45; }
 .combat.coop .combatant.player.throw-target { cursor: pointer; outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 8px; box-shadow: 0 0 12px rgba(200,160,70,.4); }
-.coop-seat-name { font-size: 1.1rem; color: #e0d4b8; text-align: center; margin-top: 0.3rem; }
+.coop-seat-name {
+  width: 13rem; max-width: 100%; min-width: 0; margin-top: 0.3rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
+  font-size: 1.1rem; color: #e0d4b8; text-align: center;
+}
+.coop-seat-player { max-width: 100%; overflow-wrap: anywhere; }
+.coop-seat-vitals { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.2rem 0.7rem; }
+.coop-seat-vitals > span { white-space: nowrap; }
 .coop-turnflag { color: var(--gold); font-size: 1rem; letter-spacing: .06em; }
 .combat.coop .combatant.enemy.selected-target { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 8px; }
 
@@ -28464,7 +28474,9 @@ function resourceBars(plan, { surface, tooltipExtra } = {}) {
     fill.style.width = `${bar.pct.toFixed(2)}%`;
     el.appendChild(fill);
 
-    // THE LABEL DEGRADES BY MEASURED FIT, not by a typed threshold.
+    // THE LABEL DEGRADES BY MEASURED FIT, not by a typed threshold. The compact
+    // form keeps the resource glyph beside its numbers: a bare `20/40` still
+    // reports quantity, but on a two-row HUD it withholds WHICH pool it is.
     // Marina rendered `maxMana = 2` at 48 px and watched "MANA" collide with
     // "1/2". Three variants ride in the DOM and CSS container queries pick the
     // widest that fits — in `em`, so the choice tracks the player's Text size
@@ -28475,7 +28487,7 @@ function resourceBars(plan, { surface, tooltipExtra } = {}) {
     label.className = 'label';
     label.innerHTML =
       `<span class="l-full">${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
-      `<span class="l-num">${bar.cur}/${bar.max}</span>` +
+      `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
       `<span class="l-glyph">${esc(bar.glyph)}</span>`;
     el.appendChild(label);
 
@@ -32741,7 +32753,10 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       box.appendChild(sprite);
       const nm = document.createElement('div');
       nm.className = 'coop-seat-name';
-      nm.innerHTML = `<span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''} · ⚡${p.energy}/${p.energyMax} · ◆${p.mana}/${p.maxMana} <span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
+      nm.innerHTML =
+        `<span class="coop-seat-player"><span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''}</span>` +
+        `<span class="coop-seat-vitals"><span title="Energy">⚡${p.energy}/${p.energyMax}</span><span title="Mana">◆${p.mana}/${p.maxMana}</span></span>` +
+        `<span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
       box.appendChild(nm);
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
