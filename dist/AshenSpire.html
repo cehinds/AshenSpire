@@ -3845,6 +3845,14 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
     console.error('[seed] refused at newRun:', { seedString, why });
     return;
   }
+  // THE PROFILE IS OLDER THAN THE CLIMB (M7 — "profile should be able to be
+  // created before first run, not after"). Here, not on the customize screen's
+  // first click: that screen's own Back button promises "Nothing here is saved",
+  // and a profile written when a class card is highlighted would make its
+  // tooltip a lie. BEGIN THE CLIMB is where a character stops being a preview,
+  // and it is one line above the run being made, so the write order is the ask.
+  // A refused seed returns above and creates nothing.
+  saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
   run = createRunState({ seed, classId, registries });
@@ -4970,7 +4978,7 @@ const { flasks } = require("src/content/flasks.js");
 const { act1Enemies } = require("src/content/enemies/act1.js");
 const { act2Enemies } = require("src/content/enemies/act2.js");
 const { act3Enemies } = require("src/content/enemies/act3.js");
-const { act1Encounters, M1_GAUNTLET } = require("src/content/encounters/act1.js");
+const { act1Encounters } = require("src/content/encounters/act1.js");
 const { act2Encounters } = require("src/content/encounters/act2.js");
 const { act3Encounters } = require("src/content/encounters/act3.js");
 const { events } = require("src/content/events.js");
@@ -5027,7 +5035,7 @@ const contentBundle = {
 
 
 
-Object.assign(module.exports, { contentBundle, M1_GAUNTLET, LOCKED_CLASSES });
+Object.assign(module.exports, { contentBundle, LOCKED_CLASSES });
 
 },
 "src/content/balance.js": function (module, exports, require) {
@@ -7061,18 +7069,22 @@ const starseerCards = [
     upgrade: { effects: [{ op: 'draw', amount: 3 }, GAIN_CHARGE] },
   },
   {
+    // FROST, not Weak (#127-adjacent, Rune 2026-08-08). The Frost row's own
+    // proc LEAVES Weak — so a frost card that also applied Weak directly paid
+    // the same debuff twice and made the build-up pointless. The card seeds the
+    // build-up; the proc pays the Weak. Numbers PROVISIONAL, like the row's.
     id: 'frostVeil', name: 'Frost Veil', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '🌫',
     effects: [
       { op: 'block', target: 'self', amount: 4 },
-      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3 },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Gain {block} Block. Apply {weak} Weak.',
+    textTemplate: 'Gain {block} Block. Apply {frost} Frost.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 6 },
-        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4 },
         GAIN_CHARGE,
       ],
     },
@@ -7146,20 +7158,27 @@ const starseerCards = [
     },
   },
   {
+    // THE CARD NAMED FROST NOVA NOW APPLIES FROST (Rune, 2026-08-08). It
+    // applied `weak` + `vulnerable` and nothing in the game applied `frost` at
+    // all — a complete threshold-proc row (threshold, burst, Frost-Exposed, a
+    // resist row and its own SFX row) that no player could reach. Weak and
+    // Vulnerable are what the Frost PROC leaves behind; this is the card that
+    // fills the meter, and it is the Starseer's because frostExposed raises
+    // `starstone`-tagged damage. Numbers PROVISIONAL, like the row's.
     id: 'frostNova', name: 'Frost Nova', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '❄',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
-      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
-      { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1, if: CHARGED },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4 },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Apply {weak} Weak. Starstone: apply {vulnerable} Vulnerable.',
+    textTemplate: 'Deal {damage} damage. Apply {frost} Frost. Starstone: apply {frost.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 6 },
-        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
-        { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1, if: CHARGED },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 5 },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4, if: CHARGED },
         GAIN_CHARGE,
       ],
     },
@@ -7642,11 +7661,29 @@ const heraldCards = [
     },
   },
   {
+    // THE HERALD IS WHERE INSANITY LIVES (Rune, 2026-08-08). The Insanity row
+    // shipped complete — threshold 14, the biggest burst, +8 Poise, a
+    // guaranteed Stagger, `insanityExposed` — and NOTHING in the game applied
+    // it. It belongs to this class and not to the Reaver or the Starseer for a
+    // reason already in the data: insanityExposed raises `ritual`- and
+    // `blight`-tagged damage, and those two tags are the Herald's
+    // (content/source/cardTagging.csv). A chant repeated until the mind gives
+    // is the cheapest, slowest door in; 14 is deliberately the hardest
+    // threshold to fill, so a common has to be able to start it.
+    // Numbers PROVISIONAL, like the row's.
     id: 'litany', name: 'Litany', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '📿',
-    effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 }],
-    textTemplate: 'Apply {weak} Weak.',
-    upgrade: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 }] },
+    effects: [
+      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 },
+      { op: 'applyStatus', target: 'enemy', status: 'insanity', stacks: 3 },
+    ],
+    textTemplate: 'Apply {weak} Weak and {insanity} Insanity.',
+    upgrade: {
+      effects: [
+        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 },
+        { op: 'applyStatus', target: 'enemy', status: 'insanity', stacks: 4 },
+      ],
+    },
   },
   {
     id: 'graveOffering', name: 'Grave Offering', class: 'herald', rarity: 'common', cost: 2, type: 'attack',
@@ -9303,9 +9340,20 @@ const act2Enemies = [
     tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🛡',
     moves: {
-      slam: { intent: 'attack', damage: 10, weight: 40 },
-      fortify: { intent: 'block', block: 12, weight: 35, maxConsecutive: 1 },
-      crush: { intent: 'attack', damage: 14, weight: 25, maxConsecutive: 1 },
+      slam: { intent: 'attack', damage: 10, weight: 30 },
+      fortify: { intent: 'block', block: 12, weight: 25, maxConsecutive: 1 },
+      crush: { intent: 'attack', damage: 14, weight: 20, maxConsecutive: 1 },
+      // The player-side door into Frost (Rune, 2026-08-08). This act's own
+      // header already states the design — "the first enemies that turn YOUR
+      // mechanics against you (Bleed and Blight applied to the player)" — and
+      // Frost was the one build-up with no enemy behind it. Living Armor is
+      // already tinted var(--frost) and is `construct`, which is NOT in Frost's
+      // resistance tags, so it can seed the meter without shrugging it off
+      // itself. Numbers PROVISIONAL, like the row's.
+      rimeCrush: {
+        intent: 'attack', damage: 8, weight: 25, maxConsecutive: 1,
+        effects: [{ op: 'applyStatus', target: 'player', status: 'frost', stacks: 3 }],
+      },
     },
   },
 
@@ -9410,11 +9458,18 @@ const act3Enemies = [
     art: '🧎',
     moves: {
       desperateClaw: { intent: 'attack', damage: 9, weight: 60 },
+      // The player-side door into Insanity (Rune, 2026-08-08). An
+      // ember-starved pilgrim wailing at you is the one move in the tree that
+      // was already ABOUT the mind, and Insanity had no applier anywhere. The
+      // pilgrim is `humanoid`, which IS in Insanity's resistance tags — it
+      // resists what it inflicts, which is the joke and also the reason this
+      // is the right row. Numbers PROVISIONAL, like the row's.
       wail: {
         intent: 'debuff', weight: 40, maxConsecutive: 1,
         effects: [
           { op: 'applyStatus', target: 'player', status: 'weak', stacks: 1 },
           { op: 'applyStatus', target: 'player', status: 'frail', stacks: 1 },
+          { op: 'applyStatus', target: 'player', status: 'insanity', stacks: 3 },
         ],
       },
     },
@@ -9535,7 +9590,7 @@ Object.assign(module.exports, { act3Enemies });
 
 },
 "src/content/encounters/act1.js": function (module, exports, require) {
-// src/content/encounters/act1.js — Act 1 encounter pools + the M1 gauntlet
+// src/content/encounters/act1.js — Act 1 encounter pools
 
 const act1Encounters = [
   { id: 'loneSoldier', enemies: ['wanderingSoldier'], weight: 20, pool: 'normal' },
@@ -9547,11 +9602,15 @@ const act1Encounters = [
   { id: 'bossOmen', enemies: ['fellWarden'], weight: 1, pool: 'boss' },
 ];
 
-// M1 acceptance gauntlet (SPEC §9 M1): 2 monsters → elite → boss.
-const M1_GAUNTLET = ['patrol', 'packHunt', 'eliteWyrm', 'bossOmen'];
+// (`M1_GAUNTLET = ['patrol','packHunt','eliteWyrm','bossOmen']` — the M1
+// acceptance walk, SPEC §9 M1 — stood here and in the content barrel with no
+// reader anywhere in the tree, found by tools/closedsets.mjs. Deleted: the map
+// flow has been the real thing since M2, the headless bot test runs off
+// `balance.gauntlet`, and four ids nothing resolves are four ids that rot when
+// an encounter is renamed. SPEC §9 M1's prose is the record of that acceptance.)
 
 
-Object.assign(module.exports, { act1Encounters, M1_GAUNTLET });
+Object.assign(module.exports, { act1Encounters });
 
 },
 "src/content/encounters/act2.js": function (module, exports, require) {
@@ -11151,7 +11210,8 @@ const weapons = [
     "tags": "starstone",
     "mods": [
       "power.potency=+2",
-      "strike.damage=-1"
+      "strike.damage=-1",
+      "strike.frost=+2"
     ],
     "unlock": "",
     "blurb": "The stone hums before you do."
@@ -11268,7 +11328,8 @@ const weapons = [
     ],
     "mods": [
       "power.potency=+2",
-      "strike.poise=+2"
+      "strike.poise=+2",
+      "strike.insanity=+2"
     ],
     "unlock": "",
     "blurb": "Taken from something that objected."
@@ -11657,6 +11718,28 @@ const equipMods = [
     "blurb": "Burn the card applies."
   },
   {
+    "field": "frost",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "frost",
+    "label": "Frost",
+    "clause": "Apply {frost} Frost.",
+    "blurb": "Frost build-up the card applies."
+  },
+  {
+    "field": "insanity",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "insanity",
+    "label": "Insanity",
+    "clause": "Apply {insanity} Insanity.",
+    "blurb": "Insanity build-up the card applies."
+  },
+  {
     "field": "strength",
     "scope": "run",
     "apply": "startStatus",
@@ -11919,7 +12002,7 @@ Object.assign(module.exports, { unlocks });
 
 const { resolveFloorPlan } = require("src/model/floorplan.js");
 const { viewRefusals, geometryRefusals } = require("src/model/mapview.js");
-const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, MODIFIER_KEYS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, CREATURE_TAGS } = require("src/model/schemas.js");
+const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, PILES, PILE_POSITIONS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, CREATURE_TAGS } = require("src/model/schemas.js");
 
 
 
@@ -11935,7 +12018,8 @@ const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CAR
 
 
 
-const { RESOURCE_SOURCES, RESOURCE_SOURCE_IDS } = require("src/model/resources.js");
+
+const { RESOURCE_SOURCE_IDS } = require("src/model/resources.js");
 const { FORMULA_OPS, FORMULA_OF, isFormula } = require("src/model/formulas.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -12168,7 +12252,7 @@ function validateContent(bundle) {
   // instead of drawing an empty bar nobody can tell from a broken one.
   for (const row of (Array.isArray(b.resources) ? b.resources : [])) {
     if (!row || typeof row.source !== 'string') continue; // shape walk owns this
-    if (!Object.hasOwn(RESOURCE_SOURCES, row.source)) {
+    if (!RESOURCE_SOURCE_IDS.includes(row.source)) {
       err(`resources.${row.id || '?'}`, `source ${JSON.stringify(row.source)} has no reader — `
         + `the engine cannot get a value for it, so this bar would render an empty trough forever. `
         + `Readable sources are: ${RESOURCE_SOURCE_IDS.join(', ')}. `
@@ -12755,11 +12839,17 @@ function validateEffects(effects, path, vctx) {
       err(`${p}.target`, `stagger targets enemies only, got '${eff.target}'`);
     }
     if (eff.op === 'addCard') {
-      if (eff.pile !== undefined && !['draw', 'hand', 'discard', 'exhaust'].includes(eff.pile)) {
-        err(`${p}.pile`, `Unknown pile '${eff.pile}'`);
+      // PILES / PILE_POSITIONS, not the same words typed again. Both sets were
+      // declared closed in schemas.js and read by NOBODY, while these two lines
+      // re-typed them as literals and did the actual refusing — the vocabulary
+      // an author would edit was decoration, the copy nobody would think to edit
+      // was the law. The legal values in the message come off the set too, so a
+      // new pile cannot be legal and unmentioned.
+      if (eff.pile !== undefined && !PILES.includes(eff.pile)) {
+        err(`${p}.pile`, `Unknown pile '${eff.pile}' (legal: ${PILES.join(', ')})`);
       }
-      if (eff.position !== undefined && !['top', 'bottom', 'random'].includes(eff.position)) {
-        err(`${p}.position`, `Unknown position '${eff.position}'`);
+      if (eff.position !== undefined && !PILE_POSITIONS.includes(eff.position)) {
+        err(`${p}.position`, `Unknown position '${eff.position}' (legal: ${PILE_POSITIONS.join(', ')})`);
       }
     }
   });
@@ -14029,17 +14119,29 @@ const PASSIVE_KEYS = Object.freeze([
 //   blockCap            — number: hard cap on owner's total block (max of caps wins).
 //   meterMaxGrowthDisabled — bool: while ANY combatant has it, meter thresholds
 //                            (status meters and poise) do not grow on fill.
-const MODIFIER_KEYS = Object.freeze([
-  'damageDealtMult',
-  'damageTakenMult',
-  'blockGainedMult',
-  'attackDamageAdd',
-  'blockAdd',
-  'skipTurn',
-  'retainBlock',
-  'blockCap',
-  'meterMaxGrowthDisabled',
-]);
+//
+// THE SET AND THE SCHEMA WERE TWO COPIES AND ONLY ONE OF THEM ENFORCED
+// ANYTHING — the same shape as the relic passives, found by tools/closedsets.mjs
+// rather than by eye. `MODIFIER_KEYS` was a frozen list whose only mention in
+// the tree was an import into validate.js that used it for nothing, while
+// `modifiersSchema` below re-typed the same nine names by hand and did the
+// actual refusing. So the types come here, the list is derived from them, the
+// schema is built from the same object, and the engine's lookups check against
+// it (engine/statuses.js): adding a modifier is one row, and the three cannot
+// disagree about what exists.
+const MODIFIER_TYPES = Object.freeze({
+  damageDealtMult: 'num',
+  damageTakenMult: 'num',
+  blockGainedMult: 'num',
+  attackDamageAdd: 'num',
+  blockAdd: 'num',
+  skipTurn: 'bool',
+  retainBlock: 'bool',
+  blockCap: 'num',
+  meterMaxGrowthDisabled: 'bool',
+});
+
+const MODIFIER_KEYS = Object.freeze(Object.keys(MODIFIER_TYPES));
 
 const STACK_MODES = Object.freeze(['add', 'refresh', 'unique']);
 
@@ -14185,17 +14287,12 @@ const floorAnchor = (extra = {}) => obj({
 
 const costNode = union(int, en('X'));
 
-const modifiersSchema = obj({
-  damageDealtMult: opt(num),
-  damageTakenMult: opt(num),
-  blockGainedMult: opt(num),
-  attackDamageAdd: opt(num),
-  blockAdd: opt(num),
-  skipTurn: opt(bool),
-  retainBlock: opt(bool),
-  blockCap: opt(num),
-  meterMaxGrowthDisabled: opt(bool),
-});
+// DERIVED FROM MODIFIER_TYPES, never re-typed. `obj` is strict about unknown
+// keys, so this node is what actually refuses a mis-spelled modifier — which is
+// exactly why it must not be a second list.
+const modifiersSchema = obj(Object.fromEntries(
+  Object.entries(MODIFIER_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
+));
 
 const enemyMoveSchema = obj({
   intent: en(...INTENT_KINDS),
@@ -14529,7 +14626,7 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_KEYS, STACK_MODES, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
+Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
 
 },
 "src/model/resources.js": function (module, exports, require) {
@@ -14929,7 +15026,7 @@ Object.assign(module.exports, { FORMULA_OPS, FORMULA_OF, isFormula, evaluate });
 //
 // Headless: no document/window/localStorage/timers.
 
-const { REGISTRY_TYPES } = require("src/model/schemas.js");
+const { REGISTRY_TYPES, PASSIVE_KEYS } = require("src/model/schemas.js");
 const { applyCardMods } = require("src/model/loadout.js");
 
 /** Recursively freeze a value in place (functions and frozen values skipped). */
@@ -15045,10 +15142,27 @@ function createRegistries(contentBundle) {
 
 // ---------------------------------------------------------------------------
 // Relic passives (SPEC PASSIVE_KEYS) — data lookups over owned relic defs.
+//
+// The key is a string typed at nine call sites and a mis-typed one returns
+// 1 / 0 / false — a defect that behaves exactly like a relic whose passive is
+// simply not very good. PASSIVE_KEYS says which strings are real, so it does the
+// saying: named once, with the legal set, and the caller still gets its default
+// rather than a thrown boot. Until this the set had NO reader in the whole tree
+// (tools/closedsets.mjs) — the vocabulary was decoration while the relic
+// schema's hand-typed copy was the law.
 // ---------------------------------------------------------------------------
+
+const PASSIVE_SET = new Set(PASSIVE_KEYS);
+const unknownPassives = new Set();
+function knownPassive(key) {
+  if (PASSIVE_SET.has(key) || unknownPassives.has(key)) return;
+  unknownPassives.add(key);
+  console.error(`[passives] '${key}' is not a relic passive — it will always read as the default. Legal: ${PASSIVE_KEYS.join(', ')}`);
+}
 
 /** Product of a multiplicative passive across owned relics (default 1). */
 function passiveMult(registries, relicIds, key) {
+  knownPassive(key);
   let m = 1;
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
@@ -15059,6 +15173,7 @@ function passiveMult(registries, relicIds, key) {
 
 /** Sum of an additive passive across owned relics (default 0). */
 function passiveSum(registries, relicIds, key) {
+  knownPassive(key);
   let s = 0;
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
@@ -15069,6 +15184,7 @@ function passiveSum(registries, relicIds, key) {
 
 /** True if any owned relic sets the boolean passive. */
 function passiveFlag(registries, relicIds, key) {
+  knownPassive(key);
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
     if (p && p[key] === true) return true;
@@ -16770,7 +16886,10 @@ const ASCENSION_ORDER = [
 ];
 const MAX_ASCENSION = ASCENSION_ORDER.length;
 
-const ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS];
+// (`ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS]` stood here with no reader in
+// src/, tools/ or tests/ — a union kept in case somebody wanted one. Deleted
+// rather than documented: nothing re-typed it, so there is nothing to collapse
+// into, and the day a screen needs both groups it can spell the spread itself.)
 
 // True when a run carries any non-default rule (so it is flagged + excluded
 // from win-rate telemetry).
@@ -16802,7 +16921,7 @@ function activeMods(custom) {
 }
 
 
-Object.assign(module.exports, { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, ALL_MODS, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP, endlessActInfo, activeMods });
+Object.assign(module.exports, { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP, endlessActInfo, activeMods });
 
 },
 "src/engine/rng.js": function (module, exports, require) {
@@ -17737,6 +17856,7 @@ function previewCard(combat, cardInstanceId, targetId) {
     source: p,
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
+    card: { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type },
     meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
   };
 
@@ -17752,23 +17872,24 @@ function previewCard(combat, cardInstanceId, targetId) {
     const primary = firstResolvedTarget(combat, action, eff);
     switch (eff.op) {
       case 'damage': {
+        const attackTags = A.attackTagsFor(action, eff);
         const base = evalPreview(combat, action, eff.amount, primary);
-        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, eff.tags);
+        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         for (const e of living) {
           const b = evalPreview(combat, action, eff.amount, e);
-          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, eff.tags);
+          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, attackTags);
         }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent
         // the boosted number. Engine states the fact; display reads it.
-        if (eff.tags && primary && primary.kind === 'enemy') {
+        if (attackTags.length && primary && primary.kind === 'enemy') {
           for (const [sid, inst] of Object.entries(primary.statuses || {})) {
             if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
             const sdef = combat.registries.statuses.get(sid);
             const tv = sdef && sdef.taggedVulnerability;
-            if (tv && tv.tags.some((t) => eff.tags.includes(t))) {
+            if (tv && tv.tags.some((t) => attackTags.includes(t))) {
               entry.boostTint = sdef.tint || null;
               break;
             }
@@ -17902,6 +18023,7 @@ const { COMBAT_OPCODES, RUN_OPCODES } = require("src/model/schemas.js");
 const { evaluate, isFormula } = require("src/model/formulas.js");
 const statuses = require("src/engine/statuses.js");
 const { evalPredicate, checkPhases } = require("src/engine/triggers.js");
+const { damageTagIds } = require("src/content/tags.js");
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -17937,6 +18059,11 @@ function computeAttackDamage(ctx, source, target, base, attackTags) {
   }
   dmg = Math.floor(dmg);
   return dmg < 0 ? 0 : dmg;
+}
+
+/** One derivation for live actions and previews: card identity comes from CSV. */
+function attackTagsFor(action, effect) {
+  return damageTagIds(action.card && action.card.cardId, effect.tags);
 }
 
 /**
@@ -18226,6 +18353,7 @@ function runOpcode(ctx, action, eff) {
     case 'damage': {
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
+      const attackTags = attackTagsFor(action, eff);
       for (let h = 0; h < hits; h++) {
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
@@ -18233,7 +18361,7 @@ function runOpcode(ctx, action, eff) {
         for (const t of targets) {
           if (!t.alive) continue;
           const base = evalNum(ctx, action, eff.amount, 0, t);
-          applyAttackDamage(ctx, action.source, t, base, eff.tags);
+          applyAttackDamage(ctx, action.source, t, base, attackTags);
         }
       }
       break;
@@ -18501,7 +18629,7 @@ function executeRunEffects({ run, registries, rng }, effects) {
 }
 
 
-Object.assign(module.exports, { computeAttackDamage, applyAttackDamage, computeBlockGain, gainBlock, applyLoseHp, applyHeal, staggerEnemy, dealPoiseDamage, drawCards, reshuffleDiscardIntoDraw, resolveTargets, formulaCtxFor, executeAction, executeRunEffects });
+Object.assign(module.exports, { computeAttackDamage, attackTagsFor, applyAttackDamage, computeBlockGain, gainBlock, applyLoseHp, applyHeal, staggerEnemy, dealPoiseDamage, drawCards, reshuffleDiscardIntoDraw, resolveTargets, formulaCtxFor, executeAction, executeRunEffects });
 
 },
 "src/engine/statuses.js": function (module, exports, require) {
@@ -18523,6 +18651,8 @@ Object.assign(module.exports, { computeAttackDamage, applyAttackDamage, computeB
 // ctx.player, ctx.enemies.
 //
 // Headless: no document/window/localStorage/timers.
+
+const { MODIFIER_KEYS } = require("src/model/schemas.js");
 
 function getStatusInstance(entity, statusId) {
   return (entity && entity.statuses && entity.statuses[statusId]) || null;
@@ -18723,6 +18853,21 @@ function isDurationDecay(decay) {
 //   blockCap— max of declared caps (the most generous wins).
 // ---------------------------------------------------------------------------
 
+// EVERY ONE OF THESE READS IS A STRING TYPED AT A CALL SITE, and a mis-typed
+// one used to return 1 / 0 / false — the graceful default that makes a defect
+// quiet. `MODIFIER_KEYS` is the closed set that says which strings are real, so
+// it does the saying: an unknown key is named once, with the legal set beside
+// it, and the caller still gets its default so a typo cannot black out a fight.
+// This is also what gives that vocabulary a reader — it had none, and a closed
+// set nothing reads is decoration a future author edits INSTEAD of the schema.
+const MODIFIER_SET = new Set(MODIFIER_KEYS);
+const unknownModifiers = new Set();
+function knownModifier(key) {
+  if (MODIFIER_SET.has(key) || unknownModifiers.has(key)) return;
+  unknownModifiers.add(key);
+  console.error(`[modifiers] '${key}' is not a modifier key — it will always read as the default. Legal: ${MODIFIER_KEYS.join(', ')}`);
+}
+
 function* modifierSources(ctx, entity) {
   for (const statusId of Object.keys(entity.statuses)) {
     const def = ctx.registries.statuses.get(statusId);
@@ -18736,6 +18881,7 @@ function* modifierSources(ctx, entity) {
 
 /** Product of flat multipliers for `key` ('damageDealtMult', ...). */
 function getMult(ctx, entity, key) {
+  knownModifier(key);
   let m = 1;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') m *= src.modifiers[key];
@@ -18745,6 +18891,7 @@ function getMult(ctx, entity, key) {
 
 /** Sum of per-stack adders for `key` ('attackDamageAdd', 'blockAdd'). */
 function getAdd(ctx, entity, key) {
+  knownModifier(key);
   let a = 0;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') a += src.modifiers[key] * src.stacks;
@@ -18754,6 +18901,7 @@ function getAdd(ctx, entity, key) {
 
 /** True if any status/stance on the entity sets boolean modifier `key`. */
 function getFlag(ctx, entity, key) {
+  knownModifier(key);
   for (const src of modifierSources(ctx, entity)) {
     if (src.modifiers[key] === true) return true;
   }
@@ -18762,6 +18910,7 @@ function getFlag(ctx, entity, key) {
 
 /** Max declared numeric value for `key` (e.g. blockCap), or null if none. */
 function getCap(ctx, entity, key) {
+  knownModifier(key);
   let cap = null;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') {
@@ -18773,6 +18922,7 @@ function getCap(ctx, entity, key) {
 
 /** True if ANY living combatant carries boolean modifier `key`. */
 function anyCombatantFlag(ctx, key) {
+  knownModifier(key);
   if (ctx.player && ctx.player.alive && getFlag(ctx, ctx.player, key)) return true;
   for (const e of ctx.enemies || []) {
     if (e.alive && getFlag(ctx, e, key)) return true;
@@ -19084,6 +19234,203 @@ function resolveOf(ctx, pctx, of) {
 
 
 Object.assign(module.exports, { emitEvent, fireOwnerHooks, findEntity, checkPhases, evalPredicate, TRIGGER_EVENTS });
+
+},
+"src/content/tags.js": function (module, exports, require) {
+// src/content/tags.js — card subtype tags, indexed for lookup.
+//
+// The primary card type (attack / skill / power) is engine-load-bearing and
+// frozen. Tags are the layer beneath it: what KIND of attack, which school a
+// skill belongs to. They are authored as two spreadsheets and compiled by
+// tools/content-build.mjs:
+//
+//   content/source/cardTags.csv     the registry — id, label, colour, glyph
+//   content/source/cardTagging.csv  which cards carry which tags
+//
+// Tagging a card is a CSV row, never a code change. Nothing here mutates the
+// card defs, so the validated content bundle is untouched and a bad tag shows
+// up as a test failure rather than a silently missing chip.
+
+const { cardTags } = require("src/content/generated/cardTags.js");
+const { cardTagging } = require("src/content/generated/cardTagging.js");
+
+/** All registered tags, in authoring order. */
+const TAGS = cardTags;
+
+const BY_ID = new Map(cardTags.map((t) => [t.id, t]));
+
+// cardId → [tagId]. The CSV coerces a single value to a string and a
+// pipe-separated one to an array, so normalise both to an array here.
+const BY_CARD = new Map(
+  cardTagging.map((row) => [
+    row.cardId,
+    row.tags === '' ? [] : (Array.isArray(row.tags) ? row.tags : [row.tags]),
+  ])
+);
+
+/** tagsFor(cardId) → [{ id, label, color, glyph, blurb }] (empty when untagged). */
+function tagsFor(cardId) {
+  return (BY_CARD.get(cardId) || []).map((id) => BY_ID.get(id)).filter(Boolean);
+}
+
+/** Raw tag ids for a card — for validation and future synergy predicates. */
+function tagIdsFor(cardId) {
+  return BY_CARD.get(cardId) || [];
+}
+
+/**
+ * damageTagIds(cardId, effectTags) → [tagId]
+ *
+ * A card hit inherits the card's CSV-authored identity. `effectTags` remains a
+ * fallback for non-card effects and isolated engine fixtures; it never
+ * overrides a card row, because that would restore two homes for one tag.
+ */
+function damageTagIds(cardId, effectTags) {
+  const derived = cardId ? tagIdsFor(cardId) : [];
+  return derived.length ? derived : (Array.isArray(effectTags) ? effectTags : []);
+}
+
+/** Every card id that carries a given tag (e.g. "all Blade cards"). */
+function cardsWithTag(tagId) {
+  const out = [];
+  for (const [cardId, ids] of BY_CARD) if (ids.includes(tagId)) out.push(cardId);
+  return out;
+}
+
+function hasTag(id) {
+  return BY_ID.has(id);
+}
+
+
+Object.assign(module.exports, { TAGS, tagsFor, tagIdsFor, damageTagIds, cardsWithTag, hasTag });
+
+},
+"src/content/generated/cardTagging.js": function (module, exports, require) {
+// GENERATED by tools/content-build.mjs from content/source/cardTagging.csv
+// Do not edit by hand — edit the source file and re-run the build.
+
+const cardTagging = [
+  {
+    "cardId": "strike",
+    "tags": "blade"
+  },
+  {
+    "cardId": "defend",
+    "tags": "guard"
+  },
+  {
+    "cardId": "gorefireSlash",
+    "tags": [
+      "blade",
+      "blood",
+      "gorefire"
+    ]
+  },
+  {
+    "cardId": "crimsonCleave",
+    "tags": [
+      "blade",
+      "blood"
+    ]
+  },
+  {
+    "cardId": "shieldBash",
+    "tags": [
+      "guard",
+      "blade"
+    ]
+  },
+  {
+    "cardId": "quickstep",
+    "tags": "flourish"
+  },
+  {
+    "cardId": "guardCounter",
+    "tags": [
+      "guard",
+      "flourish"
+    ]
+  },
+  {
+    "cardId": "ironResolve",
+    "tags": "guard"
+  },
+  {
+    "cardId": "serratedBlade",
+    "tags": [
+      "blade",
+      "blood"
+    ]
+  },
+  {
+    "cardId": "enterGorefire",
+    "tags": [
+      "gorefire",
+      "oath"
+    ]
+  },
+  {
+    "cardId": "enterBulwark",
+    "tags": [
+      "guard",
+      "oath"
+    ]
+  },
+  {
+    "cardId": "riposte",
+    "tags": [
+      "guard",
+      "flourish"
+    ]
+  },
+  {
+    "cardId": "starstonePebble",
+    "tags": "starstone"
+  },
+  {
+    "cardId": "cometFragment",
+    "tags": "starstone"
+  },
+  {
+    "cardId": "starbladePhalanx",
+    "tags": [
+      "starstone",
+      "guard"
+    ]
+  },
+  {
+    "cardId": "frostNova",
+    "tags": "starstone"
+  },
+  {
+    "cardId": "gildedOath",
+    "tags": [
+      "ritual",
+      "oath"
+    ]
+  },
+  {
+    "cardId": "urgentHeal",
+    "tags": "ritual"
+  },
+  {
+    "cardId": "bloodPact",
+    "tags": [
+      "blood",
+      "ritual"
+    ]
+  },
+  {
+    "cardId": "blightTouch",
+    "tags": [
+      "blight",
+      "ritual"
+    ]
+  }
+];
+
+
+Object.assign(module.exports, { cardTagging });
 
 },
 "src/engine/actmap.js": function (module, exports, require) {
@@ -19930,10 +20277,51 @@ function createSaveManager(storage) {
     return { ok: true, archiveId };
   }
 
+  // ---- THE PROFILE EXISTS BEFORE THE FIRST RUN DOES (M7) -------------------
+  // His ask: "profile should be able to be created before first run, not after".
+  // What shipped did the opposite. `loadMeta()` SYNTHESIZES a profile in memory
+  // for every caller (freshMeta) and writes nothing, so a player who cleared
+  // storage, picked a class and pressed BEGIN THE CLIMB had `sote_run_v1` and no
+  // `sote_meta_v1` — a run with no player behind it — and Settings → Profile
+  // printed his own sentence back at him as the behaviour (Bjorn's M7 walk,
+  // 2026-08-08). Two states for one concept: the profile that exists because
+  // every read gets an object, and the profile that exists on disk.
+  //
+  // This is the collapse. `ensureProfile()` is the only way a profile comes into
+  // being unasked, it is idempotent, and it never touches one that is already
+  // there. It is called at two places and they are one rule each:
+  //
+  //   · at the class-pick commit (main.js newRun) — HIS ask, and it lands
+  //     BEFORE the run is created, so the profile is older than the climb.
+  //   · inside saveRun/loadRun below — A STORED RUN IMPLIES A STORED PROFILE.
+  //     That is the structural half: it cannot be forgotten by a future start
+  //     path the way the first one was, and it is what repairs the players who
+  //     ALREADY have runs and no profile, with no migration to write.
+  //
+  // It refuses while quarantined for the same reason every other write does:
+  // those bytes are the evidence (property 4).
+  function ensureProfile() {
+    if (storage.getItem(META_KEY) != null) return { created: false, ok: true };
+    if (quarantined) {
+      return { created: false, ok: false, reason: `profile is quarantined (${status.state}); refusing to write` };
+    }
+    const res = saveMetaInternal(freshMeta());
+    if (!res.ok) return { created: false, ...res };
+    status = { ok: true, state: 'ok', reason: 'created before the first run', archiveId: null, recoveredFrom: null };
+    return { created: true, ok: true };
+  }
+
   return {
+    /**
+     * ensureProfile() → { created, ok, reason? }. Creates the durable profile if
+     * this browser has none; a no-op when one exists. See the block above.
+     */
+    ensureProfile,
+
     /** Persist after every committed choice (SPEC §3.12). Stamps RNG counters. */
     saveRun(run, rng, slot = 1) {
       if (rng) run.streamCounters = rng.getCounters();
+      ensureProfile(); // a stored run implies a stored profile — never the other way round
       storage.setItem(runKey(slot), serializeRun(run));
     },
 
@@ -19977,6 +20365,13 @@ function createSaveManager(storage) {
         run.maxMana = registries.classes.get(run.class).maxMana;
         run.mana = run.maxMana;
       }
+      // A run that LOADS is a player too, and this is the edge Bjorn could not
+      // reach: everyone who started a climb on a build before this one has runs
+      // and no profile. Waiting for their next autosave would leave Settings →
+      // Profile lying to them for as long as they stood on the map, so the
+      // profile appears the moment their run does. Failed loads return above and
+      // create nothing — an archived corrupt save is not a player arriving.
+      ensureProfile();
       return run;
     },
 
@@ -20204,7 +20599,13 @@ function createSaveManager(storage) {
      */
     startNewProfile() {
       const res = replacePrimaryWith(freshMeta(), 'kept when you started a new profile');
-      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId: res.archiveId, recoveredFrom: null };
+      // 'ok', NOT 'empty' — and this is the same defect as M7 wearing another
+      // hat. This path WRITES a fresh profile (replacePrimaryWith → META_KEY),
+      // so 'empty' told the calm screen there was no profile while one sat in
+      // storage, and it printed "No profile yet — one is created when you finish
+      // your first run" at a player who had just made one. 'empty' means NO
+      // BYTES, and after this call there are bytes.
+      status = { ok: true, state: 'ok', reason: 'player started a new profile', archiveId: res.archiveId, recoveredFrom: null };
       return res;
     },
 
@@ -22984,191 +23385,6 @@ function cardTooltip(registries, def, tokens) {
 Object.assign(module.exports, { staticTokens, relicText, renderCard, upgradePreviewHtml });
 
 },
-"src/content/tags.js": function (module, exports, require) {
-// src/content/tags.js — card subtype tags, indexed for lookup.
-//
-// The primary card type (attack / skill / power) is engine-load-bearing and
-// frozen. Tags are the layer beneath it: what KIND of attack, which school a
-// skill belongs to. They are authored as two spreadsheets and compiled by
-// tools/content-build.mjs:
-//
-//   content/source/cardTags.csv     the registry — id, label, colour, glyph
-//   content/source/cardTagging.csv  which cards carry which tags
-//
-// Tagging a card is a CSV row, never a code change. Nothing here mutates the
-// card defs, so the validated content bundle is untouched and a bad tag shows
-// up as a test failure rather than a silently missing chip.
-
-const { cardTags } = require("src/content/generated/cardTags.js");
-const { cardTagging } = require("src/content/generated/cardTagging.js");
-
-/** All registered tags, in authoring order. */
-const TAGS = cardTags;
-
-const BY_ID = new Map(cardTags.map((t) => [t.id, t]));
-
-// cardId → [tagId]. The CSV coerces a single value to a string and a
-// pipe-separated one to an array, so normalise both to an array here.
-const BY_CARD = new Map(
-  cardTagging.map((row) => [
-    row.cardId,
-    row.tags === '' ? [] : (Array.isArray(row.tags) ? row.tags : [row.tags]),
-  ])
-);
-
-/** tagsFor(cardId) → [{ id, label, color, glyph, blurb }] (empty when untagged). */
-function tagsFor(cardId) {
-  return (BY_CARD.get(cardId) || []).map((id) => BY_ID.get(id)).filter(Boolean);
-}
-
-/** Raw tag ids for a card — for validation and future synergy predicates. */
-function tagIdsFor(cardId) {
-  return BY_CARD.get(cardId) || [];
-}
-
-/** Every card id that carries a given tag (e.g. "all Blade cards"). */
-function cardsWithTag(tagId) {
-  const out = [];
-  for (const [cardId, ids] of BY_CARD) if (ids.includes(tagId)) out.push(cardId);
-  return out;
-}
-
-function hasTag(id) {
-  return BY_ID.has(id);
-}
-
-
-Object.assign(module.exports, { TAGS, tagsFor, tagIdsFor, cardsWithTag, hasTag });
-
-},
-"src/content/generated/cardTagging.js": function (module, exports, require) {
-// GENERATED by tools/content-build.mjs from content/source/cardTagging.csv
-// Do not edit by hand — edit the source file and re-run the build.
-
-const cardTagging = [
-  {
-    "cardId": "strike",
-    "tags": "blade"
-  },
-  {
-    "cardId": "defend",
-    "tags": "guard"
-  },
-  {
-    "cardId": "gorefireSlash",
-    "tags": [
-      "blade",
-      "blood",
-      "gorefire"
-    ]
-  },
-  {
-    "cardId": "crimsonCleave",
-    "tags": [
-      "blade",
-      "blood"
-    ]
-  },
-  {
-    "cardId": "shieldBash",
-    "tags": [
-      "guard",
-      "blade"
-    ]
-  },
-  {
-    "cardId": "quickstep",
-    "tags": "flourish"
-  },
-  {
-    "cardId": "guardCounter",
-    "tags": [
-      "guard",
-      "flourish"
-    ]
-  },
-  {
-    "cardId": "ironResolve",
-    "tags": "guard"
-  },
-  {
-    "cardId": "serratedBlade",
-    "tags": [
-      "blade",
-      "blood"
-    ]
-  },
-  {
-    "cardId": "enterGorefire",
-    "tags": [
-      "gorefire",
-      "oath"
-    ]
-  },
-  {
-    "cardId": "enterBulwark",
-    "tags": [
-      "guard",
-      "oath"
-    ]
-  },
-  {
-    "cardId": "riposte",
-    "tags": [
-      "guard",
-      "flourish"
-    ]
-  },
-  {
-    "cardId": "starstonePebble",
-    "tags": "starstone"
-  },
-  {
-    "cardId": "cometFragment",
-    "tags": "starstone"
-  },
-  {
-    "cardId": "starbladePhalanx",
-    "tags": [
-      "starstone",
-      "guard"
-    ]
-  },
-  {
-    "cardId": "frostNova",
-    "tags": "starstone"
-  },
-  {
-    "cardId": "gildedOath",
-    "tags": [
-      "ritual",
-      "oath"
-    ]
-  },
-  {
-    "cardId": "urgentHeal",
-    "tags": "ritual"
-  },
-  {
-    "cardId": "bloodPact",
-    "tags": [
-      "blood",
-      "ritual"
-    ]
-  },
-  {
-    "cardId": "blightTouch",
-    "tags": [
-      "blight",
-      "ritual"
-    ]
-  }
-];
-
-
-Object.assign(module.exports, { cardTagging });
-
-},
 "src/ui/screens/map.js": function (module, exports, require) {
 // src/ui/screens/map.js — the act map (SPEC §7.1, mockup: map-screen.svg)
 //
@@ -23475,7 +23691,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
            this sentence is a note and not a shipped blank screen.) -->
       ${entranceOrientation}
       <div class="map-frame">
-      <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}">
+      <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}" data-scroll-axis="x" data-scroll-axis-why="the act map is a horizontal route">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
             ${groundSvg}
@@ -30853,9 +31069,18 @@ function renderProfileSection(container, { saves, onRestored }) {
 
   // DRAFT COPY (Sunna's to replace) — the state line. It exists so the screen
   // answers "is my profile alright?" before it answers "what is in the drawer".
+  //
+  // THE `empty` LINE IS THE ASK, PRINTED BACK AT HIM (M7). It read "one is
+  // created when you finish your first run" — which was true of the build and
+  // was the exact behaviour Constantine had asked us to change, quoted to him in
+  // bold on the screen where he went looking for the profile. The behaviour is
+  // fixed in engine/save.js (`ensureProfile`, created at the class-pick commit),
+  // so this sentence is rewritten rather than deleted: the state is still
+  // reachable — someone who opens Settings before they have ever begun a climb —
+  // and it must say what will actually happen to them.
   const stateLine = {
     ok: 'Your profile is fine.',
-    empty: 'No profile yet — one is created when you finish your first run.',
+    empty: 'No profile yet — one is created the moment you begin your first climb.',
     migrated: 'Your profile was saved by an older version and has been brought forward.',
     recovered: 'Your profile was restored from the backup copy after a bad read.',
     corrupt: 'Your profile could not be read. It has been set aside — it is listed below.',
@@ -32982,7 +33207,7 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
           <div class="coop-partybar"></div>
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
-        <div class="map-scroll"><div class="map-canvas">
+        <div class="map-scroll" data-scroll-axis="x" data-scroll-axis-why="the act map is a horizontal route"><div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
             <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${esc(actTitle(snap.actNumber))}</text>
             ${edgeSvg}
