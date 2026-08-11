@@ -34,10 +34,11 @@
 // and on every screen it does not open.
 
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 const DIST = process.argv.includes('--dist');
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const { port } = await serve({ root: ROOT, port: 8196, open: false });
 const PAGE = `http://localhost:${port}/${DIST ? 'dist/AshenSpire.html' : ''}`;
 

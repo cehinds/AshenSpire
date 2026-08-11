@@ -30,7 +30,7 @@ import {
   MUSIC_BED_SCHEMA,
   CREATURE_TAGS,
 } from './schemas.js';
-import { RESOURCE_SOURCES, RESOURCE_SOURCE_IDS } from './resources.js';
+import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -263,7 +263,7 @@ export function validateContent(bundle) {
   // instead of drawing an empty bar nobody can tell from a broken one.
   for (const row of (Array.isArray(b.resources) ? b.resources : [])) {
     if (!row || typeof row.source !== 'string') continue; // shape walk owns this
-    if (!Object.hasOwn(RESOURCE_SOURCES, row.source)) {
+    if (!RESOURCE_SOURCE_IDS.includes(row.source)) {
       err(`resources.${row.id || '?'}`, `source ${JSON.stringify(row.source)} has no reader — `
         + `the engine cannot get a value for it, so this bar would render an empty trough forever. `
         + `Readable sources are: ${RESOURCE_SOURCE_IDS.join(', ')}. `

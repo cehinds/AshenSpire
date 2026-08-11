@@ -404,15 +404,15 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   if (linkTree.code !== 0 || !linkTreeV.text) zoomExtra++;
   else zoomPassed++;
 
-  // 49/50 — every exported closed set has a reader (Marina's ask, out of the
-  // PASSIVE_KEYS finding). Numbered 49/50 because engine.test.js hands out 47
-  // and 48; two files, one number line, and a suite printing "47." twice is the
+  // 50/51 — every exported closed set has a reader (Marina's ask, out of the
+  // PASSIVE_KEYS finding). Numbered after engine.test.js's current 49; two
+  // files, one number line, and a suite printing "49." twice is the
   // collision a merge cannot see (see the note above 36).
   //
-  // TWO LINES FOR THE SAME REASON EVERY PAIR ABOVE IS TWO: 49 is the check's own
+  // TWO LINES FOR THE SAME REASON EVERY PAIR ABOVE IS TWO: 50 is the check's own
   // integrity against a corpus planted into a copy of this tree ON DISK — a
   // known-bad that enters by the same door the real input does, which is exactly
-  // what my last probe did not do. 50 is the state of src/. Its failure is the
+  // what my last probe did not do. 51 is the state of src/. Its failure is the
   // code's, not the check's.
   //
   // NO SET COUNT AND NO PLANT COUNT IN THIS COMMENT. Both live in the tool's own
@@ -428,7 +428,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   const setsSelf = runSets(['--selftest']);
   const setsSelfV = quote(setsSelf.out);
   console.log(
-    `${setsSelf.code === 0 && setsSelfV.text ? 'PASS' : 'FAIL'}  49. the closed-set check still catches its own known-bad corpus` +
+    `${setsSelf.code === 0 && setsSelfV.text ? 'PASS' : 'FAIL'}  50. the closed-set check still catches its own known-bad corpus` +
       ` — ${setsSelfV.text || `closedsets --selftest (exit ${setsSelf.code}): ${setsSelfV.why}`}`
   );
   if (setsSelf.code !== 0 || !setsSelfV.text) zoomExtra++;
@@ -437,7 +437,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   const setsTree = runSets([]);
   const setsTreeV = quote(setsTree.out);
   console.log(
-    `${setsTree.code === 0 && setsTreeV.text ? 'PASS' : 'FAIL'}  50. every exported closed set is read by something` +
+    `${setsTree.code === 0 && setsTreeV.text ? 'PASS' : 'FAIL'}  51. every exported closed set is read by something` +
       ` — ${setsTreeV.text || `closedsets (exit ${setsTree.code}): ${setsTreeV.why}`}` +
       ` (\`node tools/closedsets.mjs\` for the table, \`--selftest\` for the reds)`
   );
@@ -471,7 +471,7 @@ console.log('          export and not one module body was executed — so they p
 console.log('          eleven hand-started instruments START, never that any of them');
 console.log('          WORKS. A name that exists but is wrong links green, and');
 console.log('          release-shots must still be RUN by a person before a delivery.');
-console.log('          49–50 ASK ONE QUESTION: is each exported closed set READ anywhere.');
+console.log('          50–51 ASK ONE QUESTION: is each exported closed set READ anywhere.');
 console.log('          They are silent on whether a set has a second, hand-typed copy');
 console.log('          somewhere — the defect that made the question worth asking. Green');
 console.log('          means no vocabulary is decoration, never that none is duplicated.');
