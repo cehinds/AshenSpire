@@ -316,6 +316,27 @@ async function captureLayoutPage(b, href, [w, h], state, tree) {
     } else {
       notes.push(`A9 ${tree} ${w}x${h}: BATTLEFIELD REACH ok — ${battlefield.fighters.length} fighters fit horizontally and are vertically reachable; ${battlefield.cards.length} cards each have a whole-card scroll position`);
     }
+
+    // These are the two co-op combat actions visible outside the card hand.
+    // Read the floor from the same custom property they must obey; a typed 44
+    // here would disagree as soon as UI zoom changes.
+    const actions = await b.ev(`(() => {
+      const probe = document.createElement('div');
+      probe.style.cssText = 'position:absolute;left:-9999px;height:var(--tap-floor)';
+      document.body.appendChild(probe);
+      const floor = probe.getBoundingClientRect().height;
+      probe.remove();
+      return { floor, controls: [...document.querySelectorAll('.combat.coop .coop-leave, .combat.coop .coop-flask')].map((el) => ({
+        text: el.textContent.trim(), height: el.getBoundingClientRect().height,
+      })) };
+    })()`);
+    const undersized = actions.controls.filter((control) => control.height < actions.floor - 0.5);
+    if (actions.controls.length !== 2 || undersized.length) {
+      fail('A10', `${tree} ${w}x${h}: CO-OP ACTION FLOOR — expected Leave + flask at ${actions.floor}px; `
+        + `${actions.controls.map((control) => `${control.text}=${control.height.toFixed(1)}`).join(', ') || 'no controls'}`);
+    } else {
+      notes.push(`A10 ${tree} ${w}x${h}: CO-OP ACTION FLOOR ok — Leave and Crimson Flask are at/above ${actions.floor}px`);
+    }
   }
 
   const shot = await b.cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, b.S);

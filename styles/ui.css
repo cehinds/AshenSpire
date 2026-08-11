@@ -1182,6 +1182,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* flasks (throw-to-ally) */
 .coop-flasks { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin: 0.4rem 0; }
 .coop-flask { padding: 0.5rem 1.2rem; font-size: 1.3rem; }
+.combat.coop .coop-leave,
+.combat.coop .coop-flask { min-height: var(--tap-floor); height: auto; }
 .coop-flask.armed { border-color: var(--gold); box-shadow: 0 0 8px rgba(200,160,70,.5); }
 .coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: 7px; padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
 
