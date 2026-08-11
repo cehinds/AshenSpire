@@ -203,8 +203,14 @@ for (const [label, find, replace, expectMsg] of STRICT_ONLY) {
 function patchTool(dir, find, replace) {
   const p = resolve(dir, 'tools/bundle.mjs');
   const s = readFileSync(p, 'utf8');
-  if (!s.includes(find)) return false;
-  writeFileSync(p, s.replace(find, replace), 'utf8');
+  // Git may materialise the sandbox source as CRLF on Windows while fixture
+  // fragments in this ESM file are LF string literals. Adapt actual newline
+  // characters to the copied file; leave escaped `\\n` source text alone.
+  const eol = s.includes('\r\n') ? '\r\n' : '\n';
+  const forFile = (fragment) => fragment.replace(/\r?\n/g, eol);
+  const needle = forFile(find);
+  if (!s.includes(needle)) return false;
+  writeFileSync(p, s.replace(needle, forFile(replace)), 'utf8');
   return true;
 }
 
