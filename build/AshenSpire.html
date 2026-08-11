@@ -1426,6 +1426,23 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.4rem;
   min-width: 13rem; align-items: flex-end; justify-content: center;
 }
+/* Phones cannot honestly hold two player seats beside three enemies: both
+   groups have real min-content widths from their resource bars. Stack the two
+   rows only for co-op, keeping every fighter at the shared sprite/text sizes.
+   The field owns vertical reach if an unusually short phone cannot hold both.
+   The hand remains its existing horizontal scroller; inline padding gives a
+   rotated first/last card a whole-card resting position at either edge. */
+:root[data-layout='narrow'] .combat.coop .field {
+  flex-direction: column; min-height: 0; overflow-y: auto;
+}
+:root[data-layout='narrow'] .combat.coop .player-zone {
+  width: 100%; min-width: 0; flex: 0 0 auto; flex-wrap: nowrap;
+  align-items: flex-end; justify-content: space-evenly; padding-bottom: 0.6rem;
+}
+:root[data-layout='narrow'] .combat.coop .enemy-row {
+  width: 100%; min-width: 0; flex: 1 0 auto; padding-bottom: 0.6rem;
+}
+:root[data-layout='narrow'] .combat.coop .hand { padding-inline: 1rem; }
 .combat.coop .combatant.player { position: relative; }
 .combat.coop .combatant.player.me .sprite { filter: drop-shadow(0 0 6px rgba(200,160,70,.55)); }
 .combat.coop .combatant.player.ended { opacity: .62; }
@@ -2899,6 +2916,39 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    the flex-item clamp the scrollport needs to be allowed to shrink — without it
    a tall canvas pushes the zoom bar off the bottom. */
 .mapscreen .map-frame { position: relative; flex: 1; display: flex; min-height: 0; min-width: 0; }
+.map-entrance-orientation { display: none; }
+
+/* The full real climb no longer fits on a phone once adjacent floors keep their
+   device-space pitch. This static orientation strip names the same endpoints;
+   it is text and a direction rail, never a second set of node-shaped choices.
+   The real map remains directly below it and owns every interaction. */
+@media (max-width: 700px) {
+  .map-entrance-orientation {
+    flex: 0 0 auto; display: grid; gap: 3px; padding: 5px 12px 6px;
+    border-bottom: 1px solid var(--line); background: var(--bg-raise);
+    pointer-events: none; user-select: none; cursor: default;
+  }
+  .map-entrance-orientation strong {
+    text-align: center; color: var(--gold); font-family: Georgia, serif;
+    font-size: 11px; line-height: 1.1; letter-spacing: 2px;
+  }
+  .map-orientation-progress {
+    display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
+    align-items: center; gap: 8px;
+  }
+  .map-orientation-progress small {
+    color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
+  }
+  .map-orientation-progress [data-role="boss"] { color: var(--ember); }
+  .map-orientation-rail {
+    height: 1px; position: relative; background: var(--map-structure);
+  }
+  .map-orientation-rail::after {
+    content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
+    border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
+    transform: translateY(-50%) rotate(45deg);
+  }
+}
 .mapscreen .map-scroll {
   flex: 1; overflow: auto;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
@@ -12173,8 +12223,8 @@ function validateContent(bundle) {
   // THE MAP'S VERTICAL MARGIN, and it belongs here because it has exactly one
   // data input. `balance.ui.tapSize.def` is what the map node's radius is SOLVED
   // FROM (model/mapview.js), so raising it grows the target and eats the space
-  // BETWEEN two adjacent targets in the same stroke — 44.09 px of node against a
-  // 47.0 px row pitch at 390x844 today, under 3 px of air between two taps that
+  // BETWEEN two adjacent targets in the same stroke — at 08e184a, 44.09 px of
+  // node against a 47.0 px row pitch at 390x844, under 3 px of air between taps
   // both start a fight nobody can undo (Sunna, 2026-08-08). Nothing was watching
   // that number; a refusal that prints a verdict and not a margin cannot be.
   //
@@ -13219,9 +13269,8 @@ Object.assign(module.exports, { NODE_TYPES, ANCHOR_KINDS, rollableFloors, resolv
 
 const { balance } = require("src/content/balance.js");
 
-/** Column pitch and floor pitch of the SVG, in SVG units. */
+/** Column pitch of the SVG, in SVG units. Floor pitch is derived below. */
 const COL_X = 95;
-const ROW_H = 46;
 
 /**
  * The zoom ladder — the manual control, and the bounds the computed zoom is
@@ -13267,6 +13316,31 @@ const PHONE_UI_ZOOM = 0.9;
  * the same fact the comment states, once (Law 0 clause 4).
  */
 const PHONE_UI_ZOOM_MIN = 0.74;
+
+/**
+ * The minimum centre-to-centre pitch between adjacent map floors, measured in
+ * device-space CSS pixels at the smallest phone the game claims.
+ *
+ * This is deliberately a delivered value, not another SVG-unit guess. `Fit`
+ * is allowed to change the camera zoom, and `--ui-zoom` changes with the phone;
+ * both used to make a larger ROW_H look unchanged on glass. ROW_H is derived
+ * from this floor, PHONE_UI_ZOOM_MIN and the map zoom ladder's floor below, so
+ * none of those three multipliers can quietly absorb the requested spacing.
+ *
+ * 48 is the first whole-pixel floor above every rejected 08e184a reading (the
+ * largest was 47.61 px at 390x844/115%). It is a conservative lower bound, not
+ * a claim that 48 is the visual ideal. Remove it if the map stops using adjacent
+ * floor rows; change it on Constantine's rendered read, never to fit a test.
+ */
+const NODE_PITCH_MIN_PX = 48;
+
+/**
+ * Floor pitch of the SVG, derived from the device-space floor at the two
+ * multipliers that can make it smallest: the map zoom ladder's floor and the
+ * smallest phone UI scale. `Math.ceil` spends at most one SVG unit and makes
+ * the lower bound survive fractional layout rounding.
+ */
+const ROW_H = Math.ceil(NODE_PITCH_MIN_PX / (ZOOM_MIN * PHONE_UI_ZOOM_MIN));
 
 /**
  * nodeRadiusFor(tapPx, zoom, uiZoom) -> the SVG radius that DELIVERS `tapPx`.
@@ -13466,9 +13540,10 @@ function maxFittingColumns() {
  *   watching that number. The refusal said `accepted`. It never said `by 2%`.
  *
  *   SUNNA, vertical. The node that grew to meet the tap floor ate the space
- *   BETWEEN nodes in the same stroke: she measured 44.09 px of node against a
- *   47.0 px row pitch at 390x844, and 36.25 against 39.0 at 320x640 — under 3 px
- *   of air between two adjacent, irreversible taps. Correctly, and silently.
+ *   BETWEEN nodes in the same stroke: at 08e184a she measured 44.09 px of node
+ *   against a 47.0 px row pitch at 390x844, and 36.25 against 39.0 at 320x640 —
+ *   under 3 px of air between two adjacent, irreversible taps. Correctly and
+ *   silently. Constantine's next rendered read was simpler: too close.
  *
  * A VERDICT HAS NO DERIVATIVE; A MARGIN DOES. Both axes compute one below, both
  * refusals print it, and each margin has a floor that can go red. The floors sit
@@ -13476,14 +13551,11 @@ function maxFittingColumns() {
  * the next change to NODE_R, ROW_H, COL_X or `balance.ui.tapSize.def` cannot
  * quietly eat what is left.
  *
- * WHAT THIS IS NOT — and it is the first thing to say, because the obvious next
- * move is the wrong one. This is NOT an attempt to reach 44 device px on the map.
- * Two node centres are 34 px apart at 320x640, so that target cannot exist there
- * at any radius; and SCALING THE GEOMETRY IS A NO-OP — multiply COL_X, ROW_H and
- * NODE_R by k and the fit zoom divides by k, delivering the same device px. The
- * margins are made WATCHABLE here, not big. Whether 3 px of air between two
- * irreversible taps needs a mercy control is Sunna's sentence to write, and this
- * file is the number under it, never the answer to it.
+ * Scaling every geometric term together is a no-op under Fit: multiply COL_X,
+ * ROW_H and NODE_R by k and Fit divides zoom by k. The floor pitch is therefore
+ * derived from DEVICE space while COL_X and NODE_R keep their own jobs.
+ * `tools/mapspacing.mjs` reads the rendered result at both phone shapes and both
+ * zoom modes; source constants are not allowed to grade themselves.
  *
  * DIVISION OF LABOUR BETWEEN THE TWO FLOORS, since neither watches everything:
  * the vertical floor is what binds NODE_R and ROW_H tightly; the horizontal
@@ -13527,11 +13599,9 @@ const FANOUT_SLACK_MIN = 1;
  *   · It is a floor on AIR, never on target size. The target size question was
  *     answered by `nodeRadiusFor` and is not re-asked here.
  *
- * THE DERIVATION IS THE OPTIMISTIC HALF AND SAYS SO. Derived, the air at 390 is
- * 3.52 device px; Sunna measured 2.9 on the rendered screen. The screen delivers
- * LESS than this arithmetic — up to ~0.6 px less at 390 — so a floor cleared here
- * is not a floor cleared on glass. Bjorn's eye and her measurement remain the
- * only things that can say what a thumb met.
+ * THE DERIVATION IS THE OPTIMISTIC HALF AND SAYS SO. At 08e184a it predicted
+ * 3.52 device px at 390 while the screen delivered 2.9. A floor cleared here is
+ * not a floor cleared on glass; `tools/mapspacing.mjs` now owns that reading.
  *
  * What this floor buys — the largest tap default and the smallest row pitch that
  * still clear it — is DERIVED by `nodeAir` and printed, never typed here, so this
@@ -13784,7 +13854,7 @@ function viewRefusals(config) {
 }
 
 
-Object.assign(module.exports, { COL_X, ROW_H, ZOOM_STEPS, ZOOM_MIN, ZOOM_MAX, MAP_ZOOM_DEFAULT, PHONE_UI_ZOOM, PHONE_UI_ZOOM_MIN, nodeRadiusFor, deliveredNodePx, TAP_TARGET_DEFAULT, REF_ZOOM, nodeRadiusFromTap, BOSS_RATIO, NODE_R, BOSS_R, PHONE_VIEW_W, nodeRadius, svgWidth, svgHeight, nodeX, nodeY, clampZoom, framingBox, fitZoom, spanWidth, maxFanoutSpan, maxFittingColumns, FANOUT_SLACK_MIN, NODE_AIR_MIN_PX, fanoutMargin, maxSafeColumns, nodeAir, maxTapDefault, geometryRefusals, viewRefusals });
+Object.assign(module.exports, { COL_X, ZOOM_STEPS, ZOOM_MIN, ZOOM_MAX, MAP_ZOOM_DEFAULT, PHONE_UI_ZOOM, PHONE_UI_ZOOM_MIN, NODE_PITCH_MIN_PX, ROW_H, nodeRadiusFor, deliveredNodePx, TAP_TARGET_DEFAULT, REF_ZOOM, nodeRadiusFromTap, BOSS_RATIO, NODE_R, BOSS_R, PHONE_VIEW_W, nodeRadius, svgWidth, svgHeight, nodeX, nodeY, clampZoom, framingBox, fitZoom, spanWidth, maxFanoutSpan, maxFittingColumns, FANOUT_SLACK_MIN, NODE_AIR_MIN_PX, fanoutMargin, maxSafeColumns, nodeAir, maxTapDefault, geometryRefusals, viewRefusals });
 
 },
 "src/model/schemas.js": function (module, exports, require) {
@@ -23332,9 +23402,26 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   const heroName = (cz.name || className).toUpperCase();
   const hasRelics = run.relics.length > 0;
   const hasFlasks = run.flasks.length > 0;
+  // Once the real floors have enough device-space pitch, a phone cannot also
+  // show the full door-to-boss span at an honest node size. The entrance uses a
+  // static orientation strip above the real map. It names the same endpoints,
+  // but deliberately has no node icons, circles, edges or handlers that could
+  // look like choices or enter game state. The actual next choice remains on
+  // the pannable board below.
+  const atEntrance = !run.mapNodeId;
+  const entranceStart = atEntrance && map.startIds.length ? map.nodes[map.startIds[0]] : null;
+  const entranceBoss = atEntrance ? nodes.find((n) => n.type === 'boss') : null;
+  const entranceOrientation = entranceStart && entranceBoss
+    ? `<div class="map-entrance-orientation" data-composition="orientation-strip" role="note" aria-label="${esc(actTitle(run.actNumber))} orientation: entrance to boss">
+        <strong>${esc(actTitle(run.actNumber))}</strong>
+        <span class="map-orientation-progress" aria-hidden="true">
+          <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
+        </span>
+      </div>`
+    : '';
 
   app.innerHTML = `
-    <div class="mapscreen${fog ? ' map-fog' : ''}">
+    <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <header class="topbar map-header">
         <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
         <div class="who">
@@ -23384,6 +23471,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
            into by the person quoting it. It cost one run of actends, which
            reported NOTHING SWEPT rather than a pass, which is the only reason
            this sentence is a note and not a shipped blank screen.) -->
+      ${entranceOrientation}
       <div class="map-frame">
       <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}">
         <div class="map-canvas">
@@ -32511,9 +32599,7 @@ const { nodeIcon, nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, bac
 const { resolveCard } = require("src/model/registries.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
-
-const COL_X = 95;
-const ROW_H = 46;
+const { nodeRadius, nodeX, nodeY, svgHeight, svgWidth } = require("src/model/mapview.js");
 
 function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -32862,10 +32948,12 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       columns = Math.max(...nodes.map((n) => n.col)) + 1;
       console.warn(`[coop] snapshot map has no \`columns\`; drawing ${columns} derived from the nodes in use.`);
     }
-    const width = columns * COL_X + 60;
-    const height = (maxFloor + 1) * ROW_H + 30;
-    const x = (col) => 60 + col * COL_X;
-    const y = (floor) => height - floor * ROW_H;
+    // One map geometry for both viewers. The old renderer retyped COL_X,
+    // ROW_H and both radii here, so a solo spacing fix left co-op unchanged.
+    const width = svgWidth(columns);
+    const height = svgHeight(maxFloor);
+    const x = (col) => nodeX(col);
+    const y = (floor) => nodeY(floor, height);
 
     let edgeSvg = '';
     for (const n of nodes) for (const toId of n.next || []) {
@@ -32908,7 +32996,7 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const cls = ['map-node', n.type, isReachable ? 'reachable' : '', voters.includes(me) ? 'my-vote' : ''].filter(Boolean).join(' ');
       const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       el.setAttribute('class', cls);
-      const r = n.type === 'boss' ? 20 : 15;
+      const r = nodeRadius(n.type);
       const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
       // Vote pips: the voters' class glyphs ride above a voted node.
       const pips = voters.length

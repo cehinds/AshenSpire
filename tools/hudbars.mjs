@@ -265,6 +265,57 @@ async function captureLayoutPage(b, href, [w, h], state, tree) {
     else if (!fails.some((f) => f.startsWith('A8') && f.includes(`${tree} ${w}x${h}`))) {
       notes.push(`A8 ${tree} ${w}x${h}: SEAT CONTAINMENT ok — Wren and both seat lines stay inside the viewport`);
     }
+
+    // A seat label fitting is weaker than the battlefield fitting. At 320 px
+    // the old side-by-side field kept both names in view while its min-content
+    // width pushed the last enemy off the right edge. Cards are deliberately a
+    // horizontal strip, so they pass when every whole card has a feasible
+    // scroll position; fighters have no horizontal scroller and must fit now.
+    const battlefield = await b.ev(`(() => {
+      const rect = (el) => { const r = el.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height }; };
+      const hand = document.querySelector('.combat.coop .hand');
+      const field = document.querySelector('.combat.coop .field');
+      const hr = rect(hand);
+      const fr = rect(field);
+      const handScale = hand.clientWidth ? hr.width / hand.clientWidth : 1;
+      const fieldScale = field.clientHeight ? fr.height / field.clientHeight : 1;
+      const maxScroll = Math.max(0, hand.scrollWidth - hand.clientWidth) * handScale;
+      const cards = [...hand.querySelectorAll('.card')].map((card) => {
+        const r = rect(card);
+        const left = r.left - hr.left + hand.scrollLeft * handScale;
+        const right = r.right - hr.left + hand.scrollLeft * handScale;
+        const lo = Math.max(0, right - hr.width);
+        const hi = Math.min(maxScroll, left);
+        return { name: card.querySelector('.cname')?.textContent.trim() || '?', width: r.width, left, right, reachable: r.width <= hr.width + 0.5 && lo <= hi + 0.5 };
+      });
+      const maxFieldScroll = Math.max(0, field.scrollHeight - field.clientHeight) * fieldScale;
+      const fighters = [...document.querySelectorAll('.combat.coop .field .combatant')].map((el) => {
+        const r = rect(el);
+        const top = r.top - fr.top + field.scrollTop * fieldScale;
+        const bottom = r.bottom - fr.top + field.scrollTop * fieldScale;
+        const lo = Math.max(0, bottom - fr.height);
+        const hi = Math.min(maxFieldScroll, top);
+        return {
+          kind: el.classList.contains('player') ? 'player' : 'enemy',
+          name: el.querySelector('.coop-seat-player, .nm')?.textContent.trim() || '?',
+          ...r, verticalReachable: r.height <= fr.height + 0.5 && lo <= hi + 0.5,
+        };
+      });
+      return { viewport: innerWidth, field: { ...fr, clientHeight: field.clientHeight, scrollHeight: field.scrollHeight }, hand: { ...hr, clientWidth: hand.clientWidth, scrollWidth: hand.scrollWidth }, cards, fighters };
+    })()`);
+    const cropped = battlefield.fighters.filter((f) => f.left < -0.5 || f.right > battlefield.viewport + 0.5);
+    const verticallyUnreachable = battlefield.fighters.filter((f) => !f.verticalReachable);
+    const unreachableCards = battlefield.cards.filter((card) => !card.reachable);
+    const handCropped = battlefield.hand.left < -0.5 || battlefield.hand.right > battlefield.viewport + 0.5;
+    if (cropped.length || verticallyUnreachable.length || unreachableCards.length || handCropped) {
+      fail('A9', `${tree} ${w}x${h}: BATTLEFIELD HORIZONTAL CROP — viewport ${battlefield.viewport}px; `
+        + `${cropped.map((f) => `${f.kind} ${f.name} ${f.left.toFixed(1)}..${f.right.toFixed(1)}`).join(', ') || 'fighters fit'}; `
+        + `${verticallyUnreachable.length ? `vertically unreachable ${verticallyUnreachable.map((f) => `${f.kind} ${f.name}`).join(', ')}` : `field vertical reach ${battlefield.field.clientHeight}/${battlefield.field.scrollHeight}`}; `
+        + `hand ${battlefield.hand.left.toFixed(1)}..${battlefield.hand.right.toFixed(1)} client/scroll ${battlefield.hand.clientWidth}/${battlefield.hand.scrollWidth}; `
+        + `${unreachableCards.length ? `unreachable cards ${unreachableCards.map((c) => c.name).join(', ')}` : 'all cards have a whole-card scroll position'}`);
+    } else {
+      notes.push(`A9 ${tree} ${w}x${h}: BATTLEFIELD REACH ok — ${battlefield.fighters.length} fighters fit horizontally and are vertically reachable; ${battlefield.cards.length} cards each have a whole-card scroll position`);
+    }
   }
 
   const shot = await b.cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, b.S);

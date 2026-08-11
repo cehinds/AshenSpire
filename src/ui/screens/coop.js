@@ -19,9 +19,7 @@ import { nodeIcon, nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, ba
 import { resolveCard } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
-
-const COL_X = 95;
-const ROW_H = 46;
+import { nodeRadius, nodeX, nodeY, svgHeight, svgWidth } from '../../model/mapview.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -370,10 +368,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       columns = Math.max(...nodes.map((n) => n.col)) + 1;
       console.warn(`[coop] snapshot map has no \`columns\`; drawing ${columns} derived from the nodes in use.`);
     }
-    const width = columns * COL_X + 60;
-    const height = (maxFloor + 1) * ROW_H + 30;
-    const x = (col) => 60 + col * COL_X;
-    const y = (floor) => height - floor * ROW_H;
+    // One map geometry for both viewers. The old renderer retyped COL_X,
+    // ROW_H and both radii here, so a solo spacing fix left co-op unchanged.
+    const width = svgWidth(columns);
+    const height = svgHeight(maxFloor);
+    const x = (col) => nodeX(col);
+    const y = (floor) => nodeY(floor, height);
 
     let edgeSvg = '';
     for (const n of nodes) for (const toId of n.next || []) {
@@ -416,7 +416,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const cls = ['map-node', n.type, isReachable ? 'reachable' : '', voters.includes(me) ? 'my-vote' : ''].filter(Boolean).join(' ');
       const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       el.setAttribute('class', cls);
-      const r = n.type === 'boss' ? 20 : 15;
+      const r = nodeRadius(n.type);
       const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
       // Vote pips: the voters' class glyphs ride above a voted node.
       const pips = voters.length

@@ -1134,6 +1134,23 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.4rem;
   min-width: 13rem; align-items: flex-end; justify-content: center;
 }
+/* Phones cannot honestly hold two player seats beside three enemies: both
+   groups have real min-content widths from their resource bars. Stack the two
+   rows only for co-op, keeping every fighter at the shared sprite/text sizes.
+   The field owns vertical reach if an unusually short phone cannot hold both.
+   The hand remains its existing horizontal scroller; inline padding gives a
+   rotated first/last card a whole-card resting position at either edge. */
+:root[data-layout='narrow'] .combat.coop .field {
+  flex-direction: column; min-height: 0; overflow-y: auto;
+}
+:root[data-layout='narrow'] .combat.coop .player-zone {
+  width: 100%; min-width: 0; flex: 0 0 auto; flex-wrap: nowrap;
+  align-items: flex-end; justify-content: space-evenly; padding-bottom: 0.6rem;
+}
+:root[data-layout='narrow'] .combat.coop .enemy-row {
+  width: 100%; min-width: 0; flex: 1 0 auto; padding-bottom: 0.6rem;
+}
+:root[data-layout='narrow'] .combat.coop .hand { padding-inline: 1rem; }
 .combat.coop .combatant.player { position: relative; }
 .combat.coop .combatant.player.me .sprite { filter: drop-shadow(0 0 6px rgba(200,160,70,.55)); }
 .combat.coop .combatant.player.ended { opacity: .62; }

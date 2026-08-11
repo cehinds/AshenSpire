@@ -319,8 +319,8 @@ export function validateContent(bundle) {
   // THE MAP'S VERTICAL MARGIN, and it belongs here because it has exactly one
   // data input. `balance.ui.tapSize.def` is what the map node's radius is SOLVED
   // FROM (model/mapview.js), so raising it grows the target and eats the space
-  // BETWEEN two adjacent targets in the same stroke — 44.09 px of node against a
-  // 47.0 px row pitch at 390x844 today, under 3 px of air between two taps that
+  // BETWEEN two adjacent targets in the same stroke — at 08e184a, 44.09 px of
+  // node against a 47.0 px row pitch at 390x844, under 3 px of air between taps
   // both start a fight nobody can undo (Sunna, 2026-08-08). Nothing was watching
   // that number; a refusal that prints a verdict and not a margin cannot be.
   //
