@@ -554,7 +554,11 @@ function showLobby() {
     onBack: () => showTitle(),
     onStart: ({ conn, myId, myIds }) => {
       inCoop = true;
-      mountCoop(app, { registries, conn, myId, myIds, onLeave: () => showTitle() });
+      // `meta` because the ACT MAP is now one renderer and the map-zoom
+      // preference is the VIEWER's (ui/components/mapboard.js): a co-op client
+      // is a viewer, and it was opening at a literal while the same player's
+      // solo map honoured their setting.
+      mountCoop(app, { registries, conn, myId, myIds, meta: saves.loadMeta(), onLeave: () => showTitle() });
     },
   });
 }
@@ -1460,7 +1464,7 @@ function poseFxShowcase() {
 // needed — so the co-op board/map can be photographed like the solo shots.
 function coopStubMount(snapshot, myId) {
   const stub = { _h: null, setHandlers(h) { this._h = h; }, send() {}, close() {}, get open() { return false; } };
-  mountCoop(app, { registries, conn: stub, myId, onLeave() {} });
+  mountCoop(app, { registries, conn: stub, myId, meta: saves.loadMeta(), onLeave() {} });
   if (stub._h && stub._h.onMessage) stub._h.onMessage({ t: 'state', snapshot });
 }
 function coopCombatShot() {
@@ -1486,15 +1490,45 @@ function coopCombatShot() {
     party,
   };
 }
-function coopMapShot() {
+// `?shot=coopmap[&shotWalk=N]` — the co-op act map, at the doors or MID-CLIMB.
+//
+// `shotWalk` is the same pose `?shotAt` / `?shotWalk` give the solo map, and it
+// is here for the same reason those exist: every co-op map measurement this repo
+// has taken was taken at the ENTRANCE ROW, because that was the only co-op map
+// position anything could open. That is why nobody noticed the co-op map never
+// drew `cursorId` — at the doors there IS no current node, so the missing mark
+// was invisible to every instrument and to every screenshot.
+//
+// The walk is the solo one's, deliberately not a second algorithm: from the
+// lowest-numbered entrance, take the lowest-numbered `next` each step. It uses
+// the graph's own edges, so a pose this produces is a pose a party could
+// actually be in. Running out of graph is LOUD.
+function coopMapShot(steps = 0) {
   newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
   const g = run.mapGraph;
   const nodeType = (n) => (n.type === 'event' ? 'unknown' : n.type);
+  let cursorId = null;
+  let reachableIds = g.startIds.slice();
+  let floor = 0;
+  if (steps > 0) {
+    let id = [...g.startIds].sort()[0];
+    for (let i = 1; i < steps; i++) {
+      const next = [...(g.nodes[id].next || [])].sort();
+      if (!next.length) throw new Error(`?shotWalk=${steps}: this act runs out at step ${i} (${id} has nowhere to go). The boss is the last node; ask for fewer steps.`);
+      id = next[0];
+    }
+    cursorId = id;
+    floor = g.nodes[id].floor;
+    reachableIds = [...(g.nodes[id].next || [])];
+  }
   return {
-    actNumber: 1, floor: 0, seedString: 'SHOWCASE', endless: false,
-    // Fenn has already voted for a start node; Wren (you) is still deciding.
-    scene: { kind: 'map', votes: { p2: g.startIds[1] || g.startIds[0] } },
-    reachableIds: g.startIds.slice(),
+    actNumber: 1, floor, seedString: 'SHOWCASE', endless: false,
+    // Fenn has already voted; Wren (you) is still deciding.
+    scene: { kind: 'map', votes: { p2: reachableIds[1] || reachableIds[0] } },
+    // THE PARTY'S POSITION, and it has always been on the real snapshot
+    // (tools/session.mjs) — the client just never drew it.
+    cursorId,
+    reachableIds,
     map: { floors: g.floors, columns: g.columns, startIds: g.startIds, bossId: g.bossId, nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next })) },
     party: [
       { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, catchupQueue: [] },
@@ -1734,7 +1768,11 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
 } else if (shotState === 'coop') {
   coopStubMount(coopCombatShot(), 'p1');
 } else if (shotState === 'coopmap') {
-  coopStubMount(coopMapShot(), 'p1');
+  const w = shotParams.get('shotWalk');
+  if (w != null && !(Number.isInteger(Number(w)) && Number(w) >= 1)) {
+    throw new Error(`?shotWalk=${w}: needs a positive whole number of steps. A silent fallback would photograph a different map than the one asked for.`);
+  }
+  coopStubMount(coopMapShot(w == null ? 0 : Number(w)), 'p1');
 } else if (shotState === 'coopreward') {
   coopStubMount(coopRewardShot(), 'p1');
 } else if (shotState === 'coopshrine') {

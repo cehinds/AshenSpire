@@ -5,23 +5,32 @@
 // mutates game state — it draws the snapshot and sends intents.
 //
 // Visual parity with solo: it reuses the SAME components and CSS as single-
-// player — enemySprite/playerSprite, the shared renderCard, the SVG node map,
-// and the .combat / .mapscreen shells. The only additions are co-op-specific:
-// a seat per player, whose-turn indicators, and the throw/mend affordances.
-// The board helpers below are snapshot-fed twins of combat.js's private ones
-// (kept here so solo combat.js stays untouched).
+// player — enemySprite/playerSprite, the shared renderCard, and the .combat /
+// .mapscreen shells. The only additions are co-op-specific: a seat per player,
+// whose-turn indicators, and the throw/mend affordances.
+// The COMBAT board helpers below are snapshot-fed twins of combat.js's private
+// ones (kept here so solo combat.js stays untouched).
+//
+// THE MAP IS NOT A TWIN ANY MORE, AND THAT WAS THE DEFECT. `renderMap` carried
+// its own `ROW_H = 46`, its own `y(floor)` and its own `r = boss ? 20 : 15` —
+// the literals the solo map derived away from — and imported neither map module,
+// so at dev cd3da94 a co-op node was 27 device px against solo's 44.09, the tap
+// size setting moved nothing, and there was no camera, no zoom control and no
+// honesty note. It calls ui/components/mapboard.js now. Read that file's header:
+// the co-op map is the SAME MAP with a second player on it, so the only thing
+// this screen supplies is the VIEWER — who `me` is, and what `me` voted for.
 
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox } from '../fx.js';
-import { nodeIcon, nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass } from '../uiContent.js';
+import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass } from '../uiContent.js';
 import { resolveCard } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
-import { nodeRadius, nodeX, nodeY, svgHeight, svgWidth } from '../../model/mapview.js';
+import { mountMapBoard } from '../components/mapboard.js';
 
-export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
+export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
   let snap = null;
   // Couch co-op: this screen may control several seats; `me` is the ACTIVE one.
@@ -34,6 +43,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   let pacing = false; // an enemy-turn replay is holding the render
   let pendingSnap = null; // newest snapshot that arrived while pacing
+  let mapBoard = null; // the live act-map board, so a re-render can stop the old one
 
   conn.setHandlers({
     onMessage: (msg) => {
@@ -136,6 +146,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
     document.removeEventListener('keydown', keyHandler);
     clearInterval(padTimer);
     removeSeatTabs();
+    if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
   const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded, mods: c.mods });
@@ -146,6 +157,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
     const mm = myMember();
     if (mm && mm.catchupQueue && mm.catchupQueue.length) return renderCatchup(mm);
     if (snap.scene.kind !== 'combat') prevCombat = null;
+    // The board holds a ResizeObserver and a timeout aimed at a scrollport the
+    // next render is about to replace. The same leak the solo screen fixes at
+    // its own re-mount, one screen over.
+    if (mapBoard && snap.scene.kind !== 'map') { mapBoard.teardown(); mapBoard = null; }
     renderSeatTabs();
     switch (snap.scene.kind) {
       case 'map': return renderMap();
@@ -178,10 +193,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   function meterBars(ent, isEnemy) {
     const wrap = document.createElement('div');
     wrap.className = 'meters';
-    if (!isEnemy) {
-      wrap.appendChild(resourceBars(resourceBarPlan(registries, 'main', ent, ent, resourceDomainTable), { surface: 'main' }));
-      return wrap;
-    }
     const hp = document.createElement('div');
     hp.className = 'bar hpbar';
     hp.innerHTML = `<div class="fill" style="width:${(Math.max(0, ent.hp) / ent.maxHp) * 100}%"></div><div class="label">${Math.max(0, ent.hp)} / ${ent.maxHp}</div>`;
@@ -259,10 +270,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       box.appendChild(sprite);
       const nm = document.createElement('div');
       nm.className = 'coop-seat-name';
-      nm.innerHTML =
-        `<span class="coop-seat-player"><span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''}</span>` +
-        `<span class="coop-seat-vitals"><span title="Energy">⚡${p.energy}/${p.energyMax}</span><span title="Mana">◆${p.mana}/${p.maxMana}</span></span>` +
-        `<span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
+      nm.innerHTML = `<span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''} · ⚡${p.energy}/${p.energyMax} <span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
       box.appendChild(nm);
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
@@ -302,7 +310,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const n = meP.hand.length;
       meP.hand.forEach((c, i) => {
         const def = cardDef(c);
-        const affordable = !meP.ended && (def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost) && meP.mana >= (def.manaCost || 0);
+        const affordable = !meP.ended && (def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost);
         const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods }, { affordable });
         const spread = Math.min(6, n) * 1.2;
         el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
@@ -349,37 +357,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
     wireLeave();
   }
 
-  // ---- map (parity SVG node map) --------------------------------------------
+  // ---- map (THE act map, mounted with a co-op viewer) ------------------------
   function renderMap() {
     const map = snap.map;
     if (!map) { app.innerHTML = '<div class="screen"><div class="coop-note">Loading the path…</div></div>'; return; }
-    const nodes = map.nodes;
-    const reachable = new Set(snap.reachableIds);
-    const maxFloor = Math.max(...nodes.map((n) => n.floor));
-    // COLUMNS COME FROM THE SNAPSHOT, not from a literal — the same fix as
-    // map.js in this branch, found by Bjorn one view over: "the view and the
-    // generator cannot disagree" was one view short of true while this line
-    // read 7. Masked today because every act ships 7 columns; the day a host
-    // tunes columns, an unfixed parity renderer here would disagree with the
-    // host about where every node is. A snapshot from an older host lacks the
-    // field and gets the derived width, loudly.
-    let columns = map.columns;
-    if (typeof columns !== 'number') {
-      columns = Math.max(...nodes.map((n) => n.col)) + 1;
-      console.warn(`[coop] snapshot map has no \`columns\`; drawing ${columns} derived from the nodes in use.`);
-    }
-    // One map geometry for both viewers. The old renderer retyped COL_X,
-    // ROW_H and both radii here, so a solo spacing fix left co-op unchanged.
-    const width = svgWidth(columns);
-    const height = svgHeight(maxFloor);
-    const x = (col) => nodeX(col);
-    const y = (floor) => nodeY(floor, height);
-
-    let edgeSvg = '';
-    for (const n of nodes) for (const toId of n.next || []) {
-      const to = nodes.find((m) => m.id === toId);
-      if (to) edgeSvg += `<line class="map-edge" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
-    }
 
     // Fork voting: who has voted for which reachable node (2+ present members).
     const votes = snap.scene.votes || {};
@@ -400,33 +381,57 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
           <div class="coop-partybar"></div>
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
-        <div class="map-scroll" data-scroll-axis="x" data-scroll-axis-why="the act map is a horizontal route"><div class="map-canvas">
-          <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-            <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${esc(actTitle(snap.actNumber))}</text>
-            ${edgeSvg}
-            <g id="map-nodes"></g>
-          </svg>
-        </div></div>
       </div>`;
 
-    const g = app.querySelector('#map-nodes');
-    for (const n of nodes) {
-      const isReachable = reachable.has(n.id);
-      const voters = votesByNode[n.id] || [];
-      const cls = ['map-node', n.type, isReachable ? 'reachable' : '', voters.includes(me) ? 'my-vote' : ''].filter(Boolean).join(' ');
-      const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      el.setAttribute('class', cls);
-      const r = nodeRadius(n.type);
-      const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
-      // Vote pips: the voters' class glyphs ride above a voted node.
-      const pips = voters.length
-        ? `<text class="vote-pips" x="${x(n.col)}" y="${y(n.floor) - r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${voters.map((pid) => classGlyph((snap.party.find((p) => p.id === pid) || {}).classId)).join('')}</text>`
-        : '';
-      el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(n.type)}</text>${pips}`;
-      attachTooltip(el, () => `<div class="tt-title">${esc(nodeName(n.type))}</div>${nodeBlurb(n.type)}${isReachable ? '<br>Click to vote for this path.' : ''}`);
-      if (isReachable) el.addEventListener('click', () => send({ t: 'chooseNode', nodeId: n.id }));
-      g.appendChild(el);
-    }
+    if (mapBoard) mapBoard.teardown();
+    mapBoard = mountMapBoard(app.querySelector('.mapscreen'), {
+      // THE MAP. Every field comes off the snapshot, so the host and every
+      // client draw one act. `columns` was MISSING from `tools/session.mjs`'s
+      // `snapshot()` until this commit — the comment here said it was read while
+      // the producer had never sent it, and `?shot=coopmap` handed it a canned
+      // snapshot that DID carry the field, so the harness was green about a value
+      // no real host had ever produced. Fixed at the producer; the board still
+      // warns by name for an older host, because a silent fallback is what let
+      // this sit.
+      act: {
+        nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber,
+        startIds: map.startIds, bossId: map.bossId,
+      },
+      // THE VIEWER — the half that is legitimately different on every screen.
+      viewer: {
+        // The player's own map-zoom preference. Mine, not the party's: nothing
+        // syncs a camera and nothing should.
+        meta,
+        reachable: new Set(snap.reachableIds),
+        // WHERE THE PARTY IS STANDING. `cursorId` has always been on the
+        // snapshot and this screen never drew it, so a co-op player could not
+        // see their own position — solo has marked it `current` since it
+        // shipped. One field, read.
+        current: snap.cursorId || null,
+        // FOG IS OFF HERE, AND IT IS A SNAPSHOT GAP, NOT A CHOICE. The ladder
+        // (model/mapknowledge.js) lights the trail behind you from `run.path`,
+        // and `snapshot()` sends no path — so asking for fog would hide ground
+        // the party has already walked. Until the host sends `path`, a co-op
+        // client is honestly in `path` mode while a solo player now defaults to
+        // fog, which means two people in one game know different amounts of it.
+        // Named here so it is a card and not a surprise.
+        mode: 'path',
+        // Whose vote rides which node — the ONE thing two clients rendering the
+        // same snapshot MUST draw differently. A mark and a class, not a second
+        // renderer.
+        classes: (n) => ((votesByNode[n.id] || []).includes(me) ? 'my-vote' : ''),
+        mark: (n, geom) => {
+          const voters = votesByNode[n.id] || [];
+          if (!voters.length) return '';
+          const glyphs = voters.map((pid) => classGlyph((snap.party.find((p) => p.id === pid) || {}).classId)).join('');
+          return `<text class="vote-pips" x="${geom.x}" y="${geom.y - geom.r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${glyphs}</text>`;
+        },
+        tooltip: (n, { shownType, reachable }) =>
+          `<div class="tt-title">${esc(nodeName(shownType))}</div>${nodeBlurb(shownType)}${reachable ? '<br>Click to vote for this path.' : ''}`,
+        onPick: (id) => send({ t: 'chooseNode', nodeId: id }),
+      },
+    });
+    mapBoard.recenter();
     renderPartyBar();
     wireLeave();
   }
