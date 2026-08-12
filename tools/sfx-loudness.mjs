@@ -40,6 +40,7 @@
 // the truer one. Until then this is the only re-runnable number a mix edit can
 // be checked against.
 
+import { pathToFileURL } from 'node:url';
 import { SFX_RECIPES } from '../src/content/sfx.js';
 
 // A-weighting, IEC 61672.
@@ -103,7 +104,17 @@ export function recipeLoudness(recipe) {
 
 const r1 = (v) => Math.round(v * 10) / 10;
 
-if (process.argv.includes('--selftest')) {
+// THE CLI RUNS ONLY WHEN THIS FILE IS THE ENTRY POINT. Everything below used to
+// run on IMPORT: `import { recipeLoudness } from './sfx-loudness.mjs'` printed
+// the whole table into another tool's output and, with --selftest on the
+// command line, called process.exit() out from under its caller. The file has
+// exported `layerEnergy` and `recipeLoudness` since it was written, so being
+// importable was always the intent — this is the guard that intent was missing.
+// Added 2026-08-08 by Vega, whose tools/holdbeat.mjs is the first importer;
+// reusing the meter beats owning a second copy of the A-weighting (SOP 4).
+const IS_CLI = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (IS_CLI && process.argv.includes('--selftest')) {
   // The instrument must go red on a known-bad: a recipe made 20 dB quieter
   // MUST measure quieter, and a sub-bass-only sting MUST measure below a
   // bright one of the same raw amplitude — the exact failure (raw energy level,
@@ -125,6 +136,7 @@ if (process.argv.includes('--selftest')) {
   process.exit(bad ? 1 : 0);
 }
 
+if (IS_CLI) {
 const famArg = process.argv.indexOf('--family');
 const family = famArg > -1 ? process.argv[famArg + 1] : null;
 const ids = Object.keys(SFX_RECIPES).filter((id) => !family || id === family || id.startsWith(`${family}_`));
@@ -142,4 +154,5 @@ if (family && rows.length > 1) {
     `A sibling more than ~6 dBA off its family reads as the quiet one or the loud one before it reads as itself.`);
 } else {
   console.log(`\nRESULT: ${rows.length} recipes measured (analytic A-weighted; comparisons are the claim, absolute dBFS is not).`);
+}
 }
