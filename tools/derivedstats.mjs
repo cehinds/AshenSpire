@@ -92,10 +92,35 @@ check('a row may override pointsPerTier and rounding', () => {
   equal(out.tier, 3, 'ceil(9/4)'); equal(out.value, 4, 'Energy');
 });
 
+check('an authored row override outranks the authored global defaults', () => {
+  const source = clone(derivedStatRules);
+  source.defaults.pointsPerTier = 5;
+  source.rules.energy.pointsPerTier = 10;
+  const out = deriveStat(resolveDerivedStatRules(source, { attributeIds: ATTRIBUTE_IDS }), 'energy', {
+    attributes: { dexterity: 10 }, classDef: CLASS,
+  });
+  equal(out.tier, 1, 'row pointsPerTier');
+});
+
 check('a finite cap clamps the final value and null means uncapped', () => {
   const capped = resolved({ explicitOverride: { rules: { energy: { cap: 2 } } } });
   equal(deriveStat(capped, 'energy', { attributes: { dexterity: 10 }, classDef: CLASS }).value, 2, 'cap');
   equal(deriveStat(resolved(), 'energy', { attributes: { dexterity: 10 }, classDef: CLASS }).value, 3, 'uncapped');
+});
+
+check('cap null stays unbounded at a deliberately high stat', () => {
+  const out = deriveStat(resolved(), 'energy', { attributes: { dexterity: 5000 }, classDef: CLASS });
+  equal(out.tier, 1000, 'high-stat tier');
+  equal(out.value, 1001, 'uncapped high-stat Energy');
+});
+
+check('class-field bases are live data references and calculations mutate no input', () => {
+  const attributes = { constitution: 10, wisdom: 10 };
+  const classDef = { id: 'newClass', maxHp: 137, maxMana: 23 };
+  const before = JSON.stringify({ attributes, classDef });
+  equal(deriveStat(resolved(), 'hp', { attributes, classDef }).base, 137, 'HP reads changed class data');
+  equal(deriveStat(resolved(), 'mana', { attributes, classDef }).base, 23, 'Mana reads changed class data');
+  equal(JSON.stringify({ attributes, classDef }), before, 'inputs unchanged');
 });
 
 check('precedence is authored defaults/rows < mode < run < explicit override', () => {
@@ -106,6 +131,27 @@ check('precedence is authored defaults/rows < mode < run < explicit override', (
   });
   const out = deriveStat(rules, 'energy', { attributes: { dexterity: 10 }, classDef: CLASS });
   equal(out.tier, 1, 'explicit pointsPerTier'); equal(out.raw, 10, 'explicit base plus retained run gain');
+});
+
+check('run modifiers apply in listed order before the explicit/debug override', () => {
+  const rules = resolved({
+    runModifiers: [
+      { rules: { draw: { base: 4, gainPerTier: 2 } } },
+      { rules: { draw: { base: 6 } } },
+    ],
+    explicitOverride: { rules: { draw: { gainPerTier: 4 } } },
+  });
+  const out = deriveStat(rules, 'draw', { attributes: { intelligence: 10 }, classDef: CLASS });
+  equal(out.raw, 14, 'later run base 6 + explicit gain 4 × tier 2');
+});
+
+check('a mode-level defaults override reaches every row until a row patch replaces it', () => {
+  const rules = resolved({ modeModifiers: {
+    defaults: { pointsPerTier: 10 },
+    rules: { energy: { pointsPerTier: 2 } },
+  } });
+  equal(deriveStat(rules, 'draw', { attributes: { intelligence: 10 }, classDef: CLASS }).tier, 1, 'mode default reached Draw');
+  equal(deriveStat(rules, 'energy', { attributes: { dexterity: 10 }, classDef: CLASS }).tier, 5, 'row patch replaced mode default');
 });
 
 const badCases = [
@@ -123,6 +169,80 @@ for (const [name, mutate, path] of badCases) check(`schema refuses ${name} by pa
   const source = clone(derivedStatRules); mutate(source);
   const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'maxMana'] });
   assert(problems.some((p) => p.path === path), `no problem at ${path}: ${JSON.stringify(problems)}`);
+});
+
+const rootNumericMutants = [
+  ['rulesetVersion zero', (x) => { x.rulesetVersion = 0; }, 'rulesetVersion'],
+  ['rulesetVersion fractional', (x) => { x.rulesetVersion = 1.5; }, 'rulesetVersion'],
+  ['rulesetVersion NaN', (x) => { x.rulesetVersion = Number.NaN; }, 'rulesetVersion'],
+  ['default pointsPerTier NaN', (x) => { x.defaults.pointsPerTier = Number.NaN; }, 'defaults.pointsPerTier'],
+  ['default cap negative', (x) => { x.defaults.cap = -1; }, 'defaults.cap'],
+  ['default cap infinite', (x) => { x.defaults.cap = Infinity; }, 'defaults.cap'],
+];
+for (const [name, mutate, path] of rootNumericMutants) check(`numeric corpus refuses ${name}`, () => {
+  const source = clone(derivedStatRules); mutate(source);
+  const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'maxMana'] });
+  assert(problems.some((p) => p.path === path), `no problem at ${path}`);
+});
+
+for (const id of Object.keys(derivedStatRules.rules)) {
+  const row = derivedStatRules.rules[id];
+  const mutations = [
+    ['gainPerTier NaN', (x) => { x.rules[id].gainPerTier = Number.NaN; }, `rules.${id}.gainPerTier`],
+    ['pointsPerTier zero', (x) => { x.rules[id].pointsPerTier = 0; }, `rules.${id}.pointsPerTier`],
+    ['rounding unknown', (x) => { x.rules[id].rounding = 'truncate'; }, `rules.${id}.rounding`],
+    ['cap negative', (x) => { x.rules[id].cap = -1; }, `rules.${id}.cap`],
+  ];
+  if (typeof row.base === 'number') mutations.push(['base NaN', (x) => { x.rules[id].base = Number.NaN; }, `rules.${id}.base`]);
+  else mutations.push(['class base loses field', (x) => { delete x.rules[id].base.field; }, `rules.${id}.base.field`]);
+  for (const [name, mutate, path] of mutations) check(`${id} row corpus refuses ${name}`, () => {
+    const source = clone(derivedStatRules); mutate(source);
+    const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'maxMana'] });
+    assert(problems.some((p) => p.path === path), `no problem at ${path}`);
+  });
+}
+
+const completenessMutants = [
+  ['missing global pointsPerTier', (x) => { delete x.defaults.pointsPerTier; }, 'defaults.pointsPerTier'],
+  ['missing global rounding', (x) => { delete x.defaults.rounding; }, 'defaults.rounding'],
+  ['missing global cap', (x) => { delete x.defaults.cap; }, 'defaults.cap'],
+  ['unknown global field', (x) => { x.defaults.threshold = 4; }, 'defaults.threshold'],
+  ['unknown root field', (x) => { x.secondRules = {}; }, 'derivedStatRules.secondRules'],
+  ['missing row sourceStat', (x) => { delete x.rules.energy.sourceStat; }, 'rules.energy.sourceStat'],
+  ['missing row gainPerTier', (x) => { delete x.rules.energy.gainPerTier; }, 'rules.energy.gainPerTier'],
+];
+for (const [name, mutate, path] of completenessMutants) check(`completeness corpus refuses ${name}`, () => {
+  const source = clone(derivedStatRules); mutate(source);
+  const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'maxMana'] });
+  assert(problems.some((p) => p.path === path), `no problem at ${path}`);
+});
+
+const overrideMutants = [
+  ['default pointsPerTier zero', { defaults: { pointsPerTier: 0 } }, 'explicitOverride.defaults.pointsPerTier'],
+  ['default rounding unknown', { defaults: { rounding: 'truncate' } }, 'explicitOverride.defaults.rounding'],
+  ['default cap negative', { defaults: { cap: -1 } }, 'explicitOverride.defaults.cap'],
+  ['rule base NaN', { rules: { energy: { base: Number.NaN } } }, 'explicitOverride.rules.energy.base'],
+  ['rule source unknown', { rules: { energy: { sourceStat: 'luck' } } }, 'explicitOverride.rules.energy.sourceStat'],
+  ['rule pointsPerTier zero', { rules: { energy: { pointsPerTier: 0 } } }, 'explicitOverride.rules.energy.pointsPerTier'],
+  ['rule gainPerTier NaN', { rules: { energy: { gainPerTier: Number.NaN } } }, 'explicitOverride.rules.energy.gainPerTier'],
+  ['rule rounding unknown', { rules: { energy: { rounding: 'truncate' } } }, 'explicitOverride.rules.energy.rounding'],
+  ['rule cap negative', { rules: { energy: { cap: -1 } } }, 'explicitOverride.rules.energy.cap'],
+  ['unknown override field', { debugMagic: true }, 'explicitOverride.debugMagic'],
+  ['unknown override row', { rules: { dodge: { base: 1 } } }, 'explicitOverride.rules.dodge'],
+];
+for (const [name, explicitOverride, path] of overrideMutants) check(`override corpus refuses ${name}`, () => {
+  let message = '';
+  try { resolved({ explicitOverride }); } catch (error) { message = error.message; }
+  assert(message.includes(path), `refusal did not name ${path}: ${message}`);
+});
+
+check('the same override validator guards mode and every run layer by its own path', () => {
+  let modeMessage = '';
+  try { resolved({ modeModifiers: { defaults: { pointsPerTier: 0 } } }); } catch (error) { modeMessage = error.message; }
+  assert(modeMessage.includes('modeModifiers.defaults.pointsPerTier'), `mode path absent: ${modeMessage}`);
+  let runMessage = '';
+  try { resolved({ runModifiers: [{}, { rules: { draw: { cap: -1 } } }] }); } catch (error) { runMessage = error.message; }
+  assert(runMessage.includes('runModifiers[1].rules.draw.cap'), `run path absent: ${runMessage}`);
 });
 
 check('only a host may author the co-op rules snapshot', () => {
@@ -157,6 +277,14 @@ check('resume refuses an unknown snapshot/ruleset version by name', () => {
   assert(/rulesetVersion 999/.test(message), `version refusal not named: ${message}`);
 });
 
+check('resume refuses an unknown snapshot envelope version by name', () => {
+  const snap = createDerivedStatRuleSnapshot(derivedStatRules, { authority: 'host', attributeIds: ATTRIBUTE_IDS });
+  snap.snapshotVersion = 999;
+  let message = '';
+  try { restoreDerivedStatRuleSnapshot(snap, { attributeIds: ATTRIBUTE_IDS }); } catch (error) { message = error.message; }
+  assert(/snapshotVersion 999/.test(message), `snapshot refusal not named: ${message}`);
+});
+
 check('the dependency seam is mechanically inert before Phase 1 lands', () => {
   const consumers = [
     'src/model/state.js', 'src/model/resources.js', 'src/engine/actions.js',
@@ -177,4 +305,3 @@ check('no Dodge/reaction behavior or handMax policy is smuggled into the contrac
 console.log(`\n${failures ? 'FAIL' : 'PASS'} — ${checks - failures}/${checks} contract checks held, ${failures} failed.`);
 console.log('BOUNDARY: data + pure readers only. Nothing here changes a run, combat, draw pile, resource bar, save, LAN message or screen.');
 process.exit(failures ? 1 : 0);
-
