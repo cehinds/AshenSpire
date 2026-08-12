@@ -1454,10 +1454,16 @@ button.ev-choice {
       no box; Law 4 clause 5 — it is inline typographic adornment sitting in
       the line of text it belongs to, so it tracks Text size on purpose while
       the bar's `min-height: var(--tap-floor)` above stays text-independent. */
-button.ev-choice.ev-hold {
+/* `.beat-hold`, not `.ev-hold`, AND NOT ON `button.ev-choice`. The class was
+   named for the event screen because the event screen was the only caller —
+   which is the same fact, spelled in CSS, that lost "same with ending turn".
+   The selector is now the CLASS ALONE so that every control the machinery arms
+   is dressed the same: an event bar, End Turn, the Shrine's Rest panel, a flask
+   icon. A rule that names a screen can only ever dress that screen. */
+.beat-hold {
   /* THE FILL IS A BACKGROUND, NOT A PSEUDO-ELEMENT, AND THAT IS BJORN'S FINDING
      PAID BACK. The first version was a `::before` plus
-     `button.ev-choice.ev-hold > * { position: relative; }` to lift the label
+     `button.ev-choice.beat-hold > * { position: relative; }` to lift the label
      above it — and `> *` reaches ELEMENT children, while the label on these
      bars is a BARE TEXT NODE. He repainted the ::before opaque for one frame:
      the label vanished and only `HOLD` (a real <span>) survived. The picture
@@ -1477,7 +1483,7 @@ button.ev-choice.ev-hold {
      — the one frame where the picture must tell the truth instantly. */
   background-size: calc(var(--hold, 0) * 100%) 100%;
 }
-button.ev-choice.ev-hold[data-hold='holding'] { border-color: var(--gold); }
+.beat-hold[data-hold='holding'] { border-color: var(--gold); }
 
 /* `--accent-rgb` is the accent theme's own channel triple (base.css:24), so the
    fill follows the palette the player chose. IT DOES NOT FOLLOW THE
@@ -1501,6 +1507,46 @@ button.ev-choice.ev-hold[data-hold='holding'] { border-color: var(--gold); }
   color: var(--gold); opacity: 0.75;
 }
 button.ev-choice.gp-focus .hold-hint { display: none; }
+/* THE WORD DOES NOT FIT ON AN ICON. A flask slot is a 🧪 in a crowded topbar;
+   three letters of `HOLD` beside it is not an instruction, it is a mess. The
+   fill still runs (it is the same background rule above) and the tooltip says
+   "Hold to drink." — and it says it by READING `data-beat` off the element the
+   machinery dressed, so the sentence and the gesture cannot drift. */
+.flask-slot .hold-hint { display: none; }
+
+/* ---- THE CONFIRM FORM (the Smith, the merchant's brazier) -----------------
+   The other second beat, for the other mistake. A hold answers a finger that
+   MISSED; this answers a finger that landed exactly where it aimed on the
+   WRONG OBJECT — and the only thing that helps there is seeing what the action
+   actually does before it happens.
+
+   THE PANEL CARRIES THE PREVIEW. #105 shipped the Smith's upgrade preview as a
+   hover tooltip, and a phone has no hover: the touch player's preview was
+   nothing at all. `.beat-detail` is where the same preview goes, rendered from
+   the same `upgradePreviewHtml` — one home, no second copy.
+
+   LAW 4 CLAUSE 4 ON BOTH BUTTONS: a fixed floor and intrinsic growth, never a
+   multiple of the text unit. LAW 5: the row WRAPS, so a narrow shape spends
+   height instead of running the CANCEL button off the side. */
+.beat-confirm {
+  flex-basis: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+  margin: 6px 0 2px; padding: 10px 12px;
+  border: 1px solid var(--gold); border-radius: 6px;
+  background: var(--panel);
+  max-width: 34rem;
+}
+.beat-confirm .beat-q { color: var(--parchment); font-size: 1.2rem; text-align: center; margin: 0; }
+.beat-confirm .beat-detail { color: var(--muted); font-size: 1.1rem; text-align: center; }
+.beat-confirm .beat-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.beat-confirm .beat-actions button {
+  min-height: var(--tap-floor); height: auto;
+  min-width: var(--tap-floor);
+  padding: 8px 18px; font-size: 1.2rem;
+}
+/* The armed control stays visible and stays IDENTIFIED — the player has to be
+   able to see which card the question is about. */
+.beat-armed { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 .choice-group[data-resizes-while-pressed] .choice {
   min-height: var(--tap-floor-default); min-width: var(--tap-floor-default);
@@ -4613,6 +4659,9 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     run,
     combat,
     label,
+    // The second-beat dial lives in meta.settings, and combat has two actions
+    // in the table (End Turn, drinking a flask). Same read as the event screen.
+    meta: saves.loadMeta(),
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
     onMenu: showOverlay,
@@ -4749,6 +4798,7 @@ function showRest() {
     run,
     healMult,
     refill,
+    meta: saves.loadMeta(),
     onDone: () => {
       persist();
       showMap();
@@ -4761,6 +4811,7 @@ function showShop() {
   mountShop(app, {
     registries,
     run,
+    meta: saves.loadMeta(),
     onChanged: () => persist(),
     onLeave: () => {
       run.shopStock = null;
@@ -4966,7 +5017,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -5093,6 +5144,23 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.floor = 8;
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
     showRest();
+  } else if (shotState === 'shop') {
+    // A REACH STATE, and the fourth of the same shape (`?shotEvent`, `?shotAt`,
+    // `?shot=rest`). The merchant is one of the screens no instrument this repo
+    // owns can open, which is why "burn a card out of the deck for good, one
+    // tap, no confirm" sat in shipped code with nobody's number against it —
+    // the same reason the Shrine's Smith grid overflowed a phone unseen.
+    //
+    // POSED WITH A DECK WORTH REMOVING FROM and a purse that can pay: the
+    // remove grid only renders at `cinders >= removeCost && deck.length > 1`,
+    // so a fresh run (0 cinders) mounts the screen with the one control this
+    // state exists to reach ABSENT — a green on nothing, which is the
+    // wrong-place empty SOP 2 calls malformed.
+    run.floor = 8;
+    run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
+    run.cinders = 999;
+    run.shopStock = buildShopStock(registries, rng, run);
+    showShop();
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.
     //
@@ -5119,6 +5187,15 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     if (shotParams.has('shotMana') && Number.isFinite(shotMana)) {
       run.mana = Math.max(0, Math.min(run.maxMana, Math.floor(shotMana)));
     }
+    // TWO FLASKS IN THE POSE, ONE OF EACH KIND, AND IT IS NOT DRESSING. A
+    // drunk flask does not come back this climb, and `useFlask` is a row in the
+    // second-beat table — but a board with an EMPTY flask row draws no flask
+    // control at all, so the census could not tell "this action is not wired"
+    // from "this pose has nothing to press". Those two readings are opposite
+    // and looked identical. An untargeted flask owes a hold, a targeted one
+    // does not (it enters aim mode, which is already a second beat), so the
+    // pose carries one of each and the check sees both cells of the row.
+    run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
     enterNode(startId);
@@ -12481,6 +12558,7 @@ Object.assign(module.exports, { unlocks });
 // Headless: no document/window/localStorage/timers.
 
 const { resolveFloorPlan } = require("src/model/floorplan.js");
+const { assertTableSane } = require("src/model/secondbeat.js");
 const { viewRefusals, geometryRefusals } = require("src/model/mapview.js");
 const { graceRefillRefusals } = require("src/model/gracerefill.js");
 const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, PILES, PILE_POSITIONS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, CREATURE_TAGS } = require("src/model/schemas.js");
@@ -12821,6 +12899,15 @@ function validateContent(bundle) {
       });
     }
   }
+  // THE SECOND-BEAT TABLE, checked at the same boot and for the same reason as
+  // the dial above. It is CODE, not content, so it can never be a row a
+  // designer breaks — but it is a table, and a table whose row is malformed
+  // resolves to a plausible 'none' and takes a safety step off a button with
+  // nothing on the screen looking different. That is Law 0 clause 5 exactly:
+  // the dangerous failure is the silent plausible derivation, so the derivation
+  // is asked to prove itself out loud on every boot that validates anything.
+  for (const complaint of assertTableSane()) err('secondBeat', complaint);
+
   // THE MAP'S VERTICAL MARGIN, and it belongs here because it has exactly one
   // data input. `balance.ui.tapSize.def` is what the map node's radius is SOLVED
   // FROM (model/mapview.js), so raising it grows the target and eats the space
@@ -14057,6 +14144,438 @@ function applyRunShape(config, shape, limits) {
 
 
 Object.assign(module.exports, { NODE_TYPES, ANCHOR_KINDS, rollableFloors, resolveAnchor, resolveFloorPlan, describePlan, MAP_SHAPE_KEYS, minViableFloors, applyRunShape });
+
+},
+"src/model/secondbeat.js": function (module, exports, require) {
+// src/model/secondbeat.js — WHICH ACTIONS TAKE A SECOND BEAT, and what kind.
+//
+// Constantine asked for press-and-hold on confirmations and finished the
+// sentence with "same with ending turn." The hold shipped (#115) and End Turn
+// did not, because the hold was wired AT A CALL SITE: `armHold` had exactly one
+// caller in the whole tree, the event screen. A second half of a sentence
+// cannot be lost by a machine that reads a set; it can only be lost by a human
+// who has to remember a second call.
+//
+// MARINA'S RULING, and it is the whole design of this file:
+//
+//     WHICH ACTIONS TAKE A SECOND BEAT IS A CHARACTERISTIC ON THE ACTION,
+//     NEVER A LIST OF CALL SITES.
+//
+// So no screen decides. A screen names the action it is wiring and hands over
+// the commit; the machinery reads the characteristics below and picks the form.
+// Adding a second beat to something is A ROW HERE. Taking one away is a row
+// here. Neither is a line in a screen. (Law 0 clause 1: the entry DESCRIBES,
+// the machinery DERIVES.)
+//
+// ---------------------------------------------------------------------------
+// WHY ONE TABLE RATHER THAN A DECLARATION BESIDE EACH ACTION. The precedent is
+// `model/consequence.js`, which holds SAFE_OPS — one reviewable screen of
+// positive declarations, each with the reason it is there. A set scattered
+// across nine screens is a set nobody can read in one sitting, and the ONE
+// THING this file has to be is enumerable: the question "which actions take a
+// second beat today" must have an answer a person can read and a tool can
+// print. Every row names the file its action lives in, so the pointer runs
+// both ways.
+//
+// WHAT THIS FILE STILL CANNOT SEE, said out loud because `ui/surfaces.js` says
+// the same thing about the same class of hole: A DESTRUCTIVE CONTROL NOBODY
+// ADDS A ROW FOR IS INVISIBLE HERE. Nothing in a source tree can see it. What
+// answers it is the rendered page — every control the machinery arms marks
+// itself `data-beat-action`, so `tools/holdconfirm.mjs` can enumerate what the
+// game ACTUALLY DREW and hold it against this table in both directions. A row
+// with no control on the page is a lie; a control with no row is a gap. Both
+// print by name.
+// ---------------------------------------------------------------------------
+
+/**
+ * STAKES — what a mis-press writes. Ordered, because the derivation reads the
+ * weight and not the name; a new level is a row here and the rule below does
+ * not change.
+ */
+const STAKES = Object.freeze({
+  nothing: { weight: 0, of: 'nothing the player did not already have' },
+  tempo: { weight: 1, of: 'time and refillable resources — the run pays it back' },
+  turn: { weight: 2, of: 'this turn: the hand, the energy, the enemy acting next' },
+  run: { weight: 3, of: 'the run: a card, a charge, a shrine — gone until the next climb' },
+  profile: { weight: 4, of: 'the profile: it outlives the run' },
+});
+
+/** UNDO — how the player gets it back, if they can. */
+const UNDO = Object.freeze({
+  free: 'the same screen takes it back, at no cost',
+  faucet: 'play refills it — a mis-press costs tempo, not state',
+  none: 'nothing in the game gives it back',
+});
+
+/**
+ * HAZARD — HOW THE MISTAKE HAPPENS, and this is the field that picks the FORM.
+ * It is the difference between the two things Constantine asked for on the same
+ * evening, and they are two answers because they are two different mistakes.
+ */
+const HAZARD = Object.freeze({
+  // The finger missed. The right thing and the wrong thing are one thumb-width
+  // apart (the event screen's 9 px gaps), so the correction has to live INSIDE
+  // the gesture: the control fills, the player reads the words that are
+  // filling, and lets go. A modal here asks "are you sure" about a screen the
+  // eye has already left.
+  pointing: 'the wrong thing is one thumb-width from the right thing',
+  // The finger landed exactly where it aimed and THE OBJECT WAS WRONG. A hold
+  // is useless here — holding the wrong card still upgrades the wrong card.
+  // What the player needs is to SEE WHAT IT BECOMES and then say yes.
+  choosing: 'the aim was true and the object was wrong — the player must see the result first',
+  // ALREADY A SECOND BEAT. The action is performed through a multi-part gesture
+  // that carries its own abort (drag to a target and release off it; tap to
+  // select and tap away). A beat on top of that is a THIRD beat, and charging
+  // one for the game's primary verb is how a safety step teaches players to
+  // rush past every safety step. A row using this MUST name the abort the
+  // player already has, in `gesture`.
+  deliberate: 'the action already costs a multi-part gesture that can be abandoned',
+});
+
+/** The forms. `none` is a form: it is the answer "a tap is enough". */
+const BEATS = Object.freeze(['none', 'hold', 'confirm']);
+
+/**
+ * THE DERIVATION — one rule, three lines, and every row below answers to it.
+ *
+ *   a second beat is owed when the mis-press cannot be taken back AND it costs
+ *   at least a turn; the FORM is whichever mistake the player is at risk of.
+ *
+ * `tempo` is under the line on purpose and it is the same exception
+ * consequence.js already ships for cinders: a cost the run refills is tempo,
+ * and tempo is what the rest of the run is for.
+ */
+function beatOf({ stakes, undo, hazard }) {
+  const owed = undo === 'none' && STAKES[stakes].weight >= STAKES.turn.weight;
+  if (!owed) return 'none';
+  if (hazard === 'deliberate') return 'none';
+  return hazard === 'choosing' ? 'confirm' : 'hold';
+}
+
+// ---------------------------------------------------------------------------
+// THE ACTIONS. Each row DESCRIBES; nothing here states a form.
+//
+// A field may be a value or a function of the action's context. A function row
+// MUST declare `edges` — every value of every context key it reads — for two
+// reasons, and the second one is the Quality Gate: (1) an under-specified
+// context fails BY NAME rather than resolving to a plausible default (Law 0
+// clause 5), and (2) the enumeration prints EVERY CELL of the product, so
+// "check both edges" is a property of the table instead of a thing a reviewer
+// has to remember. Enumerate the cells, never the factors — Viki's #78.
+// ---------------------------------------------------------------------------
+const ACTIONS = Object.freeze({
+  // ---- wired to the shared machinery ---------------------------------------
+  eventChoice: {
+    of: 'taking an event choice',
+    lives: 'src/ui/screens/event.js',
+    surface: 'event',
+    // WHETHER A CHOICE BINDS IS ITSELF DERIVED, from the entry's own ops —
+    // model/consequence.js, and this row does not restate a word of it. Author
+    // the twenty-first event with a curse in it and the hold is already there.
+    stakes: (c) => (c.binding ? 'run' : 'nothing'),
+    undo: 'none',
+    hazard: 'pointing',
+    edges: { binding: [true, false] },
+    note: 'the 9 px gaps between three 44 px bars, where the neighbour is a permanent curse',
+  },
+  endTurn: {
+    of: 'ending your turn',
+    lives: 'src/ui/screens/combat.js',
+    surface: 'combat',
+    // HIS SENTENCE, AND THE HALF OF IT THAT WAS DROPPED: "same with ending
+    // turn." The ruling is literal and state-independent: End Turn always
+    // hands the enemy the turn, even when the current hand is spent, so the
+    // same configured second beat guards every press. The pulse may still
+    // report playable resources; it does not decide whether the safety step
+    // exists.
+    stakes: 'turn',
+    undo: 'none',
+    hazard: 'pointing',
+    note: 'the button sits at the edge of a hand a thumb is already dragging cards out of',
+  },
+  useFlask: {
+    of: 'drinking a flask',
+    lives: 'src/ui/screens/combat.js',
+    surface: 'combat',
+    // A flask is a charge, and a drunk one does not come back this climb.
+    // A TARGETED flask is not the same action: it enters targeting mode, so the
+    // player must aim and may abandon — the second beat is already in the
+    // gesture. An untargeted one fires on one tap of a 3-across icon row wedged
+    // between the relics and the portrait.
+    stakes: 'run',
+    undo: 'none',
+    hazard: (c) => (c.targeted ? 'deliberate' : 'pointing'),
+    gesture: 'a targeted flask enters aim mode; releasing anywhere but an enemy abandons it',
+    edges: { targeted: [true, false] },
+  },
+  shrineRest: {
+    of: 'resting at the shrine',
+    lives: 'src/ui/screens/rest.js',
+    surface: 'rest',
+    // Resting is not "gaining HP" — it is SPENDING THE SHRINE, and the shrine
+    // is the only thing on the screen. One tap and the Smith is gone for this
+    // floor. Two big adjacent panels, and the wrong one is 14 px away.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'pointing',
+    note: 'Rest and Smith are two adjacent panels; taking either closes the other',
+  },
+  smithUpgrade: {
+    of: 'smithing a card',
+    lives: 'src/ui/screens/rest.js',
+    surface: 'rest',
+    // HIS SECOND ASK, and the reason it is a DIFFERENT form from End Turn. The
+    // preview shipped (#105) — hover a candidate and see what it becomes — and
+    // then one click committed it, permanently, with no confirm and no undo.
+    // On a phone there is no hover, so the preview a touch player got was
+    // nothing at all. Holding would not help: a held wrong card is still the
+    // wrong card. The player has to SEE THE UPGRADE and then say yes.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'choosing',
+    note: 'twenty small cards in a wrapped grid; the preview only ever existed on hover',
+  },
+  shopRemove: {
+    of: 'paying the merchant to burn a card out of the deck',
+    lives: 'src/ui/screens/shop.js',
+    surface: 'shop',
+    // NOBODY ASKED FOR THIS ONE AND IT IS THE SAME SHAPE AS THE SMITH: a
+    // wrapped grid of small cards, one tap, the card is gone and the cinders
+    // with it. It is in this table because the table is the thing that makes a
+    // gap visible; it is WIRED because the machinery that answers the Smith
+    // answers it for free, and leaving it unwired while editing the same
+    // component would be filing a defect instead of fixing one.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'choosing',
+  },
+
+  // ---- a second beat this game already had, in its own screen's hand --------
+  //
+  // `handledBy` NAMES AN EXEMPTION FROM THE SHARED MACHINERY, NEVER FROM THE
+  // BEAT. The derivation still runs and the row still says what form is owed;
+  // what the field says is "this screen answers it in its own hand, here."
+  // Written at the row, in the code, with its reason — the shape Law 5 clause 2
+  // requires of every horizontal-scroll exemption, for the same reason: a set
+  // with an unnamed hole in it is not a set.
+  deleteSave: {
+    of: 'deleting a saved run from the title screen',
+    lives: 'src/ui/screens/title.js',
+    surface: null,
+    stakes: 'profile',
+    undo: 'none',
+    hazard: 'pointing',
+    handledBy: 'title.js:76 — a two-click, self-resetting arm ("✕" → "Delete?")',
+    // AND WHY IT IS NOT COLLAPSED INTO THE MACHINERY TONIGHT, which is the
+    // honest half: `surface: null` — no `?shot=` state reaches a title screen
+    // with saved runs on it, so nothing this repo owns can watch the rewrite
+    // run. Replacing a WORKING second beat with an unwatched one is the exact
+    // failure this branch exists to answer. The row is the card.
+    gap: 'a third form of the same idea, in its own hand, unreachable by any instrument here',
+  },
+  profileRestore: {
+    of: 'restoring a set-aside profile over the one in play',
+    lives: 'src/ui/screens/profileArchive.js',
+    surface: null,
+    stakes: 'profile',
+    undo: 'none',
+    hazard: 'choosing',
+    handledBy: 'profileArchive.js:174 — an inline .prof-confirm box that states what happens to the current profile',
+  },
+  freshProfile: {
+    of: 'starting a new profile over an unreadable one',
+    lives: 'src/ui/screens/profileNotice.js',
+    surface: null,
+    stakes: 'profile',
+    undo: 'none',
+    hazard: 'choosing',
+    handledBy: 'profileNotice.js:147 — a .confirm-fresh modal that says the old profile is set aside, not deleted',
+  },
+
+  // ---- declared to take NO beat, and WHY --------------------------------
+  //
+  // These rows are the point of a set. An action absent from this file is
+  // invisible; an action present with `none` derived from its characteristics
+  // is a decision someone can argue with.
+  playCard: {
+    of: 'playing a card',
+    lives: 'src/ui/screens/combat.js',
+    // `surface: null` DESPITE living on a screen an instrument can open, and
+    // the reason is the honest one rather than the convenient one: this action
+    // is NOT ROUTED THROUGH THE MACHINERY. Its commit is not a click — it is
+    // `wireCardInput`'s drag-or-tap, which owns `pointerdown`, a ghost, a slop
+    // radius and a target arrow. Arming it would put a second `pointerdown`
+    // listener on the same element and the two would fight over the same
+    // finger. So the row is a DECLARATION and not a wiring, it draws no
+    // `data-beat-action`, and the census must not expect one.
+    surface: null,
+    stakes: 'turn',
+    undo: 'none',
+    hazard: 'deliberate',
+    gesture: 'drag to a target and release off it, or tap to select and tap away — both abandon',
+    note: 'the game\'s primary verb; a beat here is a third beat on a gesture that already has two. '
+      + 'Declared, not routed: its commit is a gesture, not a click (see `surface`)',
+  },
+  rewardPick: {
+    of: 'taking a card from the victory rewards',
+    lives: 'src/ui/screens/reward.js',
+    surface: null,
+    stakes: 'nothing',
+    undo: 'none',
+    hazard: 'choosing',
+    note: 'a gain, and the player reached for it — the same ruling SAFE_OPS makes about addRelic',
+  },
+  draftPick: {
+    of: 'drafting a card into a custom climb',
+    lives: 'src/ui/screens/draft.js',
+    surface: null,
+    stakes: 'nothing',
+    undo: 'none',
+    hazard: 'choosing',
+    note: 'a gain',
+  },
+  shopBuy: {
+    of: 'buying from the merchant',
+    lives: 'src/ui/screens/shop.js',
+    surface: 'shop',
+    stakes: 'tempo',
+    undo: 'faucet',
+    hazard: 'choosing',
+    note: 'cinders come back — combat pays, treasure pays, events pay (consequence.js, the one cost with a faucet)',
+  },
+});
+
+// ---------------------------------------------------------------------------
+
+const FIELDS = ['stakes', 'undo', 'hazard'];
+const LEGAL = { stakes: STAKES, undo: UNDO, hazard: HAZARD };
+
+/**
+ * A CONTEXT KEY A ROW READS AND THE CALLER DID NOT SUPPLY IS A THROW, BY NAME.
+ * Law 0 clause 5: a missing field that fails loud is cheap; a generated thing
+ * that is wrong but reasonable is invisible. The invisible version of this bug
+ * is a hold that quietly stops holding.
+ */
+function readField(id, row, field, ctx) {
+  const v = row[field];
+  if (typeof v !== 'function') return v;
+  for (const key of Object.keys(row.edges || {})) {
+    if (!Object.hasOwn(ctx || {}, key)) {
+      throw new Error(
+        `secondbeat: '${id}'.${field} reads context '${key}' and the caller did not supply it. `
+        + `Pass { ${Object.keys(row.edges).join(', ')} } — ${row.lives} declares them in \`edges\`.`
+      );
+    }
+  }
+  return v(ctx);
+}
+
+/**
+ * beatFor(id, ctx) -> { id, form, stakes, undo, hazard, why, handledBy }
+ *
+ * The one question every caller asks. `form` is one of BEATS. `why` is for a
+ * log and an instrument, never rendered raw at a player.
+ */
+function beatFor(id, ctx = {}) {
+  const row = Object.hasOwn(ACTIONS, id) ? ACTIONS[id] : null;
+  if (!row) {
+    throw new Error(
+      `secondbeat: no action named '${id}'. Which actions take a second beat is a `
+      + `characteristic on the action — add a row to ACTIONS in src/model/secondbeat.js. `
+      + `Declared today: ${Object.keys(ACTIONS).join(', ')}.`
+    );
+  }
+  const c = {};
+  for (const f of FIELDS) {
+    c[f] = readField(id, row, f, ctx);
+    if (!Object.hasOwn(LEGAL[f], c[f])) {
+      throw new Error(`secondbeat: '${id}'.${f} resolved to ${JSON.stringify(c[f])}, which is not one of `
+        + `${Object.keys(LEGAL[f]).join(' | ')}.`);
+    }
+  }
+  const form = beatOf(c);
+  return {
+    id,
+    form,
+    ...c,
+    handledBy: row.handledBy || null,
+    of: row.of,
+    lives: row.lives,
+    surface: row.surface || null,
+    why: form === 'none'
+      ? (c.hazard === 'deliberate'
+        ? `no beat: ${HAZARD.deliberate} (${row.gesture || 'gesture unnamed'})`
+        : `no beat: stakes '${c.stakes}' (${STAKES[c.stakes].of}), undo '${c.undo}'`)
+      : `${form}: stakes '${c.stakes}' (${STAKES[c.stakes].of}) and ${UNDO[c.undo]}; ${HAZARD[c.hazard]}`,
+  };
+}
+
+/**
+ * enumerateBeats() -> row[] — THE ANSWER TO "WHICH ACTIONS TAKE A SECOND BEAT",
+ * every cell of every state-dependent row expanded. This is what makes the set
+ * a set: a person or a tool can print it, and a row that resolves two ways
+ * prints twice rather than once with a footnote.
+ */
+function enumerateBeats() {
+  const out = [];
+  for (const [id, row] of Object.entries(ACTIONS)) {
+    const keys = Object.keys(row.edges || {});
+    // The full product of the declared edges. One row with no edges is one cell.
+    let cells = [{}];
+    for (const k of keys) {
+      const next = [];
+      for (const cell of cells) for (const v of row.edges[k]) next.push({ ...cell, [k]: v });
+      cells = next;
+    }
+    for (const ctx of cells) out.push({ ...beatFor(id, ctx), ctx });
+  }
+  return out;
+}
+
+/**
+ * beatsOwed() -> the ids that owe a beat, in declaration order. The short
+ * answer to Marina's question, for a log line or a header.
+ */
+function beatsOwed() {
+  return [...new Set(enumerateBeats().filter((b) => b.form !== 'none').map((b) => b.id))];
+}
+
+/**
+ * assertTableSane() -> string[] of complaints, empty when the table is well
+ * formed. Called at boot by validate.js so a malformed row fails LOUD and by
+ * name rather than resolving to a plausible 'none' (Law 1 clause 5). A row that
+ * silently stopped owing a beat is the one defect on this whole branch that
+ * looks exactly like working software.
+ */
+function assertTableSane() {
+  const bad = [];
+  for (const [id, row] of Object.entries(ACTIONS)) {
+    if (!row.of || !row.lives) bad.push(`${id}: every row states \`of\` (what the player is doing) and \`lives\` (its file)`);
+    for (const f of FIELDS) {
+      if (row[f] == null) bad.push(`${id}: missing characteristic '${f}'`);
+      else if (typeof row[f] === 'function' && !Object.keys(row.edges || {}).length) {
+        bad.push(`${id}.${f} is a function of context but the row declares no \`edges\`; `
+          + `nothing could enumerate its cells and a missing key could not fail by name`);
+      }
+    }
+    for (const [k, vals] of Object.entries(row.edges || {})) {
+      if (!Array.isArray(vals) || vals.length < 2) bad.push(`${id}.edges.${k} must list at least two values — one edge is not both edges`);
+    }
+    // A `deliberate` row must name the abort the player already has, or the
+    // value is a way to opt out of the table by writing one word.
+    try {
+      for (const cell of enumerateBeats().filter((b) => b.id === id)) {
+        if (cell.hazard === 'deliberate' && !row.gesture) {
+          bad.push(`${id}: hazard 'deliberate' must name the abort the player already has, in \`gesture\``);
+        }
+      }
+    } catch (e) { bad.push(`${id}: ${e.message}`); }
+  }
+  return bad;
+}
+
+
+Object.assign(module.exports, { STAKES, UNDO, HAZARD, beatOf, ACTIONS, beatFor, enumerateBeats, beatsOwed, assertTableSane });
 
 },
 "src/model/mapview.js": function (module, exports, require) {
@@ -28315,8 +28834,18 @@ const { figureSpec } = require("src/model/loadout.js");
 const { trackGesture } = require("src/ui/gesture.js");
 const { resourceBars, markFlooredBars } = require("src/ui/components/resbars.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
+const { beatArmer } = require("src/ui/components/holdconfirm.js");
 
-function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
+function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
+  // THE ONE DOOR for every action on this screen that the second-beat table has
+  // ruled on. This screen names actions; it does not know what a hold is and it
+  // does not decide which of its buttons deserve one (model/secondbeat.js).
+  const arm = beatArmer(meta, registries);
+  // Declared here, assigned where End Turn is wired. `renderControls` re-dresses
+  // it every frame and runs before that line on the first paint, so it must be
+  // a `let` that reads null rather than a `const` in its temporal dead zone —
+  // which throws, and would throw on the FIRST RENDER OF EVERY FIGHT.
+  let endTurnBeat = null;
   app.innerHTML = `
     <div class="combat">
       <!-- THE MAIN HUD, TWO ROWS, HIS ASSIGNMENT (D10 wave 4):
@@ -28671,16 +29200,30 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
         kb.textContent = hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
         el.appendChild(kb);
       }
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}${def.targeted ? '<br><i>Click, then choose a target.</i>' : '<br><i>Click to drink.</i>'}`);
-      el.addEventListener('click', () => {
-        if (busy || combat.result) return;
-        if (def.targeted) {
-          selectedFlask = selectedFlask === slot ? null : slot;
-          selected = null;
-          render();
-        } else {
-          useFlask(slot, null);
-        }
+      // THE LABEL READS THE BEAT, IT DOES NOT RESTATE IT. `data-beat` is written
+      // by the machinery from the table, so the sentence a player reads and the
+      // gesture the button actually wants cannot drift — and the icon is far too
+      // small for the HOLD word the event bars carry (hidden in ui.css).
+      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`
+        + (def.targeted ? '<br><i>Click, then choose a target.</i>'
+          : el.dataset.beat === 'hold' ? '<br><i>Hold to drink.</i>' : '<br><i>Click to drink.</i>'));
+      // A DRUNK FLASK DOES NOT COME BACK THIS CLIMB, and nobody asked for this
+      // one — it is in the table because a set is the thing that makes a gap
+      // visible, and it is wired because the machinery already existed by the
+      // time it was found. A TARGETED flask owes no beat and the row says why:
+      // it enters aim mode, so the second beat is already in the gesture.
+      arm(el, 'useFlask', {
+        ctx: { targeted: !!def.targeted },
+        onConfirm: () => {
+          if (busy || combat.result) return;
+          if (def.targeted) {
+            selectedFlask = selectedFlask === slot ? null : slot;
+            selected = null;
+            render();
+          } else {
+            useFlask(slot, null);
+          }
+        },
       });
       flasks.appendChild(el);
     });
@@ -28943,18 +29486,29 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     return (resolveCard(registries, inst).keywords || []).includes('unplayable');
   }
 
+  /** The pulse reports that the player still has an affordable play. */
+  function endTurnHasPlayable() {
+    const anyPlayable = combat.piles.hand.some((inst) => {
+      const def = resolveCard(registries, inst);
+      if ((def.keywords || []).includes('unplayable')) return false;
+      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost)
+        && combat.player.mana >= (def.manaCost || 0);
+    });
+    return combat.player.energy > 0 && anyPlayable;
+  }
+
   function renderControls() {
     $('.energy-orb').textContent = `${combat.player.energy}/${combat.player.energyMax}`;
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
     $('.end-turn').innerHTML = `END TURN <kbd class="et-key">${esc(etKey)}</kbd>`;
-    const anyPlayable = combat.piles.hand.some((inst) => {
-      const def = resolveCard(registries, inst);
-      if ((def.keywords || []).includes('unplayable')) return false;
-      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost) && combat.player.mana >= (def.manaCost || 0);
-    });
-    $('.end-turn').classList.toggle('pulse', combat.player.energy > 0 && anyPlayable);
+    $('.end-turn').classList.toggle('pulse', endTurnHasPlayable());
+    // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
+    // re-reads the action's state and re-dresses the button — and it is the
+    // reason a beat can live on a control its own screen repaints every frame
+    // without any screen tracking the dressing.
+    if (endTurnBeat) endTurnBeat.refresh();
     $('.pile.draw .n').textContent = combat.piles.draw.length;
     $('.pile.discard .n').textContent = combat.piles.discard.length;
     const ex = $('.pile.exhaust');
@@ -29329,7 +29883,14 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     afterDispatch(out.events);
   }
 
-  $('.end-turn').addEventListener('click', () => {
+  // "SAME WITH ENDING TURN." — Constantine, in the sentence that also asked for
+  // the hold, and the half of it that was dropped. It is not wired here by
+  // hand: `endTurn` is a row in model/secondbeat.js, and the ruling is that it
+  // always takes the configured second beat.
+  // Nothing on this line says "hold", and adding a third action to this screen
+  // would say even less.
+  endTurnBeat = arm($('.end-turn'), 'endTurn', {
+    onConfirm: () => {
     if (busy || combat.result || combat.phase !== 'player') {
       const why = { busy, result: combat.result, phase: combat.phase };
       console.debug('[combat] endTurn ignored:', JSON.stringify(why));
@@ -29352,7 +29913,9 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     dlog('dispatch', 'endTurn', { events: out.events.length });
     busy = true;
     afterDispatch(out.events);
+    },
   });
+  endTurnBeat.refresh();
 
   const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
   const showDiscard = () => openPileModal(registries, 'Discard pile', combat.piles.discard);
@@ -30650,6 +31213,443 @@ function markFlooredBars(root, track) {
 Object.assign(module.exports, { resourceBars, markFlooredBars });
 
 },
+"src/ui/components/holdconfirm.js": function (module, exports, require) {
+// src/ui/components/holdconfirm.js — THE SECOND BEAT, in both its forms.
+//
+// Constantine, asked whether to build it: "yes press and hold" — and the same
+// sentence ended "same with ending turn."
+//
+// WHAT THIS FILE IS NOW, AND WHY IT CHANGED. It used to export `armHold` and
+// nothing else, and `armHold` had exactly ONE caller in the whole tree: the
+// event screen. That is how the second half of his sentence was lost — not by
+// anyone deciding End Turn should commit on a tap, but because giving a second
+// action a second beat meant REMEMBERING A SECOND CALL. Marina's ruling, and it
+// is the design of this module:
+//
+//     WHICH ACTIONS TAKE A SECOND BEAT IS A CHARACTERISTIC ON THE ACTION,
+//     NEVER A LIST OF CALL SITES.
+//
+// So `applyBeat` is the door now, and no screen picks a form. A screen names
+// its action and hands over the commit; `model/secondbeat.js` says whether a
+// beat is owed and which one, and this file performs it. A screen CANNOT wire a
+// hold to something the table has not ruled on — `beatFor` throws on an unknown
+// id — and it cannot quietly skip one either, because the control it draws
+// marks itself and an instrument reads the page back against the table.
+//
+// ---------------------------------------------------------------------------
+// TWO FORMS, BECAUSE THEY ANSWER TWO DIFFERENT MISTAKES.
+//
+//   HOLD  — the finger missed. The control FILLS UNDER THE FINGER: the player
+//           reads the words that are filling, sees they are the wrong ones, and
+//           LETS GO. The correction happens inside the same gesture as the
+//           mistake. A modal asks "are you sure?" after the commit, when the
+//           eye has already moved to the next screen and the answer is always
+//           yes.
+//   CONFIRM — the finger landed where it aimed and THE OBJECT WAS WRONG.
+//           Holding is useless: a held wrong card still upgrades the wrong
+//           card. What the player needs is to SEE WHAT IT BECOMES and then say
+//           yes — which is exactly what Constantine asked for at the Smith, and
+//           what a hover-only preview never gave a phone.
+//
+// THE FIVE THINGS THE HOLD MUST NEVER DO, each one a way this shape goes wrong:
+//
+//   1. COMMIT ON A RELEASE. Releasing early is the abort, so a pointer `click`
+//      on a held control NEVER commits — the completed hold is the only pointer
+//      path there is. Get this backwards and the safety feature becomes a
+//      second way to fire the thing.
+//   2. COMMIT TWICE. It fires the instant the fill lands, then disarms; the
+//      trailing pointerup and its click find nothing armed.
+//   3. LOCK ANYONE OUT. `ev.detail === 0` — a keyboard Enter on a focused
+//      button, and the synthetic click ui/input.js dispatches for the gamepad
+//      cursor — commits immediately, with no hold. That is not a loophole, it
+//      is the scope: this answers a POINTING failure, a 9 px gap only a finger
+//      can fall into. A focus cursor selects a NAMED element and cannot land
+//      between two bars, so charging it a hold would be ceremony billed to a
+//      player who cannot make the mistake. Named boundary, not silence: pad and
+//      keyboard players get no confirm step. (The CONFIRM form is different and
+//      deliberately so — see armConfirm.)
+//   4. TRAP A SCROLL. Moving more than SLOP px abandons, so a drag that was
+//      trying to scroll the screen never becomes a commit.
+//   5. GO INVISIBLE. The fill is state, not decoration, so it survives
+//      reduced-motion; it is a width driven per frame, not an animation.
+//
+// Cancellation is not hand-rolled: trackGesture (#22, ui/gesture.js) calls
+// onEnd exactly once however the gesture ended — pointerup, pointercancel,
+// palm rejection, focus loss — pointerId-scoped, listeners on the element,
+// nothing on window. Vira measured the hole that module exists to fill; a hold
+// that reinvented it would reinvent the hole.
+//
+// ---------------------------------------------------------------------------
+// THE SEAM FOR VEGA — a hold with no feedback is a gesture you cannot tell is
+// working, and I am not the seat who authors sound.
+//
+// Hold boundaries deliberately make no sound here. Vega's hold-beat observer
+// owns `data-hold` / `data-hold-progress` and is the one sound path for start,
+// progress, completion and abort. Confirm panels are a different form with no
+// hold transition, so their three cues remain here without double-firing.
+// ---------------------------------------------------------------------------
+
+const { trackGesture } = require("src/ui/gesture.js");
+const { beatFor } = require("src/model/secondbeat.js");
+const { sfx } = require("src/ui/sfx.js");
+
+/** How far a finger may wander before the hold is read as a drag. */
+const SLOP = 12;
+
+/**
+ * THE CUE VOCABULARY — six phases, one family. Exported so Vega can author
+ * against a list rather than against a grep, and so an instrument can assert
+ * the wiring is live off `sfx.recent` without shipping any audio.
+ */
+const BEAT_CUES = Object.freeze([
+  'beat_confirmArm', 'beat_confirmCommit', 'beat_confirmCancel',
+]);
+
+/**
+ * THE ONE PLACE A BEAT ANNOUNCES ITSELF. Sound today; haptics belong here too.
+ * `phase` is one of BEAT_CUES' suffixes; `id` and `form` are passed so a future
+ * pattern can differ per action without a second call site being invented.
+ */
+function beatCue(phase, id, form) {
+  const cue = `beat_${phase}`;
+  sfx.play(cue);
+  // VEGA'S SEAM. `navigator.vibrate` goes here — one call, every form, every
+  // action, with `id` and `form` already in hand. Nothing else in the tree
+  // should ever learn that a beat has a body.
+  return { cue, id, form };
+}
+
+/**
+ * armHold(btn, { ms, onConfirm, id }) -> disarm() (with .refresh())
+ *
+ * `ms` may be a NUMBER or a FUNCTION returning one, read at the moment the
+ * finger lands. The function form remains available to rows whose state can
+ * change while a screen is mounted; End Turn itself is deliberately constant.
+ *
+ * `ms <= 0` is the "off" position of the dial and it is the pre-hold behaviour
+ * byte for byte: one tap commits. Not a hold with a zero timer.
+ */
+function armHold(btn, { ms, onConfirm, id = null }) {
+  const msOf = typeof ms === 'function' ? ms : () => ms;
+
+  let raf = 0;
+  let armed = false;
+  let fired = false;
+  // Set at pointerdown, read at the click that follows it: did this press start
+  // a hold? Rule 1 lives on this flag, and so does the ms<=0 passthrough.
+  let heldThisPress = false;
+
+  const paint = (p) => {
+    btn.style.setProperty('--hold', String(p));
+    btn.dataset.holdProgress = p.toFixed(3);
+  };
+
+  /**
+   * The two states an instrument and a screenshot can both read, so a tool
+   * never re-derives what the screen already knows (Law 0 clause 4). Re-applied
+   * on refresh() because a screen that repaints its own innerHTML — combat's
+   * End Turn does, every render — drops the hint and nothing else notices.
+   */
+  function dress() {
+    const now = msOf();
+    if (now > 0) {
+      btn.classList.add('beat-hold');
+      if (id) btn.dataset.holdAction = id;
+      if (!btn.dataset.hold) btn.dataset.hold = 'idle';
+      btn.dataset.holdMs = String(now);
+      if (btn.style.getPropertyValue('--hold') === '') btn.style.setProperty('--hold', '0');
+      if (!btn.querySelector('.hold-hint')) {
+        // THE INSTRUCTION IS ON SCREEN, not announced and not discovered. A
+        // gesture a tired player has to find is a gesture they will fight; the
+        // word is three letters and it costs the control nothing.
+        const hint = document.createElement('span');
+        hint.className = 'hold-hint';
+        hint.textContent = 'HOLD';
+        btn.appendChild(hint);
+      }
+    } else {
+      btn.classList.remove('beat-hold');
+      delete btn.dataset.hold;
+      delete btn.dataset.holdAction;
+      delete btn.dataset.holdMs;
+      delete btn.dataset.holdProgress;
+      btn.style.removeProperty('--hold');
+      const hint = btn.querySelector('.hold-hint');
+      if (hint) hint.remove();
+    }
+  }
+
+  function stop(state) {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    armed = false;
+    if (btn.dataset.hold) btn.dataset.hold = state;
+    paint(0);
+  }
+
+  function begin(ev) {
+    heldThisPress = false;
+    const ms0 = msOf();
+    // The dial is off, or this state of this action owes no beat. Let the
+    // click through untouched — that is the pre-hold behaviour, byte for byte.
+    if (!(ms0 > 0)) return;
+    if (fired || armed) return;
+    heldThisPress = true;
+    armed = true;
+    btn.dataset.hold = 'holding';
+    const t0 = performance.now();
+    const x0 = ev.clientX;
+    const y0 = ev.clientY;
+
+    const tick = (now) => {
+      if (!armed) return;
+      const p = Math.min(1, (now - t0) / ms0);
+      paint(p);
+      if (p >= 1) {
+        // FIRE AT FULL, not at release. The player feels it land while their
+        // thumb is still down, which is the confirmation; waiting for the lift
+        // would make a completed hold feel like it did nothing.
+        fired = true;
+        stop('done');
+        onConfirm(ev);
+        // A control that survives its own commit (End Turn does — the screen
+        // stays and the next turn begins) must be pressable again.
+        fired = false;
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    trackGesture(ev, {
+      onMove: (mv) => {
+        if (!armed) return;
+        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) stop('idle');
+      },
+      // However it ended — lift, cancel, palm, focus loss. If the fill never
+      // reached the end, nothing happened, and that IS the feature.
+      onEnd: () => { if (armed) stop('idle'); },
+    });
+  }
+
+  // A pointer click never commits WHEN A HOLD WAS ARMED. See rule 1 — the early
+  // release IS the abort, so the click it generates must die here rather than
+  // become a second door. When no hold was armed (the dial is off, or this
+  // state owes no beat) the click is the whole action and passes straight
+  // through.
+  const onClick = (ev) => {
+    if (ev.detail === 0) { onConfirm(ev); return; } // rule 3: keyboard / pad cursor
+    if (!heldThisPress) { onConfirm(ev); return; }
+    heldThisPress = false;
+    ev.preventDefault();
+    ev.stopPropagation();
+  };
+
+  const onKeyEsc = (ev) => { if (ev.key === 'Escape' && armed) stop('idle'); };
+
+  dress();
+  btn.addEventListener('pointerdown', begin);
+  btn.addEventListener('click', onClick);
+  addEventListener('keydown', onKeyEsc);
+
+  const disarm = function disarm() {
+    stop('idle');
+    fired = true;
+    btn.removeEventListener('pointerdown', begin);
+    btn.removeEventListener('click', onClick);
+    removeEventListener('keydown', onKeyEsc);
+  };
+  // Re-read the dial and the action's state. Cheap, idempotent, and the only
+  // way a control whose own screen rewrites its innerHTML keeps its dressing.
+  disarm.refresh = dress;
+  return disarm;
+}
+
+// ---------------------------------------------------------------------------
+// THE CONFIRM FORM.
+//
+// ONE ARMED CONTROL AT A TIME, HELD HERE. Arming a second card must disarm the
+// first, and that mutual exclusion is a property of the FORM, not of any
+// screen — the Smith and the merchant would otherwise each hand-roll it and
+// drift. This is the one piece of module state in the file and it exists so
+// that no screen owns it.
+let activeConfirm = null;
+
+/**
+ * armConfirm(el, { question, detailHtml, confirmLabel, onConfirm, id })
+ *   -> disarm()
+ *
+ * The first press ARMS: the control is marked, and a panel appears beside it
+ * carrying the answer to "what does this actually do" — for the Smith, the
+ * upgrade preview that until now only ever existed on hover, which a phone does
+ * not have. The second press, on CONFIRM, commits.
+ *
+ * WHY THE PAD IS NOT EXEMPTED HERE AND IS EXEMPTED FROM THE HOLD. The hold
+ * answers a pointing failure a focus cursor cannot make, so charging a pad
+ * player for it is ceremony. This answers a CHOOSING failure — picking the
+ * wrong object — and a pad player picks objects exactly like everyone else.
+ * Same mistake, same beat.
+ */
+function armConfirm(el, { question, detailHtml = '', confirmLabel = 'CONFIRM', onConfirm, id = null }) {
+  let panel = null;
+
+  function close(phase) {
+    if (!panel) return;
+    panel.remove();
+    panel = null;
+    el.classList.remove('beat-armed');
+    el.removeAttribute('data-beat-armed');
+    if (activeConfirm === close) activeConfirm = null;
+    if (phase) beatCue(phase, id, 'confirm');
+  }
+
+  function open() {
+    if (panel) return;
+    if (activeConfirm) activeConfirm(null);
+    el.classList.add('beat-armed');
+    el.dataset.beatArmed = '1';
+    panel = document.createElement('div');
+    panel.className = 'beat-confirm';
+    panel.dataset.beatFor = id || '';
+    // The question is TEXT and the detail is HTML the caller already built with
+    // the game's own escaping helpers (upgradePreviewHtml does). Nothing here
+    // interpolates a player-supplied string.
+    const q = document.createElement('p');
+    q.className = 'beat-q';
+    q.textContent = question;
+    panel.appendChild(q);
+    if (detailHtml) {
+      const d = document.createElement('div');
+      d.className = 'beat-detail';
+      d.innerHTML = detailHtml;
+      panel.appendChild(d);
+    }
+    const row = document.createElement('div');
+    row.className = 'beat-actions';
+    const yes = document.createElement('button');
+    yes.className = 'beat-yes';
+    yes.textContent = confirmLabel;
+    const no = document.createElement('button');
+    no.className = 'subtle beat-no';
+    no.textContent = 'CANCEL';
+    row.appendChild(yes);
+    row.appendChild(no);
+    panel.appendChild(row);
+    el.insertAdjacentElement('afterend', panel);
+    activeConfirm = close;
+    beatCue('confirmArm', id, 'confirm');
+
+    yes.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const commit = onConfirm;
+      close(null);
+      beatCue('confirmCommit', id, 'confirm');
+      commit(ev);
+    });
+    no.addEventListener('click', (ev) => { ev.stopPropagation(); close('confirmCancel'); });
+    yes.focus({ preventScroll: true });
+  }
+
+  const onKeyEsc = (ev) => { if (ev.key === 'Escape' && panel) close('confirmCancel'); };
+  const onPress = (ev) => { ev.stopPropagation(); if (panel) close('confirmCancel'); else open(); };
+
+  el.addEventListener('click', onPress);
+  // ESCAPE CANCELS, same key the hold answers to — a player who has learned one
+  // way out of a beat has learned both. Bound ONCE per armed control, not once
+  // per open: a listener added in open() and removed only in disarm() stacks a
+  // copy every time the player changes their mind, which is the leak #22 exists
+  // to be careful about.
+  addEventListener('keydown', onKeyEsc);
+  return function disarm() {
+    close(null);
+    el.removeEventListener('click', onPress);
+    removeEventListener('keydown', onKeyEsc);
+  };
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * The dial position -> milliseconds, in one place, reading the one home
+ * (`balance.ui.holdConfirm`). An unknown stored value resolves to the DEFAULT
+ * rather than to 0: a settings string nobody recognises must not quietly
+ * disable a safety step.
+ */
+function holdMs(settings, holdConfirm) {
+  const steps = (holdConfirm && holdConfirm.steps) || {};
+  const raw = settings && settings.holdConfirm;
+  const key = Object.prototype.hasOwnProperty.call(steps, raw) ? raw : holdConfirm.def;
+  return Number(steps[key]) || 0;
+}
+
+/**
+ * beatArmer(meta, registries) -> arm(el, actionId, opts) -> disarm
+ *
+ * THE ONE DOOR. A screen calls this once, then names actions. It never names a
+ * form, never reads the dial twice, and cannot arm something the table has not
+ * ruled on.
+ *
+ * opts:
+ *   ctx          the action's state, for a row whose characteristics depend on
+ *                it. A key the row declares and the caller omits THROWS by name
+ *                (secondbeat.js) rather than resolving to a plausible 'none'.
+ *   onConfirm    the commit. Called once, whichever form ran.
+ *   question     confirm form only — the sentence above the buttons.
+ *   detailHtml   confirm form only — what the action actually does.
+ *   confirmLabel confirm form only.
+ *
+ * EVERY ARMED CONTROL MARKS ITSELF, including the ones that owe no beat:
+ * `data-beat="none|hold|confirm"` and `data-beat-action="<id>"`. That is not
+ * decoration — it is the only way an instrument can read the page back against
+ * the table IN BOTH DIRECTIONS: a declared action that draws no control is a
+ * lie, and a control whose action nobody declared is a gap. Neither is visible
+ * from a source tree.
+ */
+function beatArmer(meta, registries) {
+  const dialMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
+
+  return function arm(el, actionId, { ctx = {}, onConfirm, question, detailHtml, confirmLabel } = {}) {
+    // `ctxOf` so a row whose stakes move with the game state (End Turn) is
+    // evaluated at the moment the finger lands, not at the moment the screen
+    // mounted. A screen passes a function; a static action passes an object.
+    const ctxOf = typeof ctx === 'function' ? ctx : () => ctx;
+    const formNow = () => beatFor(actionId, ctxOf()).form;
+
+    el.dataset.beatAction = actionId;
+    const initial = beatFor(actionId, ctxOf());
+    el.dataset.beat = initial.form;
+
+    if (initial.form === 'confirm') {
+      // A confirm is a screen-state change, not a timer, so the dial does not
+      // set its length — but `off` is still off: the player asked for one tap.
+      if (dialMs <= 0) {
+        const off = function disarmOff() { el.removeEventListener('click', onConfirm); };
+        off.refresh = () => {};
+        el.addEventListener('click', onConfirm);
+        return off;
+      }
+      const c = armConfirm(el, { question: question || `${initial.of}?`, detailHtml, confirmLabel, onConfirm, id: actionId });
+      c.refresh = () => {};
+      return c;
+    }
+
+    // HOLD and NONE share one path, because for a state-dependent action they
+    // are the SAME CONTROL at two moments. `armHold` reads the duration at
+    // pointerdown; a 0 means this press owes no beat and the click commits.
+    const ms = () => (formNow() === 'hold' ? dialMs : 0);
+    const disarm = armHold(el, { ms, onConfirm, id: actionId });
+    const wrapped = function disarmBeat() { disarm(); };
+    // A screen that repaints the control (combat's End Turn, every render) calls
+    // this; it re-reads the state and re-dresses. Nothing else changes.
+    wrapped.refresh = () => { el.dataset.beat = formNow(); disarm.refresh(); };
+    return wrapped;
+  };
+}
+
+
+Object.assign(module.exports, { beatCue, armHold, armConfirm, holdMs, beatArmer });
+
+},
 "src/ui/screens/reward.js": function (module, exports, require) {
 // src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1)
 //
@@ -30732,11 +31732,30 @@ Object.assign(module.exports, { mountRewards });
 "src/ui/screens/rest.js": function (module, exports, require) {
 // src/ui/screens/rest.js — Shrine of Emberlight: Rest (heal) or Smith (upgrade)
 // (SPEC §7.1; heal math from engine/encounters.js shrineHealAmount)
+//
+// TWO ACTIONS ON THIS SCREEN TAKE A SECOND BEAT, and they take DIFFERENT ONES,
+// which is the clearest illustration in the tree of why the form is derived
+// rather than chosen:
+//
+//   REST holds. Rest and Smith are two adjacent panels and taking either closes
+//   the other, so the mistake is a THUMB LANDING 14 px OFF — and the answer is
+//   the fill, inside the same gesture.
+//   SMITH CONFIRMS. Constantine asked for the upgrade preview to be
+//   confirmable. #105 shipped the preview as a HOVER tooltip, which on a phone
+//   is nothing at all, and then one tap committed a permanent upgrade. Holding
+//   the wrong card upgrades the wrong card; what the player needs is to SEE
+//   WHAT IT BECOMES and then say yes. So the confirm panel carries
+//   `upgradePreviewHtml` — the same preview, on the screen, where a finger can
+//   read it.
+//
+// Neither of those decisions is in this file. `model/secondbeat.js` holds the
+// characteristics; this screen names its actions.
 
 const { shrineHealAmount } = require("src/engine/encounters.js");
 const { passiveFlag, resolveCard } = require("src/model/registries.js");
 const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { esc } = require("src/ui/components/tooltip.js");
+const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { sfx } = require("src/ui/sfx.js");
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
@@ -30774,10 +31793,11 @@ function refillLineHtml(registries, refill) {
   return `<p class="rest-refill">${said.join(' ')}</p>`;
 }
 
-function mountRest(app, { registries, run, onDone, healMult = 1, refill = null }) {
+function mountRest(app, { registries, run, meta, onDone, healMult = 1, refill = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
+  const arm = beatArmer(meta, registries);
 
   app.innerHTML = `
     <div class="screen">
@@ -30800,14 +31820,20 @@ function mountRest(app, { registries, run, onDone, healMult = 1, refill = null }
     </div>`;
 
   if (!noRest) {
-    app.querySelector('#rest-opt').addEventListener('click', () => {
-      run.hp = Math.min(run.maxHp, run.hp + heal);
-      run.mana = run.maxMana;
-      sfx.play('shrine');
-      onDone(`Rested: +${heal} HP.`);
+    arm(app.querySelector('#rest-opt'), 'shrineRest', {
+      onConfirm: () => {
+        run.hp = Math.min(run.maxHp, run.hp + heal);
+        run.mana = run.maxMana;
+        sfx.play('shrine');
+        onDone(`Rested: +${heal} HP.`);
+      },
     });
   }
   if (upgradable.length) {
+    // OPENING THE GRID IS NOT AN ACTION THE TABLE RULES ON, and the asymmetry
+    // is the point: this button commits nothing — it reveals the candidates,
+    // and the player can walk away or rest instead. Rest commits. Same screen,
+    // same shape of panel, different characteristics, different answer.
     app.querySelector('#smith-opt').addEventListener('click', () => {
       const grid = app.querySelector('#smith-grid');
       if (grid.style.display !== 'none') return;
@@ -30818,10 +31844,18 @@ function mountRest(app, { registries, run, onDone, healMult = 1, refill = null }
       for (const inst of upgradable) {
         // Hover/focus a candidate to preview exactly what the upgrade changes.
         const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
-        el.addEventListener('click', () => {
-          inst.upgraded = true;
-          sfx.play('shrine');
-          onDone(`Smithed: ${esc(resolveCard(registries, inst).name)}.`);
+        arm(el, 'smithUpgrade', {
+          question: `Smith ${resolveCard(registries, inst).name}? This is permanent.`,
+          // THE SAME PREVIEW THE TOOLTIP CARRIES, ON THE SCREEN. One home — a
+          // second rendering of "what this upgrade does" is the second copy
+          // this house exists to catch, and it would be the copy a phone reads.
+          detailHtml: upgradePreviewHtml(registries, inst),
+          confirmLabel: 'SMITH IT',
+          onConfirm: () => {
+            inst.upgraded = true;
+            sfx.play('shrine');
+            onDone(`Smithed: ${esc(resolveCard(registries, inst).name)}.`);
+          },
         });
         grid.appendChild(el);
       }
@@ -30845,9 +31879,17 @@ const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { sfx } = require("src/ui/sfx.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
+const { beatArmer } = require("src/ui/components/holdconfirm.js");
 
-function mountShop(app, { registries, run, onLeave, onChanged }) {
+function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
   const stock = run.shopStock;
+  // BUYING AND BURNING ARE NOT THE SAME ACTION and the table says why: a
+  // purchase spends cinders, which the run refills (`shopBuy`: tempo, faucet —
+  // the same ruling consequence.js makes about every cinder spend). Removing a
+  // card takes something out of the deck for good, from a wrapped grid of small
+  // cards, one tap. Nobody asked for this one; it is here because the Smith's
+  // machinery answers it for free and it is the same mistake.
+  const arm = beatArmer(meta, registries);
   const slotsFree = () => run.flasks.length < (registries.balance.flaskSlots || 3);
 
   function render() {
@@ -30877,13 +31919,21 @@ function mountShop(app, { registries, run, onLeave, onChanged }) {
       tag.textContent = `${item.cost} cinders`;
       tag.style.color = run.cinders >= item.cost ? 'var(--gold)' : 'var(--muted)';
       if (run.cinders >= item.cost) {
-        el.addEventListener('click', () => {
-          run.cinders -= item.cost;
-          run.deck.push({ instanceId: `s${run.deck.length}_${item.id}`, cardId: item.id, upgraded: false });
-          stock.cards.splice(i, 1);
-          sfx.play('buy');
-          onChanged();
-          render();
+        // ROUTED THROUGH THE MACHINERY EVEN THOUGH IT OWES NO BEAT, and that is
+        // the falsifier for Law 0 on this control rather than a formality:
+        // change `shopBuy`'s characteristics in model/secondbeat.js — say the
+        // day a purse can strand a run — and a purchase starts asking, with
+        // ZERO commits outside that table. An action wired with a bare
+        // `addEventListener` can only ever be changed by editing this line.
+        arm(el, 'shopBuy', {
+          onConfirm: () => {
+            run.cinders -= item.cost;
+            run.deck.push({ instanceId: `s${run.deck.length}_${item.id}`, cardId: item.id, upgraded: false });
+            stock.cards.splice(i, 1);
+            sfx.play('buy');
+            onChanged();
+            render();
+          },
         });
       } else {
         el.classList.add('unaffordable');
@@ -30928,14 +31978,19 @@ function mountShop(app, { registries, run, onLeave, onChanged }) {
         grid.style.justifyContent = 'center';
         run.deck.forEach((inst, idx) => {
           const el = renderCard(registries, inst, { small: true });
-          el.addEventListener('click', () => {
-            run.cinders -= stock.removeCost;
-            run.deck.splice(idx, 1);
-            run.removesPurchased = (run.removesPurchased || 0) + 1;
-            stock.removeCost = registries.balance.shop.removeBase + registries.balance.shop.removeStep * run.removesPurchased;
-            sfx.play('buy');
-            onChanged();
-            render();
+          const def = registries.cards.get(inst.cardId);
+          arm(el, 'shopRemove', {
+            question: `Burn ${def.name} out of the deck? ${stock.removeCost} cinders, and the card is gone.`,
+            confirmLabel: 'BURN IT',
+            onConfirm: () => {
+              run.cinders -= stock.removeCost;
+              run.deck.splice(idx, 1);
+              run.removesPurchased = (run.removesPurchased || 0) + 1;
+              stock.removeCost = registries.balance.shop.removeBase + registries.balance.shop.removeStep * run.removesPurchased;
+              sfx.play('buy');
+              onChanged();
+              render();
+            },
           });
           grid.appendChild(el);
         });
@@ -30975,13 +32030,16 @@ const { executeRunEffects } = require("src/engine/actions.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
 const { isBindingChoice } = require("src/model/consequence.js");
-const { armHold, holdMs } = require("src/ui/components/holdconfirm.js");
+const { beatArmer } = require("src/ui/components/holdconfirm.js");
 
 function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
   const def = registries.events.get(eventId);
-  // The dial, read once per mount. `holdConfirm` lives in balance.ui and this
-  // screen restates none of it.
-  const hold = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
+  // THE ONE DOOR. This screen no longer knows what a hold is, what the dial
+  // says, or which choices deserve one — it names the action and hands over the
+  // commit. `secondbeat.js` rules; `holdconfirm.js` performs. That is the whole
+  // point of tonight: `armHold` used to have exactly one caller and it was this
+  // line, which is how "same with ending turn" was lost.
+  const arm = beatArmer(meta, registries);
   const disarmers = [];
 
   function meets(requires) {
@@ -31068,20 +32126,14 @@ function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
         executeRunEffects({ run, registries, rng }, choice.effects);
         showResult(choice.resultText);
       };
-      if (binding && hold > 0) {
-        // THE INSTRUCTION IS ON SCREEN, not announced and not discovered. A
-        // gesture a tired player has to find is a gesture they will fight; the
-        // word is three letters and it costs the bar nothing. It stays inside
-        // the branch on purpose — a bar that cannot be pressed must not be told
-        // to hold.
-        const hint = document.createElement('span');
-        hint.className = 'hold-hint';
-        hint.textContent = 'HOLD';
-        btn.appendChild(hint);
-        disarmers.push(armHold(btn, { ms: hold, onConfirm: commit }));
-      } else {
-        btn.addEventListener('click', commit);
-      }
+      // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
+      // CHARACTERISTIC of the choice, derived from its own ops
+      // (model/consequence.js); the beat is derived from that characteristic
+      // (model/secondbeat.js). The HOLD hint, the fill, the dial and the "off"
+      // position all moved into the machinery with it — a bar that cannot be
+      // pressed still never gets armed, because this branch is the affordable
+      // one and always was.
+      disarmers.push(arm(btn, 'eventChoice', { ctx: { binding }, onConfirm: commit }));
     }
     box.appendChild(btn);
   });
@@ -31323,169 +32375,6 @@ function isBindingChoice(choice, registries) {
 
 
 Object.assign(module.exports, { SAFE_OPS, BINDING_CARD_TYPES, failClosedOps, cinderPremise, bindingReasons, isBindingChoice });
-
-},
-"src/ui/components/holdconfirm.js": function (module, exports, require) {
-// src/ui/components/holdconfirm.js — PRESS AND HOLD, for the choices a run
-// cannot take back. Constantine, asked whether to build it: "yes press and
-// hold".
-//
-// THE DEFECT IT ANSWERS, in one number. The event screen's three bars are
-// 44/44/44 across sixteen cells — the SIZE was fixed and it did not help,
-// because the GAPS are 9-9.7 px at every dial setting and nothing in this game
-// reads a gap. A thumb that lands 9 px low lands on the neighbour, and on that
-// screen the neighbour is a permanent curse with no confirm and no undo.
-//
-// WHY A HOLD RATHER THAN A MODAL, and this is the whole design rather than a
-// preference: the control FILLS UNDER THE FINGER. The player reads the words
-// that are filling, sees they are the wrong ones, and LETS GO — the correction
-// happens inside the same gesture as the mistake. A modal asks "are you sure?"
-// after the commit, when the eye has already moved to the next screen and the
-// answer is always yes.
-//
-// THE FIVE THINGS IT MUST NEVER DO, each one a way this shape goes wrong:
-//
-//   1. COMMIT ON A RELEASE. Releasing early is the abort, so a pointer `click`
-//      on a held control NEVER commits — the completed hold is the only pointer
-//      path there is. Get this backwards and the safety feature becomes a
-//      second way to fire the thing.
-//   2. COMMIT TWICE. It fires the instant the fill lands, then disarms; the
-//      trailing pointerup and its click find nothing armed.
-//   3. LOCK ANYONE OUT. `ev.detail === 0` — a keyboard Enter on a focused
-//      button, and the synthetic click ui/input.js dispatches for the gamepad
-//      cursor — commits immediately, with no hold. That is not a loophole, it
-//      is the scope: this answers a POINTING failure, a 9 px gap only a finger
-//      can fall into. A focus cursor selects a NAMED element and cannot land
-//      between two bars, so charging it a hold would be ceremony billed to a
-//      player who cannot make the mistake. Named boundary, not silence: pad and
-//      keyboard players get no confirm step.
-//   4. TRAP A SCROLL. Moving more than SLOP px abandons, so a drag that was
-//      trying to scroll the screen never becomes a commit.
-//   5. GO INVISIBLE. The fill is state, not decoration, so it survives
-//      reduced-motion; it is a width driven per frame, not an animation.
-//
-// Cancellation is not hand-rolled: trackGesture (#22, ui/gesture.js) calls
-// onEnd exactly once however the gesture ended — pointerup, pointercancel,
-// palm rejection, focus loss — pointerId-scoped, listeners on the element,
-// nothing on window. Vira measured the hole that module exists to fill; a hold
-// that reinvented it would reinvent the hole.
-
-const { trackGesture } = require("src/ui/gesture.js");
-
-/** How far a finger may wander before the hold is read as a drag. */
-const SLOP = 12;
-
-/**
- * armHold(btn, { ms, onConfirm }) -> disarm()
- *
- * `ms <= 0` wires a plain click and returns: the "off" position of the dial is
- * the pre-hold behaviour byte for byte, not a hold with a zero timer.
- */
-function armHold(btn, { ms, onConfirm }) {
-  if (!(ms > 0)) {
-    btn.addEventListener('click', onConfirm);
-    return () => btn.removeEventListener('click', onConfirm);
-  }
-
-  btn.classList.add('ev-hold');
-  // Two states an instrument and a screenshot can both read, so the tool never
-  // re-derives what the screen already knows (Law 0 clause 4).
-  btn.dataset.hold = 'idle';
-  btn.dataset.holdMs = String(ms);
-  btn.style.setProperty('--hold', '0');
-
-  let raf = 0;
-  let armed = false;
-  let fired = false;
-
-  const paint = (p) => {
-    btn.style.setProperty('--hold', String(p));
-    btn.dataset.holdProgress = p.toFixed(3);
-  };
-
-  function stop(state) {
-    if (raf) cancelAnimationFrame(raf);
-    raf = 0;
-    armed = false;
-    btn.dataset.hold = state;
-    paint(0);
-  }
-
-  function begin(ev) {
-    if (fired || armed) return;
-    armed = true;
-    fired = false;
-    btn.dataset.hold = 'holding';
-    const t0 = performance.now();
-    const x0 = ev.clientX;
-    const y0 = ev.clientY;
-
-    const tick = (now) => {
-      if (!armed) return;
-      const p = Math.min(1, (now - t0) / ms);
-      paint(p);
-      if (p >= 1) {
-        // FIRE AT FULL, not at release. The player feels it land while their
-        // thumb is still down, which is the confirmation; waiting for the lift
-        // would make a completed hold feel like it did nothing.
-        fired = true;
-        stop('done');
-        onConfirm(ev);
-        return;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-
-    trackGesture(ev, {
-      onMove: (mv) => {
-        if (!armed) return;
-        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) stop('idle');
-      },
-      // However it ended — lift, cancel, palm, focus loss. If the fill never
-      // reached the end, nothing happened, and that IS the feature.
-      onEnd: () => { if (armed) stop('idle'); },
-    });
-  }
-
-  // A pointer click never commits. See rule 1 — the early release IS the abort,
-  // so the click it generates must die here rather than become a second door.
-  const onClick = (ev) => {
-    if (ev.detail === 0) { onConfirm(ev); return; } // rule 3: keyboard / pad cursor
-    ev.preventDefault();
-    ev.stopPropagation();
-  };
-
-  const onKeyEsc = (ev) => { if (ev.key === 'Escape' && armed) stop('idle'); };
-
-  btn.addEventListener('pointerdown', begin);
-  btn.addEventListener('click', onClick);
-  addEventListener('keydown', onKeyEsc);
-
-  return function disarm() {
-    stop('idle');
-    fired = true;
-    btn.removeEventListener('pointerdown', begin);
-    btn.removeEventListener('click', onClick);
-    removeEventListener('keydown', onKeyEsc);
-  };
-}
-
-/**
- * The dial position -> milliseconds, in one place, reading the one home
- * (`balance.ui.holdConfirm`). An unknown stored value resolves to the DEFAULT
- * rather than to 0: a settings string nobody recognises must not quietly
- * disable a safety step.
- */
-function holdMs(settings, holdConfirm) {
-  const steps = (holdConfirm && holdConfirm.steps) || {};
-  const raw = settings && settings.holdConfirm;
-  const key = Object.prototype.hasOwnProperty.call(steps, raw) ? raw : holdConfirm.def;
-  return Number(steps[key]) || 0;
-}
-
-
-Object.assign(module.exports, { armHold, holdMs });
 
 },
 "src/ui/screens/gameover.js": function (module, exports, require) {
