@@ -5307,6 +5307,7 @@ const { SCALES, BEDS } = require("src/content/music.js");
 const { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } = require("src/content/equipment.js");
 const { equipTargets } = require("src/content/generated/equipTargets.js");
 const { unlocks } = require("src/content/generated/unlocks.js");
+const { attributes, creationModes, attributeRules } = require("src/content/attributes.js");
 
 const contentBundle = {
   version: '0.4.0',
@@ -5345,6 +5346,9 @@ const contentBundle = {
   // The card-tag registry rides the bundle so effect `tags` and
   // taggedVulnerability lists validate against ONE vocabulary home (#61).
   tags: cardTags,
+  attributes,
+  creationModes,
+  attributeRules,
 };
 
 // Not part of the bundle (UI-only data / M1 flow):
@@ -12581,6 +12585,51 @@ const unlocks = [
 Object.assign(module.exports, { unlocks });
 
 },
+"src/content/attributes.js": function (module, exports, require) {
+// src/content/attributes.js — authoritative Phase 1 creation-stat data.
+//
+// These values are inert run identity. Combat, checks, resource pools and
+// derived formulas do not read them in Phase 1. `strength` and `dexterity`
+// deliberately share display words with existing transient combat statuses;
+// they remain separate namespaces until a later feature defines a bridge.
+
+const attributes = [
+  { id: 'strength', label: 'Strength', shortLabel: 'STR', order: 1 },
+  { id: 'dexterity', label: 'Dexterity', shortLabel: 'DEX', order: 2 },
+  { id: 'constitution', label: 'Constitution', shortLabel: 'CON', order: 3 },
+  { id: 'wisdom', label: 'Wisdom', shortLabel: 'WIS', order: 4 },
+  { id: 'intelligence', label: 'Intelligence', shortLabel: 'INT', order: 5 },
+];
+
+const creationModes = [
+  {
+    id: 'standard',
+    label: 'Standard',
+    baseline: 10,
+    bonusPool: 5,
+    minimum: 10,
+    maximum: 15,
+    belowBaseline: 'forbid',
+    redistribution: 'fixedTotal',
+  },
+];
+
+// Complete mode × class × attribute product. No Origins are enabled in Phase 1.
+const attributeRules = {
+  defaultMode: 'standard',
+  presets: {
+    standard: {
+      reaver: { strength: 13, dexterity: 10, constitution: 12, wisdom: 10, intelligence: 10 },
+      starseer: { strength: 10, dexterity: 11, constitution: 10, wisdom: 10, intelligence: 14 },
+      herald: { strength: 10, dexterity: 10, constitution: 12, wisdom: 13, intelligence: 10 },
+    },
+  },
+};
+
+
+Object.assign(module.exports, { attributes, creationModes, attributeRules });
+
+},
 "src/model/validate.js": function (module, exports, require) {
 // src/model/validate.js — content validation (SPEC §3.14)
 //
@@ -12618,6 +12667,7 @@ const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CAR
 
 const { RESOURCE_SOURCE_IDS } = require("src/model/resources.js");
 const { FORMULA_OPS, FORMULA_OF, isFormula } = require("src/model/formulas.js");
+const { attributeContentProblems } = require("src/model/attributes.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -12661,6 +12711,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'sfx',
   'music',
   'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
+  'attributeRules',
 ]);
 
 /**
@@ -12817,6 +12868,8 @@ function validateContent(bundle) {
 
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {
+    attributes: SCHEMAS.attribute,
+    creationModes: SCHEMAS.creationMode,
     cards: SCHEMAS.card,
     resources: SCHEMAS.resource,
     relics: SCHEMAS.relic,
@@ -12836,6 +12889,8 @@ function validateContent(bundle) {
       walkSchema(def, typeToSchema[type], path, vctx);
     });
   }
+  walkSchema(b.attributeRules, SCHEMAS.attributeRules, 'attributeRules', vctx);
+  for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
   // The shape walk above already rejects a missing `source`. This rejects a
@@ -16000,6 +16055,8 @@ const SFX_WAVE_TYPES = Object.freeze(['sine', 'square', 'sawtooth', 'triangle'])
 
 // Registry type names (bundle keys holding arrays of defs).
 const REGISTRY_TYPES = Object.freeze([
+  'attributes',
+  'creationModes',
   'cards',
   // HUD resource bars as data (content/resources.js). A registry, not a balance
   // sub-object, because a bar is an entry with an id — and because that is what
@@ -16181,6 +16238,26 @@ const SFX_LAYER_SCHEMAS = Object.freeze({
 // ---------------------------------------------------------------------------
 
 const SCHEMAS = Object.freeze({
+  attribute: obj({
+    id: str,
+    label: str,
+    shortLabel: str,
+    order: int,
+  }),
+  creationMode: obj({
+    id: str,
+    label: str,
+    baseline: int,
+    bonusPool: int,
+    minimum: int,
+    maximum: int,
+    belowBaseline: en('forbid'),
+    redistribution: en('fixedTotal'),
+  }),
+  attributeRules: obj({
+    defaultMode: ref('creationModes'),
+    presets: mapOf(mapOf(mapOf(int))),
+  }),
   card: obj({
     id: str,
     name: str,
@@ -16814,6 +16891,160 @@ function stacksOf(entity, statusId) {
 Object.assign(module.exports, { FORMULA_OPS, FORMULA_OF, isFormula, evaluate });
 
 },
+"src/model/attributes.js": function (module, exports, require) {
+// src/model/attributes.js — the one reader for creation-stat data.
+// No combat or derived-resource behavior belongs here.
+
+const plainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+
+function tables(source) {
+  if (source && source.attributes && typeof source.attributes.all === 'function') {
+    return {
+      attributes: source.attributes.all(),
+      creationModes: source.creationModes.all(),
+      attributeRules: source.attributeRules,
+      classes: source.classes.all(),
+    };
+  }
+  return {
+    attributes: Array.isArray(source && source.attributes) ? source.attributes : [],
+    creationModes: Array.isArray(source && source.creationModes) ? source.creationModes : [],
+    attributeRules: source && source.attributeRules,
+    classes: Array.isArray(source && source.classes) ? source.classes : [],
+  };
+}
+
+function orderedAttributes(source) {
+  return tables(source).attributes.slice().sort((a, b) => a.order - b.order);
+}
+
+function defaultCreationModeId(source) {
+  const t = tables(source);
+  const id = t.attributeRules && t.attributeRules.defaultMode;
+  if (typeof id !== 'string' || !t.creationModes.some((m) => m && m.id === id)) {
+    throw new Error(`attributeRules.defaultMode '${id}' does not resolve`);
+  }
+  return id;
+}
+
+function creationMode(source, modeId = defaultCreationModeId(source)) {
+  const mode = tables(source).creationModes.find((m) => m && m.id === modeId);
+  if (!mode) throw new Error(`Unknown attribute creation mode '${modeId}'`);
+  return mode;
+}
+
+function allocationTotal(source, modeId = defaultCreationModeId(source)) {
+  const mode = creationMode(source, modeId);
+  return mode.baseline * orderedAttributes(source).length + mode.bonusPool;
+}
+
+function allocationProblems(t, classId, modeId, values, path) {
+  const problems = [];
+  const attrs = t.attributes.slice().sort((a, b) => a.order - b.order);
+  const mode = t.creationModes.find((m) => m && m.id === modeId);
+  if (!mode) problems.push({ path: 'attributeMode', msg: `unknown creation mode '${modeId}'` });
+  if (!t.classes.some((c) => c && c.id === classId)) problems.push({ path: 'class', msg: `unknown class '${classId}'` });
+  if (!plainObject(values)) {
+    problems.push({ path, msg: 'must be a plain object keyed by attribute id' });
+    return problems;
+  }
+  const ids = attrs.map((a) => a && a.id).filter((id) => typeof id === 'string');
+  for (const id of ids) if (!Object.hasOwn(values, id)) problems.push({ path: `${path}.${id}`, msg: 'missing attribute cell' });
+  for (const id of Object.keys(values)) if (!ids.includes(id)) problems.push({ path: `${path}.${id}`, msg: `unknown attribute id '${id}'` });
+  if (!mode) return problems;
+  let total = 0;
+  let allIntegers = true;
+  for (const id of ids) {
+    const value = values[id];
+    if (!Number.isInteger(value)) {
+      allIntegers = false;
+      problems.push({ path: `${path}.${id}`, msg: 'must be an integer' });
+      continue;
+    }
+    const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
+    if (value < floor || value > mode.maximum) problems.push({ path: `${path}.${id}`, msg: `must be between ${floor} and ${mode.maximum} for mode '${mode.id}'` });
+    total += value;
+  }
+  if (allIntegers && mode.redistribution === 'fixedTotal') {
+    const expected = mode.baseline * ids.length + mode.bonusPool;
+    if (total !== expected) problems.push({ path, msg: `total ${total} must equal ${expected} for mode '${mode.id}'` });
+  }
+  return problems;
+}
+
+function attributeAllocationProblems(source, classId, modeId, values, path = 'attributes') {
+  return allocationProblems(tables(source), classId, modeId, values, path);
+}
+
+function classAttributePreset(source, classId, modeId = defaultCreationModeId(source)) {
+  const t = tables(source);
+  const values = t.attributeRules && t.attributeRules.presets
+    && t.attributeRules.presets[modeId] && t.attributeRules.presets[modeId][classId];
+  const path = `attributeRules.presets.${modeId}.${classId}`;
+  const problems = allocationProblems(t, classId, modeId, values, path);
+  if (problems.length) throw new Error(problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
+  return Object.fromEntries(orderedAttributes(source).map((def) => [def.id, values[def.id]]));
+}
+
+function normalizeRunAttributes(run, registries) {
+  const modeAbsent = run.attributeMode === undefined;
+  const valuesAbsent = run.attributes === undefined;
+  if (modeAbsent !== valuesAbsent) throw new Error('attributeMode and attributes must both be present or both be absent');
+  if (modeAbsent) {
+    run.attributeMode = defaultCreationModeId(registries);
+    run.attributes = classAttributePreset(registries, run.class, run.attributeMode);
+    return run;
+  }
+  const problems = attributeAllocationProblems(registries, run.class, run.attributeMode, run.attributes);
+  if (problems.length) throw new Error(problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
+  run.attributes = Object.fromEntries(orderedAttributes(registries).map((def) => [def.id, run.attributes[def.id]]));
+  return run;
+}
+
+function attributeContentProblems(source) {
+  const t = tables(source);
+  const out = [];
+  if (!t.attributes.length) out.push({ path: 'attributes', msg: 'must define at least one attribute' });
+  if (!t.creationModes.length) out.push({ path: 'creationModes', msg: 'must define at least one creation mode' });
+  const orders = new Map();
+  for (const attr of t.attributes) {
+    if (!attr || typeof attr.id !== 'string' || !attr.id) continue;
+    if (!Number.isInteger(attr.order) || attr.order < 0) out.push({ path: `attributes.${attr.id}.order`, msg: 'must be a non-negative integer' });
+    else if (orders.has(attr.order)) out.push({ path: `attributes.${attr.id}.order`, msg: `duplicates order ${attr.order} used by '${orders.get(attr.order)}'` });
+    else orders.set(attr.order, attr.id);
+  }
+  for (const mode of t.creationModes) {
+    if (!mode || typeof mode.id !== 'string' || !mode.id) continue;
+    const path = `creationModes.${mode.id}`;
+    if (Number.isInteger(mode.minimum) && Number.isInteger(mode.baseline) && mode.minimum > mode.baseline) out.push({ path, msg: `minimum ${mode.minimum} exceeds baseline ${mode.baseline}` });
+    if (Number.isInteger(mode.baseline) && Number.isInteger(mode.maximum) && mode.baseline > mode.maximum) out.push({ path, msg: `baseline ${mode.baseline} exceeds maximum ${mode.maximum}` });
+    if (Number.isInteger(mode.bonusPool) && mode.bonusPool < 0) out.push({ path: `${path}.bonusPool`, msg: 'must be >= 0' });
+  }
+  if (!plainObject(t.attributeRules)) return [...out, { path: 'attributeRules', msg: 'must be a plain object' }];
+  const modeIds = t.creationModes.map((m) => m && m.id).filter((id) => typeof id === 'string');
+  const classIds = t.classes.map((c) => c && c.id).filter((id) => typeof id === 'string');
+  const presets = plainObject(t.attributeRules.presets) ? t.attributeRules.presets : {};
+  for (const id of Object.keys(presets)) if (!modeIds.includes(id)) out.push({ path: `attributeRules.presets.${id}`, msg: `unknown creation mode '${id}'` });
+  for (const modeId of modeIds) {
+    const byClass = presets[modeId];
+    if (!plainObject(byClass)) {
+      out.push({ path: `attributeRules.presets.${modeId}`, msg: 'missing mode preset table' });
+      continue;
+    }
+    for (const id of Object.keys(byClass)) if (!classIds.includes(id)) out.push({ path: `attributeRules.presets.${modeId}.${id}`, msg: `unknown class '${id}'` });
+    for (const classId of classIds) {
+      const path = `attributeRules.presets.${modeId}.${classId}`;
+      if (!Object.hasOwn(byClass, classId)) out.push({ path, msg: 'missing class × mode preset cell' });
+      else out.push(...allocationProblems(t, classId, modeId, byClass[classId], path));
+    }
+  }
+  return out;
+}
+
+
+Object.assign(module.exports, { orderedAttributes, defaultCreationModeId, creationMode, allocationTotal, attributeAllocationProblems, classAttributePreset, normalizeRunAttributes, attributeContentProblems });
+
+},
 "src/model/registries.js": function (module, exports, require) {
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
@@ -16868,6 +17099,8 @@ function makeRegistry(typeName, defs) {
 
 // Bundle key → registry property + singular type name for error messages.
 const TYPE_SINGULAR = {
+  attributes: 'attribute',
+  creationModes: 'creation mode',
   cards: 'card',
   resources: 'resource',
   relics: 'relic',
@@ -16913,6 +17146,7 @@ function createRegistries(contentBundle) {
   }
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
 
   const mapConfigs = deepFreeze({ ...(bundle.mapConfigs || {}) });
   registries.mapConfigs = mapConfigs;
@@ -18477,6 +18711,7 @@ Object.assign(module.exports, { parseMod, HANDS, CARD_MOD_APPLIES, RUN_MOD_APPLI
 
 const { createLoadout, runMods, stampDeck } = require("src/model/loadout.js");
 const { graceRefillPlan } = require("src/model/gracerefill.js");
+const { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } = require("src/model/attributes.js");
 
 const RUN_SCHEMA_VERSION = 1;
 
@@ -18504,8 +18739,14 @@ function createDeck(cardIds, idGen = createIdGen('d')) {
  * Starting deck/relic/HP come from the class def; cinders from
  * balance.startingCinders (default 0).
  */
-function createRunState({ seed, classId, registries }) {
+function createRunState({ seed, classId, registries, attributeMode = undefined, attributes: requestedAttributes = undefined }) {
   const classDef = registries.classes.get(classId);
+  const selectedAttributeMode = attributeMode === undefined
+    ? defaultCreationModeId(registries)
+    : attributeMode;
+  const attributes = requestedAttributes === undefined
+    ? classAttributePreset(registries, classId, selectedAttributeMode)
+    : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const idGen = createIdGen('rc');
   const loadout = createLoadout(registries, classId);
   // Armour can carry `self.maxHp`, so the pool it sets has to be known before
@@ -18518,6 +18759,8 @@ function createRunState({ seed, classId, registries }) {
     seed: seed >>> 0,
     streamCounters: {},
     class: classId,
+    attributeMode: selectedAttributeMode,
+    attributes,
     floor: 0,
     actNumber: 1,
     mapNodeId: null,
@@ -18567,6 +18810,9 @@ const RUN_SHAPE = [
   { key: 'seed', type: 'number' },
   { key: 'streamCounters', type: 'object' },
   { key: 'class', type: 'string' },
+  // Optional as a pair only so pre-attribute saves can migrate as one block.
+  { key: 'attributeMode', type: 'string', optional: true },
+  { key: 'attributes', type: 'object', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
@@ -18610,6 +18856,14 @@ function validateRunShape(run) {
       continue;
     }
     if (!typeOk(v, f.type)) problems.push(`'${f.key}' should be ${f.type}`);
+  }
+  const modeAbsent = run.attributeMode === undefined;
+  const attributesAbsent = run.attributes === undefined;
+  if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');
+  if (!attributesAbsent && typeOk(run.attributes, 'object')) {
+    for (const [id, value] of Object.entries(run.attributes)) {
+      if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
+    }
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.
@@ -22252,6 +22506,7 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 
 const { serializeRun, deserializeRun } = require("src/model/state.js");
 const { createLoadout, stampDeck } = require("src/model/loadout.js");
+const { normalizeRunAttributes } = require("src/model/attributes.js");
 
 const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -22574,6 +22829,7 @@ function createSaveManager(storage) {
       let run;
       try {
         run = deserializeRun(json);
+        normalizeRunAttributes(run, registries);
       } catch (e) {
         archive(json, e && e.message ? e.message : 'corrupt save', slot);
         return null;
