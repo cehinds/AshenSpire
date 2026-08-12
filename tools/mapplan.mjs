@@ -163,7 +163,7 @@ function printAirMargin(tapPx = TAP_TARGET_DEFAULT, pad = '  ') {
     + `${a.ok ? '' : '  <-- BELOW THE FLOOR'}`);
   console.log(`${pad}  ^ node r ${a.r} solved from balance.ui.tapSize.def = ${tapPx} at ${(a.refZoom * 100).toFixed(0)}% zoom; row pitch ROW_H = ${ROW_H} does not move with it.`);
   console.log(`${pad}  ^ the default may reach ${maxTapDefault()} px, and ROW_H may fall to ${a.minPitch.toFixed(2)}, before this goes red.`);
-  console.log(`${pad}  ^ DERIVED, and derivation is the optimistic half: Sunna MEASURED 2.9 px at 390 where this arithmetic says ${a.px390.toFixed(2)}.`);
+  console.log(`${pad}  ^ DERIVED air only; tools/mapspacing.mjs owns rendered centre pitch at both phone shapes.`);
 }
 
 // ------------------------------------------------------------------- the run
@@ -548,7 +548,7 @@ function selftest() {
   console.log(`  UNDER-reports greens every one of them at once. The generative anchor above closes that`);
   console.log(`  on the shipped act shape only; \`node tools/mapplan.mjs --spans\` is the grid, and it is`);
   console.log(`  the thing this corpus stands on. Nothing here was rendered: the vertical margin is`);
-  console.log(`  arithmetic, and the screen delivers LESS than it (2.9 measured against 3.52 derived).`);
+  console.log(`  arithmetic; tools/mapspacing.mjs owns rendered centre pitch at both phone shapes.`);
   return pass ? 0 : 1;
 }
 

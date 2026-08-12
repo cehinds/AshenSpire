@@ -586,6 +586,14 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
     console.error('[seed] refused at newRun:', { seedString, why });
     return;
   }
+  // THE PROFILE IS OLDER THAN THE CLIMB (M7 — "profile should be able to be
+  // created before first run, not after"). Here, not on the customize screen's
+  // first click: that screen's own Back button promises "Nothing here is saved",
+  // and a profile written when a class card is highlighted would make its
+  // tooltip a lie. BEGIN THE CLIMB is where a character stops being a preview,
+  // and it is one line above the run being made, so the write order is the ask.
+  // A refused seed returns above and creates nothing.
+  saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
   run = createRunState({ seed, classId, registries });
@@ -1133,6 +1141,8 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       classId: run.class,
       maxHp: run.maxHp,
       hp: run.hp,
+      maxMana: run.maxMana,
+      mana: run.mana,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
@@ -1201,6 +1211,7 @@ function onCombatEnd(result, combat, enc) {
   }
 
   run.hp = combat.player.hp;
+  run.mana = combat.player.mana;
   run.stats.fightsWon += 1;
   run.combatEntered = null;
 
@@ -1414,8 +1425,8 @@ function coopStubMount(snapshot, myId) {
 function coopCombatShot() {
   const hand = ['strike', 'rallyingBanner', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
   const party = [
-    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
-    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 50, maxMana: 80, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 20, maxMana: 40, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
   return {
     actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
@@ -1427,8 +1438,8 @@ function coopCombatShot() {
         { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 } },
       ],
       players: [
-        { id: 'p1', hp: 61, maxHp: 72, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, flasks: [{ flaskId: 'crimsonFlask' }] },
-        { id: 'p2', hp: 84, maxHp: 84, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, flasks: [] },
+        { id: 'p1', hp: 61, maxHp: 72, mana: 50, maxMana: 80, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, flasks: [{ flaskId: 'crimsonFlask' }] },
+        { id: 'p2', hp: 84, maxHp: 84, mana: 20, maxMana: 40, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, flasks: [] },
       ],
     },
     party,
@@ -1623,6 +1634,31 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
     showRest();
   } else if (shotState === 'combat' || shotState === 'fx') {
+    // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.
+    //
+    // A REACH STATE, exactly the shape and reason as ?shotAt and ?shotEvent
+    // above. His bar-scaling rule ("the size of that bar should scale depending
+    // on the max total") is a claim about how the HUD behaves ACROSS maxima,
+    // and no instrument could vary a maximum: every capture this repo has ever
+    // taken of the combat HUD was taken at the reaver's 84. One max is not the
+    // scale, in the same way one map is not the map. This is the lever
+    // tools/hudbars.mjs sweeps, and the proof that the bar length tracks the
+    // number is worth nothing without it.
+    //
+    // It moves the RUN's maxHp, which is the same field a curse and an armour
+    // mod move (actions.js:549, loadout.js runMods) — so the value enters
+    // through the door a real maximum enters, not through the renderer.
+    const shotMaxHp = Number(shotParams.get('shotMaxHp'));
+    if (Number.isFinite(shotMaxHp) && shotMaxHp > 0) {
+      run.maxHp = Math.floor(shotMaxHp);
+      run.hp = Math.min(run.hp, run.maxHp);
+    }
+    // Current mana enters through the run, before combat entity creation; the
+    // renderer never receives a fabricated value.
+    const shotMana = Number(shotParams.get('shotMana'));
+    if (shotParams.has('shotMana') && Number.isFinite(shotMana)) {
+      run.mana = Math.max(0, Math.min(run.maxMana, Math.floor(shotMana)));
+    }
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
     enterNode(startId);

@@ -23,6 +23,10 @@
 
 // Effect DSL opcodes (SPEC §3.4).
 import { NODE_TYPES, ANCHOR_KINDS } from './floorplan.js';
+// The bar vocabulary lives with the readers it describes (model/resources.js),
+// so the schema and the engine cannot drift into two homes. resources.js
+// imports nothing — no cycle.
+import { RESOURCE_WEIGHTS, HUD_SURFACES } from './resources.js';
 
 export const COMBAT_OPCODES = Object.freeze([
   'damage',
@@ -34,6 +38,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'exhaust',
   'addCard',
   'gainEnergy',
+  'restoreMana',
   'loseHp',
   'heal',
   'shuffleDiscardIntoDraw',
@@ -102,6 +107,8 @@ export const EVENTS = Object.freeze([
   'procResisted',
   'energyGained',
   'energySpent',
+  'manaRestored',
+  'manaSpent',
   'flaskUsed',
   'relicTriggered',
 ]);
@@ -160,17 +167,29 @@ export const PASSIVE_KEYS = Object.freeze([
 //   blockCap            — number: hard cap on owner's total block (max of caps wins).
 //   meterMaxGrowthDisabled — bool: while ANY combatant has it, meter thresholds
 //                            (status meters and poise) do not grow on fill.
-export const MODIFIER_KEYS = Object.freeze([
-  'damageDealtMult',
-  'damageTakenMult',
-  'blockGainedMult',
-  'attackDamageAdd',
-  'blockAdd',
-  'skipTurn',
-  'retainBlock',
-  'blockCap',
-  'meterMaxGrowthDisabled',
-]);
+//
+// THE SET AND THE SCHEMA WERE TWO COPIES AND ONLY ONE OF THEM ENFORCED
+// ANYTHING — the same shape as the relic passives, found by tools/closedsets.mjs
+// rather than by eye. `MODIFIER_KEYS` was a frozen list whose only mention in
+// the tree was an import into validate.js that used it for nothing, while
+// `modifiersSchema` below re-typed the same nine names by hand and did the
+// actual refusing. So the types come here, the list is derived from them, the
+// schema is built from the same object, and the engine's lookups check against
+// it (engine/statuses.js): adding a modifier is one row, and the three cannot
+// disagree about what exists.
+export const MODIFIER_TYPES = Object.freeze({
+  damageDealtMult: 'num',
+  damageTakenMult: 'num',
+  blockGainedMult: 'num',
+  attackDamageAdd: 'num',
+  blockAdd: 'num',
+  skipTurn: 'bool',
+  retainBlock: 'bool',
+  blockCap: 'num',
+  meterMaxGrowthDisabled: 'bool',
+});
+
+export const MODIFIER_KEYS = Object.freeze(Object.keys(MODIFIER_TYPES));
 
 export const STACK_MODES = Object.freeze(['add', 'refresh', 'unique']);
 
@@ -234,6 +253,10 @@ export const SFX_WAVE_TYPES = Object.freeze(['sine', 'square', 'sawtooth', 'tria
 // Registry type names (bundle keys holding arrays of defs).
 export const REGISTRY_TYPES = Object.freeze([
   'cards',
+  // HUD resource bars as data (content/resources.js). A registry, not a balance
+  // sub-object, because a bar is an entry with an id — and because that is what
+  // makes "add a row, a bar appears" the same act as adding any other content.
+  'resources',
   'relics',
   'statuses',
   'stances',
@@ -261,6 +284,7 @@ export const EFFECT_SPECS = Object.freeze({
   exhaust: { allowed: ['random'], required: [], refs: {} },
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
+  restoreMana: { allowed: [], required: ['amount'], refs: {} },
   loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
@@ -311,17 +335,12 @@ const floorAnchor = (extra = {}) => obj({
 
 const costNode = union(int, en('X'));
 
-const modifiersSchema = obj({
-  damageDealtMult: opt(num),
-  damageTakenMult: opt(num),
-  blockGainedMult: opt(num),
-  attackDamageAdd: opt(num),
-  blockAdd: opt(num),
-  skipTurn: opt(bool),
-  retainBlock: opt(bool),
-  blockCap: opt(num),
-  meterMaxGrowthDisabled: opt(bool),
-});
+// DERIVED FROM MODIFIER_TYPES, never re-typed. `obj` is strict about unknown
+// keys, so this node is what actually refuses a mis-spelled modifier — which is
+// exactly why it must not be a second list.
+const modifiersSchema = obj(Object.fromEntries(
+  Object.entries(MODIFIER_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
+));
 
 const enemyMoveSchema = obj({
   intent: en(...INTENT_KINDS),
@@ -420,6 +439,7 @@ export const SCHEMAS = Object.freeze({
     class: str, // a class id or 'colorless' (checked in validate.js)
     rarity: en(...CARD_RARITIES),
     cost: costNode,
+    manaCost: opt(int),
     type: en(...CARD_TYPES),
     keywords: arr(ref('keywords')),
     effects,
@@ -511,6 +531,22 @@ export const SCHEMAS = Object.freeze({
     script: opt(ref('scripts')),
   }),
 
+  // A HUD resource bar. `source` is validated against the CLOSED READER SET in
+  // model/resources.js — not here — because whether a source can be READ is a
+  // fact about the engine, and a row naming one that cannot is the exact defect
+  // this table exists to refuse (validate.js prints the row id and the set).
+  resource: obj({
+    id: str,
+    name: str,
+    glyph: opt(str),
+    tint: str,
+    weight: en(...RESOURCE_WEIGHTS),
+    order: num,
+    surfaces: arr(en(...HUD_SURFACES)),
+    source: str,
+    domainMax: opt(num),
+  }),
+
   stance: obj({
     id: str,
     name: str,
@@ -588,6 +624,7 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
+    maxMana: int,
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),

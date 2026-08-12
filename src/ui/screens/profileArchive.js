@@ -81,9 +81,18 @@ export function renderProfileSection(container, { saves, onRestored }) {
 
   // DRAFT COPY (Sunna's to replace) — the state line. It exists so the screen
   // answers "is my profile alright?" before it answers "what is in the drawer".
+  //
+  // THE `empty` LINE IS THE ASK, PRINTED BACK AT HIM (M7). It read "one is
+  // created when you finish your first run" — which was true of the build and
+  // was the exact behaviour Constantine had asked us to change, quoted to him in
+  // bold on the screen where he went looking for the profile. The behaviour is
+  // fixed in engine/save.js (`ensureProfile`, created at the class-pick commit),
+  // so this sentence is rewritten rather than deleted: the state is still
+  // reachable — someone who opens Settings before they have ever begun a climb —
+  // and it must say what will actually happen to them.
   const stateLine = {
     ok: 'Your profile is fine.',
-    empty: 'No profile yet — one is created when you finish your first run.',
+    empty: 'No profile yet — one is created the moment you begin your first climb.',
     migrated: 'Your profile was saved by an older version and has been brought forward.',
     recovered: 'Your profile was restored from the backup copy after a bad read.',
     corrupt: 'Your profile could not be read. It has been set aside — it is listed below.',

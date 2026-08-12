@@ -18,8 +18,8 @@ export const flasks = [
     name: 'Azure Flask',
     rarity: 'common',
     icon: '🫙',
-    effects: [{ op: 'gainEnergy', amount: 2 }],
-    textTemplate: 'Gain 2 Energy.',
+    effects: [{ op: 'restoreMana', amount: 20 }],
+    textTemplate: 'Restore 20 Mana.',
   },
   {
     id: 'flaskOfFerocity',

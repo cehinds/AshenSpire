@@ -48,7 +48,10 @@ export const ASCENSION_ORDER = [
 ];
 export const MAX_ASCENSION = ASCENSION_ORDER.length;
 
-export const ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS];
+// (`ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS]` stood here with no reader in
+// src/, tools/ or tests/ — a union kept in case somebody wanted one. Deleted
+// rather than documented: nothing re-typed it, so there is nothing to collapse
+// into, and the day a screen needs both groups it can spell the spread itself.)
 
 // True when a run carries any non-default rule (so it is flagged + excluded
 // from win-rate telemetry).

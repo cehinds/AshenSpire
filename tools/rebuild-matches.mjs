@@ -43,7 +43,12 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const TRACKED = 'build/AshenSpire.html';
 const ABS = resolve(ROOT, TRACKED);
 
-const md5 = (buf) => createHash('md5').update(buf).digest('hex');
+// Git stores this text artifact with LF, while a Windows checkout may feed the
+// bundler CRLF source and produce mixed newline bytes. That is checkout format,
+// not foreign content. Canonicalize CRLF only; every other byte still binds.
+const md5 = (buf) => createHash('md5').update(
+  Buffer.from(buf.toString('utf8').replace(/\r\n/g, '\n'))
+).digest('hex');
 const git = (...args) => execFileSync('git', ['-C', ROOT, ...args], { encoding: 'utf8' }).trim();
 
 /** unknown is not the softer bucket — it BLOCKS, exactly as red does (SOP 2). */
@@ -114,8 +119,8 @@ restore();
 
 // ---- the verdict ------------------------------------------------------------
 console.log(`rebuild-matches: ${TRACKED} at ${shortHead}`);
-console.log(`  committed  md5 ${before}  at ${head}`);
-console.log(`  rebuilt    md5 ${after}  from the source at ${head}`);
+console.log(`  committed  canonical-LF md5 ${before}  at ${head}`);
+console.log(`  rebuilt    canonical-LF md5 ${after}  from the source at ${head}`);
 console.log('');
 
 if (before !== after) {
@@ -135,7 +140,8 @@ console.log('BOUNDARY — what this green does NOT mean:');
 console.log(`  · nothing about dist/. "dist equals build" is verify-shipped check B, one`);
 console.log('    home each, and this row owns build/ only — deliberately narrow.');
 console.log('  · nothing about whether the game plays, renders, or is any good. It compares');
-console.log('    bytes produced by a bundler against bytes in a commit.');
+console.log('    content produced by a bundler against content in a commit. CRLF is');
+console.log('    canonicalized to LF; verify-shipped still owns exact build/dist bytes.');
 console.log(`  · reproducibility ON THIS MACHINE only — Node ${process.version}, ${process.platform}.`);
 console.log('    A bundler whose output varies by platform is a defect this cannot see from');
 console.log('    one runner; that is the git-diff step in .github/workflows/ci.yml.');

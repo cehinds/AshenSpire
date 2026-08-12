@@ -47,7 +47,7 @@ function affordable(c) {
     const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
     if ((def.keywords || []).includes('unplayable')) return false;
     const cost = def.cost === 'X' ? 0 : def.cost;
-    return cost <= c.player.energy;
+    return cost <= c.player.energy && (def.manaCost || 0) <= c.player.mana;
   });
 }
 function botStep(c) {

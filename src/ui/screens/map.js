@@ -232,9 +232,26 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const heroName = (cz.name || className).toUpperCase();
   const hasRelics = run.relics.length > 0;
   const hasFlasks = run.flasks.length > 0;
+  // Once the real floors have enough device-space pitch, a phone cannot also
+  // show the full door-to-boss span at an honest node size. The entrance uses a
+  // static orientation strip above the real map. It names the same endpoints,
+  // but deliberately has no node icons, circles, edges or handlers that could
+  // look like choices or enter game state. The actual next choice remains on
+  // the pannable board below.
+  const atEntrance = !run.mapNodeId;
+  const entranceStart = atEntrance && map.startIds.length ? map.nodes[map.startIds[0]] : null;
+  const entranceBoss = atEntrance ? nodes.find((n) => n.type === 'boss') : null;
+  const entranceOrientation = entranceStart && entranceBoss
+    ? `<div class="map-entrance-orientation" data-composition="orientation-strip" role="note" aria-label="${esc(actTitle(run.actNumber))} orientation: entrance to boss">
+        <strong>${esc(actTitle(run.actNumber))}</strong>
+        <span class="map-orientation-progress" aria-hidden="true">
+          <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
+        </span>
+      </div>`
+    : '';
 
   app.innerHTML = `
-    <div class="mapscreen${fog ? ' map-fog' : ''}">
+    <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <header class="topbar map-header">
         <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
         <div class="who">
@@ -284,8 +301,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
            into by the person quoting it. It cost one run of actends, which
            reported NOTHING SWEPT rather than a pass, which is the only reason
            this sentence is a note and not a shipped blank screen.) -->
+      ${entranceOrientation}
       <div class="map-frame">
-      <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}">
+      <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}" data-scroll-axis="x" data-scroll-axis-why="the act map is a horizontal route">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
             ${groundSvg}

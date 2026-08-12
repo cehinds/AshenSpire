@@ -24,7 +24,7 @@ function botTurn(combat, memberId) {
     const card = P.piles.hand.find((h) => {
       const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
       if ((def.keywords || []).includes('unplayable')) return false;
-      return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy;
+      return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana;
     });
     const tgt = combat.enemies.find((e) => e.alive);
     try {

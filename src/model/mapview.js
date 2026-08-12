@@ -33,9 +33,8 @@
 
 import { balance } from '../content/balance.js';
 
-/** Column pitch and floor pitch of the SVG, in SVG units. */
+/** Column pitch of the SVG, in SVG units. Floor pitch is derived below. */
 export const COL_X = 95;
-export const ROW_H = 46;
 
 /**
  * The zoom ladder — the manual control, and the bounds the computed zoom is
@@ -81,6 +80,31 @@ export const PHONE_UI_ZOOM = 0.9;
  * the same fact the comment states, once (Law 0 clause 4).
  */
 export const PHONE_UI_ZOOM_MIN = 0.74;
+
+/**
+ * The minimum centre-to-centre pitch between adjacent map floors, measured in
+ * device-space CSS pixels at the smallest phone the game claims.
+ *
+ * This is deliberately a delivered value, not another SVG-unit guess. `Fit`
+ * is allowed to change the camera zoom, and `--ui-zoom` changes with the phone;
+ * both used to make a larger ROW_H look unchanged on glass. ROW_H is derived
+ * from this floor, PHONE_UI_ZOOM_MIN and the map zoom ladder's floor below, so
+ * none of those three multipliers can quietly absorb the requested spacing.
+ *
+ * 48 is the first whole-pixel floor above every rejected 08e184a reading (the
+ * largest was 47.61 px at 390x844/115%). It is a conservative lower bound, not
+ * a claim that 48 is the visual ideal. Remove it if the map stops using adjacent
+ * floor rows; change it on Constantine's rendered read, never to fit a test.
+ */
+export const NODE_PITCH_MIN_PX = 48;
+
+/**
+ * Floor pitch of the SVG, derived from the device-space floor at the two
+ * multipliers that can make it smallest: the map zoom ladder's floor and the
+ * smallest phone UI scale. `Math.ceil` spends at most one SVG unit and makes
+ * the lower bound survive fractional layout rounding.
+ */
+export const ROW_H = Math.ceil(NODE_PITCH_MIN_PX / (ZOOM_MIN * PHONE_UI_ZOOM_MIN));
 
 /**
  * nodeRadiusFor(tapPx, zoom, uiZoom) -> the SVG radius that DELIVERS `tapPx`.
@@ -280,9 +304,10 @@ export function maxFittingColumns() {
  *   watching that number. The refusal said `accepted`. It never said `by 2%`.
  *
  *   SUNNA, vertical. The node that grew to meet the tap floor ate the space
- *   BETWEEN nodes in the same stroke: she measured 44.09 px of node against a
- *   47.0 px row pitch at 390x844, and 36.25 against 39.0 at 320x640 — under 3 px
- *   of air between two adjacent, irreversible taps. Correctly, and silently.
+ *   BETWEEN nodes in the same stroke: at 08e184a she measured 44.09 px of node
+ *   against a 47.0 px row pitch at 390x844, and 36.25 against 39.0 at 320x640 —
+ *   under 3 px of air between two adjacent, irreversible taps. Correctly and
+ *   silently. Constantine's next rendered read was simpler: too close.
  *
  * A VERDICT HAS NO DERIVATIVE; A MARGIN DOES. Both axes compute one below, both
  * refusals print it, and each margin has a floor that can go red. The floors sit
@@ -290,14 +315,11 @@ export function maxFittingColumns() {
  * the next change to NODE_R, ROW_H, COL_X or `balance.ui.tapSize.def` cannot
  * quietly eat what is left.
  *
- * WHAT THIS IS NOT — and it is the first thing to say, because the obvious next
- * move is the wrong one. This is NOT an attempt to reach 44 device px on the map.
- * Two node centres are 34 px apart at 320x640, so that target cannot exist there
- * at any radius; and SCALING THE GEOMETRY IS A NO-OP — multiply COL_X, ROW_H and
- * NODE_R by k and the fit zoom divides by k, delivering the same device px. The
- * margins are made WATCHABLE here, not big. Whether 3 px of air between two
- * irreversible taps needs a mercy control is Sunna's sentence to write, and this
- * file is the number under it, never the answer to it.
+ * Scaling every geometric term together is a no-op under Fit: multiply COL_X,
+ * ROW_H and NODE_R by k and Fit divides zoom by k. The floor pitch is therefore
+ * derived from DEVICE space while COL_X and NODE_R keep their own jobs.
+ * `tools/mapspacing.mjs` reads the rendered result at both phone shapes and both
+ * zoom modes; source constants are not allowed to grade themselves.
  *
  * DIVISION OF LABOUR BETWEEN THE TWO FLOORS, since neither watches everything:
  * the vertical floor is what binds NODE_R and ROW_H tightly; the horizontal
@@ -341,11 +363,9 @@ export const FANOUT_SLACK_MIN = 1;
  *   · It is a floor on AIR, never on target size. The target size question was
  *     answered by `nodeRadiusFor` and is not re-asked here.
  *
- * THE DERIVATION IS THE OPTIMISTIC HALF AND SAYS SO. Derived, the air at 390 is
- * 3.52 device px; Sunna measured 2.9 on the rendered screen. The screen delivers
- * LESS than this arithmetic — up to ~0.6 px less at 390 — so a floor cleared here
- * is not a floor cleared on glass. Bjorn's eye and her measurement remain the
- * only things that can say what a thumb met.
+ * THE DERIVATION IS THE OPTIMISTIC HALF AND SAYS SO. At 08e184a it predicted
+ * 3.52 device px at 390 while the screen delivered 2.9. A floor cleared here is
+ * not a floor cleared on glass; `tools/mapspacing.mjs` now owns that reading.
  *
  * What this floor buys — the largest tap default and the smallest row pitch that
  * still clear it — is DERIVED by `nodeAir` and printed, never typed here, so this

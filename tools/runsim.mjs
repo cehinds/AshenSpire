@@ -64,7 +64,7 @@ function botFight(run, rng, encounterId, cm = {}) {
     const card = combat.piles.hand.find((h) => {
       const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
       if ((def.keywords || []).includes('unplayable')) return false;
-      return (def.cost === 'X' ? 0 : def.cost) <= combat.player.energy;
+      return (def.cost === 'X' ? 0 : def.cost) <= combat.player.energy && (def.manaCost || 0) <= combat.player.mana;
     });
     const tgt = combat.enemies.find((e) => e.alive);
     try {

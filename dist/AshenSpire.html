@@ -321,6 +321,12 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 1.4rem; color: var(--parchment);
 }
+.card .mana-cost {
+  position: absolute; top: -0.7rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
+  border-radius: 999px; padding: 0 0.6rem; background: #111b35; border: 2px solid #4f82d8;
+  display: flex; align-items: center; justify-content: center; gap: 0.25rem;
+  font-weight: 700; font-size: 1rem; color: #cfe1ff;
+}
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
 .card .cname { font-family: var(--font-display); font-size: 1.15rem; text-align: center; line-height: 1.15; min-height: 2.6rem; }
 .card.upgraded .cname { color: var(--green); }
@@ -1416,14 +1422,41 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .coop-take { border-color: var(--gold); }
 
 /* multiple player seats sit side-by-side in the combat player-zone */
-.combat.coop .player-zone { display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.4rem; align-items: flex-end; justify-content: center; }
+.combat.coop .player-zone {
+  display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.4rem;
+  min-width: 13rem; align-items: flex-end; justify-content: center;
+}
+/* Phones cannot honestly hold two player seats beside three enemies: both
+   groups have real min-content widths from their resource bars. Stack the two
+   rows only for co-op, keeping every fighter at the shared sprite/text sizes.
+   The field owns vertical reach if an unusually short phone cannot hold both.
+   The hand remains its existing horizontal scroller; inline padding gives a
+   rotated first/last card a whole-card resting position at either edge. */
+:root[data-layout='narrow'] .combat.coop .field {
+  flex-direction: column; min-height: 0; overflow-y: auto;
+}
+:root[data-layout='narrow'] .combat.coop .player-zone {
+  width: 100%; min-width: 0; flex: 0 0 auto; flex-wrap: nowrap;
+  align-items: flex-end; justify-content: space-evenly; padding-bottom: 0.6rem;
+}
+:root[data-layout='narrow'] .combat.coop .enemy-row {
+  width: 100%; min-width: 0; flex: 1 0 auto; padding-bottom: 0.6rem;
+}
+:root[data-layout='narrow'] .combat.coop .hand { padding-inline: 1rem; }
 .combat.coop .combatant.player { position: relative; }
 .combat.coop .combatant.player.me .sprite { filter: drop-shadow(0 0 6px rgba(200,160,70,.55)); }
 .combat.coop .combatant.player.ended { opacity: .62; }
 .combat.coop .combatant.player.down { filter: grayscale(1); opacity: .45; }
 .combat.coop .combatant.player.away { opacity: .45; }
 .combat.coop .combatant.player.throw-target { cursor: pointer; outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 8px; box-shadow: 0 0 12px rgba(200,160,70,.4); }
-.coop-seat-name { font-size: 1.1rem; color: #e0d4b8; text-align: center; margin-top: 0.3rem; }
+.coop-seat-name {
+  width: 13rem; max-width: 100%; min-width: 0; margin-top: 0.3rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
+  font-size: 1.1rem; color: #e0d4b8; text-align: center;
+}
+.coop-seat-player { max-width: 100%; overflow-wrap: anywhere; }
+.coop-seat-vitals { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.2rem 0.7rem; }
+.coop-seat-vitals > span { white-space: nowrap; }
 .coop-turnflag { color: var(--gold); font-size: 1rem; letter-spacing: .06em; }
 .combat.coop .combatant.enemy.selected-target { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 8px; }
 
@@ -1441,6 +1474,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* flasks (throw-to-ally) */
 .coop-flasks { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin: 0.4rem 0; }
 .coop-flask { padding: 0.5rem 1.2rem; font-size: 1.3rem; }
+.combat.coop .coop-leave,
+.combat.coop .coop-flask { min-height: var(--tap-floor); height: auto; }
 .coop-flask.armed { border-color: var(--gold); box-shadow: 0 0 8px rgba(200,160,70,.5); }
 .coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: 7px; padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
 
@@ -2125,19 +2160,52 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 .combat { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
 
-/* ---------- top bar ---------- */
+/* ---------- top bar: TWO ROWS (D10 wave 4) ----------
+   Row 1 — the resource bar stack, then the armament and menu buttons.
+   Row 2 — "the other hud items": portrait, name, cinders, flasks, relics.
+
+   Law 4, and this block is CONVERTED rather than carried: the old
+   `height: 5.2rem` made the whole HUD's box answer the Text-size control. The
+   header is a box; it gets a px-under-zoom floor and grows intrinsically from
+   what is in it, so it never clips at XL and never balloons. (Ratchet, not
+   sweep — converted because this rule is being rewritten anyway.) */
 .topbar {
-  height: 5.2rem; background: var(--bg-raise); border-bottom: 1px solid var(--line);
+  min-height: calc(52px / var(--ui-zoom, 1)); height: auto;
+  background: var(--bg-raise); border-bottom: 1px solid var(--line);
   display: flex; align-items: center; gap: 1.6rem; padding: 0 1.6rem; flex-shrink: 0;
+}
+/* `.topbar` is SHARED SKIN — the map header wears it too (styles/map.css:223,
+   src/ui/screens/map.js:239) and is still a single row of its own items. Only
+   the COMBAT HUD is the two-row shape he specified, so the restructure is
+   scoped to `.combat-hud` and the map is untouched by it. Checked, not assumed:
+   the map header is the only other `.topbar` in the tree. */
+.topbar.combat-hud {
+  flex-direction: column; align-items: stretch; justify-content: center;
+  gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
+}
+/* Kept for the map header, which still draws a .who column with an .hpbar in
+   it. The combat HUD has neither any more, so these are inert there. */
+.topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
+.topbar .hpbar { width: 19rem; height: 1.4rem; }
+.topbar .hpbar .fill { background: var(--blood); }
+/* THE TOP ROW, AND THE WHOLE OF HIS SCALING RULE IS THIS ONE LINE OF LAYOUT.
+   `.resbars-host` is `flex: 1; min-width: 0`; the two buttons are
+   `flex-shrink: 0`. So the bar track = row width − padding − buttons − gaps,
+   DERIVED by the browser. Nothing types a ceiling; a bar asking for 100 % gets
+   exactly the row he means by "filling up the full top row", at any width, any
+   zoom, and after a third button is ever added. */
+.topbar.combat-hud .hud-top { display: flex; align-items: center; gap: 1rem; }
+.topbar.combat-hud .resbars-host { flex: 1 1 auto; min-width: 0; }
+.topbar.combat-hud .hud-bottom {
+  display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;
+  row-gap: calc(4px / var(--ui-zoom, 1));
 }
 .topbar .portrait {
   width: 3.8rem; height: 3.8rem; border-radius: 50%; background: var(--panel);
   border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 2rem;
+  flex-shrink: 0;
 }
-.topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
-.topbar .who .nm { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.15em; }
-.topbar .hpbar { width: 19rem; height: 1.4rem; }
-.topbar .hpbar .fill { background: var(--blood); }
+.topbar .nm { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.15em; }
 .topbar .relics { display: flex; gap: 0.6rem; margin-left: 0.8rem; }
 .topbar .relic {
   width: 2.6rem; height: 2.6rem; border-radius: 6px; background: var(--panel);
@@ -2151,6 +2219,108 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   transition: border-color 140ms, color 140ms;
 }
 .topbar .topbar-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* THE TWO BUTTONS HE PUT AT THE END OF THE TOP ROW, AT THE TAP FLOOR.
+   Measured, and the premise I was handed was wrong: the brief said these were
+   "already at the floor". They are not, and never were — `width/height: 3rem`
+   renders 27 device px against a 44 px floor at 390x844, IDENTICALLY on
+   dev = 08e184a before any of this change (tools/hudbars.mjs A5, run against
+   both trees). Marina's 44.1 was a number from her mock, not from the shipped
+   button, and it travelled.
+   Fixed here because he assigned this row its contents in the same sentence,
+   so the row is this change's to get right. SCOPED TO COMBAT deliberately: the
+   map header wears the same `.topbar-btn` with THREE of them in a row plus a
+   substrip, and growing those is a Law 5 width question on a different screen
+   that belongs to whoever opens it — named in the log, not silently swept.
+   Law 4 clause 4: a floor plus intrinsic growth, never a text multiple. */
+.topbar.combat-hud .topbar-btn {
+  width: auto; height: auto;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+}
+
+/* ---------- resource bars (content/resources.js + model/resources.js) ----------
+   ONE stylesheet block for both HUDs. The stack is left-aligned so unequal
+   lengths read as a ragged right edge — which IS the information: a longer bar
+   is a bigger pool, at a glance, without a number. Elden Ring's HUD, his
+   reference, does exactly this. */
+.resbars { display: flex; flex-direction: column; align-items: flex-start; gap: calc(3px / var(--ui-zoom, 1)); }
+
+.resbar {
+  /* Chrome geometry: px under zoom, never rem — Law 4 clause 3. A bar is a box.
+     Its inline size is set from data (the trough length); its block size is an
+     ergonomic constant. */
+  height: calc(14px / var(--ui-zoom, 1));
+  container-type: inline-size;
+  flex-shrink: 0;
+
+  /* ---- THE MINIMUM-WIDTH CLAUSE ----
+     His rule ("length scales with max") is right and needs a floor under it.
+     Marina rendered maxMana = 2 at 48 px and watched the label collide with
+     itself; below that the failure gets worse, not better — at a 4-poise mob on
+     a 9.4rem strip the trough asks for 11 px, which is narrower than its own
+     two 1 px borders plus a legible fill.
+
+     WHY A FLOOR IS LEGITIMATE AND NOT A CHEAT. The bar's claim is "you can read
+     the maximum off the length". Below the floor nobody can read a length
+     difference anyway, so preserving the encoding there costs legibility and
+     buys no information. What is NOT legitimate is a floored bar that still
+     looks to scale — two different maxima render identically down there, and
+     that is a lie unless the bar admits it. So:
+
+     THE FLOOR IS MARKED. A floored trough is drawn DASHED — the broken-axis
+     mark, the same grammar a chart uses for a truncated scale — and its exact
+     maximum is always in the tooltip. The bar stops encoding and says so.
+
+     16 px, in px under zoom because a minimum perceivable bar length must not
+     track the Text-size control (Law 2 rule 3, Law 4 clause 3).
+
+     MEASURED, not chosen by eye. `node tools/hudbars.mjs --floor` renders a
+     half-empty bar at each candidate and reports the FILL, at 390x844:
+         floor  8 -> fill 3 px   (thinner than the corner radius; reads as noise)
+         floor 10 -> fill 4 px       floor 12 -> fill  5 px
+         floor 14 -> fill 6 px       floor 16 -> fill  7 px
+         floor 20 -> fill 9 px       floor 32 -> fill 15 px
+     14 is the smallest that clears 6 px. 16 ships, one step above it, because
+     the fill is also the thing that must survive a rounded corner and a 1 px
+     border on a real screen and that margin is not free. If --floor and this
+     number ever disagree, --floor is right and this is a stale copy. */
+  --resbar-min: calc(16px / var(--ui-zoom, 1));
+  min-width: var(--resbar-min);
+}
+.resbar > .fill { background: var(--res-tint, var(--muted)); }
+/* "poise (very skinny bar)" — his words, and skinny is a row's `weight`, so a
+   future resource is skinny by writing the word, not by editing this file. */
+.resbar-skinny { height: calc(5px / var(--ui-zoom, 1)); }
+.resbar.full > .fill { animation: pulse-gold 600ms infinite alternate; }
+.reduced-motion .resbar.full > .fill { animation: none; }
+
+/* The broken-axis mark: this trough is at its floor and no longer to scale. */
+.resbar[data-floored] { border-style: dashed; }
+
+/* ---- LABEL DEGRADATION, BY MEASURED FIT ----
+   Three variants ride in the DOM; the container query picks the widest that
+   fits its own trough. Thresholds are in `em`, which inside @container resolves
+   against the container's font-size — so "does the word fit" answers the
+   player's Text-size setting, which is the only thing that question depends on.
+   This is not Law 4 chrome-scaling: the BOX above is text-independent px. */
+.resbar > .label {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: calc(10px / var(--ui-zoom, 1)); line-height: 1; padding: 0;
+  letter-spacing: 0.06em; color: var(--parchment); text-shadow: 0 1px 2px #000;
+  white-space: nowrap; overflow: hidden; pointer-events: none;
+}
+.resbar .l-full, .resbar .l-num, .resbar .l-glyph { display: none; }
+@container (min-width: 2.4em) { .resbar .l-glyph { display: inline; } }
+@container (min-width: 5.5em) { .resbar .l-glyph { display: none; } .resbar .l-num { display: inline; } }
+@container (min-width: 11em)  { .resbar .l-num { display: none; } .resbar .l-full { display: inline; } }
+/* A skinny bar carries NO label at any width — "poise (very skinny bar)" is
+   5 px tall and nothing legible fits in it; the tooltip and the aria-label
+   carry the numbers. LAST, and deliberately so: it has the same specificity as
+   the `.resbar > .label` block above and must win on order. It did not, in the
+   first draft — the poise label rendered a 4 px-tall "0/10" inside a 6 px
+   trough and I found it by rendering, not by reading the cascade. */
+.resbar-skinny > .label { display: none; }
 
 /* ---------- act backdrop ---------- */
 /* One rendered plate per act (tools/backdrops-blender.py → assets/bg/*.webp,
@@ -2197,7 +2367,23 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 .combatant { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; position: relative; }
 .combatant .sprite { position: relative; display: flex; align-items: flex-end; justify-content: center; }
+/* The under-model strip. Its bars are the SAME component as the main HUD's —
+   the old .hpbar/.poisebar pair here was two more homes for one grammar, and
+   they are gone rather than kept in parallel (Law 0 clause 4). What survives is
+   the track width, which is this surface's own container. */
 .combatant .meters { width: 13rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.combatant .resbars { width: 100%; }
+/* The bar heights differ by surface — under a model there is less room and no
+   label to hold — so the surface overrides the component's default. */
+.combatant .resbar { height: calc(12px / var(--ui-zoom, 1)); }
+.combatant .resbar-skinny { height: calc(6px / var(--ui-zoom, 1)); }
+/* STILL LIVE, and for a reason worth naming rather than deleting quietly:
+   src/ui/screens/coop.js:177 has its OWN meterBars() drawing `.bar hpbar` and
+   `.bar poisebar` inside `.combatant`. That is a second renderer for one
+   grammar — a pre-existing Law 0 clause 4 breach (the same "second map
+   renderer nobody owns" Law 5 already lists) — and converting it is not this
+   change. These two rules are what keeps co-op's strip from collapsing to
+   zero height. Delete them the day coop.js calls resbars.js. */
 .combatant .hpbar { height: 1.2rem; }
 .combatant .hpbar .fill { background: var(--blood); }
 .combatant .poisebar { height: 0.6rem; }
@@ -2613,8 +2799,19 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 :root[data-layout='narrow'] .topbar {
     height: auto; flex-wrap: wrap; row-gap: 0.4rem; gap: 1rem; padding: 0.6rem 1rem;
   }
+  :root[data-layout='narrow'] .topbar.combat-hud {
+    flex-wrap: nowrap; gap: calc(5px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1rem;
+  }
+  /* Law 5 clause 4 — the bottom row spends HEIGHT, not width. It wraps rather
+     than pushing the seed label off the side; the fight label is hidden below
+     for the reason its own comment gives. */
+  :root[data-layout='narrow'] .topbar.combat-hud .hud-bottom { gap: 0.8rem; }
+  /* Still the MAP header's bar — combat's is gone. The old rule typed the
+     combat health bar at 14rem on a phone, a constant that could not tell 72
+     max HP from 84; combat's track is derived from the row now, so the narrow
+     shape needs nothing said about it. */
   :root[data-layout='narrow'] .topbar .hpbar { width: 14rem; }
-  :root[data-layout='narrow'] .topbar .who .nm { font-size: 1rem; }
+  :root[data-layout='narrow'] .topbar .nm { font-size: 1rem; }
   /* The seed string is dev information and it is what was overflowing the bar
      on a phone. It is not gone, and I checked rather than assuming when I
      wrote this the first time: overlay.js:163 puts Seed in the Stats panel,
@@ -2721,6 +2918,39 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    the flex-item clamp the scrollport needs to be allowed to shrink — without it
    a tall canvas pushes the zoom bar off the bottom. */
 .mapscreen .map-frame { position: relative; flex: 1; display: flex; min-height: 0; min-width: 0; }
+.map-entrance-orientation { display: none; }
+
+/* The full real climb no longer fits on a phone once adjacent floors keep their
+   device-space pitch. This static orientation strip names the same endpoints;
+   it is text and a direction rail, never a second set of node-shaped choices.
+   The real map remains directly below it and owns every interaction. */
+@media (max-width: 700px) {
+  .map-entrance-orientation {
+    flex: 0 0 auto; display: grid; gap: 3px; padding: 5px 12px 6px;
+    border-bottom: 1px solid var(--line); background: var(--bg-raise);
+    pointer-events: none; user-select: none; cursor: default;
+  }
+  .map-entrance-orientation strong {
+    text-align: center; color: var(--gold); font-family: Georgia, serif;
+    font-size: 11px; line-height: 1.1; letter-spacing: 2px;
+  }
+  .map-orientation-progress {
+    display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
+    align-items: center; gap: 8px;
+  }
+  .map-orientation-progress small {
+    color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
+  }
+  .map-orientation-progress [data-role="boss"] { color: var(--ember); }
+  .map-orientation-rail {
+    height: 1px; position: relative; background: var(--map-structure);
+  }
+  .map-orientation-rail::after {
+    content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
+    border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
+    transform: translateY(-50%) rotate(45deg);
+  }
+}
 .mapscreen .map-scroll {
   flex: 1; overflow: auto;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
@@ -3615,6 +3845,14 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
     console.error('[seed] refused at newRun:', { seedString, why });
     return;
   }
+  // THE PROFILE IS OLDER THAN THE CLIMB (M7 — "profile should be able to be
+  // created before first run, not after"). Here, not on the customize screen's
+  // first click: that screen's own Back button promises "Nothing here is saved",
+  // and a profile written when a class card is highlighted would make its
+  // tooltip a lie. BEGIN THE CLIMB is where a character stops being a preview,
+  // and it is one line above the run being made, so the write order is the ask.
+  // A refused seed returns above and creates nothing.
+  saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
   run = createRunState({ seed, classId, registries });
@@ -4162,6 +4400,8 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       classId: run.class,
       maxHp: run.maxHp,
       hp: run.hp,
+      maxMana: run.maxMana,
+      mana: run.mana,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
@@ -4230,6 +4470,7 @@ function onCombatEnd(result, combat, enc) {
   }
 
   run.hp = combat.player.hp;
+  run.mana = combat.player.mana;
   run.stats.fightsWon += 1;
   run.combatEntered = null;
 
@@ -4443,8 +4684,8 @@ function coopStubMount(snapshot, myId) {
 function coopCombatShot() {
   const hand = ['strike', 'rallyingBanner', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
   const party = [
-    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
-    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 50, maxMana: 80, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 20, maxMana: 40, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
   return {
     actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
@@ -4456,8 +4697,8 @@ function coopCombatShot() {
         { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 } },
       ],
       players: [
-        { id: 'p1', hp: 61, maxHp: 72, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, flasks: [{ flaskId: 'crimsonFlask' }] },
-        { id: 'p2', hp: 84, maxHp: 84, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, flasks: [] },
+        { id: 'p1', hp: 61, maxHp: 72, mana: 50, maxMana: 80, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, flasks: [{ flaskId: 'crimsonFlask' }] },
+        { id: 'p2', hp: 84, maxHp: 84, mana: 20, maxMana: 40, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, flasks: [] },
       ],
     },
     party,
@@ -4652,6 +4893,31 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
     showRest();
   } else if (shotState === 'combat' || shotState === 'fx') {
+    // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.
+    //
+    // A REACH STATE, exactly the shape and reason as ?shotAt and ?shotEvent
+    // above. His bar-scaling rule ("the size of that bar should scale depending
+    // on the max total") is a claim about how the HUD behaves ACROSS maxima,
+    // and no instrument could vary a maximum: every capture this repo has ever
+    // taken of the combat HUD was taken at the reaver's 84. One max is not the
+    // scale, in the same way one map is not the map. This is the lever
+    // tools/hudbars.mjs sweeps, and the proof that the bar length tracks the
+    // number is worth nothing without it.
+    //
+    // It moves the RUN's maxHp, which is the same field a curse and an armour
+    // mod move (actions.js:549, loadout.js runMods) — so the value enters
+    // through the door a real maximum enters, not through the renderer.
+    const shotMaxHp = Number(shotParams.get('shotMaxHp'));
+    if (Number.isFinite(shotMaxHp) && shotMaxHp > 0) {
+      run.maxHp = Math.floor(shotMaxHp);
+      run.hp = Math.min(run.hp, run.maxHp);
+    }
+    // Current mana enters through the run, before combat entity creation; the
+    // renderer never receives a fabricated value.
+    const shotMana = Number(shotParams.get('shotMana'));
+    if (shotParams.has('shotMana') && Number.isFinite(shotMana)) {
+      run.mana = Math.max(0, Math.min(run.maxMana, Math.floor(shotMana)));
+    }
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
     enterNode(startId);
@@ -4700,6 +4966,7 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
 const { balance } = require("src/content/balance.js");
 const { statuses } = require("src/content/statuses.js");
 const { stances } = require("src/content/stances.js");
+const { resources } = require("src/content/resources.js");
 const { keywords } = require("src/content/keywords.js");
 const { reaverCards } = require("src/content/cards/reaver.js");
 const { starseerCards } = require("src/content/cards/starseer.js");
@@ -4711,7 +4978,7 @@ const { flasks } = require("src/content/flasks.js");
 const { act1Enemies } = require("src/content/enemies/act1.js");
 const { act2Enemies } = require("src/content/enemies/act2.js");
 const { act3Enemies } = require("src/content/enemies/act3.js");
-const { act1Encounters, M1_GAUNTLET } = require("src/content/encounters/act1.js");
+const { act1Encounters } = require("src/content/encounters/act1.js");
 const { act2Encounters } = require("src/content/encounters/act2.js");
 const { act3Encounters } = require("src/content/encounters/act3.js");
 const { events } = require("src/content/events.js");
@@ -4732,6 +4999,8 @@ const contentBundle = {
   relics,
   statuses,
   stances,
+  // HUD resource bars — one row per bar (Law 0: add a row, a bar appears).
+  resources,
   keywords,
   enemies: [...act1Enemies, ...act2Enemies, ...act3Enemies],
   encounters: [...act1Encounters, ...act2Encounters, ...act3Encounters],
@@ -4766,7 +5035,7 @@ const contentBundle = {
 
 
 
-Object.assign(module.exports, { contentBundle, M1_GAUNTLET, LOCKED_CLASSES });
+Object.assign(module.exports, { contentBundle, LOCKED_CLASSES });
 
 },
 "src/content/balance.js": function (module, exports, require) {
@@ -4856,6 +5125,31 @@ const balance = {
   // slider can't drift apart — they previously lived in two files and silently
   // disagreed.
   ui: {
+    // HUD resource bars, per surface (content/resources.js holds the rows).
+    //
+    // `scaleByMax` is HIS RULE — "the size of that bar should scale depending on
+    // the max total ... with the max size filling up the full top row". It is on
+    // for the main HUD, which is the surface he said it about.
+    //
+    // It is OFF under the character models, and that is a call worth stating
+    // rather than burying: he assigned that surface its CONTENTS ("really just
+    // health and poise"), not a scaling rule. Turning it on there is defensible
+    // and informative — the act-3 boss carries 250 HP against a 12 HP wisp —
+    // but the under-model track is 84.6 px at 390x844, so most of the roster
+    // lands on the 16 px floor and stops encoding anything.
+    //
+    // MEASURED, all 19 enemies, `node tools/hudbars.mjs --model-scale`:
+    // 15 of 38 bars (39 %) sit ON the floor, and 13 of the 19 HP bars (68 %) do
+    // — every enemy at or under 60 HP renders the same length as every other.
+    // A scale two thirds of whose values are pinned to its minimum is not a
+    // scale. That is the reason for the false, and it is a number rather than
+    // a preference.
+    //
+    // Flipping either boolean is a one-number data edit and needs no code.
+    hudBars: {
+      main: { scaleByMax: true },
+      model: { scaleByMax: false },
+    },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
       gold: { hex: '#c9a227', rgb: '201, 162, 39' },
@@ -6003,6 +6297,72 @@ const stances = [
 Object.assign(module.exports, { stances });
 
 },
+"src/content/resources.js": function (module, exports, require) {
+// src/content/resources.js — THE HUD RESOURCE TABLE.
+//
+// One row per bar. This file is the whole authoring surface for the HUD's
+// meters: add a row and a bar appears, in both HUDs or one, at the length its
+// max earns. No UI code is touched, ever. (Law 0's falsifier for this feature;
+// tools/hudbars.mjs --falsifier runs it against a real row.)
+//
+// FIELDS
+//   id         unique
+//   name       the label the player reads
+//   glyph      the mark that survives when the bar is too short for words
+//   tint       the fill colour (a var(), so accent themes still own the palette)
+//   weight     'normal' | 'skinny'  — "poise (very skinny bar)", his words
+//   order      top-to-bottom within a surface; health first, his row order
+//   surfaces   ['main'] | ['model'] | both — HIS two-HUD split, as data:
+//              main HUD = health, then stamina/mana under it, then poise;
+//              under the character models = "really just health and poise"
+//   source     WHICH RESOURCE, from the closed set in model/resources.js.
+//              A source with no reader is refused at boot, by name.
+//   domainMax  OPTIONAL override of the derived ceiling (Law 0 clause 3).
+//              Omit it and the ceiling is derived from the content itself.
+//
+// Stamina remains absent because no stamina model exists. Mana is present below
+// because this branch adds the complete state path: class ceiling, run/save,
+// combat spending, shrine/flask restoration, and solo/co-op serialization.
+
+const resources = [
+  {
+    id: 'mana',
+    name: 'MANA',
+    glyph: '◆',
+    tint: '#3f73c9',
+    weight: 'normal',
+    order: 30,
+    surfaces: ['main'],
+    source: 'mana',
+  },
+  {
+    id: 'hp',
+    name: 'HEALTH',
+    glyph: '❤',
+    tint: 'var(--blood)',
+    weight: 'normal',
+    order: 10,
+    surfaces: ['main', 'model'],
+    source: 'hp',
+  },
+  {
+    id: 'poise',
+    name: 'POISE',
+    glyph: '◈',
+    tint: 'var(--gold)',
+    weight: 'skinny',
+    // Last of the stack on the main HUD — under health, and under stamina and
+    // mana whenever those arrive, because their `order` will sit between.
+    order: 90,
+    surfaces: ['main', 'model'],
+    source: 'poise',
+  },
+];
+
+
+Object.assign(module.exports, { resources });
+
+},
 "src/content/keywords.js": function (module, exports, require) {
 // src/content/keywords.js — keyword display names + tooltips (SPEC §3.7 note)
 //
@@ -6055,7 +6415,7 @@ const reaverCards = [
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 8 }] },
   },
   {
-    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, type: 'attack',
+    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 10, type: 'attack',
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -6625,7 +6985,7 @@ const GAIN_CHARGE = { op: 'applyStatus', target: 'self', status: 'starstoneCharg
 const starseerCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, type: 'attack',
+    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, manaCost: 10, type: 'attack',
     keywords: [], icon: '💎',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -6709,18 +7069,22 @@ const starseerCards = [
     upgrade: { effects: [{ op: 'draw', amount: 3 }, GAIN_CHARGE] },
   },
   {
+    // FROST, not Weak (#127-adjacent, Rune 2026-08-08). The Frost row's own
+    // proc LEAVES Weak — so a frost card that also applied Weak directly paid
+    // the same debuff twice and made the build-up pointless. The card seeds the
+    // build-up; the proc pays the Weak. Numbers PROVISIONAL, like the row's.
     id: 'frostVeil', name: 'Frost Veil', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '🌫',
     effects: [
       { op: 'block', target: 'self', amount: 4 },
-      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3 },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Gain {block} Block. Apply {weak} Weak.',
+    textTemplate: 'Gain {block} Block. Apply {frost} Frost.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 6 },
-        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4 },
         GAIN_CHARGE,
       ],
     },
@@ -6794,20 +7158,27 @@ const starseerCards = [
     },
   },
   {
+    // THE CARD NAMED FROST NOVA NOW APPLIES FROST (Rune, 2026-08-08). It
+    // applied `weak` + `vulnerable` and nothing in the game applied `frost` at
+    // all — a complete threshold-proc row (threshold, burst, Frost-Exposed, a
+    // resist row and its own SFX row) that no player could reach. Weak and
+    // Vulnerable are what the Frost PROC leaves behind; this is the card that
+    // fills the meter, and it is the Starseer's because frostExposed raises
+    // `starstone`-tagged damage. Numbers PROVISIONAL, like the row's.
     id: 'frostNova', name: 'Frost Nova', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     keywords: [], icon: '❄',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
-      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
-      { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1, if: CHARGED },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4 },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage. Apply {weak} Weak. Starstone: apply {vulnerable} Vulnerable.',
+    textTemplate: 'Deal {damage} damage. Apply {frost} Frost. Starstone: apply {frost.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 6 },
-        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
-        { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1, if: CHARGED },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 5 },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4, if: CHARGED },
         GAIN_CHARGE,
       ],
     },
@@ -7219,7 +7590,7 @@ const one = { f: 'add', args: [1] };
 const heraldCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, type: 'skill',
+    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 10, type: 'skill',
     keywords: [], icon: '✚',
     effects: [{ op: 'heal', target: 'self', amount: 4 }],
     textTemplate: 'Heal {heal} HP.',
@@ -7290,11 +7661,29 @@ const heraldCards = [
     },
   },
   {
+    // THE HERALD IS WHERE INSANITY LIVES (Rune, 2026-08-08). The Insanity row
+    // shipped complete — threshold 14, the biggest burst, +8 Poise, a
+    // guaranteed Stagger, `insanityExposed` — and NOTHING in the game applied
+    // it. It belongs to this class and not to the Reaver or the Starseer for a
+    // reason already in the data: insanityExposed raises `ritual`- and
+    // `blight`-tagged damage, and those two tags are the Herald's
+    // (content/source/cardTagging.csv). A chant repeated until the mind gives
+    // is the cheapest, slowest door in; 14 is deliberately the hardest
+    // threshold to fill, so a common has to be able to start it.
+    // Numbers PROVISIONAL, like the row's.
     id: 'litany', name: 'Litany', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
     keywords: [], icon: '📿',
-    effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 }],
-    textTemplate: 'Apply {weak} Weak.',
-    upgrade: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 }] },
+    effects: [
+      { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 },
+      { op: 'applyStatus', target: 'enemy', status: 'insanity', stacks: 3 },
+    ],
+    textTemplate: 'Apply {weak} Weak and {insanity} Insanity.',
+    upgrade: {
+      effects: [
+        { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 },
+        { op: 'applyStatus', target: 'enemy', status: 'insanity', stacks: 4 },
+      ],
+    },
   },
   {
     id: 'graveOffering', name: 'Grave Offering', class: 'herald', rarity: 'common', cost: 2, type: 'attack',
@@ -8661,8 +9050,8 @@ const flasks = [
     name: 'Azure Flask',
     rarity: 'common',
     icon: '🫙',
-    effects: [{ op: 'gainEnergy', amount: 2 }],
-    textTemplate: 'Gain 2 Energy.',
+    effects: [{ op: 'restoreMana', amount: 20 }],
+    textTemplate: 'Restore 20 Mana.',
   },
   {
     id: 'flaskOfFerocity',
@@ -8951,9 +9340,20 @@ const act2Enemies = [
     tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🛡',
     moves: {
-      slam: { intent: 'attack', damage: 10, weight: 40 },
-      fortify: { intent: 'block', block: 12, weight: 35, maxConsecutive: 1 },
-      crush: { intent: 'attack', damage: 14, weight: 25, maxConsecutive: 1 },
+      slam: { intent: 'attack', damage: 10, weight: 30 },
+      fortify: { intent: 'block', block: 12, weight: 25, maxConsecutive: 1 },
+      crush: { intent: 'attack', damage: 14, weight: 20, maxConsecutive: 1 },
+      // The player-side door into Frost (Rune, 2026-08-08). This act's own
+      // header already states the design — "the first enemies that turn YOUR
+      // mechanics against you (Bleed and Blight applied to the player)" — and
+      // Frost was the one build-up with no enemy behind it. Living Armor is
+      // already tinted var(--frost) and is `construct`, which is NOT in Frost's
+      // resistance tags, so it can seed the meter without shrugging it off
+      // itself. Numbers PROVISIONAL, like the row's.
+      rimeCrush: {
+        intent: 'attack', damage: 8, weight: 25, maxConsecutive: 1,
+        effects: [{ op: 'applyStatus', target: 'player', status: 'frost', stacks: 3 }],
+      },
     },
   },
 
@@ -9058,11 +9458,18 @@ const act3Enemies = [
     art: '🧎',
     moves: {
       desperateClaw: { intent: 'attack', damage: 9, weight: 60 },
+      // The player-side door into Insanity (Rune, 2026-08-08). An
+      // ember-starved pilgrim wailing at you is the one move in the tree that
+      // was already ABOUT the mind, and Insanity had no applier anywhere. The
+      // pilgrim is `humanoid`, which IS in Insanity's resistance tags — it
+      // resists what it inflicts, which is the joke and also the reason this
+      // is the right row. Numbers PROVISIONAL, like the row's.
       wail: {
         intent: 'debuff', weight: 40, maxConsecutive: 1,
         effects: [
           { op: 'applyStatus', target: 'player', status: 'weak', stacks: 1 },
           { op: 'applyStatus', target: 'player', status: 'frail', stacks: 1 },
+          { op: 'applyStatus', target: 'player', status: 'insanity', stacks: 3 },
         ],
       },
     },
@@ -9183,7 +9590,7 @@ Object.assign(module.exports, { act3Enemies });
 
 },
 "src/content/encounters/act1.js": function (module, exports, require) {
-// src/content/encounters/act1.js — Act 1 encounter pools + the M1 gauntlet
+// src/content/encounters/act1.js — Act 1 encounter pools
 
 const act1Encounters = [
   { id: 'loneSoldier', enemies: ['wanderingSoldier'], weight: 20, pool: 'normal' },
@@ -9195,11 +9602,15 @@ const act1Encounters = [
   { id: 'bossOmen', enemies: ['fellWarden'], weight: 1, pool: 'boss' },
 ];
 
-// M1 acceptance gauntlet (SPEC §9 M1): 2 monsters → elite → boss.
-const M1_GAUNTLET = ['patrol', 'packHunt', 'eliteWyrm', 'bossOmen'];
+// (`M1_GAUNTLET = ['patrol','packHunt','eliteWyrm','bossOmen']` — the M1
+// acceptance walk, SPEC §9 M1 — stood here and in the content barrel with no
+// reader anywhere in the tree, found by tools/closedsets.mjs. Deleted: the map
+// flow has been the real thing since M2, the headless bot test runs off
+// `balance.gauntlet`, and four ids nothing resolves are four ids that rot when
+// an encounter is renamed. SPEC §9 M1's prose is the record of that acceptance.)
 
 
-Object.assign(module.exports, { act1Encounters, M1_GAUNTLET });
+Object.assign(module.exports, { act1Encounters });
 
 },
 "src/content/encounters/act2.js": function (module, exports, require) {
@@ -9740,6 +10151,7 @@ const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
+    maxMana: 40,
     startingRelic: 'forsakenMedallion',
     startingDeck: [
       'strike', 'strike', 'strike', 'strike', 'strike',
@@ -9768,6 +10180,7 @@ const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
+    maxMana: 80,
     startingRelic: 'starstoneShard',
     startingDeck: [
       'strike', 'strike', 'strike', 'strike', 'strike',
@@ -9794,6 +10207,7 @@ const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
+    maxMana: 60,
     startingRelic: 'goldFigurine',
     startingDeck: [
       'strike', 'strike', 'strike', 'strike', 'strike',
@@ -10796,7 +11210,8 @@ const weapons = [
     "tags": "starstone",
     "mods": [
       "power.potency=+2",
-      "strike.damage=-1"
+      "strike.damage=-1",
+      "strike.frost=+2"
     ],
     "unlock": "",
     "blurb": "The stone hums before you do."
@@ -10913,7 +11328,8 @@ const weapons = [
     ],
     "mods": [
       "power.potency=+2",
-      "strike.poise=+2"
+      "strike.poise=+2",
+      "strike.insanity=+2"
     ],
     "unlock": "",
     "blurb": "Taken from something that objected."
@@ -11302,6 +11718,28 @@ const equipMods = [
     "blurb": "Burn the card applies."
   },
   {
+    "field": "frost",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "frost",
+    "label": "Frost",
+    "clause": "Apply {frost} Frost.",
+    "blurb": "Frost build-up the card applies."
+  },
+  {
+    "field": "insanity",
+    "scope": "card",
+    "apply": "status",
+    "op": "applyStatus",
+    "effTarget": "enemy",
+    "status": "insanity",
+    "label": "Insanity",
+    "clause": "Apply {insanity} Insanity.",
+    "blurb": "Insanity build-up the card applies."
+  },
+  {
     "field": "strength",
     "scope": "run",
     "apply": "startStatus",
@@ -11564,7 +12002,7 @@ Object.assign(module.exports, { unlocks });
 
 const { resolveFloorPlan } = require("src/model/floorplan.js");
 const { viewRefusals, geometryRefusals } = require("src/model/mapview.js");
-const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, MODIFIER_KEYS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, CREATURE_TAGS } = require("src/model/schemas.js");
+const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, PILES, PILE_POSITIONS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, CREATURE_TAGS } = require("src/model/schemas.js");
 
 
 
@@ -11580,6 +12018,8 @@ const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CAR
 
 
 
+
+const { RESOURCE_SOURCE_IDS } = require("src/model/resources.js");
 const { FORMULA_OPS, FORMULA_OF, isFormula } = require("src/model/formulas.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -11593,6 +12033,7 @@ const TOKENIZABLE_OPS = Object.freeze([
   'poiseDamage',
   'draw',
   'gainEnergy',
+  'restoreMana',
   'addCinders',
   'loseMaxHpPct',
 ]);
@@ -11608,6 +12049,7 @@ const REQUIRED_TOKEN_OPS = Object.freeze([
   'poiseDamage',
   'draw',
   'gainEnergy',
+  'restoreMana',
 ]);
 
 const KNOWN_BUNDLE_KEYS = new Set([
@@ -11757,6 +12199,20 @@ function validateContent(bundle) {
     });
   }
 
+  // Resource ceilings and costs are semantic bounds, not merely integer
+  // shapes. A zero maximum would make a 0/0 bar; a negative cost would mint
+  // mana when a card is played. Both are refused at the content door.
+  for (const cls of Array.isArray(b.classes) ? b.classes : []) {
+    if (cls && Number.isInteger(cls.maxMana) && cls.maxMana <= 0) {
+      err(`classes.${cls.id || '?'}.maxMana`, 'must be > 0');
+    }
+  }
+  for (const card of Array.isArray(b.cards) ? b.cards : []) {
+    if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
+      err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
+    }
+  }
+
   // Effect-tag vocabulary: the card-tag registry rides the bundle so effect
   // `tags` and taggedVulnerability lists validate against ONE home (#61).
   const tagIds = new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => t && t.id).filter(Boolean));
@@ -11765,6 +12221,7 @@ function validateContent(bundle) {
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {
     cards: SCHEMAS.card,
+    resources: SCHEMAS.resource,
     relics: SCHEMAS.relic,
     statuses: SCHEMAS.status,
     stances: SCHEMAS.stance,
@@ -11781,6 +12238,33 @@ function validateContent(bundle) {
       const path = `${type}.${(def && def.id) || '?'}`;
       walkSchema(def, typeToSchema[type], path, vctx);
     });
+  }
+
+  // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
+  // The shape walk above already rejects a missing `source`. This rejects a
+  // source the engine cannot READ — the defect that would otherwise ship a
+  // trough reading 0/0 forever on Constantine's HUD, looking finished.
+  //
+  // THIS IS THE REFUSAL THE FEATURE WAS BUILT AROUND. Wave 4 of D10 asks for
+  // stamina and mana bars; neither resource exists in this tree. Adding
+  // `{ id: 'stamina', source: 'stamina', ... }` to content/resources.js dies
+  // HERE, at boot, naming the row and printing the sources that do exist —
+  // instead of drawing an empty bar nobody can tell from a broken one.
+  for (const row of (Array.isArray(b.resources) ? b.resources : [])) {
+    if (!row || typeof row.source !== 'string') continue; // shape walk owns this
+    if (!RESOURCE_SOURCE_IDS.includes(row.source)) {
+      err(`resources.${row.id || '?'}`, `source ${JSON.stringify(row.source)} has no reader — `
+        + `the engine cannot get a value for it, so this bar would render an empty trough forever. `
+        + `Readable sources are: ${RESOURCE_SOURCE_IDS.join(', ')}. `
+        + `Adding one is an engine change (a reader in model/resources.js), not a row.`);
+    }
+    if (row.domainMax != null && !(Number.isFinite(row.domainMax) && row.domainMax > 0)) {
+      err(`resources.${row.id || '?'}.domainMax`, `must be a positive number when present — got ${JSON.stringify(row.domainMax)}. `
+        + `It is the bar's full-row ceiling; a zero or negative one divides the length by nothing.`);
+    }
+    if (Array.isArray(row.surfaces) && row.surfaces.length === 0) {
+      err(`resources.${row.id || '?'}.surfaces`, 'names no surface, so this row can never draw — omit the row or give it a surface.');
+    }
   }
 
   if (b.balance != null && (typeof b.balance !== 'object' || Array.isArray(b.balance))) {
@@ -11825,8 +12309,8 @@ function validateContent(bundle) {
   // THE MAP'S VERTICAL MARGIN, and it belongs here because it has exactly one
   // data input. `balance.ui.tapSize.def` is what the map node's radius is SOLVED
   // FROM (model/mapview.js), so raising it grows the target and eats the space
-  // BETWEEN two adjacent targets in the same stroke — 44.09 px of node against a
-  // 47.0 px row pitch at 390x844 today, under 3 px of air between two taps that
+  // BETWEEN two adjacent targets in the same stroke — at 08e184a, 44.09 px of
+  // node against a 47.0 px row pitch at 390x844, under 3 px of air between taps
   // both start a fight nobody can undo (Sunna, 2026-08-08). Nothing was watching
   // that number; a refusal that prints a verdict and not a margin cannot be.
   //
@@ -12355,11 +12839,17 @@ function validateEffects(effects, path, vctx) {
       err(`${p}.target`, `stagger targets enemies only, got '${eff.target}'`);
     }
     if (eff.op === 'addCard') {
-      if (eff.pile !== undefined && !['draw', 'hand', 'discard', 'exhaust'].includes(eff.pile)) {
-        err(`${p}.pile`, `Unknown pile '${eff.pile}'`);
+      // PILES / PILE_POSITIONS, not the same words typed again. Both sets were
+      // declared closed in schemas.js and read by NOBODY, while these two lines
+      // re-typed them as literals and did the actual refusing — the vocabulary
+      // an author would edit was decoration, the copy nobody would think to edit
+      // was the law. The legal values in the message come off the set too, so a
+      // new pile cannot be legal and unmentioned.
+      if (eff.pile !== undefined && !PILES.includes(eff.pile)) {
+        err(`${p}.pile`, `Unknown pile '${eff.pile}' (legal: ${PILES.join(', ')})`);
       }
-      if (eff.position !== undefined && !['top', 'bottom', 'random'].includes(eff.position)) {
-        err(`${p}.position`, `Unknown position '${eff.position}'`);
+      if (eff.position !== undefined && !PILE_POSITIONS.includes(eff.position)) {
+        err(`${p}.position`, `Unknown position '${eff.position}' (legal: ${PILE_POSITIONS.join(', ')})`);
       }
     }
   });
@@ -12871,9 +13361,8 @@ Object.assign(module.exports, { NODE_TYPES, ANCHOR_KINDS, rollableFloors, resolv
 
 const { balance } = require("src/content/balance.js");
 
-/** Column pitch and floor pitch of the SVG, in SVG units. */
+/** Column pitch of the SVG, in SVG units. Floor pitch is derived below. */
 const COL_X = 95;
-const ROW_H = 46;
 
 /**
  * The zoom ladder — the manual control, and the bounds the computed zoom is
@@ -12919,6 +13408,31 @@ const PHONE_UI_ZOOM = 0.9;
  * the same fact the comment states, once (Law 0 clause 4).
  */
 const PHONE_UI_ZOOM_MIN = 0.74;
+
+/**
+ * The minimum centre-to-centre pitch between adjacent map floors, measured in
+ * device-space CSS pixels at the smallest phone the game claims.
+ *
+ * This is deliberately a delivered value, not another SVG-unit guess. `Fit`
+ * is allowed to change the camera zoom, and `--ui-zoom` changes with the phone;
+ * both used to make a larger ROW_H look unchanged on glass. ROW_H is derived
+ * from this floor, PHONE_UI_ZOOM_MIN and the map zoom ladder's floor below, so
+ * none of those three multipliers can quietly absorb the requested spacing.
+ *
+ * 48 is the first whole-pixel floor above every rejected 08e184a reading (the
+ * largest was 47.61 px at 390x844/115%). It is a conservative lower bound, not
+ * a claim that 48 is the visual ideal. Remove it if the map stops using adjacent
+ * floor rows; change it on Constantine's rendered read, never to fit a test.
+ */
+const NODE_PITCH_MIN_PX = 48;
+
+/**
+ * Floor pitch of the SVG, derived from the device-space floor at the two
+ * multipliers that can make it smallest: the map zoom ladder's floor and the
+ * smallest phone UI scale. `Math.ceil` spends at most one SVG unit and makes
+ * the lower bound survive fractional layout rounding.
+ */
+const ROW_H = Math.ceil(NODE_PITCH_MIN_PX / (ZOOM_MIN * PHONE_UI_ZOOM_MIN));
 
 /**
  * nodeRadiusFor(tapPx, zoom, uiZoom) -> the SVG radius that DELIVERS `tapPx`.
@@ -13118,9 +13632,10 @@ function maxFittingColumns() {
  *   watching that number. The refusal said `accepted`. It never said `by 2%`.
  *
  *   SUNNA, vertical. The node that grew to meet the tap floor ate the space
- *   BETWEEN nodes in the same stroke: she measured 44.09 px of node against a
- *   47.0 px row pitch at 390x844, and 36.25 against 39.0 at 320x640 — under 3 px
- *   of air between two adjacent, irreversible taps. Correctly, and silently.
+ *   BETWEEN nodes in the same stroke: at 08e184a she measured 44.09 px of node
+ *   against a 47.0 px row pitch at 390x844, and 36.25 against 39.0 at 320x640 —
+ *   under 3 px of air between two adjacent, irreversible taps. Correctly and
+ *   silently. Constantine's next rendered read was simpler: too close.
  *
  * A VERDICT HAS NO DERIVATIVE; A MARGIN DOES. Both axes compute one below, both
  * refusals print it, and each margin has a floor that can go red. The floors sit
@@ -13128,14 +13643,11 @@ function maxFittingColumns() {
  * the next change to NODE_R, ROW_H, COL_X or `balance.ui.tapSize.def` cannot
  * quietly eat what is left.
  *
- * WHAT THIS IS NOT — and it is the first thing to say, because the obvious next
- * move is the wrong one. This is NOT an attempt to reach 44 device px on the map.
- * Two node centres are 34 px apart at 320x640, so that target cannot exist there
- * at any radius; and SCALING THE GEOMETRY IS A NO-OP — multiply COL_X, ROW_H and
- * NODE_R by k and the fit zoom divides by k, delivering the same device px. The
- * margins are made WATCHABLE here, not big. Whether 3 px of air between two
- * irreversible taps needs a mercy control is Sunna's sentence to write, and this
- * file is the number under it, never the answer to it.
+ * Scaling every geometric term together is a no-op under Fit: multiply COL_X,
+ * ROW_H and NODE_R by k and Fit divides zoom by k. The floor pitch is therefore
+ * derived from DEVICE space while COL_X and NODE_R keep their own jobs.
+ * `tools/mapspacing.mjs` reads the rendered result at both phone shapes and both
+ * zoom modes; source constants are not allowed to grade themselves.
  *
  * DIVISION OF LABOUR BETWEEN THE TWO FLOORS, since neither watches everything:
  * the vertical floor is what binds NODE_R and ROW_H tightly; the horizontal
@@ -13179,11 +13691,9 @@ const FANOUT_SLACK_MIN = 1;
  *   · It is a floor on AIR, never on target size. The target size question was
  *     answered by `nodeRadiusFor` and is not re-asked here.
  *
- * THE DERIVATION IS THE OPTIMISTIC HALF AND SAYS SO. Derived, the air at 390 is
- * 3.52 device px; Sunna measured 2.9 on the rendered screen. The screen delivers
- * LESS than this arithmetic — up to ~0.6 px less at 390 — so a floor cleared here
- * is not a floor cleared on glass. Bjorn's eye and her measurement remain the
- * only things that can say what a thumb met.
+ * THE DERIVATION IS THE OPTIMISTIC HALF AND SAYS SO. At 08e184a it predicted
+ * 3.52 device px at 390 while the screen delivered 2.9. A floor cleared here is
+ * not a floor cleared on glass; `tools/mapspacing.mjs` now owns that reading.
  *
  * What this floor buys — the largest tap default and the smallest row pitch that
  * still clear it — is DERIVED by `nodeAir` and printed, never typed here, so this
@@ -13436,7 +13946,7 @@ function viewRefusals(config) {
 }
 
 
-Object.assign(module.exports, { COL_X, ROW_H, ZOOM_STEPS, ZOOM_MIN, ZOOM_MAX, MAP_ZOOM_DEFAULT, PHONE_UI_ZOOM, PHONE_UI_ZOOM_MIN, nodeRadiusFor, deliveredNodePx, TAP_TARGET_DEFAULT, REF_ZOOM, nodeRadiusFromTap, BOSS_RATIO, NODE_R, BOSS_R, PHONE_VIEW_W, nodeRadius, svgWidth, svgHeight, nodeX, nodeY, clampZoom, framingBox, fitZoom, spanWidth, maxFanoutSpan, maxFittingColumns, FANOUT_SLACK_MIN, NODE_AIR_MIN_PX, fanoutMargin, maxSafeColumns, nodeAir, maxTapDefault, geometryRefusals, viewRefusals });
+Object.assign(module.exports, { COL_X, ZOOM_STEPS, ZOOM_MIN, ZOOM_MAX, MAP_ZOOM_DEFAULT, PHONE_UI_ZOOM, PHONE_UI_ZOOM_MIN, NODE_PITCH_MIN_PX, ROW_H, nodeRadiusFor, deliveredNodePx, TAP_TARGET_DEFAULT, REF_ZOOM, nodeRadiusFromTap, BOSS_RATIO, NODE_R, BOSS_R, PHONE_VIEW_W, nodeRadius, svgWidth, svgHeight, nodeX, nodeY, clampZoom, framingBox, fitZoom, spanWidth, maxFanoutSpan, maxFittingColumns, FANOUT_SLACK_MIN, NODE_AIR_MIN_PX, fanoutMargin, maxSafeColumns, nodeAir, maxTapDefault, geometryRefusals, viewRefusals });
 
 },
 "src/model/schemas.js": function (module, exports, require) {
@@ -13465,6 +13975,10 @@ Object.assign(module.exports, { COL_X, ROW_H, ZOOM_STEPS, ZOOM_MIN, ZOOM_MAX, MA
 
 // Effect DSL opcodes (SPEC §3.4).
 const { NODE_TYPES, ANCHOR_KINDS } = require("src/model/floorplan.js");
+// The bar vocabulary lives with the readers it describes (model/resources.js),
+// so the schema and the engine cannot drift into two homes. resources.js
+// imports nothing — no cycle.
+const { RESOURCE_WEIGHTS, HUD_SURFACES } = require("src/model/resources.js");
 
 const COMBAT_OPCODES = Object.freeze([
   'damage',
@@ -13476,6 +13990,7 @@ const COMBAT_OPCODES = Object.freeze([
   'exhaust',
   'addCard',
   'gainEnergy',
+  'restoreMana',
   'loseHp',
   'heal',
   'shuffleDiscardIntoDraw',
@@ -13544,6 +14059,8 @@ const EVENTS = Object.freeze([
   'procResisted',
   'energyGained',
   'energySpent',
+  'manaRestored',
+  'manaSpent',
   'flaskUsed',
   'relicTriggered',
 ]);
@@ -13602,17 +14119,29 @@ const PASSIVE_KEYS = Object.freeze([
 //   blockCap            — number: hard cap on owner's total block (max of caps wins).
 //   meterMaxGrowthDisabled — bool: while ANY combatant has it, meter thresholds
 //                            (status meters and poise) do not grow on fill.
-const MODIFIER_KEYS = Object.freeze([
-  'damageDealtMult',
-  'damageTakenMult',
-  'blockGainedMult',
-  'attackDamageAdd',
-  'blockAdd',
-  'skipTurn',
-  'retainBlock',
-  'blockCap',
-  'meterMaxGrowthDisabled',
-]);
+//
+// THE SET AND THE SCHEMA WERE TWO COPIES AND ONLY ONE OF THEM ENFORCED
+// ANYTHING — the same shape as the relic passives, found by tools/closedsets.mjs
+// rather than by eye. `MODIFIER_KEYS` was a frozen list whose only mention in
+// the tree was an import into validate.js that used it for nothing, while
+// `modifiersSchema` below re-typed the same nine names by hand and did the
+// actual refusing. So the types come here, the list is derived from them, the
+// schema is built from the same object, and the engine's lookups check against
+// it (engine/statuses.js): adding a modifier is one row, and the three cannot
+// disagree about what exists.
+const MODIFIER_TYPES = Object.freeze({
+  damageDealtMult: 'num',
+  damageTakenMult: 'num',
+  blockGainedMult: 'num',
+  attackDamageAdd: 'num',
+  blockAdd: 'num',
+  skipTurn: 'bool',
+  retainBlock: 'bool',
+  blockCap: 'num',
+  meterMaxGrowthDisabled: 'bool',
+});
+
+const MODIFIER_KEYS = Object.freeze(Object.keys(MODIFIER_TYPES));
 
 const STACK_MODES = Object.freeze(['add', 'refresh', 'unique']);
 
@@ -13676,6 +14205,10 @@ const SFX_WAVE_TYPES = Object.freeze(['sine', 'square', 'sawtooth', 'triangle'])
 // Registry type names (bundle keys holding arrays of defs).
 const REGISTRY_TYPES = Object.freeze([
   'cards',
+  // HUD resource bars as data (content/resources.js). A registry, not a balance
+  // sub-object, because a bar is an entry with an id — and because that is what
+  // makes "add a row, a bar appears" the same act as adding any other content.
+  'resources',
   'relics',
   'statuses',
   'stances',
@@ -13703,6 +14236,7 @@ const EFFECT_SPECS = Object.freeze({
   exhaust: { allowed: ['random'], required: [], refs: {} },
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
+  restoreMana: { allowed: [], required: ['amount'], refs: {} },
   loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
@@ -13753,17 +14287,12 @@ const floorAnchor = (extra = {}) => obj({
 
 const costNode = union(int, en('X'));
 
-const modifiersSchema = obj({
-  damageDealtMult: opt(num),
-  damageTakenMult: opt(num),
-  blockGainedMult: opt(num),
-  attackDamageAdd: opt(num),
-  blockAdd: opt(num),
-  skipTurn: opt(bool),
-  retainBlock: opt(bool),
-  blockCap: opt(num),
-  meterMaxGrowthDisabled: opt(bool),
-});
+// DERIVED FROM MODIFIER_TYPES, never re-typed. `obj` is strict about unknown
+// keys, so this node is what actually refuses a mis-spelled modifier — which is
+// exactly why it must not be a second list.
+const modifiersSchema = obj(Object.fromEntries(
+  Object.entries(MODIFIER_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
+));
 
 const enemyMoveSchema = obj({
   intent: en(...INTENT_KINDS),
@@ -13862,6 +14391,7 @@ const SCHEMAS = Object.freeze({
     class: str, // a class id or 'colorless' (checked in validate.js)
     rarity: en(...CARD_RARITIES),
     cost: costNode,
+    manaCost: opt(int),
     type: en(...CARD_TYPES),
     keywords: arr(ref('keywords')),
     effects,
@@ -13953,6 +14483,22 @@ const SCHEMAS = Object.freeze({
     script: opt(ref('scripts')),
   }),
 
+  // A HUD resource bar. `source` is validated against the CLOSED READER SET in
+  // model/resources.js — not here — because whether a source can be READ is a
+  // fact about the engine, and a row naming one that cannot is the exact defect
+  // this table exists to refuse (validate.js prints the row id and the set).
+  resource: obj({
+    id: str,
+    name: str,
+    glyph: opt(str),
+    tint: str,
+    weight: en(...RESOURCE_WEIGHTS),
+    order: num,
+    surfaces: arr(en(...HUD_SURFACES)),
+    source: str,
+    domainMax: opt(num),
+  }),
+
   stance: obj({
     id: str,
     name: str,
@@ -14030,6 +14576,7 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
+    maxMana: int,
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),
@@ -14079,7 +14626,219 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_KEYS, STACK_MODES, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
+Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
+
+},
+"src/model/resources.js": function (module, exports, require) {
+// src/model/resources.js — the engine half of the HUD resource bars.
+//
+// Constantine, 2026-08-08: "the stamina and mana bars should be under the
+// health bar and the size of that bar should scale depending on the max total.
+// much like elden ring's hud".
+//
+// THE SHAPE, and it is Law 0's: a resource bar is a ROW (src/content/resources.js)
+// plus a READER (the closed set below). The renderer (ui/components/resbars.js)
+// knows nothing about health, poise, stamina or mana — it draws whatever the
+// rows say, in the order the rows say, at the length the max says. Adding a bar
+// for a resource the model ALREADY exposes is one row and zero UI code; that is
+// this feature's falsifier and tools/hudbars.mjs runs it.
+//
+// WHAT THIS FILE DELIBERATELY DOES NOT CONTAIN: stamina and mana. They are D10
+// brainstorm — his words, unbuilt. `grep -rn "stamina" src/` is 0 and every one
+// of the 9 hits for "mana" is the word "manager". There is no character stat
+// system either (`constitution` 0, `charisma` 0), so his "1 per 5 constitution"
+// is not derivable from anything that exists. A row naming a source with no
+// reader is REFUSED BY NAME at boot (validate.js) rather than drawing a trough
+// that reads 0/0 forever — a bar that reads a resource nothing produces is a
+// lie on his screen, and this is the machinery that stops it being written.
+
+/**
+ * THE TRANSPOSE SCALE — one function, one edit.
+ *
+ * His word is "transpose scale" and it has not been ruled on. Every scale looks
+ * identical at a single value and diverges everywhere else (Law 0 clause 5: the
+ * plausible-but-wrong derivation is the invisible one), so this is drawn LINEAR
+ * and flagged as linear rather than guessed at.
+ *
+ * If he answers "curved", EXACTLY ONE LINE CHANGES — the return below. The two
+ * candidates, with what they do to the bars actually on screen today (track
+ * 264 px at 390 wide, health domain 84):
+ *
+ *   linear   x            72 -> 226 px   78 -> 245 px   84 -> 264 px
+ *   sqrt     Math.sqrt(x) 72 -> 244 px   78 -> 254 px   84 -> 264 px
+ *   log      Math.log1p(x) 72 -> 258 px  78 -> 261 px   84 -> 264 px
+ *
+ * A curve COMPRESSES the low end upward: it makes a weak character's bar look
+ * nearly as long as a strong one's, which is the opposite of what "the size
+ * scales depending on the max" is for on a 14 %-spread domain. Over a WIDE
+ * domain (enemy poise, 4..36) a curve is the better read: linear puts a 4-poise
+ * mob at 11 % and a curve puts it at 33 %, above the floor instead of on it.
+ * Both numbers are measured, not asserted — tools/hudbars.mjs --scales prints
+ * this table from this function.
+ */
+function resourceScale(v) {
+  return v; // LINEAR. Swap for Math.sqrt(v) or Math.log1p(v) — nothing else moves.
+}
+
+/**
+ * THE CLOSED SET OF SOURCES — the whole vocabulary a row may name.
+ *
+ * `read(view, entity)` returns { cur, max } or NULL. Null is the refusal and it
+ * is load-bearing: the player entity has no poiseMeter (state.js:204 — poise is
+ * enemy-only and always has been), so the poise row reads null under the player
+ * and the bar is ABSENT, not empty. That is the same code path a stamina row
+ * would take the day someone writes one, and it is observable on the shipped
+ * tree today, which is why this feature's refusal needs no fixture.
+ *
+ * `domain(pop)` derives the largest max this resource reaches, over the
+ * population the surface can display — DERIVED from content, never typed, so it
+ * cannot drift when content is added (Law 0 clause 1). A row may override with
+ * an explicit `domainMax` (Law 0 clause 3: an override is data).
+ *
+ * ADDING A SOURCE IS AN ENGINE CHANGE — one entry here, in one act with its
+ * schema and validator (Law 0 clause 2). We say that plainly rather than
+ * promising stamina is "just a row": it is one reader plus one row, and the
+ * half that is genuinely free is the UI.
+ */
+const RESOURCE_SOURCES = Object.freeze({
+  hp: Object.freeze({
+    read: (view, entity) => {
+      const max = entity && entity.maxHp;
+      if (!Number.isFinite(max) || max <= 0) return null;
+      const cur = view && Number.isFinite(view.hp) ? view.hp : entity.hp;
+      return { cur: Math.max(0, cur), max };
+    },
+    domain: (pop) => maxOf(pop.map((e) => e.maxHp)),
+  }),
+  mana: Object.freeze({
+    read: (view, entity) => {
+      const max = entity && entity.maxMana;
+      if (!Number.isFinite(max) || max <= 0) return null;
+      const cur = view && Number.isFinite(view.mana) ? view.mana : entity.mana;
+      return { cur: Math.max(0, Math.min(max, cur)), max };
+    },
+    domain: (pop) => maxOf(pop.map((e) => e.maxMana)),
+  }),
+  poise: Object.freeze({
+    read: (view, entity) => {
+      const pm = (view && view.poiseMeter) || (entity && entity.poiseMeter);
+      if (!pm || !Number.isFinite(pm.max) || pm.max <= 0) return null;
+      return { cur: Math.max(0, pm.value || 0), max: pm.max };
+    },
+    domain: (pop) => maxOf(pop.map((e) => e.poiseMax)),
+  }),
+});
+
+const RESOURCE_SOURCE_IDS = Object.freeze(Object.keys(RESOURCE_SOURCES));
+const RESOURCE_WEIGHTS = Object.freeze(['normal', 'skinny']);
+const HUD_SURFACES = Object.freeze(['main', 'model']);
+
+function maxOf(values) {
+  let best = 0;
+  for (const v of values) {
+    // Content writes hp as a number OR as a [lo, hi] roll range; both are the
+    // population, and taking the hi is the honest ceiling.
+    if (Array.isArray(v)) { for (const n of v) if (Number.isFinite(n) && n > best) best = n; }
+    else if (Number.isFinite(v) && v > best) best = v;
+  }
+  return best;
+}
+
+/**
+ * resourceDomains(registries) → { [surfaceId]: { [rowId]: number } }
+ *
+ * The population per surface, and it is the two-HUD split he drew:
+ *   main  — the player, and only the player. So the health domain is what a
+ *           PLAYER's max HP can be (classes + equipment maxHp mods), not what a
+ *           boss's can be. 84 today, and see the boundary note in the report:
+ *           the spread across all three classes is 14 %, because this game has
+ *           no max-HP progression yet. His rule is right and has almost nothing
+ *           to encode until D10's levelling lands.
+ *   model  — the player AND every enemy, since both wear an under-model strip.
+ *
+ * Derived once per registries, not per frame.
+ */
+function resourceDomains(registries) {
+  const classes = registries.classes.all();
+  const enemies = registries.enemies.all();
+  // Equipment can raise a run's max HP (loadout.js runMods, `self.maxHp=+N`),
+  // so the player ceiling is the best class plus the best reachable bonus.
+  const eq = registries.equipment || {};
+  let bonus = 0;
+  for (const piece of [...(eq.armour || []), ...(eq.armaments || [])]) {
+    for (const raw of (piece && piece.mods) || []) {
+      const m = /^self\.maxHp=\+?(-?\d+)$/.exec(String(raw).trim());
+      if (m) bonus = Math.max(bonus, Number(m[1]));
+    }
+  }
+  const playerPop = classes.map((c) => ({ maxHp: (c.maxHp || 0) + bonus, maxMana: c.maxMana, poiseMax: undefined }));
+  const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
+  const pops = { main: playerPop, model: bothPop };
+  const out = {};
+  for (const surface of HUD_SURFACES) {
+    out[surface] = {};
+    for (const row of registries.resources.all()) {
+      const src = RESOURCE_SOURCES[row.source];
+      if (!src) continue; // unreachable: the validator refuses the row at boot
+      out[surface][row.id] = Number.isFinite(row.domainMax) ? row.domainMax : src.domain(pops[surface]);
+    }
+  }
+  return out;
+}
+
+/**
+ * resourceBarPlan(registries, surface, view, entity, domains) → [bar]
+ *
+ * ONE function, both HUDs. A bar is:
+ *   { id, name, glyph, tint, weight, cur, max, pct, lengthPct, floored }
+ *
+ *   pct        — the FILL inside the trough (cur/max). The old bars' only job.
+ *   lengthPct  — the TROUGH's own length, as a fraction of the row track, and
+ *                the whole of his ask: scale(max)/scale(domainMax). Nothing is
+ *                typed; the track is derived by flexbox from the row minus the
+ *                two buttons, so a bar cannot lie about a max.
+ *   floored    — the minimum-width clause fired; see resbars.css. A floored bar
+ *                is no longer to scale and says so in its own trough.
+ *
+ * A row whose reader returns null is ABSENT from the plan. Not zero-length,
+ * not an empty trough: absent.
+ */
+function resourceBarPlan(registries, surface, view, entity, domains) {
+  const bars = [];
+  const rows = registries.resources.all()
+    .filter((r) => r.surfaces.includes(surface))
+    .sort((a, b) => a.order - b.order);
+  const scaleByMax = surfaceScalesByMax(registries, surface);
+  for (const row of rows) {
+    const src = RESOURCE_SOURCES[row.source];
+    const val = src && src.read(view, entity);
+    if (!val) continue; // the refusal
+    const domain = (domains && domains[surface] && domains[surface][row.id]) || val.max;
+    const raw = domain > 0 ? resourceScale(val.max) / resourceScale(domain) : 1;
+    bars.push({
+      id: row.id,
+      name: row.name,
+      glyph: row.glyph || '',
+      tint: row.tint,
+      weight: row.weight,
+      cur: val.cur,
+      max: val.max,
+      pct: Math.max(0, Math.min(100, (val.cur / val.max) * 100)),
+      lengthPct: scaleByMax ? Math.max(0, Math.min(100, raw * 100)) : 100,
+      domain,
+    });
+  }
+  return bars;
+}
+
+/** balance.ui.hudBars.<surface>.scaleByMax — his rule, per surface, as data. */
+function surfaceScalesByMax(registries, surface) {
+  const cfg = ((registries.balance || {}).ui || {}).hudBars || {};
+  return !!(cfg[surface] && cfg[surface].scaleByMax);
+}
+
+
+Object.assign(module.exports, { resourceScale, RESOURCE_SOURCES, RESOURCE_SOURCE_IDS, RESOURCE_WEIGHTS, HUD_SURFACES, resourceDomains, resourceBarPlan, surfaceScalesByMax });
 
 },
 "src/model/formulas.js": function (module, exports, require) {
@@ -14267,7 +15026,7 @@ Object.assign(module.exports, { FORMULA_OPS, FORMULA_OF, isFormula, evaluate });
 //
 // Headless: no document/window/localStorage/timers.
 
-const { REGISTRY_TYPES } = require("src/model/schemas.js");
+const { REGISTRY_TYPES, PASSIVE_KEYS } = require("src/model/schemas.js");
 const { applyCardMods } = require("src/model/loadout.js");
 
 /** Recursively freeze a value in place (functions and frozen values skipped). */
@@ -14313,6 +15072,7 @@ function makeRegistry(typeName, defs) {
 // Bundle key → registry property + singular type name for error messages.
 const TYPE_SINGULAR = {
   cards: 'card',
+  resources: 'resource',
   relics: 'relic',
   statuses: 'status',
   stances: 'stance',
@@ -14382,10 +15142,27 @@ function createRegistries(contentBundle) {
 
 // ---------------------------------------------------------------------------
 // Relic passives (SPEC PASSIVE_KEYS) — data lookups over owned relic defs.
+//
+// The key is a string typed at nine call sites and a mis-typed one returns
+// 1 / 0 / false — a defect that behaves exactly like a relic whose passive is
+// simply not very good. PASSIVE_KEYS says which strings are real, so it does the
+// saying: named once, with the legal set, and the caller still gets its default
+// rather than a thrown boot. Until this the set had NO reader in the whole tree
+// (tools/closedsets.mjs) — the vocabulary was decoration while the relic
+// schema's hand-typed copy was the law.
 // ---------------------------------------------------------------------------
+
+const PASSIVE_SET = new Set(PASSIVE_KEYS);
+const unknownPassives = new Set();
+function knownPassive(key) {
+  if (PASSIVE_SET.has(key) || unknownPassives.has(key)) return;
+  unknownPassives.add(key);
+  console.error(`[passives] '${key}' is not a relic passive — it will always read as the default. Legal: ${PASSIVE_KEYS.join(', ')}`);
+}
 
 /** Product of a multiplicative passive across owned relics (default 1). */
 function passiveMult(registries, relicIds, key) {
+  knownPassive(key);
   let m = 1;
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
@@ -14396,6 +15173,7 @@ function passiveMult(registries, relicIds, key) {
 
 /** Sum of an additive passive across owned relics (default 0). */
 function passiveSum(registries, relicIds, key) {
+  knownPassive(key);
   let s = 0;
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
@@ -14406,6 +15184,7 @@ function passiveSum(registries, relicIds, key) {
 
 /** True if any owned relic sets the boolean passive. */
 function passiveFlag(registries, relicIds, key) {
+  knownPassive(key);
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
     if (p && p[key] === true) return true;
@@ -15639,6 +16418,7 @@ function createRunState({ seed, classId, registries }) {
   // Armour can carry `self.maxHp`, so the pool it sets has to be known before
   // hp is filled — the run starts at full, in whatever it starts wearing.
   const maxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
+  const maxMana = classDef.maxMana;
   const run = {
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
@@ -15650,6 +16430,8 @@ function createRunState({ seed, classId, registries }) {
     mapNodeId: null,
     hp: maxHp,
     maxHp,
+    mana: maxMana,
+    maxMana,
     cinders: registries.balance.startingCinders || 0,
     deck: createDeck(classDef.startingDeck, idGen),
     loadout,
@@ -15686,6 +16468,10 @@ const RUN_SHAPE = [
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
   { key: 'maxHp', type: 'number' },
+  // Optional only for save compatibility. save.js migrates a pre-mana run to
+  // its class-authored full pool before handing it to the game.
+  { key: 'mana', type: 'number', optional: true },
+  { key: 'maxMana', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
@@ -15731,6 +16517,12 @@ function validateRunShape(run) {
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');
   }
+  if (run.maxMana !== undefined && (!Number.isFinite(run.maxMana) || run.maxMana <= 0)) {
+    problems.push('maxMana must be > 0');
+  }
+  if (Number.isFinite(run.mana) && Number.isFinite(run.maxMana) && (run.mana < 0 || run.mana > run.maxMana)) {
+    problems.push('mana must be between 0 and maxMana');
+  }
   return problems;
 }
 
@@ -15761,13 +16553,15 @@ function deserializeRun(json) {
 /**
  * Player combat entity. statuses: { [statusId]: { stacks, duration?, meter? } }.
  */
-function createPlayerCombatEntity({ classId, maxHp, hp, relicIds = [], flasks = [], energyMax = 3 }) {
+function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, relicIds = [], flasks = [], energyMax = 3 }) {
   return {
     id: 'player',
     kind: 'player',
     classId,
     hp: hp != null ? hp : maxHp,
     maxHp,
+    mana: mana != null ? mana : maxMana,
+    maxMana,
     block: 0,
     energy: 0,
     energyMax,
@@ -16092,7 +16886,10 @@ const ASCENSION_ORDER = [
 ];
 const MAX_ASCENSION = ASCENSION_ORDER.length;
 
-const ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS];
+// (`ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS]` stood here with no reader in
+// src/, tools/ or tests/ — a union kept in case somebody wanted one. Deleted
+// rather than documented: nothing re-typed it, so there is nothing to collapse
+// into, and the day a screen needs both groups it can spell the spread itself.)
 
 // True when a run carries any non-default rule (so it is flagged + excluded
 // from win-rate telemetry).
@@ -16124,7 +16921,7 @@ function activeMods(custom) {
 }
 
 
-Object.assign(module.exports, { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, ALL_MODS, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP, endlessActInfo, activeMods });
+Object.assign(module.exports, { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP, endlessActInfo, activeMods });
 
 },
 "src/engine/rng.js": function (module, exports, require) {
@@ -16413,6 +17210,8 @@ const QUEUE_GUARD = 10000;
  */
 function createCombat({ registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [] }) {
   const bal = registries.balance || {};
+  const classMaxMana = registries.classes.get(player.classId).maxMana;
+  const maxMana = player.maxMana != null ? player.maxMana : classMaxMana;
   const combat = {
     registries,
     rng,
@@ -16425,6 +17224,8 @@ function createCombat({ registries, rng, player, enemyIds, hpMult = 1, enemyStat
       classId: player.classId,
       maxHp: player.maxHp,
       hp: player.hp,
+      maxMana,
+      mana: player.mana != null ? player.mana : maxMana,
       relicIds: player.relicIds || [],
       flasks: player.flasks || [],
       energyMax: bal.energy != null ? bal.energy : 3,
@@ -16914,7 +17715,9 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(combat, def);
+  const manaCost = def.manaCost || 0;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
+  if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
 
   let target = null;
   if (targetId != null) {
@@ -16928,6 +17731,8 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   // Pay cost (X-cost consumes ALL energy — SPEC §4.3).
   p.energy -= cost;
   if (cost > 0 || isX) combat.emit('energySpent', { amount: cost });
+  p.mana -= manaCost;
+  if (manaCost > 0) combat.emit('manaSpent', { amount: manaCost });
 
   // Remove from hand; bump counters (used by predicates + formulas).
   combat.piles.hand.splice(idx, 1);
@@ -16935,6 +17740,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   p.counters.cardsPlayedThisCombat += 1;
   const meta = {
     energySpent: cost,
+    manaSpent: manaCost,
     ordinalThisTurn: p.counters.cardsPlayedThisTurn,
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
@@ -16958,6 +17764,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat,
     energySpent: cost,
+    manaSpent: manaCost,
   });
   drainQueue(combat);
 
@@ -17049,6 +17856,7 @@ function previewCard(combat, cardInstanceId, targetId) {
     source: p,
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
+    card: { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type },
     meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
   };
 
@@ -17064,23 +17872,24 @@ function previewCard(combat, cardInstanceId, targetId) {
     const primary = firstResolvedTarget(combat, action, eff);
     switch (eff.op) {
       case 'damage': {
+        const attackTags = A.attackTagsFor(action, eff);
         const base = evalPreview(combat, action, eff.amount, primary);
-        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, eff.tags);
+        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         for (const e of living) {
           const b = evalPreview(combat, action, eff.amount, e);
-          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, eff.tags);
+          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, attackTags);
         }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent
         // the boosted number. Engine states the fact; display reads it.
-        if (eff.tags && primary && primary.kind === 'enemy') {
+        if (attackTags.length && primary && primary.kind === 'enemy') {
           for (const [sid, inst] of Object.entries(primary.statuses || {})) {
             if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
             const sdef = combat.registries.statuses.get(sid);
             const tv = sdef && sdef.taggedVulnerability;
-            if (tv && tv.tags.some((t) => eff.tags.includes(t))) {
+            if (tv && tv.tags.some((t) => attackTags.includes(t))) {
               entry.boostTint = sdef.tint || null;
               break;
             }
@@ -17101,6 +17910,7 @@ function previewCard(combat, cardInstanceId, targetId) {
       case 'loseHp':
       case 'draw':
       case 'gainEnergy':
+      case 'restoreMana':
       case 'poiseDamage':
       case 'addCinders': {
         entry.value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);
@@ -17133,6 +17943,7 @@ function previewCard(combat, cardInstanceId, targetId) {
     type: def.type,
     cost: shownCost,
     costIsX: isX,
+    manaCost: def.manaCost || 0,
     needsTarget: needsEnemyTarget(def),
     values,
     tokens,
@@ -17212,6 +18023,7 @@ const { COMBAT_OPCODES, RUN_OPCODES } = require("src/model/schemas.js");
 const { evaluate, isFormula } = require("src/model/formulas.js");
 const statuses = require("src/engine/statuses.js");
 const { evalPredicate, checkPhases } = require("src/engine/triggers.js");
+const { damageTagIds } = require("src/content/tags.js");
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -17247,6 +18059,11 @@ function computeAttackDamage(ctx, source, target, base, attackTags) {
   }
   dmg = Math.floor(dmg);
   return dmg < 0 ? 0 : dmg;
+}
+
+/** One derivation for live actions and previews: card identity comes from CSV. */
+function attackTagsFor(action, effect) {
+  return damageTagIds(action.card && action.card.cardId, effect.tags);
 }
 
 /**
@@ -17536,6 +18353,7 @@ function runOpcode(ctx, action, eff) {
     case 'damage': {
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
+      const attackTags = attackTagsFor(action, eff);
       for (let h = 0; h < hits; h++) {
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
@@ -17543,7 +18361,7 @@ function runOpcode(ctx, action, eff) {
         for (const t of targets) {
           if (!t.alive) continue;
           const base = evalNum(ctx, action, eff.amount, 0, t);
-          applyAttackDamage(ctx, action.source, t, base, eff.tags);
+          applyAttackDamage(ctx, action.source, t, base, attackTags);
         }
       }
       break;
@@ -17615,6 +18433,13 @@ function runOpcode(ctx, action, eff) {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
       ctx.player.energy += n;
       ctx.emit('energyGained', { amount: n });
+      break;
+    }
+    case 'restoreMana': {
+      const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      const before = ctx.player.mana;
+      ctx.player.mana = Math.min(ctx.player.maxMana, ctx.player.mana + n);
+      ctx.emit('manaRestored', { amount: ctx.player.mana - before });
       break;
     }
     case 'loseHp': {
@@ -17804,7 +18629,7 @@ function executeRunEffects({ run, registries, rng }, effects) {
 }
 
 
-Object.assign(module.exports, { computeAttackDamage, applyAttackDamage, computeBlockGain, gainBlock, applyLoseHp, applyHeal, staggerEnemy, dealPoiseDamage, drawCards, reshuffleDiscardIntoDraw, resolveTargets, formulaCtxFor, executeAction, executeRunEffects });
+Object.assign(module.exports, { computeAttackDamage, attackTagsFor, applyAttackDamage, computeBlockGain, gainBlock, applyLoseHp, applyHeal, staggerEnemy, dealPoiseDamage, drawCards, reshuffleDiscardIntoDraw, resolveTargets, formulaCtxFor, executeAction, executeRunEffects });
 
 },
 "src/engine/statuses.js": function (module, exports, require) {
@@ -17826,6 +18651,8 @@ Object.assign(module.exports, { computeAttackDamage, applyAttackDamage, computeB
 // ctx.player, ctx.enemies.
 //
 // Headless: no document/window/localStorage/timers.
+
+const { MODIFIER_KEYS } = require("src/model/schemas.js");
 
 function getStatusInstance(entity, statusId) {
   return (entity && entity.statuses && entity.statuses[statusId]) || null;
@@ -18026,6 +18853,21 @@ function isDurationDecay(decay) {
 //   blockCap— max of declared caps (the most generous wins).
 // ---------------------------------------------------------------------------
 
+// EVERY ONE OF THESE READS IS A STRING TYPED AT A CALL SITE, and a mis-typed
+// one used to return 1 / 0 / false — the graceful default that makes a defect
+// quiet. `MODIFIER_KEYS` is the closed set that says which strings are real, so
+// it does the saying: an unknown key is named once, with the legal set beside
+// it, and the caller still gets its default so a typo cannot black out a fight.
+// This is also what gives that vocabulary a reader — it had none, and a closed
+// set nothing reads is decoration a future author edits INSTEAD of the schema.
+const MODIFIER_SET = new Set(MODIFIER_KEYS);
+const unknownModifiers = new Set();
+function knownModifier(key) {
+  if (MODIFIER_SET.has(key) || unknownModifiers.has(key)) return;
+  unknownModifiers.add(key);
+  console.error(`[modifiers] '${key}' is not a modifier key — it will always read as the default. Legal: ${MODIFIER_KEYS.join(', ')}`);
+}
+
 function* modifierSources(ctx, entity) {
   for (const statusId of Object.keys(entity.statuses)) {
     const def = ctx.registries.statuses.get(statusId);
@@ -18039,6 +18881,7 @@ function* modifierSources(ctx, entity) {
 
 /** Product of flat multipliers for `key` ('damageDealtMult', ...). */
 function getMult(ctx, entity, key) {
+  knownModifier(key);
   let m = 1;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') m *= src.modifiers[key];
@@ -18048,6 +18891,7 @@ function getMult(ctx, entity, key) {
 
 /** Sum of per-stack adders for `key` ('attackDamageAdd', 'blockAdd'). */
 function getAdd(ctx, entity, key) {
+  knownModifier(key);
   let a = 0;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') a += src.modifiers[key] * src.stacks;
@@ -18057,6 +18901,7 @@ function getAdd(ctx, entity, key) {
 
 /** True if any status/stance on the entity sets boolean modifier `key`. */
 function getFlag(ctx, entity, key) {
+  knownModifier(key);
   for (const src of modifierSources(ctx, entity)) {
     if (src.modifiers[key] === true) return true;
   }
@@ -18065,6 +18910,7 @@ function getFlag(ctx, entity, key) {
 
 /** Max declared numeric value for `key` (e.g. blockCap), or null if none. */
 function getCap(ctx, entity, key) {
+  knownModifier(key);
   let cap = null;
   for (const src of modifierSources(ctx, entity)) {
     if (typeof src.modifiers[key] === 'number') {
@@ -18076,6 +18922,7 @@ function getCap(ctx, entity, key) {
 
 /** True if ANY living combatant carries boolean modifier `key`. */
 function anyCombatantFlag(ctx, key) {
+  knownModifier(key);
   if (ctx.player && ctx.player.alive && getFlag(ctx, ctx.player, key)) return true;
   for (const e of ctx.enemies || []) {
     if (e.alive && getFlag(ctx, e, key)) return true;
@@ -18387,6 +19234,203 @@ function resolveOf(ctx, pctx, of) {
 
 
 Object.assign(module.exports, { emitEvent, fireOwnerHooks, findEntity, checkPhases, evalPredicate, TRIGGER_EVENTS });
+
+},
+"src/content/tags.js": function (module, exports, require) {
+// src/content/tags.js — card subtype tags, indexed for lookup.
+//
+// The primary card type (attack / skill / power) is engine-load-bearing and
+// frozen. Tags are the layer beneath it: what KIND of attack, which school a
+// skill belongs to. They are authored as two spreadsheets and compiled by
+// tools/content-build.mjs:
+//
+//   content/source/cardTags.csv     the registry — id, label, colour, glyph
+//   content/source/cardTagging.csv  which cards carry which tags
+//
+// Tagging a card is a CSV row, never a code change. Nothing here mutates the
+// card defs, so the validated content bundle is untouched and a bad tag shows
+// up as a test failure rather than a silently missing chip.
+
+const { cardTags } = require("src/content/generated/cardTags.js");
+const { cardTagging } = require("src/content/generated/cardTagging.js");
+
+/** All registered tags, in authoring order. */
+const TAGS = cardTags;
+
+const BY_ID = new Map(cardTags.map((t) => [t.id, t]));
+
+// cardId → [tagId]. The CSV coerces a single value to a string and a
+// pipe-separated one to an array, so normalise both to an array here.
+const BY_CARD = new Map(
+  cardTagging.map((row) => [
+    row.cardId,
+    row.tags === '' ? [] : (Array.isArray(row.tags) ? row.tags : [row.tags]),
+  ])
+);
+
+/** tagsFor(cardId) → [{ id, label, color, glyph, blurb }] (empty when untagged). */
+function tagsFor(cardId) {
+  return (BY_CARD.get(cardId) || []).map((id) => BY_ID.get(id)).filter(Boolean);
+}
+
+/** Raw tag ids for a card — for validation and future synergy predicates. */
+function tagIdsFor(cardId) {
+  return BY_CARD.get(cardId) || [];
+}
+
+/**
+ * damageTagIds(cardId, effectTags) → [tagId]
+ *
+ * A card hit inherits the card's CSV-authored identity. `effectTags` remains a
+ * fallback for non-card effects and isolated engine fixtures; it never
+ * overrides a card row, because that would restore two homes for one tag.
+ */
+function damageTagIds(cardId, effectTags) {
+  const derived = cardId ? tagIdsFor(cardId) : [];
+  return derived.length ? derived : (Array.isArray(effectTags) ? effectTags : []);
+}
+
+/** Every card id that carries a given tag (e.g. "all Blade cards"). */
+function cardsWithTag(tagId) {
+  const out = [];
+  for (const [cardId, ids] of BY_CARD) if (ids.includes(tagId)) out.push(cardId);
+  return out;
+}
+
+function hasTag(id) {
+  return BY_ID.has(id);
+}
+
+
+Object.assign(module.exports, { TAGS, tagsFor, tagIdsFor, damageTagIds, cardsWithTag, hasTag });
+
+},
+"src/content/generated/cardTagging.js": function (module, exports, require) {
+// GENERATED by tools/content-build.mjs from content/source/cardTagging.csv
+// Do not edit by hand — edit the source file and re-run the build.
+
+const cardTagging = [
+  {
+    "cardId": "strike",
+    "tags": "blade"
+  },
+  {
+    "cardId": "defend",
+    "tags": "guard"
+  },
+  {
+    "cardId": "gorefireSlash",
+    "tags": [
+      "blade",
+      "blood",
+      "gorefire"
+    ]
+  },
+  {
+    "cardId": "crimsonCleave",
+    "tags": [
+      "blade",
+      "blood"
+    ]
+  },
+  {
+    "cardId": "shieldBash",
+    "tags": [
+      "guard",
+      "blade"
+    ]
+  },
+  {
+    "cardId": "quickstep",
+    "tags": "flourish"
+  },
+  {
+    "cardId": "guardCounter",
+    "tags": [
+      "guard",
+      "flourish"
+    ]
+  },
+  {
+    "cardId": "ironResolve",
+    "tags": "guard"
+  },
+  {
+    "cardId": "serratedBlade",
+    "tags": [
+      "blade",
+      "blood"
+    ]
+  },
+  {
+    "cardId": "enterGorefire",
+    "tags": [
+      "gorefire",
+      "oath"
+    ]
+  },
+  {
+    "cardId": "enterBulwark",
+    "tags": [
+      "guard",
+      "oath"
+    ]
+  },
+  {
+    "cardId": "riposte",
+    "tags": [
+      "guard",
+      "flourish"
+    ]
+  },
+  {
+    "cardId": "starstonePebble",
+    "tags": "starstone"
+  },
+  {
+    "cardId": "cometFragment",
+    "tags": "starstone"
+  },
+  {
+    "cardId": "starbladePhalanx",
+    "tags": [
+      "starstone",
+      "guard"
+    ]
+  },
+  {
+    "cardId": "frostNova",
+    "tags": "starstone"
+  },
+  {
+    "cardId": "gildedOath",
+    "tags": [
+      "ritual",
+      "oath"
+    ]
+  },
+  {
+    "cardId": "urgentHeal",
+    "tags": "ritual"
+  },
+  {
+    "cardId": "bloodPact",
+    "tags": [
+      "blood",
+      "ritual"
+    ]
+  },
+  {
+    "cardId": "blightTouch",
+    "tags": [
+      "blight",
+      "ritual"
+    ]
+  }
+];
+
+
+Object.assign(module.exports, { cardTagging });
 
 },
 "src/engine/actmap.js": function (module, exports, require) {
@@ -19233,10 +20277,51 @@ function createSaveManager(storage) {
     return { ok: true, archiveId };
   }
 
+  // ---- THE PROFILE EXISTS BEFORE THE FIRST RUN DOES (M7) -------------------
+  // His ask: "profile should be able to be created before first run, not after".
+  // What shipped did the opposite. `loadMeta()` SYNTHESIZES a profile in memory
+  // for every caller (freshMeta) and writes nothing, so a player who cleared
+  // storage, picked a class and pressed BEGIN THE CLIMB had `sote_run_v1` and no
+  // `sote_meta_v1` — a run with no player behind it — and Settings → Profile
+  // printed his own sentence back at him as the behaviour (Bjorn's M7 walk,
+  // 2026-08-08). Two states for one concept: the profile that exists because
+  // every read gets an object, and the profile that exists on disk.
+  //
+  // This is the collapse. `ensureProfile()` is the only way a profile comes into
+  // being unasked, it is idempotent, and it never touches one that is already
+  // there. It is called at two places and they are one rule each:
+  //
+  //   · at the class-pick commit (main.js newRun) — HIS ask, and it lands
+  //     BEFORE the run is created, so the profile is older than the climb.
+  //   · inside saveRun/loadRun below — A STORED RUN IMPLIES A STORED PROFILE.
+  //     That is the structural half: it cannot be forgotten by a future start
+  //     path the way the first one was, and it is what repairs the players who
+  //     ALREADY have runs and no profile, with no migration to write.
+  //
+  // It refuses while quarantined for the same reason every other write does:
+  // those bytes are the evidence (property 4).
+  function ensureProfile() {
+    if (storage.getItem(META_KEY) != null) return { created: false, ok: true };
+    if (quarantined) {
+      return { created: false, ok: false, reason: `profile is quarantined (${status.state}); refusing to write` };
+    }
+    const res = saveMetaInternal(freshMeta());
+    if (!res.ok) return { created: false, ...res };
+    status = { ok: true, state: 'ok', reason: 'created before the first run', archiveId: null, recoveredFrom: null };
+    return { created: true, ok: true };
+  }
+
   return {
+    /**
+     * ensureProfile() → { created, ok, reason? }. Creates the durable profile if
+     * this browser has none; a no-op when one exists. See the block above.
+     */
+    ensureProfile,
+
     /** Persist after every committed choice (SPEC §3.12). Stamps RNG counters. */
     saveRun(run, rng, slot = 1) {
       if (rng) run.streamCounters = rng.getCounters();
+      ensureProfile(); // a stored run implies a stored profile — never the other way round
       storage.setItem(runKey(slot), serializeRun(run));
     },
 
@@ -19273,6 +20358,20 @@ function createSaveManager(storage) {
         run.loadout = createLoadout(registries, run.class);
         stampDeck(registries, run);
       }
+      // Pre-mana v1 saves remain valid: the absent optional fields mean the
+      // climb began before this resource existed, so it enters at its class's
+      // authored full pool. Present-but-malformed values were refused earlier.
+      if (run.maxMana === undefined && run.mana === undefined) {
+        run.maxMana = registries.classes.get(run.class).maxMana;
+        run.mana = run.maxMana;
+      }
+      // A run that LOADS is a player too, and this is the edge Bjorn could not
+      // reach: everyone who started a climb on a build before this one has runs
+      // and no profile. Waiting for their next autosave would leave Settings →
+      // Profile lying to them for as long as they stood on the map, so the
+      // profile appears the moment their run does. Failed loads return above and
+      // create nothing — an archived corrupt save is not a player arriving.
+      ensureProfile();
       return run;
     },
 
@@ -19500,7 +20599,13 @@ function createSaveManager(storage) {
      */
     startNewProfile() {
       const res = replacePrimaryWith(freshMeta(), 'kept when you started a new profile');
-      status = { ok: true, state: 'empty', reason: 'player started a new profile', archiveId: res.archiveId, recoveredFrom: null };
+      // 'ok', NOT 'empty' — and this is the same defect as M7 wearing another
+      // hat. This path WRITES a fresh profile (replacePrimaryWith → META_KEY),
+      // so 'empty' told the calm screen there was no profile while one sat in
+      // storage, and it printed "No profile yet — one is created when you finish
+      // your first run" at a player who had just made one. 'empty' means NO
+      // BYTES, and after this call there are bytes.
+      status = { ok: true, state: 'ok', reason: 'player started a new profile', archiveId: res.archiveId, recoveredFrom: null };
       return res;
     },
 
@@ -21534,9 +22639,9 @@ const ASSET_MAP = {
   "assets/equipment/weapon_twinblade.webp": "data:image/webp;base64,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",
   "assets/equipment/weapon_warhammer.webp": "data:image/webp;base64,UklGRuwEAABXRUJQVlA4WAoAAAAQAAAAwQEAOQIAQUxQSP4AAAABgGJt27Low7VZ0kym6QbIzhpIHHZAtc4anH1AhWTZbXymYV/65cwdERMg8D/+x//4H//jf/yP//E//sf/+B//43/VrkFWBcEQLZXlzPmVA2P17VPObUpBqP1Jekr/S6mylWQdVw6Ev3yUYpZ2KwgitpNi6hH4D//hP/yH//T3NlJMlIVAvfHAzv6mWbvxwJpTUTCYHhlZ3DR2mx4pFM/QbSOHUGLxH/7Df/gP/+E//If/8B/+w3/4D//hP/yH//Af/sN/+A//4T/8h//wH/7Df/gP/714cP5+a9euyDgy2VtTJkVGGG4W+B//43/8j//xP/7H//gf/+N//K99BVZQOCDIAwAAUEsAnQEqwgE6Aj49HopFIiGIjFgQAeJaW7hdj4CtzYA/EB6bLaW02Cnpw24JNPkd1Q9NdhV95qh6a7Cr7zVD012FX3mqHprsKvvNUPTXYVfeaoemuwq+81Q9NdhV95qiA3JJptNptNptNptNptNprFpGb5vw2TTcsHJJptNptNYk+R3VD012FX3mqHprsKvvNUPTXYVfeaoemy73nN834bJpuWDkkaiqP88F3+M821J4vgnwFXYVfeaoemuwq+A6EsHdgtDGhFv1smm5YOSTTabTabPCCc/VHhC0Zvm/DZNNywckmeKmfXGv2ssuqo78nyO6oemuwq+4AicubNEyBKaHtlPuPNUPTXYVfeaoelLA8kEnRSr7zVD012FX3mp+zkCTopV95qh6a7Cr7zU/ZyBJ0Uq+81Q9NdhV95qfs5Ak6KVfeaoemuwq+81P2cgSdFKvvNUPTXYVfean7OQJOilX3mqHprsKvvNT9nIEniLYjfN+Gyablg5JNNps7TGnHbcRFuwxuWDkk02m02m02mzwctAob7zVD012FX3mqHpUOWgUN95qh6a7Cr7zVD0qHLQKR7jNUPTXYVfeaoelQ5aBSPcZqh6a7Cr7zVD0qHLQKR7jNUPTXYVfeaoelQ5aBSPcZqh6a7Cr7zVD0qHLQKG+81Q9NdhV95qh6VDjCBPuX6FnlnNUPTXYVfeaoemuEPWRTT5HdUPTXYVfeaoemuwq+81Q9NdhV95qh6a7Cr7zVD012FX3mqHprsKvvNUPTXYVfeaoemuwq+81Q9NdhV95qh6a7Cr7zVD012FX3mqHlAAA/v/jd4AAAASk1i2MAAAlIGUX//zENbz4PQk/tawebfbCIc9foL7/Tm/+MX/k7n/n/68/fx/w3mzj9dt5U34nTCQvwb0ShIg1Ri72MzUN0JzUNMT9lyr+IDr8qxv1SemD/5Bhb+fyZKUBsv+7av+Tuvv/1JOx/EN1jSJ/NbWpID5MgtMB/HNoFyhhAUEIACABKFBA7JB+K/2LNV7N8zxKhr4iEAeG6xl0QGqXT3MRZCiM1cqenZNDP0yiTt0tEEWb1jic4UHCzMlgpN66Q2XsJgkNPmx9h9ZiwfSPu5H/lXeJhkwMBi2nmi1tlBBYzoHgADCWpZmklU0gPqOO2QIeb1EAksWYFGqgCjVQz+rvCCnVDEx6GclPUswIT6oAo1UM/CDGVCMCUCoVgSgVDEgVSoAktN71tAAjew11Gk3CJ7QipZbZr5Bq3ZsBa9iIKmgn7wFVI6hx1FZ1YAAAAAAAAAAAAAA=",
   "assets/equipment/weapon_wyrmhornStaff.webp": "data:image/webp;base64,UklGRkoNAABXRUJQVlA4WAoAAAAQAAAAwQEAOQIAQUxQSE4FAAABoAVtmyHJyqzqrh7PcsyItW37yrZt27Zt27ZtjmLHawxP73RXbfwH2V1ZffcfZURMABH+/z/GlKKP3LhlHgl3aLnozOtd80uYE3j2F0D27aqI477ABgCQUQdv5Dbf4a9vgtCGlooC5m4L2uQ7ojHsfSnWWCb/BObnMgRppWafgX3DF2uKvwKHi01Ik2u35uC3phRnlHG/gcOECIKyUpOP4PisJ84UeASO1fESyvhsUp1Iq04w1jw0G5x84Y8xtEEqOLtZwZjIu+CsrStFGJ9NqlMfihN8NfXNAqeveOMLrZMITmvTZXwJuQHOZzUi6Oq1xq4jOhhdTD0yQOc+N2yhNeNBp32IhC1B10Dvt4oEWT2W2HXdzY0scuc00L3ChCu0YizotraiuBJ4DvQnFyCo6rHAxuGKN6rIHdJAvzZNxhRaNgY4ptcimOp3/BeP1wGY4jYjB3jusCCK3Pob8LT1pohSMgq4fi5N8DTvAY3PVR88USb8BK7aHBlNpGafgW92Y4KmRZ4B59hQNPHdovI64YElyshs4KyOlZBEavIReKdVJ0ha4BFwf+GPJD6bVH6bFRwxD8kG7jldKIrQBsnAP7UIQdHwO2DgFW8U8d6oGqBNlzHE1DMTDMxsQBCU1owHI6OCMSTkGhi6xw1BPFfZDbH3pfhh6p4Bhn4pR9CTVosHY2/lwo+gi2DwUhN6eCyxG2RtSbFD7pAGBicXIMhJK8aA0Re9sCPwHBitTZKRw32BzbC06gQ35bY/wPCX/rhBS0WB8dssuOF3TDPO1pOihmVaDhj/qRTBTKn5Z3DBq96oUeINuKA2S8aM3Hs0V8hqRBBTGWcFV4wNRQypyUdwyaPuiFHoMbikOlrCC98tqmv8qELQUu6TBa75zA8vpHJbP/9yiT1+ioQVhLhX3fJBc4H0+zuHV/GRkIIQ9wqrkzTDAED9dqlnkIQUhFhKLYvXjAMA65OuvlhBiFJs8TvNBQCy9peVsYIQpdiiWM0FAKKbmdGCEHORRVGqC8DH7gpeEGIuMPOFzTj40t6EGISYwsa9sBkGSXUpZhAih42O56VqDuBGEG4Q4neN193VXx3Ypiu4IXXI5nUqd4d4FqSUww2/u8BW9bmbmqeyYLmCGbRVNuvD1KtZuoh5uJWVWAQzLFuBmTPBkqfdZVUPyXOUZetNESM0jvUihBBaNEUXrfudASc8EaNuJkObYSKEhCXqIj4XWO/C8EIaqjLSqhNO0nCVkVYFL0yrgBkVyItUSWPYOlO0sOxnXfTkFpnMUAfhhftp1lE3bkFxDJgo4cVZ1gELt4Bo1jS8sBxgXfDgFpnMUIdQtDBvYL3y51Yjg2HrjBfSCJXxvSovqb+dkVaZ4GXDLIY6SebkdQaY8aGIERbLgKfBfGidb6zzXojhtpOVM8rMxWcvMO1DJcSg7a0MSK1HOZh6ZrJSShDM9LvDggfFqC65QQIwtZUW1JB6W1nahdIROnybxQD7fQWCm/nOsQDejkt16ua0j8BWF1mQg9Z67wB+qk7Z7ODwdjjBTmVslgPeqY0pehDv5TmGfO1lJgiab4PVgI/9LARFc8/+zi2mpUKQ1L3tU5WL9Vh5maCpVGBxgqbL9nJwXkowVSmx6JXq1M/rgyNkgq3mMqlOXQmUCMKGJTp1yp0I/wn/Cf8J/wn/Cf8J/wn/Cf8J/wn/Cf8J/wn/Cf8J/wn/Cf8J/wn/Cf8J/wn/Cf8J/wn/Cf8J/wn/Cf8J/wn/Cf8J/wn/Cf8J/wn/Cf8J/wn//ZtQAv7kW3PQyQPjFZShisVZMxH+F/4X/hf+F/4X/v+f7lZQOCDWBwAAUF8AnQEqwgE6Aj49Ho1FIiGhkDl0YCADxLS3cLtAmXsBrDB/u/imaUPMQdTTBeIPNY2q+yDt4eJ30jvMP+wHUr/wnqAfrx1n3oT+Wt+4fwaftX+5fwD/sb/7c5s7FP75Xh1kdip1AlhHdU+eCG9tGK6cuLzPtzPryfZzPtzPtzPtzPtzPru7s22sJHhjtzPtzPtzPtzPtyS/dYheV8HdyFE9/M+wAN5y4vM+3M+3M+3JR+pt5JRIV0tNcUdF2TQKVDrG9DFsm7pidJu6IPxkS2G+pat2aOu0aTumJ0m7pidJu6YlaXw1O0tRA5ENEcqj4XZOhVORFoRl7aMV05cXmfbRobOqIPlXyp/GFYal/4nBX8tCWBTAtgagRdM3mfbmfbmfbmfbmVBCfR1pM+LsrCKpWe5z/R8lOnJV0m9DFsm7pidJu6YnSNnR486ralAMMFKNL7Epr1exiunLi8z7cz7aKGEeNp0m9DFsm7pidJu6YnSN71GmmDawuYPQxbJu6YnSbumJ0myeHGrEMNgEZe2jFdOXF5n25MSg2sLlxeZ9uZ9uZ9uZ9ech+k7M+3M+3M+3M+3M+vOQ/SdmfbmfbmfbmfbmfXnIfpOzPtzPtzPtzPtzPrzkP0nZn25n25n25n25n15yH6Tsz7cz7cz7cz7cz685D9J2Z9uZ9uZ9uZ9uZ9ech+lsG75u6YnSbumJ0m7pic1QZp55EeWcMbq/vQsb0MWybumJ0jjIYMizq285cXmfbmfbmfbmWXyMvMsPOXF5n25n25n20UMI8s4X/bmfbmfbmfbmerSnapEJeZ9uZ9uZ9uZ9uTEogoxRi9tGK6cuLzPtzPVpTtUiEvM+3M+3M+3M+3JiUG1hcuLzPtzPtzPtzPrzkP0nZn25n25n25n25n15yH6Wwbl7aMV05cXmfbmWXyMvrSxeZ9uZ9uZ9uZ9tFB7siGTlzPf/tzPtzPtzPtzPr0h6/tzPtzPtzPtzPtzPtzPtzPtzPtzPtzPtzPtzPtzPtzPtzPtzPtzPtyQAAP7/5v0L3+2nr///liR9vb1ns5zuYYFGT/+vpgzv/bcn//yaigW8XcOF0bzufU93b9Of3ylN1uNUlIkkVfdpibopj62CKjtSblP5TzzWD/wn2jJWvTSqt00p2+DBiXcAA7f/7Iy+5oaC+p50R//7IxOgALTDf1ckd5mDE380ZpOLArFE3GwkMcO+O5d7Pp9fWZUA5InDmpTFasV/FjgZ//iecExs5BzMSnfm9AxwBk//2RxDxXzWB8OBA/jptULA9Jv3kBnv+To7Hlq7XrJrzlcmHJP0OpEiwZVy51paprmNfrKm6Q7a7VSPzOYE16H/3cY//5D7//k5f//5BNT7+NMBI16upmNdloedEQg7PElqBJJfFMzZ1VYqg28rLkPGx7KIWHS8ss1m/f2Ug5Uih+jFf+/u0Et90EJ//sjL0Mf8wWgbhle0QP11yifKHzu+eW+L4TMbThAFB5CvVR1TrbSl6RjKltqGfHLGl6HQaXanpMCGOiAR4ao8VDlNtg+SNi25NTmQVLh0L/A15hmTkIhdVk6tVf1hIj6WOBBvvAvyZzOEm+KQkUS2QapQ89sWRHOBM0DsLIBY3Kb/TTqRybAW44Zkt46KLDSDiNaL31JUCpOAc4sD00QbGegzVWAvLPJvs/Z7eKoJ7XVZs9+btYXSPLmbATl2KLOs38vgN9M6F8YY9s+m5M3mU4ilVlh//6q8faHUiH5NnKT6TZ5treTKhIyfvyStrberqPoHOSb7n1EXz9mV+7APjm97VJpc9JRO1Z1cOUk2W6r7hD32JGHfO9GoHVSWM11PlvkzFjqaFGPvDSq+N0s03OOLre6oOhI9nNeTTgBBkuiuLhF2wfXtghUkf89FWY6bkIqduT7opKRPjoq8KBz5QV9gbA9sAtUXTvOPhGmrC36WlvE3edy2eyXv7tL2HfCw2JcaJmA48ojAcP+Ix4kEzfW5TPlSlW1ABL2PHPjLGW8HojdrfLuSgwzbE+zoFbjh84Yn2Fld9uxyJBLZ/Gz62s/Hx3It+Zpd/hJkMQlbITGoJ+W3Jmf/5SjyizB9lvifbXF4VGXgd9Fs8WeC1MqmfY+gtoE0QWchR3hKhP7qVkyfhEi34FdSKCklQqAkcCWrUsb6uELEs8Bw/guzuu3/269YzLH78twfl6IVXRf3A/D4I3F93pfEXvlffhMPr9DgTzx2P7IKjQEYfKvEhLCCoaRXia0gex72bSWB2RhyGGCvb8s6VBIp3SRwrypiN69gX/6hAwAp7th6Pc+WZPchTmfk2n93L98PO1K9fb+v4Ap09nWqfmhey8eh3c99UQMiXTZ/vf2A2a/6FJenxuAiT+RXUq/thI1aZcgMf0VnSVm2Zj/qfBqE/6gvt/YpWg/v5NjmkaAAZYsP0Lb9dzlvk7vaH5zYiosH1JqLqjLz//oElP//+Q/VKvEtuqwilihLMApyyDUN8MTCANQSDhV9x0gIAxagQSMdv4DmlM4+wpUBhQJwTajCbjtNWAha7XI4DQjt5nYEpELHBc1eEAcUdvND3gUAPqTscbQEb1cKCAh5MLmiM47qmVheQ8aJ1OW0wJ8wwLiUSgSy2J2HkhqFhcoWyaACaQ9SuVc/n64gg+0SDuW2TUU6274JcYdkXqEDamAAAAAAAAA=",
-  "assets/map/parchment_act1.svg": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDIwNDgiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIHNsaWNlIj4KPHRpdGxlPkFjdCBwbGF0ZSAxIOKAlCB1bmRpc2NvdmVyZWQgZ3JvdW5kLiBHZW5lcmF0ZWQgYnkgdG9vbHMvcGFyY2htZW50Lm1qczsgZG8gbm90IGhhbmQtZWRpdC48L3RpdGxlPgo8ZGVmcz4KPGZpbHRlciBpZD0iYmxvdGNoIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMDAxNiIgbnVtT2N0YXZlcz0iNCIgc2VlZD0iOTciIHN0aXRjaFRpbGVzPSJzdGl0Y2giLz48ZmVDb2xvck1hdHJpeCB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PC9maWx0ZXI+CjxmaWx0ZXIgaWQ9ImZpYnJlIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMDA0IDAuMjgiIG51bU9jdGF2ZXM9IjMiIHNlZWQ9Ijk4IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPgo8ZmlsdGVyIGlkPSJncmFpbiIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjg1IiBudW1PY3RhdmVzPSI0IiBzZWVkPSI5OSIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPjxmZUNvbG9yTWF0cml4IHR5cGU9InNhdHVyYXRlIiB2YWx1ZXM9IjAiLz48L2ZpbHRlcj4KPC9kZWZzPgo8cmVjdCB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIyMDQ4IiBmaWxsPSIjODA4MDgwIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNibG90Y2gpIiBvcGFjaXR5PSIwLjYyIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNmaWJyZSkiIG9wYWNpdHk9IjAuMjQiLz4KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsdGVyPSJ1cmwoI2dyYWluKSIgb3BhY2l0eT0iMC4zMCIvPgo8L3N2Zz4K",
-  "assets/map/parchment_act2.svg": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDIwNDgiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIHNsaWNlIj4KPHRpdGxlPkFjdCBwbGF0ZSAyIOKAlCB1bmRpc2NvdmVyZWQgZ3JvdW5kLiBHZW5lcmF0ZWQgYnkgdG9vbHMvcGFyY2htZW50Lm1qczsgZG8gbm90IGhhbmQtZWRpdC48L3RpdGxlPgo8ZGVmcz4KPGZpbHRlciBpZD0iYmxvdGNoIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMDAxNiIgbnVtT2N0YXZlcz0iNCIgc2VlZD0iMTk0IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPgo8ZmlsdGVyIGlkPSJmaWJyZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjAwNCAwLjI4IiBudW1PY3RhdmVzPSIzIiBzZWVkPSIxOTUiIHN0aXRjaFRpbGVzPSJzdGl0Y2giLz48ZmVDb2xvck1hdHJpeCB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PC9maWx0ZXI+CjxmaWx0ZXIgaWQ9ImdyYWluIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuODUiIG51bU9jdGF2ZXM9IjQiIHNlZWQ9IjE5NiIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPjxmZUNvbG9yTWF0cml4IHR5cGU9InNhdHVyYXRlIiB2YWx1ZXM9IjAiLz48L2ZpbHRlcj4KPC9kZWZzPgo8cmVjdCB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIyMDQ4IiBmaWxsPSIjODA4MDgwIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNibG90Y2gpIiBvcGFjaXR5PSIwLjYyIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNmaWJyZSkiIG9wYWNpdHk9IjAuMjQiLz4KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsdGVyPSJ1cmwoI2dyYWluKSIgb3BhY2l0eT0iMC4zMCIvPgo8L3N2Zz4K",
-  "assets/map/parchment_act3.svg": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDIwNDgiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIHNsaWNlIj4KPHRpdGxlPkFjdCBwbGF0ZSAzIOKAlCB1bmRpc2NvdmVyZWQgZ3JvdW5kLiBHZW5lcmF0ZWQgYnkgdG9vbHMvcGFyY2htZW50Lm1qczsgZG8gbm90IGhhbmQtZWRpdC48L3RpdGxlPgo8ZGVmcz4KPGZpbHRlciBpZD0iYmxvdGNoIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMDAxNiIgbnVtT2N0YXZlcz0iNCIgc2VlZD0iMjkxIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPgo8ZmlsdGVyIGlkPSJmaWJyZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjAwNCAwLjI4IiBudW1PY3RhdmVzPSIzIiBzZWVkPSIyOTIiIHN0aXRjaFRpbGVzPSJzdGl0Y2giLz48ZmVDb2xvck1hdHJpeCB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PC9maWx0ZXI+CjxmaWx0ZXIgaWQ9ImdyYWluIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuODUiIG51bU9jdGF2ZXM9IjQiIHNlZWQ9IjI5MyIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPjxmZUNvbG9yTWF0cml4IHR5cGU9InNhdHVyYXRlIiB2YWx1ZXM9IjAiLz48L2ZpbHRlcj4KPC9kZWZzPgo8cmVjdCB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIyMDQ4IiBmaWxsPSIjODA4MDgwIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNibG90Y2gpIiBvcGFjaXR5PSIwLjYyIi8+CjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNmaWJyZSkiIG9wYWNpdHk9IjAuMjQiLz4KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsdGVyPSJ1cmwoI2dyYWluKSIgb3BhY2l0eT0iMC4zMCIvPgo8L3N2Zz4K",
+  "assets/map/parchment_act1.svg": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDIwNDgiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIHNsaWNlIj4NCjx0aXRsZT5BY3QgcGxhdGUgMSDigJQgdW5kaXNjb3ZlcmVkIGdyb3VuZC4gR2VuZXJhdGVkIGJ5IHRvb2xzL3BhcmNobWVudC5tanM7IGRvIG5vdCBoYW5kLWVkaXQuPC90aXRsZT4NCjxkZWZzPg0KPGZpbHRlciBpZD0iYmxvdGNoIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMDAxNiIgbnVtT2N0YXZlcz0iNCIgc2VlZD0iOTciIHN0aXRjaFRpbGVzPSJzdGl0Y2giLz48ZmVDb2xvck1hdHJpeCB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PC9maWx0ZXI+DQo8ZmlsdGVyIGlkPSJmaWJyZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjAwNCAwLjI4IiBudW1PY3RhdmVzPSIzIiBzZWVkPSI5OCIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPjxmZUNvbG9yTWF0cml4IHR5cGU9InNhdHVyYXRlIiB2YWx1ZXM9IjAiLz48L2ZpbHRlcj4NCjxmaWx0ZXIgaWQ9ImdyYWluIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuODUiIG51bU9jdGF2ZXM9IjQiIHNlZWQ9Ijk5IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPg0KPC9kZWZzPg0KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsbD0iIzgwODA4MCIvPg0KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsdGVyPSJ1cmwoI2Jsb3RjaCkiIG9wYWNpdHk9IjAuNjIiLz4NCjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNmaWJyZSkiIG9wYWNpdHk9IjAuMjQiLz4NCjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNncmFpbikiIG9wYWNpdHk9IjAuMzAiLz4NCjwvc3ZnPg0K",
+  "assets/map/parchment_act2.svg": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDIwNDgiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIHNsaWNlIj4NCjx0aXRsZT5BY3QgcGxhdGUgMiDigJQgdW5kaXNjb3ZlcmVkIGdyb3VuZC4gR2VuZXJhdGVkIGJ5IHRvb2xzL3BhcmNobWVudC5tanM7IGRvIG5vdCBoYW5kLWVkaXQuPC90aXRsZT4NCjxkZWZzPg0KPGZpbHRlciBpZD0iYmxvdGNoIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMDAxNiIgbnVtT2N0YXZlcz0iNCIgc2VlZD0iMTk0IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPg0KPGZpbHRlciBpZD0iZmlicmUiIHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9Im9iamVjdEJvdW5kaW5nQm94Ij48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC4wMDQgMC4yOCIgbnVtT2N0YXZlcz0iMyIgc2VlZD0iMTk1IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPg0KPGZpbHRlciBpZD0iZ3JhaW4iIHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9Im9iamVjdEJvdW5kaW5nQm94Ij48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44NSIgbnVtT2N0YXZlcz0iNCIgc2VlZD0iMTk2IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPg0KPC9kZWZzPg0KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsbD0iIzgwODA4MCIvPg0KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsdGVyPSJ1cmwoI2Jsb3RjaCkiIG9wYWNpdHk9IjAuNjIiLz4NCjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNmaWJyZSkiIG9wYWNpdHk9IjAuMjQiLz4NCjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNncmFpbikiIG9wYWNpdHk9IjAuMzAiLz4NCjwvc3ZnPg0K",
+  "assets/map/parchment_act3.svg": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDIwNDgiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIHNsaWNlIj4NCjx0aXRsZT5BY3QgcGxhdGUgMyDigJQgdW5kaXNjb3ZlcmVkIGdyb3VuZC4gR2VuZXJhdGVkIGJ5IHRvb2xzL3BhcmNobWVudC5tanM7IGRvIG5vdCBoYW5kLWVkaXQuPC90aXRsZT4NCjxkZWZzPg0KPGZpbHRlciBpZD0iYmxvdGNoIiB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMDAxNiIgbnVtT2N0YXZlcz0iNCIgc2VlZD0iMjkxIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPg0KPGZpbHRlciBpZD0iZmlicmUiIHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9Im9iamVjdEJvdW5kaW5nQm94Ij48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC4wMDQgMC4yOCIgbnVtT2N0YXZlcz0iMyIgc2VlZD0iMjkyIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPg0KPGZpbHRlciBpZD0iZ3JhaW4iIHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9Im9iamVjdEJvdW5kaW5nQm94Ij48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44NSIgbnVtT2N0YXZlcz0iNCIgc2VlZD0iMjkzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPg0KPC9kZWZzPg0KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsbD0iIzgwODA4MCIvPg0KPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjA0OCIgZmlsdGVyPSJ1cmwoI2Jsb3RjaCkiIG9wYWNpdHk9IjAuNjIiLz4NCjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNmaWJyZSkiIG9wYWNpdHk9IjAuMjQiLz4NCjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjIwNDgiIGZpbHRlcj0idXJsKCNncmFpbikiIG9wYWNpdHk9IjAuMzAiLz4NCjwvc3ZnPg0K",
   "assets/sprites/enemy_ashRevenant.webp": "data:image/webp;base64,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",
   "assets/sprites/enemy_blightHound.webp": "data:image/webp;base64,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",
   "assets/sprites/enemy_blightedValkyrie.webp": "data:image/webp;base64,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",
@@ -22191,9 +23296,11 @@ function renderCard(registries, ref, opts = {}) {
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
+  const manaCost = opts.preview ? opts.preview.manaCost : (def.manaCost || 0);
 
   el.innerHTML =
     `<div class="cost">${esc(cost)}</div>` +
+    (manaCost ? `<div class="mana-cost" title="Mana cost">◆ ${esc(manaCost)}</div>` : '') +
     `<div class="cname">${esc(def.name)}</div>` +
     `<div class="art">${esc(def.icon || '❖')}</div>` +
     `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
@@ -22247,7 +23354,7 @@ function upgradePreviewHtml(registries, ref) {
 }
 
 function cardTooltip(registries, def, tokens) {
-  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)}</div>`;
+  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)} Energy${def.manaCost ? ` + ${esc(def.manaCost)} Mana` : ''}</div>`;
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;
@@ -22276,191 +23383,6 @@ function cardTooltip(registries, def, tokens) {
 
 
 Object.assign(module.exports, { staticTokens, relicText, renderCard, upgradePreviewHtml });
-
-},
-"src/content/tags.js": function (module, exports, require) {
-// src/content/tags.js — card subtype tags, indexed for lookup.
-//
-// The primary card type (attack / skill / power) is engine-load-bearing and
-// frozen. Tags are the layer beneath it: what KIND of attack, which school a
-// skill belongs to. They are authored as two spreadsheets and compiled by
-// tools/content-build.mjs:
-//
-//   content/source/cardTags.csv     the registry — id, label, colour, glyph
-//   content/source/cardTagging.csv  which cards carry which tags
-//
-// Tagging a card is a CSV row, never a code change. Nothing here mutates the
-// card defs, so the validated content bundle is untouched and a bad tag shows
-// up as a test failure rather than a silently missing chip.
-
-const { cardTags } = require("src/content/generated/cardTags.js");
-const { cardTagging } = require("src/content/generated/cardTagging.js");
-
-/** All registered tags, in authoring order. */
-const TAGS = cardTags;
-
-const BY_ID = new Map(cardTags.map((t) => [t.id, t]));
-
-// cardId → [tagId]. The CSV coerces a single value to a string and a
-// pipe-separated one to an array, so normalise both to an array here.
-const BY_CARD = new Map(
-  cardTagging.map((row) => [
-    row.cardId,
-    row.tags === '' ? [] : (Array.isArray(row.tags) ? row.tags : [row.tags]),
-  ])
-);
-
-/** tagsFor(cardId) → [{ id, label, color, glyph, blurb }] (empty when untagged). */
-function tagsFor(cardId) {
-  return (BY_CARD.get(cardId) || []).map((id) => BY_ID.get(id)).filter(Boolean);
-}
-
-/** Raw tag ids for a card — for validation and future synergy predicates. */
-function tagIdsFor(cardId) {
-  return BY_CARD.get(cardId) || [];
-}
-
-/** Every card id that carries a given tag (e.g. "all Blade cards"). */
-function cardsWithTag(tagId) {
-  const out = [];
-  for (const [cardId, ids] of BY_CARD) if (ids.includes(tagId)) out.push(cardId);
-  return out;
-}
-
-function hasTag(id) {
-  return BY_ID.has(id);
-}
-
-
-Object.assign(module.exports, { TAGS, tagsFor, tagIdsFor, cardsWithTag, hasTag });
-
-},
-"src/content/generated/cardTagging.js": function (module, exports, require) {
-// GENERATED by tools/content-build.mjs from content/source/cardTagging.csv
-// Do not edit by hand — edit the source file and re-run the build.
-
-const cardTagging = [
-  {
-    "cardId": "strike",
-    "tags": "blade"
-  },
-  {
-    "cardId": "defend",
-    "tags": "guard"
-  },
-  {
-    "cardId": "gorefireSlash",
-    "tags": [
-      "blade",
-      "blood",
-      "gorefire"
-    ]
-  },
-  {
-    "cardId": "crimsonCleave",
-    "tags": [
-      "blade",
-      "blood"
-    ]
-  },
-  {
-    "cardId": "shieldBash",
-    "tags": [
-      "guard",
-      "blade"
-    ]
-  },
-  {
-    "cardId": "quickstep",
-    "tags": "flourish"
-  },
-  {
-    "cardId": "guardCounter",
-    "tags": [
-      "guard",
-      "flourish"
-    ]
-  },
-  {
-    "cardId": "ironResolve",
-    "tags": "guard"
-  },
-  {
-    "cardId": "serratedBlade",
-    "tags": [
-      "blade",
-      "blood"
-    ]
-  },
-  {
-    "cardId": "enterGorefire",
-    "tags": [
-      "gorefire",
-      "oath"
-    ]
-  },
-  {
-    "cardId": "enterBulwark",
-    "tags": [
-      "guard",
-      "oath"
-    ]
-  },
-  {
-    "cardId": "riposte",
-    "tags": [
-      "guard",
-      "flourish"
-    ]
-  },
-  {
-    "cardId": "starstonePebble",
-    "tags": "starstone"
-  },
-  {
-    "cardId": "cometFragment",
-    "tags": "starstone"
-  },
-  {
-    "cardId": "starbladePhalanx",
-    "tags": [
-      "starstone",
-      "guard"
-    ]
-  },
-  {
-    "cardId": "frostNova",
-    "tags": "starstone"
-  },
-  {
-    "cardId": "gildedOath",
-    "tags": [
-      "ritual",
-      "oath"
-    ]
-  },
-  {
-    "cardId": "urgentHeal",
-    "tags": "ritual"
-  },
-  {
-    "cardId": "bloodPact",
-    "tags": [
-      "blood",
-      "ritual"
-    ]
-  },
-  {
-    "cardId": "blightTouch",
-    "tags": [
-      "blight",
-      "ritual"
-    ]
-  }
-];
-
-
-Object.assign(module.exports, { cardTagging });
 
 },
 "src/ui/screens/map.js": function (module, exports, require) {
@@ -22698,9 +23620,26 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   const heroName = (cz.name || className).toUpperCase();
   const hasRelics = run.relics.length > 0;
   const hasFlasks = run.flasks.length > 0;
+  // Once the real floors have enough device-space pitch, a phone cannot also
+  // show the full door-to-boss span at an honest node size. The entrance uses a
+  // static orientation strip above the real map. It names the same endpoints,
+  // but deliberately has no node icons, circles, edges or handlers that could
+  // look like choices or enter game state. The actual next choice remains on
+  // the pannable board below.
+  const atEntrance = !run.mapNodeId;
+  const entranceStart = atEntrance && map.startIds.length ? map.nodes[map.startIds[0]] : null;
+  const entranceBoss = atEntrance ? nodes.find((n) => n.type === 'boss') : null;
+  const entranceOrientation = entranceStart && entranceBoss
+    ? `<div class="map-entrance-orientation" data-composition="orientation-strip" role="note" aria-label="${esc(actTitle(run.actNumber))} orientation: entrance to boss">
+        <strong>${esc(actTitle(run.actNumber))}</strong>
+        <span class="map-orientation-progress" aria-hidden="true">
+          <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
+        </span>
+      </div>`
+    : '';
 
   app.innerHTML = `
-    <div class="mapscreen${fog ? ' map-fog' : ''}">
+    <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <header class="topbar map-header">
         <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
         <div class="who">
@@ -22750,8 +23689,9 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
            into by the person quoting it. It cost one run of actends, which
            reported NOTHING SWEPT rather than a pass, which is the only reason
            this sentence is a note and not a shipped blank screen.) -->
+      ${entranceOrientation}
       <div class="map-frame">
-      <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}">
+      <div class="map-scroll${fog ? ` ${parchmentClass(run.actNumber)}` : ''}" data-map-mode="${mode}" data-scroll-axis="x" data-scroll-axis-why="the act map is a horizontal route">
         <div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
             ${groundSvg}
@@ -25557,22 +26497,35 @@ const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { figureSpec } = require("src/model/loadout.js");
 const { trackGesture } = require("src/ui/gesture.js");
+const { resourceBars, markFlooredBars } = require("src/ui/components/resbars.js");
+const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 
 function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   app.innerHTML = `
     <div class="combat">
-      <header class="topbar">
-        <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
-        <div class="who">
-          <span class="nm">${esc(((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase())} · ${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
-          <div class="bar hpbar"><div class="fill"></div><div class="label"></div></div>
+      <!-- THE MAIN HUD, TWO ROWS, HIS ASSIGNMENT (D10 wave 4):
+           "the size of those bars to scale depending on max value ... with the
+            max size filling up the full top row, with the menu and armament
+            buttons at the end of that row, at the bottom of the hud should be
+            the other hud items."
+           Top row: the bar stack + the two buttons, nothing else. The stack is
+           flex:1 with min-width:0, so ITS TRACK IS DERIVED — row width minus the
+           buttons, minus padding and gaps. No width is typed anywhere, which is
+           what lets a bar's length be an honest statement about a maximum. -->
+      <header class="topbar combat-hud">
+        <div class="hud-top">
+          <div class="resbars-host"></div>
+          <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
+          <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
         </div>
-        <span class="cinders" style="color:var(--gold);font-size:13px">⛁ ${run.cinders}</span>
-        <div class="flasks" style="display:flex;gap:6px"></div>
-        <div class="relics"></div>
-        <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
-        <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
-        <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
+        <div class="hud-bottom">
+          <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
+          <span class="nm">${esc(((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase())} · ${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
+          <span class="cinders" style="color:var(--gold);font-size:13px">⛁ ${run.cinders}</span>
+          <div class="flasks" style="display:flex;gap:6px"></div>
+          <div class="relics"></div>
+          <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
+        </div>
       </header>
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field">
@@ -25596,6 +26549,10 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
+  // The bar ceilings, DERIVED from the content (classes + equipment for the
+  // player surface, plus every enemy for the under-model one) rather than typed.
+  // Once per mount: it is a fact about the content, not about the frame.
+  const resDomains = resourceDomains(registries);
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
   const fxCtx = {
     layer: $('.fx-layer'),
@@ -25736,6 +26693,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     }
     return {
       hp: e.hp,
+      mana: e.mana,
       block: e.block,
       alive,
       statuses,
@@ -25770,6 +26728,12 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
           break;
         case 'blockGained':
           if (t) t.block += e.amount;
+          break;
+        case 'manaSpent':
+          if (disp.ents.player) disp.ents.player.mana = Math.max(0, disp.ents.player.mana - e.amount);
+          break;
+        case 'manaRestored':
+          if (disp.ents.player) disp.ents.player.mana = Math.min(combat.player.maxMana, disp.ents.player.mana + e.amount);
           break;
         case 'enemyDied':
           if (t) {
@@ -25848,9 +26812,20 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
   function renderTopbar() {
     const p = combat.player;
     const pv = dv(p);
-    const hp = $('.topbar .hpbar');
-    hp.querySelector('.fill').style.width = `${(pv.hp / p.maxHp) * 100}%`;
-    hp.querySelector('.label').textContent = `${pv.hp} / ${p.maxHp}`;
+    // THE MAIN HUD BAR STACK — health, then whatever rows sit under it, then
+    // poise. Which rows those are is content/resources.js's business, not this
+    // screen's: this call is the whole of the main HUD's meter code and it does
+    // not change when a resource is added.
+    //
+    // The player has NO poise meter (state.js:204 — poiseMeter is created on
+    // enemies only), so the poise row's reader returns null and the bar is
+    // ABSENT. Not a 0/0 trough. That refusal is the same one a stamina row
+    // would hit today, and it is visible on this screen right now.
+    const host = $('.topbar .resbars-host');
+    host.innerHTML = '';
+    const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
+    host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTooltipExtra }));
+    markFlooredBars(host, host);
     const relics = $('.topbar .relics');
     relics.innerHTML = '';
     for (const rid of p.relicIds) {
@@ -25955,26 +26930,37 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     return row;
   }
 
+  // Stagger's own text, from the status def (data), so a poise tooltip cannot
+  // drift from the balance numbers. Passed INTO the renderer rather than known
+  // by it — resbars.js must not learn what poise is.
+  function poiseTooltipExtra(bar) {
+    if (bar.id !== 'poise') return '';
+    const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+    return `Fill it to Stagger. ${esc(stagDesc)}`;
+  }
+
   function meterBars(entity) {
     const v = dv(entity);
     const wrap = document.createElement('div');
     wrap.className = 'meters';
-    const hp = document.createElement('div');
-    hp.className = 'bar hpbar';
-    hp.innerHTML = `<div class="fill" style="width:${(v.hp / entity.maxHp) * 100}%"></div><div class="label">${v.hp} / ${entity.maxHp}</div>`;
-    wrap.appendChild(hp);
+    // THE UNDER-MODEL HUD — "should really just show health and poise", his
+    // words. Same renderer, same table, different surface: the rows carry which
+    // surfaces they appear on, so the two-HUD split he drew is DATA and neither
+    // screen decides it. Poise is absent under the player for the same reason
+    // it is absent from his main HUD — the player has no poise meter — and
+    // present under every enemy.
+    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains);
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTooltipExtra });
+    // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
+    // on this screen rather than moving into the shared renderer.
+    for (const bar of plan) {
+      if (bar.id === 'poise' && bar.cur >= bar.max * 0.75) {
+        const el = bars.querySelector('[data-res="poise"]');
+        if (el) el.classList.add('full');
+      }
+    }
+    while (bars.firstChild) wrap.appendChild(bars.firstChild);
     if (entity.kind === 'enemy') {
-      // Poise reads the paced view too, so M7's poise chunk lands on the
-      // burst's own beat instead of a frame ahead of the cascade.
-      const pm = v.poiseMeter || entity.poiseMeter;
-      const poise = document.createElement('div');
-      poise.className = `bar poisebar${pm.value >= pm.max * 0.75 ? ' full' : ''}`;
-      poise.innerHTML = `<div class="fill" style="width:${Math.min(100, (pm.value / pm.max) * 100)}%"></div>`;
-      // Meter-bar tooltips render the STATUS def's own text (data) so they can't
-      // drift from the balance/formula numbers.
-      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
-      attachTooltip(poise, () => `<div class="tt-title">Poise</div>${pm.value} / ${pm.max} — fill it to Stagger. ${stagDesc}`);
-      wrap.appendChild(poise);
       // #61 M1/M4: the shipped bleedbar, generalized into the one grammar —
       // a thin bar per threshold-proc row (max two, procDisplayPlan's cap),
       // tint + glyph nub from the row's own data, absent at zero. Numbers
@@ -26118,7 +27104,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       } catch (e) {
         console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
       }
-      const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && !isUnplayable(inst);
+      const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
       const el = renderCard(registries, inst, pv ? { preview: pv, affordable } : { affordable });
       const spread = Math.min(6, n) * 1.2;
       el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
@@ -26150,7 +27136,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
     const anyPlayable = combat.piles.hand.some((inst) => {
       const def = resolveCard(registries, inst);
       if ((def.keywords || []).includes('unplayable')) return false;
-      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost);
+      return combat.player.energy >= (def.cost === 'X' ? 0 : def.cost) && combat.player.mana >= (def.manaCost || 0);
     });
     $('.end-turn').classList.toggle('pulse', combat.player.energy > 0 && anyPlayable);
     $('.pile.draw .n').textContent = combat.piles.draw.length;
@@ -26349,7 +27335,7 @@ function mountCombat(app, { registries, run, combat, label, onEnd, showTutorial,
       const inst = combat.piles.hand[cardIdx];
       if (!inst) return;
       const pv = previewCard(combat, inst.instanceId);
-      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && !isUnplayable(inst);
+      const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
       if (!affordable) return;
       if (pv.needsTarget) {
         const living = combat.enemies.filter((e) => e.alive);
@@ -27729,6 +28715,125 @@ function mountEquipment(host, {
 Object.assign(module.exports, { viewIds, viewCells, viewCellsSay, viewLayout, regionIds, regionById, authoredSubject, subjectRegion, contextRegions, opensCollapsed, mountEquipment });
 
 },
+"src/ui/components/resbars.js": function (module, exports, require) {
+// src/ui/components/resbars.js — the ONE renderer for every resource bar.
+//
+// It knows nothing about health, poise, stamina or mana. It is handed a plan
+// (model/resources.js resourceBarPlan) and draws it. That is the whole point:
+// the day a resource exists, its bar is a row in content/resources.js and this
+// file does not change.
+//
+// TWO GEOMETRIES, and only one of them is new:
+//   the FILL   — width = cur/max. Every bar this game has ever drawn did this.
+//   the TROUGH — width = scale(max)/scale(domain). HIS ASK. The trough's own
+//                length encodes the maximum, so a bar cannot lie about a stat.
+//
+// NOTHING IS TYPED. The track is whatever flexbox leaves after the two top-row
+// buttons take their fixed size; the trough is a percentage of that. Law 2's
+// "names its container and is proven inside it" is satisfied by construction —
+// a percentage of a derived track cannot overflow it — and tools/hudbars.mjs
+// measures it anyway rather than trusting the argument.
+
+const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+
+/**
+ * resourceBars(plan, { surface, tooltipExtra }) → HTMLElement (.resbars)
+ *
+ * `tooltipExtra(bar)` may return extra tooltip HTML for a bar (the poise bar
+ * wants Stagger's own text, which is content and not this file's to know).
+ */
+function resourceBars(plan, { surface, tooltipExtra } = {}) {
+  const wrap = document.createElement('div');
+  wrap.className = 'resbars';
+  wrap.dataset.surface = surface || 'main';
+  for (const bar of plan) {
+    const el = document.createElement('div');
+    el.className = `bar resbar resbar-${bar.weight}`;
+    el.dataset.res = bar.id;
+    // THE TROUGH LENGTH — the one line that is his whole instruction.
+    el.style.width = `${bar.lengthPct.toFixed(3)}%`;
+    el.style.setProperty('--res-tint', bar.tint);
+    // THE MACHINE-READABLE HOME, and it is not decoration. The label degrades
+    // to a glyph on a short bar, so `.textContent` is neither stable nor a fair
+    // reading of what the bar says — three variants ride in the DOM and hidden
+    // ones still land in textContent. Instruments and assistive tech read these
+    // instead: tools/veil-owns-input.mjs and tools/hudbars.mjs both do.
+    el.dataset.cur = String(bar.cur);
+    el.dataset.max = String(bar.max);
+    el.setAttribute('role', 'img');
+    el.setAttribute('aria-label', `${bar.name} ${bar.cur} of ${bar.max}`);
+
+    // THE MINIMUM-WIDTH CLAUSE, and it is declared here rather than computed.
+    // `min-width: var(--resbar-min)` in CSS does the flooring; this flag exists
+    // so the trough can SAY it is floored. See the CSS for the justification —
+    // a floored bar is drawn dashed, which is the broken-axis mark, because two
+    // different maxima below the floor render the same length and a bar that is
+    // no longer to scale must not look like one that is.
+    //
+    // Whether the floor FIRED is a rendered fact, not a computed one (it depends
+    // on the track, the zoom and the floor together), so it is stamped after
+    // layout by markFlooredBars() rather than guessed at here.
+    el.dataset.res = bar.id;
+
+    const fill = document.createElement('div');
+    fill.className = 'fill';
+    fill.style.width = `${bar.pct.toFixed(2)}%`;
+    el.appendChild(fill);
+
+    // THE LABEL DEGRADES BY MEASURED FIT, not by a typed threshold. The compact
+    // form keeps the resource glyph beside its numbers: a bare `20/40` still
+    // reports quantity, but on a two-row HUD it withholds WHICH pool it is.
+    // Marina rendered `maxMana = 2` at 48 px and watched "MANA" collide with
+    // "1/2". Three variants ride in the DOM and CSS container queries pick the
+    // widest that fits — in `em`, so the choice tracks the player's Text size
+    // setting, which is exactly what "does the word fit" depends on. This is
+    // NOT Law 4 chrome-scaling: the BOX is text-independent (px under zoom);
+    // only the question "can a word fit in it" answers to text size.
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.innerHTML =
+      `<span class="l-full">${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
+      `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
+      `<span class="l-glyph">${esc(bar.glyph)}</span>`;
+    el.appendChild(label);
+
+    attachTooltip(el, () => {
+      const extra = (tooltipExtra && tooltipExtra(bar)) || '';
+      // The tooltip is the floor of legibility for this bar: whatever the
+      // trough is too short to print, this always says. Including the maximum,
+      // which is the number a floored bar has stopped encoding.
+      return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
+    });
+    wrap.appendChild(el);
+  }
+  return wrap;
+}
+
+/**
+ * markFlooredBars(root) — stamp `data-floored` on every bar the minimum-width
+ * clause caught, by MEASURING the rendered trough against the floor.
+ *
+ * Called after layout. A bar is floored when its rendered width is wider than
+ * the width its own lengthPct asked for — which is precisely what `min-width`
+ * winning looks like, and it needs no second copy of the floor's value.
+ */
+function markFlooredBars(root, track) {
+  const bars = root.querySelectorAll('.resbar');
+  const trackW = track ? track.getBoundingClientRect().width : 0;
+  for (const el of bars) {
+    const asked = parseFloat(el.style.width); // percent
+    if (!Number.isFinite(asked) || !trackW) continue;
+    const wanted = (asked / 100) * trackW;
+    const got = el.getBoundingClientRect().width;
+    if (got > wanted + 0.5) el.dataset.floored = '1';
+    else delete el.dataset.floored;
+  }
+}
+
+
+Object.assign(module.exports, { resourceBars, markFlooredBars });
+
+},
 "src/ui/screens/reward.js": function (module, exports, require) {
 // src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1)
 //
@@ -27831,7 +28936,7 @@ function mountRest(app, { registries, run, onDone, healMult = 1 }) {
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
           <h3>Rest</h3>
-          <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}).`}</p>
+          <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
         </div>
         <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt">
           <div class="glyph">⚒</div>
@@ -27845,6 +28950,7 @@ function mountRest(app, { registries, run, onDone, healMult = 1 }) {
   if (!noRest) {
     app.querySelector('#rest-opt').addEventListener('click', () => {
       run.hp = Math.min(run.maxHp, run.hp + heal);
+      run.mana = run.maxMana;
       sfx.play('shrine');
       onDone(`Rested: +${heal} HP.`);
     });
@@ -29963,9 +31069,18 @@ function renderProfileSection(container, { saves, onRestored }) {
 
   // DRAFT COPY (Sunna's to replace) — the state line. It exists so the screen
   // answers "is my profile alright?" before it answers "what is in the drawer".
+  //
+  // THE `empty` LINE IS THE ASK, PRINTED BACK AT HIM (M7). It read "one is
+  // created when you finish your first run" — which was true of the build and
+  // was the exact behaviour Constantine had asked us to change, quoted to him in
+  // bold on the screen where he went looking for the profile. The behaviour is
+  // fixed in engine/save.js (`ensureProfile`, created at the class-pick commit),
+  // so this sentence is rewritten rather than deleted: the state is still
+  // reachable — someone who opens Settings before they have ever begun a climb —
+  // and it must say what will actually happen to them.
   const stateLine = {
     ok: 'Your profile is fine.',
-    empty: 'No profile yet — one is created when you finish your first run.',
+    empty: 'No profile yet — one is created the moment you begin your first climb.',
     migrated: 'Your profile was saved by an older version and has been brought forward.',
     recovered: 'Your profile was restored from the backup copy after a bad read.',
     corrupt: 'Your profile could not be read. It has been set aside — it is listed below.',
@@ -31709,11 +32824,12 @@ const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { anchorLocalBox } = require("src/ui/fx.js");
 const { nodeIcon, nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass } = require("src/ui/uiContent.js");
 const { resolveCard } = require("src/model/registries.js");
-
-const COL_X = 95;
-const ROW_H = 46;
+const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
+const { resourceBars } = require("src/ui/components/resbars.js");
+const { nodeRadius, nodeX, nodeY, svgHeight, svgWidth } = require("src/model/mapview.js");
 
 function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
+  const resourceDomainTable = resourceDomains(registries);
   let snap = null;
   // Couch co-op: this screen may control several seats; `me` is the ACTIVE one.
   let seats = (myIds && myIds.length ? myIds : [myId]).slice();
@@ -31869,6 +32985,10 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   function meterBars(ent, isEnemy) {
     const wrap = document.createElement('div');
     wrap.className = 'meters';
+    if (!isEnemy) {
+      wrap.appendChild(resourceBars(resourceBarPlan(registries, 'main', ent, ent, resourceDomainTable), { surface: 'main' }));
+      return wrap;
+    }
     const hp = document.createElement('div');
     hp.className = 'bar hpbar';
     hp.innerHTML = `<div class="fill" style="width:${(Math.max(0, ent.hp) / ent.maxHp) * 100}%"></div><div class="label">${Math.max(0, ent.hp)} / ${ent.maxHp}</div>`;
@@ -31946,7 +33066,10 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       box.appendChild(sprite);
       const nm = document.createElement('div');
       nm.className = 'coop-seat-name';
-      nm.innerHTML = `<span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''} · ⚡${p.energy}/${p.energyMax} <span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
+      nm.innerHTML =
+        `<span class="coop-seat-player"><span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''}</span>` +
+        `<span class="coop-seat-vitals"><span title="Energy">⚡${p.energy}/${p.energyMax}</span><span title="Mana">◆${p.mana}/${p.maxMana}</span></span>` +
+        `<span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
       box.appendChild(nm);
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
@@ -31986,7 +33109,7 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const n = meP.hand.length;
       meP.hand.forEach((c, i) => {
         const def = cardDef(c);
-        const affordable = !meP.ended && (def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost);
+        const affordable = !meP.ended && (def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost) && meP.mana >= (def.manaCost || 0);
         const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods }, { affordable });
         const spread = Math.min(6, n) * 1.2;
         el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
@@ -32052,10 +33175,12 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       columns = Math.max(...nodes.map((n) => n.col)) + 1;
       console.warn(`[coop] snapshot map has no \`columns\`; drawing ${columns} derived from the nodes in use.`);
     }
-    const width = columns * COL_X + 60;
-    const height = (maxFloor + 1) * ROW_H + 30;
-    const x = (col) => 60 + col * COL_X;
-    const y = (floor) => height - floor * ROW_H;
+    // One map geometry for both viewers. The old renderer retyped COL_X,
+    // ROW_H and both radii here, so a solo spacing fix left co-op unchanged.
+    const width = svgWidth(columns);
+    const height = svgHeight(maxFloor);
+    const x = (col) => nodeX(col);
+    const y = (floor) => nodeY(floor, height);
 
     let edgeSvg = '';
     for (const n of nodes) for (const toId of n.next || []) {
@@ -32082,7 +33207,7 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
           <div class="coop-partybar"></div>
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
-        <div class="map-scroll"><div class="map-canvas">
+        <div class="map-scroll" data-scroll-axis="x" data-scroll-axis-why="the act map is a horizontal route"><div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
             <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${esc(actTitle(snap.actNumber))}</text>
             ${edgeSvg}
@@ -32098,7 +33223,7 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const cls = ['map-node', n.type, isReachable ? 'reachable' : '', voters.includes(me) ? 'my-vote' : ''].filter(Boolean).join(' ');
       const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       el.setAttribute('class', cls);
-      const r = n.type === 'boss' ? 20 : 15;
+      const r = nodeRadius(n.type);
       const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
       // Vote pips: the voters' class glyphs ride above a voted node.
       const pips = voters.length

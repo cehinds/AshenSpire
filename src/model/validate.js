@@ -21,7 +21,8 @@ import {
   TRIGGER_EVENTS,
   PREDICATES,
   CARD_TYPES,
-  MODIFIER_KEYS,
+  PILES,
+  PILE_POSITIONS,
   REGISTRY_TYPES,
   SFX_LAYER_KINDS,
   SFX_LAYER_SCHEMAS,
@@ -29,6 +30,7 @@ import {
   MUSIC_BED_SCHEMA,
   CREATURE_TAGS,
 } from './schemas.js';
+import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -42,6 +44,7 @@ export const TOKENIZABLE_OPS = Object.freeze([
   'poiseDamage',
   'draw',
   'gainEnergy',
+  'restoreMana',
   'addCinders',
   'loseMaxHpPct',
 ]);
@@ -57,6 +60,7 @@ export const REQUIRED_TOKEN_OPS = Object.freeze([
   'poiseDamage',
   'draw',
   'gainEnergy',
+  'restoreMana',
 ]);
 
 const KNOWN_BUNDLE_KEYS = new Set([
@@ -206,6 +210,20 @@ export function validateContent(bundle) {
     });
   }
 
+  // Resource ceilings and costs are semantic bounds, not merely integer
+  // shapes. A zero maximum would make a 0/0 bar; a negative cost would mint
+  // mana when a card is played. Both are refused at the content door.
+  for (const cls of Array.isArray(b.classes) ? b.classes : []) {
+    if (cls && Number.isInteger(cls.maxMana) && cls.maxMana <= 0) {
+      err(`classes.${cls.id || '?'}.maxMana`, 'must be > 0');
+    }
+  }
+  for (const card of Array.isArray(b.cards) ? b.cards : []) {
+    if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
+      err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
+    }
+  }
+
   // Effect-tag vocabulary: the card-tag registry rides the bundle so effect
   // `tags` and taggedVulnerability lists validate against ONE home (#61).
   const tagIds = new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => t && t.id).filter(Boolean));
@@ -214,6 +232,7 @@ export function validateContent(bundle) {
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {
     cards: SCHEMAS.card,
+    resources: SCHEMAS.resource,
     relics: SCHEMAS.relic,
     statuses: SCHEMAS.status,
     stances: SCHEMAS.stance,
@@ -230,6 +249,33 @@ export function validateContent(bundle) {
       const path = `${type}.${(def && def.id) || '?'}`;
       walkSchema(def, typeToSchema[type], path, vctx);
     });
+  }
+
+  // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
+  // The shape walk above already rejects a missing `source`. This rejects a
+  // source the engine cannot READ — the defect that would otherwise ship a
+  // trough reading 0/0 forever on Constantine's HUD, looking finished.
+  //
+  // THIS IS THE REFUSAL THE FEATURE WAS BUILT AROUND. Wave 4 of D10 asks for
+  // stamina and mana bars; neither resource exists in this tree. Adding
+  // `{ id: 'stamina', source: 'stamina', ... }` to content/resources.js dies
+  // HERE, at boot, naming the row and printing the sources that do exist —
+  // instead of drawing an empty bar nobody can tell from a broken one.
+  for (const row of (Array.isArray(b.resources) ? b.resources : [])) {
+    if (!row || typeof row.source !== 'string') continue; // shape walk owns this
+    if (!RESOURCE_SOURCE_IDS.includes(row.source)) {
+      err(`resources.${row.id || '?'}`, `source ${JSON.stringify(row.source)} has no reader — `
+        + `the engine cannot get a value for it, so this bar would render an empty trough forever. `
+        + `Readable sources are: ${RESOURCE_SOURCE_IDS.join(', ')}. `
+        + `Adding one is an engine change (a reader in model/resources.js), not a row.`);
+    }
+    if (row.domainMax != null && !(Number.isFinite(row.domainMax) && row.domainMax > 0)) {
+      err(`resources.${row.id || '?'}.domainMax`, `must be a positive number when present — got ${JSON.stringify(row.domainMax)}. `
+        + `It is the bar's full-row ceiling; a zero or negative one divides the length by nothing.`);
+    }
+    if (Array.isArray(row.surfaces) && row.surfaces.length === 0) {
+      err(`resources.${row.id || '?'}.surfaces`, 'names no surface, so this row can never draw — omit the row or give it a surface.');
+    }
   }
 
   if (b.balance != null && (typeof b.balance !== 'object' || Array.isArray(b.balance))) {
@@ -274,8 +320,8 @@ export function validateContent(bundle) {
   // THE MAP'S VERTICAL MARGIN, and it belongs here because it has exactly one
   // data input. `balance.ui.tapSize.def` is what the map node's radius is SOLVED
   // FROM (model/mapview.js), so raising it grows the target and eats the space
-  // BETWEEN two adjacent targets in the same stroke — 44.09 px of node against a
-  // 47.0 px row pitch at 390x844 today, under 3 px of air between two taps that
+  // BETWEEN two adjacent targets in the same stroke — at 08e184a, 44.09 px of
+  // node against a 47.0 px row pitch at 390x844, under 3 px of air between taps
   // both start a fight nobody can undo (Sunna, 2026-08-08). Nothing was watching
   // that number; a refusal that prints a verdict and not a margin cannot be.
   //
@@ -804,11 +850,17 @@ export function validateEffects(effects, path, vctx) {
       err(`${p}.target`, `stagger targets enemies only, got '${eff.target}'`);
     }
     if (eff.op === 'addCard') {
-      if (eff.pile !== undefined && !['draw', 'hand', 'discard', 'exhaust'].includes(eff.pile)) {
-        err(`${p}.pile`, `Unknown pile '${eff.pile}'`);
+      // PILES / PILE_POSITIONS, not the same words typed again. Both sets were
+      // declared closed in schemas.js and read by NOBODY, while these two lines
+      // re-typed them as literals and did the actual refusing — the vocabulary
+      // an author would edit was decoration, the copy nobody would think to edit
+      // was the law. The legal values in the message come off the set too, so a
+      // new pile cannot be legal and unmentioned.
+      if (eff.pile !== undefined && !PILES.includes(eff.pile)) {
+        err(`${p}.pile`, `Unknown pile '${eff.pile}' (legal: ${PILES.join(', ')})`);
       }
-      if (eff.position !== undefined && !['top', 'bottom', 'random'].includes(eff.position)) {
-        err(`${p}.position`, `Unknown position '${eff.position}'`);
+      if (eff.position !== undefined && !PILE_POSITIONS.includes(eff.position)) {
+        err(`${p}.position`, `Unknown position '${eff.position}' (legal: ${PILE_POSITIONS.join(', ')})`);
       }
     }
   });

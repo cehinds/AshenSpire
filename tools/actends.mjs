@@ -55,6 +55,7 @@
 //   node tools/actends.mjs --shapes 390x844,1200x730
 //   node tools/actends.mjs --mode fog|path       default: the shipping default
 //   node tools/actends.mjs --shots DIR           write each entrance frame as a PNG
+//   node tools/actends.mjs --dist                 inspect dist/AshenSpire.html
 //   CHROME=/path/to/chrome node tools/actends.mjs
 //
 // Exit codes
@@ -75,7 +76,7 @@ import { spawn } from 'node:child_process';
 import { createConnection } from 'node:net';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -90,15 +91,21 @@ const BROWSERS = [
 ].filter(Boolean);
 
 const args = process.argv.slice(2);
+const useDist = args.includes('--dist');
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const SEEDS = arg('--seeds', 'SHOWCASE,BJORN1,BJORN2,SUNNA3,VIRA4,VIKI5,MARINA6,RUNE7,FREJA8,VEGA9,STEN10,SAGA11').split(',');
-// THE SHAPES ARE tools/mapfit.mjs'S, VERBATIM — the same width, the same device
-// pixel ratio, the same `mobile` flag. Two instruments measuring the same screen
+// 390x844 and 1200x730 are tools/mapfit.mjs's shapes; 320x640 is the smallest
+// phone carried by mapreach.mjs and mapspacing.mjs. Same width, device pixel
+// ratio and `mobile` flag. Two instruments measuring the same screen
 // under different emulation produce two numbers and one argument; this file had
 // that argument with itself on its first run (it read `mobile:true, dpr:1` and
 // disagreed with a playwright pass at `mobile:false, dpr:2` about whether the
 // boss was on screen on dev). One shape table, or the disagreement is the tool's.
-const KNOWN_SHAPES = { '390x844': { d: 3, mobile: true }, '1200x730': { d: 1, mobile: false } };
+const KNOWN_SHAPES = {
+  '320x640': { d: 3, mobile: true },
+  '390x844': { d: 3, mobile: true },
+  '1200x730': { d: 1, mobile: false },
+};
 const SHAPES = arg('--shapes', '390x844,1200x730').split(',').map((s) => {
   const m = /^(\d+)x(\d+)$/.exec(s.trim());
   if (!m) { console.error(`actends: --shapes wants WxH, got "${s}"`); process.exit(2); }
@@ -115,7 +122,10 @@ if (!browser) {
 }
 if (SHOTS) mkdirSync(resolve(SHOTS), { recursive: true });
 
-const { server, port } = await serve({ root: ROOT, port: 8177, open: false });
+const served = useDist ? null : await serve({ root: ROOT, port: 8177, open: false });
+const pageBase = useDist
+  ? pathToFileURL(resolve(ROOT, 'dist', 'AshenSpire.html')).href
+  : `http://localhost:${served.port}/index.html`;
 
 // The page-side probe. It runs in the document, so it must not import anything.
 // It returns the two ends' RECTS and the scrollport's, and nothing derived — the
@@ -124,6 +134,12 @@ const PROBE = `(() => {
   const sc = document.querySelector('.map-scroll');
   if (!sc) return { error: 'no .map-scroll — the map never mounted' };
   const port = sc.getBoundingClientRect();
+  const rect = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height || getComputedStyle(el).visibility === 'hidden') return null;
+    return { x0: Math.round(r.left), y0: Math.round(r.top), x1: Math.round(r.right), y1: Math.round(r.bottom) };
+  };
   const circle = (el) => { const c = el.querySelector('circle:not(.node-halo)'); return (c || el).getBoundingClientRect(); };
   const ends = [];
   for (const el of document.querySelectorAll('#map-nodes > .map-node')) {
@@ -137,9 +153,21 @@ const PROBE = `(() => {
       x0: Math.round(r.left), y0: Math.round(r.top), x1: Math.round(r.right), y1: Math.round(r.bottom),
     });
   }
+  const orientation = document.querySelector('.map-entrance-orientation');
   return {
     port: { x0: Math.round(port.left), y0: Math.round(port.top), x1: Math.round(port.right), y1: Math.round(port.bottom) },
+    viewport: { x0: 0, y0: 0, x1: innerWidth, y1: innerHeight },
     ends,
+    title: rect(document.querySelector('.map-act-title')),
+    orientation: orientation && getComputedStyle(orientation).display !== 'none' ? {
+      title: rect(orientation.querySelector('strong')),
+      start: rect(orientation.querySelector('[data-role="start"]')),
+      boss: rect(orientation.querySelector('[data-role="boss"]')),
+      rail: rect(orientation.querySelector('.map-orientation-rail')),
+      inert: getComputedStyle(orientation).pointerEvents === 'none'
+        && !orientation.querySelector('button, a, [role="button"], [tabindex]')
+        && !orientation.querySelector('circle, .map-node, .map-overview-node'),
+    } : null,
     drawn: document.querySelectorAll('#map-nodes > .map-node').length,
     mode: sc.dataset.mapMode || '?',
     framing: sc.dataset.framing || '?',
@@ -150,7 +178,7 @@ const PROBE = `(() => {
 async function cdp(shape, seed) {
   const q = new URLSearchParams({ shot: 'map', shotSeed: seed });
   if (MODE) q.set('shotSettings', JSON.stringify({ mapMode: MODE }));
-  const url = `http://localhost:${port}/index.html?${q}`;
+  const url = `${pageBase}?${q}`;
   const dp = 9333 + Math.floor(Math.random() * 400);
   const child = spawn(browser, [
     '--headless=new', '--disable-gpu', '--no-sandbox',
@@ -256,29 +284,49 @@ for (const shape of SHAPES) {
     // passed — the same rule mapfit.mjs exits 2 on.
     if (!boss && !doors.length) { findings.push(`${shape.label} ${seed}: neither end is in the DOM — nothing to measure`); continue; }
     swept++;
+    const realEnds = [boss, ...doors].filter(Boolean);
+    const endSpan = realEnds.length
+      ? Math.max(...realEnds.map((e) => e.y1)) - Math.min(...realEnds.map((e) => e.y0))
+      : Infinity;
+    const portH = v.port.y1 - v.port.y0;
+    const realFits = !!boss && doors.length > 0 && realEnds.every((e) => inside(e, v.port));
+    const titleFits = !!v.title && inside(v.title, v.viewport);
+    const orientationFits = !!v.orientation && !!v.orientation.title && !!v.orientation.start
+      && !!v.orientation.boss && !!v.orientation.rail && v.orientation.inert
+      && [v.orientation.title, v.orientation.start, v.orientation.boss, v.orientation.rail].every((e) => inside(e, v.viewport));
+    const impossible = endSpan > portH;
+    const composition = realFits && titleFits ? 'map' : (impossible && orientationFits ? 'orientation' : 'failed');
     const bad = [];
+    if (v.orientation && !v.orientation.inert) bad.push('the orientation strip has an interactive or node-shaped descendant');
+    if (!titleFits && !orientationFits) bad.push('the ACT TITLE is not wholly visible');
     if (!boss) bad.push('the end node is not drawn at all');
-    else if (!inside(boss, v.port)) bad.push(`the END is off frame by ${missBy(boss, v.port)} px`);
-    for (const d of doors) if (!inside(d, v.port)) bad.push(`a START door (${d.id}) is off frame by ${missBy(d, v.port)} px`);
-    rows.push({ shape: shape.label, seed, mode: v.mode, drawn: v.drawn, ok: !bad.length, why: bad.join('; ') });
+    else if (!inside(boss, v.port) && composition !== 'orientation') bad.push(`the END is off frame by ${missBy(boss, v.port)} px`);
+    for (const d of doors) if (!inside(d, v.port) && composition !== 'orientation') bad.push(`a START door (${d.id}) is off frame by ${missBy(d, v.port)} px`);
+    if (orientationFits && !impossible && !realFits) bad.push(`orientation strip hides a fixable camera miss: real ends need ${endSpan}px inside a ${portH}px port`);
+    if (composition === 'failed' && !bad.length) bad.push('neither real map nor bounded orientation strip carries title + start + boss');
+    rows.push({ shape: shape.label, seed, mode: v.mode, drawn: v.drawn, composition, endSpan, portH, ok: !bad.length, why: bad.join('; ') });
     if (bad.length) findings.push(`${shape.label} ${seed} [${v.mode}, ${v.drawn} drawn]: ${bad.join('; ')}`);
   }
 }
 
-server.close();
+if (served) served.server.close();
 
 const w = (s, n) => String(s).padEnd(n);
-console.log('\nactends — at the act entrance, are BOTH ends of the climb on screen?\n');
-console.log(`  ${w('shape', 11)}${w('seed', 11)}${w('mode', 7)}${w('drawn', 7)}verdict`);
-for (const r of rows) console.log(`  ${w(r.shape, 11)}${w(r.seed, 11)}${w(r.mode, 7)}${w(r.drawn, 7)}${r.ok ? 'both ends on screen' : r.why}`);
+console.log('\nactends — at the act entrance, are TITLE, START and BOSS visible together?\n');
+console.log(`  ${w('shape', 11)}${w('seed', 11)}${w('mode', 7)}${w('drawn', 7)}${w('composition', 13)}verdict`);
+for (const r of rows) console.log(`  ${w(r.shape, 11)}${w(r.seed, 11)}${w(r.mode, 7)}${w(r.drawn, 7)}${w(r.composition, 13)}`
+  + `${r.ok ? `all three visible; real ends ${r.endSpan}px / port ${r.portH}px` : r.why}`);
 
 if (!swept) {
   console.error('\nactends: NOTHING SWEPT — unknown, never a pass.');
   process.exit(2);
 }
-console.log(`\n  ${rows.filter((r) => r.ok).length}/${swept} cells show both ends.`);
-console.log('\nBOUNDARY: headless Chromium, one Linux box, act 1, the ENTRANCE frame only.');
-console.log('  Measures each end node\'s own <circle>, never its reachable halo. Says nothing');
+console.log(`\n  ${rows.filter((r) => r.ok).length}/${swept} cells show title + start + boss.`);
+console.log('\nBOUNDARY: headless Chromium on this machine, act 1, the ENTRANCE frame only.');
+console.log('  `map` measures real endpoint circles. `orientation` accepts only an inert,');
+console.log('  node-free orientation strip where the');
+console.log('  measured real span exceeds the measured port at the current zoom. Neither path');
+console.log('  judges the composition or measures the reachable halo. Says nothing');
 console.log('  about mid-climb framing (tools/mapfit.mjs), whether the node is in the DOM');
 console.log('  (tools/mapfog.mjs), or whether the unlit ground READS as parchment — the act');
 console.log('  plate is a 404 today, so every frame above is of the placeholder wash.');

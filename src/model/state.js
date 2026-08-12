@@ -42,6 +42,7 @@ export function createRunState({ seed, classId, registries }) {
   // Armour can carry `self.maxHp`, so the pool it sets has to be known before
   // hp is filled — the run starts at full, in whatever it starts wearing.
   const maxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
+  const maxMana = classDef.maxMana;
   const run = {
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
@@ -53,6 +54,8 @@ export function createRunState({ seed, classId, registries }) {
     mapNodeId: null,
     hp: maxHp,
     maxHp,
+    mana: maxMana,
+    maxMana,
     cinders: registries.balance.startingCinders || 0,
     deck: createDeck(classDef.startingDeck, idGen),
     loadout,
@@ -89,6 +92,10 @@ export const RUN_SHAPE = [
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
   { key: 'maxHp', type: 'number' },
+  // Optional only for save compatibility. save.js migrates a pre-mana run to
+  // its class-authored full pool before handing it to the game.
+  { key: 'mana', type: 'number', optional: true },
+  { key: 'maxMana', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
@@ -134,6 +141,12 @@ export function validateRunShape(run) {
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');
   }
+  if (run.maxMana !== undefined && (!Number.isFinite(run.maxMana) || run.maxMana <= 0)) {
+    problems.push('maxMana must be > 0');
+  }
+  if (Number.isFinite(run.mana) && Number.isFinite(run.maxMana) && (run.mana < 0 || run.mana > run.maxMana)) {
+    problems.push('mana must be between 0 and maxMana');
+  }
   return problems;
 }
 
@@ -164,13 +177,15 @@ export function deserializeRun(json) {
 /**
  * Player combat entity. statuses: { [statusId]: { stacks, duration?, meter? } }.
  */
-export function createPlayerCombatEntity({ classId, maxHp, hp, relicIds = [], flasks = [], energyMax = 3 }) {
+export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, relicIds = [], flasks = [], energyMax = 3 }) {
   return {
     id: 'player',
     kind: 'player',
     classId,
     hp: hp != null ? hp : maxHp,
     maxHp,
+    mana: mana != null ? mana : maxMana,
+    maxMana,
     block: 0,
     energy: 0,
     energyMax,

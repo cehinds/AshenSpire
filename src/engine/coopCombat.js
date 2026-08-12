@@ -116,6 +116,8 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
 function addPlayerState(C, p, { initial = false } = {}) {
   const entity = createPlayerCombatEntity({
     classId: p.classId, maxHp: p.maxHp, hp: p.hp != null ? p.hp : p.maxHp,
+    maxMana: p.maxMana != null ? p.maxMana : C.registries.classes.get(p.classId).maxMana,
+    mana: p.mana,
     relicIds: p.relicIds || [], flasks: p.flasks || [], energyMax: C.energyMax,
   });
   const deck = (p.deck || []).map((c) => ({
@@ -299,7 +301,9 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
 
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(C, def);
+  const manaCost = def.manaCost || 0;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
+  if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
 
   let target = null;
   if (targetId != null) {
@@ -319,12 +323,15 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
 
   p.energy -= cost;
   if (cost > 0 || isX) C.emit('energySpent', { amount: cost });
+  p.mana -= manaCost;
+  if (manaCost > 0) C.emit('manaSpent', { amount: manaCost });
 
   C.piles.hand.splice(idx, 1);
   p.counters.cardsPlayedThisTurn += 1;
   p.counters.cardsPlayedThisCombat += 1;
   const meta = {
     energySpent: cost,
+    manaSpent: manaCost,
     ordinalThisTurn: p.counters.cardsPlayedThisTurn,
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
@@ -336,7 +343,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   C.emit('cardPlayed', {
     cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: def.type,
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
-    ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost,
+    ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost,
   });
   drainQueue(C);
 

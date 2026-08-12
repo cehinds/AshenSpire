@@ -29,6 +29,12 @@
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 1.4rem; color: var(--parchment);
 }
+.card .mana-cost {
+  position: absolute; top: -0.7rem; right: -0.7rem; min-width: 3.2rem; height: 2.4rem;
+  border-radius: 999px; padding: 0 0.6rem; background: #111b35; border: 2px solid #4f82d8;
+  display: flex; align-items: center; justify-content: center; gap: 0.25rem;
+  font-weight: 700; font-size: 1rem; color: #cfe1ff;
+}
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
 .card .cname { font-family: var(--font-display); font-size: 1.15rem; text-align: center; line-height: 1.15; min-height: 2.6rem; }
 .card.upgraded .cname { color: var(--green); }
@@ -1124,14 +1130,41 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .coop-take { border-color: var(--gold); }
 
 /* multiple player seats sit side-by-side in the combat player-zone */
-.combat.coop .player-zone { display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.4rem; align-items: flex-end; justify-content: center; }
+.combat.coop .player-zone {
+  display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.4rem;
+  min-width: 13rem; align-items: flex-end; justify-content: center;
+}
+/* Phones cannot honestly hold two player seats beside three enemies: both
+   groups have real min-content widths from their resource bars. Stack the two
+   rows only for co-op, keeping every fighter at the shared sprite/text sizes.
+   The field owns vertical reach if an unusually short phone cannot hold both.
+   The hand remains its existing horizontal scroller; inline padding gives a
+   rotated first/last card a whole-card resting position at either edge. */
+:root[data-layout='narrow'] .combat.coop .field {
+  flex-direction: column; min-height: 0; overflow-y: auto;
+}
+:root[data-layout='narrow'] .combat.coop .player-zone {
+  width: 100%; min-width: 0; flex: 0 0 auto; flex-wrap: nowrap;
+  align-items: flex-end; justify-content: space-evenly; padding-bottom: 0.6rem;
+}
+:root[data-layout='narrow'] .combat.coop .enemy-row {
+  width: 100%; min-width: 0; flex: 1 0 auto; padding-bottom: 0.6rem;
+}
+:root[data-layout='narrow'] .combat.coop .hand { padding-inline: 1rem; }
 .combat.coop .combatant.player { position: relative; }
 .combat.coop .combatant.player.me .sprite { filter: drop-shadow(0 0 6px rgba(200,160,70,.55)); }
 .combat.coop .combatant.player.ended { opacity: .62; }
 .combat.coop .combatant.player.down { filter: grayscale(1); opacity: .45; }
 .combat.coop .combatant.player.away { opacity: .45; }
 .combat.coop .combatant.player.throw-target { cursor: pointer; outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 8px; box-shadow: 0 0 12px rgba(200,160,70,.4); }
-.coop-seat-name { font-size: 1.1rem; color: #e0d4b8; text-align: center; margin-top: 0.3rem; }
+.coop-seat-name {
+  width: 13rem; max-width: 100%; min-width: 0; margin-top: 0.3rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
+  font-size: 1.1rem; color: #e0d4b8; text-align: center;
+}
+.coop-seat-player { max-width: 100%; overflow-wrap: anywhere; }
+.coop-seat-vitals { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.2rem 0.7rem; }
+.coop-seat-vitals > span { white-space: nowrap; }
 .coop-turnflag { color: var(--gold); font-size: 1rem; letter-spacing: .06em; }
 .combat.coop .combatant.enemy.selected-target { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 8px; }
 
@@ -1149,6 +1182,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* flasks (throw-to-ally) */
 .coop-flasks { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin: 0.4rem 0; }
 .coop-flask { padding: 0.5rem 1.2rem; font-size: 1.3rem; }
+.combat.coop .coop-leave,
+.combat.coop .coop-flask { min-height: var(--tap-floor); height: auto; }
 .coop-flask.armed { border-color: var(--gold); box-shadow: 0 0 8px rgba(200,160,70,.5); }
 .coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: 7px; padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
 

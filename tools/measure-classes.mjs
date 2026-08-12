@@ -189,7 +189,7 @@ function botFight(run, rng, encounterId, stats, pickRandom) {
     const affordable = combat.piles.hand.filter((h) => {
       const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
       if ((def.keywords || []).includes('unplayable')) return false;
-      return (def.cost === 'X' ? 0 : def.cost) <= combat.player.energy;
+      return (def.cost === 'X' ? 0 : def.cost) <= combat.player.energy && (def.manaCost || 0) <= combat.player.mana;
     });
     let card;
     if (POLICY === 'greedy') card = affordable[0];

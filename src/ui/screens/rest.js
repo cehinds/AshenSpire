@@ -20,7 +20,7 @@ export function mountRest(app, { registries, run, onDone, healMult = 1 }) {
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
           <h3>Rest</h3>
-          <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}).`}</p>
+          <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
         </div>
         <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt">
           <div class="glyph">⚒</div>
@@ -34,6 +34,7 @@ export function mountRest(app, { registries, run, onDone, healMult = 1 }) {
   if (!noRest) {
     app.querySelector('#rest-opt').addEventListener('click', () => {
       run.hp = Math.min(run.maxHp, run.hp + heal);
+      run.mana = run.maxMana;
       sfx.play('shrine');
       onDone(`Rested: +${heal} HP.`);
     });

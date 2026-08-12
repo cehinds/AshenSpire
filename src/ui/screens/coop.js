@@ -17,11 +17,12 @@ import { attachTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox } from '../fx.js';
 import { nodeIcon, nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass } from '../uiContent.js';
 import { resolveCard } from '../../model/registries.js';
-
-const COL_X = 95;
-const ROW_H = 46;
+import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
+import { resourceBars } from '../components/resbars.js';
+import { nodeRadius, nodeX, nodeY, svgHeight, svgWidth } from '../../model/mapview.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
+  const resourceDomainTable = resourceDomains(registries);
   let snap = null;
   // Couch co-op: this screen may control several seats; `me` is the ACTIVE one.
   let seats = (myIds && myIds.length ? myIds : [myId]).slice();
@@ -177,6 +178,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
   function meterBars(ent, isEnemy) {
     const wrap = document.createElement('div');
     wrap.className = 'meters';
+    if (!isEnemy) {
+      wrap.appendChild(resourceBars(resourceBarPlan(registries, 'main', ent, ent, resourceDomainTable), { surface: 'main' }));
+      return wrap;
+    }
     const hp = document.createElement('div');
     hp.className = 'bar hpbar';
     hp.innerHTML = `<div class="fill" style="width:${(Math.max(0, ent.hp) / ent.maxHp) * 100}%"></div><div class="label">${Math.max(0, ent.hp)} / ${ent.maxHp}</div>`;
@@ -254,7 +259,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       box.appendChild(sprite);
       const nm = document.createElement('div');
       nm.className = 'coop-seat-name';
-      nm.innerHTML = `<span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''} · ⚡${p.energy}/${p.energyMax} <span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
+      nm.innerHTML =
+        `<span class="coop-seat-player"><span style="color:${tintCss(m.tint)}">${esc(m.name || p.id)}</span>${p.id === me ? ' <b>(you)</b>' : ''}</span>` +
+        `<span class="coop-seat-vitals"><span title="Energy">⚡${p.energy}/${p.energyMax}</span><span title="Mana">◆${p.mana}/${p.maxMana}</span></span>` +
+        `<span class="coop-turnflag">${!p.connected ? 'away' : !p.alive ? 'down' : p.ended ? '✓ ended' : '● turn'}</span>`;
       box.appendChild(nm);
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
@@ -294,7 +302,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const n = meP.hand.length;
       meP.hand.forEach((c, i) => {
         const def = cardDef(c);
-        const affordable = !meP.ended && (def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost);
+        const affordable = !meP.ended && (def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost) && meP.mana >= (def.manaCost || 0);
         const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods }, { affordable });
         const spread = Math.min(6, n) * 1.2;
         el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
@@ -360,10 +368,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       columns = Math.max(...nodes.map((n) => n.col)) + 1;
       console.warn(`[coop] snapshot map has no \`columns\`; drawing ${columns} derived from the nodes in use.`);
     }
-    const width = columns * COL_X + 60;
-    const height = (maxFloor + 1) * ROW_H + 30;
-    const x = (col) => 60 + col * COL_X;
-    const y = (floor) => height - floor * ROW_H;
+    // One map geometry for both viewers. The old renderer retyped COL_X,
+    // ROW_H and both radii here, so a solo spacing fix left co-op unchanged.
+    const width = svgWidth(columns);
+    const height = svgHeight(maxFloor);
+    const x = (col) => nodeX(col);
+    const y = (floor) => nodeY(floor, height);
 
     let edgeSvg = '';
     for (const n of nodes) for (const toId of n.next || []) {
@@ -390,7 +400,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
           <div class="coop-partybar"></div>
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
-        <div class="map-scroll"><div class="map-canvas">
+        <div class="map-scroll" data-scroll-axis="x" data-scroll-axis-why="the act map is a horizontal route"><div class="map-canvas">
           <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
             <text x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${esc(actTitle(snap.actNumber))}</text>
             ${edgeSvg}
@@ -406,7 +416,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
       const cls = ['map-node', n.type, isReachable ? 'reachable' : '', voters.includes(me) ? 'my-vote' : ''].filter(Boolean).join(' ');
       const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       el.setAttribute('class', cls);
-      const r = n.type === 'boss' ? 20 : 15;
+      const r = nodeRadius(n.type);
       const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
       // Vote pips: the voters' class glyphs ride above a voted node.
       const pips = voters.length

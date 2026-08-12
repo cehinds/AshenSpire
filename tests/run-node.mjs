@@ -403,6 +403,82 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (linkTree.code !== 0 || !linkTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // ---- 50/51. CAN A PLAYER EVER MEET THIS STATUS? (Rune, 2026-08-08) -------
+  //
+  // Law 1 clause 1 says a status is a row. Nothing checked that a row was ever
+  // APPLIED, and two complete threshold-proc rows shipped that no player could
+  // reach: `frost` (threshold 10, burst, Frost-Exposed, resist row, its own SFX
+  // row) and `insanity` (threshold 14, guaranteed Stagger). Zero appliers, both.
+  // Bleed had 25. THE CARD NAMED FROST NOVA APPLIED `weak` AND `vulnerable`.
+  //
+  // Everything downstream was green because everything downstream tested the
+  // ROW: the engine procs them (7b, 7c, 7e, 7g), the validator rules on every
+  // knob (7f), the SFX resolver answers them (35d). Not one of those checks
+  // could tell a row with a door from a row without one — and 35d in
+  // particular is the near miss: it walks `statuses.filter(s => s.proc)` and
+  // proves each has a burst sound. The same population, one question earlier.
+  //
+  // TWO LINES, for the same reason 45/46 are two: 50 is the check's own
+  // integrity against its planted corpus (including the two plants that must
+  // go GREEN), 51 is the state of the tree. No plant count typed here — the
+  // corpus lives in statusreach.mjs and its RESULT line carries the number.
+  const runReach = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/statusreach.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
+  // 52/53 — every exported closed set has a reader (Marina's ask, out of the
+  // PASSIVE_KEYS finding). Numbered after the current engine and status-reach
+  // checks so this merged suite has one number line.
+  const runSets = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/closedsets.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
+  const reachSelf = runReach(['--selftest']);
+  const reachSelfV = quote(reachSelf.out);
+  console.log(
+    `${reachSelf.code === 0 && reachSelfV.text ? 'PASS' : 'FAIL'}  50. the status-reach check still catches its own known-bad corpus` +
+      ` — ${reachSelfV.text || `statusreach --selftest (exit ${reachSelf.code}): ${reachSelfV.why}`}`
+  );
+  if (reachSelf.code !== 0 || !reachSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const reachTree = runReach([]);
+  const reachTreeV = quote(reachTree.out);
+  console.log(
+    `${reachTree.code === 0 && reachTreeV.text ? 'PASS' : 'FAIL'}  51. every shipped status has something that applies it` +
+      ` — ${reachTreeV.text || `statusreach (exit ${reachTree.code}): ${reachTreeV.why}`}` +
+      ` (\`node tools/statusreach.mjs\` names the row and the route)`
+  );
+  if (reachTree.code !== 0 || !reachTreeV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const setsSelf = runSets(['--selftest']);
+  const setsSelfV = quote(setsSelf.out);
+  console.log(
+    `${setsSelf.code === 0 && setsSelfV.text ? 'PASS' : 'FAIL'}  52. the closed-set check still catches its own known-bad corpus` +
+      ` — ${setsSelfV.text || `closedsets --selftest (exit ${setsSelf.code}): ${setsSelfV.why}`}`
+  );
+  if (setsSelf.code !== 0 || !setsSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const setsTree = runSets([]);
+  const setsTreeV = quote(setsTree.out);
+  console.log(
+    `${setsTree.code === 0 && setsTreeV.text ? 'PASS' : 'FAIL'}  53. every exported closed set is read by something` +
+      ` — ${setsTreeV.text || `closedsets (exit ${setsTree.code}): ${setsTreeV.why}`}` +
+      ` (\`node tools/closedsets.mjs\` for the table, \`--selftest\` for the reds)`
+  );
+  if (setsTree.code !== 0 || !setsTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -431,4 +507,13 @@ console.log('          export and not one module body was executed — so they p
 console.log('          eleven hand-started instruments START, never that any of them');
 console.log('          WORKS. A name that exists but is wrong links green, and');
 console.log('          release-shots must still be RUN by a person before a delivery.');
+console.log('          50–51 prove a status has a DOOR, never that the door opens on');
+console.log('          anything. They read definitions: nothing here says a card is in');
+console.log('          a pool, that a run can draw it, or that the numbers are balanced.');
+console.log('          Cases 7e2 and 7e3 separately exercise one real tagged hit for');
+console.log('          each exposure; they do not prove broader card coverage.');
+console.log('          52–53 ASK ONE QUESTION: is each exported closed set READ anywhere.');
+console.log('          They are silent on whether a set has a second, hand-typed copy');
+console.log('          somewhere — the defect that made the question worth asking. Green');
+console.log('          means no vocabulary is decoration, never that none is duplicated.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

@@ -1,0 +1,206 @@
+// src/model/resources.js — the engine half of the HUD resource bars.
+//
+// Constantine, 2026-08-08: "the stamina and mana bars should be under the
+// health bar and the size of that bar should scale depending on the max total.
+// much like elden ring's hud".
+//
+// THE SHAPE, and it is Law 0's: a resource bar is a ROW (src/content/resources.js)
+// plus a READER (the closed set below). The renderer (ui/components/resbars.js)
+// knows nothing about health, poise, stamina or mana — it draws whatever the
+// rows say, in the order the rows say, at the length the max says. Adding a bar
+// for a resource the model ALREADY exposes is one row and zero UI code; that is
+// this feature's falsifier and tools/hudbars.mjs runs it.
+//
+// WHAT THIS FILE DELIBERATELY DOES NOT CONTAIN: stamina and mana. They are D10
+// brainstorm — his words, unbuilt. `grep -rn "stamina" src/` is 0 and every one
+// of the 9 hits for "mana" is the word "manager". There is no character stat
+// system either (`constitution` 0, `charisma` 0), so his "1 per 5 constitution"
+// is not derivable from anything that exists. A row naming a source with no
+// reader is REFUSED BY NAME at boot (validate.js) rather than drawing a trough
+// that reads 0/0 forever — a bar that reads a resource nothing produces is a
+// lie on his screen, and this is the machinery that stops it being written.
+
+/**
+ * THE TRANSPOSE SCALE — one function, one edit.
+ *
+ * His word is "transpose scale" and it has not been ruled on. Every scale looks
+ * identical at a single value and diverges everywhere else (Law 0 clause 5: the
+ * plausible-but-wrong derivation is the invisible one), so this is drawn LINEAR
+ * and flagged as linear rather than guessed at.
+ *
+ * If he answers "curved", EXACTLY ONE LINE CHANGES — the return below. The two
+ * candidates, with what they do to the bars actually on screen today (track
+ * 264 px at 390 wide, health domain 84):
+ *
+ *   linear   x            72 -> 226 px   78 -> 245 px   84 -> 264 px
+ *   sqrt     Math.sqrt(x) 72 -> 244 px   78 -> 254 px   84 -> 264 px
+ *   log      Math.log1p(x) 72 -> 258 px  78 -> 261 px   84 -> 264 px
+ *
+ * A curve COMPRESSES the low end upward: it makes a weak character's bar look
+ * nearly as long as a strong one's, which is the opposite of what "the size
+ * scales depending on the max" is for on a 14 %-spread domain. Over a WIDE
+ * domain (enemy poise, 4..36) a curve is the better read: linear puts a 4-poise
+ * mob at 11 % and a curve puts it at 33 %, above the floor instead of on it.
+ * Both numbers are measured, not asserted — tools/hudbars.mjs --scales prints
+ * this table from this function.
+ */
+export function resourceScale(v) {
+  return v; // LINEAR. Swap for Math.sqrt(v) or Math.log1p(v) — nothing else moves.
+}
+
+/**
+ * THE CLOSED SET OF SOURCES — the whole vocabulary a row may name.
+ *
+ * `read(view, entity)` returns { cur, max } or NULL. Null is the refusal and it
+ * is load-bearing: the player entity has no poiseMeter (state.js:204 — poise is
+ * enemy-only and always has been), so the poise row reads null under the player
+ * and the bar is ABSENT, not empty. That is the same code path a stamina row
+ * would take the day someone writes one, and it is observable on the shipped
+ * tree today, which is why this feature's refusal needs no fixture.
+ *
+ * `domain(pop)` derives the largest max this resource reaches, over the
+ * population the surface can display — DERIVED from content, never typed, so it
+ * cannot drift when content is added (Law 0 clause 1). A row may override with
+ * an explicit `domainMax` (Law 0 clause 3: an override is data).
+ *
+ * ADDING A SOURCE IS AN ENGINE CHANGE — one entry here, in one act with its
+ * schema and validator (Law 0 clause 2). We say that plainly rather than
+ * promising stamina is "just a row": it is one reader plus one row, and the
+ * half that is genuinely free is the UI.
+ */
+export const RESOURCE_SOURCES = Object.freeze({
+  hp: Object.freeze({
+    read: (view, entity) => {
+      const max = entity && entity.maxHp;
+      if (!Number.isFinite(max) || max <= 0) return null;
+      const cur = view && Number.isFinite(view.hp) ? view.hp : entity.hp;
+      return { cur: Math.max(0, cur), max };
+    },
+    domain: (pop) => maxOf(pop.map((e) => e.maxHp)),
+  }),
+  mana: Object.freeze({
+    read: (view, entity) => {
+      const max = entity && entity.maxMana;
+      if (!Number.isFinite(max) || max <= 0) return null;
+      const cur = view && Number.isFinite(view.mana) ? view.mana : entity.mana;
+      return { cur: Math.max(0, Math.min(max, cur)), max };
+    },
+    domain: (pop) => maxOf(pop.map((e) => e.maxMana)),
+  }),
+  poise: Object.freeze({
+    read: (view, entity) => {
+      const pm = (view && view.poiseMeter) || (entity && entity.poiseMeter);
+      if (!pm || !Number.isFinite(pm.max) || pm.max <= 0) return null;
+      return { cur: Math.max(0, pm.value || 0), max: pm.max };
+    },
+    domain: (pop) => maxOf(pop.map((e) => e.poiseMax)),
+  }),
+});
+
+export const RESOURCE_SOURCE_IDS = Object.freeze(Object.keys(RESOURCE_SOURCES));
+export const RESOURCE_WEIGHTS = Object.freeze(['normal', 'skinny']);
+export const HUD_SURFACES = Object.freeze(['main', 'model']);
+
+function maxOf(values) {
+  let best = 0;
+  for (const v of values) {
+    // Content writes hp as a number OR as a [lo, hi] roll range; both are the
+    // population, and taking the hi is the honest ceiling.
+    if (Array.isArray(v)) { for (const n of v) if (Number.isFinite(n) && n > best) best = n; }
+    else if (Number.isFinite(v) && v > best) best = v;
+  }
+  return best;
+}
+
+/**
+ * resourceDomains(registries) → { [surfaceId]: { [rowId]: number } }
+ *
+ * The population per surface, and it is the two-HUD split he drew:
+ *   main  — the player, and only the player. So the health domain is what a
+ *           PLAYER's max HP can be (classes + equipment maxHp mods), not what a
+ *           boss's can be. 84 today, and see the boundary note in the report:
+ *           the spread across all three classes is 14 %, because this game has
+ *           no max-HP progression yet. His rule is right and has almost nothing
+ *           to encode until D10's levelling lands.
+ *   model  — the player AND every enemy, since both wear an under-model strip.
+ *
+ * Derived once per registries, not per frame.
+ */
+export function resourceDomains(registries) {
+  const classes = registries.classes.all();
+  const enemies = registries.enemies.all();
+  // Equipment can raise a run's max HP (loadout.js runMods, `self.maxHp=+N`),
+  // so the player ceiling is the best class plus the best reachable bonus.
+  const eq = registries.equipment || {};
+  let bonus = 0;
+  for (const piece of [...(eq.armour || []), ...(eq.armaments || [])]) {
+    for (const raw of (piece && piece.mods) || []) {
+      const m = /^self\.maxHp=\+?(-?\d+)$/.exec(String(raw).trim());
+      if (m) bonus = Math.max(bonus, Number(m[1]));
+    }
+  }
+  const playerPop = classes.map((c) => ({ maxHp: (c.maxHp || 0) + bonus, maxMana: c.maxMana, poiseMax: undefined }));
+  const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
+  const pops = { main: playerPop, model: bothPop };
+  const out = {};
+  for (const surface of HUD_SURFACES) {
+    out[surface] = {};
+    for (const row of registries.resources.all()) {
+      const src = RESOURCE_SOURCES[row.source];
+      if (!src) continue; // unreachable: the validator refuses the row at boot
+      out[surface][row.id] = Number.isFinite(row.domainMax) ? row.domainMax : src.domain(pops[surface]);
+    }
+  }
+  return out;
+}
+
+/**
+ * resourceBarPlan(registries, surface, view, entity, domains) → [bar]
+ *
+ * ONE function, both HUDs. A bar is:
+ *   { id, name, glyph, tint, weight, cur, max, pct, lengthPct, floored }
+ *
+ *   pct        — the FILL inside the trough (cur/max). The old bars' only job.
+ *   lengthPct  — the TROUGH's own length, as a fraction of the row track, and
+ *                the whole of his ask: scale(max)/scale(domainMax). Nothing is
+ *                typed; the track is derived by flexbox from the row minus the
+ *                two buttons, so a bar cannot lie about a max.
+ *   floored    — the minimum-width clause fired; see resbars.css. A floored bar
+ *                is no longer to scale and says so in its own trough.
+ *
+ * A row whose reader returns null is ABSENT from the plan. Not zero-length,
+ * not an empty trough: absent.
+ */
+export function resourceBarPlan(registries, surface, view, entity, domains) {
+  const bars = [];
+  const rows = registries.resources.all()
+    .filter((r) => r.surfaces.includes(surface))
+    .sort((a, b) => a.order - b.order);
+  const scaleByMax = surfaceScalesByMax(registries, surface);
+  for (const row of rows) {
+    const src = RESOURCE_SOURCES[row.source];
+    const val = src && src.read(view, entity);
+    if (!val) continue; // the refusal
+    const domain = (domains && domains[surface] && domains[surface][row.id]) || val.max;
+    const raw = domain > 0 ? resourceScale(val.max) / resourceScale(domain) : 1;
+    bars.push({
+      id: row.id,
+      name: row.name,
+      glyph: row.glyph || '',
+      tint: row.tint,
+      weight: row.weight,
+      cur: val.cur,
+      max: val.max,
+      pct: Math.max(0, Math.min(100, (val.cur / val.max) * 100)),
+      lengthPct: scaleByMax ? Math.max(0, Math.min(100, raw * 100)) : 100,
+      domain,
+    });
+  }
+  return bars;
+}
+
+/** balance.ui.hudBars.<surface>.scaleByMax — his rule, per surface, as data. */
+export function surfaceScalesByMax(registries, surface) {
+  const cfg = ((registries.balance || {}).ui || {}).hudBars || {};
+  return !!(cfg[surface] && cfg[surface].scaleByMax);
+}

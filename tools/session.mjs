@@ -67,6 +67,10 @@ export function createSession({ registries, seedString, endless = false, restore
   // Restore members (disconnected until they re-attach by rejoinId).
   if (restore) {
     for (const md of restore.members) {
+      if (md.run.maxMana === undefined && md.run.mana === undefined) {
+        md.run.maxMana = registries.classes.get(md.classId).maxMana;
+        md.run.mana = md.run.maxMana;
+      }
       members.set(md.id, {
         id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
         connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
@@ -147,7 +151,10 @@ export function createSession({ registries, seedString, endless = false, restore
       return;
     }
     // Full heal between acts for every living member.
-    for (const m of livingMembers()) m.run.hp = m.run.maxHp;
+    for (const m of livingMembers()) {
+      m.run.hp = m.run.maxHp;
+      m.run.mana = m.run.maxMana;
+    }
     buildMap();
   }
 
@@ -233,6 +240,7 @@ export function createSession({ registries, seedString, endless = false, restore
     return {
       id: m.id, name: m.name, classId: m.classId,
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
+      maxMana: m.run.maxMana, mana: m.run.mana,
       relicIds: m.run.relics, flasks: m.run.flasks,
     };
   }
@@ -277,6 +285,7 @@ export function createSession({ registries, seedString, endless = false, restore
       })),
       players: [...c.players.values()].map((P) => ({
         id: P.id, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
+        mana: P.entity.mana, maxMana: P.entity.maxMana,
         energy: P.entity.energy, energyMax: P.entity.energyMax,
         connected: P.connected, alive: P.entity.alive, ended: P.ended,
         statuses: P.entity.statuses, stanceId: P.entity.stanceId,
@@ -317,6 +326,11 @@ export function createSession({ registries, seedString, endless = false, restore
       const s = outcome.survivors[m.id];
       if (!s) continue;
       m.run.hp = s.downed ? 0 : Math.max(0, s.hp);
+      const P = c.players.get(m.id);
+      if (P) {
+        m.run.mana = P.entity.mana;
+        m.run.flasks = P.entity.flasks.map((f) => ({ ...f }));
+      }
     }
     live = null;
     if (c.result === 'defeat') {
@@ -429,6 +443,7 @@ export function createSession({ registries, seedString, endless = false, restore
     if (!m) return { ok: false };
     if (choice === 'rest') {
       m.run.hp = Math.min(m.run.maxHp, m.run.hp + shrineHealAmount(registries, m.run));
+      m.run.mana = m.run.maxMana;
     } else if (choice === 'mend') {
       // Co-op Mend: heal an ally for 30% of their max HP instead of resting.
       const ally = members.get(targetId);
@@ -498,6 +513,7 @@ export function createSession({ registries, seedString, endless = false, restore
     return {
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
+      mana: m.run.mana, maxMana: m.run.maxMana,
       deck: m.run.deck.map((c) => ({ instanceId: c.instanceId, cardId: c.cardId, upgraded: c.upgraded })),
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,
       catchup: m.catchup.length,
