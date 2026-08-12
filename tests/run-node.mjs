@@ -556,9 +556,8 @@ console.log('          somewhere — the defect that made the question worth ask
 console.log('          means no vocabulary is decoration, never that none is duplicated.');
 console.log('          54–55 NEVER OPEN A BROWSER. 54 proves the boot refusals fire and the');
 console.log('          shrine pours, through the real bundle and the real registry; 55 reports');
-console.log('          the shipped table. Neither has seen the settings row, its NOT BINDING');
-console.log('          line, or the sentence on the shrine screen — those are photographed');
-console.log('          (`?shot=rest`), not asserted. And neither says one word about whether');
-console.log('          three flasks a grace is the right number: that is');
-console.log('          `node tools/runsim.mjs --grace-ab`, and a person rules on it.');
+console.log('          the shipped table. Neither has seen the settings rows or the shrine');
+console.log('          sentence — those are photographed (`?shot=rest`), not asserted.');
+console.log('          Neither settles whether 3+3 is release balance; the old no-Mana');
+console.log('          A/B is stale, so that needs a Mana-aware simulation and player review.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

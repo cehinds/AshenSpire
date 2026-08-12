@@ -6,7 +6,10 @@ export const balance = {
   energy: 3,
   draw: 5,
   handMax: 10,
-  flaskSlots: 3,
+  // The authored grace table below promises three HP and three Mana flasks.
+  // This shared inventory therefore has six slots; the validator refuses any
+  // refill table whose live rows cannot fit.
+  flaskSlots: 6,
   startingCinders: 0,
 
   // Engine-consulted poise config (see ENGINE-API §1). onFill is where content
@@ -55,33 +58,24 @@ export const balance = {
   // effects). Adding a third refilled kind is a row here plus one word in
   // FLASK_KINDS; adding a second HP flask is neither.
   //
-  // THE mana ROW IS DECLARED AND INERT, DELIBERATELY. No entry carries kind
-  // 'mana' — there is no mana resource in this build — so it restores nothing
-  // and says NOT BINDING on the shrine screen and in its own debug row. It is
-  // here because the day a mana flask is authored, the refill he asked for is
-  // already declared and starts working with no code change. Its count is his
-  // number, 3, held rather than guessed at.
+  // Both rows bind in the current build: Crimson derives `hp` from `heal`, and
+  // Azure derives `mana` from `restoreMana`. They share the six-slot inventory.
   //
   // COUNTS ARE A TOP-UP, NOT A GRANT: a grace brings you UP TO `count` of the
   // kind. Arriving with two Crimson Flasks gets you one, not three.
   //
   // THE CAP IS balance.flaskSlots ABOVE, and boot validation refuses a table
   // whose satisfiable rows sum past it (model/gracerefill.js
-  // graceRefillRefusals). Today: hp 3 + mana 0-because-inert = 3 into 3 slots.
-  // Author a mana flask without raising flaskSlots and the game refuses to boot
-  // by name — which is the balance question arriving out loud, on purpose.
+  // graceRefillRefusals). Today: hp 3 + mana 3 = 6 into 6 slots.
   graceRefill: [
     { kind: 'hp', count: 3 },
     { kind: 'mana', count: 3 },
   ],
 
   // "and each character should start with those" — the fourth clause of his
-  // flask sentence, BUILT and shipped OFF. See model/state.js createRunState for
-  // why it is off: his live instruction tonight was about GRACES, and the grace
-  // refill alone already moves the bot's win rate 9.2% -> 24.8%
-  // (`node tools/runsim.mjs 200 --grace-ab`). Turning it on is this one word and
-  // no code — which is the whole point of it being here rather than nowhere.
-  graceRefillAtRunStart: false,
+  // flask sentence. The merged preview keeps the rule data-authored and turns
+  // it on so a fresh run truthfully starts with the same 3+3 table.
+  graceRefillAtRunStart: true,
 
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
   // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,

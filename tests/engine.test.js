@@ -3673,7 +3673,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     // says the plates are still what the generator makes.
   });
 
-  test('49. the run-shape knobs cap the act, move the roll, and refuse bad values by name', () => {
+  test('49b. the run-shape knobs cap the act, move the roll, and refuse bad values by name', () => {
     // Constantine: "I only have the patience for 30 min runs. perhaps add an
     // advanced debug feature to limit the amount of max columns, rows, and or
     // columns with percent chance of certain nodes being more likely."

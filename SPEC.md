@@ -621,7 +621,7 @@ Relic behavior uses the trigger DSL (§3.6) — the same declarative form as pow
 
 3 slots (`balance.flaskSlots`). Found from combats (~35% drop, decaying like StS's potion chance: −10% per drop, +10% per miss), shops, events — **and refilled at every grace** (§5.5.1).
 
-**Kind.** Every flask has a `kind` from the closed set `FLASK_KINDS` (`hp`, `mana`, `utility`, `model/schemas.js`). It is **derived, not authored** (`model/gracerefill.js` `flaskKindOf`): a flask whose effects include `heal` is `hp`, everything else is `utility`, and an explicit `kind:` on the entry overrides the derivation. **`mana` is never derived** — there is no mana resource in this build, and reading Cerulean Flask's `gainEnergy` as mana would be a plausible-invisible derivation (Law 0 clause 5). The only way an entry becomes `mana` is by saying so.
+**Kind.** Every flask has a `kind` from the closed set `FLASK_KINDS` (`hp`, `mana`, `utility`, `model/schemas.js`). It is **derived, not authored** (`model/gracerefill.js` `flaskKindOf`): `heal` is `hp`, the real `restoreMana` opcode is `mana`, everything else is `utility`, and an explicit `kind:` overrides an ambiguous entry.
 
 #### 5.5.1 The grace refill
 
@@ -633,14 +633,14 @@ Relic behavior uses the trigger DSL (§3.6) — the same declarative form as pow
 - **Data driven.** `balance.graceRefill` is a table of `{ kind, count, flaskId? }` rows. A row names a KIND; the kind resolves to its first authored member (`flaskId` overrides which one). Adding a refilled kind is a row plus one word in `FLASK_KINDS`; adding a second HP flask is neither.
 - **A top-up, not a grant.** A grace brings you **up to** `count` of the kind — arriving with two Crimson Flasks gets you one. Therefore idempotent: a re-mounted shrine cannot double-pour.
 - **Configurable in the debug settings.** Settings ▸ Advanced carries **one chip row per table row**, generated from the table, with the ladder `0 … balance.flaskSlots` derived from the carry cap. Nothing about those rows is authored in `settings.js`.
-- **The `mana` row ships declared and inert.** No entry carries `kind: 'mana'`, so it restores nothing and says **NOT BINDING** in its own debug row and in `tools/gracerefill.mjs`. It is declared so the refill starts working the day a mana flask is authored, with no code change.
+- **Both authored rows bind.** Crimson Flask supplies the HP row and Azure Flask supplies the Mana row. The shared inventory is data-sized to six slots so a fresh character can hold the authored 3+3 allocation; utility flasks are preserved, so an occupied belt produces a visible shortfall instead of deleting inventory.
 - **Refusals** (`graceRefillRefusals`, run from `validateContent` at boot; corpus `node tools/gracerefill.mjs --selftest`): a kind outside the closed set · two rows for one kind · a non-numeric, negative or fractional count · a count above the carry cap · a `flaskId` override that dangles or is of another kind · **and the aggregate** — satisfiable rows summing past `balance.flaskSlots`, which names `balance.flaskSlots` as the fix.
-- **Cost, measured not asserted:** `node tools/runsim.mjs 200 --grace-ab` at this writing — greedy bot, 600 runs per side, same seeds — **9.2% → 24.8% full-run win rate, +15.7 points**. That is a difficulty call, not a build claim, and it belongs to the balance seat.
+- **Balance boundary:** the old no-Mana simulation is stale. This merged preview is for watching and mechanical validation; a Mana-aware A/B balance run remains a release gate.
 
 | Flask | Effect |
 |---|---|
 | Crimson Flask | Heal 25% max HP. |
-| Cerulean Flask | Gain 2 energy. |
+| Azure Flask | Restore 20 Mana. |
 | Flask of Ferocity | Gain 2 Strength this combat. |
 | Flask of Stone | Gain 15 Block. |
 | Rot Coating | Apply 4 Scarlet Rot to target. |

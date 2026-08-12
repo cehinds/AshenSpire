@@ -61,7 +61,7 @@ export function createRunState({ seed, classId, registries }) {
     deck: createDeck(classDef.startingDeck, idGen),
     loadout,
     relics: [classDef.startingRelic],
-    flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots (default 3)
+    flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
     seedString: null, // set by the orchestrator right after creation (display/replay)
     mapGraph: null,
     combatEntered: null,
@@ -73,14 +73,8 @@ export function createRunState({ seed, classId, registries }) {
   // nearly lost. His sentence was quoted to me tonight with this clause missing
   // from the quote; the ledger (`commons/decisions/directions.md` D10) has it.
   //
-  // IT SHIPS OFF, AND THAT IS A RULING, NOT AN OVERSIGHT. His LIVE instruction
-  // was "flasks should refill automatically at graces" — graces. Starting the
-  // run with the same set is a second balance change stacked on one already
-  // measured at +15.7 points of win rate (`tools/runsim.mjs --grace-ab`), and
-  // deciding that inside a branch he asked to be about shrines would be a build
-  // settling a balance question. So: BUILT, DECLARED, and OFF by one boolean —
-  // `balance.graceRefillAtRunStart`. Nothing is dropped and nothing is decided.
-  // Flipping it is a data edit and no code; the selftest proves the flip works.
+  // The table remains authoritative at both doors. The preview enables this
+  // data switch so every class starts with the same 3 HP + 3 Mana allocation.
   if (registries.balance && registries.balance.graceRefillAtRunStart === true) {
     for (const flaskId of graceRefillPlan(registries, run).grants) run.flasks.push({ flaskId });
   }

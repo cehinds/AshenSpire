@@ -67,6 +67,12 @@ function freshRun(registries, classId = 'reaver') {
   return createRunState({ seed: 1, classId, registries });
 }
 
+function emptyRun(registries, classId = 'reaver') {
+  const run = freshRun(registries, classId);
+  run.flasks = [];
+  return run;
+}
+
 // ---------------------------------------------------------------------------
 // report
 // ---------------------------------------------------------------------------
@@ -86,7 +92,7 @@ function report() {
   }
 
   console.log('\n  THE TABLE (balance.graceRefill), against a fresh run with 0 flasks:');
-  const plan = graceRefillPlan(reg, freshRun(reg));
+  const plan = graceRefillPlan(reg, emptyRun(reg));
   for (const r of plan.rows) {
     const head = `    ${r.kind}×${r.count}`.padEnd(16);
     console.log(`${head}${r.binding ? `grants ${r.granted} × ${r.flaskId}` : 'NOT BINDING'}`);
@@ -96,14 +102,14 @@ function report() {
   if (graceRefillTable(bal).length === 0) console.log('  (no table: a grace refills nothing)');
 
   const inert = plan.rows.filter((r) => !r.binding).length;
-  console.log(`\nRESULT: ${plan.rows.length} refill row(s) — ${plan.total} flask(s) poured into a fresh run's `
-    + `${cap} slot(s), ${inert} declared and NOT BINDING.`);
+  console.log(`\nRESULT: ${plan.rows.length} refill row(s) — ${plan.total} flask(s) poured into an empty run's `
+    + `${cap} slot(s), ${inert} row(s) NOT BINDING.`);
 
   console.log('\nBOUNDARY — what this report does NOT say:');
   console.log('  · it reports the SHIPPED table at one run state (fresh, 0 flasks held).');
   console.log('    Whether the refusals can go red is --selftest, and nothing else here claims it.');
-  console.log('  · it says nothing about balance. What six free flasks a grace does to a run is');
-  console.log('    `node tools/runsim.mjs --grace-ab`, and that is a measurement, not a verdict.');
+  console.log('  · it says nothing about release balance. The old no-Mana A/B is stale; a');
+  console.log('    Mana-aware run simulation and player review remain separate gates.');
   console.log('  · co-op refills every living member at enterShrine (tools/session.mjs) with the');
   console.log('    AUTHORED counts — the server has no meta.settings — and this report does not');
   console.log('    open a session.');
@@ -151,17 +157,11 @@ const PLANTS = [
   { name: 'flaskId override is of the wrong kind',
     expect: 'balance.graceRefill[0].flaskId',
     mutate: (b) => { b.balance.graceRefill[0].flaskId = 'flaskOfStone'; } },
-  // THE ONE THAT MATTERS MOST, and the reason the aggregate check exists: the
-  // day someone authors the first mana flask, his 3+3 stops fitting in 3 slots.
-  // This plant IS that day — a real content row, entering the real bundle.
-  { name: 'the aggregate: authoring a mana flask over-subscribes the slots',
+  // The live 3+3 table needs six shared slots. Lowering the data cap must fail
+  // loudly rather than letting row order starve the Azure refill.
+  { name: 'the aggregate: lowering the cap below the live 3+3 table refuses',
     expect: 'balance.graceRefill',
-    mutate: (b) => {
-      b.flasks.push({
-        id: 'ceruleanFlask', name: 'Cerulean Flask', rarity: 'common', kind: 'mana', icon: '🔵',
-        effects: [{ op: 'gainEnergy', amount: 1 }], textTemplate: 'Gain 1 Energy.',
-      });
-    } },
+    mutate: (b) => { b.balance.flaskSlots = 5; } },
   // A kind declared in FLASK_KINDS with no member is LEGAL and must NOT refuse.
   // Planted as a negative so the corpus proves the refusal is discriminating
   // rather than merely loud — the shipped tree is already in this state.
@@ -175,72 +175,77 @@ const BEHAVIOUR = [
   {
     name: 'a fresh run at a grace is topped up to the hp count',
     run: (reg) => {
-      const run = freshRun(reg);
+      const run = emptyRun(reg);
       const plan = applyGraceRefill(reg, run);
       const hp = run.flasks.filter((f) => flaskKindOf(reg.flasks.get(f.flaskId)) === 'hp').length;
-      return { ok: hp === 3 && plan.total === 3, saw: `${hp} hp flask(s), plan.total ${plan.total}` };
+      const mana = run.flasks.filter((f) => flaskKindOf(reg.flasks.get(f.flaskId)) === 'mana').length;
+      return { ok: hp === 3 && mana === 3 && plan.total === 6, saw: `${hp} hp, ${mana} mana, plan.total ${plan.total}` };
     },
   },
   {
     name: 'it is a TOP-UP, not a grant: arriving with 2 gets you 1',
     run: (reg) => {
-      const run = freshRun(reg);
+      const run = emptyRun(reg);
       run.flasks.push({ flaskId: 'crimsonFlask' }, { flaskId: 'crimsonFlask' });
       const plan = applyGraceRefill(reg, run);
-      return { ok: plan.total === 1 && run.flasks.length === 3, saw: `granted ${plan.total}, holding ${run.flasks.length}` };
+      return { ok: plan.total === 4 && run.flasks.length === 6, saw: `granted ${plan.total}, holding ${run.flasks.length}` };
     },
   },
   {
     name: 'idempotent: a second grace at the same stop grants nothing',
     run: (reg) => {
-      const run = freshRun(reg);
+      const run = emptyRun(reg);
       applyGraceRefill(reg, run);
       const again = applyGraceRefill(reg, run);
-      return { ok: again.total === 0 && run.flasks.length === 3, saw: `second pour ${again.total}, holding ${run.flasks.length}` };
+      return { ok: again.total === 0 && run.flasks.length === 6, saw: `second pour ${again.total}, holding ${run.flasks.length}` };
     },
   },
   {
     name: 'slots full of other flasks: grants 0 and SAYS SO (no silent clamp)',
     run: (reg) => {
-      const run = freshRun(reg);
-      run.flasks.push({ flaskId: 'flaskOfStone' }, { flaskId: 'flaskOfStone' }, { flaskId: 'flaskOfStone' });
+      const run = emptyRun(reg);
+      for (let i = 0; i < 6; i++) run.flasks.push({ flaskId: 'flaskOfStone' });
       const plan = applyGraceRefill(reg, run);
       const said = plan.shortfalls.some((s) => s.kind === 'hp' && s.short === 3);
       return { ok: plan.total === 0 && said, saw: `granted ${plan.total}, shortfalls ${JSON.stringify(plan.shortfalls.map((s) => `${s.kind}:${s.short}`))}` };
     },
   },
   {
-    name: 'the mana row is INERT and names itself',
+    name: 'the real Azure Flask binds the Mana row',
     run: (reg) => {
-      const plan = graceRefillPlan(reg, freshRun(reg));
+      const plan = graceRefillPlan(reg, emptyRun(reg));
       const mana = plan.rows.find((r) => r.kind === 'mana');
-      return { ok: !!mana && mana.binding === false && /NOT BINDING/.test(mana.why), saw: mana ? mana.why.slice(0, 60) : 'no mana row' };
+      return { ok: !!mana && mana.binding === true && mana.flaskId === 'azureFlask' && mana.granted === 3, saw: mana ? `${mana.flaskId} × ${mana.granted}` : 'no mana row' };
     },
   },
   {
     name: 'the debug count reaches the shrine: counts { hp: 0 } grants nothing',
     run: (reg) => {
-      const run = freshRun(reg);
-      const plan = applyGraceRefill(reg, run, { counts: { hp: 0 } });
+      const run = emptyRun(reg);
+      const plan = applyGraceRefill(reg, run, { counts: { hp: 0, mana: 0 } });
       return { ok: plan.total === 0 && run.flasks.length === 0, saw: `granted ${plan.total}` };
     },
   },
   {
     // HIS FOURTH CLAUSE, and the plant enters at `createRunState` — the door
     // every run comes through, in the game, in co-op and in every sim.
-    name: 'run start: OFF by default, so a fresh run holds no flasks',
+    name: 'run start: ON by data, so every fresh class holds the authored 3+3',
     run: (reg) => {
-      const run = freshRun(reg);
-      return { ok: run.flasks.length === 0, saw: `${run.flasks.length} flask(s) at run start` };
+      const rows = reg.classes.ids().map((classId) => {
+        const run = freshRun(reg, classId);
+        const hp = run.flasks.filter((f) => flaskKindOf(reg.flasks.get(f.flaskId)) === 'hp').length;
+        const mana = run.flasks.filter((f) => flaskKindOf(reg.flasks.get(f.flaskId)) === 'mana').length;
+        return { classId, hp, mana, total: run.flasks.length };
+      });
+      return { ok: rows.every((r) => r.total === 6 && r.hp === 3 && r.mana === 3), saw: rows.map((r) => `${r.classId}:${r.hp}+${r.mana}`).join(', ') };
     },
   },
   {
-    name: 'run start: the switch WORKS when flipped — one data word, no code',
-    bundle: (b) => { b.balance.graceRefillAtRunStart = true; },
+    name: 'run start: the data switch turns the allocation off without code',
+    bundle: (b) => { b.balance.graceRefillAtRunStart = false; },
     run: (reg) => {
       const run = freshRun(reg);
-      const hp = run.flasks.filter((f) => flaskKindOf(reg.flasks.get(f.flaskId)) === 'hp').length;
-      return { ok: run.flasks.length === 3 && hp === 3, saw: `${run.flasks.length} flask(s), ${hp} of kind hp` };
+      return { ok: run.flasks.length === 0, saw: `${run.flasks.length} flask(s)` };
     },
   },
   {
@@ -261,18 +266,17 @@ const BEHAVIOUR = [
     // kind, one content row, ZERO code commits — it appears and works. The row
     // enters `src/content/flasks.js`'s array through the real bundle and the
     // real registry build, and the refill picks it up with nothing else edited.
-    name: 'LAW 0: one authored mana flask makes the declared row live, no code',
+    name: 'LAW 0: an explicit Mana flask override can replace Azure with no engine edit',
     bundle: (b) => {
       b.flasks.push({
         id: 'ceruleanFlask', name: 'Cerulean Flask', rarity: 'common', kind: 'mana', icon: '🔵',
-        effects: [{ op: 'gainEnergy', amount: 1 }], textTemplate: 'Gain 1 Energy.',
+        effects: [{ op: 'restoreMana', amount: 5 }], textTemplate: 'Restore 5 Mana.',
       });
-      // The cap has to answer for six now — which is the refusal above firing in
-      // its own selftest, and here is the data fix it names, applied.
-      b.balance.flaskSlots = 6;
+      b.balance.graceRefill[1].flaskId = 'ceruleanFlask';
+      b.balance.graceRefillAtRunStart = false;
     },
     run: (reg) => {
-      const run = freshRun(reg);
+      const run = emptyRun(reg);
       const plan = applyGraceRefill(reg, run);
       const mana = plan.rows.find((r) => r.kind === 'mana');
       const held = run.flasks.filter((f) => f.flaskId === 'ceruleanFlask').length;
@@ -349,9 +353,9 @@ function selftest() {
 
   console.log('\nBOUNDARY — what a green from --selftest does NOT mean:');
   console.log('  · it proves the refusals FIRE and the shrine POURS. It says nothing about');
-  console.log('    whether 3 flasks a grace is the right number — that is balance, measured by');
-  console.log('    `node tools/runsim.mjs --grace-ab` and ruled on by a person.');
-  console.log('  · no browser ran. The settings row, its NOT BINDING line and the shrine sentence');
+  console.log('    whether 3+3 flasks is the right release balance — that needs a Mana-aware');
+  console.log('    simulation and player review, not the stale no-Mana A/B.');
+  console.log('  · no browser ran. The settings rows and shrine sentence');
   console.log('    are rendered HTML and are photographed, not asserted, here.');
   console.log('  · the co-op path (tools/session.mjs enterShrine) is covered by');
   console.log('    `node tools/session-smoke.mjs`, not by this file.');

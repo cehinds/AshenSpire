@@ -252,10 +252,8 @@ export const FLASK_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
 // `flaskKindOf` reads the effects and only falls back to an explicit `kind:`
 // override. Nothing in content/flasks.js carries this field.
 //
-// 'mana' HAS NO MEMBERS AND THAT IS THE HONEST STATE. Constantine asked for
-// mana flasks at a grace in the same sentence as hp flasks; mana does not
-// exist in this build. The kind is declared so the refill row can be declared,
-// and both say NOT BINDING out loud until an entry claims the kind.
+// Mana is live run/combat state. `restoreMana` derives the Mana kind without
+// confusing it with per-turn Energy; explicit `kind` remains the override.
 export const FLASK_KINDS = Object.freeze(['hp', 'mana', 'utility']);
 export const INTENT_KINDS = Object.freeze(['attack', 'block', 'buff', 'debuff', 'unknown']);
 export const ENCOUNTER_POOLS = Object.freeze(['normal', 'elite', 'boss']);

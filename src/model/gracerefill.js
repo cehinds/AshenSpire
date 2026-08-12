@@ -39,19 +39,15 @@ import { FLASK_KINDS } from './schemas.js';
  * explicit `kind:` on the row wins over everything below, so a flask that heals
  * as a side effect but is not the healing flask can say so without code.
  *
- * `mana` IS NEVER DERIVED, and that is deliberate rather than an omission.
- * There is no mana resource in this build (zero matches for `mana` across
- * `src/` at 08e184a) and therefore no opcode that could imply the kind. Reading
- * Azure Flask's `gainEnergy` as "mana" is exactly the plausible-invisible
- * derivation Law 0 clause 5 names: Energy is the per-turn combat resource that
- * already exists, mana is a per-run resource that does not, and a rule that
- * quietly equates them would look right and be wrong at every value. The only
- * way an entry becomes `mana` is by saying `kind: 'mana'` out loud.
+ * Mana is now real run/combat state. Azure Flask carries the real `restoreMana`
+ * opcode, so that authored effect derives `mana` without confusing Mana with
+ * per-turn Energy. An explicit kind still wins for unusual hybrid flasks.
  */
 export function flaskKindOf(def) {
   if (!def || typeof def !== 'object') return 'utility';
   if (typeof def.kind === 'string') return def.kind; // override wins, validated at boot
   const effects = Array.isArray(def.effects) ? def.effects : [];
+  if (effects.some((e) => e && e.op === 'restoreMana')) return 'mana';
   if (effects.some((e) => e && e.op === 'heal')) return 'hp';
   return 'utility';
 }
