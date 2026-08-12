@@ -3481,6 +3481,7 @@ const { lanInfo } = require("src/net/lan.js");
 const { setAnimSpeed, anchorLocalBox, clampBox, floatNum: fxFloatNum } = require("src/ui/fx.js");
 const { sfx } = require("src/ui/sfx.js");
 const { initAudio } = require("src/ui/audio.js");
+const { installHoldBeat } = require("src/ui/components/holdbeat.js");
 const { surfaceReport } = require("src/ui/surfaces.js");
 // failureBanner is the ONE home for "the game says something is structurally
 // wrong" — the two boot checks below used to build that element by hand, and a
@@ -3635,6 +3636,13 @@ if (typeof window !== 'undefined') window.__uiScale = UI.uiScale;
 // table off the page, not hold its own copy (Law 1 clause 2). A tool typing
 // 'rack' would agree with a typo as happily as with the truth. Read-only.
 if (typeof window !== 'undefined') window.__equipCfg = registries.balance.equipment;
+
+// THE HOLD'S BEAT (ui/components/holdbeat.js). Installed once, here, and never
+// mentioned again: it rides `data-hold` / `data-hold-progress`, the two facts
+// armHold already publishes on every held control, so nothing at any call site
+// wires it and a control that starts holding LATER is covered the day it does.
+// `at` is the one home of the fractions; the sounds are content/sfx.js.
+installHoldBeat({ root: document, at: (UI.holdBeat || {}).at || [] });
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;
@@ -5490,6 +5498,49 @@ const balance = {
     holdConfirm: {
       def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
+    },
+    // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
+    // fractions; the sounds themselves are recipes in content/sfx.js and the
+    // durations are holdConfirm above. Three facts, three homes, none restated.
+    //
+    // WHY THE HOLD NEEDS ONE AT ALL, and it is a measurement rather than a
+    // taste. The fill is the only feedback the hold has, and on the event
+    // screen it works: the bar is 378x44 at 390x844 and a thumb covers a
+    // fraction of it. END TURN IS 190.2x50.4 AT y=784.6 OF AN 844 px VIEWPORT
+    // — a control roughly the size of the contact patch, in the bottom 60 px,
+    // approached from below. The hand that presses it is on top of the only
+    // thing telling the player the press was received. A hold with no beat is
+    // then indistinguishable from a tap that did not register, and the player
+    // presses again — so the guard fires the thing twice.
+    //
+    // `at` IS THE CLOSED SET, as fractions of the fill, ascending, and 1.0 is
+    // NOT in it: the arrival is `holdCommit`, a different sound with a
+    // different job, and putting it here would give the landing two homes.
+    //
+    // THE SPACING IS THE MESSAGE, not decoration. The gaps shorten (0.42,
+    // 0.36, 0.22) so the train ACCELERATES toward the commit: a player hears
+    // "approaching" without counting anything, and an abort at 0.5 has heard a
+    // train that was speeding up and then stopped, which is the true sentence
+    // about what happened. An evenly spaced train is a metronome, and a
+    // metronome says only "time is passing".
+    //
+    // ACCELERATION AND NOT PITCH, which is a composition decision with a
+    // maintenance reason. A rising train would need one recipe per tick
+    // (`holdTick_1..3`), and the day someone adds a fourth fraction here the
+    // fourth tick has no row and the rise breaks — the row edit this comment
+    // promises would stop being enough. Identical ticks getting closer
+    // together is the same signal, and a fourth fraction just works.
+    //
+    // WHY THREE. One tick cannot rise. Two can, barely. Four plus a commit is
+    // five sounds on every confirmation and this fires many times a run — the
+    // cost of a charming sound is paid at hold #200, not hold #1. Three is the
+    // fewest that reads as a gesture. TUNING IS THIS ROW: an empty array is
+    // legal and means the ticks are off with the commit intact.
+    //
+    // The first tick is at 0.00 on purpose — it is the "pressed" report, and a
+    // report that arrives at 180 ms has already let the player wonder.
+    holdBeat: {
+      at: [0, 0.42, 0.78],
     },
     // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
     // renderer emits them as rem (÷10).
@@ -10926,6 +10977,70 @@ const SFX_RECIPES = {
     { kind: 'tone', type: 'square', freq: 296, to: 112, dur: 0.5, peak: 0.3, t0: 0.015 },
     { kind: 'noise', dur: 0.34, peak: 0.26, hp: 700, lp: 3400 },
   ],
+  // ---- the hold family: a press-and-hold has a BEAT ------------------------
+  //
+  // THE SCORE, written out because this house has no ears and a sound nobody
+  // can check is decoration. Four sounds make ONE PHRASE, and the phrase is
+  // "approach, approach, approach, arrive":
+  //
+  //   tick   tick  tick      COMMIT
+  //   A3     A3    A3        A3 -> E4, with A4 over it
+  //   |------|-----|---|
+  //   0.00   0.42  0.78  1.0        (fractions of the fill; balance.ui.holdBeat)
+  //
+  // Every tick is the SAME NOTE. Nothing rises in pitch — the gaps shorten, and
+  // that is the whole progress signal (the reason is in balance.ui.holdBeat, one
+  // home). The commit is that same A arriving UP: 220 glides to 330 (a fifth)
+  // with a quiet 440 (the octave) laid over it 25 ms later. So the landing is
+  // heard as the ticks resolving rather than as a fifth unrelated event, and a
+  // player learns the phrase in one run without being told anything.
+  //
+  // WHY A3 = 220 Hz. It is an octave under `cardPlay` (520->380) and two under
+  // `relic`, so a confirmation never competes with the sound of the thing being
+  // confirmed. A phone speaker rolls off hard below ~500 Hz, so on the shape
+  // that matters the fundamental is barely there and the TRIANGLE'S ODD
+  // HARMONICS (660, 1100, 1540...) are what actually arrives — which is why the
+  // tick is a triangle and not a sine. A 35 ms sine has no transient to hear.
+  //
+  // WHY NOT THE OTHER TIMBRES: square reads as an error tone (it is `stagger`
+  // and half of `procBurst_insanity`); sawtooth is the bleed/death material;
+  // noise is impact, and a confirmation is not an impact. The tick is the only
+  // dry, unfiltered, single-layer row in this table on purpose.
+  //
+  // THE LEVELS, AND THE TRADE I TOOK. `holdTick` peak 0.10 is the QUIETEST row
+  // here — under `default`'s 0.15 — and 35 ms is the shortest. It fires three
+  // times per confirmation and hundreds of times a run, so it is the one sound
+  // in the game whose cost is paid at hold #200 rather than hold #1. It is
+  // audible because it is dry and transient against a sustained bed, NOT
+  // because it is loud; buying audibility with gain would be the wrong fix and
+  // the mix would be the thing at fault.
+  //
+  // `holdCommit` peak 0.30 sits UNDER `cardPlay`'s 0.35, deliberately and at a
+  // cost: the more satisfying sound is louder. But a confirmation is not a
+  // bigger event than the card it confirms, and a mix where the guard
+  // out-shouts the action is lying about what mattered.
+  //
+  // THERE IS NO `holdAbort`, AND THE ABSENCE IS THE DECISION. Letting go is
+  // nothing happening, and the honest sound for nothing happening is nothing.
+  // It is also the COMMON case — releasing early IS the feature — so a cue
+  // there would become the most-fired sound in the game while reporting a
+  // non-event. The train stopping already says it.
+  //
+  // COMPOSED PER ACTION, exactly like `procBurst_<status>` above:
+  //   holdCommit_endTurn -> the exact row if some future author writes one
+  //                      -> else `holdCommit`, this family row
+  // So the day an action becomes one that "takes a second beat", it already
+  // sounds right with no engine edit and no content edit. A per-action row is
+  // an OPTIONAL flourish. None is authored here on purpose: this table deleted
+  // `uiClick` for being a shipped sound with no caller, and a `holdCommit_x`
+  // for an x that does not hold yet would be the same lie in a new coat.
+  holdTick: [
+    { kind: 'tone', type: 'triangle', freq: 220, dur: 0.035, peak: 0.1 },
+  ],
+  holdCommit: [
+    { kind: 'tone', type: 'triangle', freq: 220, to: 330, dur: 0.14, peak: 0.3 },
+    { kind: 'tone', type: 'sine', freq: 440, dur: 0.16, peak: 0.16, t0: 0.025 },
+  ],
   stagger: [
     { kind: 'tone', type: 'square', freq: 90, to: 40, dur: 0.35, peak: 0.5 },
     { kind: 'noise', dur: 0.22, peak: 0.4, hp: 120, lp: 1800 },
@@ -12670,6 +12785,40 @@ function validateContent(bundle) {
             + `the default position must exist, or every player starts on a setting the row cannot show.`);
         }
       }
+    }
+  }
+  // balance.ui.holdBeat — THE SAME FAILURE SHAPE AS holdConfirm, one control
+  // over. The beat is the only feedback a held control has once a thumb is on
+  // top of the fill, and every way this row can be wrong is SILENT: a fraction
+  // of 1.4 never arrives, a NaN compares false against every progress value, a
+  // descending list fires the late tick first and then never again, and a
+  // duplicate fires two ticks in one frame that a player hears as one. In all
+  // four the screen is unchanged and the sound simply is not there — which is
+  // the exact state the beat exists to distinguish from a tap that missed.
+  //
+  // An EMPTY array is legal and means "no ticks, commit only": turning the
+  // train off is a tuning decision, and refusing it here would make the row a
+  // lie about what one edit can do.
+  if (b.balance && b.balance.ui && b.balance.ui.holdBeat != null) {
+    const hb = b.balance.ui.holdBeat;
+    if (typeof hb !== 'object' || Array.isArray(hb)) {
+      err('balance.ui.holdBeat', 'must be an object { at: [fractions] }');
+    } else if (!Array.isArray(hb.at)) {
+      err('balance.ui.holdBeat.at', `must be an array of fractions of the fill (0 <= f < 1) — got ${JSON.stringify(hb.at)}. `
+        + `A value the beat cannot read fires no ticks, and a hold with no ticks is the defect this row exists for.`);
+    } else {
+      let prev = -1;
+      hb.at.forEach((f, i) => {
+        if (typeof f !== 'number' || !Number.isFinite(f) || f < 0 || f >= 1) {
+          err(`balance.ui.holdBeat.at[${i}]`, `must be a number in [0, 1) — got ${JSON.stringify(f)}. `
+            + `1.0 is not a tick: the arrival is the 'holdCommit' recipe, and putting it here would give the landing two homes.`);
+        } else if (f <= prev) {
+          err(`balance.ui.holdBeat.at[${i}]`, `must be strictly greater than at[${i - 1}] (${prev}) — got ${f}. `
+            + `The fill only ever runs forward, so an out-of-order or duplicated fraction is a tick that fires twice in one frame or never fires at all.`);
+        } else {
+          prev = f;
+        }
+      });
     }
   }
   // THE MAP'S VERTICAL MARGIN, and it belongs here because it has exactly one
@@ -33340,10 +33489,35 @@ function initAudio(settings = {}) {
   }
 
   // The context begins suspended; the first gesture resumes it.
+  //
+  // THE LIST USED TO BE ['pointerdown', 'keydown'] AND THAT IS A TOUCH BUG.
+  // Measured, headless Chromium, 390x844, CDP touch, `navigator.userActivation`
+  // sampled inside each listener on a fresh load:
+  //
+  //   touch:  pointerdown false · touchstart false · pointerup TRUE · touchend TRUE
+  //   mouse:  pointerdown TRUE
+  //
+  // Chromium grants user activation for a TOUCH at the lift, not at the press —
+  // deliberately, so that a scroll or a long-press is not an activation. A
+  // resume() called with no activation returns a promise that simply does not
+  // settle. So on a phone the whole of the first press-and-hold ran against a
+  // SUSPENDED context: measured on the shipped event screen, peak amplitude
+  // 0.000 across 209 sampled frames of a completed hold, while the same hold
+  // driven by a mouse resumed at the press. The one platform named as the
+  // priority is the one where it failed, and it failed only on the first
+  // gesture of a page — which is why nobody found it by playing.
+  //
+  // Adding the lift events does NOT make the page's very first hold audible;
+  // nothing can, because the browser will not start a context during a gesture
+  // it has not yet counted. What it fixes is everything after: any tap that
+  // ends anywhere now starts the audio, so the window in which the game is
+  // silently mute is one gesture wide instead of open-ended. In real play the
+  // title screen is tapped before any hold exists, so that window is normally
+  // already closed — `?shot=` boots are where it is not.
   function resume() {
     if (ctx.state === 'suspended') ctx.resume();
   }
-  ['pointerdown', 'keydown'].forEach((ev) =>
+  ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach((ev) =>
     addEventListener(ev, resume, { once: false, capture: true })
   );
 
@@ -33357,6 +33531,27 @@ function initAudio(settings = {}) {
   function sfx(id) {
     if (state.muted || state.sfxVol <= 0) return;
     resume();
+    // A CUE THAT ARRIVES AFTER THE THING IT REPORTS IS A LIE, SO IT IS DROPPED.
+    //
+    // A suspended context does not advance its clock, so anything scheduled at
+    // `now()` sits there and fires the instant the context starts. Measured on
+    // the shipped event screen, 390x844, fresh load, CDP touch: the whole of a
+    // press-and-hold ran suspended (a touch is not an activation until the
+    // lift), and all four sounds of the beat — three ticks spread over 600 ms
+    // and an arrival — came out AS ONE 0.1687 PEAK AFTER THE FINGER LIFTED.
+    // Not lost. Piled up, in the wrong order, describing a gesture that was
+    // already over. A player would read that as the game reacting to their
+    // RELEASE, which is the opposite of what happened.
+    //
+    // Silence is the honest answer for the one gesture the browser has not yet
+    // counted. This costs the very first cue of a session on desktop too (the
+    // resume promise has not settled inside the same listener that called it)
+    // and that is the right price: one missing tick beats a phrase that lies
+    // about when it happened.
+    //
+    // MUSIC IS DELIBERATELY NOT DROPPED — a bed that starts a beat late is a
+    // bed, not a report about an event, and music() keeps its own path.
+    if (ctx.state !== 'running') return;
     const sample = own(SFX_MANIFEST, id);
     if (sample) {
       playSample(sample, sfxBus);
@@ -35309,6 +35504,164 @@ function mountCoop(app, { registries, conn, myId, myIds, onLeave }) {
 
 
 Object.assign(module.exports, { mountCoop });
+
+},
+"src/ui/components/holdbeat.js": function (module, exports, require) {
+// src/ui/components/holdbeat.js — THE HOLD HAS A BEAT.
+//
+// THE DEFECT, and it is a measurement rather than a taste. A press-and-hold
+// whose only feedback is a fill is a gesture you cannot tell is working the
+// moment your hand is on top of the fill. On the event screen the bar is
+// 378x44 at 390x844 and a thumb covers a fraction of it, so the fill reads.
+// END TURN IS 190.2x50.4 AT y=784.6 OF AN 844 px VIEWPORT — a control about
+// the size of the contact patch, in the bottom 60 px, approached from below.
+// The hand that presses it is on top of the only thing saying the press was
+// received. A hold with no beat is then indistinguishable from a tap that did
+// not register: the player presses again, and the thing they were being
+// protected from fires twice. THAT IS WORSE THAN NO CONFIRMATION.
+//
+// (The occlusion sentence is REASONED, not measured. The two rects are real
+// numbers from a real render; nobody in this family has watched a thumb.)
+//
+// WHAT IT DOES. Three quiet ticks during the fill and one arrival at the end,
+// as one phrase — the score, the note choices and the levels are written out
+// in src/content/sfx.js (`holdTick` / `holdCommit`), and WHERE in the fill
+// they land is balance.ui.holdBeat. Nothing about the sound lives here.
+//
+// HOW IT ATTACHES, AND WHY THIS SHAPE. It listens to the DOM. `armHold`
+// already publishes two facts on the held element every frame —
+// `data-hold` (idle|holding|done) and `data-hold-progress` — because an
+// instrument and a screenshot both needed to read them. So the beat DERIVES
+// from the state the control already describes (Law 0 clause 1) and needs no
+// call in holdconfirm.js, no argument threaded through, and no edit at any
+// call site. Two consequences worth stating plainly:
+//
+//   * It works on every control that holds, TODAY AND LATER. The event screen
+//     is the only caller at this ref; the day "takes a second beat" becomes a
+//     characteristic of an action rather than a list of call sites, End Turn
+//     and the Smith arrive with a beat and NOBODY EDITS THIS FILE.
+//   * The per-action flourish is a data attribute, not a parameter. A control
+//     carrying `data-hold-action="endTurn"` composes `holdCommit_endTurn`,
+//     which resolves exact -> family -> default in content/sfx.js. With the
+//     attribute absent — which is every control at this ref — the family row
+//     answers, and that is the correct sound rather than a fallback blip.
+//
+// THE ABORT IS SILENT ON PURPOSE. Releasing early is the feature and it is the
+// COMMON case, so a cue there would be the most-fired sound in the game and it
+// would be reporting that nothing happened. The train stopping says it.
+//
+// WHAT THIS IS NOT. It is not the floor. A muted phone, a silent room and an
+// iPhone with the ringer off all get nothing from this file, so the VISIBLE
+// beat is still the thing a player must be able to rely on — and on End Turn
+// the visible beat is under the thumb. That gap is named in the report and is
+// not closed here; sound is the channel that is not occluded by a hand, not
+// the channel that is always on.
+
+const { sfx } = require("src/ui/sfx.js");
+
+/** The attributes `armHold` publishes. Named once — a typo here is silence. */
+const ATTRS = ['data-hold', 'data-hold-progress'];
+
+/**
+ * installHoldBeat({ root, at, play }) -> uninstall()
+ *
+ * `at` is balance.ui.holdBeat.at — fractions of the fill, ascending, 1.0
+ * excluded (the arrival is `holdCommit`, not a tick). An empty or missing list
+ * means no ticks and a commit that still lands: turning the train off is a
+ * tuning decision the row is allowed to express.
+ */
+function installHoldBeat({ root = document, at = [], play = (id) => sfx.play(id) } = {}) {
+  // Copy, and drop anything the validator would have refused. The validator is
+  // the loud gate (model/validate.js, balance.ui.holdBeat); this is the quiet
+  // one, and it exists because a beat that THROWS mid-hold takes the fill's
+  // animation frame down with it and breaks the confirm itself. Fail small.
+  const marks = (Array.isArray(at) ? at : []).filter((f) => typeof f === 'number' && f >= 0 && f < 1);
+
+  // Per-element cursor: how many marks this hold has already sounded. A
+  // WeakMap so a screen that unmounts takes its state with it.
+  const cursor = new WeakMap();
+
+  const idFor = (el, phase) => {
+    const action = el.dataset ? el.dataset.holdAction : null;
+    return action ? `${phase}_${action}` : phase;
+  };
+
+  // Fire every mark the fill has passed since the last frame. A slow frame can
+  // cross two at once — they are sounded in order rather than collapsed,
+  // because collapsing them would make a stutter sound like progress.
+  function advance(el, p) {
+    let n = cursor.get(el) || 0;
+    while (n < marks.length && p >= marks[n]) {
+      play(idFor(el, 'holdTick'));
+      n++;
+    }
+    cursor.set(el, n);
+  }
+
+  function transition(el, was, now) {
+    if (now === 'holding' && was !== 'holding') {
+      // The press report does NOT wait for the first painted frame. `begin()`
+      // sets 'holding' and the first progress paint is one rAF later; on a busy
+      // frame that is the difference between "instant" and "did it take my
+      // press?", which is the whole question this file answers.
+      cursor.set(el, 0);
+      advance(el, 0);
+    } else if (now === 'done' && was === 'holding') {
+      play(idFor(el, 'holdCommit'));
+      cursor.set(el, marks.length);
+    } else if (now === 'idle' && was === 'holding') {
+      // The abort. Deliberately nothing. See the header.
+      cursor.set(el, marks.length);
+    }
+  }
+
+  // A MutationObserver record carries only `oldValue`, and by the time the
+  // callback runs the DOM HAS ALREADY MOVED ON — possibly several steps.
+  //
+  // THIS IS NOT A HYPOTHETICAL AND IT IS THE BUG THIS FUNCTION EXISTS FOR.
+  // A completed hold does three things in ONE task: armHold sets 'done', calls
+  // onConfirm, and the screen's commit disarms every bar, which sets 'idle'.
+  // Reading `el.dataset.hold` in the callback therefore returns 'idle' for the
+  // record whose oldValue is 'holding' — so the arrival was scored as an ABORT
+  // and the commit sound never played, on the one screen that actually holds
+  // today. The synthetic control in tools/holdbeat.mjs never disarms, so it
+  // sounded perfect while the real one was missing its last note.
+  //
+  // So the chain is RECONSTRUCTED: values are [r0.old, r1.old, ..., current],
+  // and every adjacent pair is a real transition that happened, in order.
+  function flush(records) {
+    const chain = new Map();
+    for (const r of records) {
+      if (r.attributeName !== 'data-hold') continue;
+      if (!chain.has(r.target)) chain.set(r.target, []);
+      chain.get(r.target).push(r.oldValue);
+    }
+    for (const [el, olds] of chain) {
+      if (!el.dataset) continue;
+      const seq = olds.concat([el.dataset.hold]);
+      for (let i = 1; i < seq.length; i++) transition(el, seq[i - 1], seq[i]);
+    }
+    // Progress is replayed once per target, from the CURRENT value, and only
+    // while the element is still holding. `advance` is monotonic, so replaying
+    // every intermediate frame would sound exactly the same ticks; and a target
+    // whose hold ended in this same batch has already been resolved above.
+    const moved = new Set();
+    for (const r of records) if (r.attributeName === 'data-hold-progress') moved.add(r.target);
+    for (const el of moved) {
+      if (!el.dataset || el.dataset.hold !== 'holding') continue;
+      const p = Number(el.dataset.holdProgress);
+      if (Number.isFinite(p)) advance(el, p);
+    }
+  }
+
+  const obs = new MutationObserver(flush);
+  const target = root.body || root;
+  obs.observe(target, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ATTRS });
+  return function uninstall() { obs.disconnect(); };
+}
+
+
+Object.assign(module.exports, { installHoldBeat });
 
 },
 "src/ui/surfaces.js": function (module, exports, require) {
