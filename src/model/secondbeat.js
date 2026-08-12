@@ -84,7 +84,7 @@ export const HAZARD = Object.freeze({
 });
 
 /** The forms. `none` is a form: it is the answer "a tap is enough". */
-export const BEATS = Object.freeze(['none', 'hold', 'confirm']);
+const BEATS = Object.freeze(['none', 'hold', 'confirm']);
 
 /**
  * THE DERIVATION — one rule, three lines, and every row below answers to it.

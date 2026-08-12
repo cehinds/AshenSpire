@@ -85,7 +85,7 @@ const SLOP = 12;
  * against a list rather than against a grep, and so an instrument can assert
  * the wiring is live off `sfx.recent` without shipping any audio.
  */
-export const BEAT_CUES = Object.freeze([
+const BEAT_CUES = Object.freeze([
   'beat_confirmArm', 'beat_confirmCommit', 'beat_confirmCancel',
 ]);
 
