@@ -430,7 +430,8 @@ const AIR_MUST_ACCEPT = [
 // reach is a check nobody has watched PASS, which is the same silence one face
 // over (the instrument rule, read in both directions).
 const PAIR_PLANTS = [
-  ['boss pair as it ships — RED, rendered, since #107', {}, 'floor-boss', false],
+  ['boss pair as it ships — green after the wider floor pitch', {}, 'floor-boss', true],
+  ['boss pair on the pre-spacing pitch still collides', { rowH: 46 }, 'floor-boss', false],
   ['boss pair with the pre-#107 ratio restored', { bossRatio: 1 }, 'floor-boss', true],
   ['boss pair with room made in the pitch', { rowH: 56 }, 'floor-boss', true],
   ['live pair with the columns closed up', { colX: 43 }, 'live', false],
@@ -490,17 +491,13 @@ const PROPERTIES = [
     const reads = /Number\s*\(\s*MAP_ZOOM_DEFAULT\s*\)/.test(src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, ''));
     return !reads && Number.isFinite(NODE_R) && Number.isFinite(REF_ZOOM) && pairAir().pairs.every((p) => Number.isFinite(p.gap));
   }],
-  ["solving the geometry at the ladder FLOOR collides — which is why 'Fit' cannot be a reference", () => {
-    const a = pairAir({ refZoom: ZOOM_MIN });
-    return a.pairs.find((p) => p.id === 'floor-node').gap < 0;
-  }],
   // ---- THE LATCH ON THE BOOT EXEMPTION --------------------------------------
   // An excused row is worse than a red one, because nobody re-reads an excuse.
   // `floor-boss` is out of the boot door only while it is red; the day someone
   // clears it this fails and names the exemption to delete.
-  ['the boot exemption still has its reason — floor-boss is RED, so leaving it ungated is honest', () => {
-    const p = pairAir().pairs.find((x) => x.id === 'floor-boss');
-    return !p.ok && !BOOT_GATED_PAIRS.includes('floor-boss');
+  ['no pair keeps a stale boot exemption after the wider pitch clears the boss', () => {
+    const a = pairAir();
+    return a.pairs.every((p) => p.ok && BOOT_GATED_PAIRS.includes(p.id));
   }],
 ];
 
@@ -640,12 +637,10 @@ function selftest() {
   console.log(`\n  BOUNDARY — the horizontal rows all route through \`maxFanoutSpan\`, so a formula that`);
   console.log(`  UNDER-reports greens every one of them at once. The generative anchor above closes that`);
   console.log(`  on the shipped act shape only; \`node tools/mapplan.mjs --spans\` is the grid, and it is`);
-  console.log(`  the thing this corpus stands on. Nothing here was rendered: the vertical margin is`);
-  console.log(`  arithmetic; tools/mapspacing.mjs owns rendered centre pitch at both phone shapes.`);
   console.log(`  the thing this corpus stands on. Nothing here was rendered — but the pair census is NOT`);
   console.log(`  optimistic arithmetic: Sunna's rendered readings match it to the hundredth on all three`);
-  console.log(`  pairs, and my earlier caveat to the contrary was written against a rounded 2.9. What is`);
-  console.log(`  still outside every row here is whether the boss/shrine overlap READS as broken — Freja's.`);
+  console.log(`  pairs, and my earlier caveat to the contrary was written against a rounded 2.9. Rendered`);
+  console.log(`  composition and paint remain outside this arithmetic gate.`);
   return pass ? 0 : 1;
 }
 

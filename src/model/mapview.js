@@ -581,28 +581,9 @@ export function pairAir(opts = {}) {
   return { ...base, why: worst.ok ? null : 'collision', r, bossR, pairs, worst };
 }
 
-/**
- * The pair a CONTENT edit is answerable for, and the reason the other one is not.
- *
- * `floor-boss` is red at the shipped default and has been since #107 gave the
- * radii their derivation: -3.7 SVG units, -3.83 device px at 390 and -3.15 at
- * 320, rendered in every act and every seed, against 11 SVG units of air before
- * it. It is caused by `BOSS_RATIO x NODE_R` against `ROW_H` — a ratio and two
- * code constants — and its fix is a proportion Freja owns.
- *
- * SO IT IS NOT GATED AT BOOT, AND THAT IS A DELIBERATE HOLE WITH A LATCH ON IT. A
- * boot banner is player-facing: shipping one that fires on every launch for a
- * defect the player cannot act on is a worse failure than the overlap, and it is
- * Sunna's floor that says so. The red lives in `mapplan --margins`, which exits 1
- * today, rather than in a banner nobody can clear.
- *
- * THE LATCH, because an excused row is worse than a red one — nobody re-reads an
- * excuse (Sten, tonight, withdrawing his own clause for exactly this). A property
- * in `mapplan --selftest` asserts this pair is STILL RED. The day it clears, that
- * property fails and tells whoever cleared it to delete this exemption and let
- * the boot door take the pair. The exemption cannot outlive its own reason.
- */
-export const BOOT_GATED_PAIRS = Object.freeze(['live', 'floor-node']);
+/** Every rendered neighbour pair is gated. The wider floor pitch repaired the
+ * old boss/shrine collision, so its former boot exemption has been removed. */
+export const BOOT_GATED_PAIRS = Object.freeze(['live', 'floor-node', 'floor-boss']);
 
 /**
  * The largest `balance.ui.tapSize.def` that still clears every BOOT-GATED pair —
@@ -632,8 +613,9 @@ export function maxTapDefault(opts = {}) {
  * bundle, not once per `mapConfigs` key, and three identical errors would be
  * three copies of one fact.
  *
- * It rules on `BOOT_GATED_PAIRS` and NOT on `floor-boss` — the reason, and the
- * latch that stops the exemption outliving itself, are on that const above.
+ * It rules on every pair in `BOOT_GATED_PAIRS`. The wider floor pitch now keeps
+ * the boss/shrine pair green too, so no stale exemption survives the geometry
+ * that originally required it.
  *
  * The corpus it has to turn red is `node tools/mapplan.mjs --selftest` — the same
  * corpus validate.js already points at, with rows for this refusal in it, so this
