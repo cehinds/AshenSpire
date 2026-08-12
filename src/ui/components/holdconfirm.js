@@ -107,9 +107,8 @@ export function beatCue(phase, id, form) {
  * armHold(btn, { ms, onConfirm, id }) -> disarm() (with .refresh())
  *
  * `ms` may be a NUMBER or a FUNCTION returning one, read at the moment the
- * finger lands. The function form is what lets End Turn's beat track the state
- * the game already computes — a turn with nothing left to spend forfeits
- * nothing — without any screen deciding anything.
+ * finger lands. The function form remains available to rows whose state can
+ * change while a screen is mounted; End Turn itself is deliberately constant.
  *
  * `ms <= 0` is the "off" position of the dial and it is the pre-hold behaviour
  * byte for byte: one tap commits. Not a hold with a zero timer.

@@ -55,10 +55,10 @@
 //      DREW, both directions: a declared action that draws no control is a
 //      declaration with no handler; a control armed under an id nobody declared
 //      is a gap. Neither is visible from a source tree.
-//   9. END TURN HOLDS — the half of Constantine's sentence that was dropped
-//      ("same with ending turn"), driven on a real board with real touch, at
-//      both edges: with a play still in hand it holds and an early release does
-//      not end the turn; with nothing left to spend the table owes no beat.
+//   9. END TURN ALWAYS HOLDS while the dial is enabled — the literal ruling on
+//      "same with ending turn". A spent hand does not remove the beat. Off still
+//      restores the old one-tap pointer path, while keyboard/pad activation
+//      remains immediate because it cannot be a pointing miss.
 //  10. THE SMITH CONFIRMS, and the confirm carries the preview. #105 shipped
 //      that preview as a HOVER tooltip and a phone has no hover, so the touch
 //      player's preview was nothing at all. One tap ARMS, CANCEL takes it back,
@@ -633,7 +633,7 @@ async function main() {
       try {
         const b = await import(pathToFileURL(resolve(ROOT, 'src/model/secondbeat.js')).href);
         return { rows: b.enumerateBeats(), owed: b.beatsOwed(), sane: b.assertTableSane(),
-                 ids: Object.keys(b.ACTIONS), noBeatWhenSpent: b.beatFor('endTurn', { forfeits: false }).form };
+                 ids: Object.keys(b.ACTIONS), endTurnForm: b.beatFor('endTurn').form };
       } catch (e) { return { skip: `could not read src/model/secondbeat.js at this ref: ${e.message}` }; }
     })();
     if (table && table.skip) skip('the-set', 'structural', table.skip);
@@ -746,11 +746,8 @@ async function main() {
       ok(`with a play still in hand, End Turn owes a HOLD`, a.beat === 'hold' && a.holdMs > 0,
         `beat=${a.beat} ms=${a.holdMs} energy=${a.energy} pulse=${a.pulse}`);
       ok(`and it SAYS so on the button`, a.hint === true, `HOLD hint present=${a.hint}`);
-      // THE PULSE AND THE BEAT READ ONE PREDICATE. If these two ever disagree
-      // the button is pulsing "you still have a play" while committing on a tap,
-      // or holding while claiming there is nothing to lose.
-      ok(`the gold pulse and the beat agree`, a.pulse === (a.beat === 'hold'),
-        `pulse=${a.pulse} beat=${a.beat}`);
+      ok(`the table rules End Turn as an unconditional hold`, table && !table.skip && table.endTurnForm === 'hold',
+        `beatFor('endTurn') = ${table && table.endTurnForm}`);
 
       const p = await pointOf('.end-turn');
       if (!p) ok(`End Turn is pressable`, false, 'the button has no box');
@@ -770,23 +767,47 @@ async function main() {
           `turn ${a.turn} -> ${b2 && b2.turn}, phase ${a.phase} -> ${b2 && b2.phase}`);
       }
 
-      // 3. THE OTHER EDGE, AND IT IS THE ONE THAT KEEPS THIS FROM BEING
-      // CEREMONY. A turn with nothing left to spend forfeits nothing, so the
-      // beat is not owed and the button takes a tap. Energy is set to 0 through
-      // the debug handle and the screen re-rendered the way the game does.
+      // 3. THE SPENT EDGE. The ruling is state-independent: energy reaching 0
+      // does not take the safety step off End Turn.
       await openShot('combat');
       const c0 = await ev(`(() => {
         const c = window.__combat; if (!c) return null;
         c.player.energy = 0;
-        document.querySelector('.end-turn').dispatchEvent(new Event('nothing'));
-        return { turn: c.turn };
+        const b = document.querySelector('.end-turn');
+        return { turn: c.turn, beat: b && b.dataset.beat, holdMs: Number((b && b.dataset.holdMs) || 0) };
       })()`);
       if (!c0) skip('end-turn spent edge', 'unasked', 'no combat handle');
-      else if (!table || table.skip) skip('end-turn spent edge', 'unasked', 'the table could not be read at this ref');
       else {
-        ok(`with nothing left to spend, the table owes NO beat`, table.noBeatWhenSpent === 'none',
-          `beatFor('endTurn', { forfeits: false }) = ${table.noBeatWhenSpent}`);
+        ok(`with nothing left to spend, End Turn still owes the enabled hold`,
+          c0.beat === 'hold' && c0.holdMs > 0,
+          `energy=0 beat=${c0.beat} ms=${c0.holdMs}`);
       }
+
+      // 4. OFF IS STILL OFF. The characteristic remains `hold`, but the dial
+      // removes its timer and visible hint, and a pointer tap commits once.
+      await openShot('combat', { shotSettings: JSON.stringify({ holdConfirm: 'off' }) });
+      const off = await st();
+      ok(`Off removes End Turn's hold timer and hint`, off && off.holdMs === 0 && off.hint === false,
+        off ? `beat=${off.beat} ms=${off.holdMs} hint=${off.hint}` : 'no combat state');
+      const op = await pointOf('.end-turn');
+      if (!off || !op) ok(`Off leaves End Turn pressable`, false, 'no button box');
+      else {
+        await press(op, 30); await wait(900);
+        const off2 = await st();
+        ok(`Off restores one-tap pointer End Turn`, off2 && (off2.turn > off.turn || off2.phase !== 'player'),
+          `turn ${off.turn} -> ${off2 && off2.turn}, phase ${off.phase} -> ${off2 && off2.phase}`);
+      }
+
+      // 5. Keyboard/pad activation is a synthetic click (detail 0), not a
+      // pointing hazard. It remains immediate under the enabled dial.
+      await openShot('combat');
+      const key0 = await st();
+      await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69 }, sessionId);
+      await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69 }, sessionId);
+      await wait(900);
+      const key1 = await st();
+      ok(`the End Turn key remains immediate and commits once`, key0 && key1 && (key1.turn > key0.turn || key1.phase !== 'player'),
+        `turn ${key0 && key0.turn} -> ${key1 && key1.turn}, phase ${key0 && key0.phase} -> ${key1 && key1.phase}`);
     }
   }
 
