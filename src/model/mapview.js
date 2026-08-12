@@ -6,13 +6,13 @@
 // preference, it is arithmetic: how wide is the thing we must show, how wide is
 // the space we have, what zoom relates them. Until now the two halves of that
 // arithmetic lived in different worlds — the column pitch and the zoom ladder in
-// `ui/screens/map.js`, the `columns` knob in `content/mapconfig.js`, and nothing
+// `ui/components/mapboard.js`, the `columns` knob in `content/mapconfig.js`, and nothing
 // anywhere that could answer "does this act's width fit on a phone?".
 //
 // So the numbers move here, once, and get three readers (Law 0 clause 4, one
 // home per fact):
 //
-//   ui/screens/map.js   draws with them, and computes the opening zoom from them
+//   ui/components/mapboard.js draws with them, and computes the opening zoom from them
 //   model/validate.js   REFUSES a `columns` value that makes the ask impossible
 //   tools/mapfit.mjs    measures the shipped screen against them
 //
@@ -149,24 +149,43 @@ export function deliveredNodePx(r, zoom, uiZoom) {
 export const TAP_TARGET_DEFAULT = balance.ui.tapSize.def;
 
 /**
- * THE ZOOM THE GEOMETRY IS SOLVED AT — one home, because the radius and both
- * margins below all need it and three copies of `Number(MAP_ZOOM_DEFAULT) / 100`
- * is the second-copy defect in miniature.
+ * THE ZOOM THE GEOMETRY IS SOLVED AT — a reference, and its OWN fact.
  *
- * IT CAN BE NaN, AND NAMING THAT IS PART OF THIS COMMIT. `MAP_ZOOM_DEFAULT`
- * legally holds `'Fit'`, and its own comment says flipping the token "is the
- * whole change" and "nothing else moves". `Number('Fit')` is NaN — so on that
- * flip the node radius, the boss radius, both margins and every circle on the
- * screen go NaN today. That sentence is true-looking prose over code that does
- * something else, which is the shape of three of tonight's defects.
+ * IT IS NOT `Number(MAP_ZOOM_DEFAULT) / 100`, AND THAT IS SUNNA'S RULING, NOT MY
+ * PREFERENCE. I wrote it as that expression, found that `MAP_ZOOM_DEFAULT`
+ * legally holds `'Fit'` — `Number('Fit')` is NaN, so every radius, every circle
+ * and every margin goes NaN on the flip its own comment calls "the whole change"
+ * — and refused it by name rather than repairing it, because what the geometry
+ * solves at when the default IS the computed frame looked like a design call.
+ * She ruled the union splits instead, and her line is the whole reason:
  *
- * I did NOT repair the flip: what zoom the geometry should be solved at when the
- * default IS the computed frame is a design call (Sunna holds #107 on that
- * token), not arithmetic I get to pick at 4am. What I did is make it impossible
- * for it to arrive quietly — `nodeAir` refuses BY NAME on a reference zoom that
- * is not a number, and `mapplan --selftest` carries the row that watches it.
+ *   "They were never one fact. The reference only LOOKS like the default
+ *    because today they happen to be equal."
+ *
+ * `MAP_ZOOM_DEFAULT` keeps one job — what the setting opens at, and it may
+ * legally say `Fit`. The geometry keeps its own reference, here, beside
+ * `PHONE_UI_ZOOM` and `PHONE_VIEW_W`, and the arithmetic MUST NOT LEARN THE WORD:
+ * she checked, and `Fit` is a RANGE — solved at the floor of that range the node
+ * circles overlap by 2.80 SVG units. A reference zoom has to be one rung, and
+ * `mapplan --selftest` asserts it is a rung the ladder actually has.
+ *
+ * Today `REF_ZOOM` and `MAP_ZOOM_DEFAULT` still agree at 1.15, so nothing about
+ * this split moves a pixel. The refusal-by-name stays and is not decoration: the
+ * parameterised path below still refuses a non-finite reference zoom, which is
+ * what makes the split checkable rather than merely written down.
  */
-export const REF_ZOOM = Number(MAP_ZOOM_DEFAULT) / 100;
+export const REF_ZOOM = 1.15;
+
+/**
+ * Is `MAP_ZOOM_DEFAULT` a legal token? `'Fit'`, or a percentage naming a rung the
+ * ladder actually has. Its own consumers already fall back on an unreadable
+ * value; this is the half that says so out loud instead of falling back quietly.
+ */
+export function mapZoomDefaultIsLegal(token = MAP_ZOOM_DEFAULT) {
+  if (token === 'Fit') return true;
+  const z = Number(token) / 100;
+  return Number.isFinite(z) && ZOOM_STEPS.includes(z);
+}
 
 /**
  * The radius that delivers `tapPx`, rounded to the 0.1 the SVG is authored in.
@@ -308,23 +327,53 @@ export function maxFittingColumns() {
  *   against a 47.0 px row pitch at 390x844, and 36.25 against 39.0 at 320x640 —
  *   under 3 px of air between two adjacent, irreversible taps. Correctly and
  *   silently. Constantine's next rendered read was simpler: too close.
+ *   SUNNA, vertical. The circles that grew to meet the tap floor ate the space
+ *   BETWEEN circles in the same stroke, correctly and silently. Nothing read a
+ *   gap on this screen — which is a sentence she had already written about the
+ *   event screen's choice bars, in `content/balance.js`, weeks before tonight.
  *
  * A VERDICT HAS NO DERIVATIVE; A MARGIN DOES. Both axes compute one below, both
  * refusals print it, and each margin has a floor that can go red. The floors sit
  * BELOW today's values on purpose: today is legal, and the whole point is that
- * the next change to NODE_R, ROW_H, COL_X or `balance.ui.tapSize.def` cannot
- * quietly eat what is left.
+ * the next change to NODE_R, ROW_H, COL_X, BOSS_RATIO or
+ * `balance.ui.tapSize.def` cannot quietly eat what is left.
+ *
+ * AND THE VERTICAL HALF CAME BACK CORRECTED, TWICE, BOTH FROM SUNNA AND BOTH
+ * AGAINST ME — the record matters more than the tidy version:
+ *
+ *   1. THE PREMISE WAS WRONG. I wrote the floor to protect "two adjacent,
+ *      irreversible taps". Adjacent-floor nodes are never both live: only
+ *      reachable nodes get a handler and every edge runs floor -> floor+1, so a
+ *      reachable set is one floor. 987 live pairs over 2,601 decision moments,
+ *      all of them on one floor; the closest two LIVE doors are 54.23 px at 390.
+ *      She drove real touch events too — slide off, lift over a neighbour, tap
+ *      between: nothing fires, and the abort has shipped since the first commit.
+ *      Her verdict on a mercy hold: NO, and the reason is hers to keep — it would
+ *      charge the most-repeated tap in the game 600 ms against a survivable miss.
+ *   2. THE SHAPE WAS WRONG, AND THAT ONE IS THE FINDING. My first margin computed
+ *      `ROW_H - 2 * NODE_R`: two IDENTICAL circles. The boss carries a different
+ *      radius, so the one pair on this screen that is ACTUALLY COLLIDING is the
+ *      pair my invariant could not express. `pairAir` ranges over the pairs that
+ *      exist now — see it, and the boss/shrine overlap it finds, below.
  *
  * Scaling every geometric term together is a no-op under Fit: multiply COL_X,
  * ROW_H and NODE_R by k and Fit divides zoom by k. The floor pitch is therefore
  * derived from DEVICE space while COL_X and NODE_R keep their own jobs.
  * `tools/mapspacing.mjs` reads the rendered result at both phone shapes and both
  * zoom modes; source constants are not allowed to grade themselves.
+ * WHAT THIS IS NOT — and it is the first thing to say, because the obvious next
+ * move is the wrong one. This is NOT an attempt to reach 44 device px on the map.
+ * Two node centres are 34 px apart at 320x640, so that target cannot exist there
+ * at any radius; and SCALING THE GEOMETRY IS A NO-OP — multiply COL_X, ROW_H and
+ * NODE_R by k and the fit zoom divides by k, delivering the same device px. The
+ * margins are made WATCHABLE here, not big. Whether an overlap READS as broken is
+ * Freja's call and whether the surface needs mercy is Sunna's; this file is the
+ * number under both, never the answer to either.
  *
  * DIVISION OF LABOUR BETWEEN THE TWO FLOORS, since neither watches everything:
- * the vertical floor is what binds NODE_R and ROW_H tightly; the horizontal
- * floor is what binds COL_X tightly. Each axis watches the constant that lives
- * on it, and both print the next value that would take them red.
+ * the collision floor is what binds NODE_R, ROW_H and BOSS_RATIO tightly; the
+ * fan-out floor is what binds COL_X tightly. Each watches the constants that
+ * live on it, and both print the next value that would take them red.
  */
 
 /**
@@ -349,30 +398,48 @@ export function maxFittingColumns() {
 export const FANOUT_SLACK_MIN = 1;
 
 /**
- * FLOOR 2, VERTICAL — the air between two adjacent floors' node circles, in
- * DEVICE px, at the smallest shape this game claims (320x640).
+ * FLOOR 2 — the air between two node circles that are drawn NEXT TO EACH OTHER,
+ * in DEVICE px, at the smallest shape this game claims (320x640).
+ *
+ * THE REASON I FIRST GAVE FOR THIS FLOOR WAS WRONG, AND SUNNA FALSIFIED IT WITH
+ * RENDERED EVIDENCE RATHER THAN ARGUMENT. I wrote "a dead zone between two
+ * adjacent, irreversible taps". There is no such pair on the vertical axis:
+ * only reachable nodes get a click handler (`ui/components/mapboard.js`) and every edge
+ * runs floor -> floor+1, so A REACHABLE SET IS ALWAYS ONE FLOOR. She measured 72
+ * graphs, 2,601 decision moments, 987 live pairs — all 987 on one floor, and the
+ * closest two LIVE doors are 54.23 px at 390 and 44.59 at 320. She then drove it
+ * with real touch events: slide off, lift over a neighbour, tap the air between —
+ * nothing fires. Her verdict on a hold: no, and she is right.
+ *
+ * SO THE FLOOR SURVIVES WITH A DIFFERENT JOB: LEGIBILITY, NOT MERCY. Two circles
+ * that touch or overlap read as one shape, and the overlap the census below finds
+ * is real and rendered. That is Freja's and Sunna's ground to judge; keeping the
+ * circles visibly separate is the engineering floor under it.
  *
  * TWO, and the whole reason, because a threshold is a judgement and should read
  * as one:
  *
- *   · It is BELOW both numbers Sunna measured (2.9 px at 390, 2.75 at 320), so
- *     today is legal and the floor was not fitted to the reading I liked.
+ *   · It is BELOW every rendered air on this map today except the one that is
+ *     already negative, so it was not fitted to a reading I liked.
  *   · It is not ONE: the chain SVG unit -> local px -> device px rounds at the
- *     top of one circle and the bottom of the next, and a 1 px claim of air
- *     cannot survive two roundings. Two is the smallest air still air afterwards.
+ *     edge of one circle and the edge of the next, and a 1 px claim of air cannot
+ *     survive two roundings. Two is the smallest air still air afterwards.
  *   · It is a floor on AIR, never on target size. The target size question was
  *     answered by `nodeRadiusFor` and is not re-asked here.
  *
  * THE DERIVATION IS THE OPTIMISTIC HALF AND SAYS SO. At 08e184a it predicted
  * 3.52 device px at 390 while the screen delivered 2.9. A floor cleared here is
  * not a floor cleared on glass; `tools/mapspacing.mjs` now owns that reading.
+ * AND MY STATED BOUNDARY WAS WRONG IN THE OTHER DIRECTION TOO — struck rather
+ * than edited away. I wrote that "derivation is the optimistic half" because her
+ * relayed 2.9 sat below my derived 3.52. Her 2.9 was a rounding of a pitch read
+ * as 47.0; the pitch is 47.61 and the rendered air is 3.52 at 390 and 2.89 at
+ * 320. THIS ARITHMETIC MATCHED THE PAINT TO THE HUNDREDTH, on all three pairs
+ * below. I had written a caveat against my own numbers on a rounding error.
  *
- * What this floor buys — the largest tap default and the smallest row pitch that
- * still clear it — is DERIVED by `nodeAir` and printed, never typed here, so this
- * comment cannot rot into a number that stopped being true.
- *
- * Sunna owns whether the air needs a mercy control at all. This is the
- * engineering floor beneath her question, not an answer to it.
+ * What the floor buys — the largest tap default, the smallest row pitch — is
+ * DERIVED and printed, never typed here, so this comment cannot rot into a
+ * number that stopped being true.
  */
 export const NODE_AIR_MIN_PX = 2;
 
@@ -439,63 +506,116 @@ export function maxSafeColumns() {
 }
 
 /**
- * nodeAir(tapPx, refZoom) -> the VERTICAL margin: the air between two adjacent
- * floors' node circles, in the space the constants live in and in the device px a
- * thumb meets, at both reference shapes.
+ * pairAir(opts) -> EVERY PAIR OF CIRCLES THIS MAP DRAWS NEXT TO EACH OTHER, with
+ * the air between them in SVG units and in the device px a player sees.
  *
- * It takes its inputs rather than reading the module's consts so the corpus can
- * ask it about a tap default the game does not ship. `why` names WHICH input made
- * it unanswerable, because "the geometry is NaN" and "the nodes touch" are two
- * different failures and a reader must not have to guess which one they have.
+ * IT RANGES OVER THE PAIRS THAT EXIST, NOT THE PAIR THE FORMULA ASSUMED — and
+ * that correction is Sunna's, arriving from outside as rendered evidence against
+ * my own seam. My first version computed `ROW_H - 2 * NODE_R`: TWO NODE_R
+ * CIRCLES. The boss carries a different radius — I derived it by ratio on
+ * purpose, "never a second literal" — so THE ONE PAIR THAT IS ACTUALLY RED WAS
+ * THE ONE PAIR MY INVARIANT COULD NOT EXPRESS. A margin over a uniform pair, on
+ * a screen with a non-uniform pair in it.
+ *
+ * The three pairs, and each is a fact about geometry the generator guarantees:
+ *
+ *   live       same floor, adjacent columns — `COL_X - 2 * NODE_R`. THE ONLY
+ *              PAIR THAT CAN BOTH BE LIVE AT ONCE (every edge runs floor ->
+ *              floor+1, so a reachable set is one floor). Sunna measured 987 live
+ *              pairs across 2,601 decision moments and the closest was 54.23 px
+ *              at 390 / 44.59 at 320 — which is this expression, to the hundredth.
+ *   floor-node adjacent floors, two ordinary nodes — `ROW_H - 2 * NODE_R`.
+ *              Never both live. Legibility only.
+ *   floor-boss adjacent floors, the boss above the lone top shrine
+ *              (`engine/mapgen.js` puts it there in every act) —
+ *              `ROW_H - BOSS_R - NODE_R`. Never both live. RED TODAY.
+ *
+ * Every input is a parameter with the module's const as its default, so the
+ * corpus can plant both faces of every pair — a red the fixtures cannot reach is
+ * a check nobody has watched fail (the instrument rule).
+ *
+ * `why` names WHICH input made it unanswerable, because "the geometry is NaN" and
+ * "the circles collide" are two different failures and a reader must not have to
+ * guess which one they are holding.
  */
-export function nodeAir(tapPx = TAP_TARGET_DEFAULT, refZoom = REF_ZOOM) {
-  const base = { tapPx, refZoom, pitch: ROW_H, floorPx: NODE_AIR_MIN_PX };
-  const dead = { r: NaN, gap: NaN, px390: NaN, px320: NaN, minGap: NaN, minPitch: NaN, ok: false };
-  if (!Number.isFinite(refZoom) || refZoom <= 0) return { ...base, ...dead, why: 'no-reference-zoom' };
-  if (!Number.isFinite(tapPx) || tapPx <= 0) return { ...base, ...dead, why: 'no-tap-target' };
+export function pairAir(opts = {}) {
+  const {
+    tapPx = TAP_TARGET_DEFAULT,
+    refZoom = REF_ZOOM,
+    rowH = ROW_H,
+    colX = COL_X,
+    bossRatio = BOSS_RATIO,
+  } = opts;
+  const base = { tapPx, refZoom, rowH, colX, bossRatio, floorPx: NODE_AIR_MIN_PX };
+  if (!Number.isFinite(refZoom) || refZoom <= 0) return { ...base, why: 'no-reference-zoom', pairs: [], worst: null };
+  if (!Number.isFinite(tapPx) || tapPx <= 0) return { ...base, why: 'no-tap-target', pairs: [], worst: null };
+
   const r = nodeRadiusFromTap(tapPx, refZoom);
-  const gap = ROW_H - 2 * r;
-  const px = (uiZoom) => gap * refZoom * uiZoom;
-  // The SVG-unit gap that would deliver exactly the floor at the deciding shape.
-  const minGap = NODE_AIR_MIN_PX / (refZoom * PHONE_UI_ZOOM_MIN);
-  const px320 = px(PHONE_UI_ZOOM_MIN);
-  return {
-    ...base,
-    r,
-    gap,
-    px390: px(PHONE_UI_ZOOM),
-    px320,
-    minGap,
-    minPitch: 2 * r + minGap,
-    ok: px320 >= NODE_AIR_MIN_PX,
-    why: px320 >= NODE_AIR_MIN_PX ? null : 'air',
+  const bossR = Math.round(r * bossRatio * 10) / 10;
+  const pair = (id, label, axis, centres, r1, r2) => {
+    const gap = centres - r1 - r2;
+    const px = (uiZoom) => gap * refZoom * uiZoom;
+    const px320 = px(PHONE_UI_ZOOM_MIN);
+    return {
+      id,
+      label,
+      axis,
+      centres,
+      r1,
+      r2,
+      gap,
+      px390: px(PHONE_UI_ZOOM),
+      px320,
+      floorPx: NODE_AIR_MIN_PX,
+      ok: px320 >= NODE_AIR_MIN_PX,
+      // The centre-to-centre pitch that would put this pair exactly on the floor.
+      minCentres: r1 + r2 + NODE_AIR_MIN_PX / (refZoom * PHONE_UI_ZOOM_MIN),
+    };
   };
+  const pairs = [
+    pair('live', 'two LIVE doors — same floor, adjacent columns', 'horizontal', colX, r, r),
+    pair('floor-node', 'two ordinary nodes on adjacent floors', 'vertical', rowH, r, r),
+    pair('floor-boss', 'the boss above the top shrine', 'vertical', rowH, bossR, r),
+  ];
+  const worst = pairs.reduce((a, b) => (b.px320 < a.px320 ? b : a));
+  return { ...base, why: worst.ok ? null : 'collision', r, bossR, pairs, worst };
 }
 
+/** Every rendered neighbour pair is gated. The wider floor pitch repaired the
+ * old boss/shrine collision, so its former boot exemption has been removed. */
+export const BOOT_GATED_PAIRS = Object.freeze(['live', 'floor-node', 'floor-boss']);
+
 /**
- * The largest `balance.ui.tapSize.def` that still clears the vertical floor —
- * derived by asking, so the day ROW_H or the reference zoom moves this answer
- * moves with them and nothing has to remember to edit a number.
+ * The largest `balance.ui.tapSize.def` that still clears every BOOT-GATED pair —
+ * derived by asking, so the day ROW_H, COL_X or the reference zoom moves this
+ * answer moves with them and nothing has to remember to edit a number.
  */
-export function maxTapDefault(refZoom = REF_ZOOM) {
+export function maxTapDefault(opts = {}) {
   let best = 0;
-  for (let t = 1; t <= 400; t++) if (nodeAir(t, refZoom).ok) best = t;
+  for (let t = 1; t <= 400; t++) {
+    const a = pairAir({ ...opts, tapPx: t });
+    if (a.pairs.length && a.pairs.filter((p) => BOOT_GATED_PAIRS.includes(p.id)).every((p) => p.ok)) best = t;
+  }
   return best;
 }
 
 /**
  * geometryRefusals(balance) -> [{ key, msg }]
  *
- * THE VERTICAL AXIS'S REFUSAL, and it is a CONTENT refusal because it has exactly
- * one data input: `balance.ui.tapSize.def`, which is what the node radius is
- * solved from. Everything else it reads (ROW_H, the reference zoom, both measured
- * `--ui-zoom` values) is code — so this is the boot-time half of Law 1 clause 5
- * for the one entry an author can turn that silently closes the gap between two
- * irreversible taps.
+ * THE COLLISION REFUSAL, and it is a CONTENT refusal because it has exactly one
+ * data input: `balance.ui.tapSize.def`, which is what every radius on this map is
+ * solved from. Everything else it reads (ROW_H, COL_X, the boss ratio, the
+ * reference zoom, both measured `--ui-zoom` values) is code — so this is the
+ * boot-time half of Law 1 clause 5 for the one entry an author can turn that
+ * closes the space between two circles.
  *
  * Separate from `viewRefusals` because it is not per-act: it is asked ONCE of the
  * bundle, not once per `mapConfigs` key, and three identical errors would be
  * three copies of one fact.
+ *
+ * It rules on every pair in `BOOT_GATED_PAIRS`. The wider floor pitch now keeps
+ * the boss/shrine pair green too, so no stale exemption survives the geometry
+ * that originally required it.
  *
  * The corpus it has to turn red is `node tools/mapplan.mjs --selftest` — the same
  * corpus validate.js already points at, with rows for this refusal in it, so this
@@ -506,7 +626,7 @@ export function geometryRefusals(balance) {
   if (!balance || typeof balance !== 'object' || Array.isArray(balance)) return out;
   const spec = balance.ui && balance.ui.tapSize;
   // ABSENCE IS THE FAILURE, NOT AN EXEMPTION — and it is here because the check
-  // above it would otherwise die green at one particular state of the tree,
+  // below it would otherwise die green at one particular state of the tree,
   // which is the hazard my own `--mutate` hit earlier tonight. `NODE_R` is
   // solved from this entry at module load with no fallback: delete it and every
   // radius on the map is NaN, while a refusal guarded on `tapSize != null` says
@@ -514,42 +634,44 @@ export function geometryRefusals(balance) {
   if (!spec || typeof spec !== 'object' || Array.isArray(spec) || spec.def == null) {
     out.push({
       key: 'balance.ui.tapSize.def',
-      msg: `missing — the map node's radius is SOLVED from it (model/mapview.js NODE_R) with no fallback, `
-        + `so its absence is not a default: every node circle, the boss circle and both map margins resolve to NaN. `
+      msg: `missing — every map circle's radius is SOLVED from it (model/mapview.js NODE_R) with no fallback, `
+        + `so its absence is not a default: every node, the boss circle and every margin resolve to NaN. `
         + `A bundle with a 'balance' must carry it.`,
     });
     return out;
   }
-  const air = nodeAir(spec.def);
-  if (air.ok) return out;
 
+  const air = pairAir({ tapPx: spec.def });
   if (air.why === 'no-reference-zoom') {
     out.push({
       key: 'balance.ui.tapSize.def',
-      msg: `the map's node radius cannot be derived from this entry: model/mapview.js solves it at `
-        + `MAP_ZOOM_DEFAULT = ${JSON.stringify(MAP_ZOOM_DEFAULT)}, which is not a percentage, so the reference zoom is `
-        + `${air.refZoom} and every radius, every boss circle and both map margins are NaN. `
-        + `The comment on that const says flipping it to 'Fit' is the whole change and nothing else moves — this is the part that moves.`,
+      msg: `no radius can be solved from this entry: model/mapview.js REF_ZOOM is ${air.refZoom}, which is not a zoom, `
+        + `so every node circle, the boss circle and every margin are NaN. `
+        + `REF_ZOOM is the geometry's own reference and must be one rung of the ladder — it is deliberately NOT the map-zoom default, which may legally say 'Fit'.`,
     });
     return out;
   }
   if (air.why === 'no-tap-target') {
     out.push({
       key: 'balance.ui.tapSize.def',
-      msg: `must be a positive number of device px — the map node radius is solved from it — got ${JSON.stringify(spec.def)}`,
+      msg: `must be a positive number of device px — every map circle's radius is solved from it — got ${JSON.stringify(spec.def)}`,
     });
     return out;
   }
-  out.push({
-    key: 'balance.ui.tapSize.def',
-    msg: `${spec.def} px map nodes leave ${air.gap.toFixed(1)} SVG units between two adjacent floors' circles: `
-      + `${air.px320.toFixed(2)} device px of air at 320x640 and ${air.px390.toFixed(2)} at 390x844, `
-      + `against a floor of ${NODE_AIR_MIN_PX} px of air between two adjacent, irreversible taps. `
-      + `The node radius is DERIVED from this entry (${air.r} SVG units at ${(air.refZoom * 100).toFixed(0)}%), so raising it grows the target `
-      + `and eats the space BETWEEN targets in the same stroke — the row pitch ROW_H is ${ROW_H} SVG units and does not move with it. `
-      + `Largest default that still clears the floor: ${maxTapDefault()} px. `
-      + `Smallest row pitch that would clear it at ${spec.def} px: ${air.minPitch.toFixed(2)} SVG units.`,
-  });
+
+  for (const p of air.pairs) {
+    if (!BOOT_GATED_PAIRS.includes(p.id) || p.ok) continue;
+    out.push({
+      key: 'balance.ui.tapSize.def',
+      msg: `${spec.def} px circles collide on the map: ${p.label} sit ${p.centres} SVG units apart centre to centre `
+        + `and leave ${p.gap.toFixed(1)} — ${p.px320.toFixed(2)} device px of air at 320x640, ${p.px390.toFixed(2)} at 390x844 — `
+        + `against a floor of ${NODE_AIR_MIN_PX} px. Two circles that touch read as one shape. `
+        + `Every radius is DERIVED from this entry (node ${air.r}, boss ${air.bossR} SVG units at ${(air.refZoom * 100).toFixed(0)}%), `
+        + `so raising it grows every circle while the pitch it is measured against does not move. `
+        + `Largest default that still clears every gated pair: ${maxTapDefault()} px. `
+        + `Smallest pitch that would clear this pair at ${spec.def} px: ${p.minCentres.toFixed(2)} SVG units.`,
+    });
+  }
   return out;
 }
 
