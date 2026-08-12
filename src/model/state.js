@@ -8,6 +8,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { createLoadout, runMods, stampDeck } from './loadout.js';
+import { graceRefillPlan } from './gracerefill.js';
 
 export const RUN_SCHEMA_VERSION = 1;
 
@@ -60,13 +61,23 @@ export function createRunState({ seed, classId, registries }) {
     deck: createDeck(classDef.startingDeck, idGen),
     loadout,
     relics: [classDef.startingRelic],
-    flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots (default 3)
+    flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
     seedString: null, // set by the orchestrator right after creation (display/replay)
     mapGraph: null,
     combatEntered: null,
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // "and each character should start with those" — Constantine, 2026-08-08, the
+  // FOURTH clause of the flask parenthesis, and it is here because it was very
+  // nearly lost. His sentence was quoted to me tonight with this clause missing
+  // from the quote; the ledger (`commons/decisions/directions.md` D10) has it.
+  //
+  // The table remains authoritative at both doors. The preview enables this
+  // data switch so every class starts with the same 3 HP + 3 Mana allocation.
+  if (registries.balance && registries.balance.graceRefillAtRunStart === true) {
+    for (const flaskId of graceRefillPlan(registries, run).grants) run.flasks.push({ flaskId });
+  }
   // Stamp the starting deck with whatever the loadout says. Bare-handed this
   // is a no-op; in an armour set with `defend.block=+2` it is already true of
   // the very first Defend you draw.

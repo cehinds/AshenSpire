@@ -50,6 +50,24 @@ export function parseMod(str) {
 /** The closed set. A third hand is a new word — engine, one act (Law 1 c1). */
 export const HANDS = Object.freeze(['left', 'right']);
 
+// ---------------------------------------------------------------------------
+// The two `apply` vocabularies — one per mod scope (Viki, A8)
+// ---------------------------------------------------------------------------
+//
+// equipMods.csv's header has always called `apply` a closed set and NOTHING HAS
+// EVER CHECKED IT. `validateEquipment` checks the field name, the scope and the
+// status; a row reading `apply=swapcost` or `apply=maxhp` passes every one of
+// those, is collected by neither `cardMods` nor `runMods`, and does nothing —
+// silently, forever. That is a legal-looking entry with a wrong-but-reasonable
+// result, which is the failure Law 0 clause 5 names as the dangerous one.
+//
+// So the vocabulary lives beside its consumers, and each list is the set of
+// values the function two hundred lines below actually branches on. A new
+// `apply` is a WORD, not a row: it means teaching a consumer something, and the
+// validator goes red until one has been taught (Law 0 clause 2).
+export const CARD_MOD_APPLIES = Object.freeze(['amount', 'hits', 'cost', 'scale', 'status']);
+export const RUN_MOD_APPLIES = Object.freeze(['maxHp', 'startStatus', 'swapCost']);
+
 /**
  * slotHand(slot) → 'left' | 'right' | null — WHERE A SLOT IS.
  *
@@ -126,6 +144,33 @@ export function validateEquipment(registries) {
       }
     }
   }
+
+  // ---- the `apply` vocabulary, which nothing checked until A8 --------------
+  // equipMods.csv's header calls `apply` a closed set; `cardMods`, `runMods`
+  // and `applyCardMods` are the three functions that branch on it, and until
+  // now a row naming a fourth value passed every check and did NOTHING. Legal
+  // input, no output, no complaint — Law 0 clause 5's dangerous half. The lists
+  // live beside those consumers (CARD_MOD_APPLIES / RUN_MOD_APPLIES).
+  for (const [field, spec] of Object.entries(fields)) {
+    const legal = spec.scope === 'run' ? RUN_MOD_APPLIES : spec.scope === 'card' ? CARD_MOD_APPLIES : null;
+    if (!legal) {
+      problems.push(`equipMods.csv: field '${field}' has scope '${spec.scope}' — expected 'card' or 'run'`);
+      continue;
+    }
+    if (!legal.includes(spec.apply)) {
+      problems.push(
+        `equipMods.csv: field '${field}' applies '${spec.apply}', which no ${spec.scope} consumer handles `
+        + `— it would collect nothing and change nothing. Legal for scope '${spec.scope}': ${legal.join(', ')}`
+      );
+    }
+  }
+
+  // ABSENT IS NOT ZERO — this file's own rule, applied to itself. The partial
+  // registries the tests build carry no `balance`, and telling one of them its
+  // swap cost is malformed would be the checker inventing a defect out of not
+  // being able to look. No balance block, nothing to say.
+  const eqBal = ((registries.balance || {}).equipment) || null;
+  if (eqBal) validateEquipmentBalance(pieces, eqBal, problems);
 
   for (const slot of eq.slots || []) {
     if (slot.kinds.length === 0) problems.push(`slot '${slot.id}' gates on no kinds`);
@@ -241,6 +286,101 @@ export function validateEquipment(registries) {
   return problems;
 }
 
+
+/**
+ * The `balance.equipment` half of the equipment check (Viki, A8/A7).
+ *
+ * Separate only because its input is separate: everything above validates what
+ * an AUTHOR wrote in a spreadsheet, and this validates what a TUNER wrote in
+ * balance.js. Both are data and both fail loud by name; a partial registry has
+ * the first and not the second, and the caller says so rather than guessing.
+ */
+function validateEquipmentBalance(pieces, eqBal, problems) {
+  // ---- A FEW BASIC WEAPONS FOR ALL (A7) ------------------------------------
+  // `basicTag` is the one word behind *"maybe a few basic weapons become
+  // available for all"*, and each refusal below exists because the failure it
+  // catches is SILENT: the shelf looks exactly the way it looked before, and
+  // nobody can tell a setting that is off from one that is broken.
+  const basicTag = eqBal.basicTag;
+  if (basicTag != null && basicTag !== '') {
+    if (typeof basicTag !== 'string') {
+      problems.push(`balance.equipment.basicTag must be a tag id string or '' — got ${JSON.stringify(basicTag)}`);
+    } else {
+      const carriers = pieces.filter((p) => (p.tags || []).includes(basicTag));
+      if (!carriers.length) {
+        problems.push(
+          `balance.equipment.basicTag is '${basicTag}' and no armament carries that tag — `
+          + `the universal shelf would be empty and say nothing. Tag a row in weapons.csv or set basicTag to ''`
+        );
+      }
+      for (const p of carriers) {
+        // `basic` answers the FOUND gate; an unlock is the EARNED gate. A row
+        // wearing both is an author saying two opposite things, and the one
+        // that would win is an implementation detail of `ownership()`.
+        if (p.unlock !== '' && p.unlock != null) {
+          problems.push(
+            `'${p.id}' is tagged '${basicTag}' (everybody's) AND has unlock '${p.unlock}' (earned) — `
+            + `pick one: drop the tag, or clear the unlock`
+          );
+        }
+        // Armour never enters the drop pool, so `basic` has no gate to answer
+        // on it and would sit there looking meaningful.
+        if (!fromDropPool(p)) {
+          problems.push(
+            `'${p.id}' is tagged '${basicTag}' but its kind '${p.kind}' never drops, so the tag can never do `
+            + `anything — '${basicTag}' answers the found gate only`
+          );
+        }
+      }
+    }
+  }
+
+  // ---- THE SWAP-COST CHAIN (A8) --------------------------------------------
+  // Three rules he can try, so three ways to author one that quietly charges
+  // the default forever. Each of these names the row.
+  const rules = eqBal.swapCostRules;
+  if (rules != null) {
+    if (!Array.isArray(rules) || !rules.length) {
+      problems.push('balance.equipment.swapCostRules must be a non-empty array of rule rows');
+    } else {
+      const seen = new Set();
+      for (const r of rules) {
+        const at = `swapCostRules row '${(r && r.id) || '(no id)'}'`;
+        if (!r || typeof r.id !== 'string' || !r.id) { problems.push(`${at}: every rule row needs an id`); continue; }
+        if (seen.has(r.id)) problems.push(`${at}: duplicate rule id — the later row is unreachable`);
+        seen.add(r.id);
+        if (!SWAP_COST_BASES.includes(r.base)) {
+          problems.push(`${at}: base '${r.base}' is not one of ${SWAP_COST_BASES.join('|')}`);
+        }
+        if (typeof r.gear !== 'boolean') {
+          problems.push(`${at}: gear must be true or false — got ${JSON.stringify(r.gear)}`);
+        }
+      }
+      if (!seen.has(eqBal.swapCostRule)) {
+        problems.push(
+          `balance.equipment.swapCostRule is '${eqBal.swapCostRule}', which is not a rule id — `
+          + `authored rules: ${[...seen].map((s) => `'${s}'`).join(', ')}`
+        );
+      }
+    }
+  }
+  if (!Number.isInteger(eqBal.swapCost) || eqBal.swapCost < 0) {
+    problems.push(`balance.equipment.swapCost must be a whole number ≥ 0 — got ${JSON.stringify(eqBal.swapCost)}`);
+  }
+  for (const r of eqBal.swapCostByCategory || []) {
+    const at = `swapCostByCategory row '${(r && r.tag) || '(no tag)'}'`;
+    if (!r || typeof r.tag !== 'string' || !r.tag) { problems.push(`${at}: every category row needs a tag`); continue; }
+    // A category nothing carries is the silent one: the rule is live, the row
+    // is legal, and no weapon in the game will ever match it.
+    if (!pieces.some((p) => (p.tags || []).includes(r.tag))) {
+      problems.push(`${at}: no armament carries tag '${r.tag}', so this cost can never be charged`);
+    }
+    if (!Number.isInteger(r.cost) || r.cost < 0) {
+      problems.push(`${at}: cost must be a whole number ≥ 0 — got ${JSON.stringify(r.cost)}`);
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // WHAT IS YOURS — one predicate, one home (EldenSpire#90)
 // ---------------------------------------------------------------------------
@@ -333,13 +473,25 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
   // generic. 'unfound' would promise the player it turns up in treasure, which
   // is a lie about a piece that does not exist. `has(null)` stays false either
   // way, which is the behaviour every caller already had.
+  // A FEW BASIC WEAPONS FOR ALL (A7). Constantine: *"everything else is profile
+  // specific but maybe a few basic weapons become available for all."*
+  //
+  // IT ANSWERS THE FOUND GATE AND ONLY THAT, which is why it is inside the
+  // `requireFound` branch rather than a fourth `if` at the top. A piece is not
+  // yours for two independent reasons — earned (`unlock`) and found (the drop
+  // pool) — and a tag that short-circuited BOTH would make one word able to
+  // unlock content, which is not what "basic" means and not what he asked for.
+  // The two gates compose; a row wearing both is refused by name at validation,
+  // so this order is not a tiebreak, it is the absence of a tie.
+  const basicTag = cfg.basicTag;
+  const isBasic = (piece) => !!basicTag && (piece.tags || []).includes(basicTag);
   const why = (piece) => {
     if (!piece) return 'unearned';
     if (piece.unlock !== '' && piece.unlock != null) {
       return unlocked.has(piece.unlock) ? null : 'unearned';
     }
     if (fromDropPool(piece) && drops.requireFound) {
-      return found.has(piece.id) ? null : 'unfound';
+      return isBasic(piece) || found.has(piece.id) ? null : 'unfound';
     }
     return null;
   };
@@ -598,15 +750,29 @@ function cardForTarget(eq, target, classId) {
 }
 
 /**
- * runMods(registries, loadout, classId) → { maxHp, startStatuses: [{status, stacks}] }
+ * runMods(registries, loadout, classId) → { maxHp, swapCostDelta, startStatuses }
  * The `self.*` half of the vocabulary: things a piece does to you rather than
  * to a card. startStatuses are handed straight to createCombat's existing
  * playerStatuses hook, so the engine needs no equipment code to honour them.
+ *
+ * `swapCostDelta` is the TALISMAN half of A8 — *"perhaps this action costs more
+ * or less depending on Talisman"* — and it arrives as one `apply` value rather
+ * than a new field on a piece, because a talisman already says what it does in
+ * the same `mods` column every other piece uses (`self.swapCost=+1`). It is
+ * SIGNED and it is a DELTA, never a price: the price is derived in
+ * `swapCostFor` below, which is the only place that knows the base.
+ *
+ * NOTHING IS AUTHORED FOR IT YET AND THAT IS A CONTENT FACT, NOT A GAP. The
+ * talisman slot has zero rows (equipSlots.csv ships it ahead of its content),
+ * so today this returns 0 for every real loadout — and the day a talisman row
+ * exists it works with no code, which test 28b measures with a piece it
+ * authors itself rather than waiting for one.
  */
 export function runMods(registries, loadout, classId) {
   const fields = (registries.equipment || {}).modFields || {};
   const stacks = new Map();
   let maxHp = 0;
+  let swapCostDelta = 0;
   for (const piece of equippedPieces(registries, loadout, classId)) {
     for (const raw of piece.mods || []) {
       const mod = parseMod(raw);
@@ -614,6 +780,8 @@ export function runMods(registries, loadout, classId) {
       if (!spec || spec.scope !== 'run') continue;
       if (spec.apply === 'maxHp') {
         maxHp = mod.mode === 'add' ? maxHp + mod.value : mod.value;
+      } else if (spec.apply === 'swapCost') {
+        swapCostDelta = mod.mode === 'add' ? swapCostDelta + mod.value : mod.value;
       } else if (spec.apply === 'startStatus') {
         const prev = stacks.get(spec.status) || 0;
         stacks.set(spec.status, mod.mode === 'add' ? prev + mod.value : mod.value);
@@ -622,6 +790,7 @@ export function runMods(registries, loadout, classId) {
   }
   return {
     maxHp,
+    swapCostDelta,
     startStatuses: [...stacks].filter(([, n]) => n > 0).map(([status, n]) => ({ status, stacks: n })),
   };
 }
@@ -813,6 +982,132 @@ export function canSwap(registries, slotId, { inCombat = false } = {}) {
     return { ok: false, word: 'fastened', reason: `${slot.label} stays fastened until the fight ends.` };
   }
   return { ok: true, word: '', reason: '' };
+}
+
+// ---------------------------------------------------------------------------
+// WHAT A SWAP COSTS — one chain, three rules, all of it data (Viki, A8)
+// ---------------------------------------------------------------------------
+//
+// `canSwap` above says WHETHER. This says HOW MUCH, and the comment on
+// `cycleSet` below already named it as the next act: *"the PRICE.
+// balance.equipment.swapCost is charged in doSwapArmament, outside this
+// function"* — so the price had no truth function at all, only a subtraction in
+// the engine. It has one now, and it lives here because this module is the one
+// home for what a loadout means.
+//
+// Constantine named three prices and said *"that way I can try each"*, so the
+// three are rows in `balance.equipment.swapCostRules` and the live one is a
+// word. This function is the chain they select rungs of; it contains no `if`
+// on a rule id, which is the difference between data he can switch between and
+// three branches wearing a config key.
+
+/** Where a rule's base price comes from. Closed; a row saying anything else is refused by name. */
+export const SWAP_COST_BASES = Object.freeze(['default', 'category']);
+
+/** The authored rules table. Empty is a real answer: no table, no rule, price falls to the default. */
+export function swapCostRules(registries) {
+  return (((registries || {}).balance || {}).equipment || {}).swapCostRules || [];
+}
+
+/**
+ * resolveSwapCostRule(registries, meta) → the live rule row, or null.
+ *
+ * Unset, or a value this build cannot read, is the SHIPPING DEFAULT — the same
+ * rule `resolveMapMode` and `savedZoom` use, and for the same reason: a
+ * hand-edited save or an older build's value must behave exactly as an absent
+ * one. The Settings row reads this table too, so the control and the resolver
+ * cannot disagree about which rules exist.
+ */
+export function resolveSwapCostRule(registries, meta) {
+  const cfg = (((registries || {}).balance || {}).equipment || {});
+  const rows = swapCostRules(registries);
+  const want = ((meta && meta.settings) || {}).swapCostRule;
+  return rows.find((r) => r && r.id === want) || rows.find((r) => r && r.id === cfg.swapCostRule) || null;
+}
+
+/**
+ * swapCostFor(registries, { rule, loadout, classId, slotId, setIndex, relicDelta })
+ *   → { cost, ruleId, base, baseCost, categoryTag, gearOn, gearDelta, gearIgnored, floored }
+ *
+ * THE WHOLE DERIVATION, RETURNED RATHER THAN JUST THE NUMBER. A price a screen
+ * or a test can only observe as `2` cannot be checked for WHY it is 2, and the
+ * thing being measured tonight is whether three settings actually produce
+ * different numbers — so every rung is in the return value and test 28b prints
+ * the table. `gearIgnored` is the deliberately loud one: it is the delta a
+ * gear-off rule DECLINED, so a talisman doing nothing says so instead of
+ * looking broken.
+ *
+ * WHICH PIECE'S CATEGORY. The one being DRAWN — `loadout.sets[slotId][setIndex]`,
+ * the set you are switching TO — not the one going away and not a max() of the
+ * two. You pay for what you pick up, which is the reading a player can predict
+ * from the thing they just chose. It is one line and named here rather than
+ * discovered: if it plays wrong, this sentence is what changes.
+ *
+ * THE RELIC HALF ARRIVES AS A NUMBER, and that is a module boundary, not a
+ * shortcut. `passiveSum` lives in model/registries.js, which imports THIS file
+ * — so importing it back would make a cycle, and a cycle that survives Node
+ * survives it in a hand-rolled single-file bundler only by luck. Combat already
+ * owns the relic-passive-to-price pattern (`effectiveCost`, same file, same
+ * shape), so it sums `swapCostDelta` and hands the total in. A caller that
+ * forgets is NAMED, not defaulted: silence must not mean "no relics".
+ *
+ * THE FLOOR IS 0 AND IT IS ARITHMETIC, NOT DATA. An authored negative — a
+ * category row at −1, a `swapCost` below zero — is refused by name in
+ * `validateEquipment`. A negative TOTAL is a legal talisman meeting a cheap
+ * weapon, and it clamps the way `powerCostReduction` already does, with
+ * `floored` set so the clamp is observable rather than quiet.
+ */
+export function swapCostFor(registries, {
+  rule = null, loadout = null, classId = null, slotId = null, setIndex = 0, relicDelta,
+} = {}) {
+  const cfg = (((registries || {}).balance || {}).equipment || {});
+  const fallback = Number.isFinite(cfg.swapCost) ? cfg.swapCost : 0;
+  const row = rule || null;
+  const base = row && SWAP_COST_BASES.includes(row.base) ? row.base : 'default';
+
+  let categoryTag = null;
+  let baseCost = fallback;
+  if (base === 'category') {
+    const ids = ((loadout || {}).sets || {})[slotId] || [];
+    const id = ids[setIndex];
+    const eq = (registries || {}).equipment || {};
+    const piece = id ? (eq.armaments || []).find((a) => a.id === id) || null : null;
+    const tags = (piece && piece.tags) || [];
+    // ORDERED, FIRST MATCH WINS — the priority between two tags a piece carries
+    // is the order of the rows, so it is authorable and visible. No match at all
+    // (a bare hand, an untagged piece) falls through to the default, which is
+    // the same number the 'flat' rule charges — by design, not by accident.
+    const hit = (cfg.swapCostByCategory || []).find((r) => r && tags.includes(r.tag));
+    if (hit) {
+      categoryTag = hit.tag;
+      baseCost = Number.isFinite(hit.cost) ? hit.cost : fallback;
+    }
+  }
+
+  if (!Number.isFinite(relicDelta)) {
+    console.error(
+      `swapCostFor('${slotId}'): no finite \`relicDelta\` — refusing to guess.`
+      + ` Got ${JSON.stringify(relicDelta)}. Pass passiveSum(registries, relicIds, 'swapCostDelta').`
+      + ' Charging the gear stage as 0. This line is the defect, not the price.'
+    );
+  }
+  const relic = Number.isFinite(relicDelta) ? relicDelta : 0;
+  const worn = loadout ? runMods(registries, loadout, classId).swapCostDelta : 0;
+  const delta = relic + worn;
+  const gearOn = !!(row && row.gear);
+  const raw = baseCost + (gearOn ? delta : 0);
+
+  return {
+    cost: Math.max(0, raw),
+    ruleId: row ? row.id : null,
+    base,
+    baseCost,
+    categoryTag,
+    gearOn,
+    gearDelta: gearOn ? delta : 0,
+    gearIgnored: gearOn ? 0 : delta,
+    floored: raw < 0,
+  };
 }
 
 /**

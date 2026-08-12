@@ -146,7 +146,7 @@ defect this layering exists to catch.
 | Entity | Key fields |
 |---|---|
 | Card | `id, class, rarity, cost (int \| 'X'), type, keywords[], effects[], textTemplate, upgrade` (partial override object) |
-| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult (`runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction`) |
+| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult, and it has **one home**: `PASSIVE_TYPES` in `src/model/schemas.js`, which the relic schema's `passives` node is BUILT FROM rather than restating (the two were separate hand-typed lists until A8, and only the schema enforced anything). Today: `runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction, swapCostDelta` |
 | Status | `id, name, icon, stackMode, decay, meter?, modifiers?, hooks?` (§3.7) |
 | Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
 | Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
@@ -269,6 +269,24 @@ Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, 
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
 
 Every generator is a pure function of `(config, rngStream, runState)` → snapshot-testable with fixed seeds (§8).
+
+**Armaments: what a swap costs, and what is on the shelf** *(A8/A7, Constantine 2026-08-08)*
+
+Two closed vocabularies, both in `balance.equipment`, both derived rather than authored per row:
+
+| Question | Word | Chain |
+|---|---|---|
+| what does a mid-fight set-swap cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** `base: 'category'` prices by the DRAWN piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js` and it returns the whole derivation; `engine/combat.js` charges it and the `armamentSwapped` event carries the number. |
+| which pieces need no finding | `basicTag` | A piece carrying that tag answers the **found** gate for free (`ownership()`). It has no opinion about the **earned** gate; a row carrying both is refused by name. `persistence` remains the only scope word — profile-wide (`both`, the shipped default) vs this-run-only (`perRun`). |
+
+**A weapon's category is its tags** — `heavy`, `flourish` — never a `swapCost` column, because a
+column would compel an author to restate what the tags already imply (Law 0 clause 1). The two
+rule fields are closed and **their product is total**: all four cells price a swap, and a fourth
+rule is one row of `swapCostRules` with no code (proven by test 28q).
+
+`apply` in `equipMods.csv` is a closed set **per scope** — `CARD_MOD_APPLIES` / `RUN_MOD_APPLIES`
+in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
+validation failure; before A8 it validated clean and silently did nothing.
 
 ### 3.9 Action queue
 
@@ -601,12 +619,28 @@ Relic behavior uses the trigger DSL (§3.6) — the same declarative form as pow
 
 ### 5.5 Flasks (potions)
 
-3 slots. Found from combats (~35% drop, decaying like StS's potion chance: −10% per drop, +10% per miss), shops, events.
+3 slots (`balance.flaskSlots`). Found from combats (~35% drop, decaying like StS's potion chance: −10% per drop, +10% per miss), shops, events — **and refilled at every grace** (§5.5.1).
+
+**Kind.** Every flask has a `kind` from the closed set `FLASK_KINDS` (`hp`, `mana`, `utility`, `model/schemas.js`). It is **derived, not authored** (`model/gracerefill.js` `flaskKindOf`): `heal` is `hp`, the real `restoreMana` opcode is `mana`, everything else is `utility`, and an explicit `kind:` overrides an ambiguous entry.
+
+#### 5.5.1 The grace refill
+
+> Constantine, 2026-08-08: *"at every grace all characters should restore 3 hp flasks, and 3 mana flasks (this should be configurable in teh debug settings and be data driven)"*.
+
+**The grace is the Shrine of Emberlight** — this game has no separate `grace` node type and does not invent one.
+
+- **Automatic, on arrival, before the Rest/Smith choice.** A run that comes to smith is refilled exactly like a run that comes to rest. Co-op refills every living member at `enterShrine`.
+- **Data driven.** `balance.graceRefill` is a table of `{ kind, count, flaskId? }` rows. A row names a KIND; the kind resolves to its first authored member (`flaskId` overrides which one). Adding a refilled kind is a row plus one word in `FLASK_KINDS`; adding a second HP flask is neither.
+- **A top-up, not a grant.** A grace brings you **up to** `count` of the kind — arriving with two Crimson Flasks gets you one. Therefore idempotent: a re-mounted shrine cannot double-pour.
+- **Configurable in the debug settings.** Settings ▸ Advanced carries **one chip row per table row**, generated from the table, with the ladder `0 … balance.flaskSlots` derived from the carry cap. Nothing about those rows is authored in `settings.js`.
+- **Both authored rows bind.** Crimson Flask supplies the HP row and Azure Flask supplies the Mana row. The shared inventory is data-sized to six slots so a fresh character can hold the authored 3+3 allocation; utility flasks are preserved, so an occupied belt produces a visible shortfall instead of deleting inventory.
+- **Refusals** (`graceRefillRefusals`, run from `validateContent` at boot; corpus `node tools/gracerefill.mjs --selftest`): a kind outside the closed set · two rows for one kind · a non-numeric, negative or fractional count · a count above the carry cap · a `flaskId` override that dangles or is of another kind · **and the aggregate** — satisfiable rows summing past `balance.flaskSlots`, which names `balance.flaskSlots` as the fix.
+- **Balance boundary:** the old no-Mana simulation is stale. This merged preview is for watching and mechanical validation; a Mana-aware A/B balance run remains a release gate.
 
 | Flask | Effect |
 |---|---|
 | Crimson Flask | Heal 25% max HP. |
-| Cerulean Flask | Gain 2 energy. |
+| Azure Flask | Restore 20 Mana. |
 | Flask of Ferocity | Gain 2 Strength this combat. |
 | Flask of Stone | Gain 15 Block. |
 | Rot Coating | Apply 4 Scarlet Rot to target. |
@@ -664,7 +698,7 @@ Title ──► Class Select (+ seed entry) ──► Map ──► [Combat | Sh
 Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► Title
 ```
 
-Screen router in `main.js`; each screen module exports `mount(state, dispatch)` / `unmount()`.
+Screen router in `main.js`; each screen module exports `mount(state, dispatch)` / `unmount()`. **Arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1); the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
 
 ### 7.2 Combat layout (1280×720 reference)
 

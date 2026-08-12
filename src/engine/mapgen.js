@@ -9,8 +9,46 @@
 // Headless: no document/window/localStorage/timers.
 
 import { resolveFloorPlan } from '../model/floorplan.js';
+import { createRng, sweepSeed } from './rng.js';
 
 const TYPING_RETRIES = 40;
+
+/**
+ * sampleActShape(config, seeds) → { seeds, nodes: {mean,min,max}, byType: {...} }
+ *
+ * HOW BIG IS AN ACT AT THIS CONFIG, over a distribution and never on one seed.
+ *
+ * Constantine asked for a 30-minute run, and the thing that drives run length is
+ * how many nodes he has to stop on. He cannot be handed a knob and a promise —
+ * he has to be handed the number, and it has to move while he drags. So this is
+ * the ONE sampler: the Custom Climb screen prints it live, tools/mapplan.mjs
+ * prints it in the before/after table, and the tests assert on it. Three readers,
+ * one measurement, so a screen can never quote a figure the tool disagrees with.
+ *
+ * Seeds come from `sweepSeed` (engine/rng.js) for the reason written there: a
+ * sweep whose seeds all collapse to 0 prints a perfect distribution of one graph.
+ *
+ * WHAT IT IS NOT: wall-clock. Nobody in this tree can measure minutes. Node count
+ * is the driver of run length, not run length, and every caller says so out loud.
+ */
+export function sampleActShape(config, seeds = 24) {
+  const counts = [];
+  const byType = {};
+  for (let i = 0; i < seeds; i++) {
+    const g = generateActMap({ config, rng: createRng(sweepSeed(i)) });
+    const all = Object.values(g.nodes);
+    counts.push(all.length);
+    for (const n of all) byType[n.type] = (byType[n.type] || 0) + 1;
+  }
+  const stat = (xs) => ({
+    mean: Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 100) / 100,
+    min: Math.min(...xs),
+    max: Math.max(...xs),
+  });
+  const perAct = {};
+  for (const [t, n] of Object.entries(byType)) perAct[t] = Math.round((n / seeds) * 100) / 100;
+  return { seeds, nodes: stat(counts), byType: perAct };
+}
 
 /**
  * generateActMap({ config, rng }) → {

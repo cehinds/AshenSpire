@@ -148,15 +148,32 @@ export const PREDICATES = Object.freeze([
 // and cost/flask math consult. Closed set; each key is generic capability,
 // not entity behavior (law §3.1(2)).
 //   *Mult keys multiply across relics; flags OR; reductions sum.
-export const PASSIVE_KEYS = Object.freeze([
-  'runeGainMult', // cinder rewards ×
-  'eliteExtraCardReward', // flag: elites offer one extra card choice
-  'flaskPowerMult', // flask effect amounts ×
-  'revealUnknown', // flag: '?' map nodes show their resolved type
-  'shrineHealMult', // shrine rest healing ×
-  'shrineNoRest', // flag: shrines offer Smith only
-  'powerCostReduction', // Power cards cost N less (min 0)
-]);
+//
+// THE SET AND THE SCHEMA WERE TWO COPIES AND ONLY ONE OF THEM ENFORCED
+// ANYTHING (Viki, A8). `PASSIVE_KEYS` was a frozen list with no reader in the
+// whole tree — `grep -rn PASSIVE_KEYS src tests tools` found its declaration and
+// one comment — while `SCHEMAS.relic.passives` re-typed the same seven names by
+// hand and did the actual refusing. A vocabulary nothing reads is decoration;
+// worse, it is decoration a future author will edit *instead of* the schema, and
+// then a legal-looking passive is silently inert. So the types come here, the
+// list is derived from them, and the schema is built from the same object below:
+// adding a passive is one row and the two cannot disagree about what exists.
+export const PASSIVE_TYPES = Object.freeze({
+  runeGainMult: 'num', // cinder rewards ×
+  eliteExtraCardReward: 'bool', // flag: elites offer one extra card choice
+  flaskPowerMult: 'num', // flask effect amounts ×
+  revealUnknown: 'bool', // flag: '?' map nodes show their resolved type
+  shrineHealMult: 'num', // shrine rest healing ×
+  shrineNoRest: 'bool', // flag: shrines offer Smith only
+  powerCostReduction: 'num', // Power cards cost N less (min 0)
+  // SIGNED, and deliberately not `swapCostReduction` beside its neighbour. His
+  // sentence is *"costs more OR LESS depending on Talisman or starting relic"* —
+  // a "reduction" of −1 to mean "one more" is a word arguing with its own value.
+  // Deltas sum across relics; the total is added to the base and floored at 0.
+  swapCostDelta: 'num', // a mid-fight armament swap costs N more (negative = less)
+});
+
+export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
 
 // Status/stance modifier keys consulted by the generic damage/block math and
 // turn loop (SPEC §3.7, §4.2). Semantics:
@@ -227,6 +244,17 @@ export const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 's
 export const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
 export const RELIC_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
 export const FLASK_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
+// What a flask IS, as opposed to how rare it is. The grace refill table
+// (balance.graceRefill) names kinds, never ids, so "restore 3 hp flasks" keeps
+// meaning the same thing when a second healing flask is authored.
+//
+// DERIVED, NOT AUTHORED, for every flask shipped today — model/gracerefill.js
+// `flaskKindOf` reads the effects and only falls back to an explicit `kind:`
+// override. Nothing in content/flasks.js carries this field.
+//
+// Mana is live run/combat state. `restoreMana` derives the Mana kind without
+// confusing it with per-turn Energy; explicit `kind` remains the override.
+export const FLASK_KINDS = Object.freeze(['hp', 'mana', 'utility']);
 export const INTENT_KINDS = Object.freeze(['attack', 'block', 'buff', 'debuff', 'unknown']);
 export const ENCOUNTER_POOLS = Object.freeze(['normal', 'elite', 'boss']);
 export const PILES = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
@@ -464,16 +492,13 @@ export const SCHEMAS = Object.freeze({
     rarity: en(...RELIC_RARITIES),
     textTemplate: str,
     triggers: triggersNode,
+    // DERIVED FROM PASSIVE_TYPES, never re-typed. `obj` is strict about unknown
+    // keys, so this node is what actually refuses a mis-spelled passive — which
+    // is exactly why it must not be a second list.
     passives: opt(
-      obj({
-        runeGainMult: opt(num),
-        eliteExtraCardReward: opt(bool),
-        flaskPowerMult: opt(num),
-        revealUnknown: opt(bool),
-        shrineHealMult: opt(num),
-        shrineNoRest: opt(bool),
-        powerCostReduction: opt(num),
-      })
+      obj(Object.fromEntries(
+        Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
+      ))
     ),
     icon: opt(str),
     flavor: opt(str),
@@ -613,6 +638,10 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     rarity: en(...FLASK_RARITIES),
+    // OPTIONAL because it is derived (model/gracerefill.js flaskKindOf). Present
+    // only on an entry whose effects would derive the wrong answer — Law 0
+    // clause 3, and the override is data.
+    kind: opt(en(...FLASK_KINDS)),
     targeted: opt(bool),
     effects,
     icon: opt(str),

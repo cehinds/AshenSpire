@@ -431,6 +431,25 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     }
   };
 
+  // ---- 50-51: the grace refill (Constantine, 2026-08-08) -------------------
+  //
+  // TWO LINES FOR THE SAME REASON 45/46 ARE TWO: 50 is the check's own
+  // integrity against its planted corpus, 51 is the state of the shipped table.
+  // A refusal nobody has watched fail is `unknown`, not green.
+  //
+  // AND THE PLANTS ENTER BY THE DOOR THE REAL INPUT USES — a deep copy of the
+  // real contentBundle handed to the real validateContent, and registries built
+  // by createRegistries driving the real applyGraceRefill. The tool's header
+  // says which door each plant uses; this comment does not restate the corpus,
+  // and the count lives in its RESULT line, not here.
+  const runGrace = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/gracerefill.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
   // 52/53 — every exported closed set has a reader (Marina's ask, out of the
   // PASSIVE_KEYS finding). Numbered after the current engine and status-reach
   // checks so this merged suite has one number line.
@@ -479,6 +498,25 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (setsTree.code !== 0 || !setsTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  const graceSelf = runGrace(['--selftest']);
+  const graceSelfV = quote(graceSelf.out);
+  console.log(
+    `${graceSelf.code === 0 && graceSelfV.text ? 'PASS' : 'FAIL'}  54. the grace-refill refusals still catch their own known-bad corpus` +
+      ` — ${graceSelfV.text || `gracerefill --selftest (exit ${graceSelf.code}): ${graceSelfV.why}`}`
+  );
+  if (graceSelf.code !== 0 || !graceSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const graceTree = runGrace([]);
+  const graceTreeV = quote(graceTree.out);
+  console.log(
+    `${graceTree.code === 0 && graceTreeV.text ? 'PASS' : 'FAIL'}  55. a grace pours what balance.graceRefill says it pours` +
+      ` — ${graceTreeV.text || `gracerefill (exit ${graceTree.code}): ${graceTreeV.why}`}` +
+      ` (\`node tools/gracerefill.mjs\` names each row and what it resolves to)`
+  );
+  if (graceTree.code !== 0 || !graceTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -516,4 +554,10 @@ console.log('          52–53 ASK ONE QUESTION: is each exported closed set REA
 console.log('          They are silent on whether a set has a second, hand-typed copy');
 console.log('          somewhere — the defect that made the question worth asking. Green');
 console.log('          means no vocabulary is decoration, never that none is duplicated.');
+console.log('          54–55 NEVER OPEN A BROWSER. 54 proves the boot refusals fire and the');
+console.log('          shrine pours, through the real bundle and the real registry; 55 reports');
+console.log('          the shipped table. Neither has seen the settings rows or the shrine');
+console.log('          sentence — those are photographed (`?shot=rest`), not asserted.');
+console.log('          Neither settles whether 3+3 is release balance; the old no-Mana');
+console.log('          A/B is stale, so that needs a Mana-aware simulation and player review.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

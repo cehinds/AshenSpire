@@ -243,6 +243,14 @@ export function resolveFloorPlan(config) {
     noShrineOn,
     minElites,
     minMerchants,
+    // THE SAME TWO NUMBERS, KEYED BY THE TYPE THEY FORCE — and it is a
+    // derivation of the pair above, not a second copy of them. mapgen honours
+    // these by FORCE-PLACING (relaxPlace) when the rolls do not produce them,
+    // which means a type named here cannot be rolled out of the act. Anything
+    // that wants to say so — applyRunShape's readout, a tool — needs the map
+    // rather than two hardcoded names, or it silently stops covering the third
+    // minimum the day one is added.
+    minima: { elite: minElites, merchant: minMerchants },
     unknownWeights,
   };
   return { plan, errors, readout };
@@ -252,4 +260,203 @@ export function resolveFloorPlan(config) {
 export function describePlan(config) {
   const { errors, readout } = resolveFloorPlan(config);
   return readout.concat(errors.map((e) => `ERROR ${e.key}: ${e.msg}`));
+}
+
+/* ------------------------------------------------------------ THE RUN SHAPE --
+ *
+ * Constantine asked for a debug feature that caps floors and columns and biases
+ * the node roll, so a full run fits the patience he actually has. The knobs are
+ * data (`MAP_SHAPE_LIMITS` and the act's own `typeWeights`, content/mapconfig.js);
+ * this is the machinery that DERIVES an act from them.
+ *
+ * IT LIVES HERE AND NOT IN A NEW FILE ON PURPOSE. This module is already the one
+ * place that turns authored map data into the numbers the generator uses — "one
+ * resolution, three readers" is written at resolveFloorPlan above. A per-run
+ * override resolved anywhere else would be a second answer to "what does this
+ * act's config mean", which is the exact defect the anchors were built to end.
+ */
+
+/** The closed set of things a run shape may say. A new key is an engine change. */
+export const MAP_SHAPE_KEYS = Object.freeze(['floors', 'columns', 'typeWeights']);
+
+/**
+ * minViableFloors(config) → { floors } | { error }
+ *
+ * The shortest act THIS act's own floor rules can describe, found by asking
+ * rather than typing. At the shipped rules the answer is 4, and the reason is
+ * worth reading: at 3 floors the band is 2, `{ fraction: 0.64 }` rounds to
+ * floor 1, and floor 1 is already claimed by the fixed Monster — two rules
+ * collide and resolveFloorPlan refuses. A typed `min: 4` would be a constant
+ * whose MEANING moves when someone retunes 0.64 while the constant does not,
+ * which is the drift this file was written against.
+ */
+export function minViableFloors(config) {
+  const ceiling = Number.isInteger(config && config.floors) ? config.floors : 0;
+  for (let f = 2; f <= ceiling; f++) {
+    if (resolveFloorPlan({ ...config, floors: f }).errors.length === 0) return { floors: f };
+  }
+  return { error: `no act length from 2 to ${ceiling} resolves this act's floor rules` };
+}
+
+/**
+ * applyRunShape(config, shape, limits) → { config, errors, readout, changed }
+ *
+ *   shape   { floors?, columns?, typeWeights?: { [nodeType]: number } } or null
+ *   limits  MAP_SHAPE_LIMITS from content — passed in, never imported, so this
+ *           model file keeps its "imports nothing" property and a tool can ask
+ *           the question against limits the game does not ship.
+ *
+ * `errors` is non-empty ⇒ THE SHAPE IS REFUSED and `config` comes back as the
+ * authored one, unchanged. Nothing here clamps a wrong value into a working
+ * one: a knob that quietly became a different knob is worse than a knob that
+ * says no (Law 1 clause 5).
+ *
+ * ON `viewRefusals` (model/mapview.js), which is NOT called here and it is a
+ * deliberate omission with a reason, not an oversight. That function refuses a
+ * `columns` value too WIDE to frame on a phone. This resolver can only ever
+ * SHRINK columns — the cap is `min(authored, cap)` — and both `maxFanoutSpan`
+ * (floor(columns/2)+1) and `spanWidth` are monotone non-decreasing in columns,
+ * so no shrink can newly fire a width refusal that the authored act did not
+ * already fire at boot. Importing the view into the generator's path to ask a
+ * question whose answer is fixed by construction is a coupling bought for
+ * nothing. If this ever grows a knob that WIDENS the act, that argument dies
+ * with it and the import becomes required.
+ */
+export function applyRunShape(config, shape, limits) {
+  const errors = [];
+  const readout = [];
+  // NOTES are the subset of the readout a PLAYER has to read — the sentences
+  // that say "this knob did something other than what it looks like it did".
+  // They are pushed to both, so the screen prints the resolver's own words and
+  // there is no second wording of a caveat to drift (Law 1 clause 2).
+  const notes = [];
+  const note = (s) => { notes.push(s); readout.push(s); };
+  const lim = limits || {};
+  const refuse = () => ({ config, errors, readout, notes, changed: false });
+
+  if (shape == null) return { config, errors, readout, notes, changed: false };
+  if (typeof shape !== 'object' || Array.isArray(shape)) {
+    errors.push({ key: 'mapShape', msg: `must be an object like { floors: 8, columns: 5, typeWeights: { elite: 30 } }, got ${Array.isArray(shape) ? 'an array' : typeof shape}` });
+    return refuse();
+  }
+  for (const key of Object.keys(shape)) {
+    if (!MAP_SHAPE_KEYS.includes(key)) {
+      errors.push({ key: `mapShape.${key}`, msg: `is not a run-shape knob — one of ${MAP_SHAPE_KEYS.join(', ')}` });
+    }
+  }
+
+  // ---- the two caps ------------------------------------------------------
+  const cap = (key, min, whyMin) => {
+    const authored = config[key];
+    const v = shape[key];
+    if (v == null) { readout.push(`${key}: uncapped — the act's own ${authored}`); return authored; }
+    if (!Number.isInteger(v)) {
+      errors.push({ key: `mapShape.${key}`, msg: `must be a whole number of ${key}, got ${JSON.stringify(v)}` });
+      return authored;
+    }
+    if (min != null && v < min) {
+      errors.push({ key: `mapShape.${key}`, msg: `${v} is below ${min} — ${whyMin}` });
+      return authored;
+    }
+    if (v > authored) {
+      // Not an error: min() is the semantics and a cap above the act is simply
+      // slack. It is PRINTED, because a knob that silently did nothing is the
+      // failure this feature is most likely to ship with.
+      readout.push(`${key}: cap ${v} is above the ${authored} this act authors — NOT BINDING, the act keeps ${authored}`);
+      return authored;
+    }
+    readout.push(`${key}: ${authored} capped to ${v}`);
+    return v;
+  };
+
+  const mv = minViableFloors(config);
+  if (mv.error) errors.push({ key: 'mapShape.floors', msg: mv.error });
+  const floors = cap(
+    'floors',
+    mv.floors,
+    mv.floors == null ? 'this act has no viable length' :
+      `${mv.floors} is the shortest act this act's own floor rules resolve at (ask tools/mapplan.mjs --floors ${(mv.floors || 2) - 1} and read the collision)`
+  );
+  const columns = cap(
+    'columns',
+    lim.minColumns,
+    `${lim.minColumns} columns is the floor — one column is a corridor: every walker lands on the same node and the act has no choices in it`
+  );
+
+  // ---- the weights -------------------------------------------------------
+  // The knobs are DERIVED from the act's own typeWeights keys. An unknown key
+  // is refused by name and the legal set is printed, so the day a node type is
+  // added to the act the message changes with it and nothing here is retyped.
+  let typeWeights = config.typeWeights;
+  const authoredWeights = config.typeWeights;
+  if (shape.typeWeights != null) {
+    const w = shape.typeWeights;
+    if (typeof w !== 'object' || Array.isArray(w)) {
+      errors.push({ key: 'mapShape.typeWeights', msg: `must be an object of node type -> weight, got ${Array.isArray(w) ? 'an array' : typeof w}` });
+    } else if (!authoredWeights || typeof authoredWeights !== 'object') {
+      errors.push({ key: 'mapShape.typeWeights', msg: 'this act authors no typeWeights, so there is nothing to re-weight' });
+    } else {
+      const merged = { ...authoredWeights };
+      for (const [type, v] of Object.entries(w)) {
+        if (!Object.prototype.hasOwnProperty.call(authoredWeights, type)) {
+          errors.push({ key: `mapShape.typeWeights.${type}`, msg: `is not a node type this act rolls — one of ${Object.keys(authoredWeights).join(', ')}` });
+          continue;
+        }
+        if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) {
+          errors.push({ key: `mapShape.typeWeights.${type}`, msg: `must be a weight of 0 or more, got ${JSON.stringify(v)}` });
+          continue;
+        }
+        if (lim.maxWeight != null && v > lim.maxWeight) {
+          errors.push({ key: `mapShape.typeWeights.${type}`, msg: `${v} is above the ${lim.maxWeight} a run-shape knob may set` });
+          continue;
+        }
+        merged[type] = v;
+      }
+      const total = Object.values(merged).reduce((a, b) => a + b, 0);
+      if (total <= 0) {
+        errors.push({ key: 'mapShape.typeWeights', msg: 'every weight is zero — no type could ever be rolled and every node would fall back to Monster. Raise at least one above zero.' });
+      } else {
+        typeWeights = merged;
+        readout.push(`typeWeights: ${Object.entries(merged).map(([k, v]) => `${k} ${((v / total) * 100).toFixed(0)}%`).join(' · ')}`);
+        // THE ONE HONEST FOOTNOTE ON THIS KNOB, and it is not a bug: mapgen's
+        // rollType returns 'monster' when a node's every other type is barred
+        // (a floor rule, or the no-same-type-adjacent ban). So Monster at 0
+        // does not mean zero Monsters — it means Monster is never CHOSEN, only
+        // fallen back to. Said here rather than discovered on the map.
+        if (merged.monster === 0) {
+          note('Monster 0 — a node whose every other type is barred by a floor rule or the no-repeat-neighbour ban still falls back to Monster, so Monsters do not reach zero.');
+        }
+      }
+    }
+  }
+
+  if (errors.length) return refuse();
+
+  const next = { ...config, floors, columns, typeWeights };
+  const changed = floors !== config.floors || columns !== config.columns || typeWeights !== config.typeWeights;
+  if (!changed) return { config, errors, readout, notes, changed: false };
+
+  // The shortened act must still resolve its OWN rules — the anchors move with
+  // `floors`, so this is not a formality: it is the check that makes the cap
+  // safe to expose to a slider. One resolution, and it is the same one the
+  // generator will run.
+  const { plan, errors: planErrors, readout: planReadout } = resolveFloorPlan(next);
+  for (const e of planErrors) errors.push({ key: `mapShape -> ${e.key}`, msg: e.msg });
+  if (errors.length) return refuse();
+
+  // A WEIGHT OF ZERO THAT STILL PRODUCES THE TYPE, SAID OUT LOUD. Found by the
+  // test that asserted it reached zero and did not: `minElites: 2` is a hard
+  // promise the generator keeps by FORCE-PLACING elites when the rolls never
+  // made one, so Elite at weight 0 still lands two per act. That is correct
+  // behaviour and it is exactly the shape of Law 0 clause 5 — the knob looks
+  // ignored. It is not ignored; it is outranked, and the reader is told which.
+  for (const [type, floorCount] of Object.entries(plan.minima || {})) {
+    if (floorCount > 0 && typeWeights[type] === 0) {
+      note(`${type[0].toUpperCase()}${type.slice(1)} 0 — but this act promises at least ${floorCount} a map, so ${floorCount} are force-placed. Zero weight means never ROLLED, not never present.`);
+    }
+  }
+
+  readout.push(...planReadout.map((l) => `  ${l}`));
+
+  return { config: next, errors, readout, notes, changed: true };
 }

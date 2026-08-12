@@ -627,6 +627,155 @@ body.hide-hints .hint-bar { display: none; }
 .mod-chip.forced { cursor: not-allowed; opacity: 0.85; }
 .mod-chip.forced::after { content: 'ASCENSION'; font-size: 0.8rem; letter-spacing: 0.12em; color: var(--ember); margin-top: 0.2rem; }
 .customrun .cz-label { color: var(--muted); font-size: 1.1rem; letter-spacing: 0.18em; margin-bottom: 0.6rem; }
+
+/* ---------- custom climb · run shape (the debug knobs) ----------
+   Freja, 2026-08-08. Constantine: "I only have the patience for 30 min runs.
+   perhaps add an advanced debug feature to limit the amount of max columns,
+   rows, and or columns with percent chance of certain nodes being more likely".
+
+   THE COMPOSITION CALL, stated because it is the part that is mine. This panel
+   sits below CLASS and ASCENSION and must not compete with them: it is folded
+   shut, its head is a quiet line, and the only bright thing inside it is the
+   NUMBER — one gold figure the eye lands on and watches move while a slider is
+   dragged. Everything else in here is muted on purpose. A debug panel that
+   shouts is a debug panel that gets read as the game.
+
+   LAW 5 — one axis. There is no horizontal strip anywhere in this panel and no
+   width-keyed variant of it: every row is a column (head line, then a full-width
+   slider), so the narrow shape IS the wide shape and there is no second
+   composition to drift. Nothing here can produce horizontal travel because
+   nothing here has a minimum width — the one flexible track is `minmax(0, 1fr)`
+   by construction.
+
+   LAW 4 — text metrics take the text unit; boxes do not. `font-size` and
+   `line-height` are rem. The tap floor, the track and the thumb are px through
+   `--tap-floor`, because a finger does not grow when Text size does. */
+.runshape { border: 1px solid var(--line); border-radius: 8px; background: rgba(0, 0, 0, 0.18); }
+.runshape-toggle {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  min-height: var(--tap-floor); height: auto;
+  padding: 6px 12px; text-align: left; cursor: pointer;
+  background: none; border: 0; border-radius: 8px; color: var(--muted);
+}
+.runshape-toggle:hover { color: var(--parchment); }
+.runshape .rs-title { font-size: 1.1rem; letter-spacing: 0.18em; flex: 1 1 auto; min-width: 0; }
+.runshape .rs-state {
+  font-size: 0.95rem; letter-spacing: 0.12em; color: var(--muted);
+  border: 1px solid var(--line-soft); border-radius: 4px; padding: 1px 5px;
+}
+.runshape.shaped .rs-state { color: var(--gold); border-color: var(--gold); }
+.runshape.shaped .rs-title { color: var(--gold); }
+.runshape .rs-caret { transition: transform 140ms; flex: 0 0 auto; }
+.runshape.open .rs-caret { transform: rotate(180deg); }
+/* THE GAP BETWEEN KNOBS IS BIGGER THAN THE AIR INSIDE ONE, and it has to be
+   stated as a number rather than left to taste: a 44 px slider box carries ~20 px
+   of empty track above and below its ink, so at the first draft's 14 px each
+   knob's own NOTE sat closer to the NEXT knob's label than to the slider it
+   describes. Read off the photograph, not the stylesheet.
+   px, not rem, throughout this block's box geometry — Law 4 clause 3, applied as
+   the ratchet it is: new writes take it, the tree is not swept. */
+.runshape-body { display: flex; flex-direction: column; gap: 26px; padding: 0 12px 14px; }
+.runshape .rs-intro { max-width: none; }
+
+/* The readout — the whole feature. A knob without a number is the thing that
+   shipped last time (mapconfig.js says the same sentence about the act length).
+   `tabular-nums` so the figure does not jitter sideways while it is dragged. */
+.rs-readout {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 10px 12px; border-radius: 6px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+}
+.rs-readout b { color: var(--gold); font-size: 2rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.rs-readout span { color: var(--muted); font-size: 1.05rem; line-height: 1.4; }
+.rs-readout .rs-boundary { color: var(--muted); font-size: 0.95rem; opacity: 0.85; }
+/* The one place in this panel that goes loud. `--parchment` at 14.44:1 carries
+   the WORDS and `--ember` carries the RULE, for the reason base.css and the seed
+   refusal both give: ember measures 3.70:1 on --panel — over the 3:1 a UI
+   component needs, under AA for text — so colour marks WHERE and never says
+   WHAT. */
+.rs-readout .rs-boundary.warn {
+  color: var(--parchment); opacity: 1;
+  border-left: 2px solid var(--ember); padding-left: 8px; margin-top: 4px;
+}
+
+/* THREE TIERS, and the gaps are what say so. A 44 px slider box already carries
+   most of the air a row needs, so the spacing here is doing HIERARCHY, not
+   breathing room: `gap: 0` inside a knob binds its head, track and note into one
+   object; the body's `gap` between knobs is what separates them. The first draft
+   used one gap everywhere and the five weight rows read as an undifferentiated
+   stack with "Node odds" indistinguishable from "Monster" — measured by looking
+   at the photograph, which is the only way that class of mistake is ever found. */
+.rs-knob { display: flex; flex-direction: column; gap: 0; }
+.rs-knob-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  color: var(--parchment); font-size: 1.2rem;
+}
+.rs-knob-head .rs-val { color: var(--gold); font-variant-numeric: tabular-nums; }
+.rs-knob .rs-why { max-width: none; }
+/* Tier up: five weights are a GROUP, so their head reads as a section label and
+   not as a sixth control name. Same treatment `.cz-label` gives the sections
+   above it, so the panel borrows the screen's own hierarchy rather than a new one. */
+.rs-group-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  color: var(--muted); font-size: 1.1rem; letter-spacing: 0.18em;
+  padding-bottom: 4px; border-bottom: 1px solid var(--line);
+}
+.rs-group-head .rs-val { color: var(--muted); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.rs-group .rs-why { padding-top: 6px; }
+
+/* One slider rule for the panel. The BOX is the tap target (44 device px tall,
+   full width); the INK is small. Sunna's floor is about what a thumb can hit,
+   never about how loud a control looks — so the whole strip is draggable and
+   only the handle is drawn. */
+.rs-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; min-width: 0;
+  min-height: var(--tap-floor); height: var(--tap-floor);
+  background: none; cursor: pointer;
+}
+.rs-slider:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
+.rs-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--line-soft); }
+.rs-slider::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line-soft); }
+.rs-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 18px; height: 18px; margin-top: -7px; border-radius: 50%;
+  background: var(--gold); border: 1px solid var(--bg);
+}
+.rs-slider::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--gold); border: 1px solid var(--bg);
+}
+
+/* Name and share on one line, the track on the row under it — two lines at
+   EVERY width, so the narrow shape is the wide shape (Law 5 note above). The
+   head is a flex row whose only flexible child is `minmax(0, …)` by way of
+   `min-width: 0`, so a long node type wraps instead of pushing the row wide. */
+.rs-weights { display: flex; flex-direction: column; padding-top: 6px; }
+.rs-wrow { display: flex; flex-direction: column; }
+.rs-whead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rs-wrow .rs-wname {
+  color: var(--parchment); font-size: 1.1rem; text-transform: capitalize;
+  flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere;
+}
+.rs-wrow .rs-wpct {
+  color: var(--gold); font-size: 1.1rem; font-variant-numeric: tabular-nums; flex: 0 0 auto;
+}
+/* A zeroed weight reads as muted AND says "0%" — the word is the signal, the
+   colour is not (base.css: colour is never the only signal). */
+.rs-wrow .rs-wpct.zero { color: var(--muted); }
+/* `button.rs-reset`, not `.rs-reset` — MEASURED, not read. `button.subtle` in
+   base.css is (0,1,1) and a bare class is (0,1,0), so the first version of this
+   rule lost to it silently and the control came back 111.7 x 24.8 device px on a
+   390x844 phone: 56% of the floor it is supposed to clear, in a panel where the
+   thing beside it starts a run. Same specificity trap `button.ev-choice` above
+   is annotated for, found the same way — by photographing it, not by reading.
+   Law 4 clause 4: a fixed floor, `height: auto`, so it can neither clip at Text
+   XL nor balloon; px because a finger does not grow with Text size. */
+button.rs-reset {
+  align-self: flex-start;
+  min-height: var(--tap-floor); height: auto;
+  padding: 8px 20px;
+}
 .draft-grid { gap: 1.6rem; }
 .hx-custom { display: inline-block; margin-left: 0.6rem; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.9rem; letter-spacing: 0.08em; background: rgba(201, 162, 39, 0.18); border: 1px solid var(--gold); color: var(--gold); }
 .farewell { gap: 2.2rem; }
@@ -683,6 +832,22 @@ body.hide-hints .hint-bar { display: none; }
 }
 .screen .title-big { font-size: 4.4rem; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
 .screen .subtitle { color: var(--muted); letter-spacing: 0.3em; font-size: 1.2rem; }
+/* The grace-refill sentence on the Shrine (Sten, 2026-08-08). NOT `.subtitle`:
+   that rule's 0.3em tracking is right for a three-word banner and wrong for a
+   sentence — at 390x844 it pushed the first draft of this line to six lines
+   over the Rest button. Normal tracking, one measure, and it sits under the
+   banner rather than pretending to be one.
+   LAW 4: `font-size` in rem because it decides how big a letter is; the measure
+   and the gaps are text-independent, so the box does not grow with Text size —
+   and there is no fixed height, so the letters push it taller on their own. */
+.screen .rest-refill {
+  color: var(--gold);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  max-width: 34ch;
+  margin: 0 auto 10px;
+  text-align: center;
+}
 .seed-line { color: var(--muted); font-size: 1.2rem; }
 .seed-line input {
   background: var(--panel); border: 1px solid var(--line); color: var(--parchment);
@@ -3270,14 +3435,15 @@ const { contentBundle } = require("src/content/index.js");
 const { validateContent } = require("src/model/validate.js");
 const { createRegistries } = require("src/model/registries.js");
 const { createRunState, createDeck, createIdGen } = require("src/model/state.js");
-const { runMods, stampDeck, addToStorage, carriedIds } = require("src/model/loadout.js");
+const { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } = require("src/model/loadout.js");
 const { recordProgress, evaluateUnlocks } = require("src/model/unlocks.js");
 const { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } = require("src/content/customMods.js");
 const { createRng, seedToString, seedFromString, seedProblem } = require("src/engine/rng.js");
 const { createCombat } = require("src/engine/combat.js");
 const { buildActMap } = require("src/engine/actmap.js");
 const { createSaveManager, createMemoryStorage } = require("src/engine/save.js");
-const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, buildShopStock, rollArmamentDrop } = require("src/engine/encounters.js");
+const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, buildShopStock, rollArmamentDrop, applyGraceRefill } = require("src/engine/encounters.js");
+
 
 
 
@@ -3302,7 +3468,7 @@ const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
 const { mountCompendium } = require("src/ui/screens/compendium.js");
-const { openSettings, settingOn, showSettingsNotice, resolveTapSize } = require("src/ui/screens/settings.js");
+const { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill } = require("src/ui/screens/settings.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
@@ -3888,7 +4054,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  run.mapGraph = buildActMap(registries, rng, contentAct());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
   persist();
   showMap();
 }
@@ -3921,6 +4087,14 @@ function contentAct() {
   return endlessOn() ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
 }
 
+// The Custom Climb debug shape (floors cap, columns cap, node weights) or null
+// for an ordinary run. It rides on `run.custom`, so it is saved and reloaded
+// with everything else the run chose — a resumed short run stays short, and act
+// 2 is generated at the same shape act 1 was.
+function runMapShape() {
+  return (run.custom && run.custom.mapShape) || null;
+}
+
 // The map-build sequence itself lives in engine/actmap.js (the one boot path,
 // #54) — this file only decides which act and where the graph is stored.
 
@@ -3937,7 +4111,7 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
-  run.mapGraph = buildActMap(registries, rng, contentAct());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
   persist();
   showMap();
 }
@@ -4410,6 +4584,11 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     enemyIds: enc.enemies,
     hpMult: cm.hpMult,
     enemyStatuses: cm.enemyStatuses,
+    // WHICH SWAP PRICE THIS FIGHT IS UNDER (A8). Read once, here, at the same
+    // point the other per-fight rules are decided — Settings → Advanced changes
+    // it for the NEXT fight, which is what the row's note promises, and is why
+    // there is no live re-read inside the swap.
+    swapCostRule: resolveSwapCostRule(registries, saves.loadMeta()),
     // `self.*` mods (Strength from an oathsworn set, Regen from a warm habit)
     // enter through the same door Custom Climb buffs already used — the engine
     // has no equipment code, only statuses applied at combat start.
@@ -4544,10 +4723,24 @@ function shopPriceMult() {
 function showRest() {
   audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+  // AUTOMATIC, AND IT HAPPENS BEFORE THE CHOICE. Constantine: "flasks should
+  // refill automatically at graces". Not a third option beside Rest and Smith —
+  // arriving is the trigger, so a run that comes to smith is refilled exactly
+  // like a run that comes to rest. The counts come from balance.graceRefill
+  // through the Advanced debug rows; `bad` is a stored override that is not on
+  // the ladder, and it is named in the command log rather than swallowed
+  // (the same treatment applyTapSize gives a bad tapFloor).
+  const { counts, bad } = resolveGraceRefill(saves.loadMeta().settings || {});
+  for (const b of bad) {
+    dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
+  }
+  const refill = applyGraceRefill(registries, run, { counts });
+  if (refill.total) persist();
   mountRest(app, {
     registries,
     run,
     healMult,
+    refill,
     onDone: () => {
       persist();
       showMap();
@@ -5047,7 +5240,10 @@ const balance = {
   energy: 3,
   draw: 5,
   handMax: 10,
-  flaskSlots: 3,
+  // The authored grace table below promises three HP and three Mana flasks.
+  // This shared inventory therefore has six slots; the validator refuses any
+  // refill table whose live rows cannot fit.
+  flaskSlots: 6,
   startingCinders: 0,
 
   // Engine-consulted poise config (see ENGINE-API §1). onFill is where content
@@ -5083,6 +5279,37 @@ const balance = {
   },
 
   shrine: { healPct: 35 },
+
+  // ---- what a grace hands back (Constantine, 2026-08-08) --------------------
+  //
+  // "at every grace all characters should restore 3 hp flasks, and 3 mana
+  // flasks (this should be configurable in teh debug settings and be data
+  // driven)". The grace is the Shrine of Emberlight; the machinery is
+  // model/gracerefill.js and one line in engine/encounters.js.
+  //
+  // A TABLE, NOT TWO CONSTANTS. Rows name a KIND, and a kind resolves to the
+  // first flask entry that carries it (content/flasks.js, derived from its
+  // effects). Adding a third refilled kind is a row here plus one word in
+  // FLASK_KINDS; adding a second HP flask is neither.
+  //
+  // Both rows bind in the current build: Crimson derives `hp` from `heal`, and
+  // Azure derives `mana` from `restoreMana`. They share the six-slot inventory.
+  //
+  // COUNTS ARE A TOP-UP, NOT A GRANT: a grace brings you UP TO `count` of the
+  // kind. Arriving with two Crimson Flasks gets you one, not three.
+  //
+  // THE CAP IS balance.flaskSlots ABOVE, and boot validation refuses a table
+  // whose satisfiable rows sum past it (model/gracerefill.js
+  // graceRefillRefusals). Today: hp 3 + mana 3 = 6 into 6 slots.
+  graceRefill: [
+    { kind: 'hp', count: 3 },
+    { kind: 'mana', count: 3 },
+  ],
+
+  // "and each character should start with those" — the fourth clause of his
+  // flask sentence. The merged preview keeps the rule data-authored and turns
+  // it on so a fresh run truthfully starts with the same 3+3 table.
+  graceRefillAtRunStart: true,
 
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
   // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,
@@ -5316,10 +5543,39 @@ const balance = {
   equipment: {
     enabled: true,
 
+    // WHAT THE SHELF IS SCOPED TO, and it is this word — there is no second one.
     // 'perRun'   what you find is yours for this run only
     // 'unlocked' pieces are permanent once unlocked, chosen before a run
     // 'both'     unlocked pieces are choosable AND drops apply for the run
+    //
+    // Constantine, 2026-08-08: *"maybe the armament menu on the main menu might
+    // update, but everything else is profile specific but maybe a few basic
+    // weapons become available for all. so all together for armory shelf with
+    // settings to configure this."* The DEFAULT half of that is decided —
+    // profile-wide, which is `both` and is what already shipped (directions.md
+    // D15). The SETTING half is this line, and it did not need inventing: a
+    // `shelfScope` word beside `persistence` would be two settings answering one
+    // question, which is the defect this house is named for (Law 1 clause 2).
+    // What `persistence` genuinely cannot say is the other half of his sentence
+    // — the few pieces that are nobody's to FIND because they are everybody's —
+    // and that is `basicTag` below.
     persistence: 'both',
+
+    // ---- A FEW BASIC WEAPONS, AVAILABLE FOR ALL --------------------------
+    // The tag that means "this is everybody's". It answers the FOUND gate only
+    // (drops.requireFound): a basic piece never has to turn up in treasure. It
+    // has no opinion about the EARNED gate, so the two compose instead of
+    // racing, and a row that carries both is refused by name at validation
+    // rather than quietly preferring one.
+    //
+    // NOTHING NEW IS AUTHORED (Law 0 clause 1). `tags` is a column weapons.csv
+    // has always had; three plain rows now carry `basic` and the shelf follows.
+    // Moving the line between "for all" and "profile specific" is editing that
+    // column — no code, which is the whole promise. Set it to '' to switch the
+    // universal shelf off entirely; a value naming a tag no armament carries is
+    // a hard validation failure, because a setting that silently does nothing
+    // is the one failure mode worse than a missing one.
+    basicTag: 'basic',
 
     // Swapping a hand mid-fight. 'energy' spends from the turn's pool;
     // 'allowance' gives a separate per-turn budget that energy never touches.
@@ -5327,6 +5583,51 @@ const balance = {
     swapCost: 2,
     swapAllowancePerTurn: 1, // only consulted when swapCostKind === 'allowance'
     swapEndsTurn: false,
+
+    // ---- WHAT A SWAP COSTS: three prices he can try, one chain ------------
+    // Constantine, 2026-08-08: *"switching sets should cost actions. perhaps
+    // this action costs more or less depending on Talisman or starting relic,
+    // or some other reason. let's default to costing 2 actions. alternatively,
+    // or by a setting, different weapon categories have weapon swap costs.
+    // THAT WAY I CAN TRY EACH."*
+    //
+    // He named three prices and asked to FEEL them, so the three are ROWS and
+    // the live one is a WORD — never three branches in the engine. One chain,
+    // always the same, and the row says which of its rungs are live:
+    //
+    //   base 'category' → the drawn piece's category cost, falling through to
+    //                     `swapCost` when its tags match no row below
+    //   base 'default'  → `swapCost` for everything
+    //   gear true       → talisman and relic deltas adjust that base
+    //
+    // THE PRODUCT IS TOTAL, AND THAT IS THE PART I GOT WRONG LAST TIME (#78).
+    // Two closed fields make FOUR cells; I once shipped three ids for a product
+    // whose fourth cell nobody had built, and one row of legal data drew an
+    // empty screen. Here every one of the four computes a real price. The
+    // fourth — category AND gear — is deliberately not shipped, because he named
+    // three; it is one row away and needs no code, which is what test 28c
+    // measures (Law 0's falsifier, applied to a rule instead of a card).
+    //
+    // The default is 'flat', which is the game exactly as it shipped: nobody who
+    // does not opt in pays a different price. Settings → Advanced switches it.
+    swapCostRule: 'flat',
+    swapCostRules: [
+      { id: 'flat', label: 'Flat', base: 'default', gear: false },
+      { id: 'gear', label: 'Talisman & relic', base: 'default', gear: true },
+      { id: 'category', label: 'Weapon category', base: 'category', gear: false },
+    ],
+    // A WEAPON'S CATEGORY IS ITS TAGS. `heavy` and `flourish` are already on the
+    // rows because a greatsword IS heavy — a `swapCost` column on weapons.csv
+    // would compel an author to restate what the tags already imply, which is a
+    // breach of Law 0 clause 1 even though every value would sit in a table.
+    //
+    // ORDERED, FIRST MATCH WINS. A twinblade is `blade|flourish` and a halberd
+    // is `blade|heavy`; which tag rules is the order of these rows, not a max()
+    // nobody can see. A tag no armament carries fails validation by name.
+    swapCostByCategory: [
+      { tag: 'heavy', cost: 3 },
+      { tag: 'flourish', cost: 1 },
+    ],
 
     // true  → swapping rewrites the Strikes/Defends already in your hand
     // false → only cards drawn after the swap carry the new numbers
@@ -10329,6 +10630,43 @@ const ACT_SHAPE = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// THE DEBUG RUN SHAPE — Constantine, 2026-08-08, verbatim:
+//
+//   "need to do a full run, but I only have the patience for 30 min runs.
+//    perhaps add an advanced debug feature to limit the amount of max columns,
+//    rows, and or columns with percent chance of certain nodes being more
+//    likely"
+//
+// Three knobs, and the entry below is the ONLY thing this feature adds to
+// content. Everything else about it is DERIVED (Law 0 clause 1):
+//
+//   floors cap    max = whatever THIS act authors above; min = the shortest act
+//                 this act's own floorRules can describe, found by ASKING
+//                 resolveFloorPlan (model/floorplan.js `minViableFloors`). Edit
+//                 the anchors above and the slider's low end moves on its own.
+//   columns cap   max = authored; min = the one number below, because "a
+//                 corridor is not a map" is a design call and not arithmetic.
+//   type weights  ONE SLIDER PER KEY OF `typeWeights` ABOVE. The Custom Climb
+//                 screen reads that object and builds its controls from it, so
+//                 adding a node type to the act adds a knob with zero UI edits.
+//                 That is this feature's Law 0 falsifier and it is testable.
+//
+// A CAP, not a setting: the effective value is min(authored, cap), so a cap
+// above the authored number does nothing — and the readout SAYS SO rather than
+// letting it look like it did something (Law 0 clause 5).
+const MAP_SHAPE_LIMITS = Object.freeze({
+  // Two columns is the floor because ONE column is a corridor: every walker
+  // lands on the same node, the act has zero choices, and the shape is
+  // identical every seed (Viki measured exactly this at pathCount 1 — 13 nodes,
+  // no decisions, 300 seeds). A short run is the ask; a run with no map is not.
+  minColumns: 2,
+  // The largest weight a knob may set. Weights are RELATIVE — the odds a type
+  // is rolled are its weight over the total — so this number is a slider end,
+  // not a percentage. The screen prints the derived share beside each one.
+  maxWeight: 100,
+});
+
 // All three acts share the SPEC §6 shape; per-act difficulty lives in the
 // encounter pools, not the map geometry. Distinct objects so future acts can
 // diverge without surprises — and now they genuinely can, because the anchors
@@ -10340,7 +10678,7 @@ const mapConfigs = {
 };
 
 
-Object.assign(module.exports, { mapConfigs });
+Object.assign(module.exports, { MAP_SHAPE_LIMITS, mapConfigs });
 
 },
 "src/content/generated/cardTags.js": function (module, exports, require) {
@@ -10424,6 +10762,13 @@ const cardTags = [
     "color": "C9A227",
     "glyph": "◆",
     "blurb": "Slow, committed, and hard to stop."
+  },
+  {
+    "id": "basic",
+    "label": "Basic",
+    "color": "7A6F5A",
+    "glyph": "○",
+    "blurb": "Everybody's — on the shelf without being found."
   }
 ];
 
@@ -10883,7 +11228,10 @@ const weapons = [
     "scale": 1,
     "metal": "B8B0A0",
     "accent": "C9A227",
-    "tags": "blade",
+    "tags": [
+      "blade",
+      "basic"
+    ],
     "mods": "strike.damage=+1",
     "unlock": "",
     "blurb": "Honest steel. It asks nothing clever of you."
@@ -11102,7 +11450,10 @@ const weapons = [
     "scale": 1,
     "metal": "8E8678",
     "accent": "7FA8C9",
-    "tags": "guard",
+    "tags": [
+      "guard",
+      "basic"
+    ],
     "mods": "defend.block=+2",
     "unlock": "",
     "blurb": "Plain, round, and enough."
@@ -11192,7 +11543,10 @@ const weapons = [
     "scale": 1,
     "metal": "6B5D45",
     "accent": "C9A227",
-    "tags": "ritual",
+    "tags": [
+      "ritual",
+      "basic"
+    ],
     "mods": "power.potency=+1",
     "unlock": "",
     "blurb": "Grey wood, warm at the grip."
@@ -11782,6 +12136,17 @@ const equipMods = [
     "label": "Max HP",
     "clause": "",
     "blurb": "Added to your maximum HP for the run."
+  },
+  {
+    "field": "swapCost",
+    "scope": "run",
+    "apply": "swapCost",
+    "op": "",
+    "effTarget": "",
+    "status": "",
+    "label": "Swap cost",
+    "clause": "",
+    "blurb": "Changed cost to switch armament sets mid-fight."
   }
 ];
 
@@ -12002,6 +12367,7 @@ Object.assign(module.exports, { unlocks });
 
 const { resolveFloorPlan } = require("src/model/floorplan.js");
 const { viewRefusals, geometryRefusals } = require("src/model/mapview.js");
+const { graceRefillRefusals } = require("src/model/gracerefill.js");
 const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, PILES, PILE_POSITIONS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, CREATURE_TAGS } = require("src/model/schemas.js");
 
 
@@ -12324,6 +12690,18 @@ function validateContent(bundle) {
   if (b.balance != null && typeof b.balance === 'object' && !Array.isArray(b.balance)) {
     for (const e of geometryRefusals(b.balance)) err(e.key, e.msg);
   }
+  // balance.graceRefill — what a grace hands back (Constantine, 2026-08-08).
+  //
+  // TAKES THE WHOLE BUNDLE, not `b.balance`, and that is the point: three of its
+  // eight refusals can only be asked with the flask ENTRIES in hand (does this
+  // kind have a member, does this override resolve, is the override of the kind
+  // the row claims). A refusal that could only see `balance` would be checking
+  // the half that was never in doubt.
+  //
+  // Its corpus is `node tools/gracerefill.mjs --selftest`, which plants each
+  // refusal into the real bundle and watches this call go red.
+  for (const e of graceRefillRefusals(b)) err(e.key, e.msg);
+
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {
     const p = b.balance.poise;
@@ -13310,6 +13688,14 @@ function resolveFloorPlan(config) {
     noShrineOn,
     minElites,
     minMerchants,
+    // THE SAME TWO NUMBERS, KEYED BY THE TYPE THEY FORCE — and it is a
+    // derivation of the pair above, not a second copy of them. mapgen honours
+    // these by FORCE-PLACING (relaxPlace) when the rolls do not produce them,
+    // which means a type named here cannot be rolled out of the act. Anything
+    // that wants to say so — applyRunShape's readout, a tool — needs the map
+    // rather than two hardcoded names, or it silently stops covering the third
+    // minimum the day one is added.
+    minima: { elite: minElites, merchant: minMerchants },
     unknownWeights,
   };
   return { plan, errors, readout };
@@ -13321,8 +13707,207 @@ function describePlan(config) {
   return readout.concat(errors.map((e) => `ERROR ${e.key}: ${e.msg}`));
 }
 
+/* ------------------------------------------------------------ THE RUN SHAPE --
+ *
+ * Constantine asked for a debug feature that caps floors and columns and biases
+ * the node roll, so a full run fits the patience he actually has. The knobs are
+ * data (`MAP_SHAPE_LIMITS` and the act's own `typeWeights`, content/mapconfig.js);
+ * this is the machinery that DERIVES an act from them.
+ *
+ * IT LIVES HERE AND NOT IN A NEW FILE ON PURPOSE. This module is already the one
+ * place that turns authored map data into the numbers the generator uses — "one
+ * resolution, three readers" is written at resolveFloorPlan above. A per-run
+ * override resolved anywhere else would be a second answer to "what does this
+ * act's config mean", which is the exact defect the anchors were built to end.
+ */
 
-Object.assign(module.exports, { NODE_TYPES, ANCHOR_KINDS, rollableFloors, resolveAnchor, resolveFloorPlan, describePlan });
+/** The closed set of things a run shape may say. A new key is an engine change. */
+const MAP_SHAPE_KEYS = Object.freeze(['floors', 'columns', 'typeWeights']);
+
+/**
+ * minViableFloors(config) → { floors } | { error }
+ *
+ * The shortest act THIS act's own floor rules can describe, found by asking
+ * rather than typing. At the shipped rules the answer is 4, and the reason is
+ * worth reading: at 3 floors the band is 2, `{ fraction: 0.64 }` rounds to
+ * floor 1, and floor 1 is already claimed by the fixed Monster — two rules
+ * collide and resolveFloorPlan refuses. A typed `min: 4` would be a constant
+ * whose MEANING moves when someone retunes 0.64 while the constant does not,
+ * which is the drift this file was written against.
+ */
+function minViableFloors(config) {
+  const ceiling = Number.isInteger(config && config.floors) ? config.floors : 0;
+  for (let f = 2; f <= ceiling; f++) {
+    if (resolveFloorPlan({ ...config, floors: f }).errors.length === 0) return { floors: f };
+  }
+  return { error: `no act length from 2 to ${ceiling} resolves this act's floor rules` };
+}
+
+/**
+ * applyRunShape(config, shape, limits) → { config, errors, readout, changed }
+ *
+ *   shape   { floors?, columns?, typeWeights?: { [nodeType]: number } } or null
+ *   limits  MAP_SHAPE_LIMITS from content — passed in, never imported, so this
+ *           model file keeps its "imports nothing" property and a tool can ask
+ *           the question against limits the game does not ship.
+ *
+ * `errors` is non-empty ⇒ THE SHAPE IS REFUSED and `config` comes back as the
+ * authored one, unchanged. Nothing here clamps a wrong value into a working
+ * one: a knob that quietly became a different knob is worse than a knob that
+ * says no (Law 1 clause 5).
+ *
+ * ON `viewRefusals` (model/mapview.js), which is NOT called here and it is a
+ * deliberate omission with a reason, not an oversight. That function refuses a
+ * `columns` value too WIDE to frame on a phone. This resolver can only ever
+ * SHRINK columns — the cap is `min(authored, cap)` — and both `maxFanoutSpan`
+ * (floor(columns/2)+1) and `spanWidth` are monotone non-decreasing in columns,
+ * so no shrink can newly fire a width refusal that the authored act did not
+ * already fire at boot. Importing the view into the generator's path to ask a
+ * question whose answer is fixed by construction is a coupling bought for
+ * nothing. If this ever grows a knob that WIDENS the act, that argument dies
+ * with it and the import becomes required.
+ */
+function applyRunShape(config, shape, limits) {
+  const errors = [];
+  const readout = [];
+  // NOTES are the subset of the readout a PLAYER has to read — the sentences
+  // that say "this knob did something other than what it looks like it did".
+  // They are pushed to both, so the screen prints the resolver's own words and
+  // there is no second wording of a caveat to drift (Law 1 clause 2).
+  const notes = [];
+  const note = (s) => { notes.push(s); readout.push(s); };
+  const lim = limits || {};
+  const refuse = () => ({ config, errors, readout, notes, changed: false });
+
+  if (shape == null) return { config, errors, readout, notes, changed: false };
+  if (typeof shape !== 'object' || Array.isArray(shape)) {
+    errors.push({ key: 'mapShape', msg: `must be an object like { floors: 8, columns: 5, typeWeights: { elite: 30 } }, got ${Array.isArray(shape) ? 'an array' : typeof shape}` });
+    return refuse();
+  }
+  for (const key of Object.keys(shape)) {
+    if (!MAP_SHAPE_KEYS.includes(key)) {
+      errors.push({ key: `mapShape.${key}`, msg: `is not a run-shape knob — one of ${MAP_SHAPE_KEYS.join(', ')}` });
+    }
+  }
+
+  // ---- the two caps ------------------------------------------------------
+  const cap = (key, min, whyMin) => {
+    const authored = config[key];
+    const v = shape[key];
+    if (v == null) { readout.push(`${key}: uncapped — the act's own ${authored}`); return authored; }
+    if (!Number.isInteger(v)) {
+      errors.push({ key: `mapShape.${key}`, msg: `must be a whole number of ${key}, got ${JSON.stringify(v)}` });
+      return authored;
+    }
+    if (min != null && v < min) {
+      errors.push({ key: `mapShape.${key}`, msg: `${v} is below ${min} — ${whyMin}` });
+      return authored;
+    }
+    if (v > authored) {
+      // Not an error: min() is the semantics and a cap above the act is simply
+      // slack. It is PRINTED, because a knob that silently did nothing is the
+      // failure this feature is most likely to ship with.
+      readout.push(`${key}: cap ${v} is above the ${authored} this act authors — NOT BINDING, the act keeps ${authored}`);
+      return authored;
+    }
+    readout.push(`${key}: ${authored} capped to ${v}`);
+    return v;
+  };
+
+  const mv = minViableFloors(config);
+  if (mv.error) errors.push({ key: 'mapShape.floors', msg: mv.error });
+  const floors = cap(
+    'floors',
+    mv.floors,
+    mv.floors == null ? 'this act has no viable length' :
+      `${mv.floors} is the shortest act this act's own floor rules resolve at (ask tools/mapplan.mjs --floors ${(mv.floors || 2) - 1} and read the collision)`
+  );
+  const columns = cap(
+    'columns',
+    lim.minColumns,
+    `${lim.minColumns} columns is the floor — one column is a corridor: every walker lands on the same node and the act has no choices in it`
+  );
+
+  // ---- the weights -------------------------------------------------------
+  // The knobs are DERIVED from the act's own typeWeights keys. An unknown key
+  // is refused by name and the legal set is printed, so the day a node type is
+  // added to the act the message changes with it and nothing here is retyped.
+  let typeWeights = config.typeWeights;
+  const authoredWeights = config.typeWeights;
+  if (shape.typeWeights != null) {
+    const w = shape.typeWeights;
+    if (typeof w !== 'object' || Array.isArray(w)) {
+      errors.push({ key: 'mapShape.typeWeights', msg: `must be an object of node type -> weight, got ${Array.isArray(w) ? 'an array' : typeof w}` });
+    } else if (!authoredWeights || typeof authoredWeights !== 'object') {
+      errors.push({ key: 'mapShape.typeWeights', msg: 'this act authors no typeWeights, so there is nothing to re-weight' });
+    } else {
+      const merged = { ...authoredWeights };
+      for (const [type, v] of Object.entries(w)) {
+        if (!Object.prototype.hasOwnProperty.call(authoredWeights, type)) {
+          errors.push({ key: `mapShape.typeWeights.${type}`, msg: `is not a node type this act rolls — one of ${Object.keys(authoredWeights).join(', ')}` });
+          continue;
+        }
+        if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) {
+          errors.push({ key: `mapShape.typeWeights.${type}`, msg: `must be a weight of 0 or more, got ${JSON.stringify(v)}` });
+          continue;
+        }
+        if (lim.maxWeight != null && v > lim.maxWeight) {
+          errors.push({ key: `mapShape.typeWeights.${type}`, msg: `${v} is above the ${lim.maxWeight} a run-shape knob may set` });
+          continue;
+        }
+        merged[type] = v;
+      }
+      const total = Object.values(merged).reduce((a, b) => a + b, 0);
+      if (total <= 0) {
+        errors.push({ key: 'mapShape.typeWeights', msg: 'every weight is zero — no type could ever be rolled and every node would fall back to Monster. Raise at least one above zero.' });
+      } else {
+        typeWeights = merged;
+        readout.push(`typeWeights: ${Object.entries(merged).map(([k, v]) => `${k} ${((v / total) * 100).toFixed(0)}%`).join(' · ')}`);
+        // THE ONE HONEST FOOTNOTE ON THIS KNOB, and it is not a bug: mapgen's
+        // rollType returns 'monster' when a node's every other type is barred
+        // (a floor rule, or the no-same-type-adjacent ban). So Monster at 0
+        // does not mean zero Monsters — it means Monster is never CHOSEN, only
+        // fallen back to. Said here rather than discovered on the map.
+        if (merged.monster === 0) {
+          note('Monster 0 — a node whose every other type is barred by a floor rule or the no-repeat-neighbour ban still falls back to Monster, so Monsters do not reach zero.');
+        }
+      }
+    }
+  }
+
+  if (errors.length) return refuse();
+
+  const next = { ...config, floors, columns, typeWeights };
+  const changed = floors !== config.floors || columns !== config.columns || typeWeights !== config.typeWeights;
+  if (!changed) return { config, errors, readout, notes, changed: false };
+
+  // The shortened act must still resolve its OWN rules — the anchors move with
+  // `floors`, so this is not a formality: it is the check that makes the cap
+  // safe to expose to a slider. One resolution, and it is the same one the
+  // generator will run.
+  const { plan, errors: planErrors, readout: planReadout } = resolveFloorPlan(next);
+  for (const e of planErrors) errors.push({ key: `mapShape -> ${e.key}`, msg: e.msg });
+  if (errors.length) return refuse();
+
+  // A WEIGHT OF ZERO THAT STILL PRODUCES THE TYPE, SAID OUT LOUD. Found by the
+  // test that asserted it reached zero and did not: `minElites: 2` is a hard
+  // promise the generator keeps by FORCE-PLACING elites when the rolls never
+  // made one, so Elite at weight 0 still lands two per act. That is correct
+  // behaviour and it is exactly the shape of Law 0 clause 5 — the knob looks
+  // ignored. It is not ignored; it is outranked, and the reader is told which.
+  for (const [type, floorCount] of Object.entries(plan.minima || {})) {
+    if (floorCount > 0 && typeWeights[type] === 0) {
+      note(`${type[0].toUpperCase()}${type.slice(1)} 0 — but this act promises at least ${floorCount} a map, so ${floorCount} are force-placed. Zero weight means never ROLLED, not never present.`);
+    }
+  }
+
+  readout.push(...planReadout.map((l) => `  ${l}`));
+
+  return { config: next, errors, readout, notes, changed: true };
+}
+
+
+Object.assign(module.exports, { NODE_TYPES, ANCHOR_KINDS, rollableFloors, resolveAnchor, resolveFloorPlan, describePlan, MAP_SHAPE_KEYS, minViableFloors, applyRunShape });
 
 },
 "src/model/mapview.js": function (module, exports, require) {
@@ -13949,6 +14534,347 @@ function viewRefusals(config) {
 Object.assign(module.exports, { COL_X, ZOOM_STEPS, ZOOM_MIN, ZOOM_MAX, MAP_ZOOM_DEFAULT, PHONE_UI_ZOOM, PHONE_UI_ZOOM_MIN, NODE_PITCH_MIN_PX, ROW_H, nodeRadiusFor, deliveredNodePx, TAP_TARGET_DEFAULT, REF_ZOOM, nodeRadiusFromTap, BOSS_RATIO, NODE_R, BOSS_R, PHONE_VIEW_W, nodeRadius, svgWidth, svgHeight, nodeX, nodeY, clampZoom, framingBox, fitZoom, spanWidth, maxFanoutSpan, maxFittingColumns, FANOUT_SLACK_MIN, NODE_AIR_MIN_PX, fanoutMargin, maxSafeColumns, nodeAir, maxTapDefault, geometryRefusals, viewRefusals });
 
 },
+"src/model/gracerefill.js": function (module, exports, require) {
+// src/model/gracerefill.js — what a grace hands back, and what it refuses.
+//
+// Constantine, 2026-08-08: "flasks should refill automatically at graces", and
+// the longer form the same evening: "at every grace all characters should
+// restore 3 hp flasks, and 3 mana flasks (this should be configurable in teh
+// debug settings and be data driven, and each character should start with
+// those)."
+//
+// THE GRACE IS THE SHRINE OF EMBERLIGHT. There is no node type called `grace`
+// in this tree and none is invented here: `shrine` is the rest node (SPEC §7.1,
+// NODE_TYPES in model/floorplan.js), it is the only place a run stops to
+// recover, and it is what his sentence is about. Naming a second word for it
+// would be the second copy this house exists to catch.
+//
+// TWO NOUNS THAT ARE NOT THE SAME NOUN, and this file exists on the seam.
+// His flask is Elden Ring's: one vessel, N charges, refilled at a grace.
+// THIS GAME'S flask is Slay the Spire's potion: `run.flasks` is up to
+// `balance.flaskSlots` SLOTS, each holding a distinct content entry with its
+// own effects (content/flasks.js). "Restore 3 hp flasks" therefore has to mean
+// something in the second model, and the only honest reading is: TOP THE SLOTS
+// UP TO THREE OF THAT KIND. Said out loud because the reading is ours, not his.
+//
+// LAYERING: model/, imports nothing from engine/. Pure. `graceRefillPlan` never
+// mutates — the mutation is one line in engine/encounters.js, so the same plan
+// can be shown on a screen, printed by a settings row, and measured by a sim
+// without any of the three having to apply it to find out what it says.
+
+const { FLASK_KINDS } = require("src/model/schemas.js");
+
+/**
+ * flaskKindOf(def) → one of FLASK_KINDS.
+ *
+ * LAW 0 CLAUSE 1 — an entry DESCRIBES, the machinery DERIVES. No flask in
+ * content/flasks.js was edited to gain a kind: Crimson Flask heals, so it is
+ * `hp`, and it says so by carrying a `heal` op and nothing else. An author who
+ * writes a new healing flask writes no new field.
+ *
+ * LAW 0 CLAUSE 3 — the derivation is overridable, and the override is data. An
+ * explicit `kind:` on the row wins over everything below, so a flask that heals
+ * as a side effect but is not the healing flask can say so without code.
+ *
+ * Mana is now real run/combat state. Azure Flask carries the real `restoreMana`
+ * opcode, so that authored effect derives `mana` without confusing Mana with
+ * per-turn Energy. An explicit kind still wins for unusual hybrid flasks.
+ */
+function flaskKindOf(def) {
+  if (!def || typeof def !== 'object') return 'utility';
+  if (typeof def.kind === 'string') return def.kind; // override wins, validated at boot
+  const effects = Array.isArray(def.effects) ? def.effects : [];
+  if (effects.some((e) => e && e.op === 'restoreMana')) return 'mana';
+  if (effects.some((e) => e && e.op === 'heal')) return 'hp';
+  return 'utility';
+}
+
+/**
+ * firstFlaskOfKind(defs, kind) → the def a kind resolves to, or null.
+ *
+ * THE ONE HOME for "which flask does 'hp' mean". It takes a plain array of
+ * defs rather than registries so that all three callers can share it: the plan
+ * (registries.flasks.all()), boot validation (the raw bundle, before any
+ * registry exists), and the settings row (the content array, in a module that
+ * is never handed registries). One rule, three doors, no second copy.
+ *
+ * FIRST AUTHORED, NEVER RANDOM. A grace that hands over a different flask on a
+ * re-run is a grace nothing can measure.
+ */
+function firstFlaskOfKind(defs, kind) {
+  for (const d of defs || []) if (flaskKindOf(d) === kind) return d;
+  return null;
+}
+
+/** Every flask id of a kind, in registry (authored) order. */
+function flasksOfKind(registries, kind) {
+  return registries.flasks.all().filter((d) => flaskKindOf(d) === kind).map((d) => d.id);
+}
+
+/** The refill table, as authored. Absent = no refill, which is a legal state. */
+function graceRefillTable(balance) {
+  const t = balance && balance.graceRefill;
+  return Array.isArray(t) ? t : [];
+}
+
+/** The carry cap. One home: `balance.flaskSlots`, same default the UI uses. */
+function flaskSlotCap(balance) {
+  const n = balance && balance.flaskSlots;
+  return typeof n === 'number' && Number.isFinite(n) ? n : 3;
+}
+
+/**
+ * graceRefillLadder(balance) → ['0','1',...,String(cap)]
+ *
+ * The debug control's choices, DERIVED from the carry cap rather than typed.
+ * Raising `flaskSlots` lengthens every one of those chip rows with no edit to
+ * the settings screen. The strings are strings because `type: 'choice'` rows
+ * store strings (settings.js `rowHtml`), and a number stored where a string is
+ * compared is how a setting silently stops sticking.
+ */
+function graceRefillLadder(balance) {
+  const cap = flaskSlotCap(balance);
+  const n = Number.isInteger(cap) && cap >= 0 ? cap : 3;
+  return Array.from({ length: n + 1 }, (_, i) => String(i));
+}
+
+/**
+ * graceRefillPlan(registries, run, { counts }) → what a grace would hand over.
+ *
+ * PURE. Returns the whole reckoning — including everything it could NOT do and
+ * why — so that no caller has to apply it to find out. `counts` is the debug
+ * override, `{ [kind]: number }`; anything absent falls back to the authored
+ * row, which is the one home for the number.
+ *
+ *   {
+ *     cap, held, free,                       // slots
+ *     rows: [{ kind, count, flaskId, have, want, granted, short, binding, why }],
+ *     grants: [flaskId, ...],                // in the order they would be added
+ *     total,                                 // grants.length
+ *     shortfalls: [{ kind, short, why }],    // what it refused to pretend it did
+ *   }
+ *
+ * `binding: false` is the inert row and it is the point of the `why` string:
+ * a knob whose value is plausibly ignored is worse than no knob, so the row
+ * that restores nothing SAYS it restores nothing, by name, wherever it is
+ * drawn.
+ */
+function graceRefillPlan(registries, run, { counts = {} } = {}) {
+  const balance = registries.balance || {};
+  const cap = flaskSlotCap(balance);
+  const held = Array.isArray(run && run.flasks) ? run.flasks : [];
+  const kindOfHeld = held.map((f) => {
+    if (!f || !registries.flasks.has(f.flaskId)) return null;
+    return flaskKindOf(registries.flasks.get(f.flaskId));
+  });
+
+  let free = Math.max(0, cap - held.length);
+  const rows = [];
+  const grants = [];
+  const shortfalls = [];
+
+  for (const raw of graceRefillTable(balance)) {
+    const kind = raw && raw.kind;
+    // THE OVERRIDE, AND IT IS READ HERE OR THE WHOLE DEBUG CONTROL IS THEATRE.
+    // This line was missing for one commit: the parameter was declared, the
+    // settings row was drawn, the shrine passed `counts` in, and the plan
+    // silently used the authored number anyway — a knob whose value is ignored,
+    // the exact failure Law 0 clause 5 names, shipped inside the feature that
+    // exists to avoid it. It was found by `tools/gracerefill.mjs --selftest`
+    // (behaviour plant `counts { hp: 0 }`) and by nothing else, which is why
+    // that plant enters at the shrine and not at this function.
+    const authored = raw && typeof raw.count === 'number' ? raw.count : 0;
+    const override = counts && Object.hasOwn(counts, kind) ? counts[kind] : undefined;
+    const count = typeof override === 'number' && Number.isFinite(override) && override >= 0
+      ? Math.floor(override)
+      : authored;
+    const members = flasksOfKind(registries, kind);
+    // An explicit `flaskId` on the row wins; otherwise the kind's first
+    // authored member. Registry order, never rng — a grace that hands over a
+    // different flask on a re-run is a grace nothing can measure.
+    const flaskId = (raw && raw.flaskId) || members[0] || null;
+    const have = kindOfHeld.filter((k) => k === kind).length;
+    const want = Math.max(0, count - have);
+
+    if (!flaskId) {
+      rows.push({
+        kind, count, flaskId: null, have, want: 0, granted: 0, short: 0, binding: false,
+        why: `NOT BINDING — no flask entry declares kind '${kind}', so this restores nothing. `
+          + `The row is declared on purpose: the day an entry carries kind: '${kind}', this refill starts working with no code change.`,
+      });
+      continue;
+    }
+
+    const granted = Math.min(want, free);
+    for (let i = 0; i < granted; i++) grants.push(flaskId);
+    free -= granted;
+    const short = want - granted;
+    if (short > 0) {
+      shortfalls.push({
+        kind, short,
+        why: `${short} ${kind} flask${short === 1 ? '' : 's'} not given — all ${cap} flask slot${cap === 1 ? '' : 's'} are full.`,
+      });
+    }
+    rows.push({
+      kind, count, flaskId, have, want, granted, short, binding: true,
+      why: short > 0 ? shortfalls[shortfalls.length - 1].why : '',
+    });
+  }
+
+  return { cap, held: held.length, free, rows, grants, total: grants.length, shortfalls };
+}
+
+/**
+ * graceRefillRefusals(bundle) → [{ key, msg }]
+ *
+ * LAW 1 CLAUSE 5, at boot, naming the entry. Shaped exactly like
+ * `geometryRefusals` in model/mapview.js and consumed the same way from
+ * model/validate.js, because one refusal shape in one place is cheaper than two
+ * that agree today.
+ *
+ * IT TAKES THE BUNDLE, NOT THE BALANCE, and that is load-bearing: three of the
+ * eight refusals below can only be asked with the flask entries in hand — does
+ * this kind have a member, is this override a real id, is that override of the
+ * kind the row claims. A refusal that could only see `balance` would be the
+ * half of the question that was never in doubt.
+ *
+ * WHAT IS DELIBERATELY *NOT* A REFUSAL: a row whose kind has no members. That
+ * is the inert row, it is legal, and it reports itself as NOT BINDING wherever
+ * it is drawn. Refusing it at boot would make `mana` unspeakable until a mana
+ * flask exists, which is the opposite of declaring it early.
+ */
+function graceRefillRefusals(bundle) {
+  const out = [];
+  const b = bundle || {};
+  const balance = b.balance;
+  if (!balance || typeof balance !== 'object' || Array.isArray(balance)) return out;
+  if (balance.graceRefill == null) return out; // no table = no refill; legal.
+
+  if (!Array.isArray(balance.graceRefill)) {
+    out.push({
+      key: 'balance.graceRefill',
+      msg: `must be an array of { kind, count } rows — got ${JSON.stringify(balance.graceRefill)}. `
+        + `It is a table so that a new flask kind is a ROW and not an edit to the shrine.`,
+    });
+    return out;
+  }
+
+  const cap = flaskSlotCap(balance);
+  const defs = Array.isArray(b.flasks) ? b.flasks : [];
+  const byId = new Map(defs.filter((d) => d && typeof d.id === 'string').map((d) => [d.id, d]));
+  const membersOf = (kind) => defs.filter((d) => flaskKindOf(d) === kind).length;
+
+  const seen = new Map();
+  let satisfiable = 0;
+  const satisfiableRows = [];
+
+  balance.graceRefill.forEach((row, i) => {
+    const at = `balance.graceRefill[${i}]`;
+    if (!row || typeof row !== 'object' || Array.isArray(row)) {
+      out.push({ key: at, msg: `must be an object { kind, count } — got ${JSON.stringify(row)}.` });
+      return;
+    }
+    const { kind, count } = row;
+
+    // 1. A kind nothing carries — the closed set, named, with the legal values.
+    if (typeof kind !== 'string' || !FLASK_KINDS.includes(kind)) {
+      out.push({
+        key: `${at}.kind`,
+        msg: `${JSON.stringify(kind)} is not a flask kind — one of ${FLASK_KINDS.join(', ')}. `
+          + `A kind is a WORD (Law 0 clause 2): adding one is an edit to FLASK_KINDS in model/schemas.js, `
+          + `not a row here, and this refusal is what stops a typo from becoming a silent no-op.`,
+      });
+      return;
+    }
+
+    // 2. One home per number. Two rows for one kind is two answers to one question.
+    if (seen.has(kind)) {
+      out.push({
+        key: `${at}.kind`,
+        msg: `'${kind}' is already refilled by balance.graceRefill[${seen.get(kind)}] — two rows for one kind are two homes `
+          + `for one number, and only the first would ever be read. Keep one row.`,
+      });
+      return;
+    }
+    seen.set(kind, i);
+
+    // 3-5. The count. Each refusal says what the bad value would have DONE.
+    if (typeof count !== 'number' || !Number.isFinite(count)) {
+      out.push({ key: `${at}.count`, msg: `must be a number of flasks — got ${JSON.stringify(count)}.` });
+      return;
+    }
+    if (count < 0) {
+      out.push({
+        key: `${at}.count`,
+        msg: `${count} is negative — a grace restores flasks, it never takes them. `
+          + `A negative count reaches Math.max(0, count - have) and resolves to "give nothing", which is a knob that looks set and does nothing.`,
+      });
+      return;
+    }
+    if (!Number.isInteger(count)) {
+      out.push({
+        key: `${at}.count`,
+        msg: `${count} is fractional — a slot holds a whole flask. `
+          + `A fractional count would floor into a different number than the one written here, on a screen that prints the one written here.`,
+      });
+      return;
+    }
+
+    // 6. A row that can never be satisfied even alone.
+    if (count > cap) {
+      out.push({
+        key: `${at}.count`,
+        msg: `${count} '${kind}' flasks cannot be carried — balance.flaskSlots is ${cap}. `
+          + `Raise balance.flaskSlots or lower this count; a refill above the carry cap is a promise the inventory cannot keep.`,
+      });
+      return;
+    }
+
+    // 7. An explicit flaskId override must resolve, and must be of this kind.
+    if (row.flaskId != null) {
+      if (!byId.has(row.flaskId)) {
+        out.push({ key: `${at}.flaskId`, msg: `${JSON.stringify(row.flaskId)} is not a flask id.` });
+        return;
+      }
+      const actual = flaskKindOf(byId.get(row.flaskId));
+      if (actual !== kind) {
+        out.push({
+          key: `${at}.flaskId`,
+          msg: `'${row.flaskId}' is a '${actual}' flask but this row refills '${kind}'. `
+            + `The override picks WHICH flask of the kind is handed over, never what the kind means.`,
+        });
+        return;
+      }
+    }
+
+    if (membersOf(kind) > 0 || row.flaskId != null) {
+      satisfiable += count;
+      satisfiableRows.push(`${kind}×${count}`);
+    }
+  });
+
+  // 8. The aggregate. It is asked of the SATISFIABLE rows only, so a declared
+  //    inert kind costs nothing today — and turns this red the day someone
+  //    authors a member for it without raising the cap. That is the balance
+  //    question arriving loudly instead of silently, and it is the intended
+  //    behaviour, not a side effect: whoever adds the first mana flask is
+  //    exactly the person who has to answer "how many can you carry now".
+  if (satisfiable > cap) {
+    out.push({
+      key: 'balance.graceRefill',
+      msg: `a grace would hand over ${satisfiable} flasks (${satisfiableRows.join(' + ')}) into ${cap} slot${cap === 1 ? '' : 's'}. `
+        + `Raise balance.flaskSlots to ${satisfiable} or lower the counts. Left alone, the last rows in the table would silently `
+        + `restore nothing while the debug control still showed their number — a knob whose value is ignored.`,
+    });
+  }
+
+  return out;
+}
+
+
+Object.assign(module.exports, { flaskKindOf, firstFlaskOfKind, flasksOfKind, graceRefillTable, flaskSlotCap, graceRefillLadder, graceRefillPlan, graceRefillRefusals });
+
+},
 "src/model/schemas.js": function (module, exports, require) {
 // src/model/schemas.js — entity schemas + contractual closed sets (SPEC §3.3–§3.7)
 //
@@ -14100,15 +15026,32 @@ const PREDICATES = Object.freeze([
 // and cost/flask math consult. Closed set; each key is generic capability,
 // not entity behavior (law §3.1(2)).
 //   *Mult keys multiply across relics; flags OR; reductions sum.
-const PASSIVE_KEYS = Object.freeze([
-  'runeGainMult', // cinder rewards ×
-  'eliteExtraCardReward', // flag: elites offer one extra card choice
-  'flaskPowerMult', // flask effect amounts ×
-  'revealUnknown', // flag: '?' map nodes show their resolved type
-  'shrineHealMult', // shrine rest healing ×
-  'shrineNoRest', // flag: shrines offer Smith only
-  'powerCostReduction', // Power cards cost N less (min 0)
-]);
+//
+// THE SET AND THE SCHEMA WERE TWO COPIES AND ONLY ONE OF THEM ENFORCED
+// ANYTHING (Viki, A8). `PASSIVE_KEYS` was a frozen list with no reader in the
+// whole tree — `grep -rn PASSIVE_KEYS src tests tools` found its declaration and
+// one comment — while `SCHEMAS.relic.passives` re-typed the same seven names by
+// hand and did the actual refusing. A vocabulary nothing reads is decoration;
+// worse, it is decoration a future author will edit *instead of* the schema, and
+// then a legal-looking passive is silently inert. So the types come here, the
+// list is derived from them, and the schema is built from the same object below:
+// adding a passive is one row and the two cannot disagree about what exists.
+const PASSIVE_TYPES = Object.freeze({
+  runeGainMult: 'num', // cinder rewards ×
+  eliteExtraCardReward: 'bool', // flag: elites offer one extra card choice
+  flaskPowerMult: 'num', // flask effect amounts ×
+  revealUnknown: 'bool', // flag: '?' map nodes show their resolved type
+  shrineHealMult: 'num', // shrine rest healing ×
+  shrineNoRest: 'bool', // flag: shrines offer Smith only
+  powerCostReduction: 'num', // Power cards cost N less (min 0)
+  // SIGNED, and deliberately not `swapCostReduction` beside its neighbour. His
+  // sentence is *"costs more OR LESS depending on Talisman or starting relic"* —
+  // a "reduction" of −1 to mean "one more" is a word arguing with its own value.
+  // Deltas sum across relics; the total is added to the base and floored at 0.
+  swapCostDelta: 'num', // a mid-fight armament swap costs N more (negative = less)
+});
+
+const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
 
 // Status/stance modifier keys consulted by the generic damage/block math and
 // turn loop (SPEC §3.7, §4.2). Semantics:
@@ -14179,6 +15122,17 @@ const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']
 const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
 const RELIC_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
 const FLASK_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
+// What a flask IS, as opposed to how rare it is. The grace refill table
+// (balance.graceRefill) names kinds, never ids, so "restore 3 hp flasks" keeps
+// meaning the same thing when a second healing flask is authored.
+//
+// DERIVED, NOT AUTHORED, for every flask shipped today — model/gracerefill.js
+// `flaskKindOf` reads the effects and only falls back to an explicit `kind:`
+// override. Nothing in content/flasks.js carries this field.
+//
+// Mana is live run/combat state. `restoreMana` derives the Mana kind without
+// confusing it with per-turn Energy; explicit `kind` remains the override.
+const FLASK_KINDS = Object.freeze(['hp', 'mana', 'utility']);
 const INTENT_KINDS = Object.freeze(['attack', 'block', 'buff', 'debuff', 'unknown']);
 const ENCOUNTER_POOLS = Object.freeze(['normal', 'elite', 'boss']);
 const PILES = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
@@ -14416,16 +15370,13 @@ const SCHEMAS = Object.freeze({
     rarity: en(...RELIC_RARITIES),
     textTemplate: str,
     triggers: triggersNode,
+    // DERIVED FROM PASSIVE_TYPES, never re-typed. `obj` is strict about unknown
+    // keys, so this node is what actually refuses a mis-spelled passive — which
+    // is exactly why it must not be a second list.
     passives: opt(
-      obj({
-        runeGainMult: opt(num),
-        eliteExtraCardReward: opt(bool),
-        flaskPowerMult: opt(num),
-        revealUnknown: opt(bool),
-        shrineHealMult: opt(num),
-        shrineNoRest: opt(bool),
-        powerCostReduction: opt(num),
-      })
+      obj(Object.fromEntries(
+        Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
+      ))
     ),
     icon: opt(str),
     flavor: opt(str),
@@ -14565,6 +15516,10 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     rarity: en(...FLASK_RARITIES),
+    // OPTIONAL because it is derived (model/gracerefill.js flaskKindOf). Present
+    // only on an entry whose effects would derive the wrong answer — Law 0
+    // clause 3, and the override is data.
+    kind: opt(en(...FLASK_KINDS)),
     targeted: opt(bool),
     effects,
     icon: opt(str),
@@ -14626,7 +15581,7 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
+Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_TYPES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, FLASK_KINDS, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
 
 },
 "src/model/resources.js": function (module, exports, require) {
@@ -15314,6 +16269,24 @@ function parseMod(str) {
 /** The closed set. A third hand is a new word — engine, one act (Law 1 c1). */
 const HANDS = Object.freeze(['left', 'right']);
 
+// ---------------------------------------------------------------------------
+// The two `apply` vocabularies — one per mod scope (Viki, A8)
+// ---------------------------------------------------------------------------
+//
+// equipMods.csv's header has always called `apply` a closed set and NOTHING HAS
+// EVER CHECKED IT. `validateEquipment` checks the field name, the scope and the
+// status; a row reading `apply=swapcost` or `apply=maxhp` passes every one of
+// those, is collected by neither `cardMods` nor `runMods`, and does nothing —
+// silently, forever. That is a legal-looking entry with a wrong-but-reasonable
+// result, which is the failure Law 0 clause 5 names as the dangerous one.
+//
+// So the vocabulary lives beside its consumers, and each list is the set of
+// values the function two hundred lines below actually branches on. A new
+// `apply` is a WORD, not a row: it means teaching a consumer something, and the
+// validator goes red until one has been taught (Law 0 clause 2).
+const CARD_MOD_APPLIES = Object.freeze(['amount', 'hits', 'cost', 'scale', 'status']);
+const RUN_MOD_APPLIES = Object.freeze(['maxHp', 'startStatus', 'swapCost']);
+
 /**
  * slotHand(slot) → 'left' | 'right' | null — WHERE A SLOT IS.
  *
@@ -15390,6 +16363,33 @@ function validateEquipment(registries) {
       }
     }
   }
+
+  // ---- the `apply` vocabulary, which nothing checked until A8 --------------
+  // equipMods.csv's header calls `apply` a closed set; `cardMods`, `runMods`
+  // and `applyCardMods` are the three functions that branch on it, and until
+  // now a row naming a fourth value passed every check and did NOTHING. Legal
+  // input, no output, no complaint — Law 0 clause 5's dangerous half. The lists
+  // live beside those consumers (CARD_MOD_APPLIES / RUN_MOD_APPLIES).
+  for (const [field, spec] of Object.entries(fields)) {
+    const legal = spec.scope === 'run' ? RUN_MOD_APPLIES : spec.scope === 'card' ? CARD_MOD_APPLIES : null;
+    if (!legal) {
+      problems.push(`equipMods.csv: field '${field}' has scope '${spec.scope}' — expected 'card' or 'run'`);
+      continue;
+    }
+    if (!legal.includes(spec.apply)) {
+      problems.push(
+        `equipMods.csv: field '${field}' applies '${spec.apply}', which no ${spec.scope} consumer handles `
+        + `— it would collect nothing and change nothing. Legal for scope '${spec.scope}': ${legal.join(', ')}`
+      );
+    }
+  }
+
+  // ABSENT IS NOT ZERO — this file's own rule, applied to itself. The partial
+  // registries the tests build carry no `balance`, and telling one of them its
+  // swap cost is malformed would be the checker inventing a defect out of not
+  // being able to look. No balance block, nothing to say.
+  const eqBal = ((registries.balance || {}).equipment) || null;
+  if (eqBal) validateEquipmentBalance(pieces, eqBal, problems);
 
   for (const slot of eq.slots || []) {
     if (slot.kinds.length === 0) problems.push(`slot '${slot.id}' gates on no kinds`);
@@ -15505,6 +16505,101 @@ function validateEquipment(registries) {
   return problems;
 }
 
+
+/**
+ * The `balance.equipment` half of the equipment check (Viki, A8/A7).
+ *
+ * Separate only because its input is separate: everything above validates what
+ * an AUTHOR wrote in a spreadsheet, and this validates what a TUNER wrote in
+ * balance.js. Both are data and both fail loud by name; a partial registry has
+ * the first and not the second, and the caller says so rather than guessing.
+ */
+function validateEquipmentBalance(pieces, eqBal, problems) {
+  // ---- A FEW BASIC WEAPONS FOR ALL (A7) ------------------------------------
+  // `basicTag` is the one word behind *"maybe a few basic weapons become
+  // available for all"*, and each refusal below exists because the failure it
+  // catches is SILENT: the shelf looks exactly the way it looked before, and
+  // nobody can tell a setting that is off from one that is broken.
+  const basicTag = eqBal.basicTag;
+  if (basicTag != null && basicTag !== '') {
+    if (typeof basicTag !== 'string') {
+      problems.push(`balance.equipment.basicTag must be a tag id string or '' — got ${JSON.stringify(basicTag)}`);
+    } else {
+      const carriers = pieces.filter((p) => (p.tags || []).includes(basicTag));
+      if (!carriers.length) {
+        problems.push(
+          `balance.equipment.basicTag is '${basicTag}' and no armament carries that tag — `
+          + `the universal shelf would be empty and say nothing. Tag a row in weapons.csv or set basicTag to ''`
+        );
+      }
+      for (const p of carriers) {
+        // `basic` answers the FOUND gate; an unlock is the EARNED gate. A row
+        // wearing both is an author saying two opposite things, and the one
+        // that would win is an implementation detail of `ownership()`.
+        if (p.unlock !== '' && p.unlock != null) {
+          problems.push(
+            `'${p.id}' is tagged '${basicTag}' (everybody's) AND has unlock '${p.unlock}' (earned) — `
+            + `pick one: drop the tag, or clear the unlock`
+          );
+        }
+        // Armour never enters the drop pool, so `basic` has no gate to answer
+        // on it and would sit there looking meaningful.
+        if (!fromDropPool(p)) {
+          problems.push(
+            `'${p.id}' is tagged '${basicTag}' but its kind '${p.kind}' never drops, so the tag can never do `
+            + `anything — '${basicTag}' answers the found gate only`
+          );
+        }
+      }
+    }
+  }
+
+  // ---- THE SWAP-COST CHAIN (A8) --------------------------------------------
+  // Three rules he can try, so three ways to author one that quietly charges
+  // the default forever. Each of these names the row.
+  const rules = eqBal.swapCostRules;
+  if (rules != null) {
+    if (!Array.isArray(rules) || !rules.length) {
+      problems.push('balance.equipment.swapCostRules must be a non-empty array of rule rows');
+    } else {
+      const seen = new Set();
+      for (const r of rules) {
+        const at = `swapCostRules row '${(r && r.id) || '(no id)'}'`;
+        if (!r || typeof r.id !== 'string' || !r.id) { problems.push(`${at}: every rule row needs an id`); continue; }
+        if (seen.has(r.id)) problems.push(`${at}: duplicate rule id — the later row is unreachable`);
+        seen.add(r.id);
+        if (!SWAP_COST_BASES.includes(r.base)) {
+          problems.push(`${at}: base '${r.base}' is not one of ${SWAP_COST_BASES.join('|')}`);
+        }
+        if (typeof r.gear !== 'boolean') {
+          problems.push(`${at}: gear must be true or false — got ${JSON.stringify(r.gear)}`);
+        }
+      }
+      if (!seen.has(eqBal.swapCostRule)) {
+        problems.push(
+          `balance.equipment.swapCostRule is '${eqBal.swapCostRule}', which is not a rule id — `
+          + `authored rules: ${[...seen].map((s) => `'${s}'`).join(', ')}`
+        );
+      }
+    }
+  }
+  if (!Number.isInteger(eqBal.swapCost) || eqBal.swapCost < 0) {
+    problems.push(`balance.equipment.swapCost must be a whole number ≥ 0 — got ${JSON.stringify(eqBal.swapCost)}`);
+  }
+  for (const r of eqBal.swapCostByCategory || []) {
+    const at = `swapCostByCategory row '${(r && r.tag) || '(no tag)'}'`;
+    if (!r || typeof r.tag !== 'string' || !r.tag) { problems.push(`${at}: every category row needs a tag`); continue; }
+    // A category nothing carries is the silent one: the rule is live, the row
+    // is legal, and no weapon in the game will ever match it.
+    if (!pieces.some((p) => (p.tags || []).includes(r.tag))) {
+      problems.push(`${at}: no armament carries tag '${r.tag}', so this cost can never be charged`);
+    }
+    if (!Number.isInteger(r.cost) || r.cost < 0) {
+      problems.push(`${at}: cost must be a whole number ≥ 0 — got ${JSON.stringify(r.cost)}`);
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // WHAT IS YOURS — one predicate, one home (EldenSpire#90)
 // ---------------------------------------------------------------------------
@@ -15597,13 +16692,25 @@ function ownership(registries, { meta = {}, loadout = null } = {}) {
   // generic. 'unfound' would promise the player it turns up in treasure, which
   // is a lie about a piece that does not exist. `has(null)` stays false either
   // way, which is the behaviour every caller already had.
+  // A FEW BASIC WEAPONS FOR ALL (A7). Constantine: *"everything else is profile
+  // specific but maybe a few basic weapons become available for all."*
+  //
+  // IT ANSWERS THE FOUND GATE AND ONLY THAT, which is why it is inside the
+  // `requireFound` branch rather than a fourth `if` at the top. A piece is not
+  // yours for two independent reasons — earned (`unlock`) and found (the drop
+  // pool) — and a tag that short-circuited BOTH would make one word able to
+  // unlock content, which is not what "basic" means and not what he asked for.
+  // The two gates compose; a row wearing both is refused by name at validation,
+  // so this order is not a tiebreak, it is the absence of a tie.
+  const basicTag = cfg.basicTag;
+  const isBasic = (piece) => !!basicTag && (piece.tags || []).includes(basicTag);
   const why = (piece) => {
     if (!piece) return 'unearned';
     if (piece.unlock !== '' && piece.unlock != null) {
       return unlocked.has(piece.unlock) ? null : 'unearned';
     }
     if (fromDropPool(piece) && drops.requireFound) {
-      return found.has(piece.id) ? null : 'unfound';
+      return isBasic(piece) || found.has(piece.id) ? null : 'unfound';
     }
     return null;
   };
@@ -15862,15 +16969,29 @@ function cardForTarget(eq, target, classId) {
 }
 
 /**
- * runMods(registries, loadout, classId) → { maxHp, startStatuses: [{status, stacks}] }
+ * runMods(registries, loadout, classId) → { maxHp, swapCostDelta, startStatuses }
  * The `self.*` half of the vocabulary: things a piece does to you rather than
  * to a card. startStatuses are handed straight to createCombat's existing
  * playerStatuses hook, so the engine needs no equipment code to honour them.
+ *
+ * `swapCostDelta` is the TALISMAN half of A8 — *"perhaps this action costs more
+ * or less depending on Talisman"* — and it arrives as one `apply` value rather
+ * than a new field on a piece, because a talisman already says what it does in
+ * the same `mods` column every other piece uses (`self.swapCost=+1`). It is
+ * SIGNED and it is a DELTA, never a price: the price is derived in
+ * `swapCostFor` below, which is the only place that knows the base.
+ *
+ * NOTHING IS AUTHORED FOR IT YET AND THAT IS A CONTENT FACT, NOT A GAP. The
+ * talisman slot has zero rows (equipSlots.csv ships it ahead of its content),
+ * so today this returns 0 for every real loadout — and the day a talisman row
+ * exists it works with no code, which test 28b measures with a piece it
+ * authors itself rather than waiting for one.
  */
 function runMods(registries, loadout, classId) {
   const fields = (registries.equipment || {}).modFields || {};
   const stacks = new Map();
   let maxHp = 0;
+  let swapCostDelta = 0;
   for (const piece of equippedPieces(registries, loadout, classId)) {
     for (const raw of piece.mods || []) {
       const mod = parseMod(raw);
@@ -15878,6 +16999,8 @@ function runMods(registries, loadout, classId) {
       if (!spec || spec.scope !== 'run') continue;
       if (spec.apply === 'maxHp') {
         maxHp = mod.mode === 'add' ? maxHp + mod.value : mod.value;
+      } else if (spec.apply === 'swapCost') {
+        swapCostDelta = mod.mode === 'add' ? swapCostDelta + mod.value : mod.value;
       } else if (spec.apply === 'startStatus') {
         const prev = stacks.get(spec.status) || 0;
         stacks.set(spec.status, mod.mode === 'add' ? prev + mod.value : mod.value);
@@ -15886,6 +17009,7 @@ function runMods(registries, loadout, classId) {
   }
   return {
     maxHp,
+    swapCostDelta,
     startStatuses: [...stacks].filter(([, n]) => n > 0).map(([status, n]) => ({ status, stacks: n })),
   };
 }
@@ -16077,6 +17201,132 @@ function canSwap(registries, slotId, { inCombat = false } = {}) {
     return { ok: false, word: 'fastened', reason: `${slot.label} stays fastened until the fight ends.` };
   }
   return { ok: true, word: '', reason: '' };
+}
+
+// ---------------------------------------------------------------------------
+// WHAT A SWAP COSTS — one chain, three rules, all of it data (Viki, A8)
+// ---------------------------------------------------------------------------
+//
+// `canSwap` above says WHETHER. This says HOW MUCH, and the comment on
+// `cycleSet` below already named it as the next act: *"the PRICE.
+// balance.equipment.swapCost is charged in doSwapArmament, outside this
+// function"* — so the price had no truth function at all, only a subtraction in
+// the engine. It has one now, and it lives here because this module is the one
+// home for what a loadout means.
+//
+// Constantine named three prices and said *"that way I can try each"*, so the
+// three are rows in `balance.equipment.swapCostRules` and the live one is a
+// word. This function is the chain they select rungs of; it contains no `if`
+// on a rule id, which is the difference between data he can switch between and
+// three branches wearing a config key.
+
+/** Where a rule's base price comes from. Closed; a row saying anything else is refused by name. */
+const SWAP_COST_BASES = Object.freeze(['default', 'category']);
+
+/** The authored rules table. Empty is a real answer: no table, no rule, price falls to the default. */
+function swapCostRules(registries) {
+  return (((registries || {}).balance || {}).equipment || {}).swapCostRules || [];
+}
+
+/**
+ * resolveSwapCostRule(registries, meta) → the live rule row, or null.
+ *
+ * Unset, or a value this build cannot read, is the SHIPPING DEFAULT — the same
+ * rule `resolveMapMode` and `savedZoom` use, and for the same reason: a
+ * hand-edited save or an older build's value must behave exactly as an absent
+ * one. The Settings row reads this table too, so the control and the resolver
+ * cannot disagree about which rules exist.
+ */
+function resolveSwapCostRule(registries, meta) {
+  const cfg = (((registries || {}).balance || {}).equipment || {});
+  const rows = swapCostRules(registries);
+  const want = ((meta && meta.settings) || {}).swapCostRule;
+  return rows.find((r) => r && r.id === want) || rows.find((r) => r && r.id === cfg.swapCostRule) || null;
+}
+
+/**
+ * swapCostFor(registries, { rule, loadout, classId, slotId, setIndex, relicDelta })
+ *   → { cost, ruleId, base, baseCost, categoryTag, gearOn, gearDelta, gearIgnored, floored }
+ *
+ * THE WHOLE DERIVATION, RETURNED RATHER THAN JUST THE NUMBER. A price a screen
+ * or a test can only observe as `2` cannot be checked for WHY it is 2, and the
+ * thing being measured tonight is whether three settings actually produce
+ * different numbers — so every rung is in the return value and test 28b prints
+ * the table. `gearIgnored` is the deliberately loud one: it is the delta a
+ * gear-off rule DECLINED, so a talisman doing nothing says so instead of
+ * looking broken.
+ *
+ * WHICH PIECE'S CATEGORY. The one being DRAWN — `loadout.sets[slotId][setIndex]`,
+ * the set you are switching TO — not the one going away and not a max() of the
+ * two. You pay for what you pick up, which is the reading a player can predict
+ * from the thing they just chose. It is one line and named here rather than
+ * discovered: if it plays wrong, this sentence is what changes.
+ *
+ * THE RELIC HALF ARRIVES AS A NUMBER, and that is a module boundary, not a
+ * shortcut. `passiveSum` lives in model/registries.js, which imports THIS file
+ * — so importing it back would make a cycle, and a cycle that survives Node
+ * survives it in a hand-rolled single-file bundler only by luck. Combat already
+ * owns the relic-passive-to-price pattern (`effectiveCost`, same file, same
+ * shape), so it sums `swapCostDelta` and hands the total in. A caller that
+ * forgets is NAMED, not defaulted: silence must not mean "no relics".
+ *
+ * THE FLOOR IS 0 AND IT IS ARITHMETIC, NOT DATA. An authored negative — a
+ * category row at −1, a `swapCost` below zero — is refused by name in
+ * `validateEquipment`. A negative TOTAL is a legal talisman meeting a cheap
+ * weapon, and it clamps the way `powerCostReduction` already does, with
+ * `floored` set so the clamp is observable rather than quiet.
+ */
+function swapCostFor(registries, {
+  rule = null, loadout = null, classId = null, slotId = null, setIndex = 0, relicDelta,
+} = {}) {
+  const cfg = (((registries || {}).balance || {}).equipment || {});
+  const fallback = Number.isFinite(cfg.swapCost) ? cfg.swapCost : 0;
+  const row = rule || null;
+  const base = row && SWAP_COST_BASES.includes(row.base) ? row.base : 'default';
+
+  let categoryTag = null;
+  let baseCost = fallback;
+  if (base === 'category') {
+    const ids = ((loadout || {}).sets || {})[slotId] || [];
+    const id = ids[setIndex];
+    const eq = (registries || {}).equipment || {};
+    const piece = id ? (eq.armaments || []).find((a) => a.id === id) || null : null;
+    const tags = (piece && piece.tags) || [];
+    // ORDERED, FIRST MATCH WINS — the priority between two tags a piece carries
+    // is the order of the rows, so it is authorable and visible. No match at all
+    // (a bare hand, an untagged piece) falls through to the default, which is
+    // the same number the 'flat' rule charges — by design, not by accident.
+    const hit = (cfg.swapCostByCategory || []).find((r) => r && tags.includes(r.tag));
+    if (hit) {
+      categoryTag = hit.tag;
+      baseCost = Number.isFinite(hit.cost) ? hit.cost : fallback;
+    }
+  }
+
+  if (!Number.isFinite(relicDelta)) {
+    console.error(
+      `swapCostFor('${slotId}'): no finite \`relicDelta\` — refusing to guess.`
+      + ` Got ${JSON.stringify(relicDelta)}. Pass passiveSum(registries, relicIds, 'swapCostDelta').`
+      + ' Charging the gear stage as 0. This line is the defect, not the price.'
+    );
+  }
+  const relic = Number.isFinite(relicDelta) ? relicDelta : 0;
+  const worn = loadout ? runMods(registries, loadout, classId).swapCostDelta : 0;
+  const delta = relic + worn;
+  const gearOn = !!(row && row.gear);
+  const raw = baseCost + (gearOn ? delta : 0);
+
+  return {
+    cost: Math.max(0, raw),
+    ruleId: row ? row.id : null,
+    base,
+    baseCost,
+    categoryTag,
+    gearOn,
+    gearDelta: gearOn ? delta : 0,
+    gearIgnored: gearOn ? 0 : delta,
+    floored: raw < 0,
+  };
 }
 
 /**
@@ -16370,7 +17620,7 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, slotHand, pieceHand, fitsSlot, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, CARD_MOD_APPLIES, RUN_MOD_APPLIES, slotHand, pieceHand, fitsSlot, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
 
 },
 "src/model/state.js": function (module, exports, require) {
@@ -16384,6 +17634,7 @@ Object.assign(module.exports, { parseMod, HANDS, slotHand, pieceHand, fitsSlot, 
 // Headless: no document/window/localStorage/timers.
 
 const { createLoadout, runMods, stampDeck } = require("src/model/loadout.js");
+const { graceRefillPlan } = require("src/model/gracerefill.js");
 
 const RUN_SCHEMA_VERSION = 1;
 
@@ -16436,13 +17687,23 @@ function createRunState({ seed, classId, registries }) {
     deck: createDeck(classDef.startingDeck, idGen),
     loadout,
     relics: [classDef.startingRelic],
-    flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots (default 3)
+    flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
     seedString: null, // set by the orchestrator right after creation (display/replay)
     mapGraph: null,
     combatEntered: null,
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // "and each character should start with those" — Constantine, 2026-08-08, the
+  // FOURTH clause of the flask parenthesis, and it is here because it was very
+  // nearly lost. His sentence was quoted to me tonight with this clause missing
+  // from the quote; the ledger (`commons/decisions/directions.md` D10) has it.
+  //
+  // The table remains authoritative at both doors. The preview enables this
+  // data switch so every class starts with the same 3 HP + 3 Mana allocation.
+  if (registries.balance && registries.balance.graceRefillAtRunStart === true) {
+    for (const flaskId of graceRefillPlan(registries, run).grants) run.flasks.push({ flaskId });
+  }
   // Stamp the starting deck with whatever the loadout says. Bare-handed this
   // is a no-op; in an armour set with `defend.block=+2` it is already true of
   // the very first Defend you draw.
@@ -16897,6 +18158,10 @@ function isCustomRun(custom) {
   if (!custom) return false;
   if (custom.ascension > 0) return true;
   if (custom.deckMode && custom.deckMode !== 'standard') return true;
+  // A run whose map was capped or re-weighted is not the game the win rate is
+  // about. Missing this line would have let a deliberately-shortened debug run
+  // count as a win against the real climb — the whole point of the flag.
+  if (custom.mapShape && Object.keys(custom.mapShape).length) return true;
   return !!(custom.mods && Object.values(custom.mods).some(Boolean));
 }
 
@@ -17141,6 +18406,26 @@ function seedProblem(str) {
   return scanSeed(str).why;
 }
 
+/**
+ * sweepSeed(i) → a uint32 that is genuinely different for every i.
+ *
+ * THE ONE HOME FOR "give me the i-th seed of a sweep", and it exists because
+ * getting it wrong is invisible. `createRng('mapplan-3')` is `'mapplan-3' >>> 0`,
+ * which is 0 — for EVERY i. tools/mapplan.mjs's first run reported 24 seeds with
+ * a range of 52-52 and nearly shipped: that was ONE seed measured 24 times,
+ * wearing a distribution's clothes, and it was caught only because a count read
+ * exactly 52.00 twenty-four times.
+ *
+ * Knuth's multiplicative hash on (i + 1), so index 0 is not seed 0. Every sweep
+ * in the tree — the tool, the tests, and the live estimate the Custom Climb
+ * screen prints while a knob is dragged — draws from this function, so a
+ * distribution measured in one of them is the same distribution in the others.
+ * A caller that writes its own is reintroducing the defect this export deletes.
+ */
+function sweepSeed(i) {
+  return Math.imul((i | 0) + 1, 2654435761) >>> 0;
+}
+
 function seedToString(seed) {
   let n = seed >>> 0;
   if (n === 0) return '0';
@@ -17161,7 +18446,7 @@ function seedFromString(str) {
 }
 
 
-Object.assign(module.exports, { STREAM_NAMES, mulberry32, createRng, SEED_MAX_LEN, seedProblem, seedToString, seedFromString });
+Object.assign(module.exports, { STREAM_NAMES, mulberry32, createRng, SEED_MAX_LEN, seedProblem, sweepSeed, seedToString, seedFromString });
 
 },
 "src/engine/combat.js": function (module, exports, require) {
@@ -17187,7 +18472,7 @@ const { resolveCard, passiveSum, passiveMult } = require("src/model/registries.j
 const { evaluate } = require("src/model/formulas.js");
 const { computeTokenBindings } = require("src/model/validate.js");
 const { createPlayerCombatEntity, createEnemyCombatEntity } = require("src/model/state.js");
-const { canSwap, cycleSet, stampDeck } = require("src/model/loadout.js");
+const { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule } = require("src/model/loadout.js");
 
 const QUEUE_GUARD = 10000;
 
@@ -17208,7 +18493,16 @@ const QUEUE_GUARD = 10000;
  * first player turn starts (energy set, 5 drawn, playerTurnStart triggers).
  * Setup events are in combat.eventLog.
  */
-function createCombat({ registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [] }) {
+function createCombat({
+  registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [],
+  // WHICH SWAP-COST RULE THIS FIGHT IS UNDER (A8). Resolved once here rather
+  // than per swap, for the reason `hpMult` is: a fight's rules must not change
+  // under the player halfway through it. Omitted resolves to the shipping
+  // default, so every existing caller — and every test — keeps the price it
+  // already had, and `resolveSwapCostRule(registries, meta)` is the one place
+  // his Settings choice is read.
+  swapCostRule = null,
+}) {
   const bal = registries.balance || {};
   const classMaxMana = registries.classes.get(player.classId).maxMana;
   const maxMana = player.maxMana != null ? player.maxMana : classMaxMana;
@@ -17234,6 +18528,7 @@ function createCombat({ registries, rng, player, enemyIds, hpMult = 1, enemyStat
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
     // still swapped when the fight ends.
     loadout: player.loadout || null,
+    swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
     queue: [],
@@ -17645,10 +18940,26 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   if (!allowed.ok) throw new Error(allowed.reason);
 
   const p = combat.player;
+  // THE PRICE IS DERIVED, NOT READ (A8). `cfg.swapCost` is one rung of a chain
+  // now — the default — and which rungs are live is `combat.swapCostRule`, a row
+  // of `balance.equipment.swapCostRules` resolved once at createCombat from his
+  // Settings choice. The whole derivation comes back so the throw can name the
+  // real number and the event can carry it; the relic half is summed here
+  // because relic passives are this file's vocabulary (see `effectiveCost`
+  // below, same shape) and model/loadout.js must not import back into
+  // model/registries.js.
+  const price = swapCostFor(combat.registries, {
+    rule: combat.swapCostRule,
+    loadout: combat.loadout,
+    classId: p.classId,
+    slotId,
+    setIndex,
+    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta'),
+  });
   if (cfg.swapCostKind === 'allowance') {
     if ((combat.swapsLeft || 0) < 1) throw new Error('No swaps left this turn');
-  } else if (p.energy < cfg.swapCost) {
-    throw new Error(`Swapping costs ${cfg.swapCost} Energy`);
+  } else if (p.energy < price.cost) {
+    throw new Error(`Swapping costs ${price.cost} Energy`);
   }
 
   // THE LADDER BINDS HERE TOO (#90, Vira's gate), and combat has no profile —
@@ -17674,7 +18985,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   }
 
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
-  else p.energy -= cfg.swapCost;
+  else p.energy -= price.cost;
 
   // The new numbers reach the draw and discard piles always; the hand only if
   // the config says a swap re-arms what you are already holding.
@@ -17683,7 +18994,9 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   const run = { deck: [], loadout: combat.loadout, class: p.classId };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
-  combat.emit('armamentSwapped', { slotId, setIndex });
+  // The event carries what it COST and under which rule — a price nobody can
+  // read back is a price nobody can check, and "try each" is a comparison.
+  combat.emit('armamentSwapped', { slotId, setIndex, cost: price.cost, rule: price.ruleId });
   if (cfg.swapEndsTurn) doEndTurn(combat);
 }
 
@@ -19459,9 +20772,11 @@ Object.assign(module.exports, { cardTagging });
 
 const { generateActMap } = require("src/engine/mapgen.js");
 const { resolveUnknownNode } = require("src/engine/encounters.js");
+const { applyRunShape } = require("src/model/floorplan.js");
+const { MAP_SHAPE_LIMITS } = require("src/content/mapconfig.js");
 
 /**
- * buildActMap(registries, rng, act) → mapGraph
+ * buildActMap(registries, rng, act, mapShape) → mapGraph
  *
  * `act` is the CONTENT act (the caller answers Endless looping — main.js and
  * the tools pass their contentAct), required for the same reason
@@ -19469,9 +20784,26 @@ const { resolveUnknownNode } = require("src/engine/encounters.js");
  * authored. Unknown (?) nodes come back with `.resolved` already set, so a
  * node's outcome is seed-determined at map birth and the Sealstone Key can
  * reveal it (SPEC §6).
+ *
+ * `mapShape` is the Custom Climb debug shape (`run.custom.mapShape`) or null.
+ * It is applied HERE, in the one act-boot path, for exactly the reason this file
+ * exists: a per-run override applied at each of the four call sites would be
+ * four copies of one fact, and the fourth would be the one that forgets. Absent
+ * ⇒ byte-for-byte today's act, so every existing seed replays unchanged.
+ *
+ * A shape that does not resolve THROWS and names the knob. The screen refuses
+ * it before the run starts (ui/screens/customRun.js), so reaching this throw
+ * means a shape arrived from somewhere the screen does not guard — a hand-edited
+ * save, a future caller. That is precisely when a loud failure is worth its cost.
  */
-function buildActMap(registries, rng, act) {
-  const map = generateActMap({ config: registries.mapConfig(act), rng });
+function buildActMap(registries, rng, act, mapShape = null) {
+  const authored = registries.mapConfig(act);
+  const shaped = applyRunShape(authored, mapShape, MAP_SHAPE_LIMITS);
+  if (shaped.errors.length) {
+    throw new Error(`buildActMap: this run's map shape does not resolve — ${
+      shaped.errors.map((e) => `${e.key}: ${e.msg}`).join(' · ')}`);
+  }
+  const map = generateActMap({ config: shaped.config, rng });
   const assigned = [];
   for (const node of Object.values(map.nodes)) {
     if (node.type === 'event') {
@@ -19498,8 +20830,46 @@ Object.assign(module.exports, { buildActMap });
 // Headless: no document/window/localStorage/timers.
 
 const { resolveFloorPlan } = require("src/model/floorplan.js");
+const { createRng, sweepSeed } = require("src/engine/rng.js");
 
 const TYPING_RETRIES = 40;
+
+/**
+ * sampleActShape(config, seeds) → { seeds, nodes: {mean,min,max}, byType: {...} }
+ *
+ * HOW BIG IS AN ACT AT THIS CONFIG, over a distribution and never on one seed.
+ *
+ * Constantine asked for a 30-minute run, and the thing that drives run length is
+ * how many nodes he has to stop on. He cannot be handed a knob and a promise —
+ * he has to be handed the number, and it has to move while he drags. So this is
+ * the ONE sampler: the Custom Climb screen prints it live, tools/mapplan.mjs
+ * prints it in the before/after table, and the tests assert on it. Three readers,
+ * one measurement, so a screen can never quote a figure the tool disagrees with.
+ *
+ * Seeds come from `sweepSeed` (engine/rng.js) for the reason written there: a
+ * sweep whose seeds all collapse to 0 prints a perfect distribution of one graph.
+ *
+ * WHAT IT IS NOT: wall-clock. Nobody in this tree can measure minutes. Node count
+ * is the driver of run length, not run length, and every caller says so out loud.
+ */
+function sampleActShape(config, seeds = 24) {
+  const counts = [];
+  const byType = {};
+  for (let i = 0; i < seeds; i++) {
+    const g = generateActMap({ config, rng: createRng(sweepSeed(i)) });
+    const all = Object.values(g.nodes);
+    counts.push(all.length);
+    for (const n of all) byType[n.type] = (byType[n.type] || 0) + 1;
+  }
+  const stat = (xs) => ({
+    mean: Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 100) / 100,
+    min: Math.min(...xs),
+    max: Math.max(...xs),
+  });
+  const perAct = {};
+  for (const [t, n] of Object.entries(byType)) perAct[t] = Math.round((n / seeds) * 100) / 100;
+  return { seeds, nodes: stat(counts), byType: perAct };
+}
 
 /**
  * generateActMap({ config, rng }) → {
@@ -19704,7 +21074,7 @@ function clamp(v, lo, hi) {
 }
 
 
-Object.assign(module.exports, { generateActMap });
+Object.assign(module.exports, { sampleActShape, generateActMap });
 
 },
 "src/engine/encounters.js": function (module, exports, require) {
@@ -19714,13 +21084,16 @@ Object.assign(module.exports, { generateActMap });
 // Procedural systems: seeded algorithms whose every knob comes from content
 // (balance.js, encounters/*.js). Pure functions of (registries, rng, args) —
 // run mutation is limited to explicitly documented counters (flask pity,
-// removal price). Stream usage: encounters → 'enemyAI', card rewards →
+// removal price) plus `applyGraceRefill`, which is the one function here that
+// puts something IN the run — flasks, at a grace, from a pure plan it does not
+// itself compute. Stream usage: encounters → 'enemyAI', card rewards →
 // 'cardRewards', relics → 'relicRewards', flasks → 'flaskRewards',
 // unknown nodes + events → 'events', shop stock → 'shop', cinders → 'misc'.
 //
 // Headless: no document/window/localStorage/timers.
 
 const { passiveMult, passiveFlag } = require("src/model/registries.js");
+const { graceRefillPlan } = require("src/model/gracerefill.js");
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -19971,6 +21344,29 @@ function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {}) {
   return { kind: 'event', eventId: rng.pick('events', pool) };
 }
 
+/**
+ * applyGraceRefill(registries, run, { counts }) → the plan it just applied.
+ *
+ * THE ONE MUTATION, and it is listed in this file's header beside flask pity
+ * and the removal price. Everything that decides WHAT to hand over is pure and
+ * lives in model/gracerefill.js, so a screen, a settings row and a sim can each
+ * ask what a grace would do without one of them having to do it.
+ *
+ * AUTOMATIC, NOT A CHOICE. Constantine: "flasks should refill automatically at
+ * graces". The caller fires this on ARRIVAL at the shrine, before Rest or Smith
+ * is offered — resting is one of the two things you can then spend the stop on,
+ * and the flasks are not the price of either.
+ *
+ * IDEMPOTENT BY CONSTRUCTION, which is what makes a re-entry safe: the plan is
+ * a TOP-UP to `count`, so calling it twice at one shrine grants nothing the
+ * second time. A resumed save that re-mounts the shrine cannot double-pour.
+ */
+function applyGraceRefill(registries, run, opts = {}) {
+  const plan = graceRefillPlan(registries, run, opts);
+  for (const flaskId of plan.grants) run.flasks.push({ flaskId });
+  return plan;
+}
+
 /** Shrine rest heal (SPEC shrine.healPct × shrineHealMult passives, floored). */
 function shrineHealAmount(registries, run) {
   const pct = registries.balance.shrine.healPct;
@@ -19979,7 +21375,7 @@ function shrineHealAmount(registries, run) {
 }
 
 
-Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, rollArmamentDrop, buildShopStock, resolveUnknownNode, shrineHealAmount });
+Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, rollArmamentDrop, buildShopStock, resolveUnknownNode, applyGraceRefill, shrineHealAmount });
 
 },
 "src/engine/save.js": function (module, exports, require) {
@@ -22995,10 +24391,16 @@ Object.assign(module.exports, { SEED_PROMISE, attachSeedField });
 const { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION, activeMods } = require("src/content/customMods.js");
 
 
+const { MAP_SHAPE_LIMITS } = require("src/content/mapconfig.js");
+const { applyRunShape, minViableFloors, resolveFloorPlan } = require("src/model/floorplan.js");
+const { sampleActShape } = require("src/engine/mapgen.js");
 const { classGlyph } = require("src/ui/assets.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { refusesWhen } = require("src/ui/components/refusal.js");
 const { attachSeedField } = require("src/ui/components/seedfield.js");
+
+/** How many seeds the live estimate averages. Named, because it is printed. */
+const ESTIMATE_SEEDS = 24;
 
 function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -23007,6 +24409,71 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     mods: {}, // explicit toggles (on top of ascension-enabled rules)
     deckMode: 'standard',
   };
+
+  // ---- the run shape: every bound below is DERIVED from the acts themselves --
+  // Nothing about the three knobs is typed on this screen. `acts` is whatever
+  // content authors; the floors slider's low end is what those acts' own floor
+  // rules resolve at; the weight rows ARE the keys of `typeWeights`. Add a node
+  // type to content/mapconfig.js and a slider appears here with no edit to this
+  // file — that is the Law 0 falsifier for this feature, and it is why the loop
+  // below reads the act instead of a list.
+  const acts = Object.entries(registries.mapConfigs || {})
+    .map(([act, cfg]) => ({ act: Number(act), cfg }))
+    .sort((a, b) => a.act - b.act);
+  const baseCfg = acts.length ? acts[0].cfg : null;
+  const shapeable = !!(baseCfg && baseCfg.typeWeights);
+  const floorsMax = shapeable ? Math.max(...acts.map((a) => a.cfg.floors)) : 0;
+  const colsMax = shapeable ? Math.max(...acts.map((a) => a.cfg.columns)) : 0;
+  // The shortest act every act's own rules survive — the strictest of them, so
+  // a cap the slider offers cannot break act 3 while act 1 is fine.
+  const floorsMin = shapeable
+    ? acts.reduce((worst, a) => {
+      const m = minViableFloors(a.cfg);
+      return m.error ? Math.max(worst, floorsMax) : Math.max(worst, m.floors);
+    }, 2)
+    : 0;
+  const weightKeys = shapeable ? Object.keys(baseCfg.typeWeights) : [];
+  // Live knob positions start ON the authored values, so an untouched section
+  // emits no shape at all and every existing seed replays byte for byte.
+  const shape = {
+    floors: floorsMax,
+    columns: colsMax,
+    weights: shapeable ? { ...baseCfg.typeWeights } : {},
+  };
+
+  /**
+   * The entry this screen hands the orchestrator — ONLY what differs from the
+   * authored act. A shape of `{}` is `null`: "he opened the panel and changed
+   * nothing" and "he never opened it" must produce the same run.
+   */
+  function mapShapeEntry() {
+    if (!shapeable) return null;
+    const out = {};
+    if (shape.floors < floorsMax) out.floors = shape.floors;
+    if (shape.columns < colsMax) out.columns = shape.columns;
+    const w = {};
+    for (const k of weightKeys) if (shape.weights[k] !== baseCfg.typeWeights[k]) w[k] = shape.weights[k];
+    if (Object.keys(w).length) out.typeWeights = w;
+    return Object.keys(out).length ? out : null;
+  }
+
+  /** Every act resolved at the current shape — the one place the screen asks. */
+  function resolveShape() {
+    const entry = mapShapeEntry();
+    return acts.map(({ act, cfg }) => ({ act, entry, ...applyRunShape(cfg, entry, MAP_SHAPE_LIMITS) }));
+  }
+
+  /**
+   * The refusal sentence, or null. The SAME resolver the generator will run, so
+   * a shape this screen accepts cannot throw at act build and a shape it refuses
+   * names the same knob the engine would have named.
+   */
+  function shapeProblem() {
+    for (const r of resolveShape()) {
+      if (r.errors.length) return `Act ${r.act}: ${r.errors.map((e) => `${e.key} — ${e.msg}`).join(' · ')}`;
+    }
+    return null;
+  }
 
   app.innerHTML = `
     <div class="screen customrun" style="justify-content:flex-start;overflow-y:auto;gap:16px;padding-top:26px">
@@ -23025,6 +24492,50 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
         <div><p class="cz-label">DIFFICULTY RULES</p><div id="cr-diff" class="mod-grid"></div></div>
         <div><p class="cz-label">CHAOS</p><div id="cr-chaos" class="mod-grid"></div></div>
         <div><p class="cz-label">STARTING DECK</p><div id="cr-deck" class="mod-grid"></div></div>
+
+        ${shapeable ? `
+        <div class="runshape" id="cr-shape">
+          <button class="runshape-toggle" id="cr-shape-toggle" aria-expanded="false" aria-controls="cr-shape-body">
+            <span class="rs-title">ADVANCED · DEBUG — RUN SHAPE</span>
+            <span class="rs-state" id="cr-shape-state">off</span>
+            <span class="rs-caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="runshape-body" id="cr-shape-body" hidden>
+            <p class="set-note rs-intro">Shorten the climb. Caps the act, and biases what the map rolls — for testing a full run in one sitting.</p>
+
+            <div class="rs-readout">
+              <b id="cr-shape-big">—</b>
+              <span id="cr-shape-sub"></span>
+              <span class="rs-boundary" id="cr-shape-bound"></span>
+            </div>
+
+            <div class="rs-knob">
+              <label class="rs-knob-head" for="cr-shape-floors">
+                <span>Floors per act</span><span class="rs-val" id="cr-shape-floors-val">${floorsMax}</span>
+              </label>
+              <input class="rs-slider" id="cr-shape-floors" type="range"
+                     min="${floorsMin}" max="${floorsMax}" step="1" value="${floorsMax}">
+              <p class="set-note rs-why" id="cr-shape-floors-why"></p>
+            </div>
+
+            <div class="rs-knob">
+              <label class="rs-knob-head" for="cr-shape-cols">
+                <span>Map width</span><span class="rs-val" id="cr-shape-cols-val">${colsMax}</span>
+              </label>
+              <input class="rs-slider" id="cr-shape-cols" type="range"
+                     min="${MAP_SHAPE_LIMITS.minColumns}" max="${colsMax}" step="1" value="${colsMax}">
+              <p class="set-note rs-why">Columns the walkers may spread across. Narrower is a shorter, straighter act.</p>
+            </div>
+
+            <div class="rs-knob rs-group">
+              <p class="rs-group-head"><span>NODE ODDS</span><span class="rs-val" id="cr-shape-odds-val"></span></p>
+              <div class="rs-weights" id="cr-shape-weights"></div>
+              <p class="set-note rs-why" id="cr-shape-weights-why"></p>
+            </div>
+
+            <button class="subtle rs-reset" id="cr-shape-reset">Reset run shape</button>
+          </div>
+        </div>` : ''}
 
         <div class="seed-line">Seed <input id="cr-seed" type="text" value="${esc(defaultSeedString)}"></div>
       </div>
@@ -23110,12 +24621,155 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     deckBox.appendChild(el);
   });
 
+  // ---- the run shape: controls, and the number that answers the ask --------
+  //
+  // "I only have the patience for 30 min runs." NOBODY IN THIS TREE CAN MEASURE
+  // MINUTES, and a knob handed over with a promise attached is the shape of
+  // every feature this family has had to go back and check. What CAN be
+  // measured is the thing that drives the length: how many nodes he has to stop
+  // on. So the readout is the feature, and it moves while he drags — one live
+  // sample, `sampleActShape`, the same function tools/mapplan.mjs prints from.
+  let refreshShape = () => {};
+  if (shapeable) {
+    const weightsBox = $('#cr-shape-weights');
+    const sliders = {};
+    for (const key of weightKeys) {
+      const row = document.createElement('div');
+      row.className = 'rs-wrow';
+      row.innerHTML = `<span class="rs-whead">`
+        + `<span class="rs-wname">${esc(key)}</span>`
+        + `<span class="rs-wpct" data-pct="${esc(key)}">—</span></span>`
+        + `<input class="rs-slider" type="range" min="0" max="${MAP_SHAPE_LIMITS.maxWeight}" step="1"`
+        + ` value="${baseCfg.typeWeights[key]}" data-weight="${esc(key)}"`
+        + ` aria-label="${esc(key)} roll weight">`;
+      const input = row.querySelector('input');
+      input.addEventListener('input', () => {
+        shape.weights[key] = Number(input.value);
+        refreshShape();
+      });
+      sliders[key] = input;
+      weightsBox.appendChild(row);
+    }
+
+    const floorsEl = $('#cr-shape-floors');
+    const colsEl = $('#cr-shape-cols');
+    floorsEl.addEventListener('input', () => { shape.floors = Number(floorsEl.value); refreshShape(); });
+    colsEl.addEventListener('input', () => { shape.columns = Number(colsEl.value); refreshShape(); });
+
+    const toggle = $('#cr-shape-toggle');
+    const body = $('#cr-shape-body');
+    toggle.addEventListener('click', () => {
+      const open = body.hasAttribute('hidden');
+      if (open) body.removeAttribute('hidden'); else body.setAttribute('hidden', '');
+      toggle.setAttribute('aria-expanded', String(open));
+      $('#cr-shape').classList.toggle('open', open);
+    });
+
+    $('#cr-shape-reset').addEventListener('click', () => {
+      shape.floors = floorsMax;
+      shape.columns = colsMax;
+      for (const k of weightKeys) shape.weights[k] = baseCfg.typeWeights[k];
+      floorsEl.value = String(floorsMax);
+      colsEl.value = String(colsMax);
+      for (const k of weightKeys) sliders[k].value = String(baseCfg.typeWeights[k]);
+      refreshShape();
+    });
+
+    // The DEFAULT climb, measured once at mount — the reference the shaped
+    // number is read against. Measured, never typed: the day an act's shape
+    // changes, this moves with it.
+    const defaultTotal = acts.reduce(
+      (sum, a) => sum + sampleActShape(a.cfg, ESTIMATE_SEEDS).nodes.mean, 0
+    );
+
+    refreshShape = () => {
+      const resolved = resolveShape();
+      const entry = mapShapeEntry();
+      $('#cr-shape-floors-val').textContent = String(shape.floors);
+      $('#cr-shape-cols-val').textContent = String(shape.columns);
+      $('#cr-shape-state').textContent = entry ? 'on' : 'off';
+      $('#cr-shape').classList.toggle('shaped', !!entry);
+
+      // The derived share beside every weight — the "percent chance" he asked
+      // for, computed from the weights rather than restated as one.
+      const total = weightKeys.reduce((a, k) => a + shape.weights[k], 0);
+      for (const key of weightKeys) {
+        const cell = weightsBox.querySelector(`[data-pct="${key}"]`);
+        cell.textContent = total > 0 ? `${Math.round((shape.weights[key] / total) * 100)}%` : '—';
+        cell.classList.toggle('zero', shape.weights[key] === 0);
+      }
+      $('#cr-shape-odds-val').textContent = total > 0 ? `${total} total weight` : 'no weight';
+      // THE CAVEATS ARE THE RESOLVER'S OWN SENTENCES, not this screen's. Every
+      // way a weight can mean less than it looks — Monster's fallback, a type
+      // the act force-places to keep a minimum — is written once, in
+      // applyRunShape, and printed here. A second wording on the screen is a
+      // second copy of a fact, and it would be the copy that goes stale.
+      const notes = resolved.flatMap((r) => r.notes || []);
+      $('#cr-shape-weights-why').textContent =
+        ['Share of the roll, not of the finished map — floor rules and the no-repeat-neighbour ban still override it.']
+          .concat([...new Set(notes)]).join(' ');
+
+      const problem = resolved.find((r) => r.errors.length);
+      const big = $('#cr-shape-big');
+      const sub = $('#cr-shape-sub');
+      const bound = $('#cr-shape-bound');
+      if (problem) {
+        big.textContent = '—';
+        sub.textContent = `Act ${problem.act}: ${problem.errors[0].msg}`;
+        bound.textContent = '';
+      } else {
+        const per = resolved.map((r) => sampleActShape(r.config, ESTIMATE_SEEDS));
+        const climb = per.reduce((a, s) => a + s.nodes.mean, 0);
+        const lo = per.reduce((a, s) => a + s.nodes.min, 0);
+        const hi = per.reduce((a, s) => a + s.nodes.max, 0);
+        big.textContent = `≈ ${Math.round(climb)} stops`;
+        sub.textContent = `over ${per.length} act${per.length === 1 ? '' : 's'}`
+          + ` · range ${lo}–${hi} · default is ≈ ${Math.round(defaultTotal)}`
+          + (entry ? ` · ${Math.round((1 - climb / defaultTotal) * 100)}% shorter` : '');
+
+        // A SHORT ACT CAN BREAK A PROMISE THE ACT MAKES TO ITSELF, and it does
+        // so silently. `minElites: 2` is kept by force-placing into eligible
+        // Monster nodes; squeeze the act to 4x2 and there are not enough of
+        // them, so relaxPlace runs out and stops. Measured: 1.87 elites and
+        // 0.54 merchants a map at floors=4 columns=2, against promises of 2 and
+        // 1. That is not a reason to refuse the shape — a 20-stop climb is
+        // exactly what he asked for — but it is a reason to SAY it. Derived by
+        // sampling, because how many nodes a 4x2 act has is a distribution and
+        // not a formula, so nothing can answer it from the config alone.
+        const shortfalls = [];
+        resolved.forEach((r, i) => {
+          const minima = (resolveFloorPlan(r.config).plan || {}).minima || {};
+          for (const [t, want] of Object.entries(minima)) {
+            const got = per[i].byType[t] || 0;
+            // TWO DECIMALS, and it is not fussiness: at one decimal a mean of
+            // 1.99 prints "2.0 of 2", which reads as the promise being KEPT in
+            // the sentence saying it is broken.
+            if (want > 0 && got < want) shortfalls.push(`${t} ${got.toFixed(2)} of ${want}`);
+          }
+        });
+        bound.textContent = shortfalls.length
+          ? `nodes across ${ESTIMATE_SEEDS} seeds — the driver of run length, not minutes.`
+            + ` This act is too small to keep its own guarantees: ${[...new Set(shortfalls)].join(', ')} per map.`
+          : `nodes across ${ESTIMATE_SEEDS} seeds — the driver of run length, not minutes`;
+        bound.classList.toggle('warn', shortfalls.length > 0);
+      }
+
+      seedRefusal();
+    };
+  }
+
   // Custom Climb is the screen Constantine asked for so a short run could be
   // REPEATED, and this field is what makes a run repeatable. Same component,
   // same sentence, same refusal as the ordinary new-run screen — the vocabulary
   // is not retyped here, and there is no second place for it to drift.
   const seed = attachSeedField($('#cr-seed'));
-  const seedRefusal = refusesWhen($('#cr-start'), () => seed.problem(), () => {
+  // ONE reason function for the one button. The seed field and the run shape
+  // both refuse here, and they refuse through the same component for the same
+  // reason: a control a player can see and cannot use has to say why, where
+  // they are looking. Two independent guards on one button would be two chances
+  // to disagree about whether it is usable.
+  const startProblem = () => seed.problem() || shapeProblem();
+  const seedRefusal = refusesWhen($('#cr-start'), startProblem, () => {
     const cls = registries.classes.all().find((c) => c.id === state.classId);
     return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
       + ` at <b>Ascension ${state.ascension}</b>.<br>Results are kept out of win-rate stats.`;
@@ -23124,15 +24778,28 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
 
   $('#cr-back').addEventListener('click', onBack);
   $('#cr-start').addEventListener('click', () => {
-    if (seed.problem()) return; // the refusal already said why, at the button
+    if (startProblem()) return; // the refusal already said why, at the button
+    const mapShape = mapShapeEntry();
     onStart({
       classId: state.classId,
       seedString: $('#cr-seed').value.trim(),
-      custom: { ascension: state.ascension, mods: { ...state.mods }, deckMode: state.deckMode },
+      custom: {
+        ascension: state.ascension,
+        mods: { ...state.mods },
+        deckMode: state.deckMode,
+        // Absent, not null, when untouched — `custom` keeps the exact shape it
+        // has always had for an ordinary Custom Climb.
+        ...(mapShape ? { mapShape } : {}),
+      },
     });
   });
 
   refreshModChips();
+  if (shapeable) {
+    $('#cr-shape-floors-why').textContent =
+      `${floorsMin} is the shortest act this content's own floor rules resolve at — below it two fixed ranks land on the same floor.`;
+    refreshShape();
+  }
 }
 
 
@@ -28923,7 +30590,42 @@ const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { sfx } = require("src/ui/sfx.js");
 
-function mountRest(app, { registries, run, onDone, healMult = 1 }) {
+// THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
+// arrival — this screen reports, it never decides, and it is passed the plan
+// rather than re-deriving it so the sentence cannot disagree with the flasks.
+//
+// IT SAYS WHAT IT COULD NOT DO — but only the half a PLAYER is owed. Two things
+// go on this screen: what you were handed, and what the shrine could not hand
+// you because your slots were full. Silence on the second is the real failure
+// mode: a player given nothing and told nothing concludes the shrine is broken.
+//
+// AND THE `NOT BINDING` DECLARATION IS DELIBERATELY *NOT* HERE, which is a
+// ruling and not an oversight. The first draft printed it and I photographed
+// it: six letter-spaced lines at 390x844 about a resource that does not exist,
+// over a Rest button. A player has never heard of a mana flask and is owed
+// nothing about one. The inert row still names itself — in the Advanced debug
+// row's own line, and in `node tools/gracerefill.mjs` — which is where the
+// person who needs that sentence is standing. Audience, not censorship: the
+// same fact, at the door the reader who needs it comes through.
+//
+// NOTHING AT ALL when the plan granted nothing and had nothing to confess (a
+// table of zeroes, the feature switched off in Advanced). Sunna's rule: a state
+// that needs no words needs silence.
+function refillLineHtml(registries, refill) {
+  if (!refill) return '';
+  const said = [];
+  if (refill.total) {
+    const byId = new Map();
+    for (const id of refill.grants) byId.set(id, (byId.get(id) || 0) + 1);
+    const named = [...byId].map(([id, n]) => `${n} × ${esc(registries.flasks.get(id).name)}`);
+    said.push(`Flasks refilled: ${named.join(', ')}.`);
+  }
+  for (const s of refill.shortfalls) said.push(`Flask slots full — ${s.short} not given.`);
+  if (!said.length) return '';
+  return `<p class="rest-refill">${said.join(' ')}</p>`;
+}
+
+function mountRest(app, { registries, run, onDone, healMult = 1, refill = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
@@ -28932,6 +30634,7 @@ function mountRest(app, { registries, run, onDone, healMult = 1 }) {
     <div class="screen">
       <h2 style="color:var(--gold);font-size:26px">SHRINE OF EMBER</h2>
       <p class="subtitle">THE GOLD LIGHT HOLDS, FOR NOW</p>
+      ${refillLineHtml(registries, refill)}
       <div class="class-row">
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
@@ -30049,8 +31752,58 @@ const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
 const { balance } = require("src/content/balance.js");
 const { ZOOM_STEPS, MAP_ZOOM_DEFAULT } = require("src/model/mapview.js");
 const { MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE } = require("src/model/mapknowledge.js");
+const { flasks } = require("src/content/flasks.js");
+const { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } = require("src/model/gracerefill.js");
 
 const UI_DEFAULTS = balance.ui;
+const EQ_DEFAULTS = balance.equipment;
+
+// ---- the grace-refill rows: DERIVED, one per row of the table --------------
+//
+// Constantine asked for the flask refill to be "configurable in teh debug
+// settings and be data driven" in one breath, and this is the only shape that
+// is both at once. These rows are not authored. `balance.graceRefill` is walked
+// and each row becomes one Advanced chip strip, so a third refilled kind is a
+// row in content and NOTHING here — which is the Law 0 falsifier for this
+// feature, and `tools/gracerefill.mjs --selftest` runs it.
+//
+// THE LADDER IS DERIVED TOO: 0 … balance.flaskSlots, from graceRefillLadder.
+// Raising the carry cap lengthens every strip with no edit here, and 0 is a
+// real position — his own debug switch for turning the whole thing off.
+//
+// FIVE CHIPS AT flaskSlots: 3. Marina measured four chips at 92.1 px tall on
+// 390x844 and seven at 301.2 px with the last chip off-viewport; five is inside
+// that, and tools/axisfit.mjs is what says so rather than this comment.
+//
+// KEY SHAPE `graceRefill.<kind>`: one key per kind, so a stored override
+// survives a table reorder. `settingOn` is not involved — these are choices.
+const GRACE_REFILL_KEY = (kind) => `graceRefill.${kind}`;
+
+// What a kind is CALLED to a human. A kind with no entry here falls back to the
+// id, so a new kind gets a working row before anyone writes it prose — the row
+// appears ugly rather than not at all.
+const KIND_LABELS = { hp: 'HP', mana: 'Mana', utility: 'Utility' };
+const kindLabel = (k) => KIND_LABELS[k] || k;
+
+function graceRefillRows() {
+  const cap = flaskSlotCap(balance);
+  return graceRefillTable(balance).map((row) => ({
+    cat: 'Advanced',
+    key: GRACE_REFILL_KEY(row.kind),
+    type: 'choice',
+    def: String(row.count),
+    choices: graceRefillLadder(balance),
+    label: `Grace refill — ${kindLabel(row.kind)} flasks`,
+    applied: graceRefillAppliedHtml,
+    graceRefillKind: row.kind,
+    // SHORT, and Marina's own measurement is why: a long note beside a chip
+    // strip squeezes the text column to a ribbon (she took one row from 92.1 px
+    // to 216.9 px proving it). What the row DOES is one clause; what it
+    // RESOLVES TO is the applied line below, which changes with the value and
+    // therefore earns its space.
+    note: `Topped up automatically on arrival at a shrine. 0 is off; ${cap} slots in total.`,
+  }));
+}
 
 const ROWS = [
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
@@ -30252,6 +32005,30 @@ const ROWS = [
     // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
     // else to on a Thursday holds on my own row on the same Thursday.
     note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
+  // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
+  // 2026-08-08: *"let's default to costing 2 actions. alternatively, or by a
+  // setting, different weapon categories have weapon swap costs. THAT WAY I CAN
+  // TRY EACH."* He asked to feel three prices, so the row is the way to feel
+  // them; the rules themselves are rows in balance.equipment.swapCostRules.
+  //
+  // ADVANCED, because Advanced is this game's debugging surface and that is
+  // where the last knob he asked to "try" went (Hold to confirm, same
+  // category). It is a tuning question he wants to answer by playing, not a
+  // preference the game should be asking a first-time player.
+  //
+  // `choices` and `def` are DERIVED, never typed. The zoom row two screens up
+  // carried four of a six-step ladder for a night because someone typed the
+  // list; a fourth rule row is a row in balance.js and nothing here.
+  { cat: 'Advanced', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
+    choices: (EQ_DEFAULTS.swapCostRules || []).map((r) => r.id), label: 'Weapon swap cost',
+    // ONE SENTENCE PER RULE AND NO MORE, on the measurement in the row above:
+    // a long note squeezes the text column beside a chip strip. Three chips,
+    // three clauses.
+    note: 'What switching armament sets costs mid-fight. FLAT charges the same for every weapon; TALISMAN & RELIC starts there and lets your gear make it dearer or cheaper; WEAPON CATEGORY prices it by the weapon you are drawing — a heavy one is slow, a quick one is not. Takes effect on the next fight.' },
+  // Advanced is the debugging surface — his word, and where Hold to confirm
+  // already lives. These rows are generated from balance.graceRefill; see the
+  // block above the ROWS array.
+  ...graceRefillRows(),
 ];
 
 // ---- categories: a heading is DERIVED from what is under it (#78) ----------
@@ -30458,6 +32235,82 @@ function rowHtml(settings, r) {
 function appliedSlot(settings, r) {
   if (!r.applied) return '';
   return `<div class="set-applied-slot" data-applied="${r.key}">${r.applied(settings, r) || ''}</div>`;
+}
+
+/**
+ * resolveGraceRefill(settings) → { counts, bad: [{ key, kind, stored, used }] }
+ *
+ * THE ONE HOME FOR "how many flasks does a grace give", asked by the shrine
+ * (main.js showRest), by the co-op session, and by the row below that prints
+ * it. The authored numbers are `balance.graceRefill`; this only ever layers a
+ * stored override on top, and the override has to be a position on the row's
+ * own ladder.
+ *
+ * `bad` IS THE POINT, exactly as it is for resolveTapSize: a sparse store is
+ * normal and absence means "use the authored count" with nothing to report. A
+ * key that is PRESENT and not on the ladder is bad data — a hand-edited save, a
+ * restored profile from a tree with a smaller carry cap — and it still has to
+ * resolve to something, so it resolves to the authored count and SAYS SO. A
+ * refill that quietly ignores the number on the screen is the failure this
+ * whole feature is supposed to be the opposite of.
+ */
+function resolveGraceRefill(settings) {
+  const s = settings || {};
+  const counts = {};
+  const bad = [];
+  for (const r of ROWS) {
+    if (!r.graceRefillKind) continue;
+    const def = Number(r.def);
+    const stored = s[r.key];
+    if (stored === undefined || stored === null || stored === '') {
+      counts[r.graceRefillKind] = def;
+      continue;
+    }
+    const v = String(stored);
+    if (r.choices.includes(v)) {
+      counts[r.graceRefillKind] = Number(v);
+    } else {
+      counts[r.graceRefillKind] = def;
+      bad.push({ key: r.key, kind: r.graceRefillKind, stored: v, used: def });
+    }
+  }
+  return { counts, bad };
+}
+
+// THE LINE UNDER A GRACE-REFILL ROW. It exists to make two states impossible to
+// miss and one impossible to fake:
+//
+//   NOT BINDING — the kind has no flask entry, so whatever number is showing,
+//   this restores nothing. Freja's pattern, and the reason it is not silence:
+//   a chip strip reading 3 over a refill that gives 0 is a knob whose value is
+//   ignored, which Law 0 clause 5 calls the dangerous failure.
+//
+//   the rejected stored value — same sentence resolveTapSize's row prints.
+//
+//   0 says "off" in words, because a lone 0 chip is ambiguous between "off"
+//   and "not set".
+//
+// It names the flask a kind resolves to, at the value chosen, so the derivation
+// is visible on the screen the choice is made on rather than inferable from
+// content/flasks.js.
+function graceRefillAppliedHtml(settings, r) {
+  const { counts, bad } = resolveGraceRefill(settings);
+  const kind = r.graceRefillKind;
+  const n = counts[kind];
+  const rejected = bad.find((b) => b.kind === kind);
+  const lead = rejected
+    ? `<b>${esc(rejected.stored)}</b> is not one of these — using ${rejected.used}. `
+    : '';
+  // Asked of the content array rather than the registry: this module is UI and
+  // is never handed registries. The RULE is `firstFlaskOfKind`, one home,
+  // shared with the plan and with boot validation.
+  const entry = firstFlaskOfKind(flasks, kind);
+  if (!entry) {
+    return `${lead}<b>NOT BINDING</b> — nothing declares kind “${esc(kind)}”, so a grace restores none. `
+      + `Declared so it works the day something does.`;
+  }
+  if (n === 0) return `${lead}Off — a grace tops up no ${esc(kindLabel(kind))} flasks.`;
+  return `${lead}A grace tops you up to ${n} × ${esc(entry.name)}.`;
 }
 
 /**
@@ -30982,7 +32835,7 @@ function openSettings({ meta, onChange, saves = null, onProfileRestored = null }
 }
 
 
-Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, resolveTapSize, renderSettings, showSettingsNotice, openSettings });
+Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, resolveGraceRefill, resolveTapSize, renderSettings, showSettingsNotice, openSettings });
 
 },
 "src/ui/screens/profileArchive.js": function (module, exports, require) {

@@ -11,7 +11,7 @@ import { contentBundle } from './content/index.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
-import { runMods, stampDeck, addToStorage, carriedIds } from './model/loadout.js';
+import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
@@ -26,6 +26,7 @@ import {
   rollRelicReward,
   buildShopStock,
   rollArmamentDrop,
+  applyGraceRefill,
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
@@ -43,7 +44,7 @@ import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, resolveTapSize } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -629,7 +630,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  run.mapGraph = buildActMap(registries, rng, contentAct());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
   persist();
   showMap();
 }
@@ -662,6 +663,14 @@ function contentAct() {
   return endlessOn() ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
 }
 
+// The Custom Climb debug shape (floors cap, columns cap, node weights) or null
+// for an ordinary run. It rides on `run.custom`, so it is saved and reloaded
+// with everything else the run chose — a resumed short run stays short, and act
+// 2 is generated at the same shape act 1 was.
+function runMapShape() {
+  return (run.custom && run.custom.mapShape) || null;
+}
+
 // The map-build sequence itself lives in engine/actmap.js (the one boot path,
 // #54) — this file only decides which act and where the graph is stored.
 
@@ -678,7 +687,7 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
-  run.mapGraph = buildActMap(registries, rng, contentAct());
+  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape());
   persist();
   showMap();
 }
@@ -1151,6 +1160,11 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     enemyIds: enc.enemies,
     hpMult: cm.hpMult,
     enemyStatuses: cm.enemyStatuses,
+    // WHICH SWAP PRICE THIS FIGHT IS UNDER (A8). Read once, here, at the same
+    // point the other per-fight rules are decided — Settings → Advanced changes
+    // it for the NEXT fight, which is what the row's note promises, and is why
+    // there is no live re-read inside the swap.
+    swapCostRule: resolveSwapCostRule(registries, saves.loadMeta()),
     // `self.*` mods (Strength from an oathsworn set, Regen from a warm habit)
     // enter through the same door Custom Climb buffs already used — the engine
     // has no equipment code, only statuses applied at combat start.
@@ -1285,10 +1299,24 @@ function shopPriceMult() {
 function showRest() {
   audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+  // AUTOMATIC, AND IT HAPPENS BEFORE THE CHOICE. Constantine: "flasks should
+  // refill automatically at graces". Not a third option beside Rest and Smith —
+  // arriving is the trigger, so a run that comes to smith is refilled exactly
+  // like a run that comes to rest. The counts come from balance.graceRefill
+  // through the Advanced debug rows; `bad` is a stored override that is not on
+  // the ladder, and it is named in the command log rather than swallowed
+  // (the same treatment applyTapSize gives a bad tapFloor).
+  const { counts, bad } = resolveGraceRefill(saves.loadMeta().settings || {});
+  for (const b of bad) {
+    dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
+  }
+  const refill = applyGraceRefill(registries, run, { counts });
+  if (refill.total) persist();
   mountRest(app, {
     registries,
     run,
     healMult,
+    refill,
     onDone: () => {
       persist();
       showMap();
