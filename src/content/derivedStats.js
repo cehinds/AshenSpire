@@ -1,9 +1,8 @@
 // src/content/derivedStats.js — inert contract for post-Phase-1 derived stats.
 //
 // Nothing imports this from the shipping content bundle yet. Phase 1 owns the
-// attribute allocation and its save/session shape; this table may be joined to
-// that allocation only after Phase 1 lands. Until then it is data exercised by
-// tools/derivedstats.mjs, not a gameplay switch.
+// attribute allocation and its save/session shape; this table is exercised by
+// tools/derivedstats.mjs but remains deliberately outside gameplay wiring.
 
 export const derivedStatRules = {
   rulesetVersion: 1,
@@ -17,11 +16,13 @@ export const derivedStatRules = {
       base: 1,
       sourceStat: 'dexterity',
       gainPerTier: 1,
+      cap: null,
     },
     draw: {
       base: 3,
       sourceStat: 'intelligence',
       gainPerTier: 1,
+      cap: null,
     },
     hp: {
       base: { strategy: 'classField', field: 'maxHp' },

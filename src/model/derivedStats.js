@@ -6,6 +6,7 @@
 
 export const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana']);
 export const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
+export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1]);
 export const DERIVED_STAT_SNAPSHOT_VERSION = 1;
 
 const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules'];
@@ -109,8 +110,8 @@ export function derivedStatRuleProblems(source, options = {}) {
   const opts = normalizedOptions(options);
   if (!plainObject(source)) return [{ path: 'derivedStatRules', msg: 'must be a plain object' }];
   unknownFields(out, source, ROOT_FIELDS, 'derivedStatRules');
-  if (!Number.isInteger(source.rulesetVersion) || source.rulesetVersion <= 0) {
-    problem(out, 'rulesetVersion', 'must be a positive integer');
+  if (!Number.isInteger(source.rulesetVersion) || !DERIVED_STAT_RULESET_VERSIONS.includes(source.rulesetVersion)) {
+    problem(out, 'rulesetVersion', `must be one of ${DERIVED_STAT_RULESET_VERSIONS.join(', ')}`);
   }
   validateDefaults(out, source.defaults, 'defaults', { partial: false });
   if (!plainObject(source.rules)) {
@@ -217,8 +218,8 @@ export function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
   if (snapshot.snapshotVersion !== DERIVED_STAT_SNAPSHOT_VERSION) {
     throw new Error(`Unknown derived-stat snapshotVersion ${snapshot.snapshotVersion} (expected ${DERIVED_STAT_SNAPSHOT_VERSION})`);
   }
-  if (snapshot.rulesetVersion !== 1) {
-    throw new Error(`Unknown derived-stat rulesetVersion ${snapshot.rulesetVersion} (expected 1)`);
+  if (!DERIVED_STAT_RULESET_VERSIONS.includes(snapshot.rulesetVersion)) {
+    throw new Error(`Unknown derived-stat rulesetVersion ${snapshot.rulesetVersion} (supported: ${DERIVED_STAT_RULESET_VERSIONS.join(', ')})`);
   }
   if (!plainObject(snapshot.rules) || snapshot.rules.rulesetVersion !== snapshot.rulesetVersion) {
     throw new Error('Derived-stat snapshot rulesetVersion disagrees with its rules');

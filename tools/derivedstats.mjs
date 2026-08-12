@@ -1,14 +1,15 @@
 // tools/derivedstats.mjs — executable contract for the inert derived-stat table.
 //
-// This deliberately does not enter tests/run-node.mjs until Phase 1 lands.
-// It imports no run/combat/session code and supplies the Phase 1 attribute
-// vocabulary as an explicit dependency, so this branch cannot wire mechanics
-// by accident.
+// This deliberately does not enter tests/run-node.mjs while the rules remain
+// inert. It imports no run/combat/session code and reads the Phase 1 attribute
+// vocabulary from its authoritative table, so this branch cannot wire mechanics
+// or drift the attribute order by accident.
 
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { derivedStatRules } from '../src/content/derivedStats.js';
+import { attributes as phase1Attributes } from '../src/content/attributes.js';
 import {
   derivedStatRuleProblems,
   resolveDerivedStatRules,
@@ -18,7 +19,7 @@ import {
 } from '../src/model/derivedStats.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const ATTRIBUTE_IDS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
+const ATTRIBUTE_IDS = phase1Attributes.slice().sort((a, b) => a.order - b.order).map((row) => row.id);
 const CLASS = { id: 'reaver', maxHp: 84, maxMana: 40 };
 let failures = 0;
 let checks = 0;
@@ -108,10 +109,16 @@ check('a finite cap clamps the final value and null means uncapped', () => {
   equal(deriveStat(resolved(), 'energy', { attributes: { dexterity: 10 }, classDef: CLASS }).value, 3, 'uncapped');
 });
 
-check('cap null stays unbounded at a deliberately high stat', () => {
-  const out = deriveStat(resolved(), 'energy', { attributes: { dexterity: 5000 }, classDef: CLASS });
-  equal(out.tier, 1000, 'high-stat tier');
-  equal(out.value, 1001, 'uncapped high-stat Energy');
+check('shipped Energy and Draw both declare cap null and grow unbounded at high stats', () => {
+  equal(derivedStatRules.rules.energy.cap, null, 'Energy cap');
+  equal(derivedStatRules.rules.draw.cap, null, 'Draw cap');
+  const rules = resolved();
+  const energy = deriveStat(rules, 'energy', { attributes: { dexterity: 5000 }, classDef: CLASS });
+  const draw = deriveStat(rules, 'draw', { attributes: { intelligence: 5000 }, classDef: CLASS });
+  equal(energy.tier, 1000, 'high-stat Energy tier');
+  equal(energy.value, 1001, 'uncapped high-stat Energy');
+  equal(draw.tier, 1000, 'high-stat Draw tier');
+  equal(draw.value, 1003, 'uncapped high-stat Draw');
 });
 
 check('class-field bases are live data references and calculations mutate no input', () => {
@@ -175,6 +182,7 @@ const rootNumericMutants = [
   ['rulesetVersion zero', (x) => { x.rulesetVersion = 0; }, 'rulesetVersion'],
   ['rulesetVersion fractional', (x) => { x.rulesetVersion = 1.5; }, 'rulesetVersion'],
   ['rulesetVersion NaN', (x) => { x.rulesetVersion = Number.NaN; }, 'rulesetVersion'],
+  ['unsupported positive rulesetVersion', (x) => { x.rulesetVersion = 2; }, 'rulesetVersion'],
   ['default pointsPerTier NaN', (x) => { x.defaults.pointsPerTier = Number.NaN; }, 'defaults.pointsPerTier'],
   ['default cap negative', (x) => { x.defaults.cap = -1; }, 'defaults.cap'],
   ['default cap infinite', (x) => { x.defaults.cap = Infinity; }, 'defaults.cap'],
@@ -285,7 +293,7 @@ check('resume refuses an unknown snapshot envelope version by name', () => {
   assert(/snapshotVersion 999/.test(message), `snapshot refusal not named: ${message}`);
 });
 
-check('the dependency seam is mechanically inert before Phase 1 lands', () => {
+check('the Phase 1 dependency seam remains mechanically inert', () => {
   const consumers = [
     'src/model/state.js', 'src/model/resources.js', 'src/engine/actions.js',
     'src/engine/combat.js', 'src/engine/coopCombat.js', 'tools/session.mjs',
