@@ -63,7 +63,6 @@ export function createRunState({
   // Armour can carry `self.maxHp`, so the pool it sets has to be known before
   // hp is filled — the run starts at full, in whatever it starts wearing.
   const oldMaxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
-  const oldMaxMana = classDef.maxMana;
   const run = {
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
@@ -77,8 +76,6 @@ export function createRunState({
     mapNodeId: null,
     hp: oldMaxHp,
     maxHp: oldMaxHp,
-    mana: oldMaxMana,
-    maxMana: oldMaxMana,
     cinders: registries.balance.startingCinders || 0,
     deck: createDeck(classDef.startingDeck, idGen),
     loadout,
@@ -133,7 +130,9 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const existing = snapshot || run.derivedStatRuleSnapshot;
-  if (existing && run.derivedStatRuleSnapshot
+  const currentRuleset = registries.derivedStatRules.rulesetVersion;
+  const existingIsCurrent = existing && existing.rulesetVersion === currentRuleset;
+  if (existingIsCurrent && run.derivedStatRuleSnapshot
     && run.maxHp !== undefined && run.hp !== undefined
     && run.maxMana !== undefined && run.mana !== undefined
     && run.maxStamina !== undefined && run.stamina !== undefined
@@ -142,7 +141,10 @@ export function initializeRunDerivedStats(run, registries, {
     return run;
   }
 
-  const receipt = existing
+  // v1 carried class-authored 40/60/80 Mana pools. It is readable so its
+  // current/max ratio can be migrated, but it is never retained as authority.
+  if (existing && !existingIsCurrent) restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+  const receipt = existingIsCurrent
     ? restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries))
     : createDerivedStatRuleSnapshot(registries.derivedStatRules, derivedOptions(registries, derivedStatOptions));
   const classDef = registries.classes.get(run.class);
@@ -167,8 +169,9 @@ export function initializeRunDerivedStats(run, registries, {
   if (preserveDeficits && Number.isFinite(oldHpMax) && Number.isFinite(oldHp)) {
     run.hp = Math.max(0, run.maxHp - Math.max(0, oldHpMax - oldHp));
   } else run.hp = run.maxHp;
-  if (preserveDeficits && Number.isFinite(oldManaMax) && Number.isFinite(oldMana)) {
-    run.mana = Math.max(0, run.maxMana - Math.max(0, oldManaMax - oldMana));
+  if (preserveDeficits && Number.isFinite(oldManaMax) && oldManaMax > 0 && Number.isFinite(oldMana)) {
+    const legacyRatio = Math.max(0, Math.min(1, oldMana / oldManaMax));
+    run.mana = Math.max(0, Math.min(run.maxMana, Math.round(legacyRatio * run.maxMana)));
   } else run.mana = run.maxMana;
   run.stamina = run.maxStamina;
   return run;

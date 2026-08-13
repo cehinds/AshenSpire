@@ -52,8 +52,9 @@ export function createCombat({
   swapCostRule = null,
 }) {
   const bal = registries.balance || {};
-  const classMaxMana = registries.classes.get(player.classId).maxMana;
-  const maxMana = player.maxMana != null ? player.maxMana : classMaxMana;
+  // Run creation owns derived Mana. Older headless fixtures without a Mana
+  // pool get a harmless zero pool; class data is never a fallback authority.
+  const maxMana = Number.isFinite(player.maxMana) ? player.maxMana : 0;
   const combat = {
     registries,
     rng,

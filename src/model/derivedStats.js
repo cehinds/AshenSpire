@@ -6,7 +6,9 @@
 
 export const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana']);
 export const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
-export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1]);
+// v1 is readable only so an unreleased class-base Mana snapshot can migrate to
+// v2. New snapshots always use the authored v2 table.
+export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2]);
 export const DERIVED_STAT_SNAPSHOT_VERSION = 1;
 
 const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules'];

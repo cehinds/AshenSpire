@@ -22,8 +22,8 @@ export const flasks = [
     icon: '🫙',
     artKey: 'flask-azure',
     tint: '#75a9ff',
-    effects: [{ op: 'restoreMana', amount: 20 }],
-    textTemplate: 'Restore 20 Mana.',
+    effects: [{ op: 'restoreMana', amount: 1 }],
+    textTemplate: 'Restore 1 Mana.',
   },
   {
     id: 'flaskOfFerocity',

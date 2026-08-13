@@ -10,7 +10,6 @@ export const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
-    maxMana: 40,
     startingRelic: 'forsakenMedallion',
     startingDeck: [
       'strike', 'strike', 'strike', 'strike', 'strike',
@@ -39,7 +38,6 @@ export const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
-    maxMana: 80,
     startingRelic: 'starstoneShard',
     startingDeck: [
       'strike', 'strike', 'strike', 'strike', 'strike',
@@ -66,7 +64,6 @@ export const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
-    maxMana: 60,
     startingRelic: 'goldFigurine',
     startingDeck: [
       'strike', 'strike', 'strike', 'strike', 'strike',

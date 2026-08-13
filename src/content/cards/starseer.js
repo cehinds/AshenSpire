@@ -18,7 +18,7 @@ const GAIN_CHARGE = { op: 'applyStatus', target: 'self', status: 'starstoneCharg
 export const starseerCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, manaCost: 10, type: 'attack',
+    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '💎',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },

@@ -216,14 +216,9 @@ export function validateContent(bundle) {
     });
   }
 
-  // Resource ceilings and costs are semantic bounds, not merely integer
-  // shapes. A zero maximum would make a 0/0 bar; a negative cost would mint
-  // mana when a card is played. Both are refused at the content door.
-  for (const cls of Array.isArray(b.classes) ? b.classes : []) {
-    if (cls && Number.isInteger(cls.maxMana) && cls.maxMana <= 0) {
-      err(`classes.${cls.id || '?'}.maxMana`, 'must be > 0');
-    }
-  }
+  // Mana costs are semantic bounds, not merely integer shapes. A negative
+  // cost would mint Mana when a card is played. Mana maxima are derived from
+  // the rules table; classes deliberately own no second maximum.
   for (const card of Array.isArray(b.cards) ? b.cards : []) {
     if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
       err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
@@ -262,7 +257,7 @@ export function validateContent(bundle) {
   for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
-    classFields: ['maxHp', 'maxMana'],
+    classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------

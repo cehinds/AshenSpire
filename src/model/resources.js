@@ -44,6 +44,7 @@
  * Both numbers are measured, not asserted — tools/hudbars.mjs --scales prints
  * this table from this function.
  */
+
 export function resourceScale(v) {
   return v; // LINEAR. Swap for Math.sqrt(v) or Math.log1p(v) — nothing else moves.
 }
@@ -137,19 +138,13 @@ function maxOf(values) {
  * Derived once per registries, not per frame.
  */
 export function resourceDomains(registries) {
-  const classes = registries.classes.all();
   const enemies = registries.enemies.all();
-  // Equipment can raise a run's max HP (loadout.js runMods, `self.maxHp=+N`),
-  // so the player ceiling is the best class plus the best reachable bonus.
-  const eq = registries.equipment || {};
-  let bonus = 0;
-  for (const piece of [...(eq.armour || []), ...(eq.armaments || [])]) {
-    for (const raw of (piece && piece.mods) || []) {
-      const m = /^self\.maxHp=\+?(-?\d+)$/.exec(String(raw).trim());
-      if (m) bonus = Math.max(bonus, Number(m[1]));
-    }
-  }
-  const playerPop = classes.map((c) => ({ maxHp: (c.maxHp || 0) + bonus, maxMana: c.maxMana, maxStamina: 0, poiseMax: undefined }));
+  const playerPop = [{
+    maxHp: registries.statDomains.hp,
+    maxMana: registries.statDomains.mana,
+    maxStamina: registries.statDomains.stamina,
+    poiseMax: undefined,
+  }];
   const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
   const pops = { main: playerPop, model: bothPop };
   const out = {};

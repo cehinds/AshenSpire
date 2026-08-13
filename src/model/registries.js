@@ -8,6 +8,7 @@
 
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { applyCardMods } from './loadout.js';
+import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 
 /** Recursively freeze a value in place (functions and frozen values skipped). */
 export function deepFreeze(value) {
@@ -115,6 +116,31 @@ export function createRegistries(contentBundle) {
   // by (slot, class) far more often than by bare id, and armour ids repeat
   // across classes on purpose. They ride along frozen, like balance.
   registries.equipment = deepFreeze({ ...(bundle.equipment || {}) });
+
+  // Visual scaling domains use the same derived-stat engine as run creation.
+  // They are content potential (the largest legal creation allocation), not a
+  // gameplay cap and not a second formula in the HUD.
+  const attributeIds = registries.attributes.ids();
+  const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
+  const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
+  let hpEquipmentBonus = 0;
+  for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
+    for (const raw of (piece && piece.mods) || []) {
+      const match = /^self\.maxHp=\+?(-?\d+)$/.exec(String(raw).trim());
+      if (match) hpEquipmentBonus = Math.max(hpEquipmentBonus, Number(match[1]));
+    }
+  }
+  const domainRows = registries.classes.all().map((classDef) => ({
+    hp: deriveStat(rules, 'hp', { attributes: ceilingAttributes, classDef }).value + hpEquipmentBonus,
+    mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value,
+    stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value,
+  }));
+  registries.statDomains = deepFreeze({
+    hp: Math.max(...domainRows.map((row) => row.hp)),
+    mana: Math.max(...domainRows.map((row) => row.mana)),
+    stamina: Math.max(...domainRows.map((row) => row.stamina)),
+  });
 
   // What can be earned. A table, like equipment — evaluated against saved
   // progress by model/unlocks.js, never by anything in here.

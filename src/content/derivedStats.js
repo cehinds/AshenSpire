@@ -5,7 +5,7 @@
 // tools/derivedstats.mjs but remains deliberately outside gameplay wiring.
 
 export const derivedStatRules = {
-  rulesetVersion: 1,
+  rulesetVersion: 2,
   defaults: {
     pointsPerTier: 5,
     rounding: 'floor',
@@ -35,11 +35,12 @@ export const derivedStatRules = {
       gainPerTier: 1,
     },
     mana: {
-      // Keep every current class's authored Mana floor when this is eventually
-      // wired; Wisdom adds to it instead of silently replacing 40/80/60.
-      base: { strategy: 'classField', field: 'maxMana' },
+      // Small-unit pool: WIS is the only authored Mana authority. Classes do
+      // not carry a second base pool that can drift from this row.
+      base: 0,
       sourceStat: 'wisdom',
       gainPerTier: 1,
+      cap: null,
     },
   },
 };

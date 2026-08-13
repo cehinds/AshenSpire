@@ -164,7 +164,7 @@ const REG_CHARM = {
 };
 
 // deck: array of cardId strings or { id, up: true }
-function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, relicIds = [], flasks = [] } = {}) {
+function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 20, maxMana = 20, relicIds = [], flasks = [] } = {}) {
   const rng = createRng(seed >>> 0);
   const instances = deck.map((d, i) => {
     const isObj = typeof d === 'object';
@@ -173,7 +173,7 @@ function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], 
   return createCombat({
     registries: REG,
     rng,
-    player: { classId: 'reaver', maxHp, hp, deck: instances, relicIds, flasks },
+    player: { classId: 'reaver', maxHp, hp, mana, maxMana, deck: instances, relicIds, flasks },
     enemyIds: enemies,
   });
 }
@@ -1151,7 +1151,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const c = createCombat({
       registries: REG,
       rng: createRng(0x51deb00b),
-      player: { classId: 'reaver', maxHp: 78, hp: 78, deck, relicIds: ['forsakenMedallion'] },
+      player: { classId: 'reaver', maxHp: 78, hp: 78, mana: 2, maxMana: 2, deck, relicIds: ['forsakenMedallion'] },
       enemyIds: ['fellWarden'],
     });
     let guard = 0;
@@ -1371,7 +1371,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       const c = createCombat({
         registries: REG,
         rng: createRng(0xabc0 + classId.length),
-        player: { classId, maxHp: cls.maxHp, hp: cls.maxHp, deck, relicIds: [cls.startingRelic] },
+        player: { classId, maxHp: cls.maxHp, hp: cls.maxHp, mana: 2, maxMana: 2, deck, relicIds: [cls.startingRelic] },
         enemyIds: ['wyrmAspirant'],
       });
       let guard = 0;
@@ -1392,45 +1392,45 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
   test('20b. Mana is real state: validated maxima, spend/refuse/restore, save migration, and zero/max HUD plans', () => {
     const fresh = createRunState({ seed: 0x6d616e61, classId: 'reaver', registries: REG });
-    eq(fresh.mana, 42, 'run starts at its WIS-derived mana maximum');
-    eq(fresh.maxMana, 42, 'Reaver maximum starts from class data and adds WIS tiers');
+    eq(fresh.mana, 2, 'run starts at its WIS-derived mana maximum');
+    eq(fresh.maxMana, 2, 'Reaver maximum is base-zero WIS tiers');
     assert(validateRunShape(fresh).length === 0, 'the new run shape accepts a sound mana pool');
-    assert(validateRunShape({ ...fresh, mana: 43 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
+    assert(validateRunShape({ ...fresh, mana: 3 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
 
     const badMax = validateContent({
       ...contentBundle,
       classes: contentBundle.classes.map((c) => c.id === 'reaver' ? { ...c, maxMana: 0 } : c),
     });
-    assert(!badMax.ok && badMax.errors.some((e) => e.path === 'classes.reaver.maxMana'), 'zero class maxMana is refused at the content door');
+    assert(!badMax.ok && badMax.errors.some((e) => e.path === 'classes.reaver.maxMana'), 'class maxMana authority is refused at the content door');
     const badCost = validateContent({
       ...contentBundle,
       cards: contentBundle.cards.map((c) => c.id === 'gorefireSlash' ? { ...c, manaCost: -1 } : c),
     });
     assert(!badCost.ok && badCost.errors.some((e) => e.path === 'cards.gorefireSlash.manaCost'), 'negative manaCost cannot mint mana');
 
-    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'] });
+    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 2, maxMana: 2 });
     const sig = spend.piles.hand[0];
     const pv = previewCard(spend, sig.instanceId);
-    eq(pv.manaCost, 10, 'preview exposes the same mana cost execution charges');
+    eq(pv.manaCost, 1, 'preview exposes the same mana cost execution charges');
     dispatch(spend, { type: 'playCard', cardInstanceId: sig.instanceId, targetId: 'e1' });
-    eq(spend.player.mana, 30, 'signature starter spends 10 mana');
-    assert(logOf(spend, 'manaSpent').some((e) => e.amount === 10), 'mana spend emits a receipt');
+    eq(spend.player.mana, 1, 'signature starter spends 1 mana');
+    assert(logOf(spend, 'manaSpent').some((e) => e.amount === 1), 'mana spend emits a receipt');
 
-    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'] });
-    empty.player.mana = 9;
+    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 0, maxMana: 2 });
+    empty.player.mana = 0;
     const beforeHand = empty.piles.hand.length;
     let refused = '';
     try { dispatch(empty, { type: 'playCard', cardInstanceId: empty.piles.hand[0].instanceId, targetId: 'e1' }); }
     catch (e) { refused = e.message; }
     assert(refused.includes('Not enough mana'), 'under-cost play is refused by name');
-    eq(empty.player.mana, 9, 'refusal spends no mana');
+    eq(empty.player.mana, 0, 'refusal spends no mana');
     eq(empty.piles.hand.length, beforeHand, 'refusal moves no card');
 
-    const flask = makeCombat({ deck: Array(5).fill('strike'), flasks: [{ flaskId: 'azureFlask' }] });
-    flask.player.mana = 25;
+    const flask = makeCombat({ deck: Array(5).fill('strike'), flasks: [{ flaskId: 'azureFlask' }], mana: 0, maxMana: 2 });
+    flask.player.mana = 0;
     dispatch(flask, { type: 'useFlask', slot: 0 });
-    eq(flask.player.mana, 40, 'Azure Flask restores and clamps at maxMana');
-    assert(logOf(flask, 'manaRestored').some((e) => e.amount === 15), 'restoration receipt reports the amount actually gained');
+    eq(flask.player.mana, 1, 'Azure Flask restores one small Mana unit');
+    assert(logOf(flask, 'manaRestored').some((e) => e.amount === 1), 'restoration receipt reports the amount actually gained');
 
     const storage = createMemoryStorage();
     const saves = createSaveManager(storage);
@@ -1439,18 +1439,18 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     delete old.maxMana;
     storage.setItem(RUN_KEY, JSON.stringify(old));
     const migrated = saves.loadRun(REG);
-    eq(migrated.mana, 42, 'pre-mana save migrates to full derived mana');
-    eq(migrated.maxMana, 42, 'pre-mana save derives class base plus WIS tiers');
+    eq(migrated.mana, 2, 'pre-mana save migrates to full derived mana');
+    eq(migrated.maxMana, 2, 'pre-mana save derives base-zero WIS tiers');
 
     const domains = resourceDomains(REG);
     const zero = { ...empty.player, mana: 0 };
     const atZero = resourceBarPlan(REG, 'main', zero, zero, domains).find((b) => b.id === 'mana');
     eq(atZero.cur, 0, 'zero edge is a real empty mana plan');
     eq(atZero.pct, 0, 'zero edge has zero fill');
-    const star = { maxHp: 72, hp: 72, maxMana: 80, mana: 80 };
+    const star = { maxHp: 72, hp: 72, maxMana: 3, mana: 3 };
     const atMax = resourceBarPlan(REG, 'main', star, star, domains).find((b) => b.id === 'mana');
     eq(atMax.pct, 100, 'max edge fills the mana trough');
-    eq(atMax.lengthPct, 100, 'largest authored maxMana fills the derived row track');
+    eq(atMax.lengthPct, 100, 'largest legal WIS-derived maxMana fills the derived row track');
   });
 
   // ---- 21. M3 phase 2: Acts II–III mechanics ------------------------------------------------

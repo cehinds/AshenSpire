@@ -15,7 +15,7 @@ const one = { f: 'add', args: [1] };
 export const heraldCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 10, type: 'skill',
+    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, type: 'skill',
     keywords: [], icon: '✚',
     effects: [{ op: 'heal', target: 'self', amount: 4 }],
     textTemplate: 'Heal {heal} HP.',

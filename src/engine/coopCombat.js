@@ -116,7 +116,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
 function addPlayerState(C, p, { initial = false } = {}) {
   const entity = createPlayerCombatEntity({
     classId: p.classId, maxHp: p.maxHp, hp: p.hp != null ? p.hp : p.maxHp,
-    maxMana: p.maxMana != null ? p.maxMana : C.registries.classes.get(p.classId).maxMana,
+    maxMana: Number.isFinite(p.maxMana) ? p.maxMana : 0,
     mana: p.mana,
     maxStamina: p.maxStamina, stamina: p.stamina,
     relicIds: p.relicIds || [], flasks: p.flasks || [],

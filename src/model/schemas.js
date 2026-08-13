@@ -677,7 +677,6 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
-    maxMana: int,
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),
