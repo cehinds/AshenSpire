@@ -24,16 +24,20 @@ import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox } from '../fx.js';
-import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation } from '../uiContent.js';
+import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
-import { flaskIdentityHtml } from '../components/flask.js';
+import { flaskActionPlan } from '../../model/flaskActions.js';
+import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js';
+import { beatArmer } from '../components/holdconfirm.js';
+import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
+  const arm = beatArmer(meta, registries);
   let snap = null;
   // Couch co-op: this screen may control several seats; `me` is the ACTIVE one.
   let seats = (myIds && myIds.length ? myIds : [myId]).slice();
@@ -46,6 +50,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   let pacing = false; // an enemy-turn replay is holding the render
   let pendingSnap = null; // newest snapshot that arrived while pacing
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
+  let endTurnBeat = null; // pointer-only; named keyboard/pad activation is immediate
 
   conn.setHandlers({
     onMessage: (msg) => {
@@ -58,6 +63,30 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   // Every game intent carries the ACTIVE seat (`as`); the server validates
   // ownership and falls back to the connection's main seat.
   const send = (obj) => conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
+
+  const sendFlaskUse = ({ slot = null, targetId = undefined, chargeKind = null } = {}) => send({
+    t: 'flaskIntent',
+    intent: { action: 'use', ...(slot != null ? { slot } : {}), ...(targetId ? { targetId } : {}), ...(chargeKind ? { chargeKind } : {}) },
+  });
+
+  function openCoopFlaskMenu(anchor, def, meP, { slot = null, chargeKind = null, remaining = 1 } = {}) {
+    const canUse = meP.alive && meP.connected && !meP.ended && remaining > 0;
+    const useReason = remaining <= 0 ? 'No charges remaining'
+      : !meP.connected ? 'This player is disconnected'
+        : !meP.alive ? 'This player is down' : meP.ended ? 'This turn has ended' : '';
+    const plan = flaskActionPlan({ context: 'combat', canUse, useReason });
+    mountFlaskActionMenu(anchor, {
+      def,
+      plan,
+      onCancel: () => {},
+      onAction: (actionId) => {
+        if (actionId !== 'use') return;
+        if (chargeKind) sendFlaskUse({ chargeKind });
+        else if (def.targeted) sendFlaskUse({ slot, targetId: selectedEnemy });
+        else { armedFlask = armedFlask === slot ? null : slot; armedAllyCard = null; render(); }
+      },
+    });
+  }
 
   function setSeat(i) {
     if (i === seatIdx || !seats[i]) return;
@@ -113,7 +142,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     if (!meP || !meP.alive || !meP.connected) return;
     if (ev.key === 'e' || ev.key === 'E') { if (!meP.ended) send({ t: 'endTurn' }); return; }
     const fl = { f: 0, g: 1, h: 2 }[ev.key.toLowerCase()];
-    if (fl != null && meP.flasks && meP.flasks[fl]) { send({ t: 'useFlask', slot: fl, targetId: selectedEnemy }); return; }
+    if (fl != null && meP.flasks && meP.flasks[fl]) {
+      app.querySelector(`[data-coop-flask-slot="${fl}"]`)?.click();
+      return;
+    }
     const idx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
     if (idx >= 0 && !meP.ended && meP.hand[idx]) {
       const c = meP.hand[idx];
@@ -147,6 +179,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   function teardown() {
     document.removeEventListener('keydown', keyHandler);
     clearInterval(padTimer);
+    if (endTurnBeat) endTurnBeat();
+    endTurnBeat = null;
     removeSeatTabs();
     if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
   }
@@ -156,6 +190,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
 
   function render() {
     if (!snap) return;
+    if (endTurnBeat) endTurnBeat();
+    endTurnBeat = null;
     const mm = myMember();
     if (mm && mm.catchupQueue && mm.catchupQueue.length) return renderCatchup(mm);
     if (snap.scene.kind !== 'combat') prevCombat = null;
@@ -186,6 +222,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const presentation = statusInstancePresentation(def, inst);
       const el = document.createElement('div');
       el.className = 'status-icon';
+      const semanticAttrs = statusInstanceSemanticAttrs(presentation);
+      el.setAttribute('data-status-id', semanticAttrs['data-status-id']);
+      el.setAttribute('data-status-value-token', semanticAttrs['data-status-value-token']);
+      el.setAttribute('aria-label', semanticAttrs['aria-label']);
       el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${esc(presentation.valueText)}</span>`;
       attachTooltip(el, () => `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}`);
@@ -296,7 +336,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       box.appendChild(statusRow(p.statuses));
       if (arming && p.alive && p.connected) box.addEventListener('click', () => {
         if (armedAllyCard) { send({ t: 'playCard', cardInstanceId: armedAllyCard, targetId: p.id }); armedAllyCard = null; }
-        else { send({ t: 'useFlask', slot: armedFlask, targetId: p.id === me ? undefined : p.id }); armedFlask = null; }
+        else { sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id }); armedFlask = null; }
       });
       zone.appendChild(box);
     }
@@ -366,28 +406,26 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     // Flasks.
     const fwrap = app.querySelector('.coop-flasks');
     if (fwrap && meP) {
-      for (const [kind, flaskId] of [['hp', 'crimsonFlask'], ['mana', 'azureFlask']]) {
-        const fd = registries.flasks.get(flaskId);
+      for (const kind of CHARGE_FLASK_KINDS) {
+        const fd = chargeFlaskDefinition(registries, kind);
         const current = meP.flaskCharges ? meP.flaskCharges[`${kind}Current`] : 0;
         const b = document.createElement('button');
         b.className = 'coop-flask flask-charge';
-        b.disabled = current <= 0;
+        b.setAttribute('aria-disabled', String(current <= 0));
         b.innerHTML = `${flaskIdentityHtml(fd)} <b>${current}</b>`;
         b.setAttribute('aria-label', `${fd.name}: ${current} charges remaining`);
         attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
-        b.addEventListener('click', () => send({ t: 'useFlask', chargeKind: kind }));
+        b.addEventListener('click', () => openCoopFlaskMenu(b, fd, meP, { chargeKind: kind, remaining: current }));
         fwrap.appendChild(b);
       }
       meP.flasks.forEach((f, i) => {
         const fd = registries.flasks.get(f.flaskId);
         const b = document.createElement('button');
         b.className = `coop-flask${armedFlask === i ? ' armed' : ''}`;
+        b.dataset.coopFlaskSlot = String(i);
         b.innerHTML = `${flaskIdentityHtml(fd)}${fd.targeted ? '' : ' ▾'}`;
         attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
-        b.addEventListener('click', () => {
-          if (fd.targeted) { send({ t: 'useFlask', slot: i, targetId: selectedEnemy }); armedFlask = null; }
-          else { armedFlask = armedFlask === i ? null : i; render(); }
-        });
+        b.addEventListener('click', () => openCoopFlaskMenu(b, fd, meP, { slot: i }));
         fwrap.appendChild(b);
       });
     }
@@ -396,7 +434,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     const et = app.querySelector('#coop-endturn');
     et.disabled = !canEnd;
     et.classList.toggle('pulse', canEnd && meP.energy > 0);
-    if (canEnd) et.addEventListener('click', () => send({ t: 'endTurn' }));
+    endTurnBeat = arm(et, 'endTurn', {
+      onConfirm: () => {
+        const current = snap && snap.scene && snap.scene.kind === 'combat'
+          ? snap.scene.players.find((p) => p.id === me)
+          : null;
+        if (current && current.alive && current.connected && !current.ended) send({ t: 'endTurn' });
+      },
+    });
+    endTurnBeat.refresh();
     const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; armedAllyCard = null; render(); });
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;

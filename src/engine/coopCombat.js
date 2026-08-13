@@ -28,6 +28,8 @@
 // supported. Per-seat once/limitPerTurn gating is handled: setActive publishes
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
+import { chargeFlaskId } from '../model/gracerefill.js';
+
 import * as A from './actions.js';
 import * as S from './statuses.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
@@ -57,8 +59,6 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
     phase: 'setup', // 'player' | 'enemy' | 'ended' | 'suspended'
     result: null,
     handMax: bal.handMax != null ? bal.handMax : 10,
-    drawPerTurn: bal.draw != null ? bal.draw : 5,
-    energyMax: bal.energy != null ? bal.energy : 3,
     enemies: [],
     eventLog: [],
     queue: [],
@@ -124,8 +124,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     mana: p.mana,
     maxStamina: p.maxStamina, stamina: p.stamina,
     relicIds: p.relicIds || [], flasks: p.flasks || [], flaskCharges: p.flaskCharges || null,
-    energyMax: p.energyMax != null ? p.energyMax : C.energyMax,
-    drawPerTurn: p.drawPerTurn != null ? p.drawPerTurn : C.drawPerTurn,
+    energyMax: p.energyMax,
+    drawPerTurn: p.drawPerTurn,
   });
   const deck = (p.deck || []).map((c) => ({
     instanceId: c.instanceId,
@@ -383,7 +383,7 @@ export function useFlask(C, playerId, slot, targetId, chargeKind = null) {
   const P = C.players.get(playerId);
   if (!P || !P.connected || !P.entity.alive) throw new Error(`Player '${playerId}' cannot act`);
   const p = P.entity;
-  const chargeId = chargeKind === 'hp' ? 'crimsonFlask' : chargeKind === 'mana' ? 'azureFlask' : null;
+  const chargeId = chargeFlaskId(C.registries, chargeKind);
   const currentKey = chargeKind && `${chargeKind}Current`;
   if (chargeId && (!p.flaskCharges || p.flaskCharges[currentKey] <= 0)) throw new Error(`No ${chargeKind} flask charges`);
   const flask = chargeId ? { flaskId: chargeId } : p.flasks[slot];

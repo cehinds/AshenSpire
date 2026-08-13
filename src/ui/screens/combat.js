@@ -12,7 +12,7 @@ import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation } from '../uiContent.js';
+import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -27,7 +27,9 @@ import { resourceBars, markFlooredBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../components/holdconfirm.js';
-import { flaskPresentation } from '../components/flask.js';
+import { flaskActionPlan } from '../../model/flaskActions.js';
+import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
+import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -109,6 +111,37 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
+
+  function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1 } = {}) {
+    const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
+    const useReason = remaining <= 0 ? 'No charges remaining'
+      : busy ? 'Wait for the current action to finish'
+        : combat.result ? 'Combat is already over' : combat.phase !== 'player' ? 'Wait for your turn' : '';
+    const plan = flaskActionPlan({ context: 'combat', canUse, useReason });
+    mountFlaskActionMenu(anchor, {
+      def,
+      plan,
+      onCancel: () => {},
+      onAction: (actionId) => {
+        if (actionId !== 'use') return;
+        if (def.targeted) {
+          selectedFlask = selectedFlask === slot ? null : slot;
+          selected = null;
+          selfArm = null;
+          render();
+        } else {
+          useFlask(slot, null, chargeKind);
+        }
+      },
+      // The menu is the selection boundary; the explicit Use row still reads
+      // the shared second-beat rule rather than inventing a screen-local rule.
+      wireAction: (row, button, invoke) => {
+        if (row.id !== 'use' || !row.enabled) return false;
+        arm(button, 'useFlask', { ctx: { targeted: !!def.targeted }, onConfirm: invoke });
+        return true;
+      },
+    });
+  }
 
   // Entering targeting mode: move the focus cursor onto an enemy so keyboard /
   // gamepad players confirm a target next, not wander into the top bar. Prefer
@@ -390,28 +423,32 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def))}`);
       relics.appendChild(el);
     }
-    // Flask slots — click to drink; targeted flasks enter targeting mode.
+    // Flask selection is inert. Every slot opens one shared action plan; only
+    // its explicit Use row may spend a charge or enter targeting mode.
     const flasks = $('.topbar .flasks');
     flasks.innerHTML = '';
-    for (const [kind, flaskId] of [['hp', 'crimsonFlask'], ['mana', 'azureFlask']]) {
-      const def = registries.flasks.get(flaskId);
+    for (const kind of CHARGE_FLASK_KINDS) {
+      const def = chargeFlaskDefinition(registries, kind);
       const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
       const el = document.createElement('button');
       el.className = 'relic flask-slot flask-charge';
-      el.disabled = current <= 0;
+      el.type = 'button';
+      el.setAttribute('aria-disabled', String(current <= 0));
       el.appendChild(flaskPresentation(def, { showName: false }));
       const count = document.createElement('b');
       count.className = 'flask-charge-count';
       count.textContent = String(current);
       el.appendChild(count);
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
-      arm(el, 'useFlask', { ctx: { targeted: false }, onConfirm: () => useFlask(null, null, kind) });
+      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current }));
       flasks.appendChild(el);
     }
     p.flasks.forEach((f, slot) => {
       const def = registries.flasks.get(f.flaskId);
-      const el = document.createElement('div');
+      const el = document.createElement('button');
+      el.type = 'button';
       el.className = 'relic flask-slot';
+      el.dataset.flaskSlot = String(slot);
       el.style.cursor = 'pointer';
       if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
       el.appendChild(flaskPresentation(def, { showName: false }));
@@ -428,26 +465,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       // gesture the button actually wants cannot drift — and the icon is far too
       // small for the HOLD word the event bars carry (hidden in ui.css).
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`
-        + (def.targeted ? '<br><i>Click, then choose a target.</i>'
-          : el.dataset.beat === 'hold' ? '<br><i>Hold to drink.</i>' : '<br><i>Click to drink.</i>'));
-      // A DRUNK FLASK DOES NOT COME BACK THIS CLIMB, and nobody asked for this
-      // one — it is in the table because a set is the thing that makes a gap
-      // visible, and it is wired because the machinery already existed by the
-      // time it was found. A TARGETED flask owes no beat and the row says why:
-      // it enters aim mode, so the second beat is already in the gesture.
-      arm(el, 'useFlask', {
-        ctx: { targeted: !!def.targeted },
-        onConfirm: () => {
-          if (busy || combat.result) return;
-          if (def.targeted) {
-            selectedFlask = selectedFlask === slot ? null : slot;
-            selected = null;
-            render();
-          } else {
-            useFlask(slot, null);
-          }
-        },
-      });
+        + '<br><i>Open actions to Use or Inspect.</i>');
+      el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot }));
       flasks.appendChild(el);
     });
   }
@@ -489,6 +508,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       if (def.proc && stacks <= 0) continue;
       const el = document.createElement('div');
       el.className = 'status-icon';
+      const semanticAttrs = statusInstanceSemanticAttrs(presentation);
+      el.setAttribute('data-status-id', semanticAttrs['data-status-id']);
+      el.setAttribute('data-status-value-token', semanticAttrs['data-status-value-token']);
+      el.setAttribute('aria-label', semanticAttrs['aria-label']);
       el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       // Collapsed proc meter (M4 display cap): ring-fill pip — the pip's own
       // background is a conic fill in the row's tint, same value/threshold
@@ -893,23 +916,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       return;
     }
 
-    // Flask quick-use (F/G/H by default, rebindable; pads route through the
-    // same bound keys). Drinks immediately, or enters aim mode when targeted.
+    // Flask keys select a slot and open its menu; they never auto-use.
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
-        const f = combat.player.flasks[slot];
-        if (!f) return;
-        const fdef = registries.flasks.get(f.flaskId);
-        if (fdef.targeted) {
-          selectedFlask = slot;
-          selected = null;
-          selfArm = null;
-          render();
-          focusTargeting();
-        } else {
-          useFlask(slot, null);
-        }
+        const slotEl = $(`.flask-slot[data-flask-slot="${slot}"]`);
+        if (slotEl) slotEl.click();
         return;
       }
     }

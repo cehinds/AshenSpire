@@ -26,7 +26,7 @@ import { esc } from '../components/tooltip.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { sfx } from '../sfx.js';
 import { flaskIdentityHtml } from '../components/flask.js';
-import { reallocateFlaskCharges } from '../../model/gracerefill.js';
+import { chargeFlaskDefinition, reallocateFlaskCharges } from '../../model/gracerefill.js';
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -68,6 +68,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
   const arm = beatArmer(meta, registries);
+  const hpCharge = chargeFlaskDefinition(registries, 'hp');
+  const manaCharge = chargeFlaskDefinition(registries, 'mana');
 
   app.innerHTML = `
     <div class="screen">
@@ -88,7 +90,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         <div class="class-pick" id="flask-reallocate">
           <div class="glyph">⚗</div>
           <h3>Reallocate Flask Charges</h3>
-          <p>Fixed capacity ${run.flaskCharges.capacity}: Crimson ${run.flaskCharges.hp} · Azure ${run.flaskCharges.mana}</p>
+          <p>Fixed capacity ${run.flaskCharges.capacity}: ${flaskIdentityHtml(hpCharge)} ${run.flaskCharges.hp} · ${flaskIdentityHtml(manaCharge)} ${run.flaskCharges.mana}</p>
           <div class="flask-allocation-controls">
             ${Array.from({ length: run.flaskCharges.capacity + 1 }, (_, hp) => `<button type="button" data-hp="${hp}">${hp}/${run.flaskCharges.capacity - hp}</button>`).join('')}
           </div>

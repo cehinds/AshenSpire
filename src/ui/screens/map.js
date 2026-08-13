@@ -34,7 +34,8 @@ import { classGlyph, tintCss } from '../assets.js';
 import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { mountMapBoard } from '../components/mapboard.js';
-import { flaskPresentation } from '../components/flask.js';
+import { flaskActionPlan } from '../../model/flaskActions.js';
+import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 
 /**
@@ -162,10 +163,30 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const flaskWrap = app.querySelector('.mh-flasks');
   for (const f of run.flasks) {
     const def = registries.flasks.get(f.flaskId);
-    const el = document.createElement('span');
+    const el = document.createElement('button');
+    el.type = 'button';
     el.className = 'mh-flask';
     el.appendChild(flaskPresentation(def, { showName: false }));
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
+    el.addEventListener('click', () => {
+      const plan = flaskActionPlan({
+        context: 'run',
+        canUse: false,
+        useReason: 'Flasks can only be used in combat',
+        canDrop: true,
+      });
+      mountFlaskActionMenu(el, {
+        def,
+        plan,
+        onCancel: () => {},
+        onAction: (actionId) => {
+          if (actionId !== 'drop') return;
+          const at = run.flasks.indexOf(f);
+          if (at >= 0) run.flasks.splice(at, 1);
+          el.remove();
+        },
+      });
+    });
     flaskWrap.appendChild(el);
   }
 

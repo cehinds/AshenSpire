@@ -20,9 +20,10 @@
 
 import { FLASK_KINDS } from './schemas.js';
 
-export const CHARGE_FLASK_IDS = Object.freeze(['crimsonFlask', 'azureFlask']);
-export function isFlaskChargeId(id) { return CHARGE_FLASK_IDS.includes(id); }
-export function utilityFlaskIds(registries) { return registries.flasks.ids().filter((id) => !isFlaskChargeId(id)); }
+export const CHARGE_FLASK_KINDS = Object.freeze(['hp', 'mana']);
+// Save-schema compatibility only. Runtime identity is derived from the current
+// authored definitions below; these ids recognize pre-authority saves.
+const LEGACY_CHARGE_FLASK_KIND_BY_ID = Object.freeze({ crimsonFlask: 'hp', azureFlask: 'mana' });
 
 export function flaskCapacity(balance) {
   const value = balance && balance.flaskCapacity;
@@ -101,6 +102,33 @@ export function firstFlaskOfKind(defs, kind) {
   return null;
 }
 
+/** The current authored definition backing a charge-pool kind. */
+export function chargeFlaskDefinition(registries, kind) {
+  if (!CHARGE_FLASK_KINDS.includes(kind)) return null;
+  const def = firstFlaskOfKind(registries && registries.flasks && registries.flasks.all(), kind);
+  if (!def) throw new Error(`Missing authored '${kind}' charge flask definition`);
+  return def;
+}
+
+/** Current content id for a charge kind; never a UI/engine literal. */
+export function chargeFlaskId(registries, kind) {
+  return chargeFlaskDefinition(registries, kind)?.id || null;
+}
+
+/** Reverse current content identity, with one explicit legacy-save seam. */
+export function chargeKindForFlask(registries, id) {
+  if (typeof id !== 'string' || !id) return null;
+  for (const kind of CHARGE_FLASK_KINDS) {
+    if (chargeFlaskId(registries, kind) === id) return kind;
+  }
+  return LEGACY_CHARGE_FLASK_KIND_BY_ID[id] || null;
+}
+
+export function isFlaskChargeId(registries, id) { return chargeKindForFlask(registries, id) != null; }
+export function utilityFlaskIds(registries) {
+  return registries.flasks.ids().filter((id) => !isFlaskChargeId(registries, id));
+}
+
 /** Every flask id of a kind, in registry (authored) order. */
 export function flasksOfKind(registries, kind) {
   return registries.flasks.all().filter((d) => flaskKindOf(d) === kind).map((d) => d.id);
@@ -112,10 +140,11 @@ export function graceRefillTable(balance) {
   return Array.isArray(t) ? t : [];
 }
 
-/** The carry cap. One home: `balance.flaskSlots`, same default the UI uses. */
+/** The carry cap. One strict home: `balance.flaskSlots`. */
 export function flaskSlotCap(balance) {
   const n = balance && balance.flaskSlots;
-  return typeof n === 'number' && Number.isFinite(n) ? n : 3;
+  if (!Number.isInteger(n) || n <= 0) throw new Error('balance.flaskSlots must be a positive integer');
+  return n;
 }
 
 /**
@@ -129,8 +158,7 @@ export function flaskSlotCap(balance) {
  */
 export function graceRefillLadder(balance) {
   const cap = flaskSlotCap(balance);
-  const n = Number.isInteger(cap) && cap >= 0 ? cap : 3;
-  return Array.from({ length: n + 1 }, (_, i) => String(i));
+  return Array.from({ length: cap + 1 }, (_, i) => String(i));
 }
 
 /**
