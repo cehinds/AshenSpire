@@ -1,6 +1,8 @@
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
 
+let activeFlaskActionMenu = null;
+
 /** One data-owned identity fragment; every surface may add its own surrounding copy. */
 export function flaskIdentityHtml(def, { showName = true, className = '' } = {}) {
   const art = def.artAsset
@@ -25,8 +27,9 @@ export function flaskPresentation(def, options = {}) {
  */
 export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireAction } = {}) {
   if (!anchor || !def || !plan) throw new Error('mountFlaskActionMenu requires anchor, def, and plan');
-  const prior = anchor.closest('.combat,.mapscreen')?.querySelector('.flask-action-menu');
-  if (prior) prior.remove();
+  // One menu at a time, and close through its lifecycle so its window-level
+  // controller Cancel listener cannot survive after the DOM has gone.
+  if (activeFlaskActionMenu) activeFlaskActionMenu.close({ cancelled: true });
   const root = document.createElement('div');
   root.className = 'flask-action-menu';
   root.setAttribute('role', 'menu');
@@ -38,9 +41,19 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
   const close = ({ cancelled = false } = {}) => {
     if (closed) return;
     closed = true;
+    window.removeEventListener('keydown', onGlobalCancel);
     root.remove();
+    if (activeFlaskActionMenu?.root === root) activeFlaskActionMenu = null;
     if (cancelled && onCancel) onCancel();
     if (anchor.isConnected && typeof anchor.focus === 'function') anchor.focus();
+  };
+  // Gamepad Cancel is a synthesized Escape dispatched on window by input.js,
+  // not on the focused button. Root bubbling covers physical keyboard Escape;
+  // this mounted listener is the parity seam for pad B / Back.
+  const onGlobalCancel = (ev) => {
+    if (ev.key !== 'Escape' && ev.key !== 'Backspace') return;
+    ev.preventDefault();
+    close({ cancelled: true });
   };
   for (const row of plan.actions) {
     const button = document.createElement('button');
@@ -80,7 +93,9 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
     else if (ev.key === 'Home') { ev.preventDefault(); buttons[0]?.focus(); }
     else if (ev.key === 'End') { ev.preventDefault(); buttons.at(-1)?.focus(); }
   });
+  window.addEventListener('keydown', onGlobalCancel);
   (anchor.closest('.combat,.mapscreen') || document.body).appendChild(root);
   (buttons.find((button) => button.getAttribute('aria-disabled') === 'false') || buttons[0])?.focus();
-  return Object.freeze({ root, buttons: Object.freeze(buttons), close });
+  activeFlaskActionMenu = Object.freeze({ root, buttons: Object.freeze(buttons), close });
+  return activeFlaskActionMenu;
 }
