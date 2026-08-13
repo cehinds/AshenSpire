@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
+import { stampDeck } from '../src/model/loadout.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
@@ -159,6 +160,24 @@ check('run card instances persist both carriers and resolved definitions agree',
   equal(stable.damageSchool, attack.damageSchool, 'live profile drift rewrote saved school');
   equal(stable.exposureBuildupPerHit, attack.exposureBuildupPerHit, 'live profile drift rewrote saved buildup');
 
+  const signature = run.deck.find((card) => !card.equipmentRole && card.damageSchool === 'magic');
+  assert(signature, 'persisted non-equipment magic signature absent');
+  const cardDrift = mutableBundle();
+  const driftedSignatureDef = cardDrift.cards.find((card) => card.id === signature.cardId);
+  driftedSignatureDef.damageSchool = 'arcane';
+  driftedSignatureDef.exposureBuildupPerHit = 99;
+  const driftR = createRegistries(cardDrift);
+  const resumedUnderCardDrift = saves.loadRun(driftR);
+  const restampedSignature = resumedUnderCardDrift.deck.find((card) => card.instanceId === signature.instanceId);
+  // Equipment swaps use this same re-stamp door. A signature is not an
+  // equipment role and must keep the host-authored values saved with the run.
+  stampDeck(driftR, resumedUnderCardDrift);
+  equal(restampedSignature.damageSchool, signature.damageSchool, 'equipment re-stamp rewrote saved signature school from live content');
+  equal(restampedSignature.exposureBuildupPerHit, signature.exposureBuildupPerHit, 'equipment re-stamp rewrote saved signature buildup from live content');
+  const finalSignature = resolveCard(driftR, restampedSignature);
+  equal(finalSignature.damageSchool, signature.damageSchool, 'final signature resolution drifted after re-stamp');
+  equal(finalSignature.exposureBuildupPerHit, signature.exposureBuildupPerHit, 'final signature buildup drifted after re-stamp');
+
   const legacy = JSON.parse(storage.getItem(RUN_KEY));
   for (const card of legacy.deck) {
     delete card.damageSchool;
@@ -190,6 +209,9 @@ check('co-op cloning preserves host-authored card carriers without recomputing t
     .find((card) => card.instanceId === source.instanceId);
   equal(cloned.damageSchool, source.damageSchool, 'co-op clone lost school');
   equal(cloned.exposureBuildupPerHit, source.exposureBuildupPerHit, 'co-op clone lost buildup');
+  const resolved = resolveCard(registries, cloned);
+  equal(resolved.damageSchool, source.damageSchool, 'co-op final resolution changed host school');
+  equal(resolved.exposureBuildupPerHit, source.exposureBuildupPerHit, 'co-op final resolution changed host buildup');
 });
 
 check('combat cloning preserves the host-authored card carriers', () => {
