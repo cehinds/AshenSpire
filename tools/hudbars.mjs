@@ -212,6 +212,55 @@ const fails = [];
 const notes = [];
 const fail = (id, msg) => { fails.push(`${id}  ${msg}`); };
 
+function seatIdentityFailures(seats, expectedName = 'Wren') {
+  const errors = [];
+  for (const seat of seats) {
+    if (!seat.identity) {
+      errors.push(`seat "${seat.rawText || '?'}" has no .coop-seat-name identity span`);
+      continue;
+    }
+    if (seat.line.left < -0.5 || seat.line.right > seat.viewport + 0.5
+      || seat.identity.left < -0.5 || seat.identity.right > seat.viewport + 0.5) {
+      errors.push(`seat "${seat.text}" leaves the viewport (${seat.line.left.toFixed(1)}..${seat.line.right.toFixed(1)} of ${seat.viewport})`);
+    }
+  }
+  if (!seats.some((seat) => seat.identity && seat.text.includes(expectedName))) {
+    errors.push(`${expectedName}'s seat identity is absent`);
+  }
+  return errors;
+}
+
+// Negative control for A8: deleting the authored identity span must make both
+// the per-seat and expected-name clauses fail. This prevents a future optional
+// lookup from turning an absent identity into a green containment reading.
+function proveMissingSeatIdentityFails() {
+  const mutant = [{
+    line: { left: 0, right: 100 }, identity: null, text: '', rawText: 'Wren (you)', viewport: 320,
+  }];
+  const errors = seatIdentityFailures(mutant);
+  if (!errors.some((error) => error.includes('identity span'))
+    || !errors.some((error) => error.includes("Wren's seat identity is absent"))) {
+    throw new Error('A8 negative control is dead: deleting the co-op identity did not fail');
+  }
+}
+
+function compactResourceIdentityFailures(label, expected, glyph) {
+  const errors = [];
+  if (!label.includes(glyph)) errors.push(`glyph "${glyph}" is absent`);
+  const number = `${expected.cur}/${expected.max}`;
+  if (!label.includes(number)) errors.push(`value is not authoritative ${number}`);
+  return errors;
+}
+
+// Negative control for A7: an old numeric expectation must fail even when the
+// glyph and current value still look plausible.
+function proveManaNumericDriftFails() {
+  const errors = compactResourceIdentityFailures('◆ 20/40', { cur: 20, max: 42 }, '◆');
+  if (!errors.some((error) => error.includes('20/42'))) {
+    throw new Error('A7 negative control is dead: a stale Mana maximum did not fail');
+  }
+}
+
 async function sweepShape(b, href, [w, h]) {
   await b.cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false }, b.S);
   const rows = [];
@@ -240,29 +289,40 @@ async function captureLayoutPage(b, href, [w, h], state, tree) {
     const compact = await b.ev(`(() => {
       const bar = document.querySelector('.combat .topbar .resbar[data-res="mana"]');
       const visible = [...bar.querySelectorAll('.label > span')].find((s) => getComputedStyle(s).display !== 'none');
-      return visible ? visible.textContent.trim() : '';
+      const player = window.__combat && window.__combat.player;
+      return {
+        label: visible ? visible.textContent.trim() : '',
+        expected: player ? { cur: player.mana, max: player.maxMana } : null,
+      };
     })()`);
-    if (!compact.includes('◆') || !compact.includes('20/40')) {
-      fail('A7', `${tree} ${w}x${h}: compact Mana identity is "${compact}"; expected glyph and 20/40`);
+    if (!compact.expected) {
+      fail('A7', `${tree} ${w}x${h}: posed combat entity is absent; Mana identity authority is unknown`);
     } else {
-      notes.push(`A7 ${tree} ${w}x${h}: MANA IDENTITY ok — visible compact label is "${compact}"`);
+      const errors = compactResourceIdentityFailures(compact.label, compact.expected, '◆');
+      if (errors.length) {
+        fail('A7', `${tree} ${w}x${h}: compact Mana identity is "${compact.label}"; ${errors.join(', ')}`);
+      } else {
+        notes.push(`A7 ${tree} ${w}x${h}: MANA IDENTITY ok — visible compact label is "${compact.label}", matching the posed combat entity`);
+      }
     }
   } else {
     const seats = await b.ev(`(() => {
       const n = (r) => ({ left: r.left, right: r.right, width: r.width });
       return [...document.querySelectorAll('.combat.coop .coop-seat')].map((seat) => {
         const line = seat.querySelector('.coop-seat-name');
-        const player = seat.querySelector('.coop-seat-player');
-        return { seat: n(seat.getBoundingClientRect()), line: n(line.getBoundingClientRect()), player: n(player.getBoundingClientRect()), text: player.textContent.trim(), viewport: innerWidth };
+        const identity = line && line.querySelector(':scope > span');
+        return {
+          seat: n(seat.getBoundingClientRect()),
+          line: n(line.getBoundingClientRect()),
+          identity: identity ? n(identity.getBoundingClientRect()) : null,
+          text: identity ? identity.textContent.trim() : '',
+          rawText: line.textContent.trim(),
+          viewport: innerWidth,
+        };
       });
     })()`);
-    for (const seat of seats) {
-      if (seat.line.left < -0.5 || seat.line.right > seat.viewport + 0.5 || seat.player.left < -0.5 || seat.player.right > seat.viewport + 0.5) {
-        fail('A8', `${tree} ${w}x${h}: co-op seat "${seat.text}" leaves the viewport (${seat.line.left.toFixed(1)}..${seat.line.right.toFixed(1)} of ${seat.viewport})`);
-      }
-    }
-    if (!seats.some((seat) => seat.text.includes('Wren'))) fail('A8', `${tree} ${w}x${h}: Wren's seat identity is absent`);
-    else if (!fails.some((f) => f.startsWith('A8') && f.includes(`${tree} ${w}x${h}`))) {
+    for (const error of seatIdentityFailures(seats)) fail('A8', `${tree} ${w}x${h}: ${error}`);
+    if (!fails.some((f) => f.startsWith('A8') && f.includes(`${tree} ${w}x${h}`))) {
       notes.push(`A8 ${tree} ${w}x${h}: SEAT CONTAINMENT ok — Wren and both seat lines stay inside the viewport`);
     }
 
@@ -620,6 +680,8 @@ async function printFloor(b, href) {
 
 // ---------------------------------------------------------------------------
 async function main() {
+  proveMissingSeatIdentityFails();
+  proveManaNumericDriftFails();
   const artifact = resolve(TREE, 'dist/AshenSpire.html');
   if (!existsSync(artifact)) {
     console.error(`hudbars: no dist/AshenSpire.html under ${TREE} — run node tools/launch.mjs --build-only first`);
