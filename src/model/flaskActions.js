@@ -2,12 +2,13 @@
 // a flask returns this plan and never mutates state; only an explicit enabled
 // action may become a local or host-authorized intent.
 
-export const FLASK_ACTION_IDS = Object.freeze(['use', 'inspect', 'drop', 'store']);
-export const FLASK_ACTION_CONTEXTS = Object.freeze(['combat', 'run', 'storage']);
+const FLASK_ACTION_IDS = Object.freeze(['use', 'inspect', 'drop', 'store']);
+const FLASK_ACTION_CONTEXTS = Object.freeze(['combat', 'run', 'storage']);
 
 const LABELS = Object.freeze({ use: 'Use', inspect: 'Inspect', drop: 'Drop', store: 'Store' });
 
 function action(id, enabled, reason = '') {
+  if (!FLASK_ACTION_IDS.includes(id)) throw new Error(`Unknown flask action '${id}'`);
   return Object.freeze({ id, label: LABELS[id], enabled: !!enabled, reason: enabled ? '' : String(reason || `${LABELS[id]} is unavailable`) });
 }
 
@@ -26,4 +27,3 @@ export function flaskActionPlan({
   if (context === 'storage') actions.push(action('store', canStore, storeReason));
   return Object.freeze({ context, commitOnSelect: false, actions: Object.freeze(actions) });
 }
-
