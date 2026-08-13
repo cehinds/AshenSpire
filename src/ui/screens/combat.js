@@ -12,7 +12,7 @@ import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText } from '../uiContent.js';
+import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -483,6 +483,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
       const def = registries.statuses.get(sid);
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
+      const presentation = statusInstancePresentation(def, inst);
       // M1's "absent at zero", applied to pips too: a spent proc row (💧0
       // after a burst) is an empty frame, not information (Sunna's S-flag).
       if (def.proc && stacks <= 0) continue;
@@ -499,13 +500,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       }
       // A resistance pip's number is its countdown (M3 — the receipt reads in
       // turns); every other pip keeps its stack count.
-      const shown = def.resists && inst.duration != null ? inst.duration : stacks;
+      const shown = def.resists && inst.duration != null ? inst.duration : presentation.valueText;
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${shown}</span>`;
       attachTooltip(el, () => {
         let extra = '';
         if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
         if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
-        return `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(statusTooltipText(def))}${extra}`;
+        return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
       });
       row.appendChild(el);
     }

@@ -31,6 +31,30 @@ export function statusTooltipText(def) {
   return t;
 }
 
+// One typed instance presentation for both combat clients. A registered
+// percent payload is not a generic stack count; its duration is a separate
+// clock and must be named separately.
+export function statusInstancePresentation(def, inst) {
+  const rawValue = inst && inst.meter ? inst.meter.value : (inst && inst.stacks) || 0;
+  const durationText = inst && Number.isFinite(inst.duration)
+    ? `${inst.duration} ${inst.duration === 1 ? 'turn' : 'turns'}` : '';
+  if (def.schoolDamageVulnerability) {
+    const valueText = `${rawValue}%`;
+    return {
+      valueText,
+      durationText,
+      label: `${def.name} ${valueText}${durationText ? ` · ${durationText}` : ''}`,
+      tooltip: `${statusTooltipText(def)}${durationText ? ` Turns left: ${inst.duration}.` : ''}`,
+    };
+  }
+  return {
+    valueText: String(rawValue),
+    durationText,
+    label: `${def.name} ×${rawValue}`,
+    tooltip: `${statusTooltipText(def)}${durationText ? ` Turns left: ${inst.duration}.` : ''}`,
+  };
+}
+
 // ---- map node types ---------------------------------------------------------
 export const NODE_TYPES = {
   monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
