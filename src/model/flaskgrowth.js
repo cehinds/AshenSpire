@@ -202,6 +202,18 @@ export function flaskGrowthRefusals(bundle) {
   const b = bundle || {};
   const balance = b.balance;
   if (!balance || typeof balance !== 'object' || Array.isArray(balance)) return out;
+
+  // The cap's SHAPE is checked before the table's existence — a malformed
+  // flaskGrowthMax beside an absent table was silent in this function's first
+  // draft, and its own selftest caught it (MISS, 2026-08-13) before commit.
+  const max = flaskGrowthMax(balance);
+  if (balance.flaskGrowthMax !== undefined && max == null) {
+    out.push({
+      key: 'balance.flaskGrowthMax',
+      msg: `must be a positive integer — got ${JSON.stringify(balance.flaskGrowthMax)}.`,
+    });
+  }
+
   if (balance.flaskGrowth == null) return out; // no chain = no growth; legal.
 
   if (!Array.isArray(balance.flaskGrowth)) {
@@ -217,8 +229,18 @@ export function flaskGrowthRefusals(bundle) {
   const events = Array.isArray(b.events) ? b.events : [];
   const eventIds = new Set(events.map((e) => e && e.id).filter(Boolean));
   const eq = b.equipment || {};
-  const pieceIds = new Set(
-    [...(eq.armaments || []), ...(eq.armour || [])].map((p) => p && p.id).filter(Boolean)
+  // A talisman row must name a piece the talisman slot could actually hold —
+  // resolved against the slot's own `kinds` (generated/equipSlots.js), never
+  // against all pieces: a row naming a weapon id would validate forever and
+  // bind never, the silent-plausible failure Law 0 clause 5 names.
+  const talismanSlot = (eq.slots || []).find((s) => s && s.id === 'talisman');
+  const talismanKinds = talismanSlot
+    ? (Array.isArray(talismanSlot.kinds) ? talismanSlot.kinds : [talismanSlot.kinds])
+    : [];
+  const talismanIds = new Set(
+    [...(eq.armaments || []), ...(eq.armour || [])]
+      .filter((p) => p && talismanKinds.includes(p.kind))
+      .map((p) => p.id)
   );
 
   const seen = new Map();
@@ -314,12 +336,13 @@ export function flaskGrowthRefusals(bundle) {
         return;
       }
     }
-    if (source === 'talisman' && !pieceIds.has(id)) {
+    if (source === 'talisman' && !talismanIds.has(id)) {
       out.push({
         key: `${at}.id`,
-        msg: `'${id}' is not an equipment piece id — talismans are unauthored today (the slot ships empty, `
-          + 'generated/equipSlots.js), so every talisman row refuses here until the first talisman row is authored. '
-          + 'That day this refusal stops firing and the row binds with no code change.',
+        msg: `'${id}' is not a piece the talisman slot can hold (slot kinds: ${talismanKinds.join(', ') || 'none'}) — `
+          + 'talismans are unauthored today (the slot ships empty, generated/equipSlots.js), so every talisman row '
+          + 'refuses here until the first talisman piece is authored. That day this refusal stops firing and the row '
+          + 'binds with no code change.',
       });
       return;
     }
@@ -340,13 +363,7 @@ export function flaskGrowthRefusals(bundle) {
   //    binding (the seam's): base capacity + all growth, worst case all held.
   //    Under the vessel reading the bound becomes per-kind — that edit lives
   //    at the seam with the rest of C1's answer.
-  const max = flaskGrowthMax(balance);
-  if (balance.flaskGrowthMax !== undefined && max == null) {
-    out.push({
-      key: 'balance.flaskGrowthMax',
-      msg: `must be a positive integer — got ${JSON.stringify(balance.flaskGrowthMax)}.`,
-    });
-  } else if (max != null) {
+  if (max != null) {
     let base = 0;
     try { base = flaskCapacity(balance); } catch { /* its own refusal reports it */ }
     if (base + growthSum > max) {

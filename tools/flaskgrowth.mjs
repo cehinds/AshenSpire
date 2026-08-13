@@ -1,0 +1,277 @@
+#!/usr/bin/env node
+// tools/flaskgrowth.mjs — the growth chain's corpus, and proof it refuses.
+// Sten, 2026-08-13.
+//
+// Subject: balance.flaskGrowth (model/flaskgrowth.js) — D17 message 6's chain:
+// relics · quest events · talismans · flask seeds → max charges. The capacity
+// topology (pool vs vessel, the open C1 question) is bound in exactly one
+// function, syncFlaskGrowth; nothing in this file depends on which answer
+// wins, and the one plant that touches the binding says so where it does.
+//
+// THE DOORS (development.md, *The instrument rule*, same-door clause). A
+// known-bad handed below the defect exercises the half that was never in
+// doubt, so every plant here states its door:
+//
+//   DOOR 1 — CONTENT. The game boots `validateContent(contentBundle)` against
+//   the bundle from src/content/index.js. Every refusal plant mutates a deep
+//   copy of THAT bundle and hands it to THAT function. No synthetic bundle is
+//   built anywhere in this file.
+//
+//   DOOR 2 — THE RUN. Growth binds through `createRunState` (birth and the
+//   starting relic), `initializeRunFlaskCharges` (load), and the relic-gain
+//   sites, of which `executeRunEffects` op `addRelic` is the engine one.
+//   Behaviour plants enter there, through `createRegistries(bundle)`.
+//
+//   THE HONEST CEILING, named: relic LOSS has no real door (no opcode removes
+//   a relic), and talisman swap's real door is the equipment screen, which is
+//   a browser surface this headless file cannot walk. Those two plants mutate
+//   run state directly below their screens and SAY SO in their own names; the
+//   wiring from screen to sync is held instead by the source contracts at the
+//   bottom, flask-data-authority's pattern.
+//
+// Usage:
+//   node tools/flaskgrowth.mjs              # what the shipped chain contains
+//   node tools/flaskgrowth.mjs --selftest   # plants; exits 1 on any miss
+
+import { contentBundle } from '../src/content/index.js';
+import { validateContent } from '../src/model/validate.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createRunState, initializeRunFlaskCharges, validateRunShape } from '../src/model/state.js';
+import { executeRunEffects } from '../src/engine/actions.js';
+import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
+import { flaskGrowthTable, flaskGrowthPlan, syncFlaskGrowth } from '../src/model/flaskgrowth.js';
+import { FLASK_GROWTH_SOURCES } from '../src/model/schemas.js';
+import fs from 'node:fs';
+
+const argv = process.argv.slice(2);
+const SELFTEST = argv.includes('--selftest');
+
+function realBundleCopy() {
+  const { scripts, ...rest } = contentBundle;
+  const copy = structuredClone(rest);
+  copy.scripts = scripts;
+  return copy;
+}
+
+function freshRun(registries, classId = 'reaver') {
+  return createRunState({ seed: 1, classId, registries });
+}
+
+// A fictional relic + a growth row for it, entered as DATA into a real-bundle
+// copy — the Law 0 falsifier's raw material. Zero code is edited to make it
+// exist; that is the point.
+function plantGrowthRelic(b, { kind = 'mana', amount = 1 } = {}) {
+  b.relics.push({ id: 'fixtureCharm', name: 'Fixture Charm', icon: '◈', rarity: 'common', textTemplate: 'The vessel remembers being larger.', triggers: [] });
+  b.balance.flaskGrowth = [{ source: 'relic', id: 'fixtureCharm', kind, amount }];
+}
+
+function report() {
+  const reg = createRegistries(contentBundle);
+  const rows = flaskGrowthTable(reg.balance);
+  console.log(`flaskgrowth: ${rows.length} authored row${rows.length === 1 ? '' : 's'} in balance.flaskGrowth.`);
+  if (rows.length === 0) {
+    console.log('  none ship today — deliberate: no live growth lands while C1 (pool vs vessel) is open with Constantine.');
+    console.log(`  the closed source set is declared: ${FLASK_GROWTH_SOURCES.join(', ')} (D17 message 6, his four words).`);
+  }
+  const run = freshRun(reg);
+  const plan = flaskGrowthPlan(reg, run);
+  for (const r of plan.rows) {
+    console.log(`  ${r.source} '${r.id}' → ${r.kind} +${r.amount} — ${r.binding ? 'BINDING' : `not binding: ${r.why}`}`);
+  }
+  console.log(`  a fresh reaver run: capacity ${run.flaskCharges.capacity}, hp ${run.flaskCharges.hp}, mana ${run.flaskCharges.mana}, grown { hp: ${run.flaskCharges.grown.hp}, mana: ${run.flaskCharges.grown.mana} }.`);
+  console.log('\nBoundary: this reports the shipped table and a fresh run. It asserts nothing');
+  console.log('about screens, and nothing about balance — no live row exists to balance yet.');
+}
+
+function selftest() {
+  let fails = 0;
+
+  // ── DOOR 1: refusal plants — each enters validateContent on a real-bundle
+  //    copy and must come back RED with the entry named. ──────────────────────
+  console.log('DOOR 1 — validateContent(realBundleCopy) [src/main.js boot door]:');
+  const refuse = (name, mutate, pattern) => {
+    const b = realBundleCopy();
+    mutate(b);
+    const said = validateContent(b).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+    const ok = pattern.test(said);
+    if (!ok) fails++;
+    console.log(`  ${ok ? 'RED  ' : 'MISS '} ${name}${ok ? '' : ` — ${said || 'no refusal'}`}`);
+  };
+
+  refuse('table is not an array', (b) => { b.balance.flaskGrowth = { relic: 1 }; }, /flaskGrowth.*must be an array/);
+  refuse('row is not an object', (b) => { b.balance.flaskGrowth = ['grow please']; }, /flaskGrowth\[0\]/);
+  refuse('unknown source word', (b) => { b.balance.flaskGrowth = [{ source: 'blessing', id: 'x', kind: 'hp', amount: 1 }]; }, /not a growth source/);
+  refuse('kind utility has no maximum to grow', (b) => { b.balance.flaskGrowth = [{ source: 'relic', id: 'emberHeart', kind: 'utility', amount: 1 }]; }, /not a charge kind/);
+  refuse('negative amount', (b) => { plantGrowthRelic(b, { amount: -1 }); }, /not positive/);
+  refuse('zero amount', (b) => { plantGrowthRelic(b, { amount: 0 }); }, /not positive/);
+  refuse('fractional amount', (b) => { plantGrowthRelic(b, { amount: 1.5 }); }, /fractional/);
+  refuse('duplicate grant (same source, id, kind)', (b) => {
+    plantGrowthRelic(b);
+    b.balance.flaskGrowth.push({ source: 'relic', id: 'fixtureCharm', kind: 'mana', amount: 2 });
+  }, /duplicate of balance\.flaskGrowth\[0\]/);
+  refuse('dangling relic id', (b) => { b.balance.flaskGrowth = [{ source: 'relic', id: 'noSuchRelic', kind: 'hp', amount: 1 }]; }, /not a relic id/);
+  refuse('dangling event id', (b) => { b.balance.flaskGrowth = [{ source: 'questEvent', id: 'noSuchEvent', kind: 'hp', amount: 1 }]; }, /not an event id/);
+  refuse('two doors for one grant (event already has addFlaskCapacity)', (b) => {
+    const ev = b.events.find((e) => e.id === 'goldboughAvatar');
+    ev.choices[0].effects.push({ op: 'addFlaskCapacity', kind: 'hp', amount: 1 });
+    b.balance.flaskGrowth = [{ source: 'questEvent', id: 'goldboughAvatar', kind: 'hp', amount: 1 }];
+  }, /two doors for one grant/);
+  refuse('talisman row naming a weapon (slot cannot hold it)', (b) => {
+    const weapon = b.equipment.armaments.find((a) => a.kind === 'weapon');
+    b.balance.flaskGrowth = [{ source: 'talisman', id: weapon.id, kind: 'hp', amount: 1 }];
+  }, /talisman slot can hold/);
+  refuse('flaskSeed row while no seed vocabulary exists', (b) => { b.balance.flaskGrowth = [{ source: 'flaskSeed', id: 'oldSeed', kind: 'hp', amount: 1 }]; }, /flask-seed item vocabulary/);
+  refuse('malformed flaskGrowthMax', (b) => { b.balance.flaskGrowthMax = '9'; }, /flaskGrowthMax.*positive integer/);
+  refuse('growth past the authored hard cap', (b) => {
+    plantGrowthRelic(b, { amount: 3 });
+    b.balance.flaskGrowthMax = 5; // base 3 + 3 > 5
+  }, /flaskGrowthMax 5/);
+
+  // ── DOOR 2: behaviour plants through the real registry and run doors. ─────
+  console.log('DOOR 2 — createRegistries → createRunState / executeRunEffects:');
+  const behave = (name, fn) => {
+    let saw = '';
+    let ok = false;
+    try { ({ ok, saw } = fn()); } catch (e) { saw = e.message; }
+    if (!ok) fails++;
+    console.log(`  ${ok ? 'PASS ' : 'FAIL '} ${name}${ok ? '' : ` — saw: ${saw}`}`);
+  };
+
+  behave('LAW 0 falsifier: fictional relic + one row, zero code — gained via the addRelic opcode, the mana maximum grows', () => {
+    const b = realBundleCopy();
+    plantGrowthRelic(b, { kind: 'mana', amount: 1 });
+    const v = validateContent(b);
+    if (v.errors.length) return { ok: false, saw: v.errors.map((e) => e.path).join(',') };
+    const reg = createRegistries(b);
+    const run = freshRun(reg); // reaver starts hp2/mana1 in capacity 3
+    const before = `${run.flaskCharges.capacity}/${run.flaskCharges.mana}`;
+    executeRunEffects({ run, registries: reg, rng: null }, [{ op: 'addRelic', id: 'fixtureCharm' }]);
+    const f = run.flaskCharges;
+    return {
+      ok: before === '3/1' && f.capacity === 4 && f.mana === 2 && f.manaCurrent === 2 && f.grown.mana === 1,
+      saw: `before ${before}, after capacity ${f.capacity} mana ${f.mana}/${f.manaCurrent} grown ${JSON.stringify(f.grown)}`,
+    };
+  });
+
+  behave('empty edge: zero rows — sync is a byte-level no-op beyond grown {0,0}', () => {
+    const reg = createRegistries(contentBundle);
+    const run = freshRun(reg);
+    const before = JSON.stringify(run.flaskCharges);
+    syncFlaskGrowth(reg, run);
+    return { ok: JSON.stringify(run.flaskCharges) === before, saw: JSON.stringify(run.flaskCharges) };
+  });
+
+  behave('idempotent: sync twice is sync once', () => {
+    const b = realBundleCopy();
+    plantGrowthRelic(b);
+    const reg = createRegistries(b);
+    const run = freshRun(reg);
+    run.relics.push('fixtureCharm');
+    syncFlaskGrowth(reg, run);
+    const once = JSON.stringify(run.flaskCharges);
+    syncFlaskGrowth(reg, run);
+    return { ok: JSON.stringify(run.flaskCharges) === once, saw: JSON.stringify(run.flaskCharges) };
+  });
+
+  behave('a starting relic with a row grows the run at birth (createRunState)', () => {
+    const b = realBundleCopy();
+    const startingRelic = b.classes[0].startingRelic;
+    b.balance.flaskGrowth = [{ source: 'relic', id: startingRelic, kind: 'hp', amount: 2 }];
+    const reg = createRegistries(b);
+    const run = freshRun(reg, b.classes[0].id);
+    const f = run.flaskCharges;
+    return { ok: f.capacity === 5 && f.grown.hp === 2 && f.hpCurrent === f.hp, saw: JSON.stringify(f) };
+  });
+
+  behave('max edge, POOL-BINDING SPECIFIC: reallocate the grown charge away, then lose the relic below its missing door — overflow shrinks the other kind, currents bounded', () => {
+    // The reversal enters BELOW a real door on purpose and says so: no opcode
+    // removes a relic. What this proves is the seam's decrease arithmetic —
+    // under the VESSEL reading this plant is rewritten with the seam (C1).
+    const b = realBundleCopy();
+    plantGrowthRelic(b, { kind: 'hp', amount: 1 });
+    const reg = createRegistries(b);
+    const run = freshRun(reg);
+    run.relics.push('fixtureCharm');
+    syncFlaskGrowth(reg, run); // capacity 4, hp 3, mana 1
+    reallocateFlaskCharges(run.flaskCharges, { hp: 0, mana: 4 });
+    run.relics = run.relics.filter((id) => id !== 'fixtureCharm');
+    syncFlaskGrowth(reg, run);
+    const f = run.flaskCharges;
+    const sound = f.capacity === 3 && f.hp + f.mana === 3 && f.hp === 0 && f.mana === 3
+      && f.hpCurrent <= f.hp && f.manaCurrent <= f.mana && f.grown.hp === 0;
+    return { ok: sound, saw: JSON.stringify(f) };
+  });
+
+  behave('a loaded save re-derives the chain (initializeRunFlaskCharges door)', () => {
+    const b = realBundleCopy();
+    plantGrowthRelic(b, { kind: 'mana', amount: 1 });
+    const reg = createRegistries(b);
+    const run = freshRun(reg);
+    run.relics.push('fixtureCharm');
+    // Simulate a pre-chain save of this run: no grown, ungrown numbers.
+    delete run.flaskCharges.grown;
+    initializeRunFlaskCharges(run, reg);
+    const f = run.flaskCharges;
+    return { ok: f.capacity === 4 && f.grown.mana === 1, saw: JSON.stringify(f) };
+  });
+
+  behave('the grown field survives the save shape (validateRunShape accepts, and refuses a corrupt one)', () => {
+    const reg = createRegistries(contentBundle);
+    const run = freshRun(reg);
+    const clean = validateRunShape(run).length === 0;
+    run.flaskCharges.grown = { hp: -1, mana: 0 };
+    const dirty = validateRunShape(run).some((p) => p.includes('grown'));
+    return { ok: clean && dirty, saw: `clean ${clean}, dirty-refused ${dirty}` };
+  });
+
+  behave('a questEvent row on a clean event validates, and the plan says NOT BINDING by name', () => {
+    const b = realBundleCopy();
+    b.balance.flaskGrowth = [{ source: 'questEvent', id: 'goldboughAvatar', kind: 'hp', amount: 1 }];
+    const v = validateContent(b);
+    if (v.errors.length) return { ok: false, saw: v.errors.map((e) => `${e.path}`).join(',') };
+    const reg = createRegistries(b);
+    const run = freshRun(reg);
+    const row = flaskGrowthPlan(reg, run).rows[0];
+    return {
+      ok: row.binding === false && /quest-event history/.test(row.why) && run.flaskCharges.capacity === 3,
+      saw: `binding ${row.binding}, why '${row.why}', capacity ${run.flaskCharges.capacity}`,
+    };
+  });
+
+  // ── SOURCE CONTRACTS — flask-data-authority's pattern: the wiring that no
+  //    headless run can walk is held as a source-level claim, with a mutant
+  //    proving each contract can fail. ───────────────────────────────────────
+  console.log('SOURCE CONTRACTS — the screen wiring, greppable because it is not walkable:');
+  const contract = (name, ok, detail = '') => {
+    if (!ok) fails++;
+    console.log(`  ${ok ? 'PASS ' : 'FAIL '} ${name}${detail ? ` — ${detail}` : ''}`);
+  };
+  const src = (p) => fs.readFileSync(p, 'utf8');
+  const pushSites = ['src/engine/actions.js', 'src/ui/screens/reward.js', 'src/ui/screens/shop.js'];
+  for (const p of pushSites) {
+    const text = src(p);
+    const idx = [...text.matchAll(/run\.relics\.push\(/g)].map((m) => m.index);
+    const wired = idx.length > 0 && idx.every((i) => {
+      const after = text.slice(i, i + 200);
+      return /syncFlaskGrowth\(/.test(after);
+    });
+    contract(`every run.relics.push in ${p} is followed by syncFlaskGrowth within its own act`, wired, `${idx.length} site(s)`);
+  }
+  contract('equipment.js commit() re-syncs the chain (the talisman door)',
+    /function commit\(\) \{[\s\S]{0,400}syncFlaskGrowth\(registries, run\)/.test(src('src/ui/screens/equipment.js')));
+  // The mutant: prove the contract regex can fail — a push with no sync.
+  contract('MUTANT: the contract goes red on a push with no sync',
+    !(() => {
+      const planted = 'if (relicId) {\n  run.relics.push(relicId);\n}\n';
+      const idx = [...planted.matchAll(/run\.relics\.push\(/g)].map((m) => m.index);
+      return idx.length > 0 && idx.every((i) => /syncFlaskGrowth\(/.test(planted.slice(i, i + 200)));
+    })());
+
+  console.log(`\nRESULT ${fails === 0 ? 'all plants behaved' : `${fails} MISBEHAVED`} — 15 refusal plants (door 1), 8 behaviour plants (door 2), 5 source contracts.`);
+  console.log('Boundary: no pixel was asserted (the equipment and reward screens are browser');
+  console.log('surfaces); no balance claim is made (zero live rows ship); and the reversal');
+  console.log('plant enters below a door that does not exist yet — both named above, in place.');
+  process.exit(fails === 0 ? 0 : 1);
+}
+
+if (SELFTEST) selftest(); else report();
