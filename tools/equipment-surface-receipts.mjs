@@ -39,7 +39,8 @@ if (equipmentSurfaceReceipt) {
   check(active.poise?.note === 'No current consumer. Player Poise is not the enemy Poise meter.',
     'one exact truthful no-consumer sentence is model-owned', active.poise?.note);
 
-  const greatsword = equipmentSurfaceReceipt(R, reaver, {
+  const lowStrengthReaver = { ...reaver, attributes: { ...reaver.attributes, strength: 10 } };
+  const greatsword = equipmentSurfaceReceipt(R, lowStrengthReaver, {
     candidate: { slotId: 'rightHand', setIndex: 0, pieceId: 'greatsword' },
   }).candidate;
   check(greatsword?.pieceId === 'greatsword' && greatsword.requirement?.ok === false
@@ -63,15 +64,17 @@ if (equipmentSurfaceReceipt) {
 
 const customize = fs.readFileSync(new URL('../src/ui/screens/customize.js', import.meta.url), 'utf8');
 const armoury = fs.readFileSync(new URL('../src/ui/screens/equipment.js', import.meta.url), 'utf8');
+const receiptComponents = fs.readFileSync(new URL('../src/ui/components/equipmentReceipts.js', import.meta.url), 'utf8');
 const css = fs.readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8');
 for (const [source, label] of [[customize, 'creation'], [armoury, 'Armoury']]) {
   check(/equipmentSurfaceReceipt/.test(source), `${label} consumes the shared equipment presentation reader`);
-  check(/equipment-requirements/.test(source), `${label} renders requirement receipt selector`);
-  check(/player-poise-receipt/.test(source), `${label} renders player Poise receipt selector`);
+  check(/renderEquipmentRequirements/.test(source), `${label} renders the shared requirement receipt`);
+  check(/renderPlayerPoise/.test(source), `${label} renders the shared player Poise receipt`);
 }
 check(/role-copy-count/.test(armoury), 'Armoury renders role copy-count selectors');
-check(/equip-candidate-comparison/.test(armoury), 'Armoury renders canonical candidate comparison selectors');
-check(/equip-resource-change/.test(armoury) && /equip-added-effect/.test(armoury),
+check(/renderCandidateComparison/.test(armoury) && /equip-candidate-comparison/.test(receiptComponents),
+  'Armoury renders the canonical candidate comparison');
+check(/equip-resource-change/.test(receiptComponents) && /equip-added-effect/.test(receiptComponents),
   'Armoury renders resource and explicit-effect comparison selectors');
 for (const selector of ['equipment-requirements', 'player-poise-receipt', 'equip-candidate-comparison']) {
   check(new RegExp(`\\.${selector}[^}]*overflow-wrap\\s*:\\s*anywhere`, 's').test(css),
