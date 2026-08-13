@@ -158,6 +158,14 @@ function anySource(expr) {
   return VISUAL_SOURCES.some((re) => re.test(expr));
 }
 
+// A tainted BINDING reference, not a property bearing the same word. `left`
+// must match in `${left}px`; it must not match in `${lb.left}px`. The object
+// side of `from.left` still matches `from`, so real member reads stay visible.
+function referencesBinding(expr, name) {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?<![.\\w$])${escaped}\\b`).test(expr);
+}
+
 /**
  * scan(src) → { findings, stats }. Findings are 1-indexed line numbers with the
  * write and the reason it is a finding.
@@ -189,7 +197,7 @@ export function scan(src) {
       if (local.has(name) || visual.has(name)) continue;
       const divided = [...zoomVars].some((z) => new RegExp(`/\\s*\\(?\\s*${z}\\b`).test(expr));
       if (divided) continue;
-      const referencesVisual = [...visual].some((v) => new RegExp(`\\b${v}\\b`).test(expr));
+      const referencesVisual = [...visual].some((v) => referencesBinding(expr, v));
       if (anySource(expr) || referencesVisual) {
         visual.add(name);
         grew = true;
@@ -220,7 +228,7 @@ export function scan(src) {
     if (divided) return;
 
     const direct = anySource(value);
-    const via = [...visual].filter((v) => new RegExp(`\\b${v}\\b`).test(value));
+    const via = [...visual].filter((v) => referencesBinding(value, v));
     if (!direct && !via.length) return;
 
     findings.push({
@@ -408,6 +416,7 @@ const SELFTEST = [
   ['tests/fixtures/zoomunits/good_tutorial_3a0def9.js', 'clear', 0],
   ['tests/fixtures/zoomunits/good_divided_by_zoom.js', 'clear', 0],
   ['tests/fixtures/zoomunits/good_no_px_write.js', 'clear', 0],
+  ['tests/fixtures/zoomunits/good_local_box_property_collision.js', 'clear', 0],
 ];
 
 function selftest() {
@@ -435,6 +444,27 @@ function selftest() {
   console.log(`known-good clear  ${goodHit}/${good}`);
   console.log('OK* = right verdict, different count than recorded — read it before trusting the recall.');
 
+  // Precision mutants for the binding-reference rule itself. The production
+  // fixture proves the reported defect; these keep the two neighbouring edges
+  // from being "fixed" by ignoring all member expressions or all bindings.
+  const memberCollision = scan(`
+    const r = el.getBoundingClientRect();
+    const left = r.left;
+    const lb = anchorLocalBox(el);
+    el.style.left = \`${'${lb.left}'}px\`;
+  `).findings;
+  const taintedObject = scan(`
+    const from = el.getBoundingClientRect();
+    el.style.left = \`${'${from.left}'}px\`;
+  `).findings;
+  const taintedBinding = scan(`
+    const r = el.getBoundingClientRect();
+    const left = r.left;
+    el.style.left = \`${'${left}'}px\`;
+  `).findings;
+  const precisionOk = memberCollision.length === 0 && taintedObject.length === 1 && taintedBinding.length === 1;
+  console.log(`  ${precisionOk ? 'OK  ' : 'MISS'}  binding-reference precision mutants → member property ${memberCollision.length}, tainted object ${taintedObject.length}, tainted binding ${taintedBinding.length} (expected 0/1/1)`);
+
   // The boundary block's non-JS count needs a fixture or it is unfalsifiable: src/
   // holds zero non-JS files, so a measured 0 and the hardcoded 0 it replaced are the
   // same three characters on this tree, and the defect would have been invisible
@@ -457,14 +487,14 @@ function selftest() {
   }
   const covRead = /read (\d+) \.js\/\.mjs file/.exec(covLines.join('\n'));
   const covSkip = /and (\d+) non-JS file\(s\)/.exec(covLines.join('\n'));
-  const covOk = !!covRead && covRead[1] === '5' && !!covSkip && covSkip[1] === '1';
+  const covOk = !!covRead && covRead[1] === '6' && !!covSkip && covSkip[1] === '1';
   console.log(
     `  ${covOk ? 'OK  ' : 'MISS'}  boundary line over tests/fixtures/zoomunits → ` +
-      `"read ${covRead ? covRead[1] : '?'} .js/.mjs" and "${covSkip ? covSkip[1] : '?'} non-JS" (expected 5 and 1)`
+      `"read ${covRead ? covRead[1] : '?'} .js/.mjs" and "${covSkip ? covSkip[1] : '?'} non-JS" (expected 6 and 1)`
   );
 
   const corpusPass = badHit === bad && goodHit === good;
-  const pass = corpusPass && covOk;
+  const pass = corpusPass && covOk && precisionOk;
   // The numbers live ON the RESULT line so the harness can quote one terminated
   // sentence instead of scraping two. Bjorn's finding 1: test 36's detail came from
   // the same `grab` helper, so renaming a word in this output printed `recall ?`
