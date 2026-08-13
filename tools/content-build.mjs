@@ -519,6 +519,7 @@ async function selftest() {
       registries: REG2, rng: G.createRng('clause6-probe'),
       player: {
         classId: 'reaver', maxHp: 60, hp: 60, relicIds: [], flasks: [],
+        energyMax: 3, drawPerTurn: 5,
         deck: [1, 2, 3, 4, 5].map((n) => ({ instanceId: `probe${n}`, cardId: PROBE_CARD.id, upgraded: false })),
       },
       enemyIds: [PROBE_ENEMY.id],
