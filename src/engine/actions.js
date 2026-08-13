@@ -273,6 +273,22 @@ export function drawCards(ctx, n) {
   }
 }
 
+/**
+ * discardFromHand(ctx, n) — the discard op's body, one home for both callers:
+ * the 'discard' effect below and the ?shotHand pose (main.js), which needs to
+ * reach a small hand through the same door a played-down hand goes through —
+ * same splice, same pile, same event. Non-random takes from the right end,
+ * exactly as the op always has.
+ */
+export function discardFromHand(ctx, n, { random = false } = {}) {
+  for (let i = 0; i < n && ctx.piles.hand.length > 0; i++) {
+    const idx = random ? Math.floor(ctx.rng.float('misc') * ctx.piles.hand.length) : ctx.piles.hand.length - 1;
+    const card = ctx.piles.hand.splice(idx, 1)[0];
+    ctx.piles.discard.push(card);
+    ctx.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'effect' });
+  }
+}
+
 export function reshuffleDiscardIntoDraw(ctx) {
   ctx.piles.draw.push(...ctx.piles.discard);
   ctx.piles.discard.length = 0;
@@ -443,12 +459,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'discard': {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
-      for (let i = 0; i < n && ctx.piles.hand.length > 0; i++) {
-        const idx = eff.random ? Math.floor(ctx.rng.float('misc') * ctx.piles.hand.length) : ctx.piles.hand.length - 1;
-        const card = ctx.piles.hand.splice(idx, 1)[0];
-        ctx.piles.discard.push(card);
-        ctx.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'effect' });
-      }
+      discardFromHand(ctx, n, { random: !!eff.random });
       break;
     }
     case 'exhaust': {

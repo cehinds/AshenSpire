@@ -35,7 +35,7 @@ import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
 import { KEEPSAKES } from './content/keepsakes.js';
-import { executeRunEffects, drawCards } from './engine/actions.js';
+import { executeRunEffects, drawCards, discardFromHand } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
 import { mountRewards } from './ui/screens/reward.js';
@@ -1234,6 +1234,11 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       throw new Error(`?shotHand=${shotParams.get('shotHand')}: needs a whole number from 1 to handMax (${combat.handMax}).`);
     }
     if (combat.piles.hand.length < wantHand) drawCards(combat, wantHand - combat.piles.hand.length);
+    // Reaching DOWN goes through the discard op's own body (discardFromHand) —
+    // the same splice, pile and event a played-down hand produces, so a small
+    // posed hand carries its honest receipt: the discard pile shows where the
+    // cards went.
+    if (combat.piles.hand.length > wantHand) discardFromHand(combat, combat.piles.hand.length - wantHand);
     if (combat.piles.hand.length !== wantHand) {
       throw new Error(`?shotHand=${wantHand}: the deck ran out at ${combat.piles.hand.length} cards — this pose cannot reach the asked hand.`);
     }

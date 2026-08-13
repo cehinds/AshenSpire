@@ -31,10 +31,27 @@
 //   node tools/inspecthold.mjs                     source tree via serve.mjs
 //   node tools/inspecthold.mjs --root DIR          another tree (the known-bad run)
 //   node tools/inspecthold.mjs --only 390x844
+//   node tools/inspecthold.mjs --mode overlap      one arm of the hand-layout
+//                                                  word (default: both, so the
+//                                                  corpus is 2 shapes x 2 modes)
 //   node tools/inspecthold.mjs --shots DIR         also write the four 390x844
 //                                                  screenshots (rest, mid-hold,
-//                                                  open, released)
+//                                                  open, released), per mode
 // Exit: 0 all green · 1 a finding · 2 usage / no browser / NOTHING RAN
+//
+// THE MODE AXIS (C2). balance.ui.handLayout arranges the same hand two ways —
+// 'paging' (the shipped strip) and 'overlap' (the whole hand in the strip's
+// width) — and the gesture must survive both, so the corpus runs once per
+// mode rather than once per tree. One axis, not a second file: the checks are
+// the same 14, the mode enters through ?shotSettings (the app's own settings
+// resolution, the same door a player's stored choice enters), and the ONE
+// mode-aware line is where a press aims. In overlap a card's centre can lie
+// under its right neighbour, so every aim point is the centre of the card's
+// EXPOSED strip — a formula that degenerates to the plain centre wherever
+// nothing overlaps, which keeps the paging runs aimed exactly where they
+// always were. On a tree without the word (dev), the setting resolves to
+// nothing and both mode runs see the shipped strip — the overlap arm is then
+// measured by tools/handlayout.mjs going red, not by this corpus.
 //
 // OBSERVED RED (the instrument rule), same door as the real input — CDP touch
 // on the shipped combat screen over ?shot=combat, exactly the entry
@@ -79,6 +96,7 @@ const BROWSERS = [process.env.CHROME, '/opt/pw-browsers/chromium-1194/chrome-lin
 const SHAPES = [[390, 844], [1200, 730]];
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const only = argOf('--only');
+const MODES = argOf('--mode') ? [argOf('--mode')] : ['paging', 'overlap'];
 const shotsDir = argOf('--shots');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -118,6 +136,7 @@ async function main() {
   const cdp = connectCdp(wsUrl); await cdp.ready;
   let fails = 0, ran = 0;
 
+  for (const mode of MODES) {
   for (const [W, H] of SHAPES) {
     const shape = `${W}x${H}`;
     if (only && only !== shape) continue;
@@ -137,12 +156,16 @@ async function main() {
       const st = await ev(`(document.querySelector('.hand .card')||{dataset:{}}).dataset.inspect || 'unmarked'`);
       const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, S);
       const st2 = await ev(`(document.querySelector('.hand .card')||{dataset:{}}).dataset.inspect || 'unmarked'`);
-      writeFileSync(join(shotsDir, `${name}.png`), Buffer.from(data, 'base64'));
-      console.log(`    shot ${name}.png (state ${st} -> ${st2})`); };
+      writeFileSync(join(shotsDir, `${mode}-${name}.png`), Buffer.from(data, 'base64'));
+      console.log(`    shot ${mode}-${name}.png (state ${st} -> ${st2})`); };
 
-    await cdp.send('Page.navigate', { url: base + '?shot=combat' }, S);
+    // The mode enters by the settings door (?shotSettings -> saves.loadMeta()
+    // -> applyDisplaySettings), never by poking the attribute: what runs is the
+    // app's own derivation of the word, or on an old tree, nothing.
+    const combatUrl = base + '?shot=combat&shotSettings=' + encodeURIComponent(JSON.stringify({ handLayout: mode }));
+    await cdp.send('Page.navigate', { url: combatUrl }, S);
     await until(`!!document.querySelector('.combat .hand .card')`, 'combat'); await wait(500);
-    console.log(`\n  ${shape}`);
+    console.log(`\n  ${shape} · ${mode}`);
 
     const state = `(() => ({ discard: +document.querySelector('.pile.discard .n').textContent,
       energy: (document.querySelector('.energy-orb')||{textContent:''}).textContent.trim(),
@@ -150,12 +173,22 @@ async function main() {
       ghosts: [...document.querySelectorAll('body > .card')].filter(e=>e.style.position==='fixed' && !e.classList.contains('card-inspect')).length }))()`;
     // Centre the probe card first — the narrow hand is a scroller (gesture-
     // cancel's lesson: a drag at a stale off-strip centre touches nothing).
-    const cardAt = `(() => { const c=document.querySelector('.hand .card');
+    // AIM AT THE EXPOSED STRIP, not the raw centre: in overlap a card's centre
+    // can lie under its right neighbour, and a press there belongs to the
+    // neighbour — which is true for the player too, so the instrument aims
+    // where a finger must. Where nothing overlaps (paging, and any last card)
+    // the formula IS the centre, so the shipped runs aim exactly as before.
+    const aimFn = `const __aim = (c) => { const r = c.getBoundingClientRect();
+      const sib = c.nextElementSibling;
+      const sr = sib ? sib.getBoundingClientRect() : null;
+      const right = sr && sr.left < r.right && sr.left > r.left ? sr.left : r.right;
+      return { x: (r.left + right) / 2, y: r.top + r.height / 2, w: r.width }; };`;
+    const cardAt = `(() => { ${aimFn} const c=document.querySelector('.hand .card');
       c.scrollIntoView({ inline: 'center', block: 'nearest' });
-      const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2,w:r.width}; })()`;
-    const strikeAt = `(() => { const c=[...document.querySelectorAll('.hand .card')].find(x=>/Strike/.test(x.textContent));
+      return __aim(c); })()`;
+    const strikeAt = `(() => { ${aimFn} const c=[...document.querySelectorAll('.hand .card')].find(x=>/Strike/.test(x.textContent));
       c.scrollIntoView({ inline: 'center', block: 'nearest' });
-      const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`;
+      return __aim(c); })()`;
     const enemyAt = `(() => { const e=document.querySelector('.enemy:not(.dead)'); const r=e.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`;
     const inspectOf = `(() => (document.querySelector('.hand .card')||{dataset:{}}).dataset.inspect)()`;
     const before = await ev(state);
@@ -230,10 +263,10 @@ async function main() {
       const tOpen = (log.find((e) => e.v === 'open') || {}).t;
       const frame = tPend && tOpen ? frames.filter((f) => f.t > tPend + 30 && f.t < tOpen - 30).pop() : null;
       if (frame) {
-        writeFileSync(join(shotsDir, '2-mid-hold.png'), Buffer.from(frame.data, 'base64'));
-        console.log(`    shot 2-mid-hold.png (frame at +${(frame.t - tPend).toFixed(0)}ms of a ${(tOpen - tPend).toFixed(0)}ms hold, ${frames.length} streamed)`);
+        writeFileSync(join(shotsDir, `${mode}-2-mid-hold.png`), Buffer.from(frame.data, 'base64'));
+        console.log(`    shot ${mode}-2-mid-hold.png (frame at +${(frame.t - tPend).toFixed(0)}ms of a ${(tOpen - tPend).toFixed(0)}ms hold, ${frames.length} streamed)`);
       } else {
-        console.log(`    shot 2-mid-hold: no frame provably inside the window (pending ${tPend}, open ${tOpen}, frames ${frames.length}) — nothing ambiguous written`);
+        console.log(`    shot ${mode}-2-mid-hold: no frame provably inside the window (pending ${tPend}, open ${tOpen}, frames ${frames.length}) — nothing ambiguous written`);
       }
     }
 
@@ -270,9 +303,9 @@ async function main() {
     await selectStrike(40);
     await ev(`(() => { window.__combat.player.energy = 0; return 1; })()`);
     await cancelTargeting();
-    const unaffordable = await ev(`(() => { const c = [...document.querySelectorAll('.hand .card')].find(x => x.classList.contains('unaffordable'));
+    const unaffordable = await ev(`(() => { ${aimFn} const c = [...document.querySelectorAll('.hand .card')].find(x => x.classList.contains('unaffordable'));
       if (!c) return null; c.scrollIntoView({ inline: 'center', block: 'nearest' });
-      const r = c.getBoundingClientRect(); return { x: r.left + r.width/2, y: r.top + r.height/2 }; })()`);
+      return __aim(c); })()`);
     if (unaffordable) {
       await touch('touchStart', [{ x: unaffordable.x, y: unaffordable.y, id: 8 }]); await wait(600);
       const ua = await ev(`document.querySelectorAll('body > .card-inspect').length`);
@@ -287,7 +320,7 @@ async function main() {
     // wired at a zero-energy paint (the captured `affordable` closure is how
     // the screen works, not a defect) — a reload is the honest reset, not a
     // second trick through the debug handle.
-    await cdp.send('Page.navigate', { url: base + '?shot=combat' }, S);
+    await cdp.send('Page.navigate', { url: combatUrl }, S);
     await until(`!!document.querySelector('.combat .hand .card')`, 'combat reboot'); await wait(500);
     const before7 = await ev(state);
     const p2 = await ev(strikeAt);
@@ -300,6 +333,7 @@ async function main() {
     ok(played.discard === before7.discard + 1, `drag: a careful drag onto an enemy still PLAYS (discard ${before7.discard}->${played.discard})`);
 
     await cdp.send('Target.closeTarget', { targetId });
+  }
   }
 
   cdp.close(); child.kill(); s.server.close();
