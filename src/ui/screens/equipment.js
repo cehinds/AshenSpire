@@ -164,7 +164,7 @@ const REGIONS = [
     id: 'cards',
     label: 'Cards',
     sel: '.armoury-strip',
-    count: (el) => el.querySelectorAll('.equip-cards > .card').length,
+    count: (el) => el.querySelectorAll('.equip-cards > .equip-card-with-count').length,
     unit: 'card',
   },
 ];

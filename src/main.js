@@ -1197,6 +1197,18 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
+  if (shotState === 'combat' && shotParams.get('shotArcane') === 'matrix') {
+    // A host-state visual fixture, before the renderer receives the combat.
+    // It covers all three schema states without client mutation: two configured
+    // meters (zero and nonzero) plus one enemy whose config is absent.
+    const authored = registries.enemies.get('wanderingSoldier').arcaneExposure;
+    if (combat.enemies.length < 3 || !authored || authored.mode !== 'configured') {
+      throw new Error('?shotArcane=matrix needs three enemies and the authored Wandering Soldier Arcane Exposure row');
+    }
+    combat.enemies[0].arcaneExposure = { ...structuredClone(authored), value: 0 };
+    combat.enemies[1].arcaneExposure = { ...structuredClone(authored), value: Math.max(1, Math.floor(authored.threshold / 2)) };
+    delete combat.enemies[2].arcaneExposure;
+  }
   const label =
     enc.pool === 'boss'
       ? registries.enemies.get(enc.enemies[0]).name.toUpperCase()
@@ -1491,7 +1503,7 @@ function coopCombatShot() {
     { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
     { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
-  return {
+  const snapshot = {
     actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
     scene: {
       kind: 'combat', pool: 'normal', phase: 'player', turn: 2, headcount: 2,
@@ -1507,6 +1519,21 @@ function coopCombatShot() {
     },
     party,
   };
+  if (shotParams.get('shotArcane') === 'matrix') {
+    const [locked, immune] = snapshot.scene.enemies;
+    locked.arcaneExposure = {
+      mode: 'configured', threshold: 8, value: 0, buildupMultiplier: 1,
+      resetMode: 'zero', overflowPolicy: 'discard', lockPolicy: 'whileMagicVulnerable',
+      onBreak: { status: 'magicVulnerable', value: 25, duration: 2 },
+    };
+    locked.statuses.magicVulnerable = { stacks: 25, duration: 2 };
+    immune.arcaneExposure = { mode: 'immune' };
+    snapshot.scene.events = [
+      { type: 'arcaneBreak', targetId: locked.id, status: 'magicVulnerable', value: 25, duration: 2 },
+      { type: 'arcaneExposureRefused', targetId: immune.id, reason: 'immune', school: 'magic', attempted: 1 },
+    ];
+  }
+  return snapshot;
 }
 // `?shot=coopmap[&shotWalk=N]` — the co-op act map, at the doors or MID-CLIMB.
 //
@@ -1790,7 +1817,8 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
-    enterNode(startId);
+    if (shotParams.get('shotArcane') === 'matrix') enterCombat(startId, 'packHunt');
+    else enterNode(startId);
     if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
   }
 } else if (shotState === 'coop') {

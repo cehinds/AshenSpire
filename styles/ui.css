@@ -830,6 +830,13 @@ button.rs-reset {
   border: 2px solid var(--line-soft); display: flex; align-items: center; justify-content: center;
   font-size: 2rem; cursor: pointer; transition: transform 120ms, border-color 120ms;
 }
+#cz-kits button.cz-opt {
+  /* Starting kits carry words and commit a run-defining choice. The generic
+     sigil tile's 4rem square shrinks with body zoom; this specific interactive
+     row uses the on-glass floor and grows around its authored label. */
+  width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
+  padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
+}
 .cz-opt:hover { transform: translateY(-2px); }
 .cz-opt.chosen { border-color: var(--parchment); }
 .cz-opt.tint.chosen { outline: 2px solid var(--parchment); outline-offset: 2px; }
@@ -1737,6 +1744,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    is handed to the subject by the layout that was already there. */
 .armoury [data-role='context'][data-collapsed='1'] > :not(.region-head) { display: none; }
 .armoury [data-role='context'][data-collapsed='1'] { flex: 0 0 auto; padding-top: 0; padding-bottom: 0; }
+.armoury [data-role='context'][data-collapsed='0'] {
+  /* An expanded receipt pane is real content, not overflow behind the modal.
+     Share the panel with its subject and give the pane its own scrollport so a
+     phone can reach candidate receipts without moving the Armoury off-screen. */
+  flex: 1 1 50%; min-height: var(--tap-floor); overflow-y: auto;
+}
 
 /* Grid view: the figure between two columns of slots, hands on the side they
    are actually held. The picker moves to the right pane so the middle stays a
