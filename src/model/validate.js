@@ -30,6 +30,7 @@ import {
   SFX_LAYER_SCHEMAS,
   MUSIC_SILENCE_WORD,
   MUSIC_BED_SCHEMA,
+  DAMAGE_SCHOOLS,
   CREATURE_TAGS,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
@@ -274,9 +275,38 @@ export function validateContent(bundle) {
       if (profile && Number.isFinite(profile.baseValue) && profile.baseValue < 0) err(`equipment.basicCardProfiles.${id}.baseValue`, 'must be non-negative');
       if (profile && Number.isFinite(profile.pointsPerTier) && profile.pointsPerTier <= 0) err(`equipment.basicCardProfiles.${id}.pointsPerTier`, 'must be > 0');
       if (profile && Number.isFinite(profile.cap) && profile.cap < 0) err(`equipment.basicCardProfiles.${id}.cap`, 'must be non-negative');
+      if (!Number.isInteger(profile && profile.exposureBuildupPerHit) || profile.exposureBuildupPerHit < 0) err(`equipment.basicCardProfiles.${id}.exposureBuildupPerHit`, 'must be a non-negative integer');
       if (profile && profile.cap !== '' && profile.cap != null && !Number.isFinite(profile.cap)) err(`equipment.basicCardProfiles.${id}.cap`, 'must be blank or finite');
       if (profile && profile.compatibility !== `${profile.role}-v1`) err(`equipment.basicCardProfiles.${id}.compatibility`, `must match role '${profile.role}-v1'`);
       for (const tag of (profile && profile.tags) || []) if (!tagIds.has(tag)) err(`equipment.basicCardProfiles.${id}.tags`, `unknown tag '${tag}'`);
+    }
+
+    // Validate the raw authored carrier rows before their map is joined onto
+    // cards. This keeps duplicate/missing rows visible at the production boot
+    // door rather than allowing Map normalization to hide them.
+    if (!Array.isArray(equipment.cardExposure)) {
+      err('equipment.cardExposure', 'Missing required generated cardExposure array');
+    } else {
+      const seen = new Set();
+      for (const row of equipment.cardExposure) {
+        const cardId = row && row.cardId;
+        const path = `equipment.cardExposure.${cardId || '?'}`;
+        for (const key of Object.keys(row || {})) if (!['cardId', 'damageSchool', 'exposureBuildupPerHit'].includes(key)) err(`${path}.${key}`, 'Unknown field');
+        if (typeof cardId !== 'string' || !ids.cards.has(cardId)) err(`${path}.cardId`, `unknown card '${cardId}'`);
+        if (!DAMAGE_SCHOOLS.includes(row && row.damageSchool)) err(`${path}.damageSchool`, `unknown damage school '${row && row.damageSchool}'`);
+        if (!Number.isInteger(row && row.exposureBuildupPerHit) || row.exposureBuildupPerHit < 0) err(`${path}.exposureBuildupPerHit`, 'must be a non-negative integer');
+        if (seen.has(cardId)) err(path, `Duplicate card exposure row '${cardId}'`);
+        seen.add(cardId);
+      }
+      const damages = (Array.isArray(b.cards) ? b.cards : []).filter((card) => [...(card.effects || []), ...((card.upgrade && card.upgrade.effects) || [])].some((effect) => effect && effect.op === 'damage'));
+      for (const card of damages) {
+        const path = `cards.${card.id}`;
+        const row = equipment.cardExposure.find((candidate) => candidate.cardId === card.id);
+        if (!row) err(`${path}.exposureBuildupPerHit`, 'Missing required explicit damage carrier row');
+        if (typeof card.damageSchool !== 'string') err(`${path}.damageSchool`, 'Missing required explicit damage school');
+        if (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0) err(`${path}.exposureBuildupPerHit`, 'Missing required non-negative per-hit buildup');
+        if (row && (card.damageSchool !== row.damageSchool || card.exposureBuildupPerHit !== row.exposureBuildupPerHit)) err(path, 'Resolved card carrier disagrees with authored row');
+      }
     }
   }
 
@@ -363,6 +393,25 @@ export function validateContent(bundle) {
       const path = `${type}.${(def && def.id) || '?'}`;
       walkSchema(def, typeToSchema[type], path, vctx);
     });
+  }
+  for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
+    const base = `enemies.${enemy && enemy.id || '?'}`;
+    const cfg = enemy && enemy.arcaneExposure;
+    if (cfg && cfg.mode === 'configured') {
+      for (const field of ['threshold', 'buildupMultiplier', 'resetMode', 'overflowPolicy', 'lockPolicy', 'onBreak']) {
+        if (cfg[field] === undefined) err(`${base}.arcaneExposure.${field}`, `Missing required configured field '${field}'`);
+      }
+      if (!Number.isInteger(cfg.threshold) || cfg.threshold <= 0) err(`${base}.arcaneExposure.threshold`, 'must be a positive integer');
+      if (!Number.isFinite(cfg.buildupMultiplier) || cfg.buildupMultiplier <= 0) err(`${base}.arcaneExposure.buildupMultiplier`, 'must be finite and > 0');
+      if (cfg.onBreak && (!Number.isFinite(cfg.onBreak.value) || cfg.onBreak.value <= 0)) err(`${base}.arcaneExposure.onBreak.value`, 'must be finite and > 0');
+      if (cfg.onBreak && (!Number.isInteger(cfg.onBreak.duration) || cfg.onBreak.duration <= 0)) err(`${base}.arcaneExposure.onBreak.duration`, 'must be a positive integer');
+    } else if (cfg && cfg.mode === 'immune') {
+      for (const field of Object.keys(cfg)) if (field !== 'mode') err(`${base}.arcaneExposure.${field}`, `immune policy may not author '${field}'`);
+    }
+    for (const [school, percent] of Object.entries((enemy && enemy.damageResistanceBySchool) || {})) {
+      if (!DAMAGE_SCHOOLS.includes(school)) err(`${base}.damageResistanceBySchool.${school}`, `unknown damage school '${school}'`);
+      if (!Number.isFinite(percent) || percent < 0 || percent > 100) err(`${base}.damageResistanceBySchool.${school}`, 'must be a finite percent from 0 to 100');
+    }
   }
   walkSchema(b.attributeRules, SCHEMAS.attributeRules, 'attributeRules', vctx);
   for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);

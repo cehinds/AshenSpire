@@ -29,7 +29,7 @@ import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
 import {
-  ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, STARTING_KITS,
+  ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS,
   EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING,
 } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
@@ -37,10 +37,17 @@ import { unlocks } from './generated/unlocks.js';
 import { attributes, creationModes, attributeRules } from './attributes.js';
 import { derivedStatRules } from './derivedStats.js';
 
+const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...colorlessCards, ...coopCards];
+const exposureByCard = new Map(CARD_EXPOSURE.map((row) => [row.cardId, row]));
+const cards = authoredCards.map((card) => {
+  const carrier = exposureByCard.get(card.id);
+  return carrier ? { ...card, damageSchool: carrier.damageSchool, exposureBuildupPerHit: carrier.exposureBuildupPerHit } : card;
+});
+
 export const contentBundle = {
   version: '0.4.0',
   balance,
-  cards: [...reaverCards, ...starseerCards, ...heraldCards, ...colorlessCards, ...coopCards],
+  cards,
   relics,
   statuses,
   stances,
@@ -70,6 +77,7 @@ export const contentBundle = {
     targets: equipTargets,
     cardTargets: CARD_TARGETS,
     basicCardProfiles: BASIC_CARD_PROFILES,
+    cardExposure: CARD_EXPOSURE,
     startingKits: STARTING_KITS,
     equipmentRequirements: EQUIPMENT_REQUIREMENTS,
     cardEquipmentExceptions: CARD_EQUIPMENT_EXCEPTIONS,

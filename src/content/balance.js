@@ -3,6 +3,9 @@
 // Code never embeds a balance number; a balance change is a one-file diff here.
 
 export const balance = {
+  // Visible system name only. Arcane Exposure is schema/carrier data until its
+  // separately reviewed engine slice lands.
+  arcaneExposure: { label: 'Arcane Exposure' },
   energy: 3,
   draw: 5,
   handMax: 10,

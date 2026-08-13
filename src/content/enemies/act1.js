@@ -7,6 +7,16 @@ export const act1Enemies = [
     name: 'Wandering Soldier',
     hp: [22, 26],
     poiseMax: 10,
+    arcaneExposure: {
+      mode: 'configured',
+      threshold: 8, // PROVISIONAL
+      buildupMultiplier: 1, // PROVISIONAL
+      resetMode: 'zero',
+      overflowPolicy: 'discard',
+      lockPolicy: 'whileMagicVulnerable',
+      onBreak: { status: 'magicVulnerable', value: 25, duration: 2 }, // PROVISIONAL
+    },
+    damageResistanceBySchool: { magic: 10 }, // PROVISIONAL raw HP resistance
     tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '⚔',
     moves: {

@@ -128,6 +128,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     cardId: c.cardId,
     upgraded: !!c.upgraded,
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}), // equipment numbers
+    ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
+    ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
   }));
   const shuffled = C.rng.shuffle('shuffle', deck);

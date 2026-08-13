@@ -20,6 +20,7 @@ import { equipSlots } from './generated/equipSlots.js';
 import { equipMods } from './generated/equipMods.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { basicCardProfiles } from './generated/basicCardProfiles.js';
+import { cardExposure } from './generated/cardExposure.js';
 import { startingKits } from './generated/startingKits.js';
 import { equipmentRequirements } from './generated/equipmentRequirements.js';
 import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js';
@@ -112,6 +113,9 @@ export const BASIC_CARD_PROFILES = basicCardProfiles.map((row) => ({
   tags: list(row.tags),
   mods: list(row.mods),
 }));
+
+/** Explicit damage carriers; school and buildup are never inferred from tags. */
+export const CARD_EXPOSURE = cardExposure.map((row) => ({ ...row }));
 
 /** Class-listed starting kits; hand ids stay explicit so validation can name them. */
 export const STARTING_KITS = startingKits.map((row) => ({ ...row }));

@@ -1189,12 +1189,20 @@ export function stampDeck(registries, run, cards) {
       inst.profileId = row.profile.id;
       inst.profileReceipt = { ...row.receipt };
     }
+    const carrier = row && row.profile ? row.profile : registries.cards.get(inst.cardId);
+    const priorSchool = inst.damageSchool;
+    const priorBuildup = inst.exposureBuildupPerHit;
+    if (typeof carrier.damageSchool === 'string') inst.damageSchool = carrier.damageSchool;
+    else delete inst.damageSchool;
+    if (Number.isInteger(carrier.exposureBuildupPerHit)) inst.exposureBuildupPerHit = carrier.exposureBuildupPerHit;
+    else delete inst.exposureBuildupPerHit;
     const mods = cardMods(registries, run.loadout, run.class);
     const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.value}`
       : row && row.role === 'guard' ? `block=${row.receipt.value}` : null;
     const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
     const prev = inst.mods || [];
-    if (next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
+    const carrierChanged = priorSchool !== inst.damageSchool || priorBuildup !== inst.exposureBuildupPerHit;
+    if (!carrierChanged && next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
     if (next.length) inst.mods = next;
     else delete inst.mods;
     n += 1;

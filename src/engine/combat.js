@@ -121,6 +121,8 @@ export function createCombat({
     // Equipment numbers ride on the instance (model/loadout.js) — copy them in
     // or every card would come back to its bare-handed self at combat start.
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),
+    ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
+    ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);

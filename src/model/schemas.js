@@ -478,6 +478,7 @@ export const SCHEMAS = Object.freeze({
     displayName: str,
     icon: str,
     damageSchool: en(...DAMAGE_SCHOOLS),
+    exposureBuildupPerHit: int,
     baseValue: num,
     scalingStat: ref('attributes'),
     pointsPerTier: num,
@@ -517,6 +518,8 @@ export const SCHEMAS = Object.freeze({
     cost: costNode,
     manaCost: opt(int),
     type: en(...CARD_TYPES),
+    damageSchool: opt(en(...DAMAGE_SCHOOLS)),
+    exposureBuildupPerHit: opt(int),
     keywords: arr(ref('keywords')),
     effects,
     textTemplate: str,
@@ -598,6 +601,9 @@ export const SCHEMAS = Object.freeze({
         stacking: en(...VULN_STACKING),
       })
     ),
+    // Inert schema carrier for Arcane Exposure's registered break effect.
+    // The engine slice will consume only explicit magic-school HP packets.
+    schoolDamageVulnerability: opt(obj({ school: en(...DAMAGE_SCHOOLS) })),
     modifiers: opt(modifiersSchema),
     hooks: opt(triggersNode),
     tooltip: opt(str),
@@ -649,6 +655,24 @@ export const SCHEMAS = Object.freeze({
     art: opt(str),
     size: opt(en('small', 'medium', 'large')), // sprite size tier (display)
     tint: opt(str), // border/accent CSS color (display)
+    // Strict absent | immune | configured Arcane Exposure policy. Absence is
+    // represented by no field; it is not silently defaulted by the engine.
+    arcaneExposure: opt(union(
+      obj({ mode: en('immune') }),
+      obj({
+        mode: en('configured'),
+        threshold: int,
+        buildupMultiplier: num,
+        resetMode: en('zero'),
+        overflowPolicy: en('discard'),
+        lockPolicy: en('whileMagicVulnerable'),
+        onBreak: obj({ status: ref('statuses'), value: num, duration: int }),
+      })
+    )),
+    // Raw HP resistance is deliberately separate from buildup resistance.
+    damageResistanceBySchool: opt(obj(Object.fromEntries(
+      DAMAGE_SCHOOLS.map((school) => [school, opt(num)])
+    ))),
     script: opt(ref('scripts')),
   }),
 

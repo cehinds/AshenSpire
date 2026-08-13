@@ -22,6 +22,7 @@ function applyBasicCardProfile(def, profile) {
     icon: profile.icon,
     flavor: profile.flavor || def.flavor,
     damageSchool: profile.damageSchool,
+    exposureBuildupPerHit: profile.exposureBuildupPerHit,
     cardTags: tags,
     effects,
     equipmentProfileId: profile.id,
@@ -247,7 +248,8 @@ export function resolveCard(registries, instanceOrRef) {
   const base = registries.cards.get(cardId);
   const mods = instanceOrRef.mods;
   const profileId = instanceOrRef.profileId;
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId) return base;
+  const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -257,7 +259,7 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -275,6 +277,13 @@ export function resolveCard(registries, instanceOrRef) {
         limits: (registries.balance.equipment || {}).limits || {},
       })
     );
+  }
+  if (hasCarrier) {
+    result = deepFreeze({
+      ...result,
+      ...(typeof instanceOrRef.damageSchool === 'string' ? { damageSchool: instanceOrRef.damageSchool } : {}),
+      ...(Number.isInteger(instanceOrRef.exposureBuildupPerHit) ? { exposureBuildupPerHit: instanceOrRef.exposureBuildupPerHit } : {}),
+    });
   }
   cache.set(key, result);
   return result;

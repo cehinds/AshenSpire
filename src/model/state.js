@@ -16,6 +16,7 @@ import {
   deriveStat,
 } from './derivedStats.js';
 import { resolveStartingKit, startingKitSnapshot } from './startingKits.js';
+import { DAMAGE_SCHOOLS } from './schemas.js';
 
 export const RUN_SCHEMA_VERSION = 2;
 
@@ -287,6 +288,15 @@ export function validateRunShape(run, { legacy = false } = {}) {
   if (Array.isArray(run.deck)) {
     const bad = run.deck.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
     if (bad !== -1) problems.push(`deck[${bad}] is not { instanceId, cardId }`);
+    for (let i = 0; i < run.deck.length; i++) {
+      const card = run.deck[i];
+      if (!card) continue;
+      const schoolAbsent = card.damageSchool === undefined;
+      const buildupAbsent = card.exposureBuildupPerHit === undefined;
+      if (schoolAbsent !== buildupAbsent) problems.push(`deck[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
+      if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`deck[${i}].damageSchool '${card.damageSchool}' is unknown`);
+      if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`deck[${i}].exposureBuildupPerHit must be a non-negative integer`);
+    }
   }
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');

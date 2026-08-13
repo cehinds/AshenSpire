@@ -388,6 +388,7 @@ export function createSaveManager(storage) {
       // A run saved before equipment existed has no loadout. Give it the bare
       // starting one and re-stamp, rather than throwing away someone's climb.
       const needsEquipmentStamp = !run.loadout || !run.equipmentProfileRuleSnapshot;
+      const needsCarrierStamp = (run.deck || []).some((card) => card.damageSchool === undefined || card.exposureBuildupPerHit === undefined);
       if (!run.loadout) {
         run.loadout = createLoadout(registries, run.class);
       }
@@ -396,7 +397,7 @@ export function createSaveManager(storage) {
       // the current host rules and preserves existing HP/Mana deficits.
       try {
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
-        if (needsEquipmentStamp) stampDeck(registries, run);
+        if (needsEquipmentStamp || needsCarrierStamp) stampDeck(registries, run);
         initializeRunFlaskCharges(run, registries);
       } catch (e) {
         archive(json, e && e.message ? e.message : 'invalid derived-stat snapshot', slot);
