@@ -13,6 +13,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { createCombat } from '../src/engine/combat.js';
+import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { RESOURCE_SOURCE_IDS, resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { createSession } from './session.mjs';
@@ -175,6 +176,31 @@ check('Mana semantic constant scan refuses legacy class-scale authority', () => 
   assert(!/rules:\s*\{[\s\S]*?mana:\s*\{[\s\S]*?classField[\s\S]*?maxMana/.test(ruleSource), 'Mana still reads class maxMana');
   assert(!/manaCost\s*:\s*10\b/.test(cardSources), 'legacy signature Mana cost remains');
   assert(!/id:\s*['"]azureFlask['"][\s\S]*?restoreMana['"],\s*amount:\s*20\b/.test(flaskSource), 'legacy Azure restore remains');
+});
+
+check('co-op UI affordability and host execution agree for all three Mana signatures', () => {
+  const coopSource = readFileSync(resolve(ROOT, 'src/ui/screens/coop.js'), 'utf8');
+  assert(/meP\.mana\s*>=\s*\(def\.manaCost\s*\|\|\s*0\)/.test(coopSource), 'co-op hand omits Mana from affordability');
+  for (const cardId of ['gorefireSlash', 'starstonePebble', 'urgentHeal']) {
+    const fight = (mana) => createCoopCombat({
+      registries: REG,
+      rng: createRng(0x6d616e61),
+      players: [{
+        id: 'p1', classId: REG.cards.get(cardId).class, maxHp: 84, hp: 84,
+        maxMana: 2, mana, maxStamina: 2, stamina: 2,
+        deck: [{ instanceId: `i-${cardId}`, cardId, upgraded: false }], relicIds: [], flasks: [],
+      }],
+      enemyIds: ['blightHound'],
+    });
+    const empty = fight(0);
+    let refusal = '';
+    try { playCoopCard(empty, 'p1', `i-${cardId}`, 'e1'); } catch (error) { refusal = error.message; }
+    assert(/Not enough mana/.test(refusal), `${cardId} host did not refuse zero Mana`);
+    const funded = fight(1);
+    playCoopCard(funded, 'p1', `i-${cardId}`, 'e1');
+    equal(funded.players.get('p1').entity.mana, 0, `${cardId} host Mana after spend`);
+    assert(funded.eventLog.some((event) => event.type === 'manaSpent' && event.amount === 1), `${cardId} missing spend receipt`);
+  }
 });
 
 check('Hybrid Stats panel and co-op active-seat HUD use shared data plans', () => {
