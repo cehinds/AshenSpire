@@ -17,6 +17,7 @@ import { createRng } from '../src/engine/rng.js';
 import { RESOURCE_SOURCE_IDS, resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { createSession } from './session.mjs';
 import { statProjection } from '../src/model/statProjection.js';
+import { derivedStatRules } from '../src/content/derivedStats.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REG = createRegistries(contentBundle);
@@ -72,8 +73,8 @@ check('a standard Reaver run owns the versioned snapshot and all approved derive
   equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 1, 'ruleset version');
   equal(run.maxHp, 86, 'CON-derived max HP');
   equal(run.hp, 86, 'new run HP starts full');
-  equal(run.maxMana, 42, 'WIS-derived max Mana');
-  equal(run.mana, 42, 'new run Mana starts full');
+  equal(run.maxMana, 2, 'WIS-derived max Mana has no class base');
+  equal(run.mana, 2, 'new run Mana starts full');
   equal(run.maxStamina, 2, 'CON-derived max Stamina');
   equal(run.stamina, 2, 'new run Stamina starts full');
   equal(run.energyMax, 3, 'DEX-derived Energy');
@@ -106,13 +107,13 @@ check('pre-derived save migrates real pools and preserves full/deficit truth', (
   old.maxHp = 84;
   old.hp = 74; // ten HP missing remains ten HP missing after the max grows.
   old.maxMana = 40;
-  old.mana = 40; // full remains full after the max grows.
+  old.mana = 20; // a half-full legacy pool remains half-full in small units.
   saves.saveRun(old);
   const run = saves.loadRun(REG);
   equal(run.maxHp, 86, 'migrated max HP');
   equal(run.hp, 76, 'HP deficit preserved');
-  equal(run.maxMana, 42, 'migrated max Mana');
-  equal(run.mana, 42, 'full Mana preserved');
+  equal(run.maxMana, 2, 'migrated max Mana');
+  equal(run.mana, 1, 'legacy Mana proportion preserved');
   equal(run.maxStamina, 2, 'Stamina created from real attributes');
   equal(run.stamina, 2, 'new Stamina pool starts full');
   equal(run.derivedStatRuleSnapshot.rulesetVersion, 1, 'migration stamps ruleset');
@@ -136,7 +137,7 @@ check('host session snapshot is authoritative for derived rules and every curren
   equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 1, 'party ruleset');
   equal(party.maxStamina, 2, 'party Stamina max');
   equal(party.stamina, 2, 'party Stamina current');
-  equal(party.maxMana, 42, 'party derived Mana max');
+  equal(party.maxMana, 2, 'party derived Mana max');
   equal(party.energyMax, 3, 'party derived Energy');
   equal(party.drawPerTurn, 5, 'party derived draw');
 });
@@ -147,10 +148,33 @@ check('shared main-HUD plan shows Mana and real Stamina, never a fabricated trou
   const plan = resourceBarPlan(REG, 'main', run, run, resourceDomains(REG));
   const mana = plan.find((row) => row.id === 'mana');
   const stamina = plan.find((row) => row.id === 'stamina');
-  equal(mana && mana.cur, 42, 'Mana current');
-  equal(mana && mana.max, 42, 'Mana max');
+  equal(mana && mana.cur, 2, 'Mana current');
+  equal(mana && mana.max, 2, 'Mana max');
   equal(stamina && stamina.cur, 2, 'Stamina current');
   equal(stamina && stamina.max, 2, 'Stamina max');
+});
+
+check('Mana authority is base-zero WIS data and gameplay uses small-unit costs/restores', () => {
+  equal(derivedStatRules.rules.mana.base, 0, 'Mana base');
+  equal(derivedStatRules.rules.mana.sourceStat, 'wisdom', 'Mana source');
+  equal(derivedStatRules.rules.mana.cap, null, 'Mana cap');
+  for (const id of ['gorefireSlash', 'starstonePebble', 'urgentHeal']) {
+    equal(contentBundle.cards.find((card) => card.id === id)?.manaCost, 1, `${id} Mana cost`);
+  }
+  const azure = contentBundle.flasks.find((flask) => flask.id === 'azureFlask');
+  equal(azure.effects.find((effect) => effect.op === 'restoreMana')?.amount, 1, 'Azure restore');
+  assert(!REG.classes.all().some((row) => Object.hasOwn(row, 'maxMana')), 'class data still authors maxMana');
+});
+
+check('Mana semantic constant scan refuses legacy class-scale authority', () => {
+  const classSource = readFileSync(resolve(ROOT, 'src/content/classes.js'), 'utf8');
+  const ruleSource = readFileSync(resolve(ROOT, 'src/content/derivedStats.js'), 'utf8');
+  const cardSources = ['reaver', 'starseer', 'herald'].map((name) => readFileSync(resolve(ROOT, `src/content/cards/${name}.js`), 'utf8')).join('\n');
+  const flaskSource = readFileSync(resolve(ROOT, 'src/content/flasks.js'), 'utf8');
+  assert(!/maxMana\s*:\s*(40|60|80)\b/.test(classSource), 'legacy class Mana maximum remains');
+  assert(!/rules:\s*\{[\s\S]*?mana:\s*\{[\s\S]*?classField[\s\S]*?maxMana/.test(ruleSource), 'Mana still reads class maxMana');
+  assert(!/manaCost\s*:\s*10\b/.test(cardSources), 'legacy signature Mana cost remains');
+  assert(!/id:\s*['"]azureFlask['"][\s\S]*?restoreMana['"],\s*amount:\s*20\b/.test(flaskSource), 'legacy Azure restore remains');
 });
 
 check('Hybrid Stats panel and co-op active-seat HUD use shared data plans', () => {
