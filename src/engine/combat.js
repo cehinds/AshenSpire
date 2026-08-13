@@ -80,6 +80,7 @@ export function createCombat({
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
     // still swapped when the fight ends.
     loadout: player.loadout || null,
+    attributes: player.attributes ? { ...player.attributes } : null,
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
@@ -115,6 +116,7 @@ export function createCombat({
     // Equipment numbers ride on the instance (model/loadout.js) — copy them in
     // or every card would come back to its bare-handed self at combat start.
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),
+    ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);
   const innate = [];
@@ -543,7 +545,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // the config says a swap re-arms what you are already holding.
   const piles = [combat.piles.draw, combat.piles.discard];
   if (cfg.restampHand) piles.push(combat.piles.hand);
-  const run = { deck: [], loadout: combat.loadout, class: p.classId };
+  const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
   // The event carries what it COST and under which rule — a price nobody can

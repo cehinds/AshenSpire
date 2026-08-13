@@ -1,4 +1,5 @@
 import { tokenRe } from './validate.js';
+import { deriveAttributeTierReceipt } from './derivedStats.js';
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
 // The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
@@ -122,6 +123,37 @@ export function validateEquipment(registries) {
   const fields = eq.modFields || {};
   const problems = [];
   const pieces = [...(eq.armaments || []), ...(eq.armour || [])];
+  const profilesPresent = Array.isArray(eq.basicCardProfiles);
+  const profiles = eq.basicCardProfiles || [];
+  const profileIds = new Set();
+  const tagIds = new Set((registries.tags || []).map((t) => t.id));
+  const attributeIds = new Set(registries.attributes && registries.attributes.ids ? registries.attributes.ids() : []);
+
+  for (const profile of profiles) {
+    if (profileIds.has(profile.id)) problems.push(`basicCardProfiles.csv: duplicate profile id '${profile.id}'`);
+    profileIds.add(profile.id);
+    if (!EQUIPMENT_ROLES.includes(profile.role)) problems.push(`${profile.id}: unknown equipment role '${profile.role}'`);
+    if (!registries.cards.has(profile.baseCardId)) problems.push(`${profile.id}: unknown base card '${profile.baseCardId}'`);
+    if (!DAMAGE_SCHOOLS.includes(profile.damageSchool)) problems.push(`${profile.id}: unknown damage school '${profile.damageSchool}'`);
+    if (!Number.isFinite(profile.baseValue) || profile.baseValue < 0) problems.push(`${profile.id}: baseValue must be finite and non-negative`);
+    if (!attributeIds.has(profile.scalingStat)) problems.push(`${profile.id}: unknown scalingStat '${profile.scalingStat}'`);
+    if (!Number.isFinite(profile.pointsPerTier) || profile.pointsPerTier <= 0) problems.push(`${profile.id}: pointsPerTier must be finite and > 0`);
+    if (!['floor', 'ceil', 'round'].includes(profile.rounding)) problems.push(`${profile.id}: unknown rounding '${profile.rounding}'`);
+    if (!Number.isFinite(profile.gainPerTier)) problems.push(`${profile.id}: gainPerTier must be finite`);
+    if (profile.cap !== '' && profile.cap != null && !Number.isFinite(profile.cap)) problems.push(`${profile.id}: cap must be blank or finite`);
+    for (const tag of profile.tags || []) if (!tagIds.has(tag)) problems.push(`${profile.id}: unknown profile tag '${tag}'`);
+    for (const raw of profile.mods || []) if (!parseMod(`${profile.role}.${raw}`)) problems.push(`${profile.id}: unparseable profile mod '${raw}'`);
+  }
+
+  for (const piece of profilesPresent ? (eq.armaments || []) : []) {
+    for (const role of EQUIPMENT_ROLES) {
+      const profileId = piece[`${role}Profile`];
+      if (!profileId) continue;
+      const profile = profiles.find((p) => p.id === profileId);
+      if (!profile) problems.push(`${piece.id}: unknown ${role} profile '${profileId}'`);
+      else if (profile.role !== role) problems.push(`${piece.id}: ${role}Profile '${profileId}' has wrong role '${profile.role}'`);
+    }
+  }
 
   for (const piece of pieces) {
     for (const raw of piece.mods || []) {
@@ -232,6 +264,14 @@ export function validateEquipment(registries) {
     if (starting.length !== 1) {
       problems.push(`class '${classId}' has ${starting.length} starting armour sets (need exactly 1)`);
     }
+    const cls = registries.classes.get(classId);
+    for (const [slotId, pieceId] of Object.entries(cls.startingLoadout || {})) {
+      const slot = (eq.slots || []).find((s) => s.id === slotId);
+      if (!slot) { problems.push(`class '${classId}' startingLoadout names unknown slot '${slotId}'`); continue; }
+      const piece = (eq.armaments || []).find((p) => p.id === pieceId);
+      if (!piece) { problems.push(`class '${classId}' startingLoadout names unknown piece '${pieceId}'`); continue; }
+      if (!fitsSlot(slot, piece)) problems.push(`class '${classId}' starting piece '${pieceId}' does not fit slot '${slotId}'`);
+    }
   }
   // The ladder's one join, and it dangles the way every join dangles: a rung
   // naming a slot that is not there. Law 1 clause 5 — fail loud, name the
@@ -283,6 +323,28 @@ export function validateEquipment(registries) {
         + `${cap - 1 - rungs.length} would never be reachable; add a rung with `
         + `kind='${SLOT_RUNG_KIND}' ref='${slot.id}' or lower \`sets\` in equipSlots.csv`
       );
+    }
+  }
+
+  if (eqBal) {
+    const roleCopies = eqBal.roleCopies || {};
+    const total = [...EQUIPMENT_ROLES, 'signature'].reduce((sum, role) => sum + (Number(roleCopies[role]) || 0), 0);
+    if (total !== registries.balance.startingDeckSize) {
+      problems.push(`balance.equipment.roleCopies sum ${total}; startingDeckSize is ${registries.balance.startingDeckSize}`);
+    }
+    if (roleCopies.signature !== 1) problems.push('balance.equipment.roleCopies.signature must be exactly 1');
+    for (const role of EQUIPMENT_ROLES) {
+      const sources = (eqBal.roleSources || {})[role];
+      if (!Array.isArray(sources) || !sources.length) { problems.push(`roleSources.${role} must be non-empty`); continue; }
+      const seenSlots = new Set();
+      for (const source of sources) {
+        if (!(eq.slots || []).some((s) => s.id === source.slot)) problems.push(`roleSources.${role} names unknown slot '${source.slot}'`);
+        if (seenSlots.has(source.slot)) problems.push(`roleSources.${role} duplicates slot '${source.slot}' at equal precedence`);
+        seenSlots.add(source.slot);
+      }
+      const fallback = (eqBal.unarmedProfiles || {})[role];
+      const profile = profiles.find((p) => p.id === fallback);
+      if (!profile || profile.role !== role) problems.push(`unarmedProfiles.${role} '${fallback}' does not resolve to a ${role} profile`);
     }
   }
   return problems;
@@ -666,6 +728,21 @@ export function equipmentKitPlan(registries, loadout, classId) {
   return EQUIPMENT_ROLES.map((role) => equipmentRoleSource(registries, loadout, classId, role));
 }
 
+function roleAmountReceipt(registries, row, attributes) {
+  const profile = row.profile;
+  const tier = deriveAttributeTierReceipt(profile, { attributes, sourceStat: profile.scalingStat });
+  const rarity = row.piece && row.piece.rarity;
+  const rarityBonus = ((((registries.balance || {}).equipment || {}).rarityBonuses || {})[rarity] || {})[row.role] || 0;
+  const raw = profile.baseValue + tier.value + rarityBonus;
+  const value = Number.isFinite(profile.cap) ? Math.min(profile.cap, raw) : raw;
+  return { role: row.role, profileId: profile.id, pieceId: row.piece && row.piece.id, base: profile.baseValue, rarity, rarityBonus, ...tier, raw, cap: profile.cap === '' ? null : profile.cap, value };
+}
+
+/** Calculation receipts; the tier arithmetic is owned by derivedStats.js. */
+export function equipmentKitReceipt(registries, loadout, classId, attributes) {
+  return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes) }));
+}
+
 /** The ten-card role distribution, as instance-ready refs. */
 export function startingDeckRefs(registries, loadout, classId) {
   const cls = registries.classes.get(classId);
@@ -960,16 +1037,20 @@ export function applyCardMods(def, mods, opts = {}) {
  */
 export function stampDeck(registries, run, cards) {
   const list = cards || run.deck || [];
-  const rolePlan = new Map(equipmentKitPlan(registries, run.loadout, run.class).map((row) => [row.role, row]));
+  if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
+  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
     const row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
     if (row && row.profile) {
       inst.cardId = row.profile.baseCardId;
       inst.profileId = row.profile.id;
+      inst.profileReceipt = { ...row.receipt };
     }
     const mods = cardMods(registries, run.loadout, run.class);
-    const next = [...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
+    const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.value}`
+      : row && row.role === 'guard' ? `block=${row.receipt.value}` : null;
+    const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
     const prev = inst.mods || [];
     if (next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
     if (next.length) inst.mods = next;

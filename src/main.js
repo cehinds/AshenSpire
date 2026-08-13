@@ -1160,6 +1160,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     rng,
     player: {
       classId: run.class,
+      attributes: run.attributes,
       maxHp: run.maxHp,
       hp: run.hp,
       maxMana: run.maxMana,

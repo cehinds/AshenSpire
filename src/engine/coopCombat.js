@@ -128,6 +128,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     cardId: c.cardId,
     upgraded: !!c.upgraded,
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}), // equipment numbers
+    ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
   }));
   const shuffled = C.rng.shuffle('shuffle', deck);
   const innate = [];
