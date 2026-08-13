@@ -662,6 +662,15 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    scrolled while trying to aim. Scoped to narrow: the wide hand is not a
    scroller and its default behaviour is not in question. */
 :root[data-layout='narrow'] .hand .card { touch-action: pan-x; }
+/* The OVERLAP arm of balance.ui.handLayout (C2): when the layout word says
+   overlap, the narrow hand is not a scroller — the whole hand fits its width
+   by derived negative margins (renderHand) and there is nothing legitimate
+   for the browser to claim, which is the WIDE argument below, arriving on a
+   narrow shape because the word changed the composition. Leaving pan-x here
+   would let Chrome cancel a real aimed drag against a strip with zero travel.
+   Scoped to the word: in 'paging' (the default) this rule does not exist and
+   the pan-x above is untouched. */
+:root[data-layout='narrow'][data-hand-layout='overlap'] .hand .card { touch-action: none; }
 /* And the WIDE half, found by the probe going red at 1200x730 where 390x844
    passed: with default `touch-action: auto` Chrome claims ANY touch drag as a
    potential scroll and fires pointercancel — even where nothing scrolls — so a
