@@ -15,8 +15,10 @@ let actions = null;
 try { actions = await import('../src/model/flaskActions.js'); } catch { /* observed red */ }
 const component = text('src/ui/components/flask.js');
 const combat = text('src/ui/screens/combat.js');
+const coop = text('src/ui/screens/coop.js');
 const map = text('src/ui/screens/map.js');
 const session = text('tools/session.mjs');
+const lan = text('tools/lan.mjs');
 
 check('one pure flaskActionPlan owns action availability', typeof actions?.flaskActionPlan === 'function');
 if (actions?.flaskActionPlan) {
@@ -43,11 +45,14 @@ check('menu supports focus navigation, cancel, and back without dispatch',
 check('flask selection does not call useFlask directly',
   /mountFlaskActionMenu/.test(combat)
     && !/flask-slot[\s\S]{0,500}(?:onConfirm|click)[\s\S]{0,120}useFlask/.test(combat));
+check('co-op flask selection also opens the shared menu instead of sending use',
+  /mountFlaskActionMenu/.test(coop) && !/coop-flask[\s\S]{0,500}send\(\{ t: 'useFlask'/.test(coop));
 check('co-op transports an explicit flask intent to host authority',
   /flaskIntent/.test(session) && /host/i.test(session) && /useFlask/.test(session));
+check('LAN routes only the explicit flaskIntent action through the host',
+  /case 'flaskIntent'/.test(lan) && /g\.flaskIntent/.test(lan));
 check('host refusal remains a returned reason rather than client mutation',
   /flaskIntent[\s\S]*?ok:\s*false[\s\S]*?error/.test(session));
 
 console.log(`\nflask-action-contract: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
-
