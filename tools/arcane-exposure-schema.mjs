@@ -319,10 +319,13 @@ check('Magic Vulnerable is registered but cannot become generic vulnerability', 
   assert(!status.taggedVulnerability, 'Magic Vulnerable infers schools from tags');
 });
 
-check('engine slice does not claim an Arcane Exposure UI before its visual review', () => {
-  const forbidden = ['src/ui/screens/combat.js', 'src/ui/screens/coop.js'];
-  const offenders = forbidden.filter((file) => /arcaneExposure|magicVulnerable/i.test(readFileSync(resolve(ROOT, file), 'utf8')));
-  assert(offenders.length === 0, `UI landed before engine checkpoint: ${offenders.join(', ')}`);
+check('reviewed Arcane UI uses one shared host-state renderer on solo and co-op', () => {
+  const component = readFileSync(resolve(ROOT, 'src/ui/components/arcaneExposure.js'), 'utf8');
+  const solo = readFileSync(resolve(ROOT, 'src/ui/screens/combat.js'), 'utf8');
+  const coop = readFileSync(resolve(ROOT, 'src/ui/screens/coop.js'), 'utf8');
+  assert(/export function arcaneExposureReceipt/.test(component), 'shared Arcane UI receipt absent');
+  assert(/renderArcaneExposure/.test(solo) && /renderArcaneExposure/.test(coop), 'solo/co-op bypass shared Arcane renderer');
+  assert(!/dispatch|applyAttackDamage/.test(component), 'UI component owns a mutation or damage path');
 });
 
 console.log(`\n${failures ? `ARCANE EXPOSURE SCHEMA RED — ${failures}/${checks} contracts failing` : `ARCANE EXPOSURE SCHEMA GREEN — ${checks}/${checks}`}`);

@@ -47,6 +47,16 @@ if (arcaneExposureReceipt) {
   check(live?.mode === 'configured' && live.label === 'Arcane Exposure'
       && live.value === 3 && live.threshold === 8 && live.percent === 37.5,
     'configured host meter is visible by its data-owned name and exact receipt', JSON.stringify(live));
+  configured.arcaneExposure.value = 7;
+  check(arcaneExposureReceipt(R, configured, []).fillPercent === 87.5,
+    'host value independently changes the rendered fill numerator');
+  configured.arcaneExposure.threshold = 14;
+  check(arcaneExposureReceipt(R, configured, []).percent === 50,
+    'host threshold independently changes denominator and fill');
+  configured.arcaneExposure.value = 99;
+  check(arcaneExposureReceipt(R, configured, []).percent > 100
+      && arcaneExposureReceipt(R, configured, []).fillPercent === 100,
+    'numeric receipt stays exact while visual fill clamps independently');
   check(arcaneExposureReceipt(R, enemy('blightHound'), []) === null,
     'truly absent enemy has no Arcane Exposure UI row');
   const immuneEnemy = enemy('charredColossus');
@@ -87,7 +97,7 @@ check(/arcaneExposure:/.test(solo) && /arcaneExposureChanged/.test(solo) && /arc
   'solo paced snapshot carries and advances host Arcane state');
 check(/scene\.events|sc\.events/.test(coop) && /arcaneExposureRefused|arcaneBreak/.test(coop),
   'co-op consumes transported refusal and break receipts');
-check(!/dispatch|applyAttackDamage|arcaneExposure\s*[+.=-]/.test(component),
+check(!/dispatch|applyAttackDamage|arcaneExposure(?:\.value)?\s*(?:=|\+\+|--)/.test(component),
   'shared UI component contains no client mutation or damage path');
 check(/arcane-exposure-meter/.test(component) && /arcane-exposure-immune/.test(component),
   'configured and immune states have distinct semantic selectors');
