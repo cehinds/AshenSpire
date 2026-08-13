@@ -17,7 +17,7 @@ export const weapons = [
       "basic"
     ],
     "attackProfile": "bladeAttack",
-    "guardProfile": "",
+    "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
     "mods": "strike.damage=+1",
     "unlock": "",
@@ -38,7 +38,7 @@ export const weapons = [
       "heavy"
     ],
     "attackProfile": "bladeAttack",
-    "guardProfile": "",
+    "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+4",
@@ -63,7 +63,7 @@ export const weapons = [
       "flourish"
     ],
     "attackProfile": "bladeAttack",
-    "guardProfile": "",
+    "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=3",
@@ -88,7 +88,7 @@ export const weapons = [
       "flourish"
     ],
     "attackProfile": "bladeAttack",
-    "guardProfile": "",
+    "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=-1",
@@ -112,7 +112,7 @@ export const weapons = [
       "heavy"
     ],
     "attackProfile": "bladeAttack",
-    "guardProfile": "",
+    "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+3",
@@ -134,7 +134,7 @@ export const weapons = [
     "accent": "C9A227",
     "tags": "heavy",
     "attackProfile": "bladeAttack",
-    "guardProfile": "",
+    "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+2",
@@ -158,7 +158,7 @@ export const weapons = [
       "flourish"
     ],
     "attackProfile": "bladeAttack",
-    "guardProfile": "",
+    "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=2",
@@ -182,7 +182,7 @@ export const weapons = [
       "heavy"
     ],
     "attackProfile": "bladeAttack",
-    "guardProfile": "",
+    "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+3",
@@ -380,7 +380,7 @@ export const weapons = [
       "basic"
     ],
     "attackProfile": "staffMagicAttack",
-    "guardProfile": "",
+    "guardProfile": "staffGuard",
     "techniqueProfile": "staffTechnique",
     "mods": "power.potency=+1",
     "unlock": "",
@@ -398,7 +398,7 @@ export const weapons = [
     "accent": "7FA8C9",
     "tags": "starstone",
     "attackProfile": "staffMagicAttack",
-    "guardProfile": "",
+    "guardProfile": "staffGuard",
     "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+2",
@@ -423,7 +423,7 @@ export const weapons = [
       "blight"
     ],
     "attackProfile": "sceptreArcaneAttack",
-    "guardProfile": "",
+    "guardProfile": "sceptreGuard",
     "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+1",
