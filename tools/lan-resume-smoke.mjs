@@ -47,11 +47,12 @@ try {
   const c1 = client(`ws://localhost:${s1.port}/lan`);
   await c1.ready;
   await c1.next((m) => m.t === 'welcome', 'welcome');
-  c1.send({ t: 'hello', name: 'Wren', classId: 'starseer', hostKey: hk1 });
+  c1.send({ t: 'hello', name: 'Wren', classId: 'starseer', startingKitId: 'starseerStarstone', discoveredArmaments: ['starstoneStaff'], hostKey: hk1 });
   await c1.next((m) => m.t === 'roster', 'roster');
   c1.send({ t: 'start' });
   const st0 = await c1.next((m) => m.t === 'state', 'first state');
   ok(st0.snapshot.scene.kind === 'map', 'run started at the shared map');
+  ok(st0.snapshot.party[0].startingKitId === 'starseerStarstone', 'LAN start records alternate kit identity');
   await wait(60);
   ok(existsSync(savePath), 'the run persisted to disk at the map boundary');
 
@@ -81,6 +82,7 @@ try {
   ok(!!resumed.yourId, 'the server hands the client its restored member id');
   const st2 = await c2.next((m) => m.t === 'state', 'resumed state');
   ok(st2.snapshot.party.some((p) => p.name === 'Wren' && p.connected), 'resumed run has the player back, connected');
+  ok(st2.snapshot.party[0].startingKitId === 'starseerStarstone', 'LAN resume preserves alternate kit identity');
   ok(st2.snapshot.actNumber >= 1, 'resumed run is back on the map at the saved progress');
 
   c2.close();

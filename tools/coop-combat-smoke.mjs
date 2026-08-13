@@ -8,6 +8,7 @@
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
+import { createRunState } from '../src/model/state.js';
 import {
   createCoopCombat, coopHpMult, playCard, endTurn, useFlask, leaveCombat, joinCombat, coopOutcome,
 } from '../src/engine/coopCombat.js';
@@ -17,8 +18,8 @@ const fails = [];
 const ok = (cond, msg) => { console.log(`  ${cond ? '✓' : '✗'} ${msg}`); if (!cond) fails.push(msg); };
 
 function deckOf(classId) {
-  const d = REG.classes.get(classId).startingDeck;
-  return d.map((cardId, i) => ({ instanceId: `${classId[0]}${i}`, cardId, upgraded: false }));
+  const run = createRunState({ seed: 1, classId, registries: REG });
+  return run.deck.map((card, i) => ({ ...card, instanceId: `${classId[0]}${i}` }));
 }
 function players() {
   return [

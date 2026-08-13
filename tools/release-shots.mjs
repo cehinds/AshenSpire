@@ -115,6 +115,11 @@ const SCREENS = [
   { name: 'boss', query: '?shot=boss', landmark: '.combat', state: 'boss' },
   { name: 'death', query: '?shot=death', landmark: '.stats-table', state: 'death' },
   { name: 'customize', query: '?shot=customize', landmark: '.customize', state: 'customize' },
+  {
+    name: 'customize-stats', query: '?shot=customize', landmark: '#cz-stat-projection',
+    drive: `document.querySelector('.cz-stats').open = true`,
+    after: `document.querySelector('.cz-stats').scrollIntoView({ block: 'start' })`,
+  },
   // The Shrine — #84, and it is here rather than in EXCLUDED_STATES on purpose.
   // Excluding it by name would have been one line and would have put back the
   // exact condition the bug lived in: this is the screen Constantine could not
@@ -143,6 +148,7 @@ const SCREENS = [
   // state on `graveOfTheNameless` — three choices, the last one "Leave" — so the
   // photograph shows the adjacency the fix is about.
   { name: 'event', query: '?shot=event', landmark: '.ev-choice', state: 'event' },
+  { name: 'shop', query: '?shot=shop', landmark: '#shop-cards', state: 'shop' },
   {
     // AND THE GRID OPEN, driven, because the closed Shrine FITS. A baseline of
     // the screen in the state that never overflowed could not have caught the
@@ -314,6 +320,9 @@ const SUB_SURFACE_GROUPS = [
         if (!len) return 'tab ' + ${q(id)} + ' is selected and its panel is EMPTY';
         return true;
       })()`,
+      after: id === 'hybrid'
+        ? `document.querySelector('.armoury-stats').scrollIntoView({ block: 'start' })`
+        : null,
       probe: `(() => {
         const b = document.querySelector('.overlay-body');
         return b ? ${SIG_FN}(b.innerHTML) : null;
@@ -629,7 +638,7 @@ const BASE = `http://localhost:${port}/dist/AshenSpire.html`;
 // `9222 + (pid % 400)` = 9222…9621, a range that CONTAINS 9431, so it would
 // silently take this tool's browser about one run in four hundred.
 // ---------------------------------------------------------------------------
-const browser = spawn('/opt/pw-browsers/chromium', [
+const browser = spawn(process.env.CHROME || '/opt/pw-browsers/chromium', [
   '--headless=new', '--disable-gpu', '--no-sandbox',
   '--remote-debugging-port=0', 'about:blank',
 ], { stdio: ['ignore', 'pipe', 'pipe'] });

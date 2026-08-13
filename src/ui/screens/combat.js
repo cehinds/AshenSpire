@@ -12,7 +12,7 @@ import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText } from '../uiContent.js';
+import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -24,8 +24,10 @@ import { mountEquipment } from './equipment.js';
 import { figureSpec } from '../../model/loadout.js';
 import { trackGesture } from '../gesture.js';
 import { resourceBars, markFlooredBars } from '../components/resbars.js';
+import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../components/holdconfirm.js';
+import { flaskPresentation } from '../components/flask.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -211,6 +213,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // bars/hand render from this pre-dispatch copy, advanced beat by beat, so
   // the HUD updates one actor at a time instead of jumping to the outcome.
   let disp = null;
+  let recentArcaneEvents = [];
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
   // The snapshot is the PACED state the whole HUD renders from. It must carry
   // every value the board draws, or that layer silently renders post-state
@@ -228,18 +231,21 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       };
     }
     return {
+      id: e.id,
+      kind: e.kind,
       hp: e.hp,
       mana: e.mana,
       block: e.block,
       alive,
       statuses,
       poiseMeter: e.poiseMeter ? { value: e.poiseMeter.value, max: e.poiseMeter.max } : null,
+      arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
     };
   }
   function takeSnapshot() {
     const ents = { player: snapEnt(combat.player, true) };
     for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
-    return { ents, hand: [...combat.piles.hand] };
+    return { ents, hand: [...combat.piles.hand], arcaneEvents: [] };
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -253,6 +259,17 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     for (const e of beat.events) {
       const t = e.targetId && disp.ents[e.targetId];
       switch (e.type) {
+        case 'arcaneExposureChanged':
+          if (t && t.arcaneExposure) t.arcaneExposure.value = e.value;
+          disp.arcaneEvents.push(e);
+          break;
+        case 'arcaneBreak':
+          if (t && t.arcaneExposure) t.arcaneExposure.value = 0;
+          disp.arcaneEvents.push(e);
+          break;
+        case 'arcaneExposureRefused':
+          disp.arcaneEvents.push(e);
+          break;
         case 'damageDealt':
           if (t) t.block = Math.max(0, t.block - e.blocked);
           break;
@@ -376,13 +393,28 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // Flask slots — click to drink; targeted flasks enter targeting mode.
     const flasks = $('.topbar .flasks');
     flasks.innerHTML = '';
+    for (const [kind, flaskId] of [['hp', 'crimsonFlask'], ['mana', 'azureFlask']]) {
+      const def = registries.flasks.get(flaskId);
+      const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
+      const el = document.createElement('button');
+      el.className = 'relic flask-slot flask-charge';
+      el.disabled = current <= 0;
+      el.appendChild(flaskPresentation(def, { showName: false }));
+      const count = document.createElement('b');
+      count.className = 'flask-charge-count';
+      count.textContent = String(current);
+      el.appendChild(count);
+      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
+      arm(el, 'useFlask', { ctx: { targeted: false }, onConfirm: () => useFlask(null, null, kind) });
+      flasks.appendChild(el);
+    }
     p.flasks.forEach((f, slot) => {
       const def = registries.flasks.get(f.flaskId);
       const el = document.createElement('div');
       el.className = 'relic flask-slot';
       el.style.cursor = 'pointer';
       if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
-      el.textContent = def.icon || '🧪';
+      el.appendChild(flaskPresentation(def, { showName: false }));
       // Quick-use key badge (F/G/H by default; pad glyph while a pad drives).
       if (slot < 3) {
         const kb = document.createElement('span');
@@ -451,6 +483,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
       const def = registries.statuses.get(sid);
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
+      const presentation = statusInstancePresentation(def, inst);
       // M1's "absent at zero", applied to pips too: a spent proc row (💧0
       // after a burst) is an empty frame, not information (Sunna's S-flag).
       if (def.proc && stacks <= 0) continue;
@@ -467,13 +500,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       }
       // A resistance pip's number is its countdown (M3 — the receipt reads in
       // turns); every other pip keeps its stack count.
-      const shown = def.resists && inst.duration != null ? inst.duration : stacks;
+      const shown = def.resists && inst.duration != null ? inst.duration : presentation.valueText;
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${shown}</span>`;
       attachTooltip(el, () => {
         let extra = '';
         if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
         if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
-        return `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(statusTooltipText(def))}${extra}`;
+        return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
       });
       row.appendChild(el);
     }
@@ -511,6 +544,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     }
     while (bars.firstChild) wrap.appendChild(bars.firstChild);
     if (entity.kind === 'enemy') {
+      const arcane = renderArcaneExposure(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents);
+      if (arcane) wrap.appendChild(arcane);
       // #61 M1/M4: the shipped bleedbar, generalized into the one grammar —
       // a thin bar per threshold-proc row (max two, procDisplayPlan's cap),
       // tint + glyph nub from the row's own data, absent at zero. Numbers
@@ -922,7 +957,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     }
   }
 
-  function useFlask(slot, targetId) {
+  function useFlask(slot, targetId, chargeKind = null) {
     if (busy || combat.result) {
       dlog('ignored', `useFlask slot=${slot}`, { busy, result: combat.result, phase: combat.phase });
       return;
@@ -933,7 +968,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     disp = takeSnapshot();
     let out;
     try {
-      out = dispatch(combat, { type: 'useFlask', slot, targetId: targetId || undefined });
+      out = dispatch(combat, { type: 'useFlask', slot, chargeKind, targetId: targetId || undefined });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
       dlog('rejected', `useFlask slot=${slot}`, err && err.message);
@@ -953,6 +988,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // it (and fires onEnd on victory/defeat). A render throw here once froze
     // the game permanently on the killing blow.
     try {
+      recentArcaneEvents = events.filter((event) => (
+        event.type === 'arcaneExposureChanged' || event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak'
+      ));
       trackStats(events);
       render(); // hand/energy react now; bars render from the pre-dispatch snapshot
     } catch (e) {

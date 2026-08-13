@@ -20,7 +20,7 @@ import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
-import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule } from '../model/loadout.js';
+import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot } from '../model/loadout.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -52,30 +52,40 @@ export function createCombat({
   swapCostRule = null,
 }) {
   const bal = registries.balance || {};
-  const classMaxMana = registries.classes.get(player.classId).maxMana;
-  const maxMana = player.maxMana != null ? player.maxMana : classMaxMana;
+  // Run creation owns derived Mana. Older headless fixtures without a Mana
+  // pool get a harmless zero pool; class data is never a fallback authority.
+  const maxMana = Number.isFinite(player.maxMana) ? player.maxMana : 0;
+  const equipmentProfileRuleSnapshot = player.equipmentProfileRuleSnapshot
+    ? structuredClone(player.equipmentProfileRuleSnapshot)
+    : createEquipmentProfileRuleSnapshot(registries);
   const combat = {
     registries,
+    equipmentProfileRuleSnapshot,
     rng,
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
     result: null, // null | 'victory' | 'defeat'
     handMax: bal.handMax != null ? bal.handMax : 10,
-    drawPerTurn: bal.draw != null ? bal.draw : 5,
+    drawPerTurn: player.drawPerTurn != null ? player.drawPerTurn : (bal.draw != null ? bal.draw : 5),
     player: createPlayerCombatEntity({
       classId: player.classId,
       maxHp: player.maxHp,
       hp: player.hp,
       maxMana,
       mana: player.mana != null ? player.mana : maxMana,
+      maxStamina: player.maxStamina,
+      stamina: player.stamina,
       relicIds: player.relicIds || [],
       flasks: player.flasks || [],
-      energyMax: bal.energy != null ? bal.energy : 3,
+      flaskCharges: player.flaskCharges || null,
+      energyMax: player.energyMax != null ? player.energyMax : (bal.energy != null ? bal.energy : 3),
+      drawPerTurn: player.drawPerTurn != null ? player.drawPerTurn : (bal.draw != null ? bal.draw : 5),
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
     // still swapped when the fight ends.
     loadout: player.loadout || null,
+    attributes: player.attributes ? { ...player.attributes } : null,
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
@@ -98,7 +108,11 @@ export function createCombat({
     let hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
     if (hpMult !== 1) hp = Math.max(1, Math.round(hp * hpMult));
     combat.enemies.push(
-      createEnemyCombatEntity({ instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax })
+      createEnemyCombatEntity({
+        instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
+        arcaneExposure: def.arcaneExposure,
+        damageResistanceBySchool: def.damageResistanceBySchool,
+      })
     );
     combat.emit('enemySpawned', { targetId: `e${i + 1}`, enemyId });
   });
@@ -111,6 +125,9 @@ export function createCombat({
     // Equipment numbers ride on the instance (model/loadout.js) — copy them in
     // or every card would come back to its bare-handed self at combat start.
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),
+    ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
+    ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
+    ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);
   const innate = [];
@@ -539,7 +556,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // the config says a swap re-arms what you are already holding.
   const piles = [combat.piles.draw, combat.piles.discard];
   if (cfg.restampHand) piles.push(combat.piles.hand);
-  const run = { deck: [], loadout: combat.loadout, class: p.classId };
+  const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
   // The event carries what it COST and under which rule — a price nobody can
@@ -610,7 +627,12 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     p.counters.attacksPlayedThisCombat += 1;
     meta.attackOrdinal = p.counters.attacksPlayedThisCombat;
   }
-  const cardRef = { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type };
+  const cardRef = {
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
+    type: def.type, tags: def.cardTags,
+    damageSchool: inst.damageSchool ?? def.damageSchool,
+    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+  };
 
   // Enqueue the card's own effects first, then announce the play — triggers
   // reacting to cardPlayed enqueue after the card's effects (FIFO).
@@ -652,10 +674,13 @@ function doEndTurn(combat) {
   startPlayerTurn(combat);
 }
 
-function doUseFlask(combat, { slot, targetId }) {
+function doUseFlask(combat, { slot, chargeKind, targetId }) {
   if (combat.phase !== 'player') throw new Error('Flasks can only be used on the player turn');
   const p = combat.player;
-  const flask = p.flasks[slot];
+  const chargeId = chargeKind === 'hp' ? 'crimsonFlask' : chargeKind === 'mana' ? 'azureFlask' : null;
+  const currentKey = chargeKind && `${chargeKind}Current`;
+  if (chargeId && (!p.flaskCharges || p.flaskCharges[currentKey] <= 0)) throw new Error(`No ${chargeKind} flask charges`);
+  const flask = chargeId ? { flaskId: chargeId } : p.flasks[slot];
   if (!flask) throw new Error(`No flask in slot ${slot}`);
   const def = combat.registries.flasks.get(flask.flaskId);
   let target = null;
@@ -665,7 +690,8 @@ function doUseFlask(combat, { slot, targetId }) {
   } else if (def.targeted) {
     target = combat.enemies.find((e) => e.alive) || null;
   }
-  p.flasks.splice(slot, 1);
+  if (chargeId) p.flaskCharges[currentKey] -= 1;
+  else p.flasks.splice(slot, 1);
   combat.emit('flaskUsed', { flaskId: flask.flaskId, slot, targetId: target ? target.id : null });
   // Cracked Tear-style passives scale flask amounts (rounded up, SPEC §5.4).
   const amountMult = passiveMult(combat.registries, p.relicIds, 'flaskPowerMult');
@@ -717,7 +743,12 @@ export function previewCard(combat, cardInstanceId, targetId) {
     source: p,
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
-    card: { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type },
+    card: {
+      instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
+      type: def.type, tags: def.cardTags,
+      damageSchool: inst.damageSchool ?? def.damageSchool,
+      exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+    },
     meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
   };
 
@@ -735,12 +766,12 @@ export function previewCard(combat, cardInstanceId, targetId) {
       case 'damage': {
         const attackTags = A.attackTagsFor(action, eff);
         const base = evalPreview(combat, action, eff.amount, primary);
-        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags);
+        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, action.card);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         for (const e of living) {
           const b = evalPreview(combat, action, eff.amount, e);
-          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, attackTags);
+          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, attackTags, action.card);
         }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent

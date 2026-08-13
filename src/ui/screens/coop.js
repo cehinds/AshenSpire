@@ -24,11 +24,13 @@ import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox } from '../fx.js';
-import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass } from '../uiContent.js';
+import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation } from '../uiContent.js';
 import { resolveCard } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
+import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
+import { flaskIdentityHtml } from '../components/flask.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -181,16 +183,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       if (!registries.statuses.has(sid)) continue;
       const def = registries.statuses.get(sid);
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
+      const presentation = statusInstancePresentation(def, inst);
       const el = document.createElement('div');
       el.className = 'status-icon';
       el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
-      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${stacks}</span>`;
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)} ×${stacks}</div>${esc(def.tooltip || '')}`);
+      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${esc(presentation.valueText)}</span>`;
+      attachTooltip(el, () => `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}`);
       row.appendChild(el);
     }
     return row;
   }
-  function meterBars(ent, isEnemy) {
+  function meterBars(ent, isEnemy, recentEvents = []) {
     const wrap = document.createElement('div');
     wrap.className = 'meters';
     const hp = document.createElement('div');
@@ -204,6 +207,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
       attachTooltip(poise, () => `<div class="tt-title">Poise</div>${ent.poiseMeter.value} / ${ent.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
+    }
+    if (isEnemy) {
+      const arcane = renderArcaneExposure(registries, ent, recentEvents);
+      if (arcane) wrap.appendChild(arcane);
     }
     return wrap;
   }
@@ -236,16 +243,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
 
     app.innerHTML = `
       <div class="combat coop">
-        <header class="topbar">
-          <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
-          <button class="subtle coop-leave" id="coop-leave" style="margin-left:auto">Leave</button>
+        <header class="topbar combat-hud">
+          <div class="hud-top">
+            <div class="resbars-host"></div>
+            <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
+            <button class="subtle coop-leave" id="coop-leave">Leave</button>
+          </div>
         </header>
         <div class="${backdropClass(snap.actNumber)}"></div>
         <div class="field">
           <div class="player-zone"></div>
           <div class="enemy-row"></div>
         </div>
-        ${meP && meP.flasks && meP.flasks.length ? '<div class="coop-flasks"></div>' : ''}
+        ${meP && ((meP.flasks && meP.flasks.length) || meP.flaskCharges) ? '<div class="coop-flasks"></div>' : ''}
         ${armedFlask != null ? `<div class="coop-arm">Throwing <b>${esc(registries.flasks.get(meP.flasks[armedFlask].flaskId).name)}</b> — click a hero seat to give it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
         ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — click the hero who receives it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
         <div class="hand-area">
@@ -255,6 +265,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
         </div>
         <div class="fx-layer"></div>
       </div>`;
+
+    // The active seat gets the same main-HUD plan as solo. Values come only
+    // from the host snapshot; a missing current/max pair produces no bar.
+    const mainHost = app.querySelector('.topbar .resbars-host');
+    if (mainHost && meP) {
+      const mainPlan = resourceBarPlan(registries, 'main', meP, meP, resourceDomainTable);
+      mainHost.appendChild(resourceBars(mainPlan, { surface: 'main' }));
+    }
 
     // Player seats (all party members in the fight).
     const zone = app.querySelector('.player-zone');
@@ -298,7 +316,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const bb = blockBadge(e.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = def.name; box.appendChild(nm);
-      box.appendChild(meterBars(e, true));
+      box.appendChild(meterBars(e, true, (sc.events || []).filter((event) => (
+        event.targetId === e.id && (event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak' || event.type === 'arcaneExposureChanged')
+      ))));
       box.appendChild(statusRow(e.statuses));
       if (!dead) box.addEventListener('click', () => { selectedEnemy = e.id; render(); });
       row.appendChild(box);
@@ -310,8 +330,22 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const n = meP.hand.length;
       meP.hand.forEach((c, i) => {
         const def = cardDef(c);
-        const affordable = !meP.ended && (def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost);
+        const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
+        const manaAffordable = meP.mana >= (def.manaCost || 0);
+        const affordable = !meP.ended && energyAffordable && manaAffordable;
         const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods }, { affordable });
+        if (!affordable) {
+          const reason = !manaAffordable
+            ? `Need ${def.manaCost || 0} Mana; have ${meP.mana}`
+            : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
+          el.dataset.unavailableReason = reason;
+          el.setAttribute('aria-disabled', 'true');
+          el.setAttribute('aria-label', `${def.name} unavailable: ${reason}`);
+          const badge = document.createElement('div');
+          badge.className = 'card-unavailable-reason';
+          badge.textContent = reason;
+          el.appendChild(badge);
+        }
         const spread = Math.min(6, n) * 1.2;
         el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
         el.style.zIndex = i;
@@ -332,11 +366,23 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     // Flasks.
     const fwrap = app.querySelector('.coop-flasks');
     if (fwrap && meP) {
+      for (const [kind, flaskId] of [['hp', 'crimsonFlask'], ['mana', 'azureFlask']]) {
+        const fd = registries.flasks.get(flaskId);
+        const current = meP.flaskCharges ? meP.flaskCharges[`${kind}Current`] : 0;
+        const b = document.createElement('button');
+        b.className = 'coop-flask flask-charge';
+        b.disabled = current <= 0;
+        b.innerHTML = `${flaskIdentityHtml(fd)} <b>${current}</b>`;
+        b.setAttribute('aria-label', `${fd.name}: ${current} charges remaining`);
+        attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
+        b.addEventListener('click', () => send({ t: 'useFlask', chargeKind: kind }));
+        fwrap.appendChild(b);
+      }
       meP.flasks.forEach((f, i) => {
         const fd = registries.flasks.get(f.flaskId);
         const b = document.createElement('button');
         b.className = `coop-flask${armedFlask === i ? ' armed' : ''}`;
-        b.innerHTML = `⚗ ${esc(fd.name)}${fd.targeted ? '' : ' ▾'}`;
+        b.innerHTML = `${flaskIdentityHtml(fd)}${fd.targeted ? '' : ' ▾'}`;
         attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
         b.addEventListener('click', () => {
           if (fd.targeted) { send({ t: 'useFlask', slot: i, targetId: selectedEnemy }); armedFlask = null; }
@@ -468,7 +514,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     app.innerHTML = rewardShell(`${rTitle(`${(snap.scene.pool || '').toUpperCase()} — CHOOSE A CARD`)}<div class="reward-row"></div>
       <div class="coop-choices" style="margin-top:12px">
         ${offer.relicId ? `<button class="coop-take" data-take="relic">Take relic: ${esc(registries.relics.get(offer.relicId).name)}</button>` : ''}
-        ${offer.flaskId ? `<button class="coop-take" data-take="flask">Take flask: ${esc(registries.flasks.get(offer.flaskId).name)}</button>` : ''}
+        ${offer.flaskId ? `<button class="coop-take" data-take="flask">Take flask: ${flaskIdentityHtml(registries.flasks.get(offer.flaskId))}</button>` : ''}
         <button class="subtle" data-take="skip">Skip card</button>
       </div>`);
     const grid = app.querySelector('.reward-row');

@@ -8,6 +8,27 @@
 
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { applyCardMods } from './loadout.js';
+import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
+
+function applyBasicCardProfile(def, profile) {
+  if (!profile) return def;
+  const tags = [...(profile.tags || [])];
+  const effects = (def.effects || []).map((effect) => (
+    effect.op === 'damage' ? { ...effect, tags } : { ...effect }
+  ));
+  return {
+    ...def,
+    name: profile.displayName,
+    icon: profile.icon,
+    flavor: profile.flavor || def.flavor,
+    damageSchool: profile.damageSchool,
+    exposureBuildupPerHit: profile.exposureBuildupPerHit,
+    cardTags: tags,
+    effects,
+    equipmentProfileId: profile.id,
+    equipmentRole: profile.role,
+  };
+}
 
 /** Recursively freeze a value in place (functions and frozen values skipped). */
 export function deepFreeze(value) {
@@ -51,6 +72,8 @@ function makeRegistry(typeName, defs) {
 
 // Bundle key → registry property + singular type name for error messages.
 const TYPE_SINGULAR = {
+  attributes: 'attribute',
+  creationModes: 'creation mode',
   cards: 'card',
   resources: 'resource',
   relics: 'relic',
@@ -96,6 +119,10 @@ export function createRegistries(contentBundle) {
   }
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
+  // One object, not a copied settings shadow. The run snapshots the resolved
+  // result; authoring and validation still point at this exact content object.
+  registries.derivedStatRules = deepFreeze(bundle.derivedStatRules || {});
 
   const mapConfigs = deepFreeze({ ...(bundle.mapConfigs || {}) });
   registries.mapConfigs = mapConfigs;
@@ -109,6 +136,32 @@ export function createRegistries(contentBundle) {
   // by (slot, class) far more often than by bare id, and armour ids repeat
   // across classes on purpose. They ride along frozen, like balance.
   registries.equipment = deepFreeze({ ...(bundle.equipment || {}) });
+  registries.tags = deepFreeze([...(bundle.tags || [])]);
+
+  // Visual scaling domains use the same derived-stat engine as run creation.
+  // They are content potential (the largest legal creation allocation), not a
+  // gameplay cap and not a second formula in the HUD.
+  const attributeIds = registries.attributes.ids();
+  const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
+  const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
+  let hpEquipmentBonus = 0;
+  for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
+    for (const raw of (piece && piece.mods) || []) {
+      const match = /^self\.maxHp=\+?(-?\d+)$/.exec(String(raw).trim());
+      if (match) hpEquipmentBonus = Math.max(hpEquipmentBonus, Number(match[1]));
+    }
+  }
+  const domainRows = registries.classes.all().map((classDef) => ({
+    hp: deriveStat(rules, 'hp', { attributes: ceilingAttributes, classDef }).value + hpEquipmentBonus,
+    mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value,
+    stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value,
+  }));
+  registries.statDomains = deepFreeze({
+    hp: Math.max(...domainRows.map((row) => row.hp)),
+    mana: Math.max(...domainRows.map((row) => row.mana)),
+    stamina: Math.max(...domainRows.map((row) => row.stamina)),
+  });
 
   // What can be earned. A table, like equipment — evaluated against saved
   // progress by model/unlocks.js, never by anything in here.
@@ -194,7 +247,9 @@ export function resolveCard(registries, instanceOrRef) {
   const cardId = instanceOrRef.cardId;
   const base = registries.cards.get(cardId);
   const mods = instanceOrRef.mods;
-  if (!instanceOrRef.upgraded && !(mods && mods.length)) return base;
+  const profileId = instanceOrRef.profileId;
+  const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -204,12 +259,16 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${mods ? mods.join(',') : ''}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
   let result = base;
   if (instanceOrRef.upgraded) result = mergeUpgrade(base);
+  if (profileId) {
+    const profile = ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === profileId);
+    result = applyBasicCardProfile(result, profile);
+  }
   if (mods && mods.length) {
     const eq = registries.equipment || {};
     result = deepFreeze(
@@ -218,6 +277,13 @@ export function resolveCard(registries, instanceOrRef) {
         limits: (registries.balance.equipment || {}).limits || {},
       })
     );
+  }
+  if (hasCarrier) {
+    result = deepFreeze({
+      ...result,
+      ...(typeof instanceOrRef.damageSchool === 'string' ? { damageSchool: instanceOrRef.damageSchool } : {}),
+      ...(Number.isInteger(instanceOrRef.exposureBuildupPerHit) ? { exposureBuildupPerHit: instanceOrRef.exposureBuildupPerHit } : {}),
+    });
   }
   cache.set(key, result);
   return result;

@@ -16,9 +16,15 @@ export const weapons = [
       "blade",
       "basic"
     ],
-    "mods": "strike.damage=+1",
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
+    "mods": "",
     "unlock": "",
-    "blurb": "Honest steel. It asks nothing clever of you."
+    "blurb": "Honest steel. It asks nothing clever of you.",
+    "dropWeight": 10,
+    "artKey": "",
+    "poiseThreshold": 5
   },
   {
     "id": "greatsword",
@@ -34,13 +40,19 @@ export const weapons = [
       "blade",
       "heavy"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+4",
       "strike.cost=+1",
       "strike.poise=+3"
     ],
     "unlock": "",
-    "blurb": "Slow, and it does not care."
+    "blurb": "Slow, and it does not care.",
+    "dropWeight": 7,
+    "artKey": "",
+    "poiseThreshold": 8
   },
   {
     "id": "dagger",
@@ -54,14 +66,43 @@ export const weapons = [
     "accent": "C9A227",
     "tags": [
       "blade",
+      "pierce",
       "flourish"
     ],
-    "mods": [
-      "strike.damage=3",
-      "strike.hits=2"
-    ],
+    "attackProfile": "daggerPierceAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
+    "mods": "strike.hits=2",
     "unlock": "",
-    "blurb": "Two cuts where one would do."
+    "blurb": "Two cuts where one would do.",
+    "dropWeight": 10,
+    "artKey": "",
+    "poiseThreshold": 3
+  },
+  {
+    "id": "shortbow",
+    "name": "Shortbow",
+    "kind": "weapon",
+    "hand": "right",
+    "rarity": "common",
+    "geom": "dagger",
+    "scale": 1,
+    "metal": "C0B8A6",
+    "accent": "C9A227",
+    "tags": [
+      "pierce",
+      "ranged",
+      "precision"
+    ],
+    "attackProfile": "bowPierceAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "bowTechnique",
+    "mods": "",
+    "unlock": "",
+    "blurb": "A compact bow represented by a generic armament silhouette in this slice.",
+    "dropWeight": 10,
+    "artKey": "dagger",
+    "poiseThreshold": 2
   },
   {
     "id": "katana",
@@ -78,12 +119,18 @@ export const weapons = [
       "blood",
       "flourish"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=-1",
       "strike.bleed=+2"
     ],
     "unlock": "",
-    "blurb": "A long curve, and a long grudge."
+    "blurb": "A long curve, and a long grudge.",
+    "dropWeight": 7,
+    "artKey": "",
+    "poiseThreshold": 5
   },
   {
     "id": "halberd",
@@ -99,13 +146,19 @@ export const weapons = [
       "blade",
       "heavy"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+3",
       "strike.cost=+1",
       "strike.poise=+4"
     ],
     "unlock": "",
-    "blurb": "Reach enough to keep the dead at arm's length."
+    "blurb": "Reach enough to keep the dead at arm's length.",
+    "dropWeight": 7,
+    "artKey": "",
+    "poiseThreshold": 7
   },
   {
     "id": "warhammer",
@@ -118,12 +171,18 @@ export const weapons = [
     "metal": "8E8678",
     "accent": "C9A227",
     "tags": "heavy",
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+2",
       "strike.poise=+6"
     ],
     "unlock": "",
-    "blurb": "Poise is a fiction. This is the argument."
+    "blurb": "Poise is a fiction. This is the argument.",
+    "dropWeight": 7,
+    "artKey": "",
+    "poiseThreshold": 9
   },
   {
     "id": "twinblade",
@@ -139,12 +198,18 @@ export const weapons = [
       "blade",
       "flourish"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=2",
       "strike.hits=3"
     ],
     "unlock": "",
-    "blurb": "Both ends are the business end."
+    "blurb": "Both ends are the business end.",
+    "dropWeight": 4,
+    "artKey": "",
+    "poiseThreshold": 5
   },
   {
     "id": "battleaxe",
@@ -160,12 +225,18 @@ export const weapons = [
       "blade",
       "heavy"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+3",
       "strike.cost=+1"
     ],
     "unlock": "",
-    "blurb": "It was a woodcutter's once."
+    "blurb": "It was a woodcutter's once.",
+    "dropWeight": 10,
+    "artKey": "",
+    "poiseThreshold": 7
   },
   {
     "id": "buckler",
@@ -181,9 +252,15 @@ export const weapons = [
       "guard",
       "flourish"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": "defend.block=+2",
     "unlock": "",
-    "blurb": "Small enough to be quick with."
+    "blurb": "Small enough to be quick with.",
+    "dropWeight": 10,
+    "artKey": "",
+    "poiseThreshold": 4
   },
   {
     "id": "kiteShield",
@@ -196,12 +273,18 @@ export const weapons = [
     "metal": "8E8678",
     "accent": "C9A227",
     "tags": "guard",
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+3",
       "strike.damage=-1"
     ],
     "unlock": "",
-    "blurb": "A wall you can carry. Your arm knows it."
+    "blurb": "A wall you can carry. Your arm knows it.",
+    "dropWeight": 10,
+    "artKey": "",
+    "poiseThreshold": 8
   },
   {
     "id": "towerShield",
@@ -217,12 +300,18 @@ export const weapons = [
       "guard",
       "heavy"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+6",
       "strike.damage=-2"
     ],
     "unlock": "",
-    "blurb": "You will not be moved. You will not move."
+    "blurb": "You will not be moved. You will not move.",
+    "dropWeight": 4,
+    "artKey": "",
+    "poiseThreshold": 12
   },
   {
     "id": "roundShield",
@@ -238,9 +327,15 @@ export const weapons = [
       "guard",
       "basic"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": "defend.block=+2",
     "unlock": "",
-    "blurb": "Plain, round, and enough."
+    "blurb": "Plain, round, and enough.",
+    "dropWeight": 10,
+    "artKey": "",
+    "poiseThreshold": 7
   },
   {
     "id": "spikedShield",
@@ -256,12 +351,18 @@ export const weapons = [
       "guard",
       "blade"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+2",
       "strike.damage=+1"
     ],
     "unlock": "",
-    "blurb": "Defence with an opinion."
+    "blurb": "Defence with an opinion.",
+    "dropWeight": 7,
+    "artKey": "",
+    "poiseThreshold": 8
   },
   {
     "id": "lantern",
@@ -274,12 +375,18 @@ export const weapons = [
     "metal": "6B5D45",
     "accent": "C9A227",
     "tags": "guard",
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+1",
       "self.regen=+1"
     ],
     "unlock": "",
-    "blurb": "Light enough to see what is coming."
+    "blurb": "Light enough to see what is coming.",
+    "dropWeight": 10,
+    "artKey": "",
+    "poiseThreshold": 2
   },
   {
     "id": "torch",
@@ -292,9 +399,15 @@ export const weapons = [
     "metal": "6B5D45",
     "accent": "C9502E",
     "tags": "gorefire",
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": "strike.burn=+2",
     "unlock": "",
-    "blurb": "Fire remembers what steel forgets."
+    "blurb": "Fire remembers what steel forgets.",
+    "dropWeight": 10,
+    "artKey": "",
+    "poiseThreshold": 2
   },
   {
     "id": "parryDagger",
@@ -310,12 +423,18 @@ export const weapons = [
       "guard",
       "flourish"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+1",
       "strike.poise=+2"
     ],
     "unlock": "",
-    "blurb": "Held wrong on purpose."
+    "blurb": "Held wrong on purpose.",
+    "dropWeight": 7,
+    "artKey": "",
+    "poiseThreshold": 3
   },
   {
     "id": "ashStaff",
@@ -331,9 +450,15 @@ export const weapons = [
       "ritual",
       "basic"
     ],
+    "attackProfile": "staffMagicAttack",
+    "guardProfile": "staffGuard",
+    "techniqueProfile": "staffTechnique",
     "mods": "power.potency=+1",
     "unlock": "",
-    "blurb": "Grey wood, warm at the grip."
+    "blurb": "Grey wood, warm at the grip.",
+    "dropWeight": 10,
+    "artKey": "",
+    "poiseThreshold": 3
   },
   {
     "id": "starstoneStaff",
@@ -346,13 +471,19 @@ export const weapons = [
     "metal": "6B5D45",
     "accent": "7FA8C9",
     "tags": "starstone",
+    "attackProfile": "staffMagicAttack",
+    "guardProfile": "staffGuard",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+2",
       "strike.damage=-1",
       "strike.frost=+2"
     ],
     "unlock": "",
-    "blurb": "The stone hums before you do."
+    "blurb": "The stone hums before you do.",
+    "dropWeight": 7,
+    "artKey": "",
+    "poiseThreshold": 3
   },
   {
     "id": "boneSceptre",
@@ -368,12 +499,18 @@ export const weapons = [
       "ritual",
       "blight"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "sceptreGuard",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+1",
       "strike.blight=+2"
     ],
     "unlock": "",
-    "blurb": "Someone knelt for this once."
+    "blurb": "Someone knelt for this once.",
+    "dropWeight": 7,
+    "artKey": "",
+    "poiseThreshold": 4
   },
   {
     "id": "emberlightSceptre",
@@ -389,9 +526,15 @@ export const weapons = [
       "ritual",
       "oath"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": "power.potency=+3",
     "unlock": "",
-    "blurb": "It keeps a little of the guiding flame."
+    "blurb": "It keeps a little of the guiding flame.",
+    "dropWeight": 4,
+    "artKey": "",
+    "poiseThreshold": 4
   },
   {
     "id": "goldboughBranch",
@@ -407,12 +550,18 @@ export const weapons = [
       "ritual",
       "oath"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+2",
       "self.regen=+1"
     ],
     "unlock": "",
-    "blurb": "Cut, and still growing."
+    "blurb": "Cut, and still growing.",
+    "dropWeight": 4,
+    "artKey": "",
+    "poiseThreshold": 4
   },
   {
     "id": "blightRod",
@@ -425,9 +574,15 @@ export const weapons = [
     "metal": "4B3522",
     "accent": "B5541C",
     "tags": "blight",
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": "strike.blight=+3",
     "unlock": "",
-    "blurb": "Wet to the touch. It should not be."
+    "blurb": "Wet to the touch. It should not be.",
+    "dropWeight": 7,
+    "artKey": "",
+    "poiseThreshold": 3
   },
   {
     "id": "gorefireBrand",
@@ -443,12 +598,18 @@ export const weapons = [
       "gorefire",
       "blood"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "strike.burn=+2",
       "strike.bleed=+1"
     ],
     "unlock": "",
-    "blurb": "Blood takes to flame more readily than wood."
+    "blurb": "Blood takes to flame more readily than wood.",
+    "dropWeight": 4,
+    "artKey": "",
+    "poiseThreshold": 3
   },
   {
     "id": "wyrmhornStaff",
@@ -464,12 +625,18 @@ export const weapons = [
       "ritual",
       "heavy"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+2",
       "strike.poise=+2",
       "strike.insanity=+2"
     ],
     "unlock": "",
-    "blurb": "Taken from something that objected."
+    "blurb": "Taken from something that objected.",
+    "dropWeight": 4,
+    "artKey": "",
+    "poiseThreshold": 5
   }
 ];

@@ -1,10 +1,7 @@
 // src/model/gracerefill.js — what a grace hands back, and what it refuses.
 //
-// Constantine, 2026-08-08: "flasks should refill automatically at graces", and
-// the longer form the same evening: "at every grace all characters should
-// restore 3 hp flasks, and 3 mana flasks (this should be configurable in teh
-// debug settings and be data driven, and each character should start with
-// those)."
+// Crimson and Azure are fixed-capacity charge pools. Class data authors the
+// starting split; Grace refills that split and may reallocate it atomically.
 //
 // THE GRACE IS THE SHRINE OF EMBERLIGHT. There is no node type called `grace`
 // in this tree and none is invented here: `shrine` is the rest node (SPEC §7.1,
@@ -12,13 +9,9 @@
 // recover, and it is what his sentence is about. Naming a second word for it
 // would be the second copy this house exists to catch.
 //
-// TWO NOUNS THAT ARE NOT THE SAME NOUN, and this file exists on the seam.
-// His flask is Elden Ring's: one vessel, N charges, refilled at a grace.
-// THIS GAME'S flask is Slay the Spire's potion: `run.flasks` is up to
-// `balance.flaskSlots` SLOTS, each holding a distinct content entry with its
-// own effects (content/flasks.js). "Restore 3 hp flasks" therefore has to mean
-// something in the second model, and the only honest reading is: TOP THE SLOTS
-// UP TO THREE OF THAT KIND. Said out loud because the reading is ours, not his.
+// Utility consumables remain separate inventory entries in `run.flasks`.
+// Crimson/Azure definitions supply effects and presentation only; reward and
+// shop pools exclude their ids through `utilityFlaskIds`.
 //
 // LAYERING: model/, imports nothing from engine/. Pure. `graceRefillPlan` never
 // mutates — the mutation is one line in engine/encounters.js, so the same plan
@@ -26,6 +19,45 @@
 // without any of the three having to apply it to find out what it says.
 
 import { FLASK_KINDS } from './schemas.js';
+
+export const CHARGE_FLASK_IDS = Object.freeze(['crimsonFlask', 'azureFlask']);
+export function isFlaskChargeId(id) { return CHARGE_FLASK_IDS.includes(id); }
+export function utilityFlaskIds(registries) { return registries.flasks.ids().filter((id) => !isFlaskChargeId(id)); }
+
+export function flaskCapacity(balance) {
+  const value = balance && balance.flaskCapacity;
+  if (!Number.isInteger(value) || value <= 0) throw new Error('balance.flaskCapacity must be a positive integer');
+  return value;
+}
+
+export function createFlaskCharges(balance, allocation) {
+  const capacity = flaskCapacity(balance);
+  const hp = allocation && allocation.hp;
+  const mana = allocation && allocation.mana;
+  if (!Number.isInteger(hp) || hp < 0 || !Number.isInteger(mana) || mana < 0 || hp + mana !== capacity) {
+    throw new Error(`Flask allocation must satisfy hp + mana = capacity ${capacity}`);
+  }
+  return { capacity, hp, mana, hpCurrent: hp, manaCurrent: mana };
+}
+
+export function reallocateFlaskCharges(charges, { hp, mana }) {
+  if (!charges || !Number.isInteger(charges.capacity) || charges.capacity <= 0) throw new Error('Missing flask charge capacity');
+  if (!Number.isInteger(hp) || hp < 0 || !Number.isInteger(mana) || mana < 0 || hp + mana !== charges.capacity) {
+    throw new Error(`Flask allocation must satisfy hp + mana = capacity ${charges.capacity}`);
+  }
+  charges.hp = hp;
+  charges.mana = mana;
+  charges.hpCurrent = hp;
+  charges.manaCurrent = mana;
+  return charges;
+}
+
+export function refillFlaskCharges(charges) {
+  if (!charges) return null;
+  charges.hpCurrent = charges.hp;
+  charges.manaCurrent = charges.mana;
+  return charges;
+}
 
 /**
  * flaskKindOf(def) → one of FLASK_KINDS.

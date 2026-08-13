@@ -38,6 +38,14 @@
    zoom, and after a third button is ever added. */
 .topbar.combat-hud .hud-top { display: flex; align-items: center; gap: 1rem; }
 .topbar.combat-hud .resbars-host { flex: 1 1 auto; min-width: 0; }
+.combat.coop .topbar.combat-hud .hud-top {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto auto;
+  align-items: start;
+}
+.combat.coop .topbar.combat-hud .resbars-host { min-width: 10rem; }
+.combat.coop .topbar.combat-hud .fight-label { margin-left: 0; align-self: center; }
+.combat.coop .topbar.combat-hud .coop-leave { align-self: start; }
 .topbar.combat-hud .hud-bottom {
   display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;
   row-gap: calc(4px / var(--ui-zoom, 1));
@@ -205,6 +213,18 @@
 .enemy-row {
   flex: 1; display: flex; align-items: flex-end; justify-content: space-evenly;
   padding-bottom: 2.6rem; gap: 1rem;
+}
+
+/* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
+   Remove unrelated player/action chrome so all conditional enemy states remain
+   readable in one phone still. This selector is unreachable in ordinary play. */
+:root[data-shot-arcane='matrix'] .combat.coop .topbar,
+:root[data-shot-arcane='matrix'] .combat.coop .player-zone,
+:root[data-shot-arcane='matrix'] .combat.coop .coop-flasks,
+:root[data-shot-arcane='matrix'] .combat.coop .hand-area { display: none; }
+:root[data-shot-arcane='matrix'] .combat.coop .field { overflow: visible; padding: 1rem; }
+:root[data-shot-arcane='matrix'] .combat.coop .enemy-row {
+  width: 100%; min-width: 0; height: 100%; padding: 0; align-items: center;
 }
 
 .combatant { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; position: relative; }
@@ -648,6 +668,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      than pushing the seed label off the side; the fight label is hidden below
      for the reason its own comment gives. */
   :root[data-layout='narrow'] .topbar.combat-hud .hud-bottom { gap: 0.8rem; }
+  :root[data-layout='narrow'] .combat.coop .topbar.combat-hud .hud-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  :root[data-layout='narrow'] .combat.coop .topbar.combat-hud .resbars-host { min-width: 0; }
   /* Still the MAP header's bar — combat's is gone. The old rule typed the
      combat health bar at 14rem on a phone, a constant that could not tell 72
      max HP from 84; combat's track is derived from the row now, so the narrow

@@ -3,14 +3,23 @@
 // Code never embeds a balance number; a balance change is a one-file diff here.
 
 export const balance = {
+  // Arcane Exposure host resolution: visible name plus the explicit school
+  // mapping actions.js consumes. No buildup is inferred from card tags.
+  arcaneExposure: {
+    label: 'Arcane Exposure',
+    // Explicit carrier schools. Physical/holy/fire are currently unmapped and
+    // therefore add zero even if a malformed card tries to author buildup.
+    schoolBuildupMultipliers: { magic: 1, arcane: 1 }, // PROVISIONAL
+  },
   energy: 3,
   draw: 5,
   handMax: 10,
-  // The authored grace table below promises three HP and three Mana flasks.
-  // This shared inventory therefore has six slots; the validator refuses any
-  // refill table whose live rows cannot fit.
-  flaskSlots: 6,
+  // Crimson/Azure are charge pools sharing this fixed capacity. Utility
+  // consumables remain inventory items and use flaskSlots independently.
+  flaskCapacity: 3,
+  flaskSlots: 3,
   startingCinders: 0,
+  startingDeckSize: 10,
 
   // Engine-consulted poise config (see ENGINE-API §1). onFill is where content
   // defines what "Staggered" means — the engine never names the status.
@@ -46,36 +55,12 @@ export const balance = {
 
   shrine: { healPct: 35 },
 
-  // ---- what a grace hands back (Constantine, 2026-08-08) --------------------
-  //
-  // "at every grace all characters should restore 3 hp flasks, and 3 mana
-  // flasks (this should be configurable in teh debug settings and be data
-  // driven)". The grace is the Shrine of Emberlight; the machinery is
-  // model/gracerefill.js and one line in engine/encounters.js.
-  //
-  // A TABLE, NOT TWO CONSTANTS. Rows name a KIND, and a kind resolves to the
-  // first flask entry that carries it (content/flasks.js, derived from its
-  // effects). Adding a third refilled kind is a row here plus one word in
-  // FLASK_KINDS; adding a second HP flask is neither.
-  //
-  // Both rows bind in the current build: Crimson derives `hp` from `heal`, and
-  // Azure derives `mana` from `restoreMana`. They share the six-slot inventory.
-  //
-  // COUNTS ARE A TOP-UP, NOT A GRANT: a grace brings you UP TO `count` of the
-  // kind. Arriving with two Crimson Flasks gets you one, not three.
-  //
-  // THE CAP IS balance.flaskSlots ABOVE, and boot validation refuses a table
-  // whose satisfiable rows sum past it (model/gracerefill.js
-  // graceRefillRefusals). Today: hp 3 + mana 3 = 6 into 6 slots.
-  graceRefill: [
-    { kind: 'hp', count: 3 },
-    { kind: 'mana', count: 3 },
-  ],
-
-  // "and each character should start with those" — the fourth clause of his
-  // flask sentence. The merged preview keeps the rule data-authored and turns
-  // it on so a fresh run truthfully starts with the same 3+3 table.
-  graceRefillAtRunStart: true,
+  // ---- what a grace hands back ----------------------------------------------
+  // Grace refills the current Crimson/Azure counts to the allocation stored on
+  // the run. The allocation may be redistributed but always sums to capacity.
+  // This legacy table remains empty so old debug readers fail harmlessly.
+  graceRefill: [],
+  graceRefillAtRunStart: false,
 
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
   // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,
@@ -350,6 +335,28 @@ export const balance = {
   // the rules of the system, kept in one place so it can be tuned or switched
   // off without touching the model.
   equipment: {
+    startingKitDiscovery: {
+      // Undiscovered alternates render no row at all: no name, numbers, cards,
+      // or item silhouette leaks through character creation.
+      undiscoveredPresentation: 'hidden',
+      receiptLimit: 64,
+    },
+    roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 },
+    rarityBonuses: {
+      common: { attack: 0, guard: 0 },
+      uncommon: { attack: 1, guard: 1 },
+      rare: { attack: 2, guard: 2 },
+    },
+    roleSources: {
+      attack: [{ slot: 'rightHand' }],
+      guard: [{ slot: 'leftHand', kinds: ['shield'] }, { slot: 'rightHand' }],
+      technique: [{ slot: 'rightHand' }],
+    },
+    unarmedProfiles: {
+      attack: 'unarmedAttack',
+      guard: 'unarmedGuard',
+      technique: 'unarmedTechnique',
+    },
     enabled: true,
 
     // WHAT THE SHELF IS SCOPED TO, and it is this word — there is no second one.

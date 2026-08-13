@@ -13,7 +13,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { passiveMult, passiveFlag } from '../model/registries.js';
-import { graceRefillPlan } from '../model/gracerefill.js';
+import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -104,7 +104,7 @@ export function rollFlaskDrop(registries, rng, run) {
   const hit = rng.float('flaskRewards') * 100 < run.flaskChancePct;
   if (hit) {
     run.flaskChancePct = Math.max(0, run.flaskChancePct - bal.flaskDropStepPct);
-    const pool = registries.flasks.ids();
+    const pool = utilityFlaskIds(registries);
     return pool.length ? rng.pick('flaskRewards', pool) : null;
   }
   run.flaskChancePct = Math.min(100, run.flaskChancePct + bal.flaskDropStepPct);
@@ -167,7 +167,15 @@ export function rollArmamentDrop(registries, rng, { source, found = [], carried 
       break;
     }
   }
-  return rng.pick('armaments', pool.filter((a) => a.rarity === rarity).map((a) => a.id));
+  const candidates = pool.filter((a) => a.rarity === rarity && Number(a.dropWeight) > 0);
+  if (!candidates.length) return null;
+  const pieceTotal = candidates.reduce((sum, piece) => sum + piece.dropWeight, 0);
+  let pieceRoll = rng.float('armaments') * pieceTotal;
+  for (const piece of candidates) {
+    pieceRoll -= piece.dropWeight;
+    if (pieceRoll < 0) return piece.id;
+  }
+  return candidates[candidates.length - 1].id;
 }
 
 // ---------------------------------------------------------------------------
@@ -199,7 +207,7 @@ export function buildShopStock(registries, rng, run) {
     relics.push({ id, cost: rng.int('shop', ...bal.relicCost[registries.relics.get(id).rarity]) });
   }
 
-  const flaskIds = registries.flasks.ids();
+  const flaskIds = utilityFlaskIds(registries);
   const flasks = [];
   for (let i = 0; i < bal.flaskStock && flaskIds.length; i++) {
     const id = rng.pick('shop', flaskIds);
@@ -282,6 +290,10 @@ export function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {
  * second time. A resumed save that re-mounts the shrine cannot double-pour.
  */
 export function applyGraceRefill(registries, run, opts = {}) {
+  if (run.flaskCharges) {
+    refillFlaskCharges(run.flaskCharges);
+    return { chargePools: structuredClone(run.flaskCharges), grants: [], total: 0, shortfalls: [] };
+  }
   const plan = graceRefillPlan(registries, run, opts);
   for (const flaskId of plan.grants) run.flasks.push({ flaskId });
   return plan;

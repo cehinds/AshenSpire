@@ -27,8 +27,10 @@
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-import { serializeRun, deserializeRun } from '../model/state.js';
+import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges } from '../model/state.js';
 import { createLoadout, stampDeck } from '../model/loadout.js';
+import { normalizeRunAttributes } from '../model/attributes.js';
+import { validateRunStartingKit } from '../model/startingKits.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -45,7 +47,7 @@ export const SLOTS = 3; // save slots, one run each
 const HISTORY_LIMIT = 20;
 // THE ONE HOME for the meta schema's version (the run schema's one home is
 // RUN_SCHEMA_VERSION in model/state.js — two schemas, one home each).
-export const META_SCHEMA_VERSION = 1;
+export const META_SCHEMA_VERSION = 2;
 const ARCHIVE_LIMIT = 12; // keep the last N RUN archives…
 // …and profiles are counted separately, because a run must never evict one
 // (Saga's gate). This cap is generous and exists only so the drawer cannot grow
@@ -236,16 +238,29 @@ export function createSaveManager(storage) {
   // migrateMeta(meta, fromVersion) → meta | null. One switch, one home; every
   // arm must be able to state what it changed.
   function migrateMeta(meta, fromVersion) {
+    if (fromVersion === 1) {
+      return {
+        ...meta,
+        schemaVersion: META_SCHEMA_VERSION,
+        discoveredArmaments: [...new Set(meta.discoveredArmaments || meta.found || [])],
+        discoveryReceipts: [...(meta.discoveryReceipts || [])],
+      };
+    }
     if (fromVersion === 0) {
       // v0 = the pre-#67 unversioned/zero profile: shape is already compatible,
       // it simply never carried a stamp. Adopt it and stamp it.
-      return { ...meta, schemaVersion: META_SCHEMA_VERSION };
+      return {
+        ...meta,
+        schemaVersion: META_SCHEMA_VERSION,
+        discoveredArmaments: [...new Set(meta.discoveredArmaments || meta.found || [])],
+        discoveryReceipts: [...(meta.discoveryReceipts || [])],
+      };
     }
     return null;
   }
 
   function freshMeta() {
-    return { schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [] };
+    return { schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [] };
   }
 
   // The actual write, shared by saveMeta (updates the live profile) and
@@ -351,6 +366,9 @@ export function createSaveManager(storage) {
       let run;
       try {
         run = deserializeRun(json);
+        normalizeRunAttributes(run, registries);
+        validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
+        delete run.migratedFromRunSchemaVersion;
       } catch (e) {
         archive(json, e && e.message ? e.message : 'corrupt save', slot);
         return null;
@@ -369,16 +387,21 @@ export function createSaveManager(storage) {
       }
       // A run saved before equipment existed has no loadout. Give it the bare
       // starting one and re-stamp, rather than throwing away someone's climb.
+      const needsEquipmentStamp = !run.loadout || !run.equipmentProfileRuleSnapshot;
+      const needsCarrierStamp = (run.deck || []).some((card) => card.damageSchool === undefined || card.exposureBuildupPerHit === undefined);
       if (!run.loadout) {
         run.loadout = createLoadout(registries, run.class);
-        stampDeck(registries, run);
       }
-      // Pre-mana v1 saves remain valid: the absent optional fields mean the
-      // climb began before this resource existed, so it enters at its class's
-      // authored full pool. Present-but-malformed values were refused earlier.
-      if (run.maxMana === undefined && run.mana === undefined) {
-        run.maxMana = registries.classes.get(run.class).maxMana;
-        run.mana = run.maxMana;
+      // One migration door for HP, Mana, Stamina, Energy and Draw. A run that
+      // already owns a rules snapshot is only validated; a legacy run resolves
+      // the current host rules and preserves existing HP/Mana deficits.
+      try {
+        initializeRunDerivedStats(run, registries, { preserveDeficits: true });
+        if (needsEquipmentStamp || needsCarrierStamp) stampDeck(registries, run);
+        initializeRunFlaskCharges(run, registries);
+      } catch (e) {
+        archive(json, e && e.message ? e.message : 'invalid derived-stat snapshot', slot);
+        return null;
       }
       // A run that LOADS is a player too, and this is the edge Bjorn could not
       // reach: everyone who started a climb on a build before this one has runs

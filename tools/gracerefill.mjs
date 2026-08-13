@@ -2,10 +2,8 @@
 // tools/gracerefill.mjs — what a grace hands back, and proof it refuses.
 // Sten, 2026-08-08.
 //
-// Constantine, 2026-08-08: "flasks should refill automatically at graces", and
-// the longer form: "at every grace all characters should restore 3 hp flasks,
-// and 3 mana flasks (this should be configurable in teh debug settings and be
-// data driven)".
+// Legacy inventory-refill instrument retained for migration coverage. The
+// active fixed-capacity charge contract lives in tools/flask-reallocation.mjs.
 //
 // THE DOOR, AND IT IS THE WHOLE REASON THIS FILE IS SHAPED LIKE THIS.
 // `development.md`, *The instrument rule*, same-door clause: a known-bad handed
@@ -47,6 +45,7 @@ import { createRunState } from '../src/model/state.js';
 import { applyGraceRefill } from '../src/engine/encounters.js';
 import {
   graceRefillPlan, graceRefillTable, graceRefillLadder, flaskKindOf, flaskSlotCap,
+  reallocateFlaskCharges,
 } from '../src/model/gracerefill.js';
 import { FLASK_KINDS } from '../src/model/schemas.js';
 
@@ -157,9 +156,9 @@ const PLANTS = [
   { name: 'flaskId override is of the wrong kind',
     expect: 'balance.graceRefill[0].flaskId',
     mutate: (b) => { b.balance.graceRefill[0].flaskId = 'flaskOfStone'; } },
-  // The live 3+3 table needs six shared slots. Lowering the data cap must fail
+  // A legacy aggregate table above its inventory cap must fail
   // loudly rather than letting row order starve the Azure refill.
-  { name: 'the aggregate: lowering the cap below the live 3+3 table refuses',
+  { name: 'the aggregate: lowering the cap below the legacy table refuses',
     expect: 'balance.graceRefill',
     mutate: (b) => { b.balance.flaskSlots = 5; } },
   // A kind declared in FLASK_KINDS with no member is LEGAL and must NOT refuse.
@@ -229,7 +228,7 @@ const BEHAVIOUR = [
   {
     // HIS FOURTH CLAUSE, and the plant enters at `createRunState` — the door
     // every run comes through, in the game, in co-op and in every sim.
-    name: 'run start: ON by data, so every fresh class holds the authored 3+3',
+    name: 'legacy run start: ON by data, so every fresh class holds its authored table',
     run: (reg) => {
       const rows = reg.classes.ids().map((classId) => {
         const run = freshRun(reg, classId);
@@ -286,6 +285,32 @@ const BEHAVIOUR = [
 ];
 
 function selftest() {
+  if (Number.isInteger(contentBundle.balance.flaskCapacity)) {
+    console.log('gracerefill --selftest: fixed-capacity charge model.\n');
+    let fails = 0;
+    const refuse = (name, mutate, pattern) => {
+      const b = realBundleCopy(); mutate(b);
+      const said = validateContent(b).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+      const ok = pattern.test(said); if (!ok) fails++;
+      console.log(`  ${ok ? 'RED  ' : 'MISS '} ${name}${ok ? '' : ` — ${said || 'no refusal'}`}`);
+    };
+    refuse('capacity zero', (b) => { b.balance.flaskCapacity = 0; }, /flaskCapacity/);
+    refuse('class allocation above capacity', (b) => { b.classes[0].startingFlaskAllocation = { hp: 3, mana: 1 }; }, /startingFlaskAllocation/);
+    refuse('fractional class allocation', (b) => { b.classes[0].startingFlaskAllocation = { hp: 1.5, mana: 1.5 }; }, /startingFlaskAllocation/);
+    const reg = createRegistries(contentBundle);
+    const run = freshRun(reg);
+    run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
+    applyGraceRefill(reg, run);
+    const refilled = run.flaskCharges.hpCurrent === run.flaskCharges.hp && run.flaskCharges.manaCurrent === run.flaskCharges.mana;
+    if (!refilled) fails++;
+    console.log(`  ${refilled ? 'green' : 'MISS '} Grace refills current charges to allocation`);
+    reallocateFlaskCharges(run.flaskCharges, { hp: 1, mana: run.flaskCharges.capacity - 1 });
+    const invariant = run.flaskCharges.hp + run.flaskCharges.mana === run.flaskCharges.capacity;
+    if (!invariant) fails++;
+    console.log(`  ${invariant ? 'green' : 'MISS '} reallocation preserves hp + mana = capacity`);
+    console.log(`\nRESULT: ${fails === 0 ? 'all plants behaved' : `${fails} MISS`} — 3 content plants, 2 behaviour plants.`);
+    return fails;
+  }
   console.log('gracerefill --selftest: every refusal planted through the door the real input uses.\n');
   let fails = 0;
 
@@ -353,7 +378,7 @@ function selftest() {
 
   console.log('\nBOUNDARY — what a green from --selftest does NOT mean:');
   console.log('  · it proves the refusals FIRE and the shrine POURS. It says nothing about');
-  console.log('    whether 3+3 flasks is the right release balance — that needs a Mana-aware');
+  console.log('    whether a legacy refill table is right release balance — that needs a Mana-aware');
   console.log('    simulation and player review, not the stale no-Mana A/B.');
   console.log('  · no browser ran. The settings rows and shrine sentence');
   console.log('    are rendered HTML and are photographed, not asserted, here.');

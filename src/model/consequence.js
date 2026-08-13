@@ -55,6 +55,7 @@ export const SAFE_OPS = Object.freeze({
   // Gains. Permanent, and the player reached for them.
   addRelic: 'a relic is a gain, and permanence is the point of it',
   addFlask: 'a flask is a gain',
+  addFlaskCapacity: 'flask capacity is a gain',
   upgradeCard: 'as permanent as anything here, and wanted — the axis is "paid, not gained"',
 
   // Numbers that move back.

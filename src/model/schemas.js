@@ -23,6 +23,9 @@
 
 // Effect DSL opcodes (SPEC §3.4).
 import { NODE_TYPES, ANCHOR_KINDS } from './floorplan.js';
+
+/** Presentation schools carried explicitly by equipment-bound card profiles. */
+export const DAMAGE_SCHOOLS = Object.freeze(['physical', 'magic', 'arcane', 'holy', 'fire']);
 // The bar vocabulary lives with the readers it describes (model/resources.js),
 // so the schema and the engine cannot drift into two homes. resources.js
 // imports nothing — no cycle.
@@ -54,6 +57,7 @@ export const RUN_OPCODES = Object.freeze([
   'upgradeCard',
   'addRelic',
   'addFlask',
+  'addFlaskCapacity',
   'loseMaxHpPct',
   'startCombat',
 ]);
@@ -109,6 +113,9 @@ export const EVENTS = Object.freeze([
   'energySpent',
   'manaRestored',
   'manaSpent',
+  'arcaneExposureChanged',
+  'arcaneExposureRefused',
+  'arcaneBreak',
   'flaskUsed',
   'relicTriggered',
 ]);
@@ -166,6 +173,9 @@ export const PASSIVE_TYPES = Object.freeze({
   shrineHealMult: 'num', // shrine rest healing ×
   shrineNoRest: 'bool', // flag: shrines offer Smith only
   powerCostReduction: 'num', // Power cards cost N less (min 0)
+  // Inert character-sheet projection only. Player state and combat deliberately
+  // have no poise meter; enemy poise remains a separate engine system.
+  poiseThresholdAdd: 'num', // additive equipment-receipt modifier
   // SIGNED, and deliberately not `swapCostReduction` beside its neighbour. His
   // sentence is *"costs more OR LESS depending on Talisman or starting relic"* —
   // a "reduction" of −1 to mean "one more" is a word arguing with its own value.
@@ -280,6 +290,8 @@ export const SFX_WAVE_TYPES = Object.freeze(['sine', 'square', 'sawtooth', 'tria
 
 // Registry type names (bundle keys holding arrays of defs).
 export const REGISTRY_TYPES = Object.freeze([
+  'attributes',
+  'creationModes',
   'cards',
   // HUD resource bars as data (content/resources.js). A registry, not a balance
   // sub-object, because a bar is an entry with an id — and because that is what
@@ -327,6 +339,7 @@ export const EFFECT_SPECS = Object.freeze({
   upgradeCard: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },
   addRelic: { allowed: ['id', 'random'], required: [], refs: { id: 'relics' } },
   addFlask: { allowed: ['id', 'random'], required: [], refs: { id: 'flasks' } },
+  addFlaskCapacity: { allowed: ['kind', 'amount'], required: ['kind', 'amount'], refs: {} },
   loseMaxHpPct: { allowed: ['pct'], required: ['pct'], refs: {} },
   startCombat: { allowed: ['encounterId'], required: ['encounterId'], refs: { encounterId: 'encounters' } },
 });
@@ -461,6 +474,45 @@ export const SFX_LAYER_SCHEMAS = Object.freeze({
 // ---------------------------------------------------------------------------
 
 export const SCHEMAS = Object.freeze({
+  basicCardProfile: obj({
+    id: str,
+    role: en('attack', 'guard', 'technique'),
+    baseCardId: ref('cards'),
+    displayName: str,
+    icon: str,
+    damageSchool: en(...DAMAGE_SCHOOLS),
+    exposureBuildupPerHit: int,
+    baseValue: num,
+    scalingStat: ref('attributes'),
+    pointsPerTier: num,
+    rounding: en('floor', 'ceil', 'round'),
+    gainPerTier: num,
+    cap: union(num, str),
+    tags: arr(str),
+    flavor: str,
+    mods: arr(str),
+    compatibility: en('attack-v1', 'guard-v1', 'technique-v1'),
+  }),
+  attribute: obj({
+    id: str,
+    label: str,
+    shortLabel: str,
+    order: int,
+  }),
+  creationMode: obj({
+    id: str,
+    label: str,
+    baseline: int,
+    bonusPool: int,
+    minimum: int,
+    maximum: int,
+    belowBaseline: en('forbid'),
+    redistribution: en('fixedTotal'),
+  }),
+  attributeRules: obj({
+    defaultMode: ref('creationModes'),
+    presets: mapOf(mapOf(mapOf(int))),
+  }),
   card: obj({
     id: str,
     name: str,
@@ -469,6 +521,8 @@ export const SCHEMAS = Object.freeze({
     cost: costNode,
     manaCost: opt(int),
     type: en(...CARD_TYPES),
+    damageSchool: opt(en(...DAMAGE_SCHOOLS)),
+    exposureBuildupPerHit: opt(int),
     keywords: arr(ref('keywords')),
     effects,
     textTemplate: str,
@@ -550,6 +604,9 @@ export const SCHEMAS = Object.freeze({
         stacking: en(...VULN_STACKING),
       })
     ),
+    // Inert schema carrier for Arcane Exposure's registered break effect.
+    // The engine slice will consume only explicit magic-school HP packets.
+    schoolDamageVulnerability: opt(obj({ school: en(...DAMAGE_SCHOOLS) })),
     modifiers: opt(modifiersSchema),
     hooks: opt(triggersNode),
     tooltip: opt(str),
@@ -601,6 +658,24 @@ export const SCHEMAS = Object.freeze({
     art: opt(str),
     size: opt(en('small', 'medium', 'large')), // sprite size tier (display)
     tint: opt(str), // border/accent CSS color (display)
+    // Strict absent | immune | configured Arcane Exposure policy. Absence is
+    // represented by no field; it is not silently defaulted by the engine.
+    arcaneExposure: opt(union(
+      obj({ mode: en('immune') }),
+      obj({
+        mode: en('configured'),
+        threshold: int,
+        buildupMultiplier: num,
+        resetMode: en('zero'),
+        overflowPolicy: en('discard'),
+        lockPolicy: en('whileMagicVulnerable'),
+        onBreak: obj({ status: ref('statuses'), value: num, duration: int }),
+      })
+    )),
+    // Raw HP resistance is deliberately separate from buildup resistance.
+    damageResistanceBySchool: opt(obj(Object.fromEntries(
+      DAMAGE_SCHOOLS.map((school) => [school, opt(num)])
+    ))),
     script: opt(ref('scripts')),
   }),
 
@@ -644,7 +719,10 @@ export const SCHEMAS = Object.freeze({
     kind: opt(en(...FLASK_KINDS)),
     targeted: opt(bool),
     effects,
-    icon: opt(str),
+    icon: str,
+    artKey: str,
+    artAsset: opt(str),
+    tint: str,
     textTemplate: opt(str),
     script: opt(ref('scripts')),
   }),
@@ -653,11 +731,12 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
-    maxMana: int,
+    startingFlaskAllocation: obj({ hp: int, mana: int }),
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),
-    startingDeck: arr(ref('cards')),
+    startingSignatureCard: ref('cards'),
+    eligibleStartingKitIds: arr(str),
     cardPool: arr(ref('cards')),
     description: opt(str),
   }),

@@ -11,14 +11,10 @@
 // for a resource the model ALREADY exposes is one row and zero UI code; that is
 // this feature's falsifier and tools/hudbars.mjs runs it.
 //
-// WHAT THIS FILE DELIBERATELY DOES NOT CONTAIN: stamina and mana. They are D10
-// brainstorm — his words, unbuilt. `grep -rn "stamina" src/` is 0 and every one
-// of the 9 hits for "mana" is the word "manager". There is no character stat
-// system either (`constitution` 0, `charisma` 0), so his "1 per 5 constitution"
-// is not derivable from anything that exists. A row naming a source with no
-// reader is REFUSED BY NAME at boot (validate.js) rather than drawing a trough
-// that reads 0/0 forever — a bar that reads a resource nothing produces is a
-// lie on his screen, and this is the machinery that stops it being written.
+// Stamina and Mana enter here only as readers of persisted derived pools. Their
+// formulas remain in the versioned rules table; this module owns HUD projection,
+// not gameplay authority. An unknown source is refused at boot rather than
+// drawing a lying 0/0 trough.
 
 /**
  * THE TRANSPOSE SCALE — one function, one edit.
@@ -44,6 +40,7 @@
  * Both numbers are measured, not asserted — tools/hudbars.mjs --scales prints
  * this table from this function.
  */
+
 export function resourceScale(v) {
   return v; // LINEAR. Swap for Math.sqrt(v) or Math.log1p(v) — nothing else moves.
 }
@@ -87,6 +84,16 @@ export const RESOURCE_SOURCES = Object.freeze({
     },
     domain: (pop) => maxOf(pop.map((e) => e.maxMana)),
   }),
+  stamina: Object.freeze({
+    read: (view, entity) => {
+      const max = entity && entity.maxStamina;
+      if (!Number.isFinite(max) || max < 0) return null;
+      const cur = view && Number.isFinite(view.stamina) ? view.stamina : entity.stamina;
+      if (!Number.isFinite(cur)) return null;
+      return { cur: Math.max(0, Math.min(max, cur)), max };
+    },
+    domain: (pop) => maxOf(pop.map((e) => e.maxStamina)),
+  }),
   poise: Object.freeze({
     read: (view, entity) => {
       const pm = (view && view.poiseMeter) || (entity && entity.poiseMeter);
@@ -127,19 +134,13 @@ function maxOf(values) {
  * Derived once per registries, not per frame.
  */
 export function resourceDomains(registries) {
-  const classes = registries.classes.all();
   const enemies = registries.enemies.all();
-  // Equipment can raise a run's max HP (loadout.js runMods, `self.maxHp=+N`),
-  // so the player ceiling is the best class plus the best reachable bonus.
-  const eq = registries.equipment || {};
-  let bonus = 0;
-  for (const piece of [...(eq.armour || []), ...(eq.armaments || [])]) {
-    for (const raw of (piece && piece.mods) || []) {
-      const m = /^self\.maxHp=\+?(-?\d+)$/.exec(String(raw).trim());
-      if (m) bonus = Math.max(bonus, Number(m[1]));
-    }
-  }
-  const playerPop = classes.map((c) => ({ maxHp: (c.maxHp || 0) + bonus, maxMana: c.maxMana, poiseMax: undefined }));
+  const playerPop = [{
+    maxHp: registries.statDomains.hp,
+    maxMana: registries.statDomains.mana,
+    maxStamina: registries.statDomains.stamina,
+    poiseMax: undefined,
+  }];
   const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
   const pops = { main: playerPop, model: bothPop };
   const out = {};

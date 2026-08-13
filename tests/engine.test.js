@@ -142,8 +142,9 @@ const OWNS_EVERYTHING = { has: () => true };
 // "not in combat" fails OPEN, so every call site written after today would
 // re-arm mid-fight by saying nothing. Blocks that predate #95 are about the fit
 // and ownership gates, so they declare the context they were always assuming.
-const AT_CAMP = { inCombat: false };
-const MID_FIGHT = { inCombat: true };
+const REQUIREMENT_TEST_ATTRIBUTES = { strength: 15, dexterity: 15, constitution: 15, wisdom: 15, intelligence: 15 };
+const AT_CAMP = { inCombat: false, attributes: REQUIREMENT_TEST_ATTRIBUTES };
+const MID_FIGHT = { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 
 // #104 — THE WIDE, SEALED SLOT, WOKEN ONCE. `talisman` is the only row in
 // equipSlots.csv that is BOTH multi-set (`sets=3`) and `swap=outOfCombat`, so it
@@ -164,7 +165,7 @@ const REG_CHARM = {
 };
 
 // deck: array of cardId strings or { id, up: true }
-function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, relicIds = [], flasks = [] } = {}) {
+function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, relicIds = [], flasks = [] } = {}) {
   const rng = createRng(seed >>> 0);
   const instances = deck.map((d, i) => {
     const isObj = typeof d === 'object';
@@ -173,7 +174,7 @@ function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], 
   return createCombat({
     registries: REG,
     rng,
-    player: { classId: 'reaver', maxHp, hp, deck: instances, relicIds, flasks },
+    player: { classId: 'reaver', maxHp, hp, mana, maxMana, deck: instances, relicIds, flasks },
     enemyIds: enemies,
   });
 }
@@ -1147,11 +1148,12 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
   // ---- 14. Scripted bot completes a boss combat -------------------------------------
   test('14. bot (leftmost affordable, end turn) finishes a seeded boss fight without throwing', () => {
-    const deck = REG.classes.get('reaver').startingDeck.map((id, i) => ({ instanceId: `c${i}`, cardId: id, upgraded: false }));
+    const fresh = createRunState({ seed: 1, classId: 'reaver', registries: REG });
+    const deck = fresh.deck;
     const c = createCombat({
       registries: REG,
       rng: createRng(0x51deb00b),
-      player: { classId: 'reaver', maxHp: 78, hp: 78, deck, relicIds: ['forsakenMedallion'] },
+      player: { classId: 'reaver', attributes: fresh.attributes, maxHp: 78, hp: 78, mana: 2, maxMana: 2, deck, loadout: fresh.loadout, relicIds: ['forsakenMedallion'] },
       enemyIds: ['fellWarden'],
     });
     let guard = 0;
@@ -1301,9 +1303,9 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
     const rn4 = createRunState({ seed: 4, classId: 'reaver', registries: REG });
     rn4.hp = 10;
-    eq(shrineHealAmount(REG, rn4), Math.floor((84 * 35) / 100), 'shrine heal 35%');
+    eq(shrineHealAmount(REG, rn4), Math.floor((rn4.maxHp * 35) / 100), 'shrine heal 35%');
     rn4.relics.push('emberFragment');
-    eq(shrineHealAmount(REG, rn4), Math.floor((84 * 35 * 1.15) / 100), 'Ember Fragment ×1.15');
+    eq(shrineHealAmount(REG, rn4), Math.floor((rn4.maxHp * 35 * 1.15) / 100), 'Ember Fragment ×1.15');
   });
 
   // ---- 19. Keepsakes (character creation boons) -------------------------------------------
@@ -1320,7 +1322,8 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'oldCinder').effects);
     eq(rn.cinders, 50, 'Old Cinder grants 50 cinders');
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'travelersFlask').effects);
-    eq(rn.flasks[0].flaskId, 'crimsonFlask', "Traveler's Flask grants a Crimson Flask");
+    eq(rn.flaskCharges.capacity, 4, "Traveler's Flask raises fixed charge capacity");
+    eq(rn.flaskCharges.hp, 3, "Traveler's Flask allocates the added charge to Crimson");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
     assert(rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'Whetstone Memory upgrades a Strike');
   });
@@ -1330,7 +1333,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     eq(REG.classes.size, 3, 'three playable classes registered');
 
     // Starstone: 1st spell plain, 2nd spell empowered, charge fades at turn end.
-    const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'] });
+    const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 3, maxMana: 3 });
     playFromHand(a, 'starstonePebble');
     let hits = logOf(a, 'damageDealt').map((e) => e.amount);
     eq(hits.join(','), '6', 'first spell: no bonus');
@@ -1367,11 +1370,12 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     // A bot finishes an elite fight with each new class's starting deck.
     for (const classId of ['starseer', 'herald']) {
       const cls = REG.classes.get(classId);
-      const deck = cls.startingDeck.map((id, i) => ({ instanceId: `b${i}`, cardId: id, upgraded: false }));
+      const fresh = createRunState({ seed: 1, classId, registries: REG });
+      const deck = fresh.deck;
       const c = createCombat({
         registries: REG,
         rng: createRng(0xabc0 + classId.length),
-        player: { classId, maxHp: cls.maxHp, hp: cls.maxHp, deck, relicIds: [cls.startingRelic] },
+        player: { classId, attributes: fresh.attributes, maxHp: cls.maxHp, hp: cls.maxHp, mana: 2, maxMana: 2, deck, loadout: fresh.loadout, relicIds: [cls.startingRelic] },
         enemyIds: ['wyrmAspirant'],
       });
       let guard = 0;
@@ -1392,45 +1396,45 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
   test('20b. Mana is real state: validated maxima, spend/refuse/restore, save migration, and zero/max HUD plans', () => {
     const fresh = createRunState({ seed: 0x6d616e61, classId: 'reaver', registries: REG });
-    eq(fresh.mana, 40, 'run starts at its class-authored mana maximum');
-    eq(fresh.maxMana, 40, 'Reaver maximum comes from class data');
+    eq(fresh.mana, 2, 'run starts at its WIS-derived mana maximum');
+    eq(fresh.maxMana, 2, 'Reaver maximum is base-zero WIS tiers');
     assert(validateRunShape(fresh).length === 0, 'the new run shape accepts a sound mana pool');
-    assert(validateRunShape({ ...fresh, mana: 41 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
+    assert(validateRunShape({ ...fresh, mana: 3 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
 
     const badMax = validateContent({
       ...contentBundle,
       classes: contentBundle.classes.map((c) => c.id === 'reaver' ? { ...c, maxMana: 0 } : c),
     });
-    assert(!badMax.ok && badMax.errors.some((e) => e.path === 'classes.reaver.maxMana'), 'zero class maxMana is refused at the content door');
+    assert(!badMax.ok && badMax.errors.some((e) => e.path === 'classes.reaver.maxMana'), 'class maxMana authority is refused at the content door');
     const badCost = validateContent({
       ...contentBundle,
       cards: contentBundle.cards.map((c) => c.id === 'gorefireSlash' ? { ...c, manaCost: -1 } : c),
     });
     assert(!badCost.ok && badCost.errors.some((e) => e.path === 'cards.gorefireSlash.manaCost'), 'negative manaCost cannot mint mana');
 
-    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'] });
+    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 2, maxMana: 2 });
     const sig = spend.piles.hand[0];
     const pv = previewCard(spend, sig.instanceId);
-    eq(pv.manaCost, 10, 'preview exposes the same mana cost execution charges');
+    eq(pv.manaCost, 1, 'preview exposes the same mana cost execution charges');
     dispatch(spend, { type: 'playCard', cardInstanceId: sig.instanceId, targetId: 'e1' });
-    eq(spend.player.mana, 30, 'signature starter spends 10 mana');
-    assert(logOf(spend, 'manaSpent').some((e) => e.amount === 10), 'mana spend emits a receipt');
+    eq(spend.player.mana, 1, 'signature starter spends 1 mana');
+    assert(logOf(spend, 'manaSpent').some((e) => e.amount === 1), 'mana spend emits a receipt');
 
-    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'] });
-    empty.player.mana = 9;
+    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 0, maxMana: 2 });
+    empty.player.mana = 0;
     const beforeHand = empty.piles.hand.length;
     let refused = '';
     try { dispatch(empty, { type: 'playCard', cardInstanceId: empty.piles.hand[0].instanceId, targetId: 'e1' }); }
     catch (e) { refused = e.message; }
     assert(refused.includes('Not enough mana'), 'under-cost play is refused by name');
-    eq(empty.player.mana, 9, 'refusal spends no mana');
+    eq(empty.player.mana, 0, 'refusal spends no mana');
     eq(empty.piles.hand.length, beforeHand, 'refusal moves no card');
 
-    const flask = makeCombat({ deck: Array(5).fill('strike'), flasks: [{ flaskId: 'azureFlask' }] });
-    flask.player.mana = 25;
+    const flask = makeCombat({ deck: Array(5).fill('strike'), flasks: [{ flaskId: 'azureFlask' }], mana: 0, maxMana: 2 });
+    flask.player.mana = 0;
     dispatch(flask, { type: 'useFlask', slot: 0 });
-    eq(flask.player.mana, 40, 'Azure Flask restores and clamps at maxMana');
-    assert(logOf(flask, 'manaRestored').some((e) => e.amount === 15), 'restoration receipt reports the amount actually gained');
+    eq(flask.player.mana, 1, 'Azure Flask restores one small Mana unit');
+    assert(logOf(flask, 'manaRestored').some((e) => e.amount === 1), 'restoration receipt reports the amount actually gained');
 
     const storage = createMemoryStorage();
     const saves = createSaveManager(storage);
@@ -1439,18 +1443,18 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     delete old.maxMana;
     storage.setItem(RUN_KEY, JSON.stringify(old));
     const migrated = saves.loadRun(REG);
-    eq(migrated.mana, 40, 'pre-mana save migrates to full current mana');
-    eq(migrated.maxMana, 40, 'pre-mana save derives its class maximum');
+    eq(migrated.mana, 2, 'pre-mana save migrates to full derived mana');
+    eq(migrated.maxMana, 2, 'pre-mana save derives base-zero WIS tiers');
 
     const domains = resourceDomains(REG);
     const zero = { ...empty.player, mana: 0 };
     const atZero = resourceBarPlan(REG, 'main', zero, zero, domains).find((b) => b.id === 'mana');
     eq(atZero.cur, 0, 'zero edge is a real empty mana plan');
     eq(atZero.pct, 0, 'zero edge has zero fill');
-    const star = { maxHp: 72, hp: 72, maxMana: 80, mana: 80 };
+    const star = { maxHp: 72, hp: 72, maxMana: 3, mana: 3 };
     const atMax = resourceBarPlan(REG, 'main', star, star, domains).find((b) => b.id === 'mana');
     eq(atMax.pct, 100, 'max edge fills the mana trough');
-    eq(atMax.lengthPct, 100, 'largest authored maxMana fills the derived row track');
+    eq(atMax.lengthPct, 100, 'largest legal WIS-derived maxMana fills the derived row track');
   });
 
   // ---- 21. M3 phase 2: Acts II–III mechanics ------------------------------------------------
@@ -1492,11 +1496,12 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
     // Full-fight bot: an upgraded Reaver deck concludes the final boss fight.
     const cls = REG.classes.get('reaver');
-    const deck = [...cls.startingDeck, 'stomp', 'executioner', 'crimsonCleave'].map((id, i) => ({ instanceId: `f${i}`, cardId: id, upgraded: true }));
+    const fresh = createRunState({ seed: 1, classId: 'reaver', registries: REG });
+    const deck = [...fresh.deck.map((c) => ({ ...c, upgraded: true })), ...['stomp', 'executioner', 'crimsonCleave'].map((cardId, i) => ({ instanceId: `f${i}`, cardId, upgraded: true }))];
     const f = createCombat({
       registries: REG,
       rng: createRng(0xf17e),
-      player: { classId: 'reaver', maxHp: 78, hp: 78, deck, relicIds: ['forsakenMedallion'] },
+      player: { classId: 'reaver', attributes: fresh.attributes, maxHp: 78, hp: 78, deck, loadout: fresh.loadout, relicIds: ['forsakenMedallion'] },
       enemyIds: ['blightedValkyrie'],
     });
     let guard = 0;
@@ -1680,7 +1685,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
     const ids = weapons.map((w) => w.id);
     eq(ids.length, new Set(ids).size, 'armament ids are unique');
-    eq(weapons.filter((w) => w.kind === 'weapon').length, 8, 'eight weapons');
+    eq(weapons.filter((w) => w.kind === 'weapon').length, 9, 'nine weapons');
     eq(weapons.filter((w) => w.kind === 'shield').length, 8, 'eight shields/offhands');
     eq(weapons.filter((w) => w.kind === 'staff').length, 8, 'eight staves');
 
@@ -1772,7 +1777,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     equipPiece(REG, run.loadout, 'armor', 0, 'oathsworn', OWNS_EVERYTHING, AT_CAMP);
     stampDeck(REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(REG, aStrike)), 3, 'the deck itself is stamped with the dagger');
+    eq(dmgOf(resolveCard(REG, aStrike)), 5, 'the deck itself is stamped with the DEX dagger receipt');
     eq(runMods(REG, run.loadout, 'reaver').startStatuses[0].status, 'strength', 'the Oathsworn set grants Strength');
     assert(loadoutTags(REG, run.loadout, 'reaver').includes('blade'), 'worn pieces contribute their tags');
 
@@ -1781,14 +1786,14 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const combat = createCombat({
       registries: REG,
       rng,
-      player: { classId: 'reaver', maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds: [], loadout: run.loadout },
+      player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds: [], loadout: run.loadout },
       enemyIds: ['fellWarden'],
     });
     const energyBefore = combat.player.energy;
     dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
     eq(combat.player.energy, energyBefore - bal.swapCost, 'the swap costs what the config says');
     const inHand = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(REG, inHand)), 10, 'every Strike now swings the greatsword');
+    eq(dmgOf(resolveCard(REG, inHand)), 12, 'every Strike now carries the greatsword profile, rarity, tier, and explicit mod');
     // Armour is not something you change with a knight in the room.
     let refused = '';
     try {
@@ -1843,7 +1848,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     saves.saveRun(run, rng);
     const loaded = saves.loadRun(REG);
     eq(loaded.loadout.sets.rightHand[1], 'greatsword', 'the loadout round-trips');
-    eq(dmgOf(resolveCard(REG, loaded.deck.find((c) => c.cardId === 'strike'))), 10, 'stamped cards round-trip');
+    eq(dmgOf(resolveCard(REG, loaded.deck.find((c) => c.cardId === 'strike'))), 12, 'stamped cards round-trip');
 
     // And a run saved before equipment existed is healed, not refused.
     const legacy = JSON.parse(JSON.stringify(run));
@@ -1852,7 +1857,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     storage.setItem(RUN_KEY, JSON.stringify(legacy));
     const healed = saves.loadRun(REG);
     assert(healed && healed.loadout, 'a pre-equipment save loads with a fresh loadout');
-    eq(healed.loadout.sets.rightHand[0], null, 'the healed loadout starts bare-handed');
+    eq(healed.loadout.sets.rightHand[0], 'straightSword', 'the healed loadout restores the class-authored starting weapon');
   });
 
   // ---- 28p. the swap PRICE: three rules, three measured numbers -----------
@@ -1889,7 +1894,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       const combat = createCombat({
         registries: REG,
         rng: createRng(11),
-        player: { classId: 'reaver', maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds, loadout: run.loadout },
+        player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds, loadout: run.loadout },
         enemyIds: ['fellWarden'],
         swapCostRule: rule,
       });
@@ -2178,7 +2183,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     // ---- the gate is on the mutation, not on the screen -------------------
     const fresh = createRunState({ seed: 4, classId: 'reaver', registries: REG });
     assert(!equipPiece(REG, fresh.loadout, 'leftHand', 0, 'greatsword', OWNS_EVERYTHING, AT_CAMP), 'the left hand refuses a right-handed weapon');
-    eq(fresh.loadout.sets.leftHand[0], null, 'and a refusal leaves the slot exactly as it found it');
+    eq(fresh.loadout.sets.leftHand[0], 'roundShield', 'and a refusal leaves the authored starting shield exactly as it found it');
     assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'buckler', OWNS_EVERYTHING, AT_CAMP), 'a left-hand piece goes in');
     assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), "an 'either' piece goes in the left hand");
     assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, AT_CAMP), '…and in the right hand');
@@ -2400,7 +2405,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     // Same registries, same profile, `basicTag` cleared: the shelf goes back to
     // the pre-A7 number, which is the measurement the line above used to be.
     const noBasics = { ...REG, balance: { ...REG.balance, equipment: { ...REG.balance.equipment, basicTag: '' } } };
-    eq(rightPool.filter((p) => ownership(noBasics, { meta: {}, loadout: fresh }).has(p)).length, 0,
+    eq(rightPool.filter((p) => ownership(noBasics, { meta: {}, loadout: fresh }).has(p)).map((p) => p.id).join(','), 'straightSword',
       'with basicTag cleared a fresh profile is offered 0 again — the tag, not a hard-coded list');
 
     // ---- 2. …and what it finds, it is offered, and ONLY that --------------
@@ -2434,7 +2439,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const probe = createLoadout(REG, 'reaver');
     assert(!equipPiece(REG, probe, 'rightHand', 0, 'greatsword', none, AT_CAMP),
       'an unowned armament cannot be equipped even when it fits');
-    eq(probe.sets.rightHand[0], null, 'and the refusal left the slot alone');
+    eq(probe.sets.rightHand[0], 'straightSword', 'and the refusal left the authored starting weapon alone');
     assert(equipPiece(REG, probe, 'rightHand', 0, 'dagger', two, AT_CAMP), 'an owned one goes in');
 
     // ---- 6. the ladder: three states from two integers --------------------
@@ -2758,7 +2763,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       if (!equipPiece(REG, rich, 'rightHand', 0, piece.id, OWNS_EVERYTHING, MID_FIGHT)) refusedAll += 1;
     }
     eq(refusedAll, pool.length, `every one of ${pool.length} owned, fitting pieces is refused mid-fight`);
-    eq(rich.sets.rightHand[0], null, 'and after the whole sweep the slot is still as it started');
+    eq(rich.sets.rightHand[0], 'straightSword', 'and after the whole sweep the slot is still at its authored start');
     // …and the same sweep at camp is the control group. If BOTH sides refused,
     // the count above would be green for the wrong reason.
     let tookAll = 0;
@@ -2823,7 +2828,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       }
     } finally { console.error = hush2; }
     eq(refusedShapes, shapes.length, `every one of ${shapes.length} non-boolean contexts is refused`);
-    eq(shapeProbe.sets.rightHand[0], null, 'and none of them moved a piece');
+    eq(shapeProbe.sets.rightHand[0], 'straightSword', 'and none of them moved the authored starting piece');
 
     // WHICH LAYER REFUSED, and this assertion exists because the plant for it
     // stayed GREEN. `canEquip` also refuses a non-boolean, so with only the
@@ -2841,8 +2846,8 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       `the mutation refuses a typed-but-unset flag on its own, not by way of canEquip — got: ${byWhom || '(nothing)'}`);
     // The control group: the two REAL shapes still work, so the check above is
     // not green because everything refuses.
-    assert(equipPiece(REG, shapeProbe, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, { inCombat: false }), 'a real false still equips');
-    assert(!equipPiece(REG, shapeProbe, 'rightHand', 1, 'dagger', OWNS_EVERYTHING, { inCombat: true }), 'a real true still refuses');
+    assert(equipPiece(REG, shapeProbe, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, { inCombat: false, attributes: REQUIREMENT_TEST_ATTRIBUTES }), 'a real false still equips');
+    assert(!equipPiece(REG, shapeProbe, 'rightHand', 1, 'dagger', OWNS_EVERYTHING, { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES }), 'a real true still refuses');
   });
 
   // ---- 31c. the ladder gates the MUTATION, not just the screen ------------
@@ -2968,7 +2973,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const orphaned = [];
 
     for (const a of REG.equipment.armaments) {
-      const entry = manifest.armaments[a.id];
+      const entry = manifest.armaments[a.artKey || a.id];
       if (!entry) {
         stale.push(`${a.id}: no art rendered`);
         continue;
@@ -3013,7 +3018,8 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
     // The manifest must also actually cover the content, or an empty file would
     // pass every assertion above by having nothing to disagree with.
-    eq(Object.keys(manifest.armaments).length, REG.equipment.armaments.length, 'every armament is covered');
+    const authoredArtKeys = new Set(REG.equipment.armaments.map((a) => a.artKey || a.id));
+    eq(Object.keys(manifest.armaments).length, authoredArtKeys.size, 'every distinct armament art key is covered');
     eq(Object.keys(manifest.armour).length, REG.equipment.armour.length, 'every armour set is covered');
   });
 
@@ -3817,6 +3823,139 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     // tools/tapsize.mjs, tools/axisfit.mjs and a photograph, not this file.
     // It is also silent on MINUTES: node count is the driver of run length and
     // nothing in this tree can measure a clock.
+  });
+
+  // ---- 50. Phase 1 attributes are authored data, not engine defaults --------
+  test('50. five-stat creation vocabulary and class presets come from one complete content product', () => {
+    assert(Array.isArray(contentBundle.attributes), 'attribute definitions are a content table');
+    assert(Array.isArray(contentBundle.creationModes), 'creation modes are a content table');
+    assert(contentBundle.attributeRules && typeof contentBundle.attributeRules === 'object', 'attribute creation rules are content');
+    const attrs = contentBundle.attributes.slice().sort((a, b) => a.order - b.order);
+    const modes = contentBundle.creationModes;
+    const classes = contentBundle.classes;
+    eq(attrs.map((a) => a.id).join(','), 'strength,dexterity,constitution,wisdom,intelligence', 'the five stable ids ship in authored order');
+    eq(attrs.map((a) => a.shortLabel).join(','), 'STR,DEX,CON,WIS,INT', 'all five short labels ship from the same rows');
+    const standard = contentBundle.creationModes.find((m) => m.id === contentBundle.attributeRules.defaultMode);
+    assert(!!standard, 'the default mode resolves');
+    eq(`${standard.baseline}/${standard.bonusPool}/${standard.minimum}/${standard.maximum}`, '10/5/10/15', 'standard creation bounds are authored');
+    eq(
+      classes.map((c) => attrs.map((a) => contentBundle.attributeRules.presets.standard[c.id][a.id]).join('/')).join('|'),
+      '13/10/12/10/10|10/11/10/10/14|10/10/12/13/10',
+      'all three standard class presets are exact in the authored attribute order'
+    );
+
+    // The product is derived from its three axes. This is not a three-class
+    // snapshot: every mode/class/stat cell in whatever content ships is walked.
+    let cells = 0;
+    for (const mode of modes) {
+      const expectedTotal = mode.baseline * attrs.length + mode.bonusPool;
+      for (const cls of classes) {
+        const preset = contentBundle.attributeRules.presets[mode.id][cls.id];
+        eq(Object.keys(preset).sort().join(','), attrs.map((a) => a.id).sort().join(','), `${mode.id}/${cls.id} has exactly the authored stat vocabulary`);
+        eq(attrs.reduce((sum, a) => sum + preset[a.id], 0), expectedTotal, `${mode.id}/${cls.id} total derives from baseline × count + pool`);
+        for (const attr of attrs) {
+          assert(Number.isInteger(preset[attr.id]) && preset[attr.id] >= mode.minimum && preset[attr.id] <= mode.maximum, `${mode.id}/${cls.id}/${attr.id} is an in-range integer`);
+          cells++;
+        }
+      }
+    }
+    eq(cells, modes.length * classes.length * attrs.length, 'the complete mode × class × stat product was checked');
+
+    const clone = () => ({
+      ...contentBundle,
+      attributes: structuredClone(contentBundle.attributes),
+      creationModes: structuredClone(contentBundle.creationModes),
+      attributeRules: structuredClone(contentBundle.attributeRules),
+    });
+    const rejected = (mutate, path, label) => {
+      const b = clone(); mutate(b);
+      const v = validateContent(b);
+      assert(!v.ok && v.errors.some((e) => e.path.includes(path)), `${label} is refused and names ${path}`);
+    };
+    rejected((b) => { delete b.attributes[0].id; }, 'attributes', 'missing attribute id');
+    rejected((b) => { b.attributes[1].id = b.attributes[0].id; }, 'attributes', 'duplicate attribute id');
+    rejected((b) => { delete b.attributes[0].order; }, 'attributes', 'missing order');
+    rejected((b) => { b.attributes[1].order = b.attributes[0].order; }, 'order', 'duplicate order');
+    rejected((b) => { b.attributes[0].order = 1.5; }, 'order', 'fractional order');
+    rejected((b) => { b.attributes[0].order = -1; }, 'order', 'negative order');
+    rejected((b) => { b.attributes[0].order = Number.NaN; }, 'order', 'NaN order');
+    rejected((b) => { b.attributes[0].unknown = true; }, 'unknown', 'unknown attribute field');
+    rejected((b) => { b.creationModes.push({ ...b.creationModes[0] }); }, 'creationModes', 'duplicate creation mode id');
+    rejected((b) => { b.creationModes[0].unknown = true; }, 'unknown', 'unknown creation mode field');
+    rejected((b) => { b.creationModes[0].minimum = b.creationModes[0].baseline + 1; }, 'creationModes', 'minimum above baseline');
+    rejected((b) => { b.creationModes[0].maximum = b.creationModes[0].baseline - 1; }, 'creationModes', 'baseline above maximum');
+    rejected((b) => { b.creationModes[0].bonusPool = -1; }, 'bonusPool', 'negative bonus pool');
+    rejected((b) => { b.attributeRules.defaultMode = 'missing'; }, 'defaultMode', 'dangling default mode');
+    rejected((b) => { delete b.attributeRules.presets.standard.reaver.strength; }, 'strength', 'missing stat product cell');
+    rejected((b) => { b.attributeRules.presets.standard.reaver.luck = 10; }, 'luck', 'extra stat cell');
+    rejected((b) => { b.attributeRules.presets.standard.ghost = { ...b.attributeRules.presets.standard.reaver }; }, 'ghost', 'unknown class cell');
+    rejected((b) => { b.attributeRules.presets.ghost = {}; }, 'ghost', 'unknown mode cell');
+    rejected((b) => { b.attributeRules.presets.standard.reaver.strength = 10.5; }, 'strength', 'fractional preset value');
+    rejected((b) => { b.attributeRules.presets.standard.reaver.strength = standard.maximum + 1; }, 'strength', 'out-of-range preset value');
+    rejected((b) => { b.attributeRules.presets.standard.reaver.strength -= 1; }, 'reaver', 'wrong fixed total');
+
+    const fresh = createRunState({ seed: 50, classId: 'herald', registries: REG });
+    eq(fresh.attributeMode, contentBundle.attributeRules.defaultMode, 'new run selects the authored default mode');
+    eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
+    for (const mode of modes) {
+      const selected = createRunState({ seed: 50, classId: 'reaver', registries: REG, attributeMode: mode.id });
+      eq(selected.attributeMode, mode.id, `creation accepts authored mode '${mode.id}'`);
+    }
+    const allocated = { ...contentBundle.attributeRules.presets.standard.reaver, strength: 12, dexterity: 11 };
+    const custom = createRunState({ seed: 50, classId: 'reaver', registries: REG, attributeMode: 'standard', attributes: allocated });
+    eq(JSON.stringify(custom.attributes), JSON.stringify(allocated), 'creation accepts a valid player allocation through the shared validator');
+
+    // Whole-block legacy migration is allowed; any half-block is corruption.
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    const legacy = { ...fresh };
+    delete legacy.attributeMode;
+    delete legacy.attributes;
+    storage.setItem(RUN_KEY, JSON.stringify(legacy));
+    const migrated = saves.loadRun(REG);
+    eq(JSON.stringify(migrated.attributes), JSON.stringify(contentBundle.attributeRules.presets[migrated.attributeMode].herald), 'legacy run migrates to its content-selected class preset as one whole block');
+    for (const malformed of [
+      { ...fresh, attributeMode: undefined },
+      { ...fresh, attributes: undefined },
+      { ...fresh, attributes: { ...fresh.attributes, luck: 10 } },
+      { ...fresh, attributes: { ...fresh.attributes, wisdom: undefined } },
+      { ...fresh, attributeMode: 'ghost' },
+      { ...fresh, attributes: { ...fresh.attributes, wisdom: 10.5 } },
+      { ...fresh, attributes: { ...fresh.attributes, wisdom: standard.maximum + 1 } },
+      { ...fresh, attributes: { ...fresh.attributes, wisdom: fresh.attributes.wisdom + 1 } },
+    ]) {
+      storage.setItem(RUN_KEY, JSON.stringify(malformed));
+      eq(saves.loadRun(REG), null, 'partial/unknown attribute save fails closed');
+    }
+
+    // A synthetic second mode changes order, every numeric rule, defaultMode,
+    // and a class preset. Readers must follow it without a system default.
+    const mutant = clone();
+    mutant.attributes = mutant.attributes.map((a, i) => ({ ...a, order: mutant.attributes.length - i }));
+    const testMode = { id: 'testMode', label: 'Test Mode', baseline: 7, bonusPool: 3, minimum: 7, maximum: 10, belowBaseline: 'forbid', redistribution: 'fixedTotal' };
+    mutant.creationModes.push(testMode);
+    mutant.attributeRules.defaultMode = testMode.id;
+    mutant.attributeRules.presets.testMode = {
+      reaver: { strength: 10, dexterity: 7, constitution: 7, wisdom: 7, intelligence: 7 },
+      starseer: { strength: 7, dexterity: 8, constitution: 7, wisdom: 7, intelligence: 9 },
+      herald: { strength: 7, dexterity: 7, constitution: 8, wisdom: 9, intelligence: 7 },
+    };
+    assert(validateContent(mutant).ok, 'mutant content remains valid after every derived input changes');
+    const MR = createRegistries(mutant);
+    const mr = createRunState({ seed: 51, classId: 'reaver', registries: MR });
+    eq(mr.attributeMode, 'testMode', 'creation follows mutated default mode');
+    eq(Object.keys(mr.attributes).join(','), mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => a.id).join(','), 'run allocation key order follows mutated authored order');
+    eq(Object.values(mr.attributes).reduce((a, b) => a + b, 0), testMode.baseline * mutant.attributes.length + testMode.bonusPool, 'run total follows mutated baseline/count/pool');
+    const mutantAllocation = { ...mutant.attributeRules.presets.testMode.reaver, strength: 9, dexterity: 8 };
+    const ma = createRunState({ seed: 52, classId: 'reaver', registries: MR, attributeMode: testMode.id, attributes: mutantAllocation });
+    eq(JSON.stringify(ma.attributes), JSON.stringify(Object.fromEntries(mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => [a.id, mutantAllocation[a.id]]))), 'creation input follows mutated vocabulary/order/rules');
+    const mutantLegacy = { ...ma }; delete mutantLegacy.attributeMode; delete mutantLegacy.attributes;
+    const mutantStorage = createMemoryStorage();
+    mutantStorage.setItem(RUN_KEY, JSON.stringify(mutantLegacy));
+    const mutantMigrated = createSaveManager(mutantStorage).loadRun(MR);
+    eq(mutantMigrated.attributeMode, mutant.attributeRules.defaultMode, 'legacy migration follows the mutated default mode');
+    const expectedMutantPreset = Object.fromEntries(mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => [a.id, mutant.attributeRules.presets[mutantMigrated.attributeMode].reaver[a.id]]));
+    eq(JSON.stringify(mutantMigrated.attributes), JSON.stringify(expectedMutantPreset), 'legacy migration follows the mutated class preset and authored order');
   });
 
   const passed = results.filter((r) => r.ok).length;

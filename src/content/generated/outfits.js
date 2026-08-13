@@ -13,7 +13,8 @@ export const outfits = [
     "tags": "guard",
     "mods": "",
     "unlock": "",
-    "blurb": "The armour you were buried in."
+    "blurb": "The armour you were buried in.",
+    "poiseThreshold": 8
   },
   {
     "id": "vigil",
@@ -29,7 +30,8 @@ export const outfits = [
     ],
     "mods": "defend.block=+2",
     "unlock": "beatStitchedKing",
-    "blurb": "Blackened at the court that broke."
+    "blurb": "Blackened at the court that broke.",
+    "poiseThreshold": 7
   },
   {
     "id": "oathsworn",
@@ -48,7 +50,8 @@ export const outfits = [
       "self.strength=+1"
     ],
     "unlock": "winAsReaver",
-    "blurb": "Kept bright by an oath unbroken."
+    "blurb": "Kept bright by an oath unbroken.",
+    "poiseThreshold": 9
   },
   {
     "id": "warden",
@@ -67,7 +70,8 @@ export const outfits = [
       "strike.damage=-1"
     ],
     "unlock": "reachAshenCrown",
-    "blurb": "Issued, not chosen."
+    "blurb": "Issued, not chosen.",
+    "poiseThreshold": 10
   },
   {
     "id": "default",
@@ -80,7 +84,8 @@ export const outfits = [
     "tags": "starstone",
     "mods": "",
     "unlock": "",
-    "blurb": "Dyed with the dark between stars."
+    "blurb": "Dyed with the dark between stars.",
+    "poiseThreshold": 3
   },
   {
     "id": "eclipse",
@@ -96,7 +101,8 @@ export const outfits = [
     ],
     "mods": "power.potency=+1",
     "unlock": "winAsStarseer",
-    "blurb": "Worn only when the moon is eaten."
+    "blurb": "Worn only when the moon is eaten.",
+    "poiseThreshold": 4
   },
   {
     "id": "starlit",
@@ -115,7 +121,8 @@ export const outfits = [
       "strike.damage=-1"
     ],
     "unlock": "beatFellWarden",
-    "blurb": "It catches light that is not there."
+    "blurb": "It catches light that is not there.",
+    "poiseThreshold": 3
   },
   {
     "id": "astral",
@@ -134,7 +141,8 @@ export const outfits = [
       "defend.block=-1"
     ],
     "unlock": "winTwice",
-    "blurb": "Cut for someone taller than you."
+    "blurb": "Cut for someone taller than you.",
+    "poiseThreshold": 4
   },
   {
     "id": "default",
@@ -147,7 +155,8 @@ export const outfits = [
     "tags": "ritual",
     "mods": "",
     "unlock": "",
-    "blurb": "Plain cloth, plainly kept."
+    "blurb": "Plain cloth, plainly kept.",
+    "poiseThreshold": 5
   },
   {
     "id": "ossuary",
@@ -163,7 +172,8 @@ export const outfits = [
     ],
     "mods": "strike.blight=+1",
     "unlock": "beatBlightedValkyrie",
-    "blurb": "Threaded through with quiet bone."
+    "blurb": "Threaded through with quiet bone.",
+    "poiseThreshold": 6
   },
   {
     "id": "emberhabit",
@@ -182,7 +192,8 @@ export const outfits = [
       "self.regen=+1"
     ],
     "unlock": "beatKingAsHerald",
-    "blurb": "Warm long after the fire is out."
+    "blurb": "Warm long after the fire is out.",
+    "poiseThreshold": 4
   },
   {
     "id": "pilgrim",
@@ -201,6 +212,7 @@ export const outfits = [
       "self.maxHp=+4"
     ],
     "unlock": "reachStitchedCourt",
-    "blurb": "Road dust worked into the weave."
+    "blurb": "Road dust worked into the weave.",
+    "poiseThreshold": 5
   }
 ];

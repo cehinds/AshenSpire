@@ -803,4 +803,16 @@ export const statuses = [
     modifiers: { damageDealtMult: 1.25, damageTakenMult: 1.25 },
     tooltip: 'Deal 25% more attack damage, and take 25% more.',
   },
+  {
+    // Registered break payload for Arcane Exposure. The engine applies this
+    // only to explicit magic-school HP packets, never tags or buildup.
+    id: 'magicVulnerable',
+    name: 'Magic Vulnerable',
+    icon: '✧',
+    tint: '#8b7cd6',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL
+    schoolDamageVulnerability: { school: 'magic' },
+    tooltip: 'Magic-school HP damage is increased while this lasts. Arcane Exposure buildup is locked.',
+  },
 ];

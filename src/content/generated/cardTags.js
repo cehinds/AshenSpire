@@ -85,5 +85,26 @@ export const cardTags = [
     "color": "7A6F5A",
     "glyph": "○",
     "blurb": "Everybody's — on the shelf without being found."
+  },
+  {
+    "id": "pierce",
+    "label": "Pierce",
+    "color": "9FC3E8",
+    "glyph": "†",
+    "blurb": "A precise physical form; presentation only."
+  },
+  {
+    "id": "ranged",
+    "label": "Ranged",
+    "color": "7FA8C9",
+    "glyph": "➶",
+    "blurb": "Authored ranged presentation; no position system."
+  },
+  {
+    "id": "precision",
+    "label": "Precision",
+    "color": "C9A227",
+    "glyph": "◎",
+    "blurb": "Deliberate aim and finesse; presentation only."
   }
 ];

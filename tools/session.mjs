@@ -16,7 +16,10 @@
 // series when they return (see resolveCatchup).
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../src/model/state.js';
+import { normalizeRunAttributes } from '../src/model/attributes.js';
+import { validateRunStartingKit } from '../src/model/startingKits.js';
+import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
@@ -42,7 +45,7 @@ export function restoreSession(registries, data) {
   return s;
 }
 
-export function createSession({ registries, seedString, endless = false, restore = null }) {
+export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {} }) {
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
   const seed = restore ? (restore.seed >>> 0) : seedOf(seedString);
   const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
@@ -67,13 +70,20 @@ export function createSession({ registries, seedString, endless = false, restore
   // Restore members (disconnected until they re-attach by rejoinId).
   if (restore) {
     for (const md of restore.members) {
-      if (md.run.maxMana === undefined && md.run.mana === undefined) {
-        md.run.maxMana = registries.classes.get(md.classId).maxMana;
-        md.run.mana = md.run.maxMana;
+      if (md.classId !== md.run.class) {
+        throw new Error(`Session member '${md.id}' class '${md.classId}' disagrees with run class '${md.run.class}'`);
       }
+      normalizeRunAttributes(md.run, registries);
+      const discoveredArmaments = [...new Set(md.discoveredArmaments || [])];
+      const legacyKit = md.run.schemaVersion === 1;
+      validateRunStartingKit(md.run, registries, { discoveredArmaments }, { legacy: legacyKit });
+      if (legacyKit) md.run.schemaVersion = RUN_SCHEMA_VERSION;
+      initializeRunDerivedStats(md.run, registries, { preserveDeficits: true });
+      initializeRunFlaskCharges(md.run, registries);
       members.set(md.id, {
         id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
         connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
+        discoveredArmaments,
         catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
       });
     }
@@ -87,9 +97,10 @@ export function createSession({ registries, seedString, endless = false, restore
     return endless ? Math.floor((session.actNumber - 1) / LAST_ACT) : 0;
   }
 
-  function addMember({ id, name, classId, tint, spriteStyle }) {
+  function addMember({ id, name, classId, tint, spriteStyle, attributeMode = undefined, attributes = undefined, startingKitId = undefined, discoveredArmaments = [] }) {
     const index = order++;
-    const run = createRunState({ seed, classId, registries });
+    const entitlement = [...new Set(discoveredArmaments || [])];
+    const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: { discoveredArmaments: entitlement } });
     const m = {
       id,
       name: String(name || 'Forsaken').slice(0, 18),
@@ -99,6 +110,7 @@ export function createSession({ registries, seedString, endless = false, restore
       tint: tint || 'gold', // chosen accent — colors this hero's sprite for everyone
       spriteStyle: spriteStyle || 'rendered', // rendered PNG / classic SVG / sigil glyph
       run, // per-member build: deck/relics/flasks/hp/maxHp/cinders
+      discoveredArmaments: entitlement,
       rng: memberRng(seed, index),
       catchup: [], // pending missed-node choices (S4 replay)
       cardSeq: 0, // monotonic counter for reward/catch-up card instance ids
@@ -241,7 +253,12 @@ export function createSession({ registries, seedString, endless = false, restore
       id: m.id, name: m.name, classId: m.classId,
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
       maxMana: m.run.maxMana, mana: m.run.mana,
-      relicIds: m.run.relics, flasks: m.run.flasks,
+      maxStamina: m.run.maxStamina, stamina: m.run.stamina,
+      energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
+      startingKitId: m.run.startingKitId,
+      derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
+      attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
+      relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
     };
   }
 
@@ -268,8 +285,14 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => e.type === 'enemyMoveStarted' || e.type === 'enemyDied' || e.type === 'playerDowned')
-      .map((e) => ({ type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId, kind: e.kind, targetId: e.targetId, playerId: e.playerId }));
+      .filter((e) => ['enemyMoveStarted', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type))
+      .map((e) => ({
+        type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
+        kind: e.kind, targetId: e.targetId, playerId: e.playerId,
+        reason: e.reason, school: e.school, amount: e.amount, value: e.value,
+        attempted: e.attempted,
+        threshold: e.threshold, status: e.status, duration: e.duration,
+      }));
     live.evCursor = c.eventLog.length;
     return {
       kind: 'combat',
@@ -282,16 +305,21 @@ export function createSession({ registries, seedString, endless = false, restore
       enemies: c.enemies.map((e) => ({
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
         alive: e.alive, intent: e.intent, statuses: e.statuses, poiseMeter: e.poiseMeter,
+        arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
+        damageResistanceBySchool: e.damageResistanceBySchool ? { ...e.damageResistanceBySchool } : undefined,
       })),
       players: [...c.players.values()].map((P) => ({
         id: P.id, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         mana: P.entity.mana, maxMana: P.entity.maxMana,
+        stamina: P.entity.stamina, maxStamina: P.entity.maxStamina,
+        attributeMode: P.attributeMode, attributes: { ...P.attributes },
         energy: P.entity.energy, energyMax: P.entity.energyMax,
+        drawPerTurn: P.entity.drawPerTurn,
         connected: P.connected, alive: P.entity.alive, ended: P.ended,
         statuses: P.entity.statuses, stanceId: P.entity.stanceId,
         hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
-        flasks: P.entity.flasks,
+        flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
       })),
     };
   }
@@ -308,9 +336,9 @@ export function createSession({ registries, seedString, endless = false, restore
     try { endTurn(live.combat, memberId); } catch (e) { return { ok: false, error: e.message }; }
     return settleCombat();
   }
-  function combatFlask(memberId, slot, targetId) {
+  function combatFlask(memberId, slot, targetId, chargeKind = null) {
     if (!live) return { ok: false, error: 'no combat' };
-    try { useFlask(live.combat, memberId, slot, targetId); } catch (e) { return { ok: false, error: e.message }; }
+    try { useFlask(live.combat, memberId, slot, targetId, chargeKind); } catch (e) { return { ok: false, error: e.message }; }
     return settleCombat();
   }
 
@@ -329,7 +357,9 @@ export function createSession({ registries, seedString, endless = false, restore
       const P = c.players.get(m.id);
       if (P) {
         m.run.mana = P.entity.mana;
+        m.run.stamina = P.entity.stamina;
         m.run.flasks = P.entity.flasks.map((f) => ({ ...f }));
+        m.run.flaskCharges = P.entity.flaskCharges ? { ...P.entity.flaskCharges } : null;
       }
     }
     live = null;
@@ -434,8 +464,8 @@ export function createSession({ registries, seedString, endless = false, restore
 
   // ---- shrine / treasure / event (per-member, simplified for S2) -----------
   function enterShrine() {
-    // "at every grace ALL CHARACTERS should restore 3 hp flasks" — his word,
-    // and in co-op "all characters" is the party, not whoever taps first. Every
+    // At every Grace, every character refills their fixed-capacity allocation.
+    // In co-op the host owns that truth, not whichever client taps first. Every
     // LIVING member is refilled on arrival, connected or not: a member who is
     // away does not lose a grace they were standing at, and the top-up is
     // idempotent so their catchup queue has nothing to replay.
@@ -451,7 +481,10 @@ export function createSession({ registries, seedString, endless = false, restore
     if (session.scene.kind !== 'shrine') return { ok: false, error: 'no shrine open' };
     const m = members.get(memberId);
     if (!m) return { ok: false };
-    if (choice === 'rest') {
+    if (choice === 'reallocate') {
+      reallocateFlaskCharges(m.run.flaskCharges, targetId || {});
+      return { ok: true, allocation: { ...m.run.flaskCharges } };
+    } else if (choice === 'rest') {
       m.run.hp = Math.min(m.run.maxHp, m.run.hp + shrineHealAmount(registries, m.run));
       m.run.mana = m.run.maxMana;
     } else if (choice === 'mend') {
@@ -522,10 +555,16 @@ export function createSession({ registries, seedString, endless = false, restore
   function memberView(m) {
     return {
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
+      startingKitId: m.run.startingKitId,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
       mana: m.run.mana, maxMana: m.run.maxMana,
+      stamina: m.run.stamina, maxStamina: m.run.maxStamina,
+      energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
+      derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
+      attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       deck: m.run.deck.map((c) => ({ instanceId: c.instanceId, cardId: c.cardId, upgraded: c.upgraded })),
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,
+      flaskCharges: structuredClone(m.run.flaskCharges),
       catchup: m.catchup.length,
       catchupQueue: m.catchup, // rolled options for the reconnect series
     };
@@ -551,7 +590,7 @@ export function createSession({ registries, seedString, endless = false, restore
       order,
       members: [...members.values()].map((m) => ({
         id: m.id, name: m.name, index: m.index, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, alive: m.alive,
-        run: m.run, catchup: m.catchup, cardSeq: m.cardSeq, rng: m.rng.getCounters(),
+        run: m.run, discoveredArmaments: [...m.discoveredArmaments], catchup: m.catchup, cardSeq: m.cardSeq, rng: m.rng.getCounters(),
       })),
     };
   }

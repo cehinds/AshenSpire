@@ -73,6 +73,7 @@ try {
   S.start();
   ok(S.scene.kind === 'map', 'start → shared map scene');
   ok(S.snapshot().party.length === 2, 'snapshot shows a 2-member party');
+  ok(S.snapshot().party.every((p) => p.attributeMode && p.attributes), 'party snapshot transports creation mode + inert attributes');
 
   // --- fork voting: one vote holds the party; a tie breaks toward the host ---
   const opts = S.session.reachableIds;
@@ -114,11 +115,28 @@ try {
   }
   ok(S.scene.kind === 'combat', 'party reaches a live shared combat');
   ok(S.scene.players.length === 2 && S.scene.enemies.length >= 1, 'combat scene exposes both players + shared enemies');
+  ok(S.scene.players.every((p) => p.attributeMode && p.attributes), 'combat snapshot transports each seat\'s inert attributes');
+  const hostEnemy = S.live.combat.enemies[0];
+  const snapshotEnemy = S.snapshot().scene.enemies.find((enemy) => enemy.id === hostEnemy.id);
+  ok(JSON.stringify(snapshotEnemy.arcaneExposure) === JSON.stringify(hostEnemy.arcaneExposure), 'combat snapshot transports the host Arcane Exposure state exactly');
+  ok(JSON.stringify(snapshotEnemy.damageResistanceBySchool) === JSON.stringify(hostEnemy.damageResistanceBySchool), 'combat snapshot keeps raw school resistance separate');
   const twoPMult = coopHpMult(2);
   ok(S.live && Math.abs(S.live.combat.baseHpMult - twoPMult) < 1e-9, 'enemies scaled to the 2-player headcount');
 
+  const p1AttributesBefore = JSON.stringify({
+    attributeMode: S.session.members.get('p1').run.attributeMode,
+    attributes: S.session.members.get('p1').run.attributes,
+  });
+  // Combat carries an inert copy for snapshots. Even if that copy is damaged,
+  // the run remains the sole authority and no combat outcome writes it back.
+  S.live.combat.players.get('p1').attributeMode = 'ghost';
+  S.live.combat.players.get('p1').attributes.strength = 999;
   const p2DeckBefore = S.session.members.get('p2').run.deck.length;
   S.autoResolveCombat(botTurn);
+  ok(JSON.stringify({
+    attributeMode: S.session.members.get('p1').run.attributeMode,
+    attributes: S.session.members.get('p1').run.attributes,
+  }) === p1AttributesBefore, 'combat snapshot copies cannot mutate or overwrite the authoritative run allocation');
   ok(S.scene.kind === 'reward' || S.scene.kind === 'complete', 'shared combat settles into rewards (or run end)');
   if (S.scene.kind === 'reward') {
     ok(!!S.scene.offers.p1 && !!S.scene.offers.p2, 'both present members get their own reward offer');
@@ -156,12 +174,19 @@ try {
   ok(res.ok && p2.run.deck.length === deckBefore + 1, 'catch-up replay adds the chosen missed card');
   ok(p2.catchup.length === 0, 'catch-up queue drains after replay');
 
-  // --- Mend at a shrine: a player heals a wounded ally 30% instead of resting ---
-  S.session.scene = { kind: 'shrine', done: {} };
-  const p1m = S.session.members.get('p1');
+  // --- Mend at a shrine: isolate this rule from the long combat walk above.
+  // That walk may truthfully kill either bot as card balance evolves; Mend
+  // refuses dead allies, so reusing its survivors made this a balance lottery
+  // rather than an ally-targeting contract.
+  const M = createSession({ registries: REG, seedString: 'MENDGATE' });
+  M.addMember({ id: 'p1', name: 'Wren', classId: 'starseer' });
+  M.addMember({ id: 'p2', name: 'Fenn', classId: 'reaver' });
+  M.start();
+  M.session.scene = { kind: 'shrine', done: {} };
+  const p1m = M.session.members.get('p1');
   p1m.run.hp = 20;
   const mendBefore = p1m.run.hp;
-  S.shrineChoice('p2', 'mend', 'p1'); // p2 mends p1
+  M.shrineChoice('p2', 'mend', 'p1'); // p2 mends p1
   ok(p1m.run.hp === Math.min(p1m.run.maxHp, mendBefore + Math.ceil(p1m.run.maxHp * 0.3)), 'Mend heals the targeted ally for 30% of their max HP');
 } catch (e) {
   ok(false, `threw: ${e.stack || e.message}`);

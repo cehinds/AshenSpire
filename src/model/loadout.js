@@ -1,4 +1,11 @@
 import { tokenRe } from './validate.js';
+import { deriveAttributeTierReceipt } from './derivedStats.js';
+import { startingKitProblems } from './startingKits.js';
+import { DAMAGE_SCHOOLS } from './schemas.js';
+
+const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
+const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
+const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit']);
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
 // The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
@@ -49,7 +56,7 @@ export function parseMod(str) {
 
 /** The closed set. A third hand is a new word — engine, one act (Law 1 c1). */
 export const HANDS = Object.freeze(['left', 'right']);
-
+export const EQUIPMENT_ROLES = Object.freeze(['attack', 'guard', 'technique']);
 // ---------------------------------------------------------------------------
 // The two `apply` vocabularies — one per mod scope (Viki, A8)
 // ---------------------------------------------------------------------------
@@ -108,6 +115,39 @@ export function fitsSlot(slot, piece) {
   return may === null || may === slotHand(slot);
 }
 
+/** Resolve explicit item attribute minima. Missing attributes fail closed. */
+export function equipmentRequirementReceipt(registries, piece, attributes = {}) {
+  if (!piece || typeof piece !== 'object') throw new Error('equipment requirement receipt needs a piece');
+  const authored = (piece.requirements && piece.requirements.attributes) || {};
+  const requirements = [];
+  const failures = [];
+  for (const [attributeId, required] of Object.entries(authored)) {
+    if (!registries.attributes.has(attributeId)) throw new Error(`${piece.id}: unknown requirement attribute '${attributeId}'`);
+    if (!Number.isInteger(required) || required < 0) throw new Error(`${piece.id}.${attributeId}: requirement minimum must be a non-negative integer`);
+    const actual = attributes && attributes[attributeId];
+    const row = { attributeId, required, actual: Number.isFinite(actual) ? actual : null };
+    requirements.push(row);
+    if (!Number.isFinite(actual) || actual < required) failures.push(row);
+  }
+  return { itemId: piece.id, requirements, failures, ok: failures.length === 0 };
+}
+
+/** Resolve whether a card fits an equipped weapon without class-id branches. */
+export function cardEquipmentCompatibility(registries, { cardId, classId, pieceId } = {}) {
+  const card = registries.cards.get(cardId);
+  const equipment = registries.equipment || {};
+  const piece = (equipment.armaments || []).find((row) => row.id === pieceId);
+  if (!piece) throw new Error(`Unknown armament '${pieceId}' for card compatibility`);
+  const exactRows = (equipment.cardEquipmentExceptions || []).filter((row) => row.cardId === cardId);
+  if (exactRows.length) return { ok: exactRows.some((row) => row.weaponId === pieceId), reason: 'exactWeapon', cardId, pieceId };
+  if (card.class === classId) return { ok: true, reason: 'class', cardId, pieceId };
+  const tagging = (equipment.cardTagging || []).find((row) => row.cardId === cardId);
+  const cardTags = (tagging && tagging.tags) || [];
+  const sharedTags = cardTags.filter((tag) => (piece.tags || []).includes(tag));
+  if (sharedTags.length) return { ok: true, reason: 'tag', sharedTags, cardId, pieceId };
+  return { ok: false, reason: 'noMatch', sharedTags: [], cardId, pieceId };
+}
+
 /**
  * validateEquipment(registries) → [] when sound, else human-readable problems.
  * Catches the mistakes CSV authoring actually makes: a misspelled field, a mod
@@ -120,6 +160,85 @@ export function validateEquipment(registries) {
   const fields = eq.modFields || {};
   const problems = [];
   const pieces = [...(eq.armaments || []), ...(eq.armour || [])];
+  const profilesPresent = Array.isArray(eq.basicCardProfiles);
+  const profiles = eq.basicCardProfiles || [];
+  const profileIds = new Set();
+  const tagIds = new Set((registries.tags || []).map((t) => t.id));
+  const attributeIds = new Set(registries.attributes && registries.attributes.ids ? registries.attributes.ids() : []);
+  if (Array.isArray(eq.startingKits)) problems.push(...startingKitProblems(registries));
+
+  if (profilesPresent) {
+    if (!Array.isArray(eq.equipmentRequirements)) problems.push('equipmentRequirements.csv: missing generated table');
+    if (!Array.isArray(eq.cardEquipmentExceptions)) problems.push('cardEquipmentExceptions.csv: missing generated table');
+    if (!Array.isArray(eq.cardTagging)) problems.push('cardTagging.csv: missing registered table');
+  }
+  const requirementKeys = new Set();
+  for (const row of eq.equipmentRequirements || []) {
+    const key = `${row.itemId}:${row.attributeId}`;
+    if (requirementKeys.has(key)) problems.push(`equipmentRequirements.csv: duplicate '${key}'`);
+    requirementKeys.add(key);
+    if (!pieces.some((piece) => piece.id === row.itemId)) problems.push(`equipmentRequirements.csv: unknown item '${row.itemId}'`);
+    if (!attributeIds.has(row.attributeId)) problems.push(`equipmentRequirements.csv: unknown attribute '${row.attributeId}'`);
+    if (!Number.isInteger(row.minimum) || row.minimum < 0) problems.push(`${key}: minimum must be a non-negative integer`);
+  }
+  const exceptionKeys = new Set();
+  for (const row of eq.cardEquipmentExceptions || []) {
+    const key = `${row.cardId}:${row.weaponId}`;
+    if (exceptionKeys.has(key)) problems.push(`cardEquipmentExceptions.csv: duplicate '${key}'`);
+    exceptionKeys.add(key);
+    if (!registries.cards.has(row.cardId)) problems.push(`cardEquipmentExceptions.csv: unknown card '${row.cardId}'`);
+    if (!(eq.armaments || []).some((piece) => piece.id === row.weaponId)) problems.push(`cardEquipmentExceptions.csv: unknown weapon '${row.weaponId}'`);
+  }
+  for (const piece of pieces) {
+    try { equipmentRequirementReceipt(registries, piece, {}); }
+    catch (error) { problems.push(error.message); }
+  }
+
+  // A row may deliberately reuse an existing generic render instead of adding
+  // binary art in the same feature. The reference is explicit and truthful:
+  // every renderer-owned field must match the row whose asset is reused.
+  const armamentById = new Map((eq.armaments || []).map((piece) => [piece.id, piece]));
+  for (const piece of eq.armaments || []) {
+    const artKey = piece.artKey || piece.id;
+    const source = armamentById.get(artKey);
+    if (!source) {
+      problems.push(`${piece.id}: artKey '${artKey}' is not a registered armament render`);
+      continue;
+    }
+    if (artKey === piece.id) continue;
+    for (const field of ['geom', 'scale', 'metal', 'accent']) {
+      if (String(piece[field]) !== String(source[field])) {
+        problems.push(`${piece.id}: ${field} '${piece[field]}' disagrees with artKey '${artKey}' field '${source[field]}'`);
+      }
+    }
+  }
+
+  for (const profile of profiles) {
+    if (profileIds.has(profile.id)) problems.push(`basicCardProfiles.csv: duplicate profile id '${profile.id}'`);
+    profileIds.add(profile.id);
+    if (!EQUIPMENT_ROLES.includes(profile.role)) problems.push(`${profile.id}: unknown equipment role '${profile.role}'`);
+    if (!registries.cards.has(profile.baseCardId)) problems.push(`${profile.id}: unknown base card '${profile.baseCardId}'`);
+    if (!DAMAGE_SCHOOLS.includes(profile.damageSchool)) problems.push(`${profile.id}: unknown damage school '${profile.damageSchool}'`);
+    if (!Number.isFinite(profile.baseValue) || profile.baseValue < 0) problems.push(`${profile.id}: baseValue must be finite and non-negative`);
+    if (!attributeIds.has(profile.scalingStat)) problems.push(`${profile.id}: unknown scalingStat '${profile.scalingStat}'`);
+    if (!Number.isFinite(profile.pointsPerTier) || profile.pointsPerTier <= 0) problems.push(`${profile.id}: pointsPerTier must be finite and > 0`);
+    if (!['floor', 'ceil', 'round'].includes(profile.rounding)) problems.push(`${profile.id}: unknown rounding '${profile.rounding}'`);
+    if (!Number.isFinite(profile.gainPerTier)) problems.push(`${profile.id}: gainPerTier must be finite`);
+    if (profile.cap !== '' && profile.cap != null && (!Number.isFinite(profile.cap) || profile.cap < 0)) problems.push(`${profile.id}: cap must be blank or a finite non-negative number`);
+    if (profile.compatibility !== `${profile.role}-v1`) problems.push(`${profile.id}: compatibility '${profile.compatibility}' must match role vocabulary '${profile.role}-v1'`);
+    for (const tag of profile.tags || []) if (!tagIds.has(tag)) problems.push(`${profile.id}: unknown profile tag '${tag}'`);
+    for (const raw of profile.mods || []) if (!parseMod(`${profile.role}.${raw}`)) problems.push(`${profile.id}: unparseable profile mod '${raw}'`);
+  }
+
+  for (const piece of profilesPresent ? (eq.armaments || []) : []) {
+    for (const role of EQUIPMENT_ROLES) {
+      const profileId = piece[`${role}Profile`];
+      if (!profileId) continue;
+      const profile = profiles.find((p) => p.id === profileId);
+      if (!profile) problems.push(`${piece.id}: unknown ${role} profile '${profileId}'`);
+      else if (profile.role !== role) problems.push(`${piece.id}: ${role}Profile '${profileId}' has wrong role '${profile.role}'`);
+    }
+  }
 
   for (const piece of pieces) {
     for (const raw of piece.mods || []) {
@@ -281,6 +400,28 @@ export function validateEquipment(registries) {
         + `${cap - 1 - rungs.length} would never be reachable; add a rung with `
         + `kind='${SLOT_RUNG_KIND}' ref='${slot.id}' or lower \`sets\` in equipSlots.csv`
       );
+    }
+  }
+
+  if (eqBal) {
+    const roleCopies = eqBal.roleCopies || {};
+    const total = [...EQUIPMENT_ROLES, 'signature'].reduce((sum, role) => sum + (Number(roleCopies[role]) || 0), 0);
+    if (total !== registries.balance.startingDeckSize) {
+      problems.push(`balance.equipment.roleCopies sum ${total}; startingDeckSize is ${registries.balance.startingDeckSize}`);
+    }
+    if (roleCopies.signature !== 1) problems.push('balance.equipment.roleCopies.signature must be exactly 1');
+    for (const role of EQUIPMENT_ROLES) {
+      const sources = (eqBal.roleSources || {})[role];
+      if (!Array.isArray(sources) || !sources.length) { problems.push(`roleSources.${role} must be non-empty`); continue; }
+      const seenSlots = new Set();
+      for (const source of sources) {
+        if (!(eq.slots || []).some((s) => s.id === source.slot)) problems.push(`roleSources.${role} names unknown slot '${source.slot}'`);
+        if (seenSlots.has(source.slot)) problems.push(`roleSources.${role} duplicates slot '${source.slot}' at equal precedence`);
+        seenSlots.add(source.slot);
+      }
+      const fallback = (eqBal.unarmedProfiles || {})[role];
+      const profile = profiles.find((p) => p.id === fallback);
+      if (!profile || profile.role !== role) problems.push(`unarmedProfiles.${role} '${fallback}' does not resolve to a ${role} profile`);
     }
   }
   return problems;
@@ -623,7 +764,7 @@ export function setCellState(index, opened, visible) {
  * every new run with no change here. You start bare-handed in your class's one
  * unlocked armour set — the run is meant to arm you.
  */
-export function createLoadout(registries, classId) {
+export function createLoadout(registries, classId, startingKit = null) {
   const eq = registries.equipment || {};
   const sets = {};
   const active = {};
@@ -633,7 +774,135 @@ export function createLoadout(registries, classId) {
   }
   const starting = (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
   if (starting && sets.armor) sets.armor[0] = starting.id;
+  const kit = startingKit || (eq.startingKits || []).find((row) => row.classId === classId && row.baseline === true);
+  for (const [slotId, pieceId] of Object.entries({ rightHand: kit && kit.rightHand, leftHand: kit && kit.leftHand })) {
+    if (!pieceId) continue;
+    if (sets[slotId]) sets[slotId][0] = pieceId;
+  }
   return { sets, active, storage: [] };
+}
+
+function profileById(registries, id) {
+  return ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === id) || null;
+}
+
+function profileRule(profile) {
+  return {
+    ...Object.fromEntries(EQUIPMENT_PROFILE_PATCH_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
+    ...Object.fromEntries(EQUIPMENT_PROFILE_CARRIER_FIELDS.map((key) => [key, profile[key]])),
+    compatibility: profile.compatibility,
+  };
+}
+
+function profileLayers(options = {}) {
+  return [options.modeModifiers, ...(Array.isArray(options.runModifiers) ? options.runModifiers : options.runModifiers ? [options.runModifiers] : []), options.explicitOverride];
+}
+
+/** Host-owned equipment scaling rows, resolved once and persisted with the run. */
+export function createEquipmentProfileRuleSnapshot(registries, options = {}) {
+  const profiles = Object.fromEntries((registries.equipment.basicCardProfiles || []).map((profile) => [profile.id, profileRule(profile)]));
+  for (const layer of profileLayers(options)) {
+    if (!layer || layer.equipmentProfiles == null) continue;
+    if (!layer.equipmentProfiles || typeof layer.equipmentProfiles !== 'object' || Array.isArray(layer.equipmentProfiles)) throw new Error('equipmentProfiles override must be an object map');
+    for (const [id, patch] of Object.entries(layer.equipmentProfiles)) {
+      if (!profiles[id]) throw new Error(`equipmentProfiles.${id}: unknown profile`);
+      if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error(`equipmentProfiles.${id}: patch must be an object`);
+      for (const key of Object.keys(patch)) if (!EQUIPMENT_PROFILE_PATCH_FIELDS.includes(key)) throw new Error(`equipmentProfiles.${id}.${key}: unknown field`);
+      Object.assign(profiles[id], patch);
+    }
+  }
+  const rarityBonuses = structuredClone(((registries.balance || {}).equipment || {}).rarityBonuses || {});
+  return restoreEquipmentProfileRuleSnapshot({ snapshotVersion: EQUIPMENT_PROFILE_SNAPSHOT_VERSION, profiles, rarityBonuses }, registries);
+}
+
+/** Validate and clone a saved equipment scaling snapshot without live-data repair. */
+export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) throw new Error('equipment profile snapshot must be an object');
+  if (snapshot.snapshotVersion !== EQUIPMENT_PROFILE_SNAPSHOT_VERSION) throw new Error(`unknown equipment profile snapshotVersion ${snapshot.snapshotVersion}`);
+  if (!snapshot.profiles || typeof snapshot.profiles !== 'object' || Array.isArray(snapshot.profiles)) throw new Error('equipment profile snapshot profiles must be an object map');
+  snapshot = structuredClone(snapshot);
+  const liveIds = new Set((registries.equipment.basicCardProfiles || []).map((profile) => profile.id));
+  for (const id of Object.keys(snapshot.profiles)) if (!liveIds.has(id)) throw new Error(`equipment profile snapshot has unknown '${id}'`);
+  for (const profile of registries.equipment.basicCardProfiles || []) {
+    const rule = snapshot.profiles[profile.id];
+    if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
+    if (!Number.isFinite(rule.baseValue) || rule.baseValue < 0) throw new Error(`${profile.id}.baseValue must be finite and non-negative`);
+    if (!registries.attributes.has(rule.scalingStat)) throw new Error(`${profile.id}.scalingStat '${rule.scalingStat}' is unknown`);
+    if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error(`${profile.id}.pointsPerTier must be > 0`);
+    if (!['floor', 'ceil', 'round'].includes(rule.rounding)) throw new Error(`${profile.id}.rounding '${rule.rounding}' is unknown`);
+    if (!Number.isFinite(rule.gainPerTier)) throw new Error(`${profile.id}.gainPerTier must be finite`);
+    if (rule.cap != null && (!Number.isFinite(rule.cap) || rule.cap < 0)) throw new Error(`${profile.id}.cap must be null or finite non-negative`);
+    if (rule.compatibility !== `${profile.role}-v1`) throw new Error(`${profile.id}.compatibility '${rule.compatibility}' does not match ${profile.role}-v1`);
+    // Version-1 snapshots predate combat carriers. They adopt the live row
+    // exactly once during migration; every subsequent save owns the values.
+    if (rule.damageSchool === undefined) rule.damageSchool = profile.damageSchool;
+    if (rule.exposureBuildupPerHit === undefined) rule.exposureBuildupPerHit = profile.exposureBuildupPerHit;
+    if (!DAMAGE_SCHOOLS.includes(rule.damageSchool)) throw new Error(`${profile.id}.damageSchool '${rule.damageSchool}' is unknown`);
+    if (!Number.isInteger(rule.exposureBuildupPerHit) || rule.exposureBuildupPerHit < 0) throw new Error(`${profile.id}.exposureBuildupPerHit must be a non-negative integer`);
+    const legal = [...EQUIPMENT_PROFILE_PATCH_FIELDS, ...EQUIPMENT_PROFILE_CARRIER_FIELDS, 'compatibility'];
+    for (const key of Object.keys(rule)) if (!legal.includes(key)) throw new Error(`${profile.id}.${key}: unknown equipment profile snapshot field`);
+  }
+  if (!snapshot.rarityBonuses || typeof snapshot.rarityBonuses !== 'object' || Array.isArray(snapshot.rarityBonuses)) throw new Error('equipment profile snapshot rarityBonuses must be an object');
+  for (const [rarity, bonuses] of Object.entries(snapshot.rarityBonuses)) {
+    if (!bonuses || typeof bonuses !== 'object' || Array.isArray(bonuses)) throw new Error(`rarityBonuses.${rarity} must be an object`);
+    for (const [role, value] of Object.entries(bonuses)) {
+      if (!EQUIPMENT_ROLES.includes(role)) throw new Error(`rarityBonuses.${rarity}.${role}: unknown role`);
+      if (!Number.isFinite(value)) throw new Error(`rarityBonuses.${rarity}.${role}: must be finite`);
+    }
+  }
+  return snapshot;
+}
+
+/** Resolve one equipment role from the data-owned ordered source table. */
+export function equipmentRoleSource(registries, loadout, classId, role) {
+  const eqBal = (registries.balance || {}).equipment || {};
+  const sources = (eqBal.roleSources || {})[role] || [];
+  for (const source of sources) {
+    const piece = equippedIn(registries, loadout, classId, source.slot);
+    if (!piece) continue;
+    if (source.kinds && !source.kinds.includes(piece.kind)) continue;
+    const profileId = piece[`${role}Profile`];
+    if (profileId) return { role, slotId: source.slot, piece, profile: profileById(registries, profileId) };
+  }
+  const profileId = (eqBal.unarmedProfiles || {})[role];
+  return { role, slotId: null, piece: null, profile: profileById(registries, profileId) };
+}
+
+/** One projection consumed by run creation, cards, Armoury, and creation UI. */
+export function equipmentKitPlan(registries, loadout, classId) {
+  return EQUIPMENT_ROLES.map((role) => equipmentRoleSource(registries, loadout, classId, role));
+}
+
+function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnapshot) {
+  const profile = row.profile;
+  const rule = equipmentProfileRuleSnapshot && equipmentProfileRuleSnapshot.profiles && equipmentProfileRuleSnapshot.profiles[profile.id];
+  if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
+  const tier = deriveAttributeTierReceipt(rule, { attributes, sourceStat: rule.scalingStat });
+  const rarity = row.piece && row.piece.rarity;
+  const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
+  const raw = rule.baseValue + tier.value + rarityBonus;
+  const value = Number.isFinite(rule.cap) ? Math.min(rule.cap, raw) : raw;
+  return { role: row.role, profileId: profile.id, pieceId: row.piece && row.piece.id, base: rule.baseValue, rarity, rarityBonus, ...tier, raw, cap: rule.cap, value };
+}
+
+/** Calculation receipts; the tier arithmetic is owned by derivedStats.js. */
+export function equipmentKitReceipt(registries, loadout, classId, attributes, equipmentProfileRuleSnapshot) {
+  const snapshot = restoreEquipmentProfileRuleSnapshot(equipmentProfileRuleSnapshot, registries);
+  return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot) }));
+}
+
+/** The ten-card role distribution, as instance-ready refs. */
+export function startingDeckRefs(registries, loadout, classId) {
+  const cls = registries.classes.get(classId);
+  const copies = ((registries.balance || {}).equipment || {}).roleCopies || {};
+  const refs = [];
+  for (const row of equipmentKitPlan(registries, loadout, classId)) {
+    for (let i = 0; i < (copies[row.role] || 0); i++) {
+      refs.push({ cardId: row.profile.baseCardId, equipmentRole: row.role, profileId: row.profile.id });
+    }
+  }
+  for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
+  return refs;
 }
 
 /** The piece in a slot's active set, or null. Armour resolves per class. */
@@ -687,8 +956,8 @@ export function figureSpec(registries, loadout, classId) {
       continue;
     }
     const hand = slotHand(slot);
-    if (hand === 'right') spec.rightId = piece.id;
-    else if (hand === 'left') spec.leftId = piece.id;
+    if (hand === 'right') spec.rightId = piece.artKey || piece.id;
+    else if (hand === 'left') spec.leftId = piece.artKey || piece.id;
     // No hand: this slot is not held (a talisman), so there is nothing to draw
     // in a hand for it. It used to land in the right hand as a weapon layer.
   }
@@ -916,12 +1185,46 @@ export function applyCardMods(def, mods, opts = {}) {
  */
 export function stampDeck(registries, run, cards) {
   const list = cards || run.deck || [];
-  const mods = cardMods(registries, run.loadout, run.class);
+  if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
+  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
-    const next = mods.get(inst.cardId) || [];
+    const row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
+    if (row && row.profile) {
+      const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
+      const nextCompatibility = run.equipmentProfileRuleSnapshot.profiles[row.profile.id].compatibility;
+      if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible ${inst.equipmentRole} profile swap: ${inst.profileId} (${prior.compatibility}) -> ${row.profile.id} (${nextCompatibility})`);
+      inst.cardId = row.profile.baseCardId;
+      inst.profileId = row.profile.id;
+      inst.profileReceipt = { ...row.receipt };
+    }
+    let carrier;
+    if (row && row.profile) {
+      // Equipment roles deliberately re-resolve from the persisted host rule
+      // snapshot when the active set changes.
+      carrier = run.equipmentProfileRuleSnapshot.profiles[row.profile.id];
+    } else {
+      const schoolAbsent = inst.damageSchool === undefined;
+      const buildupAbsent = inst.exposureBuildupPerHit === undefined;
+      if (schoolAbsent !== buildupAbsent) throw new Error(`${inst.instanceId}: damageSchool and exposureBuildupPerHit must both be present or both be absent`);
+      // Non-equipment cards are immutable host-stamped instances. Consult live
+      // content only at the explicit new/legacy adoption door, never during a
+      // later equipment swap re-stamp.
+      carrier = schoolAbsent ? registries.cards.get(inst.cardId) : inst;
+    }
+    const priorSchool = inst.damageSchool;
+    const priorBuildup = inst.exposureBuildupPerHit;
+    if (typeof carrier.damageSchool === 'string') inst.damageSchool = carrier.damageSchool;
+    else delete inst.damageSchool;
+    if (Number.isInteger(carrier.exposureBuildupPerHit)) inst.exposureBuildupPerHit = carrier.exposureBuildupPerHit;
+    else delete inst.exposureBuildupPerHit;
+    const mods = cardMods(registries, run.loadout, run.class);
+    const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.value}`
+      : row && row.role === 'guard' ? `block=${row.receipt.value}` : null;
+    const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
     const prev = inst.mods || [];
-    if (next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
+    const carrierChanged = priorSchool !== inst.damageSchool || priorBuildup !== inst.exposureBuildupPerHit;
+    if (!carrierChanged && next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
     if (next.length) inst.mods = next;
     else delete inst.mods;
     n += 1;
@@ -1396,6 +1699,7 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
     return false;
   }
   if (!owned.has(piece)) return false;
+  if (!equipmentRequirementReceipt(registries, piece, ctx.attributes).ok) return false;
   ids[setIndex] = itemId;
   return true;
 }

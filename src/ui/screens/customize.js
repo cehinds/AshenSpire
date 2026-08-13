@@ -10,8 +10,13 @@ import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, cl
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
+import { createRunState } from '../../model/state.js';
+import { statProjection } from '../../model/statProjection.js';
+import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
+import { renderEquipmentRequirements, renderPlayerPoise } from '../components/equipmentReceipts.js';
+import { startingKitViews } from '../../model/startingKits.js';
 
-export function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
+export function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart }) {
   const state = {
     classId: 'reaver',
     name: 'Forsaken',
@@ -19,6 +24,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     tint: PORTRAIT_TINTS[0].id,
     spriteStyle: 'rendered',
     keepsakeId: 'none',
+    startingKitId: null,
   };
 
   // WHY THIS MARKUP LOOKS THE WAY IT DOES — EldenSpire#29 slice 2, out of
@@ -62,6 +68,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
         <div class="cz-cols">
           <div class="cz-fields">
             <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
+            <div><p class="cz-label">STARTING KIT</p><div id="cz-kits" class="cz-opts"></div></div>
             <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
             <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
             <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
@@ -70,6 +77,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
 
           <div class="preview-pane">
             <div id="cz-portrait" class="cz-portrait"></div>
+            <details class="cz-stats"><summary>ATTRIBUTES &amp; RESOURCES</summary><div id="cz-stat-projection"></div></details>
             <label class="cz-label cz-name-label" for="cz-name">NAME</label>
             <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false"
                    autocomplete="off" placeholder="Forsaken" value="">
@@ -98,18 +106,52 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
       : null;
     if (sprite) p.appendChild(sprite);
     else p.textContent = state.glyph;
+    const preview = createRunState({ seed: 0, classId: state.classId, registries, startingKitId: state.startingKitId, profileMeta: meta });
+    const projection = statProjection(registries, preview);
+    const surface = equipmentSurfaceReceipt(registries, preview);
+    const kit = surface.roles;
+    const signature = surface.signature;
+    const copies = surface.roleCopies;
+    $('#cz-stat-projection').innerHTML = projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')
+      + projection.derived.map((row) => `<div><b>${esc(row.label)}</b> ${esc(row.formula)}${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')
+      + renderEquipmentRequirements(surface.requirements)
+      + renderPlayerPoise(surface.poise)
+      + `<details class="cz-kit"><summary>Starting kit · ${registries.balance.startingDeckSize} cards</summary><ul>`
+      + kit.map((row) => `<li><b>${esc(row.profile.displayName)}</b> ×${copies[row.role]} <span>${row.receipt.base}+${row.receipt.value - row.receipt.base}=${row.receipt.value} · ${esc(row.profile.damageSchool)}</span></li>`).join('')
+      + `<li><b>${esc(signature.name)}</b> ×${copies.signature} <span>class signature</span></li></ul></details>`;
   }
 
   // ---- class row (real classes + locked M3 silhouettes) ----
   const classes = $('#cz-classes');
+  const kitBox = $('#cz-kits');
+  function renderKits() {
+    const views = startingKitViews(registries, state.classId, meta);
+    if (!views.some((row) => row.id === state.startingKitId)) state.startingKitId = (views.find((row) => row.baseline) || views[0]).id;
+    kitBox.innerHTML = '';
+    for (const kit of views) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `cz-opt${kit.id === state.startingKitId ? ' chosen' : ''}`;
+      button.dataset.startingKitId = kit.id;
+      button.textContent = kit.label;
+      button.addEventListener('click', () => {
+        state.startingKitId = kit.id;
+        renderKits();
+        renderPortrait();
+      });
+      kitBox.appendChild(button);
+    }
+  }
   for (const cls of registries.classes.all()) {
     const el = document.createElement('div');
     el.className = 'class-pick cz-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${cls.startingDeck.length} cards</span></div>`;
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${registries.balance.startingDeckSize} cards</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
+      state.startingKitId = null;
       classes.querySelectorAll('.cz-class').forEach((x) => x.classList.toggle('chosen', x === el));
+      renderKits();
       renderPortrait();
     });
     classes.appendChild(el);
@@ -121,6 +163,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     classes.appendChild(el);
   }
   classes.querySelector('.cz-class').classList.add('chosen');
+  renderKits();
 
   // ---- sigil + tint pickers ----
   const glyphBox = $('#cz-glyphs');
@@ -235,6 +278,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
       seedString: $('#seed-input').value.trim(),
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
       keepsakeId: state.keepsakeId,
+      startingKitId: state.startingKitId,
     });
   });
 

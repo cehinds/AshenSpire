@@ -20,12 +20,15 @@ import {
   canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
   ownership, openedSets, visibleSets, rungFor, setCellState,
 } from '../../model/loadout.js';
+import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import { renderCard } from '../components/card.js';
+import { renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise } from '../components/equipmentReceipts.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
+import { statProjection } from '../../model/statProjection.js';
 
 const CFG = () => balance.equipment;
 
@@ -161,7 +164,7 @@ const REGIONS = [
     id: 'cards',
     label: 'Cards',
     sel: '.armoury-strip',
-    count: (el) => el.querySelectorAll('.equip-cards > .card').length,
+    count: (el) => el.querySelectorAll('.equip-cards > .equip-card-with-count').length,
     unit: 'card',
   },
 ];
@@ -292,7 +295,7 @@ function figureFor(registries, run, cz) {
 function thumbSrc(piece) {
   return piece.kind === 'armor'
     ? assetUrl(`assets/equipment/body_${piece.classId}_${piece.id}.webp`)
-    : assetUrl(`assets/equipment/icon_${piece.id}.webp`);
+    : assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`);
 }
 
 /** A piece's mods, written the way a player reads them. */
@@ -652,7 +655,7 @@ export function mountEquipment(host, {
     bare.innerHTML = '<span class="ec-name">Bare</span><span class="ec-mods">Nothing at all</span>';
     if (seal.ok) {
       bare.addEventListener('click', () => {
-        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null, owned(), { inCombat });
+        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null, owned(), { inCombat, attributes: run.attributes });
         commit();
       });
     } else sealChip(bare);
@@ -673,12 +676,19 @@ export function mountEquipment(host, {
       const chip = pieceChip(registries, piece, { selected: piece.id === current });
       if (seal.ok) {
         chip.addEventListener('click', () => {
-          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned(), { inCombat });
+          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned(), { inCombat, attributes: run.attributes });
           sfx.play('cardPlay');
           commit();
         });
       } else sealChip(chip);
-      list.appendChild(chip);
+      const row = document.createElement('div');
+      row.className = 'equip-candidate-row';
+      row.appendChild(chip);
+      const comparison = equipmentSurfaceReceipt(registries, run, {
+        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },
+      }).candidate;
+      row.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
+      list.appendChild(row);
     }
     return box;
   }
@@ -687,14 +697,30 @@ export function mountEquipment(host, {
   function cardStrip() {
     const box = document.createElement('div');
     box.className = 'equip-cards';
-    const mods = cardMods(registries, run.loadout, run.class);
-    const ids = [...new Set((eq.targets || [])
-      .filter((t) => t.classId === '*' || t.classId === run.class)
-      .map((t) => t.cardId))];
-    for (const cardId of ids) {
-      if (!registries.cards.has(cardId)) continue;
-      box.appendChild(renderCard(registries, { cardId, mods: mods.get(cardId) }, { small: true }));
+    const surface = equipmentSurfaceReceipt(registries, run);
+    const shown = new Set();
+    for (const inst of run.deck || []) {
+      const key = inst.equipmentRole || `signature:${inst.cardId}`;
+      if (shown.has(key)) continue;
+      shown.add(key);
+      const card = document.createElement('div');
+      card.className = 'equip-card-with-count';
+      card.appendChild(renderCard(registries, inst, { small: true }));
+      const count = document.createElement('em');
+      count.className = 'role-copy-count';
+      count.textContent = `x${inst.equipmentRole ? surface.roleCopies[inst.equipmentRole] : surface.signature.copies}`;
+      card.appendChild(count);
+      box.appendChild(card);
     }
+    const receipt = document.createElement('div');
+    receipt.className = 'equip-role-receipts';
+    receipt.innerHTML = surface.roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)} <em class="role-copy-count">x${row.copies}</em></b>`
+      + `<span>${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier}`
+      + ` + ${row.receipt.rarityBonus} rarity = <strong>${row.receipt.value}</strong></span>`
+      + `<small>${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}</small></div>`).join('');
+    receipt.insertAdjacentHTML('beforeend', renderEquipmentRequirements(surface.requirements));
+    receipt.insertAdjacentHTML('beforeend', renderPlayerPoise(surface.poise));
+    box.appendChild(receipt);
     const rm = runMods(registries, run.loadout, run.class);
     const bits = [];
     if (rm.maxHp) bits.push(`Max HP ${rm.maxHp > 0 ? '+' : ''}${rm.maxHp}`);
@@ -706,6 +732,16 @@ export function mountEquipment(host, {
       `<span class="ef-tags">${tags.map((t) => `<em>${esc(t)}</em>`).join('') || '<em class="none">no tags</em>'}</span>` +
       (bits.length ? `<span class="ef-run">${bits.map(esc).join(' · ')}</span>` : '');
     box.appendChild(foot);
+    return box;
+  }
+
+  function statsComparison() {
+    const projection = statProjection(registries, run);
+    const box = document.createElement('section');
+    box.className = 'armoury-stats';
+    box.innerHTML = '<h3>ATTRIBUTES &amp; RESOURCES</h3>'
+      + `<div class="armoury-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
+      + `<div class="armoury-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`;
     return box;
   }
 
@@ -854,6 +890,7 @@ export function mountEquipment(host, {
       dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
       right.appendChild(dead);
     }
+    wrap.querySelector('.armoury-strip').appendChild(statsComparison());
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
 
     notice = '';

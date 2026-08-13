@@ -10,13 +10,10 @@ export const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
-    maxMana: 40,
+    startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'forsakenMedallion',
-    startingDeck: [
-      'strike', 'strike', 'strike', 'strike', 'strike',
-      'defend', 'defend', 'defend', 'defend',
-      'gorefireSlash',
-    ],
+    startingSignatureCard: 'gorefireSlash',
+    eligibleStartingKitIds: ['reaverBaseline', 'reaverGreatsword'],
     cardPool: [
       // Commons
       'crimsonCleave', 'shieldBash', 'quickstep', 'guardCounter', 'ironResolve',
@@ -39,13 +36,10 @@ export const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
-    maxMana: 80,
+    startingFlaskAllocation: { hp: 1, mana: 2 },
     startingRelic: 'starstoneShard',
-    startingDeck: [
-      'strike', 'strike', 'strike', 'strike', 'strike',
-      'defend', 'defend', 'defend', 'defend',
-      'starstonePebble',
-    ],
+    startingSignatureCard: 'starstonePebble',
+    eligibleStartingKitIds: ['starseerBaseline', 'starseerStarstone'],
     cardPool: [
       // Commons
       'cometFragment', 'starbladePhalanx', 'crystalBarrier', 'starShower', 'scholarsInsight', 'frostVeil',
@@ -66,13 +60,10 @@ export const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
-    maxMana: 60,
+    startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'goldFigurine',
-    startingDeck: [
-      'strike', 'strike', 'strike', 'strike', 'strike',
-      'defend', 'defend', 'defend', 'defend',
-      'urgentHeal',
-    ],
+    startingSignatureCard: 'urgentHeal',
+    eligibleStartingKitIds: ['heraldBaseline', 'heraldEmberlight'],
     cardPool: [
       // Commons
       'bloodPact', 'blightTouch', 'flagellation', 'penance', 'litany', 'graveOffering',

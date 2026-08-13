@@ -89,7 +89,11 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
     const def = registries.enemies.get(enemyId);
     let hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
     hp = Math.max(1, Math.round(hp * C.baseHpMult));
-    C.enemies.push(createEnemyCombatEntity({ instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax }));
+    C.enemies.push(createEnemyCombatEntity({
+      instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
+      arcaneExposure: def.arcaneExposure,
+      damageResistanceBySchool: def.damageResistanceBySchool,
+    }));
   });
 
   // Players — each an entity + own shuffled piles (Innate on top).
@@ -116,15 +120,21 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
 function addPlayerState(C, p, { initial = false } = {}) {
   const entity = createPlayerCombatEntity({
     classId: p.classId, maxHp: p.maxHp, hp: p.hp != null ? p.hp : p.maxHp,
-    maxMana: p.maxMana != null ? p.maxMana : C.registries.classes.get(p.classId).maxMana,
+    maxMana: Number.isFinite(p.maxMana) ? p.maxMana : 0,
     mana: p.mana,
-    relicIds: p.relicIds || [], flasks: p.flasks || [], energyMax: C.energyMax,
+    maxStamina: p.maxStamina, stamina: p.stamina,
+    relicIds: p.relicIds || [], flasks: p.flasks || [], flaskCharges: p.flaskCharges || null,
+    energyMax: p.energyMax != null ? p.energyMax : C.energyMax,
+    drawPerTurn: p.drawPerTurn != null ? p.drawPerTurn : C.drawPerTurn,
   });
   const deck = (p.deck || []).map((c) => ({
     instanceId: c.instanceId,
     cardId: c.cardId,
     upgraded: !!c.upgraded,
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}), // equipment numbers
+    ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
+    ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
+    ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
   }));
   const shuffled = C.rng.shuffle('shuffle', deck);
   const innate = [];
@@ -136,6 +146,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     id: p.id,
     name: p.name || p.id,
     classId: p.classId,
+    attributeMode: p.attributeMode,
+    attributes: p.attributes ? { ...p.attributes } : undefined,
     entity,
     piles: { draw: [...innate, ...rest], hand: [], discard: [], exhaust: [] },
     connected: true,
@@ -148,7 +160,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     if (C.phase === 'player') {
       setActive(C, P);
       P.entity.energy = P.entity.energyMax;
-      A.drawCards(C, C.drawPerTurn);
+      A.drawCards(C, P.entity.drawPerTurn);
     }
     rescaleEnemies(C);
   }
@@ -256,7 +268,7 @@ function startPlayerPhase(C) {
     if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
     e.energy = e.energyMax;
-    A.drawCards(C, C.drawPerTurn);
+    A.drawCards(C, e.drawPerTurn);
     C.emit('playerTurnStart', { turn: C.turn, playerId: P.id });
     fireOwnerHooks(C, e, 'ownerTurnStart');
     drainQueue(C);
@@ -337,7 +349,12 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     attackOrdinal: null,
   };
   if (def.type === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
-  const cardRef = { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type };
+  const cardRef = {
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
+    type: def.type, tags: def.cardTags,
+    damageSchool: inst.damageSchool ?? def.damageSchool,
+    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+  };
 
   for (const eff of def.effects || []) C.enqueue({ effect: eff, source: p, owner: p, target, card: cardRef, meta });
   C.emit('cardPlayed', {
@@ -360,13 +377,16 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
 
 // targetId may be an enemy id (offensive flask) OR another player's member id
 // (StS2 throw-to-ally: a self-beneficial flask lands on a chosen ally instead).
-export function useFlask(C, playerId, slot, targetId) {
+export function useFlask(C, playerId, slot, targetId, chargeKind = null) {
   if (C.result) throw new Error('Combat is over');
   if (C.phase !== 'player') throw new Error('Not the player phase');
   const P = C.players.get(playerId);
   if (!P || !P.connected || !P.entity.alive) throw new Error(`Player '${playerId}' cannot act`);
   const p = P.entity;
-  const flask = p.flasks[slot];
+  const chargeId = chargeKind === 'hp' ? 'crimsonFlask' : chargeKind === 'mana' ? 'azureFlask' : null;
+  const currentKey = chargeKind && `${chargeKind}Current`;
+  if (chargeId && (!p.flaskCharges || p.flaskCharges[currentKey] <= 0)) throw new Error(`No ${chargeKind} flask charges`);
+  const flask = chargeId ? { flaskId: chargeId } : p.flasks[slot];
   if (!flask) throw new Error(`No flask in slot ${slot}`);
   const def = C.registries.flasks.get(flask.flaskId);
 
@@ -385,7 +405,8 @@ export function useFlask(C, playerId, slot, targetId) {
     }
   }
 
-  p.flasks.splice(slot, 1);
+  if (chargeId) p.flaskCharges[currentKey] -= 1;
+  else p.flasks.splice(slot, 1);
   // Effects that target 'self'/'player' resolve against the recipient (thrower
   // or ally); offensive effects still hit the enemy target.
   setActive(C, thrown ? ally : P);

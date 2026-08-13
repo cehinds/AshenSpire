@@ -7,10 +7,18 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { createLoadout, runMods, stampDeck } from './loadout.js';
-import { graceRefillPlan } from './gracerefill.js';
+import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt } from './loadout.js';
+import { createFlaskCharges } from './gracerefill.js';
+import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
+import {
+  createDerivedStatRuleSnapshot,
+  restoreDerivedStatRuleSnapshot,
+  deriveStat,
+} from './derivedStats.js';
+import { resolveStartingKit, startingKitSnapshot } from './startingKits.js';
+import { DAMAGE_SCHOOLS } from './schemas.js';
 
-export const RUN_SCHEMA_VERSION = 1;
+export const RUN_SCHEMA_VERSION = 2;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -36,32 +44,60 @@ export function createDeck(cardIds, idGen = createIdGen('d')) {
  * Starting deck/relic/HP come from the class def; cinders from
  * balance.startingCinders (default 0).
  */
-export function createRunState({ seed, classId, registries }) {
+export function createRunState({
+  seed,
+  classId,
+  registries,
+  attributeMode = undefined,
+  attributes: requestedAttributes = undefined,
+  derivedStatOptions = {},
+  derivedStatRuleSnapshot = undefined,
+  startingKitId = undefined,
+  profileMeta = {},
+}) {
   const classDef = registries.classes.get(classId);
+  const selectedAttributeMode = attributeMode === undefined
+    ? defaultCreationModeId(registries)
+    : attributeMode;
+  const attributes = requestedAttributes === undefined
+    ? classAttributePreset(registries, classId, selectedAttributeMode)
+    : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const idGen = createIdGen('rc');
-  const loadout = createLoadout(registries, classId);
+  const startingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
+  const loadout = createLoadout(registries, classId, startingKit);
+  for (const [slotId, itemId] of Object.entries({ rightHand: startingKit.rightHand, leftHand: startingKit.leftHand })) {
+    if (!itemId) continue;
+    const piece = (registries.equipment.armaments || []).find((row) => row.id === itemId);
+    const receipt = equipmentRequirementReceipt(registries, piece, attributes);
+    if (!receipt.ok) {
+      const failed = receipt.failures[0];
+      throw new Error(`${startingKit.id}.${slotId}: ${itemId} requires ${failed.attributeId} ${failed.required} (got ${failed.actual})`);
+    }
+  }
   // Armour can carry `self.maxHp`, so the pool it sets has to be known before
   // hp is filled — the run starts at full, in whatever it starts wearing.
-  const maxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
-  const maxMana = classDef.maxMana;
+  const oldMaxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
   const run = {
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
     seed: seed >>> 0,
     streamCounters: {},
     class: classId,
+    startingKitId: startingKit.id,
+    startingKitSnapshot: startingKitSnapshot(startingKit),
+    attributeMode: selectedAttributeMode,
+    attributes,
     floor: 0,
     actNumber: 1,
     mapNodeId: null,
-    hp: maxHp,
-    maxHp,
-    mana: maxMana,
-    maxMana,
+    hp: oldMaxHp,
+    maxHp: oldMaxHp,
     cinders: registries.balance.startingCinders || 0,
-    deck: createDeck(classDef.startingDeck, idGen),
+    deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
     relics: [classDef.startingRelic],
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
+    flaskCharges: createFlaskCharges(registries.balance, classDef.startingFlaskAllocation),
     seedString: null, // set by the orchestrator right after creation (display/replay)
     mapGraph: null,
     combatEntered: null,
@@ -75,13 +111,96 @@ export function createRunState({ seed, classId, registries }) {
   //
   // The table remains authoritative at both doors. The preview enables this
   // data switch so every class starts with the same 3 HP + 3 Mana allocation.
-  if (registries.balance && registries.balance.graceRefillAtRunStart === true) {
-    for (const flaskId of graceRefillPlan(registries, run).grants) run.flasks.push({ flaskId });
-  }
+  // Crimson/Azure start full in their class-authored allocation. Utility
+  // consumables remain in run.flasks and are never synthesized here.
   // Stamp the starting deck with whatever the loadout says. Bare-handed this
   // is a no-op; in an armour set with `defend.block=+2` it is already true of
   // the very first Defend you draw.
+  initializeRunDerivedStats(run, registries, {
+    snapshot: derivedStatRuleSnapshot,
+    derivedStatOptions,
+    preserveDeficits: false,
+  });
   stampDeck(registries, run);
+  return run;
+}
+
+function derivedOptions(registries, extra = {}) {
+  const statLayer = (layer) => {
+    if (!layer || typeof layer !== 'object') return layer;
+    const { equipmentProfiles, ...stats } = layer;
+    return stats;
+  };
+  return {
+    ...extra,
+    modeModifiers: statLayer(extra.modeModifiers),
+    runModifiers: Array.isArray(extra.runModifiers) ? extra.runModifiers.map(statLayer) : statLayer(extra.runModifiers),
+    explicitOverride: statLayer(extra.explicitOverride),
+    authority: 'host',
+    attributeIds: registries.attributes.ids(),
+    classFields: ['maxHp', 'maxMana'],
+  };
+}
+
+/**
+ * Resolve the host-owned rule snapshot into the run's authoritative outputs.
+ * Existing current pools preserve their deficit during the one legacy
+ * migration. Once a snapshot exists, restores validate and trust the persisted
+ * outputs so a later content edit cannot rewrite a climb in progress.
+ */
+export function initializeRunDerivedStats(run, registries, {
+  snapshot = undefined,
+  derivedStatOptions = {},
+  preserveDeficits = true,
+} = {}) {
+  const existing = snapshot || run.derivedStatRuleSnapshot;
+  run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
+    ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
+    : createEquipmentProfileRuleSnapshot(registries, derivedStatOptions);
+  const currentRuleset = registries.derivedStatRules.rulesetVersion;
+  const existingIsCurrent = existing && existing.rulesetVersion === currentRuleset;
+  if (existingIsCurrent && run.derivedStatRuleSnapshot
+    && run.maxHp !== undefined && run.hp !== undefined
+    && run.maxMana !== undefined && run.mana !== undefined
+    && run.maxStamina !== undefined && run.stamina !== undefined
+    && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
+    restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+    return run;
+  }
+
+  // v1 carried class-authored 40/60/80 Mana pools. It is readable so its
+  // current/max ratio can be migrated, but it is never retained as authority.
+  if (existing && !existingIsCurrent) restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+  const receipt = existingIsCurrent
+    ? restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries))
+    : createDerivedStatRuleSnapshot(registries.derivedStatRules, derivedOptions(registries, derivedStatOptions));
+  const classDef = registries.classes.get(run.class);
+  const rules = receipt.rules;
+  const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef });
+  const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef });
+  const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef });
+  const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef });
+  const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef });
+  const hpBonus = run.loadout ? runMods(registries, run.loadout, run.class).maxHp : 0;
+
+  const oldHpMax = run.maxHp;
+  const oldHp = run.hp;
+  const oldManaMax = run.maxMana;
+  const oldMana = run.mana;
+  run.derivedStatRuleSnapshot = structuredClone(receipt);
+  run.maxHp = hp.value + hpBonus;
+  run.maxMana = mana.value;
+  run.maxStamina = stamina.value;
+  run.energyMax = energy.value;
+  run.drawPerTurn = draw.value;
+  if (preserveDeficits && Number.isFinite(oldHpMax) && Number.isFinite(oldHp)) {
+    run.hp = Math.max(0, run.maxHp - Math.max(0, oldHpMax - oldHp));
+  } else run.hp = run.maxHp;
+  if (preserveDeficits && Number.isFinite(oldManaMax) && oldManaMax > 0 && Number.isFinite(oldMana)) {
+    const legacyRatio = Math.max(0, Math.min(1, oldMana / oldManaMax));
+    run.mana = Math.max(0, Math.min(run.maxMana, Math.round(legacyRatio * run.maxMana)));
+  } else run.mana = run.maxMana;
+  run.stamina = run.maxStamina;
   return run;
 }
 
@@ -99,6 +218,14 @@ export const RUN_SHAPE = [
   { key: 'seed', type: 'number' },
   { key: 'streamCounters', type: 'object' },
   { key: 'class', type: 'string' },
+  { key: 'startingKitId', type: 'string' },
+  { key: 'startingKitSnapshot', type: 'object' },
+  // Optional as a pair only so pre-attribute saves can migrate as one block.
+  { key: 'attributeMode', type: 'string', optional: true },
+  { key: 'attributes', type: 'object', optional: true },
+  // Optional only for the one pre-derived migration at the load door.
+  { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
+  { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
@@ -107,6 +234,10 @@ export const RUN_SHAPE = [
   // its class-authored full pool before handing it to the game.
   { key: 'mana', type: 'number', optional: true },
   { key: 'maxMana', type: 'number', optional: true },
+  { key: 'stamina', type: 'number', optional: true },
+  { key: 'maxStamina', type: 'number', optional: true },
+  { key: 'energyMax', type: 'number', optional: true },
+  { key: 'drawPerTurn', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
@@ -129,9 +260,10 @@ function typeOk(value, type) {
 }
 
 /** validateRunShape(run) → [] when sound, else a list of human-readable problems. */
-export function validateRunShape(run) {
+export function validateRunShape(run, { legacy = false } = {}) {
   const problems = [];
   for (const f of RUN_SHAPE) {
+    if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -143,11 +275,28 @@ export function validateRunShape(run) {
     }
     if (!typeOk(v, f.type)) problems.push(`'${f.key}' should be ${f.type}`);
   }
+  const modeAbsent = run.attributeMode === undefined;
+  const attributesAbsent = run.attributes === undefined;
+  if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');
+  if (!attributesAbsent && typeOk(run.attributes, 'object')) {
+    for (const [id, value] of Object.entries(run.attributes)) {
+      if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
+    }
+  }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.
   if (Array.isArray(run.deck)) {
     const bad = run.deck.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
     if (bad !== -1) problems.push(`deck[${bad}] is not { instanceId, cardId }`);
+    for (let i = 0; i < run.deck.length; i++) {
+      const card = run.deck[i];
+      if (!card) continue;
+      const schoolAbsent = card.damageSchool === undefined;
+      const buildupAbsent = card.exposureBuildupPerHit === undefined;
+      if (schoolAbsent !== buildupAbsent) problems.push(`deck[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
+      if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`deck[${i}].damageSchool '${card.damageSchool}' is unknown`);
+      if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`deck[${i}].exposureBuildupPerHit must be a non-negative integer`);
+    }
   }
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');
@@ -158,11 +307,42 @@ export function validateRunShape(run) {
   if (Number.isFinite(run.mana) && Number.isFinite(run.maxMana) && (run.mana < 0 || run.mana > run.maxMana)) {
     problems.push('mana must be between 0 and maxMana');
   }
+  const staminaAbsent = run.stamina === undefined;
+  const maxStaminaAbsent = run.maxStamina === undefined;
+  if (staminaAbsent !== maxStaminaAbsent) problems.push('stamina and maxStamina must both be present or both be absent');
+  if (run.maxStamina !== undefined && (!Number.isFinite(run.maxStamina) || run.maxStamina < 0)) problems.push('maxStamina must be >= 0');
+  if (Number.isFinite(run.stamina) && Number.isFinite(run.maxStamina) && (run.stamina < 0 || run.stamina > run.maxStamina)) {
+    problems.push('stamina must be between 0 and maxStamina');
+  }
+  if (run.flaskCharges !== undefined) {
+    const f = run.flaskCharges;
+    if (!f || !Number.isInteger(f.capacity) || f.capacity <= 0
+      || !Number.isInteger(f.hp) || f.hp < 0 || !Number.isInteger(f.mana) || f.mana < 0
+      || f.hp + f.mana !== f.capacity
+      || !Number.isInteger(f.hpCurrent) || f.hpCurrent < 0 || f.hpCurrent > f.hp
+      || !Number.isInteger(f.manaCurrent) || f.manaCurrent < 0 || f.manaCurrent > f.mana) {
+      problems.push('flaskCharges must satisfy hp + mana = capacity with bounded current counts');
+    }
+  }
+  if (run.energyMax !== undefined && (!Number.isFinite(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be >= 0');
+  if (run.drawPerTurn !== undefined && (!Number.isFinite(run.drawPerTurn) || run.drawPerTurn < 0)) problems.push('drawPerTurn must be >= 0');
   return problems;
 }
 
 export function serializeRun(run) {
   return JSON.stringify(run);
+}
+
+export function initializeRunFlaskCharges(run, registries) {
+  if (!run.flaskCharges) {
+    const allocation = registries.classes.get(run.class).startingFlaskAllocation;
+    run.flaskCharges = createFlaskCharges(registries.balance, allocation);
+    const legacy = run.flasks || [];
+    run.flaskCharges.hpCurrent = Math.min(run.flaskCharges.hp, legacy.filter((f) => f && f.flaskId === 'crimsonFlask').length);
+    run.flaskCharges.manaCurrent = Math.min(run.flaskCharges.mana, legacy.filter((f) => f && f.flaskId === 'azureFlask').length);
+    run.flasks = (run.flasks || []).filter((f) => f && f.flaskId !== 'crimsonFlask' && f.flaskId !== 'azureFlask');
+  }
+  return run.flaskCharges;
 }
 
 /**
@@ -173,11 +353,16 @@ export function serializeRun(run) {
 export function deserializeRun(json) {
   const run = JSON.parse(json);
   if (!run || typeof run !== 'object') throw new Error('Corrupt run save');
-  if (run.schemaVersion !== RUN_SCHEMA_VERSION) {
+  const legacy = run.schemaVersion === 1;
+  if (!legacy && run.schemaVersion !== RUN_SCHEMA_VERSION) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (expected ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run);
+  const problems = validateRunShape(run, { legacy });
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
+  if (legacy) {
+    run.schemaVersion = RUN_SCHEMA_VERSION;
+    run.migratedFromRunSchemaVersion = 1;
+  }
   return run;
 }
 
@@ -188,7 +373,7 @@ export function deserializeRun(json) {
 /**
  * Player combat entity. statuses: { [statusId]: { stacks, duration?, meter? } }.
  */
-export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, relicIds = [], flasks = [], energyMax = 3 }) {
+export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax = 3, drawPerTurn = 5 }) {
   return {
     id: 'player',
     kind: 'player',
@@ -197,13 +382,17 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, re
     maxHp,
     mana: mana != null ? mana : maxMana,
     maxMana,
+    stamina: stamina != null ? stamina : maxStamina,
+    maxStamina,
     block: 0,
     energy: 0,
     energyMax,
+    drawPerTurn,
     statuses: {},
     stanceId: null,
     relicIds: [...relicIds],
     flasks: flasks.map((f) => ({ ...f })),
+    flaskCharges: flaskCharges ? { ...flaskCharges } : null,
     counters: {
       cardsPlayedThisTurn: 0,
       cardsPlayedThisCombat: 0,
@@ -218,8 +407,8 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, re
  * the poiseDamage opcode (SPEC §3.7, §4.4); everything else about Stagger is
  * content data.
  */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax }) {
-  return {
+export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool }) {
+  const entity = {
     id: instanceId,
     kind: 'enemy',
     enemyId,
@@ -235,4 +424,9 @@ export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax }) {
     unlockedMoves: [],
     alive: true,
   };
+  if (arcaneExposure) entity.arcaneExposure = arcaneExposure.mode === 'configured'
+    ? { ...structuredClone(arcaneExposure), value: 0 }
+    : { mode: 'immune' };
+  if (damageResistanceBySchool) entity.damageResistanceBySchool = { ...damageResistanceBySchool };
+  return entity;
 }

@@ -12,11 +12,12 @@ import { classGlyph, PORTRAIT_TINTS, SPRITE_STYLES, tintCss } from '../assets.js
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
+import { startingKitViews } from '../../model/startingKits.js';
 
 const NAME_KEY = 'sote_lan_name';
 const TINT_KEY = 'sote_lan_tint';
 
-export function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
+export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBack, onStart }) {
   let conn = null;
   let hosting = false;
   let myId = null;
@@ -24,6 +25,8 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
   const state = {
     name: localStorage.getItem(NAME_KEY) || 'Forsaken',
     classId: registries.classes.all()[0].id,
+    startingKitId: null,
+    discoveredArmaments: [...new Set(meta.discoveredArmaments || [])],
     tint: localStorage.getItem(TINT_KEY) || 'gold',
     spriteStyle: localStorage.getItem('sote_lan_style') || 'rendered',
     ready: false,
@@ -31,6 +34,9 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
     players: [],
     locals: [], // couch seats riding this connection: {name, classId, tint, spriteStyle}
   };
+  const kitsFor = (classId) => startingKitViews(registries, classId, meta).filter((row) => row.available);
+  const baselineKit = (classId) => (kitsFor(classId).find((row) => row.baseline) || kitsFor(classId)[0]).id;
+  state.startingKitId = baselineKit(state.classId);
 
   function cleanup() {
     clearInterval(pollTimer);
@@ -114,7 +120,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
       onMessage: (msg) => {
         if (msg.t === 'welcome') {
           myId = msg.id;
-          conn.send({ t: 'hello', name: state.name, classId: state.classId, tint: state.tint, spriteStyle: state.spriteStyle, hostKey });
+          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, tint: state.tint, spriteStyle: state.spriteStyle, hostKey });
         } else if (msg.t === 'roster') {
           state.players = msg.players;
           if (msg.seedString) state.seedString = msg.seedString;
@@ -170,6 +176,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
             </div>`).join('')}
         </div>
         <div><p class="cz-label">YOUR CLASS</p><div id="lb-classes" class="class-row" style="flex-wrap:wrap;justify-content:center"></div></div>
+        <div><p class="cz-label">YOUR STARTING KIT</p><div id="lb-kits" class="lb-tints"></div></div>
         <div><p class="cz-label">YOUR ACCENT</p><div id="lb-tints" class="lb-tints"></div></div>
         <div><p class="cz-label">SPRITE</p><div id="lb-styles" class="lb-tints"></div></div>
         <div style="width:min(460px,92%)"><p class="cz-label">LOCAL PARTY — MORE PLAYERS ON THIS SCREEN</p>
@@ -201,12 +208,24 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
       const el = document.createElement('div');
       el.className = `class-pick cr-class${cls.id === state.classId ? ' chosen' : ''}`;
       el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3>`;
-      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${cls.maxHp} · ${cls.startingDeck.length} cards`);
+      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${cls.maxHp} · ${registries.balance.startingDeckSize} cards`);
       el.addEventListener('click', () => {
         state.classId = cls.id;
-        conn.send({ t: 'pick', classId: cls.id });
+        state.startingKitId = baselineKit(cls.id);
+        conn.send({ t: 'pick', classId: cls.id, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments });
       });
       classes.appendChild(el);
+    }
+    const kitBox = app.querySelector('#lb-kits');
+    for (const kit of kitsFor(state.classId)) {
+      const button = document.createElement('button');
+      button.className = `mod-chip${kit.id === state.startingKitId ? ' on' : ''}`;
+      button.textContent = kit.label;
+      button.addEventListener('click', () => {
+        state.startingKitId = kit.id;
+        conn.send({ t: 'pick', startingKitId: kit.id, discoveredArmaments: state.discoveredArmaments });
+      });
+      kitBox.appendChild(button);
     }
     // Accent swatches: the chosen tint colors your sprite + party chips for
     // everyone, so two Reavers still read apart on the shared board.
@@ -251,12 +270,20 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
         row.innerHTML = `
           <input class="ll-name" maxlength="14" spellcheck="false" value="${esc(lp.name)}" style="width:110px;background:var(--panel);border:1px solid var(--line);color:var(--parchment);border-radius:6px;padding:4px 8px">
           <button class="subtle ll-class" style="min-width:100px">${classGlyph(lp.classId)} ${esc(classList.find((c) => c.id === lp.classId).name)}</button>
+          <button class="subtle ll-kit">${esc((kitsFor(lp.classId).find((kit) => kit.id === lp.startingKitId) || kitsFor(lp.classId)[0]).label)}</button>
           <button class="tint-dot ll-tint" style="background:${tintCss(lp.tint)}"></button>
           <button class="subtle ll-del" title="Remove">✕</button>`;
         row.querySelector('.ll-name').addEventListener('input', (e) => { lp.name = e.target.value.trim() || `Player ${i + 2}`; sendLocals(); });
         row.querySelector('.ll-class').addEventListener('click', () => {
           const ci = classList.findIndex((c) => c.id === lp.classId);
           lp.classId = classList[(ci + 1) % classList.length].id;
+          lp.startingKitId = baselineKit(lp.classId);
+          renderLocals(); sendLocals();
+        });
+        row.querySelector('.ll-kit').addEventListener('click', () => {
+          const rows = kitsFor(lp.classId);
+          const ki = rows.findIndex((kit) => kit.id === lp.startingKitId);
+          lp.startingKitId = rows[(ki + 1) % rows.length].id;
           renderLocals(); sendLocals();
         });
         row.querySelector('.ll-tint').addEventListener('click', () => {
@@ -274,7 +301,8 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
     addBtn.addEventListener('click', () => {
       if (state.players.length >= 4 || state.locals.length >= 3) return;
       const n = state.locals.length + 2;
-      state.locals.push({ name: `Player ${n}`, classId: classList[(n - 1) % classList.length].id, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: 'rendered' });
+      const classId = classList[(n - 1) % classList.length].id;
+      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: 'rendered' });
       renderLocals(); sendLocals();
     });
     app.querySelector('#lb-leave').addEventListener('click', () => back());

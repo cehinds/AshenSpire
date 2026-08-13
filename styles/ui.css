@@ -592,6 +592,10 @@ button.rs-reset {
 .class-pick h3 { color: var(--gold); font-size: 1.5rem; margin-bottom: 0.6rem; }
 .class-pick p { font-size: 1.1rem; color: var(--muted); line-height: 1.5; }
 .class-pick .chip { display: inline-block; margin-top: 0.8rem; font-size: 1rem; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 0.2rem 0.8rem; }
+.flask-allocation-controls button {
+  min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
+  display: inline-flex; align-items: center; justify-content: center;
+}
 
 .stats-table { border-collapse: collapse; font-size: 1.3rem; }
 .stats-table td { padding: 0.4rem 1.4rem; }
@@ -825,6 +829,13 @@ button.rs-reset {
   width: 4rem; height: 4rem; border-radius: 9px; background: var(--panel);
   border: 2px solid var(--line-soft); display: flex; align-items: center; justify-content: center;
   font-size: 2rem; cursor: pointer; transition: transform 120ms, border-color 120ms;
+}
+#cz-kits button.cz-opt {
+  /* Starting kits carry words and commit a run-defining choice. The generic
+     sigil tile's 4rem square shrinks with body zoom; this specific interactive
+     row uses the on-glass floor and grows around its authored label. */
+  width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
+  padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
 }
 .cz-opt:hover { transform: translateY(-2px); }
 .cz-opt.chosen { border-color: var(--parchment); }
@@ -1396,6 +1407,16 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .combat.coop .coop-leave,
 .combat.coop .coop-flask { min-height: var(--tap-floor); height: auto; }
 .coop-flask.armed { border-color: var(--gold); box-shadow: 0 0 8px rgba(200,160,70,.5); }
+.card-unavailable-reason {
+  position: absolute; left: 0.3rem; right: 0.3rem; bottom: 0.3rem; z-index: 3;
+  padding: 0.2rem 0.35rem; border: 1px solid var(--blood); border-radius: 4px;
+  background: rgba(24, 8, 7, 0.92); color: #ffd7cf; font-size: 0.75rem;
+  line-height: 1.2; text-align: center;
+}
+.cz-stats summary {
+  min-height: var(--tap-floor); height: auto;
+  display: flex; align-items: center; cursor: pointer;
+}
 .coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: 7px; padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
 
 /* co-op: fork voting on the shared map */
@@ -1480,6 +1501,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: none; border: 1px solid var(--line); color: var(--muted);
   padding: 0.4rem 1.1rem; border-radius: 3px; cursor: pointer;
   font-size: 1.2rem; text-transform: capitalize; font-family: var(--font-body);
+  min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
 }
 .armoury-views button.on { color: var(--gold); border-color: var(--gold); background: var(--bg); }
 .armoury-close { background: none; border: none; color: var(--muted); font-size: 1.8rem; cursor: pointer; }
@@ -1589,6 +1611,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   gap: 0.2rem 0.9rem; align-items: center; text-align: left;
   border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
   color: var(--parchment); padding: 0.6rem 0.9rem; cursor: pointer; font-family: var(--font-body);
+  min-height: var(--tap-floor);
 }
 .equip-chip:hover { border-color: var(--line-soft); }
 .equip-chip.on { border-color: var(--gold); background: var(--bg); }
@@ -1608,6 +1631,49 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 .armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.equip-card-with-count { position: relative; }
+.equip-card-with-count > .role-copy-count { position: absolute; right: 0.35rem; bottom: 0.35rem; }
+.role-copy-count { color: var(--gold); font-style: normal; white-space: nowrap; }
+.equip-role-receipts { flex: 1 1 28rem; display: grid; gap: 0.5rem; }
+.equip-role-receipts > div { display: grid; grid-template-columns: minmax(9rem, 1fr) 2fr; gap: 0.2rem 0.8rem; border-left: 2px solid var(--line-soft); padding-left: 0.8rem; }
+.equip-role-receipts span, .equip-role-receipts small { color: var(--muted); }
+.equip-role-receipts small { grid-column: 2; }
+.cz-kit { margin-top: 0.8rem; }
+.cz-kit summary { cursor: pointer; color: var(--gold); }
+.cz-kit ul { margin: 0.5rem 0 0; padding-left: 1.6rem; }
+.cz-kit li { margin: 0.25rem 0; }
+.cz-kit li span { color: var(--muted); }
+.equipment-requirements { display: grid; gap: 0.35rem; overflow-wrap: anywhere; }
+.equipment-requirements ul { margin: 0; padding-left: 1.4rem; }
+.equipment-requirements li { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.equipment-requirements em { font-style: normal; color: var(--grace); }
+.equipment-requirements em.unmet { color: var(--ember); }
+.equipment-requirements p { margin: 0; color: var(--muted); }
+.player-poise-receipt { display: grid; gap: 0.2rem; overflow-wrap: anywhere; }
+.player-poise-receipt span, .player-poise-receipt small { color: var(--muted); }
+.player-poise-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
+.player-poise-receipt p { margin: 0; color: var(--muted); }
+.arcane-exposure-meter, .arcane-exposure-immune {
+  min-width: 7.2rem; max-width: 100%; box-sizing: border-box;
+  overflow-wrap: anywhere; color: var(--frost); font-size: 0.92rem;
+}
+.arcane-exposure-head { display: flex; align-items: center; gap: 0.25rem; }
+.arcane-exposure-head strong { margin-left: auto; white-space: nowrap; color: var(--parchment); }
+.arcane-exposure-head em { color: var(--gold); font-style: normal; }
+.arcane-exposure-glyph { color: var(--frost); }
+.arcane-exposure-track { height: 0.35rem; background: var(--line); border-radius: 99px; overflow: hidden; }
+.arcane-exposure-track > span { display: block; height: 100%; background: var(--frost); }
+.arcane-exposure-meter.locked .arcane-exposure-track > span { background: var(--gold); }
+.arcane-exposure-immune { display: flex; gap: 0.3rem; align-items: center; }
+.magic-vulnerable-receipt, .arcane-exposure-event { color: var(--muted); line-height: 1.2; }
+.arcane-refusal-receipt { color: var(--gold); }
+.equip-candidate-row { display: grid; gap: 0.35rem; min-width: 0; }
+.equip-candidate-comparison { margin-left: 4.5rem; border-left: 2px solid var(--line-soft); padding: 0.25rem 0 0.5rem 0.8rem; overflow-wrap: anywhere; }
+.equip-candidate-comparison summary { min-height: var(--tap-floor); display: flex; align-items: center; cursor: pointer; color: var(--gold); }
+.equip-candidate-comparison ul { margin: 0.35rem 0; padding-left: 1.4rem; }
+.equip-card-changes li { display: grid; grid-template-columns: minmax(9rem, 1fr) auto; gap: 0.15rem 0.5rem; }
+.equip-card-changes small { grid-column: 1 / -1; color: var(--muted); }
+.equip-added-effect.none, .equip-resource-change.none { color: var(--muted); }
 .equip-foot { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
 .ef-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 .ef-run { color: var(--grace); font-size: 1.15rem; }
@@ -1678,6 +1744,25 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    is handed to the subject by the layout that was already there. */
 .armoury [data-role='context'][data-collapsed='1'] > :not(.region-head) { display: none; }
 .armoury [data-role='context'][data-collapsed='1'] { flex: 0 0 auto; padding-top: 0; padding-bottom: 0; }
+.armoury [data-role='context'][data-collapsed='0'] {
+  /* An expanded receipt pane is real content, not overflow behind the modal.
+     Share the panel with its subject and give the pane its own scrollport so a
+     phone can reach candidate receipts without moving the Armoury off-screen. */
+  flex: 1 1 50%; min-height: var(--tap-floor); overflow-y: auto;
+}
+
+/* Screenshot evidence poses use the real screen/readers but focus the camera on
+   the contract under review. They are query-gated dev surfaces; ordinary play
+   never carries either root attribute. */
+:root[data-shot-evidence='creation'] .customize .cz-fields > div:not(:has(#cz-kits)),
+:root[data-shot-evidence='creation'] .customize .preview-pane > :not(.cz-stats) { display: none; }
+:root[data-shot-evidence='creation'] .customize .cz-cols { align-items: flex-start; }
+:root[data-shot-evidence='armoury'] .armoury-left,
+:root[data-shot-evidence='armoury'] .armoury.picking .equip-slots { display: none; }
+:root[data-shot-evidence='armoury'] .armoury-body { min-height: 0; overflow: hidden; }
+:root[data-shot-evidence='armoury'] .armoury-right { height: 100%; overflow-y: auto !important; }
+:root[data-shot-evidence='armoury'] .armoury-strip[data-role='context'][data-collapsed='0'] { flex: 0 0 35%; }
+:root[data-shot-evidence='armoury'] .equip-card-with-count { display: none; }
 
 /* Grid view: the figure between two columns of slots, hands on the side they
    are actually held. The picker moves to the right pane so the middle stays a
@@ -2072,3 +2157,24 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 @media (prefers-reduced-motion: no-preference) {
   .cp-cell { transition: border-color 120ms ease, background 120ms ease; }
 }
+.flask-identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  color: var(--flask-tint);
+  min-width: 0;
+}
+.flask-art {
+  display: inline-grid;
+  place-items: center;
+  width: 1.8em;
+  height: 1.8em;
+  flex: 0 0 auto;
+}
+.flask-art-image { display: block; width: 100%; height: 100%; object-fit: contain; }
+.flask-art-glyph {
+  display: inline-grid; place-items: center; width: 1.35em; height: 1.35em;
+  border: 1px solid currentColor; border-radius: 45% 45% 55% 55%;
+  background: color-mix(in srgb, var(--flask-tint) 22%, #111);
+}
+.flask-name { color: var(--ink, #f2ead8); }

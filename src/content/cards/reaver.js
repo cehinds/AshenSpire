@@ -31,7 +31,14 @@ export const reaverCards = [
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 8 }] },
   },
   {
-    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 10, type: 'attack',
+    id: 'technique', name: 'Footwork', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
+    keywords: [], icon: '✧',
+    effects: [{ op: 'block', target: 'self', amount: 3 }, { op: 'draw', amount: 1 }],
+    textTemplate: 'Gain {block} Block. Draw {draw} card.',
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 5 }, { op: 'draw', amount: 1 }] },
+  },
+  {
+    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },

@@ -24,8 +24,8 @@ export const KEEPSAKES = [
     id: 'travelersFlask',
     name: "Traveler's Flask",
     icon: '🧪',
-    desc: 'Begin with a Crimson Flask in your belt.',
-    effects: [{ op: 'addFlask', id: 'crimsonFlask' }],
+    desc: 'Begin with one additional Crimson charge.',
+    effects: [{ op: 'addFlaskCapacity', kind: 'hp', amount: 1 }],
   },
   {
     id: 'whetstoneMemory',

@@ -30,10 +30,14 @@ import {
   SFX_LAYER_SCHEMAS,
   MUSIC_SILENCE_WORD,
   MUSIC_BED_SCHEMA,
+  DAMAGE_SCHOOLS,
   CREATURE_TAGS,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
+import { attributeContentProblems } from './attributes.js';
+import { derivedStatRuleProblems } from './derivedStats.js';
+import { startingKitProblems } from './startingKits.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -77,6 +81,8 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'sfx',
   'music',
   'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
+  'attributeRules',
+  'derivedStatRules',
 ]);
 
 /**
@@ -192,6 +198,16 @@ export function validateContent(bundle) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
 
+  const schoolBuildup = b.balance && b.balance.arcaneExposure && b.balance.arcaneExposure.schoolBuildupMultipliers;
+  if (!schoolBuildup || typeof schoolBuildup !== 'object' || Array.isArray(schoolBuildup)) {
+    err('balance.arcaneExposure.schoolBuildupMultipliers', 'must be an explicit school map');
+  } else {
+    for (const [school, multiplier] of Object.entries(schoolBuildup)) {
+      if (!DAMAGE_SCHOOLS.includes(school)) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, `unknown damage school '${school}'`);
+      if (!Number.isFinite(multiplier) || multiplier < 0) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, 'must be finite and non-negative');
+    }
+  }
+
   for (const key of Object.keys(b)) {
     if (!KNOWN_BUNDLE_KEYS.has(key)) err(key, `Unknown content bundle key '${key}'`);
   }
@@ -212,17 +228,21 @@ export function validateContent(bundle) {
     });
   }
 
-  // Resource ceilings and costs are semantic bounds, not merely integer
-  // shapes. A zero maximum would make a 0/0 bar; a negative cost would mint
-  // mana when a card is played. Both are refused at the content door.
-  for (const cls of Array.isArray(b.classes) ? b.classes : []) {
-    if (cls && Number.isInteger(cls.maxMana) && cls.maxMana <= 0) {
-      err(`classes.${cls.id || '?'}.maxMana`, 'must be > 0');
-    }
-  }
+  // Mana costs are semantic bounds, not merely integer shapes. A negative
+  // cost would mint Mana when a card is played. Mana maxima are derived from
+  // the rules table; classes deliberately own no second maximum.
   for (const card of Array.isArray(b.cards) ? b.cards : []) {
     if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
       err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
+    }
+  }
+  const flaskCapacity = b.balance && b.balance.flaskCapacity;
+  if (!Number.isInteger(flaskCapacity) || flaskCapacity <= 0) err('balance.flaskCapacity', 'must be a positive integer');
+  for (const cls of Array.isArray(b.classes) ? b.classes : []) {
+    const a = cls && cls.startingFlaskAllocation;
+    if (!a || !Number.isInteger(a.hp) || a.hp < 0 || !Number.isInteger(a.mana) || a.mana < 0
+      || a.hp + a.mana !== flaskCapacity) {
+      err(`classes.${cls && cls.id || '?'}.startingFlaskAllocation`, `must satisfy hp + mana = flaskCapacity ${flaskCapacity}`);
     }
   }
 
@@ -231,8 +251,140 @@ export function validateContent(bundle) {
   const tagIds = new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => t && t.id).filter(Boolean));
   const vctx = { ids, err, tagIds };
 
+  // Equipment profiles are nested tables, but receive the same strict central
+  // schema walk as top-level registries. Absence is not an empty valid table.
+  const equipment = b.equipment;
+  if (!equipment || typeof equipment !== 'object' || Array.isArray(equipment)) {
+    err('equipment', 'must be an object containing basicCardProfiles');
+  } else if (!Array.isArray(equipment.basicCardProfiles)) {
+    err('equipment.basicCardProfiles', 'Missing required basicCardProfiles array');
+  } else {
+    // Player Poise is authored on every equipment row even though it has no
+    // combat consumer yet. Missing data must not silently normalize to zero:
+    // the receipt is truthful only when every worn source says its number.
+    for (const [table, rows] of [['armaments', equipment.armaments], ['armour', equipment.armour]]) {
+      if (!Array.isArray(rows)) {
+        err(`equipment.${table}`, 'must be an array');
+        continue;
+      }
+      for (const row of rows) {
+        const id = row && row.id || '?';
+        const value = row && row.poiseThreshold;
+        if (!Number.isFinite(value) || !Number.isInteger(value) || value < 0) {
+          err(`equipment.${table}.${id}.poiseThreshold`, `must be a finite non-negative integer, got ${JSON.stringify(value)}`);
+        }
+      }
+    }
+
+    const seenProfiles = new Set();
+    for (const profile of equipment.basicCardProfiles) {
+      const id = profile && profile.id || '?';
+      walkSchema(profile, SCHEMAS.basicCardProfile, `equipment.basicCardProfiles.${id}`, vctx);
+      if (seenProfiles.has(id)) err(`equipment.basicCardProfiles.${id}`, `Duplicate profile id '${id}'`);
+      seenProfiles.add(id);
+      if (profile && Number.isFinite(profile.baseValue) && profile.baseValue < 0) err(`equipment.basicCardProfiles.${id}.baseValue`, 'must be non-negative');
+      if (profile && Number.isFinite(profile.pointsPerTier) && profile.pointsPerTier <= 0) err(`equipment.basicCardProfiles.${id}.pointsPerTier`, 'must be > 0');
+      if (profile && Number.isFinite(profile.cap) && profile.cap < 0) err(`equipment.basicCardProfiles.${id}.cap`, 'must be non-negative');
+      if (!Number.isInteger(profile && profile.exposureBuildupPerHit) || profile.exposureBuildupPerHit < 0) err(`equipment.basicCardProfiles.${id}.exposureBuildupPerHit`, 'must be a non-negative integer');
+      if (profile && profile.cap !== '' && profile.cap != null && !Number.isFinite(profile.cap)) err(`equipment.basicCardProfiles.${id}.cap`, 'must be blank or finite');
+      if (profile && profile.compatibility !== `${profile.role}-v1`) err(`equipment.basicCardProfiles.${id}.compatibility`, `must match role '${profile.role}-v1'`);
+      for (const tag of (profile && profile.tags) || []) if (!tagIds.has(tag)) err(`equipment.basicCardProfiles.${id}.tags`, `unknown tag '${tag}'`);
+    }
+
+    // Validate the raw authored carrier rows before their map is joined onto
+    // cards. This keeps duplicate/missing rows visible at the production boot
+    // door rather than allowing Map normalization to hide them.
+    if (!Array.isArray(equipment.cardExposure)) {
+      err('equipment.cardExposure', 'Missing required generated cardExposure array');
+    } else {
+      const seen = new Set();
+      for (const row of equipment.cardExposure) {
+        const cardId = row && row.cardId;
+        const path = `equipment.cardExposure.${cardId || '?'}`;
+        for (const key of Object.keys(row || {})) if (!['cardId', 'damageSchool', 'exposureBuildupPerHit'].includes(key)) err(`${path}.${key}`, 'Unknown field');
+        if (typeof cardId !== 'string' || !ids.cards.has(cardId)) err(`${path}.cardId`, `unknown card '${cardId}'`);
+        if (!DAMAGE_SCHOOLS.includes(row && row.damageSchool)) err(`${path}.damageSchool`, `unknown damage school '${row && row.damageSchool}'`);
+        if (!Number.isInteger(row && row.exposureBuildupPerHit) || row.exposureBuildupPerHit < 0) err(`${path}.exposureBuildupPerHit`, 'must be a non-negative integer');
+        if (seen.has(cardId)) err(path, `Duplicate card exposure row '${cardId}'`);
+        seen.add(cardId);
+      }
+      const damages = (Array.isArray(b.cards) ? b.cards : []).filter((card) => [...(card.effects || []), ...((card.upgrade && card.upgrade.effects) || [])].some((effect) => effect && effect.op === 'damage'));
+      for (const card of damages) {
+        const path = `cards.${card.id}`;
+        const row = equipment.cardExposure.find((candidate) => candidate.cardId === card.id);
+        if (!row) err(`${path}.exposureBuildupPerHit`, 'Missing required explicit damage carrier row');
+        if (typeof card.damageSchool !== 'string') err(`${path}.damageSchool`, 'Missing required explicit damage school');
+        if (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0) err(`${path}.exposureBuildupPerHit`, 'Missing required non-negative per-hit buildup');
+        if (row && (card.damageSchool !== row.damageSchool || card.exposureBuildupPerHit !== row.exposureBuildupPerHit)) err(path, 'Resolved card carrier disagrees with authored row');
+      }
+    }
+  }
+
+  // Equipment eligibility tables are boot-critical raw authoring. Validate
+  // them before the equipment normalizer can join rows into pieces and thereby
+  // hide a duplicate item/stat pair. This is the same validateContent door the
+  // production boot uses, not a tool-only validator.
+  if (equipment && typeof equipment === 'object' && !Array.isArray(equipment)) {
+    const pieces = [...(Array.isArray(equipment.armaments) ? equipment.armaments : []), ...(Array.isArray(equipment.armour) ? equipment.armour : [])];
+    const pieceIds = new Set(pieces.map((row) => row && row.id).filter(Boolean));
+    const armamentIds = new Set((Array.isArray(equipment.armaments) ? equipment.armaments : []).map((row) => row && row.id).filter(Boolean));
+    if (!Array.isArray(equipment.equipmentRequirements)) {
+      err('equipment.equipmentRequirements', 'Missing required generated equipmentRequirements array');
+    } else {
+      const seen = new Set();
+      for (const row of equipment.equipmentRequirements) {
+        const itemId = row && row.itemId;
+        const attributeId = row && row.attributeId;
+        const path = `equipment.equipmentRequirements.${itemId || '?'}:${attributeId || '?'}`;
+        for (const key of Object.keys(row || {})) if (!['itemId', 'attributeId', 'minimum'].includes(key)) err(`${path}.${key}`, 'Unknown field');
+        if (typeof itemId !== 'string' || !itemId) err(`${path}.itemId`, 'must be a non-empty item id');
+        else if (!pieceIds.has(itemId)) err(`${path}.itemId`, `unknown item '${itemId}'`);
+        if (typeof attributeId !== 'string' || !attributeId) err(`${path}.attributeId`, 'must be a non-empty attribute id');
+        else if (!ids.attributes.has(attributeId)) err(`${path}.attributeId`, `unknown attribute '${attributeId}'`);
+        if (!row || !Object.prototype.hasOwnProperty.call(row, 'minimum') || !Number.isFinite(row.minimum) || !Number.isInteger(row.minimum) || row.minimum < 0) {
+          err(`${path}.minimum`, 'must be a finite non-negative integer');
+        }
+        const key = `${itemId}:${attributeId}`;
+        if (seen.has(key)) err(path, `Duplicate item/stat requirement '${key}'`);
+        seen.add(key);
+      }
+    }
+    if (!Array.isArray(equipment.cardEquipmentExceptions)) {
+      err('equipment.cardEquipmentExceptions', 'Missing required generated cardEquipmentExceptions array');
+    } else {
+      const seen = new Set();
+      for (const row of equipment.cardEquipmentExceptions) {
+        const cardId = row && row.cardId;
+        const weaponId = row && row.weaponId;
+        const path = `equipment.cardEquipmentExceptions.${cardId || '?'}:${weaponId || '?'}`;
+        for (const key of Object.keys(row || {})) if (!['cardId', 'weaponId'].includes(key)) err(`${path}.${key}`, 'Unknown field');
+        if (typeof cardId !== 'string' || !ids.cards.has(cardId)) err(`${path}.cardId`, `unknown card '${cardId}'`);
+        if (typeof weaponId !== 'string' || !armamentIds.has(weaponId)) err(`${path}.weaponId`, `unknown weapon '${weaponId}'`);
+        const key = `${cardId}:${weaponId}`;
+        if (seen.has(key)) err(path, `Duplicate exact card/weapon pair '${key}'`);
+        seen.add(key);
+      }
+    }
+    if (!Array.isArray(equipment.cardTagging)) err('equipment.cardTagging', 'Missing required registered cardTagging array');
+  }
+
+  // Starting kits are a nested generated table whose validity spans classes,
+  // hand slots, armament discovery weights, and the no-spoiler policy.
+  try {
+    const kitRegistries = {
+      classes: { ids: () => [...ids.classes], has: (id) => ids.classes.has(id), get: (id) => (b.classes || []).find((row) => row.id === id) },
+      equipment: b.equipment || {},
+      balance: b.balance || {},
+    };
+    for (const problem of startingKitProblems(kitRegistries)) err('equipment.startingKits', problem);
+  } catch (error) {
+    err('equipment.startingKits', error && error.message ? error.message : 'starting-kit validation failed');
+  }
+
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {
+    attributes: SCHEMAS.attribute,
+    creationModes: SCHEMAS.creationMode,
     cards: SCHEMAS.card,
     resources: SCHEMAS.resource,
     relics: SCHEMAS.relic,
@@ -252,17 +404,39 @@ export function validateContent(bundle) {
       walkSchema(def, typeToSchema[type], path, vctx);
     });
   }
+  for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
+    const base = `enemies.${enemy && enemy.id || '?'}`;
+    const cfg = enemy && enemy.arcaneExposure;
+    if (cfg && cfg.mode === 'configured') {
+      for (const field of ['threshold', 'buildupMultiplier', 'resetMode', 'overflowPolicy', 'lockPolicy', 'onBreak']) {
+        if (cfg[field] === undefined) err(`${base}.arcaneExposure.${field}`, `Missing required configured field '${field}'`);
+      }
+      if (!Number.isInteger(cfg.threshold) || cfg.threshold <= 0) err(`${base}.arcaneExposure.threshold`, 'must be a positive integer');
+      if (!Number.isFinite(cfg.buildupMultiplier) || cfg.buildupMultiplier <= 0) err(`${base}.arcaneExposure.buildupMultiplier`, 'must be finite and > 0');
+      if (cfg.onBreak && (!Number.isFinite(cfg.onBreak.value) || cfg.onBreak.value <= 0)) err(`${base}.arcaneExposure.onBreak.value`, 'must be finite and > 0');
+      if (cfg.onBreak && (!Number.isInteger(cfg.onBreak.duration) || cfg.onBreak.duration <= 0)) err(`${base}.arcaneExposure.onBreak.duration`, 'must be a positive integer');
+    } else if (cfg && cfg.mode === 'immune') {
+      for (const field of Object.keys(cfg)) if (field !== 'mode') err(`${base}.arcaneExposure.${field}`, `immune policy may not author '${field}'`);
+    }
+    for (const [school, percent] of Object.entries((enemy && enemy.damageResistanceBySchool) || {})) {
+      if (!DAMAGE_SCHOOLS.includes(school)) err(`${base}.damageResistanceBySchool.${school}`, `unknown damage school '${school}'`);
+      if (!Number.isFinite(percent) || percent < 0 || percent > 100) err(`${base}.damageResistanceBySchool.${school}`, 'must be a finite percent from 0 to 100');
+    }
+  }
+  walkSchema(b.attributeRules, SCHEMAS.attributeRules, 'attributeRules', vctx);
+  for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
+  for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
+    attributeIds: (b.attributes || []).map((row) => row.id),
+    classFields: ['maxHp'],
+  })) err(problem.path, problem.msg);
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
   // The shape walk above already rejects a missing `source`. This rejects a
   // source the engine cannot READ — the defect that would otherwise ship a
   // trough reading 0/0 forever on Constantine's HUD, looking finished.
   //
-  // THIS IS THE REFUSAL THE FEATURE WAS BUILT AROUND. Wave 4 of D10 asks for
-  // stamina and mana bars; neither resource exists in this tree. Adding
-  // `{ id: 'stamina', source: 'stamina', ... }` to content/resources.js dies
-  // HERE, at boot, naming the row and printing the sources that do exist —
-  // instead of drawing an empty bar nobody can tell from a broken one.
+  // A new row whose resource has no engine reader dies HERE at boot, naming the
+  // row and legal sources instead of drawing a 0/0 trough that looks finished.
   for (const row of (Array.isArray(b.resources) ? b.resources : [])) {
     if (!row || typeof row.source !== 'string') continue; // shape walk owns this
     if (!RESOURCE_SOURCE_IDS.includes(row.source)) {
@@ -460,6 +634,10 @@ export function validateContent(bundle) {
 
   for (const relic of b.relics || []) {
     validateRelicTemplate(relic, `relics.${relic.id}`, err);
+    const poiseAdd = relic && relic.passives && relic.passives.poiseThresholdAdd;
+    if (poiseAdd != null && (!Number.isFinite(poiseAdd) || !Number.isInteger(poiseAdd) || poiseAdd < 0)) {
+      err(`relics.${relic.id}.passives.poiseThresholdAdd`, `must be a finite non-negative integer, got ${JSON.stringify(poiseAdd)}`);
+    }
   }
 
   // ---- threshold-proc second layer (#61): meaning, not shape ---------------
@@ -919,6 +1097,10 @@ export function validateEffects(effects, path, vctx) {
     }
     if (eff.op === 'stagger' && ['self', 'player', 'owner', 'ally'].includes(eff.target)) {
       err(`${p}.target`, `stagger targets enemies only, got '${eff.target}'`);
+    }
+    if (eff.op === 'addFlaskCapacity') {
+      if (!['hp', 'mana'].includes(eff.kind)) err(`${p}.kind`, `must be 'hp' or 'mana'`);
+      if (!Number.isInteger(eff.amount) || eff.amount <= 0) err(`${p}.amount`, 'must be a positive integer');
     }
     if (eff.op === 'addCard') {
       // PILES / PILE_POSITIONS, not the same words typed again. Both sets were

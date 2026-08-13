@@ -13,6 +13,7 @@ import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
+import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
@@ -124,6 +125,9 @@ setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 // thing that makes the gate below reach every state; keep the count at one.
 const shotParams = new URLSearchParams(location.search);
 const shotState = shotParams.get('shot');
+const shotEvidence = shotParams.get('shotEvidence');
+if (shotEvidence) document.documentElement.dataset.shotEvidence = shotEvidence;
+if (shotParams.get('shotArcane') === 'matrix') document.documentElement.dataset.shotArcane = 'matrix';
 
 function pickStorage() {
   // A ?shot= boot NEVER touches durable storage. It used to: the hook wrote
@@ -550,6 +554,7 @@ function showLobby() {
   audio.music('title');
   mountLobby(app, {
     registries,
+    meta: saves.loadMeta(),
     defaultSeedString: randomSeedString(),
     onBack: () => showTitle(),
     onStart: ({ conn, myId, myIds }) => {
@@ -567,7 +572,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, slot = 1 }) {
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -609,7 +614,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
   saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
-  run = createRunState({ seed, classId, registries });
+  run = createRunState({ seed, classId, registries, startingKitId, profileMeta: saves.loadMeta() });
   run.seedString = seedToString(seed);
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
@@ -958,7 +963,12 @@ function rollDrop(source) {
   addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
     meta.found = [...(meta.found || []), id];
-    saves.saveMeta(meta);
+    const progressionMode = shotState ? 'showcase' : isCustomRun(run.custom) ? 'custom' : 'normal';
+    const recorded = recordArmamentDiscovery(meta, id, {
+      progressionMode, source, runSeed: run.seedString,
+      receiptLimit: registries.balance.equipment.startingKitDiscovery.receiptLimit,
+    });
+    saves.saveMeta(recorded.meta);
   }
   return id;
 }
@@ -976,6 +986,7 @@ function finishRun(victory) {
 function showCustomize(slot = 1) {
   mountCustomize(app, {
     registries,
+    meta: saves.loadMeta(),
     // A ?shot= boot gets a fixed seed so the field photographs identically on
     // every capture; a real boot still gets a random one.
     defaultSeedString: shotState === 'customize' ? 'SHOWCASE' : randomSeedString(),
@@ -1160,13 +1171,20 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     rng,
     player: {
       classId: run.class,
+      attributes: run.attributes,
       maxHp: run.maxHp,
       hp: run.hp,
       maxMana: run.maxMana,
       mana: run.mana,
+      maxStamina: run.maxStamina,
+      stamina: run.stamina,
+      energyMax: run.energyMax,
+      drawPerTurn: run.drawPerTurn,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
+      flaskCharges: run.flaskCharges,
       loadout: run.loadout,
     },
     enemyIds: enc.enemies,
@@ -1182,6 +1200,18 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
+  if (shotState === 'combat' && shotParams.get('shotArcane') === 'matrix') {
+    // A host-state visual fixture, before the renderer receives the combat.
+    // It covers all three schema states without client mutation: two configured
+    // meters (zero and nonzero) plus one enemy whose config is absent.
+    const authored = registries.enemies.get('wanderingSoldier').arcaneExposure;
+    if (combat.enemies.length < 3 || !authored || authored.mode !== 'configured') {
+      throw new Error('?shotArcane=matrix needs three enemies and the authored Wandering Soldier Arcane Exposure row');
+    }
+    combat.enemies[0].arcaneExposure = { ...structuredClone(authored), value: 0 };
+    combat.enemies[1].arcaneExposure = { ...structuredClone(authored), value: Math.max(1, Math.floor(authored.threshold / 2)) };
+    delete combat.enemies[2].arcaneExposure;
+  }
   const label =
     enc.pool === 'boss'
       ? registries.enemies.get(enc.enemies[0]).name.toUpperCase()
@@ -1225,6 +1255,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
 
 function onCombatEnd(result, combat, enc) {
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
+  run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run);
@@ -1241,6 +1272,7 @@ function onCombatEnd(result, combat, enc) {
 
   run.hp = combat.player.hp;
   run.mana = combat.player.mana;
+  run.stamina = combat.player.stamina;
   run.stats.fightsWon += 1;
   run.combatEntered = null;
 
@@ -1333,6 +1365,7 @@ function showRest() {
     healMult,
     refill,
     meta: saves.loadMeta(),
+    onReallocate: () => persist(),
     onDone: () => {
       persist();
       showMap();
@@ -1470,10 +1503,10 @@ function coopStubMount(snapshot, myId) {
 function coopCombatShot() {
   const hand = ['strike', 'rallyingBanner', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
   const party = [
-    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 50, maxMana: 80, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
-    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 20, maxMana: 40, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
-  return {
+  const snapshot = {
     actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
     scene: {
       kind: 'combat', pool: 'normal', phase: 'player', turn: 2, headcount: 2,
@@ -1483,12 +1516,27 @@ function coopCombatShot() {
         { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 } },
       ],
       players: [
-        { id: 'p1', hp: 61, maxHp: 72, mana: 50, maxMana: 80, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, flasks: [{ flaskId: 'crimsonFlask' }] },
-        { id: 'p2', hp: 84, maxHp: 84, mana: 20, maxMana: 40, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, flasks: [] },
+        { id: 'p1', hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
+        { id: 'p2', hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
       ],
     },
     party,
   };
+  if (shotParams.get('shotArcane') === 'matrix') {
+    const [locked, immune] = snapshot.scene.enemies;
+    locked.arcaneExposure = {
+      mode: 'configured', threshold: 8, value: 0, buildupMultiplier: 1,
+      resetMode: 'zero', overflowPolicy: 'discard', lockPolicy: 'whileMagicVulnerable',
+      onBreak: { status: 'magicVulnerable', value: 25, duration: 2 },
+    };
+    locked.statuses.magicVulnerable = { stacks: 25, duration: 2 };
+    immune.arcaneExposure = { mode: 'immune' };
+    snapshot.scene.events = [
+      { type: 'arcaneBreak', targetId: locked.id, status: 'magicVulnerable', value: 25, duration: 2 },
+      { type: 'arcaneExposureRefused', targetId: immune.id, reason: 'immune', school: 'magic', attempted: 1 },
+    ];
+  }
+  return snapshot;
 }
 // `?shot=coopmap[&shotWalk=N]` — the co-op act map, at the doors or MID-CLIMB.
 //
@@ -1751,6 +1799,16 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     if (shotParams.has('shotMana') && Number.isFinite(shotMana)) {
       run.mana = Math.max(0, Math.min(run.maxMana, Math.floor(shotMana)));
     }
+    const shotMaxMana = Number(shotParams.get('shotMaxMana'));
+    if (Number.isFinite(shotMaxMana) && shotMaxMana > 0) {
+      run.maxMana = Math.floor(shotMaxMana);
+      run.mana = Math.min(run.mana, run.maxMana);
+    }
+    const shotMaxStamina = Number(shotParams.get('shotMaxStamina'));
+    if (Number.isFinite(shotMaxStamina) && shotMaxStamina > 0) {
+      run.maxStamina = Math.floor(shotMaxStamina);
+      run.stamina = Math.min(run.stamina, run.maxStamina);
+    }
     // TWO FLASKS IN THE POSE, ONE OF EACH KIND, AND IT IS NOT DRESSING. A
     // drunk flask does not come back this climb, and `useFlask` is a row in the
     // second-beat table — but a board with an EMPTY flask row draws no flask
@@ -1762,7 +1820,8 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
-    enterNode(startId);
+    if (shotParams.get('shotArcane') === 'matrix') enterCombat(startId, 'packHunt');
+    else enterNode(startId);
     if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
   }
 } else if (shotState === 'coop') {
