@@ -109,9 +109,9 @@ export function createRunState({
   // nearly lost. His sentence was quoted to me tonight with this clause missing
   // from the quote; the ledger (`commons/decisions/directions.md` D10) has it.
   //
-  // The table remains authoritative at both doors. The preview enables this
-  // data switch so every class starts with the same 3 HP + 3 Mana allocation.
-  // Crimson/Azure start full in their class-authored allocation. Utility
+  // The table remains authoritative at both doors. Each class starts with its
+  // class-authored HP/Mana split within the fixed three-charge capacity.
+  // Crimson/Azure start full in that allocation. Utility
   // consumables remain in run.flasks and are never synthesized here.
   // Stamp the starting deck with whatever the loadout says. Bare-handed this
   // is a no-op; in an armour set with `defend.block=+2` it is already true of

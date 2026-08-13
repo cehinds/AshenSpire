@@ -1,8 +1,7 @@
-// src/content/derivedStats.js — inert contract for post-Phase-1 derived stats.
+// src/content/derivedStats.js — shipping authority for derived-stat rules.
 //
-// Nothing imports this from the shipping content bundle yet. Phase 1 owns the
-// attribute allocation and its save/session shape; this table is exercised by
-// tools/derivedstats.mjs but remains deliberately outside gameplay wiring.
+// The content registry validates this table, and run creation snapshots its
+// resolved rules so saves, sessions, and co-op keep the same derived values.
 
 export const derivedStatRules = {
   rulesetVersion: 2,
