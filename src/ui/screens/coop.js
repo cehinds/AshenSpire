@@ -28,6 +28,7 @@ import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClas
 import { resolveCard } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
+import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 
@@ -191,7 +192,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     }
     return row;
   }
-  function meterBars(ent, isEnemy) {
+  function meterBars(ent, isEnemy, recentEvents = []) {
     const wrap = document.createElement('div');
     wrap.className = 'meters';
     const hp = document.createElement('div');
@@ -205,6 +206,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
       attachTooltip(poise, () => `<div class="tt-title">Poise</div>${ent.poiseMeter.value} / ${ent.poiseMeter.max} — fill it to Stagger. ${stagDesc}`);
       wrap.appendChild(poise);
+    }
+    if (isEnemy) {
+      const arcane = renderArcaneExposure(registries, ent, recentEvents);
+      if (arcane) wrap.appendChild(arcane);
     }
     return wrap;
   }
@@ -310,7 +315,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const bb = blockBadge(e.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = def.name; box.appendChild(nm);
-      box.appendChild(meterBars(e, true));
+      box.appendChild(meterBars(e, true, (sc.events || []).filter((event) => (
+        event.targetId === e.id && (event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak' || event.type === 'arcaneExposureChanged')
+      ))));
       box.appendChild(statusRow(e.statuses));
       if (!dead) box.addEventListener('click', () => { selectedEnemy = e.id; render(); });
       row.appendChild(box);

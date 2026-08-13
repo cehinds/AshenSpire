@@ -24,6 +24,7 @@ import { mountEquipment } from './equipment.js';
 import { figureSpec } from '../../model/loadout.js';
 import { trackGesture } from '../gesture.js';
 import { resourceBars, markFlooredBars } from '../components/resbars.js';
+import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { flaskPresentation } from '../components/flask.js';
@@ -212,6 +213,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // bars/hand render from this pre-dispatch copy, advanced beat by beat, so
   // the HUD updates one actor at a time instead of jumping to the outcome.
   let disp = null;
+  let recentArcaneEvents = [];
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
   // The snapshot is the PACED state the whole HUD renders from. It must carry
   // every value the board draws, or that layer silently renders post-state
@@ -229,18 +231,21 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       };
     }
     return {
+      id: e.id,
+      kind: e.kind,
       hp: e.hp,
       mana: e.mana,
       block: e.block,
       alive,
       statuses,
       poiseMeter: e.poiseMeter ? { value: e.poiseMeter.value, max: e.poiseMeter.max } : null,
+      arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
     };
   }
   function takeSnapshot() {
     const ents = { player: snapEnt(combat.player, true) };
     for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
-    return { ents, hand: [...combat.piles.hand] };
+    return { ents, hand: [...combat.piles.hand], arcaneEvents: [] };
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -254,6 +259,17 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     for (const e of beat.events) {
       const t = e.targetId && disp.ents[e.targetId];
       switch (e.type) {
+        case 'arcaneExposureChanged':
+          if (t && t.arcaneExposure) t.arcaneExposure.value = e.value;
+          disp.arcaneEvents.push(e);
+          break;
+        case 'arcaneBreak':
+          if (t && t.arcaneExposure) t.arcaneExposure.value = 0;
+          disp.arcaneEvents.push(e);
+          break;
+        case 'arcaneExposureRefused':
+          disp.arcaneEvents.push(e);
+          break;
         case 'damageDealt':
           if (t) t.block = Math.max(0, t.block - e.blocked);
           break;
@@ -527,6 +543,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     }
     while (bars.firstChild) wrap.appendChild(bars.firstChild);
     if (entity.kind === 'enemy') {
+      const arcane = renderArcaneExposure(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents);
+      if (arcane) wrap.appendChild(arcane);
       // #61 M1/M4: the shipped bleedbar, generalized into the one grammar —
       // a thin bar per threshold-proc row (max two, procDisplayPlan's cap),
       // tint + glyph nub from the row's own data, absent at zero. Numbers
@@ -969,6 +987,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // it (and fires onEnd on victory/defeat). A render throw here once froze
     // the game permanently on the killing blow.
     try {
+      recentArcaneEvents = events.filter((event) => (
+        event.type === 'arcaneExposureChanged' || event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak'
+      ));
       trackStats(events);
       render(); // hand/energy react now; bars render from the pre-dispatch snapshot
     } catch (e) {

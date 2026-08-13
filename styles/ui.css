@@ -1646,6 +1646,20 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .player-poise-receipt span, .player-poise-receipt small { color: var(--muted); }
 .player-poise-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
 .player-poise-receipt p { margin: 0; color: var(--muted); }
+.arcane-exposure-meter, .arcane-exposure-immune {
+  min-width: 7.2rem; max-width: 100%; box-sizing: border-box;
+  overflow-wrap: anywhere; color: var(--frost); font-size: 0.92rem;
+}
+.arcane-exposure-head { display: flex; align-items: center; gap: 0.25rem; }
+.arcane-exposure-head strong { margin-left: auto; white-space: nowrap; color: var(--parchment); }
+.arcane-exposure-head em { color: var(--gold); font-style: normal; }
+.arcane-exposure-glyph { color: var(--frost); }
+.arcane-exposure-track { height: 0.35rem; background: var(--line); border-radius: 99px; overflow: hidden; }
+.arcane-exposure-track > span { display: block; height: 100%; background: var(--frost); }
+.arcane-exposure-meter.locked .arcane-exposure-track > span { background: var(--gold); }
+.arcane-exposure-immune { display: flex; gap: 0.3rem; align-items: center; }
+.magic-vulnerable-receipt, .arcane-exposure-event { color: var(--muted); line-height: 1.2; }
+.arcane-refusal-receipt { color: var(--gold); }
 .equip-candidate-row { display: grid; gap: 0.35rem; min-width: 0; }
 .equip-candidate-comparison { margin-left: 4.5rem; border-left: 2px solid var(--line-soft); padding: 0.25rem 0 0.5rem 0.8rem; overflow-wrap: anywhere; }
 .equip-candidate-comparison summary { min-height: var(--tap-floor); display: flex; align-items: center; cursor: pointer; color: var(--gold); }
