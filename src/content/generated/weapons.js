@@ -19,10 +19,11 @@ export const weapons = [
     "attackProfile": "bladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": "strike.damage=+1",
+    "mods": "",
     "unlock": "",
     "blurb": "Honest steel. It asks nothing clever of you.",
-    "dropWeight": 10
+    "dropWeight": 10,
+    "artKey": ""
   },
   {
     "id": "greatsword",
@@ -48,7 +49,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "Slow, and it does not care.",
-    "dropWeight": 7
+    "dropWeight": 7,
+    "artKey": ""
   },
   {
     "id": "dagger",
@@ -62,18 +64,41 @@ export const weapons = [
     "accent": "C9A227",
     "tags": [
       "blade",
+      "pierce",
       "flourish"
     ],
-    "attackProfile": "bladeAttack",
+    "attackProfile": "daggerPierceAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": [
-      "strike.damage=3",
-      "strike.hits=2"
-    ],
+    "mods": "strike.hits=2",
     "unlock": "",
     "blurb": "Two cuts where one would do.",
-    "dropWeight": 10
+    "dropWeight": 10,
+    "artKey": ""
+  },
+  {
+    "id": "shortbow",
+    "name": "Shortbow",
+    "kind": "weapon",
+    "hand": "right",
+    "rarity": "common",
+    "geom": "dagger",
+    "scale": 1,
+    "metal": "C0B8A6",
+    "accent": "C9A227",
+    "tags": [
+      "pierce",
+      "ranged",
+      "precision"
+    ],
+    "attackProfile": "bowPierceAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "bowTechnique",
+    "mods": "",
+    "unlock": "",
+    "blurb": "A compact bow represented by a generic armament silhouette in this slice.",
+    "dropWeight": 10,
+    "artKey": "dagger"
   },
   {
     "id": "katana",
@@ -99,7 +124,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "A long curve, and a long grudge.",
-    "dropWeight": 7
+    "dropWeight": 7,
+    "artKey": ""
   },
   {
     "id": "halberd",
@@ -125,7 +151,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "Reach enough to keep the dead at arm's length.",
-    "dropWeight": 7
+    "dropWeight": 7,
+    "artKey": ""
   },
   {
     "id": "warhammer",
@@ -147,7 +174,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "Poise is a fiction. This is the argument.",
-    "dropWeight": 7
+    "dropWeight": 7,
+    "artKey": ""
   },
   {
     "id": "twinblade",
@@ -172,7 +200,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "Both ends are the business end.",
-    "dropWeight": 4
+    "dropWeight": 4,
+    "artKey": ""
   },
   {
     "id": "battleaxe",
@@ -197,7 +226,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "It was a woodcutter's once.",
-    "dropWeight": 10
+    "dropWeight": 10,
+    "artKey": ""
   },
   {
     "id": "buckler",
@@ -219,7 +249,8 @@ export const weapons = [
     "mods": "defend.block=+2",
     "unlock": "",
     "blurb": "Small enough to be quick with.",
-    "dropWeight": 10
+    "dropWeight": 10,
+    "artKey": ""
   },
   {
     "id": "kiteShield",
@@ -241,7 +272,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "A wall you can carry. Your arm knows it.",
-    "dropWeight": 10
+    "dropWeight": 10,
+    "artKey": ""
   },
   {
     "id": "towerShield",
@@ -266,7 +298,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "You will not be moved. You will not move.",
-    "dropWeight": 4
+    "dropWeight": 4,
+    "artKey": ""
   },
   {
     "id": "roundShield",
@@ -288,7 +321,8 @@ export const weapons = [
     "mods": "defend.block=+2",
     "unlock": "",
     "blurb": "Plain, round, and enough.",
-    "dropWeight": 10
+    "dropWeight": 10,
+    "artKey": ""
   },
   {
     "id": "spikedShield",
@@ -313,7 +347,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "Defence with an opinion.",
-    "dropWeight": 7
+    "dropWeight": 7,
+    "artKey": ""
   },
   {
     "id": "lantern",
@@ -335,7 +370,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "Light enough to see what is coming.",
-    "dropWeight": 10
+    "dropWeight": 10,
+    "artKey": ""
   },
   {
     "id": "torch",
@@ -354,7 +390,8 @@ export const weapons = [
     "mods": "strike.burn=+2",
     "unlock": "",
     "blurb": "Fire remembers what steel forgets.",
-    "dropWeight": 10
+    "dropWeight": 10,
+    "artKey": ""
   },
   {
     "id": "parryDagger",
@@ -379,7 +416,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "Held wrong on purpose.",
-    "dropWeight": 7
+    "dropWeight": 7,
+    "artKey": ""
   },
   {
     "id": "ashStaff",
@@ -401,7 +439,8 @@ export const weapons = [
     "mods": "power.potency=+1",
     "unlock": "",
     "blurb": "Grey wood, warm at the grip.",
-    "dropWeight": 10
+    "dropWeight": 10,
+    "artKey": ""
   },
   {
     "id": "starstoneStaff",
@@ -424,7 +463,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "The stone hums before you do.",
-    "dropWeight": 7
+    "dropWeight": 7,
+    "artKey": ""
   },
   {
     "id": "boneSceptre",
@@ -449,7 +489,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "Someone knelt for this once.",
-    "dropWeight": 7
+    "dropWeight": 7,
+    "artKey": ""
   },
   {
     "id": "emberlightSceptre",
@@ -471,7 +512,8 @@ export const weapons = [
     "mods": "power.potency=+3",
     "unlock": "",
     "blurb": "It keeps a little of the guiding flame.",
-    "dropWeight": 4
+    "dropWeight": 4,
+    "artKey": ""
   },
   {
     "id": "goldboughBranch",
@@ -496,7 +538,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "Cut, and still growing.",
-    "dropWeight": 4
+    "dropWeight": 4,
+    "artKey": ""
   },
   {
     "id": "blightRod",
@@ -515,7 +558,8 @@ export const weapons = [
     "mods": "strike.blight=+3",
     "unlock": "",
     "blurb": "Wet to the touch. It should not be.",
-    "dropWeight": 7
+    "dropWeight": 7,
+    "artKey": ""
   },
   {
     "id": "gorefireBrand",
@@ -540,7 +584,8 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "Blood takes to flame more readily than wood.",
-    "dropWeight": 4
+    "dropWeight": 4,
+    "artKey": ""
   },
   {
     "id": "wyrmhornStaff",
@@ -566,6 +611,7 @@ export const weapons = [
     ],
     "unlock": "",
     "blurb": "Taken from something that objected.",
-    "dropWeight": 4
+    "dropWeight": 4,
+    "artKey": ""
   }
 ];

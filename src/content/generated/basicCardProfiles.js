@@ -39,6 +39,49 @@ export const basicCardProfiles = [
     "compatibility": "attack-v1"
   },
   {
+    "id": "daggerPierceAttack",
+    "role": "attack",
+    "baseCardId": "strike",
+    "displayName": "Piercing Flurry",
+    "icon": "†",
+    "damageSchool": "physical",
+    "baseValue": 3,
+    "scalingStat": "dexterity",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": [
+      "pierce",
+      "flourish"
+    ],
+    "flavor": "Two precise openings in one breath.",
+    "mods": "",
+    "compatibility": "attack-v1"
+  },
+  {
+    "id": "bowPierceAttack",
+    "role": "attack",
+    "baseCardId": "strike",
+    "displayName": "Piercing Shot",
+    "icon": "➶",
+    "damageSchool": "physical",
+    "baseValue": 4,
+    "scalingStat": "dexterity",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": [
+      "pierce",
+      "ranged",
+      "precision"
+    ],
+    "flavor": "Distance is presentation; the point still lands.",
+    "mods": "",
+    "compatibility": "attack-v1"
+  },
+  {
     "id": "staffMagicAttack",
     "role": "attack",
     "baseCardId": "strike",
@@ -203,6 +246,27 @@ export const basicCardProfiles = [
       "flourish"
     ],
     "flavor": "Let the weapon teach the hand.",
+    "mods": "",
+    "compatibility": "technique-v1"
+  },
+  {
+    "id": "bowTechnique",
+    "role": "technique",
+    "baseCardId": "technique",
+    "displayName": "Steady Aim",
+    "icon": "➶",
+    "damageSchool": "physical",
+    "baseValue": 0,
+    "scalingStat": "dexterity",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 0,
+    "cap": "",
+    "tags": [
+      "ranged",
+      "precision"
+    ],
+    "flavor": "Set the hand before loosing.",
     "mods": "",
     "compatibility": "technique-v1"
   },
