@@ -9,6 +9,7 @@
 
 import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges } from './gracerefill.js';
+import { syncFlaskGrowth } from './flaskgrowth.js';
 import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 import {
   createDerivedStatRuleSnapshot,
@@ -122,6 +123,9 @@ export function createRunState({
     preserveDeficits: false,
   });
   stampDeck(registries, run);
+  // The growth chain binds from birth: a starting relic carrying a
+  // balance.flaskGrowth row grows the maximum before the first node.
+  syncFlaskGrowth(registries, run);
   return run;
 }
 
@@ -335,6 +339,14 @@ export function validateRunShape(run, { legacy = false } = {}) {
       || !Number.isInteger(f.manaCurrent) || f.manaCurrent < 0 || f.manaCurrent > f.mana) {
       problems.push('flaskCharges must satisfy hp + mana = capacity with bounded current counts');
     }
+    // `grown` — what the growth chain currently contributes (model/flaskgrowth.js).
+    // Optional: pre-chain saves lack it and syncFlaskGrowth treats absent as zero.
+    if (f && f.grown !== undefined
+      && !(f.grown && typeof f.grown === 'object'
+        && Number.isInteger(f.grown.hp) && f.grown.hp >= 0
+        && Number.isInteger(f.grown.mana) && f.grown.mana >= 0)) {
+      problems.push('flaskCharges.grown must be { hp, mana } non-negative integers when present');
+    }
   }
   if (run.energyMax !== undefined && (!Number.isInteger(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be a non-negative integer');
   if (run.drawPerTurn !== undefined && (!Number.isInteger(run.drawPerTurn) || run.drawPerTurn < 0)) problems.push('drawPerTurn must be a non-negative integer');
@@ -354,6 +366,10 @@ export function initializeRunFlaskCharges(run, registries) {
     run.flaskCharges.manaCurrent = Math.min(run.flaskCharges.mana, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'mana').length);
     run.flasks = (run.flasks || []).filter((f) => f && chargeKindForFlask(registries, f.flaskId) == null);
   }
+  // Loaded runs re-derive the chain here — the load door. A save carrying a
+  // relic whose growth row was authored after it was written grows on load;
+  // a save whose growth source no longer exists shrinks back, currents bounded.
+  syncFlaskGrowth(registries, run);
   return run.flaskCharges;
 }
 
