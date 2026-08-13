@@ -8,6 +8,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
+import * as UiContent from '../src/ui/uiContent.js';
 
 const R = createRegistries(contentBundle);
 let passed = 0;
@@ -24,6 +25,15 @@ try {
   check(false, 'shared Arcane Exposure UI receipt exists', error.message);
 }
 check(typeof arcaneExposureReceipt === 'function', 'shared Arcane Exposure UI receipt is exported');
+check(typeof UiContent.statusInstancePresentation === 'function',
+  'one shared status instance reader owns percent versus duration semantics');
+if (UiContent.statusInstancePresentation) {
+  const row = UiContent.statusInstancePresentation(
+    R.statuses.get('magicVulnerable'), { stacks: 25, duration: 2 },
+  );
+  check(row.valueText === '25%' && row.durationText === '2 turns' && !/×25|x25/i.test(row.label),
+    'Magic Vulnerable presents effect percent and duration, never generic stacks', JSON.stringify(row));
+}
 
 function enemy(enemyId) {
   const run = createRunState({ seed: 0xa11, classId: 'starseer', registries: R });
@@ -93,6 +103,8 @@ const coop = fs.readFileSync(new URL('../src/ui/screens/coop.js', import.meta.ur
 const css = fs.readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8');
 check(/renderArcaneExposure/.test(solo), 'solo combat renders the shared host-state meter');
 check(/renderArcaneExposure/.test(coop), 'co-op combat renders the shared snapshot meter');
+check(/statusInstancePresentation/.test(solo) && /statusInstancePresentation/.test(coop),
+  'solo and co-op generic status rows consume the shared typed presentation');
 check(/arcaneExposure:/.test(solo) && /arcaneExposureChanged/.test(solo) && /arcaneBreak/.test(solo),
   'solo paced snapshot carries and advances host Arcane state');
 check(/scene\.events|sc\.events/.test(coop) && /arcaneExposureRefused|arcaneBreak/.test(coop),
