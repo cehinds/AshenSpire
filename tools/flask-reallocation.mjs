@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, serializeRun, deserializeRun, initializeRunFlaskCharges } from '../src/model/state.js';
-import { applyGraceRefill } from '../src/engine/encounters.js';
+import { applyGraceRefill, buildShopStock, rollFlaskDrop } from '../src/engine/encounters.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 
@@ -89,9 +89,19 @@ dispatch(C, { type: 'useFlask', chargeKind: 'mana' });
 check(C.player.mana === 1 && C.player.flaskCharges.manaCurrent === beforeManaCharges - 1 && C.player.flasks.length === 0,
   'solo Azure use restores one Mana and spends one charge, not an inventory slot');
 
-const rewards = text('src/engine/encounters.js') + session;
-check(!/(push\([^\n]*flaskId[^\n]*(crimsonFlask|azureFlask))/.test(rewards),
-  'rewards never turn Crimson/Azure charge capacity into inventory drops');
+const shopSeen = new Set();
+const dropSeen = new Set();
+for (let seed = 1; seed <= 80; seed++) {
+  const run = createRunState({ seed, classId: 'reaver', registries: R });
+  for (const row of buildShopStock(R, createRng(seed), run).flasks) shopSeen.add(row.id);
+  run.flaskChancePct = 100;
+  const drop = rollFlaskDrop(R, createRng(seed), run);
+  if (drop) dropSeen.add(drop);
+}
+check(![...shopSeen].some((id) => chargeIds.has(id)) && shopSeen.size > 0,
+  'shop excludes Crimson/Azure definitions while utility flasks remain eligible', [...shopSeen].join(','));
+check(![...dropSeen].some((id) => chargeIds.has(id)) && dropSeen.size > 0,
+  'reward drops exclude Crimson/Azure definitions while utility flasks remain eligible', [...dropSeen].join(','));
 
 console.log(`\nflask-reallocation: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);
