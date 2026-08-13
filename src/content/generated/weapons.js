@@ -23,7 +23,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Honest steel. It asks nothing clever of you.",
     "dropWeight": 10,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 5
   },
   {
     "id": "greatsword",
@@ -50,7 +51,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Slow, and it does not care.",
     "dropWeight": 7,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 8
   },
   {
     "id": "dagger",
@@ -74,7 +76,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Two cuts where one would do.",
     "dropWeight": 10,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 3
   },
   {
     "id": "shortbow",
@@ -98,7 +101,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "A compact bow represented by a generic armament silhouette in this slice.",
     "dropWeight": 10,
-    "artKey": "dagger"
+    "artKey": "dagger",
+    "poiseThreshold": 2
   },
   {
     "id": "katana",
@@ -125,7 +129,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "A long curve, and a long grudge.",
     "dropWeight": 7,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 5
   },
   {
     "id": "halberd",
@@ -152,7 +157,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Reach enough to keep the dead at arm's length.",
     "dropWeight": 7,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 7
   },
   {
     "id": "warhammer",
@@ -175,7 +181,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Poise is a fiction. This is the argument.",
     "dropWeight": 7,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 9
   },
   {
     "id": "twinblade",
@@ -201,7 +208,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Both ends are the business end.",
     "dropWeight": 4,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 5
   },
   {
     "id": "battleaxe",
@@ -227,7 +235,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "It was a woodcutter's once.",
     "dropWeight": 10,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 7
   },
   {
     "id": "buckler",
@@ -250,7 +259,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Small enough to be quick with.",
     "dropWeight": 10,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 4
   },
   {
     "id": "kiteShield",
@@ -273,7 +283,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "A wall you can carry. Your arm knows it.",
     "dropWeight": 10,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 8
   },
   {
     "id": "towerShield",
@@ -299,7 +310,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "You will not be moved. You will not move.",
     "dropWeight": 4,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 12
   },
   {
     "id": "roundShield",
@@ -322,7 +334,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Plain, round, and enough.",
     "dropWeight": 10,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 7
   },
   {
     "id": "spikedShield",
@@ -348,7 +361,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Defence with an opinion.",
     "dropWeight": 7,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 8
   },
   {
     "id": "lantern",
@@ -371,7 +385,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Light enough to see what is coming.",
     "dropWeight": 10,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 2
   },
   {
     "id": "torch",
@@ -391,7 +406,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Fire remembers what steel forgets.",
     "dropWeight": 10,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 2
   },
   {
     "id": "parryDagger",
@@ -417,7 +433,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Held wrong on purpose.",
     "dropWeight": 7,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 3
   },
   {
     "id": "ashStaff",
@@ -440,7 +457,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Grey wood, warm at the grip.",
     "dropWeight": 10,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 3
   },
   {
     "id": "starstoneStaff",
@@ -464,7 +482,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "The stone hums before you do.",
     "dropWeight": 7,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 3
   },
   {
     "id": "boneSceptre",
@@ -490,7 +509,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Someone knelt for this once.",
     "dropWeight": 7,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 4
   },
   {
     "id": "emberlightSceptre",
@@ -513,7 +533,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "It keeps a little of the guiding flame.",
     "dropWeight": 4,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 4
   },
   {
     "id": "goldboughBranch",
@@ -539,7 +560,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Cut, and still growing.",
     "dropWeight": 4,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 4
   },
   {
     "id": "blightRod",
@@ -559,7 +581,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Wet to the touch. It should not be.",
     "dropWeight": 7,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 3
   },
   {
     "id": "gorefireBrand",
@@ -585,7 +608,8 @@ export const weapons = [
     "unlock": "",
     "blurb": "Blood takes to flame more readily than wood.",
     "dropWeight": 4,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 3
   },
   {
     "id": "wyrmhornStaff",
@@ -612,6 +636,7 @@ export const weapons = [
     "unlock": "",
     "blurb": "Taken from something that objected.",
     "dropWeight": 4,
-    "artKey": ""
+    "artKey": "",
+    "poiseThreshold": 5
   }
 ];
