@@ -16,9 +16,10 @@
 // series when they return (see resolveCatchup).
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
-import { createRunState, initializeRunDerivedStats, RUN_SCHEMA_VERSION } from '../src/model/state.js';
+import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
+import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
@@ -78,6 +79,7 @@ export function createSession({ registries, seedString, endless = false, restore
       validateRunStartingKit(md.run, registries, { discoveredArmaments }, { legacy: legacyKit });
       if (legacyKit) md.run.schemaVersion = RUN_SCHEMA_VERSION;
       initializeRunDerivedStats(md.run, registries, { preserveDeficits: true });
+      initializeRunFlaskCharges(md.run, registries);
       members.set(md.id, {
         id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
         connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
@@ -256,7 +258,7 @@ export function createSession({ registries, seedString, endless = false, restore
       startingKitId: m.run.startingKitId,
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
-      relicIds: m.run.relics, flasks: m.run.flasks,
+      relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
     };
   }
 
@@ -309,7 +311,7 @@ export function createSession({ registries, seedString, endless = false, restore
         statuses: P.entity.statuses, stanceId: P.entity.stanceId,
         hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
-        flasks: P.entity.flasks,
+        flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
       })),
     };
   }
@@ -326,9 +328,9 @@ export function createSession({ registries, seedString, endless = false, restore
     try { endTurn(live.combat, memberId); } catch (e) { return { ok: false, error: e.message }; }
     return settleCombat();
   }
-  function combatFlask(memberId, slot, targetId) {
+  function combatFlask(memberId, slot, targetId, chargeKind = null) {
     if (!live) return { ok: false, error: 'no combat' };
-    try { useFlask(live.combat, memberId, slot, targetId); } catch (e) { return { ok: false, error: e.message }; }
+    try { useFlask(live.combat, memberId, slot, targetId, chargeKind); } catch (e) { return { ok: false, error: e.message }; }
     return settleCombat();
   }
 
@@ -349,6 +351,7 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.mana = P.entity.mana;
         m.run.stamina = P.entity.stamina;
         m.run.flasks = P.entity.flasks.map((f) => ({ ...f }));
+        m.run.flaskCharges = P.entity.flaskCharges ? { ...P.entity.flaskCharges } : null;
       }
     }
     live = null;
@@ -470,7 +473,10 @@ export function createSession({ registries, seedString, endless = false, restore
     if (session.scene.kind !== 'shrine') return { ok: false, error: 'no shrine open' };
     const m = members.get(memberId);
     if (!m) return { ok: false };
-    if (choice === 'rest') {
+    if (choice === 'reallocate') {
+      reallocateFlaskCharges(m.run.flaskCharges, targetId || {});
+      return { ok: true, allocation: { ...m.run.flaskCharges } };
+    } else if (choice === 'rest') {
       m.run.hp = Math.min(m.run.maxHp, m.run.hp + shrineHealAmount(registries, m.run));
       m.run.mana = m.run.maxMana;
     } else if (choice === 'mend') {
@@ -550,6 +556,7 @@ export function createSession({ registries, seedString, endless = false, restore
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       deck: m.run.deck.map((c) => ({ instanceId: c.instanceId, cardId: c.cardId, upgraded: c.upgraded })),
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,
+      flaskCharges: structuredClone(m.run.flaskCharges),
       catchup: m.catchup.length,
       catchupQueue: m.catchup, // rolled options for the reconnect series
     };

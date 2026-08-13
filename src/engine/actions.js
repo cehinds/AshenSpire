@@ -559,6 +559,14 @@ function runRunOpcode(ctx, action, eff) {
       }
       break;
     }
+    case 'addFlaskCapacity': {
+      const kind = eff.kind;
+      if (!run.flaskCharges || !['hp', 'mana'].includes(kind) || !Number.isInteger(eff.amount) || eff.amount <= 0) break;
+      run.flaskCharges.capacity += eff.amount;
+      run.flaskCharges[kind] += eff.amount;
+      run.flaskCharges[`${kind}Current`] += eff.amount;
+      break;
+    }
     case 'loseMaxHpPct': {
       const pct = evalNum(ctx, action, eff.pct, 0);
       run.maxHp = Math.max(1, Math.floor(run.maxHp * (1 - pct / 100)));

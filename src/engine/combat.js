@@ -77,6 +77,7 @@ export function createCombat({
       stamina: player.stamina,
       relicIds: player.relicIds || [],
       flasks: player.flasks || [],
+      flaskCharges: player.flaskCharges || null,
       energyMax: player.energyMax != null ? player.energyMax : (bal.energy != null ? bal.energy : 3),
       drawPerTurn: player.drawPerTurn != null ? player.drawPerTurn : (bal.draw != null ? bal.draw : 5),
     }),
@@ -662,10 +663,13 @@ function doEndTurn(combat) {
   startPlayerTurn(combat);
 }
 
-function doUseFlask(combat, { slot, targetId }) {
+function doUseFlask(combat, { slot, chargeKind, targetId }) {
   if (combat.phase !== 'player') throw new Error('Flasks can only be used on the player turn');
   const p = combat.player;
-  const flask = p.flasks[slot];
+  const chargeId = chargeKind === 'hp' ? 'crimsonFlask' : chargeKind === 'mana' ? 'azureFlask' : null;
+  const currentKey = chargeKind && `${chargeKind}Current`;
+  if (chargeId && (!p.flaskCharges || p.flaskCharges[currentKey] <= 0)) throw new Error(`No ${chargeKind} flask charges`);
+  const flask = chargeId ? { flaskId: chargeId } : p.flasks[slot];
   if (!flask) throw new Error(`No flask in slot ${slot}`);
   const def = combat.registries.flasks.get(flask.flaskId);
   let target = null;
@@ -675,7 +679,8 @@ function doUseFlask(combat, { slot, targetId }) {
   } else if (def.targeted) {
     target = combat.enemies.find((e) => e.alive) || null;
   }
-  p.flasks.splice(slot, 1);
+  if (chargeId) p.flaskCharges[currentKey] -= 1;
+  else p.flasks.splice(slot, 1);
   combat.emit('flaskUsed', { flaskId: flask.flaskId, slot, targetId: target ? target.id : null });
   // Cracked Tear-style passives scale flask amounts (rounded up, SPEC §5.4).
   const amountMult = passiveMult(combat.registries, p.relicIds, 'flaskPowerMult');

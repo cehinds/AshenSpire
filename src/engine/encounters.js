@@ -13,7 +13,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { passiveMult, passiveFlag } from '../model/registries.js';
-import { graceRefillPlan } from '../model/gracerefill.js';
+import { graceRefillPlan, refillFlaskCharges } from '../model/gracerefill.js';
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -104,7 +104,7 @@ export function rollFlaskDrop(registries, rng, run) {
   const hit = rng.float('flaskRewards') * 100 < run.flaskChancePct;
   if (hit) {
     run.flaskChancePct = Math.max(0, run.flaskChancePct - bal.flaskDropStepPct);
-    const pool = registries.flasks.ids();
+    const pool = registries.flasks.ids().filter((id) => id !== 'crimsonFlask' && id !== 'azureFlask');
     return pool.length ? rng.pick('flaskRewards', pool) : null;
   }
   run.flaskChancePct = Math.min(100, run.flaskChancePct + bal.flaskDropStepPct);
@@ -290,6 +290,10 @@ export function resolveUnknownNode(registries, rng, { seenEvents = [], act } = {
  * second time. A resumed save that re-mounts the shrine cannot double-pour.
  */
 export function applyGraceRefill(registries, run, opts = {}) {
+  if (run.flaskCharges) {
+    refillFlaskCharges(run.flaskCharges);
+    return { chargePools: structuredClone(run.flaskCharges), grants: [], total: 0, shortfalls: [] };
+  }
   const plan = graceRefillPlan(registries, run, opts);
   for (const flaskId of plan.grants) run.flasks.push({ flaskId });
   return plan;

@@ -1181,6 +1181,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
+      flaskCharges: run.flaskCharges,
       loadout: run.loadout,
     },
     enemyIds: enc.enemies,
@@ -1239,6 +1240,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
 
 function onCombatEnd(result, combat, enc) {
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
+  run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run);
@@ -1348,6 +1350,7 @@ function showRest() {
     healMult,
     refill,
     meta: saves.loadMeta(),
+    onReallocate: () => persist(),
     onDone: () => {
       persist();
       showMap();

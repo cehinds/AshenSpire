@@ -225,6 +225,15 @@ export function validateContent(bundle) {
       err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
     }
   }
+  const flaskCapacity = b.balance && b.balance.flaskCapacity;
+  if (!Number.isInteger(flaskCapacity) || flaskCapacity <= 0) err('balance.flaskCapacity', 'must be a positive integer');
+  for (const cls of Array.isArray(b.classes) ? b.classes : []) {
+    const a = cls && cls.startingFlaskAllocation;
+    if (!a || !Number.isInteger(a.hp) || a.hp < 0 || !Number.isInteger(a.mana) || a.mana < 0
+      || a.hp + a.mana !== flaskCapacity) {
+      err(`classes.${cls && cls.id || '?'}.startingFlaskAllocation`, `must satisfy hp + mana = flaskCapacity ${flaskCapacity}`);
+    }
+  }
 
   // Effect-tag vocabulary: the card-tag registry rides the bundle so effect
   // `tags` and taggedVulnerability lists validate against ONE home (#61).
@@ -1008,6 +1017,10 @@ export function validateEffects(effects, path, vctx) {
     }
     if (eff.op === 'stagger' && ['self', 'player', 'owner', 'ally'].includes(eff.target)) {
       err(`${p}.target`, `stagger targets enemies only, got '${eff.target}'`);
+    }
+    if (eff.op === 'addFlaskCapacity') {
+      if (!['hp', 'mana'].includes(eff.kind)) err(`${p}.kind`, `must be 'hp' or 'mana'`);
+      if (!Number.isInteger(eff.amount) || eff.amount <= 0) err(`${p}.amount`, 'must be a positive integer');
     }
     if (eff.op === 'addCard') {
       // PILES / PILE_POSITIONS, not the same words typed again. Both sets were

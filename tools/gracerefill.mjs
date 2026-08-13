@@ -47,6 +47,7 @@ import { createRunState } from '../src/model/state.js';
 import { applyGraceRefill } from '../src/engine/encounters.js';
 import {
   graceRefillPlan, graceRefillTable, graceRefillLadder, flaskKindOf, flaskSlotCap,
+  reallocateFlaskCharges,
 } from '../src/model/gracerefill.js';
 import { FLASK_KINDS } from '../src/model/schemas.js';
 
@@ -286,6 +287,32 @@ const BEHAVIOUR = [
 ];
 
 function selftest() {
+  if (Number.isInteger(contentBundle.balance.flaskCapacity)) {
+    console.log('gracerefill --selftest: fixed-capacity charge model.\n');
+    let fails = 0;
+    const refuse = (name, mutate, pattern) => {
+      const b = realBundleCopy(); mutate(b);
+      const said = validateContent(b).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+      const ok = pattern.test(said); if (!ok) fails++;
+      console.log(`  ${ok ? 'RED  ' : 'MISS '} ${name}${ok ? '' : ` — ${said || 'no refusal'}`}`);
+    };
+    refuse('capacity zero', (b) => { b.balance.flaskCapacity = 0; }, /flaskCapacity/);
+    refuse('class allocation above capacity', (b) => { b.classes[0].startingFlaskAllocation = { hp: 3, mana: 1 }; }, /startingFlaskAllocation/);
+    refuse('fractional class allocation', (b) => { b.classes[0].startingFlaskAllocation = { hp: 1.5, mana: 1.5 }; }, /startingFlaskAllocation/);
+    const reg = createRegistries(contentBundle);
+    const run = freshRun(reg);
+    run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
+    applyGraceRefill(reg, run);
+    const refilled = run.flaskCharges.hpCurrent === run.flaskCharges.hp && run.flaskCharges.manaCurrent === run.flaskCharges.mana;
+    if (!refilled) fails++;
+    console.log(`  ${refilled ? 'green' : 'MISS '} Grace refills current charges to allocation`);
+    reallocateFlaskCharges(run.flaskCharges, { hp: 1, mana: run.flaskCharges.capacity - 1 });
+    const invariant = run.flaskCharges.hp + run.flaskCharges.mana === run.flaskCharges.capacity;
+    if (!invariant) fails++;
+    console.log(`  ${invariant ? 'green' : 'MISS '} reallocation preserves hp + mana = capacity`);
+    console.log(`\nRESULT: ${fails === 0 ? 'all plants behaved' : `${fails} MISS`} — 3 content plants, 2 behaviour plants.`);
+    return fails;
+  }
   console.log('gracerefill --selftest: every refusal planted through the door the real input uses.\n');
   let fails = 0;
 

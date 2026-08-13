@@ -27,6 +27,41 @@
 
 import { FLASK_KINDS } from './schemas.js';
 
+export function flaskCapacity(balance) {
+  const value = balance && balance.flaskCapacity;
+  if (!Number.isInteger(value) || value <= 0) throw new Error('balance.flaskCapacity must be a positive integer');
+  return value;
+}
+
+export function createFlaskCharges(balance, allocation) {
+  const capacity = flaskCapacity(balance);
+  const hp = allocation && allocation.hp;
+  const mana = allocation && allocation.mana;
+  if (!Number.isInteger(hp) || hp < 0 || !Number.isInteger(mana) || mana < 0 || hp + mana !== capacity) {
+    throw new Error(`Flask allocation must satisfy hp + mana = capacity ${capacity}`);
+  }
+  return { capacity, hp, mana, hpCurrent: hp, manaCurrent: mana };
+}
+
+export function reallocateFlaskCharges(charges, { hp, mana }) {
+  if (!charges || !Number.isInteger(charges.capacity) || charges.capacity <= 0) throw new Error('Missing flask charge capacity');
+  if (!Number.isInteger(hp) || hp < 0 || !Number.isInteger(mana) || mana < 0 || hp + mana !== charges.capacity) {
+    throw new Error(`Flask allocation must satisfy hp + mana = capacity ${charges.capacity}`);
+  }
+  charges.hp = hp;
+  charges.mana = mana;
+  charges.hpCurrent = hp;
+  charges.manaCurrent = mana;
+  return charges;
+}
+
+export function refillFlaskCharges(charges) {
+  if (!charges) return null;
+  charges.hpCurrent = charges.hp;
+  charges.manaCurrent = charges.mana;
+  return charges;
+}
+
 /**
  * flaskKindOf(def) → one of FLASK_KINDS.
  *

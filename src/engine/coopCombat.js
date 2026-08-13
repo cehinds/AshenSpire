@@ -119,7 +119,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     maxMana: Number.isFinite(p.maxMana) ? p.maxMana : 0,
     mana: p.mana,
     maxStamina: p.maxStamina, stamina: p.stamina,
-    relicIds: p.relicIds || [], flasks: p.flasks || [],
+    relicIds: p.relicIds || [], flasks: p.flasks || [], flaskCharges: p.flaskCharges || null,
     energyMax: p.energyMax != null ? p.energyMax : C.energyMax,
     drawPerTurn: p.drawPerTurn != null ? p.drawPerTurn : C.drawPerTurn,
   });
@@ -366,13 +366,16 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
 
 // targetId may be an enemy id (offensive flask) OR another player's member id
 // (StS2 throw-to-ally: a self-beneficial flask lands on a chosen ally instead).
-export function useFlask(C, playerId, slot, targetId) {
+export function useFlask(C, playerId, slot, targetId, chargeKind = null) {
   if (C.result) throw new Error('Combat is over');
   if (C.phase !== 'player') throw new Error('Not the player phase');
   const P = C.players.get(playerId);
   if (!P || !P.connected || !P.entity.alive) throw new Error(`Player '${playerId}' cannot act`);
   const p = P.entity;
-  const flask = p.flasks[slot];
+  const chargeId = chargeKind === 'hp' ? 'crimsonFlask' : chargeKind === 'mana' ? 'azureFlask' : null;
+  const currentKey = chargeKind && `${chargeKind}Current`;
+  if (chargeId && (!p.flaskCharges || p.flaskCharges[currentKey] <= 0)) throw new Error(`No ${chargeKind} flask charges`);
+  const flask = chargeId ? { flaskId: chargeId } : p.flasks[slot];
   if (!flask) throw new Error(`No flask in slot ${slot}`);
   const def = C.registries.flasks.get(flask.flaskId);
 
@@ -391,7 +394,8 @@ export function useFlask(C, playerId, slot, targetId) {
     }
   }
 
-  p.flasks.splice(slot, 1);
+  if (chargeId) p.flaskCharges[currentKey] -= 1;
+  else p.flasks.splice(slot, 1);
   // Effects that target 'self'/'player' resolve against the recipient (thrower
   // or ally); offensive effects still hit the enemy target.
   setActive(C, thrown ? ally : P);

@@ -27,7 +27,7 @@
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-import { serializeRun, deserializeRun, initializeRunDerivedStats } from '../model/state.js';
+import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges } from '../model/state.js';
 import { createLoadout, stampDeck } from '../model/loadout.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
@@ -397,6 +397,7 @@ export function createSaveManager(storage) {
       try {
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
         if (needsEquipmentStamp) stampDeck(registries, run);
+        initializeRunFlaskCharges(run, registries);
       } catch (e) {
         archive(json, e && e.message ? e.message : 'invalid derived-stat snapshot', slot);
         return null;

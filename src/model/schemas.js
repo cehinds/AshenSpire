@@ -57,6 +57,7 @@ export const RUN_OPCODES = Object.freeze([
   'upgradeCard',
   'addRelic',
   'addFlask',
+  'addFlaskCapacity',
   'loseMaxHpPct',
   'startCombat',
 ]);
@@ -332,6 +333,7 @@ export const EFFECT_SPECS = Object.freeze({
   upgradeCard: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },
   addRelic: { allowed: ['id', 'random'], required: [], refs: { id: 'relics' } },
   addFlask: { allowed: ['id', 'random'], required: [], refs: { id: 'flasks' } },
+  addFlaskCapacity: { allowed: ['kind', 'amount'], required: ['kind', 'amount'], refs: {} },
   loseMaxHpPct: { allowed: ['pct'], required: ['pct'], refs: {} },
   startCombat: { allowed: ['encounterId'], required: ['encounterId'], refs: { encounterId: 'encounters' } },
 });
@@ -698,6 +700,7 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
+    startingFlaskAllocation: obj({ hp: int, mana: int }),
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),

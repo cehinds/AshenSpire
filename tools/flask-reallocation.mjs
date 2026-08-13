@@ -5,8 +5,10 @@
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
+import { createRunState, serializeRun, deserializeRun, initializeRunFlaskCharges } from '../src/model/state.js';
 import { applyGraceRefill } from '../src/engine/encounters.js';
+import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createRng } from '../src/engine/rng.js';
 
 let passed = 0;
 let failed = 0;
@@ -41,6 +43,14 @@ const roundTrip = deserializeRun(serializeRun(fresh[0]));
 check(roundTrip.flaskCharges && JSON.stringify(roundTrip.flaskCharges) === JSON.stringify(fresh[0].flaskCharges),
   'save round-trip preserves charge capacity/allocation/current truth');
 
+const legacy = structuredClone(fresh[0]);
+delete legacy.flaskCharges;
+legacy.flasks.push({ flaskId: 'crimsonFlask' }, { flaskId: 'azureFlask' });
+initializeRunFlaskCharges(legacy, R);
+check(legacy.flaskCharges.hpCurrent === 1 && legacy.flaskCharges.manaCurrent === 1
+  && !legacy.flasks.some((f) => chargeIds.has(f.flaskId)),
+  'legacy inventory migrates available counts without retaining charge items');
+
 const spent = fresh[0];
 if (spent.flaskCharges) { spent.flaskCharges.hpCurrent = 0; spent.flaskCharges.manaCurrent = 0; }
 applyGraceRefill(R, spent);
@@ -64,6 +74,20 @@ check(/flaskCharges/.test(session) && /reallocateFlaskCharges/.test(session),
 const combat = text('src/engine/combat.js') + text('src/engine/coopCombat.js');
 check(/flaskCharges/.test(combat) && /crimsonFlask/.test(combat) && /azureFlask/.test(combat),
   'solo and co-op consumption spend the same authoritative charge pools');
+
+const soloRun = fresh[0];
+soloRun.mana = 0;
+const C = createCombat({
+  registries: R, rng: createRng(9),
+  player: { classId: soloRun.class, maxHp: soloRun.maxHp, hp: soloRun.hp, maxMana: soloRun.maxMana, mana: 0,
+    maxStamina: soloRun.maxStamina, stamina: soloRun.stamina, energyMax: soloRun.energyMax,
+    drawPerTurn: soloRun.drawPerTurn, deck: soloRun.deck, relicIds: [], flasks: [], flaskCharges: soloRun.flaskCharges },
+  enemyIds: [R.enemies.ids()[0]],
+});
+const beforeManaCharges = C.player.flaskCharges.manaCurrent;
+dispatch(C, { type: 'useFlask', chargeKind: 'mana' });
+check(C.player.mana === 1 && C.player.flaskCharges.manaCurrent === beforeManaCharges - 1 && C.player.flasks.length === 0,
+  'solo Azure use restores one Mana and spends one charge, not an inventory slot');
 
 const rewards = text('src/engine/encounters.js') + session;
 check(!/(push\([^\n]*flaskId[^\n]*(crimsonFlask|azureFlask))/.test(rewards),

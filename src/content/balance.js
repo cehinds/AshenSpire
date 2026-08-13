@@ -6,10 +6,10 @@ export const balance = {
   energy: 3,
   draw: 5,
   handMax: 10,
-  // The authored grace table below promises three HP and three Mana flasks.
-  // This shared inventory therefore has six slots; the validator refuses any
-  // refill table whose live rows cannot fit.
-  flaskSlots: 6,
+  // Crimson/Azure are charge pools sharing this fixed capacity. Utility
+  // consumables remain inventory items and use flaskSlots independently.
+  flaskCapacity: 3,
+  flaskSlots: 3,
   startingCinders: 0,
   startingDeckSize: 10,
 
@@ -65,18 +65,10 @@ export const balance = {
   // COUNTS ARE A TOP-UP, NOT A GRANT: a grace brings you UP TO `count` of the
   // kind. Arriving with two Crimson Flasks gets you one, not three.
   //
-  // THE CAP IS balance.flaskSlots ABOVE, and boot validation refuses a table
-  // whose satisfiable rows sum past it (model/gracerefill.js
-  // graceRefillRefusals). Today: hp 3 + mana 3 = 6 into 6 slots.
-  graceRefill: [
-    { kind: 'hp', count: 3 },
-    { kind: 'mana', count: 3 },
-  ],
-
-  // "and each character should start with those" — the fourth clause of his
-  // flask sentence. The merged preview keeps the rule data-authored and turns
-  // it on so a fresh run truthfully starts with the same 3+3 table.
-  graceRefillAtRunStart: true,
+  // Legacy inventory-top-up rows are intentionally empty. Grace refills the
+  // run's fixed charge allocation; it does not mint Crimson/Azure items.
+  graceRefill: [],
+  graceRefillAtRunStart: false,
 
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
   // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,

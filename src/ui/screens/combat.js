@@ -377,6 +377,21 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // Flask slots — click to drink; targeted flasks enter targeting mode.
     const flasks = $('.topbar .flasks');
     flasks.innerHTML = '';
+    for (const [kind, flaskId] of [['hp', 'crimsonFlask'], ['mana', 'azureFlask']]) {
+      const def = registries.flasks.get(flaskId);
+      const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
+      const el = document.createElement('button');
+      el.className = 'relic flask-slot flask-charge';
+      el.disabled = current <= 0;
+      el.appendChild(flaskPresentation(def, { showName: false }));
+      const count = document.createElement('b');
+      count.className = 'flask-charge-count';
+      count.textContent = String(current);
+      el.appendChild(count);
+      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
+      arm(el, 'useFlask', { ctx: { targeted: false }, onConfirm: () => useFlask(null, null, kind) });
+      flasks.appendChild(el);
+    }
     p.flasks.forEach((f, slot) => {
       const def = registries.flasks.get(f.flaskId);
       const el = document.createElement('div');
@@ -923,7 +938,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     }
   }
 
-  function useFlask(slot, targetId) {
+  function useFlask(slot, targetId, chargeKind = null) {
     if (busy || combat.result) {
       dlog('ignored', `useFlask slot=${slot}`, { busy, result: combat.result, phase: combat.phase });
       return;
@@ -934,7 +949,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     disp = takeSnapshot();
     let out;
     try {
-      out = dispatch(combat, { type: 'useFlask', slot, targetId: targetId || undefined });
+      out = dispatch(combat, { type: 'useFlask', slot, chargeKind, targetId: targetId || undefined });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
       dlog('rejected', `useFlask slot=${slot}`, err && err.message);

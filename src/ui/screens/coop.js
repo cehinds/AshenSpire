@@ -247,7 +247,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
           <div class="player-zone"></div>
           <div class="enemy-row"></div>
         </div>
-        ${meP && meP.flasks && meP.flasks.length ? '<div class="coop-flasks"></div>' : ''}
+        ${meP && ((meP.flasks && meP.flasks.length) || meP.flaskCharges) ? '<div class="coop-flasks"></div>' : ''}
         ${armedFlask != null ? `<div class="coop-arm">Throwing <b>${esc(registries.flasks.get(meP.flasks[armedFlask].flaskId).name)}</b> — click a hero seat to give it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
         ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — click the hero who receives it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
         <div class="hand-area">
@@ -356,6 +356,18 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     // Flasks.
     const fwrap = app.querySelector('.coop-flasks');
     if (fwrap && meP) {
+      for (const [kind, flaskId] of [['hp', 'crimsonFlask'], ['mana', 'azureFlask']]) {
+        const fd = registries.flasks.get(flaskId);
+        const current = meP.flaskCharges ? meP.flaskCharges[`${kind}Current`] : 0;
+        const b = document.createElement('button');
+        b.className = 'coop-flask flask-charge';
+        b.disabled = current <= 0;
+        b.innerHTML = `${flaskIdentityHtml(fd)} <b>${current}</b>`;
+        b.setAttribute('aria-label', `${fd.name}: ${current} charges remaining`);
+        attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
+        b.addEventListener('click', () => send({ t: 'useFlask', chargeKind: kind }));
+        fwrap.appendChild(b);
+      }
       meP.flasks.forEach((f, i) => {
         const fd = registries.flasks.get(f.flaskId);
         const b = document.createElement('button');

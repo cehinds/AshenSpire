@@ -1322,7 +1322,8 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'oldCinder').effects);
     eq(rn.cinders, 50, 'Old Cinder grants 50 cinders');
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'travelersFlask').effects);
-    eq(rn.flasks[0].flaskId, 'crimsonFlask', "Traveler's Flask grants a Crimson Flask");
+    eq(rn.flaskCharges.capacity, 4, "Traveler's Flask raises fixed charge capacity");
+    eq(rn.flaskCharges.hp, 3, "Traveler's Flask allocates the added charge to Crimson");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
     assert(rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'Whetstone Memory upgrades a Strike');
   });

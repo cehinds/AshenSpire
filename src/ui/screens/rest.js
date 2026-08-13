@@ -26,6 +26,7 @@ import { esc } from '../components/tooltip.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { sfx } from '../sfx.js';
 import { flaskIdentityHtml } from '../components/flask.js';
+import { reallocateFlaskCharges } from '../../model/gracerefill.js';
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -62,7 +63,7 @@ function refillLineHtml(registries, refill) {
   return `<p class="rest-refill">${said.join(' ')}</p>`;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, healMult = 1, refill = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, healMult = 1, refill = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
@@ -84,6 +85,14 @@ export function mountRest(app, { registries, run, meta, onDone, healMult = 1, re
           <h3>Smith</h3>
           <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
         </div>
+        <div class="class-pick" id="flask-reallocate">
+          <div class="glyph">⚗</div>
+          <h3>Reallocate Flask Charges</h3>
+          <p>Fixed capacity ${run.flaskCharges.capacity}: Crimson ${run.flaskCharges.hp} · Azure ${run.flaskCharges.mana}</p>
+          <div class="flask-allocation-controls">
+            ${Array.from({ length: run.flaskCharges.capacity + 1 }, (_, hp) => `<button type="button" data-hp="${hp}">${hp}/${run.flaskCharges.capacity - hp}</button>`).join('')}
+          </div>
+        </div>
       </div>
       <div id="smith-grid" class="deck-strip" style="display:none;max-width:900px"></div>
     </div>`;
@@ -98,6 +107,12 @@ export function mountRest(app, { registries, run, meta, onDone, healMult = 1, re
       },
     });
   }
+  app.querySelectorAll('#flask-reallocate [data-hp]').forEach((button) => button.addEventListener('click', () => {
+    const hp = Number(button.dataset.hp);
+    reallocateFlaskCharges(run.flaskCharges, { hp, mana: run.flaskCharges.capacity - hp });
+    if (onReallocate) onReallocate({ ...run.flaskCharges });
+    mountRest(app, { registries, run, meta, onDone, onReallocate, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+  }));
   if (upgradable.length) {
     // OPENING THE GRID IS NOT AN ACTION THE TABLE RULES ON, and the asymmetry
     // is the point: this button commits nothing — it reveals the candidates,
