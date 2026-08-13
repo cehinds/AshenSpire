@@ -1122,6 +1122,13 @@ button.rs-reset {
   border: 2px solid var(--line-soft); display: flex; align-items: center; justify-content: center;
   font-size: 2rem; cursor: pointer; transition: transform 120ms, border-color 120ms;
 }
+#cz-kits button.cz-opt {
+  /* Starting kits carry words and commit a run-defining choice. The generic
+     sigil tile's 4rem square shrinks with body zoom; this specific interactive
+     row uses the on-glass floor and grows around its authored label. */
+  width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
+  padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
+}
 .cz-opt:hover { transform: translateY(-2px); }
 .cz-opt.chosen { border-color: var(--parchment); }
 .cz-opt.tint.chosen { outline: 2px solid var(--parchment); outline-offset: 2px; }
@@ -2029,6 +2036,25 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    is handed to the subject by the layout that was already there. */
 .armoury [data-role='context'][data-collapsed='1'] > :not(.region-head) { display: none; }
 .armoury [data-role='context'][data-collapsed='1'] { flex: 0 0 auto; padding-top: 0; padding-bottom: 0; }
+.armoury [data-role='context'][data-collapsed='0'] {
+  /* An expanded receipt pane is real content, not overflow behind the modal.
+     Share the panel with its subject and give the pane its own scrollport so a
+     phone can reach candidate receipts without moving the Armoury off-screen. */
+  flex: 1 1 50%; min-height: var(--tap-floor); overflow-y: auto;
+}
+
+/* Screenshot evidence poses use the real screen/readers but focus the camera on
+   the contract under review. They are query-gated dev surfaces; ordinary play
+   never carries either root attribute. */
+:root[data-shot-evidence='creation'] .customize .cz-fields > div:not(:has(#cz-kits)),
+:root[data-shot-evidence='creation'] .customize .preview-pane > :not(.cz-stats) { display: none; }
+:root[data-shot-evidence='creation'] .customize .cz-cols { align-items: flex-start; }
+:root[data-shot-evidence='armoury'] .armoury-left,
+:root[data-shot-evidence='armoury'] .armoury.picking .equip-slots { display: none; }
+:root[data-shot-evidence='armoury'] .armoury-body { min-height: 0; overflow: hidden; }
+:root[data-shot-evidence='armoury'] .armoury-right { height: 100%; overflow-y: auto !important; }
+:root[data-shot-evidence='armoury'] .armoury-strip[data-role='context'][data-collapsed='0'] { flex: 0 0 35%; }
+:root[data-shot-evidence='armoury'] .equip-card-with-count { display: none; }
 
 /* Grid view: the figure between two columns of slots, hands on the side they
    are actually held. The picker moves to the right pane so the middle stays a
@@ -2662,6 +2688,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .enemy-row {
   flex: 1; display: flex; align-items: flex-end; justify-content: space-evenly;
   padding-bottom: 2.6rem; gap: 1rem;
+}
+
+/* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
+   Remove unrelated player/action chrome so all conditional enemy states remain
+   readable in one phone still. This selector is unreachable in ordinary play. */
+:root[data-shot-arcane='matrix'] .combat.coop .topbar,
+:root[data-shot-arcane='matrix'] .combat.coop .player-zone,
+:root[data-shot-arcane='matrix'] .combat.coop .coop-flasks,
+:root[data-shot-arcane='matrix'] .combat.coop .hand-area { display: none; }
+:root[data-shot-arcane='matrix'] .combat.coop .field { overflow: visible; padding: 1rem; }
+:root[data-shot-arcane='matrix'] .combat.coop .enemy-row {
+  width: 100%; min-width: 0; height: 100%; padding: 0; align-items: center;
 }
 
 .combatant { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; position: relative; }
@@ -3687,6 +3725,9 @@ setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 // thing that makes the gate below reach every state; keep the count at one.
 const shotParams = new URLSearchParams(location.search);
 const shotState = shotParams.get('shot');
+const shotEvidence = shotParams.get('shotEvidence');
+if (shotEvidence) document.documentElement.dataset.shotEvidence = shotEvidence;
+if (shotParams.get('shotArcane') === 'matrix') document.documentElement.dataset.shotArcane = 'matrix';
 
 function pickStorage() {
   // A ?shot= boot NEVER touches durable storage. It used to: the hook wrote
@@ -4759,6 +4800,18 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
+  if (shotState === 'combat' && shotParams.get('shotArcane') === 'matrix') {
+    // A host-state visual fixture, before the renderer receives the combat.
+    // It covers all three schema states without client mutation: two configured
+    // meters (zero and nonzero) plus one enemy whose config is absent.
+    const authored = registries.enemies.get('wanderingSoldier').arcaneExposure;
+    if (combat.enemies.length < 3 || !authored || authored.mode !== 'configured') {
+      throw new Error('?shotArcane=matrix needs three enemies and the authored Wandering Soldier Arcane Exposure row');
+    }
+    combat.enemies[0].arcaneExposure = { ...structuredClone(authored), value: 0 };
+    combat.enemies[1].arcaneExposure = { ...structuredClone(authored), value: Math.max(1, Math.floor(authored.threshold / 2)) };
+    delete combat.enemies[2].arcaneExposure;
+  }
   const label =
     enc.pool === 'boss'
       ? registries.enemies.get(enc.enemies[0]).name.toUpperCase()
@@ -5053,7 +5106,7 @@ function coopCombatShot() {
     { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
     { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
-  return {
+  const snapshot = {
     actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
     scene: {
       kind: 'combat', pool: 'normal', phase: 'player', turn: 2, headcount: 2,
@@ -5069,6 +5122,21 @@ function coopCombatShot() {
     },
     party,
   };
+  if (shotParams.get('shotArcane') === 'matrix') {
+    const [locked, immune] = snapshot.scene.enemies;
+    locked.arcaneExposure = {
+      mode: 'configured', threshold: 8, value: 0, buildupMultiplier: 1,
+      resetMode: 'zero', overflowPolicy: 'discard', lockPolicy: 'whileMagicVulnerable',
+      onBreak: { status: 'magicVulnerable', value: 25, duration: 2 },
+    };
+    locked.statuses.magicVulnerable = { stacks: 25, duration: 2 };
+    immune.arcaneExposure = { mode: 'immune' };
+    snapshot.scene.events = [
+      { type: 'arcaneBreak', targetId: locked.id, status: 'magicVulnerable', value: 25, duration: 2 },
+      { type: 'arcaneExposureRefused', targetId: immune.id, reason: 'immune', school: 'magic', attempted: 1 },
+    ];
+  }
+  return snapshot;
 }
 // `?shot=coopmap[&shotWalk=N]` — the co-op act map, at the doors or MID-CLIMB.
 //
@@ -5352,7 +5420,8 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
-    enterNode(startId);
+    if (shotParams.get('shotArcane') === 'matrix') enterCombat(startId, 'packHunt');
+    else enterNode(startId);
     if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
   }
 } else if (shotState === 'coop') {
@@ -33883,7 +33952,7 @@ const REGIONS = [
     id: 'cards',
     label: 'Cards',
     sel: '.armoury-strip',
-    count: (el) => el.querySelectorAll('.equip-cards > .card').length,
+    count: (el) => el.querySelectorAll('.equip-cards > .equip-card-with-count').length,
     unit: 'card',
   },
 ];
