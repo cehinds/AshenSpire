@@ -10,6 +10,7 @@ import { esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
+import { flaskIdentityHtml } from '../components/flask.js';
 
 export function mountRewards(app, { registries, run, rewards, onDone }) {
   const lines = [];
@@ -26,7 +27,7 @@ export function mountRewards(app, { registries, run, rewards, onDone }) {
     const def = registries.flasks.get(rewards.flaskId);
     if (run.flasks.length < (registries.balance.flaskSlots || 3)) {
       run.flasks.push({ flaskId: rewards.flaskId });
-      lines.push(`Flask: <b>${esc(def.icon || '🧪')} ${esc(def.name)}</b>`);
+      lines.push(`Flask: <b>${flaskIdentityHtml(def)}</b>`);
     } else {
       lines.push(`<span style="color:var(--muted)">A ${esc(def.name)} — but your flask slots are full. It stays in the mud.</span>`);
     }

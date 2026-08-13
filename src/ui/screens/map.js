@@ -34,6 +34,7 @@ import { classGlyph, tintCss } from '../assets.js';
 import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { mountMapBoard } from '../components/mapboard.js';
+import { flaskPresentation } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 
 /**
@@ -163,7 +164,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     const def = registries.flasks.get(f.flaskId);
     const el = document.createElement('span');
     el.className = 'mh-flask';
-    el.textContent = def.icon || '🧪';
+    el.appendChild(flaskPresentation(def, { showName: false }));
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
     flaskWrap.appendChild(el);
   }

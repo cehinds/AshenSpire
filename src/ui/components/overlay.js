@@ -14,6 +14,7 @@ import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
+import { flaskIdentityHtml } from './flask.js';
 
 let openVeil = null;
 let escHandler = null;
@@ -101,7 +102,7 @@ function renderRelics(container, ctx) {
     const def = ctx.registries.flasks.get(f.flaskId);
     const el = document.createElement('div');
     el.className = 'ov-relic';
-    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '🧪')}</span><div><b>${esc(def.name)}</b><p>${esc(def.textTemplate || '')}</p></div>`;
+    el.innerHTML = `${flaskIdentityHtml(def)}<div><p>${esc(def.textTemplate || '')}</p></div>`;
     fGrid.appendChild(el);
   }
   if (!ctx.run.flasks.length) fGrid.innerHTML = '<div style="color:var(--muted)">None.</div>';

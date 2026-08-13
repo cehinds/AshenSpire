@@ -29,6 +29,7 @@ import { resolveCard } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { mountMapBoard } from '../components/mapboard.js';
+import { flaskIdentityHtml } from '../components/flask.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -345,7 +346,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
         const fd = registries.flasks.get(f.flaskId);
         const b = document.createElement('button');
         b.className = `coop-flask${armedFlask === i ? ' armed' : ''}`;
-        b.innerHTML = `⚗ ${esc(fd.name)}${fd.targeted ? '' : ' ▾'}`;
+        b.innerHTML = `${flaskIdentityHtml(fd)}${fd.targeted ? '' : ' ▾'}`;
         attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
         b.addEventListener('click', () => {
           if (fd.targeted) { send({ t: 'useFlask', slot: i, targetId: selectedEnemy }); armedFlask = null; }
@@ -477,7 +478,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     app.innerHTML = rewardShell(`${rTitle(`${(snap.scene.pool || '').toUpperCase()} — CHOOSE A CARD`)}<div class="reward-row"></div>
       <div class="coop-choices" style="margin-top:12px">
         ${offer.relicId ? `<button class="coop-take" data-take="relic">Take relic: ${esc(registries.relics.get(offer.relicId).name)}</button>` : ''}
-        ${offer.flaskId ? `<button class="coop-take" data-take="flask">Take flask: ${esc(registries.flasks.get(offer.flaskId).name)}</button>` : ''}
+        ${offer.flaskId ? `<button class="coop-take" data-take="flask">Take flask: ${flaskIdentityHtml(registries.flasks.get(offer.flaskId))}</button>` : ''}
         <button class="subtle" data-take="skip">Skip card</button>
       </div>`);
     const grid = app.querySelector('.reward-row');

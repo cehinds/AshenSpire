@@ -10,6 +10,7 @@ import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../components/holdconfirm.js';
+import { flaskIdentityHtml } from '../components/flask.js';
 
 export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
   const stock = run.shopStock;
@@ -88,14 +89,14 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     stock.flasks.forEach((item, i) => {
       const def = registries.flasks.get(item.id);
       const can = run.cinders >= item.cost && slotsFree();
-      items.appendChild(shopItem(`${def.icon || '🧪'} ${def.name}`, slotsFree() ? def.textTemplate : 'Flask slots full.', item.cost, can, () => {
+      items.appendChild(shopItem(flaskIdentityHtml(def), slotsFree() ? def.textTemplate : 'Flask slots full.', item.cost, can, () => {
         run.cinders -= item.cost;
         run.flasks.push({ flaskId: item.id });
         stock.flasks.splice(i, 1);
         sfx.play('buy');
         onChanged();
         render();
-      }));
+      }, { titleHtml: true }));
     });
 
     if (run.cinders >= stock.removeCost && run.deck.length > 1) {
@@ -130,10 +131,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     app.querySelector('#leave-shop').addEventListener('click', onLeave);
   }
 
-  function shopItem(title, desc, cost, affordable, onBuy) {
+  function shopItem(title, desc, cost, affordable, onBuy, { titleHtml = false } = {}) {
     const el = document.createElement('div');
     el.className = `class-pick${affordable ? '' : ' locked'}`;
-    el.innerHTML = `<h3 style="font-size:13px">${esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} cinders</span>`;
+    el.innerHTML = `<h3 style="font-size:13px">${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} cinders</span>`;
     if (affordable) el.addEventListener('click', onBuy);
     return el;
   }

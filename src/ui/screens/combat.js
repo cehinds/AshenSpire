@@ -26,6 +26,7 @@ import { trackGesture } from '../gesture.js';
 import { resourceBars, markFlooredBars } from '../components/resbars.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../components/holdconfirm.js';
+import { flaskPresentation } from '../components/flask.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -382,7 +383,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       el.className = 'relic flask-slot';
       el.style.cursor = 'pointer';
       if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
-      el.textContent = def.icon || '🧪';
+      el.appendChild(flaskPresentation(def, { showName: false }));
       // Quick-use key badge (F/G/H by default; pad glyph while a pad drives).
       if (slot < 3) {
         const kb = document.createElement('span');

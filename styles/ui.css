@@ -2072,3 +2072,20 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 @media (prefers-reduced-motion: no-preference) {
   .cp-cell { transition: border-color 120ms ease, background 120ms ease; }
 }
+.flask-identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  color: var(--flask-tint);
+  min-width: 0;
+}
+.flask-art {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.35em;
+  min-height: 1.35em;
+  border: 1px solid currentColor;
+  border-radius: 45% 45% 55% 55%;
+  background: color-mix(in srgb, var(--flask-tint) 22%, #111);
+}
+.flask-name { color: var(--ink, #f2ead8); }

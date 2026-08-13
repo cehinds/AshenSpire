@@ -25,6 +25,7 @@ import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { esc } from '../components/tooltip.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { sfx } from '../sfx.js';
+import { flaskIdentityHtml } from '../components/flask.js';
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -53,7 +54,7 @@ function refillLineHtml(registries, refill) {
   if (refill.total) {
     const byId = new Map();
     for (const id of refill.grants) byId.set(id, (byId.get(id) || 0) + 1);
-    const named = [...byId].map(([id, n]) => `${n} × ${esc(registries.flasks.get(id).name)}`);
+    const named = [...byId].map(([id, n]) => `${n} × ${flaskIdentityHtml(registries.flasks.get(id))}`);
     said.push(`Flasks refilled: ${named.join(', ')}.`);
   }
   for (const s of refill.shortfalls) said.push(`Flask slots full — ${s.short} not given.`);
