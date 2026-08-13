@@ -1,6 +1,6 @@
-// Phase 1 attributes are creation/save/session data only. This source gate
-// fails if a combat/formula/resource reader starts consuming them early, or
-// if the clean Phase 1 vocabulary grows deterministic Dodge/stamina behavior.
+// Attribute integration boundary after the approved derived/equipment slices.
+// Combat may transport persisted attributes and hand them back to stampDeck on
+// an active-set swap. No engine action/resource/status reader interprets them.
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,12 +14,22 @@ const mechanics = [
   'src/model/resources.js',
 ];
 const findings = [];
+const approvedCombatReaders = new Set([
+  'attributes: player.attributes ? { ...player.attributes } : null,',
+  'const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };',
+]);
 
 for (const rel of mechanics) {
   const source = readFileSync(resolve(root, rel), 'utf8');
   source.split(/\r?\n/).forEach((line, index) => {
     if (/\battributeMode\b|\.attributes\b|\[['"]attributes['"]\]/.test(line)) {
-      findings.push(`${rel}:${index + 1}: Phase 1 attribute gameplay reader: ${line.trim()}`);
+      const trimmed = line.trim();
+      if (rel !== 'src/engine/combat.js' || !approvedCombatReaders.has(trimmed)) {
+        findings.push(`${rel}:${index + 1}: unapproved attribute gameplay reader: ${trimmed}`);
+      }
+    }
+    if (/Math\.floor\([^\n]*(?:strength|dexterity|constitution|wisdom|intelligence)|\/\s*5\b/i.test(line)) {
+      findings.push(`${rel}:${index + 1}: duplicate attribute tier arithmetic: ${line.trim()}`);
     }
   });
 }
@@ -27,8 +37,8 @@ for (const rel of mechanics) {
 for (const rel of ['src/content/attributes.js', 'src/model/attributes.js']) {
   const source = readFileSync(resolve(root, rel), 'utf8');
   source.split(/\r?\n/).forEach((line, index) => {
-    if (/\b(?:dodge|stamina)\b/i.test(line)) {
-      findings.push(`${rel}:${index + 1}: post-Phase-1 mechanic contamination: ${line.trim()}`);
+    if (/\bdodge\b/i.test(line)) {
+      findings.push(`${rel}:${index + 1}: unimplemented Dodge contamination: ${line.trim()}`);
     }
   });
 }
@@ -37,4 +47,4 @@ if (findings.length) {
   console.error(findings.join('\n'));
   process.exit(1);
 }
-console.log(`ATTRIBUTE PHASE 1 BOUNDARY OK — ${mechanics.length} mechanics files have no attribute reader; no Dodge/stamina vocabulary entered the authored tables/readers.`);
+console.log(`ATTRIBUTE INTEGRATION BOUNDARY OK — exactly ${approvedCombatReaders.size} combat transport/restamp readers; no duplicate tier arithmetic or fake Dodge consumer.`);
