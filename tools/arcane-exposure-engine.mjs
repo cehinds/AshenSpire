@@ -3,10 +3,11 @@
 // No UI claims live here. Mid-combat state is authoritative in the host combat
 // snapshot; disk saves still resume at the established pre-combat boundary.
 
+import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createCoopCombat, playCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyAttackDamage, computeAttackDamage } from '../src/engine/actions.js';
@@ -171,6 +172,36 @@ check('real solo and co-op card dispatch carry the stamped school and buildup', 
   equal(C.enemies[0].arcaneExposure.value, 1, 'co-op dispatched attack buildup');
   equal(recent(S, 'arcaneExposureChanged').at(-1)?.school, 'magic', 'solo receipt school');
   equal(recent(C, 'arcaneExposureChanged').at(-1)?.school, 'magic', 'co-op receipt school');
+});
+
+check('real preview and dispatch agree under resistance, vulnerability, and per-hit buildup', () => {
+  const C = solo('charredColossus');
+  // Use a configured policy on the raw-resistance fixture so one target proves
+  // both lanes remain separate. This is host state, not live content mutation.
+  C.enemies[0].arcaneExposure = {
+    mode: 'configured', value: 0, threshold: 100, buildupMultiplier: 1,
+    resetMode: 'zero', overflowPolicy: 'discard', lockPolicy: 'whileMagicVulnerable',
+    onBreak: { status: 'magicVulnerable', value: 25, duration: 2 },
+  };
+  // The active vulnerability consumes explicit magic packets, while its lock
+  // would prevent buildup. For the parity packet, author a separate matching
+  // status whose value is active but does not equal the configured lock id.
+  C.enemies[0].statuses.magicVulnerable = { stacks: 25, duration: 2 };
+  C.enemies[0].arcaneExposure.onBreak.status = 'vulnerable';
+  const attack = forceAttackIntoHand(C.piles);
+  const beforeHp = C.enemies[0].hp;
+  const beforeExposure = C.enemies[0].arcaneExposure.value;
+  const pv = previewCard(C, attack.instanceId, C.enemies[0].id).values.find((row) => row.op === 'damage');
+  dispatch(C, { type: 'playCard', cardInstanceId: attack.instanceId, targetId: C.enemies[0].id });
+  equal(beforeHp - C.enemies[0].hp, pv.value * pv.hits, 'preview damage vs dispatched HP loss');
+  equal(C.enemies[0].arcaneExposure.value - beforeExposure, attack.exposureBuildupPerHit * pv.hits, 'per-hit buildup vs preview hit count');
+});
+
+check('session projection source preserves refusal attempted amount', () => {
+  // Source-level because session combat setup is encounter-seeded; this proves
+  // the named host field is not silently dropped at the LAN boundary.
+  const source = readFileSync(new URL('./session.mjs', import.meta.url), 'utf8');
+  assert(/attempted:\s*e\.attempted/.test(source), 'session projection drops arcaneExposureRefused.attempted');
 });
 
 console.log(`\n${failures ? `ARCANE EXPOSURE ENGINE RED — ${failures}/${checks} failing` : `ARCANE EXPOSURE ENGINE GREEN — ${checks}/${checks}`}`);
