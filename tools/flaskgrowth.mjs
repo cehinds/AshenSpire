@@ -247,16 +247,27 @@ function selftest() {
     console.log(`  ${ok ? 'PASS ' : 'FAIL '} ${name}${detail ? ` — ${detail}` : ''}`);
   };
   const src = (p) => fs.readFileSync(p, 'utf8');
-  const pushSites = ['src/engine/actions.js', 'src/ui/screens/reward.js', 'src/ui/screens/shop.js'];
-  for (const p of pushSites) {
+  // THE WHOLE TREE, not a list of known files: a named-file list is a
+  // blacklist, and a fourth relic-gain site added in a new file tomorrow
+  // would pass it silently. Every .js under src/ is scanned; the count is
+  // asserted >= 3 so the walk itself cannot quietly find nothing (the
+  // zero-referent failure SOP 2's ⚙ clause names).
+  const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const p = `${dir}/${e.name}`;
+    return e.isDirectory() ? walk(p) : (e.name.endsWith('.js') ? [p] : []);
+  });
+  let pushCount = 0;
+  let unwired = [];
+  for (const p of walk('src')) {
     const text = src(p);
-    const idx = [...text.matchAll(/run\.relics\.push\(/g)].map((m) => m.index);
-    const wired = idx.length > 0 && idx.every((i) => {
-      const after = text.slice(i, i + 200);
-      return /syncFlaskGrowth\(/.test(after);
-    });
-    contract(`every run.relics.push in ${p} is followed by syncFlaskGrowth within its own act`, wired, `${idx.length} site(s)`);
+    for (const m of text.matchAll(/run\.relics\.push\(/g)) {
+      pushCount++;
+      if (!/syncFlaskGrowth\(/.test(text.slice(m.index, m.index + 200))) unwired.push(p);
+    }
   }
+  contract('every run.relics.push under src/ is followed by syncFlaskGrowth within its own act',
+    pushCount >= 3 && unwired.length === 0,
+    unwired.length ? `unwired: ${unwired.join(', ')}` : `${pushCount} sites, all wired`);
   contract('equipment.js commit() re-syncs the chain (the talisman door)',
     /function commit\(\) \{[\s\S]{0,400}syncFlaskGrowth\(registries, run\)/.test(src('src/ui/screens/equipment.js')));
   // The mutant: prove the contract regex can fail — a push with no sync.
@@ -267,7 +278,7 @@ function selftest() {
       return idx.length > 0 && idx.every((i) => /syncFlaskGrowth\(/.test(planted.slice(i, i + 200)));
     })());
 
-  console.log(`\nRESULT ${fails === 0 ? 'all plants behaved' : `${fails} MISBEHAVED`} — 15 refusal plants (door 1), 8 behaviour plants (door 2), 5 source contracts.`);
+  console.log(`\nRESULT ${fails === 0 ? 'all plants behaved' : `${fails} MISBEHAVED`} — 15 refusal plants (door 1), 8 behaviour plants (door 2), 3 source contracts.`);
   console.log('Boundary: no pixel was asserted (the equipment and reward screens are browser');
   console.log('surfaces); no balance claim is made (zero live rows ship); and the reversal');
   console.log('plant enters below a door that does not exist yet — both named above, in place.');
