@@ -1900,6 +1900,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 .armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.equip-role-receipts { flex: 1 1 28rem; display: grid; gap: 0.5rem; }
+.equip-role-receipts > div { display: grid; grid-template-columns: minmax(9rem, 1fr) 2fr; gap: 0.2rem 0.8rem; border-left: 2px solid var(--line-soft); padding-left: 0.8rem; }
+.equip-role-receipts span, .equip-role-receipts small { color: var(--muted); }
+.equip-role-receipts small { grid-column: 2; }
+.cz-kit { margin-top: 0.8rem; }
+.cz-kit summary { cursor: pointer; color: var(--gold); }
+.cz-kit ul { margin: 0.5rem 0 0; padding-left: 1.6rem; }
+.cz-kit li { margin: 0.25rem 0; }
+.cz-kit li span { color: var(--muted); }
 .equip-foot { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
 .ef-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 .ef-run { color: var(--grace); font-size: 1.15rem; }
@@ -4647,6 +4656,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     rng,
     player: {
       classId: run.class,
+      attributes: run.attributes,
       maxHp: run.maxHp,
       hp: run.hp,
       maxMana: run.maxMana,
@@ -4655,6 +4665,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       stamina: run.stamina,
       energyMax: run.energyMax,
       drawPerTurn: run.drawPerTurn,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
@@ -4962,8 +4973,8 @@ function coopStubMount(snapshot, myId) {
 function coopCombatShot() {
   const hand = ['strike', 'rallyingBanner', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
   const party = [
-    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 50, maxMana: 80, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
-    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 20, maxMana: 40, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
   return {
     actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
@@ -4975,8 +4986,8 @@ function coopCombatShot() {
         { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 } },
       ],
       players: [
-        { id: 'p1', hp: 61, maxHp: 72, mana: 50, maxMana: 80, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, flasks: [{ flaskId: 'crimsonFlask' }] },
-        { id: 'p2', hp: 84, maxHp: 84, mana: 20, maxMana: 40, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, flasks: [] },
+        { id: 'p1', hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, flasks: [{ flaskId: 'crimsonFlask' }] },
+        { id: 'p2', hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, flasks: [] },
       ],
     },
     party,
@@ -5326,7 +5337,7 @@ const { cardTags } = require("src/content/generated/cardTags.js");
 const { scripts } = require("src/content/scripts.js");
 const { SFX_RECIPES } = require("src/content/sfx.js");
 const { SCALES, BEDS } = require("src/content/music.js");
-const { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } = require("src/content/equipment.js");
+const { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES } = require("src/content/equipment.js");
 const { equipTargets } = require("src/content/generated/equipTargets.js");
 const { unlocks } = require("src/content/generated/unlocks.js");
 const { attributes, creationModes, attributeRules } = require("src/content/attributes.js");
@@ -5364,6 +5375,7 @@ const contentBundle = {
     modFields: Object.fromEntries(MOD_FIELDS),
     targets: equipTargets,
     cardTargets: CARD_TARGETS,
+    basicCardProfiles: BASIC_CARD_PROFILES,
   },
   unlocks,
   // The card-tag registry rides the bundle so effect `tags` and
@@ -5396,6 +5408,7 @@ const balance = {
   // refill table whose live rows cannot fit.
   flaskSlots: 6,
   startingCinders: 0,
+  startingDeckSize: 10,
 
   // Engine-consulted poise config (see ENGINE-API §1). onFill is where content
   // defines what "Staggered" means — the engine never names the status.
@@ -5735,6 +5748,22 @@ const balance = {
   // the rules of the system, kept in one place so it can be tuned or switched
   // off without touching the model.
   equipment: {
+    roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 },
+    rarityBonuses: {
+      common: { attack: 0, guard: 0 },
+      uncommon: { attack: 1, guard: 1 },
+      rare: { attack: 2, guard: 2 },
+    },
+    roleSources: {
+      attack: [{ slot: 'rightHand' }],
+      guard: [{ slot: 'leftHand', kinds: ['shield'] }, { slot: 'rightHand' }],
+      technique: [{ slot: 'rightHand' }],
+    },
+    unarmedProfiles: {
+      attack: 'unarmedAttack',
+      guard: 'unarmedGuard',
+      technique: 'unarmedTechnique',
+    },
     enabled: true,
 
     // WHAT THE SHELF IS SCOPED TO, and it is this word — there is no second one.
@@ -6806,18 +6835,18 @@ Object.assign(module.exports, { stances });
 //   glyph      the mark that survives when the bar is too short for words
 //   tint       the fill colour (a var(), so accent themes still own the palette)
 //   weight     'normal' | 'skinny'  — "poise (very skinny bar)", his words
-//   order      top-to-bottom within a surface; health first, his row order
+//   order      top-to-bottom within a surface; HP, Mana, Stamina, then Poise
 //   surfaces   ['main'] | ['model'] | both — HIS two-HUD split, as data:
-//              main HUD = health, then stamina/mana under it, then poise;
+//              main HUD = health, then mana/stamina under it, then poise;
 //              under the character models = "really just health and poise"
 //   source     WHICH RESOURCE, from the closed set in model/resources.js.
 //              A source with no reader is refused at boot, by name.
 //   domainMax  OPTIONAL override of the derived ceiling (Law 0 clause 3).
 //              Omit it and the ceiling is derived from the content itself.
 //
-// Stamina remains absent because no stamina model exists. Mana is present below
-// because this branch adds the complete state path: class ceiling, run/save,
-// combat spending, shrine/flask restoration, and solo/co-op serialization.
+// Mana and Stamina are persisted derived pools. Their formulas and ruleset
+// version remain authoritative in derivedStats; this table only describes how
+// their current/max values are projected into resource surfaces.
 
 const resources = [
   {
@@ -6826,7 +6855,7 @@ const resources = [
     glyph: '▲',
     tint: '#4f9b62',
     weight: 'normal',
-    order: 20,
+    order: 30,
     surfaces: ['main'],
     source: 'stamina',
   },
@@ -6836,7 +6865,7 @@ const resources = [
     glyph: '◆',
     tint: '#3f73c9',
     weight: 'normal',
-    order: 30,
+    order: 20,
     surfaces: ['main'],
     source: 'mana',
   },
@@ -6920,7 +6949,14 @@ const reaverCards = [
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 8 }] },
   },
   {
-    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 10, type: 'attack',
+    id: 'technique', name: 'Footwork', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
+    keywords: [], icon: '✧',
+    effects: [{ op: 'block', target: 'self', amount: 3 }, { op: 'draw', amount: 1 }],
+    textTemplate: 'Gain {block} Block. Draw {draw} card.',
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 5 }, { op: 'draw', amount: 1 }] },
+  },
+  {
+    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -7490,7 +7526,7 @@ const GAIN_CHARGE = { op: 'applyStatus', target: 'self', status: 'starstoneCharg
 const starseerCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, manaCost: 10, type: 'attack',
+    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '💎',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -8095,7 +8131,7 @@ const one = { f: 'add', args: [1] };
 const heraldCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 10, type: 'skill',
+    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, type: 'skill',
     keywords: [], icon: '✚',
     effects: [{ op: 'heal', target: 'self', amount: 4 }],
     textTemplate: 'Heal {heal} HP.',
@@ -9559,8 +9595,8 @@ const flasks = [
     icon: '🫙',
     artKey: 'flask-azure',
     tint: '#75a9ff',
-    effects: [{ op: 'restoreMana', amount: 20 }],
-    textTemplate: 'Restore 20 Mana.',
+    effects: [{ op: 'restoreMana', amount: 1 }],
+    textTemplate: 'Restore 1 Mana.',
   },
   {
     id: 'flaskOfFerocity',
@@ -10670,13 +10706,9 @@ const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
-    maxMana: 40,
     startingRelic: 'forsakenMedallion',
-    startingDeck: [
-      'strike', 'strike', 'strike', 'strike', 'strike',
-      'defend', 'defend', 'defend', 'defend',
-      'gorefireSlash',
-    ],
+    startingSignatureCard: 'gorefireSlash',
+    startingLoadout: { rightHand: 'straightSword', leftHand: 'roundShield' },
     cardPool: [
       // Commons
       'crimsonCleave', 'shieldBash', 'quickstep', 'guardCounter', 'ironResolve',
@@ -10699,13 +10731,9 @@ const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
-    maxMana: 80,
     startingRelic: 'starstoneShard',
-    startingDeck: [
-      'strike', 'strike', 'strike', 'strike', 'strike',
-      'defend', 'defend', 'defend', 'defend',
-      'starstonePebble',
-    ],
+    startingSignatureCard: 'starstonePebble',
+    startingLoadout: { rightHand: 'ashStaff' },
     cardPool: [
       // Commons
       'cometFragment', 'starbladePhalanx', 'crystalBarrier', 'starShower', 'scholarsInsight', 'frostVeil',
@@ -10726,13 +10754,9 @@ const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
-    maxMana: 60,
     startingRelic: 'goldFigurine',
-    startingDeck: [
-      'strike', 'strike', 'strike', 'strike', 'strike',
-      'defend', 'defend', 'defend', 'defend',
-      'urgentHeal',
-    ],
+    startingSignatureCard: 'urgentHeal',
+    startingLoadout: { rightHand: 'boneSceptre' },
     cardPool: [
       // Commons
       'bloodPact', 'blightTouch', 'flagellation', 'penance', 'litany', 'graveOffering',
@@ -11418,6 +11442,7 @@ const { outfits } = require("src/content/generated/outfits.js");
 const { equipSlots } = require("src/content/generated/equipSlots.js");
 const { equipMods } = require("src/content/generated/equipMods.js");
 const { equipTargets } = require("src/content/generated/equipTargets.js");
+const { basicCardProfiles } = require("src/content/generated/basicCardProfiles.js");
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
 function list(v) {
@@ -11491,8 +11516,15 @@ function cardForTarget(target, classId) {
 /** Every mod prefix that resolves to a card (for validation and tests). */
 const CARD_TARGETS = [...new Set(equipTargets.map((t) => t.target))];
 
+/** Equipment-bound core card profiles, authored once and selected by role. */
+const BASIC_CARD_PROFILES = basicCardProfiles.map((row) => ({
+  ...row,
+  tags: list(row.tags),
+  mods: list(row.mods),
+}));
 
-Object.assign(module.exports, { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, armamentById, slotById, armourForClass, startingArmour, armourById, armamentsForSlot, cardForTarget, CARD_TARGETS });
+
+Object.assign(module.exports, { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, armamentById, slotById, armourForClass, startingArmour, armourById, armamentsForSlot, cardForTarget, CARD_TARGETS, BASIC_CARD_PROFILES });
 
 },
 "src/content/generated/weapons.js": function (module, exports, require) {
@@ -11514,6 +11546,9 @@ const weapons = [
       "blade",
       "basic"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": "strike.damage=+1",
     "unlock": "",
     "blurb": "Honest steel. It asks nothing clever of you."
@@ -11532,6 +11567,9 @@ const weapons = [
       "blade",
       "heavy"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+4",
       "strike.cost=+1",
@@ -11554,6 +11592,9 @@ const weapons = [
       "blade",
       "flourish"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=3",
       "strike.hits=2"
@@ -11576,6 +11617,9 @@ const weapons = [
       "blood",
       "flourish"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=-1",
       "strike.bleed=+2"
@@ -11597,6 +11641,9 @@ const weapons = [
       "blade",
       "heavy"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+3",
       "strike.cost=+1",
@@ -11616,6 +11663,9 @@ const weapons = [
     "metal": "8E8678",
     "accent": "C9A227",
     "tags": "heavy",
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+2",
       "strike.poise=+6"
@@ -11637,6 +11687,9 @@ const weapons = [
       "blade",
       "flourish"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=2",
       "strike.hits=3"
@@ -11658,6 +11711,9 @@ const weapons = [
       "blade",
       "heavy"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+3",
       "strike.cost=+1"
@@ -11679,6 +11735,9 @@ const weapons = [
       "guard",
       "flourish"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": "defend.block=+2",
     "unlock": "",
     "blurb": "Small enough to be quick with."
@@ -11694,6 +11753,9 @@ const weapons = [
     "metal": "8E8678",
     "accent": "C9A227",
     "tags": "guard",
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+3",
       "strike.damage=-1"
@@ -11715,6 +11777,9 @@ const weapons = [
       "guard",
       "heavy"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+6",
       "strike.damage=-2"
@@ -11736,6 +11801,9 @@ const weapons = [
       "guard",
       "basic"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": "defend.block=+2",
     "unlock": "",
     "blurb": "Plain, round, and enough."
@@ -11754,6 +11822,9 @@ const weapons = [
       "guard",
       "blade"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+2",
       "strike.damage=+1"
@@ -11772,6 +11843,9 @@ const weapons = [
     "metal": "6B5D45",
     "accent": "C9A227",
     "tags": "guard",
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+1",
       "self.regen=+1"
@@ -11790,6 +11864,9 @@ const weapons = [
     "metal": "6B5D45",
     "accent": "C9502E",
     "tags": "gorefire",
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": "strike.burn=+2",
     "unlock": "",
     "blurb": "Fire remembers what steel forgets."
@@ -11808,6 +11885,9 @@ const weapons = [
       "guard",
       "flourish"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+1",
       "strike.poise=+2"
@@ -11829,6 +11909,9 @@ const weapons = [
       "ritual",
       "basic"
     ],
+    "attackProfile": "staffMagicAttack",
+    "guardProfile": "staffGuard",
+    "techniqueProfile": "staffTechnique",
     "mods": "power.potency=+1",
     "unlock": "",
     "blurb": "Grey wood, warm at the grip."
@@ -11844,6 +11927,9 @@ const weapons = [
     "metal": "6B5D45",
     "accent": "7FA8C9",
     "tags": "starstone",
+    "attackProfile": "staffMagicAttack",
+    "guardProfile": "staffGuard",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+2",
       "strike.damage=-1",
@@ -11866,6 +11952,9 @@ const weapons = [
       "ritual",
       "blight"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "sceptreGuard",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+1",
       "strike.blight=+2"
@@ -11887,6 +11976,9 @@ const weapons = [
       "ritual",
       "oath"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": "power.potency=+3",
     "unlock": "",
     "blurb": "It keeps a little of the guiding flame."
@@ -11905,6 +11997,9 @@ const weapons = [
       "ritual",
       "oath"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+2",
       "self.regen=+1"
@@ -11923,6 +12018,9 @@ const weapons = [
     "metal": "4B3522",
     "accent": "B5541C",
     "tags": "blight",
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": "strike.blight=+3",
     "unlock": "",
     "blurb": "Wet to the touch. It should not be."
@@ -11941,6 +12039,9 @@ const weapons = [
       "gorefire",
       "blood"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "strike.burn=+2",
       "strike.bleed=+1"
@@ -11962,6 +12063,9 @@ const weapons = [
       "ritual",
       "heavy"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+2",
       "strike.poise=+2",
@@ -12472,6 +12576,239 @@ const equipTargets = [
 Object.assign(module.exports, { equipTargets });
 
 },
+"src/content/generated/basicCardProfiles.js": function (module, exports, require) {
+// GENERATED by tools/content-build.mjs from content/source/basicCardProfiles.csv
+// Do not edit by hand — edit the source file and re-run the build.
+
+const basicCardProfiles = [
+  {
+    "id": "unarmedAttack",
+    "role": "attack",
+    "baseCardId": "strike",
+    "displayName": "Unarmed Strike",
+    "icon": "✊",
+    "damageSchool": "physical",
+    "baseValue": 3,
+    "scalingStat": "strength",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": "basic",
+    "flavor": "A last resort, still yours.",
+    "mods": "",
+    "compatibility": "attack-v1"
+  },
+  {
+    "id": "bladeAttack",
+    "role": "attack",
+    "baseCardId": "strike",
+    "displayName": "Slashing Strike",
+    "icon": "⚔",
+    "damageSchool": "physical",
+    "baseValue": 5,
+    "scalingStat": "strength",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": "blade",
+    "flavor": "Steel gives the motion its name.",
+    "mods": "",
+    "compatibility": "attack-v1"
+  },
+  {
+    "id": "staffMagicAttack",
+    "role": "attack",
+    "baseCardId": "strike",
+    "displayName": "Staff Magic Strike",
+    "icon": "✦",
+    "damageSchool": "magic",
+    "baseValue": 2,
+    "scalingStat": "intelligence",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": "starstone",
+    "flavor": "Ash carries a small cold light.",
+    "mods": "",
+    "compatibility": "attack-v1"
+  },
+  {
+    "id": "sceptreArcaneAttack",
+    "role": "attack",
+    "baseCardId": "strike",
+    "displayName": "Arcane Strike",
+    "icon": "◈",
+    "damageSchool": "arcane",
+    "baseValue": 3,
+    "scalingStat": "wisdom",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": [
+      "ritual",
+      "blight"
+    ],
+    "flavor": "The sceptre answers in a darker tongue.",
+    "mods": "",
+    "compatibility": "attack-v1"
+  },
+  {
+    "id": "unarmedGuard",
+    "role": "guard",
+    "baseCardId": "defend",
+    "displayName": "Defend",
+    "icon": "🛡",
+    "damageSchool": "physical",
+    "baseValue": 1,
+    "scalingStat": "dexterity",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": "guard",
+    "flavor": "Brace with what you have.",
+    "mods": "",
+    "compatibility": "guard-v1"
+  },
+  {
+    "id": "weaponGuard",
+    "role": "guard",
+    "baseCardId": "defend",
+    "displayName": "Weapon Guard",
+    "icon": "🛡",
+    "damageSchool": "physical",
+    "baseValue": 2,
+    "scalingStat": "dexterity",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": "guard",
+    "flavor": "Turn the haft and weather the blow.",
+    "mods": "",
+    "compatibility": "guard-v1"
+  },
+  {
+    "id": "shieldGuard",
+    "role": "guard",
+    "baseCardId": "defend",
+    "displayName": "Shield Defend",
+    "icon": "🛡",
+    "damageSchool": "physical",
+    "baseValue": 3,
+    "scalingStat": "dexterity",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": "guard",
+    "flavor": "Meet the blow on carried iron.",
+    "mods": "",
+    "compatibility": "guard-v1"
+  },
+  {
+    "id": "staffGuard",
+    "role": "guard",
+    "baseCardId": "defend",
+    "displayName": "Arcane Ward",
+    "icon": "✦",
+    "damageSchool": "magic",
+    "baseValue": 1,
+    "scalingStat": "dexterity",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": "starstone",
+    "flavor": "A thin ward drawn through the focus.",
+    "mods": "",
+    "compatibility": "guard-v1"
+  },
+  {
+    "id": "sceptreGuard",
+    "role": "guard",
+    "baseCardId": "defend",
+    "displayName": "Ritual Ward",
+    "icon": "◈",
+    "damageSchool": "arcane",
+    "baseValue": 1,
+    "scalingStat": "dexterity",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "tags": "ritual",
+    "flavor": "A ward held together by rite.",
+    "mods": "",
+    "compatibility": "guard-v1"
+  },
+  {
+    "id": "unarmedTechnique",
+    "role": "technique",
+    "baseCardId": "technique",
+    "displayName": "Footwork",
+    "icon": "✧",
+    "damageSchool": "physical",
+    "baseValue": 0,
+    "scalingStat": "dexterity",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 0,
+    "cap": "",
+    "tags": "flourish",
+    "flavor": "Position is an armament too.",
+    "mods": "",
+    "compatibility": "technique-v1"
+  },
+  {
+    "id": "weaponTechnique",
+    "role": "technique",
+    "baseCardId": "technique",
+    "displayName": "Weapon Technique",
+    "icon": "✧",
+    "damageSchool": "physical",
+    "baseValue": 0,
+    "scalingStat": "dexterity",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 0,
+    "cap": "",
+    "tags": [
+      "blade",
+      "flourish"
+    ],
+    "flavor": "Let the weapon teach the hand.",
+    "mods": "",
+    "compatibility": "technique-v1"
+  },
+  {
+    "id": "staffTechnique",
+    "role": "technique",
+    "baseCardId": "technique",
+    "displayName": "Staff Channel",
+    "icon": "✦",
+    "damageSchool": "magic",
+    "baseValue": 0,
+    "scalingStat": "intelligence",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 0,
+    "cap": "",
+    "tags": "ritual",
+    "flavor": "Set the breath behind the focus.",
+    "mods": "",
+    "compatibility": "technique-v1"
+  }
+];
+
+
+Object.assign(module.exports, { basicCardProfiles });
+
+},
 "src/content/generated/unlocks.js": function (module, exports, require) {
 // GENERATED by tools/content-build.mjs from content/source/unlocks.csv
 // Do not edit by hand — edit the source file and re-run the build.
@@ -12686,7 +13023,7 @@ Object.assign(module.exports, { attributes, creationModes, attributeRules });
 // tools/derivedstats.mjs but remains deliberately outside gameplay wiring.
 
 const derivedStatRules = {
-  rulesetVersion: 1,
+  rulesetVersion: 2,
   defaults: {
     pointsPerTier: 5,
     rounding: 'floor',
@@ -12716,11 +13053,12 @@ const derivedStatRules = {
       gainPerTier: 1,
     },
     mana: {
-      // Keep every current class's authored Mana floor when this is eventually
-      // wired; Wisdom adds to it instead of silently replacing 40/80/60.
-      base: { strategy: 'classField', field: 'maxMana' },
+      // Small-unit pool: WIS is the only authored Mana authority. Classes do
+      // not carry a second base pool that can drift from this row.
+      base: 0,
       sourceStat: 'wisdom',
       gainPerTier: 1,
+      cap: null,
     },
   },
 };
@@ -12948,14 +13286,9 @@ function validateContent(bundle) {
     });
   }
 
-  // Resource ceilings and costs are semantic bounds, not merely integer
-  // shapes. A zero maximum would make a 0/0 bar; a negative cost would mint
-  // mana when a card is played. Both are refused at the content door.
-  for (const cls of Array.isArray(b.classes) ? b.classes : []) {
-    if (cls && Number.isInteger(cls.maxMana) && cls.maxMana <= 0) {
-      err(`classes.${cls.id || '?'}.maxMana`, 'must be > 0');
-    }
-  }
+  // Mana costs are semantic bounds, not merely integer shapes. A negative
+  // cost would mint Mana when a card is played. Mana maxima are derived from
+  // the rules table; classes deliberately own no second maximum.
   for (const card of Array.isArray(b.cards) ? b.cards : []) {
     if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
       err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
@@ -12966,6 +13299,29 @@ function validateContent(bundle) {
   // `tags` and taggedVulnerability lists validate against ONE home (#61).
   const tagIds = new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => t && t.id).filter(Boolean));
   const vctx = { ids, err, tagIds };
+
+  // Equipment profiles are nested tables, but receive the same strict central
+  // schema walk as top-level registries. Absence is not an empty valid table.
+  const equipment = b.equipment;
+  if (!equipment || typeof equipment !== 'object' || Array.isArray(equipment)) {
+    err('equipment', 'must be an object containing basicCardProfiles');
+  } else if (!Array.isArray(equipment.basicCardProfiles)) {
+    err('equipment.basicCardProfiles', 'Missing required basicCardProfiles array');
+  } else {
+    const seenProfiles = new Set();
+    for (const profile of equipment.basicCardProfiles) {
+      const id = profile && profile.id || '?';
+      walkSchema(profile, SCHEMAS.basicCardProfile, `equipment.basicCardProfiles.${id}`, vctx);
+      if (seenProfiles.has(id)) err(`equipment.basicCardProfiles.${id}`, `Duplicate profile id '${id}'`);
+      seenProfiles.add(id);
+      if (profile && Number.isFinite(profile.baseValue) && profile.baseValue < 0) err(`equipment.basicCardProfiles.${id}.baseValue`, 'must be non-negative');
+      if (profile && Number.isFinite(profile.pointsPerTier) && profile.pointsPerTier <= 0) err(`equipment.basicCardProfiles.${id}.pointsPerTier`, 'must be > 0');
+      if (profile && Number.isFinite(profile.cap) && profile.cap < 0) err(`equipment.basicCardProfiles.${id}.cap`, 'must be non-negative');
+      if (profile && profile.cap !== '' && profile.cap != null && !Number.isFinite(profile.cap)) err(`equipment.basicCardProfiles.${id}.cap`, 'must be blank or finite');
+      if (profile && profile.compatibility !== `${profile.role}-v1`) err(`equipment.basicCardProfiles.${id}.compatibility`, `must match role '${profile.role}-v1'`);
+      for (const tag of (profile && profile.tags) || []) if (!tagIds.has(tag)) err(`equipment.basicCardProfiles.${id}.tags`, `unknown tag '${tag}'`);
+    }
+  }
 
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {
@@ -12994,7 +13350,7 @@ function validateContent(bundle) {
   for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
-    classFields: ['maxHp', 'maxMana'],
+    classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
@@ -13002,11 +13358,8 @@ function validateContent(bundle) {
   // source the engine cannot READ — the defect that would otherwise ship a
   // trough reading 0/0 forever on Constantine's HUD, looking finished.
   //
-  // THIS IS THE REFUSAL THE FEATURE WAS BUILT AROUND. Wave 4 of D10 asks for
-  // stamina and mana bars; neither resource exists in this tree. Adding
-  // `{ id: 'stamina', source: 'stamina', ... }` to content/resources.js dies
-  // HERE, at boot, naming the row and printing the sources that do exist —
-  // instead of drawing an empty bar nobody can tell from a broken one.
+  // A new row whose resource has no engine reader dies HERE at boot, naming the
+  // row and legal sources instead of drawing a 0/0 trough that looks finished.
   for (const row of (Array.isArray(b.resources) ? b.resources : [])) {
     if (!row || typeof row.source !== 'string') continue; // shape walk owns this
     if (!RESOURCE_SOURCE_IDS.includes(row.source)) {
@@ -16343,6 +16696,24 @@ const SFX_LAYER_SCHEMAS = Object.freeze({
 // ---------------------------------------------------------------------------
 
 const SCHEMAS = Object.freeze({
+  basicCardProfile: obj({
+    id: str,
+    role: en('attack', 'guard', 'technique'),
+    baseCardId: ref('cards'),
+    displayName: str,
+    icon: str,
+    damageSchool: en('physical', 'magic', 'arcane'),
+    baseValue: num,
+    scalingStat: ref('attributes'),
+    pointsPerTier: num,
+    rounding: en('floor', 'ceil', 'round'),
+    gainPerTier: num,
+    cap: union(num, str),
+    tags: arr(str),
+    flavor: str,
+    mods: arr(str),
+    compatibility: en('attack-v1', 'guard-v1', 'technique-v1'),
+  }),
   attribute: obj({
     id: str,
     label: str,
@@ -16557,11 +16928,11 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
-    maxMana: int,
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),
-    startingDeck: arr(ref('cards')),
+    startingSignatureCard: ref('cards'),
+    startingLoadout: mapOf(str),
     cardPool: arr(ref('cards')),
     description: opt(str),
   }),
@@ -16624,14 +16995,10 @@ Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, E
 // for a resource the model ALREADY exposes is one row and zero UI code; that is
 // this feature's falsifier and tools/hudbars.mjs runs it.
 //
-// WHAT THIS FILE DELIBERATELY DOES NOT CONTAIN: stamina and mana. They are D10
-// brainstorm — his words, unbuilt. `grep -rn "stamina" src/` is 0 and every one
-// of the 9 hits for "mana" is the word "manager". There is no character stat
-// system either (`constitution` 0, `charisma` 0), so his "1 per 5 constitution"
-// is not derivable from anything that exists. A row naming a source with no
-// reader is REFUSED BY NAME at boot (validate.js) rather than drawing a trough
-// that reads 0/0 forever — a bar that reads a resource nothing produces is a
-// lie on his screen, and this is the machinery that stops it being written.
+// Stamina and Mana enter here only as readers of persisted derived pools. Their
+// formulas remain in the versioned rules table; this module owns HUD projection,
+// not gameplay authority. An unknown source is refused at boot rather than
+// drawing a lying 0/0 trough.
 
 /**
  * THE TRANSPOSE SCALE — one function, one edit.
@@ -16657,6 +17024,7 @@ Object.assign(module.exports, { COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, E
  * Both numbers are measured, not asserted — tools/hudbars.mjs --scales prints
  * this table from this function.
  */
+
 function resourceScale(v) {
   return v; // LINEAR. Swap for Math.sqrt(v) or Math.log1p(v) — nothing else moves.
 }
@@ -16750,19 +17118,13 @@ function maxOf(values) {
  * Derived once per registries, not per frame.
  */
 function resourceDomains(registries) {
-  const classes = registries.classes.all();
   const enemies = registries.enemies.all();
-  // Equipment can raise a run's max HP (loadout.js runMods, `self.maxHp=+N`),
-  // so the player ceiling is the best class plus the best reachable bonus.
-  const eq = registries.equipment || {};
-  let bonus = 0;
-  for (const piece of [...(eq.armour || []), ...(eq.armaments || [])]) {
-    for (const raw of (piece && piece.mods) || []) {
-      const m = /^self\.maxHp=\+?(-?\d+)$/.exec(String(raw).trim());
-      if (m) bonus = Math.max(bonus, Number(m[1]));
-    }
-  }
-  const playerPop = classes.map((c) => ({ maxHp: (c.maxHp || 0) + bonus, maxMana: c.maxMana, maxStamina: 0, poiseMax: undefined }));
+  const playerPop = [{
+    maxHp: registries.statDomains.hp,
+    maxMana: registries.statDomains.mana,
+    maxStamina: registries.statDomains.stamina,
+    poiseMax: undefined,
+  }];
   const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
   const pops = { main: playerPop, model: bothPop };
   const out = {};
@@ -17171,7 +17533,9 @@ Object.assign(module.exports, { orderedAttributes, defaultCreationModeId, creati
 
 const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana']);
 const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
-const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1]);
+// v1 is readable only so an unreleased class-base Mana snapshot can migrate to
+// v2. New snapshots always use the authored v2 table.
+const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2]);
 const DERIVED_STAT_SNAPSHOT_VERSION = 1;
 
 const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules'];
@@ -17435,6 +17799,26 @@ Object.assign(module.exports, { DERIVED_STAT_IDS, DERIVED_STAT_ROUNDING, DERIVED
 
 const { REGISTRY_TYPES, PASSIVE_KEYS } = require("src/model/schemas.js");
 const { applyCardMods } = require("src/model/loadout.js");
+const { deriveStat, resolveDerivedStatRules } = require("src/model/derivedStats.js");
+
+function applyBasicCardProfile(def, profile) {
+  if (!profile) return def;
+  const tags = [...(profile.tags || [])];
+  const effects = (def.effects || []).map((effect) => (
+    effect.op === 'damage' ? { ...effect, tags } : { ...effect }
+  ));
+  return {
+    ...def,
+    name: profile.displayName,
+    icon: profile.icon,
+    flavor: profile.flavor || def.flavor,
+    damageSchool: profile.damageSchool,
+    cardTags: tags,
+    effects,
+    equipmentProfileId: profile.id,
+    equipmentRole: profile.role,
+  };
+}
 
 /** Recursively freeze a value in place (functions and frozen values skipped). */
 function deepFreeze(value) {
@@ -17542,6 +17926,32 @@ function createRegistries(contentBundle) {
   // by (slot, class) far more often than by bare id, and armour ids repeat
   // across classes on purpose. They ride along frozen, like balance.
   registries.equipment = deepFreeze({ ...(bundle.equipment || {}) });
+  registries.tags = deepFreeze([...(bundle.tags || [])]);
+
+  // Visual scaling domains use the same derived-stat engine as run creation.
+  // They are content potential (the largest legal creation allocation), not a
+  // gameplay cap and not a second formula in the HUD.
+  const attributeIds = registries.attributes.ids();
+  const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
+  const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
+  let hpEquipmentBonus = 0;
+  for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
+    for (const raw of (piece && piece.mods) || []) {
+      const match = /^self\.maxHp=\+?(-?\d+)$/.exec(String(raw).trim());
+      if (match) hpEquipmentBonus = Math.max(hpEquipmentBonus, Number(match[1]));
+    }
+  }
+  const domainRows = registries.classes.all().map((classDef) => ({
+    hp: deriveStat(rules, 'hp', { attributes: ceilingAttributes, classDef }).value + hpEquipmentBonus,
+    mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value,
+    stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value,
+  }));
+  registries.statDomains = deepFreeze({
+    hp: Math.max(...domainRows.map((row) => row.hp)),
+    mana: Math.max(...domainRows.map((row) => row.mana)),
+    stamina: Math.max(...domainRows.map((row) => row.stamina)),
+  });
 
   // What can be earned. A table, like equipment — evaluated against saved
   // progress by model/unlocks.js, never by anything in here.
@@ -17627,7 +18037,8 @@ function resolveCard(registries, instanceOrRef) {
   const cardId = instanceOrRef.cardId;
   const base = registries.cards.get(cardId);
   const mods = instanceOrRef.mods;
-  if (!instanceOrRef.upgraded && !(mods && mods.length)) return base;
+  const profileId = instanceOrRef.profileId;
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -17637,12 +18048,16 @@ function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${mods ? mods.join(',') : ''}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
   let result = base;
   if (instanceOrRef.upgraded) result = mergeUpgrade(base);
+  if (profileId) {
+    const profile = ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === profileId);
+    result = applyBasicCardProfile(result, profile);
+  }
   if (mods && mods.length) {
     const eq = registries.equipment || {};
     result = deepFreeze(
@@ -17676,6 +18091,10 @@ Object.assign(module.exports, { deepFreeze, createRegistries, passiveMult, passi
 },
 "src/model/loadout.js": function (module, exports, require) {
 const { tokenRe } = require("src/model/validate.js");
+const { deriveAttributeTierReceipt } = require("src/model/derivedStats.js");
+
+const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
+const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
 // The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
@@ -17726,6 +18145,8 @@ function parseMod(str) {
 
 /** The closed set. A third hand is a new word — engine, one act (Law 1 c1). */
 const HANDS = Object.freeze(['left', 'right']);
+const EQUIPMENT_ROLES = Object.freeze(['attack', 'guard', 'technique']);
+const DAMAGE_SCHOOLS = Object.freeze(['physical', 'magic', 'arcane', 'holy', 'fire']);
 
 // ---------------------------------------------------------------------------
 // The two `apply` vocabularies — one per mod scope (Viki, A8)
@@ -17797,6 +18218,38 @@ function validateEquipment(registries) {
   const fields = eq.modFields || {};
   const problems = [];
   const pieces = [...(eq.armaments || []), ...(eq.armour || [])];
+  const profilesPresent = Array.isArray(eq.basicCardProfiles);
+  const profiles = eq.basicCardProfiles || [];
+  const profileIds = new Set();
+  const tagIds = new Set((registries.tags || []).map((t) => t.id));
+  const attributeIds = new Set(registries.attributes && registries.attributes.ids ? registries.attributes.ids() : []);
+
+  for (const profile of profiles) {
+    if (profileIds.has(profile.id)) problems.push(`basicCardProfiles.csv: duplicate profile id '${profile.id}'`);
+    profileIds.add(profile.id);
+    if (!EQUIPMENT_ROLES.includes(profile.role)) problems.push(`${profile.id}: unknown equipment role '${profile.role}'`);
+    if (!registries.cards.has(profile.baseCardId)) problems.push(`${profile.id}: unknown base card '${profile.baseCardId}'`);
+    if (!DAMAGE_SCHOOLS.includes(profile.damageSchool)) problems.push(`${profile.id}: unknown damage school '${profile.damageSchool}'`);
+    if (!Number.isFinite(profile.baseValue) || profile.baseValue < 0) problems.push(`${profile.id}: baseValue must be finite and non-negative`);
+    if (!attributeIds.has(profile.scalingStat)) problems.push(`${profile.id}: unknown scalingStat '${profile.scalingStat}'`);
+    if (!Number.isFinite(profile.pointsPerTier) || profile.pointsPerTier <= 0) problems.push(`${profile.id}: pointsPerTier must be finite and > 0`);
+    if (!['floor', 'ceil', 'round'].includes(profile.rounding)) problems.push(`${profile.id}: unknown rounding '${profile.rounding}'`);
+    if (!Number.isFinite(profile.gainPerTier)) problems.push(`${profile.id}: gainPerTier must be finite`);
+    if (profile.cap !== '' && profile.cap != null && (!Number.isFinite(profile.cap) || profile.cap < 0)) problems.push(`${profile.id}: cap must be blank or a finite non-negative number`);
+    if (profile.compatibility !== `${profile.role}-v1`) problems.push(`${profile.id}: compatibility '${profile.compatibility}' must match role vocabulary '${profile.role}-v1'`);
+    for (const tag of profile.tags || []) if (!tagIds.has(tag)) problems.push(`${profile.id}: unknown profile tag '${tag}'`);
+    for (const raw of profile.mods || []) if (!parseMod(`${profile.role}.${raw}`)) problems.push(`${profile.id}: unparseable profile mod '${raw}'`);
+  }
+
+  for (const piece of profilesPresent ? (eq.armaments || []) : []) {
+    for (const role of EQUIPMENT_ROLES) {
+      const profileId = piece[`${role}Profile`];
+      if (!profileId) continue;
+      const profile = profiles.find((p) => p.id === profileId);
+      if (!profile) problems.push(`${piece.id}: unknown ${role} profile '${profileId}'`);
+      else if (profile.role !== role) problems.push(`${piece.id}: ${role}Profile '${profileId}' has wrong role '${profile.role}'`);
+    }
+  }
 
   for (const piece of pieces) {
     for (const raw of piece.mods || []) {
@@ -17907,6 +18360,14 @@ function validateEquipment(registries) {
     if (starting.length !== 1) {
       problems.push(`class '${classId}' has ${starting.length} starting armour sets (need exactly 1)`);
     }
+    const cls = registries.classes.get(classId);
+    for (const [slotId, pieceId] of Object.entries(cls.startingLoadout || {})) {
+      const slot = (eq.slots || []).find((s) => s.id === slotId);
+      if (!slot) { problems.push(`class '${classId}' startingLoadout names unknown slot '${slotId}'`); continue; }
+      const piece = (eq.armaments || []).find((p) => p.id === pieceId);
+      if (!piece) { problems.push(`class '${classId}' startingLoadout names unknown piece '${pieceId}'`); continue; }
+      if (!fitsSlot(slot, piece)) problems.push(`class '${classId}' starting piece '${pieceId}' does not fit slot '${slotId}'`);
+    }
   }
   // The ladder's one join, and it dangles the way every join dangles: a rung
   // naming a slot that is not there. Law 1 clause 5 — fail loud, name the
@@ -17958,6 +18419,28 @@ function validateEquipment(registries) {
         + `${cap - 1 - rungs.length} would never be reachable; add a rung with `
         + `kind='${SLOT_RUNG_KIND}' ref='${slot.id}' or lower \`sets\` in equipSlots.csv`
       );
+    }
+  }
+
+  if (eqBal) {
+    const roleCopies = eqBal.roleCopies || {};
+    const total = [...EQUIPMENT_ROLES, 'signature'].reduce((sum, role) => sum + (Number(roleCopies[role]) || 0), 0);
+    if (total !== registries.balance.startingDeckSize) {
+      problems.push(`balance.equipment.roleCopies sum ${total}; startingDeckSize is ${registries.balance.startingDeckSize}`);
+    }
+    if (roleCopies.signature !== 1) problems.push('balance.equipment.roleCopies.signature must be exactly 1');
+    for (const role of EQUIPMENT_ROLES) {
+      const sources = (eqBal.roleSources || {})[role];
+      if (!Array.isArray(sources) || !sources.length) { problems.push(`roleSources.${role} must be non-empty`); continue; }
+      const seenSlots = new Set();
+      for (const source of sources) {
+        if (!(eq.slots || []).some((s) => s.id === source.slot)) problems.push(`roleSources.${role} names unknown slot '${source.slot}'`);
+        if (seenSlots.has(source.slot)) problems.push(`roleSources.${role} duplicates slot '${source.slot}' at equal precedence`);
+        seenSlots.add(source.slot);
+      }
+      const fallback = (eqBal.unarmedProfiles || {})[role];
+      const profile = profiles.find((p) => p.id === fallback);
+      if (!profile || profile.role !== role) problems.push(`unarmedProfiles.${role} '${fallback}' does not resolve to a ${role} profile`);
     }
   }
   return problems;
@@ -18310,7 +18793,126 @@ function createLoadout(registries, classId) {
   }
   const starting = (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
   if (starting && sets.armor) sets.armor[0] = starting.id;
+  const classDef = registries.classes.get(classId);
+  for (const [slotId, pieceId] of Object.entries(classDef.startingLoadout || {})) {
+    if (sets[slotId]) sets[slotId][0] = pieceId;
+  }
   return { sets, active, storage: [] };
+}
+
+function profileById(registries, id) {
+  return ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === id) || null;
+}
+
+function profileRule(profile) {
+  return {
+    ...Object.fromEntries(EQUIPMENT_PROFILE_PATCH_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
+    compatibility: profile.compatibility,
+  };
+}
+
+function profileLayers(options = {}) {
+  return [options.modeModifiers, ...(Array.isArray(options.runModifiers) ? options.runModifiers : options.runModifiers ? [options.runModifiers] : []), options.explicitOverride];
+}
+
+/** Host-owned equipment scaling rows, resolved once and persisted with the run. */
+function createEquipmentProfileRuleSnapshot(registries, options = {}) {
+  const profiles = Object.fromEntries((registries.equipment.basicCardProfiles || []).map((profile) => [profile.id, profileRule(profile)]));
+  for (const layer of profileLayers(options)) {
+    if (!layer || layer.equipmentProfiles == null) continue;
+    if (!layer.equipmentProfiles || typeof layer.equipmentProfiles !== 'object' || Array.isArray(layer.equipmentProfiles)) throw new Error('equipmentProfiles override must be an object map');
+    for (const [id, patch] of Object.entries(layer.equipmentProfiles)) {
+      if (!profiles[id]) throw new Error(`equipmentProfiles.${id}: unknown profile`);
+      if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error(`equipmentProfiles.${id}: patch must be an object`);
+      for (const key of Object.keys(patch)) if (!EQUIPMENT_PROFILE_PATCH_FIELDS.includes(key)) throw new Error(`equipmentProfiles.${id}.${key}: unknown field`);
+      Object.assign(profiles[id], patch);
+    }
+  }
+  const rarityBonuses = structuredClone(((registries.balance || {}).equipment || {}).rarityBonuses || {});
+  return restoreEquipmentProfileRuleSnapshot({ snapshotVersion: EQUIPMENT_PROFILE_SNAPSHOT_VERSION, profiles, rarityBonuses }, registries);
+}
+
+/** Validate and clone a saved equipment scaling snapshot without live-data repair. */
+function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) throw new Error('equipment profile snapshot must be an object');
+  if (snapshot.snapshotVersion !== EQUIPMENT_PROFILE_SNAPSHOT_VERSION) throw new Error(`unknown equipment profile snapshotVersion ${snapshot.snapshotVersion}`);
+  if (!snapshot.profiles || typeof snapshot.profiles !== 'object' || Array.isArray(snapshot.profiles)) throw new Error('equipment profile snapshot profiles must be an object map');
+  const liveIds = new Set((registries.equipment.basicCardProfiles || []).map((profile) => profile.id));
+  for (const id of Object.keys(snapshot.profiles)) if (!liveIds.has(id)) throw new Error(`equipment profile snapshot has unknown '${id}'`);
+  for (const profile of registries.equipment.basicCardProfiles || []) {
+    const rule = snapshot.profiles[profile.id];
+    if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
+    if (!Number.isFinite(rule.baseValue) || rule.baseValue < 0) throw new Error(`${profile.id}.baseValue must be finite and non-negative`);
+    if (!registries.attributes.has(rule.scalingStat)) throw new Error(`${profile.id}.scalingStat '${rule.scalingStat}' is unknown`);
+    if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error(`${profile.id}.pointsPerTier must be > 0`);
+    if (!['floor', 'ceil', 'round'].includes(rule.rounding)) throw new Error(`${profile.id}.rounding '${rule.rounding}' is unknown`);
+    if (!Number.isFinite(rule.gainPerTier)) throw new Error(`${profile.id}.gainPerTier must be finite`);
+    if (rule.cap != null && (!Number.isFinite(rule.cap) || rule.cap < 0)) throw new Error(`${profile.id}.cap must be null or finite non-negative`);
+    if (rule.compatibility !== `${profile.role}-v1`) throw new Error(`${profile.id}.compatibility '${rule.compatibility}' does not match ${profile.role}-v1`);
+    const legal = [...EQUIPMENT_PROFILE_PATCH_FIELDS, 'compatibility'];
+    for (const key of Object.keys(rule)) if (!legal.includes(key)) throw new Error(`${profile.id}.${key}: unknown equipment profile snapshot field`);
+  }
+  if (!snapshot.rarityBonuses || typeof snapshot.rarityBonuses !== 'object' || Array.isArray(snapshot.rarityBonuses)) throw new Error('equipment profile snapshot rarityBonuses must be an object');
+  for (const [rarity, bonuses] of Object.entries(snapshot.rarityBonuses)) {
+    if (!bonuses || typeof bonuses !== 'object' || Array.isArray(bonuses)) throw new Error(`rarityBonuses.${rarity} must be an object`);
+    for (const [role, value] of Object.entries(bonuses)) {
+      if (!EQUIPMENT_ROLES.includes(role)) throw new Error(`rarityBonuses.${rarity}.${role}: unknown role`);
+      if (!Number.isFinite(value)) throw new Error(`rarityBonuses.${rarity}.${role}: must be finite`);
+    }
+  }
+  return structuredClone(snapshot);
+}
+
+/** Resolve one equipment role from the data-owned ordered source table. */
+function equipmentRoleSource(registries, loadout, classId, role) {
+  const eqBal = (registries.balance || {}).equipment || {};
+  const sources = (eqBal.roleSources || {})[role] || [];
+  for (const source of sources) {
+    const piece = equippedIn(registries, loadout, classId, source.slot);
+    if (!piece) continue;
+    if (source.kinds && !source.kinds.includes(piece.kind)) continue;
+    const profileId = piece[`${role}Profile`];
+    if (profileId) return { role, slotId: source.slot, piece, profile: profileById(registries, profileId) };
+  }
+  const profileId = (eqBal.unarmedProfiles || {})[role];
+  return { role, slotId: null, piece: null, profile: profileById(registries, profileId) };
+}
+
+/** One projection consumed by run creation, cards, Armoury, and creation UI. */
+function equipmentKitPlan(registries, loadout, classId) {
+  return EQUIPMENT_ROLES.map((role) => equipmentRoleSource(registries, loadout, classId, role));
+}
+
+function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnapshot) {
+  const profile = row.profile;
+  const rule = equipmentProfileRuleSnapshot && equipmentProfileRuleSnapshot.profiles && equipmentProfileRuleSnapshot.profiles[profile.id];
+  if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
+  const tier = deriveAttributeTierReceipt(rule, { attributes, sourceStat: rule.scalingStat });
+  const rarity = row.piece && row.piece.rarity;
+  const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
+  const raw = rule.baseValue + tier.value + rarityBonus;
+  const value = Number.isFinite(rule.cap) ? Math.min(rule.cap, raw) : raw;
+  return { role: row.role, profileId: profile.id, pieceId: row.piece && row.piece.id, base: rule.baseValue, rarity, rarityBonus, ...tier, raw, cap: rule.cap, value };
+}
+
+/** Calculation receipts; the tier arithmetic is owned by derivedStats.js. */
+function equipmentKitReceipt(registries, loadout, classId, attributes, equipmentProfileRuleSnapshot) {
+  const snapshot = restoreEquipmentProfileRuleSnapshot(equipmentProfileRuleSnapshot, registries);
+  return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot) }));
+}
+
+/** The ten-card role distribution, as instance-ready refs. */
+function startingDeckRefs(registries, loadout, classId) {
+  const cls = registries.classes.get(classId);
+  const copies = ((registries.balance || {}).equipment || {}).roleCopies || {};
+  const refs = [];
+  for (const row of equipmentKitPlan(registries, loadout, classId)) {
+    for (let i = 0; i < (copies[row.role] || 0); i++) {
+      refs.push({ cardId: row.profile.baseCardId, equipmentRole: row.role, profileId: row.profile.id });
+    }
+  }
+  for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
+  return refs;
 }
 
 /** The piece in a slot's active set, or null. Armour resolves per class. */
@@ -18593,10 +19195,23 @@ function applyCardMods(def, mods, opts = {}) {
  */
 function stampDeck(registries, run, cards) {
   const list = cards || run.deck || [];
-  const mods = cardMods(registries, run.loadout, run.class);
+  if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
+  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
-    const next = mods.get(inst.cardId) || [];
+    const row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
+    if (row && row.profile) {
+      const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
+      const nextCompatibility = run.equipmentProfileRuleSnapshot.profiles[row.profile.id].compatibility;
+      if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible ${inst.equipmentRole} profile swap: ${inst.profileId} (${prior.compatibility}) -> ${row.profile.id} (${nextCompatibility})`);
+      inst.cardId = row.profile.baseCardId;
+      inst.profileId = row.profile.id;
+      inst.profileReceipt = { ...row.receipt };
+    }
+    const mods = cardMods(registries, run.loadout, run.class);
+    const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.value}`
+      : row && row.role === 'guard' ? `block=${row.receipt.value}` : null;
+    const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
     const prev = inst.mods || [];
     if (next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
     if (next.length) inst.mods = next;
@@ -19078,7 +19693,7 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, CARD_MOD_APPLIES, RUN_MOD_APPLIES, slotHand, pieceHand, fitsSlot, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, DAMAGE_SCHOOLS, CARD_MOD_APPLIES, RUN_MOD_APPLIES, slotHand, pieceHand, fitsSlot, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
 
 },
 "src/model/state.js": function (module, exports, require) {
@@ -19091,7 +19706,7 @@ Object.assign(module.exports, { parseMod, HANDS, CARD_MOD_APPLIES, RUN_MOD_APPLI
 //
 // Headless: no document/window/localStorage/timers.
 
-const { createLoadout, runMods, stampDeck } = require("src/model/loadout.js");
+const { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot } = require("src/model/loadout.js");
 const { graceRefillPlan } = require("src/model/gracerefill.js");
 const { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } = require("src/model/attributes.js");
 const { createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot, deriveStat } = require("src/model/derivedStats.js");
@@ -19147,7 +19762,6 @@ function createRunState({
   // Armour can carry `self.maxHp`, so the pool it sets has to be known before
   // hp is filled — the run starts at full, in whatever it starts wearing.
   const oldMaxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
-  const oldMaxMana = classDef.maxMana;
   const run = {
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
@@ -19161,10 +19775,8 @@ function createRunState({
     mapNodeId: null,
     hp: oldMaxHp,
     maxHp: oldMaxHp,
-    mana: oldMaxMana,
-    maxMana: oldMaxMana,
     cinders: registries.balance.startingCinders || 0,
-    deck: createDeck(classDef.startingDeck, idGen),
+    deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
     relics: [classDef.startingRelic],
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
@@ -19187,18 +19799,26 @@ function createRunState({
   // Stamp the starting deck with whatever the loadout says. Bare-handed this
   // is a no-op; in an armour set with `defend.block=+2` it is already true of
   // the very first Defend you draw.
-  stampDeck(registries, run);
   initializeRunDerivedStats(run, registries, {
     snapshot: derivedStatRuleSnapshot,
     derivedStatOptions,
     preserveDeficits: false,
   });
+  stampDeck(registries, run);
   return run;
 }
 
 function derivedOptions(registries, extra = {}) {
+  const statLayer = (layer) => {
+    if (!layer || typeof layer !== 'object') return layer;
+    const { equipmentProfiles, ...stats } = layer;
+    return stats;
+  };
   return {
     ...extra,
+    modeModifiers: statLayer(extra.modeModifiers),
+    runModifiers: Array.isArray(extra.runModifiers) ? extra.runModifiers.map(statLayer) : statLayer(extra.runModifiers),
+    explicitOverride: statLayer(extra.explicitOverride),
     authority: 'host',
     attributeIds: registries.attributes.ids(),
     classFields: ['maxHp', 'maxMana'],
@@ -19217,7 +19837,12 @@ function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const existing = snapshot || run.derivedStatRuleSnapshot;
-  if (existing && run.derivedStatRuleSnapshot
+  run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
+    ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
+    : createEquipmentProfileRuleSnapshot(registries, derivedStatOptions);
+  const currentRuleset = registries.derivedStatRules.rulesetVersion;
+  const existingIsCurrent = existing && existing.rulesetVersion === currentRuleset;
+  if (existingIsCurrent && run.derivedStatRuleSnapshot
     && run.maxHp !== undefined && run.hp !== undefined
     && run.maxMana !== undefined && run.mana !== undefined
     && run.maxStamina !== undefined && run.stamina !== undefined
@@ -19226,7 +19851,10 @@ function initializeRunDerivedStats(run, registries, {
     return run;
   }
 
-  const receipt = existing
+  // v1 carried class-authored 40/60/80 Mana pools. It is readable so its
+  // current/max ratio can be migrated, but it is never retained as authority.
+  if (existing && !existingIsCurrent) restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+  const receipt = existingIsCurrent
     ? restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries))
     : createDerivedStatRuleSnapshot(registries.derivedStatRules, derivedOptions(registries, derivedStatOptions));
   const classDef = registries.classes.get(run.class);
@@ -19251,8 +19879,9 @@ function initializeRunDerivedStats(run, registries, {
   if (preserveDeficits && Number.isFinite(oldHpMax) && Number.isFinite(oldHp)) {
     run.hp = Math.max(0, run.maxHp - Math.max(0, oldHpMax - oldHp));
   } else run.hp = run.maxHp;
-  if (preserveDeficits && Number.isFinite(oldManaMax) && Number.isFinite(oldMana)) {
-    run.mana = Math.max(0, run.maxMana - Math.max(0, oldManaMax - oldMana));
+  if (preserveDeficits && Number.isFinite(oldManaMax) && oldManaMax > 0 && Number.isFinite(oldMana)) {
+    const legacyRatio = Math.max(0, Math.min(1, oldMana / oldManaMax));
+    run.mana = Math.max(0, Math.min(run.maxMana, Math.round(legacyRatio * run.maxMana)));
   } else run.mana = run.maxMana;
   run.stamina = run.maxStamina;
   return run;
@@ -19277,6 +19906,7 @@ const RUN_SHAPE = [
   { key: 'attributes', type: 'object', optional: true },
   // Optional only for the one pre-derived migration at the load door.
   { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
+  { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
@@ -20048,7 +20678,7 @@ const { resolveCard, passiveSum, passiveMult } = require("src/model/registries.j
 const { evaluate } = require("src/model/formulas.js");
 const { computeTokenBindings } = require("src/model/validate.js");
 const { createPlayerCombatEntity, createEnemyCombatEntity } = require("src/model/state.js");
-const { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule } = require("src/model/loadout.js");
+const { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot } = require("src/model/loadout.js");
 
 const QUEUE_GUARD = 10000;
 
@@ -20080,10 +20710,15 @@ function createCombat({
   swapCostRule = null,
 }) {
   const bal = registries.balance || {};
-  const classMaxMana = registries.classes.get(player.classId).maxMana;
-  const maxMana = player.maxMana != null ? player.maxMana : classMaxMana;
+  // Run creation owns derived Mana. Older headless fixtures without a Mana
+  // pool get a harmless zero pool; class data is never a fallback authority.
+  const maxMana = Number.isFinite(player.maxMana) ? player.maxMana : 0;
+  const equipmentProfileRuleSnapshot = player.equipmentProfileRuleSnapshot
+    ? structuredClone(player.equipmentProfileRuleSnapshot)
+    : createEquipmentProfileRuleSnapshot(registries);
   const combat = {
     registries,
+    equipmentProfileRuleSnapshot,
     rng,
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
@@ -20107,6 +20742,7 @@ function createCombat({
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
     // still swapped when the fight ends.
     loadout: player.loadout || null,
+    attributes: player.attributes ? { ...player.attributes } : null,
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
@@ -20142,6 +20778,7 @@ function createCombat({
     // Equipment numbers ride on the instance (model/loadout.js) — copy them in
     // or every card would come back to its bare-handed self at combat start.
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),
+    ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);
   const innate = [];
@@ -20570,7 +21207,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // the config says a swap re-arms what you are already holding.
   const piles = [combat.piles.draw, combat.piles.discard];
   if (cfg.restampHand) piles.push(combat.piles.hand);
-  const run = { deck: [], loadout: combat.loadout, class: p.classId };
+  const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
   // The event carries what it COST and under which rule — a price nobody can
@@ -20641,7 +21278,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     p.counters.attacksPlayedThisCombat += 1;
     meta.attackOrdinal = p.counters.attacksPlayedThisCombat;
   }
-  const cardRef = { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type };
+  const cardRef = { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type, tags: def.cardTags };
 
   // Enqueue the card's own effects first, then announce the play — triggers
   // reacting to cardPlayed enqueue after the card's effects (FIFO).
@@ -20748,7 +21385,7 @@ function previewCard(combat, cardInstanceId, targetId) {
     source: p,
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
-    card: { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type },
+    card: { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type, tags: def.cardTags },
     meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
   };
 
@@ -20955,6 +21592,7 @@ function computeAttackDamage(ctx, source, target, base, attackTags) {
 
 /** One derivation for live actions and previews: card identity comes from CSV. */
 function attackTagsFor(action, effect) {
+  if (action.card && Array.isArray(action.card.tags) && action.card.tags.length) return action.card.tags;
   return damageTagIds(action.card && action.card.cardId, effect.tags);
 }
 
@@ -23331,15 +23969,16 @@ function createSaveManager(storage) {
       }
       // A run saved before equipment existed has no loadout. Give it the bare
       // starting one and re-stamp, rather than throwing away someone's climb.
+      const needsEquipmentStamp = !run.loadout || !run.equipmentProfileRuleSnapshot;
       if (!run.loadout) {
         run.loadout = createLoadout(registries, run.class);
-        stampDeck(registries, run);
       }
       // One migration door for HP, Mana, Stamina, Energy and Draw. A run that
       // already owns a rules snapshot is only validated; a legacy run resolves
       // the current host rules and preserves existing HP/Mana deficits.
       try {
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
+        if (needsEquipmentStamp) stampDeck(registries, run);
       } catch (e) {
         archive(json, e && e.message ? e.message : 'invalid derived-stat snapshot', slot);
         return null;
@@ -24973,6 +25612,7 @@ const { refusesWhen } = require("src/ui/components/refusal.js");
 const { attachSeedField } = require("src/ui/components/seedfield.js");
 const { createRunState } = require("src/model/state.js");
 const { statProjection } = require("src/model/statProjection.js");
+const { equipmentKitReceipt } = require("src/model/loadout.js");
 
 function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -25064,8 +25704,14 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
     else p.textContent = state.glyph;
     const preview = createRunState({ seed: 0, classId: state.classId, registries });
     const projection = statProjection(registries, preview);
+    const kit = equipmentKitReceipt(registries, preview.loadout, preview.class, preview.attributes, preview.equipmentProfileRuleSnapshot);
+    const signature = registries.cards.get(registries.classes.get(preview.class).startingSignatureCard);
+    const copies = registries.balance.equipment.roleCopies;
     $('#cz-stat-projection').innerHTML = projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')
-      + projection.derived.map((row) => `<div><b>${esc(row.label)}</b> ${esc(row.formula)}${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('');
+      + projection.derived.map((row) => `<div><b>${esc(row.label)}</b> ${esc(row.formula)}${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')
+      + `<details class="cz-kit"><summary>Starting kit · ${registries.balance.startingDeckSize} cards</summary><ul>`
+      + kit.map((row) => `<li><b>${esc(row.profile.displayName)}</b> ×${copies[row.role]} <span>${row.receipt.base}+${row.receipt.value - row.receipt.base}=${row.receipt.value} · ${esc(row.profile.damageSchool)}</span></li>`).join('')
+      + `<li><b>${esc(signature.name)}</b> ×${copies.signature} <span>class signature</span></li></ul></details>`;
   }
 
   // ---- class row (real classes + locked M3 silhouettes) ----
@@ -25074,7 +25720,7 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
     const el = document.createElement('div');
     el.className = 'class-pick cz-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${cls.startingDeck.length} cards</span></div>`;
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${registries.balance.startingDeckSize} cards</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
       classes.querySelectorAll('.cz-class').forEach((x) => x.classList.toggle('chosen', x === el));
@@ -26592,7 +27238,9 @@ function renderCard(registries, ref, opts = {}) {
   if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
   el.dataset.cardId = def.id;
 
-  const tags = tagsFor(def.id);
+  const tags = def.cardTags && def.cardTags.length
+    ? def.cardTags.map((id) => registries.tags.find((t) => t.id === id)).filter(Boolean)
+    : tagsFor(def.id);
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
@@ -31288,7 +31936,7 @@ Object.assign(module.exports, { mountTutorial });
 
 const { balance } = require("src/content/balance.js");
 const { resolveCard } = require("src/model/registries.js");
-const { canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, ownership, openedSets, visibleSets, rungFor, setCellState } = require("src/model/loadout.js");
+const { canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, equipmentKitReceipt, ownership, openedSets, visibleSets, rungFor, setCellState } = require("src/model/loadout.js");
 
 
 
@@ -31960,14 +32608,21 @@ function mountEquipment(host, {
   function cardStrip() {
     const box = document.createElement('div');
     box.className = 'equip-cards';
-    const mods = cardMods(registries, run.loadout, run.class);
-    const ids = [...new Set((eq.targets || [])
-      .filter((t) => t.classId === '*' || t.classId === run.class)
-      .map((t) => t.cardId))];
-    for (const cardId of ids) {
-      if (!registries.cards.has(cardId)) continue;
-      box.appendChild(renderCard(registries, { cardId, mods: mods.get(cardId) }, { small: true }));
+    const roles = equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot);
+    const shown = new Set();
+    for (const inst of run.deck || []) {
+      const key = inst.equipmentRole || `signature:${inst.cardId}`;
+      if (shown.has(key)) continue;
+      shown.add(key);
+      box.appendChild(renderCard(registries, inst, { small: true }));
     }
+    const receipt = document.createElement('div');
+    receipt.className = 'equip-role-receipts';
+    receipt.innerHTML = roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)}</b>`
+      + `<span>${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier}`
+      + ` + ${row.receipt.rarityBonus} rarity = <strong>${row.receipt.value}</strong></span>`
+      + `<small>${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}</small></div>`).join('');
+    box.appendChild(receipt);
     const rm = runMods(registries, run.loadout, run.class);
     const bits = [];
     if (rm.maxHp) bits.push(`Max HP ${rm.maxHp > 0 ? '+' : ''}${rm.maxHp}`);
@@ -36628,7 +37283,7 @@ function mountLobby(app, { registries, defaultSeedString, onBack, onStart }) {
       const el = document.createElement('div');
       el.className = `class-pick cr-class${cls.id === state.classId ? ' chosen' : ''}`;
       el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3>`;
-      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${cls.maxHp} · ${cls.startingDeck.length} cards`);
+      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${cls.maxHp} · ${registries.balance.startingDeckSize} cards`);
       el.addEventListener('click', () => {
         state.classId = cls.id;
         conn.send({ t: 'pick', classId: cls.id });
@@ -37151,8 +37806,22 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
       const n = meP.hand.length;
       meP.hand.forEach((c, i) => {
         const def = cardDef(c);
-        const affordable = !meP.ended && (def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost);
+        const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
+        const manaAffordable = meP.mana >= (def.manaCost || 0);
+        const affordable = !meP.ended && energyAffordable && manaAffordable;
         const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods }, { affordable });
+        if (!affordable) {
+          const reason = !manaAffordable
+            ? `Need ${def.manaCost || 0} Mana; have ${meP.mana}`
+            : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
+          el.dataset.unavailableReason = reason;
+          el.setAttribute('aria-disabled', 'true');
+          el.setAttribute('aria-label', `${def.name} unavailable: ${reason}`);
+          const badge = document.createElement('div');
+          badge.className = 'card-unavailable-reason';
+          badge.textContent = reason;
+          el.appendChild(badge);
+        }
         const spread = Math.min(6, n) * 1.2;
         el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
         el.style.zIndex = i;
