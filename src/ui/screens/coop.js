@@ -320,8 +320,22 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const n = meP.hand.length;
       meP.hand.forEach((c, i) => {
         const def = cardDef(c);
-        const affordable = !meP.ended && (def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost);
+        const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
+        const manaAffordable = meP.mana >= (def.manaCost || 0);
+        const affordable = !meP.ended && energyAffordable && manaAffordable;
         const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods }, { affordable });
+        if (!affordable) {
+          const reason = !manaAffordable
+            ? `Need ${def.manaCost || 0} Mana; have ${meP.mana}`
+            : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
+          el.dataset.unavailableReason = reason;
+          el.setAttribute('aria-disabled', 'true');
+          el.setAttribute('aria-label', `${def.name} unavailable: ${reason}`);
+          const badge = document.createElement('div');
+          badge.className = 'card-unavailable-reason';
+          badge.textContent = reason;
+          el.appendChild(badge);
+        }
         const spread = Math.min(6, n) * 1.2;
         el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
         el.style.zIndex = i;

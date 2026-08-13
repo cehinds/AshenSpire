@@ -265,11 +265,8 @@ export function validateContent(bundle) {
   // source the engine cannot READ — the defect that would otherwise ship a
   // trough reading 0/0 forever on Constantine's HUD, looking finished.
   //
-  // THIS IS THE REFUSAL THE FEATURE WAS BUILT AROUND. Wave 4 of D10 asks for
-  // stamina and mana bars; neither resource exists in this tree. Adding
-  // `{ id: 'stamina', source: 'stamina', ... }` to content/resources.js dies
-  // HERE, at boot, naming the row and printing the sources that do exist —
-  // instead of drawing an empty bar nobody can tell from a broken one.
+  // A new row whose resource has no engine reader dies HERE at boot, naming the
+  // row and legal sources instead of drawing a 0/0 trough that looks finished.
   for (const row of (Array.isArray(b.resources) ? b.resources : [])) {
     if (!row || typeof row.source !== 'string') continue; // shape walk owns this
     if (!RESOURCE_SOURCE_IDS.includes(row.source)) {

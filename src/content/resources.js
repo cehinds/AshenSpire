@@ -11,18 +11,18 @@
 //   glyph      the mark that survives when the bar is too short for words
 //   tint       the fill colour (a var(), so accent themes still own the palette)
 //   weight     'normal' | 'skinny'  — "poise (very skinny bar)", his words
-//   order      top-to-bottom within a surface; health first, his row order
+//   order      top-to-bottom within a surface; HP, Mana, Stamina, then Poise
 //   surfaces   ['main'] | ['model'] | both — HIS two-HUD split, as data:
-//              main HUD = health, then stamina/mana under it, then poise;
+//              main HUD = health, then mana/stamina under it, then poise;
 //              under the character models = "really just health and poise"
 //   source     WHICH RESOURCE, from the closed set in model/resources.js.
 //              A source with no reader is refused at boot, by name.
 //   domainMax  OPTIONAL override of the derived ceiling (Law 0 clause 3).
 //              Omit it and the ceiling is derived from the content itself.
 //
-// Stamina remains absent because no stamina model exists. Mana is present below
-// because this branch adds the complete state path: class ceiling, run/save,
-// combat spending, shrine/flask restoration, and solo/co-op serialization.
+// Mana and Stamina are persisted derived pools. Their formulas and ruleset
+// version remain authoritative in derivedStats; this table only describes how
+// their current/max values are projected into resource surfaces.
 
 export const resources = [
   {

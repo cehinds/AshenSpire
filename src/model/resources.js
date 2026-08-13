@@ -11,14 +11,10 @@
 // for a resource the model ALREADY exposes is one row and zero UI code; that is
 // this feature's falsifier and tools/hudbars.mjs runs it.
 //
-// WHAT THIS FILE DELIBERATELY DOES NOT CONTAIN: stamina and mana. They are D10
-// brainstorm — his words, unbuilt. `grep -rn "stamina" src/` is 0 and every one
-// of the 9 hits for "mana" is the word "manager". There is no character stat
-// system either (`constitution` 0, `charisma` 0), so his "1 per 5 constitution"
-// is not derivable from anything that exists. A row naming a source with no
-// reader is REFUSED BY NAME at boot (validate.js) rather than drawing a trough
-// that reads 0/0 forever — a bar that reads a resource nothing produces is a
-// lie on his screen, and this is the machinery that stops it being written.
+// Stamina and Mana enter here only as readers of persisted derived pools. Their
+// formulas remain in the versioned rules table; this module owns HUD projection,
+// not gameplay authority. An unknown source is refused at boot rather than
+// drawing a lying 0/0 trough.
 
 /**
  * THE TRANSPOSE SCALE — one function, one edit.

@@ -164,7 +164,7 @@ const REG_CHARM = {
 };
 
 // deck: array of cardId strings or { id, up: true }
-function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 20, maxMana = 20, relicIds = [], flasks = [] } = {}) {
+function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, relicIds = [], flasks = [] } = {}) {
   const rng = createRng(seed >>> 0);
   const instances = deck.map((d, i) => {
     const isObj = typeof d === 'object';
@@ -1330,7 +1330,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     eq(REG.classes.size, 3, 'three playable classes registered');
 
     // Starstone: 1st spell plain, 2nd spell empowered, charge fades at turn end.
-    const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'] });
+    const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 3, maxMana: 3 });
     playFromHand(a, 'starstonePebble');
     let hits = logOf(a, 'damageDealt').map((e) => e.amount);
     eq(hits.join(','), '6', 'first spell: no bonus');
