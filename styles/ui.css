@@ -1751,6 +1751,19 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   flex: 1 1 50%; min-height: var(--tap-floor); overflow-y: auto;
 }
 
+/* Screenshot evidence poses use the real screen/readers but focus the camera on
+   the contract under review. They are query-gated dev surfaces; ordinary play
+   never carries either root attribute. */
+:root[data-shot-evidence='creation'] .customize .cz-fields > div:not(:has(#cz-kits)),
+:root[data-shot-evidence='creation'] .customize .preview-pane > :not(.cz-stats) { display: none; }
+:root[data-shot-evidence='creation'] .customize .cz-cols { align-items: flex-start; }
+:root[data-shot-evidence='armoury'] .armoury-left,
+:root[data-shot-evidence='armoury'] .armoury.picking .equip-slots { display: none; }
+:root[data-shot-evidence='armoury'] .armoury-body { min-height: 0; overflow: hidden; }
+:root[data-shot-evidence='armoury'] .armoury-right { height: 100%; overflow-y: auto !important; }
+:root[data-shot-evidence='armoury'] .armoury-strip[data-role='context'][data-collapsed='0'] { flex: 0 0 35%; }
+:root[data-shot-evidence='armoury'] .equip-card-with-count { display: none; }
+
 /* Grid view: the figure between two columns of slots, hands on the side they
    are actually held. The picker moves to the right pane so the middle stays a
    picture of a person rather than a form. */

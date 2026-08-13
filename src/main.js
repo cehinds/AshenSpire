@@ -125,6 +125,9 @@ setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 // thing that makes the gate below reach every state; keep the count at one.
 const shotParams = new URLSearchParams(location.search);
 const shotState = shotParams.get('shot');
+const shotEvidence = shotParams.get('shotEvidence');
+if (shotEvidence) document.documentElement.dataset.shotEvidence = shotEvidence;
+if (shotParams.get('shotArcane') === 'matrix') document.documentElement.dataset.shotArcane = 'matrix';
 
 function pickStorage() {
   // A ?shot= boot NEVER touches durable storage. It used to: the hook wrote

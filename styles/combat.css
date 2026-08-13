@@ -215,6 +215,18 @@
   padding-bottom: 2.6rem; gap: 1rem;
 }
 
+/* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
+   Remove unrelated player/action chrome so all conditional enemy states remain
+   readable in one phone still. This selector is unreachable in ordinary play. */
+:root[data-shot-arcane='matrix'] .combat.coop .topbar,
+:root[data-shot-arcane='matrix'] .combat.coop .player-zone,
+:root[data-shot-arcane='matrix'] .combat.coop .coop-flasks,
+:root[data-shot-arcane='matrix'] .combat.coop .hand-area { display: none; }
+:root[data-shot-arcane='matrix'] .combat.coop .field { overflow: visible; padding: 1rem; }
+:root[data-shot-arcane='matrix'] .combat.coop .enemy-row {
+  width: 100%; min-width: 0; height: 100%; padding: 0; align-items: center;
+}
+
 .combatant { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; position: relative; }
 .combatant .sprite { position: relative; display: flex; align-items: flex-end; justify-content: center; }
 /* The under-model strip. Its bars are the SAME component as the main HUD's —
