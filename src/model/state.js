@@ -7,7 +7,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot } from './loadout.js';
+import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt } from './loadout.js';
 import { graceRefillPlan } from './gracerefill.js';
 import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 import {
@@ -64,6 +64,15 @@ export function createRunState({
   const idGen = createIdGen('rc');
   const startingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
   const loadout = createLoadout(registries, classId, startingKit);
+  for (const [slotId, itemId] of Object.entries({ rightHand: startingKit.rightHand, leftHand: startingKit.leftHand })) {
+    if (!itemId) continue;
+    const piece = (registries.equipment.armaments || []).find((row) => row.id === itemId);
+    const receipt = equipmentRequirementReceipt(registries, piece, attributes);
+    if (!receipt.ok) {
+      const failed = receipt.failures[0];
+      throw new Error(`${startingKit.id}.${slotId}: ${itemId} requires ${failed.attributeId} ${failed.required} (got ${failed.actual})`);
+    }
+  }
   // Armour can carry `self.maxHp`, so the pool it sets has to be known before
   // hp is filled — the run starts at full, in whatever it starts wearing.
   const oldMaxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;

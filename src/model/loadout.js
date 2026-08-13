@@ -114,6 +114,39 @@ export function fitsSlot(slot, piece) {
   return may === null || may === slotHand(slot);
 }
 
+/** Resolve explicit item attribute minima. Missing attributes fail closed. */
+export function equipmentRequirementReceipt(registries, piece, attributes = {}) {
+  if (!piece || typeof piece !== 'object') throw new Error('equipment requirement receipt needs a piece');
+  const authored = (piece.requirements && piece.requirements.attributes) || {};
+  const requirements = [];
+  const failures = [];
+  for (const [attributeId, required] of Object.entries(authored)) {
+    if (!registries.attributes.has(attributeId)) throw new Error(`${piece.id}: unknown requirement attribute '${attributeId}'`);
+    if (!Number.isInteger(required) || required < 0) throw new Error(`${piece.id}.${attributeId}: requirement minimum must be a non-negative integer`);
+    const actual = attributes && attributes[attributeId];
+    const row = { attributeId, required, actual: Number.isFinite(actual) ? actual : null };
+    requirements.push(row);
+    if (!Number.isFinite(actual) || actual < required) failures.push(row);
+  }
+  return { itemId: piece.id, requirements, failures, ok: failures.length === 0 };
+}
+
+/** Resolve whether a card fits an equipped weapon without class-id branches. */
+export function cardEquipmentCompatibility(registries, { cardId, classId, pieceId } = {}) {
+  const card = registries.cards.get(cardId);
+  const equipment = registries.equipment || {};
+  const piece = (equipment.armaments || []).find((row) => row.id === pieceId);
+  if (!piece) throw new Error(`Unknown armament '${pieceId}' for card compatibility`);
+  const exactRows = (equipment.cardEquipmentExceptions || []).filter((row) => row.cardId === cardId);
+  if (exactRows.length) return { ok: exactRows.some((row) => row.weaponId === pieceId), reason: 'exactWeapon', cardId, pieceId };
+  if (card.class === classId) return { ok: true, reason: 'class', cardId, pieceId };
+  const tagging = (equipment.cardTagging || []).find((row) => row.cardId === cardId);
+  const cardTags = (tagging && tagging.tags) || [];
+  const sharedTags = cardTags.filter((tag) => (piece.tags || []).includes(tag));
+  if (sharedTags.length) return { ok: true, reason: 'tag', sharedTags, cardId, pieceId };
+  return { ok: false, reason: 'noMatch', sharedTags: [], cardId, pieceId };
+}
+
 /**
  * validateEquipment(registries) → [] when sound, else human-readable problems.
  * Catches the mistakes CSV authoring actually makes: a misspelled field, a mod
@@ -132,6 +165,33 @@ export function validateEquipment(registries) {
   const tagIds = new Set((registries.tags || []).map((t) => t.id));
   const attributeIds = new Set(registries.attributes && registries.attributes.ids ? registries.attributes.ids() : []);
   if (Array.isArray(eq.startingKits)) problems.push(...startingKitProblems(registries));
+
+  if (profilesPresent) {
+    if (!Array.isArray(eq.equipmentRequirements)) problems.push('equipmentRequirements.csv: missing generated table');
+    if (!Array.isArray(eq.cardEquipmentExceptions)) problems.push('cardEquipmentExceptions.csv: missing generated table');
+    if (!Array.isArray(eq.cardTagging)) problems.push('cardTagging.csv: missing registered table');
+  }
+  const requirementKeys = new Set();
+  for (const row of eq.equipmentRequirements || []) {
+    const key = `${row.itemId}:${row.attributeId}`;
+    if (requirementKeys.has(key)) problems.push(`equipmentRequirements.csv: duplicate '${key}'`);
+    requirementKeys.add(key);
+    if (!pieces.some((piece) => piece.id === row.itemId)) problems.push(`equipmentRequirements.csv: unknown item '${row.itemId}'`);
+    if (!attributeIds.has(row.attributeId)) problems.push(`equipmentRequirements.csv: unknown attribute '${row.attributeId}'`);
+    if (!Number.isInteger(row.minimum) || row.minimum < 0) problems.push(`${key}: minimum must be a non-negative integer`);
+  }
+  const exceptionKeys = new Set();
+  for (const row of eq.cardEquipmentExceptions || []) {
+    const key = `${row.cardId}:${row.weaponId}`;
+    if (exceptionKeys.has(key)) problems.push(`cardEquipmentExceptions.csv: duplicate '${key}'`);
+    exceptionKeys.add(key);
+    if (!registries.cards.has(row.cardId)) problems.push(`cardEquipmentExceptions.csv: unknown card '${row.cardId}'`);
+    if (!(eq.armaments || []).some((piece) => piece.id === row.weaponId)) problems.push(`cardEquipmentExceptions.csv: unknown weapon '${row.weaponId}'`);
+  }
+  for (const piece of pieces) {
+    try { equipmentRequirementReceipt(registries, piece, {}); }
+    catch (error) { problems.push(error.message); }
+  }
 
   // A row may deliberately reuse an existing generic render instead of adding
   // binary art in the same feature. The reference is explicit and truthful:
@@ -1609,6 +1669,7 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
     return false;
   }
   if (!owned.has(piece)) return false;
+  if (!equipmentRequirementReceipt(registries, piece, ctx.attributes).ok) return false;
   ids[setIndex] = itemId;
   return true;
 }

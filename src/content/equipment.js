@@ -21,6 +21,9 @@ import { equipMods } from './generated/equipMods.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { basicCardProfiles } from './generated/basicCardProfiles.js';
 import { startingKits } from './generated/startingKits.js';
+import { equipmentRequirements } from './generated/equipmentRequirements.js';
+import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js';
+import { cardTagging } from './generated/cardTagging.js';
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
 function list(v) {
@@ -29,7 +32,16 @@ function list(v) {
 }
 
 function normPiece(row) {
-  return { ...row, artKey: row.artKey || row.id, tags: list(row.tags), mods: list(row.mods) };
+  const attributes = Object.fromEntries(equipmentRequirements
+    .filter((requirement) => requirement.itemId === row.id)
+    .map((requirement) => [requirement.attributeId, requirement.minimum]));
+  return {
+    ...row,
+    artKey: row.artKey || row.id,
+    tags: list(row.tags),
+    mods: list(row.mods),
+    ...(Object.keys(attributes).length ? { requirements: { attributes } } : {}),
+  };
 }
 
 /** Every armament: weapons, shields and staves, in authoring order. */
@@ -103,3 +115,12 @@ export const BASIC_CARD_PROFILES = basicCardProfiles.map((row) => ({
 
 /** Class-listed starting kits; hand ids stay explicit so validation can name them. */
 export const STARTING_KITS = startingKits.map((row) => ({ ...row }));
+
+/** Raw item/stat minima retained so validation can detect duplicate authored rows. */
+export const EQUIPMENT_REQUIREMENTS = equipmentRequirements.map((row) => ({ ...row }));
+
+/** Registered exceptional card→weapon bonds; ordinary fit is class/tag based. */
+export const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({ ...row }));
+
+/** Raw authored card tag ids, carried into registries for compatibility checks. */
+export const CARD_EQUIPMENT_TAGGING = cardTagging.map((row) => ({ ...row, tags: list(row.tags) }));

@@ -653,7 +653,7 @@ export function mountEquipment(host, {
     bare.innerHTML = '<span class="ec-name">Bare</span><span class="ec-mods">Nothing at all</span>';
     if (seal.ok) {
       bare.addEventListener('click', () => {
-        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null, owned(), { inCombat });
+        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null, owned(), { inCombat, attributes: run.attributes });
         commit();
       });
     } else sealChip(bare);
@@ -674,7 +674,7 @@ export function mountEquipment(host, {
       const chip = pieceChip(registries, piece, { selected: piece.id === current });
       if (seal.ok) {
         chip.addEventListener('click', () => {
-          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned(), { inCombat });
+          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned(), { inCombat, attributes: run.attributes });
           sfx.play('cardPlay');
           commit();
         });
