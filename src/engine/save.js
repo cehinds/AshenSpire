@@ -371,15 +371,16 @@ export function createSaveManager(storage) {
       }
       // A run saved before equipment existed has no loadout. Give it the bare
       // starting one and re-stamp, rather than throwing away someone's climb.
+      const needsEquipmentStamp = !run.loadout || !run.equipmentProfileRuleSnapshot;
       if (!run.loadout) {
         run.loadout = createLoadout(registries, run.class);
-        stampDeck(registries, run);
       }
       // One migration door for HP, Mana, Stamina, Energy and Draw. A run that
       // already owns a rules snapshot is only validated; a legacy run resolves
       // the current host rules and preserves existing HP/Mana deficits.
       try {
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
+        if (needsEquipmentStamp) stampDeck(registries, run);
       } catch (e) {
         archive(json, e && e.message ? e.message : 'invalid derived-stat snapshot', slot);
         return null;

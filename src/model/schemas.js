@@ -463,6 +463,24 @@ export const SFX_LAYER_SCHEMAS = Object.freeze({
 // ---------------------------------------------------------------------------
 
 export const SCHEMAS = Object.freeze({
+  basicCardProfile: obj({
+    id: str,
+    role: en('attack', 'guard', 'technique'),
+    baseCardId: ref('cards'),
+    displayName: str,
+    icon: str,
+    damageSchool: en('physical', 'magic', 'arcane'),
+    baseValue: num,
+    scalingStat: ref('attributes'),
+    pointsPerTier: num,
+    rounding: en('floor', 'ceil', 'round'),
+    gainPerTier: num,
+    cap: union(num, str),
+    tags: arr(str),
+    flavor: str,
+    mods: arr(str),
+    compatibility: en('attack-v1', 'guard-v1', 'technique-v1'),
+  }),
   attribute: obj({
     id: str,
     label: str,

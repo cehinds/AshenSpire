@@ -20,7 +20,7 @@ import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
-import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule } from '../model/loadout.js';
+import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot } from '../model/loadout.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -55,8 +55,12 @@ export function createCombat({
   // Run creation owns derived Mana. Older headless fixtures without a Mana
   // pool get a harmless zero pool; class data is never a fallback authority.
   const maxMana = Number.isFinite(player.maxMana) ? player.maxMana : 0;
+  const equipmentProfileRuleSnapshot = player.equipmentProfileRuleSnapshot
+    ? structuredClone(player.equipmentProfileRuleSnapshot)
+    : createEquipmentProfileRuleSnapshot(registries);
   const combat = {
     registries,
+    equipmentProfileRuleSnapshot,
     rng,
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
@@ -545,7 +549,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // the config says a swap re-arms what you are already holding.
   const piles = [combat.piles.draw, combat.piles.discard];
   if (cfg.restampHand) piles.push(combat.piles.hand);
-  const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes };
+  const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 
   // The event carries what it COST and under which rule — a price nobody can

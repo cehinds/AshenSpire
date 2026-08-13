@@ -104,7 +104,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     else p.textContent = state.glyph;
     const preview = createRunState({ seed: 0, classId: state.classId, registries });
     const projection = statProjection(registries, preview);
-    const kit = equipmentKitReceipt(registries, preview.loadout, preview.class, preview.attributes);
+    const kit = equipmentKitReceipt(registries, preview.loadout, preview.class, preview.attributes, preview.equipmentProfileRuleSnapshot);
     const signature = registries.cards.get(registries.classes.get(preview.class).startingSignatureCard);
     const copies = registries.balance.equipment.roleCopies;
     $('#cz-stat-projection').innerHTML = projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')

@@ -1,5 +1,8 @@
 import { tokenRe } from './validate.js';
 import { deriveAttributeTierReceipt } from './derivedStats.js';
+
+const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
+const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
 // The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
@@ -140,7 +143,8 @@ export function validateEquipment(registries) {
     if (!Number.isFinite(profile.pointsPerTier) || profile.pointsPerTier <= 0) problems.push(`${profile.id}: pointsPerTier must be finite and > 0`);
     if (!['floor', 'ceil', 'round'].includes(profile.rounding)) problems.push(`${profile.id}: unknown rounding '${profile.rounding}'`);
     if (!Number.isFinite(profile.gainPerTier)) problems.push(`${profile.id}: gainPerTier must be finite`);
-    if (profile.cap !== '' && profile.cap != null && !Number.isFinite(profile.cap)) problems.push(`${profile.id}: cap must be blank or finite`);
+    if (profile.cap !== '' && profile.cap != null && (!Number.isFinite(profile.cap) || profile.cap < 0)) problems.push(`${profile.id}: cap must be blank or a finite non-negative number`);
+    if (profile.compatibility !== `${profile.role}-v1`) problems.push(`${profile.id}: compatibility '${profile.compatibility}' must match role vocabulary '${profile.role}-v1'`);
     for (const tag of profile.tags || []) if (!tagIds.has(tag)) problems.push(`${profile.id}: unknown profile tag '${tag}'`);
     for (const raw of profile.mods || []) if (!parseMod(`${profile.role}.${raw}`)) problems.push(`${profile.id}: unparseable profile mod '${raw}'`);
   }
@@ -708,6 +712,65 @@ function profileById(registries, id) {
   return ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === id) || null;
 }
 
+function profileRule(profile) {
+  return {
+    ...Object.fromEntries(EQUIPMENT_PROFILE_PATCH_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
+    compatibility: profile.compatibility,
+  };
+}
+
+function profileLayers(options = {}) {
+  return [options.modeModifiers, ...(Array.isArray(options.runModifiers) ? options.runModifiers : options.runModifiers ? [options.runModifiers] : []), options.explicitOverride];
+}
+
+/** Host-owned equipment scaling rows, resolved once and persisted with the run. */
+export function createEquipmentProfileRuleSnapshot(registries, options = {}) {
+  const profiles = Object.fromEntries((registries.equipment.basicCardProfiles || []).map((profile) => [profile.id, profileRule(profile)]));
+  for (const layer of profileLayers(options)) {
+    if (!layer || layer.equipmentProfiles == null) continue;
+    if (!layer.equipmentProfiles || typeof layer.equipmentProfiles !== 'object' || Array.isArray(layer.equipmentProfiles)) throw new Error('equipmentProfiles override must be an object map');
+    for (const [id, patch] of Object.entries(layer.equipmentProfiles)) {
+      if (!profiles[id]) throw new Error(`equipmentProfiles.${id}: unknown profile`);
+      if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error(`equipmentProfiles.${id}: patch must be an object`);
+      for (const key of Object.keys(patch)) if (!EQUIPMENT_PROFILE_PATCH_FIELDS.includes(key)) throw new Error(`equipmentProfiles.${id}.${key}: unknown field`);
+      Object.assign(profiles[id], patch);
+    }
+  }
+  const rarityBonuses = structuredClone(((registries.balance || {}).equipment || {}).rarityBonuses || {});
+  return restoreEquipmentProfileRuleSnapshot({ snapshotVersion: EQUIPMENT_PROFILE_SNAPSHOT_VERSION, profiles, rarityBonuses }, registries);
+}
+
+/** Validate and clone a saved equipment scaling snapshot without live-data repair. */
+export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) throw new Error('equipment profile snapshot must be an object');
+  if (snapshot.snapshotVersion !== EQUIPMENT_PROFILE_SNAPSHOT_VERSION) throw new Error(`unknown equipment profile snapshotVersion ${snapshot.snapshotVersion}`);
+  if (!snapshot.profiles || typeof snapshot.profiles !== 'object' || Array.isArray(snapshot.profiles)) throw new Error('equipment profile snapshot profiles must be an object map');
+  const liveIds = new Set((registries.equipment.basicCardProfiles || []).map((profile) => profile.id));
+  for (const id of Object.keys(snapshot.profiles)) if (!liveIds.has(id)) throw new Error(`equipment profile snapshot has unknown '${id}'`);
+  for (const profile of registries.equipment.basicCardProfiles || []) {
+    const rule = snapshot.profiles[profile.id];
+    if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
+    if (!Number.isFinite(rule.baseValue) || rule.baseValue < 0) throw new Error(`${profile.id}.baseValue must be finite and non-negative`);
+    if (!registries.attributes.has(rule.scalingStat)) throw new Error(`${profile.id}.scalingStat '${rule.scalingStat}' is unknown`);
+    if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error(`${profile.id}.pointsPerTier must be > 0`);
+    if (!['floor', 'ceil', 'round'].includes(rule.rounding)) throw new Error(`${profile.id}.rounding '${rule.rounding}' is unknown`);
+    if (!Number.isFinite(rule.gainPerTier)) throw new Error(`${profile.id}.gainPerTier must be finite`);
+    if (rule.cap != null && (!Number.isFinite(rule.cap) || rule.cap < 0)) throw new Error(`${profile.id}.cap must be null or finite non-negative`);
+    if (rule.compatibility !== `${profile.role}-v1`) throw new Error(`${profile.id}.compatibility '${rule.compatibility}' does not match ${profile.role}-v1`);
+    const legal = [...EQUIPMENT_PROFILE_PATCH_FIELDS, 'compatibility'];
+    for (const key of Object.keys(rule)) if (!legal.includes(key)) throw new Error(`${profile.id}.${key}: unknown equipment profile snapshot field`);
+  }
+  if (!snapshot.rarityBonuses || typeof snapshot.rarityBonuses !== 'object' || Array.isArray(snapshot.rarityBonuses)) throw new Error('equipment profile snapshot rarityBonuses must be an object');
+  for (const [rarity, bonuses] of Object.entries(snapshot.rarityBonuses)) {
+    if (!bonuses || typeof bonuses !== 'object' || Array.isArray(bonuses)) throw new Error(`rarityBonuses.${rarity} must be an object`);
+    for (const [role, value] of Object.entries(bonuses)) {
+      if (!EQUIPMENT_ROLES.includes(role)) throw new Error(`rarityBonuses.${rarity}.${role}: unknown role`);
+      if (!Number.isFinite(value)) throw new Error(`rarityBonuses.${rarity}.${role}: must be finite`);
+    }
+  }
+  return structuredClone(snapshot);
+}
+
 /** Resolve one equipment role from the data-owned ordered source table. */
 export function equipmentRoleSource(registries, loadout, classId, role) {
   const eqBal = (registries.balance || {}).equipment || {};
@@ -728,19 +791,22 @@ export function equipmentKitPlan(registries, loadout, classId) {
   return EQUIPMENT_ROLES.map((role) => equipmentRoleSource(registries, loadout, classId, role));
 }
 
-function roleAmountReceipt(registries, row, attributes) {
+function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnapshot) {
   const profile = row.profile;
-  const tier = deriveAttributeTierReceipt(profile, { attributes, sourceStat: profile.scalingStat });
+  const rule = equipmentProfileRuleSnapshot && equipmentProfileRuleSnapshot.profiles && equipmentProfileRuleSnapshot.profiles[profile.id];
+  if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
+  const tier = deriveAttributeTierReceipt(rule, { attributes, sourceStat: rule.scalingStat });
   const rarity = row.piece && row.piece.rarity;
-  const rarityBonus = ((((registries.balance || {}).equipment || {}).rarityBonuses || {})[rarity] || {})[row.role] || 0;
-  const raw = profile.baseValue + tier.value + rarityBonus;
-  const value = Number.isFinite(profile.cap) ? Math.min(profile.cap, raw) : raw;
-  return { role: row.role, profileId: profile.id, pieceId: row.piece && row.piece.id, base: profile.baseValue, rarity, rarityBonus, ...tier, raw, cap: profile.cap === '' ? null : profile.cap, value };
+  const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
+  const raw = rule.baseValue + tier.value + rarityBonus;
+  const value = Number.isFinite(rule.cap) ? Math.min(rule.cap, raw) : raw;
+  return { role: row.role, profileId: profile.id, pieceId: row.piece && row.piece.id, base: rule.baseValue, rarity, rarityBonus, ...tier, raw, cap: rule.cap, value };
 }
 
 /** Calculation receipts; the tier arithmetic is owned by derivedStats.js. */
-export function equipmentKitReceipt(registries, loadout, classId, attributes) {
-  return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes) }));
+export function equipmentKitReceipt(registries, loadout, classId, attributes, equipmentProfileRuleSnapshot) {
+  const snapshot = restoreEquipmentProfileRuleSnapshot(equipmentProfileRuleSnapshot, registries);
+  return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot) }));
 }
 
 /** The ten-card role distribution, as instance-ready refs. */
@@ -1038,11 +1104,14 @@ export function applyCardMods(def, mods, opts = {}) {
 export function stampDeck(registries, run, cards) {
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
-  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes).map((row) => [row.role, row]));
+  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
     const row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
     if (row && row.profile) {
+      const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
+      const nextCompatibility = run.equipmentProfileRuleSnapshot.profiles[row.profile.id].compatibility;
+      if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible ${inst.equipmentRole} profile swap: ${inst.profileId} (${prior.compatibility}) -> ${row.profile.id} (${nextCompatibility})`);
       inst.cardId = row.profile.baseCardId;
       inst.profileId = row.profile.id;
       inst.profileReceipt = { ...row.receipt };

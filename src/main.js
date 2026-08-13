@@ -1169,6 +1169,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       stamina: run.stamina,
       energyMax: run.energyMax,
       drawPerTurn: run.drawPerTurn,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,

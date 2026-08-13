@@ -688,7 +688,7 @@ export function mountEquipment(host, {
   function cardStrip() {
     const box = document.createElement('div');
     box.className = 'equip-cards';
-    const roles = equipmentKitReceipt(registries, run.loadout, run.class, run.attributes);
+    const roles = equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot);
     const shown = new Set();
     for (const inst of run.deck || []) {
       const key = inst.equipmentRole || `signature:${inst.cardId}`;

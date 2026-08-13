@@ -7,7 +7,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { createLoadout, runMods, stampDeck, startingDeckRefs } from './loadout.js';
+import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot } from './loadout.js';
 import { graceRefillPlan } from './gracerefill.js';
 import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 import {
@@ -100,18 +100,26 @@ export function createRunState({
   // Stamp the starting deck with whatever the loadout says. Bare-handed this
   // is a no-op; in an armour set with `defend.block=+2` it is already true of
   // the very first Defend you draw.
-  stampDeck(registries, run);
   initializeRunDerivedStats(run, registries, {
     snapshot: derivedStatRuleSnapshot,
     derivedStatOptions,
     preserveDeficits: false,
   });
+  stampDeck(registries, run);
   return run;
 }
 
 function derivedOptions(registries, extra = {}) {
+  const statLayer = (layer) => {
+    if (!layer || typeof layer !== 'object') return layer;
+    const { equipmentProfiles, ...stats } = layer;
+    return stats;
+  };
   return {
     ...extra,
+    modeModifiers: statLayer(extra.modeModifiers),
+    runModifiers: Array.isArray(extra.runModifiers) ? extra.runModifiers.map(statLayer) : statLayer(extra.runModifiers),
+    explicitOverride: statLayer(extra.explicitOverride),
     authority: 'host',
     attributeIds: registries.attributes.ids(),
     classFields: ['maxHp', 'maxMana'],
@@ -130,6 +138,9 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const existing = snapshot || run.derivedStatRuleSnapshot;
+  run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
+    ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
+    : createEquipmentProfileRuleSnapshot(registries, derivedStatOptions);
   const currentRuleset = registries.derivedStatRules.rulesetVersion;
   const existingIsCurrent = existing && existing.rulesetVersion === currentRuleset;
   if (existingIsCurrent && run.derivedStatRuleSnapshot
@@ -196,6 +207,7 @@ export const RUN_SHAPE = [
   { key: 'attributes', type: 'object', optional: true },
   // Optional only for the one pre-derived migration at the load door.
   { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
+  { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },

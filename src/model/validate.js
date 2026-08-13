@@ -230,6 +230,29 @@ export function validateContent(bundle) {
   const tagIds = new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => t && t.id).filter(Boolean));
   const vctx = { ids, err, tagIds };
 
+  // Equipment profiles are nested tables, but receive the same strict central
+  // schema walk as top-level registries. Absence is not an empty valid table.
+  const equipment = b.equipment;
+  if (!equipment || typeof equipment !== 'object' || Array.isArray(equipment)) {
+    err('equipment', 'must be an object containing basicCardProfiles');
+  } else if (!Array.isArray(equipment.basicCardProfiles)) {
+    err('equipment.basicCardProfiles', 'Missing required basicCardProfiles array');
+  } else {
+    const seenProfiles = new Set();
+    for (const profile of equipment.basicCardProfiles) {
+      const id = profile && profile.id || '?';
+      walkSchema(profile, SCHEMAS.basicCardProfile, `equipment.basicCardProfiles.${id}`, vctx);
+      if (seenProfiles.has(id)) err(`equipment.basicCardProfiles.${id}`, `Duplicate profile id '${id}'`);
+      seenProfiles.add(id);
+      if (profile && Number.isFinite(profile.baseValue) && profile.baseValue < 0) err(`equipment.basicCardProfiles.${id}.baseValue`, 'must be non-negative');
+      if (profile && Number.isFinite(profile.pointsPerTier) && profile.pointsPerTier <= 0) err(`equipment.basicCardProfiles.${id}.pointsPerTier`, 'must be > 0');
+      if (profile && Number.isFinite(profile.cap) && profile.cap < 0) err(`equipment.basicCardProfiles.${id}.cap`, 'must be non-negative');
+      if (profile && profile.cap !== '' && profile.cap != null && !Number.isFinite(profile.cap)) err(`equipment.basicCardProfiles.${id}.cap`, 'must be blank or finite');
+      if (profile && profile.compatibility !== `${profile.role}-v1`) err(`equipment.basicCardProfiles.${id}.compatibility`, `must match role '${profile.role}-v1'`);
+      for (const tag of (profile && profile.tags) || []) if (!tagIds.has(tag)) err(`equipment.basicCardProfiles.${id}.tags`, `unknown tag '${tag}'`);
+    }
+  }
+
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {
     attributes: SCHEMAS.attribute,
