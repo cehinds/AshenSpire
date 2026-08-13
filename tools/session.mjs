@@ -16,8 +16,9 @@
 // series when they return (see resolveCatchup).
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
-import { createRunState, initializeRunDerivedStats } from '../src/model/state.js';
+import { createRunState, initializeRunDerivedStats, RUN_SCHEMA_VERSION } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
+import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
@@ -72,10 +73,15 @@ export function createSession({ registries, seedString, endless = false, restore
         throw new Error(`Session member '${md.id}' class '${md.classId}' disagrees with run class '${md.run.class}'`);
       }
       normalizeRunAttributes(md.run, registries);
+      const discoveredArmaments = [...new Set(md.discoveredArmaments || [])];
+      const legacyKit = md.run.schemaVersion === 1;
+      validateRunStartingKit(md.run, registries, { discoveredArmaments }, { legacy: legacyKit });
+      if (legacyKit) md.run.schemaVersion = RUN_SCHEMA_VERSION;
       initializeRunDerivedStats(md.run, registries, { preserveDeficits: true });
       members.set(md.id, {
         id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
         connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
+        discoveredArmaments,
         catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
       });
     }
@@ -91,7 +97,8 @@ export function createSession({ registries, seedString, endless = false, restore
 
   function addMember({ id, name, classId, tint, spriteStyle, attributeMode = undefined, attributes = undefined, startingKitId = undefined, discoveredArmaments = [] }) {
     const index = order++;
-    const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: { discoveredArmaments } });
+    const entitlement = [...new Set(discoveredArmaments || [])];
+    const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: { discoveredArmaments: entitlement } });
     const m = {
       id,
       name: String(name || 'Forsaken').slice(0, 18),
@@ -101,6 +108,7 @@ export function createSession({ registries, seedString, endless = false, restore
       tint: tint || 'gold', // chosen accent — colors this hero's sprite for everyone
       spriteStyle: spriteStyle || 'rendered', // rendered PNG / classic SVG / sigil glyph
       run, // per-member build: deck/relics/flasks/hp/maxHp/cinders
+      discoveredArmaments: entitlement,
       rng: memberRng(seed, index),
       catchup: [], // pending missed-node choices (S4 replay)
       cardSeq: 0, // monotonic counter for reward/catch-up card instance ids
@@ -245,6 +253,7 @@ export function createSession({ registries, seedString, endless = false, restore
       maxMana: m.run.maxMana, mana: m.run.mana,
       maxStamina: m.run.maxStamina, stamina: m.run.stamina,
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
+      startingKitId: m.run.startingKitId,
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       relicIds: m.run.relics, flasks: m.run.flasks,
@@ -532,6 +541,7 @@ export function createSession({ registries, seedString, endless = false, restore
   function memberView(m) {
     return {
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
+      startingKitId: m.run.startingKitId,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
       mana: m.run.mana, maxMana: m.run.maxMana,
       stamina: m.run.stamina, maxStamina: m.run.maxStamina,
@@ -565,7 +575,7 @@ export function createSession({ registries, seedString, endless = false, restore
       order,
       members: [...members.values()].map((m) => ({
         id: m.id, name: m.name, index: m.index, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, alive: m.alive,
-        run: m.run, catchup: m.catchup, cardSeq: m.cardSeq, rng: m.rng.getCounters(),
+        run: m.run, discoveredArmaments: [...m.discoveredArmaments], catchup: m.catchup, cardSeq: m.cardSeq, rng: m.rng.getCounters(),
       })),
     };
   }

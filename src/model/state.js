@@ -15,9 +15,9 @@ import {
   restoreDerivedStatRuleSnapshot,
   deriveStat,
 } from './derivedStats.js';
-import { resolveStartingKit } from './startingKits.js';
+import { resolveStartingKit, startingKitSnapshot } from './startingKits.js';
 
-export const RUN_SCHEMA_VERSION = 1;
+export const RUN_SCHEMA_VERSION = 2;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -74,6 +74,7 @@ export function createRunState({
     streamCounters: {},
     class: classId,
     startingKitId: startingKit.id,
+    startingKitSnapshot: startingKitSnapshot(startingKit),
     attributeMode: selectedAttributeMode,
     attributes,
     floor: 0,
@@ -207,6 +208,8 @@ export const RUN_SHAPE = [
   { key: 'seed', type: 'number' },
   { key: 'streamCounters', type: 'object' },
   { key: 'class', type: 'string' },
+  { key: 'startingKitId', type: 'string' },
+  { key: 'startingKitSnapshot', type: 'object' },
   // Optional as a pair only so pre-attribute saves can migrate as one block.
   { key: 'attributeMode', type: 'string', optional: true },
   { key: 'attributes', type: 'object', optional: true },
@@ -247,9 +250,10 @@ function typeOk(value, type) {
 }
 
 /** validateRunShape(run) → [] when sound, else a list of human-readable problems. */
-export function validateRunShape(run) {
+export function validateRunShape(run, { legacy = false } = {}) {
   const problems = [];
   for (const f of RUN_SHAPE) {
+    if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -308,11 +312,16 @@ export function serializeRun(run) {
 export function deserializeRun(json) {
   const run = JSON.parse(json);
   if (!run || typeof run !== 'object') throw new Error('Corrupt run save');
-  if (run.schemaVersion !== RUN_SCHEMA_VERSION) {
+  const legacy = run.schemaVersion === 1;
+  if (!legacy && run.schemaVersion !== RUN_SCHEMA_VERSION) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (expected ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run);
+  const problems = validateRunShape(run, { legacy });
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
+  if (legacy) {
+    run.schemaVersion = RUN_SCHEMA_VERSION;
+    run.migratedFromRunSchemaVersion = 1;
+  }
   return run;
 }
 

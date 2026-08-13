@@ -131,6 +131,7 @@ check(/not discovered|unavailable/i.test(lockedError), 'undiscovered alternate f
 
 if (altRun) {
   const save = createSaveManager(createMemoryStorage());
+  save.saveMeta({ schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], discoveredArmaments: ['greatsword'], discoveryReceipts: [] });
   save.saveRun(altRun);
   const resumed = save.loadRun(R);
   check(resumed?.startingKitId === altRun.startingKitId && resumed.loadout.sets.rightHand[0] === 'greatsword',

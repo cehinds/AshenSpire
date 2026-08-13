@@ -116,6 +116,33 @@ export function resolveStartingKit(registries, classId, requestedId, meta = {}) 
   return row;
 }
 
+export function startingKitSnapshot(kit) {
+  return Object.freeze({
+    id: kit.id,
+    classId: kit.classId,
+    rightHand: kit.rightHand || null,
+    leftHand: kit.leftHand || null,
+  });
+}
+
+/** Validate persisted identity, or stamp the one explicit v1 baseline migration. */
+export function validateRunStartingKit(run, registries, meta = {}, { legacy = false } = {}) {
+  if (legacy) {
+    const baseline = resolveStartingKit(registries, run.class, undefined, {});
+    run.startingKitId = baseline.id;
+    run.startingKitSnapshot = startingKitSnapshot(baseline);
+    return run;
+  }
+  if (typeof run.startingKitId !== 'string') throw new Error('run startingKitId is required');
+  if (!run.startingKitSnapshot || typeof run.startingKitSnapshot !== 'object') throw new Error('run startingKitSnapshot is required');
+  const row = resolveStartingKit(registries, run.class, run.startingKitId, meta);
+  const expected = startingKitSnapshot(row);
+  if (JSON.stringify(run.startingKitSnapshot) !== JSON.stringify(expected)) {
+    throw new Error(`startingKitId '${run.startingKitId}' disagrees with persisted startingKitSnapshot`);
+  }
+  return run;
+}
+
 export function recordArmamentDiscovery(meta, pieceId, {
   progressionMode = 'normal', source = 'unknown', runSeed = null, receiptLimit = 64,
 } = {}) {

@@ -160,10 +160,10 @@ export function attachLan(server, { port, root }) {
   function roster() {
     const out = [];
     for (const pl of session.clients.values()) {
-      out.push({ id: pl.id, name: pl.name, classId: pl.classId, tint: pl.tint, spriteStyle: pl.spriteStyle, ready: pl.ready, isHost: pl.isHost });
+      out.push({ id: pl.id, name: pl.name, classId: pl.classId, startingKitId: pl.startingKitId, tint: pl.tint, spriteStyle: pl.spriteStyle, ready: pl.ready, isHost: pl.isHost });
       // Local (couch) players ride their owner's connection and are always ready.
       (pl.locals || []).forEach((lp, i) => out.push({
-        id: `${pl.id}L${i + 1}`, name: lp.name, classId: lp.classId, tint: lp.tint,
+        id: `${pl.id}L${i + 1}`, name: lp.name, classId: lp.classId, startingKitId: lp.startingKitId, tint: lp.tint,
         spriteStyle: lp.spriteStyle, ready: true, isHost: false, isLocal: true, ownerId: pl.id,
       }));
     }
@@ -199,9 +199,9 @@ export function attachLan(server, { port, root }) {
     const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless });
     const fallbackClass = REG.classes.all()[0].id;
     for (const cl of session.clients.values()) {
-      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, tint: cl.tint, spriteStyle: cl.spriteStyle });
+      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, tint: cl.tint, spriteStyle: cl.spriteStyle });
       (cl.locals || []).forEach((lp, i) => game.addMember({
-        id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, tint: lp.tint, spriteStyle: lp.spriteStyle,
+        id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, startingKitId: lp.startingKitId, discoveredArmaments: lp.discoveredArmaments, tint: lp.tint, spriteStyle: lp.spriteStyle,
       }));
     }
     game.start();
@@ -245,6 +245,8 @@ export function attachLan(server, { port, root }) {
       case 'hello':
         pl.name = String(msg.name || 'Forsaken').slice(0, 18);
         pl.classId = msg.classId || null;
+        pl.startingKitId = msg.startingKitId || null;
+        pl.discoveredArmaments = Array.isArray(msg.discoveredArmaments) ? [...new Set(msg.discoveredArmaments.filter((id) => typeof id === 'string'))] : [];
         pl.tint = msg.tint || 'gold';
         pl.spriteStyle = msg.spriteStyle || 'rendered';
         pl.isHost = !!(hosting && msg.hostKey === hosting.hostKey);
@@ -260,6 +262,8 @@ export function attachLan(server, { port, root }) {
         break;
       case 'pick':
         if (msg.classId) pl.classId = msg.classId;
+        if (msg.startingKitId !== undefined) pl.startingKitId = msg.startingKitId || null;
+        if (Array.isArray(msg.discoveredArmaments)) pl.discoveredArmaments = [...new Set(msg.discoveredArmaments.filter((id) => typeof id === 'string'))];
         if (msg.tint) pl.tint = msg.tint;
         if (msg.spriteStyle) pl.spriteStyle = msg.spriteStyle;
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
@@ -273,6 +277,8 @@ export function attachLan(server, { port, root }) {
         const sane = (Array.isArray(msg.locals) ? msg.locals : []).slice(0, 3).map((lp) => ({
           name: String((lp && lp.name) || 'Forsaken').slice(0, 18),
           classId: (lp && lp.classId) || null,
+          startingKitId: (lp && lp.startingKitId) || null,
+          discoveredArmaments: Array.isArray(lp && lp.discoveredArmaments) ? [...new Set(lp.discoveredArmaments.filter((id) => typeof id === 'string'))] : [],
           tint: (lp && lp.tint) || 'gold',
           spriteStyle: (lp && lp.spriteStyle) || 'rendered',
         }));
@@ -308,7 +314,10 @@ export function attachLan(server, { port, root }) {
         break;
       case 'start':
         if (!pl.isHost) return;
-        startGame();
+        try { startGame(); }
+        catch (error) {
+          sock.write(wsEncode(JSON.stringify({ t: 'startRefused', reason: error && error.message ? error.message : 'invalid starting kit' })));
+        }
         break;
       case 'resume':
         if (!pl.isHost) return;

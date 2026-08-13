@@ -551,6 +551,7 @@ function showLobby() {
   audio.music('title');
   mountLobby(app, {
     registries,
+    meta: saves.loadMeta(),
     defaultSeedString: randomSeedString(),
     onBack: () => showTitle(),
     onStart: ({ conn, myId, myIds }) => {
