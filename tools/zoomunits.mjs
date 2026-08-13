@@ -408,6 +408,7 @@ const SELFTEST = [
   ['tests/fixtures/zoomunits/good_tutorial_3a0def9.js', 'clear', 0],
   ['tests/fixtures/zoomunits/good_divided_by_zoom.js', 'clear', 0],
   ['tests/fixtures/zoomunits/good_no_px_write.js', 'clear', 0],
+  ['tests/fixtures/zoomunits/good_local_box_property_collision.js', 'clear', 0],
 ];
 
 function selftest() {
@@ -457,10 +458,10 @@ function selftest() {
   }
   const covRead = /read (\d+) \.js\/\.mjs file/.exec(covLines.join('\n'));
   const covSkip = /and (\d+) non-JS file\(s\)/.exec(covLines.join('\n'));
-  const covOk = !!covRead && covRead[1] === '5' && !!covSkip && covSkip[1] === '1';
+  const covOk = !!covRead && covRead[1] === '6' && !!covSkip && covSkip[1] === '1';
   console.log(
     `  ${covOk ? 'OK  ' : 'MISS'}  boundary line over tests/fixtures/zoomunits → ` +
-      `"read ${covRead ? covRead[1] : '?'} .js/.mjs" and "${covSkip ? covSkip[1] : '?'} non-JS" (expected 5 and 1)`
+      `"read ${covRead ? covRead[1] : '?'} .js/.mjs" and "${covSkip ? covSkip[1] : '?'} non-JS" (expected 6 and 1)`
   );
 
   const corpusPass = badHit === bad && goodHit === good;
