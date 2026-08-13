@@ -131,17 +131,25 @@ function contract(surface, reading) {
     need(reading.kitCount >= 2, 'creation: baseline and discovered alternate are visible');
     need(reading.chosenKit === 1, 'creation: exactly one kit is selected');
     need(reading.alternateSelected === true, 'creation: the discovered alternate can be selected');
-    need(reading.derived.join('|') === 'HP|Mana|Stamina|Energy / turn|Draw / turn and opening hand',
+    need((reading.derived || []).join('|') === 'HP|Mana|Stamina|Energy / turn|Draw / turn and opening hand',
       'creation: canonical five derived receipts render in order');
     need(reading.roleRows === 4, 'creation: 4/4/1/1 kit receipt exposes three equipment roles plus signature');
-    need(reading.hasReceiptMath === true, 'creation: kit rows show computed receipt math');
+    need(reading.equipmentReceiptRows === 3 && reading.hasReceiptMath === true,
+      'creation: three equipment roles show computed receipt math');
+    need(reading.signatureRows === 1, 'creation: the fourth row is the fixed class signature');
   } else if (surface === 'armoury') {
     need(reading.view === 'hybrid', 'armoury: Hybrid view is selected');
-    need(reading.derived.join('|') === 'HP|Mana|Stamina|Energy / turn|Draw / turn and opening hand',
+    need((reading.derived || []).join('|') === 'HP|Mana|Stamina|Energy / turn|Draw / turn and opening hand',
       'armoury: canonical five derived receipts render in order');
-    need(reading.roles.join('|') === 'attack|guard|technique',
+    need((reading.roles || []).join('|') === 'attack|guard|technique',
       'armoury: Attack, Guard and Technique share one equipment receipt panel');
     need(reading.hasReceiptMath === true, 'armoury: role receipts show base, tier, rarity and total');
+    need(reading.cardsRegionOpen === true, 'armoury: canonical Cards receipt region is visibly open');
+    need(reading.cardCount === 4, 'armoury: Cards region truthfully counts four card types');
+    need(reading.candidateOpen === true, 'armoury: a candidate before/after comparison is visibly open');
+    need(reading.candidateRoles >= 1, 'armoury: candidate comparison exposes before/after card numbers');
+    need(reading.hasRequirements && reading.hasPoise && reading.hasEffects && reading.hasResources,
+      'armoury: candidate comparison exposes requirements, poise, effects and resource changes');
   }
   return failures;
 }
@@ -151,17 +159,23 @@ function proveMutants() {
     title: 'Reallocate Flask Charges', capacity: 3, allocations: ['0/3', '1/2', '2/1', '3/0'], fullMana: true };
   const creation = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
     kitCount: 2, chosenKit: 1, alternateSelected: true,
-    derived: ['HP', 'Mana', 'Stamina', 'Energy / turn', 'Draw / turn and opening hand'], roleRows: 4, hasReceiptMath: true };
+    derived: ['HP', 'Mana', 'Stamina', 'Energy / turn', 'Draw / turn and opening hand'], roleRows: 4,
+    equipmentReceiptRows: 3, signatureRows: 1, hasReceiptMath: true };
   const armoury = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
-    view: 'hybrid', derived: [...creation.derived], roles: ['attack', 'guard', 'technique'], hasReceiptMath: true };
+    view: 'hybrid', derived: [...creation.derived], roles: ['attack', 'guard', 'technique'], hasReceiptMath: true,
+    cardsRegionOpen: true, cardCount: 4, candidateOpen: true, candidateRoles: 3,
+    hasRequirements: true, hasPoise: true, hasEffects: true, hasResources: true };
   const plants = [
     ['missing landmark', 'grace', grace, (x) => { x.mounted = false; }],
     ['allocation drift', 'grace', grace, (x) => { x.allocations[2] = '2/2'; }],
     ['Mana baseline drift', 'grace', grace, (x) => { x.fullMana = false; }],
     ['missing alternate', 'creation', creation, (x) => { x.kitCount = 1; }],
     ['missing role receipt', 'creation', creation, (x) => { x.roleRows = 3; }],
+    ['signature mistaken for scaling math', 'creation', creation, (x) => { x.signatureRows = 0; x.equipmentReceiptRows = 4; }],
     ['duplicate derived math', 'armoury', armoury, (x) => { x.derived[3] = 'Energy'; }],
     ['missing equipment role', 'armoury', armoury, (x) => { x.roles.pop(); }],
+    ['false cards count', 'armoury', armoury, (x) => { x.cardCount = 0; }],
+    ['hidden candidate receipt', 'armoury', armoury, (x) => { x.candidateOpen = false; }],
     ['undersized control', 'grace', grace, (x) => { x.minControl = 43; }],
     ['horizontal bleed', 'armoury', armoury, (x) => { x.horizontalOverflow = 2; }],
   ];
@@ -173,7 +187,7 @@ function proveMutants() {
   const a = JSON.stringify({ surface: 'grace', title: grace.title, capacity: grace.capacity, allocations: grace.allocations });
   const b = JSON.stringify({ surface: 'grace', title: grace.title, capacity: 4, allocations: grace.allocations });
   if (a === b) throw new Error('dead source/dist parity mutant');
-  console.log(`contract mutants: ${plants.length + 1}/10 caught`);
+  console.log(`contract mutants: ${plants.length + 1}/${plants.length + 1} caught`);
 }
 
 const READERS = {
@@ -189,19 +203,23 @@ const READERS = {
       title: root?.querySelector('h3')?.textContent.trim() || '', capacity: Number(/capacity\\D*(\\d+)/i.exec(root?.querySelector('p')?.textContent||'')?.[1]),
       allocations: buttons.map((x) => x.textContent.trim()), fullMana: /Mana\\D*2\\D+2/.test(text) };
   })()`,
-  creation: `(() => {
+  creation: `(async () => {
     const n=(value)=>Math.round(value*100)/100;
     const kitButtons=[...document.querySelectorAll('#cz-kits button')];
     const relevant=[...kitButtons, document.querySelector('.cz-stats summary')].filter(Boolean);
-    const boxes=relevant.map((x)=>x.getBoundingClientRect());
+    const boxes=[];
+    for(const x of relevant){ x.scrollIntoView({block:'center'}); await new Promise((done)=>requestAnimationFrame(()=>requestAnimationFrame(done))); boxes.push(x.getBoundingClientRect()); }
     const derived=[...document.querySelectorAll('#cz-stat-projection > div > b')].map((x)=>x.textContent.trim());
     const roleRows=[...document.querySelectorAll('.cz-kit li')];
+    const equipmentRows=roleRows.filter((x)=>/=/.test(x.textContent));
+    const signatureRows=roleRows.filter((x)=>/class signature/i.test(x.textContent));
     return { mounted: !!document.querySelector('#cz-stat-projection'), horizontalOverflow: Math.max(0,document.documentElement.scrollWidth-innerWidth),
       minControl: boxes.length?n(Math.min(...boxes.map((x)=>Math.min(x.width,x.height)))):0,
       controlsOutside: boxes.filter((x)=>x.left<0||x.right>innerWidth||x.top<0||x.bottom>innerHeight).length,
       kitCount: kitButtons.length, chosenKit: kitButtons.filter((x)=>x.classList.contains('chosen')).length,
       alternateSelected: kitButtons.length>1 && kitButtons[1].classList.contains('chosen'), derived, roleRows: roleRows.length,
-      hasReceiptMath: roleRows.length>0 && roleRows.every((x)=>/=/.test(x.textContent)) };
+      equipmentReceiptRows:equipmentRows.length, signatureRows:signatureRows.length,
+      hasReceiptMath: equipmentRows.length===3 && equipmentRows.every((x)=>/=/.test(x.textContent)) };
   })()`,
   armoury: `(() => {
     const n=(value)=>Math.round(value*100)/100;
@@ -210,11 +228,17 @@ const READERS = {
     const derived=[...document.querySelectorAll('.armoury-derived [data-stat] > b')].map((x)=>x.textContent.trim());
     const roles=[...document.querySelectorAll('.equip-role-receipts [data-role]')].map((x)=>x.dataset.role);
     const receiptText=[...document.querySelectorAll('.equip-role-receipts [data-role]')].map((x)=>x.textContent);
+    const cards=document.querySelector('[data-region="cards"]');
+    const comparison=document.querySelector('.equip-candidate-comparison[open]');
     return { mounted: !!document.querySelector('.armoury-stats'), horizontalOverflow: Math.max(0,document.documentElement.scrollWidth-innerWidth),
       minControl: boxes.length?n(Math.min(...boxes.map((x)=>Math.min(x.width,x.height)))):0,
       controlsOutside: boxes.filter((x)=>x.left<0||x.right>innerWidth||x.top<0||x.bottom>innerHeight).length,
       view: document.querySelector('.armoury')?.dataset.view || '', derived, roles,
-      hasReceiptMath: receiptText.length===3 && receiptText.every((x)=>/base/i.test(x)&&/tier/i.test(x)&&/rarity/i.test(x)&&/=/.test(x)) };
+      hasReceiptMath: receiptText.length===3 && receiptText.every((x)=>/base/i.test(x)&&/tier/i.test(x)&&/rarity/i.test(x)&&/=/.test(x)),
+      cardsRegionOpen:cards?.dataset.collapsed==='0', cardCount:Number(cards?.querySelector('.rf-count')?.textContent.match(/\\d+/)?.[0]),
+      candidateOpen:!!comparison, candidateRoles:comparison?.querySelectorAll('.equip-card-changes [data-role]').length||0,
+      hasRequirements:!!comparison?.querySelector('.equipment-requirements'), hasPoise:!!comparison?.querySelector('.player-poise-receipt'),
+      hasEffects:/Explicit added effects/.test(comparison?.textContent||''), hasResources:/Resource changes/.test(comparison?.textContent||'') };
   })()`,
 };
 
@@ -222,6 +246,16 @@ async function seedProfile(b, base) {
   await b.cdp.send('Page.navigate', { url: base }, b.sessionId);
   await b.until('document.readyState === "complete"', 'base origin');
   await b.evaluate(`localStorage.clear(); localStorage.setItem(${JSON.stringify(META_KEY)}, ${JSON.stringify(PROFILE)}); true`);
+}
+
+async function openCreationFromProfile(b, base) {
+  await seedProfile(b, base);
+  // A shot boot intentionally swaps localStorage for an in-memory store. Enter
+  // through the real title/new-slot flow so this contract observes the seeded
+  // profile through the same save manager a player uses.
+  await b.cdp.send('Page.navigate', { url: base }, b.sessionId);
+  await b.until(`!!document.querySelector('.slot-new[data-slot="1"]')`, 'new slot');
+  await b.evaluate(`document.querySelector('.slot-new[data-slot="1"]').click(); true`);
 }
 
 async function pose(b, base, surface) {
@@ -232,6 +266,7 @@ async function pose(b, base, surface) {
     await b.until('!!document.querySelector("#flask-reallocate")', 'Grace reallocation');
     await b.evaluate('document.querySelector("#flask-reallocate").scrollIntoView({block:"center"}); true');
   } else if (surface === 'creation') {
+    await openCreationFromProfile(b, base);
     await b.until('!!document.querySelector("#cz-stat-projection")', 'creation projection');
     await b.evaluate(`(() => {
       const buttons=[...document.querySelectorAll('#cz-kits button')];
@@ -247,8 +282,15 @@ async function pose(b, base, surface) {
     await b.until('!!document.querySelector(".armoury")', 'Armoury');
     await b.evaluate(`(() => {
       const button=document.querySelector('[data-surface="armouryView"] [data-member="hybrid"]'); if(button) button.click();
-      const stats=document.querySelector('.armoury-stats'); if(stats) stats.scrollIntoView({block:'center'});
+      const fold=document.querySelector('.region-fold[data-fold="cards"]'); if(fold && fold.getAttribute('aria-expanded')==='false') fold.click();
+      const slot=document.querySelector('.equip-slot .es-cell.on')||document.querySelector('.equip-slot .es-cell'); if(slot) slot.click();
       return true;
+    })()`);
+    await b.until('document.querySelector("[data-region=cards]")?.dataset.collapsed==="0"', 'open Cards receipts');
+    await b.until('!!document.querySelector(".equip-candidate-comparison")', 'candidate comparison');
+    await b.evaluate(`(() => {
+      const comparison=document.querySelector('.equip-candidate-comparison'); comparison.open=true;
+      comparison.scrollIntoView({block:'center'}); return true;
     })()`);
   }
   await wait(180);
