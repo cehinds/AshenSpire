@@ -1147,11 +1147,12 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
   // ---- 14. Scripted bot completes a boss combat -------------------------------------
   test('14. bot (leftmost affordable, end turn) finishes a seeded boss fight without throwing', () => {
-    const deck = REG.classes.get('reaver').startingDeck.map((id, i) => ({ instanceId: `c${i}`, cardId: id, upgraded: false }));
+    const fresh = createRunState({ seed: 1, classId: 'reaver', registries: REG });
+    const deck = fresh.deck;
     const c = createCombat({
       registries: REG,
       rng: createRng(0x51deb00b),
-      player: { classId: 'reaver', maxHp: 78, hp: 78, mana: 2, maxMana: 2, deck, relicIds: ['forsakenMedallion'] },
+      player: { classId: 'reaver', attributes: fresh.attributes, maxHp: 78, hp: 78, mana: 2, maxMana: 2, deck, loadout: fresh.loadout, relicIds: ['forsakenMedallion'] },
       enemyIds: ['fellWarden'],
     });
     let guard = 0;
@@ -1367,11 +1368,12 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     // A bot finishes an elite fight with each new class's starting deck.
     for (const classId of ['starseer', 'herald']) {
       const cls = REG.classes.get(classId);
-      const deck = cls.startingDeck.map((id, i) => ({ instanceId: `b${i}`, cardId: id, upgraded: false }));
+      const fresh = createRunState({ seed: 1, classId, registries: REG });
+      const deck = fresh.deck;
       const c = createCombat({
         registries: REG,
         rng: createRng(0xabc0 + classId.length),
-        player: { classId, maxHp: cls.maxHp, hp: cls.maxHp, mana: 2, maxMana: 2, deck, relicIds: [cls.startingRelic] },
+        player: { classId, attributes: fresh.attributes, maxHp: cls.maxHp, hp: cls.maxHp, mana: 2, maxMana: 2, deck, loadout: fresh.loadout, relicIds: [cls.startingRelic] },
         enemyIds: ['wyrmAspirant'],
       });
       let guard = 0;
@@ -1492,11 +1494,12 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
     // Full-fight bot: an upgraded Reaver deck concludes the final boss fight.
     const cls = REG.classes.get('reaver');
-    const deck = [...cls.startingDeck, 'stomp', 'executioner', 'crimsonCleave'].map((id, i) => ({ instanceId: `f${i}`, cardId: id, upgraded: true }));
+    const fresh = createRunState({ seed: 1, classId: 'reaver', registries: REG });
+    const deck = [...fresh.deck.map((c) => ({ ...c, upgraded: true })), ...['stomp', 'executioner', 'crimsonCleave'].map((cardId, i) => ({ instanceId: `f${i}`, cardId, upgraded: true }))];
     const f = createCombat({
       registries: REG,
       rng: createRng(0xf17e),
-      player: { classId: 'reaver', maxHp: 78, hp: 78, deck, relicIds: ['forsakenMedallion'] },
+      player: { classId: 'reaver', attributes: fresh.attributes, maxHp: 78, hp: 78, deck, loadout: fresh.loadout, relicIds: ['forsakenMedallion'] },
       enemyIds: ['blightedValkyrie'],
     });
     let guard = 0;
@@ -1781,14 +1784,14 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const combat = createCombat({
       registries: REG,
       rng,
-      player: { classId: 'reaver', maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds: [], loadout: run.loadout },
+      player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds: [], loadout: run.loadout },
       enemyIds: ['fellWarden'],
     });
     const energyBefore = combat.player.energy;
     dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
     eq(combat.player.energy, energyBefore - bal.swapCost, 'the swap costs what the config says');
     const inHand = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(REG, inHand)), 10, 'every Strike now swings the greatsword');
+    eq(dmgOf(resolveCard(REG, inHand)), 12, 'every Strike now carries the greatsword profile, rarity, tier, and explicit mod');
     // Armour is not something you change with a knight in the room.
     let refused = '';
     try {
@@ -1843,7 +1846,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     saves.saveRun(run, rng);
     const loaded = saves.loadRun(REG);
     eq(loaded.loadout.sets.rightHand[1], 'greatsword', 'the loadout round-trips');
-    eq(dmgOf(resolveCard(REG, loaded.deck.find((c) => c.cardId === 'strike'))), 10, 'stamped cards round-trip');
+    eq(dmgOf(resolveCard(REG, loaded.deck.find((c) => c.cardId === 'strike'))), 12, 'stamped cards round-trip');
 
     // And a run saved before equipment existed is healed, not refused.
     const legacy = JSON.parse(JSON.stringify(run));
@@ -1852,7 +1855,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     storage.setItem(RUN_KEY, JSON.stringify(legacy));
     const healed = saves.loadRun(REG);
     assert(healed && healed.loadout, 'a pre-equipment save loads with a fresh loadout');
-    eq(healed.loadout.sets.rightHand[0], null, 'the healed loadout starts bare-handed');
+    eq(healed.loadout.sets.rightHand[0], 'straightSword', 'the healed loadout restores the class-authored starting weapon');
   });
 
   // ---- 28p. the swap PRICE: three rules, three measured numbers -----------
@@ -1889,7 +1892,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       const combat = createCombat({
         registries: REG,
         rng: createRng(11),
-        player: { classId: 'reaver', maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds, loadout: run.loadout },
+        player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds, loadout: run.loadout },
         enemyIds: ['fellWarden'],
         swapCostRule: rule,
       });
@@ -2178,7 +2181,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     // ---- the gate is on the mutation, not on the screen -------------------
     const fresh = createRunState({ seed: 4, classId: 'reaver', registries: REG });
     assert(!equipPiece(REG, fresh.loadout, 'leftHand', 0, 'greatsword', OWNS_EVERYTHING, AT_CAMP), 'the left hand refuses a right-handed weapon');
-    eq(fresh.loadout.sets.leftHand[0], null, 'and a refusal leaves the slot exactly as it found it');
+    eq(fresh.loadout.sets.leftHand[0], 'roundShield', 'and a refusal leaves the authored starting shield exactly as it found it');
     assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'buckler', OWNS_EVERYTHING, AT_CAMP), 'a left-hand piece goes in');
     assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), "an 'either' piece goes in the left hand");
     assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, AT_CAMP), '…and in the right hand');
@@ -2400,7 +2403,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     // Same registries, same profile, `basicTag` cleared: the shelf goes back to
     // the pre-A7 number, which is the measurement the line above used to be.
     const noBasics = { ...REG, balance: { ...REG.balance, equipment: { ...REG.balance.equipment, basicTag: '' } } };
-    eq(rightPool.filter((p) => ownership(noBasics, { meta: {}, loadout: fresh }).has(p)).length, 0,
+    eq(rightPool.filter((p) => ownership(noBasics, { meta: {}, loadout: fresh }).has(p)).map((p) => p.id).join(','), 'straightSword',
       'with basicTag cleared a fresh profile is offered 0 again — the tag, not a hard-coded list');
 
     // ---- 2. …and what it finds, it is offered, and ONLY that --------------
@@ -2434,7 +2437,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const probe = createLoadout(REG, 'reaver');
     assert(!equipPiece(REG, probe, 'rightHand', 0, 'greatsword', none, AT_CAMP),
       'an unowned armament cannot be equipped even when it fits');
-    eq(probe.sets.rightHand[0], null, 'and the refusal left the slot alone');
+    eq(probe.sets.rightHand[0], 'straightSword', 'and the refusal left the authored starting weapon alone');
     assert(equipPiece(REG, probe, 'rightHand', 0, 'dagger', two, AT_CAMP), 'an owned one goes in');
 
     // ---- 6. the ladder: three states from two integers --------------------
@@ -2758,7 +2761,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       if (!equipPiece(REG, rich, 'rightHand', 0, piece.id, OWNS_EVERYTHING, MID_FIGHT)) refusedAll += 1;
     }
     eq(refusedAll, pool.length, `every one of ${pool.length} owned, fitting pieces is refused mid-fight`);
-    eq(rich.sets.rightHand[0], null, 'and after the whole sweep the slot is still as it started');
+    eq(rich.sets.rightHand[0], 'straightSword', 'and after the whole sweep the slot is still at its authored start');
     // …and the same sweep at camp is the control group. If BOTH sides refused,
     // the count above would be green for the wrong reason.
     let tookAll = 0;
@@ -2823,7 +2826,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       }
     } finally { console.error = hush2; }
     eq(refusedShapes, shapes.length, `every one of ${shapes.length} non-boolean contexts is refused`);
-    eq(shapeProbe.sets.rightHand[0], null, 'and none of them moved a piece');
+    eq(shapeProbe.sets.rightHand[0], 'straightSword', 'and none of them moved the authored starting piece');
 
     // WHICH LAYER REFUSED, and this assertion exists because the plant for it
     // stayed GREEN. `canEquip` also refuses a non-boolean, so with only the

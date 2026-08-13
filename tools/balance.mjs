@@ -18,6 +18,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createRunState } from '../src/model/state.js';
 
 // A no-op punching bag for measuring unopposed player DPS.
 const DUMMY = { id: 'balanceDummy', name: 'Dummy', hp: [100000, 100000], poiseMax: 999999, moves: { wait: { intent: 'unknown', weight: 1 } } };
@@ -58,16 +59,17 @@ function botStep(c) {
   catch { dispatch(c, { type: 'endTurn' }); }
 }
 
-function newDeck(cls) {
-  return cls.startingDeck.map((id, i) => ({ instanceId: `c${i}`, cardId: id, upgraded: false }));
+function newRun(classId) {
+  return createRunState({ seed: 1, classId, registries: REG });
 }
 
 // Measured unopposed DPS: bot vs. the dummy for T player turns.
 function measureDps(classId, T = 10) {
   const cls = REG.classes.get(classId);
+  const run = newRun(classId);
   const c = createCombat({
     registries: REG, rng: createRng(0xba1a),
-    player: { classId, maxHp: cls.maxHp, hp: cls.maxHp, deck: newDeck(cls), relicIds: [cls.startingRelic] },
+    player: { classId, attributes: run.attributes, maxHp: run.maxHp, hp: run.maxHp, deck: run.deck, loadout: run.loadout, relicIds: [cls.startingRelic] },
     enemyIds: ['balanceDummy'],
   });
   let guard = 0;
@@ -79,9 +81,10 @@ function measureDps(classId, T = 10) {
 // Bot fights one encounter from full HP; returns { win, hpLost }.
 function simFight(classId, enemyIds, seed) {
   const cls = REG.classes.get(classId);
+  const run = newRun(classId);
   const c = createCombat({
     registries: REG, rng: createRng(seed),
-    player: { classId, maxHp: cls.maxHp, hp: cls.maxHp, deck: newDeck(cls), relicIds: [cls.startingRelic] },
+    player: { classId, attributes: run.attributes, maxHp: run.maxHp, hp: run.maxHp, deck: run.deck, loadout: run.loadout, relicIds: [cls.startingRelic] },
     enemyIds,
   });
   let guard = 0;

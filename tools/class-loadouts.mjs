@@ -5,6 +5,8 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { validateEquipment, stampDeck } from '../src/model/loadout.js';
+import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
+import { createRng } from '../src/engine/rng.js';
 
 let passed = 0;
 let failed = 0;
@@ -53,6 +55,33 @@ check((magic?.effects.find((e) => e.op === 'damage')?.tags || []).includes('star
 check(Array.isArray(magic?.cardTags) && magic.cardTags.includes('starstone'),
   'Ash Staff attack presents its explicit magic/starstone tag', JSON.stringify(magic?.cardTags));
 check(R.cards.get('starstonePebble').name === 'Starstone Pebble', 'IP-safe Starstone Pebble remains authoritative');
+check(attack?.profileReceipt?.base === 2 && attack.profileReceipt.tier === 2
+  && attack.profileReceipt.rarityBonus === 0 && attack.profileReceipt.value === 4,
+  'Ash Staff INT receipt is exactly 2 + 2 + 0 = 4', JSON.stringify(attack?.profileReceipt));
+check(magic?.effects.find((e) => e.op === 'damage')?.amount === 4,
+  'resolved Ash Staff execution definition uses receipt value 4', JSON.stringify(magic?.effects));
+
+const C = createCombat({
+  registries: R,
+  rng: createRng(71),
+  player: {
+    classId: 'starseer', attributes: starseer.attributes, maxHp: starseer.maxHp, hp: starseer.hp,
+    maxMana: starseer.maxMana, mana: starseer.mana, maxStamina: starseer.maxStamina, stamina: starseer.stamina,
+    energyMax: starseer.energyMax, drawPerTurn: starseer.drawPerTurn, deck: starseer.deck,
+    relicIds: [], flasks: [], loadout: starseer.loadout,
+  },
+  enemyIds: [R.enemies.ids()[0]],
+});
+let liveAttack = [...C.piles.hand, ...C.piles.draw].find((c) => c.equipmentRole === 'attack');
+if (!C.piles.hand.includes(liveAttack)) {
+  C.piles.draw.splice(C.piles.draw.indexOf(liveAttack), 1);
+  C.piles.hand.push(liveAttack);
+}
+const previewDamage = previewCard(C, liveAttack.instanceId, 'e1').values.find((v) => v.op === 'damage').value;
+const hpBefore = C.enemies[0].hp;
+dispatch(C, { type: 'playCard', cardInstanceId: liveAttack.instanceId, targetId: 'e1' });
+check(previewDamage === 4 && hpBefore - C.enemies[0].hp === previewDamage,
+  'Ash Staff magic preview and execution share exact value 4', `${previewDamage}/${hpBefore - C.enemies[0].hp}`);
 
 // Stable role identity: a profile swap may change what the card resolves to,
 // never its instance id, upgrade flag, or signature card.
@@ -70,7 +99,7 @@ if (attack) {
 function mutant({ classPatch, equipmentPatch, piecePatch, profilePatch, balancePatch }) {
   const classes = contentBundle.classes.map((c) => c.id === 'starseer' ? { ...c, ...classPatch } : { ...c });
   const armaments = contentBundle.equipment.armaments.map((a) => a.id === 'ashStaff' ? { ...a, ...piecePatch } : { ...a });
-  const profiles = (contentBundle.equipment.basicCardProfiles || []).map((p) => p.id === 'ashStaffAttack' ? { ...p, ...profilePatch } : { ...p });
+  const profiles = (contentBundle.equipment.basicCardProfiles || []).map((p) => p.id === 'staffMagicAttack' ? { ...p, ...profilePatch } : { ...p });
   return createRegistries({
     ...contentBundle,
     balance: { ...contentBundle.balance, ...balancePatch },
