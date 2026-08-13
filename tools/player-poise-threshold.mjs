@@ -114,6 +114,19 @@ check('validator covers armour independently of armaments', () => {
   assert(/poiseThreshold/i.test(errorText(bundle)), 'armour omission escaped validation');
 });
 
+check('validator names every individual equipment row when its authored value disappears', () => {
+  for (const table of ['armaments', 'armour']) {
+    for (let i = 0; i < contentBundle.equipment[table].length; i++) {
+      const bundle = mutableBundle();
+      const row = bundle.equipment[table][i];
+      delete row.poiseThreshold;
+      const said = errorText(bundle);
+      assert(said.includes(`equipment.${table}.${row.id}.poiseThreshold`), `${table}.${row.id} omission was not named`);
+    }
+  }
+  return `${pieceRows().length} omission mutants`;
+});
+
 check('poiseThresholdAdd is one registered numeric relic-passive key', () => {
   equal(PASSIVE_TYPES.poiseThresholdAdd, 'num', 'PASSIVE_TYPES.poiseThresholdAdd');
   const authored = contentBundle.relics.filter((row) => row.passives && own(row.passives, 'poiseThresholdAdd'));
@@ -129,10 +142,21 @@ check('relic schema refuses a nonnumeric poiseThresholdAdd modifier', () => {
   assert(/poiseThresholdAdd.*(expected num|expected number|must be a number)/i.test(said), `nonnumeric modifier was not type-refused: ${said.match(/.*poiseThresholdAdd.*/i)?.[0] || 'no error'}`);
 });
 
+check('relic modifier numeric corpus refuses NaN, Infinity, negative, and fractional values', () => {
+  for (const value of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5]) {
+    const bundle = mutableBundle();
+    bundle.relics[0].passives = { ...(bundle.relics[0].passives || {}), poiseThresholdAdd: value };
+    const said = errorText(bundle);
+    assert(/poiseThresholdAdd.*finite non-negative integer/i.test(said), `${String(value)} escaped relic numeric validation`);
+  }
+});
+
 check('one pure playerPoiseThresholdReceipt reader owns the projection', () => {
   assert(typeof projectionModel.playerPoiseThresholdReceipt === 'function', 'statProjection.js does not export playerPoiseThresholdReceipt');
   const registries = createRegistries(contentBundle);
   const run = createRunState({ seed: 0x5015e, classId: 'reaver', registries });
+  run.loadout.sets.rightHand[1] = 'greatsword';
+  run.relics.push('curedHide');
   const before = JSON.stringify(run);
   const receipt = projectionModel.playerPoiseThresholdReceipt(registries, run);
   equal(JSON.stringify(run), before, 'receipt reader mutated the run');
@@ -140,6 +164,9 @@ check('one pure playerPoiseThresholdReceipt reader owns the projection', () => {
   assert(Number.isFinite(receipt.equipment) && Number.isFinite(receipt.relic), 'receipt subtotals are not finite');
   equal(receipt.raw, receipt.equipment + receipt.relic, 'receipt raw subtotal');
   equal(receipt.value, receipt.raw, 'inert receipt value');
+  equal(receipt.relic, 2, 'Cured Hide contribution is counted once');
+  assert(!receipt.sources.some((source) => source.id === 'greatsword'), 'inactive right-hand set contributed');
+  equal(receipt.sources.filter((source) => source.kind === 'equipment').length, 3, 'one active right hand, left hand, and armour source');
   equal(receipt.active, false, 'receipt must explicitly remain inert');
   assert(/no current consumer/i.test(receipt.note || ''), 'receipt does not disclose that it has no consumer');
 });
