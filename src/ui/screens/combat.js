@@ -26,7 +26,7 @@ import { trackGesture } from '../gesture.js';
 import { resourceBars, markFlooredBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer, armInspect } from '../components/holdconfirm.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
@@ -698,6 +698,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   function renderHand() {
     const hand = $('.hand');
     hand.innerHTML = '';
+    // The one home of the duration is balance.ui.inspectHold; the Number()||0
+    // shape is why model/validate.js checks that row loud — an unreadable
+    // value here would silently turn the gesture off.
+    const inspectMs = Number((registries.balance.ui.inspectHold || {}).ms) || 0;
     const handList = disp ? disp.hand : combat.piles.hand;
     const n = handList.length;
     handList.forEach((inst, i) => {
@@ -726,6 +730,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         hint.textContent = i < 9 ? i + 1 : 'Q';
         el.appendChild(hint);
       }
+      // The reading hold — EVERY card, before the play wiring on purpose:
+      // affordability gates playing, never reading (the card you cannot pay
+      // for is the one you most need to read), and same-element listeners run
+      // in registration order, which is what lets a completed read's lift die
+      // in armInspect's click handler instead of selecting or playing below.
+      armInspect(el, { ms: inspectMs, onOpen: hideTooltip });
       if (pv) wireCardInput(el, inst, pv, affordable);
       hand.appendChild(el);
     });
@@ -783,6 +793,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       // onUp — is the one that played a cancelled drag's card on the next tap
       // (Vira's misplay: discard 0->1 from a tap on a DIFFERENT pointerId).
       const onMove = (mv) => {
+        // An OPEN inspect owns this press: a finger drifting while reading an
+        // expanded card must not start a drag whose release over the field
+        // would PLAY a no-target card — a read must never be able to become a
+        // commit. Guarded on 'open' only: while merely pending, a real drag
+        // crossing the shared 12 px boundary abandons the inspect in the same
+        // event and proceeds here, whichever handler ran first.
+        if (el.dataset.inspect === 'open') return;
         if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > 12) {
           dragging = true;
           hideTooltip();

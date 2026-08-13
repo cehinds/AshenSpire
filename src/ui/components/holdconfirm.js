@@ -76,6 +76,7 @@
 import { trackGesture } from '../gesture.js';
 import { beatFor } from '../../model/secondbeat.js';
 import { sfx } from '../sfx.js';
+import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 
 /** How far a finger may wander before the hold is read as a drag. */
 const SLOP = 12;
@@ -247,6 +248,199 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
   // way a control whose own screen rewrites its innerHTML keeps its dressing.
   disarm.refresh = dress;
   return disarm;
+}
+
+// ---------------------------------------------------------------------------
+// THE INSPECT FORM — press-and-hold to READ, and it is deliberately not a beat.
+//
+// Constantine, 2026-08-08: hold a card and it "expands" and comes "in front".
+// This is the gesture half of that ask, built against the hand as it ships;
+// the LAYOUT half (overlap vs paging — C2) is held and lands on top of this
+// later without touching it.
+//
+// WHY IT LIVES IN THIS FILE AND IS NOT A ROW IN model/secondbeat.js. The table
+// rules on COMMITS — what a mis-press writes. An inspect writes nothing:
+// stakes `nothing`, and the table's own derivation already answers `none` for
+// that. So it takes no row, calls no `beatFor`, and no control marks itself
+// `data-beat` for it. What it SHARES with the hold form is the machinery —
+// SLOP, trackGesture's lifecycle, the fire-at-full shape — which is why it is
+// a neighbour and not a copy.
+//
+// WHY IT IS SILENT, and this is Vega's call to make and sign. Three reasons,
+// each sufficient:
+//   1. The hold-beat phrase (holdbeat.js) is authored to MEAN "an irreversible
+//      commit is approaching" — the accelerating train, the arrival note. An
+//      inspect commits nothing, so playing that phrase here would teach the
+//      arrival note a second meaning and the cue would start lying about
+//      system state on the controls where it matters.
+//   2. Frequency. Inspecting is reading; it will fire more than any hold in
+//      the game. The cost of a charming sound is paid at hold #200.
+//   3. Unlike End Turn, the confirmation is not occluded: the expanded card is
+//      most of the screen and nowhere near the thumb. The eye already has it.
+// So: no BEAT_CUES entry, no `data-hold` (holdbeat.js filters on that name and
+// stays silent), its own attributes. If a soft page-turn is ever wanted, it is
+// one `sfx.play` at ONE call site — `open()` below — and Sunna's read decides,
+// not this comment.
+//
+// WHAT IT PUBLISHES, because an instrument and a screenshot must read the
+// gesture without becoming its finger: `data-inspect` = idle | pending | open,
+// and `data-inspect-progress` while pending. A mid-hold check reads the
+// attribute; it never has to time a camera against a 400 ms window.
+//
+// DISAMBIGUATION AGAINST TAP AND DRAG — one shared boundary, one timer:
+//   move > SLOP px, any time  -> a DRAG (or the narrow hand's pan-x scroll).
+//                                The inspect abandons silently; whoever owns
+//                                drags proceeds. Same 12 px the drag itself
+//                                uses to start, so there is no gap band.
+//   still, release < ms       -> a TAP. The click passes through untouched.
+//   still, past ms            -> the INSPECT. Expands at full, front, under
+//                                the finger; RELEASE closes it and the click
+//                                that follows is swallowed exactly once —
+//                                a completed read must never become a play.
+//   once open, movement does NOTHING here, and the caller is expected to
+//   refuse to start a drag while `data-inspect="open"` (combat does): the
+//   alternative — collapse into a live drag — lets a 13 px reading drift end
+//   with a no-target card PLAYED on release over the field. A read must not
+//   be able to become a commit; lift and aim again.
+//
+// LAW 4 / RESTORE: the expanded copy is `pointer-events: none`, steals no
+// focus, covers no tap floor it can eat, and release removes it entirely —
+// the hand under it is byte-for-byte untouched. On cancel (browser claims the
+// gesture) the click swallow is NOT armed — no click follows a cancel, and a
+// stale swallow eats the next real tap (Vira's F3, learned once already).
+// ---------------------------------------------------------------------------
+
+/** One expanded card at a time — a property of the form, not of any screen. */
+let activeInspect = null;
+
+/**
+ * armInspect(el, { ms, onOpen }) -> disarm()
+ *
+ * `ms` <= 0 is the off position: no listeners' worth of behaviour changes —
+ * the tap and the drag are exactly the pre-inspect tree. `onOpen` runs at the
+ * moment the copy appears (combat passes hideTooltip so a mouse hold does not
+ * stack the hover tooltip under the expansion).
+ */
+export function armInspect(el, { ms, onOpen = null } = {}) {
+  let raf = 0;
+  let phase = 'idle'; // idle | pending | open
+  let ghost = null;
+  let swallowClick = false;
+
+  const setState = (s) => {
+    phase = s;
+    el.dataset.inspect = s;
+    if (s !== 'pending') delete el.dataset.inspectProgress;
+  };
+
+  function buildGhost() {
+    // All values in LOCAL px, converted once — the dragGhost's #15 lesson:
+    // clientX is visual px and style.left is local px, and writing one into
+    // the other runs away from the finger at every zoom but 1.00.
+    const view = viewportLocalBox();
+    const r = anchorLocalBox(VIEWPORT_ORIGIN, el);
+    // Big enough to read, never past the screen: capped by width, by the top
+    // ~60% of the height (so it clears the hand it came from), and at 2.6x.
+    const k = Math.min((view.width * 0.78) / r.width, (view.height * 0.6) / r.height, 2.6);
+    const g = el.cloneNode(true);
+    g.classList.add('card-inspect');
+    g.classList.remove('selected');
+    g.removeAttribute('data-inspect');
+    g.removeAttribute('data-inspect-progress');
+    // The positional quick-play badge is a fact about a SLOT in the hand; a
+    // copy floating mid-screen has no slot and the badge would lie.
+    const hint = g.querySelector('.key-hint');
+    if (hint) hint.remove();
+    // Explicit width/height from the measured box: the clone leaves the
+    // `.hand`-scoped sizing rules behind when it moves to <body>, and WYSIWYG
+    // beats whatever the base class thinks a card is.
+    g.style.cssText = 'position:fixed;z-index:630;pointer-events:none;margin:0;'
+      + `left:${(view.width - r.width * k) / 2}px;top:${(view.height - r.height * k) / 2}px;`
+      + `width:${r.width}px;height:${r.height}px;transform:scale(${k});transform-origin:top left;`;
+    document.body.appendChild(g);
+    return g;
+  }
+
+  function close() {
+    if (ghost) { ghost.remove(); ghost = null; }
+    if (activeInspect === close) activeInspect = null;
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    setState('idle');
+  }
+
+  function open() {
+    if (activeInspect) activeInspect();
+    activeInspect = close;
+    setState('open');
+    ghost = buildGhost();
+    if (onOpen) onOpen();
+    // Deliberately no sound. See the header — the reasons are numbered.
+  }
+
+  function begin(ev) {
+    swallowClick = false;
+    if (!(ms > 0)) return;
+    if (ev.button !== 0 || phase !== 'idle') return;
+    setState('pending');
+    const t0 = performance.now();
+    const x0 = ev.clientX;
+    const y0 = ev.clientY;
+
+    const tick = (now) => {
+      // A screen that re-renders its hand mid-gesture (combat rewrites
+      // .hand's innerHTML on every state change) detaches this element and
+      // its listeners with it — pointerup can never arrive, so the watch
+      // closes the copy rather than stranding it on <body> forever.
+      if (!el.isConnected) { close(); return; }
+      if (phase === 'pending') {
+        const p = Math.min(1, (now - t0) / ms);
+        el.dataset.inspectProgress = p.toFixed(3);
+        if (p >= 1) { open(); }
+      }
+      if (phase !== 'idle') raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    trackGesture(ev, {
+      onMove: (mv) => {
+        // Past the shared boundary this press is a drag (or the narrow
+        // hand's scroll) — theirs, silently. Once open, movement is the
+        // finger drifting while reading and changes nothing here.
+        if (phase === 'pending' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();
+      },
+      onEnd: (up, { cancelled }) => {
+        // Swallow only what a completed read's LIFT produces. A cancel is
+        // followed by no click, and arming the swallow there eats the next
+        // real tap instead (F3's shape).
+        if (phase === 'open' && !cancelled) swallowClick = true;
+        close();
+      },
+    });
+  }
+
+  // Registered BEFORE the screen's own click wiring (the caller's job, and
+  // combat's renderHand does) so a read's lift dies here and never selects or
+  // plays. `detail === 0` is keyboard / pad — not a press, never an inspect.
+  const onClick = (ev) => {
+    if (ev.detail === 0) return;
+    if (!swallowClick) return;
+    swallowClick = false;
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+  };
+
+  // Marked at rest, so an instrument can enumerate what is inspectable and a
+  // screenshot of the idle hand carries its state — same reason armHold
+  // dresses its button. With the row at 0 nothing is marked and nothing runs.
+  if (ms > 0) setState('idle');
+  el.addEventListener('pointerdown', begin);
+  el.addEventListener('click', onClick);
+  return function disarm() {
+    close();
+    el.removeEventListener('pointerdown', begin);
+    el.removeEventListener('click', onClick);
+  };
 }
 
 // ---------------------------------------------------------------------------
