@@ -290,7 +290,10 @@ async function pose(b, base, surface) {
     await b.until('!!document.querySelector(".equip-candidate-comparison")', 'candidate comparison');
     await b.evaluate(`(() => {
       const comparison=document.querySelector('.equip-candidate-comparison'); comparison.open=true;
-      comparison.scrollIntoView({block:'center'}); return true;
+      const pane=comparison.closest('.armoury-right');
+      if(pane) pane.scrollIntoView({block:'start'});
+      comparison.scrollIntoView({block:'center'});
+      return true;
     })()`);
   }
   await wait(180);
@@ -317,11 +320,23 @@ async function main() {
             await pose(b, bases[tree], surface);
             reading = await b.evaluate(READERS[surface]);
           } catch (reason) { error = reason.message; }
+          let detailShot = null;
+          if (!error && (surface === 'creation' || surface === 'armoury')) {
+            detailShot = resolve(OUT, `${tree}-${surface}-detail-${shape.tag}.png`);
+            const detailImage = await b.cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, b.sessionId);
+            writeFileSync(detailShot, Buffer.from(detailImage.data, 'base64'));
+            if (surface === 'creation') {
+              await b.evaluate(`document.querySelector('#cz-kits')?.scrollIntoView({block:'start'}); true`);
+            } else {
+              await b.evaluate(`(() => { const cards=document.querySelector('[data-region="cards"]'); if(cards){cards.scrollTop=0;cards.scrollIntoView({block:'center'});} return true; })()`);
+            }
+            await wait(100);
+          }
           const shot = resolve(OUT, `${tree}-${surface}-${shape.tag}.png`);
           const image = await b.cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, b.sessionId);
           writeFileSync(shot, Buffer.from(image.data, 'base64'));
           const failures = [...(error ? [`drive: ${error}`] : []), ...contract(surface, reading)];
-          rows.push({ tree, surface, shape: shape.tag, reading, failures, shot });
+          rows.push({ tree, surface, shape: shape.tag, reading, failures, shot, ...(detailShot ? { detailShot } : {}) });
           console.log(`${failures.length ? 'RED ' : 'PASS'} ${tree.padEnd(6)} ${surface.padEnd(8)} ${shape.tag} -> ${shot}`);
           for (const failure of failures) console.log(`     ${failure}`);
           console.log(`     read ${JSON.stringify(reading)}`);
@@ -344,7 +359,7 @@ async function main() {
   }
   const red = rows.filter((row) => row.failures.length);
   writeFileSync(resolve(OUT, 'presentation-matrix.json'), JSON.stringify(rows, null, 2));
-  console.log(`\npresentation-matrix: ${rows.length - red.length}/12 green, ${red.length}/12 red; 12/12 screenshots written`);
+  console.log(`\npresentation-matrix: ${rows.length - red.length}/12 green, ${red.length}/12 red; 20/20 screenshots written (12 primary + 8 detail)`);
   console.log('BOUNDARY: headless Chrome stills at two phone shapes. This checks DOM truth, geometry, and source/dist parity; it does not certify touch feel, animation, or desktop.');
   process.exit(red.length ? 1 : 0);
 }
