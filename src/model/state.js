@@ -159,6 +159,18 @@ export function initializeRunDerivedStats(run, registries, {
     : createEquipmentProfileRuleSnapshot(registries, derivedStatOptions);
   const currentRuleset = registries.derivedStatRules.rulesetVersion;
   const existingIsCurrent = existing && existing.rulesetVersion === currentRuleset;
+  if (existingIsCurrent && run.derivedStatRuleSnapshot) {
+    const restored = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+    const classDef = registries.classes.get(run.class);
+    for (const [key, statId] of [['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
+      const value = run[key];
+      if (!Number.isInteger(value) || value < 0) {
+        throw new Error(`Persisted ${key} must be a non-negative integer under its derived-stat snapshot`);
+      }
+      const expected = deriveStat(restored.rules, statId, { attributes: run.attributes, classDef }).value;
+      if (value !== expected) throw new Error(`Persisted ${key} ${value} contradicts derived-stat snapshot value ${expected}`);
+    }
+  }
   if (existingIsCurrent && run.derivedStatRuleSnapshot
     && run.maxHp !== undefined && run.hp !== undefined
     && run.maxMana !== undefined && run.mana !== undefined
@@ -324,8 +336,8 @@ export function validateRunShape(run, { legacy = false } = {}) {
       problems.push('flaskCharges must satisfy hp + mana = capacity with bounded current counts');
     }
   }
-  if (run.energyMax !== undefined && (!Number.isFinite(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be >= 0');
-  if (run.drawPerTurn !== undefined && (!Number.isFinite(run.drawPerTurn) || run.drawPerTurn < 0)) problems.push('drawPerTurn must be >= 0');
+  if (run.energyMax !== undefined && (!Number.isInteger(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be a non-negative integer');
+  if (run.drawPerTurn !== undefined && (!Number.isInteger(run.drawPerTurn) || run.drawPerTurn < 0)) problems.push('drawPerTurn must be a non-negative integer');
   return problems;
 }
 
@@ -373,7 +385,9 @@ export function deserializeRun(json) {
 /**
  * Player combat entity. statuses: { [statusId]: { stacks, duration?, meter? } }.
  */
-export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax = 3, drawPerTurn = 5 }) {
+export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn }) {
+  if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
+  if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
   return {
     id: 'player',
     kind: 'player',

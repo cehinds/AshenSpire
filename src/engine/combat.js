@@ -67,7 +67,7 @@ export function createCombat({
     phase: 'setup', // 'player' | 'enemy' | 'ended'
     result: null, // null | 'victory' | 'defeat'
     handMax: bal.handMax != null ? bal.handMax : 10,
-    drawPerTurn: player.drawPerTurn != null ? player.drawPerTurn : (bal.draw != null ? bal.draw : 5),
+    drawPerTurn: player.drawPerTurn,
     player: createPlayerCombatEntity({
       classId: player.classId,
       maxHp: player.maxHp,
@@ -79,8 +79,8 @@ export function createCombat({
       relicIds: player.relicIds || [],
       flasks: player.flasks || [],
       flaskCharges: player.flaskCharges || null,
-      energyMax: player.energyMax != null ? player.energyMax : (bal.energy != null ? bal.energy : 3),
-      drawPerTurn: player.drawPerTurn != null ? player.drawPerTurn : (bal.draw != null ? bal.draw : 5),
+      energyMax: player.energyMax,
+      drawPerTurn: player.drawPerTurn,
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is

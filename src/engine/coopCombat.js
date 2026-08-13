@@ -59,8 +59,6 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
     phase: 'setup', // 'player' | 'enemy' | 'ended' | 'suspended'
     result: null,
     handMax: bal.handMax != null ? bal.handMax : 10,
-    drawPerTurn: bal.draw != null ? bal.draw : 5,
-    energyMax: bal.energy != null ? bal.energy : 3,
     enemies: [],
     eventLog: [],
     queue: [],
@@ -126,8 +124,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     mana: p.mana,
     maxStamina: p.maxStamina, stamina: p.stamina,
     relicIds: p.relicIds || [], flasks: p.flasks || [], flaskCharges: p.flaskCharges || null,
-    energyMax: p.energyMax != null ? p.energyMax : C.energyMax,
-    drawPerTurn: p.drawPerTurn != null ? p.drawPerTurn : C.drawPerTurn,
+    energyMax: p.energyMax,
+    drawPerTurn: p.drawPerTurn,
   });
   const deck = (p.deck || []).map((c) => ({
     instanceId: c.instanceId,

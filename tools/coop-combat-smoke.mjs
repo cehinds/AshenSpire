@@ -22,9 +22,11 @@ function deckOf(classId) {
   return run.deck.map((card, i) => ({ ...card, instanceId: `${classId[0]}${i}` }));
 }
 function players() {
+  const starseer = createRunState({ seed: 1, classId: 'starseer', registries: REG });
+  const reaver = createRunState({ seed: 1, classId: 'reaver', registries: REG });
   return [
-    { id: 'p1', name: 'Wren', classId: 'starseer', maxHp: 72, hp: 72, deck: deckOf('starseer'), relicIds: [], flasks: [] },
-    { id: 'p2', name: 'Fenn', classId: 'reaver', maxHp: 84, hp: 84, deck: deckOf('reaver'), relicIds: [], flasks: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', maxHp: 72, hp: 72, energyMax: starseer.energyMax, drawPerTurn: starseer.drawPerTurn, deck: deckOf('starseer'), relicIds: [], flasks: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', maxHp: 84, hp: 84, energyMax: reaver.energyMax, drawPerTurn: reaver.drawPerTurn, deck: deckOf('reaver'), relicIds: [], flasks: [] },
   ];
 }
 

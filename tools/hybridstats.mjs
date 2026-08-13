@@ -188,6 +188,7 @@ check('co-op UI affordability and host execution agree for all three Mana signat
       players: [{
         id: 'p1', classId: REG.cards.get(cardId).class, maxHp: 84, hp: 84,
         maxMana: 2, mana, maxStamina: 2, stamina: 2,
+        energyMax: 3, drawPerTurn: 5,
         deck: [{ instanceId: `i-${cardId}`, cardId, upgraded: false }], relicIds: [], flasks: [],
       }],
       enemyIds: ['blightHound'],

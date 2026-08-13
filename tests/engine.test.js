@@ -174,7 +174,7 @@ function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], 
   return createCombat({
     registries: REG,
     rng,
-    player: { classId: 'reaver', maxHp, hp, mana, maxMana, deck: instances, relicIds, flasks },
+    player: { classId: 'reaver', maxHp, hp, mana, maxMana, energyMax: 3, drawPerTurn: 5, deck: instances, relicIds, flasks },
     enemyIds: enemies,
   });
 }
@@ -1153,7 +1153,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const c = createCombat({
       registries: REG,
       rng: createRng(0x51deb00b),
-      player: { classId: 'reaver', attributes: fresh.attributes, maxHp: 78, hp: 78, mana: 2, maxMana: 2, deck, loadout: fresh.loadout, relicIds: ['forsakenMedallion'] },
+      player: { classId: 'reaver', attributes: fresh.attributes, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck, loadout: fresh.loadout, relicIds: ['forsakenMedallion'] },
       enemyIds: ['fellWarden'],
     });
     let guard = 0;
@@ -1375,7 +1375,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       const c = createCombat({
         registries: REG,
         rng: createRng(0xabc0 + classId.length),
-        player: { classId, attributes: fresh.attributes, maxHp: cls.maxHp, hp: cls.maxHp, mana: 2, maxMana: 2, deck, loadout: fresh.loadout, relicIds: [cls.startingRelic] },
+        player: { classId, attributes: fresh.attributes, maxHp: cls.maxHp, hp: cls.maxHp, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck, loadout: fresh.loadout, relicIds: [cls.startingRelic] },
         enemyIds: ['wyrmAspirant'],
       });
       let guard = 0;
@@ -1501,7 +1501,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const f = createCombat({
       registries: REG,
       rng: createRng(0xf17e),
-      player: { classId: 'reaver', attributes: fresh.attributes, maxHp: 78, hp: 78, deck, loadout: fresh.loadout, relicIds: ['forsakenMedallion'] },
+      player: { classId: 'reaver', attributes: fresh.attributes, maxHp: 78, hp: 78, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck, loadout: fresh.loadout, relicIds: ['forsakenMedallion'] },
       enemyIds: ['blightedValkyrie'],
     });
     let guard = 0;
@@ -1535,11 +1535,11 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     }
     // Cycle scaling applies in combat: +35% HP and +1 Strength per loop.
     const base = createCombat({
-      registries: REG, rng: createRng(7), player: { classId: 'reaver', maxHp: 84, hp: 84, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] },
+      registries: REG, rng: createRng(7), player: { classId: 'reaver', maxHp: 84, hp: 84, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] },
       enemyIds: ['blightHound'],
     });
     const loop2 = createCombat({
-      registries: REG, rng: createRng(7), player: { classId: 'reaver', maxHp: 84, hp: 84, deck: [{ instanceId: 'x2', cardId: 'strike', upgraded: false }] },
+      registries: REG, rng: createRng(7), player: { classId: 'reaver', maxHp: 84, hp: 84, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'x2', cardId: 'strike', upgraded: false }] },
       enemyIds: ['blightHound'],
       hpMult: 1 + ENDLESS_HP_PER_LOOP * 2,
       enemyStatuses: [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * 2 }],
@@ -1578,8 +1578,8 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       registries: REG,
       rng: createRng(11),
       players: [
-        { id: 'p1', classId: 'reaver', maxHp: 80, hp: 80, deck: deck('a'), relicIds: ['goldleafCharm'], flasks: [] },
-        { id: 'p2', classId: 'reaver', maxHp: 80, hp: 80, deck: deck('b'), relicIds: ['goldleafCharm'], flasks: [] },
+        { id: 'p1', classId: 'reaver', maxHp: 80, hp: 80, energyMax: 3, drawPerTurn: 5, deck: deck('a'), relicIds: ['goldleafCharm'], flasks: [] },
+        { id: 'p2', classId: 'reaver', maxHp: 80, hp: 80, energyMax: 3, drawPerTurn: 5, deck: deck('b'), relicIds: ['goldleafCharm'], flasks: [] },
       ],
       enemyIds: ['blightHound'],
     });
@@ -1786,7 +1786,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const combat = createCombat({
       registries: REG,
       rng,
-      player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds: [], loadout: run.loadout },
+      player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, relicIds: [], loadout: run.loadout },
       enemyIds: ['fellWarden'],
     });
     const energyBefore = combat.player.energy;
@@ -1894,7 +1894,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       const combat = createCombat({
         registries: REG,
         rng: createRng(11),
-        player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds, loadout: run.loadout },
+        player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, relicIds, loadout: run.loadout },
         enemyIds: ['fellWarden'],
         swapCostRule: rule,
       });
