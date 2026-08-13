@@ -1,4 +1,4 @@
-// src/model/flaskgrowth.js — how the flask maximum grows, and where C1 waits.
+// src/model/flaskgrowth.js — how the flask maximum grows, and where C1 landed.
 //
 // Constantine, 2026-08-08 (D17 message 6): "...those two are locked in with 3
 // charges, with upgrade options via relics or quest events or talismans or
@@ -12,25 +12,33 @@
 // model/schemas.js — engine act, set + refusals together).
 //
 // ═════════════════════════════════════════════════════════════════════════
-// THE C1 SEAM — the one named place the open capacity question lands.
+// THE C1 SEAM — DECIDED: POOL, by Constantine's own word.
 //
-// Two records disagree about what "3 charges" means, and the question is open
-// with Constantine (the family record calls it C1):
+// C1 asked what "3 charges" means, and he answered on 2026-08-13:
 //
-//   POOL   — dev as shipped: `balance.flaskCapacity` is 3 TOTAL, one pool,
-//            reallocatable between Crimson (hp) and Azure (mana) at a grace.
-//   VESSEL — D17 message 6 as recorded: "those two are locked in with 3
-//            charges" — 3 EACH on two dedicated vessels, no reallocation.
+//   "3 total (with future unlocks for larger total amount)"
+//   — Constantine, family record D19 (C1 — CLOSED: POOL),
+//     commons/decisions/directions.md, claude-family repo.
 //
-// THIS CHAIN IS NEUTRAL BY CONSTRUCTION. Every row targets a KIND
-// ('hp' | 'mana'), and both readings need exactly that: the pool reading
-// allocates the growth to the kind (precisely what the shipped
-// `addFlaskCapacity` opcode already does), the vessel reading raises that
-// vessel's own maximum. The BINDING of a kind-delta into stored charge state
-// lives in exactly one function below — `syncFlaskGrowth` — and it currently
-// implements the POOL reading because that is what ships. C1's answer
-// rewrites THAT FUNCTION (and, under VESSEL, the charge container it feeds);
-// it rewrites ZERO rows, and no other function in this file changes meaning.
+// So: `balance.flaskCapacity` is 3 TOTAL, one pool, reallocatable between
+// Crimson (hp) and Azure (mana) at a grace — dev as shipped stands. The
+// discarded reading (VESSEL: 3 each on two locked vessels, from D17 message 6
+// as first recorded) is named here once, as history, so nobody re-derives it
+// from the old wording; it is not an alternative and this file no longer
+// keeps the door open for it.
+//
+// THE SEAM OUTLIVES THE QUESTION. Every row still targets a KIND
+// ('hp' | 'mana') — under pool, a row's growth is allocated to its kind at
+// the moment it binds, precisely what the shipped `addFlaskCapacity` opcode
+// already does. The binding of a kind-delta into stored charge state stays in
+// exactly one function below — `syncFlaskGrowth` — not because an answer is
+// pending, but because one named binding point is what made the answer cost
+// one function and zero rows. That property is worth keeping after the
+// question dies.
+//
+// And his parenthesis is this chain's build order: "future unlocks for
+// larger total amount" IS the growth chain — the first live rows ship under
+// that clause.
 //
 // TWO DOORS INTO A BIGGER MAXIMUM, deliberately, one per shape of cause:
 //   the MOMENT door     — the `addFlaskCapacity` run opcode: a one-shot grant
@@ -66,7 +74,8 @@ export function flaskGrowthTable(balance) {
 }
 
 /** The optional hard cap. Absent = uncapped; the boot refusal only arms when
- *  it is authored, so no invented ceiling ships while C1 is open. */
+ *  it is authored. The unlock ceiling is Constantine's number to author
+ *  ("future unlocks for larger total amount", D19) — never invented here. */
 export function flaskGrowthMax(balance) {
   const v = balance && balance.flaskGrowthMax;
   return Number.isInteger(v) && v > 0 ? v : null;
@@ -131,26 +140,29 @@ export function flaskGrowthPlan(registries, run) {
  * syncFlaskGrowth(registries, run) → { changed, applied, plan } | null
  *
  * ══ THE C1 SEAM, applied — the ONLY place a kind-delta becomes stored
- * capacity, and the function C1's answer rewrites. ══
+ * capacity. ══
  *
- * POOL BINDING (shipped): a held row's amount raises `flaskCharges.capacity`
- * and allocates itself to the row's kind — the same arithmetic as the
- * `addFlaskCapacity` opcode, so the two doors cannot disagree about what a
- * charge is. Under the VESSEL reading this function would instead raise the
- * kind's own maximum, and `createFlaskCharges`/`reallocateFlaskCharges`
- * (model/gracerefill.js) would change shape with it; the rows would not.
+ * POOL BINDING — PERMANENT, his word (D19, 2026-08-13: "3 total (with future
+ * unlocks for larger total amount)"; C1 — CLOSED: POOL): a held row's amount
+ * raises `flaskCharges.capacity` and allocates itself to the row's kind —
+ * the same arithmetic as the `addFlaskCapacity` opcode, so the two doors
+ * cannot disagree about what a charge is. This is no longer one of two
+ * readings held apart; it is the decided topology, and an edit that splits
+ * capacity into per-kind vessels is overturning D19, not resolving it.
  *
  * DERIVED, SO REVERSIBLE: `flaskCharges.grown` stores what the chain has
  * currently applied per kind. Sync diffs the plan against it and applies the
  * difference, so gaining a relic grows the maximum and (one day) unequipping
  * a talisman shrinks it back — idempotent, safe to call at every checkpoint.
  *
- * THE POOL AMBIGUITY, named rather than smoothed: under the pool reading the
- * player may have reallocated a grown charge to the other kind before the
- * source is lost. Removal takes from the row's kind first and overflows to
- * the other — a rule NOBODY ordered, forced into existence by the pool
- * topology alone. The vessel reading has no such case. That asymmetry is
- * part of C1's price and is recorded in the family packet, not decided here.
+ * THE OVERFLOW RULE — LOAD-BEARING, no longer provisional: under pool the
+ * player may reallocate a grown charge to the other kind at a grace
+ * (ui/screens/rest.js) and THEN lose the growth source. Removal takes from
+ * the row's kind first and overflows the remainder to the other kind,
+ * currents bounded. Nobody ordered this rule; the pool topology forces it,
+ * and D19 choosing pool is what made it real. Its gate lives in
+ * tools/flaskgrowth.mjs (both edges, observed red first — the instrument
+ * rule); do not touch this arithmetic without re-running that corpus.
  */
 export function syncFlaskGrowth(registries, run) {
   const f = run && run.flaskCharges;
@@ -358,11 +370,10 @@ export function flaskGrowthRefusals(bundle) {
     growthSum += amount;
   });
 
-  // 8. The aggregate hard cap — armed only when authored, so no invented
-  //    ceiling ships while C1 is open. Evaluated under the SHIPPED pool
-  //    binding (the seam's): base capacity + all growth, worst case all held.
-  //    Under the vessel reading the bound becomes per-kind — that edit lives
-  //    at the seam with the rest of C1's answer.
+  // 8. The aggregate hard cap — armed only when authored; the ceiling is his
+  //    to name (D19's parenthesis), never invented here. Evaluated under the
+  //    decided pool binding (the seam's): base capacity + all growth, worst
+  //    case all held — one total, which is exactly what "3 total" grows.
   if (max != null) {
     let base = 0;
     try { base = flaskCapacity(balance); } catch { /* its own refusal reports it */ }

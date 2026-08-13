@@ -4,9 +4,11 @@
 //
 // Subject: balance.flaskGrowth (model/flaskgrowth.js) — D17 message 6's chain:
 // relics · quest events · talismans · flask seeds → max charges. The capacity
-// topology (pool vs vessel, the open C1 question) is bound in exactly one
-// function, syncFlaskGrowth; nothing in this file depends on which answer
-// wins, and the one plant that touches the binding says so where it does.
+// topology is DECIDED — POOL, his word (D19, 2026-08-13: "3 total (with
+// future unlocks for larger total amount)"; C1 — CLOSED) — and bound in
+// exactly one function, syncFlaskGrowth. The overflow rule that pool forces
+// (reallocate a grown charge away, then lose the source) is load-bearing and
+// gated below, both edges, observed red first per the instrument rule.
 //
 // THE DOORS (development.md, *The instrument rule*, same-door clause). A
 // known-bad handed below the defect exercises the half that was never in
@@ -70,7 +72,7 @@ function report() {
   const rows = flaskGrowthTable(reg.balance);
   console.log(`flaskgrowth: ${rows.length} authored row${rows.length === 1 ? '' : 's'} in balance.flaskGrowth.`);
   if (rows.length === 0) {
-    console.log('  none ship today — deliberate: no live growth lands while C1 (pool vs vessel) is open with Constantine.');
+    console.log('  none ship — if this is unexpected, someone deleted the live rows: C1 closed POOL (D19) and the first rows shipped with it.');
     console.log(`  the closed source set is declared: ${FLASK_GROWTH_SOURCES.join(', ')} (D17 message 6, his four words).`);
   }
   const run = freshRun(reg);
@@ -186,7 +188,7 @@ function selftest() {
   behave('max edge, POOL-BINDING SPECIFIC: reallocate the grown charge away, then lose the relic below its missing door — overflow shrinks the other kind, currents bounded', () => {
     // The reversal enters BELOW a real door on purpose and says so: no opcode
     // removes a relic. What this proves is the seam's decrease arithmetic —
-    // under the VESSEL reading this plant is rewritten with the seam (C1).
+    // the pool overflow rule, load-bearing since D19 closed C1 as POOL.
     const b = realBundleCopy();
     plantGrowthRelic(b, { kind: 'hp', amount: 1 });
     const reg = createRegistries(b);
