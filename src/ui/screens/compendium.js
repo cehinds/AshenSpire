@@ -170,7 +170,7 @@ function cell(piece, { state, hint, gate }, modFields) {
   // picture is deliberately hiding.
   el.setAttribute('aria-label', named ? piece.name : `Unknown ${piece.kind}`);
   el.innerHTML =
-    `<span class="cp-art"><img src="${esc(assetUrl(`assets/equipment/icon_${piece.id}.webp`))}" alt=""></span>`
+    `<span class="cp-art"><img src="${esc(assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`))}" alt=""></span>`
     + `<span class="cp-name">${named ? esc(piece.name) : ''}</span>`;
   const art = el.querySelector('img');
   art.addEventListener('error', () => art.remove());

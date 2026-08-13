@@ -1683,7 +1683,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
     const ids = weapons.map((w) => w.id);
     eq(ids.length, new Set(ids).size, 'armament ids are unique');
-    eq(weapons.filter((w) => w.kind === 'weapon').length, 8, 'eight weapons');
+    eq(weapons.filter((w) => w.kind === 'weapon').length, 9, 'nine weapons');
     eq(weapons.filter((w) => w.kind === 'shield').length, 8, 'eight shields/offhands');
     eq(weapons.filter((w) => w.kind === 'staff').length, 8, 'eight staves');
 
@@ -1775,7 +1775,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     equipPiece(REG, run.loadout, 'armor', 0, 'oathsworn', OWNS_EVERYTHING, AT_CAMP);
     stampDeck(REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(REG, aStrike)), 3, 'the deck itself is stamped with the dagger');
+    eq(dmgOf(resolveCard(REG, aStrike)), 5, 'the deck itself is stamped with the DEX dagger receipt');
     eq(runMods(REG, run.loadout, 'reaver').startStatuses[0].status, 'strength', 'the Oathsworn set grants Strength');
     assert(loadoutTags(REG, run.loadout, 'reaver').includes('blade'), 'worn pieces contribute their tags');
 
@@ -2971,7 +2971,7 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const orphaned = [];
 
     for (const a of REG.equipment.armaments) {
-      const entry = manifest.armaments[a.id];
+      const entry = manifest.armaments[a.artKey || a.id];
       if (!entry) {
         stale.push(`${a.id}: no art rendered`);
         continue;
@@ -3016,7 +3016,8 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
     // The manifest must also actually cover the content, or an empty file would
     // pass every assertion above by having nothing to disagree with.
-    eq(Object.keys(manifest.armaments).length, REG.equipment.armaments.length, 'every armament is covered');
+    const authoredArtKeys = new Set(REG.equipment.armaments.map((a) => a.artKey || a.id));
+    eq(Object.keys(manifest.armaments).length, authoredArtKeys.size, 'every distinct armament art key is covered');
     eq(Object.keys(manifest.armour).length, REG.equipment.armour.length, 'every armour set is covered');
   });
 

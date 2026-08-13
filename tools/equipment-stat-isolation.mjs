@@ -51,7 +51,7 @@ for (const school of expectedSchools) {
 check(dagger?.attackProfile === 'daggerPierceAttack', 'dagger explicitly references its DEX attack profile', String(dagger?.attackProfile));
 check(daggerProfile?.scalingStat === 'dexterity' && daggerProfile?.baseValue === 3
   && daggerProfile?.pointsPerTier === 5 && daggerProfile?.rounding === 'floor'
-  && daggerProfile?.gainPerTier === 1 && daggerProfile?.cap == null,
+  && daggerProfile?.gainPerTier === 1 && (daggerProfile?.cap === '' || daggerProfile?.cap == null),
   'dagger profile authors base 3 + floor(DEX/5), uncapped', JSON.stringify(daggerProfile));
 check(daggerProfile?.damageSchool === 'physical' && daggerProfile?.tags?.includes('pierce')
   && daggerProfile?.tags?.includes('flourish') && !(daggerProfile?.mods || []).some((mod) => /^hits=/.test(mod)),
@@ -68,11 +68,19 @@ check(bow?.kind === 'weapon' && bow?.hand === 'right' && bow?.rarity === 'common
   'representative shortbow is a common right-hand weapon row', JSON.stringify(bow));
 check(bow?.artKey === 'dagger',
   'shortbow declares the temporary existing generic-art boundary', JSON.stringify(bow));
+{
+  const mutateBow = (patch) => ({ ...R, equipment: { ...R.equipment,
+    armaments: R.equipment.armaments.map((row) => row.id === 'shortbow' ? { ...row, ...patch } : row) } });
+  const unknown = validateEquipment(mutateBow({ artKey: 'notRendered' })).join(' | ');
+  check(/shortbow.*artKey.*notRendered/i.test(unknown), 'mutant: unknown generic art key is refused by item name', unknown);
+  const drift = validateEquipment(mutateBow({ accent: '000000' })).join(' | ');
+  check(/shortbow.*accent.*artKey/i.test(drift), 'mutant: generic art reuse cannot disagree with rendered fields', drift);
+}
 check(bow?.attackProfile === 'bowPierceAttack' && bow?.techniqueProfile === 'bowTechnique',
   'shortbow references explicit attack and technique profiles', JSON.stringify(bow));
 check(bowProfile?.baseValue === 4 && bowProfile?.scalingStat === 'dexterity'
   && bowProfile?.pointsPerTier === 5 && bowProfile?.rounding === 'floor'
-  && bowProfile?.gainPerTier === 1 && bowProfile?.cap == null,
+  && bowProfile?.gainPerTier === 1 && (bowProfile?.cap === '' || bowProfile?.cap == null),
   'bow profile authors base 4 + floor(DEX/5), uncapped', JSON.stringify(bowProfile));
 check(bowProfile?.damageSchool === 'physical'
   && ['pierce', 'ranged', 'precision'].every((tag) => bowProfile?.tags?.includes(tag))
@@ -189,23 +197,36 @@ for (const [id, amount, hits] of [['dagger', 5, 2], ['shortbow', 6, 1]]) {
   `${id} receipt, preview and execution agree per hit`, JSON.stringify(got));
 }
 
-for (const [id, amount, rarityBonus] of [['straightSword', 7, 0], ['dagger', 5, 0], ['shortbow', 6, 0], ['boneSceptre', 6, 1]]) {
-  const receipt = roleReceipt(id, 'attack', allTen);
-  check(receipt?.rarityBonus === rarityBonus && receipt?.value === amount
-    && !(piece(id)?.mods || []).some((mod) => /^strike\.damage=/.test(mod)),
-  `${id} applies rarity exactly once and no item mod duplicates final damage`, JSON.stringify({ receipt, mods: piece(id)?.mods }));
+function projectedAttack(pieceId, extraMod = null) {
+  const armaments = contentBundle.equipment.armaments.map((row) => row.id === pieceId && extraMod
+    ? { ...row, mods: [...row.mods, extraMod] } : row);
+  const registries = createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, armaments } });
+  const run = createRunState({ seed: 711, classId: 'reaver', registries });
+  run.attributes = { ...allTen };
+  run.loadout.sets.rightHand[0] = pieceId;
+  run.loadout.sets.leftHand[0] = null;
+  stampDeck(registries, run);
+  const attack = run.deck.find((card) => card.equipmentRole === 'attack');
+  return {
+    receipt: attack.profileReceipt,
+    final: resolveCard(registries, attack).effects.find((effect) => effect.op === 'damage')?.amount,
+  };
 }
 
-function equipmentMutant(pieceId, mod) {
-  const armaments = R.equipment.armaments.map((row) => row.id === pieceId
-    ? { ...row, mods: [...row.mods, mod] } : row);
-  return { ...R, equipment: { ...R.equipment, armaments } };
+for (const [id, amount, rarityBonus] of [['straightSword', 7, 0], ['dagger', 5, 0], ['shortbow', 6, 0], ['boneSceptre', 6, 1]]) {
+  const receipt = roleReceipt(id, 'attack', allTen);
+  const projected = projectedAttack(id);
+  check(receipt?.rarityBonus === rarityBonus && receipt?.value === amount
+    && projected.receipt?.value === amount && projected.final === amount
+    && !(piece(id)?.mods || []).some((mod) => /^strike\.damage=/.test(mod)),
+  `${id} applies rarity exactly once and no item mod duplicates final damage`, JSON.stringify({ receipt, projected, mods: piece(id)?.mods }));
 }
+
 for (const id of ['straightSword', 'dagger', 'shortbow']) {
   if (!piece(id)) continue;
-  const said = validateEquipment(equipmentMutant(id, 'strike.damage=+1')).join(' | ');
-  check(/damage.*profile|duplicate.*damage|second.*authority/i.test(said),
-    `mutant: ${id} cannot duplicate profile damage through an item mod`, said);
+  const mutant = projectedAttack(id, 'strike.damage=+1');
+  check(mutant.final !== mutant.receipt?.value,
+    `mutant: receipt/final parity catches ${id} item damage duplication`, JSON.stringify(mutant));
 }
 
 console.log(`\nequipment-stat-isolation: ${passed} passed, ${failed} failed`);

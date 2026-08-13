@@ -293,7 +293,7 @@ function figureFor(registries, run, cz) {
 function thumbSrc(piece) {
   return piece.kind === 'armor'
     ? assetUrl(`assets/equipment/body_${piece.classId}_${piece.id}.webp`)
-    : assetUrl(`assets/equipment/icon_${piece.id}.webp`);
+    : assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`);
 }
 
 /** A piece's mods, written the way a player reads them. */

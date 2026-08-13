@@ -29,7 +29,7 @@ function list(v) {
 }
 
 function normPiece(row) {
-  return { ...row, tags: list(row.tags), mods: list(row.mods) };
+  return { ...row, artKey: row.artKey || row.id, tags: list(row.tags), mods: list(row.mods) };
 }
 
 /** Every armament: weapons, shields and staves, in authoring order. */

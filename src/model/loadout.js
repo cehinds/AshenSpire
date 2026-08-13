@@ -134,6 +134,25 @@ export function validateEquipment(registries) {
   const attributeIds = new Set(registries.attributes && registries.attributes.ids ? registries.attributes.ids() : []);
   if (Array.isArray(eq.startingKits)) problems.push(...startingKitProblems(registries));
 
+  // A row may deliberately reuse an existing generic render instead of adding
+  // binary art in the same feature. The reference is explicit and truthful:
+  // every renderer-owned field must match the row whose asset is reused.
+  const armamentById = new Map((eq.armaments || []).map((piece) => [piece.id, piece]));
+  for (const piece of eq.armaments || []) {
+    const artKey = piece.artKey || piece.id;
+    const source = armamentById.get(artKey);
+    if (!source) {
+      problems.push(`${piece.id}: artKey '${artKey}' is not a registered armament render`);
+      continue;
+    }
+    if (artKey === piece.id) continue;
+    for (const field of ['geom', 'scale', 'metal', 'accent']) {
+      if (String(piece[field]) !== String(source[field])) {
+        problems.push(`${piece.id}: ${field} '${piece[field]}' disagrees with artKey '${artKey}' field '${source[field]}'`);
+      }
+    }
+  }
+
   for (const profile of profiles) {
     if (profileIds.has(profile.id)) problems.push(`basicCardProfiles.csv: duplicate profile id '${profile.id}'`);
     profileIds.add(profile.id);
@@ -869,8 +888,8 @@ export function figureSpec(registries, loadout, classId) {
       continue;
     }
     const hand = slotHand(slot);
-    if (hand === 'right') spec.rightId = piece.id;
-    else if (hand === 'left') spec.leftId = piece.id;
+    if (hand === 'right') spec.rightId = piece.artKey || piece.id;
+    else if (hand === 'left') spec.leftId = piece.artKey || piece.id;
     // No hand: this slot is not held (a talisman), so there is nothing to draw
     // in a hand for it. It used to land in the right hand as a weapon layer.
   }

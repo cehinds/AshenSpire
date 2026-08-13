@@ -469,7 +469,7 @@ export const SCHEMAS = Object.freeze({
     baseCardId: ref('cards'),
     displayName: str,
     icon: str,
-    damageSchool: en('physical', 'magic', 'arcane'),
+    damageSchool: en('physical', 'magic', 'arcane', 'holy', 'fire'),
     baseValue: num,
     scalingStat: ref('attributes'),
     pointsPerTier: num,
