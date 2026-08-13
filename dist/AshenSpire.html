@@ -2364,6 +2364,23 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 @media (prefers-reduced-motion: no-preference) {
   .cp-cell { transition: border-color 120ms ease, background 120ms ease; }
 }
+.flask-identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  color: var(--flask-tint);
+  min-width: 0;
+}
+.flask-art {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.35em;
+  min-height: 1.35em;
+  border: 1px solid currentColor;
+  border-radius: 45% 45% 55% 55%;
+  background: color-mix(in srgb, var(--flask-tint) 22%, #111);
+}
+.flask-name { color: var(--ink, #f2ead8); }
 
   </style>
   <style data-src="styles/combat.css">
@@ -4634,6 +4651,10 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       hp: run.hp,
       maxMana: run.maxMana,
       mana: run.mana,
+      maxStamina: run.maxStamina,
+      stamina: run.stamina,
+      energyMax: run.energyMax,
+      drawPerTurn: run.drawPerTurn,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
@@ -4711,6 +4732,7 @@ function onCombatEnd(result, combat, enc) {
 
   run.hp = combat.player.hp;
   run.mana = combat.player.mana;
+  run.stamina = combat.player.stamina;
   run.stats.fightsWon += 1;
   run.combatEntered = null;
 
@@ -5308,6 +5330,7 @@ const { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } = require("src/cont
 const { equipTargets } = require("src/content/generated/equipTargets.js");
 const { unlocks } = require("src/content/generated/unlocks.js");
 const { attributes, creationModes, attributeRules } = require("src/content/attributes.js");
+const { derivedStatRules } = require("src/content/derivedStats.js");
 
 const contentBundle = {
   version: '0.4.0',
@@ -5349,6 +5372,7 @@ const contentBundle = {
   attributes,
   creationModes,
   attributeRules,
+  derivedStatRules,
 };
 
 // Not part of the bundle (UI-only data / M1 flow):
@@ -6796,6 +6820,16 @@ Object.assign(module.exports, { stances });
 // combat spending, shrine/flask restoration, and solo/co-op serialization.
 
 const resources = [
+  {
+    id: 'stamina',
+    name: 'STAMINA',
+    glyph: '▲',
+    tint: '#4f9b62',
+    weight: 'normal',
+    order: 20,
+    surfaces: ['main'],
+    source: 'stamina',
+  },
   {
     id: 'mana',
     name: 'MANA',
@@ -9513,6 +9547,8 @@ const flasks = [
     name: 'Crimson Flask',
     rarity: 'common',
     icon: '🧪',
+    artKey: 'flask-crimson',
+    tint: '#ef7272',
     effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 25 } }],
     textTemplate: 'Heal 25% of your max HP.',
   },
@@ -9521,6 +9557,8 @@ const flasks = [
     name: 'Azure Flask',
     rarity: 'common',
     icon: '🫙',
+    artKey: 'flask-azure',
+    tint: '#75a9ff',
     effects: [{ op: 'restoreMana', amount: 20 }],
     textTemplate: 'Restore 20 Mana.',
   },
@@ -9529,6 +9567,8 @@ const flasks = [
     name: 'Flask of Ferocity',
     rarity: 'common',
     icon: '🍶',
+    artKey: 'flask-ferocity',
+    tint: '#d77b35',
     effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 2 }],
     textTemplate: 'Gain 2 Strength this combat.',
   },
@@ -9537,6 +9577,8 @@ const flasks = [
     name: 'Flask of Stone',
     rarity: 'common',
     icon: '🏺',
+    artKey: 'flask-stone',
+    tint: '#9a8b73',
     effects: [{ op: 'block', target: 'self', amount: 15 }],
     textTemplate: 'Gain 15 Block.',
   },
@@ -9545,6 +9587,8 @@ const flasks = [
     name: 'Blight Coating',
     rarity: 'uncommon',
     icon: '🦠',
+    artKey: 'flask-blight',
+    tint: '#73984d',
     targeted: true,
     effects: [{ op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: 4 }],
     textTemplate: 'Apply 4 Crimson Blight to an enemy.',
@@ -9554,6 +9598,8 @@ const flasks = [
     name: 'Blood Unction',
     rarity: 'uncommon',
     icon: '🫗',
+    artKey: 'flask-blood',
+    tint: '#8e3143',
     effects: [{ op: 'applyStatus', target: 'self', status: 'bloodUnction', stacks: 1 }],
     textTemplate: 'This turn, your attacks apply 2 extra Bleed per hit.',
   },
@@ -9562,6 +9608,8 @@ const flasks = [
     name: 'Wondrous Draught',
     rarity: 'rare',
     icon: '⚗',
+    artKey: 'flask-wondrous',
+    tint: '#9a65c7',
     effects: [{ script: 'wondrousDraught' }],
     textTemplate: 'Gain the effects of two different random flasks at once.',
   },
@@ -12630,6 +12678,57 @@ const attributeRules = {
 Object.assign(module.exports, { attributes, creationModes, attributeRules });
 
 },
+"src/content/derivedStats.js": function (module, exports, require) {
+// src/content/derivedStats.js — inert contract for post-Phase-1 derived stats.
+//
+// Nothing imports this from the shipping content bundle yet. Phase 1 owns the
+// attribute allocation and its save/session shape; this table is exercised by
+// tools/derivedstats.mjs but remains deliberately outside gameplay wiring.
+
+const derivedStatRules = {
+  rulesetVersion: 1,
+  defaults: {
+    pointsPerTier: 5,
+    rounding: 'floor',
+    cap: null,
+  },
+  rules: {
+    energy: {
+      base: 1,
+      sourceStat: 'dexterity',
+      gainPerTier: 1,
+      cap: null,
+    },
+    draw: {
+      base: 3,
+      sourceStat: 'intelligence',
+      gainPerTier: 1,
+      cap: null,
+    },
+    hp: {
+      base: { strategy: 'classField', field: 'maxHp' },
+      sourceStat: 'constitution',
+      gainPerTier: 1,
+    },
+    stamina: {
+      base: 0,
+      sourceStat: 'constitution',
+      gainPerTier: 1,
+    },
+    mana: {
+      // Keep every current class's authored Mana floor when this is eventually
+      // wired; Wisdom adds to it instead of silently replacing 40/80/60.
+      base: { strategy: 'classField', field: 'maxMana' },
+      sourceStat: 'wisdom',
+      gainPerTier: 1,
+    },
+  },
+};
+
+
+Object.assign(module.exports, { derivedStatRules });
+
+},
 "src/model/validate.js": function (module, exports, require) {
 // src/model/validate.js — content validation (SPEC §3.14)
 //
@@ -12668,6 +12767,7 @@ const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CAR
 const { RESOURCE_SOURCE_IDS } = require("src/model/resources.js");
 const { FORMULA_OPS, FORMULA_OF, isFormula } = require("src/model/formulas.js");
 const { attributeContentProblems } = require("src/model/attributes.js");
+const { derivedStatRuleProblems } = require("src/model/derivedStats.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -12712,6 +12812,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'music',
   'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
   'attributeRules',
+  'derivedStatRules',
 ]);
 
 /**
@@ -12891,6 +12992,10 @@ function validateContent(bundle) {
   }
   walkSchema(b.attributeRules, SCHEMAS.attributeRules, 'attributeRules', vctx);
   for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
+  for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
+    attributeIds: (b.attributes || []).map((row) => row.id),
+    classFields: ['maxHp', 'maxMana'],
+  })) err(problem.path, problem.msg);
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
   // The shape walk above already rejects a missing `source`. This rejects a
@@ -16441,7 +16546,9 @@ const SCHEMAS = Object.freeze({
     kind: opt(en(...FLASK_KINDS)),
     targeted: opt(bool),
     effects,
-    icon: opt(str),
+    icon: str,
+    artKey: str,
+    tint: str,
     textTemplate: opt(str),
     script: opt(ref('scripts')),
   }),
@@ -16593,6 +16700,16 @@ const RESOURCE_SOURCES = Object.freeze({
     },
     domain: (pop) => maxOf(pop.map((e) => e.maxMana)),
   }),
+  stamina: Object.freeze({
+    read: (view, entity) => {
+      const max = entity && entity.maxStamina;
+      if (!Number.isFinite(max) || max < 0) return null;
+      const cur = view && Number.isFinite(view.stamina) ? view.stamina : entity.stamina;
+      if (!Number.isFinite(cur)) return null;
+      return { cur: Math.max(0, Math.min(max, cur)), max };
+    },
+    domain: (pop) => maxOf(pop.map((e) => e.maxStamina)),
+  }),
   poise: Object.freeze({
     read: (view, entity) => {
       const pm = (view && view.poiseMeter) || (entity && entity.poiseMeter);
@@ -16645,7 +16762,7 @@ function resourceDomains(registries) {
       if (m) bonus = Math.max(bonus, Number(m[1]));
     }
   }
-  const playerPop = classes.map((c) => ({ maxHp: (c.maxHp || 0) + bonus, maxMana: c.maxMana, poiseMax: undefined }));
+  const playerPop = classes.map((c) => ({ maxHp: (c.maxHp || 0) + bonus, maxMana: c.maxMana, maxStamina: 0, poiseMax: undefined }));
   const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
   const pops = { main: playerPop, model: bothPop };
   const out = {};
@@ -17045,6 +17162,268 @@ function attributeContentProblems(source) {
 Object.assign(module.exports, { orderedAttributes, defaultCreationModeId, creationMode, allocationTotal, attributeAllocationProblems, classAttributePreset, normalizeRunAttributes, attributeContentProblems });
 
 },
+"src/model/derivedStats.js": function (module, exports, require) {
+// src/model/derivedStats.js — pure post-Phase-1 derived-stat rules.
+//
+// This module accepts an attribute allocation; it does not import, create or
+// mutate one. That is the dependency seam which lets Phase 1 land first. It
+// likewise has no run, combat, save, session or UI imports.
+
+const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana']);
+const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
+const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1]);
+const DERIVED_STAT_SNAPSHOT_VERSION = 1;
+
+const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules'];
+const DEFAULT_FIELDS = ['pointsPerTier', 'rounding', 'cap'];
+const RULE_FIELDS = ['base', 'sourceStat', 'pointsPerTier', 'gainPerTier', 'rounding', 'cap'];
+const OVERRIDE_FIELDS = ['defaults', 'rules'];
+const BASE_FIELDS = ['strategy', 'field'];
+const plainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+const own = (v, key) => Object.hasOwn(v, key);
+const problem = (out, path, msg) => out.push({ path, msg });
+
+function unknownFields(out, value, allowed, path) {
+  if (!plainObject(value)) return;
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) problem(out, path ? `${path}.${key}` : key, 'unknown field');
+  }
+}
+
+function validatePoints(out, value, path, required) {
+  if (value === undefined && !required) return;
+  if (!Number.isFinite(value) || value <= 0) problem(out, path, 'must be a finite number > 0');
+}
+
+function validateGain(out, value, path, required) {
+  if (value === undefined && !required) return;
+  if (!Number.isFinite(value)) problem(out, path, 'must be a finite number');
+}
+
+function validateRounding(out, value, path, required) {
+  if (value === undefined && !required) return;
+  if (!DERIVED_STAT_ROUNDING.includes(value)) {
+    problem(out, path, `must be one of ${DERIVED_STAT_ROUNDING.join(', ')}`);
+  }
+}
+
+function validateCap(out, value, path, required) {
+  if (value === undefined && !required) return;
+  if (value !== null && (!Number.isFinite(value) || value < 0)) {
+    problem(out, path, 'must be null or a finite number >= 0');
+  }
+}
+
+function validateBase(out, value, path, { required, classFields }) {
+  if (value === undefined && !required) return;
+  if (Number.isFinite(value)) return;
+  if (!plainObject(value)) {
+    problem(out, path, 'must be a finite number or a classField reference');
+    return;
+  }
+  unknownFields(out, value, BASE_FIELDS, path);
+  if (value.strategy !== 'classField') problem(out, `${path}.strategy`, "must be 'classField'");
+  if (typeof value.field !== 'string' || !classFields.includes(value.field)) {
+    problem(out, `${path}.field`, `must name one of ${classFields.join(', ')}`);
+  }
+}
+
+function validateDefaults(out, value, path, { partial }) {
+  if (!plainObject(value)) {
+    problem(out, path, 'must be a plain object');
+    return;
+  }
+  unknownFields(out, value, DEFAULT_FIELDS, path);
+  for (const key of DEFAULT_FIELDS) if (!partial && !own(value, key)) problem(out, `${path}.${key}`, 'missing');
+  validatePoints(out, value.pointsPerTier, `${path}.pointsPerTier`, !partial);
+  validateRounding(out, value.rounding, `${path}.rounding`, !partial);
+  validateCap(out, value.cap, `${path}.cap`, !partial);
+}
+
+function validateRule(out, value, path, options, partial) {
+  if (!plainObject(value)) {
+    problem(out, path, 'must be a plain object');
+    return;
+  }
+  unknownFields(out, value, RULE_FIELDS, path);
+  if (!partial) {
+    for (const key of ['base', 'sourceStat', 'gainPerTier']) {
+      if (!own(value, key)) problem(out, `${path}.${key}`, 'missing');
+    }
+  }
+  validateBase(out, value.base, `${path}.base`, { required: !partial, classFields: options.classFields });
+  if ((value.sourceStat !== undefined || !partial)
+    && (typeof value.sourceStat !== 'string' || !options.attributeIds.includes(value.sourceStat))) {
+    problem(out, `${path}.sourceStat`, `must name one of ${options.attributeIds.join(', ')}`);
+  }
+  validatePoints(out, value.pointsPerTier, `${path}.pointsPerTier`, false);
+  validateGain(out, value.gainPerTier, `${path}.gainPerTier`, !partial);
+  validateRounding(out, value.rounding, `${path}.rounding`, false);
+  validateCap(out, value.cap, `${path}.cap`, false);
+}
+
+function normalizedOptions(options = {}) {
+  return {
+    attributeIds: Array.isArray(options.attributeIds) ? [...options.attributeIds] : [],
+    classFields: Array.isArray(options.classFields) ? [...options.classFields] : ['maxHp', 'maxMana'],
+  };
+}
+
+/** Returns named schema problems; it never throws and never repairs input. */
+function derivedStatRuleProblems(source, options = {}) {
+  const out = [];
+  const opts = normalizedOptions(options);
+  if (!plainObject(source)) return [{ path: 'derivedStatRules', msg: 'must be a plain object' }];
+  unknownFields(out, source, ROOT_FIELDS, 'derivedStatRules');
+  if (!Number.isInteger(source.rulesetVersion) || !DERIVED_STAT_RULESET_VERSIONS.includes(source.rulesetVersion)) {
+    problem(out, 'rulesetVersion', `must be one of ${DERIVED_STAT_RULESET_VERSIONS.join(', ')}`);
+  }
+  validateDefaults(out, source.defaults, 'defaults', { partial: false });
+  if (!plainObject(source.rules)) {
+    problem(out, 'rules', 'must be a plain object');
+    return out;
+  }
+  for (const id of DERIVED_STAT_IDS) {
+    if (!own(source.rules, id)) problem(out, `rules.${id}`, 'missing required derived-stat row');
+    else validateRule(out, source.rules[id], `rules.${id}`, opts, false);
+  }
+  for (const id of Object.keys(source.rules)) {
+    if (!DERIVED_STAT_IDS.includes(id)) problem(out, `rules.${id}`, `unknown derived-stat row '${id}'`);
+  }
+  return out;
+}
+
+function overrideProblems(value, path, options) {
+  const out = [];
+  if (!plainObject(value)) return [{ path, msg: 'must be a plain object' }];
+  unknownFields(out, value, OVERRIDE_FIELDS, path);
+  if (value.defaults !== undefined) validateDefaults(out, value.defaults, `${path}.defaults`, { partial: true });
+  if (value.rules !== undefined) {
+    if (!plainObject(value.rules)) problem(out, `${path}.rules`, 'must be a plain object');
+    else for (const [id, row] of Object.entries(value.rules)) {
+      if (!DERIVED_STAT_IDS.includes(id)) problem(out, `${path}.rules.${id}`, `unknown derived-stat row '${id}'`);
+      else validateRule(out, row, `${path}.rules.${id}`, options, true);
+    }
+  }
+  return out;
+}
+
+function throwProblems(label, problems) {
+  if (problems.length) throw new Error(`${label}: ${problems.map((p) => `${p.path}: ${p.msg}`).join('; ')}`);
+}
+
+/** Resolve authored rows plus mode/run/debug layers into a self-contained table. */
+function resolveDerivedStatRules(source, options = {}) {
+  const opts = normalizedOptions(options);
+  throwProblems('derivedStatRules', derivedStatRuleProblems(source, opts));
+  const layers = [
+    ['modeModifiers', options.modeModifiers],
+    ...((Array.isArray(options.runModifiers) ? options.runModifiers : options.runModifiers ? [options.runModifiers] : [])
+      .map((value, index) => [`runModifiers[${index}]`, value])),
+    ['explicitOverride', options.explicitOverride],
+  ];
+  for (const [path, layer] of layers) {
+    if (layer === undefined || layer === null) continue;
+    throwProblems(path, overrideProblems(layer, path, opts));
+  }
+  // A defaults override affects every row that was not explicitly patched by
+  // the same or a later layer. Resolve layer-by-layer to keep that fact true.
+  const replayed = {
+    rulesetVersion: source.rulesetVersion,
+    defaults: { ...source.defaults },
+    rules: Object.fromEntries(DERIVED_STAT_IDS.map((id) => [id, { ...source.defaults, ...structuredClone(source.rules[id]) }])),
+  };
+  for (const [, layer] of layers) {
+    if (!layer) continue;
+    if (layer.defaults) {
+      Object.assign(replayed.defaults, layer.defaults);
+      for (const id of DERIVED_STAT_IDS) Object.assign(replayed.rules[id], layer.defaults);
+    }
+    if (layer.rules) for (const [id, patch] of Object.entries(layer.rules)) Object.assign(replayed.rules[id], patch);
+  }
+  return replayed;
+}
+
+function baseValue(base, classDef, statId) {
+  if (Number.isFinite(base)) return base;
+  const value = classDef && base && classDef[base.field];
+  if (!Number.isFinite(value)) throw new Error(`${statId}.base: class field '${base && base.field}' is not a finite number`);
+  return value;
+}
+
+/**
+ * Generic attribute-tier receipt for weapon/armour/resource projections.
+ * The caller supplies one already-resolved rule row, so authored defaults,
+ * mode/run layers and the explicit/debug override have already merged once.
+ * This helper owns no weapon base and mutates nothing.
+ */
+function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rule.sourceStat } = {}) {
+  if (!plainObject(rule)) throw new Error('Attribute tier rule must be a resolved rule row');
+  const points = attributes && attributes[sourceStat];
+  if (!Number.isFinite(points)) throw new Error(`sourceStat '${sourceStat}' is not a finite number`);
+  if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error('pointsPerTier must be a finite number > 0');
+  if (!Number.isFinite(rule.gainPerTier)) throw new Error('gainPerTier must be a finite number');
+  const round = Math[rule.rounding];
+  if (typeof round !== 'function') throw new Error(`rounding '${rule.rounding}' is not executable`);
+  const tier = round(points / rule.pointsPerTier);
+  return {
+    sourceStat,
+    points,
+    pointsPerTier: rule.pointsPerTier,
+    rounding: rule.rounding,
+    tier,
+    gainPerTier: rule.gainPerTier,
+    value: tier * rule.gainPerTier,
+  };
+}
+
+/** Pure calculation. The returned receipt distinguishes base, tier, raw and cap. */
+function deriveStat(resolved, statId, { attributes, classDef } = {}) {
+  const row = resolved && resolved.rules && resolved.rules[statId];
+  if (!row) throw new Error(`Unknown derived stat '${statId}'`);
+  const tierReceipt = deriveAttributeTierReceipt(row, { attributes });
+  const { points, tier } = tierReceipt;
+  const base = baseValue(row.base, classDef, statId);
+  const raw = base + tier * row.gainPerTier;
+  const value = row.cap === null ? raw : Math.min(raw, row.cap);
+  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: row.gainPerTier, raw, cap: row.cap, value };
+}
+
+/** Host-created, immutable-by-convention rules receipt for co-op/save owners. */
+function createDerivedStatRuleSnapshot(source, options = {}) {
+  if (options.authority !== 'host') throw new Error('Only the host authority may create a derived-stat rules snapshot');
+  const rules = resolveDerivedStatRules(source, options);
+  return structuredClone({
+    snapshotVersion: DERIVED_STAT_SNAPSHOT_VERSION,
+    rulesetVersion: rules.rulesetVersion,
+    rules,
+  });
+}
+
+/** Restore exactly what the host saved; current authored data is not consulted. */
+function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
+  if (!plainObject(snapshot)) throw new Error('Derived-stat snapshot must be an object');
+  if (snapshot.snapshotVersion !== DERIVED_STAT_SNAPSHOT_VERSION) {
+    throw new Error(`Unknown derived-stat snapshotVersion ${snapshot.snapshotVersion} (expected ${DERIVED_STAT_SNAPSHOT_VERSION})`);
+  }
+  if (!DERIVED_STAT_RULESET_VERSIONS.includes(snapshot.rulesetVersion)) {
+    throw new Error(`Unknown derived-stat rulesetVersion ${snapshot.rulesetVersion} (supported: ${DERIVED_STAT_RULESET_VERSIONS.join(', ')})`);
+  }
+  if (!plainObject(snapshot.rules) || snapshot.rules.rulesetVersion !== snapshot.rulesetVersion) {
+    throw new Error('Derived-stat snapshot rulesetVersion disagrees with its rules');
+  }
+  // Reconstitute an authored-shape table, validate it through the same door,
+  // and resolve it without any live overrides. Resolved rows contain defaults;
+  // those extra row keys are all legal authored override keys.
+  const source = structuredClone(snapshot.rules);
+  throwProblems('derivedStatSnapshot', derivedStatRuleProblems(source, normalizedOptions(options)));
+  return { snapshotVersion: snapshot.snapshotVersion, rulesetVersion: snapshot.rulesetVersion, rules: source };
+}
+
+
+Object.assign(module.exports, { DERIVED_STAT_IDS, DERIVED_STAT_ROUNDING, DERIVED_STAT_RULESET_VERSIONS, DERIVED_STAT_SNAPSHOT_VERSION, derivedStatRuleProblems, resolveDerivedStatRules, deriveAttributeTierReceipt, deriveStat, createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot });
+
+},
 "src/model/registries.js": function (module, exports, require) {
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
@@ -17147,6 +17526,9 @@ function createRegistries(contentBundle) {
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
+  // One object, not a copied settings shadow. The run snapshots the resolved
+  // result; authoring and validation still point at this exact content object.
+  registries.derivedStatRules = deepFreeze(bundle.derivedStatRules || {});
 
   const mapConfigs = deepFreeze({ ...(bundle.mapConfigs || {}) });
   registries.mapConfigs = mapConfigs;
@@ -18712,6 +19094,11 @@ Object.assign(module.exports, { parseMod, HANDS, CARD_MOD_APPLIES, RUN_MOD_APPLI
 const { createLoadout, runMods, stampDeck } = require("src/model/loadout.js");
 const { graceRefillPlan } = require("src/model/gracerefill.js");
 const { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } = require("src/model/attributes.js");
+const { createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot, deriveStat } = require("src/model/derivedStats.js");
+
+
+
+
 
 const RUN_SCHEMA_VERSION = 1;
 
@@ -18739,7 +19126,15 @@ function createDeck(cardIds, idGen = createIdGen('d')) {
  * Starting deck/relic/HP come from the class def; cinders from
  * balance.startingCinders (default 0).
  */
-function createRunState({ seed, classId, registries, attributeMode = undefined, attributes: requestedAttributes = undefined }) {
+function createRunState({
+  seed,
+  classId,
+  registries,
+  attributeMode = undefined,
+  attributes: requestedAttributes = undefined,
+  derivedStatOptions = {},
+  derivedStatRuleSnapshot = undefined,
+}) {
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
     ? defaultCreationModeId(registries)
@@ -18751,8 +19146,8 @@ function createRunState({ seed, classId, registries, attributeMode = undefined, 
   const loadout = createLoadout(registries, classId);
   // Armour can carry `self.maxHp`, so the pool it sets has to be known before
   // hp is filled — the run starts at full, in whatever it starts wearing.
-  const maxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
-  const maxMana = classDef.maxMana;
+  const oldMaxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
+  const oldMaxMana = classDef.maxMana;
   const run = {
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
@@ -18764,10 +19159,10 @@ function createRunState({ seed, classId, registries, attributeMode = undefined, 
     floor: 0,
     actNumber: 1,
     mapNodeId: null,
-    hp: maxHp,
-    maxHp,
-    mana: maxMana,
-    maxMana,
+    hp: oldMaxHp,
+    maxHp: oldMaxHp,
+    mana: oldMaxMana,
+    maxMana: oldMaxMana,
     cinders: registries.balance.startingCinders || 0,
     deck: createDeck(classDef.startingDeck, idGen),
     loadout,
@@ -18793,6 +19188,73 @@ function createRunState({ seed, classId, registries, attributeMode = undefined, 
   // is a no-op; in an armour set with `defend.block=+2` it is already true of
   // the very first Defend you draw.
   stampDeck(registries, run);
+  initializeRunDerivedStats(run, registries, {
+    snapshot: derivedStatRuleSnapshot,
+    derivedStatOptions,
+    preserveDeficits: false,
+  });
+  return run;
+}
+
+function derivedOptions(registries, extra = {}) {
+  return {
+    ...extra,
+    authority: 'host',
+    attributeIds: registries.attributes.ids(),
+    classFields: ['maxHp', 'maxMana'],
+  };
+}
+
+/**
+ * Resolve the host-owned rule snapshot into the run's authoritative outputs.
+ * Existing current pools preserve their deficit during the one legacy
+ * migration. Once a snapshot exists, restores validate and trust the persisted
+ * outputs so a later content edit cannot rewrite a climb in progress.
+ */
+function initializeRunDerivedStats(run, registries, {
+  snapshot = undefined,
+  derivedStatOptions = {},
+  preserveDeficits = true,
+} = {}) {
+  const existing = snapshot || run.derivedStatRuleSnapshot;
+  if (existing && run.derivedStatRuleSnapshot
+    && run.maxHp !== undefined && run.hp !== undefined
+    && run.maxMana !== undefined && run.mana !== undefined
+    && run.maxStamina !== undefined && run.stamina !== undefined
+    && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
+    restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+    return run;
+  }
+
+  const receipt = existing
+    ? restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries))
+    : createDerivedStatRuleSnapshot(registries.derivedStatRules, derivedOptions(registries, derivedStatOptions));
+  const classDef = registries.classes.get(run.class);
+  const rules = receipt.rules;
+  const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef });
+  const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef });
+  const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef });
+  const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef });
+  const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef });
+  const hpBonus = run.loadout ? runMods(registries, run.loadout, run.class).maxHp : 0;
+
+  const oldHpMax = run.maxHp;
+  const oldHp = run.hp;
+  const oldManaMax = run.maxMana;
+  const oldMana = run.mana;
+  run.derivedStatRuleSnapshot = structuredClone(receipt);
+  run.maxHp = hp.value + hpBonus;
+  run.maxMana = mana.value;
+  run.maxStamina = stamina.value;
+  run.energyMax = energy.value;
+  run.drawPerTurn = draw.value;
+  if (preserveDeficits && Number.isFinite(oldHpMax) && Number.isFinite(oldHp)) {
+    run.hp = Math.max(0, run.maxHp - Math.max(0, oldHpMax - oldHp));
+  } else run.hp = run.maxHp;
+  if (preserveDeficits && Number.isFinite(oldManaMax) && Number.isFinite(oldMana)) {
+    run.mana = Math.max(0, run.maxMana - Math.max(0, oldManaMax - oldMana));
+  } else run.mana = run.maxMana;
+  run.stamina = run.maxStamina;
   return run;
 }
 
@@ -18813,6 +19275,8 @@ const RUN_SHAPE = [
   // Optional as a pair only so pre-attribute saves can migrate as one block.
   { key: 'attributeMode', type: 'string', optional: true },
   { key: 'attributes', type: 'object', optional: true },
+  // Optional only for the one pre-derived migration at the load door.
+  { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
@@ -18821,6 +19285,10 @@ const RUN_SHAPE = [
   // its class-authored full pool before handing it to the game.
   { key: 'mana', type: 'number', optional: true },
   { key: 'maxMana', type: 'number', optional: true },
+  { key: 'stamina', type: 'number', optional: true },
+  { key: 'maxStamina', type: 'number', optional: true },
+  { key: 'energyMax', type: 'number', optional: true },
+  { key: 'drawPerTurn', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
@@ -18880,6 +19348,15 @@ function validateRunShape(run) {
   if (Number.isFinite(run.mana) && Number.isFinite(run.maxMana) && (run.mana < 0 || run.mana > run.maxMana)) {
     problems.push('mana must be between 0 and maxMana');
   }
+  const staminaAbsent = run.stamina === undefined;
+  const maxStaminaAbsent = run.maxStamina === undefined;
+  if (staminaAbsent !== maxStaminaAbsent) problems.push('stamina and maxStamina must both be present or both be absent');
+  if (run.maxStamina !== undefined && (!Number.isFinite(run.maxStamina) || run.maxStamina < 0)) problems.push('maxStamina must be >= 0');
+  if (Number.isFinite(run.stamina) && Number.isFinite(run.maxStamina) && (run.stamina < 0 || run.stamina > run.maxStamina)) {
+    problems.push('stamina must be between 0 and maxStamina');
+  }
+  if (run.energyMax !== undefined && (!Number.isFinite(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be >= 0');
+  if (run.drawPerTurn !== undefined && (!Number.isFinite(run.drawPerTurn) || run.drawPerTurn < 0)) problems.push('drawPerTurn must be >= 0');
   return problems;
 }
 
@@ -18910,7 +19387,7 @@ function deserializeRun(json) {
 /**
  * Player combat entity. statuses: { [statusId]: { stacks, duration?, meter? } }.
  */
-function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, relicIds = [], flasks = [], energyMax = 3 }) {
+function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], energyMax = 3, drawPerTurn = 5 }) {
   return {
     id: 'player',
     kind: 'player',
@@ -18919,9 +19396,12 @@ function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, relicIds 
     maxHp,
     mana: mana != null ? mana : maxMana,
     maxMana,
+    stamina: stamina != null ? stamina : maxStamina,
+    maxStamina,
     block: 0,
     energy: 0,
     energyMax,
+    drawPerTurn,
     statuses: {},
     stanceId: null,
     relicIds: [...relicIds],
@@ -18960,7 +19440,7 @@ function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax }) {
 }
 
 
-Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, RUN_SHAPE, validateRunShape, serializeRun, deserializeRun, createPlayerCombatEntity, createEnemyCombatEntity });
+Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, initializeRunDerivedStats, RUN_SHAPE, validateRunShape, serializeRun, deserializeRun, createPlayerCombatEntity, createEnemyCombatEntity });
 
 },
 "src/model/unlocks.js": function (module, exports, require) {
@@ -19609,16 +20089,19 @@ function createCombat({
     phase: 'setup', // 'player' | 'enemy' | 'ended'
     result: null, // null | 'victory' | 'defeat'
     handMax: bal.handMax != null ? bal.handMax : 10,
-    drawPerTurn: bal.draw != null ? bal.draw : 5,
+    drawPerTurn: player.drawPerTurn != null ? player.drawPerTurn : (bal.draw != null ? bal.draw : 5),
     player: createPlayerCombatEntity({
       classId: player.classId,
       maxHp: player.maxHp,
       hp: player.hp,
       maxMana,
       mana: player.mana != null ? player.mana : maxMana,
+      maxStamina: player.maxStamina,
+      stamina: player.stamina,
       relicIds: player.relicIds || [],
       flasks: player.flasks || [],
-      energyMax: bal.energy != null ? bal.energy : 3,
+      energyMax: player.energyMax != null ? player.energyMax : (bal.energy != null ? bal.energy : 3),
+      drawPerTurn: player.drawPerTurn != null ? player.drawPerTurn : (bal.draw != null ? bal.draw : 5),
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
@@ -22504,7 +22987,7 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-const { serializeRun, deserializeRun } = require("src/model/state.js");
+const { serializeRun, deserializeRun, initializeRunDerivedStats } = require("src/model/state.js");
 const { createLoadout, stampDeck } = require("src/model/loadout.js");
 const { normalizeRunAttributes } = require("src/model/attributes.js");
 
@@ -22852,12 +23335,14 @@ function createSaveManager(storage) {
         run.loadout = createLoadout(registries, run.class);
         stampDeck(registries, run);
       }
-      // Pre-mana v1 saves remain valid: the absent optional fields mean the
-      // climb began before this resource existed, so it enters at its class's
-      // authored full pool. Present-but-malformed values were refused earlier.
-      if (run.maxMana === undefined && run.mana === undefined) {
-        run.maxMana = registries.classes.get(run.class).maxMana;
-        run.mana = run.maxMana;
+      // One migration door for HP, Mana, Stamina, Energy and Draw. A run that
+      // already owns a rules snapshot is only validated; a legacy run resolves
+      // the current host rules and preserves existing HP/Mana deficits.
+      try {
+        initializeRunDerivedStats(run, registries, { preserveDeficits: true });
+      } catch (e) {
+        archive(json, e && e.message ? e.message : 'invalid derived-stat snapshot', slot);
+        return null;
       }
       // A run that LOADS is a player too, and this is the edge Bjorn could not
       // reach: everyone who started a climb on a build before this one has runs
@@ -24486,6 +24971,8 @@ const { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, cla
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { refusesWhen } = require("src/ui/components/refusal.js");
 const { attachSeedField } = require("src/ui/components/seedfield.js");
+const { createRunState } = require("src/model/state.js");
+const { statProjection } = require("src/model/statProjection.js");
 
 function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -24546,6 +25033,7 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
 
           <div class="preview-pane">
             <div id="cz-portrait" class="cz-portrait"></div>
+            <details class="cz-stats"><summary>ATTRIBUTES &amp; RESOURCES</summary><div id="cz-stat-projection"></div></details>
             <label class="cz-label cz-name-label" for="cz-name">NAME</label>
             <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false"
                    autocomplete="off" placeholder="Forsaken" value="">
@@ -24574,6 +25062,10 @@ function mountCustomize(app, { registries, defaultSeedString, onBack, onStart })
       : null;
     if (sprite) p.appendChild(sprite);
     else p.textContent = state.glyph;
+    const preview = createRunState({ seed: 0, classId: state.classId, registries });
+    const projection = statProjection(registries, preview);
+    $('#cz-stat-projection').innerHTML = projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')
+      + projection.derived.map((row) => `<div><b>${esc(row.label)}</b> ${esc(row.formula)}${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('');
   }
 
   // ---- class row (real classes + locked M3 silhouettes) ----
@@ -25478,6 +25970,49 @@ function attachSeedField(input, { promise = SEED_PROMISE } = {}) {
 Object.assign(module.exports, { SEED_PROMISE, attachSeedField });
 
 },
+"src/model/statProjection.js": function (module, exports, require) {
+// One read model for character stats on every non-combat comparison surface.
+// It exposes calculation receipts; screens choose layout, never redo formulas.
+
+const { deriveStat } = require("src/model/derivedStats.js");
+
+const LABELS = Object.freeze({
+  hp: 'HP',
+  mana: 'Mana',
+  stamina: 'Stamina',
+  energy: 'Energy / turn',
+  draw: 'Draw / turn and opening hand',
+});
+
+function statProjection(registries, run) {
+  const snapshot = run && run.derivedStatRuleSnapshot;
+  if (!snapshot || !snapshot.rules) throw new Error('statProjection requires a run with a derived-stat rules snapshot');
+  const classDef = registries.classes.get(run.class);
+  const attributes = registries.attributes.all()
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map((def) => ({ ...def, value: run.attributes[def.id] }));
+  const derived = ['hp', 'mana', 'stamina', 'energy', 'draw'].map((id) => {
+    const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef });
+    const equipmentBonus = id === 'hp' ? Math.max(0, run.maxHp - receipt.value) : 0;
+    const value = receipt.value + equipmentBonus;
+    return {
+      ...receipt,
+      label: LABELS[id],
+      value,
+      equipmentBonus,
+      formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
+        + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''} = ${value}`,
+      note: id === 'stamina' ? 'No current consumer' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
+    };
+  });
+  return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };
+}
+
+
+Object.assign(module.exports, { statProjection });
+
+},
 "src/ui/screens/customRun.js": function (module, exports, require) {
 // src/ui/screens/customRun.js — Custom Climb setup (SPEC §10 ascension seam).
 //
@@ -26187,6 +26722,7 @@ const { classGlyph, tintCss } = require("src/ui/assets.js");
 const { nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { mountMapBoard } = require("src/ui/components/mapboard.js");
+const { flaskPresentation } = require("src/ui/components/flask.js");
 const { resolveMapMode } = require("src/model/mapknowledge.js");
 
 /**
@@ -26316,7 +26852,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     const def = registries.flasks.get(f.flaskId);
     const el = document.createElement('span');
     el.className = 'mh-flask';
-    el.textContent = def.icon || '🧪';
+    el.appendChild(flaskPresentation(def, { showName: false }));
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
     flaskWrap.appendChild(el);
   }
@@ -29306,6 +29842,28 @@ function mapKnowledge({ graph, run, mode = MAP_MODE_DEFAULT, reveal = false }) {
 Object.assign(module.exports, { HIDDEN, PLACED, KNOWN, RUNGS, rungHeight, MAP_MODES, MAP_MODE_DEFAULT, resolveMapMode, nodeReading, FOG_TRAIL_CLAUSE, litNodes, mapKnowledge });
 
 },
+"src/ui/components/flask.js": function (module, exports, require) {
+const { esc } = require("src/ui/components/tooltip.js");
+
+/** One data-owned identity fragment; every surface may add its own surrounding copy. */
+function flaskIdentityHtml(def, { showName = true, className = '' } = {}) {
+  return `<span class="flask-identity ${esc(className)}" data-flask-art="${esc(def.artKey)}" style="--flask-tint:${esc(def.tint)}" aria-label="${esc(def.name)}">`
+    + `<span class="flask-art" aria-hidden="true">${esc(def.icon)}</span>`
+    + (showName ? `<span class="flask-name">${esc(def.name)}</span>` : '')
+    + '</span>';
+}
+
+function flaskPresentation(def, options = {}) {
+  const el = document.createElement(options.tag || 'span');
+  el.className = options.hostClass || '';
+  el.innerHTML = flaskIdentityHtml(def, options);
+  return el;
+}
+
+
+Object.assign(module.exports, { flaskIdentityHtml, flaskPresentation });
+
+},
 "src/ui/screens/combat.js": function (module, exports, require) {
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
@@ -29335,6 +29893,7 @@ const { trackGesture } = require("src/ui/gesture.js");
 const { resourceBars, markFlooredBars } = require("src/ui/components/resbars.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { flaskPresentation } = require("src/ui/components/flask.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -29691,7 +30250,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       el.className = 'relic flask-slot';
       el.style.cursor = 'pointer';
       if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
-      el.textContent = def.icon || '🧪';
+      el.appendChild(flaskPresentation(def, { showName: false }));
       // Quick-use key badge (F/G/H by default; pad glyph while a pad drives).
       if (slot < 3) {
         const kb = document.createElement('span');
@@ -30739,6 +31298,7 @@ const { refuses } = require("src/ui/components/refusal.js");
 const { playerSprite, equippedFigure } = require("src/ui/assets.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { sfx } = require("src/ui/sfx.js");
+const { statProjection } = require("src/model/statProjection.js");
 
 const CFG = () => balance.equipment;
 
@@ -31422,6 +31982,16 @@ function mountEquipment(host, {
     return box;
   }
 
+  function statsComparison() {
+    const projection = statProjection(registries, run);
+    const box = document.createElement('section');
+    box.className = 'armoury-stats';
+    box.innerHTML = '<h3>ATTRIBUTES &amp; RESOURCES</h3>'
+      + `<div class="armoury-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
+      + `<div class="armoury-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`;
+    return box;
+  }
+
   function commit() {
     if (onChange) onChange(run.loadout);
     draw();
@@ -31567,6 +32137,7 @@ function mountEquipment(host, {
       dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
       right.appendChild(dead);
     }
+    wrap.querySelector('.armoury-strip').appendChild(statsComparison());
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
 
     notice = '';
@@ -32163,6 +32734,7 @@ const { esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { sfx } = require("src/ui/sfx.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
+const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 
 function mountRewards(app, { registries, run, rewards, onDone }) {
   const lines = [];
@@ -32179,7 +32751,7 @@ function mountRewards(app, { registries, run, rewards, onDone }) {
     const def = registries.flasks.get(rewards.flaskId);
     if (run.flasks.length < (registries.balance.flaskSlots || 3)) {
       run.flasks.push({ flaskId: rewards.flaskId });
-      lines.push(`Flask: <b>${esc(def.icon || '🧪')} ${esc(def.name)}</b>`);
+      lines.push(`Flask: <b>${flaskIdentityHtml(def)}</b>`);
     } else {
       lines.push(`<span style="color:var(--muted)">A ${esc(def.name)} — but your flask slots are full. It stays in the mud.</span>`);
     }
@@ -32257,6 +32829,7 @@ const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { esc } = require("src/ui/components/tooltip.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { sfx } = require("src/ui/sfx.js");
+const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -32285,7 +32858,7 @@ function refillLineHtml(registries, refill) {
   if (refill.total) {
     const byId = new Map();
     for (const id of refill.grants) byId.set(id, (byId.get(id) || 0) + 1);
-    const named = [...byId].map(([id, n]) => `${n} × ${esc(registries.flasks.get(id).name)}`);
+    const named = [...byId].map(([id, n]) => `${n} × ${flaskIdentityHtml(registries.flasks.get(id))}`);
     said.push(`Flasks refilled: ${named.join(', ')}.`);
   }
   for (const s of refill.shortfalls) said.push(`Flask slots full — ${s.short} not given.`);
@@ -32380,6 +32953,7 @@ const { relicText } = require("src/ui/components/card.js");
 const { sfx } = require("src/ui/sfx.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 
 function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
   const stock = run.shopStock;
@@ -32458,14 +33032,14 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     stock.flasks.forEach((item, i) => {
       const def = registries.flasks.get(item.id);
       const can = run.cinders >= item.cost && slotsFree();
-      items.appendChild(shopItem(`${def.icon || '🧪'} ${def.name}`, slotsFree() ? def.textTemplate : 'Flask slots full.', item.cost, can, () => {
+      items.appendChild(shopItem(flaskIdentityHtml(def), slotsFree() ? def.textTemplate : 'Flask slots full.', item.cost, can, () => {
         run.cinders -= item.cost;
         run.flasks.push({ flaskId: item.id });
         stock.flasks.splice(i, 1);
         sfx.play('buy');
         onChanged();
         render();
-      }));
+      }, { titleHtml: true }));
     });
 
     if (run.cinders >= stock.removeCost && run.deck.length > 1) {
@@ -32500,10 +33074,10 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     app.querySelector('#leave-shop').addEventListener('click', onLeave);
   }
 
-  function shopItem(title, desc, cost, affordable, onBuy) {
+  function shopItem(title, desc, cost, affordable, onBuy, { titleHtml = false } = {}) {
     const el = document.createElement('div');
     el.className = `class-pick${affordable ? '' : ' locked'}`;
-    el.innerHTML = `<h3 style="font-size:13px">${esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} cinders</span>`;
+    el.innerHTML = `<h3 style="font-size:13px">${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} cinders</span>`;
     if (affordable) el.addEventListener('click', onBuy);
     return el;
   }
@@ -35333,6 +35907,8 @@ const { relicText } = require("src/ui/components/card.js");
 const { isEngaged, focusFirst, setTabRing } = require("src/ui/input.js");
 const { menuTabs } = require("src/ui/uiContent.js");
 const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } = require("src/ui/components/quicknav.js");
+const { statProjection } = require("src/model/statProjection.js");
+const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 
 let openVeil = null;
 let escHandler = null;
@@ -35420,7 +35996,7 @@ function renderRelics(container, ctx) {
     const def = ctx.registries.flasks.get(f.flaskId);
     const el = document.createElement('div');
     el.className = 'ov-relic';
-    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '🧪')}</span><div><b>${esc(def.name)}</b><p>${esc(def.textTemplate || '')}</p></div>`;
+    el.innerHTML = `${flaskIdentityHtml(def)}<div><p>${esc(def.textTemplate || '')}</p></div>`;
     fGrid.appendChild(el);
   }
   if (!ctx.run.flasks.length) fGrid.innerHTML = '<div style="color:var(--muted)">None.</div>';
@@ -35456,16 +36032,23 @@ function renderSave(container, ctx) {
   if (e && ctx.onExit) e.addEventListener('click', () => { closeOverlay(); ctx.onExit(); });
 }
 
-function renderStats(container, ctx) {
+function hybridStatsPlan(ctx) {
   const s = ctx.run.stats || {};
   const cls = ctx.registries.classes.get(ctx.run.class);
-  const rows = [
+  const projection = statProjection(ctx.registries, ctx.run);
+  const attributes = projection.attributes.map((def) => [def.shortLabel, def.value]);
+  const derived = projection.derived.flatMap((row) => [
+    [row.label, row.formula],
+    ...(row.note ? [[`${row.label} note`, row.note]] : []),
+  ]);
+  return [
     ['Forsaken', (ctx.run.customization && ctx.run.customization.name) || cls.name],
     ['Class', cls.name],
+    ...attributes,
     ['Seed', ctx.run.seedString],
     ['Act', ctx.run.actNumber > 3 ? `${ctx.run.actNumber} (endless)` : `${ctx.run.actNumber} / 3`],
     ['Floor', ctx.run.floor],
-    ['HP', `${ctx.run.hp} / ${ctx.run.maxHp}`],
+    ...derived,
     ['Cinders', ctx.run.cinders],
     ['Fights won', s.fightsWon || 0],
     ['Damage dealt', s.damageDealt || 0],
@@ -35473,6 +36056,10 @@ function renderStats(container, ctx) {
     ['Deck size', ctx.run.deck.length],
     ['Relics', ctx.run.relics.length],
   ];
+}
+
+function renderStats(container, ctx) {
+  const rows = hybridStatsPlan(ctx);
   const el = document.createElement('div');
   el.className = 'ov-stats';
   el.innerHTML = rows
@@ -35652,7 +36239,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
 }
 
 
-Object.assign(module.exports, { panelFor, closeOverlay, openOverlay });
+Object.assign(module.exports, { panelFor, hybridStatsPlan, closeOverlay, openOverlay });
 
 },
 "src/ui/screens/controls.js": function (module, exports, require) {
@@ -36273,6 +36860,7 @@ const { resolveCard } = require("src/model/registries.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
 const { mountMapBoard } = require("src/ui/components/mapboard.js");
+const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 
 function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -36482,6 +37070,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
       <div class="combat coop">
         <header class="topbar">
           <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
+          <div class="resbars-host"></div>
           <button class="subtle coop-leave" id="coop-leave" style="margin-left:auto">Leave</button>
         </header>
         <div class="${backdropClass(snap.actNumber)}"></div>
@@ -36499,6 +37088,14 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
         </div>
         <div class="fx-layer"></div>
       </div>`;
+
+    // The active seat gets the same main-HUD plan as solo. Values come only
+    // from the host snapshot; a missing current/max pair produces no bar.
+    const mainHost = app.querySelector('.topbar .resbars-host');
+    if (mainHost && meP) {
+      const mainPlan = resourceBarPlan(registries, 'main', meP, meP, resourceDomainTable);
+      mainHost.appendChild(resourceBars(mainPlan, { surface: 'main' }));
+    }
 
     // Player seats (all party members in the fight).
     const zone = app.querySelector('.player-zone');
@@ -36580,7 +37177,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
         const fd = registries.flasks.get(f.flaskId);
         const b = document.createElement('button');
         b.className = `coop-flask${armedFlask === i ? ' armed' : ''}`;
-        b.innerHTML = `⚗ ${esc(fd.name)}${fd.targeted ? '' : ' ▾'}`;
+        b.innerHTML = `${flaskIdentityHtml(fd)}${fd.targeted ? '' : ' ▾'}`;
         attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
         b.addEventListener('click', () => {
           if (fd.targeted) { send({ t: 'useFlask', slot: i, targetId: selectedEnemy }); armedFlask = null; }
@@ -36712,7 +37309,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
     app.innerHTML = rewardShell(`${rTitle(`${(snap.scene.pool || '').toUpperCase()} — CHOOSE A CARD`)}<div class="reward-row"></div>
       <div class="coop-choices" style="margin-top:12px">
         ${offer.relicId ? `<button class="coop-take" data-take="relic">Take relic: ${esc(registries.relics.get(offer.relicId).name)}</button>` : ''}
-        ${offer.flaskId ? `<button class="coop-take" data-take="flask">Take flask: ${esc(registries.flasks.get(offer.flaskId).name)}</button>` : ''}
+        ${offer.flaskId ? `<button class="coop-take" data-take="flask">Take flask: ${flaskIdentityHtml(registries.flasks.get(offer.flaskId))}</button>` : ''}
         <button class="subtle" data-take="skip">Skip card</button>
       </div>`);
     const grid = app.querySelector('.reward-row');
