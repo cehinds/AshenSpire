@@ -19,7 +19,7 @@ import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
-import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
+import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
@@ -453,7 +453,7 @@ export function createSession({ registries, seedString, endless = false, restore
     if (takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) {
       m.run.relics.push(offer.relicId);
     }
-    if (flask && offer.flaskId && m.run.flasks.length < (registries.balance.flaskSlots || 3)) {
+    if (flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) {
       m.run.flasks.push({ flaskId: offer.flaskId });
     }
     session.scene.chosen[memberId] = true;
@@ -553,7 +553,7 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
       if (pick && pick.takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) m.run.relics.push(offer.relicId);
-      if (pick && pick.flask && offer.flaskId && m.run.flasks.length < (registries.balance.flaskSlots || 3)) m.run.flasks.push({ flaskId: offer.flaskId });
+      if (pick && pick.flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) m.run.flasks.push({ flaskId: offer.flaskId });
     } else if (item.type === 'treasure') {
       if (pick && pick.takeRelic && item.relicId && !m.run.relics.includes(item.relicId)) m.run.relics.push(item.relicId);
     }

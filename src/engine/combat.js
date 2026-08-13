@@ -21,6 +21,7 @@ import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
 import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot } from '../model/loadout.js';
+import { chargeFlaskId } from '../model/gracerefill.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -677,7 +678,7 @@ function doEndTurn(combat) {
 function doUseFlask(combat, { slot, chargeKind, targetId }) {
   if (combat.phase !== 'player') throw new Error('Flasks can only be used on the player turn');
   const p = combat.player;
-  const chargeId = chargeKind === 'hp' ? 'crimsonFlask' : chargeKind === 'mana' ? 'azureFlask' : null;
+  const chargeId = chargeFlaskId(combat.registries, chargeKind);
   const currentKey = chargeKind && `${chargeKind}Current`;
   if (chargeId && (!p.flaskCharges || p.flaskCharges[currentKey] <= 0)) throw new Error(`No ${chargeKind} flask charges`);
   const flask = chargeId ? { flaskId: chargeId } : p.flasks[slot];

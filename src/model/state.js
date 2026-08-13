@@ -8,7 +8,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt } from './loadout.js';
-import { createFlaskCharges } from './gracerefill.js';
+import { chargeKindForFlask, createFlaskCharges } from './gracerefill.js';
 import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 import {
   createDerivedStatRuleSnapshot,
@@ -338,9 +338,9 @@ export function initializeRunFlaskCharges(run, registries) {
     const allocation = registries.classes.get(run.class).startingFlaskAllocation;
     run.flaskCharges = createFlaskCharges(registries.balance, allocation);
     const legacy = run.flasks || [];
-    run.flaskCharges.hpCurrent = Math.min(run.flaskCharges.hp, legacy.filter((f) => f && f.flaskId === 'crimsonFlask').length);
-    run.flaskCharges.manaCurrent = Math.min(run.flaskCharges.mana, legacy.filter((f) => f && f.flaskId === 'azureFlask').length);
-    run.flasks = (run.flasks || []).filter((f) => f && f.flaskId !== 'crimsonFlask' && f.flaskId !== 'azureFlask');
+    run.flaskCharges.hpCurrent = Math.min(run.flaskCharges.hp, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'hp').length);
+    run.flaskCharges.manaCurrent = Math.min(run.flaskCharges.mana, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'mana').length);
+    run.flasks = (run.flasks || []).filter((f) => f && chargeKindForFlask(registries, f.flaskId) == null);
   }
   return run.flaskCharges;
 }

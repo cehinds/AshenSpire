@@ -29,6 +29,7 @@ import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
+import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -426,8 +427,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // its explicit Use row may spend a charge or enter targeting mode.
     const flasks = $('.topbar .flasks');
     flasks.innerHTML = '';
-    for (const [kind, flaskId] of [['hp', 'crimsonFlask'], ['mana', 'azureFlask']]) {
-      const def = registries.flasks.get(flaskId);
+    for (const kind of CHARGE_FLASK_KINDS) {
+      const def = chargeFlaskDefinition(registries, kind);
       const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
       const el = document.createElement('button');
       el.className = 'relic flask-slot flask-charge';

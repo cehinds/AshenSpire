@@ -28,6 +28,7 @@ import { evaluate, isFormula } from '../model/formulas.js';
 import * as statuses from './statuses.js';
 import { evalPredicate, checkPhases } from './triggers.js';
 import { damageTagIds } from '../content/tags.js';
+import { flaskSlotCap } from '../model/gracerefill.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -591,7 +592,7 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'addFlask': {
-      const slots = ctx.registries.balance.flaskSlots != null ? ctx.registries.balance.flaskSlots : 3;
+      const slots = flaskSlotCap(ctx.registries.balance);
       if (run.flasks.length >= slots) break;
       let flaskId = eff.id || null;
       if (!flaskId && eff.random) {

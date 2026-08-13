@@ -11,6 +11,7 @@ import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml } from '../components/flask.js';
+import { flaskSlotCap } from '../../model/gracerefill.js';
 
 export function mountRewards(app, { registries, run, rewards, onDone }) {
   const lines = [];
@@ -25,7 +26,7 @@ export function mountRewards(app, { registries, run, rewards, onDone }) {
   }
   if (rewards.flaskId) {
     const def = registries.flasks.get(rewards.flaskId);
-    if (run.flasks.length < (registries.balance.flaskSlots || 3)) {
+    if (run.flasks.length < flaskSlotCap(registries.balance)) {
       run.flasks.push({ flaskId: rewards.flaskId });
       lines.push(`Flask: <b>${flaskIdentityHtml(def)}</b>`);
     } else {

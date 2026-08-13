@@ -11,6 +11,7 @@ import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { flaskIdentityHtml } from '../components/flask.js';
+import { flaskSlotCap } from '../../model/gracerefill.js';
 
 export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
   const stock = run.shopStock;
@@ -21,7 +22,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
   // cards, one tap. Nobody asked for this one; it is here because the Smith's
   // machinery answers it for free and it is the same mistake.
   const arm = beatArmer(meta, registries);
-  const slotsFree = () => run.flasks.length < (registries.balance.flaskSlots || 3);
+  const slotsFree = () => run.flasks.length < flaskSlotCap(registries.balance);
 
   function render() {
     app.innerHTML = `

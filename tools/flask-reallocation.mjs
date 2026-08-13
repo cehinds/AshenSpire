@@ -72,7 +72,8 @@ check(/flaskCharges/.test(session) && /reallocateFlaskCharges/.test(session),
   'host session snapshots, restores, and authors reallocation');
 
 const combat = text('src/engine/combat.js') + text('src/engine/coopCombat.js');
-check(/flaskCharges/.test(combat) && /crimsonFlask/.test(combat) && /azureFlask/.test(combat),
+check(/flaskCharges/.test(combat) && /chargeFlaskId/.test(combat)
+  && !/['"](?:crimsonFlask|azureFlask)['"]/.test(combat),
   'solo and co-op consumption spend the same authoritative charge pools');
 
 const soloRun = fresh[0];

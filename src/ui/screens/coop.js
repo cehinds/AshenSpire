@@ -33,6 +33,7 @@ import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js';
 import { beatArmer } from '../components/holdconfirm.js';
+import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -401,8 +402,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     // Flasks.
     const fwrap = app.querySelector('.coop-flasks');
     if (fwrap && meP) {
-      for (const [kind, flaskId] of [['hp', 'crimsonFlask'], ['mana', 'azureFlask']]) {
-        const fd = registries.flasks.get(flaskId);
+      for (const kind of CHARGE_FLASK_KINDS) {
+        const fd = chargeFlaskDefinition(registries, kind);
         const current = meP.flaskCharges ? meP.flaskCharges[`${kind}Current`] : 0;
         const b = document.createElement('button');
         b.className = 'coop-flask flask-charge';
