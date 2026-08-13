@@ -527,6 +527,22 @@ export function validateContent(bundle) {
       });
     }
   }
+  // balance.ui.inspectHold — the reading hold on the hand. The consumer is
+  // `Number(...) || 0` shaped like holdConfirm's, so a typo'd row would resolve
+  // to 0 and silently REMOVE the gesture: nothing on screen looks different, a
+  // held card simply never expands — the same silent-plausible failure as the
+  // rows above (Law 0 clause 5). `ms: 0` on purpose is legal and means off; a
+  // row that cannot be READ is not a zero, it is a mistake, and it fails here
+  // by name.
+  if (b.balance && b.balance.ui && b.balance.ui.inspectHold != null) {
+    const ih = b.balance.ui.inspectHold;
+    if (typeof ih !== 'object' || Array.isArray(ih)) {
+      err('balance.ui.inspectHold', 'must be an object { ms }');
+    } else if (typeof ih.ms !== 'number' || !Number.isFinite(ih.ms) || ih.ms < 0) {
+      err('balance.ui.inspectHold.ms', `must be a non-negative number of milliseconds — got ${JSON.stringify(ih.ms)}. `
+        + `The consumer resolves an unreadable value to 0, which takes the inspect gesture off every card with nothing on the screen looking different.`);
+    }
+  }
   // THE SECOND-BEAT TABLE, checked at the same boot and for the same reason as
   // the dial above. It is CODE, not content, so it can never be a row a
   // designer breaks — but it is a table, and a table whose row is malformed
