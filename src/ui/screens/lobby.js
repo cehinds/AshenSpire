@@ -201,7 +201,7 @@ export function mountLobby(app, { registries, defaultSeedString, onBack, onStart
       const el = document.createElement('div');
       el.className = `class-pick cr-class${cls.id === state.classId ? ' chosen' : ''}`;
       el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3>`;
-      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${cls.maxHp} · ${cls.startingDeck.length} cards`);
+      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${cls.maxHp} · ${registries.balance.startingDeckSize} cards`);
       el.addEventListener('click', () => {
         state.classId = cls.id;
         conn.send({ t: 'pick', classId: cls.id });

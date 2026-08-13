@@ -12,6 +12,7 @@ import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
 import { statProjection } from '../../model/statProjection.js';
+import { equipmentKitReceipt } from '../../model/loadout.js';
 
 export function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -103,8 +104,14 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     else p.textContent = state.glyph;
     const preview = createRunState({ seed: 0, classId: state.classId, registries });
     const projection = statProjection(registries, preview);
+    const kit = equipmentKitReceipt(registries, preview.loadout, preview.class, preview.attributes);
+    const signature = registries.cards.get(registries.classes.get(preview.class).startingSignatureCard);
+    const copies = registries.balance.equipment.roleCopies;
     $('#cz-stat-projection').innerHTML = projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')
-      + projection.derived.map((row) => `<div><b>${esc(row.label)}</b> ${esc(row.formula)}${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('');
+      + projection.derived.map((row) => `<div><b>${esc(row.label)}</b> ${esc(row.formula)}${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')
+      + `<details class="cz-kit"><summary>Starting kit · ${registries.balance.startingDeckSize} cards</summary><ul>`
+      + kit.map((row) => `<li><b>${esc(row.profile.displayName)}</b> ×${copies[row.role]} <span>${row.receipt.base}+${row.receipt.value - row.receipt.base}=${row.receipt.value} · ${esc(row.profile.damageSchool)}</span></li>`).join('')
+      + `<li><b>${esc(signature.name)}</b> ×${copies.signature} <span>class signature</span></li></ul></details>`;
   }
 
   // ---- class row (real classes + locked M3 silhouettes) ----
@@ -113,7 +120,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
     const el = document.createElement('div');
     el.className = 'class-pick cz-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${cls.startingDeck.length} cards</span></div>`;
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${registries.balance.startingDeckSize} cards</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
       classes.querySelectorAll('.cz-class').forEach((x) => x.classList.toggle('chosen', x === el));

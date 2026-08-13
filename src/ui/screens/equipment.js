@@ -17,7 +17,7 @@
 import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
-  canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
+  canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, equipmentKitReceipt,
   ownership, openedSets, visibleSets, rungFor, setCellState,
 } from '../../model/loadout.js';
 import { renderCard } from '../components/card.js';
@@ -688,14 +688,21 @@ export function mountEquipment(host, {
   function cardStrip() {
     const box = document.createElement('div');
     box.className = 'equip-cards';
-    const mods = cardMods(registries, run.loadout, run.class);
-    const ids = [...new Set((eq.targets || [])
-      .filter((t) => t.classId === '*' || t.classId === run.class)
-      .map((t) => t.cardId))];
-    for (const cardId of ids) {
-      if (!registries.cards.has(cardId)) continue;
-      box.appendChild(renderCard(registries, { cardId, mods: mods.get(cardId) }, { small: true }));
+    const roles = equipmentKitReceipt(registries, run.loadout, run.class, run.attributes);
+    const shown = new Set();
+    for (const inst of run.deck || []) {
+      const key = inst.equipmentRole || `signature:${inst.cardId}`;
+      if (shown.has(key)) continue;
+      shown.add(key);
+      box.appendChild(renderCard(registries, inst, { small: true }));
     }
+    const receipt = document.createElement('div');
+    receipt.className = 'equip-role-receipts';
+    receipt.innerHTML = roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)}</b>`
+      + `<span>${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier}`
+      + ` + ${row.receipt.rarityBonus} rarity = <strong>${row.receipt.value}</strong></span>`
+      + `<small>${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}</small></div>`).join('');
+    box.appendChild(receipt);
     const rm = runMods(registries, run.loadout, run.class);
     const bits = [];
     if (rm.maxHp) bits.push(`Max HP ${rm.maxHp > 0 ? '+' : ''}${rm.maxHp}`);

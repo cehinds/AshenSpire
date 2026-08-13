@@ -1608,6 +1608,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 .armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.equip-role-receipts { flex: 1 1 28rem; display: grid; gap: 0.5rem; }
+.equip-role-receipts > div { display: grid; grid-template-columns: minmax(9rem, 1fr) 2fr; gap: 0.2rem 0.8rem; border-left: 2px solid var(--line-soft); padding-left: 0.8rem; }
+.equip-role-receipts span, .equip-role-receipts small { color: var(--muted); }
+.equip-role-receipts small { grid-column: 2; }
+.cz-kit { margin-top: 0.8rem; }
+.cz-kit summary { cursor: pointer; color: var(--gold); }
+.cz-kit ul { margin: 0.5rem 0 0; padding-left: 1.6rem; }
+.cz-kit li { margin: 0.25rem 0; }
+.cz-kit li span { color: var(--muted); }
 .equip-foot { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
 .ef-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 .ef-run { color: var(--grace); font-size: 1.15rem; }
