@@ -23,6 +23,9 @@
 
 // Effect DSL opcodes (SPEC §3.4).
 import { NODE_TYPES, ANCHOR_KINDS } from './floorplan.js';
+
+/** Presentation schools carried explicitly by equipment-bound card profiles. */
+export const DAMAGE_SCHOOLS = Object.freeze(['physical', 'magic', 'arcane', 'holy', 'fire']);
 // The bar vocabulary lives with the readers it describes (model/resources.js),
 // so the schema and the engine cannot drift into two homes. resources.js
 // imports nothing — no cycle.
@@ -469,7 +472,7 @@ export const SCHEMAS = Object.freeze({
     baseCardId: ref('cards'),
     displayName: str,
     icon: str,
-    damageSchool: en('physical', 'magic', 'arcane', 'holy', 'fire'),
+    damageSchool: en(...DAMAGE_SCHOOLS),
     baseValue: num,
     scalingStat: ref('attributes'),
     pointsPerTier: num,

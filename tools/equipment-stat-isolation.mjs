@@ -8,7 +8,8 @@
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { DAMAGE_SCHOOLS, equipmentKitReceipt, stampDeck, validateEquipment } from '../src/model/loadout.js';
+import { equipmentKitReceipt, stampDeck, validateEquipment } from '../src/model/loadout.js';
+import { DAMAGE_SCHOOLS, SCHEMAS } from '../src/model/schemas.js';
 import { deriveStat } from '../src/model/derivedStats.js';
 import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
 import { createCoopCombat } from '../src/engine/coopCombat.js';
@@ -33,9 +34,9 @@ const bowTechnique = profile('bowTechnique');
 const dagger = piece('dagger');
 const bow = piece('shortbow');
 
-const expectedSchools = ['physical', 'magic', 'arcane', 'holy', 'fire'];
-equal(JSON.stringify(DAMAGE_SCHOOLS), JSON.stringify(expectedSchools), 'one runtime damage-school vocabulary is authoritative');
-for (const school of expectedSchools) {
+equal(JSON.stringify(SCHEMAS.basicCardProfile.fields.damageSchool.values), JSON.stringify(DAMAGE_SCHOOLS),
+  'schema consumes the one authoritative damage-school vocabulary');
+for (const school of DAMAGE_SCHOOLS) {
   const bundle = { ...contentBundle, equipment: { ...contentBundle.equipment,
     basicCardProfiles: contentBundle.equipment.basicCardProfiles.map((row) => ({ ...row })) } };
   bundle.equipment.basicCardProfiles[0].damageSchool = school;
@@ -264,7 +265,8 @@ save.saveRun(layered);
 const resumed = save.loadRun(R);
 const resumedAttack = resumed?.deck.find((card) => card.equipmentRole === 'attack');
 check(resumedAttack?.profileId === 'bowPierceAttack'
-  && JSON.stringify(resumedAttack.profileReceipt) === JSON.stringify(layeredAttack.profileReceipt),
+  && JSON.stringify(resumedAttack.profileReceipt) === JSON.stringify(layeredAttack.profileReceipt)
+  && resolveCard(R, resumedAttack).effects.find((effect) => effect.op === 'damage')?.amount === 12,
   'save resume preserves DEX profile and calculation receipt identity', JSON.stringify(resumedAttack));
 
 const coop = createCoopCombat({
@@ -278,7 +280,8 @@ const coop = createCoopCombat({
 const coopAttack = [...coop.players.get('p1').piles.hand, ...coop.players.get('p1').piles.draw]
   .find((card) => card.instanceId === layeredAttack.instanceId);
 check(coopAttack?.profileId === layeredAttack.profileId
-  && JSON.stringify(coopAttack.profileReceipt) === JSON.stringify(layeredAttack.profileReceipt),
+  && JSON.stringify(coopAttack.profileReceipt) === JSON.stringify(layeredAttack.profileReceipt)
+  && resolveCard(R, coopAttack).effects.find((effect) => effect.op === 'damage')?.amount === 12,
   'co-op transport preserves DEX profile and calculation receipt identity', JSON.stringify(coopAttack));
 
 const driftProfiles = contentBundle.equipment.basicCardProfiles.map((row) => (
@@ -286,7 +289,8 @@ const driftProfiles = contentBundle.equipment.basicCardProfiles.map((row) => (
 ));
 const driftR = createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, basicCardProfiles: driftProfiles } });
 stampDeck(driftR, layered);
-check(layeredAttack.profileReceipt.value === 12,
+check(layeredAttack.profileReceipt.value === 12
+  && resolveCard(driftR, layeredAttack).effects.find((effect) => effect.op === 'damage')?.amount === 12,
   'live profile drift cannot rewrite the saved host snapshot', JSON.stringify(layeredAttack.profileReceipt));
 
 console.log(`\nequipment-stat-isolation: ${passed} passed, ${failed} failed`);

@@ -1,6 +1,7 @@
 import { tokenRe } from './validate.js';
 import { deriveAttributeTierReceipt } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
+import { DAMAGE_SCHOOLS } from './schemas.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -55,8 +56,6 @@ export function parseMod(str) {
 /** The closed set. A third hand is a new word — engine, one act (Law 1 c1). */
 export const HANDS = Object.freeze(['left', 'right']);
 export const EQUIPMENT_ROLES = Object.freeze(['attack', 'guard', 'technique']);
-export const DAMAGE_SCHOOLS = Object.freeze(['physical', 'magic', 'arcane', 'holy', 'fire']);
-
 // ---------------------------------------------------------------------------
 // The two `apply` vocabularies — one per mod scope (Viki, A8)
 // ---------------------------------------------------------------------------
