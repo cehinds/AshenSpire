@@ -290,6 +290,7 @@ export function createSession({ registries, seedString, endless = false, restore
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
         kind: e.kind, targetId: e.targetId, playerId: e.playerId,
         reason: e.reason, school: e.school, amount: e.amount, value: e.value,
+        attempted: e.attempted,
         threshold: e.threshold, status: e.status, duration: e.duration,
       }));
     live.evCursor = c.eventLog.length;

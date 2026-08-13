@@ -804,8 +804,8 @@ export const statuses = [
     tooltip: 'Deal 25% more attack damage, and take 25% more.',
   },
   {
-    // Registered, inert break payload for Arcane Exposure. The later engine
-    // slice must apply this only to explicit magic-school HP packets.
+    // Registered break payload for Arcane Exposure. The engine applies this
+    // only to explicit magic-school HP packets, never tags or buildup.
     id: 'magicVulnerable',
     name: 'Magic Vulnerable',
     icon: '✧',
@@ -813,6 +813,6 @@ export const statuses = [
     stackMode: 'refresh',
     decay: { duration: 2 }, // PROVISIONAL
     schoolDamageVulnerability: { school: 'magic' },
-    tooltip: 'Registered Arcane Exposure break payload. No current engine consumer.',
+    tooltip: 'Magic-school HP damage is increased while this lasts. Arcane Exposure buildup is locked.',
   },
 ];

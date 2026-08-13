@@ -3,8 +3,8 @@
 // Code never embeds a balance number; a balance change is a one-file diff here.
 
 export const balance = {
-  // Visible system name only. Arcane Exposure is schema/carrier data until its
-  // separately reviewed engine slice lands.
+  // Arcane Exposure host resolution: visible name plus the explicit school
+  // mapping actions.js consumes. No buildup is inferred from card tags.
   arcaneExposure: {
     label: 'Arcane Exposure',
     // Explicit carrier schools. Physical/holy/fire are currently unmapped and
