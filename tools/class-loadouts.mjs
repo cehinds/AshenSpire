@@ -7,6 +7,9 @@ import { createRunState } from '../src/model/state.js';
 import { validateEquipment, stampDeck } from '../src/model/loadout.js';
 import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
+import { validateContent } from '../src/model/validate.js';
+import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
+import { createCoopCombat } from '../src/engine/coopCombat.js';
 
 let passed = 0;
 let failed = 0;
@@ -123,6 +126,103 @@ refuses('mutant: duplicate precedence slot is refused by name', /rightHand|dupli
 refuses('mutant: role counts must sum to startingDeckSize', /10|sum|startingDeckSize/i, {
   balancePatch: { startingDeckSize: 10, equipment: { ...contentBundle.balance.equipment, roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1 } } },
 });
+
+// Host-resolved equipment scaling must be snapshotted, not recomputed from
+// whatever profile CSV happens to ship when a save resumes.
+let layered;
+let layeredError = '';
+try {
+  layered = createRunState({
+    seed: 3, classId: 'starseer', registries: R,
+    derivedStatOptions: {
+      modeModifiers: { equipmentProfiles: { staffMagicAttack: { gainPerTier: 2 } } },
+      runModifiers: [{ equipmentProfiles: { staffMagicAttack: { gainPerTier: 3 } } }],
+      explicitOverride: { equipmentProfiles: { staffMagicAttack: { gainPerTier: 4 } } },
+    },
+  });
+} catch (error) { layeredError = error.message; layered = createRunState({ seed: 3, classId: 'starseer', registries: R }); }
+const layeredAttack = layered.deck.find((c) => c.equipmentRole === 'attack');
+check(layeredAttack?.profileReceipt?.gainPerTier === 4 && layeredAttack.profileReceipt.value === 10,
+  'mode/run/explicit equipment scaling resolves once with explicit precedence', layeredError || JSON.stringify(layeredAttack?.profileReceipt));
+check(layered.equipmentProfileRuleSnapshot?.profiles?.staffMagicAttack?.gainPerTier === 4,
+  'run persists the host-resolved equipment profile snapshot', JSON.stringify(layered.equipmentProfileRuleSnapshot));
+
+const cloneBundle = () => ({
+  ...contentBundle,
+  equipment: {
+    ...contentBundle.equipment,
+    basicCardProfiles: (contentBundle.equipment.basicCardProfiles || []).map((p) => ({ ...p, tags: [...p.tags], mods: [...p.mods] })),
+  },
+});
+const driftBundle = cloneBundle();
+driftBundle.equipment.basicCardProfiles.find((p) => p.id === 'staffMagicAttack').gainPerTier = 99;
+const driftR = createRegistries(driftBundle);
+const beforeDrift = layeredAttack.profileReceipt.value;
+let driftError = '';
+try { stampDeck(driftR, layered); } catch (error) { driftError = error.message; }
+check(layeredAttack.profileReceipt.value === beforeDrift,
+  're-stamp after live content drift consumes the saved profile snapshot', driftError || JSON.stringify(layeredAttack.profileReceipt));
+
+function contentRefuses(label, pattern, mutate) {
+  const bundle = cloneBundle();
+  mutate(bundle);
+  const said = validateContent(bundle).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+  check(pattern.test(said), label, said);
+}
+contentRefuses('schema: missing basic-card profile table fails closed', /basicCardProfiles/i,
+  (b) => { delete b.equipment.basicCardProfiles; });
+contentRefuses('schema: unknown profile field is refused by path', /basicCardProfiles.*surprise/i,
+  (b) => { b.equipment.basicCardProfiles[0].surprise = true; });
+contentRefuses('schema: negative finite cap is refused', /cap.*negative|non-negative/i,
+  (b) => { b.equipment.basicCardProfiles[0].cap = -1; });
+contentRefuses('schema: compatibility vocabulary is role-bound', /compatibility/i,
+  (b) => { b.equipment.basicCardProfiles[0].compatibility = 'guard-v1'; });
+for (const field of ['id', 'role', 'baseCardId', 'displayName', 'icon', 'damageSchool', 'baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap', 'tags', 'flavor', 'mods', 'compatibility']) {
+  contentRefuses(`schema completeness: missing ${field} is refused`, new RegExp(`basicCardProfiles.*${field}`, 'i'),
+    (b) => { delete b.equipment.basicCardProfiles[0][field]; });
+}
+contentRefuses('schema product: zero pointsPerTier is refused', /pointsPerTier.*> 0/i,
+  (b) => { b.equipment.basicCardProfiles[0].pointsPerTier = 0; });
+contentRefuses('schema product: negative baseValue is refused', /baseValue.*non-negative/i,
+  (b) => { b.equipment.basicCardProfiles[0].baseValue = -1; });
+contentRefuses('schema product: unknown scaling stat is refused', /scalingStat.*Dangling|unknown attributes/i,
+  (b) => { b.equipment.basicCardProfiles[0].scalingStat = 'luck'; });
+contentRefuses('schema product: duplicate profile id is refused', /Duplicate profile id/i,
+  (b) => { b.equipment.basicCardProfiles.push({ ...b.equipment.basicCardProfiles[0] }); });
+
+const incompatible = createRunState({ seed: 33, classId: 'starseer', registries: R });
+const incompatibleAttack = incompatible.deck.find((c) => c.equipmentRole === 'attack');
+incompatibleAttack.profileId = 'shieldGuard';
+incompatible.loadout.sets.rightHand[0] = 'starstoneStaff';
+let incompatibleSaid = '';
+try { stampDeck(R, incompatible); } catch (error) { incompatibleSaid = error.message; }
+check(/Incompatible attack profile swap/.test(incompatibleSaid),
+  'compatibility is consumed to refuse silent state-loss swaps', incompatibleSaid);
+
+const persisted = createRunState({ seed: 4, classId: 'starseer', registries: R });
+const saveStorage = createMemoryStorage();
+const save = createSaveManager(saveStorage);
+save.saveRun(persisted);
+const resumed = save.loadRun(R);
+const savedRole = persisted.deck.find((c) => c.equipmentRole === 'attack');
+const resumedRole = resumed?.deck.find((c) => c.equipmentRole === 'attack');
+check(JSON.stringify({ role: resumedRole?.equipmentRole, profile: resumedRole?.profileId, receipt: resumedRole?.profileReceipt })
+  === JSON.stringify({ role: savedRole?.equipmentRole, profile: savedRole?.profileId, receipt: savedRole?.profileReceipt }),
+  'save round-trip preserves role/profile/receipt identity', JSON.stringify(resumedRole));
+
+const coop = createCoopCombat({
+  registries: R, rng: createRng(9), enemyIds: [R.enemies.ids()[0]],
+  players: [{
+    id: 'p1', classId: persisted.class, maxHp: persisted.maxHp, hp: persisted.hp,
+    maxMana: persisted.maxMana, mana: persisted.mana, maxStamina: persisted.maxStamina, stamina: persisted.stamina,
+    deck: persisted.deck, relicIds: persisted.relics, flasks: persisted.flasks,
+  }],
+});
+const coopRole = [...coop.players.get('p1').piles.hand, ...coop.players.get('p1').piles.draw]
+  .find((c) => c.instanceId === savedRole.instanceId);
+check(JSON.stringify({ role: coopRole?.equipmentRole, profile: coopRole?.profileId, receipt: coopRole?.profileReceipt })
+  === JSON.stringify({ role: savedRole.equipmentRole, profile: savedRole.profileId, receipt: savedRole.profileReceipt }),
+  'co-op transport preserves role/profile/receipt identity', JSON.stringify(coopRole));
 
 console.log(`\nclass-loadouts: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);
