@@ -170,12 +170,19 @@ try {
   ok(res.ok && p2.run.deck.length === deckBefore + 1, 'catch-up replay adds the chosen missed card');
   ok(p2.catchup.length === 0, 'catch-up queue drains after replay');
 
-  // --- Mend at a shrine: a player heals a wounded ally 30% instead of resting ---
-  S.session.scene = { kind: 'shrine', done: {} };
-  const p1m = S.session.members.get('p1');
+  // --- Mend at a shrine: isolate this rule from the long combat walk above.
+  // That walk may truthfully kill either bot as card balance evolves; Mend
+  // refuses dead allies, so reusing its survivors made this a balance lottery
+  // rather than an ally-targeting contract.
+  const M = createSession({ registries: REG, seedString: 'MENDGATE' });
+  M.addMember({ id: 'p1', name: 'Wren', classId: 'starseer' });
+  M.addMember({ id: 'p2', name: 'Fenn', classId: 'reaver' });
+  M.start();
+  M.session.scene = { kind: 'shrine', done: {} };
+  const p1m = M.session.members.get('p1');
   p1m.run.hp = 20;
   const mendBefore = p1m.run.hp;
-  S.shrineChoice('p2', 'mend', 'p1'); // p2 mends p1
+  M.shrineChoice('p2', 'mend', 'p1'); // p2 mends p1
   ok(p1m.run.hp === Math.min(p1m.run.maxHp, mendBefore + Math.ceil(p1m.run.maxHp * 0.3)), 'Mend heals the targeted ally for 30% of their max HP');
 } catch (e) {
   ok(false, `threw: ${e.stack || e.message}`);
