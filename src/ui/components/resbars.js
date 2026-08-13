@@ -80,8 +80,25 @@ function hybridUnit(bar, tooltipExtra) {
   // still ride the DOM and degrade by measured fit, but the container is the
   // UNIT (whose width flex sets), not the plate (whose width its own content
   // sets — a container query there would be circular).
+  //
+  // THE PLATE IS RESERVED, AND THIS IS LOAD-BEARING, NOT POLISH. The trough's
+  // track is the unit minus the plate — so if the plate's width followed its
+  // own digits, crossing 99 -> 100 max HP would WIDEN the plate, NARROW the
+  // track, and the bar for the BIGGER pool would render SHORTER. Observed,
+  // not hypothesised: before this reserve, sweeping max 88 -> 120 through
+  // ?shotMaxHp shrank the health bar 92.91 -> 88.53 px (tools/hudbars.mjs A1,
+  // 2026-08-13). So the plate reserves the width of its own resource's DOMAIN
+  // ceiling — derived per bar from data, never typed — in `ch` with tabular
+  // numerals, so the reservation tracks the Text-size setting like the text
+  // it is. Each degradation variant reserves its own width (a full-name
+  // reservation applied while only the glyph shows would steal track for a
+  // label that is not there); the CSS applies each var in the same container
+  // window that shows its variant.
+  const digits = String(Math.trunc(Math.max(bar.max, bar.domain || bar.max, 1))).length;
   const plate = document.createElement('div');
   plate.className = 'resplate';
+  plate.style.setProperty('--plate-reserve-full', `${bar.name.length + 2 * digits + 2.5}ch`);
+  plate.style.setProperty('--plate-reserve-num', `${2 * digits + 4}ch`);
   plate.innerHTML =
     `<span class="l-full">${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
     `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +

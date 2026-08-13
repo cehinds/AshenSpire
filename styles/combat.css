@@ -133,6 +133,11 @@
   flex: none; white-space: nowrap;
   font-size: calc(11px / var(--ui-zoom, 1)); line-height: 1;
   letter-spacing: 0.05em; color: var(--parchment); text-shadow: 0 1px 2px #000;
+  /* Tabular digits + the derived reservation (set per bar in resbars.js): the
+     trough's track must not move when the label's digit count does. Each
+     reservation applies only in the container window that shows its variant —
+     see the degradation block below. */
+  font-variant-numeric: tabular-nums;
 }
 .restrack { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
 /* The pill trough of the approved look. Height is owner anatomy (9 px fill +
@@ -149,8 +154,22 @@
    glyph+numbers, then the bare glyph. */
 .resplate .l-full, .resplate .l-num, .resplate .l-glyph { display: none; }
 @container (min-width: 3.5em) { .resplate .l-glyph { display: inline; } }
-@container (min-width: 6.5em) { .resplate .l-glyph { display: none; } .resplate .l-num { display: inline; } }
-@container (min-width: 9em)   { .resplate .l-num { display: none; } .resplate .l-full { display: inline; } }
+@container (min-width: 6.5em) {
+  .resplate .l-glyph { display: none; }
+  .resplate .l-num { display: inline; }
+  .resplate { min-width: var(--plate-reserve-num, 0); }
+}
+/* 6.75em, and the number is MEASURED, not styled: a container query reads the
+   CONTENT box in CSS px (pre --ui-zoom), where a banded half-unit is 6.94em at
+   390x844 (the approved shape — its plate must read "MP 2/2", the name) and
+   6.59em at 320x640 (free to degrade; the atlas rules only 390). The margin is
+   ~0.2em on both sides; if a future font shifts it, A4's plate-clip assertion
+   and the reserve are what keep a wrong flip from ever clipping. */
+@container (min-width: 6.75em) {
+  .resplate .l-num { display: none; }
+  .resplate .l-full { display: inline; }
+  .resplate { min-width: var(--plate-reserve-full, 0); }
+}
 
 .resbar {
   /* Chrome geometry: px under zoom, never rem — Law 4 clause 3. A bar is a box.

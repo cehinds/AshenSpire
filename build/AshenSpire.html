@@ -2608,6 +2608,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   flex: none; white-space: nowrap;
   font-size: calc(11px / var(--ui-zoom, 1)); line-height: 1;
   letter-spacing: 0.05em; color: var(--parchment); text-shadow: 0 1px 2px #000;
+  /* Tabular digits + the derived reservation (set per bar in resbars.js): the
+     trough's track must not move when the label's digit count does. Each
+     reservation applies only in the container window that shows its variant —
+     see the degradation block below. */
+  font-variant-numeric: tabular-nums;
 }
 .restrack { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
 /* The pill trough of the approved look. Height is owner anatomy (9 px fill +
@@ -2624,8 +2629,22 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    glyph+numbers, then the bare glyph. */
 .resplate .l-full, .resplate .l-num, .resplate .l-glyph { display: none; }
 @container (min-width: 3.5em) { .resplate .l-glyph { display: inline; } }
-@container (min-width: 6.5em) { .resplate .l-glyph { display: none; } .resplate .l-num { display: inline; } }
-@container (min-width: 9em)   { .resplate .l-num { display: none; } .resplate .l-full { display: inline; } }
+@container (min-width: 6.5em) {
+  .resplate .l-glyph { display: none; }
+  .resplate .l-num { display: inline; }
+  .resplate { min-width: var(--plate-reserve-num, 0); }
+}
+/* 6.75em, and the number is MEASURED, not styled: a container query reads the
+   CONTENT box in CSS px (pre --ui-zoom), where a banded half-unit is 6.94em at
+   390x844 (the approved shape — its plate must read "MP 2/2", the name) and
+   6.59em at 320x640 (free to degrade; the atlas rules only 390). The margin is
+   ~0.2em on both sides; if a future font shifts it, A4's plate-clip assertion
+   and the reserve are what keep a wrong flip from ever clipping. */
+@container (min-width: 6.75em) {
+  .resplate .l-num { display: none; }
+  .resplate .l-full { display: inline; }
+  .resplate { min-width: var(--plate-reserve-full, 0); }
+}
 
 .resbar {
   /* Chrome geometry: px under zoom, never rem — Law 4 clause 3. A bar is a box.
@@ -35089,8 +35108,25 @@ function hybridUnit(bar, tooltipExtra) {
   // still ride the DOM and degrade by measured fit, but the container is the
   // UNIT (whose width flex sets), not the plate (whose width its own content
   // sets — a container query there would be circular).
+  //
+  // THE PLATE IS RESERVED, AND THIS IS LOAD-BEARING, NOT POLISH. The trough's
+  // track is the unit minus the plate — so if the plate's width followed its
+  // own digits, crossing 99 -> 100 max HP would WIDEN the plate, NARROW the
+  // track, and the bar for the BIGGER pool would render SHORTER. Observed,
+  // not hypothesised: before this reserve, sweeping max 88 -> 120 through
+  // ?shotMaxHp shrank the health bar 92.91 -> 88.53 px (tools/hudbars.mjs A1,
+  // 2026-08-13). So the plate reserves the width of its own resource's DOMAIN
+  // ceiling — derived per bar from data, never typed — in `ch` with tabular
+  // numerals, so the reservation tracks the Text-size setting like the text
+  // it is. Each degradation variant reserves its own width (a full-name
+  // reservation applied while only the glyph shows would steal track for a
+  // label that is not there); the CSS applies each var in the same container
+  // window that shows its variant.
+  const digits = String(Math.trunc(Math.max(bar.max, bar.domain || bar.max, 1))).length;
   const plate = document.createElement('div');
   plate.className = 'resplate';
+  plate.style.setProperty('--plate-reserve-full', `${bar.name.length + 2 * digits + 2.5}ch`);
+  plate.style.setProperty('--plate-reserve-num', `${2 * digits + 4}ch`);
   plate.innerHTML =
     `<span class="l-full">${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
     `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +

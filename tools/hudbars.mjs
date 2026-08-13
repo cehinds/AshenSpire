@@ -17,13 +17,18 @@
 //                   scale) within tolerance — the shape claim, not just the
 //                   direction. Reported per pair so a curve is legible as a
 //                   curve rather than as a failure.
-//   A3 CEILING      A bar at its own domain maximum must fill the derived track
+//   A3 CEILING      A bar at its own domain maximum must fill its derived cell
 //                   (his "max size filling up the full top row"), and no bar may
-//                   ever exceed it. The track is MEASURED off the row, never
-//                   typed — that is the whole point of the layout.
-//   A4 NO COLLISION The label must not overflow its own trough at any max in
-//                   the sweep. Marina rendered maxMana = 2 at 48 px and watched
-//                   "MANA" collide with "1/2"; this is that finding, mechanised.
+//                   ever exceed it. The cell is MEASURED off the bar's own
+//                   containing block, never typed — since the hybrid HUD
+//                   (2026-08-13) that is the .restrack beside the label plate,
+//                   and two banded bars on one line do not share a track.
+//   A4 NO COLLISION The visible label must fit the box that holds it, at every
+//                   max in the sweep. Hybrid units: the plate must not clip its
+//                   own text (the reserve or a degradation stage is missing).
+//                   Strip/legacy bars: the label must not outgrow its trough —
+//                   Marina rendered maxMana = 2 at 48 px and watched "MANA"
+//                   collide with "1/2"; this is that finding, mechanised.
 //   A5 TAP FLOOR    Law 4 — the two top-row buttons stay at or above the floor.
 //                   The bars must not push them under it.
 //   A6 FLOOR MARK   Every bar the minimum-width clause caught must carry the
@@ -47,6 +52,19 @@
 //
 //     node tools/hudbars.mjs --tree <a checkout at dev=08e184a>   → A1 RED
 //     node tools/hudbars.mjs --tree <this branch>                 → A1 GREEN
+//
+// THE HYBRID ASSERTIONS WERE ALSO WATCHED RED BY THE SAME DOOR (2026-08-13,
+// each planted as a scratch stylesheet edit, rebuilt, swept via ?shotMaxHp,
+// then reverted — never committed):
+//   typed-constant trough (width: 40% !important)  → A1 "2 distinct widths",
+//       A2 78.8 % spread, A3 30.84 px of a 77.11 px cell — all RED.
+//   over-wide plate reserve (min-width: 30ch)      → A4 "plate clips its own
+//       label" RED on every bar, both shapes.
+//   the un-reserved plate itself (commit d2e61aa)  → A1 RED: max 88 -> 120
+//       shrank the bar 92.91 -> 88.53 px, because the label's digit count was
+//       moving the trough's track. That observation is why the plate reserve
+//       exists (resbars.js) and why A2 deliberately reads RAW px, never
+//       cell-normalised — normalising would have hidden exactly this defect.
 //
 // The maximum enters through `?shotMaxHp=`, which writes `run.maxHp` — the same
 // field a curse (engine/actions.js:549) and an armour mod (model/loadout.js
@@ -174,22 +192,40 @@ const READ = `(() => {
   const bars = [...document.querySelectorAll(
     legacy ? '.combat .topbar .hpbar' : '.combat .topbar .resbar'
   )].map((el) => {
-    const label = el.querySelector('.label');
-    // Overflow of the VISIBLE label variant only — the hidden variants are
-    // display:none and have no box, so scrollWidth is honest here.
-    const vis = [...el.querySelectorAll('.label > span')].filter((s) => s.offsetParent !== null || s.offsetWidth > 0);
+    // THE BAR'S OWN TRACK. Since the hybrid HUD (2026-08-13) the trough lives
+    // in a .restrack cell beside its label plate, and two banded bars on one
+    // line do not share a track — so the track is the bar's own CONTAINING
+    // BLOCK, measured per bar, never the host. On the pre-hybrid structures
+    // the parent is the stack/host and this reads the same width it always did.
+    const cellW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
+    // THE LABEL SUBJECT differs by structure: hybrid units carry the label on
+    // a .resplate beside the trough (overflow = the plate or unit clipping
+    // its own visible text); strip/legacy bars carry it inside the trough
+    // (overflow = label wider than trough).
+    const unit = el.closest('.resunit');
+    const plate = unit && unit.querySelector('.resplate');
+    const labelHost = plate || el.querySelector('.label') || null;
+    const vis = labelHost
+      ? [...labelHost.querySelectorAll(':scope > span')].filter((s) => s.offsetParent !== null || s.offsetWidth > 0)
+      : [];
     const labelW = vis.length ? Math.max(...vis.map((s) => s.getBoundingClientRect().width))
-      : (label ? label.scrollWidth : 0);
+      : (labelHost ? labelHost.scrollWidth : 0);
+    const overflow = plate
+      ? (plate.scrollWidth > plate.clientWidth + 0.5 || unit.scrollWidth > unit.clientWidth + 0.5)
+      : n(labelW) > n(el.getBoundingClientRect().width) + 0.5;
     return {
       id: el.dataset.res || 'hp(legacy)',
       w: n(el.getBoundingClientRect().width),
       wLocal: n(el.offsetWidth),
+      cellW: n(cellW),
+      plated: !!plate,
+      visibleLabel: vis.length ? vis.map((s) => s.textContent.trim()).join(' ') : '',
       cur: el.dataset.cur != null ? Number(el.dataset.cur) : null,
       max: el.dataset.max != null ? Number(el.dataset.max) : null,
       floored: el.dataset.floored === '1',
       dashed: getComputedStyle(el).borderTopStyle === 'dashed',
       labelW: n(labelW),
-      overflow: n(labelW) > n(el.getBoundingClientRect().width) + 0.5,
+      overflow,
     };
   });
   const btns = [...document.querySelectorAll('.combat .topbar .topbar-btn')]
@@ -244,9 +280,15 @@ function proveMissingSeatIdentityFails() {
   }
 }
 
-function compactResourceIdentityFailures(label, expected, glyph) {
+function compactResourceIdentityFailures(label, expected, glyph, name) {
   const errors = [];
-  if (!label.includes(glyph)) errors.push(`glyph "${glyph}" is absent`);
+  // Identity may be carried by the glyph OR the row's name — the approved
+  // hybrid's full plate reads "MP 2/2" with no glyph (the owner pixels), and
+  // the narrow degradations read "◆ 2/2" / "◆". Either mark identifies the
+  // pool; NEITHER is anonymous numbers, which is what this fails on.
+  if (!label.includes(glyph) && !(name && label.includes(name))) {
+    errors.push(`neither glyph "${glyph}" nor name "${name || ''}" is present — the pool is anonymous`);
+  }
   const number = `${expected.cur}/${expected.max}`;
   if (!label.includes(number)) errors.push(`value is not authoritative ${number}`);
   return errors;
@@ -255,9 +297,19 @@ function compactResourceIdentityFailures(label, expected, glyph) {
 // Negative control for A7: an old numeric expectation must fail even when the
 // glyph and current value still look plausible.
 function proveManaNumericDriftFails() {
-  const errors = compactResourceIdentityFailures('◆ 20/40', { cur: 20, max: 42 }, '◆');
+  const errors = compactResourceIdentityFailures('◆ 20/40', { cur: 20, max: 42 }, '◆', 'MP');
   if (!errors.some((error) => error.includes('20/42'))) {
     throw new Error('A7 negative control is dead: a stale Mana maximum did not fail');
+  }
+}
+
+// Second negative control for A7: an anonymous label — right numbers, no glyph
+// and no name — must fail. This is what stops the name-or-glyph widening from
+// quietly becoming "any text with the right digits passes".
+function proveAnonymousLabelFails() {
+  const errors = compactResourceIdentityFailures('1/2', { cur: 1, max: 2 }, '◆', 'MP');
+  if (!errors.some((error) => error.includes('anonymous'))) {
+    throw new Error('A7 negative control is dead: an anonymous pool label did not fail');
   }
 }
 
@@ -288,7 +340,11 @@ async function captureLayoutPage(b, href, [w, h], state, tree) {
   if (state === 'solo') {
     const compact = await b.ev(`(() => {
       const bar = document.querySelector('.combat .topbar .resbar[data-res="mana"]');
-      const visible = [...bar.querySelectorAll('.label > span')].find((s) => getComputedStyle(s).display !== 'none');
+      // The label host moved with the hybrid: plate beside the trough on the
+      // main HUD, inside it on older structures. Read whichever exists.
+      const unit = bar.closest('.resunit');
+      const labelHost = (unit && unit.querySelector('.resplate')) || bar.querySelector('.label') || bar;
+      const visible = [...labelHost.querySelectorAll(':scope > span')].find((s) => getComputedStyle(s).display !== 'none');
       const player = window.__combat && window.__combat.player;
       return {
         label: visible ? visible.textContent.trim() : '',
@@ -298,7 +354,7 @@ async function captureLayoutPage(b, href, [w, h], state, tree) {
     if (!compact.expected) {
       fail('A7', `${tree} ${w}x${h}: posed combat entity is absent; Mana identity authority is unknown`);
     } else {
-      const errors = compactResourceIdentityFailures(compact.label, compact.expected, '◆');
+      const errors = compactResourceIdentityFailures(compact.label, compact.expected, '◆', 'MP');
       if (errors.length) {
         fail('A7', `${tree} ${w}x${h}: compact Mana identity is "${compact.label}"; ${errors.join(', ')}`);
       } else {
@@ -431,10 +487,12 @@ function judge(shape, rows) {
   // ---- A1 strict monotonicity below the domain ceiling ----------------------
   // Above the ceiling the bar CLAMPS, so monotonicity is only required while the
   // asked-for length is under 100 %. Stated rather than quietly skipped.
-  const belowCeiling = hp.filter((r) => r.bar.w < r.trackW - 0.5 || true).slice();
+  // "Clamped" is judged against the bar's OWN cell (r.bar.cellW) — since the
+  // hybrid the trough's containing block is a cell beside the label plate, and
+  // the host width would misread every clamped point as unclamped.
   let prev = null;
   for (const r of hp) {
-    const clamped = Math.abs(r.bar.w - trackOf(rows, r.max)) < 0.5;
+    const clamped = Math.abs(r.bar.w - r.bar.cellW) < 0.5;
     if (prev && !clamped && r.bar.w <= prev.bar.w) {
       fail('A1', `${tag}: max ${prev.max} -> ${r.max} did not lengthen the bar (${prev.bar.w} -> ${r.bar.w} px)`);
     }
@@ -442,7 +500,12 @@ function judge(shape, rows) {
   }
 
   // ---- A2 proportionality (the LINEAR shape claim) --------------------------
-  const unclamped = hp.filter((r) => Math.abs(r.bar.w - trackOf(rows, r.max)) > 0.5);
+  // Raw rendered px per point of max, deliberately NOT normalised by the cell:
+  // the claim is about the LENGTH the player sees, and normalising would hide
+  // a track that moves under the bar (the digit-reserve defect, observed
+  // 2026-08-13: an unreserved plate shrank the bar 92.91 -> 88.53 px across
+  // max 88 -> 120). A constant cell is part of what this asserts.
+  const unclamped = hp.filter((r) => Math.abs(r.bar.w - r.bar.cellW) > 0.5);
   if (unclamped.length >= 2) {
     const ratios = unclamped.map((r) => r.bar.w / r.max);
     const lo = Math.min(...ratios), hi = Math.max(...ratios);
@@ -457,26 +520,34 @@ function judge(shape, rows) {
     fail('A2', `${tag}: PROPORTION — only ${unclamped.length} unclamped point(s); the sweep never sat below the ceiling long enough to have a shape`);
   }
 
-  // ---- A3 ceiling: fills the track at domain max, never exceeds it ----------
+  // ---- A3 ceiling: fills its own cell at domain max, never exceeds it -------
+  // The cell is the bar's containing block — the whole row pre-hybrid, the
+  // derived track beside the plate since. Both claims survive: never outside
+  // the container (Law 2), and a maxed stat fills what the layout dealt it.
   for (const r of hp) {
-    if (r.bar.w > trackOf(rows, r.max) + 0.5) {
-      fail('A3', `${tag}: max ${r.max} rendered ${r.bar.w} px in a ${trackOf(rows, r.max)} px track — a bar outside its own container (Law 2)`);
+    if (r.bar.w > r.bar.cellW + 0.5) {
+      fail('A3', `${tag}: max ${r.max} rendered ${r.bar.w} px in its ${r.bar.cellW} px cell — a bar outside its own container (Law 2)`);
     }
   }
   const top = hp[hp.length - 1];
-  if (Math.abs(top.bar.w - trackOf(rows, top.max)) > 1.0) {
-    fail('A3', `${tag}: at max ${top.max} (above the derived domain) the bar is ${top.bar.w} px of a ${trackOf(rows, top.max)} px track — `
+  if (Math.abs(top.bar.w - top.bar.cellW) > 1.0) {
+    fail('A3', `${tag}: at max ${top.max} (above the derived domain) the bar is ${top.bar.w} px of its ${top.bar.cellW} px cell — `
       + `"the max size filling up the full top row" is not satisfied`);
   } else {
-    notes.push(`A3 ${tag}: CEILING ok — a maxed stat fills the derived ${trackOf(rows, top.max)} px track exactly`);
+    notes.push(`A3 ${tag}: CEILING ok — a maxed stat fills its derived ${top.bar.cellW} px cell exactly`);
   }
 
-  // ---- A4 label never collides with its own trough --------------------------
+  // ---- A4 label never collides with its own bar -----------------------------
+  // Two structures, one claim: the visible label variant must fit the box that
+  // holds it. Hybrid units: the plate/unit must not clip its text. Strip and
+  // legacy bars: the label must not be wider than its trough.
   for (const r of rows) {
     for (const bar of r.bars) {
       if (bar.overflow) {
-        fail('A4', `${tag}: at max ${r.max} the "${bar.id}" label is ${bar.labelW} px inside a ${bar.w} px trough — it collides with itself. `
-          + `The degradation stage for this width is missing.`);
+        fail('A4', bar.plated
+          ? `${tag}: at max ${r.max} the "${bar.id}" plate clips its own label ("${bar.visibleLabel}", ${bar.labelW} px) — the degradation stage (or its reserve) for this width is missing.`
+          : `${tag}: at max ${r.max} the "${bar.id}" label is ${bar.labelW} px inside a ${bar.w} px trough — it collides with itself. `
+            + `The degradation stage for this width is missing.`);
       }
     }
   }
@@ -498,11 +569,6 @@ function judge(shape, rows) {
       }
     }
   }
-}
-
-function trackOf(rows, max) {
-  const r = rows.find((x) => x.max === max);
-  return r ? r.trackW : 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -685,6 +751,7 @@ async function printFloor(b, href) {
 async function main() {
   proveMissingSeatIdentityFails();
   proveManaNumericDriftFails();
+  proveAnonymousLabelFails();
   const artifact = resolve(TREE, 'dist/AshenSpire.html');
   if (!existsSync(artifact)) {
     console.error(`hudbars: no dist/AshenSpire.html under ${TREE} — run node tools/launch.mjs --build-only first`);
