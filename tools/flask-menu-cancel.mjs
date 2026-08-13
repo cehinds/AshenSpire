@@ -93,4 +93,3 @@ check('mutant removing listener teardown is caught',
 
 console.log(`\nflask-menu-cancel: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
-
