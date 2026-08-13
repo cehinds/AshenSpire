@@ -237,10 +237,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
 
     app.innerHTML = `
       <div class="combat coop">
-        <header class="topbar">
-          <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
-          <div class="resbars-host"></div>
-          <button class="subtle coop-leave" id="coop-leave" style="margin-left:auto">Leave</button>
+        <header class="topbar combat-hud">
+          <div class="hud-top">
+            <div class="resbars-host"></div>
+            <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
+            <button class="subtle coop-leave" id="coop-leave">Leave</button>
+          </div>
         </header>
         <div class="${backdropClass(snap.actNumber)}"></div>
         <div class="field">

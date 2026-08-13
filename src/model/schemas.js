@@ -691,6 +691,7 @@ export const SCHEMAS = Object.freeze({
     effects,
     icon: str,
     artKey: str,
+    artAsset: opt(str),
     tint: str,
     textTemplate: opt(str),
     script: opt(ref('scripts')),

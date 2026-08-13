@@ -74,7 +74,7 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
     const label = document.createElement('div');
     label.className = 'label';
     label.innerHTML =
-      `<span class="l-full">${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
+      `<span class="l-full">${esc(bar.glyph)} ${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
       `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
       `<span class="l-glyph">${esc(bar.glyph)}</span>`;
     el.appendChild(label);

@@ -1769,6 +1769,16 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     if (shotParams.has('shotMana') && Number.isFinite(shotMana)) {
       run.mana = Math.max(0, Math.min(run.maxMana, Math.floor(shotMana)));
     }
+    const shotMaxMana = Number(shotParams.get('shotMaxMana'));
+    if (Number.isFinite(shotMaxMana) && shotMaxMana > 0) {
+      run.maxMana = Math.floor(shotMaxMana);
+      run.mana = Math.min(run.mana, run.maxMana);
+    }
+    const shotMaxStamina = Number(shotParams.get('shotMaxStamina'));
+    if (Number.isFinite(shotMaxStamina) && shotMaxStamina > 0) {
+      run.maxStamina = Math.floor(shotMaxStamina);
+      run.stamina = Math.min(run.stamina, run.maxStamina);
+    }
     // TWO FLASKS IN THE POSE, ONE OF EACH KIND, AND IT IS NOT DRESSING. A
     // drunk flask does not come back this climb, and `useFlask` is a row in the
     // second-beat table — but a board with an EMPTY flask row draws no flask

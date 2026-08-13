@@ -1396,6 +1396,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .combat.coop .coop-leave,
 .combat.coop .coop-flask { min-height: var(--tap-floor); height: auto; }
 .coop-flask.armed { border-color: var(--gold); box-shadow: 0 0 8px rgba(200,160,70,.5); }
+.card-unavailable-reason {
+  position: absolute; left: 0.3rem; right: 0.3rem; bottom: 0.3rem; z-index: 3;
+  padding: 0.2rem 0.35rem; border: 1px solid var(--blood); border-radius: 4px;
+  background: rgba(24, 8, 7, 0.92); color: #ffd7cf; font-size: 0.75rem;
+  line-height: 1.2; text-align: center;
+}
 .coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: 7px; padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
 
 /* co-op: fork voting on the shared map */
@@ -2091,10 +2097,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .flask-art {
   display: inline-grid;
   place-items: center;
-  min-width: 1.35em;
-  min-height: 1.35em;
-  border: 1px solid currentColor;
-  border-radius: 45% 45% 55% 55%;
+  width: 1.8em;
+  height: 1.8em;
+  flex: 0 0 auto;
+}
+.flask-art-image { display: block; width: 100%; height: 100%; object-fit: contain; }
+.flask-art-glyph {
+  display: inline-grid; place-items: center; width: 1.35em; height: 1.35em;
+  border: 1px solid currentColor; border-radius: 45% 45% 55% 55%;
   background: color-mix(in srgb, var(--flask-tint) 22%, #111);
 }
 .flask-name { color: var(--ink, #f2ead8); }
