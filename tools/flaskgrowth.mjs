@@ -87,11 +87,17 @@ function report() {
 
 function selftest() {
   let fails = 0;
+  // Counted, never typed: a RESULT line carrying a hand-written plant count
+  // is a frozen baseline — it reads correct forever while plants come and go
+  // (the cf3fe6d defect class). These three only ever increment in the
+  // helpers below.
+  const counts = { refusal: 0, behaviour: 0, contract: 0 };
 
   // ── DOOR 1: refusal plants — each enters validateContent on a real-bundle
   //    copy and must come back RED with the entry named. ──────────────────────
   console.log('DOOR 1 — validateContent(realBundleCopy) [src/main.js boot door]:');
   const refuse = (name, mutate, pattern) => {
+    counts.refusal++;
     const b = realBundleCopy();
     mutate(b);
     const said = validateContent(b).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
@@ -132,6 +138,7 @@ function selftest() {
   // ── DOOR 2: behaviour plants through the real registry and run doors. ─────
   console.log('DOOR 2 — createRegistries → createRunState / executeRunEffects:');
   const behave = (name, fn) => {
+    counts.behaviour++;
     let saw = '';
     let ok = false;
     try { ({ ok, saw } = fn()); } catch (e) { saw = e.message; }
@@ -185,10 +192,45 @@ function selftest() {
     return { ok: f.capacity === 5 && f.grown.hp === 2 && f.hpCurrent === f.hp, saw: JSON.stringify(f) };
   });
 
-  behave('max edge, POOL-BINDING SPECIFIC: reallocate the grown charge away, then lose the relic below its missing door — overflow shrinks the other kind, currents bounded', () => {
-    // The reversal enters BELOW a real door on purpose and says so: no opcode
-    // removes a relic. What this proves is the seam's decrease arithmetic —
-    // the pool overflow rule, load-bearing since D19 closed C1 as POOL.
+  // ── THE OVERFLOW GATE — load-bearing since D19 closed C1 as POOL. ─────────
+  // The rule: removal takes from the row's kind FIRST and overflows only the
+  // remainder to the other kind, currents bounded. Two edges, because two
+  // different halves of the arithmetic can rot independently:
+  //   EDGE A (empty/no-overflow) is the only edge that can see the ORDER —
+  //          a take that drains the other kind first passes edge B unchanged,
+  //          because there the row's kind is already empty.
+  //   EDGE B (max/full-overflow) is the only edge that can see the OVERFLOW —
+  //          a take that stops at the row's kind passes edge A unchanged,
+  //          because there the row's kind covers the whole take.
+  // OBSERVED RED FIRST (the instrument rule), 2026-08-14, before trusting:
+  //   sabotage 1 — deleted `f[other] -= take - fromKind` at the seam →
+  //     edge B FAIL (saw capacity 3, hp 0, mana 4 — a phantom charge survives
+  //     its source), edge A still green: B is the overflow's only witness.
+  //   sabotage 2 — inverted kind-first (take from the other kind first) →
+  //     edge A FAIL (saw hp 3, mana 0 — the wrong vessel paid), edge B still
+  //     green: A is the order's only witness. Both reds entered through the
+  //     same doors the green run uses; seam restored, both edges green.
+  // DOORS, stated: reallocation is the REAL model door — the same
+  // reallocateFlaskCharges call ui/screens/rest.js:114 makes at a grace.
+  // Removal still enters BELOW a door, and says so: no opcode removes a
+  // relic; the day one exists, these plants move up to it.
+
+  behave('OVERFLOW GATE edge A (no overflow): lose the source with the grown charge still on its kind — the row\'s kind pays, the other kind is untouched', () => {
+    const b = realBundleCopy();
+    plantGrowthRelic(b, { kind: 'hp', amount: 1 });
+    const reg = createRegistries(b);
+    const run = freshRun(reg);
+    run.relics.push('fixtureCharm');
+    syncFlaskGrowth(reg, run); // capacity 4, hp 3, mana 1
+    run.relics = run.relics.filter((id) => id !== 'fixtureCharm');
+    syncFlaskGrowth(reg, run);
+    const f = run.flaskCharges;
+    const sound = f.capacity === 3 && f.hp === 2 && f.mana === 1
+      && f.hpCurrent <= f.hp && f.manaCurrent <= f.mana && f.grown.hp === 0;
+    return { ok: sound, saw: JSON.stringify(f) };
+  });
+
+  behave('OVERFLOW GATE edge B (full overflow): reallocate the grown charge away, then lose the source — the remainder overflows to the other kind, currents bounded', () => {
     const b = realBundleCopy();
     plantGrowthRelic(b, { kind: 'hp', amount: 1 });
     const reg = createRegistries(b);
@@ -245,6 +287,7 @@ function selftest() {
   //    proving each contract can fail. ───────────────────────────────────────
   console.log('SOURCE CONTRACTS — the screen wiring, greppable because it is not walkable:');
   const contract = (name, ok, detail = '') => {
+    counts.contract++;
     if (!ok) fails++;
     console.log(`  ${ok ? 'PASS ' : 'FAIL '} ${name}${detail ? ` — ${detail}` : ''}`);
   };
@@ -280,7 +323,7 @@ function selftest() {
       return idx.length > 0 && idx.every((i) => /syncFlaskGrowth\(/.test(planted.slice(i, i + 200)));
     })());
 
-  console.log(`\nRESULT ${fails === 0 ? 'all plants behaved' : `${fails} MISBEHAVED`} — 15 refusal plants (door 1), 8 behaviour plants (door 2), 3 source contracts.`);
+  console.log(`\nRESULT ${fails === 0 ? 'all plants behaved' : `${fails} MISBEHAVED`} — ${counts.refusal} refusal plants (door 1), ${counts.behaviour} behaviour plants (door 2), ${counts.contract} source contracts (counted at run time, never typed).`);
   console.log('Boundary: no pixel was asserted (the equipment and reward screens are browser');
   console.log('surfaces); no balance claim is made (zero live rows ship); and the reversal');
   console.log('plant enters below a door that does not exist yet — both named above, in place.');
