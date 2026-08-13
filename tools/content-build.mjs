@@ -252,6 +252,154 @@ function sweepStraySources(contentRoot) {
   return errors;
 }
 
+/** Remove comments while preserving strings/templates and line positions. */
+function withoutJsComments(source) {
+  let out = '';
+  let quote = null;
+  let escaped = false;
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+    const next = source[i + 1];
+    if (quote) {
+      out += ch;
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') { quote = ch; out += ch; continue; }
+    if (ch === '/' && next === '/') {
+      while (i < source.length && source[i] !== '\n') { out += ' '; i++; }
+      out += '\n';
+      continue;
+    }
+    if (ch === '/' && next === '*') {
+      out += '  '; i += 2;
+      while (i < source.length && !(source[i] === '*' && source[i + 1] === '/')) {
+        out += source[i] === '\n' ? '\n' : ' ';
+        i++;
+      }
+      out += ' ';
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
+function sfxSourceFiles(srcRoot) {
+  const files = [];
+  (function walk(dir) {
+    for (const ent of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+      const abs = join(dir, ent.name);
+      if (ent.isDirectory()) walk(abs);
+      else if (ent.name.endsWith('.js')) files.push(abs);
+    }
+  })(srcRoot);
+  return files;
+}
+
+function closingCallParen(source, open) {
+  let depth = 1;
+  let quote = null;
+  let escaped = false;
+  for (let i = open + 1; i < source.length; i++) {
+    const ch = source[i];
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') { quote = ch; continue; }
+    if (ch === '(') depth += 1;
+    else if (ch === ')' && --depth === 0) return i;
+  }
+  return -1;
+}
+
+const quotedIds = (text) => [...text.matchAll(/(['"])([A-Za-z_$][\w$]*)\1/g)].map((m) => m[2]);
+const templateFamily = (text) => {
+  const m = /^`([^`]*)\$\{/.exec(text.trim());
+  if (!m) return null;
+  return m[1].endsWith('_') ? m[1].slice(0, -1) : m[1];
+};
+
+/**
+ * Compare ids reachable from sfx.play() with authored rows in both directions.
+ * `sourceOverrides` exists only for --selftest plants; production always walks
+ * the real src tree. Identifier-only forwarding calls are reported but are not
+ * invented into ids: this gate owns literal, conditional-literal and composed
+ * template callers, the exact boundary of #67.
+ */
+function sweepSfxAuthority(srcRoot, recipes, familyIds, sourceOverrides = null) {
+  const families = new Set(familyIds);
+  const literals = new Set();
+  const composed = new Set();
+  let callerSites = 0;
+  let forwardedSites = 0;
+  const sources = sourceOverrides || new Map(sfxSourceFiles(srcRoot).map((file) => [file, readFileSync(file, 'utf8')]));
+
+  for (const [file, raw] of sources) {
+    const source = withoutJsComments(raw);
+    const call = /\bsfx\.play\s*\(/g;
+    let match;
+    while ((match = call.exec(source))) {
+      const open = source.indexOf('(', match.index);
+      const close = closingCallParen(source, open);
+      if (close < 0) continue;
+      const arg = source.slice(open + 1, close).trim();
+      callerSites += 1;
+      const directFamily = templateFamily(arg);
+      if (directFamily) composed.add(directFamily);
+      else if (/^(['"])[A-Za-z_$][\w$]*\1$/.test(arg)) quotedIds(arg).forEach((id) => literals.add(id));
+      else if (arg.includes('?')) quotedIds(arg).forEach((id) => literals.add(id));
+      else if (/^[A-Za-z_$][\w$]*$/.test(arg)) {
+        const aliasPattern = '(?:const|let|var)\\s+' + arg + '\\s*=\\s*(`[^`]*`)';
+        const assignments = [...source.slice(0, match.index).matchAll(new RegExp(aliasPattern, 'g'))];
+        const aliasFamily = assignments.length ? templateFamily(assignments.at(-1)[1]) : null;
+        if (aliasFamily) composed.add(aliasFamily); else forwardedSites += 1;
+      }
+      call.lastIndex = close + 1;
+    }
+    // holdbeat's injectable `play` defaults to sfx.play and receives composed
+    // ids from idFor(). Keep that dependency visible without pretending every
+    // HTMLMediaElement.play() in the tree is an SFX caller.
+    for (const m of source.matchAll(/\bplay\s*\(\s*idFor\([^)]*,\s*(['"])([A-Za-z_$][\w$]*)\1\s*\)/g)) {
+      composed.add(m[2]);
+      callerSites += 1;
+    }
+  }
+
+  const errors = [];
+  if (families.size !== familyIds.length) errors.push('SFX family ids contain a duplicate');
+  for (const family of families) {
+    if (!Object.prototype.hasOwnProperty.call(recipes, family)) errors.push(`SFX family '${family}' has no recipe row`);
+    if (!composed.has(family)) errors.push(`SFX family recipe '${family}' has no composed caller`);
+  }
+  const resolve = (id) => {
+    if (Object.prototype.hasOwnProperty.call(recipes, id)) return id;
+    const cut = id.indexOf('_');
+    const family = cut > 0 ? id.slice(0, cut) : null;
+    return family && Object.prototype.hasOwnProperty.call(recipes, family) ? family : 'default';
+  };
+  for (const id of literals) {
+    if (resolve(id) === 'default') errors.push(`SFX caller without recipe '${id}'`);
+  }
+  for (const family of composed) {
+    if (!families.has(family) || !Object.prototype.hasOwnProperty.call(recipes, family)) {
+      errors.push(`SFX composed caller '${family}_…' has no registered family recipe '${family}'`);
+    }
+  }
+  for (const id of Object.keys(recipes)) {
+    if (id === 'default' || families.has(id)) continue;
+    const exact = literals.has(id);
+    const viaComposed = [...composed].some((family) => id.startsWith(`${family}_`));
+    if (!exact && !viaComposed) errors.push(`SFX recipe without caller '${id}'`);
+  }
+  return { errors, callerSites, literalIds: literals.size, composedFamilies: composed.size, forwardedSites };
+}
+
 // ---------------------------------------------------------------------------
 // The smoke — shared plumbing
 // ---------------------------------------------------------------------------
@@ -259,15 +407,16 @@ function sweepStraySources(contentRoot) {
 // The game modules load only inside the smoke: a plain compile run must not
 // import the engine (this tool runs before the tree is necessarily healthy).
 async function loadGame() {
-  const [{ validateContent }, { contentBundle }, { createRegistries, resolveCard }, { createCombat, dispatch }, { createRng }] =
+  const [{ validateContent }, { contentBundle }, { SFX_RECIPES, SFX_FAMILY_IDS }, { createRegistries, resolveCard }, { createCombat, dispatch }, { createRng }] =
     await Promise.all([
       import('../src/model/validate.js'),
       import('../src/content/index.js'),
+      import('../src/content/sfx.js'),
       import('../src/model/registries.js'),
       import('../src/engine/combat.js'),
       import('../src/engine/rng.js'),
     ]);
-  return { validateContent, contentBundle, createRegistries, resolveCard, createCombat, dispatch, createRng };
+  return { validateContent, contentBundle, SFX_RECIPES, SFX_FAMILY_IDS, createRegistries, resolveCard, createCombat, dispatch, createRng };
 }
 
 const jclone = (v) => JSON.parse(JSON.stringify(v));
@@ -354,6 +503,8 @@ async function selftest() {
     ok(sw0.errors.length === 0, `asset sweep clean: ${sw0.bound} sprite(s) bound by convention, ${sw0.artless.length} enemy(ies) art-less (licensed by Law 1 clause 4 — placeholder, not a defect)`);
     const st0 = sweepStraySources(join(ROOT, 'content'));
     ok(st0.length === 0, 'stray-source sweep clean: every *.csv/*.json under content/ sits exactly where the compile reads (content/source/, top level)');
+    const sfx0 = sweepSfxAuthority(join(ROOT, 'src'), G.SFX_RECIPES, G.SFX_FAMILY_IDS);
+    ok(sfx0.errors.length === 0, `SFX authority joins ${sfx0.literalIds} literal id(s) + ${sfx0.composedFamilies} composed family/families to ${Object.keys(G.SFX_RECIPES).length} recipe row(s), both ways${sfx0.errors.length ? ` — ${sfx0.errors.join(' | ')}` : ''}`);
 
     // ---- the Add edge (clause 6's first words) ----------------------------
     console.log('\nthe Add edge — one entry by table + asset alone, asserted on OUTCOME:');
@@ -368,6 +519,7 @@ async function selftest() {
       registries: REG2, rng: G.createRng('clause6-probe'),
       player: {
         classId: 'reaver', maxHp: 60, hp: 60, relicIds: [], flasks: [],
+        energyMax: 3, drawPerTurn: 5,
         deck: [1, 2, 3, 4, 5].map((n) => ({ instanceId: `probe${n}`, cardId: PROBE_CARD.id, upgraded: false })),
       },
       enemyIds: [PROBE_ENEMY.id],
@@ -504,6 +656,32 @@ async function selftest() {
       const pass = r.errors.length === 1 && r.errors[0].includes('WRONG FOLDER') && r.errors[0].includes('sprites/nested/enemy_wanderingSoldier.webp') && r.bound === 0;
       ok(pass, `K16 [S3 m5] real-named sprite nested in assets/sprites/nested/ — ${pass ? r.errors[0] : `NOT CAUGHT (errors: ${r.errors.join(' | ') || 'none'}; bound=${r.bound})`}`);
     }
+    {
+      const sources = new Map(sfxSourceFiles(join(ROOT, 'src')).map((file) => [file, readFileSync(file, 'utf8')]));
+      sources.set(join(ROOT, 'src', 'selftest-sfx-missing.js'), "sfx.play('sfxMissingCallerRow');\n");
+      const r = sweepSfxAuthority(join(ROOT, 'src'), G.SFX_RECIPES, G.SFX_FAMILY_IDS, sources);
+      const hit = r.errors.find((m) => m.includes('caller without recipe') && m.includes('sfxMissingCallerRow'));
+      ok(!!hit, `K17 [SFX caller→row] caller without recipe 'sfxMissingCallerRow' is red by name\n      → ${hit || 'NOT CAUGHT BY NAME'}`);
+    }
+    {
+      const recipes = { ...G.SFX_RECIPES, sfxOrphanRecipeRow: G.SFX_RECIPES.default };
+      const r = sweepSfxAuthority(join(ROOT, 'src'), recipes, G.SFX_FAMILY_IDS);
+      const hit = r.errors.find((m) => m.includes('recipe without caller') && m.includes('sfxOrphanRecipeRow'));
+      ok(!!hit, `K18 [SFX row→caller] recipe without caller 'sfxOrphanRecipeRow' is red by name\n      → ${hit || 'NOT CAUGHT BY NAME'}`);
+    }
+    {
+      const families = G.SFX_FAMILY_IDS.filter((id) => id !== 'beat');
+      const r = sweepSfxAuthority(join(ROOT, 'src'), G.SFX_RECIPES, families);
+      const hit = r.errors.find((m) => m.includes("beat_…") && m.includes("family recipe 'beat'"));
+      ok(!!hit, `K19 [SFX composed→family] beat_<phase> without the registered 'beat' family is red by name\n      → ${hit || 'NOT CAUGHT BY NAME'}`);
+    }
+    {
+      const families = [...G.SFX_FAMILY_IDS, 'noCallerFamily'];
+      const recipes = { ...G.SFX_RECIPES, noCallerFamily: G.SFX_RECIPES.default };
+      const r = sweepSfxAuthority(join(ROOT, 'src'), recipes, families);
+      const hit = r.errors.find((m) => m.includes("family recipe 'noCallerFamily'") && m.includes('no composed caller'));
+      ok(!!hit, `K20 [SFX family row→caller] registered family recipe without a composed caller is red by name\n      → ${hit || 'NOT CAUGHT BY NAME'}`);
+    }
 
     // ---- the matrix, every cell named (Vega's amendment) ------------------
     console.log(`
@@ -532,7 +710,7 @@ the matrix — 5 modes × 3 surfaces, every cell RUNS or says N/A BY NAME:
 
     printBoundary();
     if (bad) { console.error(`\ncontent-build --selftest: ${bad} check(s) failed.`); process.exit(1); }
-    console.log(`\ncontent-build --selftest: OK — baseline green, Add edge plays, 16 known-bads red by name, 15/15 matrix cells accounted for.`);
+    console.log(`\ncontent-build --selftest: OK — baseline green, Add edge plays, 20 known-bads red by name, 15/15 matrix cells accounted for.`);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -661,6 +839,11 @@ if (SELFTEST) {
   if (stray.length) {
     fail(`stray source file(s) the compile will never read:\n  ${stray.join('\n  ')}`);
   }
+  const { SFX_RECIPES, SFX_FAMILY_IDS } = await import('../src/content/sfx.js');
+  const sfxAuthority = sweepSfxAuthority(join(ROOT, 'src'), SFX_RECIPES, SFX_FAMILY_IDS);
+  if (sfxAuthority.errors.length) {
+    fail(`SFX caller/table authority defect(s):\n  ${sfxAuthority.errors.join('\n  ')}`);
+  }
   if (CHECK && r.stale) {
     fail(`${r.stale} generated file(s) are out of date — run: node tools/content-build.mjs`);
   }
@@ -668,6 +851,7 @@ if (SELFTEST) {
     fail(`orphaned generated file(s) with no source: ${r.orphans.join(', ')} — delete them or restore their source`);
   }
   console.log(CHECK ? 'content-build: generated files are current' : 'content-build: OK');
+  console.log(`SFX_FAMILY_IDS [${SFX_FAMILY_IDS.join(', ')}] — sfx authority: ${sfxAuthority.literalIds + sfxAuthority.composedFamilies} caller id(s), ${Object.keys(SFX_RECIPES).length} recipe row(s), 0 defect(s)`);
   for (const o of r.orphans) console.log(`  ORPHANED src/content/generated/${o} — no source file produces it; it ships stale`);
   for (const res of r.results) console.log(`  ${res.file.padEnd(16)} → src/content/generated/${res.name}.js  (${res.rows} rows)`);
 }

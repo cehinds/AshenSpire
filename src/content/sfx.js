@@ -40,6 +40,21 @@ export const SFX_MANIFEST = {
   // cardPlay: 'assets/sfx/card.ogg',  ← example: drop a file here to override
 };
 
+// Family rows are an explicit content characteristic. Runtime resolution and
+// the content-build reachability check both consume this list; neither guesses
+// that every row before an underscore is intended as a composed-id family.
+export const SFX_FAMILY_IDS = Object.freeze([
+  'procBurst', 'beat', 'holdTick', 'holdCommit',
+]);
+
+// Confirm arrivals share one generic fallback gesture. `beat_<phase>` and
+// `holdCommit_<action>` may add exact flourishes later without copying this
+// tuning or falling through to the missing-id beep today.
+const CONFIRM_ARRIVAL_RECIPE = Object.freeze([
+  { kind: 'tone', type: 'triangle', freq: 220, to: 330, dur: 0.14, peak: 0.3 },
+  { kind: 'tone', type: 'sine', freq: 440, dur: 0.16, peak: 0.16, t0: 0.025 },
+]);
+
 // One recipe per feedback hook. Kept short and characterful (dark fantasy).
 export const SFX_RECIPES = {
   cardPlay: [
@@ -107,6 +122,7 @@ export const SFX_RECIPES = {
     { kind: 'tone', type: 'square', freq: 296, to: 112, dur: 0.5, peak: 0.3, t0: 0.015 },
     { kind: 'noise', dur: 0.34, peak: 0.26, hp: 700, lp: 3400 },
   ],
+  beat: CONFIRM_ARRIVAL_RECIPE,
   // ---- the hold family: a press-and-hold has a BEAT ------------------------
   //
   // THE SCORE, written out because this house has no ears and a sound nobody
@@ -167,10 +183,7 @@ export const SFX_RECIPES = {
   holdTick: [
     { kind: 'tone', type: 'triangle', freq: 220, dur: 0.035, peak: 0.1 },
   ],
-  holdCommit: [
-    { kind: 'tone', type: 'triangle', freq: 220, to: 330, dur: 0.14, peak: 0.3 },
-    { kind: 'tone', type: 'sine', freq: 440, dur: 0.16, peak: 0.16, t0: 0.025 },
-  ],
+  holdCommit: CONFIRM_ARRIVAL_RECIPE,
   stagger: [
     { kind: 'tone', type: 'square', freq: 90, to: 40, dur: 0.35, peak: 0.5 },
     { kind: 'noise', dur: 0.22, peak: 0.4, hp: 120, lp: 1800 },
@@ -249,7 +262,7 @@ export function resolveRecipe(id) {
   const cut = typeof id === 'string' ? id.indexOf('_') : -1;
   if (cut > 0) {
     const family = id.slice(0, cut);
-    const fam = own(family);
+    const fam = SFX_FAMILY_IDS.includes(family) ? own(family) : undefined;
     if (fam) return { recipe: fam, matched: family, fellBack: false };
   }
   return { recipe: SFX_RECIPES.default, matched: 'default', fellBack: true };
