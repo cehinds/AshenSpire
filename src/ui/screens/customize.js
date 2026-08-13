@@ -12,7 +12,8 @@ import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
 import { statProjection } from '../../model/statProjection.js';
-import { equipmentKitReceipt } from '../../model/loadout.js';
+import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
+import { renderEquipmentRequirements, renderPlayerPoise } from '../components/equipmentReceipts.js';
 import { startingKitViews } from '../../model/startingKits.js';
 
 export function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart }) {
@@ -107,11 +108,14 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     else p.textContent = state.glyph;
     const preview = createRunState({ seed: 0, classId: state.classId, registries, startingKitId: state.startingKitId, profileMeta: meta });
     const projection = statProjection(registries, preview);
-    const kit = equipmentKitReceipt(registries, preview.loadout, preview.class, preview.attributes, preview.equipmentProfileRuleSnapshot);
-    const signature = registries.cards.get(registries.classes.get(preview.class).startingSignatureCard);
-    const copies = registries.balance.equipment.roleCopies;
+    const surface = equipmentSurfaceReceipt(registries, preview);
+    const kit = surface.roles;
+    const signature = surface.signature;
+    const copies = surface.roleCopies;
     $('#cz-stat-projection').innerHTML = projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')
       + projection.derived.map((row) => `<div><b>${esc(row.label)}</b> ${esc(row.formula)}${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')
+      + renderEquipmentRequirements(surface.requirements)
+      + renderPlayerPoise(surface.poise)
       + `<details class="cz-kit"><summary>Starting kit · ${registries.balance.startingDeckSize} cards</summary><ul>`
       + kit.map((row) => `<li><b>${esc(row.profile.displayName)}</b> ×${copies[row.role]} <span>${row.receipt.base}+${row.receipt.value - row.receipt.base}=${row.receipt.value} · ${esc(row.profile.damageSchool)}</span></li>`).join('')
       + `<li><b>${esc(signature.name)}</b> ×${copies.signature} <span>class signature</span></li></ul></details>`;

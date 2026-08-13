@@ -1604,6 +1604,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   gap: 0.2rem 0.9rem; align-items: center; text-align: left;
   border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
   color: var(--parchment); padding: 0.6rem 0.9rem; cursor: pointer; font-family: var(--font-body);
+  min-height: var(--tap-floor);
 }
 .equip-chip:hover { border-color: var(--line-soft); }
 .equip-chip.on { border-color: var(--gold); background: var(--bg); }
@@ -1623,6 +1624,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 .armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.equip-card-with-count { position: relative; }
+.equip-card-with-count > .role-copy-count { position: absolute; right: 0.35rem; bottom: 0.35rem; }
+.role-copy-count { color: var(--gold); font-style: normal; white-space: nowrap; }
 .equip-role-receipts { flex: 1 1 28rem; display: grid; gap: 0.5rem; }
 .equip-role-receipts > div { display: grid; grid-template-columns: minmax(9rem, 1fr) 2fr; gap: 0.2rem 0.8rem; border-left: 2px solid var(--line-soft); padding-left: 0.8rem; }
 .equip-role-receipts span, .equip-role-receipts small { color: var(--muted); }
@@ -1632,6 +1636,23 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .cz-kit ul { margin: 0.5rem 0 0; padding-left: 1.6rem; }
 .cz-kit li { margin: 0.25rem 0; }
 .cz-kit li span { color: var(--muted); }
+.equipment-requirements { display: grid; gap: 0.35rem; overflow-wrap: anywhere; }
+.equipment-requirements ul { margin: 0; padding-left: 1.4rem; }
+.equipment-requirements li { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.equipment-requirements em { font-style: normal; color: var(--grace); }
+.equipment-requirements em.unmet { color: var(--ember); }
+.equipment-requirements p { margin: 0; color: var(--muted); }
+.player-poise-receipt { display: grid; gap: 0.2rem; overflow-wrap: anywhere; }
+.player-poise-receipt span, .player-poise-receipt small { color: var(--muted); }
+.player-poise-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
+.player-poise-receipt p { margin: 0; color: var(--muted); }
+.equip-candidate-row { display: grid; gap: 0.35rem; min-width: 0; }
+.equip-candidate-comparison { margin-left: 4.5rem; border-left: 2px solid var(--line-soft); padding: 0.25rem 0 0.5rem 0.8rem; overflow-wrap: anywhere; }
+.equip-candidate-comparison summary { min-height: var(--tap-floor); display: flex; align-items: center; cursor: pointer; color: var(--gold); }
+.equip-candidate-comparison ul { margin: 0.35rem 0; padding-left: 1.4rem; }
+.equip-card-changes li { display: grid; grid-template-columns: minmax(9rem, 1fr) auto; gap: 0.15rem 0.5rem; }
+.equip-card-changes small { grid-column: 1 / -1; color: var(--muted); }
+.equip-added-effect.none, .equip-resource-change.none { color: var(--muted); }
 .equip-foot { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
 .ef-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 .ef-run { color: var(--grace); font-size: 1.15rem; }

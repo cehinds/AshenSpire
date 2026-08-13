@@ -17,10 +17,12 @@
 import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
-  canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, equipmentKitReceipt,
+  canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
   ownership, openedSets, visibleSets, rungFor, setCellState,
 } from '../../model/loadout.js';
+import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import { renderCard } from '../components/card.js';
+import { renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise } from '../components/equipmentReceipts.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
@@ -679,7 +681,14 @@ export function mountEquipment(host, {
           commit();
         });
       } else sealChip(chip);
-      list.appendChild(chip);
+      const row = document.createElement('div');
+      row.className = 'equip-candidate-row';
+      row.appendChild(chip);
+      const comparison = equipmentSurfaceReceipt(registries, run, {
+        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },
+      }).candidate;
+      row.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
+      list.appendChild(row);
     }
     return box;
   }
@@ -688,20 +697,29 @@ export function mountEquipment(host, {
   function cardStrip() {
     const box = document.createElement('div');
     box.className = 'equip-cards';
-    const roles = equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot);
+    const surface = equipmentSurfaceReceipt(registries, run);
     const shown = new Set();
     for (const inst of run.deck || []) {
       const key = inst.equipmentRole || `signature:${inst.cardId}`;
       if (shown.has(key)) continue;
       shown.add(key);
-      box.appendChild(renderCard(registries, inst, { small: true }));
+      const card = document.createElement('div');
+      card.className = 'equip-card-with-count';
+      card.appendChild(renderCard(registries, inst, { small: true }));
+      const count = document.createElement('em');
+      count.className = 'role-copy-count';
+      count.textContent = `x${inst.equipmentRole ? surface.roleCopies[inst.equipmentRole] : surface.signature.copies}`;
+      card.appendChild(count);
+      box.appendChild(card);
     }
     const receipt = document.createElement('div');
     receipt.className = 'equip-role-receipts';
-    receipt.innerHTML = roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)}</b>`
+    receipt.innerHTML = surface.roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)} <em class="role-copy-count">x${row.copies}</em></b>`
       + `<span>${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier}`
       + ` + ${row.receipt.rarityBonus} rarity = <strong>${row.receipt.value}</strong></span>`
       + `<small>${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}</small></div>`).join('');
+    receipt.insertAdjacentHTML('beforeend', renderEquipmentRequirements(surface.requirements));
+    receipt.insertAdjacentHTML('beforeend', renderPlayerPoise(surface.poise));
     box.appendChild(receipt);
     const rm = runMods(registries, run.loadout, run.class);
     const bits = [];
