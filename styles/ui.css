@@ -592,6 +592,10 @@ button.rs-reset {
 .class-pick h3 { color: var(--gold); font-size: 1.5rem; margin-bottom: 0.6rem; }
 .class-pick p { font-size: 1.1rem; color: var(--muted); line-height: 1.5; }
 .class-pick .chip { display: inline-block; margin-top: 0.8rem; font-size: 1rem; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 0.2rem 0.8rem; }
+.flask-allocation-controls button {
+  min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
+  display: inline-flex; align-items: center; justify-content: center;
+}
 
 .stats-table { border-collapse: collapse; font-size: 1.3rem; }
 .stats-table td { padding: 0.4rem 1.4rem; }
@@ -1402,6 +1406,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: rgba(24, 8, 7, 0.92); color: #ffd7cf; font-size: 0.75rem;
   line-height: 1.2; text-align: center;
 }
+.cz-stats summary {
+  min-height: var(--tap-floor); height: auto;
+  display: flex; align-items: center; cursor: pointer;
+}
 .coop-arm { color: var(--gold); font-size: 1.3rem; text-align: center; background: rgba(16,13,10,.85); border: 1px solid var(--gold); border-radius: 7px; padding: 0.6rem 1.2rem; margin: 0.4rem auto; width: fit-content; }
 
 /* co-op: fork voting on the shared map */
@@ -1486,6 +1494,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: none; border: 1px solid var(--line); color: var(--muted);
   padding: 0.4rem 1.1rem; border-radius: 3px; cursor: pointer;
   font-size: 1.2rem; text-transform: capitalize; font-family: var(--font-body);
+  min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
 }
 .armoury-views button.on { color: var(--gold); border-color: var(--gold); background: var(--bg); }
 .armoury-close { background: none; border: none; color: var(--muted); font-size: 1.8rem; cursor: pointer; }
