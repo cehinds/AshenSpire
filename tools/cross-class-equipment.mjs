@@ -5,9 +5,14 @@
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
+import { resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import * as Loadout from '../src/model/loadout.js';
 import { resolveStartingKit } from '../src/model/startingKits.js';
+import { validateContent } from '../src/model/validate.js';
+import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
+import { createCoopCombat } from '../src/engine/coopCombat.js';
+import { createRng } from '../src/engine/rng.js';
 
 const R = createRegistries(contentBundle);
 let passed = 0;
@@ -49,17 +54,35 @@ for (const [field, label] of [
   delete mutant[field];
   const said = Loadout.validateEquipment(createRegistries({ ...contentBundle, equipment: mutant })).join(' | ');
   check(new RegExp(field, 'i').test(said), `mutant: missing generated ${label} table fails closed`, said);
+  const bootSaid = validateContent({ ...contentBundle, equipment: mutant }).errors.map((row) => `${row.path}: ${row.msg}`).join(' | ');
+  check(new RegExp(field, 'i').test(bootSaid), `boot mutant: missing generated ${label} table fails closed`, bootSaid);
 }
 const duplicatedRequirement = [...R.equipment.equipmentRequirements, { ...R.equipment.equipmentRequirements[0] }];
 check(/duplicate.*greatsword:strength/i.test(Loadout.validateEquipment(equipmentMutant({ equipmentRequirements: duplicatedRequirement })).join(' | ')),
   'mutant: duplicate item/stat requirement fails closed');
+const bootErrors = (equipment) => validateContent({ ...contentBundle, equipment: { ...contentBundle.equipment, ...equipment } })
+  .errors.map((row) => `${row.path}: ${row.msg}`).join(' | ');
+check(/duplicate.*greatsword:strength/i.test(bootErrors({ equipmentRequirements: duplicatedRequirement })),
+  'boot mutant: duplicate item/stat requirement fails closed');
 const badMinimum = R.equipment.equipmentRequirements.map((row) => row.itemId === 'greatsword' ? { ...row, minimum: -1 } : row);
 check(/minimum.*non-negative|greatsword:strength/i.test(Loadout.validateEquipment(equipmentMutant({ equipmentRequirements: badMinimum })).join(' | ')),
   'mutant: negative requirement minimum fails closed');
+for (const [value, label] of [[undefined, 'missing'], ['12', 'string'], [1.5, 'fractional'], [Number.NaN, 'NaN'], [Number.POSITIVE_INFINITY, 'Infinity'], [-1, 'negative']]) {
+  const rows = R.equipment.equipmentRequirements.map((row) => row.itemId === 'greatsword'
+    ? Object.fromEntries(Object.entries({ ...row, minimum: value }).filter(([, v]) => v !== undefined)) : row);
+  check(/greatsword:strength|minimum/i.test(bootErrors({ equipmentRequirements: rows })),
+    `boot mutant: ${label} requirement minimum fails closed`, bootErrors({ equipmentRequirements: rows }));
+}
 const danglingException = [{ cardId: 'missingCard', weaponId: 'missingWeapon' }];
 const danglingSaid = Loadout.validateEquipment(equipmentMutant({ cardEquipmentExceptions: danglingException })).join(' | ');
 check(/unknown card 'missingCard'/.test(danglingSaid) && /unknown weapon 'missingWeapon'/.test(danglingSaid),
   'mutant: dangling exact card and weapon ids fail closed', danglingSaid);
+check(/unknown card 'missingCard'/.test(bootErrors({ cardEquipmentExceptions: danglingException }))
+  && /unknown weapon 'missingWeapon'/.test(bootErrors({ cardEquipmentExceptions: danglingException })),
+  'boot mutant: dangling exact card and weapon ids fail closed', bootErrors({ cardEquipmentExceptions: danglingException }));
+const duplicatedException = [...R.equipment.cardEquipmentExceptions, { ...R.equipment.cardEquipmentExceptions[0] }];
+check(/duplicate.*starstoneKris:dagger/i.test(bootErrors({ cardEquipmentExceptions: duplicatedException })),
+  'boot mutant: duplicate exact card/weapon pair fails closed');
 
 const all10 = { strength: 10, dexterity: 10, constitution: 10, wisdom: 10, intelligence: 10 };
 const all15 = { strength: 15, dexterity: 15, constitution: 15, wisdom: 15, intelligence: 15 };
@@ -93,6 +116,37 @@ check(starseerStrong.equipped === true && starseerStrong.run.loadout.sets.rightH
   'non-class pickup equips when hand/category/stat requirements pass', JSON.stringify(starseerStrong.run.loadout));
 const reaverMage = tryEquip('reaver', 'ashStaff', { ...all10, intelligence: 12 });
 check(reaverMage.equipped === true, 'equip gate has no class branch: a qualified Reaver may use Ash Staff');
+
+Loadout.stampDeck(R, starseerStrong.run);
+const crossAttack = starseerStrong.run.deck.find((card) => card.equipmentRole === 'attack');
+const crossFinal = resolveCard(R, crossAttack).effects.find((effect) => effect.op === 'damage')?.amount;
+const saves = createSaveManager(createMemoryStorage());
+saves.saveRun(starseerStrong.run);
+const resumedCross = saves.loadRun(R);
+const resumedCrossAttack = resumedCross?.deck.find((card) => card.instanceId === crossAttack.instanceId);
+check(resumedCross?.loadout?.sets?.rightHand?.[0] === 'greatsword'
+  && resumedCrossAttack?.equipmentRole === crossAttack.equipmentRole
+  && resumedCrossAttack?.profileId === crossAttack.profileId
+  && JSON.stringify(resumedCrossAttack?.profileReceipt) === JSON.stringify(crossAttack.profileReceipt)
+  && resolveCard(R, resumedCrossAttack).effects.find((effect) => effect.op === 'damage')?.amount === crossFinal,
+  'qualified cross-class equip save/resume preserves item, role, profile, receipt and final card', JSON.stringify(resumedCrossAttack));
+const coop = createCoopCombat({
+  registries: R, rng: createRng(0xb00), enemyIds: [R.enemies.ids()[0]],
+  players: [{
+    id: 'p1', classId: starseerStrong.run.class, maxHp: starseerStrong.run.maxHp, hp: starseerStrong.run.hp,
+    maxMana: starseerStrong.run.maxMana, mana: starseerStrong.run.mana,
+    maxStamina: starseerStrong.run.maxStamina, stamina: starseerStrong.run.stamina,
+    deck: starseerStrong.run.deck, relicIds: [], flasks: [],
+  }],
+});
+const coopPlayer = coop.players.get('p1');
+const coopCross = [...coopPlayer.piles.hand, ...coopPlayer.piles.draw, ...coopPlayer.piles.discard]
+  .find((card) => card.instanceId === crossAttack.instanceId);
+check(coopCross?.equipmentRole === crossAttack.equipmentRole && coopCross?.profileId === crossAttack.profileId
+  && JSON.stringify(coopCross?.profileReceipt) === JSON.stringify(crossAttack.profileReceipt)
+  && resolveCard(R, coopCross).effects.find((effect) => effect.op === 'damage')?.amount === crossFinal
+  && !Object.prototype.hasOwnProperty.call(coopPlayer, 'loadout'),
+  'co-op carries the stamped role/profile/final card, not a mutable loadout', JSON.stringify(coopCross));
 
 const baseline = resolveStartingKit(R, 'starseer', undefined, {});
 let crossStart = '';
