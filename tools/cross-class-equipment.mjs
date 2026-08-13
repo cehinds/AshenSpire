@@ -37,6 +37,30 @@ check(typeof cardCompatibility === 'function', 'one model resolver owns card/equ
 check(Array.isArray(R.equipment.cardEquipmentExceptions),
   'exact-weapon card exceptions are a registered generated table', JSON.stringify(R.equipment.cardEquipmentExceptions));
 
+function equipmentMutant(patch) {
+  return createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, ...patch } });
+}
+for (const [field, label] of [
+  ['equipmentRequirements', 'requirements'],
+  ['cardEquipmentExceptions', 'exact exceptions'],
+  ['cardTagging', 'card tags'],
+]) {
+  const mutant = { ...contentBundle.equipment };
+  delete mutant[field];
+  const said = Loadout.validateEquipment(createRegistries({ ...contentBundle, equipment: mutant })).join(' | ');
+  check(new RegExp(field, 'i').test(said), `mutant: missing generated ${label} table fails closed`, said);
+}
+const duplicatedRequirement = [...R.equipment.equipmentRequirements, { ...R.equipment.equipmentRequirements[0] }];
+check(/duplicate.*greatsword:strength/i.test(Loadout.validateEquipment(equipmentMutant({ equipmentRequirements: duplicatedRequirement })).join(' | ')),
+  'mutant: duplicate item/stat requirement fails closed');
+const badMinimum = R.equipment.equipmentRequirements.map((row) => row.itemId === 'greatsword' ? { ...row, minimum: -1 } : row);
+check(/minimum.*non-negative|greatsword:strength/i.test(Loadout.validateEquipment(equipmentMutant({ equipmentRequirements: badMinimum })).join(' | ')),
+  'mutant: negative requirement minimum fails closed');
+const danglingException = [{ cardId: 'missingCard', weaponId: 'missingWeapon' }];
+const danglingSaid = Loadout.validateEquipment(equipmentMutant({ cardEquipmentExceptions: danglingException })).join(' | ');
+check(/unknown card 'missingCard'/.test(danglingSaid) && /unknown weapon 'missingWeapon'/.test(danglingSaid),
+  'mutant: dangling exact card and weapon ids fail closed', danglingSaid);
+
 const all10 = { strength: 10, dexterity: 10, constitution: 10, wisdom: 10, intelligence: 10 };
 const all15 = { strength: 15, dexterity: 15, constitution: 15, wisdom: 15, intelligence: 15 };
 if (typeof requirementReceipt === 'function') {

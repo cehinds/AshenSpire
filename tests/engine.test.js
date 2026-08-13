@@ -142,8 +142,9 @@ const OWNS_EVERYTHING = { has: () => true };
 // "not in combat" fails OPEN, so every call site written after today would
 // re-arm mid-fight by saying nothing. Blocks that predate #95 are about the fit
 // and ownership gates, so they declare the context they were always assuming.
-const AT_CAMP = { inCombat: false };
-const MID_FIGHT = { inCombat: true };
+const REQUIREMENT_TEST_ATTRIBUTES = { strength: 15, dexterity: 15, constitution: 15, wisdom: 15, intelligence: 15 };
+const AT_CAMP = { inCombat: false, attributes: REQUIREMENT_TEST_ATTRIBUTES };
+const MID_FIGHT = { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 
 // #104 — THE WIDE, SEALED SLOT, WOKEN ONCE. `talisman` is the only row in
 // equipSlots.csv that is BOTH multi-set (`sets=3`) and `swap=outOfCombat`, so it
@@ -2844,8 +2845,8 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
       `the mutation refuses a typed-but-unset flag on its own, not by way of canEquip — got: ${byWhom || '(nothing)'}`);
     // The control group: the two REAL shapes still work, so the check above is
     // not green because everything refuses.
-    assert(equipPiece(REG, shapeProbe, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, { inCombat: false }), 'a real false still equips');
-    assert(!equipPiece(REG, shapeProbe, 'rightHand', 1, 'dagger', OWNS_EVERYTHING, { inCombat: true }), 'a real true still refuses');
+    assert(equipPiece(REG, shapeProbe, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, { inCombat: false, attributes: REQUIREMENT_TEST_ATTRIBUTES }), 'a real false still equips');
+    assert(!equipPiece(REG, shapeProbe, 'rightHand', 1, 'dagger', OWNS_EVERYTHING, { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES }), 'a real true still refuses');
   });
 
   // ---- 31c. the ladder gates the MUTATION, not just the screen ------------
