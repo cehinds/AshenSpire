@@ -11,7 +11,9 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createCombat } from '../src/engine/combat.js';
+import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
+import { createMemoryStorage, createSaveManager, RUN_KEY } from '../src/engine/save.js';
 import { validateContent } from '../src/model/validate.js';
 import * as schemaVocabulary from '../src/model/schemas.js';
 
@@ -118,6 +120,19 @@ check('damage-card schema refuses a missing carrier independently of profiles', 
   expectPath(bundle, new RegExp(`cards\\.${card.id}\\.exposureBuildupPerHit`), 'missing card buildup');
 });
 
+for (const [mutate, pattern, label] of [
+  [(rows) => rows.slice(1), /cardExposure\..*Missing|required explicit damage carrier/i, 'missing row'],
+  [(rows) => [...rows, { ...rows[0] }], /cardExposure\..*Duplicate/i, 'duplicate row'],
+  [(rows) => rows.map((row, i) => i ? row : { ...row, damageSchool: 'magick' }), /cardExposure\..*damageSchool/i, 'unknown school'],
+  [(rows) => rows.map((row, i) => i ? row : { ...row, exposureBuildupPerHit: 1.5 }), /cardExposure\..*exposureBuildupPerHit/i, 'fractional buildup'],
+]) {
+  check(`raw authored carrier table refuses ${label} at boot`, () => {
+    const bundle = mutableBundle();
+    bundle.equipment.cardExposure = mutate(bundle.equipment.cardExposure.map((row) => ({ ...row })));
+    expectPath(bundle, pattern, label);
+  });
+}
+
 check('run card instances persist both carriers and resolved definitions agree', () => {
   const registries = createRegistries(contentBundle);
   const run = createRunState({ seed: 0xa7ca, classId: 'starseer', registries });
@@ -128,8 +143,53 @@ check('run card instances persist both carriers and resolved definitions agree',
   const resolved = resolveCard(registries, attack);
   equal(resolved.damageSchool, attack.damageSchool, 'resolved school drifted from persisted carrier');
   equal(resolved.exposureBuildupPerHit, attack.exposureBuildupPerHit, 'resolved buildup drifted from persisted carrier');
-  const saved = JSON.parse(JSON.stringify(run));
-  equal(saved.deck.find((card) => card.instanceId === attack.instanceId).damageSchool, attack.damageSchool, 'save lost school carrier');
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  saves.saveRun(run);
+  const saved = saves.loadRun(registries);
+  const restored = saved.deck.find((card) => card.instanceId === attack.instanceId);
+  equal(restored.damageSchool, attack.damageSchool, 'save/load lost school carrier');
+  equal(restored.exposureBuildupPerHit, attack.exposureBuildupPerHit, 'save/load lost buildup carrier');
+  const drift = mutableBundle();
+  const profile = drift.equipment.basicCardProfiles.find((row) => row.id === attack.profileId);
+  profile.damageSchool = 'arcane';
+  profile.exposureBuildupPerHit = 99;
+  const drifted = saves.loadRun(createRegistries(drift));
+  const stable = drifted.deck.find((card) => card.instanceId === attack.instanceId);
+  equal(stable.damageSchool, attack.damageSchool, 'live profile drift rewrote saved school');
+  equal(stable.exposureBuildupPerHit, attack.exposureBuildupPerHit, 'live profile drift rewrote saved buildup');
+
+  const legacy = JSON.parse(storage.getItem(RUN_KEY));
+  for (const card of legacy.deck) {
+    delete card.damageSchool;
+    delete card.exposureBuildupPerHit;
+  }
+  storage.setItem(RUN_KEY, JSON.stringify(legacy));
+  const migrated = saves.loadRun(registries);
+  const migratedAttack = migrated.deck.find((card) => card.instanceId === attack.instanceId);
+  equal(migratedAttack.damageSchool, attack.damageSchool, 'legacy migration did not stamp school');
+  equal(migratedAttack.exposureBuildupPerHit, attack.exposureBuildupPerHit, 'legacy migration did not stamp buildup');
+});
+
+check('co-op cloning preserves host-authored card carriers without recomputing tags', () => {
+  const registries = createRegistries(contentBundle);
+  const run = createRunState({ seed: 0xc00, classId: 'starseer', registries });
+  const source = run.deck.find((card) => card.equipmentRole === 'attack');
+  const coop = createCoopCombat({
+    registries, rng: createRng(0xc00), enemyIds: ['wanderingSoldier'],
+    players: [{
+      id: 'p1', classId: run.class, attributes: run.attributes,
+      maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana, mana: run.mana,
+      maxStamina: run.maxStamina, stamina: run.stamina,
+      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
+      deck: run.deck, relicIds: run.relics, flasks: run.flasks,
+    }],
+  });
+  const player = coop.players.get('p1');
+  const cloned = [...player.piles.draw, ...player.piles.hand, ...player.piles.discard]
+    .find((card) => card.instanceId === source.instanceId);
+  equal(cloned.damageSchool, source.damageSchool, 'co-op clone lost school');
+  equal(cloned.exposureBuildupPerHit, source.exposureBuildupPerHit, 'co-op clone lost buildup');
 });
 
 check('combat cloning preserves the host-authored card carriers', () => {
@@ -217,6 +277,7 @@ check('resistance validator refuses unknown schools and out-of-range percents by
 check('Magic Vulnerable is registered but cannot become generic vulnerability', () => {
   const status = contentBundle.statuses.find((row) => row.id === 'magicVulnerable');
   assert(status, 'registered magicVulnerable status absent');
+  equal(status.schoolDamageVulnerability && status.schoolDamageVulnerability.school, 'magic', 'Magic Vulnerable school');
   assert(!status.modifiers || !own(status.modifiers, 'damageTakenMult'), 'Magic Vulnerable would affect non-magic HP packets');
   assert(!status.taggedVulnerability, 'Magic Vulnerable infers schools from tags');
 });
