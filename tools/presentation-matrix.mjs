@@ -137,6 +137,7 @@ function contract(surface, reading) {
     need(reading.equipmentReceiptRows === 3 && reading.hasReceiptMath === true,
       'creation: three equipment roles show computed receipt math');
     need(reading.signatureRows === 1, 'creation: the fourth row is the fixed class signature');
+    need(reading.rolesVisible === true, 'creation: all four role rows are visible in the detail evidence');
   } else if (surface === 'armoury') {
     need(reading.view === 'hybrid', 'armoury: Hybrid view is selected');
     need((reading.derived || []).join('|') === 'HP|Mana|Stamina|Energy / turn|Draw / turn and opening hand',
@@ -150,6 +151,10 @@ function contract(surface, reading) {
     need(reading.candidateRoles >= 1, 'armoury: candidate comparison exposes before/after card numbers');
     need(reading.hasRequirements && reading.hasPoise && reading.hasEffects && reading.hasResources,
       'armoury: candidate comparison exposes requirements, poise, effects and resource changes');
+    need(reading.candidateProofVisible === true,
+      'armoury: candidate identity, before/after, requirements, effects, resources and poise are visible');
+    need(reading.primaryProofVisible === true,
+      'armoury: role math, requirements and poise are visible in the primary evidence');
   }
   return failures;
 }
@@ -160,11 +165,12 @@ function proveMutants() {
   const creation = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
     kitCount: 2, chosenKit: 1, alternateSelected: true,
     derived: ['HP', 'Mana', 'Stamina', 'Energy / turn', 'Draw / turn and opening hand'], roleRows: 4,
-    equipmentReceiptRows: 3, signatureRows: 1, hasReceiptMath: true };
+    equipmentReceiptRows: 3, signatureRows: 1, hasReceiptMath: true, rolesVisible: true };
   const armoury = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
     view: 'hybrid', derived: [...creation.derived], roles: ['attack', 'guard', 'technique'], hasReceiptMath: true,
     cardsRegionOpen: true, cardCount: 4, candidateOpen: true, candidateRoles: 3,
-    hasRequirements: true, hasPoise: true, hasEffects: true, hasResources: true };
+    hasRequirements: true, hasPoise: true, hasEffects: true, hasResources: true,
+    candidateProofVisible: true, primaryProofVisible: true };
   const plants = [
     ['missing landmark', 'grace', grace, (x) => { x.mounted = false; }],
     ['allocation drift', 'grace', grace, (x) => { x.allocations[2] = '2/2'; }],
@@ -172,10 +178,13 @@ function proveMutants() {
     ['missing alternate', 'creation', creation, (x) => { x.kitCount = 1; }],
     ['missing role receipt', 'creation', creation, (x) => { x.roleRows = 3; }],
     ['signature mistaken for scaling math', 'creation', creation, (x) => { x.signatureRows = 0; x.equipmentReceiptRows = 4; }],
+    ['role rows below crop', 'creation', creation, (x) => { x.rolesVisible = false; }],
     ['duplicate derived math', 'armoury', armoury, (x) => { x.derived[3] = 'Energy'; }],
     ['missing equipment role', 'armoury', armoury, (x) => { x.roles.pop(); }],
     ['false cards count', 'armoury', armoury, (x) => { x.cardCount = 0; }],
     ['hidden candidate receipt', 'armoury', armoury, (x) => { x.candidateOpen = false; }],
+    ['candidate proof clipped', 'armoury', armoury, (x) => { x.candidateProofVisible = false; }],
+    ['primary receipt proof clipped', 'armoury', armoury, (x) => { x.primaryProofVisible = false; }],
     ['undersized control', 'grace', grace, (x) => { x.minControl = 43; }],
     ['horizontal bleed', 'armoury', armoury, (x) => { x.horizontalOverflow = 2; }],
   ];
@@ -203,23 +212,24 @@ const READERS = {
       title: root?.querySelector('h3')?.textContent.trim() || '', capacity: Number(/capacity\\D*(\\d+)/i.exec(root?.querySelector('p')?.textContent||'')?.[1]),
       allocations: buttons.map((x) => x.textContent.trim()), fullMana: /Mana\\D*2\\D+2/.test(text) };
   })()`,
-  creation: `(async () => {
+  creation: `(() => {
     const n=(value)=>Math.round(value*100)/100;
     const kitButtons=[...document.querySelectorAll('#cz-kits button')];
     const relevant=[...kitButtons, document.querySelector('.cz-stats summary')].filter(Boolean);
-    const boxes=[];
-    for(const x of relevant){ x.scrollIntoView({block:'center'}); await new Promise((done)=>requestAnimationFrame(()=>requestAnimationFrame(done))); boxes.push(x.getBoundingClientRect()); }
+    const boxes=relevant.map((x)=>x.getBoundingClientRect());
     const derived=[...document.querySelectorAll('#cz-stat-projection > div > b')].map((x)=>x.textContent.trim());
     const roleRows=[...document.querySelectorAll('.cz-kit li')];
     const equipmentRows=roleRows.filter((x)=>/=/.test(x.textContent));
     const signatureRows=roleRows.filter((x)=>/class signature/i.test(x.textContent));
+    const roleBoxes=roleRows.map((x)=>x.getBoundingClientRect());
     return { mounted: !!document.querySelector('#cz-stat-projection'), horizontalOverflow: Math.max(0,document.documentElement.scrollWidth-innerWidth),
       minControl: boxes.length?n(Math.min(...boxes.map((x)=>Math.min(x.width,x.height)))):0,
       controlsOutside: boxes.filter((x)=>x.left<0||x.right>innerWidth||x.top<0||x.bottom>innerHeight).length,
       kitCount: kitButtons.length, chosenKit: kitButtons.filter((x)=>x.classList.contains('chosen')).length,
       alternateSelected: kitButtons.length>1 && kitButtons[1].classList.contains('chosen'), derived, roleRows: roleRows.length,
       equipmentReceiptRows:equipmentRows.length, signatureRows:signatureRows.length,
-      hasReceiptMath: equipmentRows.length===3 && equipmentRows.every((x)=>/=/.test(x.textContent)) };
+      hasReceiptMath: equipmentRows.length===3 && equipmentRows.every((x)=>/=/.test(x.textContent)),
+      rolesVisible:roleBoxes.length===4&&roleBoxes.every((x)=>x.left>=0&&x.right<=innerWidth&&x.top>=0&&x.bottom<=innerHeight) };
   })()`,
   armoury: `(() => {
     const n=(value)=>Math.round(value*100)/100;
@@ -230,6 +240,8 @@ const READERS = {
     const receiptText=[...document.querySelectorAll('.equip-role-receipts [data-role]')].map((x)=>x.textContent);
     const cards=document.querySelector('[data-region="cards"]');
     const comparison=document.querySelector('.equip-candidate-comparison[open]');
+    const visible=(x)=>{const b=x?.getBoundingClientRect();return !!b&&b.left>=0&&b.right<=innerWidth&&b.top>=0&&b.bottom<=innerHeight;};
+    const proof=comparison?[comparison.querySelector('summary'),comparison.querySelector('.equip-card-changes'),comparison.querySelector('.equipment-requirements'),...comparison.querySelectorAll('section')]:[];
     return { mounted: !!document.querySelector('.armoury-stats'), horizontalOverflow: Math.max(0,document.documentElement.scrollWidth-innerWidth),
       minControl: boxes.length?n(Math.min(...boxes.map((x)=>Math.min(x.width,x.height)))):0,
       controlsOutside: boxes.filter((x)=>x.left<0||x.right>innerWidth||x.top<0||x.bottom>innerHeight).length,
@@ -238,7 +250,8 @@ const READERS = {
       cardsRegionOpen:cards?.dataset.collapsed==='0', cardCount:Number(cards?.querySelector('.rf-count')?.textContent.match(/\\d+/)?.[0]),
       candidateOpen:!!comparison, candidateRoles:comparison?.querySelectorAll('.equip-card-changes [data-role]').length||0,
       hasRequirements:!!comparison?.querySelector('.equipment-requirements'), hasPoise:!!comparison?.querySelector('.player-poise-receipt'),
-      hasEffects:/Explicit added effects/.test(comparison?.textContent||''), hasResources:/Resource changes/.test(comparison?.textContent||'') };
+      hasEffects:/Explicit added effects/.test(comparison?.textContent||''), hasResources:/Resource changes/.test(comparison?.textContent||''),
+      candidateProofVisible:proof.length>=5&&proof.every(visible) };
   })()`,
 };
 
@@ -249,17 +262,18 @@ async function seedProfile(b, base) {
 }
 
 async function openCreationFromProfile(b, base) {
-  await seedProfile(b, base);
+  const evidenceBase = `${base}${base.includes('?') ? '&' : '?'}shotEvidence=creation`;
+  await seedProfile(b, evidenceBase);
   // A shot boot intentionally swaps localStorage for an in-memory store. Enter
   // through the real title/new-slot flow so this contract observes the seeded
   // profile through the same save manager a player uses.
-  await b.cdp.send('Page.navigate', { url: base }, b.sessionId);
+  await b.cdp.send('Page.navigate', { url: evidenceBase }, b.sessionId);
   await b.until(`!!document.querySelector('.slot-new[data-slot="1"]')`, 'new slot');
   await b.evaluate(`document.querySelector('.slot-new[data-slot="1"]').click(); true`);
 }
 
 async function pose(b, base, surface) {
-  const query = surface === 'grace' ? '?shot=rest' : surface === 'creation' ? '?shot=customize' : '?shot=combat';
+  const query = surface === 'grace' ? '?shot=rest' : surface === 'creation' ? '?shot=customize' : '?shot=combat&shotEvidence=armoury';
   await seedProfile(b, base);
   await b.cdp.send('Page.navigate', { url: base + query }, b.sessionId);
   if (surface === 'grace') {
@@ -328,7 +342,13 @@ async function main() {
             if (surface === 'creation') {
               await b.evaluate(`document.querySelector('#cz-kits')?.scrollIntoView({block:'start'}); true`);
             } else {
-              await b.evaluate(`(() => { const cards=document.querySelector('[data-region="cards"]'); if(cards){cards.scrollTop=0;cards.scrollIntoView({block:'center'});} return true; })()`);
+              reading.primaryProofVisible = await b.evaluate(`(() => {
+                const cards=document.querySelector('[data-region="cards"]');
+                const roles=cards?.querySelector('.equip-role-receipts');
+                if(cards&&roles){cards.scrollTop=Math.max(0,roles.offsetTop-cards.offsetTop-4);cards.scrollIntoView({block:'end'});}
+                const visible=(x)=>{const b=x?.getBoundingClientRect();return !!b&&b.left>=0&&b.right<=innerWidth&&b.top>=0&&b.bottom<=innerHeight;};
+                return !!roles&&[...roles.querySelectorAll('[data-role]'),roles.querySelector('.equipment-requirements'),roles.querySelector('.player-poise-receipt')].every(visible);
+              })()`);
             }
             await wait(100);
           }
