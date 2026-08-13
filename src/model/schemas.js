@@ -170,6 +170,9 @@ export const PASSIVE_TYPES = Object.freeze({
   shrineHealMult: 'num', // shrine rest healing ×
   shrineNoRest: 'bool', // flag: shrines offer Smith only
   powerCostReduction: 'num', // Power cards cost N less (min 0)
+  // Inert character-sheet projection only. Player state and combat deliberately
+  // have no poise meter; enemy poise remains a separate engine system.
+  poiseThresholdAdd: 'num', // additive equipment-receipt modifier
   // SIGNED, and deliberately not `swapCostReduction` beside its neighbour. His
   // sentence is *"costs more OR LESS depending on Talisman or starting relic"* —
   // a "reduction" of −1 to mean "one more" is a word arguing with its own value.

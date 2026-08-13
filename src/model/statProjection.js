@@ -2,6 +2,8 @@
 // It exposes calculation receipts; screens choose layout, never redo formulas.
 
 import { deriveStat } from './derivedStats.js';
+import { equippedPieces } from './loadout.js';
+import { passiveSum } from './registries.js';
 
 const LABELS = Object.freeze({
   hp: 'HP',
@@ -10,6 +12,39 @@ const LABELS = Object.freeze({
   energy: 'Energy / turn',
   draw: 'Draw / turn and opening hand',
 });
+
+/**
+ * Pure, inert player-Poise projection. Equipment and relics may state a
+ * threshold, but no player state field or combat system consumes it yet.
+ */
+export function playerPoiseThresholdReceipt(registries, run) {
+  if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
+  const pieces = equippedPieces(registries, run.loadout, run.class);
+  const pieceSources = pieces.map((piece) => ({
+    kind: 'equipment',
+    id: piece.id,
+    classId: piece.kind === 'armor' ? piece.classId : null,
+    value: piece.poiseThreshold,
+  }));
+  const relicSources = (run.relics || [])
+    .map((id) => registries.relics.get(id))
+    .filter((relic) => relic.passives && Number.isFinite(relic.passives.poiseThresholdAdd))
+    .map((relic) => ({ kind: 'relic', id: relic.id, value: relic.passives.poiseThresholdAdd }));
+  const equipment = pieceSources.reduce((sum, source) => sum + source.value, 0);
+  const relic = passiveSum(registries, run.relics || [], 'poiseThresholdAdd');
+  const raw = equipment + relic;
+  return {
+    id: 'poiseThreshold',
+    label: 'Poise threshold',
+    sources: [...pieceSources, ...relicSources],
+    equipment,
+    relic,
+    raw,
+    value: raw,
+    active: false,
+    note: 'No current consumer. Player Poise is not the enemy Poise meter.',
+  };
+}
 
 export function statProjection(registries, run) {
   const snapshot = run && run.derivedStatRuleSnapshot;

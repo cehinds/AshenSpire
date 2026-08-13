@@ -155,6 +155,9 @@ export const relics = [
     name: 'Cured Hide',
     rarity: 'common',
     icon: '🛡',
+    // Character-sheet receipt only. This does not create a player poise meter
+    // or change stagger behavior; the projection says so explicitly.
+    passives: { poiseThresholdAdd: 2 },
     triggers: [
       {
         on: 'hpLost',
@@ -163,7 +166,7 @@ export const relics = [
         do: [{ op: 'block', target: 'owner', amount: 5 }],
       },
     ],
-    textTemplate: 'The first time you lose HP each combat, gain {block} Block.',
+    textTemplate: 'The first time you lose HP each combat, gain {block} Block. Poise threshold +2 (no current consumer).',
     flavor: 'The beast learned its lesson too late to keep it.',
   },
   {

@@ -248,6 +248,23 @@ export function validateContent(bundle) {
   } else if (!Array.isArray(equipment.basicCardProfiles)) {
     err('equipment.basicCardProfiles', 'Missing required basicCardProfiles array');
   } else {
+    // Player Poise is authored on every equipment row even though it has no
+    // combat consumer yet. Missing data must not silently normalize to zero:
+    // the receipt is truthful only when every worn source says its number.
+    for (const [table, rows] of [['armaments', equipment.armaments], ['armour', equipment.armour]]) {
+      if (!Array.isArray(rows)) {
+        err(`equipment.${table}`, 'must be an array');
+        continue;
+      }
+      for (const row of rows) {
+        const id = row && row.id || '?';
+        const value = row && row.poiseThreshold;
+        if (!Number.isFinite(value) || !Number.isInteger(value) || value < 0) {
+          err(`equipment.${table}.${id}.poiseThreshold`, `must be a finite non-negative integer, got ${JSON.stringify(value)}`);
+        }
+      }
+    }
+
     const seenProfiles = new Set();
     for (const profile of equipment.basicCardProfiles) {
       const id = profile && profile.id || '?';
@@ -558,6 +575,10 @@ export function validateContent(bundle) {
 
   for (const relic of b.relics || []) {
     validateRelicTemplate(relic, `relics.${relic.id}`, err);
+    const poiseAdd = relic && relic.passives && relic.passives.poiseThresholdAdd;
+    if (poiseAdd != null && (!Number.isFinite(poiseAdd) || !Number.isInteger(poiseAdd) || poiseAdd < 0)) {
+      err(`relics.${relic.id}.passives.poiseThresholdAdd`, `must be a finite non-negative integer, got ${JSON.stringify(poiseAdd)}`);
+    }
   }
 
   // ---- threshold-proc second layer (#61): meaning, not shape ---------------
