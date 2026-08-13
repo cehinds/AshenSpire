@@ -19,6 +19,7 @@ import { outfits } from './generated/outfits.js';
 import { equipSlots } from './generated/equipSlots.js';
 import { equipMods } from './generated/equipMods.js';
 import { equipTargets } from './generated/equipTargets.js';
+import { basicCardProfiles } from './generated/basicCardProfiles.js';
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
 function list(v) {
@@ -91,3 +92,10 @@ export function cardForTarget(target, classId) {
 
 /** Every mod prefix that resolves to a card (for validation and tests). */
 export const CARD_TARGETS = [...new Set(equipTargets.map((t) => t.target))];
+
+/** Equipment-bound core card profiles, authored once and selected by role. */
+export const BASIC_CARD_PROFILES = basicCardProfiles.map((row) => ({
+  ...row,
+  tags: list(row.tags),
+  mods: list(row.mods),
+}));

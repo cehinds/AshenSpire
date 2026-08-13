@@ -11,11 +11,8 @@ export const classes = [
     name: 'Reaver',
     maxHp: 84,
     startingRelic: 'forsakenMedallion',
-    startingDeck: [
-      'strike', 'strike', 'strike', 'strike', 'strike',
-      'defend', 'defend', 'defend', 'defend',
-      'gorefireSlash',
-    ],
+    startingSignatureCard: 'gorefireSlash',
+    startingLoadout: { rightHand: 'straightSword', leftHand: 'roundShield' },
     cardPool: [
       // Commons
       'crimsonCleave', 'shieldBash', 'quickstep', 'guardCounter', 'ironResolve',
@@ -39,11 +36,8 @@ export const classes = [
     name: 'Starseer',
     maxHp: 72,
     startingRelic: 'starstoneShard',
-    startingDeck: [
-      'strike', 'strike', 'strike', 'strike', 'strike',
-      'defend', 'defend', 'defend', 'defend',
-      'starstonePebble',
-    ],
+    startingSignatureCard: 'starstonePebble',
+    startingLoadout: { rightHand: 'ashStaff' },
     cardPool: [
       // Commons
       'cometFragment', 'starbladePhalanx', 'crystalBarrier', 'starShower', 'scholarsInsight', 'frostVeil',
@@ -65,11 +59,8 @@ export const classes = [
     name: 'Herald',
     maxHp: 78,
     startingRelic: 'goldFigurine',
-    startingDeck: [
-      'strike', 'strike', 'strike', 'strike', 'strike',
-      'defend', 'defend', 'defend', 'defend',
-      'urgentHeal',
-    ],
+    startingSignatureCard: 'urgentHeal',
+    startingLoadout: { rightHand: 'boneSceptre' },
     cardPool: [
       // Commons
       'bloodPact', 'blightTouch', 'flagellation', 'penance', 'litany', 'graveOffering',

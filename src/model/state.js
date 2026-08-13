@@ -7,7 +7,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { createLoadout, runMods, stampDeck } from './loadout.js';
+import { createLoadout, runMods, stampDeck, startingDeckRefs } from './loadout.js';
 import { graceRefillPlan } from './gracerefill.js';
 import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 import {
@@ -77,7 +77,7 @@ export function createRunState({
     hp: oldMaxHp,
     maxHp: oldMaxHp,
     cinders: registries.balance.startingCinders || 0,
-    deck: createDeck(classDef.startingDeck, idGen),
+    deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
     relics: [classDef.startingRelic],
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots

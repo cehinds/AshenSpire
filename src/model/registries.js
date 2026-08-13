@@ -10,6 +10,25 @@ import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 
+function applyBasicCardProfile(def, profile) {
+  if (!profile) return def;
+  const tags = [...(profile.tags || [])];
+  const effects = (def.effects || []).map((effect) => (
+    effect.op === 'damage' ? { ...effect, tags } : { ...effect }
+  ));
+  return {
+    ...def,
+    name: profile.displayName,
+    icon: profile.icon,
+    flavor: profile.flavor || def.flavor,
+    damageSchool: profile.damageSchool,
+    cardTags: tags,
+    effects,
+    equipmentProfileId: profile.id,
+    equipmentRole: profile.role,
+  };
+}
+
 /** Recursively freeze a value in place (functions and frozen values skipped). */
 export function deepFreeze(value) {
   if (value === null || typeof value !== 'object') return value;
@@ -116,6 +135,7 @@ export function createRegistries(contentBundle) {
   // by (slot, class) far more often than by bare id, and armour ids repeat
   // across classes on purpose. They ride along frozen, like balance.
   registries.equipment = deepFreeze({ ...(bundle.equipment || {}) });
+  registries.tags = deepFreeze([...(bundle.tags || [])]);
 
   // Visual scaling domains use the same derived-stat engine as run creation.
   // They are content potential (the largest legal creation allocation), not a
@@ -226,7 +246,8 @@ export function resolveCard(registries, instanceOrRef) {
   const cardId = instanceOrRef.cardId;
   const base = registries.cards.get(cardId);
   const mods = instanceOrRef.mods;
-  if (!instanceOrRef.upgraded && !(mods && mods.length)) return base;
+  const profileId = instanceOrRef.profileId;
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -236,12 +257,16 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${mods ? mods.join(',') : ''}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
   let result = base;
   if (instanceOrRef.upgraded) result = mergeUpgrade(base);
+  if (profileId) {
+    const profile = ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === profileId);
+    result = applyBasicCardProfile(result, profile);
+  }
   if (mods && mods.length) {
     const eq = registries.equipment || {};
     result = deepFreeze(

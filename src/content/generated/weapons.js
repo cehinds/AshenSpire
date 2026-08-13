@@ -16,6 +16,9 @@ export const weapons = [
       "blade",
       "basic"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "",
+    "techniqueProfile": "weaponTechnique",
     "mods": "strike.damage=+1",
     "unlock": "",
     "blurb": "Honest steel. It asks nothing clever of you."
@@ -34,6 +37,9 @@ export const weapons = [
       "blade",
       "heavy"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+4",
       "strike.cost=+1",
@@ -56,6 +62,9 @@ export const weapons = [
       "blade",
       "flourish"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=3",
       "strike.hits=2"
@@ -78,6 +87,9 @@ export const weapons = [
       "blood",
       "flourish"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=-1",
       "strike.bleed=+2"
@@ -99,6 +111,9 @@ export const weapons = [
       "blade",
       "heavy"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+3",
       "strike.cost=+1",
@@ -118,6 +133,9 @@ export const weapons = [
     "metal": "8E8678",
     "accent": "C9A227",
     "tags": "heavy",
+    "attackProfile": "bladeAttack",
+    "guardProfile": "",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+2",
       "strike.poise=+6"
@@ -139,6 +157,9 @@ export const weapons = [
       "blade",
       "flourish"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=2",
       "strike.hits=3"
@@ -160,6 +181,9 @@ export const weapons = [
       "blade",
       "heavy"
     ],
+    "attackProfile": "bladeAttack",
+    "guardProfile": "",
+    "techniqueProfile": "weaponTechnique",
     "mods": [
       "strike.damage=+3",
       "strike.cost=+1"
@@ -181,6 +205,9 @@ export const weapons = [
       "guard",
       "flourish"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": "defend.block=+2",
     "unlock": "",
     "blurb": "Small enough to be quick with."
@@ -196,6 +223,9 @@ export const weapons = [
     "metal": "8E8678",
     "accent": "C9A227",
     "tags": "guard",
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+3",
       "strike.damage=-1"
@@ -217,6 +247,9 @@ export const weapons = [
       "guard",
       "heavy"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+6",
       "strike.damage=-2"
@@ -238,6 +271,9 @@ export const weapons = [
       "guard",
       "basic"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": "defend.block=+2",
     "unlock": "",
     "blurb": "Plain, round, and enough."
@@ -256,6 +292,9 @@ export const weapons = [
       "guard",
       "blade"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+2",
       "strike.damage=+1"
@@ -274,6 +313,9 @@ export const weapons = [
     "metal": "6B5D45",
     "accent": "C9A227",
     "tags": "guard",
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+1",
       "self.regen=+1"
@@ -292,6 +334,9 @@ export const weapons = [
     "metal": "6B5D45",
     "accent": "C9502E",
     "tags": "gorefire",
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": "strike.burn=+2",
     "unlock": "",
     "blurb": "Fire remembers what steel forgets."
@@ -310,6 +355,9 @@ export const weapons = [
       "guard",
       "flourish"
     ],
+    "attackProfile": "",
+    "guardProfile": "shieldGuard",
+    "techniqueProfile": "",
     "mods": [
       "defend.block=+1",
       "strike.poise=+2"
@@ -331,6 +379,9 @@ export const weapons = [
       "ritual",
       "basic"
     ],
+    "attackProfile": "staffMagicAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": "power.potency=+1",
     "unlock": "",
     "blurb": "Grey wood, warm at the grip."
@@ -346,6 +397,9 @@ export const weapons = [
     "metal": "6B5D45",
     "accent": "7FA8C9",
     "tags": "starstone",
+    "attackProfile": "staffMagicAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+2",
       "strike.damage=-1",
@@ -368,6 +422,9 @@ export const weapons = [
       "ritual",
       "blight"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+1",
       "strike.blight=+2"
@@ -389,6 +446,9 @@ export const weapons = [
       "ritual",
       "oath"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": "power.potency=+3",
     "unlock": "",
     "blurb": "It keeps a little of the guiding flame."
@@ -407,6 +467,9 @@ export const weapons = [
       "ritual",
       "oath"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+2",
       "self.regen=+1"
@@ -425,6 +488,9 @@ export const weapons = [
     "metal": "4B3522",
     "accent": "B5541C",
     "tags": "blight",
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": "strike.blight=+3",
     "unlock": "",
     "blurb": "Wet to the touch. It should not be."
@@ -443,6 +509,9 @@ export const weapons = [
       "gorefire",
       "blood"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "strike.burn=+2",
       "strike.bleed=+1"
@@ -464,6 +533,9 @@ export const weapons = [
       "ritual",
       "heavy"
     ],
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "",
+    "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+2",
       "strike.poise=+2",

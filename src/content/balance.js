@@ -11,6 +11,7 @@ export const balance = {
   // refill table whose live rows cannot fit.
   flaskSlots: 6,
   startingCinders: 0,
+  startingDeckSize: 10,
 
   // Engine-consulted poise config (see ENGINE-API §1). onFill is where content
   // defines what "Staggered" means — the engine never names the status.
@@ -350,6 +351,22 @@ export const balance = {
   // the rules of the system, kept in one place so it can be tuned or switched
   // off without touching the model.
   equipment: {
+    roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 },
+    rarityBonuses: {
+      common: { attack: 0, guard: 0 },
+      uncommon: { attack: 1, guard: 1 },
+      rare: { attack: 2, guard: 2 },
+    },
+    roleSources: {
+      attack: [{ slot: 'rightHand' }],
+      guard: [{ slot: 'leftHand', kinds: ['shield'] }, { slot: 'rightHand' }],
+      technique: [{ slot: 'rightHand' }],
+    },
+    unarmedProfiles: {
+      attack: 'unarmedAttack',
+      guard: 'unarmedGuard',
+      technique: 'unarmedTechnique',
+    },
     enabled: true,
 
     // WHAT THE SHELF IS SCOPED TO, and it is this word — there is no second one.

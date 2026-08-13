@@ -1,0 +1,16 @@
+# Equipment-bound core-card profiles. A profile projects one stable deck role
+# onto a registered base card. Tags are both presented and attached to damage
+# effects; damageSchool is presentation metadata, not an implicit mechanic.
+id,role,baseCardId,displayName,icon,damageSchool,tags,flavor,mods,compatibility
+unarmedAttack,attack,strike,Unarmed Strike,✊,physical,basic,"A last resort, still yours.",,attack-v1
+bladeAttack,attack,strike,Slashing Strike,⚔,physical,blade,"Steel gives the motion its name.",,attack-v1
+staffMagicAttack,attack,strike,Staff Magic Strike,✦,magic,starstone,"Ash carries a small cold light.",,attack-v1
+sceptreArcaneAttack,attack,strike,Arcane Strike,◈,arcane,ritual|blight,"The sceptre answers in a darker tongue.",,attack-v1
+unarmedGuard,guard,defend,Defend,🛡,physical,guard,"Brace with what you have.",,guard-v1
+weaponGuard,guard,defend,Weapon Guard,🛡,physical,guard,"Turn the haft and weather the blow.",,guard-v1
+shieldGuard,guard,defend,Shield Defend,🛡,physical,guard,"Meet the blow on carried iron.",,guard-v1
+staffGuard,guard,defend,Arcane Ward,✦,magic,starstone,"A thin ward drawn through the focus.",,guard-v1
+sceptreGuard,guard,defend,Ritual Ward,◈,arcane,ritual,"A ward held together by rite.",,guard-v1
+unarmedTechnique,technique,technique,Footwork,✧,physical,flourish,"Position is an armament too.",,technique-v1
+weaponTechnique,technique,technique,Weapon Technique,✧,physical,blade|flourish,"Let the weapon teach the hand.",,technique-v1
+staffTechnique,technique,technique,Staff Channel,✦,magic,ritual,"Set the breath behind the focus.",,technique-v1

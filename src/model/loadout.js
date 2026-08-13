@@ -49,6 +49,8 @@ export function parseMod(str) {
 
 /** The closed set. A third hand is a new word — engine, one act (Law 1 c1). */
 export const HANDS = Object.freeze(['left', 'right']);
+export const EQUIPMENT_ROLES = Object.freeze(['attack', 'guard', 'technique']);
+export const DAMAGE_SCHOOLS = Object.freeze(['physical', 'magic', 'arcane', 'holy', 'fire']);
 
 // ---------------------------------------------------------------------------
 // The two `apply` vocabularies — one per mod scope (Viki, A8)
@@ -633,7 +635,49 @@ export function createLoadout(registries, classId) {
   }
   const starting = (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
   if (starting && sets.armor) sets.armor[0] = starting.id;
+  const classDef = registries.classes.get(classId);
+  for (const [slotId, pieceId] of Object.entries(classDef.startingLoadout || {})) {
+    if (sets[slotId]) sets[slotId][0] = pieceId;
+  }
   return { sets, active, storage: [] };
+}
+
+function profileById(registries, id) {
+  return ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === id) || null;
+}
+
+/** Resolve one equipment role from the data-owned ordered source table. */
+export function equipmentRoleSource(registries, loadout, classId, role) {
+  const eqBal = (registries.balance || {}).equipment || {};
+  const sources = (eqBal.roleSources || {})[role] || [];
+  for (const source of sources) {
+    const piece = equippedIn(registries, loadout, classId, source.slot);
+    if (!piece) continue;
+    if (source.kinds && !source.kinds.includes(piece.kind)) continue;
+    const profileId = piece[`${role}Profile`];
+    if (profileId) return { role, slotId: source.slot, piece, profile: profileById(registries, profileId) };
+  }
+  const profileId = (eqBal.unarmedProfiles || {})[role];
+  return { role, slotId: null, piece: null, profile: profileById(registries, profileId) };
+}
+
+/** One projection consumed by run creation, cards, Armoury, and creation UI. */
+export function equipmentKitPlan(registries, loadout, classId) {
+  return EQUIPMENT_ROLES.map((role) => equipmentRoleSource(registries, loadout, classId, role));
+}
+
+/** The ten-card role distribution, as instance-ready refs. */
+export function startingDeckRefs(registries, loadout, classId) {
+  const cls = registries.classes.get(classId);
+  const copies = ((registries.balance || {}).equipment || {}).roleCopies || {};
+  const refs = [];
+  for (const row of equipmentKitPlan(registries, loadout, classId)) {
+    for (let i = 0; i < (copies[row.role] || 0); i++) {
+      refs.push({ cardId: row.profile.baseCardId, equipmentRole: row.role, profileId: row.profile.id });
+    }
+  }
+  for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
+  return refs;
 }
 
 /** The piece in a slot's active set, or null. Armour resolves per class. */
@@ -916,10 +960,16 @@ export function applyCardMods(def, mods, opts = {}) {
  */
 export function stampDeck(registries, run, cards) {
   const list = cards || run.deck || [];
-  const mods = cardMods(registries, run.loadout, run.class);
+  const rolePlan = new Map(equipmentKitPlan(registries, run.loadout, run.class).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
-    const next = mods.get(inst.cardId) || [];
+    const row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
+    if (row && row.profile) {
+      inst.cardId = row.profile.baseCardId;
+      inst.profileId = row.profile.id;
+    }
+    const mods = cardMods(registries, run.loadout, run.class);
+    const next = [...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
     const prev = inst.mods || [];
     if (next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
     if (next.length) inst.mods = next;

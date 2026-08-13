@@ -93,7 +93,9 @@ export function renderCard(registries, ref, opts = {}) {
   if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
   el.dataset.cardId = def.id;
 
-  const tags = tagsFor(def.id);
+  const tags = def.cardTags && def.cardTags.length
+    ? def.cardTags.map((id) => registries.tags.find((t) => t.id === id)).filter(Boolean)
+    : tagsFor(def.id);
   const base = staticTokens(def);
   const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;

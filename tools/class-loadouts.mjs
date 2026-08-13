@@ -19,11 +19,11 @@ const expected = {
   starseer: { rightHand: 'ashStaff', leftHand: null, signature: 'starstonePebble' },
   herald: { rightHand: 'boneSceptre', leftHand: null, signature: 'urgentHeal' },
 };
-const wantedCounts = { attack: 3, guard: 3, technique: 3 };
+const wantedCounts = { attack: 4, guard: 4, technique: 1 };
 
 check(R.balance.startingDeckSize === 10, 'global startingDeckSize is 10', String(R.balance.startingDeckSize));
 check(JSON.stringify(R.balance.equipment?.roleCopies) === JSON.stringify({ ...wantedCounts, signature: 1 }),
-  'default roleCopies are 3/3/3/1', JSON.stringify(R.balance.equipment?.roleCopies));
+  'default roleCopies are 4/4/1/1', JSON.stringify(R.balance.equipment?.roleCopies));
 
 for (const [classId, want] of Object.entries(expected)) {
   const cls = R.classes.get(classId);
@@ -89,10 +89,10 @@ refuses('mutant: wrong-target profile is refused by name', /wrong|guard|attack/i
 refuses('mutant: unknown damage school is refused by name', /magick/, { profilePatch: { damageSchool: 'magick' } });
 refuses('mutant: unknown profile tag is refused by name', /notMagic/, { profilePatch: { tags: ['notMagic'] } });
 refuses('mutant: duplicate precedence slot is refused by name', /rightHand|duplicate/i, {
-  balancePatch: { equipment: { ...contentBundle.balance.equipment, rolePrecedence: { attack: ['rightHand', 'rightHand'], guard: ['leftHand', 'rightHand'], technique: ['rightHand', 'leftHand'] } } },
+  balancePatch: { equipment: { ...contentBundle.balance.equipment, roleSources: { attack: [{ slot: 'rightHand' }, { slot: 'rightHand' }], guard: [{ slot: 'leftHand', kinds: ['shield'] }, { slot: 'rightHand' }], technique: [{ slot: 'rightHand' }] } } },
 });
 refuses('mutant: role counts must sum to startingDeckSize', /10|sum|startingDeckSize/i, {
-  balancePatch: { startingDeckSize: 10, equipment: { ...contentBundle.balance.equipment, roleCopies: { attack: 4, guard: 3, technique: 3, signature: 1 } } },
+  balancePatch: { startingDeckSize: 10, equipment: { ...contentBundle.balance.equipment, roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1 } } },
 });
 
 console.log(`\nclass-loadouts: ${passed} passed, ${failed} failed`);

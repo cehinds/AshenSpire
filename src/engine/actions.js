@@ -67,6 +67,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags) {
 
 /** One derivation for live actions and previews: card identity comes from CSV. */
 export function attackTagsFor(action, effect) {
+  if (action.card && Array.isArray(action.card.tags) && action.card.tags.length) return action.card.tags;
   return damageTagIds(action.card && action.card.cardId, effect.tags);
 }
 
