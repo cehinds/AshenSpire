@@ -186,15 +186,38 @@ function baseValue(base, classDef, statId) {
   return value;
 }
 
+/**
+ * Generic attribute-tier receipt for weapon/armour/resource projections.
+ * The caller supplies one already-resolved rule row, so authored defaults,
+ * mode/run layers and the explicit/debug override have already merged once.
+ * This helper owns no weapon base and mutates nothing.
+ */
+export function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rule.sourceStat } = {}) {
+  if (!plainObject(rule)) throw new Error('Attribute tier rule must be a resolved rule row');
+  const points = attributes && attributes[sourceStat];
+  if (!Number.isFinite(points)) throw new Error(`sourceStat '${sourceStat}' is not a finite number`);
+  if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error('pointsPerTier must be a finite number > 0');
+  if (!Number.isFinite(rule.gainPerTier)) throw new Error('gainPerTier must be a finite number');
+  const round = Math[rule.rounding];
+  if (typeof round !== 'function') throw new Error(`rounding '${rule.rounding}' is not executable`);
+  const tier = round(points / rule.pointsPerTier);
+  return {
+    sourceStat,
+    points,
+    pointsPerTier: rule.pointsPerTier,
+    rounding: rule.rounding,
+    tier,
+    gainPerTier: rule.gainPerTier,
+    value: tier * rule.gainPerTier,
+  };
+}
+
 /** Pure calculation. The returned receipt distinguishes base, tier, raw and cap. */
 export function deriveStat(resolved, statId, { attributes, classDef } = {}) {
   const row = resolved && resolved.rules && resolved.rules[statId];
   if (!row) throw new Error(`Unknown derived stat '${statId}'`);
-  const points = attributes && attributes[row.sourceStat];
-  if (!Number.isFinite(points)) throw new Error(`${statId}.sourceStat '${row.sourceStat}' is not a finite number`);
-  const round = Math[row.rounding];
-  if (typeof round !== 'function') throw new Error(`${statId}.rounding '${row.rounding}' is not executable`);
-  const tier = round(points / row.pointsPerTier);
+  const tierReceipt = deriveAttributeTierReceipt(row, { attributes });
+  const { points, tier } = tierReceipt;
   const base = baseValue(row.base, classDef, statId);
   const raw = base + tier * row.gainPerTier;
   const value = row.cap === null ? raw : Math.min(raw, row.cap);

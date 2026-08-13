@@ -16,6 +16,7 @@ import {
   deriveStat,
   createDerivedStatRuleSnapshot,
   restoreDerivedStatRuleSnapshot,
+  deriveAttributeTierReceipt,
 } from '../src/model/derivedStats.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -101,6 +102,22 @@ check('an authored row override outranks the authored global defaults', () => {
     attributes: { dexterity: 10 }, classDef: CLASS,
   });
   equal(out.tier, 1, 'row pointsPerTier');
+});
+
+check('weapon-facing tier receipt consumes a resolved row and owns no weapon base', () => {
+  const row = resolved({
+    modeModifiers: { defaults: { pointsPerTier: 4 } },
+    explicitOverride: { rules: { energy: { gainPerTier: 3, rounding: 'ceil' } } },
+  }).rules.energy;
+  const receipt = deriveAttributeTierReceipt(row, { attributes: { dexterity: 9 } });
+  equal(receipt.sourceStat, 'dexterity', 'source stat');
+  equal(receipt.points, 9, 'points');
+  equal(receipt.pointsPerTier, 4, 'resolved global pointsPerTier');
+  equal(receipt.rounding, 'ceil', 'resolved row rounding');
+  equal(receipt.tier, 3, 'tier');
+  equal(receipt.gainPerTier, 3, 'resolved row gain');
+  equal(receipt.value, 9, 'tier contribution only');
+  assert(!Object.hasOwn(receipt, 'base'), 'generic receipt must not own a weapon base');
 });
 
 check('a finite cap clamps the final value and null means uncapped', () => {
