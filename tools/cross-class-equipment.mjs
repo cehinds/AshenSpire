@@ -76,6 +76,13 @@ try { resolveStartingKit(R, 'starseer', 'reaverGreatsword', { discoveredArmament
 catch (error) { crossStart = error.message; }
 check(baseline.id === 'starseerBaseline' && /not eligible|class/i.test(crossStart),
   'starting-kit class eligibility stays separate from cross-class loot equipping', crossStart);
+let weakStart = '';
+try {
+  createRunState({ seed: 12, classId: 'reaver', registries: R, startingKitId: 'reaverGreatsword',
+    profileMeta: { discoveredArmaments: ['greatsword'] }, attributes: { ...all10, dexterity: 15 } });
+} catch (error) { weakStart = error.message; }
+check(/greatsword|strength|12/i.test(weakStart),
+  'starting-kit eligibility does not bypass explicit equipment requirements', weakStart);
 
 if (typeof cardCompatibility === 'function') {
   const classFit = cardCompatibility(R, { cardId: 'crimsonCleave', classId: 'reaver', pieceId: 'ashStaff' });
