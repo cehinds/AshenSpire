@@ -41,8 +41,12 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState, initializeRunFlaskCharges, validateRunShape } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
-import { flaskGrowthTable, flaskGrowthPlan, syncFlaskGrowth } from '../src/model/flaskgrowth.js';
+import { flaskGrowthTable, flaskGrowthPlan, flaskGrowthClause, syncFlaskGrowth } from '../src/model/flaskgrowth.js';
 import { FLASK_GROWTH_SOURCES } from '../src/model/schemas.js';
+// The REAL tooltip renderer — imports headless (no DOM at module top), so the
+// clause is proven on the same function the reward, shop, map and combat
+// tooltips call, not on a helper beside it.
+import { relicText } from '../src/ui/components/card.js';
 import fs from 'node:fs';
 
 const argv = process.argv.slice(2);
@@ -82,7 +86,8 @@ function report() {
   }
   console.log(`  a fresh reaver run: capacity ${run.flaskCharges.capacity}, hp ${run.flaskCharges.hp}, mana ${run.flaskCharges.mana}, grown { hp: ${run.flaskCharges.grown.hp}, mana: ${run.flaskCharges.grown.mana} }.`);
   console.log('\nBoundary: this reports the shipped table and a fresh run. It asserts nothing');
-  console.log('about screens, and nothing about balance — no live row exists to balance yet.');
+  console.log('about screens; the shipped rows are PROVISIONAL and unweighed — whether +1 on');
+  console.log('a common relic is right is the M3 balance pass\'s question, not this tool\'s.');
 }
 
 function selftest() {
@@ -268,6 +273,60 @@ function selftest() {
     return { ok: clean && dirty, saw: `clean ${clean}, dirty-refused ${dirty}` };
   });
 
+  // ── THE LIVE ROWS — D19's parenthesis made real. These two plants read the
+  //    SHIPPED table and derive every expectation from it (no row is copied
+  //    here, so a retune retunes the plants). OBSERVED RED FIRST, 2026-08-14:
+  //    both written and run against the zero-row tree before the first live
+  //    row existed — falsifier FAIL 'zero shipped relic rows', clause FAIL
+  //    likewise — then green the moment the row shipped, with no tool edit. ──
+  behave('LAW 0 falsifier, LIVE (D19): every SHIPPED relic row grows the maximum through the addRelic door — and at least one live row ships', () => {
+    const reg = createRegistries(contentBundle);
+    const shipped = flaskGrowthTable(reg.balance).filter((r) => r && r.source === 'relic');
+    if (shipped.length === 0) {
+      return { ok: false, saw: 'zero shipped relic rows — D19\'s first live rung is gone; if that was deliberate (Tier 0), retire this plant out loud in the same act' };
+    }
+    for (const row of shipped) {
+      const run = freshRun(reg);
+      if (run.relics.includes(row.id)) return { ok: false, saw: `'${row.id}' is a starting relic — this plant needs the gain door; use a birth plant instead` };
+      const before = { cap: run.flaskCharges.capacity, k: run.flaskCharges[row.kind], cur: run.flaskCharges[`${row.kind}Current`] };
+      executeRunEffects({ run, registries: reg, rng: null }, [{ op: 'addRelic', id: row.id }]);
+      const f = run.flaskCharges;
+      const sound = f.capacity === before.cap + row.amount && f[row.kind] === before.k + row.amount
+        && f[`${row.kind}Current`] === before.cur + row.amount && f.grown[row.kind] >= row.amount;
+      if (!sound) return { ok: false, saw: `'${row.id}': ${JSON.stringify(f)} from capacity ${before.cap}` };
+    }
+    return { ok: true, saw: '' };
+  });
+
+  behave('the tooltip clause is DERIVED from the shipped rows, follows a retune, and is silent for a relic with no row', () => {
+    const b = realBundleCopy();
+    const shipped = (Array.isArray(b.balance.flaskGrowth) ? b.balance.flaskGrowth : []).filter((r) => r && r.source === 'relic');
+    if (shipped.length === 0) return { ok: false, saw: 'zero shipped relic rows — see the live falsifier above' };
+    for (const row of shipped) {
+      const clause = flaskGrowthClause(b.balance, b.flasks, row.id);
+      if (!clause.includes(`+${row.amount} max`)) return { ok: false, saw: `'${row.id}' clause '${clause}' does not carry +${row.amount}` };
+    }
+    // The mutant that kills every hand-typed copy: retune the first row in the
+    // COPY and the clause must follow — prose in a textTemplate cannot do this.
+    const tuned = shipped[0].amount + 4;
+    shipped[0].amount = tuned;
+    const follows = flaskGrowthClause(b.balance, b.flasks, shipped[0].id).includes(`+${tuned} max`);
+    const silent = flaskGrowthClause(b.balance, b.flasks, 'noSuchRelic') === '';
+    return { ok: follows && silent, saw: `follows ${follows}, silent ${silent}` };
+  });
+
+  behave('SAME DOOR, short of the pixel: the REAL relicText renders every shipped row\'s clause (observed red 2026-08-14 with the card.js call removed — saw the bare heal sentence)', () => {
+    const reg = createRegistries(contentBundle);
+    const shipped = flaskGrowthTable(reg.balance).filter((r) => r && r.source === 'relic');
+    if (shipped.length === 0) return { ok: false, saw: 'zero shipped relic rows — see the live falsifier above' };
+    for (const row of shipped) {
+      const def = contentBundle.relics.find((r) => r && r.id === row.id);
+      const text = relicText(def);
+      if (!text.includes(`+${row.amount} max`)) return { ok: false, saw: `'${row.id}' renders '${text}'` };
+    }
+    return { ok: true, saw: '' };
+  });
+
   behave('a questEvent row on a clean event validates, and the plan says NOT BINDING by name', () => {
     const b = realBundleCopy();
     b.balance.flaskGrowth = [{ source: 'questEvent', id: 'goldboughAvatar', kind: 'hp', amount: 1 }];
@@ -315,6 +374,8 @@ function selftest() {
     unwired.length ? `unwired: ${unwired.join(', ')}` : `${pushCount} sites, all wired`);
   contract('equipment.js commit() re-syncs the chain (the talisman door)',
     /function commit\(\) \{[\s\S]{0,400}syncFlaskGrowth\(registries, run\)/.test(src('src/ui/screens/equipment.js')));
+  contract('relicText derives the growth clause (card.js calls flaskGrowthClause — the tooltip cannot silently omit a live row)',
+    /flaskGrowthClause\(/.test(src('src/ui/components/card.js')));
   // The mutant: prove the contract regex can fail — a push with no sync.
   contract('MUTANT: the contract goes red on a push with no sync',
     !(() => {
@@ -325,8 +386,9 @@ function selftest() {
 
   console.log(`\nRESULT ${fails === 0 ? 'all plants behaved' : `${fails} MISBEHAVED`} — ${counts.refusal} refusal plants (door 1), ${counts.behaviour} behaviour plants (door 2), ${counts.contract} source contracts (counted at run time, never typed).`);
   console.log('Boundary: no pixel was asserted (the equipment and reward screens are browser');
-  console.log('surfaces); no balance claim is made (zero live rows ship); and the reversal');
-  console.log('plant enters below a door that does not exist yet — both named above, in place.');
+  console.log('surfaces); the live rows are proven to WORK, not to be WELL-WEIGHED (the M3');
+  console.log('balance pass owns the numbers); and the removal plants enter below a door that');
+  console.log('does not exist yet — all named above, in place.');
   process.exit(fails === 0 ? 0 : 1);
 }
 

@@ -52,7 +52,7 @@
 // ═════════════════════════════════════════════════════════════════════════
 
 import { FLASK_GROWTH_SOURCES } from './schemas.js';
-import { CHARGE_FLASK_KINDS, flaskCapacity } from './gracerefill.js';
+import { CHARGE_FLASK_KINDS, flaskCapacity, firstFlaskOfKind } from './gracerefill.js';
 
 // DELIBERATELY NOT `import { equippedIn } from './loadout.js'`. The canonical
 // worn-piece resolver is loadout.js `equippedIn`, but importing it here closes
@@ -134,6 +134,36 @@ export function flaskGrowthPlan(registries, run) {
   }
 
   return { rows, perKind };
+}
+
+/**
+ * flaskGrowthClause(balance, flasks, relicId) → derived tooltip sentence, or ''.
+ *
+ * LAW 1 CLAUSE 2, enforced by construction: a growth row's amount is a
+ * tunable number with ONE home (its row). A hand-written "+1" in a relic's
+ * textTemplate would be a copy nothing syncs — the crackedTear "50%" shape —
+ * so the player-facing sentence is DERIVED from the table instead, and a
+ * retune changes the tooltip with zero prose edits. The flask's display name
+ * comes from the same kind→first-authored-member rule the grace uses
+ * (firstFlaskOfKind), so renaming Crimson Flask renames this clause too.
+ *
+ * Relic rows only: a relic-source row's id is validated at boot to be a relic
+ * id, so a flask def passed through the shared relic/flask text path cannot
+ * match one unless a flask ever shares an id with a relic — none does, and
+ * the day one did, the clause would still describe the relic that owns it.
+ * Talisman-source rows will need the equipment text path the day the first
+ * talisman piece is authored; that is that day's one wire, not this one's.
+ */
+export function flaskGrowthClause(balance, flasks, relicId) {
+  const parts = [];
+  for (const row of flaskGrowthTable(balance)) {
+    if (!row || row.source !== 'relic' || row.id !== relicId) continue;
+    if (!CHARGE_FLASK_KINDS.includes(row.kind) || !Number.isInteger(row.amount) || row.amount <= 0) continue;
+    const def = firstFlaskOfKind(flasks, row.kind);
+    const name = (def && def.name) || row.kind;
+    parts.push(`While carried: +${row.amount} max ${name} charge${row.amount === 1 ? '' : 's'}.`);
+  }
+  return parts.join(' ');
 }
 
 /**
