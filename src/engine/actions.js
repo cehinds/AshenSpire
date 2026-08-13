@@ -37,7 +37,7 @@ import { damageTagIds } from '../content/tags.js';
  * computeAttackDamage(ctx, source, target|null, base) → final integer damage.
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
-export function computeAttackDamage(ctx, source, target, base, attackTags) {
+export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   let dmg = base;
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
@@ -61,6 +61,18 @@ export function computeAttackDamage(ctx, source, target, base, attackTags) {
     }
     if (addPool > 0) dmg *= 1 + addPool;
   }
+  const school = carrier && carrier.damageSchool;
+  if (target && school) {
+    const resistance = target.damageResistanceBySchool && target.damageResistanceBySchool[school];
+    if (Number.isFinite(resistance)) dmg *= Math.max(0, 1 - resistance / 100);
+    for (const [id, inst] of Object.entries(target.statuses || {})) {
+      if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
+      const def = ctx.registries.statuses.get(id);
+      if (def && def.schoolDamageVulnerability && def.schoolDamageVulnerability.school === school) {
+        dmg *= 1 + (inst.stacks || 0) / 100;
+      }
+    }
+  }
   dmg = Math.floor(dmg);
   return dmg < 0 ? 0 : dmg;
 }
@@ -76,9 +88,9 @@ export function attackTagsFor(action, effect) {
  * §4.2 math, block absorption first, then HP. Emits damageDealt (+ hpLost if
  * HP was touched), handles deaths and phase checks. Returns final damage.
  */
-export function applyAttackDamage(ctx, source, target, base, attackTags) {
+export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
-  const dmg = computeAttackDamage(ctx, source, target, base, attackTags);
+  const dmg = computeAttackDamage(ctx, source, target, base, attackTags, carrier);
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
   const hpLoss = dmg - blocked;
@@ -92,9 +104,43 @@ export function applyAttackDamage(ctx, source, target, base, attackTags) {
   });
   if (hpLoss > 0) {
     ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack' });
+    applyArcaneExposure(ctx, source, target, carrier);
   }
   afterHpChange(ctx, target);
   return dmg;
+}
+
+/** Host-only Arcane Exposure mutation, reached only after final HP loss. */
+function applyArcaneExposure(ctx, source, target, carrier) {
+  if (!target || target.kind !== 'enemy' || !target.arcaneExposure || !carrier) return;
+  const schoolMult = ((ctx.registries.balance || {}).arcaneExposure || {}).schoolBuildupMultipliers || {};
+  const school = carrier.damageSchool;
+  const perHit = carrier.exposureBuildupPerHit;
+  const mapped = Number.isFinite(schoolMult[school]) ? schoolMult[school] : 0;
+  if (!Number.isInteger(perHit) || perHit <= 0 || mapped <= 0) return;
+  const cfg = target.arcaneExposure;
+  if (cfg.mode === 'immune') {
+    ctx.emit('arcaneExposureRefused', { targetId: target.id, sourceId: source && source.id, reason: 'immune', school, attempted: perHit });
+    return;
+  }
+  if (cfg.mode !== 'configured') return;
+  if (statuses.hasStatus(target, cfg.onBreak.status)) {
+    ctx.emit('arcaneExposureRefused', { targetId: target.id, sourceId: source && source.id, reason: 'locked', school, attempted: perHit });
+    return;
+  }
+  const amount = Math.floor(perHit * mapped * cfg.buildupMultiplier);
+  if (amount <= 0) return;
+  cfg.value += amount;
+  ctx.emit('arcaneExposureChanged', { targetId: target.id, sourceId: source && source.id, school, amount, value: cfg.value, threshold: cfg.threshold });
+  if (cfg.value < cfg.threshold) return;
+  cfg.value = 0; // authored resetMode=zero; overflowPolicy=discard
+  ctx.emit('arcaneBreak', {
+    targetId: target.id, sourceId: source && source.id, school,
+    threshold: cfg.threshold, status: cfg.onBreak.status,
+    value: cfg.onBreak.value, duration: cfg.onBreak.duration,
+  });
+  statuses.applyStatus(ctx, target, cfg.onBreak.status, cfg.onBreak.value, source);
+  if (target.statuses[cfg.onBreak.status]) target.statuses[cfg.onBreak.status].duration = cfg.onBreak.duration;
 }
 
 /**
@@ -366,7 +412,7 @@ function runOpcode(ctx, action, eff) {
         for (const t of targets) {
           if (!t.alive) continue;
           const base = evalNum(ctx, action, eff.amount, 0, t);
-          applyAttackDamage(ctx, action.source, t, base, attackTags);
+          applyAttackDamage(ctx, action.source, t, base, attackTags, action.card);
         }
       }
       break;

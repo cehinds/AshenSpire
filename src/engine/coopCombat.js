@@ -89,7 +89,11 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
     const def = registries.enemies.get(enemyId);
     let hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
     hp = Math.max(1, Math.round(hp * C.baseHpMult));
-    C.enemies.push(createEnemyCombatEntity({ instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax }));
+    C.enemies.push(createEnemyCombatEntity({
+      instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
+      arcaneExposure: def.arcaneExposure,
+      damageResistanceBySchool: def.damageResistanceBySchool,
+    }));
   });
 
   // Players — each an entity + own shuffled piles (Innate on top).
@@ -345,7 +349,12 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     attackOrdinal: null,
   };
   if (def.type === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
-  const cardRef = { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type, tags: def.cardTags };
+  const cardRef = {
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
+    type: def.type, tags: def.cardTags,
+    damageSchool: inst.damageSchool ?? def.damageSchool,
+    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+  };
 
   for (const eff of def.effects || []) C.enqueue({ effect: eff, source: p, owner: p, target, card: cardRef, meta });
   C.emit('cardPlayed', {

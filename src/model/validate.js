@@ -198,6 +198,16 @@ export function validateContent(bundle) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
 
+  const schoolBuildup = b.balance && b.balance.arcaneExposure && b.balance.arcaneExposure.schoolBuildupMultipliers;
+  if (!schoolBuildup || typeof schoolBuildup !== 'object' || Array.isArray(schoolBuildup)) {
+    err('balance.arcaneExposure.schoolBuildupMultipliers', 'must be an explicit school map');
+  } else {
+    for (const [school, multiplier] of Object.entries(schoolBuildup)) {
+      if (!DAMAGE_SCHOOLS.includes(school)) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, `unknown damage school '${school}'`);
+      if (!Number.isFinite(multiplier) || multiplier < 0) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, 'must be finite and non-negative');
+    }
+  }
+
   for (const key of Object.keys(b)) {
     if (!KNOWN_BUNDLE_KEYS.has(key)) err(key, `Unknown content bundle key '${key}'`);
   }

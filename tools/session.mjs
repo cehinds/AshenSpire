@@ -285,8 +285,13 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => e.type === 'enemyMoveStarted' || e.type === 'enemyDied' || e.type === 'playerDowned')
-      .map((e) => ({ type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId, kind: e.kind, targetId: e.targetId, playerId: e.playerId }));
+      .filter((e) => ['enemyMoveStarted', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type))
+      .map((e) => ({
+        type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
+        kind: e.kind, targetId: e.targetId, playerId: e.playerId,
+        reason: e.reason, school: e.school, amount: e.amount, value: e.value,
+        threshold: e.threshold, status: e.status, duration: e.duration,
+      }));
     live.evCursor = c.eventLog.length;
     return {
       kind: 'combat',
@@ -299,6 +304,8 @@ export function createSession({ registries, seedString, endless = false, restore
       enemies: c.enemies.map((e) => ({
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
         alive: e.alive, intent: e.intent, statuses: e.statuses, poiseMeter: e.poiseMeter,
+        arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
+        damageResistanceBySchool: e.damageResistanceBySchool ? { ...e.damageResistanceBySchool } : undefined,
       })),
       players: [...c.players.values()].map((P) => ({
         id: P.id, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,

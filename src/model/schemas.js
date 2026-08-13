@@ -113,6 +113,9 @@ export const EVENTS = Object.freeze([
   'energySpent',
   'manaRestored',
   'manaSpent',
+  'arcaneExposureChanged',
+  'arcaneExposureRefused',
+  'arcaneBreak',
   'flaskUsed',
   'relicTriggered',
 ]);

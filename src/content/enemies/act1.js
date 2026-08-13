@@ -16,7 +16,6 @@ export const act1Enemies = [
       lockPolicy: 'whileMagicVulnerable',
       onBreak: { status: 'magicVulnerable', value: 25, duration: 2 }, // PROVISIONAL
     },
-    damageResistanceBySchool: { magic: 10 }, // PROVISIONAL raw HP resistance
     tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '⚔',
     moves: {

@@ -407,8 +407,8 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
  * the poiseDamage opcode (SPEC §3.7, §4.4); everything else about Stagger is
  * content data.
  */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax }) {
-  return {
+export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool }) {
+  const entity = {
     id: instanceId,
     kind: 'enemy',
     enemyId,
@@ -424,4 +424,9 @@ export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax }) {
     unlockedMoves: [],
     alive: true,
   };
+  if (arcaneExposure) entity.arcaneExposure = arcaneExposure.mode === 'configured'
+    ? { ...structuredClone(arcaneExposure), value: 0 }
+    : { mode: 'immune' };
+  if (damageResistanceBySchool) entity.damageResistanceBySchool = { ...damageResistanceBySchool };
+  return entity;
 }

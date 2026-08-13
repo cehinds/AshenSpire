@@ -79,6 +79,7 @@ export const act3Enemies = [
     hp: [55, 60],
     poiseMax: 30,
     arcaneExposure: { mode: 'immune' },
+    damageResistanceBySchool: { magic: 10 }, // PROVISIONAL raw HP resistance
     tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '🗿',
     moves: {

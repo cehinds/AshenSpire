@@ -108,7 +108,11 @@ export function createCombat({
     let hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
     if (hpMult !== 1) hp = Math.max(1, Math.round(hp * hpMult));
     combat.enemies.push(
-      createEnemyCombatEntity({ instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax })
+      createEnemyCombatEntity({
+        instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
+        arcaneExposure: def.arcaneExposure,
+        damageResistanceBySchool: def.damageResistanceBySchool,
+      })
     );
     combat.emit('enemySpawned', { targetId: `e${i + 1}`, enemyId });
   });
@@ -623,7 +627,12 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     p.counters.attacksPlayedThisCombat += 1;
     meta.attackOrdinal = p.counters.attacksPlayedThisCombat;
   }
-  const cardRef = { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type, tags: def.cardTags };
+  const cardRef = {
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
+    type: def.type, tags: def.cardTags,
+    damageSchool: inst.damageSchool ?? def.damageSchool,
+    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+  };
 
   // Enqueue the card's own effects first, then announce the play — triggers
   // reacting to cardPlayed enqueue after the card's effects (FIFO).
@@ -734,7 +743,12 @@ export function previewCard(combat, cardInstanceId, targetId) {
     source: p,
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
-    card: { instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, type: def.type, tags: def.cardTags },
+    card: {
+      instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
+      type: def.type, tags: def.cardTags,
+      damageSchool: inst.damageSchool ?? def.damageSchool,
+      exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+    },
     meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
   };
 
@@ -752,12 +766,12 @@ export function previewCard(combat, cardInstanceId, targetId) {
       case 'damage': {
         const attackTags = A.attackTagsFor(action, eff);
         const base = evalPreview(combat, action, eff.amount, primary);
-        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags);
+        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, action.card);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         for (const e of living) {
           const b = evalPreview(combat, action, eff.amount, e);
-          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, attackTags);
+          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, attackTags, action.card);
         }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent

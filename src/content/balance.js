@@ -5,7 +5,12 @@
 export const balance = {
   // Visible system name only. Arcane Exposure is schema/carrier data until its
   // separately reviewed engine slice lands.
-  arcaneExposure: { label: 'Arcane Exposure' },
+  arcaneExposure: {
+    label: 'Arcane Exposure',
+    // Explicit carrier schools. Physical/holy/fire are currently unmapped and
+    // therefore add zero even if a malformed card tries to author buildup.
+    schoolBuildupMultipliers: { magic: 1, arcane: 1 }, // PROVISIONAL
+  },
   energy: 3,
   draw: 5,
   handMax: 10,
