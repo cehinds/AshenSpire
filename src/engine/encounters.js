@@ -167,7 +167,15 @@ export function rollArmamentDrop(registries, rng, { source, found = [], carried 
       break;
     }
   }
-  return rng.pick('armaments', pool.filter((a) => a.rarity === rarity).map((a) => a.id));
+  const candidates = pool.filter((a) => a.rarity === rarity && Number(a.dropWeight) > 0);
+  if (!candidates.length) return null;
+  const pieceTotal = candidates.reduce((sum, piece) => sum + piece.dropWeight, 0);
+  let pieceRoll = rng.float('armaments') * pieceTotal;
+  for (const piece of candidates) {
+    pieceRoll -= piece.dropWeight;
+    if (pieceRoll < 0) return piece.id;
+  }
+  return candidates[candidates.length - 1].id;
 }
 
 // ---------------------------------------------------------------------------

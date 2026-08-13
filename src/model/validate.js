@@ -36,6 +36,7 @@ import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
 import { derivedStatRuleProblems } from './derivedStats.js';
+import { startingKitProblems } from './startingKits.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -251,6 +252,19 @@ export function validateContent(bundle) {
       if (profile && profile.compatibility !== `${profile.role}-v1`) err(`equipment.basicCardProfiles.${id}.compatibility`, `must match role '${profile.role}-v1'`);
       for (const tag of (profile && profile.tags) || []) if (!tagIds.has(tag)) err(`equipment.basicCardProfiles.${id}.tags`, `unknown tag '${tag}'`);
     }
+  }
+
+  // Starting kits are a nested generated table whose validity spans classes,
+  // hand slots, armament discovery weights, and the no-spoiler policy.
+  try {
+    const kitRegistries = {
+      classes: { ids: () => [...ids.classes], has: (id) => ids.classes.has(id), get: (id) => (b.classes || []).find((row) => row.id === id) },
+      equipment: b.equipment || {},
+      balance: b.balance || {},
+    };
+    for (const problem of startingKitProblems(kitRegistries)) err('equipment.startingKits', problem);
+  } catch (error) {
+    err('equipment.startingKits', error && error.message ? error.message : 'starting-kit validation failed');
   }
 
   // ---- schema walks --------------------------------------------------------

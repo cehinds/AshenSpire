@@ -13,6 +13,7 @@ import { createRegistries } from './model/registries.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
+import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
@@ -567,7 +568,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, slot = 1 }) {
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -609,7 +610,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, slot =
   saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
-  run = createRunState({ seed, classId, registries });
+  run = createRunState({ seed, classId, registries, startingKitId, profileMeta: saves.loadMeta() });
   run.seedString = seedToString(seed);
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
@@ -958,7 +959,12 @@ function rollDrop(source) {
   addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
     meta.found = [...(meta.found || []), id];
-    saves.saveMeta(meta);
+    const progressionMode = shotState ? 'showcase' : isCustomRun(run.custom) ? 'custom' : 'normal';
+    const recorded = recordArmamentDiscovery(meta, id, {
+      progressionMode, source, runSeed: run.seedString,
+      receiptLimit: registries.balance.equipment.startingKitDiscovery.receiptLimit,
+    });
+    saves.saveMeta(recorded.meta);
   }
   return id;
 }
@@ -976,6 +982,7 @@ function finishRun(victory) {
 function showCustomize(slot = 1) {
   mountCustomize(app, {
     registries,
+    meta: saves.loadMeta(),
     // A ?shot= boot gets a fixed seed so the field photographs identically on
     // every capture; a real boot still gets a random one.
     defaultSeedString: shotState === 'customize' ? 'SHOWCASE' : randomSeedString(),

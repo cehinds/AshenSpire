@@ -351,6 +351,12 @@ export const balance = {
   // the rules of the system, kept in one place so it can be tuned or switched
   // off without touching the model.
   equipment: {
+    startingKitDiscovery: {
+      // Undiscovered alternates render no row at all: no name, numbers, cards,
+      // or item silhouette leaks through character creation.
+      undiscoveredPresentation: 'hidden',
+      receiptLimit: 64,
+    },
     roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 },
     rarityBonuses: {
       common: { attack: 0, guard: 0 },

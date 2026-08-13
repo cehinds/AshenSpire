@@ -28,7 +28,7 @@ import { cardTags } from './generated/cardTags.js';
 import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
-import { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES } from './equipment.js';
+import { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, STARTING_KITS } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
 import { attributes, creationModes, attributeRules } from './attributes.js';
@@ -67,6 +67,7 @@ export const contentBundle = {
     targets: equipTargets,
     cardTargets: CARD_TARGETS,
     basicCardProfiles: BASIC_CARD_PROFILES,
+    startingKits: STARTING_KITS,
   },
   unlocks,
   // The card-tag registry rides the bundle so effect `tags` and

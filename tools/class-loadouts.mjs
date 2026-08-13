@@ -34,7 +34,8 @@ for (const [classId, want] of Object.entries(expected)) {
   const cls = R.classes.get(classId);
   const run = createRunState({ seed: 1, classId, registries: R });
   check(cls.startingSignatureCard === want.signature, `${classId} declares exactly one signature`, String(cls.startingSignatureCard));
-  check(cls.startingLoadout != null, `${classId} declares startingLoadout`);
+  check(Array.isArray(cls.eligibleStartingKitIds) && cls.eligibleStartingKitIds.length > 0,
+    `${classId} declares eligible starting kits`, JSON.stringify(cls.eligibleStartingKitIds));
   check(run.loadout.sets.rightHand[0] === want.rightHand, `${classId} equips authored right hand`, JSON.stringify(run.loadout.sets.rightHand));
   check(run.loadout.sets.leftHand[0] === want.leftHand, `${classId} equips authored left hand`, JSON.stringify(run.loadout.sets.leftHand));
   check(run.deck.length === 10, `${classId} starts with exactly 10 cards`, String(run.deck.length));
@@ -99,23 +100,23 @@ if (attack) {
   check(attack.profileId != null, 'active weapon stamps an explicit profile id', String(attack.profileId));
 }
 
-function mutant({ classPatch, equipmentPatch, piecePatch, profilePatch, balancePatch }) {
+function mutant({ classPatch, equipmentPatch, piecePatch, profilePatch, balancePatch, kitPatch }) {
   const classes = contentBundle.classes.map((c) => c.id === 'starseer' ? { ...c, ...classPatch } : { ...c });
   const armaments = contentBundle.equipment.armaments.map((a) => a.id === 'ashStaff' ? { ...a, ...piecePatch } : { ...a });
   const profiles = (contentBundle.equipment.basicCardProfiles || []).map((p) => p.id === 'staffMagicAttack' ? { ...p, ...profilePatch } : { ...p });
+  const startingKits = (contentBundle.equipment.startingKits || []).map((k) => k.id === 'starseerBaseline' ? { ...k, ...kitPatch } : { ...k });
   return createRegistries({
     ...contentBundle,
     balance: { ...contentBundle.balance, ...balancePatch },
     classes,
-    equipment: { ...contentBundle.equipment, armaments, basicCardProfiles: profiles, ...equipmentPatch },
+    equipment: { ...contentBundle.equipment, armaments, basicCardProfiles: profiles, startingKits, ...equipmentPatch },
   });
 }
 function refuses(label, pattern, patches) {
   const said = validateEquipment(mutant(patches)).join(' | ');
   check(pattern.test(said), label, said);
 }
-refuses('mutant: unknown starting slot is refused by name', /nowhere/, { classPatch: { startingLoadout: { nowhere: 'ashStaff' } } });
-refuses('mutant: dangling starting piece is refused by name', /notAStaff/, { classPatch: { startingLoadout: { rightHand: 'notAStaff' } } });
+refuses('mutant: dangling baseline piece is refused by name', /notAStaff/, { kitPatch: { rightHand: 'notAStaff' } });
 refuses('mutant: unknown profile ref is refused by name', /notAProfile/, { piecePatch: { attackProfile: 'notAProfile' } });
 refuses('mutant: wrong-target profile is refused by name', /wrong|guard|attack/i, { profilePatch: { role: 'guard' } });
 refuses('mutant: unknown damage school is refused by name', /magick/, { profilePatch: { damageSchool: 'magick' } });

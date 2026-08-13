@@ -1,5 +1,6 @@
 import { tokenRe } from './validate.js';
 import { deriveAttributeTierReceipt } from './derivedStats.js';
+import { startingKitProblems } from './startingKits.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -131,6 +132,7 @@ export function validateEquipment(registries) {
   const profileIds = new Set();
   const tagIds = new Set((registries.tags || []).map((t) => t.id));
   const attributeIds = new Set(registries.attributes && registries.attributes.ids ? registries.attributes.ids() : []);
+  if (Array.isArray(eq.startingKits)) problems.push(...startingKitProblems(registries));
 
   for (const profile of profiles) {
     if (profileIds.has(profile.id)) problems.push(`basicCardProfiles.csv: duplicate profile id '${profile.id}'`);
@@ -267,14 +269,6 @@ export function validateEquipment(registries) {
     const starting = sets.filter((o) => o.unlock === '');
     if (starting.length !== 1) {
       problems.push(`class '${classId}' has ${starting.length} starting armour sets (need exactly 1)`);
-    }
-    const cls = registries.classes.get(classId);
-    for (const [slotId, pieceId] of Object.entries(cls.startingLoadout || {})) {
-      const slot = (eq.slots || []).find((s) => s.id === slotId);
-      if (!slot) { problems.push(`class '${classId}' startingLoadout names unknown slot '${slotId}'`); continue; }
-      const piece = (eq.armaments || []).find((p) => p.id === pieceId);
-      if (!piece) { problems.push(`class '${classId}' startingLoadout names unknown piece '${pieceId}'`); continue; }
-      if (!fitsSlot(slot, piece)) problems.push(`class '${classId}' starting piece '${pieceId}' does not fit slot '${slotId}'`);
     }
   }
   // The ladder's one join, and it dangles the way every join dangles: a rung
@@ -691,7 +685,7 @@ export function setCellState(index, opened, visible) {
  * every new run with no change here. You start bare-handed in your class's one
  * unlocked armour set — the run is meant to arm you.
  */
-export function createLoadout(registries, classId) {
+export function createLoadout(registries, classId, startingKit = null) {
   const eq = registries.equipment || {};
   const sets = {};
   const active = {};
@@ -701,8 +695,9 @@ export function createLoadout(registries, classId) {
   }
   const starting = (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
   if (starting && sets.armor) sets.armor[0] = starting.id;
-  const classDef = registries.classes.get(classId);
-  for (const [slotId, pieceId] of Object.entries(classDef.startingLoadout || {})) {
+  const kit = startingKit || (eq.startingKits || []).find((row) => row.classId === classId && row.baseline === true);
+  for (const [slotId, pieceId] of Object.entries({ rightHand: kit && kit.rightHand, leftHand: kit && kit.leftHand })) {
+    if (!pieceId) continue;
     if (sets[slotId]) sets[slotId][0] = pieceId;
   }
   return { sets, active, storage: [] };

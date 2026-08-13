@@ -699,7 +699,7 @@ export const SCHEMAS = Object.freeze({
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),
     startingSignatureCard: ref('cards'),
-    startingLoadout: mapOf(str),
+    eligibleStartingKitIds: arr(str),
     cardPool: arr(ref('cards')),
     description: opt(str),
   }),

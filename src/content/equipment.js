@@ -20,6 +20,7 @@ import { equipSlots } from './generated/equipSlots.js';
 import { equipMods } from './generated/equipMods.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { basicCardProfiles } from './generated/basicCardProfiles.js';
+import { startingKits } from './generated/startingKits.js';
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
 function list(v) {
@@ -99,3 +100,6 @@ export const BASIC_CARD_PROFILES = basicCardProfiles.map((row) => ({
   tags: list(row.tags),
   mods: list(row.mods),
 }));
+
+/** Class-listed starting kits; hand ids stay explicit so validation can name them. */
+export const STARTING_KITS = startingKits.map((row) => ({ ...row }));

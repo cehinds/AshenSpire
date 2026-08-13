@@ -12,7 +12,7 @@ export const classes = [
     maxHp: 84,
     startingRelic: 'forsakenMedallion',
     startingSignatureCard: 'gorefireSlash',
-    startingLoadout: { rightHand: 'straightSword', leftHand: 'roundShield' },
+    eligibleStartingKitIds: ['reaverBaseline', 'reaverGreatsword'],
     cardPool: [
       // Commons
       'crimsonCleave', 'shieldBash', 'quickstep', 'guardCounter', 'ironResolve',
@@ -37,7 +37,7 @@ export const classes = [
     maxHp: 72,
     startingRelic: 'starstoneShard',
     startingSignatureCard: 'starstonePebble',
-    startingLoadout: { rightHand: 'ashStaff' },
+    eligibleStartingKitIds: ['starseerBaseline', 'starseerStarstone'],
     cardPool: [
       // Commons
       'cometFragment', 'starbladePhalanx', 'crystalBarrier', 'starShower', 'scholarsInsight', 'frostVeil',
@@ -60,7 +60,7 @@ export const classes = [
     maxHp: 78,
     startingRelic: 'goldFigurine',
     startingSignatureCard: 'urgentHeal',
-    startingLoadout: { rightHand: 'boneSceptre' },
+    eligibleStartingKitIds: ['heraldBaseline', 'heraldEmberlight'],
     cardPool: [
       // Commons
       'bloodPact', 'blightTouch', 'flagellation', 'penance', 'litany', 'graveOffering',

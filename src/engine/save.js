@@ -46,7 +46,7 @@ export const SLOTS = 3; // save slots, one run each
 const HISTORY_LIMIT = 20;
 // THE ONE HOME for the meta schema's version (the run schema's one home is
 // RUN_SCHEMA_VERSION in model/state.js — two schemas, one home each).
-export const META_SCHEMA_VERSION = 1;
+export const META_SCHEMA_VERSION = 2;
 const ARCHIVE_LIMIT = 12; // keep the last N RUN archives…
 // …and profiles are counted separately, because a run must never evict one
 // (Saga's gate). This cap is generous and exists only so the drawer cannot grow
@@ -237,16 +237,29 @@ export function createSaveManager(storage) {
   // migrateMeta(meta, fromVersion) → meta | null. One switch, one home; every
   // arm must be able to state what it changed.
   function migrateMeta(meta, fromVersion) {
+    if (fromVersion === 1) {
+      return {
+        ...meta,
+        schemaVersion: META_SCHEMA_VERSION,
+        discoveredArmaments: [...new Set(meta.discoveredArmaments || meta.found || [])],
+        discoveryReceipts: [...(meta.discoveryReceipts || [])],
+      };
+    }
     if (fromVersion === 0) {
       // v0 = the pre-#67 unversioned/zero profile: shape is already compatible,
       // it simply never carried a stamp. Adopt it and stamp it.
-      return { ...meta, schemaVersion: META_SCHEMA_VERSION };
+      return {
+        ...meta,
+        schemaVersion: META_SCHEMA_VERSION,
+        discoveredArmaments: [...new Set(meta.discoveredArmaments || meta.found || [])],
+        discoveryReceipts: [...(meta.discoveryReceipts || [])],
+      };
     }
     return null;
   }
 
   function freshMeta() {
-    return { schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [] };
+    return { schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [] };
   }
 
   // The actual write, shared by saveMeta (updates the live profile) and

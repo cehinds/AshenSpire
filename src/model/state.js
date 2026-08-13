@@ -15,6 +15,7 @@ import {
   restoreDerivedStatRuleSnapshot,
   deriveStat,
 } from './derivedStats.js';
+import { resolveStartingKit } from './startingKits.js';
 
 export const RUN_SCHEMA_VERSION = 1;
 
@@ -50,6 +51,8 @@ export function createRunState({
   attributes: requestedAttributes = undefined,
   derivedStatOptions = {},
   derivedStatRuleSnapshot = undefined,
+  startingKitId = undefined,
+  profileMeta = {},
 }) {
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
@@ -59,7 +62,8 @@ export function createRunState({
     ? classAttributePreset(registries, classId, selectedAttributeMode)
     : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const idGen = createIdGen('rc');
-  const loadout = createLoadout(registries, classId);
+  const startingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
+  const loadout = createLoadout(registries, classId, startingKit);
   // Armour can carry `self.maxHp`, so the pool it sets has to be known before
   // hp is filled — the run starts at full, in whatever it starts wearing.
   const oldMaxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
@@ -69,6 +73,7 @@ export function createRunState({
     seed: seed >>> 0,
     streamCounters: {},
     class: classId,
+    startingKitId: startingKit.id,
     attributeMode: selectedAttributeMode,
     attributes,
     floor: 0,
