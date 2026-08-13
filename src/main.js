@@ -448,6 +448,20 @@ function applyDisplaySettings(settings) {
   // switching is a re-paint with no re-render. Both defaults live in balance.ui.
   const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
   document.documentElement.dataset.cardMotif = motif;
+  // Hand layout (C2) — same shape as cardMotif, one line up: the word's one
+  // home is balance.ui.handLayout, a stored choice outside the closed set
+  // lands on that default, and the renderer (combat's renderHand + the narrow
+  // CSS) keys off this attribute and reads the word nowhere else. Garbage is
+  // SAID, not swallowed — a player whose stored setting rotted should not
+  // find the hand silently rearranged (same contract as tapFloor above).
+  const handLayout = UI.handLayoutModes.includes(settings.handLayout) ? settings.handLayout : UI.handLayout;
+  if (settings.handLayout != null && handLayout !== settings.handLayout) {
+    const msg = `settings.handLayout: stored value ${JSON.stringify(settings.handLayout)} is not one of `
+      + `${UI.handLayoutModes.join(', ')} — applying the default '${handLayout}' and saying so`;
+    dlog('ERROR', msg);
+    console.warn(msg);
+  }
+  document.documentElement.dataset.handLayout = handLayout;
   const strengths = UI.cardMotifStrength;
   const sKey = strengths[settings.cardMotifStrength] != null ? settings.cardMotifStrength : 'normal';
   document.documentElement.style.setProperty('--card-motif-strength', String(strengths[sKey]));

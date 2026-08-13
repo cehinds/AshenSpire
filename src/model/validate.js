@@ -543,6 +543,22 @@ export function validateContent(bundle) {
         + `The consumer resolves an unreadable value to 0, which takes the inspect gesture off every card with nothing on the screen looking different.`);
     }
   }
+  // balance.ui.handLayout — the hand-layout word (C2: overlap AND paging, one
+  // knob). The consumer guards a stored player setting against the modes list
+  // and falls back to THIS row — so if this row itself is garbage, the
+  // fallback is garbage and the narrow hand silently renders in whatever the
+  // CSS default happens to be, with nothing on screen saying a mode was ever
+  // chosen (Law 0 clause 5, again). Loud, by name, at boot.
+  if (b.balance && b.balance.ui && (b.balance.ui.handLayout != null || b.balance.ui.handLayoutModes != null)) {
+    const modes = b.balance.ui.handLayoutModes;
+    if (!Array.isArray(modes) || modes.length === 0 || modes.some((m) => typeof m !== 'string' || !m)) {
+      err('balance.ui.handLayoutModes', `must be a non-empty array of mode names — got ${JSON.stringify(modes)}. `
+        + `It is the closed set the settings guard checks a stored value against; unreadable, every stored choice would land on the default without the player ever being told why.`);
+    } else if (typeof b.balance.ui.handLayout !== 'string' || !modes.includes(b.balance.ui.handLayout)) {
+      err('balance.ui.handLayout', `must be one of ${modes.join(' | ')} — got ${JSON.stringify(b.balance.ui.handLayout)}. `
+        + `This row is the fallback every garbage stored setting lands on; a fallback outside the closed set leaves the hand with no layout word at all.`);
+    }
+  }
   // THE SECOND-BEAT TABLE, checked at the same boot and for the same reason as
   // the dial above. It is CODE, not content, so it can never be a row a
   // designer breaks — but it is a table, and a table whose row is malformed

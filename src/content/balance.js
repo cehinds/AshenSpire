@@ -313,6 +313,33 @@ export const balance = {
     inspectHold: {
       ms: 400,
     },
+    // HAND LAYOUT (C2). THE ONE HOME OF THE WORD.
+    //
+    // Constantine, 2026-08-13: "overlap and paging (maybe a toggleable
+    // feature)" — BOTH modes, one knob. His "maybe" hedges the TOGGLE, not the
+    // modes (directions.md D19), so both modes exist now behind this word and
+    // the player-facing control waits for his eye on a picture. No Settings row
+    // derives from this yet, on purpose — adding one later is a data edit in
+    // settings.js, not a redesign.
+    //
+    // 'paging' names the SHIPPED narrow hand: the horizontal card strip
+    // (styles/combat.css, the narrow reflow) — F1 of the approved hybrid.
+    // Selecting it changes nothing, byte for byte; it is the default because
+    // the shipped behaviour keeps its seat until his picture says otherwise.
+    //
+    // 'overlap' lays the whole hand inside the strip's width: each card
+    // overlapped by the next, the overlap DERIVED per render from hand size
+    // and measured width (renderHand, combat.js) — no number for it lives
+    // here or anywhere, which is why this row is a word and not a px value.
+    //
+    // The renderer derives from this word alone (via data-hand-layout on
+    // <html>, written by applyDisplaySettings beside cardMotif's attribute).
+    // A stored settings.handLayout outside `handLayoutModes` lands on this
+    // default and says so in the debug log; a garbage value HERE fails loud
+    // in model/validate.js — the two halves of "validated loud, garbage lands
+    // on default".
+    handLayout: 'paging',
+    handLayoutModes: ['paging', 'overlap'],
     // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
     // renderer emits them as rem (÷10).
     spriteTiers: {
