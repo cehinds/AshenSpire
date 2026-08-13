@@ -32,9 +32,11 @@ import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js';
+import { beatArmer } from '../components/holdconfirm.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
+  const arm = beatArmer(meta, registries);
   let snap = null;
   // Couch co-op: this screen may control several seats; `me` is the ACTIVE one.
   let seats = (myIds && myIds.length ? myIds : [myId]).slice();
@@ -47,6 +49,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   let pacing = false; // an enemy-turn replay is holding the render
   let pendingSnap = null; // newest snapshot that arrived while pacing
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
+  let endTurnBeat = null; // pointer-only; named keyboard/pad activation is immediate
 
   conn.setHandlers({
     onMessage: (msg) => {
@@ -175,6 +178,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   function teardown() {
     document.removeEventListener('keydown', keyHandler);
     clearInterval(padTimer);
+    if (endTurnBeat) endTurnBeat();
+    endTurnBeat = null;
     removeSeatTabs();
     if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
   }
@@ -184,6 +189,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
 
   function render() {
     if (!snap) return;
+    if (endTurnBeat) endTurnBeat();
+    endTurnBeat = null;
     const mm = myMember();
     if (mm && mm.catchupQueue && mm.catchupQueue.length) return renderCatchup(mm);
     if (snap.scene.kind !== 'combat') prevCombat = null;
@@ -422,7 +429,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     const et = app.querySelector('#coop-endturn');
     et.disabled = !canEnd;
     et.classList.toggle('pulse', canEnd && meP.energy > 0);
-    if (canEnd) et.addEventListener('click', () => send({ t: 'endTurn' }));
+    endTurnBeat = arm(et, 'endTurn', {
+      onConfirm: () => {
+        const current = snap && snap.scene && snap.scene.kind === 'combat'
+          ? snap.scene.players.find((p) => p.id === me)
+          : null;
+        if (current && current.alive && current.connected && !current.ended) send({ t: 'endTurn' });
+      },
+    });
+    endTurnBeat.refresh();
     const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; armedAllyCard = null; render(); });
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
