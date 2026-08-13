@@ -39,7 +39,7 @@ import { reallocateFlaskCharges } from '../../model/gracerefill.js';
 //
 // AND THE `NOT BINDING` DECLARATION IS DELIBERATELY *NOT* HERE, which is a
 // ruling and not an oversight. The first draft printed it and I photographed
-// it: six letter-spaced lines at 390x844 about a resource that does not exist,
+// it: several letter-spaced lines at 390x844 about an inactive row,
 // over a Rest button. A player has never heard of a mana flask and is owed
 // nothing about one. The inert row still names itself — in the Advanced debug
 // row's own line, and in `node tools/gracerefill.mjs` — which is where the

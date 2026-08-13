@@ -456,8 +456,8 @@ export function createSession({ registries, seedString, endless = false, restore
 
   // ---- shrine / treasure / event (per-member, simplified for S2) -----------
   function enterShrine() {
-    // "at every grace ALL CHARACTERS should restore 3 hp flasks" — his word,
-    // and in co-op "all characters" is the party, not whoever taps first. Every
+    // At every Grace, every character refills their fixed-capacity allocation.
+    // In co-op the host owns that truth, not whichever client taps first. Every
     // LIVING member is refilled on arrival, connected or not: a member who is
     // away does not lose a grace they were standing at, and the top-up is
     // idempotent so their catchup queue has nothing to replay.

@@ -2,10 +2,8 @@
 // tools/gracerefill.mjs — what a grace hands back, and proof it refuses.
 // Sten, 2026-08-08.
 //
-// Constantine, 2026-08-08: "flasks should refill automatically at graces", and
-// the longer form: "at every grace all characters should restore 3 hp flasks,
-// and 3 mana flasks (this should be configurable in teh debug settings and be
-// data driven)".
+// Legacy inventory-refill instrument retained for migration coverage. The
+// active fixed-capacity charge contract lives in tools/flask-reallocation.mjs.
 //
 // THE DOOR, AND IT IS THE WHOLE REASON THIS FILE IS SHAPED LIKE THIS.
 // `development.md`, *The instrument rule*, same-door clause: a known-bad handed
@@ -158,9 +156,9 @@ const PLANTS = [
   { name: 'flaskId override is of the wrong kind',
     expect: 'balance.graceRefill[0].flaskId',
     mutate: (b) => { b.balance.graceRefill[0].flaskId = 'flaskOfStone'; } },
-  // The live 3+3 table needs six shared slots. Lowering the data cap must fail
+  // A legacy aggregate table above its inventory cap must fail
   // loudly rather than letting row order starve the Azure refill.
-  { name: 'the aggregate: lowering the cap below the live 3+3 table refuses',
+  { name: 'the aggregate: lowering the cap below the legacy table refuses',
     expect: 'balance.graceRefill',
     mutate: (b) => { b.balance.flaskSlots = 5; } },
   // A kind declared in FLASK_KINDS with no member is LEGAL and must NOT refuse.
@@ -230,7 +228,7 @@ const BEHAVIOUR = [
   {
     // HIS FOURTH CLAUSE, and the plant enters at `createRunState` — the door
     // every run comes through, in the game, in co-op and in every sim.
-    name: 'run start: ON by data, so every fresh class holds the authored 3+3',
+    name: 'legacy run start: ON by data, so every fresh class holds its authored table',
     run: (reg) => {
       const rows = reg.classes.ids().map((classId) => {
         const run = freshRun(reg, classId);
@@ -380,7 +378,7 @@ function selftest() {
 
   console.log('\nBOUNDARY — what a green from --selftest does NOT mean:');
   console.log('  · it proves the refusals FIRE and the shrine POURS. It says nothing about');
-  console.log('    whether 3+3 flasks is the right release balance — that needs a Mana-aware');
+  console.log('    whether a legacy refill table is right release balance — that needs a Mana-aware');
   console.log('    simulation and player review, not the stale no-Mana A/B.');
   console.log('  · no browser ran. The settings rows and shrine sentence');
   console.log('    are rendered HTML and are photographed, not asserted, here.');

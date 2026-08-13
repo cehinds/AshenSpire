@@ -47,26 +47,10 @@ export const balance = {
 
   shrine: { healPct: 35 },
 
-  // ---- what a grace hands back (Constantine, 2026-08-08) --------------------
-  //
-  // "at every grace all characters should restore 3 hp flasks, and 3 mana
-  // flasks (this should be configurable in teh debug settings and be data
-  // driven)". The grace is the Shrine of Emberlight; the machinery is
-  // model/gracerefill.js and one line in engine/encounters.js.
-  //
-  // A TABLE, NOT TWO CONSTANTS. Rows name a KIND, and a kind resolves to the
-  // first flask entry that carries it (content/flasks.js, derived from its
-  // effects). Adding a third refilled kind is a row here plus one word in
-  // FLASK_KINDS; adding a second HP flask is neither.
-  //
-  // Both rows bind in the current build: Crimson derives `hp` from `heal`, and
-  // Azure derives `mana` from `restoreMana`. They share the six-slot inventory.
-  //
-  // COUNTS ARE A TOP-UP, NOT A GRANT: a grace brings you UP TO `count` of the
-  // kind. Arriving with two Crimson Flasks gets you one, not three.
-  //
-  // Legacy inventory-top-up rows are intentionally empty. Grace refills the
-  // run's fixed charge allocation; it does not mint Crimson/Azure items.
+  // ---- what a grace hands back ----------------------------------------------
+  // Grace refills the current Crimson/Azure counts to the allocation stored on
+  // the run. The allocation may be redistributed but always sums to capacity.
+  // This legacy table remains empty so old debug readers fail harmlessly.
   graceRefill: [],
   graceRefillAtRunStart: false,
 

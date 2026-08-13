@@ -13,7 +13,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { passiveMult, passiveFlag } from '../model/registries.js';
-import { graceRefillPlan, refillFlaskCharges } from '../model/gracerefill.js';
+import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -104,7 +104,7 @@ export function rollFlaskDrop(registries, rng, run) {
   const hit = rng.float('flaskRewards') * 100 < run.flaskChancePct;
   if (hit) {
     run.flaskChancePct = Math.max(0, run.flaskChancePct - bal.flaskDropStepPct);
-    const pool = registries.flasks.ids().filter((id) => id !== 'crimsonFlask' && id !== 'azureFlask');
+    const pool = utilityFlaskIds(registries);
     return pool.length ? rng.pick('flaskRewards', pool) : null;
   }
   run.flaskChancePct = Math.min(100, run.flaskChancePct + bal.flaskDropStepPct);
@@ -207,7 +207,7 @@ export function buildShopStock(registries, rng, run) {
     relics.push({ id, cost: rng.int('shop', ...bal.relicCost[registries.relics.get(id).rarity]) });
   }
 
-  const flaskIds = registries.flasks.ids();
+  const flaskIds = utilityFlaskIds(registries);
   const flasks = [];
   for (let i = 0; i < bal.flaskStock && flaskIds.length; i++) {
     const id = rng.pick('shop', flaskIds);
