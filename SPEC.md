@@ -637,6 +637,20 @@ Relic behavior uses the trigger DSL (§3.6) — the same declarative form as pow
 - **Refusals** (`graceRefillRefusals`, run from `validateContent` at boot; corpus `node tools/gracerefill.mjs --selftest`): a kind outside the closed set · two rows for one kind · a non-numeric, negative or fractional count · a count above the carry cap · a `flaskId` override that dangles or is of another kind · **and the aggregate** — satisfiable rows summing past `balance.flaskSlots`, which names `balance.flaskSlots` as the fix.
 - **Balance boundary:** the old no-Mana simulation is stale. This merged preview is for watching and mechanical validation; a Mana-aware A/B balance run remains a release gate.
 
+#### 5.5.2 The growth chain — how the maximum grows
+
+> Constantine, 2026-08-08 (D17 message 6): *"…those two are locked in with 3 charges, with upgrade options via relics or quest events or talismans or flask seeds to increase the amount of charges"*.
+
+**One chain, data rows, one truth function** (`model/flaskgrowth.js`). `balance.flaskGrowth` is a table of `{ source, id, kind, amount }` rows: holding the named source grows the named kind's maximum by `amount`. Sources are the closed set `FLASK_GROWTH_SOURCES` (`relic`, `questEvent`, `talisman`, `flaskSeed` — his four words, `model/schemas.js`); a fifth source is an engine act, never a row.
+
+- **Derived, so reversible.** `flaskCharges.grown` records what the chain currently contributes; `syncFlaskGrowth` reconciles at every door a source changes through (run birth, run load, the relic-gain sites, the equipment screen). Gaining a source grows the maximum; losing one shrinks it back, currents bounded.
+- **Two doors, one grant each.** The chain is the *possession* door. The `addFlaskCapacity` opcode remains the *moment* door (keepsakes, quest-event choice effects). An event granting through both is a boot refusal — one grant may not land twice under two names.
+- **Declared ahead of content, on purpose:** `questEvent` rows validate but report **NOT BINDING** (no run event history exists yet — the moment door is the live mechanism); any `flaskSeed` row refuses at boot (no seed item vocabulary exists; the word is reserved, not invented). `talisman` rows refuse until the first talisman piece is authored, then bind with no code change.
+- **The optional hard cap** `balance.flaskGrowthMax` arms an aggregate refusal only when authored — no invented ceiling ships while C1 is open.
+- **Refusals** (`flaskGrowthRefusals`, run from `validateContent` at boot; corpus `node tools/flaskgrowth.mjs --selftest`): unknown source · non-charge kind · negative, zero or fractional amount · duplicate grant · dangling relic/event/talisman ref · the two-door collision · any seed row · cap malformed or exceeded.
+- **THE C1 SEAM.** Whether "3 charges" is one reallocatable pool (dev as shipped) or 3 each on two locked vessels (D17 as recorded) is **open with Constantine**. Every row targets a kind, which both readings need; the binding of a kind-delta into stored capacity lives in `syncFlaskGrowth` alone, currently the pool reading. C1's answer rewrites that one function — zero rows, zero refusals.
+- **Zero rows ship today**, deliberately: no live balance change lands while C1 is open. The chain is proven by its corpus (a fictional relic plus one row, zero code commits, the maximum grows — Law 0's falsifier, observed).
+
 | Flask | Effect |
 |---|---|
 | Crimson Flask | Heal 25% max HP. |
