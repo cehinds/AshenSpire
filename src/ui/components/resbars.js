@@ -10,11 +10,23 @@
 //   the TROUGH — width = scale(max)/scale(domain). HIS ASK. The trough's own
 //                length encodes the maximum, so a bar cannot lie about a stat.
 //
-// NOTHING IS TYPED. The track is whatever flexbox leaves after the two top-row
-// buttons take their fixed size; the trough is a percentage of that. Law 2's
-// "names its container and is proven inside it" is satisfied by construction —
-// a percentage of a derived track cannot overflow it — and tools/hudbars.mjs
-// measures it anyway rather than trusting the argument.
+// TWO STRUCTURES, keyed on the surface — the approved hybrid (2026-08-13,
+// claude-family falk-family: hybrid-confirmation/output/selection-record.json,
+// owner pixels owners/F1-resource-health.png, F2-resource-mana.png,
+// F2-resource-stamina.png):
+//
+//   'main'  — the HYBRID shape. Each bar is a bordered UNIT: a label plate
+//             ("HP 86/86") to the LEFT of a pill trough. Bars sharing a row's
+//             `band` sit side by side on one line (F2's Mana+Stamina row);
+//             a bar with no band takes a line alone (F1's Health row). The
+//             trough's track is its unit's remaining width, derived by flex —
+//             nothing types a ceiling, so a bar cannot overflow its cell
+//             (Law 2 by construction; tools/hudbars.mjs measures it anyway).
+//   'model' — unchanged: the under-model strip keeps its inside label, which
+//             is also what the approved combat mock draws under the fighters.
+//
+// NOTHING IS TYPED. The line splits into equal unit cells by flex; the trough
+// track is unit minus plate, derived; the trough is a percentage of that.
 
 import { attachTooltip, esc } from './tooltip.js';
 
@@ -28,67 +40,114 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'resbars';
   wrap.dataset.surface = surface || 'main';
-  for (const bar of plan) {
-    const el = document.createElement('div');
-    el.className = `bar resbar resbar-${bar.weight}`;
-    el.dataset.res = bar.id;
-    // THE TROUGH LENGTH — the one line that is his whole instruction.
-    el.style.width = `${bar.lengthPct.toFixed(3)}%`;
-    el.style.setProperty('--res-tint', bar.tint);
-    // THE MACHINE-READABLE HOME, and it is not decoration. The label degrades
-    // to a glyph on a short bar, so `.textContent` is neither stable nor a fair
-    // reading of what the bar says — three variants ride in the DOM and hidden
-    // ones still land in textContent. Instruments and assistive tech read these
-    // instead: tools/veil-owns-input.mjs and tools/hudbars.mjs both do.
-    el.dataset.cur = String(bar.cur);
-    el.dataset.max = String(bar.max);
-    el.setAttribute('role', 'img');
-    el.setAttribute('aria-label', `${bar.name} ${bar.cur} of ${bar.max}`);
-
-    // THE MINIMUM-WIDTH CLAUSE, and it is declared here rather than computed.
-    // `min-width: var(--resbar-min)` in CSS does the flooring; this flag exists
-    // so the trough can SAY it is floored. See the CSS for the justification —
-    // a floored bar is drawn dashed, which is the broken-axis mark, because two
-    // different maxima below the floor render the same length and a bar that is
-    // no longer to scale must not look like one that is.
-    //
-    // Whether the floor FIRED is a rendered fact, not a computed one (it depends
-    // on the track, the zoom and the floor together), so it is stamped after
-    // layout by markFlooredBars() rather than guessed at here.
-    el.dataset.res = bar.id;
-
-    const fill = document.createElement('div');
-    fill.className = 'fill';
-    fill.style.width = `${bar.pct.toFixed(2)}%`;
-    el.appendChild(fill);
-
-    // THE LABEL DEGRADES BY MEASURED FIT, not by a typed threshold. The compact
-    // form keeps the resource glyph beside its numbers: a bare `20/40` still
-    // reports quantity, but on a two-row HUD it withholds WHICH pool it is.
-    // Marina rendered `maxMana = 2` at 48 px and watched "MANA" collide with
-    // "1/2". Three variants ride in the DOM and CSS container queries pick the
-    // widest that fits — in `em`, so the choice tracks the player's Text size
-    // setting, which is exactly what "does the word fit" depends on. This is
-    // NOT Law 4 chrome-scaling: the BOX is text-independent (px under zoom);
-    // only the question "can a word fit in it" answers to text size.
-    const label = document.createElement('div');
-    label.className = 'label';
-    label.innerHTML =
-      `<span class="l-full">${esc(bar.glyph)} ${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
-      `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
-      `<span class="l-glyph">${esc(bar.glyph)}</span>`;
-    el.appendChild(label);
-
-    attachTooltip(el, () => {
-      const extra = (tooltipExtra && tooltipExtra(bar)) || '';
-      // The tooltip is the floor of legibility for this bar: whatever the
-      // trough is too short to print, this always says. Including the maximum,
-      // which is the number a floored bar has stopped encoding.
-      return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
-    });
-    wrap.appendChild(el);
+  if ((surface || 'main') === 'main') {
+    // THE HYBRID LINES. Consecutive plan bars with the same truthy band share
+    // a line; everything else lines alone. Consecutive-only is deliberate:
+    // the plan is already in `order` order, and a band split across the stack
+    // would be a row author asking for two contradictory things at once —
+    // rendering it as two lines keeps the order authoritative.
+    for (const group of groupByBand(plan)) {
+      const line = document.createElement('div');
+      line.className = 'resline';
+      for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra));
+      wrap.appendChild(line);
+    }
+  } else {
+    for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
   }
   return wrap;
+}
+
+function groupByBand(plan) {
+  const groups = [];
+  for (const bar of plan) {
+    const prev = groups[groups.length - 1];
+    if (bar.band && prev && prev[0].band === bar.band) prev.push(bar);
+    else groups.push([bar]);
+  }
+  return groups;
+}
+
+/** The hybrid unit: [plate "HP 86/86"][track > pill trough]. */
+function hybridUnit(bar, tooltipExtra) {
+  const unit = document.createElement('div');
+  unit.className = 'resunit';
+  unit.dataset.res = bar.id;
+
+  // THE PLATE. The label lives BESIDE the trough now, not inside it — the
+  // owner pixels put "HP 86/86" on the unit's ground, left of the pill — so a
+  // short trough can no longer collide with its own words. The three variants
+  // still ride the DOM and degrade by measured fit, but the container is the
+  // UNIT (whose width flex sets), not the plate (whose width its own content
+  // sets — a container query there would be circular).
+  const plate = document.createElement('div');
+  plate.className = 'resplate';
+  plate.innerHTML =
+    `<span class="l-full">${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-glyph">${esc(bar.glyph)}</span>`;
+  unit.appendChild(plate);
+
+  const track = document.createElement('div');
+  track.className = 'restrack';
+  track.appendChild(troughEl(bar));
+  unit.appendChild(track);
+
+  attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
+  return unit;
+}
+
+/** The under-model strip bar: trough with the label inside (unchanged shape). */
+function stripBar(bar, tooltipExtra) {
+  const el = troughEl(bar);
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.innerHTML =
+    `<span class="l-full">${esc(bar.glyph)} ${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-glyph">${esc(bar.glyph)}</span>`;
+  el.appendChild(label);
+  attachTooltip(el, () => tooltipHtml(bar, tooltipExtra));
+  return el;
+}
+
+/** The trough itself — the one element whose LENGTH is the data. */
+function troughEl(bar) {
+  const el = document.createElement('div');
+  el.className = `bar resbar resbar-${bar.weight}`;
+  el.dataset.res = bar.id;
+  // THE TROUGH LENGTH — the one line that is his whole instruction.
+  el.style.width = `${bar.lengthPct.toFixed(3)}%`;
+  el.style.setProperty('--res-tint', bar.tint);
+  // THE MACHINE-READABLE HOME, and it is not decoration. The label degrades
+  // to a glyph on a short unit, so `.textContent` is neither stable nor a fair
+  // reading of what the bar says. Instruments and assistive tech read these
+  // instead: tools/veil-owns-input.mjs and tools/hudbars.mjs both do.
+  el.dataset.cur = String(bar.cur);
+  el.dataset.max = String(bar.max);
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', `${bar.name} ${bar.cur} of ${bar.max}`);
+
+  // THE MINIMUM-WIDTH CLAUSE — `min-width: var(--resbar-min)` in CSS does the
+  // flooring; whether the floor FIRED is a rendered fact (it depends on the
+  // track, the zoom and the floor together), so it is stamped after layout by
+  // markFlooredBars() rather than guessed at here. A floored trough is drawn
+  // DASHED — the broken-axis mark — because two different maxima below the
+  // floor render the same length, and a bar that is no longer to scale must
+  // not look like one that is.
+  const fill = document.createElement('div');
+  fill.className = 'fill';
+  fill.style.width = `${bar.pct.toFixed(2)}%`;
+  el.appendChild(fill);
+  return el;
+}
+
+function tooltipHtml(bar, tooltipExtra) {
+  const extra = (tooltipExtra && tooltipExtra(bar)) || '';
+  // The tooltip is the floor of legibility for this bar: whatever the plate is
+  // too narrow to print, this always says. Including the maximum, which is the
+  // number a floored bar has stopped encoding.
+  return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
 }
 
 /**
@@ -98,12 +157,18 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
  * Called after layout. A bar is floored when its rendered width is wider than
  * the width its own lengthPct asked for — which is precisely what `min-width`
  * winning looks like, and it needs no second copy of the floor's value.
+ *
+ * The track each percentage resolves against is the bar's own CONTAINING BLOCK
+ * (`.restrack` on the hybrid HUD, the strip on the model surface) — measured
+ * per bar rather than passed in, because since the hybrid two bars on one line
+ * no longer share a track and a single passed-in width would be wrong for one
+ * of them. The old second parameter is accepted and ignored.
  */
-export function markFlooredBars(root, track) {
+export function markFlooredBars(root) {
   const bars = root.querySelectorAll('.resbar');
-  const trackW = track ? track.getBoundingClientRect().width : 0;
   for (const el of bars) {
     const asked = parseFloat(el.style.width); // percent
+    const trackW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
     if (!Number.isFinite(asked) || !trackW) continue;
     const wanted = (asked / 100) * trackW;
     const got = el.getBoundingClientRect().width;

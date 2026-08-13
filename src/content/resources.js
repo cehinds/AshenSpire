@@ -19,35 +19,53 @@
 //              A source with no reader is refused at boot, by name.
 //   domainMax  OPTIONAL override of the derived ceiling (Law 0 clause 3).
 //              Omit it and the ceiling is derived from the content itself.
+//   band       OPTIONAL. Rows that share a band render SIDE BY SIDE on one
+//              line of the HUD; a row with no band gets a line of its own.
+//              The approved hybrid (2026-08-13) puts Mana and Stamina beside
+//              each other under Health — that layout is this one word, so a
+//              future pool joins their line by writing `band: 'pools'`, not
+//              by editing CSS. Grouping is per surface, after the surface
+//              filter, in `order` order.
 //
 // Mana and Stamina are persisted derived pools. Their formulas and ruleset
 // version remain authoritative in derivedStats; this table only describes how
 // their current/max values are projected into resource surfaces.
 
+// NAMES AND TINTS FOLLOW THE APPROVED HYBRID (claude-family falk-family branch,
+// hybrid-confirmation/output/selection-record.json + owners/*.png, approved
+// 2026-08-13): the owner pixels label the pools "HP 86/86" / "MP 2/2" /
+// "SP 2/2" and paint them #a43c35 / #315c9b / #4d7a45. Mana and Stamina take
+// the sampled owner hexes directly — they were already raw hexes here, outside
+// the accent-theme swap. Health deliberately KEEPS var(--blood): the accent
+// themes (base.css) swap that token for the colourblind palette, and a typed
+// hex would break that swap. The delta is named, not hidden: --blood #8a1a1a
+// vs owner #a43c35.
 export const resources = [
   {
     id: 'stamina',
-    name: 'STAMINA',
+    name: 'SP',
     glyph: '▲',
-    tint: '#4f9b62',
+    tint: '#4d7a45',
     weight: 'normal',
     order: 30,
     surfaces: ['main'],
     source: 'stamina',
+    band: 'pools',
   },
   {
     id: 'mana',
-    name: 'MANA',
+    name: 'MP',
     glyph: '◆',
-    tint: '#3f73c9',
+    tint: '#315c9b',
     weight: 'normal',
     order: 20,
     surfaces: ['main'],
     source: 'mana',
+    band: 'pools',
   },
   {
     id: 'hp',
-    name: 'HEALTH',
+    name: 'HP',
     glyph: '❤',
     tint: 'var(--blood)',
     weight: 'normal',

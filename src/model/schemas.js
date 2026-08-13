@@ -635,6 +635,9 @@ export const SCHEMAS = Object.freeze({
     surfaces: arr(en(...HUD_SURFACES)),
     source: str,
     domainMax: opt(num),
+    // Rows sharing a band render side by side on one HUD line (the approved
+    // hybrid's Mana+Stamina row). Free-form id; grouping happens per surface.
+    band: opt(str),
   }),
 
   stance: obj({

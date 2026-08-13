@@ -159,7 +159,7 @@ export function resourceDomains(registries) {
  * resourceBarPlan(registries, surface, view, entity, domains) → [bar]
  *
  * ONE function, both HUDs. A bar is:
- *   { id, name, glyph, tint, weight, cur, max, pct, lengthPct, floored }
+ *   { id, name, glyph, tint, weight, band, cur, max, pct, lengthPct, floored }
  *
  *   pct        — the FILL inside the trough (cur/max). The old bars' only job.
  *   lengthPct  — the TROUGH's own length, as a fraction of the row track, and
@@ -190,6 +190,7 @@ export function resourceBarPlan(registries, surface, view, entity, domains) {
       glyph: row.glyph || '',
       tint: row.tint,
       weight: row.weight,
+      band: row.band || null,
       cur: val.cur,
       max: val.max,
       pct: Math.max(0, Math.min(100, (val.cur / val.max) * 100)),
