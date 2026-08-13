@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, RUN_SCHEMA_VERSION } from '../src/model/state.js';
 import { createMemoryStorage, createSaveManager, META_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 import { rollArmamentDrop } from '../src/engine/encounters.js';
 import { createRng } from '../src/engine/rng.js';
@@ -137,6 +137,31 @@ if (altRun) {
     'save resume preserves authoritative kit identity and resolved loadout', JSON.stringify(resumed));
 }
 
+if (altRun) {
+  const storage = createMemoryStorage();
+  const save = createSaveManager(storage);
+  save.saveMeta({ schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], discoveredArmaments: ['greatsword'], discoveryReceipts: [] });
+  const missing = structuredClone(altRun);
+  delete missing.startingKitId;
+  save.saveRun(missing);
+  check(save.loadRun(R) === null, 'current run missing startingKitId is refused, not silently baselined');
+
+  const mismatched = structuredClone(altRun);
+  mismatched.startingKitId = 'reaverBaseline';
+  save.saveRun(mismatched);
+  check(save.loadRun(R) === null, 'changed startingKitId that disagrees with its snapshot is refused');
+
+  const legacy = structuredClone(altRun);
+  legacy.schemaVersion = 1;
+  delete legacy.startingKitId;
+  delete legacy.startingKitSnapshot;
+  save.saveRun(legacy);
+  const migratedRun = save.loadRun(R);
+  check(RUN_SCHEMA_VERSION >= 2 && migratedRun?.startingKitId === 'reaverBaseline'
+    && migratedRun?.startingKitSnapshot?.classId === 'reaver',
+    'legacy v1 run receives the class baseline identity through the one migration door', JSON.stringify(migratedRun));
+}
+
 let sessionError = '';
 try {
   const session = createSession({ registries: R, seedString: 'KITTEST' });
@@ -181,6 +206,15 @@ check(/startingKitViews/.test(customize) && /startingKitId/.test(customize),
   'creation consumes the shared kit view and submits kit identity');
 check(!/starstoneStaff|emberlightSceptre|greatsword/.test(customize),
   'creation contains no hard-coded alternate names or stats');
+
+const lan = readFileSync(new URL('./lan.mjs', import.meta.url), 'utf8');
+const lobby = readFileSync(new URL('../src/ui/screens/lobby.js', import.meta.url), 'utf8');
+check(/startingKitId:\s*cl\.startingKitId/.test(lan) && /discoveredArmaments:\s*cl\.discoveredArmaments/.test(lan),
+  'production LAN start forwards main-seat kit identity and entitlement to the host session');
+check(/startingKitId:\s*lp\.startingKitId/.test(lan) && /discoveredArmaments:\s*lp\.discoveredArmaments/.test(lan),
+  'production LAN start forwards local-seat kit identity and entitlement');
+check(/startingKitId/.test(lobby) && /discoveredArmaments/.test(lobby) && /startingKitViews/.test(lobby),
+  'lobby requests only profile-visible kits and transports the entitlement claim');
 
 console.log(`\nstarting-kit-discovery: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);
