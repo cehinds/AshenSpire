@@ -1198,7 +1198,20 @@ export function stampDeck(registries, run, cards) {
       inst.profileId = row.profile.id;
       inst.profileReceipt = { ...row.receipt };
     }
-    const carrier = row && row.profile ? run.equipmentProfileRuleSnapshot.profiles[row.profile.id] : registries.cards.get(inst.cardId);
+    let carrier;
+    if (row && row.profile) {
+      // Equipment roles deliberately re-resolve from the persisted host rule
+      // snapshot when the active set changes.
+      carrier = run.equipmentProfileRuleSnapshot.profiles[row.profile.id];
+    } else {
+      const schoolAbsent = inst.damageSchool === undefined;
+      const buildupAbsent = inst.exposureBuildupPerHit === undefined;
+      if (schoolAbsent !== buildupAbsent) throw new Error(`${inst.instanceId}: damageSchool and exposureBuildupPerHit must both be present or both be absent`);
+      // Non-equipment cards are immutable host-stamped instances. Consult live
+      // content only at the explicit new/legacy adoption door, never during a
+      // later equipment swap re-stamp.
+      carrier = schoolAbsent ? registries.cards.get(inst.cardId) : inst;
+    }
     const priorSchool = inst.damageSchool;
     const priorBuildup = inst.exposureBuildupPerHit;
     if (typeof carrier.damageSchool === 'string') inst.damageSchool = carrier.damageSchool;
