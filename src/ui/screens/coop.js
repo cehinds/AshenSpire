@@ -30,7 +30,8 @@ import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
-import { flaskIdentityHtml } from '../components/flask.js';
+import { flaskActionPlan } from '../../model/flaskActions.js';
+import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -58,6 +59,30 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   // Every game intent carries the ACTIVE seat (`as`); the server validates
   // ownership and falls back to the connection's main seat.
   const send = (obj) => conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
+
+  const sendFlaskUse = ({ slot = null, targetId = undefined, chargeKind = null } = {}) => send({
+    t: 'flaskIntent',
+    intent: { action: 'use', ...(slot != null ? { slot } : {}), ...(targetId ? { targetId } : {}), ...(chargeKind ? { chargeKind } : {}) },
+  });
+
+  function openCoopFlaskMenu(anchor, def, meP, { slot = null, chargeKind = null, remaining = 1 } = {}) {
+    const canUse = meP.alive && meP.connected && !meP.ended && remaining > 0;
+    const useReason = remaining <= 0 ? 'No charges remaining'
+      : !meP.connected ? 'This player is disconnected'
+        : !meP.alive ? 'This player is down' : meP.ended ? 'This turn has ended' : '';
+    const plan = flaskActionPlan({ context: 'combat', canUse, useReason });
+    mountFlaskActionMenu(anchor, {
+      def,
+      plan,
+      onCancel: () => {},
+      onAction: (actionId) => {
+        if (actionId !== 'use') return;
+        if (chargeKind) sendFlaskUse({ chargeKind });
+        else if (def.targeted) sendFlaskUse({ slot, targetId: selectedEnemy });
+        else { armedFlask = armedFlask === slot ? null : slot; armedAllyCard = null; render(); }
+      },
+    });
+  }
 
   function setSeat(i) {
     if (i === seatIdx || !seats[i]) return;
@@ -113,7 +138,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     if (!meP || !meP.alive || !meP.connected) return;
     if (ev.key === 'e' || ev.key === 'E') { if (!meP.ended) send({ t: 'endTurn' }); return; }
     const fl = { f: 0, g: 1, h: 2 }[ev.key.toLowerCase()];
-    if (fl != null && meP.flasks && meP.flasks[fl]) { send({ t: 'useFlask', slot: fl, targetId: selectedEnemy }); return; }
+    if (fl != null && meP.flasks && meP.flasks[fl]) {
+      app.querySelector(`[data-coop-flask-slot="${fl}"]`)?.click();
+      return;
+    }
     const idx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
     if (idx >= 0 && !meP.ended && meP.hand[idx]) {
       const c = meP.hand[idx];
@@ -296,7 +324,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       box.appendChild(statusRow(p.statuses));
       if (arming && p.alive && p.connected) box.addEventListener('click', () => {
         if (armedAllyCard) { send({ t: 'playCard', cardInstanceId: armedAllyCard, targetId: p.id }); armedAllyCard = null; }
-        else { send({ t: 'useFlask', slot: armedFlask, targetId: p.id === me ? undefined : p.id }); armedFlask = null; }
+        else { sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id }); armedFlask = null; }
       });
       zone.appendChild(box);
     }
@@ -371,23 +399,21 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
         const current = meP.flaskCharges ? meP.flaskCharges[`${kind}Current`] : 0;
         const b = document.createElement('button');
         b.className = 'coop-flask flask-charge';
-        b.disabled = current <= 0;
+        b.setAttribute('aria-disabled', String(current <= 0));
         b.innerHTML = `${flaskIdentityHtml(fd)} <b>${current}</b>`;
         b.setAttribute('aria-label', `${fd.name}: ${current} charges remaining`);
         attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
-        b.addEventListener('click', () => send({ t: 'useFlask', chargeKind: kind }));
+        b.addEventListener('click', () => openCoopFlaskMenu(b, fd, meP, { chargeKind: kind, remaining: current }));
         fwrap.appendChild(b);
       }
       meP.flasks.forEach((f, i) => {
         const fd = registries.flasks.get(f.flaskId);
         const b = document.createElement('button');
         b.className = `coop-flask${armedFlask === i ? ' armed' : ''}`;
+        b.dataset.coopFlaskSlot = String(i);
         b.innerHTML = `${flaskIdentityHtml(fd)}${fd.targeted ? '' : ' ▾'}`;
         attachTooltip(b, () => `<div class="tt-title">${esc(fd.name)}</div>${esc(fd.textTemplate || '')}`);
-        b.addEventListener('click', () => {
-          if (fd.targeted) { send({ t: 'useFlask', slot: i, targetId: selectedEnemy }); armedFlask = null; }
-          else { armedFlask = armedFlask === i ? null : i; render(); }
-        });
+        b.addEventListener('click', () => openCoopFlaskMenu(b, fd, meP, { slot: i }));
         fwrap.appendChild(b);
       });
     }
