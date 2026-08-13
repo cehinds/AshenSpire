@@ -81,7 +81,22 @@ check('one authoritative damage-school vocabulary includes physical and magic', 
 
 check('visible system name has one data-owned Arcane Exposure label', () => {
   equal(contentBundle.balance.arcaneExposure && contentBundle.balance.arcaneExposure.label, 'Arcane Exposure', 'balance.arcaneExposure.label');
+  const map = contentBundle.balance.arcaneExposure.schoolBuildupMultipliers;
+  assert(map && map.magic === 1 && map.arcane === 1, 'explicit magic/arcane school buildup map absent');
 });
+
+for (const [map, pattern, label] of [
+  [null, /schoolBuildupMultipliers/i, 'missing map'],
+  [{ magick: 1 }, /schoolBuildupMultipliers\.magick/i, 'unknown school'],
+  [{ magic: -1 }, /schoolBuildupMultipliers\.magic/i, 'negative multiplier'],
+  [{ magic: Number.POSITIVE_INFINITY }, /schoolBuildupMultipliers\.magic/i, 'infinite multiplier'],
+]) {
+  check(`school buildup mapping refuses ${label}`, () => {
+    const bundle = mutableBundle();
+    bundle.balance = { ...bundle.balance, arcaneExposure: { ...bundle.balance.arcaneExposure, schoolBuildupMultipliers: map } };
+    expectPath(bundle, pattern, label);
+  });
+}
 
 check('every damage card explicitly authors damageSchool and exposureBuildupPerHit', () => {
   const bad = contentBundle.cards.filter(damageCard).filter((card) => (
@@ -304,10 +319,10 @@ check('Magic Vulnerable is registered but cannot become generic vulnerability', 
   assert(!status.taggedVulnerability, 'Magic Vulnerable infers schools from tags');
 });
 
-check('schema/carrier slice has no Arcane Exposure engine or meter implementation', () => {
-  const forbidden = ['src/model/state.js', 'src/engine/actions.js', 'src/engine/combat.js', 'src/engine/coopCombat.js'];
+check('engine slice does not claim an Arcane Exposure UI before its visual review', () => {
+  const forbidden = ['src/ui/screens/combat.js', 'src/ui/screens/coop.js'];
   const offenders = forbidden.filter((file) => /arcaneExposure|magicVulnerable/i.test(readFileSync(resolve(ROOT, file), 'utf8')));
-  assert(offenders.length === 0, `engine work landed before checkpoint: ${offenders.join(', ')}`);
+  assert(offenders.length === 0, `UI landed before engine checkpoint: ${offenders.join(', ')}`);
 });
 
 console.log(`\n${failures ? `ARCANE EXPOSURE SCHEMA RED — ${failures}/${checks} contracts failing` : `ARCANE EXPOSURE SCHEMA GREEN — ${checks}/${checks}`}`);

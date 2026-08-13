@@ -6,8 +6,8 @@
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { createCombat } from '../src/engine/combat.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
+import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createCoopCombat, playCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyAttackDamage, computeAttackDamage } from '../src/engine/actions.js';
 import { EVENTS } from '../src/model/schemas.js';
@@ -45,6 +45,17 @@ function coop(enemyId = 'wanderingSoldier', seed = 8) {
 }
 const carrier = (damageSchool = 'magic', exposureBuildupPerHit = 1) => ({ damageSchool, exposureBuildupPerHit });
 const recent = (ctx, type) => ctx.eventLog.filter((event) => event.type === type);
+function forceAttackIntoHand(piles) {
+  const all = ['hand', 'draw', 'discard', 'exhaust'];
+  let attack = null;
+  for (const pile of all) {
+    const index = piles[pile].findIndex((card) => card.equipmentRole === 'attack');
+    if (index >= 0) { attack = piles[pile].splice(index, 1)[0]; break; }
+  }
+  assert(attack, 'equipment attack card absent');
+  piles.hand.push(attack);
+  return attack;
+}
 
 console.log('arcane-exposure-engine — host resolution contract\n');
 
@@ -126,7 +137,7 @@ check('Magic Vulnerable locks buildup with a visible refusal', () => {
 });
 
 check('raw school resistance is separate and Magic Vulnerable affects magic HP only', () => {
-  const C = solo();
+  const C = solo('charredColossus');
   const E = C.enemies[0];
   const plainMagic = computeAttackDamage(C, C.player, E, 10, [], carrier('magic', 0));
   const plainArcane = computeAttackDamage(C, C.player, E, 10, [], carrier('arcane', 0));
@@ -143,9 +154,23 @@ check('solo and co-op use one action implementation for the same receipt', () =>
   const S = solo();
   const C = coop();
   applyAttackDamage(S, S.player, S.enemies[0], 2, [], carrier());
-  applyAttackDamage(C, C.players.get('p1'), C.enemies[0], 2, [], carrier());
+  applyAttackDamage(C, C.players.get('p1').entity, C.enemies[0], 2, [], carrier());
   equal(C.enemies[0].arcaneExposure.value, S.enemies[0].arcaneExposure.value, 'host state parity');
   equal(recent(C, 'arcaneExposureChanged').at(-1)?.amount, recent(S, 'arcaneExposureChanged').at(-1)?.amount, 'receipt parity');
+});
+
+check('real solo and co-op card dispatch carry the stamped school and buildup', () => {
+  const S = solo();
+  const soloAttack = forceAttackIntoHand(S.piles);
+  dispatch(S, { type: 'playCard', cardInstanceId: soloAttack.instanceId, targetId: S.enemies[0].id });
+  const C = coop();
+  const seat = C.players.get('p1');
+  const coopAttack = forceAttackIntoHand(seat.piles);
+  playCard(C, 'p1', coopAttack.instanceId, C.enemies[0].id);
+  equal(S.enemies[0].arcaneExposure.value, 1, 'solo dispatched attack buildup');
+  equal(C.enemies[0].arcaneExposure.value, 1, 'co-op dispatched attack buildup');
+  equal(recent(S, 'arcaneExposureChanged').at(-1)?.school, 'magic', 'solo receipt school');
+  equal(recent(C, 'arcaneExposureChanged').at(-1)?.school, 'magic', 'co-op receipt school');
 });
 
 console.log(`\n${failures ? `ARCANE EXPOSURE ENGINE RED — ${failures}/${checks} failing` : `ARCANE EXPOSURE ENGINE GREEN — ${checks}/${checks}`}`);
