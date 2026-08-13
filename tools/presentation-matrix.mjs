@@ -117,7 +117,9 @@ function contract(surface, reading) {
   const need = (condition, label) => { if (!condition) failures.push(label); };
   need(reading.mounted, `${surface}: landmark mounted`);
   need(reading.horizontalOverflow <= 1, `${surface}: no horizontal viewport overflow`);
-  need(reading.minControl >= 44, `${surface}: relevant controls are at least 44px`);
+  // Chromium may report an authored 44px box as 43.99997 after zoom. Keep the
+  // tolerance far below one device pixel; the 43px mutant must still fail.
+  need(reading.minControl >= 43.99, `${surface}: relevant controls are at least 44px`);
   need(reading.controlsOutside === 0, `${surface}: relevant controls remain inside the viewport`);
   if (surface === 'grace') {
     need(reading.title === 'Reallocate Flask Charges', 'grace: exact feature name');
@@ -176,37 +178,40 @@ function proveMutants() {
 
 const READERS = {
   grace: `(() => {
+    const n=(value)=>Math.round(value*100)/100;
     const root = document.querySelector('#flask-reallocate');
     const buttons = [...document.querySelectorAll('#flask-reallocate [data-hp]')];
     const boxes = buttons.map((x) => x.getBoundingClientRect());
     const text = document.querySelector('#rest-opt p')?.textContent || '';
     return { mounted: !!root, horizontalOverflow: Math.max(0, document.documentElement.scrollWidth-innerWidth),
-      minControl: boxes.length ? Math.min(...boxes.map((x) => Math.min(x.width,x.height))) : 0,
+      minControl: boxes.length ? n(Math.min(...boxes.map((x) => Math.min(x.width,x.height)))) : 0,
       controlsOutside: boxes.filter((x) => x.left < 0 || x.right > innerWidth || x.top < 0 || x.bottom > innerHeight).length,
       title: root?.querySelector('h3')?.textContent.trim() || '', capacity: Number(/capacity\\D*(\\d+)/i.exec(root?.querySelector('p')?.textContent||'')?.[1]),
       allocations: buttons.map((x) => x.textContent.trim()), fullMana: /Mana\\D*2\\D+2/.test(text) };
   })()`,
   creation: `(() => {
+    const n=(value)=>Math.round(value*100)/100;
     const kitButtons=[...document.querySelectorAll('#cz-kits button')];
     const relevant=[...kitButtons, document.querySelector('.cz-stats summary')].filter(Boolean);
     const boxes=relevant.map((x)=>x.getBoundingClientRect());
     const derived=[...document.querySelectorAll('#cz-stat-projection > div > b')].map((x)=>x.textContent.trim());
     const roleRows=[...document.querySelectorAll('.cz-kit li')];
     return { mounted: !!document.querySelector('#cz-stat-projection'), horizontalOverflow: Math.max(0,document.documentElement.scrollWidth-innerWidth),
-      minControl: boxes.length?Math.min(...boxes.map((x)=>Math.min(x.width,x.height))):0,
+      minControl: boxes.length?n(Math.min(...boxes.map((x)=>Math.min(x.width,x.height)))):0,
       controlsOutside: boxes.filter((x)=>x.left<0||x.right>innerWidth||x.top<0||x.bottom>innerHeight).length,
       kitCount: kitButtons.length, chosenKit: kitButtons.filter((x)=>x.classList.contains('chosen')).length,
       alternateSelected: kitButtons.length>1 && kitButtons[1].classList.contains('chosen'), derived, roleRows: roleRows.length,
       hasReceiptMath: roleRows.length>0 && roleRows.every((x)=>/=/.test(x.textContent)) };
   })()`,
   armoury: `(() => {
+    const n=(value)=>Math.round(value*100)/100;
     const viewButtons=[...document.querySelectorAll('[data-surface="armouryView"] [data-member]')];
     const boxes=viewButtons.map((x)=>x.getBoundingClientRect());
     const derived=[...document.querySelectorAll('.armoury-derived [data-stat] > b')].map((x)=>x.textContent.trim());
     const roles=[...document.querySelectorAll('.equip-role-receipts [data-role]')].map((x)=>x.dataset.role);
     const receiptText=[...document.querySelectorAll('.equip-role-receipts [data-role]')].map((x)=>x.textContent);
     return { mounted: !!document.querySelector('.armoury-stats'), horizontalOverflow: Math.max(0,document.documentElement.scrollWidth-innerWidth),
-      minControl: boxes.length?Math.min(...boxes.map((x)=>Math.min(x.width,x.height))):0,
+      minControl: boxes.length?n(Math.min(...boxes.map((x)=>Math.min(x.width,x.height)))):0,
       controlsOutside: boxes.filter((x)=>x.left<0||x.right>innerWidth||x.top<0||x.bottom>innerHeight).length,
       view: document.querySelector('.armoury')?.dataset.view || '', derived, roles,
       hasReceiptMath: receiptText.length===3 && receiptText.every((x)=>/base/i.test(x)&&/tier/i.test(x)&&/rarity/i.test(x)&&/=/.test(x)) };
