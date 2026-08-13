@@ -36,22 +36,29 @@ export function statusTooltipText(def) {
 // clock and must be named separately.
 export function statusInstancePresentation(def, inst) {
   const rawValue = inst && inst.meter ? inst.meter.value : (inst && inst.stacks) || 0;
+  const valueToken = def.instancePresentation?.valueToken || 'stacks';
   const durationText = inst && Number.isFinite(inst.duration)
     ? `${inst.duration} ${inst.duration === 1 ? 'turn' : 'turns'}` : '';
-  if (def.schoolDamageVulnerability) {
-    const valueText = `${rawValue}%`;
-    return {
-      valueText,
-      durationText,
-      label: `${def.name} ${valueText}${durationText ? ` · ${durationText}` : ''}`,
-      tooltip: `${statusTooltipText(def)}${durationText ? ` Turns left: ${inst.duration}.` : ''}`,
-    };
-  }
+  const valueText = valueToken === 'percent' ? `${rawValue}%` : String(rawValue);
+  const label = valueToken === 'percent'
+    ? `${def.name} ${valueText}${durationText ? ` · ${durationText}` : ''}`
+    : `${def.name} ×${rawValue}`;
   return {
-    valueText: String(rawValue),
+    valueToken,
+    valueText,
     durationText,
-    label: `${def.name} ×${rawValue}`,
+    label,
     tooltip: `${statusTooltipText(def)}${durationText ? ` Turns left: ${inst.duration}.` : ''}`,
+    semantic: { statusId: def.id, valueToken, ariaLabel: label },
+  };
+}
+
+/** Pure attribute map shared by both combat clients. */
+export function statusInstanceSemanticAttrs(presentation) {
+  return {
+    'data-status-id': presentation.semantic.statusId,
+    'data-status-value-token': presentation.semantic.valueToken,
+    'aria-label': presentation.semantic.ariaLabel,
   };
 }
 

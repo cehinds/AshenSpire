@@ -219,6 +219,10 @@ export const MODIFIER_TYPES = Object.freeze({
 export const MODIFIER_KEYS = Object.freeze(Object.keys(MODIFIER_TYPES));
 
 export const STACK_MODES = Object.freeze(['add', 'refresh', 'unique']);
+// Instance-value display is presentation data, separate from engine keywords
+// and from the mechanic that produced the value.
+export const STATUS_VALUE_TOKENS = Object.freeze(['stacks', 'percent']);
+export const STATUS_DURATION_TOKENS = Object.freeze(['turns']);
 
 // ---------------------------------------------------------------------------
 // Threshold-proc vocabulary (#61 direction, Constantine's words 2026-08-06)
@@ -566,6 +570,10 @@ export const SCHEMAS = Object.freeze({
     tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
     stackMode: en(...STACK_MODES),
     decay: union(en('none', 'perTurnEnd', 'onConsume'), obj({ duration: int })),
+    instancePresentation: opt(obj({
+      valueToken: en(...STATUS_VALUE_TOKENS),
+      durationToken: en(...STATUS_DURATION_TOKENS),
+    })),
     meter: opt(obj({ max: int, growthMult: num, onFill: effects })),
     // Threshold-proc block (#61 vocabulary; see VULN_STACKING header above).
     // Every number is a table knob. burstPercent is a percent of the PROC

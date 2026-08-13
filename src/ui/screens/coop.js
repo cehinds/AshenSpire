@@ -24,7 +24,7 @@ import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox } from '../fx.js';
-import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation } from '../uiContent.js';
+import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
@@ -222,6 +222,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const presentation = statusInstancePresentation(def, inst);
       const el = document.createElement('div');
       el.className = 'status-icon';
+      const semanticAttrs = statusInstanceSemanticAttrs(presentation);
+      el.setAttribute('data-status-id', semanticAttrs['data-status-id']);
+      el.setAttribute('data-status-value-token', semanticAttrs['data-status-value-token']);
+      el.setAttribute('aria-label', semanticAttrs['aria-label']);
       el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${esc(presentation.valueText)}</span>`;
       attachTooltip(el, () => `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}`);

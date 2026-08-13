@@ -12,7 +12,7 @@ import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation } from '../uiContent.js';
+import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -508,6 +508,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       if (def.proc && stacks <= 0) continue;
       const el = document.createElement('div');
       el.className = 'status-icon';
+      const semanticAttrs = statusInstanceSemanticAttrs(presentation);
+      el.setAttribute('data-status-id', semanticAttrs['data-status-id']);
+      el.setAttribute('data-status-value-token', semanticAttrs['data-status-value-token']);
+      el.setAttribute('aria-label', semanticAttrs['aria-label']);
       el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
       // Collapsed proc meter (M4 display cap): ring-fill pip — the pip's own
       // background is a conic fill in the row's tint, same value/threshold

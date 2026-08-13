@@ -812,6 +812,7 @@ export const statuses = [
     tint: '#8b7cd6',
     stackMode: 'refresh',
     decay: { duration: 2 }, // PROVISIONAL
+    instancePresentation: { valueToken: 'percent', durationToken: 'turns' },
     schoolDamageVulnerability: { school: 'magic' },
     tooltip: 'Magic-school HP damage is increased while this lasts. Arcane Exposure buildup is locked.',
   },
