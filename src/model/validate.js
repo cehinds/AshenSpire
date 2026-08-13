@@ -254,6 +254,54 @@ export function validateContent(bundle) {
     }
   }
 
+  // Equipment eligibility tables are boot-critical raw authoring. Validate
+  // them before the equipment normalizer can join rows into pieces and thereby
+  // hide a duplicate item/stat pair. This is the same validateContent door the
+  // production boot uses, not a tool-only validator.
+  if (equipment && typeof equipment === 'object' && !Array.isArray(equipment)) {
+    const pieces = [...(Array.isArray(equipment.armaments) ? equipment.armaments : []), ...(Array.isArray(equipment.armour) ? equipment.armour : [])];
+    const pieceIds = new Set(pieces.map((row) => row && row.id).filter(Boolean));
+    const armamentIds = new Set((Array.isArray(equipment.armaments) ? equipment.armaments : []).map((row) => row && row.id).filter(Boolean));
+    if (!Array.isArray(equipment.equipmentRequirements)) {
+      err('equipment.equipmentRequirements', 'Missing required generated equipmentRequirements array');
+    } else {
+      const seen = new Set();
+      for (const row of equipment.equipmentRequirements) {
+        const itemId = row && row.itemId;
+        const attributeId = row && row.attributeId;
+        const path = `equipment.equipmentRequirements.${itemId || '?'}:${attributeId || '?'}`;
+        for (const key of Object.keys(row || {})) if (!['itemId', 'attributeId', 'minimum'].includes(key)) err(`${path}.${key}`, 'Unknown field');
+        if (typeof itemId !== 'string' || !itemId) err(`${path}.itemId`, 'must be a non-empty item id');
+        else if (!pieceIds.has(itemId)) err(`${path}.itemId`, `unknown item '${itemId}'`);
+        if (typeof attributeId !== 'string' || !attributeId) err(`${path}.attributeId`, 'must be a non-empty attribute id');
+        else if (!ids.attributes.has(attributeId)) err(`${path}.attributeId`, `unknown attribute '${attributeId}'`);
+        if (!row || !Object.prototype.hasOwnProperty.call(row, 'minimum') || !Number.isFinite(row.minimum) || !Number.isInteger(row.minimum) || row.minimum < 0) {
+          err(`${path}.minimum`, 'must be a finite non-negative integer');
+        }
+        const key = `${itemId}:${attributeId}`;
+        if (seen.has(key)) err(path, `Duplicate item/stat requirement '${key}'`);
+        seen.add(key);
+      }
+    }
+    if (!Array.isArray(equipment.cardEquipmentExceptions)) {
+      err('equipment.cardEquipmentExceptions', 'Missing required generated cardEquipmentExceptions array');
+    } else {
+      const seen = new Set();
+      for (const row of equipment.cardEquipmentExceptions) {
+        const cardId = row && row.cardId;
+        const weaponId = row && row.weaponId;
+        const path = `equipment.cardEquipmentExceptions.${cardId || '?'}:${weaponId || '?'}`;
+        for (const key of Object.keys(row || {})) if (!['cardId', 'weaponId'].includes(key)) err(`${path}.${key}`, 'Unknown field');
+        if (typeof cardId !== 'string' || !ids.cards.has(cardId)) err(`${path}.cardId`, `unknown card '${cardId}'`);
+        if (typeof weaponId !== 'string' || !armamentIds.has(weaponId)) err(`${path}.weaponId`, `unknown weapon '${weaponId}'`);
+        const key = `${cardId}:${weaponId}`;
+        if (seen.has(key)) err(path, `Duplicate exact card/weapon pair '${key}'`);
+        seen.add(key);
+      }
+    }
+    if (!Array.isArray(equipment.cardTagging)) err('equipment.cardTagging', 'Missing required registered cardTagging array');
+  }
+
   // Starting kits are a nested generated table whose validity spans classes,
   // hand slots, armament discovery weights, and the no-spoiler policy.
   try {
