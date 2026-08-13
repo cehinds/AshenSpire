@@ -5,6 +5,7 @@ import { DAMAGE_SCHOOLS } from './schemas.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
+const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit']);
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
 // The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
@@ -788,6 +789,7 @@ function profileById(registries, id) {
 function profileRule(profile) {
   return {
     ...Object.fromEntries(EQUIPMENT_PROFILE_PATCH_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
+    ...Object.fromEntries(EQUIPMENT_PROFILE_CARRIER_FIELDS.map((key) => [key, profile[key]])),
     compatibility: profile.compatibility,
   };
 }
@@ -818,6 +820,7 @@ export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
   if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) throw new Error('equipment profile snapshot must be an object');
   if (snapshot.snapshotVersion !== EQUIPMENT_PROFILE_SNAPSHOT_VERSION) throw new Error(`unknown equipment profile snapshotVersion ${snapshot.snapshotVersion}`);
   if (!snapshot.profiles || typeof snapshot.profiles !== 'object' || Array.isArray(snapshot.profiles)) throw new Error('equipment profile snapshot profiles must be an object map');
+  snapshot = structuredClone(snapshot);
   const liveIds = new Set((registries.equipment.basicCardProfiles || []).map((profile) => profile.id));
   for (const id of Object.keys(snapshot.profiles)) if (!liveIds.has(id)) throw new Error(`equipment profile snapshot has unknown '${id}'`);
   for (const profile of registries.equipment.basicCardProfiles || []) {
@@ -830,7 +833,13 @@ export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
     if (!Number.isFinite(rule.gainPerTier)) throw new Error(`${profile.id}.gainPerTier must be finite`);
     if (rule.cap != null && (!Number.isFinite(rule.cap) || rule.cap < 0)) throw new Error(`${profile.id}.cap must be null or finite non-negative`);
     if (rule.compatibility !== `${profile.role}-v1`) throw new Error(`${profile.id}.compatibility '${rule.compatibility}' does not match ${profile.role}-v1`);
-    const legal = [...EQUIPMENT_PROFILE_PATCH_FIELDS, 'compatibility'];
+    // Version-1 snapshots predate combat carriers. They adopt the live row
+    // exactly once during migration; every subsequent save owns the values.
+    if (rule.damageSchool === undefined) rule.damageSchool = profile.damageSchool;
+    if (rule.exposureBuildupPerHit === undefined) rule.exposureBuildupPerHit = profile.exposureBuildupPerHit;
+    if (!DAMAGE_SCHOOLS.includes(rule.damageSchool)) throw new Error(`${profile.id}.damageSchool '${rule.damageSchool}' is unknown`);
+    if (!Number.isInteger(rule.exposureBuildupPerHit) || rule.exposureBuildupPerHit < 0) throw new Error(`${profile.id}.exposureBuildupPerHit must be a non-negative integer`);
+    const legal = [...EQUIPMENT_PROFILE_PATCH_FIELDS, ...EQUIPMENT_PROFILE_CARRIER_FIELDS, 'compatibility'];
     for (const key of Object.keys(rule)) if (!legal.includes(key)) throw new Error(`${profile.id}.${key}: unknown equipment profile snapshot field`);
   }
   if (!snapshot.rarityBonuses || typeof snapshot.rarityBonuses !== 'object' || Array.isArray(snapshot.rarityBonuses)) throw new Error('equipment profile snapshot rarityBonuses must be an object');
@@ -841,7 +850,7 @@ export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
       if (!Number.isFinite(value)) throw new Error(`rarityBonuses.${rarity}.${role}: must be finite`);
     }
   }
-  return structuredClone(snapshot);
+  return snapshot;
 }
 
 /** Resolve one equipment role from the data-owned ordered source table. */
@@ -1189,7 +1198,7 @@ export function stampDeck(registries, run, cards) {
       inst.profileId = row.profile.id;
       inst.profileReceipt = { ...row.receipt };
     }
-    const carrier = row && row.profile ? row.profile : registries.cards.get(inst.cardId);
+    const carrier = row && row.profile ? run.equipmentProfileRuleSnapshot.profiles[row.profile.id] : registries.cards.get(inst.cardId);
     const priorSchool = inst.damageSchool;
     const priorBuildup = inst.exposureBuildupPerHit;
     if (typeof carrier.damageSchool === 'string') inst.damageSchool = carrier.damageSchool;
