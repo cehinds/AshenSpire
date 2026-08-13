@@ -27,7 +27,7 @@
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-import { serializeRun, deserializeRun } from '../model/state.js';
+import { serializeRun, deserializeRun, initializeRunDerivedStats } from '../model/state.js';
 import { createLoadout, stampDeck } from '../model/loadout.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 
@@ -375,12 +375,14 @@ export function createSaveManager(storage) {
         run.loadout = createLoadout(registries, run.class);
         stampDeck(registries, run);
       }
-      // Pre-mana v1 saves remain valid: the absent optional fields mean the
-      // climb began before this resource existed, so it enters at its class's
-      // authored full pool. Present-but-malformed values were refused earlier.
-      if (run.maxMana === undefined && run.mana === undefined) {
-        run.maxMana = registries.classes.get(run.class).maxMana;
-        run.mana = run.maxMana;
+      // One migration door for HP, Mana, Stamina, Energy and Draw. A run that
+      // already owns a rules snapshot is only validated; a legacy run resolves
+      // the current host rules and preserves existing HP/Mana deficits.
+      try {
+        initializeRunDerivedStats(run, registries, { preserveDeficits: true });
+      } catch (e) {
+        archive(json, e && e.message ? e.message : 'invalid derived-stat snapshot', slot);
+        return null;
       }
       // A run that LOADS is a player too, and this is the edge Bjorn could not
       // reach: everyone who started a climb on a build before this one has runs

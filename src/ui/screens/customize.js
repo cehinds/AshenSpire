@@ -10,6 +10,8 @@ import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, cl
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
+import { createRunState } from '../../model/state.js';
+import { statProjection } from '../../model/statProjection.js';
 
 export function mountCustomize(app, { registries, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -70,6 +72,7 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
 
           <div class="preview-pane">
             <div id="cz-portrait" class="cz-portrait"></div>
+            <details class="cz-stats"><summary>ATTRIBUTES &amp; RESOURCES</summary><div id="cz-stat-projection"></div></details>
             <label class="cz-label cz-name-label" for="cz-name">NAME</label>
             <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false"
                    autocomplete="off" placeholder="Forsaken" value="">
@@ -98,6 +101,10 @@ export function mountCustomize(app, { registries, defaultSeedString, onBack, onS
       : null;
     if (sprite) p.appendChild(sprite);
     else p.textContent = state.glyph;
+    const preview = createRunState({ seed: 0, classId: state.classId, registries });
+    const projection = statProjection(registries, preview);
+    $('#cz-stat-projection').innerHTML = projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')
+      + projection.derived.map((row) => `<div><b>${esc(row.label)}</b> ${esc(row.formula)}${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('');
   }
 
   // ---- class row (real classes + locked M3 silhouettes) ----

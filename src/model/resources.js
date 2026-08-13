@@ -87,6 +87,16 @@ export const RESOURCE_SOURCES = Object.freeze({
     },
     domain: (pop) => maxOf(pop.map((e) => e.maxMana)),
   }),
+  stamina: Object.freeze({
+    read: (view, entity) => {
+      const max = entity && entity.maxStamina;
+      if (!Number.isFinite(max) || max < 0) return null;
+      const cur = view && Number.isFinite(view.stamina) ? view.stamina : entity.stamina;
+      if (!Number.isFinite(cur)) return null;
+      return { cur: Math.max(0, Math.min(max, cur)), max };
+    },
+    domain: (pop) => maxOf(pop.map((e) => e.maxStamina)),
+  }),
   poise: Object.freeze({
     read: (view, entity) => {
       const pm = (view && view.poiseMeter) || (entity && entity.poiseMeter);
@@ -139,7 +149,7 @@ export function resourceDomains(registries) {
       if (m) bonus = Math.max(bonus, Number(m[1]));
     }
   }
-  const playerPop = classes.map((c) => ({ maxHp: (c.maxHp || 0) + bonus, maxMana: c.maxMana, poiseMax: undefined }));
+  const playerPop = classes.map((c) => ({ maxHp: (c.maxHp || 0) + bonus, maxMana: c.maxMana, maxStamina: 0, poiseMax: undefined }));
   const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
   const pops = { main: playerPop, model: bothPop };
   const out = {};

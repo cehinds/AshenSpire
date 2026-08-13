@@ -238,6 +238,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       <div class="combat coop">
         <header class="topbar">
           <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
+          <div class="resbars-host"></div>
           <button class="subtle coop-leave" id="coop-leave" style="margin-left:auto">Leave</button>
         </header>
         <div class="${backdropClass(snap.actNumber)}"></div>
@@ -255,6 +256,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
         </div>
         <div class="fx-layer"></div>
       </div>`;
+
+    // The active seat gets the same main-HUD plan as solo. Values come only
+    // from the host snapshot; a missing current/max pair produces no bar.
+    const mainHost = app.querySelector('.topbar .resbars-host');
+    if (mainHost && meP) {
+      const mainPlan = resourceBarPlan(registries, 'main', meP, meP, resourceDomainTable);
+      mainHost.appendChild(resourceBars(mainPlan, { surface: 'main' }));
+    }
 
     // Player seats (all party members in the fight).
     const zone = app.querySelector('.player-zone');

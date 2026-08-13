@@ -1301,9 +1301,9 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
     const rn4 = createRunState({ seed: 4, classId: 'reaver', registries: REG });
     rn4.hp = 10;
-    eq(shrineHealAmount(REG, rn4), Math.floor((84 * 35) / 100), 'shrine heal 35%');
+    eq(shrineHealAmount(REG, rn4), Math.floor((rn4.maxHp * 35) / 100), 'shrine heal 35%');
     rn4.relics.push('emberFragment');
-    eq(shrineHealAmount(REG, rn4), Math.floor((84 * 35 * 1.15) / 100), 'Ember Fragment ×1.15');
+    eq(shrineHealAmount(REG, rn4), Math.floor((rn4.maxHp * 35 * 1.15) / 100), 'Ember Fragment ×1.15');
   });
 
   // ---- 19. Keepsakes (character creation boons) -------------------------------------------
@@ -1392,10 +1392,10 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
 
   test('20b. Mana is real state: validated maxima, spend/refuse/restore, save migration, and zero/max HUD plans', () => {
     const fresh = createRunState({ seed: 0x6d616e61, classId: 'reaver', registries: REG });
-    eq(fresh.mana, 40, 'run starts at its class-authored mana maximum');
-    eq(fresh.maxMana, 40, 'Reaver maximum comes from class data');
+    eq(fresh.mana, 42, 'run starts at its WIS-derived mana maximum');
+    eq(fresh.maxMana, 42, 'Reaver maximum starts from class data and adds WIS tiers');
     assert(validateRunShape(fresh).length === 0, 'the new run shape accepts a sound mana pool');
-    assert(validateRunShape({ ...fresh, mana: 41 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
+    assert(validateRunShape({ ...fresh, mana: 43 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
 
     const badMax = validateContent({
       ...contentBundle,
@@ -1439,8 +1439,8 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     delete old.maxMana;
     storage.setItem(RUN_KEY, JSON.stringify(old));
     const migrated = saves.loadRun(REG);
-    eq(migrated.mana, 40, 'pre-mana save migrates to full current mana');
-    eq(migrated.maxMana, 40, 'pre-mana save derives its class maximum');
+    eq(migrated.mana, 42, 'pre-mana save migrates to full derived mana');
+    eq(migrated.maxMana, 42, 'pre-mana save derives class base plus WIS tiers');
 
     const domains = resourceDomains(REG);
     const zero = { ...empty.player, mana: 0 };

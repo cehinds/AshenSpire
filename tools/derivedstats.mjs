@@ -293,13 +293,13 @@ check('resume refuses an unknown snapshot envelope version by name', () => {
   assert(/snapshotVersion 999/.test(message), `snapshot refusal not named: ${message}`);
 });
 
-check('the Phase 1 dependency seam remains mechanically inert', () => {
+check('the integrated dependency seam has one rules owner and value-only consumers', () => {
   const consumers = [
     'src/model/state.js', 'src/model/resources.js', 'src/engine/actions.js',
     'src/engine/combat.js', 'src/engine/coopCombat.js', 'tools/session.mjs',
   ];
   const wired = consumers.filter((rel) => /derivedStats|derivedStatRules/.test(readFileSync(resolve(ROOT, rel), 'utf8')));
-  assert(!wired.length, `premature gameplay/session reader(s): ${wired.join(', ')}`);
+  equal(wired.join(','), 'src/model/state.js', 'only run-state creation/restore resolves rules');
   const model = readFileSync(resolve(ROOT, 'src/model/derivedStats.js'), 'utf8');
   assert(!/content\/attributes|model\/attributes/.test(model), 'reader imports Phase 1 instead of accepting its allocation seam');
 });
@@ -311,5 +311,5 @@ check('no Dodge/reaction behavior or handMax policy is smuggled into the contrac
 });
 
 console.log(`\n${failures ? 'FAIL' : 'PASS'} — ${checks - failures}/${checks} contract checks held, ${failures} failed.`);
-console.log('BOUNDARY: data + pure readers only. Nothing here changes a run, combat, draw pile, resource bar, save, LAN message or screen.');
+console.log('BOUNDARY: one host-owned snapshot resolves at run state; downstream systems consume persisted values, not live rules.');
 process.exit(failures ? 1 : 0);

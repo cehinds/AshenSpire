@@ -32,6 +32,7 @@ import { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS } from './equipment.
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
 import { attributes, creationModes, attributeRules } from './attributes.js';
+import { derivedStatRules } from './derivedStats.js';
 
 export const contentBundle = {
   version: '0.4.0',
@@ -73,6 +74,7 @@ export const contentBundle = {
   attributes,
   creationModes,
   attributeRules,
+  derivedStatRules,
 };
 
 // Not part of the bundle (UI-only data / M1 flow):

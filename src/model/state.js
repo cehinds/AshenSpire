@@ -10,6 +10,11 @@
 import { createLoadout, runMods, stampDeck } from './loadout.js';
 import { graceRefillPlan } from './gracerefill.js';
 import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
+import {
+  createDerivedStatRuleSnapshot,
+  restoreDerivedStatRuleSnapshot,
+  deriveStat,
+} from './derivedStats.js';
 
 export const RUN_SCHEMA_VERSION = 1;
 
@@ -37,7 +42,15 @@ export function createDeck(cardIds, idGen = createIdGen('d')) {
  * Starting deck/relic/HP come from the class def; cinders from
  * balance.startingCinders (default 0).
  */
-export function createRunState({ seed, classId, registries, attributeMode = undefined, attributes: requestedAttributes = undefined }) {
+export function createRunState({
+  seed,
+  classId,
+  registries,
+  attributeMode = undefined,
+  attributes: requestedAttributes = undefined,
+  derivedStatOptions = {},
+  derivedStatRuleSnapshot = undefined,
+}) {
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
     ? defaultCreationModeId(registries)
@@ -49,8 +62,8 @@ export function createRunState({ seed, classId, registries, attributeMode = unde
   const loadout = createLoadout(registries, classId);
   // Armour can carry `self.maxHp`, so the pool it sets has to be known before
   // hp is filled — the run starts at full, in whatever it starts wearing.
-  const maxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
-  const maxMana = classDef.maxMana;
+  const oldMaxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
+  const oldMaxMana = classDef.maxMana;
   const run = {
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
@@ -62,10 +75,10 @@ export function createRunState({ seed, classId, registries, attributeMode = unde
     floor: 0,
     actNumber: 1,
     mapNodeId: null,
-    hp: maxHp,
-    maxHp,
-    mana: maxMana,
-    maxMana,
+    hp: oldMaxHp,
+    maxHp: oldMaxHp,
+    mana: oldMaxMana,
+    maxMana: oldMaxMana,
     cinders: registries.balance.startingCinders || 0,
     deck: createDeck(classDef.startingDeck, idGen),
     loadout,
@@ -91,6 +104,73 @@ export function createRunState({ seed, classId, registries, attributeMode = unde
   // is a no-op; in an armour set with `defend.block=+2` it is already true of
   // the very first Defend you draw.
   stampDeck(registries, run);
+  initializeRunDerivedStats(run, registries, {
+    snapshot: derivedStatRuleSnapshot,
+    derivedStatOptions,
+    preserveDeficits: false,
+  });
+  return run;
+}
+
+function derivedOptions(registries, extra = {}) {
+  return {
+    ...extra,
+    authority: 'host',
+    attributeIds: registries.attributes.ids(),
+    classFields: ['maxHp', 'maxMana'],
+  };
+}
+
+/**
+ * Resolve the host-owned rule snapshot into the run's authoritative outputs.
+ * Existing current pools preserve their deficit during the one legacy
+ * migration. Once a snapshot exists, restores validate and trust the persisted
+ * outputs so a later content edit cannot rewrite a climb in progress.
+ */
+export function initializeRunDerivedStats(run, registries, {
+  snapshot = undefined,
+  derivedStatOptions = {},
+  preserveDeficits = true,
+} = {}) {
+  const existing = snapshot || run.derivedStatRuleSnapshot;
+  if (existing && run.derivedStatRuleSnapshot
+    && run.maxHp !== undefined && run.hp !== undefined
+    && run.maxMana !== undefined && run.mana !== undefined
+    && run.maxStamina !== undefined && run.stamina !== undefined
+    && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
+    restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+    return run;
+  }
+
+  const receipt = existing
+    ? restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries))
+    : createDerivedStatRuleSnapshot(registries.derivedStatRules, derivedOptions(registries, derivedStatOptions));
+  const classDef = registries.classes.get(run.class);
+  const rules = receipt.rules;
+  const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef });
+  const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef });
+  const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef });
+  const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef });
+  const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef });
+  const hpBonus = run.loadout ? runMods(registries, run.loadout, run.class).maxHp : 0;
+
+  const oldHpMax = run.maxHp;
+  const oldHp = run.hp;
+  const oldManaMax = run.maxMana;
+  const oldMana = run.mana;
+  run.derivedStatRuleSnapshot = structuredClone(receipt);
+  run.maxHp = hp.value + hpBonus;
+  run.maxMana = mana.value;
+  run.maxStamina = stamina.value;
+  run.energyMax = energy.value;
+  run.drawPerTurn = draw.value;
+  if (preserveDeficits && Number.isFinite(oldHpMax) && Number.isFinite(oldHp)) {
+    run.hp = Math.max(0, run.maxHp - Math.max(0, oldHpMax - oldHp));
+  } else run.hp = run.maxHp;
+  if (preserveDeficits && Number.isFinite(oldManaMax) && Number.isFinite(oldMana)) {
+    run.mana = Math.max(0, run.maxMana - Math.max(0, oldManaMax - oldMana));
+  } else run.mana = run.maxMana;
+  run.stamina = run.maxStamina;
   return run;
 }
 
@@ -111,6 +191,8 @@ export const RUN_SHAPE = [
   // Optional as a pair only so pre-attribute saves can migrate as one block.
   { key: 'attributeMode', type: 'string', optional: true },
   { key: 'attributes', type: 'object', optional: true },
+  // Optional only for the one pre-derived migration at the load door.
+  { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
@@ -119,6 +201,10 @@ export const RUN_SHAPE = [
   // its class-authored full pool before handing it to the game.
   { key: 'mana', type: 'number', optional: true },
   { key: 'maxMana', type: 'number', optional: true },
+  { key: 'stamina', type: 'number', optional: true },
+  { key: 'maxStamina', type: 'number', optional: true },
+  { key: 'energyMax', type: 'number', optional: true },
+  { key: 'drawPerTurn', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
@@ -178,6 +264,15 @@ export function validateRunShape(run) {
   if (Number.isFinite(run.mana) && Number.isFinite(run.maxMana) && (run.mana < 0 || run.mana > run.maxMana)) {
     problems.push('mana must be between 0 and maxMana');
   }
+  const staminaAbsent = run.stamina === undefined;
+  const maxStaminaAbsent = run.maxStamina === undefined;
+  if (staminaAbsent !== maxStaminaAbsent) problems.push('stamina and maxStamina must both be present or both be absent');
+  if (run.maxStamina !== undefined && (!Number.isFinite(run.maxStamina) || run.maxStamina < 0)) problems.push('maxStamina must be >= 0');
+  if (Number.isFinite(run.stamina) && Number.isFinite(run.maxStamina) && (run.stamina < 0 || run.stamina > run.maxStamina)) {
+    problems.push('stamina must be between 0 and maxStamina');
+  }
+  if (run.energyMax !== undefined && (!Number.isFinite(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be >= 0');
+  if (run.drawPerTurn !== undefined && (!Number.isFinite(run.drawPerTurn) || run.drawPerTurn < 0)) problems.push('drawPerTurn must be >= 0');
   return problems;
 }
 
@@ -208,7 +303,7 @@ export function deserializeRun(json) {
 /**
  * Player combat entity. statuses: { [statusId]: { stacks, duration?, meter? } }.
  */
-export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, relicIds = [], flasks = [], energyMax = 3 }) {
+export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], energyMax = 3, drawPerTurn = 5 }) {
   return {
     id: 'player',
     kind: 'player',
@@ -217,9 +312,12 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, re
     maxHp,
     mana: mana != null ? mana : maxMana,
     maxMana,
+    stamina: stamina != null ? stamina : maxStamina,
+    maxStamina,
     block: 0,
     energy: 0,
     energyMax,
+    drawPerTurn,
     statuses: {},
     stanceId: null,
     relicIds: [...relicIds],

@@ -26,6 +26,16 @@
 
 export const resources = [
   {
+    id: 'stamina',
+    name: 'STAMINA',
+    glyph: '▲',
+    tint: '#4f9b62',
+    weight: 'normal',
+    order: 20,
+    surfaces: ['main'],
+    source: 'stamina',
+  },
+  {
     id: 'mana',
     name: 'MANA',
     glyph: '◆',

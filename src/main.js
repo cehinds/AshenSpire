@@ -1164,6 +1164,10 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       hp: run.hp,
       maxMana: run.maxMana,
       mana: run.mana,
+      maxStamina: run.maxStamina,
+      stamina: run.stamina,
+      energyMax: run.energyMax,
+      drawPerTurn: run.drawPerTurn,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
@@ -1241,6 +1245,7 @@ function onCombatEnd(result, combat, enc) {
 
   run.hp = combat.player.hp;
   run.mana = combat.player.mana;
+  run.stamina = combat.player.stamina;
   run.stats.fightsWon += 1;
   run.combatEntered = null;
 

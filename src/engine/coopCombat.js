@@ -118,7 +118,10 @@ function addPlayerState(C, p, { initial = false } = {}) {
     classId: p.classId, maxHp: p.maxHp, hp: p.hp != null ? p.hp : p.maxHp,
     maxMana: p.maxMana != null ? p.maxMana : C.registries.classes.get(p.classId).maxMana,
     mana: p.mana,
-    relicIds: p.relicIds || [], flasks: p.flasks || [], energyMax: C.energyMax,
+    maxStamina: p.maxStamina, stamina: p.stamina,
+    relicIds: p.relicIds || [], flasks: p.flasks || [],
+    energyMax: p.energyMax != null ? p.energyMax : C.energyMax,
+    drawPerTurn: p.drawPerTurn != null ? p.drawPerTurn : C.drawPerTurn,
   });
   const deck = (p.deck || []).map((c) => ({
     instanceId: c.instanceId,
@@ -150,7 +153,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     if (C.phase === 'player') {
       setActive(C, P);
       P.entity.energy = P.entity.energyMax;
-      A.drawCards(C, C.drawPerTurn);
+      A.drawCards(C, P.entity.drawPerTurn);
     }
     rescaleEnemies(C);
   }
@@ -258,7 +261,7 @@ function startPlayerPhase(C) {
     if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
     e.energy = e.energyMax;
-    A.drawCards(C, C.drawPerTurn);
+    A.drawCards(C, e.drawPerTurn);
     C.emit('playerTurnStart', { turn: C.turn, playerId: P.id });
     fireOwnerHooks(C, e, 'ownerTurnStart');
     drainQueue(C);

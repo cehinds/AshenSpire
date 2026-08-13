@@ -26,6 +26,7 @@ import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
+import { statProjection } from '../../model/statProjection.js';
 
 const CFG = () => balance.equipment;
 
@@ -709,6 +710,16 @@ export function mountEquipment(host, {
     return box;
   }
 
+  function statsComparison() {
+    const projection = statProjection(registries, run);
+    const box = document.createElement('section');
+    box.className = 'armoury-stats';
+    box.innerHTML = '<h3>ATTRIBUTES &amp; RESOURCES</h3>'
+      + `<div class="armoury-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
+      + `<div class="armoury-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`;
+    return box;
+  }
+
   function commit() {
     if (onChange) onChange(run.loadout);
     draw();
@@ -854,6 +865,7 @@ export function mountEquipment(host, {
       dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
       right.appendChild(dead);
     }
+    wrap.querySelector('.armoury-strip').appendChild(statsComparison());
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
 
     notice = '';

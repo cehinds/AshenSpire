@@ -16,6 +16,7 @@ import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { RESOURCE_SOURCE_IDS, resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { createSession } from './session.mjs';
+import { statProjection } from '../src/model/statProjection.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REG = createRegistries(contentBundle);
@@ -154,11 +155,28 @@ check('shared main-HUD plan shows Mana and real Stamina, never a fabricated trou
 
 check('Hybrid Stats panel and co-op active-seat HUD use shared data plans', () => {
   const overlay = readFileSync(resolve(ROOT, 'src/ui/components/overlay.js'), 'utf8');
+  const projection = readFileSync(resolve(ROOT, 'src/model/statProjection.js'), 'utf8');
   const coop = readFileSync(resolve(ROOT, 'src/ui/screens/coop.js'), 'utf8');
   assert(/hybridStatsPlan\s*\(/.test(overlay), 'overlay Stats still hard-codes its rows');
-  assert(/DRAW PER TURN \/ OPENING HAND/i.test(overlay), 'panel does not state the current shared draw meaning');
+  assert(/turn 1 and every later turn/i.test(projection), 'projection does not state the current shared draw meaning');
   assert(/resourceBarPlan\s*\(registries,\s*['"]main['"]/.test(coop), 'co-op never calls the shared main-HUD plan');
   assert(/resourceBars\s*\(/.test(coop), 'co-op never renders the shared resource plan');
+});
+
+check('one projection exports attribute scaling receipts for Overlay, Armoury and creation', () => {
+  const run = fresh();
+  const projection = statProjection(REG, run);
+  equal(projection.attributes.length, 5, 'attribute rows');
+  for (const id of ['hp', 'mana', 'stamina', 'energy', 'draw']) {
+    const row = projection.derived.find((entry) => entry.id === id);
+    assert(row, `missing ${id} receipt`);
+    assert(Number.isFinite(row.base) && Number.isFinite(row.tier) && Number.isFinite(row.value), `${id} receipt is not numeric`);
+    assert(typeof row.formula === 'string' && row.formula.includes(String(row.value)), `${id} formula omits result`);
+  }
+  const equipment = readFileSync(resolve(ROOT, 'src/ui/screens/equipment.js'), 'utf8');
+  const customize = readFileSync(resolve(ROOT, 'src/ui/screens/customize.js'), 'utf8');
+  assert(/statProjection\s*\(/.test(equipment), 'Armoury does not consume the shared projection');
+  assert(/statProjection\s*\(/.test(customize), 'character creation does not consume the shared projection');
 });
 
 console.log(`\n${failures ? `HYBRID STATS RED — ${failures}/${checks} contracts failing` : `HYBRID STATS GREEN — ${checks}/${checks}`}`);

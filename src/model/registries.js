@@ -99,6 +99,9 @@ export function createRegistries(contentBundle) {
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
+  // One object, not a copied settings shadow. The run snapshots the resolved
+  // result; authoring and validation still point at this exact content object.
+  registries.derivedStatRules = deepFreeze(bundle.derivedStatRules || {});
 
   const mapConfigs = deepFreeze({ ...(bundle.mapConfigs || {}) });
   registries.mapConfigs = mapConfigs;

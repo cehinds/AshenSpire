@@ -16,7 +16,7 @@
 // series when they return (see resolveCatchup).
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, initializeRunDerivedStats } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import {
@@ -43,7 +43,7 @@ export function restoreSession(registries, data) {
   return s;
 }
 
-export function createSession({ registries, seedString, endless = false, restore = null }) {
+export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {} }) {
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
   const seed = restore ? (restore.seed >>> 0) : seedOf(seedString);
   const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
@@ -72,10 +72,7 @@ export function createSession({ registries, seedString, endless = false, restore
         throw new Error(`Session member '${md.id}' class '${md.classId}' disagrees with run class '${md.run.class}'`);
       }
       normalizeRunAttributes(md.run, registries);
-      if (md.run.maxMana === undefined && md.run.mana === undefined) {
-        md.run.maxMana = registries.classes.get(md.classId).maxMana;
-        md.run.mana = md.run.maxMana;
-      }
+      initializeRunDerivedStats(md.run, registries, { preserveDeficits: true });
       members.set(md.id, {
         id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
         connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
@@ -94,7 +91,7 @@ export function createSession({ registries, seedString, endless = false, restore
 
   function addMember({ id, name, classId, tint, spriteStyle, attributeMode = undefined, attributes = undefined }) {
     const index = order++;
-    const run = createRunState({ seed, classId, registries, attributeMode, attributes });
+    const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions });
     const m = {
       id,
       name: String(name || 'Forsaken').slice(0, 18),
@@ -246,6 +243,9 @@ export function createSession({ registries, seedString, endless = false, restore
       id: m.id, name: m.name, classId: m.classId,
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
       maxMana: m.run.maxMana, mana: m.run.mana,
+      maxStamina: m.run.maxStamina, stamina: m.run.stamina,
+      energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
+      derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       relicIds: m.run.relics, flasks: m.run.flasks,
     };
@@ -292,8 +292,10 @@ export function createSession({ registries, seedString, endless = false, restore
       players: [...c.players.values()].map((P) => ({
         id: P.id, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         mana: P.entity.mana, maxMana: P.entity.maxMana,
+        stamina: P.entity.stamina, maxStamina: P.entity.maxStamina,
         attributeMode: P.attributeMode, attributes: { ...P.attributes },
         energy: P.entity.energy, energyMax: P.entity.energyMax,
+        drawPerTurn: P.entity.drawPerTurn,
         connected: P.connected, alive: P.entity.alive, ended: P.ended,
         statuses: P.entity.statuses, stanceId: P.entity.stanceId,
         hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
@@ -336,6 +338,7 @@ export function createSession({ registries, seedString, endless = false, restore
       const P = c.players.get(m.id);
       if (P) {
         m.run.mana = P.entity.mana;
+        m.run.stamina = P.entity.stamina;
         m.run.flasks = P.entity.flasks.map((f) => ({ ...f }));
       }
     }
@@ -531,6 +534,9 @@ export function createSession({ registries, seedString, endless = false, restore
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
       mana: m.run.mana, maxMana: m.run.maxMana,
+      stamina: m.run.stamina, maxStamina: m.run.maxStamina,
+      energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
+      derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       deck: m.run.deck.map((c) => ({ instanceId: c.instanceId, cardId: c.cardId, upgraded: c.upgraded })),
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,

@@ -35,6 +35,7 @@ import {
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
+import { derivedStatRuleProblems } from './derivedStats.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -79,6 +80,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'music',
   'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
   'attributeRules',
+  'derivedStatRules',
 ]);
 
 /**
@@ -258,6 +260,10 @@ export function validateContent(bundle) {
   }
   walkSchema(b.attributeRules, SCHEMAS.attributeRules, 'attributeRules', vctx);
   for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
+  for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
+    attributeIds: (b.attributes || []).map((row) => row.id),
+    classFields: ['maxHp', 'maxMana'],
+  })) err(problem.path, problem.msg);
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
   // The shape walk above already rejects a missing `source`. This rejects a
