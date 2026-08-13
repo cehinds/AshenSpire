@@ -11,8 +11,10 @@ import { createRunState } from '../src/model/state.js';
 import { DAMAGE_SCHOOLS, equipmentKitReceipt, stampDeck, validateEquipment } from '../src/model/loadout.js';
 import { deriveStat } from '../src/model/derivedStats.js';
 import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
+import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { validateContent } from '../src/model/validate.js';
+import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
 
 const R = createRegistries(contentBundle);
 let passed = 0;
@@ -228,6 +230,64 @@ for (const id of ['straightSword', 'dagger', 'shortbow']) {
   check(mutant.final !== mutant.receipt?.value,
     `mutant: receipt/final parity catches ${id} item damage duplication`, JSON.stringify(mutant));
 }
+
+const layered = createRunState({
+  seed: 901, classId: 'reaver', registries: R,
+  derivedStatOptions: {
+    modeModifiers: { equipmentProfiles: {
+      daggerPierceAttack: { gainPerTier: 2 }, bowPierceAttack: { gainPerTier: 2 },
+    } },
+    runModifiers: [{ equipmentProfiles: {
+      daggerPierceAttack: { gainPerTier: 3 }, bowPierceAttack: { gainPerTier: 3 },
+    } }],
+    explicitOverride: { equipmentProfiles: {
+      daggerPierceAttack: { gainPerTier: 4 }, bowPierceAttack: { gainPerTier: 4 },
+    } },
+  },
+});
+check(layered.equipmentProfileRuleSnapshot.profiles.daggerPierceAttack.gainPerTier === 4
+  && layered.equipmentProfileRuleSnapshot.profiles.bowPierceAttack.gainPerTier === 4,
+  'host override precedence snapshots both DEX profile rows', JSON.stringify(layered.equipmentProfileRuleSnapshot.profiles));
+layered.loadout.sets.leftHand[0] = null;
+layered.loadout.sets.rightHand[0] = 'dagger';
+stampDeck(R, layered);
+const layeredAttack = layered.deck.find((card) => card.equipmentRole === 'attack');
+check(layeredAttack.profileId === 'daggerPierceAttack' && layeredAttack.profileReceipt.value === 11,
+  'DEX dagger consumes the host-resolved override snapshot', JSON.stringify(layeredAttack));
+layered.loadout.sets.rightHand[0] = 'shortbow';
+stampDeck(R, layered);
+check(layeredAttack.profileId === 'bowPierceAttack' && layeredAttack.profileReceipt.value === 12,
+  'DEX bow consumes the same host-resolved override snapshot', JSON.stringify(layeredAttack));
+
+const save = createSaveManager(createMemoryStorage());
+save.saveRun(layered);
+const resumed = save.loadRun(R);
+const resumedAttack = resumed?.deck.find((card) => card.equipmentRole === 'attack');
+check(resumedAttack?.profileId === 'bowPierceAttack'
+  && JSON.stringify(resumedAttack.profileReceipt) === JSON.stringify(layeredAttack.profileReceipt),
+  'save resume preserves DEX profile and calculation receipt identity', JSON.stringify(resumedAttack));
+
+const coop = createCoopCombat({
+  registries: R, rng: createRng(902), enemyIds: [R.enemies.ids()[0]],
+  players: [{
+    id: 'p1', classId: layered.class, maxHp: layered.maxHp, hp: layered.hp,
+    maxMana: layered.maxMana, mana: layered.mana, maxStamina: layered.maxStamina, stamina: layered.stamina,
+    deck: layered.deck, relicIds: [], flasks: [],
+  }],
+});
+const coopAttack = [...coop.players.get('p1').piles.hand, ...coop.players.get('p1').piles.draw]
+  .find((card) => card.instanceId === layeredAttack.instanceId);
+check(coopAttack?.profileId === layeredAttack.profileId
+  && JSON.stringify(coopAttack.profileReceipt) === JSON.stringify(layeredAttack.profileReceipt),
+  'co-op transport preserves DEX profile and calculation receipt identity', JSON.stringify(coopAttack));
+
+const driftProfiles = contentBundle.equipment.basicCardProfiles.map((row) => (
+  ['daggerPierceAttack', 'bowPierceAttack'].includes(row.id) ? { ...row, gainPerTier: 99 } : row
+));
+const driftR = createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, basicCardProfiles: driftProfiles } });
+stampDeck(driftR, layered);
+check(layeredAttack.profileReceipt.value === 12,
+  'live profile drift cannot rewrite the saved host snapshot', JSON.stringify(layeredAttack.profileReceipt));
 
 console.log(`\nequipment-stat-isolation: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);
