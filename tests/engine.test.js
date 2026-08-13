@@ -2223,7 +2223,16 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const check = (mut) => {
       const equipment = clone();
       mut(equipment);
-      return validateEquipment({ equipment, classes: REG.classes, statuses: REG.statuses }).join('; ');
+      // `attributes` rides along because three armaments (greatsword, dagger,
+      // ashStaff) AUTHOR attribute minima on their own rows, and
+      // equipmentRequirementReceipt fails CLOSED on an attributes registry it
+      // cannot ask — `registries.attributes.has` on undefined, once per such
+      // piece. The real boot always hands the validator that registry
+      // (createRegistries), so a partial-registries control arm was reading the
+      // tables through a door no real caller uses. Observed red at dev=86564e6
+      // (three identical 'reading has' messages, one per requiring piece)
+      // before this line; the mutation arms below are unchanged and still red.
+      return validateEquipment({ equipment, classes: REG.classes, statuses: REG.statuses, attributes: REG.attributes }).join('; ');
     };
     const slotRow = (e, id) => e.slots.find((s) => s.id === id);
     const armRow = (e, id) => e.armaments.find((a) => a.id === id);
