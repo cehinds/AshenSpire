@@ -66,17 +66,33 @@
 //      and against the sideways travel of their own scroll container.
 //  11. THE MERCHANT'S BRAZIER, which nobody asked for and which burns a card
 //      out of the deck for good on one tap of a small card in a wrapped grid.
+//  12. THE THREE BEATS THIS GAME ALREADY HAD, IN THEIR OWN SCREENS' HANDS —
+//      the census's `handledBy` rows, which this tool took ON FAITH from the
+//      day the set section was written until the three `?shot=` states landed
+//      (title / profile / crisis, main.js). Each is driven in its own idiom,
+//      because handledBy is an exemption from the shared machinery and not
+//      from being watched: the title's ✕ arms on one press, takes itself back
+//      at 2.5 s, and deletes only on the armed second press; the drawer's
+//      Restore opens an inline confirm that names what happens to the profile
+//      in play; the crisis screen's "Start a new profile" opens a modal, and
+//      its commit is read off the save manager's own named state
+//      (window.__profile → profileStatus()), never inferred from which screen
+//      mounted next. Every pose enters by the real doors: a real save written
+//      then listed, a real profile archived by replacePrimaryWith, real torn
+//      bytes read by the real parser.
 //
 // OBSERVED RED — `--mutate`, and it falsifies the thing that would be silent.
-// It puts the OLD DOOR back on every one of the five armed surfaces: the
-// binding bars, End Turn, the shrine's Rest, every Smith candidate and every
-// brazier card are rewired so a pointer `click` commits directly, leaving the
-// fill and the classes exactly where they are. Each screen still LOOKS right
-// and each abort silently commits. FIVE SEPARATE VERDICTS, one per surface, and
-// a run where any one of them fails to go red exits 2 — a mutation caught on
-// the event bars and missed on End Turn would have printed CAUGHT under one
-// filter, which is a green that proves the wrong thing. A guard nobody has
-// watched fail is `unknown`, not green (development.md, the instrument rule).
+// It puts the OLD DOOR back on every one of the eight armed surfaces: the
+// binding bars, End Turn, the shrine's Rest, every Smith candidate, every
+// brazier card, the title's ✕, the drawer's Restore and the crisis screen's
+// fresh-profile button are rewired so a pointer `click` commits (or looks
+// committed) directly, leaving the classes exactly where they are. Each screen
+// still LOOKS right and each abort silently commits. EIGHT SEPARATE VERDICTS,
+// one per surface, and a run where any one of them fails to go red exits 2 — a
+// mutation caught on the event bars and missed on End Turn would have printed
+// CAUGHT under one filter, which is a green that proves the wrong thing. A
+// guard nobody has watched fail is `unknown`, not green (development.md, the
+// instrument rule).
 //
 // Usage
 //   node tools/holdconfirm.mjs                 source tree via tools/serve.mjs
@@ -87,10 +103,11 @@
 //   node tools/holdconfirm.mjs --schema        the dial's boot refusal, on 5 known-bads
 //   CHROME=/path/to/chrome node tools/holdconfirm.mjs
 //
-// Surfaces driven: ?shot=event, ?shot=combat, ?shot=rest, ?shot=shop. Which
-// ones is DERIVED from the table's own `surface` field, so a new row with a
-// reachable surface is swept the day it is written and a new row WITHOUT one is
-// named in the skips rather than skipped in silence.
+// Surfaces driven: ?shot=event, ?shot=combat, ?shot=rest, ?shot=shop,
+// ?shot=title, ?shot=profile, ?shot=crisis. Which ones is DERIVED from the
+// table's own `surface` field, so a new row with a reachable surface is swept
+// the day it is written and a new row WITHOUT one is named in the skips rather
+// than skipped in silence.
 //
 // Exit codes
 //   0  every check held
@@ -769,11 +786,14 @@ async function main() {
     // A ROW THAT OWES NO BEAT AND IS NOT ROUTED HAS NOTHING TO WATCH, and
     // counting it as a gap would be inflating the red with rows working exactly
     // as declared (playCard, rewardPick, draftPick). THE GAP IS A SECOND BEAT
-    // THIS GAME HAS THAT NOTHING HERE CAN OPEN — all three are `handledBy`
-    // rows, all three predate this branch, and every one of them is a real
-    // confirm nobody has ever watched run. Named, and it takes the exit code:
-    // this tool must not print PASS while a third of the game's second beats
-    // are unobserved. The fix is three `?shot=` states, which is a card.
+    // THIS GAME HAS THAT NOTHING HERE CAN OPEN. For a week that named three
+    // `handledBy` rows — deleteSave, profileRestore, freshProfile — real
+    // confirms nobody had ever watched run; the three `?shot=` states this
+    // line asked for exist now (title / profile / crisis) and their beats are
+    // DRIVEN below, in their own screens' hands. What this skip still guards
+    // is the FUTURE row: any beat-owing action whose row names no surface
+    // lands here by name and takes the exit code with it, exactly as the
+    // first three did.
     const unreachable = [...new Set(table.rows.filter((r) => r.form !== 'none' && !r.surface)
       .map((r) => `${r.id} (${r.handledBy ? 'its own hand: ' + r.handledBy.split(' — ')[0] : 'nothing wires it'})`))];
     if (unreachable.length) skip(`${unreachable.length} second beat(s) no instrument can open`, 'unasked', unreachable.join(' · '));
@@ -1030,6 +1050,205 @@ async function main() {
     }
   }
 
+  // ==========================================================================
+  // THE THREE BEATS IN THEIR OWN SCREENS' HANDS — the census's `handledBy`
+  // rows, watched instead of believed. Each is driven in its own idiom, on a
+  // state posed by the real doors (see main.js, the three states' comments).
+  // The exemption `handledBy` names is from the SHARED MACHINERY, never from
+  // being measured: no `data-beat-action` is expected on any of these, and
+  // none of these sections reads one.
+
+  // ---- THE TITLE: deleting a run — the game's oldest second beat ------------
+  {
+    console.log(`\n  THE TITLE — the ✕ arms, takes itself back, and deletes only on the armed second press`);
+    await openShot('title');
+    if (mutate) {
+      // THE OLD DOOR: one click deletes, no arm. The button keeps its class
+      // and its glyph — only the wiring changes.
+      const rewired = await ev(`(() => {
+        const b = document.querySelector('.slot-delete'); if (!b) return 0;
+        const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
+        c.addEventListener('click', () => { c.closest('.slot').remove(); });
+        return 1;
+      })()`);
+      if (!rewired) { console.error('\nholdconfirm --mutate: no .slot-delete to rewire at ?shot=title. unknown, not caught.'); cdp.close(); child.kill(); stop(); process.exit(2); }
+      console.log(`    (mutation rewired the slot's ✕ to delete on ONE pointer click)`);
+    }
+    const tState = () => ev(`(() => {
+      const d = document.querySelector('.slot-delete');
+      return {
+        occupied: document.querySelectorAll('.slot.occupied').length,
+        del: !!d,
+        armed: d ? d.dataset.armed === '1' : null,
+        label: d ? d.textContent.trim() : null,
+        cont: !!document.querySelector('.slot-continue'),
+      };
+    })()`);
+    const t0 = await tState();
+    if (!t0.del || !t0.occupied) skip('title', 'unasked', 'no occupied slot with a delete control at ?shot=title at this ref');
+    else {
+      ok(`the pose surfaced a REAL save through the real reader`, t0.occupied === 1 && t0.cont,
+        `${t0.occupied} occupied slot(s), CONTINUE drawn=${t0.cont} — listSlots reading the bytes newRun wrote`);
+      ok(`at rest the ✕ is not armed`, t0.armed === false && t0.label === '✕',
+        `armed=${t0.armed} label=${JSON.stringify(t0.label)}`);
+      const dp = await pointOf('.slot-delete');
+      await press(dp, 30);
+      const t1 = await tState();
+      ok(`one press ARMS the delete and deletes NOTHING`,
+        t1.del && t1.armed === true && /Delete\?/.test(t1.label || '') && t1.occupied === t0.occupied,
+        `armed=${t1.armed} label=${JSON.stringify(t1.label)} occupied ${t0.occupied} -> ${t1.occupied}`);
+      // THE ABORT IS TIME, which is this form's whole difference: nobody
+      // presses again and the arm takes itself back. title.js resets at
+      // 2500 ms; measured past it.
+      await wait(2700);
+      const t2 = await tState();
+      ok(`an armed ✕ nobody presses again takes itself back`,
+        mutate ? true : (t2.armed === false && t2.label === '✕' && t2.occupied === t0.occupied),
+        `armed=${t2.armed} label=${JSON.stringify(t2.label)} occupied=${t2.occupied} after the 2.5 s self-reset`);
+      // THE ARMED SECOND PRESS COMMITS — and the verdict is the re-render the
+      // real reader draws from storage, not the button's own state.
+      const dp2 = await pointOf('.slot-delete');
+      if (await press(dp2, 30)) { await press(await pointOf('.slot-delete'), 30); await wait(400); }
+      const t3 = await tState();
+      ok(`the second press while armed deletes the run`,
+        mutate ? true : (t3.occupied === 0 && !t3.cont),
+        `occupied ${t0.occupied} -> ${t3.occupied}, CONTINUE=${t3.cont} — read off the re-rendered slot list`);
+    }
+  }
+
+  // ---- SETTINGS → PROFILE: restoring a set-aside profile --------------------
+  {
+    console.log(`\n  SETTINGS → PROFILE — Restore opens an inline confirm that names what happens to the profile in play`);
+    await openShot('profile');
+    // The player's own door into the section: the Profile tab in the modal.
+    const tab = await pointOf('.set-tab[data-member="Profile"]');
+    if (!tab) skip('profile', 'unasked', 'no Profile tab in the Settings modal at ?shot=profile at this ref');
+    else {
+      await press(tab, 30); await wait(300);
+      if (mutate) {
+        // THE OLD DOOR: one tap "restores" — the result line speaks, no
+        // confirm ever opens.
+        const rewired = await ev(`(() => {
+          const b = document.querySelector('.prof-restore'); if (!b) return 0;
+          const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
+          c.addEventListener('click', () => { const r = document.querySelector('.prof-result'); if (r) r.textContent = 'Restored.'; });
+          return 1;
+        })()`);
+        if (!rewired) { console.error('\nholdconfirm --mutate: no .prof-restore to rewire at ?shot=profile. unknown, not caught.'); cdp.close(); child.kill(); stop(); process.exit(2); }
+        console.log(`    (mutation rewired Restore to look committed on ONE pointer click)`);
+      }
+      const pState = () => ev(`(() => ({
+        restore: !!document.querySelector('.prof-restore'),
+        confirm: !!document.querySelector('.prof-confirm'),
+        entries: document.querySelectorAll('.prof-entry').length,
+        result: ((document.querySelector('.prof-result') || {}).textContent || '').trim(),
+      }))()`);
+      const p0 = await pState();
+      if (!p0.restore) skip('profile', 'unasked', 'the drawer offered no restorable profile — the ?shot=profile pose did not archive one');
+      else {
+        ok(`the drawer lists the REAL set-aside profile the pose archived`, p0.entries > 0,
+          `${p0.entries} entr(ies) — listArchives reading what replacePrimaryWith wrote`);
+        const rp = await pointOf('.prof-restore');
+        await press(rp, 30);
+        const p1 = await pState();
+        ok(`one tap on Restore ARMS the confirm and restores NOTHING`,
+          p1.confirm === true && p1.result === '' && p1.entries === p0.entries,
+          `confirm=${p1.confirm} result=${JSON.stringify(p1.result.slice(0, 40))} entries ${p0.entries} -> ${p1.entries}`);
+        const stated = await ev(`(() => { const c = document.querySelector('.prof-confirm'); return c ? c.textContent : ''; })()`);
+        ok(`and the confirm names what happens to the profile in play`,
+          mutate ? true : /set aside/.test(stated),
+          JSON.stringify(String(stated).replace(/\s+/g, ' ').trim().slice(0, 70)));
+        // "Not yet" takes it back.
+        const cp = await pointOf('.prof-cancel');
+        if (!(await press(cp, 30))) ok(`"Not yet" takes it back and nothing was restored`, mutate ? true : false, 'no cancel button — the confirm never opened');
+        else {
+          const p2 = await pState();
+          ok(`"Not yet" takes it back and nothing was restored`,
+            !p2.confirm && p2.result === '' && p2.entries === p0.entries,
+            `confirm=${p2.confirm} result=${JSON.stringify(p2.result.slice(0, 20))} entries=${p2.entries}`);
+        }
+        // "Restore it" commits — witnessed by the re-render's own words AND by
+        // the drawer growing by the profile that was set aside in its place,
+        // both read back through the real reader.
+        const rp2 = await pointOf('.prof-restore');
+        if (await press(rp2, 30)) await wait(200);
+        const gp = await pointOf('.prof-go');
+        if (!gp) ok(`"Restore it" commits and the outgoing profile is set aside in its place`, mutate ? true : false, 'the confirm did not re-open — nothing to commit');
+        else {
+          await press(gp, 30); await wait(400);
+          const p3 = await pState();
+          ok(`"Restore it" commits and the outgoing profile is set aside in its place`,
+            /Restored\./.test(p3.result) && p3.entries === p0.entries + 1,
+            `result=${JSON.stringify(p3.result.slice(0, 44))} entries ${p0.entries} -> ${p3.entries}`);
+        }
+      }
+    }
+  }
+
+  // ---- THE CRISIS SCREEN: starting a new profile over an unreadable one -----
+  {
+    console.log(`\n  THE CRISIS SCREEN — "Start a new profile" opens its confirm; the commit is read off the manager's own state`);
+    await openShot('crisis');
+    const cState = () => ev(`(() => {
+      const p = typeof window.__profile === 'function' ? window.__profile() : null;
+      return {
+        notice: !!document.querySelector('.profile-notice'),
+        modal: !!document.querySelector('.confirm-fresh'),
+        title: !!document.querySelector('.title-screen'),
+        state: p && p.state, ok: p && p.ok, quarantined: p && p.quarantined,
+        archived: !!(p && p.archiveId),
+      };
+    })()`);
+    const c0 = await cState();
+    if (!c0.notice) skip('crisis', 'unasked', 'no .profile-notice mounted at ?shot=crisis at this ref');
+    else {
+      ok(`the torn bytes entered by the real door: named, quarantined, archived`,
+        c0.ok === false && c0.state === 'corrupt' && c0.quarantined === true && c0.archived,
+        `state=${c0.state} quarantined=${c0.quarantined} old bytes ${c0.archived ? 'kept in the drawer' : 'MISSING'}`);
+      if (mutate) {
+        // THE OLD DOOR: one click starts fresh, no confirm.
+        const rewired = await ev(`(() => {
+          const b = document.querySelector('.fresh'); if (!b) return 0;
+          const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
+          c.addEventListener('click', () => { const n = document.querySelector('.profile-notice'); if (n) n.remove(); });
+          return 1;
+        })()`);
+        if (!rewired) { console.error('\nholdconfirm --mutate: no .fresh to rewire at ?shot=crisis. unknown, not caught.'); cdp.close(); child.kill(); stop(); process.exit(2); }
+        console.log(`    (mutation rewired "Start a new profile" to commit on ONE pointer click)`);
+      }
+      const fp = await pointOf('.fresh');
+      await press(fp, 30);
+      const c1 = await cState();
+      ok(`"Start a new profile" OPENS its confirm and starts NOTHING`,
+        c1.modal === true && c1.notice && c1.quarantined === true,
+        `modal=${c1.modal} notice still mounted=${c1.notice} quarantined=${c1.quarantined}`);
+      // "Not yet" — the safe answer holds everything exactly where it was.
+      const np = await pointOf('.confirm-fresh .cancel');
+      if (!(await press(np, 30))) ok(`"Not yet" closes the confirm and the old bytes stay quarantined`, mutate ? true : false, 'no cancel — the confirm never opened');
+      else {
+        const c2 = await cState();
+        ok(`"Not yet" closes the confirm and the old bytes stay quarantined`,
+          !c2.modal && c2.notice && c2.quarantined === true && c2.state === 'corrupt',
+          `modal=${c2.modal} state=${c2.state} quarantined=${c2.quarantined}`);
+      }
+      // "Start fresh" commits — and because navigation after it is
+      // unconditional, the screen alone cannot witness the write: the verdict
+      // is profileStatus() itself, plus the promise the modal makes kept in
+      // state (the old bytes still archived, not deleted).
+      const fp2 = await pointOf('.fresh');
+      if (await press(fp2, 30)) await wait(200);
+      const gp2 = await pointOf('.confirm-fresh .go');
+      if (!gp2) ok(`"Start fresh" commits: a fresh profile is live and the torn one is KEPT`, mutate ? true : false, 'the confirm did not re-open — nothing to commit');
+      else {
+        await press(gp2, 30); await wait(500);
+        const c3 = await cState();
+        ok(`"Start fresh" commits: a fresh profile is live and the torn one is KEPT`,
+          c3.ok === true && c3.state === 'ok' && c3.quarantined === false && c3.archived && c3.title,
+          `state=${c3.state} quarantined=${c3.quarantined} old bytes ${c3.archived ? 'kept' : 'LOST'} title mounted=${c3.title}`);
+      }
+    }
+  }
+
   cdp.close(); child.kill(); stop();
 
   if (!checks) { console.error(`\nholdconfirm: nothing was measured. That is unknown, not a pass.`); process.exit(2); }
@@ -1045,6 +1264,9 @@ async function main() {
       ['the shrine', 'does NOT spend the shrine'],
       ['the Smith', 'it does not smith'],
       ['the merchant', 'it does not burn'],
+      ['the title slot', 'deletes NOTHING'],
+      ['the profile drawer', 'restores NOTHING'],
+      ['the crisis screen', 'starts NOTHING'],
     ];
     const caught = findings.filter((f) => CAUGHT_BY.some(([, needle]) => f.includes(needle)));
     for (const [name, needle] of CAUGHT_BY) {
@@ -1084,7 +1306,14 @@ async function main() {
   (g) NOT THAT THE FORMS ARE THE RIGHT ONES. The table's axis (stakes / undo /
       hazard) is a design claim. This proves the derivation is applied
       consistently and reaches the page; it cannot tell you that a hold on End
-      Turn is what a player wants, and NOBODY HAS WATCHED A PLAYER USE IT.`);
+      Turn is what a player wants, and NOBODY HAS WATCHED A PLAYER USE IT.
+  (h) THE THREE handledBy BEATS ARE MEASURED AS THEY ARE, NOT AS THE TABLE
+      DERIVES THEM. deleteSave's row derives 'hold'; its hand answers with a
+      two-click self-resetting arm — a third form. This proves that arm works
+      (arms, resets, commits only armed); whether it SHOULD be the shared
+      hold is a design call, and a green here licenses nothing about it. The
+      crisis pose is the corrupt state only: 'older' and 'newer' render
+      different screens and neither is driven here.`);
   if (notAsked.length) {
     const structural = notAsked.filter((n) => n.kind === 'structural');
     console.log(`\n  NOT ASKED OF THIS ARTIFACT — ${notAsked.length}:`);

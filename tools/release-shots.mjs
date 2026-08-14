@@ -149,6 +149,22 @@ const SCREENS = [
   // photograph shows the adjacency the fix is about.
   { name: 'event', query: '?shot=event', landmark: '.ev-choice', state: 'event' },
   { name: 'shop', query: '?shot=shop', landmark: '#shop-cards', state: 'shop' },
+  // The three profile-beat states (the census's handledBy rows, given doors so
+  // tools/holdconfirm.mjs can watch them — same reasoning as the Shrine and the
+  // event above: each state exists BECAUSE a fix or a watch needed the screen,
+  // so excluding it here would put back the condition the gap lived in). The
+  // landmarks are the controls the states were added FOR: the occupied slot's
+  // ✕, the drawer's Restore, the crisis screen's fresh-profile button.
+  { name: 'title-slots', query: '?shot=title', landmark: '.slot.occupied .slot-delete', state: 'title' },
+  {
+    name: 'profile-drawer',
+    // The Settings modal opens on the stored category; `settingsCategory` is
+    // the same setting a returning player's last-viewed tab uses, so the pose
+    // enters by that door rather than this tool clicking through the strip.
+    query: '?shot=profile&shotSettings=' + encodeURIComponent('{"settingsCategory":"Profile"}'),
+    landmark: '.prof-restore', state: 'profile',
+  },
+  { name: 'profile-crisis', query: '?shot=crisis', landmark: '.profile-notice .fresh', state: 'crisis' },
   {
     // AND THE GRID OPEN, driven, because the closed Shrine FITS. A baseline of
     // the screen in the state that never overflowed could not have caught the

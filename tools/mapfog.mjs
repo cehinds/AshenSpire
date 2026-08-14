@@ -248,10 +248,12 @@ const PROPERTIES = [
   // UNCONDITIONAL SINCE 2026-08-08, and that is the upgrade rather than a
   // widening. It used to run on the `+forks` half of the corpus only, because
   // the other half was a legal reading of his sentence where it must NOT hold.
-  // He picked the wide reading, so this is now the whole rule — and it is the
-  // check standing behind `FOG_TRAIL_CLAUSE`, the sentence the settings screen
-  // shows a player. A promise on a screen with no property behind it is the
-  // defect this row was written out of.
+  // The wide reading ships as THE FAMILY'S DEFAULT — asked, he answered "idk
+  // about hte forks part" (D19, claude-family), an honest idk and not a pick,
+  // so this rule is ours until he rules — and it is the check standing behind
+  // `FOG_TRAIL_CLAUSE`, the sentence the settings screen shows a player. A
+  // promise on a screen with no property behind it is the defect this row was
+  // written out of.
   ['NOTHING ever lit goes dark — the drawn set only grows',
     (cells) => {
       const bySeed = new Map();
