@@ -146,7 +146,12 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     const el = document.createElement('div');
     el.className = 'class-pick cz-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${registries.balance.startingDeckSize} cards</span></div>`;
+    // The chip's HP is the DERIVED total from the run's own home (state.js via
+    // createRunState: class base + attribute tiers + kit gear), never bare
+    // cls.maxHp — that is a component posing as a total, and it sat two scrolls
+    // above a ledger saying 96 while claiming 84 (Bjorn's gate, 2026-08-14).
+    // Same read the ledger stands on, default kit: the class's honest advert.
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${createRunState({ seed: 0, classId: cls.id, registries, profileMeta: meta }).maxHp} · ${registries.balance.startingDeckSize} cards</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
       state.startingKitId = null;
