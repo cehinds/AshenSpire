@@ -34705,7 +34705,6 @@ Object.assign(module.exports, { flaskIdentityHtml, flaskPresentation, mountFlask
 
 const { dispatch, previewCard, previewIntent, getEntity } = require("src/engine/combat.js");
 const { resolveCard } = require("src/model/registries.js");
-const { renderCard } = require("src/ui/components/card.js");
 const { openPileModal } = require("src/ui/components/piles.js");
 const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
@@ -34725,11 +34724,11 @@ const { trackGesture } = require("src/ui/gesture.js");
 const { resourceBars, markFlooredBars } = require("src/ui/components/resbars.js");
 const { renderArcaneExposure } = require("src/ui/components/arcaneExposure.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
-const { beatArmer, armInspect } = require("src/ui/components/holdconfirm.js");
+const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
-const { modeScopedHandExemption } = require("src/ui/handAxis.js");
+const { mountHand } = require("src/ui/components/hand.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -34741,16 +34740,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   // a `let` that reads null rather than a `const` in its temporal dead zone —
   // which throws, and would throw on the FIRST RENDER OF EVERY FIGHT.
   let endTurnBeat = null;
-  // ---- the hand's Law 5 exemption — MODE-SCOPED, and the words are his ------
-  //
-  // ONE HOME: src/ui/handAxis.js builds the declaration (D19's word, D17's
-  // history, and why coop.js's copy of this hand gets a DIFFERENT one). This
-  // renderer reads the hand-layout word — its overlap arm below lays the hand
-  // at zero travel — so its exemption is mode-scoped: present only under
-  // 'paging', absent under 'overlap', re-derived per mount (the word has no
-  // settings row, so mount-time is its lifetime; re-derive here if that
-  // changes). Never retype the string — the derivation lives there, not here.
-  const handExemption = modeScopedHandExemption();
   app.innerHTML = `
     <div class="combat">
       <!-- THE MAIN HUD, TWO ROWS, HIS ASSIGNMENT (D10 wave 4):
@@ -34784,7 +34773,13 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       </div>
       <div class="hand-area">
         <div class="energy-orb"></div>
-        <div class="hand"${handExemption}></div>
+        <!-- The strip itself — cards, fan, key hints, the inspect hold, the
+             overlap arm and the Law 5 exemption — is components/hand.js, THE
+             one hand renderer (both surfaces; the exemption's home is
+             src/ui/handAxis.js). This screen supplies only the viewer half:
+             live previewCard entries off the paced snapshot, and the local
+             dispatch wiring (wireCardInput). -->
+        <div class="hand"></div>
         <button class="end-turn">END TURN</button>
       </div>
       <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
@@ -34822,88 +34817,17 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
 
-  // ---- hand layout: the OVERLAP arm of balance.ui.handLayout (C2) ----------
-  //
-  // The word's one home is balance.ui.handLayout; main.js derives it onto
-  // <html data-hand-layout>; this block reads the ATTRIBUTE and nothing else.
-  // When the word is 'paging' (the default), every line below is inert and
-  // renderHand is byte-for-byte the shipped strip — that inertness is the C2
-  // ruling ("the shipped behaviour keeps its seat") made checkable.
-  //
-  // OVERLAP, on the narrow shape: the whole hand lays inside the strip's own
-  // width, each card overlapped by the next, z-order left-under-right (the
-  // zIndex renderHand already writes). THE OVERLAP IS DERIVED, NEVER TYPED:
-  // measured container width, measured card width, hand size — the same three
-  // facts every render, so ten cards at Text XL fit exactly where five at S
-  // spread out. Law 5 clause 1 is the constraint the arithmetic serves:
-  // horizontal scroll travel ZERO in this mode (the strip's clause-2
-  // exemption is PAGING's, and it does not travel with the word).
-  //
-  // The narrow fan transform is flattened here on purpose: a rotated card's
-  // hit edge is a wedge, and in overlap the exposed sliver of every card but
-  // the top IS its tap target — the sliver is the composition, so it stays
-  // rectangular and measurable. Cramped slivers are the mode's stated cost;
-  // the compensating reader is the inspect hold on every card (hold ~400 ms
-  // → the card expands, unclipped, above everything — armInspect below).
-  //
-  // On the wide shape the word changes nothing: the wide hand is already an
-  // overlapping fan (margin -1.4rem, combat.css), so 'overlap' is its shipped
-  // truth and 'paging' has no wide meaning either — the word picks the NARROW
-  // arrangement. Reconciliation still runs on shape flips so a resize from
-  // narrow back to wide restores the fan transform this mode flattened.
-  let handEls = []; // the rendered cards, in hand order (filled by renderHand)
-  let handFan = []; // each card's shipped fan transform, same index
-  const handLayoutWord = () => document.documentElement.dataset.handLayout;
-  function applyHandLayout() {
-    if (handLayoutWord() !== 'overlap') return;
-    const hand = app.querySelector('.hand');
-    if (!hand) return;
-    const els = handEls.filter((el) => el.parentNode === hand);
-    const n = els.length;
-    if (!n) return;
-    const narrow = document.documentElement.getAttribute('data-layout') === 'narrow';
-    if (!narrow) {
-      // wide: the shipped fan, exactly — undo anything the narrow arm wrote.
-      els.forEach((el, i) => { el.style.transform = handFan[i]; el.style.marginLeft = ''; });
-      return;
-    }
-    // Flatten first so the measurement below reads border-box widths, not the
-    // axis-aligned box of a rotated card.
-    els.forEach((el) => { el.style.transform = 'none'; });
-    const cs = getComputedStyle(hand);
-    // ONE COORDINATE SPACE, or the arithmetic lies (Law 2's whole subject).
-    // The app scales under `body { zoom: var(--ui-zoom) }`, and the two rulers
-    // available here disagree about it: clientWidth / scrollWidth / the margin
-    // this writes are LOCAL px (pre-zoom), getBoundingClientRect is the zoomed
-    // viewport. First cut mixed them and shipped 115 px of travel at 390x844 —
-    // observed, not hypothetical. Everything below is LOCAL: the card's bcr
-    // width is divided back through the body zoom it rendered under.
-    const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
-    // clientWidth is integer-rounded; solving against it exactly can leave the
-    // content edge a sub-pixel past it, which scrollWidth then rounds UP into
-    // one pixel of travel. One px is donated to certainty instead: the row is
-    // solved to fit clientWidth - 1, so travel is zero by construction and
-    // the instrument (tools/handlayout.mjs) can hold it at zero, not "small".
-    const W = hand.clientWidth - 1 - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
-    const gap = parseFloat(cs.columnGap) || 0;
-    const C = els[0].getBoundingClientRect().width / zoom;
-    const need = n * C + (n - 1) * gap;
-    const o = n > 1 ? Math.max(0, (need - W) / (n - 1)) : 0;
-    els.forEach((el, i) => { el.style.marginLeft = i && o ? `${-o}px` : ''; });
-  }
-  // Re-derive when the measured facts move: container width (window resize),
-  // card width (Text size), and the narrow/wide word main.js writes. All three
-  // observers reconcile through the same function, are attached only when the
-  // layout word asks for them, and dispose themselves when this screen's DOM
-  // is replaced (no unmount hook exists to hang cleanup on).
-  if (typeof ResizeObserver !== 'undefined' && handLayoutWord() === 'overlap') {
-    const alive = () => document.body.contains(combatEl);
-    const ro = new ResizeObserver(() => { if (alive()) applyHandLayout(); else ro.disconnect(); });
-    const mo = new MutationObserver(() => { if (alive()) applyHandLayout(); else mo.disconnect(); });
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout'] });
-    ro.observe($('.hand'));
-    combatEl.__handRo = ro; // renderHand re-points card observation each render
-  }
+  // THE ONE HAND RENDERER (components/hand.js) — the strip, its fan, key
+  // hints, the inspect hold, the overlap arm of balance.ui.handLayout and the
+  // Law 5 exemption all live there, once, for both surfaces. This screen
+  // supplies the viewer half per render (renderHand below): live previewCard
+  // entries off the paced snapshot, and wireCardInput as the play wiring.
+  // wireCardInput is a hoisted declaration below; cards with no preview
+  // (stale playback snapshot on a combat-ending play) render inert.
+  const handStrip = mountHand($('.hand'), {
+    registries,
+    wireCard: (el, entry) => { if (entry.preview) wireCardInput(el, entry.inst, entry.preview, entry.affordable); },
+  });
 
   function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1 } = {}) {
     const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
@@ -35502,62 +35426,24 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   }
 
   function renderHand() {
-    const hand = $('.hand');
-    hand.innerHTML = '';
-    // The one home of the duration is balance.ui.inspectHold; the Number()||0
-    // shape is why model/validate.js checks that row loud — an unreadable
-    // value here would silently turn the gesture off.
-    const inspectMs = Number((registries.balance.ui.inspectHold || {}).ms) || 0;
     const handList = disp ? disp.hand : combat.piles.hand;
-    const n = handList.length;
-    handList.forEach((inst, i) => {
-      // disp.hand is a pre-dispatch snapshot; on a combat-ending play the engine
-      // strands the in-flight card in no pile (finishCombat clears the queue),
-      // so previewCard can no longer resolve it. Render such cards inert instead
-      // of letting the throw wedge the timeline (this froze the game on the
-      // killing blow).
-      let pv = null;
-      try {
-        pv = previewCard(combat, inst.instanceId);
-      } catch (e) {
-        console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
-      }
-      const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
-      const el = renderCard(registries, inst, pv ? { preview: pv, affordable } : { affordable });
-      const spread = Math.min(6, n) * 1.2;
-      el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
-      el.style.zIndex = i;
-      if (inst.instanceId === selected || inst.instanceId === selfArm) el.classList.add('selected');
-      // Positional quick-play key badge: 1–9 then Q, tied to the slot not the
-      // card. Hidden while a gamepad drives (body.pad-mode via refreshHintBars).
-      if (i < 10) {
-        const hint = document.createElement('span');
-        hint.className = 'key-hint';
-        hint.textContent = i < 9 ? i + 1 : 'Q';
-        el.appendChild(hint);
-      }
-      // The reading hold — EVERY card, before the play wiring on purpose:
-      // affordability gates playing, never reading (the card you cannot pay
-      // for is the one you most need to read), and same-element listeners run
-      // in registration order, which is what lets a completed read's lift die
-      // in armInspect's click handler instead of selecting or playing below.
-      armInspect(el, { ms: inspectMs, onOpen: hideTooltip });
-      if (pv) wireCardInput(el, inst, pv, affordable);
-      hand.appendChild(el);
+    handStrip.render({
+      cards: handList.map((inst) => {
+        // disp.hand is a pre-dispatch snapshot; on a combat-ending play the
+        // engine strands the in-flight card in no pile (finishCombat clears the
+        // queue), so previewCard can no longer resolve it. Such cards render
+        // inert (no preview → no play wiring) instead of letting the throw
+        // wedge the timeline (this froze the game on the killing blow).
+        let pv = null;
+        try {
+          pv = previewCard(combat, inst.instanceId);
+        } catch (e) {
+          console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
+        }
+        const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && !isUnplayable(inst);
+        return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm };
+      }),
     });
-    // The overlap arm (block above renderHand): record what this render made,
-    // then reconcile. Inert — including the observer re-point — unless the
-    // layout word is 'overlap'; in 'paging' the loop above was the whole
-    // render, unchanged.
-    handEls = [...hand.children];
-    handFan = handEls.map((el) => el.style.transform);
-    if (combatEl.__handRo && handLayoutWord() === 'overlap') {
-      const ro = combatEl.__handRo;
-      ro.disconnect();
-      ro.observe(hand);
-      handEls.forEach((el) => ro.observe(el));
-    }
-    applyHandLayout();
   }
 
   function isUnplayable(inst) {
@@ -37497,6 +37383,197 @@ function renderArcaneExposure(registries, enemySnapshot, recentEvents = []) {
 Object.assign(module.exports, { arcaneExposureReceipt, renderArcaneExposure });
 
 },
+"src/ui/components/hand.js": function (module, exports, require) {
+// src/ui/components/hand.js — THE hand strip. One renderer, two surfaces.
+//
+// Until 2026-08-15 the hand was rendered TWICE: combat.js's template (the
+// machinery — inspect hold, overlap arm, key hints, the mode word) and
+// coop.js's own `.hand` (a snapshot-fed twin with none of it). That fork is
+// how the co-op hand shipped at 27-device-px nodes' little sibling: no
+// inspect hold, no overlap arm, an unscoped Law 5 exemption whose why-string
+// named this collapse as the debt (Bjorn: "coop.js is two laws deep in
+// undelivered fixes — the map then, the hand"). Same ruling as the map
+// (mapboard.js): the STRIP is a property of the game — one renderer; WHO is
+// looking supplies only viewer data. What is legitimately different per
+// surface enters as parameters, never as a second template:
+//
+//   cards     — the viewer's list: { inst, preview?, affordable, reason?,
+//               name?, selected? }. Solo passes live previewCard numbers off
+//               the paced snapshot; co-op passes the host snapshot's hand
+//               with a spelled-out unavailability reason (its player cannot
+//               hover the engine for one).
+//   wireCard  — what a card DOES. Solo wires local dispatch (drag,
+//               click-to-target, self-arm); co-op wires network intents
+//               (send playCard / arm an ally target). The strip itself never
+//               plays a card — rendering and committing stay two hands.
+//   emptyHtml — the viewer's empty state (co-op's spectator note). Solo never
+//               renders a hand it cannot act in, so it passes nothing.
+//
+// Everything else — fan transform, z-order, key-hint badges (both surfaces
+// honor 1-9/Q positionally), the inspect hold (armInspect BEFORE wireCard, in
+// registration order, so a completed read can never become a play), the Law 5
+// exemption (applied from its one home, src/ui/handAxis.js), and the OVERLAP
+// arm of balance.ui.handLayout — is the strip's own truth and lives here once.
+//
+// THE OVERLAP ARM (C2), moved verbatim from combat.js:
+// The word's one home is balance.ui.handLayout; main.js derives it onto
+// <html data-hand-layout>; this module reads the ATTRIBUTE and nothing else.
+// When the word is 'paging' (the default), the arm is inert and the render
+// loop is byte-for-byte the shipped strip. Under 'overlap' on the narrow
+// shape the whole hand lays inside the strip's own width: THE OVERLAP IS
+// DERIVED, NEVER TYPED — measured container width, measured card width, hand
+// size, so ten cards at Text XL fit exactly where five at S spread out.
+// Law 5 clause 1 is the constraint the arithmetic serves: horizontal travel
+// ZERO in this mode. The narrow fan is flattened on purpose: the exposed
+// sliver of every card but the top IS its tap target, so it stays
+// rectangular and measurable; the compensating reader is the inspect hold —
+// which is exactly why the hold rides this component and not one caller: an
+// overlap hand without its reader is the combination validateContent refuses.
+//
+// The word has no settings row, so mount-time is the exemption's lifetime —
+// if a live toggle ever ships, callers must re-mount (or this must re-derive)
+// on flip; the same warning rides handAxis.js.
+
+const { renderCard } = require("src/ui/components/card.js");
+const { armInspect } = require("src/ui/components/holdconfirm.js");
+const { hideTooltip } = require("src/ui/components/tooltip.js");
+const { applyHandExemption } = require("src/ui/handAxis.js");
+
+function mountHand(handEl, { registries, wireCard = null }) {
+  // The one home of the duration is balance.ui.inspectHold; the Number()||0
+  // shape is why model/validate.js checks that row loud — an unreadable
+  // value here would silently turn the gesture off.
+  const inspectMs = Number((registries.balance.ui.inspectHold || {}).ms) || 0;
+  // The Law 5 exemption, derived from ITS one home (handAxis.js): present and
+  // mode-scoped under 'paging', absent under 'overlap'. Attribute order
+  // (axis, mode, why) is the order the old template carried, so the paging
+  // DOM stays byte-identical across the collapse.
+  applyHandExemption(handEl);
+
+  let handEls = []; // the rendered cards, in hand order (filled by render)
+  let handFan = []; // each card's shipped fan transform, same index
+  const handLayoutWord = () => document.documentElement.dataset.handLayout;
+
+  function applyHandLayout() {
+    if (handLayoutWord() !== 'overlap') return;
+    if (!handEl.isConnected) return;
+    const els = handEls.filter((el) => el.parentNode === handEl);
+    const n = els.length;
+    if (!n) return;
+    const narrow = document.documentElement.getAttribute('data-layout') === 'narrow';
+    if (!narrow) {
+      // wide: the shipped fan, exactly — undo anything the narrow arm wrote.
+      els.forEach((el, i) => { el.style.transform = handFan[i]; el.style.marginLeft = ''; });
+      return;
+    }
+    // Flatten first so the measurement below reads border-box widths, not the
+    // axis-aligned box of a rotated card.
+    els.forEach((el) => { el.style.transform = 'none'; });
+    const cs = getComputedStyle(handEl);
+    // ONE COORDINATE SPACE, or the arithmetic lies (Law 2's whole subject).
+    // The app scales under `body { zoom: var(--ui-zoom) }`, and the two rulers
+    // available here disagree about it: clientWidth / scrollWidth / the margin
+    // this writes are LOCAL px (pre-zoom), getBoundingClientRect is the zoomed
+    // viewport. First cut mixed them and shipped 115 px of travel at 390x844 —
+    // observed, not hypothetical. Everything below is LOCAL: the card's bcr
+    // width is divided back through the body zoom it rendered under.
+    const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+    // clientWidth is integer-rounded; solving against it exactly can leave the
+    // content edge a sub-pixel past it, which scrollWidth then rounds UP into
+    // one pixel of travel. One px is donated to certainty instead: the row is
+    // solved to fit clientWidth - 1, so travel is zero by construction and
+    // the instrument (tools/handlayout.mjs) can hold it at zero, not "small".
+    const W = handEl.clientWidth - 1 - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    const gap = parseFloat(cs.columnGap) || 0;
+    const C = els[0].getBoundingClientRect().width / zoom;
+    const need = n * C + (n - 1) * gap;
+    const o = n > 1 ? Math.max(0, (need - W) / (n - 1)) : 0;
+    els.forEach((el, i) => { el.style.marginLeft = i && o ? `${-o}px` : ''; });
+  }
+
+  // Re-derive when the measured facts move: container width (window resize),
+  // card width (Text size), and the narrow/wide word main.js writes. All three
+  // observers reconcile through the same function, are attached only when the
+  // layout word asks for them, and dispose themselves when the strip's DOM is
+  // replaced (co-op re-mounts per snapshot; solo replaces the screen wholesale).
+  let ro = null;
+  let mo = null;
+  if (typeof ResizeObserver !== 'undefined' && handLayoutWord() === 'overlap') {
+    const alive = () => document.body.contains(handEl);
+    ro = new ResizeObserver(() => { if (alive()) applyHandLayout(); else ro.disconnect(); });
+    mo = new MutationObserver(() => { if (alive()) applyHandLayout(); else mo.disconnect(); });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout'] });
+    ro.observe(handEl);
+  }
+
+  function render({ cards = [], emptyHtml = null }) {
+    handEl.innerHTML = '';
+    handEls = [];
+    handFan = [];
+    if (emptyHtml != null) { handEl.innerHTML = emptyHtml; return; }
+    const n = cards.length;
+    cards.forEach((entry, i) => {
+      const el = renderCard(registries, entry.inst,
+        entry.preview ? { preview: entry.preview, affordable: entry.affordable } : { affordable: entry.affordable });
+      const spread = Math.min(6, n) * 1.2;
+      el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
+      el.style.zIndex = i;
+      if (entry.selected) el.classList.add('selected');
+      // The spelled-out unavailability reason is VIEWER data (co-op supplies
+      // it; solo's player reads live previews and the hint bar instead). When
+      // present it rides the card as a badge and as assistive text.
+      if (entry.reason) {
+        el.dataset.unavailableReason = entry.reason;
+        el.setAttribute('aria-disabled', 'true');
+        el.setAttribute('aria-label', `${entry.name || ''} unavailable: ${entry.reason}`);
+        const badge = document.createElement('div');
+        badge.className = 'card-unavailable-reason';
+        badge.textContent = entry.reason;
+        el.appendChild(badge);
+      }
+      // Positional quick-play key badge: 1-9 then Q, tied to the slot not the
+      // card — BOTH surfaces map those keys to the same slots. Hidden while a
+      // gamepad drives (body.pad-mode via refreshHintBars).
+      if (i < 10) {
+        const hint = document.createElement('span');
+        hint.className = 'key-hint';
+        hint.textContent = i < 9 ? i + 1 : 'Q';
+        el.appendChild(hint);
+      }
+      // The reading hold — EVERY card, before the play wiring on purpose:
+      // affordability gates playing, never reading (the card you cannot pay
+      // for is the one you most need to read), and same-element listeners run
+      // in registration order, which is what lets a completed read's lift die
+      // in armInspect's click handler instead of selecting or playing below.
+      armInspect(el, { ms: inspectMs, onOpen: hideTooltip });
+      if (wireCard) wireCard(el, entry, i);
+      handEl.appendChild(el);
+    });
+    // The overlap arm: record what this render made, then reconcile. Inert —
+    // including the observer re-point — unless the layout word is 'overlap';
+    // in 'paging' the loop above was the whole render, unchanged.
+    handEls = [...handEl.children];
+    handFan = handEls.map((el) => el.style.transform);
+    if (ro && handLayoutWord() === 'overlap') {
+      ro.disconnect();
+      ro.observe(handEl);
+      handEls.forEach((el) => ro.observe(el));
+    }
+    applyHandLayout();
+  }
+
+  function teardown() {
+    if (ro) ro.disconnect();
+    if (mo) mo.disconnect();
+  }
+
+  return { render, teardown };
+}
+
+
+Object.assign(module.exports, { mountHand });
+
+},
 "src/ui/handAxis.js": function (module, exports, require) {
 // src/ui/handAxis.js — THE ONE HOME of the hand strip's Law 5 exemption.
 //
@@ -37514,71 +37591,48 @@ Object.assign(module.exports, { arcaneExposureReceipt, renderArcaneExposure });
 // D19's later word is what makes this writable. It cites him, not us; if
 // either word moves, this file moves with it.
 //
-// TWO RENDERERS, ONE DERIVATION (Bjorn's refused gate, 2026-08-14): the hand
-// is rendered by combat.js AND by coop.js's own template. #169 derived the
-// exemption inside combat.js's template and the coop hand shipped undeclared —
-// one fact, two renderers, one home. The string is built HERE, once, and both
-// renderers call in; neither may retype it. The two exports differ because the
-// two renderers' truths differ, and a declaration states the truth of the
-// renderer that carries it:
-//
-//   modeScopedHandExemption() — combat.js. That renderer READS the hand-layout
-//     word (its overlap arm lays the whole hand inside the strip at zero
-//     travel), so its exemption exists only under 'paging' and says so
-//     (data-scroll-axis-mode). axisfit's A5 fails the declaration found under
-//     any other word.
-//
-//   pagerOnlyHandExemption() — coop.js. That renderer implements ONLY the
-//     paging strip: no overlap arm, no reader of the word, so its hand travels
-//     identically under either mode (measured: H 211px at 390x844 under BOTH
-//     words, axisfit 411b89c). A mode-scoped declaration would lie twice —
-//     conditional, it vanishes under overlap while the travel stays
-//     (undeclared red); copied verbatim, it sits scoped to a word the page
-//     contradicts (A5 red). So it is UNSCOPED: true in every mode, and it
-//     SAYS it is renderer-scoped. Its wake is in the instrument, not here:
-//     axisfit sweeps coop under both modes, and the day coop.js grows an
-//     overlap arm, the coop[overlap] cells reach zero travel and A4 fires on
-//     this declaration, forcing a person to re-scope it.
-//
-// STANDING DEBT, named (Bjorn: "coop.js is now two laws deep in undelivered
-// fixes" — the map then, the hand now): the honest end state is ONE hand
-// renderer — coop's combat board mounting the same hand component as solo, the
-// way its map now mounts ui/components/mapboard.js. That is a real refactor of
-// an entangled render path (selection, targeting, network intents vs local
-// dispatch), not one act; until it lands, this module is the seam that keeps
-// the fact single-homed across the split.
+// ONE RENDERER NOW (2026-08-15). From 2026-08-14 to 2026-08-15 this file held
+// TWO exports because the hand had two renderers: combat.js's mode-scoped
+// declaration, and coop.js's own `.hand` — a pager-only twin with no overlap
+// arm — carrying an UNSCOPED one whose why-string named the renderer collapse
+// as standing debt. That debt is paid: both surfaces mount
+// src/ui/components/hand.js (the way both maps mount components/mapboard.js),
+// the component reads the hand-layout word on either surface, and the
+// unscoped exemption died with the fork — its A4 wake (axisfit sweeping coop
+// under both modes) was observed firing on the day the overlap arm arrived,
+// exactly as designed, and the coop[overlap] cells now assert ZERO like any
+// undeclared container. The mode-scoped declaration below is the whole story.
 //
 // The word's one home is balance.ui.handLayout; main.js derives it onto
 // <html data-hand-layout>; this file reads the ATTRIBUTE and nothing else.
 // The word has no settings row, so mount-time is the declaration's lifetime —
-// if a live toggle ever ships, both callers must re-derive on flip.
+// if a live toggle ever ships, the component must re-derive on flip.
 
 const D19 = "his word, D19 2026-08-13: 'overlap and paging'";
 
-// The attribute string has one shape and it is built in one place. `why` must
-// not contain double quotes — it lands inside an HTML attribute.
-function attrs(why, mode) {
-  return ` data-scroll-axis="x"${mode ? ` data-scroll-axis-mode="${mode}"` : ''}`
-    + ` data-scroll-axis-why="${why}"`;
+/**
+ * Apply (or clear) the mode-scoped exemption on the hand container itself.
+ * Present only while the page's word is 'paging'; absent under 'overlap',
+ * where components/hand.js lays the strip at zero travel and axisfit asserts
+ * it. Attribute order (axis, mode, why) is fixed: it is the order the old
+ * template string carried, and it keeps the paging DOM byte-identical across
+ * the renderer collapse (tools/handlayout.mjs hashes .hand-area to hold that).
+ */
+function applyHandExemption(el) {
+  if (document.documentElement.dataset.handLayout === 'paging') {
+    el.setAttribute('data-scroll-axis', 'x');
+    el.setAttribute('data-scroll-axis-mode', 'paging');
+    el.setAttribute('data-scroll-axis-why',
+      `paging is the designed horizontal pager — ${D19}; scoped to this mode, absent under overlap`);
+  } else {
+    el.removeAttribute('data-scroll-axis');
+    el.removeAttribute('data-scroll-axis-mode');
+    el.removeAttribute('data-scroll-axis-why');
+  }
 }
 
-/** combat.js — mode-scoped: present only while the page's word is 'paging'. */
-function modeScopedHandExemption() {
-  return document.documentElement.dataset.handLayout === 'paging'
-    ? attrs(`paging is the designed horizontal pager — ${D19}; scoped to this mode, absent under overlap`, 'paging')
-    : '';
-}
 
-/** coop.js — renderer-scoped: this renderer pages in every mode, and says so. */
-function pagerOnlyHandExemption() {
-  return attrs(`the co-op hand is the same designed pager — ${D19} — and this renderer (coop.js)`
-    + ' implements only the paging strip: no overlap arm, no reader of the hand-layout word,'
-    + ' so the exemption is unscoped and true in every mode; collapsing the two hand renderers'
-    + ' into one is named standing debt (src/ui/handAxis.js)');
-}
-
-
-Object.assign(module.exports, { modeScopedHandExemption, pagerOnlyHandExemption });
+Object.assign(module.exports, { applyHandExemption });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {
@@ -41771,7 +41825,22 @@ Object.assign(module.exports, { lanInfo, lanHost, lanUnhost, lanConnect });
 // .mapscreen shells. The only additions are co-op-specific: a seat per player,
 // whose-turn indicators, and the throw/mend affordances.
 // The COMBAT board helpers below are snapshot-fed twins of combat.js's private
-// ones (kept here so solo combat.js stays untouched).
+// ones (kept here so solo combat.js stays untouched) — statusRow, meterBars,
+// blockBadge, intentEl. THE HAND IS NO LONGER AMONG THEM.
+//
+// THE HAND IS NOT A TWIN ANY MORE, AND THAT WAS THE SECOND DEFECT OF THIS
+// SHAPE (2026-08-15, the same ruling as the map below, one law later). This
+// screen rendered its own `.hand` — the fan and the click, and none of the
+// machinery: no inspect hold (the compensating reader for a cramped card), no
+// key-hint badges, no reader of `balance.ui.handLayout`, so a co-op player in
+// OVERLAP got a hand that paged while the same player's solo hand overlapped —
+// two behaviours behind one settings word — and the strip carried an UNSCOPED
+// Law 5 exemption naming this collapse as its own debt. It calls
+// ui/components/hand.js now, the way its map calls ui/components/mapboard.js.
+// Read that file's header: the STRIP is a property of the game, one renderer;
+// what is legitimately different per surface enters as PARAMS — the snapshot's
+// cards with their spelled-out reasons, and the network door as the play
+// wiring. A played card still goes through `send`, never local dispatch.
 //
 // THE MAP IS NOT A TWIN ANY MORE, AND THAT WAS THE DEFECT. `renderMap` carried
 // its own `ROW_H = 46`, its own `y(floor)` and its own `r = boss ? 20 : 15` —
@@ -41796,7 +41865,7 @@ const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskIdentityHtml, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
-const { pagerOnlyHandExemption } = require("src/ui/handAxis.js");
+const { mountHand } = require("src/ui/components/hand.js");
 
 function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -41813,6 +41882,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   let pacing = false; // an enemy-turn replay is holding the render
   let pendingSnap = null; // newest snapshot that arrived while pacing
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
+  let handStrip = null; // the live hand strip (components/hand.js), same discipline
   let endTurnBeat = null; // pointer-only; named keyboard/pad activation is immediate
 
   conn.setHandlers({
@@ -41946,6 +42016,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
     endTurnBeat = null;
     removeSeatTabs();
     if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
+    if (handStrip) { handStrip.teardown(); handStrip = null; }
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
   const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded, mods: c.mods });
@@ -42063,12 +42134,16 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
         ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — click the hero who receives it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
         <div class="hand-area">
           <div class="energy-orb">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</div>
-          <!-- The Law 5 exemption is DERIVED from its one home (src/ui/handAxis.js)
-               and is UNSCOPED on purpose: this renderer implements only the paging
-               strip — no overlap arm — so unlike combat.js's mode-scoped
-               declaration, this one is true in every mode and says so. axisfit
-               sweeps this surface under both modes as that claim's wake. -->
-          <div class="hand"${pagerOnlyHandExemption()}></div>
+          <!-- The strip is components/hand.js — THE one hand renderer, the same
+               one solo combat mounts, so this hand honors data-hand-layout
+               (overlap overlaps, paging pages), carries the inspect hold, and
+               wears the mode-scoped Law 5 exemption from its one home
+               (src/ui/handAxis.js). The unscoped exemption that lived here died
+               with the second template; its A4 wake in axisfit fired the day
+               this renderer gained the overlap arm, as designed. This screen
+               supplies only the viewer half below: snapshot-fed entries with
+               spelled-out reasons, and network intents as the play wiring. -->
+          <div class="hand"></div>
           <button class="end-turn" id="coop-endturn">END TURN</button>
         </div>
         <div class="fx-layer"></div>
@@ -42132,43 +42207,51 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
       row.appendChild(box);
     }
 
-    // My hand — the real card component.
-    const hand = app.querySelector('.hand');
-    if (meP && meP.alive && meP.connected) {
-      const n = meP.hand.length;
-      meP.hand.forEach((c, i) => {
-        const def = cardDef(c);
-        const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
-        const manaAffordable = meP.mana >= (def.manaCost || 0);
-        const affordable = !meP.ended && energyAffordable && manaAffordable;
-        const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods }, { affordable });
-        if (!affordable) {
-          const reason = !manaAffordable
-            ? `Need ${def.manaCost || 0} Mana; have ${meP.mana}`
-            : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
-          el.dataset.unavailableReason = reason;
-          el.setAttribute('aria-disabled', 'true');
-          el.setAttribute('aria-label', `${def.name} unavailable: ${reason}`);
-          const badge = document.createElement('div');
-          badge.className = 'card-unavailable-reason';
-          badge.textContent = reason;
-          el.appendChild(badge);
-        }
-        const spread = Math.min(6, n) * 1.2;
-        el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
-        el.style.zIndex = i;
-        if (c.instanceId === armedAllyCard) el.classList.add('selected');
+    // My hand — THE hand renderer, mounted fresh per snapshot render (this
+    // screen rebuilds its DOM wholesale; the old strip's observers are torn
+    // down first, the mapBoard discipline one screen over). The strip draws;
+    // this callback is the network door: a played card is ALWAYS a server
+    // intent (`send`), never local dispatch — the client renders snapshots
+    // and asks, it does not resolve.
+    if (handStrip) handStrip.teardown();
+    handStrip = mountHand(app.querySelector('.hand'), {
+      registries,
+      wireCard: (el, entry) => {
         el.addEventListener('click', () => {
-          if (!affordable) return;
-          const needsAlly = (def.effects || []).some((ef) => ef.target === 'ally');
-          if (needsAlly) { armedAllyCard = armedAllyCard === c.instanceId ? null : c.instanceId; armedFlask = null; render(); return; }
-          const needs = (def.effects || []).some((ef) => ef.target === 'enemy');
-          send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
+          if (!entry.affordable) return;
+          const effects = entry.def.effects || [];
+          if (effects.some((ef) => ef.target === 'ally')) {
+            armedAllyCard = armedAllyCard === entry.inst.instanceId ? null : entry.inst.instanceId;
+            armedFlask = null;
+            render();
+            return;
+          }
+          const needs = effects.some((ef) => ef.target === 'enemy');
+          send({ t: 'playCard', cardInstanceId: entry.inst.instanceId, targetId: needs ? selectedEnemy : undefined });
         });
-        hand.appendChild(el);
+      },
+    });
+    if (meP && meP.alive && meP.connected) {
+      handStrip.render({
+        cards: meP.hand.map((c) => {
+          const def = cardDef(c);
+          const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
+          const manaAffordable = meP.mana >= (def.manaCost || 0);
+          const affordable = !meP.ended && energyAffordable && manaAffordable;
+          // The spelled-out reason is this viewer's data: a co-op client reads
+          // a snapshot, not the engine, so the card itself says why it is grey.
+          const reason = affordable ? null
+            : !manaAffordable ? `Need ${def.manaCost || 0} Mana; have ${meP.mana}`
+              : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
+          return {
+            inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
+            def, name: def.name, affordable, reason,
+            selected: c.instanceId === armedAllyCard,
+          };
+        }),
       });
     } else {
-      hand.innerHTML = '<div class="coop-note">Spectating the fight…</div>';
+      handStrip.render({ cards: [], emptyHtml: '<div class="coop-note">Spectating the fight…</div>' });
     }
 
     // Flasks.
