@@ -89,24 +89,32 @@ try {
   ok(legacyRestored.party.every((p) => p.attributeMode === contentBundle.attributeRules.defaultMode), 'legacy session members migrate the whole attribute block through the authored default mode');
   ok(legacyRestored.party.every((p) => JSON.stringify(p.attributes) === JSON.stringify(contentBundle.attributeRules.presets[p.attributeMode][p.classId])), 'legacy session members migrate to their authored class presets');
 
+  // A poisoned member is refused PER MEMBER now — a receipt with the reason,
+  // the rest of the party restoring — never a whole-party throw while a
+  // healthy member exists (tools/coop-restore-isolation.mjs is that door's own
+  // instrument; these checks assert the same refusals still fire, as receipts).
   const restoreRefused = (mutate, label) => {
     const bad = JSON.parse(json);
     mutate(bad.members[0].run);
-    let threw = false;
-    try { restoreSession(REG, bad); } catch { threw = true; }
-    ok(threw, label);
+    let R2 = null;
+    try { R2 = restoreSession(REG, bad); } catch { /* a throw here is the old whole-party door */ }
+    const rf = R2 && R2.refusedMembers();
+    ok(R2 && rf.length === 1 && rf[0].id === bad.members[0].id && rf[0].reason
+      && R2.session.members.size === 1 && R2.session.members.has(bad.members[1].id), label);
   };
-  restoreRefused((run) => { delete run.attributes; }, 'partial session attribute block is refused');
-  restoreRefused((run) => { run.attributeMode = 'ghost'; }, 'unknown session creation mode is refused');
-  restoreRefused((run) => { run.attributes.wisdom = 10.5; }, 'fractional session allocation is refused');
-  restoreRefused((run) => { run.attributes.wisdom = 99; }, 'out-of-range session allocation is refused');
-  restoreRefused((run) => { run.attributes.wisdom += 1; }, 'wrong-total session allocation is refused');
+  restoreRefused((run) => { delete run.attributes; }, 'partial session attribute block is refused by member, with a receipt; the party restores');
+  restoreRefused((run) => { run.attributeMode = 'ghost'; }, 'unknown session creation mode is refused by member, with a receipt; the party restores');
+  restoreRefused((run) => { run.attributes.wisdom = 10.5; }, 'fractional session allocation is refused by member, with a receipt; the party restores');
+  restoreRefused((run) => { run.attributes.wisdom = 99; }, 'out-of-range session allocation is refused by member, with a receipt; the party restores');
+  restoreRefused((run) => { run.attributes.wisdom += 1; }, 'wrong-total session allocation is refused by member, with a receipt; the party restores');
   {
     const contradictory = JSON.parse(json);
     contradictory.members[0].classId = contradictory.members[0].run.class === 'reaver' ? 'starseer' : 'reaver';
-    let threw = false;
-    try { restoreSession(REG, contradictory); } catch { threw = true; }
-    ok(threw, 'contradictory member/run class authorities are refused');
+    let R2 = null;
+    try { R2 = restoreSession(REG, contradictory); } catch { /* the old whole-party door */ }
+    const rf = R2 && R2.refusedMembers();
+    ok(R2 && rf.length === 1 && /disagrees with run class/.test(rf[0].reason || ''),
+      'contradictory member/run class authorities are refused by member, with a receipt');
   }
 
   // A synthetic authored mode must propagate through member creation,
