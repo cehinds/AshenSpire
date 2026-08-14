@@ -98,6 +98,7 @@ export function createCombat({
       energyMax: player.energyMax,
       drawPerTurn: player.drawPerTurn,
       poiseMax,
+      damageBySchoolAdd: player.damageBySchoolAdd || {},
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is

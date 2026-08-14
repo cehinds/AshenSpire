@@ -2,7 +2,7 @@
 // It exposes calculation receipts; screens choose layout, never redo formulas.
 
 import { deriveStat } from './derivedStats.js';
-import { equippedPieces } from './loadout.js';
+import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 
 const LABELS = Object.freeze({
@@ -61,15 +61,18 @@ export function statProjection(registries, run) {
     .map((def) => ({ ...def, value: run.attributes[def.id] }));
   const derived = ['hp', 'mana', 'stamina', 'energy', 'draw'].map((id) => {
     const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef });
-    const equipmentBonus = id === 'hp' ? Math.max(0, run.maxHp - receipt.value) : 0;
-    const value = receipt.value + equipmentBonus;
+    const equipmentBonus = id === 'hp' ? runMods(registries, run.loadout, run.class).maxHp : 0;
+    const adjustment = id === 'hp' ? (run.maxHpAdjustment || 0) : 0;
+    const value = id === 'hp' ? Math.max(1, receipt.value + equipmentBonus + adjustment) : receipt.value;
     return {
       ...receipt,
       label: LABELS[id],
       value,
       equipmentBonus,
+      adjustment,
       formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
-        + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''} = ${value}`,
+        + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
+        + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
       note: id === 'stamina' ? 'No current consumer' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
     };
   });

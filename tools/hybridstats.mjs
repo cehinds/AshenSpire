@@ -71,8 +71,8 @@ check('shipping content and registries expose one derived-rules object', () => {
 
 check('a standard Reaver run owns the versioned snapshot and all approved derived outputs', () => {
   const run = fresh();
-  equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 2, 'ruleset version');
-  equal(run.maxHp, 96, 'VIG-derived max HP: 84 + 12 points (D17, per point)');
+  equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 3, 'ruleset version');
+  equal(run.maxHp, 96, 'CON-derived max HP: class tiers plus starter-relic bonuses (D22-D25)');
   equal(run.hp, 96, 'new run HP starts full');
   equal(run.maxMana, 2, 'WIS-derived max Mana has no class base');
   equal(run.mana, 2, 'new run Mana starts full');
@@ -111,13 +111,13 @@ check('pre-derived save migrates real pools and preserves full/deficit truth', (
   old.mana = 20; // a half-full legacy pool remains half-full in small units.
   saves.saveRun(old);
   const run = saves.loadRun(REG);
-  equal(run.maxHp, 96, 'migrated max HP (84 base + VIG 12 per point)');
+  equal(run.maxHp, 96, 'migrated max HP under CON tier authority');
   equal(run.hp, 86, 'HP deficit of 10 preserved across the migration');
   equal(run.maxMana, 2, 'migrated max Mana');
   equal(run.mana, 1, 'legacy Mana proportion preserved');
   equal(run.maxStamina, 2, 'Stamina created from real attributes');
   equal(run.stamina, 2, 'new Stamina pool starts full');
-  equal(run.derivedStatRuleSnapshot.rulesetVersion, 2, 'migration stamps ruleset');
+  equal(run.derivedStatRuleSnapshot.rulesetVersion, 3, 'migration stamps ruleset');
 });
 
 check('solo combat consumes run Energy/Draw and transports real Stamina without inventing spend', () => {
@@ -135,7 +135,7 @@ check('host session snapshot is authoritative for derived rules and every curren
   S.addMember({ id: 'p1', name: 'Wren', classId: 'reaver' });
   S.start();
   const party = S.snapshot().party[0];
-  equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 2, 'party ruleset');
+  equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 3, 'party ruleset');
   equal(party.maxStamina, 2, 'party Stamina max');
   equal(party.stamina, 2, 'party Stamina current');
   equal(party.maxMana, 2, 'party derived Mana max');

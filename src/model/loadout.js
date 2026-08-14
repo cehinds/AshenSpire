@@ -1,5 +1,5 @@
 import { tokenRe } from './validate.js';
-import { deriveAttributeTierReceipt } from './derivedStats.js';
+import { deriveAttributeTierReceipt, deriveStat } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
 
@@ -1064,6 +1064,32 @@ export function runMods(registries, loadout, classId) {
   };
 }
 
+/**
+ * Reconcile the run's HP pool after an out-of-combat loadout mutation.
+ * The derived snapshot, equipment rows, and permanent adjustment remain the
+ * authorities; current HP keeps the same absolute deficit as the vessel grows
+ * or shrinks. Partial combat stamping records do not carry these fields and are
+ * deliberately ignored.
+ */
+export function reconcileRunLoadoutHp(registries, run) {
+  if (!run || !run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules
+    || !Number.isFinite(run.maxHp) || !Number.isFinite(run.hp)) return null;
+  if (!Number.isInteger(run.maxHpAdjustment)) {
+    throw new Error('reconcileRunLoadoutHp requires integer maxHpAdjustment');
+  }
+  const classDef = registries.classes.get(run.class);
+  const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
+    attributes: run.attributes,
+    classDef,
+  });
+  const equipmentBonus = runMods(registries, run.loadout, run.class).maxHp;
+  const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);
+  const deficit = Math.max(0, run.maxHp - run.hp);
+  run.maxHp = nextMax;
+  run.hp = Math.max(0, nextMax - deficit);
+  return { derived: derived.value, equipmentBonus, adjustment: run.maxHpAdjustment, maxHp: nextMax, deficit };
+}
+
 // ---------------------------------------------------------------------------
 // Applying mods to a card
 // ---------------------------------------------------------------------------
@@ -1184,6 +1210,7 @@ export function applyCardMods(def, mods, opts = {}) {
  * `cards` to stamp a hand mid-combat; it defaults to the run deck.
  */
 export function stampDeck(registries, run, cards) {
+  reconcileRunLoadoutHp(registries, run);
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));

@@ -9,6 +9,7 @@
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
+import { resolveRelicModifiers } from './relicModifiers.js';
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -144,7 +145,7 @@ export function createRegistries(contentBundle) {
   const attributeIds = registries.attributes.ids();
   const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
   const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
-  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp', 'hpPerConTier'] });
   let hpEquipmentBonus = 0;
   for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
     for (const raw of (piece && piece.mods) || []) {
@@ -152,11 +153,14 @@ export function createRegistries(contentBundle) {
       if (match) hpEquipmentBonus = Math.max(hpEquipmentBonus, Number(match[1]));
     }
   }
-  const domainRows = registries.classes.all().map((classDef) => ({
-    hp: deriveStat(rules, 'hp', { attributes: ceilingAttributes, classDef }).value + hpEquipmentBonus,
-    mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value,
-    stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value,
-  }));
+  const domainRows = registries.classes.all().map((classDef) => {
+    const relic = resolveRelicModifiers(registries, [classDef.startingRelic], { attributes: ceilingAttributes });
+    return {
+      hp: deriveStat(rules, 'hp', { attributes: ceilingAttributes, classDef }).value + relic.resources.hp.total + hpEquipmentBonus,
+      mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value + relic.resources.mana.total,
+      stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value + relic.resources.stamina.total,
+    };
+  });
   // Player Poise potential — the largest stagger threshold a loadout can
   // state: per equipment slot, the best authored piece whose kind that slot
   // accepts, plus every authored relic bonus. Content potential like hp above

@@ -122,13 +122,32 @@ export function classAttributePreset(source, classId, modeId = defaultCreationMo
 export function migrateRetiredAttributeNames(run, source) {
   const retired = retiredNames(tables(source));
   for (const [dead, heir] of Object.entries(retired)) {
-    if (plainObject(run.attributes) && Object.hasOwn(run.attributes, dead) && !Object.hasOwn(run.attributes, heir)) {
-      run.attributes[heir] = run.attributes[dead];
-      delete run.attributes[dead];
-    }
     const snapshot = run.derivedStatRuleSnapshot;
     const rules = snapshot && plainObject(snapshot.rules) && plainObject(snapshot.rules.rules)
       ? snapshot.rules.rules : null;
+    const allocationDead = plainObject(run.attributes) && Object.hasOwn(run.attributes, dead);
+    const allocationHeir = plainObject(run.attributes) && Object.hasOwn(run.attributes, heir);
+    const sourceRows = rules ? Object.entries(rules).filter(([, rule]) => plainObject(rule)) : [];
+    const snapshotDead = sourceRows.filter(([, rule]) => rule.sourceStat === dead).map(([id]) => id);
+    const snapshotHeir = sourceRows.filter(([, rule]) => rule.sourceStat === heir).map(([id]) => id);
+    const deadPaths = [
+      ...(allocationDead ? [`attributes.${dead}`] : []),
+      ...snapshotDead.map((id) => `derivedStatRuleSnapshot.rules.rules.${id}.sourceStat`),
+    ];
+    const heirPaths = [
+      ...(allocationHeir ? [`attributes.${heir}`] : []),
+      ...snapshotHeir.map((id) => `derivedStatRuleSnapshot.rules.rules.${id}.sourceStat`),
+    ];
+    // Preflight before touching either carrier: mixed vocabularies are two
+    // competing claims on one stat seat, even when they occur in different
+    // persisted homes. Refuse atomically and name every witness.
+    if (deadPaths.length && heirPaths.length) {
+      throw new Error(`Mixed retired attribute '${dead}' and heir '${heir}' at ${[...deadPaths, ...heirPaths].join(', ')}`);
+    }
+    if (allocationDead) {
+      run.attributes[heir] = run.attributes[dead];
+      delete run.attributes[dead];
+    }
     if (rules) {
       for (const rule of Object.values(rules)) {
         if (plainObject(rule) && rule.sourceStat === dead) rule.sourceStat = heir;

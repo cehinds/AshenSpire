@@ -17,6 +17,18 @@ export const relics = [
     id: 'forsakenMedallion',
     name: 'Forsaken Medallion',
     rarity: 'starter',
+    passives: {
+      modifiers: [
+        { tag: 'resource.flat', resource: 'hp', amount: 2 },
+        {
+          tag: 'resource.attributeTier',
+          resource: 'hp',
+          sourceStat: 'constitution',
+          pointsPerTier: 5,
+          amountPerTier: 1,
+        },
+      ],
+    },
     icon: '🏅',
     triggers: [
       {
@@ -26,7 +38,7 @@ export const relics = [
         do: [{ op: 'poiseDamage', amount: 4 }],
       },
     ],
-    textTemplate: 'Your first attack each combat also deals {poiseDamage} Poise damage.',
+    textTemplate: 'Max HP +{hpFlat}, plus +{hpPerTier} per completed CON tier. Your first attack each combat also deals {poiseDamage} Poise damage.',
     flavor: 'Its face is worn smooth, but it still remembers being gold.',
   },
 
@@ -37,11 +49,23 @@ export const relics = [
     id: 'starstoneShard',
     name: 'Starstone Shard',
     rarity: 'starter',
+    passives: {
+      modifiers: [
+        { tag: 'resource.flat', resource: 'mana', amount: 1 },
+        { tag: 'damage.school.flat', school: 'magic', amount: 1 },
+      ],
+    },
     icon: '💠',
     triggers: [
-      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'starstoneCharge', stacks: { f: 'add', args: [1] } }] },
+      {
+        on: 'combatStart',
+        do: [
+          { op: 'applyStatus', target: 'owner', status: 'starstoneCharge', stacks: { f: 'add', args: [1] } },
+          { op: 'restoreMana', amount: 1 },
+        ],
+      },
     ],
-    textTemplate: 'Begin each combat with Starstone Charge (your first spell counts as a combo).',
+    textTemplate: 'Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.',
     flavor: 'A chip of someone else’s genius. It still hums.',
   },
   {
@@ -51,6 +75,7 @@ export const relics = [
     id: 'goldFigurine',
     name: 'Gold Figurine',
     rarity: 'starter',
+    passives: { modifiers: [] },
     icon: '🗿',
     triggers: [
       {

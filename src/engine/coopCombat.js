@@ -126,6 +126,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     relicIds: p.relicIds || [], flasks: p.flasks || [], flaskCharges: p.flaskCharges || null,
     energyMax: p.energyMax,
     drawPerTurn: p.drawPerTurn,
+    damageBySchoolAdd: p.damageBySchoolAdd || {},
     // Co-op players carry no loadout into this engine, so the vessel arrives
     // only if the caller stamped a threshold; absent stays absent (the HUD
     // refusal), never a lying 0/0. Same graceful shape as maxMana above.

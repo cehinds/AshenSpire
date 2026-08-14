@@ -8,8 +8,9 @@ export const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina'
 export const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
 // v1 is readable only so an unreleased class-base Mana snapshot can migrate to
 // v2. New snapshots always use the authored v2 table.
-export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2]);
-export const DERIVED_STAT_SNAPSHOT_VERSION = 1;
+export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3]);
+export const DERIVED_STAT_SNAPSHOT_VERSION = 2;
+export const DERIVED_STAT_SNAPSHOT_VERSIONS = Object.freeze([1, 2]);
 
 const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules'];
 const DEFAULT_FIELDS = ['pointsPerTier', 'rounding', 'cap'];
@@ -32,9 +33,18 @@ function validatePoints(out, value, path, required) {
   if (!Number.isFinite(value) || value <= 0) problem(out, path, 'must be a finite number > 0');
 }
 
-function validateGain(out, value, path, required) {
+function validateGain(out, value, path, required, classFields) {
   if (value === undefined && !required) return;
-  if (!Number.isFinite(value)) problem(out, path, 'must be a finite number');
+  if (Number.isFinite(value)) return;
+  if (!plainObject(value)) {
+    problem(out, path, 'must be a finite number or a classField reference');
+    return;
+  }
+  unknownFields(out, value, BASE_FIELDS, path);
+  if (value.strategy !== 'classField') problem(out, `${path}.strategy`, "must be 'classField'");
+  if (typeof value.field !== 'string' || !classFields.includes(value.field)) {
+    problem(out, `${path}.field`, `must name one of ${classFields.join(', ')}`);
+  }
 }
 
 function validateRounding(out, value, path, required) {
@@ -98,7 +108,7 @@ function validateRule(out, value, path, options, partial) {
     problem(out, `${path}.sourceStat`, `${got}must name one of ${options.attributeIds.join(', ')}`);
   }
   validatePoints(out, value.pointsPerTier, `${path}.pointsPerTier`, false);
-  validateGain(out, value.gainPerTier, `${path}.gainPerTier`, !partial);
+  validateGain(out, value.gainPerTier, `${path}.gainPerTier`, !partial, options.classFields);
   validateRounding(out, value.rounding, `${path}.rounding`, false);
   validateCap(out, value.cap, `${path}.cap`, false);
 }
@@ -107,6 +117,7 @@ function normalizedOptions(options = {}) {
   return {
     attributeIds: Array.isArray(options.attributeIds) ? [...options.attributeIds] : [],
     classFields: Array.isArray(options.classFields) ? [...options.classFields] : ['maxHp', 'maxMana'],
+    damageSchools: Array.isArray(options.damageSchools) ? [...options.damageSchools] : [],
   };
 }
 
@@ -192,18 +203,25 @@ function baseValue(base, classDef, statId) {
   return value;
 }
 
+function gainValue(gain, classDef, statId) {
+  if (Number.isFinite(gain)) return gain;
+  const value = classDef && gain && classDef[gain.field];
+  if (!Number.isFinite(value)) throw new Error(`${statId}.gainPerTier: class field '${gain && gain.field}' is not a finite number`);
+  return value;
+}
+
 /**
  * Generic attribute-tier receipt for weapon/armour/resource projections.
  * The caller supplies one already-resolved rule row, so authored defaults,
  * mode/run layers and the explicit/debug override have already merged once.
  * This helper owns no weapon base and mutates nothing.
  */
-export function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rule.sourceStat } = {}) {
+export function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rule.sourceStat, classDef, statId = 'derivedStat' } = {}) {
   if (!plainObject(rule)) throw new Error('Attribute tier rule must be a resolved rule row');
   const points = attributes && attributes[sourceStat];
   if (!Number.isFinite(points)) throw new Error(`sourceStat '${sourceStat}' is not a finite number`);
   if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error('pointsPerTier must be a finite number > 0');
-  if (!Number.isFinite(rule.gainPerTier)) throw new Error('gainPerTier must be a finite number');
+  const gainPerTier = gainValue(rule.gainPerTier, classDef, statId);
   const round = Math[rule.rounding];
   if (typeof round !== 'function') throw new Error(`rounding '${rule.rounding}' is not executable`);
   const tier = round(points / rule.pointsPerTier);
@@ -213,8 +231,8 @@ export function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule
     pointsPerTier: rule.pointsPerTier,
     rounding: rule.rounding,
     tier,
-    gainPerTier: rule.gainPerTier,
-    value: tier * rule.gainPerTier,
+    gainPerTier,
+    value: tier * gainPerTier,
   };
 }
 
@@ -222,30 +240,81 @@ export function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule
 export function deriveStat(resolved, statId, { attributes, classDef } = {}) {
   const row = resolved && resolved.rules && resolved.rules[statId];
   if (!row) throw new Error(`Unknown derived stat '${statId}'`);
-  const tierReceipt = deriveAttributeTierReceipt(row, { attributes });
+  const tierReceipt = deriveAttributeTierReceipt(row, { attributes, classDef, statId });
   const { points, tier } = tierReceipt;
   const base = baseValue(row.base, classDef, statId);
-  const raw = base + tier * row.gainPerTier;
+  const raw = base + tier * tierReceipt.gainPerTier;
   const value = row.cap === null ? raw : Math.min(raw, row.cap);
-  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: row.gainPerTier, raw, cap: row.cap, value };
+  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: tierReceipt.gainPerTier, raw, cap: row.cap, value };
+}
+
+/** One compatibility contract for folding an authored relic tier into a rule. */
+export function relicAttributeTierFoldProblems(term, rule) {
+  const problems = [];
+  if (!term || !rule) return [{ field: null, msg: 'requires a resolved target resource rule' }];
+  if (term.sourceStat !== rule.sourceStat) {
+    problems.push({ field: 'sourceStat', msg: `must match target rule sourceStat '${rule.sourceStat}'` });
+  }
+  if (term.pointsPerTier !== rule.pointsPerTier) {
+    problems.push({ field: 'pointsPerTier', msg: `must match target rule pointsPerTier ${rule.pointsPerTier}` });
+  }
+  if (rule.rounding !== 'floor') {
+    problems.push({ field: null, msg: `cannot fold into target rule rounding '${rule.rounding}'; attribute-tier modifiers require 'floor'` });
+  }
+  return problems;
+}
+
+function resolveSnapshotNumbers(rules, classDef, relicModifierReceipt, explicitOverride) {
+  if (!classDef) throw new Error('Host snapshot creation requires a classDef');
+  const out = structuredClone(rules);
+  for (const [statId, row] of Object.entries(out.rules)) {
+    row.base = baseValue(row.base, classDef, statId);
+    row.gainPerTier = gainValue(row.gainPerTier, classDef, statId);
+  }
+  const resources = relicModifierReceipt && relicModifierReceipt.resources || {};
+  for (const [statId, bonus] of Object.entries(resources)) {
+    if (!bonus || (!bonus.flat && !(bonus.attributeTiers || []).length)) continue;
+    const row = out.rules[statId];
+    if (!row) throw new Error(`Relic modifier targets unknown derived resource '${statId}'`);
+    const explicitRow = explicitOverride && explicitOverride.rules && explicitOverride.rules[statId] || {};
+    if (explicitRow.base === undefined) row.base += bonus.flat || 0;
+    if (explicitRow.gainPerTier === undefined) {
+      for (const term of bonus.attributeTiers || []) {
+        if (relicAttributeTierFoldProblems(term, row).length) {
+          throw new Error(`Relic ${statId} attribute tier ${term.sourceStat}/${term.pointsPerTier} cannot fold into host rule ${row.sourceStat}/${row.pointsPerTier}/${row.rounding}`);
+        }
+        row.gainPerTier += term.amountPerTier;
+      }
+    }
+  }
+  return out;
 }
 
 /** Host-created, immutable-by-convention rules receipt for co-op/save owners. */
 export function createDerivedStatRuleSnapshot(source, options = {}) {
   if (options.authority !== 'host') throw new Error('Only the host authority may create a derived-stat rules snapshot');
-  const rules = resolveDerivedStatRules(source, options);
+  const rules = resolveSnapshotNumbers(
+    resolveDerivedStatRules(source, options),
+    options.classDef,
+    options.relicModifierReceipt,
+    options.explicitOverride,
+  );
   return structuredClone({
     snapshotVersion: DERIVED_STAT_SNAPSHOT_VERSION,
     rulesetVersion: rules.rulesetVersion,
     rules,
+    relicModifiers: options.relicModifierReceipt ? {
+      damageBySchoolAdd: options.relicModifierReceipt.damageBySchoolAdd,
+      sources: options.relicModifierReceipt.sources,
+    } : { damageBySchoolAdd: {}, sources: [] },
   });
 }
 
 /** Restore exactly what the host saved; current authored data is not consulted. */
 export function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
   if (!plainObject(snapshot)) throw new Error('Derived-stat snapshot must be an object');
-  if (snapshot.snapshotVersion !== DERIVED_STAT_SNAPSHOT_VERSION) {
-    throw new Error(`Unknown derived-stat snapshotVersion ${snapshot.snapshotVersion} (expected ${DERIVED_STAT_SNAPSHOT_VERSION})`);
+  if (!DERIVED_STAT_SNAPSHOT_VERSIONS.includes(snapshot.snapshotVersion)) {
+    throw new Error(`Unknown derived-stat snapshotVersion ${snapshot.snapshotVersion} (supported: ${DERIVED_STAT_SNAPSHOT_VERSIONS.join(', ')})`);
   }
   if (!DERIVED_STAT_RULESET_VERSIONS.includes(snapshot.rulesetVersion)) {
     throw new Error(`Unknown derived-stat rulesetVersion ${snapshot.rulesetVersion} (supported: ${DERIVED_STAT_RULESET_VERSIONS.join(', ')})`);
@@ -257,6 +326,38 @@ export function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
   // and resolve it without any live overrides. Resolved rows contain defaults;
   // those extra row keys are all legal authored override keys.
   const source = structuredClone(snapshot.rules);
+  if (snapshot.snapshotVersion === 2) {
+    for (const [id, row] of Object.entries(source.rules || {})) {
+      if (!Number.isFinite(row.base) || !Number.isFinite(row.gainPerTier)) {
+        throw new Error(`Derived-stat snapshot v2 '${id}' must carry numeric base and gainPerTier`);
+      }
+    }
+    const modifiers = snapshot.relicModifiers;
+    if (!plainObject(modifiers) || !plainObject(modifiers.damageBySchoolAdd) || !Array.isArray(modifiers.sources)) {
+      throw new Error('Derived-stat snapshot v2 must carry relicModifiers { damageBySchoolAdd, sources }');
+    }
+    const legalSchools = normalizedOptions(options).damageSchools;
+    for (const school of legalSchools) {
+      if (!own(modifiers.damageBySchoolAdd, school)) {
+        throw new Error(`Derived-stat snapshot v2 relicModifiers.damageBySchoolAdd.${school} is missing`);
+      }
+    }
+    for (const [school, value] of Object.entries(modifiers.damageBySchoolAdd)) {
+      if (legalSchools.length && !legalSchools.includes(school)) {
+        throw new Error(`Derived-stat snapshot v2 relicModifiers.damageBySchoolAdd.${school} is not a legal damage school`);
+      }
+      if (!Number.isFinite(value) || value < 0) throw new Error(`Derived-stat snapshot v2 relicModifiers.damageBySchoolAdd.${school} must be a non-negative finite number`);
+    }
+  }
+  const expectedEnvelope = snapshot.rulesetVersion >= 3 ? 2 : 1;
+  if (snapshot.snapshotVersion !== expectedEnvelope) {
+    throw new Error(`Derived-stat rulesetVersion ${snapshot.rulesetVersion} requires snapshotVersion ${expectedEnvelope}`);
+  }
   throwProblems('derivedStatSnapshot', derivedStatRuleProblems(source, normalizedOptions(options)));
-  return { snapshotVersion: snapshot.snapshotVersion, rulesetVersion: snapshot.rulesetVersion, rules: source };
+  return {
+    snapshotVersion: snapshot.snapshotVersion,
+    rulesetVersion: snapshot.rulesetVersion,
+    rules: source,
+    ...(snapshot.relicModifiers ? { relicModifiers: structuredClone(snapshot.relicModifiers) } : {}),
+  };
 }
