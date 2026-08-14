@@ -13,6 +13,7 @@ import { applyRunShape, minViableFloors, resolveFloorPlan } from '../../model/fl
 import { sampleActShape } from '../../engine/mapgen.js';
 import { classGlyph } from '../assets.js';
 import { esc } from '../components/tooltip.js';
+import { createRunState } from '../../model/state.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 
@@ -171,7 +172,13 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
     const el = document.createElement('div');
     el.className = 'class-pick cr-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><span class="chip">HP ${cls.maxHp}</span></div>`;
+    // Derived HP from the run's own home (createRunState: class base +
+    // attribute tiers + baseline kit), never bare cls.maxHp — a component
+    // posing as a total, same defect Vega fixed on the customize chip (#175
+    // rider). No profileMeta here and none needed: with no requested kit the
+    // baseline resolves meta-free (startingKits.js: baseline is always
+    // discovered), so this chip and the customize chip print the same number.
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><span class="chip">HP ${createRunState({ seed: 0, classId: cls.id, registries }).maxHp}</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
       classes.querySelectorAll('.cr-class').forEach((x) => x.classList.toggle('chosen', x === el));
