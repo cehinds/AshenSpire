@@ -37,7 +37,7 @@ import {
 import {
   endlessActInfo, activeMods, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP,
 } from '../src/content/customMods.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
+import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { statProjection } from '../src/model/statProjection.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
@@ -143,7 +143,7 @@ const OWNS_EVERYTHING = { has: () => true };
 // "not in combat" fails OPEN, so every call site written after today would
 // re-arm mid-fight by saying nothing. Blocks that predate #95 are about the fit
 // and ownership gates, so they declare the context they were always assuming.
-const REQUIREMENT_TEST_ATTRIBUTES = { strength: 15, dexterity: 15, vigour: 15, wisdom: 15, intelligence: 15 };
+const REQUIREMENT_TEST_ATTRIBUTES = { strength: 15, dexterity: 15, constitution: 15, wisdom: 15, intelligence: 15 };
 const AT_CAMP = { inCombat: false, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 const MID_FIGHT = { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 
@@ -1346,6 +1346,41 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     playFromHand(a, 'starstonePebble');
     eq(logOf(a, 'damageDealt').map((e) => e.amount).join(','), '6,6,3,6', 'new turn: no bonus again');
 
+    // The starting relic's structured school modifier is host-stamped once and
+    // feeds the same attack math used by preview, solo execution, and co-op.
+    const starRun = createRunState({ seed: 0x57a2, classId: 'starseer', registries: REG });
+    const spellDeck = Array.from({ length: 5 }, (_, i) => ({ instanceId: `sm${i}`, cardId: 'starstonePebble', upgraded: false }));
+    const soloMagic = createCombat({
+      registries: REG, rng: createRng(0x57a2),
+      player: { classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0,
+        energyMax: starRun.energyMax, drawPerTurn: starRun.drawPerTurn, deck: spellDeck,
+        relicIds: starRun.relics, damageBySchoolAdd: starRun.damageBySchoolAdd },
+      enemyIds: ['tGiant'],
+    });
+    eq(soloMagic.player.mana, 1, 'Starstone combatStart recovery restores one Mana through its trigger row');
+    const soloSpell = soloMagic.piles.hand.find((card) => card.cardId === 'starstonePebble');
+    const soloPreview = previewCard(soloMagic, soloSpell.instanceId, 'e1').values.find((value) => value.op === 'damage');
+    eq(soloPreview.value, 7, 'solo preview includes the stamped +1 magic damage');
+    dispatch(soloMagic, { type: 'playCard', cardInstanceId: soloSpell.instanceId, targetId: 'e1' });
+    eq(logOf(soloMagic, 'damageDealt')[0].amount, 7, 'solo live primary damage matches preview');
+
+    const coopMagic = createCoopCombat({
+      registries: REG, rng: createRng(0xc002),
+      players: [
+        { id: 'p1', classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0,
+          energyMax: starRun.energyMax, drawPerTurn: starRun.drawPerTurn, deck: spellDeck,
+          relicIds: starRun.relics, damageBySchoolAdd: starRun.damageBySchoolAdd },
+        { id: 'p2', classId: 'reaver', maxHp: 96, hp: 96, maxMana: 2, mana: 2, energyMax: 3, drawPerTurn: 5,
+          deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `rm${i}`, cardId: 'strike', upgraded: false })), relicIds: [] },
+      ],
+      enemyIds: ['tGiant'],
+    });
+    eq(coopMagic.players.get('p1').entity.mana, 1, 'co-op combatStart uses the same Mana recovery row');
+    const coopSpell = coopMagic.players.get('p1').piles.hand.find((card) => card.cardId === 'starstonePebble');
+    const coopEvents = playCoopCard(coopMagic, 'p1', coopSpell.instanceId, 'e1').events;
+    eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 7,
+      'co-op live magic damage uses the same host-stamped +1');
+
     // Starstone Shard: combat starts pre-charged → the FIRST spell combos.
     const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'] });
     playFromHand(s, 'starstonePebble');
@@ -1452,8 +1487,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const storage = createMemoryStorage();
     const saves = createSaveManager(storage);
     const old = { ...fresh };
+    old.schemaVersion = 3;
     delete old.mana;
     delete old.maxMana;
+    delete old.maxHpAdjustment;
+    delete old.damageBySchoolAdd;
+    delete old.derivedStatRuleSnapshot;
     storage.setItem(RUN_KEY, JSON.stringify(old));
     const migrated = saves.loadRun(REG);
     eq(migrated.mana, 2, 'pre-mana save migrates to full derived mana');
@@ -1464,7 +1503,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const atZero = resourceBarPlan(REG, 'main', zero, zero, domains).find((b) => b.id === 'mana');
     eq(atZero.cur, 0, 'zero edge is a real empty mana plan');
     eq(atZero.pct, 0, 'zero edge has zero fill');
-    const star = { maxHp: 72, hp: 72, maxMana: 3, mana: 3 };
+    const star = { maxHp: 82, hp: 82, maxMana: 4, mana: 4 };
     const atMax = resourceBarPlan(REG, 'main', star, star, domains).find((b) => b.id === 'mana');
     eq(atMax.pct, 100, 'max edge fills the mana trough');
     eq(atMax.lengthPct, 100, 'largest legal WIS-derived maxMana fills the derived row track');
@@ -3854,8 +3893,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const attrs = contentBundle.attributes.slice().sort((a, b) => a.order - b.order);
     const modes = contentBundle.creationModes;
     const classes = contentBundle.classes;
-    eq(attrs.map((a) => a.id).join(','), 'strength,dexterity,vigour,wisdom,intelligence', 'the five stable ids ship in authored order');
-    eq(attrs.map((a) => a.shortLabel).join(','), 'STR,DEX,VIG,WIS,INT', 'all five short labels ship from the same rows');
+    eq(attrs.map((a) => a.id).join(','), 'strength,dexterity,constitution,wisdom,intelligence', 'the five stable ids ship in authored order');
+    eq(attrs.map((a) => a.shortLabel).join(','), 'STR,DEX,CON,WIS,INT', 'all five short labels ship from the same rows');
     const standard = contentBundle.creationModes.find((m) => m.id === contentBundle.attributeRules.defaultMode);
     assert(!!standard, 'the default mode resolves');
     eq(`${standard.baseline}/${standard.bonusPool}/${standard.minimum}/${standard.maximum}`, '10/5/10/15', 'standard creation bounds are authored');
@@ -3957,9 +3996,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     mutant.creationModes.push(testMode);
     mutant.attributeRules.defaultMode = testMode.id;
     mutant.attributeRules.presets.testMode = {
-      reaver: { strength: 10, dexterity: 7, vigour: 7, wisdom: 7, intelligence: 7 },
-      starseer: { strength: 7, dexterity: 8, vigour: 7, wisdom: 7, intelligence: 9 },
-      herald: { strength: 7, dexterity: 7, vigour: 8, wisdom: 9, intelligence: 7 },
+      reaver: { strength: 10, dexterity: 7, constitution: 7, wisdom: 7, intelligence: 7 },
+      starseer: { strength: 7, dexterity: 8, constitution: 7, wisdom: 7, intelligence: 9 },
+      herald: { strength: 7, dexterity: 7, constitution: 8, wisdom: 9, intelligence: 7 },
     };
     assert(validateContent(mutant).ok, 'mutant content remains valid after every derived input changes');
     const MR = createRegistries(mutant);
@@ -3992,7 +4031,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const retired = contentBundle.attributeRules.retired;
     assert(retired && typeof retired === 'object' && Object.keys(retired).length > 0,
       'the retired-name map ships as content (attributeRules.retired)');
-    eq(retired.constitution, 'vigour', "'constitution' is retired in favour of 'vigour'");
+    eq(retired.vigour, 'constitution', "'vigour' is retired in favour of 'constitution'");
     assert(validateContent(contentBundle).ok, 'the shipped bundle boots clean under its own retired map');
 
     const clone = () => ({
@@ -4009,20 +4048,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         `${label} refusal names '${needle}' — got: ${v.errors.map((e) => `${e.path}: ${e.msg}`).join('; ')}`);
     };
     // The dead row itself — the creep-back this test exists for.
-    refusedNaming((b) => { b.attributes.push({ id: 'constitution', label: 'Constitution', shortLabel: 'CON', order: 6 }); },
-      'retired', 'a re-added constitution attribute row');
-    refusedNaming((b) => { b.attributes.push({ id: 'constitution', label: 'Constitution', shortLabel: 'CON', order: 6 }); },
-      'constitution', 'a re-added constitution attribute row');
+    refusedNaming((b) => { b.attributes.push({ id: 'vigour', label: 'Vigour', shortLabel: 'VIG', order: 6 }); },
+      'retired', 'a re-added vigour attribute row');
+    refusedNaming((b) => { b.attributes.push({ id: 'vigour', label: 'Vigour', shortLabel: 'VIG', order: 6 }); },
+      'vigour', 'a re-added vigour attribute row');
     // The dead name as a preset cell — the second content home it had.
     refusedNaming((b) => {
       const p = b.attributeRules.presets.standard.reaver;
-      p.constitution = p.vigour; delete p.vigour;
-    }, 'constitution', 'a preset cell keyed by the dead name');
+      p.vigour = p.constitution; delete p.constitution;
+    }, 'vigour', 'a preset cell keyed by the dead name');
     // The dead name as a derived-stat source — the third content home it had.
-    refusedNaming((b) => { b.derivedStatRules.rules.hp.sourceStat = 'constitution'; },
-      'constitution', 'a derived-stat rule sourcing the dead name');
+    refusedNaming((b) => { b.derivedStatRules.rules.hp.sourceStat = 'vigour'; },
+      'vigour', 'a derived-stat rule sourcing the dead name');
     // The map's own hygiene: a retired name may not point at a ghost.
-    refusedNaming((b) => { b.attributeRules.retired = { constitution: 'ghostStat' }; },
+    refusedNaming((b) => { b.attributeRules.retired = { vigour: 'ghostStat' }; },
       'ghostStat', 'a retired name whose heir is not a live attribute');
     // THE LOAD-BEARING CASE — the old vocabulary coming back WHOLESALE, as a
     // complete self-consistent copy (row, presets, sourceStats — exactly what
@@ -4031,15 +4070,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // presets, every sourceStat resolving. That is why the map lives in its
     // own file and why this case exists.
     refusedNaming((b) => {
-      b.attributes = b.attributes.map((a) => (a.id === 'vigour'
-        ? { ...a, id: 'constitution', label: 'Constitution', shortLabel: 'CON' } : a));
+      b.attributes = b.attributes.map((a) => (a.id === 'constitution'
+        ? { ...a, id: 'vigour', label: 'Vigour', shortLabel: 'VIG' } : a));
       for (const byClass of Object.values(b.attributeRules.presets)) {
         for (const preset of Object.values(byClass)) {
-          preset.constitution = preset.vigour; delete preset.vigour;
+          preset.vigour = preset.constitution; delete preset.constitution;
         }
       }
-      b.derivedStatRules.rules.hp.sourceStat = 'constitution';
-      b.derivedStatRules.rules.stamina.sourceStat = 'constitution';
+      b.derivedStatRules.rules.hp.sourceStat = 'vigour';
+      b.derivedStatRules.rules.stamina.sourceStat = 'vigour';
     }, 'retired', 'the complete old vocabulary reverted wholesale');
   });
 
@@ -4056,68 +4095,64 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(true, 'SKIPPED (no fixture handed in): the browser harness has no fs; run tests/run-node.mjs');
       return;
     }
-    assert(legacyRunSave.includes('"constitution"'), 'the fixture really carries the dead name (probe has a referent)');
+    const legacyVigourSave = legacyRunSave.replaceAll('"constitution"', '"vigour"');
+    assert(legacyVigourSave.includes('"vigour"'), 'the fixture really carries the retired name (probe has a referent)');
 
     const storage = createMemoryStorage();
-    storage.setItem(RUN_KEY, legacyRunSave);
+    storage.setItem(RUN_KEY, legacyVigourSave);
     const saves = createSaveManager(storage);
     const run = saves.loadRun(REG);
     assert(run !== null, 'the three-day-window save LOADS — it is not archived for wearing the old vocabulary');
-    eq(run.attributes.vigour, 12, "the constitution points arrive as vigour, value intact");
-    assert(!Object.hasOwn(run.attributes, 'constitution'), 'the dead key does not survive the load');
-    eq(Object.keys(run.attributes).join(','), 'strength,dexterity,vigour,wisdom,intelligence',
+    eq(run.attributes.constitution, 12, "the vigour points arrive as constitution, value intact");
+    assert(!Object.hasOwn(run.attributes, 'vigour'), 'the retired key does not survive the load');
+    eq(Object.keys(run.attributes).join(','), 'strength,dexterity,constitution,wisdom,intelligence',
       'the healed allocation carries exactly the live vocabulary in authored order');
     const rules = run.derivedStatRuleSnapshot.rules.rules;
-    eq(rules.hp.sourceStat, 'vigour', "the snapshot's hp rule now sources vigour");
-    eq(rules.stamina.sourceStat, 'vigour', "the snapshot's stamina rule now sources vigour");
+    eq(rules.hp.sourceStat, 'constitution', "the snapshot's hp rule now sources constitution");
+    eq(rules.stamina.sourceStat, 'constitution', "the snapshot's stamina rule now sources constitution");
     // Healing must not move a number: same points, same seat, same outputs.
-    const old = JSON.parse(legacyRunSave);
-    eq(run.maxHp, old.maxHp, 'maxHp is untouched by the rename');
+    const old = JSON.parse(legacyVigourSave);
+    eq(run.maxHp, 96, 'legacy maxHp is re-derived through the current CON/class/relic authority');
+    eq(run.hp, 96, 'a legacy full-HP save remains full after current-rule migration');
     eq(run.energyMax, old.energyMax, 'energyMax is untouched by the rename');
     eq(run.drawPerTurn, old.drawPerTurn, 'drawPerTurn is untouched by the rename');
     // Forward hygiene: the next save writes zero dead bytes.
-    assert(!serializeRun(run).includes('constitution'), 'a re-serialized healed run spells the dead name zero times');
+    assert(!serializeRun(run).includes('"vigour"'), 'a re-serialized healed run spells the retired name zero times');
 
     // The ambiguous edge fails CLOSED (Law 0 clause 5): a save carrying BOTH
     // names in one allocation is not guessed at — it archives.
-    const both = JSON.parse(legacyRunSave);
-    both.attributes.vigour = 12; // constitution still present
+    const both = JSON.parse(legacyVigourSave);
+    both.attributes.constitution = 12; // vigour still present
     storage.setItem(RUN_KEY, JSON.stringify(both));
-    eq(saves.loadRun(REG), null, 'a save carrying both constitution and vigour is refused, never guessed');
+    eq(saves.loadRun(REG), null, 'a save carrying both vigour and constitution is refused, never guessed');
   });
 
-  test("50d. the sheet's printed HP pays 1 per Vigour point — D17, at three VIG values", () => {
-    // "vigour shoudl be 1 hp point per" — Constantine, D17 message 1, verbatim
-    // (commons/decisions/directions.md), overruling the mock's +8 AND the
-    // shipped per-tier shape (floor(VIG/5) — +2 at VIG 12 where his sentence
-    // says +12). The door is the screen's own read model: customize.js and
-    // overlay.js print statProjection's hp row verbatim, formula string and
-    // all, so this row IS the printed sheet, one esc() above the DOM.
-    // Strength's "+1 damange per every 5 points" is per-5 BY his sentence, so
-    // tiers stay right for every other row; only HP pays per point.
-    for (const [classId, vig] of [['reaver', 12], ['starseer', 10]]) {
+  test("50d. the sheet's printed HP uses class hpPerConTier × floor(CON/5) — D22", () => {
+    // This is the screen's own read model, so it checks the printed receipt and
+    // the run pool through the same host-stamped rules rather than duplicating
+    // a UI-only formula.
+    for (const [classId, con] of [['reaver', 12], ['starseer', 10], ['herald', 12]]) {
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
-      eq(run.attributes.vigour, vig, `${classId} preset VIG`);
+      eq(run.attributes.constitution, con, `${classId} preset CON`);
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
-      eq(hp.tier * hp.gainPerTier, vig,
-        `${classId}: the printed HP's attribute term pays +1 per point (VIG ${vig})`);
+      eq(hp.tier, Math.floor(con / 5), `${classId}: printed HP uses floor(CON/5)`);
       assert(hp.formula.endsWith(`= ${run.maxHp}`),
         `${classId}: the printed formula lands on the run's real pool — got '${hp.formula}'`);
-      eq(run.maxHp, hp.base + vig + hp.equipmentBonus,
-        `${classId}: max HP = class base ${hp.base} + VIG ${vig} + gear ${hp.equipmentBonus}`);
+      eq(run.maxHp, hp.base + hp.tier * hp.gainPerTier + hp.equipmentBonus + hp.adjustment,
+        `${classId}: max HP derives from stamped base + CON tiers + gear + permanent adjustment`);
     }
-    // The max creation edge: VIG 15 is standard mode's ceiling. Per-tier
-    // pays 3 here; his sentence pays 15 — the gap grows with investment.
+    // The max creation edge proves the class coefficient is data, while the
+    // Forsaken Medallion contributes through the same attribute-tier DSL.
     const maxed = createRunState({
       seed: 0xf2, classId: 'reaver', registries: REG,
-      attributes: { strength: 10, dexterity: 10, vigour: 15, wisdom: 10, intelligence: 10 },
+      attributes: { strength: 10, dexterity: 10, constitution: 15, wisdom: 10, intelligence: 10 },
     });
     const hp15 = statProjection(REG, maxed).derived.find((row) => row.id === 'hp');
-    eq(hp15.tier * hp15.gainPerTier, 15, 'VIG 15 pays +15, not floor(15/5) = 3');
-    // The stamina row still tiers — his sentence names HP alone, and the
-    // mock's own "1 per 5 points" lines he left standing.
+    eq(hp15.tier, 3, 'CON 15 resolves to three tiers');
+    eq(hp15.gainPerTier, 5, 'Reaver HP gain includes class 4 plus starting-relic CON-tier 1');
+    eq(maxed.maxHp, 101, 'Reaver CON 15 = stamped base 86 + 3 × 5');
     const st15 = statProjection(REG, maxed).derived.find((row) => row.id === 'stamina');
-    eq(st15.tier, 3, 'stamina keeps the 5-point tier: his sentence rules HP only');
+    eq(st15.tier, 3, 'stamina uses the same CON tiers with its own gain');
   });
 
   const passed = results.filter((r) => r.ok).length;

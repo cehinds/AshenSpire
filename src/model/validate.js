@@ -32,12 +32,13 @@ import {
   MUSIC_SILENCE_WORD,
   MUSIC_BED_SCHEMA,
   DAMAGE_SCHOOLS,
+  RELIC_MODIFIER_TAGS,
   CREATURE_TAGS,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
-import { derivedStatRuleProblems } from './derivedStats.js';
+import { derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -136,6 +137,23 @@ const KNOWN_BUNDLE_KEYS = new Set([
 export const TOKEN_PATTERN = '\\{([A-Za-z][\\w.]*)\\}';
 export const tokenRe = () => new RegExp(TOKEN_PATTERN, 'g');
 
+function relicModifierTokenBindings(def) {
+  const counts = {};
+  const out = [];
+  const add = (base, value, tag) => {
+    counts[base] = (counts[base] || 0) + 1;
+    const token = counts[base] === 1 ? base : `${base}.${counts[base]}`;
+    out.push({ token, value, literal: typeof value === 'number', op: tag, required: true });
+  };
+  for (const row of (def.passives && Array.isArray(def.passives.modifiers) ? def.passives.modifiers : [])) {
+    if (!row || typeof row !== 'object') continue;
+    if (row.tag === 'resource.flat') add(`${row.resource}Flat`, row.amount, row.tag);
+    else if (row.tag === 'resource.attributeTier') add(`${row.resource}PerTier`, row.amountPerTier, row.tag);
+    else if (row.tag === 'damage.school.flat') add(`${row.school}DamageFlat`, row.amount, row.tag);
+  }
+  return out;
+}
+
 export function relicTokens(def) {
   // DELEGATES. It used to carry its own grammar — a `['amount','stacks','value',
   // 'n']` scan plus status/id keying — and Bjorn's review found 3 of 4 synthetic
@@ -156,6 +174,9 @@ export function relicTokens(def) {
   for (const b of computeTokenBindings(ops)) {
     const v = (ops[b.index] || {})[b.field];
     if (typeof v === 'number') tokens[b.token] = v;
+  }
+  for (const binding of relicModifierTokenBindings(def)) {
+    if (typeof binding.value === 'number') tokens[binding.token] = binding.value;
   }
   return tokens;
 }
@@ -428,8 +449,71 @@ export function validateContent(bundle) {
   for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
-    classFields: ['maxHp'],
+    classFields: ['maxHp', 'hpPerConTier'],
   })) err(problem.path, problem.msg);
+
+  // Relic modifier tags are a compact passive DSL. The tag is the behavior;
+  // every other word is data. Validate the exact row here so a typo never
+  // becomes a plausible-looking inert bonus.
+  const attributeIds = new Set((b.attributes || []).map((row) => row && row.id));
+  const resourceIds = new Set(['hp', 'mana', 'stamina']);
+  const starterRelicIds = new Set((b.classes || []).map((row) => row && row.startingRelic));
+  for (const relic of b.relics || []) {
+    const rows = relic && relic.passives && relic.passives.modifiers;
+    if (rows === undefined) continue;
+    const base = `relics.${relic.id}.passives.modifiers`;
+    if (!Array.isArray(rows)) {
+      err(base, 'must be an array');
+      continue;
+    }
+    if (rows.length && (relic.rarity !== 'starter' || !starterRelicIds.has(relic.id))) {
+      err(base, 'resource/damage modifier tags are restricted to class starting relics');
+    }
+    rows.forEach((row, index) => {
+      const path = `${base}[${index}]`;
+      if (!row || typeof row !== 'object' || Array.isArray(row)) {
+        err(path, 'must be an object');
+        return;
+      }
+      if (!RELIC_MODIFIER_TAGS.includes(row.tag)) {
+        err(`${path}.tag`, `'${row.tag}' is unknown (legal: ${RELIC_MODIFIER_TAGS.join(', ')})`);
+        return;
+      }
+      const fields = row.tag === 'resource.flat'
+        ? ['tag', 'resource', 'amount']
+        : row.tag === 'resource.attributeTier'
+          ? ['tag', 'resource', 'sourceStat', 'pointsPerTier', 'amountPerTier']
+          : ['tag', 'school', 'amount'];
+      for (const key of Object.keys(row)) if (!fields.includes(key)) err(`${path}.${key}`, `unknown field '${key}' for '${row.tag}'`);
+      for (const key of fields) if (row[key] === undefined) err(`${path}.${key}`, `missing required field '${key}'`);
+      if (row.resource !== undefined && !resourceIds.has(row.resource)) err(`${path}.resource`, `unknown resource '${row.resource}'`);
+      if (row.sourceStat !== undefined && !attributeIds.has(row.sourceStat)) err(`${path}.sourceStat`, `unknown attribute '${row.sourceStat}'`);
+      if (row.school !== undefined && !DAMAGE_SCHOOLS.includes(row.school)) err(`${path}.school`, `unknown damage school '${row.school}'`);
+      for (const key of ['amount', 'amountPerTier']) {
+        if (row[key] !== undefined && (!Number.isInteger(row[key]) || row[key] <= 0)) err(`${path}.${key}`, 'must be a positive integer');
+      }
+      if (row.pointsPerTier !== undefined && (!Number.isInteger(row.pointsPerTier) || row.pointsPerTier <= 0)) {
+        err(`${path}.pointsPerTier`, 'must be a positive integer');
+      }
+      if (row.tag === 'resource.attributeTier') {
+        const authoredRule = b.derivedStatRules && b.derivedStatRules.rules && b.derivedStatRules.rules[row.resource];
+        const defaults = b.derivedStatRules && b.derivedStatRules.defaults || {};
+        const resolvedRule = authoredRule && { ...defaults, ...authoredRule };
+        if (resolvedRule) {
+          for (const foldProblem of relicAttributeTierFoldProblems(row, resolvedRule)) {
+            err(foldProblem.field ? `${path}.${foldProblem.field}` : path,
+              `${foldProblem.msg} so the ${row.resource} modifier can fold at content boot`);
+          }
+        }
+      }
+    });
+  }
+
+  for (const cls of b.classes || []) {
+    if (cls && (!Number.isInteger(cls.hpPerConTier) || cls.hpPerConTier <= 0)) {
+      err(`classes.${cls.id}.hpPerConTier`, 'must be a positive integer');
+    }
+  }
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
   // The shape walk above already rejects a missing `source`. This rejects a
@@ -1352,8 +1436,8 @@ export function validateFormula(value, path, vctx) {
 // Text templating (SPEC §3.13)
 // ---------------------------------------------------------------------------
 
-function checkTemplate(template, effects, path, err) {
-  const bindings = computeTokenBindings(effects);
+function checkTemplate(template, effects, path, err, extraBindings = []) {
+  const bindings = [...computeTokenBindings(effects), ...extraBindings];
   const bound = new Set(bindings.map((bd) => bd.token));
   for (const token of extractTemplateTokens(template)) {
     if (!bound.has(token)) {
@@ -1362,7 +1446,7 @@ function checkTemplate(template, effects, path, err) {
   }
   const used = new Set(extractTemplateTokens(template));
   for (const bd of bindings) {
-    if (bd.literal && REQUIRED_TOKEN_OPS.includes(bd.op) && !used.has(bd.token)) {
+    if (bd.literal && (bd.required || REQUIRED_TOKEN_OPS.includes(bd.op)) && !used.has(bd.token)) {
       err(path, `Player-visible numeric effect (op '${bd.op}', token '{${bd.token}}') lacks a template token`);
     }
   }
@@ -1386,7 +1470,7 @@ function validateRelicTemplate(relic, path, err) {
   for (const trig of relic.triggers) {
     if (trig && Array.isArray(trig.do)) effects.push(...trig.do);
   }
-  checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err);
+  checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err, relicModifierTokenBindings(relic));
 }
 
 // ---------------------------------------------------------------------------

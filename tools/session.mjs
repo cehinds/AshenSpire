@@ -16,7 +16,7 @@
 // series when they return (see resolveCatchup).
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
-import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../src/model/state.js';
+import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
@@ -110,13 +110,14 @@ export function createSession({ registries, seedString, endless = false, restore
         if (md.classId !== md.run.class) {
           throw new Error(`Session member '${md.id}' class '${md.classId}' disagrees with run class '${md.run.class}'`);
         }
+        const legacyKit = md.run.schemaVersion === 1;
+        migrateRunSchema(md.run);
         normalizeRunAttributes(md.run, registries);
         const discoveredArmaments = [...new Set(md.discoveredArmaments || [])];
-        const legacyKit = md.run.schemaVersion === 1;
         validateRunStartingKit(md.run, registries, { discoveredArmaments }, { legacy: legacyKit });
-        if (legacyKit) md.run.schemaVersion = RUN_SCHEMA_VERSION;
         initializeRunDerivedStats(md.run, registries, { preserveDeficits: true });
         initializeRunFlaskCharges(md.run, registries);
+        delete md.run.migratedFromRunSchemaVersion;
         members.set(md.id, {
           id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
           connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
@@ -310,6 +311,7 @@ export function createSession({ registries, seedString, endless = false, restore
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
       startingKitId: m.run.startingKitId,
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
+      damageBySchoolAdd: { ...m.run.damageBySchoolAdd },
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
     };

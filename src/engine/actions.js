@@ -41,6 +41,12 @@ import { syncFlaskGrowth } from '../model/flaskgrowth.js';
  */
 export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   let dmg = base;
+  const school = carrier && carrier.damageSchool;
+  if (source && source.kind === 'player' && school) {
+    dmg += source.damageBySchoolAdd && Number.isFinite(source.damageBySchoolAdd[school])
+      ? source.damageBySchoolAdd[school]
+      : 0;
+  }
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
@@ -63,7 +69,6 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
     }
     if (addPool > 0) dmg *= 1 + addPool;
   }
-  const school = carrier && carrier.damageSchool;
   if (target && school) {
     const resistance = target.damageResistanceBySchool && target.damageResistanceBySchool[school];
     if (Number.isFinite(resistance)) dmg *= Math.max(0, 1 - resistance / 100);
@@ -501,9 +506,11 @@ function runOpcode(ctx, action, eff) {
     }
     case 'restoreMana': {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
-      const before = ctx.player.mana;
-      ctx.player.mana = Math.min(ctx.player.maxMana, ctx.player.mana + n);
-      ctx.emit('manaRestored', { amount: ctx.player.mana - before });
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        const before = t.mana;
+        t.mana = Math.min(t.maxMana, t.mana + n);
+        ctx.emit('manaRestored', { targetId: t.id, amount: t.mana - before });
+      }
       break;
     }
     case 'loseHp': {
@@ -636,7 +643,12 @@ function runRunOpcode(ctx, action, eff) {
     }
     case 'loseMaxHpPct': {
       const pct = evalNum(ctx, action, eff.pct, 0);
+      if (!Number.isInteger(run.maxHpAdjustment)) {
+        throw new Error('loseMaxHpPct requires the run maxHpAdjustment ledger');
+      }
+      const before = run.maxHp;
       run.maxHp = Math.max(1, Math.floor(run.maxHp * (1 - pct / 100)));
+      run.maxHpAdjustment += run.maxHp - before;
       run.hp = Math.min(run.hp, run.maxHp);
       break;
     }

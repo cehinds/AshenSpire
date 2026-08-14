@@ -368,7 +368,6 @@ export function createSaveManager(storage) {
         run = deserializeRun(json);
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
-        delete run.migratedFromRunSchemaVersion;
       } catch (e) {
         archive(json, e && e.message ? e.message : 'corrupt save', slot);
         return null;
@@ -399,6 +398,7 @@ export function createSaveManager(storage) {
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
         if (needsEquipmentStamp || needsCarrierStamp) stampDeck(registries, run);
         initializeRunFlaskCharges(run, registries);
+        delete run.migratedFromRunSchemaVersion;
       } catch (e) {
         archive(json, e && e.message ? e.message : 'invalid derived-stat snapshot', slot);
         return null;

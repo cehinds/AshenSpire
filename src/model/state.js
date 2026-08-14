@@ -20,12 +20,13 @@ import {
 } from './derivedStats.js';
 import { resolveStartingKit, startingKitSnapshot } from './startingKits.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
+import { resolveRelicModifiers } from './relicModifiers.js';
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
 // saves lack the ledger and are attributed once at the load door
 // (initializeRunFlaskCharges); v1 additionally predates starting kits.
-export const RUN_SCHEMA_VERSION = 3;
+export const RUN_SCHEMA_VERSION = 4;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -99,10 +100,12 @@ export function createRunState({
     mapNodeId: null,
     hp: oldMaxHp,
     maxHp: oldMaxHp,
+    maxHpAdjustment: 0,
     cinders: registries.balance.startingCinders || 0,
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
     relics: [classDef.startingRelic],
+    damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
     flaskCharges: createFlaskCharges(registries.balance, classDef.startingFlaskAllocation),
     seedString: null, // set by the orchestrator right after creation (display/replay)
@@ -148,7 +151,8 @@ function derivedOptions(registries, extra = {}) {
     explicitOverride: statLayer(extra.explicitOverride),
     authority: 'host',
     attributeIds: registries.attributes.ids(),
-    classFields: ['maxHp', 'maxMana'],
+    classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+    damageSchools: DAMAGE_SCHOOLS,
   };
 }
 
@@ -164,15 +168,39 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const existing = snapshot || run.derivedStatRuleSnapshot;
+  const classDef = registries.classes.get(run.class);
+  const hpEquipmentBonus = run.loadout ? runMods(registries, run.loadout, run.class).maxHp : 0;
   run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
     ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
     : createEquipmentProfileRuleSnapshot(registries, derivedStatOptions);
   const currentRuleset = registries.derivedStatRules.rulesetVersion;
   const existingIsCurrent = existing && existing.rulesetVersion === currentRuleset;
+  let restoredExisting = null;
+  if (existing) restoredExisting = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+
+  // Schema v3 and older had no explanation for permanent max-HP reductions.
+  // Infer the exact residual once from the old authoritative rule plus current
+  // equipment. This preserves event curses instead of healing them away when
+  // D22 changes the base formula.
+  if (run.maxHpAdjustment === undefined) {
+    if (restoredExisting && Number.isFinite(run.maxHp)) {
+      const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: run.attributes, classDef }).value;
+      run.maxHpAdjustment = run.maxHp - (oldDerivedHp + hpEquipmentBonus);
+    } else run.maxHpAdjustment = 0;
+  }
+  if (!Number.isInteger(run.maxHpAdjustment)) {
+    throw new Error(`Persisted maxHpAdjustment must be an integer (got ${JSON.stringify(run.maxHpAdjustment)})`);
+  }
+
   if (existingIsCurrent && run.derivedStatRuleSnapshot) {
-    const restored = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
-    const classDef = registries.classes.get(run.class);
-    for (const [key, statId] of [['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
+    const restored = restoredExisting;
+    const expectedByKey = [
+      ['maxMana', 'mana'],
+      ['maxStamina', 'stamina'],
+      ['energyMax', 'energy'],
+      ['drawPerTurn', 'draw'],
+    ];
+    for (const [key, statId] of expectedByKey) {
       const value = run[key];
       if (!Number.isInteger(value) || value < 0) {
         throw new Error(`Persisted ${key} must be a non-negative integer under its derived-stat snapshot`);
@@ -180,41 +208,60 @@ export function initializeRunDerivedStats(run, registries, {
       const expected = deriveStat(restored.rules, statId, { attributes: run.attributes, classDef }).value;
       if (value !== expected) throw new Error(`Persisted ${key} ${value} contradicts derived-stat snapshot value ${expected}`);
     }
+    const expectedMaxHp = Math.max(1,
+      deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef }).value
+      + hpEquipmentBonus + run.maxHpAdjustment);
+    if (run.maxHp !== expectedMaxHp) {
+      throw new Error(`Persisted maxHp ${run.maxHp} contradicts derived-stat snapshot/equipment/adjustment value ${expectedMaxHp}`);
+    }
+    const stampedDamage = restored.relicModifiers && restored.relicModifiers.damageBySchoolAdd
+      || Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0]));
+    if (run.damageBySchoolAdd === undefined) run.damageBySchoolAdd = structuredClone(stampedDamage);
+    for (const school of DAMAGE_SCHOOLS) {
+      if (run.damageBySchoolAdd[school] !== (stampedDamage[school] || 0)) {
+        throw new Error(`Persisted damageBySchoolAdd.${school} contradicts host relic snapshot`);
+      }
+    }
   }
   if (existingIsCurrent && run.derivedStatRuleSnapshot
     && run.maxHp !== undefined && run.hp !== undefined
     && run.maxMana !== undefined && run.mana !== undefined
     && run.maxStamina !== undefined && run.stamina !== undefined
     && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
-    restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
     return run;
   }
 
   // v1 carried class-authored 40/60/80 Mana pools. It is readable so its
   // current/max ratio can be migrated, but it is never retained as authority.
-  if (existing && !existingIsCurrent) restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+  const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, { attributes: run.attributes });
   const receipt = existingIsCurrent
-    ? restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries))
-    : createDerivedStatRuleSnapshot(registries.derivedStatRules, derivedOptions(registries, derivedStatOptions));
-  const classDef = registries.classes.get(run.class);
+    ? restoredExisting
+    : createDerivedStatRuleSnapshot(registries.derivedStatRules, {
+      ...derivedOptions(registries, derivedStatOptions),
+      classDef,
+      relicModifierReceipt,
+    });
   const rules = receipt.rules;
   const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef });
   const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef });
   const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef });
   const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef });
   const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef });
-  const hpBonus = run.loadout ? runMods(registries, run.loadout, run.class).maxHp : 0;
 
   const oldHpMax = run.maxHp;
   const oldHp = run.hp;
   const oldManaMax = run.maxMana;
   const oldMana = run.mana;
   run.derivedStatRuleSnapshot = structuredClone(receipt);
-  run.maxHp = hp.value + hpBonus;
+  run.maxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);
   run.maxMana = mana.value;
   run.maxStamina = stamina.value;
   run.energyMax = energy.value;
   run.drawPerTurn = draw.value;
+  run.damageBySchoolAdd = structuredClone(
+    receipt.relicModifiers && receipt.relicModifiers.damageBySchoolAdd
+      || Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
+  );
   if (preserveDeficits && Number.isFinite(oldHpMax) && Number.isFinite(oldHp)) {
     run.hp = Math.max(0, run.maxHp - Math.max(0, oldHpMax - oldHp));
   } else run.hp = run.maxHp;
@@ -252,6 +299,7 @@ export const RUN_SHAPE = [
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
   { key: 'maxHp', type: 'number' },
+  { key: 'maxHpAdjustment', type: 'number' },
   // Optional only for save compatibility. save.js migrates a pre-mana run to
   // its class-authored full pool before handing it to the game.
   { key: 'mana', type: 'number', optional: true },
@@ -263,6 +311,7 @@ export const RUN_SHAPE = [
   { key: 'cinders', type: 'number' },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
+  { key: 'damageBySchoolAdd', type: 'object' },
   { key: 'flasks', type: 'array' },
   { key: 'history', type: 'array' },
   { key: 'modifiers', type: 'array' },
@@ -284,10 +333,11 @@ function typeOk(value, type) {
 /** validateRunShape(run) → [] when sound, else a list of human-readable problems.
  *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
  *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
-export function validateRunShape(run, { legacy = false, preLedger = legacy } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger } = {}) {
   const problems = [];
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
+    if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -324,6 +374,22 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy } = {
   }
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');
+  }
+  if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && (run.hp < 0 || run.hp > run.maxHp)) {
+    problems.push('hp must be between 0 and maxHp');
+  }
+  if (run.maxHpAdjustment !== undefined && !Number.isInteger(run.maxHpAdjustment)) {
+    problems.push('maxHpAdjustment must be an integer');
+  }
+  if (run.damageBySchoolAdd !== undefined) {
+    for (const school of DAMAGE_SCHOOLS) {
+      if (!Number.isInteger(run.damageBySchoolAdd[school]) || run.damageBySchoolAdd[school] < 0) {
+        problems.push(`damageBySchoolAdd.${school} must be a non-negative integer`);
+      }
+    }
+    for (const school of Object.keys(run.damageBySchoolAdd)) {
+      if (!DAMAGE_SCHOOLS.includes(school)) problems.push(`damageBySchoolAdd.${school} is not a legal damage school`);
+    }
   }
   if (run.maxMana !== undefined && (!Number.isFinite(run.maxMana) || run.maxMana <= 0)) {
     problems.push('maxMana must be > 0');
@@ -443,21 +509,26 @@ export function initializeRunFlaskCharges(run, registries) {
  * schemaVersion, or a run that doesn't match RUN_SHAPE (save.js turns any
  * throw here into an archive-and-refuse, so a bad save is never silently lost).
  */
-export function deserializeRun(json) {
-  const run = JSON.parse(json);
+export function migrateRunSchema(run) {
   if (!run || typeof run !== 'object') throw new Error('Corrupt run save');
+  const originalVersion = run.schemaVersion;
   const legacy = run.schemaVersion === 1;
   const preLedger = legacy || run.schemaVersion === 2; // v2: no flaskCharges capacity ledger yet
-  if (!preLedger && run.schemaVersion !== RUN_SCHEMA_VERSION) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (expected ${RUN_SCHEMA_VERSION})`);
+  const preHpLedger = [1, 2, 3].includes(run.schemaVersion);
+  if (![1, 2, 3, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger });
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
-  if (preLedger) {
-    run.migratedFromRunSchemaVersion = run.schemaVersion;
+  if (originalVersion !== RUN_SCHEMA_VERSION) {
+    run.migratedFromRunSchemaVersion = originalVersion;
     run.schemaVersion = RUN_SCHEMA_VERSION;
   }
   return run;
+}
+
+export function deserializeRun(json) {
+  return migrateRunSchema(JSON.parse(json));
 }
 
 // ---------------------------------------------------------------------------
@@ -479,7 +550,7 @@ export function deserializeRun(json) {
  * a zero-threshold player has no vessel, and the HUD's refusal path renders
  * it ABSENT rather than as an empty trough.
  */
-export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0 }) {
+export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {} }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
   const entity = {
@@ -499,6 +570,7 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
     statuses: {},
     stanceId: null,
     relicIds: [...relicIds],
+    damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, damageBySchoolAdd[school] || 0])),
     flasks: flasks.map((f) => ({ ...f })),
     flaskCharges: flaskCharges ? { ...flaskCharges } : null,
     counters: {

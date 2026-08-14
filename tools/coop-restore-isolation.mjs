@@ -99,7 +99,7 @@ function walkToBoundary(S) {
 // The ambiguous save Vira's migration refuses by design: BOTH the dead name
 // and its heir claim one seat (Law 0 clause 5 — no honest way to pick).
 function poisonBothNames(md) {
-  md.run.attributes.constitution = md.run.attributes.vigour;
+  md.run.attributes.vigour = md.run.attributes.constitution;
 }
 // The legitimate old save: the dead name ALONE, in both persisted homes —
 // this one is MIGRATABLE and must restore healed. It exists in this file to
@@ -107,11 +107,11 @@ function poisonBothNames(md) {
 // neighbour is what tears the caller's blob.
 function spellDead(md) {
   const a = md.run.attributes;
-  if (Object.hasOwn(a, 'vigour')) { a.constitution = a.vigour; delete a.vigour; }
+  if (Object.hasOwn(a, 'constitution')) { a.vigour = a.constitution; delete a.constitution; }
   const rules = md.run.derivedStatRuleSnapshot && md.run.derivedStatRuleSnapshot.rules
     && md.run.derivedStatRuleSnapshot.rules.rules;
   for (const rule of Object.values(rules || {})) {
-    if (rule && rule.sourceStat === 'vigour') rule.sourceStat = 'constitution';
+    if (rule && rule.sourceStat === 'constitution') rule.sourceStat = 'vigour';
   }
 }
 // Two claims on one seat, the other authority: the roster and the run disagree
@@ -155,7 +155,7 @@ try {
         && R.session.members.get('p3').run.deck.length === deckOf(bad, 'p3'),
       'the healthy members restore with their builds intact (deck sizes match the bytes)');
       const rf = refusedOf(R);
-      ok(Array.isArray(rf) && rf.length === 1 && rf[0].id === 'p2' && /constitution|retired/.test(rf[0].reason || ''),
+      ok(Array.isArray(rf) && rf.length === 1 && rf[0].id === 'p2' && /vigour|retired/.test(rf[0].reason || ''),
         'the poisoned member is refused BY NAME, and the receipt carries the refusal reason',
         rf && rf[0] ? `${rf[0].id}: ${String(rf[0].reason).slice(0, 90)}` : `refusedMembers() -> ${JSON.stringify(rf)}`);
       const snap = R.snapshot();
@@ -208,8 +208,8 @@ try {
       'an old-vocabulary member heals and restores even when a neighbour is refused',
       threw ? `threw: ${threw.slice(0, 100)}` : 'p1 healed, p3 clean, p2 refused');
     if (R) {
-      ok(Object.hasOwn(R.session.members.get('p1').run.attributes, 'vigour')
-        && !Object.hasOwn(R.session.members.get('p1').run.attributes, 'constitution'),
+      ok(Object.hasOwn(R.session.members.get('p1').run.attributes, 'constitution')
+        && !Object.hasOwn(R.session.members.get('p1').run.attributes, 'vigour'),
       'the healed member\'s SESSION run speaks the live vocabulary');
     }
     ok(JSON.stringify(bad) === before,

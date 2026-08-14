@@ -129,9 +129,9 @@ try {
   mutant.creationModes.push(mutantMode);
   mutant.attributeRules.defaultMode = mutantMode.id;
   mutant.attributeRules.presets[mutantMode.id] = {
-    reaver: { strength: 10, dexterity: 7, vigour: 7, wisdom: 7, intelligence: 7 },
-    starseer: { strength: 7, dexterity: 8, vigour: 7, wisdom: 7, intelligence: 9 },
-    herald: { strength: 7, dexterity: 7, vigour: 8, wisdom: 9, intelligence: 7 },
+    reaver: { strength: 10, dexterity: 7, constitution: 7, wisdom: 7, intelligence: 7 },
+    starseer: { strength: 7, dexterity: 8, constitution: 7, wisdom: 7, intelligence: 9 },
+    herald: { strength: 7, dexterity: 7, constitution: 8, wisdom: 9, intelligence: 7 },
   };
   ok(validateContent(mutant).ok, 'mutated session content validates');
   const mutantRegistries = createRegistries(mutant);

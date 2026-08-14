@@ -21,7 +21,7 @@ import {
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ATTRIBUTE_IDS = phase1Attributes.slice().sort((a, b) => a.order - b.order).map((row) => row.id);
-const CLASS = { id: 'reaver', maxHp: 84 };
+const CLASS = { id: 'reaver', maxHp: 84, hpPerConTier: 4 };
 let failures = 0;
 let checks = 0;
 
@@ -40,7 +40,7 @@ const equal = (actual, expected, message) => assert(Object.is(actual, expected),
 const clone = (value) => structuredClone(value);
 
 function resolved(options = {}) {
-  return resolveDerivedStatRules(derivedStatRules, { attributeIds: ATTRIBUTE_IDS, ...options });
+  return resolveDerivedStatRules(derivedStatRules, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'], ...options });
 }
 
 console.log('derivedstats — inert post-Phase-1 rules contract\n');
@@ -53,11 +53,11 @@ check('one authoritative object carries the global defaults', () => {
 
 check('the five rows map to the ruled source attributes', () => {
   const got = Object.entries(derivedStatRules.rules).map(([id, row]) => `${id}:${row.sourceStat}`).join(',');
-  equal(got, 'energy:dexterity,draw:intelligence,hp:vigour,stamina:vigour,mana:wisdom', 'row map');
+  equal(got, 'energy:dexterity,draw:intelligence,hp:constitution,stamina:constitution,mana:wisdom', 'row map');
 });
 
 check('the shipped table passes the closed schema', () => {
-  const problems = derivedStatRuleProblems(derivedStatRules, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'] });
+  const problems = derivedStatRuleProblems(derivedStatRules, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'] });
   assert(Array.isArray(problems) && problems.length === 0, problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
 });
 
@@ -72,7 +72,7 @@ check('INT 10 gives Draw raw 3 + tier 2 = 5', () => {
 });
 
 check('CON 10 gives at least 2 Stamina', () => {
-  assert(deriveStat(resolved(), 'stamina', { attributes: { vigour: 10 }, classDef: CLASS }).value >= 2, 'Stamina below 2');
+  assert(deriveStat(resolved(), 'stamina', { attributes: { constitution: 10 }, classDef: CLASS }).value >= 2, 'Stamina below 2');
 });
 
 check('WIS 10 is the only Mana authority and yields 2', () => {
@@ -80,16 +80,16 @@ check('WIS 10 is the only Mana authority and yields 2', () => {
   equal(out.base, 0, 'Mana base'); equal(out.value, 2, 'Mana');
 });
 
-check('VIG HP starts from class data and pays 1 per point (D17)', () => {
-  const out = deriveStat(resolved(), 'hp', { attributes: { vigour: 10 }, classDef: CLASS });
-  equal(out.base, 84, 'class HP base'); equal(out.value, 94, 'derived HP: 84 + 10 points');
+check('CON HP starts from class data and pays the class coefficient per five-point tier (D22)', () => {
+  const out = deriveStat(resolved(), 'hp', { attributes: { constitution: 10 }, classDef: CLASS });
+  equal(out.base, 84, 'class HP base'); equal(out.value, 92, 'derived HP: 84 + two class tiers of four');
 });
 
 check('a row may override pointsPerTier and rounding', () => {
   const source = clone(derivedStatRules);
   source.rules.energy.pointsPerTier = 4;
   source.rules.energy.rounding = 'ceil';
-  const rules = resolveDerivedStatRules(source, { attributeIds: ATTRIBUTE_IDS });
+  const rules = resolveDerivedStatRules(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'] });
   const out = deriveStat(rules, 'energy', { attributes: { dexterity: 9 }, classDef: CLASS });
   equal(out.tier, 3, 'ceil(9/4)'); equal(out.value, 4, 'Energy');
 });
@@ -98,7 +98,7 @@ check('an authored row override outranks the authored global defaults', () => {
   const source = clone(derivedStatRules);
   source.defaults.pointsPerTier = 5;
   source.rules.energy.pointsPerTier = 10;
-  const out = deriveStat(resolveDerivedStatRules(source, { attributeIds: ATTRIBUTE_IDS }), 'energy', {
+  const out = deriveStat(resolveDerivedStatRules(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'] }), 'energy', {
     attributes: { dexterity: 10 }, classDef: CLASS,
   });
   equal(out.tier, 1, 'row pointsPerTier');
@@ -139,8 +139,8 @@ check('shipped Energy and Draw both declare cap null and grow unbounded at high 
 });
 
 check('HP class-field base is live while Mana remains independent of class data', () => {
-  const attributes = { vigour: 10, wisdom: 10 };
-  const classDef = { id: 'newClass', maxHp: 137, maxMana: 23 };
+  const attributes = { constitution: 10, wisdom: 10 };
+  const classDef = { id: 'newClass', maxHp: 137, maxMana: 23, hpPerConTier: 7 };
   const before = JSON.stringify({ attributes, classDef });
   equal(deriveStat(resolved(), 'hp', { attributes, classDef }).base, 137, 'HP reads changed class data');
   equal(deriveStat(resolved(), 'mana', { attributes, classDef }).base, 0, 'Mana ignores class data');
@@ -191,7 +191,7 @@ const badCases = [
 ];
 for (const [name, mutate, path] of badCases) check(`schema refuses ${name} by path`, () => {
   const source = clone(derivedStatRules); mutate(source);
-  const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'] });
+  const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'] });
   assert(problems.some((p) => p.path === path), `no problem at ${path}: ${JSON.stringify(problems)}`);
 });
 
@@ -199,14 +199,14 @@ const rootNumericMutants = [
   ['rulesetVersion zero', (x) => { x.rulesetVersion = 0; }, 'rulesetVersion'],
   ['rulesetVersion fractional', (x) => { x.rulesetVersion = 1.5; }, 'rulesetVersion'],
   ['rulesetVersion NaN', (x) => { x.rulesetVersion = Number.NaN; }, 'rulesetVersion'],
-  ['unsupported positive rulesetVersion', (x) => { x.rulesetVersion = 3; }, 'rulesetVersion'],
+  ['unsupported positive rulesetVersion', (x) => { x.rulesetVersion = 4; }, 'rulesetVersion'],
   ['default pointsPerTier NaN', (x) => { x.defaults.pointsPerTier = Number.NaN; }, 'defaults.pointsPerTier'],
   ['default cap negative', (x) => { x.defaults.cap = -1; }, 'defaults.cap'],
   ['default cap infinite', (x) => { x.defaults.cap = Infinity; }, 'defaults.cap'],
 ];
 for (const [name, mutate, path] of rootNumericMutants) check(`numeric corpus refuses ${name}`, () => {
   const source = clone(derivedStatRules); mutate(source);
-  const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'] });
+  const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'] });
   assert(problems.some((p) => p.path === path), `no problem at ${path}`);
 });
 
@@ -222,7 +222,7 @@ for (const id of Object.keys(derivedStatRules.rules)) {
   else mutations.push(['class base loses field', (x) => { delete x.rules[id].base.field; }, `rules.${id}.base.field`]);
   for (const [name, mutate, path] of mutations) check(`${id} row corpus refuses ${name}`, () => {
     const source = clone(derivedStatRules); mutate(source);
-    const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'] });
+    const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'] });
     assert(problems.some((p) => p.path === path), `no problem at ${path}`);
   });
 }
@@ -238,7 +238,7 @@ const completenessMutants = [
 ];
 for (const [name, mutate, path] of completenessMutants) check(`completeness corpus refuses ${name}`, () => {
   const source = clone(derivedStatRules); mutate(source);
-  const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'] });
+  const problems = derivedStatRuleProblems(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'] });
   assert(problems.some((p) => p.path === path), `no problem at ${path}`);
 });
 
@@ -279,15 +279,15 @@ check('only a host may author the co-op rules snapshot', () => {
 
 check('a host snapshot records the ruleset version and resolved overrides', () => {
   const snap = createDerivedStatRuleSnapshot(derivedStatRules, {
-    authority: 'host', attributeIds: ATTRIBUTE_IDS,
+    authority: 'host', attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'], classDef: CLASS,
     explicitOverride: { rules: { energy: { base: 9 } } },
   });
-  equal(snap.rulesetVersion, 2, 'rulesetVersion');
+  equal(snap.rulesetVersion, 3, 'rulesetVersion');
   equal(snap.rules.rules.energy.base, 9, 'snapshotted explicit override');
 });
 
 check('resume derives from the saved snapshot, never changed live rules', () => {
-  const snap = createDerivedStatRuleSnapshot(derivedStatRules, { authority: 'host', attributeIds: ATTRIBUTE_IDS });
+  const snap = createDerivedStatRuleSnapshot(derivedStatRules, { authority: 'host', attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'], classDef: CLASS });
   const changed = clone(derivedStatRules); changed.rules.energy.base = 99;
   const restored = restoreDerivedStatRuleSnapshot(JSON.parse(JSON.stringify(snap)), { attributeIds: ATTRIBUTE_IDS });
   equal(deriveStat(restored.rules, 'energy', { attributes: { dexterity: 10 }, classDef: CLASS }).value, 3, 'resumed Energy');
@@ -295,7 +295,7 @@ check('resume derives from the saved snapshot, never changed live rules', () => 
 });
 
 check('resume refuses an unknown snapshot/ruleset version by name', () => {
-  const snap = createDerivedStatRuleSnapshot(derivedStatRules, { authority: 'host', attributeIds: ATTRIBUTE_IDS });
+  const snap = createDerivedStatRuleSnapshot(derivedStatRules, { authority: 'host', attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'], classDef: CLASS });
   snap.rulesetVersion = 999;
   let message = '';
   try { restoreDerivedStatRuleSnapshot(snap, { attributeIds: ATTRIBUTE_IDS }); } catch (error) { message = error.message; }
@@ -303,7 +303,7 @@ check('resume refuses an unknown snapshot/ruleset version by name', () => {
 });
 
 check('resume refuses an unknown snapshot envelope version by name', () => {
-  const snap = createDerivedStatRuleSnapshot(derivedStatRules, { authority: 'host', attributeIds: ATTRIBUTE_IDS });
+  const snap = createDerivedStatRuleSnapshot(derivedStatRules, { authority: 'host', attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp', 'hpPerConTier'], classDef: CLASS });
   snap.snapshotVersion = 999;
   let message = '';
   try { restoreDerivedStatRuleSnapshot(snap, { attributeIds: ATTRIBUTE_IDS }); } catch (error) { message = error.message; }

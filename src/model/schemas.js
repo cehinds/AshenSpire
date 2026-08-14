@@ -26,6 +26,11 @@ import { NODE_TYPES, ANCHOR_KINDS } from './floorplan.js';
 
 /** Presentation schools carried explicitly by equipment-bound card profiles. */
 export const DAMAGE_SCHOOLS = Object.freeze(['physical', 'magic', 'arcane', 'holy', 'fire']);
+export const RELIC_MODIFIER_TAGS = Object.freeze([
+  'resource.flat',
+  'resource.attributeTier',
+  'damage.school.flat',
+]);
 // The bar vocabulary lives with the readers it describes (model/resources.js),
 // so the schema and the engine cannot drift into two homes. resources.js
 // imports nothing — no cycle.
@@ -565,9 +570,15 @@ export const SCHEMAS = Object.freeze({
     // keys, so this node is what actually refuses a mis-spelled passive — which
     // is exactly why it must not be a second list.
     passives: opt(
-      obj(Object.fromEntries(
-        Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
-      ))
+      obj({
+        ...Object.fromEntries(
+          Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
+        ),
+        // Semantics and strict field validation live in validate.js beside the
+        // closed RELIC_MODIFIER_TAGS vocabulary. `any` avoids duplicating three
+        // discriminated object shapes in this generic schema walker.
+        modifiers: opt(arr(any)),
+      })
     ),
     icon: opt(str),
     flavor: opt(str),
@@ -753,6 +764,7 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
+    hpPerConTier: int,
     startingFlaskAllocation: obj({ hp: int, mana: int }),
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
