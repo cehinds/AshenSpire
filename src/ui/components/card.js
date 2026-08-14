@@ -6,8 +6,10 @@
 
 import { resolveCard } from '../../model/registries.js';
 import { computeTokenBindings, relicTokens, tokenRe } from '../../model/validate.js';
+import { flaskGrowthClause } from '../../model/flaskgrowth.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { balance } from '../../content/balance.js';
+import { flasks } from '../../content/flasks.js';
 import { tagsFor } from '../../content/tags.js';
 
 /** Static token values straight off the def (for reward/pile/deck views). */
@@ -40,9 +42,18 @@ export function staticTokens(def) {
 export function relicText(def) {
   if (!def || !def.textTemplate) return '';
   const tokens = relicTokens(def);
-  return def.textTemplate.replace(tokenRe(), (m, tok) => (
+  const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
     typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
   ));
+  // A growth row (balance.flaskGrowth) is a grant the player must be able to
+  // read on the relic that carries it — but its amount has ONE home, the row,
+  // so the sentence is DERIVED here rather than hand-typed into textTemplate
+  // (Law 1 clause 2; the derivation and its boundary live at
+  // flaskGrowthClause, model/flaskgrowth.js; corpus tools/flaskgrowth.mjs).
+  // Static content imports on purpose: the same pair this file already reads
+  // for balance.ui, and relic defs are not moddable per-run today.
+  const grown = flaskGrowthClause(balance, flasks, def.id);
+  return grown ? `${base} ${grown}` : base;
 }
 
 function fillTemplate(def, tokens, baseTokens) {

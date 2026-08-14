@@ -29,6 +29,7 @@ import * as statuses from './statuses.js';
 import { evalPredicate, checkPhases } from './triggers.js';
 import { damageTagIds } from '../content/tags.js';
 import { flaskSlotCap } from '../model/gracerefill.js';
+import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -599,6 +600,7 @@ function runRunOpcode(ctx, action, eff) {
       if (relicId && !run.relics.includes(relicId)) {
         ctx.registries.relics.get(relicId); // throws on dangling id
         run.relics.push(relicId);
+        syncFlaskGrowth(ctx.registries, run); // growth chain: a relic source binds the moment it is held
       }
       break;
     }

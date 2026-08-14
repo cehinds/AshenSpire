@@ -477,6 +477,12 @@ function applyDisplaySettings(settings) {
   // variant is running. `settingOn` because the store is sparse and the default
   // is part of the answer (see its own docstring).
   setQuickNav({ mode: settings.quickNav, fixedEnds: settingOn(settings, 'quickNavFixedEnds') });
+  // Walked-node fade → data attr on the root; styles/map.css carries the ladder.
+  // Same shape as `ambient` below: an unknown stored value lands on the default
+  // rather than on a silent no-fade, and the default here restates the settings
+  // row's `def` the way every fallback in this function does.
+  const wf = ['off', 'subtle', 'half', 'strong'].includes(settings.walkedFade) ? settings.walkedFade : 'half';
+  document.documentElement.dataset.walkedFade = wf;
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
   document.documentElement.dataset.ambient = amb;

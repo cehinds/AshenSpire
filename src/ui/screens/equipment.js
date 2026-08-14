@@ -29,6 +29,7 @@ import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
 import { statProjection } from '../../model/statProjection.js';
+import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 
 const CFG = () => balance.equipment;
 
@@ -746,6 +747,11 @@ export function mountEquipment(host, {
   }
 
   function commit() {
+    // Every loadout mutation lands here, so this is the one wire for the
+    // growth chain's talisman source (model/flaskgrowth.js): a worn growth
+    // talisman grows the maximum on equip and shrinks it back on unequip.
+    // Idempotent, and a no-op until the first talisman growth row is authored.
+    syncFlaskGrowth(registries, run);
     if (onChange) onChange(run.loadout);
     draw();
   }

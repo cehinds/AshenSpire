@@ -95,6 +95,82 @@
    reference, does exactly this. */
 .resbars { display: flex; flex-direction: column; align-items: flex-start; gap: calc(3px / var(--ui-zoom, 1)); }
 
+/* ---- THE HYBRID MAIN HUD (approved 2026-08-13) ----
+   Source of the look: the owner pixels in the family repo's approved hybrid —
+   hybrid-confirmation/output/owners/F1-resource-health.png (unit anatomy:
+   24 px unit, 1 px warm border #4c3b1f, ground #120f0c, 9 px pill trough,
+   label on the plate LEFT of the trough) and F2-resource-mana/-stamina.png
+   (two half-width units side by side). The BEHAVIOUR under it is unchanged
+   and stays the table's: trough length = lengthPct of its derived track,
+   16 px floor, dashed when floored.
+   The ground and border hexes are SAMPLED FROM THE OWNER PIXELS, and that
+   provenance is their justification — they are deliberately not --panel
+   (#241d15) / --line-soft (#4a4034), which the approved plate is darker and
+   warmer than. Health's FILL keeps var(--blood) because the accent themes swap
+   that token (base.css); the owner-vs-token delta is named in
+   content/resources.js, not hidden here. */
+.resbars[data-surface='main'] { align-items: stretch; }
+.resline { display: flex; width: 100%; gap: calc(5px / var(--ui-zoom, 1)); }
+.resunit {
+  /* Equal cells by flex, so two banded pools split their line evenly and a
+     solo bar takes it whole — nothing types a width (Law 2 by construction). */
+  flex: 1 1 0; min-width: 0;
+  display: flex; align-items: center;
+  gap: calc(6px / var(--ui-zoom, 1));
+  /* Chrome geometry: px under zoom (Law 4 clause 3). 24 px is the owner
+     unit height — a floor the label's own glyphs may push past (clause 4). */
+  min-height: calc(24px / var(--ui-zoom, 1));
+  padding: 0 calc(7px / var(--ui-zoom, 1));
+  background: #120f0c;            /* owner pixel, F1-resource-health.png */
+  border: 1px solid #4c3b1f;      /* owner pixel, unit border */
+  border-radius: calc(6px / var(--ui-zoom, 1));
+  /* The unit is the label's container: its width is set by flex, never by its
+     own content, so "does the word fit" is answerable here (a query on the
+     auto-sized plate would be circular). */
+  container-type: inline-size;
+}
+.resplate {
+  flex: none; white-space: nowrap;
+  font-size: calc(11px / var(--ui-zoom, 1)); line-height: 1;
+  letter-spacing: 0.05em; color: var(--parchment); text-shadow: 0 1px 2px #000;
+  /* Tabular digits + the derived reservation (set per bar in resbars.js): the
+     trough's track must not move when the label's digit count does. Each
+     reservation applies only in the container window that shows its variant —
+     see the degradation block below. */
+  font-variant-numeric: tabular-nums;
+}
+.restrack { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
+/* The pill trough of the approved look. Height is owner anatomy (9 px fill +
+   its border), radius full pill; LENGTH stays the data (inline style %). */
+.resbars[data-surface='main'] .resbar {
+  height: calc(11px / var(--ui-zoom, 1));
+  border-radius: calc(6px / var(--ui-zoom, 1));
+}
+
+/* ---- PLATE LABEL DEGRADATION, BY MEASURED FIT ----
+   Same grammar as the strip labels below, new container: the UNIT. Thresholds
+   in em so the choice tracks the player's Text size — which is the only thing
+   "does the word fit" depends on. Widest that fits wins: name+numbers, then
+   glyph+numbers, then the bare glyph. */
+.resplate .l-full, .resplate .l-num, .resplate .l-glyph { display: none; }
+@container (min-width: 3.5em) { .resplate .l-glyph { display: inline; } }
+@container (min-width: 6.5em) {
+  .resplate .l-glyph { display: none; }
+  .resplate .l-num { display: inline; }
+  .resplate { min-width: var(--plate-reserve-num, 0); }
+}
+/* 6.75em, and the number is MEASURED, not styled: a container query reads the
+   CONTENT box in CSS px (pre --ui-zoom), where a banded half-unit is 6.94em at
+   390x844 (the approved shape — its plate must read "MP 2/2", the name) and
+   6.59em at 320x640 (free to degrade; the atlas rules only 390). The margin is
+   ~0.2em on both sides; if a future font shifts it, A4's plate-clip assertion
+   and the reserve are what keep a wrong flip from ever clipping. */
+@container (min-width: 6.75em) {
+  .resplate .l-num { display: none; }
+  .resplate .l-full { display: inline; }
+  .resplate { min-width: var(--plate-reserve-full, 0); }
+}
+
 .resbar {
   /* Chrome geometry: px under zoom, never rem — Law 4 clause 3. A bar is a box.
      Its inline size is set from data (the trough length); its block size is an

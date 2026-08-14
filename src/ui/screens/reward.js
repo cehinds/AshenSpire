@@ -12,6 +12,7 @@ import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
+import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 
 export function mountRewards(app, { registries, run, rewards, onDone }) {
   const lines = [];
@@ -21,6 +22,7 @@ export function mountRewards(app, { registries, run, rewards, onDone }) {
   }
   if (rewards.relicId) {
     run.relics.push(rewards.relicId);
+    syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
     const def = registries.relics.get(rewards.relicId);
     lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def))}`);
   }

@@ -15,6 +15,7 @@ import { resolveFloorPlan } from './floorplan.js';
 import { assertTableSane } from './secondbeat.js';
 import { viewRefusals, geometryRefusals } from './mapview.js';
 import { graceRefillRefusals } from './gracerefill.js';
+import { flaskGrowthRefusals } from './flaskgrowth.js';
 import {
   SCHEMAS,
   OPCODES,
@@ -651,6 +652,11 @@ export function validateContent(bundle) {
   // Its corpus is `node tools/gracerefill.mjs --selftest`, which plants each
   // refusal into the real bundle and watches this call go red.
   for (const e of graceRefillRefusals(b)) err(e.key, e.msg);
+
+  // The growth chain (balance.flaskGrowth) — same refusal shape, same door.
+  // Its corpus is `node tools/flaskgrowth.mjs --selftest`, which plants each
+  // refusal into the real bundle and watches this call go red.
+  for (const e of flaskGrowthRefusals(b)) err(e.key, e.msg);
 
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {
