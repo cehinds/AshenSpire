@@ -10,10 +10,11 @@ import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRunState } from '../src/model/state.js';
 import { equipPiece, runMods, stampDeck } from '../src/model/loadout.js';
-import { createMemoryStorage, createSaveManager, RUN_KEY } from '../src/engine/save.js';
+import { createMemoryStorage, createSaveManager, RUN_KEY, RUN_ARCHIVE_KEY } from '../src/engine/save.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { createRng } from '../src/engine/rng.js';
 import { relicText } from '../src/ui/components/card.js';
+import { readFileSync } from 'node:fs';
 
 let checks = 0;
 let failures = 0;
@@ -341,6 +342,108 @@ check('Armoury loadout change reconciles equipment HP and survives equip -> save
   assert(loaded, 'equipped run was archived/refused on reload');
   eq(loaded.maxHp, run.maxHp, 'equipped max HP round-trips');
   eq(loaded.hp, run.hp, 'equipped current HP round-trips');
+});
+
+
+// ---------------------------------------------------------------------------
+// THE SAVE THAT WENT AND CAME BACK (Vira, 2026-08-15).
+//
+// The checks above build their Vigour-era save by editing a run this tree
+// created, and test 50c builds one by string-replacing "constitution" with
+// "vigour" in a Constitution-era fixture. Both are reconstructions, and a
+// reconstruction can only carry the differences its author remembered: neither
+// carries the Vigour tree's own hp override (pointsPerTier 1 / gainPerTier 1)
+// or its schemaVersion 3, which is exactly what a real save from that window
+// has. tests/fixtures/run-save-vigour-window.json is not a reconstruction — it
+// is the bytes createSaveManager.saveRun actually wrote at dev = 5f58bca and
+// dev = d7d1920, and d7d1920's bundle is the one still shipped in dist/.
+//
+// The claim: Constitution -> Vigour -> Constitution loses nothing. Not "loads",
+// not "does not throw" — the round-tripped save and its never-renamed twin
+// arrive at THE SAME player-visible state, field for field.
+const windowFixture = (() => {
+  try { return JSON.parse(readFileSync(new URL('../tests/fixtures/run-save-vigour-window.json', import.meta.url), 'utf8')); }
+  catch { return null; }
+})();
+
+const loadThroughDoor = (registries, save) => {
+  const storage = createMemoryStorage();
+  storage.setItem(RUN_KEY, JSON.stringify(save));
+  return createSaveManager(storage).loadRun(registries);
+};
+const PLAYER_VISIBLE = ['class', 'maxHp', 'hp', 'maxHpAdjustment', 'maxMana', 'mana', 'maxStamina',
+  'stamina', 'energyMax', 'drawPerTurn', 'cinders', 'floor', 'actNumber', 'attributes', 'relics'];
+const visible = (run) => JSON.stringify(Object.fromEntries(PLAYER_VISIBLE.map((k) => [k, run[k]])));
+
+check('a REAL Vigour-window save loads, and the round trip Constitution -> Vigour -> Constitution is lossless', () => {
+  assert(windowFixture, 'tests/fixtures/run-save-vigour-window.json is missing (the probe must have a referent)');
+  const raw = JSON.stringify(windowFixture.vigourEraRoundTrip);
+  assert(raw.includes('"vigour"') && !raw.includes('"constitution"'),
+    'the round-trip artifact must really carry the retired name and only the retired name');
+  const registries = createRegistries(contentBundle);
+  const there = loadThroughDoor(registries, windowFixture.vigourEraRoundTrip);
+  const never = loadThroughDoor(registries, windowFixture.constitutionEra);
+  assert(there, 'the round-tripped save was archived at the load door');
+  assert(never, 'its never-renamed twin was archived at the load door');
+  assert(!Object.hasOwn(there.attributes, 'vigour'), 'the retired key survived the load');
+  eq(visible(there), visible(never), 'round-tripped save vs never-renamed twin');
+  return `maxHp ${there.maxHp}, deficit ${there.maxHp - there.hp}, curse ledger ${there.maxHpAdjustment}`;
+});
+
+check('a save written by the SHIPPED Vigour bundle keeps its own max HP across the restore', () => {
+  assert(windowFixture, 'fixture missing');
+  const registries = createRegistries(contentBundle);
+  const before = windowFixture.vigourEraNative;
+  const after = loadThroughDoor(registries, before);
+  assert(after, 'a run started on the live build was archived at the load door');
+  // A cursed in-flight run is re-derived under D22 and its permanent loss is
+  // inferred once into the ledger. The player must not notice: same max, same
+  // deficit, same everything they can see.
+  eq(after.maxHp, before.maxHp, 'in-flight max HP');
+  eq(after.hp, before.hp, 'in-flight current HP');
+  eq(after.maxStamina, before.maxStamina, 'in-flight stamina pool');
+  eq(after.attributes.constitution, before.attributes.vigour, 'the points arrive under the live name');
+  return `maxHp ${after.maxHp} held; ledger inferred ${after.maxHpAdjustment}`;
+});
+
+check('the both-names guard fires BY NAME, across persisted homes, and stays out of other refusals', () => {
+  // `loadRun() === null` is four different refusals wearing one face — a bad
+  // total, a dangling id, an unreadable snapshot and this guard all return it.
+  // The archive carries the reason, so the check reads that instead: a guard
+  // credited for someone else's refusal is decoration with a green next to it.
+  assert(windowFixture, 'fixture missing');
+  const registries = createRegistries(contentBundle);
+  const con = windowFixture.constitutionEra;
+  const vig = windowFixture.vigourEraRoundTrip;
+  const reasonFor = (save) => {
+    const storage = createMemoryStorage();
+    storage.setItem(RUN_KEY, JSON.stringify(save));
+    assert(createSaveManager(storage).loadRun(registries) === null, 'the planted save LOADED');
+    const index = JSON.parse(storage.getItem(RUN_ARCHIVE_KEY) || '{"entries":[]}');
+    return (index.entries.at(-1) || {}).reason || '';
+  };
+  const GUARD = /^Mixed retired attribute 'vigour' and heir 'constitution' at /;
+  // Both names in the allocation.
+  const inAllocation = structuredClone(vig);
+  inAllocation.attributes.constitution = inAllocation.attributes.vigour;
+  assert(GUARD.test(reasonFor(inAllocation)), `allocation mix: ${reasonFor(inAllocation)}`);
+  // One name per persisted home — the case the guard's own comment claims and
+  // the one a half-finished migration would actually produce. Each half here is
+  // real serialized output; only the pairing is planted.
+  const acrossHomes = structuredClone(vig);
+  for (const id of ['hp', 'stamina']) {
+    acrossHomes.derivedStatRuleSnapshot.rules.rules[id].sourceStat = con.derivedStatRuleSnapshot.rules.rules[id].sourceStat;
+  }
+  const acrossReason = reasonFor(acrossHomes);
+  assert(GUARD.test(acrossReason), `cross-home mix: ${acrossReason}`);
+  assert(acrossReason.includes('attributes.vigour') && acrossReason.includes('rules.hp.sourceStat'),
+    `the refusal must name every witness: ${acrossReason}`);
+  // NEGATIVE CONTROL: an ordinary bad allocation must NOT be credited to it.
+  const badTotal = structuredClone(vig);
+  badTotal.attributes.vigour += 3;
+  const otherReason = reasonFor(badTotal);
+  assert(!GUARD.test(otherReason) && /total/.test(otherReason), `negative control: ${otherReason}`);
+  return 'fires on 2 mixed shapes, silent on a wrong total';
 });
 
 console.log(`\n${checks - failures}/${checks} checks passed`);
