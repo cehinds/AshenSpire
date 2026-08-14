@@ -8,6 +8,26 @@
 //                                                   AA failure at a gated profile
 //                                                   (default, + the #45 map rows
 //                                                   in hi-contrast-off)
+//   node tools/contrast-audit.mjs --selftest      → plant a real palette token
+//                                                   below AA, require the gate to
+//                                                   name it, revert, re-prove clean
+//   node tools/contrast-audit.mjs --gated-only    → render only the profiles the
+//                                                   gate judges (used by --selftest)
+//
+// ── THIS TOOL GATES, AND UNTIL 2026-08-15 NOBODY HAD WATCHED ITS GATE GO RED ──
+// Vira's doors audit (docs/TOOL-DOORS-AUDIT.md, 2026-08-14) filed this file under
+// HARNESS — "not a check; asserts nothing; the rule has no claim on it". That is
+// wrong and it is my own file, so the correction is mine: `--gate` exits 1 on
+// three named classes (NEW, REGRESSED, BLIND) and is a check by every definition
+// in this house. It belonged in the NO-KNOWN-BAD column, which is where the
+// P-BATCH deal would have found it. The one red anyone ever watched here was
+// Vira's, on the #45 branch, before the profile map existed — ref-pinned, so
+// `unknown (drifted)` ever since (SOP 2's drift clause).
+//
+// --selftest is the re-runnable replacement: it edits a REAL PALETTE TOKEN in
+// styles/base.css, serves the real tree, renders in the real browser, captures
+// real pixels, and requires the gate to name the rows that fell. Nothing is
+// handed to the ratio function.
 //
 // Why this reads pixels and not the stylesheet: a declared colour and a
 // delivered colour are two different facts. `.card .ctag` specs 4.67:1 at 8px —
@@ -537,6 +557,106 @@ async function evalIn(cdp, fnSrc, args) {
 const args = process.argv.slice(2);
 const arg = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
 const onlyProfile = arg('--profile', null);
+
+// ---- --selftest ---------------------------------------------------------------
+// THE KNOWN-BAD IS A REAL PALETTE EDIT, AND IT ENTERS WHERE A PALETTE ENTERS.
+//
+// The defect class this gate exists to catch is one sentence: somebody changes a
+// colour token and a target the player reads drops under the WCAG floor. So the
+// plant IS that — one token in styles/base.css, dimmed. It then travels every
+// stage a real palette change travels: the file on disk, serve(), the browser,
+// the cascade, the ?shotSettings profile, the rendered glyph pixels, the capture,
+// the luminance maths, the KNOWN_BELOW ledger, and the gate's own verdict. There
+// is no fixture here and no ratio is computed by this block.
+//
+// `--muted` under `body.hi-contrast` is the token chosen because highContrast
+// DEFAULTS TRUE: it is what a first-boot player receives, so dimming it is a
+// change to the shipped default palette and lands in the `default` profile the
+// gate judges. Three targets ride it (Act/Floor, SEED, keyboard hint) and all
+// three sit comfortably above the floor at 6.33/6.33/6.79 on a healthy tree —
+// so a red here cannot be the tree's standing state leaking in.
+//
+// The child is spawned rather than re-entered in-process: this file measures on
+// import, and a selftest that shares module state with the run it judges is the
+// witness-sharing-plumbing failure I hit on 2026-08-14. The child runs the real
+// CLI, the real gate, and its exit code and stdout are the evidence.
+if (args.includes('--selftest')) {
+  const { readFileSync, writeFileSync } = await import('node:fs');
+  const BASE = resolve(ROOT, 'styles/base.css');
+  const ARMS = [
+    {
+      name: 'subfloor',
+      find: '  --muted: #a89571;\n  --line: #6a5b43;',
+      replace: '  --muted: #5f5748;\n  --line: #6a5b43;',
+      why: 'the shipped high-contrast --muted dimmed to #5f5748 — the palette edit this gate exists to catch',
+      // Named rather than counted: a gate that merely "exits 1" would be
+      // satisfied by the standing BLIND rows below and prove nothing new.
+      expectRows: ['Act/Floor', 'SEED', 'keyboard hint'],
+    },
+  ];
+  const runChild = () => new Promise((res) => {
+    const c = spawn(process.execPath, [fileURLToPath(import.meta.url), '--gate', '--gated-only'],
+      { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '';
+    c.stdout.on('data', (d) => { out += d; });
+    c.stderr.on('data', (d) => { out += d; });
+    c.on('exit', (code) => res({ code, out }));
+  });
+
+  console.log('contrast-audit --selftest — the gate\'s own known-bad, by the palette door.\n');
+  const before = readFileSync(BASE, 'utf8');
+  let bad = 0;
+  for (const arm of ARMS) {
+    if (!before.includes(arm.find)) {
+      console.log(`  ${arm.name}: PLANT DID NOT APPLY — the anchor is gone from styles/base.css.`);
+      console.log('    A known-bad that cannot be planted proves nothing; re-point it before trusting this gate.');
+      bad++; continue;
+    }
+    let got;
+    try {
+      writeFileSync(BASE, before.replace(arm.find, arm.replace));
+      got = await runChild();
+    } finally { writeFileSync(BASE, before); }
+    // The gate must NAME the rows, at the gated profile, as NEW failures.
+    const newBlock = /--gate: \d+ NEW failure\(s\)[\s\S]*?(?=\n\ncontrast-audit --gate:|$)/.exec(got.out);
+    const named = arm.expectRows.filter((r) => newBlock && newBlock[0].includes(`${r} [default]`));
+    console.log(`  ${arm.name}: ${arm.why}`);
+    if (named.length === arm.expectRows.length && got.code === 1) {
+      for (const line of (newBlock[0].split('\n').filter((l) => arm.expectRows.some((r) => l.includes(`${r} [default]`))))) {
+        console.log(`    RED  ${line.trim()}`);
+      }
+      console.log(`    exit ${got.code}; all ${named.length} expected rows named as NEW failures at the gated profile.`);
+    } else {
+      bad++;
+      console.log(`    DID NOT FIRE as required — exit ${got.code}, named ${named.length}/${arm.expectRows.length} expected rows.`);
+      console.log(`    ${newBlock ? newBlock[0].split('\n').slice(0, 6).join('\n    ') : 'no NEW-failure block in the child output at all'}`);
+    }
+  }
+  // THE CONTROL. The restore has to be proven, and a row that is red on a healthy
+  // tree is not evidence. This asserts the planted rows are NOT named — never
+  // that the gate exits 0, because it does not: see the standing red below.
+  const clean = await runChild();
+  const stillNamed = ARMS.flatMap((a) => a.expectRows).filter((r) => new RegExp(`${r} \\[default\\] — `).test(clean.out));
+  console.log(`\n  control: restored tree — ${stillNamed.length ? `STILL RED: ${stillNamed.join(', ')}` : 'none of the planted rows is named; the plant is gone'}`);
+  console.log(`
+DOOR: the known-bad is an edit to styles/base.css, a real shipped stylesheet, served by the real
+      serve() and rendered by the real browser. It travels the cascade, the ?shotSettings profile,
+      the captured pixels, the luminance maths, the KNOWN_BELOW ledger and the gate's own verdict.
+      No ratio in this block is computed by the selftest; every number above came from a pixel.
+NOT PASSED: only the NEW-failure class is planted. REGRESSED (a KNOWN_BELOW row worsening past its
+      0.15 slack) has no plant here. BLIND needs none right now and that is not good news — see below.
+STANDING RED, on real code, at dev = 5244543 and unplanted: all three #45 map rows are BLIND in BOTH
+      gated profiles. \`?shot=map\` draws 2 nodes and 0 edges (fog), and both survivors carry an
+      excluded class (reachable, boss), so \`.map-edge:not(.traveled)\` and the plain-node selector
+      match nothing. The gate has been reporting six BLIND rows rather than measuring the map
+      structure it was extended to protect (#45). BLIND fired correctly — the instrument said it had
+      lost sight instead of going quiet, which is the one thing that went right here. Re-pointing the
+      probe at a state where the graph is drawn is a separate act; this line is the record, not the fix.
+BOUNDARY: one plant, one token, one profile family, one viewport, one font stack. Proof this gate CAN
+      go red on a real palette change — not proof it catches a palette change shaped differently.`);
+  console.log(bad ? `\nSELFTEST: ${bad} arm(s) did not fire` : `\nSELFTEST: ${ARMS.length}/${ARMS.length} arms observed RED by the palette door, plant reverted`);
+  process.exit(bad || stillNamed.length ? 1 : 0);
+}
 const asJson = args.includes('--json');
 const gate = args.includes('--gate');
 const shotDir = arg('--shots', null);
@@ -601,7 +721,23 @@ const dbg = await new Promise((res, rej) => {
   server.close(); child.kill(); process.exit(2);
 });
 
-const profiles = onlyProfile ? { [onlyProfile]: PROFILES[onlyProfile] } : PROFILES;
+// --gated-only renders exactly the profiles `--gate` judges and nothing else.
+// This is NOT the partial run the gate refuses below: that refusal exists because
+// a `--profile` invocation can omit a GATED profile and then exit 0 having judged
+// nothing there. This flag omits only profiles the gate never judged — the
+// verdict is bit-for-bit the one the full matrix produces, at a quarter of the
+// renders. The table it prints is narrower, and says so.
+const gatedOnly = args.includes('--gated-only');
+const GATED_PROFILES = ['default', 'hi-contrast-off'];
+const profiles = onlyProfile
+  ? { [onlyProfile]: PROFILES[onlyProfile] }
+  : (gatedOnly
+    ? Object.fromEntries(GATED_PROFILES.map((p) => [p, PROFILES[p]]))
+    : PROFILES);
+if (gatedOnly) {
+  console.log(`(--gated-only: rendering ${GATED_PROFILES.join(' + ')} — the profiles --gate judges. `
+    + `The other ${Object.keys(PROFILES).length - GATED_PROFILES.length} profiles are NOT measured in this run and this table is not the full matrix.)`);
+}
 if (onlyProfile && !PROFILES[onlyProfile]) {
   console.error(`contrast-audit: unknown profile '${onlyProfile}'. Have: ${Object.keys(PROFILES).join(', ')}`);
   server.close(); child.kill(); process.exit(2);
