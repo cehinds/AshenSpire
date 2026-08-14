@@ -1491,9 +1491,75 @@ button.ev-choice {
   background-repeat: no-repeat;
   /* No `transition` on the size, deliberately: an eased width keeps painting
      after the finger lifts, so the bar would still be growing during the abort
-     — the one frame where the picture must tell the truth instantly. */
+     — the one frame where the picture must tell the truth instantly.
+     THAT SENTENCE WAS NOT TRUE AND IS MADE TRUE FOUR LINES DOWN. See below. */
   background-size: calc(var(--hold, 0) * 100%) 100%;
 }
+/* ---- TWO THINGS THE RULE ABOVE SAYS AND DID NOT DO (Sunna, 2026-08-08) -----
+   Measured on the shipped bundle at dev = 08e184a and on this branch, with a
+   real mouse at 1200x800 and CDP touch at 390x844. Both are about the same
+   sentence — a comment describing a mechanism that is not running — and this
+   rule has now been bitten by that exact thing twice (Bjorn's `> *` line was
+   the first, and it is confessed two paragraphs up).
+
+   1. THE FILL DISAPPEARED UNDER A HOVERING POINTER — a regression #133's
+      rename introduced and the #142 reconcile carried onto dev, where it
+      shipped until this rule. `base.css` carries a bare
+      `button:hover { background: #2e2517; }` — specificity (0,1,1), and
+      `background` is a SHORTHAND, so it resets `background-image` to `none`.
+      Before the rename the selector was `button.ev-choice.ev-hold` (0,2,1)
+      and won. Renaming it to `.beat-hold` (0,1,0) — which is the right idea, a
+      rule that names a screen can only dress that screen — dropped it UNDER
+      the hover rule. Measured, desktop mouse, `?shot=event` and `?shot=combat`
+      (first at 08e184a on #133's bundle; re-observed at dev = 86564e6 by
+      check 6b before this rule landed):
+
+        pre-rename, hovered:  background-image = linear-gradient(...)  fill draws
+        dev 86564e6, hovered: background-image = NONE, size = auto
+        ...with --hold climbing to 0.491 under the pointer.
+
+      YOU CANNOT HOLD A CONTROL WITHOUT BEING OVER IT. So the whole fill — the
+      only feedback the hold has, and the ONLY channel a muted player has — was
+      not drawn at all for the entire press, on the event bars and on End Turn.
+      Invisible to every check on the branch: they read `data-hold-progress`,
+      which was perfect throughout, and the one fill check reads
+      `background-image` on an element nothing is hovering. That is the gap
+      holdconfirm.mjs names in its own boundary (d2 — "construction, not
+      pixels"), and it is where this went.
+
+   2. THE FILL WAS EASED, ON EVERY HELD `<button>`, INCLUDING ON DEV TODAY.
+      `base.css` also carries a bare `button { transition: background 120ms,
+      transform 120ms; }` — same shorthand, so `background-size` transitions.
+      Measured inside a rAF loop on the SHIPPED bundle, event bar, 600 ms hold
+      aborted at ~300 ms:
+
+        --hold 0.46 -> painted 32.5%     (the picture runs ~13 points behind)
+        FINGER LIFTS, --hold snaps to 0
+        next painted frame: 35.1%        <- IT GREW
+
+      The bar is still filling on the one frame the comment above says must tell
+      the truth instantly, then eases back over ~130 ms. An abort looks briefly
+      like progress. This one predates the rename entirely — and dev's
+      unconditional End Turn beat means the eased rule sits under a control
+      pressed ~91 times in a completed run (measured, tools/runsim.mjs,
+      4 winning runs).
+
+   WHY THE SELECTOR LIST AND NOT `!important`: the hover COLOUR is still
+   base.css's to set and should stay; only the image and its size are ours.
+   `.beat-hold:hover` is (0,2,0) and takes them back without touching anything
+   else. `:where()` would be worse than useless here — it weighs zero. */
+.beat-hold, .beat-hold:hover, .beat-hold:focus, .beat-hold:active {
+  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+  background-repeat: no-repeat;
+  background-size: calc(var(--hold, 0) * 100%) 100%;
+}
+/* `background` LEAVES THE TRANSITION LIST, and nothing else does. Naming the
+   three properties a held control may still ease keeps the border going gold
+   and the press squashing on their own timings (durations cycle from whatever
+   the element already declared), while the fill is painted the frame it is
+   computed. A blanket `transition: none` would have been one word shorter and
+   would have silently flattened affordances this rule has no business touching. */
+.beat-hold { transition-property: border-color, color, transform; }
 .beat-hold[data-hold='holding'] { border-color: var(--gold); }
 
 /* `--accent-rgb` is the accent theme's own channel triple (base.css:24), so the
@@ -2570,6 +2636,82 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    reference, does exactly this. */
 .resbars { display: flex; flex-direction: column; align-items: flex-start; gap: calc(3px / var(--ui-zoom, 1)); }
 
+/* ---- THE HYBRID MAIN HUD (approved 2026-08-13) ----
+   Source of the look: the owner pixels in the family repo's approved hybrid —
+   hybrid-confirmation/output/owners/F1-resource-health.png (unit anatomy:
+   24 px unit, 1 px warm border #4c3b1f, ground #120f0c, 9 px pill trough,
+   label on the plate LEFT of the trough) and F2-resource-mana/-stamina.png
+   (two half-width units side by side). The BEHAVIOUR under it is unchanged
+   and stays the table's: trough length = lengthPct of its derived track,
+   16 px floor, dashed when floored.
+   The ground and border hexes are SAMPLED FROM THE OWNER PIXELS, and that
+   provenance is their justification — they are deliberately not --panel
+   (#241d15) / --line-soft (#4a4034), which the approved plate is darker and
+   warmer than. Health's FILL keeps var(--blood) because the accent themes swap
+   that token (base.css); the owner-vs-token delta is named in
+   content/resources.js, not hidden here. */
+.resbars[data-surface='main'] { align-items: stretch; }
+.resline { display: flex; width: 100%; gap: calc(5px / var(--ui-zoom, 1)); }
+.resunit {
+  /* Equal cells by flex, so two banded pools split their line evenly and a
+     solo bar takes it whole — nothing types a width (Law 2 by construction). */
+  flex: 1 1 0; min-width: 0;
+  display: flex; align-items: center;
+  gap: calc(6px / var(--ui-zoom, 1));
+  /* Chrome geometry: px under zoom (Law 4 clause 3). 24 px is the owner
+     unit height — a floor the label's own glyphs may push past (clause 4). */
+  min-height: calc(24px / var(--ui-zoom, 1));
+  padding: 0 calc(7px / var(--ui-zoom, 1));
+  background: #120f0c;            /* owner pixel, F1-resource-health.png */
+  border: 1px solid #4c3b1f;      /* owner pixel, unit border */
+  border-radius: calc(6px / var(--ui-zoom, 1));
+  /* The unit is the label's container: its width is set by flex, never by its
+     own content, so "does the word fit" is answerable here (a query on the
+     auto-sized plate would be circular). */
+  container-type: inline-size;
+}
+.resplate {
+  flex: none; white-space: nowrap;
+  font-size: calc(11px / var(--ui-zoom, 1)); line-height: 1;
+  letter-spacing: 0.05em; color: var(--parchment); text-shadow: 0 1px 2px #000;
+  /* Tabular digits + the derived reservation (set per bar in resbars.js): the
+     trough's track must not move when the label's digit count does. Each
+     reservation applies only in the container window that shows its variant —
+     see the degradation block below. */
+  font-variant-numeric: tabular-nums;
+}
+.restrack { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
+/* The pill trough of the approved look. Height is owner anatomy (9 px fill +
+   its border), radius full pill; LENGTH stays the data (inline style %). */
+.resbars[data-surface='main'] .resbar {
+  height: calc(11px / var(--ui-zoom, 1));
+  border-radius: calc(6px / var(--ui-zoom, 1));
+}
+
+/* ---- PLATE LABEL DEGRADATION, BY MEASURED FIT ----
+   Same grammar as the strip labels below, new container: the UNIT. Thresholds
+   in em so the choice tracks the player's Text size — which is the only thing
+   "does the word fit" depends on. Widest that fits wins: name+numbers, then
+   glyph+numbers, then the bare glyph. */
+.resplate .l-full, .resplate .l-num, .resplate .l-glyph { display: none; }
+@container (min-width: 3.5em) { .resplate .l-glyph { display: inline; } }
+@container (min-width: 6.5em) {
+  .resplate .l-glyph { display: none; }
+  .resplate .l-num { display: inline; }
+  .resplate { min-width: var(--plate-reserve-num, 0); }
+}
+/* 6.75em, and the number is MEASURED, not styled: a container query reads the
+   CONTENT box in CSS px (pre --ui-zoom), where a banded half-unit is 6.94em at
+   390x844 (the approved shape — its plate must read "MP 2/2", the name) and
+   6.59em at 320x640 (free to degrade; the atlas rules only 390). The margin is
+   ~0.2em on both sides; if a future font shifts it, A4's plate-clip assertion
+   and the reserve are what keep a wrong flip from ever clipping. */
+@container (min-width: 6.75em) {
+  .resplate .l-num { display: none; }
+  .resplate .l-full { display: inline; }
+  .resplate { min-width: var(--plate-reserve-full, 0); }
+}
+
 .resbar {
   /* Chrome geometry: px under zoom, never rem — Law 4 clause 3. A bar is a box.
      Its inline size is set from data (the trough length); its block size is an
@@ -2860,6 +3002,19 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .hand .card.selected { border-color: var(--parchment); }
 
+/* The hold-to-inspect copy (armInspect, components/holdconfirm.js). It lives
+   on <body>, not in the hand — geometry (position, size, scale) is written
+   inline in LOCAL px by the one conversion home (fx.js), so nothing here may
+   restate it; this block is only the surface. `pointer-events: none` is also
+   set inline — Law 4: the copy may cover pixels, never a tap floor, and it
+   must vanish on release leaving the hand byte-for-byte untouched. Appears at
+   full size, no transition: the expansion is STATE, not an animation, so it
+   survives reduced-motion the same way the hold fill does (rule 5). */
+.card-inspect {
+  border-color: var(--parchment);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.85);
+}
+
 .energy-orb {
   position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
   background: #1c1610; border: 3px solid var(--gold);
@@ -3124,6 +3279,15 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    scrolled while trying to aim. Scoped to narrow: the wide hand is not a
    scroller and its default behaviour is not in question. */
 :root[data-layout='narrow'] .hand .card { touch-action: pan-x; }
+/* The OVERLAP arm of balance.ui.handLayout (C2): when the layout word says
+   overlap, the narrow hand is not a scroller — the whole hand fits its width
+   by derived negative margins (renderHand) and there is nothing legitimate
+   for the browser to claim, which is the WIDE argument below, arriving on a
+   narrow shape because the word changed the composition. Leaving pan-x here
+   would let Chrome cancel a real aimed drag against a strip with zero travel.
+   Scoped to the word: in 'paging' (the default) this rule does not exist and
+   the pan-x above is untouched. */
+:root[data-layout='narrow'][data-hand-layout='overlap'] .hand .card { touch-action: none; }
 /* And the WIDE half, found by the probe going red at 1200x730 where 390x844
    passed: with default `touch-action: auto` Chrome claims ANY touch drag as a
    potential scroll and fires pointercancel — even where nothing scrolls — so a
@@ -3394,10 +3558,30 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .map-node.shrine text, .map-node.treasure text { fill: var(--gold); }
 .map-node.merchant text { fill: var(--grace); }
 .map-node.visited circle { stroke: var(--gold); }
+/* WALKED NODES FADE, AND THE AMOUNT IS THE PLAYER'S — Constantine, D17 message
+   4 (2026-08-08): "previous nodes shoudl be faded, maybe 50% saturation or
+   higher (settings for customization)". The knob is Settings → Display →
+   Walked nodes (`walkedFade`); main.js applyDisplaySettings writes the chosen
+   value onto the root as data-walked-fade, and this ladder is its only reader.
+   `half` is the shipping default because it is the number in his sentence.
+   ON THE GROUP, not the circle: opacity+saturate on <g> takes the icon and the
+   ring down together, and `:not(.current)` because the node under the player's
+   feet also wears .visited and must never fade. Measured at 86564e6 before
+   this rule existed: visited stroke was full-saturation gold at opacity 1 —
+   the trail OUTSHONE the choice. Off restores exactly that look. */
+:root[data-walked-fade='subtle'] .map-node.visited:not(.current) { opacity: 0.85; filter: saturate(0.75); }
+:root[data-walked-fade='half'] .map-node.visited:not(.current) { opacity: 0.6; filter: saturate(0.5); }
+:root[data-walked-fade='strong'] .map-node.visited:not(.current) { opacity: 0.4; filter: saturate(0.25); }
 .map-node.current circle {
   stroke: var(--parchment); stroke-width: 3;
+  /* FILLED, not just ringed — D17 message 4: "the current node should be white
+     and colored in". Measured at 86564e6: fill was var(--panel), a dark disc
+     with a white ring. The icon flips to the panel tone so it stays legible
+     on the light disc. */
+  fill: var(--parchment);
   animation: nodePulse 1.5s ease-in-out infinite alternate;
 }
+.map-node.current text { fill: var(--panel); }
 @keyframes nodePulse { from { stroke-width: 3; } to { stroke-width: 5.5; } }
 .map-node.reachable { cursor: pointer; }
 .map-node.reachable > circle:not(.node-halo) {
@@ -3635,7 +3819,7 @@ const { mountCustomize } = require("src/ui/screens/customize.js");
 const { mountCustomRun } = require("src/ui/screens/customRun.js");
 const { mountDraft } = require("src/ui/screens/draft.js");
 const { KEEPSAKES } = require("src/content/keepsakes.js");
-const { executeRunEffects } = require("src/engine/actions.js");
+const { executeRunEffects, drawCards, discardFromHand } = require("src/engine/actions.js");
 const { mountMap } = require("src/ui/screens/map.js");
 const { mountCombat } = require("src/ui/screens/combat.js");
 const { mountRewards } = require("src/ui/screens/reward.js");
@@ -4048,6 +4232,20 @@ function applyDisplaySettings(settings) {
   // switching is a re-paint with no re-render. Both defaults live in balance.ui.
   const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
   document.documentElement.dataset.cardMotif = motif;
+  // Hand layout (C2) — same shape as cardMotif, one line up: the word's one
+  // home is balance.ui.handLayout, a stored choice outside the closed set
+  // lands on that default, and the renderer (combat's renderHand + the narrow
+  // CSS) keys off this attribute and reads the word nowhere else. Garbage is
+  // SAID, not swallowed — a player whose stored setting rotted should not
+  // find the hand silently rearranged (same contract as tapFloor above).
+  const handLayout = UI.handLayoutModes.includes(settings.handLayout) ? settings.handLayout : UI.handLayout;
+  if (settings.handLayout != null && handLayout !== settings.handLayout) {
+    const msg = `settings.handLayout: stored value ${JSON.stringify(settings.handLayout)} is not one of `
+      + `${UI.handLayoutModes.join(', ')} — applying the default '${handLayout}' and saying so`;
+    dlog('ERROR', msg);
+    console.warn(msg);
+  }
+  document.documentElement.dataset.handLayout = handLayout;
   const strengths = UI.cardMotifStrength;
   const sKey = strengths[settings.cardMotifStrength] != null ? settings.cardMotifStrength : 'normal';
   document.documentElement.style.setProperty('--card-motif-strength', String(strengths[sKey]));
@@ -4063,6 +4261,12 @@ function applyDisplaySettings(settings) {
   // variant is running. `settingOn` because the store is sparse and the default
   // is part of the answer (see its own docstring).
   setQuickNav({ mode: settings.quickNav, fixedEnds: settingOn(settings, 'quickNavFixedEnds') });
+  // Walked-node fade → data attr on the root; styles/map.css carries the ladder.
+  // Same shape as `ambient` below: an unknown stored value lands on the default
+  // rather than on a silent no-fade, and the default here restates the settings
+  // row's `def` the way every fallback in this function does.
+  const wf = ['off', 'subtle', 'half', 'strong'].includes(settings.walkedFade) ? settings.walkedFade : 'half';
+  document.documentElement.dataset.walkedFade = wf;
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
   document.documentElement.dataset.ambient = amb;
@@ -4800,6 +5004,35 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
+  // `?shotHand=<n>` — STAND WITH A FULLER HAND.
+  //
+  // A REACH STATE, the same shape and reason as ?shotMaxHp beside it: the
+  // hand-layout word (C2) is a claim about how the hand behaves ACROSS hand
+  // sizes, and no instrument could pose one — every capture of the combat hand
+  // was taken at the opening draw, so "ten cards fit with zero travel" had no
+  // photograph and no measurement. The cards enter through drawCards, the door
+  // every real draw enters (reshuffle and the handMax overflow included), not
+  // through the renderer or the piles directly.
+  //
+  // LOUD at both edges: a non-integer or out-of-band ask refuses by name, and
+  // a deck too small to reach the asked hand refuses rather than photograph an
+  // eight-card hand labelled ten — a silent shortfall here would quietly turn
+  // every downstream sliver measurement into a fact about a different hand.
+  if (shotState === 'combat' && shotParams.has('shotHand')) {
+    const wantHand = Number(shotParams.get('shotHand'));
+    if (!Number.isInteger(wantHand) || wantHand < 1 || wantHand > combat.handMax) {
+      throw new Error(`?shotHand=${shotParams.get('shotHand')}: needs a whole number from 1 to handMax (${combat.handMax}).`);
+    }
+    if (combat.piles.hand.length < wantHand) drawCards(combat, wantHand - combat.piles.hand.length);
+    // Reaching DOWN goes through the discard op's own body (discardFromHand) —
+    // the same splice, pile and event a played-down hand produces, so a small
+    // posed hand carries its honest receipt: the discard pile shows where the
+    // cards went.
+    if (combat.piles.hand.length > wantHand) discardFromHand(combat, combat.piles.hand.length - wantHand);
+    if (combat.piles.hand.length !== wantHand) {
+      throw new Error(`?shotHand=${wantHand}: the deck ran out at ${combat.piles.hand.length} cards — this pose cannot reach the asked hand.`);
+    }
+  }
   if (shotState === 'combat' && shotParams.get('shotArcane') === 'matrix') {
     // A host-state visual fixture, before the renderer receives the combat.
     // It covers all three schema states without client mutation: two configured
@@ -5585,6 +5818,18 @@ const balance = {
   // Crimson/Azure are charge pools sharing this fixed capacity. Utility
   // consumables remain inventory items and use flaskSlots independently.
   flaskCapacity: 3,
+  // PROVISIONAL — the first live unlock rung of D19's parenthesis
+  // ("3 total (with future unlocks for larger total amount)", Constantine,
+  // 2026-08-13; C1 — CLOSED: POOL). The seed grows the vessel: Golden Sprout
+  // is the Golden Seed homage, and carrying it grows the pool by one Crimson
+  // charge. One row, amount 1, deliberately modest — the M3 balance pass owns
+  // the number, and a retune is this row, nothing else: the tooltip clause
+  // derives (flaskGrowthClause), the capacity derives (syncFlaskGrowth), the
+  // corpus derives its expectations (tools/flaskgrowth.mjs). Schema and
+  // refusals: model/flaskgrowth.js.
+  flaskGrowth: [
+    { source: 'relic', id: 'goldenSprout', kind: 'hp', amount: 1 },
+  ],
   flaskSlots: 3,
   startingCinders: 0,
   startingDeckSize: 10,
@@ -5853,6 +6098,61 @@ const balance = {
     holdBeat: {
       at: [0, 0.42, 0.78],
     },
+    // HOLD TO INSPECT (the hand). THE ONE HOME OF THE DURATION.
+    //
+    // Constantine, 2026-08-08: press-and-hold a card and it "expands" and comes
+    // "in front". This is the gesture half of that ask; the layout half (how
+    // the hand itself is arranged) is HELD on C2 and no number for it lives
+    // here or anywhere.
+    //
+    // WHY THIS IS NOT holdConfirm's DIAL, though both are a stationary press
+    // with a timer. Two different jobs (Law 4's shape, applied to time): the
+    // confirm hold is a SAFETY step before an irreversible act — its length is
+    // a protection preference, and `off` means "one tap commits". The inspect
+    // hold is how a player READS a card — turning the safety dial off must not
+    // take reading away, and a hand that needs a longer confirm does not
+    // thereby need slower reading. One dial answering both would break the
+    // weaker job the day anyone tunes the stronger one.
+    //
+    // 400 ms: the bottom of the long-press convention players already know
+    // (Android's own threshold is ~400-500), BELOW the confirm's 600 default
+    // because reading is cheaper than committing and fires far more often —
+    // and above any tap: the slow edge of a deliberate tap is ~250 ms, and a
+    // stationary press that outlives 400 was not going to become one. The
+    // known cost, stated rather than hidden: a tap slower than this becomes an
+    // inspect, whose release then does nothing — the card visibly expanding IS
+    // the feedback that says why. `ms: 0` is the off position: no inspect,
+    // pre-gesture behaviour byte for byte.
+    inspectHold: {
+      ms: 400,
+    },
+    // HAND LAYOUT (C2). THE ONE HOME OF THE WORD.
+    //
+    // Constantine, 2026-08-13: "overlap and paging (maybe a toggleable
+    // feature)" — BOTH modes, one knob. His "maybe" hedges the TOGGLE, not the
+    // modes (directions.md D19), so both modes exist now behind this word and
+    // the player-facing control waits for his eye on a picture. No Settings row
+    // derives from this yet, on purpose — adding one later is a data edit in
+    // settings.js, not a redesign.
+    //
+    // 'paging' names the SHIPPED narrow hand: the horizontal card strip
+    // (styles/combat.css, the narrow reflow) — F1 of the approved hybrid.
+    // Selecting it changes nothing, byte for byte; it is the default because
+    // the shipped behaviour keeps its seat until his picture says otherwise.
+    //
+    // 'overlap' lays the whole hand inside the strip's width: each card
+    // overlapped by the next, the overlap DERIVED per render from hand size
+    // and measured width (renderHand, combat.js) — no number for it lives
+    // here or anywhere, which is why this row is a word and not a px value.
+    //
+    // The renderer derives from this word alone (via data-hand-layout on
+    // <html>, written by applyDisplaySettings beside cardMotif's attribute).
+    // A stored settings.handLayout outside `handLayoutModes` lands on this
+    // default and says so in the debug log; a garbage value HERE fails loud
+    // in model/validate.js — the two halves of "validated loud, garbage lands
+    // on default".
+    handLayout: 'paging',
+    handLayoutModes: ['paging', 'overlap'],
     // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
     // renderer emits them as rem (÷10).
     spriteTiers: {
@@ -7017,35 +7317,53 @@ Object.assign(module.exports, { stances });
 //              A source with no reader is refused at boot, by name.
 //   domainMax  OPTIONAL override of the derived ceiling (Law 0 clause 3).
 //              Omit it and the ceiling is derived from the content itself.
+//   band       OPTIONAL. Rows that share a band render SIDE BY SIDE on one
+//              line of the HUD; a row with no band gets a line of its own.
+//              The approved hybrid (2026-08-13) puts Mana and Stamina beside
+//              each other under Health — that layout is this one word, so a
+//              future pool joins their line by writing `band: 'pools'`, not
+//              by editing CSS. Grouping is per surface, after the surface
+//              filter, in `order` order.
 //
 // Mana and Stamina are persisted derived pools. Their formulas and ruleset
 // version remain authoritative in derivedStats; this table only describes how
 // their current/max values are projected into resource surfaces.
 
+// NAMES AND TINTS FOLLOW THE APPROVED HYBRID (claude-family falk-family branch,
+// hybrid-confirmation/output/selection-record.json + owners/*.png, approved
+// 2026-08-13): the owner pixels label the pools "HP 86/86" / "MP 2/2" /
+// "SP 2/2" and paint them #a43c35 / #315c9b / #4d7a45. Mana and Stamina take
+// the sampled owner hexes directly — they were already raw hexes here, outside
+// the accent-theme swap. Health deliberately KEEPS var(--blood): the accent
+// themes (base.css) swap that token for the colourblind palette, and a typed
+// hex would break that swap. The delta is named, not hidden: --blood #8a1a1a
+// vs owner #a43c35.
 const resources = [
   {
     id: 'stamina',
-    name: 'STAMINA',
+    name: 'SP',
     glyph: '▲',
-    tint: '#4f9b62',
+    tint: '#4d7a45',
     weight: 'normal',
     order: 30,
     surfaces: ['main'],
     source: 'stamina',
+    band: 'pools',
   },
   {
     id: 'mana',
-    name: 'MANA',
+    name: 'MP',
     glyph: '◆',
-    tint: '#3f73c9',
+    tint: '#315c9b',
     weight: 'normal',
     order: 20,
     surfaces: ['main'],
     source: 'mana',
+    band: 'pools',
   },
   {
     id: 'hp',
-    name: 'HEALTH',
+    name: 'HP',
     glyph: '❤',
     tint: 'var(--blood)',
     weight: 'normal',
@@ -14075,6 +14393,7 @@ const { resolveFloorPlan } = require("src/model/floorplan.js");
 const { assertTableSane } = require("src/model/secondbeat.js");
 const { viewRefusals, geometryRefusals } = require("src/model/mapview.js");
 const { graceRefillRefusals } = require("src/model/gracerefill.js");
+const { flaskGrowthRefusals } = require("src/model/flaskgrowth.js");
 const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, PILES, PILE_POSITIONS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, DAMAGE_SCHOOLS, CREATURE_TAGS } = require("src/model/schemas.js");
 
 
@@ -14587,6 +14906,78 @@ function validateContent(bundle) {
       });
     }
   }
+  // balance.ui.inspectHold — the reading hold on the hand. The consumer is
+  // `Number(...) || 0` shaped like holdConfirm's, so a typo'd row would resolve
+  // to 0 and silently REMOVE the gesture: nothing on screen looks different, a
+  // held card simply never expands — the same silent-plausible failure as the
+  // rows above (Law 0 clause 5). `ms: 0` on purpose is legal and means off; a
+  // row that cannot be READ is not a zero, it is a mistake, and it fails here
+  // by name.
+  if (b.balance && b.balance.ui && b.balance.ui.inspectHold != null) {
+    const ih = b.balance.ui.inspectHold;
+    if (typeof ih !== 'object' || Array.isArray(ih)) {
+      err('balance.ui.inspectHold', 'must be an object { ms }');
+    } else if (typeof ih.ms !== 'number' || !Number.isFinite(ih.ms) || ih.ms < 0) {
+      err('balance.ui.inspectHold.ms', `must be a non-negative number of milliseconds — got ${JSON.stringify(ih.ms)}. `
+        + `The consumer resolves an unreadable value to 0, which takes the inspect gesture off every card with nothing on the screen looking different.`);
+    }
+  }
+  // balance.ui.handLayout — the hand-layout word (C2: overlap AND paging, one
+  // knob). The consumer guards a stored player setting against the modes list
+  // and falls back to THIS row — so if this row itself is garbage, the
+  // fallback is garbage and the narrow hand silently renders in whatever the
+  // CSS default happens to be, with nothing on screen saying a mode was ever
+  // chosen (Law 0 clause 5, again). Loud, by name, at boot.
+  if (b.balance && b.balance.ui && (b.balance.ui.handLayout != null || b.balance.ui.handLayoutModes != null)) {
+    const modes = b.balance.ui.handLayoutModes;
+    if (!Array.isArray(modes) || modes.length === 0 || modes.some((m) => typeof m !== 'string' || !m)) {
+      err('balance.ui.handLayoutModes', `must be a non-empty array of mode names — got ${JSON.stringify(modes)}. `
+        + `It is the closed set the settings guard checks a stored value against; unreadable, every stored choice would land on the default without the player ever being told why.`);
+    } else if (typeof b.balance.ui.handLayout !== 'string' || !modes.includes(b.balance.ui.handLayout)) {
+      err('balance.ui.handLayout', `must be one of ${modes.join(' | ')} — got ${JSON.stringify(b.balance.ui.handLayout)}. `
+        + `This row is the fallback every garbage stored setting lands on; a fallback outside the closed set leaves the hand with no layout word at all.`);
+    }
+  }
+  // OVERLAP DOES NOT FLATTEN WITHOUT ITS READER (Sunna's ruling, 2026-08-14).
+  // Two rows, each defensible alone: 'overlap' is a legal layout mode, and
+  // inspectHold.ms 0 is the inspect gesture's legal off position. TOGETHER
+  // they author a hand nobody can read — ten cards flattened to ~27-30
+  // viewport px exposed slivers (measured, tools/handlayout.mjs, 390x844),
+  // under the tap floor, with the one compensating reader turned off — from a
+  // table edit that never fails a shape check, because each row's own shape is
+  // fine (Law 1 clause 5: the failure a content edit can cause, not just the
+  // rows it can malform). Ruled a REFUSAL, not a warning ("a warning that
+  // boots is the fourth silent state") and not accept-in-writing.
+  //
+  // It binds the OFFERED set, not the default: offering 'overlap' at all puts
+  // the sliver hand one legal settings write away, so the default being
+  // 'paging' discharges nothing. Paging-only with ms 0 stays legal — the
+  // strip needs no reader, and turning the gesture off is a tuning row this
+  // check must not eat. The reader is resolved exactly as its consumer
+  // resolves it (combat.js: `Number((ui.inspectHold || {}).ms) || 0`), so an
+  // ABSENT inspectHold row is the same off position as ms: 0 and refuses too
+  // — guarding on the entry would let deleting the entry silence the check
+  // that watches it (the tapSize precedent below). A MALFORMED ms is not
+  // handled here: it is already red by name in the inspectHold block above,
+  // and a second error calling garbage "0" would misname the defect.
+  // Corpus: tools/overlapreader.mjs — known-bads enter as content rows
+  // through a real boot; observed red at b277ec2 before this block existed.
+  if (b.balance && b.balance.ui) {
+    const ui = b.balance.ui;
+    const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
+    const ih = ui.inspectHold;
+    const wellFormedMs = ih != null && typeof ih === 'object' && !Array.isArray(ih)
+      && typeof ih.ms === 'number' && Number.isFinite(ih.ms) && ih.ms >= 0;
+    const readerOff = ih == null ? true : (wellFormedMs && ih.ms === 0);
+    if (offersOverlap && readerOff) {
+      const floor = ui.tapSize && typeof ui.tapSize.def === 'number' ? `the ${ui.tapSize.def} px tap floor` : 'the tap floor (balance.ui.tapSize.def)';
+      err('balance.ui.handLayoutModes + balance.ui.inspectHold.ms',
+        `'overlap' is offered while the inspect hold is off (${ih == null ? 'the inspectHold row is ABSENT, which the hand resolves to ms 0' : 'ms: 0'}) — refused. `
+        + `Overlap flattens a full hand into ~27-30 px exposed slivers, under ${floor}, and hold-to-inspect is the one reader that makes a sliver legible; ms 0 turns that reader off. `
+        + `These two entries conflict: drop 'overlap' from balance.ui.handLayoutModes, or give balance.ui.inspectHold.ms a non-zero hold. `
+        + `Paging-only with ms 0 stays legal — the strip needs no reader.`);
+    }
+  }
   // THE SECOND-BEAT TABLE, checked at the same boot and for the same reason as
   // the dial above. It is CODE, not content, so it can never be a row a
   // designer breaks — but it is a table, and a table whose row is malformed
@@ -14639,6 +15030,11 @@ function validateContent(bundle) {
   // Its corpus is `node tools/gracerefill.mjs --selftest`, which plants each
   // refusal into the real bundle and watches this call go red.
   for (const e of graceRefillRefusals(b)) err(e.key, e.msg);
+
+  // The growth chain (balance.flaskGrowth) — same refusal shape, same door.
+  // Its corpus is `node tools/flaskgrowth.mjs --selftest`, which plants each
+  // refusal into the real bundle and watches this call go red.
+  for (const e of flaskGrowthRefusals(b)) err(e.key, e.msg);
 
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {
@@ -16324,8 +16720,21 @@ Object.assign(module.exports, { STAKES, UNDO, HAZARD, beatOf, ACTIONS, beatFor, 
 
 const { balance } = require("src/content/balance.js");
 
-/** Column pitch of the SVG, in SVG units. Floor pitch is derived below. */
-const COL_X = 95;
+/** Column pitch of the SVG, in SVG units. Floor pitch is derived below.
+ *
+ * 75, DOWN FROM 95 — Constantine's rendered read of the map on his phone
+ * (D17 message 4/4b, 2026-08-08): "the width of the nodes are too wide. it
+ * should be more narrow for mobile … the edges need to be longer and more in
+ * the verticle axis instead of the horizontal." At 95 a diagonal edge ran
+ * dy 65 / dx 95 — horizontal-dominant, |dy|/len 0.565 measured as the MEDIAN
+ * edge across 12 seeds x 3 shapes at 86564e6. At 75 against the derived
+ * ROW_H of 79 the same edge is dy 79 / dx 75 — vertical-dominant, 0.725 —
+ * and the climb narrows by a fifth. Both gated floors stay clear and say so:
+ * the live-pair air drops 52.4 -> 32.4 SVG (27.6 device px at 320x640,
+ * floor 2) and the fan-out margin IMPROVES (7 columns: slack 1 -> 2).
+ * BOUNDARY, named: Sunna's cleared live-door reading of 54.23 device px at
+ * 390 becomes ~33.5 — above every coded floor, but the re-read is hers. */
+const COL_X = 75;
 
 /**
  * The zoom ladder — the manual control, and the bounds the computed zoom is
@@ -16353,7 +16762,7 @@ const ZOOM_MAX = ZOOM_STEPS[ZOOM_STEPS.length - 1];
  * default everywhere, and nothing else moves. Do it when the fog lands, or on
  * Constantine's word — it is his A/B and nobody's first run is the experiment.
  */
-const MAP_ZOOM_DEFAULT = '115';
+const MAP_ZOOM_DEFAULT = 'Fit';
 
 /**
  * THE REFERENCE UI ZOOM — `--ui-zoom` at the shape that decides, measured, not
@@ -16386,8 +16795,18 @@ const PHONE_UI_ZOOM_MIN = 0.74;
  * largest was 47.61 px at 390x844/115%). It is a conservative lower bound, not
  * a claim that 48 is the visual ideal. Remove it if the map stops using adjacent
  * floor rows; change it on Constantine's rendered read, never to fit a test.
+ *
+ * 58, UP FROM 48, and the door is the one the sentence above names: his
+ * rendered read. D17 message 4 (2026-08-08, phone, this screen): "the
+ * veritical space between nodes are way too close" — and 4b asks the edges to
+ * be LONGER as well as more vertical, which a narrower COL_X alone would have
+ * broken (edge length shrinks as columns narrow). 58 derives ROW_H 79: the
+ * delivered floor pitch at 390x844/115% goes 47.61 -> 81.8 device px, the
+ * diagonal edge is 109 SVG units (longer than the 105.6 he complained at, at
+ * 46/95), and dy exceeds dx. Not fitted to a test: every floor this file
+ * gates was re-run and stays green with margin printed.
  */
-const NODE_PITCH_MIN_PX = 48;
+const NODE_PITCH_MIN_PX = 58;
 
 /**
  * Floor pitch of the SVG, derived from the device-space floor at the two
@@ -17707,6 +18126,14 @@ const FLASK_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
 // Mana is live run/combat state. `restoreMana` derives the Mana kind without
 // confusing it with per-turn Energy; explicit `kind` remains the override.
 const FLASK_KINDS = Object.freeze(['hp', 'mana', 'utility']);
+
+// The four growth sources of D17 message 6, his words in his order: "upgrade
+// options via relics or quest events or talismans or flask seeds to increase
+// the amount of charges." A growth row names ONE of these; a fifth source is a
+// WORD (engine act: this set, the schema and model/flaskgrowth.js refusals in
+// one act — Law 0 clause 2), never a row. Two of the four are declared ahead
+// of their content on purpose — see flaskGrowthRefusals for which, and why.
+const FLASK_GROWTH_SOURCES = Object.freeze(['relic', 'questEvent', 'talisman', 'flaskSeed']);
 const INTENT_KINDS = Object.freeze(['attack', 'block', 'buff', 'debuff', 'unknown']);
 const ENCOUNTER_POOLS = Object.freeze(['normal', 'elite', 'boss']);
 const PILES = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
@@ -18073,6 +18500,9 @@ const SCHEMAS = Object.freeze({
     surfaces: arr(en(...HUD_SURFACES)),
     source: str,
     domainMax: opt(num),
+    // Rows sharing a band render side by side on one HUD line (the approved
+    // hybrid's Mana+Stamina row). Free-form id; grouping happens per surface.
+    band: opt(str),
   }),
 
   stance: obj({
@@ -18228,7 +18658,7 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { DAMAGE_SCHOOLS, COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_TYPES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, STATUS_VALUE_TOKENS, STATUS_DURATION_TOKENS, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, FLASK_KINDS, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
+Object.assign(module.exports, { DAMAGE_SCHOOLS, COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_TYPES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, STATUS_VALUE_TOKENS, STATUS_DURATION_TOKENS, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, FLASK_KINDS, FLASK_GROWTH_SOURCES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
 
 },
 "src/model/resources.js": function (module, exports, require) {
@@ -18393,13 +18823,30 @@ function resourceDomains(registries) {
  * resourceBarPlan(registries, surface, view, entity, domains) → [bar]
  *
  * ONE function, both HUDs. A bar is:
- *   { id, name, glyph, tint, weight, cur, max, pct, lengthPct, floored }
+ *   { id, name, glyph, tint, weight, band, cur, max, pct, lengthPct, floored }
  *
  *   pct        — the FILL inside the trough (cur/max). The old bars' only job.
  *   lengthPct  — the TROUGH's own length, as a fraction of the row track, and
  *                the whole of his ask: scale(max)/scale(domainMax). Nothing is
  *                typed; the track is derived by flexbox from the row minus the
  *                two buttons, so a bar cannot lie about a max.
+ *
+ *                THE DOMAIN IS PER RESOURCE, AND THAT IS RULED, NOT DEFAULTED.
+ *                Constantine, 2026-08-13: "bar scaling per resource" (family
+ *                repo, commons/decisions/directions.md D19 C6). Each row's
+ *                length is measured against ITS OWN resource's derived
+ *                ceiling — never against a shared cross-resource rate. The
+ *                consequence is deliberate: length tells pool size at a
+ *                glance WITHIN a resource across the run, not BETWEEN
+ *                resources — two pools with different maxes legitimately
+ *                render different px per point, and comparing bar lengths
+ *                across resources reads nothing. The shared-rate alternative
+ *                (Elden Ring's literal read) is dead by his word;
+ *                tools/hudbars.mjs A2/A2X assert both halves, so
+ *                reintroducing a shared rate goes red, not quiet. (His word
+ *                closed the conflict my 2026-08-13 log carried as open — the
+ *                shipped derivation was already per-resource, so his answer
+ *                ratified the default: zero code moved here. — Freja)
  *   floored    — the minimum-width clause fired; see resbars.css. A floored bar
  *                is no longer to scale and says so in its own trough.
  *
@@ -18424,6 +18871,7 @@ function resourceBarPlan(registries, surface, view, entity, domains) {
       glyph: row.glyph || '',
       tint: row.tint,
       weight: row.weight,
+      band: row.band || null,
       cur: val.cur,
       max: val.max,
       pct: Math.max(0, Math.min(100, (val.cur / val.max) * 100)),
@@ -18442,6 +18890,432 @@ function surfaceScalesByMax(registries, surface) {
 
 
 Object.assign(module.exports, { resourceScale, RESOURCE_SOURCES, RESOURCE_SOURCE_IDS, RESOURCE_WEIGHTS, HUD_SURFACES, resourceDomains, resourceBarPlan, surfaceScalesByMax });
+
+},
+"src/model/flaskgrowth.js": function (module, exports, require) {
+// src/model/flaskgrowth.js — how the flask maximum grows, and where C1 landed.
+//
+// Constantine, 2026-08-08 (D17 message 6): "...those two are locked in with 3
+// charges, with upgrade options via relics or quest events or talismans or
+// flask seeds to increase the amount of charges".
+//
+// ONE CHAIN, DATA ROWS, ONE TRUTH FUNCTION (the coordinator's ruling, and it
+// is the swap-cost chain's schema shape wearing flasks). A growth row
+// DESCRIBES — { source, id, kind, amount } — and the machinery DERIVES the
+// maximum (Law 0 clauses 1–3). A new relic that grows a charge is a ROW in
+// `balance.flaskGrowth`; a fifth SOURCE is a word (FLASK_GROWTH_SOURCES,
+// model/schemas.js — engine act, set + refusals together).
+//
+// ═════════════════════════════════════════════════════════════════════════
+// THE C1 SEAM — DECIDED: POOL, by Constantine's own word.
+//
+// C1 asked what "3 charges" means, and he answered on 2026-08-13:
+//
+//   "3 total (with future unlocks for larger total amount)"
+//   — Constantine, family record D19 (C1 — CLOSED: POOL),
+//     commons/decisions/directions.md, claude-family repo.
+//
+// So: `balance.flaskCapacity` is 3 TOTAL, one pool, reallocatable between
+// Crimson (hp) and Azure (mana) at a grace — dev as shipped stands. The
+// discarded reading (VESSEL: 3 each on two locked vessels, from D17 message 6
+// as first recorded) is named here once, as history, so nobody re-derives it
+// from the old wording; it is not an alternative and this file no longer
+// keeps the door open for it.
+//
+// THE SEAM OUTLIVES THE QUESTION. Every row still targets a KIND
+// ('hp' | 'mana') — under pool, a row's growth is allocated to its kind at
+// the moment it binds, precisely what the shipped `addFlaskCapacity` opcode
+// already does. The binding of a kind-delta into stored charge state stays in
+// exactly one function below — `syncFlaskGrowth` — not because an answer is
+// pending, but because one named binding point is what made the answer cost
+// one function and zero rows. That property is worth keeping after the
+// question dies.
+//
+// And his parenthesis is this chain's build order: "future unlocks for
+// larger total amount" IS the growth chain — the first live rows ship under
+// that clause.
+//
+// TWO DOORS INTO A BIGGER MAXIMUM, deliberately, one per shape of cause:
+//   the MOMENT door     — the `addFlaskCapacity` run opcode: a one-shot grant
+//                         from something that HAPPENS (a keepsake at run
+//                         start, a quest event's chosen effect). Stored.
+//   the POSSESSION door — this chain: growth that tracks something you HAVE
+//                         (a relic carried, a talisman worn, one day a seed).
+//                         Derived, so losing the source loses the growth.
+// One grant may use one door only; the questEvent refusal below enforces the
+// one collision the two doors could have.
+// ═════════════════════════════════════════════════════════════════════════
+
+const { FLASK_GROWTH_SOURCES } = require("src/model/schemas.js");
+const { CHARGE_FLASK_KINDS, flaskCapacity, firstFlaskOfKind } = require("src/model/gracerefill.js");
+
+// DELIBERATELY NOT `import { equippedIn } from './loadout.js'`. The canonical
+// worn-piece resolver is loadout.js `equippedIn`, but importing it here closes
+// a cycle — validate.js → this file → loadout.js → validate.js — and loadout
+// calls `tokenRe()` at module top, which then throws before initialization
+// (measured: ReferenceError at loadout.js:1073 the moment the import existed).
+// The chain only needs the ACTIVE ID in the talisman slot, so it reads the
+// loadout's own stored shape below; if `equippedIn`'s set/active resolution
+// ever changes shape, `wornTalismanId` is the one line to re-level.
+function wornTalismanId(loadout) {
+  const ids = (loadout && loadout.sets && loadout.sets.talisman) || [];
+  return ids[(loadout && loadout.active && loadout.active.talisman) || 0] || null;
+}
+
+/** The chain's rows, as authored. Absent = no growth, which is a legal state. */
+function flaskGrowthTable(balance) {
+  const t = balance && balance.flaskGrowth;
+  return Array.isArray(t) ? t : [];
+}
+
+/** The optional hard cap. Absent = uncapped; the boot refusal only arms when
+ *  it is authored. The unlock ceiling is Constantine's number to author
+ *  ("future unlocks for larger total amount", D19) — never invented here. */
+function flaskGrowthMax(balance) {
+  const v = balance && balance.flaskGrowthMax;
+  return Number.isInteger(v) && v > 0 ? v : null;
+}
+
+/**
+ * flaskGrowthPlan(registries, run) → { rows, perKind }
+ *
+ * THE TRUTH FUNCTION, and it is pure. For every authored row it answers: is
+ * the source held by THIS run, and if not, why not — so the same reckoning can
+ * be shown on a screen, printed by a tool, and applied by the seam without any
+ * of the three disagreeing. `perKind` sums only the held rows.
+ *
+ * `binding: false` rows carry a `why` by name (the mana-row pattern): a row
+ * that grows nothing SAYS it grows nothing, wherever it is read.
+ */
+function flaskGrowthPlan(registries, run) {
+  const rows = [];
+  const perKind = { hp: 0, mana: 0 };
+
+  for (const raw of flaskGrowthTable(registries.balance)) {
+    const source = raw && raw.source;
+    const id = raw && raw.id;
+    const kind = raw && raw.kind;
+    const amount = raw && Number.isInteger(raw.amount) ? raw.amount : 0;
+    let held = false;
+    let why = '';
+
+    if (source === 'relic') {
+      held = Array.isArray(run && run.relics) && run.relics.includes(id);
+      if (!held) why = `not held — the run does not carry relic '${id}'.`;
+    } else if (source === 'talisman') {
+      held = wornTalismanId(run && run.loadout) === id;
+      if (!held) why = `not worn — '${id}' is not in the talisman slot.`;
+    } else if (source === 'questEvent') {
+      // NOT BINDING TODAY, by name: the run records no quest-event history
+      // (run.history is declared and never written), so a possession-shaped
+      // row cannot resolve. A quest event that grows charges TODAY does it
+      // through the moment door — an `addFlaskCapacity` effect on its own
+      // choice row, zero code. The day event history exists, this row binds
+      // and that event's imperative grant must move into it: one door per
+      // grant, and the boot refusal below already guards the collision.
+      why = 'NOT BINDING — the run records no quest-event history yet; '
+        + 'today a quest event grants growth through its own choice effect (op addFlaskCapacity).';
+    } else if (source === 'flaskSeed') {
+      // Declared and inert: the source is one of his four words, no seed item
+      // vocabulary exists in content, and rows of this source are refused at
+      // boot until one does. The word ships so the day is a data day.
+      why = 'NOT BINDING — no flask-seed item exists in content; the source is reserved for the day one does.';
+    } else {
+      why = `unknown source '${source}' — validation refuses this row at boot.`;
+    }
+
+    if (held && CHARGE_FLASK_KINDS.includes(kind)) perKind[kind] += amount;
+    rows.push({ source, id, kind, amount, held, binding: held, why });
+  }
+
+  return { rows, perKind };
+}
+
+/**
+ * flaskGrowthClause(balance, flasks, relicId) → derived tooltip sentence, or ''.
+ *
+ * LAW 1 CLAUSE 2, enforced by construction: a growth row's amount is a
+ * tunable number with ONE home (its row). A hand-written "+1" in a relic's
+ * textTemplate would be a copy nothing syncs — the crackedTear "50%" shape —
+ * so the player-facing sentence is DERIVED from the table instead, and a
+ * retune changes the tooltip with zero prose edits. The flask's display name
+ * comes from the same kind→first-authored-member rule the grace uses
+ * (firstFlaskOfKind), so renaming Crimson Flask renames this clause too.
+ *
+ * Relic rows only: a relic-source row's id is validated at boot to be a relic
+ * id, so a flask def passed through the shared relic/flask text path cannot
+ * match one unless a flask ever shares an id with a relic — none does, and
+ * the day one did, the clause would still describe the relic that owns it.
+ * Talisman-source rows will need the equipment text path the day the first
+ * talisman piece is authored; that is that day's one wire, not this one's.
+ */
+function flaskGrowthClause(balance, flasks, relicId) {
+  const parts = [];
+  for (const row of flaskGrowthTable(balance)) {
+    if (!row || row.source !== 'relic' || row.id !== relicId) continue;
+    if (!CHARGE_FLASK_KINDS.includes(row.kind) || !Number.isInteger(row.amount) || row.amount <= 0) continue;
+    const def = firstFlaskOfKind(flasks, row.kind);
+    const name = (def && def.name) || row.kind;
+    parts.push(`While carried: +${row.amount} max ${name} charge${row.amount === 1 ? '' : 's'}.`);
+  }
+  return parts.join(' ');
+}
+
+/**
+ * syncFlaskGrowth(registries, run) → { changed, applied, plan } | null
+ *
+ * ══ THE C1 SEAM, applied — the ONLY place a kind-delta becomes stored
+ * capacity. ══
+ *
+ * POOL BINDING — PERMANENT, his word (D19, 2026-08-13: "3 total (with future
+ * unlocks for larger total amount)"; C1 — CLOSED: POOL): a held row's amount
+ * raises `flaskCharges.capacity` and allocates itself to the row's kind —
+ * the same arithmetic as the `addFlaskCapacity` opcode, so the two doors
+ * cannot disagree about what a charge is. This is no longer one of two
+ * readings held apart; it is the decided topology, and an edit that splits
+ * capacity into per-kind vessels is overturning D19, not resolving it.
+ *
+ * DERIVED, SO REVERSIBLE: `flaskCharges.grown` stores what the chain has
+ * currently applied per kind. Sync diffs the plan against it and applies the
+ * difference, so gaining a relic grows the maximum and (one day) unequipping
+ * a talisman shrinks it back — idempotent, safe to call at every checkpoint.
+ *
+ * THE OVERFLOW RULE — LOAD-BEARING, no longer provisional: under pool the
+ * player may reallocate a grown charge to the other kind at a grace
+ * (ui/screens/rest.js) and THEN lose the growth source. Removal takes from
+ * the row's kind first and overflows the remainder to the other kind,
+ * currents bounded. Nobody ordered this rule; the pool topology forces it,
+ * and D19 choosing pool is what made it real. Its gate lives in
+ * tools/flaskgrowth.mjs (both edges, observed red first — the instrument
+ * rule); do not touch this arithmetic without re-running that corpus.
+ */
+function syncFlaskGrowth(registries, run) {
+  const f = run && run.flaskCharges;
+  if (!f) return null;
+  const plan = flaskGrowthPlan(registries, run);
+  const grown = f.grown && Number.isInteger(f.grown.hp) && Number.isInteger(f.grown.mana)
+    ? f.grown
+    : { hp: 0, mana: 0 };
+  const applied = { hp: 0, mana: 0 };
+
+  for (const kind of CHARGE_FLASK_KINDS) {
+    const d = plan.perKind[kind] - grown[kind];
+    if (d === 0) continue;
+    applied[kind] = d;
+    if (d > 0) {
+      // A new charge arrives full — the same generosity as addFlaskCapacity.
+      f.capacity += d;
+      f[kind] += d;
+      f[`${kind}Current`] += d;
+    } else {
+      const take = -d;
+      const other = kind === 'hp' ? 'mana' : 'hp';
+      f.capacity -= take;
+      const fromKind = Math.min(take, f[kind]);
+      f[kind] -= fromKind;
+      f[other] -= take - fromKind; // safe: grown charges are inside capacity
+      f.hpCurrent = Math.min(f.hpCurrent, f.hp);
+      f.manaCurrent = Math.min(f.manaCurrent, f.mana);
+    }
+  }
+
+  f.grown = { hp: plan.perKind.hp, mana: plan.perKind.mana };
+  return { changed: applied.hp !== 0 || applied.mana !== 0, applied, plan };
+}
+
+/**
+ * flaskGrowthRefusals(bundle) → [{ key, msg }]
+ *
+ * LAW 1 CLAUSE 5 at boot, naming the entry — consumed by model/validate.js
+ * exactly like graceRefillRefusals, because one refusal shape in one place is
+ * cheaper than two that agree today.
+ *
+ * IT TAKES THE BUNDLE, NOT THE BALANCE: four of the refusals below can only
+ * be asked with the relics, events and equipment tables in hand — does this
+ * source id exist, is that event already granting through the moment door.
+ */
+function flaskGrowthRefusals(bundle) {
+  const out = [];
+  const b = bundle || {};
+  const balance = b.balance;
+  if (!balance || typeof balance !== 'object' || Array.isArray(balance)) return out;
+
+  // The cap's SHAPE is checked before the table's existence — a malformed
+  // flaskGrowthMax beside an absent table was silent in this function's first
+  // draft, and its own selftest caught it (MISS, 2026-08-13) before commit.
+  const max = flaskGrowthMax(balance);
+  if (balance.flaskGrowthMax !== undefined && max == null) {
+    out.push({
+      key: 'balance.flaskGrowthMax',
+      msg: `must be a positive integer — got ${JSON.stringify(balance.flaskGrowthMax)}.`,
+    });
+  }
+
+  if (balance.flaskGrowth == null) return out; // no chain = no growth; legal.
+
+  if (!Array.isArray(balance.flaskGrowth)) {
+    out.push({
+      key: 'balance.flaskGrowth',
+      msg: `must be an array of { source, id, kind, amount } rows — got ${JSON.stringify(balance.flaskGrowth)}. `
+        + 'It is a table so that a bigger maximum is a ROW, never an engine edit.',
+    });
+    return out;
+  }
+
+  const relicIds = new Set((b.relics || []).map((r) => r && r.id).filter(Boolean));
+  const events = Array.isArray(b.events) ? b.events : [];
+  const eventIds = new Set(events.map((e) => e && e.id).filter(Boolean));
+  const eq = b.equipment || {};
+  // A talisman row must name a piece the talisman slot could actually hold —
+  // resolved against the slot's own `kinds` (generated/equipSlots.js), never
+  // against all pieces: a row naming a weapon id would validate forever and
+  // bind never, the silent-plausible failure Law 0 clause 5 names.
+  const talismanSlot = (eq.slots || []).find((s) => s && s.id === 'talisman');
+  const talismanKinds = talismanSlot
+    ? (Array.isArray(talismanSlot.kinds) ? talismanSlot.kinds : [talismanSlot.kinds])
+    : [];
+  const talismanIds = new Set(
+    [...(eq.armaments || []), ...(eq.armour || [])]
+      .filter((p) => p && talismanKinds.includes(p.kind))
+      .map((p) => p.id)
+  );
+
+  const seen = new Map();
+  let growthSum = 0;
+
+  balance.flaskGrowth.forEach((row, i) => {
+    const at = `balance.flaskGrowth[${i}]`;
+    if (!row || typeof row !== 'object' || Array.isArray(row)) {
+      out.push({ key: at, msg: `must be an object { source, id, kind, amount } — got ${JSON.stringify(row)}.` });
+      return;
+    }
+    const { source, id, kind, amount } = row;
+
+    // 1. The source is a WORD from the closed set — his four, no fifth by typo.
+    if (typeof source !== 'string' || !FLASK_GROWTH_SOURCES.includes(source)) {
+      out.push({
+        key: `${at}.source`,
+        msg: `${JSON.stringify(source)} is not a growth source — one of ${FLASK_GROWTH_SOURCES.join(', ')} `
+          + '(D17 message 6, his four words). A fifth source is an engine act (FLASK_GROWTH_SOURCES, model/schemas.js), never a row.',
+      });
+      return;
+    }
+
+    // 2. The kind is a charge vessel. 'utility' flasks are inventory, not charges.
+    if (typeof kind !== 'string' || !CHARGE_FLASK_KINDS.includes(kind)) {
+      out.push({
+        key: `${at}.kind`,
+        msg: `${JSON.stringify(kind)} is not a charge kind — one of ${CHARGE_FLASK_KINDS.join(', ')}. `
+          + 'Only the dedicated vessels have a maximum to grow; utility flasks are carried, not charged.',
+      });
+      return;
+    }
+
+    // 3–5. The amount. Growth grows; each refusal says what the bad value would have done.
+    if (typeof amount !== 'number' || !Number.isFinite(amount)) {
+      out.push({ key: `${at}.amount`, msg: `must be a number of charges — got ${JSON.stringify(amount)}.` });
+      return;
+    }
+    if (amount <= 0) {
+      out.push({
+        key: `${at}.amount`,
+        msg: `${amount} is not positive — this chain GROWS the maximum ("to increase the amount of charges", his words). `
+          + 'A negative or zero row is a curse wearing an upgrade\'s name; a shrinking mechanic would be its own word, decided out loud.',
+      });
+      return;
+    }
+    if (!Number.isInteger(amount)) {
+      out.push({
+        key: `${at}.amount`,
+        msg: `${amount} is fractional — a vessel holds whole charges. A fractional amount would floor into a `
+          + 'different number than the one written here, on a screen that prints the one written here.',
+      });
+      return;
+    }
+
+    // 6. One home per grant: the same source may not grow the same kind twice.
+    const dupKey = `${source}:${id}:${kind}`;
+    if (seen.has(dupKey)) {
+      out.push({
+        key: `${at}`,
+        msg: `duplicate of balance.flaskGrowth[${seen.get(dupKey)}] — '${source}' '${id}' already grows '${kind}'. `
+          + 'Two rows for one grant are two homes for one number; raise the first row\'s amount instead.',
+      });
+      return;
+    }
+    seen.set(dupKey, i);
+
+    // 7. The source ref must resolve — a dangling id is a promise to nothing.
+    if (typeof id !== 'string' || !id) {
+      out.push({ key: `${at}.id`, msg: `must name a ${source} id — got ${JSON.stringify(id)}.` });
+      return;
+    }
+    if (source === 'relic' && !relicIds.has(id)) {
+      out.push({ key: `${at}.id`, msg: `'${id}' is not a relic id — this row would wait forever for a relic nobody can hold.` });
+      return;
+    }
+    if (source === 'questEvent') {
+      if (!eventIds.has(id)) {
+        out.push({ key: `${at}.id`, msg: `'${id}' is not an event id — this row would wait forever for an event nobody can meet.` });
+        return;
+      }
+      // THE TWO-DOOR COLLISION: an event may grow charges through its own
+      // choice effect (the moment door) OR through this chain — never both,
+      // or the grant lands twice under two names.
+      const ev = events.find((e) => e && e.id === id);
+      const alsoImperative = (ev.choices || []).some((c) => (c && c.effects || []).some((e) => e && e.op === 'addFlaskCapacity'));
+      if (alsoImperative) {
+        out.push({
+          key: `${at}`,
+          msg: `event '${id}' already grants flask capacity through its own choice effect (op addFlaskCapacity) — `
+            + 'two doors for one grant would land it twice. Keep the effect row (the working door today) or this chain row, not both.',
+        });
+        return;
+      }
+    }
+    if (source === 'talisman' && !talismanIds.has(id)) {
+      out.push({
+        key: `${at}.id`,
+        msg: `'${id}' is not a piece the talisman slot can hold (slot kinds: ${talismanKinds.join(', ') || 'none'}) — `
+          + 'talismans are unauthored today (the slot ships empty, generated/equipSlots.js), so every talisman row '
+          + 'refuses here until the first talisman piece is authored. That day this refusal stops firing and the row '
+          + 'binds with no code change.',
+      });
+      return;
+    }
+    if (source === 'flaskSeed') {
+      out.push({
+        key: `${at}`,
+        msg: `no flask-seed item vocabulary exists in content — the source is declared (D17 message 6) and reserved. `
+          + 'A seed row becomes authorable the day seed items exist as entries; until then a row here names nothing a run could hold.',
+      });
+      return;
+    }
+
+    growthSum += amount;
+  });
+
+  // 8. The aggregate hard cap — armed only when authored; the ceiling is his
+  //    to name (D19's parenthesis), never invented here. Evaluated under the
+  //    decided pool binding (the seam's): base capacity + all growth, worst
+  //    case all held — one total, which is exactly what "3 total" grows.
+  if (max != null) {
+    let base = 0;
+    try { base = flaskCapacity(balance); } catch { /* its own refusal reports it */ }
+    if (base + growthSum > max) {
+      out.push({
+        key: 'balance.flaskGrowth',
+        msg: `fully grown, the maximum would reach ${base + growthSum} charges against flaskGrowthMax ${max}. `
+          + 'Raise balance.flaskGrowthMax or lower the rows; a chain that can quietly pass its own ceiling is a cap that is decoration.',
+      });
+    }
+  }
+
+  return out;
+}
+
+
+Object.assign(module.exports, { flaskGrowthTable, flaskGrowthMax, flaskGrowthPlan, flaskGrowthClause, syncFlaskGrowth, flaskGrowthRefusals });
 
 },
 "src/model/formulas.js": function (module, exports, require) {
@@ -21244,6 +22118,7 @@ Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLI
 
 const { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt } = require("src/model/loadout.js");
 const { chargeKindForFlask, createFlaskCharges } = require("src/model/gracerefill.js");
+const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } = require("src/model/attributes.js");
 const { createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot, deriveStat } = require("src/model/derivedStats.js");
 
@@ -21357,6 +22232,9 @@ function createRunState({
     preserveDeficits: false,
   });
   stampDeck(registries, run);
+  // The growth chain binds from birth: a starting relic carrying a
+  // balance.flaskGrowth row grows the maximum before the first node.
+  syncFlaskGrowth(registries, run);
   return run;
 }
 
@@ -21570,6 +22448,14 @@ function validateRunShape(run, { legacy = false } = {}) {
       || !Number.isInteger(f.manaCurrent) || f.manaCurrent < 0 || f.manaCurrent > f.mana) {
       problems.push('flaskCharges must satisfy hp + mana = capacity with bounded current counts');
     }
+    // `grown` — what the growth chain currently contributes (model/flaskgrowth.js).
+    // Optional: pre-chain saves lack it and syncFlaskGrowth treats absent as zero.
+    if (f && f.grown !== undefined
+      && !(f.grown && typeof f.grown === 'object'
+        && Number.isInteger(f.grown.hp) && f.grown.hp >= 0
+        && Number.isInteger(f.grown.mana) && f.grown.mana >= 0)) {
+      problems.push('flaskCharges.grown must be { hp, mana } non-negative integers when present');
+    }
   }
   if (run.energyMax !== undefined && (!Number.isInteger(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be a non-negative integer');
   if (run.drawPerTurn !== undefined && (!Number.isInteger(run.drawPerTurn) || run.drawPerTurn < 0)) problems.push('drawPerTurn must be a non-negative integer');
@@ -21589,6 +22475,10 @@ function initializeRunFlaskCharges(run, registries) {
     run.flaskCharges.manaCurrent = Math.min(run.flaskCharges.mana, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'mana').length);
     run.flasks = (run.flasks || []).filter((f) => f && chargeKindForFlask(registries, f.flaskId) == null);
   }
+  // Loaded runs re-derive the chain here — the load door. A save carrying a
+  // relic whose growth row was authored after it was written grows on load;
+  // a save whose growth source no longer exists shrinks back, currents bounded.
+  syncFlaskGrowth(registries, run);
   return run.flaskCharges;
 }
 
@@ -23187,6 +24077,7 @@ const statuses = require("src/engine/statuses.js");
 const { evalPredicate, checkPhases } = require("src/engine/triggers.js");
 const { damageTagIds } = require("src/content/tags.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
+const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -23431,6 +24322,22 @@ function drawCards(ctx, n) {
   }
 }
 
+/**
+ * discardFromHand(ctx, n) — the discard op's body, one home for both callers:
+ * the 'discard' effect below and the ?shotHand pose (main.js), which needs to
+ * reach a small hand through the same door a played-down hand goes through —
+ * same splice, same pile, same event. Non-random takes from the right end,
+ * exactly as the op always has.
+ */
+function discardFromHand(ctx, n, { random = false } = {}) {
+  for (let i = 0; i < n && ctx.piles.hand.length > 0; i++) {
+    const idx = random ? Math.floor(ctx.rng.float('misc') * ctx.piles.hand.length) : ctx.piles.hand.length - 1;
+    const card = ctx.piles.hand.splice(idx, 1)[0];
+    ctx.piles.discard.push(card);
+    ctx.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'effect' });
+  }
+}
+
 function reshuffleDiscardIntoDraw(ctx) {
   ctx.piles.draw.push(...ctx.piles.discard);
   ctx.piles.discard.length = 0;
@@ -23601,12 +24508,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'discard': {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
-      for (let i = 0; i < n && ctx.piles.hand.length > 0; i++) {
-        const idx = eff.random ? Math.floor(ctx.rng.float('misc') * ctx.piles.hand.length) : ctx.piles.hand.length - 1;
-        const card = ctx.piles.hand.splice(idx, 1)[0];
-        ctx.piles.discard.push(card);
-        ctx.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'effect' });
-      }
+      discardFromHand(ctx, n, { random: !!eff.random });
       break;
     }
     case 'exhaust': {
@@ -23746,6 +24648,7 @@ function runRunOpcode(ctx, action, eff) {
       if (relicId && !run.relics.includes(relicId)) {
         ctx.registries.relics.get(relicId); // throws on dangling id
         run.relics.push(relicId);
+        syncFlaskGrowth(ctx.registries, run); // growth chain: a relic source binds the moment it is held
       }
       break;
     }
@@ -23847,7 +24750,7 @@ function executeRunEffects({ run, registries, rng }, effects) {
 }
 
 
-Object.assign(module.exports, { computeAttackDamage, attackTagsFor, applyAttackDamage, computeBlockGain, gainBlock, applyLoseHp, applyHeal, staggerEnemy, dealPoiseDamage, drawCards, reshuffleDiscardIntoDraw, resolveTargets, formulaCtxFor, executeAction, executeRunEffects });
+Object.assign(module.exports, { computeAttackDamage, attackTagsFor, applyAttackDamage, computeBlockGain, gainBlock, applyLoseHp, applyHeal, staggerEnemy, dealPoiseDamage, drawCards, discardFromHand, reshuffleDiscardIntoDraw, resolveTargets, formulaCtxFor, executeAction, executeRunEffects });
 
 },
 "src/engine/statuses.js": function (module, exports, require) {
@@ -29019,8 +29922,10 @@ Object.assign(module.exports, { mountDraft });
 
 const { resolveCard } = require("src/model/registries.js");
 const { computeTokenBindings, relicTokens, tokenRe } = require("src/model/validate.js");
+const { flaskGrowthClause } = require("src/model/flaskgrowth.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { balance } = require("src/content/balance.js");
+const { flasks } = require("src/content/flasks.js");
 const { tagsFor } = require("src/content/tags.js");
 
 /** Static token values straight off the def (for reward/pile/deck views). */
@@ -29053,9 +29958,18 @@ function staticTokens(def) {
 function relicText(def) {
   if (!def || !def.textTemplate) return '';
   const tokens = relicTokens(def);
-  return def.textTemplate.replace(tokenRe(), (m, tok) => (
+  const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
     typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
   ));
+  // A growth row (balance.flaskGrowth) is a grant the player must be able to
+  // read on the relic that carries it — but its amount has ONE home, the row,
+  // so the sentence is DERIVED here rather than hand-typed into textTemplate
+  // (Law 1 clause 2; the derivation and its boundary live at
+  // flaskGrowthClause, model/flaskgrowth.js; corpus tools/flaskgrowth.mjs).
+  // Static content imports on purpose: the same pair this file already reads
+  // for balance.ui, and relic defs are not moddable per-run today.
+  const grown = flaskGrowthClause(balance, flasks, def.id);
+  return grown ? `${base} ${grown}` : base;
 }
 
 function fillTemplate(def, tokens, baseTokens) {
@@ -32581,7 +33495,7 @@ const { trackGesture } = require("src/ui/gesture.js");
 const { resourceBars, markFlooredBars } = require("src/ui/components/resbars.js");
 const { renderArcaneExposure } = require("src/ui/components/arcaneExposure.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
-const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { beatArmer, armInspect } = require("src/ui/components/holdconfirm.js");
 const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
@@ -32666,6 +33580,89 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
+
+  // ---- hand layout: the OVERLAP arm of balance.ui.handLayout (C2) ----------
+  //
+  // The word's one home is balance.ui.handLayout; main.js derives it onto
+  // <html data-hand-layout>; this block reads the ATTRIBUTE and nothing else.
+  // When the word is 'paging' (the default), every line below is inert and
+  // renderHand is byte-for-byte the shipped strip — that inertness is the C2
+  // ruling ("the shipped behaviour keeps its seat") made checkable.
+  //
+  // OVERLAP, on the narrow shape: the whole hand lays inside the strip's own
+  // width, each card overlapped by the next, z-order left-under-right (the
+  // zIndex renderHand already writes). THE OVERLAP IS DERIVED, NEVER TYPED:
+  // measured container width, measured card width, hand size — the same three
+  // facts every render, so ten cards at Text XL fit exactly where five at S
+  // spread out. Law 5 clause 1 is the constraint the arithmetic serves:
+  // horizontal scroll travel ZERO in this mode (the strip's clause-2
+  // exemption is PAGING's, and it does not travel with the word).
+  //
+  // The narrow fan transform is flattened here on purpose: a rotated card's
+  // hit edge is a wedge, and in overlap the exposed sliver of every card but
+  // the top IS its tap target — the sliver is the composition, so it stays
+  // rectangular and measurable. Cramped slivers are the mode's stated cost;
+  // the compensating reader is the inspect hold on every card (hold ~400 ms
+  // → the card expands, unclipped, above everything — armInspect below).
+  //
+  // On the wide shape the word changes nothing: the wide hand is already an
+  // overlapping fan (margin -1.4rem, combat.css), so 'overlap' is its shipped
+  // truth and 'paging' has no wide meaning either — the word picks the NARROW
+  // arrangement. Reconciliation still runs on shape flips so a resize from
+  // narrow back to wide restores the fan transform this mode flattened.
+  let handEls = []; // the rendered cards, in hand order (filled by renderHand)
+  let handFan = []; // each card's shipped fan transform, same index
+  const handLayoutWord = () => document.documentElement.dataset.handLayout;
+  function applyHandLayout() {
+    if (handLayoutWord() !== 'overlap') return;
+    const hand = app.querySelector('.hand');
+    if (!hand) return;
+    const els = handEls.filter((el) => el.parentNode === hand);
+    const n = els.length;
+    if (!n) return;
+    const narrow = document.documentElement.getAttribute('data-layout') === 'narrow';
+    if (!narrow) {
+      // wide: the shipped fan, exactly — undo anything the narrow arm wrote.
+      els.forEach((el, i) => { el.style.transform = handFan[i]; el.style.marginLeft = ''; });
+      return;
+    }
+    // Flatten first so the measurement below reads border-box widths, not the
+    // axis-aligned box of a rotated card.
+    els.forEach((el) => { el.style.transform = 'none'; });
+    const cs = getComputedStyle(hand);
+    // ONE COORDINATE SPACE, or the arithmetic lies (Law 2's whole subject).
+    // The app scales under `body { zoom: var(--ui-zoom) }`, and the two rulers
+    // available here disagree about it: clientWidth / scrollWidth / the margin
+    // this writes are LOCAL px (pre-zoom), getBoundingClientRect is the zoomed
+    // viewport. First cut mixed them and shipped 115 px of travel at 390x844 —
+    // observed, not hypothetical. Everything below is LOCAL: the card's bcr
+    // width is divided back through the body zoom it rendered under.
+    const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+    // clientWidth is integer-rounded; solving against it exactly can leave the
+    // content edge a sub-pixel past it, which scrollWidth then rounds UP into
+    // one pixel of travel. One px is donated to certainty instead: the row is
+    // solved to fit clientWidth - 1, so travel is zero by construction and
+    // the instrument (tools/handlayout.mjs) can hold it at zero, not "small".
+    const W = hand.clientWidth - 1 - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    const gap = parseFloat(cs.columnGap) || 0;
+    const C = els[0].getBoundingClientRect().width / zoom;
+    const need = n * C + (n - 1) * gap;
+    const o = n > 1 ? Math.max(0, (need - W) / (n - 1)) : 0;
+    els.forEach((el, i) => { el.style.marginLeft = i && o ? `${-o}px` : ''; });
+  }
+  // Re-derive when the measured facts move: container width (window resize),
+  // card width (Text size), and the narrow/wide word main.js writes. All three
+  // observers reconcile through the same function, are attached only when the
+  // layout word asks for them, and dispose themselves when this screen's DOM
+  // is replaced (no unmount hook exists to hang cleanup on).
+  if (typeof ResizeObserver !== 'undefined' && handLayoutWord() === 'overlap') {
+    const alive = () => document.body.contains(combatEl);
+    const ro = new ResizeObserver(() => { if (alive()) applyHandLayout(); else ro.disconnect(); });
+    const mo = new MutationObserver(() => { if (alive()) applyHandLayout(); else mo.disconnect(); });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout'] });
+    ro.observe($('.hand'));
+    combatEl.__handRo = ro; // renderHand re-points card observation each render
+  }
 
   function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1 } = {}) {
     const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
@@ -32966,7 +33963,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     host.innerHTML = '';
     const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
     host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTooltipExtra }));
-    markFlooredBars(host, host);
+    markFlooredBars(host);
     const relics = $('.topbar .relics');
     relics.innerHTML = '';
     for (const rid of p.relicIds) {
@@ -33253,6 +34250,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   function renderHand() {
     const hand = $('.hand');
     hand.innerHTML = '';
+    // The one home of the duration is balance.ui.inspectHold; the Number()||0
+    // shape is why model/validate.js checks that row loud — an unreadable
+    // value here would silently turn the gesture off.
+    const inspectMs = Number((registries.balance.ui.inspectHold || {}).ms) || 0;
     const handList = disp ? disp.hand : combat.piles.hand;
     const n = handList.length;
     handList.forEach((inst, i) => {
@@ -33281,9 +34282,28 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         hint.textContent = i < 9 ? i + 1 : 'Q';
         el.appendChild(hint);
       }
+      // The reading hold — EVERY card, before the play wiring on purpose:
+      // affordability gates playing, never reading (the card you cannot pay
+      // for is the one you most need to read), and same-element listeners run
+      // in registration order, which is what lets a completed read's lift die
+      // in armInspect's click handler instead of selecting or playing below.
+      armInspect(el, { ms: inspectMs, onOpen: hideTooltip });
       if (pv) wireCardInput(el, inst, pv, affordable);
       hand.appendChild(el);
     });
+    // The overlap arm (block above renderHand): record what this render made,
+    // then reconcile. Inert — including the observer re-point — unless the
+    // layout word is 'overlap'; in 'paging' the loop above was the whole
+    // render, unchanged.
+    handEls = [...hand.children];
+    handFan = handEls.map((el) => el.style.transform);
+    if (combatEl.__handRo && handLayoutWord() === 'overlap') {
+      const ro = combatEl.__handRo;
+      ro.disconnect();
+      ro.observe(hand);
+      handEls.forEach((el) => ro.observe(el));
+    }
+    applyHandLayout();
   }
 
   function isUnplayable(inst) {
@@ -33338,6 +34358,13 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       // onUp — is the one that played a cancelled drag's card on the next tap
       // (Vira's misplay: discard 0->1 from a tap on a DIFFERENT pointerId).
       const onMove = (mv) => {
+        // An OPEN inspect owns this press: a finger drifting while reading an
+        // expanded card must not start a drag whose release over the field
+        // would PLAY a no-target card — a read must never be able to become a
+        // commit. Guarded on 'open' only: while merely pending, a real drag
+        // crossing the shared 12 px boundary abandons the inspect in the same
+        // event and proceeds here, whichever handler ran first.
+        if (el.dataset.inspect === 'open') return;
         if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > 12) {
           dragging = true;
           hideTooltip();
@@ -34038,6 +35065,7 @@ const { playerSprite, equippedFigure } = require("src/ui/assets.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { sfx } = require("src/ui/sfx.js");
 const { statProjection } = require("src/model/statProjection.js");
+const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 
 const CFG = () => balance.equipment;
 
@@ -34755,6 +35783,11 @@ function mountEquipment(host, {
   }
 
   function commit() {
+    // Every loadout mutation lands here, so this is the one wire for the
+    // growth chain's talisman source (model/flaskgrowth.js): a worn growth
+    // talisman grows the maximum on equip and shrinks it back on unequip.
+    // Idempotent, and a no-op until the first talisman growth row is authored.
+    syncFlaskGrowth(registries, run);
     if (onChange) onChange(run.loadout);
     draw();
   }
@@ -34940,11 +35973,23 @@ Object.assign(module.exports, { viewIds, viewCells, viewCellsSay, viewLayout, re
 //   the TROUGH — width = scale(max)/scale(domain). HIS ASK. The trough's own
 //                length encodes the maximum, so a bar cannot lie about a stat.
 //
-// NOTHING IS TYPED. The track is whatever flexbox leaves after the two top-row
-// buttons take their fixed size; the trough is a percentage of that. Law 2's
-// "names its container and is proven inside it" is satisfied by construction —
-// a percentage of a derived track cannot overflow it — and tools/hudbars.mjs
-// measures it anyway rather than trusting the argument.
+// TWO STRUCTURES, keyed on the surface — the approved hybrid (2026-08-13,
+// claude-family falk-family: hybrid-confirmation/output/selection-record.json,
+// owner pixels owners/F1-resource-health.png, F2-resource-mana.png,
+// F2-resource-stamina.png):
+//
+//   'main'  — the HYBRID shape. Each bar is a bordered UNIT: a label plate
+//             ("HP 86/86") to the LEFT of a pill trough. Bars sharing a row's
+//             `band` sit side by side on one line (F2's Mana+Stamina row);
+//             a bar with no band takes a line alone (F1's Health row). The
+//             trough's track is its unit's remaining width, derived by flex —
+//             nothing types a ceiling, so a bar cannot overflow its cell
+//             (Law 2 by construction; tools/hudbars.mjs measures it anyway).
+//   'model' — unchanged: the under-model strip keeps its inside label, which
+//             is also what the approved combat mock draws under the fighters.
+//
+// NOTHING IS TYPED. The line splits into equal unit cells by flex; the trough
+// track is unit minus plate, derived; the trough is a percentage of that.
 
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 
@@ -34958,67 +36003,131 @@ function resourceBars(plan, { surface, tooltipExtra } = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'resbars';
   wrap.dataset.surface = surface || 'main';
-  for (const bar of plan) {
-    const el = document.createElement('div');
-    el.className = `bar resbar resbar-${bar.weight}`;
-    el.dataset.res = bar.id;
-    // THE TROUGH LENGTH — the one line that is his whole instruction.
-    el.style.width = `${bar.lengthPct.toFixed(3)}%`;
-    el.style.setProperty('--res-tint', bar.tint);
-    // THE MACHINE-READABLE HOME, and it is not decoration. The label degrades
-    // to a glyph on a short bar, so `.textContent` is neither stable nor a fair
-    // reading of what the bar says — three variants ride in the DOM and hidden
-    // ones still land in textContent. Instruments and assistive tech read these
-    // instead: tools/veil-owns-input.mjs and tools/hudbars.mjs both do.
-    el.dataset.cur = String(bar.cur);
-    el.dataset.max = String(bar.max);
-    el.setAttribute('role', 'img');
-    el.setAttribute('aria-label', `${bar.name} ${bar.cur} of ${bar.max}`);
-
-    // THE MINIMUM-WIDTH CLAUSE, and it is declared here rather than computed.
-    // `min-width: var(--resbar-min)` in CSS does the flooring; this flag exists
-    // so the trough can SAY it is floored. See the CSS for the justification —
-    // a floored bar is drawn dashed, which is the broken-axis mark, because two
-    // different maxima below the floor render the same length and a bar that is
-    // no longer to scale must not look like one that is.
-    //
-    // Whether the floor FIRED is a rendered fact, not a computed one (it depends
-    // on the track, the zoom and the floor together), so it is stamped after
-    // layout by markFlooredBars() rather than guessed at here.
-    el.dataset.res = bar.id;
-
-    const fill = document.createElement('div');
-    fill.className = 'fill';
-    fill.style.width = `${bar.pct.toFixed(2)}%`;
-    el.appendChild(fill);
-
-    // THE LABEL DEGRADES BY MEASURED FIT, not by a typed threshold. The compact
-    // form keeps the resource glyph beside its numbers: a bare `20/40` still
-    // reports quantity, but on a two-row HUD it withholds WHICH pool it is.
-    // Marina rendered `maxMana = 2` at 48 px and watched "MANA" collide with
-    // "1/2". Three variants ride in the DOM and CSS container queries pick the
-    // widest that fits — in `em`, so the choice tracks the player's Text size
-    // setting, which is exactly what "does the word fit" depends on. This is
-    // NOT Law 4 chrome-scaling: the BOX is text-independent (px under zoom);
-    // only the question "can a word fit in it" answers to text size.
-    const label = document.createElement('div');
-    label.className = 'label';
-    label.innerHTML =
-      `<span class="l-full">${esc(bar.glyph)} ${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
-      `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
-      `<span class="l-glyph">${esc(bar.glyph)}</span>`;
-    el.appendChild(label);
-
-    attachTooltip(el, () => {
-      const extra = (tooltipExtra && tooltipExtra(bar)) || '';
-      // The tooltip is the floor of legibility for this bar: whatever the
-      // trough is too short to print, this always says. Including the maximum,
-      // which is the number a floored bar has stopped encoding.
-      return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
-    });
-    wrap.appendChild(el);
+  if ((surface || 'main') === 'main') {
+    // THE HYBRID LINES. Consecutive plan bars with the same truthy band share
+    // a line; everything else lines alone. Consecutive-only is deliberate:
+    // the plan is already in `order` order, and a band split across the stack
+    // would be a row author asking for two contradictory things at once —
+    // rendering it as two lines keeps the order authoritative.
+    for (const group of groupByBand(plan)) {
+      const line = document.createElement('div');
+      line.className = 'resline';
+      for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra));
+      wrap.appendChild(line);
+    }
+  } else {
+    for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
   }
   return wrap;
+}
+
+function groupByBand(plan) {
+  const groups = [];
+  for (const bar of plan) {
+    const prev = groups[groups.length - 1];
+    if (bar.band && prev && prev[0].band === bar.band) prev.push(bar);
+    else groups.push([bar]);
+  }
+  return groups;
+}
+
+/** The hybrid unit: [plate "HP 86/86"][track > pill trough]. */
+function hybridUnit(bar, tooltipExtra) {
+  const unit = document.createElement('div');
+  unit.className = 'resunit';
+  unit.dataset.res = bar.id;
+
+  // THE PLATE. The label lives BESIDE the trough now, not inside it — the
+  // owner pixels put "HP 86/86" on the unit's ground, left of the pill — so a
+  // short trough can no longer collide with its own words. The three variants
+  // still ride the DOM and degrade by measured fit, but the container is the
+  // UNIT (whose width flex sets), not the plate (whose width its own content
+  // sets — a container query there would be circular).
+  //
+  // THE PLATE IS RESERVED, AND THIS IS LOAD-BEARING, NOT POLISH. The trough's
+  // track is the unit minus the plate — so if the plate's width followed its
+  // own digits, crossing 99 -> 100 max HP would WIDEN the plate, NARROW the
+  // track, and the bar for the BIGGER pool would render SHORTER. Observed,
+  // not hypothesised: before this reserve, sweeping max 88 -> 120 through
+  // ?shotMaxHp shrank the health bar 92.91 -> 88.53 px (tools/hudbars.mjs A1,
+  // 2026-08-13). So the plate reserves the width of its own resource's DOMAIN
+  // ceiling — derived per bar from data, never typed — in `ch` with tabular
+  // numerals, so the reservation tracks the Text-size setting like the text
+  // it is. Each degradation variant reserves its own width (a full-name
+  // reservation applied while only the glyph shows would steal track for a
+  // label that is not there); the CSS applies each var in the same container
+  // window that shows its variant.
+  const digits = String(Math.trunc(Math.max(bar.max, bar.domain || bar.max, 1))).length;
+  const plate = document.createElement('div');
+  plate.className = 'resplate';
+  plate.style.setProperty('--plate-reserve-full', `${bar.name.length + 2 * digits + 2.5}ch`);
+  plate.style.setProperty('--plate-reserve-num', `${2 * digits + 4}ch`);
+  plate.innerHTML =
+    `<span class="l-full">${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-glyph">${esc(bar.glyph)}</span>`;
+  unit.appendChild(plate);
+
+  const track = document.createElement('div');
+  track.className = 'restrack';
+  track.appendChild(troughEl(bar));
+  unit.appendChild(track);
+
+  attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
+  return unit;
+}
+
+/** The under-model strip bar: trough with the label inside (unchanged shape). */
+function stripBar(bar, tooltipExtra) {
+  const el = troughEl(bar);
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.innerHTML =
+    `<span class="l-full">${esc(bar.glyph)} ${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-glyph">${esc(bar.glyph)}</span>`;
+  el.appendChild(label);
+  attachTooltip(el, () => tooltipHtml(bar, tooltipExtra));
+  return el;
+}
+
+/** The trough itself — the one element whose LENGTH is the data. */
+function troughEl(bar) {
+  const el = document.createElement('div');
+  el.className = `bar resbar resbar-${bar.weight}`;
+  el.dataset.res = bar.id;
+  // THE TROUGH LENGTH — the one line that is his whole instruction.
+  el.style.width = `${bar.lengthPct.toFixed(3)}%`;
+  el.style.setProperty('--res-tint', bar.tint);
+  // THE MACHINE-READABLE HOME, and it is not decoration. The label degrades
+  // to a glyph on a short unit, so `.textContent` is neither stable nor a fair
+  // reading of what the bar says. Instruments and assistive tech read these
+  // instead: tools/veil-owns-input.mjs and tools/hudbars.mjs both do.
+  el.dataset.cur = String(bar.cur);
+  el.dataset.max = String(bar.max);
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', `${bar.name} ${bar.cur} of ${bar.max}`);
+
+  // THE MINIMUM-WIDTH CLAUSE — `min-width: var(--resbar-min)` in CSS does the
+  // flooring; whether the floor FIRED is a rendered fact (it depends on the
+  // track, the zoom and the floor together), so it is stamped after layout by
+  // markFlooredBars() rather than guessed at here. A floored trough is drawn
+  // DASHED — the broken-axis mark — because two different maxima below the
+  // floor render the same length, and a bar that is no longer to scale must
+  // not look like one that is.
+  const fill = document.createElement('div');
+  fill.className = 'fill';
+  fill.style.width = `${bar.pct.toFixed(2)}%`;
+  el.appendChild(fill);
+  return el;
+}
+
+function tooltipHtml(bar, tooltipExtra) {
+  const extra = (tooltipExtra && tooltipExtra(bar)) || '';
+  // The tooltip is the floor of legibility for this bar: whatever the plate is
+  // too narrow to print, this always says. Including the maximum, which is the
+  // number a floored bar has stopped encoding.
+  return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
 }
 
 /**
@@ -35028,12 +36137,18 @@ function resourceBars(plan, { surface, tooltipExtra } = {}) {
  * Called after layout. A bar is floored when its rendered width is wider than
  * the width its own lengthPct asked for — which is precisely what `min-width`
  * winning looks like, and it needs no second copy of the floor's value.
+ *
+ * The track each percentage resolves against is the bar's own CONTAINING BLOCK
+ * (`.restrack` on the hybrid HUD, the strip on the model surface) — measured
+ * per bar rather than passed in, because since the hybrid two bars on one line
+ * no longer share a track and a single passed-in width would be wrong for one
+ * of them. The old second parameter is accepted and ignored.
  */
-function markFlooredBars(root, track) {
+function markFlooredBars(root) {
   const bars = root.querySelectorAll('.resbar');
-  const trackW = track ? track.getBoundingClientRect().width : 0;
   for (const el of bars) {
     const asked = parseFloat(el.style.width); // percent
+    const trackW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
     if (!Number.isFinite(asked) || !trackW) continue;
     const wanted = (asked / 100) * trackW;
     const got = el.getBoundingClientRect().width;
@@ -35207,6 +36322,7 @@ Object.assign(module.exports, { arcaneExposureReceipt, renderArcaneExposure });
 const { trackGesture } = require("src/ui/gesture.js");
 const { beatFor } = require("src/model/secondbeat.js");
 const { sfx } = require("src/ui/sfx.js");
+const { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
 
 /** How far a finger may wander before the hold is read as a drag. */
 const SLOP = 12;
@@ -35378,6 +36494,199 @@ function armHold(btn, { ms, onConfirm, id = null }) {
   // way a control whose own screen rewrites its innerHTML keeps its dressing.
   disarm.refresh = dress;
   return disarm;
+}
+
+// ---------------------------------------------------------------------------
+// THE INSPECT FORM — press-and-hold to READ, and it is deliberately not a beat.
+//
+// Constantine, 2026-08-08: hold a card and it "expands" and comes "in front".
+// This is the gesture half of that ask, built against the hand as it ships;
+// the LAYOUT half (overlap vs paging — C2) is held and lands on top of this
+// later without touching it.
+//
+// WHY IT LIVES IN THIS FILE AND IS NOT A ROW IN model/secondbeat.js. The table
+// rules on COMMITS — what a mis-press writes. An inspect writes nothing:
+// stakes `nothing`, and the table's own derivation already answers `none` for
+// that. So it takes no row, calls no `beatFor`, and no control marks itself
+// `data-beat` for it. What it SHARES with the hold form is the machinery —
+// SLOP, trackGesture's lifecycle, the fire-at-full shape — which is why it is
+// a neighbour and not a copy.
+//
+// WHY IT IS SILENT, and this is Vega's call to make and sign. Three reasons,
+// each sufficient:
+//   1. The hold-beat phrase (holdbeat.js) is authored to MEAN "an irreversible
+//      commit is approaching" — the accelerating train, the arrival note. An
+//      inspect commits nothing, so playing that phrase here would teach the
+//      arrival note a second meaning and the cue would start lying about
+//      system state on the controls where it matters.
+//   2. Frequency. Inspecting is reading; it will fire more than any hold in
+//      the game. The cost of a charming sound is paid at hold #200.
+//   3. Unlike End Turn, the confirmation is not occluded: the expanded card is
+//      most of the screen and nowhere near the thumb. The eye already has it.
+// So: no BEAT_CUES entry, no `data-hold` (holdbeat.js filters on that name and
+// stays silent), its own attributes. If a soft page-turn is ever wanted, it is
+// one `sfx.play` at ONE call site — `open()` below — and Sunna's read decides,
+// not this comment.
+//
+// WHAT IT PUBLISHES, because an instrument and a screenshot must read the
+// gesture without becoming its finger: `data-inspect` = idle | pending | open,
+// and `data-inspect-progress` while pending. A mid-hold check reads the
+// attribute; it never has to time a camera against a 400 ms window.
+//
+// DISAMBIGUATION AGAINST TAP AND DRAG — one shared boundary, one timer:
+//   move > SLOP px, any time  -> a DRAG (or the narrow hand's pan-x scroll).
+//                                The inspect abandons silently; whoever owns
+//                                drags proceeds. Same 12 px the drag itself
+//                                uses to start, so there is no gap band.
+//   still, release < ms       -> a TAP. The click passes through untouched.
+//   still, past ms            -> the INSPECT. Expands at full, front, under
+//                                the finger; RELEASE closes it and the click
+//                                that follows is swallowed exactly once —
+//                                a completed read must never become a play.
+//   once open, movement does NOTHING here, and the caller is expected to
+//   refuse to start a drag while `data-inspect="open"` (combat does): the
+//   alternative — collapse into a live drag — lets a 13 px reading drift end
+//   with a no-target card PLAYED on release over the field. A read must not
+//   be able to become a commit; lift and aim again.
+//
+// LAW 4 / RESTORE: the expanded copy is `pointer-events: none`, steals no
+// focus, covers no tap floor it can eat, and release removes it entirely —
+// the hand under it is byte-for-byte untouched. On cancel (browser claims the
+// gesture) the click swallow is NOT armed — no click follows a cancel, and a
+// stale swallow eats the next real tap (Vira's F3, learned once already).
+// ---------------------------------------------------------------------------
+
+/** One expanded card at a time — a property of the form, not of any screen. */
+let activeInspect = null;
+
+/**
+ * armInspect(el, { ms, onOpen }) -> disarm()
+ *
+ * `ms` <= 0 is the off position: no listeners' worth of behaviour changes —
+ * the tap and the drag are exactly the pre-inspect tree. `onOpen` runs at the
+ * moment the copy appears (combat passes hideTooltip so a mouse hold does not
+ * stack the hover tooltip under the expansion).
+ */
+function armInspect(el, { ms, onOpen = null } = {}) {
+  let raf = 0;
+  let phase = 'idle'; // idle | pending | open
+  let ghost = null;
+  let swallowClick = false;
+
+  const setState = (s) => {
+    phase = s;
+    el.dataset.inspect = s;
+    if (s !== 'pending') delete el.dataset.inspectProgress;
+  };
+
+  function buildGhost() {
+    // All values in LOCAL px, converted once — the dragGhost's #15 lesson:
+    // clientX is visual px and style.left is local px, and writing one into
+    // the other runs away from the finger at every zoom but 1.00.
+    const view = viewportLocalBox();
+    const r = anchorLocalBox(VIEWPORT_ORIGIN, el);
+    // Big enough to read, never past the screen: capped by width, by the top
+    // ~60% of the height (so it clears the hand it came from), and at 2.6x.
+    const k = Math.min((view.width * 0.78) / r.width, (view.height * 0.6) / r.height, 2.6);
+    const g = el.cloneNode(true);
+    g.classList.add('card-inspect');
+    g.classList.remove('selected');
+    g.removeAttribute('data-inspect');
+    g.removeAttribute('data-inspect-progress');
+    // The positional quick-play badge is a fact about a SLOT in the hand; a
+    // copy floating mid-screen has no slot and the badge would lie.
+    const hint = g.querySelector('.key-hint');
+    if (hint) hint.remove();
+    // Explicit width/height from the measured box: the clone leaves the
+    // `.hand`-scoped sizing rules behind when it moves to <body>, and WYSIWYG
+    // beats whatever the base class thinks a card is.
+    g.style.cssText = 'position:fixed;z-index:630;pointer-events:none;margin:0;'
+      + `left:${(view.width - r.width * k) / 2}px;top:${(view.height - r.height * k) / 2}px;`
+      + `width:${r.width}px;height:${r.height}px;transform:scale(${k});transform-origin:top left;`;
+    document.body.appendChild(g);
+    return g;
+  }
+
+  function close() {
+    if (ghost) { ghost.remove(); ghost = null; }
+    if (activeInspect === close) activeInspect = null;
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    setState('idle');
+  }
+
+  function open() {
+    if (activeInspect) activeInspect();
+    activeInspect = close;
+    setState('open');
+    ghost = buildGhost();
+    if (onOpen) onOpen();
+    // Deliberately no sound. See the header — the reasons are numbered.
+  }
+
+  function begin(ev) {
+    swallowClick = false;
+    if (!(ms > 0)) return;
+    if (ev.button !== 0 || phase !== 'idle') return;
+    setState('pending');
+    const t0 = performance.now();
+    const x0 = ev.clientX;
+    const y0 = ev.clientY;
+
+    const tick = (now) => {
+      // A screen that re-renders its hand mid-gesture (combat rewrites
+      // .hand's innerHTML on every state change) detaches this element and
+      // its listeners with it — pointerup can never arrive, so the watch
+      // closes the copy rather than stranding it on <body> forever.
+      if (!el.isConnected) { close(); return; }
+      if (phase === 'pending') {
+        const p = Math.min(1, (now - t0) / ms);
+        el.dataset.inspectProgress = p.toFixed(3);
+        if (p >= 1) { open(); }
+      }
+      if (phase !== 'idle') raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    trackGesture(ev, {
+      onMove: (mv) => {
+        // Past the shared boundary this press is a drag (or the narrow
+        // hand's scroll) — theirs, silently. Once open, movement is the
+        // finger drifting while reading and changes nothing here.
+        if (phase === 'pending' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();
+      },
+      onEnd: (up, { cancelled }) => {
+        // Swallow only what a completed read's LIFT produces. A cancel is
+        // followed by no click, and arming the swallow there eats the next
+        // real tap instead (F3's shape).
+        if (phase === 'open' && !cancelled) swallowClick = true;
+        close();
+      },
+    });
+  }
+
+  // Registered BEFORE the screen's own click wiring (the caller's job, and
+  // combat's renderHand does) so a read's lift dies here and never selects or
+  // plays. `detail === 0` is keyboard / pad — not a press, never an inspect.
+  const onClick = (ev) => {
+    if (ev.detail === 0) return;
+    if (!swallowClick) return;
+    swallowClick = false;
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+  };
+
+  // Marked at rest, so an instrument can enumerate what is inspectable and a
+  // screenshot of the idle hand carries its state — same reason armHold
+  // dresses its button. With the row at 0 nothing is marked and nothing runs.
+  if (ms > 0) setState('idle');
+  el.addEventListener('pointerdown', begin);
+  el.addEventListener('click', onClick);
+  return function disarm() {
+    close();
+    el.removeEventListener('pointerdown', begin);
+    el.removeEventListener('click', onClick);
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -35562,7 +36871,7 @@ function beatArmer(meta, registries) {
 }
 
 
-Object.assign(module.exports, { beatCue, armHold, armConfirm, holdMs, beatArmer });
+Object.assign(module.exports, { beatCue, armHold, armInspect, armConfirm, holdMs, beatArmer });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {
@@ -35580,6 +36889,7 @@ const { sfx } = require("src/ui/sfx.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
 const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
+const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 
 function mountRewards(app, { registries, run, rewards, onDone }) {
   const lines = [];
@@ -35589,6 +36899,7 @@ function mountRewards(app, { registries, run, rewards, onDone }) {
   }
   if (rewards.relicId) {
     run.relics.push(rewards.relicId);
+    syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
     const def = registries.relics.get(rewards.relicId);
     lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def))}`);
   }
@@ -35815,6 +37126,7 @@ const { relicText } = require("src/ui/components/card.js");
 const { sfx } = require("src/ui/sfx.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
 
@@ -35886,6 +37198,7 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def), item.cost, run.cinders >= item.cost, () => {
         run.cinders -= item.cost;
         run.relics.push(item.id);
+        syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
         stock.relics.splice(i, 1);
         sfx.play('buy');
         onChanged();
@@ -36841,6 +38154,14 @@ const ROWS = [
   { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
     choices: MAP_MODES, label: 'Map reveal',
     note: `FOG is the climb as it is meant to be read: only the door you started from, the boss, everywhere you have been, and the places you can step to next are drawn — the rest is unlit parchment. ${FOG_TRAIL_CLAUSE} PATH draws the whole act at once, the way the map looked before the fog. Switching redraws the map straight away, so you can hold the two against the same seed.` },
+  // How strongly the nodes already walked fade behind you — his clause, with
+  // his number as the default and the customization he asked for as the row
+  // (D17 message 4: "previous nodes shoudl be faded, maybe 50% saturation or
+  // higher (settings for customization)"). The ladder itself is CSS
+  // (styles/map.css, keyed on data-walked-fade); this row only picks the rung.
+  { cat: 'Display', key: 'walkedFade', type: 'choice', def: 'half',
+    choices: ['off', 'subtle', 'half', 'strong'], label: 'Walked nodes',
+    note: 'How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.' },
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
