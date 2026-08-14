@@ -26,6 +26,12 @@ export const derivedStatRules = {
     hp: {
       base: { strategy: 'classField', field: 'maxHp' },
       sourceStat: 'vigour',
+      // "vigour shoudl be 1 hp point per" — Constantine, D17 (verbatim,
+      // commons/decisions/directions.md): HP pays per POINT, so this row
+      // overrides the 5-point tier default. Every other row keeps the tier —
+      // strength's "+1 damange per every 5 points" is per-5 by the same
+      // sentence, and the mock's "1 per 5 points" lines he left standing.
+      pointsPerTier: 1,
       gainPerTier: 1,
     },
     stamina: {

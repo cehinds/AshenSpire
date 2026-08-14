@@ -128,12 +128,13 @@ function vector(attributes) {
 const expectedBase = {
   swordAttack: 7, daggerAttack: 5, bowAttack: 6, weaponGuard: 4,
   sceptreAttack: 6, staffAttack: 4,
-  hp: 86, stamina: 2, mana: 2, energy: 3, draw: 5,
+  hp: 94, stamina: 2, mana: 2, energy: 3, draw: 5,
 };
 const expectedChanges = {
   strength: { swordAttack: 8 },
   dexterity: { daggerAttack: 6, bowAttack: 7, weaponGuard: 5, energy: 4 },
-  vigour: { hp: 87, stamina: 3 },
+  // hp pays per POINT (D17: "1 hp point per") — 84 + 15; stamina still tiers.
+  vigour: { hp: 99, stamina: 3 },
   wisdom: { sceptreAttack: 7, mana: 3 },
   intelligence: { staffAttack: 5, draw: 6 },
 };
@@ -150,8 +151,8 @@ const con15Run = createRunState({
   seed: 0x4851, classId: 'reaver', registries: R,
   attributes: { strength: 10, dexterity: 10, vigour: 15, wisdom: 10, intelligence: 10 },
 });
-check(standardRun.maxHp === 86 && con15Run.maxHp === 87 && con15Run.maxStamina === 3,
-  'actual Wayfarer runs consume the CON HP/Stamina receipt', `${standardRun.maxHp}/${con15Run.maxHp}/${con15Run.maxStamina}`);
+check(standardRun.maxHp === 96 && con15Run.maxHp === 99 && con15Run.maxStamina === 3,
+  'actual Wayfarer runs consume the VIG HP/Stamina receipt (HP per point, D17)', `${standardRun.maxHp}/${con15Run.maxHp}/${con15Run.maxStamina}`);
 
 function executionReceipt(pieceId, expectedPerHit, expectedHits) {
   if (!piece(pieceId)) return { missing: true };

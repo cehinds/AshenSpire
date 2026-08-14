@@ -72,8 +72,8 @@ check('shipping content and registries expose one derived-rules object', () => {
 check('a standard Reaver run owns the versioned snapshot and all approved derived outputs', () => {
   const run = fresh();
   equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 2, 'ruleset version');
-  equal(run.maxHp, 86, 'CON-derived max HP');
-  equal(run.hp, 86, 'new run HP starts full');
+  equal(run.maxHp, 96, 'VIG-derived max HP: 84 + 12 points (D17, per point)');
+  equal(run.hp, 96, 'new run HP starts full');
   equal(run.maxMana, 2, 'WIS-derived max Mana has no class base');
   equal(run.mana, 2, 'new run Mana starts full');
   equal(run.maxStamina, 2, 'CON-derived max Stamina');
@@ -111,8 +111,8 @@ check('pre-derived save migrates real pools and preserves full/deficit truth', (
   old.mana = 20; // a half-full legacy pool remains half-full in small units.
   saves.saveRun(old);
   const run = saves.loadRun(REG);
-  equal(run.maxHp, 86, 'migrated max HP');
-  equal(run.hp, 76, 'HP deficit preserved');
+  equal(run.maxHp, 96, 'migrated max HP (84 base + VIG 12 per point)');
+  equal(run.hp, 86, 'HP deficit of 10 preserved across the migration');
   equal(run.maxMana, 2, 'migrated max Mana');
   equal(run.mana, 1, 'legacy Mana proportion preserved');
   equal(run.maxStamina, 2, 'Stamina created from real attributes');
