@@ -30,6 +30,7 @@
 //   node tools/handlayout.mjs                      source tree via serve.mjs
 //   node tools/handlayout.mjs --root DIR           another tree (the known-bad run)
 //   node tools/handlayout.mjs --shots DIR          also write one 390x844 png per cell
+//   node tools/handlayout.mjs --selftest           the RE-RUNNABLE known-bad (below)
 // Exit: 0 all green · 1 a finding · 2 usage / no browser / NOTHING RAN
 //
 // OBSERVED RED (the instrument rule), same door as the real input — the mode
@@ -42,6 +43,40 @@
 //                               re-run with --root against any tree.
 //   this tree                   exit 0, all cells.
 //
+// ...AND THAT RED WAS REF-PINNED, WHICH IS WHY --selftest EXISTS (Vira's doors
+// audit, 2026-08-14: "SAME-DOOR when run; the known-bad tree is ref-pinned").
+// The observation above needs a 71e3edd checkout to exist; under SOP 2's drift
+// clause a red that cannot be re-run is `unknown (drifted)`, not coverage. So
+// the corpus is now BUILT, not remembered:
+//
+//   --selftest copies this tree to a scratch dir, edits ONE REAL SOURCE LINE
+//   in the copy, and re-runs THIS WHOLE TOOL at --root COPY. Every stage a
+//   real regression travels — serve over http, index.html -> src/main.js ->
+//   settings resolution -> combat.js's renderHand + applyHandLayout -> the
+//   rendered DOM this tool measures — runs on the planted tree. Nothing is
+//   handed to a function; the plant is a source edit, because a source edit is
+//   how this defect class actually arrives.
+//
+//   P1 derivation cut   src/main.js stops writing <html data-hand-layout>.
+//                       Expect: check 1 red in EVERY cell, by name.
+//   P2 overlap cut      src/ui/screens/combat.js's applyHandLayout stops
+//                       writing the negative margin — the flattened fan is no
+//                       longer pulled inside the strip's width.
+//                       Expect: Law 5 travel red in the OVERLAP cells while
+//                       the paging cells stay green — the mode-inertness claim
+//                       and the overlap claim are separable, and this proves
+//                       the tool can tell them apart.
+//   C  clean control    the untouched copy must go GREEN, or the plants proved
+//                       nothing but that copying a tree breaks it.
+//
+//   Each edit is an exact-match replacement that REFUSES at exit 2 if it does
+//   not match exactly once (overlapreader's discipline): a mutation that
+//   silently matched nothing runs the control three times and calls it a
+//   corpus. THE PLANT SITES ARE THE COLLAPSE'S OWN LINES — when the two hand
+//   renderers become one (src/ui/handAxis.js's standing debt), these two
+//   strings are the first thing that stops matching, and the exit-2 refusal is
+//   this tool asking to be re-aimed rather than quietly measuring nothing.
+//
 // BOUNDARY. One shape (390x844) — the word only arranges the NARROW hand; the
 // wide fan is one composition in both modes and inspecthold covers it at
 // 1200x730. Headless Chromium hit-testing; no real finger. Sliver hittability
@@ -51,7 +86,7 @@
 // browser-level layout harness supersedes CDP measurement.
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
@@ -101,8 +136,113 @@ function launchChrome(browser, dir) {
   });
 }
 
+// ---- the re-runnable known-bad ---------------------------------------------
+// Exact source strings, as the tree spells them today. Each must match exactly
+// once in the copy or the whole selftest refuses at exit 2 — a plant that
+// matched nothing would run the clean control three times and call it a corpus
+// (SOP 2's wrong-place-empty: an empty match means the OPPOSITE of clean).
+const PLANTS = [
+  {
+    name: 'P1 derivation cut',
+    file: 'src/main.js',
+    from: '  document.documentElement.dataset.handLayout = handLayout;',
+    to: '  /* handlayout --selftest P1: derivation cut */',
+    what: "main.js's write of <html data-hand-layout>",
+    expect: 'check 1 (word) red in every cell',
+    mustRed: (out) => /FAIL word:/.test(out),
+    mustStay: (out) => /PASS pose:/.test(out), // the pose door is untouched
+  },
+  {
+    name: 'P2 overlap cut',
+    file: 'src/ui/screens/combat.js',
+    from: "    els.forEach((el, i) => { el.style.marginLeft = i && o ? `${-o}px` : ''; });",
+    to: '    /* handlayout --selftest P2: overlap arithmetic cut */',
+    what: "applyHandLayout's negative-margin write (the overlap arm's whole arithmetic)",
+    expect: 'Law 5 travel red in the OVERLAP cells, paging cells still green',
+    mustRed: (out) => /FAIL Law 5: hand horizontal scroll travel [1-9]/.test(out),
+    mustStay: (out) => /PASS word: <html data-hand-layout> derived 'paging'/.test(out),
+  },
+];
+
+function sandbox() {
+  const dir = mkdtempSync(join(tmpdir(), 'handlayout-kb-'));
+  for (const d of ['src', 'styles', 'assets']) {
+    if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
+  }
+  cpSync(resolve(ROOT, 'index.html'), resolve(dir, 'index.html'));
+  return dir;
+}
+
+function plantInto(dir, p) {
+  const path = resolve(dir, p.file);
+  const src = readFileSync(path, 'utf8');
+  const first = src.indexOf(p.from);
+  if (first < 0 || src.indexOf(p.from, first + 1) >= 0) {
+    console.error(`handlayout --selftest: ${p.name} found ${first < 0 ? 'NO' : 'MORE THAN ONE'} home in ${p.file}`);
+    console.error('  The line moved — most likely the hand renderers were collapsed into one');
+    console.error('  (src/ui/handAxis.js names that as standing debt). RE-AIM THIS PLANT at the');
+    console.error('  surviving line; do not delete it. A corpus that silently stops matching is');
+    console.error('  the eleven-instruments shape, and refusing loudly here is the whole point.');
+    process.exit(2);
+  }
+  writeFileSync(path, src.slice(0, first) + p.to + src.slice(first + p.from.length), 'utf8');
+}
+
+// Re-run THIS tool against a tree, in a child process, and hand back its output.
+function runSelfAt(root) {
+  return new Promise((res) => {
+    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--root', root],
+      { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...(browserPath ? { CHROME: browserPath } : {}) } });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; });
+    child.stderr.on('data', (d) => { out += d; });
+    child.on('exit', (code) => res({ code, out }));
+  });
+}
+
+async function selftest() {
+  console.log('handlayout --selftest — the re-runnable known-bad');
+  console.log('  DOOR: every known-bad below is a SOURCE EDIT to a disposable copy of this tree');
+  console.log(`  (root ${ROOT}), and is judged by re-running this whole tool at --root COPY: served`);
+  console.log('  over http, index.html -> src/main.js -> settings resolution -> combat.js renderHand');
+  console.log('  + applyHandLayout -> the rendered DOM, every stage a real regression travels.');
+  console.log('  Nothing is handed to a function; a source edit is how this defect class arrives.\n');
+
+  let fails = 0;
+  const ok = (b, what) => { if (b) console.log(`  PASS ${what}`); else { fails++; console.log(`  FAIL ${what}`); } };
+
+  // The clean control FIRST: if a copied tree cannot go green, no red below
+  // means anything — it would only prove that copying breaks the app.
+  const cleanDir = sandbox();
+  console.log('  control: untouched copy of this tree (no plant)');
+  const clean = await runSelfAt(cleanDir);
+  ok(clean.code === 0, `control: the copied tree is GREEN (exit ${clean.code}) — the plants below are the only difference`);
+  try { rmSync(cleanDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
+
+  for (const p of PLANTS) {
+    console.log(`\n  ${p.name}: ${p.what}`);
+    console.log(`    plant: ${p.file} — expect ${p.expect}`);
+    const dir = sandbox();
+    plantInto(dir, p);
+    const r = await runSelfAt(dir);
+    ok(r.code === 1, `${p.name}: the planted tree goes RED (exit ${r.code}, want 1)`);
+    ok(p.mustRed(r.out), `${p.name}: red BY NAME — ${p.expect}`);
+    ok(p.mustStay(r.out), `${p.name}: and the untouched claims stay green (the plant is narrow, not a smoking crater)`);
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
+  }
+
+  console.log(fails
+    ? `\nhandlayout --selftest: ${fails} FAIL — this instrument's red is NOT re-observed; treat its greens as unknown`
+    : '\nhandlayout --selftest: held — clean copy green, both plants red by name, through the whole-app door');
+  console.log('  BOUNDARY of this selftest: it proves the tool can SEE these two defects arriving by');
+  console.log('  the real door. It does not prove the tool sees every hand-layout defect, and the');
+  console.log('  sliver-hittability and pose checks carry no plant of their own here.');
+  process.exit(fails ? 1 : 0);
+}
+
 async function main() {
   if (!browserPath) { console.error('handlayout: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
+  if (args.includes('--selftest')) return selftest();
   const profile = mkdtempSync(join(tmpdir(), 'handlayout-'));
   const s = await serve({ root: ROOT, port: 8281, open: false });
   const base = `http://localhost:${s.port}/`;
