@@ -33,7 +33,21 @@ try {
   console.warn('  (no filesystem — test 49 will skip)');
 }
 
-const { passed, failed, results } = await runTests({ artManifest, assetExists });
+// The three-day-window save fixture (test 50c): real bytes saveRun wrote at
+// dev = acb8ffe, when the HP attribute was still spelled 'constitution'.
+// Handed in like the manifest above so the browser harness stays fs-free.
+let legacyRunSave = null;
+try {
+  const { readFileSync } = await import('node:fs');
+  const { resolve, dirname } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  legacyRunSave = readFileSync(resolve(root, 'tests/fixtures/run-save-constitution-acb8ffe.json'), 'utf8');
+} catch {
+  console.warn('  (no legacy run-save fixture — test 50c will skip)');
+}
+
+const { passed, failed, results } = await runTests({ artManifest, assetExists, legacyRunSave });
 for (const r of results) {
   const tag = r.skipped ? 'SKIP' : r.ok ? 'PASS' : 'FAIL';
   console.log(`${tag}  ${r.name}${r.detail ? ` — ${r.detail}` : ''}`);

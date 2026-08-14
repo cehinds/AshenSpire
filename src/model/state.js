@@ -10,7 +10,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt } from './loadout.js';
-import { chargeKindForFlask, createFlaskCharges } from './gracerefill.js';
+import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
 import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 import {
@@ -21,7 +21,11 @@ import {
 import { resolveStartingKit, startingKitSnapshot } from './startingKits.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
 
-export const RUN_SCHEMA_VERSION = 2;
+// v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
+// granted — and capacity must derive from the three (validateRunShape). v2
+// saves lack the ledger and are attributed once at the load door
+// (initializeRunFlaskCharges); v1 additionally predates starting kits.
+export const RUN_SCHEMA_VERSION = 3;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -277,8 +281,10 @@ function typeOk(value, type) {
   return typeof value === type; // 'string' | 'number'
 }
 
-/** validateRunShape(run) → [] when sound, else a list of human-readable problems. */
-export function validateRunShape(run, { legacy = false } = {}) {
+/** validateRunShape(run) → [] when sound, else a list of human-readable problems.
+ *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
+ *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
+export function validateRunShape(run, { legacy = false, preLedger = legacy } = {}) {
   const problems = [];
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
@@ -342,12 +348,39 @@ export function validateRunShape(run, { legacy = false } = {}) {
       problems.push('flaskCharges must satisfy hp + mana = capacity with bounded current counts');
     }
     // `grown` — what the growth chain currently contributes (model/flaskgrowth.js).
-    // Optional: pre-chain saves lack it and syncFlaskGrowth treats absent as zero.
-    if (f && f.grown !== undefined
-      && !(f.grown && typeof f.grown === 'object'
-        && Number.isInteger(f.grown.hp) && f.grown.hp >= 0
-        && Number.isInteger(f.grown.mana) && f.grown.mana >= 0)) {
+    // Optional on pre-ledger saves only; syncFlaskGrowth treats absent as zero.
+    const grownSound = f && f.grown && typeof f.grown === 'object'
+      && Number.isInteger(f.grown.hp) && f.grown.hp >= 0
+      && Number.isInteger(f.grown.mana) && f.grown.mana >= 0;
+    if (f && f.grown !== undefined && !grownSound) {
       problems.push('flaskCharges.grown must be { hp, mana } non-negative integers when present');
+    }
+    // THE CAPACITY LEDGER — capacity is one stored number fed by two doors
+    // (model/flaskgrowth.js, THE DOORS), and this is the check that it stays
+    // accountable: base (born, createFlaskCharges) + grown (possession door)
+    // + granted (moment door) must equal what is stored. A capacity no ledger
+    // can explain is refused BY NAME — that red is the machine form of the
+    // two-doors warning that used to live only in prose (SPEC §5.5.2): a
+    // "cleanup" that re-derives capacity from the chain alone now fails the
+    // first save it touches instead of silently deleting every keepsake charge.
+    // Pre-ledger saves (v1/v2) carry no base/granted; they are admitted only
+    // through the migration door (preLedger), where initializeRunFlaskCharges
+    // attributes them once, by the stated rule, before the run is ever re-saved.
+    if (f && f.base === undefined && f.granted === undefined) {
+      if (!preLedger) problems.push('flaskCharges is missing its capacity ledger (base, granted) — required at this schema version');
+    } else if (f) {
+      const baseSound = Number.isInteger(f.base) && f.base > 0;
+      const grantedSound = Number.isInteger(f.granted) && f.granted >= 0;
+      if (!baseSound) problems.push('flaskCharges.base must be a positive integer');
+      if (!grantedSound) problems.push('flaskCharges.granted must be a non-negative integer');
+      if (!grownSound) {
+        problems.push('flaskCharges.grown must be present beside the capacity ledger');
+      } else if (baseSound && grantedSound && Number.isInteger(f.capacity)
+        && f.capacity !== f.base + f.grown.hp + f.grown.mana + f.granted) {
+        problems.push(`flaskCharges.capacity ${f.capacity} is not accounted for by its parts — `
+          + `base ${f.base} + grown ${f.grown.hp + f.grown.mana} + granted ${f.granted} `
+          + `= ${f.base + f.grown.hp + f.grown.mana + f.granted}`);
+      }
     }
   }
   if (run.energyMax !== undefined && (!Number.isInteger(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be a non-negative integer');
@@ -368,6 +401,36 @@ export function initializeRunFlaskCharges(run, registries) {
     run.flaskCharges.manaCurrent = Math.min(run.flaskCharges.mana, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'mana').length);
     run.flasks = (run.flasks || []).filter((f) => f && chargeKindForFlask(registries, f.flaskId) == null);
   }
+  // ═══ THE ONE-TIME ATTRIBUTION — pre-ledger saves (v1/v2), stated, not
+  // silent. A v2 save stores capacity with no ledger: chain growth always
+  // wrote `grown`, but the moment door (op addFlaskCapacity — keepsakes,
+  // event effects) recorded nothing. The rule, in full:
+  //   base    = the current authored balance.flaskCapacity, clamped to
+  //             capacity − grownTotal — the best witness available for what
+  //             the vessel was born holding, never allowed to invent charges.
+  //   granted = capacity − grownTotal − base — every charge that base and the
+  //             chain's own ledger cannot account for is attributed to the
+  //             moment door, because the moment door was the untracked one.
+  // Honest defaults of the clamp: a balance retuned UP since the save yields
+  // base = capacity − grownTotal and granted 0 (the save keeps its capacity,
+  // nothing is invented); a keepsake surplus lands in granted, which is where
+  // it came from. Runs once per save, before the run can be re-serialized;
+  // from then on validateRunShape enforces capacity === base + grown + granted.
+  {
+    const f = run.flaskCharges;
+    if (f.base === undefined && f.granted === undefined) {
+      const grownTotal = f.grown && Number.isInteger(f.grown.hp) && Number.isInteger(f.grown.mana)
+        ? f.grown.hp + f.grown.mana
+        : 0;
+      if (grownTotal >= f.capacity) {
+        // The chain's own ledger cannot fit under the stored capacity — that is
+        // corruption of exactly the class this ledger polices, not a migration.
+        throw new Error(`flaskCharges.grown total ${grownTotal} meets or exceeds capacity ${f.capacity} — pre-ledger save is unaccountable`);
+      }
+      f.base = Math.min(flaskCapacity(registries.balance), f.capacity - grownTotal);
+      f.granted = f.capacity - grownTotal - f.base;
+    }
+  }
   // Loaded runs re-derive the chain here — the load door. A save carrying a
   // relic whose growth row was authored after it was written grows on load;
   // a save whose growth source no longer exists shrinks back, currents bounded.
@@ -384,14 +447,15 @@ export function deserializeRun(json) {
   const run = JSON.parse(json);
   if (!run || typeof run !== 'object') throw new Error('Corrupt run save');
   const legacy = run.schemaVersion === 1;
-  if (!legacy && run.schemaVersion !== RUN_SCHEMA_VERSION) {
+  const preLedger = legacy || run.schemaVersion === 2; // v2: no flaskCharges capacity ledger yet
+  if (!preLedger && run.schemaVersion !== RUN_SCHEMA_VERSION) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (expected ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy });
+  const problems = validateRunShape(run, { legacy, preLedger });
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
-  if (legacy) {
+  if (preLedger) {
+    run.migratedFromRunSchemaVersion = run.schemaVersion;
     run.schemaVersion = RUN_SCHEMA_VERSION;
-    run.migratedFromRunSchemaVersion = 1;
   }
   return run;
 }

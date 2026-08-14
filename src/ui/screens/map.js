@@ -156,7 +156,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     const el = document.createElement('div');
     el.className = 'relic';
     el.textContent = def.icon || '◆';
-    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def))}`);
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
     strip.appendChild(el);
   }
 

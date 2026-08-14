@@ -79,7 +79,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     const items = app.querySelector('#shop-items');
     stock.relics.forEach((item, i) => {
       const def = registries.relics.get(item.id);
-      items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def), item.cost, run.cinders >= item.cost, () => {
+      items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def, registries), item.cost, run.cinders >= item.cost, () => {
         run.cinders -= item.cost;
         run.relics.push(item.id);
         syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held

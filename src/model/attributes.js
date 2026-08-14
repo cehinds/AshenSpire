@@ -44,6 +44,11 @@ export function allocationTotal(source, modeId = defaultCreationModeId(source)) 
   return mode.baseline * orderedAttributes(source).length + mode.bonusPool;
 }
 
+function retiredNames(t) {
+  const map = plainObject(t.attributeRules) ? t.attributeRules.retired : undefined;
+  return plainObject(map) ? map : {};
+}
+
 function allocationProblems(t, classId, modeId, values, path) {
   const problems = [];
   const attrs = t.attributes.slice().sort((a, b) => a.order - b.order);
@@ -55,8 +60,14 @@ function allocationProblems(t, classId, modeId, values, path) {
     return problems;
   }
   const ids = attrs.map((a) => a && a.id).filter((id) => typeof id === 'string');
+  const retired = retiredNames(t);
   for (const id of ids) if (!Object.hasOwn(values, id)) problems.push({ path: `${path}.${id}`, msg: 'missing attribute cell' });
-  for (const id of Object.keys(values)) if (!ids.includes(id)) problems.push({ path: `${path}.${id}`, msg: `unknown attribute id '${id}'` });
+  for (const id of Object.keys(values)) {
+    if (ids.includes(id)) continue;
+    problems.push({ path: `${path}.${id}`, msg: Object.hasOwn(retired, id)
+      ? `'${id}' is a retired attribute id (its heir is '${retired[id]}')`
+      : `unknown attribute id '${id}'` });
+  }
   if (!mode) return problems;
   let total = 0;
   let allIntegers = true;
@@ -92,10 +103,46 @@ export function classAttributePreset(source, classId, modeId = defaultCreationMo
   return Object.fromEntries(orderedAttributes(source).map((def) => [def.id, values[def.id]]));
 }
 
+/**
+ * migrateRetiredAttributeNames(run, source) — heal a persisted run written
+ * under a since-retired attribute id, IN PLACE, before validation rules on it.
+ *
+ * The one legitimate carrier is a save from before the rename ('constitution'
+ * held the HP seat 2026-08-11 → 2026-08-14, d465cfc). Such a save spells the
+ * dead name in exactly two persisted homes, and this walks both:
+ *   · run.attributes — the allocation keys;
+ *   · run.derivedStatRuleSnapshot.rules.rules[*].sourceStat — the snapshot
+ *     restoreDerivedStatRuleSnapshot would otherwise refuse.
+ *
+ * DELIBERATE: a run carrying BOTH the dead name and its heir in one
+ * allocation is NOT migrated — it falls through to validation and is refused
+ * by name (Law 0 clause 5: a wrong-but-reasonable guess is invisible; this
+ * save has two claims on one seat and no honest way to pick).
+ */
+export function migrateRetiredAttributeNames(run, source) {
+  const retired = retiredNames(tables(source));
+  for (const [dead, heir] of Object.entries(retired)) {
+    if (plainObject(run.attributes) && Object.hasOwn(run.attributes, dead) && !Object.hasOwn(run.attributes, heir)) {
+      run.attributes[heir] = run.attributes[dead];
+      delete run.attributes[dead];
+    }
+    const snapshot = run.derivedStatRuleSnapshot;
+    const rules = snapshot && plainObject(snapshot.rules) && plainObject(snapshot.rules.rules)
+      ? snapshot.rules.rules : null;
+    if (rules) {
+      for (const rule of Object.values(rules)) {
+        if (plainObject(rule) && rule.sourceStat === dead) rule.sourceStat = heir;
+      }
+    }
+  }
+  return run;
+}
+
 export function normalizeRunAttributes(run, registries) {
   const modeAbsent = run.attributeMode === undefined;
   const valuesAbsent = run.attributes === undefined;
   if (modeAbsent !== valuesAbsent) throw new Error('attributeMode and attributes must both be present or both be absent');
+  migrateRetiredAttributeNames(run, registries);
   if (modeAbsent) {
     run.attributeMode = defaultCreationModeId(registries);
     run.attributes = classAttributePreset(registries, run.class, run.attributeMode);
@@ -127,6 +174,14 @@ export function attributeContentProblems(source) {
     if (Number.isInteger(mode.bonusPool) && mode.bonusPool < 0) out.push({ path: `${path}.bonusPool`, msg: 'must be >= 0' });
   }
   if (!plainObject(t.attributeRules)) return [...out, { path: 'attributeRules', msg: 'must be a plain object' }];
+  // Retired vocabulary (content/retiredNames.js): a dead name may never
+  // return as an attribute id — the refusal names it — and its heir must be
+  // a live one, or the load-door healing would migrate saves onto a ghost.
+  const liveIds = t.attributes.map((a) => a && a.id).filter((id) => typeof id === 'string');
+  for (const [dead, heir] of Object.entries(retiredNames(t))) {
+    if (liveIds.includes(dead)) out.push({ path: `attributes.${dead}`, msg: `'${dead}' is a retired attribute id (heir '${heir}') and may not return as a row` });
+    if (!liveIds.includes(heir)) out.push({ path: `attributeRules.retired.${dead}`, msg: `heir '${heir}' is not a live attribute id` });
+  }
   const modeIds = t.creationModes.map((m) => m && m.id).filter((id) => typeof id === 'string');
   const classIds = t.classes.map((c) => c && c.id).filter((id) => typeof id === 'string');
   const presets = plainObject(t.attributeRules.presets) ? t.attributeRules.presets : {};

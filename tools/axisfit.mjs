@@ -93,11 +93,14 @@
 //       went blind. Both need a person. An excuse nobody can be forced to
 //       revisit is how a suite goes green over a bug.
 //
-// THE ACT MAP SHIPS WITH ONE SCOPED DECLARATION because its horizontal route is
-// the content. Other scrollers remain undecided by design; `.hand`, for example,
-// receives no exemption from this instrument. A reviewer can read the map's
-// reason on the element, and A4 forces its owner to remove the declaration when
-// horizontal travel dies.
+// ZERO EXEMPTIONS SHIP. The act map carried the one scoped declaration ("the
+// act map is a horizontal route", 1c227ec) and it is DELETED, not moved: D17
+// message 4 falsified its reason in Constantine's own words ("not require any
+// scrollign left or right"), and the camera now owns the horizontal axis
+// through the viewBox (mapboard.js), so the map's travel is 0 by construction
+// and A4 would correctly fail the declaration if it ever came back without
+// travel under it. Other scrollers remain undecided by design; `.hand`, for
+// example, receives no exemption from this instrument.
 //
 // ---------------------------------------------------------------------------
 // THE FLOORS, AND THE ONE THAT WAS MISSING — Vira, 2026-08-08, checking gate.
@@ -724,10 +727,12 @@ async function main() {
       not a fixture's — but they are the numbers at the ENTRANCE with a starting
       deck. A late-run hand, a full relic shelf or a deeper act is more content
       in the same box and this sweeps none of them. The map is exempt from that
-      worry and it was checked, not assumed: .map-scroll remains a horizontal
-      run across the 13-seed check because its width is the act's column count,
-      not node placement. Travel varies with framing and is printed above.
-      (Vira, 2026-08-08 — a boundary cleared, not a defect.)`);
+      worry BY CONSTRUCTION now, and it was measured, not assumed: its
+      horizontal extent is the viewport itself (mapboard.js viewBox camera), so
+      no seed, walk depth or column count can widen it — 0px on 72 cells
+      (12 seeds x entrance/walk3/walk6 x 390x844 + 320x640) at the change that
+      landed it. (Rune, 2026-08-14, replacing Vira's 2026-08-08 boundary note,
+      which described the ink-grow camera this change removed.)`);
 
   if (notes.length) {
     console.log(`\n  EXEMPT — ${notes.length} container(s) declared themselves a horizontal run under Law 5 clause 2.`);
@@ -765,15 +770,35 @@ async function selftest(evalIn, cdp, S, base, settingsQ) {
     if (!good) fails.push(`selftest: ${label} gave ${got}, expected ${want}`);
   };
 
+  // THE TRAVEL IS PLANTED NOW, NOT INHERITED — Rune, 2026-08-14. Mechanisms 1
+  // and 2 used the map's own shipped defect (65..835px of horizontal travel,
+  // seed-dependent) as their travel fixture. The camera owns the horizontal
+  // axis through the viewBox since rune/the-map-fits-the-phone (mapboard.js:
+  // the content box IS the viewport, scrollLeft has no extent), so shipped
+  // travel is 0 on every seed and a fixture leaning on the defect went blind
+  // the day the defect died. The travel enters BY THE SAME DOOR a real layout
+  // regression would (development.md, the same-door clause): a wide child
+  // appended to the real scroller in the real page, collected by SCAN — never
+  // a synthetic object handed to judge().
+  await evalIn(`(() => { const e = document.querySelector('.map-scroll'); if (!e) throw new Error('no .map-scroll');
+    const p = document.createElement('div'); p.id = 'axisfit-planted-travel';
+    p.style.cssText = 'width:2000px;height:1px;flex:none;'; e.appendChild(p); return true; })()`);
+  await wait(250);
+
   // 1 — remove the shipped map declaration in memory. Real travel must still
   // fail, so the scoped contract cannot turn into an allow-list in this tool.
   let c = await plant(null);
-  console.log(`    (declaration removed: .map-scroll H ${Math.round(c.hx)}px / V ${Math.round(c.hy)}px)`);
+  console.log(`    (declaration removed, travel planted: .map-scroll H ${Math.round(c.hx)}px / V ${Math.round(c.hy)}px)`);
   expect('A1  travel, declaration removed', judge(c).verdict, 'FAIL');
 
   // 2 — the exemption honoured. This is the GREEN half.
   c = await plant({ 'data-scroll-axis': 'x', 'data-scroll-axis-why': 'the act map is a horizontal run (planted)' });
   expect('A3  declared + travel  (must go GREEN)', judge(c).verdict, 'EXCUSED');
+
+  // The planted travel leaves before the mechanisms that do not want it; the
+  // declaration planted for A3 is cleaned by the next plant() call.
+  await evalIn(`(() => { const p = document.getElementById('axisfit-planted-travel'); if (p) p.remove(); return true; })()`);
+  await wait(150);
 
   // 3 — a declaration with no reason.
   c = await plant({ 'data-scroll-axis': 'x', 'data-scroll-axis-why': '   ' });

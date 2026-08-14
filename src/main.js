@@ -18,7 +18,7 @@ import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_S
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
 import { buildActMap } from './engine/actmap.js';
-import { createSaveManager, createMemoryStorage } from './engine/save.js';
+import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -154,7 +154,24 @@ function pickStorage() {
     return createMemoryStorage(); // e.g. blocked third-party storage
   }
 }
-const saves = createSaveManager(pickStorage());
+const bootStorage = pickStorage();
+// `?shot=crisis` — THE WORST MORNING, POSED BY THE DOOR IT ARRIVES BY. The
+// profile-notice screen mounts only when profileStatus().ok is false, and no
+// in-game act can make that true: corruption enters as bytes in storage, so
+// that is where the pose enters. A REAL profile is written by the real writer
+// (ensureProfile → saveMetaInternal, verify-then-rotate), then torn mid-write
+// the way a killed tab tears one, and the mirror is removed — the player whose
+// profile predates the backup, which is exactly who the corrupt state exists
+// for. Everything downstream of this line — readMetaFrom's parse, archiveMeta,
+// the quarantine, the screen — is the shipped path, untouched. Inside Rune's
+// gate by construction: shotState is truthy, so this storage is the memory
+// stub and no durable byte is ever involved.
+if (shotState === 'crisis') {
+  createSaveManager(bootStorage).ensureProfile();
+  bootStorage.setItem(META_KEY, String(bootStorage.getItem(META_KEY)).slice(0, 24));
+  bootStorage.removeItem(META_BACKUP_KEY);
+}
+const saves = createSaveManager(bootStorage);
 
 // `?shotSettings=<json>` — display settings for a ?shot= boot, written into the
 // EPHEMERAL store above. Read only when shotState is truthy, so a normal boot
@@ -1672,6 +1689,14 @@ function coopCatchupShot() {
 // shipped path — including the multi-codepoint strings, where any width GUESS
 // lies worst. Never reachable without a ?shot= URL.
 if (shotState) {
+  // Read-only debug handle, same species as `window.__combat` and `__uiScale`:
+  // tools/holdconfirm.mjs measures the profile beats (deleteSave's arm, the
+  // restore confirm, the fresh-profile confirm), and "the confirm committed"
+  // is a claim about STORAGE STATE, not about which screen happens to be
+  // mounted next — navigation after `.go` is unconditional, so the screen
+  // alone cannot witness the write. This reads the manager's own named state
+  // (profileStatus), never a copy of it. Shot boots only; a player never has it.
+  window.__profile = () => saves.profileStatus();
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.
@@ -1920,6 +1945,43 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   const meta = saves.loadMeta();
   if (found != null) meta.found = found ? found.split(',') : [];
   mountCompendium(app, { registries, meta, onBack: showTitle });
+} else if (shotState === 'title') {
+  // A REACH STATE, the same shape as `?shot=rest` and for the same sentence:
+  // one state for the one screen being watched, so the watch has a measurement
+  // instead of a faith. `deleteSave` is a second beat this game has had since
+  // the title screen shipped (title.js — the two-click, self-resetting arm),
+  // and its row in src/model/secondbeat.js spent a week saying "no ?shot=
+  // state reaches a title screen with saved runs on it". This is that state.
+  //
+  // THE SAVE IS REAL AND ENTERS BY THE REAL DOORS: newRun → ensureProfile →
+  // startClimb → persist() → saves.saveRun writes the run into (memory)
+  // storage, and showTitle surfaces it back through saves.listSlots →
+  // slotSummary reading those bytes — the same writer and the same reader a
+  // player's save walks. Nothing is posed into the DOM; the occupied slot is
+  // the storage speaking.
+  newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
+  showTitle();
+} else if (shotState === 'profile') {
+  // A REACH STATE for Settings → Profile (`profileRestore` in secondbeat.js —
+  // the inline .prof-confirm box). The set-aside profile is real and set aside
+  // BY THE REAL ACT that sets one aside: ensureProfile writes profile A
+  // through the real writer, startNewProfile archives it through
+  // replacePrimaryWith — the one path allowed to replace the primary — and
+  // the drawer entry the screen lists is that archive read back through
+  // saves.listArchives. The instrument still opens the section by the
+  // player's own door: the Profile tab in the Settings modal.
+  saves.ensureProfile();
+  saves.startNewProfile();
+  showTitle();
+  showSettings();
+} else if (shotState === 'crisis') {
+  // The worst morning (`freshProfile` in secondbeat.js — the .confirm-fresh
+  // modal). The torn bytes were planted at the storage seam beside
+  // pickStorage(), BEFORE the manager's first read — see the comment there
+  // for why that is the real door. From here the boot is exactly a player's:
+  // showTitle → showProfileNoticeIfNeeded → profileStatus().ok is false →
+  // mountProfileNotice. Nothing on this branch mentions the notice screen.
+  showTitle();
 } else if (shotState === 'customize') {
   // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
   // and #29's own boundary records what that cost: no sweep can open a screen
