@@ -10,6 +10,51 @@ import { validateContent } from '../src/model/validate.js';
 import * as Schema from '../src/model/schemas.js';
 import * as UI from '../src/ui/uiContent.js';
 
+// DOOR. Real input enters two ways: the schema/presenter modules are IMPORTED
+// and driven, and the two combat screens are read by readFileSync. The MUTANT
+// lines at the foot test the predicates on hand-typed strings — the regex, not
+// the road. `--selftest` plants each known-bad INTO A COPY of the real module
+// on disk and re-runs this whole tool against it.
+// (Vira's doors audit 2026-08-14 listed this tool NO-KNOWN-BAD.)
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'status-presentation-authority.mjs',
+    plants: [
+      {
+        name: 'the presenter infers percent from the status NAME again',
+        file: 'src/ui/uiContent.js',
+        find: "const valueToken = def.instancePresentation?.valueToken || 'stacks';",
+        replace: "const valueToken = /magic|vulnerable/i.test(def.name) ? 'percent' : 'stacks';",
+        expectRed: /FAIL (shared presenter contains no status-id\/name regex branch|misleading id\/name cannot infer percent semantics)/,
+      },
+      {
+        name: 'the closed display-token vocabulary is opened',
+        file: 'src/model/schemas.js',
+        find: "STATUS_VALUE_TOKENS",
+        replace: "PLANTED_STATUS_VALUE_TOKENS",
+        all: true,
+        expectRed: /FAIL one closed status-value display-token vocabulary is exported/,
+      },
+      {
+        name: 'an unknown display token is accepted by the boot schema',
+        file: 'src/content/statuses.js',
+        find: "instancePresentation: { valueToken: 'percent', durationToken: 'turns' },",
+        replace: "instancePresentation: { valueToken: 'percentage', durationToken: 'turns' },",
+        expectRed: /FAIL shipping status presentation passes the production boot schema/,
+      },
+      {
+        name: 'a combat surface stops stamping the semantic token attribute',
+        file: 'src/ui/screens/coop.js',
+        find: 'statusInstanceSemanticAttrs',
+        replace: 'plantedStatusAttrs',
+        all: true,
+        expectRed: /FAIL solo and co-op consume the same semantic status receipt/,
+      },
+    ],
+  }));
+}
+
 let pass = 0;
 let fail = 0;
 const check = (name, ok, detail = '') => {
