@@ -13,17 +13,38 @@
 //   A1 TRACKING     Sweep real maxima through the run's own maxHp and require
 //                   the rendered trough width to be STRICTLY MONOTONE in max.
 //                   This is the assertion that catches a constant-width bar.
-//   A2 PROPORTION   Require width/max to be constant across the sweep (linear
-//                   scale) within tolerance — the shape claim, not just the
-//                   direction. Reported per pair so a curve is legible as a
-//                   curve rather than as a failure.
-//   A3 CEILING      A bar at its own domain maximum must fill the derived track
+//   A2 PROPORTION   PER RESOURCE (his word, 2026-08-13: "bar scaling per
+//                   resource" — family repo directions.md D19 C6). For EACH
+//                   resource with a door — hp via ?shotMaxHp, mana via
+//                   ?shotMaxMana, stamina via ?shotMaxStamina — width/max is
+//                   constant across that resource's own sweep (linear scale)
+//                   within tolerance, over the points that are neither floored
+//                   nor above the resource's own derived domain. The at-domain
+//                   point is ON the line (max/domain = 100 % exactly) and is
+//                   included. A resource with fewer than two usable points at
+//                   a shape says so by name; fewer than two at EVERY shape is
+//                   red, not silence.
+//   A2X CROSS-RES   The NEGATIVE CONTROL the per-resource ruling demands:
+//                   (a) two resources standing at different maxes MUST render
+//                   different px-per-point — under the dead shared-rate
+//                   alternative (Elden Ring's literal read) they must not,
+//                   which is exactly why this asserts they DO; and (b) a
+//                   resource AT its own derived domain fills its OWN cell —
+//                   the clause a shared-scale regression cannot pass even
+//                   when the 16 px floor masks (a), because 2/91 of a mana
+//                   cell floors while 2/3 of it does not.
+//   A3 CEILING      A bar at its own domain maximum must fill its derived cell
 //                   (his "max size filling up the full top row"), and no bar may
-//                   ever exceed it. The track is MEASURED off the row, never
-//                   typed — that is the whole point of the layout.
-//   A4 NO COLLISION The label must not overflow its own trough at any max in
-//                   the sweep. Marina rendered maxMana = 2 at 48 px and watched
-//                   "MANA" collide with "1/2"; this is that finding, mechanised.
+//                   ever exceed it. The cell is MEASURED off the bar's own
+//                   containing block, never typed — since the hybrid HUD
+//                   (2026-08-13) that is the .restrack beside the label plate,
+//                   and two banded bars on one line do not share a track.
+//   A4 NO COLLISION The visible label must fit the box that holds it, at every
+//                   max in the sweep. Hybrid units: the plate must not clip its
+//                   own text (the reserve or a degradation stage is missing).
+//                   Strip/legacy bars: the label must not outgrow its trough —
+//                   Marina rendered maxMana = 2 at 48 px and watched "MANA"
+//                   collide with "1/2"; this is that finding, mechanised.
 //   A5 TAP FLOOR    Law 4 — the two top-row buttons stay at or above the floor.
 //                   The bars must not push them under it.
 //   A6 FLOOR MARK   Every bar the minimum-width clause caught must carry the
@@ -47,6 +68,33 @@
 //
 //     node tools/hudbars.mjs --tree <a checkout at dev=08e184a>   → A1 RED
 //     node tools/hudbars.mjs --tree <this branch>                 → A1 GREEN
+//
+// THE HYBRID ASSERTIONS WERE ALSO WATCHED RED BY THE SAME DOOR (2026-08-13,
+// each planted as a scratch stylesheet edit, rebuilt, swept via ?shotMaxHp,
+// then reverted — never committed):
+//   typed-constant trough (width: 40% !important)  → A1 "2 distinct widths",
+//       A2 78.8 % spread, A3 30.84 px of a 77.11 px cell — all RED.
+//   over-wide plate reserve (min-width: 30ch)      → A4 "plate clips its own
+//       label" RED on every bar, both shapes.
+//   the un-reserved plate itself (commit d2e61aa)  → A1 RED: max 88 -> 120
+//       shrank the bar 92.91 -> 88.53 px, because the label's digit count was
+//       moving the trough's track. That observation is why the plate reserve
+//       exists (resbars.js) and why A2 deliberately reads RAW px, never
+//       cell-normalised — normalising would have hidden exactly this defect.
+//
+// THE PER-RESOURCE MIGRATION WAS ALSO WATCHED RED FIRST (2026-08-14, with the
+// D19 C6 ruling; plant a scratch edit to resourceBarPlan, rebuilt, swept by
+// ?shotMaxMana/?shotMaxStamina, then reverted — never committed):
+//   shared cross-resource rate (every row divided by the surface's LARGEST
+//   domain, 91, instead of its own) → mana and stamina floored at 16 px at
+//   EVERY point of both sweeps on both shapes (A2 "fewer than two usable
+//   points at every shape" ×2, RED); mana AT its own domain rendered 16 px
+//   floored of its own cell — 21.78 px at 390x844, 5.81 px at 320x640
+//   (A2X (b), RED both shapes); no shape offered an unfloored hp+mana pair
+//   (A2X (a) premise dead, RED). And the number that justifies the whole
+//   migration: hp STAYED GREEN under that plant — 91 IS the shared max, so
+//   the pre-migration hp-only A2 could not see this class at all. 21 failing
+//   planted; 18 ok after revert, same door.
 //
 // The maximum enters through `?shotMaxHp=`, which writes `run.maxHp` — the same
 // field a curse (engine/actions.js:549) and an armour mod (model/loadout.js
@@ -174,22 +222,40 @@ const READ = `(() => {
   const bars = [...document.querySelectorAll(
     legacy ? '.combat .topbar .hpbar' : '.combat .topbar .resbar'
   )].map((el) => {
-    const label = el.querySelector('.label');
-    // Overflow of the VISIBLE label variant only — the hidden variants are
-    // display:none and have no box, so scrollWidth is honest here.
-    const vis = [...el.querySelectorAll('.label > span')].filter((s) => s.offsetParent !== null || s.offsetWidth > 0);
+    // THE BAR'S OWN TRACK. Since the hybrid HUD (2026-08-13) the trough lives
+    // in a .restrack cell beside its label plate, and two banded bars on one
+    // line do not share a track — so the track is the bar's own CONTAINING
+    // BLOCK, measured per bar, never the host. On the pre-hybrid structures
+    // the parent is the stack/host and this reads the same width it always did.
+    const cellW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
+    // THE LABEL SUBJECT differs by structure: hybrid units carry the label on
+    // a .resplate beside the trough (overflow = the plate or unit clipping
+    // its own visible text); strip/legacy bars carry it inside the trough
+    // (overflow = label wider than trough).
+    const unit = el.closest('.resunit');
+    const plate = unit && unit.querySelector('.resplate');
+    const labelHost = plate || el.querySelector('.label') || null;
+    const vis = labelHost
+      ? [...labelHost.querySelectorAll(':scope > span')].filter((s) => s.offsetParent !== null || s.offsetWidth > 0)
+      : [];
     const labelW = vis.length ? Math.max(...vis.map((s) => s.getBoundingClientRect().width))
-      : (label ? label.scrollWidth : 0);
+      : (labelHost ? labelHost.scrollWidth : 0);
+    const overflow = plate
+      ? (plate.scrollWidth > plate.clientWidth + 0.5 || unit.scrollWidth > unit.clientWidth + 0.5)
+      : n(labelW) > n(el.getBoundingClientRect().width) + 0.5;
     return {
       id: el.dataset.res || 'hp(legacy)',
       w: n(el.getBoundingClientRect().width),
       wLocal: n(el.offsetWidth),
+      cellW: n(cellW),
+      plated: !!plate,
+      visibleLabel: vis.length ? vis.map((s) => s.textContent.trim()).join(' ') : '',
       cur: el.dataset.cur != null ? Number(el.dataset.cur) : null,
       max: el.dataset.max != null ? Number(el.dataset.max) : null,
       floored: el.dataset.floored === '1',
       dashed: getComputedStyle(el).borderTopStyle === 'dashed',
       labelW: n(labelW),
-      overflow: n(labelW) > n(el.getBoundingClientRect().width) + 0.5,
+      overflow,
     };
   });
   const btns = [...document.querySelectorAll('.combat .topbar .topbar-btn')]
@@ -244,9 +310,15 @@ function proveMissingSeatIdentityFails() {
   }
 }
 
-function compactResourceIdentityFailures(label, expected, glyph) {
+function compactResourceIdentityFailures(label, expected, glyph, name) {
   const errors = [];
-  if (!label.includes(glyph)) errors.push(`glyph "${glyph}" is absent`);
+  // Identity may be carried by the glyph OR the row's name — the approved
+  // hybrid's full plate reads "MP 2/2" with no glyph (the owner pixels), and
+  // the narrow degradations read "◆ 2/2" / "◆". Either mark identifies the
+  // pool; NEITHER is anonymous numbers, which is what this fails on.
+  if (!label.includes(glyph) && !(name && label.includes(name))) {
+    errors.push(`neither glyph "${glyph}" nor name "${name || ''}" is present — the pool is anonymous`);
+  }
   const number = `${expected.cur}/${expected.max}`;
   if (!label.includes(number)) errors.push(`value is not authoritative ${number}`);
   return errors;
@@ -255,9 +327,19 @@ function compactResourceIdentityFailures(label, expected, glyph) {
 // Negative control for A7: an old numeric expectation must fail even when the
 // glyph and current value still look plausible.
 function proveManaNumericDriftFails() {
-  const errors = compactResourceIdentityFailures('◆ 20/40', { cur: 20, max: 42 }, '◆');
+  const errors = compactResourceIdentityFailures('◆ 20/40', { cur: 20, max: 42 }, '◆', 'MP');
   if (!errors.some((error) => error.includes('20/42'))) {
     throw new Error('A7 negative control is dead: a stale Mana maximum did not fail');
+  }
+}
+
+// Second negative control for A7: an anonymous label — right numbers, no glyph
+// and no name — must fail. This is what stops the name-or-glyph widening from
+// quietly becoming "any text with the right digits passes".
+function proveAnonymousLabelFails() {
+  const errors = compactResourceIdentityFailures('1/2', { cur: 1, max: 2 }, '◆', 'MP');
+  if (!errors.some((error) => error.includes('anonymous'))) {
+    throw new Error('A7 negative control is dead: an anonymous pool label did not fail');
   }
 }
 
@@ -274,6 +356,102 @@ async function sweepShape(b, href, [w, h]) {
   return rows;
 }
 
+// THE PER-RESOURCE SWEEP (A2, migrated 2026-08-14 with the D19 C6 ruling).
+// Same door discipline as the hp sweep: the maximum enters through the shot
+// param that writes the RUN's own field (?shotMaxMana / ?shotMaxStamina,
+// main.js — the field a real max change would move), never the renderer. The
+// values are every integer of the resource's own derived domain (these pools
+// are small by design; a domain past 6 is sampled at 6 to keep the sweep
+// honest about time without inventing maxima).
+const RESOURCE_DOORS = Object.freeze({ mana: 'shotMaxMana', stamina: 'shotMaxStamina' });
+async function sweepResource(b, href, [w, h], resId, door, domain) {
+  await b.cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false }, b.S);
+  const points = [];
+  for (let v = 1; v <= Math.min(domain, 6); v++) {
+    await b.cdp.send('Page.navigate', { url: `${href}?shot=combat&${door}=${v}` }, b.S);
+    await b.until(`!!document.querySelector('.combat .topbar .resbar')`, `combat @ ${door}=${v}`);
+    await wait(320);
+    const r = await b.ev(READ);
+    const bar = r.bars.find((x) => x.id === resId);
+    if (bar) points.push({ max: v, ...bar });
+  }
+  return points;
+}
+
+// A2, one resource at one shape: constant px-per-point against the resource's
+// OWN derived domain, over the points that are neither floored nor above it.
+// The at-domain point is ON the line (max/domain is exactly 100 %) and stays
+// in; the floor and the over-domain clamp are the two named exceptions, and
+// both are exclusions this function prints rather than performs silently.
+// Returns the usable-point count so the caller can refuse a claim that was
+// never measured at any shape.
+function judgeResourceProportion(tag, resId, points, domain) {
+  if (!points.length) { fail('A2', `${tag}: ${resId} — NO bar rendered anywhere in its own sweep`); return 0; }
+  const usable = points.filter((p) => !p.floored && p.max <= domain);
+  const excluded = points.length - usable.length;
+  if (usable.length < 2) {
+    notes.push(`A2 ${tag}: ${resId} — only ${usable.length} usable point(s) of ${points.length} (domain ${domain}, ${excluded} floored/over-domain); linearity is not claimable at this shape`);
+    return usable.length;
+  }
+  const ratios = usable.map((p) => p.w / p.max);
+  const lo = Math.min(...ratios), hi = Math.max(...ratios);
+  const spread = (hi - lo) / hi;
+  if (spread > 0.03) {
+    fail('A2', `${tag}: ${resId} PROPORTION — px-per-point ranges ${lo.toFixed(3)}..${hi.toFixed(3)} (${(spread * 100).toFixed(1)} % spread) against its OWN domain ${domain}. `
+      + `Per-resource linearity is the ruled shape (D19 C6); if the transpose scale was deliberately curved, this assertion changes with it.`);
+  } else {
+    notes.push(`A2 ${tag}: ${resId} PROPORTION ok — linear at ${((lo + hi) / 2).toFixed(3)} px per point of ITS OWN max (domain ${domain}, ${usable.length} points, spread ${(spread * 100).toFixed(1)} %)`);
+  }
+  return usable.length;
+}
+
+// A2X — the cross-resource negative control the per-resource ruling demands.
+//   (a) hp and mana, standing at DIFFERENT maxes, must render DIFFERENT px
+//       per point. The dead shared-rate alternative says they must not differ;
+//       per resource says they must. Floored bars are excluded — a floored
+//       length encodes nothing. A shape with no unfloored pair says so by
+//       name (at 320x640 real content's mana legitimately floors — the floor
+//       doing its ruled job, marked dashed by A6, and clause (b) still
+//       carries the control there); NO shape ever offering a pair is RED,
+//       because then the premise died everywhere and nothing measured (a).
+//   (b) mana AT its own derived domain fills its OWN cell. This is the clause
+//       a shared-scale regression cannot pass even where the floor masks (a):
+//       mana at 100 % of its own domain fills its cell; mana at its domain
+//       over a shared 91-point rate asks ~3 % and floors at 16 px.
+function judgeCrossResource(tag, hpRows, manaPoints, domains) {
+  let hadPairs = false;
+  const pairs = hpRows
+    .map((r) => ({ max: r.max, hp: r.bars.find((x) => x.id === 'hp'), mana: r.bars.find((x) => x.id === 'mana') }))
+    .filter((p) => p.hp && p.mana && !p.hp.floored && !p.mana.floored
+      && p.hp.max <= domains.hp && p.mana.max <= domains.mana && p.hp.max !== p.mana.max);
+  if (!pairs.length) {
+    notes.push(`A2X ${tag}: no unfloored hp+mana pair at this shape (mana floors here by design, dashed per A6) — clause (a) not claimable at this shape; clause (b) below still binds`);
+  } else {
+    hadPairs = true;
+    const worst = pairs.reduce((a, p) => {
+      const hpRate = p.hp.w / p.hp.max, manaRate = p.mana.w / p.mana.max;
+      const rel = Math.abs(hpRate - manaRate) / Math.max(hpRate, manaRate);
+      return rel < a.rel ? { rel, p, hpRate, manaRate } : a;
+    }, { rel: Infinity });
+    if (worst.rel < 0.25) {
+      fail('A2X', `${tag}: hp at max ${worst.p.hp.max} renders ${worst.hpRate.toFixed(3)} px/pt and mana at max ${worst.p.mana.max} renders ${worst.manaRate.toFixed(3)} px/pt — `
+        + `only ${(worst.rel * 100).toFixed(1)} % apart. Two pools at different maxes sharing a rate is the SHARED scale, which is dead by his word (D19 C6).`);
+    } else {
+      notes.push(`A2X ${tag}: CROSS-RESOURCE ok — hp ${worst.hpRate.toFixed(3)} px/pt vs mana ${worst.manaRate.toFixed(3)} px/pt (${pairs.length} pairs; rates differ ≥ ${(worst.rel * 100).toFixed(0)} %), which per-resource requires and a shared rate forbids`);
+    }
+  }
+  const atDomain = manaPoints.find((p) => p.max === domains.mana);
+  if (!atDomain) {
+    fail('A2X', `${tag}: the mana sweep never stood AT its own domain ${domains.mana} — the fills-own-cell clause was not measured`);
+  } else if (Math.abs(atDomain.w - atDomain.cellW) > 1.0) {
+    fail('A2X', `${tag}: mana at its OWN domain ${domains.mana} rendered ${atDomain.w} px of its ${atDomain.cellW} px cell${atDomain.floored ? ' (floored)' : ''} — `
+      + `a resource at 100 % of its own ceiling must fill its own cell; a shared rate is the usual way this goes red`);
+  } else {
+    notes.push(`A2X ${tag}: AT-OWN-DOMAIN ok — mana at max ${domains.mana} fills its ${atDomain.cellW} px cell exactly`);
+  }
+  return hadPairs;
+}
+
 async function captureLayoutPage(b, href, [w, h], state, tree) {
   const outDir = resolve(SHOTS_OUT);
   mkdirSync(outDir, { recursive: true });
@@ -288,7 +466,11 @@ async function captureLayoutPage(b, href, [w, h], state, tree) {
   if (state === 'solo') {
     const compact = await b.ev(`(() => {
       const bar = document.querySelector('.combat .topbar .resbar[data-res="mana"]');
-      const visible = [...bar.querySelectorAll('.label > span')].find((s) => getComputedStyle(s).display !== 'none');
+      // The label host moved with the hybrid: plate beside the trough on the
+      // main HUD, inside it on older structures. Read whichever exists.
+      const unit = bar.closest('.resunit');
+      const labelHost = (unit && unit.querySelector('.resplate')) || bar.querySelector('.label') || bar;
+      const visible = [...labelHost.querySelectorAll(':scope > span')].find((s) => getComputedStyle(s).display !== 'none');
       const player = window.__combat && window.__combat.player;
       return {
         label: visible ? visible.textContent.trim() : '',
@@ -298,7 +480,7 @@ async function captureLayoutPage(b, href, [w, h], state, tree) {
     if (!compact.expected) {
       fail('A7', `${tree} ${w}x${h}: posed combat entity is absent; Mana identity authority is unknown`);
     } else {
-      const errors = compactResourceIdentityFailures(compact.label, compact.expected, '◆');
+      const errors = compactResourceIdentityFailures(compact.label, compact.expected, '◆', 'MP');
       if (errors.length) {
         fail('A7', `${tree} ${w}x${h}: compact Mana identity is "${compact.label}"; ${errors.join(', ')}`);
       } else {
@@ -408,7 +590,7 @@ async function captureLayoutPage(b, href, [w, h], state, tree) {
   console.log(`    shot   ${out}`);
 }
 
-function judge(shape, rows) {
+function judge(shape, rows, hpDomain) {
   const tag = `${shape[0]}x${shape[1]}`;
   const hp = rows.map((r) => ({ max: r.max, bar: r.bars.find((x) => x.id === 'hp' || x.id === 'hp(legacy)') }))
     .filter((r) => r.bar);
@@ -431,52 +613,75 @@ function judge(shape, rows) {
   // ---- A1 strict monotonicity below the domain ceiling ----------------------
   // Above the ceiling the bar CLAMPS, so monotonicity is only required while the
   // asked-for length is under 100 %. Stated rather than quietly skipped.
-  const belowCeiling = hp.filter((r) => r.bar.w < r.trackW - 0.5 || true).slice();
+  // "Clamped" is judged against the bar's OWN cell (r.bar.cellW) — since the
+  // hybrid the trough's containing block is a cell beside the label plate, and
+  // the host width would misread every clamped point as unclamped.
   let prev = null;
   for (const r of hp) {
-    const clamped = Math.abs(r.bar.w - trackOf(rows, r.max)) < 0.5;
+    const clamped = Math.abs(r.bar.w - r.bar.cellW) < 0.5;
     if (prev && !clamped && r.bar.w <= prev.bar.w) {
       fail('A1', `${tag}: max ${prev.max} -> ${r.max} did not lengthen the bar (${prev.bar.w} -> ${r.bar.w} px)`);
     }
     if (!clamped) prev = r;
   }
 
-  // ---- A2 proportionality (the LINEAR shape claim) --------------------------
-  const unclamped = hp.filter((r) => Math.abs(r.bar.w - trackOf(rows, r.max)) > 0.5);
-  if (unclamped.length >= 2) {
-    const ratios = unclamped.map((r) => r.bar.w / r.max);
-    const lo = Math.min(...ratios), hi = Math.max(...ratios);
-    const spread = (hi - lo) / hi;
-    if (spread > 0.03) {
-      fail('A2', `${tag}: PROPORTION — px-per-point ranges ${lo.toFixed(3)}..${hi.toFixed(3)} (${(spread * 100).toFixed(1)} % spread). `
-        + `A LINEAR transpose scale is a constant ratio; this is not one. If the scale was deliberately changed to a curve, this assertion is what has to change with it.`);
+  // ---- A2 proportionality (the LINEAR shape claim, PER RESOURCE) ------------
+  // Raw rendered px per point of max, deliberately NOT normalised by the cell:
+  // the claim is about the LENGTH the player sees, and normalising would hide
+  // a track that moves under the bar (the digit-reserve defect, observed
+  // 2026-08-13: an unreserved plate shrank the bar 92.91 -> 88.53 px across
+  // max 88 -> 120). A constant cell is part of what this asserts.
+  // Since the D19 C6 migration hp is judged like every other resource — by
+  // judgeResourceProportion against ITS OWN derived domain (main() calls it).
+  // The clamp-based reading below survives only for trees whose model cannot
+  // export a domain (the legacy known-bad), where per-resource has no meaning.
+  if (!Number.isFinite(hpDomain)) {
+    const unclamped = hp.filter((r) => Math.abs(r.bar.w - r.bar.cellW) > 0.5);
+    if (unclamped.length >= 2) {
+      const ratios = unclamped.map((r) => r.bar.w / r.max);
+      const lo = Math.min(...ratios), hi = Math.max(...ratios);
+      const spread = (hi - lo) / hi;
+      if (spread > 0.03) {
+        fail('A2', `${tag}: PROPORTION — px-per-point ranges ${lo.toFixed(3)}..${hi.toFixed(3)} (${(spread * 100).toFixed(1)} % spread). `
+          + `A LINEAR transpose scale is a constant ratio; this is not one. If the scale was deliberately changed to a curve, this assertion is what has to change with it.`);
+      } else {
+        notes.push(`A2 ${tag}: PROPORTION ok — linear at ${((lo + hi) / 2).toFixed(3)} px per point of max (spread ${(spread * 100).toFixed(1)} %)`);
+      }
     } else {
-      notes.push(`A2 ${tag}: PROPORTION ok — linear at ${((lo + hi) / 2).toFixed(3)} px per point of max (spread ${(spread * 100).toFixed(1)} %)`);
+      fail('A2', `${tag}: PROPORTION — only ${unclamped.length} unclamped point(s); the sweep never sat below the ceiling long enough to have a shape`);
     }
   } else {
-    fail('A2', `${tag}: PROPORTION — only ${unclamped.length} unclamped point(s); the sweep never sat below the ceiling long enough to have a shape`);
+    judgeResourceProportion(tag, 'hp', hp.map((r) => ({ max: r.max, ...r.bar })), hpDomain);
   }
 
-  // ---- A3 ceiling: fills the track at domain max, never exceeds it ----------
+  // ---- A3 ceiling: fills its own cell at domain max, never exceeds it -------
+  // The cell is the bar's containing block — the whole row pre-hybrid, the
+  // derived track beside the plate since. Both claims survive: never outside
+  // the container (Law 2), and a maxed stat fills what the layout dealt it.
   for (const r of hp) {
-    if (r.bar.w > trackOf(rows, r.max) + 0.5) {
-      fail('A3', `${tag}: max ${r.max} rendered ${r.bar.w} px in a ${trackOf(rows, r.max)} px track — a bar outside its own container (Law 2)`);
+    if (r.bar.w > r.bar.cellW + 0.5) {
+      fail('A3', `${tag}: max ${r.max} rendered ${r.bar.w} px in its ${r.bar.cellW} px cell — a bar outside its own container (Law 2)`);
     }
   }
   const top = hp[hp.length - 1];
-  if (Math.abs(top.bar.w - trackOf(rows, top.max)) > 1.0) {
-    fail('A3', `${tag}: at max ${top.max} (above the derived domain) the bar is ${top.bar.w} px of a ${trackOf(rows, top.max)} px track — `
+  if (Math.abs(top.bar.w - top.bar.cellW) > 1.0) {
+    fail('A3', `${tag}: at max ${top.max} (above the derived domain) the bar is ${top.bar.w} px of its ${top.bar.cellW} px cell — `
       + `"the max size filling up the full top row" is not satisfied`);
   } else {
-    notes.push(`A3 ${tag}: CEILING ok — a maxed stat fills the derived ${trackOf(rows, top.max)} px track exactly`);
+    notes.push(`A3 ${tag}: CEILING ok — a maxed stat fills its derived ${top.bar.cellW} px cell exactly`);
   }
 
-  // ---- A4 label never collides with its own trough --------------------------
+  // ---- A4 label never collides with its own bar -----------------------------
+  // Two structures, one claim: the visible label variant must fit the box that
+  // holds it. Hybrid units: the plate/unit must not clip its text. Strip and
+  // legacy bars: the label must not be wider than its trough.
   for (const r of rows) {
     for (const bar of r.bars) {
       if (bar.overflow) {
-        fail('A4', `${tag}: at max ${r.max} the "${bar.id}" label is ${bar.labelW} px inside a ${bar.w} px trough — it collides with itself. `
-          + `The degradation stage for this width is missing.`);
+        fail('A4', bar.plated
+          ? `${tag}: at max ${r.max} the "${bar.id}" plate clips its own label ("${bar.visibleLabel}", ${bar.labelW} px) — the degradation stage (or its reserve) for this width is missing.`
+          : `${tag}: at max ${r.max} the "${bar.id}" label is ${bar.labelW} px inside a ${bar.w} px trough — it collides with itself. `
+            + `The degradation stage for this width is missing.`);
       }
     }
   }
@@ -498,11 +703,6 @@ function judge(shape, rows) {
       }
     }
   }
-}
-
-function trackOf(rows, max) {
-  const r = rows.find((x) => x.max === max);
-  return r ? r.trackW : 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -585,10 +785,15 @@ async function runFalsifier(href) {
 // Printed from the tree's OWN resourceScale(), plus the two candidates, so the
 // table in model/resources.js cannot drift from the function it describes.
 async function printScales(trackPx) {
-  const { resourceScale } = await import(pathToFileURL(resolve(TREE, 'src/model/resources.js')).href);
+  const { resourceScale, resourceDomains } = await import(pathToFileURL(resolve(TREE, 'src/model/resources.js')).href);
+  const { contentBundle } = await import(pathToFileURL(resolve(TREE, 'src/content/index.js')).href);
+  const { createRegistries } = await import(pathToFileURL(resolve(TREE, 'src/model/registries.js')).href);
   const CANDIDATES = { 'linear  x': (x) => x, 'sqrt    √x': Math.sqrt, 'log     ln(1+x)': Math.log1p };
-  const DOMAIN = 88; // the derived player-health ceiling in this tree
-  const POINTS = [2, 8, 40, 56, 72, 78, 84, 88];
+  // DERIVED from the tree's own model — this line carried a typed 88 while the
+  // tree had derived 91 (caught 2026-08-14): a copy that drifts is Law 0
+  // clause 4's whole case, in the tool that exists to catch drift.
+  const DOMAIN = resourceDomains(createRegistries(contentBundle)).main.hp;
+  const POINTS = [2, 8, 40, 56, 72, 78, 84, DOMAIN];
   console.log(`\n  TRANSPOSE SCALE — track ${trackPx} px, domain ${DOMAIN} (derived player max HP)\n`);
   console.log('    max   ' + Object.keys(CANDIDATES).map((k) => k.padStart(16)).join(''));
   for (const m of POINTS) {
@@ -685,6 +890,7 @@ async function printFloor(b, href) {
 async function main() {
   proveMissingSeatIdentityFails();
   proveManaNumericDriftFails();
+  proveAnonymousLabelFails();
   const artifact = resolve(TREE, 'dist/AshenSpire.html');
   if (!existsSync(artifact)) {
     console.error(`hudbars: no dist/AshenSpire.html under ${TREE} — run node tools/launch.mjs --build-only first`);
@@ -712,7 +918,25 @@ async function main() {
     } finally { b.close(); }
     return;
   }
+  // THE DERIVED DOMAINS — imported from the tree's OWN model, never typed here
+  // (Law 0 clause 4; --scales carried a typed 88 while the tree had derived 91,
+  // which is exactly the drift a typed copy buys). A tree whose model exports
+  // no domains is the legacy known-bad: per-resource A2/A2X have no subject
+  // there, the tool says so, and A1 still judges it red.
+  let domains = null;
+  try {
+    const { contentBundle } = await import(pathToFileURL(resolve(TREE, 'src/content/index.js')).href);
+    const { createRegistries } = await import(pathToFileURL(resolve(TREE, 'src/model/registries.js')).href);
+    const { resourceDomains } = await import(pathToFileURL(resolve(TREE, 'src/model/resources.js')).href);
+    domains = resourceDomains(createRegistries(contentBundle)).main;
+    console.log(`  derived main-surface domains: ${Object.entries(domains).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
+  } catch {
+    console.log('  (this tree derives no resource domains — legacy shape; A2/A2X per-resource claims are not applicable and are not silently green)');
+  }
+
   const all = {};
+  const usableByResource = {}; // resId -> max usable points seen at any shape
+  let crossPairsAnywhere = false; // A2X clause (a): did ANY shape offer a premise
   const source = SHOTS_OUT ? await serve({ root: TREE, port: 8317, open: false }) : null;
   try {
     for (const shape of SHAPES) {
@@ -726,13 +950,35 @@ async function main() {
         console.log(`    ${String(r.max).padStart(4)}   ${String(hp ? hp.w : '—').padStart(6)}   ${String(ratio).padStart(8)}   ${String(r.bars.length).padStart(4)}  `
           + `${String(hp ? hp.labelW : '—').padStart(5)}   ${hp && hp.floored ? 'yes' : 'no'}`);
       }
-      judge(shape, rows);
+      judge(shape, rows, domains ? domains.hp : null);
+      if (domains) {
+        const tag = `${shape[0]}x${shape[1]}`;
+        let manaPoints = [];
+        for (const [resId, door] of Object.entries(RESOURCE_DOORS)) {
+          if (!Number.isFinite(domains[resId]) || domains[resId] <= 0) continue;
+          const points = await sweepResource(b, href, shape, resId, door, domains[resId]);
+          if (resId === 'mana') manaPoints = points;
+          console.log(`    ${resId} sweep: ${points.map((p) => `${p.max}→${p.w}px${p.floored ? ' (floored)' : ''}`).join('  ')}`);
+          const usable = judgeResourceProportion(tag, resId, points, domains[resId]);
+          usableByResource[resId] = Math.max(usableByResource[resId] || 0, usable);
+        }
+        crossPairsAnywhere = judgeCrossResource(tag, rows, manaPoints, domains) || crossPairsAnywhere;
+      }
       if (SHOTS_OUT) {
         await captureLayoutPage(b, source.url, shape, 'solo', 'source');
         await captureLayoutPage(b, source.url, shape, 'coop', 'source');
         await captureLayoutPage(b, href, shape, 'solo', 'dist');
         await captureLayoutPage(b, href, shape, 'coop', 'dist');
       }
+    }
+    // A resource whose linearity was unclaimable at EVERY shape was never
+    // measured — that is red, not a quiet note (the silence guard; a claim
+    // with no measurement anywhere must not ride the other resources' green).
+    for (const [resId, usable] of Object.entries(usableByResource)) {
+      if (usable < 2) fail('A2', `${resId}: fewer than two usable points at every shape — per-resource linearity was never measured for this resource`);
+    }
+    if (domains && !crossPairsAnywhere) {
+      fail('A2X', 'no shape ever offered an unfloored hp+mana pair at different maxes — clause (a) was never measured anywhere, and a control with no premise is red, not green');
     }
   } finally {
     b.close();
@@ -752,7 +998,12 @@ KNOWN-BAD: this tool's failing case is the SHIPPED PRE-CHANGE TREE, where the co
       A1 goes red on real code. Nothing was authored to make it fail.
 BOUNDARY: headless Chromium on ${process.platform}, dist/AshenSpire.html, ${SHAPES.length} shape(s), the reaver class,
       one seed, Text size M, UI size Auto. Silent about packaged desktop builds, about a real finger, about whether
-      LINEAR is the transpose scale he meant, and about every screen that is not combat.`);
+      LINEAR is the transpose scale he meant, and about every screen that is not combat.
+PER-RESOURCE, ruled: "bar scaling per resource" — Constantine, 2026-08-13 (family repo directions.md D19 C6).
+      The at-a-glance read — length tells pool size — survives WITHIN a resource across the run, not BETWEEN
+      resources: two pools with different maxes legitimately render different px per point (A2X asserts they
+      DO), so comparing the mana pill's length against the health bar's reads nothing, and that is the ruling,
+      not a regression.`);
   console.log(fails.length ? `\nRESULT: ${fails.length} FAILING` : `\nRESULT: ${notes.length} assertions ok`);
   process.exit(fails.length ? 1 : 0);
 }

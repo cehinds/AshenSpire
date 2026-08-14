@@ -71,6 +71,23 @@
 //   R5  code      a CLOSED, DECLARED list of appliers that live in code rather
 //                 than content. Today it has exactly one member and that is
 //                 itself a finding, stated below.
+//   R6  exposure  an enemy row's arcaneExposure.onBreak.status. The engine
+//                 (engine/actions.js applyArcaneExposure) applies it when
+//                 magic-school buildup crosses the row's threshold — the
+//                 applier is DATA ON THE ENEMY ROW, exactly where Law 1 wants
+//                 it. THREE halves, all data, all required, or it is
+//                 vocabulary nobody speaks (R4's rule, one system over):
+//                   (a) an enemy with mode:'configured' naming onBreak.status
+//                   (b) at least one shipped carrier — a card or a
+//                       basicCardProfile with exposureBuildupPerHit >= 1 —
+//                       whose school the balance table maps above zero
+//                   (c) floor(perHit * schoolMult * buildupMultiplier) >= 1
+//                       for that pairing, because that is the engine's own
+//                       arithmetic and an amount that floors to 0 never fills.
+//                 Added 2026-08-13: the Codex attribute/exposure work landed
+//                 this door after R1-R5 were enumerated, and this tool did
+//                 exactly what its boundary promised — went red, loudly, on
+//                 `magicVulnerable` at dev = 86564e6 rather than guessing.
 //
 // R5 IS THE WEAKEST EDGE IN THIS FILE AND IT IS A SUBSTRING MATCH — the same
 // technique this file's own header calls a trap. It is admissible only because
@@ -266,6 +283,27 @@ export function statusReach(bundle, opts = {}) {
     note(spec.status, `R4 equipMods:${field} via ${users.slice(0, 3).join(', ')}`);
   }
 
+  // ---- R6: arcane exposure onBreak — enemy config + carrier + multiplier ---
+  // The engine's own gate, restated as data (engine/actions.js:116-144):
+  // buildup only accrues from a carrier whose school the balance table maps
+  // above zero, in floor(perHit * mult * buildupMultiplier) steps, and only a
+  // meter that can take a step >= 1 ever crosses its threshold. An enemy
+  // config with no shipped carrier is the dictionary again, not a sentence.
+  const schoolMult = (((bundle.balance || {}).arcaneExposure) || {}).schoolBuildupMultipliers || {};
+  const rawCarriers = [
+    ...(Array.isArray(bundle.cards) ? bundle.cards : []).map((c) => ({ id: `cards:${c && c.id}`, school: c && c.damageSchool, perHit: c && c.exposureBuildupPerHit })),
+    ...((((bundle.equipment || {}).basicCardProfiles) || []).map((p) => ({ id: `profiles:${p && p.id}`, school: p && p.damageSchool, perHit: p && p.exposureBuildupPerHit }))),
+  ].filter((c) => Number.isInteger(c.perHit) && c.perHit > 0
+    && Number.isFinite(schoolMult[c.school]) && schoolMult[c.school] > 0);
+  for (const row of Array.isArray(bundle.enemies) ? bundle.enemies : []) {
+    const cfg = row && row.arcaneExposure;
+    if (!cfg || cfg.mode !== 'configured' || !cfg.onBreak || typeof cfg.onBreak.status !== 'string') continue;
+    const bm = Number.isFinite(cfg.buildupMultiplier) ? cfg.buildupMultiplier : 0;
+    const speakers = rawCarriers.filter((c) => Math.floor(c.perHit * schoolMult[c.school] * bm) >= 1);
+    if (speakers.length === 0) continue; // vocabulary nobody speaks — NOT reach
+    note(cfg.onBreak.status, `R6 exposure enemies:${row.id} via ${speakers.slice(0, 2).map((c) => c.id).join(', ')} (+${Math.max(0, speakers.length - 2)} more carriers)`);
+  }
+
   // ---- R5: code-side, closed and ratcheted (F4) ---------------------------
   for (const c of CODE_APPLIERS) {
     let src = null;
@@ -351,6 +389,16 @@ the real input enters and travelling every stage the real run travels
   · strike.burn=+2 deleted from content/source/weapons.csv, recompiled:  FAIL 7/43, exit 1
   · all 25 bleed appliers deleted from the nine content files:  FAIL 8/43
     (bleed AND bleedResist), exit 1
+R6 (the exposure door, added 2026-08-13) was observed the same way, from the
+same entry point, at dev = 86564e6 + this file's R6 diff, node v22, one Linux box:
+  · no plant at all, the shipped content BEFORE R6:  FAIL 1/44 magicVulnerable,
+    exit 1 — the tool refusing to guess at a door it had not enumerated
+  · wanderingSoldier's arcaneExposure block deleted from
+    src/content/enemies/act1.js:  FAIL 1/44 magicVulnerable, exit 1
+  · schoolBuildupMultipliers zeroed in src/content/balance.js:  FAIL 1/44, exit 1
+  · every magic/arcane carrier zeroed in content/source/cardExposure.csv AND
+    content/source/basicCardProfiles.csv, then \`node tools/content-build.mjs\`
+    recompiled:  FAIL 1/44, exit 1 — the CSV door, through the real compile
 \`--selftest\` plants the same mechanisms in memory, including the two that must
 go GREEN — a check that can only go red proves as little as one that cannot.`;
 
@@ -368,9 +416,17 @@ BOUNDARY — what a green from this tool does NOT mean:
     PROVISIONAL in its own row and none of it has been through the sim.
   · R5 IS A SUBSTRING MATCH in one file, and the header says why that is
     admissible exactly once and never twice.
+  · R6 PROVES THE METER CAN FILL, NOT THAT A RUN FILLS IT. A carrier that
+    steps the meter by 1 against a threshold of 8 is eight landed magic hits
+    on one enemy — whether that ever happens in a real climb is the sim's
+    question (every number on that path is marked PROVISIONAL), not this
+    tool's. Reach here means the arithmetic cannot floor to zero.
   · THE UPGRADE PATH IS WALKED, the equipment path is walked, the intent path
-    is walked — but any FUTURE way to apply a status that is none of R1–R5
-    reads as unreachable here, loudly, which is the right way round.`;
+    is walked — but any FUTURE way to apply a status that is none of R1–R6
+    reads as unreachable here, loudly, which is the right way round. R6 is
+    what that clause looks like discharged: the exposure door landed after
+    R1-R5 were enumerated, read as unreachable, loudly, and was then
+    enumerated from the engine like the rest.`;
 
 function report(r, { json = false } = {}) {
   if (json) {
@@ -398,7 +454,7 @@ function report(r, { json = false } = {}) {
   } else if (r.verdict === 'FAIL') {
     console.log(`RESULT: FAIL — ${r.unreached.length} of ${r.total} shipped statuses have no applier: ${r.unreached.join(', ')}.`);
   } else {
-    console.log(`RESULT: ${r.total}/${r.total} shipped statuses have at least one applier, by routes R1-R5.`);
+    console.log(`RESULT: ${r.total}/${r.total} shipped statuses have at least one applier, by routes R1-R6.`);
   }
   console.log(DOOR);
   console.log(BOUNDARY);
@@ -541,7 +597,27 @@ async function selftest(real) {
   r = statusReach(real, { readFile: () => '// the needle is gone' });
   expect('P7  a declared code applier that vanished (F4)', r.exitCode, 2);
 
-  // 9 — the OTHER green: dangling appliers are reported, not swallowed.
+  // 9 — R6, all three halves, each removed alone. The real door's shape:
+  //     magicVulnerable is applied by NOTHING except an enemy row's
+  //     arcaneExposure.onBreak, so each half taken away must send exactly it
+  //     red — the defect this route was added for, at dev = 86564e6.
+  b = clone(real);
+  for (const row of b.enemies) delete row.arcaneExposure;
+  r = statusReach(b, codeOk());
+  expect('P8  every enemy exposure config removed (R6 half a)', r.unreached.includes('magicVulnerable'), true);
+
+  b = clone(real);
+  for (const c of b.cards) if (c.exposureBuildupPerHit) c.exposureBuildupPerHit = 0;
+  for (const p of b.equipment.basicCardProfiles) if (p.exposureBuildupPerHit) p.exposureBuildupPerHit = 0;
+  r = statusReach(b, codeOk());
+  expect('P9  every carrier zeroed — config with no speaker is not reach (R6 half b)', r.unreached.includes('magicVulnerable'), true);
+
+  b = clone(real);
+  b.balance.arcaneExposure.schoolBuildupMultipliers = { magic: 0, arcane: 0 };
+  r = statusReach(b, codeOk());
+  expect('P10 school multipliers zeroed — the engine floors the step to 0 (R6 half c)', r.unreached.includes('magicVulnerable'), true);
+
+  // 10 — the OTHER green: dangling appliers are reported, not swallowed.
   b = clone(real);
   b.cards[0].effects = [{ op: APPLY_OP, target: 'enemy', status: 'noSuchStatusAnywhere', stacks: 1 }];
   r = statusReach(b, codeOk());
@@ -551,7 +627,7 @@ async function selftest(real) {
   // recomposing numbers out of it — a recomposed verdict is a second home for
   // the verdict, and it drifts. So it ends in a full stop, on purpose.
   console.log(`\nRESULT: ${bad === 0 ? 'corpus held' : `CORPUS BROKE — ${bad} plant(s) did not behave`}`
-    + ` — 12 assertions over 9 planted mechanisms, 2 of them required to go GREEN.`);
+    + ` — 15 assertions over 12 planted mechanisms, 2 of them required to go GREEN.`);
   return bad === 0 ? 0 : 1;
 }
 

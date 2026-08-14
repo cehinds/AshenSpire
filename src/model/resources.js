@@ -159,13 +159,30 @@ export function resourceDomains(registries) {
  * resourceBarPlan(registries, surface, view, entity, domains) → [bar]
  *
  * ONE function, both HUDs. A bar is:
- *   { id, name, glyph, tint, weight, cur, max, pct, lengthPct, floored }
+ *   { id, name, glyph, tint, weight, band, cur, max, pct, lengthPct, floored }
  *
  *   pct        — the FILL inside the trough (cur/max). The old bars' only job.
  *   lengthPct  — the TROUGH's own length, as a fraction of the row track, and
  *                the whole of his ask: scale(max)/scale(domainMax). Nothing is
  *                typed; the track is derived by flexbox from the row minus the
  *                two buttons, so a bar cannot lie about a max.
+ *
+ *                THE DOMAIN IS PER RESOURCE, AND THAT IS RULED, NOT DEFAULTED.
+ *                Constantine, 2026-08-13: "bar scaling per resource" (family
+ *                repo, commons/decisions/directions.md D19 C6). Each row's
+ *                length is measured against ITS OWN resource's derived
+ *                ceiling — never against a shared cross-resource rate. The
+ *                consequence is deliberate: length tells pool size at a
+ *                glance WITHIN a resource across the run, not BETWEEN
+ *                resources — two pools with different maxes legitimately
+ *                render different px per point, and comparing bar lengths
+ *                across resources reads nothing. The shared-rate alternative
+ *                (Elden Ring's literal read) is dead by his word;
+ *                tools/hudbars.mjs A2/A2X assert both halves, so
+ *                reintroducing a shared rate goes red, not quiet. (His word
+ *                closed the conflict my 2026-08-13 log carried as open — the
+ *                shipped derivation was already per-resource, so his answer
+ *                ratified the default: zero code moved here. — Freja)
  *   floored    — the minimum-width clause fired; see resbars.css. A floored bar
  *                is no longer to scale and says so in its own trough.
  *
@@ -190,6 +207,7 @@ export function resourceBarPlan(registries, surface, view, entity, domains) {
       glyph: row.glyph || '',
       tint: row.tint,
       weight: row.weight,
+      band: row.band || null,
       cur: val.cur,
       max: val.max,
       pct: Math.max(0, Math.min(100, (val.cur / val.max) * 100)),

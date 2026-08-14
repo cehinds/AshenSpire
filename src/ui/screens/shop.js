@@ -10,6 +10,7 @@ import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../components/holdconfirm.js';
+import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 
@@ -81,6 +82,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def), item.cost, run.cinders >= item.cost, () => {
         run.cinders -= item.cost;
         run.relics.push(item.id);
+        syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
         stock.relics.splice(i, 1);
         sfx.play('buy');
         onChanged();
