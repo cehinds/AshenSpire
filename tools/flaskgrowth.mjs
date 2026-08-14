@@ -397,6 +397,46 @@ function selftest() {
     };
   });
 
+  behave('WAKE RED — the questEvent row\'s NOT BINDING premise is probed at the real event door (development.md, *The wake condition*)', () => {
+    // The behave above asserts the row REFUSES ("NOT BINDING by name") — and
+    // it can never fail when the refusal's premise dies, because absence never
+    // fails a test written to expect absence. The premise, in the row's own
+    // why: "the run records no quest-event history yet" (model/flaskgrowth.js
+    // — run.history is declared in state.js and never written). This probes
+    // it: walk a REAL shipped event choice through executeRunEffects — the
+    // door src/ui/screens/event.js hands every choice to — and watch
+    // run.history. RED if history gained an entry while the posed row still
+    // prints the history-shaped NOT BINDING (the binder appeared while the
+    // row still refuses); RED the other way if the row binds while history
+    // is still never written.
+    const b = realBundleCopy();
+    b.balance.flaskGrowth = [{ source: 'questEvent', id: 'goldboughAvatar', kind: 'hp', amount: 1 }];
+    const reg = createRegistries(b);
+    const run = freshRun(reg);
+    if (!Array.isArray(run.history)) {
+      return { ok: false, saw: 'run.history is no longer a declared array — the premise\'s subject moved; rewrite this probe and the row\'s why together' };
+    }
+    const ev = b.events.find((e) => e.id === 'goldboughAvatar');
+    const choice = ev && (ev.choices || []).find((c) => (c.effects || []).some((e) => e && e.op === 'heal'));
+    if (!choice) return { ok: false, saw: 'goldboughAvatar no longer ships a heal choice — repoint this probe at a real event choice, do not delete it' };
+    executeRunEffects({ run, registries: reg, rng: null }, choice.effects);
+    const premiseDead = run.history.length > 0;
+    const row = flaskGrowthPlan(reg, run).rows[0];
+    const stillRefuses = row.binding === false && /quest-event history/.test(row.why);
+    if (premiseDead) {
+      return {
+        ok: !stillRefuses,
+        saw: `run.history gained ${run.history.length} entr${run.history.length === 1 ? 'y' : 'ies'} through the real event door while the row still prints NOT BINDING — the premise died; bind the row (and move the moment-door grant into it) or rewrite its why`,
+      };
+    }
+    return {
+      ok: stillRefuses,
+      saw: stillRefuses
+        ? 'premise holds — history unwritten after a real event choice, and the row refuses with it'
+        : `history is still never written yet the row stopped refusing (binding ${row.binding}, why '${row.why}') — the refusal dropped without its binder`,
+    };
+  });
+
   // ── DOOR 3: THE CAPACITY LEDGER at the save door — capacity must derive as
   //    base + grown + granted, or the save is refused BY NAME. Every plant
   //    builds its run through the real op doors and enters the check through
