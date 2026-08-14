@@ -112,6 +112,89 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
 
+  // ---- hand layout: the OVERLAP arm of balance.ui.handLayout (C2) ----------
+  //
+  // The word's one home is balance.ui.handLayout; main.js derives it onto
+  // <html data-hand-layout>; this block reads the ATTRIBUTE and nothing else.
+  // When the word is 'paging' (the default), every line below is inert and
+  // renderHand is byte-for-byte the shipped strip — that inertness is the C2
+  // ruling ("the shipped behaviour keeps its seat") made checkable.
+  //
+  // OVERLAP, on the narrow shape: the whole hand lays inside the strip's own
+  // width, each card overlapped by the next, z-order left-under-right (the
+  // zIndex renderHand already writes). THE OVERLAP IS DERIVED, NEVER TYPED:
+  // measured container width, measured card width, hand size — the same three
+  // facts every render, so ten cards at Text XL fit exactly where five at S
+  // spread out. Law 5 clause 1 is the constraint the arithmetic serves:
+  // horizontal scroll travel ZERO in this mode (the strip's clause-2
+  // exemption is PAGING's, and it does not travel with the word).
+  //
+  // The narrow fan transform is flattened here on purpose: a rotated card's
+  // hit edge is a wedge, and in overlap the exposed sliver of every card but
+  // the top IS its tap target — the sliver is the composition, so it stays
+  // rectangular and measurable. Cramped slivers are the mode's stated cost;
+  // the compensating reader is the inspect hold on every card (hold ~400 ms
+  // → the card expands, unclipped, above everything — armInspect below).
+  //
+  // On the wide shape the word changes nothing: the wide hand is already an
+  // overlapping fan (margin -1.4rem, combat.css), so 'overlap' is its shipped
+  // truth and 'paging' has no wide meaning either — the word picks the NARROW
+  // arrangement. Reconciliation still runs on shape flips so a resize from
+  // narrow back to wide restores the fan transform this mode flattened.
+  let handEls = []; // the rendered cards, in hand order (filled by renderHand)
+  let handFan = []; // each card's shipped fan transform, same index
+  const handLayoutWord = () => document.documentElement.dataset.handLayout;
+  function applyHandLayout() {
+    if (handLayoutWord() !== 'overlap') return;
+    const hand = app.querySelector('.hand');
+    if (!hand) return;
+    const els = handEls.filter((el) => el.parentNode === hand);
+    const n = els.length;
+    if (!n) return;
+    const narrow = document.documentElement.getAttribute('data-layout') === 'narrow';
+    if (!narrow) {
+      // wide: the shipped fan, exactly — undo anything the narrow arm wrote.
+      els.forEach((el, i) => { el.style.transform = handFan[i]; el.style.marginLeft = ''; });
+      return;
+    }
+    // Flatten first so the measurement below reads border-box widths, not the
+    // axis-aligned box of a rotated card.
+    els.forEach((el) => { el.style.transform = 'none'; });
+    const cs = getComputedStyle(hand);
+    // ONE COORDINATE SPACE, or the arithmetic lies (Law 2's whole subject).
+    // The app scales under `body { zoom: var(--ui-zoom) }`, and the two rulers
+    // available here disagree about it: clientWidth / scrollWidth / the margin
+    // this writes are LOCAL px (pre-zoom), getBoundingClientRect is the zoomed
+    // viewport. First cut mixed them and shipped 115 px of travel at 390x844 —
+    // observed, not hypothetical. Everything below is LOCAL: the card's bcr
+    // width is divided back through the body zoom it rendered under.
+    const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+    // clientWidth is integer-rounded; solving against it exactly can leave the
+    // content edge a sub-pixel past it, which scrollWidth then rounds UP into
+    // one pixel of travel. One px is donated to certainty instead: the row is
+    // solved to fit clientWidth - 1, so travel is zero by construction and
+    // the instrument (tools/handlayout.mjs) can hold it at zero, not "small".
+    const W = hand.clientWidth - 1 - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    const gap = parseFloat(cs.columnGap) || 0;
+    const C = els[0].getBoundingClientRect().width / zoom;
+    const need = n * C + (n - 1) * gap;
+    const o = n > 1 ? Math.max(0, (need - W) / (n - 1)) : 0;
+    els.forEach((el, i) => { el.style.marginLeft = i && o ? `${-o}px` : ''; });
+  }
+  // Re-derive when the measured facts move: container width (window resize),
+  // card width (Text size), and the narrow/wide word main.js writes. All three
+  // observers reconcile through the same function, are attached only when the
+  // layout word asks for them, and dispose themselves when this screen's DOM
+  // is replaced (no unmount hook exists to hang cleanup on).
+  if (typeof ResizeObserver !== 'undefined' && handLayoutWord() === 'overlap') {
+    const alive = () => document.body.contains(combatEl);
+    const ro = new ResizeObserver(() => { if (alive()) applyHandLayout(); else ro.disconnect(); });
+    const mo = new MutationObserver(() => { if (alive()) applyHandLayout(); else mo.disconnect(); });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout'] });
+    ro.observe($('.hand'));
+    combatEl.__handRo = ro; // renderHand re-points card observation each render
+  }
+
   function openCombatFlaskMenu(anchor, def, { slot = null, chargeKind = null, remaining = 1 } = {}) {
     const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
     const useReason = remaining <= 0 ? 'No charges remaining'
@@ -739,6 +822,19 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       if (pv) wireCardInput(el, inst, pv, affordable);
       hand.appendChild(el);
     });
+    // The overlap arm (block above renderHand): record what this render made,
+    // then reconcile. Inert — including the observer re-point — unless the
+    // layout word is 'overlap'; in 'paging' the loop above was the whole
+    // render, unchanged.
+    handEls = [...hand.children];
+    handFan = handEls.map((el) => el.style.transform);
+    if (combatEl.__handRo && handLayoutWord() === 'overlap') {
+      const ro = combatEl.__handRo;
+      ro.disconnect();
+      ro.observe(hand);
+      handEls.forEach((el) => ro.observe(el));
+    }
+    applyHandLayout();
   }
 
   function isUnplayable(inst) {

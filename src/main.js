@@ -35,7 +35,7 @@ import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
 import { KEEPSAKES } from './content/keepsakes.js';
-import { executeRunEffects } from './engine/actions.js';
+import { executeRunEffects, drawCards, discardFromHand } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
 import { mountRewards } from './ui/screens/reward.js';
@@ -448,6 +448,20 @@ function applyDisplaySettings(settings) {
   // switching is a re-paint with no re-render. Both defaults live in balance.ui.
   const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
   document.documentElement.dataset.cardMotif = motif;
+  // Hand layout (C2) — same shape as cardMotif, one line up: the word's one
+  // home is balance.ui.handLayout, a stored choice outside the closed set
+  // lands on that default, and the renderer (combat's renderHand + the narrow
+  // CSS) keys off this attribute and reads the word nowhere else. Garbage is
+  // SAID, not swallowed — a player whose stored setting rotted should not
+  // find the hand silently rearranged (same contract as tapFloor above).
+  const handLayout = UI.handLayoutModes.includes(settings.handLayout) ? settings.handLayout : UI.handLayout;
+  if (settings.handLayout != null && handLayout !== settings.handLayout) {
+    const msg = `settings.handLayout: stored value ${JSON.stringify(settings.handLayout)} is not one of `
+      + `${UI.handLayoutModes.join(', ')} — applying the default '${handLayout}' and saying so`;
+    dlog('ERROR', msg);
+    console.warn(msg);
+  }
+  document.documentElement.dataset.handLayout = handLayout;
   const strengths = UI.cardMotifStrength;
   const sKey = strengths[settings.cardMotifStrength] != null ? settings.cardMotifStrength : 'normal';
   document.documentElement.style.setProperty('--card-motif-strength', String(strengths[sKey]));
@@ -1206,6 +1220,35 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
+  // `?shotHand=<n>` — STAND WITH A FULLER HAND.
+  //
+  // A REACH STATE, the same shape and reason as ?shotMaxHp beside it: the
+  // hand-layout word (C2) is a claim about how the hand behaves ACROSS hand
+  // sizes, and no instrument could pose one — every capture of the combat hand
+  // was taken at the opening draw, so "ten cards fit with zero travel" had no
+  // photograph and no measurement. The cards enter through drawCards, the door
+  // every real draw enters (reshuffle and the handMax overflow included), not
+  // through the renderer or the piles directly.
+  //
+  // LOUD at both edges: a non-integer or out-of-band ask refuses by name, and
+  // a deck too small to reach the asked hand refuses rather than photograph an
+  // eight-card hand labelled ten — a silent shortfall here would quietly turn
+  // every downstream sliver measurement into a fact about a different hand.
+  if (shotState === 'combat' && shotParams.has('shotHand')) {
+    const wantHand = Number(shotParams.get('shotHand'));
+    if (!Number.isInteger(wantHand) || wantHand < 1 || wantHand > combat.handMax) {
+      throw new Error(`?shotHand=${shotParams.get('shotHand')}: needs a whole number from 1 to handMax (${combat.handMax}).`);
+    }
+    if (combat.piles.hand.length < wantHand) drawCards(combat, wantHand - combat.piles.hand.length);
+    // Reaching DOWN goes through the discard op's own body (discardFromHand) —
+    // the same splice, pile and event a played-down hand produces, so a small
+    // posed hand carries its honest receipt: the discard pile shows where the
+    // cards went.
+    if (combat.piles.hand.length > wantHand) discardFromHand(combat, combat.piles.hand.length - wantHand);
+    if (combat.piles.hand.length !== wantHand) {
+      throw new Error(`?shotHand=${wantHand}: the deck ran out at ${combat.piles.hand.length} cards — this pose cannot reach the asked hand.`);
+    }
+  }
   if (shotState === 'combat' && shotParams.get('shotArcane') === 'matrix') {
     // A host-state visual fixture, before the renderer receives the combat.
     // It covers all three schema states without client mutation: two configured

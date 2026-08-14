@@ -544,6 +544,62 @@ export function validateContent(bundle) {
         + `The consumer resolves an unreadable value to 0, which takes the inspect gesture off every card with nothing on the screen looking different.`);
     }
   }
+  // balance.ui.handLayout — the hand-layout word (C2: overlap AND paging, one
+  // knob). The consumer guards a stored player setting against the modes list
+  // and falls back to THIS row — so if this row itself is garbage, the
+  // fallback is garbage and the narrow hand silently renders in whatever the
+  // CSS default happens to be, with nothing on screen saying a mode was ever
+  // chosen (Law 0 clause 5, again). Loud, by name, at boot.
+  if (b.balance && b.balance.ui && (b.balance.ui.handLayout != null || b.balance.ui.handLayoutModes != null)) {
+    const modes = b.balance.ui.handLayoutModes;
+    if (!Array.isArray(modes) || modes.length === 0 || modes.some((m) => typeof m !== 'string' || !m)) {
+      err('balance.ui.handLayoutModes', `must be a non-empty array of mode names — got ${JSON.stringify(modes)}. `
+        + `It is the closed set the settings guard checks a stored value against; unreadable, every stored choice would land on the default without the player ever being told why.`);
+    } else if (typeof b.balance.ui.handLayout !== 'string' || !modes.includes(b.balance.ui.handLayout)) {
+      err('balance.ui.handLayout', `must be one of ${modes.join(' | ')} — got ${JSON.stringify(b.balance.ui.handLayout)}. `
+        + `This row is the fallback every garbage stored setting lands on; a fallback outside the closed set leaves the hand with no layout word at all.`);
+    }
+  }
+  // OVERLAP DOES NOT FLATTEN WITHOUT ITS READER (Sunna's ruling, 2026-08-14).
+  // Two rows, each defensible alone: 'overlap' is a legal layout mode, and
+  // inspectHold.ms 0 is the inspect gesture's legal off position. TOGETHER
+  // they author a hand nobody can read — ten cards flattened to ~27-30
+  // viewport px exposed slivers (measured, tools/handlayout.mjs, 390x844),
+  // under the tap floor, with the one compensating reader turned off — from a
+  // table edit that never fails a shape check, because each row's own shape is
+  // fine (Law 1 clause 5: the failure a content edit can cause, not just the
+  // rows it can malform). Ruled a REFUSAL, not a warning ("a warning that
+  // boots is the fourth silent state") and not accept-in-writing.
+  //
+  // It binds the OFFERED set, not the default: offering 'overlap' at all puts
+  // the sliver hand one legal settings write away, so the default being
+  // 'paging' discharges nothing. Paging-only with ms 0 stays legal — the
+  // strip needs no reader, and turning the gesture off is a tuning row this
+  // check must not eat. The reader is resolved exactly as its consumer
+  // resolves it (combat.js: `Number((ui.inspectHold || {}).ms) || 0`), so an
+  // ABSENT inspectHold row is the same off position as ms: 0 and refuses too
+  // — guarding on the entry would let deleting the entry silence the check
+  // that watches it (the tapSize precedent below). A MALFORMED ms is not
+  // handled here: it is already red by name in the inspectHold block above,
+  // and a second error calling garbage "0" would misname the defect.
+  // Corpus: tools/overlapreader.mjs — known-bads enter as content rows
+  // through a real boot; observed red at b277ec2 before this block existed.
+  if (b.balance && b.balance.ui) {
+    const ui = b.balance.ui;
+    const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
+    const ih = ui.inspectHold;
+    const wellFormedMs = ih != null && typeof ih === 'object' && !Array.isArray(ih)
+      && typeof ih.ms === 'number' && Number.isFinite(ih.ms) && ih.ms >= 0;
+    const readerOff = ih == null ? true : (wellFormedMs && ih.ms === 0);
+    if (offersOverlap && readerOff) {
+      const floor = ui.tapSize && typeof ui.tapSize.def === 'number' ? `the ${ui.tapSize.def} px tap floor` : 'the tap floor (balance.ui.tapSize.def)';
+      err('balance.ui.handLayoutModes + balance.ui.inspectHold.ms',
+        `'overlap' is offered while the inspect hold is off (${ih == null ? 'the inspectHold row is ABSENT, which the hand resolves to ms 0' : 'ms: 0'}) — refused. `
+        + `Overlap flattens a full hand into ~27-30 px exposed slivers, under ${floor}, and hold-to-inspect is the one reader that makes a sliver legible; ms 0 turns that reader off. `
+        + `These two entries conflict: drop 'overlap' from balance.ui.handLayoutModes, or give balance.ui.inspectHold.ms a non-zero hold. `
+        + `Paging-only with ms 0 stays legal — the strip needs no reader.`);
+    }
+  }
   // THE SECOND-BEAT TABLE, checked at the same boot and for the same reason as
   // the dial above. It is CODE, not content, so it can never be a row a
   // designer breaks — but it is a table, and a table whose row is malformed
