@@ -4,6 +4,13 @@
 // snapshot plus persisted outputs are the only combat/session authority; this
 // tool deliberately says nothing about their visual placement.
 
+// DOOR. Real input enters two ways: the model/engine modules are IMPORTED and
+// driven (createRunState → save/load → combat → co-op → session resume), and
+// the runtime sources are read by readFileSync for the fallback clause. The
+// MUTANT lines at the foot test the predicates on hand-typed strings — the
+// regex, not the road. `--selftest` plants each known-bad INTO A COPY of the
+// real module on disk and re-runs this whole tool against it.
+// (Vira's doors audit 2026-08-14 listed this tool NO-KNOWN-BAD.)
 import fs from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -15,6 +22,42 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { createSession, restoreSession } from './session.mjs';
+
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'derived-runtime-authority.mjs',
+    plants: [
+      {
+        name: 'live content drift rewrites the persisted Energy/Draw stamp',
+        file: 'src/model/state.js',
+        find: '  const existing = snapshot || run.derivedStatRuleSnapshot;',
+        replace: '  const existing = snapshot || undefined; // planted: the persisted snapshot is ignored',
+        expectRed: /FAIL live content drift cannot rewrite persisted (Energy|Draw)/,
+      },
+      {
+        name: 'a stamp/snapshot contradiction is accepted instead of thrown',
+        file: 'src/model/state.js',
+        find: 'if (value !== expected) throw new Error(`Persisted ${key} ${value} contradicts derived-stat snapshot value ${expected}`);',
+        replace: '/* planted: contradiction accepted */',
+        expectRed: /FAIL current stamped run refuses (energyMax|drawPerTurn)\/snapshot contradiction/,
+      },
+      {
+        name: 'combat accepts an unstamped caller (the silent fallback door)',
+        file: 'src/model/state.js',
+        find: "if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');",
+        replace: 'if (!Number.isInteger(energyMax) || energyMax < 0) energyMax = 3; // planted fallback',
+        expectRed: /FAIL solo combat refuses an unstamped caller/,
+      },
+      {
+        name: 'a fallback Energy 3 ships in the runtime',
+        file: 'src/engine/combat.js',
+        append: 'export const plantedEnergy = (run) => run.energyMax ?? 3;',
+        expectRed: /FAIL runtime has no fallback Energy 3 or Draw 5/,
+      },
+    ],
+  }));
+}
 
 const R = createRegistries(contentBundle);
 const source = (path) => fs.readFileSync(path, 'utf8');

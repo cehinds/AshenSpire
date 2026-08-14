@@ -58,6 +58,52 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// RENDERED PAGE: this tool serves the real tree, boots each ?shot= state in a
+// real browser, and hit-tests real rects with elementFromPoint. That is the
+// right door and always was. What it lacked was a re-runnable known-bad: its
+// only observation was "this branch before the two fixes" — a ref nobody can
+// check out now, which under SOP 2's drift clause is `unknown`, not coverage.
+// Vira's audit (2026-08-14) rated it OBSERVED-ONCE for exactly that.
+// `--selftest` puts the ORIGINAL defect back as CSS BYTES in a copy of the
+// tree — the map's zoom stack floating over the canvas again, which is the
+// literal shape of the covered map node — and re-runs this whole tool against
+// the copy: same serve.mjs, same browser, same hit-test.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'screenreach.mjs',
+    args: ['--only', '390x844'],
+    timeoutMs: 600000,
+    plants: [
+      {
+        // #28 moved the bar BELOW the map, so re-floating it is not one
+        // property any more: `position: fixed` over the map's own bottom band
+        // is the same geometry the pre-#28 tree shipped — a floating stack
+        // answering the hit-test in a node's place.
+        name: 'the zoom stack floats over the map canvas again (the #21-shaped covered node)',
+        file: 'styles/map.css',
+        // It floats over the TOP band, where the map's own controls actually
+        // sit at this shape — the bottom band is a pannable canvas whose nodes
+        // are mostly SCROLLED OUT, which this tool correctly does not count, so
+        // a bottom-floating plant reproduces nothing. Measured, not assumed:
+        // bottom => 0 COVERED, top => 3 COVERED.
+        append: '.map-zoom { position: fixed; left: 0; right: 0; top: 0; height: 14vh; z-index: 60; }',
+        // `map` by name, because the boss screen legitimately reports 10
+        // COVERED by design (its splash) — a bare `N COVERED` regex matches
+        // that expected line and would have called a green run a catch.
+        expectRed: /^\s*map\s.*[1-9]\d* COVERED/m,
+      },
+      {
+        name: 'a full-bleed veil is laid over every screen — nothing can answer its own hit-test',
+        file: 'styles/ui.css',
+        append: '.screen::after { content: ""; position: fixed; inset: 0; z-index: 9000; background: transparent; }',
+        expectRed: /^\s*title\s.*[1-9]\d* COVERED/m,
+      },
+    ],
+  }));
+}
+
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
 // tool measured a two-merge-stale bundle and printed OK once already. One home:

@@ -2,7 +2,50 @@
 // Runtime parity probe: gamepad Cancel is synthesized as window-targeted
 // Escape. It must close the contextual menu, spend nothing, and restore focus.
 
+// DOOR. The real input is src/ui/components/flask.js: it is IMPORTED and
+// driven through the fake DOM below, and read as bytes for the lifecycle
+// clauses. The `mutant removing…` lines at the foot test the predicate on an
+// in-memory `.replace()` — the regex, not the road. `--selftest` plants each
+// known-bad INTO A COPY of the real file on disk and re-runs this whole tool
+// against it. (Vira's doors audit 2026-08-14 listed this tool NO-KNOWN-BAD.)
 import { readFileSync } from 'node:fs';
+
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'flask-menu-cancel.mjs',
+    plants: [
+      {
+        name: 'the global cancel listener is never registered (the #22-shaped regression)',
+        file: 'src/ui/components/flask.js',
+        find: "window.addEventListener('keydown', onGlobalCancel);",
+        replace: "/* planted: no global cancel listener */",
+        expectRed: /FAIL window-targeted gamepad Escape closes the menu/,
+      },
+      {
+        name: 'the listener is registered and never torn down',
+        file: 'src/ui/components/flask.js',
+        find: "window.removeEventListener('keydown', onGlobalCancel);",
+        replace: "/* planted: no teardown */",
+        expectRed: /FAIL global cancel listener has symmetric mounted teardown/,
+      },
+      {
+        name: 'cancel closes the menu but never returns focus to the flask',
+        file: 'src/ui/components/flask.js',
+        find: "if (anchor.isConnected && typeof anchor.focus === 'function') anchor.focus();",
+        replace: "/* planted: focus is dropped on close */",
+        expectRed: /FAIL controller cancel restores focus to the selected flask/,
+      },
+      {
+        name: 'cancel reports itself twice (a double onCancel at the seam)',
+        file: 'src/ui/components/flask.js',
+        find: "    if (cancelled && onCancel) onCancel();",
+        replace: "    if (cancelled && onCancel) { onCancel(); onCancel(); }",
+        expectRed: /FAIL controller cancel reports exactly one cancellation/,
+      },
+    ],
+  }));
+}
 
 class FakeElement extends EventTarget {
   constructor(tag = 'div') {
@@ -92,4 +135,10 @@ check('mutant removing listener teardown is caught',
   lifecycle(source.replace("window.removeEventListener('keydown', onGlobalCancel);", '')) === false);
 
 console.log(`\nflask-menu-cancel: ${pass} passed, ${fail} failed`);
+console.log('DOOR: src/ui/components/flask.js is imported and driven — the plants in `--selftest` enter');
+console.log('      as bytes in a copy of that real file (observed red 2026-08-15, re-runnable).');
+console.log('BOUNDARY, found by a plant that did NOT go red: this tool drives the WINDOW-level cancel');
+console.log('      listener only. The element-level keydown handler (Escape/Backspace/arrows on the');
+console.log('      menu root) is never dispatched here, so breaking it leaves this tool green — a real');
+console.log('      hole, named rather than papered over with a plant aimed at the half already covered.');
 if (fail) process.exit(1);

@@ -99,6 +99,46 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// rendered arrival screen, served from this tree and measured in a real
+// browser before and after a scroll. The right door — but its only known-bad
+// was "the first-shipped grid", a tree nobody can check out now, so under SOP
+// 2's drift clause the observation was `unknown`, which is what Vira's audit
+// (2026-08-14) rated it: OBSERVED-ONCE. `--selftest` plants the ORIGINAL
+// defect back as CSS bytes in a copy of the tree — the actions bar returned to
+// the scroll flow, which is literally the shape that put BEGIN THE CLIMB 374
+// device px below the fold — and re-runs this whole tool against the copy.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'actionreach.mjs',
+    args: ['--only', '390x844'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        // The pre-fix shape: `.cz-actions` bounded by flow instead of pinned,
+        // and `.cz-scroll` no longer the scrollport — which is exactly the
+        // arrangement ui.css:817 describes as the thing that was fixed.
+        name: 'the action bar rejoins the scroll flow (BEGIN THE CLIMB back below the fold)',
+        file: 'styles/ui.css',
+        append: '.cz-scroll { overflow-y: visible; flex: 0 0 auto; }\n.cz-actions { margin-top: 0; flex-shrink: 1; }',
+        expectRed: /not whole on arrival \(top [0-9.]+ in a \d+px viewport\)/,
+      },
+      {
+        // Clause 4, EldenSpire#31's property. Kept as a plant rather than the
+        // "it MOVED" clause-3 one I tried first: `position: absolute` on the
+        // bar does not actually move it here (no positioned scroll ancestor),
+        // so that plant went green — a NOT-CAUGHT that was mine, not the
+        // tool's, and re-aiming quietly would have hidden that.
+        name: 'the arrival screen sends its controls off the side (clause 4, #31)',
+        file: 'styles/ui.css',
+        append: '.cz-actions button { position: relative; left: -3000px; }',
+        expectRed: /control\(s\) horizontally absent/,
+      },
+    ],
+  }));
+}
+
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
 // tool measured a two-merge-stale bundle and printed OK once already. One home:

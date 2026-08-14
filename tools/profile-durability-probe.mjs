@@ -36,6 +36,39 @@
 import { pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 
+// DOOR (Rune, 2026-08-15). The real input is `<clone-root>/src/engine/save.js`,
+// entered by IMPORT of that path — the whole-tree door, the same shape as
+// inspecthold's `--root`. That is right, and it was ref-pinned: the argument
+// had to be a pre-fix checkout that no longer exists, so under SOP 2 the
+// observation rotted to `unknown`. `--selftest` makes it re-runnable: each
+// known-bad is planted INTO A COPY of the real save.js and this whole probe is
+// re-run with the copy as its clone-root — the same import, the same module.
+// (Vira's doors audit 2026-08-14 listed this tool NO-KNOWN-BAD.)
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'profile-durability-probe.mjs',
+    args: ['.'],
+    plants: [
+      {
+        name: 'E1: a corrupt profile is read as empty instead of preserved (no archive copy kept)',
+        file: 'src/engine/save.js',
+        find: 'RUN_ARCHIVE_KEY',
+        replace: 'PLANTED_RUN_ARCHIVE_KEY',
+        all: true,
+        expectRed: /FAIL\s+E1 corrupt profile: an archive copy is kept|Error/,
+      },
+      {
+        name: 'E2: a NEWER schemaVersion is accepted blind instead of refused',
+        file: 'src/engine/save.js',
+        find: 'if (typeof v === \'number\' && v > META_SCHEMA_VERSION) {',
+        replace: 'if (false && typeof v === \'number\' && v > META_SCHEMA_VERSION) {',
+        expectRed: /FAIL\s+(E2 a newer schemaVersion is refused|P1 NEWER profile)/,
+      },
+    ],
+  }));
+}
+
 const root = process.argv[2];
 if (!root) {
   console.error('usage: node profile-loss-e444d77.mjs <clone-root> | --selftest');

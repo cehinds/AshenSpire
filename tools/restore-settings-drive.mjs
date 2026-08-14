@@ -15,6 +15,31 @@
 // D22: after a restore, does the SCREEN match the restored profile's settings?
 // Both doors. Sunna's scenario: stored highContrast true / screen off, stored
 // reducedMotion false / screen on, root font-size unchanged.
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// SCREEN after a restore: this drive reads body classes and the root font-size,
+// deliberately not the stored values — the whole point is that "it was saved"
+// and "it is on the screen" are two claims. Right door; no re-runnable
+// known-bad, which is what Vira's audit (2026-08-14) rated NO-KNOWN-BAD.
+// `--selftest` plants the exact defect this tool was built after — a restore
+// that writes the settings and never dresses the screen in them — into a copy
+// of the real main.js, and re-runs this whole drive against it.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'restore-settings-drive.mjs',
+    timeoutMs: 900000,
+    plants: [
+      {
+        name: 'a restore stores the settings but never applies them to the screen',
+        file: 'src/main.js',
+        find: "  document.body.classList.toggle('hi-contrast', settingOn(settings, 'highContrast'));",
+        replace: '  /* planted: the restored profile is stored and the screen keeps the old dress */',
+        expectRed: /FAIL\s+DOOR \d.*high contrast is ON SCREEN after restore/,
+      },
+    ],
+  }));
+}
+
 import { spawn } from 'node:child_process';
 import { serve } from './serve.mjs';
 const { port } = await serve({ root: new URL('..', import.meta.url).pathname, port: 8201, open: false });

@@ -61,6 +61,59 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// rendered control, measured in device px after `body { zoom }` in a real
+// browser — a probe element sized by `var(--tap-floor)` and MEASURED, never a
+// parsed CSS token. That door was always right; what it had no re-runnable
+// known-bad for was the thing it exists to prove: that the SETTING moves the
+// floor. Vira's audit (2026-08-14) rated this NO-KNOWN-BAD. `--selftest`
+// plants the un-wired floor back — `--tap-floor` as a constant that ignores
+// both the setting and the zoom — and re-runs this whole tool against a copy
+// of the tree.
+//
+// AND THE PLANT GOES INTO dist/AshenSpire.html, NOT styles/. Building this
+// corpus is what made me read my own `--dist` default: this tool measures the
+// SHIPPED BUNDLE, so a plant in styles/base.css is a plant it never reads —
+// it went green on both known-bads until the plant moved to the file the tool
+// actually opens. That is the same-door clause catching its own author.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'tapsize.mjs',
+    args: ['--quick'],
+    timeoutMs: 900000,
+    extraCopy: ['dist'],
+    plants: [
+      {
+        // The 24 edge, which the header names as one of the two that are the
+        // whole point: a control still measuring 44 at the 24 setting is the
+        // setting not being wired.
+        name: 'the floor stops answering the setting — --tap-floor pinned at 44 px',
+        file: 'dist/AshenSpire.html',
+        find: '--tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));',
+        replace: '--tap-floor: 44px;',
+        all: true,
+        expectRed: /FAIL — \d+ finding\(s\) of \d+ cell\(s\)/,
+      },
+      {
+        // The other direction: the floor resolves to nothing at all, which the
+        // header says must be its own finding rather than a measurement
+        // against 44.
+        name: 'the floor does not resolve at all (every height measured against nothing)',
+        file: 'dist/AshenSpire.html',
+        find: '--tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));',
+        replace: '--tap-floor: var(--planted-nothing);',
+        all: true,
+        // Anchored on the tool's own verdict line, not on the word UNKNOWN:
+        // the provenance banner prints "UNKNOWN" on every run in a copied
+        // tree, so the loose form called a provenance note a catch. A red for
+        // the wrong reason is not a catch.
+        expectRed: /FAIL — \d+ finding\(s\) of \d+ cell\(s\)/,
+      },
+    ],
+  }));
+}
+
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const argv = process.argv.slice(2);
 const flag = (n) => argv.includes(n);

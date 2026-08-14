@@ -11,6 +11,51 @@ import { validateContent } from '../src/model/validate.js';
 import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
 import { createCoopCombat } from '../src/engine/coopCombat.js';
 
+// DOOR. The real input is the content bundle and the model/engine modules,
+// entered by IMPORT — the same graph the game boots. The `mutant:`/`schema:`
+// rows below are in-memory bundle patches handed to the validators: that is
+// the validator's own door and right for those clauses, but nothing in this
+// file ever walked the AUTHORED-CONTENT road. `--selftest` closes that: each
+// plant is written INTO A COPY of the real content/model file on disk and
+// this whole tool re-runs against the copy.
+// (Vira's doors audit 2026-08-14 listed this tool NO-KNOWN-BAD.)
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'class-loadouts.mjs',
+    plants: [
+      {
+        name: 'the authored role copies stop summing to the starting deck size',
+        file: 'src/content/balance.js',
+        find: 'roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 }',
+        replace: 'roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1 }',
+        expectRed: /FAIL default roleCopies are 4\/4\/1\/1/,
+      },
+      {
+        name: 'a class loses its authored signature card',
+        file: 'src/content/classes.js',
+        find: "startingSignatureCard: 'gorefireSlash',",
+        replace: "startingSignatureCard: 'starstonePebble',",
+        expectRed: /FAIL reaver declares exactly one signature/,
+      },
+      {
+        name: 'the Ash Staff attack profile stops declaring magic damage school',
+        file: 'src/content/generated/basicCardProfiles.js',
+        find: '"id": "staffMagicAttack",\n    "role": "attack",\n    "baseCardId": "strike",\n    "displayName": "Staff Magic Strike",\n    "icon": "✦",\n    "damageSchool": "magic",',
+        replace: '"id": "staffMagicAttack",\n    "role": "attack",\n    "baseCardId": "strike",\n    "displayName": "Staff Magic Strike",\n    "icon": "✦",\n    "damageSchool": "physical",',
+        expectRed: /FAIL Ash Staff attack declares magic damageSchool/,
+      },
+      {
+        name: 'a silent state-loss profile swap is allowed through (the compatibility refusal dropped)',
+        file: 'src/model/loadout.js',
+        find: 'if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
+        replace: 'if (false && prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
+        expectRed: /FAIL compatibility is consumed to refuse silent state-loss swaps/,
+      },
+    ],
+  }));
+}
+
 let passed = 0;
 let failed = 0;
 function check(ok, label, detail = '') {
@@ -217,6 +262,17 @@ const coop = createCoopCombat({
     id: 'p1', classId: persisted.class, maxHp: persisted.maxHp, hp: persisted.hp,
     maxMana: persisted.maxMana, mana: persisted.mana, maxStamina: persisted.maxStamina, stamina: persisted.stamina,
     deck: persisted.deck, relicIds: persisted.relics, flasks: persisted.flasks,
+    // STANDING RED, FOUND BY BUILDING THIS TOOL'S OWN KNOWN-BAD (Rune,
+    // 2026-08-15). This seat was UNSTAMPED, and createPlayerCombatEntity has
+    // refused an unstamped seat since the derived-authority slice — so this
+    // file THREW at pristine dev = 5244543 and had been exiting 1 for however
+    // long, with 60+ PASS lines printed above the stack trace. Vira's doors
+    // audit rated it NO-KNOWN-BAD at `pattern` depth, which is a claim about
+    // what the file says; nobody had run it. The stamp is passed here because
+    // every other transport in the tree passes it — the refusal is correct and
+    // the CALLER was wrong, which is exactly the invariant
+    // tools/derived-runtime-authority.mjs asserts and this tool was violating.
+    energyMax: persisted.energyMax, drawPerTurn: persisted.drawPerTurn,
   }],
 });
 const coopRole = [...coop.players.get('p1').piles.hand, ...coop.players.get('p1').piles.draw]

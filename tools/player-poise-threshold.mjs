@@ -29,6 +29,68 @@ import { validateContent } from '../src/model/validate.js';
 import { PASSIVE_TYPES } from '../src/model/schemas.js';
 import * as projectionModel from '../src/model/statProjection.js';
 
+// DOOR. Three real doors, all of them the ones the game itself uses: the
+// content bundle by import, the engine/model modules by import (dealPoiseDamage
+// is driven through the funnel every poiseDamage opcode drains into), and the
+// authored CSV headers plus combat.js's denial sentence by readFileSync. The
+// in-file `mutableBundle()` mutants are the validator's own door and right for
+// those clauses. What this file never had was a re-runnable plant on the
+// SHIPPED-FILE road: the header's "observed 2026-08-14, reverted" scratch edit
+// was a one-off, and under SOP 2's drift clause it rotted to `unknown` at the
+// next ref (Vira's audit rated this OBSERVED-ONCE). `--selftest` is that plant
+// made re-runnable — including one on the WAKE RED, whose whole subject is a
+// premise dying in the real tree.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'player-poise-threshold.mjs',
+    plants: [
+      {
+        // THE WAKE RED'S OWN KNOWN-BAD (development.md, *The wake condition*,
+        // clause 3): the premise-death must be planted through the same door a
+        // real writer would arrive by. Relaxing the kind gate in
+        // dealPoiseDamage IS that door — it is the funnel every poiseDamage
+        // opcode drains into, so a real stagger slice landing would flip
+        // exactly this predicate.
+        name: 'WAKE: the no-writer premise dies — dealPoiseDamage stops refusing a player entity',
+        file: 'src/engine/actions.js',
+        find: "  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;",
+        replace: "  if (!enemy || !enemy.alive) return; // planted: the kind gate is gone, a writer has arrived",
+        all: true, // the gate guards two functions in this file; half a plant leaves the real funnel closed
+        expectRed: /FAIL\s+WAKE RED.*THE PREMISE DIED AND A REFUSAL STILL STANDS/,
+      },
+      {
+        name: 'a stagger rule learns the player threshold word (mechanics by the back door)',
+        file: 'src/engine/statuses.js',
+        append: 'export const plantedStaggerRule = (p) => p.poiseThreshold > 0;',
+        expectRed: /FAIL\s+the combat-rule vocabulary stays threshold-free/,
+      },
+      {
+        name: 'the authored poiseThreshold column disappears from the source spreadsheet',
+        file: 'content/source/weapons.csv',
+        find: 'poiseThreshold',
+        replace: 'plantedColumn',
+        expectRed: /FAIL\s+source spreadsheets author one poiseThreshold column/,
+      },
+      {
+        name: 'the receipt is flipped active while nothing writes the value',
+        file: 'src/model/statProjection.js',
+        find: 'active: false',
+        replace: 'active: true',
+        all: true,
+        expectRed: /FAIL\s+WAKE RED.*a refusal artifact already dropped/,
+      },
+      {
+        name: 'the threshold-0 refusal is dropped — an empty vessel is stamped instead of absent',
+        file: 'src/model/state.js',
+        find: 'poiseMax = 0 })',
+        replace: 'poiseMax = 1 })',
+        expectRed: /FAIL\s+the player entity stamps a real-but-empty vessel/,
+      },
+    ],
+  }));
+}
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 let checks = 0;
 let failures = 0;
@@ -315,4 +377,11 @@ check('enemy poiseMeter behavior remains the existing independent system', () =>
 });
 
 console.log(`\n${failures ? `PLAYER POISE RED — ${failures}/${checks} contracts failing` : `PLAYER POISE GREEN — ${checks}/${checks}`}`);
+console.log('DOOR: content by the real bundle import; dealPoiseDamage driven at the funnel every');
+console.log('      poiseDamage opcode drains into; the CSV headers and the denial sentence by');
+console.log('      readFileSync of the real files. `--selftest` re-observes five known-bads planted');
+console.log('      as bytes in a copy of those same files — including the WAKE premise-death at the');
+console.log('      writer funnel, red in BOTH directions (observed 2026-08-15, re-runnable). The');
+console.log('      header\'s 2026-08-14 scratch-edit observation is superseded: it was one-off and');
+console.log('      had drifted to `unknown` under SOP 2. NOT covered: any rendered pixel.');
 if (failures) process.exit(1);

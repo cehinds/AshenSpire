@@ -27,6 +27,45 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// rendered coach mark driven by REAL mouse clicks at real screen coordinates
+// — never el.click(), which would bypass the geometry under test. That door
+// is the strongest thing in this file. What it had no re-runnable known-bad
+// for was the property it exists to protect: that the veil's two buttons stay
+// hit-testable, because they are the ONLY thing that writes `seenTutorial`,
+// so an unreachable button is an un-dismissable veil that returns on reload.
+// Vira's audit (2026-08-14) rated this NO-KNOWN-BAD. `--selftest` plants that
+// exact lockout as CSS bytes in a copy of the real tree and re-runs this whole
+// tool against it — same serve.mjs, same browser, same real clicks.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'tutorial-reach.mjs',
+    args: ['--only', '800x450'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        // THE LOCKOUT ITSELF: the button row pushed off the bottom of the
+        // viewport, which is the state the header says makes the veil
+        // un-dismissable AND persistent across a reload.
+        name: 'the coach mark buttons are pushed off the bottom of the viewport (the un-dismissable veil)',
+        file: 'styles/ui.css',
+        append: '.tut-bubble .tut-row { position: relative; top: 4000px; }',
+        expectRed: /(FAIL|off-screen|not hit-testable|unreachable|✗)/i,
+      },
+      {
+        // The other way the same lockout arrives: something else answers the
+        // hit-test at the button's own coordinates, so a REAL click lands on
+        // the veil instead of the control. el.click() would not notice.
+        name: 'a transparent layer covers the buttons — a real click lands on the veil',
+        file: 'styles/ui.css',
+        append: '.tut-veil::after, .tut-bubble::after { content: ""; position: fixed; inset: 0; z-index: 99999; }',
+        expectRed: /(FAIL|not hit-testable|covered|unreachable|✗)/i,
+      },
+    ],
+  }));
+}
+
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const BROWSERS = [
   process.env.CHROME,
