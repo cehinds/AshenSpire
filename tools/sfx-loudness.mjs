@@ -131,6 +131,18 @@ if (IS_CLI && process.argv.includes('--selftest')) {
   ];
   let bad = 0;
   for (const [ok, msg] of checks) { console.log(`  ${ok ? '✓' : '✗'} ${msg}`); if (!ok) bad++; }
+  // THE DOOR, stated — and it is NOT the recipe door, on purpose. Vira's doors
+  // audit (2026-08-14) read this row as a content-door SAME-DOOR at `pattern`
+  // depth, her own weakest claim. Run, it is narrower than that and I would
+  // rather say so than keep the better verdict:
+  console.log('\n  DOOR: these known-bads are SYNTHETIC LAYERS handed straight to recipeLoudness() —');
+  console.log('    downstream of src/content/sfx.js, which never loads here. That is the right door');
+  console.log('    for what this file IS: a RULER, and these are its calibration — does the number');
+  console.log('    move the right way when amplitude, register and band move. It is the wrong door');
+  console.log('    for any claim about the shipped table, and this tool makes none: the recipe door');
+  console.log('    belongs to tools/sfx-gain-probe.mjs (class 3), which plants a clamp in the real');
+  console.log('    engine. A ruler that certified itself against its own subject would be my named');
+  console.log('    failure mode #2 — an estimator tuned by the ear it audits.');
   console.log(bad ? `\nRESULT: sfx-loudness selftest FAILED (${bad}) — the instrument cannot be trusted either way.`
     : '\nRESULT: sfx-loudness selftest held — amplitude, register and band all move the number in the right direction.');
   process.exit(bad ? 1 : 0);
