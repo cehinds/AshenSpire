@@ -51,6 +51,25 @@
 //                   broken-axis mark. A floored bar is no longer to scale, and
 //                   one that does not say so is the lie the clause exists to
 //                   prevent.
+//   A11 PLAYER VESSEL  D10.4 — "poise (very skinny bar) under the health bar",
+//                   and "the hud under the character models should really just
+//                   show health and poise" (his words, 2026-08-08; the player
+//                   half ruled answered by D17 q5, 2026-08-08, over the mock's
+//                   silence). On the default pose: (a) the main HUD carries a
+//                   poise bar whose data-max EQUALS the posed combat entity's
+//                   own poiseMeter.max (DOM ↔ model, never a typed number),
+//                   whose data-cur is 0 — the VALUE has no writer; the vessel
+//                   is real-but-empty, and this asserts the emptiness rather
+//                   than hiding it — and whose trough renders STRICTLY LOWER
+//                   than the hp trough ("very skinny" is a rendered fact, not
+//                   a stylesheet intention: the main-surface height rule
+//                   outranks .resbar-skinny by specificity, so only a
+//                   measurement can claim this). (b) the player's under-model
+//                   strip shows EXACTLY hp and poise. (c) THE REFUSAL EDGE:
+//                   ?shotMaxPoise=0 removes the vessel — the bar is ABSENT,
+//                   not an empty trough, while hp stands. (d) poise's A2 sweep
+//                   stands AT its own derived domain and must fill its own
+//                   cell there (same clause as A2X (b), poise's copy).
 //
 // ---------------------------------------------------------------------------
 // HOW THE KNOWN-BAD ENTERS — and it enters by the real door, with no fixture.
@@ -95,6 +114,20 @@
 //   migration: hp STAYED GREEN under that plant — 91 IS the shared max, so
 //   the pre-migration hp-only A2 could not see this class at all. 21 failing
 //   planted; 18 ok after revert, same door.
+//
+// A11 WAS WATCHED RED BY BOTH OF ITS DOORS (2026-08-14, with the vessel):
+//   the SHIPPED PRE-VESSEL TREE (dev = acb8ffe, real code, nothing authored)
+//   → 5 FAILING: no player poiseMeter, model strip [hp] only, both shapes,
+//   plus A2 "poise: fewer than two usable points at every shape" — which is
+//   what the usableByResource seed below exists for: without it, a tree whose
+//   model derives no poise domain skipped the sweep in SILENCE.
+//   the shared-rate plant re-run WITH poise aboard (same scratch edit as
+//   above, rebuilt, reverted) → 23 FAILING, and the row that matters: poise
+//   at its OWN domain 33 rendered 25.42/39.55 px of its cell (A11 (d), RED
+//   both shapes) while hp STAYED GREEN — poise's domain (33) differs from the
+//   shared max (91), so the vessel's at-domain clause sees exactly the class
+//   the hp sweep is structurally blind to. The control lives on the resource
+//   whose domain does NOT equal the shared value; keep it there.
 //
 // The maximum enters through `?shotMaxHp=`, which writes `run.maxHp` — the same
 // field a curse (engine/actions.js:549) and an armour mod (model/loadout.js
@@ -356,18 +389,28 @@ async function sweepShape(b, href, [w, h]) {
   return rows;
 }
 
-// THE PER-RESOURCE SWEEP (A2, migrated 2026-08-14 with the D19 C6 ruling).
-// Same door discipline as the hp sweep: the maximum enters through the shot
-// param that writes the RUN's own field (?shotMaxMana / ?shotMaxStamina,
-// main.js — the field a real max change would move), never the renderer. The
-// values are every integer of the resource's own derived domain (these pools
-// are small by design; a domain past 6 is sampled at 6 to keep the sweep
-// honest about time without inventing maxima).
-const RESOURCE_DOORS = Object.freeze({ mana: 'shotMaxMana', stamina: 'shotMaxStamina' });
+// THE PER-RESOURCE SWEEP (A2, migrated 2026-08-14 with the D19 C6 ruling;
+// poise joined 2026-08-14 with the player vessel). Same door discipline as the
+// hp sweep: the maximum enters through the shot param that writes the model's
+// own seam (?shotMaxMana / ?shotMaxStamina write the RUN's field;
+// ?shotMaxPoise writes the explicit override createCombat already owns — the
+// receipt's output seam, Law 0 clause 3 — one stage above the entity, exactly
+// where ?shotMaxHp sits relative to the derived-stat formula it bypasses),
+// never the renderer. Small domains sweep every integer; a wide domain (poise,
+// ~tens) is sampled at six spread values that INCLUDE the domain itself, so
+// every resource's sweep stands at its own ceiling at least once — nothing
+// invents a maximum past it.
+const RESOURCE_DOORS = Object.freeze({ mana: 'shotMaxMana', stamina: 'shotMaxStamina', poise: 'shotMaxPoise' });
+function sweepValues(domain) {
+  if (domain <= 6) return Array.from({ length: domain }, (_, i) => i + 1);
+  const vals = new Set();
+  for (let i = 0; i < 6; i++) vals.add(Math.max(1, Math.round(((i + 1) / 6) * domain)));
+  return [...vals].sort((a, b2) => a - b2);
+}
 async function sweepResource(b, href, [w, h], resId, door, domain) {
   await b.cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false }, b.S);
   const points = [];
-  for (let v = 1; v <= Math.min(domain, 6); v++) {
+  for (const v of sweepValues(domain)) {
     await b.cdp.send('Page.navigate', { url: `${href}?shot=combat&${door}=${v}` }, b.S);
     await b.until(`!!document.querySelector('.combat .topbar .resbar')`, `combat @ ${door}=${v}`);
     await wait(320);
@@ -450,6 +493,68 @@ function judgeCrossResource(tag, hpRows, manaPoints, domains) {
     notes.push(`A2X ${tag}: AT-OWN-DOMAIN ok — mana at max ${domains.mana} fills its ${atDomain.cellW} px cell exactly`);
   }
   return hadPairs;
+}
+
+// A11 — the player's poise vessel (D10.4 + D17 q5). One READ of the default
+// pose plus one navigation through the refusal edge. Every number is rendered;
+// the expected max comes from the posed combat entity itself, never typed.
+const READ_VESSEL = `(() => {
+  const n = (v) => Math.round(v * 100) / 100;
+  const grab = (el) => el && {
+    cur: Number(el.dataset.cur), max: Number(el.dataset.max),
+    h: n(el.getBoundingClientRect().height), w: n(el.getBoundingClientRect().width),
+    cellW: el.parentElement ? n(el.parentElement.getBoundingClientRect().width) : 0,
+    floored: el.dataset.floored === '1',
+  };
+  const main = document.querySelector('.combat .topbar .resbars-host');
+  const player = window.__combat && window.__combat.player;
+  return {
+    poise: grab(main && main.querySelector('.resbar[data-res="poise"]')),
+    hp: grab(main && main.querySelector('.resbar[data-res="hp"]')),
+    meter: player && player.poiseMeter ? { value: player.poiseMeter.value, max: player.poiseMeter.max } : null,
+    modelRows: [...document.querySelectorAll('.combatant.player .meters .resbar')].map((el) => el.dataset.res),
+  };
+})()`;
+async function judgePlayerVessel(b, href, [w, h]) {
+  const tag = `${w}x${h}`;
+  await b.cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false }, b.S);
+  await b.cdp.send('Page.navigate', { url: `${href}?shot=combat` }, b.S);
+  await b.until(`!!document.querySelector('.combat .topbar')`, `combat @ ${tag} (A11)`);
+  await wait(320);
+  const r = await b.ev(READ_VESSEL);
+  // (a) present on the main HUD, DOM agreeing with the entity, empty, skinny.
+  if (!r.meter) {
+    fail('A11', `${tag}: the posed player entity carries NO poiseMeter — the model seat this vessel reads is absent`);
+  } else if (!r.poise) {
+    fail('A11', `${tag}: player poiseMeter is {${r.meter.value}/${r.meter.max}} but the main HUD renders NO poise bar — "poise (very skinny bar) under the health bar" is his layout, twice asked (D10.4, D17 q5)`);
+  } else {
+    if (r.poise.max !== r.meter.max || r.poise.cur !== r.meter.value) {
+      fail('A11', `${tag}: DOM says poise ${r.poise.cur}/${r.poise.max}, the entity says ${r.meter.value}/${r.meter.max} — the bar is not reading the model seat`);
+    }
+    if (r.poise.cur !== 0) {
+      fail('A11', `${tag}: poise cur is ${r.poise.cur} — nothing writes player poise build-up yet; a non-zero value here means a writer landed and this assertion must MOVE with the mechanics, not be relaxed`);
+    }
+    if (!r.hp) fail('A11', `${tag}: no hp bar beside the poise vessel — the pose itself is broken`);
+    else if (!(r.poise.h < r.hp.h)) {
+      fail('A11', `${tag}: poise trough renders ${r.poise.h} px tall against hp's ${r.hp.h} px — "very skinny" is not a rendered fact here (the main-surface height rule outranks .resbar-skinny by specificity; only this measurement can claim it)`);
+    }
+  }
+  // (b) the under-model strip: exactly hp and poise, his sentence.
+  const rows = [...new Set(r.modelRows)];
+  if (!(rows.length === 2 && rows.includes('hp') && rows.includes('poise'))) {
+    fail('A11', `${tag}: the player's under-model strip shows [${r.modelRows.join(', ')}] — "should really just show health and poise", his words (D10.4)`);
+  }
+  // (c) THE REFUSAL EDGE: threshold 0 → the vessel is ABSENT, not empty.
+  await b.cdp.send('Page.navigate', { url: `${href}?shot=combat&shotMaxPoise=0` }, b.S);
+  await b.until(`!!document.querySelector('.combat .topbar')`, `combat @ ${tag} shotMaxPoise=0 (A11)`);
+  await wait(320);
+  const z = await b.ev(READ_VESSEL);
+  if (z.poise) fail('A11', `${tag}: at threshold 0 the main HUD still renders a poise bar (${z.poise.cur}/${z.poise.max}) — a zero-threshold player has no vessel; drawing one is the empty-trough lie the refusal exists to prevent`);
+  if (z.meter) fail('A11', `${tag}: at threshold 0 the entity still carries a poiseMeter {${z.meter.value}/${z.meter.max}} — the refusal must live in the model, not the paint`);
+  if (!z.hp) fail('A11', `${tag}: hp vanished with the poise vessel at shotMaxPoise=0 — the refusal took the wrong bar with it`);
+  if (!fails.some((f) => f.startsWith('A11') && f.includes(tag))) {
+    notes.push(`A11 ${tag}: PLAYER VESSEL ok — poise ${r.poise.cur}/${r.poise.max} = entity {${r.meter.value}/${r.meter.max}}, trough ${r.poise.h} px < hp ${r.hp.h} px, model strip [${rows.join('+')}], and threshold 0 renders ABSENT with hp standing`);
+  }
 }
 
 async function captureLayoutPage(b, href, [w, h], state, tree) {
@@ -955,14 +1060,32 @@ async function main() {
         const tag = `${shape[0]}x${shape[1]}`;
         let manaPoints = [];
         for (const [resId, door] of Object.entries(RESOURCE_DOORS)) {
+          // Seed 0 FIRST: a door whose resource never sweeps (no derived
+          // domain — e.g. this tool against a tree from before that resource
+          // reached the model) must land in the fewer-than-two-points RED
+          // below, never in silence. The pre-poise tree is the live known-bad:
+          // RESOURCE_DOORS names poise, the old model derives no poise domain,
+          // and without this seed the loop's `continue` was a quiet green.
+          usableByResource[resId] = usableByResource[resId] || 0;
           if (!Number.isFinite(domains[resId]) || domains[resId] <= 0) continue;
           const points = await sweepResource(b, href, shape, resId, door, domains[resId]);
           if (resId === 'mana') manaPoints = points;
           console.log(`    ${resId} sweep: ${points.map((p) => `${p.max}→${p.w}px${p.floored ? ' (floored)' : ''}`).join('  ')}`);
           const usable = judgeResourceProportion(tag, resId, points, domains[resId]);
-          usableByResource[resId] = Math.max(usableByResource[resId] || 0, usable);
+          usableByResource[resId] = Math.max(usableByResource[resId], usable);
+          // A11 (d) — poise AT its own domain fills its own cell: A2X (b)'s
+          // clause, poise's copy, measured from the sweep's own at-domain
+          // point (sweepValues always includes the domain).
+          if (resId === 'poise') {
+            const atDomain = points.find((p) => p.max === domains[resId]);
+            if (!atDomain) fail('A11', `${tag}: the poise sweep never stood AT its own domain ${domains[resId]} — the fills-own-cell clause was not measured`);
+            else if (Math.abs(atDomain.w - atDomain.cellW) > 1.0) {
+              fail('A11', `${tag}: poise at its OWN domain ${domains[resId]} rendered ${atDomain.w} px of its ${atDomain.cellW} px cell${atDomain.floored ? ' (floored)' : ''} — a resource at 100 % of its own ceiling must fill its own cell`);
+            } else notes.push(`A11 ${tag}: POISE AT-OWN-DOMAIN ok — max ${domains[resId]} fills its ${atDomain.cellW} px cell exactly`);
+          }
         }
         crossPairsAnywhere = judgeCrossResource(tag, rows, manaPoints, domains) || crossPairsAnywhere;
+        await judgePlayerVessel(b, href, shape);
       }
       if (SHOTS_OUT) {
         await captureLayoutPage(b, source.url, shape, 'solo', 'source');
@@ -992,7 +1115,11 @@ async function main() {
   console.log(`\nDOOR: the maximum entered through ?shotMaxHp=, which writes run.maxHp — the same field a curse
       (engine/actions.js) and an armour mod (model/loadout.js) write. Not injected into the renderer:
       run creation, combat entity creation, the paced snapshot, the resource table, the plan and the
-      DOM all ran as they do in play.
+      DOM all ran as they do in play. Poise's door (?shotMaxPoise=) enters ONE STAGE HIGHER than the
+      others: it writes the explicit override createCombat owns (Law 0 clause 3), the receipt's
+      OUTPUT seam — so the sweep bypasses the equipment-receipt derivation itself, which is proven
+      separately, through the content door, by tools/player-poise-threshold.mjs. The default pose
+      (no param) walks the full path: A11 checks the entity's own derived stamp against the DOM.
 KNOWN-BAD: this tool's failing case is the SHIPPED PRE-CHANGE TREE, where the combat health bar was
       \`.topbar .hpbar { width: 19rem }\` — a constant. Run with --tree against a checkout at dev and
       A1 goes red on real code. Nothing was authored to make it fail.

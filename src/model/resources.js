@@ -49,11 +49,16 @@ export function resourceScale(v) {
  * THE CLOSED SET OF SOURCES — the whole vocabulary a row may name.
  *
  * `read(view, entity)` returns { cur, max } or NULL. Null is the refusal and it
- * is load-bearing: the player entity has no poiseMeter (state.js:204 — poise is
- * enemy-only and always has been), so the poise row reads null under the player
- * and the bar is ABSENT, not empty. That is the same code path a stamina row
- * would take the day someone writes one, and it is observable on the shipped
- * tree today, which is why this feature's refusal needs no fixture.
+ * is load-bearing: an entity with no poiseMeter — a zero-threshold player
+ * (createPlayerCombatEntity stamps NO meter at threshold 0), a legacy headless
+ * fixture — reads null and the bar is ABSENT, not empty. The player carries a
+ * REAL-BUT-EMPTY meter since 2026-08-14: max is the equipment stagger-threshold
+ * receipt (stamped by engine/combat.js from statProjection's
+ * playerPoiseThresholdReceipt — D10.4's skinny bar, D17 q5's "should also
+ * effect player too"), value is 0 with NO writer until the player-poise
+ * mechanics are dealt. tools/hudbars.mjs A11 asserts both halves: the vessel
+ * present and empty at a real threshold, and ABSENT — not an empty trough —
+ * at threshold 0.
  *
  * `domain(pop)` derives the largest max this resource reaches, over the
  * population the surface can display — DERIVED from content, never typed, so it
@@ -139,7 +144,9 @@ export function resourceDomains(registries) {
     maxHp: registries.statDomains.hp,
     maxMana: registries.statDomains.mana,
     maxStamina: registries.statDomains.stamina,
-    poiseMax: undefined,
+    // The player's poise ceiling: the largest stagger threshold the equipment
+    // tables can grant (registries.js derives it beside the other domains).
+    poiseMax: registries.statDomains.poise,
   }];
   const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
   const pops = { main: playerPop, model: bothPop };

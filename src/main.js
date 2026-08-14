@@ -125,6 +125,10 @@ setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 // thing that makes the gate below reach every state; keep the count at one.
 const shotParams = new URLSearchParams(location.search);
 const shotState = shotParams.get('shot');
+// ?shotMaxPoise's parked value (see the shot=combat block): module-scoped so it
+// reaches enterCombat without touching the run — a shot lever must not leak
+// into a save. Null means "no override; derive from the loadout receipt".
+let shotPoiseMaxOverride = null;
 const shotEvidence = shotParams.get('shotEvidence');
 if (shotEvidence) document.documentElement.dataset.shotEvidence = shotEvidence;
 if (shotParams.get('shotArcane') === 'matrix') document.documentElement.dataset.shotArcane = 'matrix';
@@ -1206,6 +1210,9 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       flasks: run.flasks,
       flaskCharges: run.flaskCharges,
       loadout: run.loadout,
+      // The shot door's override, when parked (null otherwise — createCombat
+      // then derives the threshold from the loadout receipt, the real path).
+      ...(shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {}),
     },
     enemyIds: enc.enemies,
     hpMult: cm.hpMult,
@@ -1857,6 +1864,20 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     if (Number.isFinite(shotMaxStamina) && shotMaxStamina > 0) {
       run.maxStamina = Math.floor(shotMaxStamina);
       run.stamina = Math.min(run.stamina, run.maxStamina);
+    }
+    // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
+    // three doors above there is no run field to write: the player's poise max
+    // is derived per fight from the loadout (engine/combat.js reads the
+    // equipment threshold receipt at entity creation). So this door enters at
+    // the receipt's OUTPUT seam — the explicit override createCombat already
+    // owns (Law 0 clause 3: an override is data), one stage above the entity,
+    // which is where ?shotMaxHp sits relative to the derived-stat formula IT
+    // bypasses. Module-scoped, never written to the run: a shot lever must not
+    // leak into a save. 0 is a legal value on purpose — it poses the refusal
+    // (no vessel, the bar ABSENT), which is A11's zero edge.
+    const shotMaxPoise = Number(shotParams.get('shotMaxPoise'));
+    if (shotParams.has('shotMaxPoise') && Number.isFinite(shotMaxPoise) && shotMaxPoise >= 0) {
+      shotPoiseMaxOverride = Math.floor(shotMaxPoise);
     }
     // TWO FLASKS IN THE POSE, ONE OF EACH KIND, AND IT IS NOT DRESSING. A
     // drunk flask does not come back this climb, and `useFlask` is a row in the

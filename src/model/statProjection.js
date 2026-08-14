@@ -14,8 +14,13 @@ const LABELS = Object.freeze({
 });
 
 /**
- * Pure, inert player-Poise projection. Equipment and relics may state a
- * threshold, but no player state field or combat system consumes it yet.
+ * Pure player-Poise threshold projection. Equipment and relics state the
+ * threshold; since 2026-08-14 the combat entity STAMPS it as the HUD vessel's
+ * max (engine/combat.js — D10.4's skinny bar, D17 q5's "should also effect
+ * player too"). That is a DISPLAY consumer only: no combat rule reads it, no
+ * writer moves the vessel's value, and Poise damage is still dealt to enemies
+ * alone. `active` stays false until a combat rule consumes it — the day the
+ * player-poise mechanics land, that flip is theirs to make, with the note.
  */
 export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
@@ -42,7 +47,7 @@ export function playerPoiseThresholdReceipt(registries, run) {
     raw,
     value: raw,
     active: false,
-    note: 'No current consumer. Player Poise is not the enemy Poise meter.',
+    note: 'Display consumer only: the combat entity stamps this as the HUD vessel\'s max. No combat consumer — Poise damage is not dealt to players. Player Poise is not the enemy Poise meter.',
   };
 }
 

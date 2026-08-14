@@ -3,6 +3,8 @@
 // State stores INSTANCE data referencing definitions by id only:
 //   deck card  = { instanceId, cardId, upgraded }
 //   enemy      = { instanceId→id, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }
+//   player     = { …pools…, poiseMeter? — max from the equipment threshold
+//                  receipt, value 0 with NO writer (see createPlayerCombatEntity) }
 // Saves serialize instances + RNG counters, never definitions.
 //
 // Headless: no document/window/localStorage/timers.
@@ -400,11 +402,23 @@ export function deserializeRun(json) {
 
 /**
  * Player combat entity. statuses: { [statusId]: { stacks, duration?, meter? } }.
+ *
+ * `poiseMax` (optional) stamps the player's Poise vessel — the REAL-BUT-EMPTY
+ * seat: max is the equipment/relic stagger threshold (createCombat derives it
+ * from playerPoiseThresholdReceipt), value is 0 and HAS NO WRITER — the engine
+ * deals Poise damage to enemies only (actions.js dealPoiseDamage gates on
+ * kind). The vessel exists so the HUD can tell the truth he asked to see
+ * ("poise (very skinny bar) under the health bar", D10.4; "should also effect
+ * player too", D17 q5); the mechanics that will one day move the value —
+ * stagger, resistance, poise damage against players — are combat design dealt
+ * elsewhere and deliberately NOT introduced by this seat. 0 stamps NO meter:
+ * a zero-threshold player has no vessel, and the HUD's refusal path renders
+ * it ABSENT rather than as an empty trough.
  */
-export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn }) {
+export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0 }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
-  return {
+  const entity = {
     id: 'player',
     kind: 'player',
     classId,
@@ -430,6 +444,26 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
     },
     alive: true,
   };
+  stampPlayerPoiseMax(entity, poiseMax);
+  return entity;
+}
+
+/**
+ * stampPlayerPoiseMax(entity, max) — the ONE way the player's Poise vessel is
+ * (re)sized, at entity creation and at the single mid-fight door equipment
+ * moves through (doSwapArmament). Max only: the accumulated value rides —
+ * today it is always 0 because nothing writes it, and this helper must keep
+ * being value-preserving so the future writer's build-up survives a swap.
+ * A non-positive max REMOVES the meter: no vessel, the HUD refusal renders
+ * ABSENT (never an empty trough).
+ */
+export function stampPlayerPoiseMax(entity, max) {
+  if (Number.isInteger(max) && max > 0) {
+    const value = entity.poiseMeter ? Math.max(0, Math.min(entity.poiseMeter.value, max)) : 0;
+    entity.poiseMeter = { value, max };
+  } else {
+    delete entity.poiseMeter;
+  }
 }
 
 /**
