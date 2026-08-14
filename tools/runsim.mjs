@@ -24,6 +24,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
+import { resolveStartingKit } from '../src/model/startingKits.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
@@ -49,6 +50,46 @@ let GRACE_ON = !argv.includes('--no-grace-refill');
 // plain fleet's wins exactly, same seeds, or the instrument perturbed the
 // measurement. (Invariant, not a boast: re-run both ways and diff the wins.)
 const DEEP = argv.includes('--deep');
+// THE CON BAND (Vira, 2026-08-15). D22 put HP back on Constitution while D10
+// already had Stamina there, so one attribute now pays two resources and the
+// creation screen's five bonus points became a question nobody had measured.
+//
+// `--spend=<attributeId>` asks the ONE question a player actually faces at
+// creation: the class preset already spends the five bonus points somewhere —
+// what happens if they all go here instead? It starts from the shipped preset
+// and moves every movable point into the named attribute, where "movable" is
+// bounded by three authored facts and by nothing this tool decides:
+//   · the creation mode's minimum and maximum (content: creationModes);
+//   · the starting kit's own attribute requirements (content: equipment
+//     `requirements.attributes` — Starseer's ash staff wants INT 12, so a
+//     Starseer cannot legally strip Intelligence to the baseline and the tool
+//     must not pretend otherwise);
+//   · the mode's fixedTotal, which is why this is a MOVE and never a raise.
+// The result goes in through createRunState's own `attributes` door, i.e.
+// normalizeRunAttributes, so an illegal spread is refused there by name rather
+// than silently clamped into a number this tool would then report as a band.
+// Omit the flag and the fleet runs the shipped presets, exactly as before.
+const SPEND = (argv.find((a) => a.startsWith('--spend=')) || '').slice('--spend='.length) || null;
+function spendAllocation(classId) {
+  if (!SPEND) return undefined;
+  const ids = REG.attributes.ids();
+  if (!ids.includes(SPEND)) throw new Error(`--spend=${SPEND} is not an attribute id (${ids.join(', ')})`);
+  const mode = REG.creationModes.all().find((m) => m.id === 'standard');
+  const alloc = { ...REG.attributeRules.presets[mode.id][classId] };
+  const kit = resolveStartingKit(REG, classId, undefined, {});
+  const floors = Object.fromEntries(ids.map((id) => [id, Math.max(mode.minimum, mode.baseline)]));
+  for (const slot of ['rightHand', 'leftHand']) {
+    const piece = (REG.equipment.armaments || []).find((row) => row.id === kit[slot]);
+    for (const [id, req] of Object.entries((piece && piece.requirements && piece.requirements.attributes) || {})) {
+      floors[id] = Math.max(floors[id], req);
+    }
+  }
+  for (const donor of ids) {
+    if (donor === SPEND) continue;
+    while (alloc[donor] > floors[donor] && alloc[SPEND] < mode.maximum) { alloc[donor]--; alloc[SPEND]++; }
+  }
+  return alloc;
+}
 // How many flasks a grace actually poured, across the fleet — the mechanism's
 // own counter, so a green win-rate cannot be read as "the refill happened".
 let poured = 0;
@@ -110,6 +151,12 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       deck: run.deck, relicIds: run.relics, flasks: run.flasks,
       flaskCharges: run.flaskCharges,
+      // The relic damage authority the host stamps at run creation
+      // (D23, model/relicModifiers.js). Both fleets built their player
+      // literal by name and NOBODY added this field when it landed, so
+      // every simulated Starseer fought without the Starstone Shard's
+      // +1 magic — a live pool the game reads and the sim did not.
+      damageBySchoolAdd: run.damageBySchoolAdd,
     },
     enemyIds: enc.enemies,
     hpMult: cm.hpMult || 1,
@@ -187,7 +234,7 @@ function afterVictory(run, rng, pool) {
 
 // ---- one full run ------------------------------------------------------------
 function simulateRun(classId, seed, ds = null) {
-  const run = createRunState({ seed, classId, registries: REG });
+  const run = createRunState({ seed, classId, registries: REG, attributes: spendAllocation(classId) });
   run._id = createIdGen('sim');
   run.seenEvents = [];
   const rng = createRng(seed);
@@ -292,7 +339,7 @@ function simulateRun(classId, seed, ds = null) {
 // ---- fleet -------------------------------------------------------------------
 function fleet() {
 console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot`);
-console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}\n`);
+console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + '\n');
 let crash = null;
 const tally = { wins: 0, runs: 0, acts: 0 };
 for (const cls of REG.classes.all()) {
