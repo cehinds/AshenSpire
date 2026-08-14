@@ -59,9 +59,9 @@
 //
 //   P1 derivation cut   src/main.js stops writing <html data-hand-layout>.
 //                       Expect: check 1 red in EVERY cell, by name.
-//   P2 overlap cut      src/ui/screens/combat.js's applyHandLayout stops
-//                       writing the negative margin — the flattened fan is no
-//                       longer pulled inside the strip's width.
+//   P2 overlap cut      applyHandLayout stops writing the negative margin —
+//                       the flattened fan is no longer pulled inside the
+//                       strip's width.
 //                       Expect: Law 5 travel red in the OVERLAP cells while
 //                       the paging cells stay green — the mode-inertness claim
 //                       and the overlap claim are separable, and this proves
@@ -69,13 +69,17 @@
 //   C  clean control    the untouched copy must go GREEN, or the plants proved
 //                       nothing but that copying a tree breaks it.
 //
-//   Each edit is an exact-match replacement that REFUSES at exit 2 if it does
-//   not match exactly once (overlapreader's discipline): a mutation that
-//   silently matched nothing runs the control three times and calls it a
-//   corpus. THE PLANT SITES ARE THE COLLAPSE'S OWN LINES — when the two hand
-//   renderers become one (src/ui/handAxis.js's standing debt), these two
-//   strings are the first thing that stops matching, and the exit-2 refusal is
-//   this tool asking to be re-aimed rather than quietly measuring nothing.
+//   THE PLANT IS KEYED TO THE CONTRACT, NOT TO THE PATH — learned the same day
+//   it was written. The renderer collapse (Viki, 2026-08-15) moved P2's line
+//   from screens/combat.js to components/hand.js WITHOUT ONE BYTE CHANGING,
+//   and a plant keyed to the path refused while the contract it guards was
+//   alive three directories over. So each plant carries a CLOSED SET of homes
+//   the contract has lived in, exactly one of which must hold it exactly once.
+//   Not a search: a closed set can be audited and cannot pass silently through
+//   a home nobody imagined. Two homes matching is as loud a refusal as none —
+//   one contract in two places is the second copy this house exists to catch.
+//   Outside the set it still REFUSES at exit 2 and asks to be re-aimed rather
+//   than quietly measuring nothing.
 //
 // BOUNDARY. One shape (390x844) — the word only arranges the NARROW hand; the
 // wide fan is one composition in both modes and inspecthold covers it at
@@ -141,10 +145,18 @@ function launchChrome(browser, dir) {
 // once in the copy or the whole selftest refuses at exit 2 — a plant that
 // matched nothing would run the clean control three times and call it a corpus
 // (SOP 2's wrong-place-empty: an empty match means the OPPOSITE of clean).
+// `homes` is a CLOSED SET of files the contract has lived in — never a search.
+// The line is the contract; the path is where it happens to sit this month. The
+// overlap arithmetic moved from combat.js to components/hand.js in the renderer
+// collapse (2026-08-15) WITHOUT ONE BYTE CHANGING, so a plant keyed to the path
+// refused while the contract it guards was alive and well three directories
+// over. Exactly one home must match, exactly once, or the run refuses at exit 2
+// and says so: a closed set can be audited, and it cannot pass silently through
+// a home nobody imagined the way a regex search would.
 const PLANTS = [
   {
     name: 'P1 derivation cut',
-    file: 'src/main.js',
+    homes: ['src/main.js'],
     from: '  document.documentElement.dataset.handLayout = handLayout;',
     to: '  /* handlayout --selftest P1: derivation cut */',
     what: "main.js's write of <html data-hand-layout>",
@@ -154,7 +166,7 @@ const PLANTS = [
   },
   {
     name: 'P2 overlap cut',
-    file: 'src/ui/screens/combat.js',
+    homes: ['src/ui/components/hand.js', 'src/ui/screens/combat.js'],
     from: "    els.forEach((el, i) => { el.style.marginLeft = i && o ? `${-o}px` : ''; });",
     to: '    /* handlayout --selftest P2: overlap arithmetic cut */',
     what: "applyHandLayout's negative-margin write (the overlap arm's whole arithmetic)",
@@ -174,17 +186,35 @@ function sandbox() {
 }
 
 function plantInto(dir, p) {
-  const path = resolve(dir, p.file);
-  const src = readFileSync(path, 'utf8');
-  const first = src.indexOf(p.from);
-  if (first < 0 || src.indexOf(p.from, first + 1) >= 0) {
-    console.error(`handlayout --selftest: ${p.name} found ${first < 0 ? 'NO' : 'MORE THAN ONE'} home in ${p.file}`);
-    console.error('  The line moved — most likely the hand renderers were collapsed into one');
-    console.error('  (src/ui/handAxis.js names that as standing debt). RE-AIM THIS PLANT at the');
-    console.error('  surviving line; do not delete it. A corpus that silently stops matching is');
-    console.error('  the eleven-instruments shape, and refusing loudly here is the whole point.');
+  // Every home in the closed set is checked, so "two homes carry this line" is
+  // as loud a refusal as "no home does" — a contract living in two places is
+  // the second copy this house exists to catch, and planting into one of them
+  // would leave the other quietly holding the hand.
+  const hits = [];
+  for (const home of p.homes) {
+    const path = resolve(dir, home);
+    if (!existsSync(path)) continue;
+    const src = readFileSync(path, 'utf8');
+    const first = src.indexOf(p.from);
+    if (first < 0) continue;
+    if (src.indexOf(p.from, first + 1) >= 0) {
+      console.error(`handlayout --selftest: ${p.name} found MORE THAN ONE copy of its line in ${home}`);
+      process.exit(2);
+    }
+    hits.push({ home, path, src, first });
+  }
+  if (hits.length !== 1) {
+    console.error(`handlayout --selftest: ${p.name} found ${hits.length} homes for its line`);
+    console.error(`  searched (closed set): ${p.homes.join(', ')}`);
+    if (hits.length > 1) console.error(`  matched: ${hits.map((h) => h.home).join(', ')} — one contract, two homes, which is its own defect`);
+    console.error('  The contract moved outside the set. RE-AIM THIS PLANT by adding the surviving');
+    console.error('  home to `homes`; do not delete it, and do not widen it to a search — a closed');
+    console.error('  set can be audited, a search passes silently through what nobody imagined.');
+    console.error('  A corpus that stops matching in silence is the eleven-instruments shape.');
     process.exit(2);
   }
+  const { home, path, src, first } = hits[0];
+  console.log(`    home: ${home} (of ${p.homes.length} in the closed set)`);
   writeFileSync(path, src.slice(0, first) + p.to + src.slice(first + p.from.length), 'utf8');
 }
 
@@ -221,7 +251,7 @@ async function selftest() {
 
   for (const p of PLANTS) {
     console.log(`\n  ${p.name}: ${p.what}`);
-    console.log(`    plant: ${p.file} — expect ${p.expect}`);
+    console.log(`    plant: expect ${p.expect}`);
     const dir = sandbox();
     plantInto(dir, p);
     const r = await runSelfAt(dir);

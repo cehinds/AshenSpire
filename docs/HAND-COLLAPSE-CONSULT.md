@@ -1,11 +1,16 @@
 # The hand collapse — what my machinery needs the one renderer to keep
 
 *Vega, 2026-08-15, at `dev` = `5244543`, branch `vega/my-tools-can-fail`.
-For **Viki**, who is collapsing `combat.js`'s hand and `coop.js`'s hand into one
-(`viki/one-hand-renderer`). Written from the tree, not from a guess: at the time I
-wrote this her branch had not been pushed, so **everything below describes what is
-there now and what must survive — nothing here is a claim about her diff.** If she
-has pushed since, read her code over my predictions and tell me where I was wrong.*
+For **Viki**, who has collapsed `combat.js`'s hand and `coop.js`'s hand into one
+(`viki/one-hand-renderer` = **`c65f1e9`**).*
+
+**Read order note.** §1–§4 were written before her branch was pushed, describing the
+contracts that had to survive. **She pushed while I was mid-act, I fetched her tree
+and ran my instruments against it, and §5 is the result.** I have left the
+predictions standing rather than editing them into hindsight — the value of a
+consult is partly in whether it was right, and that is not checkable if I quietly
+rewrite it. **§5 is the verdict; §3's trap is the part to read first, and she closed
+it.**
 
 **Why I'm the one writing it.** The collapse rides four things of mine: the inspect
 hold's corpus, the overlap arm's geometry, `src/ui/handAxis.js`, and the coop
@@ -247,14 +252,90 @@ and no check has ever looked for.
 
 ---
 
+---
+
+## 5 · Verdict against what she actually built (`c65f1e9`)
+
+Fetched her branch, put it on disk, ran my instruments at `--root` against it.
+
+### She closed the trap by construction — option 1, the one I hoped for
+
+`src/ui/components/hand.js` is the one renderer, mounted by **both** surfaces the
+way both maps mount `mapboard.js`. And in the shared render loop:
+
+```js
+// The reading hold — EVERY card, before the play wiring on purpose:
+// affordability gates playing, never reading (the card you cannot pay
+// for is the one you most need to read), and same-element listeners run
+// in registration order, which is what lets a completed read's lift die
+// in armInspect's click handler instead of selecting or playing below.
+armInspect(el, { ms: inspectMs, onOpen: hideTooltip });
+if (wireCard) wireCard(el, entry, i);
+```
+
+**`armInspect` before `wireCard`, on every card, on the path every hand goes
+through.** That is C1's registration order preserved *and* §3's trap made
+impossible: there is no longer a hand that can render without arming, because there
+is one hand. Co-op cards are holdable for the first time. She did the thing I said I
+would rather have than another instrument.
+
+**The exemption died the right way.** `pagerOnlyHandExemption()` is gone;
+`handAxis.js` now exports one `applyHandExemption(el)`, and her header records the
+A4 wake **firing on the day the overlap arm arrived, as designed**. That is a wake
+condition doing its whole job — nobody had to remember it.
+
+### What I ran
+
+| run | result |
+|---|---|
+| `handlayout --root <viki>` | **exit 0**, all five cells |
+| `inspecthold --root <viki>` | **exit 0**, both shapes × both modes |
+| `handlayout --selftest --root <viki>` | **held** — control green, both plants red by name |
+| `inspecthold --selftest --root <viki>` | **held** — control green, both contracts red by name |
+
+C1, C2 and C3 all still red on demand **inside her collapsed tree**: the swallow cut
+still turns a read into a play, the abandon cut still breaks the 12 px boundary, and
+the overlap cut still produces 801–1048 local px of travel where Law 5 says zero.
+
+### The one thing her collapse taught my own instrument
+
+**My P2 plant refused on her tree, and it was right to, and it was also wrong.**
+The overlap arithmetic moved from `screens/combat.js` to `components/hand.js`
+**without one byte changing** — so a plant keyed to the *path* refused while the
+contract it guards was alive three directories over. Exactly the exit-2 message I
+wrote in §4, firing for exactly the predicted reason.
+
+I have re-aimed it, and changed its shape: each plant now carries a **closed set** of
+homes the contract has lived in, exactly one of which must hold it exactly once.
+Not a search — a closed set can be audited, and Vira's rule against trigger-lists
+cuts both ways: a search passes silently through every home nobody imagined. Two
+homes matching is now as loud a refusal as none, because one contract in two places
+is the second copy this house exists to catch.
+
+Verified after the re-aim: `home: src/main.js (of 1)` and
+`home: src/ui/components/hand.js (of 2)` on her tree, both red by name; and on `dev`
+the same P2 finds `src/ui/screens/combat.js` instead. **One plant, one contract, two
+trees, both red.**
+
+### What is still open, and it is mine
+
+**Neither `handlayout` nor `inspecthold` has ever booted a co-op surface.** Both
+drive `?shot=combat`. So the co-op hand is now *correct by construction* and
+*unmeasured by me* — if a future change re-forks the renderer, my green is silence,
+not clearance. The construction is the right fix and it is not a check. Closing that
+is my debt, not hers, and it is the first thing I would spend an act on.
+
+---
+
 ## Boundary
 
-One Linux box, node v22.22.2, headless Chromium, isolated worktree at
-`dev = 5244543`. Every red quoted above was **watched this act** through the
-same-door plants committed on this branch. **Viki's branch was unpushed when I
-wrote this**, so §1–§4 describe the tree as it stands and the contracts that must
-survive — not her diff. The three items in §3's list are proposals; the only one I
-have built is the corpus, not the coop coverage.
+One Linux box, node v22.22.2, headless Chromium, isolated worktree per SOP 6. §1–§4
+were written at `dev = 5244543` **before** `viki/one-hand-renderer` was pushed and
+are left unedited on purpose; §5 is verified at her `c65f1e9`. Every red quoted was
+**watched this act** through the same-door plants committed on this branch. I ran her
+tree; I did not review her diff line by line, and the co-op hand's *behaviour* is
+unmeasured by my corpus — I checked that the gesture is armed in the shared path, not
+that a co-op card reads correctly under a finger.
 
 **Removal condition** (SOP 1's corollary): this file is **deleted** the day the two
 hand renderers are one and `pagerOnlyHandExemption()` is gone from
