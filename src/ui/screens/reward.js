@@ -24,7 +24,7 @@ export function mountRewards(app, { registries, run, rewards, onDone }) {
     run.relics.push(rewards.relicId);
     syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
     const def = registries.relics.get(rewards.relicId);
-    lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def))}`);
+    lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}`);
   }
   if (rewards.flaskId) {
     const def = registries.flasks.get(rewards.flaskId);

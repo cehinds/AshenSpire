@@ -338,6 +338,14 @@ id only (§3.3).
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
   saved before equipment existed is the one healed case: it gets a fresh loadout and a
   re-stamped deck rather than being thrown away.
+- **Run schemaVersion 3** (2026-08-14): `flaskCharges` carries its **capacity ledger** —
+  `base` (born), `grown` (possession door), `granted` (moment door) — and
+  `validateRunShape` enforces `capacity === base + grown.hp + grown.mana + granted`
+  (§5.5.2). A v2 save is admitted and **attributed once** at the load door
+  (`initializeRunFlaskCharges`), by a stated rule, never silently: chain growth always
+  wrote `grown`, so the surplus base and chain cannot account for is attributed to the
+  untracked moment door (`granted`); `base` is witnessed by the current authored
+  `balance.flaskCapacity`, clamped so the attribution can invent no charge.
 
 **The profile** — key `sote_meta_v1`: settings, unlocks, durable progress, found armaments,
 and the last 20 run results. **It is the one artifact a player cannot re-earn**, so it carries
@@ -645,6 +653,7 @@ Relic behavior uses the trigger DSL (§3.6) — the same declarative form as pow
 
 - **Derived, so reversible.** `flaskCharges.grown` records what the chain currently contributes; `syncFlaskGrowth` reconciles at every door a source changes through (run birth, run load, the relic-gain sites, the equipment screen). Gaining a source grows the maximum; losing one shrinks it back, currents bounded.
 - **Two doors, one grant each.** The chain is the *possession* door. The `addFlaskCapacity` opcode remains the *moment* door (keepsakes, quest-event choice effects). An event granting through both is a boot refusal — one grant may not land twice under two names.
+- **The capacity accounts for itself — machine-enforced since run schema v3.** `flaskCharges.capacity` is one stored number fed by both doors, and each door writes its ledger line: the chain in `grown` (per kind, reversible), the moment door in `granted` (a total, permanent — under pool the grant's kind is spent the moment it lands, so only the sum is history). `validateRunShape` refuses, by name, any save where `capacity ≠ base + grown.hp + grown.mana + granted` — so a "cleanup" that re-derives capacity from the chain alone, silently deleting every keepsake charge, goes red on the first save it touches instead of reading green while it wipes them. Corpus: `node tools/flaskgrowth.mjs --selftest` (both doors, observed red first); migration attribution for pre-ledger saves is stated at §3.12.
 - **Declared ahead of content, on purpose:** `questEvent` rows validate but report **NOT BINDING** (no run event history exists yet — the moment door is the live mechanism); any `flaskSeed` row refuses at boot (no seed item vocabulary exists; the word is reserved, not invented). `talisman` rows refuse until the first talisman piece is authored, then bind with no code change.
 - **The optional hard cap** `balance.flaskGrowthMax` arms an aggregate refusal only when authored — the unlock ceiling is Constantine's number to author (D19's *"future unlocks for larger total amount"*), never invented here.
 - **Refusals** (`flaskGrowthRefusals`, run from `validateContent` at boot; corpus `node tools/flaskgrowth.mjs --selftest`): unknown source · non-charge kind · negative, zero or fractional amount · duplicate grant · dangling relic/event/talisman ref · the two-door collision · any seed row · cap malformed or exceeded.

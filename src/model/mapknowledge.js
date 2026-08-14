@@ -128,24 +128,33 @@ export function nodeReading(node, { reveal = false } = {}) {
 /* ------------------------------------------------------------- the light -- */
 
 /**
- * HE PICKED, AND THE LOSER IS GONE — Constantine, 2026-08-08: a fork stays lit
- * once you are past it. The wide reading of "previously visited locations
+ * OUR DEFAULT, WEARING OUR OWN NAME — the fork question is OPEN: a fork stays
+ * lit once you are past it. The wide reading of "previously visited locations
  * remain revealed": everything that has EVER been lit stays lit, so the known
  * ground widens into a cone behind the frontier, the way Elden Ring's
  * undiscovered map behaves.
  *
+ * THIS HEADING USED TO SAY "HE PICKED — Constantine, 2026-08-08", AND THAT WAS
+ * FALSE. Asked straight on 2026-08-13 he answered "idk about hte forks part" —
+ * an honest idk, not an answer, of record in commons/decisions/directions.md
+ * D19 (claude-family). The attribution is stripped on his own word: what ships
+ * below is the family's default, not his ruling, and the question returns to
+ * him later as two pictures — the door that has answered better than any
+ * sentence.
+ *
  * WHAT USED TO BE HERE was `FOG_KEEP_FORKS`, one boolean holding both readings
  * of his sentence with both answers photographed, and a `mapFogForks` shot flag
- * to reach the other one. Its own comment promised that "the day he picks one
- * this constant and the flag both DIE — the loser is deleted, not left as an
- * option nobody chose." He picked. They are deleted, both of them, and this
- * paragraph is the receipt rather than a third state.
+ * to reach the other one. Both were deleted under the false record above. The
+ * DELETION stands anyway: a shipped game carries one default, and resurrecting
+ * the toggle would be the third state the original deletion refused — an
+ * option nobody chose, kept warm. This paragraph is the receipt.
  *
- * THE LOSING READING IS NOT LOST, IT IS DEMOTED. It lives on in
+ * THE UNSHIPPED READING IS NOT LOST, IT IS DEMOTED. It lives on in
  * `tools/mapfog.mjs` as a MUTANT — "the trail, but the roads not taken re-fog" —
  * where it used to be a legal cell of the sweep. That is the right home for a
  * reading we deliberately do not ship: something the instrument must catch, not
- * something the game can be talked into.
+ * something the game can be talked into. If he ever picks it, that is a design
+ * change with a row in this file's history, not a revert.
  *
  * WHAT MAKES THE PROMISE BELOW TRUE, and it is structure rather than a value:
  * `run.path` only grows, and `litNodes` shines every node in it, so the lit set
@@ -165,8 +174,10 @@ export function nodeReading(node, { reveal = false } = {}) {
  * disagree is the second copy this house exists to catch, and it survived
  * because prose is not compiled and nothing could fail on it.
  *
- * His answer makes the sentence TRUE — the derivation is what keeps it true, not
- * what makes it true (Sunna's ruling, 2026-08-08). It is one home, one reader,
+ * The wide default makes the sentence TRUE — the derivation is what keeps it
+ * true, not what makes it true (Sunna's ruling, 2026-08-08 — hers, about the
+ * mechanism; the default itself is ours, question open, see the D19 note
+ * above). It is one home, one reader,
  * and the monotone property in `--selftest` is the thing that can falsify it.
  * It matters tonight rather than eventually: fog is the DEFAULT now, so this is
  * the first thing a new player reads about the mode they are already in.
@@ -195,9 +206,10 @@ export const FOG_TRAIL_CLAUSE = 'Fog never closes behind you — anywhere you ha
  *                    no penumbra, which is the ask read literally. A penumbra is
  *                    a second argument to this function and nothing else; the
  *                    ladder already holds the rung for it (`placed`).
- *                    And the splits of every EARLIER path node too — his answer
- *                    of 2026-08-08, so the known ground widens into a cone
- *                    behind the frontier instead of closing at the forks.
+ *                    And the splits of every EARLIER path node too — the wide
+ *                    default (ours, not his ruling; D19 note above), so the
+ *                    known ground widens into a cone behind the frontier
+ *                    instead of closing at the forks.
  *   the doors        every entrance, for the whole act. Before the first move
  *                    they ARE the split.
  *   the end          the boss. "when the act starts it show the start node and

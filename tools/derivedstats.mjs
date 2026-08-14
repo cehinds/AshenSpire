@@ -53,7 +53,7 @@ check('one authoritative object carries the global defaults', () => {
 
 check('the five rows map to the ruled source attributes', () => {
   const got = Object.entries(derivedStatRules.rules).map(([id, row]) => `${id}:${row.sourceStat}`).join(',');
-  equal(got, 'energy:dexterity,draw:intelligence,hp:constitution,stamina:constitution,mana:wisdom', 'row map');
+  equal(got, 'energy:dexterity,draw:intelligence,hp:vigour,stamina:vigour,mana:wisdom', 'row map');
 });
 
 check('the shipped table passes the closed schema', () => {
@@ -72,7 +72,7 @@ check('INT 10 gives Draw raw 3 + tier 2 = 5', () => {
 });
 
 check('CON 10 gives at least 2 Stamina', () => {
-  assert(deriveStat(resolved(), 'stamina', { attributes: { constitution: 10 }, classDef: CLASS }).value >= 2, 'Stamina below 2');
+  assert(deriveStat(resolved(), 'stamina', { attributes: { vigour: 10 }, classDef: CLASS }).value >= 2, 'Stamina below 2');
 });
 
 check('WIS 10 is the only Mana authority and yields 2', () => {
@@ -81,7 +81,7 @@ check('WIS 10 is the only Mana authority and yields 2', () => {
 });
 
 check('CON HP starts from class data rather than a duplicated constant', () => {
-  const out = deriveStat(resolved(), 'hp', { attributes: { constitution: 10 }, classDef: CLASS });
+  const out = deriveStat(resolved(), 'hp', { attributes: { vigour: 10 }, classDef: CLASS });
   equal(out.base, 84, 'class HP base'); equal(out.value, 86, 'derived HP');
 });
 
@@ -139,7 +139,7 @@ check('shipped Energy and Draw both declare cap null and grow unbounded at high 
 });
 
 check('HP class-field base is live while Mana remains independent of class data', () => {
-  const attributes = { constitution: 10, wisdom: 10 };
+  const attributes = { vigour: 10, wisdom: 10 };
   const classDef = { id: 'newClass', maxHp: 137, maxMana: 23 };
   const before = JSON.stringify({ attributes, classDef });
   equal(deriveStat(resolved(), 'hp', { attributes, classDef }).base, 137, 'HP reads changed class data');

@@ -209,25 +209,38 @@ export const ACTIONS = Object.freeze({
   // Written at the row, in the code, with its reason — the shape Law 5 clause 2
   // requires of every horizontal-scroll exemption, for the same reason: a set
   // with an unnamed hole in it is not a set.
+  // ON `surface` FOR A `handledBy` ROW: it names the `?shot=` state that opens
+  // the SCREEN the beat lives on, so an instrument can walk the beat in the
+  // screen's own hand. It does NOT claim the shared machinery draws a
+  // `data-beat-action` there — handledBy is precisely the exemption from that,
+  // and the census reads the two fields together (holdconfirm.mjs). The three
+  // states below pose their state by the real doors: a real save written then
+  // surfaced (`title`), a real profile archived by replacePrimaryWith
+  // (`profile`), real torn bytes read by the real parser (`crisis`).
   deleteSave: {
     of: 'deleting a saved run from the title screen',
     lives: 'src/ui/screens/title.js',
-    surface: null,
+    surface: 'title',
     stakes: 'profile',
     undo: 'none',
     hazard: 'pointing',
     handledBy: 'title.js:76 — a two-click, self-resetting arm ("✕" → "Delete?")',
-    // AND WHY IT IS NOT COLLAPSED INTO THE MACHINERY TONIGHT, which is the
-    // honest half: `surface: null` — no `?shot=` state reaches a title screen
-    // with saved runs on it, so nothing this repo owns can watch the rewrite
-    // run. Replacing a WORKING second beat with an unwatched one is the exact
-    // failure this branch exists to answer. The row is the card.
-    gap: 'a third form of the same idea, in its own hand, unreachable by any instrument here',
+    // WHY IT IS STILL NOT COLLAPSED INTO THE MACHINERY: for a week the honest
+    // half was "no ?shot= state reaches a title screen with saved runs on it,
+    // so nothing this repo owns can watch the rewrite run" — and replacing a
+    // WORKING second beat with an unwatched one is the exact failure this
+    // table exists to answer. `?shot=title` (main.js) is that state now, and
+    // holdconfirm.mjs watches this arm: armed, self-reset, committed. The
+    // collapse itself is a SEPARATE decision that is merely unblocked — note
+    // that the derivation above rules 'hold' while this hand answers with a
+    // two-click arm, a third form, and which form the rewrite should keep is
+    // a design call, not a census's.
+    gap: 'a third form of the same idea, in its own hand — watched since ?shot=title, still not the shared machinery',
   },
   profileRestore: {
     of: 'restoring a set-aside profile over the one in play',
     lives: 'src/ui/screens/profileArchive.js',
-    surface: null,
+    surface: 'profile',
     stakes: 'profile',
     undo: 'none',
     hazard: 'choosing',
@@ -236,7 +249,7 @@ export const ACTIONS = Object.freeze({
   freshProfile: {
     of: 'starting a new profile over an unreadable one',
     lives: 'src/ui/screens/profileNotice.js',
-    surface: null,
+    surface: 'crisis',
     stakes: 'profile',
     undo: 'none',
     hazard: 'choosing',

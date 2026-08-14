@@ -625,6 +625,13 @@ function runRunOpcode(ctx, action, eff) {
       run.flaskCharges.capacity += eff.amount;
       run.flaskCharges[kind] += eff.amount;
       run.flaskCharges[`${kind}Current`] += eff.amount;
+      // THE MOMENT DOOR'S LEDGER LINE — not optional. Capacity is enforced as
+      // base + grown + granted at the save shape (validateRunShape), so a
+      // grant that raises capacity without recording itself makes the very
+      // next save unaccountable and refused by name. The kind is deliberately
+      // not recorded: under pool (D19) the grant's kind is spent the moment it
+      // lands above, and the live split stays freely reallocatable at a grace.
+      run.flaskCharges.granted += eff.amount;
       break;
     }
     case 'loseMaxHpPct': {
