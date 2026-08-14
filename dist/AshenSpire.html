@@ -30644,6 +30644,7 @@ const { applyRunShape, minViableFloors, resolveFloorPlan } = require("src/model/
 const { sampleActShape } = require("src/engine/mapgen.js");
 const { classGlyph } = require("src/ui/assets.js");
 const { esc } = require("src/ui/components/tooltip.js");
+const { createRunState } = require("src/model/state.js");
 const { refusesWhen } = require("src/ui/components/refusal.js");
 const { attachSeedField } = require("src/ui/components/seedfield.js");
 
@@ -30802,7 +30803,13 @@ function mountCustomRun(app, { registries, defaultSeedString, onBack, onStart })
     const el = document.createElement('div');
     el.className = 'class-pick cr-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><span class="chip">HP ${cls.maxHp}</span></div>`;
+    // Derived HP from the run's own home (createRunState: class base +
+    // attribute tiers + baseline kit), never bare cls.maxHp — a component
+    // posing as a total, same defect Vega fixed on the customize chip (#175
+    // rider). No profileMeta here and none needed: with no requested kit the
+    // baseline resolves meta-free (startingKits.js: baseline is always
+    // discovered), so this chip and the customize chip print the same number.
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><span class="chip">HP ${createRunState({ seed: 0, classId: cls.id, registries }).maxHp}</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
       classes.querySelectorAll('.cr-class').forEach((x) => x.classList.toggle('chosen', x === el));
@@ -41397,6 +41404,7 @@ const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { refusesWhen } = require("src/ui/components/refusal.js");
 const { attachSeedField } = require("src/ui/components/seedfield.js");
 const { startingKitViews } = require("src/model/startingKits.js");
+const { createRunState } = require("src/model/state.js");
 
 const NAME_KEY = 'sote_lan_name';
 const TINT_KEY = 'sote_lan_tint';
@@ -41592,7 +41600,14 @@ function mountLobby(app, { registries, meta = {}, defaultSeedString, onBack, onS
       const el = document.createElement('div');
       el.className = `class-pick cr-class${cls.id === state.classId ? ' chosen' : ''}`;
       el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3>`;
-      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${cls.maxHp} · ${registries.balance.startingDeckSize} cards`);
+      // Derived HP from the run's own home (createRunState: class base +
+      // attribute tiers + baseline kit), never bare cls.maxHp — a component
+      // posing as a total (#175 rider; same fix as the customize chip and the
+      // Custom Climb chip). Baseline kit on purpose: this tooltip is the
+      // class's advert to a player who hasn't picked yet, and profileMeta is
+      // inert with no requested kit — meta passed anyway so the read stays
+      // honest if a kit ever rides this call.
+      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${createRunState({ seed: 0, classId: cls.id, registries, profileMeta: meta }).maxHp} · ${registries.balance.startingDeckSize} cards`);
       el.addEventListener('click', () => {
         state.classId = cls.id;
         state.startingKitId = baselineKit(cls.id);
