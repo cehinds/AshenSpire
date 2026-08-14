@@ -357,8 +357,10 @@ body.hide-header-relics .map-substrip.no-flasks { display: none; }
    for the reason map.js's header gives about .map-zoom — and it is `hidden`
    whenever the promise holds, so it costs no height on the shape it was solved
    for. Law 4: this is TEXT, so it is the text unit and nothing else here is. */
-.mapscreen .map-tapnote {
+.mapscreen .map-tapnote,
+.mapscreen .map-clipnote {
   margin: 0; text-align: center; color: var(--gold);
   font-size: 1.1rem; line-height: 1.4; padding: 0.2rem 1rem;
 }
-.mapscreen .map-tapnote[hidden] { display: none; }
+.mapscreen .map-tapnote[hidden],
+.mapscreen .map-clipnote[hidden] { display: none; }
