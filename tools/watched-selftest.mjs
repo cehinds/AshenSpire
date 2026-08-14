@@ -25,7 +25,7 @@
 // Exit: 0 all nine observed red · 1 any plant came back GREEN (the bad news)
 
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, readFileSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -139,7 +139,153 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
     return 1;
   }
   console.log(`all ${plants.length} plants observed red. The verdicts this tool prints can go the other way, which is the only reason to believe one.`);
-  console.log('BOUNDARY: the plants prove the VERDICT MACHINE can fail. They do not prove any individual probe');
-  console.log('  points at the right control — that is what `read` and `by` in the probe file are for, and they are a person.');
+  const picsFailed = pictureSelftest({ ROOT, LEDGER, PROBES });
+  if (picsFailed) {
+    console.log(`\nThe COMMITTED PICTURES sub-check misbehaved. This instrument may NOT be cited for that half.`);
+    return 1;
+  }
+  console.log('BOUNDARY: the plants prove the VERDICT MACHINE and the COMMITTED PICTURES sub-check can fail.');
+  console.log('  They do not prove any individual probe points at the right control — that is what `read` and');
+  console.log('  `by` in the probe file are for, and they are a person.');
   return 0;
+}
+
+// ---------------------------------------------------------------------------
+// THE SUB-CHECK NOBODY HAD PLANTED — `committedPictures()`.
+//
+// Bjorn, 2026-08-15. The nine plants above prove the VERDICT MACHINE can fail.
+// They say nothing about the other half of the same run: the audit of the
+// pictures checked into `docs/preview/`, which is red on STALE and on NEVER
+// PICTURED and had no known-bad at all. Two halves in one instrument, one of
+// them watched — and citing the file as though the observation covered both is
+// the borrowed-evidence shape Saga's tell was built for, wearing my own hat.
+//
+// THE DOOR IS A REAL GIT REPOSITORY. `committedPictures()` decides staleness by
+// `git log -1 --date=short` on real paths, so a plant that hands it dates
+// proves nothing about the git call — the exact downstream mistake the same-door
+// clause exists for. Each tree below is a COPY OF THIS REPO with a REAL git
+// history whose commit dates are authored by the plant, and the real tool is run
+// inside it as a whole program.
+//
+// A CLEAN BASELINE FIRST, because the real tree is ALREADY red on this half (14
+// stale pictures since July at 929b6ea). A plant scored against a tree that was
+// already red would be the legal red — a mutation credited with a defect it did
+// not cause. So the baseline commits src/ FIRST and the pictures SECOND: nothing
+// stale, nothing unpictured, and only then is each plant applied to it.
+// ---------------------------------------------------------------------------
+function pictureSelftest({ ROOT, LEDGER, PROBES }) {
+  const dir = mkdtempSync(join(tmpdir(), 'watched-pics-'));
+  const NEEDED = ['src', 'styles', 'tools', 'content', 'dist', 'docs', 'index.html'];
+  const git = (cwd, args, date) => execFileSync('git', args, {
+    cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date,
+      GIT_AUTHOR_NAME: 'Plant', GIT_AUTHOR_EMAIL: 'plant@local',
+      GIT_COMMITTER_NAME: 'Plant', GIT_COMMITTER_EMAIL: 'plant@local' },
+  });
+
+  // A tree whose pictures are NEWER than its code: the state this sub-check
+  // calls clean. `mutate` runs after the code commit and before the picture one.
+  const build = (name, { codeFirst = true, mutate = null } = {}) => {
+    const t = join(dir, name);
+    mkdirSync(t, { recursive: true });
+    for (const p of NEEDED) cpSync(join(ROOT, p), join(t, p), { recursive: true });
+    git(t, ['init', '-q'], '2026-01-01T00:00:00Z');
+    const pics = join(t, 'docs/preview');
+    const early = '2026-01-02T00:00:00Z'; const late = '2026-01-09T00:00:00Z';
+    if (codeFirst) {
+      git(t, ['add', 'src', 'styles', 'tools', 'content', 'dist', 'index.html'], early);
+      git(t, ['commit', '-q', '-m', 'code'], early);
+      if (mutate) mutate(t);
+      git(t, ['add', '-A'], late);
+      git(t, ['commit', '-q', '-m', 'pictures after code'], late);
+    } else {
+      // The defect: the pictures were committed and then the code moved on.
+      git(t, ['add', 'docs'], early);
+      git(t, ['commit', '-q', '-m', 'pictures'], early);
+      git(t, ['add', '-A'], late);
+      git(t, ['commit', '-q', '-m', 'code after pictures'], late);
+    }
+    return { t, pics };
+  };
+
+  const runIn = (t) => {
+    let out = ''; let code = 0;
+    try {
+      out = execFileSync(process.execPath, [join(t, 'tools/watched.mjs'),
+        '--ledger', LEDGER, '--probes', PROBES, '--only', 'S3', '--out', join(t, 'shots')],
+      { cwd: t, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 300000 });
+    } catch (e) { code = e.status ?? -1; out = `${e.stdout || ''}${e.stderr || ''}`; }
+    return { out, code };
+  };
+
+  const cases = [
+    {
+      // THE BASELINE IS CONSTRUCTED FOR STALENESS AND DELTA-SCORED FOR THE
+      // OTHER HALF, and the difference is not tidiness. Commit order is mine to
+      // author, so `none stale.` is a real clean baseline. The unpictured list
+      // is NOT: this repo genuinely carries EIGHT states nobody has ever
+      // photographed, and my first version of this case asserted the list was
+      // empty — which failed against the tree's own standing debt and would
+      // have made case C's red partly inherited. So C is scored on the arrival
+      // of `plantstate` BY NAME, a string the real tree can never produce, and
+      // the baseline asserts only that it is absent before the plant.
+      name: 'A baseline — pictures newer than code',
+      want: 'GREEN', check: (out) => /none stale\./.test(out) && !/plantstate/.test(out),
+      tree: () => build('A', { codeFirst: true }),
+      // Exit code deliberately NOT asserted: this run's ROW verdicts belong to
+      // the other half of the tool and can be red for reasons that are not this
+      // sub-check's. Saying so is the point; quietly asserting exit 0 here would
+      // make the case pass or fail for somebody else's reason.
+    },
+    {
+      name: 'B a picture of a build that is gone',
+      want: 'RED', check: (out) => /STALE — a picture of a build that no longer exists: [1-9]/.test(out),
+      tree: () => build('B', { codeFirst: false }),
+    },
+    {
+      name: 'C a state nobody ever photographed',
+      want: 'RED', check: (out) => /NEVER PICTURED[\s\S]*plantstate/.test(out),
+      tree: () => build('C', {
+        codeFirst: true,
+        // A new ?shot= state in the app, with no picture carrying its name —
+        // entering by main.js, which is where the denominator is derived from.
+        mutate: (t) => {
+          const f = join(t, 'src/main.js');
+          const s = readFileSync(f, 'utf8');
+          const out = s.replace(/(\n\s*)(if \(shotState === ')/, `$1if (shotState === 'plantstate') { /* PLANT */ }$1$2`);
+          if (out === s) throw new Error('the plant edited nothing in src/main.js');
+          writeFileSync(f, out);
+        },
+      }),
+    },
+  ];
+
+  console.log('\nwatched --selftest, SUB-CHECK: committed pictures — 3 cases, each a COPY OF THE REPO with a');
+  console.log('  REAL git history whose dates the plant authors, run through the real tool.\n');
+  let failed = 0;
+  for (const c of cases) {
+    let out = ''; let code = 0;
+    try { const { t } = c.tree(); ({ out, code } = runIn(t)); }
+    catch (e) { console.log(`  BAD  ${c.want.padEnd(5)} ${c.name.padEnd(40)} the plant itself failed: ${e.message}`); failed++; continue; }
+    const ok = c.check(out);
+    if (!ok) failed++;
+    console.log(`  ${ok ? 'ok  ' : 'BAD '} ${c.want.padEnd(5)} ${c.name.padEnd(40)} exit ${code}${ok ? '' : '  — the expected line did not appear'}`);
+    if (!ok) {
+      const sec = out.split('\n').filter((l) => /COMMITTED PICTURES|STALE|NEVER PICTURED|none stale/.test(l));
+      console.log(`         saw: ${sec.join(' | ').slice(0, 260) || out.trim().split('\n').slice(-2).join(' | ').slice(0, 260)}`);
+    }
+  }
+  rmSync(dir, { recursive: true, force: true });
+  if (!failed) {
+    console.log('\n  the pictures sub-check goes red on a stale picture and on an unpictured state, and stays');
+    console.log('  green on a tree where the pictures are newer than the code.');
+    console.log('  DOOR: real .png files and real src/ files in a real git repo, read through the same');
+    console.log('  `git log -1 --date=short` and the same directory walk the real audit performs.');
+    console.log('  NOT PASSED THROUGH: the picture-TAKING. Nothing here runs the capture harness, so a');
+    console.log('  photograph that is fresh and WRONG is outside this door — the eyes own that.');
+    console.log('  STANDING, NOT PLANTED: this repo carries eight ?shot= states nobody has ever');
+    console.log('  photographed. The baseline does not pretend otherwise — case C is scored on');
+    console.log('  `plantstate` arriving by name, never on the size of that list.');
+  }
+  return failed;
 }
