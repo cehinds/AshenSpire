@@ -93,14 +93,20 @@
 //       went blind. Both need a person. An excuse nobody can be forced to
 //       revisit is how a suite goes green over a bug.
 //
-// ZERO EXEMPTIONS SHIP. The act map carried the one scoped declaration ("the
-// act map is a horizontal route", 1c227ec) and it is DELETED, not moved: D17
-// message 4 falsified its reason in Constantine's own words ("not require any
-// scrollign left or right"), and the camera now owns the horizontal axis
-// through the viewBox (mapboard.js), so the map's travel is 0 by construction
-// and A4 would correctly fail the declaration if it ever came back without
-// travel under it. Other scrollers remain undecided by design; `.hand`, for
-// example, receives no exemption from this instrument.
+// ONE EXEMPTION SHIPS: the combat hand under PAGING — mode-scoped, rendered
+// conditionally (combat.js reads <html data-hand-layout> and writes the
+// attributes only under 'paging'), his D19 word as its reason; the mode axis
+// below is what keeps it honest. From 2026-08-08 to 2026-08-14 this paragraph
+// opened "ZERO EXEMPTIONS SHIP" and named `.hand` as receiving none — that
+// refusal stood on D17 msg 3's word and was right; D19's later word is what
+// opened it (the history is spelled out under THE MODE AXIS below). The act
+// map's old declaration ("the act map is a horizontal route", 1c227ec) stays
+// DELETED, not moved: D17 message 4 falsified its reason in Constantine's own
+// words ("not require any scrollign left or right"), and the camera owns the
+// horizontal axis through the viewBox (mapboard.js), so the map's travel is 0
+// by construction and A4 would correctly fail that declaration if it ever
+// came back without travel under it. Every other scroller remains undecided
+// by design.
 //
 // ---------------------------------------------------------------------------
 // THE MODE AXIS — Vega, 2026-08-14, on Marina's ruling, and the words are his.
@@ -134,7 +140,8 @@
 // (2026-08-08) is Constantine ANNOYED at this exact scroller — "I'm annoyed
 // that in mobile, that the default hand size requires me to scroll left and
 // right" — and on that word this file refused `.hand` an exemption by name
-// (the sentence above stood from 2026-08-08). D19 (2026-08-13) is his later
+// (the paragraph above carried that refusal from 2026-08-08). D19
+// (2026-08-13) is his later
 // word — "overlap and paging" — that makes paging a DESIGNED pager and the
 // declaration writable, scoped to that mode alone. The refusal was right when
 // it was written and the exemption is right now; both cite him, not us.
@@ -442,9 +449,10 @@ const SCAN = `(() => {
     // comment above judge() warns about.
     // AND THAT INCLUDES A HIDDEN ONE, deliberately: a declaration on a container
     // this surface no longer renders is a reason that died by a different route,
-    // and it reaches A4 as a ratchet failure rather than disappearing. Zero
-    // exemptions ship today, so this is latent — named here so the first seat to
-    // declare one is not surprised by it.
+    // and it reaches A4 as a ratchet failure rather than disappearing. One
+    // exemption ships today — the paging hand (combat.js) — so this arm is
+    // live, not latent: it is what forces a person back if paging ever stops
+    // travelling or the hand leaves a surface with its declaration behind.
     const declared = e.hasAttribute('data-scroll-axis');
     const hx = e.scrollWidth - e.clientWidth, hy = e.scrollHeight - e.clientHeight;
     if (!declared) {
