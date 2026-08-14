@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 // tools/gracerefill.mjs — what a grace hands back, and proof it refuses.
-// Sten, 2026-08-08.
-//
-// Legacy inventory-refill instrument retained for migration coverage. The
-// active fixed-capacity charge contract lives in tools/flask-reallocation.mjs.
+// Sten, 2026-08-08. Corpus ported to the charge model by Sten, 2026-08-15.
 //
 // THE DOOR, AND IT IS THE WHOLE REASON THIS FILE IS SHAPED LIKE THIS.
 // `development.md`, *The instrument rule*, same-door clause: a known-bad handed
@@ -15,24 +12,51 @@
 // real doors, because this feature has two:
 //
 //   DOOR 1 — CONTENT. The game boots `validateContent(contentBundle)`
-//   (src/main.js:69) against the bundle from `src/content/index.js`. Every data
-//   plant below mutates a deep copy of THAT bundle — the real one, with all 7
-//   flasks and the real balance in it — and is handed to THAT function. No
+//   (src/main.js) against the bundle from `src/content/index.js`. Every data
+//   plant below mutates a deep copy of THAT bundle — the real one, with the
+//   real flasks and the real balance in it — and is handed to THAT function. No
 //   synthetic `{ balance: { graceRefill: … } }` object is constructed anywhere
 //   in this file: a hand-built bundle would prove the refusal reads its own
 //   argument and nothing about whether the shipped bundle ever reaches it.
 //
 //   DOOR 2 — THE SHRINE. The refill is applied by `applyGraceRefill`
 //   (src/engine/encounters.js), called from `showRest()` in src/main.js on
-//   arrival at a shrine node, against registries built by `createRegistries`.
-//   Every behaviour plant below goes through `createRegistries(bundle)` and
-//   `createRunState`, so a plant that breaks the registry build fails here the
-//   way it would fail in the game, not in a fixture.
+//   arrival at a shrine node, against registries built by `createRegistries`
+//   and a run built by `createRunState` — the door every run comes through.
 //
-// WHAT AN AUTHOR WRITES: nothing. The refusal corpus is a list of mutations,
-// each naming the key it expects; adding a refusal to model/gracerefill.js
-// without adding a plant here leaves the count visibly short — the selftest
-// prints refusals-covered / refusals-declared and goes red when they differ.
+// THE CORPUS'S OWN HISTORY, because a corpus that silently stopped running is
+// the eleven-instruments shape and this one did exactly that. The original
+// 13 content plants + 10 behaviour plants were written against the slot-
+// inventory model. When the fixed-capacity charge model landed, the selftest
+// grew an `if (Number.isInteger(balance.flaskCapacity))` branch that returned
+// early, and the whole corpus went dead — still in the file, never run, while
+// the RESULT count silently shrank 15+20 → 3+2. Vira's doors audit
+// (2026-08-14) found it. Disposition, mine to make as the owner:
+//
+//   PORTED  — the Door-1 refusal corpus. `graceRefillRefusals` is still called
+//             on every boot (model/validate.js) and the table idiom is kept on
+//             purpose: settings derives its chip rows from the table, and the
+//             wake red below guards its NOT BINDING promise. The old plants
+//             mutated rows of a populated table; the shipped table is now `[]`,
+//             so each plant POSES its rows into a real bundle copy instead —
+//             same door, current tree shape.
+//   PORTED  — the Law 0 falsifier, restated for the charge model: a content
+//             row, zero engine edits, changes which flask every screen
+//             presents (chargeFlaskDefinition resolves authored-first).
+//   RETIRED — the slot-inventory behaviour plants (top-up, idempotent,
+//             shortfall, slot semantics, run-start allocation). Every real run
+//             carries flaskCharges from birth (model/state.js createRunState)
+//             or is given them at the load door (engine/save.js loadRun), and
+//             applyGraceRefill takes the charges branch whenever they exist
+//             (engine/encounters.js) — so the slot pour has NO door a real
+//             input can enter, and a plant on it would be downstream-by-
+//             construction: the same-door clause's own verdict, applied to a
+//             branch instead of a fixture. They also could not run at all
+//             against the shipped bundle: mutating `graceRefill[0]` of an
+//             empty table is a TypeError, not a red.
+//
+// WHAT AN AUTHOR WRITES: nothing. Adding a refusal to model/gracerefill.js
+// without adding a plant here leaves the covered-paths count visibly short.
 //
 // Usage:
 //   node tools/gracerefill.mjs              # what the shipped table does
@@ -45,7 +69,7 @@ import { createRunState } from '../src/model/state.js';
 import { applyGraceRefill } from '../src/engine/encounters.js';
 import {
   graceRefillPlan, graceRefillTable, graceRefillLadder, flaskKindOf, flaskSlotCap,
-  reallocateFlaskCharges,
+  reallocateFlaskCharges, chargeFlaskDefinition, chargeKindForFlask,
 } from '../src/model/gracerefill.js';
 import { FLASK_KINDS } from '../src/model/schemas.js';
 
@@ -118,266 +142,151 @@ function report() {
 // selftest — every refusal, planted through the real door
 // ---------------------------------------------------------------------------
 
+// THE POSE, and it is the port's whole mechanic. The shipped table is `[]`
+// today, so a plant that mutates `graceRefill[0]` throws instead of refusing —
+// that is how the old corpus died. Each row plant now AUTHORS its table into a
+// real bundle copy, exactly as a content author would, and hands the whole
+// bundle to the real boot validator. Same door as before; current tree shape.
+function poseTable(bundle, rows) {
+  bundle.balance.graceRefill = rows;
+  return bundle;
+}
+
 // Each plant: mutate the REAL bundle copy, hand it to the REAL validator, and
-// require an error whose key matches. `expect` is a substring of the key, so a
-// renamed index does not silently pass — the key path is asserted, not the
-// prose, and the prose is printed so a human reads what a maintainer would.
+// require an error whose key matches. `expect` is matched against the whole
+// `path: msg` line, so a renamed index does not silently pass — the key path is
+// asserted, not the prose, and the prose is printed so a human reads what a
+// maintainer would.
 const PLANTS = [
+  // ---- the charge model's own refusals: live on the shipped tree ----------
+  { name: 'capacity zero',
+    expect: /balance\.flaskCapacity/,
+    mutate: (b) => { b.balance.flaskCapacity = 0; } },
+  { name: 'class allocation above capacity',
+    expect: /startingFlaskAllocation/,
+    mutate: (b) => { b.classes[0].startingFlaskAllocation = { hp: 3, mana: 1 }; } },
+  { name: 'fractional class allocation',
+    expect: /startingFlaskAllocation/,
+    mutate: (b) => { b.classes[0].startingFlaskAllocation = { hp: 1.5, mana: 1.5 }; } },
+
+  // ---- the ported table refusals: the row is POSED, then really validated --
   { name: 'kind nothing carries',
-    expect: 'balance.graceRefill[0].kind',
-    mutate: (b) => { b.balance.graceRefill[0].kind = 'stamina'; } },
+    expect: /^balance\.graceRefill\[0\]\.kind:/m,
+    mutate: (b) => poseTable(b, [{ kind: 'stamina', count: 1 }]) },
   { name: 'kind misspelt (the typo case)',
-    expect: 'balance.graceRefill[0].kind',
-    mutate: (b) => { b.balance.graceRefill[0].kind = 'HP'; } },
+    expect: /^balance\.graceRefill\[0\]\.kind:/m,
+    mutate: (b) => poseTable(b, [{ kind: 'HP', count: 1 }]) },
   { name: 'two rows for one kind',
-    expect: 'balance.graceRefill[2].kind',
-    mutate: (b) => { b.balance.graceRefill.push({ kind: 'hp', count: 1 }); } },
+    expect: /^balance\.graceRefill\[1\]\.kind:/m,
+    mutate: (b) => poseTable(b, [{ kind: 'hp', count: 1 }, { kind: 'hp', count: 1 }]) },
   { name: 'count is not a number',
-    expect: 'balance.graceRefill[0].count',
-    mutate: (b) => { b.balance.graceRefill[0].count = 'three'; } },
+    expect: /^balance\.graceRefill\[0\]\.count:/m,
+    mutate: (b) => poseTable(b, [{ kind: 'hp', count: 'three' }]) },
   { name: 'count is negative',
-    expect: 'balance.graceRefill[0].count',
-    mutate: (b) => { b.balance.graceRefill[0].count = -1; } },
+    expect: /^balance\.graceRefill\[0\]\.count:/m,
+    mutate: (b) => poseTable(b, [{ kind: 'hp', count: -1 }]) },
   { name: 'count is fractional',
-    expect: 'balance.graceRefill[0].count',
-    mutate: (b) => { b.balance.graceRefill[0].count = 2.5; } },
+    expect: /^balance\.graceRefill\[0\]\.count:/m,
+    mutate: (b) => poseTable(b, [{ kind: 'hp', count: 2.5 }]) },
   { name: 'one row above the carry cap',
-    expect: 'balance.graceRefill[0].count',
-    mutate: (b) => { b.balance.graceRefill[0].count = b.balance.flaskSlots + 1; } },
+    expect: /^balance\.graceRefill\[0\]\.count:/m,
+    mutate: (b) => poseTable(b, [{ kind: 'hp', count: b.balance.flaskSlots + 1 }]) },
   { name: 'row is not an object',
-    expect: 'balance.graceRefill[1]',
-    mutate: (b) => { b.balance.graceRefill[1] = 'mana'; } },
+    expect: /^balance\.graceRefill\[1\]:/m,
+    mutate: (b) => poseTable(b, [{ kind: 'hp', count: 1 }, 'mana']) },
   { name: 'table is not an array',
-    expect: 'balance.graceRefill',
+    expect: /^balance\.graceRefill:/m,
     mutate: (b) => { b.balance.graceRefill = { hp: 3 }; } },
   { name: 'flaskId override is not a flask',
-    expect: 'balance.graceRefill[0].flaskId',
-    mutate: (b) => { b.balance.graceRefill[0].flaskId = 'crimsonFlaskk'; } },
+    expect: /^balance\.graceRefill\[0\]\.flaskId:/m,
+    mutate: (b) => poseTable(b, [{ kind: 'hp', count: 1, flaskId: 'crimsonFlaskk' }]) },
   { name: 'flaskId override is of the wrong kind',
-    expect: 'balance.graceRefill[0].flaskId',
-    mutate: (b) => { b.balance.graceRefill[0].flaskId = 'flaskOfStone'; } },
-  // A legacy aggregate table above its inventory cap must fail
-  // loudly rather than letting row order starve the Azure refill.
-  { name: 'the aggregate: lowering the cap below the legacy table refuses',
-    expect: 'balance.graceRefill',
-    mutate: (b) => { b.balance.flaskSlots = 5; } },
-  // A kind declared in FLASK_KINDS with no member is LEGAL and must NOT refuse.
-  // Planted as a negative so the corpus proves the refusal is discriminating
-  // rather than merely loud — the shipped tree is already in this state.
-  { name: 'NEGATIVE — an inert declared kind is legal', expectClean: true,
-    mutate: (b) => { b.balance.graceRefill.push({ kind: 'utility', count: 0 }); } },
+    expect: /^balance\.graceRefill\[0\]\.flaskId:/m,
+    mutate: (b) => poseTable(b, [{ kind: 'hp', count: 1, flaskId: 'azureFlask' }]) },
+  { name: 'the aggregate: two satisfiable rows over the carry cap refuse',
+    expect: /^balance\.graceRefill:/m,
+    mutate: (b) => poseTable(b, [{ kind: 'hp', count: 2 }, { kind: 'mana', count: 2 }]) },
+
+  // NEGATIVES. A corpus that never checks the clean case cannot tell "the
+  // refusal fires" from "the refusal always fires".
+  { name: 'NEGATIVE — a legal posed table does not refuse', expectClean: true,
+    mutate: (b) => poseTable(b, [{ kind: 'hp', count: 2 }, { kind: 'mana', count: 1 }]) },
+  { name: 'NEGATIVE — a zero-count row is legal', expectClean: true,
+    mutate: (b) => poseTable(b, [{ kind: 'utility', count: 0 }]) },
 ];
 
-// Behaviour plants: door 2. Each drives applyGraceRefill through registries
-// built from a mutated real bundle and asserts what the run ends up holding.
+// Behaviour plants: door 2. Each drives the charge model through registries
+// built from a real bundle copy and a run built by `createRunState` — the door
+// every real run comes through, in the game, in co-op and in every sim.
 const BEHAVIOUR = [
   {
-    name: 'a fresh run at a grace is topped up to the hp count',
-    run: (reg) => {
-      const run = emptyRun(reg);
-      const plan = applyGraceRefill(reg, run);
-      const hp = run.flasks.filter((f) => flaskKindOf(reg.flasks.get(f.flaskId)) === 'hp').length;
-      const mana = run.flasks.filter((f) => flaskKindOf(reg.flasks.get(f.flaskId)) === 'mana').length;
-      return { ok: hp === 3 && mana === 3 && plan.total === 6, saw: `${hp} hp, ${mana} mana, plan.total ${plan.total}` };
-    },
-  },
-  {
-    name: 'it is a TOP-UP, not a grant: arriving with 2 gets you 1',
-    run: (reg) => {
-      const run = emptyRun(reg);
-      run.flasks.push({ flaskId: 'crimsonFlask' }, { flaskId: 'crimsonFlask' });
-      const plan = applyGraceRefill(reg, run);
-      return { ok: plan.total === 4 && run.flasks.length === 6, saw: `granted ${plan.total}, holding ${run.flasks.length}` };
-    },
-  },
-  {
-    name: 'idempotent: a second grace at the same stop grants nothing',
-    run: (reg) => {
-      const run = emptyRun(reg);
-      applyGraceRefill(reg, run);
-      const again = applyGraceRefill(reg, run);
-      return { ok: again.total === 0 && run.flasks.length === 6, saw: `second pour ${again.total}, holding ${run.flasks.length}` };
-    },
-  },
-  {
-    name: 'slots full of other flasks: grants 0 and SAYS SO (no silent clamp)',
-    run: (reg) => {
-      const run = emptyRun(reg);
-      for (let i = 0; i < 6; i++) run.flasks.push({ flaskId: 'flaskOfStone' });
-      const plan = applyGraceRefill(reg, run);
-      const said = plan.shortfalls.some((s) => s.kind === 'hp' && s.short === 3);
-      return { ok: plan.total === 0 && said, saw: `granted ${plan.total}, shortfalls ${JSON.stringify(plan.shortfalls.map((s) => `${s.kind}:${s.short}`))}` };
-    },
-  },
-  {
-    name: 'the real Azure Flask binds the Mana row',
-    run: (reg) => {
-      const plan = graceRefillPlan(reg, emptyRun(reg));
-      const mana = plan.rows.find((r) => r.kind === 'mana');
-      return { ok: !!mana && mana.binding === true && mana.flaskId === 'azureFlask' && mana.granted === 3, saw: mana ? `${mana.flaskId} × ${mana.granted}` : 'no mana row' };
-    },
-  },
-  {
-    name: 'the debug count reaches the shrine: counts { hp: 0 } grants nothing',
-    run: (reg) => {
-      const run = emptyRun(reg);
-      const plan = applyGraceRefill(reg, run, { counts: { hp: 0, mana: 0 } });
-      return { ok: plan.total === 0 && run.flasks.length === 0, saw: `granted ${plan.total}` };
-    },
-  },
-  {
-    // HIS FOURTH CLAUSE, and the plant enters at `createRunState` — the door
-    // every run comes through, in the game, in co-op and in every sim.
-    name: 'legacy run start: ON by data, so every fresh class holds its authored table',
-    run: (reg) => {
-      const rows = reg.classes.ids().map((classId) => {
-        const run = freshRun(reg, classId);
-        const hp = run.flasks.filter((f) => flaskKindOf(reg.flasks.get(f.flaskId)) === 'hp').length;
-        const mana = run.flasks.filter((f) => flaskKindOf(reg.flasks.get(f.flaskId)) === 'mana').length;
-        return { classId, hp, mana, total: run.flasks.length };
-      });
-      return { ok: rows.every((r) => r.total === 6 && r.hp === 3 && r.mana === 3), saw: rows.map((r) => `${r.classId}:${r.hp}+${r.mana}`).join(', ') };
-    },
-  },
-  {
-    name: 'run start: the data switch turns the allocation off without code',
-    bundle: (b) => { b.balance.graceRefillAtRunStart = false; },
+    name: 'a grace refills current charges to the run\'s allocation',
     run: (reg) => {
       const run = freshRun(reg);
-      return { ok: run.flasks.length === 0, saw: `${run.flasks.length} flask(s)` };
+      run.flaskCharges.hpCurrent = 0;
+      run.flaskCharges.manaCurrent = 0;
+      applyGraceRefill(reg, run);
+      const ok = run.flaskCharges.hpCurrent === run.flaskCharges.hp
+        && run.flaskCharges.manaCurrent === run.flaskCharges.mana;
+      return { ok, saw: `hp ${run.flaskCharges.hpCurrent}/${run.flaskCharges.hp}, mana ${run.flaskCharges.manaCurrent}/${run.flaskCharges.mana}` };
     },
   },
   {
-    // THE DEBUG ROW'S DEFAULT MUST BE A POSITION ON ITS OWN LADDER, or the chip
-    // strip opens on a value it cannot show and the setting reads as unset.
-    // Asked here rather than in settings.js because the ladder lives in the
-    // model and this needs no DOM; the refusal above (count > cap) is what
-    // makes it true, and this is the assertion that says so out loud.
-    name: 'every table row\'s count is a position on the debug ladder it generates',
+    name: 'reallocation preserves hp + mana = capacity',
     run: (reg) => {
-      const ladder = graceRefillLadder(reg.balance);
-      const bad = graceRefillTable(reg.balance).filter((r) => !ladder.includes(String(r.count)));
-      return { ok: bad.length === 0, saw: bad.length ? `off-ladder: ${bad.map((r) => `${r.kind}=${r.count}`).join(', ')}` : `ladder ${ladder.join('/')} covers every row` };
+      const run = freshRun(reg);
+      reallocateFlaskCharges(run.flaskCharges, { hp: 1, mana: run.flaskCharges.capacity - 1 });
+      const f = run.flaskCharges;
+      return { ok: f.hp + f.mana === f.capacity, saw: `${f.hp} + ${f.mana} vs capacity ${f.capacity}` };
     },
   },
   {
-    // LAW 0's FALSIFIER FOR THIS FEATURE: a fictional entry of a brand-new
-    // kind, one content row, ZERO code commits — it appears and works. The row
-    // enters `src/content/flasks.js`'s array through the real bundle and the
-    // real registry build, and the refill picks it up with nothing else edited.
-    name: 'LAW 0: an explicit Mana flask override can replace Azure with no engine edit',
+    // LAW 0's FALSIFIER, PORTED. The slot-model version proved a content row
+    // could replace which flask a grace POURED. The charge model pours no
+    // flasks — so the same claim, on the surface that survived: one content
+    // row, ZERO engine commits, and every screen that names the Mana charge
+    // (rest.js, combat.js, coop.js all call chargeFlaskDefinition) names the
+    // new entry instead. The row enters `src/content/flasks.js`'s array
+    // through the real bundle and the real registry build.
+    name: 'LAW 0: one content row re-points the Mana charge, no engine edit',
     bundle: (b) => {
-      b.flasks.push({
-        id: 'ceruleanFlask', name: 'Cerulean Flask', rarity: 'common', kind: 'mana', icon: '🔵',
+      b.flasks.unshift({
+        id: 'ceruleanFlask', name: 'Cerulean Flask', rarity: 'common', icon: '🔵',
         effects: [{ op: 'restoreMana', amount: 5 }], textTemplate: 'Restore 5 Mana.',
       });
-      b.balance.graceRefill[1].flaskId = 'ceruleanFlask';
-      b.balance.graceRefillAtRunStart = false;
     },
     run: (reg) => {
-      const run = emptyRun(reg);
-      const plan = applyGraceRefill(reg, run);
-      const mana = plan.rows.find((r) => r.kind === 'mana');
-      const held = run.flasks.filter((f) => f.flaskId === 'ceruleanFlask').length;
-      return { ok: !!mana && mana.binding === true && held === 3 && plan.total === 6, saw: `mana binding ${mana && mana.binding}, holding ${held}, total ${plan.total}` };
+      const def = chargeFlaskDefinition(reg, 'mana');
+      const backwards = chargeKindForFlask(reg, 'ceruleanFlask');
+      const hpUntouched = chargeFlaskDefinition(reg, 'hp').id === 'crimsonFlask';
+      const ok = def.id === 'ceruleanFlask' && backwards === 'mana' && hpUntouched;
+      return { ok, saw: `mana charge resolves to '${def.id}', reverse '${backwards}', hp still '${chargeFlaskDefinition(reg, 'hp').id}'` };
     },
   },
 ];
 
+// RETIRED, and the reason is written rather than left as a gap (the header
+// carries the long form). These slot-inventory behaviours have no door a real
+// input can enter: every run carries `flaskCharges` from birth or is given
+// them at the load door, and `applyGraceRefill` takes the charges branch
+// whenever they exist — so a plant on the pour would be downstream by
+// construction. Printed on every run so the shrinkage can never be silent
+// again, which is exactly how this corpus died the first time.
+const RETIRED = [
+  'top-up semantics (arriving with 2 gets you 1)',
+  'idempotence (a second grace at the same stop grants nothing)',
+  'shortfall reporting when the slots are full of other flasks',
+  'the debug counts override reaching the shrine',
+  'run-start allocation by data (graceRefillAtRunStart)',
+];
+
+
 function selftest() {
-  if (Number.isInteger(contentBundle.balance.flaskCapacity)) {
-    console.log('gracerefill --selftest: fixed-capacity charge model.\n');
-    let fails = 0;
-    // Counted, never typed (the cf3fe6d defect class): these move with the
-    // checks below, so a check added without them leaves the RESULT visibly off.
-    let contentPlants = 0;
-    let behaviourChecks = 0;
-    const refuse = (name, mutate, pattern) => {
-      contentPlants++;
-      const b = realBundleCopy(); mutate(b);
-      const said = validateContent(b).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
-      const ok = pattern.test(said); if (!ok) fails++;
-      console.log(`  ${ok ? 'RED  ' : 'MISS '} ${name}${ok ? '' : ` — ${said || 'no refusal'}`}`);
-    };
-    refuse('capacity zero', (b) => { b.balance.flaskCapacity = 0; }, /flaskCapacity/);
-    refuse('class allocation above capacity', (b) => { b.classes[0].startingFlaskAllocation = { hp: 3, mana: 1 }; }, /startingFlaskAllocation/);
-    refuse('fractional class allocation', (b) => { b.classes[0].startingFlaskAllocation = { hp: 1.5, mana: 1.5 }; }, /startingFlaskAllocation/);
-    const reg = createRegistries(contentBundle);
-    const run = freshRun(reg);
-    behaviourChecks++;
-    run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
-    applyGraceRefill(reg, run);
-    const refilled = run.flaskCharges.hpCurrent === run.flaskCharges.hp && run.flaskCharges.manaCurrent === run.flaskCharges.mana;
-    if (!refilled) fails++;
-    console.log(`  ${refilled ? 'green' : 'MISS '} Grace refills current charges to allocation`);
-    behaviourChecks++;
-    reallocateFlaskCharges(run.flaskCharges, { hp: 1, mana: run.flaskCharges.capacity - 1 });
-    const invariant = run.flaskCharges.hp + run.flaskCharges.mana === run.flaskCharges.capacity;
-    if (!invariant) fails++;
-    console.log(`  ${invariant ? 'green' : 'MISS '} reallocation preserves hp + mana = capacity`);
-
-    // WAKE RED (development.md, *The wake condition*, Freja 2026-08-14). The
-    // NOT BINDING idiom — graceRefillPlan's inert row and the settings
-    // applied-line, both resolving membership through firstFlaskOfKind —
-    // refuses a row whose kind has no member, and PROMISES to bind "the day
-    // an entry carries the kind", zero code. Nothing here could fail when
-    // that promise rots: a row that keeps printing NOT BINDING after its
-    // binder appears is absence, and absence never fails a test written to
-    // expect absence. The mana kind already lived this shape once — no
-    // member on 2026-08-08, azureFlask derives 'mana' today.
-    //
-    // THE WITNESS IS DELIBERATELY INDEPENDENT of flaskKindOf: a binder is an
-    // entry carrying the kind explicitly or carrying the kind's deriving op
-    // (restoreMana → mana, heal → hp — flaskKindOf's own published rule,
-    // restated HERE ON PURPOSE as a consistency witness). If the derivation
-    // is retuned, move this witness WITH it or this goes red — that red is
-    // the wake working, not a false alarm. A witness that resolved through
-    // flaskKindOf itself would rot in lockstep with the thing it watches and
-    // agree forever (the same-door clause's whole point).
-    behaviourChecks++;
-    const witnessKind = (d) => {
-      if (typeof d.kind === 'string') return d.kind;
-      const effects = Array.isArray(d.effects) ? d.effects : [];
-      if (effects.some((e) => e && e.op === 'restoreMana')) return 'mana';
-      if (effects.some((e) => e && e.op === 'heal')) return 'hp';
-      return 'utility'; // the fallback IS part of the rule: utility is the everything-else kind
-    };
-    const hasBinder = (defs, kind) => defs.some((d) => d && witnessKind(d) === kind);
-    const poseRow = (bundle, kind) => {
-      bundle.balance.graceRefill = [{ kind, count: 1 }];
-      bundle.balance.graceRefillAtRunStart = false;
-      const r = createRegistries(bundle);
-      const posed = freshRun(r);
-      posed.flasks = [];
-      return graceRefillPlan(r, posed).rows[0];
-    };
-    const wakeBad = [];
-    for (const kind of FLASK_KINDS) {
-      const b = realBundleCopy();
-      const binder = hasBinder(b.flasks, kind);
-      const row = poseRow(b, kind);
-      if (binder && row.binding === false) wakeBad.push(`'${kind}' has a binder in content yet its row prints NOT BINDING — the premise died while the refusal stands`);
-      if (!binder && row.binding === true) wakeBad.push(`'${kind}' has no binder yet its row binds ('${row.flaskId}') — the refusal dropped without its binder`);
-    }
-    // The refusal's own live negative: strip every mana binder from a real
-    // bundle copy and the posed row must refuse — otherwise the NOT BINDING
-    // branch itself is dead and the promise above is being kept by accident.
-    {
-      const b = realBundleCopy();
-      b.flasks = b.flasks.filter((d) => !(d && (d.kind === 'mana' || (d.kind == null && Array.isArray(d.effects) && d.effects.some((e) => e && e.op === 'restoreMana')))));
-      const row = poseRow(b, 'mana');
-      if (row.binding !== false || !/NOT BINDING/.test(row.why)) {
-        wakeBad.push(`with every mana binder stripped the row still binds ('${row.flaskId}') — the NOT BINDING branch is dead`);
-      }
-    }
-    if (wakeBad.length) fails++;
-    console.log(`  ${wakeBad.length ? 'MISS ' : 'green'} WAKE RED: every kind's NOT BINDING verdict agrees with binder existence, both directions${wakeBad.length ? ` — ${wakeBad.join('; ')}` : ` (${FLASK_KINDS.join(', ')} live; mana re-refuses when stripped)`}`);
-
-    console.log(`\nRESULT: ${fails === 0 ? 'all plants behaved' : `${fails} MISS`} — ${contentPlants} content plants, ${behaviourChecks} behaviour checks (counted at run time, never typed).`);
-    return fails;
-  }
   console.log('gracerefill --selftest: every refusal planted through the door the real input uses.\n');
   let fails = 0;
+  // Counted, never typed (the cf3fe6d defect class): these move with the checks
+  // themselves, so a check added without a plant leaves the RESULT visibly off.
+  let behaviourChecks = 0;
 
   // The clean tree first. A corpus that never checks the negative case cannot
   // tell "the refusal fires" from "the refusal always fires".
@@ -394,25 +303,30 @@ function selftest() {
     const b = realBundleCopy();
     p.mutate(b);
     const res = validateContent(b);
-    const mine = res.errors.filter((e) => String(e.path).startsWith('balance.graceRefill'));
+    const said = res.errors.map((e) => `${e.path}: ${e.msg}`).join('\n');
     if (p.expectClean) {
+      // A negative is judged on THIS feature's keys only: an unrelated refusal
+      // elsewhere in the bundle must not be read as this row being refused.
+      const mine = res.errors.filter((e) => String(e.path).startsWith('balance.graceRefill'));
       const ok = mine.length === 0;
       if (!ok) fails++;
-      console.log(`    ${ok ? 'green' : 'MISS '}  ${p.name}${ok ? '' : ` — refused when it should not: ${mine[0].path}`}`);
+      console.log(`    ${ok ? 'green' : 'MISS '}  ${p.name}${ok ? '' : ` — refused when it should not: ${mine[0].path}: ${mine[0].msg}`}`);
       continue;
     }
-    const hit = mine.find((e) => String(e.path) === p.expect);
-    if (!hit) {
+    const ok = p.expect.test(said);
+    if (!ok) {
       fails++;
-      console.log(`    MISS   ${p.name} — expected a refusal at ${p.expect}, got ${mine.length ? mine.map((e) => e.path).join(', ') : 'NOTHING'}`);
+      console.log(`    MISS   ${p.name} — expected ${p.expect}, got ${res.errors.length ? res.errors.map((e) => e.path).join(', ') : 'NOTHING'}`);
     } else {
+      const hit = res.errors.find((e) => p.expect.test(`${e.path}: ${e.msg}`));
       console.log(`    RED    ${p.name}`);
       console.log(`             ${hit.path}: ${hit.msg}`);
     }
   }
 
-  console.log('\n  DOOR 2 — the shrine, through createRegistries + applyGraceRefill:');
+  console.log('\n  DOOR 2 — the run, through createRegistries + createRunState + applyGraceRefill:');
   for (const t of BEHAVIOUR) {
+    behaviourChecks++;
     let reg;
     try {
       const b = realBundleCopy();
@@ -435,22 +349,96 @@ function selftest() {
     console.log(`    ${out.ok ? 'green' : 'MISS '}  ${t.name} — ${out.saw}`);
   }
 
+  // WAKE RED (development.md, *The wake condition*, Freja 2026-08-14). The
+  // NOT BINDING idiom — graceRefillPlan's inert row and the settings
+  // applied-line, both resolving membership through firstFlaskOfKind —
+  // refuses a row whose kind has no member, and PROMISES to bind "the day
+  // an entry carries the kind", zero code. Nothing here could fail when
+  // that promise rots: a row that keeps printing NOT BINDING after its
+  // binder appears is absence, and absence never fails a test written to
+  // expect absence. The mana kind already lived this shape once — no
+  // member on 2026-08-08, azureFlask derives 'mana' today.
+  //
+  // THE WITNESS IS DELIBERATELY INDEPENDENT of flaskKindOf: a binder is an
+  // entry carrying the kind explicitly or carrying the kind's deriving op
+  // (restoreMana → mana, heal → hp — flaskKindOf's own published rule,
+  // restated HERE ON PURPOSE as a consistency witness). If the derivation
+  // is retuned, move this witness WITH it or this goes red — that red is
+  // the wake working, not a false alarm. A witness that resolved through
+  // flaskKindOf itself would rot in lockstep with the thing it watches and
+  // agree forever (the same-door clause's whole point).
+  behaviourChecks++;
+  const witnessKind = (d) => {
+    if (typeof d.kind === 'string') return d.kind;
+    const effects = Array.isArray(d.effects) ? d.effects : [];
+    if (effects.some((e) => e && e.op === 'restoreMana')) return 'mana';
+    if (effects.some((e) => e && e.op === 'heal')) return 'hp';
+    return 'utility'; // the fallback IS part of the rule: utility is the everything-else kind
+  };
+  const hasBinder = (defs, kind) => defs.some((d) => d && witnessKind(d) === kind);
+  const poseRow = (bundle, kind) => {
+    bundle.balance.graceRefill = [{ kind, count: 1 }];
+    bundle.balance.graceRefillAtRunStart = false;
+    const r = createRegistries(bundle);
+    const posed = freshRun(r);
+    posed.flasks = [];
+    return graceRefillPlan(r, posed).rows[0];
+  };
+  const wakeBad = [];
+  for (const kind of FLASK_KINDS) {
+    const b = realBundleCopy();
+    const binder = hasBinder(b.flasks, kind);
+    const row = poseRow(b, kind);
+    if (binder && row.binding === false) wakeBad.push(`'${kind}' has a binder in content yet its row prints NOT BINDING — the premise died while the refusal stands`);
+    if (!binder && row.binding === true) wakeBad.push(`'${kind}' has no binder yet its row binds ('${row.flaskId}') — the refusal dropped without its binder`);
+  }
+  // The refusal's own live negative: strip every mana binder from a real
+  // bundle copy and the posed row must refuse — otherwise the NOT BINDING
+  // branch itself is dead and the promise above is being kept by accident.
+  {
+    const b = realBundleCopy();
+    b.flasks = b.flasks.filter((d) => !(d && (d.kind === 'mana' || (d.kind == null && Array.isArray(d.effects) && d.effects.some((e) => e && e.op === 'restoreMana')))));
+    const row = poseRow(b, 'mana');
+    if (row.binding !== false || !/NOT BINDING/.test(row.why)) {
+      wakeBad.push(`with every mana binder stripped the row still binds ('${row.flaskId}') — the NOT BINDING branch is dead`);
+    }
+  }
+  if (wakeBad.length) fails++;
+  console.log(`  ${wakeBad.length ? 'MISS ' : 'green'} WAKE RED: every kind's NOT BINDING verdict agrees with binder existence, both directions${wakeBad.length ? ` — ${wakeBad.join('; ')}` : ` (${FLASK_KINDS.join(', ')} live; mana re-refuses when stripped)`}`);
+
+
   // The count that goes red when a refusal is added without a plant. It reads
   // the refusal keys the module can emit by planting, so it cannot drift into
   // agreeing with itself.
-  const covered = new Set(PLANTS.filter((p) => !p.expectClean).map((p) => p.expect.replace(/\[\d+\]/g, '[i]')));
-  console.log(`\n  refusal paths covered: ${covered.size} distinct (${[...covered].join(', ')})`);
+  // Printed, not just counted: a number nobody can check against the list it
+  // came from is the same silence in a smaller font.
+  const covered = new Set(PLANTS.filter((p) => !p.expectClean)
+    .map((p) => String(p.expect)
+      .replace(/^\/\^?/, '').replace(/:?\/[a-z]*$/, '')
+      .replace(/\\\[\\d\+\\\]|\\\[\d+\\\]/g, '[i]')
+      .replace(/\\\./g, '.')));
+  console.log(`\n  refusal paths covered: ${covered.size} distinct — ${[...covered].join(', ')}`);
+
+  // THE RETIRED PLANTS, NAMED IN THE OUTPUT — not only in the header. This
+  // corpus once shrank in silence; a disposition a run never prints is the
+  // same silence with a comment on it.
+  console.log(`\n  RETIRED with the charge model (${RETIRED.length}, reason in this file's header —`);
+  console.log('  the slot pour has no door a real input can enter):');
+  for (const r of RETIRED) console.log(`    · ${r}`);
 
   console.log('\nBOUNDARY — what a green from --selftest does NOT mean:');
-  console.log('  · it proves the refusals FIRE and the shrine POURS. It says nothing about');
-  console.log('    whether a legacy refill table is right release balance — that needs a Mana-aware');
-  console.log('    simulation and player review, not the stale no-Mana A/B.');
+  console.log('  · it proves the boot refusals FIRE and the charge model refills. It says');
+  console.log('    nothing about whether the allocation is right release balance — that needs');
+  console.log('    a Mana-aware simulation and player review, not the stale no-Mana A/B.');
+  console.log('  · the Door-1 plants are IN-MEMORY bundle copies handed to the real');
+  console.log('    validator: the module LOAD stage carries no plant, so a defect in how');
+  console.log('    src/content/index.js assembles the bundle is invisible here.');
   console.log('  · no browser ran. The settings rows and shrine sentence');
   console.log('    are rendered HTML and are photographed, not asserted, here.');
   console.log('  · the co-op path (tools/session.mjs enterShrine) is covered by');
   console.log('    `node tools/session-smoke.mjs`, not by this file.');
 
-  console.log(`\nRESULT: ${fails === 0 ? 'all plants behaved' : `${fails} MISS`} — ${PLANTS.length} content plants, ${BEHAVIOUR.length} behaviour plants.`);
+  console.log(`\nRESULT: ${fails === 0 ? 'all plants behaved' : `${fails} MISS`} — ${PLANTS.length} content plants, ${behaviourChecks} behaviour checks, ${RETIRED.length} retired (counted at run time, never typed).`);
   return fails;
 }
 
