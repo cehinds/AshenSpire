@@ -63,6 +63,46 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is a
+// finger on glass, and it enters here as synthesized touch through CDP against
+// the real page served from this tree — the strongest door available without a
+// phone. The known-bads in the header above were REAL and were watched, but
+// they were three named refs (505b874, d47240a, the corrected fix): under SOP
+// 2's drift clause a red pinned to a ref that is no longer checked out is
+// `unknown`, not coverage, which is what Vira's audit (2026-08-14) rated this
+// tool — OBSERVED-ONCE. `--selftest` re-observes the SAME defect class without
+// needing the old checkout: the pre-#22 gesture shape is planted back into
+// src/ui/gesture.js in a copy of the tree, and this whole tool re-runs against
+// the copy — same serve.mjs, same browser, same synthesized touch.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'gesture-cancel.mjs',
+    args: ['--only', '390x844'],
+    timeoutMs: 600000,
+    plants: [
+      {
+        name: 'the pre-#22 shape returns: no pointercancel path, so a cancelled drag leaks its listeners',
+        file: 'src/ui/gesture.js',
+        find: "el.addEventListener('pointercancel', cancel);",
+        replace: "/* planted: the #22 defect — no pointercancel path at all */",
+        expectRed: /FAIL (cancel: window listeners at baseline|five cancels: window listeners FLAT|cancel: no ghost)/,
+      },
+      {
+        // Vira's F3, the defect the FIRST fix introduced: suppressClick armed
+        // ABOVE the cancelled-return eats exactly one tap — on the very
+        // gesture the fix exists to make safe. Swapping the two lines back is
+        // that known-bad, entering where it originally shipped.
+        name: 'F3 returns: suppressClick arms above the cancelled-return and eats the next tap',
+        file: 'src/ui/screens/combat.js',
+        find: "          if (cancelled) return;\n          suppressClick = true;",
+        replace: "          suppressClick = true; // planted: armed above the cancelled-return (the F3 shape)\n          if (cancelled) return;",
+        expectRed: /FAIL F3: ONE tap after a cancel selects the card/,
+      },
+    ],
+  }));
+}
+
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
 // tool measured a two-merge-stale bundle and printed OK once already. One home:
@@ -233,6 +273,15 @@ async function main() {
   }
   if (ran === 0) { console.error(`\ngesture-cancel: --only ${only} matched nothing. Unknown, not a pass.`); process.exit(2); }
   console.log(`\n  ${fails ? `FAIL — ${fails} finding(s)` : 'PASS — a cancelled gesture drops nothing, leaks nothing, strands nothing, costs nothing'}`);
+  console.log('  DOOR: synthesized touch through CDP against the real page served from this tree.');
+  console.log('        `--selftest` re-observes both original defect shapes as bytes planted in a copy');
+  console.log('        of the real source — the #22 missing pointercancel path and Vira\'s F3 line');
+  console.log('        order (observed red 2026-08-15, re-runnable). The header\'s three ref-pinned');
+  console.log('        observations are superseded: under SOP 2 they had drifted to `unknown`.');
+  console.log('  NOT COVERED, found by a plant that would NOT go red: the listener ledger this tool');
+  console.log('        watches is WINDOW\'s. src/ui/gesture.js scopes its listeners to the ELEMENT, so');
+  console.log('        dropping its removeEventListener leaks an element listener and every count here');
+  console.log('        stays flat. A real hole, named rather than papered over.');
   cdp.close(); child.kill(); if (server) server.close();
   process.exit(fails ? 1 : 0);
 }
