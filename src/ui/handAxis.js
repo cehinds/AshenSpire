@@ -14,65 +14,42 @@
 // D19's later word is what makes this writable. It cites him, not us; if
 // either word moves, this file moves with it.
 //
-// TWO RENDERERS, ONE DERIVATION (Bjorn's refused gate, 2026-08-14): the hand
-// is rendered by combat.js AND by coop.js's own template. #169 derived the
-// exemption inside combat.js's template and the coop hand shipped undeclared —
-// one fact, two renderers, one home. The string is built HERE, once, and both
-// renderers call in; neither may retype it. The two exports differ because the
-// two renderers' truths differ, and a declaration states the truth of the
-// renderer that carries it:
-//
-//   modeScopedHandExemption() — combat.js. That renderer READS the hand-layout
-//     word (its overlap arm lays the whole hand inside the strip at zero
-//     travel), so its exemption exists only under 'paging' and says so
-//     (data-scroll-axis-mode). axisfit's A5 fails the declaration found under
-//     any other word.
-//
-//   pagerOnlyHandExemption() — coop.js. That renderer implements ONLY the
-//     paging strip: no overlap arm, no reader of the word, so its hand travels
-//     identically under either mode (measured: H 211px at 390x844 under BOTH
-//     words, axisfit 411b89c). A mode-scoped declaration would lie twice —
-//     conditional, it vanishes under overlap while the travel stays
-//     (undeclared red); copied verbatim, it sits scoped to a word the page
-//     contradicts (A5 red). So it is UNSCOPED: true in every mode, and it
-//     SAYS it is renderer-scoped. Its wake is in the instrument, not here:
-//     axisfit sweeps coop under both modes, and the day coop.js grows an
-//     overlap arm, the coop[overlap] cells reach zero travel and A4 fires on
-//     this declaration, forcing a person to re-scope it.
-//
-// STANDING DEBT, named (Bjorn: "coop.js is now two laws deep in undelivered
-// fixes" — the map then, the hand now): the honest end state is ONE hand
-// renderer — coop's combat board mounting the same hand component as solo, the
-// way its map now mounts ui/components/mapboard.js. That is a real refactor of
-// an entangled render path (selection, targeting, network intents vs local
-// dispatch), not one act; until it lands, this module is the seam that keeps
-// the fact single-homed across the split.
+// ONE RENDERER NOW (2026-08-15). From 2026-08-14 to 2026-08-15 this file held
+// TWO exports because the hand had two renderers: combat.js's mode-scoped
+// declaration, and coop.js's own `.hand` — a pager-only twin with no overlap
+// arm — carrying an UNSCOPED one whose why-string named the renderer collapse
+// as standing debt. That debt is paid: both surfaces mount
+// src/ui/components/hand.js (the way both maps mount components/mapboard.js),
+// the component reads the hand-layout word on either surface, and the
+// unscoped exemption died with the fork — its A4 wake (axisfit sweeping coop
+// under both modes) was observed firing on the day the overlap arm arrived,
+// exactly as designed, and the coop[overlap] cells now assert ZERO like any
+// undeclared container. The mode-scoped declaration below is the whole story.
 //
 // The word's one home is balance.ui.handLayout; main.js derives it onto
 // <html data-hand-layout>; this file reads the ATTRIBUTE and nothing else.
 // The word has no settings row, so mount-time is the declaration's lifetime —
-// if a live toggle ever ships, both callers must re-derive on flip.
+// if a live toggle ever ships, the component must re-derive on flip.
 
 const D19 = "his word, D19 2026-08-13: 'overlap and paging'";
 
-// The attribute string has one shape and it is built in one place. `why` must
-// not contain double quotes — it lands inside an HTML attribute.
-function attrs(why, mode) {
-  return ` data-scroll-axis="x"${mode ? ` data-scroll-axis-mode="${mode}"` : ''}`
-    + ` data-scroll-axis-why="${why}"`;
-}
-
-/** combat.js — mode-scoped: present only while the page's word is 'paging'. */
-export function modeScopedHandExemption() {
-  return document.documentElement.dataset.handLayout === 'paging'
-    ? attrs(`paging is the designed horizontal pager — ${D19}; scoped to this mode, absent under overlap`, 'paging')
-    : '';
-}
-
-/** coop.js — renderer-scoped: this renderer pages in every mode, and says so. */
-export function pagerOnlyHandExemption() {
-  return attrs(`the co-op hand is the same designed pager — ${D19} — and this renderer (coop.js)`
-    + ' implements only the paging strip: no overlap arm, no reader of the hand-layout word,'
-    + ' so the exemption is unscoped and true in every mode; collapsing the two hand renderers'
-    + ' into one is named standing debt (src/ui/handAxis.js)');
+/**
+ * Apply (or clear) the mode-scoped exemption on the hand container itself.
+ * Present only while the page's word is 'paging'; absent under 'overlap',
+ * where components/hand.js lays the strip at zero travel and axisfit asserts
+ * it. Attribute order (axis, mode, why) is fixed: it is the order the old
+ * template string carried, and it keeps the paging DOM byte-identical across
+ * the renderer collapse (tools/handlayout.mjs hashes .hand-area to hold that).
+ */
+export function applyHandExemption(el) {
+  if (document.documentElement.dataset.handLayout === 'paging') {
+    el.setAttribute('data-scroll-axis', 'x');
+    el.setAttribute('data-scroll-axis-mode', 'paging');
+    el.setAttribute('data-scroll-axis-why',
+      `paging is the designed horizontal pager — ${D19}; scoped to this mode, absent under overlap`);
+  } else {
+    el.removeAttribute('data-scroll-axis');
+    el.removeAttribute('data-scroll-axis-mode');
+    el.removeAttribute('data-scroll-axis-why');
+  }
 }
