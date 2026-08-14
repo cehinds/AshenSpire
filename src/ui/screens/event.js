@@ -26,12 +26,23 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
     return true;
   }
 
+  // `min(420px, 100%)`, NOT `420px` — Sten, 2026-08-14, on Marina's axisfit
+  // ruling (event rows 15-18px, DEFECT, dated 2026-08-16). The bare 420 was a
+  // desk width the narrow container never granted: `.screen`'s content box is
+  // 385 local px at 390x844, so the centred column stuck 18px past the
+  // scrollport's end edge (15 at 360x640, 17 at 412x915 — measured at 929b6ea
+  // by tools/axisfit.mjs; these were the only red rows on this screen). The px
+  // half is LAWFUL — a choice column's width is box geometry and answers to no
+  // text setting (Law 4 clause 3) — the defect was the missing bound, so the
+  // bound is what the fix adds (Law 2: named container, proven inside it).
+  // The bars inside stretch to the column; their `min-height: var(--tap-floor)`
+  // (button.ev-choice, ui.css) is untouched, so nothing shrinks under 44.
   app.innerHTML = `
     <div class="screen" style="gap:20px">
       <div class="event-art" style="font-size:56px">${esc(def.art || '❖')}</div>
       <h2 style="color:var(--gold);font-size:24px">${esc(def.name).toUpperCase()}</h2>
       <p style="max-width:560px;text-align:center;line-height:1.7;color:var(--parchment)">${esc(def.text)}</p>
-      <div id="choices" style="display:flex;flex-direction:column;gap:10px;min-width:420px"></div>
+      <div id="choices" style="display:flex;flex-direction:column;gap:10px;min-width:min(420px,100%)"></div>
     </div>`;
 
   const box = app.querySelector('#choices');

@@ -661,9 +661,54 @@ button.rs-reset {
    `max-width: 100%` is what lets the rule bite. With both: bleed 0 at all three
    portrait shapes, every cost badge fully visible, and 73-79px of real swipe
    travel where there was none. 1200x730 and 844x390 are untouched — the
-   container query does not fire there, measured, 0 bleed and 0 travel both. */
-  :root[data-layout='narrow'] .reward-row { overflow-x: auto; max-width: 100%; }
+   container query does not fire there, measured, 0 bleed and 0 travel both.
+
+   LAW 5 RETIRED THAT SCROLLPORT ON THE PICK ROWS — Viki, 2026-08-14, on
+   Marina's 2026-08-16 ruling (the coop reward rows' 73-79px is a defect,
+   mine). Sunna's swipe was the right recovery before the law existed; clause 1
+   now says horizontal travel on a narrow shape is ZERO, and clause 3 licenses
+   the honest answer instead: a narrow shape is a DIFFERENT COMPOSITION. So a
+   pick row WRAPS — three 14rem cards become rows of 2+1 and spend the vertical
+   budget `.screen`'s own scrollport (#84, above) already owns. No card
+   shrinks: `.card` keeps `flex-shrink: 0`, so clause 4's "fits by squeezing"
+   trap cannot fire — measured, cards 126x176.4 local px before and after.
+
+   `#shop-cards` IS CARVED OUT AND KEEPS THE OLD RULE VERBATIM, and the carve
+   is a boundary, not a fork: the shop's 397-403px red is Sten's act, dated on
+   Bjorn's axisfit board, and a wrap landing on his container from my commit
+   would half-recompose a screen he owns. Same declarations, same computed
+   style, shop pixels untouched by construction. REMOVAL: fold these two rules
+   back into one the day Sten's shop composition lands — a carve-out that
+   outlives its reason is a second copy wearing a boundary's name. */
+  :root[data-layout='narrow'] #shop-cards.reward-row { overflow-x: auto; max-width: 100%; }
+  :root[data-layout='narrow'] .reward-row:not(#shop-cards) { flex-wrap: wrap; justify-content: center; max-width: 100%; }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
+
+/* THE MERCHANT'S SHELF WRAPS — Sten, 2026-08-14, on Marina's axisfit ruling
+   (shop rows 397-403px, DEFECT, dated 2026-08-16). `#shop-cards` is a
+   `.reward-row`, and the scrollport above was Sunna's fix for a THREE-card
+   pick; the shop stocks `balance.shop.cardStock = 5`, so the same rule handed
+   this row 788px of shelf in a 385px room — H 403px at 390x844, 397 at
+   360x640, 316 at 884x1326, measured at 929b6ea by tools/axisfit.mjs, the
+   only rows on the shop screen it fails.
+
+   WRAP, NOT SCROLL, and Law 5 says which: clause 2 exempts a run only where
+   the horizontal run IS the content, and a shelf you buy from is a grid that
+   happens to be short — the remove grid TWO ELEMENTS DOWN already wraps
+   (`.deck-strip`), so one screen was answering one question both ways. Clause
+   3 licenses the rearrangement; clause 4 says spend the axis a thumb already
+   scrolls — `.screen` owns overflow-y and the cards run off the BOTTOM.
+
+   Count-agnostic on purpose (the class-card orphan ruling, above at
+   `:root[data-layout='narrow'] .class-row`): cardStock is a table row
+   Constantine can raise, and a layout correct only at today's count breaks
+   the day content grows. Cards keep their authored size — nothing shrinks,
+   tap floors hold (Law 4: the floor is ergonomic, not proportional).
+
+   Scoped to #shop-cards, NOT to .reward-row: the coop reward rows are red in
+   the same sweep and they are Viki's, dealt by name (wave-three board,
+   2026-08-14) — a class-level wrap here would fix her rows behind her back. */
+:root[data-layout='narrow'] #shop-cards { flex-wrap: wrap; justify-content: center; }
 .heal-note { color: var(--green); font-size: 1.3rem; }
 
 /* ---------- save slots (title) ---------- */
@@ -1430,6 +1475,19 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .coop-note { color: var(--muted); font-size: 1.3rem; padding: 1.8rem; text-align: center; }
 .coop-choices { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; margin-top: 0.8rem; }
 .coop-take { border-color: var(--gold); }
+/* LAW 4 CLAUSE 4 ON EVERY REWARD CONTROL — Viki, 2026-08-14, measured before
+   claiming: at 390x844 `Take relic` rendered 36px tall, `#coop-leave` 24.8px,
+   catchup's `Skip` 36px, all under the 44px floor — and WHICH button was under
+   was incidental, decided by whose flex row it happened to share (the flask
+   button's inline icon stretched its rowmates to 48.3px; the relic row had no
+   such neighbour). A floor and intrinsic growth, never a height: the box is
+   chrome, the glyphs inside grant the growth. `#reward-continue` is the same
+   control on the SOLO reward screen — one subject, one rule (the pick rows
+   collapsed to one composition above; their controls collapse to one floor). */
+.coop-choices button, #coop-leave, #reward-continue {
+  min-height: var(--tap-floor); height: auto;
+  min-width: var(--tap-floor);
+}
 
 /* multiple player seats sit side-by-side in the combat player-zone */
 .combat.coop .player-zone {
