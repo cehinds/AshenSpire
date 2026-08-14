@@ -30,6 +30,7 @@ import { beatArmer, armInspect } from '../components/holdconfirm.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
+import { modeScopedHandExemption } from '../handAxis.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -43,35 +44,14 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   let endTurnBeat = null;
   // ---- the hand's Law 5 exemption — MODE-SCOPED, and the words are his ------
   //
-  // Under PAGING the hand strip scrolls sideways BY DESIGN: Constantine's own
-  // word, D19 (2026-08-13, commons/decisions/directions.md), verbatim —
-  // "overlap and paging" — paging is a designed horizontal pager, so the strip
-  // is Law 5 clause 2's honest case: the horizontal run IS the content. The
-  // declaration below (data-scroll-axis / -mode / -why, read by
-  // tools/axisfit.mjs) names that at the container, with his word as the
-  // reason.
-  //
-  // HISTORY, so nobody reads this as convenience: D17 msg 3 (2026-08-08) is
-  // him ANNOYED at this exact scroller — "I'm annoyed that in mobile, that the
-  // default hand size requires me to scroll left and right" — and on that word
-  // the record REFUSED the hand an exemption (axisfit's header named `.hand`
-  // as receiving none, from 2026-08-08). D19's later word is what makes this
-  // writable. It cites him, not us; if either word moves, this block moves
-  // with it.
-  //
-  // DERIVED, NOT TYPED TWICE: the condition reads <html data-hand-layout> —
-  // the same attribute the overlap arm below keys off, derived once by main.js
-  // from balance.ui.handLayout. Under 'overlap' the attributes are ABSENT and
-  // the hand is asserted at zero like any other container; axisfit FAILS a
-  // declaration found under the wrong mode (the exemption may never outlive
-  // its mode), and its A4 ratchet still fails this one if paging ever stops
-  // travelling. The word is written before any screen mounts and has no
-  // settings row, so mount-time is its lifetime (re-derive here if that
-  // changes).
-  const handExemption = document.documentElement.dataset.handLayout === 'paging'
-    ? ` data-scroll-axis="x" data-scroll-axis-mode="paging"`
-      + ` data-scroll-axis-why="paging is the designed horizontal pager — his word, D19 2026-08-13: 'overlap and paging'; scoped to this mode, absent under overlap"`
-    : '';
+  // ONE HOME: src/ui/handAxis.js builds the declaration (D19's word, D17's
+  // history, and why coop.js's copy of this hand gets a DIFFERENT one). This
+  // renderer reads the hand-layout word — its overlap arm below lays the hand
+  // at zero travel — so its exemption is mode-scoped: present only under
+  // 'paging', absent under 'overlap', re-derived per mount (the word has no
+  // settings row, so mount-time is its lifetime; re-derive here if that
+  // changes). Never retype the string — the derivation lives there, not here.
+  const handExemption = modeScopedHandExemption();
   app.innerHTML = `
     <div class="combat">
       <!-- THE MAIN HUD, TWO ROWS, HIS ASSIGNMENT (D10 wave 4):

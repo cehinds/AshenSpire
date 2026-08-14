@@ -34,6 +34,7 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
+import { pagerOnlyHandExemption } from '../handAxis.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -300,7 +301,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
         ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — click the hero who receives it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
         <div class="hand-area">
           <div class="energy-orb">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</div>
-          <div class="hand"></div>
+          <!-- The Law 5 exemption is DERIVED from its one home (src/ui/handAxis.js)
+               and is UNSCOPED on purpose: this renderer implements only the paging
+               strip — no overlap arm — so unlike combat.js's mode-scoped
+               declaration, this one is true in every mode and says so. axisfit
+               sweeps this surface under both modes as that claim's wake. -->
+          <div class="hand"${pagerOnlyHandExemption()}></div>
           <button class="end-turn" id="coop-endturn">END TURN</button>
         </div>
         <div class="fx-layer"></div>

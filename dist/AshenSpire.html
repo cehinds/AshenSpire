@@ -29510,7 +29510,12 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     const el = document.createElement('div');
     el.className = 'class-pick cz-class';
     el.dataset.classId = cls.id;
-    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${cls.maxHp} · ${registries.balance.startingDeckSize} cards</span></div>`;
+    // The chip's HP is the DERIVED total from the run's own home (state.js via
+    // createRunState: class base + attribute tiers + kit gear), never bare
+    // cls.maxHp — that is a component posing as a total, and it sat two scrolls
+    // above a ledger saying 96 while claiming 84 (Bjorn's gate, 2026-08-14).
+    // Same read the ledger stands on, default kit: the class's honest advert.
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${createRunState({ seed: 0, classId: cls.id, registries, profileMeta: meta }).maxHp} · ${registries.balance.startingDeckSize} cards</span></div>`;
     el.addEventListener('click', () => {
       state.classId = cls.id;
       state.startingKitId = null;
@@ -34724,6 +34729,7 @@ const { beatArmer, armInspect } = require("src/ui/components/holdconfirm.js");
 const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
+const { modeScopedHandExemption } = require("src/ui/handAxis.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -34737,35 +34743,14 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   let endTurnBeat = null;
   // ---- the hand's Law 5 exemption — MODE-SCOPED, and the words are his ------
   //
-  // Under PAGING the hand strip scrolls sideways BY DESIGN: Constantine's own
-  // word, D19 (2026-08-13, commons/decisions/directions.md), verbatim —
-  // "overlap and paging" — paging is a designed horizontal pager, so the strip
-  // is Law 5 clause 2's honest case: the horizontal run IS the content. The
-  // declaration below (data-scroll-axis / -mode / -why, read by
-  // tools/axisfit.mjs) names that at the container, with his word as the
-  // reason.
-  //
-  // HISTORY, so nobody reads this as convenience: D17 msg 3 (2026-08-08) is
-  // him ANNOYED at this exact scroller — "I'm annoyed that in mobile, that the
-  // default hand size requires me to scroll left and right" — and on that word
-  // the record REFUSED the hand an exemption (axisfit's header named `.hand`
-  // as receiving none, from 2026-08-08). D19's later word is what makes this
-  // writable. It cites him, not us; if either word moves, this block moves
-  // with it.
-  //
-  // DERIVED, NOT TYPED TWICE: the condition reads <html data-hand-layout> —
-  // the same attribute the overlap arm below keys off, derived once by main.js
-  // from balance.ui.handLayout. Under 'overlap' the attributes are ABSENT and
-  // the hand is asserted at zero like any other container; axisfit FAILS a
-  // declaration found under the wrong mode (the exemption may never outlive
-  // its mode), and its A4 ratchet still fails this one if paging ever stops
-  // travelling. The word is written before any screen mounts and has no
-  // settings row, so mount-time is its lifetime (re-derive here if that
-  // changes).
-  const handExemption = document.documentElement.dataset.handLayout === 'paging'
-    ? ` data-scroll-axis="x" data-scroll-axis-mode="paging"`
-      + ` data-scroll-axis-why="paging is the designed horizontal pager — his word, D19 2026-08-13: 'overlap and paging'; scoped to this mode, absent under overlap"`
-    : '';
+  // ONE HOME: src/ui/handAxis.js builds the declaration (D19's word, D17's
+  // history, and why coop.js's copy of this hand gets a DIFFERENT one). This
+  // renderer reads the hand-layout word — its overlap arm below lays the hand
+  // at zero travel — so its exemption is mode-scoped: present only under
+  // 'paging', absent under 'overlap', re-derived per mount (the word has no
+  // settings row, so mount-time is its lifetime; re-derive here if that
+  // changes). Never retype the string — the derivation lives there, not here.
+  const handExemption = modeScopedHandExemption();
   app.innerHTML = `
     <div class="combat">
       <!-- THE MAIN HUD, TWO ROWS, HIS ASSIGNMENT (D10 wave 4):
@@ -37510,6 +37495,90 @@ function renderArcaneExposure(registries, enemySnapshot, recentEvents = []) {
 
 
 Object.assign(module.exports, { arcaneExposureReceipt, renderArcaneExposure });
+
+},
+"src/ui/handAxis.js": function (module, exports, require) {
+// src/ui/handAxis.js — THE ONE HOME of the hand strip's Law 5 exemption.
+//
+// One fact lives here: under PAGING the hand strip scrolls sideways BY DESIGN —
+// Constantine's own word, D19 (2026-08-13, commons/decisions/directions.md),
+// verbatim: "overlap and paging" — so the strip is Law 5 clause 2's honest
+// case: the horizontal run IS the content. The declaration attributes
+// (data-scroll-axis / -mode / -why, read by tools/axisfit.mjs) name that at
+// the container, with his word as the reason.
+//
+// HISTORY, so nobody reads this as convenience: D17 msg 3 (2026-08-08) is him
+// ANNOYED at this exact scroller — "I'm annoyed that in mobile, that the
+// default hand size requires me to scroll left and right" — and on that word
+// axisfit refused `.hand` an exemption by name from 2026-08-08 to 2026-08-14.
+// D19's later word is what makes this writable. It cites him, not us; if
+// either word moves, this file moves with it.
+//
+// TWO RENDERERS, ONE DERIVATION (Bjorn's refused gate, 2026-08-14): the hand
+// is rendered by combat.js AND by coop.js's own template. #169 derived the
+// exemption inside combat.js's template and the coop hand shipped undeclared —
+// one fact, two renderers, one home. The string is built HERE, once, and both
+// renderers call in; neither may retype it. The two exports differ because the
+// two renderers' truths differ, and a declaration states the truth of the
+// renderer that carries it:
+//
+//   modeScopedHandExemption() — combat.js. That renderer READS the hand-layout
+//     word (its overlap arm lays the whole hand inside the strip at zero
+//     travel), so its exemption exists only under 'paging' and says so
+//     (data-scroll-axis-mode). axisfit's A5 fails the declaration found under
+//     any other word.
+//
+//   pagerOnlyHandExemption() — coop.js. That renderer implements ONLY the
+//     paging strip: no overlap arm, no reader of the word, so its hand travels
+//     identically under either mode (measured: H 211px at 390x844 under BOTH
+//     words, axisfit 411b89c). A mode-scoped declaration would lie twice —
+//     conditional, it vanishes under overlap while the travel stays
+//     (undeclared red); copied verbatim, it sits scoped to a word the page
+//     contradicts (A5 red). So it is UNSCOPED: true in every mode, and it
+//     SAYS it is renderer-scoped. Its wake is in the instrument, not here:
+//     axisfit sweeps coop under both modes, and the day coop.js grows an
+//     overlap arm, the coop[overlap] cells reach zero travel and A4 fires on
+//     this declaration, forcing a person to re-scope it.
+//
+// STANDING DEBT, named (Bjorn: "coop.js is now two laws deep in undelivered
+// fixes" — the map then, the hand now): the honest end state is ONE hand
+// renderer — coop's combat board mounting the same hand component as solo, the
+// way its map now mounts ui/components/mapboard.js. That is a real refactor of
+// an entangled render path (selection, targeting, network intents vs local
+// dispatch), not one act; until it lands, this module is the seam that keeps
+// the fact single-homed across the split.
+//
+// The word's one home is balance.ui.handLayout; main.js derives it onto
+// <html data-hand-layout>; this file reads the ATTRIBUTE and nothing else.
+// The word has no settings row, so mount-time is the declaration's lifetime —
+// if a live toggle ever ships, both callers must re-derive on flip.
+
+const D19 = "his word, D19 2026-08-13: 'overlap and paging'";
+
+// The attribute string has one shape and it is built in one place. `why` must
+// not contain double quotes — it lands inside an HTML attribute.
+function attrs(why, mode) {
+  return ` data-scroll-axis="x"${mode ? ` data-scroll-axis-mode="${mode}"` : ''}`
+    + ` data-scroll-axis-why="${why}"`;
+}
+
+/** combat.js — mode-scoped: present only while the page's word is 'paging'. */
+function modeScopedHandExemption() {
+  return document.documentElement.dataset.handLayout === 'paging'
+    ? attrs(`paging is the designed horizontal pager — ${D19}; scoped to this mode, absent under overlap`, 'paging')
+    : '';
+}
+
+/** coop.js — renderer-scoped: this renderer pages in every mode, and says so. */
+function pagerOnlyHandExemption() {
+  return attrs(`the co-op hand is the same designed pager — ${D19} — and this renderer (coop.js)`
+    + ' implements only the paging strip: no overlap arm, no reader of the hand-layout word,'
+    + ' so the exemption is unscoped and true in every mode; collapsing the two hand renderers'
+    + ' into one is named standing debt (src/ui/handAxis.js)');
+}
+
+
+Object.assign(module.exports, { modeScopedHandExemption, pagerOnlyHandExemption });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {
@@ -41727,6 +41796,7 @@ const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskIdentityHtml, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
+const { pagerOnlyHandExemption } = require("src/ui/handAxis.js");
 
 function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -41993,7 +42063,12 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
         ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — click the hero who receives it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
         <div class="hand-area">
           <div class="energy-orb">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</div>
-          <div class="hand"></div>
+          <!-- The Law 5 exemption is DERIVED from its one home (src/ui/handAxis.js)
+               and is UNSCOPED on purpose: this renderer implements only the paging
+               strip — no overlap arm — so unlike combat.js's mode-scoped
+               declaration, this one is true in every mode and says so. axisfit
+               sweeps this surface under both modes as that claim's wake. -->
+          <div class="hand"${pagerOnlyHandExemption()}></div>
           <button class="end-turn" id="coop-endturn">END TURN</button>
         </div>
         <div class="fx-layer"></div>
