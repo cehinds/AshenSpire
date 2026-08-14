@@ -28,7 +28,7 @@ for (const rel of mechanics) {
         findings.push(`${rel}:${index + 1}: unapproved attribute gameplay reader: ${trimmed}`);
       }
     }
-    if (/Math\.floor\([^\n]*(?:strength|dexterity|constitution|wisdom|intelligence)|\/\s*5\b/i.test(line)) {
+    if (/Math\.floor\([^\n]*(?:strength|dexterity|vigour|wisdom|intelligence)|\/\s*5\b/i.test(line)) {
       findings.push(`${rel}:${index + 1}: duplicate attribute tier arithmetic: ${line.trim()}`);
     }
   });

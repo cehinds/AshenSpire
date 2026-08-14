@@ -91,7 +91,11 @@ function validateRule(out, value, path, options, partial) {
   validateBase(out, value.base, `${path}.base`, { required: !partial, classFields: options.classFields });
   if ((value.sourceStat !== undefined || !partial)
     && (typeof value.sourceStat !== 'string' || !options.attributeIds.includes(value.sourceStat))) {
-    problem(out, `${path}.sourceStat`, `must name one of ${options.attributeIds.join(', ')}`);
+    // The offending value is IN the message: a retired id (e.g.
+    // 'constitution') arriving here must be refused by its own name, not
+    // only by the legal list it is absent from.
+    const got = typeof value.sourceStat === 'string' ? `'${value.sourceStat}' ` : '';
+    problem(out, `${path}.sourceStat`, `${got}must name one of ${options.attributeIds.join(', ')}`);
   }
   validatePoints(out, value.pointsPerTier, `${path}.pointsPerTier`, false);
   validateGain(out, value.gainPerTier, `${path}.gainPerTier`, !partial);
