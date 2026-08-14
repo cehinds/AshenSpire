@@ -96,9 +96,25 @@ if (d4 !== 'unknown') fail(`music('toString') reported '${d4}', expected 'unknow
 
 console.warn = realWarn;
 
+// THE DOOR, in the run's own output — Vira's doors audit, 2026-08-14, found
+// this probe SAME-DOOR and its door UNSTATED. An observation that cannot name
+// its entry point has not made the claim (development.md, the instrument
+// rule's same-door clause), so the entry point is printed, and so is the stage
+// that carries no plant.
+const DOOR = [
+  '  DOOR: the known-bad enters as a CONTENT ROW — a bed deleted from the live BEDS table,',
+  '    the same object src/content/music.js exports — and is judged by the REAL engine:',
+  '    initAudio() builds its graph on the WebAudio stub and every scheduling call runs.',
+  '    Nothing is handed to a verdict function; the disposition is whatever music() returns.',
+  '    NOT PLANTED, and it matters: the plant is an in-memory edit to the imported module,',
+  '    so the file read and parse of src/content/music.js carry no known-bad here. A bed that',
+  '    vanished by a BAD FILE rather than a bad row would enter below this probe.',
+].join('\n');
+
 if (selftest) {
   const combatMiss = misses > 0;
   if (combatMiss && d2 === MUSIC_SILENCE_WORD) {
+    console.log(DOOR);
     console.log(`RESULT: selftest held — with BEDS.combat deleted, shape 1 went red (${misses} miss${misses === 1 ? '' : 'es'}) while the silence word still read as intent; a vanished bed cannot pass as quiet-by-design.`);
     process.exit(0);
   }
@@ -107,6 +123,7 @@ if (selftest) {
 }
 
 if (misses === 0) {
+  console.log(DOOR);
   console.log(`RESULT: intent and bug are distinguishable — bed schedules sound (${combatScheduled} gain values), '${MUSIC_SILENCE_WORD}' stops the bed and schedules none without warning, an unwritten context schedules none AND warns naming itself. (Scheduling graph only — nothing here has ears.)`);
   process.exit(0);
 }
