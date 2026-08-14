@@ -41,6 +41,14 @@ const ENDLESS = argv.includes('--endless');
 // bot's shrine behaviour is untouched, only the refill is withheld.
 const GRACE_AB = argv.includes('--grace-ab');
 let GRACE_ON = !argv.includes('--no-grace-refill');
+// THE CLASS-SPREAD DEEPENING (Vira, 2026-08-15). `--deep` tallies each fight's
+// own eventLog — playerTurnStart / cardPlayed / blockGained / healed / hpLost /
+// damageDealt / energySpent / flaskUsed — into per-class counters, plus the
+// death book (act, maxHp, HP entering the fatal fight). READ-ONLY: the tally
+// consumes the log after the fight resolved; a deep fleet must reproduce the
+// plain fleet's wins exactly, same seeds, or the instrument perturbed the
+// measurement. (Invariant, not a boast: re-run both ways and diff the wins.)
+const DEEP = argv.includes('--deep');
 // How many flasks a grace actually poured, across the fleet — the mechanism's
 // own counter, so a green win-rate cannot be read as "the refill happened".
 let poured = 0;
@@ -48,8 +56,42 @@ let graces = 0;
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
 const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
 
+// ---- the deep tally (read-only over a finished fight's eventLog) ------------
+function newDeepStats() {
+  return {
+    fights: 0, turns: 0, cards: 0, comboPlays: 0,
+    energySpent: 0, energyBudget: 0,
+    dmgDealt: 0, dmgBlockedByEnemy: 0,
+    playerHpLost: 0, playerBlock: 0, playerHealed: 0, flasksDrunk: 0,
+    deaths: 0, deathActs: [0, 0, 0], deathMaxHp: 0, deathHpIn: 0,
+    hpInSum: 0, // HP entering every fight, victories included
+  };
+}
+function tallyFight(ds, combat, hpEntering) {
+  ds.fights++;
+  ds.hpInSum += hpEntering;
+  let turns = 0;
+  for (const ev of combat.eventLog) {
+    switch (ev.type) {
+      case 'playerTurnStart': turns++; break;
+      case 'cardPlayed': ds.cards++; if (ev.ordinalThisTurn >= 2) ds.comboPlays++; break;
+      case 'energySpent': ds.energySpent += ev.amount; break;
+      case 'flaskUsed': ds.flasksDrunk++; break;
+      case 'blockGained': if (ev.targetId === 'player') ds.playerBlock += ev.amount; break;
+      case 'healed': if (ev.targetId === 'player') ds.playerHealed += ev.amount; break;
+      case 'hpLost': if (ev.targetId === 'player') ds.playerHpLost += ev.amount; break;
+      case 'damageDealt': if (ev.targetId !== 'player') { ds.dmgDealt += ev.amount; ds.dmgBlockedByEnemy += ev.blocked; } break;
+    }
+  }
+  ds.turns += turns;
+  // Approximate budget: turns × stamped energyMax. Statuses that grant or steal
+  // energy make this a floor/ceiling blur, so it prints as "≈" — read the
+  // utilisation as a ratio between classes, not as an absolute.
+  ds.energyBudget += turns * combat.player.energyMax;
+}
+
 // ---- the combat bot (same policy as tests/balance) --------------------------
-function botFight(run, rng, encounterId, cm = {}) {
+function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   const enc = REG.encounters.get(encounterId);
   const combat = createCombat({
     registries: REG, rng,
@@ -101,6 +143,7 @@ function botFight(run, rng, encounterId, cm = {}) {
     }
   }
   if (guard >= 9000) throw new Error(`combat stalled: ${encounterId}`);
+  if (deepStats) tallyFight(deepStats, combat, run.hp);
   run.flasks = combat.player.flasks;
   if (combat.result === 'victory') run.hp = combat.player.hp;
   return combat.result;
@@ -119,12 +162,20 @@ function afterVictory(run, rng, pool) {
 }
 
 // ---- one full run ------------------------------------------------------------
-function simulateRun(classId, seed) {
+function simulateRun(classId, seed, ds = null) {
   const run = createRunState({ seed, classId, registries: REG });
   run._id = createIdGen('sim');
   run.seenEvents = [];
   const rng = createRng(seed);
   const result = { classId, seed, victory: false, act: 1, floor: 0, deaths: null };
+  // The death book: act, the run's maxHp, and the HP it walked into the fatal
+  // node with. On a lost fight botFight does NOT write hp back, so run.hp
+  // still holds the entering value at the moment of the record.
+  const recordDeath = (ds2, act, hpIn) => {
+    if (!ds2) return;
+    ds2.deaths++; ds2.deathActs[Math.min(act, 3) - 1]++;
+    ds2.deathMaxHp += run.maxHp; ds2.deathHpIn += hpIn;
+  };
 
   const lastAct = ENDLESS ? ENDLESS_ACT_CAP : 3;
   for (let act = 1; act <= lastAct; act++) {
@@ -156,12 +207,13 @@ function simulateRun(classId, seed) {
           run.seenEvents.push(res.eventId);
           const ev = REG.events.get(res.eventId);
           const choice = ev.choices.find((c) => !c.requires || (c.requires.cinders || 0) <= run.cinders) || ev.choices[ev.choices.length - 1];
+          const hpBeforeEvent = run.hp;
           executeRunEffects({ run, registries: REG, rng }, choice.effects);
-          if (run.hp <= 0) { result.deaths = `event:${res.eventId}`; return result; }
+          if (run.hp <= 0) { result.deaths = `event:${res.eventId}`; recordDeath(ds, act, hpBeforeEvent); return result; }
           if (run.combatEntered) {
             const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
             run.combatEntered = null;
-            if (botFight(run, rng, encId, cm) !== 'victory') { result.deaths = `ambush:${encId}`; return result; }
+            if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `ambush:${encId}`; recordDeath(ds, act, run.hp); return result; }
             afterVictory(run, rng, 'normal');
           }
           kind = null;
@@ -171,7 +223,7 @@ function simulateRun(classId, seed) {
       if (kind === 'monster' || kind === 'fight' || kind === 'elite' || kind === 'boss') {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
         const encId = rollEncounter(REG, rng, { pool, act: contentAct });
-        if (botFight(run, rng, encId, cm) !== 'victory') { result.deaths = `${pool}:${encId}`; return result; }
+        if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `${pool}:${encId}`; recordDeath(ds, act, run.hp); return result; }
         afterVictory(run, rng, pool);
         if (pool === 'boss') {
           const boss = rollRelicReward(REG, rng, run.relics, { rarities: ['boss'] });
@@ -208,10 +260,11 @@ const tally = { wins: 0, runs: 0, acts: 0 };
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;
   const deaths = {};
+  const ds = DEEP ? newDeepStats() : null;
   for (let i = 1; i <= N; i++) {
     let r;
     try {
-      r = simulateRun(cls.id, (i * 2654435761) >>> 0);
+      r = simulateRun(cls.id, (i * 2654435761) >>> 0, ds);
     } catch (e) {
       crash = `${cls.id} seed#${i}: ${e.message}`;
       console.error(`CRASH ${crash}`);
@@ -231,6 +284,28 @@ for (const cls of REG.classes.all()) {
         `  avg act ${(acts / N).toFixed(2)}  avg floor ${(floors / N).toFixed(1)}` +
         `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
   );
+  if (ds && ds.fights) {
+    const perTurn = (x) => (x / ds.turns).toFixed(2);
+    const perFight = (x) => (x / ds.fights).toFixed(1);
+    console.log(
+      `  deep: fights ${ds.fights} (${(ds.fights / N).toFixed(1)}/run)  turns/fight ${(ds.turns / ds.fights).toFixed(1)}` +
+      `  cards/turn ${perTurn(ds.cards)} (combo-position ${perTurn(ds.comboPlays)})` +
+      `  energy ${(100 * ds.energySpent / ds.energyBudget).toFixed(0)}%≈of budget`
+    );
+    console.log(
+      `        per fight: dealt ${perFight(ds.dmgDealt)} (enemy blocked ${perFight(ds.dmgBlockedByEnemy)})` +
+      `  hp lost ${perFight(ds.playerHpLost)}  block ${perFight(ds.playerBlock)}  healed ${perFight(ds.playerHealed)}` +
+      `  flasks drunk ${ds.flasksDrunk}`
+    );
+    if (ds.deaths) {
+      console.log(
+        `        deaths ${ds.deaths}: by act ${ds.deathActs.join('/')}` +
+        `  mean maxHp at death ${(ds.deathMaxHp / ds.deaths).toFixed(1)}` +
+        `  mean HP entering fatal node ${(ds.deathHpIn / ds.deaths).toFixed(1)}` +
+        `  (mean HP entering ANY fight ${(ds.hpInSum / ds.fights).toFixed(1)})`
+      );
+    }
+  }
 }
 if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }
 console.log(`\ngraces visited ${graces}, flasks poured ${poured}` + (GRACE_ON && graces && !poured ? '  <-- REFILL RAN DEAD' : ''));
