@@ -6,8 +6,9 @@
 // (one run each): Continue an occupied slot, or Begin a climb in an empty one.
 
 import { esc } from '../components/tooltip.js';
+import { beatArmer } from '../components/holdconfirm.js';
 
-export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan, onCompendium }) {
+export function mountTitle(app, { slots, meta, registries, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan, onCompendium }) {
   // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
   const EMBER_COUNT = { off: 0, low: 3, normal: 7, high: 14 };
   const emberN = EMBER_COUNT[document.documentElement.dataset.ambient] ?? 7;
@@ -30,7 +31,7 @@ export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory,
              </div>
              <div class="slot-actions">
                <button class="slot-continue" data-slot="${slot}">CONTINUE</button>
-               <button class="subtle slot-delete" data-slot="${slot}" title="Delete this run">✕</button>
+               <button class="subtle slot-delete" data-slot="${slot}">✕</button>
              </div>
            </div>`
         : `<div class="slot empty">
@@ -73,20 +74,20 @@ export function mountTitle(app, { slots, onContinue, onNew, onDelete, onHistory,
   if (onLan) app.querySelector('#lan-play').addEventListener('click', onLan);
   app.querySelectorAll('.slot-continue').forEach((b) => b.addEventListener('click', () => onContinue(+b.dataset.slot)));
   app.querySelectorAll('.slot-new').forEach((b) => b.addEventListener('click', () => onNew(+b.dataset.slot)));
-  // Delete is a two-click, self-resetting confirm (no blocking dialog).
-  app.querySelectorAll('.slot-delete').forEach((b) =>
-    b.addEventListener('click', () => {
-      if (b.dataset.armed === '1') return onDelete(+b.dataset.slot);
-      b.dataset.armed = '1';
-      b.textContent = 'Delete?';
-      b.classList.add('armed');
-      setTimeout(() => {
-        if (b.isConnected) {
-          b.dataset.armed = '0';
-          b.textContent = '✕';
-          b.classList.remove('armed');
-        }
-      }, 2500);
-    })
-  );
+  // DELETE RIDES THE SHARED MACHINERY (secondbeat.js, `deleteSave` — collapsed
+  // 2026-08-14). This screen used to answer it in its own hand: a two-click,
+  // self-resetting arm with a hard-coded 2500 ms that never read the dial —
+  // `off` still demanded two clicks, `long` lengthened nothing. The screen now
+  // names its action and hands over the commit; the table picks the form and
+  // `balance.ui.holdConfirm` is the one home of the duration.
+  const arm = beatArmer(meta, registries);
+  app.querySelectorAll('.slot-delete').forEach((b) => {
+    arm(b, 'deleteSave', { onConfirm: () => onDelete(+b.dataset.slot) });
+    // The word HOLD does not fit beside an icon glyph — the flask-slot
+    // precedent (ui.css hides `.slot-delete .hold-hint`). The sentence moves
+    // into the native tooltip and READS the state the machinery dressed, so
+    // the words and the gesture cannot drift: no `data-holdMs` means the dial
+    // is off and a tap commits.
+    b.title = b.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
+  });
 }

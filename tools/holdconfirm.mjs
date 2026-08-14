@@ -66,20 +66,21 @@
 //      and against the sideways travel of their own scroll container.
 //  11. THE MERCHANT'S BRAZIER, which nobody asked for and which burns a card
 //      out of the deck for good on one tap of a small card in a wrapped grid.
-//  12. THE THREE BEATS THIS GAME ALREADY HAD, IN THEIR OWN SCREENS' HANDS —
-//      the census's `handledBy` rows, which this tool took ON FAITH from the
-//      day the set section was written until the three `?shot=` states landed
-//      (title / profile / crisis, main.js). Each is driven in its own idiom,
-//      because handledBy is an exemption from the shared machinery and not
-//      from being watched: the title's ✕ arms on one press, takes itself back
-//      at 2.5 s, and deletes only on the armed second press; the drawer's
-//      Restore opens an inline confirm that names what happens to the profile
-//      in play; the crisis screen's "Start a new profile" opens a modal, and
-//      its commit is read off the save manager's own named state
+//  12. THE BEATS IN THEIR OWN SCREENS' HANDS — the census's `handledBy` rows,
+//      which this tool took ON FAITH from the day the set section was written
+//      until the three `?shot=` states landed (title / profile / crisis,
+//      main.js). Each is driven in its own idiom, because handledBy is an
+//      exemption from the shared machinery and not from being watched: the
+//      drawer's Restore opens an inline confirm that names what happens to
+//      the profile in play; the crisis screen's "Start a new profile" opens a
+//      modal, and its commit is read off the save manager's own named state
 //      (window.__profile → profileStatus()), never inferred from which screen
-//      mounted next. Every pose enters by the real doors: a real save written
-//      then listed, a real profile archived by replacePrimaryWith, real torn
-//      bytes read by the real parser.
+//      mounted next. Every pose enters by the real doors: a real profile
+//      archived by replacePrimaryWith, real torn bytes read by the real
+//      parser. (The title's ✕ was the third of these — a two-click,
+//      self-resetting arm — until 2026-08-14, when its row collapsed into the
+//      machinery: it holds now, on the dial, and is driven like End Turn on a
+//      real save written then listed.)
 //
 // OBSERVED RED — `--mutate`, and it falsifies the thing that would be silent.
 // It puts the OLD DOOR back on every one of the eight armed surfaces: the
@@ -789,11 +790,12 @@ async function main() {
     // THIS GAME HAS THAT NOTHING HERE CAN OPEN. For a week that named three
     // `handledBy` rows — deleteSave, profileRestore, freshProfile — real
     // confirms nobody had ever watched run; the three `?shot=` states this
-    // line asked for exist now (title / profile / crisis) and their beats are
-    // DRIVEN below, in their own screens' hands. What this skip still guards
-    // is the FUTURE row: any beat-owing action whose row names no surface
-    // lands here by name and takes the exit code with it, exactly as the
-    // first three did.
+    // line asked for exist now (title / profile / crisis), deleteSave has
+    // since collapsed into the machinery (2026-08-14) and is censused like any
+    // wired row, and the two still in their own hands are DRIVEN below. What
+    // this skip still guards is the FUTURE row: any beat-owing action whose
+    // row names no surface lands here by name and takes the exit code with
+    // it, exactly as the first three did.
     const unreachable = [...new Set(table.rows.filter((r) => r.form !== 'none' && !r.surface)
       .map((r) => `${r.id} (${r.handledBy ? 'its own hand: ' + r.handledBy.split(' — ')[0] : 'nothing wires it'})`))];
     if (unreachable.length) skip(`${unreachable.length} second beat(s) no instrument can open`, 'unasked', unreachable.join(' · '));
@@ -1051,20 +1053,31 @@ async function main() {
   }
 
   // ==========================================================================
-  // THE THREE BEATS IN THEIR OWN SCREENS' HANDS — the census's `handledBy`
-  // rows, watched instead of believed. Each is driven in its own idiom, on a
-  // state posed by the real doors (see main.js, the three states' comments).
-  // The exemption `handledBy` names is from the SHARED MACHINERY, never from
-  // being measured: no `data-beat-action` is expected on any of these, and
-  // none of these sections reads one.
+  // THE BEATS IN THEIR OWN SCREENS' HANDS — the census's `handledBy` rows
+  // (profileRestore, freshProfile), watched instead of believed — plus the
+  // title's ✕, which LEFT this club on 2026-08-14: its row rides the shared
+  // machinery now, so its section drives the machinery's own hold and reads
+  // `data-beat-action` like combat's. The two `handledBy` rows are driven in
+  // their own idiom, on states posed by the real doors (see main.js); no
+  // `data-beat-action` is expected on those two.
 
-  // ---- THE TITLE: deleting a run — the game's oldest second beat ------------
+  // ---- THE TITLE: deleting a run — collapsed into the shared machinery ------
+  // The game's oldest second beat spent its life as a third form: a two-click,
+  // self-resetting arm with its own hard-coded 2500 ms, wired in title.js's own
+  // hand and DEAF TO THE DIAL — `balance.ui.holdConfirm` never reached it, so
+  // `off` still demanded two clicks and `long` never lengthened anything. The
+  // exemption's honest content was "nothing could watch a rewrite run"; the
+  // `?shot=title` state ended that, and the row is machinery now. The table
+  // rules `hold` (stakes profile, undo none, hazard pointing — the ✕ shares
+  // `.slot-actions` with CONTINUE), so the ✕ answers exactly like End Turn:
+  // fill under the finger, release-early aborts, the dial is the one home of
+  // the duration.
   {
-    console.log(`\n  THE TITLE — the ✕ arms, takes itself back, and deletes only on the armed second press`);
+    console.log(`\n  THE TITLE — the ✕ holds like everything else, and the dial finally reaches it`);
     await openShot('title');
     if (mutate) {
-      // THE OLD DOOR: one click deletes, no arm. The button keeps its class
-      // and its glyph — only the wiring changes.
+      // THE OLD DOOR: one pointer click deletes, no beat. The button keeps its
+      // class and its glyph — only the wiring changes.
       const rewired = await ev(`(() => {
         const b = document.querySelector('.slot-delete'); if (!b) return 0;
         const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
@@ -1079,8 +1092,15 @@ async function main() {
       return {
         occupied: document.querySelectorAll('.slot.occupied').length,
         del: !!d,
-        armed: d ? d.dataset.armed === '1' : null,
-        label: d ? d.textContent.trim() : null,
+        action: d ? d.dataset.beatAction : null,
+        beat: d ? d.dataset.beat : null,
+        holdMs: d ? Number(d.dataset.holdMs || 0) : null,
+        // The word HOLD does not fit beside an icon glyph — the flask-slot
+        // precedent (ui.css). The dressing exists; the CSS hides it; the
+        // native tooltip carries the sentence instead.
+        hint: d ? !!d.querySelector('.hold-hint') : null,
+        hintShown: (() => { const h = d && d.querySelector('.hold-hint'); return h ? getComputedStyle(h).display !== 'none' : false; })(),
+        tip: d ? (d.title || '') : null,
         cont: !!document.querySelector('.slot-continue'),
       };
     })()`);
@@ -1089,30 +1109,52 @@ async function main() {
     else {
       ok(`the pose surfaced a REAL save through the real reader`, t0.occupied === 1 && t0.cont,
         `${t0.occupied} occupied slot(s), CONTINUE drawn=${t0.cont} — listSlots reading the bytes newRun wrote`);
-      ok(`at rest the ✕ is not armed`, t0.armed === false && t0.label === '✕',
-        `armed=${t0.armed} label=${JSON.stringify(t0.label)}`);
+      ok(`the ✕ is the machinery's control, ruled HOLD by the table`,
+        t0.action === 'deleteSave' && t0.beat === 'hold' && t0.hint === true,
+        `data-beat-action=${JSON.stringify(t0.action)} beat=${JSON.stringify(t0.beat)} hint=${t0.hint}`);
+      ok(`the word yields to the icon, and the tooltip says HOLD instead (the flask precedent)`,
+        t0.hintShown === false && /hold/i.test(t0.tip || ''),
+        `hint shown=${t0.hintShown} title=${JSON.stringify(t0.tip)}`);
+      ok(`its duration is THE DIAL'S, not a constant of its own`, t0.holdMs > 0,
+        `holdMs=${t0.holdMs} under the default dial`);
+      // 1. THE ABORT. A release before the fill lands must not delete — under
+      // --mutate this is the check that goes red, because the rewired click
+      // fires on that release.
       const dp = await pointOf('.slot-delete');
-      await press(dp, 30);
+      await press(dp, Math.round((t0.holdMs || 600) * 0.4));
       const t1 = await tState();
-      ok(`one press ARMS the delete and deletes NOTHING`,
-        t1.del && t1.armed === true && /Delete\?/.test(t1.label || '') && t1.occupied === t0.occupied,
-        `armed=${t1.armed} label=${JSON.stringify(t1.label)} occupied ${t0.occupied} -> ${t1.occupied}`);
-      // THE ABORT IS TIME, which is this form's whole difference: nobody
-      // presses again and the arm takes itself back. title.js resets at
-      // 2500 ms; measured past it.
-      await wait(2700);
-      const t2 = await tState();
-      ok(`an armed ✕ nobody presses again takes itself back`,
-        mutate ? true : (t2.armed === false && t2.label === '✕' && t2.occupied === t0.occupied),
-        `armed=${t2.armed} label=${JSON.stringify(t2.label)} occupied=${t2.occupied} after the 2.5 s self-reset`);
-      // THE ARMED SECOND PRESS COMMITS — and the verdict is the re-render the
-      // real reader draws from storage, not the button's own state.
+      ok(`a release before the fill lands deletes NOTHING`,
+        t1.occupied === t0.occupied && t1.cont,
+        `occupied ${t0.occupied} -> ${t1.occupied}, CONTINUE=${t1.cont}`);
+      // 2. A COMPLETED HOLD DELETES — the verdict is the re-render the real
+      // reader draws from storage, not the button's own state.
       const dp2 = await pointOf('.slot-delete');
-      if (await press(dp2, 30)) { await press(await pointOf('.slot-delete'), 30); await wait(400); }
-      const t3 = await tState();
-      ok(`the second press while armed deletes the run`,
-        mutate ? true : (t3.occupied === 0 && !t3.cont),
-        `occupied ${t0.occupied} -> ${t3.occupied}, CONTINUE=${t3.cont} — read off the re-rendered slot list`);
+      if (dp2) { await press(dp2, (t0.holdMs || 600) + 350); await wait(400); }
+      const t2 = await tState();
+      ok(`a completed hold deletes the run`,
+        mutate ? true : (t2.occupied === 0 && !t2.cont),
+        `occupied ${t0.occupied} -> ${t2.occupied}, CONTINUE=${t2.cont} — read off the re-rendered slot list`);
+      // 3. THE DIAL REACHES IT — both directions. `long` lengthens the arm;
+      // `off` is the player's own "one tap commits", the position the old
+      // two-click arm never honored.
+      await openShot('title', { shotSettings: JSON.stringify({ holdConfirm: 'long' }) });
+      const tl = await tState();
+      ok(`the 'long' dial lengthens the ✕'s arm — derived, not hard-coded`,
+        mutate ? tl.del === false || true : (tl.holdMs === 1000),
+        `holdMs=${tl && tl.holdMs} under holdConfirm='long'`);
+      await openShot('title', { shotSettings: JSON.stringify({ holdConfirm: 'off' }) });
+      const toff = await tState();
+      if (!toff.del || !toff.occupied) skip('title dial-off', 'unasked', 'no occupied slot at ?shot=title with the dial off');
+      else {
+        ok(`Off strips the hold dressing from the ✕`, toff.holdMs === 0 && toff.hint === false,
+          `holdMs=${toff.holdMs} hint=${toff.hint}`);
+        const opd = await pointOf('.slot-delete');
+        await press(opd, 30); await wait(400);
+        const toff2 = await tState();
+        ok(`Off restores one-tap delete — the dial position the old arm ignored`,
+          mutate ? true : (toff2.occupied === 0 && !toff2.cont),
+          `occupied ${toff.occupied} -> ${toff2.occupied}`);
+      }
     }
   }
 
@@ -1197,6 +1239,14 @@ async function main() {
         title: !!document.querySelector('.title-screen'),
         state: p && p.state, ok: p && p.ok, quarantined: p && p.quarantined,
         archived: !!(p && p.archiveId),
+        // The drawer itself. profileStatus().archiveId is a READ-TRANSIENT:
+        // loadMeta() re-derives the status on every clean read, and the title
+        // screen performs such a read at mount now (the delete beat's dial) —
+        // so past a navigation, "the bytes are kept" is the DRAWER's claim,
+        // not the pointer's. Observed exactly there: green while nothing on
+        // the title read the meta, "old bytes LOST" the day it did, drawer
+        // intact both times.
+        drawer: typeof window.__archives === 'function' ? window.__archives().length : null,
       };
     })()`);
     const c0 = await cState();
@@ -1242,9 +1292,13 @@ async function main() {
       else {
         await press(gp2, 30); await wait(500);
         const c3 = await cState();
+        // "KEPT" is read off the drawer, not off profileStatus().archiveId —
+        // see cState's comment: the pointer does not survive the title mount's
+        // own meta read, and the promise the modal makes is about the bytes.
+        const kept = c3.drawer != null && c0.drawer != null && c3.drawer >= c0.drawer && c3.drawer > 0;
         ok(`"Start fresh" commits: a fresh profile is live and the torn one is KEPT`,
-          c3.ok === true && c3.state === 'ok' && c3.quarantined === false && c3.archived && c3.title,
-          `state=${c3.state} quarantined=${c3.quarantined} old bytes ${c3.archived ? 'kept' : 'LOST'} title mounted=${c3.title}`);
+          c3.ok === true && c3.state === 'ok' && c3.quarantined === false && kept && c3.title,
+          `state=${c3.state} quarantined=${c3.quarantined} drawer ${c0.drawer} -> ${c3.drawer} (${kept ? 'kept' : 'LOST'}) title mounted=${c3.title}`);
       }
     }
   }
@@ -1307,13 +1361,15 @@ async function main() {
       hazard) is a design claim. This proves the derivation is applied
       consistently and reaches the page; it cannot tell you that a hold on End
       Turn is what a player wants, and NOBODY HAS WATCHED A PLAYER USE IT.
-  (h) THE THREE handledBy BEATS ARE MEASURED AS THEY ARE, NOT AS THE TABLE
-      DERIVES THEM. deleteSave's row derives 'hold'; its hand answers with a
-      two-click self-resetting arm — a third form. This proves that arm works
-      (arms, resets, commits only armed); whether it SHOULD be the shared
-      hold is a design call, and a green here licenses nothing about it. The
-      crisis pose is the corrupt state only: 'older' and 'newer' render
-      different screens and neither is driven here.`);
+  (h) THE TWO handledBy BEATS ARE MEASURED AS THEY ARE, NOT AS THE TABLE
+      DERIVES THEM. profileRestore and freshProfile answer in their own
+      screens' hands; this proves each hand works (arms, cancels, commits only
+      confirmed) — whether either should collapse into the shared machinery is
+      a design call a green here licenses nothing about. (deleteSave was the
+      third until 2026-08-14; its collapse is DONE and its checks above drive
+      the machinery's own hold on the dial.) The crisis pose is the corrupt
+      state only: 'older' and 'newer' render different screens and neither is
+      driven here.`);
   if (notAsked.length) {
     const structural = notAsked.filter((n) => n.kind === 'structural');
     console.log(`\n  NOT ASKED OF THIS ARTIFACT — ${notAsked.length}:`);
