@@ -17,6 +17,14 @@
 // clicks where one does not, and a seeded localStorage for the crisis notice —
 // which is exactly the precondition a player with unreadable bytes has.
 //
+// KNOWN-BAD: tools/release-shots-selftest.mjs (Bjorn, 2026-08-15). Every
+// refusal below — unaccounted state, blind reader, partial blindness, an empty
+// home, a stale bundle — and the landmark MISS have each been OBSERVED red at
+// dev = 5244543, planted as real edits to a copy of the whole repo and run
+// through this file as a whole program. Before that they were `unknown`, not
+// green, whatever this tool printed (development.md, *The instrument rule*).
+//   node tools/release-shots-selftest.mjs
+//
 // THE ARTIFACT IS NEVER MODIFIED. The crisis states are reached by writing
 // storage from outside and reloading, never by injecting script into the HTML.
 // A shot of a patched bundle is a shot of something we do not ship.
