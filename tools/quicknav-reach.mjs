@@ -25,14 +25,61 @@
 // deliberate breakages before it was allowed to pass anything — the clamp
 // removed (R1 red at 390 combat), the ring's wrap removed (R5 red), and the
 // tail band sorted into the body (R2 red). A detector that has never been red is
-// not evidence. `--selftest` prints what was mutated and what went red.
+// not evidence.
 //
+// AND FOR MOST OF THIS FILE'S LIFE THAT PARAGRAPH WAS A PROMISE IT DID NOT KEEP
+// (Rune, 2026-08-15). Those three breakages were MANUAL, done once at authoring
+// and never again — under SOP 2's drift clause a red nobody can re-run is
+// `unknown`, not coverage, and Vira's doors audit (2026-08-14) rated this tool
+// OBSERVED-ONCE for exactly that. Worse, the line above used to promise a
+// `--selftest` flag THAT DID NOT EXIST: passing it ran the ordinary sweep under
+// a corpus-run's name. Vira found that and made the flag refuse; this act pays
+// what was owed and makes the flag real.
+//
+// DOOR. The real input is the rendered quick-nav panel — this tool serves the
+// real tree, boots the real screens with real settings, opens the real list and
+// measures real rects. `--selftest` plants each known-bad as BYTES in a copy of
+// the real file the defect would ship in and re-runs this whole tool against
+// the copy: same serve.mjs, same browser, same clicks and key presses.
 // Usage:  node tools/quicknav-reach.mjs [--shots DIR]
+//         node tools/quicknav-reach.mjs --selftest   (the same-door known-bad corpus)
 // Exit:   0 all green · 1 any finding · 2 the harness could not run
 //
 // REMOVAL CONDITION: delete this file the day the experiment resolves — when
 // `quickNav` leaves src/ui/screens/settings.js, whichever variant wins. A check
 // for a setting nobody can set is decoration.
+
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'quicknav-reach.mjs',
+    timeoutMs: 900000,
+    plants: [
+      {
+        // R3's known-bad: Sunna's tap floor removed at the one place that
+        // decides a row's height. `min-height` is the whole rule — the row has
+        // no other floor — so this is the defect, not a caricature of it.
+        name: 'R3: the 44-local-px tap floor is dropped from the quick-nav row',
+        file: 'styles/ui.css',
+        find: '  min-height: 4.4rem; padding: 0.6rem 1.6rem; text-align: left;',
+        replace: '  min-height: 0; padding: 0.1rem 1.6rem; text-align: left;',
+        expectRed: /R3.*row\(s\) under 44 local px/,
+      },
+      {
+        // R1's known-bad, and the one the tool was born for: the panel escapes
+        // the viewport. `position: fixed` with a forced width wider than the
+        // phone puts rows off the SIDE, which is the unreachable direction —
+        // the clamp is what stops exactly this.
+        name: 'R1: the panel is allowed to hang off the side of the phone (the clamp gone)',
+        file: 'styles/ui.css',
+        find: '.qn-panel {\n  position: fixed; width: 26rem; max-width: 92%;',
+        replace: '.qn-panel {\n  position: fixed !important; width: 60rem !important; max-width: none !important; left: -8rem !important;',
+        expectRed: /R1.*(spans .* in a .* px view|escapes)/,
+      },
+    ],
+  }));
+}
+
 
 import { spawn } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -358,6 +405,11 @@ chrome.child.kill();
 const red = findings.length;
 console.log(`\n${checks.filter(Boolean).length}/${checks.length} checks green, ${red} finding(s)`);
 for (const f of findings) console.log('  RED  ' + f);
+console.log('DOOR: the rendered panel, served from this tree and opened by real clicks in a real');
+console.log('      browser. `--selftest` re-observes two known-bads planted as bytes in the real');
+console.log('      stylesheet — R3\'s tap floor and R1\'s clamp (observed red 2026-08-15,');
+console.log('      re-runnable). The three manual breakages named in the header were one-off and');
+console.log('      had drifted to `unknown` under SOP 2; they are superseded, not cited.');
 console.log('BOUNDARY: two shapes (1200x730, 390x844), map + combat + menu-expanded.');
 console.log('          NO GAMEPAD IS ATTACHED — R5 drives the ring through the keyboard');
 console.log('          analogue ([ / ]), which shares the ring but NOT the button-4/5');
