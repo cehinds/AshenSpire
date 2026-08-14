@@ -38,6 +38,7 @@ import {
   endlessActInfo, activeMods, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP,
 } from '../src/content/customMods.js';
 import { createCoopCombat } from '../src/engine/coopCombat.js';
+import { statProjection } from '../src/model/statProjection.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, tagsFor, tagIdsFor, cardsWithTag } from '../src/content/tags.js';
@@ -4071,6 +4072,40 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     both.attributes.vigour = 12; // constitution still present
     storage.setItem(RUN_KEY, JSON.stringify(both));
     eq(saves.loadRun(REG), null, 'a save carrying both constitution and vigour is refused, never guessed');
+  });
+
+  test("50d. the sheet's printed HP pays 1 per Vigour point — D17, at three VIG values", () => {
+    // "vigour shoudl be 1 hp point per" — Constantine, D17 message 1, verbatim
+    // (commons/decisions/directions.md), overruling the mock's +8 AND the
+    // shipped per-tier shape (floor(VIG/5) — +2 at VIG 12 where his sentence
+    // says +12). The door is the screen's own read model: customize.js and
+    // overlay.js print statProjection's hp row verbatim, formula string and
+    // all, so this row IS the printed sheet, one esc() above the DOM.
+    // Strength's "+1 damange per every 5 points" is per-5 BY his sentence, so
+    // tiers stay right for every other row; only HP pays per point.
+    for (const [classId, vig] of [['reaver', 12], ['starseer', 10]]) {
+      const run = createRunState({ seed: 0xf1, classId, registries: REG });
+      eq(run.attributes.vigour, vig, `${classId} preset VIG`);
+      const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
+      eq(hp.tier * hp.gainPerTier, vig,
+        `${classId}: the printed HP's attribute term pays +1 per point (VIG ${vig})`);
+      assert(hp.formula.endsWith(`= ${run.maxHp}`),
+        `${classId}: the printed formula lands on the run's real pool — got '${hp.formula}'`);
+      eq(run.maxHp, hp.base + vig + hp.equipmentBonus,
+        `${classId}: max HP = class base ${hp.base} + VIG ${vig} + gear ${hp.equipmentBonus}`);
+    }
+    // The max creation edge: VIG 15 is standard mode's ceiling. Per-tier
+    // pays 3 here; his sentence pays 15 — the gap grows with investment.
+    const maxed = createRunState({
+      seed: 0xf2, classId: 'reaver', registries: REG,
+      attributes: { strength: 10, dexterity: 10, vigour: 15, wisdom: 10, intelligence: 10 },
+    });
+    const hp15 = statProjection(REG, maxed).derived.find((row) => row.id === 'hp');
+    eq(hp15.tier * hp15.gainPerTier, 15, 'VIG 15 pays +15, not floor(15/5) = 3');
+    // The stamina row still tiers — his sentence names HP alone, and the
+    // mock's own "1 per 5 points" lines he left standing.
+    const st15 = statProjection(REG, maxed).derived.find((row) => row.id === 'stamina');
+    eq(st15.tier, 3, 'stamina keeps the 5-point tier: his sentence rules HP only');
   });
 
   const passed = results.filter((r) => r.ok).length;
