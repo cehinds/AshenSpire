@@ -98,7 +98,7 @@ for (const row of [bow, bowProfile, bowTechnique].filter(Boolean)) {
 }
 
 const baseRun = createRunState({ seed: 0x51a7, classId: 'reaver', registries: R });
-const allTen = { strength: 10, dexterity: 10, constitution: 10, wisdom: 10, intelligence: 10 };
+const allTen = { strength: 10, dexterity: 10, vigour: 10, wisdom: 10, intelligence: 10 };
 function roleReceipt(pieceId, role, attributes) {
   if (!piece(pieceId)) return null;
   const loadout = structuredClone(baseRun.loadout);
@@ -133,7 +133,7 @@ const expectedBase = {
 const expectedChanges = {
   strength: { swordAttack: 8 },
   dexterity: { daggerAttack: 6, bowAttack: 7, weaponGuard: 5, energy: 4 },
-  constitution: { hp: 87, stamina: 3 },
+  vigour: { hp: 87, stamina: 3 },
   wisdom: { sceptreAttack: 7, mana: 3 },
   intelligence: { staffAttack: 5, draw: 6 },
 };
@@ -148,7 +148,7 @@ for (const stat of Object.keys(allTen)) {
 const standardRun = createRunState({ seed: 0x4850, classId: 'reaver', registries: R });
 const con15Run = createRunState({
   seed: 0x4851, classId: 'reaver', registries: R,
-  attributes: { strength: 10, dexterity: 10, constitution: 15, wisdom: 10, intelligence: 10 },
+  attributes: { strength: 10, dexterity: 10, vigour: 15, wisdom: 10, intelligence: 10 },
 });
 check(standardRun.maxHp === 86 && con15Run.maxHp === 87 && con15Run.maxStamina === 3,
   'actual Wayfarer runs consume the CON HP/Stamina receipt', `${standardRun.maxHp}/${con15Run.maxHp}/${con15Run.maxStamina}`);

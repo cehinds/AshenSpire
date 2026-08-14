@@ -524,6 +524,9 @@ export const SCHEMAS = Object.freeze({
   attributeRules: obj({
     defaultMode: ref('creationModes'),
     presets: mapOf(mapOf(mapOf(int))),
+    // retired name → live heir (content/retiredNames.js). Semantic rules —
+    // dead may not be live, heir must be — live in attributeContentProblems.
+    retired: opt(mapOf(str)),
   }),
   card: obj({
     id: str,

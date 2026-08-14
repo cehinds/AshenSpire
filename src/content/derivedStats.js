@@ -25,12 +25,12 @@ export const derivedStatRules = {
     },
     hp: {
       base: { strategy: 'classField', field: 'maxHp' },
-      sourceStat: 'constitution',
+      sourceStat: 'vigour',
       gainPerTier: 1,
     },
     stamina: {
       base: 0,
-      sourceStat: 'constitution',
+      sourceStat: 'vigour',
       gainPerTier: 1,
     },
     mana: {
