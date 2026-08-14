@@ -63,13 +63,30 @@ function newRun(classId) {
   return createRunState({ seed: 1, classId, registries: REG });
 }
 
+// The run's own stamped pools, by name — createPlayerCombatEntity REFUSES an
+// unstamped energyMax/drawPerTurn since the derived-stat train, and this tool
+// crashed on its first createCombat from the day that landed until 2026-08-15:
+// the third dead simulator of the same class (runsim and measure-classes were
+// the first two, repaired 2026-08-14). Same fix, same shape.
+function stampedPlayer(run, cls) {
+  return {
+    classId: run.class, attributes: run.attributes, loadout: run.loadout,
+    maxHp: run.maxHp, hp: run.maxHp,
+    maxMana: run.maxMana, mana: run.maxMana,
+    maxStamina: run.maxStamina, stamina: run.maxStamina,
+    energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
+    equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+    deck: run.deck, relicIds: [cls.startingRelic],
+  };
+}
+
 // Measured unopposed DPS: bot vs. the dummy for T player turns.
 function measureDps(classId, T = 10) {
   const cls = REG.classes.get(classId);
   const run = newRun(classId);
   const c = createCombat({
     registries: REG, rng: createRng(0xba1a),
-    player: { classId, attributes: run.attributes, maxHp: run.maxHp, hp: run.maxHp, deck: run.deck, loadout: run.loadout, relicIds: [cls.startingRelic] },
+    player: stampedPlayer(run, cls),
     enemyIds: ['balanceDummy'],
   });
   let guard = 0;
@@ -84,12 +101,15 @@ function simFight(classId, enemyIds, seed) {
   const run = newRun(classId);
   const c = createCombat({
     registries: REG, rng: createRng(seed),
-    player: { classId, attributes: run.attributes, maxHp: run.maxHp, hp: run.maxHp, deck: run.deck, loadout: run.loadout, relicIds: [cls.startingRelic] },
+    player: stampedPlayer(run, cls),
     enemyIds,
   });
   let guard = 0;
   while (!c.result && guard++ < 8000) botStep(c);
-  return { win: c.result === 'victory', hpLost: cls.maxHp - Math.max(0, c.player.hp) };
+  // run.maxHp, NOT cls.maxHp: HP has been DERIVED (class base + vigour per
+  // point, D17) since the derived-stat train — the class field alone is the
+  // wrong denominator for every class.
+  return { win: c.result === 'victory', hpLost: run.maxHp - Math.max(0, c.player.hp) };
 }
 
 // --- report -----------------------------------------------------------------
@@ -141,13 +161,17 @@ P('Naive bot (leftmost affordable card) vs. an infinite-HP dummy, 10 turns,');
 P('starting deck + starting relic. Real players sequence better, so these are a');
 P('conservative floor. Reference bands assume deck growth: mid = ×1.6, late = ×2.4.');
 P('');
-P('| Class | Max HP | Start DPS | ~Mid (×1.6) | ~Late (×2.4) |');
-P('|-------|-------:|----------:|------------:|-------------:|');
+P('| Class | Max HP (derived) | Start DPS | ~Mid (×1.6) | ~Late (×2.4) |');
+P('|-------|-----------------:|----------:|------------:|-------------:|');
 const dpsByClass = {};
+// Derived max HP per class (class base + vigour per point, D17) — what a run
+// actually fights at. cls.maxHp is only the base half of that number.
+const derivedHp = {};
+for (const cls of REG.classes.all()) derivedHp[cls.id] = newRun(cls.id).maxHp;
 for (const cls of REG.classes.all()) {
   const d = measureDps(cls.id);
   dpsByClass[cls.id] = d;
-  P(`| ${cls.name} | ${cls.maxHp} | ${round1(d)} | ${round1(d * 1.6)} | ${round1(d * 2.4)} |`);
+  P(`| ${cls.name} | ${derivedHp[cls.id]} | ${round1(d)} | ${round1(d * 1.6)} | ${round1(d * 2.4)} |`);
 }
 const avgStartDps = Object.values(dpsByClass).reduce((a, b) => a + b, 0) / Object.values(dpsByClass).length;
 P('');
@@ -161,7 +185,7 @@ P('(heal ≥ refDPS → cannot kill) and races (kill ≥ die).');
 P('');
 P('| Act | Encounter | HP | Heal/t | refDPS | Turns to kill | InDPS | Turns to die | Verdict |');
 P('|----:|-----------|---:|-------:|-------:|--------------:|------:|-------------:|---------|');
-const minHp = Math.min(...REG.classes.all().map((c) => c.maxHp));
+const minHp = Math.min(...Object.values(derivedHp));
 const bandMult = { 1: 1, 2: 1.6, 3: 2.4 };
 for (const enc of REG.encounters.all()) {
   if (enc.pool === 'normal') continue;
@@ -204,33 +228,81 @@ for (const cls of REG.classes.all()) {
       if (r.win) wins++;
       hpLost += r.hpLost;
     }
-    P(`| ${cls.name} | ${enc.id} (${enc.pool}) | ${round1((wins / N) * 100)} | ${round1(hpLost / N)} / ${cls.maxHp} |`);
+    P(`| ${cls.name} | ${enc.id} (${enc.pool}) | ${round1((wins / N) * 100)} | ${round1(hpLost / N)} / ${derivedHp[cls.id]} |`);
   }
 }
 P('');
 
-P('## 6. Findings (first pass)');
+// THE ASSERTION'S OWN PASS — EVERY POOL, and the table above is not its home.
+//
+// Section 4's table is deliberately elites & bosses: those are the tight fights
+// a reader wants to see. The ACCEPTANCE CRITERION is not scoped that way — SPEC
+// §9 says no encounter is unbeatable by construction, and a normal encounter
+// that cannot be killed fails it exactly as a boss does.
+//
+// This is not a hypothetical. Planting `heal: 800` on the Court Surgeon — real
+// content, the door every enemy enters by — produced NO row and exit 0, because
+// the Surgeon appears only in `normal` encounters and the table skipped them.
+// The check could not see a shipped enemy that out-healed every deck in the
+// game. Watched, 2026-08-15; that observation is why this pass exists.
+const unbeatable = [];
+for (const enc of REG.encounters.all()) {
+  const act = enc.act || 1;
+  const stats = enc.enemies.map((id) => enemyStats(REG.enemies.get(id)));
+  const heal = stats.reduce((a, s) => a + s.heal, 0);
+  const refDps = avgStartDps * bandMult[act];
+  if (refDps - heal <= 0) unbeatable.push(`${enc.id} (act ${act}, ${enc.pool}): heal ${round1(heal)}/t vs refDPS ${round1(refDps)}`);
+}
+const unbeatableCount = unbeatable.length;
+
+P('## 6. Findings');
 P('');
-P('- **No unbeatable-by-construction encounters** (SPEC §9 acceptance): every');
-P('  enemy self-heal is far below reference DPS (worst healer ~2.7/turn vs.');
-P('  refDPS 10+), so nothing out-sustains a functioning deck. ✓');
+// COMPUTED, not remembered. This section restated section 4/5 numbers as prose
+// for the life of the tool ("Reaver ~36%, Herald ~8%, Starseer ~1%") while the
+// content moved and the tool itself sat dead — a second copy of a measurement,
+// drifted. The claims below are derived from this run or they are dated.
+if (unbeatableCount === 0) {
+  P(`- **No unbeatable-by-construction encounters** (SPEC §9 acceptance):`);
+  P(`  all ${REG.encounters.all().length} encounters — every pool, not just the`);
+  P('  elites and bosses tabled above — resolved to refDPS > self-heal. ✓');
+} else {
+  P(`- **${unbeatableCount} UNBEATABLE-BY-CONSTRUCTION encounter(s)** — SPEC §9`);
+  P('  acceptance FAILS this run:');
+  for (const u of unbeatable) P(`  - ${u}`);
+}
 P('- The sanity model **ignores player Block** — the whole defensive layer — so');
 P('  "turns to die" is a zero-block floor. Bosses showing as a "race" is intended');
 P('  StS design: you survive by blocking and bursting, not by out-HP-ing.');
-P('- **Act-1 empirical** (naive bot, starting deck, no card acquisition): all');
-P('  normal fights 100%; the elite costs ~35 HP (a genuine threat); the boss');
-P('  needs a built deck (Reaver ~36%, Herald ~8%, Starseer ~1% with a');
-P('  combo-blind bot) — exactly the "build across the act" curve. Starseer\'s');
-P('  low floor reflects its fragile-early identity plus the bot\'s inability to');
-P('  sequence Starstone combos, not a content problem.');
-P('- The **Blighted Valkyrie** is the tightest DPS check (280 HP + up to ~15 heal/turn');
-P('  on her 5-hit moves via heal-on-hit); a late deck (~24 DPS) clears her only');
-P('  with block + burst — the intended apex.');
-P('- **No numeric changes were made this pass.** The static model and naive-bot');
-P('  floor reveal no outliers that would justify blind tuning. Tuning to the');
-P('  SPEC 35–50% experienced-player win-rate target needs interactive-playtest');
-P('  telemetry (run-history instrumentation, M4). Re-run this harness after any');
-P('  content or tuning change to catch regressions.');
+P('- Class-vs-boss floors, deck growth, and the why behind the spread are');
+P('  section 5 above and `node tools/runsim.mjs <n> --deep` — read the numbers');
+P('  there; prose repeating them here is the copy that drifts.');
+P('- **Dated note (M3, kept for the trigger it names):** the Blighted Valkyrie');
+P('  also heals **3 per hit she lands** via a phase trigger (not a move effect),');
+P('  so her sanity row understates her sustain — the intended apex check.');
+P('');
+P('## Boundary — what this green does NOT cover');
+P('');
+P('- A **static model**: intent-weighted averages, zero player Block, no card');
+P('  acquisition past section 5, no status interactions, no phase triggers');
+P('  (the Valkyrie note above is exactly the hole this leaves).');
+P('- **One pilot**: the leftmost-affordable bot. It cannot sequence Starstone');
+P('  combos, hold a flask for a boss, or curate a deck. A bot floor is not a');
+P('  player ceiling, and nothing here is a claim about a human.');
+P('- **Section 5 is act 1 only**, starting deck only, 300 seeds per row.');
+P('- It asserts exactly ONE thing (SPEC §9 acceptance: no encounter is');
+P('  unbeatable by construction). Every other number above is a report.');
 P('');
 
 console.log(out.join('\n'));
+
+// THE ONE ASSERTION, and it is the reason this tool is kept rather than
+// deleted: SPEC §9's acceptance criterion — no encounter unbeatable by
+// construction — has no other home in the tree. runsim measures completability
+// with a bot; measure-classes checks its own agreement with runsim. Neither can
+// say "this encounter cannot be killed by any DPS," because a bot that dies
+// early and a boss that cannot be killed produce the same lost run. A report
+// nobody can fail is a document; this exit code is what makes it a check.
+if (unbeatableCount > 0) {
+  console.error(`\nBALANCE: ${unbeatableCount} encounter(s) UNBEATABLE by construction (heal >= refDPS) — SPEC §9 acceptance FAILS.`);
+  process.exit(1);
+}

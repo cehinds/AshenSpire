@@ -60,11 +60,11 @@ Naive bot (leftmost affordable card) vs. an infinite-HP dummy, 10 turns,
 starting deck + starting relic. Real players sequence better, so these are a
 conservative floor. Reference bands assume deck growth: mid = ×1.6, late = ×2.4.
 
-| Class | Max HP | Start DPS | ~Mid (×1.6) | ~Late (×2.4) |
-|-------|-------:|----------:|------------:|-------------:|
-| Reaver | 84 | 10.5 | 16.8 | 25.2 |
-| Starseer | 72 | 10.8 | 17.3 | 25.9 |
-| Herald | 78 | 9 | 14.4 | 21.6 |
+| Class | Max HP (derived) | Start DPS | ~Mid (×1.6) | ~Late (×2.4) |
+|-------|-----------------:|----------:|------------:|-------------:|
+| Reaver | 96 | 8.7 | 13.9 | 20.9 |
+| Starseer | 82 | 5.8 | 9.3 | 13.9 |
+| Herald | 90 | 6.6 | 10.6 | 15.8 |
 
 ## 4. Sanity table — elites & bosses
 
@@ -75,12 +75,12 @@ lowest class HP / incoming DPS. Verdict flags unbeatable-by-construction
 
 | Act | Encounter | HP | Heal/t | refDPS | Turns to kill | InDPS | Turns to die | Verdict |
 |----:|-----------|---:|-------:|-------:|--------------:|------:|-------------:|---------|
-| 1 | eliteWyrm | 70 | 0.7 | 10.1 | 7.5 | 6.9 | 10.4 | ok |
-| 1 | bossOmen | 120 | — | 10.1 | 11.9 | 10.4 | 6.9 | **race — check** |
-| 2 | a2_eliteDuelist | 93 | — | 16.2 | 5.8 | 10.2 | 7.1 | ok |
-| 2 | a2_bossStitchedKing | 195 | — | 16.2 | 12.1 | 8.9 | 8.1 | **race — check** |
-| 3 | a3_eliteWyrmLord | 135 | 1.4 | 24.2 | 5.9 | 8.3 | 8.7 | ok |
-| 3 | a3_bossRotValkyrie | 250 | — | 24.2 | 10.3 | 12 | 6 | **race — check** |
+| 1 | eliteWyrm | 70 | 0.7 | 7 | 11.1 | 6.9 | 11.9 | ok |
+| 1 | bossOmen | 120 | — | 7 | 17.1 | 10.4 | 7.9 | **race — check** |
+| 2 | a2_eliteDuelist | 93 | — | 11.3 | 8.3 | 10.2 | 8 | **race — check** |
+| 2 | a2_bossStitchedKing | 195 | — | 11.3 | 17.3 | 8.9 | 9.2 | **race — check** |
+| 3 | a3_eliteWyrmLord | 135 | 1.4 | 16.9 | 8.7 | 8.3 | 9.9 | ok |
+| 3 | a3_bossRotValkyrie | 250 | — | 16.9 | 14.8 | 12 | 6.8 | **race — check** |
 
 > Note: the Blighted Valkyrie (final boss) also heals **3 per hit she lands** via a
 > phase trigger (not a move effect), up to ~15/turn on her 5-hit moves — the
@@ -94,48 +94,52 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 
 | Class | Encounter | Win % | Avg HP lost (of max) |
 |-------|-----------|------:|---------------------:|
-| Reaver | loneSoldier (normal) | 100 | 2 / 84 |
-| Reaver | patrol (normal) | 100 | 10.8 / 84 |
-| Reaver | packHunt (normal) | 100 | 10.5 / 84 |
-| Reaver | twinPatrol (normal) | 100 | 11.4 / 84 |
-| Reaver | bruiser (normal) | 100 | 10.2 / 84 |
-| Reaver | eliteWyrm (elite) | 100 | 34.9 / 84 |
-| Reaver | bossOmen (boss) | 99 | 56.7 / 84 |
-| Starseer | loneSoldier (normal) | 100 | 1.8 / 72 |
-| Starseer | patrol (normal) | 100 | 9.8 / 72 |
-| Starseer | packHunt (normal) | 100 | 8.9 / 72 |
-| Starseer | twinPatrol (normal) | 100 | 10.1 / 72 |
-| Starseer | bruiser (normal) | 100 | 8.9 / 72 |
-| Starseer | eliteWyrm (elite) | 100 | 36.5 / 72 |
-| Starseer | bossOmen (boss) | 72.3 | 63.2 / 72 |
-| Herald | loneSoldier (normal) | 100 | 1.4 / 78 |
-| Herald | patrol (normal) | 100 | 7.7 / 78 |
-| Herald | packHunt (normal) | 100 | 7.1 / 78 |
-| Herald | twinPatrol (normal) | 100 | 7.6 / 78 |
-| Herald | bruiser (normal) | 100 | 7.2 / 78 |
-| Herald | eliteWyrm (elite) | 99.3 | 36.4 / 78 |
-| Herald | bossOmen (boss) | 94.7 | 58 / 78 |
+| Reaver | loneSoldier (normal) | 100 | 0.8 / 96 |
+| Reaver | patrol (normal) | 100 | 6.3 / 96 |
+| Reaver | packHunt (normal) | 100 | 5.9 / 96 |
+| Reaver | twinPatrol (normal) | 100 | 6.9 / 96 |
+| Reaver | bruiser (normal) | 100 | 6.1 / 96 |
+| Reaver | eliteWyrm (elite) | 100 | 25.5 / 96 |
+| Reaver | bossOmen (boss) | 100 | 43.4 / 96 |
+| Starseer | loneSoldier (normal) | 100 | 5.4 / 82 |
+| Starseer | patrol (normal) | 100 | 21.5 / 82 |
+| Starseer | packHunt (normal) | 100 | 20.7 / 82 |
+| Starseer | twinPatrol (normal) | 100 | 26.6 / 82 |
+| Starseer | bruiser (normal) | 100 | 20.5 / 82 |
+| Starseer | eliteWyrm (elite) | 22.3 | 80 / 82 |
+| Starseer | bossOmen (boss) | 0 | 82 / 82 |
+| Herald | loneSoldier (normal) | 100 | 1 / 90 |
+| Herald | patrol (normal) | 100 | 5.2 / 90 |
+| Herald | packHunt (normal) | 100 | 5.2 / 90 |
+| Herald | twinPatrol (normal) | 100 | 4.9 / 90 |
+| Herald | bruiser (normal) | 100 | 4 / 90 |
+| Herald | eliteWyrm (elite) | 100 | 14.5 / 90 |
+| Herald | bossOmen (boss) | 100 | 24.4 / 90 |
 
-## 6. Findings (first pass)
+## 6. Findings
 
-- **No unbeatable-by-construction encounters** (SPEC §9 acceptance): every
-  enemy self-heal is far below reference DPS (worst healer ~2.7/turn vs.
-  refDPS 10+), so nothing out-sustains a functioning deck. ✓
+- **No unbeatable-by-construction encounters** (SPEC §9 acceptance):
+  all 21 encounters — every pool, not just the
+  elites and bosses tabled above — resolved to refDPS > self-heal. ✓
 - The sanity model **ignores player Block** — the whole defensive layer — so
   "turns to die" is a zero-block floor. Bosses showing as a "race" is intended
   StS design: you survive by blocking and bursting, not by out-HP-ing.
-- **Act-1 empirical** (naive bot, starting deck, no card acquisition): all
-  normal fights 100%; the elite costs ~35 HP (a genuine threat); the boss
-  needs a built deck (Reaver ~36%, Herald ~8%, Starseer ~1% with a
-  combo-blind bot) — exactly the "build across the act" curve. Starseer's
-  low floor reflects its fragile-early identity plus the bot's inability to
-  sequence Starstone combos, not a content problem.
-- The **Blighted Valkyrie** is the tightest DPS check (280 HP + up to ~15 heal/turn
-  on her 5-hit moves via heal-on-hit); a late deck (~24 DPS) clears her only
-  with block + burst — the intended apex.
-- **No numeric changes were made this pass.** The static model and naive-bot
-  floor reveal no outliers that would justify blind tuning. Tuning to the
-  SPEC 35–50% experienced-player win-rate target needs interactive-playtest
-  telemetry (run-history instrumentation, M4). Re-run this harness after any
-  content or tuning change to catch regressions.
+- Class-vs-boss floors, deck growth, and the why behind the spread are
+  section 5 above and `node tools/runsim.mjs <n> --deep` — read the numbers
+  there; prose repeating them here is the copy that drifts.
+- **Dated note (M3, kept for the trigger it names):** the Blighted Valkyrie
+  also heals **3 per hit she lands** via a phase trigger (not a move effect),
+  so her sanity row understates her sustain — the intended apex check.
+
+## Boundary — what this green does NOT cover
+
+- A **static model**: intent-weighted averages, zero player Block, no card
+  acquisition past section 5, no status interactions, no phase triggers
+  (the Valkyrie note above is exactly the hole this leaves).
+- **One pilot**: the leftmost-affordable bot. It cannot sequence Starstone
+  combos, hold a flask for a boss, or curate a deck. A bot floor is not a
+  player ceiling, and nothing here is a claim about a human.
+- **Section 5 is act 1 only**, starting deck only, 300 seeds per row.
+- It asserts exactly ONE thing (SPEC §9 acceptance: no encounter is
+  unbeatable by construction). Every other number above is a report.
 

@@ -1376,9 +1376,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       const c = createCombat({
         registries: REG,
         rng: createRng(0xabc0 + classId.length),
-        player: { classId, attributes: fresh.attributes, maxHp: cls.maxHp, hp: cls.maxHp, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck, loadout: fresh.loadout, relicIds: [cls.startingRelic] },
+        // fresh.maxHp, NOT cls.maxHp. HP is DERIVED (class base + vigour per
+        // point, D17); the class field is only the base half. This fixture took
+        // energyMax and drawPerTurn from `fresh` on this same line and then
+        // fought at 72/78 instead of 82/90 — a bot fixture entering below the
+        // derivation it was meant to exercise. Found by Sunna's sweep,
+        // 2026-08-15. The assertion below (concludes, does not stall) could
+        // never have caught it, which is why the eq() above it now exists.
+        player: { classId, attributes: fresh.attributes, maxHp: fresh.maxHp, hp: fresh.maxHp, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck, loadout: fresh.loadout, relicIds: [cls.startingRelic] },
         enemyIds: ['wyrmAspirant'],
       });
+      // THE FALSIFIER, and it fails for the right reason: the entity fights at
+      // the DERIVED total, not the class base. Re-hardcode cls.maxHp here and
+      // this goes red by name; the "fight concluded" assertion below would not.
+      assert(c.player.maxHp === fresh.maxHp && c.player.maxHp > cls.maxHp,
+        `${classId} bot fights at its derived maxHp (${fresh.maxHp}), not the class base (${cls.maxHp})`);
       let guard = 0;
       while (!c.result) {
         if (++guard > 2000) throw new Error(`${classId} bot did not finish`);
