@@ -38,7 +38,19 @@ export function createFlaskCharges(balance, allocation) {
   if (!Number.isInteger(hp) || hp < 0 || !Number.isInteger(mana) || mana < 0 || hp + mana !== capacity) {
     throw new Error(`Flask allocation must satisfy hp + mana = capacity ${capacity}`);
   }
-  return { capacity, hp, mana, hpCurrent: hp, manaCurrent: mana };
+  // THE CAPACITY LEDGER, born complete. `capacity` is one stored number fed by
+  // two doors (model/flaskgrowth.js, THE DOORS), and each door writes its own
+  // ledger line: `grown` (the possession door, per kind, reversible) and
+  // `granted` (the moment door, a total, permanent). `base` is what the vessel
+  // was born holding — this run's snapshot of the authored balance.flaskCapacity,
+  // like startingKitSnapshot: a later retune re-bases new runs, never old saves.
+  // The invariant the save shape enforces (validateRunShape):
+  //     capacity === base + grown.hp + grown.mana + granted
+  // A capacity that cannot be accounted for by its three parts is a corrupt
+  // save, refused BY NAME at the load door — so a future "cleanup" that
+  // derives capacity from the chain alone and silently deletes every
+  // moment-door charge goes red on the first save it touches.
+  return { capacity, base: capacity, hp, mana, hpCurrent: hp, manaCurrent: mana, grown: { hp: 0, mana: 0 }, granted: 0 };
 }
 
 export function reallocateFlaskCharges(charges, { hp, mana }) {

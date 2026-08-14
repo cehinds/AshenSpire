@@ -503,7 +503,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       el.className = 'relic';
       el.dataset.relicId = rid;
       el.textContent = def.icon || '◆';
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def))}`);
+      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
       relics.appendChild(el);
     }
     // Flask selection is inert. Every slot opens one shared action plan; only
