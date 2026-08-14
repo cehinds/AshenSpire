@@ -128,6 +128,14 @@ const ROWS = [
   { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
     choices: MAP_MODES, label: 'Map reveal',
     note: `FOG is the climb as it is meant to be read: only the door you started from, the boss, everywhere you have been, and the places you can step to next are drawn — the rest is unlit parchment. ${FOG_TRAIL_CLAUSE} PATH draws the whole act at once, the way the map looked before the fog. Switching redraws the map straight away, so you can hold the two against the same seed.` },
+  // How strongly the nodes already walked fade behind you — his clause, with
+  // his number as the default and the customization he asked for as the row
+  // (D17 message 4: "previous nodes shoudl be faded, maybe 50% saturation or
+  // higher (settings for customization)"). The ladder itself is CSS
+  // (styles/map.css, keyed on data-walked-fade); this row only picks the rung.
+  { cat: 'Display', key: 'walkedFade', type: 'choice', def: 'half',
+    choices: ['off', 'subtle', 'half', 'strong'], label: 'Walked nodes',
+    note: 'How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.' },
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },

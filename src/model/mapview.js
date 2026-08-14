@@ -33,8 +33,21 @@
 
 import { balance } from '../content/balance.js';
 
-/** Column pitch of the SVG, in SVG units. Floor pitch is derived below. */
-export const COL_X = 95;
+/** Column pitch of the SVG, in SVG units. Floor pitch is derived below.
+ *
+ * 75, DOWN FROM 95 — Constantine's rendered read of the map on his phone
+ * (D17 message 4/4b, 2026-08-08): "the width of the nodes are too wide. it
+ * should be more narrow for mobile … the edges need to be longer and more in
+ * the verticle axis instead of the horizontal." At 95 a diagonal edge ran
+ * dy 65 / dx 95 — horizontal-dominant, |dy|/len 0.565 measured as the MEDIAN
+ * edge across 12 seeds x 3 shapes at 86564e6. At 75 against the derived
+ * ROW_H of 79 the same edge is dy 79 / dx 75 — vertical-dominant, 0.725 —
+ * and the climb narrows by a fifth. Both gated floors stay clear and say so:
+ * the live-pair air drops 52.4 -> 32.4 SVG (27.6 device px at 320x640,
+ * floor 2) and the fan-out margin IMPROVES (7 columns: slack 1 -> 2).
+ * BOUNDARY, named: Sunna's cleared live-door reading of 54.23 device px at
+ * 390 becomes ~33.5 — above every coded floor, but the re-read is hers. */
+export const COL_X = 75;
 
 /**
  * The zoom ladder — the manual control, and the bounds the computed zoom is
@@ -95,8 +108,18 @@ export const PHONE_UI_ZOOM_MIN = 0.74;
  * largest was 47.61 px at 390x844/115%). It is a conservative lower bound, not
  * a claim that 48 is the visual ideal. Remove it if the map stops using adjacent
  * floor rows; change it on Constantine's rendered read, never to fit a test.
+ *
+ * 58, UP FROM 48, and the door is the one the sentence above names: his
+ * rendered read. D17 message 4 (2026-08-08, phone, this screen): "the
+ * veritical space between nodes are way too close" — and 4b asks the edges to
+ * be LONGER as well as more vertical, which a narrower COL_X alone would have
+ * broken (edge length shrinks as columns narrow). 58 derives ROW_H 79: the
+ * delivered floor pitch at 390x844/115% goes 47.61 -> 81.8 device px, the
+ * diagonal edge is 109 SVG units (longer than the 105.6 he complained at, at
+ * 46/95), and dy exceeds dx. Not fitted to a test: every floor this file
+ * gates was re-run and stays green with margin printed.
  */
-export const NODE_PITCH_MIN_PX = 48;
+export const NODE_PITCH_MIN_PX = 58;
 
 /**
  * Floor pitch of the SVG, derived from the device-space floor at the two
