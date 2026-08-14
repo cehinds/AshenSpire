@@ -23,6 +23,15 @@
   --gold: #c9a227;
   --accent-rgb: 201, 162, 39; /* --gold as rgb, for glow/halo alpha (swapped by accent theme) */
   --blood: #8a1a1a;
+  /* The HP resource fill — the approved hybrid's owner pixel (2026-08-13,
+     claude-family falk-family hybrid-confirmation, F1-resource-health.png),
+     minted as its OWN token so the accent themes keep owning the palette
+     (cb-safe swaps it below). Before this token the hp row wore var(--blood)
+     and the conflict was recorded, not resolved: token vs owner hex. Now both
+     hold — the value is the owner's, the swap is the theme's. --blood keeps
+     its 16 other consumers (map rings, danger buttons, enemy hpbars) and is
+     NOT this token. */
+  --res-hp: #a43c35;
   --rot: #b5541c;
   --frost: #7fa8c9;
   --grace: #9fc3e8;
@@ -113,6 +122,7 @@ body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-
    heal→bluish-green, frost→sky, blight→orange, bleed→reddish-purple). */
 body.cb-safe {
   --blood: #d55e00;
+  --res-hp: #d55e00; /* the hp fill keeps tracking the danger hue (Okabe-Ito vermillion) */
   --ember: #d55e00;
   --green: #009e73;
   --frost: #56b4e9;

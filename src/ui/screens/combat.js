@@ -483,17 +483,18 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const pv = dv(p);
     // THE MAIN HUD BAR STACK — health, then whatever rows sit under it, then
     // poise. Which rows those are is content/resources.js's business, not this
-    // screen's: this call is the whole of the main HUD's meter code and it does
-    // not change when a resource is added.
-    //
-    // The player has NO poise meter (state.js:204 — poiseMeter is created on
-    // enemies only), so the poise row's reader returns null and the bar is
-    // ABSENT. Not a 0/0 trough. That refusal is the same one a stamina row
-    // would hit today, and it is visible on this screen right now.
+    // screen's: this call is the whole of the main HUD's meter code and it did
+    // not change when the player's poise vessel woke (2026-08-14) — the meter
+    // arrived on the entity (engine/combat.js stamps it from the equipment
+    // threshold receipt) and the existing row simply started reading it.
+    // "Poise (very skinny bar) under the health bar", his words (D10.4). The
+    // vessel is REAL-BUT-EMPTY: cur is 0 because nothing deals Poise damage
+    // to players yet; the refusal path still guards the zero-threshold case
+    // (no meter → ABSENT, never a lying 0/0 trough).
     const host = $('.topbar .resbars-host');
     host.innerHTML = '';
     const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
-    host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTooltipExtra }));
+    host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
     markFlooredBars(host);
     const relics = $('.topbar .relics');
     relics.innerHTML = '';
@@ -621,11 +622,22 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
 
   // Stagger's own text, from the status def (data), so a poise tooltip cannot
   // drift from the balance numbers. Passed INTO the renderer rather than known
-  // by it — resbars.js must not learn what poise is.
-  function poiseTooltipExtra(bar) {
-    if (bar.id !== 'poise') return '';
-    const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
-    return `Fill it to Stagger. ${esc(stagDesc)}`;
+  // by it — resbars.js must not learn what poise is. Kind-aware since the
+  // player grew a vessel (2026-08-14): an enemy's meter fills and staggers; the
+  // player's is real-but-empty — its max is true (equipment + relics), and the
+  // tooltip says out loud that nothing moves it yet, because a vessel that
+  // implies a live mechanic it does not have is the lie the refusal path
+  // exists to prevent. When the player-poise mechanics land, this branch is
+  // the sentence that must change with them.
+  function poiseTip(kind) {
+    return (bar) => {
+      if (bar.id !== 'poise') return '';
+      if (kind === 'player') {
+        return 'Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.';
+      }
+      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      return `Fill it to Stagger. ${esc(stagDesc)}`;
+    };
   }
 
   function meterBars(entity) {
@@ -635,11 +647,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // THE UNDER-MODEL HUD — "should really just show health and poise", his
     // words. Same renderer, same table, different surface: the rows carry which
     // surfaces they appear on, so the two-HUD split he drew is DATA and neither
-    // screen decides it. Poise is absent under the player for the same reason
-    // it is absent from his main HUD — the player has no poise meter — and
-    // present under every enemy.
+    // screen decides it. Since 2026-08-14 that sentence is true of the player
+    // too: the player entity carries the real-but-empty vessel, so his strip
+    // shows health and poise exactly as the enemies' do — and a zero-threshold
+    // entity still refuses (no meter → ABSENT).
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains);
-    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTooltipExtra });
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind) });
     // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {

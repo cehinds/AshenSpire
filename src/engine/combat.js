@@ -19,7 +19,8 @@ import * as S from './statuses.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
-import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
+import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } from '../model/state.js';
+import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot } from '../model/loadout.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
 
@@ -59,6 +60,21 @@ export function createCombat({
   const equipmentProfileRuleSnapshot = player.equipmentProfileRuleSnapshot
     ? structuredClone(player.equipmentProfileRuleSnapshot)
     : createEquipmentProfileRuleSnapshot(registries);
+  // THE PLAYER'S POISE VESSEL — his layout twice over ("poise (very skinny
+  // bar) under the health bar", D10.4; "should also effect player too", D17
+  // q5). The MAX is real: the equipment/relic stagger-threshold receipt,
+  // derived from the loadout this fight brings. The VALUE has no writer —
+  // dealPoiseDamage refuses non-enemies — so the vessel ships real-but-empty;
+  // the mechanics that will move it are dealt elsewhere and are NOT smuggled
+  // in with this stamp. An explicit player.poiseMax is the override seam
+  // (Law 0 clause 3: an override is data; it is also ?shotMaxPoise's door).
+  // A fixture with no loadout gets no vessel — absent, never a lying 0/0 —
+  // the same graceful shape the Mana pool takes above.
+  const poiseMax = Number.isInteger(player.poiseMax)
+    ? player.poiseMax
+    : (player.loadout
+      ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId }).value
+      : 0);
   const combat = {
     registries,
     equipmentProfileRuleSnapshot,
@@ -81,6 +97,7 @@ export function createCombat({
       flaskCharges: player.flaskCharges || null,
       energyMax: player.energyMax,
       drawPerTurn: player.drawPerTurn,
+      poiseMax,
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
@@ -559,6 +576,14 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   if (cfg.restampHand) piles.push(combat.piles.hand);
   const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
+
+  // The vessel keeps telling the truth across the ONE mid-fight door equipment
+  // moves through: re-derive the stagger threshold from the loadout this swap
+  // just changed. Max only — stampPlayerPoiseMax preserves the accumulated
+  // value (0 today; nothing writes it), so the future writer's build-up will
+  // survive a swap unchanged. This deliberately re-derives over any explicit
+  // poiseMax override: after a real swap, the receipt is the truth again.
+  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.

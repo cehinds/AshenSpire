@@ -146,6 +146,18 @@
   height: calc(11px / var(--ui-zoom, 1));
   border-radius: calc(6px / var(--ui-zoom, 1));
 }
+/* "poise (very skinny bar)" on the MAIN surface. The rule above outranks bare
+   .resbar-skinny (two classes + an attribute vs one class), so without this
+   line a skinny row on the main HUD silently renders at pool height — the
+   cascade loss that already bit this feature once (2026-08-08, a 4 px label
+   in a 6 px trough, found by looking, not by reading). Same data word,
+   per-surface anatomy: a future skinny row gets this by writing
+   `weight: 'skinny'`, never by editing CSS. hudbars A11 asserts the RENDERED
+   height against hp's, not this stylesheet's intention. */
+.resbars[data-surface='main'] .resbar-skinny {
+  height: calc(5px / var(--ui-zoom, 1));
+  border-radius: calc(3px / var(--ui-zoom, 1));
+}
 
 /* ---- PLATE LABEL DEGRADATION, BY MEASURED FIT ----
    Same grammar as the strip labels below, new container: the UNIT. Thresholds

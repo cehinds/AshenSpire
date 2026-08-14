@@ -157,10 +157,36 @@ export function createRegistries(contentBundle) {
     mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value,
     stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value,
   }));
+  // Player Poise potential — the largest stagger threshold a loadout can
+  // state: per equipment slot, the best authored piece whose kind that slot
+  // accepts, plus every authored relic bonus. Content potential like hp above
+  // (not a legality proof — it does not check class fit, only slot fit): an
+  // equipment-table edit moves this ceiling, a code edit never does (Law 0
+  // clause 1). Not a derived stat: poise is summed from equipment rows, so it
+  // is derived here from the same tables the receipt reads
+  // (model/statProjection.js playerPoiseThresholdReceipt), not from
+  // derivedStatRules.
+  const poisePieces = [
+    ...((registries.equipment.armaments || []).map((p) => ({ kind: p.kind, poiseThreshold: p.poiseThreshold }))),
+    ...((registries.equipment.armour || []).map((p) => ({ kind: 'armor', poiseThreshold: p.poiseThreshold }))),
+  ];
+  let poiseDomain = 0;
+  for (const slot of registries.equipment.slots || []) {
+    let best = 0;
+    for (const piece of poisePieces) {
+      if ((slot.kinds || []).includes(piece.kind) && Number.isFinite(piece.poiseThreshold) && piece.poiseThreshold > best) best = piece.poiseThreshold;
+    }
+    poiseDomain += best;
+  }
+  for (const relic of registries.relics.all()) {
+    const add = relic.passives && relic.passives.poiseThresholdAdd;
+    if (Number.isFinite(add) && add > 0) poiseDomain += add;
+  }
   registries.statDomains = deepFreeze({
     hp: Math.max(...domainRows.map((row) => row.hp)),
     mana: Math.max(...domainRows.map((row) => row.mana)),
     stamina: Math.max(...domainRows.map((row) => row.stamina)),
+    poise: poiseDomain,
   });
 
   // What can be earned. A table, like equipment — evaluated against saved

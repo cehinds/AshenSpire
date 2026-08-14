@@ -30,6 +30,15 @@
   --gold: #c9a227;
   --accent-rgb: 201, 162, 39; /* --gold as rgb, for glow/halo alpha (swapped by accent theme) */
   --blood: #8a1a1a;
+  /* The HP resource fill — the approved hybrid's owner pixel (2026-08-13,
+     claude-family falk-family hybrid-confirmation, F1-resource-health.png),
+     minted as its OWN token so the accent themes keep owning the palette
+     (cb-safe swaps it below). Before this token the hp row wore var(--blood)
+     and the conflict was recorded, not resolved: token vs owner hex. Now both
+     hold — the value is the owner's, the swap is the theme's. --blood keeps
+     its 16 other consumers (map rings, danger buttons, enemy hpbars) and is
+     NOT this token. */
+  --res-hp: #a43c35;
   --rot: #b5541c;
   --frost: #7fa8c9;
   --grace: #9fc3e8;
@@ -120,6 +129,7 @@ body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-
    heal→bluish-green, frost→sky, blight→orange, bleed→reddish-purple). */
 body.cb-safe {
   --blood: #d55e00;
+  --res-hp: #d55e00; /* the hp fill keeps tracking the danger hue (Okabe-Ito vermillion) */
   --ember: #d55e00;
   --green: #009e73;
   --frost: #56b4e9;
@@ -2687,6 +2697,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   height: calc(11px / var(--ui-zoom, 1));
   border-radius: calc(6px / var(--ui-zoom, 1));
 }
+/* "poise (very skinny bar)" on the MAIN surface. The rule above outranks bare
+   .resbar-skinny (two classes + an attribute vs one class), so without this
+   line a skinny row on the main HUD silently renders at pool height — the
+   cascade loss that already bit this feature once (2026-08-08, a 4 px label
+   in a 6 px trough, found by looking, not by reading). Same data word,
+   per-surface anatomy: a future skinny row gets this by writing
+   `weight: 'skinny'`, never by editing CSS. hudbars A11 asserts the RENDERED
+   height against hp's, not this stylesheet's intention. */
+.resbars[data-surface='main'] .resbar-skinny {
+  height: calc(5px / var(--ui-zoom, 1));
+  border-radius: calc(3px / var(--ui-zoom, 1));
+}
 
 /* ---- PLATE LABEL DEGRADATION, BY MEASURED FIT ----
    Same grammar as the strip labels below, new container: the UNIT. Thresholds
@@ -3909,6 +3931,10 @@ setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 // thing that makes the gate below reach every state; keep the count at one.
 const shotParams = new URLSearchParams(location.search);
 const shotState = shotParams.get('shot');
+// ?shotMaxPoise's parked value (see the shot=combat block): module-scoped so it
+// reaches enterCombat without touching the run — a shot lever must not leak
+// into a save. Null means "no override; derive from the loadout receipt".
+let shotPoiseMaxOverride = null;
 const shotEvidence = shotParams.get('shotEvidence');
 if (shotEvidence) document.documentElement.dataset.shotEvidence = shotEvidence;
 if (shotParams.get('shotArcane') === 'matrix') document.documentElement.dataset.shotArcane = 'matrix';
@@ -4990,6 +5016,9 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       flasks: run.flasks,
       flaskCharges: run.flaskCharges,
       loadout: run.loadout,
+      // The shot door's override, when parked (null otherwise — createCombat
+      // then derives the threshold from the loadout receipt, the real path).
+      ...(shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {}),
     },
     enemyIds: enc.enemies,
     hpMult: cm.hpMult,
@@ -5641,6 +5670,20 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     if (Number.isFinite(shotMaxStamina) && shotMaxStamina > 0) {
       run.maxStamina = Math.floor(shotMaxStamina);
       run.stamina = Math.min(run.stamina, run.maxStamina);
+    }
+    // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
+    // three doors above there is no run field to write: the player's poise max
+    // is derived per fight from the loadout (engine/combat.js reads the
+    // equipment threshold receipt at entity creation). So this door enters at
+    // the receipt's OUTPUT seam — the explicit override createCombat already
+    // owns (Law 0 clause 3: an override is data), one stage above the entity,
+    // which is where ?shotMaxHp sits relative to the derived-stat formula IT
+    // bypasses. Module-scoped, never written to the run: a shot lever must not
+    // leak into a save. 0 is a legal value on purpose — it poses the refusal
+    // (no vessel, the bar ABSENT), which is A11's zero edge.
+    const shotMaxPoise = Number(shotParams.get('shotMaxPoise'));
+    if (shotParams.has('shotMaxPoise') && Number.isFinite(shotMaxPoise) && shotMaxPoise >= 0) {
+      shotPoiseMaxOverride = Math.floor(shotMaxPoise);
     }
     // TWO FLASKS IN THE POSE, ONE OF EACH KIND, AND IT IS NOT DRESSING. A
     // drunk flask does not come back this climb, and `useFlask` is a row in the
@@ -7334,10 +7377,13 @@ Object.assign(module.exports, { stances });
 // 2026-08-13): the owner pixels label the pools "HP 86/86" / "MP 2/2" /
 // "SP 2/2" and paint them #a43c35 / #315c9b / #4d7a45. Mana and Stamina take
 // the sampled owner hexes directly — they were already raw hexes here, outside
-// the accent-theme swap. Health deliberately KEEPS var(--blood): the accent
-// themes (base.css) swap that token for the colourblind palette, and a typed
-// hex would break that swap. The delta is named, not hidden: --blood #8a1a1a
-// vs owner #a43c35.
+// the accent-theme swap. Health wears var(--res-hp) — its OWN token, minted
+// 2026-08-14 to close the conflict this comment used to carry (owner hex
+// #a43c35 vs var(--blood) #8a1a1a): the default IS the owner pixel, and the
+// colourblind palette still owns the swap (base.css, cb-safe → vermillion).
+// SEAM, stated not hidden: MP and SP are still raw hexes with NO cb-safe
+// swap of their own — whether #315c9b / #4d7a45 hold under deuteranopia is
+// a call for the Player-experience seat, not silently mine.
 const resources = [
   {
     id: 'stamina',
@@ -7365,7 +7411,7 @@ const resources = [
     id: 'hp',
     name: 'HP',
     glyph: '❤',
-    tint: 'var(--blood)',
+    tint: 'var(--res-hp)',
     weight: 'normal',
     order: 10,
     surfaces: ['main', 'model'],
@@ -18713,11 +18759,16 @@ function resourceScale(v) {
  * THE CLOSED SET OF SOURCES — the whole vocabulary a row may name.
  *
  * `read(view, entity)` returns { cur, max } or NULL. Null is the refusal and it
- * is load-bearing: the player entity has no poiseMeter (state.js:204 — poise is
- * enemy-only and always has been), so the poise row reads null under the player
- * and the bar is ABSENT, not empty. That is the same code path a stamina row
- * would take the day someone writes one, and it is observable on the shipped
- * tree today, which is why this feature's refusal needs no fixture.
+ * is load-bearing: an entity with no poiseMeter — a zero-threshold player
+ * (createPlayerCombatEntity stamps NO meter at threshold 0), a legacy headless
+ * fixture — reads null and the bar is ABSENT, not empty. The player carries a
+ * REAL-BUT-EMPTY meter since 2026-08-14: max is the equipment stagger-threshold
+ * receipt (stamped by engine/combat.js from statProjection's
+ * playerPoiseThresholdReceipt — D10.4's skinny bar, D17 q5's "should also
+ * effect player too"), value is 0 with NO writer until the player-poise
+ * mechanics are dealt. tools/hudbars.mjs A11 asserts both halves: the vessel
+ * present and empty at a real threshold, and ABSENT — not an empty trough —
+ * at threshold 0.
  *
  * `domain(pop)` derives the largest max this resource reaches, over the
  * population the surface can display — DERIVED from content, never typed, so it
@@ -18803,7 +18854,9 @@ function resourceDomains(registries) {
     maxHp: registries.statDomains.hp,
     maxMana: registries.statDomains.mana,
     maxStamina: registries.statDomains.stamina,
-    poiseMax: undefined,
+    // The player's poise ceiling: the largest stagger threshold the equipment
+    // tables can grant (registries.js derives it beside the other domains).
+    poiseMax: registries.statDomains.poise,
   }];
   const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
   const pops = { main: playerPop, model: bothPop };
@@ -20245,10 +20298,36 @@ function createRegistries(contentBundle) {
     mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value,
     stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value,
   }));
+  // Player Poise potential — the largest stagger threshold a loadout can
+  // state: per equipment slot, the best authored piece whose kind that slot
+  // accepts, plus every authored relic bonus. Content potential like hp above
+  // (not a legality proof — it does not check class fit, only slot fit): an
+  // equipment-table edit moves this ceiling, a code edit never does (Law 0
+  // clause 1). Not a derived stat: poise is summed from equipment rows, so it
+  // is derived here from the same tables the receipt reads
+  // (model/statProjection.js playerPoiseThresholdReceipt), not from
+  // derivedStatRules.
+  const poisePieces = [
+    ...((registries.equipment.armaments || []).map((p) => ({ kind: p.kind, poiseThreshold: p.poiseThreshold }))),
+    ...((registries.equipment.armour || []).map((p) => ({ kind: 'armor', poiseThreshold: p.poiseThreshold }))),
+  ];
+  let poiseDomain = 0;
+  for (const slot of registries.equipment.slots || []) {
+    let best = 0;
+    for (const piece of poisePieces) {
+      if ((slot.kinds || []).includes(piece.kind) && Number.isFinite(piece.poiseThreshold) && piece.poiseThreshold > best) best = piece.poiseThreshold;
+    }
+    poiseDomain += best;
+  }
+  for (const relic of registries.relics.all()) {
+    const add = relic.passives && relic.passives.poiseThresholdAdd;
+    if (Number.isFinite(add) && add > 0) poiseDomain += add;
+  }
   registries.statDomains = deepFreeze({
     hp: Math.max(...domainRows.map((row) => row.hp)),
     mana: Math.max(...domainRows.map((row) => row.mana)),
     stamina: Math.max(...domainRows.map((row) => row.stamina)),
+    poise: poiseDomain,
   });
 
   // What can be earned. A table, like equipment — evaluated against saved
@@ -22112,6 +22191,8 @@ Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLI
 // State stores INSTANCE data referencing definitions by id only:
 //   deck card  = { instanceId, cardId, upgraded }
 //   enemy      = { instanceId→id, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }
+//   player     = { …pools…, poiseMeter? — max from the equipment threshold
+//                  receipt, value 0 with NO writer (see createPlayerCombatEntity) }
 // Saves serialize instances + RNG counters, never definitions.
 //
 // Headless: no document/window/localStorage/timers.
@@ -22509,11 +22590,23 @@ function deserializeRun(json) {
 
 /**
  * Player combat entity. statuses: { [statusId]: { stacks, duration?, meter? } }.
+ *
+ * `poiseMax` (optional) stamps the player's Poise vessel — the REAL-BUT-EMPTY
+ * seat: max is the equipment/relic stagger threshold (createCombat derives it
+ * from playerPoiseThresholdReceipt), value is 0 and HAS NO WRITER — the engine
+ * deals Poise damage to enemies only (actions.js dealPoiseDamage gates on
+ * kind). The vessel exists so the HUD can tell the truth he asked to see
+ * ("poise (very skinny bar) under the health bar", D10.4; "should also effect
+ * player too", D17 q5); the mechanics that will one day move the value —
+ * stagger, resistance, poise damage against players — are combat design dealt
+ * elsewhere and deliberately NOT introduced by this seat. 0 stamps NO meter:
+ * a zero-threshold player has no vessel, and the HUD's refusal path renders
+ * it ABSENT rather than as an empty trough.
  */
-function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn }) {
+function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0 }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
-  return {
+  const entity = {
     id: 'player',
     kind: 'player',
     classId,
@@ -22539,6 +22632,26 @@ function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamin
     },
     alive: true,
   };
+  stampPlayerPoiseMax(entity, poiseMax);
+  return entity;
+}
+
+/**
+ * stampPlayerPoiseMax(entity, max) — the ONE way the player's Poise vessel is
+ * (re)sized, at entity creation and at the single mid-fight door equipment
+ * moves through (doSwapArmament). Max only: the accumulated value rides —
+ * today it is always 0 because nothing writes it, and this helper must keep
+ * being value-preserving so the future writer's build-up survives a swap.
+ * A non-positive max REMOVES the meter: no vessel, the HUD refusal renders
+ * ABSENT (never an empty trough).
+ */
+function stampPlayerPoiseMax(entity, max) {
+  if (Number.isInteger(max) && max > 0) {
+    const value = entity.poiseMeter ? Math.max(0, Math.min(entity.poiseMeter.value, max)) : 0;
+    entity.poiseMeter = { value, max };
+  } else {
+    delete entity.poiseMeter;
+  }
 }
 
 /**
@@ -22571,7 +22684,7 @@ function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExpo
 }
 
 
-Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, initializeRunDerivedStats, RUN_SHAPE, validateRunShape, serializeRun, initializeRunFlaskCharges, deserializeRun, createPlayerCombatEntity, createEnemyCombatEntity });
+Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, initializeRunDerivedStats, RUN_SHAPE, validateRunShape, serializeRun, initializeRunFlaskCharges, deserializeRun, createPlayerCombatEntity, stampPlayerPoiseMax, createEnemyCombatEntity });
 
 },
 "src/model/unlocks.js": function (module, exports, require) {
@@ -23178,7 +23291,8 @@ const S = require("src/engine/statuses.js");
 const { resolveCard, passiveSum, passiveMult } = require("src/model/registries.js");
 const { evaluate } = require("src/model/formulas.js");
 const { computeTokenBindings } = require("src/model/validate.js");
-const { createPlayerCombatEntity, createEnemyCombatEntity } = require("src/model/state.js");
+const { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } = require("src/model/state.js");
+const { playerPoiseThresholdReceipt } = require("src/model/statProjection.js");
 const { canSwap, cycleSet, stampDeck, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot } = require("src/model/loadout.js");
 const { chargeFlaskId } = require("src/model/gracerefill.js");
 
@@ -23218,6 +23332,21 @@ function createCombat({
   const equipmentProfileRuleSnapshot = player.equipmentProfileRuleSnapshot
     ? structuredClone(player.equipmentProfileRuleSnapshot)
     : createEquipmentProfileRuleSnapshot(registries);
+  // THE PLAYER'S POISE VESSEL — his layout twice over ("poise (very skinny
+  // bar) under the health bar", D10.4; "should also effect player too", D17
+  // q5). The MAX is real: the equipment/relic stagger-threshold receipt,
+  // derived from the loadout this fight brings. The VALUE has no writer —
+  // dealPoiseDamage refuses non-enemies — so the vessel ships real-but-empty;
+  // the mechanics that will move it are dealt elsewhere and are NOT smuggled
+  // in with this stamp. An explicit player.poiseMax is the override seam
+  // (Law 0 clause 3: an override is data; it is also ?shotMaxPoise's door).
+  // A fixture with no loadout gets no vessel — absent, never a lying 0/0 —
+  // the same graceful shape the Mana pool takes above.
+  const poiseMax = Number.isInteger(player.poiseMax)
+    ? player.poiseMax
+    : (player.loadout
+      ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId }).value
+      : 0);
   const combat = {
     registries,
     equipmentProfileRuleSnapshot,
@@ -23240,6 +23369,7 @@ function createCombat({
       flaskCharges: player.flaskCharges || null,
       energyMax: player.energyMax,
       drawPerTurn: player.drawPerTurn,
+      poiseMax,
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
@@ -23718,6 +23848,14 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   if (cfg.restampHand) piles.push(combat.piles.hand);
   const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
+
+  // The vessel keeps telling the truth across the ONE mid-fight door equipment
+  // moves through: re-derive the stagger threshold from the loadout this swap
+  // just changed. Max only — stampPlayerPoiseMax preserves the accumulated
+  // value (0 today; nothing writes it), so the future writer's build-up will
+  // survive a swap unchanged. This deliberately re-derives over any explicit
+  // poiseMax override: after a real swap, the receipt is the truth again.
+  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.
@@ -25424,6 +25562,89 @@ function hasTag(id) {
 
 
 Object.assign(module.exports, { TAGS, tagsFor, tagIdsFor, damageTagIds, cardsWithTag, hasTag });
+
+},
+"src/model/statProjection.js": function (module, exports, require) {
+// One read model for character stats on every non-combat comparison surface.
+// It exposes calculation receipts; screens choose layout, never redo formulas.
+
+const { deriveStat } = require("src/model/derivedStats.js");
+const { equippedPieces } = require("src/model/loadout.js");
+const { passiveSum } = require("src/model/registries.js");
+
+const LABELS = Object.freeze({
+  hp: 'HP',
+  mana: 'Mana',
+  stamina: 'Stamina',
+  energy: 'Energy / turn',
+  draw: 'Draw / turn and opening hand',
+});
+
+/**
+ * Pure player-Poise threshold projection. Equipment and relics state the
+ * threshold; since 2026-08-14 the combat entity STAMPS it as the HUD vessel's
+ * max (engine/combat.js — D10.4's skinny bar, D17 q5's "should also effect
+ * player too"). That is a DISPLAY consumer only: no combat rule reads it, no
+ * writer moves the vessel's value, and Poise damage is still dealt to enemies
+ * alone. `active` stays false until a combat rule consumes it — the day the
+ * player-poise mechanics land, that flip is theirs to make, with the note.
+ */
+function playerPoiseThresholdReceipt(registries, run) {
+  if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
+  const pieces = equippedPieces(registries, run.loadout, run.class);
+  const pieceSources = pieces.map((piece) => ({
+    kind: 'equipment',
+    id: piece.id,
+    classId: piece.kind === 'armor' ? piece.classId : null,
+    value: piece.poiseThreshold,
+  }));
+  const relicSources = (run.relics || [])
+    .map((id) => registries.relics.get(id))
+    .filter((relic) => relic.passives && Number.isFinite(relic.passives.poiseThresholdAdd))
+    .map((relic) => ({ kind: 'relic', id: relic.id, value: relic.passives.poiseThresholdAdd }));
+  const equipment = pieceSources.reduce((sum, source) => sum + source.value, 0);
+  const relic = passiveSum(registries, run.relics || [], 'poiseThresholdAdd');
+  const raw = equipment + relic;
+  return {
+    id: 'poiseThreshold',
+    label: 'Poise threshold',
+    sources: [...pieceSources, ...relicSources],
+    equipment,
+    relic,
+    raw,
+    value: raw,
+    active: false,
+    note: 'Display consumer only: the combat entity stamps this as the HUD vessel\'s max. No combat consumer — Poise damage is not dealt to players. Player Poise is not the enemy Poise meter.',
+  };
+}
+
+function statProjection(registries, run) {
+  const snapshot = run && run.derivedStatRuleSnapshot;
+  if (!snapshot || !snapshot.rules) throw new Error('statProjection requires a run with a derived-stat rules snapshot');
+  const classDef = registries.classes.get(run.class);
+  const attributes = registries.attributes.all()
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map((def) => ({ ...def, value: run.attributes[def.id] }));
+  const derived = ['hp', 'mana', 'stamina', 'energy', 'draw'].map((id) => {
+    const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef });
+    const equipmentBonus = id === 'hp' ? Math.max(0, run.maxHp - receipt.value) : 0;
+    const value = receipt.value + equipmentBonus;
+    return {
+      ...receipt,
+      label: LABELS[id],
+      value,
+      equipmentBonus,
+      formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
+        + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''} = ${value}`,
+      note: id === 'stamina' ? 'No current consumer' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
+    };
+  });
+  return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };
+}
+
+
+Object.assign(module.exports, { playerPoiseThresholdReceipt, statProjection });
 
 },
 "src/engine/actmap.js": function (module, exports, require) {
@@ -29139,84 +29360,6 @@ function attachSeedField(input, { promise = SEED_PROMISE } = {}) {
 
 
 Object.assign(module.exports, { SEED_PROMISE, attachSeedField });
-
-},
-"src/model/statProjection.js": function (module, exports, require) {
-// One read model for character stats on every non-combat comparison surface.
-// It exposes calculation receipts; screens choose layout, never redo formulas.
-
-const { deriveStat } = require("src/model/derivedStats.js");
-const { equippedPieces } = require("src/model/loadout.js");
-const { passiveSum } = require("src/model/registries.js");
-
-const LABELS = Object.freeze({
-  hp: 'HP',
-  mana: 'Mana',
-  stamina: 'Stamina',
-  energy: 'Energy / turn',
-  draw: 'Draw / turn and opening hand',
-});
-
-/**
- * Pure, inert player-Poise projection. Equipment and relics may state a
- * threshold, but no player state field or combat system consumes it yet.
- */
-function playerPoiseThresholdReceipt(registries, run) {
-  if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
-  const pieces = equippedPieces(registries, run.loadout, run.class);
-  const pieceSources = pieces.map((piece) => ({
-    kind: 'equipment',
-    id: piece.id,
-    classId: piece.kind === 'armor' ? piece.classId : null,
-    value: piece.poiseThreshold,
-  }));
-  const relicSources = (run.relics || [])
-    .map((id) => registries.relics.get(id))
-    .filter((relic) => relic.passives && Number.isFinite(relic.passives.poiseThresholdAdd))
-    .map((relic) => ({ kind: 'relic', id: relic.id, value: relic.passives.poiseThresholdAdd }));
-  const equipment = pieceSources.reduce((sum, source) => sum + source.value, 0);
-  const relic = passiveSum(registries, run.relics || [], 'poiseThresholdAdd');
-  const raw = equipment + relic;
-  return {
-    id: 'poiseThreshold',
-    label: 'Poise threshold',
-    sources: [...pieceSources, ...relicSources],
-    equipment,
-    relic,
-    raw,
-    value: raw,
-    active: false,
-    note: 'No current consumer. Player Poise is not the enemy Poise meter.',
-  };
-}
-
-function statProjection(registries, run) {
-  const snapshot = run && run.derivedStatRuleSnapshot;
-  if (!snapshot || !snapshot.rules) throw new Error('statProjection requires a run with a derived-stat rules snapshot');
-  const classDef = registries.classes.get(run.class);
-  const attributes = registries.attributes.all()
-    .slice()
-    .sort((a, b) => a.order - b.order)
-    .map((def) => ({ ...def, value: run.attributes[def.id] }));
-  const derived = ['hp', 'mana', 'stamina', 'energy', 'draw'].map((id) => {
-    const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef });
-    const equipmentBonus = id === 'hp' ? Math.max(0, run.maxHp - receipt.value) : 0;
-    const value = receipt.value + equipmentBonus;
-    return {
-      ...receipt,
-      label: LABELS[id],
-      value,
-      equipmentBonus,
-      formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
-        + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''} = ${value}`,
-      note: id === 'stamina' ? 'No current consumer' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
-    };
-  });
-  return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };
-}
-
-
-Object.assign(module.exports, { playerPoiseThresholdReceipt, statProjection });
 
 },
 "src/model/equipmentPresentation.js": function (module, exports, require) {
@@ -33996,17 +34139,18 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     const pv = dv(p);
     // THE MAIN HUD BAR STACK — health, then whatever rows sit under it, then
     // poise. Which rows those are is content/resources.js's business, not this
-    // screen's: this call is the whole of the main HUD's meter code and it does
-    // not change when a resource is added.
-    //
-    // The player has NO poise meter (state.js:204 — poiseMeter is created on
-    // enemies only), so the poise row's reader returns null and the bar is
-    // ABSENT. Not a 0/0 trough. That refusal is the same one a stamina row
-    // would hit today, and it is visible on this screen right now.
+    // screen's: this call is the whole of the main HUD's meter code and it did
+    // not change when the player's poise vessel woke (2026-08-14) — the meter
+    // arrived on the entity (engine/combat.js stamps it from the equipment
+    // threshold receipt) and the existing row simply started reading it.
+    // "Poise (very skinny bar) under the health bar", his words (D10.4). The
+    // vessel is REAL-BUT-EMPTY: cur is 0 because nothing deals Poise damage
+    // to players yet; the refusal path still guards the zero-threshold case
+    // (no meter → ABSENT, never a lying 0/0 trough).
     const host = $('.topbar .resbars-host');
     host.innerHTML = '';
     const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
-    host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTooltipExtra }));
+    host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
     markFlooredBars(host);
     const relics = $('.topbar .relics');
     relics.innerHTML = '';
@@ -34134,11 +34278,22 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
 
   // Stagger's own text, from the status def (data), so a poise tooltip cannot
   // drift from the balance numbers. Passed INTO the renderer rather than known
-  // by it — resbars.js must not learn what poise is.
-  function poiseTooltipExtra(bar) {
-    if (bar.id !== 'poise') return '';
-    const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
-    return `Fill it to Stagger. ${esc(stagDesc)}`;
+  // by it — resbars.js must not learn what poise is. Kind-aware since the
+  // player grew a vessel (2026-08-14): an enemy's meter fills and staggers; the
+  // player's is real-but-empty — its max is true (equipment + relics), and the
+  // tooltip says out loud that nothing moves it yet, because a vessel that
+  // implies a live mechanic it does not have is the lie the refusal path
+  // exists to prevent. When the player-poise mechanics land, this branch is
+  // the sentence that must change with them.
+  function poiseTip(kind) {
+    return (bar) => {
+      if (bar.id !== 'poise') return '';
+      if (kind === 'player') {
+        return 'Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.';
+      }
+      const stagDesc = (registries.statuses.has('staggered') && registries.statuses.get('staggered').tooltip) || '';
+      return `Fill it to Stagger. ${esc(stagDesc)}`;
+    };
   }
 
   function meterBars(entity) {
@@ -34148,11 +34303,12 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     // THE UNDER-MODEL HUD — "should really just show health and poise", his
     // words. Same renderer, same table, different surface: the rows carry which
     // surfaces they appear on, so the two-HUD split he drew is DATA and neither
-    // screen decides it. Poise is absent under the player for the same reason
-    // it is absent from his main HUD — the player has no poise meter — and
-    // present under every enemy.
+    // screen decides it. Since 2026-08-14 that sentence is true of the player
+    // too: the player entity carries the real-but-empty vessel, so his strip
+    // shows health and poise exactly as the enemies' do — and a zero-threshold
+    // entity still refuses (no meter → ABSENT).
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains);
-    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTooltipExtra });
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind) });
     // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {

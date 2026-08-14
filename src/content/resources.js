@@ -36,10 +36,13 @@
 // 2026-08-13): the owner pixels label the pools "HP 86/86" / "MP 2/2" /
 // "SP 2/2" and paint them #a43c35 / #315c9b / #4d7a45. Mana and Stamina take
 // the sampled owner hexes directly — they were already raw hexes here, outside
-// the accent-theme swap. Health deliberately KEEPS var(--blood): the accent
-// themes (base.css) swap that token for the colourblind palette, and a typed
-// hex would break that swap. The delta is named, not hidden: --blood #8a1a1a
-// vs owner #a43c35.
+// the accent-theme swap. Health wears var(--res-hp) — its OWN token, minted
+// 2026-08-14 to close the conflict this comment used to carry (owner hex
+// #a43c35 vs var(--blood) #8a1a1a): the default IS the owner pixel, and the
+// colourblind palette still owns the swap (base.css, cb-safe → vermillion).
+// SEAM, stated not hidden: MP and SP are still raw hexes with NO cb-safe
+// swap of their own — whether #315c9b / #4d7a45 hold under deuteranopia is
+// a call for the Player-experience seat, not silently mine.
 export const resources = [
   {
     id: 'stamina',
@@ -67,7 +70,7 @@ export const resources = [
     id: 'hp',
     name: 'HP',
     glyph: '❤',
-    tint: 'var(--blood)',
+    tint: 'var(--res-hp)',
     weight: 'normal',
     order: 10,
     surfaces: ['main', 'model'],

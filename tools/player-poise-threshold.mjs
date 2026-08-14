@@ -1,15 +1,29 @@
-// tools/player-poise-threshold.mjs — observed-red contract for inert player Poise.
+// tools/player-poise-threshold.mjs — observed-red contract for player Poise.
 //
-// Player Poise is a truthful equipment receipt only. It is deliberately NOT
-// the enemy poise meter: no player state field, HUD bar, combat consumer,
-// stagger behavior, or save/session authority is introduced by this slice.
+// MIGRATED 2026-08-14 with the vessel (D10.4 "poise (very skinny bar) under
+// the health bar"; D17 q5 "should also effect player too" — ruled answered
+// over the mock's silence). The old contract asserted NO consumer anywhere;
+// the boundary moved and this tool was watched go red on it before it was
+// rewritten (2/17 failing at the old text: the note check and the
+// forbidden-file scan, exactly the two clauses the vessel legitimately
+// crosses).
+//
+// THE INVARIANT NOW: player Poise is a truthful equipment receipt with a
+// DISPLAY consumer and nothing else. The combat entity stamps the receipt's
+// value as its poiseMeter max (the HUD vessel — real-but-empty, value 0);
+// NO COMBAT RULE consumes it and NO WRITER moves the value: dealPoiseDamage
+// still refuses non-enemies, the stagger/damage vocabulary (engine/actions.js,
+// engine/statuses.js) stays threshold-free, and no save/session authority is
+// introduced. The stagger mechanics, resistance rules and armour weights are
+// combat design dealt elsewhere — the day they land, the checks below that
+// assert emptiness must MOVE with them, not be relaxed.
 
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState, createEnemyCombatEntity } from '../src/model/state.js';
+import { createRunState, createEnemyCombatEntity, createPlayerCombatEntity, stampPlayerPoiseMax } from '../src/model/state.js';
 import { dealPoiseDamage } from '../src/engine/actions.js';
 import { validateContent } from '../src/model/validate.js';
 import { PASSIVE_TYPES } from '../src/model/schemas.js';
@@ -167,21 +181,63 @@ check('one pure playerPoiseThresholdReceipt reader owns the projection', () => {
   equal(receipt.relic, 2, 'Cured Hide contribution is counted once');
   assert(!receipt.sources.some((source) => source.id === 'greatsword'), 'inactive right-hand set contributed');
   equal(receipt.sources.filter((source) => source.kind === 'equipment').length, 3, 'one active right hand, left hand, and armour source');
-  equal(receipt.active, false, 'receipt must explicitly remain inert');
-  assert(/no current consumer/i.test(receipt.note || ''), 'receipt does not disclose that it has no consumer');
+  equal(receipt.active, false, 'receipt must stay combat-inert (active flips only when a combat rule consumes it)');
+  assert(/display consumer only/i.test(receipt.note || ''), 'receipt does not disclose its display consumer');
+  assert(/no combat consumer/i.test(receipt.note || ''), 'receipt does not disclose that combat still ignores it');
 });
 
-check('the player model, combat engine, and HUD resource plan have no Poise consumer', () => {
-  const forbidden = [
-    'src/model/state.js',
-    'src/engine/combat.js',
-    'src/engine/coopCombat.js',
-    'src/engine/actions.js',
-    'src/model/resources.js',
-    'src/content/resources.js',
-  ];
+check('the combat-rule vocabulary stays threshold-free (the display stamp is the ONLY consumer)', () => {
+  // The old clause forbade the threshold everywhere; the vessel legitimately
+  // crossed it in state.js, engine/combat.js and model/resources.js (watched
+  // red before this rewrite). What must STAY true is narrower and sharper:
+  // the files where poise DAMAGE and stagger RULES live never learn the
+  // player threshold word — a stagger rule reading it is the mechanics
+  // arriving by the back door.
+  const forbidden = ['src/engine/actions.js', 'src/engine/statuses.js'];
   const offenders = forbidden.filter((file) => /poiseThreshold/i.test(readFileSync(resolve(ROOT, file), 'utf8')));
-  assert(offenders.length === 0, `consumer/state claim found in ${offenders.join(', ')}`);
+  assert(offenders.length === 0, `combat-rule consumer found in ${offenders.join(', ')}`);
+});
+
+check('the player entity stamps a real-but-empty vessel, and refuses one at threshold 0', () => {
+  const base = { classId: 'reaver', maxHp: 80, energyMax: 3, drawPerTurn: 5 };
+  const stamped = createPlayerCombatEntity({ ...base, poiseMax: 8 });
+  assert(stamped.poiseMeter && stamped.poiseMeter.value === 0 && stamped.poiseMeter.max === 8,
+    `poiseMax 8 must stamp {value 0, max 8}; got ${JSON.stringify(stamped.poiseMeter)}`);
+  const refused = createPlayerCombatEntity({ ...base, poiseMax: 0 });
+  assert(!('poiseMeter' in refused), 'threshold 0 must stamp NO meter — the HUD refusal needs the absence, not a 0/0');
+  const omitted = createPlayerCombatEntity(base);
+  assert(!('poiseMeter' in omitted), 'an unstamped fixture must carry no vessel (legacy shape stays graceful)');
+});
+
+check('re-stamping preserves the accumulated value and clamps it; 0 removes the vessel', () => {
+  const entity = createPlayerCombatEntity({ classId: 'reaver', maxHp: 80, energyMax: 3, drawPerTurn: 5, poiseMax: 8 });
+  entity.poiseMeter.value = 5; // the future writer's build-up, posed
+  stampPlayerPoiseMax(entity, 12);
+  assert(entity.poiseMeter.value === 5 && entity.poiseMeter.max === 12, 'a swap must not erase build-up');
+  stampPlayerPoiseMax(entity, 3);
+  assert(entity.poiseMeter.value === 3 && entity.poiseMeter.max === 3, 'a shrunk max must clamp, not overflow');
+  stampPlayerPoiseMax(entity, 0);
+  assert(!('poiseMeter' in entity), 'threshold 0 must remove the vessel');
+});
+
+check('the value has NO writer: dealPoiseDamage refuses a player entity that carries a vessel', () => {
+  // Door note: dealPoiseDamage is the one function every poiseDamage opcode
+  // funnels into (engine/statuses.js enqueues it; the queue calls it) — the
+  // real entry is one stage above, and this check states that rather than
+  // claiming the whole pipeline. Known-bad: relax the kind gate in a scratch
+  // edit and this goes red (observed 2026-08-14, reverted).
+  const player = createPlayerCombatEntity({ classId: 'reaver', maxHp: 80, energyMax: 3, drawPerTurn: 5, poiseMax: 8 });
+  const events = [];
+  const ctx = {
+    registries: { balance: { poise: { growthMult: 1 } }, statuses: { all: () => [] } },
+    emit: (type, payload) => events.push({ type, ...payload }),
+    enqueue: () => { throw new Error('a player vessel must never enqueue onFill effects'); },
+    combatants: () => [player],
+  };
+  dealPoiseDamage(ctx, player, 9); // above the max — would stagger an enemy
+  equal(player.poiseMeter.value, 0, 'player vessel value moved — a writer arrived without its mechanics');
+  equal(player.poiseMeter.max, 8, 'player vessel max moved under poise damage');
+  assert(events.length === 0, `player poise damage emitted ${JSON.stringify(events)}`);
 });
 
 check('enemy poiseMeter behavior remains the existing independent system', () => {
