@@ -40,6 +40,53 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// rendered overlay against the real cursor: this tool drives real Chrome at
+// real viewports, makes the real gestures, and measures where the overlay
+// actually landed. What it had no re-runnable known-bad for was the very
+// defect it was built after — the conversion that forgot --ui-zoom. Vira's
+// audit (2026-08-14) rated it NO-KNOWN-BAD. `--selftest` puts that conversion
+// error back at its one home in src/ui/fx.js and re-runs this whole tool
+// against a copy of the tree.
+//
+// AND `--selftest` REPORTS RED TODAY, CORRECTLY, BECAUSE THIS TOOL HAS A
+// STANDING RED AT dev = 5244543 (Rune, 2026-08-15). Building the corpus is
+// what made me run every viewport: the tooltip case fails at ALL SEVEN —
+// 167.06 local px away at 800x450 through 169.47 at 2560x1440, against a
+// tolerance of 22, INCLUDING 1200x730, this file's own declared
+// non-regression edge at --ui-zoom 1.00. The near-constant miss across a
+// dial that runs 0.62..1.70 says it is NOT a zoom-conversion error — it is a
+// fixed offset, so the fix is not this file's own history repeating. That is
+// a shipped defect for the owner, not a tooling one, and it is why the
+// harness's clean edge goes red: a baseline that is not green means no plant
+// above proves anything, and saying so is the point of checking both edges.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'zoomplace.mjs',
+    args: ['--only', '2560x1440'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        // THE ORIGINAL: anchorLocalBox returning VISUAL px instead of local
+        // px. Correct at exactly --ui-zoom 1.00 and wrong in both directions
+        // away from it, which is the sentence in fx.js's own header.
+        name: 'the anchor conversion forgets --ui-zoom (visual px handed back as local px)',
+        file: 'src/ui/fx.js',
+        find: "  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;\n  return {\n    left: (ar.left - lr.left) / z,",
+        replace: "  const z = 1; // planted: the pre-fix conversion, visual px pretending to be local\n  return {\n    left: (ar.left - lr.left) / z,",
+        // AT THE MAX CLAMP, 2560x1440 (--ui-zoom 1.70), NOT at a phone shape.
+        // I aimed this at 390x844 first and it went GREEN: zoom there is ~0.9,
+        // so the conversion error is ~10% and lands inside tolerance. The
+        // defect is proportional to the distance from 1.00 — which is fx.js's
+        // own sentence — so the plant has to be measured where the dial is,
+        // and the tool's own viewport list already names that edge.
+        expectRed: /(FAIL|out of tolerance|RESULT: .*(miss|out))/i,
+      },
+    ],
+  }));
+}
+
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
 // tool measured a two-merge-stale bundle and printed OK once already. One home:
@@ -96,6 +143,13 @@ const only = argOf('--only');
 const useDist = args.includes('--dist');
 
 const fails = [];
+// A FLOOR ON THE DENOMINATOR, not on the findings list (Rune, 2026-08-15).
+// Found while building this file's own known-bad: `--only 390x844` printed
+// `RESULT: all cases within tolerance` and exited 0 — and 390x844 is not in
+// VIEWPORTS at all, so it had measured NOTHING. That is
+// `verify-shipped: OK - 0 checks passed` wearing this tool's name: an empty
+// sweep and a clean sweep printed the same sentence and meant the opposite.
+let viewportsMeasured = 0;
 const ok = (cond, msg) => {
   console.log(`    ${cond ? '✓' : '✗'} ${msg}`);
   if (!cond) fails.push(msg);
@@ -291,6 +345,7 @@ async function main() {
   for (const vp of VIEWPORTS) {
     const name = `${vp.w}x${vp.h}`;
     if (only && only !== name) continue;
+    viewportsMeasured++;
     console.log(`\n  ${name}`);
 
     // ---------------------------------------------------------------- board
@@ -643,8 +698,16 @@ async function main() {
   console.log('          the right space if a fixed child of <body> scales by exactly that');
   console.log('          factor, which the first check of each viewport measures rather than');
   console.log('          assumes. If that check fails, ignore every other number in the run.');
-  console.log(`\nRESULT: ${fails.length ? `${fails.length} FAILED` : 'all cases within tolerance'}`);
+  if (viewportsMeasured === 0) {
+    console.error(`\nzoomplace: NOTHING WAS MEASURED${only ? ` — --only ${only} matched no viewport` : ''}. That is unknown, not a pass.`);
+    console.error(`  viewports: ${VIEWPORTS.map((v) => `${v.w}x${v.h}`).join(', ')}`);
+    cdp.close(); child.kill(); if (server) server.close();
+    process.exit(2);
+  }
+  console.log(`\nRESULT: ${fails.length ? `${fails.length} FAILED` : `all cases within tolerance`} — over ${viewportsMeasured} of ${VIEWPORTS.length} viewport(s)`);
   for (const f of fails) console.log(`  ✗ ${f}`);
+  console.log('DOOR: the rendered overlay against a real cursor in a real browser; `--selftest`');
+  console.log('      plants the pre-fix conversion into src/ui/fx.js in a copy of the tree.');
 
   cdp.close();
   child.kill();

@@ -73,6 +73,45 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// two rendered surfaces — the Armoury and the ☰ overlay — opened by real
+// clicks in a real browser against the real tree. The right door, and its
+// known-bad was real too: `dist/AshenSpire.html` as committed at d027a9a. But
+// that is a ref-pinned observation, and under SOP 2's drift clause it rotted
+// to `unknown` the moment the tree moved — Vira's audit (2026-08-14) rated
+// this OBSERVED-ONCE. `--selftest` re-observes the SAME two defects without
+// the old bundle: the `height: 74vh` Law-2 violation put back as CSS bytes,
+// and the narrow Armoury layout removed so equip cells clip again.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'menufit.mjs',
+    args: ['--only', '390x844'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        // THE ORIGINAL, to the property: `height: 74vh` under `body { zoom }`
+        // gives 74% x --ui-zoom, so the smallest phone got the smallest menu.
+        // The fix was 74vh -> 74%; this puts the vh back.
+        name: 'the overlay is sized in vh again (74% x zoom, not 74% — Law 2)',
+        file: 'styles/ui.css',
+        find: '.overlay-modal { width: 76rem; max-width: 96%; height: 74%;',
+        replace: '.overlay-modal { width: 76rem; max-width: 96%; height: 74vh;',
+        expectRed: /OVERLAY GETS [0-9.]+% of the app box where its author wrote 74%/,
+      },
+      {
+        // The other half of the original: the Armoury had never had a phone
+        // layout, so cells ran off a 390-wide screen with no sideways scroll.
+        // Forcing the rack wide reproduces the clip at the same door.
+        name: 'the Armoury loses its phone layout — equip cells run off a 390 px screen',
+        file: 'styles/ui.css',
+        append: ':root[data-layout="narrow"] .armoury-body { min-width: 900px; overflow-x: hidden; }',
+        expectRed: /(ARMOURY OPENS CLIPPED|clips \d+ cell\(s\))/,
+      },
+    ],
+  }));
+}
+
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
 // tool measured a two-merge-stale bundle and printed OK once already. One home:
