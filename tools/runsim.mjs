@@ -119,14 +119,30 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   while (!combat.result && guard++ < 9000) {
     // Drink a flask when hurt (below 55% HP) — humans use them; a bot that
     // hoards flasks under-measures the sustain the game actually provides.
-    if (combat.player.hp < combat.player.maxHp * 0.55 && combat.player.flasks.length) {
-      const fdef = REG.flasks.get(combat.player.flasks[0].flaskId);
-      const ftgt = combat.enemies.find((e) => e.alive);
-      try {
-        dispatch(combat, { type: 'useFlask', slot: 0, targetId: fdef.targeted ? ftgt && ftgt.id : undefined });
-        continue;
-      } catch (e) {
-        /* flask rejected — fall through to cards */
+    if (combat.player.hp < combat.player.maxHp * 0.55) {
+      // THE CHARGE VESSEL FIRST — the game's PRIMARY flask system, and the one
+      // this bot never drank from. doUseFlask has two doors: `chargeKind`
+      // (spends flaskCharges.hpCurrent, what the player's flask buttons send)
+      // and `slot` (splices a drop-granted flask object). The bot only ever
+      // sent `slot`, so every run was simulated with the vessels FULL AND
+      // UNUSED from birth to death — measuring a game whose main heal faucet
+      // does not exist. Starting charges are not symmetric either (Reaver and
+      // Herald hp:2, Starseer hp:1), so the omission was not even a shared
+      // bias. Found 2026-08-15 while checking why the grace refill counter
+      // read zero: the refill was topping up a pool nothing ever spent.
+      const ch = combat.player.flaskCharges;
+      if (ch && (ch.hpCurrent || 0) > 0) {
+        try { dispatch(combat, { type: 'useFlask', chargeKind: 'hp' }); continue; } catch (e) { /* fall through */ }
+      }
+      if (combat.player.flasks.length) {
+        const fdef = REG.flasks.get(combat.player.flasks[0].flaskId);
+        const ftgt = combat.enemies.find((e) => e.alive);
+        try {
+          dispatch(combat, { type: 'useFlask', slot: 0, targetId: fdef.targeted ? ftgt && ftgt.id : undefined });
+          continue;
+        } catch (e) {
+          /* flask rejected — fall through to cards */
+        }
       }
     }
     const card = combat.piles.hand.find((h) => {
@@ -145,6 +161,14 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   if (guard >= 9000) throw new Error(`combat stalled: ${encounterId}`);
   if (deepStats) tallyFight(deepStats, combat, run.hp);
   run.flasks = combat.player.flasks;
+  // THE WRITE-BACK THE REAL RUN LOOP PERFORMS (src/main.js:1335), and without
+  // it the vessels are INFINITE. createPlayerCombatEntity COPIES flaskCharges
+  // ({ ...flaskCharges }), so a fight spends the copy; main.js copies the spent
+  // pool back onto the run and the next fight starts where the last one ended.
+  // The sim never did, so every fight re-opened with a full vessel — a bot with
+  // unlimited flasks, which is not this game. Charges are spent here, refilled
+  // at a grace, and scarce in between: that is the loop being measured.
+  run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
   if (combat.result === 'victory') run.hp = combat.player.hp;
   return combat.result;
 }
@@ -234,7 +258,21 @@ function simulateRun(classId, seed, ds = null) {
         // AUTOMATIC AND BEFORE THE CHOICE, exactly as src/main.js showRest does
         // — a run that comes to smith is refilled like a run that comes to rest.
         graces++;
-        if (GRACE_ON) poured += applyGraceRefill(REG, run).total;
+        if (GRACE_ON) {
+          // COUNT THE CHARGE MODEL, NOT ONLY THE GRANT MODEL. applyGraceRefill
+          // returns `total: 0` BY CONSTRUCTION for a run on charge vessels — it
+          // tops up hpCurrent/manaCurrent and grants no flask objects — so this
+          // line read 0 forever and the fleet printed `REFILL RAN DEAD` under a
+          // refill that was working. A FALSE RED, and it was cited as a real one
+          // (my own F1 log, 2026-08-14: "measured with zero flask sustain on
+          // both sides"). The sustain was live; the counter was blind.
+          const before = run.flaskCharges
+            ? (run.flaskCharges.hpCurrent || 0) + (run.flaskCharges.manaCurrent || 0) : 0;
+          poured += applyGraceRefill(REG, run).total;
+          if (run.flaskCharges) {
+            poured += Math.max(0, ((run.flaskCharges.hpCurrent || 0) + (run.flaskCharges.manaCurrent || 0)) - before);
+          }
+        }
         if (run.hp < run.maxHp * 0.6) run.hp = Math.min(run.maxHp, run.hp + shrineHealAmount(REG, run));
         else { const c = run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true; }
       } else if (kind === 'treasure') {
@@ -308,7 +346,7 @@ for (const cls of REG.classes.all()) {
   }
 }
 if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }
-console.log(`\ngraces visited ${graces}, flasks poured ${poured}` + (GRACE_ON && graces && !poured ? '  <-- REFILL RAN DEAD' : ''));
+console.log(`\ngraces visited ${graces}, flask charges/grants poured ${poured}` + (GRACE_ON && graces && !poured ? '  <-- REFILL RAN DEAD' : ''));
 console.log('No crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.');
 return { ...tally, graces, poured };
 }

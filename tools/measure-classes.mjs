@@ -68,7 +68,7 @@ import { hasStatus } from '../src/engine/statuses.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward, shrineHealAmount,
+  rollRelicReward, shrineHealAmount, applyGraceRefill,
 } from '../src/engine/encounters.js';
 
 const REG = createRegistries(contentBundle);
@@ -190,13 +190,23 @@ function botFight(run, rng, encounterId, stats, pickRandom) {
   if (MUTATE === 'rng') rng.float('misc'); // planted: the instrumentation is no longer passive
   let guard = 0;
   while (!combat.result && guard++ < 9000) {
-    if (combat.player.hp < combat.player.maxHp * (MUTATE === 'flask' ? 0.75 : 0.55) && combat.player.flasks.length) {
-      const fdef = REG.flasks.get(combat.player.flasks[0].flaskId);
-      const ftgt = combat.enemies.find((e) => e.alive);
-      try {
-        dispatch(combat, { type: 'useFlask', slot: 0, targetId: fdef.targeted ? ftgt && ftgt.id : undefined });
-        continue;
-      } catch (e) { /* flask rejected — fall through to cards */ }
+    if (combat.player.hp < combat.player.maxHp * (MUTATE === 'flask' ? 0.75 : 0.55)) {
+      // CHARGE VESSEL FIRST — mirrors runsim.mjs, which carries the reason in
+      // full: `chargeKind` is the door the player's own flask buttons use, and
+      // both bots only ever sent `slot`. Copied deliberately (this file's
+      // header: copied, not imported), so --check keeps the two honest.
+      const ch = combat.player.flaskCharges;
+      if (ch && (ch.hpCurrent || 0) > 0) {
+        try { dispatch(combat, { type: 'useFlask', chargeKind: 'hp' }); continue; } catch (e) { /* fall through */ }
+      }
+      if (combat.player.flasks.length) {
+        const fdef = REG.flasks.get(combat.player.flasks[0].flaskId);
+        const ftgt = combat.enemies.find((e) => e.alive);
+        try {
+          dispatch(combat, { type: 'useFlask', slot: 0, targetId: fdef.targeted ? ftgt && ftgt.id : undefined });
+          continue;
+        } catch (e) { /* flask rejected — fall through to cards */ }
+      }
     }
     const affordable = combat.piles.hand.filter((h) => {
       const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
@@ -293,6 +303,9 @@ function botFight(run, rng, encounterId, stats, pickRandom) {
   }
 
   run.flasks = combat.player.flasks;
+  // The write-back src/main.js:1335 performs — without it the vessels are
+  // infinite, because createPlayerCombatEntity copies them. Mirrors runsim.mjs.
+  run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
   if (combat.result === 'victory') run.hp = combat.player.hp;
   return combat.result;
 }
@@ -381,6 +394,13 @@ function simulateRun(classId, seed) {
           break;
         }
       } else if (kind === 'shrine') {
+        // THE GRACE REFILL, automatic and BEFORE the rest/smith decision —
+        // exactly as src/main.js showRest and runsim.mjs do. This file never
+        // had it (runsim gained it 2026-08-08), and --check could not see the
+        // divergence: with the bots never spending a charge, a refill was a
+        // no-op on both sides. Two sims disagreed about the game's sustain loop
+        // and agreed on the answer, because the subsystem was dead in both.
+        applyGraceRefill(REG, run);
         if (run.hp < run.maxHp * (MUTATE === 'shrine' ? 0.2 : 0.6)) run.hp = Math.min(run.maxHp, run.hp + shrineHealAmount(REG, run));
         else { const c = run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true; }
       } else if (kind === 'treasure') {
