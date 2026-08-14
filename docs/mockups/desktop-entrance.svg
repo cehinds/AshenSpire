@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="730" viewBox="0 0 1200 730" font-family="Georgia, serif">
+  <!-- MOCK, drawn, not built. Sunna, 2026-08-14. The desktop act entrance,
+       recomposed to spend the width a 1200x730 screen actually has:
+       the phone's approved orientation band over the main port, plus a
+       fog-honest CLIMB RAIL on the right that holds the two ends the fog
+       already lights, with the bottom bars folded into its footer.
+       Geometry it must respect: port shows ~3.5 of 14 rows at Fit; the rail
+       reveals NO structure the fog hides - two ends, a trail, nothing else. -->
+
+  <!-- ground -->
+  <rect width="1200" height="730" fill="#14100a"/>
+
+  <!-- ===== topbar (52px, unchanged) ===== -->
+  <rect x="0" y="0" width="1200" height="52" fill="#1d1710"/>
+  <line x1="0" y1="52" x2="1200" y2="52" stroke="#3a2f1f" stroke-width="1"/>
+  <circle cx="34" cy="26" r="18" fill="#241c12" stroke="#c9a227" stroke-width="2"/>
+  <text x="34" y="31" text-anchor="middle" fill="#e8d9b0" font-size="14">&#9876;</text>
+  <text x="64" y="22" fill="#e8d9b0" font-size="12" letter-spacing="2">FORSAKEN &#183; REAVER</text>
+  <rect x="64" y="28" width="160" height="13" fill="#5a1717" rx="2"/>
+  <rect x="64" y="28" width="160" height="13" fill="#a32626" rx="2"/>
+  <text x="144" y="38.5" text-anchor="middle" fill="#f2e6c8" font-size="10">HP 86 / 86</text>
+  <text x="250" y="30" fill="#c9a227" font-size="12">&#9863; 0</text>
+  <text x="300" y="30" fill="#b9a67f" font-size="13">Act 1 / 3 &#183; Floor 0 / 12</text>
+  <text x="470" y="30" fill="#8a7a5f" font-size="11" letter-spacing="1">SEED 1RFFRS8</text>
+  <g stroke="#8a6f2f" fill="#241c12">
+    <rect x="1032" y="12" width="44" height="28" rx="6"/>
+    <rect x="1084" y="12" width="44" height="28" rx="6"/>
+    <rect x="1136" y="12" width="44" height="28" rx="6"/>
+  </g>
+  <g fill="#c9a227" font-size="13" text-anchor="middle">
+    <text x="1054" y="31">&#9874;</text><text x="1106" y="31">?</text><text x="1158" y="31">&#9776;</text>
+  </g>
+
+  <!-- ===== substrip (31px, unchanged) ===== -->
+  <rect x="0" y="52" width="1200" height="31" fill="#191309"/>
+  <line x1="0" y1="83" x2="1200" y2="83" stroke="#3a2f1f" stroke-width="1"/>
+  <rect x="12" y="58" width="22" height="20" rx="4" fill="#241c12" stroke="#c9a227"/>
+  <text x="23" y="73" text-anchor="middle" font-size="11">&#127941;</text>
+
+  <!-- ===== entrance band over the MAIN PORT (the phone's approved
+       composition, shown at wide - today display:none above 700px) ===== -->
+  <rect x="0" y="83" width="896" height="46" fill="#1b1409"/>
+  <line x1="0" y1="129" x2="896" y2="129" stroke="#3a2f1f" stroke-width="1"/>
+  <text x="448" y="103" text-anchor="middle" fill="#c9a227" font-size="15" letter-spacing="4">ACT I &#8212; THE FALLOW MARCHES</text>
+  <text x="24" y="122" fill="#8a7a5f" font-size="9" letter-spacing="1.5">ENTRANCE</text>
+  <line x1="86" y1="118.5" x2="820" y2="118.5" stroke="#5a4a2c" stroke-width="1.5"/>
+  <path d="M 820 118.5 l -8 -4 v 8 z" fill="#5a4a2c"/>
+  <text x="872" y="122" text-anchor="end" fill="#c96b27" font-size="9" letter-spacing="1.5">BOSS</text>
+
+  <!-- ===== main port (129..730, 896 wide - hint bar + zoom row folded
+       into the rail footer, so the port gains their 88 vertical px) ===== -->
+  <rect x="0" y="129" width="896" height="601" fill="#16110b"/>
+  <!-- faint parchment grain -->
+  <g opacity="0.025" fill="#c9a227">
+    <ellipse cx="200" cy="260" rx="260" ry="110"/>
+    <ellipse cx="640" cy="480" rx="300" ry="140"/>
+    <ellipse cx="420" cy="640" rx="240" ry="100"/>
+  </g>
+  <!-- vignette suggestion -->
+  <rect x="0" y="129" width="896" height="601" fill="url(#vig)"/>
+  <defs>
+    <radialGradient id="vig" cx="0.5" cy="0.55" r="0.75">
+      <stop offset="0.55" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.45"/>
+    </radialGradient>
+  </defs>
+  <!-- the door, framed as today: 85px at Fit -->
+  <circle cx="448" cy="450" r="58" fill="none" stroke="#c9a227" stroke-width="2" opacity="0.25"/>
+  <circle cx="448" cy="450" r="42.6" fill="#241c12" stroke="#c9a227" stroke-width="5"/>
+  <text x="448" y="460" text-anchor="middle" fill="#e8d9b0" font-size="26">&#9876;</text>
+
+  <!-- ===== THE CLIMB RAIL (right, 304px wide) - inert overview.
+       FOG-HONEST: it draws the two ends the fog already lights, the rail
+       between them, and NOTHING else - no nodes, no branches. ===== -->
+  <rect x="896" y="83" width="304" height="559" fill="#1b1409"/>
+  <line x1="896" y1="83" x2="896" y2="730" stroke="#3a2f1f" stroke-width="1"/>
+  <text x="1048" y="112" text-anchor="middle" fill="#8a7a5f" font-size="11" letter-spacing="3">THE CLIMB</text>
+
+  <!-- boss, top of the rail -->
+  <circle cx="1048" cy="160" r="20" fill="#241c12" stroke="#c96b27" stroke-width="3"/>
+  <text x="1048" y="166" text-anchor="middle" fill="#c96b27" font-size="15">&#9760;</text>
+  <text x="1048" y="196" text-anchor="middle" fill="#c96b27" font-size="9" letter-spacing="2">BOSS</text>
+
+  <!-- the fogged distance: a faded dotted rail, no structure -->
+  <line x1="1048" y1="208" x2="1048" y2="520" stroke="#5a4a2c" stroke-width="2" stroke-dasharray="2 9" opacity="0.7"/>
+  <text x="1048" y="370" text-anchor="middle" fill="#6a5c44" font-size="9" letter-spacing="1.5">13 FLOORS OF FOG</text>
+
+  <!-- entrance, bottom of the rail = where the player is -->
+  <circle cx="1048" cy="545" r="24" fill="none" stroke="#c9a227" stroke-width="1.5" opacity="0.35"/>
+  <circle cx="1048" cy="545" r="17" fill="#241c12" stroke="#c9a227" stroke-width="3"/>
+  <text x="1048" y="551" text-anchor="middle" fill="#e8d9b0" font-size="12">&#9876;</text>
+  <text x="1048" y="585" text-anchor="middle" fill="#c9a227" font-size="9" letter-spacing="2">ENTRANCE &#183; YOU</text>
+  <text x="1048" y="614" text-anchor="middle" fill="#6a5c44" font-size="8.5">the trail is drawn here as you climb</text>
+
+  <!-- ===== rail footer: the folded chrome (hint keys + zoom) ===== -->
+  <line x1="896" y1="642" x2="1200" y2="642" stroke="#3a2f1f" stroke-width="1"/>
+  <rect x="896" y="642" width="304" height="88" fill="#191309"/>
+  <g font-size="10" fill="#8a7a5f">
+    <rect x="918" y="656" width="18" height="16" rx="3" fill="#241c12" stroke="#5a4a2c"/>
+    <text x="927" y="668" text-anchor="middle" fill="#c9a227">D</text>
+    <text x="942" y="668">Deck</text>
+    <rect x="982" y="656" width="18" height="16" rx="3" fill="#241c12" stroke="#5a4a2c"/>
+    <text x="991" y="668" text-anchor="middle" fill="#c9a227">R</text>
+    <text x="1006" y="668">Relics</text>
+    <rect x="1050" y="656" width="18" height="16" rx="3" fill="#241c12" stroke="#5a4a2c"/>
+    <text x="1059" y="668" text-anchor="middle" fill="#c9a227">T</text>
+    <text x="1074" y="668">Stats</text>
+    <rect x="1114" y="656" width="18" height="16" rx="3" fill="#241c12" stroke="#5a4a2c"/>
+    <text x="1123" y="668" text-anchor="middle" fill="#c9a227">M</text>
+    <text x="1138" y="668">Menu</text>
+  </g>
+  <g stroke="#8a6f2f" fill="#241c12">
+    <rect x="1010" y="684" width="50" height="34" rx="6"/>
+    <rect x="1068" y="684" width="50" height="34" rx="6"/>
+    <rect x="1126" y="684" width="50" height="34" rx="6"/>
+  </g>
+  <g fill="#c9a227" font-size="16" text-anchor="middle">
+    <text x="1035" y="706">&#8722;</text><text x="1093" y="706">&#8857;</text><text x="1151" y="706">+</text>
+  </g>
+
+  <!-- provenance stamp -->
+  <text x="14" y="720" fill="#6a5c44" font-size="9" letter-spacing="1">MOCK &#8212; DRAWN, NOT BUILT &#183; the climb rail &#183; Sunna 2026-08-14 &#183; at acb8ffe's measured geometry</text>
+</svg>
