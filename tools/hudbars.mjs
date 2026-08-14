@@ -148,6 +148,32 @@
 //                                             surface scaled by max
 //   node tools/hudbars.mjs --tree DIR       → measure another checkout
 //   node tools/hudbars.mjs --json out.json
+//   node tools/hudbars.mjs --selftest       → plant each arm's known-bad by the
+//                                             real door, require the named red,
+//                                             revert, and prove the tree clean
+//
+// ---------------------------------------------------------------------------
+// THE ARMS THAT HAD NO WATCHED RED UNTIL 2026-08-15 — and why --selftest exists.
+//
+// Everything above records a red somebody watched: A1/A2/A2X/A3 by the typed-
+// constant and shared-rate plants, A6 and A6W by the dead-floor plants, A11 by
+// the pre-vessel tree. A4 and A5 had NONE. They have asserted green on every run
+// of this tool's life, and a green nobody has watched go red is `unknown`, not
+// green (development.md, *The instrument rule*) — Vira's doors audit put this
+// whole file in the SAME-DOOR column on the strength of the arms that WERE
+// watched, which is the neighbour-inheriting-the-green shape, in my own tool.
+//
+// So --selftest plants each of them, and the plant is a REAL EDIT TO A REAL
+// SHIPPED FILE, rebuilt through launch.mjs and re-rendered — the same door the
+// stylesheet and the content table enter by. Nothing is handed to judge().
+// Each arm restores its file in a finally and rebuilds, then the run ends with a
+// CLEAN CONTROL: the unplanted tree must produce zero fails, or a red that never
+// goes green is not a measurement either.
+//
+// AND EACH ARM PRINTS WHAT STAYED GREEN. That is not decoration: the dead-floor
+// plant (2026-08-14) went red on two assertions while every other one stayed
+// green, and that silence is the whole argument for watching each arm on its
+// own rather than trusting a suite's total.
 //
 // BOUNDARY, printed on every run including the clean ones: headless Chromium on
 // Linux, dist/AshenSpire.html, the shapes listed below, the reaver class, one
@@ -954,6 +980,139 @@ async function runFalsifier(href) {
 }
 
 // ---------------------------------------------------------------------------
+// --selftest — THE KNOWN-BADS FOR THE ARMS NOBODY HAD WATCHED FAIL.
+//
+// Each arm is a real defect this repo can actually ship, planted in the file
+// that would really carry it, and it travels the whole road: source edit →
+// launch.mjs rebuild → dist/AshenSpire.html → headless render → the same READ
+// and the same judge() the standing run uses. The plant is NEVER handed to a
+// function; there is no fixture in this block, only files.
+//
+// One shape (320x640) per arm, deliberately and stated in the output: it is the
+// narrow edge where a label runs out of room, so it is the shape both arms are
+// about. The standing run judges both shapes; this proves the assertion can
+// fire, not that it fires everywhere.
+const MUTANTS = Object.freeze({
+  // A4 — THE LABEL COLLIDES WITH ITS OWN BOX. The real class, in A4's own
+  // words, is "the degradation stage for this width is missing": the plate
+  // shows its widest variant at a width that variant does not fit. This plant
+  // is the one-line cleanup that causes it — force the full name+numbers on at
+  // every width, exactly what deleting or mis-editing the container-query block
+  // does. The reserve only applies inside the 6.75em window, so the widest
+  // label lands in a plate that never reserved room for it.
+  label: {
+    file: 'styles/combat.css',
+    find: '.resplate .l-full, .resplate .l-num, .resplate .l-glyph { display: none; }',
+    replace: '.resplate .l-full, .resplate .l-num, .resplate .l-glyph { display: none; }\n'
+      + '.resplate .l-full { display: inline !important; }',
+    expect: 'A4',
+    why: 'the widest label variant shown at every width — the missing degradation stage',
+  },
+  // A5 — THE TOP-ROW BUTTONS FALL UNDER THE TAP FLOOR. This is not invented:
+  // `width/height: 3rem` is what those buttons WERE, and they rendered 27
+  // device px against a 44 px floor on dev = 08e184a (the comment above the
+  // rule in combat.css says so, from this tool). The plant deletes the
+  // combat-scoped floor and lets them fall back to exactly that shipped defect.
+  tapfloor: {
+    file: 'styles/combat.css',
+    find: '.topbar.combat-hud .topbar-btn {\n  width: auto; height: auto;\n  min-width: var(--tap-floor); min-height: var(--tap-floor);\n}',
+    replace: '/* floor removed by --selftest */',
+    expect: 'A5',
+    why: 'the combat tap floor deleted — the buttons fall back to the 3rem that really shipped',
+  },
+});
+
+async function build() {
+  const built = spawn(process.execPath, [resolve(TREE, 'tools/launch.mjs'), '--build-only'], { cwd: TREE, stdio: 'ignore' });
+  await new Promise((res, rej) => { built.on('exit', (c) => (c === 0 ? res() : rej(new Error(`build failed (${c})`)))); built.on('error', rej); });
+}
+
+// One measured verdict at one shape, from the tool's own sweep and judge.
+// Returns the fail ids raised, so an arm can require its own and report the
+// rest — the assertions that stay green under a plant are the finding.
+async function verdictAt(href, shape, hpDomain) {
+  fails.length = 0; notes.length = 0;
+  const b = await open();
+  try {
+    const rows = await sweepShape(b, href, shape);
+    judge(shape, rows, hpDomain);
+  } finally { b.close(); }
+  return { fails: [...fails], notes: [...notes] };
+}
+
+async function runSelftest(href) {
+  const SHAPE = [320, 640];
+  let hpDomain = null;
+  try {
+    const { contentBundle } = await import(pathToFileURL(resolve(TREE, 'src/content/index.js')).href);
+    const { createRegistries } = await import(pathToFileURL(resolve(TREE, 'src/model/registries.js')).href);
+    const { resourceDomains } = await import(pathToFileURL(resolve(TREE, 'src/model/resources.js')).href);
+    hpDomain = resourceDomains(createRegistries(contentBundle)).main.hp;
+  } catch { /* legacy tree: judge() falls back to its clamp reading */ }
+
+  console.log(`\n  SELFTEST — each arm's known-bad planted in a real shipped file, rebuilt, re-rendered.`);
+  console.log(`  Judged at ${SHAPE[0]}x${SHAPE[1]} (the narrow edge both arms are about).\n`);
+  const results = [];
+  for (const [arm, m] of Object.entries(MUTANTS)) {
+    const path = resolve(TREE, m.file);
+    const before = readFileSync(path, 'utf8');
+    if (!before.includes(m.find)) {
+      console.log(`  ${arm.padEnd(9)} PLANT DID NOT APPLY — the anchor is gone from ${m.file}.`);
+      console.log(`            A known-bad that cannot be planted proves nothing; re-point it before trusting ${m.expect}.`);
+      results.push({ arm, ok: false, reason: 'anchor absent' });
+      continue;
+    }
+    let got = null;
+    try {
+      writeFileSync(path, before.replace(m.find, m.replace));
+      await build();
+      got = await verdictAt(href, SHAPE, hpDomain);
+    } finally {
+      writeFileSync(path, before);
+      await build();
+    }
+    const mine = got.fails.filter((f) => f.startsWith(m.expect));
+    const others = [...new Set(got.fails.map((f) => f.slice(0, 3).trim()))].filter((id) => id !== m.expect);
+    const stayedGreen = [...new Set(got.notes.map((n) => n.slice(0, 3).trim()))];
+    console.log(`  ${arm.padEnd(9)} ${m.file} — ${m.why}`);
+    if (mine.length) {
+      console.log(`            ${m.expect} RED, as required: ${mine[0].slice(0, 150)}${mine[0].length > 150 ? '…' : ''}`);
+      console.log(`            (${mine.length} ${m.expect} failure(s); other reds: ${others.join(', ') || 'none'})`);
+      // The sentence my own wake clause was written for: the arms that DID NOT
+      // notice are the reason each arm needs its own plant.
+      console.log(`            STAYED GREEN under this plant: ${stayedGreen.join(', ') || 'nothing'} — which is why ${m.expect} needed its own known-bad.`);
+    } else {
+      console.log(`            ${m.expect} DID NOT FIRE. The plant landed (anchor replaced, tree rebuilt) and the assertion stayed quiet.`);
+      console.log(`            Reds seen instead: ${got.fails.map((f) => f.slice(0, 90)).join(' | ') || 'NONE — the whole run was green on a broken tree'}`);
+    }
+    results.push({ arm, ok: mine.length > 0 });
+  }
+
+  // THE CLEAN CONTROL. An assertion that is red on a healthy tree is not
+  // evidence either — and the restore above has to be proven, not assumed.
+  const clean = await verdictAt(href, SHAPE, hpDomain);
+  const cleanOk = clean.fails.length === 0;
+  console.log(`\n  control   the restored tree: ${cleanOk ? `CLEAN — ${clean.notes.length} assertions ok` : `${clean.fails.length} FAILING after restore`}`);
+  if (!cleanOk) for (const f of clean.fails) console.log(`            ${f}`);
+
+  const bad = results.filter((r) => !r.ok);
+  console.log(`\nDOOR: every plant above is an edit to a REAL SHIPPED FILE (styles/combat.css), rebuilt through
+      tools/launch.mjs into dist/AshenSpire.html and re-rendered in headless Chromium. The known-bad
+      travels the stylesheet, the bundler, the browser, the cascade, the container queries and the same
+      READ the standing run uses. NOTHING in this block is handed to judge() as a fixture.
+NOT PASSED: the plants are judged at 320x640 only, on the reaver, one seed, Text size M — an arm proven
+      able to fire, not proven to fire at every shape. A4 is planted through the STYLESHEET door; a
+      long resource NAME through the content door (content/resources.js) would reach the same clause
+      by a second road and is not planted here.
+BOUNDARY: this proves A4 and A5 can go red on real code. It says nothing about whether they would catch
+      a defect shaped differently from the one planted — full recall on a corpus of one is not recall.`);
+  console.log(bad.length || !cleanOk
+    ? `\nSELFTEST: ${bad.length} arm(s) did not go red${cleanOk ? '' : ' + the control is dirty'}`
+    : `\nSELFTEST: ${results.length}/${results.length} arms observed RED by the real door, control clean`);
+  return bad.length || !cleanOk ? 1 : 0;
+}
+
+// ---------------------------------------------------------------------------
 // --scales — WHAT CHANGES IF HE ANSWERS "CURVED".
 // Printed from the tree's OWN resourceScale(), plus the two candidates, so the
 // table in model/resources.js cannot drift from the function it describes.
@@ -1075,6 +1234,7 @@ async function main() {
 
   if (flag('--model-scale')) { await printModelScale(); return; }
   if (flag('--falsifier')) { process.exit(await runFalsifier(href)); }
+  if (flag('--selftest')) { process.exit(await runSelftest(href)); }
 
   const b = await open();
   if (flag('--scales') || flag('--floor')) {
