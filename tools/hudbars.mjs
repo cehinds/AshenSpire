@@ -175,6 +175,24 @@
 // green, and that silence is the whole argument for watching each arm on its
 // own rather than trusting a suite's total.
 //
+// STILL UNWATCHED AFTER THIS ACT — A7, A8, A9, A10, and they are named here
+// rather than quietly left, because an instrument that hides its own gaps is the
+// thing this whole batch was called to fix:
+//   A7 mana identity · A8 co-op seat identity — each HAS a declared negative
+//     control (proveManaNumericDriftFails, proveAnonymousLabelFails,
+//     proveMissingSeatIdentityFails) and each is DOWNSTREAM by construction: a
+//     hand-built object goes straight to the judging function, below the render
+//     and the read the real defect would travel through. They are honest about
+//     being controls; they are not same-door known-bads.
+//   A9 battlefield crop · A10 co-op action floor — NO control of any kind.
+// All four run only under --shots, which serves the source tree and writes PNGs,
+// so planting them needs the capture path driven from the selftest as well as a
+// plant. That is a second act, not a line. Until it is done these four arms are
+// `unknown`, not green, and this comment is the debt — not a note in a log
+// nobody greps. (Freja, 2026-08-15. The same discipline as flaskSeed's unwaked
+// refusal: say the gap in the instrument's own home, do not force a plant that
+// would prove the half that was never in doubt.)
+//
 // BOUNDARY, printed on every run including the clean ones: headless Chromium on
 // Linux, dist/AshenSpire.html, the shapes listed below, the reaver class, one
 // seed. It says nothing about Windows, about a real finger, about whether the
@@ -1104,6 +1122,9 @@ NOT PASSED: the plants are judged at 320x640 only, on the reaver, one seed, Text
       able to fire, not proven to fire at every shape. A4 is planted through the STYLESHEET door; a
       long resource NAME through the content door (content/resources.js) would reach the same clause
       by a second road and is not planted here.
+      AND FOUR ARMS ARE NOT PLANTED AT ALL: A7 and A8 hold DOWNSTREAM negative controls (a built object
+      handed to the judging function, below the render); A9 and A10 hold none. All four run only under
+      --shots. They are \`unknown\`, not green, and the header block above says why.
 BOUNDARY: this proves A4 and A5 can go red on real code. It says nothing about whether they would catch
       a defect shaped differently from the one planted — full recall on a corpus of one is not recall.`);
   console.log(bad.length || !cleanOk
