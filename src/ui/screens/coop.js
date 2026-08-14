@@ -9,7 +9,22 @@
 // .mapscreen shells. The only additions are co-op-specific: a seat per player,
 // whose-turn indicators, and the throw/mend affordances.
 // The COMBAT board helpers below are snapshot-fed twins of combat.js's private
-// ones (kept here so solo combat.js stays untouched).
+// ones (kept here so solo combat.js stays untouched) — statusRow, meterBars,
+// blockBadge, intentEl. THE HAND IS NO LONGER AMONG THEM.
+//
+// THE HAND IS NOT A TWIN ANY MORE, AND THAT WAS THE SECOND DEFECT OF THIS
+// SHAPE (2026-08-15, the same ruling as the map below, one law later). This
+// screen rendered its own `.hand` — the fan and the click, and none of the
+// machinery: no inspect hold (the compensating reader for a cramped card), no
+// key-hint badges, no reader of `balance.ui.handLayout`, so a co-op player in
+// OVERLAP got a hand that paged while the same player's solo hand overlapped —
+// two behaviours behind one settings word — and the strip carried an UNSCOPED
+// Law 5 exemption naming this collapse as its own debt. It calls
+// ui/components/hand.js now, the way its map calls ui/components/mapboard.js.
+// Read that file's header: the STRIP is a property of the game, one renderer;
+// what is legitimately different per surface enters as PARAMS — the snapshot's
+// cards with their spelled-out reasons, and the network door as the play
+// wiring. A played card still goes through `send`, never local dispatch.
 //
 // THE MAP IS NOT A TWIN ANY MORE, AND THAT WAS THE DEFECT. `renderMap` carried
 // its own `ROW_H = 46`, its own `y(floor)` and its own `r = boss ? 20 : 15` —
@@ -34,7 +49,7 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
-import { pagerOnlyHandExemption } from '../handAxis.js';
+import { mountHand } from '../components/hand.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -51,6 +66,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   let pacing = false; // an enemy-turn replay is holding the render
   let pendingSnap = null; // newest snapshot that arrived while pacing
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
+  let handStrip = null; // the live hand strip (components/hand.js), same discipline
   let endTurnBeat = null; // pointer-only; named keyboard/pad activation is immediate
 
   conn.setHandlers({
@@ -184,6 +200,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     endTurnBeat = null;
     removeSeatTabs();
     if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
+    if (handStrip) { handStrip.teardown(); handStrip = null; }
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
   const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded, mods: c.mods });
@@ -301,12 +318,16 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
         ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — click the hero who receives it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
         <div class="hand-area">
           <div class="energy-orb">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</div>
-          <!-- The Law 5 exemption is DERIVED from its one home (src/ui/handAxis.js)
-               and is UNSCOPED on purpose: this renderer implements only the paging
-               strip — no overlap arm — so unlike combat.js's mode-scoped
-               declaration, this one is true in every mode and says so. axisfit
-               sweeps this surface under both modes as that claim's wake. -->
-          <div class="hand"${pagerOnlyHandExemption()}></div>
+          <!-- The strip is components/hand.js — THE one hand renderer, the same
+               one solo combat mounts, so this hand honors data-hand-layout
+               (overlap overlaps, paging pages), carries the inspect hold, and
+               wears the mode-scoped Law 5 exemption from its one home
+               (src/ui/handAxis.js). The unscoped exemption that lived here died
+               with the second template; its A4 wake in axisfit fired the day
+               this renderer gained the overlap arm, as designed. This screen
+               supplies only the viewer half below: snapshot-fed entries with
+               spelled-out reasons, and network intents as the play wiring. -->
+          <div class="hand"></div>
           <button class="end-turn" id="coop-endturn">END TURN</button>
         </div>
         <div class="fx-layer"></div>
@@ -370,43 +391,51 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       row.appendChild(box);
     }
 
-    // My hand — the real card component.
-    const hand = app.querySelector('.hand');
-    if (meP && meP.alive && meP.connected) {
-      const n = meP.hand.length;
-      meP.hand.forEach((c, i) => {
-        const def = cardDef(c);
-        const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
-        const manaAffordable = meP.mana >= (def.manaCost || 0);
-        const affordable = !meP.ended && energyAffordable && manaAffordable;
-        const el = renderCard(registries, { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods }, { affordable });
-        if (!affordable) {
-          const reason = !manaAffordable
-            ? `Need ${def.manaCost || 0} Mana; have ${meP.mana}`
-            : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
-          el.dataset.unavailableReason = reason;
-          el.setAttribute('aria-disabled', 'true');
-          el.setAttribute('aria-label', `${def.name} unavailable: ${reason}`);
-          const badge = document.createElement('div');
-          badge.className = 'card-unavailable-reason';
-          badge.textContent = reason;
-          el.appendChild(badge);
-        }
-        const spread = Math.min(6, n) * 1.2;
-        el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
-        el.style.zIndex = i;
-        if (c.instanceId === armedAllyCard) el.classList.add('selected');
+    // My hand — THE hand renderer, mounted fresh per snapshot render (this
+    // screen rebuilds its DOM wholesale; the old strip's observers are torn
+    // down first, the mapBoard discipline one screen over). The strip draws;
+    // this callback is the network door: a played card is ALWAYS a server
+    // intent (`send`), never local dispatch — the client renders snapshots
+    // and asks, it does not resolve.
+    if (handStrip) handStrip.teardown();
+    handStrip = mountHand(app.querySelector('.hand'), {
+      registries,
+      wireCard: (el, entry) => {
         el.addEventListener('click', () => {
-          if (!affordable) return;
-          const needsAlly = (def.effects || []).some((ef) => ef.target === 'ally');
-          if (needsAlly) { armedAllyCard = armedAllyCard === c.instanceId ? null : c.instanceId; armedFlask = null; render(); return; }
-          const needs = (def.effects || []).some((ef) => ef.target === 'enemy');
-          send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
+          if (!entry.affordable) return;
+          const effects = entry.def.effects || [];
+          if (effects.some((ef) => ef.target === 'ally')) {
+            armedAllyCard = armedAllyCard === entry.inst.instanceId ? null : entry.inst.instanceId;
+            armedFlask = null;
+            render();
+            return;
+          }
+          const needs = effects.some((ef) => ef.target === 'enemy');
+          send({ t: 'playCard', cardInstanceId: entry.inst.instanceId, targetId: needs ? selectedEnemy : undefined });
         });
-        hand.appendChild(el);
+      },
+    });
+    if (meP && meP.alive && meP.connected) {
+      handStrip.render({
+        cards: meP.hand.map((c) => {
+          const def = cardDef(c);
+          const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
+          const manaAffordable = meP.mana >= (def.manaCost || 0);
+          const affordable = !meP.ended && energyAffordable && manaAffordable;
+          // The spelled-out reason is this viewer's data: a co-op client reads
+          // a snapshot, not the engine, so the card itself says why it is grey.
+          const reason = affordable ? null
+            : !manaAffordable ? `Need ${def.manaCost || 0} Mana; have ${meP.mana}`
+              : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
+          return {
+            inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
+            def, name: def.name, affordable, reason,
+            selected: c.instanceId === armedAllyCard,
+          };
+        }),
       });
     } else {
-      hand.innerHTML = '<div class="coop-note">Spectating the fight…</div>';
+      handStrip.render({ cards: [], emptyHtml: '<div class="coop-note">Spectating the fight…</div>' });
     }
 
     // Flasks.
