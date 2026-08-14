@@ -269,6 +269,14 @@ export const FLASK_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
 // Mana is live run/combat state. `restoreMana` derives the Mana kind without
 // confusing it with per-turn Energy; explicit `kind` remains the override.
 export const FLASK_KINDS = Object.freeze(['hp', 'mana', 'utility']);
+
+// The four growth sources of D17 message 6, his words in his order: "upgrade
+// options via relics or quest events or talismans or flask seeds to increase
+// the amount of charges." A growth row names ONE of these; a fifth source is a
+// WORD (engine act: this set, the schema and model/flaskgrowth.js refusals in
+// one act — Law 0 clause 2), never a row. Two of the four are declared ahead
+// of their content on purpose — see flaskGrowthRefusals for which, and why.
+export const FLASK_GROWTH_SOURCES = Object.freeze(['relic', 'questEvent', 'talisman', 'flaskSeed']);
 export const INTENT_KINDS = Object.freeze(['attack', 'block', 'buff', 'debuff', 'unknown']);
 export const ENCOUNTER_POOLS = Object.freeze(['normal', 'elite', 'boss']);
 export const PILES = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
