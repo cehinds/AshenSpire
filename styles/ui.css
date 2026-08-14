@@ -664,6 +664,32 @@ button.rs-reset {
    container query does not fire there, measured, 0 bleed and 0 travel both. */
   :root[data-layout='narrow'] .reward-row { overflow-x: auto; max-width: 100%; }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
+
+/* THE MERCHANT'S SHELF WRAPS — Sten, 2026-08-14, on Marina's axisfit ruling
+   (shop rows 397-403px, DEFECT, dated 2026-08-16). `#shop-cards` is a
+   `.reward-row`, and the scrollport above was Sunna's fix for a THREE-card
+   pick; the shop stocks `balance.shop.cardStock = 5`, so the same rule handed
+   this row 788px of shelf in a 385px room — H 403px at 390x844, 397 at
+   360x640, 316 at 884x1326, measured at 929b6ea by tools/axisfit.mjs, the
+   only rows on the shop screen it fails.
+
+   WRAP, NOT SCROLL, and Law 5 says which: clause 2 exempts a run only where
+   the horizontal run IS the content, and a shelf you buy from is a grid that
+   happens to be short — the remove grid TWO ELEMENTS DOWN already wraps
+   (`.deck-strip`), so one screen was answering one question both ways. Clause
+   3 licenses the rearrangement; clause 4 says spend the axis a thumb already
+   scrolls — `.screen` owns overflow-y and the cards run off the BOTTOM.
+
+   Count-agnostic on purpose (the class-card orphan ruling, above at
+   `:root[data-layout='narrow'] .class-row`): cardStock is a table row
+   Constantine can raise, and a layout correct only at today's count breaks
+   the day content grows. Cards keep their authored size — nothing shrinks,
+   tap floors hold (Law 4: the floor is ergonomic, not proportional).
+
+   Scoped to #shop-cards, NOT to .reward-row: the coop reward rows are red in
+   the same sweep and they are Viki's, dealt by name (wave-three board,
+   2026-08-14) — a class-level wrap here would fix her rows behind her back. */
+:root[data-layout='narrow'] #shop-cards { flex-wrap: wrap; justify-content: center; }
 .heal-note { color: var(--green); font-size: 1.3rem; }
 
 /* ---------- save slots (title) ---------- */
