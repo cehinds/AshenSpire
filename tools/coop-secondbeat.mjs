@@ -4,7 +4,44 @@
 // placement-neutral: it inspects the control's semantic arming/lifecycle and
 // the host intent, never its classes, geometry, or CSS.
 
+// DOOR. Real input is the three source files below, entered by readFileSync
+// from the process cwd. The MUTANT line at the foot concatenates a plant onto
+// an in-memory string — that tests the regex, not the road. `--selftest`
+// plants each known-bad INTO A COPY of the real file on disk and re-runs this
+// whole tool from that copy. (Vira's doors audit 2026-08-14: NO-KNOWN-BAD.)
 import fs from 'node:fs';
+
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'coop-secondbeat.mjs',
+    plants: [
+      {
+        name: 'the direct click-to-host bypass returns to the co-op screen',
+        file: 'src/ui/screens/coop.js',
+        append: "const plantedEt = app.querySelector('#coop-endturn');\nplantedEt.addEventListener('click', () => send({ t: 'endTurn' }));",
+        expectRed: /FAIL co-op End Turn pointer has no direct click-to-host bypass/,
+      },
+      {
+        name: 'End Turn loses its unconditional pointer protection in the action table',
+        file: 'src/model/secondbeat.js',
+        // The find-string reaches into the endTurn row specifically — the file
+        // holds five `hazard: 'pointing'` rows and a plant on the first one is
+        // a plant on a different action.
+        find: "    stakes: 'turn',\n    undo: 'none',\n    hazard: 'pointing',\n    note: 'the button sits at the edge of a hand",
+        replace: "    stakes: 'turn',\n    undo: 'none',\n    hazard: 'plantedNone',\n    note: 'the button sits at the edge of a hand",
+        expectRed: /FAIL ACTIONS declares unconditional End Turn pointer protection/,
+      },
+      {
+        name: 'the shared armer stops deriving hold duration from balance data',
+        file: 'src/ui/components/holdconfirm.js',
+        find: 'registries.balance.ui.holdConfirm',
+        replace: 'registries.balance.ui.plantedHoldConfirm',
+        expectRed: /FAIL shared armer derives hold duration from balance data/,
+      },
+    ],
+  }));
+}
 
 const source = fs.readFileSync('src/ui/screens/coop.js', 'utf8');
 const secondbeat = fs.readFileSync('src/model/secondbeat.js', 'utf8');

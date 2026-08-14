@@ -5,6 +5,37 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// DOOR. The real input is the mechanics source files below, entered by
+// readFileSync. `--selftest` plants each known-bad INTO A COPY of the real
+// file on disk and re-runs this whole tool against that copy — the same road,
+// observed red. (Vira's doors audit 2026-08-14 listed this tool NO-KNOWN-BAD.)
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'attribute-phase1-boundary.mjs',
+    plants: [
+      {
+        name: 'a gameplay action learns to read attributes',
+        file: 'src/engine/actions.js',
+        append: "export const plantedTierReader = (player) => player.attributes;",
+        expectRed: /actions\.js:\d+: unapproved attribute gameplay reader/,
+      },
+      {
+        name: 'attribute tier arithmetic is duplicated in a formula',
+        file: 'src/model/formulas.js',
+        append: "export const plantedTier = (a) => Math.floor(a.strength / 5);",
+        expectRed: /formulas\.js:\d+: duplicate attribute tier arithmetic/,
+      },
+      {
+        name: 'an unimplemented Dodge consumer contaminates the attribute table',
+        file: 'src/model/attributes.js',
+        append: "export const plantedDodge = 'dodge';",
+        expectRed: /attributes\.js:\d+: unimplemented Dodge contamination/,
+      },
+    ],
+  }));
+}
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const mechanics = [
   'src/engine/actions.js',

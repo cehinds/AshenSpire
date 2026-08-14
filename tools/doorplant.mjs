@@ -99,7 +99,11 @@ export async function doorSelftest({ tool, plants, args = [], timeoutMs = 300000
           failed++;
           continue;
         }
-        planted = pristine.replace(p.find, p.replace);
+        // `all` replaces EVERY occurrence. A one-shot replace on a token that
+        // appears twice in the real file plants half a defect, and the tool
+        // stays green for a reason that has nothing to do with its coverage —
+        // that is a false NOT-CAUGHT, which is as misleading as a false green.
+        planted = p.all ? pristine.split(p.find).join(p.replace) : pristine.replace(p.find, p.replace);
       }
       writeFileSync(target, planted);
       const r = runTool(root, tool, args, timeoutMs, env);
