@@ -148,10 +148,30 @@
 .map-node.shrine text, .map-node.treasure text { fill: var(--gold); }
 .map-node.merchant text { fill: var(--grace); }
 .map-node.visited circle { stroke: var(--gold); }
+/* WALKED NODES FADE, AND THE AMOUNT IS THE PLAYER'S — Constantine, D17 message
+   4 (2026-08-08): "previous nodes shoudl be faded, maybe 50% saturation or
+   higher (settings for customization)". The knob is Settings → Display →
+   Walked nodes (`walkedFade`); main.js applyDisplaySettings writes the chosen
+   value onto the root as data-walked-fade, and this ladder is its only reader.
+   `half` is the shipping default because it is the number in his sentence.
+   ON THE GROUP, not the circle: opacity+saturate on <g> takes the icon and the
+   ring down together, and `:not(.current)` because the node under the player's
+   feet also wears .visited and must never fade. Measured at 86564e6 before
+   this rule existed: visited stroke was full-saturation gold at opacity 1 —
+   the trail OUTSHONE the choice. Off restores exactly that look. */
+:root[data-walked-fade='subtle'] .map-node.visited:not(.current) { opacity: 0.85; filter: saturate(0.75); }
+:root[data-walked-fade='half'] .map-node.visited:not(.current) { opacity: 0.6; filter: saturate(0.5); }
+:root[data-walked-fade='strong'] .map-node.visited:not(.current) { opacity: 0.4; filter: saturate(0.25); }
 .map-node.current circle {
   stroke: var(--parchment); stroke-width: 3;
+  /* FILLED, not just ringed — D17 message 4: "the current node should be white
+     and colored in". Measured at 86564e6: fill was var(--panel), a dark disc
+     with a white ring. The icon flips to the panel tone so it stays legible
+     on the light disc. */
+  fill: var(--parchment);
   animation: nodePulse 1.5s ease-in-out infinite alternate;
 }
+.map-node.current text { fill: var(--panel); }
 @keyframes nodePulse { from { stroke-width: 3; } to { stroke-width: 5.5; } }
 .map-node.reachable { cursor: pointer; }
 .map-node.reachable > circle:not(.node-halo) {
