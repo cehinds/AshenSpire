@@ -2212,27 +2212,26 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     assert(offered > 0 && offered < checked, `the gate both admits and refuses (${offered} of ${checked})`);
 
     // ---- the validator, watched going red, by name ------------------------
-    const clone = () => JSON.parse(JSON.stringify({
-      slots: REG.equipment.slots,
-      armaments: REG.equipment.armaments,
-      armour: REG.equipment.armour,
-      modFields: REG.equipment.modFields,
-      targets: REG.equipment.targets,
-      cardTargets: REG.equipment.cardTargets,
-    }));
+    // THE WHOLE equipment TABLE, not a hand-picked list of its sub-tables.
+    // The old six-key list was a second copy of the table's shape: when the
+    // validator grew reads on `unarmedProfiles` and `basicCardProfiles`, the
+    // control arm below reported a sound tree as broken — for the missing
+    // keys, not for anything the mutations planted.
+    const clone = () => JSON.parse(JSON.stringify(REG.equipment));
     const check = (mut) => {
       const equipment = clone();
       mut(equipment);
-      // `attributes` rides along because three armaments (greatsword, dagger,
-      // ashStaff) AUTHOR attribute minima on their own rows, and
-      // equipmentRequirementReceipt fails CLOSED on an attributes registry it
-      // cannot ask — `registries.attributes.has` on undefined, once per such
-      // piece. The real boot always hands the validator that registry
-      // (createRegistries), so a partial-registries control arm was reading the
-      // tables through a door no real caller uses. Observed red at dev=86564e6
-      // (three identical 'reading has' messages, one per requiring piece)
-      // before this line; the mutation arms below are unchanged and still red.
-      return validateEquipment({ equipment, classes: REG.classes, statuses: REG.statuses, attributes: REG.attributes }).join('; ');
+      // THE REAL REGISTRIES, WITH ONLY `equipment` SWAPPED FOR THE MUTATED
+      // CLONE. This was a hand-built { equipment, classes, statuses } object,
+      // and it went stale the day validateEquipment widened to read
+      // `registries.attributes.has(...)` and `registries.cards.has(...)`
+      // (the attribute-requirement receipts) — from then on the CONTROL ARM
+      // errored with "Cannot read properties of undefined (reading 'has')",
+      // so the five known-bad mutations below never ran: a dead battery
+      // reporting through a red control arm. A caller that re-lists the
+      // validator's inputs is a second copy of its signature; spreading REG
+      // means the next widened read is already here.
+      return validateEquipment({ ...REG, equipment }).join('; ');
     };
     const slotRow = (e, id) => e.slots.find((s) => s.id === id);
     const armRow = (e, id) => e.armaments.find((a) => a.id === id);
