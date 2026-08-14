@@ -62,7 +62,7 @@ export const ZOOM_MAX = ZOOM_STEPS[ZOOM_STEPS.length - 1];
  * default everywhere, and nothing else moves. Do it when the fog lands, or on
  * Constantine's word — it is his A/B and nobody's first run is the experiment.
  */
-export const MAP_ZOOM_DEFAULT = '115';
+export const MAP_ZOOM_DEFAULT = 'Fit';
 
 /**
  * THE REFERENCE UI ZOOM — `--ui-zoom` at the shape that decides, measured, not
