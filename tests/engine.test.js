@@ -52,6 +52,7 @@ import {
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES,
 } from '../src/model/loadout.js';
+import { SEAT_CONTROLLERS, SEAT_TENURES } from '../src/model/seat.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, PRESENT_STATES, emptyProgress, recordProgress, evaluateUnlocks,
   unlockView, revealState, pieceReveal,
@@ -3964,6 +3965,51 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     eq(mutantMigrated.attributeMode, mutant.attributeRules.defaultMode, 'legacy migration follows the mutated default mode');
     const expectedMutantPreset = Object.fromEntries(mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => [a.id, mutant.attributeRules.presets[mutantMigrated.attributeMode].reaver[a.id]]));
     eq(JSON.stringify(mutantMigrated.attributes), JSON.stringify(expectedMutantPreset), 'legacy migration follows the mutated class preset and authored order');
+  });
+
+  // ---- 56. the SEAT ruling: two axes, and AWAY is not TEMPORARY -------------
+  test('56. seat vocabulary holds the ruling: presence is not tenure, viewers are derived', () => {
+    // src/model/seat.js is the SEAT ruling's home (Viki, 2026-08-08; homed
+    // 2026-08-14): a CPU companion ≡ a co-op seat (D17 q4), two authored
+    // characteristics — controller, tenure — and NO behaviour. This test is
+    // the sets' reader (suite check 53) and the pin that keeps the ruling's
+    // one load-bearing invariant from rotting: it does NOT re-list either
+    // set (a hand-typed copy is the defect closedsets cannot see); it asks
+    // only the questions the ruling stakes.
+
+    // His words are present: "user or cpu" drives (D17 q4), "for the run or
+    // temporary" stays (D10 wave 2). Quoted values, not a copy of the sets.
+    assert(SEAT_CONTROLLERS.includes('cpu'), "a seat can be cpu-driven — his 'user or cpu'");
+    assert(SEAT_CONTROLLERS.includes('remote'), 'a seat can be a LAN client — the one controller that implies a viewer');
+    assert(SEAT_TENURES.includes('run') && SEAT_TENURES.includes('temporary'),
+      "tenure is his two words: 'permanent … for the run or temporary'");
+
+    // THE INVARIANT — AWAY IS NOT TEMPORARY. Presence ('away'/'connected')
+    // is session state with a catch-up queue behind it; tenure ends with
+    // nobody coming back. A presence word entering SEAT_TENURES is how an
+    // Ember Debt queue fills for a seat that no longer exists.
+    for (const word of ['away', 'connected', 'disconnected', 'absent']) {
+      assert(!SEAT_TENURES.includes(word), `presence word '${word}' may never be a tenure`);
+      assert(!SEAT_CONTROLLERS.includes(word), `presence word '${word}' may never be a controller`);
+    }
+
+    // DERIVED, NEVER AUTHORED — no vocabulary may exist for "has a viewer":
+    // it IS controller === 'remote'. A viewer word in either set mints the
+    // impossible cells (a CPU with a screen, a remote human with none).
+    for (const word of ['viewer', 'hasViewer', 'screen', 'me']) {
+      assert(!SEAT_CONTROLLERS.includes(word) && !SEAT_TENURES.includes(word),
+        `'${word}' is a derived fact or a client pointer, never seat data`);
+    }
+
+    // The sets are closed: frozen, and every value is a lowercase word — a
+    // shape check, not a second listing.
+    assert(Object.isFrozen(SEAT_CONTROLLERS) && Object.isFrozen(SEAT_TENURES), 'both sets are frozen');
+    for (const v of [...SEAT_CONTROLLERS, ...SEAT_TENURES]) {
+      assert(typeof v === 'string' && /^[a-z]+$/.test(v), `'${v}' is a plain lowercase word`);
+    }
+    // And both axes are real choices — a one-value axis is a constant
+    // wearing a vocabulary, and an empty one is the sets deleted under us.
+    assert(SEAT_CONTROLLERS.length >= 2 && SEAT_TENURES.length >= 2, 'each axis offers a real choice');
   });
 
   const passed = results.filter((r) => r.ok).length;

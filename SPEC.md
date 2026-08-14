@@ -861,6 +861,7 @@ Build: fx pass (floating numbers, shake, transitions), run-history screen, keybo
 - **Daily seed / run sharing:** seeds are already displayed and enterable; nothing else needed in v1.
 - **Content packs / mods:** the data/model split makes a pack = one folder of content files passing validation; a pack loader is out of scope for v1 but requires no engine redesign.
 - **Second card pools per class ("Remembrance" variants):** class def already takes `cardPool: []`, so alternate pools are content-only.
+- **Companions:** a CPU companion is the same subject as a co-op partner — a **seat** (his word, D17 q4; the chassis is a class, D17 msg 2). The vocabulary and invariants — two authored axes (`controller`, `tenure`), viewers derived, **AWAY is not TEMPORARY** — live in `src/model/seat.js` (canonical; this bullet points, never restates). The co-op server already runs N seats deterministically; what remains unbuilt is the CPU play-policy (an engine act) and the companion content rows. No behaviour ships with the vocabulary.
 
 ## 11. Non-goals (v1)
 
