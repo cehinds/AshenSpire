@@ -200,6 +200,27 @@ export const ACTIONS = Object.freeze({
     undo: 'none',
     hazard: 'choosing',
   },
+  deleteSave: {
+    of: 'deleting a saved run from the title screen',
+    lives: 'src/ui/screens/title.js',
+    surface: 'title',
+    // THE GAME'S OLDEST SECOND BEAT, COLLAPSED (2026-08-14). It shipped as a
+    // THIRD form — title.js's own two-click, self-resetting arm ("✕" →
+    // "Delete?") with a hard-coded 2500 ms — deaf to `balance.ui.holdConfirm`
+    // in every position: `off` still demanded two clicks, `long` lengthened
+    // nothing. The exemption's honest content was only ever "nothing could
+    // watch a rewrite run"; `?shot=title` (main.js) ended that, and the
+    // derivation's own ruling took over. The mistake at the ✕ is POINTING —
+    // it shares `.slot-actions` with CONTINUE, one thumb-width away, and the
+    // slot card beside it already states everything a chooser would need to
+    // see — so the hold is the right form, and the two-click's second look
+    // bought nothing the fill under the finger does not.
+    stakes: 'profile',
+    undo: 'none',
+    hazard: 'pointing',
+    note: 'the ✕ sits beside CONTINUE in the same .slot-actions column; the named cost of the '
+      + 'form: keyboard/pad activation commits immediately, as on every hold (a focus cursor cannot mis-point)',
+  },
 
   // ---- a second beat this game already had, in its own screen's hand --------
   //
@@ -213,30 +234,11 @@ export const ACTIONS = Object.freeze({
   // the SCREEN the beat lives on, so an instrument can walk the beat in the
   // screen's own hand. It does NOT claim the shared machinery draws a
   // `data-beat-action` there — handledBy is precisely the exemption from that,
-  // and the census reads the two fields together (holdconfirm.mjs). The three
-  // states below pose their state by the real doors: a real save written then
-  // surfaced (`title`), a real profile archived by replacePrimaryWith
-  // (`profile`), real torn bytes read by the real parser (`crisis`).
-  deleteSave: {
-    of: 'deleting a saved run from the title screen',
-    lives: 'src/ui/screens/title.js',
-    surface: 'title',
-    stakes: 'profile',
-    undo: 'none',
-    hazard: 'pointing',
-    handledBy: 'title.js:76 — a two-click, self-resetting arm ("✕" → "Delete?")',
-    // WHY IT IS STILL NOT COLLAPSED INTO THE MACHINERY: for a week the honest
-    // half was "no ?shot= state reaches a title screen with saved runs on it,
-    // so nothing this repo owns can watch the rewrite run" — and replacing a
-    // WORKING second beat with an unwatched one is the exact failure this
-    // table exists to answer. `?shot=title` (main.js) is that state now, and
-    // holdconfirm.mjs watches this arm: armed, self-reset, committed. The
-    // collapse itself is a SEPARATE decision that is merely unblocked — note
-    // that the derivation above rules 'hold' while this hand answers with a
-    // two-click arm, a third form, and which form the rewrite should keep is
-    // a design call, not a census's.
-    gap: 'a third form of the same idea, in its own hand — watched since ?shot=title, still not the shared machinery',
-  },
+  // and the census reads the two fields together (holdconfirm.mjs). The two
+  // states below pose their state by the real doors: a real profile archived
+  // by replacePrimaryWith (`profile`), real torn bytes read by the real parser
+  // (`crisis`). (`deleteSave` sat here from 2026-08-08 to 2026-08-14; its
+  // two-click arm is gone and its row rides the machinery above.)
   profileRestore: {
     of: 'restoring a set-aside profile over the one in play',
     lives: 'src/ui/screens/profileArchive.js',

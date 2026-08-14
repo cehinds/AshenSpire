@@ -810,6 +810,74 @@ function judge(shape, rows, hpDomain) {
   }
 }
 
+// ---- A6W THE FLOOR IS ALIVE (development.md, *The wake condition*; Freja
+// 2026-08-14). A6 above is one-sided by construction: it fires only on a bar
+// OBSERVED floored — so the day the floor itself dies (--resbar-min renamed,
+// min-width lost to a cleanup, markFlooredBars unhooked, the dashed rule
+// outranked), no bar is ever floored, A6 goes vacuously green, and the
+// broken-axis mark quietly stops existing. Absence never fails a test written
+// to expect absence: the refusal needs a red on its WAKE, not only on its
+// firing shape. Two poses per shape, through the same ?shot doors the sweeps
+// use:
+//   · max 2 — the to-scale width is a sliver and the floor MUST catch it:
+//     the token resolves, min-width wins, data-floored is stamped, the dash
+//     draws. Each organ failing is named separately, because each dies to a
+//     different class of cleanup.
+//   · the default pose — hp far above the floor: the stamp must be absent
+//     and the border solid, or the mark lies about a truncation that is not
+//     happening (the reverse edge; a dash that always shows says nothing).
+async function judgeFloorAlive(b, href, [w, h]) {
+  const tag = `${w}x${h}`;
+  const PROBE = `(() => {
+    const n = (v) => Math.round(v * 100) / 100;
+    const el = document.querySelector('.combat .topbar .resbar[data-res="hp"]');
+    if (!el) return { missing: true };
+    const cellW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
+    const asked = parseFloat(el.style.width);
+    // The floor, MEASURED off a probe resolving the same token min-width
+    // uses, inside the bar's own scope — never parsed out of the stylesheet.
+    // Fallback 0px: an unresolved token measures 0 and is reported as dead.
+    const p = document.createElement('div');
+    p.style.cssText = 'position:absolute;left:-9999px;top:0;height:1px;padding:0;border:0;width:var(--resbar-min, 0px)';
+    el.appendChild(p);
+    const floor = n(p.getBoundingClientRect().width);
+    p.remove();
+    return {
+      floor,
+      wanted: n((asked / 100) * cellW),
+      got: n(el.getBoundingClientRect().width),
+      floored: el.dataset.floored === '1',
+      dashed: getComputedStyle(el).borderTopStyle === 'dashed',
+    };
+  })()`;
+  await b.cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false }, b.S);
+  await b.cdp.send('Page.navigate', { url: `${href}?shot=combat&shotMaxHp=2` }, b.S);
+  await b.until(`!!document.querySelector('.combat .topbar .resbar')`, 'combat @ shotMaxHp=2');
+  await wait(320);
+  const low = await b.ev(PROBE);
+  if (low.missing) { fail('A6W', `${tag}: no hp resbar at the floored pose — the wake has no subject`); return; }
+  if (!(low.floor > 4)) {
+    fail('A6W', `${tag}: --resbar-min resolves to ${low.floor} px — the floor token is dead (renamed, unset, or scoped away); no bar can ever be floored again and A6 is vacuously green from here on`);
+  } else if (low.wanted >= low.floor - 0.5) {
+    fail('A6W', `${tag}: the max-2 pose wants ${low.wanted} px against a ${low.floor} px floor — the pose no longer forces flooring (domain or track moved); re-derive the pose, do not let this clause go quiet`);
+  } else {
+    if (low.got < low.floor - 0.5) fail('A6W', `${tag}: at max 2 the hp bar rendered ${low.got} px below the ${low.floor} px floor — min-width no longer wins; the floor is dead while its token still resolves`);
+    if (!low.floored) fail('A6W', `${tag}: at max 2 the hp bar sits at the floor (${low.got} px for a wanted ${low.wanted} px) with no data-floored stamp — markFlooredBars is not seeing it, so the dash can never fire`);
+    if (!low.dashed) fail('A6W', `${tag}: at max 2 the hp bar is floored and drawn SOLID — the broken-axis mark is dead (rule deleted or lost the cascade); a bar that has stopped being to scale no longer says so`);
+  }
+  await b.cdp.send('Page.navigate', { url: `${href}?shot=combat` }, b.S);
+  await b.until(`!!document.querySelector('.combat .topbar .resbar')`, 'combat @ default');
+  await wait(320);
+  const high = await b.ev(PROBE);
+  if (!high.missing && high.wanted > high.floor + 2) {
+    if (high.floored) fail('A6W', `${tag}: the default pose (wanted ${high.wanted} px, floor ${high.floor} px) is stamped data-floored — the stamp lies about unfloored bars`);
+    if (high.dashed) fail('A6W', `${tag}: the default pose wears the dash while ${high.wanted} px above the floor — the mark claims a truncation that is not happening`);
+  }
+  if (!fails.some((f) => f.startsWith(`A6W  ${tag}`))) {
+    notes.push(`A6W ${tag}: FLOOR ALIVE ok — token ${low.floor} px, max-2 pose floored+dashed (wanted ${low.wanted} px → got ${low.got} px), default pose solid and unstamped`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // --falsifier — LAW 0's TEST FOR THIS FEATURE, run rather than asserted.
 //
@@ -1056,6 +1124,7 @@ async function main() {
           + `${String(hp ? hp.labelW : '—').padStart(5)}   ${hp && hp.floored ? 'yes' : 'no'}`);
       }
       judge(shape, rows, domains ? domains.hp : null);
+      await judgeFloorAlive(b, href, shape);
       if (domains) {
         const tag = `${shape[0]}x${shape[1]}`;
         let manaPoints = [];

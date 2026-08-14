@@ -41,6 +41,37 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // a `let` that reads null rather than a `const` in its temporal dead zone —
   // which throws, and would throw on the FIRST RENDER OF EVERY FIGHT.
   let endTurnBeat = null;
+  // ---- the hand's Law 5 exemption — MODE-SCOPED, and the words are his ------
+  //
+  // Under PAGING the hand strip scrolls sideways BY DESIGN: Constantine's own
+  // word, D19 (2026-08-13, commons/decisions/directions.md), verbatim —
+  // "overlap and paging" — paging is a designed horizontal pager, so the strip
+  // is Law 5 clause 2's honest case: the horizontal run IS the content. The
+  // declaration below (data-scroll-axis / -mode / -why, read by
+  // tools/axisfit.mjs) names that at the container, with his word as the
+  // reason.
+  //
+  // HISTORY, so nobody reads this as convenience: D17 msg 3 (2026-08-08) is
+  // him ANNOYED at this exact scroller — "I'm annoyed that in mobile, that the
+  // default hand size requires me to scroll left and right" — and on that word
+  // the record REFUSED the hand an exemption (axisfit's header named `.hand`
+  // as receiving none, from 2026-08-08). D19's later word is what makes this
+  // writable. It cites him, not us; if either word moves, this block moves
+  // with it.
+  //
+  // DERIVED, NOT TYPED TWICE: the condition reads <html data-hand-layout> —
+  // the same attribute the overlap arm below keys off, derived once by main.js
+  // from balance.ui.handLayout. Under 'overlap' the attributes are ABSENT and
+  // the hand is asserted at zero like any other container; axisfit FAILS a
+  // declaration found under the wrong mode (the exemption may never outlive
+  // its mode), and its A4 ratchet still fails this one if paging ever stops
+  // travelling. The word is written before any screen mounts and has no
+  // settings row, so mount-time is its lifetime (re-derive here if that
+  // changes).
+  const handExemption = document.documentElement.dataset.handLayout === 'paging'
+    ? ` data-scroll-axis="x" data-scroll-axis-mode="paging"`
+      + ` data-scroll-axis-why="paging is the designed horizontal pager — his word, D19 2026-08-13: 'overlap and paging'; scoped to this mode, absent under overlap"`
+    : '';
   app.innerHTML = `
     <div class="combat">
       <!-- THE MAIN HUD, TWO ROWS, HIS ASSIGNMENT (D10 wave 4):
@@ -74,7 +105,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       </div>
       <div class="hand-area">
         <div class="energy-orb"></div>
-        <div class="hand"></div>
+        <div class="hand"${handExemption}></div>
         <button class="end-turn">END TURN</button>
       </div>
       <div class="pile draw"><span class="n"></span><small>DRAW</small></div>

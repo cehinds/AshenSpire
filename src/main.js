@@ -798,6 +798,10 @@ function showTitle() {
   }));
   mountTitle(app, {
     slots,
+    // The delete beat rides the shared machinery now: the armer reads the
+    // dial from meta.settings and the table from the registries.
+    meta: saves.loadMeta(),
+    registries,
     onContinue: (slot) => resumeRun(slot),
     onNew: (slot) => showCustomize(slot),
     onDelete: (slot) => {
@@ -1697,6 +1701,13 @@ if (shotState) {
   // alone cannot witness the write. This reads the manager's own named state
   // (profileStatus), never a copy of it. Shot boots only; a player never has it.
   window.__profile = () => saves.profileStatus();
+  // The DRAWER, read-only, same species. profileStatus().archiveId is a
+  // READ-TRANSIENT — loadMeta() re-derives the whole status on every clean
+  // read (save.js), and mounting the title now performs such a read (the
+  // delete beat's dial). So "the old bytes are KEPT" is not a claim that
+  // pointer can carry across a navigation; the archive list is where the
+  // promise actually lives, and this hands the harness that list.
+  window.__archives = () => saves.listArchives();
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.
@@ -1949,9 +1960,11 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // A REACH STATE, the same shape as `?shot=rest` and for the same sentence:
   // one state for the one screen being watched, so the watch has a measurement
   // instead of a faith. `deleteSave` is a second beat this game has had since
-  // the title screen shipped (title.js — the two-click, self-resetting arm),
-  // and its row in src/model/secondbeat.js spent a week saying "no ?shot=
-  // state reaches a title screen with saved runs on it". This is that state.
+  // the title screen shipped — a two-click arm in title.js's own hand until
+  // 2026-08-14, the shared machinery's hold since — and its row in
+  // src/model/secondbeat.js spent a week saying "no ?shot= state reaches a
+  // title screen with saved runs on it". This is that state, and it is what
+  // made the collapse safe to make.
   //
   // THE SAVE IS REAL AND ENTERS BY THE REAL DOORS: newRun → ensureProfile →
   // startClimb → persist() → saves.saveRun writes the run into (memory)
