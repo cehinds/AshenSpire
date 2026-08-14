@@ -250,7 +250,15 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // scrollport's own background need to read it.
   host.insertAdjacentHTML('beforeend', `
     <div class="map-frame">
-    <div class="map-scroll${fog ? ` ${parchmentClass(act.actNumber)}` : ''}" data-map-mode="${mode}" data-scroll-axis="x" data-scroll-axis-why="the act map is a horizontal route">
+    <!-- NO data-scroll-axis HERE, AND THE ABSENCE IS THE FACT. This container
+         carried the exemption 'the act map is a horizontal route' (1c227ec) —
+         a sentence D17 message 4 contradicts in Constantine's own words: "not
+         require any scrollign left or right." The route is a CLIMB and it runs
+         UP. The exemption died with the travel: the camera now owns the
+         horizontal axis through the viewBox (see sizeSvg), horizontal travel is
+         zero by construction, and axisfit's A4 ratchet would fail a declaration
+         with no travel under it — correctly. -->
+    <div class="map-scroll${fog ? ` ${parchmentClass(act.actNumber)}` : ''}" data-map-mode="${mode}">
       <div class="map-canvas">
         <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
           ${groundSvg}
@@ -389,10 +397,17 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // player was given a canvas whose empty half was pannable and whose full half
   // was not.
   //
-  // THE RULE, one sentence: the scrollable content is the painted ink, grown by
-  // half a viewport on every side so that ANY painted point can be brought to
-  // the centre — and nothing beyond it. That makes the scroll extents exactly
-  // the ink extents on both axes (`overflow = ink`).
+  // THE RULE, one sentence per axis, because the two axes answer two different
+  // masters. VERTICAL — the thumb's axis, D17's "the edges need to be longer
+  // and more in the verticle axis": the scrollable content is the painted ink,
+  // grown by half a viewport above and below so that ANY painted point can be
+  // brought to the centre (`overflow = ink`). HORIZONTAL — the camera's axis,
+  // Law 5 clause 1 and D17's "not require any scrollign left or right": the
+  // content box is EXACTLY the viewport, centred on the camera's aim, so the
+  // scrollport never has a horizontal overflow to give a finger. Travel across
+  // is ZERO BY CONSTRUCTION — not clamped, not small: there is no extent.
+  // Centring still works on both axes; what moved is WHO does the horizontal
+  // half — the viewBox origin (aimX, below), never scrollLeft.
   //
   // ~~so the map scrolls the axis the act is long on and stops scrolling the one
   // it is not.~~ STRUCK 2026-08-08 by Sunna, and struck rather than reworded,
@@ -414,12 +429,20 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // A number that swings 320 px on the seed is not an axis the layout has
   // stopped scrolling — it is one nobody is measuring. Law 5 clause 1 wants
   // ZERO and clause 2 says a threshold is not an exemption. So the honest state
-  // of this expression: the VERTICAL axis was the defect it was written to fix
-  // and it fixed it (19 -> 692 px of travel, which is what makes centring
-  // possible at all), and the HORIZONTAL axis is unpaid. `tools/axisfit.mjs` is
-  // the machine that owns that number; it is not this comment's to claim, and
-  // the entrance aim below does not move it — aiming changes where the camera
-  // looks, never how far the content reaches.
+  // of this expression WAS: the VERTICAL axis was the defect it was written to
+  // fix and it fixed it (19 -> 692 px of travel, which is what makes centring
+  // possible at all), and the HORIZONTAL axis was unpaid.
+  //
+  // THE HORIZONTAL AXIS IS NOW PAID, and the payment is structural, not a
+  // clamp. Measured at dev = acb8ffe before this change, the shipped bundle,
+  // default settings (fog, Fit), 12 seeds x entrance/walk3/walk6 x 390x844 +
+  // 320x640: travel across ran 114..835 px and was zero on 0 of 72 cells,
+  // while `data-framing` said `fit/0` on ALL 72 — the promise never needed the
+  // axis it was hoarding. The fix follows from that measurement: the camera
+  // keeps the decision framed, so the horizontal freedom belongs to the camera
+  // (the viewBox aim), and the scroller's horizontal extent is the viewport
+  // itself. `tools/axisfit.mjs` still owns the number; this comment claims
+  // only the mechanism.
   //
   // IT IS THE viewBox, NOT PADDING, AND THAT IS DELIBERATE. #24 padded
   // `.map-canvas` to clear the zoom buttons and the fix only held at the scroll
@@ -433,6 +456,14 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // The content box last APPLIED to the element, in SVG units. Read by the
   // camera and by `report`, so the three cannot disagree about where zero is.
   let content = { x0: 0, y0: 0, w: width, h: height };
+  // WHERE THE CAMERA POINTS ON THE HORIZONTAL AXIS, in SVG units — the ONLY
+  // horizontal position this board has, because scrollLeft has no extent to
+  // hold one. Written by `centerOnCurrent` (the current node's column, or the
+  // entrance aim's centre, nudged so a fitting decision box is never cut);
+  // read by `apply`, which centres the viewBox on it. Before the first
+  // centring it is the ink's own centre, the honest place to stand when
+  // nothing has been aimed at yet.
+  let aimX = (inkBox.x0 + inkBox.x1) / 2;
   // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
   // Applying a content box can add or remove a CLASSIC scrollbar (this
   // scrollport asks for `scrollbar-width: thin`, not overlay), and a scrollbar
@@ -446,11 +477,17 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     // Before the first layout the viewport is 0 and there is no half-viewport to
     // grow by; the plain canvas is the honest fallback and the ResizeObserver
     // below re-runs this the moment a real size exists.
-    const padX = scroll.clientWidth > 0 ? scroll.clientWidth / (2 * zoom) : 0;
     const padY = scroll.clientHeight > 0 ? scroll.clientHeight / (2 * zoom) : 0;
-    const x0 = inkBox.x0 - padX;
+    // HORIZONTAL: the content box IS the viewport, centred on the camera's aim.
+    // `w * zoom` lands exactly on `clientWidth`, so scrollWidth == clientWidth
+    // and horizontal travel is zero with nothing left to clamp. Ink outside
+    // [x0, x0+w] is clipped by the viewBox — deliberately: it is history and
+    // context the centring promise does not cover, and D17 asks for the current
+    // and next nodes focused, not a pannable panorama. The pre-layout fallback
+    // is the bare ink, same honesty as the vertical branch.
+    const w = scroll.clientWidth > 0 ? scroll.clientWidth / zoom : (inkBox.x1 - inkBox.x0);
+    const x0 = aimX - w / 2;
     const y0 = inkBox.y0 - padY;
-    const w = (inkBox.x1 - inkBox.x0) + 2 * padX;
     const h = (inkBox.y1 - inkBox.y0) + 2 * padY;
     content = { x0, y0, w, h };
     svgEl.setAttribute('viewBox', `${x0} ${y0} ${w} ${h}`);
@@ -691,9 +728,6 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       const z = clampZoom(Math.min(zDecision, zContext));
       if (Math.abs(z - zoom) > 0.0005) zoom = z;
     }
-    // ALWAYS, not only when the zoom moved: the content box is a function of the
-    // viewport as well as the zoom, and this is the first call after a resize.
-    sizeSvg();
     const box = framingBox(fs, height);
     // THE AIM. The node under the player's feet; before the first move, the
     // centre of the doors — which `entries: 1` has made a single door, so on a
@@ -705,46 +739,51 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     if (cur) showTitle(true);
     const entrance = cur ? null : entranceFrame(fs, box);
     const aim = cur ? framingBox([cur], height) : entrance.aim;
-    // Local px from the CONTENT origin, which is no longer the canvas origin.
-    const aimX = (aim.x0 + aim.x1) / 2;
+
+    // THE HORIZONTAL HALF HAPPENS IN SVG UNITS, BEFORE THE VIEWBOX IS SIZED,
+    // because the viewBox is where it lands: `apply()` centres the content box
+    // on `aimX`, so writing the aim and then sizing IS the horizontal centring.
+    // There is no scrollLeft arithmetic to do afterwards — no extent exists.
+    //
+    // CENTRED UNLESS CENTRING WOULD HIDE THE CHOICE — the clause survives the
+    // axis moving house, verbatim in its logic: the centre is a TARGET and the
+    // decision is a FLOOR. Nudge the aim by the smallest amount that keeps the
+    // framing box wholly inside the viewport-wide content box, and only when it
+    // fits at this zoom — when it cannot fit, nothing here can save it, the
+    // node under the player's feet stays centred, and `report` says so.
+    aimX = (aim.x0 + aim.x1) / 2;
+    const half = (scroll.clientWidth > 0 ? scroll.clientWidth / zoom : (inkBox.x1 - inkBox.x0)) / 2;
+    if (box.x1 - box.x0 <= 2 * half) {
+      aimX = Math.min(box.x0 + half, Math.max(box.x1 - half, aimX));
+    }
+
+    // ALWAYS, not only when the zoom moved: the content box is a function of
+    // the viewport as well as the zoom, this is the first call after a resize —
+    // and the viewBox now carries the horizontal aim, so sizing must follow it.
+    sizeSvg();
     // THE ACT TITLE FOLLOWS THE AIM, and this is a fix for something that was
     // already broken rather than for something I broke. `ACT I · THE FALLOW
     // MARCHES` was pinned to the middle of the act's canvas while the camera
     // looked wherever the player was, so it arrived cut off at a screen edge —
     // "ALLOW MARCHES" in the shot of `dev` I took before touching any of this.
     // The camera knows where it is pointing; the title is one attribute away
-    // from being centred over it, and it costs nothing now that the content box
-    // is wide enough to hold it.
+    // from being centred over it.
     if (titleEl) titleEl.setAttribute('x', String(aimX));
-    const cx = (aimX - content.x0) * zoom;
-    const cy = ((aim.y0 + aim.y1) / 2 - content.y0) * zoom;
-    let left = cx - scroll.clientWidth / 2;
-    let top = cy - scroll.clientHeight / 2;
 
-    // CENTRED UNLESS CENTRING WOULD HIDE THE CHOICE — and this clause exists
-    // because the first draft of tonight's change did exactly that, measured.
-    // Aiming at the current node instead of the decision box is right almost
-    // everywhere and wrong at the top of the act, where the last floors fan in
-    // from columns three apart: at floor 11, walked, 390x844, the node was dead
-    // centre and the step out of it was off screen — 0 of 30 such cells on dev,
-    // several on my own branch. His instruction and Bjorn's hidden-step defect
-    // pointed opposite ways for one cell in ten, and the camera said `clipped`,
-    // which is how I found it rather than how he would have.
-    //
-    // So the centre is a TARGET and the decision is a FLOOR: nudge by the
-    // smallest amount that puts the framing box back on screen, and only when it
-    // fits at this zoom — when it cannot fit, nothing here can save it, the node
-    // under the player's feet stays centred, and `report` says so.
-    const bl = (box.x0 - content.x0) * zoom;
-    const br = (box.x1 - content.x0) * zoom;
+    // THE VERTICAL HALF IS THE SCROLLER'S, unchanged in its logic: centre the
+    // aim, nudge so a fitting decision box stays on screen, clamp to the real
+    // extent, and let `report` measure what landed.
+    const cy = ((aim.y0 + aim.y1) / 2 - content.y0) * zoom;
+    let top = cy - scroll.clientHeight / 2;
     const bt = (box.y0 - content.y0) * zoom;
     const bb = (box.y1 - content.y0) * zoom;
-    if (br - bl <= scroll.clientWidth) left = Math.min(bl, Math.max(br - scroll.clientWidth, left));
     if (bb - bt <= scroll.clientHeight) top = Math.min(bt, Math.max(bb - scroll.clientHeight, top));
 
-    const maxLeft = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
     const maxTop = Math.max(0, scroll.scrollHeight - scroll.clientHeight);
-    scroll.scrollLeft = Math.min(maxLeft, Math.max(0, left));
+    // scrollLeft is written once, to zero, as a statement rather than a repair:
+    // if this line ever moves a pixel, the horizontal extent has come back and
+    // axisfit will say so before any player does.
+    scroll.scrollLeft = 0;
     scroll.scrollTop = Math.min(maxTop, Math.max(0, top));
     report(box, fs.length);
     reportEntrance(entrance);
@@ -907,6 +946,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     trackGesture(ev, {
       onMove: (mv) => {
         if (!panning) return;
+        // The horizontal write is INERT BY CONSTRUCTION, kept for the day a
+        // wide layout earns a horizontal extent back: scrollWidth equals
+        // clientWidth on every shape now (see apply), so the browser clamps
+        // this to 0 and a sideways drag moves nothing. That is the design, not
+        // a regression — the camera owns X, the thumb owns Y (Law 5, D17).
         scroll.scrollLeft = sl - (mv.clientX - sx);
         scroll.scrollTop = st - (mv.clientY - sy);
       },
