@@ -39,7 +39,7 @@ export function staticTokens(def) {
  * still renders as `{token}` here — braces and all — because a visible brace is
  * a bug report and a bare key is a sentence that looks fine and lies.
  */
-export function relicText(def) {
+export function relicText(def, registries = null) {
   if (!def || !def.textTemplate) return '';
   const tokens = relicTokens(def);
   const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
@@ -50,9 +50,15 @@ export function relicText(def) {
   // so the sentence is DERIVED here rather than hand-typed into textTemplate
   // (Law 1 clause 2; the derivation and its boundary live at
   // flaskGrowthClause, model/flaskgrowth.js; corpus tools/flaskgrowth.mjs).
-  // Static content imports on purpose: the same pair this file already reads
-  // for balance.ui, and relic defs are not moddable per-run today.
-  const grown = flaskGrowthClause(balance, flasks, def.id);
+  // THE CLAUSE READS THE REGISTRIES IT IS HANDED — the same object the seam
+  // (syncFlaskGrowth) derives from — so the day any mode forks balance
+  // per-run, the tooltip describes the row the seam actually applies, not the
+  // shipped one. Every run-facing call site passes its registries (source
+  // contract in the corpus). The static fallback is for surfaces with no
+  // registries in hand, where the one shipped bundle is the only truth there is.
+  const bal = (registries && registries.balance) || balance;
+  const defs = (registries && registries.flasks && registries.flasks.all()) || flasks;
+  const grown = flaskGrowthClause(bal, defs, def.id);
   return grown ? `${base} ${grown}` : base;
 }
 

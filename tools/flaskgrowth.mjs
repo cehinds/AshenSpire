@@ -357,6 +357,32 @@ function selftest() {
     return { ok: true, saw: '' };
   });
 
+  behave('REGISTRIES, not statics: relicText follows the registries it is handed, and falls back to the shipped statics without one', () => {
+    // The trap (my 2026-08-14 log): relicText derived the growth clause from
+    // the STATIC balance/flasks imports while the seam derives from
+    // registries. One object today — createRegistries freezes a copy of the
+    // one shipped bundle — so nothing failed; the day any mode forks balance
+    // per-run, the tooltip would describe the shipped row while the seam
+    // applied the forked one, both readings plausible, no red anywhere.
+    // OBSERVED RED 2026-08-14 before the wire existed: this plant, run
+    // against the unwired tree, saw the clause hold the shipped +1 while the
+    // forked registries said +5.
+    const b = realBundleCopy();
+    const shipped = (Array.isArray(b.balance.flaskGrowth) ? b.balance.flaskGrowth : []).filter((r) => r && r.source === 'relic');
+    if (shipped.length === 0) return { ok: false, saw: 'zero shipped relic rows — see the live falsifier above' };
+    const tuned = shipped[0].amount + 4;
+    shipped[0].amount = tuned;
+    const reg = createRegistries(b);
+    const def = reg.relics.get(shipped[0].id);
+    const follows = relicText(def, reg).includes(`+${tuned} max`);
+    // The fallback edge: no registries → the shipped statics, unchanged — the
+    // non-run surfaces keep reading the one shipped bundle.
+    const shippedAmount = flaskGrowthTable(createRegistries(contentBundle).balance)
+      .find((r) => r && r.source === 'relic' && r.id === shipped[0].id).amount;
+    const fallsBack = relicText(def).includes(`+${shippedAmount} max`);
+    return { ok: follows && fallsBack, saw: `follows-fork ${follows} (wanted +${tuned}), falls-back ${fallsBack} — '${relicText(def, reg)}'` };
+  });
+
   behave('a questEvent row on a clean event validates, and the plan says NOT BINDING by name', () => {
     const b = realBundleCopy();
     b.balance.flaskGrowth = [{ source: 'questEvent', id: 'goldboughAvatar', kind: 'hp', amount: 1 }];
@@ -593,6 +619,29 @@ function selftest() {
     /function commit\(\) \{[\s\S]{0,400}syncFlaskGrowth\(registries, run\)/.test(src('src/ui/screens/equipment.js')));
   contract('relicText derives the growth clause (card.js calls flaskGrowthClause — the tooltip cannot silently omit a live row)',
     /flaskGrowthClause\(/.test(src('src/ui/components/card.js')));
+  // Every relicText CALL in the tree passes its registries — the wire that
+  // keeps the tooltip deriving from the object the seam derives from. Walked
+  // over all of src/ (a named-file list is a blacklist); card.js is the
+  // definition and the one legal bare mention. Floor of 5 call sites so the
+  // walk cannot quietly find nothing.
+  let relicTextCalls = 0;
+  const bareCalls = [];
+  for (const p of walk('src')) {
+    if (p === 'src/ui/components/card.js') continue;
+    for (const m of src(p).matchAll(/relicText\(([^)]*)\)/g)) {
+      relicTextCalls++;
+      if (!/,/.test(m[1])) bareCalls.push(`${p}: relicText(${m[1]})`);
+    }
+  }
+  contract('every relicText call site under src/ hands over its registries (no static-only tooltip on a run surface)',
+    relicTextCalls >= 5 && bareCalls.length === 0,
+    bareCalls.length ? `bare: ${bareCalls.join(', ')}` : `${relicTextCalls} sites, all wired`);
+  contract('MUTANT: the registries contract goes red on a bare relicText(def)',
+    (() => {
+      const planted = 'attachTooltip(el, () => relicText(def));';
+      const m = [...planted.matchAll(/relicText\(([^)]*)\)/g)];
+      return m.length > 0 && m.some((x) => !/,/.test(x[1]));
+    })());
   // The mutant: prove the contract regex can fail — a push with no sync.
   contract('MUTANT: the contract goes red on a push with no sync',
     !(() => {
