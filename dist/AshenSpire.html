@@ -3789,11 +3789,13 @@ body.hide-header-relics .map-substrip.no-flasks { display: none; }
    for the reason map.js's header gives about .map-zoom — and it is `hidden`
    whenever the promise holds, so it costs no height on the shape it was solved
    for. Law 4: this is TEXT, so it is the text unit and nothing else here is. */
-.mapscreen .map-tapnote {
+.mapscreen .map-tapnote,
+.mapscreen .map-clipnote {
   margin: 0; text-align: center; color: var(--gold);
   font-size: 1.1rem; line-height: 1.4; padding: 0.2rem 1rem;
 }
-.mapscreen .map-tapnote[hidden] { display: none; }
+.mapscreen .map-tapnote[hidden],
+.mapscreen .map-clipnote[hidden] { display: none; }
 
   </style>
 </head>
@@ -3824,7 +3826,7 @@ const { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_ST
 const { createRng, seedToString, seedFromString, seedProblem } = require("src/engine/rng.js");
 const { createCombat } = require("src/engine/combat.js");
 const { buildActMap } = require("src/engine/actmap.js");
-const { createSaveManager, createMemoryStorage } = require("src/engine/save.js");
+const { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } = require("src/engine/save.js");
 const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRelicReward, buildShopStock, rollArmamentDrop, applyGraceRefill } = require("src/engine/encounters.js");
 
 
@@ -3960,7 +3962,24 @@ function pickStorage() {
     return createMemoryStorage(); // e.g. blocked third-party storage
   }
 }
-const saves = createSaveManager(pickStorage());
+const bootStorage = pickStorage();
+// `?shot=crisis` — THE WORST MORNING, POSED BY THE DOOR IT ARRIVES BY. The
+// profile-notice screen mounts only when profileStatus().ok is false, and no
+// in-game act can make that true: corruption enters as bytes in storage, so
+// that is where the pose enters. A REAL profile is written by the real writer
+// (ensureProfile → saveMetaInternal, verify-then-rotate), then torn mid-write
+// the way a killed tab tears one, and the mirror is removed — the player whose
+// profile predates the backup, which is exactly who the corrupt state exists
+// for. Everything downstream of this line — readMetaFrom's parse, archiveMeta,
+// the quarantine, the screen — is the shipped path, untouched. Inside Rune's
+// gate by construction: shotState is truthy, so this storage is the memory
+// stub and no durable byte is ever involved.
+if (shotState === 'crisis') {
+  createSaveManager(bootStorage).ensureProfile();
+  bootStorage.setItem(META_KEY, String(bootStorage.getItem(META_KEY)).slice(0, 24));
+  bootStorage.removeItem(META_BACKUP_KEY);
+}
+const saves = createSaveManager(bootStorage);
 
 // `?shotSettings=<json>` — display settings for a ?shot= boot, written into the
 // EPHEMERAL store above. Read only when shotState is truthy, so a normal boot
@@ -5478,6 +5497,14 @@ function coopCatchupShot() {
 // shipped path — including the multi-codepoint strings, where any width GUESS
 // lies worst. Never reachable without a ?shot= URL.
 if (shotState) {
+  // Read-only debug handle, same species as `window.__combat` and `__uiScale`:
+  // tools/holdconfirm.mjs measures the profile beats (deleteSave's arm, the
+  // restore confirm, the fresh-profile confirm), and "the confirm committed"
+  // is a claim about STORAGE STATE, not about which screen happens to be
+  // mounted next — navigation after `.go` is unconditional, so the screen
+  // alone cannot witness the write. This reads the manager's own named state
+  // (profileStatus), never a copy of it. Shot boots only; a player never has it.
+  window.__profile = () => saves.profileStatus();
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.
@@ -5726,6 +5753,43 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   const meta = saves.loadMeta();
   if (found != null) meta.found = found ? found.split(',') : [];
   mountCompendium(app, { registries, meta, onBack: showTitle });
+} else if (shotState === 'title') {
+  // A REACH STATE, the same shape as `?shot=rest` and for the same sentence:
+  // one state for the one screen being watched, so the watch has a measurement
+  // instead of a faith. `deleteSave` is a second beat this game has had since
+  // the title screen shipped (title.js — the two-click, self-resetting arm),
+  // and its row in src/model/secondbeat.js spent a week saying "no ?shot=
+  // state reaches a title screen with saved runs on it". This is that state.
+  //
+  // THE SAVE IS REAL AND ENTERS BY THE REAL DOORS: newRun → ensureProfile →
+  // startClimb → persist() → saves.saveRun writes the run into (memory)
+  // storage, and showTitle surfaces it back through saves.listSlots →
+  // slotSummary reading those bytes — the same writer and the same reader a
+  // player's save walks. Nothing is posed into the DOM; the occupied slot is
+  // the storage speaking.
+  newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
+  showTitle();
+} else if (shotState === 'profile') {
+  // A REACH STATE for Settings → Profile (`profileRestore` in secondbeat.js —
+  // the inline .prof-confirm box). The set-aside profile is real and set aside
+  // BY THE REAL ACT that sets one aside: ensureProfile writes profile A
+  // through the real writer, startNewProfile archives it through
+  // replacePrimaryWith — the one path allowed to replace the primary — and
+  // the drawer entry the screen lists is that archive read back through
+  // saves.listArchives. The instrument still opens the section by the
+  // player's own door: the Profile tab in the Settings modal.
+  saves.ensureProfile();
+  saves.startNewProfile();
+  showTitle();
+  showSettings();
+} else if (shotState === 'crisis') {
+  // The worst morning (`freshProfile` in secondbeat.js — the .confirm-fresh
+  // modal). The torn bytes were planted at the storage seam beside
+  // pickStorage(), BEFORE the manager's first read — see the comment there
+  // for why that is the real door. From here the boot is exactly a player's:
+  // showTitle → showProfileNoticeIfNeeded → profileStatus().ok is false →
+  // mountProfileNotice. Nothing on this branch mentions the notice screen.
+  showTitle();
 } else if (shotState === 'customize') {
   // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
   // and #29's own boundary records what that cost: no sweep can open a screen
@@ -5776,6 +5840,7 @@ const { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES,
 const { equipTargets } = require("src/content/generated/equipTargets.js");
 const { unlocks } = require("src/content/generated/unlocks.js");
 const { attributes, creationModes, attributeRules } = require("src/content/attributes.js");
+const { retiredAttributeNames } = require("src/content/retiredNames.js");
 const { derivedStatRules } = require("src/content/derivedStats.js");
 
 const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...colorlessCards, ...coopCards];
@@ -5830,7 +5895,10 @@ const contentBundle = {
   tags: cardTags,
   attributes,
   creationModes,
-  attributeRules,
+  // `retired` is composed HERE, from its own file, so that reverting
+  // attributes.js to a pre-rename copy cannot delete the guard along with the
+  // row it guards against (retiredNames.js says why in full).
+  attributeRules: { ...attributeRules, retired: retiredAttributeNames },
   derivedStatRules,
 };
 
@@ -14333,10 +14401,14 @@ Object.assign(module.exports, { unlocks });
 // deliberately share display words with existing transient combat statuses;
 // they remain separate namespaces until a later feature defines a bridge.
 
+// The HP seat is VIGOUR — his word (D17: "vigour shoudl be 1 hp point per"),
+// renamed from 'constitution' 2026-08-14. The dead name is retired in
+// retiredNames.js and may not return; saves from the three-day window heal at
+// the load door.
 const attributes = [
   { id: 'strength', label: 'Strength', shortLabel: 'STR', order: 1 },
   { id: 'dexterity', label: 'Dexterity', shortLabel: 'DEX', order: 2 },
-  { id: 'constitution', label: 'Constitution', shortLabel: 'CON', order: 3 },
+  { id: 'vigour', label: 'Vigour', shortLabel: 'VIG', order: 3 },
   { id: 'wisdom', label: 'Wisdom', shortLabel: 'WIS', order: 4 },
   { id: 'intelligence', label: 'Intelligence', shortLabel: 'INT', order: 5 },
 ];
@@ -14359,15 +14431,40 @@ const attributeRules = {
   defaultMode: 'standard',
   presets: {
     standard: {
-      reaver: { strength: 13, dexterity: 10, constitution: 12, wisdom: 10, intelligence: 10 },
-      starseer: { strength: 10, dexterity: 11, constitution: 10, wisdom: 10, intelligence: 14 },
-      herald: { strength: 10, dexterity: 10, constitution: 12, wisdom: 13, intelligence: 10 },
+      reaver: { strength: 13, dexterity: 10, vigour: 12, wisdom: 10, intelligence: 10 },
+      starseer: { strength: 10, dexterity: 11, vigour: 10, wisdom: 10, intelligence: 14 },
+      herald: { strength: 10, dexterity: 10, vigour: 12, wisdom: 13, intelligence: 10 },
     },
   },
 };
 
 
 Object.assign(module.exports, { attributes, creationModes, attributeRules });
+
+},
+"src/content/retiredNames.js": function (module, exports, require) {
+// src/content/retiredNames.js — names this game has retired, and their heirs.
+//
+// DELIBERATELY NOT in attributes.js. The door this file guards is an OLD COPY
+// of the attribute vocabulary coming back wholesale — row, presets and
+// sourceStats together, a complete and self-consistent set that would validate
+// green on its own (tests/engine.test.js 50b proves that case). A guard cannot
+// live in the file whose revert it exists to refuse.
+//
+// 'constitution' held the HP seat for three days (d465cfc, 2026-08-11 →
+// 2026-08-14). Constantine's stat line names Vigour (D17: "vigour shoudl be
+// 1 hp point per"). Every run saved in that window spells the old name into
+// sote_run_v1 — the allocation plus the derived-stat snapshot's hp and stamina
+// sourceStat — so the load door heals those saves through this map
+// (model/attributes.js, migrateRetiredAttributeNames). At boot, a retired name
+// may never return as an attribute id, and every heir must be a live one
+// (model/attributes.js, attributeContentProblems).
+const retiredAttributeNames = {
+  constitution: 'vigour',
+};
+
+
+Object.assign(module.exports, { retiredAttributeNames });
 
 },
 "src/content/derivedStats.js": function (module, exports, require) {
@@ -14398,12 +14495,12 @@ const derivedStatRules = {
     },
     hp: {
       base: { strategy: 'classField', field: 'maxHp' },
-      sourceStat: 'constitution',
+      sourceStat: 'vigour',
       gainPerTier: 1,
     },
     stamina: {
       base: 0,
-      sourceStat: 'constitution',
+      sourceStat: 'vigour',
       gainPerTier: 1,
     },
     mana: {
@@ -16510,25 +16607,38 @@ const ACTIONS = Object.freeze({
   // Written at the row, in the code, with its reason — the shape Law 5 clause 2
   // requires of every horizontal-scroll exemption, for the same reason: a set
   // with an unnamed hole in it is not a set.
+  // ON `surface` FOR A `handledBy` ROW: it names the `?shot=` state that opens
+  // the SCREEN the beat lives on, so an instrument can walk the beat in the
+  // screen's own hand. It does NOT claim the shared machinery draws a
+  // `data-beat-action` there — handledBy is precisely the exemption from that,
+  // and the census reads the two fields together (holdconfirm.mjs). The three
+  // states below pose their state by the real doors: a real save written then
+  // surfaced (`title`), a real profile archived by replacePrimaryWith
+  // (`profile`), real torn bytes read by the real parser (`crisis`).
   deleteSave: {
     of: 'deleting a saved run from the title screen',
     lives: 'src/ui/screens/title.js',
-    surface: null,
+    surface: 'title',
     stakes: 'profile',
     undo: 'none',
     hazard: 'pointing',
     handledBy: 'title.js:76 — a two-click, self-resetting arm ("✕" → "Delete?")',
-    // AND WHY IT IS NOT COLLAPSED INTO THE MACHINERY TONIGHT, which is the
-    // honest half: `surface: null` — no `?shot=` state reaches a title screen
-    // with saved runs on it, so nothing this repo owns can watch the rewrite
-    // run. Replacing a WORKING second beat with an unwatched one is the exact
-    // failure this branch exists to answer. The row is the card.
-    gap: 'a third form of the same idea, in its own hand, unreachable by any instrument here',
+    // WHY IT IS STILL NOT COLLAPSED INTO THE MACHINERY: for a week the honest
+    // half was "no ?shot= state reaches a title screen with saved runs on it,
+    // so nothing this repo owns can watch the rewrite run" — and replacing a
+    // WORKING second beat with an unwatched one is the exact failure this
+    // table exists to answer. `?shot=title` (main.js) is that state now, and
+    // holdconfirm.mjs watches this arm: armed, self-reset, committed. The
+    // collapse itself is a SEPARATE decision that is merely unblocked — note
+    // that the derivation above rules 'hold' while this hand answers with a
+    // two-click arm, a third form, and which form the rewrite should keep is
+    // a design call, not a census's.
+    gap: 'a third form of the same idea, in its own hand — watched since ?shot=title, still not the shared machinery',
   },
   profileRestore: {
     of: 'restoring a set-aside profile over the one in play',
     lives: 'src/ui/screens/profileArchive.js',
-    surface: null,
+    surface: 'profile',
     stakes: 'profile',
     undo: 'none',
     hazard: 'choosing',
@@ -16537,7 +16647,7 @@ const ACTIONS = Object.freeze({
   freshProfile: {
     of: 'starting a new profile over an unreadable one',
     lives: 'src/ui/screens/profileNotice.js',
-    surface: null,
+    surface: 'crisis',
     stakes: 'profile',
     undo: 'none',
     hazard: 'choosing',
@@ -17540,7 +17650,19 @@ function createFlaskCharges(balance, allocation) {
   if (!Number.isInteger(hp) || hp < 0 || !Number.isInteger(mana) || mana < 0 || hp + mana !== capacity) {
     throw new Error(`Flask allocation must satisfy hp + mana = capacity ${capacity}`);
   }
-  return { capacity, hp, mana, hpCurrent: hp, manaCurrent: mana };
+  // THE CAPACITY LEDGER, born complete. `capacity` is one stored number fed by
+  // two doors (model/flaskgrowth.js, THE DOORS), and each door writes its own
+  // ledger line: `grown` (the possession door, per kind, reversible) and
+  // `granted` (the moment door, a total, permanent). `base` is what the vessel
+  // was born holding — this run's snapshot of the authored balance.flaskCapacity,
+  // like startingKitSnapshot: a later retune re-bases new runs, never old saves.
+  // The invariant the save shape enforces (validateRunShape):
+  //     capacity === base + grown.hp + grown.mana + granted
+  // A capacity that cannot be accounted for by its three parts is a corrupt
+  // save, refused BY NAME at the load door — so a future "cleanup" that
+  // derives capacity from the chain alone and silently deletes every
+  // moment-door charge goes red on the first save it touches.
+  return { capacity, base: capacity, hp, mana, hpCurrent: hp, manaCurrent: mana, grown: { hp: 0, mana: 0 }, granted: 0 };
 }
 
 function reallocateFlaskCharges(charges, { hp, mana }) {
@@ -18427,6 +18549,9 @@ const SCHEMAS = Object.freeze({
   attributeRules: obj({
     defaultMode: ref('creationModes'),
     presets: mapOf(mapOf(mapOf(int))),
+    // retired name → live heir (content/retiredNames.js). Semantic rules —
+    // dead may not be live, heir must be — live in attributeContentProblems.
+    retired: opt(mapOf(str)),
   }),
   card: obj({
     id: str,
@@ -19594,6 +19719,11 @@ function allocationTotal(source, modeId = defaultCreationModeId(source)) {
   return mode.baseline * orderedAttributes(source).length + mode.bonusPool;
 }
 
+function retiredNames(t) {
+  const map = plainObject(t.attributeRules) ? t.attributeRules.retired : undefined;
+  return plainObject(map) ? map : {};
+}
+
 function allocationProblems(t, classId, modeId, values, path) {
   const problems = [];
   const attrs = t.attributes.slice().sort((a, b) => a.order - b.order);
@@ -19605,8 +19735,14 @@ function allocationProblems(t, classId, modeId, values, path) {
     return problems;
   }
   const ids = attrs.map((a) => a && a.id).filter((id) => typeof id === 'string');
+  const retired = retiredNames(t);
   for (const id of ids) if (!Object.hasOwn(values, id)) problems.push({ path: `${path}.${id}`, msg: 'missing attribute cell' });
-  for (const id of Object.keys(values)) if (!ids.includes(id)) problems.push({ path: `${path}.${id}`, msg: `unknown attribute id '${id}'` });
+  for (const id of Object.keys(values)) {
+    if (ids.includes(id)) continue;
+    problems.push({ path: `${path}.${id}`, msg: Object.hasOwn(retired, id)
+      ? `'${id}' is a retired attribute id (its heir is '${retired[id]}')`
+      : `unknown attribute id '${id}'` });
+  }
   if (!mode) return problems;
   let total = 0;
   let allIntegers = true;
@@ -19642,10 +19778,46 @@ function classAttributePreset(source, classId, modeId = defaultCreationModeId(so
   return Object.fromEntries(orderedAttributes(source).map((def) => [def.id, values[def.id]]));
 }
 
+/**
+ * migrateRetiredAttributeNames(run, source) — heal a persisted run written
+ * under a since-retired attribute id, IN PLACE, before validation rules on it.
+ *
+ * The one legitimate carrier is a save from before the rename ('constitution'
+ * held the HP seat 2026-08-11 → 2026-08-14, d465cfc). Such a save spells the
+ * dead name in exactly two persisted homes, and this walks both:
+ *   · run.attributes — the allocation keys;
+ *   · run.derivedStatRuleSnapshot.rules.rules[*].sourceStat — the snapshot
+ *     restoreDerivedStatRuleSnapshot would otherwise refuse.
+ *
+ * DELIBERATE: a run carrying BOTH the dead name and its heir in one
+ * allocation is NOT migrated — it falls through to validation and is refused
+ * by name (Law 0 clause 5: a wrong-but-reasonable guess is invisible; this
+ * save has two claims on one seat and no honest way to pick).
+ */
+function migrateRetiredAttributeNames(run, source) {
+  const retired = retiredNames(tables(source));
+  for (const [dead, heir] of Object.entries(retired)) {
+    if (plainObject(run.attributes) && Object.hasOwn(run.attributes, dead) && !Object.hasOwn(run.attributes, heir)) {
+      run.attributes[heir] = run.attributes[dead];
+      delete run.attributes[dead];
+    }
+    const snapshot = run.derivedStatRuleSnapshot;
+    const rules = snapshot && plainObject(snapshot.rules) && plainObject(snapshot.rules.rules)
+      ? snapshot.rules.rules : null;
+    if (rules) {
+      for (const rule of Object.values(rules)) {
+        if (plainObject(rule) && rule.sourceStat === dead) rule.sourceStat = heir;
+      }
+    }
+  }
+  return run;
+}
+
 function normalizeRunAttributes(run, registries) {
   const modeAbsent = run.attributeMode === undefined;
   const valuesAbsent = run.attributes === undefined;
   if (modeAbsent !== valuesAbsent) throw new Error('attributeMode and attributes must both be present or both be absent');
+  migrateRetiredAttributeNames(run, registries);
   if (modeAbsent) {
     run.attributeMode = defaultCreationModeId(registries);
     run.attributes = classAttributePreset(registries, run.class, run.attributeMode);
@@ -19677,6 +19849,14 @@ function attributeContentProblems(source) {
     if (Number.isInteger(mode.bonusPool) && mode.bonusPool < 0) out.push({ path: `${path}.bonusPool`, msg: 'must be >= 0' });
   }
   if (!plainObject(t.attributeRules)) return [...out, { path: 'attributeRules', msg: 'must be a plain object' }];
+  // Retired vocabulary (content/retiredNames.js): a dead name may never
+  // return as an attribute id — the refusal names it — and its heir must be
+  // a live one, or the load-door healing would migrate saves onto a ghost.
+  const liveIds = t.attributes.map((a) => a && a.id).filter((id) => typeof id === 'string');
+  for (const [dead, heir] of Object.entries(retiredNames(t))) {
+    if (liveIds.includes(dead)) out.push({ path: `attributes.${dead}`, msg: `'${dead}' is a retired attribute id (heir '${heir}') and may not return as a row` });
+    if (!liveIds.includes(heir)) out.push({ path: `attributeRules.retired.${dead}`, msg: `heir '${heir}' is not a live attribute id` });
+  }
   const modeIds = t.creationModes.map((m) => m && m.id).filter((id) => typeof id === 'string');
   const classIds = t.classes.map((c) => c && c.id).filter((id) => typeof id === 'string');
   const presets = plainObject(t.attributeRules.presets) ? t.attributeRules.presets : {};
@@ -19698,7 +19878,7 @@ function attributeContentProblems(source) {
 }
 
 
-Object.assign(module.exports, { orderedAttributes, defaultCreationModeId, creationMode, allocationTotal, attributeAllocationProblems, classAttributePreset, normalizeRunAttributes, attributeContentProblems });
+Object.assign(module.exports, { orderedAttributes, defaultCreationModeId, creationMode, allocationTotal, attributeAllocationProblems, classAttributePreset, migrateRetiredAttributeNames, normalizeRunAttributes, attributeContentProblems });
 
 },
 "src/model/derivedStats.js": function (module, exports, require) {
@@ -19795,7 +19975,11 @@ function validateRule(out, value, path, options, partial) {
   validateBase(out, value.base, `${path}.base`, { required: !partial, classFields: options.classFields });
   if ((value.sourceStat !== undefined || !partial)
     && (typeof value.sourceStat !== 'string' || !options.attributeIds.includes(value.sourceStat))) {
-    problem(out, `${path}.sourceStat`, `must name one of ${options.attributeIds.join(', ')}`);
+    // The offending value is IN the message: a retired id (e.g.
+    // 'constitution') arriving here must be refused by its own name, not
+    // only by the legal list it is absent from.
+    const got = typeof value.sourceStat === 'string' ? `'${value.sourceStat}' ` : '';
+    problem(out, `${path}.sourceStat`, `${got}must name one of ${options.attributeIds.join(', ')}`);
   }
   validatePoints(out, value.pointsPerTier, `${path}.pointsPerTier`, false);
   validateGain(out, value.gainPerTier, `${path}.gainPerTier`, !partial);
@@ -22198,7 +22382,7 @@ Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLI
 // Headless: no document/window/localStorage/timers.
 
 const { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt } = require("src/model/loadout.js");
-const { chargeKindForFlask, createFlaskCharges } = require("src/model/gracerefill.js");
+const { chargeKindForFlask, createFlaskCharges, flaskCapacity } = require("src/model/gracerefill.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } = require("src/model/attributes.js");
 const { createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot, deriveStat } = require("src/model/derivedStats.js");
@@ -22209,7 +22393,11 @@ const { createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot, deriveSta
 const { resolveStartingKit, startingKitSnapshot } = require("src/model/startingKits.js");
 const { DAMAGE_SCHOOLS } = require("src/model/schemas.js");
 
-const RUN_SCHEMA_VERSION = 2;
+// v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
+// granted — and capacity must derive from the three (validateRunShape). v2
+// saves lack the ledger and are attributed once at the load door
+// (initializeRunFlaskCharges); v1 additionally predates starting kits.
+const RUN_SCHEMA_VERSION = 3;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 function createIdGen(prefix = 'i') {
@@ -22465,8 +22653,10 @@ function typeOk(value, type) {
   return typeof value === type; // 'string' | 'number'
 }
 
-/** validateRunShape(run) → [] when sound, else a list of human-readable problems. */
-function validateRunShape(run, { legacy = false } = {}) {
+/** validateRunShape(run) → [] when sound, else a list of human-readable problems.
+ *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
+ *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
+function validateRunShape(run, { legacy = false, preLedger = legacy } = {}) {
   const problems = [];
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
@@ -22530,12 +22720,39 @@ function validateRunShape(run, { legacy = false } = {}) {
       problems.push('flaskCharges must satisfy hp + mana = capacity with bounded current counts');
     }
     // `grown` — what the growth chain currently contributes (model/flaskgrowth.js).
-    // Optional: pre-chain saves lack it and syncFlaskGrowth treats absent as zero.
-    if (f && f.grown !== undefined
-      && !(f.grown && typeof f.grown === 'object'
-        && Number.isInteger(f.grown.hp) && f.grown.hp >= 0
-        && Number.isInteger(f.grown.mana) && f.grown.mana >= 0)) {
+    // Optional on pre-ledger saves only; syncFlaskGrowth treats absent as zero.
+    const grownSound = f && f.grown && typeof f.grown === 'object'
+      && Number.isInteger(f.grown.hp) && f.grown.hp >= 0
+      && Number.isInteger(f.grown.mana) && f.grown.mana >= 0;
+    if (f && f.grown !== undefined && !grownSound) {
       problems.push('flaskCharges.grown must be { hp, mana } non-negative integers when present');
+    }
+    // THE CAPACITY LEDGER — capacity is one stored number fed by two doors
+    // (model/flaskgrowth.js, THE DOORS), and this is the check that it stays
+    // accountable: base (born, createFlaskCharges) + grown (possession door)
+    // + granted (moment door) must equal what is stored. A capacity no ledger
+    // can explain is refused BY NAME — that red is the machine form of the
+    // two-doors warning that used to live only in prose (SPEC §5.5.2): a
+    // "cleanup" that re-derives capacity from the chain alone now fails the
+    // first save it touches instead of silently deleting every keepsake charge.
+    // Pre-ledger saves (v1/v2) carry no base/granted; they are admitted only
+    // through the migration door (preLedger), where initializeRunFlaskCharges
+    // attributes them once, by the stated rule, before the run is ever re-saved.
+    if (f && f.base === undefined && f.granted === undefined) {
+      if (!preLedger) problems.push('flaskCharges is missing its capacity ledger (base, granted) — required at this schema version');
+    } else if (f) {
+      const baseSound = Number.isInteger(f.base) && f.base > 0;
+      const grantedSound = Number.isInteger(f.granted) && f.granted >= 0;
+      if (!baseSound) problems.push('flaskCharges.base must be a positive integer');
+      if (!grantedSound) problems.push('flaskCharges.granted must be a non-negative integer');
+      if (!grownSound) {
+        problems.push('flaskCharges.grown must be present beside the capacity ledger');
+      } else if (baseSound && grantedSound && Number.isInteger(f.capacity)
+        && f.capacity !== f.base + f.grown.hp + f.grown.mana + f.granted) {
+        problems.push(`flaskCharges.capacity ${f.capacity} is not accounted for by its parts — `
+          + `base ${f.base} + grown ${f.grown.hp + f.grown.mana} + granted ${f.granted} `
+          + `= ${f.base + f.grown.hp + f.grown.mana + f.granted}`);
+      }
     }
   }
   if (run.energyMax !== undefined && (!Number.isInteger(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be a non-negative integer');
@@ -22556,6 +22773,36 @@ function initializeRunFlaskCharges(run, registries) {
     run.flaskCharges.manaCurrent = Math.min(run.flaskCharges.mana, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'mana').length);
     run.flasks = (run.flasks || []).filter((f) => f && chargeKindForFlask(registries, f.flaskId) == null);
   }
+  // ═══ THE ONE-TIME ATTRIBUTION — pre-ledger saves (v1/v2), stated, not
+  // silent. A v2 save stores capacity with no ledger: chain growth always
+  // wrote `grown`, but the moment door (op addFlaskCapacity — keepsakes,
+  // event effects) recorded nothing. The rule, in full:
+  //   base    = the current authored balance.flaskCapacity, clamped to
+  //             capacity − grownTotal — the best witness available for what
+  //             the vessel was born holding, never allowed to invent charges.
+  //   granted = capacity − grownTotal − base — every charge that base and the
+  //             chain's own ledger cannot account for is attributed to the
+  //             moment door, because the moment door was the untracked one.
+  // Honest defaults of the clamp: a balance retuned UP since the save yields
+  // base = capacity − grownTotal and granted 0 (the save keeps its capacity,
+  // nothing is invented); a keepsake surplus lands in granted, which is where
+  // it came from. Runs once per save, before the run can be re-serialized;
+  // from then on validateRunShape enforces capacity === base + grown + granted.
+  {
+    const f = run.flaskCharges;
+    if (f.base === undefined && f.granted === undefined) {
+      const grownTotal = f.grown && Number.isInteger(f.grown.hp) && Number.isInteger(f.grown.mana)
+        ? f.grown.hp + f.grown.mana
+        : 0;
+      if (grownTotal >= f.capacity) {
+        // The chain's own ledger cannot fit under the stored capacity — that is
+        // corruption of exactly the class this ledger polices, not a migration.
+        throw new Error(`flaskCharges.grown total ${grownTotal} meets or exceeds capacity ${f.capacity} — pre-ledger save is unaccountable`);
+      }
+      f.base = Math.min(flaskCapacity(registries.balance), f.capacity - grownTotal);
+      f.granted = f.capacity - grownTotal - f.base;
+    }
+  }
   // Loaded runs re-derive the chain here — the load door. A save carrying a
   // relic whose growth row was authored after it was written grows on load;
   // a save whose growth source no longer exists shrinks back, currents bounded.
@@ -22572,14 +22819,15 @@ function deserializeRun(json) {
   const run = JSON.parse(json);
   if (!run || typeof run !== 'object') throw new Error('Corrupt run save');
   const legacy = run.schemaVersion === 1;
-  if (!legacy && run.schemaVersion !== RUN_SCHEMA_VERSION) {
+  const preLedger = legacy || run.schemaVersion === 2; // v2: no flaskCharges capacity ledger yet
+  if (!preLedger && run.schemaVersion !== RUN_SCHEMA_VERSION) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (expected ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy });
+  const problems = validateRunShape(run, { legacy, preLedger });
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
-  if (legacy) {
+  if (preLedger) {
+    run.migratedFromRunSchemaVersion = run.schemaVersion;
     run.schemaVersion = RUN_SCHEMA_VERSION;
-    run.migratedFromRunSchemaVersion = 1;
   }
   return run;
 }
@@ -24811,6 +25059,13 @@ function runRunOpcode(ctx, action, eff) {
       run.flaskCharges.capacity += eff.amount;
       run.flaskCharges[kind] += eff.amount;
       run.flaskCharges[`${kind}Current`] += eff.amount;
+      // THE MOMENT DOOR'S LEDGER LINE — not optional. Capacity is enforced as
+      // base + grown + granted at the save shape (validateRunShape), so a
+      // grant that raises capacity without recording itself makes the very
+      // next save unaccountable and refused by name. The kind is deliberately
+      // not recorded: under pool (D19) the grant's kind is spent the moment it
+      // lands above, and the live split stays freely reallocatable at a grace.
+      run.flaskCharges.granted += eff.amount;
       break;
     }
     case 'loseMaxHpPct': {
@@ -30098,7 +30353,7 @@ function staticTokens(def) {
  * still renders as `{token}` here — braces and all — because a visible brace is
  * a bug report and a bare key is a sentence that looks fine and lies.
  */
-function relicText(def) {
+function relicText(def, registries = null) {
   if (!def || !def.textTemplate) return '';
   const tokens = relicTokens(def);
   const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
@@ -30109,9 +30364,15 @@ function relicText(def) {
   // so the sentence is DERIVED here rather than hand-typed into textTemplate
   // (Law 1 clause 2; the derivation and its boundary live at
   // flaskGrowthClause, model/flaskgrowth.js; corpus tools/flaskgrowth.mjs).
-  // Static content imports on purpose: the same pair this file already reads
-  // for balance.ui, and relic defs are not moddable per-run today.
-  const grown = flaskGrowthClause(balance, flasks, def.id);
+  // THE CLAUSE READS THE REGISTRIES IT IS HANDED — the same object the seam
+  // (syncFlaskGrowth) derives from — so the day any mode forks balance
+  // per-run, the tooltip describes the row the seam actually applies, not the
+  // shipped one. Every run-facing call site passes its registries (source
+  // contract in the corpus). The static fallback is for surfaces with no
+  // registries in hand, where the one shipped bundle is the only truth there is.
+  const bal = (registries && registries.balance) || balance;
+  const defs = (registries && registries.flasks && registries.flasks.all()) || flasks;
+  const grown = flaskGrowthClause(bal, defs, def.id);
   return grown ? `${base} ${grown}` : base;
 }
 
@@ -30417,7 +30678,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     const el = document.createElement('div');
     el.className = 'relic';
     el.textContent = def.icon || '◆';
-    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def))}`);
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
     strip.appendChild(el);
   }
 
@@ -32412,6 +32673,18 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
          screen is not a warning, it is decoration with a worried face."
          Every number in it is READ, never typed. -->
     <p class="map-tapnote" hidden></p>
+    <!-- THE OFF-SCREEN CHOICE, SAID WHERE THE PLAYER IS — the tap note's
+         sibling, same discipline: SILENT whenever the promise is kept. It
+         exists because the camera owns the horizontal axis now (sizeSvg): a
+         choice clipped sideways at a player-chosen zoom cannot be dragged to —
+         the trained gesture died with the travel — and the only recovery is
+         the ladder (−) or ⊙. Measured before this note existed (Sunna,
+         2026-08-14, 40 seeds x both phone shapes): at manual 200% every
+         floor-11 edge column ships its ONLY next step wholly off screen with
+         nothing but a line of edge ink to say so. report() drives it from
+         the same overflow the confession reads, so the note and data-framing
+         cannot disagree. Still no backticks. -->
+    <p class="map-clipnote" hidden></p>
     <!-- OUTSIDE the scrollport, and that is the whole fix (EldenSpire#28).
          These three buttons used to be the last child of .map-scroll,
          absolutely positioned over it, so they covered a piece of the pannable
@@ -32430,6 +32703,7 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   const svgEl = scroll.querySelector('svg');
   const g = scroll.querySelector('.map-nodes');
   const tapNote = host.querySelector('.map-tapnote');
+  const clipNote = host.querySelector('.map-clipnote');
 
   let drawnCount = 0;
   for (const n of nodes) {
@@ -32948,7 +33222,11 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   let warnedClipped = false;
   function report(box, count) {
     const d = scroll.dataset;
-    if (!box) { d.framing = 'none'; d.framingMiss = '0'; return; }
+    if (!box) {
+      d.framing = 'none'; d.framingMiss = '0';
+      if (clipNote) { clipNote.hidden = true; clipNote.textContent = ''; }
+      return;
+    }
     // EVERY TERM IS RELATIVE TO THE CONTENT ORIGIN, which stopped being the
     // canvas origin when the scroll extent became the ink (see `sizeSvg`).
     // Leaving these as `box.x0 * zoom` would have made the confession wrong by
@@ -32958,10 +33236,19 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     const r = (box.x1 - content.x0) * zoom;
     const t = (box.y0 - content.y0) * zoom;
     const b = (box.y1 - content.y0) * zoom;
+    // THE TWO AXES ARE TWO DIFFERENT FAILURES NOW, and they are kept apart on
+    // purpose: a vertical miss can still be scrolled to (the thumb's axis), a
+    // horizontal miss cannot — the camera owns X (sizeSvg) and the pan
+    // handler's horizontal write is inert. So the horizontal overflow feeds the
+    // player-facing note below, while `over` keeps its one job: the confession
+    // (`data-framing`) that three instruments already read, unchanged in
+    // meaning.
+    const hOverL = Math.max(0, scroll.scrollLeft - l);
+    const hOverR = Math.max(0, r - (scroll.scrollLeft + scroll.clientWidth));
     const over = Math.max(
       0,
-      scroll.scrollLeft - l,
-      r - (scroll.scrollLeft + scroll.clientWidth),
+      hOverL,
+      hOverR,
       scroll.scrollTop - t,
       b - (scroll.scrollTop + scroll.clientHeight)
     );
@@ -32969,13 +33256,27 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     d.framingMiss = String(Math.round(over));
     d.framingZoom = zoom.toFixed(3);
     d.framingCount = String(count);
+    // THE MERCY LINE — the tap note's rule, in the same words: a line that says
+    // the same thing every time is decoration, so this one exists ONLY when a
+    // choice is off screen SIDEWAYS, the one direction no gesture reaches. It
+    // names the recovery the screen actually offers (− and ⊙ are two buttons
+    // away, in the flow below), because the player's trained answer — drag
+    // toward it — moves nothing on this axis and reads as a stuck screen.
+    // Driven from the same numbers as the confession, so the two cannot drift.
+    if (clipNote) {
+      const hClipped = Math.max(hOverL, hOverR) > 0.5;
+      clipNote.hidden = !hClipped;
+      clipNote.textContent = !hClipped ? ''
+        : `A path runs off screen to the ${hOverR >= hOverL ? 'right' : 'left'} — zoom out (−) or press ⊙ to bring it back.`;
+    }
     if (over > 0.5 && !warnedClipped) {
       warnedClipped = true;
       console.warn(`[map] the framing does not fit: ${count} node(s) of choice need `
         + `${Math.round(box.w)}x${Math.round(box.h)} local px, the map viewport is `
         + `${scroll.clientWidth}x${scroll.clientHeight}, and the zoom ladder floors at ${ZOOM_MIN}x — `
-        + `${Math.round(over)} px of the choice is off screen and only panning reaches it. `
-        + `This act is ${columns} columns wide.`);
+        + `${Math.round(over)} px of the choice is off screen. A horizontal miss has no pan to reach it `
+        + `(the camera owns that axis; zoom out or ⊙ recovers it, and the screen now says so); `
+        + `a vertical miss still scrolls. This act is ${columns} columns wide.`);
     }
     reportTapSize();
   }
@@ -33360,24 +33661,33 @@ function nodeReading(node, { reveal = false } = {}) {
 /* ------------------------------------------------------------- the light -- */
 
 /**
- * HE PICKED, AND THE LOSER IS GONE — Constantine, 2026-08-08: a fork stays lit
- * once you are past it. The wide reading of "previously visited locations
+ * OUR DEFAULT, WEARING OUR OWN NAME — the fork question is OPEN: a fork stays
+ * lit once you are past it. The wide reading of "previously visited locations
  * remain revealed": everything that has EVER been lit stays lit, so the known
  * ground widens into a cone behind the frontier, the way Elden Ring's
  * undiscovered map behaves.
  *
+ * THIS HEADING USED TO SAY "HE PICKED — Constantine, 2026-08-08", AND THAT WAS
+ * FALSE. Asked straight on 2026-08-13 he answered "idk about hte forks part" —
+ * an honest idk, not an answer, of record in commons/decisions/directions.md
+ * D19 (claude-family). The attribution is stripped on his own word: what ships
+ * below is the family's default, not his ruling, and the question returns to
+ * him later as two pictures — the door that has answered better than any
+ * sentence.
+ *
  * WHAT USED TO BE HERE was `FOG_KEEP_FORKS`, one boolean holding both readings
  * of his sentence with both answers photographed, and a `mapFogForks` shot flag
- * to reach the other one. Its own comment promised that "the day he picks one
- * this constant and the flag both DIE — the loser is deleted, not left as an
- * option nobody chose." He picked. They are deleted, both of them, and this
- * paragraph is the receipt rather than a third state.
+ * to reach the other one. Both were deleted under the false record above. The
+ * DELETION stands anyway: a shipped game carries one default, and resurrecting
+ * the toggle would be the third state the original deletion refused — an
+ * option nobody chose, kept warm. This paragraph is the receipt.
  *
- * THE LOSING READING IS NOT LOST, IT IS DEMOTED. It lives on in
+ * THE UNSHIPPED READING IS NOT LOST, IT IS DEMOTED. It lives on in
  * `tools/mapfog.mjs` as a MUTANT — "the trail, but the roads not taken re-fog" —
  * where it used to be a legal cell of the sweep. That is the right home for a
  * reading we deliberately do not ship: something the instrument must catch, not
- * something the game can be talked into.
+ * something the game can be talked into. If he ever picks it, that is a design
+ * change with a row in this file's history, not a revert.
  *
  * WHAT MAKES THE PROMISE BELOW TRUE, and it is structure rather than a value:
  * `run.path` only grows, and `litNodes` shines every node in it, so the lit set
@@ -33397,8 +33707,10 @@ function nodeReading(node, { reveal = false } = {}) {
  * disagree is the second copy this house exists to catch, and it survived
  * because prose is not compiled and nothing could fail on it.
  *
- * His answer makes the sentence TRUE — the derivation is what keeps it true, not
- * what makes it true (Sunna's ruling, 2026-08-08). It is one home, one reader,
+ * The wide default makes the sentence TRUE — the derivation is what keeps it
+ * true, not what makes it true (Sunna's ruling, 2026-08-08 — hers, about the
+ * mechanism; the default itself is ours, question open, see the D19 note
+ * above). It is one home, one reader,
  * and the monotone property in `--selftest` is the thing that can falsify it.
  * It matters tonight rather than eventually: fog is the DEFAULT now, so this is
  * the first thing a new player reads about the mode they are already in.
@@ -33427,9 +33739,10 @@ const FOG_TRAIL_CLAUSE = 'Fog never closes behind you — anywhere you have seen
  *                    no penumbra, which is the ask read literally. A penumbra is
  *                    a second argument to this function and nothing else; the
  *                    ladder already holds the rung for it (`placed`).
- *                    And the splits of every EARLIER path node too — his answer
- *                    of 2026-08-08, so the known ground widens into a cone
- *                    behind the frontier instead of closing at the forks.
+ *                    And the splits of every EARLIER path node too — the wide
+ *                    default (ours, not his ruling; D19 note above), so the
+ *                    known ground widens into a cone behind the frontier
+ *                    instead of closing at the forks.
  *   the doors        every entrance, for the whole act. Before the first move
  *                    they ARE the split.
  *   the end          the boss. "when the act starts it show the start node and
@@ -34160,7 +34473,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       el.className = 'relic';
       el.dataset.relicId = rid;
       el.textContent = def.icon || '◆';
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def))}`);
+      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
       relics.appendChild(el);
     }
     // Flask selection is inert. Every slot opens one shared action plan; only
@@ -37101,7 +37414,7 @@ function mountRewards(app, { registries, run, rewards, onDone }) {
     run.relics.push(rewards.relicId);
     syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
     const def = registries.relics.get(rewards.relicId);
-    lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def))}`);
+    lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}`);
   }
   if (rewards.flaskId) {
     const def = registries.flasks.get(rewards.flaskId);
@@ -37395,7 +37708,7 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
     const items = app.querySelector('#shop-items');
     stock.relics.forEach((item, i) => {
       const def = registries.relics.get(item.id);
-      items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def), item.cost, run.cinders >= item.cost, () => {
+      items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def, registries), item.cost, run.cinders >= item.cost, () => {
         run.cinders -= item.cost;
         run.relics.push(item.id);
         syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
@@ -40365,7 +40678,7 @@ function renderRelics(container, ctx) {
     const def = ctx.registries.relics.get(rid);
     const el = document.createElement('div');
     el.className = 'ov-relic';
-    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def))}</p></div>`;
+    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def, ctx.registries))}</p></div>`;
     rGrid.appendChild(el);
   }
   if (!ctx.run.relics.length) rGrid.innerHTML = '<div style="color:var(--muted)">None yet.</div>';
