@@ -25,7 +25,12 @@
 // deliberate breakages before it was allowed to pass anything — the clamp
 // removed (R1 red at 390 combat), the ring's wrap removed (R5 red), and the
 // tail band sorted into the body (R2 red). A detector that has never been red is
-// not evidence. `--selftest` prints what was mutated and what went red.
+// not evidence. THOSE THREE OBSERVATIONS WERE MANUAL, AT AUTHORING, AND ARE
+// REF-PINNED — they rot with the tree (SOP 2's drift clause). NO `--selftest`
+// FLAG EXISTS in this file: an earlier draft of this header promised one that
+// "prints what was mutated", no code ever parsed it, and a reader passing it
+// got the ordinary sweep wearing a corpus-run's name. Corrected 2026-08-14
+// (Vira, the doors audit); a runnable corpus is the owner's to build.
 //
 // Usage:  node tools/quicknav-reach.mjs [--shots DIR]
 // Exit:   0 all green · 1 any finding · 2 the harness could not run
@@ -43,6 +48,14 @@ import { tmpdir } from 'node:os';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const BROWSER = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const args = process.argv.slice(2);
+if (args.includes('--selftest')) {
+  // The flag this file's header once promised and never parsed. Refusing it is
+  // the fix: silently running the ordinary sweep under it printed a green that
+  // wore a corpus-run's name (Vira, 2026-08-14, the doors audit).
+  console.error('quicknav-reach: NO --selftest EXISTS here. The three known-bads were manual, at');
+  console.error('authoring, ref-pinned — see the header. A runnable corpus is the owner\'s to build.');
+  process.exit(2);
+}
 const si = args.indexOf('--shots');
 const SHOTS = si >= 0 && args[si + 1] ? resolve(args[si + 1]) : null;
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });

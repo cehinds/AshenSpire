@@ -286,7 +286,14 @@ const BEHAVIOUR = [
 
 function selftest() {
   if (Number.isInteger(contentBundle.balance.flaskCapacity)) {
-    console.log('gracerefill --selftest: fixed-capacity charge model.\n');
+    console.log('gracerefill --selftest: fixed-capacity charge model.');
+    console.log('THE DOOR, stated because the amendment requires it stated (development.md, the');
+    console.log('instrument rule): refusal plants enter validateContent(realBundleCopy) — the same');
+    console.log('call src/main.js makes at boot; behaviour plants enter createRegistries +');
+    console.log('applyGraceRefill — the same path the shrine takes. In-memory bundle copies,');
+    console.log('downstream of the module load: the LOAD stage carries no plant here.');
+    console.log('NOTE: the full legacy-table corpus below this branch (refusal paths, Law 0');
+    console.log('falsifier, ladder assertion) DOES NOT RUN on a fixed-capacity tree.\n');
     let fails = 0;
     const refuse = (name, mutate, pattern) => {
       const b = realBundleCopy(); mutate(b);
