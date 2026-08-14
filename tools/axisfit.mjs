@@ -263,11 +263,22 @@ function appHandModes() {
   return m ? [...m[1].matchAll(/'([a-z]+)'/g)].map((x) => x[1]) : [];
 }
 
-// The surface the mode word arranges — TYPED, one entry, printed in the
-// boundary. The hand renders on the combat board (src/ui/screens/combat.js is
-// data-hand-layout's only reader); every other surface sweeps at the boot
-// default because the word changes nothing there.
-const MODE_SURFACE = 'combat';
+// The surfaces swept once per mode — TYPED, two entries, printed in the
+// boundary, and the two are in for OPPOSITE reasons (Vega, 2026-08-14):
+//
+//   'combat' — the word's reader. src/ui/screens/combat.js is data-hand-layout's
+//     only reader; its hand ARRANGES differently per mode, so each mode is a
+//     different layout to judge.
+//   'coop'   — the word's NON-reader, swept both ways to hold that exact claim.
+//     coop.js renders its own .hand (the second renderer Bjorn's gate named)
+//     and implements ONLY the paging strip — no overlap arm, no reader of the
+//     word — so its declaration (src/ui/handAxis.js) is UNSCOPED: true in
+//     every mode. Sweeping coop under both words is that declaration's WAKE
+//     (development.md, the wake condition): the day coop grows an overlap arm,
+//     the coop[overlap] cells reach zero travel and A4 fires on the unscoped
+//     declaration, forcing a person to re-scope it. A surface swept only at
+//     the boot default would let that premise die silently.
+const MODE_SURFACES = ['combat', 'coop'];
 
 const BROWSERS = [
   process.env.CHROME,
@@ -647,8 +658,10 @@ async function main() {
     process.exit(1);
   }
   console.log(`\nMODE AXIS — balance.ui.handLayoutModes, DERIVED: ${handModes.join(', ')}`);
-  console.log(`  '?shot=${MODE_SURFACE}' is swept once per mode through the settings door; every other`);
-  console.log(`  surface renders the boot default — data-hand-layout's one reader is the combat hand.`);
+  console.log(`  ${MODE_SURFACES.map((s) => `'?shot=${s}'`).join(' and ')} are swept once per mode through the settings door;`);
+  console.log(`  combat because it READS the word, coop because its hand does NOT — its unscoped`);
+  console.log(`  declaration claims mode-inertness and the overlap cells are that claim's wake (A4).`);
+  console.log(`  Every other surface renders the boot default.`);
   console.log(`\nPOPULATION 2 — driven overlays · TYPED, ${DRIVEN.length} entries, the weakest edge here`);
   for (const d of DRIVEN) console.log(`  ${d.name.padEnd(18)} ${d.why}`);
 
@@ -735,7 +748,7 @@ async function main() {
     await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: vp.mobile, maxTouchPoints: 5 }, S);
 
     const jobs = [
-      ...surfaces.flatMap((s) => (s === MODE_SURFACE
+      ...surfaces.flatMap((s) => (MODE_SURFACES.includes(s)
         ? handModes.map((m) => ({ label: `${s}[${m}]`, base: s, mode: m, url: `${base}?shot=${s}${modeQ(m)}`, driver: null }))
         : [{ label: s, base: s, url: `${base}?shot=${s}${settingsQ}`, driver: null }])),
       ...DRIVEN.map((d) => ({ label: d.name, base: d.name, url: `${base}${d.from ? d.from + settingsQ : settingsQ1}`, driver: d.open })),
@@ -835,11 +848,13 @@ async function main() {
       (12 seeds x entrance/walk3/walk6 x 390x844 + 320x640) at the change that
       landed it. (Rune, 2026-08-14, replacing Vira's 2026-08-08 boundary note,
       which described the ink-grow camera this change removed.)
-  (g) THE MODE AXIS IS ONE SURFACE. balance.ui.handLayoutModes (${handModes.join('/')}) is
-      swept both ways on '?shot=${MODE_SURFACE}' alone — data-hand-layout's one reader
-      is the combat hand. A second reader of the word on another surface is NOT
-      swept in its other mode until MODE_SURFACE grows with it, and the driven
-      overlays open OVER combat at the boot default only.`);
+  (g) THE MODE AXIS IS TWO SURFACES. balance.ui.handLayoutModes (${handModes.join('/')}) is
+      swept both ways on ${MODE_SURFACES.map((s) => `'?shot=${s}'`).join(' and ')} — combat because it reads
+      the word, coop because its hand renderer does NOT (its unscoped declaration
+      claims mode-inertness; the overlap cells are the wake that fails A4 the day
+      that stops being true). Any FURTHER reader or renderer of the hand on
+      another surface is NOT swept in its other mode until MODE_SURFACES grows
+      with it, and the driven overlays open OVER combat at the boot default only.`);
 
   if (notes.length) {
     console.log(`\n  EXEMPT — ${notes.length} container(s) declared themselves a horizontal run under Law 5 clause 2.`);
@@ -1036,7 +1051,56 @@ async function selftest(evalIn, cdp, S, base, settingsQ) {
   expect('M3  declaration removed under paging — the strip travels undeclared',
     handP ? judge(handP, scanP.mode).verdict : 'NEVER COLLECTED', 'FAIL');
 
-  console.log(`\n  ${fails.length ? `SELFTEST FAIL — ${fails.length} mechanism(s) did not behave` : 'SELFTEST PASS — 20 mechanisms, 6 green and 14 red, each observed'}`);
+  // ---------------------------------------------------------------------------
+  // 19-22 — THE SECOND RENDERER (Vega, 2026-08-14; the finding is Bjorn's gate:
+  // coop.js renders its own .hand and combat's exemption never travelled to it —
+  // one fact, two renderers, one home). coop's hand implements ONLY the paging
+  // strip — no overlap arm, no reader of the word — so its lawful declaration is
+  // UNSCOPED (src/ui/handAxis.js): true in every mode. These plants prove both
+  // traps by the real doors: the copied scoped string dies under overlap (CM1),
+  // and the unscoped truth stands exactly where the copy falls (CM2).
+  const SCOPED_COPY = `(() => { const e = document.querySelector('.hand'); if (!e) throw new Error('no .hand');
+    e.setAttribute('data-scroll-axis', 'x');
+    e.setAttribute('data-scroll-axis-mode', 'paging');
+    e.setAttribute('data-scroll-axis-why', 'planted: the scoped combat string, copied onto the coop hand (selftest)');
+    return true; })()`;
+  const UNSCOPED = `(() => { const e = document.querySelector('.hand'); if (!e) throw new Error('no .hand');
+    e.setAttribute('data-scroll-axis', 'x'); e.removeAttribute('data-scroll-axis-mode');
+    e.setAttribute('data-scroll-axis-why', 'planted: this renderer implements only the pager (selftest)');
+    return true; })()`;
+
+  // 19 — the overlap door on the coop surface (the app's own resolution).
+  await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSettings=${encodeURIComponent('{"handLayout":"overlap"}')}` }, S);
+  await wait(1600);
+  const scanCO = await evalIn(SCAN);
+  expect('CM0 the settings door renders overlap on coop  (must go GREEN)', scanCO.mode, 'overlap');
+
+  // 20 — THE COPY TRAP: combat's mode-scoped declaration pasted onto the coop
+  // hand. coop has no overlap arm, so the strip still travels under overlap and
+  // the scoped copy sits in a DOM whose word it contradicts — A5 must refuse it.
+  await evalIn(SCOPED_COPY);
+  const coopO = handFrom(await evalIn(SCAN));
+  console.log(`    (coop .hand under overlap: H ${coopO ? Math.round(coopO.hx) : '?'}px at 390x844 — no overlap arm in coop.js)`);
+  expect('CM1 combat\'s scoped string copied onto the coop hand, judged under overlap',
+    coopO ? judge(coopO, scanCO.mode).verdict : 'NEVER COLLECTED', 'FAIL');
+
+  // 21 — the shape that ships: UNSCOPED, judged in the mode where the copy just
+  // died. Renderer-scoped truth must be EXCUSED wherever the strip travels.
+  await evalIn(UNSCOPED);
+  const coopO2 = handFrom(await evalIn(SCAN));
+  expect('CM2 unscoped declaration + the strip\'s travel under overlap  (must go GREEN)',
+    coopO2 ? judge(coopO2, scanCO.mode).verdict : 'NEVER COLLECTED', 'EXCUSED');
+
+  // 22 — the head's own defect, planted: no declaration at all, boot default.
+  await cdp.send('Page.navigate', { url: `${base}?shot=coop${settingsQ}` }, S);
+  await wait(1600);
+  const scanCP = await evalIn(SCAN);
+  await evalIn(UNDECL);
+  const coopP = handFrom(await evalIn(SCAN));
+  expect('CM3 coop hand undeclared under paging — travels undeclared',
+    coopP ? judge(coopP, scanCP.mode).verdict : 'NEVER COLLECTED', 'FAIL');
+
+  console.log(`\n  ${fails.length ? `SELFTEST FAIL — ${fails.length} mechanism(s) did not behave` : 'SELFTEST PASS — 24 mechanisms, 8 green and 16 red, each observed'}`);
   for (const f of fails) console.log(`    - ${f}`);
 }
 
