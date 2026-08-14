@@ -728,7 +728,21 @@ button.rs-reset {
 .slot-empty-label { color: var(--muted); font-size: 1.3rem; font-style: italic; }
 .slot-actions { display: flex; align-items: center; gap: 0.8rem; flex-shrink: 0; }
 .slot-delete { min-width: 3.4rem; padding: 0.6rem 0.8rem; }
-.slot-delete.armed { color: var(--blood); border-color: var(--blood); }
+/* The delete beat rides the shared hold machinery (secondbeat.js `deleteSave`,
+   collapsed 2026-08-14 — the two-click `.armed` state died with it). While the
+   hold is filling, the ✕ answers in the old arm's color: this is the one
+   control where the fill means "a run is about to be gone for good", and the
+   blood border is the same sentence the armed state used to say. Three class-
+   grade selectors on purpose: `.beat-hold[data-hold='holding']` (further down)
+   is (0,2,0) and later in the file, so an equal-specificity rule here would
+   quietly lose to its gold. */
+.slot-delete.beat-hold[data-hold='holding'] { color: var(--blood); border-color: var(--blood); }
+/* THE WORD DOES NOT FIT ON AN ICON — the `.flask-slot .hold-hint` precedent
+   further down: three letters of HOLD beside a ✕ grows the destructive
+   control's footprint and its pull on the eye. The fill still runs; the
+   native tooltip says "Hold to delete this run" (title.js, reading the state
+   the machinery dressed). */
+.slot-delete .hold-hint { display: none; }
 .save-toast {
   position: fixed; top: 2rem; left: 50%; transform: translateX(-50%); z-index: 60;
   background: var(--bg-raise); border: 1px solid var(--gold); color: var(--gold);
