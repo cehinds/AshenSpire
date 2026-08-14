@@ -84,8 +84,8 @@ const duplicatedException = [...R.equipment.cardEquipmentExceptions, { ...R.equi
 check(/duplicate.*starstoneKris:dagger/i.test(bootErrors({ cardEquipmentExceptions: duplicatedException })),
   'boot mutant: duplicate exact card/weapon pair fails closed');
 
-const all10 = { strength: 10, dexterity: 10, constitution: 10, wisdom: 10, intelligence: 10 };
-const all15 = { strength: 15, dexterity: 15, constitution: 15, wisdom: 15, intelligence: 15 };
+const all10 = { strength: 10, dexterity: 10, vigour: 10, wisdom: 10, intelligence: 10 };
+const all15 = { strength: 15, dexterity: 15, vigour: 15, wisdom: 15, intelligence: 15 };
 if (typeof requirementReceipt === 'function') {
   const low = requirementReceipt(R, greatsword, all10);
   const met = requirementReceipt(R, greatsword, { ...all10, strength: 12 });

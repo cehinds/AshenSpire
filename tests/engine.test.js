@@ -142,7 +142,7 @@ const OWNS_EVERYTHING = { has: () => true };
 // "not in combat" fails OPEN, so every call site written after today would
 // re-arm mid-fight by saying nothing. Blocks that predate #95 are about the fit
 // and ownership gates, so they declare the context they were always assuming.
-const REQUIREMENT_TEST_ATTRIBUTES = { strength: 15, dexterity: 15, constitution: 15, wisdom: 15, intelligence: 15 };
+const REQUIREMENT_TEST_ATTRIBUTES = { strength: 15, dexterity: 15, vigour: 15, wisdom: 15, intelligence: 15 };
 const AT_CAMP = { inCombat: false, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 const MID_FIGHT = { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 
@@ -3841,8 +3841,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const attrs = contentBundle.attributes.slice().sort((a, b) => a.order - b.order);
     const modes = contentBundle.creationModes;
     const classes = contentBundle.classes;
-    eq(attrs.map((a) => a.id).join(','), 'strength,dexterity,constitution,wisdom,intelligence', 'the five stable ids ship in authored order');
-    eq(attrs.map((a) => a.shortLabel).join(','), 'STR,DEX,CON,WIS,INT', 'all five short labels ship from the same rows');
+    eq(attrs.map((a) => a.id).join(','), 'strength,dexterity,vigour,wisdom,intelligence', 'the five stable ids ship in authored order');
+    eq(attrs.map((a) => a.shortLabel).join(','), 'STR,DEX,VIG,WIS,INT', 'all five short labels ship from the same rows');
     const standard = contentBundle.creationModes.find((m) => m.id === contentBundle.attributeRules.defaultMode);
     assert(!!standard, 'the default mode resolves');
     eq(`${standard.baseline}/${standard.bonusPool}/${standard.minimum}/${standard.maximum}`, '10/5/10/15', 'standard creation bounds are authored');
@@ -3944,9 +3944,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     mutant.creationModes.push(testMode);
     mutant.attributeRules.defaultMode = testMode.id;
     mutant.attributeRules.presets.testMode = {
-      reaver: { strength: 10, dexterity: 7, constitution: 7, wisdom: 7, intelligence: 7 },
-      starseer: { strength: 7, dexterity: 8, constitution: 7, wisdom: 7, intelligence: 9 },
-      herald: { strength: 7, dexterity: 7, constitution: 8, wisdom: 9, intelligence: 7 },
+      reaver: { strength: 10, dexterity: 7, vigour: 7, wisdom: 7, intelligence: 7 },
+      starseer: { strength: 7, dexterity: 8, vigour: 7, wisdom: 7, intelligence: 9 },
+      herald: { strength: 7, dexterity: 7, vigour: 8, wisdom: 9, intelligence: 7 },
     };
     assert(validateContent(mutant).ok, 'mutant content remains valid after every derived input changes');
     const MR = createRegistries(mutant);
