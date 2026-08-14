@@ -68,7 +68,8 @@
 // entrance frame only — the one position this property is about. It measures
 // the node's own `<circle>`, never the reachable halo, so a clipped 6 px glow
 // is deliberately not a finding. It says nothing about whether the fog READS as
-// fog (that needs eyes and Freja's plate, which is a 404 today), nothing about
+// fog — that needs eyes; the act plate mounts now (`data-map-plate="ok"`,
+// parchment_act1.svg, resolver-tested), but mounted is not read — nothing about
 // mid-climb framing (`mapfit.mjs`), and nothing about whether a player enjoys
 // the climb.
 
@@ -328,8 +329,8 @@ console.log('  node-free orientation strip where the');
 console.log('  measured real span exceeds the measured port at the current zoom. Neither path');
 console.log('  judges the composition or measures the reachable halo. Says nothing');
 console.log('  about mid-climb framing (tools/mapfit.mjs), whether the node is in the DOM');
-console.log('  (tools/mapfog.mjs), or whether the unlit ground READS as parchment — the act');
-console.log('  plate is a 404 today, so every frame above is of the placeholder wash.');
+console.log('  (tools/mapfog.mjs), or whether the unlit ground READS as parchment - the act');
+console.log('  plate mounts (data-map-plate="ok"), but only eyes can say it reads.');
 
 if (findings.length) {
   console.error(`\nFINDINGS (${findings.length}):`);
