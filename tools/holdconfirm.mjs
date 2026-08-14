@@ -512,6 +512,61 @@ async function main() {
     ok(`the fill is a background, not an overlay`,
       !paint.error && /gradient/.test(paint.bg) && (paint.beforeContent === 'none' || paint.beforeContent === 'normal'),
       `background-image=${paint.bg ? 'gradient' : 'none'}, ::before content=${paint.beforeContent}`);
+
+    // ---- 6b. THE FILL IS STILL THERE WITH A POINTER ON IT, AND IT IS THE
+    // PAINTED VALUE THAT IS READ (Sunna, 2026-08-08 — this branch shipped the
+    // defect and nothing here could see it).
+    //
+    // Every check above this line reads `data-hold-progress`, which is written
+    // by the same function that writes `--hold` and is therefore incapable of
+    // disagreeing with it. THE DEFECT WAS IN THE PAINT. `base.css` carries a
+    // bare `button:hover { background: #2e2517 }` — a SHORTHAND, so it resets
+    // `background-image` — at specificity (0,1,1). Renaming `.ev-hold` to
+    // `.beat-hold` dropped the fill rule to (0,1,0), under it. A hovering
+    // pointer therefore deleted the entire fill while `--hold` climbed
+    // perfectly, and YOU CANNOT HOLD A CONTROL WITHOUT BEING OVER IT.
+    //
+    // So this reads `getComputedStyle().backgroundSize` — the picture — with a
+    // MOUSE over the bar, mid-press, and holds it against `--hold`. It is the
+    // one check in this file that could ever have gone red on that defect, and
+    // it was OBSERVED RED against the branch head before the CSS fix, entering
+    // by the same door a player does: the real bundle, a real hover, a real
+    // press. dev's `button.ev-choice.ev-hold` (0,2,1) passes it too, which is
+    // why the defect was a regression and not a shipped bug.
+    //
+    // The second half is the ease. `button` also declares
+    // `transition: background 120ms` — same shorthand, so `background-size`
+    // eases: on dev the paint ran ~13 points behind and GREW on the frame after
+    // the finger lifted. That is the one frame the rule's own comment says must
+    // tell the truth instantly, so the tolerance here is tight on purpose: an
+    // eased fill cannot stay inside 2 points of a value moving at ~1.7 points
+    // per frame.
+    {
+      const b = await pointOf('button.ev-choice.beat-hold');
+      if (!b) skip('the painted fill', 'unasked', 'no held bar to hover');
+      else {
+        const M = (t, x, y, extra = {}) => cdp.send('Input.dispatchMouseEvent', { type: t, x, y, button: t === 'mouseMoved' ? 'none' : 'left', clickCount: 1, ...extra }, sessionId);
+        await M('mouseMoved', b.x, b.y);
+        await wait(200);
+        const hov = await ev(`(() => { const cs = getComputedStyle(document.querySelector('button.ev-choice.beat-hold'));
+          return { img: /gradient/.test(cs.backgroundImage) }; })()`);
+        ok(`a pointer resting on the bar does not delete the fill`, hov.img === true,
+          `background-image with :hover applied = ${hov.img ? 'gradient' : 'NONE — base.css button:hover out-specifies the fill rule'}`);
+        await M('mousePressed', b.x, b.y, { buttons: 1 });
+        await wait(300);
+        const mid = await ev(`(() => { const e = document.querySelector('button.ev-choice.beat-hold');
+          const painted = parseFloat(getComputedStyle(e).backgroundSize);
+          const truth = parseFloat(e.style.getPropertyValue('--hold')) * 100;
+          return { painted, truth, img: /gradient/.test(getComputedStyle(e).backgroundImage) }; })()`);
+        await M('mouseReleased', b.x, b.y, { buttons: 0 });
+        await wait(250);
+        ok(`the PAINTED fill matches the hold, under the pointer that is holding it`,
+          mid.img === true && Number.isFinite(mid.painted) && Math.abs(mid.painted - mid.truth) <= 2,
+          `painted ${Number.isFinite(mid.painted) ? mid.painted.toFixed(1) : mid.painted}% vs --hold ${mid.truth.toFixed(1)}%`
+          + ` (>2 points apart means the fill is eased, or gone)`);
+        await M('mouseMoved', 5, 5);
+      }
+    }
   }
 
   // ---- 5. IT FAILS CLOSED (Viki's gate).
