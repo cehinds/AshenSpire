@@ -29,6 +29,7 @@
 //
 // Usage
 //   node tools/inspecthold.mjs                     source tree via serve.mjs
+//   node tools/inspecthold.mjs --selftest          the RE-RUNNABLE known-bad (below)
 //   node tools/inspecthold.mjs --root DIR          another tree (the known-bad run)
 //   node tools/inspecthold.mjs --only 390x844
 //   node tools/inspecthold.mjs --mode overlap      one arm of the hand-layout
@@ -70,6 +71,35 @@
 // The run that produced those lines is in the branch report; re-run it with
 // --root against any tree.
 //
+// ...AND THAT RED IS REF-PINNED, WHICH IS WHY --selftest EXISTS (Vira's doors
+// audit, 2026-08-14: "SAME-DOOR when run; the known-bad tree is ref-pinned").
+// It needs an 86564e6 checkout to still exist on someone's disk; under SOP 2's
+// drift clause a red that cannot be re-run is `unknown (drifted)`, not
+// coverage. So the corpus is BUILT now, not remembered: --selftest copies this
+// tree, cuts ONE REAL LINE out of the gesture in the copy, and re-runs this
+// whole tool at --root COPY — real serve, real boot, real CDP touch on the
+// real combat screen. Nothing is handed to a function.
+//
+// THE TWO PLANTS ARE THE TWO CONTRACTS, not two convenient lines:
+//   P1 swallow cut     holdconfirm.js stops arming the click-swallow at the
+//                      lift of a completed read. Every visible thing still
+//                      works — the card still expands, still restores — and
+//                      the release's click now reaches the screen: A READ
+//                      BECOMES A PLAY. That is the exact defect of the
+//                      pre-inspect tree, rebuilt on demand instead of
+//                      remembered. Expect "release: state unchanged" red.
+//   P2 abandon cut     holdconfirm.js stops closing the pending inspect past
+//                      the shared 12 px boundary — the ONE disambiguation
+//                      boundary the tap, the drag and the read share. The
+//                      gesture stops yielding to the drag. Expect "abandon"
+//                      red while the tap and drag corners stay green.
+//   C  clean control   the untouched copy must go GREEN, or a red below only
+//                      proves that copying a tree breaks the app.
+//
+// Each plant refuses at exit 2 if its line does not match exactly once: an
+// empty match means the OPPOSITE of clean (SOP 2's wrong-place-empty), and a
+// corpus that silently stops matching is the eleven-instruments shape.
+//
 // BOUNDARY. Linux headless Chromium; synthesized touch is not a finger (no
 // fling, no real contact patch). The mid-hold read (check 3) samples at
 // ~150 ms of a 400 ms dial through Runtime.evaluate — a slow harness could
@@ -80,7 +110,7 @@
 // input harness supersedes CDP touch synthesis.
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -124,8 +154,119 @@ function launchChrome(browser, dir) {
   });
 }
 
+// ---- the re-runnable known-bad ---------------------------------------------
+// Exact source lines, as the tree spells them today. Each is one of the
+// gesture's CONTRACTS, not a convenient string; see the header.
+const PLANTS = [
+  {
+    name: 'P1 swallow cut',
+    file: 'src/ui/components/holdconfirm.js',
+    from: "        if (phase === 'open' && !cancelled) swallowClick = true;",
+    to: '        /* inspecthold --selftest P1: the swallow is cut — a read can now become a play */',
+    what: 'the click-swallow at the lift of a completed read',
+    expect: 'the read becomes a PLAY — "release: state unchanged" red',
+    mustRed: (out) => /FAIL release: state unchanged/.test(out),
+    // The expansion itself is untouched: the card must still open. A plant that
+    // also broke the opening would be red for the wrong reason.
+    mustStay: (out) => /PASS inspect: past the dial the card is open/.test(out),
+  },
+  {
+    name: 'P2 abandon cut',
+    file: 'src/ui/components/holdconfirm.js',
+    from: "        if (phase === 'pending' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();",
+    to: '        /* inspecthold --selftest P2: the shared 12 px boundary is cut */',
+    what: "the pending inspect's yield at the shared 12 px boundary",
+    expect: 'the gesture stops yielding to the drag — "abandon" red',
+    mustRed: (out) => /FAIL abandon:/.test(out),
+    mustStay: (out) => /PASS tap: quick tap still SELECTS/.test(out),
+  },
+];
+
+function sandbox() {
+  const dir = mkdtempSync(join(tmpdir(), 'inspecthold-kb-'));
+  for (const d of ['src', 'styles', 'assets']) {
+    if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
+  }
+  cpSync(resolve(ROOT, 'index.html'), resolve(dir, 'index.html'));
+  return dir;
+}
+
+function plantInto(dir, p) {
+  const path = resolve(dir, p.file);
+  const src = readFileSync(path, 'utf8');
+  const first = src.indexOf(p.from);
+  if (first < 0 || src.indexOf(p.from, first + 1) >= 0) {
+    console.error(`inspecthold --selftest: ${p.name} found ${first < 0 ? 'NO' : 'MORE THAN ONE'} home in ${p.file}`);
+    console.error('  That line is one of this gesture\'s CONTRACTS, not a convenience. If the hand');
+    console.error('  renderers were collapsed into one (src/ui/handAxis.js\'s standing debt), find');
+    console.error('  where the contract lives now and RE-AIM the plant. Do not delete it: a corpus');
+    console.error('  that silently stops matching is the eleven-instruments shape.');
+    process.exit(2);
+  }
+  writeFileSync(path, src.slice(0, first) + p.to + src.slice(first + p.from.length), 'utf8');
+}
+
+function runSelfAt(root) {
+  return new Promise((res) => {
+    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--root', root, '--only', '390x844', '--mode', 'paging'],
+      { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...(browserPath ? { CHROME: browserPath } : {}) } });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; });
+    child.stderr.on('data', (d) => { out += d; });
+    child.on('exit', (code) => res({ code, out }));
+  });
+}
+
+async function selftest() {
+  console.log('inspecthold --selftest — the re-runnable known-bad');
+  console.log('  DOOR: every known-bad below is a SOURCE EDIT to a disposable copy of this tree');
+  console.log(`  (root ${ROOT}), judged by re-running this whole tool at --root COPY: served over`);
+  console.log('  http, booted in headless Chromium, and pressed with real CDP touch at real');
+  console.log('  coordinates on the real combat screen — every stage a player\'s finger travels.');
+  console.log('  Nothing is handed to armInspect(); a source edit is how this defect class arrives.');
+  console.log('  SCOPE: the planted runs are 390x844 x paging (one cell) to keep the corpus');
+  console.log('  affordable — the full run sweeps 2 shapes x 2 modes and is what the control');
+  console.log('  green above does NOT stand in for.\n');
+
+  let fails = 0;
+  const ok = (b, what) => { if (b) console.log(`  PASS ${what}`); else { fails++; console.log(`  FAIL ${what}`); } };
+
+  const cleanDir = sandbox();
+  console.log('  control: untouched copy of this tree (no plant)');
+  const clean = await runSelfAt(cleanDir);
+  ok(clean.code === 0, `control: the copied tree is GREEN (exit ${clean.code}) — the plants below are the only difference`);
+  try { rmSync(cleanDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
+
+  for (const p of PLANTS) {
+    console.log(`\n  ${p.name}: ${p.what}`);
+    console.log(`    plant: ${p.file} — expect ${p.expect}`);
+    const dir = sandbox();
+    plantInto(dir, p);
+    const r = await runSelfAt(dir);
+    ok(r.code === 1, `${p.name}: the planted tree goes RED (exit ${r.code}, want 1)`);
+    ok(p.mustRed(r.out), `${p.name}: red BY NAME — ${p.expect}`);
+    ok(p.mustStay(r.out), `${p.name}: the untouched corner stays green (red for the RIGHT reason, not a crater)`);
+    // The red itself, quoted — a verdict that will not show its evidence is the
+    // shape my own README once wore ("executed rather than asserted", printed
+    // and never graded). Read these lines against the PASS above, not instead.
+    for (const line of r.out.split('\n').filter((l) => /\s+FAIL /.test(l))) {
+      console.log(`    red |${line.replace(/^\s+/, ' ')}`);
+    }
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
+  }
+
+  console.log(fails
+    ? `\ninspecthold --selftest: ${fails} FAIL — this instrument's red is NOT re-observed; treat its greens as unknown`
+    : '\ninspecthold --selftest: held — clean copy green, both contracts red by name, through the finger\'s own door');
+  console.log('  BOUNDARY: two of the triangle\'s edges carry a plant here (the swallow, the shared');
+  console.log('  boundary). The TAP corner, the affordability check and the open-inspect drag guard');
+  console.log('  do not — they are asserted every run and have never been watched to fail.');
+  process.exit(fails ? 1 : 0);
+}
+
 async function main() {
   if (!browserPath) { console.error('inspecthold: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
+  if (args.includes('--selftest')) return selftest();
   const profile = mkdtempSync(join(tmpdir(), 'inspect-'));
   const s = await serve({ root: ROOT, port: 8272, open: false });
   const base = `http://localhost:${s.port}/`;

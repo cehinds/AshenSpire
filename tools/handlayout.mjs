@@ -228,6 +228,11 @@ async function selftest() {
     ok(r.code === 1, `${p.name}: the planted tree goes RED (exit ${r.code}, want 1)`);
     ok(p.mustRed(r.out), `${p.name}: red BY NAME — ${p.expect}`);
     ok(p.mustStay(r.out), `${p.name}: and the untouched claims stay green (the plant is narrow, not a smoking crater)`);
+    // The red itself, quoted. A verdict that will not show its evidence is the
+    // shape my own README once wore — printed, and never graded.
+    for (const line of r.out.split('\n').filter((l) => /\s+FAIL /.test(l))) {
+      console.log(`    red |${line.replace(/^\s+/, ' ')}`);
+    }
     try { rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
   }
 
