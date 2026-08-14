@@ -53,7 +53,22 @@ function botFight(run, rng, encounterId, cm = {}) {
   const enc = REG.encounters.get(encounterId);
   const combat = createCombat({
     registries: REG, rng,
-    player: { classId: run.class, maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds: run.relics, flasks: run.flasks },
+    // The run's own stamped pools and loadout, whole. createPlayerCombatEntity
+    // REFUSES an unstamped energyMax/drawPerTurn since the derived-stat train,
+    // and this sim crashed on its first seed from the day that landed until
+    // 2026-08-14 — a fleet simulator dead at the door, found only when the
+    // vigour rebalance needed before/after fleets. Passing run fields by name
+    // (not `...run`) keeps the sim honest about what a fight consumes.
+    player: {
+      classId: run.class, attributes: run.attributes, loadout: run.loadout,
+      maxHp: run.maxHp, hp: run.hp,
+      maxMana: run.maxMana, mana: run.mana,
+      maxStamina: run.maxStamina, stamina: run.stamina,
+      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      deck: run.deck, relicIds: run.relics, flasks: run.flasks,
+      flaskCharges: run.flaskCharges,
+    },
     enemyIds: enc.enemies,
     hpMult: cm.hpMult || 1,
     enemyStatuses: cm.enemyStatuses || [],

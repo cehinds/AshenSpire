@@ -172,7 +172,19 @@ function botFight(run, rng, encounterId, stats, pickRandom) {
   const enc = REG.encounters.get(encounterId);
   const combat = createCombat({
     registries: REG, rng,
-    player: { classId: run.class, maxHp: run.maxHp, hp: run.hp, deck: run.deck, relicIds: run.relics, flasks: run.flasks },
+    // runsim.mjs's stamped-player hunk, verbatim (this file's rule: the bot is
+    // runsim's, copied not imported; both crashed unstamped from the day the
+    // combat entity began refusing an unstamped energyMax).
+    player: {
+      classId: run.class, attributes: run.attributes, loadout: run.loadout,
+      maxHp: run.maxHp, hp: run.hp,
+      maxMana: run.maxMana, mana: run.mana,
+      maxStamina: run.maxStamina, stamina: run.stamina,
+      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      deck: run.deck, relicIds: run.relics, flasks: run.flasks,
+      flaskCharges: run.flaskCharges,
+    },
     enemyIds: enc.enemies,
   });
   if (MUTATE === 'rng') rng.float('misc'); // planted: the instrumentation is no longer passive
