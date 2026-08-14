@@ -5,7 +5,27 @@
 // REMOVAL CONDITION (SOP 1's corollary): delete this file the day the eight
 // D17 map clauses are all GREEN on dev two syncs running, or the day a
 // standing tool (mapfit/axisfit) absorbs its readings. It is a re-derivation
-// instrument, not a gate — it asserts nothing and exits 0 on any measured map.
+// instrument, not a gate — it asserts nothing about the MAP and exits 0 on any
+// measured map.
+//
+// BUT A MEASURER STILL OWES A FLOOR (Bjorn, 2026-08-15). Vira's doors audit
+// files this file under NO-KNOWN-BAD — an asserting tool with no observed red.
+// Reading my own artifact, she is half right and the half that matters is the
+// half I had wrong: it asserts nothing about the map, and it USED TO EXIT 0
+// WHEN IT MEASURED NOTHING. Every cell could throw, `report()` would print
+// `0/108 cells measured` under a confident header, and the exit code said fine.
+// That is the eleven-instruments shape of 2026-08-08 — an instrument running
+// dead and printing a plausible number — sitting in my own tree, and SOP 2's
+// silence guard already names the verdict: an empty result is `unknown`, and
+// unknown is never a pass.
+//
+// So there are now exactly two things this file can fail on, and neither is a
+// claim about the game:
+//   exit 2  NOTHING MEASURED — no cell yielded a reading
+//   exit 1  a cell threw — printed BY NAME rather than buried in the JSON
+// Both are observed by `--selftest`, which points a whole run at a copy of the
+// tree whose map cannot mount. A check nobody has watched fail is `unknown`,
+// including a check whose only job is to admit it read nothing.
 //
 // Per cell (?shot=map & seed & pose & shape & settings) it reads, off the DOM:
 //   zoom (data-framing-zoom), framing fit/clipped, scroll travel both axes,
@@ -13,7 +33,9 @@
 //   computed styles of visited/current/reachable circles.
 // Screenshots go to shots/.
 //
-// Usage: node bj-clauses.mjs /path/to/ashenspire [--quick]
+// Usage: node tools/bjclauses.mjs /path/to/ashenspire [--quick]
+//        node tools/bjclauses.mjs /path/to/tree --seeds BJORN1 --shapes 390x844
+//        node tools/bjclauses.mjs --selftest        the two floors, observed
 
 import { spawn } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
@@ -23,7 +45,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 // Node >= 22 ships a global WebSocket; no dependency needed.
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPO = resolve(process.argv[2] || join(__dirname, '..'));
+// argv[2] is the repo path — unless it is a flag. It used to be taken blind, so
+// `--selftest` was resolved as a directory name and the run died on a path that
+// was never a path. A positional read that cannot tell a flag from a tree is
+// the same shape as a reader that cannot tell empty from missing.
+const REPO = resolve(process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : join(__dirname, '..'));
 const QUICK = process.argv.includes('--quick');
 const OUT = process.env.BJ_OUT || join(process.cwd(), 'bj-clauses-shots');
 mkdirSync(OUT, { recursive: true });
@@ -31,12 +57,23 @@ mkdirSync(OUT, { recursive: true });
 const CHROME = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const PORT = 8264;
 
-const SEEDS = Array.from({ length: 12 }, (_, i) => `BJORN${i + 1}`);
-const SHAPES = [
+const argOf = (f, d = null) => { const i = process.argv.indexOf(f); return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : d; };
+const SELFTEST = process.argv.includes('--selftest');
+const SEEDS = (argOf('--seeds') || Array.from({ length: 12 }, (_, i) => `BJORN${i + 1}`).join(',')).split(',').map((s) => s.trim()).filter(Boolean);
+const ALL_SHAPES = [
   { w: 390, h: 844, d: 3, name: '390x844' },
   { w: 360, h: 640, d: 2, name: '360x640' },
   { w: 412, h: 915, d: 2.6, name: '412x915' },
 ];
+// Narrowing exists so the floors below are cheap enough to observe. A selftest
+// nobody can afford to run is a selftest nobody runs.
+const SHAPES = argOf('--shapes')
+  ? argOf('--shapes').split(',').map((s) => s.trim()).filter(Boolean).map((n) => {
+    const found = ALL_SHAPES.find((x) => x.name === n);
+    if (!found) { console.error(`bjclauses: --shapes ${n} is not one of ${ALL_SHAPES.map((x) => x.name).join(', ')}`); process.exit(2); }
+    return found;
+  })
+  : ALL_SHAPES;
 
 function launchChrome(userDataDir) {
   return new Promise((res, rej) => {
@@ -214,6 +251,22 @@ async function main() {
     }
   }
 
+  // THE FLOOR, and it stands BEFORE the comparison cells on purpose: a run that
+  // read nothing must say so and stop, not print seventy lines of confident
+  // context above its emptiness. (release-shots learned the same lesson at its
+  // own zero-shot gate; this is that gate, here.)
+  const measured = rows.filter((r) => !r.err);
+  const threw = rows.filter((r) => r.err);
+  if (!measured.length) {
+    console.error(`\nbjclauses: NOTHING MEASURED — ${rows.length} cell(s) attempted, every one failed to yield a reading.`);
+    for (const r of threw.slice(0, 6)) console.error(`  ${r.shape} ${r.seed} walk${r.walk}: ${r.err}`);
+    console.error('An empty measurement is unknown, and unknown is never a pass (SOP 2\'s silence guard).');
+    console.error('This tool exiting 0 on a map that never mounted is the instrument running dead and');
+    console.error('printing a plausible number — the shape eleven instruments took on 2026-08-08.');
+    ws.close(); child.kill(); s.server.close();
+    process.exit(2);
+  }
+
   // one Fit-mode cell + one path-mode cell for comparison, 390x844
   const fitR = await cell({ shape: SHAPES[0], seed: 'BJORN3', walk: 6, settings: { mapZoom: 'Fit' }, shotName: '390x844_BJORN3_walk6_FIT' });
   const fitE = await cell({ shape: SHAPES[0], seed: 'BJORN3', walk: null, settings: { mapZoom: 'Fit' }, shotName: '390x844_BJORN3_entrance_FIT' });
@@ -223,6 +276,85 @@ async function main() {
   report(rows, fitR, fitE, pathR);
 
   ws.close(); child.kill(); s.server.close();
+
+  // A cell that threw used to live only in the JSON nobody opens. My own
+  // failure mode #2: a check nobody reads is not a check — make it fail, not
+  // whisper. A partial read is a smaller confident number, which is the half a
+  // zero-floor cannot catch.
+  if (threw.length) {
+    console.error(`\nbjclauses: ${threw.length} of ${rows.length} cell(s) yielded no reading — the numbers above are over ${measured.length}.`);
+    for (const r of threw) console.error(`  ${r.shape} ${r.seed} walk${r.walk}: ${r.err}`);
+    process.exit(1);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// THE KNOWN-BAD. Two floors, and the door is a whole run against a real tree.
+//
+// The plant copies the repo, renames the map scrollport's class in the COPIED
+// SOURCE, and runs this file as a program against that copy — so the break
+// enters where the real input enters (serve() → chromium → the real page) and
+// the probe fails for the reason a real broken map would fail it. Nothing is
+// handed to `report()`.
+// ---------------------------------------------------------------------------
+async function selftest() {
+  const { mkdtempSync: mkd, cpSync, rmSync, readFileSync: rf, writeFileSync: wf } = await import('node:fs');
+  const { tmpdir: td } = await import('node:os');
+  const { execFileSync } = await import('node:child_process');
+  const base = mkd(join(td(), 'bjclauses-selftest-'));
+  const tree = join(base, 'planted');
+  mkdirSync(tree, { recursive: true });
+  for (const p of ['src', 'styles', 'tools', 'content', 'index.html']) cpSync(join(REPO, p), join(tree, p), { recursive: true });
+  // The map's scrollport loses its class in the SOURCE the copy serves. The page
+  // still boots; the probe finds no `.map-scroll` and every cell reads nothing —
+  // which is exactly the state this tool used to call exit 0.
+  // WHICH FILE BUILDS THE SCROLLPORT IS DERIVED, NOT TYPED. My first version
+  // named `src/ui/screens/map.js` from memory; the class is authored in
+  // `src/ui/components/mapboard.js`, and the plant's own "edited nothing" guard
+  // is what told me — the guard doing exactly its job, in the file whose whole
+  // subject is instruments that cannot fail. A hardcoded path here is also the
+  // second copy: it would rot silently the day the markup moves.
+  const { readdirSync: rd } = await import('node:fs');
+  const walk = (d, out = []) => {
+    for (const e of rd(d, { withFileTypes: true })) {
+      const p = join(d, e.name);
+      if (e.isDirectory()) walk(p, out); else if (e.name.endsWith('.js')) out.push(p);
+    }
+    return out;
+  };
+  const CLASS_RE = /class\s*=\s*(["'`])[^"'`]*\bmap-scroll\b/;
+  const homes = walk(join(tree, 'src')).filter((f) => CLASS_RE.test(rf(f, 'utf8')));
+  if (!homes.length) { console.error('bjclauses --selftest: no file constructs .map-scroll — the plant has nothing to break, which is itself a finding.'); return 2; }
+  for (const mapFile of homes) {
+    const before = rf(mapFile, 'utf8');
+    const after = before.replace(/map-scroll/g, 'map-scroll-planted');
+    if (after === before) { console.error(`bjclauses --selftest: the plant edited nothing in ${mapFile} — the plant is broken, not the tool.`); return 2; }
+    wf(mapFile, after);
+  }
+
+  let out = ''; let code = 0;
+  try {
+    out = execFileSync(process.execPath, [join(tree, 'tools/bjclauses.mjs'), tree, '--quick', '--seeds', 'BJORN1', '--shapes', '390x844'],
+      { cwd: tree, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 300000, env: { ...process.env, BJ_OUT: join(base, 'shots') } });
+  } catch (e) { code = e.status ?? -1; out = `${e.stdout || ''}${e.stderr || ''}`; }
+  rmSync(base, { recursive: true, force: true });
+
+  const sawFloor = /NOTHING MEASURED/.test(out);
+  const ok = sawFloor && code === 2;
+  console.log(`bjclauses --selftest — 1 plant: the map's scrollport class renamed in a COPY of the real source.`);
+  console.log(`  ${ok ? 'RED ok ' : 'GREEN  '} NOTHING MEASURED floor   exit ${code} (wanted 2)${sawFloor ? '' : '  — the floor never printed'}`);
+  if (!ok) console.log(`         tail: ${out.trim().split('\n').slice(-4).join(' | ').slice(0, 300)}`);
+  console.log('');
+  if (!ok) { console.log('The floor did not fire. This tool may still exit 0 having read nothing.'); return 1; }
+  console.log('DOOR: `node <planted copy>/tools/bjclauses.mjs <copy>` — a whole run, through serve(),');
+  console.log('  chromium and the real page. The plant is a real edit to a real source file, and the');
+  console.log('  probe fails for the reason a genuinely broken map would fail it.');
+  console.log('NOT PASSED THROUGH: the build (this tool serves the source tree by design), and the');
+  console.log('  PARTIAL floor (exit 1, a cell that threw) is not planted here — it shares the code path');
+  console.log('  the zero floor exercises, and I am saying so rather than counting it twice.');
+  console.log('BOUNDARY: this proves the tool can refuse. It proves nothing about the eight clauses —');
+  console.log('  those are readings, and this file still asserts nothing about the map.');
+  return 0;
 }
 
 function strip(r) { const { edges, ...rest } = r; return { ...rest, edgeStats: edgeStats(edges) }; }
@@ -273,4 +405,5 @@ function report(rows, fitR, fitE, pathR) {
   console.log('-- path mode (BJORN3 walk6): zoom', pathR.zoom, '· H travel', pathR.hx, '· V travel', pathR.vy);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+if (SELFTEST) process.exit(await selftest());
+else main().catch((e) => { console.error(e); process.exit(1); });

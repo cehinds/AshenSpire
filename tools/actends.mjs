@@ -56,13 +56,31 @@
 //   node tools/actends.mjs --mode fog|path       default: the shipping default
 //   node tools/actends.mjs --shots DIR           write each entrance frame as a PNG
 //   node tools/actends.mjs --dist                 inspect dist/AshenSpire.html
+//   node tools/actends.mjs --mutate[=end|title]  REINSTATE the defect; must go red
 //   CHROME=/path/to/chrome node tools/actends.mjs
 //
 // Exit codes
-//   0  both ends wholly on screen at every cell swept
+//   0  both ends wholly on screen at every cell swept · or --mutate CAUGHT
 //   1  a finding — an end of the act the opening frame does not show
 //   2  usage / no browser / a screen that would not mount / NOTHING SWEPT,
 //      which is unknown, and unknown is never a pass (SOP 2's silence guard)
+//      · or --mutate NOT CAUGHT, which makes this file decoration
+//
+// THE KNOWN-BAD, RE-RUNNABLE (development.md, *The instrument rule*, both
+// clauses). The observations above are real and REF-PINNED — under SOP 2's
+// drift clause they are `unknown (drifted)` at any later tree, which Vira's
+// doors audit said out loud (verdict OBSERVED-ONCE). `--mutate` is the
+// re-runnable red: after the app has posed the entrance frame — mount, camera,
+// composition, everything a real run does — the plant removes what the player
+// was owed and the sweep MUST report it. THE DOOR IS THE RENDERED FRAME
+// ITSELF, the same surface every real reading here is taken from; nothing is
+// handed to the verdict code directly, and the tool grades the mutated page
+// with the exact loop that grades a clean one.
+//   end    the act's far end dies in BOTH carriers — the boss node in the map
+//          DOM and the orientation strip's boss cell — so whichever composition
+//          would have carried the claim, the claim is now false
+//   title  the act title dies in both carriers (display:none), the legibility
+//          half of the same sentence
 //
 // BOUNDARY, and it is not small. Headless Chromium, one Linux box, act 1, the
 // entrance frame only — the one position this property is about. It measures
@@ -115,6 +133,40 @@ const SHAPES = arg('--shapes', '390x844,1200x730').split(',').map((s) => {
 });
 const MODE = arg('--mode', null); // null = whatever the build ships as default
 const SHOTS = arg('--shots', null);
+
+// --mutate[=end|title] — the re-runnable known-bad (header block above).
+const mutateArg = args.find((a) => a === '--mutate' || a.startsWith('--mutate='));
+const MUTATE = mutateArg ? (mutateArg.split('=')[1] || 'end') : null;
+const MUTATIONS = {
+  // The far end dies in BOTH carriers. Removal, not display:none, for the map
+  // node: the probe reads the DOM census, and a hidden node with a live rect is
+  // a different (weaker) plant than the one the real defect class is made of.
+  end: `(() => {
+    let n = 0;
+    for (const el of document.querySelectorAll('#map-nodes > .map-node.boss')) { el.remove(); n++; }
+    const strip = document.querySelector('.map-entrance-orientation [data-role="boss"]');
+    if (strip) { strip.remove(); n++; }
+    return n;
+  })()`,
+  title: `(() => {
+    let n = 0;
+    const t = document.querySelector('.map-act-title'); if (t) { t.style.display = 'none'; n++; }
+    const o = document.querySelector('.map-entrance-orientation strong'); if (o) { o.style.display = 'none'; n++; }
+    return n;
+  })()`,
+};
+// What a caught cell must SAY — the finding class each plant reinstates, so a
+// cell that reds for an unrelated reason cannot count as the catch (Sten's
+// 'legal red': a mutation test that passes on a defect it did not cause has
+// proved nothing).
+const MUTATE_CLASS = {
+  end: /end node is not drawn|END is off frame|neither real map nor bounded/,
+  title: /ACT TITLE/,
+};
+if (MUTATE && !MUTATIONS[MUTATE]) {
+  console.error(`actends: --mutate=${MUTATE} is not a known-bad. Known-bads: ${Object.keys(MUTATIONS).join(', ')}`);
+  process.exit(2);
+}
 
 const browser = BROWSERS.find((p) => existsSync(p));
 if (!browser) {
@@ -176,7 +228,7 @@ const PROBE = `(() => {
 })()`;
 
 
-async function cdp(shape, seed) {
+async function cdp(shape, seed, plant = null) {
   const q = new URLSearchParams({ shot: 'map', shotSeed: seed });
   if (MODE) q.set('shotSettings', JSON.stringify({ mapMode: MODE }));
   const url = `${pageBase}?${q}`;
@@ -204,6 +256,16 @@ async function cdp(shape, seed) {
   await send('Emulation.setDeviceMetricsOverride', { width: shape.w, height: shape.h, deviceScaleFactor: shape.d, mobile: shape.mobile });
   await send('Page.navigate', { url });
   await new Promise((r) => setTimeout(r, 1400));
+  if (plant) {
+    // The plant enters HERE — after the app has mounted, framed and composed
+    // the entrance, on the same rendered page the probe below reads. Nothing
+    // is handed to the verdict code; it must find this the way it would find
+    // the real thing.
+    const planted = await send('Runtime.evaluate', { expression: MUTATIONS[plant], returnByValue: true });
+    const n = planted && planted.result && planted.result.value;
+    if (!n) { sock.destroy(); child.kill(); return { error: `--mutate=${plant}: the plant found nothing to break — the page may not have mounted` }; }
+    await new Promise((r) => setTimeout(r, 200));
+  }
   const res = await send('Runtime.evaluate', { expression: PROBE, returnByValue: true });
   let png = null;
   if (SHOTS) {
@@ -269,42 +331,59 @@ function mkSend(sock) {
 const inside = (r, p) => r.x0 >= p.x0 && r.x1 <= p.x1 && r.y0 >= p.y0 && r.y1 <= p.y1;
 const missBy = (r, p) => Math.max(0, p.x0 - r.x0, r.x1 - p.x1, p.y0 - r.y0, r.y1 - p.y1);
 
+// ONE grader, called by the sweep and by --mutate's clean pass. It was inline
+// and the clean pass would have needed a second copy of it — which is the
+// defect this file's author is named for, so it is a function instead.
+function grade(v) {
+  const boss = v.ends.find((e) => e.role === 'boss');
+  const doors = v.ends.filter((e) => e.role === 'door');
+  if (!boss && !doors.length) return { unreadable: true, bad: [] };
+  const realEnds = [boss, ...doors].filter(Boolean);
+  const endSpan = realEnds.length
+    ? Math.max(...realEnds.map((e) => e.y1)) - Math.min(...realEnds.map((e) => e.y0))
+    : Infinity;
+  const portH = v.port.y1 - v.port.y0;
+  const realFits = !!boss && doors.length > 0 && realEnds.every((e) => inside(e, v.port));
+  const titleFits = !!v.title && inside(v.title, v.viewport);
+  const orientationFits = !!v.orientation && !!v.orientation.title && !!v.orientation.start
+    && !!v.orientation.boss && !!v.orientation.rail && v.orientation.inert
+    && [v.orientation.title, v.orientation.start, v.orientation.boss, v.orientation.rail].every((e) => inside(e, v.viewport));
+  const impossible = endSpan > portH;
+  const composition = realFits && titleFits ? 'map' : (impossible && orientationFits ? 'orientation' : 'failed');
+  const bad = [];
+  if (v.orientation && !v.orientation.inert) bad.push('the orientation strip has an interactive or node-shaped descendant');
+  if (!titleFits && !orientationFits) bad.push('the ACT TITLE is not wholly visible');
+  if (!boss) bad.push('the end node is not drawn at all');
+  else if (!inside(boss, v.port) && composition !== 'orientation') bad.push(`the END is off frame by ${missBy(boss, v.port)} px`);
+  for (const d of doors) if (!inside(d, v.port) && composition !== 'orientation') bad.push(`a START door (${d.id}) is off frame by ${missBy(d, v.port)} px`);
+  if (orientationFits && !impossible && !realFits) bad.push(`orientation strip hides a fixable camera miss: real ends need ${endSpan}px inside a ${portH}px port`);
+  if (composition === 'failed' && !bad.length) bad.push('neither real map nor bounded orientation strip carries title + start + boss');
+  return { unreadable: false, bad, composition, endSpan, portH };
+}
+
 const findings = [];
 let swept = 0;
 const rows = [];
+// Under --mutate each cell is swept TWICE — clean, then planted — and the clean
+// pass lands here. See the eligibility block at the foot of the file for why.
+const cleanRows = new Map();
 
 for (const shape of SHAPES) {
   for (const seed of SEEDS) {
-    const { value: v, png } = await cdp(shape, seed);
+    if (MUTATE) {
+      const { value: cv } = await cdp(shape, seed);
+      cleanRows.set(`${shape.label}/${seed}`, cv && !cv.error ? grade(cv, shape, seed).bad : null);
+    }
+    const { value: v, png } = await cdp(shape, seed, MUTATE);
     if (!v || v.error) { findings.push(`${shape.label} ${seed}: ${(v && v.error) || 'no reading'}`); continue; }
     if (SHOTS && png) writeFileSync(join(resolve(SHOTS), `entrance-${shape.label}-${seed}.png`), png);
-    const boss = v.ends.find((e) => e.role === 'boss');
-    const doors = v.ends.filter((e) => e.role === 'door');
     // NOTHING SWEPT IS NOT A PASS. An entrance frame with no boss element and no
     // door element is a screen this tool could not read, not a screen that
     // passed — the same rule mapfit.mjs exits 2 on.
-    if (!boss && !doors.length) { findings.push(`${shape.label} ${seed}: neither end is in the DOM — nothing to measure`); continue; }
+    const g = grade(v);
+    if (g.unreadable) { findings.push(`${shape.label} ${seed}: neither end is in the DOM — nothing to measure`); continue; }
     swept++;
-    const realEnds = [boss, ...doors].filter(Boolean);
-    const endSpan = realEnds.length
-      ? Math.max(...realEnds.map((e) => e.y1)) - Math.min(...realEnds.map((e) => e.y0))
-      : Infinity;
-    const portH = v.port.y1 - v.port.y0;
-    const realFits = !!boss && doors.length > 0 && realEnds.every((e) => inside(e, v.port));
-    const titleFits = !!v.title && inside(v.title, v.viewport);
-    const orientationFits = !!v.orientation && !!v.orientation.title && !!v.orientation.start
-      && !!v.orientation.boss && !!v.orientation.rail && v.orientation.inert
-      && [v.orientation.title, v.orientation.start, v.orientation.boss, v.orientation.rail].every((e) => inside(e, v.viewport));
-    const impossible = endSpan > portH;
-    const composition = realFits && titleFits ? 'map' : (impossible && orientationFits ? 'orientation' : 'failed');
-    const bad = [];
-    if (v.orientation && !v.orientation.inert) bad.push('the orientation strip has an interactive or node-shaped descendant');
-    if (!titleFits && !orientationFits) bad.push('the ACT TITLE is not wholly visible');
-    if (!boss) bad.push('the end node is not drawn at all');
-    else if (!inside(boss, v.port) && composition !== 'orientation') bad.push(`the END is off frame by ${missBy(boss, v.port)} px`);
-    for (const d of doors) if (!inside(d, v.port) && composition !== 'orientation') bad.push(`a START door (${d.id}) is off frame by ${missBy(d, v.port)} px`);
-    if (orientationFits && !impossible && !realFits) bad.push(`orientation strip hides a fixable camera miss: real ends need ${endSpan}px inside a ${portH}px port`);
-    if (composition === 'failed' && !bad.length) bad.push('neither real map nor bounded orientation strip carries title + start + boss');
+    const { bad, composition, endSpan, portH } = g;
     rows.push({ shape: shape.label, seed, mode: v.mode, drawn: v.drawn, composition, endSpan, portH, ok: !bad.length, why: bad.join('; ') });
     if (bad.length) findings.push(`${shape.label} ${seed} [${v.mode}, ${v.drawn} drawn]: ${bad.join('; ')}`);
   }
@@ -321,6 +400,41 @@ for (const r of rows) console.log(`  ${w(r.shape, 11)}${w(r.seed, 11)}${w(r.mode
 if (!swept) {
   console.error('\nactends: NOTHING SWEPT — unknown, never a pass.');
   process.exit(2);
+}
+if (MUTATE) {
+  // ELIGIBILITY, AND IT IS THE HALF I GOT WRONG FIRST (Bjorn, 2026-08-15).
+  // My first version scored a plant CAUGHT if the planted class appeared in the
+  // cell's findings, full stop — and `--mutate=title` came back "CAUGHT 4/4"
+  // while two of those four cells were ALREADY RED for the act title with no
+  // plant at all (1200x730, below). A mutation test that passes on a defect it
+  // did not cause has proved nothing — Sten's legal red, and mapfit.mjs states
+  // the same rule in its own --mutate block, which I had read.
+  //
+  // So a cell may only be CLAIMED by the plant if the cell was GREEN without
+  // it. That is why each cell is swept twice here; the clean pass is the cost of
+  // the claim being true. A run with no eligible cell proves nothing and exits
+  // 2 — never 0, because "no cell could have shown me a red" is unknown.
+  const eligible = rows.filter((r) => { const c = cleanRows.get(`${r.shape}/${r.seed}`); return c && c.length === 0; });
+  const ineligible = rows.filter((r) => !eligible.includes(r));
+  const caughtRows = eligible.filter((r) => !r.ok && MUTATE_CLASS[MUTATE].test(r.why));
+  const caught = eligible.length > 0 && caughtRows.length === eligible.length;
+  console.log(`\n  --MUTATE=${MUTATE}: ${eligible.length
+    ? (caught
+      ? `CAUGHT — ${caughtRows.length}/${eligible.length} eligible cell(s) red with the planted class. The check can go red.`
+      : `NOT CAUGHT — only ${caughtRows.length}/${eligible.length} eligible cell(s) red with the planted class. The known-bad was armed and this tool stayed quiet on the rest, so it is decoration there, not evidence.`)
+    : 'NOTHING PROVED — no cell was green before the plant, so no cell could show a red the plant caused. Unknown, never a pass.'}`);
+  for (const r of ineligible) {
+    const c = cleanRows.get(`${r.shape}/${r.seed}`);
+    console.log(`    not eligible  ${w(r.shape, 11)}${w(r.seed, 11)} ${c === null ? 'the clean pass could not be read' : `already red without the plant: ${c.join('; ')}`}`);
+  }
+  console.log('  DOOR: the plant entered on the RENDERED entrance frame, after mount, camera and');
+  console.log('  composition — the same surface every real reading here is taken from. Nothing was');
+  console.log('  handed to the verdict code; it graded the mutated page with the loop that grades a');
+  console.log('  clean one, and only cells that pass clean may be claimed.');
+  console.log('  (development.md, *The instrument rule*, same-door clause.)');
+  console.log('  NOT PASSED THROUGH: the build step. This drives the source tree by default, so a');
+  console.log('  defect that only exists in dist/AshenSpire.html is outside this door (--dist).');
+  process.exit(caught ? 0 : 2);
 }
 console.log(`\n  ${rows.filter((r) => r.ok).length}/${swept} cells show title + start + boss.`);
 console.log('\nBOUNDARY: headless Chromium on this machine, act 1, the ENTRANCE frame only.');
