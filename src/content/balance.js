@@ -17,6 +17,18 @@ export const balance = {
   // Crimson/Azure are charge pools sharing this fixed capacity. Utility
   // consumables remain inventory items and use flaskSlots independently.
   flaskCapacity: 3,
+  // PROVISIONAL — the first live unlock rung of D19's parenthesis
+  // ("3 total (with future unlocks for larger total amount)", Constantine,
+  // 2026-08-13; C1 — CLOSED: POOL). The seed grows the vessel: Golden Sprout
+  // is the Golden Seed homage, and carrying it grows the pool by one Crimson
+  // charge. One row, amount 1, deliberately modest — the M3 balance pass owns
+  // the number, and a retune is this row, nothing else: the tooltip clause
+  // derives (flaskGrowthClause), the capacity derives (syncFlaskGrowth), the
+  // corpus derives its expectations (tools/flaskgrowth.mjs). Schema and
+  // refusals: model/flaskgrowth.js.
+  flaskGrowth: [
+    { source: 'relic', id: 'goldenSprout', kind: 'hp', amount: 1 },
+  ],
   flaskSlots: 3,
   startingCinders: 0,
   startingDeckSize: 10,

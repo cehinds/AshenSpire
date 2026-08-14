@@ -1199,9 +1199,75 @@ button.ev-choice {
   background-repeat: no-repeat;
   /* No `transition` on the size, deliberately: an eased width keeps painting
      after the finger lifts, so the bar would still be growing during the abort
-     — the one frame where the picture must tell the truth instantly. */
+     — the one frame where the picture must tell the truth instantly.
+     THAT SENTENCE WAS NOT TRUE AND IS MADE TRUE FOUR LINES DOWN. See below. */
   background-size: calc(var(--hold, 0) * 100%) 100%;
 }
+/* ---- TWO THINGS THE RULE ABOVE SAYS AND DID NOT DO (Sunna, 2026-08-08) -----
+   Measured on the shipped bundle at dev = 08e184a and on this branch, with a
+   real mouse at 1200x800 and CDP touch at 390x844. Both are about the same
+   sentence — a comment describing a mechanism that is not running — and this
+   rule has now been bitten by that exact thing twice (Bjorn's `> *` line was
+   the first, and it is confessed two paragraphs up).
+
+   1. THE FILL DISAPPEARED UNDER A HOVERING POINTER — a regression #133's
+      rename introduced and the #142 reconcile carried onto dev, where it
+      shipped until this rule. `base.css` carries a bare
+      `button:hover { background: #2e2517; }` — specificity (0,1,1), and
+      `background` is a SHORTHAND, so it resets `background-image` to `none`.
+      Before the rename the selector was `button.ev-choice.ev-hold` (0,2,1)
+      and won. Renaming it to `.beat-hold` (0,1,0) — which is the right idea, a
+      rule that names a screen can only dress that screen — dropped it UNDER
+      the hover rule. Measured, desktop mouse, `?shot=event` and `?shot=combat`
+      (first at 08e184a on #133's bundle; re-observed at dev = 86564e6 by
+      check 6b before this rule landed):
+
+        pre-rename, hovered:  background-image = linear-gradient(...)  fill draws
+        dev 86564e6, hovered: background-image = NONE, size = auto
+        ...with --hold climbing to 0.491 under the pointer.
+
+      YOU CANNOT HOLD A CONTROL WITHOUT BEING OVER IT. So the whole fill — the
+      only feedback the hold has, and the ONLY channel a muted player has — was
+      not drawn at all for the entire press, on the event bars and on End Turn.
+      Invisible to every check on the branch: they read `data-hold-progress`,
+      which was perfect throughout, and the one fill check reads
+      `background-image` on an element nothing is hovering. That is the gap
+      holdconfirm.mjs names in its own boundary (d2 — "construction, not
+      pixels"), and it is where this went.
+
+   2. THE FILL WAS EASED, ON EVERY HELD `<button>`, INCLUDING ON DEV TODAY.
+      `base.css` also carries a bare `button { transition: background 120ms,
+      transform 120ms; }` — same shorthand, so `background-size` transitions.
+      Measured inside a rAF loop on the SHIPPED bundle, event bar, 600 ms hold
+      aborted at ~300 ms:
+
+        --hold 0.46 -> painted 32.5%     (the picture runs ~13 points behind)
+        FINGER LIFTS, --hold snaps to 0
+        next painted frame: 35.1%        <- IT GREW
+
+      The bar is still filling on the one frame the comment above says must tell
+      the truth instantly, then eases back over ~130 ms. An abort looks briefly
+      like progress. This one predates the rename entirely — and dev's
+      unconditional End Turn beat means the eased rule sits under a control
+      pressed ~91 times in a completed run (measured, tools/runsim.mjs,
+      4 winning runs).
+
+   WHY THE SELECTOR LIST AND NOT `!important`: the hover COLOUR is still
+   base.css's to set and should stay; only the image and its size are ours.
+   `.beat-hold:hover` is (0,2,0) and takes them back without touching anything
+   else. `:where()` would be worse than useless here — it weighs zero. */
+.beat-hold, .beat-hold:hover, .beat-hold:focus, .beat-hold:active {
+  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+  background-repeat: no-repeat;
+  background-size: calc(var(--hold, 0) * 100%) 100%;
+}
+/* `background` LEAVES THE TRANSITION LIST, and nothing else does. Naming the
+   three properties a held control may still ease keeps the border going gold
+   and the press squashing on their own timings (durations cycle from whatever
+   the element already declared), while the fill is painted the frame it is
+   computed. A blanket `transition: none` would have been one word shorter and
+   would have silently flattened affordances this rule has no business touching. */
+.beat-hold { transition-property: border-color, color, transform; }
 .beat-hold[data-hold='holding'] { border-color: var(--gold); }
 
 /* `--accent-rgb` is the accent theme's own channel triple (base.css:24), so the
