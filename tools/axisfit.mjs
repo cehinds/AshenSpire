@@ -93,13 +93,24 @@
 //       went blind. Both need a person. An excuse nobody can be forced to
 //       revisit is how a suite goes green over a bug.
 //
-// ONE EXEMPTION SHIPS: the combat hand under PAGING — mode-scoped, rendered
-// conditionally (combat.js reads <html data-hand-layout> and writes the
-// attributes only under 'paging'), his D19 word as its reason; the mode axis
-// below is what keeps it honest. From 2026-08-08 to 2026-08-14 this paragraph
-// opened "ZERO EXEMPTIONS SHIP" and named `.hand` as receiving none — that
-// refusal stood on D17 msg 3's word and was right; D19's later word is what
-// opened it (the history is spelled out under THE MODE AXIS below). The act
+// TWO EXEMPTIONS SHIP, both built in ONE home (src/ui/handAxis.js — neither
+// renderer types the string), both on the hand strip, and they are DIFFERENT
+// because the renderers' truths differ:
+//   · the combat hand under PAGING — mode-scoped, rendered conditionally
+//     (combat.js reads <html data-hand-layout>, attributes only under
+//     'paging'), his D19 word as its reason; the mode axis below keeps it
+//     honest (A5).
+//   · the coop hand, ALWAYS — coop.js renders its own .hand and implements
+//     only the paging strip (no overlap arm, no reader of the word), so its
+//     declaration is UNSCOPED: true in every mode, held honest by sweeping
+//     coop under both modes (A4 is its wake if coop ever grows an overlap
+//     arm). Added 2026-08-14 after Bjorn's refused gate found the coop hand
+//     travelling 211px undeclared — combat's #169 exemption never travelled
+//     to the second renderer.
+// From 2026-08-08 to 2026-08-14 this paragraph opened "ZERO EXEMPTIONS SHIP"
+// and named `.hand` as receiving none — that refusal stood on D17 msg 3's word
+// and was right; D19's later word is what opened it (the history is spelled
+// out under THE MODE AXIS below). The act
 // map's old declaration ("the act map is a horizontal route", 1c227ec) stays
 // DELETED, not moved: D17 message 4 falsified its reason in Constantine's own
 // words ("not require any scrollign left or right"), and the camera owns the
@@ -460,10 +471,11 @@ const SCAN = `(() => {
     // comment above judge() warns about.
     // AND THAT INCLUDES A HIDDEN ONE, deliberately: a declaration on a container
     // this surface no longer renders is a reason that died by a different route,
-    // and it reaches A4 as a ratchet failure rather than disappearing. One
-    // exemption ships today — the paging hand (combat.js) — so this arm is
-    // live, not latent: it is what forces a person back if paging ever stops
-    // travelling or the hand leaves a surface with its declaration behind.
+    // and it reaches A4 as a ratchet failure rather than disappearing. Two
+    // exemptions ship today — the paging hand (combat.js) and the coop hand
+    // (coop.js), both from src/ui/handAxis.js — so this arm is live, not
+    // latent: it is what forces a person back if a strip ever stops
+    // travelling or a hand leaves a surface with its declaration behind.
     const declared = e.hasAttribute('data-scroll-axis');
     const hx = e.scrollWidth - e.clientWidth, hy = e.scrollHeight - e.clientHeight;
     if (!declared) {
