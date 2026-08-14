@@ -83,7 +83,7 @@
 // that no longer exists.
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -94,6 +94,11 @@ const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
 const ROOT = resolve(argOf('--root') || resolve(TOOLS, '..'));
 const only = argOf('--only');
+// --shots DIR writes one 390x844 PNG per mode, taken from the REAL fight this
+// run drove — not a ?shot= pose. The picture and the assertions are then the
+// same frame, so a reader cannot be shown one screen while another was
+// measured (the contrast-audit lesson, main.js's shotSettings header).
+const shotsDir = argOf('--shots');
 
 const BROWSERS = [process.env.CHROME, '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
   '/usr/bin/google-chrome', '/usr/bin/chromium'].filter(Boolean);
@@ -363,6 +368,18 @@ async function main() {
     const afterHand = await ev(host, `document.querySelectorAll('.combat.coop .hand .card').length`);
     ok(afterHand === beforeHand - 1, `the played card left the hand: ${beforeHand} → ${afterHand} (LIVENESS ONLY — a local mutation passes this too)`);
 
+    // The picture, of the fight that was just measured. Taken BEFORE the tabs
+    // close and AFTER the play, so what a reader sees is the state the
+    // assertions above ruled on.
+    if (shotsDir) {
+      mkdirSync(shotsDir, { recursive: true });
+      await cdp.send('Page.bringToFront', {}, host.sessionId);
+      await wait(500);
+      const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, host.sessionId);
+      const name = `coop-hand-${mode}-${W}x${H}.png`;
+      writeFileSync(join(shotsDir, name), Buffer.from(data, 'base64'));
+      console.log(`    shot ${name} — the real two-client fight, ${mode}`);
+    }
     await cdp.send('Target.closeTarget', { targetId: host.targetId });
     await cdp.send('Target.closeTarget', { targetId: guest.targetId });
     s.server.close();
