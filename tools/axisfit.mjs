@@ -93,14 +93,58 @@
 //       went blind. Both need a person. An excuse nobody can be forced to
 //       revisit is how a suite goes green over a bug.
 //
-// ZERO EXEMPTIONS SHIP. The act map carried the one scoped declaration ("the
-// act map is a horizontal route", 1c227ec) and it is DELETED, not moved: D17
-// message 4 falsified its reason in Constantine's own words ("not require any
-// scrollign left or right"), and the camera now owns the horizontal axis
-// through the viewBox (mapboard.js), so the map's travel is 0 by construction
-// and A4 would correctly fail the declaration if it ever came back without
-// travel under it. Other scrollers remain undecided by design; `.hand`, for
-// example, receives no exemption from this instrument.
+// ONE EXEMPTION SHIPS: the combat hand under PAGING — mode-scoped, rendered
+// conditionally (combat.js reads <html data-hand-layout> and writes the
+// attributes only under 'paging'), his D19 word as its reason; the mode axis
+// below is what keeps it honest. From 2026-08-08 to 2026-08-14 this paragraph
+// opened "ZERO EXEMPTIONS SHIP" and named `.hand` as receiving none — that
+// refusal stood on D17 msg 3's word and was right; D19's later word is what
+// opened it (the history is spelled out under THE MODE AXIS below). The act
+// map's old declaration ("the act map is a horizontal route", 1c227ec) stays
+// DELETED, not moved: D17 message 4 falsified its reason in Constantine's own
+// words ("not require any scrollign left or right"), and the camera owns the
+// horizontal axis through the viewBox (mapboard.js), so the map's travel is 0
+// by construction and A4 would correctly fail that declaration if it ever
+// came back without travel under it. Every other scroller remains undecided
+// by design.
+//
+// ---------------------------------------------------------------------------
+// THE MODE AXIS — Vega, 2026-08-14, on Marina's ruling, and the words are his.
+//
+// The hand wears two layouts behind one derived word (C2, D19):
+// balance.ui.handLayout -> <html data-hand-layout>, 'paging' | 'overlap'. In
+// PAGING the strip scrolls sideways BY DESIGN — his word, D19, 2026-08-13,
+// verbatim: "overlap and paging". In OVERLAP the whole hand lays inside the
+// container and horizontal travel is ZERO — asserted, never excused.
+//
+// So an exemption on the hand is legal ONLY under paging, and it says so
+// itself: a fourth attribute, data-scroll-axis-mode="<mode>", scopes the
+// declaration to the mode that designed the run. The check compares it to the
+// page's actual <html data-hand-layout>:
+//
+//   A5  declaration scoped to a mode the page does not render -> FAIL. The
+//       exemption may never outlive its mode: a paging declaration sitting in
+//       an overlap DOM is either a conditional render that broke or a hand-
+//       typed copy, and both are the trap this axis exists to refuse.
+//   A5b scoped declaration on a page with no data-hand-layout    -> FAIL (the
+//       scope names a word the page no longer speaks; unverifiable is not
+//       excused).
+//
+// And the sweep itself walks BOTH modes through the settings door
+// (?shotSettings={"handLayout":...}) on the surface that renders the hand —
+// the modes DERIVED from balance.ui.handLayoutModes, the app's own closed
+// set, never typed here. Overlap cells assert 0 like any undeclared
+// container; paging cells accept the declaration under A3/A4 as ever.
+//
+// HISTORY, so nobody reads the exemption as convenience: D17 message 3
+// (2026-08-08) is Constantine ANNOYED at this exact scroller — "I'm annoyed
+// that in mobile, that the default hand size requires me to scroll left and
+// right" — and on that word this file refused `.hand` an exemption by name
+// (the paragraph above carried that refusal from 2026-08-08). D19
+// (2026-08-13) is his later
+// word — "overlap and paging" — that makes paging a DESIGNED pager and the
+// declaration writable, scoped to that mode alone. The refusal was right when
+// it was written and the exemption is right now; both cite him, not us.
 //
 // ---------------------------------------------------------------------------
 // THE FLOORS, AND THE ONE THAT WAS MISSING — Vira, 2026-08-08, checking gate.
@@ -208,6 +252,22 @@ function appTextSizes() {
   const m = /textSize:\s*\{([^}]*)\}/.exec(src);
   return m ? [...m[1].matchAll(/([A-Za-z]+)\s*:/g)].map((x) => x[1]) : [];
 }
+
+// THE MODE AXIS IS THE APP'S CLOSED SET, DERIVED — balance.ui.handLayoutModes,
+// the same home main.js guards a stored setting against. Typed here it would be
+// a second copy that survives the feature's death; derived, it dies loudly with
+// its home (the zero-modes refusal in main()).
+function appHandModes() {
+  const src = readFileSync(resolve(ROOT, 'src', 'content', 'balance.js'), 'utf8');
+  const m = /handLayoutModes:\s*\[([^\]]*)\]/.exec(src);
+  return m ? [...m[1].matchAll(/'([a-z]+)'/g)].map((x) => x[1]) : [];
+}
+
+// The surface the mode word arranges — TYPED, one entry, printed in the
+// boundary. The hand renders on the combat board (src/ui/screens/combat.js is
+// data-hand-layout's only reader); every other surface sweeps at the boot
+// default because the word changes nothing there.
+const MODE_SURFACE = 'combat';
 
 const BROWSERS = [
   process.env.CHROME,
@@ -367,6 +427,7 @@ const SCAN = `(() => {
       rendered: e.getClientRects().length > 0,
       axis: e.getAttribute('data-scroll-axis'),
       why: e.getAttribute('data-scroll-axis-why'),
+      axisMode: e.getAttribute('data-scroll-axis-mode'),
     };
   };
   const containers = [];
@@ -388,9 +449,10 @@ const SCAN = `(() => {
     // comment above judge() warns about.
     // AND THAT INCLUDES A HIDDEN ONE, deliberately: a declaration on a container
     // this surface no longer renders is a reason that died by a different route,
-    // and it reaches A4 as a ratchet failure rather than disappearing. Zero
-    // exemptions ship today, so this is latent — named here so the first seat to
-    // declare one is not surprised by it.
+    // and it reaches A4 as a ratchet failure rather than disappearing. One
+    // exemption ships today — the paging hand (combat.js) — so this arm is
+    // live, not latent: it is what forces a person back if paging ever stops
+    // travelling or the hand leaves a surface with its declaration behind.
     const declared = e.hasAttribute('data-scroll-axis');
     const hx = e.scrollWidth - e.clientWidth, hy = e.scrollHeight - e.clientHeight;
     if (!declared) {
@@ -403,6 +465,7 @@ const SCAN = `(() => {
   }
   return {
     layout: de.getAttribute('data-layout'),
+    mode: de.getAttribute('data-hand-layout'),
     zoom: parseFloat(getComputedStyle(de).getPropertyValue('--ui-zoom')) || 1,
     htmlFont: getComputedStyle(de).fontSize,
     vw: innerWidth, vh: innerHeight,
@@ -465,7 +528,7 @@ function launchChrome(browser, userDataDir) {
 // One container, one verdict. Pulled out of the loop so --selftest exercises the
 // SAME function the run does, rather than a re-statement of it that could drift
 // green while this one is red.
-export function judge(c) {
+export function judge(c, pageMode) {
   const travels = c.hx > 0;
   const declared = c.axis != null;
   if (!declared) {
@@ -476,13 +539,28 @@ export function judge(c) {
   if (c.axis !== 'x') {
     return { verdict: 'FAIL', why: `data-scroll-axis="${c.axis}" is not a word this check knows — the only exemption is "x"` };
   }
+  // A5 — a mode-scoped declaration is checked BEFORE its reason: an exemption
+  // sitting in the wrong mode is wrong whatever its prose says. The scope is
+  // the declaration's own claim ("I exist only under this mode"); the page's
+  // <html data-hand-layout> is the fact it is checked against.
+  if (c.axisMode != null) {
+    if (!String(c.axisMode).trim()) {
+      return { verdict: 'FAIL', why: 'declares data-scroll-axis-mode with an empty value — a scope that names no mode scopes nothing' };
+    }
+    if (pageMode == null) {
+      return { verdict: 'FAIL', why: `scoped to mode "${c.axisMode}" on a page that renders no <html data-hand-layout> — an unverifiable scope does not hold` };
+    }
+    if (c.axisMode !== pageMode) {
+      return { verdict: 'FAIL', why: `MODE — the exemption outlived its mode: declared for '${c.axisMode}' while the page renders '${pageMode}'. The declaration is a conditional render (combat.js) and must never appear under the other word — D17 msg 3 refused the hand an exemption; D19 grants it to paging alone.` };
+    }
+  }
   if (!c.why || !String(c.why).trim()) {
     return { verdict: 'FAIL', why: 'declares data-scroll-axis="x" with no data-scroll-axis-why — an exemption with no reason is a mute button' };
   }
   if (!travels) {
     return { verdict: 'FAIL', why: `RATCHET — declares a horizontal run ("${c.why}") and has ZERO horizontal travel. The reason died, or this check went blind. Both need a person.` };
   }
-  return { verdict: 'EXCUSED', why: `${Math.round(c.hx)}px, exempt under Law 5 clause 2: ${c.why}` };
+  return { verdict: 'EXCUSED', why: `${Math.round(c.hx)}px, exempt under Law 5 clause 2${c.axisMode ? ` (mode-scoped: ${c.axisMode})` : ''}: ${c.why}` };
 }
 
 // --------------------------------------------------------------- the floors
@@ -558,6 +636,19 @@ async function main() {
   console.log(`  ${derived.length} state(s): ${surfaces.length} swept, ${excluded.length} excluded by name`);
   for (const s of excluded) console.log(`  EXCLUDED  ?shot=${s} — ${EXCLUDED_STATES[s] || 'NO REASON GIVEN'}`);
   console.log(`  ${surfaces.join(', ')}`);
+
+  // ---- the mode axis, derived from its one home, refused loudly at zero ----
+  const handModes = appHandModes();
+  if (!handModes.length) {
+    console.error('\naxisfit: derived ZERO hand-layout modes from src/content/balance.js (ui.handLayoutModes).');
+    console.error('That closed set is the mode axis of the combat cells; unread, the sweep would silently');
+    console.error('collapse to one mode and a green would cover half the hand. If the word left the app,');
+    console.error('delete the mode axis here in the same act — loudly, never by a silent shrink.');
+    process.exit(1);
+  }
+  console.log(`\nMODE AXIS — balance.ui.handLayoutModes, DERIVED: ${handModes.join(', ')}`);
+  console.log(`  '?shot=${MODE_SURFACE}' is swept once per mode through the settings door; every other`);
+  console.log(`  surface renders the boot default — data-hand-layout's one reader is the combat hand.`);
   console.log(`\nPOPULATION 2 — driven overlays · TYPED, ${DRIVEN.length} entries, the weakest edge here`);
   for (const d of DRIVEN) console.log(`  ${d.name.padEnd(18)} ${d.why}`);
 
@@ -608,6 +699,9 @@ async function main() {
   // ran. Cost me one probe run tonight; named here so it costs nobody else one.
   const settingsQ = textSize ? `&shotSettings=${encodeURIComponent(JSON.stringify({ textSize }))}` : '';
   const settingsQ1 = textSize ? `?shotSettings=${encodeURIComponent(JSON.stringify({ textSize }))}` : '';
+  // The mode cell's door: the SAME shotSettings channel, carrying the mode
+  // beside any text size, so a --text run sweeps the mode axis in that cell too.
+  const modeQ = (mode) => `&shotSettings=${encodeURIComponent(JSON.stringify({ ...(textSize ? { textSize } : {}), handLayout: mode }))}`;
 
   if (SELFTEST) { await selftest(evalIn, cdp, S, base, settingsQ); return done(fails.length ? 1 : 0); }
 
@@ -641,15 +735,23 @@ async function main() {
     await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: vp.mobile, maxTouchPoints: 5 }, S);
 
     const jobs = [
-      ...surfaces.map((s) => ({ label: s, url: `${base}?shot=${s}${settingsQ}`, driver: null })),
-      ...DRIVEN.map((d) => ({ label: d.name, url: `${base}${d.from ? d.from + settingsQ : settingsQ1}`, driver: d.open })),
+      ...surfaces.flatMap((s) => (s === MODE_SURFACE
+        ? handModes.map((m) => ({ label: `${s}[${m}]`, base: s, mode: m, url: `${base}?shot=${s}${modeQ(m)}`, driver: null }))
+        : [{ label: s, base: s, url: `${base}?shot=${s}${settingsQ}`, driver: null }])),
+      ...DRIVEN.map((d) => ({ label: d.name, base: d.name, url: `${base}${d.from ? d.from + settingsQ : settingsQ1}`, driver: d.open })),
     ];
     let shapeReported = false;
     for (const job of jobs) {
-      if (only && only !== job.label) continue;
-      if (only === job.label) matchedOnly = true;
+      if (only && only !== job.label && only !== job.base) continue;
+      matchedOnly = true;
       const r = await measure(`${shapeName} ${job.label}`, job.url, job.driver);
       if (!r) continue;
+      // A mode cell whose door failed is `unknown`, not a measurement of the
+      // default — the same contract as a driven overlay that never opened.
+      if (job.mode && r.mode !== job.mode) {
+        ok(false, `${shapeName} ${job.label}: asked mode '${job.mode}' through the settings door, the page rendered '${r.mode}' — the door failed, cell unmeasured`);
+        continue;
+      }
       const narrow = r.layout === 'narrow';
       if (!shapeReported) {
         console.log(`    data-layout=${r.layout} · zoom ${r.zoom} · html font ${r.htmlFont} · viewport ${r.vw}x${r.vh}` +
@@ -663,7 +765,7 @@ async function main() {
       const hs = r.containers.filter((c) => c.hx > 0);
       if (!r.containers.length) { console.log(`    ${job.label.padEnd(17)} no scroll container`); continue; }
       for (const c of r.containers) {
-        const j = judge(c);
+        const j = judge(c, r.mode);
         // THE SHAPE IS PART OF THE ADDRESS. Without it a finding names a surface
         // and a selector and not the cell it was found in, and the closing digest
         // is a list of refusals nobody can navigate to — a counted refusal is not
@@ -732,7 +834,12 @@ async function main() {
       no seed, walk depth or column count can widen it — 0px on 72 cells
       (12 seeds x entrance/walk3/walk6 x 390x844 + 320x640) at the change that
       landed it. (Rune, 2026-08-14, replacing Vira's 2026-08-08 boundary note,
-      which described the ink-grow camera this change removed.)`);
+      which described the ink-grow camera this change removed.)
+  (g) THE MODE AXIS IS ONE SURFACE. balance.ui.handLayoutModes (${handModes.join('/')}) is
+      swept both ways on '?shot=${MODE_SURFACE}' alone — data-hand-layout's one reader
+      is the combat hand. A second reader of the word on another surface is NOT
+      swept in its other mode until MODE_SURFACE grows with it, and the driven
+      overlays open OVER combat at the boot default only.`);
 
   if (notes.length) {
     console.log(`\n  EXEMPT — ${notes.length} container(s) declared themselves a horizontal run under Law 5 clause 2.`);
@@ -882,7 +989,54 @@ async function selftest(evalIn, cdp, S, base, settingsQ) {
   expect('P8  balance.ui.textSize is readable and closed',
     known.includes('XL') && known.includes('M') && !known.includes('xl') ? 'CLOSED' : `READ ${known.join('|') || 'NOTHING'}`, 'CLOSED');
 
-  console.log(`\n  ${fails.length ? `SELFTEST FAIL — ${fails.length} mechanism(s) did not behave` : 'SELFTEST PASS — 15 mechanisms, 3 green and 12 red, each observed'}`);
+  // ---------------------------------------------------------------------------
+  // 14-18 — THE MODE AXIS (Vega, 2026-08-14; the ruling is Marina's, the words
+  // his — D17 msg 3 refused the hand an exemption, D19 grants it to paging,
+  // scoped). Both plants enter BY THE REAL DOOR: the mode through ?shotSettings
+  // into the app's own resolution, the container collected by SCAN off the
+  // rendered combat DOM, judge() ruling on what SCAN handed it — nothing
+  // synthetic between the door and the verdict.
+  const handFrom = (scan) => scan.containers.find((c) => c.path.split(' > ').pop().split('.').includes('hand'));
+  const DECL = `(() => { const e = document.querySelector('.hand'); if (!e) throw new Error('no .hand');
+    e.setAttribute('data-scroll-axis', 'x');
+    e.setAttribute('data-scroll-axis-mode', 'paging');
+    e.setAttribute('data-scroll-axis-why', 'planted: the pager strip is the mode (selftest)');
+    return true; })()`;
+  const UNDECL = `(() => { const e = document.querySelector('.hand'); if (!e) throw new Error('no .hand');
+    e.removeAttribute('data-scroll-axis'); e.removeAttribute('data-scroll-axis-mode');
+    e.removeAttribute('data-scroll-axis-why'); return true; })()`;
+
+  // 14 — the overlap door, then THE FIRST PLANT: the declaration typed
+  // unconditionally, so it sits in an overlap DOM. The sweep must refuse it
+  // whatever the container measures — the exemption may never outlive its mode.
+  await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${encodeURIComponent('{"handLayout":"overlap"}')}` }, S);
+  await wait(1600);
+  await evalIn(DECL);
+  const scanO = await evalIn(SCAN);
+  expect('M0  the settings door renders overlap  (must go GREEN)', scanO.mode, 'overlap');
+  const handO = handFrom(scanO);
+  expect('M1  declaration planted unconditionally, judged under overlap',
+    handO ? judge(handO, scanO.mode).verdict : 'NEVER COLLECTED', 'FAIL');
+
+  // 15-16 — the paging door: the scoped declaration over the strip's real
+  // travel is the GREEN half; THE SECOND PLANT removes it and the same travel
+  // goes red undeclared (A1) — the ratchet lane, from the other side.
+  await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${encodeURIComponent('{"handLayout":"paging"}')}` }, S);
+  await wait(1600);
+  await evalIn(DECL);
+  let scanP = await evalIn(SCAN);
+  expect('M0  the settings door renders paging  (must go GREEN)', scanP.mode, 'paging');
+  let handP = handFrom(scanP);
+  console.log(`    (.hand under paging: H ${handP ? Math.round(handP.hx) : '?'}px at 390x844)`);
+  expect('M2  scoped declaration + the strip\'s own travel  (must go GREEN)',
+    handP ? judge(handP, scanP.mode).verdict : 'NEVER COLLECTED', 'EXCUSED');
+  await evalIn(UNDECL);
+  scanP = await evalIn(SCAN);
+  handP = handFrom(scanP);
+  expect('M3  declaration removed under paging — the strip travels undeclared',
+    handP ? judge(handP, scanP.mode).verdict : 'NEVER COLLECTED', 'FAIL');
+
+  console.log(`\n  ${fails.length ? `SELFTEST FAIL — ${fails.length} mechanism(s) did not behave` : 'SELFTEST PASS — 20 mechanisms, 6 green and 14 red, each observed'}`);
   for (const f of fails) console.log(`    - ${f}`);
 }
 
