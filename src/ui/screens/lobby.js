@@ -13,6 +13,7 @@ import { esc, attachTooltip } from '../components/tooltip.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { startingKitViews } from '../../model/startingKits.js';
+import { createRunState } from '../../model/state.js';
 
 const NAME_KEY = 'sote_lan_name';
 const TINT_KEY = 'sote_lan_tint';
@@ -208,7 +209,14 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       const el = document.createElement('div');
       el.className = `class-pick cr-class${cls.id === state.classId ? ' chosen' : ''}`;
       el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><h3>${esc(cls.name)}</h3>`;
-      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${cls.maxHp} · ${registries.balance.startingDeckSize} cards`);
+      // Derived HP from the run's own home (createRunState: class base +
+      // attribute tiers + baseline kit), never bare cls.maxHp — a component
+      // posing as a total (#175 rider; same fix as the customize chip and the
+      // Custom Climb chip). Baseline kit on purpose: this tooltip is the
+      // class's advert to a player who hasn't picked yet, and profileMeta is
+      // inert with no requested kit — meta passed anyway so the read stays
+      // honest if a kit ever rides this call.
+      attachTooltip(el, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${createRunState({ seed: 0, classId: cls.id, registries, profileMeta: meta }).maxHp} · ${registries.balance.startingDeckSize} cards`);
       el.addEventListener('click', () => {
         state.classId = cls.id;
         state.startingKitId = baselineKit(cls.id);
