@@ -461,6 +461,19 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .hand .card.selected { border-color: var(--parchment); }
 
+/* The hold-to-inspect copy (armInspect, components/holdconfirm.js). It lives
+   on <body>, not in the hand — geometry (position, size, scale) is written
+   inline in LOCAL px by the one conversion home (fx.js), so nothing here may
+   restate it; this block is only the surface. `pointer-events: none` is also
+   set inline — Law 4: the copy may cover pixels, never a tap floor, and it
+   must vanish on release leaving the hand byte-for-byte untouched. Appears at
+   full size, no transition: the expansion is STATE, not an animation, so it
+   survives reduced-motion the same way the hold fill does (rule 5). */
+.card-inspect {
+  border-color: var(--parchment);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.85);
+}
+
 .energy-orb {
   position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
   background: #1c1610; border: 3px solid var(--gold);

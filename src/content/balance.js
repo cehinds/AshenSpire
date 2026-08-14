@@ -297,6 +297,34 @@ export const balance = {
     holdBeat: {
       at: [0, 0.42, 0.78],
     },
+    // HOLD TO INSPECT (the hand). THE ONE HOME OF THE DURATION.
+    //
+    // Constantine, 2026-08-08: press-and-hold a card and it "expands" and comes
+    // "in front". This is the gesture half of that ask; the layout half (how
+    // the hand itself is arranged) is HELD on C2 and no number for it lives
+    // here or anywhere.
+    //
+    // WHY THIS IS NOT holdConfirm's DIAL, though both are a stationary press
+    // with a timer. Two different jobs (Law 4's shape, applied to time): the
+    // confirm hold is a SAFETY step before an irreversible act — its length is
+    // a protection preference, and `off` means "one tap commits". The inspect
+    // hold is how a player READS a card — turning the safety dial off must not
+    // take reading away, and a hand that needs a longer confirm does not
+    // thereby need slower reading. One dial answering both would break the
+    // weaker job the day anyone tunes the stronger one.
+    //
+    // 400 ms: the bottom of the long-press convention players already know
+    // (Android's own threshold is ~400-500), BELOW the confirm's 600 default
+    // because reading is cheaper than committing and fires far more often —
+    // and above any tap: the slow edge of a deliberate tap is ~250 ms, and a
+    // stationary press that outlives 400 was not going to become one. The
+    // known cost, stated rather than hidden: a tap slower than this becomes an
+    // inspect, whose release then does nothing — the card visibly expanding IS
+    // the feedback that says why. `ms: 0` is the off position: no inspect,
+    // pre-gesture behaviour byte for byte.
+    inspectHold: {
+      ms: 400,
+    },
     // Sprite display tiers an enemy def's `size` selects. px-magnitude; the
     // renderer emits them as rem (÷10).
     spriteTiers: {
