@@ -24,6 +24,14 @@
 //   sites, of which `executeRunEffects` op `addRelic` is the engine one.
 //   Behaviour plants enter there, through `createRegistries(bundle)`.
 //
+//   DOOR 3 — THE SAVE. Every save enters play through serializeRun →
+//   deserializeRun → createSaveManager.loadRun (engine/save.js), and since
+//   run schema v3 that door enforces the CAPACITY LEDGER: capacity ===
+//   base + grown.hp + grown.mana + granted (validateRunShape). The ledger
+//   plants below build their runs through the real op doors (a shipped
+//   keepsake's own effects, the addRelic opcode) and push them through the
+//   real save manager on a storage shim.
+//
 //   THE HONEST CEILING, named: relic LOSS has no real door (no opcode removes
 //   a relic), and talisman swap's real door is the equipment screen, which is
 //   a browser surface this headless file cannot walk. Those two plants mutate
@@ -38,8 +46,10 @@
 import { contentBundle } from '../src/content/index.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState, initializeRunFlaskCharges, validateRunShape } from '../src/model/state.js';
+import { createRunState, initializeRunFlaskCharges, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
+import { createSaveManager } from '../src/engine/save.js';
+import { KEEPSAKES } from '../src/content/keepsakes.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { flaskGrowthTable, flaskGrowthPlan, flaskGrowthClause, syncFlaskGrowth } from '../src/model/flaskgrowth.js';
 import { FLASK_GROWTH_SOURCES } from '../src/model/schemas.js';
@@ -61,6 +71,26 @@ function realBundleCopy() {
 
 function freshRun(registries, classId = 'reaver') {
   return createRunState({ seed: 1, classId, registries });
+}
+
+// The save manager's storage, in memory — the same shim shape the suite's
+// save tests use, so door 3 walks the REAL save manager, not a stand-in.
+function memStorage() {
+  const mem = new Map();
+  return {
+    getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+    setItem: (k, v) => mem.set(k, String(v)),
+    removeItem: (k) => mem.delete(k),
+    key: (i) => [...mem.keys()][i] || null,
+    get length() { return mem.size; },
+  };
+}
+
+// The shipped moment door: the first keepsake whose authored effects carry the
+// addFlaskCapacity op — DERIVED from content, never named by id, so a keepsake
+// rename retunes this helper for free. Returns null if none ships.
+function shippedMomentGrant() {
+  return KEEPSAKES.find((k) => (k.effects || []).some((e) => e && e.op === 'addFlaskCapacity')) || null;
 }
 
 // A fictional relic + a growth row for it, entered as DATA into a real-bundle
@@ -327,6 +357,32 @@ function selftest() {
     return { ok: true, saw: '' };
   });
 
+  behave('REGISTRIES, not statics: relicText follows the registries it is handed, and falls back to the shipped statics without one', () => {
+    // The trap (my 2026-08-14 log): relicText derived the growth clause from
+    // the STATIC balance/flasks imports while the seam derives from
+    // registries. One object today — createRegistries freezes a copy of the
+    // one shipped bundle — so nothing failed; the day any mode forks balance
+    // per-run, the tooltip would describe the shipped row while the seam
+    // applied the forked one, both readings plausible, no red anywhere.
+    // OBSERVED RED 2026-08-14 before the wire existed: this plant, run
+    // against the unwired tree, saw the clause hold the shipped +1 while the
+    // forked registries said +5.
+    const b = realBundleCopy();
+    const shipped = (Array.isArray(b.balance.flaskGrowth) ? b.balance.flaskGrowth : []).filter((r) => r && r.source === 'relic');
+    if (shipped.length === 0) return { ok: false, saw: 'zero shipped relic rows — see the live falsifier above' };
+    const tuned = shipped[0].amount + 4;
+    shipped[0].amount = tuned;
+    const reg = createRegistries(b);
+    const def = reg.relics.get(shipped[0].id);
+    const follows = relicText(def, reg).includes(`+${tuned} max`);
+    // The fallback edge: no registries → the shipped statics, unchanged — the
+    // non-run surfaces keep reading the one shipped bundle.
+    const shippedAmount = flaskGrowthTable(createRegistries(contentBundle).balance)
+      .find((r) => r && r.source === 'relic' && r.id === shipped[0].id).amount;
+    const fallsBack = relicText(def).includes(`+${shippedAmount} max`);
+    return { ok: follows && fallsBack, saw: `follows-fork ${follows} (wanted +${tuned}), falls-back ${fallsBack} — '${relicText(def, reg)}'` };
+  });
+
   behave('a questEvent row on a clean event validates, and the plan says NOT BINDING by name', () => {
     const b = realBundleCopy();
     b.balance.flaskGrowth = [{ source: 'questEvent', id: 'goldboughAvatar', kind: 'hp', amount: 1 }];
@@ -338,6 +394,193 @@ function selftest() {
     return {
       ok: row.binding === false && /quest-event history/.test(row.why) && run.flaskCharges.capacity === 3,
       saw: `binding ${row.binding}, why '${row.why}', capacity ${run.flaskCharges.capacity}`,
+    };
+  });
+
+  // ── DOOR 3: THE CAPACITY LEDGER at the save door — capacity must derive as
+  //    base + grown + granted, or the save is refused BY NAME. Every plant
+  //    builds its run through the real op doors and enters the check through
+  //    serializeRun → deserializeRun / the real save manager.
+  //
+  //    OBSERVED RED FIRST (the instrument rule, same-door clause), 2026-08-14,
+  //    by REAL MUTATION of each door before trusting any green:
+  //      sabotage 1 — deleted the `granted += eff.amount` ledger line from the
+  //        addFlaskCapacity opcode (engine/actions.js) → exit 1, three plants
+  //        red; the grant entered through the shipped keepsake's own effects
+  //        and the door refused: `Malformed run save: flaskCharges.capacity 4
+  //        is not accounted for by its parts — base 3 + grown 0 + granted 0
+  //        = 3`. Nothing between the op and the refusal was synthetic.
+  //      sabotage 2 — double-applied the positive delta in syncFlaskGrowth
+  //        (model/flaskgrowth.js seam: `f.capacity += d` landed twice) →
+  //        exit 1, seven plants red including BOTH DOORS AT MAX through the
+  //        real save manager: `flaskCharges.capacity 5 is not accounted for
+  //        by its parts — base 3 + grown 1 + granted 0 = 4`. `grown` records
+  //        the PLAN, not the mutation, which is why a double-counted row can
+  //        never balance its own books.
+  //    Both sabotages restored; all plants green on the clean tree. The two
+  //    LEDGER RED plants below hold each saboteur's exact state as standing
+  //    corpus, entering by serializeRun → deserializeRun like any real save. ──
+  console.log('DOOR 3 — the capacity ledger at the save door (serializeRun → deserializeRun → loadRun):');
+
+  behave('LEDGER: a shipped keepsake\'s moment grant writes its ledger line and survives the real save door', () => {
+    const grant = shippedMomentGrant();
+    if (!grant) return { ok: false, saw: 'no shipped keepsake carries addFlaskCapacity — this door\'s live witness is gone; if deliberate, retire this plant out loud' };
+    const eff = grant.effects.find((e) => e.op === 'addFlaskCapacity');
+    const reg = createRegistries(contentBundle);
+    const run = freshRun(reg);
+    const before = { cap: run.flaskCharges.capacity, base: run.flaskCharges.base, granted: run.flaskCharges.granted };
+    executeRunEffects({ run, registries: reg, rng: null }, grant.effects);
+    const saves = createSaveManager(memStorage());
+    saves.saveRun(run, null, 1);
+    const loaded = saves.loadRun(reg, 1);
+    if (!loaded) return { ok: false, saw: 'the save was refused — the clean path must be green' };
+    const f = loaded.flaskCharges;
+    return {
+      ok: before.granted === 0 && f.granted === eff.amount && f.capacity === before.cap + eff.amount
+        && f.base === before.base && f.capacity === f.base + f.grown.hp + f.grown.mana + f.granted,
+      saw: JSON.stringify(f),
+    };
+  });
+
+  behave('LEDGER RED (moment door): the exact state a ledger-skipping grant writes is refused BY NAME at the save door', () => {
+    const grant = shippedMomentGrant();
+    if (!grant) return { ok: false, saw: 'no shipped moment grant — see the plant above' };
+    const eff = grant.effects.find((e) => e.op === 'addFlaskCapacity');
+    const reg = createRegistries(contentBundle);
+    const run = freshRun(reg);
+    executeRunEffects({ run, registries: reg, rng: null }, grant.effects);
+    // The saboteur's state, byte for byte: capacity raised, ledger line skipped
+    // (what sabotage 1 above produced through the door itself, observed red).
+    run.flaskCharges.granted -= eff.amount;
+    try {
+      deserializeRun(serializeRun(run));
+      return { ok: false, saw: 'an unaccountable capacity round-tripped GREEN — the very silence this ledger exists to end' };
+    } catch (e) {
+      return { ok: /not accounted for by its parts/.test(e.message), saw: e.message };
+    }
+  });
+
+  behave('LEDGER RED (possession door): a chain row double-counted cannot balance its books at the save door', () => {
+    const b = realBundleCopy();
+    plantGrowthRelic(b, { kind: 'hp', amount: 1 });
+    const reg = createRegistries(b);
+    const run = freshRun(reg);
+    executeRunEffects({ run, registries: reg, rng: null }, [{ op: 'addRelic', id: 'fixtureCharm' }]);
+    // The double-count's state: the seam applied the delta twice while grown
+    // recorded the plan once (sabotage 2 above, observed red through the door).
+    run.flaskCharges.capacity += 1;
+    run.flaskCharges.hp += 1;
+    run.flaskCharges.hpCurrent += 1;
+    try {
+      deserializeRun(serializeRun(run));
+      return { ok: false, saw: 'a double-counted chain row round-tripped GREEN' };
+    } catch (e) {
+      return { ok: /not accounted for by its parts/.test(e.message), saw: e.message };
+    }
+  });
+
+  behave('LEDGER floor: a current-version save missing its ledger is refused by name (no fourth silent state)', () => {
+    const reg = createRegistries(contentBundle);
+    const run = freshRun(reg);
+    delete run.flaskCharges.base;
+    delete run.flaskCharges.granted;
+    try {
+      deserializeRun(serializeRun(run));
+      return { ok: false, saw: 'a ledgerless v3 save loaded green' };
+    } catch (e) {
+      return { ok: /missing its capacity ledger/.test(e.message), saw: e.message };
+    }
+  });
+
+  behave('BOTH DOORS AT MAX: chain + moment + reallocation, then source loss — the ledger accounts at every step', () => {
+    const b = realBundleCopy();
+    plantGrowthRelic(b, { kind: 'hp', amount: 1 });
+    const grant = shippedMomentGrant();
+    if (!grant) return { ok: false, saw: 'no shipped moment grant' };
+    const reg = createRegistries(b);
+    const run = freshRun(reg);
+    executeRunEffects({ run, registries: reg, rng: null }, [{ op: 'addRelic', id: 'fixtureCharm' }]);
+    executeRunEffects({ run, registries: reg, rng: null }, grant.effects);
+    reallocateFlaskCharges(run.flaskCharges, { hp: 0, mana: run.flaskCharges.capacity });
+    const saves = createSaveManager(memStorage());
+    saves.saveRun(run, null, 1);
+    const grownFull = saves.loadRun(reg, 1);
+    if (!grownFull) return { ok: false, saw: 'the fully grown save was refused' };
+    const f1 = grownFull.flaskCharges;
+    const maxSound = f1.capacity === 5 && f1.base === 3 && f1.grown.hp === 1 && f1.granted === 1
+      && f1.capacity === f1.base + f1.grown.hp + f1.grown.mana + f1.granted;
+    // Lose the chain source (below its missing door, stated at the overflow
+    // gate above); the moment grant is permanent and must survive the shrink.
+    grownFull.relics = grownFull.relics.filter((id) => id !== 'fixtureCharm');
+    syncFlaskGrowth(reg, grownFull);
+    saves.saveRun(grownFull, null, 2);
+    const shrunk = saves.loadRun(reg, 2);
+    if (!shrunk) return { ok: false, saw: 'the shrunk save was refused' };
+    const f2 = shrunk.flaskCharges;
+    return {
+      ok: maxSound && f2.capacity === 4 && f2.grown.hp === 0 && f2.granted === 1
+        && f2.capacity === f2.base + f2.grown.hp + f2.grown.mana + f2.granted,
+      saw: `max ${JSON.stringify(f1)} → shrunk ${JSON.stringify(f2)}`,
+    };
+  });
+
+  // ── DOOR 3b: THE MIGRATION — pre-ledger (v2) saves attributed once, by the
+  //    stated rule, through the real save manager. The rule under test
+  //    (initializeRunFlaskCharges): grown was always written, so the surplus
+  //    base and chain cannot account for goes to `granted` (the untracked door
+  //    owns the untracked charge); base is witnessed by the current authored
+  //    balance.flaskCapacity, clamped so the attribution invents nothing. ────
+  behave('MIGRATION: a v2 save with an untracked keepsake surplus loads, attributed granted=surplus — and round-trips as v3', () => {
+    const grant = shippedMomentGrant();
+    if (!grant) return { ok: false, saw: 'no shipped moment grant' };
+    const eff = grant.effects.find((e) => e.op === 'addFlaskCapacity');
+    const reg = createRegistries(contentBundle);
+    const run = freshRun(reg);
+    executeRunEffects({ run, registries: reg, rng: null }, grant.effects);
+    // The v2 form of this exact run: same capacity, no ledger — what every
+    // real pre-ledger save looks like after a keepsake grant.
+    const v2 = JSON.parse(serializeRun(run));
+    v2.schemaVersion = 2;
+    delete v2.flaskCharges.base;
+    delete v2.flaskCharges.granted;
+    delete v2.flaskCharges.grown;
+    const saves = createSaveManager(memStorage());
+    saves.saveRun(v2, null, 1);
+    const loaded = saves.loadRun(reg, 1);
+    if (!loaded) return { ok: false, saw: 'the v2 save was refused at the door it must migrate through' };
+    const f = loaded.flaskCharges;
+    const attributed = loaded.schemaVersion === 3 && f.base === 3 && f.granted === eff.amount
+      && f.capacity === f.base + f.grown.hp + f.grown.mana + f.granted;
+    // And the attribution is ONE-time: re-save, re-load, same books.
+    saves.saveRun(loaded, null, 2);
+    const again = saves.loadRun(reg, 2);
+    const stable = again && JSON.stringify(again.flaskCharges) === JSON.stringify(f);
+    return { ok: attributed && stable, saw: `${JSON.stringify(f)} stable=${stable}` };
+  });
+
+  behave('MIGRATION edge (base retuned UP since the save): the clamp keeps the save\'s capacity and invents nothing — granted 0', () => {
+    // A copy with flaskCapacity retuned 3 → 4. Only the LOAD door is walked
+    // here (loads never re-create charges), so the class allocations staying
+    // at 3 is fine for this plant and refused loudly anywhere else.
+    const bumped = realBundleCopy();
+    bumped.balance = { ...bumped.balance, flaskCapacity: 4 };
+    const reg = createRegistries(contentBundle);
+    const reg4 = createRegistries(bumped);
+    const run = freshRun(reg); // born at base 3
+    const v2 = JSON.parse(serializeRun(run));
+    v2.schemaVersion = 2;
+    v2.contentVersion = reg4.contentVersion;
+    delete v2.flaskCharges.base;
+    delete v2.flaskCharges.granted;
+    delete v2.flaskCharges.grown;
+    const saves = createSaveManager(memStorage());
+    saves.saveRun(v2, null, 1);
+    const loaded = saves.loadRun(reg4, 1);
+    if (!loaded) return { ok: false, saw: 'refused' };
+    const f = loaded.flaskCharges;
+    return {
+      ok: f.capacity === 3 && f.base === 3 && f.granted === 0,
+      saw: JSON.stringify(f),
     };
   });
 
@@ -376,6 +619,29 @@ function selftest() {
     /function commit\(\) \{[\s\S]{0,400}syncFlaskGrowth\(registries, run\)/.test(src('src/ui/screens/equipment.js')));
   contract('relicText derives the growth clause (card.js calls flaskGrowthClause — the tooltip cannot silently omit a live row)',
     /flaskGrowthClause\(/.test(src('src/ui/components/card.js')));
+  // Every relicText CALL in the tree passes its registries — the wire that
+  // keeps the tooltip deriving from the object the seam derives from. Walked
+  // over all of src/ (a named-file list is a blacklist); card.js is the
+  // definition and the one legal bare mention. Floor of 5 call sites so the
+  // walk cannot quietly find nothing.
+  let relicTextCalls = 0;
+  const bareCalls = [];
+  for (const p of walk('src')) {
+    if (p === 'src/ui/components/card.js') continue;
+    for (const m of src(p).matchAll(/relicText\(([^)]*)\)/g)) {
+      relicTextCalls++;
+      if (!/,/.test(m[1])) bareCalls.push(`${p}: relicText(${m[1]})`);
+    }
+  }
+  contract('every relicText call site under src/ hands over its registries (no static-only tooltip on a run surface)',
+    relicTextCalls >= 5 && bareCalls.length === 0,
+    bareCalls.length ? `bare: ${bareCalls.join(', ')}` : `${relicTextCalls} sites, all wired`);
+  contract('MUTANT: the registries contract goes red on a bare relicText(def)',
+    (() => {
+      const planted = 'attachTooltip(el, () => relicText(def));';
+      const m = [...planted.matchAll(/relicText\(([^)]*)\)/g)];
+      return m.length > 0 && m.some((x) => !/,/.test(x[1]));
+    })());
   // The mutant: prove the contract regex can fail — a push with no sync.
   contract('MUTANT: the contract goes red on a push with no sync',
     !(() => {

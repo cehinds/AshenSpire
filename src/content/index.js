@@ -35,6 +35,7 @@ import {
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
 import { attributes, creationModes, attributeRules } from './attributes.js';
+import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
 
 const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...colorlessCards, ...coopCards];
@@ -89,7 +90,10 @@ export const contentBundle = {
   tags: cardTags,
   attributes,
   creationModes,
-  attributeRules,
+  // `retired` is composed HERE, from its own file, so that reverting
+  // attributes.js to a pre-rename copy cannot delete the guard along with the
+  // row it guards against (retiredNames.js says why in full).
+  attributeRules: { ...attributeRules, retired: retiredAttributeNames },
   derivedStatRules,
 };
 

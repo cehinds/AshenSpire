@@ -86,7 +86,7 @@ function renderRelics(container, ctx) {
     const def = ctx.registries.relics.get(rid);
     const el = document.createElement('div');
     el.className = 'ov-relic';
-    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def))}</p></div>`;
+    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def, ctx.registries))}</p></div>`;
     rGrid.appendChild(el);
   }
   if (!ctx.run.relics.length) rGrid.innerHTML = '<div style="color:var(--muted)">None yet.</div>';

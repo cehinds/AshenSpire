@@ -142,7 +142,7 @@ const OWNS_EVERYTHING = { has: () => true };
 // "not in combat" fails OPEN, so every call site written after today would
 // re-arm mid-fight by saying nothing. Blocks that predate #95 are about the fit
 // and ownership gates, so they declare the context they were always assuming.
-const REQUIREMENT_TEST_ATTRIBUTES = { strength: 15, dexterity: 15, constitution: 15, wisdom: 15, intelligence: 15 };
+const REQUIREMENT_TEST_ATTRIBUTES = { strength: 15, dexterity: 15, vigour: 15, wisdom: 15, intelligence: 15 };
 const AT_CAMP = { inCombat: false, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 const MID_FIGHT = { inCombat: true, attributes: REQUIREMENT_TEST_ATTRIBUTES };
 
@@ -193,7 +193,7 @@ function logOf(combat, type) {
 // Runner
 // ---------------------------------------------------------------------------
 
-export async function runTests({ artManifest = null, assetExists = null } = {}) {
+export async function runTests({ artManifest = null, assetExists = null, legacyRunSave = null } = {}) {
   const results = [];
   const test = (name, fn) => {
     try {
@@ -3841,8 +3841,8 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     const attrs = contentBundle.attributes.slice().sort((a, b) => a.order - b.order);
     const modes = contentBundle.creationModes;
     const classes = contentBundle.classes;
-    eq(attrs.map((a) => a.id).join(','), 'strength,dexterity,constitution,wisdom,intelligence', 'the five stable ids ship in authored order');
-    eq(attrs.map((a) => a.shortLabel).join(','), 'STR,DEX,CON,WIS,INT', 'all five short labels ship from the same rows');
+    eq(attrs.map((a) => a.id).join(','), 'strength,dexterity,vigour,wisdom,intelligence', 'the five stable ids ship in authored order');
+    eq(attrs.map((a) => a.shortLabel).join(','), 'STR,DEX,VIG,WIS,INT', 'all five short labels ship from the same rows');
     const standard = contentBundle.creationModes.find((m) => m.id === contentBundle.attributeRules.defaultMode);
     assert(!!standard, 'the default mode resolves');
     eq(`${standard.baseline}/${standard.bonusPool}/${standard.minimum}/${standard.maximum}`, '10/5/10/15', 'standard creation bounds are authored');
@@ -3944,9 +3944,9 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     mutant.creationModes.push(testMode);
     mutant.attributeRules.defaultMode = testMode.id;
     mutant.attributeRules.presets.testMode = {
-      reaver: { strength: 10, dexterity: 7, constitution: 7, wisdom: 7, intelligence: 7 },
-      starseer: { strength: 7, dexterity: 8, constitution: 7, wisdom: 7, intelligence: 9 },
-      herald: { strength: 7, dexterity: 7, constitution: 8, wisdom: 9, intelligence: 7 },
+      reaver: { strength: 10, dexterity: 7, vigour: 7, wisdom: 7, intelligence: 7 },
+      starseer: { strength: 7, dexterity: 8, vigour: 7, wisdom: 7, intelligence: 9 },
+      herald: { strength: 7, dexterity: 7, vigour: 8, wisdom: 9, intelligence: 7 },
     };
     assert(validateContent(mutant).ok, 'mutant content remains valid after every derived input changes');
     const MR = createRegistries(mutant);
@@ -3964,6 +3964,113 @@ export async function runTests({ artManifest = null, assetExists = null } = {}) 
     eq(mutantMigrated.attributeMode, mutant.attributeRules.defaultMode, 'legacy migration follows the mutated default mode');
     const expectedMutantPreset = Object.fromEntries(mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => [a.id, mutant.attributeRules.presets[mutantMigrated.attributeMode].reaver[a.id]]));
     eq(JSON.stringify(mutantMigrated.attributes), JSON.stringify(expectedMutantPreset), 'legacy migration follows the mutated class preset and authored order');
+  });
+
+  // ---- 50b. the retired vocabulary cannot creep back ------------------------
+  test('50b. a retired attribute name is refused at the boot door, by name', () => {
+    // THE DOOR THIS GUARDS: 'constitution' held the HP seat for three days
+    // (d465cfc 2026-08-11 → 2026-08-14) and every save written in that window
+    // spells it. His named stat is Vigour (D17: "vigour shoudl be 1 hp point
+    // per"). The rename is content, so nothing stops a later content edit —
+    // or an old copy of attributes.js — from re-adding the dead row, at which
+    // point old saves stop migrating and two names hold one seat. This is the
+    // same door as any content refusal: validateContent, the exact call
+    // main.js:71 makes at boot.
+    const retired = contentBundle.attributeRules.retired;
+    assert(retired && typeof retired === 'object' && Object.keys(retired).length > 0,
+      'the retired-name map ships as content (attributeRules.retired)');
+    eq(retired.constitution, 'vigour', "'constitution' is retired in favour of 'vigour'");
+    assert(validateContent(contentBundle).ok, 'the shipped bundle boots clean under its own retired map');
+
+    const clone = () => ({
+      ...contentBundle,
+      attributes: structuredClone(contentBundle.attributes),
+      attributeRules: structuredClone(contentBundle.attributeRules),
+      derivedStatRules: structuredClone(contentBundle.derivedStatRules),
+    });
+    const refusedNaming = (mutate, needle, label) => {
+      const b = clone(); mutate(b);
+      const v = validateContent(b);
+      assert(!v.ok, `${label} is refused`);
+      assert(v.errors.some((e) => (e.path + ' ' + e.msg).includes(needle)),
+        `${label} refusal names '${needle}' — got: ${v.errors.map((e) => `${e.path}: ${e.msg}`).join('; ')}`);
+    };
+    // The dead row itself — the creep-back this test exists for.
+    refusedNaming((b) => { b.attributes.push({ id: 'constitution', label: 'Constitution', shortLabel: 'CON', order: 6 }); },
+      'retired', 'a re-added constitution attribute row');
+    refusedNaming((b) => { b.attributes.push({ id: 'constitution', label: 'Constitution', shortLabel: 'CON', order: 6 }); },
+      'constitution', 'a re-added constitution attribute row');
+    // The dead name as a preset cell — the second content home it had.
+    refusedNaming((b) => {
+      const p = b.attributeRules.presets.standard.reaver;
+      p.constitution = p.vigour; delete p.vigour;
+    }, 'constitution', 'a preset cell keyed by the dead name');
+    // The dead name as a derived-stat source — the third content home it had.
+    refusedNaming((b) => { b.derivedStatRules.rules.hp.sourceStat = 'constitution'; },
+      'constitution', 'a derived-stat rule sourcing the dead name');
+    // The map's own hygiene: a retired name may not point at a ghost.
+    refusedNaming((b) => { b.attributeRules.retired = { constitution: 'ghostStat' }; },
+      'ghostStat', 'a retired name whose heir is not a live attribute');
+    // THE LOAD-BEARING CASE — the old vocabulary coming back WHOLESALE, as a
+    // complete self-consistent copy (row, presets, sourceStats — exactly what
+    // reverting attributes.js + derivedStats.js to d465cfc would produce).
+    // Without the retired map this validates green: five rows, complete
+    // presets, every sourceStat resolving. That is why the map lives in its
+    // own file and why this case exists.
+    refusedNaming((b) => {
+      b.attributes = b.attributes.map((a) => (a.id === 'vigour'
+        ? { ...a, id: 'constitution', label: 'Constitution', shortLabel: 'CON' } : a));
+      for (const byClass of Object.values(b.attributeRules.presets)) {
+        for (const preset of Object.values(byClass)) {
+          preset.constitution = preset.vigour; delete preset.vigour;
+        }
+      }
+      b.derivedStatRules.rules.hp.sourceStat = 'constitution';
+      b.derivedStatRules.rules.stamina.sourceStat = 'constitution';
+    }, 'retired', 'the complete old vocabulary reverted wholesale');
+  });
+
+  // ---- 50c. the three-day window's saves come through the door healed -------
+  test('50c. a save written under the retired name loads through the real door, healed, and saves clean', () => {
+    // The fixture is NOT hand-typed: it is the exact bytes
+    // createSaveManager.saveRun wrote at dev = acb8ffe (reaver, seed 7),
+    // frozen at tests/fixtures/run-save-constitution-acb8ffe.json. It spells
+    // 'constitution' three times — attributes, and the snapshot's hp and
+    // stamina sourceStat — which is every persisted home the name had.
+    // Same door as the game: storage → loadRun → deserializeRun →
+    // normalizeRunAttributes → initializeRunDerivedStats.
+    if (!legacyRunSave) {
+      assert(true, 'SKIPPED (no fixture handed in): the browser harness has no fs; run tests/run-node.mjs');
+      return;
+    }
+    assert(legacyRunSave.includes('"constitution"'), 'the fixture really carries the dead name (probe has a referent)');
+
+    const storage = createMemoryStorage();
+    storage.setItem(RUN_KEY, legacyRunSave);
+    const saves = createSaveManager(storage);
+    const run = saves.loadRun(REG);
+    assert(run !== null, 'the three-day-window save LOADS — it is not archived for wearing the old vocabulary');
+    eq(run.attributes.vigour, 12, "the constitution points arrive as vigour, value intact");
+    assert(!Object.hasOwn(run.attributes, 'constitution'), 'the dead key does not survive the load');
+    eq(Object.keys(run.attributes).join(','), 'strength,dexterity,vigour,wisdom,intelligence',
+      'the healed allocation carries exactly the live vocabulary in authored order');
+    const rules = run.derivedStatRuleSnapshot.rules.rules;
+    eq(rules.hp.sourceStat, 'vigour', "the snapshot's hp rule now sources vigour");
+    eq(rules.stamina.sourceStat, 'vigour', "the snapshot's stamina rule now sources vigour");
+    // Healing must not move a number: same points, same seat, same outputs.
+    const old = JSON.parse(legacyRunSave);
+    eq(run.maxHp, old.maxHp, 'maxHp is untouched by the rename');
+    eq(run.energyMax, old.energyMax, 'energyMax is untouched by the rename');
+    eq(run.drawPerTurn, old.drawPerTurn, 'drawPerTurn is untouched by the rename');
+    // Forward hygiene: the next save writes zero dead bytes.
+    assert(!serializeRun(run).includes('constitution'), 'a re-serialized healed run spells the dead name zero times');
+
+    // The ambiguous edge fails CLOSED (Law 0 clause 5): a save carrying BOTH
+    // names in one allocation is not guessed at — it archives.
+    const both = JSON.parse(legacyRunSave);
+    both.attributes.vigour = 12; // constitution still present
+    storage.setItem(RUN_KEY, JSON.stringify(both));
+    eq(saves.loadRun(REG), null, 'a save carrying both constitution and vigour is refused, never guessed');
   });
 
   const passed = results.filter((r) => r.ok).length;
