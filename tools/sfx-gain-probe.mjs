@@ -15,6 +15,30 @@
 //            probe goes red when a table value and the engine disagree (the
 //            instrument rule: a check nobody has watched fail is not green).
 //
+// THE DOORS, THREE OF THEM, AND TWO ARE DOWNSTREAM ON PURPOSE. Vira's doors
+// audit (2026-08-14) called this probe "DOWNSTREAM by declared choice, honestly
+// scoped": classes 1 and 2 below enter at the COMPARATOR — the expectation and
+// the measured pool — never at the recipe. For the defect they were written
+// against that is the right door, because the defect WAS in the comparator
+// (the `includes` alibi, her #46 finding). But her sentence continued: "the
+// recipe-drop class has no plant." She was right, and class 3 is that plant.
+//
+//   class 1  false expectation   in-process; `want` is set to a known-false
+//                                value. Door: the comparator.
+//   class 2  dropped duplicate   in-process; one occurrence removed from the
+//                                measured pool. Door: the comparator.
+//   class 3  A CLAMP IN THE ENGINE   the real door. A disposable copy of this
+//                                tree gets ONE REAL EDIT to src/ui/audio.js —
+//                                a clamp between the recipe's number and the
+//                                gain node — and THIS PROBE IS RE-RUN INSIDE
+//                                THE COPY, so its own `../src/ui/audio.js`
+//                                import resolves to the planted engine. Every
+//                                stage the real probe performs runs.
+//                                This is the class the header's own claim is
+//                                about — "no copy, no clamp, no code in
+//                                between" — and until now nothing had ever
+//                                watched it fail.
+//
 // Exit 0 = every recipe's peaks reached the gain nodes; 1 = any miss.
 // REMOVAL CONDITION: delete this probe when the synth SFX layer is removed in
 // favour of samples (#46's own removal condition) — a sample's gain is the
@@ -91,12 +115,74 @@ for (const probe of ['noSuchSound', 'toString']) {
 }
 
 if (selftest) {
-  if (misses === 2) {
-    console.log(`RESULT: selftest held — both plants (false peak, dropped duplicate note) were the only 2 misses in ${layersChecked} layers, so a disagreement and a dropped-note-behind-a-duplicate both go red here.`);
-    process.exit(0);
+  if (misses !== 2) {
+    console.error(`RESULT: selftest FAILED — expected exactly the 2 planted comparator misses, saw ${misses}; this probe cannot be trusted either way.`);
+    process.exit(1);
   }
-  console.error(`RESULT: selftest FAILED — expected exactly the 2 planted misses, saw ${misses}; this probe cannot be trusted either way.`);
-  process.exit(1);
+  console.log(`  classes 1+2 held — both comparator plants (false peak, dropped duplicate note) were the only 2 misses in ${layersChecked} layers.`);
+  console.log('    DOOR, stated: these two enter at the COMPARATOR (the expectation, the measured');
+  console.log('    pool) — NOT at the recipe. That is the right door for the defect they were');
+  console.log('    written against (the `includes` alibi lived in the comparator), and it is the');
+  console.log('    wrong door for the claim in this file\'s header. Class 3 is that door.');
+
+  // ---- class 3: the recipe door ------------------------------------------
+  const { spawnSync } = await import('node:child_process');
+  const { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } = await import('node:fs');
+  const { resolve, join, dirname } = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const { fileURLToPath } = await import('node:url');
+
+  const HERE = dirname(fileURLToPath(import.meta.url));
+  const TREE = resolve(HERE, '..');
+  // A clamp between the recipe's number and the gain node. This is the whole
+  // defect class: a value that gets QUIETLY BOUNDED on its way to the node
+  // still ships a table nobody can tune. 0.4 is chosen to catch the loud end
+  // of the real table (peaks run 0.1 - 0.5) and leave the rest alone, so the
+  // red names recipes rather than painting everything.
+  const FROM = '    g.gain.exponentialRampToValueAtTime(peak, start + Math.min(0.02, dur * 0.3));';
+  const TO = '    g.gain.exponentialRampToValueAtTime(Math.min(peak, 0.4), start + Math.min(0.02, dur * 0.3));';
+
+  const dir = mkdtempSync(join(tmpdir(), 'sfx-gain-kb-'));
+  for (const d of ['src', 'tools']) {
+    if (existsSync(resolve(TREE, d))) cpSync(resolve(TREE, d), resolve(dir, d), { recursive: true });
+  }
+  const enginePath = resolve(dir, 'src/ui/audio.js');
+  const engineSrc = readFileSync(enginePath, 'utf8');
+  const first = engineSrc.indexOf(FROM);
+  if (first < 0 || engineSrc.indexOf(FROM, first + 1) >= 0) {
+    console.error(`RESULT: selftest FAILED — class 3's plant found ${first < 0 ? 'NO' : 'MORE THAN ONE'} home in src/ui/audio.js.`);
+    console.error('  The tone gain line moved. RE-AIM the plant at wherever a recipe peak now reaches');
+    console.error('  a gain node; do not delete it. A corpus that silently stops matching is exactly');
+    console.error('  the eleven-instruments shape (development.md, the instrument rule).');
+    try { rmSync(dir, { recursive: true, force: true }); } catch { /* tmp */ }
+    process.exit(1);
+  }
+  writeFileSync(enginePath, engineSrc.slice(0, first) + TO + engineSrc.slice(first + FROM.length), 'utf8');
+
+  const r = spawnSync(process.execPath, [resolve(dir, 'tools/sfx-gain-probe.mjs')], { encoding: 'utf8' });
+  const out = (r.stdout || '') + (r.stderr || '');
+  const missLines = out.split('\n').filter((l) => /^MISS /.test(l));
+  const clean = spawnSync(process.execPath, [resolve(TREE, 'tools/sfx-gain-probe.mjs')], { encoding: 'utf8' });
+
+  console.log('\n  class 3 — THE RECIPE DOOR: a clamp planted in src/ui/audio.js of a disposable copy,');
+  console.log('    this probe re-run INSIDE that copy so its own engine import resolves to the plant.');
+  console.log(`    control (this tree, unplanted): exit ${clean.status} — or a red below proves only that copying breaks it`);
+  console.log(`    planted:                        exit ${r.status}, ${missLines.length} MISS line(s)`);
+  for (const l of missLines.slice(0, 4)) console.log(`    red | ${l}`);
+  if (missLines.length > 4) console.log(`    red | ... and ${missLines.length - 4} more`);
+  try { rmSync(dir, { recursive: true, force: true }); } catch { /* tmp */ }
+
+  const held = clean.status === 0 && r.status === 1 && missLines.length > 0;
+  if (!held) {
+    console.error('RESULT: selftest FAILED — class 3 did not go red through the recipe door. A clamp');
+    console.error('  between the table and the node is the exact defect this probe claims to catch,');
+    console.error('  and it did not catch it. Treat every green from this tool as unknown.');
+    process.exit(1);
+  }
+  console.log('\nRESULT: selftest held — comparator plants red (classes 1+2, downstream and SAID SO),');
+  console.log('  and a clamp planted in the real engine goes red through the real door (class 3).');
+  console.log('  Boundary: the noise() path carries no plant of its own — class 3 clamps tone() only.');
+  process.exit(0);
 }
 
 if (misses === 0) {

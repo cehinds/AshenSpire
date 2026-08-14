@@ -30,6 +30,7 @@
 //   node tools/handlayout.mjs                      source tree via serve.mjs
 //   node tools/handlayout.mjs --root DIR           another tree (the known-bad run)
 //   node tools/handlayout.mjs --shots DIR          also write one 390x844 png per cell
+//   node tools/handlayout.mjs --selftest           the RE-RUNNABLE known-bad (below)
 // Exit: 0 all green · 1 a finding · 2 usage / no browser / NOTHING RAN
 //
 // OBSERVED RED (the instrument rule), same door as the real input — the mode
@@ -42,6 +43,44 @@
 //                               re-run with --root against any tree.
 //   this tree                   exit 0, all cells.
 //
+// ...AND THAT RED WAS REF-PINNED, WHICH IS WHY --selftest EXISTS (Vira's doors
+// audit, 2026-08-14: "SAME-DOOR when run; the known-bad tree is ref-pinned").
+// The observation above needs a 71e3edd checkout to exist; under SOP 2's drift
+// clause a red that cannot be re-run is `unknown (drifted)`, not coverage. So
+// the corpus is now BUILT, not remembered:
+//
+//   --selftest copies this tree to a scratch dir, edits ONE REAL SOURCE LINE
+//   in the copy, and re-runs THIS WHOLE TOOL at --root COPY. Every stage a
+//   real regression travels — serve over http, index.html -> src/main.js ->
+//   settings resolution -> combat.js's renderHand + applyHandLayout -> the
+//   rendered DOM this tool measures — runs on the planted tree. Nothing is
+//   handed to a function; the plant is a source edit, because a source edit is
+//   how this defect class actually arrives.
+//
+//   P1 derivation cut   src/main.js stops writing <html data-hand-layout>.
+//                       Expect: check 1 red in EVERY cell, by name.
+//   P2 overlap cut      applyHandLayout stops writing the negative margin —
+//                       the flattened fan is no longer pulled inside the
+//                       strip's width.
+//                       Expect: Law 5 travel red in the OVERLAP cells while
+//                       the paging cells stay green — the mode-inertness claim
+//                       and the overlap claim are separable, and this proves
+//                       the tool can tell them apart.
+//   C  clean control    the untouched copy must go GREEN, or the plants proved
+//                       nothing but that copying a tree breaks it.
+//
+//   THE PLANT IS KEYED TO THE CONTRACT, NOT TO THE PATH — learned the same day
+//   it was written. The renderer collapse (Viki, 2026-08-15) moved P2's line
+//   from screens/combat.js to components/hand.js WITHOUT ONE BYTE CHANGING,
+//   and a plant keyed to the path refused while the contract it guards was
+//   alive three directories over. So each plant carries a CLOSED SET of homes
+//   the contract has lived in, exactly one of which must hold it exactly once.
+//   Not a search: a closed set can be audited and cannot pass silently through
+//   a home nobody imagined. Two homes matching is as loud a refusal as none —
+//   one contract in two places is the second copy this house exists to catch.
+//   Outside the set it still REFUSES at exit 2 and asks to be re-aimed rather
+//   than quietly measuring nothing.
+//
 // BOUNDARY. One shape (390x844) — the word only arranges the NARROW hand; the
 // wide fan is one composition in both modes and inspecthold covers it at
 // 1200x730. Headless Chromium hit-testing; no real finger. Sliver hittability
@@ -51,7 +90,7 @@
 // browser-level layout harness supersedes CDP measurement.
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
@@ -101,8 +140,144 @@ function launchChrome(browser, dir) {
   });
 }
 
+// ---- the re-runnable known-bad ---------------------------------------------
+// Exact source strings, as the tree spells them today. Each must match exactly
+// once in the copy or the whole selftest refuses at exit 2 — a plant that
+// matched nothing would run the clean control three times and call it a corpus
+// (SOP 2's wrong-place-empty: an empty match means the OPPOSITE of clean).
+// `homes` is a CLOSED SET of files the contract has lived in — never a search.
+// The line is the contract; the path is where it happens to sit this month. The
+// overlap arithmetic moved from combat.js to components/hand.js in the renderer
+// collapse (2026-08-15) WITHOUT ONE BYTE CHANGING, so a plant keyed to the path
+// refused while the contract it guards was alive and well three directories
+// over. Exactly one home must match, exactly once, or the run refuses at exit 2
+// and says so: a closed set can be audited, and it cannot pass silently through
+// a home nobody imagined the way a regex search would.
+const PLANTS = [
+  {
+    name: 'P1 derivation cut',
+    homes: ['src/main.js'],
+    from: '  document.documentElement.dataset.handLayout = handLayout;',
+    to: '  /* handlayout --selftest P1: derivation cut */',
+    what: "main.js's write of <html data-hand-layout>",
+    expect: 'check 1 (word) red in every cell',
+    mustRed: (out) => /FAIL word:/.test(out),
+    mustStay: (out) => /PASS pose:/.test(out), // the pose door is untouched
+  },
+  {
+    name: 'P2 overlap cut',
+    homes: ['src/ui/components/hand.js', 'src/ui/screens/combat.js'],
+    from: "    els.forEach((el, i) => { el.style.marginLeft = i && o ? `${-o}px` : ''; });",
+    to: '    /* handlayout --selftest P2: overlap arithmetic cut */',
+    what: "applyHandLayout's negative-margin write (the overlap arm's whole arithmetic)",
+    expect: 'Law 5 travel red in the OVERLAP cells, paging cells still green',
+    mustRed: (out) => /FAIL Law 5: hand horizontal scroll travel [1-9]/.test(out),
+    mustStay: (out) => /PASS word: <html data-hand-layout> derived 'paging'/.test(out),
+  },
+];
+
+function sandbox() {
+  const dir = mkdtempSync(join(tmpdir(), 'handlayout-kb-'));
+  for (const d of ['src', 'styles', 'assets']) {
+    if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
+  }
+  cpSync(resolve(ROOT, 'index.html'), resolve(dir, 'index.html'));
+  return dir;
+}
+
+function plantInto(dir, p) {
+  // Every home in the closed set is checked, so "two homes carry this line" is
+  // as loud a refusal as "no home does" — a contract living in two places is
+  // the second copy this house exists to catch, and planting into one of them
+  // would leave the other quietly holding the hand.
+  const hits = [];
+  for (const home of p.homes) {
+    const path = resolve(dir, home);
+    if (!existsSync(path)) continue;
+    const src = readFileSync(path, 'utf8');
+    const first = src.indexOf(p.from);
+    if (first < 0) continue;
+    if (src.indexOf(p.from, first + 1) >= 0) {
+      console.error(`handlayout --selftest: ${p.name} found MORE THAN ONE copy of its line in ${home}`);
+      process.exit(2);
+    }
+    hits.push({ home, path, src, first });
+  }
+  if (hits.length !== 1) {
+    console.error(`handlayout --selftest: ${p.name} found ${hits.length} homes for its line`);
+    console.error(`  searched (closed set): ${p.homes.join(', ')}`);
+    if (hits.length > 1) console.error(`  matched: ${hits.map((h) => h.home).join(', ')} — one contract, two homes, which is its own defect`);
+    console.error('  The contract moved outside the set. RE-AIM THIS PLANT by adding the surviving');
+    console.error('  home to `homes`; do not delete it, and do not widen it to a search — a closed');
+    console.error('  set can be audited, a search passes silently through what nobody imagined.');
+    console.error('  A corpus that stops matching in silence is the eleven-instruments shape.');
+    process.exit(2);
+  }
+  const { home, path, src, first } = hits[0];
+  console.log(`    home: ${home} (of ${p.homes.length} in the closed set)`);
+  writeFileSync(path, src.slice(0, first) + p.to + src.slice(first + p.from.length), 'utf8');
+}
+
+// Re-run THIS tool against a tree, in a child process, and hand back its output.
+function runSelfAt(root) {
+  return new Promise((res) => {
+    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--root', root],
+      { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...(browserPath ? { CHROME: browserPath } : {}) } });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; });
+    child.stderr.on('data', (d) => { out += d; });
+    child.on('exit', (code) => res({ code, out }));
+  });
+}
+
+async function selftest() {
+  console.log('handlayout --selftest — the re-runnable known-bad');
+  console.log('  DOOR: every known-bad below is a SOURCE EDIT to a disposable copy of this tree');
+  console.log(`  (root ${ROOT}), and is judged by re-running this whole tool at --root COPY: served`);
+  console.log('  over http, index.html -> src/main.js -> settings resolution -> combat.js renderHand');
+  console.log('  + applyHandLayout -> the rendered DOM, every stage a real regression travels.');
+  console.log('  Nothing is handed to a function; a source edit is how this defect class arrives.\n');
+
+  let fails = 0;
+  const ok = (b, what) => { if (b) console.log(`  PASS ${what}`); else { fails++; console.log(`  FAIL ${what}`); } };
+
+  // The clean control FIRST: if a copied tree cannot go green, no red below
+  // means anything — it would only prove that copying breaks the app.
+  const cleanDir = sandbox();
+  console.log('  control: untouched copy of this tree (no plant)');
+  const clean = await runSelfAt(cleanDir);
+  ok(clean.code === 0, `control: the copied tree is GREEN (exit ${clean.code}) — the plants below are the only difference`);
+  try { rmSync(cleanDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
+
+  for (const p of PLANTS) {
+    console.log(`\n  ${p.name}: ${p.what}`);
+    console.log(`    plant: expect ${p.expect}`);
+    const dir = sandbox();
+    plantInto(dir, p);
+    const r = await runSelfAt(dir);
+    ok(r.code === 1, `${p.name}: the planted tree goes RED (exit ${r.code}, want 1)`);
+    ok(p.mustRed(r.out), `${p.name}: red BY NAME — ${p.expect}`);
+    ok(p.mustStay(r.out), `${p.name}: and the untouched claims stay green (the plant is narrow, not a smoking crater)`);
+    // The red itself, quoted. A verdict that will not show its evidence is the
+    // shape my own README once wore — printed, and never graded.
+    for (const line of r.out.split('\n').filter((l) => /\s+FAIL /.test(l))) {
+      console.log(`    red |${line.replace(/^\s+/, ' ')}`);
+    }
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
+  }
+
+  console.log(fails
+    ? `\nhandlayout --selftest: ${fails} FAIL — this instrument's red is NOT re-observed; treat its greens as unknown`
+    : '\nhandlayout --selftest: held — clean copy green, both plants red by name, through the whole-app door');
+  console.log('  BOUNDARY of this selftest: it proves the tool can SEE these two defects arriving by');
+  console.log('  the real door. It does not prove the tool sees every hand-layout defect, and the');
+  console.log('  sliver-hittability and pose checks carry no plant of their own here.');
+  process.exit(fails ? 1 : 0);
+}
+
 async function main() {
   if (!browserPath) { console.error('handlayout: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
+  if (args.includes('--selftest')) return selftest();
   const profile = mkdtempSync(join(tmpdir(), 'handlayout-'));
   const s = await serve({ root: ROOT, port: 8281, open: false });
   const base = `http://localhost:${s.port}/`;
