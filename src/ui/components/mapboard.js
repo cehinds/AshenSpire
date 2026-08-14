@@ -290,6 +290,18 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
          screen is not a warning, it is decoration with a worried face."
          Every number in it is READ, never typed. -->
     <p class="map-tapnote" hidden></p>
+    <!-- THE OFF-SCREEN CHOICE, SAID WHERE THE PLAYER IS — the tap note's
+         sibling, same discipline: SILENT whenever the promise is kept. It
+         exists because the camera owns the horizontal axis now (sizeSvg): a
+         choice clipped sideways at a player-chosen zoom cannot be dragged to —
+         the trained gesture died with the travel — and the only recovery is
+         the ladder (−) or ⊙. Measured before this note existed (Sunna,
+         2026-08-14, 40 seeds x both phone shapes): at manual 200% every
+         floor-11 edge column ships its ONLY next step wholly off screen with
+         nothing but a line of edge ink to say so. report() drives it from
+         the same overflow the confession reads, so the note and data-framing
+         cannot disagree. Still no backticks. -->
+    <p class="map-clipnote" hidden></p>
     <!-- OUTSIDE the scrollport, and that is the whole fix (EldenSpire#28).
          These three buttons used to be the last child of .map-scroll,
          absolutely positioned over it, so they covered a piece of the pannable
@@ -308,6 +320,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   const svgEl = scroll.querySelector('svg');
   const g = scroll.querySelector('.map-nodes');
   const tapNote = host.querySelector('.map-tapnote');
+  const clipNote = host.querySelector('.map-clipnote');
 
   let drawnCount = 0;
   for (const n of nodes) {
@@ -826,7 +839,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   let warnedClipped = false;
   function report(box, count) {
     const d = scroll.dataset;
-    if (!box) { d.framing = 'none'; d.framingMiss = '0'; return; }
+    if (!box) {
+      d.framing = 'none'; d.framingMiss = '0';
+      if (clipNote) { clipNote.hidden = true; clipNote.textContent = ''; }
+      return;
+    }
     // EVERY TERM IS RELATIVE TO THE CONTENT ORIGIN, which stopped being the
     // canvas origin when the scroll extent became the ink (see `sizeSvg`).
     // Leaving these as `box.x0 * zoom` would have made the confession wrong by
@@ -836,10 +853,19 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     const r = (box.x1 - content.x0) * zoom;
     const t = (box.y0 - content.y0) * zoom;
     const b = (box.y1 - content.y0) * zoom;
+    // THE TWO AXES ARE TWO DIFFERENT FAILURES NOW, and they are kept apart on
+    // purpose: a vertical miss can still be scrolled to (the thumb's axis), a
+    // horizontal miss cannot — the camera owns X (sizeSvg) and the pan
+    // handler's horizontal write is inert. So the horizontal overflow feeds the
+    // player-facing note below, while `over` keeps its one job: the confession
+    // (`data-framing`) that three instruments already read, unchanged in
+    // meaning.
+    const hOverL = Math.max(0, scroll.scrollLeft - l);
+    const hOverR = Math.max(0, r - (scroll.scrollLeft + scroll.clientWidth));
     const over = Math.max(
       0,
-      scroll.scrollLeft - l,
-      r - (scroll.scrollLeft + scroll.clientWidth),
+      hOverL,
+      hOverR,
       scroll.scrollTop - t,
       b - (scroll.scrollTop + scroll.clientHeight)
     );
@@ -847,13 +873,27 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     d.framingMiss = String(Math.round(over));
     d.framingZoom = zoom.toFixed(3);
     d.framingCount = String(count);
+    // THE MERCY LINE — the tap note's rule, in the same words: a line that says
+    // the same thing every time is decoration, so this one exists ONLY when a
+    // choice is off screen SIDEWAYS, the one direction no gesture reaches. It
+    // names the recovery the screen actually offers (− and ⊙ are two buttons
+    // away, in the flow below), because the player's trained answer — drag
+    // toward it — moves nothing on this axis and reads as a stuck screen.
+    // Driven from the same numbers as the confession, so the two cannot drift.
+    if (clipNote) {
+      const hClipped = Math.max(hOverL, hOverR) > 0.5;
+      clipNote.hidden = !hClipped;
+      clipNote.textContent = !hClipped ? ''
+        : `A path runs off screen to the ${hOverR >= hOverL ? 'right' : 'left'} — zoom out (−) or press ⊙ to bring it back.`;
+    }
     if (over > 0.5 && !warnedClipped) {
       warnedClipped = true;
       console.warn(`[map] the framing does not fit: ${count} node(s) of choice need `
         + `${Math.round(box.w)}x${Math.round(box.h)} local px, the map viewport is `
         + `${scroll.clientWidth}x${scroll.clientHeight}, and the zoom ladder floors at ${ZOOM_MIN}x — `
-        + `${Math.round(over)} px of the choice is off screen and only panning reaches it. `
-        + `This act is ${columns} columns wide.`);
+        + `${Math.round(over)} px of the choice is off screen. A horizontal miss has no pan to reach it `
+        + `(the camera owns that axis; zoom out or ⊙ recovers it, and the screen now says so); `
+        + `a vertical miss still scrolls. This act is ${columns} columns wide.`);
     }
     reportTapSize();
   }
