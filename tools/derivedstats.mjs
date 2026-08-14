@@ -80,9 +80,9 @@ check('WIS 10 is the only Mana authority and yields 2', () => {
   equal(out.base, 0, 'Mana base'); equal(out.value, 2, 'Mana');
 });
 
-check('CON HP starts from class data rather than a duplicated constant', () => {
+check('VIG HP starts from class data and pays 1 per point (D17)', () => {
   const out = deriveStat(resolved(), 'hp', { attributes: { vigour: 10 }, classDef: CLASS });
-  equal(out.base, 84, 'class HP base'); equal(out.value, 86, 'derived HP');
+  equal(out.base, 84, 'class HP base'); equal(out.value, 94, 'derived HP: 84 + 10 points');
 });
 
 check('a row may override pointsPerTier and rounding', () => {
