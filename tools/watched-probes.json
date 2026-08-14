@@ -1,0 +1,1807 @@
+{
+ "_": "tools/watched-probes.json — the HAND-HELD half of tools/watched.mjs. Bjorn, 2026-08-08. The POPULATION is derived from Saga's ledger and never typed here; this file is a person saying, per row, WHICH SCREEN the control lives on, HOW to reach it, and WHAT makes it there. Every probe names `by` (who drew the edge) and `read` (the source file the selector was read out of, never guessed). A ledger row with no probe here comes out RED as `unaccounted`; a probe here for a row the ledger no longer carries comes out RED as stale. Absence is never silence in either direction. RE-DERIVED 2026-08-14 at dev=929b6ea (Bjorn): 17 new edges for the rows the ledger grew (A7 A8 A11 S2 S4 G3 G8 G9 G11 R1 F2 K1 K5 K6 K7 K8 H3), and the probes whose screens the two trains moved are re-read from the moved source (P3 P5 M7 G7 G7b G6b).",
+ "_shape": "Authored against 390x844 — his words, 'mobile might need to be the priority for now'.",
+ "probes": [
+  {
+   "id": "P1",
+   "by": "Bjorn",
+   "read": "src/ui/screens/combat.js:445 (procbar) · src/content/statuses.js:74 (bleed.proc.threshold = 7)",
+   "screen": "combat › the enemy's build-up meter",
+   "why-drive": "No ?shot= state poses a status, so the game is PLAYED: the Reaver's own starter card Gorefire Slash applies 3 Bleed. A drive is the only honest way to photograph a mechanic.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat",
+     "ms": 2600
+    },
+    {
+     "op": "js",
+     "ms": 900,
+     "code": "for (let t=0;t<14;t++){ const c=[...document.querySelectorAll('.card')].find(e=>/Gorefire|Serrated|Rend|Crimson/i.test(e.innerText||'')); if(c){ c.click(); await sleep(250); if(document.querySelector('.card.selected')){ const en=document.querySelector('.combatant.enemy[data-eid]'); if(en) en.click(); } await sleep(700); } else { const et=document.querySelector('.end-turn'); if(et){ et.click(); await sleep(2200);} } if(document.querySelector('.procbar[data-status=\"bleed\"]')) break; } return true;"
+    }
+   ],
+   "focus": ".procbar[data-status=\"bleed\"]",
+   "expect": {
+    "present": {
+     "the bleed build-up meter": ".procbar[data-status=\"bleed\"]",
+     "the bleed pip": ".status-icon"
+    },
+    "measure": {
+     "fill": "document.querySelector('.procbar[data-status=\"bleed\"] .fill').style.width",
+     "pip": "document.querySelector('.status-icon').innerText.replace(/\\s+/g,'')"
+    }
+   }
+  },
+  {
+   "id": "P2",
+   "by": "Bjorn",
+   "read": "src/content/statuses.js:73-93 (bleed proc: threshold 7, burst 15% min 8, applies bleedResist) · :156-162 (bleedResist 'Clotted', icon 🩹) · src/content/cards/reaver.js:41 (gorefireSlash 1 energy + 1 MANA) · src/content/classes.js:13 (startingFlaskAllocation mana:1 — the third cast's honest source)",
+   "screen": "combat › the burst, as a damage event of its own",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat&shotSeed=BURST2&shotSettings=%7B%22holdConfirm%22%3A%22off%22%7D",
+     "ms": 2600
+    },
+    {
+     "op": "js",
+     "ms": 200,
+     "code": "window.__floats=[]; const obs=new MutationObserver((ms)=>{for(const m of ms) for(const n of m.addedNodes) if(n.innerText) window.__floats.push(n.innerText.trim());}); const l=document.querySelector('.fx-layer'); if(l) obs.observe(l,{childList:true}); const pipSeen=()=>[...document.querySelectorAll('.status-icon')].some(e=>/🩹/.test(e.innerText));\nconst enemy=()=>document.querySelector('.combatant.enemy[data-eid]');\nconst mana=()=>{const b=document.querySelector('.topbar .resbar[data-res=\"mana\"]');return b?+b.dataset.cur:NaN;};\nwindow.__trace=[];\nlet drank=false;\nfor(let t=0;t<34;t++){\n  if(pipSeen()){window.__trace.push(t+':BURST');break;}\n  if(!enemy()){window.__trace.push(t+':enemies-gone');break;}\n  const c=[...document.querySelectorAll('.card')].find(e=>/Gorefire/i.test(e.innerText||''));\n  if(c&&mana()>=1){\n    c.click(); await sleep(300);\n    if(document.querySelector('.card.selected')){const en=enemy(); if(en) en.click(); await sleep(900);}\n    const pb=document.querySelector('.procbar[data-status=\"bleed\"] .fill');\n    window.__trace.push(t+':cast bleed='+(pb?pb.style.width:'-')+' mana='+mana());\n    continue;\n  }\n  if(!drank&&mana()<1){\n    await sleep(1800);\n    for(let a=0;a<3&&mana()<1;a++){\n      const fl=document.querySelectorAll('.flask-charge')[1];\n      if(!fl)break;\n      fl.click(); await sleep(500);\n      const use=document.querySelector('.flask-action-menu .flask-action');\n      if(use&&!use.dataset.unavailableReason){const r=use.getBoundingClientRect();const o={bubbles:true,clientX:r.x+r.width/2,clientY:r.y+r.height/2,pointerId:5};use.dispatchEvent(new PointerEvent('pointerdown',o));await sleep(120);use.dispatchEvent(new PointerEvent('pointerup',o));use.click();await sleep(900);}\n      else {document.body.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true})); await sleep(1500);}\n    }\n    drank=true; window.__trace.push(t+':drank mana='+mana());\n    continue;\n  }\n  const et=document.querySelector('.end-turn'); if(!et) break;\n  et.click(); await sleep(2000); window.__trace.push(t+':end');\n}\nreturn true;"
+    }
+   ],
+   "focus": ".combatant.enemy",
+   "expect": {
+    "present": {
+     "the post-burst resist pip (the burst's own receipt on screen)": ".status-icon"
+    },
+    "measure": {
+     "trace": "(window.__trace||[]).join(' ')",
+     "floats": "(window.__floats||[]).slice(-14).join(' ')",
+     "pips": "[...document.querySelectorAll('.status-icon')].map(e=>e.innerText.replace(/\\s+/g,'')).join(' ')"
+    },
+    "wrong": [
+     {
+      "js": "![...document.querySelectorAll('.status-icon')].some(e=>/🩹/.test(e.innerText))",
+      "why": "drove the fight through three casts and the flask and never saw a bleed burst — the proc's own damage row was never on the screen"
+     }
+    ]
+   },
+   "why-drive": "No ?shot= state poses a burst, so the fight is PLAYED, the way a thumb would play it: two Gorefires empty the 2-mana pool at 6/7 build-up, the azure flask (1 charge, every fresh run) buys the third, 9/7 bursts. holdConfirm posed 'off' through the settings door — a shipped rung, so taps commit. Seed BURST2 pins a 33 hp enemy that SURVIVES its burst; on SHOWCASE the target dies with its receipt. The 08-08 drive is dead twice over: it clicked a card it could not pay for, and the pool it assumed (no mana gate) no longer exists."
+  },
+  {
+   "id": "P3",
+   "by": "Bjorn",
+   "read": "src/content/statuses.js (frost, threshold proc) · appliers now exist: src/content/cards/starseer.js (6x applyStatus status:'frost'), src/content/enemies/act2.js (1x)",
+   "screen": "combat › frost is now reachable content (the 08-08 red: zero appliers)",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat",
+     "ms": 2600
+    }
+   ],
+   "focus": ".combat",
+   "expect": {
+    "present": {
+     "the combat board": ".combat"
+    },
+    "source": [
+     {
+      "in": "src/content",
+      "pattern": "applyStatus[^}]*status:\\s*'frost'",
+      "min": 1,
+      "why": "NOTHING IN THE SHIPPED CONTENT APPLIES FROST — not a card, not an enemy, not a relic, not a weapon mod. Frost is a complete threshold-proc row (threshold 10, burst, Frost-Exposed, a resist row, its own SFX row) that no player can ever see. Bleed has 21 appliers by the same grep. Appliers of frost"
+     }
+    ]
+   }
+  },
+  {
+   "id": "P4",
+   "by": "Bjorn",
+   "read": "src/ui/screens/combat.js:643-664 (meterBars → resourceBars surface 'model') · src/ui/components/resbars.js:135-143 (data-res='poise', data-cur) · src/content/statuses.js:84 (proc.poiseDamage 3) · #165 replaced the old .poisebar — the vessel is the bar now",
+   "screen": "combat › the enemy's poise vessel at the moment bleed bursts",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat&shotSeed=BURST2&shotSettings=%7B%22holdConfirm%22%3A%22off%22%7D",
+     "ms": 2600
+    },
+    {
+     "op": "js",
+     "ms": 200,
+     "code": "const pipSeen=()=>[...document.querySelectorAll('.status-icon')].some(e=>/🩹/.test(e.innerText));\nconst enemy=()=>document.querySelector('.combatant.enemy[data-eid]');\nconst mana=()=>{const b=document.querySelector('.topbar .resbar[data-res=\"mana\"]');return b?+b.dataset.cur:NaN;};\nwindow.__trace=[];window.__poiseAt=()=>{const b=document.querySelector('.combatant.enemy .resbar[data-res=\"poise\"]');return b?b.dataset.cur+'/'+b.dataset.max:'none';};window.__poiseTrace=[];const _pt=setInterval(()=>{const p=window.__poiseAt();if(window.__poiseTrace[window.__poiseTrace.length-1]!==p)window.__poiseTrace.push(p);},400);setTimeout(()=>clearInterval(_pt),60000);\nlet drank=false;\nfor(let t=0;t<34;t++){\n  if(pipSeen()){window.__trace.push(t+':BURST');break;}\n  if(!enemy()){window.__trace.push(t+':enemies-gone');break;}\n  const c=[...document.querySelectorAll('.card')].find(e=>/Gorefire/i.test(e.innerText||''));\n  if(c&&mana()>=1){\n    c.click(); await sleep(300);\n    if(document.querySelector('.card.selected')){const en=enemy(); if(en) en.click(); await sleep(900);}\n    const pb=document.querySelector('.procbar[data-status=\"bleed\"] .fill');\n    window.__trace.push(t+':cast bleed='+(pb?pb.style.width:'-')+' mana='+mana());\n    continue;\n  }\n  if(!drank&&mana()<1){\n    await sleep(1800);\n    for(let a=0;a<3&&mana()<1;a++){\n      const fl=document.querySelectorAll('.flask-charge')[1];\n      if(!fl)break;\n      fl.click(); await sleep(500);\n      const use=document.querySelector('.flask-action-menu .flask-action');\n      if(use&&!use.dataset.unavailableReason){const r=use.getBoundingClientRect();const o={bubbles:true,clientX:r.x+r.width/2,clientY:r.y+r.height/2,pointerId:5};use.dispatchEvent(new PointerEvent('pointerdown',o));await sleep(120);use.dispatchEvent(new PointerEvent('pointerup',o));use.click();await sleep(900);}\n      else {document.body.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true})); await sleep(1500);}\n    }\n    drank=true; window.__trace.push(t+':drank mana='+mana());\n    continue;\n  }\n  const et=document.querySelector('.end-turn'); if(!et) break;\n  et.click(); await sleep(2000); window.__trace.push(t+':end');\n}\nreturn true;"
+    }
+   ],
+   "focus": ".combatant.enemy .resbar[data-res=\"poise\"]",
+   "expect": {
+    "present": {
+     "the enemy's poise vessel": ".combatant.enemy .resbar[data-res=\"poise\"]"
+    },
+    "measure": {
+     "poiseTrace": "(window.__poiseTrace||[]).join(' → ')",
+     "driveTrace": "(window.__trace||[]).join(' ')"
+    },
+    "wrong": [
+     {
+      "js": "(()=>{const t=(window.__poiseTrace||[]).map(s=>parseInt(s,10)||0); return !t.length || Math.max(...t)<=t[0];})()",
+      "why": "the enemy's poise never rose across the fight — the burst's 3 fixed poise damage was not visible on the vessel"
+     }
+    ]
+   },
+   "why-drive": "Same drive as P2 (same seed, same flask), the trace reading the enemy's poise vessel: bleed's burst lands 3 fixed poise damage, so the vessel must rise when the pip appears."
+  },
+  {
+   "id": "P5",
+   "by": "Bjorn",
+   "read": "src/content/statuses.js (insanity, threshold proc) · appliers now exist: src/content/cards/herald.js (2x), src/content/enemies/act3.js (applyStatus status:'insanity' on player)",
+   "screen": "combat › insanity is now reachable content (the 08-08 red: zero occurrences)",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat",
+     "ms": 2600
+    }
+   ],
+   "focus": ".combat",
+   "expect": {
+    "present": {
+     "the combat board": ".combat"
+    },
+    "source": [
+     {
+      "in": "src/content",
+      "pattern": "applyStatus[^}]*status:\\s*'insanity'",
+      "min": 1,
+      "why": "ZERO appliers of insanity anywhere in shipped content. Threshold 14, a burst with a guaranteed Stagger, a resist row and its own SFX row — and no card, enemy or relic that can put one point on a target. Appliers of insanity"
+     }
+    ]
+   }
+  },
+  {
+   "id": "M2",
+   "by": "Bjorn",
+   "read": "src/ui/screens/profileArchive.js (the drawer) · src/ui/screens/settings.js:243 (Profile category)",
+   "screen": "Settings › Profile",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Profile\"]"
+    }
+   ],
+   "focus": "#set-profile-mount, .set-panel",
+   "expect": {
+    "present": {
+     "the profile drawer": "#set-profile-mount, .set-panel"
+    },
+    "measure": {
+     "stateLine": "document.querySelector('.set-panel').innerText.split('\\n')[0].slice(0,80)"
+    }
+   }
+  },
+  {
+   "id": "M7",
+   "by": "Bjorn",
+   "read": "src/engine/save.js:310-345 (THE PROFILE EXISTS BEFORE THE FIRST RUN DOES — ensureProfile at the class-pick commit and inside saveRun/loadRun) · src/main.js:170,655 · src/ui/screens/profileArchive.js:95 (empty line now says \"the moment you begin your first climb\")",
+   "screen": "Settings › Profile, on a device that has never played",
+   "why-drive": "localStorage is cleared and the game booted fresh — the exact state a new player opens it in. Then the run is STARTED (class, name, BEGIN THE CLIMB) and storage is read again.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "js",
+     "code": "localStorage.clear(); sessionStorage.setItem('__m7',''); return true;"
+    },
+    {
+     "op": "goto",
+     "q": "",
+     "ms": 1600
+    },
+    {
+     "op": "js",
+     "code": "sessionStorage.setItem('__m7','boot:['+Object.keys(localStorage).join('+')+']'); return true;"
+    },
+    {
+     "op": "click",
+     "sel": ".slot-new",
+     "ms": 800
+    },
+    {
+     "op": "js",
+     "code": "sessionStorage.setItem('__m7',sessionStorage.getItem('__m7')+' | at the naming screen:['+Object.keys(localStorage).join('+')+']'); return true;"
+    },
+    {
+     "op": "click",
+     "sel": "#cz-start",
+     "ms": 1500
+    },
+    {
+     "op": "js",
+     "code": "sessionStorage.setItem('__m7',sessionStorage.getItem('__m7')+' | RUN STARTED:['+Object.keys(localStorage).join('+')+']'); sessionStorage.setItem('__m7profile', String(localStorage.getItem('sote_meta_v1')!==null)); return true;"
+    },
+    {
+     "op": "goto",
+     "q": "",
+     "ms": 1600
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Profile\"]"
+    }
+   ],
+   "focus": ".set-panel",
+   "expect": {
+    "present": {
+     "the Profile section": ".set-panel"
+    },
+    "measure": {
+     "storageTrace": "sessionStorage.getItem('__m7')",
+     "profileExistedWhenTheRunBegan": "sessionStorage.getItem('__m7profile')",
+     "whatTheScreenSays": "document.querySelector('.set-panel').innerText.split('\\n')[0].slice(0,95)"
+    },
+    "wrong": [
+     {
+      "js": "sessionStorage.getItem('__m7profile') !== 'true'",
+      "why": "THE CLIMB BEGAN AND THERE IS NO PROFILE. After class, name and BEGIN THE CLIMB, localStorage holds sote_run_v1 and no sote_meta_v1 — the profile is still not created"
+     },
+     {
+      "js": "/finish your first run/.test(document.querySelector('.set-panel').innerText)",
+      "why": "and the screen says it out loud: 'No profile yet - one is created when you finish your first run.' That sentence IS the behaviour he asked us to change, printed back at him"
+     }
+    ]
+   }
+  },
+  {
+   "id": "L3",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a house law",
+   "why": "Law 0 in commons/laws.md. It binds how we build every project; there is no control for it on any screen, and its falsifier (one fictional entry of a new kind, zero code commits) is a separate act nobody has run tonight.",
+   "evidence": "commons/laws.md Law 0"
+  },
+  {
+   "id": "A1",
+   "by": "Bjorn",
+   "read": "src/ui/screens/equipment.js:255-267 (picker on slot pick) · the .on.empty cell died with #140 (basics fill the shelf) — the occupied cell is now the door",
+   "screen": "the Armoury › a hand slot's picker",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    },
+    {
+     "op": "click",
+     "sel": ".es-cell.on",
+     "ms": 600
+    }
+   ],
+   "focus": ".equip-chip",
+   "expect": {
+    "present": {
+     "the picker, listing what you own": ".equip-chip"
+    },
+    "measure": {
+     "chips": "[...document.querySelectorAll('.equip-chip')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,30)).join(' | ')"
+    }
+   }
+  },
+  {
+   "id": "A2",
+   "by": "Bjorn",
+   "read": "src/model/loadout.js:352-397 (the slot ladder, his sentence quoted at the code) · .es-cell.locked",
+   "screen": "the Armoury › the slot ladder",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    }
+   ],
+   "focus": ".es-cell.locked",
+   "expect": {
+    "present": {
+     "exactly the next locked slot": ".es-cell.locked"
+    },
+    "measure": {
+     "perSlot": "[...document.querySelectorAll('.equip-slot')].map(s=>(s.querySelector('.es-label')||{}).textContent+':'+s.querySelectorAll('.es-cell.locked').length+' locked').join(' | ')"
+    },
+    "wrong": [
+     {
+      "js": "[...document.querySelectorAll('.equip-slot')].some(s=>s.querySelectorAll('.es-cell.locked').length>1)",
+      "why": "a slot block shows more than one locked rung — the ladder is showing more than the NEXT locked thing"
+     }
+    ]
+   }
+  },
+  {
+   "id": "A3",
+   "by": "Bjorn",
+   "read": "src/ui/screens/compendium.js (.cp-cell, state-teased) · src/ui/screens/title.js:54 (#armaments)",
+   "screen": "ARMAMENTS (the Compendium), from the main menu",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#armaments",
+     "ms": 900
+    }
+   ],
+   "focus": ".cp-cell",
+   "expect": {
+    "present": {
+     "its own menu entry, and the shape of what you don't have": ".cp-cell"
+    },
+    "count": [
+     {
+      "sel": ".cp-cell",
+      "min": 4
+     }
+    ],
+    "measure": {
+     "cells": "__all('.cp-cell').length",
+     "teased": "__all('.cp-cell.state-teased').length",
+     "revealed": "__all('.cp-cell:not(.state-teased)').length"
+    }
+   }
+  },
+  {
+   "id": "A4",
+   "by": "Bjorn",
+   "read": "src/ui/screens/equipment.js:758 (btn.className = 'region-fold'), :760 aria-expanded",
+   "screen": "the Armoury › the CARDS pane's fold",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    }
+   ],
+   "focus": ".region-fold",
+   "expect": {
+    "present": {
+     "a fold control on the cards pane": ".region-fold"
+    },
+    "measure": {
+     "label": "document.querySelector('.region-fold').innerText.replace(/\\s+/g,' ')",
+     "expanded": "document.querySelector('.region-fold').getAttribute('aria-expanded')"
+    }
+   }
+  },
+  {
+   "id": "A5",
+   "by": "Bjorn",
+   "read": "src/ui/screens/equipment.js:424 opensCollapsed(..., narrow) — the phone opens the context pane FOLDED",
+   "screen": "the Armoury › the fold, opened and closed",
+   "why-drive": "His sentence was 'so that I can see the armory slots better' — so the edge that matters is that a phone OPENS folded, and that the fold still opens. Both edges are driven.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    },
+    {
+     "op": "js",
+     "ms": 400,
+     "code": "const b=document.querySelector('.region-fold'); window.__first=b.getAttribute('aria-expanded'); b.click(); await sleep(400); window.__second=(document.querySelector('.region-fold')||{}).getAttribute?document.querySelector('.region-fold').getAttribute('aria-expanded'):'gone'; return true;"
+    }
+   ],
+   "focus": ".region-fold",
+   "expect": {
+    "present": {
+     "the fold, after being toggled": ".region-fold"
+    },
+    "measure": {
+     "openedAs": "window.__first",
+     "afterTap": "window.__second"
+    },
+    "wrong": [
+     {
+      "js": "window.__first !== 'false'",
+      "why": "the phone does NOT open the cards pane folded — the slots do not get the room his sentence asked for"
+     },
+     {
+      "js": "window.__second !== 'true'",
+      "why": "tapping the fold did not expand it — collapsible without expandable"
+     }
+    ]
+   }
+  },
+  {
+   "id": "A6",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — an answer of his that settled a scope question",
+   "why": "'all together for armory shelf with settings to configure this' was ANSWERED: the found-set is global, which is what save.js already did. The SETTING he described is row A7 and is not-started, so there is nothing on any screen for this row to be. Photographing the armoury here would photograph A7's absence and call it A6's presence.",
+   "evidence": "commons/decisions/directions.md (his answer) · A7 is the open half"
+  },
+  {
+   "id": "A9",
+   "by": "Bjorn",
+   "read": "src/ui/components/refusal.js · src/ui/screens/equipment.js:527 (.es-sealed) · the locked cell's own tooltip",
+   "screen": "the Armoury › a locked slot, touched",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    },
+    {
+     "op": "js",
+     "ms": 400,
+     "code": "const c=document.querySelector('.es-cell.locked'); c.dispatchEvent(new PointerEvent('pointerenter',{bubbles:true,clientX:20,clientY:20})); await sleep(420); c.click(); await sleep(300); return true;"
+    }
+   ],
+   "focus": ".es-cell.locked",
+   "expect": {
+    "present": {
+     "the locked cell": ".es-cell.locked",
+     "a refusal that says why": "#tooltip"
+    },
+    "measure": {
+     "says": "(document.getElementById('tooltip')||{}).innerText"
+    },
+    "wrong": [
+     {
+      "js": "!((document.getElementById('tooltip')||{}).innerText||'').trim()",
+      "why": "the locked slot refuses in silence — no reason where the finger landed"
+     }
+    ]
+   }
+  },
+  {
+   "id": "S1",
+   "by": "Bjorn",
+   "read": "src/ui/screens/rest.js:52 (tooltipFn: upgradePreviewHtml) · src/ui/components/tooltip.js:148 (pointerenter / gpfocus)",
+   "screen": "the Shrine › Smith, a card previewed",
+   "why-drive": "The preview is a TOOLTIP, so it has to be fired the way a finger fires it. pointerenter is what a tap dispatches first on this browser.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=rest",
+     "ms": 2200
+    },
+    {
+     "op": "click",
+     "sel": "#smith-opt"
+    },
+    {
+     "op": "js",
+     "ms": 400,
+     "code": "const c=document.querySelector('#smith-grid .card'); c.scrollIntoView({block:'center'}); c.dispatchEvent(new PointerEvent('pointerenter',{bubbles:true,clientX:20,clientY:20})); await sleep(420); return true;"
+    }
+   ],
+   "focus": "#tooltip",
+   "expect": {
+    "present": {
+     "the upgrade preview": "#tooltip",
+     "the smith grid": "#smith-grid .card"
+    },
+    "measure": {
+     "preview": "(document.getElementById('tooltip')||{}).innerText.replace(/\\s+/g,' ').slice(0,110)"
+    },
+    "wrong": [
+     {
+      "js": "!/→|becomes|upgrade/i.test((document.getElementById('tooltip')||{}).innerText||'')",
+      "why": "the tooltip fired but says nothing about what the upgrade CHANGES — he asked to see the upgrade, not the card"
+     }
+    ]
+   }
+  },
+  {
+   "id": "S3",
+   "by": "Bjorn",
+   "read": "src/ui/screens/settings.js:203 (the holdConfirm row, choices derived from balance.ui.holdConfirm)",
+   "screen": "Settings › Advanced › Hold to confirm",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Advanced\"]"
+    }
+   ],
+   "focus": "[data-key=\"holdConfirm\"]",
+   "expect": {
+    "present": {
+     "the hold-to-confirm ladder": "[data-key=\"holdConfirm\"]"
+    },
+    "count": [
+     {
+      "sel": "[data-key=\"holdConfirm\"]",
+      "min": 3
+     }
+    ],
+    "measure": {
+     "steps": "[...document.querySelectorAll('[data-key=\\\"holdConfirm\\\"]')].map(e=>e.textContent).join('/')",
+     "on": "(document.querySelector('[data-key=\\\"holdConfirm\\\"].on')||{}).textContent"
+    }
+   }
+  },
+  {
+   "id": "S5",
+   "by": "Bjorn",
+   "read": "src/ui/screens/settings.js:696-702 (.set-tabs, role=tablist, one .set-tab per category)",
+   "screen": "Settings › the tab strip",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    }
+   ],
+   "focus": ".set-tabs",
+   "expect": {
+    "present": {
+     "tabs for sections": ".set-tabs .set-tab",
+     "a tablist a screen reader can hear": "[role=\"tablist\"]"
+    },
+    "count": [
+     {
+      "sel": ".set-tab",
+      "min": 4
+     }
+    ],
+    "measure": {
+     "tabs": "[...document.querySelectorAll('.set-tab')].map(e=>e.textContent).join(' · ')"
+    }
+   }
+  },
+  {
+   "id": "T1",
+   "by": "Bjorn",
+   "read": "styles/ui.css (#84/#87 — a screen that overflows brings its own scroller) · src/main.js ?shot=rest poses a 20-card grid",
+   "screen": "the Shrine › Smith grid, the screen he could not scroll",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=rest",
+     "ms": 2200
+    },
+    {
+     "op": "click",
+     "sel": "#smith-opt"
+    }
+   ],
+   "focus": "#smith-grid",
+   "expect": {
+    "present": {
+     "the grid that overflowed": "#smith-grid .card"
+    },
+    "measure": {
+     "scrollport": "(()=>{const s=document.querySelector('.screen');return s.scrollHeight+' over '+s.clientHeight;})()",
+     "lastCardArrivesBy": "(()=>{const s=document.querySelector('.screen');s.scrollTop=s.scrollHeight;const cs=[...document.querySelectorAll('#smith-grid .card')];const l=cs[cs.length-1];return +(s.getBoundingClientRect().bottom-l.getBoundingClientRect().bottom).toFixed(1);})()"
+    },
+    "wrong": [
+     {
+      "js": "(()=>{const s=document.querySelector('.screen');return !(s.scrollHeight>s.clientHeight+1);})()",
+      "why": "the overflowing screen carries no scrollport — the finger moves nothing, which is the defect he reported"
+     },
+     {
+      "js": "(()=>{const s=document.querySelector('.screen');s.scrollTop=s.scrollHeight;const cs=[...document.querySelectorAll('#smith-grid .card')];const l=cs[cs.length-1];return l.getBoundingClientRect().bottom > s.getBoundingClientRect().bottom+1;})()",
+      "why": "scrolled to the end and the last card is STILL below the edge — cards he cannot reach"
+     }
+    ]
+   }
+  },
+  {
+   "id": "T2",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — an answer of his, later reversed by his own T3",
+   "why": "'for the 44 device lpx, I default to no' is a decision, not a control. What it produced IS on a screen and is row T3 (Minimum tap size), which is walked. Both his answers stand unstruck in directions.md D8.1 / D8.1b; that he changed his mind is the datum.",
+   "evidence": "commons/decisions/directions.md D8.1 / D8.1b · T3 is the built half"
+  },
+  {
+   "id": "T3",
+   "by": "Bjorn",
+   "read": "src/ui/screens/settings.js (tapFloor row) · balance.ui tap ladder 44/36/30/24",
+   "screen": "Settings › Accessibility › Minimum tap size",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Accessibility\"]"
+    }
+   ],
+   "focus": "[data-key=\"tapFloor\"]",
+   "expect": {
+    "present": {
+     "the tap-size ladder": "[data-key=\"tapFloor\"]"
+    },
+    "count": [
+     {
+      "sel": "[data-key=\"tapFloor\"]",
+      "min": 4
+     }
+    ],
+    "measure": {
+     "steps": "[...document.querySelectorAll('[data-key=\\\"tapFloor\\\"]')].map(e=>e.textContent).join('/')",
+     "on": "(document.querySelector('[data-key=\\\"tapFloor\\\"].on')||{}).textContent"
+    },
+    "wrong": [
+     {
+      "js": "(document.querySelector('[data-key=\\\"tapFloor\\\"].on')||{}).textContent !== '44'",
+      "why": "the default is not 44 — his floor moved without him moving it"
+     }
+    ]
+   }
+  },
+  {
+   "id": "T4",
+   "by": "Bjorn",
+   "read": "styles/ui.css (#100 — the tab takes the chip's weight) · settings.js .set-tabs",
+   "screen": "Settings › the tab strip, measured",
+   "why-tolerance": "NO tolerance is asserted here and that is deliberate: WHICH of four numbers his '20% smaller' named is DEC-9 and undecided, so a threshold typed here would be me deciding it. What is asserted is the tap floor (44, card #37) and one row; the height is REPORTED.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    }
+   ],
+   "focus": ".set-tabs",
+   "expect": {
+    "present": {
+     "the strip": ".set-tabs"
+    },
+    "measure": {
+     "tabHeightDevicePx": "+(document.querySelector('.set-tab').getBoundingClientRect().height*devicePixelRatio).toFixed(1)",
+     "tabHeightCssPx": "+document.querySelector('.set-tab').getBoundingClientRect().height.toFixed(1)",
+     "stripRows": "new Set([...document.querySelectorAll('.set-tab')].map(e=>Math.round(e.getBoundingClientRect().top))).size",
+     "stripOverflowX": "document.querySelector('.set-tabs').scrollWidth-document.querySelector('.set-tabs').clientWidth"
+    },
+    "wrong": [
+     {
+      "js": "document.querySelector('.set-tab').getBoundingClientRect().height*devicePixelRatio + 0.5 < 44",
+      "why": "a tab is now under the 44 device-px tap floor — smaller went past the floor"
+     }
+    ]
+   }
+  },
+  {
+   "id": "T5",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a ranking rule",
+   "why": "'mobile might need to be the priority for now' is the rule this whole audit is run under: every probe in this file is authored at 390x844. It has no control. Its evidence is that this run exists at that shape.",
+   "evidence": "commons/conversations/all/thread.md · and the --shape default of tools/watched.mjs"
+  },
+  {
+   "id": "G2",
+   "by": "Bjorn",
+   "read": "src/ui/screens/map.js (visited / traveled classes) · src/main.js:1556 ?shotWalk leaves a trail",
+   "screen": "the act map, four steps in",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=4",
+     "ms": 2000
+    }
+   ],
+   "focus": ".map-node.visited",
+   "expect": {
+    "present": {
+     "nodes that stay revealed behind you": ".map-node.visited",
+     "the trail": ".map-edge.traveled"
+    },
+    "count": [
+     {
+      "sel": ".map-node.visited",
+      "min": 2
+     }
+    ],
+    "measure": {
+     "visited": "__all('.map-node.visited').length",
+     "traveled": "__all('.map-edge.traveled').length"
+    }
+   }
+  },
+  {
+   "id": "G4",
+   "by": "Bjorn",
+   "read": "src/model/mapview.js (the computed framing) · src/ui/screens/map.js:534",
+   "screen": "the act map, framed on the choice",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=4",
+     "ms": 2000
+    }
+   ],
+   "focus": ".map-node.current",
+   "expect": {
+    "present": {
+     "the node you are on": ".map-node.current"
+    },
+    "measure": {
+     "currentInFrame": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();const r=document.querySelector('.map-node.current').getBoundingClientRect();return r.top>=s.top-1&&r.bottom<=s.bottom+1&&r.left>=s.left-1&&r.right<=s.right+1;})()",
+     "nextsInFrame": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();const ns=[...document.querySelectorAll('.map-node.reachable')];return ns.filter(n=>{const r=n.getBoundingClientRect();return r.top>=s.top-1&&r.bottom<=s.bottom+1&&r.left>=s.left-1&&r.right<=s.right+1;}).length+'/'+ns.length;})()",
+     "horizontalScrollTravelPx": "document.querySelector('.map-scroll').scrollWidth-document.querySelector('.map-scroll').clientWidth"
+    },
+    "wrong": [
+     {
+      "js": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();const ns=[...document.querySelectorAll('.map-node.reachable')];return ns.some(n=>{const r=n.getBoundingClientRect();return !(r.top>=s.top-1&&r.bottom<=s.bottom+1&&r.left>=s.left-1&&r.right<=s.right+1);});})()",
+      "why": "a next step he can take is outside the frame the map opened on"
+     }
+    ]
+   }
+  },
+  {
+   "id": "G5",
+   "by": "Bjorn",
+   "read": "src/ui/screens/map.js:305-308 (.map-zoom, #zoom-out / #zoom-reset / #zoom-in)",
+   "screen": "the act map › the zoom bar",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map",
+     "ms": 1800
+    }
+   ],
+   "focus": ".map-zoom",
+   "expect": {
+    "present": {
+     "zoom out": "#zoom-out",
+     "refocus on current": "#zoom-reset",
+     "zoom in": "#zoom-in"
+    },
+    "measure": {
+     "panner": "(()=>{const s=document.querySelector('.map-scroll');return getComputedStyle(s).overflow;})()",
+     "tapPx": "+(document.querySelector('#zoom-in').getBoundingClientRect().height*devicePixelRatio).toFixed(1)"
+    }
+   }
+  },
+  {
+   "id": "G6",
+   "by": "Bjorn",
+   "read": "src/ui/screens/settings.js:68 (the mapMode A/B, ruled here and NOT on Custom Climb) · src/ui/screens/customRun.js (which grows nothing new)",
+   "screen": "Settings › Display › Map reveal (test)",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Display\"]"
+    }
+   ],
+   "focus": "[data-key=\"mapMode\"]",
+   "expect": {
+    "present": {
+     "the A/B toggle": "[data-key=\"mapMode\"]"
+    },
+    "count": [
+     {
+      "sel": "[data-key=\"mapMode\"]",
+      "eq": 2
+     }
+    ],
+    "measure": {
+     "sides": "[...document.querySelectorAll('[data-key=\\\"mapMode\\\"]')].map(e=>e.textContent).join('/')",
+     "on": "(document.querySelector('[data-key=\\\"mapMode\\\"].on')||{}).textContent"
+    }
+   }
+  },
+  {
+   "id": "G7",
+   "by": "Bjorn",
+   "read": "src/model/mapknowledge.js:89 MAP_MODE_DEFAULT='fog' · src/ui/components/mapboard.js:261 data-map-mode, :245 .map-fog-ground · rungs are hidden/placed/known (mapknowledge.js:51-56)",
+   "screen": "the act map, in the state he opens it in",
+   "why-drive": "Two boots on purpose: the DEFAULT one (what he gets) and the switched-on one (what exists). The verdict is about the first; the second is photographed so nobody reads this row as 'the fog was never built'.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=4",
+     "ms": 2000
+    }
+   ],
+   "focus": ".map-scroll",
+   "expect": {
+    "present": {
+     "the map": ".map-scroll",
+     "the fog ground": ".map-fog-ground"
+    },
+    "measure": {
+     "modeHeGets": "document.querySelector('.map-scroll').dataset.mapMode",
+     "unlitNodes": "__all('.map-node.k-hidden, .map-node.k-placed').length",
+     "fogPlate": "__all('.map-fog-ground').length"
+    },
+    "wrong": [
+     {
+      "js": "document.querySelector('.map-scroll').dataset.mapMode !== 'fog'",
+      "why": "HE OPENS THE MAP AND THERE IS NO FOG. data-map-mode is 'path' — the whole act is drawn, exactly as before. The fog is in the bundle and switched off behind Settings › Display › Map reveal"
+     }
+    ]
+   }
+  },
+  {
+   "id": "G7b",
+   "extra": true,
+   "by": "Bjorn",
+   "read": "same row, the other edge — ?shotSettings={\"mapMode\":\"path\"} (src/main.js:200, the shotSettings door)",
+   "screen": "the act map with Map reveal switched to PATH — the edge that proves the old mode survives",
+   "_note": "NOT a ledger row, and DECLARED as such rather than smuggled in: `extra: true` is the only exemption from the stale floor in this file. Until 08-14 this shot the FOG side while path was the default; the default flipped (G8), so the declared other edge flips with it — it exists so G7/G8 cannot be misread as 'the path view was deleted'.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=4&shotSettings=%7B%22mapMode%22%3A%22path%22%7D",
+     "ms": 2000
+    }
+   ],
+   "focus": ".map-scroll",
+   "expect": {
+    "present": {
+     "the map, fully drawn": ".map-scroll"
+    },
+    "measure": {
+     "mode": "document.querySelector('.map-scroll').dataset.mapMode",
+     "hiddenNodes": "__all('.map-node.k-hidden').length"
+    },
+    "wrong": [
+     {
+      "js": "document.querySelector('.map-scroll').dataset.mapMode !== 'path'",
+      "why": "the shotSettings door did not deliver path mode — the A/B lost its B"
+     }
+    ]
+   }
+  },
+  {
+   "id": "G10",
+   "by": "Bjorn",
+   "read": "src/content/mapconfig.js:74 (entries: 1)",
+   "screen": "the act map, floor 1",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map",
+     "ms": 1800
+    }
+   ],
+   "focus": ".map-node.current",
+   "expect": {
+    "present": {
+     "the one starting node": ".map-node.current, .map-node.reachable"
+    },
+    "measure": {
+     "entranceRow": "(()=>{const ns=[...document.querySelectorAll('.map-node')];const ys=ns.map(n=>Math.round(n.getBoundingClientRect().top));const max=Math.max(...ys);return ys.filter(y=>y===max).length;})()"
+    },
+    "wrong": [
+     {
+      "js": "(()=>{const ns=[...document.querySelectorAll('.map-node')];const ys=ns.map(n=>Math.round(n.getBoundingClientRect().top));const max=Math.max(...ys);return ys.filter(y=>y===max).length!==1;})()",
+      "why": "the bottom row of the act has more than one node — a new game does not start from ONE starting node"
+     }
+    ]
+   }
+  },
+  {
+   "id": "G12",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a scheduling fact",
+   "why": "'make it a priority!' is a claim about the board, not a control. It is true or false about what the family did that hour, and no screenshot can settle it. Marina's board is its evidence.",
+   "evidence": "commons/conversations/all/thread.md · Marina's board"
+  },
+  {
+   "id": "C1",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a family artifact",
+   "why": "The status checklist is a thing we write for him, not a thing in the game. Its evidence is Saga's ledger and Marina's board — and this very audit is the answer to the part of the ask that a board could not give him.",
+   "evidence": "commons/decisions/asks-ledger.md · gamedesign/marina/log/2026"
+  },
+  {
+   "id": "C2",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — the shape of our updates to him",
+   "why": "Checklist, screenshots, preview build, one-line actions with the why. A format for our writing; nothing in the game renders it.",
+   "evidence": "gamedesign/marina/log/2026/2026-08-08_he-took-the-pen-back-and-handed-it-to-me.md"
+  },
+  {
+   "id": "C3",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — who speaks to him",
+   "why": "'marina, you should be coordinating and giving me feedback' is a rule about the family, enforced in SOP 1. No screen.",
+   "evidence": "commons/decisions/directions.md · commons/development.md SOP 1"
+  },
+  {
+   "id": "C4",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — who approves drafts",
+   "why": "A delegation of his approval, recorded as a decision. No control.",
+   "evidence": "commons/decisions/directions.md"
+  },
+  {
+   "id": "C7",
+   "by": "Bjorn",
+   "read": "src/ui/screens/about.js:41 (.about-ai) · src/content/aiDisclosure.js · settings.js CATEGORY_ORDER 'About'",
+   "screen": "Settings › About › the AI acknowledgement",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"About\"]"
+    }
+   ],
+   "focus": ".about-ai",
+   "expect": {
+    "present": {
+     "the disclosure, in the product": ".about-ai",
+     "its lead sentences": ".about-lead",
+     "a way to keep a copy": ".about-copy"
+    },
+    "measure": {
+     "version": "(document.querySelector('.about-ver')||{}).innerText",
+     "lead": "(document.querySelector('.about-lead')||{}).innerText.slice(0,80)"
+    }
+   }
+  },
+  {
+   "id": "C8",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — and deliberately not photographed",
+   "why": "His one statement about money. The ruling on it is that it must not be raised at him again; this audit therefore records the row as declared and looks no further. Nothing about runners or billing is in scope here.",
+   "evidence": "commons/conversations/all/thread.md (not reprinted, by ruling)"
+  },
+  {
+   "id": "C9",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a deliverable of ours",
+   "why": "'give me screenshots of the ideas' is answered by frames we render FOR him, not by a control in the game. He read them and answered with wave 4, which is the evidence. This audit is the same ask applied to shipped features rather than ideas.",
+   "evidence": "gamedesign/marina/log/2026/2026-08-08_the-systems-brainstorm-read-before-drawn.md"
+  },
+  {
+   "id": "C10",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — how the house convenes",
+   "why": "'multiple agents working on several different aspects' is a fact about our sessions. What he is naming is that it be VISIBLE to him, and visibility lives in the update format (C2), not in the game.",
+   "evidence": "commons/SUMMON.md"
+  },
+  {
+   "id": "G6b",
+   "extra": true,
+   "by": "Bjorn",
+   "read": "src/ui/screens/customRun.js:114-150 (#cr-shape — the run-shape knobs SHIPPED via #140; compare 08-08, when this file asserted their absence)",
+   "screen": "CUSTOM CLIMB — mapMode still ruled off this screen; the shape knobs now legitimately on it",
+   "_note": "NOT a ledger row. On 08-08 this probe proved two false reports false by asserting the knobs and the A/B were NOT here. R1 shipped since (#140), so the knob half of that absence is DELETED — a probe asserting yesterday's tree is the stale receipt this tool exists to catch. What remains asserted: the map-reveal A/B stays in Settings (G6's ruling), and the knobs that now exist are asserted PRESENT by R1's own probe, not here.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#custom-climb",
+     "ms": 900
+    }
+   ],
+   "focus": "#cr-seed",
+   "expect": {
+    "present": {
+     "the ascension slider": "#cr-asc",
+     "the difficulty rules": "#cr-diff .mod-chip",
+     "the seed field": "#cr-seed",
+     "begin": "#cr-start"
+    },
+    "absent": {
+     "a map-reveal control (ruled into Settings instead — G6)": "[data-key=\"mapMode\"]"
+    },
+    "measure": {
+     "controlsOnThisScreen": "[...document.querySelectorAll('.customrun input,.customrun button')].map(e=>(e.id||e.className)).join(' | ')"
+    }
+   }
+  },
+  {
+   "id": "G4b",
+   "extra": true,
+   "by": "Bjorn",
+   "read": "src/main.js:1516 ?shotSeed — one map is not the map (EldenSpire#28)",
+   "screen": "the act map on a SECOND seed, at the entrance row",
+   "_note": "NOT a ledger row. G4 is watched on ONE seed at one position, and my own 12-seed sweep at 8a780c8 found a next-step option off screen in 9 of 12. This walks one more seed at the position that sweep measured, so G4's boundary is sampled rather than only written down.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotSeed=BJORN3",
+     "ms": 2000
+    }
+   ],
+   "focus": ".map-scroll",
+   "expect": {
+    "present": {
+     "the map": ".map-scroll"
+    },
+    "measure": {
+     "stepsInFrame": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();const ns=[...document.querySelectorAll('.map-node.reachable, .map-node.current')];return ns.filter(n=>{const r=n.getBoundingClientRect();return r.top>=s.top-1&&r.bottom<=s.bottom+1&&r.left>=s.left-1&&r.right<=s.right+1;}).length+'/'+ns.length;})()",
+     "horizontalScrollTravelPx": "document.querySelector('.map-scroll').scrollWidth-document.querySelector('.map-scroll').clientWidth"
+    },
+    "wrong": [
+     {
+      "js": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();return [...document.querySelectorAll('.map-node.reachable, .map-node.current')].some(n=>{const r=n.getBoundingClientRect();return !(r.top>=s.top-1&&r.bottom<=s.bottom+1&&r.left>=s.left-1&&r.right<=s.right+1);});})()",
+      "why": "on seed BJORN3 a step he can take is outside the frame the map opened on — G4 is green on SHOWCASE and is not a claim about every map"
+     }
+    ]
+   }
+  },
+  {
+   "id": "N1",
+   "kind": "off-build",
+   "by": "Bjorn",
+   "screen": "no build surface — a sentence of HIS about himself, not a control",
+   "why": "'I've never seen the upgrade preview before' is Constantine reporting what he has and has not looked at. No machine can photograph a thing a person has not seen. The CONTROL it is about is walked as S1 (the Shrine's Smith, preview fired the way a finger fires it) — and S1's own why already carries the same fact in Saga's words. Declared here rather than skipped, because Saga declared it in the ledger rather than dropping it, and an unclaimed row must be somebody's.",
+   "evidence": "commons/decisions/directions.md D8 · and row S1, which walks the screen"
+  },
+  {
+   "id": "A7",
+   "by": "Bjorn",
+   "read": "src/content/balance.js:445 (persistence: 'both'; the note at :440-444 is why there is no second settings word), :461 (basicTag: 'basic') · src/ui/screens/equipment.js picker chips",
+   "screen": "the Armoury › a hand slot's picker on a fresh run — the basics on everybody's shelf",
+   "why-drive": "His sentence had two halves. The shelf-scope 'setting' was deliberately collapsed into the `persistence` word (balance.js:440: a second word would be two settings answering one question) — so the half a screen can show is the basics: plain weapons available to everybody at run start. On 08-08 this picker photographed EMPTY.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    },
+    {
+     "op": "click",
+     "sel": ".es-cell.on",
+     "ms": 600
+    }
+   ],
+   "focus": ".equip-chip",
+   "expect": {
+    "present": {
+     "the picker, with options a fresh run already owns": ".equip-chip"
+    },
+    "count": [
+     {
+      "sel": ".equip-chip",
+      "min": 3
+     }
+    ],
+    "measure": {
+     "chips": "[...document.querySelectorAll('.equip-chip')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,26)).join(' | ')"
+    },
+    "source": [
+     {
+      "in": "src/content",
+      "pattern": "basicTag",
+      "min": 1,
+      "why": "the basic-weapons word exists as data"
+     },
+     {
+      "in": "src/content",
+      "pattern": "persistence:",
+      "min": 1,
+      "why": "the shelf-scope word exists as data"
+     }
+    ]
+   }
+  },
+  {
+   "id": "A8",
+   "by": "Bjorn",
+   "read": "src/content/balance.js:465-467 (swapCostKind 'energy', swapCost 2) · src/ui/screens/settings.js:283-294 (Advanced › 'Weapon swap cost', choices are rows in balance.equipment.swapCostRules)",
+   "screen": "Settings › Advanced › Weapon swap cost",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Advanced\"]"
+    }
+   ],
+   "focus": "[data-key=\"swapCostRule\"]",
+   "expect": {
+    "present": {
+     "the swap-cost rule (his 'more or less depending on Talisman', as data rows)": "[data-key=\"swapCostRule\"]"
+    },
+    "count": [
+     {
+      "sel": "[data-key=\"swapCostRule\"]",
+      "min": 2
+     }
+    ],
+    "measure": {
+     "choices": "[...document.querySelectorAll('[data-key=\\\"swapCostRule\\\"]')].map(e=>e.textContent).join('/')",
+     "on": "(document.querySelector('[data-key=\\\"swapCostRule\\\"].on')||{}).textContent"
+    },
+    "source": [
+     {
+      "in": "src/content",
+      "pattern": "swapCost:\\s*2",
+      "min": 1,
+      "why": "his default of 2 actions, one home"
+     }
+    ]
+   }
+  },
+  {
+   "id": "A11",
+   "by": "Bjorn",
+   "read": "src/ui/screens/equipment.js:255-267 (ui.picker() mounted on the right pane when a slot is picked)",
+   "screen": "the Armoury › a slot picked, the pane listing what you can switch to",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map"
+    },
+    {
+     "op": "click",
+     "sel": "#open-armoury"
+    },
+    {
+     "op": "click",
+     "sel": ".es-cell.on",
+     "ms": 600
+    }
+   ],
+   "focus": ".equip-chip",
+   "expect": {
+    "present": {
+     "the list of available options": ".equip-chip"
+    },
+    "measure": {
+     "options": "[...document.querySelectorAll('.equip-chip')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,24)).join(' | ')"
+    }
+   }
+  },
+  {
+   "id": "S2",
+   "by": "Bjorn",
+   "read": "src/ui/screens/rest.js:134-139 (question 'Smith …? This is permanent.', confirmLabel 'SMITH IT') · src/ui/components/holdconfirm.js:489-510 (.beat-confirm / .beat-q / .beat-yes)",
+   "screen": "the Shrine › Smith, a card picked — the confirm between the tap and the permanent",
+   "why-drive": "One tap used to commit a permanent upgrade. Driven the way a finger drives it: pick the card, then read what now stands in the way.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=rest",
+     "ms": 2200
+    },
+    {
+     "op": "click",
+     "sel": "#smith-opt"
+    },
+    {
+     "op": "click",
+     "sel": "#smith-grid .card",
+     "ms": 800
+    }
+   ],
+   "focus": ".beat-confirm",
+   "expect": {
+    "present": {
+     "the confirm panel": ".beat-confirm",
+     "its question": ".beat-q",
+     "the yes that must be chosen": ".beat-yes"
+    },
+    "measure": {
+     "question": "(document.querySelector('.beat-q')||{}).innerText",
+     "yes": "(document.querySelector('.beat-yes')||{}).innerText"
+    },
+    "wrong": [
+     {
+      "js": "!/permanent/i.test((document.querySelector('.beat-q')||{}).innerText||'')",
+      "why": "the confirm does not say the word that matters — permanent"
+     }
+    ]
+   }
+  },
+  {
+   "id": "S4",
+   "by": "Bjorn",
+   "read": "src/ui/screens/combat.js:1259 (endTurnBeat = arm($('.end-turn'), 'endTurn', …)), :873 (.et-key kbd) · src/ui/components/holdconfirm.js:141-143 (beat-hold, data-hold-action)",
+   "screen": "combat › End Turn, armed as a hold",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat",
+     "ms": 2600
+    }
+   ],
+   "focus": ".end-turn",
+   "expect": {
+    "present": {
+     "End Turn wearing the hold": ".end-turn.beat-hold[data-hold-action=\"endTurn\"]",
+     "its key badge": ".end-turn .et-key"
+    },
+    "measure": {
+     "label": "document.querySelector('.end-turn').innerText.replace(/\\s+/g,' ')",
+     "holdState": "document.querySelector('.end-turn').dataset.hold"
+    }
+   }
+  },
+  {
+   "id": "G3",
+   "by": "Bjorn",
+   "read": "src/ui/components/mapboard.js:261 (parchmentClass rides the scrollport when fog), :245+:376 (.map-fog-ground, attachParchment) · src/ui/uiContent.js:235 (parchmentClass → parch-N)",
+   "screen": "the act map › the parchment ground under the unwalked act",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=4",
+     "ms": 2000
+    }
+   ],
+   "focus": ".map-fog-ground",
+   "expect": {
+    "present": {
+     "the fog ground plate": ".map-fog-ground"
+    },
+    "measure": {
+     "scrollportClass": "document.querySelector('.map-scroll').className",
+     "plate": "(()=>{const g=document.querySelector('.map-fog-ground');return g?g.childElementCount+' children, first '+((g.firstElementChild||{}).tagName||'?'):'none';})()"
+    },
+    "wrong": [
+     {
+      "js": "!/parch-/.test(document.querySelector('.map-scroll').className)",
+      "why": "the scrollport does not wear the per-act parchment class — the ground under the unwalked act is not paper"
+     }
+    ]
+   }
+  },
+  {
+   "id": "G8",
+   "by": "Bjorn",
+   "read": "src/model/mapknowledge.js:89 (MAP_MODE_DEFAULT = 'fog')",
+   "screen": "the act map, booted with no settings at all — the default he asked for",
+   "why-drive": "G7 walks the same map; this row is HIS SENTENCE ABOUT THE DEFAULT, so its boot passes NO shotSettings and asserts the mode the bundle chooses on its own.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map",
+     "ms": 1800
+    }
+   ],
+   "focus": ".map-scroll",
+   "expect": {
+    "present": {
+     "the map": ".map-scroll"
+    },
+    "measure": {
+     "mode": "document.querySelector('.map-scroll').dataset.mapMode",
+     "hiddenNodes": "__all('.map-node.k-hidden').length"
+    },
+    "wrong": [
+     {
+      "js": "document.querySelector('.map-scroll').dataset.mapMode !== 'fog'",
+      "why": "the default is not fog — 'the fog needs to be the default' is still a setting"
+     }
+    ],
+    "source": [
+     {
+      "in": "src/model",
+      "pattern": "MAP_MODE_DEFAULT = 'fog'",
+      "min": 1,
+      "why": "the default's one home"
+     }
+    ]
+   }
+  },
+  {
+   "id": "G9",
+   "by": "Bjorn",
+   "read": "src/model/mapknowledge.js:160-197 (litNodes: run.path only grows, every element shone — monotone BY CONSTRUCTION) · src/ui/components/mapboard.js:345 (visited class)",
+   "screen": "the act map, nine steps in — everything walked stays lit",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=9",
+     "ms": 2200
+    }
+   ],
+   "focus": ".map-node.visited",
+   "expect": {
+    "present": {
+     "the walked trail": ".map-node.visited"
+    },
+    "count": [
+     {
+      "sel": ".map-node.visited",
+      "min": 5
+     }
+    ],
+    "measure": {
+     "visited": "__all('.map-node.visited').length",
+     "visitedGoneDark": "document.querySelectorAll('.map-node.visited.k-hidden').length"
+    },
+    "wrong": [
+     {
+      "js": "document.querySelectorAll('.map-node.visited.k-hidden').length > 0",
+      "why": "a node he walked through has gone dark behind him — the fork did not stay lit"
+     }
+    ],
+    "source": [
+     {
+      "in": "src/model",
+      "pattern": "monotone",
+      "min": 1,
+      "why": "the lit set's monotone claim, at its home, with its selftest"
+     }
+    ]
+   }
+  },
+  {
+   "id": "G11",
+   "by": "Bjorn",
+   "read": "src/ui/components/mapboard.js (ink-grown scroll extent — any painted point can reach centre; data-framing on .map-scroll) · my 08-13 measurement: centring error median 0.5 px at 390x844",
+   "screen": "the act map › the current node against the viewport's vertical centre",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=4",
+     "ms": 2200
+    }
+   ],
+   "focus": ".map-node.current",
+   "expect": {
+    "present": {
+     "the node he stands on": ".map-node.current"
+    },
+    "measure": {
+     "verticalOffCentrePx": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();const r=document.querySelector('.map-node.current').getBoundingClientRect();return +(Math.abs((r.top+r.bottom)/2-(s.top+s.bottom)/2)).toFixed(1);})()",
+     "framing": "document.querySelector('.map-scroll').dataset.framing"
+    },
+    "wrong": [
+     {
+      "js": "(()=>{const s=document.querySelector('.map-scroll').getBoundingClientRect();const r=document.querySelector('.map-node.current').getBoundingClientRect();return Math.abs((r.top+r.bottom)/2-(s.top+s.bottom)/2) > 24;})()",
+      "why": "the current node sits more than 24 px off the vertical centre (0.5 px median measured 08-13 — 24 is a generous ceiling, not a target)"
+     }
+    ]
+   }
+  },
+  {
+   "id": "R1",
+   "by": "Bjorn",
+   "read": "src/ui/screens/customRun.js:114-150 (#cr-shape, #cr-shape-toggle, #cr-shape-floors, #cr-shape-cols, #cr-shape-weights — ranges derived from the acts’ own config)",
+   "screen": "CUSTOM CLIMB › RUN SHAPE — the three knobs, off by default, opened",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": "#custom-climb",
+     "ms": 900
+    },
+    {
+     "op": "click",
+     "sel": "#cr-shape-toggle",
+     "ms": 500
+    }
+   ],
+   "focus": "#cr-shape-body",
+   "expect": {
+    "present": {
+     "floors per act": "#cr-shape-floors",
+     "map width (columns)": "#cr-shape-cols",
+     "node odds (per-type weights)": "#cr-shape-weights"
+    },
+    "measure": {
+     "floors": "(()=>{const f=document.getElementById('cr-shape-floors');return f.min+'-'+f.max+' at '+f.value;})()",
+     "cols": "(()=>{const c=document.getElementById('cr-shape-cols');return c.min+'-'+c.max+' at '+c.value;})()",
+     "weightRows": "document.querySelectorAll('#cr-shape-weights input, #cr-shape-weights .rs-slider').length"
+    }
+   }
+  },
+  {
+   "id": "F2",
+   "by": "Bjorn",
+   "read": "src/ui/screens/customize.js:80,115 (.cz-stats details, #cz-stat-projection from shortLabels) · src/content/attributes.js:16-17 (wisdom/WIS, intelligence/INT born; zero faith/arcane in that file)",
+   "screen": "customize › ATTRIBUTES & RESOURCES — WIS and INT where Faith and Arcane would have been",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": ".slot-new",
+     "ms": 800
+    },
+    {
+     "op": "js",
+     "ms": 400,
+     "code": "const d=document.querySelector('.cz-stats'); if(!d) return 'no .cz-stats details'; d.open=true; return true;"
+    }
+   ],
+   "focus": "#cz-stat-projection",
+   "expect": {
+    "present": {
+     "the stat projection": "#cz-stat-projection"
+    },
+    "measure": {
+     "line": "document.getElementById('cz-stat-projection').innerText.replace(/\\s+/g,' ')"
+    },
+    "wrong": [
+     {
+      "js": "!/WIS/.test(document.getElementById('cz-stat-projection').innerText)||!/INT/.test(document.getElementById('cz-stat-projection').innerText)",
+      "why": "WIS or INT missing from the stat line — the rename did not reach the screen"
+     },
+     {
+      "js": "/\\bFAI\\b|\\bARC\\b/.test(document.getElementById('cz-stat-projection').innerText)",
+      "why": "a dead attribute name is still on the screen"
+     }
+    ],
+    "source": [
+     {
+      "in": "src/content",
+      "pattern": "id: 'wisdom'",
+      "min": 1,
+      "why": "wisdom born as an attribute row"
+     },
+     {
+      "in": "src/content",
+      "pattern": "id: 'intelligence'",
+      "min": 1,
+      "why": "intelligence born as an attribute row"
+     }
+    ]
+   }
+  },
+  {
+   "id": "K1",
+   "by": "Bjorn",
+   "read": "src/content/balance.js:353 (handLayout 'paging') · src/ui/screens/combat.js:115-190 (overlap arm reads documentElement.dataset.handLayout) · src/ui/components/holdconfirm.js:345-360 (.card-inspect ghost, hold ~400 ms) · styles/combat.css:826-833 (narrow: .hand overflow-x auto, no overlap in a scroller — the finger CAN drag it; the axisfit standing set measures the same 194-200 px)",
+   "screen": "combat › the hand at ten cards — the layout word applied, a held card expanding",
+   "why-drive": "His ask is two halves: the hand must not be a left-right finger-scroller, and press-and-hold must expand the card. Ten cards posed, a card held 550 ms, the ghost read, then released; and the hand is asked whether a finger drag would actually move it.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat&shotHand=10",
+     "ms": 2600
+    },
+    {
+     "op": "js",
+     "ms": 500,
+     "code": "const hand=document.querySelector('.hand'); if(!hand) return 'no .hand'; hand.scrollLeft=120; await sleep(150); window.__k1drag=hand.scrollLeft; hand.scrollLeft=0; await sleep(120); const c=document.querySelector('.hand .card'); if(!c) return 'no card'; const r=c.getBoundingClientRect(); const o={bubbles:true,clientX:r.x+r.width/2,clientY:r.y+r.height/2,pointerId:7}; c.dispatchEvent(new PointerEvent('pointerdown',o)); await sleep(550); window.__k1ghost=(()=>{const g=document.querySelector('.card-inspect'); return g? 'open '+Math.round(g.getBoundingClientRect().width)+'px wide' : 'NO GHOST';})(); c.dispatchEvent(new PointerEvent('pointerup',o)); await sleep(250); window.__k1after=document.querySelectorAll('.hand .card').length; return true;"
+    }
+   ],
+   "focus": ".hand",
+   "expect": {
+    "present": {
+     "the hand": ".hand .card"
+    },
+    "measure": {
+     "layoutWord": "document.documentElement.dataset.handLayout",
+     "ghostOnHold": "window.__k1ghost",
+     "cardsAfterRelease": "window.__k1after",
+     "fingerDragMovedPx": "window.__k1drag",
+     "handOverflowPx": "document.querySelector('.hand').scrollWidth-document.querySelector('.hand').clientWidth"
+    },
+    "wrong": [
+     {
+      "js": "!['paging','overlap'].includes(document.documentElement.dataset.handLayout)",
+      "why": "the DOM wears no legal hand-layout word"
+     },
+     {
+      "js": "window.__k1ghost==='NO GHOST'",
+      "why": "press-and-hold did not expand the card — the inspect ghost never opened"
+     },
+     {
+      "js": "window.__k1drag>0",
+      "why": "the hand container accepted a sideways scroll — a finger CAN drag it left-right, which is the thing he asked to be rid of"
+     }
+    ]
+   }
+  },
+  {
+   "id": "K5",
+   "by": "Bjorn",
+   "read": "src/model/mapview.js:78 (MAP_ZOOM_DEFAULT = 'Fit') · src/main.js:505-506 (data-walked-fade, def 'half') · styles/map.css:163 (half = opacity .6, saturate .5) · #164: map H travel 0 by construction",
+   "screen": "the act map, four steps in — the re-layout in the state he opens it in",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=map&shotWalk=4",
+     "ms": 2200
+    }
+   ],
+   "focus": ".map-scroll",
+   "expect": {
+    "present": {
+     "the map": ".map-scroll",
+     "the walked trail to fade": ".map-node.visited"
+    },
+    "measure": {
+     "framing": "document.querySelector('.map-scroll').dataset.framing",
+     "walkedFadeRung": "document.documentElement.dataset.walkedFade",
+     "horizontalScrollTravelPx": "document.querySelector('.map-scroll').scrollWidth-document.querySelector('.map-scroll').clientWidth",
+     "walkedNodeRenders": "(()=>{const v=[...document.querySelectorAll('.map-node.visited')].find(n=>!n.classList.contains('current'));if(!v)return 'no walked node';const cs=getComputedStyle(v);return 'opacity '+cs.opacity+' · filter '+cs.filter.slice(0,40);})()"
+    },
+    "wrong": [
+     {
+      "js": "(document.querySelector('.map-scroll').scrollWidth-document.querySelector('.map-scroll').clientWidth)!==0",
+      "why": "the map still scrolls sideways — clause 3 of his eight"
+     },
+     {
+      "js": "document.documentElement.dataset.walkedFade!=='half'",
+      "why": "the walked-fade default is not his 50%"
+     },
+     {
+      "js": "(()=>{const v=[...document.querySelectorAll('.map-node.visited')].find(n=>!n.classList.contains('current'));if(!v)return false;return parseFloat(getComputedStyle(v).opacity)>0.95;})()",
+      "why": "a walked node renders at full strength — the trail outshines the choice again"
+     }
+    ],
+    "source": [
+     {
+      "in": "src/model",
+      "pattern": "MAP_ZOOM_DEFAULT = 'Fit'",
+      "min": 1,
+      "why": "zoom ~100% delivered as the Fit default (his clause 1)"
+     }
+    ]
+   }
+  },
+  {
+   "id": "K6",
+   "by": "Bjorn",
+   "read": "src/ui/screens/combat.js:512-528 (.flask-charge with .flask-charge-count, one per CHARGE_FLASK_KINDS; pool slots [data-flask-slot]) · src/content/balance.js:19 (flaskCapacity 3)",
+   "screen": "combat › the flask row: HP and MP dedicated, their pool of 3, the won-flask slots beside them",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat",
+     "ms": 2600
+    }
+   ],
+   "focus": ".flasks",
+   "expect": {
+    "present": {
+     "the dedicated charge flasks": ".flask-charge",
+     "their charge counts": ".flask-charge-count"
+    },
+    "count": [
+     {
+      "sel": ".flask-charge",
+      "eq": 2
+     }
+    ],
+    "measure": {
+     "charges": "[...document.querySelectorAll('.flask-charge-count')].map(e=>e.textContent).join('+')",
+     "poolSlots": "document.querySelectorAll('.flask-slot[data-flask-slot]').length"
+    },
+    "wrong": [
+     {
+      "js": "[...document.querySelectorAll('.flask-charge-count')].reduce((a,e)=>a+ +e.textContent,0)!==3",
+      "why": "the hp+mana pool does not open at his capacity of 3 (D19 C1) — growth is K7, but a fresh run starts at 3"
+     }
+    ]
+   }
+  },
+  {
+   "id": "K7",
+   "by": "Bjorn",
+   "read": "src/ui/screens/rest.js:90-95 (#flask-reallocate — 'Fixed capacity N', one [data-hp] button per split) · src/model/flaskgrowth.js:71 (flaskGrowthTable, one truth function) · src/content/balance.js:29 (flaskGrowth rows)",
+   "screen": "the Shrine › the pool's capacity line and its reallocation — the derived number the growth rows feed",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=rest",
+     "ms": 2200
+    }
+   ],
+   "focus": "#flask-reallocate",
+   "expect": {
+    "present": {
+     "the reallocation block": "#flask-reallocate",
+     "its split choices": "#flask-reallocate [data-hp]"
+    },
+    "measure": {
+     "capacityLine": "(()=>{const p=document.querySelector('#flask-reallocate p');return p?p.innerText.replace(/\\s+/g,' ').slice(0,90):'none';})()",
+     "splitChoices": "document.querySelectorAll('#flask-reallocate [data-hp]').length"
+    },
+    "source": [
+     {
+      "in": "src/content",
+      "pattern": "flaskGrowth",
+      "min": 1,
+      "why": "the growth sources are data rows"
+     },
+     {
+      "in": "src/model",
+      "pattern": "flaskGrowthTable",
+      "min": 1,
+      "why": "one truth function derives the capacity"
+     }
+    ]
+   }
+  },
+  {
+   "id": "K8",
+   "by": "Bjorn",
+   "read": "src/content/balance.js:353-354 (handLayout 'paging'; handLayoutModes ['paging','overlap'] — the closed set) · src/ui/screens/combat.js:146 (the DOM reads documentElement.dataset.handLayout)",
+   "screen": "combat › the hand wearing the one derived layout word",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat&shotHand=10",
+     "ms": 2600
+    }
+   ],
+   "focus": ".hand",
+   "expect": {
+    "present": {
+     "the hand": ".hand .card"
+    },
+    "measure": {
+     "layoutWord": "document.documentElement.dataset.handLayout"
+    },
+    "wrong": [
+     {
+      "js": "!['paging','overlap'].includes(document.documentElement.dataset.handLayout)",
+      "why": "the toggle's derivation is broken — no legal layout word on the DOM"
+     }
+    ],
+    "source": [
+     {
+      "in": "src/content",
+      "pattern": "handLayoutModes",
+      "min": 1,
+      "why": "both modes, one closed set, one home"
+     },
+     {
+      "in": "src/content",
+      "pattern": "'overlap'",
+      "min": 1,
+      "why": "the second mode exists as data"
+     }
+    ]
+   }
+  },
+  {
+   "id": "H3",
+   "by": "Bjorn",
+   "read": "src/ui/components/resbars.js (the ONE renderer for every resource bar; .resbar-<weight>, .l-num cur/max) · src/ui/screens/combat.js:57,494 (.resbars-host in the topbar) · hudbars at train two: 24 assertions, exit 0",
+   "screen": "combat › the resource bars, one per resource, each scaled to its own max",
+   "reach": [
+    {
+     "op": "goto",
+     "q": "?shot=combat",
+     "ms": 2600
+    }
+   ],
+   "focus": ".topbar .resbars-host",
+   "expect": {
+    "present": {
+     "the bars": ".topbar .resbars-host .resbar"
+    },
+    "count": [
+     {
+      "sel": ".topbar .resbars-host .resbar",
+      "min": 3
+     }
+    ],
+    "measure": {
+     "bars": "[...document.querySelectorAll('.topbar .resbars-host .resbar')].map(e=>(e.className.match(/resbar-[a-z]+/)||['?'])[0]+' '+((e.querySelector('.l-num')||e.querySelector('.l-full')||{}).textContent||'').trim()).join(' | ')",
+     "widthsPx": "[...document.querySelectorAll('.topbar .resbars-host .resbar')].map(e=>Math.round(e.getBoundingClientRect().width)).join('/')"
+    }
+   }
+  },
+  {
+   "id": "F1",
+   "by": "Bjorn",
+   "read": "src/ui/screens/customize.js:80,115 (#cz-stat-projection prints 'HP <base> + <t> tier × <g> = <total>') · src/content/derivedStats.js:8-11 (pointsPerTier 5), 26-30 (hp gainPerTier 1, sourceStat vigour) · his words: commons/decisions/directions.md:1261",
+   "screen": "customize › ATTRIBUTES & RESOURCES — the HP-from-Vigour derivation, printed",
+   "why-drive": "His 'vigour shoudl be 1 hp point per' overrules the mock's flat +8 (D17). The projection prints base, tiers and total, so per-point vs per-tier is decidable from the screen's own arithmetic: per point, total − base = VIG.",
+   "reach": [
+    {
+     "op": "goto",
+     "q": ""
+    },
+    {
+     "op": "click",
+     "sel": ".slot-new",
+     "ms": 800
+    },
+    {
+     "op": "js",
+     "ms": 400,
+     "code": "const d=document.querySelector('.cz-stats'); if(!d) return 'no .cz-stats details'; d.open=true; return true;"
+    }
+   ],
+   "focus": "#cz-stat-projection",
+   "expect": {
+    "present": {
+     "the printed derivation": "#cz-stat-projection"
+    },
+    "measure": {
+     "vig": "(document.getElementById('cz-stat-projection').innerText.match(/VIG\\s*(\\d+)/)||[])[1]",
+     "hpLine": "(document.getElementById('cz-stat-projection').innerText.match(/HP[^=]*=\\s*\\d+/)||['none'])[0].replace(/\\s+/g,' ')"
+    },
+    "wrong": [
+     {
+      "js": "(()=>{const t=document.getElementById('cz-stat-projection').innerText;const vig=+(t.match(/VIG\\s*(\\d+)/)||[])[1];const m=t.match(/HP\\s*(\\d+)[^=]*=\\s*(\\d+)/);if(!m||!vig)return 'could not parse the line';return (+m[2] - +m[1]) !== vig;})()",
+      "why": "HIS RULE IS PER POINT AND THE SCREEN PRINTS PER TIER. 'vigour shoudl be 1 hp point per' (D17, recorded as overruling the +8) — at VIG 12 the line reads 'HP 84 + 2 tier × 1 = 86': +2, not +12. The rule shipped is 1 per 5-point tier (derivedStats.js pointsPerTier 5). The ledger's F1 evidence is #163 — the RENAME commit, F2's subject: one row's evidence borrowed by the row beside it, the same shape as M7/M2 on 08-08"
+     }
+    ],
+    "source": [
+     {
+      "in": "src/content",
+      "pattern": "sourceStat: 'vigour'",
+      "min": 1,
+      "why": "the derivation is data (the surface half of the row is real)"
+     }
+    ]
+   }
+  }
+ ]
+}
