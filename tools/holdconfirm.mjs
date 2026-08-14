@@ -669,7 +669,16 @@ async function main() {
       // merchant's brazier). A census that only reads the first paint would
       // report them absent, which is the same word as "not wired" and means the
       // opposite — so the reveal is part of opening the surface.
-      for (const opener of ['#smith-opt', '#remove-opt']) {
+      // THE FLASK MOVED BEHIND A MENU (Codex, #142-era flask-action work): the
+      // slot itself is now inert selection — tapping it opens the shared
+      // action menu, and the second beat rides the menu's Use row
+      // (combat.js openCombatFlaskMenu -> arm(button, 'useFlask', ...)).
+      // That is the door a player's thumb actually walks, so the census walks
+      // it too: slot LAST, after the other openers, so an outside press does
+      // not close the menu before the scan reads it. Observed red without
+      // this press at dev = 86564e6 ('7 claimed, 1 absent: useFlask') — the
+      // census reading a closed menu as 'not wired', which means the opposite.
+      for (const opener of ['#smith-opt', '#remove-opt', '.flask-slot']) {
         const p = await pointOf(opener);
         if (p) { await press(p, 30); await wait(220); }
       }
