@@ -40,6 +40,18 @@ function memberRng(seed, index, counters) {
 
 // Rebuild a session from a serialize() blob (host disk-resume). Members come
 // back disconnected; players re-attach by rejoinId.
+//
+// BLAST RADIUS IS ONE MEMBER, NOT THE PARTY (Viki's #163 gate, note 1). A
+// member whose record fails the door — the both-names refusal, a class/run
+// contradiction, corrupt bytes, whatever — is refused BY NAME WITH THE REASON
+// and set aside; the healthy members restore. The receipt surfaces in
+// snapshot() (every client sees who fell out and why), the ORIGINAL bytes ride
+// serialize() back out unchanged (the evidence-kept house rule: a save cycle
+// after a partial restore must not destroy the one copy a human or a future
+// migration could still read), and the next restore re-attempts them. The one
+// refusal that stays whole: a blob where NO member survives — a party of
+// nobody is not a resume, and pretending it resumed would be the silent
+// version of the same loss.
 export function restoreSession(registries, data) {
   const s = createSession({ registries, seedString: data.seedString, endless: data.endless, restore: data });
   return s;
@@ -67,25 +79,66 @@ export function createSession({ registries, seedString, endless = false, restore
     members,
   };
 
+  // PER-MEMBER RESTORE REFUSALS — the receipts. Each holds the member's
+  // identity as far as the record states it, the refusal reason, and `member`:
+  // a pristine clone of the ORIGINAL record, kept so serialize() can write the
+  // evidence bytes back out untouched (see restoreSession's header).
+  const refused = [];
+
   // Restore members (disconnected until they re-attach by rejoinId).
+  // `refusedMembers` records from an earlier partial restore are RE-ATTEMPTED
+  // through the same door: a save refused for vocabulary the content has since
+  // learned to heal comes back on its own; one still poisoned lands back in
+  // the receipts, evidence intact.
   if (restore) {
-    for (const md of restore.members) {
-      if (md.classId !== md.run.class) {
-        throw new Error(`Session member '${md.id}' class '${md.classId}' disagrees with run class '${md.run.class}'`);
+    const records = [...restore.members, ...(restore.refusedMembers || [])];
+    for (let i = 0; i < records.length; i++) {
+      const orig = records[i];
+      try {
+        // THE DOOR WORKS ON ITS OWN CLONE. normalizeRunAttributes and the kit/
+        // derived-stat initializers heal IN PLACE, and at the old whole-party
+        // door that meant a refusal mid-roster left the CALLER'S parsed blob
+        // half-healed (Viki's #163 note 2) — earlier members migrated, later
+        // ones untouched, and a host that re-serialized it would have written
+        // a half-migrated save. The caller's object is evidence, never
+        // scratch; everything below mutates this clone only.
+        const md = structuredClone(orig);
+        if (!md || typeof md !== 'object' || !md.run || typeof md.run !== 'object') {
+          throw new Error('member record does not carry a run');
+        }
+        if (typeof md.id !== 'string' || !md.id) throw new Error('member record has no id');
+        if (md.classId !== md.run.class) {
+          throw new Error(`Session member '${md.id}' class '${md.classId}' disagrees with run class '${md.run.class}'`);
+        }
+        normalizeRunAttributes(md.run, registries);
+        const discoveredArmaments = [...new Set(md.discoveredArmaments || [])];
+        const legacyKit = md.run.schemaVersion === 1;
+        validateRunStartingKit(md.run, registries, { discoveredArmaments }, { legacy: legacyKit });
+        if (legacyKit) md.run.schemaVersion = RUN_SCHEMA_VERSION;
+        initializeRunDerivedStats(md.run, registries, { preserveDeficits: true });
+        initializeRunFlaskCharges(md.run, registries);
+        members.set(md.id, {
+          id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
+          connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
+          discoveredArmaments,
+          catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
+        });
+      } catch (e) {
+        const has = (k, t) => orig && typeof orig === 'object' && typeof orig[k] === t;
+        refused.push({
+          id: has('id', 'string') && orig.id ? orig.id : `<member ${i}>`,
+          name: has('name', 'string') ? orig.name : null,
+          index: has('index', 'number') ? orig.index : null,
+          reason: e.message,
+          member: structuredClone(orig),
+        });
       }
-      normalizeRunAttributes(md.run, registries);
-      const discoveredArmaments = [...new Set(md.discoveredArmaments || [])];
-      const legacyKit = md.run.schemaVersion === 1;
-      validateRunStartingKit(md.run, registries, { discoveredArmaments }, { legacy: legacyKit });
-      if (legacyKit) md.run.schemaVersion = RUN_SCHEMA_VERSION;
-      initializeRunDerivedStats(md.run, registries, { preserveDeficits: true });
-      initializeRunFlaskCharges(md.run, registries);
-      members.set(md.id, {
-        id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || 'rendered',
-        connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
-        discoveredArmaments,
-        catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
-      });
+    }
+    // A restore that saves NOBODY is refused whole, every member named with
+    // their reason — this is the all-poisoned edge, and it must stay loud.
+    if (records.length && !members.size) {
+      throw new Error('Session restore refused: no member survived the door — '
+        + refused.map((r) => `'${r.id}': ${r.reason}`).join(' · '));
     }
   }
 
@@ -602,6 +655,11 @@ export function createSession({ registries, seedString, endless = false, restore
         id: m.id, name: m.name, index: m.index, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, alive: m.alive,
         run: m.run, discoveredArmaments: [...m.discoveredArmaments], catchup: m.catchup, cardSeq: m.cardSeq, rng: m.rng.getCounters(),
       })),
+      // THE EVIDENCE BYTES, byte-equal to what came in. A refused member's
+      // original record rides every save the host writes after a partial
+      // restore, so the refusal never becomes a deletion; the next
+      // restoreSession re-attempts these through the same door.
+      refusedMembers: refused.map((r) => structuredClone(r.member)),
     };
   }
 
@@ -639,11 +697,17 @@ export function createSession({ registries, seedString, endless = false, restore
       reachableNodes,
       map,
       party: [...members.values()].map(memberView),
+      // The receipts, for every client to draw: who fell out of the restore
+      // and why. Identity + reason only — the evidence bytes stay host-side,
+      // in serialize().
+      refusedMembers: refused.map((r) => ({ id: r.id, name: r.name, reason: r.reason })),
     };
   }
 
   return {
     session,
+    /** The restore receipts: [{ id, name, index, reason }] — never the bytes. */
+    refusedMembers: () => refused.map((r) => ({ id: r.id, name: r.name, index: r.index, reason: r.reason })),
     addMember, setConnected, connectedMembers, livingMembers,
     start, chooseNode, resolveNode,
     combatPlay, combatEndTurn, flaskIntent, autoResolveCombat,

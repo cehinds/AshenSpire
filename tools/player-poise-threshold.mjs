@@ -240,6 +240,61 @@ check('the value has NO writer: dealPoiseDamage refuses a player entity that car
   assert(events.length === 0, `player poise damage emitted ${JSON.stringify(events)}`);
 });
 
+check('WAKE RED — the no-writer premise is probed, and the display refusals must die with it', () => {
+  // THE WAKE CONDITION (commons/development.md, *The wake condition*, Freja
+  // 2026-08-14). This contract's refusals — the absent-at-0 vessel, the combat
+  // tooltip's denial sentence, the receipt's active:false — are all claims
+  // about ONE premise: nothing writes player poise. Every check above asserts
+  // the REFUSING, and none of them can fail when the premise dies, because
+  // absence never fails a test written to expect absence — this vessel sat
+  // correctly-absent for six days (2026-08-08 → 14) with the suite agreeing.
+  // So this check probes the premise itself, through the same funnel a real
+  // writer arrives by (dealPoiseDamage — the function every poiseDamage opcode
+  // drains into), against BOTH players the refusal shapes: the vesseled one
+  // (does the value move) and the threshold-0 one (does a writer reach the
+  // absent vessel — "a resource gains a writer while its bar still refuses").
+  // RED when the premise is dead while a refusal artifact still stands, and
+  // RED the other way: a dropped refusal while the premise holds is the
+  // display claiming mechanics that do not exist.
+  const probeCtx = (who) => ({
+    registries: { balance: { poise: { growthMult: 1 } }, statuses: { all: () => [] } },
+    emit: (type, payload) => who.push({ type, ...payload }),
+    enqueue: () => who.push({ type: 'enqueue' }),
+    combatants: () => [],
+  });
+  const events = [];
+  const vesseled = createPlayerCombatEntity({ classId: 'reaver', maxHp: 80, energyMax: 3, drawPerTurn: 5, poiseMax: 8 });
+  let wrote = false;
+  let how = '';
+  try {
+    dealPoiseDamage(probeCtx(events), vesseled, 9);
+    if (vesseled.poiseMeter.value !== 0 || events.length > 0) { wrote = true; how = `value ${vesseled.poiseMeter.value}, ${events.length} event(s)`; }
+  } catch (error) { wrote = true; how = `threw on the vesseled player: ${error.message}`; }
+  const bare = createPlayerCombatEntity({ classId: 'reaver', maxHp: 80, energyMax: 3, drawPerTurn: 5, poiseMax: 0 });
+  try {
+    dealPoiseDamage(probeCtx([]), bare, 3);
+    if ('poiseMeter' in bare) { wrote = true; how = how || 'a meter appeared on the threshold-0 player'; }
+  } catch (error) { wrote = true; how = how || `a writer reached the ABSENT vessel and crashed on it: ${error.message}`; }
+  // The refusal artifacts, read at their homes. The denial is read from
+  // combat.js SOURCE, not from a rendered tooltip — that string's one home —
+  // and the boundary is stated here rather than smoothed: no pixel rendered.
+  const denial = /Nothing deals Poise damage to you yet/.test(readFileSync(resolve(ROOT, 'src/ui/screens/combat.js'), 'utf8'));
+  const registries = createRegistries(contentBundle);
+  const run = createRunState({ seed: 0x5015e, classId: 'reaver', registries });
+  const receipt = projectionModel.playerPoiseThresholdReceipt(registries, run);
+  if (wrote) {
+    assert(!denial && receipt.active === true,
+      `THE PREMISE DIED AND A REFUSAL STILL STANDS — a writer moved player poise through dealPoiseDamage (${how}) `
+      + `while denial=${denial} (combat.js "Nothing deals Poise damage to you yet"), receipt.active=${receipt.active}. `
+      + `Retire the denial sentence and flip the receipt WITH the mechanics, not after them.`);
+    return `premise dead (${how}) and every display refusal died with it`;
+  }
+  assert(denial && receipt.active === false,
+    `the premise still holds (no writer) but a refusal artifact already dropped: denial=${denial}, receipt.active=${receipt.active} `
+    + `— the display now claims mechanics that do not exist`);
+  return 'no writer at the funnel (vesseled and threshold-0 probes both silent); the denial sentence and the inert receipt stand with the premise';
+});
+
 check('enemy poiseMeter behavior remains the existing independent system', () => {
   const enemy = createEnemyCombatEntity({ instanceId: 'e1', enemyId: 'probe', hp: 20, poiseMax: 5 });
   const events = [];

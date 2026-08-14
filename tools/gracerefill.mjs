@@ -288,7 +288,12 @@ function selftest() {
   if (Number.isInteger(contentBundle.balance.flaskCapacity)) {
     console.log('gracerefill --selftest: fixed-capacity charge model.\n');
     let fails = 0;
+    // Counted, never typed (the cf3fe6d defect class): these move with the
+    // checks below, so a check added without them leaves the RESULT visibly off.
+    let contentPlants = 0;
+    let behaviourChecks = 0;
     const refuse = (name, mutate, pattern) => {
+      contentPlants++;
       const b = realBundleCopy(); mutate(b);
       const said = validateContent(b).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
       const ok = pattern.test(said); if (!ok) fails++;
@@ -299,16 +304,76 @@ function selftest() {
     refuse('fractional class allocation', (b) => { b.classes[0].startingFlaskAllocation = { hp: 1.5, mana: 1.5 }; }, /startingFlaskAllocation/);
     const reg = createRegistries(contentBundle);
     const run = freshRun(reg);
+    behaviourChecks++;
     run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
     applyGraceRefill(reg, run);
     const refilled = run.flaskCharges.hpCurrent === run.flaskCharges.hp && run.flaskCharges.manaCurrent === run.flaskCharges.mana;
     if (!refilled) fails++;
     console.log(`  ${refilled ? 'green' : 'MISS '} Grace refills current charges to allocation`);
+    behaviourChecks++;
     reallocateFlaskCharges(run.flaskCharges, { hp: 1, mana: run.flaskCharges.capacity - 1 });
     const invariant = run.flaskCharges.hp + run.flaskCharges.mana === run.flaskCharges.capacity;
     if (!invariant) fails++;
     console.log(`  ${invariant ? 'green' : 'MISS '} reallocation preserves hp + mana = capacity`);
-    console.log(`\nRESULT: ${fails === 0 ? 'all plants behaved' : `${fails} MISS`} — 3 content plants, 2 behaviour plants.`);
+
+    // WAKE RED (development.md, *The wake condition*, Freja 2026-08-14). The
+    // NOT BINDING idiom — graceRefillPlan's inert row and the settings
+    // applied-line, both resolving membership through firstFlaskOfKind —
+    // refuses a row whose kind has no member, and PROMISES to bind "the day
+    // an entry carries the kind", zero code. Nothing here could fail when
+    // that promise rots: a row that keeps printing NOT BINDING after its
+    // binder appears is absence, and absence never fails a test written to
+    // expect absence. The mana kind already lived this shape once — no
+    // member on 2026-08-08, azureFlask derives 'mana' today.
+    //
+    // THE WITNESS IS DELIBERATELY INDEPENDENT of flaskKindOf: a binder is an
+    // entry carrying the kind explicitly or carrying the kind's deriving op
+    // (restoreMana → mana, heal → hp — flaskKindOf's own published rule,
+    // restated HERE ON PURPOSE as a consistency witness). If the derivation
+    // is retuned, move this witness WITH it or this goes red — that red is
+    // the wake working, not a false alarm. A witness that resolved through
+    // flaskKindOf itself would rot in lockstep with the thing it watches and
+    // agree forever (the same-door clause's whole point).
+    behaviourChecks++;
+    const witnessKind = (d) => {
+      if (typeof d.kind === 'string') return d.kind;
+      const effects = Array.isArray(d.effects) ? d.effects : [];
+      if (effects.some((e) => e && e.op === 'restoreMana')) return 'mana';
+      if (effects.some((e) => e && e.op === 'heal')) return 'hp';
+      return 'utility'; // the fallback IS part of the rule: utility is the everything-else kind
+    };
+    const hasBinder = (defs, kind) => defs.some((d) => d && witnessKind(d) === kind);
+    const poseRow = (bundle, kind) => {
+      bundle.balance.graceRefill = [{ kind, count: 1 }];
+      bundle.balance.graceRefillAtRunStart = false;
+      const r = createRegistries(bundle);
+      const posed = freshRun(r);
+      posed.flasks = [];
+      return graceRefillPlan(r, posed).rows[0];
+    };
+    const wakeBad = [];
+    for (const kind of FLASK_KINDS) {
+      const b = realBundleCopy();
+      const binder = hasBinder(b.flasks, kind);
+      const row = poseRow(b, kind);
+      if (binder && row.binding === false) wakeBad.push(`'${kind}' has a binder in content yet its row prints NOT BINDING — the premise died while the refusal stands`);
+      if (!binder && row.binding === true) wakeBad.push(`'${kind}' has no binder yet its row binds ('${row.flaskId}') — the refusal dropped without its binder`);
+    }
+    // The refusal's own live negative: strip every mana binder from a real
+    // bundle copy and the posed row must refuse — otherwise the NOT BINDING
+    // branch itself is dead and the promise above is being kept by accident.
+    {
+      const b = realBundleCopy();
+      b.flasks = b.flasks.filter((d) => !(d && (d.kind === 'mana' || (d.kind == null && Array.isArray(d.effects) && d.effects.some((e) => e && e.op === 'restoreMana')))));
+      const row = poseRow(b, 'mana');
+      if (row.binding !== false || !/NOT BINDING/.test(row.why)) {
+        wakeBad.push(`with every mana binder stripped the row still binds ('${row.flaskId}') — the NOT BINDING branch is dead`);
+      }
+    }
+    if (wakeBad.length) fails++;
+    console.log(`  ${wakeBad.length ? 'MISS ' : 'green'} WAKE RED: every kind's NOT BINDING verdict agrees with binder existence, both directions${wakeBad.length ? ` — ${wakeBad.join('; ')}` : ` (${FLASK_KINDS.join(', ')} live; mana re-refuses when stripped)`}`);
+
+    console.log(`\nRESULT: ${fails === 0 ? 'all plants behaved' : `${fails} MISS`} — ${contentPlants} content plants, ${behaviourChecks} behaviour checks (counted at run time, never typed).`);
     return fails;
   }
   console.log('gracerefill --selftest: every refusal planted through the door the real input uses.\n');
