@@ -17,6 +17,31 @@
 // wiring, not aesthetics — whether this screen READS right at 11pm is Sunna's
 // gate and no driver replaces it.
 
+// DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
+// RENDERED profile surface, driven by real clicks and real Tab presses in a
+// real browser — this file exists because the defect that started the round
+// "could not have been found by reading". Right door; no re-runnable
+// known-bad, which is what Vira's audit (2026-08-14) rated NO-KNOWN-BAD.
+// `--selftest` plants each known-bad into a copy of the real screen source
+// and re-runs this whole drive against it.
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'profile-surface-drive.mjs',
+    timeoutMs: 900000,
+    plants: [
+      {
+        // Sunna's must: restore states its risk BEFORE anything happens.
+        name: 'the restore confirm stops stating its risk first',
+        file: 'src/ui/screens/profileArchive.js',
+        find: 'so restoring it may not work. Nothing is lost by trying.',
+        replace: 'so restoring it is fine. Go ahead.',
+        expectRed: /FAIL\s+restore states its risk BEFORE anything happens/,
+      },
+    ],
+  }));
+}
+
 import { spawn } from 'node:child_process';
 import { serve } from './serve.mjs';
 const { port } = await serve({ root: new URL('..', import.meta.url).pathname, port: 8193, open: false });
@@ -120,6 +145,16 @@ await ev(`(()=>{ // a readable archive holding a DIFFERENT number
   return 1; })()`);
 await c.send('Page.navigate',{url:`http://localhost:${port}/`}); await sleep(1500);
 await ev(`[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`); await sleep(600);
+// STANDING RED, FOUND BY BUILDING THIS TOOL'S OWN KNOWN-BAD (Rune,
+// 2026-08-15). #90 turned the settings categories into TABS, so Profile is
+// one click in and `.prof-restore` is unreachable without it. This drive was
+// never updated: it CRASHED here at pristine dev = 5244543 —
+// `Cannot read properties of null (reading 'click')` — after printing 12 PASS
+// lines, so its last three checks (the readable-archive restore, the outgoing
+// profile surviving, the drawer contents) had not run for however long.
+// tools/restore-settings-drive.mjs already clicks the tab and says why; this
+// is the same two lines, not a new idea.
+await ev(`(()=>{const t=[...document.querySelectorAll('.set-tab')].find(e=>e.dataset.member==='Profile'); if(t){t.click(); return true;} return false;})()`); await sleep(300);
 await ev(`document.querySelector('.prof-restore').click()`); await sleep(200);
 await ev(`document.querySelector('.prof-go').click()`); await sleep(500);
 
