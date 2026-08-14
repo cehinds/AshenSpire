@@ -13,6 +13,17 @@
 //   <clone-root> = a checkout of the game repo (measured at dev = e444d77)
 // Exit 0 = the profile is protected. Exit 1 = it is not, and each red names how.
 //
+// Run:  node tools/profile-durability-probe.mjs --selftest
+//   The known-bad corpus (Sten, 2026-08-15 — this probe sat in the audit's
+//   no-known-bad thirty-seven; a check whose failing case nobody has watched
+//   fail is `unknown`, not green). Each plant is an edit to src/engine/save.js
+//   in a byte-copy of the real tree, and the probe is then re-run AS ITS OWN
+//   PROCESS against that copy — the same entry point, the same dynamic import,
+//   the same module surface every real invocation walks. Red observed, tree
+//   restored byte-identical, green re-observed. A needle that no longer
+//   matches the tree is a MISS, not a skip — a plant that silently stopped
+//   planting is the eleven-instruments shape.
+//
 // Both edges, per the Quality Gate: E1 is the corrupt/zero case (a truncated
 // write — quota, crash, or a killed tab mid-save); E2 is the future/max case (a
 // profile written by a NEWER build, read by this one).
@@ -27,8 +38,121 @@ import { join } from 'node:path';
 
 const root = process.argv[2];
 if (!root) {
-  console.error('usage: node profile-loss-e444d77.mjs <clone-root>');
+  console.error('usage: node profile-loss-e444d77.mjs <clone-root> | --selftest');
   process.exit(2);
+}
+
+// ---------------------------------------------------------------------------
+// --selftest — the same-door known-bad corpus (Sten, 2026-08-15)
+// ---------------------------------------------------------------------------
+if (root === '--selftest') {
+  const { mkdtempSync, cpSync, rmSync, readFileSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const { dirname } = await import('node:path');
+
+  const selfPath = fileURLToPath(import.meta.url);
+  const repoRoot = join(dirname(selfPath), '..');
+
+  // Each plant is one historical defect class this probe exists to hunt,
+  // reintroduced as a source edit. `needle` must match the real save.js
+  // EXACTLY ONCE or the plant is a MISS — a corpus that drifts off its tree
+  // must say so, never shrink silently.
+  const PLANTS = [
+    {
+      name: 'M1 the mirror is never rotated (pre-#67: the backup that was not there)',
+      needle: '    storage.setItem(META_BACKUP_KEY, json);',
+      patch: '    /* PLANT M1: the mirror is never rotated */',
+      expectFail: 'E1 corrupt profile: progress survives the read',
+    },
+    {
+      name: 'M2 every schemaVersion is accepted blind (an older build eats a newer profile)',
+      needle: '    if (v === undefined || v === META_SCHEMA_VERSION) return { json, meta };',
+      patch: '    return { json, meta }; /* PLANT M2: every schemaVersion accepted blind */',
+      expectFail: 'E2 a newer schemaVersion is refused rather than accepted blind',
+    },
+    {
+      name: 'M3 quarantine does not refuse (the settings write that destroyed the evidence)',
+      needle: `      if (quarantined) {
+        return { ok: false, reason: \`profile is quarantined (\${status.state}); refusing to overwrite the original bytes\` };
+      }`,
+      patch: '      /* PLANT M3: quarantine does not refuse */',
+      expectFail: 'P4 the settings write is refused while quarantined',
+    },
+    {
+      name: 'M4 the archive overwrites instead of appending (the second loss erases the first)',
+      needle: '    index.entries.push(entry);',
+      patch: '    index.entries = [entry]; /* PLANT M4: the archive overwrites instead of appending */',
+      expectFail: 'P2 two losses produce TWO archives, not one',
+    },
+  ];
+
+  console.log('profile-durability-probe --selftest: every plant is an edit to a real tree.\n');
+
+  const scratch = mkdtempSync(join(tmpdir(), 'pdp-selftest-'));
+  let misses = 0;
+  try {
+    cpSync(join(repoRoot, 'src'), join(scratch, 'src'), { recursive: true });
+    const savePath = join(scratch, 'src', 'engine', 'save.js');
+    const pristine = readFileSync(savePath, 'utf8');
+    const probe = () => {
+      const r = spawnSync(process.execPath, [selfPath, scratch], { encoding: 'utf8' });
+      return { status: r.status, out: `${r.stdout || ''}${r.stderr || ''}` };
+    };
+
+    // The clean copy first: a corpus that never checks the negative case
+    // cannot tell "the plant fails" from "everything fails".
+    const base = probe();
+    if (base.status !== 0) misses++;
+    console.log(`  ${base.status === 0 ? 'green' : 'MISS '} BASELINE — the untouched copy exits 0${base.status === 0 ? '' : ` (got exit ${base.status})`}`);
+
+    for (const p of PLANTS) {
+      const parts = pristine.split(p.needle);
+      if (parts.length !== 2) {
+        misses++;
+        console.log(`  MISS  ${p.name} — plant did not plant: needle matched ${parts.length - 1} time(s); the tree drifted, move the plant with it`);
+        continue;
+      }
+      writeFileSync(savePath, parts.join(p.patch));
+      const r = probe();
+      writeFileSync(savePath, pristine);
+      const red = r.status === 1;
+      const named = r.out.includes(`FAIL  ${p.expectFail}`);
+      const ok = red && named;
+      if (!ok) misses++;
+      console.log(`  ${ok ? 'RED  ' : 'MISS '} ${p.name}${ok ? '' : ` — exit ${r.status}, ${named ? 'named' : `did not name "${p.expectFail}"`}`}`);
+    }
+
+    // Reverted: the restored copy must be byte-identical and green again —
+    // "red observed" is only evidence beside "green re-observed on the same tree".
+    const restored = readFileSync(savePath, 'utf8') === pristine;
+    const again = restored ? probe() : { status: -1 };
+    const revertOk = restored && again.status === 0;
+    if (!revertOk) misses++;
+    console.log(`  ${revertOk ? 'green' : 'MISS '} REVERTED — save.js byte-identical and the copy exits 0 again${revertOk ? '' : ` (restored=${restored}, exit ${again.status})`}`);
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+
+  console.log('\nDOOR — where each known-bad entered: an edit to src/engine/save.js in a');
+  console.log('byte-copy of the real src/ tree on disk, then THIS TOOL re-run as its own');
+  console.log(`process: \`node ${'tools/profile-durability-probe.mjs'} <copied-root>\` — the same entry`);
+  console.log('point, the same dynamic import, the same module surface every real');
+  console.log('invocation walks. Nothing was handed to a function below that door.');
+
+  console.log('\nBOUNDARY — what this selftest does NOT prove:');
+  console.log('  · the probe\'s own boundary stands: headless Node, in-memory storage —');
+  console.log('    no plant here proves anything about a browser\'s localStorage or quota.');
+  console.log('  · the GAP row (P7b reachability) asserts nothing by design, so no plant');
+  console.log('    can prove it able to fail. Un-plantable, said here rather than forced.');
+  console.log('  · four defect classes are planted, one per property family the probe');
+  console.log('    claims. A class not on the list (e.g. the salvage path) is unwatched.');
+
+  console.log(`\nRESULT: ${misses === 0
+    ? 'all plants behaved — each observed red through the real door, and reverted'
+    : `${misses} MISS`} — ${PLANTS.length} plants (counted at run time, never typed).`);
+  process.exit(misses ? 1 : 0);
 }
 const mod = await import(pathToFileURL(join(root, 'src/engine/save.js')).href);
 const { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, RUN_ARCHIVE_KEY, META_SCHEMA_VERSION } = mod;
