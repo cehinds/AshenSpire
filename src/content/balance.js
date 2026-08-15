@@ -193,67 +193,117 @@ export const balance = {
       // IT IS A MEASUREMENT, NOT A TASTE, and it is in data because it is a
       // layout fact that will move when the board does.
       //
-      // THE MEASUREMENT IS A MINIMUM OVER AN ENUMERATED SET, AND SAYING THAT
-      // OUT LOUD IS THE WHOLE REPAIR. What the gate must never do is refuse a
-      // screen that works, so the only height that binds is the SMALLEST one at
-      // which all five required controls come whole — over every text size,
-      // because text size is what moves it. Sunna, 2026-08-15, `?shot=combat`,
-      // wide layout, auto UI size, headless Chromium at width 800, sweeping
-      // height at 1 px (`node tools/uprightgate.mjs --ladder`):
+      // THE MEASUREMENT IS A DERIVATION OVER AN ENUMERATED SET, AND SAYING THAT
+      // OUT LOUD IS WHY THIS NUMBER SURVIVED HAVING ITS QUESTION CHANGED. It was
+      // 432 on 2026-08-15 under a different predicate; the predicate was ruled
+      // wrong on 2026-08-16 and the number was RE-RUN rather than re-investigated
+      // — a threshold with a domain can be re-derived when the question changes,
+      // a remembered one cannot.
       //
-      //   text size            S     M     L     XL
-      //   first whole h      432   495   533   571
+      // ===================================================================
+      // WHAT IT ANSWERS TO: THE WALL (Marina, MR-142, 2026-08-16)
+      // ===================================================================
       //
-      //   the binding control is `.hand-area` at every one of them. At Text S
-      //   END TURN and both piles are already whole at 390, the floor of the
-      //   sweep, and the energy orb comes whole at 396 — so from 396 up it is
-      //   the hand alone deciding this number.
+      // Two predicates were on the table and they name different sets of screens:
+      //   `whole`   — all five required controls whole. A QUALITY question:
+      //               is this screen good?
+      //   the WALL  — `.end-turn` UNREACHABLE: not one pixel on glass and no
+      //               gesture to it. A SAFETY question: can this player continue?
+      // They part by 64-109 px at every text size (Vira, 2026-08-15). MARINA
+      // RULED THE WALL, for three reasons and the third decides it alone:
+      //   1. the gate's cost is TOTAL — it removes the shape and says rotate —
+      //      and a total hammer should fire on a total condition;
+      //   2. a refusal removes the player's choice, a degraded screen leaves it.
+      //      At 67.3% of the hand a player can rotate, page or accept. Behind the
+      //      gate they cannot opt out;
+      //   3. `whole` CAN BE SATISFIED BY THE VERY INTERACTION THAT STRANDS THE
+      //      PLAYER — one flask gesture at 844x390 scrolls `.combat` 162.9 px and
+      //      takes the screen from 2/5 + UNREACHABLE to 5/5 + onscreen, carrying
+      //      the topbar off the top with no gesture back. A refusal predicate the
+      //      trap itself satisfies is the wrong question.
       //
-      // 432 IS THE LARGEST VALUE THAT NEVER REFUSES A WORKING SCREEN — it is
-      // min(432, 495, 533, 571), and it is Text S's number because Text S is the
-      // most permissive setting a player can be on. At h 431 the hand is 99.25%
-      // and cut at every text size; at 432 it is whole at S. Below 432 sit every
-      // landscape phone we test — 844x390, 915x412, 844x344 — which is the shape
-      // this gate exists for.
+      // ===================================================================
+      // THE DERIVATION: max(wall h) + 1, NEVER min(good h) (MR-143)
+      // ===================================================================
       //
-      // IT SAID 435 UNTIL 2026-08-15 AND THAT WAS FALSE BY THREE. Bjorn measured
-      // the hand whole at 432 (three runs, identical) while the checker printed
-      // PASS 14/14, because the ladder that produced the old table was spaced at
-      // 10 px and had cells at 430 and 440 and nothing between. The number was
-      // never derived from a set; it was read off a table with a hole in it, and
-      // a hole in a table looks exactly like a measurement. THE LADDER IS NOW
-      // 1 PX ACROSS 430..440 AND THE SET IS ENUMERATED BY A COMMAND. Both halves
-      // or neither: a corrected constant under an uncorrected ladder is the same
-      // defect at a different offset, waiting.
+      // Sunna, 2026-08-16, `?shot=combat`, wide layout, auto UI size, headless
+      // Chromium at width 800, EXHAUSTIVE 1 px sweep of h 360..600 per text size
+      // (964 cells), tree at HEAD `sunna/the-ladder-and-the-number`:
+      //   `CHROME=/usr/bin/chromium node tools/uprightgate.mjs --ladder --ladder-from 360`
       //
-      // ONE CONSTANT IS THE RIGHT SHAPE, AND THE 139 PX SPREAD ABOVE IS WHY, not
-      // an argument against it. The four heights differ — so a per-text-size
-      // threshold is buildable, and it would refuse a Text XL player every screen
-      // under 571 while a Text S player keeps everything from 432. That is an
-      // accessibility setting that takes screens away as you turn it up, which is
-      // the opposite of its job (Law 4 clause 2: two controls, two jobs). The
-      // refusal therefore answers to the most permissive cell and nothing else,
-      // and the other three columns are not a threshold — they are a LAYOUT
-      // BACKLOG: the wide board does not fit itself at M/L/XL until 495/533/571,
-      // and at XL END TURN is already walled at h 440/450 with no gate standing
-      // (`--text XL`, pre-existing, filed, not the refusal's to cover). Moving
-      // 435 -> 432 hands three of those heights back too: an XL player at
-      // 432..434 now meets the wall where the gate used to stand by accident —
-      // three pixels of a wall the refusal covered three quarters of and never
-      // closed. Counted and argued once, in uprightgate's KNOWN OPEN block; not
-      // restated here.
+      //   text size                 S     M     L     XL
+      //   last WALLED h           367   394   423   464      <- the derivation
+      //   max(wall)+1             368   395   424   465
+      //   all five whole from     432   495   533   571      <- the COST column
       //
-      // THE COST, STATED: between 432 and 571 a large-text player can get a board
-      // with the hand cut and no refusal. That is deliberate. A gate that takes
-      // away a working screen is worse than no gate, and this number is pinned to
-      // the control the player needs on the setting that fits soonest.
+      //   THE XL WALL IS NOT AN INTERVAL: h 390..450 AND 464, with 451..463 not
+      //   walled at all. The auto-zoom steps 0.63 -> 0.64 at 464 and the board
+      //   grows faster than the window, so END TURN goes 13.37% on screen at 460,
+      //   0% AT 464, 19.76% at 470. Found by Vira, 2026-08-15; re-derived here.
       //
-      // Re-derive with `node tools/uprightgate.mjs --ladder` — it walks the
-      // refused span at 1 px and goes red BOTH ways: a constant above the
-      // measurement (refuses working screens) and one below it (a refusal left
-      // behind by a board that moved). `node tools/uprightgate.mjs --text S`
-      // is the standing check on the same fact at the shape level.
-      gateBelowH: 432,
+      // 465 IS ONE PAST THE LAST WALL — max(368, 395, 424, 465). NOT the first
+      // height that stops being a wall, WHICH WOULD BE 451 AND WOULD BE WRONG BY
+      // FOURTEEN. `min(good)` is a monotonic idea and this ground is not
+      // monotonic; I measured the non-monotonicity myself (97.13% at h 485, 94.4%
+      // at 486), used it to justify sweeping exhaustively, and still derived with
+      // `min(good)`. One past the last bad cell is the only form that survives a
+      // hole, and the hole is real.
+      //
+      // AND I CHECKED THE SAME QUESTION AGAINST THE COST COLUMN, because a
+      // corrected derivation that leaves its neighbour uncorrected is the same
+      // defect at a new address: at all four text sizes `min(whole)` and
+      // `max(not-whole)+1` COINCIDE (432/495/533/571 either way). The whole set
+      // is contiguous above its first cell; the wall set is not. That is a
+      // measurement, not an assumption, and it is why only one column moved.
+      //
+      // ===================================================================
+      // THE COST OF ONE NUMBER, AND IT IS MINE (MR-142's division)
+      // ===================================================================
+      //
+      // MAXIMUM, NOT MINIMUM, AND THE DIRECTION FLIPPED WITH THE PREDICATE.
+      // Under `whole` the binding constraint was "refuse no working screen", so
+      // the constant was the SMALLEST of the four. Under the wall it is COVERAGE
+      // — a wall the gate does not stand on is a player who cannot end their turn
+      // and is not told why — so it is the LARGEST. One number cannot serve both
+      // ends of the dial, and it now serves the one where the player has no way
+      // out.
+      //
+      // WHAT 465 BUYS: every wall at every text size is covered, including the
+      // Text XL band 432..450 and the one-pixel wall at 464 that no shipped
+      // instrument could see. THE XL CARD DOES NOT GET RE-CARDED, IT CLOSES.
+      //
+      // WHAT 465 COSTS, COUNTED — `--ladder` prints this table on every run:
+      //   Text S : h 390..464 refused, NOT ONE OF THEM A WALL, and h 432..464
+      //            (33 heights) are FULLY WHOLE — a perfect screen, refused.
+      //   Text M : h 395..464 refused and not walled.
+      //   Text L : h 424..464 refused and not walled.
+      //   h 451..463 refuses NOBODY at any text size — the gap the Text XL wall
+      //   jumps, which a downward-closed threshold cannot jump with it.
+      // A Text S player on a 800x440 window is refused a board that works. That
+      // is the price of one number and it is stated here rather than discovered.
+      //
+      // THE OPTION I MEASURED AND DID NOT INSTALL, because the shape of the
+      // threshold is a design ruling and not mine: a per-text-size TABLE on the
+      // premise — {S 368, M 395, L 424, XL 465} — is better on BOTH edges at
+      // once. It covers every wall AND refuses no reachable screen at any text
+      // size except the 451..463 gap at XL. My Law 4 objection to a table
+      // ("an accessibility setting that takes screens away as you turn it up")
+      // was true of a table on `whole` and is FALSE of a table on the premise:
+      // it refuses a large-text player only the heights where that player is
+      // actually walled. Vira found the step I generalised over; the objection
+      // was a property of the predicate, not of the shape. What it costs is the
+      // thing the single number hides: at Text S a landscape phone is handed a
+      // board with 67.3% of the hand and 86.4% of the orb, both CLIPPED WITH NO
+      // SCROLL PATH, and nothing refuses it. Whether that board is playable is a
+      // player-experience finding and it is filed with this act.
+      //
+      // Re-derive with `node tools/uprightgate.mjs --ladder --ladder-from 360` —
+      // it sweeps every cell at 1 px and goes red BOTH ways: a constant at or
+      // below the last wall (LEAVES A WALL UNGATED — what 432 was) and one above
+      // it (REFUSES ABOVE ITS OWN PREMISE). `node tools/uprightgate.mjs
+      // --predicates` is the standing check that every wall has a gate on it, and
+      // `--text S` is the standing check on what this number costs.
+      gateBelowH: 465,
     },
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).
