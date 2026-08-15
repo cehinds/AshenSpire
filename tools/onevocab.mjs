@@ -53,7 +53,9 @@
 //       the check that goes red the day one door learns a word the other
 //       does not.
 //   A6  ONE DERIVATION PATH: a relic's resource grant is entirely mediated by
-//       the derived-stat snapshot, and the max-HP addend list stays closed.
+//       the derived-stat snapshot, and the max-HP addend list stays closed —
+//       (a) pinned BY NAME against the three source homes AND by value at the
+//       door, because a list can change without a number moving.
 //   A7  ONE ANSWER: every door that re-derives max HP returns the same number.
 //       A7 exists because a plant got away from A6 — see its own comment. The
 //       composition `derived + equipment + ledger` has THREE homes today, and
@@ -63,6 +65,8 @@
 // THE DOORS, stated because an observation that cannot name its entry point has
 // not made the claim (the instrument rule's same-door clause):
 //   census (A1, A2)  — FILE BYTES under src/, tools/, tests/, comments blanked.
+//   pin (A6(a))      — FILE BYTES of the three files that compose max HP. This
+//                      half reads TERMS, so its door is the source, not a run.
 //   probes (A3–A7)   — the real content bundle -> validateContent ->
 //                      createRegistries -> createRunState, and for A7 also
 //                      createSaveManager.loadRun. Nothing is handed to an inner
@@ -101,6 +105,77 @@ const SELF = 'tools/onevocab.mjs';
 // Where the tag set is DECLARED. Derived, not typed: the one file whose export
 // this module imported. If the declaration ever moves, this moves with it.
 const DECLARATION_HOME = 'src/model/schemas.js';
+
+// ---------------------------------------------------------------------------
+// A6(a)'s PIN — the one list in this file that is TYPED ON PURPOSE.
+// ---------------------------------------------------------------------------
+// Everything else here is derived from the tree, because a sentinel that
+// re-types the vocabulary it watches IS the defect it watches for. This is the
+// deliberate exception, and the reason is the finding itself: the max-HP addend
+// list HAS NO DECLARED HOME to derive it from. Three files compose
+// `derived + equipment + ledger` in three different spellings and no module
+// exports the list, so the only place it can be pinned is here — where an edit
+// to run creation must come and change it, in review, by hand.
+//
+// WHY BY NAME AND NOT BY NUMBER (Marina's condition, 2026-08-16, and she was
+// right about the disease and generous about its severity). A6(a) used to be a
+// VALUE identity: maxHp === derived + equipment + ledger, recomputed from the
+// same three terms. That assertion cannot see a change to the LIST when the
+// SUM does not move, and both ways in happen for free:
+//   · a FOURTH addend guarded to zero — `+ (run.relicHpFlat || 0)` — the shape
+//     a real one arrives in, reader wired this week and writer next week;
+//   · a term SWAPPED for a second spelling of itself — `run.maxHpAdjustment`
+//     read into `hpLedger` and the ledger term rewritten to `hpLedger`.
+// Both were planted through doorplant into a copy of the real tree on
+// 2026-08-16 and both were NOT CAUGHT, exit 0, the whole tool green — while
+// this check's own comment said "three terms decide max HP and no more". The
+// comment was making a claim the assertion never checked. That is the same
+// agreement-is-not-synchronization shape I collapsed in conhp.mjs, committed by
+// me, in the check I wrote to catch it.
+//
+// So the names are asserted at the source and the arithmetic is asserted at the
+// door, and A6(a) is BOTH. Names catch a list that changed while the numbers
+// held; numbers catch a value that changed while the names held. Either alone
+// is half a check.
+//
+// `addends` is the exact top-level `+`-separated text inside `Math.max(1, ...)`,
+// whitespace-normalized. It is verbatim on purpose: a spelling change IS the
+// thing being watched, so a lenient match would be the hole again.
+//
+// WHERE THIS PIN WILL LIE, said before it does. Comparison is by SET, so
+// reordering the three terms passes — reorder is not a defect. But bracketing
+// them differently (`a + (b + c)`) reads as two top-level terms and goes red
+// with nothing wrong, and so does renaming a local that holds a term. Both are
+// TRUE reds by this pin's own question — the written list changed — and both
+// are fixed the same way: read the diff, then edit the pin. A pin whose whole
+// job is to force a human edit cannot also promise never to ask for one.
+const MAX_HP_COMPOSITION = [
+  {
+    file: 'src/model/state.js',
+    key: 'state.js#load-door',
+    role: 'the load-door integrity assertion',
+    anchor: 'const expectedMaxHp = Math.max(1,',
+    addends: [
+      "deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef }).value",
+      'hpEquipmentBonus',
+      'run.maxHpAdjustment',
+    ],
+  },
+  {
+    file: 'src/model/state.js',
+    key: 'state.js#fresh-derivation',
+    role: 'the fresh derivation (which reconcile then overwrites)',
+    anchor: 'run.maxHp = Math.max(1,',
+    addends: ['hp.value', 'hpEquipmentBonus', 'run.maxHpAdjustment'],
+  },
+  {
+    file: 'src/model/loadout.js',
+    key: 'loadout.js#reconcile',
+    role: 'reconcileRunLoadoutHp — runs LAST at run creation and decides the run',
+    anchor: 'const nextMax = Math.max(1,',
+    addends: ['derived.value', 'equipmentBonus', 'run.maxHpAdjustment'],
+  },
+];
 
 let checks = 0;
 let failures = 0;
@@ -216,6 +291,56 @@ for (const rel of sources) {
   if (sites.length) census.set(rel, sites);
 }
 
+/**
+ * The top-level addends of a `Math.max(1, ...)` composition, read as FILE BYTES.
+ *
+ * Returns { addends } on success, or { why } naming what stopped it. It never
+ * guesses: an anchor that is gone, or duplicated, or a paren run that does not
+ * close is UNKNOWN, and A6(a) renders unknown as RED, never as green — a pin
+ * that quietly stops finding its site is the corpus-that-stopped-running shape
+ * doorplant already refuses.
+ *
+ * Splitting tracks depth AND quotes, because one real addend is a call carrying
+ * both commas and a string literal:
+ *   deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef }).value
+ * A naive split on `+` or `,` would tear that into pieces and then complain
+ * about names nobody wrote.
+ */
+function compositionAddends(rel, anchor) {
+  const text = blankComments(readFileSync(join(ROOT, rel), 'utf8'));
+  const at = text.indexOf(anchor);
+  if (at === -1) return { why: `the anchor \`${anchor}\` is GONE from ${rel}` };
+  if (text.indexOf(anchor, at + 1) !== -1) {
+    return { why: `the anchor \`${anchor}\` appears MORE THAN ONCE in ${rel}, so the pin cannot say which site it read` };
+  }
+  let i = at + anchor.length; // just past `Math.max(1,` — inside the arg list
+  let depth = 1;
+  let quote = null;
+  let buf = '';
+  const parts = [];
+  while (i < text.length) {
+    const c = text[i];
+    if (quote) {
+      buf += c;
+      if (c === '\\') { buf += text[i + 1] === undefined ? '' : text[i + 1]; i += 2; continue; }
+      if (c === quote) quote = null;
+      i += 1;
+      continue;
+    }
+    if (c === '\'' || c === '"' || c === '`') { quote = c; buf += c; i += 1; continue; }
+    if (c === '(' || c === '[' || c === '{') depth += 1;
+    else if (c === ')' || c === ']' || c === '}') {
+      depth -= 1;
+      if (depth === 0) { parts.push(buf); buf = ''; break; }
+    }
+    if (depth === 1 && c === '+') { parts.push(buf); buf = ''; i += 1; continue; }
+    buf += c;
+    i += 1;
+  }
+  if (depth !== 0) return { why: `the \`Math.max(\` opened at \`${anchor}\` in ${rel} never closes` };
+  return { addends: parts.map((p) => p.replace(/\s+/g, ' ').trim()) };
+}
+
 // ---------------------------------------------------------------------------
 // The probe door: the real content road
 // ---------------------------------------------------------------------------
@@ -263,7 +388,10 @@ function resolveOutcome(bundle) {
 
 console.log('onevocab — is the relic-modifier vocabulary ONE vocabulary or two?\n');
 console.log(`DOOR (census A1/A2): FILE BYTES of ${sources.length} file(s) under ${SCAN_DIRS.join('/, ')}/, comments blanked, strings kept.`);
-console.log('DOOR (probes A3-A6): src/content/index.js -> validateContent -> createRegistries -> createRunState.');
+console.log('DOOR (probes A3-A7): src/content/index.js -> validateContent -> createRegistries -> createRunState.');
+console.log(`DOOR (pin A6(a)):   FILE BYTES of the ${MAX_HP_COMPOSITION.length} site(s) in `
+  + `${new Set(MAX_HP_COMPOSITION.map((h) => h.file)).size} file(s) that compose max HP, comments blanked — `
+  + `it reads the TERMS, not the numbers: ${MAX_HP_COMPOSITION.map((h) => h.key).join(', ')}.`);
 console.log(`AUTHORITY (tags):      RELIC_MODIFIER_TAGS = ${RELIC_MODIFIER_TAGS.join(', ')}  [${DECLARATION_HOME}]`);
 console.log(`AUTHORITY (resources): derivedStatRules.rules = ${Object.keys(contentBundle.derivedStatRules.rules).join(', ')}  [the set the fold accepts]\n`);
 
@@ -394,6 +522,33 @@ check('A5 the boot door and the resolve door accept exactly the same resource id
 check('A6 ONE derivation path: a relic resource grant is wholly inside the snapshot', () => {
   const registries = createRegistries(contentBundle);
 
+  // (a) THE ADDEND LIST IS CLOSED, CHECKED BY NAME AT THE SOURCE. Runs once,
+  // not per class, because it is a fact about three files and not about a run.
+  // This is the half that fails on the TERMS; the per-class arithmetic below is
+  // the half that fails on the NUMBERS, and A6(a) is not either one alone.
+  const pinned = [];
+  for (const home of MAX_HP_COMPOSITION) {
+    const read = compositionAddends(home.file, home.anchor);
+    assert(!read.why,
+      `MAX-HP PIN CANNOT READ ITS SITE — ${read.why}. ${home.file} (${home.role}) is one of the three `
+      + `homes of \`derived + equipment + ledger\`, and a pin that cannot find its site knows NOTHING `
+      + `about the addend list; that is unknown, and unknown is not green. If run creation moved, `
+      + `re-aim MAX_HP_COMPOSITION in ${SELF} by hand.`);
+    const found = read.addends;
+    const added = found.filter((term) => !home.addends.includes(term));
+    const gone = home.addends.filter((term) => !found.includes(term));
+    assert(!added.length && !gone.length,
+      `THE MAX-HP ADDEND LIST IS NOT THE PINNED ONE — ${home.file} (${home.role}).\n`
+      + `      PINNED (${home.addends.length}): ${home.addends.join('  |  ')}\n`
+      + `      FOUND  (${found.length}): ${found.join('  |  ')}\n`
+      + (added.length ? `      UNPINNED TERM(S) ADDED: ${added.join(', ')}\n` : '')
+      + (gone.length ? `      PINNED TERM(S) GONE: ${gone.join(', ')}\n` : '')
+      + `      A term here that is not on the pinned list is a SECOND way to say "+N max HP", and it `
+      + `does not have to change any number to be one. If run creation genuinely changed, edit the pin `
+      + `in ${SELF} deliberately, in review — that edit is the point of the pin.`);
+    pinned.push(`${home.key} ${found.length} term(s)`);
+  }
+
   // The stripped tree: the same content with every relic resource.* row removed.
   const stripped = cloneBundle();
   for (const relic of stripped.relics) {
@@ -410,9 +565,11 @@ check('A6 ONE derivation path: a relic resource grant is wholly inside the snaps
     const bare = createRunState({ seed, classId: cls.id, registries: strippedRegistries });
     const classDef = registries.classes.get(cls.id);
 
-    // (a) THE ADDEND LIST IS CLOSED. Three terms decide max HP and no more:
-    // the derived table, the equipment mods column, and the permanent ledger.
-    // A fourth adder appearing here IS a second way to say "+N max HP".
+    // (a) continued — THE SAME LIST, CHECKED BY VALUE AT THE DOOR. The three
+    // pinned terms are the whole of max HP at the door a real run comes
+    // through. This edge catches a term whose NUMBER drifted while its name
+    // held; the source pin above catches a term whose NAME changed while the
+    // number held. Neither sees the other's case, which is why both are here.
     const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', { attributes: run.attributes, classDef });
     const gear = runMods(registries, run.loadout, run.class).maxHp;
     const expected = Math.max(1, derived.value + gear + run.maxHpAdjustment);
@@ -439,7 +596,8 @@ check('A6 ONE derivation path: a relic resource grant is wholly inside the snaps
     notes.push(`${cls.id} +${derived.value - bareDerived.value}hp`);
   }
   assert(notes.length, 'no classes to rule on');
-  return `${notes.length} class(es): ${notes.join(', ')} — all inside the snapshot`;
+  return `addend list pinned BY NAME at ${pinned.join(', ')}; ${notes.length} class(es): `
+    + `${notes.join(', ')} — all inside the snapshot`;
 });
 
 // --- A7 -------------------------------------------------------------------
@@ -503,8 +661,10 @@ console.log('BOUNDARY: this asks whether the relic-modifier vocabulary has one h
 console.log('  path. It is SILENT on whether the numbers are balanced, on whether a relic bonus is');
 console.log('  legible to a player, and on the OTHER modifier vocabularies this game already carries —');
 console.log("  equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars, and status");
-console.log('  MODIFIER_TYPES. A6(a) pins the max-HP addend list so a fourth road cannot appear');
-console.log('  quietly, and that is the whole of what it claims about them.');
+console.log('  MODIFIER_TYPES. A6(a) pins the max-HP addend list BY NAME at its three source homes so a');
+console.log('  fourth road cannot appear quietly — not even one that adds zero — and that is the whole');
+console.log('  of what it claims about them. The pin is the one list TYPED in this file, because the');
+console.log('  addend list has no declared home to derive it from; that absence is itself the finding.');
 console.log('STANDING FINDING, watched here and NOT fixed here: the composition');
 console.log('  `derived + equipment + ledger` has THREE homes — src/model/state.js (the load-door');
 console.log('  assertion, and the fresh derivation) and src/model/loadout.js (reconcile, which');
@@ -574,6 +734,36 @@ if (SELFTEST) {
         find: 'run.maxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);',
         replace: 'run.maxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment + relicModifierReceipt.resources.hp.flat);',
         expectRed: /TWO ANSWERS/,
+      },
+      {
+        // A FOURTH addend, guarded to zero — the shape a real one arrives in:
+        // the reader is wired this week and the writer next week, and in
+        // between the list has four terms and the sum has not moved. This
+        // plant was NOT CAUGHT by A6(a) before it read the terms by name.
+        name: 'a fourth max-HP addend appears and adds nothing today',
+        file: 'src/model/loadout.js',
+        find: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);',
+        replace: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment + (run.relicHpFlat || 0));',
+        expectRed: /UNPINNED TERM\(S\) ADDED: \(run\.relicHpFlat \|\| 0\)/,
+      },
+      {
+        // One term SWAPPED for a second spelling of itself. Same number
+        // forever, so no value assertion can ever see it; the list is four
+        // words long and one of the words changed. Also NOT CAUGHT before.
+        name: 'a max-HP term is swapped for a second spelling of itself',
+        file: 'src/model/loadout.js',
+        find: '  const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);',
+        replace: '  const hpLedger = run.maxHpAdjustment;\n  const nextMax = Math.max(1, derived.value + equipmentBonus + hpLedger);',
+        expectRed: /PINNED TERM\(S\) GONE: run\.maxHpAdjustment/,
+      },
+      {
+        // The pin's own unknown edge: the site moves and the pin finds
+        // nothing. A pin that goes quiet must go RED, not green.
+        name: 'a max-HP composition home is renamed out from under the pin',
+        file: 'src/model/state.js',
+        find: 'run.maxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);',
+        replace: 'const freshMax = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);\n  run.maxHp = freshMax;',
+        expectRed: /MAX-HP PIN CANNOT READ ITS SITE/,
       },
       {
         // A dispatch site quietly stops handling one tag.

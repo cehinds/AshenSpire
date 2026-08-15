@@ -538,7 +538,9 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   // says out loud that it cannot see a second, hand-typed COPY. onevocab asks
   // exactly that, for exactly one vocabulary, and drives the boot, resolve,
   // creation and load doors so the two spellings disagree out loud if they ever
-  // drift.
+  // drift. Its A6(a) also pins the max-HP addend list BY NAME at the three
+  // source sites that compose it: the value half of that check stayed green on
+  // a fourth addend that added zero, so the terms are now read as terms.
   const runVocab = (args) => {
     try {
       return { out: execFileSync(process.execPath, ['tools/onevocab.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
