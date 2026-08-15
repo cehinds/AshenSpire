@@ -165,7 +165,15 @@ const MAX_HP_COMPOSITION = [
     file: 'src/model/state.js',
     key: 'state.js#fresh-derivation',
     role: 'the fresh derivation (which reconcile then overwrites)',
-    anchor: 'run.maxHp = Math.max(1,',
+    // RE-AIMED 2026-08-16, and this is the pin working rather than failing.
+    // Vira's run-creation visibility act (e63f9cd) named this value so the heal
+    // ledger could report it: `run.maxHp = Math.max(1, ...)` became
+    // `const derivedMaxHp = Math.max(1, ...)` with the assignment a few lines
+    // down. The pin went red as MAX-HP PIN CANNOT READ ITS SITE, a human read
+    // the diff, and the three addends were confirmed UNCHANGED — only the
+    // assignment target moved. That is the whole intended lifecycle of this
+    // list: a change to run creation cannot pass without someone looking.
+    anchor: 'const derivedMaxHp = Math.max(1,',
     addends: ['hp.value', 'hpEquipmentBonus', 'run.maxHpAdjustment'],
   },
   {
@@ -731,8 +739,8 @@ if (SELFTEST) {
         // overwrites it. Only a second door can see it.
         name: 'one of the three max-HP homes drifts where creation cannot see it',
         file: 'src/model/state.js',
-        find: 'run.maxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);',
-        replace: 'run.maxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment + relicModifierReceipt.resources.hp.flat);',
+        find: 'const derivedMaxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);',
+        replace: 'const derivedMaxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment) + 2;',
         expectRed: /TWO ANSWERS/,
       },
       {
@@ -761,8 +769,8 @@ if (SELFTEST) {
         // nothing. A pin that goes quiet must go RED, not green.
         name: 'a max-HP composition home is renamed out from under the pin',
         file: 'src/model/state.js',
-        find: 'run.maxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);',
-        replace: 'const freshMax = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);\n  run.maxHp = freshMax;',
+        find: 'const derivedMaxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);',
+        replace: 'const freshMax = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);\n  const derivedMaxHp = freshMax;',
         expectRed: /MAX-HP PIN CANNOT READ ITS SITE/,
       },
       {
