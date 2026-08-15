@@ -148,6 +148,7 @@ import { dirname, resolve, basename } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const SELF = basename(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
 const has = (f) => argv.includes(f);
 const valOf = (f, d) => {
@@ -535,6 +536,13 @@ function modeRun() {
 
   console.log('── RAN');
   for (const r of chosen) {
+    // THE RUNNER IS IN ITS OWN POPULATION, because the glob is honest and it is
+    // a tool in tools/ that reserves a failing exit. Running it would spawn
+    // itself, which spawns itself. FOUND BY RUNNING IT, not by reasoning about
+    // it: the first full run forked until it was killed. Excluded by name and
+    // never silently — its own door is `--selftest`, which is a different
+    // command and has to be run as one.
+    if (r.name === SELF) { excluded.push({ r, reason: 'this file — a runner cannot run itself without recursing. Its own door is `--selftest`, run separately.' }); continue; }
     if (r.declaredNeeds) { unreached.push({ r, reason: `declares it needs ${r.declaredNeeds.replace(/^—\s*/, '')} — this run does not supply it` }); continue; }
     if (r.needsBrowser && (NO_BROWSER || !BROWSER)) {
       unreached.push({ r, reason: NO_BROWSER ? 'deselected by --no-browser' : `no browser on this box (looked for ${BROWSERS.join(', ')})` });
@@ -587,6 +595,22 @@ function modeRun() {
 
   const failed = ran.filter((x) => x.res.verdict === 'fail');
   const attempted = allChecks.length - excluded.filter((e) => e.r.klass === 'CHECK').length;
+  // FLOOR UNDER THE RUN'S OWN CHECK COUNT (SOP 2's ⚙ clause; verify-shipped puts
+  // a floor on the artifact it inspects and had none on its own count). A run
+  // that reached nothing and a run with nothing to reach print the same 0 and
+  // mean the opposite. Its neighbourhood is two REAL cells, both observed
+  // 2026-08-15 on this box, neither synthetic: `--only contract-set` reached 0
+  // (the runner excludes itself, so the filter selected exactly one tool and
+  // then dropped it) and `--only surfaces` reached 1. Same door — an --only
+  // string on a real invocation, not a count handed to a predicate.
+  console.log(`── FLOOR ran > 0 — cells either side, both real: 0 (\`--only contract-set\`, observed) · 1 (\`--only surfaces\`, observed)`);
+  if (ran.length === 0) {
+    console.log('');
+    console.log('RED  this run reached ZERO checks. A run that reached nothing and a run with');
+    console.log('     nothing to reach print the same 0 and mean the opposite. Not green.');
+    console.log(`     ${allChecks.length} checks were enumerated; every one is listed above with why it was not run.`);
+    process.exit(2);
+  }
   console.log(`RESULT  reached ${ran.length}/${attempted} checks this run attempted · ${failed.length} FAILED · ${unreached.length} NOT REACHED`);
   console.log(`        set is ${allChecks.length} checks · ${excluded.length} kept out by declaration or filter · ${outside} tracked file(s) outside this enumeration's syntax`);
   console.log('BOUNDARY: this is one box, one Node (' + process.version + '), one browser. It says which');
@@ -614,6 +638,7 @@ function modePlants() {
   const unreached = [];
   const driftLines = [];
   for (const r of checks) {
+    if (r.name === SELF) { unreached.push([r.name, 'this file — its own --selftest is the door being counted here; running it from inside itself recurses']); continue; }
     if (r.needsBrowser && (NO_BROWSER || !BROWSER)) { unreached.push([r.name, NO_BROWSER ? 'deselected by --no-browser' : 'no browser on this box']); continue; }
     const started = Date.now();
     const p = spawnSync(process.execPath, [r.path, '--selftest'], { cwd: ROOT, encoding: 'utf8', timeout: TIMEOUT_S * 1000, maxBuffer: 128 * 1024 * 1024 });
