@@ -186,6 +186,44 @@ export const balance = {
       narrowW: 430,
       narrowH: 780,
       narrowMax: 520,
+      // THE ORIENTATION GATE'S ONE NUMBER (src/ui/components/upright.js, R-32).
+      // Below this viewport HEIGHT in device px, the game refuses the shape and
+      // says so, instead of drawing a board whose END TURN no gesture reaches.
+      //
+      // IT IS A MEASUREMENT, NOT A TASTE, and it is in data because it is a
+      // layout fact that will move when the board does. Sunna, 2026-08-15, on a
+      // height ladder at width 800, wide layout, headless Chromium, % of each
+      // control on screen (`ok` = whole):
+      //
+      //   h        500  480  470  460  450  440  430  410  390
+      //   S  hand   ok   ok   ok   ok   ok   ok   98   83   67
+      //      ENDTRN ok   ok   ok   ok   ok   ok   ok   ok   ok
+      //   M  hand   ok   94   95   92   89   82   74   60   46
+      //      ENDTRN ok   ok   ok   ok   ok   ok   ok   62    0
+      //   L  hand   81   73   73   69   67   61   54   41   29
+      //      ENDTRN ok   ok   ok   ok  100   62   25    0    0
+      //   XL hand   62   54   54   53   50   44   38   26   15
+      //      ENDTRN 71   26   20   13    0    0    0    0    0
+      //
+      // 435 IS THE LARGEST VALUE THAT NEVER REFUSES A WORKING SCREEN. The
+      // binding row is Text S: at h 440 every required control is whole, so a
+      // threshold above 440 takes away a window that works. At h 430 the hand is
+      // already cut at every text size, so 435 refuses nothing that was intact.
+      // Below it sit every landscape phone we test — 844x390, 915x412, 844x344 —
+      // which is the shape this gate exists for.
+      //
+      // IT IS DELIBERATELY NOT A PER-TEXT-SIZE TABLE, and that is the important
+      // line. The board fails EARLIER as text grows (at XL, END TURN is already
+      // gone at h 450 and the hand is cut at h 560), so a threshold that grew
+      // with the accessibility setting would refuse more and more of a
+      // large-text player's screens — the opposite of what the setting is for.
+      // That whole column is a pre-existing defect of the wide layout at Text
+      // L/XL and it needs layout work, not a wider refusal.
+      //
+      // Re-measure with `node tools/uprightgate.mjs` (add `--text S|L|XL`). It
+      // goes red both ways: a wall with no gate, and a gate on a shape where
+      // every required control is whole.
+      gateBelowH: 435,
     },
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).

@@ -2370,3 +2370,87 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: color-mix(in srgb, var(--flask-tint) 22%, #111);
 }
 .flask-name { color: var(--ink, #f2ead8); }
+
+/* ---------- the orientation gate (components/upright.js) -------------------- */
+/* THE DECISION AND ITS REASONS LIVE IN THAT FILE'S HEADER, NOT HERE. This
+   stylesheet measures nothing and decides nothing — main.js's resolveLayout()
+   already made the call in the same breath as the zoom, and a
+   `@media (orientation: landscape)` here would be the second decider that
+   caused #24. The only thing this block does is make the refusal readable.
+
+   Z-INDEX 900, ABOVE THE SIX AT 500. components/veil.js sorts by paint order, so
+   this owns input even when it rises over an already-open overlay. It stays a
+   child of <body> at `position: fixed`, which is the precondition that file
+   states for the comparison being valid at all.
+
+   NO `vh`, NO `vw` (Law 2). `.modal-veil` is `inset: 0` and this inherits it;
+   the card is capped in px and in %, both of which resolve inside the zoomed
+   body the way every panel below <body> in this tree does.
+
+   TYPE DIVIDED BY --ui-zoom, DELIBERATELY, and it is the one carve-out here:
+   this is the message about the app having zoomed itself down to its floor, so
+   scaling it by that zoom shrinks the sentence exactly when it matters most.
+   Same idiom and same reason as `--tap-floor` in base.css. Law 4 is untouched —
+   the unit is still rem, so Text size still scales these glyphs and only these
+   glyphs; what is cancelled is UI size, which is the thing being reported on. */
+.upright-veil {
+  z-index: 900;
+  /* NEAR-SOLID, and 0.95 was not enough — I looked at it. At 400x400 an enemy
+     HP bar showed through the reassurance line, so "Your run is safe" sat on a
+     red bar. A refusal has to be calm to be believed. */
+  background: rgba(8, 6, 4, 0.985);
+  padding: 24px;
+  /* Law 5: a refusal that scrolls sideways is a joke at the player's expense. */
+  overflow: hidden;
+}
+.upright-card {
+  max-width: 460px;
+  text-align: center;
+  color: var(--parchment);
+}
+.upright-veil h2 {
+  color: var(--gold);
+  font-size: calc(2.4rem / var(--ui-zoom, 1));
+  line-height: 1.25;
+  margin-bottom: 14px;
+}
+.upright-say {
+  font-size: calc(1.6rem / var(--ui-zoom, 1));
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.upright-safe {
+  font-size: calc(1.4rem / var(--ui-zoom, 1));
+  line-height: 1.5;
+  color: var(--muted);
+}
+/* The glyph is a phone standing up. Box geometry in px — chrome, not type
+   (Law 4 clause 3) — and it is `aria-hidden`, so a reader that cannot see it
+   loses nothing the sentences do not already say. */
+.upright-glyph {
+  display: grid;
+  place-items: center;
+  height: 76px;
+  margin-bottom: 18px;
+}
+.upright-phone {
+  display: block;
+  width: 34px;
+  height: 56px;
+  border: 2px solid var(--gold);
+  border-radius: 5px;
+  transform-origin: 50% 50%;
+  animation: upright-turn 2.6s ease-in-out infinite;
+}
+.upright-veil[data-advice='resize'] .upright-phone {
+  /* Not a phone to turn — a window to grow. Widen the box and hold it still. */
+  width: 56px; height: 40px; animation: none;
+}
+@keyframes upright-turn {
+  0%, 18% { transform: rotate(-90deg); }
+  55%, 100% { transform: rotate(0deg); }
+}
+/* Motion is a nicety and this screen is not. Both doors: the player's setting
+   (body.reduced-motion, main.js) and the OS's. */
+.reduced-motion .upright-phone { animation: none; }
+@media (prefers-reduced-motion: reduce) { .upright-phone { animation: none; } }
