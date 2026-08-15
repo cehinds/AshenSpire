@@ -6566,8 +6566,25 @@ const balance = {
     // whose fourth cell nobody had built, and one row of legal data drew an
     // empty screen. Here every one of the four computes a real price. The
     // fourth — category AND gear — is deliberately not shipped, because he named
-    // three; it is one row away and needs no code, which is what test 28c
+    // three; it is one row away and needs no code, which is what test 28q
     // measures (Law 0's falsifier, applied to a rule instead of a card).
+    //
+    // WHY 28q, AND NOT 28p OR 28r — re-derivable in one read, because this line
+    // cited `28c` from b5c81d0 through 284997a and NO TEST OF THAT NAME HAS EVER
+    // EXISTED IN THIS REPO (`git log --all -S '28c.' -- tests/` returns nothing).
+    // A wrong citation that four hands corrected in copies while the original
+    // stood is not fixed by a better name alone; it is fixed by a name a reader
+    // can check without trusting me:
+    //   · 28q is the ONLY test in tests/engine.test.js that DECLARES the fourth
+    //     cell — `{ id: 'both', base: 'category', gear: true }` — and then prices
+    //     all four cells of the base × gear product, asserting '2,3,3,4'.
+    //   · 28p asserts the shipped rows are exactly `flat,gear,category`. It
+    //     measures the three and never builds a fourth.
+    //   · 28r holds the two fields APART: its one gear clause refuses a
+    //     non-boolean `gear` by name, and its base sweep runs `gear: false`
+    //     throughout, so the fourth cell never occurs in it either.
+    // Scored over all 66 tests in that file at 284997a, on the four claims this
+    // sentence makes, 28q is the only one that carries all four.
     //
     // The default is 'flat', which is the game exactly as it shipped: nobody who
     // does not opt in pays a different price. Settings → Advanced switches it.
