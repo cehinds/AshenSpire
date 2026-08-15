@@ -113,6 +113,27 @@ function explicitEffects(registries, beforePiece, afterPiece) {
 // under `flat` the charm reads `2 → 2` with a sentence saying the rule refused
 // its +2. Silence there would be the same defect one step quieter.
 //
+// ---- THE RELIC CHANNEL HAS NO SURFACE HERE, AND THAT IS ARM 2 (MR-46) -------
+//
+// `relicDelta` below is real and it CANCELS: a relic does not change when you
+// slot a weapon, so it lands identically in `before` and `after` and a
+// before/after comparison can never show it. That is correct for this row and
+// it is NOT a gap this row can close. The starting-relic half of A8 —
+// Constantine's *"depending on Talisman OR STARTING RELIC"* — therefore has no
+// presentation anywhere in the tree: a relic authoring `swapCostDelta` today
+// changes the price a player pays and NOTHING on any screen moves. It does not
+// lie; it says nothing, which is the harder failure.
+//
+// MARKER, and it is a claim, so it is checked (MR-45 — a structural decision
+// leaves a TRUE marker with its reason and its discharge condition):
+//   · reason        — a relic's delta cancels in a before/after comparison
+//   · discharge     — the day any shipped presentation reader's output moves
+//                     when a `swapCostDelta` relic is worn, this paragraph is
+//                     false and must go
+//   · the wake      — `node tools/swap-cost-relic-surface.mjs` goes RED when a
+//                     relic authors `swapCostDelta` while no reader moves, and
+//                     RED the other way when a reader moves while this marker
+//                     still says none does.
 function swapPriceChanges(registries, run, beforeLoadout, afterLoadout, meta, candidateSlotId, candidateSetIndex) {
   const rule = resolveSwapCostRule(registries, meta);
   const relicDelta = passiveSum(registries, run.relics || [], 'swapCostDelta');
