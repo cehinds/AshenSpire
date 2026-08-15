@@ -47,6 +47,7 @@
 //   node tools/screenreach.mjs                    source tree via tools/serve.mjs
 //   node tools/screenreach.mjs --dist             dist/AshenSpire.html over file://
 //   node tools/screenreach.mjs --only 390x844
+//   node tools/screenreach.mjs --tap-floor 24    the smallest Accessibility tap size
 //   CHROME=/path/to/chrome node tools/screenreach.mjs
 //
 // Exit codes
@@ -251,6 +252,28 @@ const only = argOf('--only');
 const useDist = args.includes('--dist');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// --tap-floor N — BJORN 2026-08-16, and this axis is VIKI'S OWN HANDOVER, not
+// my idea. She transferred this file with five conditions and the fifth was an
+// unchecked edge named rather than left to be found: *the thumb pass has only
+// ever run at tap floor 44; at 24 it gets LESS sensitive and may be blind to
+// its own defect.* Handing over a known gap in the thing you built is the
+// seam the Charter asks for, and the answer to a named gap is a flag, not a
+// paragraph — a boundary a machine can close beats one a reader must remember.
+//
+// It enters by the PLAYER'S OWN DOOR: ?shotSettings writes into the same
+// settings blob Settings → Accessibility → Tap size writes, and main.js
+// validates it against balance.ui.tapSize.sizes [44, 36, 30, 24] and refuses
+// anything else out loud. Nothing here pokes --tap-floor directly; the probe
+// still MEASURES the floor off a rendered element rather than trusting this
+// number, so a value the app rejected shows up as an unchanged floor in the
+// printed line instead of a silent lie.
+const tapFloorArg = argOf('--tap-floor');
+const withSettings = (q) => {
+  if (!tapFloorArg) return q;
+  const s = encodeURIComponent(JSON.stringify({ tapFloor: Number(tapFloorArg) }));
+  return q ? `${q}&shotSettings=${s}` : `?shotSettings=${s}`;
+};
+
 const PROBE = `(() => {
   const app = document.getElementById('app');
   const de = document.documentElement;
@@ -315,8 +338,46 @@ const PROBE = `(() => {
   // handlayout.mjs, overlapreader.mjs — so it is named out here rather than
   // reported as noise that trains a reader to skip this section.
   const thumbable = (e) => !(e.classList && e.classList.contains('card'));
+
+  // BJORN, inheriting this file 2026-08-16 — THE THUMB POINTS ARE NOW CLIPPED
+  // THE WAY THE CENTRE ALREADY WAS, and this had to happen before any of this
+  // tool's reds could be disposed of.
+  //
+  // The centre pass below always asked a second question after the hit test:
+  // is that point even INSIDE the control's scrollport? A half-scrolled row
+  // has a rect that runs past its scroller, and past the scroller the control
+  // is CLIPPED — not painted at all — so whatever IS painted there owns the
+  // pixel honestly. The thumb pass filtered its four points to the control's
+  // own rect and to the viewport and skipped that question, so it reported a
+  // foreign control stealing a pixel the control never had.
+  //
+  // SEVEN of this tool's eleven standing reds at dev 7e67de8 were that — one
+  // instrument defect wearing two screen names — and I photographed both
+  // before ruling either:
+  //   compendium  .cp-cell <- BACK, 3 shapes. The cell's rect ends at y 848;
+  //     .cp-scroll (overflow auto) clips at 773.8; the thumb point is y 796.
+  //     BACK is painted BELOW the scroller, never over the grid.
+  //   customize   .cz-keepsake <- .cz-actions, 3 shapes. The keepsake row runs
+  //     to y 395.6; .cz-scroll clips at 349.4; the thumb point is y 381. The
+  //     actions bar ABUTS the scroller; it does not cover it.
+  //
+  // ONE HOME for the clipping, not two: visBox is the box the centre pass's
+  // own clip box was already computing, lifted so both passes read the same
+  // answer. A second copy of "where is this control actually visible" is the
+  // defect I exist to catch, and this file was one commit from having one.
+  const visBox = (e) => {
+    const r = e.getBoundingClientRect();
+    const sp = scrollport(e);
+    const b = sp ? sp.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    const l = Math.max(r.left, b.left, 0), t = Math.max(r.top, b.top, 0);
+    const ri = Math.min(r.right, b.right, innerWidth), bo = Math.min(r.bottom, b.bottom, innerHeight);
+    return (ri > l && bo > t) ? { left: l, top: t, right: ri, bottom: bo } : null;
+  };
+
   for (const c of all.filter(thumbable)) {
     const r = c.getBoundingClientRect();
+    const vb = visBox(c);
+    if (!vb) continue;   // painted nowhere at all — the centre pass owns that verdict
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     const half = floor / 2;
     // NO CLAMPING, and this is the line that decides what the tool means. A
@@ -328,8 +389,13 @@ const PROBE = `(() => {
     // control smaller than the floor, and how big a control is belongs to
     // tools/tapsize.mjs, not here. One question, asked once: within half a tap
     // floor of the centre AND inside your own rect, do you own the pixel?
+    // ...AND INSIDE THE PART OF IT THAT IS ACTUALLY PAINTED (vb). The
+    // viewport bound below is now redundant — visBox already carries it — and
+    // it stays, because a reader of this line should not have to open visBox
+    // to know a point off the screen is not a thumb.
     const pts = [[cx + half, cy], [cx - half, cy], [cx, cy + half], [cx, cy - half]]
       .filter(([x, y]) => x > r.left && x < r.right && y > r.top && y < r.bottom
+        && x > vb.left && x < vb.right && y > vb.top && y < vb.bottom
         && x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight);
     for (const [x, y] of pts) {
       const hit = document.elementFromPoint(x, y);
@@ -395,8 +461,20 @@ const PROBE = `(() => {
       const travelY = port.scrollHeight - port.clientHeight;
       if (recoverable) { scrolledOut.push(name(c)); continue; }
       const dir = [offLeft && 'left', offRight && 'right', offTop && 'above', offBottom && 'below'].filter(Boolean).join('+');
+      // BJORN 2026-08-16 — HOW MUCH OF IT IS STILL ON THE GLASS, because
+      // "UNREACHABLE" was one word for two different player experiences and
+      // the difference decides how a fix gets prioritised. At 844x390 combat
+      // this line separates END TURN (0% — the primary verb of the game, not
+      // on the screen at all) from five hand cards at 41%, whose tops are
+      // visible and tappable and whose text is not. Same verdict, same red,
+      // and now the card written off it can say which is which. The VERDICT is
+      // unchanged: a control whose centre cannot be scrolled to is red at any
+      // percentage.
+      const vb2 = visBox(c);
+      const seen = vb2 ? ((vb2.right - vb2.left) * (vb2.bottom - vb2.top)) / (r.width * r.height) : 0;
       covered.push(name(c) + '  <-  UNREACHABLE: ' + dir + ' of its scrollport, which cannot scroll that way'
-        + ' (travel ' + Math.round(travelX) + 'x' + Math.round(travelY) + ', at ' + Math.round(port.scrollLeft) + ',' + Math.round(port.scrollTop) + ')');
+        + ' (travel ' + Math.round(travelX) + 'x' + Math.round(travelY) + ', at ' + Math.round(port.scrollLeft) + ',' + Math.round(port.scrollTop) + ')'
+        + ' — ' + Math.round(seen * 100) + '% of its rect is on the glass');
       continue;
     }
     covered.push(name(c) + '  <-  ' + name(hit));
@@ -453,6 +531,9 @@ async function main() {
     server = s.server; base = `http://localhost:${s.port}/`;
   }
   console.log(`screenreach — ${base}${useDist ? '  (the shipped single-file bundle)' : '  (source tree)'}`);
+  console.log(`  TAP FLOOR: ${tapFloorArg ? `asked for ${tapFloorArg} px via ?shotSettings (the player's own Accessibility row)` : 'the app default — the ONLY floor this pass ran at until 2026-08-16'}`);
+  console.log('  Every line below prints the floor it actually MEASURED off a rendered element.');
+  console.log('  If those two numbers disagree, the app refused the ask and the sweep is about the default.');
 
   const { child, wsUrl } = await launchChrome(browserPath, profile);
   const cdp = connectCdp(wsUrl); await cdp.ready;
@@ -483,7 +564,7 @@ async function main() {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S);
     await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: vp.mobile, maxTouchPoints: 5 }, S);
     for (const sc of SCREENS) {
-      await cdp.send('Page.navigate', { url: `${base}${sc.q}` }, S);
+      await cdp.send('Page.navigate', { url: `${base}${withSettings(sc.q)}` }, S);
       const t0 = Date.now();
       let up = false;
       while (Date.now() - t0 < 12000) { if (await evalIn(sc.ready).catch(() => false)) { up = true; break; } await wait(150); }
@@ -513,7 +594,7 @@ async function main() {
         for (const c of tres.covered) { console.log(`               ✗ ${c}`); fails.push(`${shape} ${label}: ${c}`); }
         report(shape, sc.name, sc, tr.name, tres.partly);
         // Put the screen back at rest before the next transient / screen.
-        await cdp.send('Page.navigate', { url: `${base}${sc.q}` }, S);
+        await cdp.send('Page.navigate', { url: `${base}${withSettings(sc.q)}` }, S);
         await wait(300);
       }
     }
@@ -557,6 +638,23 @@ async function main() {
   by design. A stolen thumb is a hit-test fact on one headless engine; it is
   not a claim that a human finger misses, though on the one finding a human
   finger was driven at, it did.
+
+  BOTH PASSES ARE NOW CLIPPED TO WHERE THE CONTROL IS ACTUALLY PAINTED — its
+  scrollport and the viewport, one home (visBox). Before 2026-08-16 the thumb
+  pass was not, and SEVEN of this tool's eleven standing reds were points in a
+  region the control had been clipped out of: compendium .cp-cell <- BACK on
+  three shapes, customize .cz-keepsake <- .cz-actions on three. Both were
+  photographed before being ruled artifacts, and neither was suppressed — the
+  measurement was wrong, and no allow-list was added to make it right.
+
+  AND THE TAP FLOOR IS AN AXIS NOW, not an assumption. Viki handed this file
+  over naming the gap: until 2026-08-16 the thumb pass had only ever run at
+  floor 44, and at 24 it samples CLOSER to the centre and is therefore LESS
+  sensitive. Measured since: at --tap-floor 24, 390x844, the Inspect/DRAW
+  finding still fires, at (274,826) instead of (284,826). That bounds the gap
+  on the one defect we have; it is NOT a claim that the pass is equally
+  sensitive at 24 in general, and the other three shapes have not been swept
+  at any floor but the default.
 
   AND THE SHAPE LIST IS NOT THE OTHER TOOL'S. This runs 1200x730, 390x844,
   360x640, 844x390; tools/mobilefit.mjs runs nine, and neither list is a
