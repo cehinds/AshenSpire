@@ -19,11 +19,11 @@
 // is handed to a function. A fixture passed to `appShotStates()` would exercise
 // the regex and prove nothing about the run.
 //
-// SIX PLANTS. Five refuse before the browser (cheap, and they are the guards
-// that carry most of this tool's claim); the sixth drives the real browser
-// against a planted bundle, because a corpus made only of pre-browser plants
-// would leave the half that photographs unproven — which is the shape Vira's
-// audit found six times on 2026-08-08.
+// SEVEN PLANTS. Five refuse before the browser (cheap, and they are the guards
+// that carry most of this tool's claim); two drive the real browser against a
+// planted bundle, because a corpus made only of pre-browser plants would leave
+// the half that photographs unproven — which is the shape Vira's audit found
+// six times on 2026-08-08.
 //
 //   1  unaccounted state   a ?shot= state the app has and SCREENS does not
 //   2  blind reader        Vira's whitespace plant: every comparison reformatted
@@ -31,6 +31,18 @@
 //   4  empty home          settingsCategories() derives zero ids
 //   5  stale bundle        src declares a tab the shipped bundle does not carry
 //   6  landmark gone       the browser half: a real MISS on a planted bundle
+//   7  drive target gone   the DRIVEN half: a shot whose click has nothing to click
+//
+// WHY 7 EXISTS, AND IT IS AN ADMISSION (Bjorn, 2026-08-16). Plants 0-6 all run
+// `--only title` — an UNDRIVEN shot. So when I changed `profile-drawer` to open
+// its tab by CLICKING (cc5f6dd's parent, 3b74fd3), this corpus went green over a
+// change it could not see: plant 6's red licenses the undriven landmark door and
+// is SILENCE about the driven one. Vira planted both halves by hand and watched
+// them red; a plant watched once and not written down is an anecdote, so the one
+// that plant 6 cannot give — the DRIVE ITSELF failing — is now a standing row.
+// The other half she ran (kill the driven shot's landmark) is deliberately NOT
+// added: it is plant 6's class at a second address, and a corpus that grows a row
+// per shot measures its own length.
 //
 // And one GREEN control (plant 0): the untouched copy must exit 0, or every red
 // below is a red about copying a tree.
@@ -87,6 +99,8 @@ function runIn(tree, extra = []) {
 
 // The browser plants need one shot only; the derivation plants never get that
 // far, so they are run with the same narrow flags and cost nothing extra.
+// A plant may override with its own `narrow` — and plant 7 must, because `title`
+// is an UNDRIVEN shot and this default was quietly the corpus's whole door.
 const NARROW = ['--only', 'title', '--shape', '390x844'];
 
 const plants = [
@@ -148,6 +162,27 @@ const plants = [
     // can fail, and it is why --no-browser is a narrower claim and says so.
     build: (t) => edit(t, 'dist/AshenSpire.html', (s) => s.replace(/title-screen/g, 'title-screen-planted')),
   },
+  {
+    name: '7 drive target gone (the DRIVEN half)',
+    want: 'RED', wantExit: 1, wantRe: /drive failed on profile-drawer: no Profile tab in the settings screen/,
+    browser: true,
+    // A DIFFERENT DOOR FROM PLANT 6, and that is the whole reason for the row.
+    // 6 renames the landmark and asks whether the photograph can miss. This one
+    // leaves the landmark alone and takes away THE THING THE SHOT CLICKS: the
+    // settings tab strip still renders, every tab still carries data-member, and
+    // not one of them answers to 'Profile'. So the drive's own guard fires first
+    // and says so by name — `drive failed on profile-drawer: …` — and the shot
+    // then misses because .prof-restore is rendered only inside a panel nothing
+    // opened. Both halves are asserted: the sentence, and exit 1.
+    //
+    // The plant goes in the SHIPPED BUNDLE for the same reason plant 6's does —
+    // that is the artifact this tool photographs. `data-member="${esc(cat)}"` is
+    // one home (src/ui/screens/settings.js) and appears once in the bundle, so
+    // the edit is surgical: no category is renamed, no other selector moves.
+    narrow: ['--only', 'profile-drawer', '--shape', '390x844'],
+    build: (t) => edit(t, 'dist/AshenSpire.html',
+      (s) => s.replace(/data-member="\$\{esc\(cat\)\}"/, 'data-member="planted-${esc(cat)}"')),
+  },
 ];
 
 console.log(`release-shots --selftest — ${plants.length} plants, each a REAL EDIT to a COPY OF THE WHOLE REPO,`);
@@ -164,7 +199,7 @@ for (const pl of plants) {
   const tree = copyTree(pl.name.split(' ')[0]);
   try { pl.build(tree); }
   catch (e) { console.log(`  BAD        ${pl.name.padEnd(44)} the plant itself failed: ${e.message}`); failed++; continue; }
-  const { out, code } = runIn(tree, NARROW);
+  const { out, code } = runIn(tree, pl.narrow || NARROW);
   ran++;
   const sawRe = pl.wantRe.test(out);
   const sawExit = code === pl.wantExit;
@@ -185,8 +220,10 @@ if (failed) {
 console.log(`all ${ran} plants behaved${skipped ? ` (${skipped} skipped)` : ''}: the derivation guards go red, the browser half goes red, and an untouched copy stays green.`);
 console.log('DOOR: entry point `node <planted copy>/tools/release-shots.mjs` — a whole run, from argv');
 console.log('  through the derivation, the imports, serve(), chromium and the landmark assertion.');
-console.log('  Plants 1-5 are real edits to real source homes; plant 6 is a real edit to the shipped');
-console.log('  bundle, which is the artifact this tool photographs.');
+console.log('  Plants 1-5 are real edits to real source homes; plants 6 and 7 are real edits to the');
+console.log('  shipped bundle, which is the artifact this tool photographs. 6 enters by the LANDMARK');
+console.log('  on an undriven shot, 7 by the DRIVE on a driven one — two doors, and before 7 existed');
+console.log('  the undriven landmark was the whole extent of the browser half\'s green.');
 console.log('NOT PASSED THROUGH: the build. Nothing here runs tools/launch.mjs, so a defect that only');
 console.log('  appears when src/ is rebuilt into dist/ is outside this door (verify-shipped owns that).');
 if (NO_BROWSER) console.log('  AND: --no-browser was passed, so the photographing half was NOT observed this run.');

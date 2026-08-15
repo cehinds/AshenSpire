@@ -205,7 +205,10 @@ const SCREENS = [
     //
     // The reasoning was right and the door is shut. `?shotSettings` writes the
     // category into the live profile at boot (src/main.js, beside pickStorage)
-    // — and THEN this state calls `saves.startNewProfile()` (src/main.js:2044),
+    // — and THEN this state calls `saves.startNewProfile()`, in main.js's
+    // `shotState === 'profile'` branch (src/main.js:2052 at cc5f6dd — this line
+    // first said 2044, which is a COMMENT line eight above the call: cite the
+    // symbol, and read the number as a convenience that rots),
     // which is `replacePrimaryWith(freshMeta(), …)`, and `freshMeta()` is
     // `{ settings: {} }` (src/engine/save.js:274). The act that CREATES the
     // archive this shot exists to photograph is the act that throws the
@@ -864,6 +867,31 @@ async function waitFor(selector, { deadline = 8000, quiet = 220 } = {}) {
 //
 // What replaces it is not a fourth subscriber. The failure is now IN THE PAGE,
 // and `!seen.banner` below already reads it.
+//
+// THERE WAS A FOURTH, AND THAT SWEEP MISSED IT (Vira found it 2026-08-16 by
+// NEEDING it; Bjorn deleted it at cc5f6dd). The MISS line advertised
+// ` BOOT ERROR: <…>` off `window.__bootError` — and `grep -rn __bootError src/`
+// returns NOTHING, at any ref this tool has ever run at. Nothing in the shipped
+// app has ever written that global, so the reader was `null` on every MISS this
+// tool has ever printed, and the suffix could only ever be absent. Vira met it
+// on a page that had visibly lost its modal and was told nothing, which is the
+// whole cost: A READER THAT IS ALWAYS SILENT AND A READER WITH NOTHING TO SAY
+// PRINT THE SAME THING, and only one of them is honest.
+//
+// Deleted rather than given a writer, and that is the same call the three above
+// got, for the same reason: the channel already exists. An uncaught boot error
+// raises `.validation-banner` in the page (src/ui/debuglog.js) and `!seen.banner`
+// scores it a MISS with the banner's own text on the line. A `window.__bootError`
+// would be a SECOND HOME for one fact — which boot failed and why — with nothing
+// keeping the two in sync.
+//
+// RE-RUNNABLE, AND MY FIRST VERSION OF THIS SENTENCE WAS WRONG IN MY OWN CLASS:
+// it said `grep -rn '__bootError' src/ tools/` answers zero — and it answers
+// THREE, because this paragraph names the symbol three times. A check falsified
+// by the comment that states it is a check nobody can run twice. The right
+// scope is where a WRITER would have to live: `grep -rn '__bootError' src/`
+// answers 0 at cc5f6dd. If it ever answers more, the writer exists, the reader
+// has a referent, and this paragraph is the thing to delete.
 
 let misses = 0;
 const rows = [];
@@ -923,7 +951,6 @@ for (const shape of SHAPES) {
         landmark: !!el, banner: banner ? banner.textContent.slice(0,180) : null, textLen: body,
         url: location.href.slice(-42), ready: document.readyState,
         bodyHead: (document.body ? document.body.innerText.trim().slice(0,60).replace(/\s+/g,' ') : ''),
-        bootErr: (window.__bootError && String(window.__bootError).slice(0,120)) || null,
       };
     })()`);
 
@@ -954,7 +981,7 @@ for (const shape of SHAPES) {
     const why = seen && seen.banner
       ? 'VALIDATION BANNER: ' + seen.banner
       : seen && !seen.landmark
-        ? `landmark '${s.landmark}' never appeared within 10000ms — url…${seen.url} ready=${seen.ready} text=${seen.textLen} on screen: "${seen.bodyHead}"${seen.bootErr ? ' BOOT ERROR: ' + seen.bootErr : ''}`
+        ? `landmark '${s.landmark}' never appeared within 10000ms — url…${seen.url} ready=${seen.ready} text=${seen.textLen} on screen: "${seen.bodyHead}"`
         : !assertOk
           ? `SUB-SURFACE ${s.sub}: ${assertWhy}`
           : '';
