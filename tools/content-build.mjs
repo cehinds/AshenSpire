@@ -51,6 +51,8 @@
 // is the header. Values are coerced — integers/floats become numbers, 'true'/
 // 'false' become booleans, empty stays '', and a value containing '|' becomes
 // an array. Quoted fields may contain commas.
+//
+// CONTRACT-SET: check --check — the bare run COMPILES content and writes it; `--check` is the same work asserting the committed output already matches. The writing half is an actor, the asserting half is the check.
 
 import {
   readFileSync, writeFileSync, existsSync, mkdirSync, mkdtempSync, cpSync,

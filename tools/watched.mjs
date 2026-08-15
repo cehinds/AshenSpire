@@ -77,6 +77,8 @@
 // derived from a run of this file — then the two are one fact with one home and
 // this is the copy. Also deleted if it is ever green while a row it called
 // `watched` turns out not to be on the screen it named.
+//
+// CONTRACT-SET: needs the family ledger — it is driven by `--ledger <commons/tools/asks.json>` from another repo, which no run inside this repo can supply. Reached only when a person passes it.
 
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';

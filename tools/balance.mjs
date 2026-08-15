@@ -13,6 +13,8 @@
 //   5. Act-1 empirical: greedy-bot win rate + avg HP lost, starting decks.
 //
 // Run: node tools/balance.mjs   (or `node tools/balance.mjs > docs/BALANCE.md`)
+//
+// CONTRACT-SET: actor — it produces a balance table for a person to read. No invariant is asserted, so there is nothing here to be red about.
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';

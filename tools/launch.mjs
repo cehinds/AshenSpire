@@ -5,6 +5,8 @@
 // 3. Serves the live app on http://localhost and opens it in the browser.
 //
 // Invoked by run.bat (Windows) and run.sh (macOS/Linux), or: node tools/launch.mjs
+//
+// CONTRACT-SET: actor — it builds, serves and opens a browser for a person. Nothing here rules on the tree.
 
 import { spawnSync } from 'node:child_process';
 import { readFileSync, mkdirSync, copyFileSync } from 'node:fs';

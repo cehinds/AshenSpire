@@ -9,6 +9,8 @@
 // no server, and no module/CORS constraints.
 //
 // Usage: node tools/bundle.mjs
+//
+// CONTRACT-SET: actor — it BUILDS build/AshenSpire.html. Producing an artifact is not a verdict on one; tools/rebuild-matches.mjs is the check that judges what this makes.
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import vm from 'node:vm';

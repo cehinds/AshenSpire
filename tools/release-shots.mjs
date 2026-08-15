@@ -46,6 +46,8 @@
 // So: denominator 1 = top-level states (unchanged), denominator 2 = navigable
 // sub-surfaces, DERIVED from the homes that actually define them. Both print,
 // each with what was and was not photographed.
+//
+// CONTRACT-SET: actor — it photographs the release build. Its verdict half is tools/release-shots-selftest.mjs.
 
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';

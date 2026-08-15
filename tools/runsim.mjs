@@ -17,6 +17,8 @@
 // Run: node tools/runsim.mjs [runsPerClass=30] [--endless]
 //   --endless: Endless Spire mode — acts loop past 3 with per-cycle scaling
 //   (capped at act 15 here); reports climb depth instead of win rate.
+//
+// CONTRACT-SET: actor — it SIMULATES runs and reports numbers. A measurement is not a contract; its nonzero exit means the sim broke, not that the game did.
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';

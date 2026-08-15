@@ -13,6 +13,8 @@
 //   coop-live-guest.png  guest's view of the SAME fight (sync proof)
 //
 //   node tools/coop-shoot.mjs
+//
+// CONTRACT-SET: actor — it captures live multi-client screenshots. Pictures, not a ruling.
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';

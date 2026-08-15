@@ -55,6 +55,8 @@
 // identical policy is evidence about classes. That boundary is printed in the
 // run output too, not only here (SPEC §8 clause 5) — a header is read by the
 // author, the output by whoever is about to trust the number.
+//
+// CONTRACT-SET: actor — it MEASURES per-class win rates. A measurement with no threshold is not a verdict.
 
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';

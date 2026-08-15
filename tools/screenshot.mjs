@@ -6,6 +6,8 @@
 //
 //   node tools/screenshot.mjs            → docs/preview/{title,map,combat}.png
 //   node tools/screenshot.mjs --out DIR  → capture into DIR instead
+//
+// CONTRACT-SET: actor — it captures pictures into docs/preview/. A picture is evidence for a person, not a verdict.
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
