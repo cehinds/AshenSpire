@@ -36,8 +36,17 @@ if (equipmentSurfaceReceipt) {
     'active equipment requirements are presentation-ready receipts', JSON.stringify(active.requirements));
   check(active.poise?.active === false && active.poise?.value === active.poise?.equipment + active.poise?.relic,
     'player Poise threshold stays an inert item plus relic receipt', JSON.stringify(active.poise));
-  check(active.poise?.note === 'No current consumer. Player Poise is not the enemy Poise meter.',
-    'one exact truthful no-consumer sentence is model-owned', active.poise?.note);
+  // WAS AN EXACT-BYTES COPY OF A MODEL-OWNED SENTENCE, AND IT HAD DRIFTED RED.
+  // This asserted `=== 'No current consumer. Player Poise is not the enemy
+  // Poise meter.'`; the vessel migration (2026-08-14) rewrote the model's note
+  // and left this tool failing on a sentence whose home is statProjection.js.
+  // A string with two homes is Law 1 clause 2, so the copy goes and the
+  // PROPERTIES stay — which is what tools/player-poise-threshold.mjs, that
+  // sentence's own contract, already asserts. Not my card: a one-line stale
+  // copy inside a file I was already opening, and it is why the baseline here
+  // could not be green. Fixed in its own commit.
+  check(/display consumer only/i.test(active.poise?.note || '') && /no combat consumer/i.test(active.poise?.note || ''),
+    'the no-consumer disclosure is model-owned and still discloses both halves', active.poise?.note);
 
   const lowStrengthReaver = { ...reaver, attributes: { ...reaver.attributes, strength: 10 } };
   const greatsword = equipmentSurfaceReceipt(R, lowStrengthReaver, {
