@@ -131,7 +131,7 @@ function contract(surface, reading) {
     need(reading.kitCount >= 2, 'creation: baseline and discovered alternate are visible');
     need(reading.chosenKit === 1, 'creation: exactly one kit is selected');
     need(reading.alternateSelected === true, 'creation: the discovered alternate can be selected');
-    need((reading.derived || []).join('|') === 'HP|Mana|Stamina|Energy / turn|Draw / turn and opening hand',
+    need((reading.derived || []).join('|') === 'HP|Mana|Stamina|Actions / turn|Draw / turn and opening hand',
       'creation: canonical five derived receipts render in order');
     need(reading.roleRows === 4, 'creation: 4/4/1/1 kit receipt exposes three equipment roles plus signature');
     need(reading.equipmentReceiptRows === 3 && reading.hasReceiptMath === true,
@@ -140,7 +140,7 @@ function contract(surface, reading) {
     need(reading.rolesVisible === true, 'creation: all four role rows are visible in the detail evidence');
   } else if (surface === 'armoury') {
     need(reading.view === 'hybrid', 'armoury: Hybrid view is selected');
-    need((reading.derived || []).join('|') === 'HP|Mana|Stamina|Energy / turn|Draw / turn and opening hand',
+    need((reading.derived || []).join('|') === 'HP|Mana|Stamina|Actions / turn|Draw / turn and opening hand',
       'armoury: canonical five derived receipts render in order');
     need((reading.roles || []).join('|') === 'attack|guard|technique',
       'armoury: Attack, Guard and Technique share one equipment receipt panel');
@@ -164,7 +164,7 @@ function proveMutants() {
     title: 'Reallocate Flask Charges', capacity: 3, allocations: ['0/3', '1/2', '2/1', '3/0'], fullMana: true };
   const creation = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
     kitCount: 2, chosenKit: 1, alternateSelected: true,
-    derived: ['HP', 'Mana', 'Stamina', 'Energy / turn', 'Draw / turn and opening hand'], roleRows: 4,
+    derived: ['HP', 'Mana', 'Stamina', 'Actions / turn', 'Draw / turn and opening hand'], roleRows: 4,
     equipmentReceiptRows: 3, signatureRows: 1, hasReceiptMath: true, rolesVisible: true };
   const armoury = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
     view: 'hybrid', derived: [...creation.derived], roles: ['attack', 'guard', 'technique'], hasReceiptMath: true,

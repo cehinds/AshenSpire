@@ -8,6 +8,9 @@ import { LOCKED_CLASSES } from '../../content/index.js';
 import { KEEPSAKES } from '../../content/keepsakes.js';
 import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
+import { mountDisclosure } from '../components/disclosure.js';
+import { creationBrief } from '../../model/creationBrief.js';
+import { relicText } from '../components/card.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
@@ -77,6 +80,19 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
 
           <div class="preview-pane">
             <div id="cz-portrait" class="cz-portrait"></div>
+            <!-- D26's SHORT FORM, and it is the DEFAULT view: starting stats,
+                 starting armaments, nothing else. Everything that used to sit
+                 here as prose is one tap down. The ATTRIBUTES & RESOURCES
+                 details below keeps the full receipts and is now the third
+                 tier, not the first — the panel
+                 he called bad is still reachable, still exact, and no longer in
+                 the way of picking a class. -->
+            <section class="cz-brief" data-surface="creationBrief">
+              <p class="cz-label">STARTING STATS</p>
+              <div id="cz-brief-stats" class="cz-disc"></div>
+              <p class="cz-label">STARTING ARMAMENTS</p>
+              <div id="cz-brief-armaments" class="cz-disc"></div>
+            </section>
             <details class="cz-stats"><summary>ATTRIBUTES &amp; RESOURCES</summary><div id="cz-stat-projection"></div></details>
             <label class="cz-label cz-name-label" for="cz-name">NAME</label>
             <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false"
@@ -107,6 +123,18 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     if (sprite) p.appendChild(sprite);
     else p.textContent = state.glyph;
     const preview = createRunState({ seed: 0, classId: state.classId, registries, startingKitId: state.startingKitId, profileMeta: meta });
+    // THE SHORT FORM FIRST, and it is drawn from the same preview run the
+    // receipts below use — one read of the run, two tiers of the same truth.
+    const brief = creationBrief(registries, preview);
+    // The relic's authored sentence is filled by the shared relic renderer
+    // (#38's token rule); the model composes everything derivable and keeps no
+    // copy of the token machinery.
+    for (const entry of brief.armaments) {
+      if (entry.kind !== 'relic') continue;
+      entry.reveal.sense = relicText(registries.relics.get(entry.id), registries);
+    }
+    mountDisclosure($('#cz-brief-stats'), brief.stats, { moreLabel: 'more' });
+    mountDisclosure($('#cz-brief-armaments'), brief.armaments, { moreLabel: 'more' });
     const projection = statProjection(registries, preview);
     const surface = equipmentSurfaceReceipt(registries, preview);
     const kit = surface.roles;
