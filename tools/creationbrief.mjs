@@ -22,18 +22,20 @@
 //   5. DOES IT SCROLL SIDEWAYS — horizontal travel per SCROLL CONTAINER on the
 //      creation screen is ZERO at 390x844 (Law 5 clause 1, measured per
 //      container because a document-level reading is 0 by construction here).
-//   6. ARE THE PICKERS FOLDED, AND DO THEY STILL SAY WHAT IS CHOSEN — added
+//   6. IS THE PICKER FOLDED, AND DOES IT STILL SAY WHAT IS CHOSEN — added
 //      2026-08-16 (Sunna) for MR-151, Constantine's "go ahead and allow the
 //      fold", narrowed to three rows the same day by MR-171 (KEEPSAKE came back
-//      out — see the roster below). Three rows of `.cz-fields` fold by the SAME
-//      affordance: on arrival each is a face and nothing else, its panel shut and its options
+//      out) and to ONE — TINT — by MR-189 (SIGIL and SPRITE came out after it;
+//      see the roster below). That row folds by the SAME affordance: on arrival
+//      it is a face and nothing else, its panel shut and its options
 //      OFF THE GLASS (measured as ZERO CLIENT RECTS, not as an attribute — a
 //      predicate about the DOM is not a claim about ink, which is Vira's
-//      2026-08-15 finding against an instrument of mine); each face carries THE
+//      2026-08-15 finding against an instrument of mine); the face carries THE
 //      CURRENT CHOICE IN PLAYER WORDS; a tap opens it; and picking inside it
-//      MOVES THE FACE'S VALUE. Both edges: the three named rows fold, and NO
-//      OTHER row of `.cz-fields` does — folding CLASS, STARTING KIT or KEEPSAKE
-//      would hide the choosing behind a choice, and that is red here too.
+//      MOVES THE FACE'S VALUE. Both edges: the named row folds, and NO OTHER
+//      row of `.cz-fields` does — folding CLASS, STARTING KIT or KEEPSAKE would
+//      hide the choosing behind a choice, and folding SIGIL or SPRITE would buy
+//      nothing in words at the price of a tap. Both are red here.
 //
 // DOOR — stated here and printed in the run's own output (the instrument
 // rule's same-door clause, commons/development.md). THE EXPECTATION and THE
@@ -85,29 +87,43 @@ const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---------------------------------------------------------------------------
-// THE FOLDED ROSTER (MR-151, narrowed to three by MR-171). This is a CONTRACT,
-// so it is written down rather than derived: Constantine allowed the fold,
-// Marina scoped it, and a roster read off the screen would move with the screen
-// and assert nothing. It is checked in BOTH directions — a named row that
-// stopped folding is red, and a row that started folding without being named is
-// red.
+// THE FOLDED ROSTER (MR-151, narrowed to three by MR-171 and to ONE by MR-189).
+// This is a CONTRACT, so it is written down rather than derived: Constantine
+// allowed the fold, Marina scoped it, and a roster read off the screen would
+// move with the screen and assert nothing. It is checked in BOTH directions — a
+// named row that stopped folding is red, and a row that started folding without
+// being named is red.
 //
-// CLASS, STARTING KIT and KEEPSAKE are deliberately absent and that absence is
-// enforced: they are what the arrival screen is FOR. KEEPSAKE was on this list
-// for one commit (MR-151) and MR-170 found the roster wider than its own stated
-// reason — the keepsake is the only one of the four that changes the run, and
-// folding it took the only place on the screen where the game says what a
-// keepsake DOES. THIS LINE IS THE SECOND HALF OF THE REFOLD, and it is what
-// makes his veto cheap: put `pick:keepsake` back in customize.js without
-// putting it back here and the row below goes red BY NAME, in both directions.
+// FIVE ROWS ARE DELIBERATELY ABSENT AND THAT ABSENCE IS ENFORCED, for two
+// different reasons, and the reasons are the point (Marina, MR-189: *a roster is
+// not a decision, it is four decisions wearing one name* — a count of options is
+// not a count of legibility):
+//   CLASS, STARTING KIT, KEEPSAKE  they are what the arrival screen is FOR.
+//     KEEPSAKE was on this list for one commit and MR-170 found the roster wider
+//     than its own stated reason: it is the only one of the four that changes the
+//     run, and folding it took the only place on the screen where the game says
+//     what a keepsake DOES.
+//   SIGIL, SPRITE  their faces buy NOTHING IN WORDS. SIGIL's face value is
+//     `state.glyph` — the emoji again, on the one row a player picks by look.
+//     SPRITE's three chips already read Rendered / Classic / Sigil, so the face
+//     repeats one of them and takes more vertical than it saves.
+//
+// TINT IS THE ONE THAT STAYS, and it is not the leftover — it is the only row
+// whose face says something its options cannot. Five unlabelled swatches; the
+// only thing that ever named one is `attachTooltip`, which answers hover and
+// pad-focus and never a thumb (customize.js, on the swatch itself). Unfolded,
+// TINT on a phone is five untitled colour blobs; folded, the row arrives reading
+// `TINT Goldbough gold`, in words, on the glass.
+//
+// THIS ARRAY IS THE SECOND HALF OF THE REFOLD, and it is what makes his veto
+// cheap: put any `pick:*` back in customize.js without putting it back here and
+// the row below goes red BY NAME, in both directions.
 // ---------------------------------------------------------------------------
 const FOLDED = [
-  { key: 'pick:sigil', label: 'SIGIL', options: '.cz-opt' },
   { key: 'pick:tint', label: 'TINT', options: '.cz-opt' },
-  { key: 'pick:sprite', label: 'SPRITE', options: '.cz-opt' },
 ];
 
-// THE ARRIVAL READ for those three rows. It is a constant so it can be run
+// THE ARRIVAL READ for that row. It is a constant so it can be run
 // BEFORE any click lands on this screen — "on arrival" is the whole claim, and
 // a reading taken after three taps is a reading of something else.
 const FOLD_READ = `(() => {
@@ -277,27 +293,27 @@ const PLANTS = [
     file: 'src/ui/screens/customize.js',
     from: '      face: { label: row.label, value: row.value() },',
     to: '      face: { label: row.label, value: \'\' }, // planted: a face with no value',
-    what: 'the three faces carry their label and nothing else',
-    expect: 'a folded picker no longer says what is currently chosen',
+    what: 'the folded face carries its label and nothing else',
+    expect: 'a folded picker no longer says what is currently chosen — on TINT that is the whole reason it folds',
     mustRed: (out) => /FAIL each folded row names what is currently chosen/.test(out),
     mustStay: (out) => /PASS every folded picker is SHUT on arrival/.test(out),
   },
   {
-    name: 'P8 one picker never folded',
+    name: 'P8 the named picker never folded',
     file: 'src/ui/screens/customize.js',
-    from: `    { key: 'pick:sprite', label: 'SPRITE', box: styleBox, tip: 'Tap to change how your character is drawn.',
-      value: () => (SPRITE_STYLES.find((s) => s.id === state.spriteStyle) || {}).name || '—' },`,
-    to: '    // planted: the extension missed one',
-    what: 'SPRITE keeps its old open row while the other three fold',
-    expect: 'the roster MR-151 named is not the roster on the glass, BY NAME',
-    mustRed: (out) => /FAIL every picker MR-151 named is folded.*pick:sprite/.test(out),
+    from: `    { key: 'pick:tint', label: 'TINT', box: tintBox, tip: 'Tap to change your colour.',
+      value: () => (PORTRAIT_TINTS.find((t) => t.id === state.tint) || {}).name || '—' },`,
+    to: '    // planted: the extension missed the only one',
+    what: 'TINT keeps its old open row — five untitled colour blobs and no name on the glass',
+    expect: 'the roster MR-189 named is not the roster on the glass, BY NAME',
+    mustRed: (out) => /FAIL every picker MR-151 named is folded.*pick:tint/.test(out),
     mustStay: (out) => /PASS no other row of \.cz-fields is folded/.test(out),
   },
   {
     name: 'P9 a picker folded that must not be',
     file: 'src/ui/screens/customize.js',
-    from: '  const FOLDED = [\n    { key: \'pick:sigil\'',
-    to: '  const FOLDED = [\n    { key: \'pick:class\', label: \'CLASS\', box: classes, tip: \'x\', value: () => state.classId }, // planted: the choosing hidden behind a choice\n    { key: \'pick:sigil\'',
+    from: '  const FOLDED = [\n    { key: \'pick:tint\'',
+    to: '  const FOLDED = [\n    { key: \'pick:class\', label: \'CLASS\', box: classes, tip: \'x\', value: () => state.classId }, // planted: the choosing hidden behind a choice\n    { key: \'pick:tint\'',
     what: 'CLASS folds too — the one row the arrival screen exists for',
     expect: 'a row folded that MR-151 did not name, BY NAME',
     mustRed: (out) => /FAIL no other row of \.cz-fields is folded.*pick:class/.test(out),
@@ -382,7 +398,13 @@ async function selftest() {
   console.log('  BOUNDARY: the plants cover the tier filter, the content door, the tap floor, the');
   console.log('  wrap and the tap itself; and, since 2026-08-16, the four MR-151 ways the FOLD can');
   console.log('  ship wrong rather than absent — defaulting open, a face that stops naming the');
-  console.log('  choice, a named picker that never folded, and a picker folded that must not be.');
+  console.log('  choice, the named picker never folding, and a picker folded that must not be.');
+  console.log('  The roster those last two are aimed at is MR-189\'s (TINT alone); a roster edit moves');
+  console.log('  every plant\'s coordinate, so they were re-aimed and re-run, not inherited.');
+  console.log('  P8 IS ALSO THE REFERENT GUARD\'S KNOWN-BAD (SOP 2\'s ⚙ clause). At a ONE-row roster it');
+  console.log('  empties the set the fold assertions quantify over, and an empty ∀ is TRUE: before');
+  console.log('  2026-08-16 it printed `0 options off the glass` and `TINT undefined` as PASS, then');
+  console.log('  threw and took the tap floor and Law 5 down with it. Six named FAILs now, no crash.');
   console.log('  The tooltip path (hover/gamepad focus) is ASSERTED every run and has never been');
   console.log('  watched to fail — it carries no plant here.');
   process.exit(fails ? 1 : 0);
@@ -556,24 +578,41 @@ async function main() {
     ok(unfolded.length === 0, `every picker MR-151 named is folded — ${FOLDED.length - unfolded.length}/${FOLDED.length}`
       + `${unfolded.length ? ` · never folded: ${unfolded.join(', ')}` : ''}`);
     const stray = folds.drawn.filter((key) => !FOLDED.some((row) => row.key === key));
-    ok(stray.length === 0, `no other row of .cz-fields is folded — ${stray.length ? `folded anyway: ${stray.join(', ')}` : 'CLASS, STARTING KIT and KEEPSAKE are open, as they arrive'}`);
-    const ajar = folds.rows.filter((row) => !row.missing && (row.onGlass > 0 || !row.hiddenPanel || row.expanded !== 'false'));
-    ok(ajar.length === 0, `every folded picker is SHUT on arrival — ${ajar.length ? ajar.map((row) => `${row.key}: ${row.onGlass} option(s) on the glass`).join(' · ') : `${folds.rows.reduce((n, row) => n + (row.options || 0), 0)} options off the glass behind ${folds.rows.length} faces`}`);
+    ok(stray.length === 0, `no other row of .cz-fields is folded — ${stray.length ? `folded anyway: ${stray.join(', ')}` : 'CLASS, STARTING KIT, KEEPSAKE, SIGIL and SPRITE are open, as they arrive'}`);
+    // ⚙ PROVE THE QUERY HAD A REFERENT (SOP 2, commons/development.md). Every
+    // assertion below this line is quantified over the rows that were FOUND, so
+    // a roster row that never folded leaves them ranging over the empty set —
+    // and an empty ∀ is TRUE. Found 2026-08-16 by planting P8 against a
+    // one-row roster: `0 options off the glass behind 1 face(s)` and
+    // `TINT undefined` both printed PASS, against a row that was not on the
+    // screen at all. With three rows the absent one was diluted by two real
+    // ones; with one row the green was made entirely of nothing. So the
+    // referent is asserted IN EACH SENTENCE, not once above them: `unfolded`
+    // going red must not leave three greens standing under it.
+    const present = folds.rows.filter((row) => !row.missing);
+    const haveAll = present.length === FOLDED.length;
+    const noReferent = ` · NO REFERENT: ${present.length}/${FOLDED.length} named row(s) on the screen`;
+    const ajar = present.filter((row) => row.onGlass > 0 || !row.hiddenPanel || row.expanded !== 'false');
+    ok(haveAll && ajar.length === 0, `every folded picker is SHUT on arrival — ${ajar.length ? ajar.map((row) => `${row.key}: ${row.onGlass} option(s) on the glass`).join(' · ') : `${present.reduce((n, row) => n + (row.options || 0), 0)} options off the glass behind ${present.length} face(s)`}${haveAll ? '' : noReferent}`);
     // A FOLD THAT HIDES THE CURRENT CHOICE IS NOT THE MECHANISM HE APPROVED.
-    // A face is a label AND a value — the clause that put KEEPSAKE up here in
-    // the first place, applied to the row that now folds it away.
-    const mute = folds.rows.filter((row) => !row.missing
-      && (row.value === '' || row.label !== FOLDED.find((f) => f.key === row.key).label
-        || (row.chosenText && !row.chosenText.includes(row.value))));
-    ok(mute.length === 0, `each folded row names what is currently chosen — `
+    // A face is a label AND a value. On TINT this is not a side condition — it
+    // is the whole purchase: the swatches carry no text, so the face is the only
+    // place on this screen where a touch player reads the colour's NAME.
+    const mute = present.filter((row) => row.value === '' || row.label !== FOLDED.find((f) => f.key === row.key).label
+      || (row.chosenText && !row.chosenText.includes(row.value)));
+    ok(haveAll && mute.length === 0, `each folded row names what is currently chosen — `
       + `${mute.length ? mute.map((row) => `${row.key}: '${row.label}' / '${row.value}' vs chosen '${row.chosenText.slice(0, 30)}'`).join(' · ')
-        : folds.rows.map((row) => `${row.label} ${row.value}`).join(' · ')}`);
+        : present.map((row) => `${row.label} ${row.value}`).join(' · ') || 'nothing'}${haveAll ? '' : noReferent}`);
     // The tap, and then the pick — a face frozen at mount passes everything
     // above and fails here, which is why the second half exists.
     const probeRow = FOLDED[FOLDED.length - 1];
     const worked = await ev(`(() => {
       const norm = (s) => (s || '').replace(/\\s+/g, ' ').trim();
       const face = document.querySelector('.cz-fields [data-face=${JSON.stringify(probeRow.key)}]');
+      // A MISSING FACE IS A FINDING, NOT A CRASH. It used to throw here and take
+      // the rest of the sweep — the tap floor and Law 5 — down with it, so a
+      // roster defect hid two unrelated checks behind a stack trace.
+      if (!face) return { absent: true, total: 0, onGlass: 0, expanded: null, wanted: '', value: '', shut: 0 };
       face.click();
       const host = face.closest('.cz-disc');
       const opts = [...host.querySelectorAll('.disc-reveal ${probeRow.options}')];
@@ -587,11 +626,12 @@ async function main() {
       const shut = [...host.querySelectorAll('.disc-reveal ${probeRow.options}')].filter((el) => el.getClientRects().length > 0).length;
       return { ...opened, wanted, value, shut };
     })()`);
-    ok(worked.total > 0 && worked.onGlass === worked.total && worked.expanded === 'true',
-      `a tap opens the folded picker — ${probeRow.key} → ${worked.onGlass}/${worked.total} option(s) on the glass`);
-    ok(worked.wanted !== '' && worked.value === worked.wanted,
-      `picking inside the fold MOVES the face — chose '${worked.wanted}', face now '${worked.value}'`);
-    ok(worked.shut === 0, `a second tap folds it again — ${worked.shut} option(s) still on the glass`);
+    const gone = worked.absent ? ` · NO REFERENT: ${probeRow.key} is not on the screen` : '';
+    ok(!worked.absent && worked.total > 0 && worked.onGlass === worked.total && worked.expanded === 'true',
+      `a tap opens the folded picker — ${probeRow.key} → ${worked.onGlass}/${worked.total} option(s) on the glass${gone}`);
+    ok(!worked.absent && worked.wanted !== '' && worked.value === worked.wanted,
+      `picking inside the fold MOVES the face — chose '${worked.wanted}', face now '${worked.value}'${gone}`);
+    ok(!worked.absent && worked.shut === 0, `a second tap folds it again — ${worked.shut} option(s) still on the glass${gone}`);
 
     // ---- 4. the tap floor -------------------------------------------------
     const tiles = [...read.faces, ...read.kits, ...folds.rows.filter((row) => !row.missing)];
@@ -635,9 +675,13 @@ async function main() {
     + `${SHAPES.map(([w, h]) => `${w}x${h}`).join(' + ')}, default Text size and UI size, the first class only.`);
   console.log('  Silent on: a real finger, Windows, the receipts panel under the short form, whether');
   console.log('  the sentences are GOOD — only that they are short, the table\'s own, and one tap away.');
-  console.log('  On the FOLD it is silent about: whether a player FINDS the three faces (a picture is');
-  console.log('  not a playtest), what happens when all three are opened at once (each fold is its own');
-  console.log('  group, so nothing closes anything else), and every text/UI size but the defaults.');
+  console.log('  On the FOLD it is silent about THE ONE THING THAT NOW MATTERS MOST (MR-172, primary');
+  console.log('  debt): whether a player ever FINDS the face. TOUCH IS NEVER TOLD THE ROW OPENS — the');
+  console.log('  only teacher is attachTooltip, which answers pointerenter/gpfocus and never a thumb,');
+  console.log('  and at 390x844 the chips that teach the affordance are BELOW THE FOLD. TINT is now');
+  console.log('  the ONLY fold on this screen, so the whole teaching problem rests on one row a touch');
+  console.log('  player is never told is openable. A picture is not a playtest. Also silent on every');
+  console.log('  text/UI size but the defaults.');
   process.exit(fails ? 1 : 0);
 }
 
