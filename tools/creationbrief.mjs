@@ -24,15 +24,16 @@
 //      container because a document-level reading is 0 by construction here).
 //   6. ARE THE PICKERS FOLDED, AND DO THEY STILL SAY WHAT IS CHOSEN — added
 //      2026-08-16 (Sunna) for MR-151, Constantine's "go ahead and allow the
-//      fold". Four rows of `.cz-fields` fold by the SAME affordance: on
-//      arrival each is a face and nothing else, its panel shut and its options
+//      fold", narrowed to three rows the same day by MR-171 (KEEPSAKE came back
+//      out — see the roster below). Three rows of `.cz-fields` fold by the SAME
+//      affordance: on arrival each is a face and nothing else, its panel shut and its options
 //      OFF THE GLASS (measured as ZERO CLIENT RECTS, not as an attribute — a
 //      predicate about the DOM is not a claim about ink, which is Vira's
 //      2026-08-15 finding against an instrument of mine); each face carries THE
 //      CURRENT CHOICE IN PLAYER WORDS; a tap opens it; and picking inside it
-//      MOVES THE FACE'S VALUE. Both edges: the four named rows fold, and NO
-//      OTHER row of `.cz-fields` does — folding CLASS would hide the choosing
-//      behind a choice, and that is red here too.
+//      MOVES THE FACE'S VALUE. Both edges: the three named rows fold, and NO
+//      OTHER row of `.cz-fields` does — folding CLASS, STARTING KIT or KEEPSAKE
+//      would hide the choosing behind a choice, and that is red here too.
 //
 // DOOR — stated here and printed in the run's own output (the instrument
 // rule's same-door clause, commons/development.md). THE EXPECTATION and THE
@@ -84,23 +85,29 @@ const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---------------------------------------------------------------------------
-// THE FOLDED ROSTER (MR-151). This is a CONTRACT, so it is written down rather
-// than derived: Constantine allowed the fold, Marina scoped it to these four,
-// and a roster read off the screen would move with the screen and assert
-// nothing. It is checked in BOTH directions — a named row that stopped folding
-// is red, and a row that started folding without being named is red.
+// THE FOLDED ROSTER (MR-151, narrowed to three by MR-171). This is a CONTRACT,
+// so it is written down rather than derived: Constantine allowed the fold,
+// Marina scoped it, and a roster read off the screen would move with the screen
+// and assert nothing. It is checked in BOTH directions — a named row that
+// stopped folding is red, and a row that started folding without being named is
+// red.
 //
-// CLASS and STARTING KIT are deliberately absent and that absence is enforced:
-// they are what the arrival screen is FOR.
+// CLASS, STARTING KIT and KEEPSAKE are deliberately absent and that absence is
+// enforced: they are what the arrival screen is FOR. KEEPSAKE was on this list
+// for one commit (MR-151) and MR-170 found the roster wider than its own stated
+// reason — the keepsake is the only one of the four that changes the run, and
+// folding it took the only place on the screen where the game says what a
+// keepsake DOES. THIS LINE IS THE SECOND HALF OF THE REFOLD, and it is what
+// makes his veto cheap: put `pick:keepsake` back in customize.js without
+// putting it back here and the row below goes red BY NAME, in both directions.
 // ---------------------------------------------------------------------------
 const FOLDED = [
-  { key: 'pick:keepsake', label: 'KEEPSAKE', options: '.cz-keepsake' },
   { key: 'pick:sigil', label: 'SIGIL', options: '.cz-opt' },
   { key: 'pick:tint', label: 'TINT', options: '.cz-opt' },
   { key: 'pick:sprite', label: 'SPRITE', options: '.cz-opt' },
 ];
 
-// THE ARRIVAL READ for those four rows. It is a constant so it can be run
+// THE ARRIVAL READ for those three rows. It is a constant so it can be run
 // BEFORE any click lands on this screen — "on arrival" is the whole claim, and
 // a reading taken after three taps is a reading of something else.
 const FOLD_READ = `(() => {
@@ -270,7 +277,7 @@ const PLANTS = [
     file: 'src/ui/screens/customize.js',
     from: '      face: { label: row.label, value: row.value() },',
     to: '      face: { label: row.label, value: \'\' }, // planted: a face with no value',
-    what: 'the four faces carry their label and nothing else',
+    what: 'the three faces carry their label and nothing else',
     expect: 'a folded picker no longer says what is currently chosen',
     mustRed: (out) => /FAIL each folded row names what is currently chosen/.test(out),
     mustStay: (out) => /PASS every folded picker is SHUT on arrival/.test(out),
@@ -289,8 +296,8 @@ const PLANTS = [
   {
     name: 'P9 a picker folded that must not be',
     file: 'src/ui/screens/customize.js',
-    from: '  const FOLDED = [\n    { key: \'pick:keepsake\'',
-    to: '  const FOLDED = [\n    { key: \'pick:class\', label: \'CLASS\', box: classes, tip: \'x\', value: () => state.classId }, // planted: the choosing hidden behind a choice\n    { key: \'pick:keepsake\'',
+    from: '  const FOLDED = [\n    { key: \'pick:sigil\'',
+    to: '  const FOLDED = [\n    { key: \'pick:class\', label: \'CLASS\', box: classes, tip: \'x\', value: () => state.classId }, // planted: the choosing hidden behind a choice\n    { key: \'pick:sigil\'',
     what: 'CLASS folds too — the one row the arrival screen exists for',
     expect: 'a row folded that MR-151 did not name, BY NAME',
     mustRed: (out) => /FAIL no other row of \.cz-fields is folded.*pick:class/.test(out),
@@ -549,9 +556,9 @@ async function main() {
     ok(unfolded.length === 0, `every picker MR-151 named is folded — ${FOLDED.length - unfolded.length}/${FOLDED.length}`
       + `${unfolded.length ? ` · never folded: ${unfolded.join(', ')}` : ''}`);
     const stray = folds.drawn.filter((key) => !FOLDED.some((row) => row.key === key));
-    ok(stray.length === 0, `no other row of .cz-fields is folded — ${stray.length ? `folded anyway: ${stray.join(', ')}` : 'CLASS and STARTING KIT are open, as they arrive'}`);
+    ok(stray.length === 0, `no other row of .cz-fields is folded — ${stray.length ? `folded anyway: ${stray.join(', ')}` : 'CLASS, STARTING KIT and KEEPSAKE are open, as they arrive'}`);
     const ajar = folds.rows.filter((row) => !row.missing && (row.onGlass > 0 || !row.hiddenPanel || row.expanded !== 'false'));
-    ok(ajar.length === 0, `every folded picker is SHUT on arrival — ${ajar.length ? ajar.map((row) => `${row.key}: ${row.onGlass} option(s) on the glass`).join(' · ') : `${folds.rows.reduce((n, row) => n + (row.options || 0), 0)} options off the glass behind 4 faces`}`);
+    ok(ajar.length === 0, `every folded picker is SHUT on arrival — ${ajar.length ? ajar.map((row) => `${row.key}: ${row.onGlass} option(s) on the glass`).join(' · ') : `${folds.rows.reduce((n, row) => n + (row.options || 0), 0)} options off the glass behind ${folds.rows.length} faces`}`);
     // A FOLD THAT HIDES THE CURRENT CHOICE IS NOT THE MECHANISM HE APPROVED.
     // A face is a label AND a value — the clause that put KEEPSAKE up here in
     // the first place, applied to the row that now folds it away.
@@ -628,8 +635,8 @@ async function main() {
     + `${SHAPES.map(([w, h]) => `${w}x${h}`).join(' + ')}, default Text size and UI size, the first class only.`);
   console.log('  Silent on: a real finger, Windows, the receipts panel under the short form, whether');
   console.log('  the sentences are GOOD — only that they are short, the table\'s own, and one tap away.');
-  console.log('  On the FOLD it is silent about: whether a player FINDS the four faces (a picture is');
-  console.log('  not a playtest), what happens when all four are opened at once (each fold is its own');
+  console.log('  On the FOLD it is silent about: whether a player FINDS the three faces (a picture is');
+  console.log('  not a playtest), what happens when all three are opened at once (each fold is its own');
   console.log('  group, so nothing closes anything else), and every text/UI size but the defaults.');
   process.exit(fails ? 1 : 0);
 }
