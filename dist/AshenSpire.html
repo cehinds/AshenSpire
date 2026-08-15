@@ -32318,6 +32318,63 @@ function explicitEffects(registries, beforePiece, afterPiece) {
 // WHAT A SWAP WOULD COST — read from the price, never re-derived (Viki, MR-41)
 // ---------------------------------------------------------------------------
 //
+// ---- WHY THIS ROW IS KEPT AT ALL, AND WHEN THAT REASON DIES (Saga, MR-45) ---
+//
+// A8 IS THE PRESENTATION HALF OF HIS SWAP-COST ASK. Constantine, D15,
+// 2026-08-08: *"switching sets should cost actions. PERHAPS THIS ACTION COSTS
+// MORE OR LESS DEPENDING ON TALISMAN or starting relic… let's default to
+// costing 2 actions… THAT WAY I CAN TRY EACH."*
+//
+// KEEP IT, AND THIS IS THE REASON THAT HOLDS: THIS IS THE ONLY PLACE A PLAYER
+// MEETS THE PRICE. Settings › Advanced ships the RULE — the row keyed
+// `swapCostRule`, labelled *"Weapon swap cost"*, in the settings table at
+// `src/ui/screens/settings.js` — so A8 is not invisible, and the reason first
+// written here, *"THE ONLY TRACE OF A8 ON A SCREEN"*, was overstated. But what
+// Settings shows is a WORD: which of his three prices is in force, never what
+// it costs. No shipped screen states the NUMBER of Actions a swap charges.
+// `src/engine/combat.js` charges it and emits `armamentSwapped` carrying
+// `cost`, and NO SCREEN SUBSCRIBES: the event lands in `combat.eventLog`,
+// whose only reader under `src/ui` filters for `relicTriggered`, and the one
+// consumer of the payload anywhere is engine test `28p`. He asked to TRY EACH,
+// which is a comparison, and this row is the only place it is drawn.
+//
+//   DISCHARGE CONDITION: this reason dies the day any OTHER shipped screen puts
+//   a swap price, as a number, in front of a player — a combat affordance, an
+//   `armamentSwapped` reader, a Settings row that prints Actions instead of a
+//   rule name. On that day this row is ordinary code, judged on its own merits
+//   and deletable like any other. Measured undischarged at `dabd7d9`.
+//
+//   DO NOT KEEP IT BECAUSE IT IS THE LAST TRACE OF A REQUEST HE MADE. That was
+//   the reason first recorded here and IT IS FALSE. The ask has other traces
+//   and several are executable: the `flat`/`gear`/`category` rows of
+//   `balance.equipment.swapCostRules` in `src/content/balance.js`, under a
+//   paragraph quoting his sentence verbatim; `swapCostFor()`'s
+//   gearOn/gearDelta/gearIgnored rungs in `src/model/loadout.js`; and engine
+//   tests `28p`, `28q`, `28r` in `tests/engine.test.js`. ONE GREP DISCHARGES A
+//   LAST-TRACE CLAIM, and the reader careful enough to run that grep is handed
+//   an argument for the deletion this comment exists to prevent. A false reason
+//   for a right keep is an invitation.
+//
+//   NO COUNT OF THOSE TRACES IS WRITTEN HERE, DELIBERATELY. The first version
+//   of this marker printed one — *"at least five traces and four executable"*
+//   — and it was wrong in the arithmetic and in two of the names it counted:
+//   `content/balance.js` does not exist (it is `src/content/balance.js`), and
+//   `engine test 28c` has never existed in this repo at all, while `28b` is
+//   about which hand holds a piece. A number in a marker goes stale, and a
+//   stale number is an argument for the deletion the marker exists to prevent
+//   — which is the exact failure this paragraph already records against the
+//   reason it replaced. Falsified by Sten; citations corrected by Bjorn; both
+//   2026-08-15.
+//
+//   AND IT DOES RENDER, which the first version of this marker denied. Under
+//   the shipped default (`flat`) a weapon swap costs the same either way and
+//   the row correctly stays silent — but Settings › Advanced switches the rule
+//   to `category` with no content and no code, and a heavy-weapon candidate
+//   then reads 2 → 3. That is asserted, not asserted-about — the row named
+//   "the live rule decides the row" in
+//   `node tools/equipment-surface-receipts.mjs` measures it. So the keep does
+//   not rest on a surface nobody can reach.
+//
 // THE DEFECT THIS REPLACES, MEASURED RATHER THAN ARGUED. This row used to be
 // `beforeMods.swapCostDelta → afterMods.swapCostDelta` under the label
 // *"Active-set swap Actions"* — a DELTA wearing a PRICE's name, and a second
