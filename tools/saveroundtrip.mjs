@@ -56,6 +56,19 @@
 // A substituted string ("constitution" -> "vigour") is a guess about what the
 // old build wrote. These are what it wrote.
 //
+// AND THE DEAD NAME IN THAT FILE IS DELIBERATE — said in the file's own first
+// key, and now PLANTED. The frozen entries spell `vigour` because the population
+// they stand for spells `vigour`; a corpus normalized to the live name would
+// pass every check below while proving nothing about the saves that actually
+// exist on players' disks. The corpus carries that warning at its first key, and
+// the warning's central promise — "each reader goes RED BY NAME if the
+// vocabulary is modernised" — was true by reading and never once observed. The
+// --selftest corpus now plants that exact tidy-up ("the frozen corpus is
+// normalized to the live name"), so groupB's `mustContain` gate is watched
+// rather than merely asserted. Plant added by Sten on Marina's order,
+// 2026-08-16; the warning and the fixtures are Vira's. A purpose that lives only
+// in prose is one refactor from gone.
+//
 // I BUILT THE SECOND COPY MYSELF AND THEN COLLAPSED IT. Branching off dev, I
 // regenerated Vigour-era fixtures my own earlier session had already frozen and
 // pushed at 9c83856 — one fact, two homes, nothing keeping them in sync, which
@@ -67,11 +80,13 @@
 // about any number. It only says: THIS number is not the number that went in.
 // Every failure names the field, the fixture, and both values.
 //
-// SELFTEST: `node tools/saveroundtrip.mjs --selftest` plants five known-bads
+// SELFTEST: `node tools/saveroundtrip.mjs --selftest` plants six known-bads
 // into a COPY of the real tree via tools/doorplant.mjs and runs this whole file
-// from that copy, so each plant enters as source bytes on the road the real
-// input travels. Observed red 2026-08-15 at dev = 7e67de8 — see the log entry
-// gamedesign/vira/log/2026/2026-08-15_the-save-that-came-back-whole.md.
+// from that copy, so each plant enters as file bytes on the road the real input
+// travels. Five break the door; the sixth breaks the corpus. Observed red
+// 2026-08-15 at dev = 7e67de8 for the first five — see the log entry
+// gamedesign/vira/log/2026/2026-08-15_the-save-that-came-back-whole.md — and
+// 2026-08-16 at 7e968f2 for the corpus plant.
 //
 // REMOVAL CONDITION (SOP 1's corollary): deleted the day the run save stops
 // being a persisted artifact — no bytes, no fixed point, no subject.
@@ -606,7 +621,9 @@ read the next paragraph before the old text below it.
 }
 
 // ---------------------------------------------------------------------------
-// Selftest — five known-bads, each entering as source bytes in a copied tree
+// Selftest — six known-bads, each entering as file bytes in a copied tree.
+// Five break the DOOR (src/); the sixth breaks the EVIDENCE (the corpus),
+// which was the one input none of the others could see.
 // ---------------------------------------------------------------------------
 async function selftest() {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -666,6 +683,30 @@ async function selftest() {
         find: '  syncFlaskGrowth(registries, run);\n  return run.flaskCharges;',
         replace: '  syncFlaskGrowth(registries, run);\n  run.flaskCharges.hpCurrent = run.flaskCharges.hp;\n  return run.flaskCharges;',
         expectRed: /flaskCharges\.hpCurrent|the door changed/,
+      },
+      {
+        // THE PLANT THAT IS NOT IN src/ — the CORPUS is the input here, and it
+        // was the one input nobody armed. Every plant above breaks the door;
+        // this one breaks the evidence.
+        //
+        // The predicted edit, and it is a helpful one: someone tidying the tree
+        // sees a fixture full of a name this game retired, runs the obvious
+        // find-and-replace, and every check that reads it stays green — while
+        // measuring a save that spells the CURRENT name, which proves nothing
+        // about the population this corpus exists for. The frozen bytes are
+        // Vigour-era ON PURPOSE, and purpose that only lives in a commit
+        // message is one refactor from gone.
+        //
+        // Marina ordered the warning written at the corpus rather than in a
+        // log (2026-08-16). It is the first key of the fixture, where a person
+        // editing those bytes reads it before anything else. This plant is what
+        // makes it more than a note: the guard that enforces it is now watched.
+        name: 'the frozen corpus is normalized to the live name',
+        file: 'tests/fixtures/run-save-vigour-window.json',
+        find: '"vigour"',
+        replace: '"constitution"',
+        all: true, // it appears in three entries; half a rename is a false green
+        expectRed: /no longer contains "vigour"/,
       },
     ],
   });
