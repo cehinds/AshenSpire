@@ -26,6 +26,25 @@ import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
+// The orientation gate's one number, read from its single home. See THE FIRST
+// VIEWPORT IS DERIVED, NOT TYPED below for why this import exists.
+import { balance } from '../src/content/balance.js';
+
+// Derived here, above --selftest, because BOTH readers need it and two reads of
+// one number is the defect this derivation exists to remove.
+const GATE_BELOW_H = balance?.ui?.uiScale?.gateBelowH;
+if (typeof GATE_BELOW_H !== 'number' || !Number.isFinite(GATE_BELOW_H)) {
+  // Absent is not a pass. A missing constant here would silently produce a NaN
+  // viewport and the browser would pick a size of its own, so this fails loudly
+  // rather than measuring something nobody chose.
+  console.error('tutorial-reach: balance.ui.uiScale.gateBelowH is absent or not finite.');
+  console.error('  The first viewport is derived from it and there is nothing to derive from.');
+  console.error('  UNKNOWN BLOCKS — this is not a pass and not a soft red.');
+  process.exit(2);
+}
+// The smallest viewport this tool drives, as `--only` spells it (`${w}x${h}`).
+const SMALLEST_VP = { w: 800, h: GATE_BELOW_H };
+const SMALLEST_VP_NAME = `${SMALLEST_VP.w}x${SMALLEST_VP.h}`;
 
 // DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
 // rendered coach mark driven by REAL mouse clicks at real screen coordinates
@@ -41,7 +60,15 @@ if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'tutorial-reach.mjs',
-    args: ['--only', '800x450'],
+    // DERIVED, not typed — this named the viewport as a literal '800x450' until
+    // 2026-08-16. When the gate moved 432 -> 465 the first viewport moved with
+    // it and this string did not, so `--only` would have matched NO viewport and
+    // the plants would have been re-run against an empty sweep. doorplant would
+    // have called that a failure rather than a pass (it requires a non-zero exit
+    // AND a matching line), so it fails loudly — but a known-bad harness aimed at
+    // a viewport that no longer exists is checking nothing, and "it fails loudly"
+    // is not the same as "it is checking the thing". One home, both readers.
+    args: ['--only', SMALLEST_VP_NAME],
     timeoutMs: 900000,
     plants: [
       {
@@ -79,11 +106,39 @@ const BROWSERS = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ].filter(Boolean);
 
-// Both edges are viewport edges here: --ui-zoom is min(w/1200, h/730) clamped
-// to [0.62, 1.70] (balance.js uiScale), so the two ends of the dial are the two
-// ends of this list. The middle four are the sizes Sunna measured.
+// Both edges are viewport edges here: --ui-zoom is min(w/designW, h/designH)
+// clamped to [min, max] (balance.js uiScale), so the two ends of the dial are
+// the two ends of this list. The middle four are the sizes Sunna measured.
+//
+// ---- THE FIRST VIEWPORT IS DERIVED, NOT TYPED -------------------------------
+//
+// It read `{ w: 800, h: 450 }` until 2026-08-16, when the orientation gate's one
+// number moved 432 -> 465 (balance.ui.uiScale.gateBelowH, re-derived against the
+// wall). 450 fell FIFTEEN PX BELOW the gate, the upright veil correctly covered
+// the board, and this tool went exit 1 with three failures — naming the culprit
+// itself, `elementFromPoint -> modal-veil upright-veil`. The tool was right and
+// the viewport was stale.
+//
+// A HAND-TYPED 465 HERE WOULD BE THE SAME DEFECT ONE FILE OVER. The whole
+// subject of that change was a number anchored in two places; "fixing" it by
+// typing the new value into a second file re-creates the thing on the day it
+// was collapsed. So the height is READ from the number's one home, and it moves
+// when the gate moves, forever.
+//
+// SAME DOOR AS uprightgate --ladder, deliberately: import src/content/balance.js
+// in Node — same bytes, different loader. Whether the shipped bundle carries
+// those bytes is tools/verify-shipped.mjs's subject, not this file's.
+//
+// WHAT THIS COSTS, AND IT IS A REAL LOSS, STATED RATHER THAN DISCOVERED: at
+// width 800 the MIN clamp is NO LONGER REACHABLE above the gate. 800x465 zooms
+// to 0.64, not the 0.62 floor — that floor now needs w <= designW*min = 744,
+// and whether this list should carry such a viewport is a coverage decision
+// about what we ship, not a merge-time edit. Filed with this act, not taken.
 const VIEWPORTS = [
-  { w: 800, h: 450 },   // zoom 0.62 — the MIN clamp
+  // The smallest screen we ship: the lowest height the upright gate ADMITS, at
+  // the width every wall in the derivation was measured at (800). Derived and
+  // named once, above --selftest, because that harness reads it too.
+  SMALLEST_VP,
   { w: 1024, h: 640 },  // zoom 0.85 — below the design baseline
   { w: 1200, h: 730 },  // zoom 1.00 — the design baseline, the case that always worked
   { w: 1280, h: 800 },  // zoom 1.07

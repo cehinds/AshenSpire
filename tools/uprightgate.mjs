@@ -48,19 +48,31 @@
 //       no gate.
 //   K — THE WAKE (development.md, *The wake condition*). The gate is a refusal,
 //       and a refusal's correct state and its expired state print the same
-//       nothing. So: THE GATE MUST BE ABSENT ON EVERY SHAPE WHERE ALL FIVE
-//       REQUIRED CONTROLS ARE WHOLE (WHOLE_SET below — mobilefit's four, plus
-//       the hand). The day a composition fits a short shape, all five come whole
-//       and this clause goes red; then `gateBelowH` comes down, or
-//       components/upright.js is deleted, instead of the refusal quietly
-//       outliving its reason. A suite that only asserts the refusal re-proves it
-//       forever and watches the premise never.
+//       nothing. So something has to check that the refusal STOPS: THE GATE MUST
+//       BE ABSENT ON EVERY SHAPE WHERE NOTHING WALLS. A suite that only asserts
+//       the refusal re-proves it forever and watches the premise never.
 //
-//       IT USED TO ASK ABOUT END TURN ALONE AND THAT WAS WRONG. At Text S the
-//       landscape phone has END TURN whole while two thirds of the hand is off
-//       screen — so the narrow question called 844x390 "a shape that fits" and
-//       failed the gate for refusing it. Cards you cannot see are not a working
-//       screen. The set is wide because the claim is wide.
+//       IT ASKED ABOUT `whole` UNTIL 2026-08-16 AND MARINA RULED THAT WRONG
+//       (MR-142): the refusal answers to the WALL. So the trip is still the wide
+//       set — all five required controls whole (WHOLE_SET below), which is the
+//       cheap question this run already has an answer to — but a trip is now a
+//       QUESTION, not a finding, and it is resolved after every shape is read:
+//         · the shape walls at ANOTHER TEXT SIZE   -> justified. The wall arrives
+//           ~100 px higher at XL than at S and the gate is one number for all four.
+//         · nothing walls here, but something walls ABOVE here -> the price of one
+//           downward-closed threshold over a wall set with a hole in it. Counted
+//           in `--ladder`'s COST table, printed per shape, not a finding.
+//         · nothing walls here and nothing walls above -> THE FINDING. The refusal
+//           has outlived its premise: `gateBelowH` comes down or
+//           components/upright.js is deleted. The day a landscape composition
+//           ships, every trip lands here.
+//
+//       WHY THE TRIP IS STILL `whole` AND NOT THE PREMISE. It is a filter, not the
+//       verdict: it is free (already measured), it never misses a dead premise (a
+//       shape with no wall anywhere and a gate standing is whole at some text size
+//       or it is a layout defect clause W already owns), and it keeps the
+//       expensive four-text-size re-read to the handful of shapes that could be
+//       findings. The VERDICT reads the wall, every time.
 //
 // K is the clause that makes this an instrument rather than a victory lap. W and
 // G would both stay green under a gate that stands at every shape on earth.
@@ -73,11 +85,16 @@
 //     the smallest this house tests, the iPad-portrait shape that caused #24,
 //     A TABLET IN LANDSCAPE (1024x768 — landscape and perfectly fine, which is
 //     the whole reason the predicate is not an orientation), the desktop
-//     baseline, and A LADDER ACROSS THE THRESHOLD ITSELF (800x410 .. 800x500).
-//     The ladder is here because the FIRST version of this list had none of it
-//     and let a predicate ship that refused a working window: A POPULATION WITH
-//     NO CELL EITHER SIDE OF ITS OWN BOUNDARY CANNOT TELL YOU THE BOUNDARY IS
-//     WRONG. If this file ever gates 1024x768 the check has become an
+//     baseline, and A LADDER ACROSS THE THRESHOLD ITSELF (800x410 .. 800x500,
+//     WALKED AT 1 PX ACROSS 460..470 where the constant lives). The ladder is
+//     here because the FIRST version of this list had none of it and let a
+//     predicate ship that refused a working window; the 1 px band is here
+//     because the SECOND version spaced it at 10 px and let the constant sit in
+//     the hole, three pixels above the measurement, while this file printed
+//     PASS. Same rule, same site, twice: A POPULATION WITH NO CELL EITHER SIDE
+//     OF ITS OWN BOUNDARY CANNOT TELL YOU THE BOUNDARY IS WRONG — and a
+//     boundary written in integers has to be sampled in integers. Full note at
+//     `LADDER_H`. If this file ever gates 1024x768 the check has become an
 //     orientation sniffer, and clause K says so.
 //   DEVICE OR WINDOW — stated per shape (WINDOWS below), not inferred from the
 //     dimensions. It decides touch emulation, and through that the app's
@@ -90,10 +107,17 @@
 //     control per surface, and only combat has one written down. Widening the
 //     surface set without widening the control set would count screens it never
 //     actually checked.
-//   TEXT SIZE — one cell (the M default) unless `--text S|M|L|XL`. Stated in the
-//     boundary rather than left to be found: text size changes content height,
-//     so a shape that fits at M can wall at XL, and the default run is silent
-//     about that.
+//   TEXT SIZE — one cell (the M default) unless `--text S|M|L|XL`, EXCEPT in
+//     clause K's resolution, which re-reads a tripped shape at all four because
+//     the question it asks is about the other three. Stated in the boundary
+//     rather than left to be found: text size changes content height, so a shape
+//     that fits at M can wall at XL. THE CONSTANT IS DECIDED AT XL: the last
+//     walled height is 367/394/423/464 across S/M/L/XL, the constant is one past
+//     the largest (MR-143), and a default `M` run cannot see it move. `--ladder`
+//     is the mode that walks all four and checks the number against them;
+//     `--selftest` carries the XL cell that sets it and the Text S cell that
+//     shows what it costs, so the check does not depend on which flag a person
+//     happened to type.
 //   NO TOLERANCE ON REACHABILITY. Half a pixel of slack on the viewport edges
 //     for device-pixel rounding, and nothing else. "Mostly on screen" is a
 //     button a thumb misses.
@@ -124,33 +148,60 @@
 //   speak for them.
 //
 // ---------------------------------------------------------------------------
-// KNOWN OPEN — `--text XL` IS RED, THE REDS ARE REAL, AND NONE OF THEM IS THE
-// GATE'S. `--text S`, the default `M`, and `--text L` are all GREEN 14/14.
+// KNOWN OPEN — WHAT THE RE-DERIVATION CLOSED, AND THE ONE THING NO HEIGHT CAN.
 //
-//   --text XL  ->  FAIL, 6 finding(s) over 14 shapes, all of them WALL/no-gate:
-//     360x640  .end-turn top 659.25..720.91 in a 640 px viewport, 0% on screen
-//     800x440  .end-turn top 450.95..479.83 in a 440 px viewport
-//     800x450  .end-turn top 450.95..479.83 in a 450 px viewport
-//   (each counted twice — combat and title)
+// Measured 2026-08-16 (Sunna) on this branch — dev = aafa3e2 + this branch +
+// vira/two-predicates — headless Chromium, source tree, width 800 for the sweeps.
 //
-// THE COMBAT BOARD DOES NOT FIT ITSELF AT LARGE TEXT, and that is the cause.
-// Measured on a height ladder at width 800 (full table in balance.js beside
-// `gateBelowH`; % of each control on screen):
+// CLOSED, AND BY A RULING RATHER THAN BY LAYOUT WORK. Moving the constant
+// 432 -> 465 puts the gate on every wall this house has measured at width 800:
+// the Text XL band h 390..450 AND the one-pixel wall at 464 that sits 14 px
+// above the top of the interval everyone was counting. `--predicates` was RED at
+// e5cb619 with "A WALL WITH NO GATE — text XL, h 432..464" and is GREEN here.
+// Marina's XL card is not re-carded — IT CLOSES. A predicate ruling closed a
+// layout card, which is the strongest practical argument for MR-142 and neither
+// of us could see it from one predicate alone.
 //
-//   Text L : the hand is cut from h 520 down (92% -> 29%); END TURN gone at 410.
-//   Text XL: the hand is cut from h 560 down (94% -> 15%); END TURN gone at 450,
-//            and only 71% whole at h 500.
+//   the wall, per text size, at width 800 (`--ladder --ladder-from 360`, 964
+//   cells, exhaustive 1 px):
+//     text            S     M     L     XL
+//     last WALL h   367   394   423   464      -> constant = max+1 = 465
+//     all 5 whole   432   495   533   571      <- the COST column, not the number
+//
+// STILL OPEN, AND IT IS THE PRICE OF THE RULING, NOT A BUG IN IT. One
+// downward-closed threshold over four text sizes must refuse heights that wall
+// nobody, and `--ladder` counts them on every run rather than leaving them to be
+// discovered: at Text S, h 368..464 are refused and NOT ONE of them is a wall —
+// 33 of those (432..464) are FULLY WHOLE, a perfect screen refused. At M, 70
+// heights; at L, 41. And h 451..463 refuses nobody at any text size, because
+// that is the gap the XL wall jumps and a threshold cannot jump with it. THE
+// DIRECTION OF THE COST FLIPPED WITH THE PREDICATE: under `whole` it fell on
+// large-text players (walls left uncovered); under the wall it falls on
+// small-text players (working heights refused). A per-text-size TABLE
+// {368, 395, 424, 465} would pay neither — measured, filed, and not installed,
+// because the SHAPE of the threshold is a ruling and MR-142 ruled the predicate.
+//
+// STILL OPEN, AND NO HEIGHT CLOSES IT: at Text XL, 360x640 is walled — END TURN
+// at top 659.25..720.91 in a 640 px viewport. A PORTRAIT phone, at the largest
+// accessibility text. A threshold that covered it would have to exceed 640,
+// refusing every window shorter than that including desktop ones, and neither
+// piece of advice this gate can give is even true there (turning 360x640 gives
+// 640x360, which is worse). `--text XL` is therefore still RED on this branch,
+// with the finding on 360x640 alone instead of on 23 shapes. THE BOARD MUST FIT
+// ITSELF at every text size, or `.combat` must offer a real scroll path. Both
+// are layout work; neither is a refusal, and a refusal that grew with the
+// accessibility setting would take screens away as a player turns it up.
+//
+// THE COMBAT BOARD DOES NOT FIT ITSELF AT LARGE TEXT, and that is the cause of
+// all of it. % of each control on screen, width 800:
+//   Text L : the hand is cut below h 533 (68.83% at 464, 47.8% at 420); END TURN
+//            is UNREACHABLE at every h <= 423.
+//   Text XL: the hand is cut below h 571 (54.19% at 463); END TURN is
+//            UNREACHABLE at every h <= 450 and again at 464.
+//   Text S : the hand is cut below h 432 — 67.3% at h 390, CLIPPED WITH NO
+//            SCROLL PATH, which is the number Marina's ruling left open as mine.
 //   Not only short windows — at Text XL, 1024x600 shows 68% of the hand and
 //   960x540 shows 66% of END TURN. Identical at 1ab9777: PRE-EXISTING, all of it.
-//   360x640 is the one that should worry a person: a real phone, in PORTRAIT,
-//   at the largest accessibility text, with END TURN unreachable.
-//
-// THE GATE DOES NOT AND MUST NOT COVER THIS. A threshold that grew with the
-// accessibility setting would refuse more and more of a large-text player's
-// screens, which is the opposite of what that setting is for — and on a phone
-// in portrait neither piece of advice the gate can give is even true. The fix is
-// that the board must fit its own baseline at every text size, or `.combat` must
-// offer a real scroll path. Both are layout work; neither is a refusal.
 //
 // NOTHING SHIPPED SWEEPS THAT CELL, which is why it surfaced only now:
 // mobilefit's s/m/l/xl matrix varies UI SIZE, not Text size, and actionreach
@@ -163,12 +214,43 @@
 //   node tools/uprightgate.mjs --only 844x390
 //   node tools/uprightgate.mjs --text XL
 //   node tools/uprightgate.mjs --selftest      the same-door known-bad corpus
+//   node tools/uprightgate.mjs --ladder        DERIVE gateBelowH from the board
+//        --ladder-text S      one text size instead of all four
+//        --ladder-width 800   comma list; the wall is a rect, not a height
+//        --ladder-from 390    floor of the exhaustive 1 px sweep (free — a cell
+//                             below the maximum cannot raise it)
+//        --ladder-to 600      ceiling of the same sweep, and NOT free: a top cell
+//                             that is still a wall is a finding, not a number
+//   node tools/uprightgate.mjs --predicates    THE PREDICATE AGAINST THE PREMISE
+//        --predicate-text S   comma list; default all four
+//        --predicate-width 800
+//        --predicate-from 360 / --predicate-to 480   the exhaustive 1 px sweep
 //   CHROME=/path/to/chrome node tools/uprightgate.mjs
 //
 // Exit codes
-//   0  every walled shape is gated with true advice, and no fitting shape is
+//   0  every walled shape is gated with true advice, and no shape where nothing
+//      walls is refused; under --ladder, gateBelowH is exactly max(wall h)+1 over
+//      the measured text sizes; under --predicates, every wall in the sweep has
+//      the gate standing
 //   1  a finding
 //   2  usage / no browser / NOTHING MEASURED — never a pass
+//
+// `--predicates` WAS EXPECTED RED ON THIS TREE AND IS NOW GREEN — the paragraph
+// is kept and corrected in place rather than deleted, because what closed it is
+// the point. VIRA WROTE, at e5cb619: "At Text XL the wall runs to h 450 and
+// gateBelowH is 432, so h 432..450 is a wall with no gate — Marina's card, with
+// those coordinates, filed deliberately rather than left inside the phrase 'a
+// layout backlog'." THAT CARD IS CLOSED, NOT RE-CARDED (Sunna, 2026-08-16):
+// re-deriving the constant against the premise put it at 465, which covers
+// 432..450 AND the one-pixel wall at 464 that neither of us could see until she
+// read `ctl.reach`. A ruling on WHICH PREDICATE closed a layout card. That is
+// the strongest practical evidence for MR-142 and none of it was visible from
+// either predicate alone.
+//
+// NOTHING RUNS THIS TOOL BUT A PERSON: `grep -rn uprightgate` outside this file
+// returns nothing, in .github/workflows/ci.yml included, so no mode here blocks
+// a merge. Verified at e5cb619 (Vira), re-verified 2026-08-16 (Sunna). The day
+// that stops being true, this paragraph is the warning.
 //
 // REMOVAL CONDITION: deleted the day src/ui/components/upright.js is deleted —
 // this file has no subject without it, and clause K is what will tell you.
@@ -180,9 +262,28 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
+// THE CORPUS RUNS IN FOUR GROUPS, BECAUSE A CORPUS IS A POPULATION TOO.
+//
+// doorplant hands the SAME argv to every plant in a group, and these plants do
+// not live at the same cell. The gate's own defects show at Text M on the phone
+// shapes; THE CONSTANT'S defect shows in a three-pixel window and only at the
+// text size that can see the number. Running the whole corpus at one cell would
+// make plants report NOT CAUGHT for want of a shape rather than for want of a
+// check. So: group 1 is the gate, group 2 is the constant's guard IN THE MAIN
+// RUN, group 3 is the derivation, group 4 is the predicate against the premise.
+// One number, checked at the cell where it is decided rather than at the cell
+// that is convenient.
+//
+// THE CELLS MOVED WITH THE NUMBER, 2026-08-16. Under `whole` the constant was
+// the MINIMUM over the text sizes, so Text S set it and both constant groups
+// lived at S in the 430s. Under the premise it is the MAXIMUM (MR-142/MR-143),
+// so Text XL sets it at 465 and group 3 derives there; group 2 stays at Text S
+// because S is now where the constant's other edge shows — the heights just
+// above it that work for everyone. A corpus anchored to a moved number is the
+// same defect this branch was opened to fix.
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  process.exit(await doorSelftest({
+  let rc = await doorSelftest({
     tool: 'uprightgate.mjs',
     args: ['--only', '844x390,1200x730,400x400,800x500'],
     timeoutMs: 900000,
@@ -206,7 +307,7 @@ if (process.argv.includes('--selftest')) {
         file: 'src/main.js',
         find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse });',
         replace: '  updateUprightGate({ short: true, offerRotate: !turned.short && coarse });',
-        expectRed: /GATE STANDS ON A SHAPE THAT FITS/,
+        expectRed: /GATE STANDS WHERE NOTHING WALLS/,
       },
       {
         // THE ADVICE PLANT. The wording is a claim about a screen the code has
@@ -253,12 +354,122 @@ if (process.argv.includes('--selftest')) {
         // name (clause 5) rather than quietly refuse somebody's screen.
         name: 'the threshold creeps up and refuses a working window (the branch\'s own first bug)',
         file: 'src/content/balance.js',
-        find: '      gateBelowH: 435,',
+        find: '      gateBelowH: 465,',
         replace: '      gateBelowH: 520,',
-        expectRed: /GATE STANDS ON A SHAPE THAT FITS/,
+        expectRed: /GATE STANDS WHERE NOTHING WALLS/,
       },
     ],
-  }));
+  });
+
+  // GROUP 2 — THE BRANCH'S OWN SECOND BUG, AT THE CELL THAT CAN SEE IT.
+  //
+  // The plant above moves the threshold 55 px and any ladder catches it. This one
+  // moves it THREE, which is the size the real defect was, and a three-pixel
+  // creep is invisible to every cell that is not standing on the boundary: while
+  // the constant was 432 and the ladder had a cell at 430 and a cell at 440 and
+  // nothing between, `gateBelowH: 435` printed PASS 14/14 through every run this
+  // branch made while it refused three working screens. The cell and the text
+  // size are BOTH part of the catch, and BOTH MOVED WITH THE NUMBER on 2026-08-16:
+  // 800x466 at Text S is the new boundary cell, three above the new constant 465.
+  //
+  // TEXT S IS STILL THE RIGHT TEXT SIZE AND THE REASON INVERTED. It used to be
+  // the size that SET the constant (the minimum whole-fit). It is now the size
+  // that can SEE ITS UPPER EDGE: at S the board is whole from h 432, so 466 is a
+  // screen that works for everybody and walls nobody, and a constant that creeps
+  // to 468 takes it away. At Text M/L/XL the same cell is not whole and clause K
+  // never trips, so the plant would report NOT CAUGHT for want of a shape.
+  rc = await doorSelftest({
+    tool: 'uprightgate.mjs',
+    args: ['--text', 'S', '--only', '800x466'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        name: 'the threshold creeps three pixels above the last wall (the branch\'s own SECOND bug, re-anchored at Text S)',
+        file: 'src/content/balance.js',
+        find: '      gateBelowH: 465,',
+        replace: '      gateBelowH: 468,',
+        expectRed: /GATE STANDS WHERE NOTHING WALLS/,
+      },
+    ],
+  }) || rc;
+
+  // GROUP 3 — THE DERIVATION, BOTH DIRECTIONS.
+  //
+  // `--ladder` is what makes the number re-derivable instead of remembered, and
+  // an unfalsifiable derivation is a comment with a browser attached. Both edges
+  // of the equality it asserts get a plant: five too LOW (a wall left with no
+  // gate — WHICH IS WHAT 432 ACTUALLY WAS at Text XL, so this plant is the real
+  // defect put back) and ten too HIGH (a refusal that has outgrown its premise).
+  //
+  // AT TEXT XL, 455..480, BECAUSE THAT IS WHERE THE NUMBER IS DECIDED NOW. The
+  // constant is max(wall h)+1 over the four text sizes and XL is the maximum, so
+  // XL alone re-derives 465 and the clean run comes back green on a partial set.
+  // The window is deliberately narrow — 26 cells — and it contains the ONE-PIXEL
+  // WALL AT 464 that sets the whole number (Vira, 2026-08-15). A sweep that
+  // stepped over 464 would derive 451 and pass itself off as a measurement; this
+  // group is the guard on exactly that, and the tool prints the range it walked.
+  //
+  // A NARROW SWEEP IS SOUND FOR THIS DERIVATION AND WAS NOT FOR THE OLD ONE. The
+  // maximum needs only the TOP of the wall set: a cell below it cannot raise it,
+  // so the floor of the sweep is free. The ceiling is not free, and it is
+  // asserted — a sweep whose top cell is still a wall has not found the edge.
+  rc = await doorSelftest({
+    tool: 'uprightgate.mjs',
+    args: ['--ladder', '--ladder-text', 'XL', '--ladder-from', '455', '--ladder-to', '480'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        name: '--ladder: the constant sits below the last wall (what 432 was — a wall with no gate)',
+        file: 'src/content/balance.js',
+        find: '      gateBelowH: 465,',
+        replace: '      gateBelowH: 460,',
+        expectRed: /THE CONSTANT LEAVES A WALL UNGATED/,
+      },
+      {
+        name: '--ladder: the constant refuses above the last wall (a refusal that outgrew its premise)',
+        file: 'src/content/balance.js',
+        find: '      gateBelowH: 465,',
+        replace: '      gateBelowH: 475,',
+        expectRed: /THE CONSTANT REFUSES ABOVE ITS OWN PREMISE/,
+      },
+    ],
+  }) || rc;
+
+  // GROUP 4 — THE PREDICATE AGAINST THE PREMISE (`--predicates`, Vira).
+  //
+  // A FOURTH GROUP FOR THE SAME REASON THERE WERE THREE: a corpus is a
+  // population too, and this plant does not live where the others do. It is run
+  // at TEXT M over h 385..400, and both halves of that cell are load-bearing:
+  //   · at Text M the wall's top edge is h 394, so the clean run has TEN REAL
+  //     WALL CELLS to rule on and comes back GREEN because every one of them is
+  //     gated. A group whose clean run had no wall in it would report this plant
+  //     CAUGHT for want of a referent, which is the empty-query defect wearing a
+  //     corpus (SOP 2's ⚙ clause).
+  //   · it is NOT run at Text XL, and that is the whole reason the group exists
+  //     as its own cell. At XL the tree is ALREADY RED here — the wall runs to
+  //     h 450 against a constant of 432 — and doorplant requires the clean run to
+  //     come back green. Running this plant at XL would prove nothing about the
+  //     check and would fail the harness for a defect that is Marina's card.
+  //
+  // The plant drops the constant BELOW the wall's top edge, which is the exact
+  // shape of a refusal that stopped covering its own premise: the gate keeps
+  // standing, keeps looking like a gate, and the wall walks out from under it.
+  rc = await doorSelftest({
+    tool: 'uprightgate.mjs',
+    args: ['--predicates', '--predicate-text', 'M', '--predicate-from', '385', '--predicate-to', '400'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        name: '--predicates: the constant drops below the wall\'s top edge — a wall the gate does not stand on',
+        file: 'src/content/balance.js',
+        find: '      gateBelowH: 465,',
+        replace: '      gateBelowH: 380,',
+        expectRed: /A WALL WITH NO GATE/,
+      },
+    ],
+  }) || rc;
+
+  process.exit(rc);
 }
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -276,6 +487,48 @@ const BROWSERS = [
 // emulate the swapped viewport to check the advice — every phone/tablet shape
 // can be turned; the desktop baseline is not a device and turning it is a
 // question about a window, which clause G handles through the 'resize' wording.
+// THE LADDER ACROSS THE THRESHOLD, at 1 px where the threshold actually sits.
+//
+// IT IS HERE BECAUSE MY OWN RULE HAS NOW CAUGHT ME TWICE AT THIS ONE SITE. The
+// FIRST version of this list had no ladder at all and let me ship a predicate
+// that refused 800x450, a working window. I fixed that with a neighbourhood —
+// and then spaced the neighbourhood at 10 px and left `gateBelowH` sitting in
+// the hole. At Text S every required control is whole from h 432 up, so
+// h 432/433/434 were three screens the gate refused while this tool printed
+// PASS 14/14, because it had a cell at 430 and a cell at 440 and nothing
+// between. Bjorn found it by hand (2026-08-15) and it is the same sentence a
+// second time: A POPULATION WITH NO CELL EITHER SIDE OF ITS OWN BOUNDARY CANNOT
+// TELL YOU THE BOUNDARY IS WRONG — and "either side" means EITHER SIDE, at the
+// resolution the boundary is written in. A threshold is an integer; so is its
+// ladder.
+//
+// 460..470 is the band the constant lives in, so it is walked at 1 px. Outside
+// that band the ladder stays coarse on purpose: those cells prove the gate keeps
+// standing well below and keeps quiet well above, and neither claim needs
+// resolution. If `gateBelowH` ever moves out of 460..470, THIS BAND MOVES WITH
+// IT — the band is anchored to the constant, and a band left behind by a moved
+// constant is exactly the defect above (Marina, 2026-08-15: when you move
+// anything, ask what was anchored to its old position).
+//
+// AND IT MOVED, 2026-08-16, FOR EXACTLY THAT REASON. The band was 430..440 while
+// the constant was 432. MR-142 changed the predicate the refusal answers to (the
+// WALL, not `whole`) and MR-143 changed the derivation (`max(wall h)+1`, not
+// `min(good h)`), so the constant went 432 -> 465 — and I moved the band the
+// same hour, because the whole reason the old defect survived was a band left
+// three pixels behind its own number. 464 IS INSIDE THIS BAND ON PURPOSE: it is
+// the one-pixel Text XL wall that sits 14 px above the top of the interval
+// everyone was counting (Vira, 2026-08-15), and it is the cell that sets the
+// constant.
+//
+// AND THE BAND IS ONLY DIAGNOSTIC AT THE TEXT SIZE THAT CAN SEE THE NUMBER —
+// WHICH IS NOW THE OTHER END OF THE DIAL. Under `whole` the constant was the
+// MINIMUM over the text sizes, so Text S set it. Under the premise it is the
+// MAXIMUM, so Text XL sets it (S 368, M 395, L 424, XL 465 — `--ladder`), and
+// Text S is where its COST is visible instead: at S every one of these rungs is
+// a screen that works and is refused anyway. Both readings matter and they are
+// different runs. `--selftest` group 2 runs the band at S for the cost edge and
+// group 3 derives at XL for the number, rather than trusting anyone to remember.
+const LADDER_H = [410, 430, 450, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 480, 500];
 const SHAPES = [
   [390, 844], [360, 640], [834, 1194],   // portrait: must never gate
   [844, 390], [915, 412],                // landscape phone: the subject
@@ -283,12 +536,7 @@ const SHAPES = [
                                          // renders the 'resize' wording at all.
                                          // Without it that half of the copy is
                                          // never drawn by any run and rots.
-  // THE LADDER ACROSS THE THRESHOLD, and it is here because the FIRST version of
-  // this list had none of it and let me ship a predicate that refused a working
-  // window. 430 is the tightest height at which END TURN is still whole; 410 is
-  // the first at which it is not. A population with no cell either side of its
-  // own boundary cannot tell you the boundary is wrong.
-  [800, 410], [800, 430], [800, 440], [800, 450], [800, 480], [800, 500],
+  ...LADDER_H.map((h) => [800, h]),
   [1024, 768],                           // tablet LANDSCAPE — must never gate
   [1200, 730],                           // the desktop baseline
 ];
@@ -297,7 +545,12 @@ const SHAPES = [
 // "turn your phone" to a browser window. The distinction is now stated per
 // shape, because it is a fact about what the cell REPRESENTS and no arithmetic
 // on its dimensions can recover it.
-const WINDOWS = new Set(['800x410', '800x430', '800x440', '800x450', '800x480', '800x500', '1200x730']);
+//
+// DERIVED FROM `LADDER_H`, not restated (Law 0 clause 1). The hand-written twin
+// of this list was a trap with a name: adding a ladder rung and forgetting its
+// WINDOWS entry silently makes that rung a TOUCHSCREEN, which changes the gate's
+// wording and the shape of the finding, and nothing would have said so.
+const WINDOWS = new Set([...LADDER_H.map((h) => `800x${h}`), '1200x730']);
 const isDevice = (shape) => !WINDOWS.has(shape);
 // balance.ui.textSize. A second copy of a content value, so it is named here
 // rather than hidden (Law 1 clause 2); it is the one drift risk in this file.
@@ -347,55 +600,63 @@ const probe = (required, wholeSet) => `(() => { const n=(v)=>+(+v).toFixed(2);
   const zoom=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'))||1;
   const layout=document.documentElement.getAttribute('data-layout');
   const scrollerName=(el)=>el.tagName+(el.className&&typeof el.className==='string'?'.'+el.className.trim().split(/\\s+/).join('.'):'');
+  // ONE MEASUREMENT FUNCTION, USED FOR BOTH SETS — it was written for the
+  // REQUIRED control alone and the wake set got a bare percentage off a second,
+  // shorter copy of the same arithmetic. Same probe, same frame, second half
+  // discarded: that is how --ladder could read wholeCount for a whole branch
+  // and never once read a reach word (Vira, 2026-08-15; MR-144). A cut control
+  // now says WHICH KIND of cut it is, because "67.3% of the hand" and "67.3% of
+  // the hand with no gesture to the rest" are two different screens for the
+  // player and were one number for the tool.
+  const measure=(el)=>{
+    const r=el.getBoundingClientRect();
+    const inside = r.top>=-0.5 && r.bottom<=vh+0.5 && r.left>=-0.5 && r.right<=vw+0.5;
+    let p=el.parentElement, scroller=null, clipper=null;
+    while (p) {
+      const cs=getComputedStyle(p);
+      const yTravel=p.scrollHeight-p.clientHeight, xTravel=p.scrollWidth-p.clientWidth;
+      const canY=(cs.overflowY==='auto'||cs.overflowY==='scroll')&&yTravel>1;
+      const canX=(cs.overflowX==='auto'||cs.overflowX==='scroll')&&xTravel>1;
+      if ((canY||canX)&&!scroller) scroller={ el:scrollerName(p), y:yTravel, x:xTravel };
+      if (!clipper&&(cs.overflowY==='hidden'||cs.overflowX==='hidden')&&(yTravel>1||xTravel>1))
+        clipper={ el:scrollerName(p), overflowY:cs.overflowY, scrollH:p.scrollHeight, clientH:p.clientHeight };
+      p=p.parentElement;
+    }
+    const de=document.scrollingElement||document.documentElement;
+    const docTravel=de.scrollHeight-de.clientHeight;
+    if (!scroller && docTravel>1) scroller={ el:'document', y:docTravel, x:0 };
+    // FOUR WORDS, NOT TWO, AND THE FOURTH IS THE ONE I NEARLY GOT WRONG.
+    // At 915x412 END TURN lies 395..419 against a 412 px viewport: 17 of its
+    // 24 px are on screen and a thumb CAN hit them (Bjorn's mobilefit reads
+    // 25/45 finger positions there). Calling that a wall would be me doing
+    // the thing he caught himself doing - describing a measurement in a word
+    // stronger than the measurement. UNREACHABLE means NOT ONE PIXEL is on
+    // screen and no gesture exists; CLIPPED means part of it is.
+    // (No backticks below this line: it is inside a template literal.)
+    const overlap = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0))
+                  * Math.max(0, Math.min(r.right, vw) - Math.max(r.left, 0));
+    return { present:true, top:n(r.top), bottom:n(r.bottom), left:n(r.left), right:n(r.right),
+             inside, scroller, clipper, onScreenPct: r.width*r.height>0 ? n(100*overlap/(r.width*r.height)) : 0,
+             reach: inside ? 'onscreen' : (scroller ? 'scrollable' : (overlap > 0 ? 'clipped' : 'unreachable')) };
+  };
   let ctl=null;
   const sel=${JSON.stringify(required)};
   if (sel) {
     const el=document.querySelector(sel);
-    if (!el) ctl={ present:false };
-    else {
-      const r=el.getBoundingClientRect();
-      const inside = r.top>=-0.5 && r.bottom<=vh+0.5 && r.left>=-0.5 && r.right<=vw+0.5;
-      let p=el.parentElement, scroller=null, clipper=null;
-      while (p) {
-        const cs=getComputedStyle(p);
-        const yTravel=p.scrollHeight-p.clientHeight, xTravel=p.scrollWidth-p.clientWidth;
-        const canY=(cs.overflowY==='auto'||cs.overflowY==='scroll')&&yTravel>1;
-        const canX=(cs.overflowX==='auto'||cs.overflowX==='scroll')&&xTravel>1;
-        if ((canY||canX)&&!scroller) scroller={ el:scrollerName(p), y:yTravel, x:xTravel };
-        if (!clipper&&(cs.overflowY==='hidden'||cs.overflowX==='hidden')&&(yTravel>1||xTravel>1))
-          clipper={ el:scrollerName(p), overflowY:cs.overflowY, scrollH:p.scrollHeight, clientH:p.clientHeight };
-        p=p.parentElement;
-      }
-      const de=document.scrollingElement||document.documentElement;
-      const docTravel=de.scrollHeight-de.clientHeight;
-      if (!scroller && docTravel>1) scroller={ el:'document', y:docTravel, x:0 };
-      // FOUR WORDS, NOT TWO, AND THE FOURTH IS THE ONE I NEARLY GOT WRONG.
-      // At 915x412 END TURN lies 395..419 against a 412 px viewport: 17 of its
-      // 24 px are on screen and a thumb CAN hit them (Bjorn's mobilefit reads
-      // 25/45 finger positions there). Calling that a wall would be me doing
-      // the thing he caught himself doing - describing a measurement in a word
-      // stronger than the measurement. UNREACHABLE means NOT ONE PIXEL is on
-      // screen and no gesture exists; CLIPPED means part of it is.
-      // (No backticks below this line: it is inside a template literal.)
-      const overlap = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0))
-                    * Math.max(0, Math.min(r.right, vw) - Math.max(r.left, 0));
-      ctl={ present:true, top:n(r.top), bottom:n(r.bottom), left:n(r.left), right:n(r.right),
-            inside, scroller, clipper, onScreenPct: r.width*r.height>0 ? n(100*overlap/(r.width*r.height)) : 0,
-            reach: inside ? 'onscreen' : (scroller ? 'scrollable' : (overlap > 0 ? 'clipped' : 'unreachable')) };
-    }
+    ctl = el ? measure(el) : { present:false };
   }
   // THE WAKE SET: which of the required controls are WHOLE on screen. An absent
   // one counts as NOT whole — a control that is not in the DOM is not a control
   // the player can use, and treating absence as "fine" is how a wake clause goes
   // quiet (this file's own subject, one level up).
-  const cut=[]; let wholeCount=0;
+  const cut=[]; let wholeCount=0; const reach={}, boxes={};
   for (const s of ${JSON.stringify(wholeSet || [])}) {
     const e=document.querySelector(s);
-    if(!e){ cut.push(s+':absent'); continue; }
-    const r=e.getBoundingClientRect();
-    const ov=Math.max(0,Math.min(r.bottom,vh)-Math.max(r.top,0))*Math.max(0,Math.min(r.right,vw)-Math.max(r.left,0));
-    const pct = r.width*r.height>0 ? n(100*ov/(r.width*r.height)) : 0;
-    if (pct>=99.9) wholeCount++; else cut.push(s+':'+pct+'%');
+    if(!e){ cut.push(s+':absent'); reach[s]='absent'; continue; }
+    const m=measure(e);
+    reach[s]=m.reach;
+    boxes[s]={ top:m.top, bottom:m.bottom, left:m.left, right:m.right, pct:m.onScreenPct, scroller:m.scroller?m.scroller.el:null };
+    if (m.onScreenPct>=99.9) wholeCount++; else cut.push(s+':'+m.onScreenPct+'%:'+m.reach);
   }
   const g=document.querySelector('.upright-veil');
   let gate=null;
@@ -415,7 +676,7 @@ const probe = (required, wholeSet) => `(() => { const n=(v)=>+(+v).toFixed(2);
       controls: g.querySelectorAll('button,a[href],input,select,textarea').length,
       overflowX: n(g.scrollWidth-g.clientWidth) };
   }
-  return { vw, vh, zoom, layout, localH:n(vh/zoom), ctl, gate, cut, wholeCount,
+  return { vw, vh, zoom, layout, localH:n(vh/zoom), ctl, gate, cut, wholeCount, reach, boxes,
            wholeTotal: ${JSON.stringify((wholeSet || []).length)} }; })()`;
 
 function connectCdp(wsUrl) {
@@ -438,6 +699,527 @@ function launchChrome(browser, dir) {
     child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
     setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-400)}`)), 12000);
   });
+}
+
+// ---------------------------------------------------------------------------
+// `--ladder` — WHERE THE CONSTANT COMES FROM. Derived on demand, not remembered.
+//
+// `balance.ui.uiScale.gateBelowH` is a MEASUREMENT, and until now it was a
+// measurement taken by hand once and typed into a comment. That is a frozen
+// snapshot of a thing that moves with the board, and the ladder table beside it
+// pointed at `node tools/uprightgate.mjs` as the way to re-take it — a command
+// that could not produce that table. A pointer to a re-measure that does not
+// re-measure is how 435 survived: the number looked sourced.
+//
+// ===========================================================================
+// WHAT THIS DERIVES, AND IT CHANGED ON 2026-08-16 — TWICE, FOR TWO REASONS
+// ===========================================================================
+//
+// IT USED TO READ `wholeCount` AND NEVER `ctl.reach`. Same probe, same frame,
+// second half discarded (MR-144, Vira). So it derived the constant from ALL
+// FIVE REQUIRED CONTROLS WHOLE — a QUALITY question, *is this screen good* —
+// while the gate exists for a WALL: END TURN not one pixel on glass and no
+// gesture to it, a SAFETY question, *can this player continue*.
+//
+// MARINA RULED THE PREDICATE (MR-142): THE REFUSAL ANSWERS TO THE WALL. Three
+// reasons and the third decides it alone — the gate's cost is total, so it
+// fires on a total condition; a refusal removes the player's choice while a
+// degraded screen leaves it; and `whole` CAN BE SATISFIED BY THE VERY
+// INTERACTION THAT STRANDS THE PLAYER (one flask gesture takes 844x390 from
+// 2/5 + UNREACHABLE to 5/5 + onscreen — Vira, re-observed). A refusal predicate
+// the trap itself satisfies is not conservative, it is the wrong question.
+//
+// AND THE DERIVATION ITSELF WAS UNSOUND, WHICH IS MINE (MR-143). It took
+// `min(good h)` — the FIRST height that works. THE WALL SET IS NOT AN INTERVAL:
+// at Text XL the ungated cells are h 432..450 AND 464, with 451..463 not walled
+// at all (the auto-zoom steps 0.63 -> 0.64 and the board grows faster than the
+// window; END TURN 13.37% at 460, 0% AT 464, 19.76% at 470). "The first h that
+// stops being bad" is a monotonic idea and this ground is not monotonic — I
+// MEASURED THE NON-MONOTONICITY MYSELF (97.13% at h 485, 94.4% at 486), used it
+// to justify sweeping exhaustively, and then derived with `min(good)` anyway.
+// THE SOUND DERIVATION IS `max(bad h) + 1`: one past the LAST wall, never the
+// first non-wall. It is the only form that survives a hole.
+//
+//   THE DERIVATION, IN ONE LINE:  gateBelowH = max over the enumerated text
+//   sizes of ( last h where `.end-turn` is UNREACHABLE ) + 1.
+//
+// MAXIMUM, NOT MINIMUM, AND THE DIRECTION FLIPPED WITH THE PREDICATE. Under
+// `whole` the binding constraint was "refuse no working screen", so the
+// constant was the SMALLEST of the four. Under the premise the binding
+// constraint is COVERAGE — a wall the gate does not stand on is a player who
+// cannot finish their turn — so it is the LARGEST. One number cannot do both
+// jobs at once and this one now does the safety job, which is the ruling.
+//
+// BOTH EDGES ARE REAL DEFECTS AND BOTH ARE ASSERTED:
+//   · a constant AT OR BELOW the last wall leaves a WALL WITH NO GATE — the
+//     premise holds and the refusal is absent. That is what 432 was at Text XL.
+//   · a constant ABOVE max(wall)+1 refuses heights where the player can reach
+//     END TURN — a refusal that has outgrown its premise, which is clause K's
+//     defect at the source.
+//
+// THE COST OF ONE NUMBER IS PRINTED, NOT HIDDEN. A single downward-closed
+// threshold over a wall set that differs by text size (and is not even an
+// interval) necessarily refuses heights that wall nobody. This mode counts them
+// and names the worst of them, per text size, so the price is a number in the
+// output rather than a sentence in a comment. It is my cost and I own it
+// (MR-142's division: Marina rules what the mechanism is for; I derive the
+// number and own the consequences).
+//
+// EXHAUSTIVE, 1 PX, NO BISECTION, AND NOW OVER THE WHOLE RANGE. Phase B used to
+// bracket at 8 px above the constant and close at 1 px — that is exactly the
+// hole-shaped assumption above, wearing a cheaper coat, and it is DELETED. Every
+// cell from `--ladder-from` to `--ladder-to` is read. The floor of the sweep does
+// not affect the derivation (a cell below the maximum cannot raise it); it
+// decides only how much of the refused span the COST table can see. The ceiling
+// does affect it, so the ceiling is asserted: a sweep whose top cell is still a
+// wall has not found the top edge, and that is a finding, not a pass.
+//
+// THE `whole` COLUMN IS STILL REPORTED — AND NOW IT IS CHECKED THE SAME WAY.
+// MR-143's third half: whether 432/495/533/571 were `min(whole)` or
+// `max(not-whole)+1` was UNMEASURED, and inheriting a number from a monotonic
+// assumption is the same defect at a new address. Both are computed and printed
+// side by side, and a disagreement is named with the holes listed.
+//
+// DOOR. Every measurement comes through the same door as the rest of this file —
+// the rendered app in a real browser, read off the frame it painted. The one
+// thing not read through the browser is the NUMBER BEING CHECKED: `gateBelowH`
+// is read by importing src/content/balance.js in Node. Same bytes, different
+// loader, and it is named here rather than left to be found. Whether the shipped
+// bundle carries those same bytes is tools/verify-shipped.mjs's subject.
+async function runLadder(read) {
+  const { balance } = await import(pathToFileURL(resolve(ROOT, 'src/content/balance.js')).href);
+  const constant = balance?.ui?.uiScale?.gateBelowH;
+  if (constant == null) {
+    console.error(`uprightgate --ladder: balance.ui.uiScale.gateBelowH is absent. There is no constant to check, and absent is not a pass.`);
+    return 2;
+  }
+  const from = +(argOf('--ladder-from') ?? 390);
+  const to = +(argOf('--ladder-to') ?? 600);
+  const widths = (argOf('--ladder-width') ?? '800').split(',').map((s) => +s.trim());
+  const texts = (argOf('--ladder-text') ?? Object.keys(TEXT).join(',')).split(',').map((s) => s.trim());
+  for (const t of texts) if (!TEXT[t]) { console.error(`uprightgate --ladder: --ladder-text ${t} is not one of ${Object.keys(TEXT).join('/')}`); return 2; }
+  if (!(from < to)) { console.error(`uprightgate --ladder: --ladder-from ${from} is not below --ladder-to ${to}; the sweep would measure nothing.`); return 2; }
+
+  const surface = SURFACES[0];
+  const isWhole = (r) => r.wholeTotal > 0 && r.wholeCount === r.wholeTotal;
+  const isWall = (r) => !!(r.ctl && r.ctl.present) && r.ctl.reach === 'unreachable';
+  // Contiguity is the whole point of this mode now, so heights are printed as
+  // runs: `432..450, 464` says in one line what a list of 20 numbers hides.
+  const ranges = (list) => {
+    if (!list.length) return '(none)';
+    const out = []; let a = list[0], b = list[0];
+    for (const v of list.slice(1)) { if (v === b + 1) { b = v; continue; } out.push(a === b ? `${a}` : `${a}..${b}`); a = b = v; }
+    out.push(a === b ? `${a}` : `${a}..${b}`);
+    return out.join(', ');
+  };
+  const line = (w, h, t, r) => `    ${w}x${h} ${t.padEnd(2)} zoom=${r.zoom} `
+    + `.end-turn ${(r.ctl && r.ctl.present ? r.ctl.reach : 'ABSENT').padEnd(11)} `
+    + `${String(r.ctl && r.ctl.present ? r.ctl.onScreenPct : 0).padStart(6)}% `
+    + `whole ${r.wholeCount}/${r.wholeTotal}${r.cut.length ? ` cut[${r.cut.join(' ')}]` : ''}`;
+
+  console.log(`\n  --ladder — deriving gateBelowH from the board, at width(s) ${widths.join(',')}, text ${texts.join(',')}`);
+  console.log(`  THE PREDICATE IS THE WALL (MR-142): \`.end-turn\` UNREACHABLE — not one pixel on screen,`);
+  console.log(`  no scroll path. THE DERIVATION IS max(wall h) + 1 (MR-143), never min(good h): the`);
+  console.log(`  wall set is not an interval, and "the first h that stops being bad" cannot survive a hole.`);
+  console.log(`  gateBelowH as written in src/content/balance.js: ${constant}`);
+  console.log(`\n  THE SWEEP — exhaustive 1 px over ${from}..${to}, every cell read, no bisection.`);
+  if (constant > to) console.log(`  NOTE: gateBelowH ${constant} is ABOVE the sweep's ceiling ${to}, so the COST table below sees only part of the refused span. The derivation is unaffected — it needs the wall's top edge, which is inside.`);
+  if (constant < from) console.log(`  NOTE: gateBelowH ${constant} is BELOW the sweep's floor ${from}, so the COST table below is empty by construction, not by measurement.`);
+
+  const bad = [];
+  const table = [];
+  let cells = 0;
+  for (const w of widths) {
+    for (const t of texts) {
+      const seen = new Map();                    // h -> probe result
+      const walls = [], notWhole = [], absent = [];
+      for (let h = from; h <= to; h++) {
+        const r = await read(w, h, surface, false, t);
+        cells++; seen.set(h, r);
+        if (!r.ctl || !r.ctl.present) { absent.push(h); continue; }
+        if (isWall(r)) walls.push(h);
+        if (!isWhole(r)) notWhole.push(h);
+      }
+      const lastWall = walls.length ? walls[walls.length - 1] : null;
+      const firstWhole = [...seen.keys()].find((h) => isWhole(seen.get(h))) ?? null;
+      const lastNotWhole = notWhole.length ? notWhole[notWhole.length - 1] : null;
+      // The interesting cells, printed: the ends of the sweep, every wall run's
+      // edges, the two derivations' cells, the constant's neighbourhood, and a
+      // coarse spine so a reader can see the ground between them.
+      const marks = new Set([from, to, constant - 1, constant, constant + 1]);
+      for (const h of [lastWall, lastWall === null ? null : lastWall + 1, firstWhole, lastNotWhole, lastNotWhole === null ? null : lastNotWhole + 1]) if (h != null) marks.add(h);
+      for (const h of walls) { if (!walls.includes(h - 1) || !walls.includes(h + 1)) marks.add(h); }
+      for (let h = from; h <= to; h++) if (h % 20 === 0) marks.add(h);
+      for (const h of [...marks].sort((a, b) => a - b)) {
+        if (!seen.has(h)) continue;
+        const r = seen.get(h);
+        console.log(line(w, h, t, r) + (isWall(r) ? '   <-- WALL' : ''));
+      }
+
+      // --- unknown is never green, three ways --------------------------------
+      if (absent.length) {
+        bad.push(`\`.end-turn\` IS NOT IN THE DOM at width ${w} text ${t}, h ${ranges(absent)} — the required control is UNKNOWN there, and unknown is not a pass`);
+      }
+      if (lastWall === to) {
+        bad.push(`THE SWEEP'S TOP CELL IS STILL A WALL — width ${w} text ${t}, h ${to}. The wall's top edge is ABOVE this sweep, `
+          + `so max(wall h) is UNKNOWN, not ${to}. Widen --ladder-to. A derivation whose maximum sits on the edge of its own range is a guess.`);
+      }
+      const premise = lastWall === null ? null : lastWall + 1;
+      if (lastWall === null) {
+        console.log(`    -> width ${w} text ${t}: NO WALL anywhere in ${from}..${to}. This text size has nothing to derive from — `
+          + `reported, because an empty result and a clean result look identical and mean the opposite.`);
+      } else {
+        console.log(`    -> width ${w} text ${t}: WALL at ${walls.length} cell(s), h ${ranges(walls)}`);
+        console.log(`       last wall h = ${lastWall}  ->  max(wall)+1 = ${premise}`
+          + `${walls.length && walls[0] + walls.length - 1 !== lastWall ? '   (NOT AN INTERVAL — a hole inside the wall set)' : ''}`);
+      }
+      // --- MR-143's third half: the same question, asked of `whole` ----------
+      const wholeMax = lastNotWhole === null ? null : lastNotWhole + 1;
+      const agree = firstWhole !== null && wholeMax !== null && firstWhole === wholeMax;
+      const holes = notWhole.filter((h) => firstWhole !== null && h > firstWhole);
+      console.log(firstWhole === null
+        ? `       whole: NOTHING is whole anywhere in ${from}..${to} — both min(whole) and max(not-whole)+1 are UNKNOWN here, not ${to + 1}`
+        : `       whole: first whole h = ${firstWhole}, max(not-whole)+1 = ${wholeMax}`
+          + `${agree ? '  — THEY AGREE (the whole set is contiguous above its first cell)'
+            : `  — THEY DISAGREE: the whole set has ${holes.length} hole cell(s) at h ${ranges(holes)}, so min(whole) was unsound here too`}`);
+      table.push({ w, t, walls, lastWall, premise, firstWhole, wholeMax, agree, holes, seen });
+    }
+  }
+
+  // --- THE DERIVATION -------------------------------------------------------
+  console.log(`\n  THE SET THE CONSTANT IS THE MAXIMUM OF (MR-143: max(wall h) + 1, per text size)`);
+  const known = [];
+  for (const row of table) {
+    console.log(`    width ${row.w}  text ${row.t.padEnd(2)}  last wall h = ${String(row.lastWall ?? 'none').padStart(4)}  ->  max(wall)+1 = ${row.premise ?? 'nothing to derive'}`);
+    if (row.premise !== null) known.push(row.premise);
+  }
+  if (!known.length) {
+    bad.push(`NO WALL ANYWHERE IN ${from}..${to} AT ANY TEXT SIZE MEASURED. The gate's PREMISE has no referent in this sweep, `
+      + `so the constant cannot be derived and is UNKNOWN — never a pass. Either the sweep is in the wrong place, or the board now `
+      + `fits every height here and THE REFUSAL HAS OUTLIVED ITS PREMISE: delete src/ui/components/upright.js (this file's removal condition).`);
+  } else {
+    const trueValue = Math.max(...known);
+    console.log(`\n    maximum over the set = ${trueValue}; gateBelowH = ${constant}`);
+    if (constant <= trueValue - 1) {
+      const ungated = table.map((row) => {
+        const over = row.walls.filter((h) => h >= constant);
+        return over.length ? `${row.t}: h ${ranges(over)} (${over.length} cell(s))` : null;
+      }).filter(Boolean);
+      bad.push(`THE CONSTANT LEAVES A WALL UNGATED — \`.end-turn\` is UNREACHABLE as high as h ${trueValue - 1} and gateBelowH is ${constant}, `
+        + `so the gate stops standing while its own premise is still true. WALLED CELLS AT OR ABOVE THE CONSTANT — `
+        + `${ungated.join(' · ') || '(none — widen the sweep)'}. `
+        + `The true value is ${trueValue}. A player at one of those heights cannot end their turn and is not told why.`);
+    } else if (constant > trueValue) {
+      bad.push(`THE CONSTANT REFUSES ABOVE ITS OWN PREMISE — nothing is a wall at or above h ${trueValue} at any text size measured, `
+        + `and gateBelowH is ${constant}. Heights ${trueValue}..${constant - 1} are refused and the player can reach END TURN in every `
+        + `one of them. Either the board improved and the number was left behind, or the number was never derived. Re-derive it: ${trueValue}.`);
+    }
+  }
+
+  // --- THE COST OF ONE NUMBER, COUNTED -------------------------------------
+  //
+  // This is not a defect and it is not free. A single downward-closed threshold
+  // over four text sizes whose wall sets differ by ~100 px — and one of which
+  // has a hole in it — must refuse heights that wall nobody. Under `whole` the
+  // cost fell on large-text players (walls left uncovered); under the premise it
+  // falls on small-text players (working heights refused). It is printed per
+  // text size, with the worst cell named, because a cost nobody counts is a cost
+  // somebody discovers.
+  console.log(`\n  THE COST OF ONE NUMBER — heights below gateBelowH ${constant} that are NOT a wall (the player`);
+  console.log(`  could reach END TURN there and is refused anyway). Reported, never asserted: it is the`);
+  console.log(`  price of a single downward-closed threshold, and the ruling bought it deliberately.`);
+  const noWallAnywhere = [];
+  for (let h = Math.max(from, 0); h < Math.min(constant, to + 1); h++) {
+    if (table.every((row) => row.seen.has(h) && !isWall(row.seen.get(h)))) noWallAnywhere.push(h);
+  }
+  for (const row of table) {
+    const refusedFine = [], refusedWhole = [];
+    for (let h = Math.max(from, 0); h < Math.min(constant, to + 1); h++) {
+      const r = row.seen.get(h); if (!r) continue;
+      if (!isWall(r)) { refusedFine.push(h); if (isWhole(r)) refusedWhole.push(h); }
+    }
+    const worst = refusedFine.length ? row.seen.get(refusedFine[refusedFine.length - 1]) : null;
+    console.log(`    width ${row.w} text ${row.t.padEnd(2)}: ${refusedFine.length} refused non-wall height(s) [${ranges(refusedFine)}]`
+      + `, of which ${refusedWhole.length} are FULLY WHOLE [${ranges(refusedWhole)}]`);
+    if (worst) console.log(`      top refused non-wall cell h ${refusedFine[refusedFine.length - 1]}: whole ${worst.wholeCount}/${worst.wholeTotal}`
+      + `${worst.cut.length ? ` cut[${worst.cut.join(' ')}]` : ''}`);
+  }
+  console.log(`    REFUSED AND NOBODY WALLS at any text size measured: ${ranges(noWallAnywhere)}`);
+  console.log(`      — these are the gap cells. They exist because the wall set has a hole in it and a`);
+  console.log(`        threshold cannot: covering the top of the wall covers everything under it.`);
+
+  console.log(`\n  BOUNDARY — what this derivation does NOT cover, named rather than left to be found:
+  (a) WIDTH IS NOT SWEPT BY DEFAULT. The constant is a HEIGHT and the fit is not
+      purely one, so this ran at ${widths.join(',')}. Measured 2026-08-15 (Sunna) at Text S
+      under the OLD predicate: 432 at widths 600/800/844/1200/1440 — it SATURATES
+      — and later at narrower ones (444 at 400 and 360, 453 at 300, where the
+      narrow layout takes over). THAT WAS A \`whole\` MEASUREMENT AND IT DOES NOT
+      TRANSFER: the wall's width behaviour is re-derived with --ladder-width, and
+      the NARROW layout is a different composition with its own wall (at Text XL,
+      360x640 is walled — a portrait phone, far above any height threshold, and
+      no height can gate it without refusing every phone. That is layout work.)
+  (b) UI SIZE. Every cell here is Auto fit. A player on a fixed UI-size setting
+      is a different board, and mobilefit is the tool that sweeps that axis.
+  (c) ONE SURFACE. ?shot=combat, because that is where the required control is
+      named. A screen that fits combat and not the map is not this number's.
+  (d) ONE BOX, headless Chromium, device-metric emulation, and EVERY CELL IS
+      READ AS A WINDOW — no touch emulation, the same call the 800x… rungs make
+      in the main run. A touchscreen of the same dimensions is a device cell and
+      differs in the gate's WORDING, not in whether END TURN is reachable.
+  (e) BOOT STATE ONLY, AND THIS IS THE SHARPEST ONE. Every cell is the board as
+      it paints, before any interaction. One flask gesture at 844x390 scrolls
+      \`.combat\` 162.9 px programmatically and takes END TURN from UNREACHABLE to
+      onscreen while carrying the topbar off the top with no gesture back (Vira,
+      2026-08-15, re-observing Bjorn). SO A WALL IS A PROPERTY OF THE SHAPE AND A
+      SCROLL STATE. This mode derives from the state the player arrives in, which
+      is the state the refusal has to decide in. Nothing here measures after an
+      interaction, and that silence is a boundary, not a safety.
+  (f) THE CLIPPED BAND IS NOT LEGISLATED. \`unreachable\` is the word the premise
+      uses; a control 70% on screen with no scroll path is not a wall and is not
+      fine either. Widening the refusal to cover it would hide a layout bug
+      behind a wall — see THE COST above for what it actually costs a player.`);
+
+  console.log(`\n  ${bad.length ? `FAIL — ${bad.length} finding(s) over ${cells} cell(s)` : `PASS — ${cells} cell(s): gateBelowH ${constant} is exactly max(wall h)+1 over the measured set — every wall is covered and nothing above the last wall is refused`}`);
+  for (const b of bad) console.log(`    - ${b}`);
+  return bad.length ? 1 : 0;
+}
+
+// ---------------------------------------------------------------------------
+// `--predicates` — THE GATE'S PREDICATE AGAINST THE GATE'S PREMISE.
+//
+// Vira, 2026-08-15, on Marina's question (packet e431613): Sunna's constant is
+// derived from ALL FIVE REQUIRED CONTROLS WHOLE; this gate was built for a WALL
+// — END TURN unreachable by any gesture. MARINA COULD NOT SETTLE FROM A SUMMARY
+// WHETHER THOSE TWO NAME THE SAME SET OF SCREENS, and stopped rather than rule.
+// They are different predicates and the whole argument turns on it, so it is a
+// measurement and not an opinion. This mode is the measurement.
+//
+// WHY IT IS HERE AND NOT IN A NEW FILE. Both predicates are already this file's:
+// clause W owns the wall, clause K owns the five. The question "are W's set and
+// K's set the same set" is a question about THIS TOOL'S OWN TWO CLAUSES, and a
+// second file would have meant a second copy of the door — the same browser
+// boot, the same probe, the same serve — to ask about the instrument that
+// already has one. It reuses read() and probe() untouched. IT CHANGES NOTHING
+// ABOUT THE DEFAULT RUN OR `--ladder`: Sunna's derivation and its assertions are
+// not forked, not restated and not touched.
+//
+// WHAT IT ASSERTS, AND IT IS ONE RELATION, NOT A NUMBER (the falsifier that
+// fails for the right reason):
+//
+//   P1 — EVERY WALL IS GATED. At every cell where `.end-turn` is UNREACHABLE,
+//        the gate must be STANDING. Not "h < gateBelowH" — that would be this
+//        tool keeping a second copy of main.js's decision and then checking its
+//        own copy. THE GATE IS READ OFF THE PAINTED FRAME, so what is checked is
+//        the refusal the player actually meets.
+//
+// WHAT IT DELIBERATELY DOES NOT ASSERT, because the house already owns it:
+//   · that no working screen is refused — `--ladder` derives exactly that and is
+//     its home (single-home rule); this mode reports the band and rules nothing.
+//   · that a gate standing on a 5/5 shape is wrong — clause K, above.
+//   · the CLIPPED band. Sunna refused to legislate inside it and she is right:
+//     a threshold drawn inside a band nobody measured is fitted by whoever ran
+//     the tool last. Widening a refusal to cover a layout defect hides a bug
+//     behind a wall.
+//
+// EXHAUSTIVE, 1 PX, NO BISECTION — Sunna's rule and the reason for it hold here
+// unchanged: the fit is NOT monotonic in height (97.13% at h 485, 94.4% at 486,
+// the auto-zoom stepping 0.66 -> 0.67), and a boundary search that assumes
+// monotonicity is a guess wearing a measurement's clothes. `wallTop` is
+// therefore the LARGEST h in the sweep that is a wall, not the first h that
+// stops being one — so a wall that reappears above a gap is caught rather than
+// stepped over.
+//
+// UNKNOWN IS NEVER GREEN, TWICE OVER:
+//   · a sweep whose TOP CELL IS STILL A WALL has not found the wall's top edge.
+//     That is a finding, not a pass — widen --predicate-to.
+//   · a text size with NO WALL ANYWHERE in the sweep is REPORTED AS HAVING HAD
+//     NOTHING TO RULE ON (SOP 2's ⚙ clause: prove the query had a referent). An
+//     empty result and a clean result look identical and mean the opposite.
+//
+// DOOR: the same one as the rest of this file — the rendered app in a real
+// browser at emulated device metrics, read off the frame it painted, nothing
+// scrolled or positioned by the probe. The known-bad enters as file bytes in
+// `src/content/balance.js` in a copied real tree and the whole tool re-runs from
+// that copy (`--selftest`, group 4).
+//
+// ---------------------------------------------------------------------------
+// THE ANSWER, MEASURED. Width 800, ?shot=combat, wide layout, Auto fit, read as
+// a window, 1 px exhaustive 360..480 (484 cells) and again 480..600 (484 cells),
+// at e5cb619 + this mode, headless Chromium:
+//
+//   text   last WALL h   .end-turn whole from   all 5 whole from   they part over
+//   S      367           390                    432                368..431  (64 px)
+//   M      394           420                    495                395..494 (100 px)
+//   L      423           451                    533                424..532 (109 px)
+//   XL     464           510                    571                465..570 (106 px)
+//
+//   (the `all 5 whole` column is --ladder's, re-derived here at the same ref and
+//   identical: 432/495/533/571, minimum 432, PASS. No wall anywhere in 480..600
+//   at any text size, so `last WALL h` is a found edge and not a sweep artefact.)
+//
+// THEY DO NOT COINCIDE, AT ANY TEXT SIZE, AND THE GAP IS 64 TO 109 PX. Between
+// the two columns the screen is NOT a wall and NOT whole: END TURN is on the
+// glass, a thumb ends the turn, and the hand is cut. "All five whole" is a
+// STRICT SUBSET of "not a wall" — necessarily, since `.end-turn` is one of the
+// five — so an argument that holds for one does not transfer to the other.
+// Which predicate the refusal should answer to is a ruling and is not here.
+//
+// THE WALL AT TEXT XL IS NOT AN INTERVAL, AND THIS IS THE PART NOTHING ELSE
+// COULD HAVE FOUND. Ungated wall cells at XL: h 432..450 AND h 464 — with
+// 451..463 not walled at all. At 464 the auto-zoom steps 0.63 -> 0.64 and the
+// board grows faster than the window, so END TURN goes 13.37% on screen at 460,
+// to 0% at 464, back to 19.76% at 470. Three runs, identical. IT IS ONE PIXEL
+// TALL AND IT SITS 14 PX ABOVE THE TOP OF THE BAND EVERYONE HAS BEEN COUNTING.
+// Sunna's rule — a bisection would be a guess in a measurement's clothes — was
+// written about the FIT and it has now paid out on the WALL; and note that even
+// her exhaustive 1 px ladder could not have found this, because `--ladder` reads
+// `wholeCount` and never once reads `ctl.reach`. Same probe, same call, the
+// second half discarded.
+//
+// OBSERVED RED — every one on this tree at e5cb619, command first:
+//   node tools/uprightgate.mjs --predicates
+//     -> exit 1, "A WALL WITH NO GATE — text XL, width 800, h 432..464
+//        (20 cell(s) of 92)". THE REAL DEFECT, unplanted, and it is Marina's
+//        card with its coordinates corrected in both directions: the card says
+//        433–450; the measurement says 432..450 AND 464.
+//   node tools/uprightgate.mjs --predicates --predicate-text M \
+//        --predicate-from 385 --predicate-to 392
+//     -> exit 1, "THE SWEEP'S TOP CELL IS STILL A WALL". The unknown-is-not-
+//        green clause, watched firing. Its known-bad is a too-narrow sweep, which
+//        is a usage defect and not a tree defect, so it has no file-bytes plant
+//        and is observed directly instead of pretended into the corpus.
+//   node tools/uprightgate.mjs --selftest   (group 4)
+//     -> exit 1 on the plant, "A WALL WITH NO GATE — text M, width 800,
+//        h 385..394 (10 cell(s) of 10)", and green on the clean copy.
+async function runPredicates(read) {
+  const surface = SURFACES[0];
+  const from = +(argOf('--predicate-from') ?? 360);
+  const to = +(argOf('--predicate-to') ?? 480);
+  const width = +(argOf('--predicate-width') ?? 800);
+  const texts = (argOf('--predicate-text') ?? Object.keys(TEXT).join(',')).split(',').map((s) => s.trim()).filter(Boolean);
+  for (const t of texts) if (!TEXT[t]) { console.error(`uprightgate --predicates: --predicate-text ${t} is not one of ${Object.keys(TEXT).join('/')}`); return 2; }
+  if (!(from < to)) { console.error(`uprightgate --predicates: --predicate-from ${from} is not below --predicate-to ${to}; the sweep would measure nothing.`); return 2; }
+
+  console.log(`\n  --predicates — the gate's PREDICATE (all ${WHOLE_SET.length} required controls whole) against its`);
+  console.log(`  PREMISE (\`.end-turn\` unreachable — a wall). Width ${width}, text ${texts.join(',')},`);
+  console.log(`  heights ${from}..${to} EXHAUSTIVELY at 1 px (no bisection — the fit is not monotonic).`);
+  console.log(`  The gate is read off the painted frame, never computed from gateBelowH.`);
+
+  const bad = [];
+  const table = [];
+  let cells = 0;
+  for (const t of texts) {
+    let wallTop = null, firstAll = null, firstEndWhole = null, walls = 0, gatedWalls = 0;
+    const ungated = [];
+    let topCellIsWall = false;
+    for (let h = from; h <= to; h++) {
+      const r = await read(width, h, surface, false, t);
+      cells++;
+      if (!r.ctl || !r.ctl.present) {
+        bad.push(`${width}x${h} text ${t}: \`.end-turn\` is not in the DOM on ?shot=combat — the required control is UNKNOWN, and unknown is not a pass`);
+        continue;
+      }
+      const wall = r.ctl.reach === 'unreachable';
+      const standing = !!r.gate;
+      const whole = r.wholeTotal > 0 && r.wholeCount === r.wholeTotal;
+      if (wall) {
+        walls++; wallTop = h; if (h === to) topCellIsWall = true;
+        if (standing) gatedWalls++; else ungated.push(h);
+      }
+      if (firstEndWhole === null && r.ctl.onScreenPct >= 99.9) firstEndWhole = h;
+      if (firstAll === null && whole) firstAll = h;
+      const notable = (wall && !standing) || h === from || h === to || h === firstAll || h === firstEndWhole || h % 20 === 0;
+      if (notable) {
+        console.log(`    ${width}x${h} ${t.padEnd(2)} zoom=${r.zoom} .end-turn ${r.ctl.reach.padEnd(11)} ${String(r.ctl.onScreenPct).padStart(6)}% `
+          + `whole ${r.wholeCount}/${r.wholeTotal} gate=${standing ? `STANDING(${r.gate.advice})` : 'absent'}`
+          + `${wall && !standing ? '   <-- WALL, NO GATE' : ''}`);
+      }
+    }
+    table.push({ t, wallTop, firstAll, firstEndWhole, walls, gatedWalls, ungated });
+
+    // --- P1, the asserted relation -----------------------------------------
+    if (walls === 0) {
+      console.log(`    -> text ${t}: NO WALL anywhere in ${from}..${to}. This clause had nothing to rule on here — `
+        + `reported, because an empty result and a clean result look identical and mean the opposite.`);
+    } else {
+      if (ungated.length) {
+        bad.push(`A WALL WITH NO GATE — text ${t}, width ${width}, h ${ungated[0]}..${ungated[ungated.length - 1]} `
+          + `(${ungated.length} cell(s) of ${walls}): \`.end-turn\` is UNREACHABLE — not one pixel on screen and no scroll path — `
+          + `and the gate is ABSENT. The gate's PREMISE holds at these heights and the gate does not stand. `
+          + `Heights: ${ungated.join(',')}`);
+      }
+      if (topCellIsWall) {
+        bad.push(`THE SWEEP'S TOP CELL IS STILL A WALL — text ${t}, width ${width}, h ${to}. The wall's top edge is `
+          + `ABOVE this sweep, so \`wallTop\` is UNKNOWN, not ${to}. Widen --predicate-to. Unknown is not a pass.`);
+      }
+      console.log(`    -> text ${t}: wall at ${walls} cell(s), top wall h = ${wallTop}, gated ${gatedWalls}/${walls}.`);
+    }
+  }
+
+  // --- P2, the two sets, side by side — REPORTED --------------------------
+  console.log(`\n  THE TWO PREDICATES, SIDE BY SIDE (width ${width})`);
+  console.log(`    text   last WALL h   .end-turn whole from   all ${WHOLE_SET.length} whole from   they part over`);
+  let parted = 0, coincided = 0;
+  for (const row of table) {
+    const wallEnd = row.wallTop === null ? '(none)' : String(row.wallTop);
+    const endW = row.firstEndWhole === null ? `>${to}` : String(row.firstEndWhole);
+    const allW = row.firstAll === null ? `>${to}` : String(row.firstAll);
+    // The divergence: heights that are NOT a wall (the premise is false — the
+    // player can reach END TURN) and NOT whole (the predicate is false).
+    const lo = row.wallTop === null ? from : row.wallTop + 1;
+    const hi = row.firstAll === null ? null : row.firstAll - 1;
+    const span = hi === null ? `${lo}..>${to} (at least ${to - lo + 1} px)` : (hi < lo ? 'nothing — they coincide here' : `${lo}..${hi} (${hi - lo + 1} px)`);
+    if (hi !== null && hi < lo) coincided++; else parted++;
+    console.log(`    ${row.t.padEnd(4)}   ${wallEnd.padEnd(11)}   ${endW.padEnd(20)}   ${allW.padEnd(18)}   ${span}`);
+  }
+  console.log(`\n  VERDICT ON THE PREDICATE QUESTION: ${parted === 0
+    ? `THEY COINCIDE over every text size measured — every screen that is not a wall is whole, so "whole" and "not a wall" name the same set here and either may be reasoned from.`
+    : `THEY PART at ${parted} of ${table.length} text size(s) measured. Between the two boundaries the screen is NOT A WALL — END TURN is on the glass and a thumb reaches it — and NOT WHOLE. "All five whole" is the STRICTLY NARROWER set: it is a subset of "not a wall" by construction, because \`.end-turn\` is one of the five. An argument that holds for one does not transfer to the other, and the direction matters: a threshold derived from WHOLE refuses MORE screens than the premise justifies at small text, and FEWER walls than the premise demands at large text.`}`);
+
+  console.log(`\n  BOUNDARY — what this mode does NOT cover, named rather than left to be found:
+  (a) ONE WIDTH (${width}) and one surface (?shot=combat). The wall is a rect and
+      the rect moves with width; Sunna's --ladder boundary (a) is the width note
+      and is not restated here.
+  (b) EVERY CELL IS READ AS A WINDOW, no touch emulation — the same call --ladder
+      makes. Touch changes the gate's WORDING, not whether the board fits.
+  (c) THE CLIPPED BAND IS REPORTED AND NOT LEGISLATED. A control 70% on screen
+      with no scroll path is not a wall and is not fine either. This mode counts
+      only \`unreachable\`, which is the word the premise uses.
+  (d) IT IS SILENT ON WHETHER 'not a wall' IS THE RIGHT PREDICATE TO SHIP. It
+      measures that the two sets differ and where. Which one the refusal should
+      answer to is a ruling, and rulings are not numbers.
+  (e) IT DOES NOT TAP, AND THAT IS THIS MODE'S SHARPEST LIMIT — every cell above
+      is the board at boot. Bjorn's flask finding, RE-OBSERVED by Vira at e5cb619
+      rather than inherited (SOP 2's drift clause), 844x390 Text M, one real
+      pointer gesture dispatched at the flask:
+        before  .end-turn top 394.95..419.33, 0% on screen, UNREACHABLE,
+                whole 2/5, \`.combat\` scrollTop 0, scrollH 758, clientH 629,
+                overflow-y hidden, topbar top 0, gate STANDING
+        after   .end-turn top 293.95..318.33, 100% on screen, ONSCREEN,
+                WHOLE 5/5, \`.combat\` scrollTop 162.9, scrollH 792,
+                topbar top -101, scroller STILL null
+      Text S, same shape: 3/5 -> 5/5, scrollTop 0 -> 103.23, topbar to -64.
+      SO "WHOLE" IS NOT A PROPERTY OF THE SHAPE. It is a property of the shape
+      AND a scroll state, and the only motion that puts END TURN on the glass is
+      the one that carries the topbar and its menu off it with no gesture back.
+      THE CONSEQUENCE IS CLAUSE K'S, NOT THIS MODE'S: clause K's predicate is
+      \`wholeCount === wholeTotal\`, so it reads 5/5 on 844x390 — the shape this
+      gate was built for — in a state a player can enter and not leave. Nothing
+      today measures after an interaction, so nothing fires; that is the reason
+      it is silent, and it is not a reason it is safe. Filed, not fixed:
+      widening clause K is Sunna's call on Sunna's clause.
+      ANSWERED 2026-08-16 (Sunna), and not by widening the set. Clause K still
+      TRIPS on \`wholeCount === wholeTotal\` — it is free and it never misses a
+      dead premise — but A TRIP IS NO LONGER A VERDICT: the verdict re-reads the
+      shape at all four text sizes and asks whether ANYTHING WALLS there. So a
+      5/5 reading on 844x390, however it was arrived at, can no longer call that
+      shape working on its own; the wall at Text M/L/XL answers first. The
+      post-interaction state is still unmeasured and still a boundary — what
+      changed is that it is no longer the thing deciding.`);
+
+  console.log(`\n  ${bad.length ? `FAIL — ${bad.length} finding(s) over ${cells} cell(s)` : `PASS — ${cells} cell(s): every wall is gated, and the wall's top edge was found inside the sweep at every text size`}`);
+  for (const b of bad) console.log(`    - ${b}`);
+  return bad.length ? 1 : 0;
 }
 
 async function main() {
@@ -472,19 +1254,37 @@ async function main() {
     while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return true; await wait(150); }
     throw new Error(`timed out waiting for ${w}`); };
 
-  async function read(w, h, surface, device = true) {
+  async function read(w, h, surface, device = true, tKey = textKey) {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 2, mobile: device }, S);
     await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: device, maxTouchPoints: device ? 5 : 1 }, S);
     await cdp.send('Page.navigate', { url: base + surface.q }, S);
     await until(surface.ready, `${surface.name} to mount at ${w}x${h}`);
-    await ev(`document.documentElement.style.fontSize='${TEXT[textKey]}'; 'ok'`);
+    await ev(`document.documentElement.style.fontSize='${TEXT[tKey]}'; 'ok'`);
     // The auto-zoom re-flexes on a 150ms debounce and re-applies at +300ms from
     // boot; 800 clears both, and the gate is written by the same call.
     await wait(800);
     return ev(probe(surface.required, surface.whole));
   }
 
+  if (args.includes('--ladder')) {
+    const code = await runLadder(read);
+    cdp.close(); child.kill(); if (server) server.close();
+    process.exit(code);
+  }
+
+  if (args.includes('--predicates')) {
+    const code = await runPredicates(read);
+    cdp.close(); child.kill(); if (server) server.close();
+    process.exit(code);
+  }
+
   const fails = []; let cells = 0;
+  // CLAUSE K IS RESOLVED AFTER THE LOOP, NOT INSIDE IT (MR-142). See the block
+  // below THE SHAPES: whether a standing gate is justified is a question about
+  // the OTHER text sizes and about the heights ABOVE this one, and neither is
+  // known while this shape is being read.
+  const pendingK = [];
+  const wallAt = [];                       // { h, texts } — every wall this run saw
   for (const [w, h] of SHAPES) {
     const shape = `${w}x${h}`;
     if (onlySet && !onlySet.has(shape)) continue;
@@ -504,12 +1304,23 @@ async function main() {
     for (const [surface, r] of rows) {
       console.log(`    ${surface.name.padEnd(7)} gate=${r.gate ? `STANDING advice='${r.gate.advice}' covers=${r.gate.covers} chars=${r.gate.chars} readable=${r.gate.cardOnScreen}` : 'absent'}`);
     }
+    // WHERE the cut is, not just how much of it. A control 67% on screen with
+    // its BOTTOM third gone is a card whose text you cannot read; the same 67%
+    // with a scroller is a swipe. The percentage cannot tell those apart and a
+    // player lives in the difference, so the rect is printed next to it.
+    for (const sel of Object.keys(combat.boxes || {})) {
+      const b = combat.boxes[sel];
+      if (b.pct >= 99.9) continue;
+      console.log(`      (cut) ${sel.padEnd(14)} ${b.pct}% on screen, ${combat.reach[sel]}, rect top ${b.top} bottom ${b.bottom} left ${b.left} right ${b.right} in ${w}x${h}`
+        + `${b.scroller ? ` — scroller ${b.scroller}` : ' — NO scroll path to the rest'}`);
+    }
 
     const bad = [];
     // --- clause W: the wall must be gated ------------------------------------
     if (!combat.ctl || !combat.ctl.present) {
       bad.push(`.end-turn is not in the DOM on ?shot=combat — the required control is UNKNOWN, and unknown is not a pass`);
     } else if (walled) {
+      wallAt.push({ h, texts: [textKey] });
       const c = combat.ctl.clipper;
       const where = `top ${combat.ctl.top}..${combat.ctl.bottom} outside a ${h} px viewport with NO scrollable ancestor`
         + (c ? ` (nearest clipper ${c.el}, overflow-y ${c.overflowY}, scrollHeight ${c.scrollH} > clientHeight ${c.clientH})` : '');
@@ -546,16 +1357,17 @@ async function main() {
       }
     }
 
-    // --- clause K, the WAKE ---------------------------------------------------
-    if (intact) {
-      for (const [surface, r] of rows) {
-        if (r.gate) {
-          bad.push(`GATE STANDS ON A SHAPE THAT FITS — ${surface.name}, all ${combat.wholeTotal} required controls are `
-            + `whole on screen (${WHOLE_SET.join(', ')}). This is the refusal outliving its premise: if a composition `
-            + `now fits this shape, lower balance.ui.uiScale.gateBelowH or delete src/ui/components/upright.js — `
-            + `do not leave it refusing a screen that works.`);
-        }
-      }
+    // --- clause K, the WAKE — TRIPPED HERE, JUDGED BELOW ----------------------
+    //
+    // IT USED TO FIRE RIGHT HERE AND THAT IS NO LONGER SOUND (MR-142). "All five
+    // whole at the text size this run happens to be in" is not the premise the
+    // gate answers to; the premise is the WALL, and the wall arrives at a
+    // different height for every text size. A gate standing on a screen that is
+    // perfect at Text S can be the refusal a Text XL player needs at that exact
+    // height — so this is a QUESTION now, not a finding, and the question is
+    // answered after every shape has been read.
+    if (intact && rows.some(([, r]) => !!r.gate)) {
+      pendingK.push({ shape, w, h, device, cut: combat.cut, surfaces: rows.filter(([, r]) => r.gate).map(([s]) => s.name) });
     }
 
     // --- clause G's advice half: GO AND LOOK AT THE TURNED VIEWPORT -----------
@@ -582,6 +1394,63 @@ async function main() {
 
     for (const b of bad) fails.push(`${shape}: ${b}`);
     for (const b of bad) console.log(`      <-- ${b}`);
+  }
+
+  // -------------------------------------------------------------------------
+  // CLAUSE K RESOLVED — THE WAKE ANSWERS TO THE WALL (MR-142)
+  //
+  // A standing gate on a shape that is whole at THIS run's text size is one of
+  // three things, and only the third is a defect:
+  //   1. THE PREMISE, AT ANOTHER PLAYER'S TEXT SIZE. Text XL walls ~100 px higher
+  //      than Text S. The refusal is doing its job for someone this run is not.
+  //      Each tripped shape is therefore re-read at all four text sizes — cheap,
+  //      because only shapes that would have been findings are re-read at all.
+  //   2. THE PRICE OF ONE NUMBER. `gateBelowH` is a single downward-closed
+  //      threshold and the wall set is neither single nor contiguous (Text XL
+  //      walls at 432..450 AND 464 — Vira, 2026-08-15). Covering the top of the
+  //      wall covers every height beneath it, including heights that wall
+  //      nobody. That is counted in `--ladder`'s COST table and it is not a
+  //      finding here; it is the consequence of the ruling, which is mine to own.
+  //   3. THE REFUSAL OUTLIVING ITS PREMISE — the gate stands where nothing walls
+  //      at any text size AND nothing at or above this height walls either. That
+  //      is the wake red, and it is the only one of the three that is a finding.
+  //      The day a landscape composition ships, every tripped shape lands here.
+  if (pendingK.length) {
+    console.log(`\n  CLAUSE K — THE WAKE, RESOLVED AGAINST THE PREMISE (MR-142: the gate answers to the wall).`);
+    console.log(`  ${pendingK.length} shape(s) are whole at Text ${textKey} with the gate standing. Re-reading each at all`);
+    console.log(`  four text sizes, because the wall arrives ~100 px higher at XL than at S:`);
+    for (const p of pendingK) {
+      p.wallTexts = [];
+      for (const t of Object.keys(TEXT)) {
+        const r = await read(p.w, p.h, SURFACES[0], p.device, t);
+        if (r.ctl && r.ctl.present && r.ctl.reach === 'unreachable') p.wallTexts.push(t);
+      }
+      if (p.wallTexts.length) wallAt.push({ h: p.h, texts: p.wallTexts });
+      console.log(`    ${p.shape}  gate on ${p.surfaces.join('+')}  walls at text: ${p.wallTexts.join('/') || 'NONE of S/M/L/XL'}`);
+    }
+    const top = wallAt.length ? wallAt.reduce((a, b) => (b.h > a.h ? b : a)) : null;
+    for (const p of pendingK) {
+      if (p.wallTexts.length) {
+        console.log(`      (justified) ${p.shape}: Text ${p.wallTexts.join('/')} has .end-turn UNREACHABLE at this exact height. `
+          + `The refusal is the premise's — at a text size this run is not in.`);
+        continue;
+      }
+      if (top && top.h >= p.h) {
+        console.log(`      (cost) ${p.shape}: nothing walls here at any text size, and it is refused anyway because h ${top.h} `
+          + `DOES wall (Text ${top.texts.join('/')}) and a single threshold is downward-closed — covering the top of the wall `
+          + `covers everything under it. Counted in --ladder's COST table. The price of one number, not a defect of this one.`);
+        continue;
+      }
+      for (const s of p.surfaces) {
+        const f = `${p.shape}: GATE STANDS WHERE NOTHING WALLS — ${s}, all ${WHOLE_SET.length} required controls whole `
+          + `(${WHOLE_SET.join(', ')}), NO text size of S/M/L/XL puts .end-turn out of reach at this shape, and no cell measured `
+          + `in this run walls at any height at or above ${p.h}. THIS IS THE REFUSAL OUTLIVING ITS PREMISE: re-derive with `
+          + `\`--ladder\` and lower balance.ui.uiScale.gateBelowH, or delete src/ui/components/upright.js. Do not leave it `
+          + `refusing a screen nobody is walled on.`;
+        fails.push(f);
+        console.log(`      <-- ${f}`);
+      }
+    }
   }
 
   if (cells === 0) {
