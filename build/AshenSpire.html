@@ -32322,7 +32322,8 @@ function candidateReceipt(registries, run, candidate, beforeRoles) {
       after: run.maxHp + afterMods.maxHp - beforeMods.maxHp,
     });
   }
-  // A8 — THE PRESENTATION HALF OF HIS SWAP-COST ASK, AND IT IS NOT DEAD CODE.
+  // A8 — THE PRESENTATION HALF OF HIS SWAP-COST ASK. KEEP, AND THIS IS THE
+  // REASON THAT HOLDS.
   // His words, D15, 2026-08-08: "switching sets should cost actions. PERHAPS
   // THIS ACTION COSTS MORE OR LESS DEPENDING ON TALISMAN or starting relic, or
   // some other reason. let's default to costing 2 actions... that way I can try
@@ -32331,6 +32332,24 @@ function candidateReceipt(registries, run, candidate, beforeRoles) {
   // it. The mechanism is `runMods().swapCostDelta` — see the long note at
   // `model/loadout.js` runMods, which is the truth home for WHY the value
   // exists; this comment is the truth home for why the ROW exists.
+  //
+  // WHY IT IS KEPT: THIS ROW IS THE ONLY TRACE OF A8 ON A SCREEN. It is the one
+  // place a player could ever meet the rung he asked to TRY and to FEEL — "that
+  // way I can try each" — and a rung with perfect code and no surface fails his
+  // ask while every test in this repo is green.
+  //   DISCHARGE CONDITION: this reason dies the day the rung gets a surface
+  //   somewhere else — any shipped screen that shows a player what a swap costs
+  //   with the talisman/relic delta applied. On that day this row is ordinary
+  //   code, judged on its own merits and deletable like any other.
+  //   DO NOT KEEP IT BECAUSE IT IS THE LAST TRACE OF A REQUEST HE MADE. That was
+  //   the reason first recorded here and IT IS FALSE — the ask has at least five
+  //   traces and four are executable: the `gear` row in
+  //   `balance.equipment.swapCostRules`, `swapCostFor()`'s gearOn/gearDelta/
+  //   gearIgnored rungs, engine test 28b, engine test 28c, plus his sentence
+  //   quoted verbatim in `content/balance.js`. One grep discharges it, and the
+  //   reader careful enough to run that grep is handed an argument for the
+  //   deletion this comment exists to prevent. A false reason for a right keep
+  //   is an invitation. Falsified by Sten, 2026-08-15; corrected here.
   //
   // IT HAS NEVER RENDERED, AND THAT IS TWO PREMISES, NOT A BUG. Written out so
   // the next reader deletes neither by mistake:
@@ -32350,6 +32369,14 @@ function candidateReceipt(registries, run, candidate, beforeRoles) {
   // mod or a `swapCostDelta` passive is authored, this row must either move
   // behind the active rule's `gear` flag or say what the rule declined
   // (`swapCostFor().gearIgnored` already computes it — see engine test 28b).
+  // THAT REMEDY ANSWERS THE TALISMAN CHANNEL ONLY, and the limit is deliberate:
+  // this row compares before/after `runMods().swapCostDelta`, which is the WORN
+  // channel, correctly, because a relic does not change when you swap a weapon
+  // and its delta cancels in the comparison. So a `swapCostDelta` RELIC passive
+  // authored tomorrow moves nothing here, lies about nothing, and shows nothing
+  // — silent, not wrong, which is the harder failure and NOT this row's job to
+  // answer. It needs a surface that does not exist; carded separately, and do
+  // not let it ride this row's fix (Sten's finding, 2026-08-15).
   // NO WAKE RED EXISTS FOR THIS ONE. Four sibling refusals got theirs in #172
   // (flaskgrowth, gracerefill, hudbars, player-poise-threshold); this is the
   // fifth and it is uncovered. Carded, not built — Saga, 2026-08-15.
