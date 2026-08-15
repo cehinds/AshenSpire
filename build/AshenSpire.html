@@ -32322,6 +32322,37 @@ function candidateReceipt(registries, run, candidate, beforeRoles) {
       after: run.maxHp + afterMods.maxHp - beforeMods.maxHp,
     });
   }
+  // A8 — THE PRESENTATION HALF OF HIS SWAP-COST ASK, AND IT IS NOT DEAD CODE.
+  // His words, D15, 2026-08-08: "switching sets should cost actions. PERHAPS
+  // THIS ACTION COSTS MORE OR LESS DEPENDING ON TALISMAN or starting relic, or
+  // some other reason. let's default to costing 2 actions... that way I can try
+  // each." The base price shipped (`balance.swapCost: 2`); this row is the half
+  // that shows him the "depending on Talisman" clause when a comparison changes
+  // it. The mechanism is `runMods().swapCostDelta` — see the long note at
+  // `model/loadout.js` runMods, which is the truth home for WHY the value
+  // exists; this comment is the truth home for why the ROW exists.
+  //
+  // IT HAS NEVER RENDERED, AND THAT IS TWO PREMISES, NOT A BUG. Written out so
+  // the next reader deletes neither by mistake:
+  //   1. NO CONTENT AUTHORS IT. Zero rows in `content/` or `src/content/` carry
+  //      a `self.swapCost` mod or a `swapCostDelta` relic passive. The talisman
+  //      slot ships ahead of its content on purpose — `equipSlots.csv`, "Empty
+  //      until talismans are authored." So both mods are always 0 and the
+  //      inequality above is always false.
+  //   2. THE SHIPPED RULE IGNORES THE RUNG ANYWAY. `balance.swapCostRule` is
+  //      'flat', and 'flat' is `gear: false`. Only the 'gear' rule takes the
+  //      talisman/relic delta.
+  //
+  // WAKE CONDITION (development.md, *The wake condition*) — the premises die
+  // SEPARATELY, and premise 1 dying alone makes this row LIE: the first
+  // authored talisman renders "Active-set swap Actions 0 -> 2" while a 'flat'
+  // run charges 2 flat and discards the delta. So: the day a `self.swapCost`
+  // mod or a `swapCostDelta` passive is authored, this row must either move
+  // behind the active rule's `gear` flag or say what the rule declined
+  // (`swapCostFor().gearIgnored` already computes it — see engine test 28b).
+  // NO WAKE RED EXISTS FOR THIS ONE. Four sibling refusals got theirs in #172
+  // (flaskgrowth, gracerefill, hudbars, player-poise-threshold); this is the
+  // fifth and it is uncovered. Carded, not built — Saga, 2026-08-15.
   if (beforeMods.swapCostDelta !== afterMods.swapCostDelta) {
     resourceChanges.push({
       id: 'swapCost',
