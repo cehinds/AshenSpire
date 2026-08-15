@@ -16,7 +16,18 @@
 // not a fix. Both are fixed; this is the check that has to stay.
 //
 // WHAT IT DOES. Boots each ?shot= state at each shape, collects everything a
-// player can press, and hit-tests the centre of each with elementFromPoint.
+// player can press, and hit-tests it with elementFromPoint — at its centre, and
+// then at four points half a tap floor out from that centre.
+//
+// WHY TWO TESTS, and the second one is a defect this file shipped. The centre
+// test is structurally blind to a control eaten from ONE SIDE: it keeps its
+// centre, so it passes. At dev 7e67de8, 390x844, the flask action bar reads
+// `Inspect [213,808 97x36]` under `DRAW [266,797 38x32]` — 23% of the button,
+// all of it right of centre. Bjorn put a real touch tap at (285,819) and got
+// the draw-pile modal (his log, 2026-08-15). This tool was green on that screen
+// for two full gates. The THUMB-STOLEN pass samples where a thumb aimed at the
+// centre actually lands, and reports it at (284,826) — one pixel from where his
+// finger was. Both passes are red; neither is advisory.
 //
 // THE ONE DISTINCTION THAT MAKES THE NUMBER MEAN ANYTHING — and the first two
 // versions of this file got it wrong in opposite directions. A control that
@@ -39,17 +50,26 @@
 //   CHROME=/path/to/chrome node tools/screenreach.mjs
 //
 // Exit codes
-//   0  no control is covered at any shape
-//   1  a covered control  (the known-bad: this branch before the two fixes)
+//   0  no control is covered and no thumb is stolen, at any shape
+//   1  a covered control, or a foreign control winning a thumb point
 //   2  usage / no browser / a screen that would not mount — never a pass
 //
 // BOUNDARY, printed again at the end: Linux headless Chromium only, and CDP
 // emulation is not a phone. It reaches only the screens that have a ?shot=
-// state — title, map, combat, boss, death. CUSTOMIZE, SHOP, REST, REWARDS and
-// the overlays have no ?shot= and are NOT covered by this or anything else,
-// which matters because #23's own bleed evidence came from customize. It
-// hit-tests reachability at rest; it does not press anything, does not judge
-// legibility, and cannot see a control that only appears mid-interaction.
+// state, plus the transient surfaces named on those screens' entries. It does
+// not judge legibility. ~~and cannot see a control that only appears
+// mid-interaction~~ — STRUCK, not softened: that sentence was true when it was
+// written and became the hiding place for a photographed defect, and an excuse
+// that outlives its defect is how a suite goes green over a bug. Transient
+// surfaces are opened by their real gesture and swept with the same probe; the
+// ones that are NOT yet listed are named below, positively.
+//
+// TWO THINGS THE THUMB PASS DELIBERATELY DOES NOT COUNT, each for a reason:
+//   - an ANCESTOR answering (a round button's own corner, a padded row). The
+//     tap dies rather than doing the wrong thing; that is a tap-floor question
+//     and tools/tapsize.mjs owns it.
+//   - the hand's cards. Their fan overlaps BY DESIGN on the wide layout, and
+//     handlayout.mjs / overlapreader.mjs already own that surface.
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync } from 'node:fs';
@@ -100,6 +120,34 @@ if (process.argv.includes('--selftest')) {
         append: '.screen::after { content: ""; position: fixed; inset: 0; z-index: 9000; background: transparent; }',
         expectRed: /^\s*title\s.*[1-9]\d* COVERED/m,
       },
+      {
+        // THE THUMB PASS'S OWN KNOWN-BAD, and it has to be a PARTIAL cover or
+        // it proves nothing new — a plant the centre test also catches would
+        // just re-prove the pass that was never in doubt. So the draw pile is
+        // slid left until it eats END TURN's right side and stops short of its
+        // centre: measured at 390x844, END TURN is [67,785 190x50], centre
+        // (162,810), right thumb point (184,810). At `right: 21rem` the pile's
+        // count glyph owns that pixel and nothing owns the centre.
+        //
+        // Observed, in the real tree, before this was written: combat went
+        // `0 COVERED · 0 THUMB-STOLEN` -> `0 COVERED · 1 THUMB-STOLEN`, red
+        // named `END TURN EHOLD .end-turn <- 5 .n at (184,810)`; reverted with
+        // `git checkout styles/combat.css` and the finding went away. Same
+        // door, CSS bytes, whole tool, real browser.
+        //
+        // AND IT CANNOT RUN GREEN TODAY, which is stated here rather than
+        // discovered: doorplant re-runs the unplanted copy and requires exit 0,
+        // and this tool is NOT green at dev 7e67de8 — 390x844 carries two real
+        // findings (below). So `--selftest` will correctly report
+        // `clean copy exited 1 — the baseline is not green, so no plant above
+        // proves anything`. That verdict is right and the plant stays wired: it
+        // becomes usable the day the findings are fixed, which is the same day
+        // it is needed, because that is when the free real red disappears.
+        name: 'the draw pile eats END TURN\'s right side without reaching its centre (a PARTIAL cover — invisible to the centre test)',
+        file: 'styles/combat.css',
+        append: ":root[data-layout='narrow'] .pile.draw { right: 21rem; }",
+        expectRed: /^\s*combat\s.*[1-9]\d* THUMB-STOLEN/m,
+      },
     ],
   }));
 }
@@ -126,7 +174,31 @@ const BROWSERS = [
 const SCREENS = [
   { name: 'title', q: '', ready: `!!document.querySelector('#app button')` },
   { name: 'map', q: '?shot=map', ready: `!!document.querySelector('.map-node')` },
-  { name: 'combat', q: '?shot=combat', ready: `!!document.querySelector('.combat .hand .card')` },
+  {
+    name: 'combat',
+    q: '?shot=combat',
+    ready: `!!document.querySelector('.combat .hand .card')`,
+    // TRANSIENT SURFACES — the hole this file's own boundary named for weeks.
+    // The old boundary ended "a control that appears only mid-interaction
+    // cannot be seen", and a photographed defect lived in exactly that
+    // sentence: Bjorn drove a real thumb onto Inspect in the flask action bar
+    // and opened the draw pile instead (his log, 2026-08-15, the sentinel that
+    // could not see its own discharge). Two full gates of instruments were
+    // green over it because nothing on this screen exists until a flask is
+    // tapped. An excuse that outlives its defect is how a suite goes green
+    // over a bug, so the sentence is DELETED, not softened, and the surface is
+    // opened and swept with the same probe as everything else.
+    transients: [
+      {
+        name: 'flask actions',
+        // The real door: the click listener the topbar flask button carries
+        // (combat.js renderTopbar → openCombatFlaskMenu). Nothing is
+        // synthesised here — the menu that appears is the one a thumb gets.
+        open: `(() => { const b = document.querySelector('.combat .flask-slot'); if (!b) return false; b.click(); return true; })()`,
+        ready: `!!document.querySelector('.flask-action-menu .flask-action')`,
+      },
+    ],
+  },
   { name: 'death', q: '?shot=death', ready: `!!document.querySelector('#app button')` },
   // EldenSpire#29 slice 1. Added the day the state existed. This file's own
   // boundary has said since it was written that customize/shop/rest/rewards
@@ -153,6 +225,18 @@ const SCREENS = [
   { name: 'shop', q: '?shot=shop', ready: `!!document.querySelector('#leave-shop')` },
 ];
 
+// NO EXEMPTION LIST, AND THAT WAS A DECISION. This file's first draft carried a
+// KNOWN_DEBT table — named findings, named shapes, a close condition, and a
+// wake that went red the day one stopped reproducing. It was deleted before it
+// ever shipped an entry, for two reasons worth keeping written down:
+//   1. Every finding it would have held belongs to a surface someone else owns
+//      (the flask row is Sunna's, the Compendium is Freja's). A seat writing an
+//      instrument does not get to license other seats' defects into silence.
+//   2. It was protecting a green that does not exist. This tool is ALREADY red
+//      at dev 7e67de8 — 844x390, combat, 6 COVERED, on the pristine file, no
+//      edit of mine involved — so there was no working gate to keep working.
+// A covered control and a stolen thumb are the same verdict here: red, named,
+// and discharged by fixing it.
 const SHAPES = [
   { w: 1200, h: 730, d: 1, mobile: false, tag: 'desktop' }, // NON-REGRESSION EDGE
   { w: 390, h: 844, d: 3, mobile: true, tag: 'portrait' },
@@ -193,11 +277,78 @@ const PROBE = `(() => {
     }
     return null;
   };
-  const covered = [], scrolledOut = [];
+  const covered = [], scrolledOut = [], partly = [];
   const all = [...app.querySelectorAll(sel)].filter((e) => {
     const r = e.getBoundingClientRect();
     return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden';
   });
+
+  // ---- THUMB REACH: the centre test is structurally blind to a partial cover.
+  //
+  // THIS IS A FALSE-NEGATIVE THIS FILE SHIPPED, not a new class of defect. The
+  // sweep above asks one question — who owns the CENTRE — and a control eaten
+  // from one side keeps its centre and passes. Measured at dev 7e67de8,
+  // 390x844, the flask action bar:
+  //
+  //   Inspect  [213,808 97x36]   centre (261.5, 826)  -> Inspect  (PASSES)
+  //   DRAW     [266,797 38x32]   z-index 30, absolute, over the same band
+  //
+  // Bjorn drove a REAL TOUCH TAP at (285, 819) and got the draw-pile modal
+  // (his log, 2026-08-15). The overlap is 38x21 px, 23% of the button, all of
+  // it to the right of the centre — so a centre probe and a thumb disagree,
+  // and the centre probe is the one that is wrong about the player.
+  //
+  // What a thumb actually does: it lands somewhere within about half a tap
+  // floor of where it aimed. So sample the four points half a tap-floor from
+  // the centre, clamped inside the control's own rect, and require the control
+  // to own them. The floor is MEASURED, never parsed — the --tap-floor var is a
+  // calc() and parseFloat on the token is NaN, which prints as 0 and looks
+  // like a measurement (tools/tapsize.mjs found that one first).
+  const fp = document.createElement('div');
+  fp.style.cssText = 'position:absolute;left:-9999px;top:0;width:1px;height:var(--tap-floor,44px);';
+  document.body.appendChild(fp);
+  const floor = fp.getBoundingClientRect().height || 44;
+  fp.remove();
+  // The hand's fan overlaps BY DESIGN on the wide layout (negative margins,
+  // styles/combat.css) and is the one surface in the tree where a neighbour
+  // owning your edge is the intended look. It has its own instruments —
+  // handlayout.mjs, overlapreader.mjs — so it is named out here rather than
+  // reported as noise that trains a reader to skip this section.
+  const thumbable = (e) => !(e.classList && e.classList.contains('card'));
+  for (const c of all.filter(thumbable)) {
+    const r = c.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const half = floor / 2;
+    // NO CLAMPING, and this is the line that decides what the tool means. A
+    // point pushed back onto the rect's own edge asks a different question —
+    // "does anything overlap my border by a pixel" — which every abutting
+    // neighbour answers yes to, and the first run of this probe reported eight
+    // findings on that basis with only one of them real. A point that falls
+    // OUTSIDE the control is not a thumb this control could have won; it is a
+    // control smaller than the floor, and how big a control is belongs to
+    // tools/tapsize.mjs, not here. One question, asked once: within half a tap
+    // floor of the centre AND inside your own rect, do you own the pixel?
+    const pts = [[cx + half, cy], [cx - half, cy], [cx, cy + half], [cx, cy - half]]
+      .filter(([x, y]) => x > r.left && x < r.right && y > r.top && y < r.bottom
+        && x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight);
+    for (const [x, y] of pts) {
+      const hit = document.elementFromPoint(x, y);
+      // An ANCESTOR answering is not a theft. A round button's own corner, a
+      // padded row, a rect wider than its painted shape — the container wins
+      // the pixel and NOTHING takes the tap. That is a dead pixel, not a wrong
+      // action, and it is what four of this probe's first five findings were
+      // (.topbar-btn <- .hud-top, .zbtn <- .map-zoom: parents, every one).
+      // The defect this file exists for is #21's: a FOREIGN control answering
+      // where a player aimed at this one. Named in the boundary, not silently
+      // dropped — a dead pixel on a control is a real if smaller thing, and it
+      // belongs to whoever owns tap floors, not to a cover sweep.
+      if (!hit || hit === c || c.contains(hit) || hit.contains(c)) continue;
+      partly.push(name(c) + '  <-  ' + name(hit) + '  at (' + Math.round(x) + ',' + Math.round(y) + '), '
+        + Math.round(half) + ' px from its own centre; the centre test passes this control');
+      break; // one report per control — the first stolen thumb point is the finding
+    }
+  }
+
   for (const c of all) {
     const r = c.getBoundingClientRect();
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
@@ -250,8 +401,8 @@ const PROBE = `(() => {
     }
     covered.push(name(c) + '  <-  ' + name(hit));
   }
-  return { z, local: app.clientWidth + 'x' + app.clientHeight, total: all.length,
-           covered, scrolledOut: scrolledOut.length };
+  return { z, local: app.clientWidth + 'x' + app.clientHeight, total: all.length, floor: Math.round(floor),
+           covered, partly, scrolledOut: scrolledOut.length };
 })()`;
 
 function connectCdp(wsUrl) {
@@ -316,6 +467,14 @@ async function main() {
 
   const fails = [];
   let shapesRun = 0;
+  // One home for the thumb-reach verdict, at rest and mid-interaction alike.
+  const report = (shape, screen, sc, transient, partly) => {
+    for (const p of partly) {
+      if (sc.overlay) { console.log(`               · ${p}  (overlay screen — not counted)`); continue; }
+      console.log(`               ✗ ${p}`);
+      fails.push(`${shape} ${screen}${transient ? '/' + transient : ''}: THUMB-STOLEN — ${p}`);
+    }
+  };
   for (const vp of SHAPES) {
     const shape = `${vp.w}x${vp.h}`;
     if (only && only !== shape) continue;
@@ -332,11 +491,34 @@ async function main() {
       await wait(900); // auto-zoom re-flexes on a 150ms debounce plus a boot re-apply
       const r = await evalIn(PROBE);
       const tail = sc.overlay ? `  (overlay screen: ${sc.overlay})` : '';
-      console.log(`    ${sc.name.padEnd(8)} zoom ${String(r.z).padEnd(5)} local ${r.local.padEnd(10)} ${String(r.total).padStart(3)} controls · ${r.scrolledOut} scrolled-out (fine) · ${r.covered.length} COVERED${tail}`);
+      console.log(`    ${sc.name.padEnd(8)} zoom ${String(r.z).padEnd(5)} local ${r.local.padEnd(10)} ${String(r.total).padStart(3)} controls · ${r.scrolledOut} scrolled-out (fine) · ${r.covered.length} COVERED · ${r.partly.length} THUMB-STOLEN (floor ${r.floor})${tail}`);
       for (const c of r.covered) console.log(`               ✗ ${c}`);
       if (r.covered.length && !sc.overlay) fails.push(`${shape} ${sc.name}: ${r.covered.length} covered control(s) — ${r.covered[0]}`);
+      report(shape, sc.name, sc, null, r.partly);
+
+      // ---- transient surfaces: the same probe, after the gesture that makes
+      // the surface exist. Each one re-navigates first so the screen is back at
+      // rest and one transient cannot leave state for the next.
+      for (const tr of sc.transients || []) {
+        const label = `${sc.name}/${tr.name}`;
+        const opened = await evalIn(tr.open).catch(() => false);
+        if (!opened) { console.log(`      ${label.padEnd(22)} WOULD NOT OPEN — never a pass`); fails.push(`${shape} ${label}: the surface would not open`); continue; }
+        const t1 = Date.now();
+        let shown = false;
+        while (Date.now() - t1 < 4000) { if (await evalIn(tr.ready).catch(() => false)) { shown = true; break; } await wait(100); }
+        if (!shown) { console.log(`      ${label.padEnd(22)} DID NOT MOUNT — never a pass`); fails.push(`${shape} ${label}: the surface would not mount`); continue; }
+        await wait(200);
+        const tres = await evalIn(PROBE);
+        console.log(`      ${label.padEnd(22)} ${String(tres.total).padStart(3)} controls · ${tres.scrolledOut} scrolled-out (fine) · ${tres.covered.length} COVERED · ${tres.partly.length} THUMB-STOLEN`);
+        for (const c of tres.covered) { console.log(`               ✗ ${c}`); fails.push(`${shape} ${label}: ${c}`); }
+        report(shape, sc.name, sc, tr.name, tres.partly);
+        // Put the screen back at rest before the next transient / screen.
+        await cdp.send('Page.navigate', { url: `${base}${sc.q}` }, S);
+        await wait(300);
+      }
     }
   }
+
 
   // A CHECK THAT RAN NOTHING IS `unknown`, NEVER A PASS. This exact command —
   // `--only 412x915` — printed "PASS — no covered controls" and exited 0 at the
@@ -362,8 +544,19 @@ async function main() {
   here or anywhere by nothing. Neither is a second-beat surface today
   (rewardPick and draftPick are declared 'none' in src/model/secondbeat.js), so
   what is unmeasured there is their reach, not a confirm step.
-  Reachability at rest only: nothing is pressed, legibility is not judged, and a
-  control that appears only mid-interaction cannot be seen.
+  Legibility is not judged. Reachability is measured at rest AND on the
+  transient surfaces declared per screen — today exactly one, combat's flask
+  action bar. Every other mid-interaction surface (the quick-nav overlay, the
+  pile modals, the armoury drawer, targeting mode, the reward pick) is still
+  seen by nothing here, and that list is the ask, not a footnote.
+
+  THE THUMB PASS reports a FOREIGN control winning a point half a tap floor
+  from the centre — the partial cover the centre test cannot see. It does not
+  count an ancestor winning that point (a dead pixel, not a wrong action:
+  tools/tapsize.mjs owns control size), and it skips .card, whose fan overlaps
+  by design. A stolen thumb is a hit-test fact on one headless engine; it is
+  not a claim that a human finger misses, though on the one finding a human
+  finger was driven at, it did.
 
   AND THE SHAPE LIST IS NOT THE OTHER TOOL'S. This runs 1200x730, 390x844,
   360x640, 844x390; tools/mobilefit.mjs runs nine, and neither list is a
