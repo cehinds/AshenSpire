@@ -6,7 +6,9 @@
 // selection , and then have the ability to expand by clicking, with tool tips.
 // for character creation I mean"
 //
-// WHAT THIS ASKS, and it is one question in six parts (six since 2026-08-16):
+// WHAT THIS ASKS, and it is one question in seven parts (seven since
+// 2026-08-16, when Constantine found on the shipped build the thing none of
+// the other six ask — see 7):
 //   1. IS THE ARRIVAL SHORT — every entry the CONTENT TABLES call face-tier is
 //      drawn, every entry they call reveal-tier is NOT, no reveal is open, and
 //      no face carries prose (a face's text must be exactly its own label and
@@ -50,6 +52,29 @@
 //      row of `.cz-fields` does — folding CLASS, STARTING KIT or KEEPSAKE would
 //      hide the choosing behind a choice, and folding SIGIL or SPRITE would buy
 //      nothing in words at the price of a tap. Both are red here.
+//   7. DOES THE PANEL OPEN UNDER THE FACE THAT WAS TAPPED — added 2026-08-16
+//      (MR-287) for the defect CONSTANTINE FOUND HIMSELF, on the build, at
+//      334fd02: "in character creation, I would slect an item and instead of
+//      expanding under the ubtton it shows up at hte bottom for all of them as
+//      if I expanded the bottom button". NOT A FALSE GREEN — AN UNASKED
+//      QUESTION, and that is the whole reason it is written down. Every other
+//      measure in this file is a y-coordinate or a client rect and NOT ONE of
+//      them asks WHERE the panel opened: shut on arrival, the face names the
+//      value, the options come on the glass with area — a panel that opens at
+//      the bottom of the screen satisfies every one of them. THE CODE IS ALSO
+//      CORRECT: disclosure.js builds `.disc-faces` and ONE `.disc-reveal` as
+//      its next sibling, and ui.css says "ONE panel, under the row" three
+//      lines above `.disc-faces { flex-wrap: wrap }`, so a face on the first
+//      of two wrapped rows gets its panel below BOTH. It is a specification
+//      the player disagrees with, and nobody would have found it by reading
+//      the code (Marina, MR-287). SCOPE — her conditional, and she calls it
+//      that rather than a cap: THIS FAILS ONLY FOR THE ROWS IN `FOLDED`. The
+//      rest of the screen is measured by the same predicate and REPORTED
+//      beside it, ungated, because it carried this at 334fd02 before the fold
+//      existed and a lane that inherits a defect is not the lane that owes it.
+//      No baseline constant is needed for that conditional and none is typed:
+//      the fold's entire contribution to this screen IS the FOLDED roster, so
+//      *no folded row is adrift* is exactly *the fold made this no worse*.
 //
 // DOOR — stated here and printed in the run's own output (the instrument
 // rule's same-door clause, commons/development.md). THE EXPECTATION and THE
@@ -155,6 +180,71 @@ const FOLDED = [
 // rects support — see the boundary, which still names what ink this cannot see.
 const ON_GLASS = `const onGlass = (el) => !!el
       && [...el.getClientRects()].some((r) => r.width > 0 && r.height > 0);`;
+
+// THE ANCHOR (MR-287) — ONE MEASUREMENT, and it is the one nobody asked.
+// Constantine found this on the build at 334fd02 himself; the header's part 7
+// says why it was invisible to every other line in this file and why the code
+// is correct. This is the predicate.
+//
+// A PANEL IS UNDER ITS OWN FACE IF THE SPACE BETWEEN THEM IS NO MORE THAN THE
+// SPACE THIS LAYOUT PUTS BETWEEN TWO OF ITS OWN ROWS. That reference length is
+// READ — `getComputedStyle(.disc-faces).rowGap`, the stylesheet's own number,
+// plus ONE PIXEL for subpixel rounding (the anchored gap measures 5.39 px
+// against a 6 px row-gap at 390x844). A typed tolerance here would be the
+// second copy this house exists to catch, and one read off the layout moves
+// when the layout moves. The separation is not marginal: anchored reads 5-6 px
+// at both shapes, adrift reads 55, 104 and 154 px.
+//
+// WHY NOT "no other face lies between them", which is the sentence a player
+// would say: because it is silent on a one-face host. `.cz-fields` holds
+// exactly one folded row, so a stylesheet that pinned the panel to the bottom
+// of the viewport would have no face to put between and would pass. The gap
+// against the layout's own row-gap catches that, the wrapped-row case, and a
+// panel that opens ABOVE its face. The intervening faces are still NAMED in
+// the output, because that is the sentence that tells a reader what went
+// wrong; they are not what the predicate turns on.
+//
+// WHAT PASSING LICENSES, stated before it ships (identity card): the panel
+// BEGINS within one row-gap below the face that was tapped. It licenses
+// nothing about the panel's height, nothing about whether either is in the
+// viewport, and nothing about scroll — a panel correctly anchored to a face
+// 900 px down the page is still a panel a player must scroll to find, and that
+// is MR-172's debt, not this measure's claim.
+const ANCHOR_READ = `(() => {
+    const out = [];
+    for (const host of document.querySelectorAll('.cz-disc')) {
+      const box = host.querySelector('.disc-faces');
+      const panel = host.querySelector('.disc-reveal');
+      if (!box || !panel) continue;
+      // \`.disc-more\` is excluded and it is not a convenience: it is not an
+      // entry, it has no panel, and clicking it toggles the expander — which
+      // would leave the screen in a different state than the run measured.
+      const faces = [...box.children].filter((el) => el.classList.contains('disc-face')
+        && !el.classList.contains('disc-more'));
+      const tol = parseFloat(getComputedStyle(box).rowGap) || 0;
+      for (const face of faces) {
+        face.click();
+        const open = !panel.hidden && panel.getClientRects().length > 0;
+        const f = face.getBoundingClientRect();
+        const p = panel.getBoundingClientRect();
+        const gap = p.top - f.bottom;
+        const between = open ? faces.filter((el) => el !== face).filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.bottom > f.bottom + 0.5 && r.top < p.top - 0.5;
+        }).map((el) => el.dataset.face) : [];
+        out.push({
+          key: face.dataset.face || '(unkeyed)',
+          open,
+          gap: Math.round(gap * 100) / 100,
+          tol,
+          anchored: open && gap >= -0.5 && gap <= tol + 1,
+          between,
+        });
+        face.click(); // put the screen back the way this pass found it
+      }
+    }
+    return out;
+  })()`;
 
 // THE ARRIVAL READ for that row. It is a constant so it can be run
 // BEFORE any click lands on this screen — "on arrival" is the whole claim, and
@@ -456,6 +546,56 @@ const PLANTS = [
       && /PASS no face carries prose/.test(out)
       && /PASS every face and armament tile clears the/.test(out),
   },
+  // --- MR-287, added 2026-08-16 with the anchor above. TWO PLANTS FOR ONE
+  // MEASUREMENT, because the predicate has TWO EDGES and this house checks
+  // both: the panel may drift too far BELOW its face (P15) or land ABOVE it
+  // (P16). One plant would have watched one arm and left the other `unknown`.
+  //
+  // AND A THIRD ROAD, WATCHED BY HAND AT THIS REF AND NOT IN THE CORPUS:
+  // `.cz-disc { display: flex; flex-direction: column-reverse }` puts the panel
+  // above the face at -96.37 px and goes red by name. It is the same arm as
+  // P16 by another road, so it earns a sentence, not a minute of runtime.
+  //
+  // A NOTE ON P15's SITE, because it cost me a green: the first place I aimed
+  // it was a new `.disc-reveal { margin-top: 12rem }` rule appended after
+  // `.disc-more`. It landed in the file, the file parsed, and the run came
+  // back EXIT 0 GREEN with the gap unchanged at 5.39 px — the ORIGINAL
+  // `.disc-reveal` block is 4 lines FURTHER DOWN the stylesheet, equal
+  // specificity, and later wins. A plant that lands and does nothing looks
+  // exactly like a check that caught nothing to catch. It is edited into the
+  // existing declaration now, and the gap it produces (108 px) is printed, so
+  // the plant's own referent is visible in the output rather than assumed.
+  {
+    name: 'P15 the panel drifts away from its face',
+    file: 'styles/ui.css',
+    from: '  width: 100%; margin-top: 0.6rem; padding: 0.8rem 1rem;',
+    to: '  width: 100%; margin-top: 12rem; padding: 0.8rem 1rem; /* planted: the panel opens a long way under the face that was tapped */',
+    what: 'the panel keeps its place in the flow and opens 108 px below its face instead of 5.39 — THE SAME ARM AS THE DEFECT CONSTANTINE FOUND, whose wrapped-row gaps read 55, 104 and 154 px against a 6 px row-gap',
+    expect: "the fold's panel is measured against the layout's OWN row-gap and found adrift below its face",
+    mustRed: (out) => /FAIL the fold's panel opens UNDER ITS OWN FACE.*pick:tint: panel opens 108 px below its face/.test(out),
+    // The fold's own sentences must survive: a plant that also blanked the
+    // value or craters the tap floor would make this red twice over and prove
+    // nothing about WHERE the panel went.
+    mustStay: (out) => /PASS each folded row names what is currently chosen, ON THE GLASS/.test(out)
+      && /PASS a tap opens the folded picker/.test(out)
+      && /PASS every folded picker is SHUT on arrival/.test(out)
+      && /PASS every face and armament tile clears the/.test(out),
+  },
+  {
+    name: 'P16 the panel pinned to the bottom of the screen',
+    file: 'styles/ui.css',
+    from: '.disc-more { border-style: dashed; }',
+    to: '.disc-more { border-style: dashed; }\n.disc-reveal { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; } /* planted: the bottom sheet — his words, as a stylesheet */',
+    what: "the panel leaves the flow and sits at the bottom of the viewport — literally 'it shows up at hte bottom', as a plausible mis-fix rather than as prose",
+    expect: 'the panel is measured ABOVE its own face (a negative gap) and goes red — the other arm of the predicate',
+    mustRed: (out) => /FAIL the fold's panel opens UNDER ITS OWN FACE.*pick:tint: panel opens -\d+(\.\d+)? px below its face/.test(out),
+    // AND THE PART THIS PLANT IS EVIDENCE OF: a bottom-sheet panel passes
+    // EVERY other sentence in this tool. The greens below are the finding.
+    mustStay: (out) => /PASS each folded row names what is currently chosen, ON THE GLASS/.test(out)
+      && /PASS a tap opens the folded picker/.test(out)
+      && /PASS a second tap folds it again/.test(out)
+      && /PASS horizontal travel is ZERO/.test(out),
+  },
 ];
 
 function sandbox() {
@@ -560,6 +700,17 @@ async function selftest() {
   console.log('  empties the set the fold assertions quantify over, and an empty ∀ is TRUE: before');
   console.log('  2026-08-16 it printed `0 options off the glass` and `TINT undefined` as PASS, then');
   console.log('  threw and took the tap floor and Law 5 down with it. Six named FAILs now, no crash.');
+  console.log('  P15-P16 (MR-287) ARE THE TWO EDGES OF ONE MEASUREMENT — the anchor. The panel may');
+  console.log('  drift too far BELOW its face (P15, in flow, the same arm as the defect Constantine');
+  console.log('  found on the build) or land ABOVE it (P16, the bottom sheet, his own words as a');
+  console.log('  stylesheet). One plant would have watched one arm and left the other unknown.');
+  console.log('  BOTH ARE ALSO EVIDENCE FOR THE SENTENCE THEY WERE WRITTEN FOR: under P16 every');
+  console.log('  other check in this tool prints PASS on a panel sitting at the bottom of the');
+  console.log('  screen, which is why this measurement had to be added rather than derived from a');
+  console.log('  green. P15\'s first site was appended AFTER `.disc-more` and was overridden by the');
+  console.log('  `.disc-reveal` block four lines further down — it landed, parsed, and printed EXIT');
+  console.log('  0 GREEN with the gap unchanged. A plant with no referent and a check with nothing');
+  console.log('  to catch print the same thing. It is aimed at the declaration itself now.');
   console.log('  The tooltip path (hover/gamepad focus) is ASSERTED every run and has never been');
   console.log('  watched to fail — it carries no plant here.');
   process.exit(fails ? 1 : 0);
@@ -848,6 +999,34 @@ async function main() {
       + `${axis.scrollers.length ? axis.scrollers.map((row) => `${row.sel} ${row.travel}px`).join(' · ') : 'none scroll sideways'}`
       + ` (document ${axis.doc} px)`);
 
+    // ---- 7. the anchor (MR-287) -------------------------------------------
+    // LAST ON PURPOSE. This pass CLICKS every face on the screen and clicks it
+    // shut again; running it earlier would hand sections 1-6 a screen this
+    // pass had touched. It therefore reads the screen AS THIS RUN LEFT IT —
+    // section 3 has opened the expander, so the brief lane carries one more
+    // face here than it does on arrival. That matters only to the ungated
+    // half: `.cz-fields` is untouched by the expander, so the FOLD's reading
+    // is the same either way.
+    const anchors = await ev(ANCHOR_READ);
+    const foldKeys = new Set(FOLDED.map((row) => row.key));
+    const foldAnchors = anchors.filter((row) => foldKeys.has(row.key));
+    const adrift = foldAnchors.filter((row) => !row.anchored);
+    // Everything that is NOT a folded row, counted together rather than by
+    // host: a third `.cz-disc` appearing on this screen must show up in this
+    // number, not fall through a `.cz-brief` test into silence.
+    const rest = anchors.filter((row) => !foldKeys.has(row.key));
+    const restAdrift = rest.filter((row) => !row.anchored);
+    const say = (row) => `${row.key}: ${row.open ? `panel opens ${row.gap} px below its face (one row-gap is ${row.tol} px)` : 'the panel did not open at all'}`
+      + (row.between.length ? `, past ${row.between.length} other face(s): ${row.between.join(', ')}` : '');
+    ok(foldAnchors.length === FOLDED.length && adrift.length === 0,
+      `the fold's panel opens UNDER ITS OWN FACE — `
+      + `${adrift.length ? adrift.map(say).join(' · ')
+        : foldAnchors.map((row) => `${row.key} gap ${row.gap} px, row-gap ${row.tol} px`).join(' · ') || 'nothing'}`
+      + `${foldAnchors.length === FOLDED.length ? '' : ` · NO REFERENT: ${foldAnchors.length}/${FOLDED.length} named row(s) measured`}`
+      + ` · MR-287, MEASURED AND NOT GATED HERE: ${restAdrift.length}/${rest.length} other face(s) on this`
+      + ` screen open a panel that is not under them${restAdrift.length ? ` — ${restAdrift.map((row) => row.key).join(', ')}` : ''}`
+      + `; inherited from 334fd02, not this lane's to owe`);
+
     await cdp.send('Target.closeTarget', { targetId }, S).catch(() => {});
   }
 
@@ -897,6 +1076,33 @@ async function main() {
   console.log('  relic sentence prints PASS while the relic name is nowhere on the screen. Those');
   console.log('  sentences are named here because a boundary owes the reader the gaps it knows,');
   console.log('  and they are not repaired here because they are not this lane\'s to write.');
+  console.log('  THE ANCHOR (MR-287) IS ONE MEASUREMENT WITH TWO SCOPES, and the split is Marina\'s');
+  console.log('  conditional, not a cap. A panel is UNDER ITS OWN FACE when the space between them');
+  console.log('  is no more than ONE ROW-GAP of that host\'s own `.disc-faces` — the reference length');
+  console.log('  is READ off the layout (6 px here), never typed, plus 1 px for subpixel rounding.');
+  console.log('  Anchored measures 5.39 px at 390x844 and 6 px at 1200x730; adrift measures 55, 104');
+  // Worded to avoid the token this tool greps its own output for: --selftest
+  // prints every line matching /FAIL/ as a plant's red, and a boundary sentence
+  // that says FAILS lands in that list looking like a finding. Found by reading
+  // the selftest's own output rather than the source.
+  console.log('  and 154. IT GOES RED ONLY FOR THE ROWS IN `FOLDED`. Every other face on this screen');
+  console.log('  is');
+  console.log('  measured by the same predicate and printed in the same sentence UNGATED, because it');
+  console.log('  carried this defect at 334fd02 before the fold existed — measured there by hand,');
+  console.log('  2026-08-16: the same 8 of 14 faces at 390x844 and 11 of 15 at 1200x730, the fold row');
+  console.log('  being the only difference and the only one anchored. The conditional needs no');
+  console.log('  baseline constant and none is typed: the fold\'s whole contribution to this screen IS');
+  console.log('  the roster, so NO FOLDED ROW ADRIFT is exactly THE FOLD MADE THIS NO WORSE.');
+  console.log('  WATCHED RED at this ref, all three through the stylesheet: margin-top:12rem on');
+  console.log('  .disc-reveal (P15, the in-flow arm — the same arm as the real defect),');
+  console.log('  position:fixed;bottom:0 (P16, the panel above its face), and');
+  console.log('  .cz-disc{flex-direction:column-reverse} (the same arm as P16 by another road).');
+  console.log('  IT IS SILENT on the panel\'s HEIGHT, on whether either is in the viewport, and on');
+  console.log('  SCROLL: a panel correctly anchored to a face 900 px down the page is still a panel a');
+  console.log('  player has to scroll to find. It is measured LAST, on the screen this run left —');
+  console.log('  section 3 has opened the expander by then, so the ungated count carries one more');
+  console.log('  face than arrival does. `.cz-fields` is untouched by that, so the GATED half reads');
+  console.log('  the same either way.');
   console.log('  On the FOLD it is silent about THE ONE THING THAT NOW MATTERS MOST (MR-172, primary');
   console.log('  debt): whether a player ever FINDS the face. TOUCH IS NEVER TOLD THE ROW OPENS — the');
   console.log('  only teacher is attachTooltip, which answers pointerenter/gpfocus and never a thumb,');
