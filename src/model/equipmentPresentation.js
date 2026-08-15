@@ -134,8 +134,24 @@ function explicitEffects(registries, beforePiece, afterPiece) {
 //                     relic authors `swapCostDelta` while no reader moves, and
 //                     RED the other way when a reader moves while this marker
 //                     still says none does.
+//
+// THE WORD "Actions" HAS ONE HOME AND IT IS NOT THIS FILE (D26). I spelt it out
+// in the row's label last night, and the note below needs the same word — so
+// rather than write a second copy of it here and a third one there, both read
+// the row that owns it: `derivedStatRules.presentation.energy`. Absent is NAMED,
+// never guessed: a price row labelled `undefined Actions` is exactly the
+// plausible-and-wrong render Law 0 clause 5 is about, and `statProjection`
+// already throws by name for the same table.
+function actionsWord(registries) {
+  const row = (((registries || {}).derivedStatRules || {}).presentation || {}).energy;
+  const word = row && (row.faceLabel || row.label);
+  if (!word) throw new Error('swapPriceChanges requires derivedStatRules.presentation.energy — the word a swap price is charged in has one home (D26)');
+  return word;
+}
+
 function swapPriceChanges(registries, run, beforeLoadout, afterLoadout, meta, candidateSlotId, candidateSetIndex) {
   const rule = resolveSwapCostRule(registries, meta);
+  const unit = actionsWord(registries);
   const relicDelta = passiveSum(registries, run.relics || [], 'swapCostDelta');
   const rows = [];
   for (const slot of (registries.equipment.slots || [])) {
@@ -155,12 +171,30 @@ function swapPriceChanges(registries, run, beforeLoadout, afterLoadout, meta, ca
       // Actions, not Energy (D17 message 3) — the same resource, the same
       // rename, and a comparison row that kept the old noun would be the one
       // place a player met both words in one session.
-      label: `${slot.label} swap Actions`,
+      label: `${slot.label} swap ${unit}`,
       before: before.cost,
       after: after.cost,
       ruleId: after.ruleId,
-      note: declined === 0 ? '' : `${(rule && rule.label) || 'This rule'} does not charge gear`
-        + ` — ${declined > 0 ? '+' : ''}${declined} not applied.`,
+      // THE SENTENCE IS SUNNA'S, ADOPTED VERBATIM (MR-77), and it is a
+      // correction rather than a rewrite. What it replaces said *"Flat does not
+      // charge gear — +2 not applied."* and three things were wrong with it:
+      //
+      //   · "gear" is an INTERNAL ID that leaked. She counted it: the word
+      //     occurs exactly ONCE in player-facing prose, in a Settings ›
+      //     Advanced explainer a default-rule player has by definition never
+      //     opened — and in that same sentence the game's own name for the
+      //     concept is the rule label "Talisman & relic". The note reached past
+      //     the game's word to ours.
+      //   · "Flat" stood as a bare subject, so a proper noun read as an adverb.
+      //     `${label} swap costs` makes it modify the thing it names.
+      //   · "+2" dropped the unit every other number on this row carries, which
+      //     is why `unit` is threaded through both strings above.
+      //
+      // No rule row is a legal state (an unauthored table — the price falls to
+      // the default), so the subject degrades to a bare "Swap costs" rather
+      // than into "This rule swap costs".
+      note: declined === 0 ? '' : `${rule && rule.label ? `${rule.label} swap costs` : 'Swap costs'} ignore talismans and relics`
+        + ` — this ${declined > 0 ? '+' : ''}${declined} ${unit} is not charged.`,
     });
   }
   return rows;

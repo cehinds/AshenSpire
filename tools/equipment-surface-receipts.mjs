@@ -235,7 +235,14 @@ if (equipmentSurfaceReceipt) {
     const seen = equipmentSurfaceReceipt(R, reaver, {
       candidate: { slotId: 'talisman', setIndex: 0, pieceId: gearPieces[0] }, meta: { settings: { swapCostRule: 'flat' } },
     }).candidate.resourceChanges.filter((r) => r.id.startsWith('swapCost'));
-    check(seen.length === COMBAT_SLOTS.length && seen.every((r) => r.before === r.after && /does not charge gear/.test(r.note || '')),
+    // BY PRESENCE, NEVER BY PHRASE — this read `/does not charge gear/` until
+    // MR-77 replaced the sentence, and it would have gone RED on a surface that
+    // qualified every row. A sentinel that re-types the prose it watches is a
+    // second home for that prose (Sunna's own correction in
+    // tools/swap-row-reads.mjs; Sten, onevocab.mjs). What this contract owns is
+    // that the declined delta is REPORTED AT ALL; whether the sentence reads is
+    // photographed and judged by a person elsewhere.
+    check(seen.length === COMBAT_SLOTS.length && seen.every((r) => r.before === r.after && (r.note || '').trim()),
       'a gear-off rule reports the delta it DECLINED instead of showing an unmoved number',
       JSON.stringify(seen));
     const geared = equipmentSurfaceReceipt(R, reaver, {
