@@ -78,11 +78,12 @@ export const derivedStatRules = {
     // re-ask. The ENGINE ids are untouched here (`energyMax`, `balance.energy`,
     // the orb) — that rename is a sequenced act across five branches and is not
     // this one. What changes is the WORD A PLAYER READS, and since D26 that
-    // word has exactly one home: this row. The cost is stated rather than
-    // hidden: until the frame lands, creation and the Armoury say Actions while
-    // the combat HUD still says Energy. One surface saying his word beats none
-    // saying it, and the frame adopts this row's label rather than inventing a
-    // second one.
+    // word has exactly one home: this row — the frame adopts this row's label
+    // rather than inventing a second one.
+    // NO SURFACE CENSUS ON THIS LINE. One lived here, listing which screens
+    // said which word. It was wrong the day it was written, nothing went red
+    // when it drifted, and it reached him. A spread worth watching gets a
+    // check that can go red, never a comment kept in sync by hand.
     energy: { label: 'Actions / turn', faceLabel: 'Actions', order: 4, disclosure: 'face', sense: 'How much you can do in one turn.' },
     draw: { label: 'Draw / turn and opening hand', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you hold to choose from.' },
   },
