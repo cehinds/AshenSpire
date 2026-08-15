@@ -59,6 +59,7 @@ import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from '
 import { sfx } from './ui/sfx.js';
 import { initAudio } from './ui/audio.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
+import { updateUprightGate } from './ui/components/upright.js';
 import { surfaceReport } from './ui/surfaces.js';
 // failureBanner is the ONE home for "the game says something is structurally
 // wrong" — the two boot checks below used to build that element by hand, and a
@@ -337,13 +338,46 @@ const UI_NAMED = UI.uiScale.named;
 // 806 local px. The property is upheld by every return path; the recovery is
 // upheld by nothing but its own usefulness, and that is the honest reason to
 // keep it.
-function layoutForCap(cap) {
-  if (typeof window === 'undefined') return { zoom: 1, narrow: false };
+//
+// THE THIRD VALUE — `short` (Sunna, 2026-08-15, R-32). It rides here and not in
+// a stylesheet for EXACTLY the reason above: a `@media (orientation: landscape)`
+// would be a second decider on a second input, which is #24 rebuilt from
+// scratch. It is also not an orientation at all — a 1024x768 tablet is landscape
+// and fine, and a 400x400 desktop window is not.
+//
+//   SHORT  <=>  h < balance.ui.uiScale.gateBelowH
+//
+// One number, one home, and it is a MEASUREMENT — the rendered device-px bottom
+// edge of the wide board's last required control, the ladder and its licensed
+// band written where the number lives. Below it, END TURN's bottom is off screen
+// inside a container that is `overflow: hidden`, and `overflow: hidden` scrolls
+// programmatically and never by hand (Bjorn, 2026-08-15), so there is no gesture
+// to reach it.
+//
+// I HAD THIS WRONG FIRST AND THE MEASUREMENT CAUGHT ME. My first predicate was
+// `h < z.min x baselineH` — "the clamp is what is binding" — which is a true
+// statement about the ZOOM and the wrong statement about the PLAYER: it refused
+// 800x450, where END TURN is whole and 100% on screen. A gate that takes away a
+// working screen is worse than no gate, so the number is now pinned to the
+// control the player needs rather than to the baseline the board declares.
+//
+// `vw`/`vh` are parameters so the SAME decider can be asked about a viewport
+// that does not exist yet — applyUiScale asks it about the TURNED phone before
+// the gate is allowed to say "turn your phone". Omit them and it reads the
+// window, byte-for-byte as before.
+function layoutForCap(cap, vw, vh) {
+  const given = vw != null && vh != null;
+  if (!given && typeof window === 'undefined') return { zoom: 1, narrow: false, short: false };
   const z = UI.uiScale;
-  const w = window.innerWidth, h = window.innerHeight;
+  const w = given ? vw : window.innerWidth, h = given ? vh : window.innerHeight;
   const clamp = (v) => Math.max(z.min, Math.min(z.max, v));
   const fitFor = (dw, dh) => Math.min(w / dw, h / dh);
   const capped = (v) => Math.min(v, cap);
+  // Height only, and the same answer on every return path — the wall does not
+  // care which baseline won, because a short viewport always lands wide.
+  // `gateBelowH` absent (an older content bundle) means NO GATE, never a gate at
+  // a guessed number: a missing threshold must not invent a refusal.
+  const isShort = () => z.gateBelowH != null && h < z.gateBelowH;
 
   // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE. The wide path keeps
   // `Math.round` byte-for-byte, because every zoom every existing player sees
@@ -353,11 +387,11 @@ function layoutForCap(cap) {
   // Flooring BOTH moved 1280x800 from 1.07 to 1.06 and turned
   // tools/tutorial-reach.mjs red — the guard on #7.
   const wideZoom = clamp(capped(Math.round(fitFor(z.designW, z.designH) * 100) / 100));
-  if (!(z.narrowW && z.narrowH && z.narrowMax)) return { zoom: wideZoom, narrow: false };
+  if (!(z.narrowW && z.narrowH && z.narrowMax)) return { zoom: wideZoom, narrow: false, short: isShort() };
 
   const narrowFit = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
   const narrowZoom = clamp(capped(narrowFit));
-  if (w / narrowZoom <= z.narrowMax) return { zoom: narrowZoom, narrow: true };
+  if (w / narrowZoom <= z.narrowMax) return { zoom: narrowZoom, narrow: true, short: isShort() };
 
   // Recovery: the cap, not the screen, is what pushed this out of the narrow
   // band. Unreachable when cap is Infinity — narrowZoom === narrowFit there, so
@@ -367,9 +401,9 @@ function layoutForCap(cap) {
   // for #24's property — see the header — only for the quality of the answer.
   if (w / narrowFit <= z.narrowMax) {
     const bandFloor = clamp(Math.ceil((w / z.narrowMax) * 100) / 100);
-    if (w / bandFloor <= z.narrowMax) return { zoom: bandFloor, narrow: true };
+    if (w / bandFloor <= z.narrowMax) return { zoom: bandFloor, narrow: true, short: isShort() };
   }
-  return { zoom: wideZoom, narrow: false };
+  return { zoom: wideZoom, narrow: false, short: isShort() };
 }
 
 // A named size is a CEILING the player asked for, not a value the app owes them
@@ -378,14 +412,14 @@ function layoutForCap(cap) {
 // so behaving as fixed zoom made the control look dead ("scaling stopped
 // working") — balance.js records that complaint, and it is the reason the
 // settings screen now shows the value actually applied.
-function resolveLayout(uiScale) {
+function resolveLayout(uiScale, vw, vh) {
   const key = String(uiScale == null ? 'auto' : uiScale).toLowerCase();
   const named = key !== 'auto' ? UI_NAMED[key] : null;
-  return layoutForCap(named != null ? named : Infinity);
+  return layoutForCap(named != null ? named : Infinity, vw, vh);
 }
 
 function applyUiScale(settings) {
-  const { zoom, narrow } = resolveLayout(settings.uiScale);
+  const { zoom, narrow, short } = resolveLayout(settings.uiScale);
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
@@ -393,6 +427,27 @@ function applyUiScale(settings) {
   // The layout mode, written by the same call that chose the zoom, so the two
   // cannot disagree. The stylesheets key off this and measure nothing (#24).
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
+  // THE ORIENTATION GATE (ui/components/upright.js — the decision lives in its
+  // header, not here). Written by the SAME call that chose the zoom and the
+  // layout, from the same decider, so there is no second opinion about whether
+  // this screen is too short. The wording is derived, not guessed: ask the
+  // decider about the TURNED viewport and only then are we allowed to say "turn
+  // your phone" — a gate that tells a desktop player to rotate their monitor is
+  // a gate nobody believes the second time.
+  const turned = typeof window === 'undefined'
+    ? { short: true }
+    : resolveLayout(settings.uiScale, window.innerHeight, window.innerWidth);
+  // AND ONE CAPABILITY QUERY, FOR THE WORDS ONLY. "Turn your phone upright" read
+  // on an 800x410 DESKTOP WINDOW is a false instruction, and a screen that tells
+  // you one wrong thing is a screen you stop reading. `(pointer: coarse)` is NOT
+  // "is this a phone" — the question this file refuses to ask, because it has no
+  // honest answer — it is "is the primary pointer a finger", which is exactly the
+  // population for whom turning a device is a thing you can do. It chooses the
+  // WORDING and never the refusal: if it is wrong the player still gets a true
+  // recovery line, and the gate stands or falls on the geometry either way.
+  const coarse = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    && window.matchMedia('(pointer: coarse)').matches;
+  updateUprightGate({ short, offerRotate: !turned.short && coarse });
 }
 
 // MINIMUM TAP SIZE → `--tap-target` on <html>, read by `--tap-floor` in

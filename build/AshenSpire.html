@@ -2690,6 +2690,90 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .flask-name { color: var(--ink, #f2ead8); }
 
+/* ---------- the orientation gate (components/upright.js) -------------------- */
+/* THE DECISION AND ITS REASONS LIVE IN THAT FILE'S HEADER, NOT HERE. This
+   stylesheet measures nothing and decides nothing — main.js's resolveLayout()
+   already made the call in the same breath as the zoom, and a
+   `@media (orientation: landscape)` here would be the second decider that
+   caused #24. The only thing this block does is make the refusal readable.
+
+   Z-INDEX 900, ABOVE THE SIX AT 500. components/veil.js sorts by paint order, so
+   this owns input even when it rises over an already-open overlay. It stays a
+   child of <body> at `position: fixed`, which is the precondition that file
+   states for the comparison being valid at all.
+
+   NO `vh`, NO `vw` (Law 2). `.modal-veil` is `inset: 0` and this inherits it;
+   the card is capped in px and in %, both of which resolve inside the zoomed
+   body the way every panel below <body> in this tree does.
+
+   TYPE DIVIDED BY --ui-zoom, DELIBERATELY, and it is the one carve-out here:
+   this is the message about the app having zoomed itself down to its floor, so
+   scaling it by that zoom shrinks the sentence exactly when it matters most.
+   Same idiom and same reason as `--tap-floor` in base.css. Law 4 is untouched —
+   the unit is still rem, so Text size still scales these glyphs and only these
+   glyphs; what is cancelled is UI size, which is the thing being reported on. */
+.upright-veil {
+  z-index: 900;
+  /* NEAR-SOLID, and 0.95 was not enough — I looked at it. At 400x400 an enemy
+     HP bar showed through the reassurance line, so "Your run is safe" sat on a
+     red bar. A refusal has to be calm to be believed. */
+  background: rgba(8, 6, 4, 0.985);
+  padding: 24px;
+  /* Law 5: a refusal that scrolls sideways is a joke at the player's expense. */
+  overflow: hidden;
+}
+.upright-card {
+  max-width: 460px;
+  text-align: center;
+  color: var(--parchment);
+}
+.upright-veil h2 {
+  color: var(--gold);
+  font-size: calc(2.4rem / var(--ui-zoom, 1));
+  line-height: 1.25;
+  margin-bottom: 14px;
+}
+.upright-say {
+  font-size: calc(1.6rem / var(--ui-zoom, 1));
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.upright-safe {
+  font-size: calc(1.4rem / var(--ui-zoom, 1));
+  line-height: 1.5;
+  color: var(--muted);
+}
+/* The glyph is a phone standing up. Box geometry in px — chrome, not type
+   (Law 4 clause 3) — and it is `aria-hidden`, so a reader that cannot see it
+   loses nothing the sentences do not already say. */
+.upright-glyph {
+  display: grid;
+  place-items: center;
+  height: 76px;
+  margin-bottom: 18px;
+}
+.upright-phone {
+  display: block;
+  width: 34px;
+  height: 56px;
+  border: 2px solid var(--gold);
+  border-radius: 5px;
+  transform-origin: 50% 50%;
+  animation: upright-turn 2.6s ease-in-out infinite;
+}
+.upright-veil[data-advice='resize'] .upright-phone {
+  /* Not a phone to turn — a window to grow. Widen the box and hold it still. */
+  width: 56px; height: 40px; animation: none;
+}
+@keyframes upright-turn {
+  0%, 18% { transform: rotate(-90deg); }
+  55%, 100% { transform: rotate(0deg); }
+}
+/* Motion is a nicety and this screen is not. Both doors: the player's setting
+   (body.reduced-motion, main.js) and the OS's. */
+.reduced-motion .upright-phone { animation: none; }
+@media (prefers-reduced-motion: reduce) { .upright-phone { animation: none; } }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -4010,6 +4094,7 @@ const { setAnimSpeed, anchorLocalBox, clampBox, floatNum: fxFloatNum } = require
 const { sfx } = require("src/ui/sfx.js");
 const { initAudio } = require("src/ui/audio.js");
 const { installHoldBeat } = require("src/ui/components/holdbeat.js");
+const { updateUprightGate } = require("src/ui/components/upright.js");
 const { surfaceReport } = require("src/ui/surfaces.js");
 // failureBanner is the ONE home for "the game says something is structurally
 // wrong" — the two boot checks below used to build that element by hand, and a
@@ -4288,13 +4373,46 @@ const UI_NAMED = UI.uiScale.named;
 // 806 local px. The property is upheld by every return path; the recovery is
 // upheld by nothing but its own usefulness, and that is the honest reason to
 // keep it.
-function layoutForCap(cap) {
-  if (typeof window === 'undefined') return { zoom: 1, narrow: false };
+//
+// THE THIRD VALUE — `short` (Sunna, 2026-08-15, R-32). It rides here and not in
+// a stylesheet for EXACTLY the reason above: a `@media (orientation: landscape)`
+// would be a second decider on a second input, which is #24 rebuilt from
+// scratch. It is also not an orientation at all — a 1024x768 tablet is landscape
+// and fine, and a 400x400 desktop window is not.
+//
+//   SHORT  <=>  h < balance.ui.uiScale.gateBelowH
+//
+// One number, one home, and it is a MEASUREMENT — the rendered device-px bottom
+// edge of the wide board's last required control, the ladder and its licensed
+// band written where the number lives. Below it, END TURN's bottom is off screen
+// inside a container that is `overflow: hidden`, and `overflow: hidden` scrolls
+// programmatically and never by hand (Bjorn, 2026-08-15), so there is no gesture
+// to reach it.
+//
+// I HAD THIS WRONG FIRST AND THE MEASUREMENT CAUGHT ME. My first predicate was
+// `h < z.min x baselineH` — "the clamp is what is binding" — which is a true
+// statement about the ZOOM and the wrong statement about the PLAYER: it refused
+// 800x450, where END TURN is whole and 100% on screen. A gate that takes away a
+// working screen is worse than no gate, so the number is now pinned to the
+// control the player needs rather than to the baseline the board declares.
+//
+// `vw`/`vh` are parameters so the SAME decider can be asked about a viewport
+// that does not exist yet — applyUiScale asks it about the TURNED phone before
+// the gate is allowed to say "turn your phone". Omit them and it reads the
+// window, byte-for-byte as before.
+function layoutForCap(cap, vw, vh) {
+  const given = vw != null && vh != null;
+  if (!given && typeof window === 'undefined') return { zoom: 1, narrow: false, short: false };
   const z = UI.uiScale;
-  const w = window.innerWidth, h = window.innerHeight;
+  const w = given ? vw : window.innerWidth, h = given ? vh : window.innerHeight;
   const clamp = (v) => Math.max(z.min, Math.min(z.max, v));
   const fitFor = (dw, dh) => Math.min(w / dw, h / dh);
   const capped = (v) => Math.min(v, cap);
+  // Height only, and the same answer on every return path — the wall does not
+  // care which baseline won, because a short viewport always lands wide.
+  // `gateBelowH` absent (an older content bundle) means NO GATE, never a gate at
+  // a guessed number: a missing threshold must not invent a refusal.
+  const isShort = () => z.gateBelowH != null && h < z.gateBelowH;
 
   // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE. The wide path keeps
   // `Math.round` byte-for-byte, because every zoom every existing player sees
@@ -4304,11 +4422,11 @@ function layoutForCap(cap) {
   // Flooring BOTH moved 1280x800 from 1.07 to 1.06 and turned
   // tools/tutorial-reach.mjs red — the guard on #7.
   const wideZoom = clamp(capped(Math.round(fitFor(z.designW, z.designH) * 100) / 100));
-  if (!(z.narrowW && z.narrowH && z.narrowMax)) return { zoom: wideZoom, narrow: false };
+  if (!(z.narrowW && z.narrowH && z.narrowMax)) return { zoom: wideZoom, narrow: false, short: isShort() };
 
   const narrowFit = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
   const narrowZoom = clamp(capped(narrowFit));
-  if (w / narrowZoom <= z.narrowMax) return { zoom: narrowZoom, narrow: true };
+  if (w / narrowZoom <= z.narrowMax) return { zoom: narrowZoom, narrow: true, short: isShort() };
 
   // Recovery: the cap, not the screen, is what pushed this out of the narrow
   // band. Unreachable when cap is Infinity — narrowZoom === narrowFit there, so
@@ -4318,9 +4436,9 @@ function layoutForCap(cap) {
   // for #24's property — see the header — only for the quality of the answer.
   if (w / narrowFit <= z.narrowMax) {
     const bandFloor = clamp(Math.ceil((w / z.narrowMax) * 100) / 100);
-    if (w / bandFloor <= z.narrowMax) return { zoom: bandFloor, narrow: true };
+    if (w / bandFloor <= z.narrowMax) return { zoom: bandFloor, narrow: true, short: isShort() };
   }
-  return { zoom: wideZoom, narrow: false };
+  return { zoom: wideZoom, narrow: false, short: isShort() };
 }
 
 // A named size is a CEILING the player asked for, not a value the app owes them
@@ -4329,14 +4447,14 @@ function layoutForCap(cap) {
 // so behaving as fixed zoom made the control look dead ("scaling stopped
 // working") — balance.js records that complaint, and it is the reason the
 // settings screen now shows the value actually applied.
-function resolveLayout(uiScale) {
+function resolveLayout(uiScale, vw, vh) {
   const key = String(uiScale == null ? 'auto' : uiScale).toLowerCase();
   const named = key !== 'auto' ? UI_NAMED[key] : null;
-  return layoutForCap(named != null ? named : Infinity);
+  return layoutForCap(named != null ? named : Infinity, vw, vh);
 }
 
 function applyUiScale(settings) {
-  const { zoom, narrow } = resolveLayout(settings.uiScale);
+  const { zoom, narrow, short } = resolveLayout(settings.uiScale);
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
@@ -4344,6 +4462,27 @@ function applyUiScale(settings) {
   // The layout mode, written by the same call that chose the zoom, so the two
   // cannot disagree. The stylesheets key off this and measure nothing (#24).
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
+  // THE ORIENTATION GATE (ui/components/upright.js — the decision lives in its
+  // header, not here). Written by the SAME call that chose the zoom and the
+  // layout, from the same decider, so there is no second opinion about whether
+  // this screen is too short. The wording is derived, not guessed: ask the
+  // decider about the TURNED viewport and only then are we allowed to say "turn
+  // your phone" — a gate that tells a desktop player to rotate their monitor is
+  // a gate nobody believes the second time.
+  const turned = typeof window === 'undefined'
+    ? { short: true }
+    : resolveLayout(settings.uiScale, window.innerHeight, window.innerWidth);
+  // AND ONE CAPABILITY QUERY, FOR THE WORDS ONLY. "Turn your phone upright" read
+  // on an 800x410 DESKTOP WINDOW is a false instruction, and a screen that tells
+  // you one wrong thing is a screen you stop reading. `(pointer: coarse)` is NOT
+  // "is this a phone" — the question this file refuses to ask, because it has no
+  // honest answer — it is "is the primary pointer a finger", which is exactly the
+  // population for whom turning a device is a thing you can do. It chooses the
+  // WORDING and never the refusal: if it is wrong the player still gets a true
+  // recovery line, and the gate stands or falls on the geometry either way.
+  const coarse = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    && window.matchMedia('(pointer: coarse)').matches;
+  updateUprightGate({ short, offerRotate: !turned.short && coarse });
 }
 
 // MINIMUM TAP SIZE → `--tap-target` on <html>, read by `--tap-floor` in
@@ -6264,6 +6403,44 @@ const balance = {
       narrowW: 430,
       narrowH: 780,
       narrowMax: 520,
+      // THE ORIENTATION GATE'S ONE NUMBER (src/ui/components/upright.js, R-32).
+      // Below this viewport HEIGHT in device px, the game refuses the shape and
+      // says so, instead of drawing a board whose END TURN no gesture reaches.
+      //
+      // IT IS A MEASUREMENT, NOT A TASTE, and it is in data because it is a
+      // layout fact that will move when the board does. Sunna, 2026-08-15, on a
+      // height ladder at width 800, wide layout, headless Chromium, % of each
+      // control on screen (`ok` = whole):
+      //
+      //   h        500  480  470  460  450  440  430  410  390
+      //   S  hand   ok   ok   ok   ok   ok   ok   98   83   67
+      //      ENDTRN ok   ok   ok   ok   ok   ok   ok   ok   ok
+      //   M  hand   ok   94   95   92   89   82   74   60   46
+      //      ENDTRN ok   ok   ok   ok   ok   ok   ok   62    0
+      //   L  hand   81   73   73   69   67   61   54   41   29
+      //      ENDTRN ok   ok   ok   ok  100   62   25    0    0
+      //   XL hand   62   54   54   53   50   44   38   26   15
+      //      ENDTRN 71   26   20   13    0    0    0    0    0
+      //
+      // 435 IS THE LARGEST VALUE THAT NEVER REFUSES A WORKING SCREEN. The
+      // binding row is Text S: at h 440 every required control is whole, so a
+      // threshold above 440 takes away a window that works. At h 430 the hand is
+      // already cut at every text size, so 435 refuses nothing that was intact.
+      // Below it sit every landscape phone we test — 844x390, 915x412, 844x344 —
+      // which is the shape this gate exists for.
+      //
+      // IT IS DELIBERATELY NOT A PER-TEXT-SIZE TABLE, and that is the important
+      // line. The board fails EARLIER as text grows (at XL, END TURN is already
+      // gone at h 450 and the hand is cut at h 560), so a threshold that grew
+      // with the accessibility setting would refuse more and more of a
+      // large-text player's screens — the opposite of what the setting is for.
+      // That whole column is a pre-existing defect of the wide layout at Text
+      // L/XL and it needs layout work, not a wider refusal.
+      //
+      // Re-measure with `node tools/uprightgate.mjs` (add `--text S|L|XL`). It
+      // goes red both ways: a wall with no gate, and a gate on a shape where
+      // every required control is whole.
+      gateBelowH: 435,
     },
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).
@@ -44597,6 +44774,228 @@ function installHoldBeat({ root = document, at = [], play = (id) => sfx.play(id)
 
 
 Object.assign(module.exports, { installHoldBeat });
+
+},
+"src/ui/components/upright.js": function (module, exports, require) {
+// src/ui/components/upright.js — THE ORIENTATION GATE.
+//
+// ============================================================================
+// THE DECISION, AND IT CAME BEFORE ANY LAYOUT: GATE, NOT SUPPORT.
+// ============================================================================
+//
+// Sunna, 2026-08-15, on Marina's ruling that this act opens with a decision and
+// not a stylesheet. Landscape phone is REFUSED, out loud, with a way back — it
+// is not a supported shape and this file is the whole of that answer. Four
+// reasons, in the order they actually decided it:
+//
+// 1. THE WALL IS HEIGHT, AND REARRANGING DOES NOT MAKE HEIGHT. At 844x390 the
+//    app renders at its zoom FLOOR (0.62, the clamp, not the fit) and the board
+//    gets 390/0.62 = 629 local px against a baseline that declares it needs 730.
+//    Bjorn measured the consequence: END TURN at top 395 in a 390 px viewport,
+//    inside `DIV.combat` at `overflow-y: hidden` (scrollHeight 758 vs
+//    clientHeight 629), NO scrollable ancestor, `docH == vh`. No gesture reaches
+//    it. The 101 px his flask probe pushed the topbar above the fold is the SAME
+//    NUMBER: 730 - 629. One deficit, two faces. A composition can move a button;
+//    it cannot conjure the 101 px.
+//
+// 2. SUPPORT IS NOT ONE SCREEN, IT IS EVERY SCREEN. The wall is combat. The map
+//    at 844x390 is a second face — the `ENTRANCE ——— BOSS` strip is
+//    `display: none` above 700 px (styles/map.css:16), so a 844-wide phone loses
+//    the one thing that says which way the act runs, and the bundle logs
+//    "1074 px of the choice is off screen". Behind those two sit creation, the
+//    Armoury, settings, rest, shop, event, the co-op surfaces. Supporting
+//    landscape means a THIRD composition for all of them, and a third
+//    composition is a third thing that rots. This game has two and #24 was born
+//    out of having two DECIDERS for those two.
+//
+// 3. NOBODY ASKED FOR IT, AND HIS ONE MOBILE RULING POINTS THE OTHER WAY. Law 5
+//    is his: "for mobile, if possible, I should only be scrolling up and down."
+//    Vertical is the budget. A landscape phone is the shape with the least
+//    vertical budget there is.
+//
+// 4. A GATE IS REVERSIBLE AND A COMPOSITION IS NOT. "Revert costs nothing"
+//    (Charter). If landscape support is ever wanted, this file is deleted and
+//    the premise dies with it — see the WAKE CONDITION below, which is written
+//    so a machine notices that day instead of me.
+//
+// WHAT I AM NOT CLAIMING: that landscape *could* not be made to work. Only that
+// it is not one change, it is not this act, and the man is holding a build
+// whose only protection today is a sentence in a note asking him not to rotate
+// his phone. This replaces the sentence.
+//
+// ============================================================================
+// THE PREDICATE — WHY IT IS A FIT AND NOT AN ORIENTATION
+// ============================================================================
+//
+// `@media (orientation: landscape)` would gate a 1024x768 tablet and a desktop
+// window, both of which are FINE, and it would ask "is this a phone" — the
+// question main.js already refuses to ask because it has no honest answer. So
+// the gate rides the same decider that picks the zoom and the layout, in the
+// same call, and reads:
+//
+//   SHORT  <=>  innerHeight < balance.ui.uiScale.gateBelowH
+//
+// One number, one home, and it is a MEASUREMENT with its ladder written beside
+// it in balance.js — the rendered bottom edge of END TURN at the zoom floor.
+// This file holds no copy of it (Law 0 clause 4, Law 1 clause 2).
+//
+// I HAD IT WRONG FIRST, AND WRITING IT DOWN HERE IS THE POINT. My first
+// predicate was "the zoom clamp is what is binding" — h < min x baselineH. True
+// about the zoom, wrong about the player: it refused 800x450, where END TURN is
+// whole and 100% on screen. I found that by widening the check's shape list, not
+// by reasoning, and the check went red on my own build before anyone saw it.
+// A REFUSAL MUST BE PINNED TO THE CONTROL THE PLAYER NEEDS, NEVER TO THE
+// BASELINE THE BOARD DECLARES — those two differ by 30 px of viewport, and every
+// one of them is somebody's window.
+//
+// WHAT THE GATE DOES NOT ANNEX. On that same ladder `.hand-area` is already
+// clipped at h 480 — well above any gate — sliding 94% -> 74% before END TURN
+// moves at all. That is a pre-existing defect of the wide layout in short
+// windows and it needs layout work. Widening the refusal to cover it would hide
+// a bug behind a wall.
+//
+// THE ADVICE IS DERIVED, NEVER GUESSED. "Turn your phone upright" is a CLAIM
+// about a screen this code has not seen, so main.js asks the same decider about
+// the TURNED viewport (h x w) before this file is allowed to say it. If turning
+// would not help, the gate says the true thing instead — make the window taller.
+// A gate that tells a desktop player to rotate their monitor is a gate nobody
+// trusts the second time.
+//
+// ============================================================================
+// WAKE CONDITION (development.md, *The wake condition*) — A REFUSAL ROTS QUIETLY
+// ============================================================================
+//
+// This is a refusal mechanism: it exists to NOT draw the board while a premise
+// holds. Its correct state and its expired state print the same nothing, so:
+//
+//   PREMISE, as an observable predicate: at some shape, combat's END TURN is
+//   outside the viewport with no scrollable ancestor between it and the
+//   document — i.e. a real wall exists there.
+//
+//   THE WAKE RED, and it is the half a suite written to assert absence never
+//   fires: `node tools/uprightgate.mjs` goes RED WHEN THE GATE STANDS ON A SHAPE
+//   WHERE END TURN IS REACHABLE. The day a landscape composition ships, the
+//   premise dies, that clause goes red, and this file is deleted rather than
+//   quietly outliving its reason. It is not enough to check that the gate
+//   appears; something has to check that it stops.
+//
+// REMOVAL CONDITION: deleted the day `balance.ui.uiScale` carries a baseline
+// that fits a short viewport — then `gateBelowH` goes to 0, no shape is short,
+// and this file refuses nothing. Removing the key entirely also disarms it (see
+// main.js): a missing threshold must never invent a refusal at a guessed number.
+//
+// ============================================================================
+// MECHANISM — BORROWED, NOT INVENTED
+// ============================================================================
+//
+// The gate is a `.modal-veil`, which in this tree is not decoration: it is how a
+// layer DECLARES INPUT OWNERSHIP (components/veil.js). Carrying the class buys,
+// with no new input code:
+//   - combat.js:912 and map.js:270 refuse their keyboard handlers, so the `E`
+//     chip stops ending turns behind a screen the player cannot see;
+//   - input.js's scopeRoot() scopes the pad/keyboard focus cursor to this veil,
+//     which has nothing focusable — so the cursor has nowhere to wander;
+//   - `topVeil()` sorts by z-index, and this one is ABOVE the six at 500, so it
+//     owns input even if it rises over an open overlay.
+// The precondition veil.js states holds: this mounts as a child of <body>, at
+// `position: fixed`, in the same root stacking context as the other six.
+//
+// NO INTERACTIVE CONTROLS, AND THAT IS RULED RATHER THAN OMITTED. There is no
+// "continue anyway", because continuing leads to a fight that cannot be
+// advanced, and a door into a wall is worse than a wall. Law 3 clause 4 (a
+// tooltip on every interactive control) therefore has no subject here — not an
+// exemption, an empty set. THE COST, NAMED: a player whose device is physically
+// locked to landscape cannot play. If that ever arrives as a real report, the
+// answer is landscape support (Viki), never a bypass added here.
+//
+// THE TYPE IS DIVIDED BY `--ui-zoom` ON PURPOSE, and it is the one carve-out in
+// this file. This is the message ABOUT the app having zoomed itself to its
+// floor; scaling it by that zoom is the message shrinking exactly when it
+// matters. Same idiom, same reason, as `--tap-floor: calc(44px/var(--ui-zoom))`
+// in base.css. Law 4 is intact: the unit is still `rem`, so Text size still
+// scales these glyphs and only these glyphs; what is cancelled is UI size, which
+// is the thing being reported on.
+
+/** The gate's own element, or null when nothing is standing. */
+let gate = null;
+
+// ONE HOME FOR THE COPY, and it is a function of the advice rather than two
+// pasted blocks — the quarantine-sentence lesson (main.js): two doors with two
+// strings is how they drift. `rotate` is only ever chosen when main.js has
+// already confirmed the turned viewport is not short.
+// ONE REASSURANCE LINE FOR BOTH, AND IT NAMES NO DEVICE. The heading is the
+// instruction; this line's only job is to answer the question the player is
+// actually asking, which is "have I lost my run". Its first draft was
+// per-variant and read "turn back — or make this window taller —" on a phone: a
+// third line of text, and the word `window` on something that is not one. If
+// the pointer query is ever wrong about someone, they still read a true
+// sentence here — which is exactly why it must not name the fix.
+const SAFE = 'Your run is safe — nothing is lost, and it comes right back.';
+const SAY = {
+  rotate: {
+    title: 'Turn your phone upright',
+    body: 'Sideways there isn’t enough height for the board, and END TURN ends up somewhere your thumb can’t reach.',
+    safe: SAFE,
+  },
+  resize: {
+    title: 'This window is too short',
+    body: 'There isn’t enough height for the board, and END TURN ends up somewhere you can’t reach.',
+    safe: SAFE,
+  },
+};
+
+/**
+ * updateUprightGate({ short, offerRotate })
+ *
+ *   short        the viewport is shorter than `uiScale.gateBelowH` — THE ONLY
+ *                thing that decides whether the game refuses this shape
+ *   offerRotate  main.js asked the same decider about the SWAPPED viewport and
+ *                it is not short, AND the primary pointer is coarse — so
+ *                "turn it" is a true and doable instruction. WORDING ONLY.
+ *
+ * Idempotent, and deliberately so: it is called from every applyUiScale, which
+ * fires on boot, on every settings change and on a 150ms resize debounce. When
+ * the advice has not changed it touches nothing, so the gate does not blink and
+ * — the part that matters — NOTHING BENEATH IT RE-RENDERS. Turning the phone
+ * back removes one element; the run underneath never knew.
+ */
+function updateUprightGate({ short, offerRotate } = {}) {
+  if (typeof document === 'undefined') return null;
+  if (!short) {
+    if (gate) { gate.remove(); gate = null; }
+    return null;
+  }
+  const advice = offerRotate ? 'rotate' : 'resize';
+  if (gate && gate.dataset.advice === advice) return gate;
+  if (!gate) {
+    gate = document.createElement('div');
+    // `.modal-veil` is the input-ownership declaration, not the dimming — see
+    // the header. `.upright-veil` carries the look and the higher z-index.
+    gate.className = 'modal-veil upright-veil';
+    gate.setAttribute('role', 'alertdialog');
+    gate.setAttribute('aria-modal', 'true');
+    gate.setAttribute('aria-labelledby', 'upright-title');
+    document.body.appendChild(gate);
+  }
+  const say = SAY[advice];
+  gate.dataset.advice = advice;
+  gate.innerHTML = `
+    <div class="upright-card">
+      <div class="upright-glyph" aria-hidden="true"><span class="upright-phone"></span></div>
+      <h2 id="upright-title">${say.title}</h2>
+      <p class="upright-say">${say.body}</p>
+      <p class="upright-safe">${say.safe}</p>
+    </div>`;
+  return gate;
+}
+
+/** Is the gate standing? One reader, for tests and for anything downstream. */
+function uprightGateIsUp() {
+  return !!(typeof document !== 'undefined' && document.querySelector('.upright-veil'));
+}
+
+
+Object.assign(module.exports, { updateUprightGate, uprightGateIsUp });
 
 },
 "src/ui/surfaces.js": function (module, exports, require) {
