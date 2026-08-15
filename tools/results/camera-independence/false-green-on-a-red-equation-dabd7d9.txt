@@ -1,0 +1,64 @@
+FINDING — linebudget-camera.mjs prints "the two readings agree at every cell" on a
+run where they agreed at none. Vira, 2026-08-15, at dev = dabd7d9.
+
+THE GAP. The header says: "EXIT 1 when the camera and `bands()` disagree on the
+UNPLANTED tree". The code says (control loop):
+
+    const eq = k.liLines === k.headLines + k.noteLines && k.headLines === 1;
+    if (eq && k.ink !== k.liLines) findings.push('THE ASSERTION IS GREEN AND THE CAMERA DISAGREES …')
+
+The disagreement is only ever reported when the equation is GREEN. A control cell
+where the equation is RED and the camera disagrees is printed in the table and
+pushed to no finding. On rows that carry a note the `mute` check usually fires and
+masks this. ON NOTE-FREE ROWS NOTHING FIRES AT ALL.
+
+REPRODUCTION, no edit to any committed file — a temp copy with two substitutions:
+  1. `bands()` returns 0            (the camera must then disagree at every cell)
+  2. RULES = ['gear']               (the rule whose rows carry NO note, so the
+                                     mute check cannot fire and the disagreement
+                                     check is the only thing left that could speak)
+
+  node -e "const fs=require('fs');let s=fs.readFileSync('tools/linebudget-camera.mjs','utf8');
+  s=s.replace('    return out.length;\n  };','    return 0;\n  };');
+  s=s.replace(\"const RULES = ['flat', 'category', 'gear'];\",\"const RULES = ['gear'];\");
+  fs.writeFileSync('tools/.probe.mjs',s);" && node tools/.probe.mjs; echo \$?; rm tools/.probe.mjs
+
+OBSERVED:
+
+REF    dabd7d9 (vira/gate-the-camera)  DIRTY — 3 path(s) not in that commit: tools/linebudget-camera.mjs, tools/.vira-probe.mjs, tools/camera-independence.mjs. Every number below is about the WORKING TREE.
+
+DOOR   content/source/weapons.csv +2 rows → node tools/content-build.mjs → OK. Plants land in styles/ui.css BY BYTES, at the shipped fix's own declaration.
+
+
+RUN    browser pid 30312 · HTTP port 8151 — this run's own.
+
+CONTROL — the tree as it stands. `bands()` on the left, INK counted off the photograph on the right.
+  shape    rule      row  li  head  note  equation  CAMERA  what the row says
+  390x844  gear      0   0   0     0     RED       1       "Right Hand swap Actions 2 → 4"
+  390x844  gear      1   0   0     0     RED       1       "Left Hand swap Actions 2 → 4"
+  360x640  gear      0   0   0     0     RED       1       "Right Hand swap Actions 2 → 4"
+  360x640  gear      1   0   0     0     RED       1       "Left Hand swap Actions 2 → 4"
+  ink floor 8px at 2x (this file's one literal — kept bands measured 30-50 rows, dropped slivers 4-6), ink threshold 28/255 from the crop's own modal background, 2+ pixels to ink a row.
+
+PLANTS NOT RUN — pass --plants. Without them this run has watched nothing fail, which is `unknown`, not green.
+
+BOUNDARY  source tree over http, one Linux box, one Chromium, Armoury → Talisman → set 1, two shapes, three shipped rules.
+          This camera reads INK, and it cannot tell a tall glyph bridging two lines from one tall band — that case is flagged, never counted.
+          Silent about dist/, every other surface, and about whether the sentence MEANS anything — that is Sunna's ruling, not this exit code.
+          It gates ONE assertion in swap-row-reads.mjs. It is silent on every other check in that file.
+
+PASS — on the unplanted tree the two readings agree at every cell, and every planted cell was scored.
+EXIT CODE: 0
+
+READING IT: bands() reports 0 lines at all four cells. The camera reports 1 band of
+ink at all four. THEY DISAGREE AT 4 OF 4 — and the tool exits 0 under the sentence
+"on the unplanted tree the two readings agree at every cell."
+
+SIZE OF IT, HONESTLY. This does not touch the independence verdict and it is not the
+green-and-wrong case his file was built for — `eq &&` is a defensible SCOPE for that
+subject. What is wrong is that the header, and the PASS line, both claim the wider
+thing. Reachable without breaking bands(): any tree where the price statement wraps
+(headLines !== 1) turns eq false, and Viki's grid attempt did exactly that at head 2.
+
+THE FIX IS ONE LINE, and it belongs to Bjorn, not to his gate: report the
+disagreement unconditionally and let `eq` decide only which SENTENCE is printed.

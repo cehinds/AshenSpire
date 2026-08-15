@@ -1,0 +1,55 @@
+
+REF    dabd7d9 (vira/gate-the-camera)  DIRTY — 2 path(s): tools/linebudget-camera.mjs, tools/camera-independence.mjs. Numbers are about the WORKING TREE.
+WATCH  the ink card (MR-102). Premise: tools/swap-row-reads.mjs contains none of [inflateSync, decodePng, inkBands, node:zlib]
+       premise alive — the interim is still doing work no other instrument does.
+       Proxy, not proof: a route that counts ink without decoding here would not trip this.
+GATE   the claim under test: a defect in `bands()` cannot reach the camera reading.
+DOOR   every variant edits the source text of the primitive inside linebudget-camera.mjs's own
+       MEASURE probe, then runs HIS tool unmodified. The numbers are the ones his table prints.
+
+CONTROL  12 cells at this ref. bands() and camera agree at 12 of 12.
+         distinct (li, ink) readings across those cells: 3/3, 1/1  ← the agreement is replicated, not varied. Sample size is the number of DISTINCT readings.
+
+  bands-drop-one   → INDEPENDENT — bands() moved, the camera did not
+    touches bands(). THE NAMED SHAPE, PUT IN THE PRIMITIVE INSTEAD OF IN THE CSS. `bands()` loses one band whenever it finds more than one, so the note falls 2 -> 1 and the row falls 3 -> 2 while the head stays 1. li 2 = head 1 + note 1 — THE EQUATION IS GREEN AND THE COUNT IS WRONG. This is Bjorn's line-height 0.4 cell with the defect moved into the function he says the camera cannot see.
+    bands() moved at 8/12 cells · camera moved at 0/12
+      390x844/flat/row0 li 3→2 head 1→1 note 2→1
+      390x844/flat/row1 li 3→2 head 1→1 note 2→1
+    AND THE EQUATION STAYED GREEN AT 8 OF THEM while the camera disagreed — e.g. 390x844/flat/row0: li 2 = head 1 + note 1, camera 3.
+  bands-plus-one   → INDEPENDENT — bands() moved, the camera did not
+    touches bands(). the crudest possible defect — every count off by one, on both sides at once.
+    bands() moved at 12/12 cells · camera moved at 0/12
+      390x844/flat/row0 li 3→4 head 1→2 note 2→3
+      390x844/flat/row1 li 3→4 head 1→2 note 2→3
+  bands-zero       → INDEPENDENT — bands() moved, the camera did not
+    touches bands(). the primitive stops reading entirely. If the camera can follow `bands()` anywhere, it follows it here.
+    bands() moved at 12/12 cells · camera moved at 0/12
+      390x844/flat/row0 li 3→0 head 1→0 note 2→0
+      390x844/flat/row1 li 3→0 head 1→0 note 2→0
+  crop-half        → CONTROL LIVE — the camera moved
+    touches the crop rectangle. POSITIVE CONTROL — `bands()` untouched, the PHOTOGRAPH halved. The camera must move here or this file has watched nothing. It is also the finding: the crop is a layout read, so the two oracles share no code and do share the element box.
+    bands() moved at 0/12 cells · camera moved at 8/12
+      390x844/flat/row0 ink 3→2
+      390x844/flat/row1 ink 3→2
+
+BOUNDARY  the CONTROL cells only, source tree over http, one Linux box, one Chromium, his two shapes
+          and three rules. Silent about his plants, his ink floor, his crop choice, and every other
+          instrument here. It tests INDEPENDENCE, never accuracy — two readings can be independent
+          and both wrong. It says nothing about doors the real defect uses and neither oracle sees.
+
+PASS — every `bands()` variant moved the left-hand reading and left the camera bit-identical,
+       and the positive control moved the camera. The independence claim is observed, not read.
+
+--- NOT TOOL OUTPUT. Added by hand after the run, Vira, 2026-08-15. ------------
+NO CROPS ARE KEPT HERE. Five runs photographed the same twelve control cells and
+the finding is in the NUMBERS — Bjorn's own rule about his 97 images, applied to
+my own directory rather than quoted at his. Every crop is reproducible with
+`node tools/camera-independence.mjs` on this tree.
+
+THE 12-OF-12 IS RE-DERIVED AT dabd7d9, NOT CARRIED FROM 77e240f. Bjorn measured
+it in a dirty tree at 77e240f; the lane has since landed. styles/ui.css,
+src/ui/equipmentPresentation.js and src/ui/equipmentReceipts.js are BYTE-IDENTICAL
+between those two refs (`git diff 77e240f dabd7d9 --` on those paths is empty), so
+the drift was discharged by re-running rather than by argument (SOP 2: aging is
+not a fix, and a criterion is for evidence that costs a harness to reproduce).
+The CONTROL block above is that re-derivation, on my box, at the landed head.
