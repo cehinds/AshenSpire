@@ -158,6 +158,14 @@ function groupA(registries) {
 // ---------------------------------------------------------------------------
 // B. the two doors agree — Sten's A7
 // ---------------------------------------------------------------------------
+// "A7" HERE MEANS THE ACT, not a check — the dispatch item that built this
+// whole tool. Until 2026-08-15 a CHECK inside tools/onevocab.mjs also wore the
+// name, and Vira nearly gated the wrong one; a finding reported as "A7 failed"
+// named two artifacts. That check is now ONEANSWER (Marina MR-35). The act's
+// name is in the packets and the thread and is not recalled — only the check
+// moved, because only the check lived in one file. If you are holding a report
+// dated before 2026-08-15: "A7" there is this tool OR onevocab's ONEANSWER, and
+// the report has to say which.
 // "Drive createRunState AND createSaveManager.loadRun, fail if they disagree."
 // Two disagreements are possible and both are checked:
 //   1. WITHIN a door: two homes computing the same field to different numbers.

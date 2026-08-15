@@ -37,7 +37,8 @@
 //            throws on a resource with no row. What the fold accepts is what
 //            the word means; every other list of resource ids is a copy of it.
 //
-// SEVEN CHECKS. A1/A2 read the tree's bytes; A3–A7 drive the production doors.
+// SEVEN CHECKS. A1/A2 read the tree's bytes; A3–A6 and ONEANSWER drive the
+// production doors.
 //
 //   A1  no second TYPED home for the tag set — no file outside the declaration
 //       may carry two or more tags in one list literal.
@@ -56,8 +57,10 @@
 //       the derived-stat snapshot, and the max-HP addend list stays closed —
 //       (a) pinned BY NAME against the three source homes AND by value at the
 //       door, because a list can change without a number moving.
-//   A7  ONE ANSWER: every door that re-derives max HP returns the same number.
-//       A7 exists because a plant got away from A6 — see its own comment. The
+//   ONEANSWER  every door that re-derives max HP returns the same number.
+//       Called A7 until 2026-08-15; renamed because that name already belonged
+//       to another artifact (see its own comment block). It exists because a
+//       plant got away from A6 — also its own comment. The
 //       composition `derived + equipment + ledger` has THREE homes today, and
 //       a drift in the one that runs first is invisible to anything that only
 //       reads a freshly created run.
@@ -67,8 +70,8 @@
 //   census (A1, A2)  — FILE BYTES under src/, tools/, tests/, comments blanked.
 //   pin (A6(a))      — FILE BYTES of the three files that compose max HP. This
 //                      half reads TERMS, so its door is the source, not a run.
-//   probes (A3–A7)   — the real content bundle -> validateContent ->
-//                      createRegistries -> createRunState, and for A7 also
+//   probes (A3–A6,   — the real content bundle -> validateContent ->
+//    ONEANSWER)          createRegistries -> createRunState, and for ONEANSWER also
 //                      createSaveManager.loadRun. Nothing is handed to an inner
 //                      function directly; a planted row travels the whole road a
 //                      shipped row travels.
@@ -137,6 +140,17 @@ const DECLARATION_HOME = 'src/model/schemas.js';
 // door, and A6(a) is BOTH. Names catch a list that changed while the numbers
 // held; numbers catch a value that changed while the names held. Either alone
 // is half a check.
+//
+// BY NAME, AND BY MULTISET — the second hole, one level down (Vira, 2026-08-15).
+// The name half above was written as a SET comparison, and a set cannot see a
+// term written twice: `+ run.maxHpAdjustment + run.maxHpAdjustment` is four
+// addends and three names, nothing added, nothing gone, exit 0, whole tool
+// green. It was NOT CAUGHT, planted through doorplant, and it is in the corpus
+// below. The value half could not cover for it, and the reason is the whole
+// point: `maxHpAdjustment` measures 0 on all three classes at birth, so a
+// DUPLICATED ZERO MOVES NO TOTAL. The two halves were blind in the same place at
+// once — one defect, not two — and a double-count of that exact term is the
+// historical defect this seam was built around. Occurrences are now counted.
 //
 // `addends` is the exact top-level `+`-separated text inside `Math.max(1, ...)`,
 // whitespace-normalized. It is verbatim on purpose: a spelling change IS the
@@ -396,7 +410,7 @@ function resolveOutcome(bundle) {
 
 console.log('onevocab — is the relic-modifier vocabulary ONE vocabulary or two?\n');
 console.log(`DOOR (census A1/A2): FILE BYTES of ${sources.length} file(s) under ${SCAN_DIRS.join('/, ')}/, comments blanked, strings kept.`);
-console.log('DOOR (probes A3-A7): src/content/index.js -> validateContent -> createRegistries -> createRunState.');
+console.log('DOOR (probes A3-A6, ONEANSWER): src/content/index.js -> validateContent -> createRegistries -> createRunState.');
 console.log(`DOOR (pin A6(a)):   FILE BYTES of the ${MAX_HP_COMPOSITION.length} site(s) in `
   + `${new Set(MAX_HP_COMPOSITION.map((h) => h.file)).size} file(s) that compose max HP, comments blanked — `
   + `it reads the TERMS, not the numbers: ${MAX_HP_COMPOSITION.map((h) => h.key).join(', ')}.`);
@@ -543,15 +557,21 @@ check('A6 ONE derivation path: a relic resource grant is wholly inside the snaps
       + `about the addend list; that is unknown, and unknown is not green. If run creation moved, `
       + `re-aim MAX_HP_COMPOSITION in ${SELF} by hand.`);
     const found = read.addends;
-    const added = found.filter((term) => !home.addends.includes(term));
-    const gone = home.addends.filter((term) => !found.includes(term));
+    // MULTISET, not set — Vira, 2026-08-15, and the fix is one line because the
+    // defect was one word. `includes` cannot see a term written TWICE, so
+    // `+ run.maxHpAdjustment + run.maxHpAdjustment` was four addends, three
+    // names, nothing added, nothing gone, exit 0. Counting each occurrence is
+    // the whole of it.
+    const surplus = (a, b) => { const pool = [...b]; return a.filter((t) => { const i = pool.indexOf(t); if (i !== -1) { pool.splice(i, 1); return false; } return true; }); };
+    const added = surplus(found, home.addends);
+    const gone = surplus(home.addends, found);
     assert(!added.length && !gone.length,
       `THE MAX-HP ADDEND LIST IS NOT THE PINNED ONE — ${home.file} (${home.role}).\n`
       + `      PINNED (${home.addends.length}): ${home.addends.join('  |  ')}\n`
       + `      FOUND  (${found.length}): ${found.join('  |  ')}\n`
-      + (added.length ? `      UNPINNED TERM(S) ADDED: ${added.join(', ')}\n` : '')
+      + (added.length ? `      SURPLUS TERM(S) — unpinned, or a pinned term written more than once: ${added.join(', ')}\n` : '')
       + (gone.length ? `      PINNED TERM(S) GONE: ${gone.join(', ')}\n` : '')
-      + `      A term here that is not on the pinned list is a SECOND way to say "+N max HP", and it `
+      + `      A term here that is not on the pinned list — or a pinned one counted twice — is a SECOND way to say "+N max HP", and it `
       + `does not have to change any number to be one. If run creation genuinely changed, edit the pin `
       + `in ${SELF} deliberately, in review — that edit is the point of the pin.`);
     pinned.push(`${home.key} ${found.length} term(s)`);
@@ -608,9 +628,18 @@ check('A6 ONE derivation path: a relic resource grant is wholly inside the snaps
     + `${notes.join(', ')} — all inside the snapshot`;
 });
 
-// --- A7 -------------------------------------------------------------------
+// --- ONEANSWER --------------------------------------------------------------
+// RENAMED FROM A7, 2026-08-15 (Marina MR-35, naming mine). "A7" named two
+// different artifacts: the act that built tools/runcreation.mjs, and this
+// check. Vira nearly gated the wrong one, and a finding reported as "A7 failed"
+// was ambiguous the day it was written. The act's name is in the packets, the
+// thread and three logs and cannot be recalled; this label lived in one file,
+// so this is the one that moves. (In this tree "A7" is ALSO a Saga ledger row
+// and a Viki equipment clause — the name was never mine to hold.)
+// Its subject was already the word: ONE ANSWER. Reports say ONEANSWER now.
+// Viki's lens owns naming; if she wants a different word she takes it on sight.
 
-check('A7 every door that re-derives max HP returns the SAME number', () => {
+check('ONEANSWER every door that re-derives max HP returns the SAME number', () => {
   // WHY THIS EXISTS, and it was found by a plant that got away. The composition
   // `derived + equipment + ledger` is written in THREE places:
   //   src/model/state.js:210    the load-door integrity assertion
@@ -647,6 +676,17 @@ check('A7 every door that re-derives max HP returns the SAME number', () => {
     }
     notes.push(`${cls.id} ${created.maxHp}hp`);
   }
+  // THE DENOMINATOR FLOOR (Vira, 2026-08-15; Marina MR-35). Empty the class
+  // domain and this check used to print `PASS — 0 class(es) agree across both
+  // doors:` — `verify-shipped: OK — 0 checks passed` in another tool's clothes.
+  // It was masked only because A6 shares this domain and asserts notes.length:
+  // a NEIGHBOUR'S assertion holding up a check that could not hold itself up.
+  // A6 going red is A6's coverage, never this one's.
+  assert(notes.length,
+    'ONEANSWER HAS NO CLASS DOMAIN — 0 class(es) were compared across the two doors, so this check '
+    + 'ruled on nothing and said PASS. An empty comparison and an agreeing one print the same word and '
+    + 'mean the opposite (SOP 2\'s ⚙ clause). registries.classes.all() is empty: either the content '
+    + 'bundle lost its classes or the registry stopped loading them.');
   return `${notes.length} class(es) agree across both doors: ${notes.join(', ')}`;
 });
 
@@ -677,7 +717,7 @@ console.log('STANDING FINDING, watched here and NOT fixed here: the composition'
 console.log('  `derived + equipment + ledger` has THREE homes — src/model/state.js (the load-door');
 console.log('  assertion, and the fresh derivation) and src/model/loadout.js (reconcile, which');
 console.log('  runs last at run creation and overwrites the second). All three are live at');
-console.log('  different doors. A7 makes them disagree out loud; collapsing them to one is a');
+console.log('  different doors. ONEANSWER makes them disagree out loud; collapsing them to one is a');
 console.log('  change to run creation and belongs to whoever owns that seam, not to a sentinel.');
 
 if (findings.length) {
@@ -734,7 +774,7 @@ if (SELFTEST) {
         expectRed: /SECOND derivation path|arriving off-table|TWO ANSWERS/,
       },
       {
-        // The plant that got away, and the reason A7 exists: a drift in the
+        // The plant that got away, and the reason ONEANSWER exists: a drift in the
         // fresh-derivation home is invisible at run creation, because reconcile
         // overwrites it. Only a second door can see it.
         name: 'one of the three max-HP homes drifts where creation cannot see it',
@@ -752,7 +792,7 @@ if (SELFTEST) {
         file: 'src/model/loadout.js',
         find: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);',
         replace: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment + (run.relicHpFlat || 0));',
-        expectRed: /UNPINNED TERM\(S\) ADDED: \(run\.relicHpFlat \|\| 0\)/,
+        expectRed: /SURPLUS TERM\(S\)[^\n]*: \(run\.relicHpFlat \|\| 0\)/,
       },
       {
         // One term SWAPPED for a second spelling of itself. Same number
@@ -772,6 +812,38 @@ if (SELFTEST) {
         find: 'const derivedMaxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);',
         replace: 'const freshMax = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);\n  const derivedMaxHp = freshMax;',
         expectRed: /MAX-HP PIN CANNOT READ ITS SITE/,
+      },
+      {
+        // VIRA'S PLANT, 2026-08-15, and it is the reason the comparison is a
+        // multiset. A pinned term written TWICE: four addends, three names.
+        // Set-difference sees nothing added and nothing gone and the whole tool
+        // exits 0. The value half cannot cover for it either — `maxHpAdjustment`
+        // measures 0 on all three classes at birth, so a duplicated zero moves
+        // no total and no arithmetic assertion twitches. THE ZERO IS WHY THIS IS
+        // FATAL RATHER THAN COSMETIC: the ledger term is pinned by name only,
+        // and the name half was blind to its own duplication. A double-count of
+        // that exact term is the historical defect this whole seam was built
+        // around.
+        name: 'a pinned max-HP term is written TWICE — four addends, three names, no number moves',
+        file: 'src/model/loadout.js',
+        find: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);',
+        replace: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment + run.maxHpAdjustment);',
+        expectRed: /SURPLUS TERM\(S\)[^\n]*run\.maxHpAdjustment/,
+      },
+      {
+        // ONEANSWER's own denominator. The class domain it iterates is produced
+        // by createRegistries; empty it there and the check used to print
+        // `PASS A7 — 0 class(es) agree across both doors:` — an empty green,
+        // standing only because A6 shares the loop and asserts notes.length. A
+        // neighbour's assertion holding up a check that cannot hold itself up.
+        // The tool goes red under this plant either way; the plant is armed
+        // against ONEANSWER'S OWN LINE, because a neighbour's red is not this
+        // check's coverage.
+        name: "the class domain goes empty at the registry — ONEANSWER's denominator dies",
+        file: 'src/model/registries.js',
+        find: '    registries[type] = makeRegistry(TYPE_SINGULAR[type], bundle[type]);',
+        replace: "    registries[type] = makeRegistry(TYPE_SINGULAR[type], type === 'classes' ? [] : bundle[type]);",
+        expectRed: /ONEANSWER HAS NO CLASS DOMAIN/,
       },
       {
         // A dispatch site quietly stops handling one tag.
