@@ -5,13 +5,19 @@ import { deriveStat } from './derivedStats.js';
 import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 
-const LABELS = Object.freeze({
-  hp: 'HP',
-  mana: 'Mana',
-  stamina: 'Stamina',
-  energy: 'Energy / turn',
-  draw: 'Draw / turn and opening hand',
-});
+// The labels and the order used to be a frozen map right here — a second home
+// for a fact the content table should own, and the reason "add a derived stat"
+// meant editing this file (D26, Law 0 clause 1). They are READ from
+// derivedStatRules.presentation now, which the content door validates row for
+// row against the rules themselves. Nothing about a derived stat's name or its
+// place in the list lives in src/model any more.
+function presentationRows(registries) {
+  const table = (registries.derivedStatRules || {}).presentation;
+  if (!table) throw new Error('statProjection requires derivedStatRules.presentation');
+  return Object.entries(table)
+    .map(([id, row]) => ({ id, ...row }))
+    .sort((a, b) => a.order - b.order);
+}
 
 /**
  * Pure player-Poise threshold projection. Equipment and relics state the
@@ -59,14 +65,21 @@ export function statProjection(registries, run) {
     .slice()
     .sort((a, b) => a.order - b.order)
     .map((def) => ({ ...def, value: run.attributes[def.id] }));
-  const derived = ['hp', 'mana', 'stamina', 'energy', 'draw'].map((id) => {
+  const derived = presentationRows(registries).map((presentation) => {
+    const id = presentation.id;
     const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef });
     const equipmentBonus = id === 'hp' ? runMods(registries, run.loadout, run.class).maxHp : 0;
     const adjustment = id === 'hp' ? (run.maxHpAdjustment || 0) : 0;
     const value = id === 'hp' ? Math.max(1, receipt.value + equipmentBonus + adjustment) : receipt.value;
     return {
       ...receipt,
-      label: LABELS[id],
+      label: presentation.label,
+      // The short-form fields travel WITH the projection so no surface has to
+      // go and fetch a second table to know how a row reads (D26).
+      faceLabel: presentation.faceLabel || presentation.label,
+      disclosure: presentation.disclosure,
+      sense: presentation.sense,
+      order: presentation.order,
       value,
       equipmentBonus,
       adjustment,

@@ -27,10 +27,11 @@
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges } from '../model/state.js';
+import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
 import { createLoadout, stampDeck } from '../model/loadout.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
+import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -207,6 +208,17 @@ export function createSaveManager(storage) {
   let status = { ok: true, state: 'ok', reason: null, archiveId: null, recoveredFrom: null };
   let quarantined = false;
 
+  // ---- THE RUN'S NAMED, VISIBLE STATE (the run-side twin of profileStatus) --
+  // Property 3 above — "a failed load is a NAMED, VISIBLE state, never a fresh
+  // profile wearing the same filename" — has been true of the PROFILE since #67
+  // and was never true of the RUN. A run whose allocation, loadout or flask
+  // ledger was missing came back healed, plausible, and completely silent; a
+  // caller could not tell it from a clean load. `runStatus()` is that state.
+  // It is not a refusal and it is not a gate: the heals still heal, and
+  // tests/engine.test.js 28 and 50 stay green. It is the door saying what it
+  // did. One home for the mechanic: src/model/healLedger.js.
+  let runStatusRecord = { state: 'none', reason: 'no run has been loaded in this session', ledger: null };
+
   function parseMeta(json) {
     const meta = JSON.parse(json);
     if (!meta || typeof meta !== 'object') throw new Error('profile is not an object');
@@ -362,14 +374,35 @@ export function createSaveManager(storage) {
      */
     loadRun(registries, slot = 1) {
       const json = storage.getItem(runKey(slot));
-      if (!json) return null;
+      if (!json) {
+        runStatusRecord = { state: 'none', reason: `slot ${slot} is empty`, ledger: null };
+        return null;
+      }
       let run;
       try {
         run = deserializeRun(json);
+        // THE DOOR OPENS HERE — after the shape is proven, before the first
+        // heal can fire. `savedSchemaVersion` is what the FILE said, not what
+        // the migration stamped, because "did a heal fire on a current-schema
+        // save" is the whole question and the stamp would erase it.
+        openLedger(run, 'loadRun', run.migratedFromRunSchemaVersion === undefined
+          ? RUN_SCHEMA_VERSION : run.migratedFromRunSchemaVersion);
+        if (run.migratedFromRunSchemaVersion !== undefined) {
+          note(run, {
+            kind: 'write',
+            site: 'state.js:migrateRunSchema',
+            field: 'schemaVersion',
+            was: run.migratedFromRunSchemaVersion,
+            now: RUN_SCHEMA_VERSION,
+            why: 'an older build wrote this save; the schema stamp was brought forward',
+          });
+        }
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
       } catch (e) {
-        archive(json, e && e.message ? e.message : 'corrupt save', slot);
+        const reason = e && e.message ? e.message : 'corrupt save';
+        const archiveId = archive(json, reason, slot);
+        runStatusRecord = { state: 'archived', reason, ledger: readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION }), archiveId };
         return null;
       }
       if (run.contentVersion !== registries.contentVersion) {
@@ -378,10 +411,20 @@ export function createSaveManager(storage) {
           (run.relics || []).find((id) => !registries.relics.has(id)) ||
           (run.flasks || []).find((f) => !registries.flasks.has(f.flaskId));
         if (dangling) {
-          archive(json, `contentVersion ${run.contentVersion} → ${registries.contentVersion}: dangling id`, slot);
+          const reason = `contentVersion ${run.contentVersion} → ${registries.contentVersion}: dangling id`;
+          const archiveId = archive(json, reason, slot);
+          runStatusRecord = { state: 'archived', reason, ledger: readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION }), archiveId };
           return null;
         }
         // Ids all still resolve: the run survives the content patch.
+        note(run, {
+          kind: 'overwrite',
+          site: 'save.js:loadRun',
+          field: 'contentVersion',
+          was: run.contentVersion,
+          now: registries.contentVersion,
+          why: 'the content changed under this run and every id it holds still resolves, so it was re-stamped rather than archived',
+        });
         run.contentVersion = registries.contentVersion;
       }
       // A run saved before equipment existed has no loadout. Give it the bare
@@ -390,6 +433,19 @@ export function createSaveManager(storage) {
       const needsCarrierStamp = (run.deck || []).some((card) => card.damageSchool === undefined || card.exposureBuildupPerHit === undefined);
       if (!run.loadout) {
         run.loadout = createLoadout(registries, run.class);
+        // ONE OF THE THREE UNGATED HEALS. tests/engine.test.js 28 deletes
+        // `loadout` from a CURRENT-schema run and requires exactly this, and it
+        // is right to: throwing away a climb over a missing field is worse. The
+        // defect was never the heal, it was that nothing downstream could tell
+        // this had happened.
+        note(run, {
+          kind: 'heal',
+          site: 'save.js:loadRun',
+          field: 'loadout',
+          was: undefined,
+          now: { sets: run.loadout.sets },
+          why: `absent in the save: refilled with the class starting loadout for '${run.class}' — whatever this player was wearing is not recoverable from this file`,
+        });
       }
       // One migration door for HP, Mana, Stamina, Energy and Draw. A run that
       // already owns a rules snapshot is only validated; a legacy run resolves
@@ -400,9 +456,23 @@ export function createSaveManager(storage) {
         initializeRunFlaskCharges(run, registries);
         delete run.migratedFromRunSchemaVersion;
       } catch (e) {
-        archive(json, e && e.message ? e.message : 'invalid derived-stat snapshot', slot);
+        const reason = e && e.message ? e.message : 'invalid derived-stat snapshot';
+        const archiveId = archive(json, reason, slot);
+        runStatusRecord = { state: 'archived', reason, ledger: readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION }), archiveId };
         return null;
       }
+      // The door closes. Everything after this — a whole climb of stampDeck
+      // calls — records nothing, by design.
+      closeLedger(run);
+      const ledger = readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION });
+      runStatusRecord = {
+        state: ledger && ledger.healed ? 'healed' : 'ok',
+        reason: ledger && ledger.healed
+          ? `${ledger.healed} field(s) the save did not carry were filled in at the load door`
+          : null,
+        ledger,
+        archiveId: null,
+      };
       // A run that LOADS is a player too, and this is the edge Bjorn could not
       // reach: everyone who started a climb on a build before this one has runs
       // and no profile. Waiting for their next autosave would leave Settings →
@@ -519,6 +589,32 @@ export function createSaveManager(storage) {
      */
     profileStatus() {
       return { ...status, quarantined };
+    },
+
+    /**
+     * runStatus() → { state, reason, ledger, archiveId } for the LAST loadRun on
+     * this manager. The run-side twin of profileStatus(), and the same promise:
+     * what the door did to a save is a named, visible state, not something a
+     * caller has to diff two objects to discover.
+     *
+     * state: 'none'     — nothing has been loaded (or the slot was empty)
+     *        'ok'       — the save carried everything; nothing was filled in
+     *        'healed'   — one or more ABSENT fields were filled in, and
+     *                     `ledger.entries` says which, from where, with what
+     *        'archived' — refused; the bytes were set aside, reason named
+     *
+     * `ledger.healedOnCurrentSchema` is the number this house is watching: a
+     * heal on a save written by THIS schema version is not a migration, it is a
+     * save that lost a field on a build that should never have written it
+     * missing. Today that only happens when a test plants it. The day it
+     * happens for real, the parked refuse-vs-heal call wakes up — the wake
+     * condition is asserted in tools/runcreation.mjs, not left in prose.
+     *
+     * A ledger is a WITNESS, not persisted state: it lives non-enumerably on
+     * the run object, so no save byte changes and no schema version moves.
+     */
+    runStatus() {
+      return { ...runStatusRecord };
     },
 
     /**

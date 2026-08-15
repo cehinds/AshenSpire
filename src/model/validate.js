@@ -38,7 +38,7 @@ import {
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
-import { derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
+import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -451,6 +451,10 @@ export function validateContent(bundle) {
     attributeIds: (b.attributes || []).map((row) => row.id),
     classFields: ['maxHp', 'hpPerConTier'],
   })) err(problem.path, problem.msg);
+  // D26's short form: every derived stat carries how it READS, beside the rule
+  // it describes. Content-door only — a save's restored snapshot has rules and
+  // no prose, and asking it for prose it never stored would refuse a legal save.
+  for (const problem of derivedStatPresentationProblems(b.derivedStatRules)) err(problem.path, problem.msg);
 
   // Relic modifier tags are a compact passive DSL. The tag is the behavior;
   // every other word is data. Validate the exact row here so a typo never

@@ -911,6 +911,60 @@ button.rs-reset {
 .cz-keepsake .ks-icon { font-size: 2.2rem; }
 .cz-keepsake p { font-size: 1.1rem; color: var(--muted); }
 
+/* ---------- D26 — the short form: FACE, then REVEAL ------------------------
+   Constantine: "just the starting stats, starting armaments selection , and
+   then the ability to expand by clicking, with tool tips."
+
+   THE ROW WRAPS, IT NEVER SCROLLS SIDEWAYS (Law 5 clause 1: horizontal travel
+   on a narrow shape is ZERO, not small). Nine faces at 390 wrap to as many
+   rows as they need and the screen grows DOWN, where a thumb already goes —
+   `flex-wrap: wrap` plus `max-width: 100%` on the control and
+   `overflow-wrap: anywhere` on its words, so a long armament name breaks
+   instead of pushing the row off the side. No exemption is claimed here: this
+   is not a filmstrip and its horizontal run is not the content.
+
+   THE FLOOR IS `--tap-floor` AND THE HEIGHT IS `auto` (Law 4 clause 4): the
+   floor is the ergonomic constant, the growth is granted by the glyphs
+   actually inside, so a face can neither clip at Text XL nor balloon. Padding
+   is rem because it sits around read text; the floor is not, because a finger
+   does not grow when Text size does. */
+.cz-brief { width: 100%; display: flex; flex-direction: column; gap: 0.4rem; }
+/* The section labels need air ABOVE them, or an open reveal butts straight into
+   the next heading — measured on the 390 shot, not guessed. `.preview-pane
+   .cz-label` zeroes the house margin for the name field; this restores it for
+   the two headings that separate the tiers. */
+.cz-brief .cz-label { margin: 0.7rem 0 0.2rem; }
+.cz-disc { width: 100%; }
+.disc-faces { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: stretch; }
+.disc-face {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: var(--tap-floor); min-width: var(--tap-floor); height: auto;
+  width: auto; max-width: 100%;
+  padding: 0.4rem 0.9rem;
+  background: var(--panel); border: 1.5px solid var(--line-soft); border-radius: 9px;
+  color: var(--parchment); font-family: var(--font-display); letter-spacing: 0.06em;
+  cursor: pointer; text-align: left; overflow-wrap: anywhere;
+}
+.disc-face .disc-name { color: var(--muted); font-size: 1.05rem; }
+.disc-face .disc-value { color: var(--parchment); font-size: 1.25rem; }
+.disc-face:hover { border-color: var(--muted); }
+.disc-face[data-reveal='open'] { border-color: var(--gold); }
+/* The armament and relic faces carry names rather than numbers, so they read
+   as rows rather than chips — one per line, on every shape. */
+.disc-armament, .disc-relic { flex: 1 1 100%; justify-content: space-between; }
+.disc-more { border-style: dashed; }
+/* ONE panel, under the row: the entry the player asked about. The sentence is
+   the authored one, the list is derived, and the RECEIPT is last and quietest —
+   the arithmetic is available, never in the way. */
+.disc-reveal {
+  width: 100%; margin-top: 0.6rem; padding: 0.8rem 1rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+}
+.disc-reveal h4 { color: var(--gold); font-size: 1.15rem; letter-spacing: 0.14em; margin: 0 0 0.4rem; }
+.disc-reveal .disc-sense { margin: 0 0 0.4rem; font-size: 1.1rem; color: var(--parchment); }
+.disc-reveal .disc-lines { margin: 0; padding-left: 1.4rem; color: var(--muted); font-size: 1.05rem; }
+.disc-reveal .disc-receipt { margin: 0.4rem 0 0; color: var(--muted); font-size: 1rem; letter-spacing: 0.04em; }
+
 /* ---------- run history ---------- */
 .hx-byclass { color: var(--muted); font-size: 1.1rem; letter-spacing: 0.08em; }
 .hx-wrap { width: 100%; max-width: 72rem; overflow-y: auto; max-height: 58vh; margin-top: 0.4rem; }

@@ -184,6 +184,12 @@ function botFight(run, rng, encounterId, stats, pickRandom) {
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       deck: run.deck, relicIds: run.relics, flasks: run.flasks,
       flaskCharges: run.flaskCharges,
+      // The relic damage authority the host stamps at run creation
+      // (D23, model/relicModifiers.js). Both fleets built their player
+      // literal by name and NOBODY added this field when it landed, so
+      // every simulated Starseer fought without the Starstone Shard's
+      // +1 magic — a live pool the game reads and the sim did not.
+      damageBySchoolAdd: run.damageBySchoolAdd,
     },
     enemyIds: enc.enemies,
   });

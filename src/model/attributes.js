@@ -1,6 +1,10 @@
 // src/model/attributes.js — the one reader for creation-stat data.
 // No combat or derived-resource behavior belongs here.
 
+// The run door's witness (src/model/healLedger.js). `note` is a no-op unless a
+// door is open and never changes a value — this file's behaviour is unchanged.
+import { note } from './healLedger.js';
+
 const plainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 
 function tables(source) {
@@ -145,12 +149,31 @@ export function migrateRetiredAttributeNames(run, source) {
       throw new Error(`Mixed retired attribute '${dead}' and heir '${heir}' at ${[...deadPaths, ...heirPaths].join(', ')}`);
     }
     if (allocationDead) {
+      note(run, {
+        kind: 'rename',
+        site: 'attributes.js:migrateRetiredAttributeNames',
+        field: `attributes.${dead}`,
+        was: { [dead]: run.attributes[dead] },
+        now: { [heir]: run.attributes[dead] },
+        why: `the retired seat '${dead}' was carried to its heir '${heir}', points intact`,
+      });
       run.attributes[heir] = run.attributes[dead];
       delete run.attributes[dead];
     }
     if (rules) {
-      for (const rule of Object.values(rules)) {
-        if (plainObject(rule) && rule.sourceStat === dead) rule.sourceStat = heir;
+      const moved = [];
+      for (const [id, rule] of Object.entries(rules)) {
+        if (plainObject(rule) && rule.sourceStat === dead) { rule.sourceStat = heir; moved.push(id); }
+      }
+      if (moved.length) {
+        note(run, {
+          kind: 'rename',
+          site: 'attributes.js:migrateRetiredAttributeNames',
+          field: 'derivedStatRuleSnapshot.rules.rules[*].sourceStat',
+          was: { [dead]: moved },
+          now: { [heir]: moved },
+          why: `${moved.length} persisted snapshot rule(s) re-pointed from '${dead}' to '${heir}'`,
+        });
       }
     }
   }
@@ -165,6 +188,19 @@ export function normalizeRunAttributes(run, registries) {
   if (modeAbsent) {
     run.attributeMode = defaultCreationModeId(registries);
     run.attributes = classAttributePreset(registries, run.class, run.attributeMode);
+    // ONE OF THE THREE UNGATED HEALS, and the one that started this: the pair is
+    // optional in RUN_SHAPE with no schemaVersion gate, so a CURRENT-schema save
+    // whose allocation is gone comes back wearing the class preset. Somebody
+    // else's build. It still does; it says so now, with the schemaVersion of the
+    // save it happened to, which is the number the parked refuse question turns on.
+    note(run, {
+      kind: 'heal',
+      site: 'attributes.js:normalizeRunAttributes',
+      field: 'attributes+attributeMode',
+      was: undefined,
+      now: { attributeMode: run.attributeMode, attributes: { ...run.attributes } },
+      why: `absent in the save: REFILLED FROM THE CLASS PRESET for '${run.class}' — this is a plausible allocation, not the player's`,
+    });
     return run;
   }
   const problems = attributeAllocationProblems(registries, run.class, run.attributeMode, run.attributes);

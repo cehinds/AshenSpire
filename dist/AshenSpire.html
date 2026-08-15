@@ -1213,6 +1213,60 @@ button.rs-reset {
 .cz-keepsake .ks-icon { font-size: 2.2rem; }
 .cz-keepsake p { font-size: 1.1rem; color: var(--muted); }
 
+/* ---------- D26 — the short form: FACE, then REVEAL ------------------------
+   Constantine: "just the starting stats, starting armaments selection , and
+   then the ability to expand by clicking, with tool tips."
+
+   THE ROW WRAPS, IT NEVER SCROLLS SIDEWAYS (Law 5 clause 1: horizontal travel
+   on a narrow shape is ZERO, not small). Nine faces at 390 wrap to as many
+   rows as they need and the screen grows DOWN, where a thumb already goes —
+   `flex-wrap: wrap` plus `max-width: 100%` on the control and
+   `overflow-wrap: anywhere` on its words, so a long armament name breaks
+   instead of pushing the row off the side. No exemption is claimed here: this
+   is not a filmstrip and its horizontal run is not the content.
+
+   THE FLOOR IS `--tap-floor` AND THE HEIGHT IS `auto` (Law 4 clause 4): the
+   floor is the ergonomic constant, the growth is granted by the glyphs
+   actually inside, so a face can neither clip at Text XL nor balloon. Padding
+   is rem because it sits around read text; the floor is not, because a finger
+   does not grow when Text size does. */
+.cz-brief { width: 100%; display: flex; flex-direction: column; gap: 0.4rem; }
+/* The section labels need air ABOVE them, or an open reveal butts straight into
+   the next heading — measured on the 390 shot, not guessed. `.preview-pane
+   .cz-label` zeroes the house margin for the name field; this restores it for
+   the two headings that separate the tiers. */
+.cz-brief .cz-label { margin: 0.7rem 0 0.2rem; }
+.cz-disc { width: 100%; }
+.disc-faces { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: stretch; }
+.disc-face {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: var(--tap-floor); min-width: var(--tap-floor); height: auto;
+  width: auto; max-width: 100%;
+  padding: 0.4rem 0.9rem;
+  background: var(--panel); border: 1.5px solid var(--line-soft); border-radius: 9px;
+  color: var(--parchment); font-family: var(--font-display); letter-spacing: 0.06em;
+  cursor: pointer; text-align: left; overflow-wrap: anywhere;
+}
+.disc-face .disc-name { color: var(--muted); font-size: 1.05rem; }
+.disc-face .disc-value { color: var(--parchment); font-size: 1.25rem; }
+.disc-face:hover { border-color: var(--muted); }
+.disc-face[data-reveal='open'] { border-color: var(--gold); }
+/* The armament and relic faces carry names rather than numbers, so they read
+   as rows rather than chips — one per line, on every shape. */
+.disc-armament, .disc-relic { flex: 1 1 100%; justify-content: space-between; }
+.disc-more { border-style: dashed; }
+/* ONE panel, under the row: the entry the player asked about. The sentence is
+   the authored one, the list is derived, and the RECEIPT is last and quietest —
+   the arithmetic is available, never in the way. */
+.disc-reveal {
+  width: 100%; margin-top: 0.6rem; padding: 0.8rem 1rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+}
+.disc-reveal h4 { color: var(--gold); font-size: 1.15rem; letter-spacing: 0.14em; margin: 0 0 0.4rem; }
+.disc-reveal .disc-sense { margin: 0 0 0.4rem; font-size: 1.1rem; color: var(--parchment); }
+.disc-reveal .disc-lines { margin: 0; padding-left: 1.4rem; color: var(--muted); font-size: 1.05rem; }
+.disc-reveal .disc-receipt { margin: 0.4rem 0 0; color: var(--muted); font-size: 1rem; letter-spacing: 0.04em; }
+
 /* ---------- run history ---------- */
 .hx-byclass { color: var(--muted); font-size: 1.1rem; letter-spacing: 0.08em; }
 .hx-wrap { width: 100%; max-width: 72rem; overflow-y: auto; max-height: 58vh; margin-top: 0.4rem; }
@@ -5105,6 +5159,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       stamina: run.stamina,
       energyMax: run.energyMax,
       drawPerTurn: run.drawPerTurn,
+      damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       deck: run.deck,
       relicIds: run.relics,
@@ -5588,6 +5643,15 @@ if (shotState) {
   // pointer can carry across a navigation; the archive list is where the
   // promise actually lives, and this hands the harness that list.
   window.__archives = () => saves.listArchives();
+  // THE RUN'S named state — the exact twin of __profile above, same species
+  // again: read the manager's own runStatus(), never a copy. It exists because
+  // the run door was the silent one. A save missing its allocation, loadout or
+  // flask ledger came back healed with a plausible substitute and nothing
+  // downstream could tell it from a clean load. This hands a harness the door's
+  // own account of what it did and what it overwrote. Read-only, shot boots only.
+  // NOT a player-facing surface: what a PLAYER should be told when their save
+  // was repaired is wording, and wording is not this seat's to write.
+  window.__runstatus = () => saves.runStatus();
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.
@@ -9611,6 +9675,18 @@ const relics = [
     id: 'forsakenMedallion',
     name: 'Forsaken Medallion',
     rarity: 'starter',
+    passives: {
+      modifiers: [
+        { tag: 'resource.flat', resource: 'hp', amount: 2 },
+        {
+          tag: 'resource.attributeTier',
+          resource: 'hp',
+          sourceStat: 'constitution',
+          pointsPerTier: 5,
+          amountPerTier: 1,
+        },
+      ],
+    },
     icon: '🏅',
     triggers: [
       {
@@ -9620,7 +9696,7 @@ const relics = [
         do: [{ op: 'poiseDamage', amount: 4 }],
       },
     ],
-    textTemplate: 'Your first attack each combat also deals {poiseDamage} Poise damage.',
+    textTemplate: 'Max HP +{hpFlat}, plus +{hpPerTier} per completed CON tier. Your first attack each combat also deals {poiseDamage} Poise damage.',
     flavor: 'Its face is worn smooth, but it still remembers being gold.',
   },
 
@@ -9631,11 +9707,23 @@ const relics = [
     id: 'starstoneShard',
     name: 'Starstone Shard',
     rarity: 'starter',
+    passives: {
+      modifiers: [
+        { tag: 'resource.flat', resource: 'mana', amount: 1 },
+        { tag: 'damage.school.flat', school: 'magic', amount: 1 },
+      ],
+    },
     icon: '💠',
     triggers: [
-      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'starstoneCharge', stacks: { f: 'add', args: [1] } }] },
+      {
+        on: 'combatStart',
+        do: [
+          { op: 'applyStatus', target: 'owner', status: 'starstoneCharge', stacks: { f: 'add', args: [1] } },
+          { op: 'restoreMana', amount: 1 },
+        ],
+      },
     ],
-    textTemplate: 'Begin each combat with Starstone Charge (your first spell counts as a combo).',
+    textTemplate: 'Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.',
     flavor: 'A chip of someone else’s genius. It still hums.',
   },
   {
@@ -9645,6 +9733,7 @@ const relics = [
     id: 'goldFigurine',
     name: 'Gold Figurine',
     rarity: 'starter',
+    passives: { modifiers: [] },
     icon: '🗿',
     triggers: [
       {
@@ -11413,6 +11502,7 @@ const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
+    hpPerConTier: 4,
     startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'forsakenMedallion',
     startingSignatureCard: 'gorefireSlash',
@@ -11439,6 +11529,7 @@ const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
+    hpPerConTier: 5,
     startingFlaskAllocation: { hp: 1, mana: 2 },
     startingRelic: 'starstoneShard',
     startingSignatureCard: 'starstonePebble',
@@ -11463,6 +11554,7 @@ const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
+    hpPerConTier: 6,
     startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'goldFigurine',
     startingSignatureCard: 'urgentHeal',
@@ -14486,16 +14578,27 @@ Object.assign(module.exports, { unlocks });
 // deliberately share display words with existing transient combat statuses;
 // they remain separate namespaces until a later feature defines a bridge.
 
-// The HP seat is VIGOUR — his word (D17: "vigour shoudl be 1 hp point per"),
-// renamed from 'constitution' 2026-08-14. The dead name is retired in
-// retiredNames.js and may not return; saves from the three-day window heal at
-// the load door.
+// Constitution is the authored HP and Stamina source. Vigour is the retired
+// three-day save spelling; the load door migrates it through retiredNames.js.
+//
+// `sense` and `disclosure` are the D26 short form (model/disclosure.js).
+//
+//   sense       ONE player sentence, and it carries NO NUMBER. Every number in
+//               a reveal is derived from the table that owns it — a figure
+//               typed into prose is a copy nothing syncs (Law 1 clause 2,
+//               which calls that a defect "even in tooltip prose"). So this
+//               says what the attribute IS; what it FEEDS and what it UNLOCKS
+//               are read off derivedStatRules and equipmentRequirements at
+//               render time and can never go stale.
+//   disclosure  'face' (in the short form) or 'reveal' (behind the tap). All
+//               five are face-tier because he named them: "just the starting
+//               stats". This is data, not a decision the screen makes.
 const attributes = [
-  { id: 'strength', label: 'Strength', shortLabel: 'STR', order: 1 },
-  { id: 'dexterity', label: 'Dexterity', shortLabel: 'DEX', order: 2 },
-  { id: 'vigour', label: 'Vigour', shortLabel: 'VIG', order: 3 },
-  { id: 'wisdom', label: 'Wisdom', shortLabel: 'WIS', order: 4 },
-  { id: 'intelligence', label: 'Intelligence', shortLabel: 'INT', order: 5 },
+  { id: 'strength', label: 'Strength', shortLabel: 'STR', order: 1, disclosure: 'face', sense: 'Raw force. Heavy armaments ask for it before they will let you hold them.' },
+  { id: 'dexterity', label: 'Dexterity', shortLabel: 'DEX', order: 2, disclosure: 'face', sense: 'Speed of hand — the quick armaments answer to it.' },
+  { id: 'constitution', label: 'Constitution', shortLabel: 'CON', order: 3, disclosure: 'face', sense: 'What your body takes before the climb ends.' },
+  { id: 'wisdom', label: 'Wisdom', shortLabel: 'WIS', order: 4, disclosure: 'face', sense: 'What you hold in mind, and can pour back out.' },
+  { id: 'intelligence', label: 'Intelligence', shortLabel: 'INT', order: 5, disclosure: 'face', sense: 'How much of the Spire you read at once.' },
 ];
 
 const creationModes = [
@@ -14516,9 +14619,9 @@ const attributeRules = {
   defaultMode: 'standard',
   presets: {
     standard: {
-      reaver: { strength: 13, dexterity: 10, vigour: 12, wisdom: 10, intelligence: 10 },
-      starseer: { strength: 10, dexterity: 11, vigour: 10, wisdom: 10, intelligence: 14 },
-      herald: { strength: 10, dexterity: 10, vigour: 12, wisdom: 13, intelligence: 10 },
+      reaver: { strength: 13, dexterity: 10, constitution: 12, wisdom: 10, intelligence: 10 },
+      starseer: { strength: 10, dexterity: 11, constitution: 10, wisdom: 10, intelligence: 14 },
+      herald: { strength: 10, dexterity: 10, constitution: 12, wisdom: 13, intelligence: 10 },
     },
   },
 };
@@ -14536,16 +14639,16 @@ Object.assign(module.exports, { attributes, creationModes, attributeRules });
 // green on its own (tests/engine.test.js 50b proves that case). A guard cannot
 // live in the file whose revert it exists to refuse.
 //
-// 'constitution' held the HP seat for three days (d465cfc, 2026-08-11 →
-// 2026-08-14). Constantine's stat line names Vigour (D17: "vigour shoudl be
-// 1 hp point per"). Every run saved in that window spells the old name into
-// sote_run_v1 — the allocation plus the derived-stat snapshot's hp and stamina
-// sourceStat — so the load door heals those saves through this map
+// 'vigour' briefly held the HP seat during the D17 implementation.
+// Constitution is canonical again under D22. Every run saved in the Vigour
+// window spells that name into sote_run_v1 — the allocation plus the
+// derived-stat snapshot's hp and stamina sourceStat — so the load door heals
+// those saves through this map
 // (model/attributes.js, migrateRetiredAttributeNames). At boot, a retired name
 // may never return as an attribute id, and every heir must be a live one
 // (model/attributes.js, attributeContentProblems).
 const retiredAttributeNames = {
-  constitution: 'vigour',
+  vigour: 'constitution',
 };
 
 
@@ -14559,7 +14662,7 @@ Object.assign(module.exports, { retiredAttributeNames });
 // resolved rules so saves, sessions, and co-op keep the same derived values.
 
 const derivedStatRules = {
-  rulesetVersion: 2,
+  rulesetVersion: 3,
   defaults: {
     pointsPerTier: 5,
     rounding: 'floor',
@@ -14580,18 +14683,14 @@ const derivedStatRules = {
     },
     hp: {
       base: { strategy: 'classField', field: 'maxHp' },
-      sourceStat: 'vigour',
-      // "vigour shoudl be 1 hp point per" — Constantine, D17 (verbatim,
-      // commons/decisions/directions.md): HP pays per POINT, so this row
-      // overrides the 5-point tier default. Every other row keeps the tier —
-      // strength's "+1 damange per every 5 points" is per-5 by the same
-      // sentence, and the mock's "1 per 5 points" lines he left standing.
-      pointsPerTier: 1,
-      gainPerTier: 1,
+      sourceStat: 'constitution',
+      // D22 restores Constitution and pays HP in complete five-point tiers.
+      pointsPerTier: 5,
+      gainPerTier: { strategy: 'classField', field: 'hpPerConTier' },
     },
     stamina: {
       base: 0,
-      sourceStat: 'vigour',
+      sourceStat: 'constitution',
       gainPerTier: 1,
     },
     mana: {
@@ -14602,6 +14701,48 @@ const derivedStatRules = {
       gainPerTier: 1,
       cap: null,
     },
+  },
+  // ---- D26: how each row READS, authored beside the row it describes -------
+  //
+  // WHY IT IS A SIBLING OF `rules` AND NOT A FIELD ON EACH RULE. A rule row is
+  // SNAPSHOTTED into every save and every co-op handshake (createDerivedStat-
+  // RuleSnapshot): putting a label and a sentence in there would write prose
+  // into save bytes and make a copy-edit a save-compatibility question. So
+  // presentation sits outside the snapshot and inside the same FILE — one
+  // author edit adds a derived stat and how it reads, and a row here with no
+  // rule (or a rule with no row) is refused BY NAME at the content door
+  // (derivedStatPresentationProblems, model/derivedStats.js).
+  //
+  //   label       the row title. These five strings were the hard-coded LABELS
+  //               map in model/statProjection.js until now — a second home for
+  //               a fact the table should own. Moved, not copied.
+  //   faceLabel   OPTIONAL. What the chip says when the label is a phrase. Left
+  //               out, the face uses `label` (Law 0 clause 3: derivation is
+  //               overridable and the override is data).
+  //   order       the order every stat surface reads them in.
+  //   disclosure  'face' = in the short form · 'reveal' = behind the tap.
+  //   sense       ONE player sentence, no numbers in it (Law 1 clause 2).
+  //
+  // STAMINA IS 'reveal' ON PURPOSE and it is the honest half of this table:
+  // nothing in the engine spends it yet. The old panel said so in engine words
+  // ("No current consumer") on the first screen of the game. It now says so in
+  // player words, one tap down, where a stat that does nothing belongs.
+  presentation: {
+    hp: { label: 'HP', order: 1, disclosure: 'face', sense: 'What you have left before the climb ends.' },
+    mana: { label: 'Mana', order: 2, disclosure: 'face', sense: 'Spent by the cards that ask for more than effort.' },
+    stamina: { label: 'Stamina', order: 3, disclosure: 'reveal', sense: 'Carried, and nothing spends it yet.' },
+    // ACTIONS, NOT ENERGY — his rename, D17 message 3: "energy (which we
+    // should call actions going forward)", confirmed by D21 as needing no
+    // re-ask. The ENGINE ids are untouched here (`energyMax`, `balance.energy`,
+    // the orb) — that rename is a sequenced act across five branches and is not
+    // this one. What changes is the WORD A PLAYER READS, and since D26 that
+    // word has exactly one home: this row. The cost is stated rather than
+    // hidden: until the frame lands, creation and the Armoury say Actions while
+    // the combat HUD still says Energy. One surface saying his word beats none
+    // saying it, and the frame adopts this row's label rather than inventing a
+    // second one.
+    energy: { label: 'Actions / turn', faceLabel: 'Actions', order: 4, disclosure: 'face', sense: 'How much you can do in one turn.' },
+    draw: { label: 'Draw / turn and opening hand', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you hold to choose from.' },
   },
 };
 
@@ -14628,7 +14769,8 @@ const { assertTableSane } = require("src/model/secondbeat.js");
 const { viewRefusals, geometryRefusals } = require("src/model/mapview.js");
 const { graceRefillRefusals } = require("src/model/gracerefill.js");
 const { flaskGrowthRefusals } = require("src/model/flaskgrowth.js");
-const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, PILES, PILE_POSITIONS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, DAMAGE_SCHOOLS, CREATURE_TAGS } = require("src/model/schemas.js");
+const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, PILES, PILE_POSITIONS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, DAMAGE_SCHOOLS, RELIC_MODIFIER_TAGS, CREATURE_TAGS } = require("src/model/schemas.js");
+
 
 
 
@@ -14649,7 +14791,7 @@ const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CAR
 const { RESOURCE_SOURCE_IDS } = require("src/model/resources.js");
 const { FORMULA_OPS, FORMULA_OF, isFormula } = require("src/model/formulas.js");
 const { attributeContentProblems } = require("src/model/attributes.js");
-const { derivedStatRuleProblems } = require("src/model/derivedStats.js");
+const { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } = require("src/model/derivedStats.js");
 const { startingKitProblems } = require("src/model/startingKits.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -14748,6 +14890,23 @@ const KNOWN_BUNDLE_KEYS = new Set([
 const TOKEN_PATTERN = '\\{([A-Za-z][\\w.]*)\\}';
 const tokenRe = () => new RegExp(TOKEN_PATTERN, 'g');
 
+function relicModifierTokenBindings(def) {
+  const counts = {};
+  const out = [];
+  const add = (base, value, tag) => {
+    counts[base] = (counts[base] || 0) + 1;
+    const token = counts[base] === 1 ? base : `${base}.${counts[base]}`;
+    out.push({ token, value, literal: typeof value === 'number', op: tag, required: true });
+  };
+  for (const row of (def.passives && Array.isArray(def.passives.modifiers) ? def.passives.modifiers : [])) {
+    if (!row || typeof row !== 'object') continue;
+    if (row.tag === 'resource.flat') add(`${row.resource}Flat`, row.amount, row.tag);
+    else if (row.tag === 'resource.attributeTier') add(`${row.resource}PerTier`, row.amountPerTier, row.tag);
+    else if (row.tag === 'damage.school.flat') add(`${row.school}DamageFlat`, row.amount, row.tag);
+  }
+  return out;
+}
+
 function relicTokens(def) {
   // DELEGATES. It used to carry its own grammar — a `['amount','stacks','value',
   // 'n']` scan plus status/id keying — and Bjorn's review found 3 of 4 synthetic
@@ -14768,6 +14927,9 @@ function relicTokens(def) {
   for (const b of computeTokenBindings(ops)) {
     const v = (ops[b.index] || {})[b.field];
     if (typeof v === 'number') tokens[b.token] = v;
+  }
+  for (const binding of relicModifierTokenBindings(def)) {
+    if (typeof binding.value === 'number') tokens[binding.token] = binding.value;
   }
   return tokens;
 }
@@ -15040,8 +15202,75 @@ function validateContent(bundle) {
   for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
-    classFields: ['maxHp'],
+    classFields: ['maxHp', 'hpPerConTier'],
   })) err(problem.path, problem.msg);
+  // D26's short form: every derived stat carries how it READS, beside the rule
+  // it describes. Content-door only — a save's restored snapshot has rules and
+  // no prose, and asking it for prose it never stored would refuse a legal save.
+  for (const problem of derivedStatPresentationProblems(b.derivedStatRules)) err(problem.path, problem.msg);
+
+  // Relic modifier tags are a compact passive DSL. The tag is the behavior;
+  // every other word is data. Validate the exact row here so a typo never
+  // becomes a plausible-looking inert bonus.
+  const attributeIds = new Set((b.attributes || []).map((row) => row && row.id));
+  const resourceIds = new Set(['hp', 'mana', 'stamina']);
+  const starterRelicIds = new Set((b.classes || []).map((row) => row && row.startingRelic));
+  for (const relic of b.relics || []) {
+    const rows = relic && relic.passives && relic.passives.modifiers;
+    if (rows === undefined) continue;
+    const base = `relics.${relic.id}.passives.modifiers`;
+    if (!Array.isArray(rows)) {
+      err(base, 'must be an array');
+      continue;
+    }
+    if (rows.length && (relic.rarity !== 'starter' || !starterRelicIds.has(relic.id))) {
+      err(base, 'resource/damage modifier tags are restricted to class starting relics');
+    }
+    rows.forEach((row, index) => {
+      const path = `${base}[${index}]`;
+      if (!row || typeof row !== 'object' || Array.isArray(row)) {
+        err(path, 'must be an object');
+        return;
+      }
+      if (!RELIC_MODIFIER_TAGS.includes(row.tag)) {
+        err(`${path}.tag`, `'${row.tag}' is unknown (legal: ${RELIC_MODIFIER_TAGS.join(', ')})`);
+        return;
+      }
+      const fields = row.tag === 'resource.flat'
+        ? ['tag', 'resource', 'amount']
+        : row.tag === 'resource.attributeTier'
+          ? ['tag', 'resource', 'sourceStat', 'pointsPerTier', 'amountPerTier']
+          : ['tag', 'school', 'amount'];
+      for (const key of Object.keys(row)) if (!fields.includes(key)) err(`${path}.${key}`, `unknown field '${key}' for '${row.tag}'`);
+      for (const key of fields) if (row[key] === undefined) err(`${path}.${key}`, `missing required field '${key}'`);
+      if (row.resource !== undefined && !resourceIds.has(row.resource)) err(`${path}.resource`, `unknown resource '${row.resource}'`);
+      if (row.sourceStat !== undefined && !attributeIds.has(row.sourceStat)) err(`${path}.sourceStat`, `unknown attribute '${row.sourceStat}'`);
+      if (row.school !== undefined && !DAMAGE_SCHOOLS.includes(row.school)) err(`${path}.school`, `unknown damage school '${row.school}'`);
+      for (const key of ['amount', 'amountPerTier']) {
+        if (row[key] !== undefined && (!Number.isInteger(row[key]) || row[key] <= 0)) err(`${path}.${key}`, 'must be a positive integer');
+      }
+      if (row.pointsPerTier !== undefined && (!Number.isInteger(row.pointsPerTier) || row.pointsPerTier <= 0)) {
+        err(`${path}.pointsPerTier`, 'must be a positive integer');
+      }
+      if (row.tag === 'resource.attributeTier') {
+        const authoredRule = b.derivedStatRules && b.derivedStatRules.rules && b.derivedStatRules.rules[row.resource];
+        const defaults = b.derivedStatRules && b.derivedStatRules.defaults || {};
+        const resolvedRule = authoredRule && { ...defaults, ...authoredRule };
+        if (resolvedRule) {
+          for (const foldProblem of relicAttributeTierFoldProblems(row, resolvedRule)) {
+            err(foldProblem.field ? `${path}.${foldProblem.field}` : path,
+              `${foldProblem.msg} so the ${row.resource} modifier can fold at content boot`);
+          }
+        }
+      }
+    });
+  }
+
+  for (const cls of b.classes || []) {
+    if (cls && (!Number.isInteger(cls.hpPerConTier) || cls.hpPerConTier <= 0)) {
+      err(`classes.${cls.id}.hpPerConTier`, 'must be a positive integer');
+    }
+  }
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
   // The shape walk above already rejects a missing `source`. This rejects a
@@ -15964,8 +16193,8 @@ function validateFormula(value, path, vctx) {
 // Text templating (SPEC §3.13)
 // ---------------------------------------------------------------------------
 
-function checkTemplate(template, effects, path, err) {
-  const bindings = computeTokenBindings(effects);
+function checkTemplate(template, effects, path, err, extraBindings = []) {
+  const bindings = [...computeTokenBindings(effects), ...extraBindings];
   const bound = new Set(bindings.map((bd) => bd.token));
   for (const token of extractTemplateTokens(template)) {
     if (!bound.has(token)) {
@@ -15974,7 +16203,7 @@ function checkTemplate(template, effects, path, err) {
   }
   const used = new Set(extractTemplateTokens(template));
   for (const bd of bindings) {
-    if (bd.literal && REQUIRED_TOKEN_OPS.includes(bd.op) && !used.has(bd.token)) {
+    if (bd.literal && (bd.required || REQUIRED_TOKEN_OPS.includes(bd.op)) && !used.has(bd.token)) {
       err(path, `Player-visible numeric effect (op '${bd.op}', token '{${bd.token}}') lacks a template token`);
     }
   }
@@ -15998,7 +16227,7 @@ function validateRelicTemplate(relic, path, err) {
   for (const trig of relic.triggers) {
     if (trig && Array.isArray(trig.do)) effects.push(...trig.do);
   }
-  checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err);
+  checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err, relicModifierTokenBindings(relic));
 }
 
 // ---------------------------------------------------------------------------
@@ -18144,10 +18373,19 @@ const { NODE_TYPES, ANCHOR_KINDS } = require("src/model/floorplan.js");
 
 /** Presentation schools carried explicitly by equipment-bound card profiles. */
 const DAMAGE_SCHOOLS = Object.freeze(['physical', 'magic', 'arcane', 'holy', 'fire']);
+const RELIC_MODIFIER_TAGS = Object.freeze([
+  'resource.flat',
+  'resource.attributeTier',
+  'damage.school.flat',
+]);
 // The bar vocabulary lives with the readers it describes (model/resources.js),
 // so the schema and the engine cannot drift into two homes. resources.js
 // imports nothing — no cycle.
 const { RESOURCE_WEIGHTS, HUD_SURFACES } = require("src/model/resources.js");
+// The disclosure tiers live with the split they describe (model/disclosure.js),
+// so the schema and the screen cannot drift into two homes — same reasoning as
+// the bar vocabulary above. disclosure.js imports nothing — no cycle.
+const { DISCLOSURE_TIERS } = require("src/model/disclosure.js");
 
 const COMBAT_OPCODES = Object.freeze([
   'damage',
@@ -18628,6 +18866,13 @@ const SCHEMAS = Object.freeze({
     label: str,
     shortLabel: str,
     order: int,
+    // D26's short form. `disclosure` is the tier this row lives in on the
+    // creation screen and it is REQUIRED, not optional: an attribute with no
+    // tier is an entry that does not describe itself, and the screen would
+    // have to guess — which is the hard-coded list this whole shape exists to
+    // refuse (model/disclosure.js). `sense` is the one player sentence.
+    disclosure: en(...DISCLOSURE_TIERS),
+    sense: str,
   }),
   creationMode: obj({
     id: str,
@@ -18683,9 +18928,15 @@ const SCHEMAS = Object.freeze({
     // keys, so this node is what actually refuses a mis-spelled passive — which
     // is exactly why it must not be a second list.
     passives: opt(
-      obj(Object.fromEntries(
-        Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
-      ))
+      obj({
+        ...Object.fromEntries(
+          Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
+        ),
+        // Semantics and strict field validation live in validate.js beside the
+        // closed RELIC_MODIFIER_TAGS vocabulary. `any` avoids duplicating three
+        // discriminated object shapes in this generic schema walker.
+        modifiers: opt(arr(any)),
+      })
     ),
     icon: opt(str),
     flavor: opt(str),
@@ -18871,6 +19122,7 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
+    hpPerConTier: int,
     startingFlaskAllocation: obj({ hp: int, mana: int }),
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
@@ -18922,7 +19174,7 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { DAMAGE_SCHOOLS, COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_TYPES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, STATUS_VALUE_TOKENS, STATUS_DURATION_TOKENS, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, FLASK_KINDS, FLASK_GROWTH_SOURCES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
+Object.assign(module.exports, { DAMAGE_SCHOOLS, RELIC_MODIFIER_TAGS, COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_TYPES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, STATUS_VALUE_TOKENS, STATUS_DURATION_TOKENS, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, FLASK_KINDS, FLASK_GROWTH_SOURCES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
 
 },
 "src/model/resources.js": function (module, exports, require) {
@@ -19161,6 +19413,95 @@ function surfaceScalesByMax(registries, surface) {
 
 
 Object.assign(module.exports, { resourceScale, RESOURCE_SOURCES, RESOURCE_SOURCE_IDS, RESOURCE_WEIGHTS, HUD_SURFACES, resourceDomains, resourceBarPlan, surfaceScalesByMax });
+
+},
+"src/model/disclosure.js": function (module, exports, require) {
+// src/model/disclosure.js — THE ONE HOME OF THE DISCLOSURE VOCABULARY.
+//
+// Constantine, 2026-08-15 (D26): "the statte descriptions kind of suck. perhaps
+// have a simplifed verison with just the starting stats, starting armaments
+// selection , and then have the ability to expand by clicking, with tool tips.
+// for character creation I mean"
+//
+// THREE WORDS, AND THEY ARE MEANT TO BE PERMANENT — the F1 combat frame adopts
+// them, so they are chosen as vocabulary rather than as this screen's private
+// spelling (Marina's handover packet, 2026-08-16: "Sunna's creation act SETS
+// the shared vocabulary; the frame ADOPTS it"):
+//
+//   FACE     the line an entry shows BEFORE anyone asks: its name and its
+//            number, and nothing else. A face never carries prose. If a face
+//            needs a sentence to be understood, the sentence belongs one tier
+//            down — that is the whole of what he asked for.
+//   REVEAL   what ONE TAP opens: the same entry in player words. Every entry
+//            has exactly one reveal; a reveal is never a second screen.
+//   RECEIPT  the arithmetic that produced the number, at the FOOT of the
+//            reveal. Already the house word (statProjection's "calculation
+//            receipts", equipmentSurfaceReceipt) — adopted, not minted, so the
+//            frame's CALCULATION tooltip and this screen say one word.
+//
+// AND ONE FIELD, WHICH IS THE DATA-DRIVEN HALF (Law 0 clause 1: an entry
+// DESCRIBES, the machinery DERIVES). `disclosure` is authored ON THE ENTRY and
+// says which tier that entry lives in:
+//
+//   disclosure: 'face'    drawn in the short form, always
+//   disclosure: 'reveal'  drawn only once the panel is opened
+//
+// THERE IS NO LIST ANYWHERE OF WHICH STATS ARE "SIMPLE". A screen that filtered
+// on a hard-coded set would be a knob whose value is ignored, which is worse
+// than no knob: the author would retune the table and the screen would not
+// move. The check (tools/creationbrief.mjs) plants exactly that defect and must
+// see it go red.
+//
+// WHAT OPENS A REVEAL, and no second gesture is minted for it: a TAP on the
+// face. Hover and the gamepad focus cursor show the same words in the shared
+// tooltip (components/tooltip.js). The press-and-hold in this tree already
+// means INSPECT (balance.ui.inspectHold, 400 ms / 12 px) and it keeps meaning
+// that — a disclosure that answers a thumb is answered by the thumb's cheapest
+// gesture, not by teaching one gesture two jobs.
+//
+// REMOVAL CONDITION (SOP 1's corollary): this module is deleted the day no
+// surface has two tiers of disclosure — one tier needs no word for the split.
+
+const FACE = 'face';
+const REVEAL = 'reveal';
+
+/** The closed set. A value outside it is refused by name at the content door. */
+const DISCLOSURE_TIERS = Object.freeze([FACE, REVEAL]);
+
+/**
+ * disclosureProblem(value, path) → null | { path, msg }
+ *
+ * Named, never thrown, and THE OFFENDING VALUE IS IN THE MESSAGE — a typo'd
+ * tier must be refused by its own spelling, not only by the legal list it is
+ * absent from (Law 1 clause 5, and the same shape derivedStats.js already uses
+ * for a retired sourceStat).
+ */
+function disclosureProblem(value, path) {
+  if (typeof value === 'string' && DISCLOSURE_TIERS.includes(value)) return null;
+  const got = typeof value === 'string' ? `'${value}' ` : '';
+  return { path, msg: `${got}must be one of ${DISCLOSURE_TIERS.join(', ')}` };
+}
+
+/**
+ * splitByDisclosure(entries) → { face, reveal }
+ *
+ * The ONE place the short/long split is computed, so no screen can invent its
+ * own answer. Entries keep their given order inside each tier.
+ */
+function splitByDisclosure(entries) {
+  const out = { face: [], reveal: [] };
+  for (const entry of entries || []) {
+    const tier = entry && entry.disclosure;
+    if (!DISCLOSURE_TIERS.includes(tier)) {
+      throw new Error(`disclosure: entry '${entry && entry.id}' has tier '${tier}'`);
+    }
+    out[tier].push(entry);
+  }
+  return out;
+}
+
+
+Object.assign(module.exports, { FACE, REVEAL, DISCLOSURE_TIERS, disclosureProblem, splitByDisclosure });
 
 },
 "src/model/flaskgrowth.js": function (module, exports, require) {
@@ -19769,6 +20110,10 @@ Object.assign(module.exports, { FORMULA_OPS, FORMULA_OF, isFormula, evaluate });
 // src/model/attributes.js — the one reader for creation-stat data.
 // No combat or derived-resource behavior belongs here.
 
+// The run door's witness (src/model/healLedger.js). `note` is a no-op unless a
+// door is open and never changes a value — this file's behaviour is unchanged.
+const { note } = require("src/model/healLedger.js");
+
 const plainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 
 function tables(source) {
@@ -19890,16 +20235,54 @@ function classAttributePreset(source, classId, modeId = defaultCreationModeId(so
 function migrateRetiredAttributeNames(run, source) {
   const retired = retiredNames(tables(source));
   for (const [dead, heir] of Object.entries(retired)) {
-    if (plainObject(run.attributes) && Object.hasOwn(run.attributes, dead) && !Object.hasOwn(run.attributes, heir)) {
-      run.attributes[heir] = run.attributes[dead];
-      delete run.attributes[dead];
-    }
     const snapshot = run.derivedStatRuleSnapshot;
     const rules = snapshot && plainObject(snapshot.rules) && plainObject(snapshot.rules.rules)
       ? snapshot.rules.rules : null;
+    const allocationDead = plainObject(run.attributes) && Object.hasOwn(run.attributes, dead);
+    const allocationHeir = plainObject(run.attributes) && Object.hasOwn(run.attributes, heir);
+    const sourceRows = rules ? Object.entries(rules).filter(([, rule]) => plainObject(rule)) : [];
+    const snapshotDead = sourceRows.filter(([, rule]) => rule.sourceStat === dead).map(([id]) => id);
+    const snapshotHeir = sourceRows.filter(([, rule]) => rule.sourceStat === heir).map(([id]) => id);
+    const deadPaths = [
+      ...(allocationDead ? [`attributes.${dead}`] : []),
+      ...snapshotDead.map((id) => `derivedStatRuleSnapshot.rules.rules.${id}.sourceStat`),
+    ];
+    const heirPaths = [
+      ...(allocationHeir ? [`attributes.${heir}`] : []),
+      ...snapshotHeir.map((id) => `derivedStatRuleSnapshot.rules.rules.${id}.sourceStat`),
+    ];
+    // Preflight before touching either carrier: mixed vocabularies are two
+    // competing claims on one stat seat, even when they occur in different
+    // persisted homes. Refuse atomically and name every witness.
+    if (deadPaths.length && heirPaths.length) {
+      throw new Error(`Mixed retired attribute '${dead}' and heir '${heir}' at ${[...deadPaths, ...heirPaths].join(', ')}`);
+    }
+    if (allocationDead) {
+      note(run, {
+        kind: 'rename',
+        site: 'attributes.js:migrateRetiredAttributeNames',
+        field: `attributes.${dead}`,
+        was: { [dead]: run.attributes[dead] },
+        now: { [heir]: run.attributes[dead] },
+        why: `the retired seat '${dead}' was carried to its heir '${heir}', points intact`,
+      });
+      run.attributes[heir] = run.attributes[dead];
+      delete run.attributes[dead];
+    }
     if (rules) {
-      for (const rule of Object.values(rules)) {
-        if (plainObject(rule) && rule.sourceStat === dead) rule.sourceStat = heir;
+      const moved = [];
+      for (const [id, rule] of Object.entries(rules)) {
+        if (plainObject(rule) && rule.sourceStat === dead) { rule.sourceStat = heir; moved.push(id); }
+      }
+      if (moved.length) {
+        note(run, {
+          kind: 'rename',
+          site: 'attributes.js:migrateRetiredAttributeNames',
+          field: 'derivedStatRuleSnapshot.rules.rules[*].sourceStat',
+          was: { [dead]: moved },
+          now: { [heir]: moved },
+          why: `${moved.length} persisted snapshot rule(s) re-pointed from '${dead}' to '${heir}'`,
+        });
       }
     }
   }
@@ -19914,6 +20297,19 @@ function normalizeRunAttributes(run, registries) {
   if (modeAbsent) {
     run.attributeMode = defaultCreationModeId(registries);
     run.attributes = classAttributePreset(registries, run.class, run.attributeMode);
+    // ONE OF THE THREE UNGATED HEALS, and the one that started this: the pair is
+    // optional in RUN_SHAPE with no schemaVersion gate, so a CURRENT-schema save
+    // whose allocation is gone comes back wearing the class preset. Somebody
+    // else's build. It still does; it says so now, with the schemaVersion of the
+    // save it happened to, which is the number the parked refuse question turns on.
+    note(run, {
+      kind: 'heal',
+      site: 'attributes.js:normalizeRunAttributes',
+      field: 'attributes+attributeMode',
+      was: undefined,
+      now: { attributeMode: run.attributeMode, attributes: { ...run.attributes } },
+      why: `absent in the save: REFILLED FROM THE CLASS PRESET for '${run.class}' — this is a plausible allocation, not the player's`,
+    });
     return run;
   }
   const problems = attributeAllocationProblems(registries, run.class, run.attributeMode, run.attributes);
@@ -19974,21 +20370,270 @@ function attributeContentProblems(source) {
 Object.assign(module.exports, { orderedAttributes, defaultCreationModeId, creationMode, allocationTotal, attributeAllocationProblems, classAttributePreset, migrateRetiredAttributeNames, normalizeRunAttributes, attributeContentProblems });
 
 },
+"src/model/healLedger.js": function (module, exports, require) {
+// src/model/healLedger.js — THE RUN DOOR SAYS WHAT IT DID.
+//
+// THE DEFECT THIS EXISTS FOR, and it was found from two ends by two seats who
+// each could only see half of it (Marina's ruling, 2026-08-15):
+//
+//   · Vira, from the save side: three fields are optional in RUN_SHAPE with no
+//     schemaVersion gate, so a heal written for old saves also fires on a
+//     CURRENT-schema save. Delete an allocation from a v4 save and it loads
+//     with the class preset, silently.
+//   · Sten, from the run-creation side: a planted double-count in the max-HP
+//     chain was SWALLOWED — `reconcileRunLoadoutHp` is the last writer at run
+//     creation, so it overwrote the plant and his instrument went green on a
+//     real defect.
+//
+// One defect: **a last-writer-wins reconcile that keeps no record of what it
+// overwrote.** Nobody owned run creation.
+//
+// WHAT THIS IS AND IS NOT. It is VISIBILITY, explicitly not the collapse. The
+// max-HP formula still lives in three homes (src/model/state.js twice,
+// src/model/loadout.js once) and this file does not merge them — *you cannot
+// safely collapse what you cannot watch drift*, and Sten's swallowed plant is
+// the proof. Each home now WRITES DOWN what it computed and what it replaced,
+// so a disagreement between them is observable instead of being decided by
+// call order. No behaviour changes. Not one number moves.
+//
+// AND IT IS NOT A REFUSAL. Refuse-vs-heal is a false dichotomy (Constantine's
+// own word, C6). The defect is the SILENCE, not the heal. A heal that names
+// itself satisfies save.js's honesty contract — "a failed load is a NAMED,
+// VISIBLE state, never a fresh profile wearing the same filename", which the
+// PROFILE has had since #67 and the RUN never did — and leaves
+// tests/engine.test.js 28 and 50 green, because they are right that a player's
+// climb should survive a missing field.
+//
+// SHAPE. The ledger is a NON-ENUMERABLE property of the run object, so
+// `JSON.stringify(run)` (serializeRun), `{...run}`, `Object.keys` and
+// `structuredClone` all skip it: **no save byte changes**, which is what lets
+// tools/saveroundtrip.mjs keep asserting that a save is a fixed point of its
+// own door. It is a witness, not persisted state.
+//
+// SCOPE — open only at a DOOR. `openLedger` is called at exactly two places,
+// and `note()` is a no-op anywhere else:
+//   · createRunState        (src/model/state.js)   — a run being born
+//   · createSaveManager.loadRun (src/engine/save.js) — a run coming back
+// stampDeck → reconcileRunLoadoutHp runs after every loadout mutation all
+// climb long; recording those would grow without bound and answer a question
+// nobody asked. Between doors the ledger is closed and costs nothing.
+//
+// WHO READS IT. `saves.runStatus()` — the run-side twin of `profileStatus()`,
+// same idea, one home each. tools/runcreation.mjs drives BOTH doors and fails
+// if the three max-HP homes disagree (Sten's A7).
+//
+// REMOVAL CONDITION (SOP 1's corollary): deleted the day run creation and the
+// load door have ONE writer for each field they set — no last writer, nothing
+// to overwrite, nothing to witness. Collapsing the three homes is what would
+// earn that, and this file is the instrument that makes the collapse safe to
+// attempt; it is not a permanent fixture.
+
+/** The property name on the run. String, not a Symbol, so it greps. */
+const LEDGER_KEY = 'runHealLedger';
+
+// A bound so a pathological caller cannot grow it without limit even inside a
+// door. Dropped entries are COUNTED, never silently discarded: a truncated
+// witness that does not say it was truncated is the silence again.
+const MAX_ENTRIES = 500;
+
+function ledger(run) {
+  return run && typeof run === 'object' ? run[LEDGER_KEY] : null;
+}
+
+/**
+ * openLedger(run, door, savedSchemaVersion) — start recording. Resets any
+ * previous record: each trip through a door is its own account, and a ledger
+ * that accumulated across two loads could not tell you which one healed.
+ */
+function openLedger(run, door, savedSchemaVersion) {
+  if (!run || typeof run !== 'object') return null;
+  const record = {
+    door,
+    savedSchemaVersion: savedSchemaVersion === undefined ? null : savedSchemaVersion,
+    open: true,
+    entries: [],
+    dropped: 0,
+  };
+  if (Object.hasOwn(run, LEDGER_KEY)) {
+    run[LEDGER_KEY] = record;
+  } else {
+    Object.defineProperty(run, LEDGER_KEY, {
+      value: record,
+      writable: true,
+      enumerable: false, // ← the whole reason no save byte moves
+      configurable: true,
+    });
+  }
+  return record;
+}
+
+/** closeLedger(run) → the finished record (or null). Notes after this are no-ops. */
+function closeLedger(run) {
+  const rec = ledger(run);
+  if (!rec) return null;
+  rec.open = false;
+  return rec;
+}
+
+/**
+ * note(run, entry) — record one act of the door. No-op unless a door is open.
+ *
+ * entry = {
+ *   kind:  'write'     — a field set for the first time at this door
+ *          'overwrite' — a later writer replaced a value an earlier one set
+ *          'heal'      — a field ABSENT from the input was filled in
+ *          'rename'    — a value carried from a retired name to its heir
+ *          'compute'   — a home stated the value it computed (may equal the
+ *                        one already there; this is how the three max-HP homes
+ *                        are compared without collapsing them)
+ *   site   — the code that did it, file:function, one string
+ *   field  — the run field it touched
+ *   was / now — the values, as they were and are
+ *   why    — one sentence a person can act on
+ * }
+ */
+function note(run, entry) {
+  const rec = ledger(run);
+  if (!rec || !rec.open) return null;
+  if (rec.entries.length >= MAX_ENTRIES) {
+    rec.dropped += 1;
+    return null;
+  }
+  const row = {
+    kind: entry.kind,
+    site: entry.site,
+    field: entry.field,
+    was: entry.was,
+    now: entry.now,
+    why: entry.why || '',
+    changed: entry.kind === 'compute' ? undefined : jsonEq(entry.was, entry.now) === false,
+    savedSchemaVersion: rec.savedSchemaVersion,
+    door: rec.door,
+  };
+  rec.entries.push(row);
+  return row;
+}
+
+function jsonEq(a, b) {
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch (e) {
+    return a === b;
+  }
+}
+
+/**
+ * readLedger(run, { currentSchemaVersion }) → a plain summary, or null when the
+ * run has never been through an instrumented door.
+ *
+ * `heals` counts only the entries that FILLED AN ABSENCE — the thing the
+ * narrowed refuse question is about. `overwrites` counts a later writer
+ * replacing an earlier one — Sten's swallow. They are separate numbers because
+ * they are separate defects wearing one shape.
+ */
+function readLedger(run, { currentSchemaVersion = null } = {}) {
+  const rec = ledger(run);
+  if (!rec) return null;
+  const heals = rec.entries.filter((e) => e.kind === 'heal' || e.kind === 'rename');
+  const overwrites = rec.entries.filter((e) => e.kind === 'overwrite' && e.changed);
+  const onCurrentSchema = currentSchemaVersion !== null
+    && rec.savedSchemaVersion === currentSchemaVersion;
+  return {
+    door: rec.door,
+    savedSchemaVersion: rec.savedSchemaVersion,
+    open: rec.open,
+    dropped: rec.dropped,
+    entries: rec.entries.map((e) => ({ ...e })),
+    healed: heals.length,
+    overwrote: overwrites.length,
+    // THE PREDICATE THE WAKE CONDITION IS WRITTEN ON (see tools/runcreation.mjs
+    // and the boundary of tools/saveroundtrip.mjs). A heal on a CURRENT-schema
+    // save is the event that turns "should a v4 save missing a field heal or
+    // refuse?" from a parked design call into a live one.
+    healedOnCurrentSchema: onCurrentSchema ? heals.length : 0,
+    fields: [...new Set(rec.entries.map((e) => e.field))],
+  };
+}
+
+/**
+ * THE THREE LIVE HOMES OF THE MAX-HP FORMULA, named once, here, so a tool that
+ * censuses them cannot drift from the code that reports them (Sten found them;
+ * the line numbers he gave were state.js:210, state.js:256, loadout.js:1086 at
+ * dev = 7e67de8, which is why this is keyed on site strings and not on lines).
+ *
+ * THEY ARE NOT COLLAPSED AND THIS OBJECT IS NOT A PLAN TO COLLAPSE THEM. It is
+ * the census list: a home missing from a run's ledger has not agreed with the
+ * others — it has said nothing, and those look identical from the outside.
+ */
+const MAX_HP_HOMES = Object.freeze({
+  'state.js:initializeRunDerivedStats(validate)': 'home 1 — checks a persisted maxHp against the snapshot + equipment + adjustment',
+  'state.js:initializeRunDerivedStats(derive)': 'home 2 — derives maxHp from the host rules; SECOND writer at run creation',
+  'loadout.js:reconcileRunLoadoutHp': 'home 3 — reconciles maxHp after a loadout mutation; LAST writer at run creation',
+});
+
+/**
+ * maxHpHomeValues(summary) → [{ site, value, was, door }] — what each home said
+ * about maxHp on this trip. Empty is a meaningful answer and callers must treat
+ * it as one: a home that did not run proves nothing about agreement.
+ */
+function maxHpHomeValues(summary) {
+  if (!summary) return [];
+  return summary.entries
+    .filter((e) => e.field === 'maxHp' && Object.hasOwn(MAX_HP_HOMES, e.site))
+    .map((e) => ({ site: e.site, value: e.now, was: e.was, door: e.door }));
+}
+
+/**
+ * describeLedger(summary) → the lines a human reads. One line per act, each
+ * naming the site, the field, and both values — because "the door healed
+ * something" is the same silence in a friendlier voice.
+ */
+function describeLedger(summary) {
+  if (!summary) return ['(no run door has been opened on this run)'];
+  const short = (v) => {
+    if (v === undefined) return '(absent)';
+    let s;
+    try {
+      s = JSON.stringify(v);
+    } catch (e) {
+      s = String(v);
+    }
+    if (s === undefined) s = String(v);
+    return s.length > 90 ? `${s.slice(0, 90)}…` : s;
+  };
+  const head = `${summary.door}: saved schemaVersion ${summary.savedSchemaVersion} · `
+    + `${summary.healed} heal(s), ${summary.overwrote} overwrite(s)`
+    + (summary.dropped ? ` · ${summary.dropped} entr(ies) DROPPED past the cap` : '');
+  return [head, ...summary.entries.map((e) => `  ${e.kind.toUpperCase().padEnd(9)} ${e.site} — ${e.field}: ${short(e.was)} -> ${short(e.now)}${e.why ? `  (${e.why})` : ''}`)];
+}
+
+
+Object.assign(module.exports, { LEDGER_KEY, openLedger, closeLedger, note, readLedger, MAX_HP_HOMES, maxHpHomeValues, describeLedger });
+
+},
 "src/model/derivedStats.js": function (module, exports, require) {
 // src/model/derivedStats.js — pure post-Phase-1 derived-stat rules.
 //
 // This module accepts an attribute allocation; it does not import, create or
 // mutate one. That is the dependency seam which lets Phase 1 land first. It
 // likewise has no run, combat, save, session or UI imports.
+//
+// The one import is the disclosure vocabulary (D26), which is itself
+// import-free: the tier a row is authored into is checked here, beside the row
+// it belongs to, rather than in a second validator that could drift.
+
+const { disclosureProblem } = require("src/model/disclosure.js");
 
 const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana']);
 const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
 // v1 is readable only so an unreleased class-base Mana snapshot can migrate to
 // v2. New snapshots always use the authored v2 table.
-const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2]);
-const DERIVED_STAT_SNAPSHOT_VERSION = 1;
+const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3]);
+const DERIVED_STAT_SNAPSHOT_VERSION = 2;
+const DERIVED_STAT_SNAPSHOT_VERSIONS = Object.freeze([1, 2]);
 
-const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules'];
+const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules', 'presentation'];
+const PRESENTATION_FIELDS = ['label', 'faceLabel', 'order', 'disclosure', 'sense'];
 const DEFAULT_FIELDS = ['pointsPerTier', 'rounding', 'cap'];
 const RULE_FIELDS = ['base', 'sourceStat', 'pointsPerTier', 'gainPerTier', 'rounding', 'cap'];
 const OVERRIDE_FIELDS = ['defaults', 'rules'];
@@ -20009,9 +20654,18 @@ function validatePoints(out, value, path, required) {
   if (!Number.isFinite(value) || value <= 0) problem(out, path, 'must be a finite number > 0');
 }
 
-function validateGain(out, value, path, required) {
+function validateGain(out, value, path, required, classFields) {
   if (value === undefined && !required) return;
-  if (!Number.isFinite(value)) problem(out, path, 'must be a finite number');
+  if (Number.isFinite(value)) return;
+  if (!plainObject(value)) {
+    problem(out, path, 'must be a finite number or a classField reference');
+    return;
+  }
+  unknownFields(out, value, BASE_FIELDS, path);
+  if (value.strategy !== 'classField') problem(out, `${path}.strategy`, "must be 'classField'");
+  if (typeof value.field !== 'string' || !classFields.includes(value.field)) {
+    problem(out, `${path}.field`, `must name one of ${classFields.join(', ')}`);
+  }
 }
 
 function validateRounding(out, value, path, required) {
@@ -20075,7 +20729,7 @@ function validateRule(out, value, path, options, partial) {
     problem(out, `${path}.sourceStat`, `${got}must name one of ${options.attributeIds.join(', ')}`);
   }
   validatePoints(out, value.pointsPerTier, `${path}.pointsPerTier`, false);
-  validateGain(out, value.gainPerTier, `${path}.gainPerTier`, !partial);
+  validateGain(out, value.gainPerTier, `${path}.gainPerTier`, !partial, options.classFields);
   validateRounding(out, value.rounding, `${path}.rounding`, false);
   validateCap(out, value.cap, `${path}.cap`, false);
 }
@@ -20084,6 +20738,7 @@ function normalizedOptions(options = {}) {
   return {
     attributeIds: Array.isArray(options.attributeIds) ? [...options.attributeIds] : [],
     classFields: Array.isArray(options.classFields) ? [...options.classFields] : ['maxHp', 'maxMana'],
+    damageSchools: Array.isArray(options.damageSchools) ? [...options.damageSchools] : [],
   };
 }
 
@@ -20107,6 +20762,48 @@ function derivedStatRuleProblems(source, options = {}) {
   }
   for (const id of Object.keys(source.rules)) {
     if (!DERIVED_STAT_IDS.includes(id)) problem(out, `rules.${id}`, `unknown derived-stat row '${id}'`);
+  }
+  return out;
+}
+
+/**
+ * derivedStatPresentationProblems(source) → named problems, never thrown.
+ *
+ * D26's short form. The authored table must carry ONE presentation row per
+ * derived-stat rule and no strays — the pairing is what makes "add a row and it
+ * appears, correctly placed, with no code edit" true, and a missing half has to
+ * fail LOUD AND BY NAME rather than draw a blank chip (Law 1 clause 5).
+ *
+ * Called from the CONTENT door only (model/validate.js). Snapshot restore
+ * reconstitutes `rules` alone and must not be asked for prose it never saved —
+ * `presentation` is optional to derivedStatRuleProblems for exactly that
+ * reason, and required here.
+ */
+function derivedStatPresentationProblems(source) {
+  const out = [];
+  if (!plainObject(source)) return [{ path: 'derivedStatRules', msg: 'must be a plain object' }];
+  const table = source.presentation;
+  if (!plainObject(table)) return [{ path: 'derivedStatRules.presentation', msg: 'must be a plain object with one row per derived stat' }];
+  const orders = new Map();
+  for (const id of DERIVED_STAT_IDS) {
+    const path = `presentation.${id}`;
+    if (!own(table, id)) { problem(out, path, 'missing presentation row for a shipped derived stat'); continue; }
+    const row = table[id];
+    if (!plainObject(row)) { problem(out, path, 'must be a plain object'); continue; }
+    unknownFields(out, row, PRESENTATION_FIELDS, path);
+    if (typeof row.label !== 'string' || !row.label.trim()) problem(out, `${path}.label`, 'must be a non-empty string');
+    if (row.faceLabel !== undefined && (typeof row.faceLabel !== 'string' || !row.faceLabel.trim())) {
+      problem(out, `${path}.faceLabel`, 'must be a non-empty string when present');
+    }
+    if (typeof row.sense !== 'string' || !row.sense.trim()) problem(out, `${path}.sense`, 'must be a non-empty player sentence');
+    if (!Number.isInteger(row.order) || row.order <= 0) problem(out, `${path}.order`, 'must be an integer > 0');
+    else if (orders.has(row.order)) problem(out, `${path}.order`, `duplicates presentation.${orders.get(row.order)}.order ${row.order}`);
+    else orders.set(row.order, id);
+    const tier = disclosureProblem(row.disclosure, `${path}.disclosure`);
+    if (tier) out.push(tier);
+  }
+  for (const id of Object.keys(table)) {
+    if (!DERIVED_STAT_IDS.includes(id)) problem(out, `presentation.${id}`, `unknown derived-stat row '${id}'`);
   }
   return out;
 }
@@ -20169,18 +20866,25 @@ function baseValue(base, classDef, statId) {
   return value;
 }
 
+function gainValue(gain, classDef, statId) {
+  if (Number.isFinite(gain)) return gain;
+  const value = classDef && gain && classDef[gain.field];
+  if (!Number.isFinite(value)) throw new Error(`${statId}.gainPerTier: class field '${gain && gain.field}' is not a finite number`);
+  return value;
+}
+
 /**
  * Generic attribute-tier receipt for weapon/armour/resource projections.
  * The caller supplies one already-resolved rule row, so authored defaults,
  * mode/run layers and the explicit/debug override have already merged once.
  * This helper owns no weapon base and mutates nothing.
  */
-function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rule.sourceStat } = {}) {
+function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rule.sourceStat, classDef, statId = 'derivedStat' } = {}) {
   if (!plainObject(rule)) throw new Error('Attribute tier rule must be a resolved rule row');
   const points = attributes && attributes[sourceStat];
   if (!Number.isFinite(points)) throw new Error(`sourceStat '${sourceStat}' is not a finite number`);
   if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error('pointsPerTier must be a finite number > 0');
-  if (!Number.isFinite(rule.gainPerTier)) throw new Error('gainPerTier must be a finite number');
+  const gainPerTier = gainValue(rule.gainPerTier, classDef, statId);
   const round = Math[rule.rounding];
   if (typeof round !== 'function') throw new Error(`rounding '${rule.rounding}' is not executable`);
   const tier = round(points / rule.pointsPerTier);
@@ -20190,8 +20894,8 @@ function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rul
     pointsPerTier: rule.pointsPerTier,
     rounding: rule.rounding,
     tier,
-    gainPerTier: rule.gainPerTier,
-    value: tier * rule.gainPerTier,
+    gainPerTier,
+    value: tier * gainPerTier,
   };
 }
 
@@ -20199,30 +20903,81 @@ function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rul
 function deriveStat(resolved, statId, { attributes, classDef } = {}) {
   const row = resolved && resolved.rules && resolved.rules[statId];
   if (!row) throw new Error(`Unknown derived stat '${statId}'`);
-  const tierReceipt = deriveAttributeTierReceipt(row, { attributes });
+  const tierReceipt = deriveAttributeTierReceipt(row, { attributes, classDef, statId });
   const { points, tier } = tierReceipt;
   const base = baseValue(row.base, classDef, statId);
-  const raw = base + tier * row.gainPerTier;
+  const raw = base + tier * tierReceipt.gainPerTier;
   const value = row.cap === null ? raw : Math.min(raw, row.cap);
-  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: row.gainPerTier, raw, cap: row.cap, value };
+  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: tierReceipt.gainPerTier, raw, cap: row.cap, value };
+}
+
+/** One compatibility contract for folding an authored relic tier into a rule. */
+function relicAttributeTierFoldProblems(term, rule) {
+  const problems = [];
+  if (!term || !rule) return [{ field: null, msg: 'requires a resolved target resource rule' }];
+  if (term.sourceStat !== rule.sourceStat) {
+    problems.push({ field: 'sourceStat', msg: `must match target rule sourceStat '${rule.sourceStat}'` });
+  }
+  if (term.pointsPerTier !== rule.pointsPerTier) {
+    problems.push({ field: 'pointsPerTier', msg: `must match target rule pointsPerTier ${rule.pointsPerTier}` });
+  }
+  if (rule.rounding !== 'floor') {
+    problems.push({ field: null, msg: `cannot fold into target rule rounding '${rule.rounding}'; attribute-tier modifiers require 'floor'` });
+  }
+  return problems;
+}
+
+function resolveSnapshotNumbers(rules, classDef, relicModifierReceipt, explicitOverride) {
+  if (!classDef) throw new Error('Host snapshot creation requires a classDef');
+  const out = structuredClone(rules);
+  for (const [statId, row] of Object.entries(out.rules)) {
+    row.base = baseValue(row.base, classDef, statId);
+    row.gainPerTier = gainValue(row.gainPerTier, classDef, statId);
+  }
+  const resources = relicModifierReceipt && relicModifierReceipt.resources || {};
+  for (const [statId, bonus] of Object.entries(resources)) {
+    if (!bonus || (!bonus.flat && !(bonus.attributeTiers || []).length)) continue;
+    const row = out.rules[statId];
+    if (!row) throw new Error(`Relic modifier targets unknown derived resource '${statId}'`);
+    const explicitRow = explicitOverride && explicitOverride.rules && explicitOverride.rules[statId] || {};
+    if (explicitRow.base === undefined) row.base += bonus.flat || 0;
+    if (explicitRow.gainPerTier === undefined) {
+      for (const term of bonus.attributeTiers || []) {
+        if (relicAttributeTierFoldProblems(term, row).length) {
+          throw new Error(`Relic ${statId} attribute tier ${term.sourceStat}/${term.pointsPerTier} cannot fold into host rule ${row.sourceStat}/${row.pointsPerTier}/${row.rounding}`);
+        }
+        row.gainPerTier += term.amountPerTier;
+      }
+    }
+  }
+  return out;
 }
 
 /** Host-created, immutable-by-convention rules receipt for co-op/save owners. */
 function createDerivedStatRuleSnapshot(source, options = {}) {
   if (options.authority !== 'host') throw new Error('Only the host authority may create a derived-stat rules snapshot');
-  const rules = resolveDerivedStatRules(source, options);
+  const rules = resolveSnapshotNumbers(
+    resolveDerivedStatRules(source, options),
+    options.classDef,
+    options.relicModifierReceipt,
+    options.explicitOverride,
+  );
   return structuredClone({
     snapshotVersion: DERIVED_STAT_SNAPSHOT_VERSION,
     rulesetVersion: rules.rulesetVersion,
     rules,
+    relicModifiers: options.relicModifierReceipt ? {
+      damageBySchoolAdd: options.relicModifierReceipt.damageBySchoolAdd,
+      sources: options.relicModifierReceipt.sources,
+    } : { damageBySchoolAdd: {}, sources: [] },
   });
 }
 
 /** Restore exactly what the host saved; current authored data is not consulted. */
 function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
   if (!plainObject(snapshot)) throw new Error('Derived-stat snapshot must be an object');
-  if (snapshot.snapshotVersion !== DERIVED_STAT_SNAPSHOT_VERSION) {
-    throw new Error(`Unknown derived-stat snapshotVersion ${snapshot.snapshotVersion} (expected ${DERIVED_STAT_SNAPSHOT_VERSION})`);
+  if (!DERIVED_STAT_SNAPSHOT_VERSIONS.includes(snapshot.snapshotVersion)) {
+    throw new Error(`Unknown derived-stat snapshotVersion ${snapshot.snapshotVersion} (supported: ${DERIVED_STAT_SNAPSHOT_VERSIONS.join(', ')})`);
   }
   if (!DERIVED_STAT_RULESET_VERSIONS.includes(snapshot.rulesetVersion)) {
     throw new Error(`Unknown derived-stat rulesetVersion ${snapshot.rulesetVersion} (supported: ${DERIVED_STAT_RULESET_VERSIONS.join(', ')})`);
@@ -20234,12 +20989,44 @@ function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
   // and resolve it without any live overrides. Resolved rows contain defaults;
   // those extra row keys are all legal authored override keys.
   const source = structuredClone(snapshot.rules);
+  if (snapshot.snapshotVersion === 2) {
+    for (const [id, row] of Object.entries(source.rules || {})) {
+      if (!Number.isFinite(row.base) || !Number.isFinite(row.gainPerTier)) {
+        throw new Error(`Derived-stat snapshot v2 '${id}' must carry numeric base and gainPerTier`);
+      }
+    }
+    const modifiers = snapshot.relicModifiers;
+    if (!plainObject(modifiers) || !plainObject(modifiers.damageBySchoolAdd) || !Array.isArray(modifiers.sources)) {
+      throw new Error('Derived-stat snapshot v2 must carry relicModifiers { damageBySchoolAdd, sources }');
+    }
+    const legalSchools = normalizedOptions(options).damageSchools;
+    for (const school of legalSchools) {
+      if (!own(modifiers.damageBySchoolAdd, school)) {
+        throw new Error(`Derived-stat snapshot v2 relicModifiers.damageBySchoolAdd.${school} is missing`);
+      }
+    }
+    for (const [school, value] of Object.entries(modifiers.damageBySchoolAdd)) {
+      if (legalSchools.length && !legalSchools.includes(school)) {
+        throw new Error(`Derived-stat snapshot v2 relicModifiers.damageBySchoolAdd.${school} is not a legal damage school`);
+      }
+      if (!Number.isFinite(value) || value < 0) throw new Error(`Derived-stat snapshot v2 relicModifiers.damageBySchoolAdd.${school} must be a non-negative finite number`);
+    }
+  }
+  const expectedEnvelope = snapshot.rulesetVersion >= 3 ? 2 : 1;
+  if (snapshot.snapshotVersion !== expectedEnvelope) {
+    throw new Error(`Derived-stat rulesetVersion ${snapshot.rulesetVersion} requires snapshotVersion ${expectedEnvelope}`);
+  }
   throwProblems('derivedStatSnapshot', derivedStatRuleProblems(source, normalizedOptions(options)));
-  return { snapshotVersion: snapshot.snapshotVersion, rulesetVersion: snapshot.rulesetVersion, rules: source };
+  return {
+    snapshotVersion: snapshot.snapshotVersion,
+    rulesetVersion: snapshot.rulesetVersion,
+    rules: source,
+    ...(snapshot.relicModifiers ? { relicModifiers: structuredClone(snapshot.relicModifiers) } : {}),
+  };
 }
 
 
-Object.assign(module.exports, { DERIVED_STAT_IDS, DERIVED_STAT_ROUNDING, DERIVED_STAT_RULESET_VERSIONS, DERIVED_STAT_SNAPSHOT_VERSION, derivedStatRuleProblems, resolveDerivedStatRules, deriveAttributeTierReceipt, deriveStat, createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot });
+Object.assign(module.exports, { DERIVED_STAT_IDS, DERIVED_STAT_ROUNDING, DERIVED_STAT_RULESET_VERSIONS, DERIVED_STAT_SNAPSHOT_VERSION, DERIVED_STAT_SNAPSHOT_VERSIONS, derivedStatRuleProblems, derivedStatPresentationProblems, resolveDerivedStatRules, deriveAttributeTierReceipt, deriveStat, relicAttributeTierFoldProblems, createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot });
 
 },
 "src/model/startingKits.js": function (module, exports, require) {
@@ -20427,6 +21214,7 @@ Object.assign(module.exports, { PROGRESSION_MODES, UNDISCOVERED_PRESENTATIONS, s
 const { REGISTRY_TYPES, PASSIVE_KEYS } = require("src/model/schemas.js");
 const { applyCardMods } = require("src/model/loadout.js");
 const { deriveStat, resolveDerivedStatRules } = require("src/model/derivedStats.js");
+const { resolveRelicModifiers } = require("src/model/relicModifiers.js");
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -20562,7 +21350,7 @@ function createRegistries(contentBundle) {
   const attributeIds = registries.attributes.ids();
   const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
   const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
-  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp', 'hpPerConTier'] });
   let hpEquipmentBonus = 0;
   for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
     for (const raw of (piece && piece.mods) || []) {
@@ -20570,11 +21358,14 @@ function createRegistries(contentBundle) {
       if (match) hpEquipmentBonus = Math.max(hpEquipmentBonus, Number(match[1]));
     }
   }
-  const domainRows = registries.classes.all().map((classDef) => ({
-    hp: deriveStat(rules, 'hp', { attributes: ceilingAttributes, classDef }).value + hpEquipmentBonus,
-    mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value,
-    stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value,
-  }));
+  const domainRows = registries.classes.all().map((classDef) => {
+    const relic = resolveRelicModifiers(registries, [classDef.startingRelic], { attributes: ceilingAttributes });
+    return {
+      hp: deriveStat(rules, 'hp', { attributes: ceilingAttributes, classDef }).value + relic.resources.hp.total + hpEquipmentBonus,
+      mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value + relic.resources.mana.total,
+      stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value + relic.resources.stamina.total,
+    };
+  });
   // Player Poise potential — the largest stagger threshold a loadout can
   // state: per equipment slot, the best authored piece whose kind that slot
   // accepts, plus every authored relic bonus. Content potential like hp above
@@ -20753,9 +21544,12 @@ Object.assign(module.exports, { deepFreeze, createRegistries, passiveMult, passi
 },
 "src/model/loadout.js": function (module, exports, require) {
 const { tokenRe } = require("src/model/validate.js");
-const { deriveAttributeTierReceipt } = require("src/model/derivedStats.js");
+const { deriveAttributeTierReceipt, deriveStat } = require("src/model/derivedStats.js");
 const { startingKitProblems } = require("src/model/startingKits.js");
 const { DAMAGE_SCHOOLS } = require("src/model/schemas.js");
+// Recording only — `note` is a no-op unless a run door is open, so the
+// stampDeck calls that fire all climb long cost nothing.
+const { note } = require("src/model/healLedger.js");
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -21818,6 +22612,45 @@ function runMods(registries, loadout, classId) {
   };
 }
 
+/**
+ * Reconcile the run's HP pool after an out-of-combat loadout mutation.
+ * The derived snapshot, equipment rows, and permanent adjustment remain the
+ * authorities; current HP keeps the same absolute deficit as the vessel grows
+ * or shrinks. Partial combat stamping records do not carry these fields and are
+ * deliberately ignored.
+ */
+function reconcileRunLoadoutHp(registries, run) {
+  if (!run || !run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules
+    || !Number.isFinite(run.maxHp) || !Number.isFinite(run.hp)) return null;
+  if (!Number.isInteger(run.maxHpAdjustment)) {
+    throw new Error('reconcileRunLoadoutHp requires integer maxHpAdjustment');
+  }
+  const classDef = registries.classes.get(run.class);
+  const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
+    attributes: run.attributes,
+    classDef,
+  });
+  const equipmentBonus = runMods(registries, run.loadout, run.class).maxHp;
+  // MAX-HP HOME 3 of 3, and THE LAST WRITER AT RUN CREATION — createRunState
+  // ends with stampDeck(), which begins with this call. That is why Sten's
+  // planted double-count went green: whatever the earlier writers put in the
+  // field, this one replaced it, and nothing recorded the replacement. It still
+  // replaces it. It no longer does so silently.
+  const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);
+  const deficit = Math.max(0, run.maxHp - run.hp);
+  note(run, {
+    kind: 'overwrite',
+    field: 'maxHp',
+    site: 'loadout.js:reconcileRunLoadoutHp',
+    was: run.maxHp,
+    now: nextMax,
+    why: `max-HP home 3 of 3 and the last writer at the door — derived ${derived.value} + equipment ${equipmentBonus} + adjustment ${run.maxHpAdjustment}; deficit ${deficit} carried`,
+  });
+  run.maxHp = nextMax;
+  run.hp = Math.max(0, nextMax - deficit);
+  return { derived: derived.value, equipmentBonus, adjustment: run.maxHpAdjustment, maxHp: nextMax, deficit };
+}
+
 // ---------------------------------------------------------------------------
 // Applying mods to a card
 // ---------------------------------------------------------------------------
@@ -21938,6 +22771,7 @@ function applyCardMods(def, mods, opts = {}) {
  * `cards` to stamp a hand mid-combat; it defaults to the run deck.
  */
 function stampDeck(registries, run, cards) {
+  reconcileRunLoadoutHp(registries, run);
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
@@ -22459,7 +23293,68 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLIES, RUN_MOD_APPLIES, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLIES, RUN_MOD_APPLIES, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
+
+},
+"src/model/relicModifiers.js": function (module, exports, require) {
+// src/model/relicModifiers.js — generic, data-authored relic modifier receipts.
+//
+// Relic ids never appear here. A closed modifier tag selects one piece of
+// generic arithmetic; the relic row supplies the resource/stat/school and its
+// value. The host resolves these rows once before stamping run/combat state.
+
+const { DAMAGE_SCHOOLS } = require("src/model/schemas.js");
+
+const RELIC_RESOURCE_IDS = Object.freeze(['hp', 'mana', 'stamina']);
+
+const emptyResource = () => ({ flat: 0, attributeTiers: [], total: 0 });
+
+function resolveRelicModifiers(registries, relicIds, { attributes = {} } = {}) {
+  const resources = Object.fromEntries(RELIC_RESOURCE_IDS.map((id) => [id, emptyResource()]));
+  const damageBySchoolAdd = Object.fromEntries(DAMAGE_SCHOOLS.map((id) => [id, 0]));
+  const sources = [];
+
+  for (const relicId of relicIds || []) {
+    const relic = registries.relics.get(relicId);
+    for (const [index, row] of (relic.passives && relic.passives.modifiers || []).entries()) {
+      const source = { relicId, index, tag: row.tag };
+      if (row.tag === 'resource.flat') {
+        resources[row.resource].flat += row.amount;
+        resources[row.resource].total += row.amount;
+        sources.push({ ...source, resource: row.resource, value: row.amount });
+      } else if (row.tag === 'resource.attributeTier') {
+        const points = attributes[row.sourceStat];
+        if (!Number.isFinite(points)) {
+          throw new Error(`${relicId}.passives.modifiers[${index}].sourceStat '${row.sourceStat}' has no finite run value`);
+        }
+        const tier = Math.floor(points / row.pointsPerTier);
+        const value = tier * row.amountPerTier;
+        const term = {
+          sourceStat: row.sourceStat,
+          pointsPerTier: row.pointsPerTier,
+          amountPerTier: row.amountPerTier,
+          tier,
+          value,
+        };
+        resources[row.resource].attributeTiers.push(term);
+        resources[row.resource].total += value;
+        sources.push({ ...source, resource: row.resource, ...term });
+      } else if (row.tag === 'damage.school.flat') {
+        damageBySchoolAdd[row.school] += row.amount;
+        sources.push({ ...source, school: row.school, value: row.amount });
+      } else {
+        // Boot validation owns normal content. This is the same loud edge for
+        // callers that construct registries without first running validation.
+        throw new Error(`${relicId}.passives.modifiers[${index}].tag '${row.tag}' is unknown`);
+      }
+    }
+  }
+
+  return structuredClone({ resources, damageBySchoolAdd, sources });
+}
+
+
+Object.assign(module.exports, { RELIC_RESOURCE_IDS, resolveRelicModifiers });
 
 },
 "src/model/state.js": function (module, exports, require) {
@@ -22485,12 +23380,16 @@ const { createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot, deriveSta
 
 const { resolveStartingKit, startingKitSnapshot } = require("src/model/startingKits.js");
 const { DAMAGE_SCHOOLS } = require("src/model/schemas.js");
+const { resolveRelicModifiers } = require("src/model/relicModifiers.js");
+// The run door's witness. Recording only; nothing here changes a number.
+// One home for the mechanic: src/model/healLedger.js.
+const { openLedger, closeLedger, note } = require("src/model/healLedger.js");
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
 // saves lack the ledger and are attributed once at the load door
 // (initializeRunFlaskCharges); v1 additionally predates starting kits.
-const RUN_SCHEMA_VERSION = 3;
+const RUN_SCHEMA_VERSION = 4;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 function createIdGen(prefix = 'i') {
@@ -22564,10 +23463,12 @@ function createRunState({
     mapNodeId: null,
     hp: oldMaxHp,
     maxHp: oldMaxHp,
+    maxHpAdjustment: 0,
     cinders: registries.balance.startingCinders || 0,
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
     relics: [classDef.startingRelic],
+    damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
     flaskCharges: createFlaskCharges(registries.balance, classDef.startingFlaskAllocation),
     seedString: null, // set by the orchestrator right after creation (display/replay)
@@ -22576,6 +23477,21 @@ function createRunState({
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // THE DOOR OPENS HERE. Everything below this line writes to a run that
+  // already exists, and until today none of it said so. `hp`/`maxHp` above are
+  // the FIRST of three writers; initializeRunDerivedStats is the second and
+  // reconcileRunLoadoutHp (via stampDeck) is the third and last. Sten's planted
+  // double-count was swallowed by that last writer and his instrument went
+  // green on it. Now each writer states what it computed and what it replaced.
+  openLedger(run, 'createRunState', RUN_SCHEMA_VERSION);
+  note(run, {
+    kind: 'write',
+    site: 'state.js:createRunState',
+    field: 'maxHp',
+    was: undefined,
+    now: oldMaxHp,
+    why: 'classDef.maxHp + runMods equipment bonus, set before the derived rules are resolved — the first of three writers',
+  });
   // "and each character should start with those" — Constantine, 2026-08-08, the
   // FOURTH clause of the flask parenthesis, and it is here because it was very
   // nearly lost. His sentence was quoted to me tonight with this clause missing
@@ -22597,6 +23513,7 @@ function createRunState({
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
+  closeLedger(run);
   return run;
 }
 
@@ -22613,7 +23530,8 @@ function derivedOptions(registries, extra = {}) {
     explicitOverride: statLayer(extra.explicitOverride),
     authority: 'host',
     attributeIds: registries.attributes.ids(),
-    classFields: ['maxHp', 'maxMana'],
+    classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+    damageSchools: DAMAGE_SCHOOLS,
   };
 }
 
@@ -22629,15 +23547,49 @@ function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const existing = snapshot || run.derivedStatRuleSnapshot;
+  const classDef = registries.classes.get(run.class);
+  const hpEquipmentBonus = run.loadout ? runMods(registries, run.loadout, run.class).maxHp : 0;
   run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
     ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
     : createEquipmentProfileRuleSnapshot(registries, derivedStatOptions);
   const currentRuleset = registries.derivedStatRules.rulesetVersion;
   const existingIsCurrent = existing && existing.rulesetVersion === currentRuleset;
+  let restoredExisting = null;
+  if (existing) restoredExisting = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+
+  // Schema v3 and older had no explanation for permanent max-HP reductions.
+  // Infer the exact residual once from the old authoritative rule plus current
+  // equipment. This preserves event curses instead of healing them away when
+  // D22 changes the base formula.
+  if (run.maxHpAdjustment === undefined) {
+    if (restoredExisting && Number.isFinite(run.maxHp)) {
+      const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: run.attributes, classDef }).value;
+      run.maxHpAdjustment = run.maxHp - (oldDerivedHp + hpEquipmentBonus);
+    } else run.maxHpAdjustment = 0;
+    note(run, {
+      kind: 'heal',
+      site: 'state.js:initializeRunDerivedStats',
+      field: 'maxHpAdjustment',
+      was: undefined,
+      now: run.maxHpAdjustment,
+      why: restoredExisting
+        ? 'absent in the save: the permanent max-HP residual was INFERRED once from the old rule plus current equipment, so an event curse survives a formula change'
+        : 'absent in the save and no old rule to infer from: assumed 0, i.e. this run is treated as never having been cursed',
+    });
+  }
+  if (!Number.isInteger(run.maxHpAdjustment)) {
+    throw new Error(`Persisted maxHpAdjustment must be an integer (got ${JSON.stringify(run.maxHpAdjustment)})`);
+  }
+
   if (existingIsCurrent && run.derivedStatRuleSnapshot) {
-    const restored = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
-    const classDef = registries.classes.get(run.class);
-    for (const [key, statId] of [['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
+    const restored = restoredExisting;
+    const expectedByKey = [
+      ['maxMana', 'mana'],
+      ['maxStamina', 'stamina'],
+      ['energyMax', 'energy'],
+      ['drawPerTurn', 'draw'],
+    ];
+    for (const [key, statId] of expectedByKey) {
       const value = run[key];
       if (!Number.isInteger(value) || value < 0) {
         throw new Error(`Persisted ${key} must be a non-negative integer under its derived-stat snapshot`);
@@ -22645,44 +23597,108 @@ function initializeRunDerivedStats(run, registries, {
       const expected = deriveStat(restored.rules, statId, { attributes: run.attributes, classDef }).value;
       if (value !== expected) throw new Error(`Persisted ${key} ${value} contradicts derived-stat snapshot value ${expected}`);
     }
+    // MAX-HP HOME 1 of 3 (the validating one). Same formula as home 2 below and
+    // home 3 in loadout.js:reconcileRunLoadoutHp. Deliberately NOT collapsed
+    // this act — the ruling is visibility first, because you cannot safely
+    // collapse what you cannot watch drift. It states its number so a tool can
+    // compare the three instead of trusting that they agree.
+    const expectedMaxHp = Math.max(1,
+      deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef }).value
+      + hpEquipmentBonus + run.maxHpAdjustment);
+    note(run, {
+      kind: 'compute',
+      site: 'state.js:initializeRunDerivedStats(validate)',
+      field: 'maxHp',
+      was: run.maxHp,
+      now: expectedMaxHp,
+      why: 'max-HP home 1 of 3 — derived + equipment + adjustment, checked against the persisted value',
+    });
+    if (run.maxHp !== expectedMaxHp) {
+      throw new Error(`Persisted maxHp ${run.maxHp} contradicts derived-stat snapshot/equipment/adjustment value ${expectedMaxHp}`);
+    }
+    const stampedDamage = restored.relicModifiers && restored.relicModifiers.damageBySchoolAdd
+      || Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0]));
+    if (run.damageBySchoolAdd === undefined) run.damageBySchoolAdd = structuredClone(stampedDamage);
+    for (const school of DAMAGE_SCHOOLS) {
+      if (run.damageBySchoolAdd[school] !== (stampedDamage[school] || 0)) {
+        throw new Error(`Persisted damageBySchoolAdd.${school} contradicts host relic snapshot`);
+      }
+    }
   }
   if (existingIsCurrent && run.derivedStatRuleSnapshot
     && run.maxHp !== undefined && run.hp !== undefined
     && run.maxMana !== undefined && run.mana !== undefined
     && run.maxStamina !== undefined && run.stamina !== undefined
     && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
-    restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
     return run;
   }
 
   // v1 carried class-authored 40/60/80 Mana pools. It is readable so its
   // current/max ratio can be migrated, but it is never retained as authority.
-  if (existing && !existingIsCurrent) restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+  const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, { attributes: run.attributes });
   const receipt = existingIsCurrent
-    ? restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries))
-    : createDerivedStatRuleSnapshot(registries.derivedStatRules, derivedOptions(registries, derivedStatOptions));
-  const classDef = registries.classes.get(run.class);
+    ? restoredExisting
+    : createDerivedStatRuleSnapshot(registries.derivedStatRules, {
+      ...derivedOptions(registries, derivedStatOptions),
+      classDef,
+      relicModifierReceipt,
+    });
   const rules = receipt.rules;
   const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef });
   const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef });
   const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef });
   const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef });
   const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef });
-  const hpBonus = run.loadout ? runMods(registries, run.loadout, run.class).maxHp : 0;
 
   const oldHpMax = run.maxHp;
   const oldHp = run.hp;
   const oldManaMax = run.maxMana;
   const oldMana = run.mana;
   run.derivedStatRuleSnapshot = structuredClone(receipt);
-  run.maxHp = hp.value + hpBonus;
+  // MAX-HP HOME 2 of 3 (the deriving one), and the SECOND writer at run
+  // creation — it replaces the classDef+equipment value createRunState set two
+  // dozen lines up, with nothing but call order deciding which wins.
+  const derivedMaxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);
+  note(run, {
+    kind: 'overwrite',
+    site: 'state.js:initializeRunDerivedStats(derive)',
+    field: 'maxHp',
+    was: oldHpMax,
+    now: derivedMaxHp,
+    why: 'max-HP home 2 of 3 — the host derived-stat rules replace whatever was in the field, at birth and at the load door alike',
+  });
+  run.maxHp = derivedMaxHp;
   run.maxMana = mana.value;
   run.maxStamina = stamina.value;
   run.energyMax = energy.value;
   run.drawPerTurn = draw.value;
+  run.damageBySchoolAdd = structuredClone(
+    receipt.relicModifiers && receipt.relicModifiers.damageBySchoolAdd
+      || Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
+  );
   if (preserveDeficits && Number.isFinite(oldHpMax) && Number.isFinite(oldHp)) {
     run.hp = Math.max(0, run.maxHp - Math.max(0, oldHpMax - oldHp));
-  } else run.hp = run.maxHp;
+    note(run, {
+      kind: 'overwrite',
+      site: 'state.js:initializeRunDerivedStats(pools)',
+      field: 'hp',
+      was: oldHp,
+      now: run.hp,
+      why: `the vessel moved ${oldHpMax} -> ${run.maxHp}; the ABSOLUTE deficit (${Math.max(0, oldHpMax - oldHp)}) is the player's and was carried`,
+    });
+  } else {
+    note(run, {
+      kind: preserveDeficits ? 'write' : 'overwrite',
+      site: 'state.js:initializeRunDerivedStats(pools)',
+      field: 'hp',
+      was: oldHp,
+      now: run.maxHp,
+      why: preserveDeficits
+        ? 'no prior pool to carry a deficit from — filled to the new maximum'
+        : 'preserveDeficits=false (a run being BORN, not restored): filled to the maximum. On a restore this would be healing a wound away, which is the friendliest way to lose a climb',
+    });
+    run.hp = run.maxHp;
+  }
   if (preserveDeficits && Number.isFinite(oldManaMax) && oldManaMax > 0 && Number.isFinite(oldMana)) {
     const legacyRatio = Math.max(0, Math.min(1, oldMana / oldManaMax));
     run.mana = Math.max(0, Math.min(run.maxMana, Math.round(legacyRatio * run.maxMana)));
@@ -22717,6 +23733,7 @@ const RUN_SHAPE = [
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
   { key: 'maxHp', type: 'number' },
+  { key: 'maxHpAdjustment', type: 'number' },
   // Optional only for save compatibility. save.js migrates a pre-mana run to
   // its class-authored full pool before handing it to the game.
   { key: 'mana', type: 'number', optional: true },
@@ -22728,6 +23745,7 @@ const RUN_SHAPE = [
   { key: 'cinders', type: 'number' },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
+  { key: 'damageBySchoolAdd', type: 'object' },
   { key: 'flasks', type: 'array' },
   { key: 'history', type: 'array' },
   { key: 'modifiers', type: 'array' },
@@ -22749,10 +23767,11 @@ function typeOk(value, type) {
 /** validateRunShape(run) → [] when sound, else a list of human-readable problems.
  *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
  *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
-function validateRunShape(run, { legacy = false, preLedger = legacy } = {}) {
+function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger } = {}) {
   const problems = [];
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
+    if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -22789,6 +23808,22 @@ function validateRunShape(run, { legacy = false, preLedger = legacy } = {}) {
   }
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');
+  }
+  if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && (run.hp < 0 || run.hp > run.maxHp)) {
+    problems.push('hp must be between 0 and maxHp');
+  }
+  if (run.maxHpAdjustment !== undefined && !Number.isInteger(run.maxHpAdjustment)) {
+    problems.push('maxHpAdjustment must be an integer');
+  }
+  if (run.damageBySchoolAdd !== undefined) {
+    for (const school of DAMAGE_SCHOOLS) {
+      if (!Number.isInteger(run.damageBySchoolAdd[school]) || run.damageBySchoolAdd[school] < 0) {
+        problems.push(`damageBySchoolAdd.${school} must be a non-negative integer`);
+      }
+    }
+    for (const school of Object.keys(run.damageBySchoolAdd)) {
+      if (!DAMAGE_SCHOOLS.includes(school)) problems.push(`damageBySchoolAdd.${school} is not a legal damage school`);
+    }
   }
   if (run.maxMana !== undefined && (!Number.isFinite(run.maxMana) || run.maxMana <= 0)) {
     problems.push('maxMana must be > 0');
@@ -22859,12 +23894,26 @@ function serializeRun(run) {
 
 function initializeRunFlaskCharges(run, registries) {
   if (!run.flaskCharges) {
+    const wasFlasks = structuredClone(run.flasks || []);
     const allocation = registries.classes.get(run.class).startingFlaskAllocation;
     run.flaskCharges = createFlaskCharges(registries.balance, allocation);
     const legacy = run.flasks || [];
     run.flaskCharges.hpCurrent = Math.min(run.flaskCharges.hp, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'hp').length);
     run.flaskCharges.manaCurrent = Math.min(run.flaskCharges.mana, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'mana').length);
     run.flasks = (run.flasks || []).filter((f) => f && chargeKindForFlask(registries, f.flaskId) == null);
+    // ONE OF THE THREE UNGATED HEALS. `flaskCharges` is optional in RUN_SHAPE
+    // with no schemaVersion gate, so this fires on a CURRENT-schema save that
+    // has lost the field, not only on the pre-ledger save it was written for —
+    // and every spent charge comes back. It is allowed to; it may not be quiet
+    // about it.
+    note(run, {
+      kind: 'heal',
+      site: 'state.js:initializeRunFlaskCharges',
+      field: 'flaskCharges',
+      was: undefined,
+      now: { hp: run.flaskCharges.hp, mana: run.flaskCharges.mana, hpCurrent: run.flaskCharges.hpCurrent, manaCurrent: run.flaskCharges.manaCurrent },
+      why: `absent in the save: rebuilt from the class allocation, currents reconstructed from ${wasFlasks.length} legacy run.flasks entr(ies)`,
+    });
   }
   // ═══ THE ONE-TIME ATTRIBUTION — pre-ledger saves (v1/v2), stated, not
   // silent. A v2 save stores capacity with no ledger: chain growth always
@@ -22894,6 +23943,14 @@ function initializeRunFlaskCharges(run, registries) {
       }
       f.base = Math.min(flaskCapacity(registries.balance), f.capacity - grownTotal);
       f.granted = f.capacity - grownTotal - f.base;
+      note(run, {
+        kind: 'heal',
+        site: 'state.js:initializeRunFlaskCharges(attribution)',
+        field: 'flaskCharges.base/granted',
+        was: undefined,
+        now: { base: f.base, granted: f.granted, grownTotal, capacity: f.capacity },
+        why: 'pre-ledger save: capacity was attributed once — base from the current authored balance, the unaccounted remainder to the moment door',
+      });
     }
   }
   // Loaded runs re-derive the chain here — the load door. A save carrying a
@@ -22908,21 +23965,26 @@ function initializeRunFlaskCharges(run, registries) {
  * schemaVersion, or a run that doesn't match RUN_SHAPE (save.js turns any
  * throw here into an archive-and-refuse, so a bad save is never silently lost).
  */
-function deserializeRun(json) {
-  const run = JSON.parse(json);
+function migrateRunSchema(run) {
   if (!run || typeof run !== 'object') throw new Error('Corrupt run save');
+  const originalVersion = run.schemaVersion;
   const legacy = run.schemaVersion === 1;
   const preLedger = legacy || run.schemaVersion === 2; // v2: no flaskCharges capacity ledger yet
-  if (!preLedger && run.schemaVersion !== RUN_SCHEMA_VERSION) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (expected ${RUN_SCHEMA_VERSION})`);
+  const preHpLedger = [1, 2, 3].includes(run.schemaVersion);
+  if (![1, 2, 3, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger });
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
-  if (preLedger) {
-    run.migratedFromRunSchemaVersion = run.schemaVersion;
+  if (originalVersion !== RUN_SCHEMA_VERSION) {
+    run.migratedFromRunSchemaVersion = originalVersion;
     run.schemaVersion = RUN_SCHEMA_VERSION;
   }
   return run;
+}
+
+function deserializeRun(json) {
+  return migrateRunSchema(JSON.parse(json));
 }
 
 // ---------------------------------------------------------------------------
@@ -22944,7 +24006,7 @@ function deserializeRun(json) {
  * a zero-threshold player has no vessel, and the HUD's refusal path renders
  * it ABSENT rather than as an empty trough.
  */
-function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0 }) {
+function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {} }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
   const entity = {
@@ -22964,6 +24026,7 @@ function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamin
     statuses: {},
     stanceId: null,
     relicIds: [...relicIds],
+    damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, damageBySchoolAdd[school] || 0])),
     flasks: flasks.map((f) => ({ ...f })),
     flaskCharges: flaskCharges ? { ...flaskCharges } : null,
     counters: {
@@ -23025,7 +24088,7 @@ function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExpo
 }
 
 
-Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, initializeRunDerivedStats, RUN_SHAPE, validateRunShape, serializeRun, initializeRunFlaskCharges, deserializeRun, createPlayerCombatEntity, stampPlayerPoiseMax, createEnemyCombatEntity });
+Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, initializeRunDerivedStats, RUN_SHAPE, validateRunShape, serializeRun, initializeRunFlaskCharges, migrateRunSchema, deserializeRun, createPlayerCombatEntity, stampPlayerPoiseMax, createEnemyCombatEntity });
 
 },
 "src/model/unlocks.js": function (module, exports, require) {
@@ -23711,6 +24774,7 @@ function createCombat({
       energyMax: player.energyMax,
       drawPerTurn: player.drawPerTurn,
       poiseMax,
+      damageBySchoolAdd: player.damageBySchoolAdd || {},
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
@@ -24568,6 +25632,12 @@ const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
  */
 function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   let dmg = base;
+  const school = carrier && carrier.damageSchool;
+  if (source && source.kind === 'player' && school) {
+    dmg += source.damageBySchoolAdd && Number.isFinite(source.damageBySchoolAdd[school])
+      ? source.damageBySchoolAdd[school]
+      : 0;
+  }
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
@@ -24590,7 +25660,6 @@ function computeAttackDamage(ctx, source, target, base, attackTags, carrier = nu
     }
     if (addPool > 0) dmg *= 1 + addPool;
   }
-  const school = carrier && carrier.damageSchool;
   if (target && school) {
     const resistance = target.damageResistanceBySchool && target.damageResistanceBySchool[school];
     if (Number.isFinite(resistance)) dmg *= Math.max(0, 1 - resistance / 100);
@@ -25028,9 +26097,11 @@ function runOpcode(ctx, action, eff) {
     }
     case 'restoreMana': {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
-      const before = ctx.player.mana;
-      ctx.player.mana = Math.min(ctx.player.maxMana, ctx.player.mana + n);
-      ctx.emit('manaRestored', { amount: ctx.player.mana - before });
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        const before = t.mana;
+        t.mana = Math.min(t.maxMana, t.mana + n);
+        ctx.emit('manaRestored', { targetId: t.id, amount: t.mana - before });
+      }
       break;
     }
     case 'loseHp': {
@@ -25163,7 +26234,12 @@ function runRunOpcode(ctx, action, eff) {
     }
     case 'loseMaxHpPct': {
       const pct = evalNum(ctx, action, eff.pct, 0);
+      if (!Number.isInteger(run.maxHpAdjustment)) {
+        throw new Error('loseMaxHpPct requires the run maxHpAdjustment ledger');
+      }
+      const before = run.maxHp;
       run.maxHp = Math.max(1, Math.floor(run.maxHp * (1 - pct / 100)));
+      run.maxHpAdjustment += run.maxHp - before;
       run.hp = Math.min(run.hp, run.maxHp);
       break;
     }
@@ -25917,16 +26993,22 @@ Object.assign(module.exports, { TAGS, tagsFor, tagIdsFor, damageTagIds, cardsWit
 // It exposes calculation receipts; screens choose layout, never redo formulas.
 
 const { deriveStat } = require("src/model/derivedStats.js");
-const { equippedPieces } = require("src/model/loadout.js");
+const { equippedPieces, runMods } = require("src/model/loadout.js");
 const { passiveSum } = require("src/model/registries.js");
 
-const LABELS = Object.freeze({
-  hp: 'HP',
-  mana: 'Mana',
-  stamina: 'Stamina',
-  energy: 'Energy / turn',
-  draw: 'Draw / turn and opening hand',
-});
+// The labels and the order used to be a frozen map right here — a second home
+// for a fact the content table should own, and the reason "add a derived stat"
+// meant editing this file (D26, Law 0 clause 1). They are READ from
+// derivedStatRules.presentation now, which the content door validates row for
+// row against the rules themselves. Nothing about a derived stat's name or its
+// place in the list lives in src/model any more.
+function presentationRows(registries) {
+  const table = (registries.derivedStatRules || {}).presentation;
+  if (!table) throw new Error('statProjection requires derivedStatRules.presentation');
+  return Object.entries(table)
+    .map(([id, row]) => ({ id, ...row }))
+    .sort((a, b) => a.order - b.order);
+}
 
 /**
  * Pure player-Poise threshold projection. Equipment and relics state the
@@ -25974,17 +27056,27 @@ function statProjection(registries, run) {
     .slice()
     .sort((a, b) => a.order - b.order)
     .map((def) => ({ ...def, value: run.attributes[def.id] }));
-  const derived = ['hp', 'mana', 'stamina', 'energy', 'draw'].map((id) => {
+  const derived = presentationRows(registries).map((presentation) => {
+    const id = presentation.id;
     const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef });
-    const equipmentBonus = id === 'hp' ? Math.max(0, run.maxHp - receipt.value) : 0;
-    const value = receipt.value + equipmentBonus;
+    const equipmentBonus = id === 'hp' ? runMods(registries, run.loadout, run.class).maxHp : 0;
+    const adjustment = id === 'hp' ? (run.maxHpAdjustment || 0) : 0;
+    const value = id === 'hp' ? Math.max(1, receipt.value + equipmentBonus + adjustment) : receipt.value;
     return {
       ...receipt,
-      label: LABELS[id],
+      label: presentation.label,
+      // The short-form fields travel WITH the projection so no surface has to
+      // go and fetch a second table to know how a row reads (D26).
+      faceLabel: presentation.faceLabel || presentation.label,
+      disclosure: presentation.disclosure,
+      sense: presentation.sense,
+      order: presentation.order,
       value,
       equipmentBonus,
+      adjustment,
       formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
-        + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''} = ${value}`,
+        + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
+        + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
       note: id === 'stamina' ? 'No current consumer' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
     };
   });
@@ -26669,10 +27761,11 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-const { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges } = require("src/model/state.js");
+const { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } = require("src/model/state.js");
 const { createLoadout, stampDeck } = require("src/model/loadout.js");
 const { normalizeRunAttributes } = require("src/model/attributes.js");
 const { validateRunStartingKit } = require("src/model/startingKits.js");
+const { openLedger, closeLedger, note, readLedger } = require("src/model/healLedger.js");
 
 const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -26849,6 +27942,17 @@ function createSaveManager(storage) {
   let status = { ok: true, state: 'ok', reason: null, archiveId: null, recoveredFrom: null };
   let quarantined = false;
 
+  // ---- THE RUN'S NAMED, VISIBLE STATE (the run-side twin of profileStatus) --
+  // Property 3 above — "a failed load is a NAMED, VISIBLE state, never a fresh
+  // profile wearing the same filename" — has been true of the PROFILE since #67
+  // and was never true of the RUN. A run whose allocation, loadout or flask
+  // ledger was missing came back healed, plausible, and completely silent; a
+  // caller could not tell it from a clean load. `runStatus()` is that state.
+  // It is not a refusal and it is not a gate: the heals still heal, and
+  // tests/engine.test.js 28 and 50 stay green. It is the door saying what it
+  // did. One home for the mechanic: src/model/healLedger.js.
+  let runStatusRecord = { state: 'none', reason: 'no run has been loaded in this session', ledger: null };
+
   function parseMeta(json) {
     const meta = JSON.parse(json);
     if (!meta || typeof meta !== 'object') throw new Error('profile is not an object');
@@ -27004,15 +28108,35 @@ function createSaveManager(storage) {
      */
     loadRun(registries, slot = 1) {
       const json = storage.getItem(runKey(slot));
-      if (!json) return null;
+      if (!json) {
+        runStatusRecord = { state: 'none', reason: `slot ${slot} is empty`, ledger: null };
+        return null;
+      }
       let run;
       try {
         run = deserializeRun(json);
+        // THE DOOR OPENS HERE — after the shape is proven, before the first
+        // heal can fire. `savedSchemaVersion` is what the FILE said, not what
+        // the migration stamped, because "did a heal fire on a current-schema
+        // save" is the whole question and the stamp would erase it.
+        openLedger(run, 'loadRun', run.migratedFromRunSchemaVersion === undefined
+          ? RUN_SCHEMA_VERSION : run.migratedFromRunSchemaVersion);
+        if (run.migratedFromRunSchemaVersion !== undefined) {
+          note(run, {
+            kind: 'write',
+            site: 'state.js:migrateRunSchema',
+            field: 'schemaVersion',
+            was: run.migratedFromRunSchemaVersion,
+            now: RUN_SCHEMA_VERSION,
+            why: 'an older build wrote this save; the schema stamp was brought forward',
+          });
+        }
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
-        delete run.migratedFromRunSchemaVersion;
       } catch (e) {
-        archive(json, e && e.message ? e.message : 'corrupt save', slot);
+        const reason = e && e.message ? e.message : 'corrupt save';
+        const archiveId = archive(json, reason, slot);
+        runStatusRecord = { state: 'archived', reason, ledger: readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION }), archiveId };
         return null;
       }
       if (run.contentVersion !== registries.contentVersion) {
@@ -27021,10 +28145,20 @@ function createSaveManager(storage) {
           (run.relics || []).find((id) => !registries.relics.has(id)) ||
           (run.flasks || []).find((f) => !registries.flasks.has(f.flaskId));
         if (dangling) {
-          archive(json, `contentVersion ${run.contentVersion} → ${registries.contentVersion}: dangling id`, slot);
+          const reason = `contentVersion ${run.contentVersion} → ${registries.contentVersion}: dangling id`;
+          const archiveId = archive(json, reason, slot);
+          runStatusRecord = { state: 'archived', reason, ledger: readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION }), archiveId };
           return null;
         }
         // Ids all still resolve: the run survives the content patch.
+        note(run, {
+          kind: 'overwrite',
+          site: 'save.js:loadRun',
+          field: 'contentVersion',
+          was: run.contentVersion,
+          now: registries.contentVersion,
+          why: 'the content changed under this run and every id it holds still resolves, so it was re-stamped rather than archived',
+        });
         run.contentVersion = registries.contentVersion;
       }
       // A run saved before equipment existed has no loadout. Give it the bare
@@ -27033,6 +28167,19 @@ function createSaveManager(storage) {
       const needsCarrierStamp = (run.deck || []).some((card) => card.damageSchool === undefined || card.exposureBuildupPerHit === undefined);
       if (!run.loadout) {
         run.loadout = createLoadout(registries, run.class);
+        // ONE OF THE THREE UNGATED HEALS. tests/engine.test.js 28 deletes
+        // `loadout` from a CURRENT-schema run and requires exactly this, and it
+        // is right to: throwing away a climb over a missing field is worse. The
+        // defect was never the heal, it was that nothing downstream could tell
+        // this had happened.
+        note(run, {
+          kind: 'heal',
+          site: 'save.js:loadRun',
+          field: 'loadout',
+          was: undefined,
+          now: { sets: run.loadout.sets },
+          why: `absent in the save: refilled with the class starting loadout for '${run.class}' — whatever this player was wearing is not recoverable from this file`,
+        });
       }
       // One migration door for HP, Mana, Stamina, Energy and Draw. A run that
       // already owns a rules snapshot is only validated; a legacy run resolves
@@ -27041,10 +28188,25 @@ function createSaveManager(storage) {
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
         if (needsEquipmentStamp || needsCarrierStamp) stampDeck(registries, run);
         initializeRunFlaskCharges(run, registries);
+        delete run.migratedFromRunSchemaVersion;
       } catch (e) {
-        archive(json, e && e.message ? e.message : 'invalid derived-stat snapshot', slot);
+        const reason = e && e.message ? e.message : 'invalid derived-stat snapshot';
+        const archiveId = archive(json, reason, slot);
+        runStatusRecord = { state: 'archived', reason, ledger: readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION }), archiveId };
         return null;
       }
+      // The door closes. Everything after this — a whole climb of stampDeck
+      // calls — records nothing, by design.
+      closeLedger(run);
+      const ledger = readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION });
+      runStatusRecord = {
+        state: ledger && ledger.healed ? 'healed' : 'ok',
+        reason: ledger && ledger.healed
+          ? `${ledger.healed} field(s) the save did not carry were filled in at the load door`
+          : null,
+        ledger,
+        archiveId: null,
+      };
       // A run that LOADS is a player too, and this is the edge Bjorn could not
       // reach: everyone who started a climb on a build before this one has runs
       // and no profile. Waiting for their next autosave would leave Settings →
@@ -27161,6 +28323,32 @@ function createSaveManager(storage) {
      */
     profileStatus() {
       return { ...status, quarantined };
+    },
+
+    /**
+     * runStatus() → { state, reason, ledger, archiveId } for the LAST loadRun on
+     * this manager. The run-side twin of profileStatus(), and the same promise:
+     * what the door did to a save is a named, visible state, not something a
+     * caller has to diff two objects to discover.
+     *
+     * state: 'none'     — nothing has been loaded (or the slot was empty)
+     *        'ok'       — the save carried everything; nothing was filled in
+     *        'healed'   — one or more ABSENT fields were filled in, and
+     *                     `ledger.entries` says which, from where, with what
+     *        'archived' — refused; the bytes were set aside, reason named
+     *
+     * `ledger.healedOnCurrentSchema` is the number this house is watching: a
+     * heal on a save written by THIS schema version is not a migration, it is a
+     * save that lost a field on a build that should never have written it
+     * missing. Today that only happens when a test plants it. The day it
+     * happens for real, the parked refuse-vs-heal call wakes up — the wake
+     * condition is asserted in tools/runcreation.mjs, not left in prose.
+     *
+     * A ledger is a WITNESS, not persisted state: it lives non-enumerably on
+     * the run object, so no save byte changes and no schema version moves.
+     */
+    runStatus() {
+      return { ...runStatusRecord };
     },
 
     /**
@@ -29372,6 +30560,9 @@ const { LOCKED_CLASSES } = require("src/content/index.js");
 const { KEEPSAKES } = require("src/content/keepsakes.js");
 const { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } = require("src/ui/assets.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { mountDisclosure } = require("src/ui/components/disclosure.js");
+const { creationBrief } = require("src/model/creationBrief.js");
+const { relicText } = require("src/ui/components/card.js");
 const { refusesWhen } = require("src/ui/components/refusal.js");
 const { attachSeedField } = require("src/ui/components/seedfield.js");
 const { createRunState } = require("src/model/state.js");
@@ -29441,6 +30632,19 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
 
           <div class="preview-pane">
             <div id="cz-portrait" class="cz-portrait"></div>
+            <!-- D26's SHORT FORM, and it is the DEFAULT view: starting stats,
+                 starting armaments, nothing else. Everything that used to sit
+                 here as prose is one tap down. The ATTRIBUTES & RESOURCES
+                 details below keeps the full receipts and is now the third
+                 tier, not the first — the panel
+                 he called bad is still reachable, still exact, and no longer in
+                 the way of picking a class. -->
+            <section class="cz-brief" data-surface="creationBrief">
+              <p class="cz-label">STARTING STATS</p>
+              <div id="cz-brief-stats" class="cz-disc"></div>
+              <p class="cz-label">STARTING ARMAMENTS</p>
+              <div id="cz-brief-armaments" class="cz-disc"></div>
+            </section>
             <details class="cz-stats"><summary>ATTRIBUTES &amp; RESOURCES</summary><div id="cz-stat-projection"></div></details>
             <label class="cz-label cz-name-label" for="cz-name">NAME</label>
             <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false"
@@ -29471,6 +30675,18 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     if (sprite) p.appendChild(sprite);
     else p.textContent = state.glyph;
     const preview = createRunState({ seed: 0, classId: state.classId, registries, startingKitId: state.startingKitId, profileMeta: meta });
+    // THE SHORT FORM FIRST, and it is drawn from the same preview run the
+    // receipts below use — one read of the run, two tiers of the same truth.
+    const brief = creationBrief(registries, preview);
+    // The relic's authored sentence is filled by the shared relic renderer
+    // (#38's token rule); the model composes everything derivable and keeps no
+    // copy of the token machinery.
+    for (const entry of brief.armaments) {
+      if (entry.kind !== 'relic') continue;
+      entry.reveal.sense = relicText(registries.relics.get(entry.id), registries);
+    }
+    mountDisclosure($('#cz-brief-stats'), brief.stats, { moreLabel: 'more' });
+    mountDisclosure($('#cz-brief-armaments'), brief.armaments, { moreLabel: 'more' });
     const projection = statProjection(registries, preview);
     const surface = equipmentSurfaceReceipt(registries, preview);
     const kit = surface.roles;
@@ -30130,6 +31346,594 @@ function assetsAreInlined() {
 Object.assign(module.exports, { ASSET_MAP, assetUrl, assetsAreInlined });
 
 },
+"src/ui/components/disclosure.js": function (module, exports, require) {
+// src/ui/components/disclosure.js — THE FACE / REVEAL RENDERER.
+//
+// D26. The words are model/disclosure.js; this is the one thing that draws
+// them, so the creation screen and (by the handover packet, 2026-08-16) the F1
+// combat frame render entries with one renderer instead of two that agree
+// today. Two hand renderers cost this house a whole act once already.
+//
+// WHAT IT DRAWS, per group:
+//
+//   .disc-faces      the row of FACES — one control per entry whose own
+//                    `disclosure` says 'face'. A face is a <button>: name and
+//                    number, no prose, tap floor on both axes.
+//   .disc-more       present ONLY when the data puts at least one entry behind
+//                    it. Its count is the count — never a typed number — and
+//                    when every entry is face-tier the control does not exist,
+//                    because an expander that opens nothing is a lie about
+//                    there being more.
+//   .disc-reveal     ONE panel, below the row, holding the open entry: title,
+//                    the authored sentence, the derived lines, and the RECEIPT
+//                    last. One at a time on purpose — the short form stays
+//                    short, and a phone that opens five sentences is the
+//                    screen he asked us to stop shipping.
+//
+// HOW IT OPENS, and no second gesture is minted (model/disclosure.js says why):
+//   TAP the face      → its reveal. Tap it again → closed. This is the whole
+//                       affordance and it is the one a thumb already has.
+//   HOVER / GP FOCUS  → the same words in the shared tooltip. A pointer and the
+//                       pad get the tip for free; neither is required to read.
+//
+// WHAT IT PUBLISHES, so an instrument and a screenshot can read the state
+// without becoming the finger (armInspect's rule, applied here):
+//   data-face="<key>"        on every face, the model's own entry key
+//   data-disclosure="face|reveal"  the tier the ENTRY declared, echoed as
+//                            drawn — an instrument compares this against the
+//                            content table and catches a screen that ignored it
+//   aria-expanded + data-reveal="open|closed"  on the face
+//   data-reveal-for="<key>"  on the panel while it is open
+//
+// REMOVAL CONDITION: deleted with model/disclosure.js — it has no other job.
+
+const { attachTooltip, esc, hideTooltip } = require("src/ui/components/tooltip.js");
+
+function revealHtml(entry) {
+  const lines = (entry.reveal.lines || []).filter(Boolean);
+  return `<h4>${esc(entry.reveal.title)}</h4>`
+    + (entry.reveal.sense ? `<p class="disc-sense">${esc(entry.reveal.sense)}</p>` : '')
+    + (lines.length ? `<ul class="disc-lines">${lines.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>` : '')
+    + (entry.reveal.receipt ? `<p class="disc-receipt">${esc(entry.reveal.receipt)}</p>` : '');
+}
+
+/** The same words the panel shows, for the hover/focus tip. One source. */
+function tipHtml(entry) {
+  return revealHtml(entry);
+}
+
+/**
+ * mountDisclosure(host, entries, { moreLabel }) → { open(key), close() }
+ *
+ * `entries` is the model's list, in model order. WHICH ONES ARE DRAWN UP FRONT
+ * IS READ OFF `entry.disclosure` — there is no id list here, and adding one is
+ * the defect tools/creationbrief.mjs plants.
+ */
+function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
+  const rows = [...(entries || [])];
+  const faces = rows.filter((entry) => entry.disclosure === 'face');
+  const behind = rows.filter((entry) => entry.disclosure !== 'face');
+  host.innerHTML = `<div class="disc-faces"></div><div class="disc-reveal" hidden></div>`;
+  const faceBox = host.querySelector('.disc-faces');
+  const panel = host.querySelector('.disc-reveal');
+  const buttons = new Map();
+  let openKey = null;
+
+  function close() {
+    openKey = null;
+    panel.hidden = true;
+    panel.innerHTML = '';
+    panel.removeAttribute('data-reveal-for');
+    for (const button of buttons.values()) {
+      button.setAttribute('aria-expanded', 'false');
+      button.dataset.reveal = 'closed';
+    }
+  }
+
+  function open(key) {
+    const entry = rows.find((row) => row.key === key);
+    if (!entry) return;
+    close();
+    openKey = key;
+    panel.innerHTML = revealHtml(entry);
+    panel.hidden = false;
+    panel.dataset.revealFor = key;
+    const button = buttons.get(key);
+    if (button) {
+      button.setAttribute('aria-expanded', 'true');
+      button.dataset.reveal = 'open';
+    }
+  }
+
+  function drawFace(entry) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `disc-face disc-${entry.kind}`;
+    button.dataset.face = entry.key;
+    // The tier as the ENTRY declared it, echoed on the control that was drawn.
+    // A screen that stopped reading the field prints the contradiction here.
+    button.dataset.disclosure = entry.disclosure;
+    button.dataset.reveal = 'closed';
+    button.setAttribute('aria-expanded', 'false');
+    button.innerHTML = `<b class="disc-name">${esc(entry.face.label)}</b>`
+      + (entry.face.value === '' || entry.face.value == null ? '' : `<span class="disc-value">${esc(entry.face.value)}</span>`);
+    button.addEventListener('click', () => {
+      hideTooltip();
+      if (openKey === entry.key) close(); else open(entry.key);
+    });
+    attachTooltip(button, () => tipHtml(entry));
+    buttons.set(entry.key, button);
+    faceBox.appendChild(button);
+  }
+
+  for (const entry of faces) drawFace(entry);
+
+  // The expander exists only if the data put something behind it, and its
+  // count is counted.
+  if (behind.length) {
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'disc-face disc-more';
+    more.dataset.more = String(behind.length);
+    more.setAttribute('aria-expanded', 'false');
+    more.innerHTML = `<b class="disc-name">+${behind.length} ${esc(moreLabel)}</b>`;
+    more.addEventListener('click', () => {
+      const opened = more.getAttribute('aria-expanded') === 'true';
+      if (opened) {
+        for (const entry of behind) {
+          const button = buttons.get(entry.key);
+          if (button) button.remove();
+          buttons.delete(entry.key);
+        }
+        if (behind.some((entry) => entry.key === openKey)) close();
+        more.setAttribute('aria-expanded', 'false');
+      } else {
+        for (const entry of behind) drawFace(entry);
+        faceBox.appendChild(more); // stays last, so the row reads in one order
+        more.setAttribute('aria-expanded', 'true');
+      }
+    });
+    attachTooltip(more, () => `${behind.length} more, kept out of the way until you ask.`);
+    faceBox.appendChild(more);
+  }
+
+  return { open, close, get openKey() { return openKey; } };
+}
+
+
+Object.assign(module.exports, { mountDisclosure });
+
+},
+"src/model/creationBrief.js": function (module, exports, require) {
+// src/model/creationBrief.js — D26's SHORT FORM, as one read model.
+//
+// Constantine, 2026-08-15: "the statte descriptions kind of suck. perhaps have
+// a simplifed verison with just the starting stats, starting armaments
+// selection , and then have the ability to expand by clicking, with tool tips.
+// for character creation I mean"
+//
+// THE FIX IS LESS PROSE, NOT BETTER PROSE. Every entry here has a FACE (name
+// and number, no sentence) and a REVEAL (the sentence, one tap down). The
+// vocabulary and the tier field are model/disclosure.js; this file is the one
+// place that composes them, so the creation screen and the F1 combat frame
+// cannot answer "what does a stat look like" two different ways.
+//
+// WHAT IS AUTHORED AND WHAT IS DERIVED (Law 0 clause 1 — an entry DESCRIBES,
+// the machinery DERIVES). Authored, once, per row: `sense`, one sentence with
+// NO NUMBER IN IT. Derived here, every render, from the tables that own the
+// facts:
+//
+//   an attribute's FEEDS      every derived stat whose sourceStat is this
+//                             attribute, with its own gain and its own tier
+//                             size — so adding a rule row changes the
+//                             attribute's reveal with nobody editing prose
+//   an attribute's UNLOCKS    every armament that names it in
+//                             equipmentRequirements, with the minimum it asks
+//                             — which is how STRENGTH has an honest reveal on
+//                             a screen where it feeds no pool at all
+//   a derived stat's SOURCE   its own rule row, in words
+//   a derived stat's RECEIPT  statProjection's formula string, unchanged: the
+//                             arithmetic already has one home and this is not
+//                             a second one
+//   an armament's EFFECTS     its `mods` column read through modFields, the
+//                             same vocabulary the Armoury comparison reads
+//   an armament's REQUIREMENTS equipmentRequirementReceipt, met or unmet
+//
+// AN ENTRY THAT FEEDS NOTHING AND UNLOCKS NOTHING SAYS SO. Silence there would
+// be the screen implying a stat matters because it is drawn; the derivation
+// prints "Nothing reads it yet" and that sentence goes stale the moment the
+// tables change, which is the point.
+//
+// THE RELIC IS HERE BECAUSE THE SCREEN NEVER NAMED IT (Bjorn, 2026-08-15): the
+// class-pick panel itemized "Items 6 + relics 0 = 6" one row below a screen
+// that never mentioned the starting relic — and D23 made that relic the carrier
+// of the class's own numbers. Its passive modifiers are derived below; its
+// authored sentence is composed by the caller through the shared relicText
+// renderer (`extras`), because token-filling is a rendering concern with one
+// home already (ui/components/card.js) and this module keeps no copy of it.
+//
+// REMOVAL CONDITION (SOP 1's corollary): deleted the day the creation screen
+// and the combat frame no longer show stats — the split has no subject then.
+
+const { splitByDisclosure } = require("src/model/disclosure.js");
+const { statProjection } = require("src/model/statProjection.js");
+const { equipmentRequirementReceipt, equippedPieces, parseMod } = require("src/model/loadout.js");
+
+/** `mods` → player-readable effect lines, through the modFields vocabulary. */
+function pieceEffects(registries, piece) {
+  const fields = (registries.equipment || {}).modFields || {};
+  return (piece.mods || []).map((raw) => {
+    const mod = parseMod(raw);
+    const spec = mod && fields[mod.field];
+    // A mod the vocabulary does not know is refused at the content door, so
+    // reaching here means the tables disagree — say the raw row rather than
+    // drop it silently. A visible oddity is a bug report; a dropped line is a
+    // screen that quietly under-describes a weapon.
+    if (!spec) return raw;
+    const sign = mod.mode === 'add' && mod.value >= 0 ? '+' : '';
+    return `${spec.label} ${sign}${mod.value}`;
+  });
+}
+
+function requirementLines(registries, piece, attributes) {
+  const receipt = equipmentRequirementReceipt(registries, piece, attributes);
+  return receipt.requirements.map((row) => {
+    const def = registries.attributes.get(row.attributeId);
+    const met = Number.isFinite(row.actual) && row.actual >= row.required;
+    return `Needs ${def.shortLabel} ${row.required} — you have ${row.actual == null ? '—' : row.actual}${met ? '' : ' (short)'}`;
+  });
+}
+
+/** The armament entries: what the chosen kit actually puts in your hands. */
+function armamentEntries(registries, run) {
+  const slots = (registries.equipment || {}).slots || [];
+  return equippedPieces(registries, run.loadout, run.class).map((piece) => {
+    const slot = slots.find((row) => (row.kinds || []).includes(piece.kind) && (!piece.hand || piece.hand === 'either' || piece.hand === row.hand));
+    return {
+      id: piece.id,
+      // THE KEY IS THE MODEL'S, NOT THE SCREEN'S. Two hands may hold the same
+      // armament id, so a bare id is not unique on this surface — and a DOM
+      // that keys two faces the same silently opens the wrong reveal. One rule,
+      // stated once, adopted by every surface that draws entries.
+      key: `armament:${slot ? slot.id : piece.kind}:${piece.id}`,
+      slotId: slot ? slot.id : null,
+      kind: 'armament',
+      // Always face-tier: he named the armaments selection as the other half
+      // of the short form, so a starting armament is never behind a tap.
+      disclosure: 'face',
+      face: { label: piece.name, value: slot ? slot.label : '' },
+      reveal: {
+        title: piece.name,
+        sense: piece.blurb || '',
+        lines: [...pieceEffects(registries, piece), ...requirementLines(registries, piece, run.attributes)],
+        receipt: '',
+      },
+    };
+  });
+}
+
+function relicEntry(registries, run) {
+  const classDef = registries.classes.get(run.class);
+  const relic = classDef.startingRelic ? registries.relics.get(classDef.startingRelic) : null;
+  if (!relic) return null;
+  // The resource's name is the presentation table's, never an upper-cased id:
+  // a player reads 'Mana', and the engine's key is not a label (Vira's
+  // engine-language finding, 2026-08-15).
+  const named = (id) => (((registries.derivedStatRules || {}).presentation || {})[id] || {}).label || id;
+  const lines = ((relic.passives && relic.passives.modifiers) || []).map((row) => {
+    if (row.tag === 'resource.flat') return `${named(row.resource)} +${row.amount}`;
+    if (row.tag === 'resource.attributeTier') {
+      const def = registries.attributes.get(row.sourceStat);
+      return `${named(row.resource)} +${row.amountPerTier} per ${row.pointsPerTier} ${def.shortLabel}`;
+    }
+    if (row.tag === 'damage.school.flat') return `${row.school} damage +${row.amount}`;
+    return row.tag;
+  });
+  return {
+    id: relic.id,
+    key: `relic:${relic.id}`,
+    kind: 'relic',
+    disclosure: 'face',
+    face: { label: 'Relic', value: relic.name },
+    reveal: { title: relic.name, sense: '', lines, receipt: '' },
+  };
+}
+
+/** Every armament in the class's tables that names this attribute as a gate. */
+function unlockLines(registries, attributeId) {
+  return ((registries.equipment || {}).armaments || [])
+    .filter((piece) => ((piece.requirements && piece.requirements.attributes) || {})[attributeId] != null)
+    .map((piece) => `${piece.name} asks ${piece.requirements.attributes[attributeId]}`);
+}
+
+function attributeEntries(registries, projection) {
+  const rules = ((registries.derivedStatRules || {}).rules) || {};
+  const presentation = ((registries.derivedStatRules || {}).presentation) || {};
+  return projection.attributes.map((def) => {
+    const feeds = Object.entries(rules)
+      .filter(([, rule]) => rule.sourceStat === def.id)
+      .sort((a, b) => (presentation[a[0]].order || 0) - (presentation[b[0]].order || 0))
+      .map(([id, rule]) => {
+        const gain = Number.isFinite(rule.gainPerTier) ? rule.gainPerTier : null;
+        const points = rule.pointsPerTier || ((registries.derivedStatRules || {}).defaults || {}).pointsPerTier;
+        const label = presentation[id].label;
+        // A class-field gain (hp) is a different number per class, so it is
+        // read off the projection's own receipt rather than restated here.
+        const perTier = gain == null
+          ? (projection.derived.find((row) => row.id === id) || {}).gainPerTier
+          : gain;
+        return `${label} +${perTier} every ${points} points`;
+      });
+    const unlocks = unlockLines(registries, def.id);
+    const lines = [...feeds, ...unlocks];
+    return {
+      id: def.id,
+      key: `attribute:${def.id}`,
+      kind: 'attribute',
+      disclosure: def.disclosure,
+      face: { label: def.shortLabel, value: def.value },
+      reveal: {
+        title: def.label,
+        sense: def.sense,
+        lines: lines.length ? lines : ['Nothing reads it yet.'],
+        receipt: '',
+      },
+    };
+  });
+}
+
+function derivedEntries(projection) {
+  return projection.derived.map((row) => ({
+    id: row.id,
+    key: `derived:${row.id}`,
+    kind: 'derived',
+    disclosure: row.disclosure,
+    face: { label: row.faceLabel, value: row.value },
+    reveal: {
+      title: row.label,
+      sense: row.sense,
+      lines: [],
+      // THE RECEIPT TIER, and it is the projection's own string — the
+      // arithmetic keeps its single home (Law 1 clause 2).
+      receipt: row.formula,
+    },
+  }));
+}
+
+/**
+ * creationBrief(registries, run) → { stats, armaments, faces, reveals }
+ *
+ * `stats` and `armaments` are every entry in authored order; `faces` and
+ * `reveals` are the same entries split by their own `disclosure` field — the
+ * split is READ, never decided here, and no caller may filter by id.
+ */
+function creationBrief(registries, run) {
+  const projection = statProjection(registries, run);
+  const stats = [...attributeEntries(registries, projection), ...derivedEntries(projection)];
+  const relic = relicEntry(registries, run);
+  const armaments = [...armamentEntries(registries, run), ...(relic ? [relic] : [])];
+  const split = splitByDisclosure(stats);
+  return {
+    classId: run.class,
+    stats,
+    armaments,
+    faces: split.face,
+    reveals: split.reveal,
+  };
+}
+
+
+Object.assign(module.exports, { creationBrief });
+
+},
+"src/ui/components/card.js": function (module, exports, require) {
+// src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
+//
+// All numbers shown come from the engine: in combat, previewCard tokens
+// (live math, SPEC §3.13); outside combat, the card's own literal values via
+// computeTokenBindings. No math happens here.
+
+const { resolveCard } = require("src/model/registries.js");
+const { computeTokenBindings, relicTokens, tokenRe } = require("src/model/validate.js");
+const { flaskGrowthClause } = require("src/model/flaskgrowth.js");
+const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { balance } = require("src/content/balance.js");
+const { flasks } = require("src/content/flasks.js");
+const { tagsFor } = require("src/content/tags.js");
+
+/** Static token values straight off the def (for reward/pile/deck views). */
+function staticTokens(def) {
+  const tokens = {};
+  for (const b of computeTokenBindings(def.effects || [])) {
+    const v = (def.effects[b.index] || {})[b.field];
+    if (typeof v === 'number') tokens[b.token] = v;
+  }
+  return tokens;
+}
+
+/**
+ * relicText(def) → plain text with every {token} replaced by the number the
+ * relic's own data produces. EldenSpire#38.
+ *
+ * Beside fillTemplate() on purpose: that one is the card path (rich HTML, live
+ * combat previews, up/down colouring); this one is the relic/flask path, which
+ * is read in tooltips and list rows where the caller escapes the result itself.
+ * They share the token SYNTAX, so they live together — one place to look when
+ * the syntax changes — and they do not share a body, because one returns HTML
+ * and the other returns text and merging them would mean an escaping decision
+ * made in the wrong place.
+ *
+ * What replaced it: `textTemplate.replace(/[{}]/g, '')` at three call sites,
+ * which stripped the braces and showed the player the KEY. An unresolved token
+ * still renders as `{token}` here — braces and all — because a visible brace is
+ * a bug report and a bare key is a sentence that looks fine and lies.
+ */
+function relicText(def, registries = null) {
+  if (!def || !def.textTemplate) return '';
+  const tokens = relicTokens(def);
+  const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
+    typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
+  ));
+  // A growth row (balance.flaskGrowth) is a grant the player must be able to
+  // read on the relic that carries it — but its amount has ONE home, the row,
+  // so the sentence is DERIVED here rather than hand-typed into textTemplate
+  // (Law 1 clause 2; the derivation and its boundary live at
+  // flaskGrowthClause, model/flaskgrowth.js; corpus tools/flaskgrowth.mjs).
+  // THE CLAUSE READS THE REGISTRIES IT IS HANDED — the same object the seam
+  // (syncFlaskGrowth) derives from — so the day any mode forks balance
+  // per-run, the tooltip describes the row the seam actually applies, not the
+  // shipped one. Every run-facing call site passes its registries (source
+  // contract in the corpus). The static fallback is for surfaces with no
+  // registries in hand, where the one shipped bundle is the only truth there is.
+  const bal = (registries && registries.balance) || balance;
+  const defs = (registries && registries.flasks && registries.flasks.all()) || flasks;
+  const grown = flaskGrowthClause(bal, defs, def.id);
+  return grown ? `${base} ${grown}` : base;
+}
+
+function fillTemplate(def, tokens, baseTokens) {
+  let html = esc(def.textTemplate);
+  html = html.replace(tokenRe(), (m, tok) => {
+    const v = tokens[tok];
+    if (v == null) return m;
+    let cls = 'val';
+    if (baseTokens && typeof baseTokens[tok] === 'number') {
+      if (v > baseTokens[tok]) cls += ' up';
+      else if (v < baseTokens[tok]) cls += ' down';
+    }
+    return `<span class="${cls}">${v}</span>`;
+  });
+  // Light keyword coloring for readability.
+  html = html
+    .replace(/\b(Bleed|Crimson Blight|Staggered|Poise)\b/g, '<span class="st-bleed">$1</span>')
+    .replace(/\b(Exhaust|Ethereal|Innate|Retain|Unplayable)\b/g, '<span class="kw">$1</span>');
+  return html;
+}
+
+/**
+ * renderCard(registries, ref, opts) → element.
+ *   ref  — { cardId, upgraded, instanceId? }
+ *   opts — { preview?    (previewCard result → live numbers),
+ *            affordable? (bool; greys out when false),
+ *            small?      (scale for reward/pile grids) }
+ */
+function renderCard(registries, ref, opts = {}) {
+  const def = resolveCard(registries, ref);
+  const el = document.createElement('div');
+  el.className = `card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
+  // Type presentation is data (balance.ui.cardTypes): corner radii carry the
+  // type (attack squarest → power roundest) and each type owns its banner
+  // colour. Renaming a label here never touches engine logic.
+  const ty = balance.ui.cardTypes[def.type];
+  if (ty) {
+    el.style.setProperty('--card-type-color', ty.color);
+    el.style.setProperty('--card-radius', `${ty.radius}px`);
+    el.style.setProperty('--card-art-radius', `${ty.art}px`);
+  }
+  // The class motif hue is DATA (class def cardTint), handed to CSS as a var so
+  // adding a class brings its own card colour with no stylesheet edit. Colorless
+  // cards have no owning class, so they fall back to the neutral frame.
+  const owner = registries.classes.has(def.class) ? registries.classes.get(def.class) : null;
+  if (owner && owner.cardTint) el.style.setProperty('--card-tint', owner.cardTint);
+  if (opts.affordable === false) el.classList.add('unaffordable');
+  if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
+  el.dataset.cardId = def.id;
+
+  const tags = def.cardTags && def.cardTags.length
+    ? def.cardTags.map((id) => registries.tags.find((t) => t.id === id)).filter(Boolean)
+    : tagsFor(def.id);
+  const base = staticTokens(def);
+  const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
+  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
+  const manaCost = opts.preview ? opts.preview.manaCost : (def.manaCost || 0);
+
+  el.innerHTML =
+    `<div class="cost">${esc(cost)}</div>` +
+    (manaCost ? `<div class="mana-cost" title="Mana cost">◆ ${esc(manaCost)}</div>` : '') +
+    `<div class="cname">${esc(def.name)}</div>` +
+    `<div class="art">${esc(def.icon || '❖')}</div>` +
+    `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
+    // Subtypes: authored in content/source/cardTagging.csv. Untagged cards
+    // render nothing here, so the layout is unchanged for them.
+    (tags.length
+      ? `<div class="ctags">${tags
+          .map((t) => `<span class="ctag" style="--tag-color:#${esc(t.color)}" title="${esc(t.blurb)}">${esc(t.glyph)} ${esc(t.label)}</span>`)
+          .join('')}</div>`
+      : '') +
+    `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
+
+  // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
+  // number in the status row's own tint — "these cards just lit up" instead
+  // of set-intersection math. Non-matching cards get nothing (absence = no
+  // bonus; never a "+0%" badge).
+  const boost = opts.preview && (opts.preview.values || []).find((v) => v.boostTint);
+  if (boost) {
+    el.classList.add('tag-boost');
+    el.style.setProperty('--boost-tint', boost.boostTint);
+  }
+
+  // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
+  attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
+  if (opts.small) {
+    el.style.transform = 'scale(0.92)';
+  }
+  return el;
+}
+
+/**
+ * Tooltip HTML previewing what a card becomes when Smithed: current text in
+ * muted, upgraded text below with changed values highlighted green/red (the
+ * same up/down coloring cards use in play). All numbers come from the defs.
+ */
+function upgradePreviewHtml(registries, ref) {
+  const base = resolveCard(registries, { cardId: ref.cardId, upgraded: false });
+  const upg = resolveCard(registries, { cardId: ref.cardId, upgraded: true });
+  const baseTokens = staticTokens(base);
+  const upgTokens = { ...baseTokens, ...staticTokens(upg) };
+  // Both lines are CARD TEXT, so both wear `.ctext` — the class the mark rules
+  // are keyed to (ui.css). Without it the preview drew the number it had just
+  // computed as changed in the same colour and weight as the word beside it.
+  // `.ctext` carries the marks only; the card face's block layout stays on
+  // `.card .ctext` and does not follow the text into the tooltip.
+  let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
+  html += `<div class="ctext" style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
+  html += `<div class="ctext" style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
+  if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
+  return html;
+}
+
+function cardTooltip(registries, def, tokens) {
+  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)} Energy${def.manaCost ? ` + ${esc(def.manaCost)} Mana` : ''}</div>`;
+  // Card text here too — same function, same marks, same class. The in-play
+  // card tooltip had the identical defect; it is one fix, not two.
+  html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;
+  // Nested keyword + status tooltips (SPEC §7.3).
+  const lines = [];
+  for (const kw of def.keywords || []) {
+    if (registries.keywords.has(kw)) {
+      const k = registries.keywords.get(kw);
+      lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
+    }
+  }
+  for (const eff of def.effects || []) {
+    if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {
+      const s = registries.statuses.get(eff.status);
+      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    }
+    if (eff.op === 'enterStance' && registries.stances.has(eff.stance)) {
+      const s = registries.stances.get(eff.stance);
+      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    }
+  }
+  if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);
+  if (lines.length) html += `<div class="tt-kw">${lines.join('<br>')}</div>`;
+  return html;
+}
+
+
+Object.assign(module.exports, { staticTokens, relicText, renderCard, upgradePreviewHtml });
+
+},
 "src/ui/components/refusal.js": function (module, exports, require) {
 // src/ui/components/refusal.js — a control the player can SEE and cannot USE.
 //
@@ -30521,7 +32325,10 @@ function candidateReceipt(registries, run, candidate, beforeRoles) {
   if (beforeMods.swapCostDelta !== afterMods.swapCostDelta) {
     resourceChanges.push({
       id: 'swapCost',
-      label: 'Active-set swap Energy',
+      // Actions, not Energy (D17 message 3) — the same resource, the same
+      // rename, and a comparison row that kept the old noun would be the one
+      // place a player met both words in one session.
+      label: 'Active-set swap Actions',
       before: beforeMods.swapCostDelta,
       after: afterMods.swapCostDelta,
     });
@@ -31116,214 +32923,6 @@ function mountDraft(app, { registries, classId, rng, rounds = 3, choices = 3, on
 
 
 Object.assign(module.exports, { mountDraft });
-
-},
-"src/ui/components/card.js": function (module, exports, require) {
-// src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
-//
-// All numbers shown come from the engine: in combat, previewCard tokens
-// (live math, SPEC §3.13); outside combat, the card's own literal values via
-// computeTokenBindings. No math happens here.
-
-const { resolveCard } = require("src/model/registries.js");
-const { computeTokenBindings, relicTokens, tokenRe } = require("src/model/validate.js");
-const { flaskGrowthClause } = require("src/model/flaskgrowth.js");
-const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
-const { balance } = require("src/content/balance.js");
-const { flasks } = require("src/content/flasks.js");
-const { tagsFor } = require("src/content/tags.js");
-
-/** Static token values straight off the def (for reward/pile/deck views). */
-function staticTokens(def) {
-  const tokens = {};
-  for (const b of computeTokenBindings(def.effects || [])) {
-    const v = (def.effects[b.index] || {})[b.field];
-    if (typeof v === 'number') tokens[b.token] = v;
-  }
-  return tokens;
-}
-
-/**
- * relicText(def) → plain text with every {token} replaced by the number the
- * relic's own data produces. EldenSpire#38.
- *
- * Beside fillTemplate() on purpose: that one is the card path (rich HTML, live
- * combat previews, up/down colouring); this one is the relic/flask path, which
- * is read in tooltips and list rows where the caller escapes the result itself.
- * They share the token SYNTAX, so they live together — one place to look when
- * the syntax changes — and they do not share a body, because one returns HTML
- * and the other returns text and merging them would mean an escaping decision
- * made in the wrong place.
- *
- * What replaced it: `textTemplate.replace(/[{}]/g, '')` at three call sites,
- * which stripped the braces and showed the player the KEY. An unresolved token
- * still renders as `{token}` here — braces and all — because a visible brace is
- * a bug report and a bare key is a sentence that looks fine and lies.
- */
-function relicText(def, registries = null) {
-  if (!def || !def.textTemplate) return '';
-  const tokens = relicTokens(def);
-  const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
-    typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
-  ));
-  // A growth row (balance.flaskGrowth) is a grant the player must be able to
-  // read on the relic that carries it — but its amount has ONE home, the row,
-  // so the sentence is DERIVED here rather than hand-typed into textTemplate
-  // (Law 1 clause 2; the derivation and its boundary live at
-  // flaskGrowthClause, model/flaskgrowth.js; corpus tools/flaskgrowth.mjs).
-  // THE CLAUSE READS THE REGISTRIES IT IS HANDED — the same object the seam
-  // (syncFlaskGrowth) derives from — so the day any mode forks balance
-  // per-run, the tooltip describes the row the seam actually applies, not the
-  // shipped one. Every run-facing call site passes its registries (source
-  // contract in the corpus). The static fallback is for surfaces with no
-  // registries in hand, where the one shipped bundle is the only truth there is.
-  const bal = (registries && registries.balance) || balance;
-  const defs = (registries && registries.flasks && registries.flasks.all()) || flasks;
-  const grown = flaskGrowthClause(bal, defs, def.id);
-  return grown ? `${base} ${grown}` : base;
-}
-
-function fillTemplate(def, tokens, baseTokens) {
-  let html = esc(def.textTemplate);
-  html = html.replace(tokenRe(), (m, tok) => {
-    const v = tokens[tok];
-    if (v == null) return m;
-    let cls = 'val';
-    if (baseTokens && typeof baseTokens[tok] === 'number') {
-      if (v > baseTokens[tok]) cls += ' up';
-      else if (v < baseTokens[tok]) cls += ' down';
-    }
-    return `<span class="${cls}">${v}</span>`;
-  });
-  // Light keyword coloring for readability.
-  html = html
-    .replace(/\b(Bleed|Crimson Blight|Staggered|Poise)\b/g, '<span class="st-bleed">$1</span>')
-    .replace(/\b(Exhaust|Ethereal|Innate|Retain|Unplayable)\b/g, '<span class="kw">$1</span>');
-  return html;
-}
-
-/**
- * renderCard(registries, ref, opts) → element.
- *   ref  — { cardId, upgraded, instanceId? }
- *   opts — { preview?    (previewCard result → live numbers),
- *            affordable? (bool; greys out when false),
- *            small?      (scale for reward/pile grids) }
- */
-function renderCard(registries, ref, opts = {}) {
-  const def = resolveCard(registries, ref);
-  const el = document.createElement('div');
-  el.className = `card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
-  // Type presentation is data (balance.ui.cardTypes): corner radii carry the
-  // type (attack squarest → power roundest) and each type owns its banner
-  // colour. Renaming a label here never touches engine logic.
-  const ty = balance.ui.cardTypes[def.type];
-  if (ty) {
-    el.style.setProperty('--card-type-color', ty.color);
-    el.style.setProperty('--card-radius', `${ty.radius}px`);
-    el.style.setProperty('--card-art-radius', `${ty.art}px`);
-  }
-  // The class motif hue is DATA (class def cardTint), handed to CSS as a var so
-  // adding a class brings its own card colour with no stylesheet edit. Colorless
-  // cards have no owning class, so they fall back to the neutral frame.
-  const owner = registries.classes.has(def.class) ? registries.classes.get(def.class) : null;
-  if (owner && owner.cardTint) el.style.setProperty('--card-tint', owner.cardTint);
-  if (opts.affordable === false) el.classList.add('unaffordable');
-  if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
-  el.dataset.cardId = def.id;
-
-  const tags = def.cardTags && def.cardTags.length
-    ? def.cardTags.map((id) => registries.tags.find((t) => t.id === id)).filter(Boolean)
-    : tagsFor(def.id);
-  const base = staticTokens(def);
-  const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
-  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
-  const manaCost = opts.preview ? opts.preview.manaCost : (def.manaCost || 0);
-
-  el.innerHTML =
-    `<div class="cost">${esc(cost)}</div>` +
-    (manaCost ? `<div class="mana-cost" title="Mana cost">◆ ${esc(manaCost)}</div>` : '') +
-    `<div class="cname">${esc(def.name)}</div>` +
-    `<div class="art">${esc(def.icon || '❖')}</div>` +
-    `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
-    // Subtypes: authored in content/source/cardTagging.csv. Untagged cards
-    // render nothing here, so the layout is unchanged for them.
-    (tags.length
-      ? `<div class="ctags">${tags
-          .map((t) => `<span class="ctag" style="--tag-color:#${esc(t.color)}" title="${esc(t.blurb)}">${esc(t.glyph)} ${esc(t.label)}</span>`)
-          .join('')}</div>`
-      : '') +
-    `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
-
-  // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
-  // number in the status row's own tint — "these cards just lit up" instead
-  // of set-intersection math. Non-matching cards get nothing (absence = no
-  // bonus; never a "+0%" badge).
-  const boost = opts.preview && (opts.preview.values || []).find((v) => v.boostTint);
-  if (boost) {
-    el.classList.add('tag-boost');
-    el.style.setProperty('--boost-tint', boost.boostTint);
-  }
-
-  // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
-  attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
-  if (opts.small) {
-    el.style.transform = 'scale(0.92)';
-  }
-  return el;
-}
-
-/**
- * Tooltip HTML previewing what a card becomes when Smithed: current text in
- * muted, upgraded text below with changed values highlighted green/red (the
- * same up/down coloring cards use in play). All numbers come from the defs.
- */
-function upgradePreviewHtml(registries, ref) {
-  const base = resolveCard(registries, { cardId: ref.cardId, upgraded: false });
-  const upg = resolveCard(registries, { cardId: ref.cardId, upgraded: true });
-  const baseTokens = staticTokens(base);
-  const upgTokens = { ...baseTokens, ...staticTokens(upg) };
-  // Both lines are CARD TEXT, so both wear `.ctext` — the class the mark rules
-  // are keyed to (ui.css). Without it the preview drew the number it had just
-  // computed as changed in the same colour and weight as the word beside it.
-  // `.ctext` carries the marks only; the card face's block layout stays on
-  // `.card .ctext` and does not follow the text into the tooltip.
-  let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
-  html += `<div class="ctext" style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
-  html += `<div class="ctext" style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
-  if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
-  return html;
-}
-
-function cardTooltip(registries, def, tokens) {
-  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)} Energy${def.manaCost ? ` + ${esc(def.manaCost)} Mana` : ''}</div>`;
-  // Card text here too — same function, same marks, same class. The in-play
-  // card tooltip had the identical defect; it is one fix, not two.
-  html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;
-  // Nested keyword + status tooltips (SPEC §7.3).
-  const lines = [];
-  for (const kw of def.keywords || []) {
-    if (registries.keywords.has(kw)) {
-      const k = registries.keywords.get(kw);
-      lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
-    }
-  }
-  for (const eff of def.effects || []) {
-    if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {
-      const s = registries.statuses.get(eff.status);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
-    }
-    if (eff.op === 'enterStance' && registries.stances.has(eff.stance)) {
-      const s = registries.stances.get(eff.stance);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
-    }
-  }
-  if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);
-  if (lines.length) html += `<div class="tt-kw">${lines.join('<br>')}</div>`;
-  return html;
-}
-
-
-Object.assign(module.exports, { staticTokens, relicText, renderCard, upgradePreviewHtml });
 
 },
 "src/ui/screens/map.js": function (module, exports, require) {

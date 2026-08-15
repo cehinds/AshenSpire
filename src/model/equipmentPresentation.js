@@ -101,7 +101,10 @@ function candidateReceipt(registries, run, candidate, beforeRoles) {
   if (beforeMods.swapCostDelta !== afterMods.swapCostDelta) {
     resourceChanges.push({
       id: 'swapCost',
-      label: 'Active-set swap Energy',
+      // Actions, not Energy (D17 message 3) — the same resource, the same
+      // rename, and a comparison row that kept the old noun would be the one
+      // place a player met both words in one session.
+      label: 'Active-set swap Actions',
       before: beforeMods.swapCostDelta,
       after: afterMods.swapCostDelta,
     });

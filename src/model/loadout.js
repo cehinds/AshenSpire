@@ -2,6 +2,9 @@ import { tokenRe } from './validate.js';
 import { deriveAttributeTierReceipt, deriveStat } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
+// Recording only — `note` is a no-op unless a run door is open, so the
+// stampDeck calls that fire all climb long cost nothing.
+import { note } from './healLedger.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -1083,8 +1086,21 @@ export function reconcileRunLoadoutHp(registries, run) {
     classDef,
   });
   const equipmentBonus = runMods(registries, run.loadout, run.class).maxHp;
+  // MAX-HP HOME 3 of 3, and THE LAST WRITER AT RUN CREATION — createRunState
+  // ends with stampDeck(), which begins with this call. That is why Sten's
+  // planted double-count went green: whatever the earlier writers put in the
+  // field, this one replaced it, and nothing recorded the replacement. It still
+  // replaces it. It no longer does so silently.
   const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);
   const deficit = Math.max(0, run.maxHp - run.hp);
+  note(run, {
+    kind: 'overwrite',
+    field: 'maxHp',
+    site: 'loadout.js:reconcileRunLoadoutHp',
+    was: run.maxHp,
+    now: nextMax,
+    why: `max-HP home 3 of 3 and the last writer at the door — derived ${derived.value} + equipment ${equipmentBonus} + adjustment ${run.maxHpAdjustment}; deficit ${deficit} carried`,
+  });
   run.maxHp = nextMax;
   run.hp = Math.max(0, nextMax - deficit);
   return { derived: derived.value, equipmentBonus, adjustment: run.maxHpAdjustment, maxHp: nextMax, deficit };

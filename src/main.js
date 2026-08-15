@@ -1709,6 +1709,15 @@ if (shotState) {
   // pointer can carry across a navigation; the archive list is where the
   // promise actually lives, and this hands the harness that list.
   window.__archives = () => saves.listArchives();
+  // THE RUN'S named state — the exact twin of __profile above, same species
+  // again: read the manager's own runStatus(), never a copy. It exists because
+  // the run door was the silent one. A save missing its allocation, loadout or
+  // flask ledger came back healed with a plausible substitute and nothing
+  // downstream could tell it from a clean load. This hands a harness the door's
+  // own account of what it did and what it overwrote. Read-only, shot boots only.
+  // NOT a player-facing surface: what a PLAYER should be told when their save
+  // was repaired is wording, and wording is not this seat's to write.
+  window.__runstatus = () => saves.runStatus();
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.

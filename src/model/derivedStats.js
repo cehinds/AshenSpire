@@ -3,6 +3,12 @@
 // This module accepts an attribute allocation; it does not import, create or
 // mutate one. That is the dependency seam which lets Phase 1 land first. It
 // likewise has no run, combat, save, session or UI imports.
+//
+// The one import is the disclosure vocabulary (D26), which is itself
+// import-free: the tier a row is authored into is checked here, beside the row
+// it belongs to, rather than in a second validator that could drift.
+
+import { disclosureProblem } from './disclosure.js';
 
 export const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana']);
 export const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
@@ -12,7 +18,8 @@ export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3]);
 export const DERIVED_STAT_SNAPSHOT_VERSION = 2;
 export const DERIVED_STAT_SNAPSHOT_VERSIONS = Object.freeze([1, 2]);
 
-const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules'];
+const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules', 'presentation'];
+const PRESENTATION_FIELDS = ['label', 'faceLabel', 'order', 'disclosure', 'sense'];
 const DEFAULT_FIELDS = ['pointsPerTier', 'rounding', 'cap'];
 const RULE_FIELDS = ['base', 'sourceStat', 'pointsPerTier', 'gainPerTier', 'rounding', 'cap'];
 const OVERRIDE_FIELDS = ['defaults', 'rules'];
@@ -141,6 +148,48 @@ export function derivedStatRuleProblems(source, options = {}) {
   }
   for (const id of Object.keys(source.rules)) {
     if (!DERIVED_STAT_IDS.includes(id)) problem(out, `rules.${id}`, `unknown derived-stat row '${id}'`);
+  }
+  return out;
+}
+
+/**
+ * derivedStatPresentationProblems(source) → named problems, never thrown.
+ *
+ * D26's short form. The authored table must carry ONE presentation row per
+ * derived-stat rule and no strays — the pairing is what makes "add a row and it
+ * appears, correctly placed, with no code edit" true, and a missing half has to
+ * fail LOUD AND BY NAME rather than draw a blank chip (Law 1 clause 5).
+ *
+ * Called from the CONTENT door only (model/validate.js). Snapshot restore
+ * reconstitutes `rules` alone and must not be asked for prose it never saved —
+ * `presentation` is optional to derivedStatRuleProblems for exactly that
+ * reason, and required here.
+ */
+export function derivedStatPresentationProblems(source) {
+  const out = [];
+  if (!plainObject(source)) return [{ path: 'derivedStatRules', msg: 'must be a plain object' }];
+  const table = source.presentation;
+  if (!plainObject(table)) return [{ path: 'derivedStatRules.presentation', msg: 'must be a plain object with one row per derived stat' }];
+  const orders = new Map();
+  for (const id of DERIVED_STAT_IDS) {
+    const path = `presentation.${id}`;
+    if (!own(table, id)) { problem(out, path, 'missing presentation row for a shipped derived stat'); continue; }
+    const row = table[id];
+    if (!plainObject(row)) { problem(out, path, 'must be a plain object'); continue; }
+    unknownFields(out, row, PRESENTATION_FIELDS, path);
+    if (typeof row.label !== 'string' || !row.label.trim()) problem(out, `${path}.label`, 'must be a non-empty string');
+    if (row.faceLabel !== undefined && (typeof row.faceLabel !== 'string' || !row.faceLabel.trim())) {
+      problem(out, `${path}.faceLabel`, 'must be a non-empty string when present');
+    }
+    if (typeof row.sense !== 'string' || !row.sense.trim()) problem(out, `${path}.sense`, 'must be a non-empty player sentence');
+    if (!Number.isInteger(row.order) || row.order <= 0) problem(out, `${path}.order`, 'must be an integer > 0');
+    else if (orders.has(row.order)) problem(out, `${path}.order`, `duplicates presentation.${orders.get(row.order)}.order ${row.order}`);
+    else orders.set(row.order, id);
+    const tier = disclosureProblem(row.disclosure, `${path}.disclosure`);
+    if (tier) out.push(tier);
+  }
+  for (const id of Object.keys(table)) {
+    if (!DERIVED_STAT_IDS.includes(id)) problem(out, `presentation.${id}`, `unknown derived-stat row '${id}'`);
   }
   return out;
 }
