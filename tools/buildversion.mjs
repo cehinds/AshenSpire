@@ -68,6 +68,103 @@ export const DIGEST_CHARS = 10;
 /** The closed set of digest inputs. One home; --check proves it is a superset. */
 export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets']);
 
+/**
+ * Row B arm 2: a SITE that declares a version — an identifier or object key
+ * ending in `version`, bound to a string literal. The caller filters on the
+ * key; the VALUE is captured to be REPORTED and is never compared, which is the
+ * whole point of the arm.
+ *
+ * TWO PATTERNS, NOT ONE, AND THE SECOND HALF OF THIS COMMENT IS AN APOLOGY.
+ * My first version of this was a single permissive pattern that let a quote sit
+ * between the key and the colon, so JSON would fall out for free. Planted and
+ * watched on the live tree, it returned TWO false positives:
+ *
+ *   src/ui/screens/profileNotice.js:81   ...a newer version' : 'We couldn’t...
+ *
+ * — the last WORD of an English sentence, with a ternary's colon read as an
+ * assignment. So the two forms are now written separately and exactly: a bare
+ * identifier takes NO quote before its colon, and a quoted key takes quotes on
+ * BOTH sides. Prose cannot satisfy either. I had written into row B's own
+ * comment that a predicate with standing false positives gets muted, and then
+ * shipped one with two — caught only because I planted it instead of reading it.
+ *
+ * DERIVATION IS NOT A COPY, and that was the other false positive:
+ *
+ *   src/buildversion.js:104   export const BUILD_VERSION = `${RELEASE}+${SOURCE}`
+ *
+ * — the canonical composition this whole file exists to protect, reported as a
+ * second home for the release. A value is a derivation, not a typed version,
+ * when it interpolates and has no digits of its own left once the `${...}`
+ * groups are removed. `${RELEASE}+${SOURCE}` reduces to `+` and is derivation;
+ * `0.4.0 ${x}` still carries digits and is a copy wearing a template. Testing
+ * merely "contains ${" would have been the looser rule and would have opened
+ * exactly that hole.
+ *
+ * ON SCANNING tools/ — AND THIS PARAGRAPH IS A CORRECTION OF MY OWN, MEASURED
+ * RATHER THAN REASONED. I first wrote here that row B "cannot be widened to
+ * tools/, because a sweep that included tools/ would make this file match
+ * itself" — the ai-disclosure trap (Sunna's D-S1: our own falsifier came back
+ * red on a clean tree because the file it searched contained the thing it
+ * searched for). Then I swept these two patterns over tools/*.mjs and looked.
+ * SIX HITS, AND NOT ONE OF THEM IS IN THIS FILE. The stated reason was false.
+ *
+ * It is false by accident, which is the part worth keeping: the patterns match
+ * an identifier, then `\s*`, then a quote — and inside this file's own regex
+ * SOURCE the characters `\s*` are a backslash, an `s` and an asterisk, none of
+ * which are whitespace. `VERSION_MODULE` and `RELEASE_HOME` are saved by the
+ * other half, `/version$/i`, which their names do not satisfy. So the self-match
+ * is LATENT, not absent: one ordinary rewrite of either pattern re-arms it.
+ *
+ * The conclusion survives, on different evidence. Widening to tools/ is still
+ * not free — the six hits are `contentVersion: 'x'` twice in
+ * profile-durability-probe.mjs, two PROSE values in saveroundtrip.mjs, a log
+ * line assembled by concatenation in bundle.mjs, and the plant literal in this
+ * tool's own corpus. All six are false positives, and six standing false
+ * positives mute a row. Anyone widening this must deal with those AND re-check
+ * the self-match, which today holds only by the spelling of a regex.
+ */
+const VERSION_SITES = Object.freeze([
+  // a bare identifier: `version: '…'`, `const SHOWN_VERSION = '…'`. No quote
+  // may sit between the key and the colon — that is what let prose through.
+  /(?:^|[{(,;]|\b(?:const|let|var)\s+|\s)([A-Za-z_$][\w$]*)\s*[:=]\s*(['"`])([^'"`\n]*)\2/g,
+  // a quoted key, so JSON is covered: `"version": "…"`. Quotes on BOTH sides.
+  /(['"])([A-Za-z_$][\w$]*)\1\s*:\s*(['"`])([^'"`\n]*)\3/g,
+]);
+
+/**
+ * True when a captured value COMPOSES a version rather than typing one. See the
+ * comment above for why "has an interpolation" alone is too loose.
+ */
+function isDerived(value) {
+  return value.includes('${') && !/\d/.test(value.replace(/\$\{[^}]*\}/g, ''));
+}
+
+/**
+ * SECOND VERSION SITES THAT ARE KNOWN, STATED AND OPEN — not clean, not fresh.
+ *
+ * A site listed here resolves row B to UNKNOWN, which blocks exactly as red
+ * does. It is NOT an exemption and it does not buy a green: it is the
+ * difference between an instrument that is silent about a thing and an
+ * instrument that names it, prints its current value on every run, and says who
+ * owes the decision. `unknown` is never green (house law).
+ *
+ * REMOVAL CONDITION: delete an entry the day the question it names is answered.
+ * The row then rules on that site by itself — PASS if the second home is gone,
+ * RED if it is still there — with no help from this list.
+ */
+export const OPEN_SECOND_SITES = Object.freeze([
+  Object.freeze({
+    file: 'src/content/aiDisclosure.js',
+    key: 'version',
+    raised: '2026-08-16 (Bjorn found the inversion, Sten rebuilt the row)',
+    why: "the About screen renders this string to a player while the build stamp on title/map/combat "
+      + "renders the release — two numbers, two screens, live. Constantine APPROVED THIS WORDING "
+      + "(b349bbd / #92), so which of the two should move is a Tier-2 call (SOP 1) and is his, not "
+      + "this tool's and not the maker's. Marina is carrying the split to him with a picture. This "
+      + "row's job is to stop the tree from reporting clean while it is open.",
+  }),
+]);
+
 // ---------------------------------------------------------------------------
 // the digest
 // ---------------------------------------------------------------------------
@@ -177,8 +274,18 @@ function insideRoots(rel) {
 }
 
 /**
- * check(root) → { rows, red } — each row states its own verdict, and a row that
- * could not be answered resolves to red, never to the softer bucket (SOP 2).
+ * check(root) → { rows, red, unknown } — each row states its own verdict, and a
+ * row that could not be answered resolves to red, never to the softer bucket
+ * (SOP 2).
+ *
+ * THREE STATES, NOT TWO. `ok: true` passes, `ok: false` is red, and `ok: null`
+ * is UNKNOWN — a question this tool put itself in a position to ask and cannot
+ * answer, because answering it is somebody else's call. Unknown BLOCKS: it is
+ * counted into `red` for the exit code and it is never printed as a pass. The
+ * bucket exists so that "we know about this and it is open" stops being
+ * indistinguishable from "we looked and the tree is clean" — which is the state
+ * row B was in, silently, for as long as the About screen has disagreed with
+ * the build stamp.
  */
 export function check(root = REPO_ROOT) {
   const rows = [];
@@ -200,34 +307,113 @@ export function check(root = REPO_ROOT) {
         : `${VERSION_MODULE} between the markers is not the placeholder — a digest typed into source is a version ASSERTED, not derived:\n      ${between.trim().slice(0, 120)}`);
   }
 
-  // B — NO SECOND COPY OF THE RELEASE. The palworld defect is born as
-  //     AGREEMENT, so the predicate is exact equality with the release string,
-  //     over the files that reach the shipped artifact.
-  //     Comment lines are excluded, and the boundary is printed rather than
-  //     assumed: SOP 5's own words are "prose mention ≠ copy — but the moment
-  //     anything ASSERTS IT EQUAL to the source, it's a consumer". A `//` line
-  //     asserts nothing. The convention is bundle.mjs's, not a new one (its
-  //     dangling-literal scan skips the same three openers for the same
-  //     reason), so there is one idea of what a comment is in this build.
+  // B — NO SECOND COPY OF THE RELEASE. TWO ARMS, AND THE SECOND EXISTS BECAUSE
+  //     THE FIRST ONE TURNS AROUND.
+  //
+  //     ARM 1 — exact string equality with the release, over the files that
+  //     reach the shipped artifact. It is right about the defect's BIRTH (each
+  //     of palworld's three drifts began as agreement) and it is the only arm
+  //     that can see a copy at an UNNAMED site — a bare literal inside a
+  //     template with no identifier attached to it. It is kept for that.
+  //
+  //     ARM 2 — and here is the finding. Equality is a PROXY for copy-hood, and
+  //     Bjorn watched the proxy invert, in a copied tree, both ways:
+  //
+  //         aiDisclosure version '0.4.0'   agreeing → RED
+  //         aiDisclosure version '0.4.x'   drifted  → PASS
+  //
+  //     Red-at-agreement is correct. GREEN-AT-DRIFT IS THE DEFECT: the row
+  //     fired while the copy was still harmless and went quiet the moment the
+  //     harm landed — two different numbers rendered to a player on two
+  //     different screens, and the instrument built to catch exactly that
+  //     reporting clean. Marina's MR-251, which generalises it:
+  //
+  //       An instrument whose predicate is a proxy will invert wherever the
+  //       proxy and the subject diverge — and the moment of divergence is
+  //       usually the moment of harm.
+  //
+  //     So arm 2 does not WIDEN the proxy, it REMOVES it. It looks for a SITE
+  //     that declares a version — an identifier or object key ending in
+  //     `version`, bound to a string literal — and it never reads the value to
+  //     decide. A predicate that does not compare the value cannot invert when
+  //     the value drifts. The value is reported, never tested.
+  //
+  //     WHY A SITE AND NOT A SHAPE, measured before it was written rather than
+  //     argued: on this tree the site predicate returns 1 hit and it is the real
+  //     defect. The obvious alternative — a version-SHAPED literal, /\d+\.\d+/ —
+  //     returns 37, of which 36 are SVG stroke widths in src/ui/assets.js and
+  //     `"scale"` values in assets/equipment/manifest.json. A predicate with 36
+  //     standing false positives gets muted, and a muted check is arm 1's defect
+  //     again by another route.
+  //
+  //     Comments are excluded by BOTH arms, unchanged: SOP 5's words are "prose
+  //     mention ≠ copy — but the moment anything ASSERTS IT EQUAL to the source,
+  //     it's a consumer". A `//` line asserts nothing. The convention is
+  //     bundle.mjs's, not a new one, so there is one idea of what a comment is
+  //     in this build.
+  //
+  //     BOUNDARY, and it is a real hole, not a formality: a copy that has BOTH
+  //     drifted AND sits at an unnamed site is invisible to both arms — a bare
+  //     `Ashen Spire 0.4.x` inside a template literal with no `version` key on
+  //     it. Arm 1 cannot see it (the value differs) and arm 2 cannot see it (no
+  //     site declares it). Nothing in this file closes that; it is named here so
+  //     the green states its own extent.
   const rel = release(root);
   const copies = [];
+  const sites = [];
   let commentHits = 0;
+  const isComment = (t) => t.startsWith('//') || t.startsWith('*') || t.startsWith('/*');
   for (const f of inputFiles(root)) {
     if (f === RELEASE_HOME) continue;
     if (!/\.(js|css|html|json)$/.test(f)) continue;
     const text = readFileSync(resolve(root, f), 'utf8');
     text.split('\n').forEach((line, i) => {
-      if (!(line.includes(`'${rel}'`) || line.includes(`"${rel}"`) || line.includes(`\`${rel}\``))) return;
       const t = line.trim();
-      if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) { commentHits += 1; return; }
-      copies.push(`${f}:${i + 1}  ${t.slice(0, 90)}`);
+      // arm 1 — the value equals the release
+      if (line.includes(`'${rel}'`) || line.includes(`"${rel}"`) || line.includes(`\`${rel}\``)) {
+        if (isComment(t)) commentHits += 1;
+        else copies.push(`${f}:${i + 1}  ${t.slice(0, 90)}`);
+      }
+      // arm 2 — a site DECLARES a version; the value is recorded, never tested
+      if (isComment(t)) return;
+      for (const [n, re] of VERSION_SITES.entries()) {
+        // bare-identifier form captures (key, quote, value); quoted-key form
+        // captures (quote, key, quote, value) — hence the index shift.
+        const [ki, vi] = n === 0 ? [1, 3] : [2, 4];
+        for (const m of line.matchAll(re)) {
+          if (!/version$/i.test(m[ki]) || isDerived(m[vi])) continue;
+          sites.push({ file: f, line: i + 1, key: m[ki], value: m[vi] });
+        }
+      }
     });
   }
-  add(copies.length === 0, 'B NO SECOND COPY',
-    copies.length === 0
-      ? `no file under ${INPUT_ROOTS.join(', ')} re-types '${rel}' outside ${RELEASE_HOME}`
-        + ` (${commentHits} prose mention${commentHits === 1 ? '' : 's'} in comments, which assert nothing and are not copies)`
-      : `the release '${rel}' is typed outside ${RELEASE_HOME}:\n      ${copies.join('\n      ')}`);
+
+  // A site that is KNOWN AND OPEN is not a clean tree and not a fresh defect.
+  // It resolves to unknown, which blocks — never to the softer bucket (SOP 2).
+  const open = sites.filter((s) => OPEN_SECOND_SITES.some((o) => o.file === s.file && o.key === s.key));
+  const unstated = sites.filter((s) => !open.includes(s));
+  const show = (s) => `${s.file}:${s.line}  ${s.key} = '${s.value}'`;
+
+  if (copies.length || unstated.length) {
+    add(false, 'B NO SECOND COPY',
+      `the release has a second home under ${INPUT_ROOTS.join(', ')}:`
+      + (copies.length ? `\n      [arm 1 · the value equals the release '${rel}']\n      ${copies.join('\n      ')}` : '')
+      + (unstated.length ? `\n      [arm 2 · a second site declares a version; agreeing or drifted, it is a copy]\n      ${unstated.map(show).join('\n      ')}` : ''));
+  } else if (open.length) {
+    add(null, 'B NO SECOND COPY',
+      `UNKNOWN — ${open.length} second version site, stated and open, not a clean tree and not a fresh defect:`
+      + open.map((s) => {
+        const o = OPEN_SECOND_SITES.find((x) => x.file === s.file && x.key === s.key);
+        return `\n      ${show(s)}   (release home holds '${rel}')\n        raised ${o.raised}: ${o.why}`;
+      }).join('')
+      + `\n      arm 1 alone reported this tree GREEN — that is the inversion this row was rebuilt for.`);
+  } else {
+    add(true, 'B NO SECOND COPY',
+      `no second home for the release under ${INPUT_ROOTS.join(', ')}: no file re-types '${rel}'`
+      + ` outside ${RELEASE_HOME} (arm 1), and no other site declares a version at all (arm 2,`
+      + ` which does not read the value, so it does not go quiet when the value drifts).`
+      + ` ${commentHits} prose mention${commentHits === 1 ? '' : 's'} in comments, which assert nothing and are not copies.`);
+  }
 
   // C — EVERY CONSUMER DERIVES. The three surfaces he named must read the one
   //     module. A screen that prints a version it computed itself is a copy
@@ -289,7 +475,9 @@ export function check(root = REPO_ROOT) {
         : `${BUNDLE} carries ${found.length === 1 ? `SOURCE '${found[0]}'` : `${found.length} SOURCE literals`}, this tree derives '${want}' — the shipped stamp is not this source`);
   }
 
-  return { rows, red: rows.some((r) => !r.ok) };
+  // `!r.ok` catches false AND null on purpose: unknown blocks exactly as red
+  // does, and there is no third exit code that means "carry on anyway".
+  return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
 }
 
 // ---------------------------------------------------------------------------
@@ -297,10 +485,18 @@ export function check(root = REPO_ROOT) {
 // ---------------------------------------------------------------------------
 
 function printCheck(root, label) {
-  const { rows, red } = check(root);
-  for (const r of rows) console.log(`  ${r.ok ? 'PASS' : 'RED '}  [${r.name}] ${r.detail}`);
+  const { rows, red, unknown } = check(root);
+  for (const r of rows) {
+    console.log(`  ${r.ok === null ? 'UNK ' : r.ok ? 'PASS' : 'RED '}  [${r.name}] ${r.detail}`);
+  }
   console.log('');
-  console.log(red ? `buildversion: RED — ${label}` : `buildversion: OK — ${rows.length} checks passed`);
+  if (!red) console.log(`buildversion: OK — ${rows.length} checks passed`);
+  else if (rows.some((r) => r.ok === false)) console.log(`buildversion: RED — ${label}`);
+  else {
+    console.log(`buildversion: UNKNOWN — ${rows.filter((r) => r.ok === null).length} row(s) name an open question this tool cannot answer.`);
+    console.log('  UNKNOWN BLOCKS. It is not a pass and it is not a soft red: the tree is not');
+    console.log('  clean, and the decision that would settle it is not this tool\'s to make.');
+  }
   return red;
 }
 
@@ -315,6 +511,13 @@ function boundary() {
   console.log('    which is generative and which this deliberately does not restate.');
   console.log('  · the release NUMBER is not judged here, only its singleness. Choosing it is a');
   console.log('    Tier-2 call (SOP 1); SOP 5 automates the checking, never the choosing.');
+  console.log('  · row B sweeps INPUT_ROOTS ONLY, so a second copy of the release living in');
+  console.log('    tools/ is invisible to it — tools/launch.mjs carried exactly that for as long');
+  console.log('    as the launcher has existed. Widening is not free: swept over tools/*.mjs the');
+  console.log('    arm-2 patterns return 6 hits, all false positives, and six of those mute a row.');
+  console.log('  · row B has one hole it cannot close: a copy that has BOTH drifted AND sits at');
+  console.log('    an unnamed site — a bare `0.4.x` inside a template with no version key on it.');
+  console.log('    Arm 1 misses it (value differs), arm 2 misses it (no site declares it).');
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {

@@ -23,13 +23,34 @@
 // a browser at runtime, a stamp painted by CSS. Those are ink, and ink is
 // tools/buildstamp-shot.mjs with a browser and its own corpus.
 //
-// A NEGATIVE CONTROL RUNS FIRST. A check that is red on a clean tree catches
-// every plant and means nothing; the pristine copy must be GREEN before a
-// single defect is planted, and the run refuses if it is not.
+// A NEGATIVE CONTROL RUNS FIRST, because a check that is red on a clean tree
+// catches every plant and means nothing. What the control is USED for changed
+// on 2026-08-16 and the next paragraph is the whole of it — it is recorded and
+// compared against, no longer a veto.
 //
-// AND EACH PLANT NAMES THE ROW IT MUST BE CAUGHT BY. "Something went red" is
-// not evidence: a plant caught by the wrong row is a check agreeing with me by
-// accident. The row is asserted, and a hit on any other row is a FAIL here.
+// THE CONTROL IS RECORDED PER ROW, NOT USED AS A WHOLE-TREE VETO, AND THAT
+// CHANGED ON 2026-08-16. It used to refuse the entire run if any row was
+// non-green. That was right while a non-green control could only mean a broken
+// check — but row B can now resolve to UNKNOWN on a tree whose defect is REAL,
+// KNOWN and OPEN (the About screen and the build stamp render two different
+// numbers; Constantine's call, carried by Marina). A whole-tree refusal would
+// have let one honest open question silently disable the corpus for all five
+// rows, which is a checklist outcome: the suite stops ruling and says so in a
+// way nobody reads.
+//
+// SO EACH PLANT MUST MOVE ITS OWN ROW, AND THAT IS A STRICTLY STRONGER BAR THAN
+// THE ONE IT REPLACES. Two things are demanded of every plant, not one:
+//
+//   1. the asserted row ends RED — not merely non-green. A plant that only
+//      manages to push a row to UNKNOWN has not been caught; unknown is never
+//      green and it is never evidence of a catch either.
+//   2. the asserted row's DETAIL DIFFERS from the control's detail for that
+//      same row. This is the new half. It proves THIS edit moved THIS row,
+//      rather than the plant inheriting a verdict it did not earn from a row
+//      that was already unhappy before it was planted.
+//
+// Clause 2 is what keeps an already-non-green row plantable at all, and row B
+// is the reason it had to exist. A hit on any other row is still surfaced.
 //
 // Usage:  node tools/buildversion.mjs --selftest
 
@@ -64,11 +85,28 @@ const PLANTS = [
     plant: (root) => edit(root, 'src/buildversion.js',
       (t) => t.replace('/* BUILD_SOURCE_START */', '/* BUILD_SRC_START */')),
   },
+  // ---- row B, WATCHED AT BOTH EDGES -----------------------------------------
+  // These two plants are the same defect at two moments in its life, and until
+  // 2026-08-16 only the first was here. That is how the inversion survived: the
+  // corpus proved the row caught a copy while the copy was harmless, and never
+  // asked what the row did once the copy drifted. It went QUIET — green at the
+  // moment of harm. A corpus that only plants the birth of a defect certifies
+  // the half of the predicate that works.
   {
-    name: 'a SECOND COPY of the release, born agreeing — the palworld shape',
+    name: 'a SECOND COPY of the release, born AGREEING — the palworld shape',
     row: 'B NO SECOND COPY',
     plant: (root, rel) => edit(root, 'src/ui/screens/about.js',
       (t) => t.replace('export function', `const SHOWN_VERSION = '${rel}';\n\nexport function`)),
+  },
+  {
+    // The edge the old predicate went GREEN on. `rel` is not used: the whole
+    // point is a value that no longer equals the release, so arm 1 is blind to
+    // it by construction and only arm 2 — which never reads the value — can
+    // see it. If this plant is ever "not caught", the proxy is back.
+    name: 'a second copy that has ALREADY DRIFTED — harm landed, and the old predicate went green',
+    row: 'B NO SECOND COPY',
+    plant: (root) => edit(root, 'src/ui/screens/about.js',
+      (t) => t.replace('export function', `const SHOWN_VERSION = '9.9.z';\n\nexport function`)),
   },
   {
     name: 'a named consumer stops deriving (combat prints no stamp)',
@@ -102,18 +140,25 @@ export async function selftest() {
   const rel = /version:\s*'([^']+)'/.exec(readFileSync(resolve(REPO_ROOT, 'src/content/index.js'), 'utf8'))[1];
   let failures = 0;
 
-  // ---- the negative control -------------------------------------------------
+  // ---- the control, recorded per row ---------------------------------------
   const control = fresh();
+  let baseline;
   try {
-    const { rows, red } = check(control);
-    if (red) {
-      console.log('  FAIL  [control] the untouched copy is already RED — no plant below could mean anything:');
-      for (const r of rows.filter((x) => !x.ok)) console.log(`          ${r.name}: ${r.detail.split('\n')[0]}`);
-      return 1;
-    }
-    console.log(`  ok    [control] the untouched copy is GREEN on all ${rows.length} rows — the plants have something to disturb`);
+    baseline = new Map(check(control).rows.map((r) => [r.name, r]));
   } finally {
     rmSync(control, { recursive: true, force: true });
+  }
+  const dirty = [...baseline.values()].filter((r) => !r.ok);
+  if (!dirty.length) {
+    console.log(`  ok    [control] the untouched copy is GREEN on all ${baseline.size} rows — the plants have something to disturb`);
+  } else {
+    console.log(`  note  [control] the untouched copy is NOT green on ${dirty.length} of ${baseline.size} rows.`);
+    for (const r of dirty) {
+      console.log(`          ${r.ok === null ? 'UNKNOWN' : 'RED'} ${r.name}: ${r.detail.split('\n')[0]}`);
+    }
+    console.log('          Each plant below must still move its own row (verdict RED *and* a detail');
+    console.log('          that differs from this baseline), so these rows stay testable without');
+    console.log('          being handed a verdict they did not earn.');
   }
 
   // ---- the corpus -----------------------------------------------------------
@@ -121,21 +166,37 @@ export async function selftest() {
     const root = fresh();
     try {
       p.plant(root, rel);
-      const { rows } = check(root);
-      const reds = rows.filter((r) => !r.ok).map((r) => r.name);
-      const caught = reds.includes(p.row);
-      const strays = reds.filter((r) => r !== p.row);
-      if (!caught) {
+      const rows = check(root).rows;
+      const row = rows.find((r) => r.name === p.row);
+      const before = baseline.get(p.row);
+      const strays = rows.filter((r) => !r.ok && r.name !== p.row).map((r) => r.name);
+
+      if (!row) {
+        failures += 1;
+        console.log(`  FAIL  [${p.row}] NO SUCH ROW — ${p.name}`);
+        console.log(`          the plant asserts a row this check does not produce; the corpus is stale`);
+      } else if (row.ok !== false) {
         failures += 1;
         console.log(`  FAIL  [${p.row}] NOT CAUGHT — ${p.name}`);
-        console.log(`          the check stayed green on a tree that carries this defect`);
-      } else if (strays.length) {
-        // Not a failure of the plant, but it must be visible: a defect that
-        // trips extra rows may be tripping them for a reason I did not intend.
-        console.log(`  RED   [${p.row}] caught — ${p.name}`);
-        console.log(`          also red: ${strays.join(', ')} (stated, not hidden)`);
+        console.log(`          the row is ${row.ok === null ? 'UNKNOWN' : 'PASS'} on a tree that carries this defect`);
+        console.log(`          ${row.detail.split('\n')[0]}`);
+      } else if (before && row.detail === before.detail) {
+        // The row is red, but it was red for this same reason before the plant.
+        // That is a verdict inherited, not earned, and it is a FAIL: it would
+        // let a broken predicate ride on somebody else's open defect.
+        failures += 1;
+        console.log(`  FAIL  [${p.row}] VERDICT INHERITED — ${p.name}`);
+        console.log(`          the row is red with the identical detail it had BEFORE the plant,`);
+        console.log(`          so nothing here shows this check reacted to this defect at all`);
       } else {
         console.log(`  RED   [${p.row}] caught — ${p.name}`);
+        if (before && !before.ok) {
+          console.log(`          (row was ${before.ok === null ? 'UNKNOWN' : 'RED'} in the control; the plant moved it, detail differs)`);
+        }
+        console.log(`          ${row.detail.split('\n').slice(0, 3).map((s) => s.trim()).filter(Boolean).join(' / ').slice(0, 150)}`);
+        // Not a failure of the plant, but it must be visible: a defect that
+        // trips extra rows may be tripping them for a reason I did not intend.
+        if (strays.length) console.log(`          also non-green: ${strays.join(', ')} (stated, not hidden)`);
       }
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -149,10 +210,10 @@ export async function selftest() {
     console.log(`buildversion --selftest: RED — ${failures} of ${PLANTS.length} known-bads walked through the check.`);
     return 1;
   }
-  console.log(`buildversion --selftest: OK — ${PLANTS.length}/${PLANTS.length} known-bads observed red, each by the row that owns it,`);
+  console.log(`buildversion --selftest: OK — ${PLANTS.length}/${PLANTS.length} known-bads observed red, each by the row that owns it and each having MOVED that row,`);
   console.log('  planted as real edits to a real tree and entered at check(root) — the same door the real run uses.');
   console.log('');
-  console.log('BOUNDARY: this is a corpus, not a proof of completeness. It says these six defects');
+  console.log('BOUNDARY: this is a corpus, not a proof of completeness. It says these defects');
   console.log('  cannot pass; it says nothing about a seventh nobody thought of, and nothing at all');
   console.log('  about whether the stamp is VISIBLE — that is tools/buildstamp-shot.mjs.');
   return 0;

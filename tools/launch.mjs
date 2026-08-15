@@ -7,20 +7,54 @@
 // Invoked by run.bat (Windows) and run.sh (macOS/Linux), or: node tools/launch.mjs
 
 import { spawnSync } from 'node:child_process';
-import { readFileSync, mkdirSync, copyFileSync } from 'node:fs';
+import { mkdirSync, copyFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
+// THE RELEASE STRING IS READ FROM ITS ONE HOME, NOT RE-DERIVED HERE. This file
+// used to carry its own copy of buildversion.release() — the same regex against
+// the same file — and the copy differed from the original in the one way that
+// matters: it FELL BACK instead of failing. On one ordinary edit to
+// src/content/index.js (`'0.4.0'` → `"0.4.0"`, single quotes to double) the
+// original throws by name; the copy returned '0.0.0' and shipped
+// dist/AshenSpire-0.0.0.html with nothing said. Bjorn found it; it had been
+// here since the launcher was written. A second implementation of a rule is a
+// second chance to disagree with it, and this one disagreed silently.
+import { release } from './buildversion.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
+/**
+ * The release half of the version, from src/content/index.js via the one home.
+ *
+ * NO FALLBACK, DELIBERATELY — Marina's MR-263: *when the version cannot be
+ * derived, fail loudly — never emit a plausible filename.* `0.0.0` was
+ * precisely a plausible filename. That is what made it worse than a crash: it
+ * is not obviously wrong on disk, it is not obviously wrong pasted into a bug
+ * report, and it reads as a fact on the box. A launcher that cannot find the
+ * release does not know what it is building and must say so.
+ *
+ * This matters more than it did last week because Constantine has since given a
+ * standing instruction that a build carries its name AND its version. The
+ * DECIDED half of that — name plus version, DERIVED rather than typed — is what
+ * the copyFileSync calls below already do.
+ *
+ * WHAT IS NOT DECIDED IS NOT GUESSED AT HERE, and that is deliberate: his
+ * `v0.00.01` padding against our `0.4.0`, the `dev` channel field (which exists
+ * nowhere in this tree), and whether the source digest belongs in the filename
+ * at all are all open. Inventing an answer to any of them inside this fix would
+ * mint a second version scheme — which is the exact subject SOP 5 and
+ * tools/buildversion.mjs exist to forbid. They come back specified or not at
+ * all. The filename shape below is therefore UNCHANGED by this commit.
+ */
 function version() {
   try {
-    const idx = readFileSync(resolve(ROOT, 'src/content/index.js'), 'utf8');
-    const m = /version:\s*'([^']+)'/.exec(idx);
-    return m ? m[1] : '0.0.0';
-  } catch {
-    return '0.0.0';
+    return release(ROOT);
+  } catch (e) {
+    console.error(`launch: ${e.message}`);
+    console.error('launch: refusing to name the artifact after a guess — fix the release home and retry.');
+    console.error('launch: (this is the check tools/buildversion.mjs row A/B rest on; see that file.)');
+    process.exit(1);
   }
 }
 
