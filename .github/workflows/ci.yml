@@ -340,11 +340,11 @@ jobs:
         run: node tools/buildstamp-shot.mjs
 
       - name: …and that gate can fail — six ways to lose the ink, each caught
-        # Inverted expectation. It costs ~4 minutes because each plant is a whole
-        # program run against its own served tree and its own browser — stated
-        # rather than hidden, since this workflow bills by the minute and runs by
-        # hand. Four of the six are invisible to any DOM-presence predicate, which
-        # is precisely why the corpus is worth the four minutes.
+        # Inverted expectation. Seven whole-program runs — a control and six
+        # plants, each with its own served tree and its own browser — measured at
+        # 64s on the machine it was written on. Stated rather than guessed,
+        # because this workflow bills by the minute and runs by hand; a runner
+        # will be slower and that number is not a promise about one.
         run: node tools/buildstamp-shot.mjs --selftest
 
   # ---------------------------------------------------------------------------
