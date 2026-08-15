@@ -523,8 +523,24 @@ BOUNDARY — what this green does NOT cover.
     RIGHT. If D22 derives the wrong HP, this tool is silent: it only reports
     that whatever went in came back. tools/conhp.mjs holds the formula.
 
-FINDING CARRIED, NOT ASSERTED — and it is here because it is one design call
-away from being this tool's business.
+FINDING RULED ON 2026-08-15 — and the ruling changed what is carried here, so
+read the next paragraph before the old text below it.
+
+  Marina's ruling (R-1/R-2, one act): this finding and Sten's swallowed
+  double-count at run creation are ONE defect — a last-writer-wins reconcile
+  that keeps no record of what it overwrote. The act shipped is VISIBILITY,
+  explicitly not a refusal and explicitly not the collapse of the three max-HP
+  homes. Every heal below now NAMES ITSELF through this same door:
+  saves.runStatus() reports state 'ok' | 'healed' | 'archived' with a ledger
+  naming the site, the field, both values, the reason and the schemaVersion of
+  the save it happened to. src/model/healLedger.js is the one home;
+  tools/runcreation.mjs is the instrument and drives both doors.
+
+  WHAT IS STILL CARRIED, unchanged: whether a current-schema save missing a
+  field should be REFUSED rather than healed. It is parked, deliberately, with
+  a wake condition asserted in tools/runcreation.mjs group D — not left in
+  prose here. The repro below still reproduces; the door no longer says nothing
+  while it does it.
 
   Three fields are optional in RUN_SHAPE with NO schemaVersion gate, so the
   migration heals meant for old saves also fire on a CURRENT-schema (v${RUN_SCHEMA_VERSION}) save:
@@ -568,10 +584,24 @@ away from being this tool's business.
   those three fields on schemaVersion 1 (the gate startingKitId already uses)
   turns tests 28 and 50 red — measured 2026-08-15 at dev = 7e67de8.
 
-  WAKE CONDITION (an observable predicate, not a mood): the day tests 28 and 50
-  stop requiring a current-schema save to heal, this paragraph is DELETED and
-  the assertion moves into Group B — an excuse that outlives its defect is how
-  a suite goes green over a bug (Law 5's enforcement note).
+  WAKE CONDITION — it has a RED now, and it does not live here.
+  Ruled 2026-08-15: a refusal ships with a red on its WAKE, not only on its
+  refusing (commons/development.md, Freja's clause), and this paragraph was the
+  refusing half — always green, because absence never fails a test written to
+  expect absence. The premise is now asserted by a machine:
+
+    node tools/runcreation.mjs      group D — "this build writes no save its
+                                    own door must heal"; RED the moment
+                                    healedOnCurrentSchema is non-zero on an
+                                    untouched round trip. Observed red on a
+                                    planted premise-death, same door.
+
+  The two conditions that retire this paragraph, unchanged in substance:
+    · tests 28 and 50 stop requiring a current-schema save to heal — then the
+      design call has been made and the assertion moves into Group B;
+    · or group D goes red — then it has been made for us.
+  An excuse that outlives its defect is how a suite goes green over a bug
+  (Law 5's enforcement note).
 `);
 }
 

@@ -5105,6 +5105,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       stamina: run.stamina,
       energyMax: run.energyMax,
       drawPerTurn: run.drawPerTurn,
+      damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
       deck: run.deck,
       relicIds: run.relics,
@@ -5588,6 +5589,15 @@ if (shotState) {
   // pointer can carry across a navigation; the archive list is where the
   // promise actually lives, and this hands the harness that list.
   window.__archives = () => saves.listArchives();
+  // THE RUN'S named state — the exact twin of __profile above, same species
+  // again: read the manager's own runStatus(), never a copy. It exists because
+  // the run door was the silent one. A save missing its allocation, loadout or
+  // flask ledger came back healed with a plausible substitute and nothing
+  // downstream could tell it from a clean load. This hands a harness the door's
+  // own account of what it did and what it overwrote. Read-only, shot boots only.
+  // NOT a player-facing surface: what a PLAYER should be told when their save
+  // was repaired is wording, and wording is not this seat's to write.
+  window.__runstatus = () => saves.runStatus();
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.
@@ -9611,6 +9621,18 @@ const relics = [
     id: 'forsakenMedallion',
     name: 'Forsaken Medallion',
     rarity: 'starter',
+    passives: {
+      modifiers: [
+        { tag: 'resource.flat', resource: 'hp', amount: 2 },
+        {
+          tag: 'resource.attributeTier',
+          resource: 'hp',
+          sourceStat: 'constitution',
+          pointsPerTier: 5,
+          amountPerTier: 1,
+        },
+      ],
+    },
     icon: '🏅',
     triggers: [
       {
@@ -9620,7 +9642,7 @@ const relics = [
         do: [{ op: 'poiseDamage', amount: 4 }],
       },
     ],
-    textTemplate: 'Your first attack each combat also deals {poiseDamage} Poise damage.',
+    textTemplate: 'Max HP +{hpFlat}, plus +{hpPerTier} per completed CON tier. Your first attack each combat also deals {poiseDamage} Poise damage.',
     flavor: 'Its face is worn smooth, but it still remembers being gold.',
   },
 
@@ -9631,11 +9653,23 @@ const relics = [
     id: 'starstoneShard',
     name: 'Starstone Shard',
     rarity: 'starter',
+    passives: {
+      modifiers: [
+        { tag: 'resource.flat', resource: 'mana', amount: 1 },
+        { tag: 'damage.school.flat', school: 'magic', amount: 1 },
+      ],
+    },
     icon: '💠',
     triggers: [
-      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'starstoneCharge', stacks: { f: 'add', args: [1] } }] },
+      {
+        on: 'combatStart',
+        do: [
+          { op: 'applyStatus', target: 'owner', status: 'starstoneCharge', stacks: { f: 'add', args: [1] } },
+          { op: 'restoreMana', amount: 1 },
+        ],
+      },
     ],
-    textTemplate: 'Begin each combat with Starstone Charge (your first spell counts as a combo).',
+    textTemplate: 'Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.',
     flavor: 'A chip of someone else’s genius. It still hums.',
   },
   {
@@ -9645,6 +9679,7 @@ const relics = [
     id: 'goldFigurine',
     name: 'Gold Figurine',
     rarity: 'starter',
+    passives: { modifiers: [] },
     icon: '🗿',
     triggers: [
       {
@@ -11413,6 +11448,7 @@ const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
+    hpPerConTier: 4,
     startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'forsakenMedallion',
     startingSignatureCard: 'gorefireSlash',
@@ -11439,6 +11475,7 @@ const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
+    hpPerConTier: 5,
     startingFlaskAllocation: { hp: 1, mana: 2 },
     startingRelic: 'starstoneShard',
     startingSignatureCard: 'starstonePebble',
@@ -11463,6 +11500,7 @@ const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
+    hpPerConTier: 6,
     startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'goldFigurine',
     startingSignatureCard: 'urgentHeal',
@@ -14486,14 +14524,12 @@ Object.assign(module.exports, { unlocks });
 // deliberately share display words with existing transient combat statuses;
 // they remain separate namespaces until a later feature defines a bridge.
 
-// The HP seat is VIGOUR — his word (D17: "vigour shoudl be 1 hp point per"),
-// renamed from 'constitution' 2026-08-14. The dead name is retired in
-// retiredNames.js and may not return; saves from the three-day window heal at
-// the load door.
+// Constitution is the authored HP and Stamina source. Vigour is the retired
+// three-day save spelling; the load door migrates it through retiredNames.js.
 const attributes = [
   { id: 'strength', label: 'Strength', shortLabel: 'STR', order: 1 },
   { id: 'dexterity', label: 'Dexterity', shortLabel: 'DEX', order: 2 },
-  { id: 'vigour', label: 'Vigour', shortLabel: 'VIG', order: 3 },
+  { id: 'constitution', label: 'Constitution', shortLabel: 'CON', order: 3 },
   { id: 'wisdom', label: 'Wisdom', shortLabel: 'WIS', order: 4 },
   { id: 'intelligence', label: 'Intelligence', shortLabel: 'INT', order: 5 },
 ];
@@ -14516,9 +14552,9 @@ const attributeRules = {
   defaultMode: 'standard',
   presets: {
     standard: {
-      reaver: { strength: 13, dexterity: 10, vigour: 12, wisdom: 10, intelligence: 10 },
-      starseer: { strength: 10, dexterity: 11, vigour: 10, wisdom: 10, intelligence: 14 },
-      herald: { strength: 10, dexterity: 10, vigour: 12, wisdom: 13, intelligence: 10 },
+      reaver: { strength: 13, dexterity: 10, constitution: 12, wisdom: 10, intelligence: 10 },
+      starseer: { strength: 10, dexterity: 11, constitution: 10, wisdom: 10, intelligence: 14 },
+      herald: { strength: 10, dexterity: 10, constitution: 12, wisdom: 13, intelligence: 10 },
     },
   },
 };
@@ -14536,16 +14572,16 @@ Object.assign(module.exports, { attributes, creationModes, attributeRules });
 // green on its own (tests/engine.test.js 50b proves that case). A guard cannot
 // live in the file whose revert it exists to refuse.
 //
-// 'constitution' held the HP seat for three days (d465cfc, 2026-08-11 →
-// 2026-08-14). Constantine's stat line names Vigour (D17: "vigour shoudl be
-// 1 hp point per"). Every run saved in that window spells the old name into
-// sote_run_v1 — the allocation plus the derived-stat snapshot's hp and stamina
-// sourceStat — so the load door heals those saves through this map
+// 'vigour' briefly held the HP seat during the D17 implementation.
+// Constitution is canonical again under D22. Every run saved in the Vigour
+// window spells that name into sote_run_v1 — the allocation plus the
+// derived-stat snapshot's hp and stamina sourceStat — so the load door heals
+// those saves through this map
 // (model/attributes.js, migrateRetiredAttributeNames). At boot, a retired name
 // may never return as an attribute id, and every heir must be a live one
 // (model/attributes.js, attributeContentProblems).
 const retiredAttributeNames = {
-  constitution: 'vigour',
+  vigour: 'constitution',
 };
 
 
@@ -14559,7 +14595,7 @@ Object.assign(module.exports, { retiredAttributeNames });
 // resolved rules so saves, sessions, and co-op keep the same derived values.
 
 const derivedStatRules = {
-  rulesetVersion: 2,
+  rulesetVersion: 3,
   defaults: {
     pointsPerTier: 5,
     rounding: 'floor',
@@ -14580,18 +14616,14 @@ const derivedStatRules = {
     },
     hp: {
       base: { strategy: 'classField', field: 'maxHp' },
-      sourceStat: 'vigour',
-      // "vigour shoudl be 1 hp point per" — Constantine, D17 (verbatim,
-      // commons/decisions/directions.md): HP pays per POINT, so this row
-      // overrides the 5-point tier default. Every other row keeps the tier —
-      // strength's "+1 damange per every 5 points" is per-5 by the same
-      // sentence, and the mock's "1 per 5 points" lines he left standing.
-      pointsPerTier: 1,
-      gainPerTier: 1,
+      sourceStat: 'constitution',
+      // D22 restores Constitution and pays HP in complete five-point tiers.
+      pointsPerTier: 5,
+      gainPerTier: { strategy: 'classField', field: 'hpPerConTier' },
     },
     stamina: {
       base: 0,
-      sourceStat: 'vigour',
+      sourceStat: 'constitution',
       gainPerTier: 1,
     },
     mana: {
@@ -14628,7 +14660,8 @@ const { assertTableSane } = require("src/model/secondbeat.js");
 const { viewRefusals, geometryRefusals } = require("src/model/mapview.js");
 const { graceRefillRefusals } = require("src/model/gracerefill.js");
 const { flaskGrowthRefusals } = require("src/model/flaskgrowth.js");
-const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, PILES, PILE_POSITIONS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, DAMAGE_SCHOOLS, CREATURE_TAGS } = require("src/model/schemas.js");
+const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CARD_TYPES, PILES, PILE_POSITIONS, REGISTRY_TYPES, SFX_LAYER_KINDS, SFX_LAYER_SCHEMAS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, DAMAGE_SCHOOLS, RELIC_MODIFIER_TAGS, CREATURE_TAGS } = require("src/model/schemas.js");
+
 
 
 
@@ -14649,7 +14682,7 @@ const { SCHEMAS, OPCODES, EFFECT_SPECS, TARGETS, TRIGGER_EVENTS, PREDICATES, CAR
 const { RESOURCE_SOURCE_IDS } = require("src/model/resources.js");
 const { FORMULA_OPS, FORMULA_OF, isFormula } = require("src/model/formulas.js");
 const { attributeContentProblems } = require("src/model/attributes.js");
-const { derivedStatRuleProblems } = require("src/model/derivedStats.js");
+const { derivedStatRuleProblems, relicAttributeTierFoldProblems } = require("src/model/derivedStats.js");
 const { startingKitProblems } = require("src/model/startingKits.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
@@ -14748,6 +14781,23 @@ const KNOWN_BUNDLE_KEYS = new Set([
 const TOKEN_PATTERN = '\\{([A-Za-z][\\w.]*)\\}';
 const tokenRe = () => new RegExp(TOKEN_PATTERN, 'g');
 
+function relicModifierTokenBindings(def) {
+  const counts = {};
+  const out = [];
+  const add = (base, value, tag) => {
+    counts[base] = (counts[base] || 0) + 1;
+    const token = counts[base] === 1 ? base : `${base}.${counts[base]}`;
+    out.push({ token, value, literal: typeof value === 'number', op: tag, required: true });
+  };
+  for (const row of (def.passives && Array.isArray(def.passives.modifiers) ? def.passives.modifiers : [])) {
+    if (!row || typeof row !== 'object') continue;
+    if (row.tag === 'resource.flat') add(`${row.resource}Flat`, row.amount, row.tag);
+    else if (row.tag === 'resource.attributeTier') add(`${row.resource}PerTier`, row.amountPerTier, row.tag);
+    else if (row.tag === 'damage.school.flat') add(`${row.school}DamageFlat`, row.amount, row.tag);
+  }
+  return out;
+}
+
 function relicTokens(def) {
   // DELEGATES. It used to carry its own grammar — a `['amount','stacks','value',
   // 'n']` scan plus status/id keying — and Bjorn's review found 3 of 4 synthetic
@@ -14768,6 +14818,9 @@ function relicTokens(def) {
   for (const b of computeTokenBindings(ops)) {
     const v = (ops[b.index] || {})[b.field];
     if (typeof v === 'number') tokens[b.token] = v;
+  }
+  for (const binding of relicModifierTokenBindings(def)) {
+    if (typeof binding.value === 'number') tokens[binding.token] = binding.value;
   }
   return tokens;
 }
@@ -15040,8 +15093,71 @@ function validateContent(bundle) {
   for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
-    classFields: ['maxHp'],
+    classFields: ['maxHp', 'hpPerConTier'],
   })) err(problem.path, problem.msg);
+
+  // Relic modifier tags are a compact passive DSL. The tag is the behavior;
+  // every other word is data. Validate the exact row here so a typo never
+  // becomes a plausible-looking inert bonus.
+  const attributeIds = new Set((b.attributes || []).map((row) => row && row.id));
+  const resourceIds = new Set(['hp', 'mana', 'stamina']);
+  const starterRelicIds = new Set((b.classes || []).map((row) => row && row.startingRelic));
+  for (const relic of b.relics || []) {
+    const rows = relic && relic.passives && relic.passives.modifiers;
+    if (rows === undefined) continue;
+    const base = `relics.${relic.id}.passives.modifiers`;
+    if (!Array.isArray(rows)) {
+      err(base, 'must be an array');
+      continue;
+    }
+    if (rows.length && (relic.rarity !== 'starter' || !starterRelicIds.has(relic.id))) {
+      err(base, 'resource/damage modifier tags are restricted to class starting relics');
+    }
+    rows.forEach((row, index) => {
+      const path = `${base}[${index}]`;
+      if (!row || typeof row !== 'object' || Array.isArray(row)) {
+        err(path, 'must be an object');
+        return;
+      }
+      if (!RELIC_MODIFIER_TAGS.includes(row.tag)) {
+        err(`${path}.tag`, `'${row.tag}' is unknown (legal: ${RELIC_MODIFIER_TAGS.join(', ')})`);
+        return;
+      }
+      const fields = row.tag === 'resource.flat'
+        ? ['tag', 'resource', 'amount']
+        : row.tag === 'resource.attributeTier'
+          ? ['tag', 'resource', 'sourceStat', 'pointsPerTier', 'amountPerTier']
+          : ['tag', 'school', 'amount'];
+      for (const key of Object.keys(row)) if (!fields.includes(key)) err(`${path}.${key}`, `unknown field '${key}' for '${row.tag}'`);
+      for (const key of fields) if (row[key] === undefined) err(`${path}.${key}`, `missing required field '${key}'`);
+      if (row.resource !== undefined && !resourceIds.has(row.resource)) err(`${path}.resource`, `unknown resource '${row.resource}'`);
+      if (row.sourceStat !== undefined && !attributeIds.has(row.sourceStat)) err(`${path}.sourceStat`, `unknown attribute '${row.sourceStat}'`);
+      if (row.school !== undefined && !DAMAGE_SCHOOLS.includes(row.school)) err(`${path}.school`, `unknown damage school '${row.school}'`);
+      for (const key of ['amount', 'amountPerTier']) {
+        if (row[key] !== undefined && (!Number.isInteger(row[key]) || row[key] <= 0)) err(`${path}.${key}`, 'must be a positive integer');
+      }
+      if (row.pointsPerTier !== undefined && (!Number.isInteger(row.pointsPerTier) || row.pointsPerTier <= 0)) {
+        err(`${path}.pointsPerTier`, 'must be a positive integer');
+      }
+      if (row.tag === 'resource.attributeTier') {
+        const authoredRule = b.derivedStatRules && b.derivedStatRules.rules && b.derivedStatRules.rules[row.resource];
+        const defaults = b.derivedStatRules && b.derivedStatRules.defaults || {};
+        const resolvedRule = authoredRule && { ...defaults, ...authoredRule };
+        if (resolvedRule) {
+          for (const foldProblem of relicAttributeTierFoldProblems(row, resolvedRule)) {
+            err(foldProblem.field ? `${path}.${foldProblem.field}` : path,
+              `${foldProblem.msg} so the ${row.resource} modifier can fold at content boot`);
+          }
+        }
+      }
+    });
+  }
+
+  for (const cls of b.classes || []) {
+    if (cls && (!Number.isInteger(cls.hpPerConTier) || cls.hpPerConTier <= 0)) {
+      err(`classes.${cls.id}.hpPerConTier`, 'must be a positive integer');
+    }
+  }
 
   // ---- HUD resource rows: MEANING, not shape (Law 1 clause 5) --------------
   // The shape walk above already rejects a missing `source`. This rejects a
@@ -15964,8 +16080,8 @@ function validateFormula(value, path, vctx) {
 // Text templating (SPEC §3.13)
 // ---------------------------------------------------------------------------
 
-function checkTemplate(template, effects, path, err) {
-  const bindings = computeTokenBindings(effects);
+function checkTemplate(template, effects, path, err, extraBindings = []) {
+  const bindings = [...computeTokenBindings(effects), ...extraBindings];
   const bound = new Set(bindings.map((bd) => bd.token));
   for (const token of extractTemplateTokens(template)) {
     if (!bound.has(token)) {
@@ -15974,7 +16090,7 @@ function checkTemplate(template, effects, path, err) {
   }
   const used = new Set(extractTemplateTokens(template));
   for (const bd of bindings) {
-    if (bd.literal && REQUIRED_TOKEN_OPS.includes(bd.op) && !used.has(bd.token)) {
+    if (bd.literal && (bd.required || REQUIRED_TOKEN_OPS.includes(bd.op)) && !used.has(bd.token)) {
       err(path, `Player-visible numeric effect (op '${bd.op}', token '{${bd.token}}') lacks a template token`);
     }
   }
@@ -15998,7 +16114,7 @@ function validateRelicTemplate(relic, path, err) {
   for (const trig of relic.triggers) {
     if (trig && Array.isArray(trig.do)) effects.push(...trig.do);
   }
-  checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err);
+  checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err, relicModifierTokenBindings(relic));
 }
 
 // ---------------------------------------------------------------------------
@@ -18144,6 +18260,11 @@ const { NODE_TYPES, ANCHOR_KINDS } = require("src/model/floorplan.js");
 
 /** Presentation schools carried explicitly by equipment-bound card profiles. */
 const DAMAGE_SCHOOLS = Object.freeze(['physical', 'magic', 'arcane', 'holy', 'fire']);
+const RELIC_MODIFIER_TAGS = Object.freeze([
+  'resource.flat',
+  'resource.attributeTier',
+  'damage.school.flat',
+]);
 // The bar vocabulary lives with the readers it describes (model/resources.js),
 // so the schema and the engine cannot drift into two homes. resources.js
 // imports nothing — no cycle.
@@ -18683,9 +18804,15 @@ const SCHEMAS = Object.freeze({
     // keys, so this node is what actually refuses a mis-spelled passive — which
     // is exactly why it must not be a second list.
     passives: opt(
-      obj(Object.fromEntries(
-        Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
-      ))
+      obj({
+        ...Object.fromEntries(
+          Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
+        ),
+        // Semantics and strict field validation live in validate.js beside the
+        // closed RELIC_MODIFIER_TAGS vocabulary. `any` avoids duplicating three
+        // discriminated object shapes in this generic schema walker.
+        modifiers: opt(arr(any)),
+      })
     ),
     icon: opt(str),
     flavor: opt(str),
@@ -18871,6 +18998,7 @@ const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
+    hpPerConTier: int,
     startingFlaskAllocation: obj({ hp: int, mana: int }),
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
@@ -18922,7 +19050,7 @@ const SCHEMAS = Object.freeze({
 });
 
 
-Object.assign(module.exports, { DAMAGE_SCHOOLS, COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_TYPES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, STATUS_VALUE_TOKENS, STATUS_DURATION_TOKENS, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, FLASK_KINDS, FLASK_GROWTH_SOURCES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
+Object.assign(module.exports, { DAMAGE_SCHOOLS, RELIC_MODIFIER_TAGS, COMBAT_OPCODES, RUN_OPCODES, OPCODES, TARGETS, EVENTS, TRIGGER_EVENTS, PREDICATES, PASSIVE_TYPES, PASSIVE_KEYS, MODIFIER_TYPES, MODIFIER_KEYS, STACK_MODES, STATUS_VALUE_TOKENS, STATUS_DURATION_TOKENS, VULN_STACKING, CREATURE_TAGS, CARD_TYPES, CARD_RARITIES, RELIC_RARITIES, FLASK_RARITIES, FLASK_KINDS, FLASK_GROWTH_SOURCES, INTENT_KINDS, ENCOUNTER_POOLS, PILES, PILE_POSITIONS, ENGINE_KEYWORDS, SFX_LAYER_KINDS, SFX_WAVE_TYPES, REGISTRY_TYPES, EFFECT_SPECS, MUSIC_SILENCE_WORD, MUSIC_BED_SCHEMA, SFX_LAYER_SCHEMAS, SCHEMAS });
 
 },
 "src/model/resources.js": function (module, exports, require) {
@@ -19769,6 +19897,10 @@ Object.assign(module.exports, { FORMULA_OPS, FORMULA_OF, isFormula, evaluate });
 // src/model/attributes.js — the one reader for creation-stat data.
 // No combat or derived-resource behavior belongs here.
 
+// The run door's witness (src/model/healLedger.js). `note` is a no-op unless a
+// door is open and never changes a value — this file's behaviour is unchanged.
+const { note } = require("src/model/healLedger.js");
+
 const plainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 
 function tables(source) {
@@ -19890,16 +20022,54 @@ function classAttributePreset(source, classId, modeId = defaultCreationModeId(so
 function migrateRetiredAttributeNames(run, source) {
   const retired = retiredNames(tables(source));
   for (const [dead, heir] of Object.entries(retired)) {
-    if (plainObject(run.attributes) && Object.hasOwn(run.attributes, dead) && !Object.hasOwn(run.attributes, heir)) {
-      run.attributes[heir] = run.attributes[dead];
-      delete run.attributes[dead];
-    }
     const snapshot = run.derivedStatRuleSnapshot;
     const rules = snapshot && plainObject(snapshot.rules) && plainObject(snapshot.rules.rules)
       ? snapshot.rules.rules : null;
+    const allocationDead = plainObject(run.attributes) && Object.hasOwn(run.attributes, dead);
+    const allocationHeir = plainObject(run.attributes) && Object.hasOwn(run.attributes, heir);
+    const sourceRows = rules ? Object.entries(rules).filter(([, rule]) => plainObject(rule)) : [];
+    const snapshotDead = sourceRows.filter(([, rule]) => rule.sourceStat === dead).map(([id]) => id);
+    const snapshotHeir = sourceRows.filter(([, rule]) => rule.sourceStat === heir).map(([id]) => id);
+    const deadPaths = [
+      ...(allocationDead ? [`attributes.${dead}`] : []),
+      ...snapshotDead.map((id) => `derivedStatRuleSnapshot.rules.rules.${id}.sourceStat`),
+    ];
+    const heirPaths = [
+      ...(allocationHeir ? [`attributes.${heir}`] : []),
+      ...snapshotHeir.map((id) => `derivedStatRuleSnapshot.rules.rules.${id}.sourceStat`),
+    ];
+    // Preflight before touching either carrier: mixed vocabularies are two
+    // competing claims on one stat seat, even when they occur in different
+    // persisted homes. Refuse atomically and name every witness.
+    if (deadPaths.length && heirPaths.length) {
+      throw new Error(`Mixed retired attribute '${dead}' and heir '${heir}' at ${[...deadPaths, ...heirPaths].join(', ')}`);
+    }
+    if (allocationDead) {
+      note(run, {
+        kind: 'rename',
+        site: 'attributes.js:migrateRetiredAttributeNames',
+        field: `attributes.${dead}`,
+        was: { [dead]: run.attributes[dead] },
+        now: { [heir]: run.attributes[dead] },
+        why: `the retired seat '${dead}' was carried to its heir '${heir}', points intact`,
+      });
+      run.attributes[heir] = run.attributes[dead];
+      delete run.attributes[dead];
+    }
     if (rules) {
-      for (const rule of Object.values(rules)) {
-        if (plainObject(rule) && rule.sourceStat === dead) rule.sourceStat = heir;
+      const moved = [];
+      for (const [id, rule] of Object.entries(rules)) {
+        if (plainObject(rule) && rule.sourceStat === dead) { rule.sourceStat = heir; moved.push(id); }
+      }
+      if (moved.length) {
+        note(run, {
+          kind: 'rename',
+          site: 'attributes.js:migrateRetiredAttributeNames',
+          field: 'derivedStatRuleSnapshot.rules.rules[*].sourceStat',
+          was: { [dead]: moved },
+          now: { [heir]: moved },
+          why: `${moved.length} persisted snapshot rule(s) re-pointed from '${dead}' to '${heir}'`,
+        });
       }
     }
   }
@@ -19914,6 +20084,19 @@ function normalizeRunAttributes(run, registries) {
   if (modeAbsent) {
     run.attributeMode = defaultCreationModeId(registries);
     run.attributes = classAttributePreset(registries, run.class, run.attributeMode);
+    // ONE OF THE THREE UNGATED HEALS, and the one that started this: the pair is
+    // optional in RUN_SHAPE with no schemaVersion gate, so a CURRENT-schema save
+    // whose allocation is gone comes back wearing the class preset. Somebody
+    // else's build. It still does; it says so now, with the schemaVersion of the
+    // save it happened to, which is the number the parked refuse question turns on.
+    note(run, {
+      kind: 'heal',
+      site: 'attributes.js:normalizeRunAttributes',
+      field: 'attributes+attributeMode',
+      was: undefined,
+      now: { attributeMode: run.attributeMode, attributes: { ...run.attributes } },
+      why: `absent in the save: REFILLED FROM THE CLASS PRESET for '${run.class}' — this is a plausible allocation, not the player's`,
+    });
     return run;
   }
   const problems = attributeAllocationProblems(registries, run.class, run.attributeMode, run.attributes);
@@ -19974,6 +20157,247 @@ function attributeContentProblems(source) {
 Object.assign(module.exports, { orderedAttributes, defaultCreationModeId, creationMode, allocationTotal, attributeAllocationProblems, classAttributePreset, migrateRetiredAttributeNames, normalizeRunAttributes, attributeContentProblems });
 
 },
+"src/model/healLedger.js": function (module, exports, require) {
+// src/model/healLedger.js — THE RUN DOOR SAYS WHAT IT DID.
+//
+// THE DEFECT THIS EXISTS FOR, and it was found from two ends by two seats who
+// each could only see half of it (Marina's ruling, 2026-08-15):
+//
+//   · Vira, from the save side: three fields are optional in RUN_SHAPE with no
+//     schemaVersion gate, so a heal written for old saves also fires on a
+//     CURRENT-schema save. Delete an allocation from a v4 save and it loads
+//     with the class preset, silently.
+//   · Sten, from the run-creation side: a planted double-count in the max-HP
+//     chain was SWALLOWED — `reconcileRunLoadoutHp` is the last writer at run
+//     creation, so it overwrote the plant and his instrument went green on a
+//     real defect.
+//
+// One defect: **a last-writer-wins reconcile that keeps no record of what it
+// overwrote.** Nobody owned run creation.
+//
+// WHAT THIS IS AND IS NOT. It is VISIBILITY, explicitly not the collapse. The
+// max-HP formula still lives in three homes (src/model/state.js twice,
+// src/model/loadout.js once) and this file does not merge them — *you cannot
+// safely collapse what you cannot watch drift*, and Sten's swallowed plant is
+// the proof. Each home now WRITES DOWN what it computed and what it replaced,
+// so a disagreement between them is observable instead of being decided by
+// call order. No behaviour changes. Not one number moves.
+//
+// AND IT IS NOT A REFUSAL. Refuse-vs-heal is a false dichotomy (Constantine's
+// own word, C6). The defect is the SILENCE, not the heal. A heal that names
+// itself satisfies save.js's honesty contract — "a failed load is a NAMED,
+// VISIBLE state, never a fresh profile wearing the same filename", which the
+// PROFILE has had since #67 and the RUN never did — and leaves
+// tests/engine.test.js 28 and 50 green, because they are right that a player's
+// climb should survive a missing field.
+//
+// SHAPE. The ledger is a NON-ENUMERABLE property of the run object, so
+// `JSON.stringify(run)` (serializeRun), `{...run}`, `Object.keys` and
+// `structuredClone` all skip it: **no save byte changes**, which is what lets
+// tools/saveroundtrip.mjs keep asserting that a save is a fixed point of its
+// own door. It is a witness, not persisted state.
+//
+// SCOPE — open only at a DOOR. `openLedger` is called at exactly two places,
+// and `note()` is a no-op anywhere else:
+//   · createRunState        (src/model/state.js)   — a run being born
+//   · createSaveManager.loadRun (src/engine/save.js) — a run coming back
+// stampDeck → reconcileRunLoadoutHp runs after every loadout mutation all
+// climb long; recording those would grow without bound and answer a question
+// nobody asked. Between doors the ledger is closed and costs nothing.
+//
+// WHO READS IT. `saves.runStatus()` — the run-side twin of `profileStatus()`,
+// same idea, one home each. tools/runcreation.mjs drives BOTH doors and fails
+// if the three max-HP homes disagree (Sten's A7).
+//
+// REMOVAL CONDITION (SOP 1's corollary): deleted the day run creation and the
+// load door have ONE writer for each field they set — no last writer, nothing
+// to overwrite, nothing to witness. Collapsing the three homes is what would
+// earn that, and this file is the instrument that makes the collapse safe to
+// attempt; it is not a permanent fixture.
+
+/** The property name on the run. String, not a Symbol, so it greps. */
+const LEDGER_KEY = 'runHealLedger';
+
+// A bound so a pathological caller cannot grow it without limit even inside a
+// door. Dropped entries are COUNTED, never silently discarded: a truncated
+// witness that does not say it was truncated is the silence again.
+const MAX_ENTRIES = 500;
+
+function ledger(run) {
+  return run && typeof run === 'object' ? run[LEDGER_KEY] : null;
+}
+
+/**
+ * openLedger(run, door, savedSchemaVersion) — start recording. Resets any
+ * previous record: each trip through a door is its own account, and a ledger
+ * that accumulated across two loads could not tell you which one healed.
+ */
+function openLedger(run, door, savedSchemaVersion) {
+  if (!run || typeof run !== 'object') return null;
+  const record = {
+    door,
+    savedSchemaVersion: savedSchemaVersion === undefined ? null : savedSchemaVersion,
+    open: true,
+    entries: [],
+    dropped: 0,
+  };
+  if (Object.hasOwn(run, LEDGER_KEY)) {
+    run[LEDGER_KEY] = record;
+  } else {
+    Object.defineProperty(run, LEDGER_KEY, {
+      value: record,
+      writable: true,
+      enumerable: false, // ← the whole reason no save byte moves
+      configurable: true,
+    });
+  }
+  return record;
+}
+
+/** closeLedger(run) → the finished record (or null). Notes after this are no-ops. */
+function closeLedger(run) {
+  const rec = ledger(run);
+  if (!rec) return null;
+  rec.open = false;
+  return rec;
+}
+
+/**
+ * note(run, entry) — record one act of the door. No-op unless a door is open.
+ *
+ * entry = {
+ *   kind:  'write'     — a field set for the first time at this door
+ *          'overwrite' — a later writer replaced a value an earlier one set
+ *          'heal'      — a field ABSENT from the input was filled in
+ *          'rename'    — a value carried from a retired name to its heir
+ *          'compute'   — a home stated the value it computed (may equal the
+ *                        one already there; this is how the three max-HP homes
+ *                        are compared without collapsing them)
+ *   site   — the code that did it, file:function, one string
+ *   field  — the run field it touched
+ *   was / now — the values, as they were and are
+ *   why    — one sentence a person can act on
+ * }
+ */
+function note(run, entry) {
+  const rec = ledger(run);
+  if (!rec || !rec.open) return null;
+  if (rec.entries.length >= MAX_ENTRIES) {
+    rec.dropped += 1;
+    return null;
+  }
+  const row = {
+    kind: entry.kind,
+    site: entry.site,
+    field: entry.field,
+    was: entry.was,
+    now: entry.now,
+    why: entry.why || '',
+    changed: entry.kind === 'compute' ? undefined : jsonEq(entry.was, entry.now) === false,
+    savedSchemaVersion: rec.savedSchemaVersion,
+    door: rec.door,
+  };
+  rec.entries.push(row);
+  return row;
+}
+
+function jsonEq(a, b) {
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch (e) {
+    return a === b;
+  }
+}
+
+/**
+ * readLedger(run, { currentSchemaVersion }) → a plain summary, or null when the
+ * run has never been through an instrumented door.
+ *
+ * `heals` counts only the entries that FILLED AN ABSENCE — the thing the
+ * narrowed refuse question is about. `overwrites` counts a later writer
+ * replacing an earlier one — Sten's swallow. They are separate numbers because
+ * they are separate defects wearing one shape.
+ */
+function readLedger(run, { currentSchemaVersion = null } = {}) {
+  const rec = ledger(run);
+  if (!rec) return null;
+  const heals = rec.entries.filter((e) => e.kind === 'heal' || e.kind === 'rename');
+  const overwrites = rec.entries.filter((e) => e.kind === 'overwrite' && e.changed);
+  const onCurrentSchema = currentSchemaVersion !== null
+    && rec.savedSchemaVersion === currentSchemaVersion;
+  return {
+    door: rec.door,
+    savedSchemaVersion: rec.savedSchemaVersion,
+    open: rec.open,
+    dropped: rec.dropped,
+    entries: rec.entries.map((e) => ({ ...e })),
+    healed: heals.length,
+    overwrote: overwrites.length,
+    // THE PREDICATE THE WAKE CONDITION IS WRITTEN ON (see tools/runcreation.mjs
+    // and the boundary of tools/saveroundtrip.mjs). A heal on a CURRENT-schema
+    // save is the event that turns "should a v4 save missing a field heal or
+    // refuse?" from a parked design call into a live one.
+    healedOnCurrentSchema: onCurrentSchema ? heals.length : 0,
+    fields: [...new Set(rec.entries.map((e) => e.field))],
+  };
+}
+
+/**
+ * THE THREE LIVE HOMES OF THE MAX-HP FORMULA, named once, here, so a tool that
+ * censuses them cannot drift from the code that reports them (Sten found them;
+ * the line numbers he gave were state.js:210, state.js:256, loadout.js:1086 at
+ * dev = 7e67de8, which is why this is keyed on site strings and not on lines).
+ *
+ * THEY ARE NOT COLLAPSED AND THIS OBJECT IS NOT A PLAN TO COLLAPSE THEM. It is
+ * the census list: a home missing from a run's ledger has not agreed with the
+ * others — it has said nothing, and those look identical from the outside.
+ */
+const MAX_HP_HOMES = Object.freeze({
+  'state.js:initializeRunDerivedStats(validate)': 'home 1 — checks a persisted maxHp against the snapshot + equipment + adjustment',
+  'state.js:initializeRunDerivedStats(derive)': 'home 2 — derives maxHp from the host rules; SECOND writer at run creation',
+  'loadout.js:reconcileRunLoadoutHp': 'home 3 — reconciles maxHp after a loadout mutation; LAST writer at run creation',
+});
+
+/**
+ * maxHpHomeValues(summary) → [{ site, value, was, door }] — what each home said
+ * about maxHp on this trip. Empty is a meaningful answer and callers must treat
+ * it as one: a home that did not run proves nothing about agreement.
+ */
+function maxHpHomeValues(summary) {
+  if (!summary) return [];
+  return summary.entries
+    .filter((e) => e.field === 'maxHp' && Object.hasOwn(MAX_HP_HOMES, e.site))
+    .map((e) => ({ site: e.site, value: e.now, was: e.was, door: e.door }));
+}
+
+/**
+ * describeLedger(summary) → the lines a human reads. One line per act, each
+ * naming the site, the field, and both values — because "the door healed
+ * something" is the same silence in a friendlier voice.
+ */
+function describeLedger(summary) {
+  if (!summary) return ['(no run door has been opened on this run)'];
+  const short = (v) => {
+    if (v === undefined) return '(absent)';
+    let s;
+    try {
+      s = JSON.stringify(v);
+    } catch (e) {
+      s = String(v);
+    }
+    if (s === undefined) s = String(v);
+    return s.length > 90 ? `${s.slice(0, 90)}…` : s;
+  };
+  const head = `${summary.door}: saved schemaVersion ${summary.savedSchemaVersion} · `
+    + `${summary.healed} heal(s), ${summary.overwrote} overwrite(s)`
+    + (summary.dropped ? ` · ${summary.dropped} entr(ies) DROPPED past the cap` : '');
+  return [head, ...summary.entries.map((e) => `  ${e.kind.toUpperCase().padEnd(9)} ${e.site} — ${e.field}: ${short(e.was)} -> ${short(e.now)}${e.why ? `  (${e.why})` : ''}`)];
+}
+
+
+Object.assign(module.exports, { LEDGER_KEY, openLedger, closeLedger, note, readLedger, MAX_HP_HOMES, maxHpHomeValues, describeLedger });
+
+},
 "src/model/derivedStats.js": function (module, exports, require) {
 // src/model/derivedStats.js — pure post-Phase-1 derived-stat rules.
 //
@@ -19985,8 +20409,9 @@ const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana
 const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
 // v1 is readable only so an unreleased class-base Mana snapshot can migrate to
 // v2. New snapshots always use the authored v2 table.
-const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2]);
-const DERIVED_STAT_SNAPSHOT_VERSION = 1;
+const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3]);
+const DERIVED_STAT_SNAPSHOT_VERSION = 2;
+const DERIVED_STAT_SNAPSHOT_VERSIONS = Object.freeze([1, 2]);
 
 const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules'];
 const DEFAULT_FIELDS = ['pointsPerTier', 'rounding', 'cap'];
@@ -20009,9 +20434,18 @@ function validatePoints(out, value, path, required) {
   if (!Number.isFinite(value) || value <= 0) problem(out, path, 'must be a finite number > 0');
 }
 
-function validateGain(out, value, path, required) {
+function validateGain(out, value, path, required, classFields) {
   if (value === undefined && !required) return;
-  if (!Number.isFinite(value)) problem(out, path, 'must be a finite number');
+  if (Number.isFinite(value)) return;
+  if (!plainObject(value)) {
+    problem(out, path, 'must be a finite number or a classField reference');
+    return;
+  }
+  unknownFields(out, value, BASE_FIELDS, path);
+  if (value.strategy !== 'classField') problem(out, `${path}.strategy`, "must be 'classField'");
+  if (typeof value.field !== 'string' || !classFields.includes(value.field)) {
+    problem(out, `${path}.field`, `must name one of ${classFields.join(', ')}`);
+  }
 }
 
 function validateRounding(out, value, path, required) {
@@ -20075,7 +20509,7 @@ function validateRule(out, value, path, options, partial) {
     problem(out, `${path}.sourceStat`, `${got}must name one of ${options.attributeIds.join(', ')}`);
   }
   validatePoints(out, value.pointsPerTier, `${path}.pointsPerTier`, false);
-  validateGain(out, value.gainPerTier, `${path}.gainPerTier`, !partial);
+  validateGain(out, value.gainPerTier, `${path}.gainPerTier`, !partial, options.classFields);
   validateRounding(out, value.rounding, `${path}.rounding`, false);
   validateCap(out, value.cap, `${path}.cap`, false);
 }
@@ -20084,6 +20518,7 @@ function normalizedOptions(options = {}) {
   return {
     attributeIds: Array.isArray(options.attributeIds) ? [...options.attributeIds] : [],
     classFields: Array.isArray(options.classFields) ? [...options.classFields] : ['maxHp', 'maxMana'],
+    damageSchools: Array.isArray(options.damageSchools) ? [...options.damageSchools] : [],
   };
 }
 
@@ -20169,18 +20604,25 @@ function baseValue(base, classDef, statId) {
   return value;
 }
 
+function gainValue(gain, classDef, statId) {
+  if (Number.isFinite(gain)) return gain;
+  const value = classDef && gain && classDef[gain.field];
+  if (!Number.isFinite(value)) throw new Error(`${statId}.gainPerTier: class field '${gain && gain.field}' is not a finite number`);
+  return value;
+}
+
 /**
  * Generic attribute-tier receipt for weapon/armour/resource projections.
  * The caller supplies one already-resolved rule row, so authored defaults,
  * mode/run layers and the explicit/debug override have already merged once.
  * This helper owns no weapon base and mutates nothing.
  */
-function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rule.sourceStat } = {}) {
+function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rule.sourceStat, classDef, statId = 'derivedStat' } = {}) {
   if (!plainObject(rule)) throw new Error('Attribute tier rule must be a resolved rule row');
   const points = attributes && attributes[sourceStat];
   if (!Number.isFinite(points)) throw new Error(`sourceStat '${sourceStat}' is not a finite number`);
   if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error('pointsPerTier must be a finite number > 0');
-  if (!Number.isFinite(rule.gainPerTier)) throw new Error('gainPerTier must be a finite number');
+  const gainPerTier = gainValue(rule.gainPerTier, classDef, statId);
   const round = Math[rule.rounding];
   if (typeof round !== 'function') throw new Error(`rounding '${rule.rounding}' is not executable`);
   const tier = round(points / rule.pointsPerTier);
@@ -20190,8 +20632,8 @@ function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rul
     pointsPerTier: rule.pointsPerTier,
     rounding: rule.rounding,
     tier,
-    gainPerTier: rule.gainPerTier,
-    value: tier * rule.gainPerTier,
+    gainPerTier,
+    value: tier * gainPerTier,
   };
 }
 
@@ -20199,30 +20641,81 @@ function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule && rul
 function deriveStat(resolved, statId, { attributes, classDef } = {}) {
   const row = resolved && resolved.rules && resolved.rules[statId];
   if (!row) throw new Error(`Unknown derived stat '${statId}'`);
-  const tierReceipt = deriveAttributeTierReceipt(row, { attributes });
+  const tierReceipt = deriveAttributeTierReceipt(row, { attributes, classDef, statId });
   const { points, tier } = tierReceipt;
   const base = baseValue(row.base, classDef, statId);
-  const raw = base + tier * row.gainPerTier;
+  const raw = base + tier * tierReceipt.gainPerTier;
   const value = row.cap === null ? raw : Math.min(raw, row.cap);
-  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: row.gainPerTier, raw, cap: row.cap, value };
+  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: tierReceipt.gainPerTier, raw, cap: row.cap, value };
+}
+
+/** One compatibility contract for folding an authored relic tier into a rule. */
+function relicAttributeTierFoldProblems(term, rule) {
+  const problems = [];
+  if (!term || !rule) return [{ field: null, msg: 'requires a resolved target resource rule' }];
+  if (term.sourceStat !== rule.sourceStat) {
+    problems.push({ field: 'sourceStat', msg: `must match target rule sourceStat '${rule.sourceStat}'` });
+  }
+  if (term.pointsPerTier !== rule.pointsPerTier) {
+    problems.push({ field: 'pointsPerTier', msg: `must match target rule pointsPerTier ${rule.pointsPerTier}` });
+  }
+  if (rule.rounding !== 'floor') {
+    problems.push({ field: null, msg: `cannot fold into target rule rounding '${rule.rounding}'; attribute-tier modifiers require 'floor'` });
+  }
+  return problems;
+}
+
+function resolveSnapshotNumbers(rules, classDef, relicModifierReceipt, explicitOverride) {
+  if (!classDef) throw new Error('Host snapshot creation requires a classDef');
+  const out = structuredClone(rules);
+  for (const [statId, row] of Object.entries(out.rules)) {
+    row.base = baseValue(row.base, classDef, statId);
+    row.gainPerTier = gainValue(row.gainPerTier, classDef, statId);
+  }
+  const resources = relicModifierReceipt && relicModifierReceipt.resources || {};
+  for (const [statId, bonus] of Object.entries(resources)) {
+    if (!bonus || (!bonus.flat && !(bonus.attributeTiers || []).length)) continue;
+    const row = out.rules[statId];
+    if (!row) throw new Error(`Relic modifier targets unknown derived resource '${statId}'`);
+    const explicitRow = explicitOverride && explicitOverride.rules && explicitOverride.rules[statId] || {};
+    if (explicitRow.base === undefined) row.base += bonus.flat || 0;
+    if (explicitRow.gainPerTier === undefined) {
+      for (const term of bonus.attributeTiers || []) {
+        if (relicAttributeTierFoldProblems(term, row).length) {
+          throw new Error(`Relic ${statId} attribute tier ${term.sourceStat}/${term.pointsPerTier} cannot fold into host rule ${row.sourceStat}/${row.pointsPerTier}/${row.rounding}`);
+        }
+        row.gainPerTier += term.amountPerTier;
+      }
+    }
+  }
+  return out;
 }
 
 /** Host-created, immutable-by-convention rules receipt for co-op/save owners. */
 function createDerivedStatRuleSnapshot(source, options = {}) {
   if (options.authority !== 'host') throw new Error('Only the host authority may create a derived-stat rules snapshot');
-  const rules = resolveDerivedStatRules(source, options);
+  const rules = resolveSnapshotNumbers(
+    resolveDerivedStatRules(source, options),
+    options.classDef,
+    options.relicModifierReceipt,
+    options.explicitOverride,
+  );
   return structuredClone({
     snapshotVersion: DERIVED_STAT_SNAPSHOT_VERSION,
     rulesetVersion: rules.rulesetVersion,
     rules,
+    relicModifiers: options.relicModifierReceipt ? {
+      damageBySchoolAdd: options.relicModifierReceipt.damageBySchoolAdd,
+      sources: options.relicModifierReceipt.sources,
+    } : { damageBySchoolAdd: {}, sources: [] },
   });
 }
 
 /** Restore exactly what the host saved; current authored data is not consulted. */
 function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
   if (!plainObject(snapshot)) throw new Error('Derived-stat snapshot must be an object');
-  if (snapshot.snapshotVersion !== DERIVED_STAT_SNAPSHOT_VERSION) {
-    throw new Error(`Unknown derived-stat snapshotVersion ${snapshot.snapshotVersion} (expected ${DERIVED_STAT_SNAPSHOT_VERSION})`);
+  if (!DERIVED_STAT_SNAPSHOT_VERSIONS.includes(snapshot.snapshotVersion)) {
+    throw new Error(`Unknown derived-stat snapshotVersion ${snapshot.snapshotVersion} (supported: ${DERIVED_STAT_SNAPSHOT_VERSIONS.join(', ')})`);
   }
   if (!DERIVED_STAT_RULESET_VERSIONS.includes(snapshot.rulesetVersion)) {
     throw new Error(`Unknown derived-stat rulesetVersion ${snapshot.rulesetVersion} (supported: ${DERIVED_STAT_RULESET_VERSIONS.join(', ')})`);
@@ -20234,12 +20727,44 @@ function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
   // and resolve it without any live overrides. Resolved rows contain defaults;
   // those extra row keys are all legal authored override keys.
   const source = structuredClone(snapshot.rules);
+  if (snapshot.snapshotVersion === 2) {
+    for (const [id, row] of Object.entries(source.rules || {})) {
+      if (!Number.isFinite(row.base) || !Number.isFinite(row.gainPerTier)) {
+        throw new Error(`Derived-stat snapshot v2 '${id}' must carry numeric base and gainPerTier`);
+      }
+    }
+    const modifiers = snapshot.relicModifiers;
+    if (!plainObject(modifiers) || !plainObject(modifiers.damageBySchoolAdd) || !Array.isArray(modifiers.sources)) {
+      throw new Error('Derived-stat snapshot v2 must carry relicModifiers { damageBySchoolAdd, sources }');
+    }
+    const legalSchools = normalizedOptions(options).damageSchools;
+    for (const school of legalSchools) {
+      if (!own(modifiers.damageBySchoolAdd, school)) {
+        throw new Error(`Derived-stat snapshot v2 relicModifiers.damageBySchoolAdd.${school} is missing`);
+      }
+    }
+    for (const [school, value] of Object.entries(modifiers.damageBySchoolAdd)) {
+      if (legalSchools.length && !legalSchools.includes(school)) {
+        throw new Error(`Derived-stat snapshot v2 relicModifiers.damageBySchoolAdd.${school} is not a legal damage school`);
+      }
+      if (!Number.isFinite(value) || value < 0) throw new Error(`Derived-stat snapshot v2 relicModifiers.damageBySchoolAdd.${school} must be a non-negative finite number`);
+    }
+  }
+  const expectedEnvelope = snapshot.rulesetVersion >= 3 ? 2 : 1;
+  if (snapshot.snapshotVersion !== expectedEnvelope) {
+    throw new Error(`Derived-stat rulesetVersion ${snapshot.rulesetVersion} requires snapshotVersion ${expectedEnvelope}`);
+  }
   throwProblems('derivedStatSnapshot', derivedStatRuleProblems(source, normalizedOptions(options)));
-  return { snapshotVersion: snapshot.snapshotVersion, rulesetVersion: snapshot.rulesetVersion, rules: source };
+  return {
+    snapshotVersion: snapshot.snapshotVersion,
+    rulesetVersion: snapshot.rulesetVersion,
+    rules: source,
+    ...(snapshot.relicModifiers ? { relicModifiers: structuredClone(snapshot.relicModifiers) } : {}),
+  };
 }
 
 
-Object.assign(module.exports, { DERIVED_STAT_IDS, DERIVED_STAT_ROUNDING, DERIVED_STAT_RULESET_VERSIONS, DERIVED_STAT_SNAPSHOT_VERSION, derivedStatRuleProblems, resolveDerivedStatRules, deriveAttributeTierReceipt, deriveStat, createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot });
+Object.assign(module.exports, { DERIVED_STAT_IDS, DERIVED_STAT_ROUNDING, DERIVED_STAT_RULESET_VERSIONS, DERIVED_STAT_SNAPSHOT_VERSION, DERIVED_STAT_SNAPSHOT_VERSIONS, derivedStatRuleProblems, resolveDerivedStatRules, deriveAttributeTierReceipt, deriveStat, relicAttributeTierFoldProblems, createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot });
 
 },
 "src/model/startingKits.js": function (module, exports, require) {
@@ -20427,6 +20952,7 @@ Object.assign(module.exports, { PROGRESSION_MODES, UNDISCOVERED_PRESENTATIONS, s
 const { REGISTRY_TYPES, PASSIVE_KEYS } = require("src/model/schemas.js");
 const { applyCardMods } = require("src/model/loadout.js");
 const { deriveStat, resolveDerivedStatRules } = require("src/model/derivedStats.js");
+const { resolveRelicModifiers } = require("src/model/relicModifiers.js");
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -20562,7 +21088,7 @@ function createRegistries(contentBundle) {
   const attributeIds = registries.attributes.ids();
   const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
   const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
-  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp', 'hpPerConTier'] });
   let hpEquipmentBonus = 0;
   for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
     for (const raw of (piece && piece.mods) || []) {
@@ -20570,11 +21096,14 @@ function createRegistries(contentBundle) {
       if (match) hpEquipmentBonus = Math.max(hpEquipmentBonus, Number(match[1]));
     }
   }
-  const domainRows = registries.classes.all().map((classDef) => ({
-    hp: deriveStat(rules, 'hp', { attributes: ceilingAttributes, classDef }).value + hpEquipmentBonus,
-    mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value,
-    stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value,
-  }));
+  const domainRows = registries.classes.all().map((classDef) => {
+    const relic = resolveRelicModifiers(registries, [classDef.startingRelic], { attributes: ceilingAttributes });
+    return {
+      hp: deriveStat(rules, 'hp', { attributes: ceilingAttributes, classDef }).value + relic.resources.hp.total + hpEquipmentBonus,
+      mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value + relic.resources.mana.total,
+      stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value + relic.resources.stamina.total,
+    };
+  });
   // Player Poise potential — the largest stagger threshold a loadout can
   // state: per equipment slot, the best authored piece whose kind that slot
   // accepts, plus every authored relic bonus. Content potential like hp above
@@ -20753,9 +21282,12 @@ Object.assign(module.exports, { deepFreeze, createRegistries, passiveMult, passi
 },
 "src/model/loadout.js": function (module, exports, require) {
 const { tokenRe } = require("src/model/validate.js");
-const { deriveAttributeTierReceipt } = require("src/model/derivedStats.js");
+const { deriveAttributeTierReceipt, deriveStat } = require("src/model/derivedStats.js");
 const { startingKitProblems } = require("src/model/startingKits.js");
 const { DAMAGE_SCHOOLS } = require("src/model/schemas.js");
+// Recording only — `note` is a no-op unless a run door is open, so the
+// stampDeck calls that fire all climb long cost nothing.
+const { note } = require("src/model/healLedger.js");
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -21818,6 +22350,45 @@ function runMods(registries, loadout, classId) {
   };
 }
 
+/**
+ * Reconcile the run's HP pool after an out-of-combat loadout mutation.
+ * The derived snapshot, equipment rows, and permanent adjustment remain the
+ * authorities; current HP keeps the same absolute deficit as the vessel grows
+ * or shrinks. Partial combat stamping records do not carry these fields and are
+ * deliberately ignored.
+ */
+function reconcileRunLoadoutHp(registries, run) {
+  if (!run || !run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules
+    || !Number.isFinite(run.maxHp) || !Number.isFinite(run.hp)) return null;
+  if (!Number.isInteger(run.maxHpAdjustment)) {
+    throw new Error('reconcileRunLoadoutHp requires integer maxHpAdjustment');
+  }
+  const classDef = registries.classes.get(run.class);
+  const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
+    attributes: run.attributes,
+    classDef,
+  });
+  const equipmentBonus = runMods(registries, run.loadout, run.class).maxHp;
+  // MAX-HP HOME 3 of 3, and THE LAST WRITER AT RUN CREATION — createRunState
+  // ends with stampDeck(), which begins with this call. That is why Sten's
+  // planted double-count went green: whatever the earlier writers put in the
+  // field, this one replaced it, and nothing recorded the replacement. It still
+  // replaces it. It no longer does so silently.
+  const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);
+  const deficit = Math.max(0, run.maxHp - run.hp);
+  note(run, {
+    kind: 'overwrite',
+    field: 'maxHp',
+    site: 'loadout.js:reconcileRunLoadoutHp',
+    was: run.maxHp,
+    now: nextMax,
+    why: `max-HP home 3 of 3 and the last writer at the door — derived ${derived.value} + equipment ${equipmentBonus} + adjustment ${run.maxHpAdjustment}; deficit ${deficit} carried`,
+  });
+  run.maxHp = nextMax;
+  run.hp = Math.max(0, nextMax - deficit);
+  return { derived: derived.value, equipmentBonus, adjustment: run.maxHpAdjustment, maxHp: nextMax, deficit };
+}
+
 // ---------------------------------------------------------------------------
 // Applying mods to a card
 // ---------------------------------------------------------------------------
@@ -21938,6 +22509,7 @@ function applyCardMods(def, mods, opts = {}) {
  * `cards` to stamp a hand mid-combat; it defaults to the run deck.
  */
 function stampDeck(registries, run, cards) {
+  reconcileRunLoadoutHp(registries, run);
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
@@ -22459,7 +23031,68 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLIES, RUN_MOD_APPLIES, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLIES, RUN_MOD_APPLIES, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
+
+},
+"src/model/relicModifiers.js": function (module, exports, require) {
+// src/model/relicModifiers.js — generic, data-authored relic modifier receipts.
+//
+// Relic ids never appear here. A closed modifier tag selects one piece of
+// generic arithmetic; the relic row supplies the resource/stat/school and its
+// value. The host resolves these rows once before stamping run/combat state.
+
+const { DAMAGE_SCHOOLS } = require("src/model/schemas.js");
+
+const RELIC_RESOURCE_IDS = Object.freeze(['hp', 'mana', 'stamina']);
+
+const emptyResource = () => ({ flat: 0, attributeTiers: [], total: 0 });
+
+function resolveRelicModifiers(registries, relicIds, { attributes = {} } = {}) {
+  const resources = Object.fromEntries(RELIC_RESOURCE_IDS.map((id) => [id, emptyResource()]));
+  const damageBySchoolAdd = Object.fromEntries(DAMAGE_SCHOOLS.map((id) => [id, 0]));
+  const sources = [];
+
+  for (const relicId of relicIds || []) {
+    const relic = registries.relics.get(relicId);
+    for (const [index, row] of (relic.passives && relic.passives.modifiers || []).entries()) {
+      const source = { relicId, index, tag: row.tag };
+      if (row.tag === 'resource.flat') {
+        resources[row.resource].flat += row.amount;
+        resources[row.resource].total += row.amount;
+        sources.push({ ...source, resource: row.resource, value: row.amount });
+      } else if (row.tag === 'resource.attributeTier') {
+        const points = attributes[row.sourceStat];
+        if (!Number.isFinite(points)) {
+          throw new Error(`${relicId}.passives.modifiers[${index}].sourceStat '${row.sourceStat}' has no finite run value`);
+        }
+        const tier = Math.floor(points / row.pointsPerTier);
+        const value = tier * row.amountPerTier;
+        const term = {
+          sourceStat: row.sourceStat,
+          pointsPerTier: row.pointsPerTier,
+          amountPerTier: row.amountPerTier,
+          tier,
+          value,
+        };
+        resources[row.resource].attributeTiers.push(term);
+        resources[row.resource].total += value;
+        sources.push({ ...source, resource: row.resource, ...term });
+      } else if (row.tag === 'damage.school.flat') {
+        damageBySchoolAdd[row.school] += row.amount;
+        sources.push({ ...source, school: row.school, value: row.amount });
+      } else {
+        // Boot validation owns normal content. This is the same loud edge for
+        // callers that construct registries without first running validation.
+        throw new Error(`${relicId}.passives.modifiers[${index}].tag '${row.tag}' is unknown`);
+      }
+    }
+  }
+
+  return structuredClone({ resources, damageBySchoolAdd, sources });
+}
+
+
+Object.assign(module.exports, { RELIC_RESOURCE_IDS, resolveRelicModifiers });
 
 },
 "src/model/state.js": function (module, exports, require) {
@@ -22485,12 +23118,16 @@ const { createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot, deriveSta
 
 const { resolveStartingKit, startingKitSnapshot } = require("src/model/startingKits.js");
 const { DAMAGE_SCHOOLS } = require("src/model/schemas.js");
+const { resolveRelicModifiers } = require("src/model/relicModifiers.js");
+// The run door's witness. Recording only; nothing here changes a number.
+// One home for the mechanic: src/model/healLedger.js.
+const { openLedger, closeLedger, note } = require("src/model/healLedger.js");
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
 // saves lack the ledger and are attributed once at the load door
 // (initializeRunFlaskCharges); v1 additionally predates starting kits.
-const RUN_SCHEMA_VERSION = 3;
+const RUN_SCHEMA_VERSION = 4;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 function createIdGen(prefix = 'i') {
@@ -22564,10 +23201,12 @@ function createRunState({
     mapNodeId: null,
     hp: oldMaxHp,
     maxHp: oldMaxHp,
+    maxHpAdjustment: 0,
     cinders: registries.balance.startingCinders || 0,
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
     relics: [classDef.startingRelic],
+    damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
     flaskCharges: createFlaskCharges(registries.balance, classDef.startingFlaskAllocation),
     seedString: null, // set by the orchestrator right after creation (display/replay)
@@ -22576,6 +23215,21 @@ function createRunState({
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // THE DOOR OPENS HERE. Everything below this line writes to a run that
+  // already exists, and until today none of it said so. `hp`/`maxHp` above are
+  // the FIRST of three writers; initializeRunDerivedStats is the second and
+  // reconcileRunLoadoutHp (via stampDeck) is the third and last. Sten's planted
+  // double-count was swallowed by that last writer and his instrument went
+  // green on it. Now each writer states what it computed and what it replaced.
+  openLedger(run, 'createRunState', RUN_SCHEMA_VERSION);
+  note(run, {
+    kind: 'write',
+    site: 'state.js:createRunState',
+    field: 'maxHp',
+    was: undefined,
+    now: oldMaxHp,
+    why: 'classDef.maxHp + runMods equipment bonus, set before the derived rules are resolved — the first of three writers',
+  });
   // "and each character should start with those" — Constantine, 2026-08-08, the
   // FOURTH clause of the flask parenthesis, and it is here because it was very
   // nearly lost. His sentence was quoted to me tonight with this clause missing
@@ -22597,6 +23251,7 @@ function createRunState({
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
+  closeLedger(run);
   return run;
 }
 
@@ -22613,7 +23268,8 @@ function derivedOptions(registries, extra = {}) {
     explicitOverride: statLayer(extra.explicitOverride),
     authority: 'host',
     attributeIds: registries.attributes.ids(),
-    classFields: ['maxHp', 'maxMana'],
+    classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+    damageSchools: DAMAGE_SCHOOLS,
   };
 }
 
@@ -22629,15 +23285,49 @@ function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const existing = snapshot || run.derivedStatRuleSnapshot;
+  const classDef = registries.classes.get(run.class);
+  const hpEquipmentBonus = run.loadout ? runMods(registries, run.loadout, run.class).maxHp : 0;
   run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
     ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
     : createEquipmentProfileRuleSnapshot(registries, derivedStatOptions);
   const currentRuleset = registries.derivedStatRules.rulesetVersion;
   const existingIsCurrent = existing && existing.rulesetVersion === currentRuleset;
+  let restoredExisting = null;
+  if (existing) restoredExisting = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+
+  // Schema v3 and older had no explanation for permanent max-HP reductions.
+  // Infer the exact residual once from the old authoritative rule plus current
+  // equipment. This preserves event curses instead of healing them away when
+  // D22 changes the base formula.
+  if (run.maxHpAdjustment === undefined) {
+    if (restoredExisting && Number.isFinite(run.maxHp)) {
+      const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: run.attributes, classDef }).value;
+      run.maxHpAdjustment = run.maxHp - (oldDerivedHp + hpEquipmentBonus);
+    } else run.maxHpAdjustment = 0;
+    note(run, {
+      kind: 'heal',
+      site: 'state.js:initializeRunDerivedStats',
+      field: 'maxHpAdjustment',
+      was: undefined,
+      now: run.maxHpAdjustment,
+      why: restoredExisting
+        ? 'absent in the save: the permanent max-HP residual was INFERRED once from the old rule plus current equipment, so an event curse survives a formula change'
+        : 'absent in the save and no old rule to infer from: assumed 0, i.e. this run is treated as never having been cursed',
+    });
+  }
+  if (!Number.isInteger(run.maxHpAdjustment)) {
+    throw new Error(`Persisted maxHpAdjustment must be an integer (got ${JSON.stringify(run.maxHpAdjustment)})`);
+  }
+
   if (existingIsCurrent && run.derivedStatRuleSnapshot) {
-    const restored = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
-    const classDef = registries.classes.get(run.class);
-    for (const [key, statId] of [['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
+    const restored = restoredExisting;
+    const expectedByKey = [
+      ['maxMana', 'mana'],
+      ['maxStamina', 'stamina'],
+      ['energyMax', 'energy'],
+      ['drawPerTurn', 'draw'],
+    ];
+    for (const [key, statId] of expectedByKey) {
       const value = run[key];
       if (!Number.isInteger(value) || value < 0) {
         throw new Error(`Persisted ${key} must be a non-negative integer under its derived-stat snapshot`);
@@ -22645,44 +23335,108 @@ function initializeRunDerivedStats(run, registries, {
       const expected = deriveStat(restored.rules, statId, { attributes: run.attributes, classDef }).value;
       if (value !== expected) throw new Error(`Persisted ${key} ${value} contradicts derived-stat snapshot value ${expected}`);
     }
+    // MAX-HP HOME 1 of 3 (the validating one). Same formula as home 2 below and
+    // home 3 in loadout.js:reconcileRunLoadoutHp. Deliberately NOT collapsed
+    // this act — the ruling is visibility first, because you cannot safely
+    // collapse what you cannot watch drift. It states its number so a tool can
+    // compare the three instead of trusting that they agree.
+    const expectedMaxHp = Math.max(1,
+      deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef }).value
+      + hpEquipmentBonus + run.maxHpAdjustment);
+    note(run, {
+      kind: 'compute',
+      site: 'state.js:initializeRunDerivedStats(validate)',
+      field: 'maxHp',
+      was: run.maxHp,
+      now: expectedMaxHp,
+      why: 'max-HP home 1 of 3 — derived + equipment + adjustment, checked against the persisted value',
+    });
+    if (run.maxHp !== expectedMaxHp) {
+      throw new Error(`Persisted maxHp ${run.maxHp} contradicts derived-stat snapshot/equipment/adjustment value ${expectedMaxHp}`);
+    }
+    const stampedDamage = restored.relicModifiers && restored.relicModifiers.damageBySchoolAdd
+      || Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0]));
+    if (run.damageBySchoolAdd === undefined) run.damageBySchoolAdd = structuredClone(stampedDamage);
+    for (const school of DAMAGE_SCHOOLS) {
+      if (run.damageBySchoolAdd[school] !== (stampedDamage[school] || 0)) {
+        throw new Error(`Persisted damageBySchoolAdd.${school} contradicts host relic snapshot`);
+      }
+    }
   }
   if (existingIsCurrent && run.derivedStatRuleSnapshot
     && run.maxHp !== undefined && run.hp !== undefined
     && run.maxMana !== undefined && run.mana !== undefined
     && run.maxStamina !== undefined && run.stamina !== undefined
     && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
-    restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
     return run;
   }
 
   // v1 carried class-authored 40/60/80 Mana pools. It is readable so its
   // current/max ratio can be migrated, but it is never retained as authority.
-  if (existing && !existingIsCurrent) restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+  const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, { attributes: run.attributes });
   const receipt = existingIsCurrent
-    ? restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries))
-    : createDerivedStatRuleSnapshot(registries.derivedStatRules, derivedOptions(registries, derivedStatOptions));
-  const classDef = registries.classes.get(run.class);
+    ? restoredExisting
+    : createDerivedStatRuleSnapshot(registries.derivedStatRules, {
+      ...derivedOptions(registries, derivedStatOptions),
+      classDef,
+      relicModifierReceipt,
+    });
   const rules = receipt.rules;
   const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef });
   const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef });
   const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef });
   const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef });
   const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef });
-  const hpBonus = run.loadout ? runMods(registries, run.loadout, run.class).maxHp : 0;
 
   const oldHpMax = run.maxHp;
   const oldHp = run.hp;
   const oldManaMax = run.maxMana;
   const oldMana = run.mana;
   run.derivedStatRuleSnapshot = structuredClone(receipt);
-  run.maxHp = hp.value + hpBonus;
+  // MAX-HP HOME 2 of 3 (the deriving one), and the SECOND writer at run
+  // creation — it replaces the classDef+equipment value createRunState set two
+  // dozen lines up, with nothing but call order deciding which wins.
+  const derivedMaxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);
+  note(run, {
+    kind: 'overwrite',
+    site: 'state.js:initializeRunDerivedStats(derive)',
+    field: 'maxHp',
+    was: oldHpMax,
+    now: derivedMaxHp,
+    why: 'max-HP home 2 of 3 — the host derived-stat rules replace whatever was in the field, at birth and at the load door alike',
+  });
+  run.maxHp = derivedMaxHp;
   run.maxMana = mana.value;
   run.maxStamina = stamina.value;
   run.energyMax = energy.value;
   run.drawPerTurn = draw.value;
+  run.damageBySchoolAdd = structuredClone(
+    receipt.relicModifiers && receipt.relicModifiers.damageBySchoolAdd
+      || Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
+  );
   if (preserveDeficits && Number.isFinite(oldHpMax) && Number.isFinite(oldHp)) {
     run.hp = Math.max(0, run.maxHp - Math.max(0, oldHpMax - oldHp));
-  } else run.hp = run.maxHp;
+    note(run, {
+      kind: 'overwrite',
+      site: 'state.js:initializeRunDerivedStats(pools)',
+      field: 'hp',
+      was: oldHp,
+      now: run.hp,
+      why: `the vessel moved ${oldHpMax} -> ${run.maxHp}; the ABSOLUTE deficit (${Math.max(0, oldHpMax - oldHp)}) is the player's and was carried`,
+    });
+  } else {
+    note(run, {
+      kind: preserveDeficits ? 'write' : 'overwrite',
+      site: 'state.js:initializeRunDerivedStats(pools)',
+      field: 'hp',
+      was: oldHp,
+      now: run.maxHp,
+      why: preserveDeficits
+        ? 'no prior pool to carry a deficit from — filled to the new maximum'
+        : 'preserveDeficits=false (a run being BORN, not restored): filled to the maximum. On a restore this would be healing a wound away, which is the friendliest way to lose a climb',
+    });
+    run.hp = run.maxHp;
+  }
   if (preserveDeficits && Number.isFinite(oldManaMax) && oldManaMax > 0 && Number.isFinite(oldMana)) {
     const legacyRatio = Math.max(0, Math.min(1, oldMana / oldManaMax));
     run.mana = Math.max(0, Math.min(run.maxMana, Math.round(legacyRatio * run.maxMana)));
@@ -22717,6 +23471,7 @@ const RUN_SHAPE = [
   { key: 'actNumber', type: 'number' },
   { key: 'hp', type: 'number' },
   { key: 'maxHp', type: 'number' },
+  { key: 'maxHpAdjustment', type: 'number' },
   // Optional only for save compatibility. save.js migrates a pre-mana run to
   // its class-authored full pool before handing it to the game.
   { key: 'mana', type: 'number', optional: true },
@@ -22728,6 +23483,7 @@ const RUN_SHAPE = [
   { key: 'cinders', type: 'number' },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
+  { key: 'damageBySchoolAdd', type: 'object' },
   { key: 'flasks', type: 'array' },
   { key: 'history', type: 'array' },
   { key: 'modifiers', type: 'array' },
@@ -22749,10 +23505,11 @@ function typeOk(value, type) {
 /** validateRunShape(run) → [] when sound, else a list of human-readable problems.
  *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
  *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
-function validateRunShape(run, { legacy = false, preLedger = legacy } = {}) {
+function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger } = {}) {
   const problems = [];
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
+    if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -22789,6 +23546,22 @@ function validateRunShape(run, { legacy = false, preLedger = legacy } = {}) {
   }
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');
+  }
+  if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && (run.hp < 0 || run.hp > run.maxHp)) {
+    problems.push('hp must be between 0 and maxHp');
+  }
+  if (run.maxHpAdjustment !== undefined && !Number.isInteger(run.maxHpAdjustment)) {
+    problems.push('maxHpAdjustment must be an integer');
+  }
+  if (run.damageBySchoolAdd !== undefined) {
+    for (const school of DAMAGE_SCHOOLS) {
+      if (!Number.isInteger(run.damageBySchoolAdd[school]) || run.damageBySchoolAdd[school] < 0) {
+        problems.push(`damageBySchoolAdd.${school} must be a non-negative integer`);
+      }
+    }
+    for (const school of Object.keys(run.damageBySchoolAdd)) {
+      if (!DAMAGE_SCHOOLS.includes(school)) problems.push(`damageBySchoolAdd.${school} is not a legal damage school`);
+    }
   }
   if (run.maxMana !== undefined && (!Number.isFinite(run.maxMana) || run.maxMana <= 0)) {
     problems.push('maxMana must be > 0');
@@ -22859,12 +23632,26 @@ function serializeRun(run) {
 
 function initializeRunFlaskCharges(run, registries) {
   if (!run.flaskCharges) {
+    const wasFlasks = structuredClone(run.flasks || []);
     const allocation = registries.classes.get(run.class).startingFlaskAllocation;
     run.flaskCharges = createFlaskCharges(registries.balance, allocation);
     const legacy = run.flasks || [];
     run.flaskCharges.hpCurrent = Math.min(run.flaskCharges.hp, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'hp').length);
     run.flaskCharges.manaCurrent = Math.min(run.flaskCharges.mana, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'mana').length);
     run.flasks = (run.flasks || []).filter((f) => f && chargeKindForFlask(registries, f.flaskId) == null);
+    // ONE OF THE THREE UNGATED HEALS. `flaskCharges` is optional in RUN_SHAPE
+    // with no schemaVersion gate, so this fires on a CURRENT-schema save that
+    // has lost the field, not only on the pre-ledger save it was written for —
+    // and every spent charge comes back. It is allowed to; it may not be quiet
+    // about it.
+    note(run, {
+      kind: 'heal',
+      site: 'state.js:initializeRunFlaskCharges',
+      field: 'flaskCharges',
+      was: undefined,
+      now: { hp: run.flaskCharges.hp, mana: run.flaskCharges.mana, hpCurrent: run.flaskCharges.hpCurrent, manaCurrent: run.flaskCharges.manaCurrent },
+      why: `absent in the save: rebuilt from the class allocation, currents reconstructed from ${wasFlasks.length} legacy run.flasks entr(ies)`,
+    });
   }
   // ═══ THE ONE-TIME ATTRIBUTION — pre-ledger saves (v1/v2), stated, not
   // silent. A v2 save stores capacity with no ledger: chain growth always
@@ -22894,6 +23681,14 @@ function initializeRunFlaskCharges(run, registries) {
       }
       f.base = Math.min(flaskCapacity(registries.balance), f.capacity - grownTotal);
       f.granted = f.capacity - grownTotal - f.base;
+      note(run, {
+        kind: 'heal',
+        site: 'state.js:initializeRunFlaskCharges(attribution)',
+        field: 'flaskCharges.base/granted',
+        was: undefined,
+        now: { base: f.base, granted: f.granted, grownTotal, capacity: f.capacity },
+        why: 'pre-ledger save: capacity was attributed once — base from the current authored balance, the unaccounted remainder to the moment door',
+      });
     }
   }
   // Loaded runs re-derive the chain here — the load door. A save carrying a
@@ -22908,21 +23703,26 @@ function initializeRunFlaskCharges(run, registries) {
  * schemaVersion, or a run that doesn't match RUN_SHAPE (save.js turns any
  * throw here into an archive-and-refuse, so a bad save is never silently lost).
  */
-function deserializeRun(json) {
-  const run = JSON.parse(json);
+function migrateRunSchema(run) {
   if (!run || typeof run !== 'object') throw new Error('Corrupt run save');
+  const originalVersion = run.schemaVersion;
   const legacy = run.schemaVersion === 1;
   const preLedger = legacy || run.schemaVersion === 2; // v2: no flaskCharges capacity ledger yet
-  if (!preLedger && run.schemaVersion !== RUN_SCHEMA_VERSION) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (expected ${RUN_SCHEMA_VERSION})`);
+  const preHpLedger = [1, 2, 3].includes(run.schemaVersion);
+  if (![1, 2, 3, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger });
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
-  if (preLedger) {
-    run.migratedFromRunSchemaVersion = run.schemaVersion;
+  if (originalVersion !== RUN_SCHEMA_VERSION) {
+    run.migratedFromRunSchemaVersion = originalVersion;
     run.schemaVersion = RUN_SCHEMA_VERSION;
   }
   return run;
+}
+
+function deserializeRun(json) {
+  return migrateRunSchema(JSON.parse(json));
 }
 
 // ---------------------------------------------------------------------------
@@ -22944,7 +23744,7 @@ function deserializeRun(json) {
  * a zero-threshold player has no vessel, and the HUD's refusal path renders
  * it ABSENT rather than as an empty trough.
  */
-function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0 }) {
+function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {} }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
   const entity = {
@@ -22964,6 +23764,7 @@ function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamin
     statuses: {},
     stanceId: null,
     relicIds: [...relicIds],
+    damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, damageBySchoolAdd[school] || 0])),
     flasks: flasks.map((f) => ({ ...f })),
     flaskCharges: flaskCharges ? { ...flaskCharges } : null,
     counters: {
@@ -23025,7 +23826,7 @@ function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExpo
 }
 
 
-Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, initializeRunDerivedStats, RUN_SHAPE, validateRunShape, serializeRun, initializeRunFlaskCharges, deserializeRun, createPlayerCombatEntity, stampPlayerPoiseMax, createEnemyCombatEntity });
+Object.assign(module.exports, { RUN_SCHEMA_VERSION, createIdGen, createCardInstance, createDeck, createRunState, initializeRunDerivedStats, RUN_SHAPE, validateRunShape, serializeRun, initializeRunFlaskCharges, migrateRunSchema, deserializeRun, createPlayerCombatEntity, stampPlayerPoiseMax, createEnemyCombatEntity });
 
 },
 "src/model/unlocks.js": function (module, exports, require) {
@@ -23711,6 +24512,7 @@ function createCombat({
       energyMax: player.energyMax,
       drawPerTurn: player.drawPerTurn,
       poiseMax,
+      damageBySchoolAdd: player.damageBySchoolAdd || {},
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: a weapon swapped mid-fight is
@@ -24568,6 +25370,12 @@ const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
  */
 function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   let dmg = base;
+  const school = carrier && carrier.damageSchool;
+  if (source && source.kind === 'player' && school) {
+    dmg += source.damageBySchoolAdd && Number.isFinite(source.damageBySchoolAdd[school])
+      ? source.damageBySchoolAdd[school]
+      : 0;
+  }
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
@@ -24590,7 +25398,6 @@ function computeAttackDamage(ctx, source, target, base, attackTags, carrier = nu
     }
     if (addPool > 0) dmg *= 1 + addPool;
   }
-  const school = carrier && carrier.damageSchool;
   if (target && school) {
     const resistance = target.damageResistanceBySchool && target.damageResistanceBySchool[school];
     if (Number.isFinite(resistance)) dmg *= Math.max(0, 1 - resistance / 100);
@@ -25028,9 +25835,11 @@ function runOpcode(ctx, action, eff) {
     }
     case 'restoreMana': {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
-      const before = ctx.player.mana;
-      ctx.player.mana = Math.min(ctx.player.maxMana, ctx.player.mana + n);
-      ctx.emit('manaRestored', { amount: ctx.player.mana - before });
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        const before = t.mana;
+        t.mana = Math.min(t.maxMana, t.mana + n);
+        ctx.emit('manaRestored', { targetId: t.id, amount: t.mana - before });
+      }
       break;
     }
     case 'loseHp': {
@@ -25163,7 +25972,12 @@ function runRunOpcode(ctx, action, eff) {
     }
     case 'loseMaxHpPct': {
       const pct = evalNum(ctx, action, eff.pct, 0);
+      if (!Number.isInteger(run.maxHpAdjustment)) {
+        throw new Error('loseMaxHpPct requires the run maxHpAdjustment ledger');
+      }
+      const before = run.maxHp;
       run.maxHp = Math.max(1, Math.floor(run.maxHp * (1 - pct / 100)));
+      run.maxHpAdjustment += run.maxHp - before;
       run.hp = Math.min(run.hp, run.maxHp);
       break;
     }
@@ -25917,7 +26731,7 @@ Object.assign(module.exports, { TAGS, tagsFor, tagIdsFor, damageTagIds, cardsWit
 // It exposes calculation receipts; screens choose layout, never redo formulas.
 
 const { deriveStat } = require("src/model/derivedStats.js");
-const { equippedPieces } = require("src/model/loadout.js");
+const { equippedPieces, runMods } = require("src/model/loadout.js");
 const { passiveSum } = require("src/model/registries.js");
 
 const LABELS = Object.freeze({
@@ -25976,15 +26790,18 @@ function statProjection(registries, run) {
     .map((def) => ({ ...def, value: run.attributes[def.id] }));
   const derived = ['hp', 'mana', 'stamina', 'energy', 'draw'].map((id) => {
     const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef });
-    const equipmentBonus = id === 'hp' ? Math.max(0, run.maxHp - receipt.value) : 0;
-    const value = receipt.value + equipmentBonus;
+    const equipmentBonus = id === 'hp' ? runMods(registries, run.loadout, run.class).maxHp : 0;
+    const adjustment = id === 'hp' ? (run.maxHpAdjustment || 0) : 0;
+    const value = id === 'hp' ? Math.max(1, receipt.value + equipmentBonus + adjustment) : receipt.value;
     return {
       ...receipt,
       label: LABELS[id],
       value,
       equipmentBonus,
+      adjustment,
       formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
-        + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''} = ${value}`,
+        + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
+        + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
       note: id === 'stamina' ? 'No current consumer' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
     };
   });
@@ -26669,10 +27486,11 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-const { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges } = require("src/model/state.js");
+const { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } = require("src/model/state.js");
 const { createLoadout, stampDeck } = require("src/model/loadout.js");
 const { normalizeRunAttributes } = require("src/model/attributes.js");
 const { validateRunStartingKit } = require("src/model/startingKits.js");
+const { openLedger, closeLedger, note, readLedger } = require("src/model/healLedger.js");
 
 const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -26849,6 +27667,17 @@ function createSaveManager(storage) {
   let status = { ok: true, state: 'ok', reason: null, archiveId: null, recoveredFrom: null };
   let quarantined = false;
 
+  // ---- THE RUN'S NAMED, VISIBLE STATE (the run-side twin of profileStatus) --
+  // Property 3 above — "a failed load is a NAMED, VISIBLE state, never a fresh
+  // profile wearing the same filename" — has been true of the PROFILE since #67
+  // and was never true of the RUN. A run whose allocation, loadout or flask
+  // ledger was missing came back healed, plausible, and completely silent; a
+  // caller could not tell it from a clean load. `runStatus()` is that state.
+  // It is not a refusal and it is not a gate: the heals still heal, and
+  // tests/engine.test.js 28 and 50 stay green. It is the door saying what it
+  // did. One home for the mechanic: src/model/healLedger.js.
+  let runStatusRecord = { state: 'none', reason: 'no run has been loaded in this session', ledger: null };
+
   function parseMeta(json) {
     const meta = JSON.parse(json);
     if (!meta || typeof meta !== 'object') throw new Error('profile is not an object');
@@ -27004,15 +27833,35 @@ function createSaveManager(storage) {
      */
     loadRun(registries, slot = 1) {
       const json = storage.getItem(runKey(slot));
-      if (!json) return null;
+      if (!json) {
+        runStatusRecord = { state: 'none', reason: `slot ${slot} is empty`, ledger: null };
+        return null;
+      }
       let run;
       try {
         run = deserializeRun(json);
+        // THE DOOR OPENS HERE — after the shape is proven, before the first
+        // heal can fire. `savedSchemaVersion` is what the FILE said, not what
+        // the migration stamped, because "did a heal fire on a current-schema
+        // save" is the whole question and the stamp would erase it.
+        openLedger(run, 'loadRun', run.migratedFromRunSchemaVersion === undefined
+          ? RUN_SCHEMA_VERSION : run.migratedFromRunSchemaVersion);
+        if (run.migratedFromRunSchemaVersion !== undefined) {
+          note(run, {
+            kind: 'write',
+            site: 'state.js:migrateRunSchema',
+            field: 'schemaVersion',
+            was: run.migratedFromRunSchemaVersion,
+            now: RUN_SCHEMA_VERSION,
+            why: 'an older build wrote this save; the schema stamp was brought forward',
+          });
+        }
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
-        delete run.migratedFromRunSchemaVersion;
       } catch (e) {
-        archive(json, e && e.message ? e.message : 'corrupt save', slot);
+        const reason = e && e.message ? e.message : 'corrupt save';
+        const archiveId = archive(json, reason, slot);
+        runStatusRecord = { state: 'archived', reason, ledger: readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION }), archiveId };
         return null;
       }
       if (run.contentVersion !== registries.contentVersion) {
@@ -27021,10 +27870,20 @@ function createSaveManager(storage) {
           (run.relics || []).find((id) => !registries.relics.has(id)) ||
           (run.flasks || []).find((f) => !registries.flasks.has(f.flaskId));
         if (dangling) {
-          archive(json, `contentVersion ${run.contentVersion} → ${registries.contentVersion}: dangling id`, slot);
+          const reason = `contentVersion ${run.contentVersion} → ${registries.contentVersion}: dangling id`;
+          const archiveId = archive(json, reason, slot);
+          runStatusRecord = { state: 'archived', reason, ledger: readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION }), archiveId };
           return null;
         }
         // Ids all still resolve: the run survives the content patch.
+        note(run, {
+          kind: 'overwrite',
+          site: 'save.js:loadRun',
+          field: 'contentVersion',
+          was: run.contentVersion,
+          now: registries.contentVersion,
+          why: 'the content changed under this run and every id it holds still resolves, so it was re-stamped rather than archived',
+        });
         run.contentVersion = registries.contentVersion;
       }
       // A run saved before equipment existed has no loadout. Give it the bare
@@ -27033,6 +27892,19 @@ function createSaveManager(storage) {
       const needsCarrierStamp = (run.deck || []).some((card) => card.damageSchool === undefined || card.exposureBuildupPerHit === undefined);
       if (!run.loadout) {
         run.loadout = createLoadout(registries, run.class);
+        // ONE OF THE THREE UNGATED HEALS. tests/engine.test.js 28 deletes
+        // `loadout` from a CURRENT-schema run and requires exactly this, and it
+        // is right to: throwing away a climb over a missing field is worse. The
+        // defect was never the heal, it was that nothing downstream could tell
+        // this had happened.
+        note(run, {
+          kind: 'heal',
+          site: 'save.js:loadRun',
+          field: 'loadout',
+          was: undefined,
+          now: { sets: run.loadout.sets },
+          why: `absent in the save: refilled with the class starting loadout for '${run.class}' — whatever this player was wearing is not recoverable from this file`,
+        });
       }
       // One migration door for HP, Mana, Stamina, Energy and Draw. A run that
       // already owns a rules snapshot is only validated; a legacy run resolves
@@ -27041,10 +27913,25 @@ function createSaveManager(storage) {
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
         if (needsEquipmentStamp || needsCarrierStamp) stampDeck(registries, run);
         initializeRunFlaskCharges(run, registries);
+        delete run.migratedFromRunSchemaVersion;
       } catch (e) {
-        archive(json, e && e.message ? e.message : 'invalid derived-stat snapshot', slot);
+        const reason = e && e.message ? e.message : 'invalid derived-stat snapshot';
+        const archiveId = archive(json, reason, slot);
+        runStatusRecord = { state: 'archived', reason, ledger: readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION }), archiveId };
         return null;
       }
+      // The door closes. Everything after this — a whole climb of stampDeck
+      // calls — records nothing, by design.
+      closeLedger(run);
+      const ledger = readLedger(run, { currentSchemaVersion: RUN_SCHEMA_VERSION });
+      runStatusRecord = {
+        state: ledger && ledger.healed ? 'healed' : 'ok',
+        reason: ledger && ledger.healed
+          ? `${ledger.healed} field(s) the save did not carry were filled in at the load door`
+          : null,
+        ledger,
+        archiveId: null,
+      };
       // A run that LOADS is a player too, and this is the edge Bjorn could not
       // reach: everyone who started a climb on a build before this one has runs
       // and no profile. Waiting for their next autosave would leave Settings →
@@ -27161,6 +28048,32 @@ function createSaveManager(storage) {
      */
     profileStatus() {
       return { ...status, quarantined };
+    },
+
+    /**
+     * runStatus() → { state, reason, ledger, archiveId } for the LAST loadRun on
+     * this manager. The run-side twin of profileStatus(), and the same promise:
+     * what the door did to a save is a named, visible state, not something a
+     * caller has to diff two objects to discover.
+     *
+     * state: 'none'     — nothing has been loaded (or the slot was empty)
+     *        'ok'       — the save carried everything; nothing was filled in
+     *        'healed'   — one or more ABSENT fields were filled in, and
+     *                     `ledger.entries` says which, from where, with what
+     *        'archived' — refused; the bytes were set aside, reason named
+     *
+     * `ledger.healedOnCurrentSchema` is the number this house is watching: a
+     * heal on a save written by THIS schema version is not a migration, it is a
+     * save that lost a field on a build that should never have written it
+     * missing. Today that only happens when a test plants it. The day it
+     * happens for real, the parked refuse-vs-heal call wakes up — the wake
+     * condition is asserted in tools/runcreation.mjs, not left in prose.
+     *
+     * A ledger is a WITNESS, not persisted state: it lives non-enumerably on
+     * the run object, so no save byte changes and no schema version moves.
+     */
+    runStatus() {
+      return { ...runStatusRecord };
     },
 
     /**

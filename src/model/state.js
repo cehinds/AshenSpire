@@ -21,6 +21,9 @@ import {
 import { resolveStartingKit, startingKitSnapshot } from './startingKits.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
+// The run door's witness. Recording only; nothing here changes a number.
+// One home for the mechanic: src/model/healLedger.js.
+import { openLedger, closeLedger, note } from './healLedger.js';
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
@@ -114,6 +117,21 @@ export function createRunState({
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  // THE DOOR OPENS HERE. Everything below this line writes to a run that
+  // already exists, and until today none of it said so. `hp`/`maxHp` above are
+  // the FIRST of three writers; initializeRunDerivedStats is the second and
+  // reconcileRunLoadoutHp (via stampDeck) is the third and last. Sten's planted
+  // double-count was swallowed by that last writer and his instrument went
+  // green on it. Now each writer states what it computed and what it replaced.
+  openLedger(run, 'createRunState', RUN_SCHEMA_VERSION);
+  note(run, {
+    kind: 'write',
+    site: 'state.js:createRunState',
+    field: 'maxHp',
+    was: undefined,
+    now: oldMaxHp,
+    why: 'classDef.maxHp + runMods equipment bonus, set before the derived rules are resolved — the first of three writers',
+  });
   // "and each character should start with those" — Constantine, 2026-08-08, the
   // FOURTH clause of the flask parenthesis, and it is here because it was very
   // nearly lost. His sentence was quoted to me tonight with this clause missing
@@ -135,6 +153,7 @@ export function createRunState({
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
+  closeLedger(run);
   return run;
 }
 
@@ -187,6 +206,16 @@ export function initializeRunDerivedStats(run, registries, {
       const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: run.attributes, classDef }).value;
       run.maxHpAdjustment = run.maxHp - (oldDerivedHp + hpEquipmentBonus);
     } else run.maxHpAdjustment = 0;
+    note(run, {
+      kind: 'heal',
+      site: 'state.js:initializeRunDerivedStats',
+      field: 'maxHpAdjustment',
+      was: undefined,
+      now: run.maxHpAdjustment,
+      why: restoredExisting
+        ? 'absent in the save: the permanent max-HP residual was INFERRED once from the old rule plus current equipment, so an event curse survives a formula change'
+        : 'absent in the save and no old rule to infer from: assumed 0, i.e. this run is treated as never having been cursed',
+    });
   }
   if (!Number.isInteger(run.maxHpAdjustment)) {
     throw new Error(`Persisted maxHpAdjustment must be an integer (got ${JSON.stringify(run.maxHpAdjustment)})`);
@@ -208,9 +237,22 @@ export function initializeRunDerivedStats(run, registries, {
       const expected = deriveStat(restored.rules, statId, { attributes: run.attributes, classDef }).value;
       if (value !== expected) throw new Error(`Persisted ${key} ${value} contradicts derived-stat snapshot value ${expected}`);
     }
+    // MAX-HP HOME 1 of 3 (the validating one). Same formula as home 2 below and
+    // home 3 in loadout.js:reconcileRunLoadoutHp. Deliberately NOT collapsed
+    // this act — the ruling is visibility first, because you cannot safely
+    // collapse what you cannot watch drift. It states its number so a tool can
+    // compare the three instead of trusting that they agree.
     const expectedMaxHp = Math.max(1,
       deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef }).value
       + hpEquipmentBonus + run.maxHpAdjustment);
+    note(run, {
+      kind: 'compute',
+      site: 'state.js:initializeRunDerivedStats(validate)',
+      field: 'maxHp',
+      was: run.maxHp,
+      now: expectedMaxHp,
+      why: 'max-HP home 1 of 3 — derived + equipment + adjustment, checked against the persisted value',
+    });
     if (run.maxHp !== expectedMaxHp) {
       throw new Error(`Persisted maxHp ${run.maxHp} contradicts derived-stat snapshot/equipment/adjustment value ${expectedMaxHp}`);
     }
@@ -253,7 +295,19 @@ export function initializeRunDerivedStats(run, registries, {
   const oldManaMax = run.maxMana;
   const oldMana = run.mana;
   run.derivedStatRuleSnapshot = structuredClone(receipt);
-  run.maxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);
+  // MAX-HP HOME 2 of 3 (the deriving one), and the SECOND writer at run
+  // creation — it replaces the classDef+equipment value createRunState set two
+  // dozen lines up, with nothing but call order deciding which wins.
+  const derivedMaxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);
+  note(run, {
+    kind: 'overwrite',
+    site: 'state.js:initializeRunDerivedStats(derive)',
+    field: 'maxHp',
+    was: oldHpMax,
+    now: derivedMaxHp,
+    why: 'max-HP home 2 of 3 — the host derived-stat rules replace whatever was in the field, at birth and at the load door alike',
+  });
+  run.maxHp = derivedMaxHp;
   run.maxMana = mana.value;
   run.maxStamina = stamina.value;
   run.energyMax = energy.value;
@@ -264,7 +318,27 @@ export function initializeRunDerivedStats(run, registries, {
   );
   if (preserveDeficits && Number.isFinite(oldHpMax) && Number.isFinite(oldHp)) {
     run.hp = Math.max(0, run.maxHp - Math.max(0, oldHpMax - oldHp));
-  } else run.hp = run.maxHp;
+    note(run, {
+      kind: 'overwrite',
+      site: 'state.js:initializeRunDerivedStats(pools)',
+      field: 'hp',
+      was: oldHp,
+      now: run.hp,
+      why: `the vessel moved ${oldHpMax} -> ${run.maxHp}; the ABSOLUTE deficit (${Math.max(0, oldHpMax - oldHp)}) is the player's and was carried`,
+    });
+  } else {
+    note(run, {
+      kind: preserveDeficits ? 'write' : 'overwrite',
+      site: 'state.js:initializeRunDerivedStats(pools)',
+      field: 'hp',
+      was: oldHp,
+      now: run.maxHp,
+      why: preserveDeficits
+        ? 'no prior pool to carry a deficit from — filled to the new maximum'
+        : 'preserveDeficits=false (a run being BORN, not restored): filled to the maximum. On a restore this would be healing a wound away, which is the friendliest way to lose a climb',
+    });
+    run.hp = run.maxHp;
+  }
   if (preserveDeficits && Number.isFinite(oldManaMax) && oldManaMax > 0 && Number.isFinite(oldMana)) {
     const legacyRatio = Math.max(0, Math.min(1, oldMana / oldManaMax));
     run.mana = Math.max(0, Math.min(run.maxMana, Math.round(legacyRatio * run.maxMana)));
@@ -460,12 +534,26 @@ export function serializeRun(run) {
 
 export function initializeRunFlaskCharges(run, registries) {
   if (!run.flaskCharges) {
+    const wasFlasks = structuredClone(run.flasks || []);
     const allocation = registries.classes.get(run.class).startingFlaskAllocation;
     run.flaskCharges = createFlaskCharges(registries.balance, allocation);
     const legacy = run.flasks || [];
     run.flaskCharges.hpCurrent = Math.min(run.flaskCharges.hp, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'hp').length);
     run.flaskCharges.manaCurrent = Math.min(run.flaskCharges.mana, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'mana').length);
     run.flasks = (run.flasks || []).filter((f) => f && chargeKindForFlask(registries, f.flaskId) == null);
+    // ONE OF THE THREE UNGATED HEALS. `flaskCharges` is optional in RUN_SHAPE
+    // with no schemaVersion gate, so this fires on a CURRENT-schema save that
+    // has lost the field, not only on the pre-ledger save it was written for —
+    // and every spent charge comes back. It is allowed to; it may not be quiet
+    // about it.
+    note(run, {
+      kind: 'heal',
+      site: 'state.js:initializeRunFlaskCharges',
+      field: 'flaskCharges',
+      was: undefined,
+      now: { hp: run.flaskCharges.hp, mana: run.flaskCharges.mana, hpCurrent: run.flaskCharges.hpCurrent, manaCurrent: run.flaskCharges.manaCurrent },
+      why: `absent in the save: rebuilt from the class allocation, currents reconstructed from ${wasFlasks.length} legacy run.flasks entr(ies)`,
+    });
   }
   // ═══ THE ONE-TIME ATTRIBUTION — pre-ledger saves (v1/v2), stated, not
   // silent. A v2 save stores capacity with no ledger: chain growth always
@@ -495,6 +583,14 @@ export function initializeRunFlaskCharges(run, registries) {
       }
       f.base = Math.min(flaskCapacity(registries.balance), f.capacity - grownTotal);
       f.granted = f.capacity - grownTotal - f.base;
+      note(run, {
+        kind: 'heal',
+        site: 'state.js:initializeRunFlaskCharges(attribution)',
+        field: 'flaskCharges.base/granted',
+        was: undefined,
+        now: { base: f.base, granted: f.granted, grownTotal, capacity: f.capacity },
+        why: 'pre-ledger save: capacity was attributed once — base from the current authored balance, the unaccounted remainder to the moment door',
+      });
     }
   }
   // Loaded runs re-derive the chain here — the load door. A save carrying a
