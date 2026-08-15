@@ -35,6 +35,10 @@ export const RELIC_MODIFIER_TAGS = Object.freeze([
 // so the schema and the engine cannot drift into two homes. resources.js
 // imports nothing — no cycle.
 import { RESOURCE_WEIGHTS, HUD_SURFACES } from './resources.js';
+// The disclosure tiers live with the split they describe (model/disclosure.js),
+// so the schema and the screen cannot drift into two homes — same reasoning as
+// the bar vocabulary above. disclosure.js imports nothing — no cycle.
+import { DISCLOSURE_TIERS } from './disclosure.js';
 
 export const COMBAT_OPCODES = Object.freeze([
   'damage',
@@ -515,6 +519,13 @@ export const SCHEMAS = Object.freeze({
     label: str,
     shortLabel: str,
     order: int,
+    // D26's short form. `disclosure` is the tier this row lives in on the
+    // creation screen and it is REQUIRED, not optional: an attribute with no
+    // tier is an entry that does not describe itself, and the screen would
+    // have to guess — which is the hard-coded list this whole shape exists to
+    // refuse (model/disclosure.js). `sense` is the one player sentence.
+    disclosure: en(...DISCLOSURE_TIERS),
+    sense: str,
   }),
   creationMode: obj({
     id: str,

@@ -202,6 +202,30 @@ walks the real first-run path and asserts the flag persists. Run it after any
 change to the tutorial, to `--ui-zoom`, or to the combat board's layout; it
 prints the boundary of what it did not cover.
 
+## Character creation — the short form (D26)
+
+The creation screen's default view is **starting stats and starting armaments,
+nothing else**. Every entry has a **FACE** (its name and its number, no prose),
+a **REVEAL** one tap down (the authored sentence plus what the tables derive),
+and — for a derived stat — a **RECEIPT** at the foot of the reveal (the
+arithmetic, `statProjection`'s own string). Vocabulary and the tier field:
+`src/model/disclosure.js`; the read model: `src/model/creationBrief.js`; the
+renderer both this screen and the combat frame use: `src/ui/components/disclosure.js`.
+
+**Which entries are short is DATA.** Each row carries its own
+`disclosure: 'face' | 'reveal'` — attributes in `src/content/attributes.js`,
+derived stats in `derivedStats.js`'s `presentation` block beside the rule each
+describes. There is no list in any screen of which stats are "simple"; move a
+row's tier and the screen moves with it.
+
+`CHROME=/usr/bin/chromium node tools/creationbrief.mjs` is the check: the
+tables imported through the real content door for the expectation, the app
+served and booted in headless Chromium at `?shot=customize` for the
+observation, faces clicked. `--selftest` plants five known-bads as file bytes
+in a copy of this tree — the tier filter ignored, an illegal tier authored, the
+tap floor removed, the row un-wrapped, the tap swallowed — and re-runs the
+whole tool against each.
+
 ## Standalone build (`build/AshenSpire.html`)
 
 `node tools/bundle.mjs` emits a single self-contained HTML file to `build/` —

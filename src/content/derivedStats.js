@@ -44,4 +44,46 @@ export const derivedStatRules = {
       cap: null,
     },
   },
+  // ---- D26: how each row READS, authored beside the row it describes -------
+  //
+  // WHY IT IS A SIBLING OF `rules` AND NOT A FIELD ON EACH RULE. A rule row is
+  // SNAPSHOTTED into every save and every co-op handshake (createDerivedStat-
+  // RuleSnapshot): putting a label and a sentence in there would write prose
+  // into save bytes and make a copy-edit a save-compatibility question. So
+  // presentation sits outside the snapshot and inside the same FILE — one
+  // author edit adds a derived stat and how it reads, and a row here with no
+  // rule (or a rule with no row) is refused BY NAME at the content door
+  // (derivedStatPresentationProblems, model/derivedStats.js).
+  //
+  //   label       the row title. These five strings were the hard-coded LABELS
+  //               map in model/statProjection.js until now — a second home for
+  //               a fact the table should own. Moved, not copied.
+  //   faceLabel   OPTIONAL. What the chip says when the label is a phrase. Left
+  //               out, the face uses `label` (Law 0 clause 3: derivation is
+  //               overridable and the override is data).
+  //   order       the order every stat surface reads them in.
+  //   disclosure  'face' = in the short form · 'reveal' = behind the tap.
+  //   sense       ONE player sentence, no numbers in it (Law 1 clause 2).
+  //
+  // STAMINA IS 'reveal' ON PURPOSE and it is the honest half of this table:
+  // nothing in the engine spends it yet. The old panel said so in engine words
+  // ("No current consumer") on the first screen of the game. It now says so in
+  // player words, one tap down, where a stat that does nothing belongs.
+  presentation: {
+    hp: { label: 'HP', order: 1, disclosure: 'face', sense: 'What you have left before the climb ends.' },
+    mana: { label: 'Mana', order: 2, disclosure: 'face', sense: 'Spent by the cards that ask for more than effort.' },
+    stamina: { label: 'Stamina', order: 3, disclosure: 'reveal', sense: 'Carried, and nothing spends it yet.' },
+    // ACTIONS, NOT ENERGY — his rename, D17 message 3: "energy (which we
+    // should call actions going forward)", confirmed by D21 as needing no
+    // re-ask. The ENGINE ids are untouched here (`energyMax`, `balance.energy`,
+    // the orb) — that rename is a sequenced act across five branches and is not
+    // this one. What changes is the WORD A PLAYER READS, and since D26 that
+    // word has exactly one home: this row. The cost is stated rather than
+    // hidden: until the frame lands, creation and the Armoury say Actions while
+    // the combat HUD still says Energy. One surface saying his word beats none
+    // saying it, and the frame adopts this row's label rather than inventing a
+    // second one.
+    energy: { label: 'Actions / turn', faceLabel: 'Actions', order: 4, disclosure: 'face', sense: 'How much you can do in one turn.' },
+    draw: { label: 'Draw / turn and opening hand', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you hold to choose from.' },
+  },
 };
