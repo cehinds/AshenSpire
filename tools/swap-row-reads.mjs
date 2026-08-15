@@ -40,10 +40,26 @@
 //       them. Boundary: ANY positive separation, the weakest claim that can
 //       still fail. Not a threshold, deliberately: "how much gap is enough"
 //       would be a number of mine with no cell either side.
+//   LINE BUDGET — ADDED 2026-08-15, and it is here because this file PRINTED the
+//       number that would have caught a real regression and did not read it.
+//       `li-lines == head-lines + note-lines`, and `head-lines == 1`. The
+//       expected li-count is DERIVED from the note measured on the same run, so
+//       the 3 under a declining rule and the 1 under `gear` are typed nowhere in
+//       this file — Law 0 clause 1 read as a rule about instruments. Full story
+//       at the check itself.
+//   UNMOVED AND UNEXPLAINED — a price that did not move, on a picker promising a
+//       delta, carries a note. BY PRESENCE, NEVER BY PHRASE. This was watched
+//       only from inside `--selftest` until now, which is a check that cannot
+//       fail on a real tree.
+//   UNKNOWN IS NEVER GREEN — an ERR neighbourhood cell, an unswept width, or an
+//       unmeasurable text column FAILS rather than printing a dash inside a
+//       table of facts.
 //
-// TWO OF THESE ARE RED ON THE TREE AS IT STANDS, which is why `--selftest`
-// scores every plant against an UNPLANTED CONTROL. On a tree that already
-// exits 1, "the planted copy exited 1" is not evidence of anything.
+// SOME OF THESE ARE RED ON WHATEVER TREE YOU POINT THIS AT, which is why
+// `--selftest` scores every plant against an UNPLANTED CONTROL and PRINTS the
+// control's finding count rather than naming one here. On a tree that already
+// exits 1, "the planted copy exited 1" is not evidence of anything — and a
+// number typed into this header is a second copy of a count the run derives.
 //
 // WHAT IT REPORTS AND REFUSES TO ASSERT, and why — because I was told to, and
 // because Vira sharpened my own rule this morning into the thing that binds me:
@@ -58,9 +74,17 @@
 //   ROWS      rows per candidate, per rule, with the shipped population beside
 //             it — 0 rows (a weapon under flat), 1 row (a weapon under
 //             category), 2 rows (the charm). Real cells, all three doors.
-//   WRAP      visual line count of each row and each note, from the rendered
-//             client rects, at every shape.
 //   COLUMN    the text column's own width in CSS px after the indents.
+//
+// WRAP HAS MOVED OUT OF THAT LIST, 2026-08-15, and the move is the act of the
+// day rather than a tidy-up. The line counts were in it — printed, asserted by
+// nobody — and a regression walked straight through the gap: Viki's grid attempt
+// took li-lines 3 → 4 in this very table while every assertion stayed green.
+// Reported-and-unasserted was the right posture for a number I would have had to
+// INVENT; it was never the right posture for a number the tree DERIVES. The
+// three that remain above are still nobody's, and for the original reason: "how
+// narrow a column stops reading" and "how many rows is a wall" have no cell
+// either side, so a person rules on them and this exit code does not.
 //
 // THE VOCABULARY CENSUS is the half only this seat asks. `Flat does not charge
 // gear — +2 not applied.` is TRUE. This counts, over the game's own
@@ -169,13 +193,57 @@ const PROBE = `(() => {
   // How many VISUAL lines a run of text occupies — counted off its own client
   // rects, not divided out of a height. A Range over the node's contents gives
   // one rect per line box, which is what a reader's eye actually counts.
+  // VISUAL LINES, BY BAND — corrected 2026-08-15, and the correction is a defect
+  // of mine, found by trying to ASSERT the number I had been printing. This
+  // counted DISTINCT ROUNDED TOPS, which is not what a reader counts: a
+  // \`<small>\` sitting inline beside a price has a smaller font, so its line box
+  // has a different top on the SAME visual line. At 18d2976 that made this
+  // function print 3 for the run-on row — where a person sees two:
+  //
+  //     Right Hand swap Actions 2 → 2Flat does not charge gear — +2 not
+  //     applied.
+  //
+  // So the number my report carried this morning was not only unasserted, it was
+  // WRONG, and nothing could tell me because nothing read it. Rects are now
+  // grouped into bands by vertical overlap — a rect joins a band when its own
+  // midpoint falls inside it — which is a line as an eye finds one.
+  // TWO KINDS OF RECT COME BACK AND ONLY ONE IS A LINE. A Range that fully
+  // contains a BLOCK child returns that block's own box AND the line boxes
+  // inside it — measured on this very surface once the note became
+  // \`display: block\`: [729,753] for the small, plus [729,741] and [741,753] for
+  // the two lines it holds. The enclosing box then swallowed both bands and the
+  // row read as 2 lines where a person counts 3. A rect whose vertical span
+  // STRICTLY CONTAINS another rect's is a container, not a line, and is dropped.
+  const bands = (rects) => {
+    const kept = [...rects].filter((r) => r.width > 0.5 && r.height > 0.5);
+    const rs = kept
+      .filter((a) => !kept.some((b) => b !== a && b.top >= a.top - 0.5 && b.bottom <= a.bottom + 0.5 && (b.bottom - b.top) < (a.bottom - a.top) - 0.5))
+      .sort((a, b) => a.top - b.top);
+    const out = [];
+    for (const rect of rs) {
+      const mid = (rect.top + rect.bottom) / 2;
+      const b = out.find((x) => mid > x.top && mid < x.bottom);
+      if (b) { b.top = Math.min(b.top, rect.top); b.bottom = Math.max(b.bottom, rect.bottom); }
+      else out.push({ top: rect.top, bottom: rect.bottom });
+    }
+    return out.length;
+  };
   const lines = (el) => {
     if (!el) return 0;
     const r = document.createRange();
     r.selectNodeContents(el);
-    const ys = new Set();
-    for (const rect of r.getClientRects()) if (rect.width > 0.5) ys.add(Math.round(rect.top));
-    return ys.size;
+    return bands(r.getClientRects());
+  };
+  // THE ROW'S OWN STATEMENT, counted apart from its note — the same instrument,
+  // stopped before the \`<small>\`. This exists because the whole-row count and
+  // the note count TOGETHER cannot say where an extra line came from, and the
+  // regression this file missed put its extra line HERE: the label and the
+  // after-price on two lines, "Right Hand swap Actions 2 →" over "4".
+  const headLines = (li, note) => {
+    const r = document.createRange();
+    r.selectNodeContents(li);
+    if (note) r.setEndBefore(note);
+    return bands(r.getClientRects());
   };
 
   // '.equip-resource-change.none' is the EMPTY STATE — "No resource changes." —
@@ -189,10 +257,22 @@ const PROBE = `(() => {
     const rect = li.getBoundingClientRect();
     const host = li.closest('.equip-candidate-comparison');
     const hostRect = host ? host.getBoundingClientRect() : null;
+    // THE PRICE AS A READER SEES IT, read off the row's own text rather than
+    // off the model — the head is everything before the note, and the two
+    // numbers either side of the arrow are the whole claim the row makes. If
+    // this does not parse, the row has stopped stating a price legibly and that
+    // is a finding, never a shrug.
+    const headText = (note ? li.textContent.replace(note.textContent, '') : li.textContent).replace(/\\s+/g, ' ').trim();
+    const price = /(-?\\d+)\\s*→\\s*(-?\\d+)$/.exec(headText);
     rows.push({
       text: li.innerText.replace(/\\s+/g, ' ').trim(),
       noteText: note ? note.innerText.replace(/\\s+/g, ' ').trim() : null,
+      headText,
+      before: price ? Number(price[1]) : null,
+      after: price ? Number(price[2]) : null,
+      hasNote: !!note,
       liLines: lines(li),
+      headLines: headLines(li, note),
       noteLines: note ? lines(note) : 0,
       left: rect.left, right: rect.right, width: rect.width, height: rect.height,
       // Law 2: proven inside its named container's rendered rect, not assumed.
@@ -504,6 +584,68 @@ async function main() {
           findings.push(`${shape.tag}/${rule}: READS AS ONE WORD — the price ends "${r.priceEndsWith}" and the note begins "${r.noteStartsWith}…" with ${r.gap}px between them, on the same line. Nothing separates a number from a sentence.`);
         }
       }
+      // ---- LINE BUDGET: the count this file PRINTED and did not check --------
+      // ADDED 2026-08-15 AFTER IT COST US ONE, and the story is the whole reason
+      // it is here. Viki was told — by Marina and by me — to copy
+      // `.player-poise-receipt`'s `display: grid`. She tried it, RENDERED it, and
+      // it broke the row a different way: that sibling's children are all
+      // elements, but this `<li>` begins with a bare text node, so grid made the
+      // text an anonymous item and tore the price off its own arrow —
+      // "Right Hand swap Actions 2 →" over "4".
+      //
+      // THE CHECK ABOVE STAYED GREEN THROUGH IT. It compares `<strong>` against
+      // `<small>`, and the broken row had STOPPED PUTTING THOSE TWO ADJACENT, so
+      // the adjacency test passed BY LOSING ITS SUBJECT. Meanwhile li-lines went
+      // 3 → 4 in this tool's own table and nothing read the number. The house has
+      // a name for that state and did not have to mint one: REPORTED, NEVER
+      // ASSERTED — the sentence struck from `mobilefit.mjs`'s header the day
+      // Law 5 made the design call (`laws.md` Law 5, enforcement note). A number
+      // an instrument already prints and does not assert is the next regression
+      // it will miss.
+      //
+      // THE ADJACENCY CHECK IS NOT WRONG AND DOES NOT GO. It is INSUFFICIENT,
+      // and that is now measured rather than suspected: `--selftest` plants the
+      // sibling's declaration and scores BOTH — this budget fires, that one is
+      // silent, printed side by side so the insufficiency is in the output and
+      // not only in a log.
+      //
+      // NOTHING HERE IS A THRESHOLD OF MINE, and the mechanism is why. The
+      // expected li-count is DERIVED from the note's own measured height on the
+      // SAME RUN — `head + note` — so the 3 under a declining rule and the 1
+      // under `gear` are never typed anywhere in this file. Law 0 clause 1 read
+      // as a rule about instruments: the entry describes, the machinery derives.
+      // The one literal is the head's `1`, and it is "one statement, one line"
+      // rather than a tunable — with real cells either side, both observed: 1 at
+      // every shape, every shipped rule and all seven swept widths on the tree
+      // as it stands, and 2 on the planted copy.
+      for (const r of m.rows) {
+        if (r.headLines !== 1) {
+          findings.push(`${shape.tag}/${rule}: LINE BUDGET — the row's own price statement runs onto ${r.headLines} lines before its note even starts: "${r.headText}". One price, one line; anything else has torn a number off the words that name it.`);
+        }
+        if (r.liLines !== r.headLines + r.noteLines) {
+          findings.push(`${shape.tag}/${rule}: LINE BUDGET — the row occupies ${r.liLines} line(s) but its parts measure ${r.headLines} + ${r.noteLines} = ${r.headLines + r.noteLines}. A line is SHARED between the price and its note, which is the run-on measured in lines instead of in pixels.`);
+        }
+      }
+      // ---- UNMOVED AND UNEXPLAINED ------------------------------------------
+      // The note VANISHING was watched only from inside `--selftest`, which
+      // parsed this tool's own report to notice it. A check that lives in the
+      // harness's test and not in the harness cannot fail on a real tree — the
+      // same shape as the one above, one layer out. It is a finding now, and the
+      // plant scores it by its sentence.
+      // BY PRESENCE, NEVER BY PHRASE. What the note SAYS is a person's ruling.
+      for (const r of m.rows) {
+        if (r.before === null) {
+          findings.push(`${shape.tag}/${rule}: THE ROW STOPPED STATING A PRICE — "${r.headText}" has no "<before> → <after>" in it. Unknown is not green.`);
+          continue;
+        }
+        // Gated on the picker actually PROMISING a delta, because that is the
+        // cell I have either side of: a chip that says "Swap cost +2" over a row
+        // that says 2 → 2. Where nothing is promised I have no observation, so
+        // this stays silent rather than guessing.
+        if (r.before === r.after && !r.hasNote && m.plusTwo.chip > 0) {
+          findings.push(`${shape.tag}/${rule}: UNMOVED AND UNEXPLAINED — "${r.headText}" shows a price that did not move and carries no note, while the picker advertises a swap-cost delta on ${m.plusTwo.chip} chip(s). A player is shown a number that ignored them and no reason.`);
+        }
+      }
       report.push({ shape: shape.tag, rule, m });
     }
     // ---- THE SETTING REACHED THE SCREEN, proven rather than requested -------
@@ -572,14 +714,37 @@ async function main() {
       column: m.columnPx == null ? null : Math.round(m.columnPx),
       noteLines: Math.max(0, ...m.rows.map((r) => r.noteLines)),
       liLines: Math.max(0, ...m.rows.map((r) => r.liLines)),
+      headLines: Math.max(0, ...m.rows.map((r) => r.headLines)),
       rows: m.rows.length,
     });
+    // The sweep is the LINE BUDGET's neighbourhood and it is asserted here too,
+    // not only at the two photographed shapes. 320 is where a head would wrap if
+    // any shape were going to make it wrap, and it is the cell that turns "one
+    // statement, one line" from my taste into an observation.
+    for (const r of m.rows) {
+      if (r.headLines !== 1) findings.push(`width ${w}: LINE BUDGET — the price statement runs onto ${r.headLines} lines: "${r.headText}".`);
+      if (r.liLines !== r.headLines + r.noteLines) findings.push(`width ${w}: LINE BUDGET — ${r.liLines} line(s) for parts measuring ${r.headLines} + ${r.noteLines}.`);
+    }
+  }
+
+  // ---- UNKNOWN IS NEVER GREEN ----------------------------------------------
+  // Both tables below can print `ERR …` or `n/a` in a cell and this file used to
+  // exit 0 anyway. A dash inside a table of facts reads as a fact. The
+  // neighbourhood is the SUPPORT for every number I refuse to assert — "cells
+  // observed: 0 · 1 · 2" is the only reason the 2 means anything — so a
+  // neighbourhood that quietly collapses to one cell takes the report's evidence
+  // with it and must not do so under a green.
+  for (const n of neigh) if (n.err) findings.push(`neighbourhood cell "${n.slot} set ${n.setIndex + 1} / ${n.rule}" COULD NOT BE MEASURED — ${n.err}. The row-count report leans on this cell; unknown is not green.`);
+  for (const s of sweep) if (s.err) findings.push(`width ${s.w} COULD NOT BE MEASURED — ${s.err}. A width that was not swept is not a width that passed.`);
+  for (const r of report) {
+    if (r.m.rows.length && r.m.columnPx == null) findings.push(`${r.shape}/${r.rule}: the text column could not be measured while ${r.m.rows.length} row(s) rendered — the instrument lost its own subject.`);
   }
 
   reap();
   restore();
 
   // ---- the report -----------------------------------------------------------
+  console.log(`\nREF    ${ref()}`);
   console.log('\nDOOR   content CSV + content-build, zero code. Surface reached by real clicks: ?shot=map → Armoury → Talisman → set 1 → comparisons opened.');
   console.log('\nPHOTOGRAPHS');
   for (const s of shots) console.log(`  ${s.shape.padEnd(8)} ${s.rule.padEnd(9)} ${String(s.rows).padStart(2)} row(s)  ${(s.note||'').padEnd(38)} ${s.file.replace(ROOT + '/', '')}`);
@@ -589,13 +754,21 @@ async function main() {
   console.log('  L4 summary tap target vs a MEASURED --tap-floor probe, both in device px after body{zoom}');
   console.log('  L2 every row inside its container and the viewport; every chip\'s TEXT inside its own box');
   console.log('  ONE WORD  a price and a sentence not printed with nothing between them — boundary: any positive gap');
+  console.log('  LINE BUDGET  li-lines == head-lines + note-lines, AND head-lines == 1. The expected li-count is');
+  console.log('               DERIVED from the note measured on the same run — the 3 and the 1 are typed nowhere.');
+  console.log('  UNMOVED AND UNEXPLAINED  a price that did not move, under a picker promising a delta, carries a note.');
+  console.log('               By PRESENCE, never by phrase. What it SAYS is a person\'s ruling and is not in this exit code.');
+  console.log('  UNKNOWN IS NEVER GREEN  an ERR cell or an unmeasurable text column fails instead of printing a dash.');
 
   console.log('\nREPORTED, ASSERTED BY NOBODY — a threshold of mine with no cell either side would be the twelfth in tools/.');
-  console.log('  shape    rule       rows  li-lines  note-lines  text column');
+  console.log('  Still nobody\'s: the text column\'s WIDTH, the row COUNT, and the vocabulary census. Those are the numbers');
+  console.log('  where "how narrow stops reading" and "how many rows is a wall" have no cell either side, so a person rules.');
+  console.log('  shape    rule       rows  li-lines  head-lines  note-lines  text column');
   for (const r of report) {
     const li = Math.max(0, ...r.m.rows.map((x) => x.liLines));
+    const hd = Math.max(0, ...r.m.rows.map((x) => x.headLines));
     const nl = Math.max(0, ...r.m.rows.map((x) => x.noteLines));
-    console.log(`  ${r.shape.padEnd(8)} ${r.rule.padEnd(10)} ${String(r.m.rows.length).padStart(4)}  ${String(li).padStart(8)}  ${String(nl).padStart(10)}  ${r.m.columnPx == null ? 'n/a' : Math.round(r.m.columnPx) + 'px'}`);
+    console.log(`  ${r.shape.padEnd(8)} ${r.rule.padEnd(10)} ${String(r.m.rows.length).padStart(4)}  ${String(li).padStart(8)}  ${String(hd).padStart(10)}  ${String(nl).padStart(10)}  ${r.m.columnPx == null ? 'n/a' : Math.round(r.m.columnPx) + 'px'}`);
   }
   console.log('\n  WHAT THE ROWS SAY, verbatim, at every shape and every shipped rule:');
   for (const r of report) {
@@ -625,10 +798,10 @@ async function main() {
   if (seen.length < 2) console.log('    ONLY ONE CELL. A population with no cell either side of its own boundary cannot tell you the boundary is wrong — read the 2 below as unsampled.');
 
   console.log('\n  WIDTH SWEEP — where it breaks, if it breaks (rule: flat):');
-  console.log('    width  h-bleed  escaped  text column  note lines  li lines');
+  console.log('    width  h-bleed  escaped  text column  note lines  head lines  li lines');
   for (const s of sweep) {
     if (s.err) { console.log(`    ${String(s.w).padStart(5)}  ERR ${s.err}`); continue; }
-    console.log(`    ${String(s.w).padStart(5)}  ${String(s.bleed).padStart(7)}  ${String(s.escaped).padStart(7)}  ${String(s.column == null ? 'n/a' : s.column + 'px').padStart(11)}  ${String(s.noteLines).padStart(10)}  ${String(s.liLines).padStart(8)}`);
+    console.log(`    ${String(s.w).padStart(5)}  ${String(s.bleed).padStart(7)}  ${String(s.escaped).padStart(7)}  ${String(s.column == null ? 'n/a' : s.column + 'px').padStart(11)}  ${String(s.noteLines).padStart(10)}  ${String(s.headLines).padStart(10)}  ${String(s.liLines).padStart(8)}`);
   }
 
   // ---- the vocabulary census ------------------------------------------------
@@ -648,6 +821,24 @@ async function main() {
   }
   console.log('\nPASS  every asserted boundary held at every shape and every shipped rule.');
   process.exit(0);
+}
+
+// MR-80: EVERY INSTRUMENT RESULT CARRIES THE REF IT WAS MEASURED AT, OR IT IS
+// NOT A RESULT. Three of this wave's published greens turned out to be branch
+// numbers printed as facts about the tree, and this file was one run away from
+// being a fourth — it is normally run in a worktree at somebody else's tip. The
+// probe talisman lives in `content/source/weapons.csv` for the length of a run,
+// so that one path is excluded from the dirty list rather than reported as a
+// modification this tool did not make.
+function ref() {
+  const git = (a) => { const r = spawnSync('git', a, { cwd: ROOT, encoding: 'utf8' }); return r.status === 0 ? (r.stdout || '').trim() : null; };
+  const head = git(['rev-parse', '--short=7', 'HEAD']);
+  if (!head) return 'NOT A GIT TREE — this result names no ref and is not a result (MR-80).';
+  const names = (git(['rev-parse', '--abbrev-ref', 'HEAD']) || '?');
+  const dirty = (git(['status', '--porcelain']) || '')
+    .split('\n').map((l) => l.slice(3)).filter(Boolean)
+    .filter((p) => p !== 'content/source/weapons.csv' && !p.startsWith('src/content/generated/') && !p.startsWith('tools/results/'));
+  return `${head} (${names})${dirty.length ? `  DIRTY — ${dirty.length} path(s) not in that commit: ${dirty.slice(0, 6).join(', ')}${dirty.length > 6 ? ' …' : ''}. Every number below is about the WORKING TREE, not about ${head}.` : '  clean — the numbers below are about this commit.'}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -744,7 +935,32 @@ const PLANTS = [
     file: 'src/ui/components/equipmentReceipts.js',
     find: '${row.note ? `<small>${esc(row.note)}</small>` : \'\'}',
     replace: '',
+    expect: /UNMOVED AND UNEXPLAINED/,
     silentNote: true,
+  },
+  {
+    // THE ONE THIS FILE ALREADY MISSED, and it is not synthetic — it is the
+    // change Viki actually wrote, on the instruction Marina and I actually gave:
+    // copy `.player-poise-receipt`'s `display: grid`. Its declaration is
+    // reproduced here verbatim (ui.css:1844) rather than paraphrased, because
+    // the whole lesson is that the DEVICE travelled and the DECLARATION did not:
+    // the sibling's children are all elements, this `<li>` starts with a bare
+    // text node, and a single-column grid tears "2 →" off "4".
+    //
+    // IT IS SCORED TWICE ON PURPOSE. The new budget must fire, AND the older
+    // adjacency check must be shown SILENT on the same run — because "the
+    // adjacency test is insufficient" was a suspicion until a plant printed both
+    // answers side by side. A known-bad that only proves the new check works
+    // would leave the reason for the new check unmeasured.
+    name: "the sibling's declaration copied literally — grid tears the price off its own arrow",
+    file: 'styles/ui.css',
+    find: '.equip-resource-change small { display: block; }',
+    replace: '.equip-resource-change { display: grid; gap: 0.2rem; overflow-wrap: anywhere; }',
+    expect: /LINE BUDGET/,
+    alsoSilent: { name: 'READS AS ONE WORD (the adjacency check)', re: /READS AS ONE WORD/ },
+    site: "This plant's site ARRIVES WITH viki/the-rung-has-no-surface (77e240f). On a tree without that fix "
+      + 'there is no `display: block` to replace and the run-on is the tree\'s own state, so this plant has '
+      + 'nothing to undo — DRIFT here is the base, not a defect. Scored at 77e240f; see the run beside this file.',
   },
   {
     // THE ROW-COUNT QUESTION ITSELF. If `swapPriceChanges` stops filtering to
@@ -789,10 +1005,22 @@ function runIn(dir) {
   return { status: r.status, out: (r.stdout || '') + (r.stderr || '') };
 }
 
-// The `flat` row of the REPORTED table: shape, rule, rows, li-lines, note-lines.
+// The `flat` row of the REPORTED table: rows, li-lines, head-lines, note-lines.
+// FOUR NUMBERS NOW, NOT THREE — and a parser that quietly matched the first
+// three of four would have read `head` as `note` and scored every plant against
+// the wrong column. It asserts its own arity rather than trusting the shape.
+// SCORED AGAINST THE FINDINGS, NEVER AGAINST THE WHOLE PAGE. This matched all of
+// stdout until 2026-08-15, and it broke the instant the checks got NAMES: the
+// `ASSERTED` legend now PRINTS the words "LINE BUDGET" and "UNMOVED AND
+// UNEXPLAINED" on every run, so both new plants scored MISSED with
+// `control: ALREADY THERE` — the control's own legend, read as a finding. That
+// is the prose-in-the-machine's-eye family again (MR-86), and this instance is
+// the tool reading ITS OWN OUTPUT as evidence. Only the `  · ` lines are claims.
+const findingsOf = (out) => (out.match(/^  · .*/gm) || []).join('\n');
+
 const flatRow = (out) => {
-  const m = /390x844\s+flat\s+(\d+)\s+(\d+)\s+(\d+)/.exec(out);
-  return m ? { rows: +m[1], li: +m[2], note: +m[3] } : null;
+  const m = /390x844\s+flat\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s/.exec(out);
+  return m ? { rows: +m[1], li: +m[2], head: +m[3], note: +m[4] } : null;
 };
 
 async function selftest() {
@@ -800,16 +1028,17 @@ async function selftest() {
   console.log('the two CSV rows authored into the same copy, and the real content-build run in between.');
   console.log('Scored against an UNPLANTED CONTROL, because this tree is already red and exit 1 is free.\n');
   const tmp = mkdtempSync(join(tmpdir(), 'swaprow-'));
-  let caught = 0;
+  let caught = 0, controlFindings = 0;
   try {
     const cdir = join(tmp, 'control');
     const cerr = copyTree(cdir);
     if (cerr) { console.error(`  the CONTROL copy would not compile:\n${cerr}`); process.exit(2); }
     const control = runIn(cdir);
     const cFlat = flatRow(control.out);
-    console.log(`  CONTROL  exit ${control.status} · 390x844/flat reports ${cFlat ? `${cFlat.rows} rows, ${cFlat.note} note-lines` : 'NO PARSEABLE ROW — the control did not reach the surface, so nothing below is scored'}`);
+    console.log(`  CONTROL  exit ${control.status} · 390x844/flat reports ${cFlat ? `${cFlat.rows} rows, li ${cFlat.li} = head ${cFlat.head} + note ${cFlat.note}` : 'NO PARSEABLE ROW — the control did not reach the surface, so nothing below is scored'}`);
     if (!cFlat) { console.error('  Refusing to score plants against a control that never measured. Treat as RED.'); process.exit(2); }
-    console.log(`  CONTROL findings already present: ${(control.out.match(/^  · .*/gm) || []).length}\n`);
+    controlFindings = findingsOf(control.out).split('\n').filter(Boolean).length;
+    console.log(`  CONTROL findings already present: ${controlFindings}\n`);
 
     for (const plant of PLANTS) {
       const dir = join(tmp, plant.file.replace(/\W+/g, '_'));
@@ -820,16 +1049,26 @@ async function selftest() {
       if (!before.includes(plant.find)) {
         console.log(`  PLANT SITE DRIFTED  ${plant.name}`);
         console.log(`      '${plant.find.slice(0, 66)}…' is not in ${plant.file}. This plant proves nothing; treat as RED.`);
+        if (plant.site) console.log(`      ${plant.site}`);
         continue;
       }
       writeFileSync(p, before.replace(plant.find, plant.replace));
       const r = runIn(dir);
       let red = false, why = '';
       if (plant.expect) {
-        const inPlanted = plant.expect.test(r.out);
-        const inControl = plant.expect.test(control.out);
+        const inPlanted = plant.expect.test(findingsOf(r.out));
+        const inControl = plant.expect.test(findingsOf(control.out));
         red = inPlanted && !inControl;
         why = `planted:${inPlanted ? 'yes' : 'NO'} control:${inControl ? 'ALREADY THERE' : 'clean'} exit ${r.status}`;
+        const f = flatRow(r.out);
+        if (f) why += ` · table rows ${f.rows}, li ${f.li} = head ${f.head} + note ${f.note} (control li ${cFlat.li} = head ${cFlat.head} + note ${cFlat.note})`;
+        // THE OTHER CHECK'S ANSWER, ON THE SAME RUN. Printed whether it helps me
+        // or not: this is the only place the insufficiency of the adjacency test
+        // is a measurement rather than a claim in a commit message.
+        if (plant.alsoSilent) {
+          const heard = plant.alsoSilent.re.test(findingsOf(r.out));
+          why += `\n      ALSO ON THIS RUN: ${plant.alsoSilent.name} is ${heard ? 'ALSO RED — it can see this one after all' : 'SILENT — it cannot see this defect, which is why the check above exists'}.`;
+        }
       } else if (plant.silentNote) {
         const f = flatRow(r.out);
         red = !!f && f.rows > 0 && f.note === 0 && cFlat.note > 0;
@@ -844,8 +1083,14 @@ async function selftest() {
     }
   } finally { try { rmSync(tmp, { recursive: true, force: true }); } catch {} }
   console.log(`\n  ${caught}/${PLANTS.length} CAUGHT.`);
-  console.log('  BOUNDARY: four defects on one surface, each scored against an unplanted control.');
-  console.log('  Silent about every defect nobody thought to plant, and about the two findings the');
+  // COUNTED, NOT TYPED. This line said "four defects" and "the two findings the
+  // control already carries" while the file held five plants and the control
+  // carried six — a boundary statement that had quietly stopped describing its
+  // own run. A hand-typed count beside a machine-counted one is Law 1 clause 2
+  // inside an instrument's own boundary.
+  console.log(`  BOUNDARY: ${PLANTS.length} defect(s) on one surface, each scored against an unplanted control,`);
+  console.log(`  and each scored on the FINDINGS only — never on this tool's own legend, which now names its checks.`);
+  console.log(`  Silent about every defect nobody thought to plant, and about the ${controlFindings} finding(s) the`);
   console.log('  control already carries — those are OBSERVED on the real tree and need no plant.');
   process.exit(caught === PLANTS.length ? 0 : 1);
 }
