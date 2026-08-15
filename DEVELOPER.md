@@ -221,10 +221,13 @@ row's tier and the screen moves with it.
 `CHROME=/usr/bin/chromium node tools/creationbrief.mjs` is the check: the
 tables imported through the real content door for the expectation, the app
 served and booted in headless Chromium at `?shot=customize` for the
-observation, faces clicked. `--selftest` plants five known-bads as file bytes
-in a copy of this tree — the tier filter ignored, an illegal tier authored, the
-tap floor removed, the row un-wrapped, the tap swallowed — and re-runs the
-whole tool against each.
+observation, faces clicked. `--selftest` plants each known-bad in its corpus as
+file bytes in a copy of this tree and re-runs the whole tool against each.
+**The corpus is not listed here.** This paragraph said "five known-bads" and
+named them while the corpus stood at ten, and the count rotted without anyone
+editing a line — a second copy of a fact nothing keeps in sync. The plants, what
+each is aimed at, and what the green does NOT cover are printed by `--selftest`
+itself; read them there.
 
 ## Standalone build (`build/AshenSpire.html`)
 
