@@ -79,47 +79,101 @@ function runTool(root, tool, args, timeoutMs, env) {
  *   find    — exact substring that MUST exist in the copy (else hard red)
  *   replace — its replacement (the defect)
  *   append  — text appended to the file instead (the defect arrives at EOF)
+ *   edits   — [{ file, find, replace, all } | { file, append }] for a defect
+ *             that is genuinely more than one file. Use INSTEAD of file/find.
+ *   prep    — [[cmd, ...argv]] run in the copy AFTER the edits and BEFORE the
+ *             tool; each must exit 0 or the plant is a hard red.
  *   expectRed — RegExp the failing run's output must match
  * args: extra argv for every tool run (e.g. ['--only', '390x844'])
  * Returns an exit code: 0 all plants caught + clean green, 1 otherwise.
+ *
+ * `edits` AND `prep` ADDED 2026-08-15 (Viki, MR-41) — the same-door clause taken
+ * literally rather than stretched:
+ *
+ *   · A CSV CONTENT DOOR HAS TWO STAGES. An author edits `content/source/*.csv`
+ *     and runs `node tools/content-build.mjs`; the game imports the generated
+ *     module. A plant that stops at the spreadsheet never reaches the runtime,
+ *     and one typed straight into `src/content/generated/*.js` has entered
+ *     BELOW the door — it is the compiler's output written by hand. `prep` is
+ *     that missing stage, and the house was already doing it by hand:
+ *     statusreach's DOOR block records *"…then `node tools/content-build.mjs`
+ *     recompiled"* as a dated one-off, which SOP 2's drift clause rots to
+ *     `unknown` at the next ref. This makes that observation re-runnable.
+ *   · SOME DEFECTS ARE TWO FILES, AND SPLITTING THEM PLANTS NEITHER. A
+ *     presentation bug that can only fire on content nobody has authored yet
+ *     needs the content row AND the code. Either half alone is green for a
+ *     reason that has nothing to do with coverage — which this file already
+ *     calls a false NOT-CAUGHT (see `all` below, the same argument one level
+ *     down).
+ *
+ * Both are opt-in and change nothing for existing callers. Falsifier (SOP 1's
+ * corollary, counted not judged): cut them if no plant ever needs a second file
+ * or a compile — then they are decoration.
  */
 export async function doorSelftest({ tool, plants, args = [], timeoutMs = 300000, env = {}, extraCopy = [] }) {
   console.log(`${tool} --selftest — same-door known-bad corpus (${plants.length} plant(s))`);
-  console.log(`DOOR: each plant enters as FILE BYTES in a copied real tree at the file named below —`);
+  console.log(`DOOR: each plant enters as FILE BYTES in a copied real tree at the file(s) named below —`);
   console.log(`      the same file the real defect would ship in. The tool then runs WHOLE from that`);
   console.log(`      copy (cwd = copy root): readFileSync, the import graph, serve.mjs and any browser`);
   console.log(`      boot all read the planted bytes. Nothing is handed to an inner function directly.`);
+  console.log(`      A plant carrying \`prep\` runs that command in the copy first, so a two-stage`);
+  console.log(`      content door (spreadsheet -> content-build -> generated module) is travelled whole.`);
   console.log(`      Revert = the copy is discarded; the real tree is never edited.`);
   const root = copyTree(extraCopy);
   let failed = 0;
   try {
     for (const p of plants) {
-      const target = join(root, p.file);
-      const pristine = readFileSync(target, 'utf8');
-      let planted;
-      if (p.append != null) planted = pristine + '\n' + p.append + '\n';
-      else {
-        if (!pristine.includes(p.find)) {
-          console.error(`RED  plant "${p.name}": PLANT SITE DRIFTED — ${p.file} no longer contains the find-string. A corpus that silently stops running is the defect; rewrite the plant.`);
-          failed++;
-          continue;
-        }
+      const edits = p.edits || [{ file: p.file, find: p.find, replace: p.replace, append: p.append, all: p.all }];
+      const where = edits.map((e) => e.file).join(' + ');
+      const pristine = new Map();
+      let drifted = null;
+      for (const e of edits) {
+        const target = join(root, e.file);
+        const bytes = readFileSync(target, 'utf8');
+        pristine.set(target, bytes);
+        if (e.append != null) { writeFileSync(target, `${bytes}\n${e.append}\n`); continue; }
+        if (!bytes.includes(e.find)) { drifted = e.file; break; }
         // `all` replaces EVERY occurrence. A one-shot replace on a token that
         // appears twice in the real file plants half a defect, and the tool
         // stays green for a reason that has nothing to do with its coverage —
         // that is a false NOT-CAUGHT, which is as misleading as a false green.
-        planted = p.all ? pristine.split(p.find).join(p.replace) : pristine.replace(p.find, p.replace);
+        writeFileSync(target, e.all ? bytes.split(e.find).join(e.replace) : bytes.replace(e.find, e.replace));
       }
-      writeFileSync(target, planted);
+      const restore = () => { for (const [target, bytes] of pristine) writeFileSync(target, bytes); };
+      if (drifted) {
+        restore();
+        console.error(`RED  plant "${p.name}": PLANT SITE DRIFTED — ${drifted} no longer contains the find-string. A corpus that silently stops running is the defect; rewrite the plant.`);
+        failed++;
+        continue;
+      }
+      // The compile stage, if this door has one. A prep that fails means the
+      // plant was never armed, so the run below would be green about nothing —
+      // hard red rather than a NOT CAUGHT that reads like coverage.
+      let prepFailed = null;
+      for (const cmd of p.prep || []) {
+        const pr = spawnSync(cmd[0] === 'node' ? process.execPath : cmd[0], cmd.slice(1), { cwd: root, encoding: 'utf8', timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024 });
+        if (pr.status !== 0) { prepFailed = `${cmd.join(' ')} exited ${pr.status}: ${`${pr.stdout || ''}${pr.stderr || ''}`.trim().split('\n').slice(-4).join(' | ')}`; break; }
+      }
+      if (prepFailed) {
+        restore();
+        console.error(`RED  plant "${p.name}": PREP FAILED — ${prepFailed}. The plant was never armed; nothing below this line is evidence.`);
+        failed++;
+        continue;
+      }
       const r = runTool(root, tool, args, timeoutMs, env);
-      writeFileSync(target, pristine);
+      restore();
+      // A prep stage WRITES into the copy (content-build regenerates modules),
+      // so restoring the edited sources is not enough — re-run it clean so the
+      // next plant and the final clean run start from generated bytes that
+      // match the pristine sources.
+      for (const cmd of p.prep || []) spawnSync(cmd[0] === 'node' ? process.execPath : cmd[0], cmd.slice(1), { cwd: root, encoding: 'utf8', timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024 });
       const matched = p.expectRed.test(r.out);
       if (r.code !== 0 && matched) {
         const line = r.out.split('\n').find((l) => p.expectRed.test(l)) || '';
-        console.log(`  CAUGHT  "${p.name}" -> ${p.file} — exit ${r.code}; red named: ${line.trim().slice(0, 140)}`);
+        console.log(`  CAUGHT  "${p.name}" -> ${where}${p.prep ? ` (prep: ${p.prep.map((c) => c.join(' ')).join('; ')})` : ''} — exit ${r.code}; red named: ${line.trim().slice(0, 140)}`);
       } else {
         failed++;
-        console.error(`  NOT CAUGHT  "${p.name}" -> ${p.file} — exit ${r.code}${r.signal ? ` (signal ${r.signal})` : ''}, expected-red ${matched ? 'matched but exit 0' : 'NOT in output'}. The known-bad was armed by the real door and this tool stayed green — decoration, not evidence.`);
+        console.error(`  NOT CAUGHT  "${p.name}" -> ${where} — exit ${r.code}${r.signal ? ` (signal ${r.signal})` : ''}, expected-red ${matched ? 'matched but exit 0' : 'NOT in output'}. The known-bad was armed by the real door and this tool stayed green — decoration, not evidence.`);
         console.error(`    tail: ${r.out.trim().split('\n').slice(-6).join('\n    ')}`);
       }
     }

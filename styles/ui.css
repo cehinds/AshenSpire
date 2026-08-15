@@ -1865,6 +1865,23 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .equip-candidate-comparison ul { margin: 0.35rem 0; padding-left: 1.4rem; }
 .equip-card-changes li { display: grid; grid-template-columns: minmax(9rem, 1fr) auto; gap: 0.15rem 0.5rem; }
 .equip-card-changes small { grid-column: 1 / -1; color: var(--muted); }
+/* THE NOTE GETS ITS OWN LINE. Without this the price and its qualification are
+   printed with 0px between them and read as one word — `2 → 2Flat swap costs
+   ignore…` (Sunna + Bjorn, MR-76). Both siblings above already break it: the
+   poise receipt is a grid whose children are all elements, and .equip-card-
+   changes small takes `grid-column: 1 / -1`. THE DEVICE TRAVELS, THE DISPLAY
+   VALUE DOES NOT — this li starts with a bare text node ("Right Hand swap
+   Actions 2 → "), so `display: grid` on the li makes that text an anonymous
+   item and tears the price off its own arrow — photographed reading `2 →` /
+   `4`, and re-derivable in one edit: put `.equip-resource-change { display:
+   grid }` here instead and re-run Sunna's swap-row-reads harness, which reads
+   li-lines 4 where this line reads 3. `display: block` on the small is the
+   same break with the price left whole.
+   Colour is deliberately NOT muted here, unlike both siblings: this sentence is
+   already the smallest, lowest, most-hidden statement of a fact the screen
+   promises three times louder (MR-77), and greying it would answer that with
+   less. */
+.equip-resource-change small { display: block; }
 .equip-added-effect.none, .equip-resource-change.none { color: var(--muted); }
 .equip-foot { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
 .ef-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
