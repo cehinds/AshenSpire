@@ -1,0 +1,131 @@
+RED BEFORE GREEN — the false green in linebudget-camera.mjs's control loop.
+Bjorn, 2026-08-15, at dev = dabd7d9. Found by Vira (camera-independence.mjs's
+gate, MR-102); her reproduction broke `bands()` inside the probe. THIS ONE DOES
+NOT TOUCH ANY INSTRUMENT — the door is styles/ui.css, at the shipped fix's own
+declaration, which is the door the real regression uses.
+
+THE DEFECT.   const eq = k.liLines === k.headLines + k.noteLines && k.headLines === 1;
+              if (eq && k.ink !== k.liLines) findings.push(…)
+The disagreement was reported ONLY when the equation was green, while the header
+("EXIT 1 when the camera and `bands()` disagree on the UNPLANTED tree") and the
+PASS line ("the two readings agree at every cell") both claimed it unconditionally.
+
+THE DOOR, two declarations added after the anchor and nothing else in the tree moved:
+  .equip-resource-change small { display: block; }              <- the anchor, kept
+  .equip-resource-change { display: grid; gap: 0.2rem; overflow-wrap: anywhere; }
+  .equip-resource-change small { color: #0b0906; }
+The grid is Viki's own declaration and it wraps the price statement, so headLines
+becomes 2 and `eq` goes false — the reachable case, no broken instrument needed.
+The colour is the panel's own background, so the note keeps two line boxes and
+paints none of them: bands() reads 4, the photograph carries 2 bands of ink.
+
+REPRODUCE:  the anchor+2 declarations above in styles/ui.css, then
+            node tools/linebudget-camera.mjs
+
+--------------------------------------------------------------------------------
+BEFORE — tools/linebudget-camera.mjs at bjorn/gate-line-budget (1d07dfc)
+--------------------------------------------------------------------------------
+CONTROL — the tree as it stands. `bands()` on the left, INK counted off the photograph on the right.
+  shape    rule      row  li  head  note  equation  CAMERA  what the row says
+  390x844  flat      0   4   2     2     RED       2       "Right Hand swap Actions 2 → 2"
+  390x844  flat      1   4   2     2     RED       2       "Left Hand swap Actions 2 → 2"
+  390x844  category  0   4   2     2     RED       2       "Right Hand swap Actions 2 → 2"
+  390x844  category  1   4   2     2     RED       2       "Left Hand swap Actions 2 → 2"
+  390x844  gear      0   2   2     0     RED       2       "Right Hand swap Actions 2 → 4"
+  390x844  gear      1   2   2     0     RED       2       "Left Hand swap Actions 2 → 4"
+  360x640  flat      0   4   2     2     RED       2       "Right Hand swap Actions 2 → 2"
+  360x640  flat      1   4   2     2     RED       2       "Left Hand swap Actions 2 → 2"
+  360x640  category  0   4   2     2     RED       2       "Right Hand swap Actions 2 → 2"
+  360x640  category  1   4   2     2     RED       2       "Left Hand swap Actions 2 → 2"
+  360x640  gear      0   2   2     0     RED       2       "Right Hand swap Actions 2 → 4"
+  360x640  gear      1   2   2     0     RED       2       "Left Hand swap Actions 2 → 4"
+  ink floor 8px at 2x (this file's one literal — kept bands measured 30-50 rows, dropped slivers 4-6), ink threshold 28/255 from the crop's own modal background, 2+ pixels to ink a row.
+
+PLANTS NOT RUN — pass --plants. Without them this run has watched nothing fail, which is `unknown`, not green.
+
+BOUNDARY  source tree over http, one Linux box, one Chromium, Armoury → Talisman → set 1, two shapes, three shipped rules.
+          This camera reads INK, and it cannot tell a tall glyph bridging two lines from one tall band — that case is flagged, never counted.
+          Silent about dist/, every other surface, and about whether the sentence MEANS anything — that is Sunna's ruling, not this exit code.
+          It gates ONE assertion in swap-row-reads.mjs. It is silent on every other check in that file.
+
+PASS — on the unplanted tree the two readings agree at every cell, and every planted cell was scored.
+
+
+EXIT CODE: 0
+
+--------------------------------------------------------------------------------
+AFTER — the same door, the same tree, `eq` demoted to choosing which sentence prints
+--------------------------------------------------------------------------------
+CONTROL — the tree as it stands. `bands()` on the left, INK counted off the photograph on the right.
+  shape    rule      row  li  head  note  equation  CAMERA  what the row says
+  390x844  flat      0   4   2     2     RED       2       "Right Hand swap Actions 2 → 2"
+  390x844  flat      1   4   2     2     RED       2       "Left Hand swap Actions 2 → 2"
+  390x844  category  0   4   2     2     RED       2       "Right Hand swap Actions 2 → 2"
+  390x844  category  1   4   2     2     RED       2       "Left Hand swap Actions 2 → 2"
+  390x844  gear      0   2   2     0     RED       2       "Right Hand swap Actions 2 → 4"
+  390x844  gear      1   2   2     0     RED       2       "Left Hand swap Actions 2 → 4"
+  360x640  flat      0   4   2     2     RED       2       "Right Hand swap Actions 2 → 2"
+  360x640  flat      1   4   2     2     RED       2       "Left Hand swap Actions 2 → 2"
+  360x640  category  0   4   2     2     RED       2       "Right Hand swap Actions 2 → 2"
+  360x640  category  1   4   2     2     RED       2       "Left Hand swap Actions 2 → 2"
+  360x640  gear      0   2   2     0     RED       2       "Right Hand swap Actions 2 → 4"
+  360x640  gear      1   2   2     0     RED       2       "Left Hand swap Actions 2 → 4"
+  ink floor 8px at 2x (this file's one literal — kept bands measured 30-50 rows, dropped slivers 4-6), ink threshold 28/255 from the crop's own modal background, 2+ pixels to ink a row.
+  12 control cell(s) carrying 2 DISTINCT reading(s) — the rest are replicates, not independent trials.
+  So the control shows the two instruments do not disagree WHERE THE ROW IS FINE; the weight is in the plants, which make them differ.
+
+PLANTS NOT RUN — pass --plants. Without them this run has watched nothing fail, which is `unknown`, not green.
+
+BOUNDARY  source tree over http, one Linux box, one Chromium, Armoury → Talisman → set 1, two shapes, three shipped rules.
+          This camera reads INK, and it cannot tell a tall glyph bridging two lines from one tall band — that case is flagged, never counted.
+          Silent about dist/, every other surface, and about whether the sentence MEANS anything — that is Sunna's ruling, not this exit code.
+          It gates ONE assertion in swap-row-reads.mjs. It is silent on every other check in that file.
+          A PASS here means the two readings AGREE, never that the equation is green: a control row can read RED
+          in the table above with both instruments agreeing, and that verdict belongs to swap-row-reads.mjs.
+
+FAIL 8 finding(s):
+  · control 390x844/flat row 0: THE TWO READINGS DISAGREE, AND THE ASSERTION IS RED — bands() reads 4 line(s), 2 band(s) of ink are painted. 
+  · control 390x844/flat row 1: THE TWO READINGS DISAGREE, AND THE ASSERTION IS RED — bands() reads 4 line(s), 2 band(s) of ink are painted. 
+  · control 390x844/category row 0: THE TWO READINGS DISAGREE, AND THE ASSERTION IS RED — bands() reads 4 line(s), 2 band(s) of ink are painted. 
+  · control 390x844/category row 1: THE TWO READINGS DISAGREE, AND THE ASSERTION IS RED — bands() reads 4 line(s), 2 band(s) of ink are painted. 
+  · control 360x640/flat row 0: THE TWO READINGS DISAGREE, AND THE ASSERTION IS RED — bands() reads 4 line(s), 2 band(s) of ink are painted. 
+  · control 360x640/flat row 1: THE TWO READINGS DISAGREE, AND THE ASSERTION IS RED — bands() reads 4 line(s), 2 band(s) of ink are painted. 
+  · control 360x640/category row 0: THE TWO READINGS DISAGREE, AND THE ASSERTION IS RED — bands() reads 4 line(s), 2 band(s) of ink are painted. 
+  · control 360x640/category row 1: THE TWO READINGS DISAGREE, AND THE ASSERTION IS RED — bands() reads 4 line(s), 2 band(s) of ink are painted. 
+
+
+EXIT CODE: 1
+
+--------------------------------------------------------------------------------
+READING IT. 8 of 12 control cells disagree — bands() 4, camera 2 — on flat and
+category, the two rules whose rows carry a note. The 4 gear cells agree at 2 and
+are correctly silent. BEFORE: "PASS — the two readings agree at every cell", exit 0.
+AFTER: 8 findings, exit 1.
+
+AND THE OTHER EDGE, so the fix is not a new false red: the same file on the
+UNDOORED tree at dabd7d9 reads 12 of 12 in agreement with no control finding, and
+scores all seven plants exactly as the 77e240f run did — 32 findings, exit 1.
+See run-dabd7d9-2026-08-15.txt in this directory.
+
+WHAT THIS STILL DOES NOT DO. A control row whose equation is RED while both
+instruments AGREE is printed RED in the table and is not a finding here — that
+verdict belongs to swap-row-reads.mjs, and the run now says so in its BOUNDARY
+block rather than leaving a reader to infer it from a PASS.
+
+--------------------------------------------------------------------------------
+THE CROPS, AND WHAT WAS THROWN AWAY. Added by hand after the runs, Bjorn.
+The runs above photographed every cell they name. NINETY-SIX images of the same
+handful of readings is a second copy of a finding, not evidence of it, so this
+directory keeps TEN: one per plant at 390x844/flat/row0, the undoored control at
+the same cell, and the two doored cells that ARE this finding —
+  doored-false-green-390x844-flat-row0.png  bands() 4, ink 2. The head wraps to
+    two white lines; the note's two line boxes are painted #0b0906 and carry no
+    ink. LOOKED AT, not just counted.
+  doored-false-green-390x844-gear-row0.png  bands() 2, ink 2. A note-free row:
+    the equation reads RED because the head wrapped, the two readings AGREE, and
+    this file is correctly silent about it.
+So the `Crop:` paths printed in the runs above are correct for the run and
+dangling for this directory, and that is said here rather than left for a reader
+to discover. #0b0906 is not a new number: it is the value the already-scored
+`note-invisible-colour` plant uses, and the two corroborate to the cell — that
+plant's head is 1 and its camera reads 1; this door's head is 2 and it reads 2.
