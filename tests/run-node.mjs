@@ -531,6 +531,40 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (graceTree.code !== 0 || !graceTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // 56/57 — the relic-modifier vocabulary is ONE vocabulary (Sten, after #178
+  // gave relics the power to grant a resource). This is the other half of
+  // 52/53's stated hole: closedsets asks whether a closed set has a READER and
+  // says out loud that it cannot see a second, hand-typed COPY. onevocab asks
+  // exactly that, for exactly one vocabulary, and drives the boot, resolve,
+  // creation and load doors so the two spellings disagree out loud if they ever
+  // drift.
+  const runVocab = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/onevocab.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
+  const vocabSelf = runVocab(['--selftest']);
+  const vocabSelfV = quote(vocabSelf.out);
+  console.log(
+    `${vocabSelf.code === 0 && vocabSelfV.text ? 'PASS' : 'FAIL'}  56. the one-vocabulary check still catches its own known-bad corpus` +
+      ` — ${vocabSelfV.text || `onevocab --selftest (exit ${vocabSelf.code}): ${vocabSelfV.why}`}`
+  );
+  if (vocabSelf.code !== 0 || !vocabSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const vocabTree = runVocab([]);
+  const vocabTreeV = quote(vocabTree.out);
+  console.log(
+    `${vocabTree.code === 0 && vocabTreeV.text ? 'PASS' : 'FAIL'}  57. the relic-modifier vocabulary has one home and one derivation path` +
+      ` — ${vocabTreeV.text || `onevocab (exit ${vocabTree.code}): ${vocabTreeV.why}`}` +
+      ` (\`node tools/onevocab.mjs\` names the copy and the door that disagreed)`
+  );
+  if (vocabTree.code !== 0 || !vocabTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -568,10 +602,20 @@ console.log('          52–53 ASK ONE QUESTION: is each exported closed set REA
 console.log('          They are silent on whether a set has a second, hand-typed copy');
 console.log('          somewhere — the defect that made the question worth asking. Green');
 console.log('          means no vocabulary is decoration, never that none is duplicated.');
+console.log('          That silence now has exactly ONE exception and it is named, not general:');
+console.log('          56–57 close it for the relic-modifier vocabulary alone. Every other');
+console.log('          closed set in the tree is still unwatched for a second copy.');
 console.log('          54–55 NEVER OPEN A BROWSER. 54 proves the boot refusals fire and the');
 console.log('          shrine pours, through the real bundle and the real registry; 55 reports');
 console.log('          the shipped table. Neither has seen the settings rows or the shrine');
 console.log('          sentence — those are photographed (`?shot=rest`), not asserted.');
 console.log('          Neither settles whether 3+3 is release balance; the old no-Mana');
 console.log('          A/B is stale, so that needs a Mana-aware simulation and player review.');
+console.log('          56–57 GUARD ONE VOCABULARY: the tags and resource ids a relic uses to');
+console.log('          modify you. They prove that vocabulary has one typed home, that both');
+console.log('          content doors accept the same words, and that a relic resource grant');
+console.log('          reaches max HP by one road with one answer at creation and at load.');
+console.log('          They are SILENT on the other modifier vocabularies this game carries —');
+console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
+console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);
