@@ -45,11 +45,23 @@
 #     dirorder comparator itself, which was a FIFTH hand-enforced rule that I had
 #     protected with a comment and left off this list. Still enforced by hand, listed by the
 #     `boundary` job so the gap is in the run's own output rather than in a doc:
-#     SOP 3's review-lens sign-offs, SOP 5's one-version-derived check (this repo
-#     satisfies SOP 5 by construction — src/content/index.js:32 is the only home
-#     and tools/launch.mjs:17-25 derives it — but NOTHING STOPS a second copy
-#     being born, and I did not build that detector), and SOP 2's ref/domain
-#     resolution guard.
+#     SOP 3's review-lens sign-offs, and SOP 2's ref/domain
+#
+#     SOP 5's one-version-derived check WAS on that hand-enforced list, in these
+#     words: "this repo satisfies SOP 5 by construction — src/content/index.js is
+#     the only home and tools/launch.mjs derives it — but NOTHING STOPS a second
+#     copy being born, and I did not build that detector." Built 2026-08-15
+#     (Sten, with Constantine's ask for a build version on three screens):
+#     `tools/buildversion.mjs --check` runs in the `test` job on all three
+#     runners, `--selftest` proves it can fail on six known-bads including the
+#     re-typed-version fixture SOP 5 names, and `tools/buildstamp-shot.mjs` in
+#     `browser-guard` asks the other half — whether the string is INK on the
+#     three screens rather than merely in the DOM. The sentence is EDITED rather
+#     than left standing beside its own fix: a boundary that overstates the gap
+#     goes false exactly the way one that understates it does.
+#
+#     (…continuing the still-hand-enforced list interrupted above: and SOP 2's
+#     ref/domain resolution guard.)
 #
 #  4. A NAMED BOUNDARY IN THE RUN'S OWN OUTPUT — the `boundary` job always runs,
 #     including on failure, and tools/verify-shipped.mjs and
@@ -206,6 +218,24 @@ jobs:
         # other leg of this gate green.
         run: node tools/dirorder.mjs --mutate
 
+      - name: One version, derived — SOP 5's detector, which this file said was missing
+        # Requirement 3's named gap, closed. The header above used to say "SOP 5's
+        # one-version-derived check … NOTHING STOPS a second copy being born, and I
+        # did not build that detector"; that sentence is now edited rather than left
+        # standing, because a boundary that overstates the gap rots the same way one
+        # that understates it does.
+        #
+        # ON EVERY RUNNER, and that is requirement 2 rather than thoroughness: the
+        # digest canonicalizes CRLF, so a Windows checkout and a Linux checkout of one
+        # commit must derive the SAME string or the shipped stamp is a fact about a
+        # filesystem. This repo has already paid once for that (tools/dirorder.mjs).
+        run: node tools/buildversion.mjs --check
+
+      - name: …and it can fail — six known-bads, each caught by the row that owns it
+        # Inverted expectation, the idiom already in this job twice. Includes the
+        # fixture SOP 5 asks for by name: a tree that RE-TYPES the version.
+        run: node tools/buildversion.mjs --selftest
+
   # ---------------------------------------------------------------------------
   # Is the artifact we ship the artifact this source builds — on every platform?
   #
@@ -299,6 +329,24 @@ jobs:
         # inversion and exits 1; it is for a human at a terminal, not for here.)
         run: node tools/shotguard-probe.mjs --mutate
 
+      - name: The build version is INK on the three screens he named
+        # Constantine asked for the build version on the main menu, the map and in
+        # combat. `buildversion --check` in the `test` job proves the STRING is
+        # derived and singly-homed; that is a fact about source and it is silent
+        # about whether anything is drawn. This is the other half, and it needs a
+        # browser for the same reason the save guard does: the failure modes are
+        # `opacity: 0` and a narrow-layout `display: none`, neither of which is
+        # visible from Node.
+        run: node tools/buildstamp-shot.mjs
+
+      - name: …and that gate can fail — six ways to lose the ink, each caught
+        # Inverted expectation. It costs ~4 minutes because each plant is a whole
+        # program run against its own served tree and its own browser — stated
+        # rather than hidden, since this workflow bills by the minute and runs by
+        # hand. Four of the six are invisible to any DOM-presence predicate, which
+        # is precisely why the corpus is worth the four minutes.
+        run: node tools/buildstamp-shot.mjs --selftest
+
   # ---------------------------------------------------------------------------
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
   # the boundary is never the thing that got cut when the run went bad.
@@ -332,8 +380,17 @@ jobs:
           echo "    collation defect were each caught by that corpus"
           echo "  · the browser probe's three UNAVAILABLE branches were each triggered and"
           echo "    each resolved to exit 2 (unknown/blocks), not to a verdict about the gate"
+          echo "  · the build version has ONE home, is derived at build time rather than typed,"
+          echo "    and derives the same string on all three runners — with six known-bads,"
+          echo "    including a tree that re-types it, each observed red by its own row"
+          echo "  · that version is INK on the main menu, the map and combat, at 390x844 and"
+          echo "    1200x730 — pixels, not DOM presence, with six ways to lose the ink caught"
           echo ""
           echo "IT DOES NOT MEAN:"
+          echo "  · that the build stamp is LEGIBLE, or in the right place. The ink gate proves"
+          echo "    pixels differ from their ground inside one box in one browser at two shapes;"
+          echo "    legibility is tools/contrast-audit.mjs and Sunna, placement is Viki, and the"
+          echo "    stamp on the RELEASE artifact is tools/release-shots.mjs, not any job here."
           echo "  · that the game is playable. NOTHING HERE PLAYS IT. No job in this file"
           echo "    opens a browser on the game itself, so every claim below is a claim"
           echo "    about files, never about a fight."

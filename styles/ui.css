@@ -2471,3 +2471,34 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    (body.reduced-motion, main.js) and the OS's. */
 .reduced-motion .upright-phone { animation: none; }
 @media (prefers-reduced-motion: reduce) { .upright-phone { animation: none; } }
+
+/* ---------- the build stamp (src/ui/components/buildstamp.js) ---------------
+   ONE RULE FOR THREE SURFACES. The stamp appears on the title screen, in the
+   map header and in the combat HUD, and it is the same string in the same
+   register everywhere — its own class here rather than three per-screen rules,
+   for the same reason the markup has one home.
+
+   THE REGISTER IS THE SEED'S, deliberately: `.map-header .mh-seed` is the
+   closest sibling this game already ships — a monospace diagnostic string a
+   player reads back to us — so this borrows its size and its colour instead of
+   inventing a fourth treatment.
+
+   AND IT IS ABSENT FROM EVERY NARROW HIDE RULE ON PURPOSE. The seed
+   (`.mh-seed`, `.fight-label`) is hidden at `data-layout='narrow'` because it
+   is recoverable from the Stats panel two taps away. The build stamp is not
+   recoverable from anywhere — it is the one thing a screenshot has to carry —
+   and a phone photograph is the commonest bug report there is. If a later hand
+   wants it gone on a phone, that is a decision to take in the open, not a rule
+   to inherit by pattern-matching on the seed. */
+.build-stamp {
+  color: var(--muted);
+  font-family: monospace;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+/* On the title screen it is the last line under the flavour text, centred with
+   the stack rather than floated into a corner — a corner is where a watermark
+   goes, and this is meant to be read. */
+.title-screen .build-stamp { margin-top: 0.4rem; text-align: center; }

@@ -13,6 +13,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
+import { sourceDigest, stampSource, VERSION_MODULE } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -279,6 +280,35 @@ if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
       `/* ASSET_MAP_START */\nexport const ASSET_MAP = {\n${pairs.join(',\n')}\n};\n/* ASSET_MAP_END */`
     )
   );
+}
+
+// ---------------------------------------------------------------------------
+// 2c. THE BUILD VERSION — DERIVED HERE, NEVER TYPED IN THE TREE.
+//
+// Constantine asked for the build version on three screens. The reasoning for
+// the scheme lives in src/buildversion.js; the two facts this file needs are:
+//
+//   · the digest is a function of the SOURCE ON DISK, so a rebuild from the
+//     same tree produces the same bytes and tools/rebuild-matches.mjs stays
+//     GREEN. A ref-derived stamp would make that check red forever, and it is
+//     the only generative one in the tree.
+//   · the injection is IN MEMORY, exactly like ASSET_MAP above. Nothing is
+//     written back to src/, so the file the digest covers never moves because
+//     of the digest, and there is no second-order commit to chase.
+//
+// It refuses rather than skips. A bundler that quietly ships `UNSTAMPED`
+// because a marker got renamed hands a player a version that says nothing,
+// and says nothing about saying nothing.
+// ---------------------------------------------------------------------------
+if (!sources.has(VERSION_MODULE)) {
+  fail(`${VERSION_MODULE} is not in the import graph — no screen in this build could say which build drew it`);
+}
+let buildDigest = null;
+try {
+  buildDigest = sourceDigest(ROOT).digest;
+  sources.set(VERSION_MODULE, stampSource(sources.get(VERSION_MODULE), buildDigest));
+} catch (err) {
+  fail(`could not derive the build version: ${err.message}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -770,6 +800,7 @@ const bytes = Buffer.byteLength(html, 'utf8');
 const kib = (bytes / 1024).toFixed(1);
 console.log('bundle.mjs: OK');
 console.log('  entry            : ' + entryId);
+console.log('  build version    : ' + buildDigest + ' (derived from this source; node tools/buildversion.mjs --which ' + buildDigest + ')');
 console.log('  modules bundled  : ' + order.length);
 console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
 console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');

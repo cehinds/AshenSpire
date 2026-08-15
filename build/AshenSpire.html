@@ -2774,6 +2774,37 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .reduced-motion .upright-phone { animation: none; }
 @media (prefers-reduced-motion: reduce) { .upright-phone { animation: none; } }
 
+/* ---------- the build stamp (src/ui/components/buildstamp.js) ---------------
+   ONE RULE FOR THREE SURFACES. The stamp appears on the title screen, in the
+   map header and in the combat HUD, and it is the same string in the same
+   register everywhere — its own class here rather than three per-screen rules,
+   for the same reason the markup has one home.
+
+   THE REGISTER IS THE SEED'S, deliberately: `.map-header .mh-seed` is the
+   closest sibling this game already ships — a monospace diagnostic string a
+   player reads back to us — so this borrows its size and its colour instead of
+   inventing a fourth treatment.
+
+   AND IT IS ABSENT FROM EVERY NARROW HIDE RULE ON PURPOSE. The seed
+   (`.mh-seed`, `.fight-label`) is hidden at `data-layout='narrow'` because it
+   is recoverable from the Stats panel two taps away. The build stamp is not
+   recoverable from anywhere — it is the one thing a screenshot has to carry —
+   and a phone photograph is the commonest bug report there is. If a later hand
+   wants it gone on a phone, that is a decision to take in the open, not a rule
+   to inherit by pattern-matching on the seed. */
+.build-stamp {
+  color: var(--muted);
+  font-family: monospace;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+/* On the title screen it is the last line under the flavour text, centred with
+   the stack rather than floated into a corner — a corner is where a watermark
+   goes, and this is meant to be read. */
+.title-screen .build-stamp { margin-top: 0.4rem; text-align: center; }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -28840,6 +28871,7 @@ Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_
 
 const { esc } = require("src/ui/components/tooltip.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 
 function mountTitle(app, { slots, meta, registries, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan, onCompendium }) {
   // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
@@ -28891,6 +28923,7 @@ function mountTitle(app, { slots, meta, registries, onContinue, onNew, onDelete,
         <button class="subtle" id="quit-game">QUIT</button>
       </div>
       <p style="color:var(--muted);font-size:11px;letter-spacing:.15em">THE EMBER FLOWS UPWARD. FOLLOW IT.</p>
+      ${buildStampHtml('title')}
     </div>`;
 
   app.querySelector('#run-history').addEventListener('click', onHistory);
@@ -30645,6 +30678,167 @@ function trackGesture(startEv, { onMove, onEnd } = {}) {
 
 
 Object.assign(module.exports, { trackGesture });
+
+},
+"src/ui/components/buildstamp.js": function (module, exports, require) {
+// src/ui/components/buildstamp.js — THE ONE RENDERER of the build stamp.
+//
+// Constantine asked for the build version on three surfaces (main menu, map,
+// combat). Three surfaces is three chances to type the same markup three ways,
+// and this house has paid for that twice already in bigger things — two map
+// renderers (ui/components/mapboard.js), two hand renderers. So the string has
+// one home (src/buildversion.js) and its MARKUP has one home, here.
+//
+// WHY IT CARRIES `data-role` RATHER THAN LEANING ON ITS CLASS. A class is a
+// styling hook and any stylesheet may take it away; the role is what the
+// photograph gate looks for (tools/buildstamp-shot.mjs), and a gate keyed to a
+// styling hook goes quiet the day someone renames the hook.
+//
+// AND `data-place` IS NOT DECORATION. It is how the gate proves there are
+// THREE placements rather than one element photographed three times.
+//
+// ONE THING THIS CANNOT DO, and it is written here so nobody reads the class as
+// a promise: being in the DOM is not being on the screen. `opacity: 0`,
+// `visibility: hidden`, a colour equal to the panel behind it, `height: 0` and
+// a narrow-layout `display: none` all leave this element exactly where it is
+// (Vira's finding on `UNMOVED AND UNEXPLAINED`, 2026-08-15). That is why the
+// gate measures INK inside this element's box and not its presence — and why
+// styles/ui.css keeps `.build-stamp` out of every narrow-layout hide rule
+// deliberately rather than by luck.
+
+const { esc } = require("src/ui/components/tooltip.js");
+const { BUILD_VERSION, BUILD_IS_STAMPED } = require("src/buildversion.js");
+
+/** The one sentence a player gets if they hover it, and it asks for the report. */
+const WHY = BUILD_IS_STAMPED
+  ? `Build ${BUILD_VERSION} — quote this when something looks wrong.`
+  : `Build ${BUILD_VERSION} — this page was opened without the launcher, so the`
+    + ` source digest was never derived. Run the game with run.sh / run.bat to get a real build stamp.`;
+
+/**
+ * buildStampHtml(place) → the stamp, ready to drop into a template.
+ * `place` names the surface ('title' | 'map' | 'combat') and reaches the DOM so
+ * the gate can count placements instead of taking three on trust.
+ */
+function buildStampHtml(place) {
+  return `<span class="build-stamp" data-role="build-version" data-place="${esc(place)}" title="${esc(WHY)}">BUILD ${esc(BUILD_VERSION)}</span>`;
+}
+
+
+Object.assign(module.exports, { buildStampHtml });
+
+},
+"src/buildversion.js": function (module, exports, require) {
+// src/buildversion.js — THE ONE HOME OF THE BUILD VERSION.
+//
+// Constantine, 2026-08-15, unprompted and in full: "in the game be sure to have
+// the build version is available on the main menu, and somewhere in the map and
+// combat". That is the whole of the ask; nothing else was said.
+//
+// ---------------------------------------------------------------------------
+// THE TENSION, AND WHY THE ANSWER IS A DIGEST OF THE SOURCE
+// ---------------------------------------------------------------------------
+//
+// Two things had to be true at once and they pull against each other:
+//
+//   1. THE VERSION IS A FACT OF THE SOURCE TREE, NEVER OF THE REF. A string
+//      derived from git — `HEAD`, `describe`, a commit count — CANNOT live in a
+//      committed bundle. `tools/rebuild-matches.mjs` asks whether a build from
+//      THIS source reproduces the committed artifact; a ref-carrying string
+//      makes that RED FOREVER, because the bundle at commit N can only ever
+//      have been built at N's parent. Off by one, permanently, for every
+//      ref-derived scheme there is. And rebuild-matches is the only GENERATIVE
+//      check in this tree — the one door onto a bundle imported from somewhere
+//      else. Trading it for a version stamp would be trading the alarm for a
+//      label on the door.
+//
+//   2. HIS NOUN IS "BUILD VERSION". A string that does not distinguish builds
+//      is not one. The release line has not moved in weeks and will not move
+//      tomorrow; a screenshot carrying only that tells us nothing we did not
+//      already know, and the whole use of a version on a screen is that he can
+//      photograph a wrong thing and we can say WHICH TREE drew it.
+//
+// THEY RESOLVE, and the resolution is the work: a CONTENT DIGEST of the source
+// tree is a fact of the source tree (1) and moves whenever the source moves
+// (2). No trade was needed and none is being hidden here. What it costs is
+// stated below rather than sold.
+//
+//   · The digest is over BYTES ON DISK — index.html, styles/, src/, assets/ —
+//     so a rebuild from the same tree produces the same string, and
+//     rebuild-matches stays GREEN. Watched at both edges; see the log.
+//   · There is no fixpoint problem and no second-order commit. The digest is
+//     never written to disk: `SOURCE` below is committed as `UNSTAMPED` and
+//     replaced IN MEMORY at build time (tools/bundle.mjs) and at serve time
+//     (tools/serve.mjs), exactly the way ui/assetmap.js's ASSET_MAP already is.
+//     So the file this digest covers never changes because of the digest.
+//   · SAME STRING ⇒ SAME SOURCE. That is the direction that matters, and it is
+//     the one this scheme guarantees. The converse is deliberately NOT claimed:
+//     a source edit that cannot reach the bundle (a comment in an unimported
+//     file, a README under assets/) moves the string without moving the game.
+//     I would rather two names for one build than one name for two builds.
+//   · IT DOES NOT NAME A COMMIT, and it must not — see (1). To go from a
+//     digest on a screenshot to a commit, ask the artifact, not a table:
+//         git log -S'<digest>' --oneline -- build/AshenSpire.html
+//     The digest is a literal inside the committed bundle, so that command is
+//     exact and there is no second copy of the mapping to rot.
+//     `node tools/buildversion.mjs --which <digest>` runs precisely that.
+//
+// ---------------------------------------------------------------------------
+// SOP 5, LITERALLY — one file, and every other reader DERIVES
+// ---------------------------------------------------------------------------
+//
+// The release half is NOT typed here. `src/content/index.js` has been this
+// repo's one home for the release number all along (ci.yml says so in its own
+// header), and typing it a second time here — even agreeing — is the palworld
+// defect with a third copy. Each of that project's three drifts began as
+// agreement.
+//
+//   contentBundle.version  →  RELEASE  (imported, never re-typed)
+//   the bundler / server   →  SOURCE   (injected between the markers below)
+//   this file              →  BUILD_VERSION, composed once
+//
+// The three surfaces Constantine named read BUILD_VERSION through one renderer
+// (ui/components/buildstamp.js) — three placements, one string, one markup.
+//
+// The check is `node tools/buildversion.mjs --check`, and its known-bad corpus
+// is `--selftest`: a fixture that RE-TYPES the version must turn it red, or it
+// proves nothing (development.md, *The instrument rule*).
+//
+// Headless-safe: data only, no document, no storage, no timers.
+//
+// REMOVAL CONDITION (SOP 1's corollary): this module is deleted the day nothing
+// on a player's screen states which build drew it — one artifact, one reader,
+// nothing to distinguish.
+
+const { contentBundle } = require("src/content/index.js");
+
+/** The release line. ONE HOME, and it is not this file — src/content/index.js. */
+const RELEASE = contentBundle.version;
+
+// ---------------------------------------------------------------------------
+// THE SOURCE DIGEST — WRITTEN BY THE BUILD, NEVER BY A HAND.
+//
+// The markers are load-bearing: tools/bundle.mjs and tools/serve.mjs anchor on
+// them, and tools/buildversion.mjs --check goes RED if the committed value is
+// anything but the placeholder. A digest typed in here would be a version
+// asserted rather than derived, which is the one thing SOP 5 forbids.
+//
+// `UNSTAMPED` is what you see when the page was opened with neither of those in
+// the path — a raw `file://` open of index.html. It is honest rather than
+// alarming: nothing derived the digest, so nothing is claimed.
+// ---------------------------------------------------------------------------
+/* BUILD_SOURCE_START */
+const SOURCE = 'd20fb1bd4d';
+/* BUILD_SOURCE_END */
+
+/** What a player reads, and what a bug report should carry back to us. */
+const BUILD_VERSION = `${RELEASE}+${SOURCE}`;
+
+/** True when a build or the dev server derived the digest for this page. */
+const BUILD_IS_STAMPED = SOURCE !== 'UNSTAMPED';
+
+
+Object.assign(module.exports, { RELEASE, SOURCE, BUILD_VERSION, BUILD_IS_STAMPED });
 
 },
 "src/ui/screens/profileNotice.js": function (module, exports, require) {
@@ -33467,6 +33661,7 @@ const { mountMapBoard } = require("src/ui/components/mapboard.js");
 const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { resolveMapMode } = require("src/model/mapknowledge.js");
+const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -33537,6 +33732,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
         <span class="mh-stat cinders">⛁ ${run.cinders}</span>
         <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
         <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
+        ${buildStampHtml('map')}
         <div class="mh-actions">
           <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
@@ -36837,6 +37033,7 @@ const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
 const { mountHand } = require("src/ui/components/hand.js");
+const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -36872,6 +37069,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           <div class="flasks" style="display:flex;gap:6px"></div>
           <div class="relics"></div>
           <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
+          ${buildStampHtml('combat')}
         </div>
       </header>
       <div class="${backdropClass(run.actNumber)}"></div>

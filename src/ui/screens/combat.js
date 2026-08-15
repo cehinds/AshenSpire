@@ -30,6 +30,7 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
+import { buildStampHtml } from '../components/buildstamp.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -65,6 +66,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           <div class="flasks" style="display:flex;gap:6px"></div>
           <div class="relics"></div>
           <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
+          ${buildStampHtml('combat')}
         </div>
       </header>
       <div class="${backdropClass(run.actNumber)}"></div>

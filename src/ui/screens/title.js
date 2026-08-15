@@ -7,6 +7,7 @@
 
 import { esc } from '../components/tooltip.js';
 import { beatArmer } from '../components/holdconfirm.js';
+import { buildStampHtml } from '../components/buildstamp.js';
 
 export function mountTitle(app, { slots, meta, registries, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan, onCompendium }) {
   // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
@@ -58,6 +59,7 @@ export function mountTitle(app, { slots, meta, registries, onContinue, onNew, on
         <button class="subtle" id="quit-game">QUIT</button>
       </div>
       <p style="color:var(--muted);font-size:11px;letter-spacing:.15em">THE EMBER FLOWS UPWARD. FOLLOW IT.</p>
+      ${buildStampHtml('title')}
     </div>`;
 
   app.querySelector('#run-history').addEventListener('click', onHistory);
