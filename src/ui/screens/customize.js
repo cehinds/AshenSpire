@@ -61,6 +61,13 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   //    matches `input[type="text"]` by ATTRIBUTE, so neither text field on this
   //    screen was reachable by the pad or keyboard cursor at all.
   //
+  // 4. FOUR OF THESE SIX ROWS ARE FOLDED (MR-151, 2026-08-16). The `<p
+  //    class="cz-label">` for KEEPSAKE, SIGIL, TINT and SPRITE is REPLACED at
+  //    mount by a disclosure face carrying the same word plus the current
+  //    choice; the picker itself is adopted into that face's reveal panel and
+  //    starts hidden. See "THE FOLD" below — the markup here is what the screen
+  //    starts as, not what it arrives as.
+  //
   // NOT TOUCHED, deliberately: the 2-then-1 class card wrap. Sunna named it and
   // it is gated on Constantine's word, which he has not given.
   app.innerHTML = `
@@ -257,6 +264,58 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     });
     ksBox.appendChild(el);
   });
+
+  // ---- THE FOLD (MR-151) -----------------------------------------------
+  // Constantine, 2026-08-16: "go ahead and allow the fold". He had already said
+  // the stat descriptions "kind of suck"; D26 answered that for the preview
+  // pane and left `.cz-fields` as six stacked rows, four of which are picked
+  // once (or never) and then sit open for the rest of the screen. These four
+  // now fold BY THE SAME MECHANISM — mountDisclosure, not a second renderer.
+  // The extension is `reveal.node` in components/disclosure.js; there is no
+  // fold code in this file, on purpose. A second one is what tools/onefold.mjs
+  // counts and what handrenderers.mjs is still paying for on the hand.
+  //
+  // DEFAULT FOLDED, and that is the whole of his yes. The other reading —
+  // "allow" as *available*, a fold that defaults open — leaves the arrival
+  // screen exactly as long as the one he called bad, so it answers nothing.
+  //
+  // A FOLDED ROW STILL SAYS WHAT IS CHOSEN. Each face is its label AND its
+  // current choice IN PLAYER WORDS (the keepsake's name, the sigil itself, the
+  // tint's name — never its id, and never a bare colour, which says nothing to
+  // a player who cannot see it). This is the same clause that put KEEPSAKE up
+  // here in the first place: a face is a label and a value.
+  //
+  // WHAT IS NOT FOLDED, and it is a decision, not an omission: CLASS and
+  // STARTING KIT. Both change the run and both are what the arrival screen is
+  // FOR; folding them would hide the choosing behind a choice.
+  const FOLDED = [
+    { key: 'pick:keepsake', label: 'KEEPSAKE', box: ksBox, tip: 'Tap to choose a starting boon.',
+      value: () => (KEEPSAKES.find((k) => k.id === state.keepsakeId) || {}).name || '—' },
+    { key: 'pick:sigil', label: 'SIGIL', box: glyphBox, tip: 'Tap to change the sigil on your portrait.',
+      value: () => state.glyph },
+    { key: 'pick:tint', label: 'TINT', box: tintBox, tip: 'Tap to change your colour.',
+      value: () => (PORTRAIT_TINTS.find((t) => t.id === state.tint) || {}).name || '—' },
+    { key: 'pick:sprite', label: 'SPRITE', box: styleBox, tip: 'Tap to change how your character is drawn.',
+      value: () => (SPRITE_STYLES.find((s) => s.id === state.spriteStyle) || {}).name || '—' },
+  ];
+  for (const row of FOLDED) {
+    // The host is the row wrapper `.cz-fields` already has — its <p class label>
+    // is replaced by the face, which carries the same word plus the answer.
+    const host = row.box.parentElement;
+    host.classList.add('cz-disc');
+    const mount = mountDisclosure(host, [{
+      key: row.key, kind: 'pick', disclosure: 'face',
+      face: { label: row.label, value: row.value() },
+      reveal: { node: row.box, sense: row.tip },
+    }]);
+    row.refresh = () => mount.setValue(row.key, row.value());
+  }
+  // One call after any pick — the faces are the screen's answer to "what did I
+  // choose?", so they are re-read from `state`, never written twice.
+  const refreshFolds = () => { for (const row of FOLDED) row.refresh(); };
+  for (const box of [ksBox, glyphBox, tintBox, styleBox]) {
+    box.addEventListener('click', refreshFolds);
+  }
 
   const nameEl = $('#cz-name');
   nameEl.addEventListener('input', (ev) => {

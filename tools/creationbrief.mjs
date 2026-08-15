@@ -6,7 +6,7 @@
 // selection , and then have the ability to expand by clicking, with tool tips.
 // for character creation I mean"
 //
-// WHAT THIS ASKS, and it is one question in five parts:
+// WHAT THIS ASKS, and it is one question in six parts (six since 2026-08-16):
 //   1. IS THE ARRIVAL SHORT — every entry the CONTENT TABLES call face-tier is
 //      drawn, every entry they call reveal-tier is NOT, no reveal is open, and
 //      no face carries prose (a face's text must be exactly its own label and
@@ -22,6 +22,17 @@
 //   5. DOES IT SCROLL SIDEWAYS — horizontal travel per SCROLL CONTAINER on the
 //      creation screen is ZERO at 390x844 (Law 5 clause 1, measured per
 //      container because a document-level reading is 0 by construction here).
+//   6. ARE THE PICKERS FOLDED, AND DO THEY STILL SAY WHAT IS CHOSEN — added
+//      2026-08-16 (Sunna) for MR-151, Constantine's "go ahead and allow the
+//      fold". Four rows of `.cz-fields` fold by the SAME affordance: on
+//      arrival each is a face and nothing else, its panel shut and its options
+//      OFF THE GLASS (measured as ZERO CLIENT RECTS, not as an attribute — a
+//      predicate about the DOM is not a claim about ink, which is Vira's
+//      2026-08-15 finding against an instrument of mine); each face carries THE
+//      CURRENT CHOICE IN PLAYER WORDS; a tap opens it; and picking inside it
+//      MOVES THE FACE'S VALUE. Both edges: the four named rows fold, and NO
+//      OTHER row of `.cz-fields` does — folding CLASS would hide the choosing
+//      behind a choice, and that is red here too.
 //
 // DOOR — stated here and printed in the run's own output (the instrument
 // rule's same-door clause, commons/development.md). THE EXPECTATION and THE
@@ -71,6 +82,56 @@ const BROWSERS = [process.env.CHROME, '/opt/pw-browsers/chromium-1194/chrome-lin
   '/usr/bin/google-chrome', '/usr/bin/chromium'].filter(Boolean);
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ---------------------------------------------------------------------------
+// THE FOLDED ROSTER (MR-151). This is a CONTRACT, so it is written down rather
+// than derived: Constantine allowed the fold, Marina scoped it to these four,
+// and a roster read off the screen would move with the screen and assert
+// nothing. It is checked in BOTH directions — a named row that stopped folding
+// is red, and a row that started folding without being named is red.
+//
+// CLASS and STARTING KIT are deliberately absent and that absence is enforced:
+// they are what the arrival screen is FOR.
+// ---------------------------------------------------------------------------
+const FOLDED = [
+  { key: 'pick:keepsake', label: 'KEEPSAKE', options: '.cz-keepsake' },
+  { key: 'pick:sigil', label: 'SIGIL', options: '.cz-opt' },
+  { key: 'pick:tint', label: 'TINT', options: '.cz-opt' },
+  { key: 'pick:sprite', label: 'SPRITE', options: '.cz-opt' },
+];
+
+// THE ARRIVAL READ for those four rows. It is a constant so it can be run
+// BEFORE any click lands on this screen — "on arrival" is the whole claim, and
+// a reading taken after three taps is a reading of something else.
+const FOLD_READ = `(() => {
+    const roster = ${JSON.stringify(FOLDED)};
+    const norm = (s) => (s || '').replace(/\\s+/g, ' ').trim();
+    const fields = document.querySelector('.cz-fields');
+    const all = [...fields.querySelectorAll('.disc-face')].map((el) => el.dataset.face);
+    return {
+      drawn: all,
+      rows: roster.map((row) => {
+        const face = fields.querySelector('[data-face=' + JSON.stringify(row.key) + ']');
+        if (!face) return { key: row.key, missing: true };
+        const host = face.closest('.cz-disc');
+        const panel = host && host.querySelector('.disc-reveal');
+        const opts = panel ? [...panel.querySelectorAll(row.options)] : [];
+        const chosen = opts.find((el) => el.classList.contains('chosen'));
+        const r = face.getBoundingClientRect();
+        return {
+          key: row.key,
+          label: norm(face.querySelector('.disc-name') && face.querySelector('.disc-name').textContent),
+          value: norm(face.querySelector('.disc-value') && face.querySelector('.disc-value').textContent),
+          expanded: face.getAttribute('aria-expanded'),
+          hiddenPanel: !!(panel && panel.hidden),
+          options: opts.length,
+          onGlass: opts.filter((el) => el.getClientRects().length > 0).length,
+          chosenText: chosen ? norm((chosen.title || '') + ' ' + chosen.textContent) : '',
+          w: Math.round(r.width * 100) / 100, h: Math.round(r.height * 100) / 100,
+        };
+      }),
+    };
+  })()`;
 
 // ---------------------------------------------------------------------------
 // THE EXPECTATION — the content tables, through the real content door.
@@ -190,6 +251,51 @@ const PLANTS = [
     mustRed: (out) => /FAIL a tap opens that entry's reveal/.test(out),
     mustStay: (out) => /PASS the arrival screen holds no reveal-tier entry/.test(out),
   },
+  // --- MR-151's four, added 2026-08-16 with the fold itself. Each is a way
+  // the fold can be shipped WRONG rather than absent, which is the class this
+  // house keeps missing: a screen that renders, passes every old check, and
+  // answers the wrong question.
+  {
+    name: 'P6 the fold defaults OPEN',
+    file: 'src/ui/components/disclosure.js',
+    from: '  host.innerHTML = `<div class="disc-faces"></div><div class="disc-reveal" hidden></div>`;',
+    to: '  host.innerHTML = `<div class="disc-faces"></div><div class="disc-reveal"></div>`; // planted: available, not applied',
+    what: 'the panel is built without `hidden`, so every picker arrives unfolded',
+    expect: 'the arrival screen is as long as the one he called bad — the reading Marina killed',
+    mustRed: (out) => /FAIL every folded picker is SHUT on arrival/.test(out),
+    mustStay: (out) => /PASS every picker MR-151 named is folded/.test(out),
+  },
+  {
+    name: 'P7 the folded row stops naming the choice',
+    file: 'src/ui/screens/customize.js',
+    from: '      face: { label: row.label, value: row.value() },',
+    to: '      face: { label: row.label, value: \'\' }, // planted: a face with no value',
+    what: 'the four faces carry their label and nothing else',
+    expect: 'a folded picker no longer says what is currently chosen',
+    mustRed: (out) => /FAIL each folded row names what is currently chosen/.test(out),
+    mustStay: (out) => /PASS every folded picker is SHUT on arrival/.test(out),
+  },
+  {
+    name: 'P8 one picker never folded',
+    file: 'src/ui/screens/customize.js',
+    from: `    { key: 'pick:sprite', label: 'SPRITE', box: styleBox, tip: 'Tap to change how your character is drawn.',
+      value: () => (SPRITE_STYLES.find((s) => s.id === state.spriteStyle) || {}).name || '—' },`,
+    to: '    // planted: the extension missed one',
+    what: 'SPRITE keeps its old open row while the other three fold',
+    expect: 'the roster MR-151 named is not the roster on the glass, BY NAME',
+    mustRed: (out) => /FAIL every picker MR-151 named is folded.*pick:sprite/.test(out),
+    mustStay: (out) => /PASS no other row of \.cz-fields is folded/.test(out),
+  },
+  {
+    name: 'P9 a picker folded that must not be',
+    file: 'src/ui/screens/customize.js',
+    from: '  const FOLDED = [\n    { key: \'pick:keepsake\'',
+    to: '  const FOLDED = [\n    { key: \'pick:class\', label: \'CLASS\', box: classes, tip: \'x\', value: () => state.classId }, // planted: the choosing hidden behind a choice\n    { key: \'pick:keepsake\'',
+    what: 'CLASS folds too — the one row the arrival screen exists for',
+    expect: 'a row folded that MR-151 did not name, BY NAME',
+    mustRed: (out) => /FAIL no other row of \.cz-fields is folded.*pick:class/.test(out),
+    mustStay: (out) => /PASS every picker MR-151 named is folded/.test(out),
+  },
 ];
 
 function sandbox() {
@@ -265,10 +371,13 @@ async function selftest() {
 
   console.log(fails
     ? `\ncreationbrief --selftest: ${fails} FAIL — this instrument's red is NOT re-observed; treat its greens as unknown`
-    : '\ncreationbrief --selftest: held — clean copy green, five defects red by name, through the doors real content and real fingers use');
+    : `\ncreationbrief --selftest: held — clean copy green, ${PLANTS.length} defects red by name, through the doors real content and real fingers use`);
   console.log('  BOUNDARY: the plants cover the tier filter, the content door, the tap floor, the');
-  console.log('  wrap and the tap itself. The tooltip path (hover/gamepad focus) is ASSERTED every');
-  console.log('  run and has never been watched to fail — it carries no plant here.');
+  console.log('  wrap and the tap itself; and, since 2026-08-16, the four MR-151 ways the FOLD can');
+  console.log('  ship wrong rather than absent — defaulting open, a face that stops naming the');
+  console.log('  choice, a named picker that never folded, and a picker folded that must not be.');
+  console.log('  The tooltip path (hover/gamepad focus) is ASSERTED every run and has never been');
+  console.log('  watched to fail — it carries no plant here.');
   process.exit(fails ? 1 : 0);
 }
 
@@ -369,6 +478,9 @@ async function main() {
       };
     })()`);
     measured += read.faces.length;
+    // MR-151's arrival state, READ HERE and asserted at section 6 below — before
+    // section 2's tap and section 3's expander touch anything on this screen.
+    const foldsAtArrival = await ev(FOLD_READ);
 
     const drawn = new Map(read.faces.map((row) => [row.key, row]));
     const missing = want.faces.filter((row) => !drawn.has(row.key)).map((row) => row.key);
@@ -427,8 +539,55 @@ async function main() {
       ok(read.moreCount === 0, 'no expander is drawn when the table puts nothing behind one');
     }
 
+    // ---- 6. the folded pickers (MR-151) -----------------------------------
+    // `foldsAtArrival` was READ ABOVE, before any click landed anywhere on this
+    // screen, because "on arrival" is the whole claim; the assertions print
+    // here, after 1-3, which is why the numbering in this output runs 1 2 3 6
+    // 4 5. The tap floor below needs these rects, so 6 cannot print last.
+    const folds = foldsAtArrival;
+    const unfolded = folds.rows.filter((row) => row.missing).map((row) => row.key);
+    ok(unfolded.length === 0, `every picker MR-151 named is folded — ${FOLDED.length - unfolded.length}/${FOLDED.length}`
+      + `${unfolded.length ? ` · never folded: ${unfolded.join(', ')}` : ''}`);
+    const stray = folds.drawn.filter((key) => !FOLDED.some((row) => row.key === key));
+    ok(stray.length === 0, `no other row of .cz-fields is folded — ${stray.length ? `folded anyway: ${stray.join(', ')}` : 'CLASS and STARTING KIT are open, as they arrive'}`);
+    const ajar = folds.rows.filter((row) => !row.missing && (row.onGlass > 0 || !row.hiddenPanel || row.expanded !== 'false'));
+    ok(ajar.length === 0, `every folded picker is SHUT on arrival — ${ajar.length ? ajar.map((row) => `${row.key}: ${row.onGlass} option(s) on the glass`).join(' · ') : `${folds.rows.reduce((n, row) => n + (row.options || 0), 0)} options off the glass behind 4 faces`}`);
+    // A FOLD THAT HIDES THE CURRENT CHOICE IS NOT THE MECHANISM HE APPROVED.
+    // A face is a label AND a value — the clause that put KEEPSAKE up here in
+    // the first place, applied to the row that now folds it away.
+    const mute = folds.rows.filter((row) => !row.missing
+      && (row.value === '' || row.label !== FOLDED.find((f) => f.key === row.key).label
+        || (row.chosenText && !row.chosenText.includes(row.value))));
+    ok(mute.length === 0, `each folded row names what is currently chosen — `
+      + `${mute.length ? mute.map((row) => `${row.key}: '${row.label}' / '${row.value}' vs chosen '${row.chosenText.slice(0, 30)}'`).join(' · ')
+        : folds.rows.map((row) => `${row.label} ${row.value}`).join(' · ')}`);
+    // The tap, and then the pick — a face frozen at mount passes everything
+    // above and fails here, which is why the second half exists.
+    const probeRow = FOLDED[FOLDED.length - 1];
+    const worked = await ev(`(() => {
+      const norm = (s) => (s || '').replace(/\\s+/g, ' ').trim();
+      const face = document.querySelector('.cz-fields [data-face=${JSON.stringify(probeRow.key)}]');
+      face.click();
+      const host = face.closest('.cz-disc');
+      const opts = [...host.querySelectorAll('.disc-reveal ${probeRow.options}')];
+      const opened = { onGlass: opts.filter((el) => el.getClientRects().length > 0).length,
+        expanded: face.getAttribute('aria-expanded'), total: opts.length };
+      const other = opts.find((el) => !el.classList.contains('chosen'));
+      const wanted = norm((other && other.title) || (other && other.textContent) || '');
+      if (other) other.click();
+      const value = norm(host.querySelector('.disc-value') && host.querySelector('.disc-value').textContent);
+      face.click();
+      const shut = [...host.querySelectorAll('.disc-reveal ${probeRow.options}')].filter((el) => el.getClientRects().length > 0).length;
+      return { ...opened, wanted, value, shut };
+    })()`);
+    ok(worked.total > 0 && worked.onGlass === worked.total && worked.expanded === 'true',
+      `a tap opens the folded picker — ${probeRow.key} → ${worked.onGlass}/${worked.total} option(s) on the glass`);
+    ok(worked.wanted !== '' && worked.value === worked.wanted,
+      `picking inside the fold MOVES the face — chose '${worked.wanted}', face now '${worked.value}'`);
+    ok(worked.shut === 0, `a second tap folds it again — ${worked.shut} option(s) still on the glass`);
+
     // ---- 4. the tap floor -------------------------------------------------
-    const tiles = [...read.faces, ...read.kits];
+    const tiles = [...read.faces, ...read.kits, ...folds.rows.filter((row) => !row.missing)];
     const short = tiles.filter((row) => row.w + 0.5 < floor || row.h + 0.5 < floor);
     ok(tiles.length > 0 && short.length === 0,
       `every face and armament tile clears the ${floor} px floor — ${tiles.length} measured, smallest `
@@ -469,6 +628,9 @@ async function main() {
     + `${SHAPES.map(([w, h]) => `${w}x${h}`).join(' + ')}, default Text size and UI size, the first class only.`);
   console.log('  Silent on: a real finger, Windows, the receipts panel under the short form, whether');
   console.log('  the sentences are GOOD — only that they are short, the table\'s own, and one tap away.');
+  console.log('  On the FOLD it is silent about: whether a player FINDS the four faces (a picture is');
+  console.log('  not a playtest), what happens when all four are opened at once (each fold is its own');
+  console.log('  group, so nothing closes anything else), and every text/UI size but the defaults.');
   process.exit(fails ? 1 : 0);
 }
 
