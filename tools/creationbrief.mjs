@@ -6,7 +6,7 @@
 // selection , and then have the ability to expand by clicking, with tool tips.
 // for character creation I mean"
 //
-// WHAT THIS ASKS, and it is one question in five parts:
+// WHAT THIS ASKS, and it is one question in six parts (six since 2026-08-16):
 //   1. IS THE ARRIVAL SHORT — every entry the CONTENT TABLES call face-tier is
 //      drawn, every entry they call reveal-tier is NOT, no reveal is open, and
 //      no face carries prose (a face's text must be exactly its own label and
@@ -22,6 +22,34 @@
 //   5. DOES IT SCROLL SIDEWAYS — horizontal travel per SCROLL CONTAINER on the
 //      creation screen is ZERO at 390x844 (Law 5 clause 1, measured per
 //      container because a document-level reading is 0 by construction here).
+//   6. IS THE PICKER FOLDED, AND DOES IT STILL SAY WHAT IS CHOSEN — added
+//      2026-08-16 (Sunna) for MR-151, Constantine's "go ahead and allow the
+//      fold", narrowed to three rows the same day by MR-171 (KEEPSAKE came back
+//      out) and to ONE — TINT — by MR-189 (SIGIL and SPRITE came out after it;
+//      see the roster below). That row folds by the SAME affordance: on arrival
+//      it is a face and nothing else, its panel shut and its options
+//      OFF THE GLASS (counted as CLIENT RECTS, not as an attribute — a
+//      predicate about the DOM is not a claim about ink, which is Vira's
+//      2026-08-15 finding against an instrument of mine); the face carries THE
+//      CURRENT CHOICE IN PLAYER WORDS — ITS LABEL AND ITS VALUE, each a rect
+//      WITH AREA, on arrival, and the value again AFTER THE PICK. Every clause
+//      of that sentence has now been caught lying, in three findings one commit
+//      apart in one file. MR-237: the value was read as `textContent` alone, so
+//      a stylesheet could delete the only name of the chosen colour from the
+//      screen and this tool still printed it. MR-260, twelve lines below the
+//      line that fixed it: the post-pick half kept the `textContent` read after
+//      the arrival half moved, and the fixed arrival half counted BOXES, so
+//      `font-size: 0` — a box of no size — printed PASS on a blank face. MR-260
+//      again, one plant later and mine to have found: the LABEL was never
+//      measured at all, and a face reading `Goldbough gold` with no word for
+//      what it is OF passed everything here. A RECT IS NOT INK EITHER; the run's
+//      own BOUNDARY says what this measure still cannot see, and that paragraph
+//      is now written from the predicate rather than around it. A tap opens the
+//      row, its options land ON THE GLASS WITH AREA, and picking inside it
+//      MOVES THE FACE'S VALUE. Both edges: the named row folds, and NO OTHER
+//      row of `.cz-fields` does — folding CLASS, STARTING KIT or KEEPSAKE would
+//      hide the choosing behind a choice, and folding SIGIL or SPRITE would buy
+//      nothing in words at the price of a tap. Both are red here.
 //
 // DOOR — stated here and printed in the run's own output (the instrument
 // rule's same-door clause, commons/development.md). THE EXPECTATION and THE
@@ -71,6 +99,120 @@ const BROWSERS = [process.env.CHROME, '/opt/pw-browsers/chromium-1194/chrome-lin
   '/usr/bin/google-chrome', '/usr/bin/chromium'].filter(Boolean);
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ---------------------------------------------------------------------------
+// THE FOLDED ROSTER (MR-151, narrowed to three by MR-171 and to ONE by MR-189).
+// This is a CONTRACT, so it is written down rather than derived: Constantine
+// allowed the fold, Marina scoped it, and a roster read off the screen would
+// move with the screen and assert nothing. It is checked in BOTH directions — a
+// named row that stopped folding is red, and a row that started folding without
+// being named is red.
+//
+// FIVE ROWS ARE DELIBERATELY ABSENT AND THAT ABSENCE IS ENFORCED, for two
+// different reasons, and the reasons are the point (Marina, MR-189: *a roster is
+// not a decision, it is four decisions wearing one name* — a count of options is
+// not a count of legibility):
+//   CLASS, STARTING KIT, KEEPSAKE  they are what the arrival screen is FOR.
+//     KEEPSAKE was on this list for one commit and MR-170 found the roster wider
+//     than its own stated reason: it is the only one of the four that changes the
+//     run, and folding it took the only place on the screen where the game says
+//     what a keepsake DOES.
+//   SIGIL, SPRITE  their faces buy NOTHING IN WORDS. SIGIL's face value is
+//     `state.glyph` — the emoji again, on the one row a player picks by look.
+//     SPRITE's three chips already read Rendered / Classic / Sigil, so the face
+//     repeats one of them and takes more vertical than it saves.
+//
+// TINT IS THE ONE THAT STAYS, and it is not the leftover — it is the only row
+// whose face says something its options cannot. Five unlabelled swatches; the
+// only thing that ever named one is `attachTooltip`, which answers hover and
+// pad-focus and never a thumb (customize.js, on the swatch itself). Unfolded,
+// TINT on a phone is five untitled colour blobs; folded, the row arrives reading
+// `TINT Goldbough gold`, in words, on the glass.
+//
+// THIS ARRAY IS THE SECOND HALF OF THE REFOLD, and it is what makes his veto
+// cheap: put any `pick:*` back in customize.js without putting it back here and
+// the row below goes red BY NAME, in both directions.
+// ---------------------------------------------------------------------------
+const FOLDED = [
+  { key: 'pick:tint', label: 'TINT', options: '.cz-opt' },
+];
+
+// ONE HOME FOR THE MEASURE (MR-260). This string is interpolated into BOTH
+// in-page reads below — the arrival read and the post-pick probe — because the
+// defect it repairs was two homes: the arrival half was moved to rects on
+// 2026-08-16 and the post-pick half, twelve lines away, kept reading
+// `textContent`, so one sentence's two halves disagreed about what "on the
+// glass" meant while both printed PASS.
+//
+// A BOX IS NOT AN AREA, and this is the correction Vira's plants forced.
+// `getClientRects().length > 0` counts BOXES: an inline span at `font-size: 0`,
+// an element at `transform: scale(0)`, and `position:absolute; width:0;
+// height:0; overflow:hidden` all still HAVE a box — three ordinary stylesheet
+// edits that take the name of the chosen colour off the screen and printed
+// `PASS ... ON THE GLASS` at 5fc7a17, watched by hand through the CSS door.
+// So the measure asks the rects for their SIZE, which is the thing they carry
+// and the thing the old predicate threw away. It is not a wider claim than
+// rects support — see the boundary, which still names what ink this cannot see.
+const ON_GLASS = `const onGlass = (el) => !!el
+      && [...el.getClientRects()].some((r) => r.width > 0 && r.height > 0);`;
+
+// THE ARRIVAL READ for that row. It is a constant so it can be run
+// BEFORE any click lands on this screen — "on arrival" is the whole claim, and
+// a reading taken after three taps is a reading of something else.
+const FOLD_READ = `(() => {
+    const roster = ${JSON.stringify(FOLDED)};
+    ${ON_GLASS}
+    const norm = (s) => (s || '').replace(/\\s+/g, ' ').trim();
+    const fields = document.querySelector('.cz-fields');
+    const all = [...fields.querySelectorAll('.disc-face')].map((el) => el.dataset.face);
+    return {
+      drawn: all,
+      rows: roster.map((row) => {
+        const face = fields.querySelector('[data-face=' + JSON.stringify(row.key) + ']');
+        if (!face) return { key: row.key, missing: true };
+        const host = face.closest('.cz-disc');
+        const panel = host && host.querySelector('.disc-reveal');
+        const opts = panel ? [...panel.querySelectorAll(row.options)] : [];
+        const chosen = opts.find((el) => el.classList.contains('chosen'));
+        const r = face.getBoundingClientRect();
+        const valueEl = face.querySelector('.disc-value');
+        return {
+          key: row.key,
+          label: norm(face.querySelector('.disc-name') && face.querySelector('.disc-name').textContent),
+          value: norm(valueEl && valueEl.textContent),
+          // THE FACE VALUE MEASURED AS INK, not as DOM (MR-237, Vira's finding
+          // 2026-08-16). The face value is the entire purchase of the fold and
+          // was read with textContent and nothing else, so a stylesheet could
+          // take the only name of the chosen colour off the screen and this row
+          // still printed TINT Goldbough gold. Measured with SIZE since MR-260,
+          // by the shared predicate above. (No backticks in this block: it
+          // lives inside a template literal that is evaluated in the page.)
+          valueOnGlass: onGlass(valueEl),
+          // AND THE LABEL, by the same measure and for the same reason. The
+          // comment on the assertion below has said "a face is a label AND a
+          // value" since the fold landed, and only the value was ever measured
+          // as ink. Found by my own hand at MR-260, one plant after the one I
+          // was sent to fix: font-size:0 on .disc-name takes the word TINT off
+          // every face on this screen and the whole sweep printed exit 0.
+          labelOnGlass: onGlass(face.querySelector('.disc-name')),
+          expanded: face.getAttribute('aria-expanded'),
+          hiddenPanel: !!(panel && panel.hidden),
+          options: opts.length,
+          // PRESENCE IS AREA, ABSENCE IS BOXES, and the asymmetry is deliberate
+          // (MR-260). The count here feeds SHUT-on-arrival, which asserts the
+          // options are NOT on the screen: counting BOXES is the stronger test
+          // of that, because a zero-area option still raises the count and still
+          // goes red. The same count measured as area would quietly forgive an
+          // open panel whose options had been scaled to nothing. Where the
+          // sentence asserts something IS on the screen — the face value here,
+          // the options after the tap below — the measure is area.
+          onGlass: opts.filter((el) => el.getClientRects().length > 0).length,
+          chosenText: chosen ? norm((chosen.title || '') + ' ' + chosen.textContent) : '',
+          w: Math.round(r.width * 100) / 100, h: Math.round(r.height * 100) / 100,
+        };
+      }),
+    };
+  })()`;
 
 // ---------------------------------------------------------------------------
 // THE EXPECTATION — the content tables, through the real content door.
@@ -190,6 +332,130 @@ const PLANTS = [
     mustRed: (out) => /FAIL a tap opens that entry's reveal/.test(out),
     mustStay: (out) => /PASS the arrival screen holds no reveal-tier entry/.test(out),
   },
+  // --- MR-151's four, added 2026-08-16 with the fold itself. Each is a way
+  // the fold can be shipped WRONG rather than absent, which is the class this
+  // house keeps missing: a screen that renders, passes every old check, and
+  // answers the wrong question.
+  {
+    name: 'P6 the fold defaults OPEN',
+    file: 'src/ui/components/disclosure.js',
+    from: '  host.innerHTML = `<div class="disc-faces"></div><div class="disc-reveal" hidden></div>`;',
+    to: '  host.innerHTML = `<div class="disc-faces"></div><div class="disc-reveal"></div>`; // planted: available, not applied',
+    what: 'the panel is built without `hidden`, so every picker arrives unfolded',
+    expect: 'the arrival screen is as long as the one he called bad — the reading Marina killed',
+    mustRed: (out) => /FAIL every folded picker is SHUT on arrival/.test(out),
+    mustStay: (out) => /PASS every picker MR-151 named is folded/.test(out),
+  },
+  {
+    name: 'P7 the folded row stops naming the choice',
+    file: 'src/ui/screens/customize.js',
+    from: '      face: { label: row.label, value: row.value() },',
+    to: '      face: { label: row.label, value: \'\' }, // planted: a face with no value',
+    what: 'the folded face carries its label and nothing else',
+    expect: 'a folded picker no longer says what is currently chosen — on TINT that is the whole reason it folds',
+    mustRed: (out) => /FAIL each folded row names what is currently chosen/.test(out),
+    mustStay: (out) => /PASS every folded picker is SHUT on arrival/.test(out),
+  },
+  {
+    name: 'P8 the named picker never folded',
+    file: 'src/ui/screens/customize.js',
+    from: `    { key: 'pick:tint', label: 'TINT', box: tintBox, tip: 'Tap to change your colour.',
+      value: () => (PORTRAIT_TINTS.find((t) => t.id === state.tint) || {}).name || '—' },`,
+    to: '    // planted: the extension missed the only one',
+    what: 'TINT keeps its old open row — five untitled colour blobs and no name on the glass',
+    expect: 'the roster MR-189 named is not the roster on the glass, BY NAME',
+    mustRed: (out) => /FAIL every picker MR-151 named is folded.*pick:tint/.test(out),
+    mustStay: (out) => /PASS no other row of \.cz-fields is folded/.test(out),
+  },
+  {
+    name: 'P9 a picker folded that must not be',
+    file: 'src/ui/screens/customize.js',
+    from: '  const FOLDED = [\n    { key: \'pick:tint\'',
+    to: '  const FOLDED = [\n    { key: \'pick:class\', label: \'CLASS\', box: classes, tip: \'x\', value: () => state.classId }, // planted: the choosing hidden behind a choice\n    { key: \'pick:tint\'',
+    what: 'CLASS folds too — the one row the arrival screen exists for',
+    expect: 'a row folded that MR-151 did not name, BY NAME',
+    mustRed: (out) => /FAIL no other row of \.cz-fields is folded.*pick:class/.test(out),
+    mustStay: (out) => /PASS every picker MR-151 named is folded/.test(out),
+  },
+  // --- MR-237, added 2026-08-16 with the ink fix above. THE CSS DOOR. Every
+  // plant before this one enters through JS — a content table, a screen
+  // component, a stylesheet rule that changes GEOMETRY (P3, P4). This is the
+  // first that leaves every line of JavaScript exactly as it is and takes the
+  // face value off the screen from the stylesheet alone, which is the door the
+  // old predicate was blind to: `textContent` is unchanged by any of it.
+  {
+    name: 'P10 the face value styled off the glass',
+    file: 'styles/ui.css',
+    from: '.disc-face .disc-value { color: var(--parchment); font-size: 1.25rem; }',
+    to: '.disc-face .disc-value { color: var(--parchment); font-size: 1.25rem; display: none; } /* planted: the name is in the DOM and nowhere on the screen */',
+    what: 'the stylesheet removes the face value from layout — the DOM still says `Goldbough gold`, the screen says it nowhere',
+    expect: "the folded row's value is measured as INK and found off the glass — the fold's only purchase, gone",
+    mustRed: (out) => /FAIL each folded row names what is currently chosen, ON THE GLASS.*OFF THE GLASS/.test(out),
+    // The geometry checks must survive: a CSS plant that also craters the tap
+    // floor would make this red for a second reason and prove nothing about ink.
+    mustStay: (out) => /PASS every face and armament tile clears the/.test(out)
+      && /PASS every folded picker is SHUT on arrival/.test(out),
+  },
+  // --- MR-260, added 2026-08-16 with the area fix above. THE CSS DOOR AGAIN,
+  // and these three are the corpus Vira planted against P10's own boundary
+  // paragraph rather than against the check: the paragraph named a caught-list,
+  // she planted the caught-list, and three of five entries were green. They are
+  // in the corpus now because a boundary sentence nobody plants is exactly the
+  // thing this house has never gated (Marina, MR-260) — and because the one
+  // that fails is not always the one you wrote last.
+  {
+    name: 'P11 the face value at font-size 0',
+    file: 'styles/ui.css',
+    from: '.disc-face .disc-value { color: var(--parchment); font-size: 1.25rem; }',
+    to: '.disc-face .disc-value { color: var(--parchment); font-size: 0; } /* planted: a box of no size, and the name is gone */',
+    what: 'the value keeps a client rect and loses all of its size — the plainest of the three zero-area edits (transform:scale(0) and width:0;height:0;overflow:hidden are the same predicate by another road, watched red by hand at this ref)',
+    expect: 'the value is OFF THE GLASS for want of AREA — the case the old boundary claimed under "a zero box" and the old predicate passed, exit 0',
+    mustRed: (out) => /FAIL each folded row names what is currently chosen, ON THE GLASS.*OFF THE GLASS/.test(out),
+    mustStay: (out) => /PASS every face and armament tile clears the/.test(out)
+      && /PASS every folded picker is SHUT on arrival/.test(out),
+  },
+  {
+    name: 'P12 the value hidden only while the row is OPEN',
+    file: 'styles/ui.css',
+    from: '.disc-face[data-reveal=\'open\'] { border-color: var(--gold); }',
+    to: '.disc-face[data-reveal=\'open\'] { border-color: var(--gold); }\n.disc-face[data-reveal=\'open\'] .disc-value { display: none; } /* planted: the name goes out exactly when the player is choosing */',
+    what: 'the stylesheet hides the face value while the panel is open, on the selector this stylesheet already uses for the open state',
+    expect: 'the ARRIVAL sentence stays green and the POST-PICK one goes red — the twelve-line gap, in one plant',
+    mustRed: (out) => /FAIL picking inside the fold MOVES the face, ON THE GLASS.*OFF THE GLASS/.test(out),
+    // THE OTHER EDGE IS THE POINT OF THIS PLANT: the arrival half must stay
+    // GREEN. A plant that reddened both would prove nothing about the half that
+    // was still reading textContent twelve lines below the half that was fixed.
+    mustStay: (out) => /PASS each folded row names what is currently chosen, ON THE GLASS/.test(out)
+      && /PASS a tap opens the folded picker/.test(out),
+  },
+  {
+    name: 'P13 the options open at scale 0',
+    file: 'styles/ui.css',
+    from: '.disc-reveal .cz-opts { flex-wrap: wrap; row-gap: 0.8rem; }',
+    to: '.disc-reveal .cz-opts { flex-wrap: wrap; row-gap: 0.8rem; }\n.disc-reveal .cz-opt { transform: scale(0); } /* planted: the tap opens five swatches of no size */',
+    what: 'the tap opens the panel and every swatch inside it has a box and no area — a player taps and sees nothing appear',
+    expect: 'the tap sentence goes red at 0/5 on the glass, and SHUT on arrival — which counts BOXES on purpose — stays green',
+    mustRed: (out) => /FAIL a tap opens the folded picker.*0\/5 option/.test(out),
+    mustStay: (out) => /PASS every folded picker is SHUT on arrival/.test(out)
+      && /PASS each folded row names what is currently chosen, ON THE GLASS/.test(out),
+  },
+  {
+    name: 'P14 the face LABEL at font-size 0',
+    file: 'styles/ui.css',
+    from: '.disc-face .disc-name { color: var(--muted); font-size: 1.05rem; }',
+    to: '.disc-face .disc-name { color: var(--muted); font-size: 0; } /* planted: the value says Goldbough gold and nothing says TINT */',
+    what: 'every face label on the creation screen loses its size — the folded row reads `Goldbough gold` with no word for what it is OF',
+    expect: 'the fold row goes red on its LABEL, by the same measure as its value',
+    mustRed: (out) => /FAIL each folded row names what is currently chosen, ON THE GLASS.*label 'TINT' is OFF THE GLASS/.test(out),
+    // AND THE PART THIS PLANT IS ALSO EVIDENCE OF, kept as a mustStay rather
+    // than smuggled into a fix: the NINE arrival faces lose their labels in the
+    // same plant and every arrival sentence stays green, because that lane is
+    // still measured as DOM text. Those sentences are not mine (MR-260's scope)
+    // and the green below is the finding, not an oversight.
+    mustStay: (out) => /PASS every face-tier entry is drawn/.test(out)
+      && /PASS no face carries prose/.test(out)
+      && /PASS every face and armament tile clears the/.test(out),
+  },
 ];
 
 function sandbox() {
@@ -265,10 +531,37 @@ async function selftest() {
 
   console.log(fails
     ? `\ncreationbrief --selftest: ${fails} FAIL — this instrument's red is NOT re-observed; treat its greens as unknown`
-    : '\ncreationbrief --selftest: held — clean copy green, five defects red by name, through the doors real content and real fingers use');
+    : `\ncreationbrief --selftest: held — clean copy green, ${PLANTS.length} defects red by name, through the doors real content and real fingers use`);
   console.log('  BOUNDARY: the plants cover the tier filter, the content door, the tap floor, the');
-  console.log('  wrap and the tap itself. The tooltip path (hover/gamepad focus) is ASSERTED every');
-  console.log('  run and has never been watched to fail — it carries no plant here.');
+  console.log('  wrap and the tap itself; and, since 2026-08-16, the four MR-151 ways the FOLD can');
+  console.log('  ship wrong rather than absent — defaulting open, a face that stops naming the');
+  console.log('  choice, the named picker never folding, and a picker folded that must not be —');
+  console.log('  plus P10 (MR-237), THE CSS DOOR: the face value taken off the glass by the');
+  console.log('  stylesheet alone, with every line of JS untouched. P7 and P10 are the same');
+  console.log('  sentence entered by two different doors, and before P10 existed the JS door was');
+  console.log('  the whole extent of that green (MR-101) — through CSS it went green on a screen');
+  console.log('  that named the tint nowhere.');
+  console.log('  P11-P13 (MR-260) ARE PLANTED AGAINST THE BOUNDARY, not against the check, and');
+  console.log('  that is the point of them: P10\'s boundary paragraph listed a caught-list, the');
+  console.log('  caught-list was planted, and three of five entries came back GREEN. P11 is the');
+  console.log('  zero-area box the words "a zero box" claimed and the box-count predicate missed;');
+  console.log('  P12 hides the value only while the row is OPEN, so the arrival half stays green');
+  console.log('  and the post-pick half — twelve lines below it and still on textContent — goes');
+  console.log('  red; P13 opens the panel onto five swatches at scale(0); P14 takes the face LABEL');
+  console.log('  off the glass and is ALSO the evidence for the sentence below it. What is STILL');
+  console.log('  unplanted');
+  console.log('  is named in the run\'s own boundary: color:transparent, opacity:0,');
+  console.log('  visibility:hidden, paint-over, and an ancestor that hides a value keeping its own');
+  console.log('  box. Those are silences this measure cannot turn into a red, not gaps in the');
+  console.log('  corpus — a plant for them would be a known-bad this predicate can never fail on.');
+  console.log('  The roster those last two are aimed at is MR-189\'s (TINT alone); a roster edit moves');
+  console.log('  every plant\'s coordinate, so they were re-aimed and re-run, not inherited.');
+  console.log('  P8 IS ALSO THE REFERENT GUARD\'S KNOWN-BAD (SOP 2\'s ⚙ clause). At a ONE-row roster it');
+  console.log('  empties the set the fold assertions quantify over, and an empty ∀ is TRUE: before');
+  console.log('  2026-08-16 it printed `0 options off the glass` and `TINT undefined` as PASS, then');
+  console.log('  threw and took the tap floor and Law 5 down with it. Six named FAILs now, no crash.');
+  console.log('  The tooltip path (hover/gamepad focus) is ASSERTED every run and has never been');
+  console.log('  watched to fail — it carries no plant here.');
   process.exit(fails ? 1 : 0);
 }
 
@@ -369,6 +662,9 @@ async function main() {
       };
     })()`);
     measured += read.faces.length;
+    // MR-151's arrival state, READ HERE and asserted at section 6 below — before
+    // section 2's tap and section 3's expander touch anything on this screen.
+    const foldsAtArrival = await ev(FOLD_READ);
 
     const drawn = new Map(read.faces.map((row) => [row.key, row]));
     const missing = want.faces.filter((row) => !drawn.has(row.key)).map((row) => row.key);
@@ -427,8 +723,110 @@ async function main() {
       ok(read.moreCount === 0, 'no expander is drawn when the table puts nothing behind one');
     }
 
+    // ---- 6. the folded pickers (MR-151) -----------------------------------
+    // `foldsAtArrival` was READ ABOVE, before any click landed anywhere on this
+    // screen, because "on arrival" is the whole claim; the assertions print
+    // here, after 1-3, which is why the numbering in this output runs 1 2 3 6
+    // 4 5. The tap floor below needs these rects, so 6 cannot print last.
+    const folds = foldsAtArrival;
+    const unfolded = folds.rows.filter((row) => row.missing).map((row) => row.key);
+    ok(unfolded.length === 0, `every picker MR-151 named is folded — ${FOLDED.length - unfolded.length}/${FOLDED.length}`
+      + `${unfolded.length ? ` · never folded: ${unfolded.join(', ')}` : ''}`);
+    const stray = folds.drawn.filter((key) => !FOLDED.some((row) => row.key === key));
+    ok(stray.length === 0, `no other row of .cz-fields is folded — ${stray.length ? `folded anyway: ${stray.join(', ')}` : 'CLASS, STARTING KIT, KEEPSAKE, SIGIL and SPRITE are open, as they arrive'}`);
+    // ⚙ PROVE THE QUERY HAD A REFERENT (SOP 2, commons/development.md). Every
+    // assertion below this line is quantified over the rows that were FOUND, so
+    // a roster row that never folded leaves them ranging over the empty set —
+    // and an empty ∀ is TRUE. Found 2026-08-16 by planting P8 against a
+    // one-row roster: `0 options off the glass behind 1 face(s)` and
+    // `TINT undefined` both printed PASS, against a row that was not on the
+    // screen at all. With three rows the absent one was diluted by two real
+    // ones; with one row the green was made entirely of nothing. So the
+    // referent is asserted IN EACH SENTENCE, not once above them: `unfolded`
+    // going red must not leave three greens standing under it.
+    const present = folds.rows.filter((row) => !row.missing);
+    const haveAll = present.length === FOLDED.length;
+    const noReferent = ` · NO REFERENT: ${present.length}/${FOLDED.length} named row(s) on the screen`;
+    const ajar = present.filter((row) => row.onGlass > 0 || !row.hiddenPanel || row.expanded !== 'false');
+    ok(haveAll && ajar.length === 0, `every folded picker is SHUT on arrival — ${ajar.length ? ajar.map((row) => `${row.key}: ${row.onGlass} option(s) on the glass`).join(' · ') : `${present.reduce((n, row) => n + (row.options || 0), 0)} options off the glass behind ${present.length} face(s)`}${haveAll ? '' : noReferent}`);
+    // A FOLD THAT HIDES THE CURRENT CHOICE IS NOT THE MECHANISM HE APPROVED.
+    // A face is a label AND a value. On TINT this is not a side condition — it
+    // is the whole purchase: the swatches carry no text, so the face is the only
+    // place on this screen where a touch player reads the colour's NAME.
+    //
+    // ON THE GLASS, NOT IN THE DOM (MR-237). Until 2026-08-16 this sentence was
+    // built entirely out of `textContent`, while the options it is paired with
+    // were measured with `getClientRects` — half of the DOM-versus-ink clause
+    // applied, on the half that matters least. Vira planted
+    // `.disc-face .disc-value { display: none }` through styles/ui.css into a
+    // copy of this tree and got EXIT 0, GREEN, `TINT Goldbough gold`, on a
+    // screen where the name of the chosen colour appeared NOWHERE: the fold's
+    // sole purchase gone, and the instrument reciting the words it could not
+    // see. The value now carries the same measure as the options.
+    const mute = present.filter((row) => row.value === '' || !row.valueOnGlass || !row.labelOnGlass
+      || row.label !== FOLDED.find((f) => f.key === row.key).label
+      || (row.chosenText && !row.chosenText.includes(row.value)));
+    const why = (row) => (row.value === '' ? 'no value in the face'
+      : !row.valueOnGlass ? `value '${row.value}' is OFF THE GLASS (no box with area)`
+        : !row.labelOnGlass ? `label '${row.label}' is OFF THE GLASS (no box with area) — the value says what, and nothing says what OF`
+          : `'${row.label}' / '${row.value}' vs chosen '${row.chosenText.slice(0, 30)}'`);
+    ok(haveAll && mute.length === 0, `each folded row names what is currently chosen, ON THE GLASS — `
+      + `${mute.length ? mute.map((row) => `${row.key}: ${why(row)}`).join(' · ')
+        : present.map((row) => `${row.label} ${row.value}`).join(' · ') || 'nothing'}${haveAll ? '' : noReferent}`);
+    // The tap, and then the pick — a face frozen at mount passes everything
+    // above and fails here, which is why the second half exists.
+    //
+    // THE HALF THAT WAS STILL DOM (MR-260, Vira's second finding). Everything
+    // above this line moved to ink on 2026-08-16; this block, twelve lines
+    // below it, kept reading the post-pick value as `textContent` alone — so
+    // the sentence *the folded face value is measured as boxes* was true on
+    // arrival and false the moment a player picked. `setValue` re-renders the
+    // face, which is exactly when a stylesheet keyed on the OPEN state
+    // (`.disc-face[data-reveal='open']`, a selector this stylesheet already
+    // uses) takes the name off the screen while the arrival read stays green.
+    // Both reads now share ONE predicate, interpolated from ON_GLASS above.
+    const probeRow = FOLDED[FOLDED.length - 1];
+    const worked = await ev(`(() => {
+      ${ON_GLASS}
+      const norm = (s) => (s || '').replace(/\\s+/g, ' ').trim();
+      const face = document.querySelector('.cz-fields [data-face=${JSON.stringify(probeRow.key)}]');
+      // A MISSING FACE IS A FINDING, NOT A CRASH. It used to throw here and take
+      // the rest of the sweep — the tap floor and Law 5 — down with it, so a
+      // roster defect hid two unrelated checks behind a stack trace.
+      if (!face) return { absent: true, total: 0, onGlass: 0, expanded: null, wanted: '', value: '', valueOnGlass: false, shut: 0 };
+      face.click();
+      const host = face.closest('.cz-disc');
+      const opts = [...host.querySelectorAll('.disc-reveal ${probeRow.options}')];
+      // AREA, because this sentence asserts the options ARE on the screen after
+      // the tap. Counted as boxes it passed on a panel whose five swatches were
+      // at transform: scale(0) — a tap that opens nothing a player can see.
+      const opened = { onGlass: opts.filter(onGlass).length,
+        expanded: face.getAttribute('aria-expanded'), total: opts.length };
+      const other = opts.find((el) => !el.classList.contains('chosen'));
+      const wanted = norm((other && other.title) || (other && other.textContent) || '');
+      if (other) other.click();
+      // Re-queried off the FACE, not the host: setValue replaces the button's
+      // innerHTML, so the element read on arrival is stale by now, and the open
+      // panel is inside the host too.
+      const valueEl = face.querySelector('.disc-value');
+      const value = norm(valueEl && valueEl.textContent);
+      const valueOnGlass = onGlass(valueEl);
+      face.click();
+      // BOXES, because this one asserts the options are gone again.
+      const shut = [...host.querySelectorAll('.disc-reveal ${probeRow.options}')].filter((el) => el.getClientRects().length > 0).length;
+      return { ...opened, wanted, value, valueOnGlass, shut };
+    })()`);
+    const gone = worked.absent ? ` · NO REFERENT: ${probeRow.key} is not on the screen` : '';
+    ok(!worked.absent && worked.total > 0 && worked.onGlass === worked.total && worked.expanded === 'true',
+      `a tap opens the folded picker — ${probeRow.key} → ${worked.onGlass}/${worked.total} option(s) on the glass${gone}`);
+    ok(!worked.absent && worked.wanted !== '' && worked.value === worked.wanted && worked.valueOnGlass,
+      `picking inside the fold MOVES the face, ON THE GLASS — chose '${worked.wanted}', face now `
+      + `'${worked.value}'${worked.value === worked.wanted && !worked.valueOnGlass
+        ? ' — and that name is OFF THE GLASS (no box with area) after the pick' : ''}${gone}`);
+    ok(!worked.absent && worked.shut === 0, `a second tap folds it again — ${worked.shut} option(s) still on the glass${gone}`);
+
     // ---- 4. the tap floor -------------------------------------------------
-    const tiles = [...read.faces, ...read.kits];
+    const tiles = [...read.faces, ...read.kits, ...folds.rows.filter((row) => !row.missing)];
     const short = tiles.filter((row) => row.w + 0.5 < floor || row.h + 0.5 < floor);
     ok(tiles.length > 0 && short.length === 0,
       `every face and armament tile clears the ${floor} px floor — ${tiles.length} measured, smallest `
@@ -469,6 +867,43 @@ async function main() {
     + `${SHAPES.map(([w, h]) => `${w}x${h}`).join(' + ')}, default Text size and UI size, the first class only.`);
   console.log('  Silent on: a real finger, Windows, the receipts panel under the short form, whether');
   console.log('  the sentences are GOOD — only that they are short, the table\'s own, and one tap away.');
+  console.log('  ON THE GLASS MEANS A CLIENT RECT WITH AREA, and that is the extent of it (MR-101,');
+  console.log('  narrowed and corrected at MR-260). Where a fold sentence says something IS on the');
+  console.log('  screen — the face LABEL and value on arrival, the value after the pick, the options');
+  console.log('  after the tap — the element must have at least one box of NON-ZERO width and height.');
+  console.log('  WATCHED RED at this ref, all four through the stylesheet: display:none (P10), and');
+  console.log('  the three ordinary edits that leave a box of NO SIZE — font-size:0 (P11),');
+  console.log('  transform:scale(0), and width:0;height:0;overflow:hidden. Until MR-260 this');
+  console.log('  paragraph claimed those three under the words "a zero box" and caught NONE of them:');
+  console.log('  getClientRects().length counts BOXES, not AREA, and all three still have a box.');
+  console.log('  A subtree detached from the document is the same zero-rect result and is REASONED,');
+  console.log('  not watched — no plant reaches it through a stylesheet, and it is named as reasoning.');
+  console.log('  Where a fold sentence says something is NOT on the screen — the options behind a');
+  console.log('  shut face, the options after the second tap — the measure is BOXES, deliberately:');
+  console.log('  the stronger test of absence, since a zero-area option still raises that count.');
+  console.log('  IT IS STILL SILENT on ink painted invisible in place: color:transparent, opacity:0,');
+  console.log('  visibility:hidden, or the value in the panel\'s own colour. Those keep a box WITH');
+  console.log('  area and this tool will call them on the glass. It is silent, too, on an ANCESTOR');
+  console.log('  that hides the value while the value keeps its own box — rects are the element\'s');
+  console.log('  own geometry, not a visibility walk up the tree. Widening the measure to real ink');
+  console.log('  is not free and is not claimed here; the sentence is written to what rects carry.');
+  console.log('  Watched at this ref: height:0;overflow:hidden on .cz-disc clips the whole picker');
+  console.log('  row away and every sentence in this run, this one included, prints PASS at exit 0.');
+  console.log('  WHAT IS MEASURED AS INK HERE IS THE FOLD, AND ONLY THE FOLD. Every other sentence');
+  console.log('  in this run — every face-tier entry is drawn, no face carries prose, the starting');
+  console.log('  relic is named on the screen, the reveal says the entry\'s own sentence — reads DOM');
+  console.log('  TEXT. Watched at this ref: font-size:0 on .disc-name takes the label off all 13');
+  console.log('  faces and only the fold row goes red; and under P10 (the value display:none) the');
+  console.log('  relic sentence prints PASS while the relic name is nowhere on the screen. Those');
+  console.log('  sentences are named here because a boundary owes the reader the gaps it knows,');
+  console.log('  and they are not repaired here because they are not this lane\'s to write.');
+  console.log('  On the FOLD it is silent about THE ONE THING THAT NOW MATTERS MOST (MR-172, primary');
+  console.log('  debt): whether a player ever FINDS the face. TOUCH IS NEVER TOLD THE ROW OPENS — the');
+  console.log('  only teacher is attachTooltip, which answers pointerenter/gpfocus and never a thumb,');
+  console.log('  and at 390x844 the chips that teach the affordance are BELOW THE FOLD. TINT is now');
+  console.log('  the ONLY fold on this screen, so the whole teaching problem rests on one row a touch');
+  console.log('  player is never told is openable. A picture is not a playtest. Also silent on every');
+  console.log('  text/UI size but the defaults.');
   process.exit(fails ? 1 : 0);
 }
 

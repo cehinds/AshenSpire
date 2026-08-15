@@ -61,6 +61,15 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   //    matches `input[type="text"]` by ATTRIBUTE, so neither text field on this
   //    screen was reachable by the pad or keyboard cursor at all.
   //
+  // 4. ONE OF THESE SIX ROWS IS FOLDED (MR-151, 2026-08-16; MR-171 took
+  //    KEEPSAKE back out the same day and MR-189 took SIGIL and SPRITE out
+  //    after them). The `<p class="cz-label">` for TINT is REPLACED at mount by
+  //    a disclosure face carrying the same word plus the current choice IN
+  //    WORDS; the picker itself is adopted into that face's reveal panel and
+  //    starts hidden. CLASS, STARTING KIT, KEEPSAKE, SIGIL and SPRITE arrive
+  //    open, exactly as this markup writes them. See "THE FOLD" below — the
+  //    markup here is what the screen starts as, not what it arrives as.
+  //
   // NOT TOUCHED, deliberately: the 2-then-1 class card wrap. Sunna named it and
   // it is gated on Constantine's word, which he has not given.
   app.innerHTML = `
@@ -220,6 +229,9 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     // touch and gamepad players never see one. A tint swatch is pure colour with
     // no text of its own, so it is the one option row here that says NOTHING
     // without this. `title` is kept for the desktop mouse habit, not relied on.
+    // AND `attachTooltip` ANSWERS HOVER AND PAD-FOCUS ONLY — never a thumb. That
+    // is why TINT is the row that stays folded: see "THE FOLD" below, where the
+    // face is what finally says this colour's name on the glass, in words.
     b.title = t.name;
     attachTooltip(b, () => esc(t.name));
     b.addEventListener('click', () => {
@@ -257,6 +269,83 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     });
     ksBox.appendChild(el);
   });
+
+  // ---- THE FOLD (MR-151, narrowed by MR-171 and MR-189) ------------------
+  // Constantine, 2026-08-16: "go ahead and allow the fold". He had already said
+  // the stat descriptions "kind of suck"; D26 answered that for the preview
+  // pane and left `.cz-fields` as six stacked rows, four of which are picked
+  // once (or never) and then sit open for the rest of the screen. ONE of those
+  // four folds, BY THE SAME MECHANISM — mountDisclosure, not a second renderer.
+  // The extension is `reveal.node` in components/disclosure.js; there is no
+  // fold code in this file, on purpose. A second one is what tools/onefold.mjs
+  // counts and what handrenderers.mjs is still paying for on the hand.
+  //
+  // DEFAULT FOLDED, and that is the whole of his yes. The other reading —
+  // "allow" as *available*, a fold that defaults open — leaves the arrival
+  // screen exactly as long as the one he called bad, so it answers nothing.
+  //
+  // A ROSTER IS NOT A DECISION — IT IS FOUR DECISIONS WEARING ONE NAME. That is
+  // Marina's own words ruling her own error (MR-189): a count of options is not
+  // a count of legibility, so each row is judged on what its FACE BUYS IN
+  // WORDS, and only one row buys anything.
+  //
+  //   TINT   5 unlabelled swatches → the face says `TINT Goldbough gold`. The
+  //          current colour's NAME, to touch, FOR THE FIRST TIME. See the
+  //          comment on the swatch above: a tint swatch is pure colour with no
+  //          text of its own, and `attachTooltip` answers hover and pad-focus
+  //          only. UNFOLDED, TINT ON A PHONE IS FIVE UNTITLED COLOUR BLOBS.
+  //          (Viki, at e64e196: the fold is the first mechanism on this screen
+  //          that tells a touch player the colour they are wearing.)
+  //   SIGIL  6 glyphs → the face value is `state.glyph`, THE EMOJI AGAIN.
+  //          Nothing in words, and it costs a tap on the one row you pick by
+  //          look. OUT (MR-189).
+  //   SPRITE 3 chips already reading Rendered / Classic / Sigil → the face
+  //          repeats one of them. Nothing in words, a tap, and MORE vertical
+  //          than it saves, because a 44 px face replaces a compact label.
+  //          OUT (MR-189).
+  //   KEEPSAKE  four tiles carrying NAME AND EFFECT in plain words ('Old Cinder
+  //          · Begin the climb with 50 cinders') became one row reading
+  //          `KEEPSAKE Nothing`, and it is the only one of the four that
+  //          changes the run. OUT (MR-170/171); measured tiles painted 4 → 0.
+  //
+  // WHAT IS NOT FOLDED, and it is a decision, not an omission: CLASS, STARTING
+  // KIT, KEEPSAKE, SIGIL and SPRITE. The first three change the run and are what
+  // the arrival screen is FOR; folding them would hide the choosing behind a
+  // choice. The last two say in their own options everything a face could say.
+  //
+  // THIS IS NOT A LENGTH ARGUMENT, and the length argument is WITHDRAWN
+  // (MR-183): none of Constantine's 47 quoted directions names length, D26's
+  // words are about CLUTTER, and his nearest adjacent words sanction vertical
+  // scrolling. The metric this fold answers is the one tools/creationbrief.mjs
+  // prints — OPTIONS OFF THE GLASS BEHIND FACES. Do not re-argue it in pixels.
+  //
+  // IT REFOLDS AS TWO LINES, ON PURPOSE. Constantine has been told, not asked,
+  // and his veto is free: putting any row back is one row in the table below
+  // plus one row in tools/creationbrief.mjs's roster — and creationbrief goes
+  // RED at both edges until the second line is written, so the two cannot
+  // drift apart. Nothing else on this screen needs touching either way.
+  const FOLDED = [
+    { key: 'pick:tint', label: 'TINT', box: tintBox, tip: 'Tap to change your colour.',
+      value: () => (PORTRAIT_TINTS.find((t) => t.id === state.tint) || {}).name || '—' },
+  ];
+  for (const row of FOLDED) {
+    // The host is the row wrapper `.cz-fields` already has — its <p class label>
+    // is replaced by the face, which carries the same word plus the answer.
+    const host = row.box.parentElement;
+    host.classList.add('cz-disc');
+    const mount = mountDisclosure(host, [{
+      key: row.key, kind: 'pick', disclosure: 'face',
+      face: { label: row.label, value: row.value() },
+      reveal: { node: row.box, sense: row.tip },
+    }]);
+    row.refresh = () => mount.setValue(row.key, row.value());
+  }
+  // One call after any pick — the faces are the screen's answer to "what did I
+  // choose?", so they are re-read from `state`, never written twice.
+  const refreshFolds = () => { for (const row of FOLDED) row.refresh(); };
+  for (const row of FOLDED) {
+    row.box.addEventListener('click', refreshFolds);
+  }
 
   const nameEl = $('#cz-name');
   nameEl.addEventListener('input', (ev) => {

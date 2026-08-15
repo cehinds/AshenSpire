@@ -1254,6 +1254,18 @@ button.rs-reset {
 /* The armament and relic faces carry names rather than numbers, so they read
    as rows rather than chips — one per line, on every shape. */
 .disc-armament, .disc-relic { flex: 1 1 100%; justify-content: space-between; }
+/* A FOLDED PICKER (MR-151) reads as a ROW, not a chip: the label on the left,
+   the current choice on the right, full width — so the four folded rows of
+   `.cz-fields` stack the way the six unfolded ones did, and the answer to
+   "what did I pick?" is on the same line as the question. Same `.disc-face`
+   floor, same tap, same panel; only the reveal's contents differ. */
+.disc-pick { flex: 1 1 100%; justify-content: space-between; }
+/* The picker inside a fold WRAPS. Out in `.cz-fields` these rows had the
+   column's full 560 px; inside the panel they have that less the panel's own
+   padding, and a row that cannot wrap answers a narrow phone by running off
+   the side (Law 5). `.cz-opts` is shared with the lobby, so the wrap is
+   scoped to the fold rather than granted to every option row in the game. */
+.disc-reveal .cz-opts { flex-wrap: wrap; row-gap: 0.8rem; }
 .disc-more { border-style: dashed; }
 /* ONE panel, under the row: the entry the player asked about. The sentence is
    the authored one, the list is derived, and the RECEIPT is last and quietest —
@@ -30828,7 +30840,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'd20fb1bd4d';
+const SOURCE = '6de9a8b63e';
 /* BUILD_SOURCE_END */
 
 /** What a player reads, and what a bug report should carry back to us. */
@@ -31121,6 +31133,15 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   //    matches `input[type="text"]` by ATTRIBUTE, so neither text field on this
   //    screen was reachable by the pad or keyboard cursor at all.
   //
+  // 4. ONE OF THESE SIX ROWS IS FOLDED (MR-151, 2026-08-16; MR-171 took
+  //    KEEPSAKE back out the same day and MR-189 took SIGIL and SPRITE out
+  //    after them). The `<p class="cz-label">` for TINT is REPLACED at mount by
+  //    a disclosure face carrying the same word plus the current choice IN
+  //    WORDS; the picker itself is adopted into that face's reveal panel and
+  //    starts hidden. CLASS, STARTING KIT, KEEPSAKE, SIGIL and SPRITE arrive
+  //    open, exactly as this markup writes them. See "THE FOLD" below — the
+  //    markup here is what the screen starts as, not what it arrives as.
+  //
   // NOT TOUCHED, deliberately: the 2-then-1 class card wrap. Sunna named it and
   // it is gated on Constantine's word, which he has not given.
   app.innerHTML = `
@@ -31280,6 +31301,9 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     // touch and gamepad players never see one. A tint swatch is pure colour with
     // no text of its own, so it is the one option row here that says NOTHING
     // without this. `title` is kept for the desktop mouse habit, not relied on.
+    // AND `attachTooltip` ANSWERS HOVER AND PAD-FOCUS ONLY — never a thumb. That
+    // is why TINT is the row that stays folded: see "THE FOLD" below, where the
+    // face is what finally says this colour's name on the glass, in words.
     b.title = t.name;
     attachTooltip(b, () => esc(t.name));
     b.addEventListener('click', () => {
@@ -31317,6 +31341,83 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     });
     ksBox.appendChild(el);
   });
+
+  // ---- THE FOLD (MR-151, narrowed by MR-171 and MR-189) ------------------
+  // Constantine, 2026-08-16: "go ahead and allow the fold". He had already said
+  // the stat descriptions "kind of suck"; D26 answered that for the preview
+  // pane and left `.cz-fields` as six stacked rows, four of which are picked
+  // once (or never) and then sit open for the rest of the screen. ONE of those
+  // four folds, BY THE SAME MECHANISM — mountDisclosure, not a second renderer.
+  // The extension is `reveal.node` in components/disclosure.js; there is no
+  // fold code in this file, on purpose. A second one is what tools/onefold.mjs
+  // counts and what handrenderers.mjs is still paying for on the hand.
+  //
+  // DEFAULT FOLDED, and that is the whole of his yes. The other reading —
+  // "allow" as *available*, a fold that defaults open — leaves the arrival
+  // screen exactly as long as the one he called bad, so it answers nothing.
+  //
+  // A ROSTER IS NOT A DECISION — IT IS FOUR DECISIONS WEARING ONE NAME. That is
+  // Marina's own words ruling her own error (MR-189): a count of options is not
+  // a count of legibility, so each row is judged on what its FACE BUYS IN
+  // WORDS, and only one row buys anything.
+  //
+  //   TINT   5 unlabelled swatches → the face says `TINT Goldbough gold`. The
+  //          current colour's NAME, to touch, FOR THE FIRST TIME. See the
+  //          comment on the swatch above: a tint swatch is pure colour with no
+  //          text of its own, and `attachTooltip` answers hover and pad-focus
+  //          only. UNFOLDED, TINT ON A PHONE IS FIVE UNTITLED COLOUR BLOBS.
+  //          (Viki, at e64e196: the fold is the first mechanism on this screen
+  //          that tells a touch player the colour they are wearing.)
+  //   SIGIL  6 glyphs → the face value is `state.glyph`, THE EMOJI AGAIN.
+  //          Nothing in words, and it costs a tap on the one row you pick by
+  //          look. OUT (MR-189).
+  //   SPRITE 3 chips already reading Rendered / Classic / Sigil → the face
+  //          repeats one of them. Nothing in words, a tap, and MORE vertical
+  //          than it saves, because a 44 px face replaces a compact label.
+  //          OUT (MR-189).
+  //   KEEPSAKE  four tiles carrying NAME AND EFFECT in plain words ('Old Cinder
+  //          · Begin the climb with 50 cinders') became one row reading
+  //          `KEEPSAKE Nothing`, and it is the only one of the four that
+  //          changes the run. OUT (MR-170/171); measured tiles painted 4 → 0.
+  //
+  // WHAT IS NOT FOLDED, and it is a decision, not an omission: CLASS, STARTING
+  // KIT, KEEPSAKE, SIGIL and SPRITE. The first three change the run and are what
+  // the arrival screen is FOR; folding them would hide the choosing behind a
+  // choice. The last two say in their own options everything a face could say.
+  //
+  // THIS IS NOT A LENGTH ARGUMENT, and the length argument is WITHDRAWN
+  // (MR-183): none of Constantine's 47 quoted directions names length, D26's
+  // words are about CLUTTER, and his nearest adjacent words sanction vertical
+  // scrolling. The metric this fold answers is the one tools/creationbrief.mjs
+  // prints — OPTIONS OFF THE GLASS BEHIND FACES. Do not re-argue it in pixels.
+  //
+  // IT REFOLDS AS TWO LINES, ON PURPOSE. Constantine has been told, not asked,
+  // and his veto is free: putting any row back is one row in the table below
+  // plus one row in tools/creationbrief.mjs's roster — and creationbrief goes
+  // RED at both edges until the second line is written, so the two cannot
+  // drift apart. Nothing else on this screen needs touching either way.
+  const FOLDED = [
+    { key: 'pick:tint', label: 'TINT', box: tintBox, tip: 'Tap to change your colour.',
+      value: () => (PORTRAIT_TINTS.find((t) => t.id === state.tint) || {}).name || '—' },
+  ];
+  for (const row of FOLDED) {
+    // The host is the row wrapper `.cz-fields` already has — its <p class label>
+    // is replaced by the face, which carries the same word plus the answer.
+    const host = row.box.parentElement;
+    host.classList.add('cz-disc');
+    const mount = mountDisclosure(host, [{
+      key: row.key, kind: 'pick', disclosure: 'face',
+      face: { label: row.label, value: row.value() },
+      reveal: { node: row.box, sense: row.tip },
+    }]);
+    row.refresh = () => mount.setValue(row.key, row.value());
+  }
+  // One call after any pick — the faces are the screen's answer to "what did I
+  // choose?", so they are re-read from `state`, never written twice.
+  const refreshFolds = () => { for (const row of FOLDED) row.refresh(); };
+  for (const row of FOLDED) {
+    row.box.addEventListener('click', refreshFolds);
+  }
 
   const nameEl = $('#cz-name');
   nameEl.addEventListener('input', (ev) => {
@@ -31878,6 +31979,29 @@ Object.assign(module.exports, { ASSET_MAP, assetUrl, assetsAreInlined });
 //                    short, and a phone that opens five sentences is the
 //                    screen he asked us to stop shipping.
 //
+// A LIVE REVEAL — the same mechanism, folding a PICKER instead of words.
+// Constantine, 2026-08-16: "go ahead and allow the fold" (MR-151: default
+// folded, expandable, D26's own mechanism applied to more items). An entry may
+// hand this renderer a NODE (`reveal.node`) rather than a sentence: a picker
+// that already exists on the screen and carries its own listeners. The renderer
+// ADOPTS it — once, at mount, into the same one panel — and the fold is that
+// panel's `hidden`. It never re-draws it, because re-drawing it is how a screen
+// grows a second renderer.
+//
+// THIS BRANCH IS THREE LINES AND IT IS WHY THERE IS NO SECOND FILE. The
+// creation screen's KEEPSAKE / SIGIL / TINT / SPRITE rows fold by the same
+// face, the same tap, and the same published state as D26's stat entries.
+// tools/handrenderers.mjs is already counting what a second hand renderer cost
+// this house; tools/onefold.mjs counts the same debt here, and goes red on a
+// planted second one.
+//
+// AND A FOLDED PICKER STILL NAMES WHAT IS CHOSEN. A face is a label AND a
+// value — that is the contract the stat faces already keep, and a fold whose
+// face said only SIGIL would hide the one thing a folded row exists to report.
+// `setValue(key, value)` is how the screen keeps it true after a tap; the
+// markup for a face lives in ONE place (faceHtml) so the two paths cannot
+// drift into two shapes.
+//
 // HOW IT OPENS, and no second gesture is minted (model/disclosure.js says why):
 //   TAP the face      → its reveal. Tap it again → closed. This is the whole
 //                       affordance and it is the one a thumb already has.
@@ -31905,17 +32029,36 @@ function revealHtml(entry) {
     + (entry.reveal.receipt ? `<p class="disc-receipt">${esc(entry.reveal.receipt)}</p>` : '');
 }
 
-/** The same words the panel shows, for the hover/focus tip. One source. */
+/** A FACE IS A LABEL AND A VALUE. One home for that markup, because it is
+ *  drawn at mount and re-drawn every time a folded picker's choice changes;
+ *  two spellings of it would be two answers to "what did I pick?". */
+function faceHtml(entry) {
+  return `<b class="disc-name">${esc(entry.face.label)}</b>`
+    + (entry.face.value === '' || entry.face.value == null ? '' : `<span class="disc-value">${esc(entry.face.value)}</span>`);
+}
+
+/** The same words the panel shows, for the hover/focus tip. One source.
+ *  A LIVE REVEAL has no words of its own — the picker IS the panel — so it
+ *  gets whatever short sentence the screen authored beside it, or no tip at
+ *  all. An empty tooltip is worse than none: it is a pointer that promises. */
 function tipHtml(entry) {
+  if (entry.reveal && entry.reveal.node) {
+    return entry.reveal.sense ? `<p class="disc-sense">${esc(entry.reveal.sense)}</p>` : '';
+  }
   return revealHtml(entry);
 }
 
 /**
- * mountDisclosure(host, entries, { moreLabel }) → { open(key), close() }
+ * mountDisclosure(host, entries, { moreLabel })
+ *   → { open(key), close(), setValue(key, value), openKey }
  *
  * `entries` is the model's list, in model order. WHICH ONES ARE DRAWN UP FRONT
  * IS READ OFF `entry.disclosure` — there is no id list here, and adding one is
  * the defect tools/creationbrief.mjs plants.
+ *
+ * An entry whose `reveal.node` is a live element folds THAT ELEMENT: it is
+ * adopted into the panel at mount and the panel starts `hidden`, so the
+ * arrival screen is short and one tap opens it. Default folded — his word.
  */
 function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
   const rows = [...(entries || [])];
@@ -31926,11 +32069,16 @@ function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
   const panel = host.querySelector('.disc-reveal');
   const buttons = new Map();
   let openKey = null;
+  // The one live node this host folds, if any. It is adopted ONCE: a picker
+  // re-parented on every open would lose nothing visible and would still be a
+  // second renderer's habit — move it in, then only `hidden` moves.
+  const held = rows.find((entry) => entry.reveal && entry.reveal.node) || null;
+  if (held) panel.appendChild(held.reveal.node);
 
   function close() {
     openKey = null;
     panel.hidden = true;
-    panel.innerHTML = '';
+    if (!held) panel.innerHTML = '';
     panel.removeAttribute('data-reveal-for');
     for (const button of buttons.values()) {
       button.setAttribute('aria-expanded', 'false');
@@ -31943,7 +32091,7 @@ function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     if (!entry) return;
     close();
     openKey = key;
-    panel.innerHTML = revealHtml(entry);
+    if (!held) panel.innerHTML = revealHtml(entry);
     panel.hidden = false;
     panel.dataset.revealFor = key;
     const button = buttons.get(key);
@@ -31951,6 +32099,15 @@ function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
       button.setAttribute('aria-expanded', 'true');
       button.dataset.reveal = 'open';
     }
+  }
+
+  /** The folded row keeps reporting the current choice after it changes. */
+  function setValue(key, value) {
+    const entry = rows.find((row) => row.key === key);
+    const button = buttons.get(key);
+    if (!entry || !button) return;
+    entry.face.value = value;
+    button.innerHTML = faceHtml(entry);
   }
 
   function drawFace(entry) {
@@ -31963,13 +32120,12 @@ function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     button.dataset.disclosure = entry.disclosure;
     button.dataset.reveal = 'closed';
     button.setAttribute('aria-expanded', 'false');
-    button.innerHTML = `<b class="disc-name">${esc(entry.face.label)}</b>`
-      + (entry.face.value === '' || entry.face.value == null ? '' : `<span class="disc-value">${esc(entry.face.value)}</span>`);
+    button.innerHTML = faceHtml(entry);
     button.addEventListener('click', () => {
       hideTooltip();
       if (openKey === entry.key) close(); else open(entry.key);
     });
-    attachTooltip(button, () => tipHtml(entry));
+    if (tipHtml(entry)) attachTooltip(button, () => tipHtml(entry));
     buttons.set(entry.key, button);
     faceBox.appendChild(button);
   }
@@ -32005,7 +32161,7 @@ function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     faceBox.appendChild(more);
   }
 
-  return { open, close, get openKey() { return openKey; } };
+  return { open, close, setValue, get openKey() { return openKey; } };
 }
 
 
