@@ -73,11 +73,16 @@
 //     the smallest this house tests, the iPad-portrait shape that caused #24,
 //     A TABLET IN LANDSCAPE (1024x768 — landscape and perfectly fine, which is
 //     the whole reason the predicate is not an orientation), the desktop
-//     baseline, and A LADDER ACROSS THE THRESHOLD ITSELF (800x410 .. 800x500).
-//     The ladder is here because the FIRST version of this list had none of it
-//     and let a predicate ship that refused a working window: A POPULATION WITH
-//     NO CELL EITHER SIDE OF ITS OWN BOUNDARY CANNOT TELL YOU THE BOUNDARY IS
-//     WRONG. If this file ever gates 1024x768 the check has become an
+//     baseline, and A LADDER ACROSS THE THRESHOLD ITSELF (800x410 .. 800x500,
+//     WALKED AT 1 PX ACROSS 430..440 where the constant lives). The ladder is
+//     here because the FIRST version of this list had none of it and let a
+//     predicate ship that refused a working window; the 1 px band is here
+//     because the SECOND version spaced it at 10 px and let the constant sit in
+//     the hole, three pixels above the measurement, while this file printed
+//     PASS. Same rule, same site, twice: A POPULATION WITH NO CELL EITHER SIDE
+//     OF ITS OWN BOUNDARY CANNOT TELL YOU THE BOUNDARY IS WRONG — and a
+//     boundary written in integers has to be sampled in integers. Full note at
+//     `LADDER_H`. If this file ever gates 1024x768 the check has become an
 //     orientation sniffer, and clause K says so.
 //   DEVICE OR WINDOW — stated per shape (WINDOWS below), not inferred from the
 //     dimensions. It decides touch emulation, and through that the app's
@@ -93,7 +98,12 @@
 //   TEXT SIZE — one cell (the M default) unless `--text S|M|L|XL`. Stated in the
 //     boundary rather than left to be found: text size changes content height,
 //     so a shape that fits at M can wall at XL, and the default run is silent
-//     about that.
+//     about that. IT IS ALSO SILENT ABOUT THE CONSTANT, and that is the sharper
+//     half: the whole-fit height is 432/495/533/571 across S/M/L/XL, so the
+//     threshold is decided ENTIRELY by Text S and a default run cannot see it
+//     move. `--ladder` is the mode that walks all four and checks the number
+//     against them; `--selftest` carries a Text S cell so the check does not
+//     depend on which flag a person happened to type.
 //   NO TOLERANCE ON REACHABILITY. Half a pixel of slack on the viewport edges
 //     for device-pixel rounding, and nothing else. "Mostly on screen" is a
 //     button a thumb misses.
@@ -125,21 +135,41 @@
 //
 // ---------------------------------------------------------------------------
 // KNOWN OPEN — `--text XL` IS RED, THE REDS ARE REAL, AND NONE OF THEM IS THE
-// GATE'S. `--text S`, the default `M`, and `--text L` are all GREEN 14/14.
+// GATE'S. `--text S`, the default `M`, and `--text L` are all GREEN 23/23
+// (2026-08-15, dev = aafa3e2 + this branch, headless Chromium).
 //
-//   --text XL  ->  FAIL, 6 finding(s) over 14 shapes, all of them WALL/no-gate:
-//     360x640  .end-turn top 659.25..720.91 in a 640 px viewport, 0% on screen
-//     800x440  .end-turn top 450.95..479.83 in a 440 px viewport
-//     800x450  .end-turn top 450.95..479.83 in a 450 px viewport
-//   (each counted twice — combat and title)
+//   --text XL  ->  FAIL, 22 finding(s) over 23 shapes, all of them WALL/no-gate,
+//   each counted twice (combat and title):
+//     360x640                .end-turn top 659.25..720.91 in a 640 px viewport
+//     800x432 .. 800x440     .end-turn top 450.95..479.83, 0% on screen
+//     800x450                the same rect, still 0% on screen
+//   It was 6 findings over 14 shapes before this branch widened the ladder to
+//   1 px. THE COUNT GREW; THE DEFECT DID NOT. The nine new rungs all sit between
+//   430 and 440; eight of them are red (431 is below the constant, still gated,
+//   still quiet) and every one reads the SAME rect as 800x440 already did — one
+//   wall, sampled more finely.
+//
+// SIX OF THE SIXTEEN NEW FINDINGS ARE MINE, AND I AM NAMING THE COST RATHER THAN
+// LETTING THE COUNT CARRY IT. Lowering the constant 435 -> 432 hands three
+// heights (432/433/434, two surfaces each) back
+// to Text S players, and at Text XL those same three heights lose the gate
+// they used to get. That is a real loss and it is three pixels of ACCIDENT: the
+// XL wall runs from below 390 up to h 450 (END TURN's top edge is 450.95, so it
+// is off screen entirely at every h <= 450), and the gate at 435 was covering
+// 45 of those 61 pixels and never the rest. A refusal that covers three quarters
+// of a wall is not the thing keeping XL players safe, and pinning the constant to
+// XL instead would refuse every Text S player everything under 571. One number
+// cannot answer both; it answers the one where a WORKING screen is at stake, and
+// the wall is layout's to close.
 //
 // THE COMBAT BOARD DOES NOT FIT ITSELF AT LARGE TEXT, and that is the cause.
-// Measured on a height ladder at width 800 (full table in balance.js beside
-// `gateBelowH`; % of each control on screen):
+// Re-derive the whole set with `--ladder`; measured at width 800, % of each
+// control on screen:
 //
-//   Text L : the hand is cut from h 520 down (92% -> 29%); END TURN gone at 410.
-//   Text XL: the hand is cut from h 560 down (94% -> 15%); END TURN gone at 450,
-//            and only 71% whole at h 500.
+//   Text L : the hand is cut below h 533 (92.5% at 520, 54% at 430); END TURN is
+//            whole from 460 and 24.7% at 430.
+//   Text XL: the hand is cut below h 571 (94.2% at 560, 37.8% at 430); END TURN
+//            is 0% at every h <= 450, 70.8% at 500, whole from 520.
 //   Not only short windows — at Text XL, 1024x600 shows 68% of the hand and
 //   960x540 shows 66% of END TURN. Identical at 1ab9777: PRE-EXISTING, all of it.
 //   360x640 is the one that should worry a person: a real phone, in PORTRAIT,
@@ -163,10 +193,16 @@
 //   node tools/uprightgate.mjs --only 844x390
 //   node tools/uprightgate.mjs --text XL
 //   node tools/uprightgate.mjs --selftest      the same-door known-bad corpus
+//   node tools/uprightgate.mjs --ladder        DERIVE gateBelowH from the board
+//        --ladder-text S      one text size instead of all four
+//        --ladder-width 800   comma list; the fit is not purely a height
+//        --ladder-from 390    bottom of the exhaustive 1 px sweep
+//        --ladder-to 700      top of the reported bracket
 //   CHROME=/path/to/chrome node tools/uprightgate.mjs
 //
 // Exit codes
-//   0  every walled shape is gated with true advice, and no fitting shape is
+//   0  every walled shape is gated with true advice, and no fitting shape is;
+//      under --ladder, gateBelowH is exactly the minimum whole-fit height
 //   1  a finding
 //   2  usage / no browser / NOTHING MEASURED — never a pass
 //
@@ -180,9 +216,21 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 
+// THE CORPUS RUNS IN THREE GROUPS, BECAUSE A CORPUS IS A POPULATION TOO.
+//
+// doorplant hands the SAME argv to every plant in a group, and these plants do
+// not live at the same cell. The gate's own defects show at Text M on the phone
+// shapes; THE CONSTANT'S defect shows only at Text S in a three-pixel window,
+// because Text S is the text size that sets the constant. Running the whole
+// corpus at S would make plant 1 report NOT CAUGHT for want of a wall (at Text S
+// END TURN is whole on the landscape phone — the very reason clause K's set is
+// the wide one), and running it all at M makes the constant's plant invisible.
+// So: group 1 is the gate, group 2 is the constant's guard IN THE MAIN RUN, and
+// group 3 is the derivation. One number, checked at the cell where it is decided
+// rather than at the cell that is convenient.
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  process.exit(await doorSelftest({
+  let rc = await doorSelftest({
     tool: 'uprightgate.mjs',
     args: ['--only', '844x390,1200x730,400x400,800x500'],
     timeoutMs: 900000,
@@ -253,12 +301,70 @@ if (process.argv.includes('--selftest')) {
         // name (clause 5) rather than quietly refuse somebody's screen.
         name: 'the threshold creeps up and refuses a working window (the branch\'s own first bug)',
         file: 'src/content/balance.js',
-        find: '      gateBelowH: 435,',
+        find: '      gateBelowH: 432,',
         replace: '      gateBelowH: 520,',
         expectRed: /GATE STANDS ON A SHAPE THAT FITS/,
       },
     ],
-  }));
+  });
+
+  // GROUP 2 — THE BRANCH'S OWN SECOND BUG, AT THE CELL THAT CAN SEE IT.
+  //
+  // The plant above moves the threshold 85 px and any ladder catches it. This
+  // one moves it THREE, which is the size the real defect was, and it is
+  // invisible to every cell this file used to have: 800x433 at Text S did not
+  // exist, so `gateBelowH: 435` printed PASS 14/14 through every run this branch
+  // made while it refused three working screens. The cell and the text size are
+  // BOTH part of the catch — this is the ladder half and the number half as one
+  // thing, because a corrected constant under an uncorrected ladder is the same
+  // defect waiting at a different offset.
+  rc = await doorSelftest({
+    tool: 'uprightgate.mjs',
+    args: ['--text', 'S', '--only', '800x433'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        name: 'the threshold sits three pixels above the measurement (the branch\'s own SECOND bug, at Text S)',
+        file: 'src/content/balance.js',
+        find: '      gateBelowH: 432,',
+        replace: '      gateBelowH: 435,',
+        expectRed: /GATE STANDS ON A SHAPE THAT FITS/,
+      },
+    ],
+  }) || rc;
+
+  // GROUP 3 — THE DERIVATION, BOTH DIRECTIONS.
+  //
+  // `--ladder` is what makes the number re-derivable instead of remembered, and
+  // an unfalsifiable derivation is a comment with a browser attached. Both edges
+  // of the equality it asserts get a plant: three pixels too HIGH (refuses
+  // working screens — the real defect) and twelve too LOW (a refusal that stopped
+  // covering anything and still claims to be the largest safe value). The range
+  // starts at 415 so both plants have a legal phase A; the tool prints the range
+  // it walked, so a shortened sweep cannot pass itself off as the full one.
+  rc = await doorSelftest({
+    tool: 'uprightgate.mjs',
+    args: ['--ladder', '--ladder-text', 'S', '--ladder-from', '415'],
+    timeoutMs: 900000,
+    plants: [
+      {
+        name: '--ladder: the constant sits above the measurement',
+        file: 'src/content/balance.js',
+        find: '      gateBelowH: 432,',
+        replace: '      gateBelowH: 435,',
+        expectRed: /THE CONSTANT REFUSES A WORKING SCREEN/,
+      },
+      {
+        name: '--ladder: the constant sits below the measurement (a refusal left behind by a board that moved)',
+        file: 'src/content/balance.js',
+        find: '      gateBelowH: 432,',
+        replace: '      gateBelowH: 420,',
+        expectRed: /THE CONSTANT IS BELOW ITS OWN MEASUREMENT/,
+      },
+    ],
+  }) || rc;
+
+  process.exit(rc);
 }
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -276,6 +382,37 @@ const BROWSERS = [
 // emulate the swapped viewport to check the advice — every phone/tablet shape
 // can be turned; the desktop baseline is not a device and turning it is a
 // question about a window, which clause G handles through the 'resize' wording.
+// THE LADDER ACROSS THE THRESHOLD, at 1 px where the threshold actually sits.
+//
+// IT IS HERE BECAUSE MY OWN RULE HAS NOW CAUGHT ME TWICE AT THIS ONE SITE. The
+// FIRST version of this list had no ladder at all and let me ship a predicate
+// that refused 800x450, a working window. I fixed that with a neighbourhood —
+// and then spaced the neighbourhood at 10 px and left `gateBelowH` sitting in
+// the hole. At Text S every required control is whole from h 432 up, so
+// h 432/433/434 were three screens the gate refused while this tool printed
+// PASS 14/14, because it had a cell at 430 and a cell at 440 and nothing
+// between. Bjorn found it by hand (2026-08-15) and it is the same sentence a
+// second time: A POPULATION WITH NO CELL EITHER SIDE OF ITS OWN BOUNDARY CANNOT
+// TELL YOU THE BOUNDARY IS WRONG — and "either side" means EITHER SIDE, at the
+// resolution the boundary is written in. A threshold is an integer; so is its
+// ladder.
+//
+// 430..440 is the band the constant lives in, so it is walked at 1 px. Outside
+// that band the ladder stays coarse on purpose: those cells prove the gate keeps
+// standing well below and keeps quiet well above, and neither claim needs
+// resolution. If `gateBelowH` ever moves out of 430..440, THIS BAND MOVES WITH
+// IT — the band is anchored to the constant, and a band left behind by a moved
+// constant is exactly the defect above (Marina, 2026-08-15: when you move
+// anything, ask what was anchored to its old position).
+//
+// AND THE BAND IS ONLY DIAGNOSTIC AT THE TEXT SIZE THAT SETS THE CONSTANT. The
+// constant is the MINIMUM whole-fit height over the four text sizes, and that
+// minimum is Text S (432; M is 495, L 533, XL 571 — `--ladder`). A default `M`
+// run walks these nine cells and learns nothing about the number, because at M
+// nothing fits down here at all. `--text S` is where this band speaks, and
+// `--selftest` runs it at S for exactly that reason rather than trusting anyone
+// to remember.
+const LADDER_H = [410, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439, 440, 450, 480, 500];
 const SHAPES = [
   [390, 844], [360, 640], [834, 1194],   // portrait: must never gate
   [844, 390], [915, 412],                // landscape phone: the subject
@@ -283,12 +420,7 @@ const SHAPES = [
                                          // renders the 'resize' wording at all.
                                          // Without it that half of the copy is
                                          // never drawn by any run and rots.
-  // THE LADDER ACROSS THE THRESHOLD, and it is here because the FIRST version of
-  // this list had none of it and let me ship a predicate that refused a working
-  // window. 430 is the tightest height at which END TURN is still whole; 410 is
-  // the first at which it is not. A population with no cell either side of its
-  // own boundary cannot tell you the boundary is wrong.
-  [800, 410], [800, 430], [800, 440], [800, 450], [800, 480], [800, 500],
+  ...LADDER_H.map((h) => [800, h]),
   [1024, 768],                           // tablet LANDSCAPE — must never gate
   [1200, 730],                           // the desktop baseline
 ];
@@ -297,7 +429,12 @@ const SHAPES = [
 // "turn your phone" to a browser window. The distinction is now stated per
 // shape, because it is a fact about what the cell REPRESENTS and no arithmetic
 // on its dimensions can recover it.
-const WINDOWS = new Set(['800x410', '800x430', '800x440', '800x450', '800x480', '800x500', '1200x730']);
+//
+// DERIVED FROM `LADDER_H`, not restated (Law 0 clause 1). The hand-written twin
+// of this list was a trap with a name: adding a ladder rung and forgetting its
+// WINDOWS entry silently makes that rung a TOUCHSCREEN, which changes the gate's
+// wording and the shape of the finding, and nothing would have said so.
+const WINDOWS = new Set([...LADDER_H.map((h) => `800x${h}`), '1200x730']);
 const isDevice = (shape) => !WINDOWS.has(shape);
 // balance.ui.textSize. A second copy of a content value, so it is named here
 // rather than hidden (Law 1 clause 2); it is the one drift risk in this file.
@@ -440,6 +577,164 @@ function launchChrome(browser, dir) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// `--ladder` — WHERE THE CONSTANT COMES FROM. Derived on demand, not remembered.
+//
+// `balance.ui.uiScale.gateBelowH` is a MEASUREMENT, and until now it was a
+// measurement taken by hand once and typed into a comment. That is a frozen
+// snapshot of a thing that moves with the board, and the ladder table beside it
+// pointed at `node tools/uprightgate.mjs` as the way to re-take it — a command
+// that could not produce that table. A pointer to a re-measure that does not
+// re-measure is how 435 survived: the number looked sourced.
+//
+// THIS IS THE SET THE CONSTANT IS A MINIMUM OF, ENUMERATED. For each text size
+// it finds the SMALLEST viewport height at which all five required controls are
+// whole, then checks the constant equals the smallest of those. Both edges of
+// that equality are real defects and both are asserted:
+//   · a constant ABOVE the minimum refuses screens that work — clause K's defect
+//     at the source, and what 435 was;
+//   · a constant BELOW it is a stale refusal that stopped covering anything —
+//     it claims to be the largest safe value and is not.
+//
+// NO INTERPOLATION WHERE CORRECTNESS LIVES. Phase A walks [--ladder-from,
+// gateBelowH] at 1 px, exhaustively, for every text size — that range is the
+// entire span the gate refuses, so "no working screen is refused" is checked
+// cell by cell and never inferred. It matters that this is exhaustive: the
+// whole-fit percentage is NOT monotonic in height (at Text M it reads 97.13% at
+// h 485 and 94.4% at 486 — the auto-zoom steps 0.66 -> 0.67 and the board gets
+// bigger faster than the window), so a bisection here would be a guess wearing
+// a measurement's clothes.
+//
+// PHASE B IS THE TABLE AND IT IS REPORTED, NOT ASSERTED — and the difference is
+// stated rather than assumed. The other three text sizes fit far above the
+// constant, so finding their exact height costs hundreds of cells; phase B
+// brackets at 8 px and closes at 1 px, and a whole cell that appeared and
+// vanished inside one 8 px bracket would be missed. NOTHING THE TOOL ASSERTS
+// RESTS ON PHASE B: the constant is a minimum, phase B only ever reports values
+// above it, and a value above the minimum cannot change the minimum.
+//
+// DOOR. Every measurement comes through the same door as the rest of this file —
+// the rendered app in a real browser, read off the frame it painted. The one
+// thing not read through the browser is the NUMBER BEING CHECKED: `gateBelowH`
+// is read by importing src/content/balance.js in Node. Same bytes, different
+// loader, and it is named here rather than left to be found. Whether the shipped
+// bundle carries those same bytes is tools/verify-shipped.mjs's subject.
+async function runLadder(read) {
+  const { balance } = await import(pathToFileURL(resolve(ROOT, 'src/content/balance.js')).href);
+  const constant = balance?.ui?.uiScale?.gateBelowH;
+  if (constant == null) {
+    console.error(`uprightgate --ladder: balance.ui.uiScale.gateBelowH is absent. There is no constant to check, and absent is not a pass.`);
+    return 2;
+  }
+  const from = +(argOf('--ladder-from') ?? 390);
+  const to = +(argOf('--ladder-to') ?? 700);
+  const widths = (argOf('--ladder-width') ?? '800').split(',').map((s) => +s.trim());
+  const texts = (argOf('--ladder-text') ?? Object.keys(TEXT).join(',')).split(',').map((s) => s.trim());
+  for (const t of texts) if (!TEXT[t]) { console.error(`uprightgate --ladder: --ladder-text ${t} is not one of ${Object.keys(TEXT).join('/')}`); return 2; }
+  if (!(from <= constant)) { console.error(`uprightgate --ladder: --ladder-from ${from} is above gateBelowH ${constant}; phase A would check nothing.`); return 2; }
+
+  const surface = SURFACES[0];
+  const fit = (r) => r.wholeCount === r.wholeTotal;
+  const line = (w, h, t, r) => `    ${w}x${h} ${t.padEnd(2)} zoom=${r.zoom} layout=${r.layout} whole ${r.wholeCount}/${r.wholeTotal}`
+    + (r.cut.length ? ` cut[${r.cut.join(' ')}]` : '');
+
+  console.log(`\n  --ladder — deriving gateBelowH from the board, at width(s) ${widths.join(',')}, text ${texts.join(',')}`);
+  console.log(`  gateBelowH as written in src/content/balance.js: ${constant}`);
+  console.log(`\n  PHASE A — exhaustive 1 px over ${from}..${constant} (the whole span the gate refuses).`);
+  const firstWhole = new Map();          // `${w}|${t}` -> h | null
+  for (const w of widths) {
+    for (const t of texts) {
+      let found = null;
+      for (let h = from; h <= constant && found === null; h++) {
+        const r = await read(w, h, surface, false, t);
+        if (fit(r)) { found = h; console.log(line(w, h, t, r)); }
+        else if (h === from || h === constant || h % 10 === 0) console.log(line(w, h, t, r));
+      }
+      firstWhole.set(`${w}|${t}`, found);
+      console.log(`    -> width ${w} text ${t}: ${found === null ? `NO whole cell at or below ${constant}` : `first whole h = ${found}`}`);
+    }
+  }
+
+  console.log(`\n  PHASE B — the table. 8 px bracket, closed at 1 px. REPORTED, not asserted (see header).`);
+  for (const w of widths) {
+    for (const t of texts) {
+      const key = `${w}|${t}`;
+      if (firstWhole.get(key) !== null) { console.log(`    width ${w} text ${t}: settled in phase A at ${firstWhole.get(key)}`); continue; }
+      let band = null;
+      for (let h = constant + 1; h <= to && band === null; h += 8) {
+        const r = await read(w, h, surface, false, t);
+        console.log(line(w, h, t, r));
+        if (fit(r)) band = h;
+      }
+      if (band === null) { firstWhole.set(key, 'unknown'); console.log(`    -> width ${w} text ${t}: unknown — no whole cell up to ${to}. Unknown, never a number.`); continue; }
+      let first = band;
+      for (let h = Math.max(constant + 1, band - 7); h < band; h++) {
+        const r = await read(w, h, surface, false, t);
+        console.log(line(w, h, t, r));
+        if (fit(r)) { first = h; break; }
+      }
+      firstWhole.set(key, first);
+      console.log(`    -> width ${w} text ${t}: first whole h = ${first}`);
+    }
+  }
+
+  console.log(`\n  THE SET THE CONSTANT IS THE MINIMUM OF`);
+  const known = [];
+  for (const w of widths) for (const t of texts) {
+    const v = firstWhole.get(`${w}|${t}`);
+    console.log(`    width ${w}  text ${t.padEnd(2)}  first whole h = ${v === null ? 'unknown' : v}`);
+    if (typeof v === 'number') known.push(v);
+  }
+  const bad = [];
+  if (!known.length) {
+    bad.push(`NO CELL FITS ANYWHERE IN ${from}..${to} at any text size measured. The minimum is UNKNOWN, and unknown is not a pass — widen --ladder-to or fix the board.`);
+  } else {
+    const trueValue = Math.min(...known);
+    console.log(`\n    minimum over the set = ${trueValue}; gateBelowH = ${constant}`);
+    if (trueValue < constant) {
+      bad.push(`THE CONSTANT REFUSES A WORKING SCREEN — every required control is whole from h ${trueValue} up, `
+        + `and gateBelowH is ${constant}. Heights ${trueValue}..${constant - 1} are refused and they WORK. `
+        + `The true value is ${trueValue}. A gate that takes away a working screen is worse than no gate.`);
+    } else if (trueValue > constant) {
+      bad.push(`THE CONSTANT IS BELOW ITS OWN MEASUREMENT — nothing fits until h ${trueValue} and gateBelowH is ${constant}, `
+        + `so it is not the largest value that never refuses a working screen. Either the board improved and the number `
+        + `was left behind, or the number was never derived. Re-derive it: ${trueValue}.`);
+    }
+  }
+
+  console.log(`\n  BOUNDARY — what this derivation does NOT cover, named rather than left to be found:
+  (a) WIDTH IS NOT SWEPT BY DEFAULT. The constant is a HEIGHT and the fit is not
+      purely one, so this ran at ${widths.join(',')}. Measured 2026-08-15 (Sunna) at Text S:
+      432 at widths 600/800/844/1200/1440 — it SATURATES, wider buys nothing —
+      and LATER at narrower ones (444 at 400 and 360, 453 at 300, where the
+      narrow layout takes over). Narrower is never earlier, so the minimum over
+      widths is the wide-and-saturated value. Re-check with --ladder-width if the
+      composition changes.
+  (b) UI SIZE. Every cell here is Auto fit. A player on a fixed UI-size setting
+      is a different board, and mobilefit is the tool that sweeps that axis.
+  (c) ONE SURFACE. ?shot=combat, because that is where the five required controls
+      are named. A screen that fits combat and not the map is not this number's.
+  (d) ONE BOX, headless Chromium, device-metric emulation, and EVERY CELL IS
+      READ AS A WINDOW — no touch emulation, the same call the 800x… rungs make
+      in the main run. A touchscreen of the same dimensions is a device cell and
+      differs in the gate's WORDING, not in whether the board fits; the fit is
+      what is measured here. Emulation is not a device either — see the main
+      run's boundary (a).
+  (e) THE LOWER EDGE OF THE BAND IS NOT LEGISLATED. This checks the constant is
+      the largest value that refuses nothing working. It does NOT check the gate
+      catches every broken screen, and at large text it cannot: the board does
+      not fit itself until h 495/533/571 at M/L/XL, so between the constant and
+      those heights a large-text player gets a cut board and no refusal. That is
+      layout work, filed, and deliberately not the refusal's job — a threshold
+      that grew with the accessibility setting would refuse more and more of a
+      large-text player's screens, which is the opposite of what that setting is
+      for.`);
+
+  console.log(`\n  ${bad.length ? `FAIL — ${bad.length} finding(s)` : `PASS — gateBelowH ${constant} is exactly the minimum whole-fit height over the measured set`}`);
+  for (const b of bad) console.log(`    - ${b}`);
+  return bad.length ? 1 : 0;
+}
+
 async function main() {
   if (!browserPath) { console.error('uprightgate: no Chrome/Edge found — pass --browser PATH or set $CHROME'); process.exit(2); }
   if (!TEXT[textKey]) { console.error(`uprightgate: --text ${textKey} is not one of ${Object.keys(TEXT).join('/')}`); process.exit(2); }
@@ -472,16 +767,22 @@ async function main() {
     while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return true; await wait(150); }
     throw new Error(`timed out waiting for ${w}`); };
 
-  async function read(w, h, surface, device = true) {
+  async function read(w, h, surface, device = true, tKey = textKey) {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 2, mobile: device }, S);
     await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: device, maxTouchPoints: device ? 5 : 1 }, S);
     await cdp.send('Page.navigate', { url: base + surface.q }, S);
     await until(surface.ready, `${surface.name} to mount at ${w}x${h}`);
-    await ev(`document.documentElement.style.fontSize='${TEXT[textKey]}'; 'ok'`);
+    await ev(`document.documentElement.style.fontSize='${TEXT[tKey]}'; 'ok'`);
     // The auto-zoom re-flexes on a 150ms debounce and re-applies at +300ms from
     // boot; 800 clears both, and the gate is written by the same call.
     await wait(800);
     return ev(probe(surface.required, surface.whole));
+  }
+
+  if (args.includes('--ladder')) {
+    const code = await runLadder(read);
+    cdp.close(); child.kill(); if (server) server.close();
+    process.exit(code);
   }
 
   const fails = []; let cells = 0;

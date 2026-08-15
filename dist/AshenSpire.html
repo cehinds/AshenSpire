@@ -6408,39 +6408,69 @@ const balance = {
       // says so, instead of drawing a board whose END TURN no gesture reaches.
       //
       // IT IS A MEASUREMENT, NOT A TASTE, and it is in data because it is a
-      // layout fact that will move when the board does. Sunna, 2026-08-15, on a
-      // height ladder at width 800, wide layout, headless Chromium, % of each
-      // control on screen (`ok` = whole):
+      // layout fact that will move when the board does.
       //
-      //   h        500  480  470  460  450  440  430  410  390
-      //   S  hand   ok   ok   ok   ok   ok   ok   98   83   67
-      //      ENDTRN ok   ok   ok   ok   ok   ok   ok   ok   ok
-      //   M  hand   ok   94   95   92   89   82   74   60   46
-      //      ENDTRN ok   ok   ok   ok   ok   ok   ok   62    0
-      //   L  hand   81   73   73   69   67   61   54   41   29
-      //      ENDTRN ok   ok   ok   ok  100   62   25    0    0
-      //   XL hand   62   54   54   53   50   44   38   26   15
-      //      ENDTRN 71   26   20   13    0    0    0    0    0
+      // THE MEASUREMENT IS A MINIMUM OVER AN ENUMERATED SET, AND SAYING THAT
+      // OUT LOUD IS THE WHOLE REPAIR. What the gate must never do is refuse a
+      // screen that works, so the only height that binds is the SMALLEST one at
+      // which all five required controls come whole — over every text size,
+      // because text size is what moves it. Sunna, 2026-08-15, `?shot=combat`,
+      // wide layout, auto UI size, headless Chromium at width 800, sweeping
+      // height at 1 px (`node tools/uprightgate.mjs --ladder`):
       //
-      // 435 IS THE LARGEST VALUE THAT NEVER REFUSES A WORKING SCREEN. The
-      // binding row is Text S: at h 440 every required control is whole, so a
-      // threshold above 440 takes away a window that works. At h 430 the hand is
-      // already cut at every text size, so 435 refuses nothing that was intact.
-      // Below it sit every landscape phone we test — 844x390, 915x412, 844x344 —
-      // which is the shape this gate exists for.
+      //   text size            S     M     L     XL
+      //   first whole h      432   495   533   571
       //
-      // IT IS DELIBERATELY NOT A PER-TEXT-SIZE TABLE, and that is the important
-      // line. The board fails EARLIER as text grows (at XL, END TURN is already
-      // gone at h 450 and the hand is cut at h 560), so a threshold that grew
-      // with the accessibility setting would refuse more and more of a
-      // large-text player's screens — the opposite of what the setting is for.
-      // That whole column is a pre-existing defect of the wide layout at Text
-      // L/XL and it needs layout work, not a wider refusal.
+      //   the binding control is `.hand-area` at every one of them. At Text S
+      //   END TURN and both piles are already whole at 390, the floor of the
+      //   sweep, and the energy orb comes whole at 396 — so from 396 up it is
+      //   the hand alone deciding this number.
       //
-      // Re-measure with `node tools/uprightgate.mjs` (add `--text S|L|XL`). It
-      // goes red both ways: a wall with no gate, and a gate on a shape where
-      // every required control is whole.
-      gateBelowH: 435,
+      // 432 IS THE LARGEST VALUE THAT NEVER REFUSES A WORKING SCREEN — it is
+      // min(432, 495, 533, 571), and it is Text S's number because Text S is the
+      // most permissive setting a player can be on. At h 431 the hand is 99.25%
+      // and cut at every text size; at 432 it is whole at S. Below 432 sit every
+      // landscape phone we test — 844x390, 915x412, 844x344 — which is the shape
+      // this gate exists for.
+      //
+      // IT SAID 435 UNTIL 2026-08-15 AND THAT WAS FALSE BY THREE. Bjorn measured
+      // the hand whole at 432 (three runs, identical) while the checker printed
+      // PASS 14/14, because the ladder that produced the old table was spaced at
+      // 10 px and had cells at 430 and 440 and nothing between. The number was
+      // never derived from a set; it was read off a table with a hole in it, and
+      // a hole in a table looks exactly like a measurement. THE LADDER IS NOW
+      // 1 PX ACROSS 430..440 AND THE SET IS ENUMERATED BY A COMMAND. Both halves
+      // or neither: a corrected constant under an uncorrected ladder is the same
+      // defect at a different offset, waiting.
+      //
+      // ONE CONSTANT IS THE RIGHT SHAPE, AND THE 139 PX SPREAD ABOVE IS WHY, not
+      // an argument against it. The four heights differ — so a per-text-size
+      // threshold is buildable, and it would refuse a Text XL player every screen
+      // under 571 while a Text S player keeps everything from 432. That is an
+      // accessibility setting that takes screens away as you turn it up, which is
+      // the opposite of its job (Law 4 clause 2: two controls, two jobs). The
+      // refusal therefore answers to the most permissive cell and nothing else,
+      // and the other three columns are not a threshold — they are a LAYOUT
+      // BACKLOG: the wide board does not fit itself at M/L/XL until 495/533/571,
+      // and at XL END TURN is already walled at h 440/450 with no gate standing
+      // (`--text XL`, pre-existing, filed, not the refusal's to cover). Moving
+      // 435 -> 432 hands three of those heights back too: an XL player at
+      // 432..434 now meets the wall where the gate used to stand by accident —
+      // three pixels of a wall the refusal covered three quarters of and never
+      // closed. Counted and argued once, in uprightgate's KNOWN OPEN block; not
+      // restated here.
+      //
+      // THE COST, STATED: between 432 and 571 a large-text player can get a board
+      // with the hand cut and no refusal. That is deliberate. A gate that takes
+      // away a working screen is worse than no gate, and this number is pinned to
+      // the control the player needs on the setting that fits soonest.
+      //
+      // Re-derive with `node tools/uprightgate.mjs --ladder` — it walks the
+      // refused span at 1 px and goes red BOTH ways: a constant above the
+      // measurement (refuses working screens) and one below it (a refusal left
+      // behind by a board that moved). `node tools/uprightgate.mjs --text S`
+      // is the standing check on the same fact at the shape level.
+      gateBelowH: 432,
     },
     // Text size → root font-size %. Because type + dimensions are rem, one
     // value rescales the whole UI (styles/base.css).
