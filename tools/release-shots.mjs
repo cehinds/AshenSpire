@@ -2,12 +2,40 @@
 // tools/release-shots.mjs — photograph the RELEASE BUILD, screen by screen,
 // at the two shapes Constantine looks at (Bjorn, 2026-08-07, Track C).
 //
+// ── A SENTENCE OF MINE THAT WAS FALSE FOR EIGHT DAYS ────────────────────────
+// (Bjorn, 2026-08-16, gating Sten's version work at 51f3703.)
+//
+// Line 8 below used to end: "What Constantine runs is the single-file bundle; a
+// shot of the source tree is evidence about a thing he never opens." IT IS THE
+// OTHER WAY ROUND ON THE PATH README CALLS RECOMMENDED, and I never checked it.
+//
+//   run.sh -> tools/launch.mjs: builds build/AshenSpire.html, copies it into
+//   dist/, and then calls serve({ root: ROOT }) — WHICH SERVES THE SOURCE TREE.
+//   Measured at 51f3703: `GET /` returns 499 bytes, byte-for-byte index.html;
+//   build/AshenSpire.html is 3,056,062 bytes. He is handed the source. dist/ is
+//   built by that command and then not opened by it.
+//
+// SO THERE ARE TWO REAL PATHS, and README.md offers both: "One-click
+// (recommended)" -> run.sh -> THE SOURCE; "Standalone file" -> dist/
+// AshenSpire.html -> THE BUNDLE. Naming one of them "what Constantine runs"
+// was a claim wider than anything anyone had watched.
+//
+// THIS TOOL IS NOT WITHDRAWN AND ITS SHOTS ARE NOT VOID. Its door is
+// dist/AshenSpire.html and it photographs that correctly; what was wrong was the
+// SENTENCE laid over the door — Vira's predicate-versus-sentence finding
+// (development.md, *the door named is the extent of the green*) applied one
+// level up, to a tool's premise instead of a check's predicate. Narrowed here
+// rather than quietly deleted: every dist/ green in this repo is evidence about
+// the standalone-file path, and is SILENT about the recommended one. The source
+// path has its own eye — tools/screenshot.mjs and tools/buildstamp-shot.mjs,
+// both of which serve src/ — and neither is a substitute for the other.
+//
 // WHY THIS EXISTS AND WHY IT IS NOT tools/screenshot.mjs. That tool serves the
 // SOURCE TREE and captures the ?shot= states that existed when it was written.
-// Two gaps make it the wrong instrument for a release:
-//   1. It photographs src/, not dist/AshenSpire.html. What Constantine runs is
-//      the single-file bundle; a shot of the source tree is evidence about a
-//      thing he never opens.
+// Two gaps make it the wrong instrument for a RELEASE ARTIFACT:
+//   1. It photographs src/, not dist/AshenSpire.html — so it is silent about the
+//      file README hands a player under "Standalone file", which is the thing a
+//      release IS. (It is NOT silent about what run.sh opens; see above.)
 //   2. Five player-facing surfaces have NO ?shot= state and therefore cannot
 //      appear in it at all — the Armoury, the menu tabs, Settings,
 //      Settings → Profile, and the profile crisis notice (#66/#67, the newest
