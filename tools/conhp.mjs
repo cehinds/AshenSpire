@@ -6,6 +6,7 @@
 // The first committed form is intentionally RED against the Vigour-era tree.
 
 import { contentBundle } from '../src/content/index.js';
+import { RELIC_MODIFIER_TAGS } from '../src/model/schemas.js';
 import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRunState } from '../src/model/state.js';
@@ -95,7 +96,12 @@ check('starter relic bonuses use the one closed modifier-tag list, not relic-id 
     assert(relic, `${cls.id} starting relic is missing`);
     assert(Array.isArray(relic.passives?.modifiers), `${relic.id}.passives.modifiers is missing`);
     for (const row of relic.passives.modifiers) {
-      assert(['resource.flat', 'resource.attributeTier', 'damage.school.flat'].includes(row.tag),
+      // IMPORTED, never re-typed. This line held a hand-typed copy of the three
+      // tags until 2026-08-15: it AGREED with the declaration, which is exactly
+      // how a second home survives (SOP 5 — agreement is not synchronization),
+      // and it sat inside the check whose own name says "the ONE closed list".
+      // tools/onevocab.mjs A1 is what found it and what keeps it collapsed.
+      assert(RELIC_MODIFIER_TAGS.includes(row.tag),
         `${relic.id} has unknown modifier tag '${row.tag}'`);
     }
   }
