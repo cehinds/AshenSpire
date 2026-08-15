@@ -194,11 +194,53 @@ const SCREENS = [
   { name: 'title-slots', query: '?shot=title', landmark: '.slot.occupied .slot-delete', state: 'title' },
   {
     name: 'profile-drawer',
-    // The Settings modal opens on the stored category; `settingsCategory` is
-    // the same setting a returning player's last-viewed tab uses, so the pose
-    // enters by that door rather than this tool clicking through the strip.
-    query: '?shot=profile&shotSettings=' + encodeURIComponent('{"settingsCategory":"Profile"}'),
+    // THIS ENTRY MISSED FOR AS LONG AS IT HAS EXISTED, AND THE DOOR IS WHY
+    // (Bjorn, 2026-08-15, at dev = 334fd02). It used to read:
+    //
+    //   query: '?shot=profile&shotSettings={"settingsCategory":"Profile"}'
+    //   // The Settings modal opens on the stored category; `settingsCategory`
+    //   // is the same setting a returning player's last-viewed tab uses, so
+    //   // the pose enters by that door rather than this tool clicking through
+    //   // the strip.
+    //
+    // The reasoning was right and the door is shut. `?shotSettings` writes the
+    // category into the live profile at boot (src/main.js, beside pickStorage)
+    // — and THEN this state calls `saves.startNewProfile()` (src/main.js:2044),
+    // which is `replacePrimaryWith(freshMeta(), …)`, and `freshMeta()` is
+    // `{ settings: {} }` (src/engine/save.js:274). The act that CREATES the
+    // archive this shot exists to photograph is the act that throws the
+    // category we asked for into the drawer with the outgoing profile. By the
+    // time showSettings() reads `settings.settingsCategory` there is nothing
+    // there, so `current = cats[0]` = Display, and `.prof-restore` — which is
+    // rendered only inside the Profile panel — is not on the page at all.
+    //
+    // MEASURED, both edges, at 334fd02 on dist/AshenSpire.html:
+    //   ?shot=profile asked for Profile/About/Audio/Advanced -> tab was
+    //     Display every time, .prof-restore = 0 every time.
+    //   ?shot=title (same door, no profile swap) asked for About/Audio/Profile
+    //     -> the tab obeyed all three.
+    //   ?shot=profile, Profile tab clicked by hand -> 1 .prof-entry,
+    //     1 .prof-restore.
+    // The one difference between the two states is the profile swap.
+    //
+    // NOT AN APP DEFECT. A new profile having default settings is the correct
+    // behaviour; what was false was this tool's assumption that a display
+    // setting survives a state whose whole job is to replace the profile
+    // holding it. So the harness follows the surface, and CLICKS —
+    // which is what SUB_SURFACE_GROUPS' `settings` reach has always done
+    // ("#90: the categories are a TAB STRIP now … the drive CLICKS instead of
+    // scrolling"). That was the second copy: one fact — how you open a settings
+    // category — written twice, and only one of them worked. The query
+    // parameter is deleted rather than kept as decoration; it claimed a door
+    // that does not open on this state.
+    query: '?shot=profile',
     landmark: '.prof-restore', state: 'profile',
+    drive: `(() => {
+      const t = [...document.querySelectorAll('.set-tab')].find((e) => e.dataset.member === 'Profile');
+      if (!t) return 'no Profile tab in the settings screen';
+      t.click();
+      return true;
+    })()`,
   },
   { name: 'profile-crisis', query: '?shot=crisis', landmark: '.profile-notice .fresh', state: 'crisis' },
   {
