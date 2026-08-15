@@ -1239,6 +1239,33 @@ async function main() {
   try { cdp.close(); } catch { /* closing */ }
   try { child.kill(); } catch { /* closing */ }
   try { s.server.close(); } catch { /* closing */ }
+  // THE PROFILE DIRECTORY IS THE RUN'S, SO THE RUN TAKES IT WITH IT. Every
+  // invocation mkdtemp'd a ~10 MB Chrome profile above and left it in /tmp,
+  // and --selftest invokes this whole tool once per plant: one selftest is
+  // seventeen of them. Measured 2026-08-16, mid-merge, with the disk at 87%:
+  // 216 abandoned `creationbrief-*` directories, 2.0 GB. The sandbox trees
+  // were always cleaned and the profile never was — the same defect this file
+  // is full of, one home tidied and its twelve-lines-away twin missed.
+  // `kill()` is a signal, not a join, so the run waits for the process to go
+  // before deleting the directory it is using. THIS WAIT WAS NOT OBSERVED TO
+  // BE NECESSARY — instrumented at this ref, the child had already exited with
+  // code 0 by the time this line ran — and it is kept as a bounded guard, not
+  // as a fix for anything watched. Said plainly because the first version of
+  // this comment claimed a race I had not seen: see below.
+  await new Promise((res) => {
+    if (child.exitCode !== null || child.signalCode !== null) { res(); return; }
+    child.once('exit', res);
+    setTimeout(res, 3000);
+  });
+  try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
+  // HOW THIS WAS MEASURED, AND WHY IT IS NOT A COUNT. I first checked the fix
+  // by counting `/tmp/creationbrief-*` before and after: 216, then 217, and I
+  // wrote down that the removal had raced Chrome and lost. It had not. ANOTHER
+  // SEAT WAS RUNNING THIS SAME TOOL AT THE SAME TIME on the same machine, and
+  // a count over a directory a second writer is using is not a measurement of
+  // your own run. The honest form is a SET DIFFERENCE — list the directories,
+  // run, list them again, and name the ones that appeared — which reports this
+  // run leaving nothing behind and is re-runnable by anyone, concurrently.
 
   // AN EMPTY RESULT IS NEVER A PASS. The floor is on the denominator: a run
   // that measured no shape, or a shape that found no face, is exit 2 — not a
