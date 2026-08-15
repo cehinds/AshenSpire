@@ -37,20 +37,31 @@
 //   normalizeRunAttributes, initializeRunDerivedStats or initializeRunFlaskCharges
 //   directly — those are the stages under test, not the entry point.
 //
-// THE OLD-VOCABULARY SAVES ARE NOT HAND-TYPED. Three frozen fixtures, each the
-// exact bytes some build's own saveRun wrote:
-//   · tests/fixtures/run-save-constitution-acb8ffe.json   schemaVersion 2,
-//     'constitution' era, frozen at dev = acb8ffe (already in the tree; 50c's).
-//   · tests/fixtures/run-save-vigour-d7d1920.json          schemaVersion 3,
-//     'vigour' era — generated 2026-08-15 by running d7d1920's OWN saveRun in a
-//     worktree at that commit (reaver, seed 7). d7d1920 is dev's immediate
-//     parent, i.e. the build every player was on the hour before #178 merged.
-//   · tests/fixtures/run-save-vigour-played-d7d1920.json   same build, a PLAYED
-//     run: herald, floor 4, a real act map, 137 cinders, a loseMaxHpPct curse,
-//     an HP deficit and a spent flask charge. A fresh save is the easy case;
-//     every value this fixture carries is one a player would notice losing.
+// THE OLD-VOCABULARY SAVES ARE NOT HAND-TYPED, AND THEY LIVE IN ONE HOME.
+// tests/fixtures/run-save-vigour-window.json is the frozen Vigour-window
+// corpus — every entry the exact bytes some build's own saveRun wrote, with its
+// ref and its reason in the file's own `_provenance` block. This tool reads
+// three of its entries plus the older Constitution-era fixture 50c reads:
+//   · constitutionEra   schemaVersion 2, dev = 5f58bca — the last tree before
+//                       the rename.
+//   · vigourEraNative   schemaVersion 3, a run CREATED at dev = d7d1920, the
+//                       build every player was on the hour before #178 merged.
+//   · vigourEraPlayed   schemaVersion 3, same build, a PLAYED herald: floor 4,
+//                       a real act map, 137 cinders, a loseMaxHpPct curse, an HP
+//                       deficit and a spent flask charge. A fresh save is the
+//                       easy case; every value this one carries is one a player
+//                       would notice losing. Added for this tool.
+//   · tests/fixtures/run-save-constitution-acb8ffe.json — schemaVersion 2,
+//     frozen at dev = acb8ffe; already in the tree, and 50c's.
 // A substituted string ("constitution" -> "vigour") is a guess about what the
 // old build wrote. These are what it wrote.
+//
+// I BUILT THE SECOND COPY MYSELF AND THEN COLLAPSED IT. Branching off dev, I
+// regenerated Vigour-era fixtures my own earlier session had already frozen and
+// pushed at 9c83856 — one fact, two homes, nothing keeping them in sync, which
+// is the defect this house exists to catch. That branch is merged in here and
+// its file is the single home; my two loose fixtures are deleted, and the one
+// artifact of mine that was genuinely new (the played herald) moved into it.
 //
 // WHAT RED MEANS HERE. Not "a number is wrong" — this tool holds no opinion
 // about any number. It only says: THIS number is not the number that went in.
@@ -297,26 +308,47 @@ const EXPLAINED_CHANGES = {
   drawPerTurn: 'pools are re-derived under the current rules',
 };
 
+// `entry` names a key inside the Vigour-window corpus; its absence selects the
+// whole file. Either way what reaches the door below is a STRING of save bytes.
+const WINDOW = 'tests/fixtures/run-save-vigour-window.json';
 const FIXTURES = [
   {
     file: 'tests/fixtures/run-save-constitution-acb8ffe.json',
-    label: "constitution-era, schemaVersion 2 (dev = acb8ffe)",
+    label: 'constitution-era, schemaVersion 2 (dev = acb8ffe)',
     mustContain: ['"constitution"', '"schemaVersion":2'],
     retiredNamePresent: false,
   },
   {
-    file: 'tests/fixtures/run-save-vigour-d7d1920.json',
-    label: "vigour-era, schemaVersion 3, fresh reaver (dev = d7d1920 — dev's own parent)",
+    file: WINDOW, entry: 'constitutionEra',
+    label: 'constitution-era, schemaVersion 2 (dev = 5f58bca — the last tree before the rename)',
+    mustContain: ['"constitution"', '"schemaVersion":2'],
+    retiredNamePresent: false,
+  },
+  {
+    file: WINDOW, entry: 'vigourEraNative',
+    label: "vigour-era, schemaVersion 3, run created at dev = d7d1920 (dev's own parent)",
     mustContain: ['"vigour"', '"schemaVersion":3'],
     retiredNamePresent: true,
   },
   {
-    file: 'tests/fixtures/run-save-vigour-played-d7d1920.json',
+    file: WINDOW, entry: 'vigourEraPlayed',
     label: 'vigour-era, schemaVersion 3, PLAYED herald: floor 4, curse, deficit, spent flask',
     mustContain: ['"vigour"', '"schemaVersion":3', '"cinders":137'],
     retiredNamePresent: true,
   },
 ];
+
+/** Read a fixture's save BYTES — the string the door takes — from either shape. */
+function fixtureBytes(fx) {
+  const path = resolve(ROOT, fx.file);
+  assert(existsSync(path), `fixture missing: ${fx.file} — an absent corpus is a check that silently stopped running`);
+  const raw = readFileSync(path, 'utf8');
+  if (!fx.entry) return raw;
+  const corpus = JSON.parse(raw);
+  assert(Object.hasOwn(corpus, fx.entry),
+    `${fx.file} has no entry '${fx.entry}' — the corpus was renamed out from under this check, which is how one silently stops running`);
+  return JSON.stringify(corpus[fx.entry]);
+}
 
 // The player-owned values a migration may never move. Each is read off the OLD
 // bytes and demanded of the loaded run — no expected literals, so the check
@@ -398,9 +430,7 @@ function groupB(registries) {
 
   for (const fx of FIXTURES) {
     check(`an older build's own save comes forward whole — ${fx.label}`, () => {
-      const path = resolve(ROOT, fx.file);
-      assert(existsSync(path), `fixture missing: ${fx.file} — an absent corpus is a check that silently stopped running`);
-      const bytes = readFileSync(path, 'utf8');
+      const bytes = fixtureBytes(fx);
       // Prove the probe has a referent before trusting anything it says: a
       // fixture that no longer carries the old vocabulary would pass every
       // assertion below while testing nothing (SOP 2's ⚙ clause).
