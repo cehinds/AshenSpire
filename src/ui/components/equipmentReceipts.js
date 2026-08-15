@@ -31,7 +31,11 @@ export function renderCandidateComparison(candidate) {
     ? candidate.addedEffects.map((row) => `<li class="equip-added-effect">${esc(row.label)}</li>`).join('')
     : '<li class="equip-added-effect none">No added effects.</li>';
   const resources = candidate.resourceChanges.length
-    ? candidate.resourceChanges.map((row) => `<li class="equip-resource-change">${esc(row.label)} ${row.before} → <strong>${row.after}</strong></li>`).join('')
+    // `row.note` is the DECLINED gear delta — a price rule that ignores
+    // talismans and relics says so on the row rather than showing an unmoved
+    // number and letting the piece look broken (model/equipmentPresentation.js,
+    // `swapPriceChanges`). Absent on every row that has nothing to decline.
+    ? candidate.resourceChanges.map((row) => `<li class="equip-resource-change">${esc(row.label)} ${row.before} → <strong>${row.after}</strong>${row.note ? `<small>${esc(row.note)}</small>` : ''}</li>`).join('')
     : '<li class="equip-resource-change none">No resource changes.</li>';
   return `<details class="equip-candidate-comparison"><summary>Compare cards and receipts</summary>`
     + `<ul class="equip-card-changes">${roleRows}</ul>${requirements}`

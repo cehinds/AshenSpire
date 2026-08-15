@@ -685,8 +685,13 @@ export function mountEquipment(host, {
       const row = document.createElement('div');
       row.className = 'equip-candidate-row';
       row.appendChild(chip);
+      // `meta` is handed over because the swap-price rows are priced with the
+      // LIVE rule (Settings › Advanced › Weapon swap cost). Omitting it would
+      // price them with the shipping default and read as plausible — the row
+      // carries the rule it used (`ruleId`) so that stays readable either way.
       const comparison = equipmentSurfaceReceipt(registries, run, {
         candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },
+        meta,
       }).candidate;
       row.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
       list.appendChild(row);
