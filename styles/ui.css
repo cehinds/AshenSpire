@@ -2274,7 +2274,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .about-ai .about-block .set-note { line-height: 1.45; max-width: 62ch; }
 .about-ai .about-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .about-ai .about-result:empty { display: none; }
-.about-ai .about-ver { opacity: 0.75; }
+/* The A4 version line is TWO rows and it has to be allowed to be two rows.
+   `.set-note` caps at 23rem = 207px at this shape, which is narrower than
+   either row, so each `<br>` row wrapped again and the line Constantine picked
+   rendered as FOUR. Its two siblings above already open to 62ch for the same
+   reason; this is that rule, not a new idea. Measured at 390x844. */
+.about-ai .about-ver { opacity: 0.75; max-width: 62ch; }
 
 /* ---- THE COMPENDIUM (Freja) ------------------------------------------------
    Constantine: *"...its own menu on the main menu that keeps most things

@@ -13,7 +13,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
-import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE } from './buildversion.mjs';
+import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -321,7 +321,15 @@ try {
   const ord = bumpOrdinal(ROOT);
   buildDigest = ord.digest;
   if (ord.bumped) console.log(`bundle: build ordinal → ${padOrdinal(ord.ordinal)} (the source moved; ${ORDINAL_HOME} rewritten)`);
-  sources.set(VERSION_MODULE, stampSource(sources.get(VERSION_MODULE), buildDigest, padOrdinal(ord.ordinal)));
+  // THE RUN PATH IS SAID HERE BECAUSE ONLY HERE KNOWS IT. What this function
+  // produces is one HTML file a player opens on its own; tools/serve.mjs says
+  // the other thing in its own words. Neither infers, and there is no third
+  // site that could disagree with both.
+  sources.set(VERSION_MODULE, stampSource(sources.get(VERSION_MODULE), buildDigest, {
+    ordinal: padOrdinal(ord.ordinal),
+    built: ord.built,
+    runPath: RUN_PATH_BUNDLE,
+  }));
 } catch (err) {
   fail(`could not derive the build version: ${err.message}`);
 }

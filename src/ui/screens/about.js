@@ -11,6 +11,7 @@
 
 import { esc } from '../components/tooltip.js';
 import { AI_DISCLOSURE, disclosureAsText } from '../../content/aiDisclosure.js';
+import { ABOUT_BUILD_LINE, BUILD_VERSION, RUN_PATH } from '../../buildversion.js';
 
 export function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
   const sections = disclosure.sections
@@ -37,6 +38,23 @@ export function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {
     .map((g) => `<p class="about-lead">${esc(g.join(' '))}</p>`)
     .join('');
 
+  // THE VERSION LINE — A4, Constantine's pick of four ("a4 is really nice",
+  // 2026-08-16), and every field on it is DERIVED. It used to read
+  // `Ashen Spire 0.4.x`, a scope string typed by hand into the disclosure
+  // module — a second version site the build check had been holding OPEN
+  // pending exactly this decision (tools/buildversion.mjs, OPEN_SECOND_SITES).
+  //
+  // Row 1 comes composed from src/buildversion.js so the drop rules live with
+  // the facts; row 2 is joined here because the acknowledgement date is the one
+  // thing on the line that module has no business owning. The `<br>` is
+  // deliberate and not a wrap: the break is between WHAT THIS BUILD IS and HOW
+  // IT REACHED YOU, and a break that falls wherever the box ends puts `src`
+  // above `6654d22741` on some phone we did not measure.
+  //
+  // WHAT IT COSTS, stated because he was told it before he chose: the line now
+  // MOVES EVERY BUILD. That is the point — a screenshot pins the tree — and it
+  // is also the reason the About footer is no longer a stable string anyone can
+  // eyeball for "did anything change".
   container.innerHTML = `
     <div class="about-ai">
       ${lead}
@@ -45,7 +63,7 @@ export function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {
         <button class="about-copy">Save this to a file</button>
       </div>
       <p class="about-result" role="status"></p>
-      <p class="set-note about-ver">Ashen Spire ${esc(disclosure.version)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
+      <p class="set-note about-ver">${esc(ABOUT_BUILD_LINE)}<br>${esc(RUN_PATH)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
     </div>`;
 
   // The player can keep a copy of what they were told. Same instinct as the
@@ -53,7 +71,7 @@ export function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {
   container.querySelector('.about-copy').addEventListener('click', () => {
     const say = (m) => { container.querySelector('.about-result').textContent = m; };
     try {
-      const blob = new Blob([disclosureAsText(disclosure)], { type: 'text/plain' });
+      const blob = new Blob([disclosureAsText(disclosure, BUILD_VERSION)], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

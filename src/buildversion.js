@@ -192,8 +192,66 @@ export const SOURCE = 'UNSTAMPED';
 export const ORDINAL = 'UNBUMPED';
 /* BUILD_ORDINAL_END */
 
+// ---------------------------------------------------------------------------
+// THE BUILD DATE — THE SAME SHAPE AS THE ORDINAL, FOR THE SAME REASON, AND IT
+// IS HERE BECAUSE A DATE IS HUMAN AND A DIGEST IS NOT.
+//
+// Constantine, 2026-08-16, choosing between four About lines: "a4 is really
+// nice". A4 carries `built <date>` beside the digest. The digest identifies
+// exactly and reads like nothing; the date reads at a glance and identifies
+// nothing. Two jobs again, and neither can do the other's — the same argument
+// the ordinal and the digest already settled, one field over.
+//
+// IT IS A FACT OF HISTORY, NOT OF THE TREE, so it goes where the ordinal goes:
+// computed ONCE by the build, COMMITTED to buildordinal.json, and injected from
+// there. A clock read at build time would make tools/rebuild-matches.mjs red on
+// the second day for every tree that had not changed — the same off-by-one that
+// forced the ordinal out of `rev-list` and into a file. Written in the same act
+// as the ordinal, under the same condition (the digest moved), so a rebuild of
+// an unchanged tree writes nothing and reproduces byte for byte.
+//
+// `UNDATED` is what you see when the tree in front of you is not the tree the
+// date was computed for — an edited working copy under tools/serve.mjs. The
+// line DROPS the field rather than showing it: same rule as UNBUMPED, because a
+// date that belongs to an older build is a lie a reader has no way to check.
+// ---------------------------------------------------------------------------
+/* BUILD_DATE_START */
+export const BUILT = 'UNDATED';
+/* BUILD_DATE_END */
+
+// ---------------------------------------------------------------------------
+// THE RUN PATH — WHICH OF THE TWO README PATHS DREW THIS SCREEN.
+//
+// README offers two ways to play and NOTHING ON SCREEN HAS EVER TOLD THEM
+// APART: `run.sh` → tools/launch.mjs → tools/serve.mjs serves THE SOURCE TREE,
+// and `dist/AshenSpire.html` is THE BUNDLE. A bug report from either looks
+// identical, so "does it reproduce in the bundle" has been unanswerable from a
+// screenshot for as long as both paths have existed. Bjorn's
+// tools/release-shots.mjs header documents the split, and it cost him a
+// sentence that was false for eight days.
+//
+// IT IS DERIVED BY THE SAME MECHANISM AS THE DIGEST AND NOT BY A GUESS. The two
+// paths already inject this module differently; each now says which one it is,
+// in its own words, at the moment only it can know. Nothing here sniffs
+// `location.protocol` or counts `<script>` tags to infer it after the fact — an
+// inference is a second answer to a question the injector already answered.
+//
+// `UNPLACED` is a raw `file://` open of index.html with neither a build nor the
+// server in the path. Nothing injected, so nothing is claimed — the same
+// honesty as UNSTAMPED beside it, and in that state SOURCE says so too.
+// ---------------------------------------------------------------------------
+/* BUILD_RUNPATH_START */
+export const RUN_PATH = 'UNPLACED';
+/* BUILD_RUNPATH_END */
+
 /** True when the ordinal in this page belongs to the tree that drew it. */
 export const BUILD_IS_ORDERED = ORDINAL !== 'UNBUMPED';
+
+/** True when the build date in this page belongs to the tree that drew it. */
+export const BUILD_IS_DATED = BUILT !== 'UNDATED';
+
+/** True when a build or the dev server said which path drew this page. */
+export const BUILD_IS_PLACED = RUN_PATH !== 'UNPLACED';
 
 /** The ORDERING half: numeric throughout, last component sorts. His rule. */
 export const BUILD_VERSION = BUILD_IS_ORDERED ? `${RELEASE}.${ORDINAL}` : RELEASE;
@@ -208,3 +266,30 @@ export const BUILD_IS_STAMPED = SOURCE !== 'UNSTAMPED';
  * photograph gate cannot disagree about it.
  */
 export const BUILD_STAMP_TEXT = `BUILD ${BUILD_VERSION} · src ${SOURCE}`;
+
+/**
+ * THE ABOUT LINE — Settings → About, the variant Constantine picked ("a4 is
+ * really nice", 2026-08-16). Two rows, because he was shown two rows on a phone
+ * and the break is SEMANTIC rather than wherever the box happens to end: row 1
+ * is what this build IS, row 2 is how it REACHED you.
+ *
+ *   Ashen Spire 0.4.0.0618 · built 2026-08-16 · src 6654d22741
+ *   standalone file · acknowledgement last updated 2026-08-07
+ *
+ * COMPOSED HERE AND NOT IN THE SCREEN, for the reason BUILD_STAMP_TEXT is: the
+ * drop rules below are the honesty of the line, and a renderer that re-composed
+ * them would be a second copy of them. src/ui/screens/about.js renders row 1
+ * verbatim and joins row 2 to the acknowledgement date, which is the one fact
+ * on the line this module has no business owning.
+ *
+ * A FIELD THAT CANNOT BE DERIVED IS DROPPED, NEVER FILLED. `built` and the
+ * ordinal disappear when they belong to another tree; the digest stays and says
+ * `UNSTAMPED` out loud, because a missing identifier is a question and a wrong
+ * one is an answer.
+ */
+// NOT AN ARRAY JOINED, and the reason is a check rather than taste:
+// tools/closedsets.mjs reads `export const X = [` as a declared closed SET and
+// then reports it has no reader, because nothing imports it as a vocabulary. A
+// sentence built out of a list looks like a list. One template, no set.
+export const ABOUT_BUILD_LINE =
+  `Ashen Spire ${BUILD_VERSION}${BUILD_IS_DATED ? ` · built ${BUILT}` : ''} · src ${SOURCE}`;

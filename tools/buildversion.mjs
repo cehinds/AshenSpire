@@ -78,6 +78,25 @@ export const RELEASE_HOME = 'src/content/index.js';
 export const ORD_MARKER_START = '/* BUILD_ORDINAL_START */';
 export const ORD_MARKER_END = '/* BUILD_ORDINAL_END */';
 export const ORD_PLACEHOLDER = 'UNBUMPED';
+
+/** The build date's anchors and placeholder. A fact of history, like the ordinal. */
+export const DATE_MARKER_START = '/* BUILD_DATE_START */';
+export const DATE_MARKER_END = '/* BUILD_DATE_END */';
+export const DATE_PLACEHOLDER = 'UNDATED';
+
+/** The run path's anchors and placeholder — the one fact only the injector knows. */
+export const RUN_MARKER_START = '/* BUILD_RUNPATH_START */';
+export const RUN_MARKER_END = '/* BUILD_RUNPATH_END */';
+export const RUN_PLACEHOLDER = 'UNPLACED';
+
+/**
+ * THE TWO RUN PATHS, NAMED ONCE. README offers exactly these two and nothing on
+ * a screen has ever told them apart. The words are the player's, not ours: a
+ * bug report says which file they opened, never which module graph served it.
+ */
+export const RUN_PATH_BUNDLE = 'standalone file';
+export const RUN_PATH_SERVE = 'source tree';
+
 /** Where the ORDERING half lives. Outside the digest roots, and see below. */
 export const ORDINAL_HOME = 'buildordinal.json';
 /** Fixed width, so eye-order and string-order agree. */
@@ -198,18 +217,17 @@ function isDerived(value) {
  * The row then rules on that site by itself — PASS if the second home is gone,
  * RED if it is still there — with no help from this list.
  */
-export const OPEN_SECOND_SITES = Object.freeze([
-  Object.freeze({
-    file: 'src/content/aiDisclosure.js',
-    key: 'version',
-    raised: '2026-08-16 (Bjorn found the inversion, Sten rebuilt the row)',
-    why: "the About screen renders this string to a player while the build stamp on title/map/combat "
-      + "renders the release — two numbers, two screens, live. Constantine APPROVED THIS WORDING "
-      + "(b349bbd / #92), so which of the two should move is a Tier-2 call (SOP 1) and is his, not "
-      + "this tool's and not the maker's. Marina is carrying the split to him with a picture. This "
-      + "row's job is to stop the tree from reporting clean while it is open.",
-  }),
-]);
+// EMPTY SINCE 2026-08-16, AND THE EMPTINESS IS THE RECORD OF AN ANSWER.
+//
+// The one entry was `src/content/aiDisclosure.js` / `version` — the About
+// screen rendering a hand-typed '0.4.x' while title/map/combat rendered the
+// derived stamp. The entry said which of the two should move was a Tier-2 call
+// and Constantine's. He made it: shown four About lines, he picked A4 — "a4 is
+// really nice" — and A4 carries the derived build version. The field is gone
+// from that module, so this entry met its own removal condition and was
+// deleted rather than amended. Row B now rules on that site with no help from
+// here: PASS because the second home is gone, RED the day one comes back.
+export const OPEN_SECOND_SITES = Object.freeze([]);
 
 // ---------------------------------------------------------------------------
 // the digest
@@ -278,30 +296,46 @@ function between(text, start, end, name, line) {
 }
 
 /**
- * stampSource(text, digest, ordinal?) → the module source with SOURCE, and the
- * ORDINAL when one is supplied, derived.
+ * stampSource(text, digest, { ordinal, built, runPath }) → the module source
+ * with SOURCE derived, and each optional fact derived when one is supplied.
  *
  * Throws rather than returning the text unchanged: an injector that silently
  * no-ops ships `UNSTAMPED` to a player and nothing says a word.
  *
- * THE ORDINAL IS OPTIONAL AND THAT IS THE SERVE PATH, NOT A CONVENIENCE.
+ * THE OPTIONS ARE OPTIONAL AND THAT IS THE SERVE PATH, NOT A CONVENIENCE.
  * tools/serve.mjs must never bump — a dev server that bumped would burn an
  * ordinal per reload and dirty the tree doing it — so when the working copy has
- * drifted from the recorded digest it passes nothing and the page keeps
- * `UNBUMPED`. A page with no build number is honest; a page wearing an older
- * build's number is a lie that sorts.
+ * drifted from the recorded digest it passes neither the ordinal nor the date
+ * and the page keeps `UNBUMPED` / `UNDATED`. A page with no build number is
+ * honest; a page wearing an older build's number is a lie that sorts, and a
+ * page wearing an older build's DATE is the same lie with a friendlier face.
+ *
+ * THE RUN PATH IS NEVER OPTIONAL IN PRACTICE AND IS OPTIONAL IN THE SIGNATURE.
+ * Only an injector can know which path it is, so only an injector may pass it —
+ * but a caller that forgets leaves `UNPLACED`, which is the true answer for a
+ * page nobody injected. A default of either label would be the guess this
+ * field exists to replace.
+ *
+ * NAMED RATHER THAN POSITIONAL: three optional trailing values in a row is how
+ * a date lands in an ordinal's slot and ships a plausible wrong string.
  */
-export function stampSource(text, digest, ordinal = null) {
+export function stampSource(text, digest, { ordinal = null, built = null, runPath = null } = {}) {
   let out = between(text, MARKER_START, MARKER_END, 'BUILD_SOURCE', `export const SOURCE = '${digest}';`);
   if (ordinal !== null) {
     out = between(out, ORD_MARKER_START, ORD_MARKER_END, 'BUILD_ORDINAL', `export const ORDINAL = '${ordinal}';`);
   }
+  if (built !== null) {
+    out = between(out, DATE_MARKER_START, DATE_MARKER_END, 'BUILD_DATE', `export const BUILT = '${built}';`);
+  }
+  if (runPath !== null) {
+    out = between(out, RUN_MARKER_START, RUN_MARKER_END, 'BUILD_RUNPATH', `export const RUN_PATH = '${runPath}';`);
+  }
   return out;
 }
 
-/** stampFile(root, digest, ordinal?) → stamped source of the version module. */
-export function stampFile(root, digest, ordinal = null) {
-  return stampSource(readFileSync(resolve(root, VERSION_MODULE), 'utf8'), digest, ordinal);
+/** stampFile(root, digest, opts?) → stamped source of the version module. */
+export function stampFile(root, digest, opts = {}) {
+  return stampSource(readFileSync(resolve(root, VERSION_MODULE), 'utf8'), digest, opts);
 }
 
 // ---------------------------------------------------------------------------
@@ -313,10 +347,21 @@ export function padOrdinal(n) {
   return String(n).padStart(ORDINAL_PAD, '0');
 }
 
-/** readOrdinal(root) → { ordinal, digest } from its one home. Throws if absent. */
+/**
+ * readOrdinal(root) → { ordinal, digest, built } from its one home. Throws if
+ * absent. `built` rides in this file rather than in one of its own for the
+ * reason the ordinal does: it is a fact of history that the build computes once
+ * and commits, and two files written under one condition are one fact with two
+ * homes waiting to disagree.
+ */
 export function readOrdinal(root = REPO_ROOT) {
   const raw = JSON.parse(readFileSync(resolve(root, ORDINAL_HOME), 'utf8'));
-  return { ordinal: Number(raw.ordinal), digest: raw.digest ?? null };
+  return { ordinal: Number(raw.ordinal), digest: raw.digest ?? null, built: raw.built ?? null };
+}
+
+/** The build date, UTC, as a build writes it. One format, one place. */
+export function today(now = new Date()) {
+  return now.toISOString().slice(0, 10);
 }
 
 /**
@@ -344,7 +389,12 @@ export function readOrdinal(root = REPO_ROOT) {
 export function bumpOrdinal(root = REPO_ROOT) {
   const digest = sourceDigest(root).digest;
   const rec = readOrdinal(root);
-  if (rec.digest === digest) return { ordinal: rec.ordinal, bumped: false, digest };
+  // THE DATE IS WRITTEN IN THIS ACT AND NOWHERE ELSE, under the same condition,
+  // so it can never name a different build from the ordinal beside it. When the
+  // digest has not moved this returns the RECORDED date rather than today's —
+  // that is what keeps a rebuild of an unchanged tree byte-identical, and it is
+  // also the truth: the artifact was built on the day it was built.
+  if (rec.digest === digest) return { ordinal: rec.ordinal, bumped: false, digest, built: rec.built };
 
   let count;
   try {
@@ -357,13 +407,15 @@ export function bumpOrdinal(root = REPO_ROOT) {
   if (!Number.isFinite(count)) throw new Error('git returned a commit count that is not a number');
 
   const ordinal = Math.max(rec.ordinal + 1, count);
+  const built = today();
   writeFileSync(resolve(root, ORDINAL_HOME),
     `${JSON.stringify({
       _: 'DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.',
       ordinal,
       digest,
+      built,
     }, null, 2)}\n`, 'utf8');
-  return { ordinal, bumped: true, digest };
+  return { ordinal, bumped: true, digest, built };
 }
 
 /** The release string, read from its one home rather than re-typed. */
@@ -436,10 +488,11 @@ export function check(root = REPO_ROOT) {
   const add = (ok, name, detail) => { rows.push({ ok, name, detail }); return ok; };
   const src = (rel) => readFileSync(resolve(root, rel), 'utf8');
 
-  // A — NEITHER DERIVED VALUE IS EVER COMMITTED. Each is derived or it is typed;
+  // A — NO DERIVED VALUE IS EVER COMMITTED. Each is derived or it is typed;
   //     there is no third state, and this is where typing one would show up.
-  //     BOTH marker pairs are checked, because a scheme with two injected facts
-  //     and one guarded one is a scheme with an unguarded one.
+  //     ALL FOUR marker pairs are checked, because a scheme with four injected
+  //     facts and three guarded ones is a scheme with an unguarded one. (It had
+  //     two when the ordinal landed; the sentence was already written for this.)
   let ver = '';
   try { ver = src(VERSION_MODULE); } catch { /* reported below */ }
   if (!ver) {
@@ -450,11 +503,13 @@ export function check(root = REPO_ROOT) {
     const held = [
       { what: 'SOURCE', got: slice(MARKER_START, MARKER_END), want: /^\s*export const SOURCE = 'UNSTAMPED';\s*$/ },
       { what: 'ORDINAL', got: slice(ORD_MARKER_START, ORD_MARKER_END), want: /^\s*export const ORDINAL = 'UNBUMPED';\s*$/ },
+      { what: 'BUILT', got: slice(DATE_MARKER_START, DATE_MARKER_END), want: /^\s*export const BUILT = 'UNDATED';\s*$/ },
+      { what: 'RUN_PATH', got: slice(RUN_MARKER_START, RUN_MARKER_END), want: /^\s*export const RUN_PATH = 'UNPLACED';\s*$/ },
     ];
     const bad = held.filter((h) => h.got === null || !h.want.test(h.got));
     add(bad.length === 0, 'A ONE HOME',
       bad.length === 0
-        ? `${VERSION_MODULE} holds both placeholders; the digest and the ordinal are injected, never committed`
+        ? `${VERSION_MODULE} holds all four placeholders; the digest, the ordinal, the build date and the run path are injected, never committed`
         : `${VERSION_MODULE} does not hold a placeholder — a value typed into source is a version ASSERTED, not derived:`
           + bad.map((h) => `\n      ${h.what}: ${h.got === null ? 'its marker pair is missing' : h.got.trim().slice(0, 100)}`).join(''));
   }
@@ -621,10 +676,23 @@ export function check(root = REPO_ROOT) {
   } else {
     const want = sourceDigest(root).digest;
     const found = [...bundleText.matchAll(/const SOURCE = '([^']*)'/g)].map((m) => m[1]);
-    const ok = found.length === 1 && found[0] === want;
-    add(ok, 'E SHIPPED STAMP',
-      ok ? `${BUNDLE} carries SOURCE '${want}', which is this tree's digest`
-        : `${BUNDLE} carries ${found.length === 1 ? `SOURCE '${found[0]}'` : `${found.length} SOURCE literals`}, this tree derives '${want}' — the shipped stamp is not this source`);
+    // THE RUN PATH IS ASSERTED HERE AND NOWHERE ELSE, and this is the whole
+    // falsifier for that field. The label's only job is to tell a screenshot of
+    // the bundle apart from a screenshot of the served source tree; the way it
+    // fails is that this file stops injecting it and the shipped page quietly
+    // says `UNPLACED` — or, worse, says `source tree` because a rename crossed
+    // the two constants. The bundle is the artifact that goes out, so the
+    // bundle is where the claim is checked.
+    const places = [...bundleText.matchAll(/const RUN_PATH = '([^']*)'/g)].map((m) => m[1]);
+    const problems = [];
+    if (found.length !== 1) problems.push(`${BUNDLE} carries ${found.length} SOURCE literals, expected exactly 1`);
+    else if (found[0] !== want) problems.push(`${BUNDLE} carries SOURCE '${found[0]}', this tree derives '${want}' — the shipped stamp is not this source`);
+    if (places.length !== 1) problems.push(`${BUNDLE} carries ${places.length} RUN_PATH literals, expected exactly 1`);
+    else if (places[0] !== RUN_PATH_BUNDLE) problems.push(`${BUNDLE} says it was drawn by '${places[0]}' — a bundle is a '${RUN_PATH_BUNDLE}', and a page that misnames its own run path sends every bug report to the wrong artifact`);
+    add(problems.length === 0, 'E SHIPPED STAMP',
+      problems.length === 0
+        ? `${BUNDLE} carries SOURCE '${want}', which is this tree's digest, and names its run path '${RUN_PATH_BUNDLE}'`
+        : problems.join('\n      '));
   }
 
 
@@ -660,6 +728,17 @@ export function check(root = REPO_ROOT) {
     const want = padOrdinal(recorded.ordinal);
     const found = [...bundleText.matchAll(/const ORDINAL = '([^']*)'/g)].map((m) => m[1]);
     const problems = [];
+    // THE DATE RIDES WITH THE ORDINAL because it is written in the same act,
+    // under the same condition, into the same file — so the same hand-edit that
+    // F exists to catch reaches it, and it needs no row of its own. A date is
+    // the field on the About line a reader will BELIEVE without checking, which
+    // is exactly why it gets the same lock as the number nobody reads.
+    const dates = [...bundleText.matchAll(/const BUILT = '([^']*)'/g)].map((m) => m[1]);
+    const wantDate = recorded.built;
+    if (dates.length !== 1) problems.push(`${BUNDLE} carries ${dates.length} BUILT literals, expected exactly 1`);
+    else if (wantDate === null) problems.push(`${BUNDLE} carries BUILT '${dates[0]}' and ${ORDINAL_HOME} records no build date — a date on the box with no home behind it`);
+    else if (dates[0] !== wantDate) problems.push(`${BUNDLE} carries BUILT '${dates[0]}', ${ORDINAL_HOME} holds '${wantDate}' — the box and the file disagree about the day this was built`);
+    else if (!/^\d{4}-\d{2}-\d{2}$/.test(wantDate)) problems.push(`${ORDINAL_HOME} build date '${wantDate}' is not an ISO date — the About line reads it to a player`);
     if (found.length !== 1) problems.push(`${BUNDLE} carries ${found.length} ORDINAL literals, expected exactly 1`);
     else if (found[0] !== want) problems.push(`${BUNDLE} carries ORDINAL '${found[0]}', ${ORDINAL_HOME} holds '${want}' — the box and the file disagree`);
     if (!Number.isInteger(recorded.ordinal) || recorded.ordinal < 0) problems.push(`${ORDINAL_HOME} ordinal is not a non-negative integer: ${JSON.stringify(recorded.ordinal)}`);
@@ -669,7 +748,7 @@ export function check(root = REPO_ROOT) {
     if (recorded.ordinal >= ORDINAL_CEILING) problems.push(`ordinal ${recorded.ordinal} has reached ${ORDINAL_CEILING}, where a ${ORDINAL_PAD}-wide pad stops sorting: widen ORDINAL_PAD before the next build`);
     add(problems.length === 0, 'F ORDINAL ON THE BOX',
       problems.length === 0
-        ? `${BUNDLE} carries ORDINAL '${want}', which is ${ORDINAL_HOME}'s, padded to ${ORDINAL_PAD} and below the ${ORDINAL_CEILING} sort ceiling`
+        ? `${BUNDLE} carries ORDINAL '${want}' and BUILT '${wantDate}', which are ${ORDINAL_HOME}'s; the ordinal is padded to ${ORDINAL_PAD} and below the ${ORDINAL_CEILING} sort ceiling`
         : problems.join('\n      '));
   }
 

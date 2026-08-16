@@ -21,6 +21,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { AI_DISCLOSURE, DISCLOSURE_PARTS, disclosureAsText } from '../src/content/aiDisclosure.js';
+import { buildVersion } from './buildversion.mjs';
 // WHICH BYTES DID THIS CHECK? This tool already says STALE when a text is
 // missing — but a bundle two merges behind that happens to still carry all
 // seven passes silently, and the whole product here is credibility. One home:
@@ -128,7 +129,10 @@ if (process.argv[2] === '--check') {
 }
 
 if (process.argv[2] === '--full') {
-  console.log(disclosureAsText());
+  // The version is handed down rather than imported by the disclosure module —
+  // that module must stay import-free or `--evidence`'s second command becomes
+  // false. Derived here, from the one home, never typed.
+  console.log(disclosureAsText(AI_DISCLOSURE, buildVersion()));
   process.exit(0);
 }
 

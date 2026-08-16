@@ -158,6 +158,41 @@ const PLANTS = [
     row: 'E SHIPPED STAMP',
     plant: (root) => appendFileSync(resolve(root, 'src/content/balance.js'), '\n// a real edit nobody rebuilt\n'),
   },
+  // ---- the two fields A4 added, each watched red at its own guard -----------
+  // Constantine picked A4 on 2026-08-16, which put `built <date>` and a run-path
+  // label on the About line. Both are injected exactly like the digest, so both
+  // can fail exactly like the digest — typed into source, or shipped disagreeing
+  // with their home. A field with no plant is a field whose guard nobody has
+  // watched fail, which is `unknown`, not green (development.md).
+  {
+    // The A-row plant for the run path. Its twin for the DATE is not here and
+    // is not missing: row A checks all four placeholders through ONE predicate
+    // over ONE list, so a plant per marker would re-prove the same `.filter`
+    // four times. This one proves the list is walked; F and E below prove the
+    // two new facts are locked at the artifact, which is the half that is new.
+    name: 'the run path TYPED into source, so the page asserts a path nobody injected',
+    row: 'A ONE HOME',
+    plant: (root) => edit(root, 'src/buildversion.js',
+      (t) => t.replace("export const RUN_PATH = 'UNPLACED';", "export const RUN_PATH = 'standalone file';")),
+  },
+  {
+    // The date's hand-edit, and it is the ordinal's plant pointed one field
+    // over: buildordinal.json is outside the digest roots, so the build will
+    // never correct a typed date and a wrong day would ship in silence.
+    name: 'the build date HAND-EDITED — the file and the shipped box disagree about the day',
+    row: 'F ORDINAL ON THE BOX',
+    plant: (root) => editJson(root, (j) => ({ ...j, built: '1999-12-31' })),
+  },
+  {
+    // THE CROSSED LABEL, and it is the failure this field exists to prevent
+    // arriving through the field itself. A bundle that calls itself the source
+    // tree sends every bug report from it to the wrong artifact — quietly,
+    // plausibly, and with more confidence than the silence it replaced.
+    name: 'the shipped bundle names the OTHER run path — a standalone file claiming to be the source tree',
+    row: 'E SHIPPED STAMP',
+    plant: (root) => edit(root, 'build/AshenSpire.html',
+      (t) => t.replace("const RUN_PATH = 'standalone file'", "const RUN_PATH = 'source tree'")),
+  },
 ];
 
 function fresh() {

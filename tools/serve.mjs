@@ -10,7 +10,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { resolve, join, extname, normalize } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
-import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE } from './buildversion.mjs';
+import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 
 const ROOT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -110,12 +110,22 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false }
       if (rel.split(/[\\/]/).join('/') === VERSION_MODULE) {
         try {
           const digest = sourceDigest(rootResolved).digest;
+          // The ordinal and the date move together or not at all: both are
+          // facts of the build that wrote buildordinal.json, so a tree that has
+          // drifted from that record has neither, and half of a stale pair is
+          // worse than none of it.
           let ordinal = null;
+          let built = null;
           try {
             const rec = readOrdinal(rootResolved);
-            if (rec.digest === digest) ordinal = padOrdinal(rec.ordinal);
-          } catch { /* no ordinal home: the page says UNBUMPED, which is true */ }
-          body = Buffer.from(stampSource(body.toString('utf8'), digest, ordinal), 'utf8');
+            if (rec.digest === digest) { ordinal = padOrdinal(rec.ordinal); built = rec.built; }
+          } catch { /* no ordinal home: the page says UNBUMPED/UNDATED, which is true */ }
+          // AND THIS PATH SAYS SO. Constantine plays the source tree through
+          // this server; the bundle is a different artifact with different
+          // bugs, and until now a screenshot could not tell them apart.
+          body = Buffer.from(stampSource(body.toString('utf8'), digest, {
+            ordinal, built, runPath: RUN_PATH_SERVE,
+          }), 'utf8');
         } catch (err) {
           console.error(`serve: could not stamp ${VERSION_MODULE} — ${err.message}`);
           console.error('       the page will read UNSTAMPED, which is what it now knows.');
