@@ -234,25 +234,25 @@ const MUTATIONS = [
   {
     id: 'localeCompare',
     why: "Vira's exact mutation — the one that reproduced the 40c5b21 order 97/97",
-    apply: (src) => src.replace(/if \(a < b\) return -1;\n  if \(a > b\) return 1;\n  return 0;/,
+    apply: (src) => src.replace(/if \(a < b\) return -1;\r?\n  if \(a > b\) return 1;\r?\n  return 0;/,
       'return a.localeCompare(b);'),
   },
   {
     id: 'localeCompare-base',
     why: 'the same idea spelled as an explicit case-insensitive collation',
-    apply: (src) => src.replace(/if \(a < b\) return -1;\n  if \(a > b\) return 1;\n  return 0;/,
+    apply: (src) => src.replace(/if \(a < b\) return -1;\r?\n  if \(a > b\) return 1;\r?\n  return 0;/,
       "return a.localeCompare(b, 'en', { sensitivity: 'base' });"),
   },
   {
     id: 'Intl.Collator',
     why: 'the fast idiom a performance-minded reviewer reaches for',
-    apply: (src) => src.replace(/if \(a < b\) return -1;\n  if \(a > b\) return 1;\n  return 0;/,
+    apply: (src) => src.replace(/if \(a < b\) return -1;\r?\n  if \(a > b\) return 1;\r?\n  return 0;/,
       "return new Intl.Collator('en').compare(a, b);"),
   },
   {
     id: 'toLowerCase',
     why: 'hand-rolled case folding — no locale API in sight, same defect',
-    apply: (src) => src.replace(/if \(a < b\) return -1;\n  if \(a > b\) return 1;\n  return 0;/,
+    apply: (src) => src.replace(/if \(a < b\) return -1;\r?\n  if \(a > b\) return 1;\r?\n  return 0;/,
       'const x = a.toLowerCase(), y = b.toLowerCase();\n  return x < y ? -1 : x > y ? 1 : 0;'),
   },
   {
