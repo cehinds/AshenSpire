@@ -299,7 +299,7 @@ export function initAudio(settings = {}) {
     // human typed on purpose, and the more specific intent wins.
     const ext = state.tracks[context];
     if (ext && ext.length) {
-      playExternal(context, ext);
+      playExternal(context, ext, bed);
       return 'external';
     }
     if (bed === MUSIC_SILENCE_WORD) return MUSIC_SILENCE_WORD;
@@ -318,7 +318,7 @@ export function initAudio(settings = {}) {
   // Stream a random track from the context's list; when it ends, play another
   // (fresh random pick → variety). Any load/decode error → the shipped bed
   // (or shipped silence) via proceduralFallback.
-  function playExternal(context, urls) {
+  function playExternal(context, urls, bed) {
     const url = pickRandom(urls);
     let el;
     try {
@@ -327,14 +327,22 @@ export function initAudio(settings = {}) {
       el.preload = 'auto';
       if (!state.mediaSources.has(el)) {
         const src = ctx.createMediaElementSource(el);
-        src.connect(musicBus);
+        // Keep content gain and the player's volume as two named stages. The
+        // procedural path already multiplies every scheduled node by bed.gain;
+        // external tracks used to jump straight to musicBus and silently ignore
+        // that authored context balance. A track supplied for an intentionally
+        // silent shipped context is the explicit override and has no bed gain,
+        // so it enters at unity before the user's volume.
+        const bedGain = ctx.createGain();
+        bedGain.gain.value = bed === MUSIC_SILENCE_WORD ? 1 : bed.gain;
+        src.connect(bedGain).connect(musicBus);
         state.mediaSources.set(el, src);
       }
     } catch (e) {
       return proceduralFallback(context);
     }
     el.addEventListener('ended', () => {
-      if (state.context === context) playExternal(context, urls);
+      if (state.context === context) playExternal(context, urls, bed);
     });
     el.addEventListener('error', () => {
       if (state.context === context) {
