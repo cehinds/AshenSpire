@@ -70,7 +70,9 @@ const failures = [];
 for (const [key, expected] of [['musicVolume', '50%'], ['sfxVolume', '75%']]) {
   if (!container.innerHTML.includes(`id="setting-${key}"`)) failures.push(`${key}: slider has no stable id`);
   if (!container.innerHTML.includes(`for="setting-${key}"`)) failures.push(`${key}: output is not bound to slider`);
-  if (!container.innerHTML.includes(`aria-valuetext="${expected}"`)) failures.push(`${key}: accessible value is not ${expected}`);
+  const numeric = expected.slice(0, -1);
+  if (!container.innerHTML.includes(`aria-valuetext="${numeric} percent"`)) failures.push(`${key}: accessible value text is not ${numeric} percent`);
+  if (!container.innerHTML.includes(`aria-description="${numeric} percent"`)) failures.push(`${key}: accessible unit fallback is not ${numeric} percent`);
   if (!container.innerHTML.includes(`>${expected}</output>`)) failures.push(`${key}: visible value is not ${expected}`);
   if (container.innerHTML.includes('aria-live=')) failures.push(`${key}: output duplicates the slider announcement as a live region`);
 }
@@ -82,7 +84,8 @@ if (!music || !listeners.has('musicVolume:input')) {
   music.value = '65';
   listeners.get('musicVolume:input')();
   if (outputs.get('musicVolume').textContent !== '65%') failures.push('musicVolume: visible value did not move to 65%');
-  if (music.getAttribute('aria-valuetext') !== '65%') failures.push('musicVolume: accessible value did not move to 65%');
+  if (music.getAttribute('aria-valuetext') !== '65 percent') failures.push('musicVolume: accessible value text did not move to 65 percent');
+  if (music.getAttribute('aria-description') !== '65 percent') failures.push('musicVolume: accessible unit fallback did not move to 65 percent');
 }
 
 if (failures.length) {
@@ -195,36 +198,56 @@ async function runBrowserEvidence(path) {
         liveRegions: document.querySelectorAll('.range-val[aria-live]').length };
     })()`);
 
-    await press('Home');
-    const atZero = await read();
-    await press('End');
-    const atHundred = await read();
-    await press('ArrowLeft');
-    const afterKeyboard = await read();
-
     const remote = await evaluate(`document.querySelector('.set-range[data-key="musicVolume"]')`, false);
     const described = await cdp.send('DOM.describeNode', { objectId: remote.objectId }, sessionId);
-    const ax = await cdp.send('Accessibility.getPartialAXTree', {
-      backendNodeId: described.node.backendNodeId, fetchRelatives: false,
-    }, sessionId);
-    const sliderAx = ax.nodes.find((node) => node.role && node.role.value === 'slider');
-    const axName = sliderAx && sliderAx.name && sliderAx.name.value;
-    const axValue = sliderAx && sliderAx.value && sliderAx.value.value;
+    const readAx = async () => {
+      const ax = await cdp.send('Accessibility.getPartialAXTree', {
+        backendNodeId: described.node.backendNodeId, fetchRelatives: false,
+      }, sessionId);
+      const slider = ax.nodes.find((node) => node.role && node.role.value === 'slider');
+      const valueText = slider && slider.properties
+        && slider.properties.find((property) => property.name === 'valuetext');
+      return {
+        name: slider && slider.name && slider.name.value,
+        valueText: valueText && valueText.value && valueText.value.value,
+        description: slider && slider.description && slider.description.value,
+        numericValue: slider && slider.value && slider.value.value,
+        properties: slider && slider.properties && slider.properties.map((property) => [property.name, property.value && property.value.value]),
+      };
+    };
+
+    await press('Home');
+    const atZero = await read();
+    const axZero = await readAx();
+    await press('End');
+    const atHundred = await read();
+    const axHundred = await readAx();
+    await press('ArrowLeft');
+    const afterKeyboard = await read();
+    const axKeyboard = await readAx();
 
     const browserFailures = [];
-    const exact = (state, value) => state.value === value && state.valueText === `${value}%`
+    const exact = (state, value) => state.value === value && state.valueText === `${value} percent`
       && state.visibleText === `${value}%` && state.outputVisible;
     if (!exact(atZero, '0')) browserFailures.push(`0% edge disagreed: ${JSON.stringify(atZero)}`);
     if (!exact(atHundred, '100')) browserFailures.push(`100% edge disagreed: ${JSON.stringify(atHundred)}`);
     if (!exact(afterKeyboard, '95')) browserFailures.push(`keyboard step disagreed: ${JSON.stringify(afterKeyboard)}`);
     if (afterKeyboard.name !== 'Music volume') browserFailures.push(`DOM accessible name was ${afterKeyboard.name}`);
-    if (axName !== 'Music volume') browserFailures.push(`AX name was ${axName}`);
-    if (!String(axValue).includes('95')) browserFailures.push(`AX value was ${axValue}`);
+    for (const [label, state, expected] of [
+      ['Home', axZero, '0 percent'],
+      ['End', axHundred, '100 percent'],
+      ['ArrowLeft', axKeyboard, '95 percent'],
+    ]) {
+      if (state.name !== 'Music volume') browserFailures.push(`${label}: AX name was ${state.name}`);
+      const numeric = expected.split(' ')[0];
+      if (String(state.valueText) !== numeric) browserFailures.push(`${label}: AX native value text was ${state.valueText}, expected normalized ${numeric}`);
+      if (state.description !== expected) browserFailures.push(`${label}: AX unit description was ${state.description}, expected ${expected}`);
+    }
     if (afterKeyboard.liveRegions !== 0) browserFailures.push(`${afterKeyboard.liveRegions} duplicate live region(s) remain`);
     if (browserFailures.length) throw new Error(browserFailures.join('\n'));
 
     console.log('PASS real Chrome source branch: Home=0%, End=100%, ArrowLeft=95%; visible output matched each value.');
-    console.log(`PASS accessibility tree: slider name "${axName}", value "${axValue}"; duplicate live regions 0.`);
+    console.log('PASS accessibility tree: native value 0/100/95 plus exact unit descriptions "0 percent"/"100 percent"/"95 percent"; name="Music volume"; duplicate live regions 0.');
   } finally {
     if (cdp) cdp.close();
     if (child) child.kill();

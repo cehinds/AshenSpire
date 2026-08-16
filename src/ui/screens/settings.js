@@ -450,10 +450,11 @@ function rowHtml(settings, r) {
     const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
     const inputId = `setting-${r.key}`;
     const valueText = `${val}%`;
+    const accessibleValueText = `${val} percent`;
     return `<div class="set-row">
         <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
         <div class="range-wrap">
-          <input type="range" class="set-range" id="${inputId}" min="0" max="100" step="5" value="${val}" data-key="${r.key}" aria-label="${esc(r.label)}" aria-valuetext="${valueText}">
+          <input type="range" class="set-range" id="${inputId}" min="0" max="100" step="5" value="${val}" data-key="${r.key}" aria-label="${esc(r.label)}" aria-valuetext="${accessibleValueText}" aria-description="${accessibleValueText}">
           <output class="range-val" for="${inputId}" data-for="${r.key}">${valueText}</output>
         </div>
       </div>`;
@@ -923,9 +924,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     slider.addEventListener('input', () => {
       const val = Number(slider.value);
       const valueText = `${val}%`;
+      const accessibleValueText = `${val} percent`;
       const out = container.querySelector(`.range-val[data-for="${slider.dataset.key}"]`);
       if (out) out.textContent = valueText;
-      slider.setAttribute('aria-valuetext', valueText);
+      slider.setAttribute('aria-valuetext', accessibleValueText);
+      slider.setAttribute('aria-description', accessibleValueText);
       settings[slider.dataset.key] = val;
       onChange({ [slider.dataset.key]: val });
     });
