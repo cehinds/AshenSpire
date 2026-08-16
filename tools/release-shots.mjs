@@ -1149,8 +1149,11 @@ const FLOAT_STRINGS = [
   ['\u{1FA78} 12 RESISTED', 'blk small', 'first'],
 ];
 let floatMisses = 0;
+// COUNTED BY THE LOOP, NOT TYPED BESIDE IT — see the summary below.
+const floatShapes = [];
 for (const shape of SHAPES) {
   if (onlyShape && shape.tag !== onlyShape) continue;
+  floatShapes.push(shape.tag);
   await c.send('Emulation.setDeviceMetricsOverride', {
     width: shape.width, height: shape.height, deviceScaleFactor: shape.dsf, mobile: shape.mobile,
   });
@@ -1203,9 +1206,30 @@ for (const shape of SHAPES) {
         : JSON.stringify(m)));
   }
 }
+// THE SENTENCE IS NARROWED TO WHAT THE LOOP ABOVE ACTUALLY DID — 2026-08-16,
+// Bjorn, and it is my own second copy caught by somebody else's eye.
+//
+// It said `both shapes`, TYPED, seventy lines under a verdict line I had
+// already fixed for exactly that reason ("at both shapes was typed into this
+// sentence, so --shape made the verdict line claim two shapes on a one-shape
+// run"). One home fixed, its twin missed — under `--shape 390x844` this line
+// went on claiming two. The count comes from the loop now; it cannot disagree
+// with it.
+//
+// AND IT NAMES ITS POPULATION, because Sunna read this line correctly and it
+// still misled: `float-clip: OK` printed OK all week over the character-creation
+// panel opening at the bottom of its host, and prints OK now that Sunna has
+// fixed it. That is not this check going wrong — it measures COMBAT DAMAGE
+// NUMBERS and it never claimed otherwise. But it is the only "is anything in
+// the wrong place" line in the release report, and a tired reader will spend it
+// on whatever mispositioning is in front of them. So the noun is on the line.
+// WHERE THE PANEL IS MEASURED: tools/creationbrief.mjs (MR-287).
+const floatWhere = `${FLOAT_STRINGS.length} float string(s) on ?shot=combat at `
+  + `${floatShapes.length === SHAPES.length ? 'both shapes' : `${floatShapes.join(' and ')} (--shape)`}`;
 console.log(floatMisses
-  ? `\nfloat-clip: ${floatMisses} float(s) off-centre or clipped — the half-width is a constant, not the string's own.`
-  : '\nfloat-clip: OK — every measured float is centred on its anchor and inside the layer, both shapes.');
+  ? `\nfloat-clip: ${floatMisses} float(s) off-centre or clipped — the half-width is a constant, not the string's own. (${floatWhere})`
+  : `\nfloat-clip: OK — every measured float is centred on its anchor and inside the layer. MEASURED: ${floatWhere}`
+    + ' — combat damage numbers only; it is silent on every other placement on every other screen.');
 // Rune's call, and it is the right one: a clipped float is unreachable text and
 // fails the run like any MISS. But the two counts must not merge into one NOUN.
 // Folded into `misses` alone, a run with 28 perfect screens and 10 bad floats
