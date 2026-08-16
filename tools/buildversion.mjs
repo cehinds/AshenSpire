@@ -481,6 +481,72 @@ export function check(root = REPO_ROOT) {
 }
 
 // ---------------------------------------------------------------------------
+// --which — digest on a screenshot → the commit that shipped it
+// ---------------------------------------------------------------------------
+
+/**
+ * whichCommits(digest, root) → ['<short> <subject>', …], newest first.
+ *
+ * THIS IS THE WHOLE REASON THE VERSION MAY BE A DIGEST INSTEAD OF A REF.
+ * src/buildversion.js argues that the stamp must be a fact of the SOURCE and
+ * never of the ref, and pays for that with non-orderability, on the promise
+ * that you can always ASK THE ARTIFACT: `git log -S'<digest>' -- build/…`.
+ * If that command cannot answer, the trade was never paid — the string neither
+ * orders nor identifies.
+ *
+ * IT COULD NOT ANSWER, AND IT FAILED ON THE LIVE BUILD. Measured 2026-08-16 at
+ * `dev = a05d071`, whose bundle carries SOURCE `6de9a8b63e`:
+ *
+ *     git log -S'6de9a8b63e' --oneline -- build/AshenSpire.html   →  (nothing)
+ *
+ * TWO DEFECTS, one door.
+ *
+ *   1. MERGES. `git log` does not diff a merge commit at all by default, so the
+ *      pickaxe never looks inside one. `6de9a8b63e` entered at `cc5f6dd`, a
+ *      merge whose bundle differs from BOTH parents (3b74fd3 and a1a55a5 carry
+ *      0 occurrences; cc5f6dd carries 1) — the bundle was re-derived in the
+ *      merge act itself, which is this repo's normal way of landing work. So
+ *      the tool was blind to exactly the commits that ship builds.
+ *      `--diff-merges=first-parent` makes the merge visible.
+ *
+ *   2. `-S` REPORTS REMOVALS TOO, and the caller's question is not "when did
+ *      this string move" but "which commit SHIPPED it". With merges visible,
+ *      `--which d20fb1bd4d` returns both `ffdce3c` (added it) and `cc5f6dd`
+ *      (replaced it) — one of those two shipped it and the other is the commit
+ *      that stopped shipping it. Answering with both is a plausible wrong
+ *      answer on a screenshot, which is worse than the silence it replaced.
+ *
+ * So: PICKAXE TO FIND CANDIDATES, THEN CONFIRM AGAINST THE COMMIT'S OWN BLOB.
+ * The pickaxe is a cheap index over 139 bundle-touching commits; the blob read
+ * is what makes each line it prints TRUE. A candidate the blob does not confirm
+ * is dropped rather than reported.
+ *
+ * BOUNDARY, and the CLI prints it rather than leaving it here: this searches
+ * first-parent history from HEAD. A digest that only ever existed on an
+ * unmerged branch is not reachable, and this returns empty rather than
+ * pretending the build never existed — the honest answer to "not on this line
+ * of history" is not "nowhere".
+ */
+export function whichCommits(digest, root = REPO_ROOT) {
+  const git = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', maxBuffer: 1 << 28 });
+  const candidates = git(
+    'log', '--diff-merges=first-parent', '--no-patch', '--format=%H',
+    '-S', digest, '--', BUNDLE,
+  ).split('\n').map((s) => s.trim()).filter(Boolean);
+
+  const out = [];
+  for (const sha of candidates) {
+    // `-a`: .gitattributes marks the bundle `-text` (byte-identity gate), and
+    // git would otherwise decline to grep it. Exit 1 = "not in this blob", which
+    // is an answer, not a failure — hence the try rather than a status check.
+    let present = false;
+    try { present = git('grep', '-c', '-a', digest, sha, '--', BUNDLE).trim().length > 0; } catch { present = false; }
+    if (present) out.push(git('log', '-1', '--format=%h %s', sha).trim());
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
 
@@ -526,14 +592,22 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   if (args.includes('--which')) {
     const d = args[args.indexOf('--which') + 1];
     if (!d) { console.error('buildversion: --which needs a digest'); process.exit(2); }
+    let hits;
     try {
-      const out = execFileSync('git', ['-C', REPO_ROOT, 'log', '-S', d, '--oneline', '--', BUNDLE], { encoding: 'utf8' }).trim();
-      console.log(out || `buildversion: no commit of ${BUNDLE} carries '${d}'`);
-      process.exit(out ? 0 : 1);
+      hits = whichCommits(d);
     } catch (e) {
       console.error(`buildversion: git could not answer — ${e.message}`);
       process.exit(2);
     }
+    if (!hits.length) {
+      console.log(`buildversion: no commit of ${BUNDLE} carries '${d}'`);
+      console.log(`  searched: every commit whose ${BUNDLE} differs from its FIRST PARENT, merges included,`);
+      console.log(`  then confirmed against that commit's own blob. A digest introduced by a merge is`);
+      console.log(`  reachable; one that only ever existed in an unmerged branch is not.`);
+      process.exit(1);
+    }
+    for (const h of hits) console.log(h);
+    process.exit(0);
   }
 
   // Spawned, not imported. The corpus imports check() from this file, and an

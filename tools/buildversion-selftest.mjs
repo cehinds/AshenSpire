@@ -54,11 +54,12 @@
 //
 // Usage:  node tools/buildversion.mjs --selftest
 
-import { cpSync, mkdtempSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { check, REPO_ROOT, sourceDigest } from './buildversion.mjs';
+import { check, REPO_ROOT, sourceDigest, whichCommits } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
 const COPY = ['index.html', 'styles', 'src', 'assets', 'build'];
@@ -133,6 +134,98 @@ function fresh() {
   return dir;
 }
 
+// ---------------------------------------------------------------------------
+// THE TRACEABILITY CORPUS — a second door, and it needed one
+// ---------------------------------------------------------------------------
+//
+// The seven plants above all enter at `check(root)`, which reads FILES. `--which`
+// reads HISTORY, and no file plant can reach it: the defect lives in the shape of
+// the commit graph, not in any byte of any tree. So this corpus builds a real git
+// repository with a real merge in it and enters at `whichCommits()` — the same
+// function the CLI calls, over a real `git log`, on a real `.gitattributes`.
+//
+// WHAT IT PLANTS is the shape that was live on `dev` at `a05d071`: a bundle
+// RE-DERIVED INSIDE THE MERGE ACT, so the merge commit's artifact differs from
+// BOTH parents. `git log -S` does not diff merges at all by default, so the
+// pickaxe walked straight past the commit that shipped the build. Case T1 runs
+// the OLD command as well as the new one and requires the old one to be SILENT —
+// the observed red, without which the fix is its author's opinion.
+//
+// T2 is the other edge and it is the one a fix could easily buy the first with:
+// making merges visible also makes REMOVALS visible, and the caller's question is
+// "which commit shipped this", not "when did this string move". A digest replaced
+// by a merge must report the commit that shipped it and NOT the merge that
+// stopped shipping it.
+
+// stderr is PIPED, not inherited: `git merge --no-commit` reports success on
+// stderr, and a corpus that prints git's chatter between its own verdicts is a
+// corpus a tired reader skims past.
+const git = (dir, ...a) => execFileSync('git', ['-C', dir, ...a],
+  { encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'pipe'] });
+
+/** A repo whose bundle is re-derived inside a merge — the live `dev` shape. */
+function freshRepo() {
+  const dir = mkdtempSync(join(tmpdir(), 'buildversion-history-'));
+  git(dir, 'init', '-q', '-b', 'main');
+  git(dir, 'config', 'user.email', 'selftest@family.local');
+  git(dir, 'config', 'user.name', 'selftest');
+  git(dir, 'config', 'commit.gpgsign', 'false');
+  mkdirSync(resolve(dir, 'build'));
+  // The real repo marks the bundle `-text` (a byte-identity gate). Carried here
+  // because a grep that declines to read a binary-marked blob would be a second
+  // way to answer "nowhere", and the corpus must be able to tell them apart.
+  writeFileSync(resolve(dir, '.gitattributes'), 'build/AshenSpire.html -text\n');
+  const bundle = (d) => writeFileSync(resolve(dir, 'build/AshenSpire.html'), `<html><script>const SOURCE = '${d}';</script></html>\n`);
+  const commit = (m) => { git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', m); };
+
+  bundle('aaaaaaaaaa'); commit('shipped aaaaaaaaaa on main, no merge involved');
+  git(dir, 'checkout', '-q', '-b', 'side');
+  writeFileSync(resolve(dir, 'side.txt'), 'side work\n'); commit('side work, bundle untouched');
+  git(dir, 'checkout', '-q', 'main');
+  writeFileSync(resolve(dir, 'main.txt'), 'main work\n'); commit('main work, bundle untouched');
+  // The merge act itself re-derives the bundle: neither parent carries bbbbbbbbbb.
+  git(dir, 'merge', '-q', '--no-commit', '--no-ff', 'side');
+  bundle('bbbbbbbbbb'); git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'merged side and re-derived the bundle in the same act');
+  return dir;
+}
+
+/** Returns the number of failures; prints one line per case. */
+function traceability() {
+  const dir = freshRepo();
+  let failures = 0;
+  const say = (ok, label, detail) => {
+    if (!ok) failures += 1;
+    console.log(`  ${ok ? 'RED  ' : 'FAIL '} [--which] ${ok ? 'caught' : 'NOT CAUGHT'} — ${label}`);
+    console.log(`          ${detail}`);
+  };
+  try {
+    const merge = git(dir, 'log', '-1', '--format=%h', 'main').trim();
+    const first = git(dir, 'log', '--format=%h', '--reverse', 'main').trim().split('\n')[0];
+
+    // T1 — the plant, and the old command watched silent on it.
+    let old = '';
+    try { old = git(dir, 'log', '-S', 'bbbbbbbbbb', '--oneline', '--', 'build/AshenSpire.html').trim(); } catch { old = ''; }
+    const now = whichCommits('bbbbbbbbbb', dir);
+    say(old === '' && now.length === 1 && now[0].startsWith(merge),
+      'a digest introduced BY A MERGE (the live `dev = a05d071` shape)',
+      `old \`git log -S\` → ${old === '' ? 'SILENT (the defect, observed)' : `"${old}"`} · whichCommits → ${now.length === 1 ? now[0] : JSON.stringify(now)}`);
+
+    // T2 — the edge the fix could have bought the first one with.
+    const removed = whichCommits('aaaaaaaaaa', dir);
+    say(removed.length === 1 && removed[0].startsWith(first),
+      'a digest REPLACED by that merge reports the commit that SHIPPED it, not the one that stopped',
+      `whichCommits → ${removed.length === 1 ? removed[0] : JSON.stringify(removed)} (the merge ${merge} must not appear)`);
+
+    // T3 — the empty edge. A tool that answers everything answers nothing.
+    const none = whichCommits('cccccccccc', dir);
+    say(none.length === 0, 'a digest no commit ever shipped returns EMPTY, not a plausible commit',
+      `whichCommits → ${JSON.stringify(none)}`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+  return failures;
+}
+
 export async function selftest() {
   console.log('buildversion --selftest: every plant is a real edit to a real tree, entered at check(root).');
   console.log('');
@@ -203,19 +296,31 @@ export async function selftest() {
     }
   }
 
+  // ---- the traceability corpus, a second door ------------------------------
+  console.log('');
+  console.log('  --which reads HISTORY, not files, so no plant above can reach it. These enter');
+  console.log('  at whichCommits() over a real repo with a real merge in it.');
+  const TRACE = 3;
+  const traceFailures = traceability();
+  failures += traceFailures;
+
   console.log('');
   console.log(`  the digest this tree derives: ${sourceDigest().digest}`);
   console.log('');
+  const total = PLANTS.length + TRACE;
   if (failures) {
-    console.log(`buildversion --selftest: RED — ${failures} of ${PLANTS.length} known-bads walked through the check.`);
+    console.log(`buildversion --selftest: RED — ${failures} of ${total} known-bads walked through the check.`);
     return 1;
   }
-  console.log(`buildversion --selftest: OK — ${PLANTS.length}/${PLANTS.length} known-bads observed red, each by the row that owns it and each having MOVED that row,`);
-  console.log('  planted as real edits to a real tree and entered at check(root) — the same door the real run uses.');
+  console.log(`buildversion --selftest: OK — ${total}/${total} known-bads observed red, each by the row or command that owns it,`);
+  console.log(`  ${PLANTS.length} planted as real edits to a real tree and entered at check(root), and ${TRACE} planted as a real`);
+  console.log('  git history and entered at whichCommits() — the same doors the real runs use.');
   console.log('');
   console.log('BOUNDARY: this is a corpus, not a proof of completeness. It says these defects');
-  console.log('  cannot pass; it says nothing about a seventh nobody thought of, and nothing at all');
+  console.log('  cannot pass; it says nothing about one nobody thought of, and nothing at all');
   console.log('  about whether the stamp is VISIBLE — that is tools/buildstamp-shot.mjs.');
+  console.log('  It says nothing about ORDERING either: whether the string a player reads sorts');
+  console.log('  by eye is Constantine\'s rule of 2026-08-16 and no check in this tree tests it.');
   return 0;
 }
 
