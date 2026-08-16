@@ -198,6 +198,16 @@ jobs:
       - name: Engine suite
         run: node tests/run-node.mjs
 
+      - name: Repository root — known-bads enter through a real Git index
+        # The selftest builds disposable repositories, then proves an unexpected
+        # tracked root file and a missing launcher are both named. It also runs
+        # the live-tree check after the plants, but the next step remains the
+        # explicit verdict about the checked-out ref.
+        run: node tools/root-shape.mjs --selftest
+
+      - name: Repository root — only intentional doors are tracked
+        run: node tools/root-shape.mjs
+
       - name: Shipped-artifact guard — self-test against the known-bad corpus
         # Proves the guard can fail. A guard that has never failed proves nothing,
         # which is exactly what bundle.mjs:435's WARNING was.
