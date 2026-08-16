@@ -201,11 +201,22 @@ for (const pl of plants) {
   catch (e) { console.log(`  BAD        ${pl.name.padEnd(44)} the plant itself failed: ${e.message}`); failed++; continue; }
   const { out, code } = runIn(tree, pl.narrow || NARROW);
   ran++;
-  const sawRe = pl.wantRe.test(out);
+  // PRINT THE RED, DO NOT ASK TO BE TRUSTED FOR IT (Bjorn, 2026-08-16, at Marina's
+  // instruction to watch plant 7 go red BY NAME rather than trust the count). This
+  // loop used to print `exit 1 (wanted 1)` and nothing else, so a reader could see
+  // THAT a plant went red and never WHICH red — while `onefold --selftest`, one
+  // tool over, has always printed `red named: <the line>`. Two sibling corpora, one
+  // showing its evidence and one asking for the benefit of the doubt. The exit code
+  // was never the interesting half: a plant that exits 1 for an unrelated reason and
+  // a plant that caught its defect are the same integer, and the regex is the only
+  // thing that tells them apart — so the regex's own match is now on the line.
+  const hit = pl.wantRe.exec(out);
+  const sawRe = hit !== null;
   const sawExit = code === pl.wantExit;
   const ok = sawRe && sawExit;
   if (!ok) failed++;
   console.log(`  ${ok ? 'ok  ' : 'BAD '} ${pl.want.padEnd(5)} ${pl.name.padEnd(44)} exit ${code} (wanted ${pl.wantExit})${sawRe ? '' : '  — the expected line did not appear'}`);
+  if (sawRe && pl.want === 'RED') console.log(`         red named: ${hit[0].trim().slice(0, 150)}`);
   if (!ok) console.log(`         tail: ${out.trim().split('\n').slice(-3).join(' | ').slice(0, 260)}`);
 }
 
