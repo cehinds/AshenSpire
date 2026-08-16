@@ -965,11 +965,25 @@ button.rs-reset {
    scoped to the fold rather than granted to every option row in the game. */
 .disc-reveal .cz-opts { flex-wrap: wrap; row-gap: 0.8rem; }
 .disc-more { border-style: dashed; }
-/* ONE panel, under the row: the entry the player asked about. The sentence is
-   the authored one, the list is derived, and the RECEIPT is last and quietest —
-   the arithmetic is available, never in the way. */
+/* ONE panel, under the LINE THE TAPPED FACE IS ON: the entry the player asked
+   about. The sentence is the authored one, the list is derived, and the RECEIPT
+   is last and quietest — the arithmetic is available, never in the way.
+
+   IT IS A ROW OF `.disc-faces`, not a sibling after it (MR-287 — Constantine,
+   on the build: "instead of expanding under the ubtton it shows up at hte
+   bottom for all of them"). `flex: 1 1 100%` makes it a full-width line of the
+   same wrap; components/disclosure.js moves it under the tapped face's line and
+   the wrap puts it on the next one.
+
+   AND IT CARRIES NO MARGIN OF ITS OWN — that is the point, not a tidy-up. The
+   space above it is `.disc-faces`'s own `gap`, the same one that separates two
+   lines of faces, so the separation is DERIVED from the container instead of
+   typed a second time here. tools/creationbrief.mjs measures this gap against
+   `getComputedStyle('.disc-faces').rowGap` read off the layout; a `margin-top`
+   here would be a second copy of that number AND would push the panel a whole
+   row-gap past the length it is measured against (Law 0 clause 4). */
 .disc-reveal {
-  width: 100%; margin-top: 0.6rem; padding: 0.8rem 1rem;
+  flex: 1 1 100%; width: 100%; padding: 0.8rem 1rem;
   background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
 }
 .disc-reveal h4 { color: var(--gold); font-size: 1.15rem; letter-spacing: 0.14em; margin: 0 0 0.4rem; }

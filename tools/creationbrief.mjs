@@ -339,8 +339,15 @@ const PLANTS = [
   {
     name: 'P6 the fold defaults OPEN',
     file: 'src/ui/components/disclosure.js',
-    from: '  host.innerHTML = `<div class="disc-faces"></div><div class="disc-reveal" hidden></div>`;',
-    to: '  host.innerHTML = `<div class="disc-faces"></div><div class="disc-reveal"></div>`; // planted: available, not applied',
+    // RE-AIMED 2026-08-16 (Sunna, MR-287) — and the re-aim is the whole of the
+    // edit: the contract line moved when the panel became a ROW of
+    // `.disc-faces` instead of its next sibling, so the old `from` string no
+    // longer existed in the file. The selftest called it — HARD RED, P6 found
+    // no home — which is that clause doing exactly its job on the first source
+    // change after it was written. Same plant, same `hidden` removed, same
+    // sentence red; only the line it is aimed at is new.
+    from: '  host.innerHTML = `<div class="disc-faces"><div class="disc-reveal" hidden></div></div>`;',
+    to: '  host.innerHTML = `<div class="disc-faces"><div class="disc-reveal"></div></div>`; // planted: available, not applied',
     what: 'the panel is built without `hidden`, so every picker arrives unfolded',
     expect: 'the arrival screen is as long as the one he called bad — the reading Marina killed',
     mustRed: (out) => /FAIL every folded picker is SHUT on arrival/.test(out),

@@ -15,11 +15,59 @@
 //                    when every entry is face-tier the control does not exist,
 //                    because an expander that opens nothing is a lie about
 //                    there being more.
-//   .disc-reveal     ONE panel, below the row, holding the open entry: title,
-//                    the authored sentence, the derived lines, and the RECEIPT
-//                    last. One at a time on purpose — the short form stays
-//                    short, and a phone that opens five sentences is the
-//                    screen he asked us to stop shipping.
+//   .disc-reveal     ONE panel, holding the open entry: title, the authored
+//                    sentence, the derived lines, and the RECEIPT last. One at
+//                    a time on purpose — the short form stays short, and a
+//                    phone that opens five sentences is the screen he asked us
+//                    to stop shipping. It opens UNDER THE ROW THE TAPPED FACE
+//                    IS ON — see WHERE IT OPENS, below.
+//
+// WHERE IT OPENS (MR-287, 2026-08-16). Constantine, on the shipped build:
+// "in character creation, I would slect an item and instead of expanding under
+// the ubtton it shows up at hte bottom for all of them as if I expanded the
+// bottom button". He is describing this file. The panel used to be the NEXT
+// SIBLING of `.disc-faces` — one fixed spot, after every face — so on any host
+// whose faces occupy more than one line, a face on an earlier line opened a
+// panel lines away from itself. Measured at 9d7764f, headless Chromium, the
+// gap from the tapped face's bottom edge to the panel's top edge:
+//
+//   390x844   stats host    54.78 px on all five attribute faces (row 1 of 2)
+//             armament host 153.56 / 104.17 / 54.78 px on rows 1-3 of 4
+//   1200x730  stats host    56 px on eight of nine faces (rows 1-2 of 3)
+//             armament host 156 / 106 / 56 px on rows 1-3 of 4
+//
+//   8 of 13 faces adrift at 390x844, 11 of 13 at 1200x730 — and the armament
+//   host is the worse of the two per row, because every one of its faces is a
+//   full-width line, so a four-row host has three wrong answers and one right
+//   one. Both hosts, not one.
+//
+// THE PANEL IS NOW A ROW OF `.disc-faces` ITSELF — a `flex: 1 1 100%` item
+// moved to just after the last face sharing the tapped face's line. The wrap
+// then does the work: the panel lands on the line below, and the space between
+// them is the container's OWN `row-gap`. That is the whole of it, and the
+// reason it is done this way rather than by positioning: THE SEPARATION IS
+// DERIVED, NOT TYPED. `tools/creationbrief.mjs` (MR-287) measures the gap
+// against `getComputedStyle('.disc-faces').rowGap` read off the layout, so a
+// panel placed by arithmetic would need a JS constant that agrees with a
+// stylesheet number — a second copy of one fact, which is Law 0 clause 4 and
+// the defect this house exists to catch. A flex row cannot disagree with its
+// own container's gap.
+//
+// NOT DONE, and it was the instruction I was given: `place(anchor)` from
+// components/tooltip.js was NOT extracted and wired here. Three reasons, and
+// the first is the one that would have shipped a worse screen than the defect:
+//   1. `place()` positions a `position: fixed` element against the VIEWPORT.
+//      This panel is click-persistent inside `.cz-scroll`, which scrolls. A
+//      tooltip gets away with the viewport because it dies on pointerleave; a
+//      panel that stays open would detach from its face on the first scroll.
+//      (Reasoned from `position: fixed`, not measured — named as reasoning.)
+//   2. `place()` answers "beside it" — right, left, below, above, first that
+//      fits — and at 1200x730 there is room to the right of most faces, so it
+//      would open the panel BESIDE the face. He asked for *under the button*.
+//   3. There was no second copy to collapse. Neither host places anything by
+//      hand: both call one renderer, this one, and this one placed nothing.
+//      Extracting `place()` would have ADDED a caller, not removed one. The
+//      shared coordinate/clamp arithmetic already has one home in `ui/fx.js`.
 //
 // A LIVE REVEAL — the same mechanism, folding a PICKER instead of words.
 // Constantine, 2026-08-16: "go ahead and allow the fold" (MR-151: default
@@ -106,7 +154,12 @@ export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
   const rows = [...(entries || [])];
   const faces = rows.filter((entry) => entry.disclosure === 'face');
   const behind = rows.filter((entry) => entry.disclosure !== 'face');
-  host.innerHTML = `<div class="disc-faces"></div><div class="disc-reveal" hidden></div>`;
+  // The panel is a CHILD of `.disc-faces`, not its sibling: it is a full-width
+  // row of the same wrap, so `open()` can move it under the tapped face's line
+  // and the gap it lands with is the container's own `row-gap` (see WHERE IT
+  // OPENS, top of file). While shut it is `hidden` — `display: none` — so it is
+  // not a flex item at all and contributes no row and no gap.
+  host.innerHTML = `<div class="disc-faces"><div class="disc-reveal" hidden></div></div>`;
   const faceBox = host.querySelector('.disc-faces');
   const panel = host.querySelector('.disc-reveal');
   const buttons = new Map();
@@ -128,15 +181,44 @@ export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     }
   }
 
+  /**
+   * Move the panel to just after the last face sharing `button`'s line, so the
+   * wrap drops it onto the line below with one `row-gap` between them.
+   *
+   * IT IS READ, NOT COUNTED. "Same line" is `getBoundingClientRect().top`, the
+   * laid-out answer — not an index, not a faces-per-row arithmetic, and not a
+   * breakpoint. `.disc-faces` wraps by flex, and how many faces fit a line is
+   * decided by the widths the browser resolved at this Text size, this UI zoom
+   * and this viewport. Anything that predicts that number is a second copy of
+   * the layout's own decision and will be wrong on the shape nobody photographed.
+   *
+   * MUST BE CALLED WHILE THE PANEL IS SHUT. A visible panel is a flex item and
+   * occupies a line of its own, so measuring with it open measures the layout
+   * the last open made — the same "where it was decided how big it is, which
+   * decided where it goes next" trap tooltip.js's place() zeroes itself for.
+   */
+  function placeUnderRow(button) {
+    if (!button) return;
+    const kin = [...faceBox.children].filter((el) => el !== panel);
+    const line = button.getBoundingClientRect().top;
+    // The first sibling that starts a LATER line — the panel goes before it.
+    // `+ 1` is subpixel slack, not a tolerance on the question: faces on one
+    // line share a top exactly, because `.disc-faces` is `align-items: stretch`.
+    const next = kin.find((el) => el.getBoundingClientRect().top > line + 1);
+    faceBox.insertBefore(panel, next || null);
+  }
+
   function open(key) {
     const entry = rows.find((row) => row.key === key);
     if (!entry) return;
     close();
     openKey = key;
     if (!held) panel.innerHTML = revealHtml(entry);
+    const button = buttons.get(key);
+    // Placed BEFORE it is un-hidden: see placeUnderRow.
+    placeUnderRow(button);
     panel.hidden = false;
     panel.dataset.revealFor = key;
-    const button = buttons.get(key);
     if (button) {
       button.setAttribute('aria-expanded', 'true');
       button.dataset.reveal = 'open';
@@ -198,6 +280,11 @@ export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
         faceBox.appendChild(more); // stays last, so the row reads in one order
         more.setAttribute('aria-expanded', 'true');
       }
+      // THE EXPANDER RE-WRAPS THE HOST, so an open panel's line is no longer
+      // the line it was placed for — adding four faces above it, or removing
+      // them, moves every face after them. Re-opening the same key is the one
+      // path that recomputes it, rather than a second copy of open()'s tail.
+      if (openKey) open(openKey);
     });
     attachTooltip(more, () => `${behind.length} more, kept out of the way until you ask.`);
     faceBox.appendChild(more);
