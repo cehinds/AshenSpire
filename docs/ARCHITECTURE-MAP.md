@@ -24,17 +24,20 @@ surface.
 | Familiar application term | AshenSpire owner | Boundary |
 |---|---|---|
 | Models and interfaces | `src/model/` | Schemas, state, formulas, validation, and read models; no DOM |
-| Services | `src/engine/` | Headless game operations, orchestration, RNG, persistence, and networking adapters |
+| Services | `src/engine/` | Headless game operations, orchestration, RNG, and persistence |
+| Transport | `src/net/lan.js` | Browser-side LAN discovery, hosting requests, and lobby WebSocket adapter; no game rules |
 | Controllers and views | `src/ui/` | Input translation and rendering; the only layer that owns the DOM |
 | Configuration and domain data | `src/content/` | Pure definitions and balance data; no runtime orchestration |
 | Assets | `assets/`, `styles/`, `music/` | Player-facing media and presentation resources |
 | Application composition root | `src/main.js` | Wires the layers together; contains no reusable domain owner |
 | Verification | `tests/`, `tools/` | Headless behavior checks, browser witnesses, build and support tools |
 
-Dependencies continue to point from UI to engine/model/content, from engine to
-model/content, and from model to content where definitions are required. Shared
-contracts belong in `src/model/`; creating a parallel `interfaces/` tree would
-split one source of truth.
+Dependencies continue to point from UI to engine/model/content and the transport
+adapter, from engine to model/content, and from model to content where
+definitions are required. The composition root may also query transport
+availability. Transport does not belong to the engine and does not own game
+rules. Shared contracts belong in `src/model/`; creating a parallel
+`interfaces/` tree would split one source of truth.
 
 ## Root allowlist
 
@@ -63,14 +66,20 @@ Restructure one seam per pull request:
 
 1. Name the old public path and its consumers.
 2. Add the destination or compatibility adapter without deleting the old door.
-3. Run the same-door tests and rebuild checks relevant to that seam.
+3. Run the same-door tests and rebuild checks relevant to that seam. If the seam
+   changes bundled source, regenerate and verify the affected tracked
+   `build/`/`dist/` twins in the same integration act; do not leave derived
+   artifacts stale.
 4. Move consumers in a separate, reviewable step.
 5. Remove the adapter only after repository-wide search proves no live reader.
 
-Do not combine structural work with balance changes, generated content,
-player-facing UI changes, or release artifacts. Never mass-move `src/`: its
-existing four-layer organization is already the desired architecture, and
-moving it would create import churn without improving ownership.
+Do not combine structural work with balance changes, generated content, or
+player-facing UI changes. Derived `build/`/`dist/` twins are carried only when
+the existing provenance rules say the changed seam affects them; carrying them
+does not authorize independent release work, a release branch, a tag, or a
+release. Never mass-move `src/`: its existing layers are already the desired
+architecture, and moving them would create import churn without improving
+ownership.
 
 ## First safe follow-ups
 
