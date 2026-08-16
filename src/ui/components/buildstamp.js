@@ -24,13 +24,23 @@
 // deliberately rather than by luck.
 
 import { esc } from './tooltip.js';
-import { BUILD_VERSION, BUILD_IS_STAMPED } from '../../buildversion.js';
+import { BUILD_STAMP_TEXT, BUILD_VERSION, BUILD_IS_STAMPED, BUILD_IS_ORDERED } from '../../buildversion.js';
 
-/** The one sentence a player gets if they hover it, and it asks for the report. */
-const WHY = BUILD_IS_STAMPED
-  ? `Build ${BUILD_VERSION} — quote this when something looks wrong.`
-  : `Build ${BUILD_VERSION} — this page was opened without the launcher, so the`
-    + ` source digest was never derived. Run the game with run.sh / run.bat to get a real build stamp.`;
+/**
+ * The one sentence a player gets if they hover it, and it asks for the report.
+ *
+ * THREE STATES, NOT TWO, because the two halves of the stamp fail
+ * independently: a page can carry a real digest and no ordinal (the dev server
+ * on an edited working copy) and never the reverse. The middle sentence says
+ * WHICH half is missing rather than implying the whole stamp is worthless.
+ */
+const WHY = !BUILD_IS_STAMPED
+  ? `Build ${BUILD_VERSION} — this page was opened without the launcher, so the`
+    + ` source digest was never derived. Run the game with run.sh / run.bat to get a real build stamp.`
+  : BUILD_IS_ORDERED
+    ? `Build ${BUILD_VERSION} — a higher last number is a newer build. Quote this whole line when something looks wrong.`
+    : `Build ${BUILD_VERSION} — served from an edited working copy, so it has no build number yet; the source id`
+      + ` beside it still names this exact tree. Quote this whole line when something looks wrong.`;
 
 /**
  * buildStampHtml(place) → the stamp, ready to drop into a template.
@@ -38,5 +48,5 @@ const WHY = BUILD_IS_STAMPED
  * the gate can count placements instead of taking three on trust.
  */
 export function buildStampHtml(place) {
-  return `<span class="build-stamp" data-role="build-version" data-place="${esc(place)}" title="${esc(WHY)}">BUILD ${esc(BUILD_VERSION)}</span>`;
+  return `<span class="build-stamp" data-role="build-version" data-place="${esc(place)}" title="${esc(WHY)}">${esc(BUILD_STAMP_TEXT)}</span>`;
 }

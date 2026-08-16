@@ -13,7 +13,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
-import { sourceDigest, stampSource, VERSION_MODULE } from './buildversion.mjs';
+import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -295,6 +295,13 @@ if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
 //   · the injection is IN MEMORY, exactly like ASSET_MAP above. Nothing is
 //     written back to src/, so the file the digest covers never moves because
 //     of the digest, and there is no second-order commit to chase.
+//   · THE ORDINAL IS THE ONE EXCEPTION AND IT IS WRITTEN, NOT INJECTED FROM
+//     THIN AIR. It cannot be re-derived on the spot, because it is a fact of
+//     HISTORY and history advances by exactly the commit that carries this
+//     bundle. So it is computed once, here, and COMMITTED — which turns it into
+//     a fact of the source tree, the only kind this bundle may carry. The write
+//     is conditional on the digest having moved, which is what keeps
+//     rebuild-matches green; see bumpOrdinal().
 //
 // It refuses rather than skips. A bundler that quietly ships `UNSTAMPED`
 // because a marker got renamed hands a player a version that says nothing,
@@ -305,8 +312,16 @@ if (!sources.has(VERSION_MODULE)) {
 }
 let buildDigest = null;
 try {
-  buildDigest = sourceDigest(ROOT).digest;
-  sources.set(VERSION_MODULE, stampSource(sources.get(VERSION_MODULE), buildDigest));
+  // THE ONE PLACE THE ORDINAL IS EVER WRITTEN — Constantine's "auto bump on
+  // build", taken at its word. It rewrites buildordinal.json only when the
+  // digest has moved, so a rebuild of an unchanged tree writes nothing and
+  // reproduces the committed bundle byte for byte (tools/rebuild-matches.mjs).
+  // tools/serve.mjs deliberately does NOT do this: a dev server that bumped
+  // would burn an ordinal per reload and dirty the tree doing it.
+  const ord = bumpOrdinal(ROOT);
+  buildDigest = ord.digest;
+  if (ord.bumped) console.log(`bundle: build ordinal → ${padOrdinal(ord.ordinal)} (the source moved; ${ORDINAL_HOME} rewritten)`);
+  sources.set(VERSION_MODULE, stampSource(sources.get(VERSION_MODULE), buildDigest, padOrdinal(ord.ordinal)));
 } catch (err) {
   fail(`could not derive the build version: ${err.message}`);
 }

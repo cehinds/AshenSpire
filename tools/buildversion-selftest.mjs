@@ -59,10 +59,15 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { check, REPO_ROOT, sourceDigest, whichCommits } from './buildversion.mjs';
+import { check, REPO_ROOT, sourceDigest, whichCommits, ORDINAL_HOME, ORDINAL_CEILING } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
-const COPY = ['index.html', 'styles', 'src', 'assets', 'build'];
+const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.json'];
+
+const editJson = (root, fn) => {
+  const p = resolve(root, ORDINAL_HOME);
+  writeFileSync(p, `${JSON.stringify(fn(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
+};
 
 const edit = (root, rel, fn) => {
   const p = resolve(root, rel);
@@ -108,6 +113,33 @@ const PLANTS = [
     row: 'B NO SECOND COPY',
     plant: (root) => edit(root, 'src/ui/screens/about.js',
       (t) => t.replace('export function', `const SHOWN_VERSION = '9.9.z';\n\nexport function`)),
+  },
+  // ---- rows F and G, THE LOCK ON A FILE THE DIGEST CANNOT SEE ---------------
+  // buildordinal.json sits outside the digest roots by necessity (a fixpoint:
+  // bumping on a digest change cannot itself move the digest). The whole price
+  // of that is a hand-edit the build will never correct, so these plants are
+  // that hand-edit, performed three ways. F1 changes the number. G changes the
+  // digest the number claims to belong to. Between them there is no edit to
+  // this file that ships quietly: to fake the number you must also produce the
+  // digest of the tree you are standing in, which is derived, not typeable.
+  {
+    name: 'the ordinal HAND-EDITED — the file and the shipped box disagree',
+    row: 'F ORDINAL ON THE BOX',
+    plant: (root) => editJson(root, (j) => ({ ...j, ordinal: j.ordinal + 7 })),
+  },
+  {
+    // I asserted a sort ceiling in the tool; an asserted ceiling nobody has
+    // watched refuse is a sentence, not a check.
+    name: 'the ordinal reaches the width where the pad stops sorting',
+    row: 'F ORDINAL ON THE BOX',
+    plant: (root) => editJson(root, (j) => ({ ...j, ordinal: ORDINAL_CEILING })),
+  },
+  {
+    // Isolates G: the NUMBER still matches the box, so F stays green and only
+    // the "was this computed for this source" question can fire.
+    name: 'the recorded digest HAND-EDITED — the number belongs to another tree',
+    row: 'G ORDINAL BELONGS TO THIS TREE',
+    plant: (root) => editJson(root, (j) => ({ ...j, digest: 'deadbeef01' })),
   },
   {
     name: 'a named consumer stops deriving (combat prints no stamp)',
@@ -187,6 +219,70 @@ function freshRepo() {
   git(dir, 'merge', '-q', '--no-commit', '--no-ff', 'side');
   bundle('bbbbbbbbbb'); git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'merged side and re-derived the bundle in the same act');
   return dir;
+}
+
+
+// ---------------------------------------------------------------------------
+// ROW H — A THIRD DOOR, BECAUSE HIS RULE IS A CLAIM ABOUT TWO COMMITS
+// ---------------------------------------------------------------------------
+//
+// "the one with the higher value ... at th ened shoudl be the newest build" is
+// not a property of a tree. It is a property of a tree AND ITS PARENT, so no
+// file plant can reach it and neither can the history corpus above, which owns
+// a toy repo with no real bundle in it. This one copies the real tree, makes it
+// a git repository, and commits twice — the second commit shipping a changed
+// build/AshenSpire.html with the ordinal left where it was. That is the defect
+// in its natural habitat: somebody rebuilds, the ordinal does not move, and two
+// different artifacts read the same number. Exactly what we replaced.
+//
+// The control arm is the same repo with the ordinal moved, so the row is
+// watched GREEN and RED over one variable — otherwise a row that is red at
+// every commit would look like a catch.
+
+function ordinalHistory() {
+  let failures = 0;
+  const say = (ok, label, detail) => {
+    if (!ok) failures += 1;
+    console.log(`  ${ok ? 'RED  ' : 'FAIL '} [H ORDINAL INCREASES] ${ok ? 'caught' : 'NOT CAUGHT'} — ${label}`);
+    console.log(`          ${detail}`);
+  };
+
+  /** A committed tree, then a second commit that ships a new bundle. */
+  const build = (moveOrdinal) => {
+    const dir = fresh();
+    git(dir, 'init', '-q', '-b', 'main');
+    git(dir, 'config', 'user.email', 'selftest@family.local');
+    git(dir, 'config', 'user.name', 'selftest');
+    git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'the build that shipped');
+    // A REAL change to the shipped artifact — the same door a rebuild enters by.
+    appendFileSync(resolve(dir, 'build/AshenSpire.html'), '<!-- a later build -->\n');
+    if (moveOrdinal) {
+      const p = resolve(dir, ORDINAL_HOME);
+      const j = JSON.parse(readFileSync(p, 'utf8'));
+      writeFileSync(p, `${JSON.stringify({ ...j, ordinal: j.ordinal + 1 }, null, 2)}\n`, 'utf8');
+    }
+    git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'a second build');
+    return dir;
+  };
+
+  for (const [moved, label] of [[false, 'a NEW BUILD SHIPPED and the ordinal did not move — two builds, one number'],
+    [true, 'the control: the same commit with the ordinal moved must go GREEN']]) {
+    const dir = build(moved);
+    try {
+      const row = check(dir).rows.find((r) => r.name === 'H ORDINAL INCREASES');
+      const detail = row ? row.detail.split('\n')[0].trim() : 'NO SUCH ROW';
+      if (!moved) say(row && row.ok === false, label, detail);
+      else {
+        const ok = row && row.ok === true;
+        if (!ok) failures += 1;
+        console.log(`  ${ok ? 'ok   ' : 'FAIL '} [H ORDINAL INCREASES] ${label}`);
+        console.log(`          ${detail}`);
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+  return failures;
 }
 
 /** Returns the number of failures; prints one line per case. */
@@ -301,26 +397,34 @@ export async function selftest() {
   console.log('  --which reads HISTORY, not files, so no plant above can reach it. These enter');
   console.log('  at whichCommits() over a real repo with a real merge in it.');
   const TRACE = 3;
-  const traceFailures = traceability();
-  failures += traceFailures;
+  failures += traceability();
+
+  console.log('');
+  console.log('  Row H is a claim about a commit AND ITS PARENT, so it has its own door too:');
+  console.log('  the real tree, made a git repo, committed twice, entered at check(root).');
+  const HIST = 2;
+  failures += ordinalHistory();
 
   console.log('');
   console.log(`  the digest this tree derives: ${sourceDigest().digest}`);
   console.log('');
-  const total = PLANTS.length + TRACE;
+  const total = PLANTS.length + TRACE + HIST;
   if (failures) {
     console.log(`buildversion --selftest: RED — ${failures} of ${total} known-bads walked through the check.`);
     return 1;
   }
   console.log(`buildversion --selftest: OK — ${total}/${total} known-bads observed red, each by the row or command that owns it,`);
-  console.log(`  ${PLANTS.length} planted as real edits to a real tree and entered at check(root), and ${TRACE} planted as a real`);
-  console.log('  git history and entered at whichCommits() — the same doors the real runs use.');
+  console.log(`  ${PLANTS.length} planted as real edits to a real tree and entered at check(root), ${TRACE} planted as a real`);
+  console.log(`  git history and entered at whichCommits(), and ${HIST} planted as a real tree committed twice —`);
+  console.log('  the same three doors the real runs use. The last pair is watched RED and GREEN over');
+  console.log('  one variable, so a row that was red at every commit could not pass as a catch.');
   console.log('');
   console.log('BOUNDARY: this is a corpus, not a proof of completeness. It says these defects');
   console.log('  cannot pass; it says nothing about one nobody thought of, and nothing at all');
   console.log('  about whether the stamp is VISIBLE — that is tools/buildstamp-shot.mjs.');
-  console.log('  It says nothing about ORDERING either: whether the string a player reads sorts');
-  console.log('  by eye is Constantine\'s rule of 2026-08-16 and no check in this tree tests it.');
+  console.log('  On ORDERING it now says something, and only this: row H proves the ordinal ROSE');
+  console.log('  across one commit and its first parent. It is silent on any other pair, on');
+  console.log('  branches that never merged, and on whether a player can READ the number.');
   return 0;
 }
 

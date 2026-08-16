@@ -37,7 +37,7 @@ import { run } from './buildstamp-shot.mjs';
 
 const HERE = resolve(new URL('.', import.meta.url).pathname);
 const REPO_ROOT = resolve(HERE, '..');
-const COPY = ['index.html', 'styles', 'src', 'assets'];
+const COPY = ['index.html', 'styles', 'src', 'assets', 'buildordinal.json'];
 
 const css = (root, text) => appendFileSync(resolve(root, 'styles/ui.css'), `\n${text}\n`, 'utf8');
 const edit = (root, rel, fn) => {
@@ -84,7 +84,7 @@ const PLANTS = [
     name: 'the stamp TYPES a version instead of deriving one',
     expect: /reads "BUILD 9\.9\.9/i,
     plant: (root) => edit(root, 'src/ui/components/buildstamp.js',
-      (t) => t.replace('BUILD ${esc(BUILD_VERSION)}', 'BUILD 9.9.9+deadbeef01')),
+      (t) => t.replace('${esc(BUILD_STAMP_TEXT)}', 'BUILD 9.9.9+deadbeef01')),
   },
 ];
 

@@ -11,9 +11,23 @@
 //   node tools/buildversion.mjs --selftest   the known-bad corpus, watched red
 //   node tools/buildversion.mjs --which D    which commit shipped digest D
 //
+// TWO FACTS, TWO JOBS, AND THIS FILE DERIVES BOTH:
+//
+//     BUILD 0.4.0.0618 · src 2d5a8cc240
+//           └─ ORDERS ─┘   └ IDENTIFIES ┘
+//
+// The ORDINAL orders (Constantine, 2026-08-16: "the one with the higher value
+// ... at th ened shoudl be the newest build"). The DIGEST identifies. Neither
+// can do the other's job, and the string used to try to make the digest do
+// both. Whose home is whose is in src/buildversion.js; the arithmetic is here.
+//
 // WHAT THE DIGEST COVERS, and it is a closed set stated in one place:
 //
 //     index.html · styles/** · src/** · assets/**
+//
+// `buildordinal.json` is deliberately OUTSIDE that set — see INPUT_ROOTS for
+// the fixpoint that forces it, and rows F and G for the lock that makes it
+// safe.
 //
 // FOUR SWEEPS, NOT AN IMPORT WALK, AND THAT IS DELIBERATE. tools/bundle.mjs
 // discovers its modules by walking `import` from src/main.js. Re-implementing
@@ -42,7 +56,7 @@
 // tools/buildstamp-shot.mjs with a browser.
 
 import { createHash } from 'node:crypto';
-import { readFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -60,12 +74,44 @@ export const VERSION_MODULE = 'src/buildversion.js';
 /** Where the release half lives. Not here, and not in src/buildversion.js. */
 export const RELEASE_HOME = 'src/content/index.js';
 
+/** The ordinal's own anchors and placeholder — same rule, a different fact. */
+export const ORD_MARKER_START = '/* BUILD_ORDINAL_START */';
+export const ORD_MARKER_END = '/* BUILD_ORDINAL_END */';
+export const ORD_PLACEHOLDER = 'UNBUMPED';
+/** Where the ORDERING half lives. Outside the digest roots, and see below. */
+export const ORDINAL_HOME = 'buildordinal.json';
+/** Fixed width, so eye-order and string-order agree. */
+export const ORDINAL_PAD = 4;
+/**
+ * Padding buys correct string ordering only inside the decade it was chosen
+ * for. `0999` sorts below `10000` because `0` < `1`; `99999` does NOT sort
+ * below `100000`, because `9` > `1`. The scheme is sound to 99999 and inverts
+ * at 100000, so row F refuses the ordinal AT that line rather than leaving the
+ * trap armed for whoever is here in eighty thousand commits.
+ */
+export const ORDINAL_CEILING = 10 ** (ORDINAL_PAD + 1);
+
 // 10 hex = 40 bits = 1.1e12 names. At ten thousand builds the chance any two
 // collide is about 5e-5. Stated rather than felt, because "it's a hash, it's
 // fine" is how a number nobody computed gets shipped.
 export const DIGEST_CHARS = 10;
 
-/** The closed set of digest inputs. One home; --check proves it is a superset. */
+/**
+ * The closed set of digest inputs. One home; --check proves it is a superset.
+ *
+ * `buildordinal.json` IS DELIBERATELY NOT IN THIS SET, and the reason is a
+ * fixpoint, not an oversight: the ordinal is bumped WHEN THE DIGEST MOVES, so
+ * covering it would make every bump move the digest, which would demand another
+ * bump, forever. It sits at the repo root — outside all four roots — so nothing
+ * has to be carved out of a sweep, and the "a whole-directory walk cannot miss
+ * one" property this file rests on stays whole.
+ *
+ * WHAT THAT COSTS, STATED HERE BECAUSE IT IS THE PRICE OF THE WHOLE SCHEME: a
+ * hand-edit of that file does not move the digest, so the build will not
+ * correct it and the wrong number would ship in silence. That is SOP 5 row A's
+ * subject arriving through a new door, and rows F and G below are the door's
+ * lock. They are not a follow-up; they are why this is allowed to exist.
+ */
 export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets']);
 
 /**
@@ -218,28 +264,106 @@ export function sourceDigest(root = REPO_ROOT) {
 // the stamp — ONE HOME for the injection, called by bundle.mjs and serve.mjs
 // ---------------------------------------------------------------------------
 
-/**
- * stampSource(text, digest) → the module source with SOURCE derived.
- * Throws rather than returning the text unchanged: an injector that silently
- * no-ops ships `UNSTAMPED` to a player and nothing says a word.
- */
-export function stampSource(text, digest) {
-  const a = text.indexOf(MARKER_START);
-  const b = text.indexOf(MARKER_END);
+/** One marker pair, replaced. Shared by both injections so they cannot drift. */
+function between(text, start, end, name, line) {
+  const a = text.indexOf(start);
+  const b = text.indexOf(end);
   if (a < 0 || b < 0 || b < a) {
-    throw new Error(`${VERSION_MODULE} has lost its BUILD_SOURCE markers — the build anchors on them`);
+    throw new Error(`${VERSION_MODULE} has lost its ${name} markers — the build anchors on them`);
   }
-  if (text.indexOf(MARKER_START, a + 1) >= 0 || text.indexOf(MARKER_END, b + 1) >= 0) {
-    throw new Error(`${VERSION_MODULE} has more than one BUILD_SOURCE marker pair`);
+  if (text.indexOf(start, a + 1) >= 0 || text.indexOf(end, b + 1) >= 0) {
+    throw new Error(`${VERSION_MODULE} has more than one ${name} marker pair`);
   }
-  const head = text.slice(0, a + MARKER_START.length);
-  const tail = text.slice(b);
-  return `${head}\nexport const SOURCE = '${digest}';\n${tail}`;
+  return `${text.slice(0, a + start.length)}\n${line}\n${text.slice(b)}`;
 }
 
-/** stampFile(root, digest) → stamped source of the version module. */
-export function stampFile(root, digest) {
-  return stampSource(readFileSync(resolve(root, VERSION_MODULE), 'utf8'), digest);
+/**
+ * stampSource(text, digest, ordinal?) → the module source with SOURCE, and the
+ * ORDINAL when one is supplied, derived.
+ *
+ * Throws rather than returning the text unchanged: an injector that silently
+ * no-ops ships `UNSTAMPED` to a player and nothing says a word.
+ *
+ * THE ORDINAL IS OPTIONAL AND THAT IS THE SERVE PATH, NOT A CONVENIENCE.
+ * tools/serve.mjs must never bump — a dev server that bumped would burn an
+ * ordinal per reload and dirty the tree doing it — so when the working copy has
+ * drifted from the recorded digest it passes nothing and the page keeps
+ * `UNBUMPED`. A page with no build number is honest; a page wearing an older
+ * build's number is a lie that sorts.
+ */
+export function stampSource(text, digest, ordinal = null) {
+  let out = between(text, MARKER_START, MARKER_END, 'BUILD_SOURCE', `export const SOURCE = '${digest}';`);
+  if (ordinal !== null) {
+    out = between(out, ORD_MARKER_START, ORD_MARKER_END, 'BUILD_ORDINAL', `export const ORDINAL = '${ordinal}';`);
+  }
+  return out;
+}
+
+/** stampFile(root, digest, ordinal?) → stamped source of the version module. */
+export function stampFile(root, digest, ordinal = null) {
+  return stampSource(readFileSync(resolve(root, VERSION_MODULE), 'utf8'), digest, ordinal);
+}
+
+// ---------------------------------------------------------------------------
+// the ordinal — the half that ORDERS
+// ---------------------------------------------------------------------------
+
+/** padOrdinal(618) → '0618'. Fixed width or the string sort is a coin toss. */
+export function padOrdinal(n) {
+  return String(n).padStart(ORDINAL_PAD, '0');
+}
+
+/** readOrdinal(root) → { ordinal, digest } from its one home. Throws if absent. */
+export function readOrdinal(root = REPO_ROOT) {
+  const raw = JSON.parse(readFileSync(resolve(root, ORDINAL_HOME), 'utf8'));
+  return { ordinal: Number(raw.ordinal), digest: raw.digest ?? null };
+}
+
+/**
+ * bumpOrdinal(root) → { ordinal, bumped, digest } — THE BUILD'S ONE WRITE.
+ *
+ * Rewrites ORDINAL_HOME only when the tree's digest differs from the recorded
+ * one. That single condition is what keeps tools/rebuild-matches.mjs green: a
+ * rebuild of an unchanged tree finds the digests equal, writes nothing, injects
+ * the same number and reproduces the committed bundle byte for byte.
+ *
+ * THE NEW VALUE IS `max(recorded + 1, commit count)`, AND THE `max` IS NOT
+ * BELT-AND-BRACES — IT IS THE WHOLE GUARANTEE. Constantine asked for the commit
+ * count, and the commit count ALONE does not increase between two builds of the
+ * same commit: edit, build, edit again, build again, and `rev-list --count`
+ * returns the same number twice while the source has moved. That is the defect
+ * this scheme exists to remove, reintroduced one level down. So the value
+ * tracks the commit count and is FLOORED to strictly increasing, and it is
+ * stated plainly rather than described as "the commit count" when it is the
+ * commit count raised whenever two builds would otherwise share a number.
+ *
+ * IT REFUSES RATHER THAN GUESSING. Without git there is no count, and MR-263 is
+ * the standing rule: when the version cannot be derived, fail loudly, never
+ * emit a plausible one. `0.4.0.0000` is precisely a plausible one.
+ */
+export function bumpOrdinal(root = REPO_ROOT) {
+  const digest = sourceDigest(root).digest;
+  const rec = readOrdinal(root);
+  if (rec.digest === digest) return { ordinal: rec.ordinal, bumped: false, digest };
+
+  let count;
+  try {
+    count = Number(execFileSync('git', ['-C', root, 'rev-list', '--count', 'HEAD'], { encoding: 'utf8' }).trim());
+  } catch (e) {
+    throw new Error(
+      `the build ordinal could not be derived — git could not count commits in ${root} (${e.message}).`
+      + ` Refusing to invent one: a plausible build number is worse than none.`);
+  }
+  if (!Number.isFinite(count)) throw new Error('git returned a commit count that is not a number');
+
+  const ordinal = Math.max(rec.ordinal + 1, count);
+  writeFileSync(resolve(root, ORDINAL_HOME),
+    `${JSON.stringify({
+      _: 'DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.',
+      ordinal,
+      digest,
+    }, null, 2)}\n`, 'utf8');
+  return { ordinal, bumped: true, digest };
 }
 
 /** The release string, read from its one home rather than re-typed. */
@@ -249,9 +373,29 @@ export function release(root = REPO_ROOT) {
   return m[1];
 }
 
-/** buildVersion(root) → what a player will read, composed the one way. */
+/**
+ * buildVersion(root) → the ORDERING half, composed the one way: `0.4.0.0618`.
+ * Numeric throughout, last component sorts — Constantine's rule of 2026-08-16.
+ * The recorded ordinal is used as-is; whether it BELONGS to this tree is rows
+ * F and G's question, not this function's.
+ */
 export function buildVersion(root = REPO_ROOT) {
-  return `${release(root)}+${sourceDigest(root).digest}`;
+  return `${release(root)}.${padOrdinal(readOrdinal(root).ordinal)}`;
+}
+
+/**
+ * stampText(root) → the whole line a player reads: `BUILD 0.4.0.0618 · src …`.
+ *
+ * A SECOND COMPOSITION OF A STRING src/buildversion.js ALSO COMPOSES, AND IT IS
+ * DELIBERATE RATHER THAN OVERLOOKED. The module composes it for the browser;
+ * this composes it for tools/buildstamp-shot.mjs, which has to know what to
+ * expect on a screen it photographs. The two are not checked against each other
+ * by a third party — THEY CHECK EACH OTHER: the shot gate compares this string
+ * to the rendered ink and goes red the moment they disagree, which is a
+ * stronger binding than a comparison either of them could assert about itself.
+ */
+export function stampText(root = REPO_ROOT) {
+  return `BUILD ${buildVersion(root)} · src ${sourceDigest(root).digest}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -292,19 +436,27 @@ export function check(root = REPO_ROOT) {
   const add = (ok, name, detail) => { rows.push({ ok, name, detail }); return ok; };
   const src = (rel) => readFileSync(resolve(root, rel), 'utf8');
 
-  // A — THE DIGEST IS NEVER COMMITTED. The version is derived or it is typed;
-  //     there is no third state, and this is where typing it would show up.
+  // A — NEITHER DERIVED VALUE IS EVER COMMITTED. Each is derived or it is typed;
+  //     there is no third state, and this is where typing one would show up.
+  //     BOTH marker pairs are checked, because a scheme with two injected facts
+  //     and one guarded one is a scheme with an unguarded one.
   let ver = '';
   try { ver = src(VERSION_MODULE); } catch { /* reported below */ }
   if (!ver) {
     add(false, 'A ONE HOME', `${VERSION_MODULE} is missing — there is no home to check`);
   } else {
-    const between = ver.slice(ver.indexOf(MARKER_START) + MARKER_START.length, ver.indexOf(MARKER_END));
-    const ok = /^\s*export const SOURCE = 'UNSTAMPED';\s*$/.test(between)
-      && ver.includes(MARKER_START) && ver.includes(MARKER_END);
-    add(ok, 'A ONE HOME',
-      ok ? `${VERSION_MODULE} holds the placeholder; the digest is injected, never committed`
-        : `${VERSION_MODULE} between the markers is not the placeholder — a digest typed into source is a version ASSERTED, not derived:\n      ${between.trim().slice(0, 120)}`);
+    const slice = (a, b) => (ver.includes(a) && ver.includes(b)
+      ? ver.slice(ver.indexOf(a) + a.length, ver.indexOf(b)) : null);
+    const held = [
+      { what: 'SOURCE', got: slice(MARKER_START, MARKER_END), want: /^\s*export const SOURCE = 'UNSTAMPED';\s*$/ },
+      { what: 'ORDINAL', got: slice(ORD_MARKER_START, ORD_MARKER_END), want: /^\s*export const ORDINAL = 'UNBUMPED';\s*$/ },
+    ];
+    const bad = held.filter((h) => h.got === null || !h.want.test(h.got));
+    add(bad.length === 0, 'A ONE HOME',
+      bad.length === 0
+        ? `${VERSION_MODULE} holds both placeholders; the digest and the ordinal are injected, never committed`
+        : `${VERSION_MODULE} does not hold a placeholder — a value typed into source is a version ASSERTED, not derived:`
+          + bad.map((h) => `\n      ${h.what}: ${h.got === null ? 'its marker pair is missing' : h.got.trim().slice(0, 100)}`).join(''));
   }
 
   // B — NO SECOND COPY OF THE RELEASE. TWO ARMS, AND THE SECOND EXISTS BECAUSE
@@ -475,6 +627,114 @@ export function check(root = REPO_ROOT) {
         : `${BUNDLE} carries ${found.length === 1 ? `SOURCE '${found[0]}'` : `${found.length} SOURCE literals`}, this tree derives '${want}' — the shipped stamp is not this source`);
   }
 
+
+  // ---------------------------------------------------------------------------
+  // F, G, H — THE LOCK ON THE ORDINAL, AND THEY ARE NOT OPTIONAL EXTRAS.
+  //
+  // The ordinal lives outside the digest (INPUT_ROOTS says why: covering it is a
+  // fixpoint). That buys the whole scheme and costs one thing: a HAND-EDIT of
+  // buildordinal.json moves nothing the digest can see, so the build will not
+  // correct it and a wrong build number would ship in silence. These three rows
+  // are what stands there instead, and every one of them compares a COMMITTED
+  // fact to a COMMITTED fact — no clock, no HEAD, no off-by-one.
+  //
+  //   F  the number ON THE BOX is the number in the file, and it is well-formed
+  //   G  the file's recorded digest is THIS tree's digest — i.e. the number was
+  //      computed for the source it is sitting next to
+  //   H  the number went UP at every commit that changed the shipped artifact
+  //
+  // F and G together catch a hand-edit: change the number and F fires; change
+  // the number and the recorded digest to match, and G fires because the digest
+  // you would have to forge is the tree's, which you cannot type. H is the one
+  // that enforces his actual sentence — that a newer build reads higher.
+
+  // F — THE SHIPPED ORDINAL IS THE FILE'S, AND IT IS WELL-FORMED.
+  let recorded = null;
+  try { recorded = readOrdinal(root); } catch (e) { /* reported */ recorded = e; }
+  if (recorded instanceof Error || recorded === null) {
+    add(false, 'F ORDINAL ON THE BOX',
+      `${ORDINAL_HOME} could not be read — the ordering half has no home: ${recorded ? recorded.message : 'absent'}`);
+  } else if (bundleText == null) {
+    add(false, 'F ORDINAL ON THE BOX', `${BUNDLE} is missing — nothing to read an ordinal from`);
+  } else {
+    const want = padOrdinal(recorded.ordinal);
+    const found = [...bundleText.matchAll(/const ORDINAL = '([^']*)'/g)].map((m) => m[1]);
+    const problems = [];
+    if (found.length !== 1) problems.push(`${BUNDLE} carries ${found.length} ORDINAL literals, expected exactly 1`);
+    else if (found[0] !== want) problems.push(`${BUNDLE} carries ORDINAL '${found[0]}', ${ORDINAL_HOME} holds '${want}' — the box and the file disagree`);
+    if (!Number.isInteger(recorded.ordinal) || recorded.ordinal < 0) problems.push(`${ORDINAL_HOME} ordinal is not a non-negative integer: ${JSON.stringify(recorded.ordinal)}`);
+    if (want.length < ORDINAL_PAD) problems.push(`'${want}' is narrower than the ${ORDINAL_PAD}-wide pad — an unpadded tail string-sorts wrong`);
+    // The ceiling is refused BEFORE it can invert, not after. Past 99999 a
+    // 4-wide pad puts '99999' above '100000' and the whole promise reverses.
+    if (recorded.ordinal >= ORDINAL_CEILING) problems.push(`ordinal ${recorded.ordinal} has reached ${ORDINAL_CEILING}, where a ${ORDINAL_PAD}-wide pad stops sorting: widen ORDINAL_PAD before the next build`);
+    add(problems.length === 0, 'F ORDINAL ON THE BOX',
+      problems.length === 0
+        ? `${BUNDLE} carries ORDINAL '${want}', which is ${ORDINAL_HOME}'s, padded to ${ORDINAL_PAD} and below the ${ORDINAL_CEILING} sort ceiling`
+        : problems.join('\n      '));
+  }
+
+  // G — THE RECORDED DIGEST IS THIS TREE'S. This is the row that makes a
+  //     hand-edit unforgeable: to fake an ordinal you must also produce the
+  //     digest of the tree you are sitting in, and that is derived here.
+  if (recorded instanceof Error || recorded === null) {
+    add(false, 'G ORDINAL BELONGS TO THIS TREE', `${ORDINAL_HOME} could not be read`);
+  } else {
+    const want = sourceDigest(root).digest;
+    const ok = recorded.digest === want;
+    add(ok, 'G ORDINAL BELONGS TO THIS TREE',
+      ok ? `${ORDINAL_HOME} records digest '${want}', which is this tree's — the ordinal was computed for this source`
+        : `${ORDINAL_HOME} records digest ${recorded.digest === null ? 'nothing' : `'${recorded.digest}'`}, this tree derives '${want}'`
+          + ` — the ordinal belongs to a different source, so the number on the box is somebody else's.`
+          + ` Rebuild (node tools/bundle.mjs) rather than editing the file.`);
+  }
+
+  // H — THE ORDINAL WENT UP WHEN THE ARTIFACT CHANGED. His sentence, machine-
+  //     readable at last: a newer build reads higher. Committed vs committed,
+  //     HEAD against its FIRST PARENT, so a merge is judged the same way the
+  //     first-parent line reads it and nothing is off by one.
+  //
+  //     THE n/a CASES ARE PASSES AND THEY SAY SO. A root commit has no parent
+  //     to compare against, and a parent from before this scheme existed has no
+  //     ordinal to compare with. Both are honestly nothing-to-rule-on, and a row
+  //     that pretended otherwise would be red on every fresh clone of history.
+  // stderr is PIPED, not inherited: on a tree that is not a checkout git prints
+  // `fatal: not a git repository`, and a row that already resolves that to
+  // UNKNOWN in its own words does not also need git shouting between the rows.
+  const g = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  const at = (rev) => {
+    try { return Number(JSON.parse(g('show', `${rev}:${ORDINAL_HOME}`)).ordinal); } catch { return null; }
+  };
+  try {
+    const parents = g('rev-list', '--parents', '-n', '1', 'HEAD').trim().split(/\s+/);
+    const parent = parents[1] || null;
+    if (!parent) {
+      add(true, 'H ORDINAL INCREASES', 'HEAD has no parent — nothing to compare an ordinal against (n/a, stated)');
+    } else {
+      const changed = g('diff', '--name-only', parent, 'HEAD', '--', BUNDLE).trim() !== '';
+      const before = at(parent);
+      const now = at('HEAD');
+      if (!changed) {
+        add(true, 'H ORDINAL INCREASES', `${BUNDLE} is unchanged between ${parent.slice(0, 7)} and HEAD — no build shipped, so no ordinal was owed (n/a, stated)`);
+      } else if (before === null) {
+        add(true, 'H ORDINAL INCREASES', `${parent.slice(0, 7)} has no ${ORDINAL_HOME} — the scheme did not exist at the parent (n/a, stated)`);
+      } else if (now === null) {
+        add(false, 'H ORDINAL INCREASES', `HEAD changed ${BUNDLE} and has no readable ${ORDINAL_HOME} — a build shipped with no number`);
+      } else {
+        add(now > before, 'H ORDINAL INCREASES',
+          now > before
+            ? `${BUNDLE} changed between ${parent.slice(0, 7)} and HEAD, and the ordinal went ${before} → ${now}`
+            : `${BUNDLE} CHANGED between ${parent.slice(0, 7)} and HEAD and the ordinal went ${before} → ${now}.`
+              + ` Two different builds that do not sort apart is the whole defect this scheme replaced.`);
+      }
+    }
+  } catch (e) {
+    // SOP 2's referent gate: a question we could not put ourselves in a
+    // position to ask resolves to unknown, which blocks — never to a green.
+    add(null, 'H ORDINAL INCREASES',
+      `UNKNOWN — git could not be asked whether the ordinal increased (${e.message}).`
+      + ` Outside a git checkout this row has no referent; it is not a pass.`);
+  }
+
   // `!r.ok` catches false AND null on purpose: unknown blocks exactly as red
   // does, and there is no third exit code that means "carry on anyway".
   return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
@@ -627,8 +887,9 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   }
 
   const d = sourceDigest();
-  console.log(`buildversion: ${release()}+${d.digest}`);
-  console.log(`  digest over ${d.files} files, ${d.bytes} canonical bytes, under ${INPUT_ROOTS.join(' · ')}`);
+  console.log(`buildversion: ${stampText()}`);
+  console.log(`  the ORDERING half   ${buildVersion()}   — numeric, last component sorts; a higher one is newer`);
+  console.log(`  the IDENTIFYING half ${d.digest}   — over ${d.files} files, ${d.bytes} canonical bytes, under ${INPUT_ROOTS.join(' · ')}`);
   console.log(`  which commit shipped it: node tools/buildversion.mjs --which ${d.digest}`);
   process.exit(0);
 }

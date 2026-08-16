@@ -10,7 +10,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { resolve, join, extname, normalize } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
-import { sourceDigest, stampSource, VERSION_MODULE } from './buildversion.mjs';
+import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE } from './buildversion.mjs';
 
 const ROOT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -97,9 +97,25 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false }
       // A FAILURE HERE IS VISIBLE, NOT SILENT. If the markers are gone the page
       // gets the unstamped module and the player reads `0.4.0+UNSTAMPED` on
       // three screens — loud, and honest about knowing nothing.
+      //
+      // AND THIS PATH NEVER BUMPS THE ORDINAL — it only READS it. A dev server
+      // stays up across edits and re-derives per request; if it bumped, every
+      // reload of an edited tree would burn a build number and rewrite a
+      // committed file underneath whoever is working. So the ordinal is passed
+      // on only when the recorded digest still matches the tree in front of us.
+      // When it does not, nothing is passed and the page keeps `UNBUMPED`: the
+      // version drops its tail rather than wearing an older build's number,
+      // because a missing component is honest and a stale one that sorts is a
+      // lie with a sort order. The digest beside it still names this exact tree.
       if (rel.split(/[\\/]/).join('/') === VERSION_MODULE) {
         try {
-          body = Buffer.from(stampSource(body.toString('utf8'), sourceDigest(rootResolved).digest), 'utf8');
+          const digest = sourceDigest(rootResolved).digest;
+          let ordinal = null;
+          try {
+            const rec = readOrdinal(rootResolved);
+            if (rec.digest === digest) ordinal = padOrdinal(rec.ordinal);
+          } catch { /* no ordinal home: the page says UNBUMPED, which is true */ }
+          body = Buffer.from(stampSource(body.toString('utf8'), digest, ordinal), 'utf8');
         } catch (err) {
           console.error(`serve: could not stamp ${VERSION_MODULE} — ${err.message}`);
           console.error('       the page will read UNSTAMPED, which is what it now knows.');

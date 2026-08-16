@@ -59,7 +59,7 @@ import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
-import { buildVersion } from './buildversion.mjs';
+import { stampText } from './buildversion.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..');
@@ -83,7 +83,7 @@ const SELECTOR = '[data-role="build-version"]';
 
 export async function run({ root = REPO_ROOT, out = resolve(REPO_ROOT, 'tools/results'), quiet = false } = {}) {
   const say = (...a) => { if (!quiet) console.log(...a); };
-  const expected = `BUILD ${buildVersion(root)}`;
+  const expected = stampText(root);
   mkdirSync(out, { recursive: true });
 
   const { server, port } = await serve({ root, port: 8231, open: false });

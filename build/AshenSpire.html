@@ -30733,13 +30733,23 @@ Object.assign(module.exports, { trackGesture });
 // deliberately rather than by luck.
 
 const { esc } = require("src/ui/components/tooltip.js");
-const { BUILD_VERSION, BUILD_IS_STAMPED } = require("src/buildversion.js");
+const { BUILD_STAMP_TEXT, BUILD_VERSION, BUILD_IS_STAMPED, BUILD_IS_ORDERED } = require("src/buildversion.js");
 
-/** The one sentence a player gets if they hover it, and it asks for the report. */
-const WHY = BUILD_IS_STAMPED
-  ? `Build ${BUILD_VERSION} — quote this when something looks wrong.`
-  : `Build ${BUILD_VERSION} — this page was opened without the launcher, so the`
-    + ` source digest was never derived. Run the game with run.sh / run.bat to get a real build stamp.`;
+/**
+ * The one sentence a player gets if they hover it, and it asks for the report.
+ *
+ * THREE STATES, NOT TWO, because the two halves of the stamp fail
+ * independently: a page can carry a real digest and no ordinal (the dev server
+ * on an edited working copy) and never the reverse. The middle sentence says
+ * WHICH half is missing rather than implying the whole stamp is worthless.
+ */
+const WHY = !BUILD_IS_STAMPED
+  ? `Build ${BUILD_VERSION} — this page was opened without the launcher, so the`
+    + ` source digest was never derived. Run the game with run.sh / run.bat to get a real build stamp.`
+  : BUILD_IS_ORDERED
+    ? `Build ${BUILD_VERSION} — a higher last number is a newer build. Quote this whole line when something looks wrong.`
+    : `Build ${BUILD_VERSION} — served from an edited working copy, so it has no build number yet; the source id`
+      + ` beside it still names this exact tree. Quote this whole line when something looks wrong.`;
 
 /**
  * buildStampHtml(place) → the stamp, ready to drop into a template.
@@ -30747,7 +30757,7 @@ const WHY = BUILD_IS_STAMPED
  * the gate can count placements instead of taking three on trust.
  */
 function buildStampHtml(place) {
-  return `<span class="build-stamp" data-role="build-version" data-place="${esc(place)}" title="${esc(WHY)}">BUILD ${esc(BUILD_VERSION)}</span>`;
+  return `<span class="build-stamp" data-role="build-version" data-place="${esc(place)}" title="${esc(WHY)}">${esc(BUILD_STAMP_TEXT)}</span>`;
 }
 
 
@@ -30760,6 +30770,53 @@ Object.assign(module.exports, { buildStampHtml });
 // Constantine, 2026-08-15, unprompted and in full: "in the game be sure to have
 // the build version is available on the main menu, and somewhere in the map and
 // combat". That is the whole of the ask; nothing else was said.
+//
+// Constantine, 2026-08-16, and this one reopened the scheme: "I want builds to
+// be simply numeric except for the last value. the one with the higher value or
+// higher alpha at th ened shoudl be the newest build" — then, asked to choose
+// between three costed options: "commit count / automate the checking / auto
+// bump on build".
+//
+// ---------------------------------------------------------------------------
+// WHAT HE READ BEFORE, AND WHY IT FAILED HIM — read this before the section
+// below, because that section is still true and is no longer the whole answer.
+// ---------------------------------------------------------------------------
+//
+// The stamp was `0.4.0+<digest>`. It could not answer his question, at BOTH
+// halves, and the second half is the one nobody had named:
+//
+//   · A DIGEST DOES NOT ORDER. Measured on this branch: `6de9a8b63e` was
+//     followed by `2d5a8cc240`, and the newer one sorts BELOW its predecessor.
+//     Non-monotonicity is not a flaw in the hash, it is the entire point of one.
+//   · THE ORDER-BEARING PART NEVER MOVED. `0.4.0` has been the release for the
+//     whole recent life of the repo — 139 commits have changed the shipped
+//     bundle and the release string has held TWO values ever. The half that
+//     could sort was frozen and the half that moved could not sort.
+//
+// SO THE STRING IS NOW TWO FACTS WITH TWO JOBS, AND SAYING SO IS THE DESIGN:
+//
+//     BUILD 0.4.0.0618 · src 2d5a8cc240
+//           └── ORDERS ─┘   └ IDENTIFIES ┘
+//
+// He constrained the ORDER-BEARING TAIL and nothing else, so provenance moves
+// out of the tail rather than being deleted. The version is numeric with a
+// numeric last component, which is his rule literally; the digest keeps doing
+// the job it was good at, in a field of its own where its unsortability costs
+// nothing.
+//
+// THE TAIL IS ZERO-PADDED, AND THAT IS NOT COSMETIC. Unpadded, `0.4.0.10` sorts
+// BELOW `0.4.0.9` in every string sort there is; padded, eye-order and
+// string-order agree. He did not ask for this and he did not rule against it —
+// his own `v0.00.01` example is already padded, which is the same instinct
+// arriving twice. THE CEILING IS STATED BECAUSE PADDING HAS ONE: at width 4 the
+// sort stays correct through 99999 and inverts at 100000. `--check` row F
+// refuses the ordinal before it can get there, rather than leaving a trap set
+// for whoever is here in eighty thousand commits.
+//
+// AND THE ALPHA HE OFFERED IS A TRAP WE DECLINED, IN THE OPEN: `higher alpha`
+// works for twenty-six steps, and then `z` is followed by `aa`, which sorts
+// BELOW `b`. A letter tail is a fixed-width tail or it is a bug with a
+// schedule. Numeric costs nothing and has no such cliff.
 //
 // ---------------------------------------------------------------------------
 // THE TENSION, AND WHY THE ANSWER IS A DIGEST OF THE SOURCE
@@ -30821,10 +30878,21 @@ Object.assign(module.exports, { buildStampHtml });
 //
 //   contentBundle.version  →  RELEASE  (imported, never re-typed)
 //   the bundler / server   →  SOURCE   (injected between the markers below)
-//   this file              →  BUILD_VERSION, composed once
+//   buildordinal.json      →  ORDINAL  (injected likewise; written by the build)
+//   this file              →  BUILD_VERSION and BUILD_STAMP_TEXT, composed once
 //
-// The three surfaces Constantine named read BUILD_VERSION through one renderer
-// (ui/components/buildstamp.js) — three placements, one string, one markup.
+// AND THE ORDINAL IS NOT `contentBundle.version`, WHICH IS THE ONE PLACE IT
+// WOULD OBVIOUSLY HAVE GONE. That field is also the SAVE-COMPATIBILITY KEY:
+// `model/registries.js` copies it to `registries.contentVersion` and
+// `engine/save.js` compares a stored run against it, archiving the run if any
+// id no longer resolves. Make it move on every build and it starts announcing
+// "the content changed under this run" when no content did — one string, two
+// subjects, and the ordering requirement would corrupt the job nobody is
+// watching. The tail needed its own home and that is why it has one.
+//
+// The three surfaces Constantine named read BUILD_STAMP_TEXT through one
+// renderer (ui/components/buildstamp.js) — three placements, one string, one
+// markup.
 //
 // The check is `node tools/buildversion.mjs --check`, and its known-bad corpus
 // is `--selftest`: a fixture that RE-TYPES the version must turn it red, or it
@@ -30854,17 +30922,62 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '2d5a8cc240';
+const SOURCE = '6654d22741';
 /* BUILD_SOURCE_END */
 
-/** What a player reads, and what a bug report should carry back to us. */
-const BUILD_VERSION = `${RELEASE}+${SOURCE}`;
+// ---------------------------------------------------------------------------
+// THE BUILD ORDINAL — THE HALF THAT ORDERS. Also written by the build, never by
+// a hand, and injected between its own markers exactly like SOURCE above.
+//
+// WHY IT IS COMMITTED TO buildordinal.json AND THE DIGEST IS NOT, WHICH LOOKS
+// INCONSISTENT UNTIL YOU SEE WHAT EACH IS A FUNCTION OF. The digest is a
+// function of THE TREE, and the tree is identical when the build runs and when
+// rebuild-matches re-derives — so it can be computed on the spot, twice, and
+// agree. The ordinal is a function of HISTORY, and history ADVANCES BY EXACTLY
+// THE COMMIT THAT CARRIES THE BUNDLE: measured on this branch, `rev-list
+// --count` reads 617 at HEAD~1 and 618 at HEAD, so a bundle committed IN a
+// commit can only ever carry its parent's number, and re-deriving on the spot
+// would produce a different one every time. Injection was never the problem;
+// injection moves where a value is WRITTEN and cannot change what it is a
+// FUNCTION OF.
+//
+// So the ordinal is computed ONCE, by the build, and COMMITTED — which turns it
+// into a fact of the source tree, which is the only kind of fact this bundle is
+// allowed to carry. The build rewrites it only when the digest has moved, so a
+// rebuild of an unchanged tree touches nothing and reproduces byte-for-byte.
+// Both arms were run before this was written; the injected arm goes red with a
+// dirty tree and the committed arm goes green with a clean one.
+//
+// `UNBUMPED` is what you see when the tree in front of you is not the tree the
+// ordinal was computed for — an edited working copy served by tools/serve.mjs,
+// which reads this number and NEVER writes it. In that state BUILD_VERSION
+// drops the tail entirely rather than showing a number that belongs to an older
+// build: a missing component is honest, and a stale one that sorts is a lie
+// with a sort order.
+// ---------------------------------------------------------------------------
+/* BUILD_ORDINAL_START */
+const ORDINAL = '0618';
+/* BUILD_ORDINAL_END */
+
+/** True when the ordinal in this page belongs to the tree that drew it. */
+const BUILD_IS_ORDERED = ORDINAL !== 'UNBUMPED';
+
+/** The ORDERING half: numeric throughout, last component sorts. His rule. */
+const BUILD_VERSION = BUILD_IS_ORDERED ? `${RELEASE}.${ORDINAL}` : RELEASE;
 
 /** True when a build or the dev server derived the digest for this page. */
 const BUILD_IS_STAMPED = SOURCE !== 'UNSTAMPED';
 
+/**
+ * What a player reads, and what a bug report should carry back to us. TWO
+ * FIELDS ON PURPOSE — the version orders, the digest identifies, and neither
+ * can do the other's job. ONE HOME for the shown text so the renderer and the
+ * photograph gate cannot disagree about it.
+ */
+const BUILD_STAMP_TEXT = `BUILD ${BUILD_VERSION} · src ${SOURCE}`;
 
-Object.assign(module.exports, { RELEASE, SOURCE, BUILD_VERSION, BUILD_IS_STAMPED });
+
+Object.assign(module.exports, { RELEASE, SOURCE, ORDINAL, BUILD_IS_ORDERED, BUILD_VERSION, BUILD_IS_STAMPED, BUILD_STAMP_TEXT });
 
 },
 "src/ui/screens/profileNotice.js": function (module, exports, require) {
