@@ -601,7 +601,7 @@ function rowHtml(settings, r) {
         <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
         <div class="range-wrap">
           <input type="range" class="set-range" id="${inputId}" min="0" max="100" step="5" value="${val}" data-key="${r.key}" aria-label="${esc(r.label)}" aria-valuetext="${valueText}">
-          <output class="range-val" for="${inputId}" data-for="${r.key}" aria-live="polite">${valueText}</output>
+          <output class="range-val" for="${inputId}" data-for="${r.key}">${valueText}</output>
         </div>
       </div>`;
   }
