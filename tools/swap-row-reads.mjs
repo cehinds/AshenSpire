@@ -105,6 +105,7 @@
 
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { inflateSync } from 'node:zlib';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -115,6 +116,85 @@ const args = process.argv.slice(2);
 const SELFTEST = args.includes('--selftest');
 const oi = args.indexOf('--out');
 const OUT = resolve(ROOT, oi >= 0 && args[oi + 1] ? args[oi + 1] : 'tools/results/swap-row-reads');
+
+// The row camera formerly lived in linebudget-camera.mjs. It now reads the PNG
+// this tool already captures, but only after cropping the exact row geometry
+// returned by PROBE. Whole-screen photographs remain presentation evidence;
+// they are never line evidence.
+const INK_BAND_FLOOR_PX = 8;
+const INK_DELTA = 28;
+const INK_MIN_PIXELS = 2;
+
+function decodePng(buf) {
+  if (buf.readUInt32BE(0) !== 0x89504e47) throw new Error('not a PNG');
+  let p = 8, w = 0, h = 0, depth = 0, colour = 0, interlace = 0;
+  const idat = [];
+  while (p < buf.length) {
+    const len = buf.readUInt32BE(p);
+    const type = buf.toString('ascii', p + 4, p + 8);
+    const data = buf.subarray(p + 8, p + 8 + len);
+    if (type === 'IHDR') {
+      w = data.readUInt32BE(0); h = data.readUInt32BE(4);
+      depth = data[8]; colour = data[9]; interlace = data[12];
+    } else if (type === 'IDAT') idat.push(data);
+    else if (type === 'IEND') break;
+    p += 12 + len;
+  }
+  if (depth !== 8 || interlace !== 0) throw new Error(`unsupported PNG (depth ${depth}, interlace ${interlace})`);
+  const ch = { 0: 1, 2: 3, 4: 2, 6: 4 }[colour];
+  if (!ch) throw new Error(`unsupported PNG colour type ${colour}`);
+  const raw = inflateSync(Buffer.concat(idat));
+  const stride = w * ch;
+  const out = Buffer.alloc(h * stride);
+  let q = 0;
+  for (let y = 0; y < h; y++) {
+    const f = raw[q++];
+    const line = raw.subarray(q, q + stride); q += stride;
+    const cur = out.subarray(y * stride, (y + 1) * stride);
+    const prev = y ? out.subarray((y - 1) * stride, y * stride) : null;
+    for (let x = 0; x < stride; x++) {
+      const a = x >= ch ? cur[x - ch] : 0;
+      const b = prev ? prev[x] : 0;
+      const c = prev && x >= ch ? prev[x - ch] : 0;
+      let v = line[x];
+      if (f === 1) v += a;
+      else if (f === 2) v += b;
+      else if (f === 3) v += (a + b) >> 1;
+      else if (f === 4) {
+        const pa = Math.abs(b - c), pb = Math.abs(a - c), pc = Math.abs(a + b - 2 * c);
+        v += (pa <= pb && pa <= pc) ? a : (pb <= pc ? b : c);
+      }
+      cur[x] = v & 0xff;
+    }
+  }
+  return { w, h, ch, px: out };
+}
+
+function inkBands(buf) {
+  const { w, h, ch, px } = decodePng(buf);
+  const lum = new Uint8Array(w * h);
+  for (let i = 0, n = w * h; i < n; i++) {
+    const o = i * ch;
+    lum[i] = ch >= 3 ? Math.round(0.299 * px[o] + 0.587 * px[o + 1] + 0.114 * px[o + 2]) : px[o];
+  }
+  const hist = new Uint32Array(256);
+  for (const v of lum) hist[v]++;
+  let bg = 0;
+  for (let v = 1; v < 256; v++) if (hist[v] > hist[bg]) bg = v;
+  const runs = [];
+  let start = -1;
+  for (let y = 0; y < h; y++) {
+    let n = 0;
+    for (let x = 0; x < w; x++) if (Math.abs(lum[y * w + x] - bg) > INK_DELTA) n++;
+    const inked = n >= INK_MIN_PIXELS;
+    if (inked && start < 0) start = y;
+    if (!inked && start >= 0) { runs.push([start, y - 1]); start = -1; }
+  }
+  if (start >= 0) runs.push([start, h - 1]);
+  const kept = runs.filter(([a, b]) => b - a + 1 >= INK_BAND_FLOOR_PX);
+  const tallest = kept.reduce((m, [a, b]) => Math.max(m, b - a + 1), 0);
+  return { bands: kept.length, runs: kept, bg, bridged: tallest > 70 };
+}
 
 // The two Constantine looks at, plus the smaller one I was told to add. 360x640
 // is not decoration: it is the narrowest shape still common, and a row that
@@ -252,7 +332,7 @@ const PROBE = `(() => {
   // told to build, so it is excluded by name and counted separately.
   const empties = document.querySelectorAll('.equip-resource-change.none').length;
   const rows = [];
-  for (const li of document.querySelectorAll('.equip-resource-change:not(.none)')) {
+  for (const [rowIndex, li] of [...document.querySelectorAll('.equip-resource-change:not(.none)')].entries()) {
     const note = li.querySelector('small');
     const rect = li.getBoundingClientRect();
     const host = li.closest('.equip-candidate-comparison');
@@ -274,6 +354,20 @@ const PROBE = `(() => {
       liLines: lines(li),
       headLines: headLines(li, note),
       noteLines: note ? lines(note) : 0,
+      rowIndex,
+      // Geometry and identity travel together. The camera re-measures after
+      // scrollIntoView and refuses the crop if this key moved to another row.
+      rowKey: [headText, note ? note.textContent.replace(/\\s+/g, ' ').trim() : '', rowIndex].join(' | '),
+      x: rect.left, y: rect.top, w: rect.width, h: rect.height,
+      clipped: (() => {
+        for (let n = li.parentElement; n; n = n.parentElement) {
+          const cs = getComputedStyle(n);
+          if (!/auto|scroll|hidden/.test(cs.overflowY) && !/auto|scroll|hidden/.test(cs.overflowX)) continue;
+          const q = n.getBoundingClientRect();
+          if (rect.top < q.top - 0.5 || rect.bottom > q.bottom + 0.5 || rect.left < q.left - 0.5 || rect.right > q.right + 0.5) return true;
+        }
+        return !(rect.top >= -0.5 && rect.bottom <= innerHeight + 0.5);
+      })(),
       left: rect.left, right: rect.right, width: rect.width, height: rect.height,
       // Law 2: proven inside its named container's rendered rect, not assumed.
       insideHost: hostRect ? (rect.left >= hostRect.left - 0.5 && rect.right <= hostRect.right + 0.5) : null,
@@ -419,6 +513,12 @@ const OPEN_ALL = `(() => {
   d.forEach((x) => { x.open = true; });
   return d.length;
 })()`;
+const SCROLL_TO_ROW = (i) => `(() => {
+  const li = [...document.querySelectorAll('.equip-resource-change:not(.none)')][${i}];
+  if (!li) return false;
+  li.scrollIntoView({ block: 'center' });
+  return true;
+})()`;
 // THE LIVE RULE ARRIVES BY THE APP'S OWN DOOR. `?shotSettings=<json>` goes
 // through `saves.saveMeta()` on the ephemeral store and comes back out of
 // `saves.loadMeta()` when `showArmoury()` mounts — so the rule the screen prices
@@ -529,6 +629,37 @@ async function main() {
   const shots = [];
   const report = [];
 
+  async function readRowInk(measured, shape, rule) {
+    for (const original of measured.rows) {
+      if (await ev(SCROLL_TO_ROW(original.rowIndex)) !== true) {
+        original.inkErr = `row ${original.rowIndex} vanished before its crop`;
+        continue;
+      }
+      await sleep(180);
+      const after = await ev(PROBE);
+      const row = after && !after.__err ? after.rows[original.rowIndex] : null;
+      if (!row) { original.inkErr = `row ${original.rowIndex} could not be re-measured after scrolling`; continue; }
+      if (row.rowKey !== original.rowKey) {
+        original.inkErr = `row identity changed before crop: expected "${original.rowKey}", got "${row.rowKey}"`;
+        continue;
+      }
+      if (row.clipped) { original.inkErr = `row ${row.rowIndex} remains clipped after scrollIntoView`; continue; }
+      const png = await c.send('Page.captureScreenshot', {
+        format: 'png', captureBeyondViewport: false,
+        clip: { x: row.x, y: row.y, width: Math.max(1, row.w), height: Math.max(1, row.h), scale: 2 },
+      });
+      const buf = Buffer.from(png.data, 'base64');
+      const file = join(OUT, `row-ink-${rule}-${shape.tag}-row${row.rowIndex}.png`);
+      writeFileSync(file, buf);
+      try {
+        const ink = inkBands(buf);
+        Object.assign(original, { inkLines: ink.bands, inkRuns: ink.runs, inkBg: ink.bg, inkBridged: ink.bridged, inkFile: file });
+        shots.push({ file, shape: shape.tag, rule, rows: 1, rowKey: row.rowKey,
+          crop: { x: row.x, y: row.y, w: row.w, h: row.h }, note: 'ROW CROP — the only screenshot used as line evidence' });
+      } catch (e) { original.inkErr = `PNG decoder could not read row ${row.rowIndex}: ${e.message}`; }
+    }
+  }
+
   for (const shape of SHAPES) {
     await c.send('Emulation.setDeviceMetricsOverride', { width: shape.width, height: shape.height, deviceScaleFactor: shape.dsf, mobile: shape.mobile });
     shapeTag = shape.tag;
@@ -554,6 +685,11 @@ async function main() {
       const png2 = await c.send('Page.captureScreenshot', { format: 'png' });
       writeFileSync(f2, Buffer.from(png2.data, 'base64'));
       shots.push({ file: f2, shape: shape.tag, rule, rows: m.rows.length, note: 'scrolled to the rows' });
+
+      // Row crops are taken independently of both whole-screen images above.
+      // Each scroll is followed by a fresh PROBE, identity match, clip check,
+      // and crop from that exact row geometry.
+      await readRowInk(m, shape, rule);
 
       // ---- L5: horizontal travel, PER CONTAINER, boundary 0 -----------------
       const bleeders = m.scrollers.filter((s) => s.hx > 0 && !s.axis);
@@ -619,6 +755,16 @@ async function main() {
       // every shape, every shipped rule and all seven swept widths on the tree
       // as it stands, and 2 on the planted copy.
       for (const r of m.rows) {
+        if (r.inkErr) {
+          findings.push(`${shape.tag}/${rule}: INK LINE BUDGET UNKNOWN — ${r.inkErr}. No row crop means no line verdict.`);
+        } else if (r.inkBridged) {
+          findings.push(`${shape.tag}/${rule}: INK LINE BUDGET UNKNOWN — row "${r.headText}" has a >70px ink band that may bridge lines. Crop: ${r.inkFile}`);
+        } else if (r.inkLines !== r.liLines) {
+          findings.push(`${shape.tag}/${rule}: INK LINE BUDGET — geometry says ${r.liLines} line(s), but the correctly-associated row crop paints ${r.inkLines} ink band(s): "${r.headText}". Crop: ${r.inkFile}`);
+        }
+        if (r.hasNote && r.noteText && r.noteLines === 0) {
+          findings.push(`${shape.tag}/${rule}: NOTE PAINTS NOTHING — the note exists in the DOM but renders zero lines, so presence-only qualification is false confidence: "${r.noteText}". Crop: ${r.inkFile || 'unavailable'}`);
+        }
         if (r.headLines !== 1) {
           findings.push(`${shape.tag}/${rule}: LINE BUDGET — the row's own price statement runs onto ${r.headLines} lines before its note even starts: "${r.headText}". One price, one line; anything else has torn a number off the words that name it.`);
         }
@@ -756,6 +902,7 @@ async function main() {
   console.log('  ONE WORD  a price and a sentence not printed with nothing between them — boundary: any positive gap');
   console.log('  LINE BUDGET  li-lines == head-lines + note-lines, AND head-lines == 1. The expected li-count is');
   console.log('               DERIVED from the note measured on the same run — the 3 and the 1 are typed nowhere.');
+  console.log('  INK LINE BUDGET  every line count is checked against its own re-measured row crop; whole-screen PNGs are excluded.');
   console.log('  UNMOVED AND UNEXPLAINED  a price that did not move, under a picker promising a delta, carries a note.');
   console.log('               By PRESENCE, never by phrase. What it SAYS is a person\'s ruling and is not in this exit code.');
   console.log('  UNKNOWN IS NEVER GREEN  an ERR cell or an unmeasurable text column fails instead of printing a dash.');
@@ -763,12 +910,13 @@ async function main() {
   console.log('\nREPORTED, ASSERTED BY NOBODY — a threshold of mine with no cell either side would be the twelfth in tools/.');
   console.log('  Still nobody\'s: the text column\'s WIDTH, the row COUNT, and the vocabulary census. Those are the numbers');
   console.log('  where "how narrow stops reading" and "how many rows is a wall" have no cell either side, so a person rules.');
-  console.log('  shape    rule       rows  li-lines  head-lines  note-lines  text column');
+  console.log('  shape    rule       rows  li-lines  head-lines  note-lines  text column  ink-lines');
   for (const r of report) {
     const li = Math.max(0, ...r.m.rows.map((x) => x.liLines));
     const hd = Math.max(0, ...r.m.rows.map((x) => x.headLines));
     const nl = Math.max(0, ...r.m.rows.map((x) => x.noteLines));
-    console.log(`  ${r.shape.padEnd(8)} ${r.rule.padEnd(10)} ${String(r.m.rows.length).padStart(4)}  ${String(li).padStart(8)}  ${String(hd).padStart(10)}  ${String(nl).padStart(10)}  ${r.m.columnPx == null ? 'n/a' : Math.round(r.m.columnPx) + 'px'}`);
+    const ink = r.m.rows.some((x) => x.inkErr) ? 'ERR' : Math.max(0, ...r.m.rows.map((x) => x.inkLines));
+    console.log(`  ${r.shape.padEnd(8)} ${r.rule.padEnd(10)} ${String(r.m.rows.length).padStart(4)}  ${String(li).padStart(8)}  ${String(hd).padStart(10)}  ${String(nl).padStart(10)}  ${(r.m.columnPx == null ? 'n/a' : Math.round(r.m.columnPx) + 'px').padEnd(11)} ${ink}`);
   }
   console.log('\n  WHAT THE ROWS SAY, verbatim, at every shape and every shipped rule:');
   for (const r of report) {
@@ -910,6 +1058,41 @@ async function cdp(p) {
 // a single green.
 // ---------------------------------------------------------------------------
 const PLANTS = [
+  {
+    name: 'bands() returns zero — geometry moves while the row camera stays on painted ink',
+    file: 'tools/swap-row-reads.mjs',
+    find: '    return out.length;',
+    replace: '    return 0;',
+    expect: /INK LINE BUDGET/,
+  },
+  {
+    name: 'the row crop is reduced to one pixel — positive control proving the camera reading moves',
+    file: 'tools/swap-row-reads.mjs',
+    find: 'width: Math.max(1, row.w), height: Math.max(1, row.h), scale: 2',
+    replace: 'width: 1, height: Math.max(1, row.h), scale: 2',
+    expect: /INK LINE BUDGET/,
+  },
+  {
+    name: 'the note keeps geometry but paints in the panel background',
+    file: 'styles/ui.css',
+    find: '.equip-resource-change small { display: block; }',
+    replace: '.equip-resource-change small { display: block; color: #0b0906; }',
+    expect: /INK LINE BUDGET/,
+  },
+  {
+    name: 'the note keeps line boxes but visibility suppresses all painted ink',
+    file: 'styles/ui.css',
+    find: '.equip-resource-change small { display: block; }',
+    replace: '.equip-resource-change small { display: block; visibility: hidden; }',
+    expect: /INK LINE BUDGET/,
+  },
+  {
+    name: 'the note remains in the DOM but display:none paints and measures nothing',
+    file: 'styles/ui.css',
+    find: '.equip-resource-change small { display: block; }',
+    replace: '.equip-resource-change small { display: none; }',
+    expect: /NOTE PAINTS NOTHING/,
+  },
   {
     name: 'the comparison stops wrapping — one long note bleeds the column sideways (LAW 5)',
     file: 'styles/ui.css',
