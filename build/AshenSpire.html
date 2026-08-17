@@ -30481,16 +30481,36 @@ Object.assign(module.exports, { dlog, getEntries, failureBanner, logText, openDe
 //      player who cannot make the mistake. Named boundary, not silence: pad and
 //      keyboard players get no confirm step. (The CONFIRM form is different and
 //      deliberately so — see armConfirm.)
+//
+//      ⚠ THIS RULE IS NOW A LIVE BREACH OF S7 AND IT IS UNRESOLVED. Constantine,
+//      2026-08-17: "if press to hold is active for certain things for mouse or
+//      game pad, it shoudl apply to everything including keyboard as well for
+//      those same buttons." End Turn's hold SHIPPED, so at b968e28 a mouse must
+//      hold End Turn for 600 ms and a single `e` ends the turn — measured, not
+//      argued. Rule 3's reasoning above is good and it is not what settles this;
+//      his word does, and whether the beat is owed on every input is Sunna's
+//      read. THE FIX IS ONE LINE — the source guard at the top of armHold's
+//      `begin`, which the press door below already makes sufficient. It is
+//      deliberately not taken in the act that built the door, because it changes
+//      COMMIT semantics on shipped controls and that is not this act's lane.
+//      armInspect, whose stakes are `nothing`, serves all three inputs today.
 //   4. TRAP A SCROLL. Moving more than SLOP px abandons, so a drag that was
 //      trying to scroll the screen never becomes a commit.
 //   5. GO INVISIBLE. The fill is state, not decoration, so it survives
 //      reduced-motion; it is a width driven per frame, not an animation.
 //
-// Cancellation is not hand-rolled: trackGesture (#22, ui/gesture.js) calls
-// onEnd exactly once however the gesture ended — pointerup, pointercancel,
-// palm rejection, focus loss — pointerId-scoped, listeners on the element,
-// nothing on window. Vira measured the hole that module exists to fill; a hold
-// that reinvented it would reinvent the hole.
+// Cancellation is not hand-rolled: armPress / trackGesture (#22, ui/gesture.js)
+// calls onEnd exactly once however the gesture ended — pointerup, pointercancel,
+// palm rejection, focus loss, a key or pad button coming back up — pointerId-
+// scoped on the pointer path, listeners on the element, nothing on window. Vira
+// measured the hole that module exists to fill; a hold that reinvented it would
+// reinvent the hole.
+//
+// AND NEITHER FORM BINDS `pointerdown` ANY MORE, which is the S7 fix in one
+// sentence: both go through `armPress`, the ONE door a press-shaped gesture
+// begins at, and that door has pointer, keyboard and gamepad behind it. A form
+// that wants a hold gets all three by construction; a form that refuses one says
+// so on a line of its own (armHold does — see rule 3 above).
 //
 // ---------------------------------------------------------------------------
 // THE SEAM FOR VEGA — a hold with no feedback is a gesture you cannot tell is
@@ -30502,7 +30522,7 @@ Object.assign(module.exports, { dlog, getEntries, failureBanner, logText, openDe
 // hold transition, so their three cues remain here without double-firing.
 // ---------------------------------------------------------------------------
 
-const { trackGesture } = require("src/ui/gesture.js");
+const { armPress } = require("src/ui/gesture.js");
 const { beatFor } = require("src/model/secondbeat.js");
 const { sfx } = require("src/ui/sfx.js");
 const { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
@@ -30601,19 +30621,37 @@ function armHold(btn, { ms, onConfirm, id = null }) {
     paint(0);
   }
 
-  function begin(ev) {
+  function begin(origin, track) {
+    // ─── THE ONE LINE THAT REFUSES S7, AND IT IS A KNOWN LIVE BREACH ────────
+    // Rule 3 above: a focus cursor selects a NAMED element and cannot fall into
+    // the 9 px gap this form exists for, so keyboard and pad commit on one
+    // press. That reasoning is unchanged and it is not mine to overturn —
+    // BUT IT IS NOW IN TENSION WITH A RULE CONSTANTINE STATED IN HIS OWN WORDS
+    // (S7, 2026-08-17, `commons/decisions/directions.md`), and the tension is
+    // not hypothetical: End Turn's hold SHIPPED, so at this commit a mouse must
+    // hold End Turn for 600 ms and a single `e` ends the turn. MEASURED at
+    // b968e28, ?shot=combat: data-beat="hold", data-hold-ms="600", turn 1 -> 2
+    // on one keypress.
+    // The door below serves all three inputs. Deleting this line is the whole
+    // of the fix, and it is deliberately not deleted here: it changes COMMIT
+    // semantics on shipped controls (End Turn, flasks, event choices, the
+    // shrine), which is Sunna's read and Marina's lane, not this act's.
+    // REMOVAL: the day that lane is dealt, or the day Sunna's read says the
+    // beat is owed on every input — one line, no other edit.
+    if (origin.source !== 'pointer') return false;
     heldThisPress = false;
     const ms0 = msOf();
     // The dial is off, or this state of this action owes no beat. Let the
     // click through untouched — that is the pre-hold behaviour, byte for byte.
-    if (!(ms0 > 0)) return;
-    if (fired || armed) return;
+    if (!(ms0 > 0)) return false;
+    if (fired || armed) return false;
     heldThisPress = true;
     armed = true;
     btn.dataset.hold = 'holding';
     const t0 = performance.now();
-    const x0 = ev.clientX;
-    const y0 = ev.clientY;
+    const x0 = origin.x;
+    const y0 = origin.y;
+    const ev = origin.ev;
 
     const tick = (now) => {
       if (!armed) return;
@@ -30635,7 +30673,7 @@ function armHold(btn, { ms, onConfirm, id = null }) {
     };
     raf = requestAnimationFrame(tick);
 
-    trackGesture(ev, {
+    track({
       onMove: (mv) => {
         if (!armed) return;
         if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) stop('idle');
@@ -30644,6 +30682,7 @@ function armHold(btn, { ms, onConfirm, id = null }) {
       // reached the end, nothing happened, and that IS the feature.
       onEnd: () => { if (armed) stop('idle'); },
     });
+    return true;
   }
 
   // A pointer click never commits WHEN A HOLD WAS ARMED. See rule 1 — the early
@@ -30662,14 +30701,14 @@ function armHold(btn, { ms, onConfirm, id = null }) {
   const onKeyEsc = (ev) => { if (ev.key === 'Escape' && armed) stop('idle'); };
 
   dress();
-  btn.addEventListener('pointerdown', begin);
+  const disarmPress = armPress(btn, begin);
   btn.addEventListener('click', onClick);
   addEventListener('keydown', onKeyEsc);
 
   const disarm = function disarm() {
     stop('idle');
     fired = true;
-    btn.removeEventListener('pointerdown', begin);
+    disarmPress();
     btn.removeEventListener('click', onClick);
     removeEventListener('keydown', onKeyEsc);
   };
@@ -30715,6 +30754,18 @@ function armHold(btn, { ms, onConfirm, id = null }) {
 // gesture without becoming its finger: `data-inspect` = idle | pending | open,
 // and `data-inspect-progress` while pending. A mid-hold check reads the
 // attribute; it never has to time a camera against a 400 ms window.
+//
+// THREE INPUTS, ONE GESTURE (S7) — added 2026-08-17, and the defect it closed
+// was an accessibility one: a player who could not use a pointer could not READ
+// A CARD. Measured at b968e28, the focus cursor on a hand card, Enter held 750 ms
+// against a 400 ms dial: `data-inspect` never left `idle`, zero copies, and the
+// card was SELECTED on keydown. The gesture now begins at `armPress`
+// (ui/gesture.js), so a held Confirm key and a held Confirm pad button run the
+// same timer, the same fill, the same fire-at-full and the same restore as a
+// finger. What differs, and only this: a focus cursor has no coordinates, so the
+// origin is the control's own centre and the 12 px boundary below can never fire
+// — there is no drag to yield to and no scroll to trap. Watched red per input
+// (tools/inspecthold.mjs P3/P4/P5).
 //
 // DISAMBIGUATION AGAINST TAP AND DRAG — one shared boundary, one timer:
 //   move > SLOP px, any time  -> a DRAG (or the narrow hand's pan-x scroll).
@@ -30774,6 +30825,12 @@ function armInspect(el, { ms, onOpen = null } = {}) {
     const g = el.cloneNode(true);
     g.classList.add('card-inspect');
     g.classList.remove('selected');
+    // ...and the focus ring, for the same reason `selected` goes: it is a state
+    // of the ORIGINAL, and a copy wearing it is a second cursor. Unreachable
+    // until the gesture gained keyboard and pad (S7) — a pointer hold never had
+    // a ring to clone. MEASURED: two `.gp-focus` elements on screen mid-read,
+    // now one (tools/inspecthold.mjs, the kbd cell).
+    g.classList.remove('gp-focus');
     g.removeAttribute('data-inspect');
     g.removeAttribute('data-inspect-progress');
     // The positional quick-play badge is a fact about a SLOT in the hand; a
@@ -30807,14 +30864,18 @@ function armInspect(el, { ms, onOpen = null } = {}) {
     // Deliberately no sound. See the header — the reasons are numbered.
   }
 
-  function begin(ev) {
+  function begin(origin, track) {
     swallowClick = false;
-    if (!(ms > 0)) return;
-    if (ev.button !== 0 || phase !== 'idle') return;
+    if (!(ms > 0)) return false;
+    // A non-primary MOUSE button is not a press. There is no such thing to get
+    // wrong on the other two inputs — the press door only ever publishes the
+    // Confirm button — so the guard stays scoped to the source that has one.
+    if (origin.source === 'pointer' && origin.ev.button !== 0) return false;
+    if (phase !== 'idle') return false;
     setState('pending');
     const t0 = performance.now();
-    const x0 = ev.clientX;
-    const y0 = ev.clientY;
+    const x0 = origin.x;
+    const y0 = origin.y;
 
     const tick = (now) => {
       // A screen that re-renders its hand mid-gesture (combat rewrites
@@ -30831,26 +30892,44 @@ function armInspect(el, { ms, onOpen = null } = {}) {
     };
     raf = requestAnimationFrame(tick);
 
-    trackGesture(ev, {
+    track({
       onMove: (mv) => {
         // Past the shared boundary this press is a drag (or the narrow
         // hand's scroll) — theirs, silently. Once open, movement is the
         // finger drifting while reading and changes nothing here.
         if (phase === 'pending' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();
       },
-      onEnd: (up, { cancelled }) => {
+      onEnd: (up, { cancelled, source }) => {
+        const completed = phase === 'open' && !cancelled;
         // Swallow only what a completed read's LIFT produces. A cancel is
         // followed by no click, and arming the swallow there eats the next
         // real tap instead (F3's shape).
-        if (phase === 'open' && !cancelled) swallowClick = true;
+        //
+        // A KEY OR PAD RELEASE PRODUCES NO CLICK EITHER — input.js is holding
+        // the activation and asks this question directly (the return below).
+        // Arming the pointer swallow for it would leave a live flag with no
+        // click to eat, and the next real TAP would pay for it: F3's shape
+        // again, one input over. Same reason, different door.
+        if (completed && source === 'pointer') swallowClick = true;
         close();
+        // For a key/pad press this IS the answer to "does the release
+        // activate?". A completed read must never also select or play.
+        return completed;
       },
     });
+    return true;
   }
 
   // Registered BEFORE the screen's own click wiring (the caller's job, and
   // combat's renderHand does) so a read's lift dies here and never selects or
-  // plays. `detail === 0` is keyboard / pad — not a press, never an inspect.
+  // plays.
+  //
+  // `detail === 0` is a SYNTHETIC click — the one input.js dispatches when a
+  // Confirm press did not become a gesture. It is still passed through, and the
+  // reason has changed: it is not "keyboard is not a press" (it is one, and
+  // this gesture now serves it — S7). It is that a synthetic click only ever
+  // arrives when the release ALREADY decided this press was a tap. There is
+  // nothing here to swallow, and swallowing it would eat that tap.
   const onClick = (ev) => {
     if (ev.detail === 0) return;
     if (!swallowClick) return;
@@ -30863,11 +30942,11 @@ function armInspect(el, { ms, onOpen = null } = {}) {
   // screenshot of the idle hand carries its state — same reason armHold
   // dresses its button. With the row at 0 nothing is marked and nothing runs.
   if (ms > 0) setState('idle');
-  el.addEventListener('pointerdown', begin);
+  const disarmPress = armPress(el, begin);
   el.addEventListener('click', onClick);
   return function disarm() {
     close();
-    el.removeEventListener('pointerdown', begin);
+    disarmPress();
     el.removeEventListener('click', onClick);
   };
 }
@@ -31095,6 +31174,115 @@ Object.assign(module.exports, { beatCue, armHold, armInspect, armConfirm, holdMs
 // when the browser took the gesture (scroll claim, focus loss, touch palm
 // rejection…). The caller decides what a cancelled end abandons.
 
+// ---------------------------------------------------------------------------
+// THE PRESS DOOR — one gesture, three inputs (S7).
+//
+// Constantine, 2026-08-17, his words: "if press to hold is active for certain
+// things for mouse or game pad, it shoudl apply to everything including
+// keyboard as well for those same buttons."
+//
+// WHAT WAS WRONG. A hold began at `el.addEventListener('pointerdown', …)`, and
+// that is the whole of it: a pointerdown is the only press a browser gives you
+// for free. Keyboard and pad activation arrived as ONE synthetic click with no
+// down and no up, so a control could only ever be TAPPED without a mouse.
+// Nobody decided that. It is what "bind pointerdown" means, and every control
+// built on that line inherited it.
+//
+// SO THE PRESS IS THE ABSTRACTION, NOT THE HOLD. `armPress` is the one place a
+// press-shaped gesture begins, and it already has three inputs behind it:
+//
+//   pointer  pointerdown … trackGesture … pointerup/pointercancel
+//   keyboard the Confirm key down … up          } published by ui/input.js as
+//   gamepad  the Confirm button down … up       } gppress / gprelease
+//
+// A control that arms a hold through this door gains it on every input BY
+// CONSTRUCTION — there is no per-input wiring to remember and no list to keep
+// in step (Law 1 clause 7). PARITY IS THE DEFAULT AND A REFUSAL IS EXPLICIT: a
+// form that will not serve a source says so by returning false from its own
+// `begin`, in its own file, on a line a reader can find.
+//
+// WHICH BUTTONS — derived, never listed. `ui/input.js` owns the answer: the
+// press is the CONFIRM action, which is by definition the button that activates
+// the focused control, i.e. the one whose pointer twin is a press on it. A
+// rebind moves the hold with it because the binding is read at press time.
+//
+// WHAT A KEY PRESS DOES NOT HAVE, said out loud rather than faked: coordinates
+// of its own, and therefore movement. The origin handed to `begin` is the
+// control's own centre, so a slop test written for a finger can never fire and
+// never has to be special-cased — a focus cursor cannot wander off the element
+// it is standing on. `onMove` simply never arrives.
+//
+// NOTHING IS ADDED TO window (rule 3 above): the two custom events are
+// dispatched ON THE ELEMENT by input.js, which already owns the keyboard and
+// the pad poller, and the listeners here die with the element.
+
+/** The two ends of a non-pointer press. One home for the names — input.js
+ *  dispatches them, this module listens, and nobody types the string twice. */
+const PRESS_EVENT = 'gppress';
+const RELEASE_EVENT = 'gprelease';
+
+/**
+ * armPress(el, begin) -> disarm()
+ *
+ * `begin(origin, track)` is called once per press and RETURNS WHETHER IT TOOK
+ * THE PRESS:
+ *   origin  { source: 'pointer' | 'key' | 'pad', x, y, ev }
+ *   track({ onMove, onEnd })  subscribe to the rest of THIS press.
+ *           onEnd(ev, { cancelled, source }) is called exactly once, and its
+ *           return value answers ONE question for a key/pad press: did this
+ *           gesture consume the activation? True and no click follows (a
+ *           completed read must not also play the card); false and the release
+ *           IS the tap, exactly as an early pointer release is.
+ *
+ * A falsy return means the form declined — the dial is off, this state owes no
+ * beat, the source is refused — and the activation then happens immediately,
+ * byte for byte the pre-door behaviour.
+ */
+function armPress(el, begin) {
+  const onPointerDown = (ev) => {
+    begin({ source: 'pointer', x: ev.clientX, y: ev.clientY, ev }, (h = {}) => trackGesture(ev, {
+      onMove: h.onMove,
+      onEnd: h.onEnd ? (e, info) => h.onEnd(e, { ...info, source: 'pointer' }) : undefined,
+    }));
+  };
+
+  // One key/pad press at a time. `live` holds the subscription between the two
+  // halves; there is no timer and no window listener keeping it alive.
+  let live = null;
+
+  const onPress = (ev) => {
+    if (live) return;
+    const source = (ev.detail && ev.detail.source) || 'key';
+    // A focus cursor has no coordinates. The control's own centre is where it
+    // is standing — see the header: this makes the slop test inert, not wrong.
+    const r = el.getBoundingClientRect();
+    let sink = null;
+    const took = begin({ source, x: r.left + r.width / 2, y: r.top + r.height / 2, ev }, (h) => { sink = h; });
+    if (!took) return;
+    live = { source, h: sink || {} };
+    // The activation now waits for the release. input.js reads this.
+    ev.preventDefault();
+  };
+
+  const onRelease = (ev) => {
+    if (!live) return;
+    const { source, h } = live;
+    live = null;
+    const cancelled = !!(ev.detail && ev.detail.cancelled);
+    if (h.onEnd && h.onEnd(ev, { cancelled, source })) ev.preventDefault();
+  };
+
+  el.addEventListener('pointerdown', onPointerDown);
+  el.addEventListener(PRESS_EVENT, onPress);
+  el.addEventListener(RELEASE_EVENT, onRelease);
+  return function disarmPress() {
+    live = null;
+    el.removeEventListener('pointerdown', onPointerDown);
+    el.removeEventListener(PRESS_EVENT, onPress);
+    el.removeEventListener(RELEASE_EVENT, onRelease);
+  };
+}
+
 function trackGesture(startEv, { onMove, onEnd } = {}) {
   const id = startEv.pointerId;
   const el = startEv.currentTarget;
@@ -31124,7 +31312,7 @@ function trackGesture(startEv, { onMove, onEnd } = {}) {
 }
 
 
-Object.assign(module.exports, { trackGesture });
+Object.assign(module.exports, { PRESS_EVENT, RELEASE_EVENT, armPress, trackGesture });
 
 },
 "src/ui/components/buildstamp.js": function (module, exports, require) {
@@ -31343,7 +31531,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'cb09bf45fd';
+const SOURCE = '23f56f19f6';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -31377,7 +31565,7 @@ const SOURCE = 'cb09bf45fd';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0772';
+const ORDINAL = '0774';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -34955,11 +35143,22 @@ Object.assign(module.exports, { topVeil, veilIsOpen });
 //      listen for, so the existing keyboard handlers work with a controller
 //      too. Which pad BUTTON drives each action is rebindable (Controls tab).
 //
+//   3. THE ACTIVATION PRESS (S7, 2026-08-17). Confirm is published as a press
+//      with TWO ends — `gppress` / `gprelease` on the focused element — instead
+//      of one synthetic click, so a control that has a press-and-hold has it on
+//      all three inputs rather than on the mouse alone. Full reasoning at the
+//      press-door block below; the gesture side is `armPress` in ui/gesture.js.
+//
 // The number keys (1–9) and letter hotkeys stay owned by the screens; this
 // module adds navigation + controller parity on top without touching them.
+// BOUNDARY, because layer 3 is narrower than it sounds: parity is for the button
+// that presses THE FOCUSED CONTROL. A screen hotkey (1–9 quick-play, `e`) is a
+// different button with no pointer twin, and a hold on one is that screen's
+// design question, not this module's.
 
 const { padGlyph } = require("src/ui/uiContent.js");
 const { topVeil } = require("src/ui/components/veil.js");
+const { PRESS_EVENT, RELEASE_EVENT } = require("src/ui/gesture.js");
 
 const FOCUS_SELECTOR = [
   'button:not([disabled])',
@@ -34990,7 +35189,10 @@ const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .
 
 // Rebindable actions. Each carries BOTH a keyboard key (defKey) and a gamepad
 // button (defBtn), and both are rebindable (Controls tab). Delivery:
-//   'cursor' — handled here (activates the focus cursor).
+//   'cursor' — handled here: it acts on the FOCUSED control, which makes it the
+//              one kind with a press to publish (see the press door below).
+//              Its keyboard key is fixed (`key`, not `defKey`) and its pad
+//              button is rebindable; both are read at press time.
 //   'key'    — the canonical binding is the keyboard key; screens match it via
 //              matchAction(ev, id). A pad press dispatches that same key, so the
 //              screens' own handlers run for controller + keyboard alike.
@@ -34999,7 +35201,7 @@ const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .
 const ACTIONS = [
   // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
   // and overlay-close always work; only their pad button is rebindable.
-  { id: 'confirm', label: 'Confirm / Play', short: 'Confirm', kind: 'cursor', keyHint: 'Enter', defBtn: 0 },
+  { id: 'confirm', label: 'Confirm / Play', short: 'Confirm', kind: 'cursor', key: 'Enter', keyHint: 'Enter', defBtn: 0 },
   { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
   { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
   { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
@@ -35012,6 +35214,11 @@ const ACTIONS = [
   { id: 'flask2', label: 'Use Flask 2', short: 'Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
   { id: 'flask3', label: 'Use Flask 3', short: 'Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
 ];
+
+// Confirm's keyboard key, read off its own row rather than typed here. It is
+// FIXED (cursor-activate must always work, see the comment in ACTIONS), which is
+// why it is `key` and not `defKey` — the same shape `cancel` already uses.
+const CONFIRM_KEY = ACTIONS.find((a) => a.id === 'confirm').key;
 
 /** Compact label for the hint bar. The full `label` reads as a settings row
  *  ("Open Deck"); the bar wants the short form ("Deck"). One action registry,
@@ -35237,6 +35444,11 @@ function findByKey(k) {
 
 function setFocus(el, remember = true) {
   const prev = current();
+  // The cursor moved out from under a live press (an arrow key while Confirm is
+  // held, a re-render restoring focus elsewhere). That is a CANCEL, the same
+  // verdict trackGesture gives a pointer the browser took away: whatever was
+  // filling stops, and no activation follows.
+  if (pressEl && pressEl !== el) pressEnd(true);
   if (prev && prev !== el) {
     prev.classList.remove('gp-focus');
     // Focus-mode tooltips: tooltip.js listens for these so controller players
@@ -35319,8 +35531,7 @@ function moveFocus(dir) {
   if (best) setFocus(best);
 }
 
-function activate() {
-  const el = ensureFocus();
+function activateEl(el) {
   if (!el) return;
   if (el.matches('input[type="range"]')) return; // adjusted with left/right instead
   if (el.matches('input[type="text"]')) {
@@ -35330,6 +35541,64 @@ function activate() {
   // dispatchEvent (not .click()) so SVG map nodes — which lack HTMLElement.click
   // — activate the same as HTML buttons/cards.
   el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+}
+
+function activate() {
+  activateEl(ensureFocus());
+}
+
+// ---- the activation press: the same gesture on all three inputs (S7) --------
+//
+// Constantine, 2026-08-17: "if press to hold is active for certain things for
+// mouse or game pad, it shoudl apply to everything including keyboard as well
+// for those same buttons."
+//
+// A mouse hands a control TWO moments — down and up — and every press-and-hold
+// in this game is built in the span between them. Keyboard and pad handed it
+// ONE: `activate()` fired a synthetic click on keydown and that was the whole
+// press. So a hold was a mouse feature by construction, not by anyone's choice,
+// and a player who cannot use a pointer could not perform one at all.
+//
+// WHICH BUTTON, DERIVED RATHER THAN LISTED. The press is the CONFIRM action and
+// nothing else: `ACTIONS`' `confirm` row is `kind: 'cursor'`, which is this
+// file's own word for "this button acts on the focused control" — i.e. exactly
+// the button whose pointer twin is a press ON that control. Its keyboard key is
+// read off the row (`key: 'Enter'`) and its pad button off `bindings.confirm`
+// AT PRESS TIME, so a rebind carries the hold with it and there is no second
+// copy of the mapping to keep in step. The other rows are `kind: 'key'`: they
+// dispatch a key the SCREENS interpret, they do not press the thing under the
+// cursor, and a hold on them is that screen's question, not this one's.
+//
+// WHO DECIDES WHETHER A PRESS IS A GESTURE — the control, not this module. The
+// two events are CANCELABLE and that is the whole protocol:
+//   gppress    preventDefault => "I took this press; hold my activation."
+//              Nobody listening, or nobody claiming, and the click fires here
+//              and now — byte for byte the pre-door behaviour.
+//   gprelease  preventDefault => "the gesture completed; do NOT activate."
+//              Otherwise the release IS the tap, which is what an early pointer
+//              release has always been.
+// This module therefore knows nothing about holds, durations, or which controls
+// have one, and it can never drift from the set that does.
+let pressEl = null;
+
+function pressBegin(source) {
+  if (pressEl) return; // one press at a time
+  const el = ensureFocus();
+  if (!el) return;
+  const claimed = !el.dispatchEvent(new CustomEvent(PRESS_EVENT, { cancelable: true, detail: { source } }));
+  if (!claimed) { activateEl(el); return; }
+  pressEl = el;
+}
+
+function pressEnd(cancelled = false) {
+  const el = pressEl;
+  if (!el) return;
+  pressEl = null;
+  const consumed = !el.dispatchEvent(new CustomEvent(RELEASE_EVENT, { cancelable: true, detail: { cancelled } }));
+  // A control that left the DOM mid-press is not activated on its way out. The
+  // pointer path gets this free (no pointerup arrives at a detached element, so
+  // no click follows); the synthetic path has to say it.
+  if (!consumed && !cancelled && el.isConnected) activateEl(el);
 }
 
 // Left/right on a focused slider nudges its value (keyboard + pad parity).
@@ -35348,10 +35617,12 @@ function synthKey(key) {
   dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
 }
 
-function doAction(id) {
+function doAction(id, source = 'key') {
   const a = ACTIONS.find((x) => x.id === id);
   if (!a) return;
-  if (a.kind === 'cursor') activate();
+  // 'cursor' means "act on the focused control", so it is the one kind that has
+  // a press to publish. See the press-door block above.
+  if (a.kind === 'cursor') pressBegin(source);
   // Dispatch the CURRENTLY bound key so a pad press stays in sync with keyboard
   // rebinds (screens match by binding via matchAction). Fixed-key actions
   // (cancel) fall back to a.key.
@@ -35386,7 +35657,7 @@ function onKeydown(ev) {
   const typing = tag === 'INPUT' || tag === 'TEXTAREA';
   const cur = current();
 
-  if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === 'Enter')) {
+  if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === CONFIRM_KEY)) {
     engaged = true;
   }
   // Tab cycling, keyboard side. Ahead of everything else for the same reason
@@ -35410,18 +35681,40 @@ function onKeydown(ev) {
     moveFocus({ ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[ev.key]);
     return;
   }
-  if (!typing && ev.key === 'Enter') {
+  if (!typing && ev.key === CONFIRM_KEY) {
+    // Autorepeat is ONE press being held, not a stream of presses.
+    //
+    // AND THIS LINE FIXES A DEFECT THAT WAS ALREADY SHIPPED, which is worth the
+    // three lines: a held key is not one keydown, it is the first plus an OS
+    // repeat stream, and every repeat used to run `activate()` again. MEASURED
+    // on ?shot=compendium 1200x730, one focused `.cp-cell`, ONE Enter held for
+    // 600 ms with 17 OS repeats: b968e28 fired that control **18 times**, this
+    // tree fires it **once**. Harmless on the compendium; not harmless on a
+    // control that spends something.
+    // BOUNDARY: that pair is a scratch probe — a receipt, not coverage. No
+    // shipped check watches the repeat count on a gesture-less control;
+    // tools/inspecthold.mjs drives the hold with real repeats but only ever
+    // samples the hand, where the press door already collapses them.
+    if (ev.repeat) { ev.preventDefault(); return; }
     const el = current();
     if (el) {
       ev.preventDefault();
-      activate();
+      pressBegin('key');
     }
   }
+}
+
+// The other half of the Confirm key, and the reason a keyboard can hold at all.
+// Deliberately NOT gated on `enabled`: a press that is already live must end
+// however the world changes, or the control is left filling forever.
+function onKeyup(ev) {
+  if (ev.key === CONFIRM_KEY) pressEnd();
 }
 
 // ---- gamepad polling (started only while a pad is present) -------------------
 
 let rebindCapture = null; // callback awaiting the next pad button (Controls UI)
+let padPressBtn = null; // the button index that opened the live pad press
 
 /** Wait for the next gamepad button press; resolves with its index. */
 function captureNextButton(cb) {
@@ -35442,6 +35735,13 @@ function pollPads() {
     const pressed = pad.buttons.map((b) => b.pressed || b.value > 0.5);
 
     for (let i = 0; i < pressed.length; i++) {
+      // THE RELEASE, which this poller never used to look at. A pad had only
+      // rising edges, so a pad button was a tap and could never be a hold —
+      // the same gap the keyboard had, one input over (S7).
+      if (!pressed[i] && prev[i]) {
+        if (padPressBtn === i) { padPressBtn = null; pressEnd(); }
+        continue;
+      }
       const rising = pressed[i] && !prev[i];
       if (!rising) continue;
       engaged = true;
@@ -35456,7 +35756,9 @@ function pollPads() {
       // Relics/Stats. Without this line the defaults win and the law is prose.
       if (tabRingButton(i)) continue;
       const a = actionForButton(i);
-      if (a) doAction(a.id);
+      // Remember WHICH button opened the press so its own release closes it —
+      // never whichever button happens to come up next.
+      if (a) { doAction(a.id, 'pad'); if (a.kind === 'cursor' && pressEl) padPressBtn = i; }
       // D-pad (12–15) navigates regardless of rebinds.
       else if (i === 12) moveFocus('up');
       else if (i === 13) moveFocus('down');
@@ -35476,7 +35778,11 @@ function pollPads() {
       }
     }
   }
-  if (!any) stopPolling(); // no pads → idle until one reconnects
+  // A pad unplugged mid-press sends no release. Cancel, don't strand.
+  if (!any) {
+    if (padPressBtn != null) { padPressBtn = null; pressEnd(true); }
+    stopPolling(); // no pads → idle until one reconnects
+  }
 }
 
 function startPolling() {
@@ -35498,6 +35804,10 @@ function initInput({ getSettings } = {}) {
   setBindings(s.bindings || {});
   setKeyBindings(s.keyBindings || {});
   addEventListener('keydown', onKeydown, true);
+  addEventListener('keyup', onKeyup, true);
+  // Alt-tab away mid-hold and the keyup lands in another window. Same verdict
+  // trackGesture gives a pointer the browser takes: cancelled, nothing commits.
+  addEventListener('blur', () => pressEnd(true));
 
   // Focus memory: after a re-render drops the cursor, restore it to the same
   // logical element (by key) if it still exists — so navigation doesn't snap

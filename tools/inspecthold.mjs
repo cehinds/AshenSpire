@@ -26,6 +26,58 @@
 //      the window.__combat debug handle — the ONE state setup that does not
 //      enter by the finger, named here rather than hidden) a hold on an
 //      unaffordable card still expands
+//   9-14. THE SAME GESTURE WITHOUT A POINTER (S7) — the keyboard cell and the
+//      pad cell, each running the whole triangle: rest, mid-hold, open,
+//      the read cost nothing, restore, and the TAP corner. See below.
+//
+// ---------------------------------------------------------------------------
+// WHY THIS FILE GREW TWO MORE INPUTS, AND WHAT IT COULD NOT SEE BEFORE.
+//
+// Constantine, 2026-08-17: "if press to hold is active for certain things for
+// mouse or game pad, it shoudl apply to everything including keyboard as well
+// for those same buttons." (S7.)
+//
+// EVERY CHECK 1-8 ABOVE IS A POINTER CHECK, and all fourteen of them were green
+// on a tree where a keyboard player could not read a card at all. MEASURED at
+// dev b968e28, ?shot=combat 1200x730, the focus cursor on a hand card, Enter
+// held 750 ms against a 400 ms dial: data-inspect never left `idle`, zero
+// `.card-inspect` copies, AND THE CARD WAS SELECTED ON KEYDOWN. That absence is
+// the finding this section exists for — an instrument that samples one input
+// cannot tell you the gesture is a mouse feature.
+//
+// THE TWO DOORS, AND THEY ARE NOT THE SAME DEPTH — said plainly rather than
+// both being called "real input":
+//   keyboard  Input.dispatchKeyEvent — the same CDP door the touch checks use,
+//             one layer above the page. Real keyDown/keyUp, and the hold is
+//             driven with real `autoRepeat` keydowns because A HELD KEY IS NOT
+//             ONE KEYDOWN: an OS sends the first and then a ~30 Hz stream, each
+//             carrying `ev.repeat`. A harness that omits them measures a key
+//             nobody holds. Arrows drive the real focus cursor.
+//   gamepad   navigator.getGamepads, SHIMMED. There is NO CDP domain that
+//             synthesizes a pad, so this is the deepest door a headless box
+//             has: input.js's poller reads that function and nothing else, and
+//             the shim is installed with Page.addScriptToEvaluateOnNewDocument
+//             so it is present before the app boots, exactly as a plugged-in
+//             pad would be. WHAT IT THEREFORE CANNOT SEE: driver mapping,
+//             analog thresholds, and the browser's own gamepad plumbing.
+//             A green pad cell is a claim about this game's poller, never
+//             about a physical controller.
+// The shim is installed only for the pad cell and torn down after it: a pad
+// visible during checks 1-8 would put the page in pad-mode and change the very
+// hand those checks measure.
+//
+// WHY THE MODE AXIS RIDES ALONG UNCHANGED. Modes exist because `overlap`
+// occludes a card's centre and a finger must aim at the exposed strip. A focus
+// cursor does not aim — it names an element — so these cells have no aim point
+// to get wrong. They still run in every cell rather than being argued out of
+// three of them, because that argument is exactly the kind that turns out to be
+// wrong about the ghost's size cap on the narrow shape.
+//
+// WHAT IS STILL POINTER-ONLY, AND IT IS NOT AN OVERSIGHT: the abandon corner
+// (check 6) and the drag corner (check 7). Both are defined by MOVEMENT past
+// the shared 12 px boundary, and neither a key nor a pad button has coordinates
+// to move. The gesture door hands a key press the control's own centre, so slop
+// can never fire. There is nothing to sample, not a cell nobody wrote.
 //
 // Usage
 //   node tools/inspecthold.mjs                     source tree via serve.mjs
@@ -44,7 +96,7 @@
 // 'paging' (the shipped strip) and 'overlap' (the whole hand in the strip's
 // width) — and the gesture must survive both, so the corpus runs once per
 // mode rather than once per tree. One axis, not a second file: the checks are
-// the same 14, the mode enters through ?shotSettings (the app's own settings
+// the same 32, the mode enters through ?shotSettings (the app's own settings
 // resolution, the same door a player's stored choice enters), and the ONE
 // mode-aware line is where a press aims. In overlap a card's centre can lie
 // under its right neighbour, so every aim point is the centre of the card's
@@ -68,6 +120,13 @@
 //                               abandon-to-drag, drag plays — PASS there,
 //                               which is exactly what they protect.
 //   vega/hold-to-expand         exit 0, both shapes
+//   dev b968e28 (pre-S7)        the keyboard and pad cells red at both shapes:
+//                               data-inspect never leaves `idle` under a held
+//                               Confirm, zero copies, AND `selected true` —
+//                               the press was activating on keydown, so the
+//                               hold could not exist and the card was played
+//                               instead. Not ref-pinned: P3/P4/P5 below rebuild
+//                               it from today's tree on demand.
 // The run that produced those lines is in the branch report; re-run it with
 // --root against any tree.
 //
@@ -80,7 +139,7 @@
 // whole tool at --root COPY — real serve, real boot, real CDP touch on the
 // real combat screen. Nothing is handed to a function.
 //
-// THE TWO PLANTS ARE THE TWO CONTRACTS, not two convenient lines:
+// THE FIVE PLANTS ARE THE FIVE CONTRACTS, not five convenient lines:
 //   P1 swallow cut     holdconfirm.js stops arming the click-swallow at the
 //                      lift of a completed read. Every visible thing still
 //                      works — the card still expands, still restores — and
@@ -93,6 +152,22 @@
 //                      boundary the tap, the drag and the read share. The
 //                      gesture stops yielding to the drag. Expect "abandon"
 //                      red while the tap and drag corners stay green.
+//   P3 press unpublished   input.js activates on KEYDOWN again instead of
+//                      publishing a press — one line, and it is byte for byte
+//                      the pre-S7 tree. The keyboard hold dies; THE KEYBOARD
+//                      TAP STAYS GREEN, which is what makes this the defect
+//                      and not a crater. Expect "kbd: past the dial" red.
+//   P4 release cut     input.js activates on release WHETHER OR NOT the
+//                      gesture consumed it. The card still expands and still
+//                      restores — and the release now also selects it: A READ
+//                      BECOMES A PLAY, one input over from P1. Expect
+//                      "kbd: the read did not select" red while the open
+//                      check stays green.
+//   P5 pad release cut input.js's poller stops reading the falling edge, which
+//                      is the state a pad was in before this act: buttons rise
+//                      and never fall. The hold OPENS and never ends. Expect
+//                      "pad release: the copy is gone" red while the pad open
+//                      check stays green.
 //   C  clean control   the untouched copy must go GREEN, or a red below only
 //                      proves that copying a tree breaks the app.
 //
@@ -161,7 +236,13 @@ const PLANTS = [
   {
     name: 'P1 swallow cut',
     file: 'src/ui/components/holdconfirm.js',
-    from: "        if (phase === 'open' && !cancelled) swallowClick = true;",
+    // RE-AIMED 2026-08-17 (Sten): the swallow's own line grew a `source` guard
+    // when the gesture gained keyboard and pad (S7), so the old find-string
+    // stopped matching. Aimed at the bytes the defect actually replaces — the
+    // assignment — never loosened and never deleted (Bjorn's quicknav-reach
+    // lesson: a find-string carrying its neighbourhood is a plant aimed at a
+    // neighbourhood). P4 below is this same contract on the other two inputs.
+    from: "        if (completed && source === 'pointer') swallowClick = true;",
     to: '        /* inspecthold --selftest P1: the swallow is cut — a read can now become a play */',
     what: 'the click-swallow at the lift of a completed read',
     expect: 'the read becomes a PLAY — "release: state unchanged" red',
@@ -180,7 +261,88 @@ const PLANTS = [
     mustRed: (out) => /FAIL abandon:/.test(out),
     mustStay: (out) => /PASS tap: quick tap still SELECTS/.test(out),
   },
+  {
+    name: 'P3 press unpublished',
+    file: 'src/ui/input.js',
+    from: '      pressBegin(\'key\');',
+    to: '      activateEl(el); /* inspecthold --selftest P3: the press is not published — the pre-S7 tree */',
+    what: "the Confirm key's press (it activates on keydown again, as it did before S7)",
+    expect: 'a keyboard player cannot hold at all — "kbd: past the dial" red, the kbd TAP still green',
+    mustRed: (out) => /FAIL kbd: past the dial/.test(out),
+    // The tap corner is the whole point: this plant removes the HOLD and leaves
+    // the keyboard otherwise working, which is the defect's real shape. A plant
+    // that also broke Enter would be red for being a crater.
+    mustStay: (out) => /PASS kbd: a short Enter still SELECTS/.test(out),
+  },
+  {
+    name: 'P4 release cut',
+    file: 'src/ui/input.js',
+    from: '  if (!consumed && !cancelled && el.isConnected) activateEl(el);',
+    to: '  if (!cancelled && el.isConnected) activateEl(el); /* inspecthold --selftest P4: the release no longer asks */',
+    what: "the release's question — did the gesture consume this activation?",
+    expect: 'a completed keyboard read ALSO selects — "kbd: the read did not select" red',
+    mustRed: (out) => /FAIL kbd: the read did not select/.test(out),
+    mustStay: (out) => /PASS kbd: past the dial the card is open/.test(out),
+  },
+  {
+    name: 'P5 pad release cut',
+    file: 'src/ui/input.js',
+    from: '        if (padPressBtn === i) { padPressBtn = null; pressEnd(); }',
+    to: '        /* inspecthold --selftest P5: the poller stops reading the falling edge */',
+    what: "the pad poller's falling edge — the half it never had before this act",
+    expect: 'a pad hold opens and never ends — "pad release: the copy is gone" red',
+    mustRed: (out) => /FAIL pad release: the copy is gone/.test(out),
+    mustStay: (out) => /PASS pad: past the dial the card is open/.test(out),
+  },
 ];
+
+// ---- the non-pointer doors ---------------------------------------------------
+// The pad shim, installed ONLY for the pad cell (see the header: a pad visible
+// during checks 1-8 puts the page in pad-mode and changes the hand they
+// measure). It replaces navigator.getGamepads and nothing else — input.js's
+// poller reads that function, unmodified, at its own 16 ms cadence.
+const PAD_SHIM = `(() => {
+  const pad = { index: 0, id: 'inspecthold shim (STANDARD GAMEPAD)', mapping: 'standard',
+    connected: true, timestamp: 0, axes: [0, 0, 0, 0],
+    buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })) };
+  navigator.getGamepads = () => [pad, null, null, null];
+  window.__pad = {
+    down(i) { pad.buttons[i] = { pressed: true, touched: true, value: 1 }; pad.timestamp = performance.now(); },
+    up(i) { pad.buttons[i] = { pressed: false, touched: false, value: 0 }; pad.timestamp = performance.now(); },
+    connect() { window.dispatchEvent(new Event('gamepadconnected')); },
+  };
+})()`;
+
+// ---- the browser and its profile, torn down in the order that works ---------
+//
+// This tool was one of the 25 of 37 that mkdtemp a ~11 MB Chrome profile and
+// never remove it (Bjorn's count at b968e28, on a box at 89%). It is closed here
+// because this act already had the file open.
+//
+// THE ORDER IS BJORN'S AND IT IS NOT COSMETIC — 0fe6dfa..06b18f3, where he
+// corrected his own first cut: `child.kill()` then `rmSync` DOES NOTHING,
+// because SIGTERM starts an ASYNCHRONOUS shutdown and the dying Chromium
+// re-creates the tree on its way out. And a `kill` reachable only on the happy
+// path orphans a live browser whose profile then gets deleted underneath it,
+// which is worse than leaking. So: module scope so the catch can reach it,
+// SIGTERM, await `exit` with a 3 s ceiling, SIGKILL anything left, THEN remove.
+//
+// STILL A PATCH, with his number rather than a shrug: `child.kill()` signals the
+// direct child only, so Chromium helpers can outlive it and re-create entries
+// after rmSync. The fix is a process-group kill in ONE SHARED LAUNCHER — the
+// lane, not a fourteenth private copy of it.
+let PROFILE = null;
+let CHILD = null;
+const dropBrowser = async () => {
+  if (CHILD) {
+    const child = CHILD; CHILD = null;
+    const gone = new Promise((r) => { child.once('exit', r); setTimeout(r, 3000); });
+    try { child.kill(); } catch { /* already gone */ }
+    await gone;
+    try { child.kill('SIGKILL'); } catch { /* already gone */ }
+  }
+  if (PROFILE) { try { rmSync(PROFILE, { recursive: true, force: true }); } catch { /* a profile we cannot remove is not a finding */ } PROFILE = null; }
+};
 
 function sandbox() {
   const dir = mkdtempSync(join(tmpdir(), 'inspecthold-kb-'));
@@ -257,10 +419,14 @@ async function selftest() {
 
   console.log(fails
     ? `\ninspecthold --selftest: ${fails} FAIL — this instrument's red is NOT re-observed; treat its greens as unknown`
-    : '\ninspecthold --selftest: held — clean copy green, both contracts red by name, through the finger\'s own door');
-  console.log('  BOUNDARY: two of the triangle\'s edges carry a plant here (the swallow, the shared');
-  console.log('  boundary). The TAP corner, the affordability check and the open-inspect drag guard');
-  console.log('  do not — they are asserted every run and have never been watched to fail.');
+    : `\ninspecthold --selftest: held — clean copy green, ${PLANTS.length} contracts red by name, through each input's own door`);
+  console.log('  BOUNDARY: five contracts carry a plant — the pointer swallow, the shared 12 px');
+  console.log('  boundary, the Confirm press, the release\'s arbitration, and the pad\'s falling edge.');
+  console.log('  The TAP corners, the affordability check and the open-inspect drag guard do NOT —');
+  console.log('  they are asserted every run and have never been watched to fail. And the planted');
+  console.log('  runs are one cell (390x844 x paging), so the pad shim and the keyboard cell are');
+  console.log('  watched red at ONE shape; the full run sweeps 2 shapes x 2 modes and the control');
+  console.log('  green does not stand in for it.');
   process.exit(fails ? 1 : 0);
 }
 
@@ -268,12 +434,14 @@ async function main() {
   if (!browserPath) { console.error('inspecthold: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
   if (args.includes('--selftest')) return selftest();
   const profile = mkdtempSync(join(tmpdir(), 'inspect-'));
+  PROFILE = profile;
   const s = await serve({ root: ROOT, port: 8272, open: false });
   const base = `http://localhost:${s.port}/`;
   console.log(`inspecthold — ${base} (root ${ROOT})`);
   if (shotsDir) mkdirSync(shotsDir, { recursive: true });
 
   const { child, wsUrl } = await launchChrome(browserPath, profile);
+  CHILD = child;
   const cdp = connectCdp(wsUrl); await cdp.ready;
   let fails = 0, ran = 0;
 
@@ -292,6 +460,31 @@ async function main() {
     const until = async (x, w, ms = 20000) => { const t = Date.now();
       while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); } throw new Error('timeout ' + w); };
     const touch = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points }, S);
+    // The keyboard door: real keyDown/keyUp, so a HELD key is two events with a
+    // span between them — which is the whole subject of the S7 cells below.
+    //
+    // `autoRepeat` is passed because a REAL held key is not one keydown. An OS
+    // sends the first, then a stream of repeats at ~30 Hz, each arriving with
+    // `ev.repeat === true`. A harness that omits them measures a key nobody
+    // holds: the code path where a repeat could restart the gesture (or fire a
+    // control thirty times) would never run. So the hold below is driven with
+    // real repeats.
+    const keyDown = (k, autoRepeat = false) => cdp.send('Input.dispatchKeyEvent',
+      { type: 'keyDown', key: k, code: k, autoRepeat, text: k.length === 1 ? k : undefined }, S);
+    const keyUp = (k) => cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code: k, text: k.length === 1 ? k : undefined }, S);
+    const tapKey = async (k) => { await keyDown(k); await wait(30); await keyUp(k); };
+    /** Keep a key down for `ms`, sending OS-style repeats every ~33 ms. Returns
+     *  the number of repeats sent, so a check can say the stream was real. */
+    const keepDown = async (k, ms) => {
+      const t0 = Date.now();
+      let repeats = 0;
+      while (Date.now() - t0 < ms) {
+        await wait(33);
+        await keyDown(k, true); // a repeat, exactly as an OS sends one
+        repeats++;
+      }
+      return repeats;
+    };
     const ok = (b, what) => { if (b) console.log(`    PASS ${what}`); else { fails++; console.log(`    FAIL ${what}`); } };
     const shot = async (name) => { if (!shotsDir || W !== 390) return;
       const st = await ev(`(document.querySelector('.hand .card')||{dataset:{}}).dataset.inspect || 'unmarked'`);
@@ -308,9 +501,15 @@ async function main() {
     await until(`!!document.querySelector('.combat .hand .card')`, 'combat'); await wait(500);
     console.log(`\n  ${shape} · ${mode}`);
 
+    // `sel` was added 2026-08-17 with the S7 cells, and it was VACUOUS before
+    // it was here: the keyboard checks read `.sel` off this object, the object
+    // did not carry it, and `!undefined` passed forever. Found by watching P4
+    // fail to go red. A field a check reads and nothing supplies is a green that
+    // means nothing — the shape of the plant that would not fire.
     const state = `(() => ({ discard: +document.querySelector('.pile.discard .n').textContent,
       energy: (document.querySelector('.energy-orb')||{textContent:''}).textContent.trim(),
       open: document.querySelectorAll('body > .card-inspect').length,
+      sel: !!document.querySelector('.hand .card.selected'),
       ghosts: [...document.querySelectorAll('body > .card')].filter(e=>e.style.position==='fixed' && !e.classList.contains('card-inspect')).length }))()`;
     // Centre the probe card first — the narrow hand is a scroller (gesture-
     // cancel's lesson: a drag at a stale off-strip centre touches nothing).
@@ -473,14 +672,151 @@ async function main() {
     const played = await ev(state);
     ok(played.discard === before7.discard + 1, `drag: a careful drag onto an enemy still PLAYS (discard ${before7.discard}->${played.discard})`);
 
+    // ---- 9-14 · THE SAME GESTURE WITHOUT A POINTER (S7) --------------------
+    // Every check above is a finger. These two cells are the same triangle
+    // driven by the focus cursor: a key held, and a pad button held. See the
+    // header for the two doors and what the pad shim cannot see.
+    //
+    // WHAT THE FOCUS CURSOR DOES NOT HAVE is an aim point, so nothing here
+    // computes a coordinate. The cursor names an element; that is why these
+    // cells assert reachability FIRST — a gesture on a control the cursor
+    // cannot arrive at is unreachable however well it works.
+    const focusInfo = `(() => { const f = document.querySelector('#app .gp-focus');
+      if (!f) return null;
+      return { card: !!(f.matches && f.matches('.hand .card')), inspect: f.dataset.inspect || 'unmarked',
+        w: f.getBoundingClientRect().width, rings: document.querySelectorAll('.gp-focus').length,
+        text: (f.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 26) }; })()`;
+    // Walk the cursor with one input's own navigation keys/buttons until it is
+    // standing on a hand card (optionally a named one). Tries the axes in turn
+    // because moveFocus is spatial and does not wrap — a cursor at the right
+    // edge of the hand answers ArrowRight with nothing, which is correct.
+    const walkTo = async (step, pred) => {
+      for (const dir of ['right', 'down', 'left']) {
+        for (let i = 0; i < 14; i++) {
+          const f = await ev(focusInfo);
+          if (f && f.card && (!pred || pred(f))) return f;
+          await step(dir); await wait(70);
+        }
+      }
+      const f = await ev(focusInfo);
+      return f && f.card && (!pred || pred(f)) ? f : null;
+    };
+    const isStrike = (f) => /Strike/.test(f.text);
+
+    // --- 9-13 · KEYBOARD -----------------------------------------------------
+    await cdp.send('Page.navigate', { url: combatUrl }, S);
+    await until(`!!document.querySelector('.combat .hand .card')`, 'combat (kbd cell)'); await wait(500);
+    const kbBefore = await ev(state);
+    const ARROW = { right: 'ArrowRight', down: 'ArrowDown', left: 'ArrowLeft' };
+    const onCard = await walkTo((d) => tapKey(ARROW[d]));
+    ok(!!onCard, `kbd: arrow keys alone REACH a hand card (${onCard ? onCard.text : 'never did'})`);
+    if (onCard) {
+      ok(onCard.inspect === 'idle', `kbd: the reached card is armed (data-inspect="${onCard.inspect}")`);
+      await keyDown('Enter');
+      const r1 = await keepDown('Enter', 200);
+      const kbMid = await ev(`(() => ({ f: ${focusInfo}, open: document.querySelectorAll('body > .card-inspect').length }))()`);
+      ok(kbMid.f && kbMid.f.inspect === 'pending' && kbMid.open === 0,
+        `kbd: mid-hold reads pending, no copy yet (${kbMid.f ? kbMid.f.inspect : 'no focus'}, ${kbMid.open})`);
+      const r2 = await keepDown('Enter', 450);
+      // THE DOOR SAYS WHAT IT SENT, and this check asserts only that — that the
+      // press really was driven by a stream of OS-style repeats rather than one
+      // lonely keydown. The BEHAVIOURAL claim (a repeat does not restart the
+      // fill) is carried by the very next check: a hold longer than the dial can
+      // only read `open` if none of the repeats reset the timer.
+      //
+      // THE FLOOR IS 2, NOT A ROUND NUMBER, and it was 12 for one run. That was
+      // a threshold with nothing either side of it (Charter gate 2b) and its own
+      // corpus failed it: 18 repeats on an idle box, SEVEN with four Chromiums
+      // running on a disk at 89%, because each repeat is a CDP round-trip. The
+      // count is EVIDENCE and it is printed; the claim is only that the stream
+      // was a stream. A pass here does not say the rate resembles a real
+      // keyboard's — nothing in this harness can.
+      ok(r1 + r2 >= 2, `kbd: the hold was driven by ${r1 + r2} OS autorepeat keydowns, not one`);
+      const kbOpen = await ev(`(() => { const g = document.querySelector('body > .card-inspect');
+        return { f: ${focusInfo}, n: document.querySelectorAll('body > .card-inspect').length,
+          w: g ? g.getBoundingClientRect().width : 0 }; })()`);
+      ok(kbOpen.f && kbOpen.f.inspect === 'open' && kbOpen.n === 1,
+        `kbd: past the dial the card is open (state ${kbOpen.f ? kbOpen.f.inspect : 'no focus'}, copies ${kbOpen.n})`);
+      ok(kbOpen.n === 1 && kbOpen.w >= onCard.w * 1.5,
+        `kbd: the copy is visibly expanded (${kbOpen.w.toFixed(0)}px vs card ${onCard.w.toFixed(0)}px)`);
+      const kbDuring = await ev(state);
+      ok(kbDuring.discard === kbBefore.discard && kbDuring.energy === kbBefore.energy && !kbDuring.sel,
+        `kbd: reading changed NOTHING (discard ${kbDuring.discard}, energy ${kbDuring.energy}, selected ${kbDuring.sel})`);
+      // ONE focus ring while a copy of a focused card is on screen. The clone
+      // carries the card's classes, so a state that belongs to the original
+      // must be stripped from it — the same reason `selected` is.
+      ok(kbOpen.f && kbOpen.f.rings === 1, `kbd: the expanded copy does not carry a second focus ring (${kbOpen.f ? kbOpen.f.rings : '?'})`);
+      await keyUp('Enter');
+      await wait(300);
+      const kbAfter = await ev(state);
+      ok(kbAfter.open === 0, `kbd release: the copy is gone (${kbAfter.open})`);
+      // THE ONE THAT MATTERS MOST, and it is P1's defect one input over: a
+      // completed read must not also be the tap that plays the card.
+      ok(!kbAfter.sel && kbAfter.discard === kbBefore.discard && kbAfter.energy === kbBefore.energy,
+        `kbd: the read did not select or play (selected ${kbAfter.sel}, discard ${kbAfter.discard}, energy ${kbAfter.energy})`);
+      // The TAP corner, keyboard side: a short Enter is still the whole action.
+      const onStrike = await walkTo((d) => tapKey(ARROW[d]), isStrike);
+      if (onStrike) {
+        await tapKey('Enter'); await wait(350);
+        ok(await ev(`!!document.querySelector('.hand .card.selected')`), `kbd: a short Enter still SELECTS a targetable card`);
+      } else {
+        ok(false, `kbd: could not steer the cursor to a targetable Strike — the tap corner went unmeasured`);
+      }
+    }
+
+    // --- 14 · GAMEPAD --------------------------------------------------------
+    // The shim goes in LAST and is never removed, because this target is closed
+    // immediately after: a pad visible during checks 1-8 would put the page in
+    // pad-mode and change the hand they measure.
+    await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: PAD_SHIM }, S);
+    await cdp.send('Page.navigate', { url: combatUrl }, S);
+    await until(`!!document.querySelector('.combat .hand .card')`, 'combat (pad cell)'); await wait(500);
+    const padBefore = await ev(state);
+    await ev(`(() => { window.__pad.connect(); return 1; })()`); await wait(200);
+    ok(await ev(`document.body.classList.contains('has-gamepad')`), `pad: the shimmed pad is seen by the app`);
+    const DPAD = { right: 15, down: 13, left: 14 };
+    const padTap = async (btn) => { await ev(`(() => { window.__pad.down(${btn}); return 1; })()`); await wait(60);
+      await ev(`(() => { window.__pad.up(${btn}); return 1; })()`); };
+    const padOnCard = await walkTo((d) => padTap(DPAD[d]));
+    ok(!!padOnCard, `pad: the D-pad alone REACHES a hand card (${padOnCard ? padOnCard.text : 'never did'})`);
+    if (padOnCard) {
+      const CONFIRM_BTN = 0; // ACTIONS' `confirm` defBtn — the button this cell holds
+      await ev(`(() => { window.__pad.down(${CONFIRM_BTN}); return 1; })()`);
+      await wait(200);
+      const pMid = await ev(focusInfo);
+      ok(pMid && pMid.inspect === 'pending', `pad: mid-hold reads pending (${pMid ? pMid.inspect : 'no focus'})`);
+      await wait(450);
+      const pOpen = await ev(`(() => ({ f: ${focusInfo}, n: document.querySelectorAll('body > .card-inspect').length }))()`);
+      ok(pOpen.f && pOpen.f.inspect === 'open' && pOpen.n === 1,
+        `pad: past the dial the card is open (state ${pOpen.f ? pOpen.f.inspect : 'no focus'}, copies ${pOpen.n})`);
+      await ev(`(() => { window.__pad.up(${CONFIRM_BTN}); return 1; })()`);
+      await wait(300);
+      const pAfter = await ev(state);
+      ok(pAfter.open === 0, `pad release: the copy is gone (${pAfter.open})`);
+      ok(!pAfter.sel && pAfter.discard === padBefore.discard,
+        `pad: the read did not select or play (selected ${pAfter.sel}, discard ${pAfter.discard})`);
+      // The TAP corner, pad side: a short press is still the whole action.
+      const padOnStrike = await walkTo((d) => padTap(DPAD[d]), isStrike);
+      if (padOnStrike) {
+        await padTap(CONFIRM_BTN); await wait(350);
+        ok(await ev(`!!document.querySelector('.hand .card.selected')`), `pad: a short Confirm still SELECTS a targetable card`);
+      } else {
+        ok(false, `pad: could not steer the cursor to a targetable Strike — the tap corner went unmeasured`);
+      }
+    }
+
     await cdp.send('Target.closeTarget', { targetId });
   }
   }
 
-  cdp.close(); child.kill(); s.server.close();
+  cdp.close(); s.server.close();
+  await dropBrowser();
   if (!ran) { console.error('inspecthold: NOTHING RAN'); process.exit(2); }
   console.log(fails ? `\ninspecthold: ${fails} FAIL` : '\ninspecthold: all green');
   process.exit(fails ? 1 : 0);
 }
 
-main().catch((e) => { console.error('inspecthold:', e.message); process.exit(2); });
+// The catch reaches CHILD because it is at module scope. Without that, ANY throw
+// in main() orphans a headless Chromium — six were alive on this box when Bjorn
+// looked, aged 2 h to 3 h 24 m, none of them killed.
+main().catch(async (e) => { console.error('inspecthold:', e.message); await dropBrowser(); process.exit(2); });

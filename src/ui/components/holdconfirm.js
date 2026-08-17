@@ -52,16 +52,36 @@
 //      player who cannot make the mistake. Named boundary, not silence: pad and
 //      keyboard players get no confirm step. (The CONFIRM form is different and
 //      deliberately so — see armConfirm.)
+//
+//      ⚠ THIS RULE IS NOW A LIVE BREACH OF S7 AND IT IS UNRESOLVED. Constantine,
+//      2026-08-17: "if press to hold is active for certain things for mouse or
+//      game pad, it shoudl apply to everything including keyboard as well for
+//      those same buttons." End Turn's hold SHIPPED, so at b968e28 a mouse must
+//      hold End Turn for 600 ms and a single `e` ends the turn — measured, not
+//      argued. Rule 3's reasoning above is good and it is not what settles this;
+//      his word does, and whether the beat is owed on every input is Sunna's
+//      read. THE FIX IS ONE LINE — the source guard at the top of armHold's
+//      `begin`, which the press door below already makes sufficient. It is
+//      deliberately not taken in the act that built the door, because it changes
+//      COMMIT semantics on shipped controls and that is not this act's lane.
+//      armInspect, whose stakes are `nothing`, serves all three inputs today.
 //   4. TRAP A SCROLL. Moving more than SLOP px abandons, so a drag that was
 //      trying to scroll the screen never becomes a commit.
 //   5. GO INVISIBLE. The fill is state, not decoration, so it survives
 //      reduced-motion; it is a width driven per frame, not an animation.
 //
-// Cancellation is not hand-rolled: trackGesture (#22, ui/gesture.js) calls
-// onEnd exactly once however the gesture ended — pointerup, pointercancel,
-// palm rejection, focus loss — pointerId-scoped, listeners on the element,
-// nothing on window. Vira measured the hole that module exists to fill; a hold
-// that reinvented it would reinvent the hole.
+// Cancellation is not hand-rolled: armPress / trackGesture (#22, ui/gesture.js)
+// calls onEnd exactly once however the gesture ended — pointerup, pointercancel,
+// palm rejection, focus loss, a key or pad button coming back up — pointerId-
+// scoped on the pointer path, listeners on the element, nothing on window. Vira
+// measured the hole that module exists to fill; a hold that reinvented it would
+// reinvent the hole.
+//
+// AND NEITHER FORM BINDS `pointerdown` ANY MORE, which is the S7 fix in one
+// sentence: both go through `armPress`, the ONE door a press-shaped gesture
+// begins at, and that door has pointer, keyboard and gamepad behind it. A form
+// that wants a hold gets all three by construction; a form that refuses one says
+// so on a line of its own (armHold does — see rule 3 above).
 //
 // ---------------------------------------------------------------------------
 // THE SEAM FOR VEGA — a hold with no feedback is a gesture you cannot tell is
@@ -73,7 +93,7 @@
 // hold transition, so their three cues remain here without double-firing.
 // ---------------------------------------------------------------------------
 
-import { trackGesture } from '../gesture.js';
+import { armPress } from '../gesture.js';
 import { beatFor } from '../../model/secondbeat.js';
 import { sfx } from '../sfx.js';
 import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
@@ -172,19 +192,37 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
     paint(0);
   }
 
-  function begin(ev) {
+  function begin(origin, track) {
+    // ─── THE ONE LINE THAT REFUSES S7, AND IT IS A KNOWN LIVE BREACH ────────
+    // Rule 3 above: a focus cursor selects a NAMED element and cannot fall into
+    // the 9 px gap this form exists for, so keyboard and pad commit on one
+    // press. That reasoning is unchanged and it is not mine to overturn —
+    // BUT IT IS NOW IN TENSION WITH A RULE CONSTANTINE STATED IN HIS OWN WORDS
+    // (S7, 2026-08-17, `commons/decisions/directions.md`), and the tension is
+    // not hypothetical: End Turn's hold SHIPPED, so at this commit a mouse must
+    // hold End Turn for 600 ms and a single `e` ends the turn. MEASURED at
+    // b968e28, ?shot=combat: data-beat="hold", data-hold-ms="600", turn 1 -> 2
+    // on one keypress.
+    // The door below serves all three inputs. Deleting this line is the whole
+    // of the fix, and it is deliberately not deleted here: it changes COMMIT
+    // semantics on shipped controls (End Turn, flasks, event choices, the
+    // shrine), which is Sunna's read and Marina's lane, not this act's.
+    // REMOVAL: the day that lane is dealt, or the day Sunna's read says the
+    // beat is owed on every input — one line, no other edit.
+    if (origin.source !== 'pointer') return false;
     heldThisPress = false;
     const ms0 = msOf();
     // The dial is off, or this state of this action owes no beat. Let the
     // click through untouched — that is the pre-hold behaviour, byte for byte.
-    if (!(ms0 > 0)) return;
-    if (fired || armed) return;
+    if (!(ms0 > 0)) return false;
+    if (fired || armed) return false;
     heldThisPress = true;
     armed = true;
     btn.dataset.hold = 'holding';
     const t0 = performance.now();
-    const x0 = ev.clientX;
-    const y0 = ev.clientY;
+    const x0 = origin.x;
+    const y0 = origin.y;
+    const ev = origin.ev;
 
     const tick = (now) => {
       if (!armed) return;
@@ -206,7 +244,7 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
     };
     raf = requestAnimationFrame(tick);
 
-    trackGesture(ev, {
+    track({
       onMove: (mv) => {
         if (!armed) return;
         if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) stop('idle');
@@ -215,6 +253,7 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
       // reached the end, nothing happened, and that IS the feature.
       onEnd: () => { if (armed) stop('idle'); },
     });
+    return true;
   }
 
   // A pointer click never commits WHEN A HOLD WAS ARMED. See rule 1 — the early
@@ -233,14 +272,14 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
   const onKeyEsc = (ev) => { if (ev.key === 'Escape' && armed) stop('idle'); };
 
   dress();
-  btn.addEventListener('pointerdown', begin);
+  const disarmPress = armPress(btn, begin);
   btn.addEventListener('click', onClick);
   addEventListener('keydown', onKeyEsc);
 
   const disarm = function disarm() {
     stop('idle');
     fired = true;
-    btn.removeEventListener('pointerdown', begin);
+    disarmPress();
     btn.removeEventListener('click', onClick);
     removeEventListener('keydown', onKeyEsc);
   };
@@ -286,6 +325,18 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
 // gesture without becoming its finger: `data-inspect` = idle | pending | open,
 // and `data-inspect-progress` while pending. A mid-hold check reads the
 // attribute; it never has to time a camera against a 400 ms window.
+//
+// THREE INPUTS, ONE GESTURE (S7) — added 2026-08-17, and the defect it closed
+// was an accessibility one: a player who could not use a pointer could not READ
+// A CARD. Measured at b968e28, the focus cursor on a hand card, Enter held 750 ms
+// against a 400 ms dial: `data-inspect` never left `idle`, zero copies, and the
+// card was SELECTED on keydown. The gesture now begins at `armPress`
+// (ui/gesture.js), so a held Confirm key and a held Confirm pad button run the
+// same timer, the same fill, the same fire-at-full and the same restore as a
+// finger. What differs, and only this: a focus cursor has no coordinates, so the
+// origin is the control's own centre and the 12 px boundary below can never fire
+// — there is no drag to yield to and no scroll to trap. Watched red per input
+// (tools/inspecthold.mjs P3/P4/P5).
 //
 // DISAMBIGUATION AGAINST TAP AND DRAG — one shared boundary, one timer:
 //   move > SLOP px, any time  -> a DRAG (or the narrow hand's pan-x scroll).
@@ -345,6 +396,12 @@ export function armInspect(el, { ms, onOpen = null } = {}) {
     const g = el.cloneNode(true);
     g.classList.add('card-inspect');
     g.classList.remove('selected');
+    // ...and the focus ring, for the same reason `selected` goes: it is a state
+    // of the ORIGINAL, and a copy wearing it is a second cursor. Unreachable
+    // until the gesture gained keyboard and pad (S7) — a pointer hold never had
+    // a ring to clone. MEASURED: two `.gp-focus` elements on screen mid-read,
+    // now one (tools/inspecthold.mjs, the kbd cell).
+    g.classList.remove('gp-focus');
     g.removeAttribute('data-inspect');
     g.removeAttribute('data-inspect-progress');
     // The positional quick-play badge is a fact about a SLOT in the hand; a
@@ -378,14 +435,18 @@ export function armInspect(el, { ms, onOpen = null } = {}) {
     // Deliberately no sound. See the header — the reasons are numbered.
   }
 
-  function begin(ev) {
+  function begin(origin, track) {
     swallowClick = false;
-    if (!(ms > 0)) return;
-    if (ev.button !== 0 || phase !== 'idle') return;
+    if (!(ms > 0)) return false;
+    // A non-primary MOUSE button is not a press. There is no such thing to get
+    // wrong on the other two inputs — the press door only ever publishes the
+    // Confirm button — so the guard stays scoped to the source that has one.
+    if (origin.source === 'pointer' && origin.ev.button !== 0) return false;
+    if (phase !== 'idle') return false;
     setState('pending');
     const t0 = performance.now();
-    const x0 = ev.clientX;
-    const y0 = ev.clientY;
+    const x0 = origin.x;
+    const y0 = origin.y;
 
     const tick = (now) => {
       // A screen that re-renders its hand mid-gesture (combat rewrites
@@ -402,26 +463,44 @@ export function armInspect(el, { ms, onOpen = null } = {}) {
     };
     raf = requestAnimationFrame(tick);
 
-    trackGesture(ev, {
+    track({
       onMove: (mv) => {
         // Past the shared boundary this press is a drag (or the narrow
         // hand's scroll) — theirs, silently. Once open, movement is the
         // finger drifting while reading and changes nothing here.
         if (phase === 'pending' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();
       },
-      onEnd: (up, { cancelled }) => {
+      onEnd: (up, { cancelled, source }) => {
+        const completed = phase === 'open' && !cancelled;
         // Swallow only what a completed read's LIFT produces. A cancel is
         // followed by no click, and arming the swallow there eats the next
         // real tap instead (F3's shape).
-        if (phase === 'open' && !cancelled) swallowClick = true;
+        //
+        // A KEY OR PAD RELEASE PRODUCES NO CLICK EITHER — input.js is holding
+        // the activation and asks this question directly (the return below).
+        // Arming the pointer swallow for it would leave a live flag with no
+        // click to eat, and the next real TAP would pay for it: F3's shape
+        // again, one input over. Same reason, different door.
+        if (completed && source === 'pointer') swallowClick = true;
         close();
+        // For a key/pad press this IS the answer to "does the release
+        // activate?". A completed read must never also select or play.
+        return completed;
       },
     });
+    return true;
   }
 
   // Registered BEFORE the screen's own click wiring (the caller's job, and
   // combat's renderHand does) so a read's lift dies here and never selects or
-  // plays. `detail === 0` is keyboard / pad — not a press, never an inspect.
+  // plays.
+  //
+  // `detail === 0` is a SYNTHETIC click — the one input.js dispatches when a
+  // Confirm press did not become a gesture. It is still passed through, and the
+  // reason has changed: it is not "keyboard is not a press" (it is one, and
+  // this gesture now serves it — S7). It is that a synthetic click only ever
+  // arrives when the release ALREADY decided this press was a tap. There is
+  // nothing here to swallow, and swallowing it would eat that tap.
   const onClick = (ev) => {
     if (ev.detail === 0) return;
     if (!swallowClick) return;
@@ -434,11 +513,11 @@ export function armInspect(el, { ms, onOpen = null } = {}) {
   // screenshot of the idle hand carries its state — same reason armHold
   // dresses its button. With the row at 0 nothing is marked and nothing runs.
   if (ms > 0) setState('idle');
-  el.addEventListener('pointerdown', begin);
+  const disarmPress = armPress(el, begin);
   el.addEventListener('click', onClick);
   return function disarm() {
     close();
-    el.removeEventListener('pointerdown', begin);
+    disarmPress();
     el.removeEventListener('click', onClick);
   };
 }
