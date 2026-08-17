@@ -94,7 +94,7 @@ export function printArtifactProvenance(file, root, log = console.log) {
     lines.push(`  provenance     : UNCOMMITTED at HEAD ${p.head} — these bytes are in no commit; nothing below is reproducible from a ref.`);
   } else {
     lines.push(`  artifact       : ${name} sha256 ${p.sha256.slice(0, 12)} (${p.size} bytes)`);
-    const at = `dist@${p.touchedAt}${p.touchedWhen ? ` ${p.touchedWhen}` : ''}`;
+    const at = `${name}@${p.touchedAt}${p.touchedWhen ? ` ${p.touchedWhen}` : ''}`;
     if (p.touchedAt === p.head || p.commitsSince === 0) {
       lines.push(`  provenance     : measured ${at}, invoked at HEAD ${p.head} — same commit.`);
       // THE BLIND SPOT, PRINTED ON THE GREEN LINE, because that is the only

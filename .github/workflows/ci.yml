@@ -269,10 +269,10 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Rebuild the standalone and refresh dist/
+      - name: Rebuild the standalone and refresh root + dist/
         run: node tools/launch.mjs --build-only
 
-      - name: dist/ carries its art, and IS the build
+      - name: Root + dist carry their art, and ARE the build
         run: node tools/verify-shipped.mjs
 
       - name: The committed artifact equals a fresh build on THIS runner
@@ -282,8 +282,8 @@ jobs:
         # identical and always would have been. This is the only place the
         # platform claim is actually tested.
         run: |
-          git --no-pager diff --stat -- build dist
-          git diff --exit-code -- build dist
+          git --no-pager diff --stat -- AshenSpire.html build dist
+          git diff --exit-code -- AshenSpire.html build dist
 
   # ---------------------------------------------------------------------------
   # The save-overwrite guard needs a real browser: the defect was a URL reaching

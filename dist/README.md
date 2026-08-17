@@ -8,11 +8,11 @@ The repository root also carries `AshenSpire.html` as a byte-identical,
 easy-to-find current-build alias. `tools/launch.mjs` refreshes both paths in one
 operation and `tools/verify-shipped.mjs` verifies both against `build/`.
 
-- `AshenSpire.html` — the current standalone build, **tracked in git** because
-  `README.md:25` hands this exact path to a player who has no Node and no
-  toolchain. It is a build output living in source control, which is a second
-  copy of the source, and it is kept only for that reason. See *Why this is
-  tracked, and when it stops being* below.
+- `AshenSpire.html` — the canonical dist twin of the root current-build alias,
+  **tracked in git** for a player who has no Node and no toolchain. It is a build
+  output living in source control, which is a second copy of the source, and it
+  is kept only for that reason. See *Why this is tracked, and when it stops
+  being* below.
 - `AshenSpire-<version>.html` — a version-stamped copy the launcher emits
   (e.g. `AshenSpire-0.2.0-ashen.html`). A build artifact, git-ignored. One of
   these was committed at `40c5b21` because the ignore rule still read
@@ -40,8 +40,9 @@ which rebuilds `dist/`, then serves the live app on localhost and opens it.
 
 A shipped artifact belongs to a *release*, not to a branch. The right home for a
 double-clickable HTML is a release asset built at a tag. This repo has no release
-workflow yet, so deleting the tracked copy today would leave `README.md:25`
-pointing at nothing — a broken promise to the one reader who cannot rebuild.
+workflow yet, so deleting the tracked copies today would leave the README's
+root current-build link pointing at nothing — a broken promise to the one
+reader who cannot rebuild.
 
 So it stays, and CI proves it honest instead of trusting that someone remembered
 to rebuild: `.github/workflows/ci.yml` rebuilds from source and fails the run if

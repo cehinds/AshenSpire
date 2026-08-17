@@ -11,7 +11,7 @@
 //
 // Two defects in one line. It reads `mapEntries`, a variable in its own process,
 // about the build it is in the middle of writing — so it is structurally
-// incapable of seeing dist/, which is what README.md:25 hands to a player. And it
+// incapable of seeing the player-facing copies, which the README hands to a player. And it
 // is a console.log: bundle.mjs exits 0 either way, so nothing is gated on it.
 // At 40c5b21 the guard was green on every run while dist/AshenSpire.html had
 // `indexOf('ASSET_MAP')` === -1 — it had never run that bundler at all.
@@ -57,7 +57,7 @@ const SELFTEST = args.includes('--selftest');
 
 const BUILD = 'build/AshenSpire.html';
 const DIST_DIR = 'dist';
-const SHIPPED = 'dist/AshenSpire.html'; // the path README.md:25 gives a player
+const SHIPPED = 'dist/AshenSpire.html'; // canonical dist twin of the root alias
 const ROOT_CURRENT = 'AshenSpire.html'; // the discoverable root alias README gives a player
 
 // The stale artifact as committed at 40c5b21: 712667 bytes, no ASSET_MAP token,
@@ -337,7 +337,7 @@ record(checkCarriesArt(BUILD, buildBytes));
 
 const shippedPath = resolve(ROOT, SHIPPED);
 if (!existsSync(shippedPath)) {
-  record({ ok: false, code: 'MISSING', detail: `${SHIPPED} does not exist, but README.md:25 links it.` });
+  record({ ok: false, code: 'MISSING', detail: `${SHIPPED} does not exist, but README.md links it as the canonical dist twin.` });
 } else {
   const shippedBytes = readFileSync(shippedPath);
   record(checkCarriesArt(SHIPPED, shippedBytes));
