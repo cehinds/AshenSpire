@@ -23,18 +23,20 @@ operation and `tools/verify-shipped.mjs` verifies both against `build/`.
 From the project root:
 
 ```
-node tools/launch.mjs --build-only     # rebuild build/ AND refresh dist/
-node tools/bundle.mjs                  # ONLY the bundler → build/; dist/ untouched
-node tools/verify-shipped.mjs          # check dist/ IS that build, and carries art
+node tools/launch.mjs --build-only     # rebuild build/ and refresh root + dist/
+node tools/bundle.mjs                  # ONLY the bundler → build/; root + dist/ untouched
+node tools/verify-shipped.mjs          # check root + dist/ ARE that build, and carry art
 ```
 
 Note the second line, because this file used to get it wrong ("or just the
-bundler → build/ + copy"): `bundle.mjs` does **not** write to `dist/`. Only
-`launch.mjs` copies. That gap is how `dist/` stayed stale for months while
-`build/` was correct.
+bundler → build/ + copy"): `bundle.mjs` does **not** write to either
+player-facing alias. Only `launch.mjs` copies. That gap is how `dist/` stayed
+stale for months while `build/` was correct; the root alias now shares the same
+single refresh door.
 
 Or use the one-click launcher (`run.bat` on Windows, `run.sh` on macOS/Linux),
-which rebuilds `dist/`, then serves the live app on localhost and opens it.
+which rebuilds the root and `dist/` aliases, then serves the live app on
+localhost and opens it.
 
 ## Why this is tracked, and when it stops being
 
@@ -46,13 +48,14 @@ reader who cannot rebuild.
 
 So it stays, and CI proves it honest instead of trusting that someone remembered
 to rebuild: `.github/workflows/ci.yml` rebuilds from source and fails the run if
-`dist/AshenSpire.html` is not byte-identical to that build.
+either `AshenSpire.html` or `dist/AshenSpire.html` is not byte-identical to that
+build.
 
-**Removal condition:** the tracked `dist/AshenSpire.html` is deleted — not
-amended — the day a release workflow attaches the standalone as a release asset
-and `README.md` links the release instead of this path. At that point the git
-copy is a second copy with a live alternative, which is the defect this section
-spends three paragraphs excusing.
+**Removal condition:** both tracked player-facing aliases (`AshenSpire.html` and
+`dist/AshenSpire.html`) are deleted — not amended — the day a release workflow
+attaches the standalone as a release asset and `README.md` links the release
+instead of these paths. At that point each git copy is a second copy with a live
+alternative, which is the defect this section spends three paragraphs excusing.
 
 ## file:// caveat
 

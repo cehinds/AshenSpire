@@ -26,16 +26,16 @@
 //   node tools/verify-shipped.mjs --selftest  run the known-bad corpus
 //
 // WHAT IT DOES NOT CHECK, and this is the point of the chain:
-//   dist carries art  +  dist === build  →  the player's file is this source.
+//   root + dist carry art  +  both === build  →  the player's files are this source.
 // Check B alone would pass on two identically art-less files, so A is what makes
 // the chain terminate in a true claim rather than in agreement. Agreement is not
 // synchronization (SOP 5).
 //
-// REMOVAL CONDITION (SOP 1's corollary): deleted — not amended — the day dist/
-// holds no tracked artifact, i.e. when the standalone ships as a release asset
-// and README.md links the release (see dist/README.md, *Why this is tracked*).
-// With nothing tracked in dist/ there is nothing for this to verify and the
-// checks become theatre. Also deleted if bundle.mjs stops inlining art into a
+// REMOVAL CONDITION (SOP 1's corollary): deleted — not amended — the day neither
+// player-facing alias is tracked, i.e. when the standalone ships as a release
+// asset and README.md links the release (see dist/README.md, *Why this is
+// tracked*). With no tracked player-facing alias there is nothing for this to
+// verify and the checks become theatre. Also deleted if bundle.mjs stops inlining art into a
 // single file, because then check A is asserting a property the build no longer
 // claims. NOT removed for having passed a long time: --selftest is what keeps it
 // honest, and a --selftest that stops failing on the corpus is itself the alarm.
