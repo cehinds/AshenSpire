@@ -236,8 +236,17 @@ export const ACTIONS = Object.freeze({
     stakes: 'profile',
     undo: 'none',
     hazard: 'pointing',
-    note: 'the ✕ sits beside CONTINUE in the same .slot-actions column; the named cost of the '
-      + 'form: keyboard/pad activation commits immediately, as on every hold (a focus cursor cannot mis-point)',
+    // THE SECOND CLAUSE OF THIS NOTE WAS TRUE UNTIL 2026-08-17 AND IS NOW THE
+    // OPPOSITE. It read: "the named cost of the form: keyboard/pad activation
+    // commits immediately, as on every hold (a focus cursor cannot mis-point)."
+    // Constantine's S7 ruling — "if hold is toggled, then it should be the
+    // same, in all instances" — makes the dial ONE SWITCH over every input, so
+    // a hold is a hold on Enter and on a pad button too. Corrected rather than
+    // left standing: this file is a table an instrument reads back against the
+    // page, and a row carrying a stale parenthetical is the second copy of a
+    // rule, disagreeing with the first.
+    note: 'the ✕ sits beside CONTINUE in the same .slot-actions column; the beat is the same on '
+      + 'pointer, keyboard and pad — the dial is the only switch (S7, 2026-08-17)',
   },
 
   // ---- a second beat this game already had, in its own screen's hand --------

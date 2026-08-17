@@ -17750,8 +17750,17 @@ const ACTIONS = Object.freeze({
     stakes: 'profile',
     undo: 'none',
     hazard: 'pointing',
-    note: 'the ✕ sits beside CONTINUE in the same .slot-actions column; the named cost of the '
-      + 'form: keyboard/pad activation commits immediately, as on every hold (a focus cursor cannot mis-point)',
+    // THE SECOND CLAUSE OF THIS NOTE WAS TRUE UNTIL 2026-08-17 AND IS NOW THE
+    // OPPOSITE. It read: "the named cost of the form: keyboard/pad activation
+    // commits immediately, as on every hold (a focus cursor cannot mis-point)."
+    // Constantine's S7 ruling — "if hold is toggled, then it should be the
+    // same, in all instances" — makes the dial ONE SWITCH over every input, so
+    // a hold is a hold on Enter and on a pad button too. Corrected rather than
+    // left standing: this file is a table an instrument reads back against the
+    // page, and a row carrying a stale parenthetical is the second copy of a
+    // rule, disagreeing with the first.
+    note: 'the ✕ sits beside CONTINUE in the same .slot-actions column; the beat is the same on '
+      + 'pointer, keyboard and pad — the dial is the only switch (S7, 2026-08-17)',
   },
 
   // ---- a second beat this game already had, in its own screen's hand --------
@@ -30922,28 +30931,49 @@ Object.assign(module.exports, { dlog, getEntries, failureBanner, logText, openDe
 //      second way to fire the thing.
 //   2. COMMIT TWICE. It fires the instant the fill lands, then disarms; the
 //      trailing pointerup and its click find nothing armed.
-//   3. LOCK ANYONE OUT. `ev.detail === 0` — a keyboard Enter on a focused
-//      button, and the synthetic click ui/input.js dispatches for the gamepad
-//      cursor — commits immediately, with no hold. That is not a loophole, it
-//      is the scope: this answers a POINTING failure, a 9 px gap only a finger
-//      can fall into. A focus cursor selects a NAMED element and cannot land
-//      between two bars, so charging it a hold would be ceremony billed to a
-//      player who cannot make the mistake. Named boundary, not silence: pad and
-//      keyboard players get no confirm step. (The CONFIRM form is different and
-//      deliberately so — see armConfirm.)
+//   3. BE A MOUSE FEATURE. THE DIAL IS THE SWITCH AND IT GOVERNS EVERY INPUT.
+//      Constantine, 2026-08-17: "if hold is toggled, then it should be the
+//      same, in all instances. for ending turn, using flask, event choice,
+//      shrine rest." So `balance.ui.holdConfirm` — the dial that already
+//      existed — is the one switch, and when it is on, every one of those four
+//      actions holds on pointer, keyboard AND gamepad; when it is `off`, all
+//      four commit on one press on all three. There is no per-input rule and no
+//      per-action rule left to drift.
 //
-//      ⚠ THIS RULE IS NOW A LIVE BREACH OF S7 AND IT IS UNRESOLVED. Constantine,
-//      2026-08-17: "if press to hold is active for certain things for mouse or
-//      game pad, it shoudl apply to everything including keyboard as well for
-//      those same buttons." End Turn's hold SHIPPED, so at b968e28 a mouse must
-//      hold End Turn for 600 ms and a single `e` ends the turn — measured, not
-//      argued. Rule 3's reasoning above is good and it is not what settles this;
-//      his word does, and whether the beat is owed on every input is Sunna's
-//      read. THE FIX IS ONE LINE — the source guard at the top of armHold's
-//      `begin`, which the press door below already makes sufficient. It is
-//      deliberately not taken in the act that built the door, because it changes
-//      COMMIT semantics on shipped controls and that is not this act's lane.
-//      armInspect, whose stakes are `nothing`, serves all three inputs today.
+//      WHAT IT REPLACED, kept because the reasoning was good and is no longer
+//      the ruling. This form used to refuse every non-pointer source on the
+//      argument that it answers a POINTING failure — a 9 px gap only a finger
+//      can fall into — and a focus cursor selects a NAMED element and cannot
+//      mis-point. True, and beside the point his sentence settles: he asked for
+//      one dial with one meaning, not for the beat to be owed only where the
+//      hazard is. His word outranks the derivation; the derivation is recorded
+//      here rather than deleted, because the cost is real — a pad player who
+//      cannot mis-point now pays 600 ms per End Turn, and `off` is where they
+//      go.
+//
+//      MEASURED AT b83bda1, 390x844, dial `normal`, before this act — the
+//      breach was EIGHT cells, not one:
+//        endTurn      key `e` tap  turn 1 -> 2   ·  pad btn2 tap  turn 1 -> 2
+//        eventChoice  Enter tap    3 bars -> 1   ·  pad btn0 tap  3 bars -> 1
+//        useFlask     Enter tap    hpCurrent 2 -> 1 · pad btn0 tap  2 -> 1
+//        shrineRest   Enter tap    shrine gone   ·  pad btn0 tap  shrine gone
+//      Every pointer cell aborted correctly in the same run.
+//
+//      AND "THE FIX IS ONE LINE" — the sentence this comment used to carry —
+//      WAS WRONG, in the two ways a reader could not see from here:
+//        (a) `.end-turn` matches input.js's CHROME list, so THE FOCUS CURSOR
+//            CANNOT REACH IT. Enter and pad-Confirm never arrive at End Turn at
+//            all; its keyboard door is `e`, a `kind: 'key'` binding that reaches
+//            the button as a synthetic click. Deleting the source guard alone
+//            would have changed nothing whatsoever for the one action with a
+//            measured live breach behind it. The other half of this act is in
+//            ui/input.js: a `key`-kind action that has an armed control presses
+//            it through the same door instead of clicking it.
+//        (b) `onEnd` returned nothing, and input.js reads that return as "did
+//            the gesture consume the activation?". With only the guard deleted,
+//            an ABORTED key hold would have activated on release (the abort
+//            commits — rule 1, inverted) and a COMPLETED one would have fired
+//            at full and then activated again on release. Watched, both.
 //   4. TRAP A SCROLL. Moving more than SLOP px abandons, so a drag that was
 //      trying to scroll the screen never becomes a commit.
 //   5. GO INVISIBLE. The fill is state, not decoration, so it survives
@@ -30960,7 +30990,7 @@ Object.assign(module.exports, { dlog, getEntries, failureBanner, logText, openDe
 // sentence: both go through `armPress`, the ONE door a press-shaped gesture
 // begins at, and that door has pointer, keyboard and gamepad behind it. A form
 // that wants a hold gets all three by construction; a form that refuses one says
-// so on a line of its own (armHold does — see rule 3 above).
+// so on a line of its own. NEITHER FORM REFUSES ONE ANY MORE (rule 3 above).
 //
 // ---------------------------------------------------------------------------
 // THE SEAM FOR VEGA — a hold with no feedback is a gesture you cannot tell is
@@ -30973,6 +31003,7 @@ Object.assign(module.exports, { dlog, getEntries, failureBanner, logText, openDe
 // ---------------------------------------------------------------------------
 
 const { armPress } = require("src/ui/gesture.js");
+const { setActionControl, releaseActionControl } = require("src/ui/input.js");
 const { beatFor } = require("src/model/secondbeat.js");
 const { sfx } = require("src/ui/sfx.js");
 const { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
@@ -31072,30 +31103,23 @@ function armHold(btn, { ms, onConfirm, id = null }) {
   }
 
   function begin(origin, track) {
-    // ─── THE ONE LINE THAT REFUSES S7, AND IT IS A KNOWN LIVE BREACH ────────
-    // Rule 3 above: a focus cursor selects a NAMED element and cannot fall into
-    // the 9 px gap this form exists for, so keyboard and pad commit on one
-    // press. That reasoning is unchanged and it is not mine to overturn —
-    // BUT IT IS NOW IN TENSION WITH A RULE CONSTANTINE STATED IN HIS OWN WORDS
-    // (S7, 2026-08-17, `commons/decisions/directions.md`), and the tension is
-    // not hypothetical: End Turn's hold SHIPPED, so at this commit a mouse must
-    // hold End Turn for 600 ms and a single `e` ends the turn. MEASURED at
-    // b968e28, ?shot=combat: data-beat="hold", data-hold-ms="600", turn 1 -> 2
-    // on one keypress.
-    // The door below serves all three inputs. Deleting this line is the whole
-    // of the fix, and it is deliberately not deleted here: it changes COMMIT
-    // semantics on shipped controls (End Turn, flasks, event choices, the
-    // shrine), which is Sunna's read and Marina's lane, not this act's.
-    // REMOVAL: the day that lane is dealt, or the day Sunna's read says the
-    // beat is owed on every input — one line, no other edit.
-    if (origin.source !== 'pointer') return false;
+    // NO SOURCE IS REFUSED. Rule 3 above is the whole reasoning; what is left
+    // here is the ONE condition that decides whether this press is a hold, and
+    // it is the dial — read fresh, for every press, on every input.
+    //
+    // `heldThisPress` IS A POINTER FACT AND ONLY A POINTER FACT. It exists so
+    // the `click` a lifted finger generates can be swallowed (rule 1). A key or
+    // pad press generates NO click — input.js holds the activation and asks
+    // `onEnd` directly — so setting it for those sources would leave a live
+    // swallow flag with no click to eat, and the next real TAP would pay for
+    // it. That is F3's shape, which armInspect below learned once already.
     heldThisPress = false;
     const ms0 = msOf();
     // The dial is off, or this state of this action owes no beat. Let the
     // click through untouched — that is the pre-hold behaviour, byte for byte.
     if (!(ms0 > 0)) return false;
     if (fired || armed) return false;
-    heldThisPress = true;
+    heldThisPress = origin.source === 'pointer';
     armed = true;
     btn.dataset.hold = 'holding';
     const t0 = performance.now();
@@ -31130,7 +31154,17 @@ function armHold(btn, { ms, onConfirm, id = null }) {
       },
       // However it ended — lift, cancel, palm, focus loss. If the fill never
       // reached the end, nothing happened, and that IS the feature.
-      onEnd: () => { if (armed) stop('idle'); },
+      //
+      // THE RETURN IS THE WHOLE OF RULE 1 ON A KEY OR A PAD, and it is `true`
+      // WHICHEVER WAY THIS PRESS ENDED. input.js reads it as "did the gesture
+      // consume the activation?", and both answers are yes for opposite
+      // reasons: a completed hold ALREADY committed at full (firing again on
+      // the release would commit twice), and an early release IS the abort
+      // (activating on it would make the safety step a second way to fire the
+      // thing — rule 1, inverted, which is the failure that looks exactly like
+      // working software). Reaching here at all means `begin` took the press,
+      // so there is no third case to answer.
+      onEnd: () => { if (armed) stop('idle'); return true; },
     });
     return true;
   }
@@ -31141,7 +31175,21 @@ function armHold(btn, { ms, onConfirm, id = null }) {
   // state owes no beat) the click is the whole action and passes straight
   // through.
   const onClick = (ev) => {
-    if (ev.detail === 0) { onConfirm(ev); return; } // rule 3: keyboard / pad cursor
+    // `detail === 0` IS A SYNTHETIC CLICK, AND ITS MEANING HAS CHANGED WITH
+    // RULE 3. It is no longer "keyboard and pad skip the beat" — they do not.
+    // It is now the ONE case that reaches here: an activation that did NOT come
+    // through the press door, which happens when the press door already asked
+    // and this form declined (`begin` returned false — the dial is off, or this
+    // state of this action owes no beat). input.js activates immediately in
+    // exactly that case, so the click IS the whole action and must commit.
+    //
+    // NAMED BOUNDARY: a screen that calls `el.click()` on an armed control from
+    // some path input.js does not route still lands here and still skips the
+    // beat. Combat's `e` key was such a path until this act; nothing in this
+    // file can see the next one. What sees it is the page — every armed control
+    // carries `data-beat-action`, and tools/holdconfirm.mjs drives the real
+    // keys and the real pad rather than trusting this comment.
+    if (ev.detail === 0) { onConfirm(ev); return; }
     if (!heldThisPress) { onConfirm(ev); return; }
     heldThisPress = false;
     ev.preventDefault();
@@ -31574,7 +31622,21 @@ function beatArmer(meta, registries) {
     // pointerdown; a 0 means this press owes no beat and the click commits.
     const ms = () => (formNow() === 'hold' ? dialMs : 0);
     const disarm = armHold(el, { ms, onConfirm, id: actionId });
-    const wrapped = function disarmBeat() { disarm(); };
+    // THE OTHER HALF OF "ALL INSTANCES" (S7 wide), and it is a REGISTRATION,
+    // never a list. Some actions are reached without the focus cursor at all —
+    // End Turn is the shipped one: `.end-turn` matches input.js's CHROME
+    // selector, so no Enter and no pad Confirm can ever arrive on it, and its
+    // only non-pointer door is the rebindable `e` / pad button 2 of the
+    // `endTurn` row in input.js's own ACTIONS. Telling input.js WHICH ELEMENT
+    // this action id draws lets that key open the same press this file already
+    // serves, instead of a synthetic click that skips the beat.
+    //
+    // EVERY armed control registers, not a chosen few. input.js answers only
+    // for ids that are also a `kind: 'key'` row over there, so the pairing is
+    // the INTERSECTION OF TWO TABLES and nobody maintains a third: give
+    // `shrineRest` a hotkey tomorrow and its hold is already on that key.
+    setActionControl(actionId, el);
+    const wrapped = function disarmBeat() { releaseActionControl(actionId, el); disarm(); };
     // A screen that repaints the control (combat's End Turn, every render) calls
     // this; it re-reads the state and re-dresses. Nothing else changes.
     wrapped.refresh = () => { el.dataset.beat = formNow(); disarm.refresh(); };
@@ -31763,6 +31825,1551 @@ function trackGesture(startEv, { onMove, onEnd } = {}) {
 
 
 Object.assign(module.exports, { PRESS_EVENT, RELEASE_EVENT, armPress, trackGesture });
+
+},
+"src/ui/input.js": function (module, exports, require) {
+// src/ui/input.js — unified keyboard + gamepad navigation (SPEC §7.3).
+//
+// Two layers that make every screen playable without a mouse:
+//   1. A focus cursor over interactive elements (buttons, cards, reachable map
+//      nodes, tabs, toggles, targetable enemies…). Arrow keys / D-pad / left
+//      stick move it spatially; Enter / A activates the focused element.
+//   2. A gamepad poller (started only while a pad is connected — no idle loop)
+//      that maps buttons to actions. Confirm activates the cursor; Cancel /
+//      Menu / End-turn dispatch the same synthetic keys the screens already
+//      listen for, so the existing keyboard handlers work with a controller
+//      too. Which pad BUTTON drives each action is rebindable (Controls tab).
+//
+//   3. THE ACTIVATION PRESS (S7, 2026-08-17). Confirm is published as a press
+//      with TWO ends — `gppress` / `gprelease` on the focused element — instead
+//      of one synthetic click, so a control that has a press-and-hold has it on
+//      all three inputs rather than on the mouse alone. Full reasoning at the
+//      press-door block below; the gesture side is `armPress` in ui/gesture.js.
+//
+// The number keys (1–9) and letter hotkeys stay owned by the screens; this
+// module adds navigation + controller parity on top without touching them.
+//
+//   3b. THE PRESS IS NOT ONLY THE CURSOR'S (S7 WIDE, 2026-08-17). Constantine:
+//       "if hold is toggled, then it should be the same, in all instances. for
+//       ending turn, using flask, event choice, shrine rest." Layer 3 above
+//       serves the button that presses the FOCUSED control — and End Turn has
+//       no focused control: `.end-turn` matches CHROME below, so the cursor
+//       skips it by design and Confirm can never arrive on it. Its keyboard
+//       door is `e` and its pad door is button 2, both `kind: 'key'`, and both
+//       reached the button as a SYNTHETIC CLICK that walked straight past the
+//       hold. So a `kind: 'key'` action whose control has armed a beat now
+//       opens the same two-ended press the cursor does — see the action-control
+//       registry below.
+//
+// BOUNDARY, and it is narrower than "every key holds": only a key bound to an
+// ACTION ROW here, whose control has ARMED A BEAT, and only while the dial is
+// on. The 1–9 / Q quick-play keys are not action rows and are untouched; the
+// flask keys `f`/`g`/`h` are rows, but what they press is the flask MENU, which
+// commits nothing and owes no beat — the beat is on the menu's Use row, which
+// the cursor reaches normally. Both are silence by derivation, not by a list.
+
+const { padGlyph } = require("src/ui/uiContent.js");
+const { topVeil } = require("src/ui/components/veil.js");
+const { PRESS_EVENT, RELEASE_EVENT } = require("src/ui/gesture.js");
+
+const FOCUS_SELECTOR = [
+  'button:not([disabled])',
+  '.card',
+  '.map-node.reachable',
+  '.combatant.enemy.targetable',
+  '.ov-tab',
+  '.choice',
+  '.toggle',
+  '.slot-continue',
+  '.slot-new',
+  '.class-pick:not(.locked)', // character creation + custom-run class picks
+  '.cz-opt',
+  '.cz-keepsake',
+  '.cr-class',
+  '.mod-chip',
+  'input[type="range"]',
+  'input[type="text"]',
+  '[data-focusable]',
+].join(',');
+
+// "Chrome" the focus cursor skips during normal play — the top bar, piles, map
+// side panel, zoom, and end-turn/energy. These are reached by their dedicated
+// (rebindable) keys / the Menu overlay instead of by wandering into them
+// (StS2-style: navigation stays on cards, targets, and map nodes). Ignored when
+// a modal/overlay is open, where its own contents ARE the scope.
+const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb';
+
+// Rebindable actions. Each carries BOTH a keyboard key (defKey) and a gamepad
+// button (defBtn), and both are rebindable (Controls tab). Delivery:
+//   'cursor' — handled here: it acts on the FOCUSED control, which makes it the
+//              one kind with a press to publish (see the press door below).
+//              Its keyboard key is fixed (`key`, not `defKey`) and its pad
+//              button is rebindable; both are read at press time.
+//   'key'    — the canonical binding is the keyboard key; screens match it via
+//              matchAction(ev, id). A pad press dispatches that same key, so the
+//              screens' own handlers run for controller + keyboard alike.
+// The deck/relics/stats actions jump the in-run overlay straight to that tab
+// (StS2-style dedicated zone keys) instead of only the generic Menu.
+const ACTIONS = [
+  // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
+  // and overlay-close always work; only their pad button is rebindable.
+  { id: 'confirm', label: 'Confirm / Play', short: 'Confirm', kind: 'cursor', key: 'Enter', keyHint: 'Enter', defBtn: 0 },
+  { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
+  { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
+  { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
+  { id: 'deck', label: 'Open Deck', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3 },
+  { id: 'relics', label: 'Open Relics', short: 'Relics', kind: 'key', defKey: 'r', defBtn: 4 },
+  { id: 'stats', label: 'Open Stats', short: 'Stats', kind: 'key', defKey: 't', defBtn: 5 },
+  // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
+  // we give both a rebindable key per slot).
+  { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
+  { id: 'flask2', label: 'Use Flask 2', short: 'Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
+  { id: 'flask3', label: 'Use Flask 3', short: 'Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
+];
+
+// Confirm's keyboard key, read off its own row rather than typed here. It is
+// FIXED (cursor-activate must always work, see the comment in ACTIONS), which is
+// why it is `key` and not `defKey` — the same shape `cancel` already uses.
+const CONFIRM_KEY = ACTIONS.find((a) => a.id === 'confirm').key;
+
+/** Compact label for the hint bar. The full `label` reads as a settings row
+ *  ("Open Deck"); the bar wants the short form ("Deck"). One action registry,
+ *  two presentations — the bar used to restate these and could drift. */
+function actionShort(id) {
+  const a = ACTIONS.find((x) => x.id === id);
+  return a ? a.short || a.label : id;
+}
+
+// ---- the tab ring (Law 3: bumpers ride the tabs) ----------------------------
+//
+// A tabbed surface registers its own set here while it is open; the pad poller
+// and the keyboard handler below give buttons 4/5 and `[`/`]` to that set in
+// preference to whatever they are globally bound to. That preference is the
+// whole clause: EldenSpire's defaults already SPEND LB/RB on Relics and Stats
+// (ACTIONS above, defBtn 4 and 5), so without contextual precedence the two
+// bindings race and the winner is whoever notices first.
+//
+// It binds the SET, not the widget — a strip, a two-row wrapped strip, or one
+// folded "Deck ▾" switcher all register the same ring and cycle in the same
+// order (Law 3 clause 1a). Wrap is the ring's own job, and it is the edge that
+// breaks: last → first and first → last.
+//
+// `[` / `]` is Marina's proposed keyboard analogue and is NOT yet ratified —
+// Q/E was rejected because E is already End Turn. It earns its keep here beyond
+// the proposal: it is the only way to observe the wrap without a pad attached,
+// and no pad was attached when this was built.
+let tabRing = null; // { prev(), next() } | null
+
+/** setTabRing(ring | null) — a tabbed surface claims the bumpers while open. */
+function setTabRing(ring) {
+  tabRing = ring && typeof ring.next === 'function' && typeof ring.prev === 'function' ? ring : null;
+}
+
+/**
+ * hasTabRing() → is a tab set already holding the bumpers?
+ *
+ * LAW 3 CLAUSE 6, FOR TWO TAB SETS AND ONE PAIR OF BUMPERS. Settings now has
+ * its own tab strip, and Settings is ALSO one tab of the in-run overlay — so on
+ * that door two strips are on screen at once and RB has to mean one thing.
+ *
+ * THE ANSWER IS THE OUTER STRIP, and it is a legibility call, not a technical
+ * one. A player who learns "RB moves the menu tabs" on the Deck tab must not
+ * find that the same button means something else two tabs later; a global
+ * button whose meaning changes with where you are standing is the defect clause
+ * 6 exists to prevent. The inner strip is reached by the focus cursor and by
+ * touch — which is clause 6's own corollary, one level down.
+ *
+ * It is DERIVED, not declared: a strip claims the bumpers only if nothing holds
+ * them. openOverlay claims before it renders any panel, so the overlay's
+ * Settings tab finds them taken and the title-screen modal finds them free. No
+ * caller passes a flag, and nobody has to remember which door they are on.
+ *
+ * NOT A STACK, deliberately. Push/pop would hand the bumpers to the innermost
+ * strip, which is the behaviour this rejects.
+ */
+function hasTabRing() {
+  return !!tabRing;
+}
+
+const TAB_PREV_BTN = 4; // LB, standard mapping
+const TAB_NEXT_BTN = 5; // RB
+const TAB_PREV_KEY = '[';
+const TAB_NEXT_KEY = ']';
+
+/** True if this pad button was consumed by an open tab set. */
+function tabRingButton(i) {
+  if (!tabRing) return false;
+  if (i === TAB_PREV_BTN) tabRing.prev();
+  else if (i === TAB_NEXT_BTN) tabRing.next();
+  else return false;
+  return true;
+}
+
+const DEADZONE = 0.5;
+const REPEAT_MS = 180;
+const POLL_MS = 16; // ~60 Hz input polling (only while a pad is connected)
+
+let bindings = {}; // action id → gamepad button index
+let keyBindings = {}; // action id → keyboard key (e.g. 'm', 'Escape')
+let pollTimer = null;
+let engaged = false; // has the user driven with keyboard/gamepad this session?
+
+/**
+ * True once the player has actually navigated with keyboard or gamepad. Screens
+ * use this to gate auto-focus defaults so mouse-only players never see an
+ * unrequested focus ring.
+ */
+function isEngaged() {
+  return engaged;
+}
+let padPrev = {}; // gamepad index → last pressed-button booleans
+let lastNav = 0; // step counter gate for held-direction repeat
+let enabled = true;
+
+function defaultBindings() {
+  const b = {};
+  for (const a of ACTIONS) b[a.id] = a.defBtn;
+  return b;
+}
+
+function setBindings(stored) {
+  bindings = { ...defaultBindings(), ...(stored || {}) };
+}
+
+function getBindings() {
+  return { ...bindings };
+}
+
+function actionForButton(btn) {
+  return ACTIONS.find((a) => bindings[a.id] === btn) || null;
+}
+
+// ---- keyboard bindings ------------------------------------------------------
+
+function defaultKeyBindings() {
+  const b = {};
+  for (const a of ACTIONS) if (a.defKey) b[a.id] = a.defKey;
+  return b;
+}
+
+function setKeyBindings(stored) {
+  keyBindings = { ...defaultKeyBindings(), ...(stored || {}) };
+}
+
+function getKeyBindings() {
+  return { ...keyBindings };
+}
+
+/** True if a keydown event matches the key currently bound to an action. */
+function matchAction(ev, id) {
+  const k = keyBindings[id];
+  if (!k) return false;
+  return (ev.key || '').toLowerCase() === k.toLowerCase();
+}
+
+// Compact standard-mapping button glyphs for the hint bar / on-screen prompts.
+/** Label for the gamepad button currently bound to an action (hint bar).
+ *  Glyphs come from the shared PAD_BUTTONS table (uiContent.js) so the hint bar
+ *  and the controls screen can't drift apart. */
+function padLabel(id) {
+  const btn = bindings[id];
+  return btn == null ? '' : padGlyph(btn);
+}
+
+/** True if at least one gamepad is currently connected. */
+function hasGamepad() {
+  return (
+    typeof navigator !== 'undefined' &&
+    typeof navigator.getGamepads === 'function' &&
+    Array.from(navigator.getGamepads()).some(Boolean)
+  );
+}
+
+/** Human label for an action's bound key (Controls tab + reference). */
+function keyLabel(id) {
+  let k = keyBindings[id] || '';
+  if (!k) {
+    // Fixed-key actions (confirm=Enter, cancel=Esc) aren't in the rebind map.
+    const a = ACTIONS.find((x) => x.id === id);
+    if (a && (a.keyHint || a.key)) return a.keyHint || a.key;
+    return '—';
+  }
+  if (k === 'Escape') return 'Esc';
+  if (k === ' ') return 'Space';
+  return k.length === 1 ? k.toUpperCase() : k;
+}
+
+// ---- focus cursor -----------------------------------------------------------
+
+function visible(el) {
+  if (!el.isConnected) return false;
+  const r = el.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) return false;
+  const cs = getComputedStyle(el);
+  return cs.visibility !== 'hidden' && cs.display !== 'none';
+}
+
+// The active focus scope: the topmost open veil if any, else the app.
+//
+// The selector and the "which one is topmost" rule used to live here, inline —
+// which made this function the SECOND home of a question overlay.js also
+// answered, in different words and about one veil only. Both now ask
+// components/veil.js; read the header there for what counts as a veil, why
+// `.tut-veil` deliberately does not, and why topmost is paint order rather
+// than DOM order.
+function scopeRoot() {
+  return topVeil() || document.getElementById('app') || document.body;
+}
+
+function focusables() {
+  const root = scopeRoot();
+  const inModal = root.classList && root.classList.contains('modal-veil');
+  return Array.from(root.querySelectorAll(FOCUS_SELECTOR)).filter(
+    (el) => visible(el) && (inModal || !(el.closest && el.closest(CHROME)))
+  );
+}
+
+function current() {
+  return document.querySelector('.gp-focus');
+}
+
+// A stable identity for the focused element, so focus can be restored to the
+// "same" element after a screen re-render (focus memory between inputs).
+let focusKey = null;
+function keyOf(el) {
+  if (!el) return null;
+  const d = el.dataset || {};
+  if (d.instanceId) return `i:${d.instanceId}`;
+  if (d.eid) return `e:${d.eid}`;
+  if (d.classId) return `c:${d.classId}`;
+  if (d.mod) return `m:${d.mod}`;
+  if (d.deck) return `d:${d.deck}`;
+  if (d.tab) return `t:${d.tab}`;
+  if (d.slot) return `s:${el.className}:${d.slot}`;
+  if (el.id) return `#${el.id}`;
+  return `x:${(el.textContent || '').trim().slice(0, 28)}`;
+}
+function findByKey(k) {
+  if (!k) return null;
+  return focusables().find((el) => keyOf(el) === k) || null;
+}
+
+function setFocus(el, remember = true) {
+  const prev = current();
+  // The cursor moved out from under a live press (an arrow key while Confirm is
+  // held, a re-render restoring focus elsewhere). That is a CANCEL, the same
+  // verdict trackGesture gives a pointer the browser took away: whatever was
+  // filling stops, and no activation follows.
+  //
+  // `pressEl === prev` IS LOAD-BEARING SINCE S7 WENT WIDE. A press on a NAMED
+  // target (End Turn, which the cursor cannot reach) is not standing on the
+  // focused element, so a focus move is not the cursor stepping off it — and
+  // the old unconditional test would have cancelled a held `e` the moment
+  // anything else moved the cursor, which is a hold that silently stops
+  // filling. Only the press under the element LOSING focus is cancelled.
+  if (pressEl && pressEl === prev && pressEl !== el) pressEnd(true);
+  if (prev && prev !== el) {
+    prev.classList.remove('gp-focus');
+    // Focus-mode tooltips: tooltip.js listens for these so controller players
+    // get every tooltip a mouse hover would show (SPEC §7.3).
+    prev.dispatchEvent(new CustomEvent('gpblur'));
+  }
+  if (el) {
+    el.classList.add('gp-focus');
+    if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (prev !== el) el.dispatchEvent(new CustomEvent('gpfocus'));
+    if (remember) focusKey = keyOf(el);
+  } else if (remember) {
+    focusKey = null;
+  }
+}
+
+/** Focus the first focusable matching a selector (used for combat targeting). */
+function focusFirst(selector) {
+  const el = focusables().find((e) => e.matches && e.matches(selector));
+  if (el) setFocus(el);
+  return !!el;
+}
+
+function ensureFocus() {
+  let el = current();
+  if (el && visible(el)) return el;
+  const list = focusables();
+  el = list[0] || null;
+  setFocus(el);
+  return el;
+}
+
+// Move the cursor to the nearest focusable in a direction, scored by distance
+// along the axis plus lateral offset (so navigation feels 2D-natural).
+function moveFocus(dir) {
+  const list = focusables();
+  if (!list.length) return;
+  const cur = current();
+  if (!cur || !visible(cur)) {
+    setFocus(list[0]);
+    return;
+  }
+  const cr = cur.getBoundingClientRect();
+  const cx = cr.left + cr.width / 2;
+  const cy = cr.top + cr.height / 2;
+  let best = null;
+  let bestScore = Infinity;
+  for (const el of list) {
+    if (el === cur) continue;
+    const r = el.getBoundingClientRect();
+    const ex = r.left + r.width / 2;
+    const ey = r.top + r.height / 2;
+    const dx = ex - cx;
+    const dy = ey - cy;
+    let primary;
+    let cross;
+    if (dir === 'right') {
+      if (dx <= 2) continue;
+      primary = dx;
+      cross = Math.abs(dy);
+    } else if (dir === 'left') {
+      if (dx >= -2) continue;
+      primary = -dx;
+      cross = Math.abs(dy);
+    } else if (dir === 'down') {
+      if (dy <= 2) continue;
+      primary = dy;
+      cross = Math.abs(dx);
+    } else {
+      if (dy >= -2) continue;
+      primary = -dy;
+      cross = Math.abs(dx);
+    }
+    const score = primary + cross * 2;
+    if (score < bestScore) {
+      bestScore = score;
+      best = el;
+    }
+  }
+  if (best) setFocus(best);
+}
+
+function activateEl(el) {
+  if (!el) return;
+  if (el.matches('input[type="range"]')) return; // adjusted with left/right instead
+  if (el.matches('input[type="text"]')) {
+    el.focus();
+    return;
+  }
+  // dispatchEvent (not .click()) so SVG map nodes — which lack HTMLElement.click
+  // — activate the same as HTML buttons/cards.
+  el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+}
+
+function activate() {
+  activateEl(ensureFocus());
+}
+
+// ---- the activation press: the same gesture on all three inputs (S7) --------
+//
+// Constantine, 2026-08-17: "if press to hold is active for certain things for
+// mouse or game pad, it shoudl apply to everything including keyboard as well
+// for those same buttons."
+//
+// A mouse hands a control TWO moments — down and up — and every press-and-hold
+// in this game is built in the span between them. Keyboard and pad handed it
+// ONE: `activate()` fired a synthetic click on keydown and that was the whole
+// press. So a hold was a mouse feature by construction, not by anyone's choice,
+// and a player who cannot use a pointer could not perform one at all.
+//
+// WHICH BUTTON, DERIVED RATHER THAN LISTED. The press is the CONFIRM action and
+// nothing else: `ACTIONS`' `confirm` row is `kind: 'cursor'`, which is this
+// file's own word for "this button acts on the focused control" — i.e. exactly
+// the button whose pointer twin is a press ON that control. Its keyboard key is
+// read off the row (`key: 'Enter'`) and its pad button off `bindings.confirm`
+// AT PRESS TIME, so a rebind carries the hold with it and there is no second
+// copy of the mapping to keep in step. The other rows are `kind: 'key'`: they
+// dispatch a key the SCREENS interpret, they do not press the thing under the
+// cursor, and a hold on them is that screen's question, not this one's.
+//
+// WHO DECIDES WHETHER A PRESS IS A GESTURE — the control, not this module. The
+// two events are CANCELABLE and that is the whole protocol:
+//   gppress    preventDefault => "I took this press; hold my activation."
+//              Nobody listening, or nobody claiming, and the click fires here
+//              and now — byte for byte the pre-door behaviour.
+//   gprelease  preventDefault => "the gesture completed; do NOT activate."
+//              Otherwise the release IS the tap, which is what an early pointer
+//              release has always been.
+// This module therefore knows nothing about holds, durations, or which controls
+// have one, and it can never drift from the set that does.
+let pressEl = null;
+// The action id that opened a live KEY press on a named target, so its own key
+// closes it. Remembered rather than re-derived, for one reason worth the
+// variable: A REBIND CAN LAND BETWEEN THE DOWN AND THE UP. Asking `matchAction`
+// again at keyup would then match nothing, and the press would be left filling
+// forever on a control whose key no longer exists.
+let keyPressAction = null;
+
+// ---- WHICH CONTROL AN ACTION DRAWS (S7 wide) --------------------------------
+//
+// A REGISTRATION, NEVER A LIST. `components/holdconfirm.js` registers every
+// control it arms under its action id, in the same act that arms it; this
+// module answers only for ids that are ALSO a `kind: 'key'` row in ACTIONS
+// above. So the set of "keys that hold" is the INTERSECTION OF TWO TABLES
+// nobody has to keep in step — and it is empty for every key that presses
+// nothing, which is most of them.
+const actionControls = new Map();
+
+/** The armed control for an action id. `holdconfirm.js` calls this. */
+function setActionControl(id, el) {
+  if (el) actionControls.set(id, el);
+  else actionControls.delete(id);
+}
+
+/** Release, but only if this element is still the registered one — a screen
+ *  that re-mounts arms the new control before the old disarmer runs, and an
+ *  unconditional delete there would unregister the LIVE one. */
+function releaseActionControl(id, el) {
+  if (actionControls.get(id) === el) actionControls.delete(id);
+}
+
+/**
+ * The control this action id should PRESS rather than click, or null.
+ *
+ * THREE CONDITIONS, AND EACH IS READ AT PRESS TIME FROM SOMETHING ELSE'S HOME
+ * rather than remembered here:
+ *   1. the control is still on the page — a screen change is a disarm this
+ *      module never has to be told about;
+ *   2. `data-hold-ms` > 0 — reading the value the machinery already published ON
+ *      THE CONTROL, so the dial is not re-derived here.
+ *
+ *      ⚠ AND THIS CLAUSE IS A REDUNDANT GUARD, NOT THE SWITCH — I called it the
+ *      switch and I was wrong, and the plant aimed at it is what said so. THE
+ *      SWITCH IS `armHold`'s `ms0 > 0`: with the dial off, `begin` declines the
+ *      press, `pressBegin` activates immediately, and one key press commits
+ *      exactly as before. MEASURED — remove this line and holdconfirm.mjs runs
+ *      111 checks and STAYS GREEN, including all four `OFF, one press does…`
+ *      cells. Nothing that ships can tell the two apart.
+ *
+ *      SO WHY IT STAYS. Without it, a dial-off key press reaches the control as
+ *      `activateEl`'s dispatched click instead of the SCREEN's own handler, and
+ *      those differ on exactly one thing: a `disabled` button. Combat's End Turn
+ *      is never disabled (measured — no `.disabled` write in combat.js), but
+ *      co-op's is (`et.disabled = !canEnd`), and NO `?shot=` STATE OPENS A
+ *      CO-OP BOARD. So the difference is real, unreachable by any instrument
+ *      here, and both commits are re-guarded at `onConfirm` anyway.
+ *      **`unknown`, not green** — kept because it makes the off position the
+ *      old path by construction rather than by an argument about re-guards,
+ *      and named here because a line nobody has watched matter is the same
+ *      shape as a check nobody has watched fail. It has NO plant, deliberately:
+ *      a corpus entry that cannot go red is decoration, and Q4 was deleted
+ *      rather than kept green. Whoever finds a door onto co-op should aim one
+ *      here first;
+ *   3. the control is inside the ACTIVE FOCUS SCOPE. This is the veil rule, and
+ *      it is derived from `scopeRoot()` rather than restated: with the draw
+ *      pile or any other veil standing, `.end-turn` is not in scope, this
+ *      module declines the key, and the event reaches the screen's own handler
+ *      which refuses it exactly as it does today. Delete this line and `e`
+ *      ends the turn under an open pile — the defect veil-owns-input.mjs
+ *      exists for, one input over.
+ */
+function pressTarget(id) {
+  const el = actionControls.get(id);
+  if (!el || !el.isConnected) return null;
+  if (!(Number(el.dataset.holdMs) > 0)) return null;
+  const root = scopeRoot();
+  if (!root || !root.contains(el)) return null;
+  return el;
+}
+
+function pressBegin(source, target = null) {
+  if (pressEl) return; // one press at a time
+  // A named target is a control the CURSOR CANNOT REACH (End Turn is in
+  // CHROME); pressing it must not move or invent a focus cursor, so
+  // `ensureFocus` is deliberately not consulted on that path.
+  const el = target || ensureFocus();
+  if (!el) return;
+  const claimed = !el.dispatchEvent(new CustomEvent(PRESS_EVENT, { cancelable: true, detail: { source } }));
+  if (!claimed) { activateEl(el); return; }
+  pressEl = el;
+}
+
+function pressEnd(cancelled = false) {
+  const el = pressEl;
+  // CLEARED EVEN WHEN THERE IS NO LIVE PRESS. A blur, a pad unplug or a focus
+  // move ends the press through the `cancelled` door and never sees the keyup;
+  // leaving the id set would make the guard in onKeydown refuse every later
+  // press for the rest of the session — a hold that stops working and says
+  // nothing, which is the failure mode this whole file is careful about.
+  keyPressAction = null;
+  if (!el) return;
+  pressEl = null;
+  const consumed = !el.dispatchEvent(new CustomEvent(RELEASE_EVENT, { cancelable: true, detail: { cancelled } }));
+  // A control that left the DOM mid-press is not activated on its way out. The
+  // pointer path gets this free (no pointerup arrives at a detached element, so
+  // no click follows); the synthetic path has to say it.
+  if (!consumed && !cancelled && el.isConnected) activateEl(el);
+}
+
+// Left/right on a focused slider nudges its value (keyboard + pad parity).
+function nudgeRange(el, delta) {
+  const step = Number(el.step) || 1;
+  const min = Number(el.min);
+  const max = Number(el.max);
+  let v = Number(el.value) + delta * step;
+  if (!isNaN(min)) v = Math.max(min, v);
+  if (!isNaN(max)) v = Math.min(max, v);
+  el.value = String(v);
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function synthKey(key) {
+  dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+}
+
+function doAction(id, source = 'key') {
+  const a = ACTIONS.find((x) => x.id === id);
+  if (!a) return;
+  // 'cursor' means "act on the focused control", so it is the one kind that has
+  // a press to publish. See the press-door block above.
+  if (a.kind === 'cursor') { pressBegin(source); return; }
+  // A 'key' action whose control has a live beat is ALSO a press (S7 wide) —
+  // this is the pad's half of End Turn's hold, and it costs one branch because
+  // the poller already routes every pad button through here.
+  const held = pressTarget(id);
+  if (held) { pressBegin(source, held); return; }
+  // Dispatch the CURRENTLY bound key so a pad press stays in sync with keyboard
+  // rebinds (screens match by binding via matchAction). Fixed-key actions
+  // (cancel) fall back to a.key.
+  synthKey(keyBindings[id] || a.defKey || a.key);
+}
+
+// ---- keyboard navigation ----------------------------------------------------
+
+// Controls tab: capture the next keypress to rebind a keyboard action.
+let keyCapture = null;
+function captureNextKey(cb) {
+  keyCapture = cb;
+}
+function cancelKeyCapture() {
+  keyCapture = null;
+}
+
+function onKeydown(ev) {
+  // Key-rebind capture runs even while nav is enabled and ignores lone modifiers.
+  if (keyCapture) {
+    const k = ev.key;
+    if (k === 'Shift' || k === 'Control' || k === 'Alt' || k === 'Meta') return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const cb = keyCapture;
+    keyCapture = null;
+    cb(k);
+    return;
+  }
+  if (!enabled) return;
+  const tag = (ev.target && ev.target.tagName) || '';
+  const typing = tag === 'INPUT' || tag === 'TEXTAREA';
+  const cur = current();
+
+  if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === CONFIRM_KEY)) {
+    engaged = true;
+  }
+  // Tab cycling, keyboard side. Ahead of everything else for the same reason
+  // the pad side is: while a tab set is open it owns these two, and no screen
+  // hotkey may take them first.
+  if (!typing && tabRing && (ev.key === TAB_PREV_KEY || ev.key === TAB_NEXT_KEY)) {
+    engaged = true;
+    ev.preventDefault();
+    if (ev.key === TAB_NEXT_KEY) tabRing.next();
+    else tabRing.prev();
+    return;
+  }
+  if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
+    // On a focused slider, horizontal arrows tune it rather than navigate.
+    if (cur && cur.matches('input[type="range"]') && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
+      nudgeRange(cur, ev.key === 'ArrowRight' ? 1 : -1);
+      ev.preventDefault();
+      return;
+    }
+    ev.preventDefault();
+    moveFocus({ ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[ev.key]);
+    return;
+  }
+  if (!typing && ev.key === CONFIRM_KEY) {
+    // Autorepeat is ONE press being held, not a stream of presses.
+    //
+    // AND THIS LINE FIXES A DEFECT THAT WAS ALREADY SHIPPED, which is worth the
+    // three lines: a held key is not one keydown, it is the first plus an OS
+    // repeat stream, and every repeat used to run `activate()` again. MEASURED
+    // on ?shot=compendium 1200x730, one focused `.cp-cell`, ONE Enter held for
+    // 600 ms with 17 OS repeats: b968e28 fired that control **18 times**, this
+    // tree fires it **once**. Harmless on the compendium; not harmless on a
+    // control that spends something.
+    // BOUNDARY: that pair is a scratch probe — a receipt, not coverage. No
+    // shipped check watches the repeat count on a gesture-less control;
+    // tools/inspecthold.mjs drives the hold with real repeats but only ever
+    // samples the hand, where the press door already collapses them.
+    if (ev.repeat) { ev.preventDefault(); return; }
+    const el = current();
+    if (el) {
+      ev.preventDefault();
+      pressBegin('key');
+      return;
+    }
+  }
+
+  // ---- a SCREEN HOTKEY that presses a control with a live beat (S7 wide) ----
+  //
+  // Last, deliberately: navigation, the tab ring and Confirm all get the key
+  // first, and anything this does not claim falls through to the screens' own
+  // handlers untouched. `matchAction` is the SAME question the screens ask, so
+  // a rebind moves the hold with the key and there is no second mapping.
+  //
+  // WHY IT MUST STOP PROPAGATION when it claims: the screen's handler would
+  // otherwise ALSO run and `.end-turn`.click() the button — a synthetic click
+  // that commits immediately, which is the whole defect. Claiming and not
+  // stopping would end the turn AND start a hold.
+  //
+  // AUTOREPEAT FIRST, AND IT IS NOT A TIDY-UP — IT IS THE HOLD. A held key is
+  // the first keydown plus an OS stream at ~30 Hz, and every one of those
+  // repeats is THIS press continuing. Fall through on them and the screen's own
+  // handler answers the second keydown, 33 ms in: combat clicks `.end-turn`, a
+  // synthetic click commits, and the turn ends a third of the way into a hold
+  // that visibly keeps filling. MEASURED — tools/holdconfirm.mjs caught exactly
+  // that: `endTurn: ON, a short key press does NOT end the turn — 1 -> 2`, on a
+  // tree whose every other cell was already green, because a probe that taps
+  // without repeats never reaches this line.
+  if (!typing && keyPressAction && matchAction(ev, keyPressAction)) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    return;
+  }
+  if (!typing && !keyPressAction) {
+    for (const a of ACTIONS) {
+      if (a.kind === 'cursor' || !matchAction(ev, a.id)) continue;
+      const held = pressTarget(a.id);
+      if (!held) break; // no beat on this control — the screens own this key
+      // A repeat with no live press is a key held down from BEFORE this control
+      // was armed (a screen change under a held finger). It is not the start of
+      // a press — there will be no matching keyup for a press that never began
+      // — so it is refused rather than armed.
+      if (ev.repeat) break;
+      ev.preventDefault();
+      ev.stopPropagation();
+      engaged = true;
+      keyPressAction = a.id;
+      pressBegin('key', held);
+      return;
+    }
+  }
+}
+
+// The other half of the Confirm key, and the reason a keyboard can hold at all.
+// Deliberately NOT gated on `enabled`: a press that is already live must end
+// however the world changes, or the control is left filling forever.
+//
+function onKeyup(ev) {
+  if (ev.key === CONFIRM_KEY) { pressEnd(); return; }
+  if (keyPressAction && matchAction(ev, keyPressAction)) {
+    keyPressAction = null;
+    pressEnd();
+  }
+}
+
+// ---- gamepad polling (started only while a pad is present) -------------------
+
+let rebindCapture = null; // callback awaiting the next pad button (Controls UI)
+let padPressBtn = null; // the button index that opened the live pad press
+
+/** Wait for the next gamepad button press; resolves with its index. */
+function captureNextButton(cb) {
+  rebindCapture = cb;
+}
+function cancelCapture() {
+  rebindCapture = null;
+}
+
+function pollPads() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let any = false;
+  if (lastNav > 0) lastNav -= 1; // held-direction repeat gate (in poll ticks)
+  for (const pad of pads) {
+    if (!pad) continue;
+    any = true;
+    const prev = padPrev[pad.index] || [];
+    const pressed = pad.buttons.map((b) => b.pressed || b.value > 0.5);
+
+    for (let i = 0; i < pressed.length; i++) {
+      // THE RELEASE, which this poller never used to look at. A pad had only
+      // rising edges, so a pad button was a tap and could never be a hold —
+      // the same gap the keyboard had, one input over (S7).
+      if (!pressed[i] && prev[i]) {
+        if (padPressBtn === i) { padPressBtn = null; pressEnd(); }
+        continue;
+      }
+      const rising = pressed[i] && !prev[i];
+      if (!rising) continue;
+      engaged = true;
+      if (rebindCapture) {
+        const cb = rebindCapture;
+        rebindCapture = null;
+        cb(i);
+        continue;
+      }
+      // CONTEXTUAL PRECEDENCE (Law 3 clause 2), and the order is the rule:
+      // an open tab set takes LB/RB BEFORE actionForButton() can hand them to
+      // Relics/Stats. Without this line the defaults win and the law is prose.
+      if (tabRingButton(i)) continue;
+      const a = actionForButton(i);
+      // Remember WHICH button opened the press so its own release closes it —
+      // never whichever button happens to come up next.
+      // `if (pressEl)` and no longer `a.kind === 'cursor'`: a 'key' action whose
+      // control has a live beat opens a press too (S7 wide), and its own button
+      // must be the one that closes it. pressBegin refuses while a press is
+      // live, so a set pressEl here was set by THIS call.
+      if (a) { doAction(a.id, 'pad'); if (pressEl) padPressBtn = i; }
+      // D-pad (12–15) navigates regardless of rebinds.
+      else if (i === 12) moveFocus('up');
+      else if (i === 13) moveFocus('down');
+      else if (i === 14) moveFocus('left');
+      else if (i === 15) moveFocus('right');
+    }
+    padPrev[pad.index] = pressed;
+
+    // Left stick → navigation, rate-limited so a held stick steps, not races.
+    const ax = pad.axes[0] || 0;
+    const ay = pad.axes[1] || 0;
+    if (!rebindCapture && (Math.abs(ax) > DEADZONE || Math.abs(ay) > DEADZONE)) {
+      if (lastNav <= 0) {
+        lastNav = Math.round(REPEAT_MS / POLL_MS);
+        if (Math.abs(ax) > Math.abs(ay)) moveFocus(ax > 0 ? 'right' : 'left');
+        else moveFocus(ay > 0 ? 'down' : 'up');
+      }
+    }
+  }
+  // A pad unplugged mid-press sends no release. Cancel, don't strand.
+  if (!any) {
+    if (padPressBtn != null) { padPressBtn = null; pressEnd(true); }
+    stopPolling(); // no pads → idle until one reconnects
+  }
+}
+
+function startPolling() {
+  if (pollTimer == null) pollTimer = setInterval(pollPads, POLL_MS);
+}
+function stopPolling() {
+  if (pollTimer != null) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+/**
+ * initInput({ getSettings }) — install keyboard nav + gamepad support.
+ * Bindings come from settings.bindings (rebindable in the Controls tab).
+ */
+function initInput({ getSettings } = {}) {
+  const s = (getSettings && getSettings()) || {};
+  setBindings(s.bindings || {});
+  setKeyBindings(s.keyBindings || {});
+  addEventListener('keydown', onKeydown, true);
+  addEventListener('keyup', onKeyup, true);
+  // Alt-tab away mid-hold and the keyup lands in another window. Same verdict
+  // trackGesture gives a pointer the browser takes: cancelled, nothing commits.
+  addEventListener('blur', () => pressEnd(true));
+
+  // Focus memory: after a re-render drops the cursor, restore it to the same
+  // logical element (by key) if it still exists — so navigation doesn't snap
+  // back to the top between inputs. A full screen change won't match, leaving
+  // focus cleared until the next nav press (correct).
+  const appRoot = document.getElementById('app');
+  if (appRoot && typeof MutationObserver !== 'undefined') {
+    let scheduled = false;
+    const mo = new MutationObserver(() => {
+      if (scheduled) return;
+      scheduled = true;
+      setTimeout(() => {
+        scheduled = false;
+        if (!enabled || current() || !focusKey) return;
+        const el = findByKey(focusKey);
+        if (el) setFocus(el, false);
+      }, 0);
+    });
+    mo.observe(appRoot, { childList: true, subtree: true });
+  }
+  addEventListener('gamepadconnected', () => {
+    document.body.classList.add('has-gamepad');
+    startPolling();
+  });
+  addEventListener('gamepaddisconnected', () => {
+    if (!navigator.getGamepads || !Array.from(navigator.getGamepads()).some(Boolean)) {
+      document.body.classList.remove('has-gamepad');
+    }
+  });
+  // If a pad is already connected at load (some browsers report it immediately).
+  if (navigator.getGamepads && Array.from(navigator.getGamepads()).some(Boolean)) startPolling();
+  return {
+    setEnabled: (v) => {
+      enabled = v;
+    },
+    refocus: () => setFocus(null),
+  };
+}
+
+
+Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, focusFirst, setActionControl, releaseActionControl, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+
+},
+"src/ui/uiContent.js": function (module, exports, require) {
+// src/ui/uiContent.js — shared UI presentation data.
+//
+// The map, combat, and co-op screens all draw the same things — map node
+// types, act titles, enemy intents. These used to be hardcoded (and drifting)
+// in each screen. This is the single source so their icons, labels, and prose
+// can't diverge. Pure presentation data + tiny pure helpers, no game state.
+
+const { balance } = require("src/content/balance.js");
+
+// ---- status tooltip tokens (#61) --------------------------------------------
+// Status tooltips carry {tokens} bound to the row's OWN knobs, so the prose
+// can never restate a number the table holds (Law 1 clause 2 — a literal in
+// tooltip prose is a copy nothing syncs). One substitution home; a token that
+// resolves to nothing stays visible as its literal '{...}' — a loud defect,
+// not a silent blank.
+function statusTooltipText(def) {
+  let t = def.tooltip || '';
+  const sub = (token, v) => {
+    if (v != null) t = t.split(`{${token}}`).join(String(v));
+  };
+  if (def.proc) {
+    sub('proc.threshold', def.proc.threshold);
+    sub('proc.burstPercent', def.proc.burstPercent);
+    sub('proc.burstMin', def.proc.burstMin);
+    sub('proc.burstMax', def.proc.burstMax);
+    sub('proc.poiseDamage', def.proc.poiseDamage);
+  }
+  if (def.resists) sub('resists.percent', def.resists.percent);
+  if (def.taggedVulnerability) sub('tv.pct', Math.round((def.taggedVulnerability.mult - 1) * 100));
+  if (def.decay && typeof def.decay === 'object') sub('decay.duration', def.decay.duration);
+  return t;
+}
+
+// One typed instance presentation for both combat clients. A registered
+// percent payload is not a generic stack count; its duration is a separate
+// clock and must be named separately.
+function statusInstancePresentation(def, inst) {
+  const rawValue = inst && inst.meter ? inst.meter.value : (inst && inst.stacks) || 0;
+  const valueToken = def.instancePresentation?.valueToken || 'stacks';
+  const durationText = inst && Number.isFinite(inst.duration)
+    ? `${inst.duration} ${inst.duration === 1 ? 'turn' : 'turns'}` : '';
+  const valueText = valueToken === 'percent' ? `${rawValue}%` : String(rawValue);
+  const label = valueToken === 'percent'
+    ? `${def.name} ${valueText}${durationText ? ` · ${durationText}` : ''}`
+    : `${def.name} ×${rawValue}`;
+  return {
+    valueToken,
+    valueText,
+    durationText,
+    label,
+    tooltip: `${statusTooltipText(def)}${durationText ? ` Turns left: ${inst.duration}.` : ''}`,
+    semantic: { statusId: def.id, valueToken, ariaLabel: label },
+  };
+}
+
+/** Pure attribute map shared by both combat clients. */
+function statusInstanceSemanticAttrs(presentation) {
+  return {
+    'data-status-id': presentation.semantic.statusId,
+    'data-status-value-token': presentation.semantic.valueToken,
+    'aria-label': presentation.semantic.ariaLabel,
+  };
+}
+
+// ---- map node types ---------------------------------------------------------
+const NODE_TYPES = {
+  monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
+  fight: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
+  elite: { icon: '☠', name: 'Elite', blurb: 'A hard fight. Drops a relic.' },
+  boss: { icon: '👁', name: 'Boss', blurb: 'The act boss.' },
+  shrine: { icon: '♨', name: 'Shrine of Emberlight', blurb: 'Rest (heal), smith (upgrade a card), or mend an ally.' },
+  merchant: { icon: '⚖', name: 'Merchant', blurb: 'Cards, relics, flasks, card removal.' },
+  treasure: { icon: '▣', name: 'Treasure', blurb: 'A relic, free.' },
+  event: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
+  unknown: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
+};
+const nodeIcon = (type) => (NODE_TYPES[type] || {}).icon || '?';
+const nodeName = (type) => (NODE_TYPES[type] || {}).name || String(type);
+const nodeBlurb = (type) => (NODE_TYPES[type] || {}).blurb || '';
+
+// Tints for the map glyphs. Here rather than in the map's markup for the reason
+// this file already claims in its header — one source, or they diverge.
+const NODE_TINT = {
+  elite: 'var(--ember)',
+  boss: 'var(--ember)',
+  shrine: 'var(--gold)',
+  merchant: 'var(--grace)',
+  treasure: 'var(--gold)',
+};
+
+/**
+ * legendEntries() → [{ icon, name, tint }], one row per distinct glyph.
+ *
+ * Bjorn cold-played the map and could not identify `👁`. It is the BOSS — the
+ * most important node on the board — and it was missing from the legend, because
+ * the legend was hand-written in map.js while the icons live here, in a file
+ * whose own header says it is the single source so they "can't diverge".
+ *
+ * A claim of single-sourcing with an unchecked second copy beside it. Deriving
+ * the legend means a new node type appears in it without anyone remembering to,
+ * and the hardcoded list dies — which is the proof the collapse was real rather
+ * than a layer of indirection (Bjorn's criterion).
+ *
+ * Aliases (monster/fight, event/unknown) collapse to one row by glyph.
+ */
+function legendEntries() {
+  const seen = new Set();
+  const out = [];
+  for (const [type, def] of Object.entries(NODE_TYPES)) {
+    if (seen.has(def.icon)) continue;
+    seen.add(def.icon);
+    out.push({ icon: def.icon, name: def.name, tint: NODE_TINT[type] || '' });
+  }
+  return out;
+}
+
+// ---- act titles -------------------------------------------------------------
+const ACT_NAMES = {
+  1: 'ACT I — THE FALLOW MARCHES',
+  2: 'ACT II — THE STITCHED COURT',
+  3: 'ACT III — THE ASHEN CROWN',
+};
+// Endless Spire: acts past 3 reuse the act 1-3 names with a "· CYCLE n" marker.
+// The cycling arithmetic is `actPlate` (below, with the per-act art it now also
+// serves) and the count is the NUMBER OF NAMES WRITTEN, asked rather than typed —
+// this line held a literal `3` beside a table of three, which is one fact in two
+// places and would have gone wrong the day a fourth act was named.
+const ACT_NAME_COUNT = Object.keys(ACT_NAMES).length;
+function actTitle(actNumber) {
+  const base = ACT_NAMES[actPlate(actNumber, ACT_NAME_COUNT)] || `ACT ${actNumber}`;
+  const loop = Math.floor((actNumber - 1) / ACT_NAME_COUNT);
+  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
+}
+
+// ---- enemy intents ----------------------------------------------------------
+// `iv` is a preview/snapshot intent:
+//   { kind, moveId?, damage?, hits?, block?, delayed?, pending?, totalDamage? }
+const INTENT_ICONS = { attack: '⚔', block: '🛡', buff: '↑', debuff: '☾', staggered: '✦', unknown: '?' };
+
+// Solo (previewIntent) supplies { kind, damage, hits, block, delayed, pending,
+// totalDamage } and marks unknown via kind:'unknown'; the co-op snapshot intent
+// supplies the same fields plus moveId (null when unknown). These helpers key on
+// kind + field presence so both shapes render identically.
+const isUnknownIntent = (iv) => !iv || iv.kind === 'unknown' || iv.moveId === null;
+
+/** The badge shown over an enemy → { cls, html }. */
+function intentBadge(iv) {
+  if (isUnknownIntent(iv)) return { cls: 'unknown', html: '?' };
+  if (iv.kind === 'staggered') return { cls: 'staggered', html: '✦ STAGGERED' };
+  if (iv.damage != null) {
+    const n = iv.hits > 1 ? `${iv.damage}×${iv.hits}` : `${iv.damage}`;
+    return { cls: `attack${iv.delayed ? ' delayed' : ''}`, html: `<span class="ic">${INTENT_ICONS.attack}</span>${n}${iv.delayed ? ' ⌛' : ''}` };
+  }
+  if (iv.block != null) return { cls: 'block', html: `<span class="ic">${INTENT_ICONS.block}</span>` };
+  if (iv.kind === 'buff') return { cls: 'buff', html: `<span class="ic">${INTENT_ICONS.buff}</span>` };
+  if (iv.kind === 'debuff') return { cls: 'debuff', html: `<span class="ic">${INTENT_ICONS.debuff}</span>` };
+  return { cls: iv.kind || 'unknown', html: '?' };
+}
+
+/** Intent hover tooltip. `victim` names who attacks/debuffs hit ('you' solo,
+ *  'each hero' in co-op). Reads totalDamage/pending when the caller has them. */
+function intentTooltip(iv, { victim = 'you' } = {}) {
+  if (isUnknownIntent(iv)) return '<div class="tt-title">Intent: Unknown</div>';
+  if (iv.kind === 'staggered') return `<div class="tt-title">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.`;
+  if (iv.damage != null) {
+    const total = iv.totalDamage != null && iv.hits > 1 ? ` (${iv.totalDamage} total)` : '';
+    let t = `<div class="tt-title">Intent: Attack</div>Attacking ${victim} for <b>${iv.damage}${iv.hits > 1 ? ` × ${iv.hits}${total}` : ''}</b> damage (modifiers included).`;
+    if (iv.pending) t += '<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.';
+    else if (iv.delayed) t += '<br><b>Delayed:</b> it holds this turn and strikes the next. Stagger cancels it.';
+    return t;
+  }
+  if (iv.block != null) return '<div class="tt-title">Intent: Defend</div>Gaining Block.';
+  if (iv.kind === 'buff') return '<div class="tt-title">Intent: Buff</div>Strengthening itself.';
+  if (iv.kind === 'debuff') return `<div class="tt-title">Intent: Debuff</div>Hindering ${victim}.`;
+  return '<div class="tt-title">Intent: Unknown</div>';
+}
+
+// ---- act backdrops ---------------------------------------------------------
+// One rendered plate per act (tools/backdrops-blender.py → assets/bg/*.webp,
+// styled by .backdrop.act-N in combat.css). Endless loops past act 3, so the
+// act cycles back through the three plates rather than rendering art-less.
+const BACKDROP_ACTS = balance.ui.backdropActs;
+function backdropClass(actNumber) {
+  return `backdrop act-${actPlate(actNumber, BACKDROP_ACTS)}`;
+}
+
+// ---- map parchment (the fog's undiscovered ground) --------------------------
+//
+// THREE AUTHORED LOOKS, ONE PER ACT, BOUND BY NAME — Law 1 clause 4, and the
+// backdrop plates directly above are the precedent this copies rather than
+// invents. `assets/map/parchment_act1.webp`, `_act2`, `_act3`; no registration
+// list anywhere, so Freja drops a file in and the act wears it.
+//
+// GENERATED PARCHMENT WAS REFUSED, and on Law 0 rather than on budget: art
+// derived from the graph COUPLES THE FLAVOUR LAYER TO `mapgen`, and Constantine
+// now turns `floors` and `columns` himself — so a knob he reaches for to shorten
+// a run would silently change the art. A tunable that moves a thing its turner
+// was not thinking about is exactly clause 5's silent-plausible-derivation.
+//
+// ~~UNTIL THE ART EXISTS THE GROUND IS A DERIVED PLACEHOLDER and the screen says
+// so rather than this comment~~ — STRUCK 2026-08-08 by Sunna. It did not say so.
+// The three files NEVER EXISTED, the `<image>` resolved to nothing exactly as
+// this paragraph promised, and what a player got under fog was a flat wash: no
+// paper, no grain, no border, on a screen that is 95% ground. A missing thing
+// that renders as "fine, just flat" is invisible, and this one was invisible for
+// as long as the hook has existed.
+//
+// THE PLATES NOW EXIST AND ARE GENERATED, on Constantine's standing constraint
+// ("no billing, keep everything free"): `tools/parchment.mjs` writes three
+// feTurbulence sheets — blotch, fibre, grain — about two kilobytes each, from
+// the plate INDEX and nothing else. The refusal above is untouched and still
+// binds: the only input is the index, never the graph, so no knob he turns to
+// shorten a run can move the paper.
+//
+// THE PER-ACT TONE IS STILL CSS'S AND THE PLATES CARRY NO COLOUR — one home for
+// that datum (`--fog-parchment`), one reader that paints it, one grey texture
+// laid over it. FREJA STILL OWNS THE ACTUAL LOOK: these are the same three
+// filenames, so authored art replaces them by overwriting, and nothing else in
+// the tree moves.
+const PARCHMENT_ACTS = balance.ui.parchmentActs;
+/**
+ * THE PLATE'S FILE TYPE, one home and one token.
+ *
+ * `.svg` because the plate has to EXIST and that is the medium this repo can
+ * generate for free (`tools/parchment.mjs`). It is a const rather than a
+ * literal in the template below because the day authored `.webp` plates land,
+ * the whole of that change should be this line plus three files — and because a
+ * literal here would be a second copy of a fact `tools/parchment.mjs`,
+ * `tools/bundle.mjs`'s MIME table and the act-plate test all depend on.
+ */
+const PARCHMENT_EXT = '.svg';
+function parchmentAsset(actNumber) {
+  return `assets/map/parchment_act${actPlate(actNumber, PARCHMENT_ACTS)}${PARCHMENT_EXT}`;
+}
+function parchmentClass(actNumber) {
+  return `parch-${actPlate(actNumber, PARCHMENT_ACTS)}`;
+}
+
+/**
+ * actPlate(actNumber, plates) → 1..plates — WHICH OF N AUTHORED PLATES AN ACT
+ * WEARS, once, for every set of per-act art.
+ *
+ * Endless Spire runs past act 3, so every per-act art set has to answer "what
+ * does act 7 look like" and every one of them answers it the same way: cycle.
+ * This was written out twice (backdrops here, `actTitle` above) before the
+ * parchment would have made it three — and three copies of a modulo is how act 7
+ * comes to show plate 1 and be called ACT I · CYCLE 3 while a fourth set shows
+ * plate 3, with nothing in the tree able to notice.
+ */
+function actPlate(actNumber, plates) {
+  const n = Number(actNumber) > 0 ? Math.floor(Number(actNumber)) : 1;
+  const p = Number.isInteger(plates) && plates > 0 ? plates : 1;
+  return ((n - 1) % p) + 1;
+}
+
+// ---- the in-run menu: ONE table, two widgets --------------------------------
+//
+// The overlay's tab strip and the ☰ quick-nav dropdown are two presentations of
+// the same set of destinations. They used to be one presentation and a hardcoded
+// list (`TABS` in overlay.js) — adding the dropdown beside that list would have
+// made it the second copy this file's header exists to prevent (Law 1).
+//
+// ROWS ARE LAUNCHERS, NOT STATE. `act` is a closed vocabulary the UI resolves to
+// a handler that already exists; `selectTab` in overlay.js stays the only thing
+// that knows which tab is current. The day a row knows something selectTab does
+// not, this is a second menu rather than a quick way into the one we have.
+//
+// The act vocabulary is MENU_ACTS, below — one home, not a list in this comment
+// as well. `act: 'tab'` is the one act that carries a second field: the tab it
+// opens, which is a member of MENU_TABS and joined to it by surfaces.js.
+//
+// TWO READINGS OF "CONTEXT-SPECIFIC", AND THE TABLE SERVES BOTH.
+// Constantine: "all buttons should be context-specific." Marina's dissent: the
+// ends are fixed, the middle is contextual, because a row whose meaning moves
+// between screens is a trap for a player who navigates by muscle memory. They
+// disagree in a way only play settles, so both orders come out of this one
+// table and a setting picks:
+//
+//   fixed ends (Marina)  — group by `band`: head, body, tail. Array order within
+//                          a band. Second row is Deck on every screen.
+//   all contextual (his) — rows marked `local` (they exist only on this screen)
+//                          come first, then the rest; `tail` still last, because
+//                          he fixed Save · Save & Quit as the last two by hand.
+//
+// The map row set is IDENTICAL under both — which is the honest shape of the
+// argument: it only bites where a screen has destinations of its own, and combat
+// is the screen that does.
+const MENU_TABS = [
+  { id: 'deck', label: 'Deck', icon: '🂠', count: 'deck', tip: 'Every card in the climb, not just the ones in hand.' },
+  { id: 'relics', label: 'Relics & Flasks', icon: '◆', tip: 'What you carry, and what each one does.' },
+  { id: 'stats', label: 'Stats', icon: '♜', tip: 'This run in numbers — floor, damage, seed.' },
+  { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
+  { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
+  { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' },
+];
+
+const TAIL = [
+  { act: 'save', icon: '💾', label: 'Save', band: 'tail', tip: 'Write the climb to its slot and stay here.' },
+  { act: 'quit', icon: '⏻', label: 'Save & Quit to Title', band: 'tail', tone: 'danger',
+    tip: 'Save, then back to the title. Continue picks the climb up again.' },
+];
+
+const MENU = {
+  map: [
+    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
+      tip: 'Weapons and armour — swap between fights for free.' },
+    { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
+      tip: 'What each mark on the act map means.' },
+    { act: 'tab', tab: 'deck', band: 'body' },
+    { act: 'tab', tab: 'relics', band: 'body' },
+    { act: 'tab', tab: 'stats', band: 'body' },
+    { act: 'tab', tab: 'settings', band: 'body' },
+    ...TAIL,
+  ],
+  // Draw and discard are real destinations that exist ONLY here (combat.js's
+  // pile modals) — the demonstration that context-specific means something.
+  combat: [
+    { act: 'armoury', icon: '⚒', label: 'Armaments', band: 'head', local: true,
+      tip: 'Your hand sets, mid-fight. Swapping costs energy.' },
+    { act: 'tab', tab: 'deck', label: 'Hand / Deck', band: 'body' },
+    { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
+      tip: 'What is still to come, shuffled for viewing.' },
+    { act: 'discard', icon: '✖', label: 'Discard pile', band: 'body', local: true, count: 'discard',
+      tip: 'What you have played and what was discarded.' },
+    { act: 'tab', tab: 'relics', band: 'body' },
+    { act: 'tab', tab: 'stats', band: 'body' },
+    { act: 'tab', tab: 'settings', band: 'body' },
+    ...TAIL,
+  ],
+  // The menu already open: the dropdown mirrors the strip behind it, current tab
+  // marked. Controls earns a row here (it is a tab) and not on map/combat, where
+  // it is one click away once you land.
+  overlay: [
+    { act: 'close', icon: '✕', label: 'Close menu', band: 'head', local: true,
+      tip: 'Back to the screen behind this one.' },
+    { act: 'tab', tab: 'deck', band: 'body' },
+    { act: 'tab', tab: 'relics', band: 'body' },
+    { act: 'tab', tab: 'stats', band: 'body' },
+    { act: 'tab', tab: 'settings', band: 'body' },
+    { act: 'tab', tab: 'controls', band: 'body' },
+    ...TAIL,
+  ],
+};
+
+const BANDS = ['head', 'body', 'tail'];
+
+// The acts a MENU row may name — the vocabulary, beside the table it governs.
+// It lived in src/ui/surfaces.js, whose header promises THAT FILE HOLDS NO
+// MEMBERS; eight members later it was the second copy that file exists to
+// prevent (Vira, gate of 5c49fed).
+//
+// WHAT THIS CATCHES AND WHAT IT DOES NOT, because a hand-kept list should say
+// so out loud. A launcher row is dropped when the CONTEXT does not offer its act
+// (the map has no draw pile — correct, by design), so two different situations
+// wear the same silence:
+//
+//   TYPO      — `act: 'jorunal'`, not a word at all → not in this list → the
+//               boot check names it. Caught, and this list is why.
+//   ORPHAN    — a word in this list that NO context implements anywhere. Delete
+//               `legend:` from the actions bag in src/ui/screens/map.js — its
+//               only implementation — and the Map legend row silently vanishes
+//               with every check green. NOT CAUGHT HERE, and it cannot be: the
+//               actions bags are built inside a click handler, closed over live
+//               run state, so no source-level join can see them.
+//
+// The orphan edge is answered on the RENDERED PAGE instead, which is where the
+// implemented acts actually exist: quicknav marks its panel
+// `data-surface="menuAct"` and each row `data-member="<act>"`, so an instrument
+// that opens the three contexts can subtract what was drawn from what is
+// declared here. That instrument is Bjorn's lens and is not written yet — this
+// comment is the statement of the gap, not a claim it is closed.
+const MENU_ACTS = ['tab', 'armoury', 'legend', 'draw', 'discard', 'save', 'quit', 'close'];
+
+/** The tab a `tab` row points at, resolved against MENU_TABS. */
+function tabDef(id) {
+  return MENU_TABS.find((t) => t.id === id) || null;
+}
+
+/**
+ * menuTabRefs() → every tab id a MENU row NAVIGATES TO, across all contexts.
+ *
+ * The other half of a `{ act: 'tab', tab: … }` row. `menuRows()` resolves it to
+ * blank icon/label/tip when it names nothing, and quicknav keeps the row because
+ * the ACT is implemented — so the typo has to be caught by joining the tab, and
+ * this is the enumeration that lets surfaces.js do it.
+ */
+function menuTabRefs() {
+  return [...new Set(Object.values(MENU).flat()
+    .filter((r) => r.act === 'tab' && typeof r.tab === 'string' && r.tab)
+    .map((r) => r.tab))];
+}
+
+/**
+ * menuTabs({ hasSave }) → the overlay's tab strip, in order.
+ * The strip and the dropdown read the same table, so a tab cannot exist in one
+ * and not the other. `counts` supplies live numbers (deck size) for the label.
+ */
+function menuTabs({ hasSave = true, counts = {} } = {}) {
+  return MENU_TABS.filter((t) => hasSave || !t.needsSave).map((t) => ({
+    id: t.id,
+    label: t.count != null && counts[t.count] != null ? `${t.label} (${counts[t.count]})` : t.label,
+    icon: t.icon,
+    tip: t.tip,
+  }));
+}
+
+/**
+ * menuRows(context, { fixedEnds, hasSave, counts, current }) → resolved rows.
+ *
+ * Each row comes back with its icon, label, tooltip and a `sep` flag marking the
+ * first row of a new band (drawn as a rule under fixed ends, absent otherwise —
+ * the two readings look different, which is the point of being able to try both).
+ */
+function menuRows(context, { fixedEnds = true, hasSave = true, counts = {}, current = null } = {}) {
+  const src = (MENU[context] || []).filter((r) => (hasSave ? true : r.band !== 'tail'));
+  const ordered = fixedEnds
+    ? BANDS.flatMap((b) => src.filter((r) => r.band === b))
+    : [
+        ...src.filter((r) => r.local && r.band !== 'tail'),
+        ...src.filter((r) => !r.local && r.band !== 'tail'),
+        ...src.filter((r) => r.band === 'tail'),
+      ];
+  let prevBand = null;
+  return ordered.map((r) => {
+    const t = r.act === 'tab' ? tabDef(r.tab) : null;
+    const countKey = r.count || (t && t.count);
+    const sep = fixedEnds && prevBand !== null && r.band !== prevBand;
+    prevBand = r.band;
+    return {
+      act: r.act,
+      tab: r.tab || null,
+      icon: r.icon || (t && t.icon) || '',
+      label: r.label || (t && t.label) || '',
+      tip: r.tip || (t && t.tip) || '',
+      tone: r.tone || '',
+      badge: countKey != null && counts[countKey] != null ? String(counts[countKey]) : '',
+      on: !!(current && r.act === 'tab' && r.tab === current),
+      sep,
+    };
+  });
+}
+
+// ---- gamepad buttons --------------------------------------------------------
+// One table, two presentations. The hint bar wants a compact glyph and the
+// controls screen wants a readable word; these lived as two near-identical
+// tables (input.js PAD_LABELS / controls.js BUTTON_NAMES) that agreed on
+// buttons 0-11 and silently disagreed on the d-pad and guide.
+const PAD_BUTTONS = {
+  0: { glyph: 'A', name: 'A' },
+  1: { glyph: 'B', name: 'B' },
+  2: { glyph: 'X', name: 'X' },
+  3: { glyph: 'Y', name: 'Y' },
+  4: { glyph: 'LB', name: 'LB' },
+  5: { glyph: 'RB', name: 'RB' },
+  6: { glyph: 'LT', name: 'LT' },
+  7: { glyph: 'RT', name: 'RT' },
+  8: { glyph: 'Back', name: 'Back' },
+  9: { glyph: 'Start', name: 'Start' },
+  10: { glyph: 'L3', name: 'L3' },
+  11: { glyph: 'R3', name: 'R3' },
+  12: { glyph: '▲', name: 'D-Up' },
+  13: { glyph: '▼', name: 'D-Down' },
+  14: { glyph: '◀', name: 'D-Left' },
+  15: { glyph: '▶', name: 'D-Right' },
+  16: { glyph: '⊙', name: 'Guide' },
+};
+/** Compact glyph for the hint bar; falls back to B<n> for unmapped buttons. */
+function padGlyph(btn) {
+  const b = PAD_BUTTONS[btn];
+  return b ? b.glyph : `B${btn}`;
+}
+/** Readable name for the controls/rebind list; '—' when nothing is bound. */
+function padName(btn) {
+  if (btn == null) return '—';
+  const b = PAD_BUTTONS[btn];
+  return b ? b.name : `Btn ${btn}`;
+}
+
+// ---- why a piece is not yours, in the player's words ------------------------
+// `ownership().why()` (src/model/loadout.js) names the GATE and declares the
+// closed set of them as OWNERSHIP_GATES; the sentence is UI copy and lives here.
+// It was a literal inside equipment.js's `gate()`, which was fine while one
+// screen existed and becomes a copy nothing syncs the moment a second one asks
+// the same question (Law 1 clause 2, pointed at prose).
+//
+// DECLARED AND HANDLED: the suite asserts these keys are exactly OWNERSHIP_GATES
+// — a route the model can return with no sentence here renders an empty reason,
+// which is the quiet graceful failure rather than the loud one.
+//
+// A row's own `hint` from unlocks.csv always wins over LOCK_COPY.unearned —
+// that is the whole point of the hint column. This is what is said when the
+// table has nothing to say.
+const LOCK_COPY = Object.freeze({
+  unearned: 'Not yet earned.',
+  unfound: 'Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them.',
+});
+
+// ---- what a kind of armament is called in the plural ------------------------
+// The Compendium's section headings. A LABEL is a word, not a derivation:
+// 'staff' → 'STAVES' is not a rule any pluraliser gets right, and inventing one
+// is how a screen ends up saying STAFFS. So the irregulars are listed and
+// everything else derives, WITH A WARNING — a new kind gets a plausible heading
+// rather than a broken screen, and says so in the console so the plausible one
+// is not mistaken for an authored one (Law 0 clause 5: a generated thing that is
+// wrong but reasonable is the invisible failure).
+const ARMAMENT_KIND_LABELS = { weapon: 'WEAPONS', shield: 'SHIELDS', staff: 'STAVES' };
+function armamentKindLabel(kind) {
+  const known = ARMAMENT_KIND_LABELS[kind];
+  if (known) return known;
+  console.warn(`[content] armament kind ${JSON.stringify(kind)} has no heading in`
+    + ' src/ui/uiContent.js ARMAMENT_KIND_LABELS — showing a derived one.');
+  return `${String(kind || '').toUpperCase()}S`;
+}
+
+
+Object.assign(module.exports, { statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs, NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, ACT_NAME_COUNT, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, PARCHMENT_ACTS, PARCHMENT_EXT, parchmentAsset, parchmentClass, actPlate, MENU_TABS, MENU, MENU_ACTS, menuTabRefs, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName, LOCK_COPY, armamentKindLabel });
+
+},
+"src/ui/components/veil.js": function (module, exports, require) {
+// src/ui/components/veil.js — IS A VEIL STANDING, AND WHICH ONE. One question,
+// one home, asked by everything that needs the answer.
+//
+// WHY THIS FILE EXISTS. The question had two homes and they disagreed:
+//
+//   overlay.js  overlayIsOpen()  ->  !!openVeil        ONE named veil — the
+//                                                      in-run menu overlay, and
+//                                                      only because that module
+//                                                      happened to hold its
+//                                                      element in a variable
+//   input.js    scopeRoot()      ->  '.modal-veil'     EVERY veil, asked of the
+//                                                      DOM, which is where the
+//                                                      answer actually lives
+//
+// Six veils in this game are `.modal-veil`: the menu overlay, the pile viewer,
+// the settings modal, the debug log, the quick-nav list and the in-combat
+// Armoury. `overlayIsOpen()` had heard of exactly one of them, and combat.js
+// guarded its whole keyboard handler on it. So: OPEN THE DRAW PILE, PRESS E,
+// AND THE TURN ENDS UNDER THE PANEL YOU ARE READING. Hand 5 -> 0, discard
+// 0 -> 5, measured at aa7bc49 on both shapes — and the same on the discard pile
+// and on the in-combat Armoury, which nobody had named.
+//
+// That is not a missing `||`. It is one fact with two definitions, arriving
+// from two directions, and it is the same defect this seat removed from
+// `equipPiece` and `cycleSet` — the second copy that nothing keeps in sync.
+// The fix is not to widen the narrow one; it is to DELETE it, so no caller can
+// ever again pick the answer that knows about one veil.
+//
+// `veilIsOpen()` IS `topVeil() !== null` — not two implementations checked to
+// agree, one branch that cannot differ. Same shape as `has` being
+// `why(piece) === null` in model/loadout.js, and for the same reason.
+//
+// ---- WHAT COUNTS AS A VEIL, AND WHY `.tut-veil` DOES NOT --------------------
+//
+// The subject of this predicate is INPUT OWNERSHIP: is there a layer standing
+// that owns the keyboard, so the screen beneath must not act on this key. The
+// class `.modal-veil` is how a layer DECLARES that, and every one of the six
+// carries it deliberately (two of them — `.qn-veil` and `.armoury-overlay` —
+// carry it for the scoping alone and say so in their own files).
+//
+// `.tut-veil` is NOT one, it is `pointer-events: none` at z-index 800, and that
+// is CORRECT rather than an oversight. The tutorial coaches the player THROUGH
+// playing the board: it takes no pointer, and the board beneath it must keep
+// answering keys or the coach marks would freeze the game they are teaching. It
+// is not a subject of this predicate — IT IS A CALLER OF IT (tutorial.js asks
+// before it answers Escape, so a veil over the tutorial wins). Ruled out loud,
+// with the reason, because "absent from the selector" and "ruled out of the
+// selector" look identical to the next reader — and the next reader is the one
+// who would widen it and freeze the board.
+//
+// ---- TOPMOST IS PAINT ORDER, NOT DOM ORDER ---------------------------------
+//
+// `scopeRoot()` took `.modal-veil`'s LAST element in DOM order. Bjorn named the
+// hazard: `.armoury-overlay` paints at z-index 60 while every other veil is
+// 500, so a z500 veil standing FIRST and the Armoury opened after it makes DOM
+// order and paint order disagree — and the focus cursor then drives the panel
+// the player cannot see. He measured that shape: 60 presses, 12 controls on the
+// buried layer. He also confirmed all four shipped routes agree today, so it
+// was latent, and it stays latent only until someone opens two.
+//
+// A home that answers "which is topmost" with a rule known to be wrong is a
+// graceful fallback with a defect living in it. So the rule here is the one the
+// player's eye uses: HIGHER z-index WINS; equal z-index falls back to DOM
+// order, which is what the browser itself does. All six veils are children of
+// <body> with `position: fixed`, so they share the root stacking context and
+// their z-indices are directly comparable — that is the precondition, and it is
+// stated because the rule is wrong the day a veil mounts inside a transformed
+// or filtered ancestor.
+//
+// ---- WHY IT COSTS NOTHING TODAY — AND MY FIRST ANSWER WAS THE WRONG REASON ---
+//
+// I wrote: *"one veil standing returns early and reads no style, so every
+// shipped route is unchanged."* THE CONCLUSION HOLDS AND THE REASON IS FALSE.
+// BJORN MEASURED IT: `overlay.js:295` opens the quick-nav FROM INSIDE the
+// standing overlay, so there are FOUR REACHABLE STATES WITH TWO VEILS UP — and
+// `.qn-veil` overrides only `background` and `display`, never `z-index`, so both
+// are 500 and the loop below DOES read style. His sweep: 26/26 states agree
+// with the old DOM-order answer, four of them two-veil.
+//
+// WHAT ACTUALLY SAVES THOSE FOUR IS THE `>=` ON THE COMPARISON, NOT THE EARLY
+// RETURN. A mutant proves it: with `>`, a z500 tie keeps the FIRST veil and
+// input goes to the overlay underneath the open list. So `>=` is load-bearing
+// on a live path, not a tidy default — it is corrected here, in the file, rather
+// than only in a log, because a true-looking comment over different code is the
+// thing this house keeps finding and cannot catch by reading carefully.
+//
+// The early return is a cost saving on the common case and nothing more. It is
+// the tie rule that makes today's answer identical to yesterday's.
+
+/** Every veil currently standing, in DOM order. */
+function standing() {
+  return document.querySelectorAll('.modal-veil');
+}
+
+function zOf(el) {
+  // `auto` and any unparseable value are treated as 0 — the same number CSS
+  // gives a positioned element with no z-index, so an un-styled veil sorts
+  // below the six that declare one rather than above them.
+  const z = Number.parseInt(getComputedStyle(el).zIndex, 10);
+  return Number.isFinite(z) ? z : 0;
+}
+
+/**
+ * topVeil() → the veil that owns input right now, or null.
+ * Topmost by paint order: z-index first, DOM order to break a tie.
+ */
+function topVeil() {
+  const els = standing();
+  if (!els.length) return null;
+  // A cost saving on the common case, and ONLY that — it is not what keeps the
+  // two-veil states answering the way they did (see the header).
+  if (els.length === 1) return els[0];
+  let best = els[0];
+  let bestZ = zOf(best);
+  for (let i = 1; i < els.length; i++) {
+    const z = zOf(els[i]);
+    // `>=`, NOT `>`, AND IT IS LOAD-BEARING ON A LIVE PATH. The quick-nav opens
+    // from inside the standing overlay and both are z500, so this tie is
+    // reachable in four states. `>` would keep the FIRST veil and hand input to
+    // the overlay under the open list; `>=` keeps DOM order, which is what the
+    // browser paints and what this game did before the rule changed.
+    if (z >= bestZ) { best = els[i]; bestZ = z; }
+  }
+  return best;
+}
+
+/** True if any veil is standing — so a screen beneath it can refuse a key. */
+function veilIsOpen() {
+  return topVeil() !== null;
+}
+
+
+Object.assign(module.exports, { topVeil, veilIsOpen });
 
 },
 "src/ui/components/buildstamp.js": function (module, exports, require) {
@@ -31981,7 +33588,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'a6aba5aa0b';
+const SOURCE = 'b94c855865';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -32015,7 +33622,7 @@ const SOURCE = 'a6aba5aa0b';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0779';
+const ORDINAL = '0780';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -35442,1382 +37049,6 @@ function nodeTooltip(type, node, revealed) {
 
 
 Object.assign(module.exports, { mountMap });
-
-},
-"src/ui/components/veil.js": function (module, exports, require) {
-// src/ui/components/veil.js — IS A VEIL STANDING, AND WHICH ONE. One question,
-// one home, asked by everything that needs the answer.
-//
-// WHY THIS FILE EXISTS. The question had two homes and they disagreed:
-//
-//   overlay.js  overlayIsOpen()  ->  !!openVeil        ONE named veil — the
-//                                                      in-run menu overlay, and
-//                                                      only because that module
-//                                                      happened to hold its
-//                                                      element in a variable
-//   input.js    scopeRoot()      ->  '.modal-veil'     EVERY veil, asked of the
-//                                                      DOM, which is where the
-//                                                      answer actually lives
-//
-// Six veils in this game are `.modal-veil`: the menu overlay, the pile viewer,
-// the settings modal, the debug log, the quick-nav list and the in-combat
-// Armoury. `overlayIsOpen()` had heard of exactly one of them, and combat.js
-// guarded its whole keyboard handler on it. So: OPEN THE DRAW PILE, PRESS E,
-// AND THE TURN ENDS UNDER THE PANEL YOU ARE READING. Hand 5 -> 0, discard
-// 0 -> 5, measured at aa7bc49 on both shapes — and the same on the discard pile
-// and on the in-combat Armoury, which nobody had named.
-//
-// That is not a missing `||`. It is one fact with two definitions, arriving
-// from two directions, and it is the same defect this seat removed from
-// `equipPiece` and `cycleSet` — the second copy that nothing keeps in sync.
-// The fix is not to widen the narrow one; it is to DELETE it, so no caller can
-// ever again pick the answer that knows about one veil.
-//
-// `veilIsOpen()` IS `topVeil() !== null` — not two implementations checked to
-// agree, one branch that cannot differ. Same shape as `has` being
-// `why(piece) === null` in model/loadout.js, and for the same reason.
-//
-// ---- WHAT COUNTS AS A VEIL, AND WHY `.tut-veil` DOES NOT --------------------
-//
-// The subject of this predicate is INPUT OWNERSHIP: is there a layer standing
-// that owns the keyboard, so the screen beneath must not act on this key. The
-// class `.modal-veil` is how a layer DECLARES that, and every one of the six
-// carries it deliberately (two of them — `.qn-veil` and `.armoury-overlay` —
-// carry it for the scoping alone and say so in their own files).
-//
-// `.tut-veil` is NOT one, it is `pointer-events: none` at z-index 800, and that
-// is CORRECT rather than an oversight. The tutorial coaches the player THROUGH
-// playing the board: it takes no pointer, and the board beneath it must keep
-// answering keys or the coach marks would freeze the game they are teaching. It
-// is not a subject of this predicate — IT IS A CALLER OF IT (tutorial.js asks
-// before it answers Escape, so a veil over the tutorial wins). Ruled out loud,
-// with the reason, because "absent from the selector" and "ruled out of the
-// selector" look identical to the next reader — and the next reader is the one
-// who would widen it and freeze the board.
-//
-// ---- TOPMOST IS PAINT ORDER, NOT DOM ORDER ---------------------------------
-//
-// `scopeRoot()` took `.modal-veil`'s LAST element in DOM order. Bjorn named the
-// hazard: `.armoury-overlay` paints at z-index 60 while every other veil is
-// 500, so a z500 veil standing FIRST and the Armoury opened after it makes DOM
-// order and paint order disagree — and the focus cursor then drives the panel
-// the player cannot see. He measured that shape: 60 presses, 12 controls on the
-// buried layer. He also confirmed all four shipped routes agree today, so it
-// was latent, and it stays latent only until someone opens two.
-//
-// A home that answers "which is topmost" with a rule known to be wrong is a
-// graceful fallback with a defect living in it. So the rule here is the one the
-// player's eye uses: HIGHER z-index WINS; equal z-index falls back to DOM
-// order, which is what the browser itself does. All six veils are children of
-// <body> with `position: fixed`, so they share the root stacking context and
-// their z-indices are directly comparable — that is the precondition, and it is
-// stated because the rule is wrong the day a veil mounts inside a transformed
-// or filtered ancestor.
-//
-// ---- WHY IT COSTS NOTHING TODAY — AND MY FIRST ANSWER WAS THE WRONG REASON ---
-//
-// I wrote: *"one veil standing returns early and reads no style, so every
-// shipped route is unchanged."* THE CONCLUSION HOLDS AND THE REASON IS FALSE.
-// BJORN MEASURED IT: `overlay.js:295` opens the quick-nav FROM INSIDE the
-// standing overlay, so there are FOUR REACHABLE STATES WITH TWO VEILS UP — and
-// `.qn-veil` overrides only `background` and `display`, never `z-index`, so both
-// are 500 and the loop below DOES read style. His sweep: 26/26 states agree
-// with the old DOM-order answer, four of them two-veil.
-//
-// WHAT ACTUALLY SAVES THOSE FOUR IS THE `>=` ON THE COMPARISON, NOT THE EARLY
-// RETURN. A mutant proves it: with `>`, a z500 tie keeps the FIRST veil and
-// input goes to the overlay underneath the open list. So `>=` is load-bearing
-// on a live path, not a tidy default — it is corrected here, in the file, rather
-// than only in a log, because a true-looking comment over different code is the
-// thing this house keeps finding and cannot catch by reading carefully.
-//
-// The early return is a cost saving on the common case and nothing more. It is
-// the tie rule that makes today's answer identical to yesterday's.
-
-/** Every veil currently standing, in DOM order. */
-function standing() {
-  return document.querySelectorAll('.modal-veil');
-}
-
-function zOf(el) {
-  // `auto` and any unparseable value are treated as 0 — the same number CSS
-  // gives a positioned element with no z-index, so an un-styled veil sorts
-  // below the six that declare one rather than above them.
-  const z = Number.parseInt(getComputedStyle(el).zIndex, 10);
-  return Number.isFinite(z) ? z : 0;
-}
-
-/**
- * topVeil() → the veil that owns input right now, or null.
- * Topmost by paint order: z-index first, DOM order to break a tie.
- */
-function topVeil() {
-  const els = standing();
-  if (!els.length) return null;
-  // A cost saving on the common case, and ONLY that — it is not what keeps the
-  // two-veil states answering the way they did (see the header).
-  if (els.length === 1) return els[0];
-  let best = els[0];
-  let bestZ = zOf(best);
-  for (let i = 1; i < els.length; i++) {
-    const z = zOf(els[i]);
-    // `>=`, NOT `>`, AND IT IS LOAD-BEARING ON A LIVE PATH. The quick-nav opens
-    // from inside the standing overlay and both are z500, so this tie is
-    // reachable in four states. `>` would keep the FIRST veil and hand input to
-    // the overlay under the open list; `>=` keeps DOM order, which is what the
-    // browser paints and what this game did before the rule changed.
-    if (z >= bestZ) { best = els[i]; bestZ = z; }
-  }
-  return best;
-}
-
-/** True if any veil is standing — so a screen beneath it can refuse a key. */
-function veilIsOpen() {
-  return topVeil() !== null;
-}
-
-
-Object.assign(module.exports, { topVeil, veilIsOpen });
-
-},
-"src/ui/input.js": function (module, exports, require) {
-// src/ui/input.js — unified keyboard + gamepad navigation (SPEC §7.3).
-//
-// Two layers that make every screen playable without a mouse:
-//   1. A focus cursor over interactive elements (buttons, cards, reachable map
-//      nodes, tabs, toggles, targetable enemies…). Arrow keys / D-pad / left
-//      stick move it spatially; Enter / A activates the focused element.
-//   2. A gamepad poller (started only while a pad is connected — no idle loop)
-//      that maps buttons to actions. Confirm activates the cursor; Cancel /
-//      Menu / End-turn dispatch the same synthetic keys the screens already
-//      listen for, so the existing keyboard handlers work with a controller
-//      too. Which pad BUTTON drives each action is rebindable (Controls tab).
-//
-//   3. THE ACTIVATION PRESS (S7, 2026-08-17). Confirm is published as a press
-//      with TWO ends — `gppress` / `gprelease` on the focused element — instead
-//      of one synthetic click, so a control that has a press-and-hold has it on
-//      all three inputs rather than on the mouse alone. Full reasoning at the
-//      press-door block below; the gesture side is `armPress` in ui/gesture.js.
-//
-// The number keys (1–9) and letter hotkeys stay owned by the screens; this
-// module adds navigation + controller parity on top without touching them.
-// BOUNDARY, because layer 3 is narrower than it sounds: parity is for the button
-// that presses THE FOCUSED CONTROL. A screen hotkey (1–9 quick-play, `e`) is a
-// different button with no pointer twin, and a hold on one is that screen's
-// design question, not this module's.
-
-const { padGlyph } = require("src/ui/uiContent.js");
-const { topVeil } = require("src/ui/components/veil.js");
-const { PRESS_EVENT, RELEASE_EVENT } = require("src/ui/gesture.js");
-
-const FOCUS_SELECTOR = [
-  'button:not([disabled])',
-  '.card',
-  '.map-node.reachable',
-  '.combatant.enemy.targetable',
-  '.ov-tab',
-  '.choice',
-  '.toggle',
-  '.slot-continue',
-  '.slot-new',
-  '.class-pick:not(.locked)', // character creation + custom-run class picks
-  '.cz-opt',
-  '.cz-keepsake',
-  '.cr-class',
-  '.mod-chip',
-  'input[type="range"]',
-  'input[type="text"]',
-  '[data-focusable]',
-].join(',');
-
-// "Chrome" the focus cursor skips during normal play — the top bar, piles, map
-// side panel, zoom, and end-turn/energy. These are reached by their dedicated
-// (rebindable) keys / the Menu overlay instead of by wandering into them
-// (StS2-style: navigation stays on cards, targets, and map nodes). Ignored when
-// a modal/overlay is open, where its own contents ARE the scope.
-const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb';
-
-// Rebindable actions. Each carries BOTH a keyboard key (defKey) and a gamepad
-// button (defBtn), and both are rebindable (Controls tab). Delivery:
-//   'cursor' — handled here: it acts on the FOCUSED control, which makes it the
-//              one kind with a press to publish (see the press door below).
-//              Its keyboard key is fixed (`key`, not `defKey`) and its pad
-//              button is rebindable; both are read at press time.
-//   'key'    — the canonical binding is the keyboard key; screens match it via
-//              matchAction(ev, id). A pad press dispatches that same key, so the
-//              screens' own handlers run for controller + keyboard alike.
-// The deck/relics/stats actions jump the in-run overlay straight to that tab
-// (StS2-style dedicated zone keys) instead of only the generic Menu.
-const ACTIONS = [
-  // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
-  // and overlay-close always work; only their pad button is rebindable.
-  { id: 'confirm', label: 'Confirm / Play', short: 'Confirm', kind: 'cursor', key: 'Enter', keyHint: 'Enter', defBtn: 0 },
-  { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
-  { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
-  { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
-  { id: 'deck', label: 'Open Deck', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3 },
-  { id: 'relics', label: 'Open Relics', short: 'Relics', kind: 'key', defKey: 'r', defBtn: 4 },
-  { id: 'stats', label: 'Open Stats', short: 'Stats', kind: 'key', defKey: 't', defBtn: 5 },
-  // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
-  // we give both a rebindable key per slot).
-  { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
-  { id: 'flask2', label: 'Use Flask 2', short: 'Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
-  { id: 'flask3', label: 'Use Flask 3', short: 'Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
-];
-
-// Confirm's keyboard key, read off its own row rather than typed here. It is
-// FIXED (cursor-activate must always work, see the comment in ACTIONS), which is
-// why it is `key` and not `defKey` — the same shape `cancel` already uses.
-const CONFIRM_KEY = ACTIONS.find((a) => a.id === 'confirm').key;
-
-/** Compact label for the hint bar. The full `label` reads as a settings row
- *  ("Open Deck"); the bar wants the short form ("Deck"). One action registry,
- *  two presentations — the bar used to restate these and could drift. */
-function actionShort(id) {
-  const a = ACTIONS.find((x) => x.id === id);
-  return a ? a.short || a.label : id;
-}
-
-// ---- the tab ring (Law 3: bumpers ride the tabs) ----------------------------
-//
-// A tabbed surface registers its own set here while it is open; the pad poller
-// and the keyboard handler below give buttons 4/5 and `[`/`]` to that set in
-// preference to whatever they are globally bound to. That preference is the
-// whole clause: EldenSpire's defaults already SPEND LB/RB on Relics and Stats
-// (ACTIONS above, defBtn 4 and 5), so without contextual precedence the two
-// bindings race and the winner is whoever notices first.
-//
-// It binds the SET, not the widget — a strip, a two-row wrapped strip, or one
-// folded "Deck ▾" switcher all register the same ring and cycle in the same
-// order (Law 3 clause 1a). Wrap is the ring's own job, and it is the edge that
-// breaks: last → first and first → last.
-//
-// `[` / `]` is Marina's proposed keyboard analogue and is NOT yet ratified —
-// Q/E was rejected because E is already End Turn. It earns its keep here beyond
-// the proposal: it is the only way to observe the wrap without a pad attached,
-// and no pad was attached when this was built.
-let tabRing = null; // { prev(), next() } | null
-
-/** setTabRing(ring | null) — a tabbed surface claims the bumpers while open. */
-function setTabRing(ring) {
-  tabRing = ring && typeof ring.next === 'function' && typeof ring.prev === 'function' ? ring : null;
-}
-
-/**
- * hasTabRing() → is a tab set already holding the bumpers?
- *
- * LAW 3 CLAUSE 6, FOR TWO TAB SETS AND ONE PAIR OF BUMPERS. Settings now has
- * its own tab strip, and Settings is ALSO one tab of the in-run overlay — so on
- * that door two strips are on screen at once and RB has to mean one thing.
- *
- * THE ANSWER IS THE OUTER STRIP, and it is a legibility call, not a technical
- * one. A player who learns "RB moves the menu tabs" on the Deck tab must not
- * find that the same button means something else two tabs later; a global
- * button whose meaning changes with where you are standing is the defect clause
- * 6 exists to prevent. The inner strip is reached by the focus cursor and by
- * touch — which is clause 6's own corollary, one level down.
- *
- * It is DERIVED, not declared: a strip claims the bumpers only if nothing holds
- * them. openOverlay claims before it renders any panel, so the overlay's
- * Settings tab finds them taken and the title-screen modal finds them free. No
- * caller passes a flag, and nobody has to remember which door they are on.
- *
- * NOT A STACK, deliberately. Push/pop would hand the bumpers to the innermost
- * strip, which is the behaviour this rejects.
- */
-function hasTabRing() {
-  return !!tabRing;
-}
-
-const TAB_PREV_BTN = 4; // LB, standard mapping
-const TAB_NEXT_BTN = 5; // RB
-const TAB_PREV_KEY = '[';
-const TAB_NEXT_KEY = ']';
-
-/** True if this pad button was consumed by an open tab set. */
-function tabRingButton(i) {
-  if (!tabRing) return false;
-  if (i === TAB_PREV_BTN) tabRing.prev();
-  else if (i === TAB_NEXT_BTN) tabRing.next();
-  else return false;
-  return true;
-}
-
-const DEADZONE = 0.5;
-const REPEAT_MS = 180;
-const POLL_MS = 16; // ~60 Hz input polling (only while a pad is connected)
-
-let bindings = {}; // action id → gamepad button index
-let keyBindings = {}; // action id → keyboard key (e.g. 'm', 'Escape')
-let pollTimer = null;
-let engaged = false; // has the user driven with keyboard/gamepad this session?
-
-/**
- * True once the player has actually navigated with keyboard or gamepad. Screens
- * use this to gate auto-focus defaults so mouse-only players never see an
- * unrequested focus ring.
- */
-function isEngaged() {
-  return engaged;
-}
-let padPrev = {}; // gamepad index → last pressed-button booleans
-let lastNav = 0; // step counter gate for held-direction repeat
-let enabled = true;
-
-function defaultBindings() {
-  const b = {};
-  for (const a of ACTIONS) b[a.id] = a.defBtn;
-  return b;
-}
-
-function setBindings(stored) {
-  bindings = { ...defaultBindings(), ...(stored || {}) };
-}
-
-function getBindings() {
-  return { ...bindings };
-}
-
-function actionForButton(btn) {
-  return ACTIONS.find((a) => bindings[a.id] === btn) || null;
-}
-
-// ---- keyboard bindings ------------------------------------------------------
-
-function defaultKeyBindings() {
-  const b = {};
-  for (const a of ACTIONS) if (a.defKey) b[a.id] = a.defKey;
-  return b;
-}
-
-function setKeyBindings(stored) {
-  keyBindings = { ...defaultKeyBindings(), ...(stored || {}) };
-}
-
-function getKeyBindings() {
-  return { ...keyBindings };
-}
-
-/** True if a keydown event matches the key currently bound to an action. */
-function matchAction(ev, id) {
-  const k = keyBindings[id];
-  if (!k) return false;
-  return (ev.key || '').toLowerCase() === k.toLowerCase();
-}
-
-// Compact standard-mapping button glyphs for the hint bar / on-screen prompts.
-/** Label for the gamepad button currently bound to an action (hint bar).
- *  Glyphs come from the shared PAD_BUTTONS table (uiContent.js) so the hint bar
- *  and the controls screen can't drift apart. */
-function padLabel(id) {
-  const btn = bindings[id];
-  return btn == null ? '' : padGlyph(btn);
-}
-
-/** True if at least one gamepad is currently connected. */
-function hasGamepad() {
-  return (
-    typeof navigator !== 'undefined' &&
-    typeof navigator.getGamepads === 'function' &&
-    Array.from(navigator.getGamepads()).some(Boolean)
-  );
-}
-
-/** Human label for an action's bound key (Controls tab + reference). */
-function keyLabel(id) {
-  let k = keyBindings[id] || '';
-  if (!k) {
-    // Fixed-key actions (confirm=Enter, cancel=Esc) aren't in the rebind map.
-    const a = ACTIONS.find((x) => x.id === id);
-    if (a && (a.keyHint || a.key)) return a.keyHint || a.key;
-    return '—';
-  }
-  if (k === 'Escape') return 'Esc';
-  if (k === ' ') return 'Space';
-  return k.length === 1 ? k.toUpperCase() : k;
-}
-
-// ---- focus cursor -----------------------------------------------------------
-
-function visible(el) {
-  if (!el.isConnected) return false;
-  const r = el.getBoundingClientRect();
-  if (r.width < 2 || r.height < 2) return false;
-  const cs = getComputedStyle(el);
-  return cs.visibility !== 'hidden' && cs.display !== 'none';
-}
-
-// The active focus scope: the topmost open veil if any, else the app.
-//
-// The selector and the "which one is topmost" rule used to live here, inline —
-// which made this function the SECOND home of a question overlay.js also
-// answered, in different words and about one veil only. Both now ask
-// components/veil.js; read the header there for what counts as a veil, why
-// `.tut-veil` deliberately does not, and why topmost is paint order rather
-// than DOM order.
-function scopeRoot() {
-  return topVeil() || document.getElementById('app') || document.body;
-}
-
-function focusables() {
-  const root = scopeRoot();
-  const inModal = root.classList && root.classList.contains('modal-veil');
-  return Array.from(root.querySelectorAll(FOCUS_SELECTOR)).filter(
-    (el) => visible(el) && (inModal || !(el.closest && el.closest(CHROME)))
-  );
-}
-
-function current() {
-  return document.querySelector('.gp-focus');
-}
-
-// A stable identity for the focused element, so focus can be restored to the
-// "same" element after a screen re-render (focus memory between inputs).
-let focusKey = null;
-function keyOf(el) {
-  if (!el) return null;
-  const d = el.dataset || {};
-  if (d.instanceId) return `i:${d.instanceId}`;
-  if (d.eid) return `e:${d.eid}`;
-  if (d.classId) return `c:${d.classId}`;
-  if (d.mod) return `m:${d.mod}`;
-  if (d.deck) return `d:${d.deck}`;
-  if (d.tab) return `t:${d.tab}`;
-  if (d.slot) return `s:${el.className}:${d.slot}`;
-  if (el.id) return `#${el.id}`;
-  return `x:${(el.textContent || '').trim().slice(0, 28)}`;
-}
-function findByKey(k) {
-  if (!k) return null;
-  return focusables().find((el) => keyOf(el) === k) || null;
-}
-
-function setFocus(el, remember = true) {
-  const prev = current();
-  // The cursor moved out from under a live press (an arrow key while Confirm is
-  // held, a re-render restoring focus elsewhere). That is a CANCEL, the same
-  // verdict trackGesture gives a pointer the browser took away: whatever was
-  // filling stops, and no activation follows.
-  if (pressEl && pressEl !== el) pressEnd(true);
-  if (prev && prev !== el) {
-    prev.classList.remove('gp-focus');
-    // Focus-mode tooltips: tooltip.js listens for these so controller players
-    // get every tooltip a mouse hover would show (SPEC §7.3).
-    prev.dispatchEvent(new CustomEvent('gpblur'));
-  }
-  if (el) {
-    el.classList.add('gp-focus');
-    if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    if (prev !== el) el.dispatchEvent(new CustomEvent('gpfocus'));
-    if (remember) focusKey = keyOf(el);
-  } else if (remember) {
-    focusKey = null;
-  }
-}
-
-/** Focus the first focusable matching a selector (used for combat targeting). */
-function focusFirst(selector) {
-  const el = focusables().find((e) => e.matches && e.matches(selector));
-  if (el) setFocus(el);
-  return !!el;
-}
-
-function ensureFocus() {
-  let el = current();
-  if (el && visible(el)) return el;
-  const list = focusables();
-  el = list[0] || null;
-  setFocus(el);
-  return el;
-}
-
-// Move the cursor to the nearest focusable in a direction, scored by distance
-// along the axis plus lateral offset (so navigation feels 2D-natural).
-function moveFocus(dir) {
-  const list = focusables();
-  if (!list.length) return;
-  const cur = current();
-  if (!cur || !visible(cur)) {
-    setFocus(list[0]);
-    return;
-  }
-  const cr = cur.getBoundingClientRect();
-  const cx = cr.left + cr.width / 2;
-  const cy = cr.top + cr.height / 2;
-  let best = null;
-  let bestScore = Infinity;
-  for (const el of list) {
-    if (el === cur) continue;
-    const r = el.getBoundingClientRect();
-    const ex = r.left + r.width / 2;
-    const ey = r.top + r.height / 2;
-    const dx = ex - cx;
-    const dy = ey - cy;
-    let primary;
-    let cross;
-    if (dir === 'right') {
-      if (dx <= 2) continue;
-      primary = dx;
-      cross = Math.abs(dy);
-    } else if (dir === 'left') {
-      if (dx >= -2) continue;
-      primary = -dx;
-      cross = Math.abs(dy);
-    } else if (dir === 'down') {
-      if (dy <= 2) continue;
-      primary = dy;
-      cross = Math.abs(dx);
-    } else {
-      if (dy >= -2) continue;
-      primary = -dy;
-      cross = Math.abs(dx);
-    }
-    const score = primary + cross * 2;
-    if (score < bestScore) {
-      bestScore = score;
-      best = el;
-    }
-  }
-  if (best) setFocus(best);
-}
-
-function activateEl(el) {
-  if (!el) return;
-  if (el.matches('input[type="range"]')) return; // adjusted with left/right instead
-  if (el.matches('input[type="text"]')) {
-    el.focus();
-    return;
-  }
-  // dispatchEvent (not .click()) so SVG map nodes — which lack HTMLElement.click
-  // — activate the same as HTML buttons/cards.
-  el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-}
-
-function activate() {
-  activateEl(ensureFocus());
-}
-
-// ---- the activation press: the same gesture on all three inputs (S7) --------
-//
-// Constantine, 2026-08-17: "if press to hold is active for certain things for
-// mouse or game pad, it shoudl apply to everything including keyboard as well
-// for those same buttons."
-//
-// A mouse hands a control TWO moments — down and up — and every press-and-hold
-// in this game is built in the span between them. Keyboard and pad handed it
-// ONE: `activate()` fired a synthetic click on keydown and that was the whole
-// press. So a hold was a mouse feature by construction, not by anyone's choice,
-// and a player who cannot use a pointer could not perform one at all.
-//
-// WHICH BUTTON, DERIVED RATHER THAN LISTED. The press is the CONFIRM action and
-// nothing else: `ACTIONS`' `confirm` row is `kind: 'cursor'`, which is this
-// file's own word for "this button acts on the focused control" — i.e. exactly
-// the button whose pointer twin is a press ON that control. Its keyboard key is
-// read off the row (`key: 'Enter'`) and its pad button off `bindings.confirm`
-// AT PRESS TIME, so a rebind carries the hold with it and there is no second
-// copy of the mapping to keep in step. The other rows are `kind: 'key'`: they
-// dispatch a key the SCREENS interpret, they do not press the thing under the
-// cursor, and a hold on them is that screen's question, not this one's.
-//
-// WHO DECIDES WHETHER A PRESS IS A GESTURE — the control, not this module. The
-// two events are CANCELABLE and that is the whole protocol:
-//   gppress    preventDefault => "I took this press; hold my activation."
-//              Nobody listening, or nobody claiming, and the click fires here
-//              and now — byte for byte the pre-door behaviour.
-//   gprelease  preventDefault => "the gesture completed; do NOT activate."
-//              Otherwise the release IS the tap, which is what an early pointer
-//              release has always been.
-// This module therefore knows nothing about holds, durations, or which controls
-// have one, and it can never drift from the set that does.
-let pressEl = null;
-
-function pressBegin(source) {
-  if (pressEl) return; // one press at a time
-  const el = ensureFocus();
-  if (!el) return;
-  const claimed = !el.dispatchEvent(new CustomEvent(PRESS_EVENT, { cancelable: true, detail: { source } }));
-  if (!claimed) { activateEl(el); return; }
-  pressEl = el;
-}
-
-function pressEnd(cancelled = false) {
-  const el = pressEl;
-  if (!el) return;
-  pressEl = null;
-  const consumed = !el.dispatchEvent(new CustomEvent(RELEASE_EVENT, { cancelable: true, detail: { cancelled } }));
-  // A control that left the DOM mid-press is not activated on its way out. The
-  // pointer path gets this free (no pointerup arrives at a detached element, so
-  // no click follows); the synthetic path has to say it.
-  if (!consumed && !cancelled && el.isConnected) activateEl(el);
-}
-
-// Left/right on a focused slider nudges its value (keyboard + pad parity).
-function nudgeRange(el, delta) {
-  const step = Number(el.step) || 1;
-  const min = Number(el.min);
-  const max = Number(el.max);
-  let v = Number(el.value) + delta * step;
-  if (!isNaN(min)) v = Math.max(min, v);
-  if (!isNaN(max)) v = Math.min(max, v);
-  el.value = String(v);
-  el.dispatchEvent(new Event('input', { bubbles: true }));
-}
-
-function synthKey(key) {
-  dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
-}
-
-function doAction(id, source = 'key') {
-  const a = ACTIONS.find((x) => x.id === id);
-  if (!a) return;
-  // 'cursor' means "act on the focused control", so it is the one kind that has
-  // a press to publish. See the press-door block above.
-  if (a.kind === 'cursor') pressBegin(source);
-  // Dispatch the CURRENTLY bound key so a pad press stays in sync with keyboard
-  // rebinds (screens match by binding via matchAction). Fixed-key actions
-  // (cancel) fall back to a.key.
-  else synthKey(keyBindings[id] || a.defKey || a.key);
-}
-
-// ---- keyboard navigation ----------------------------------------------------
-
-// Controls tab: capture the next keypress to rebind a keyboard action.
-let keyCapture = null;
-function captureNextKey(cb) {
-  keyCapture = cb;
-}
-function cancelKeyCapture() {
-  keyCapture = null;
-}
-
-function onKeydown(ev) {
-  // Key-rebind capture runs even while nav is enabled and ignores lone modifiers.
-  if (keyCapture) {
-    const k = ev.key;
-    if (k === 'Shift' || k === 'Control' || k === 'Alt' || k === 'Meta') return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    const cb = keyCapture;
-    keyCapture = null;
-    cb(k);
-    return;
-  }
-  if (!enabled) return;
-  const tag = (ev.target && ev.target.tagName) || '';
-  const typing = tag === 'INPUT' || tag === 'TEXTAREA';
-  const cur = current();
-
-  if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === CONFIRM_KEY)) {
-    engaged = true;
-  }
-  // Tab cycling, keyboard side. Ahead of everything else for the same reason
-  // the pad side is: while a tab set is open it owns these two, and no screen
-  // hotkey may take them first.
-  if (!typing && tabRing && (ev.key === TAB_PREV_KEY || ev.key === TAB_NEXT_KEY)) {
-    engaged = true;
-    ev.preventDefault();
-    if (ev.key === TAB_NEXT_KEY) tabRing.next();
-    else tabRing.prev();
-    return;
-  }
-  if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
-    // On a focused slider, horizontal arrows tune it rather than navigate.
-    if (cur && cur.matches('input[type="range"]') && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
-      nudgeRange(cur, ev.key === 'ArrowRight' ? 1 : -1);
-      ev.preventDefault();
-      return;
-    }
-    ev.preventDefault();
-    moveFocus({ ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[ev.key]);
-    return;
-  }
-  if (!typing && ev.key === CONFIRM_KEY) {
-    // Autorepeat is ONE press being held, not a stream of presses.
-    //
-    // AND THIS LINE FIXES A DEFECT THAT WAS ALREADY SHIPPED, which is worth the
-    // three lines: a held key is not one keydown, it is the first plus an OS
-    // repeat stream, and every repeat used to run `activate()` again. MEASURED
-    // on ?shot=compendium 1200x730, one focused `.cp-cell`, ONE Enter held for
-    // 600 ms with 17 OS repeats: b968e28 fired that control **18 times**, this
-    // tree fires it **once**. Harmless on the compendium; not harmless on a
-    // control that spends something.
-    // BOUNDARY: that pair is a scratch probe — a receipt, not coverage. No
-    // shipped check watches the repeat count on a gesture-less control;
-    // tools/inspecthold.mjs drives the hold with real repeats but only ever
-    // samples the hand, where the press door already collapses them.
-    if (ev.repeat) { ev.preventDefault(); return; }
-    const el = current();
-    if (el) {
-      ev.preventDefault();
-      pressBegin('key');
-    }
-  }
-}
-
-// The other half of the Confirm key, and the reason a keyboard can hold at all.
-// Deliberately NOT gated on `enabled`: a press that is already live must end
-// however the world changes, or the control is left filling forever.
-function onKeyup(ev) {
-  if (ev.key === CONFIRM_KEY) pressEnd();
-}
-
-// ---- gamepad polling (started only while a pad is present) -------------------
-
-let rebindCapture = null; // callback awaiting the next pad button (Controls UI)
-let padPressBtn = null; // the button index that opened the live pad press
-
-/** Wait for the next gamepad button press; resolves with its index. */
-function captureNextButton(cb) {
-  rebindCapture = cb;
-}
-function cancelCapture() {
-  rebindCapture = null;
-}
-
-function pollPads() {
-  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-  let any = false;
-  if (lastNav > 0) lastNav -= 1; // held-direction repeat gate (in poll ticks)
-  for (const pad of pads) {
-    if (!pad) continue;
-    any = true;
-    const prev = padPrev[pad.index] || [];
-    const pressed = pad.buttons.map((b) => b.pressed || b.value > 0.5);
-
-    for (let i = 0; i < pressed.length; i++) {
-      // THE RELEASE, which this poller never used to look at. A pad had only
-      // rising edges, so a pad button was a tap and could never be a hold —
-      // the same gap the keyboard had, one input over (S7).
-      if (!pressed[i] && prev[i]) {
-        if (padPressBtn === i) { padPressBtn = null; pressEnd(); }
-        continue;
-      }
-      const rising = pressed[i] && !prev[i];
-      if (!rising) continue;
-      engaged = true;
-      if (rebindCapture) {
-        const cb = rebindCapture;
-        rebindCapture = null;
-        cb(i);
-        continue;
-      }
-      // CONTEXTUAL PRECEDENCE (Law 3 clause 2), and the order is the rule:
-      // an open tab set takes LB/RB BEFORE actionForButton() can hand them to
-      // Relics/Stats. Without this line the defaults win and the law is prose.
-      if (tabRingButton(i)) continue;
-      const a = actionForButton(i);
-      // Remember WHICH button opened the press so its own release closes it —
-      // never whichever button happens to come up next.
-      if (a) { doAction(a.id, 'pad'); if (a.kind === 'cursor' && pressEl) padPressBtn = i; }
-      // D-pad (12–15) navigates regardless of rebinds.
-      else if (i === 12) moveFocus('up');
-      else if (i === 13) moveFocus('down');
-      else if (i === 14) moveFocus('left');
-      else if (i === 15) moveFocus('right');
-    }
-    padPrev[pad.index] = pressed;
-
-    // Left stick → navigation, rate-limited so a held stick steps, not races.
-    const ax = pad.axes[0] || 0;
-    const ay = pad.axes[1] || 0;
-    if (!rebindCapture && (Math.abs(ax) > DEADZONE || Math.abs(ay) > DEADZONE)) {
-      if (lastNav <= 0) {
-        lastNav = Math.round(REPEAT_MS / POLL_MS);
-        if (Math.abs(ax) > Math.abs(ay)) moveFocus(ax > 0 ? 'right' : 'left');
-        else moveFocus(ay > 0 ? 'down' : 'up');
-      }
-    }
-  }
-  // A pad unplugged mid-press sends no release. Cancel, don't strand.
-  if (!any) {
-    if (padPressBtn != null) { padPressBtn = null; pressEnd(true); }
-    stopPolling(); // no pads → idle until one reconnects
-  }
-}
-
-function startPolling() {
-  if (pollTimer == null) pollTimer = setInterval(pollPads, POLL_MS);
-}
-function stopPolling() {
-  if (pollTimer != null) {
-    clearInterval(pollTimer);
-    pollTimer = null;
-  }
-}
-
-/**
- * initInput({ getSettings }) — install keyboard nav + gamepad support.
- * Bindings come from settings.bindings (rebindable in the Controls tab).
- */
-function initInput({ getSettings } = {}) {
-  const s = (getSettings && getSettings()) || {};
-  setBindings(s.bindings || {});
-  setKeyBindings(s.keyBindings || {});
-  addEventListener('keydown', onKeydown, true);
-  addEventListener('keyup', onKeyup, true);
-  // Alt-tab away mid-hold and the keyup lands in another window. Same verdict
-  // trackGesture gives a pointer the browser takes: cancelled, nothing commits.
-  addEventListener('blur', () => pressEnd(true));
-
-  // Focus memory: after a re-render drops the cursor, restore it to the same
-  // logical element (by key) if it still exists — so navigation doesn't snap
-  // back to the top between inputs. A full screen change won't match, leaving
-  // focus cleared until the next nav press (correct).
-  const appRoot = document.getElementById('app');
-  if (appRoot && typeof MutationObserver !== 'undefined') {
-    let scheduled = false;
-    const mo = new MutationObserver(() => {
-      if (scheduled) return;
-      scheduled = true;
-      setTimeout(() => {
-        scheduled = false;
-        if (!enabled || current() || !focusKey) return;
-        const el = findByKey(focusKey);
-        if (el) setFocus(el, false);
-      }, 0);
-    });
-    mo.observe(appRoot, { childList: true, subtree: true });
-  }
-  addEventListener('gamepadconnected', () => {
-    document.body.classList.add('has-gamepad');
-    startPolling();
-  });
-  addEventListener('gamepaddisconnected', () => {
-    if (!navigator.getGamepads || !Array.from(navigator.getGamepads()).some(Boolean)) {
-      document.body.classList.remove('has-gamepad');
-    }
-  });
-  // If a pad is already connected at load (some browsers report it immediately).
-  if (navigator.getGamepads && Array.from(navigator.getGamepads()).some(Boolean)) startPolling();
-  return {
-    setEnabled: (v) => {
-      enabled = v;
-    },
-    refocus: () => setFocus(null),
-  };
-}
-
-
-Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, focusFirst, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
-
-},
-"src/ui/uiContent.js": function (module, exports, require) {
-// src/ui/uiContent.js — shared UI presentation data.
-//
-// The map, combat, and co-op screens all draw the same things — map node
-// types, act titles, enemy intents. These used to be hardcoded (and drifting)
-// in each screen. This is the single source so their icons, labels, and prose
-// can't diverge. Pure presentation data + tiny pure helpers, no game state.
-
-const { balance } = require("src/content/balance.js");
-
-// ---- status tooltip tokens (#61) --------------------------------------------
-// Status tooltips carry {tokens} bound to the row's OWN knobs, so the prose
-// can never restate a number the table holds (Law 1 clause 2 — a literal in
-// tooltip prose is a copy nothing syncs). One substitution home; a token that
-// resolves to nothing stays visible as its literal '{...}' — a loud defect,
-// not a silent blank.
-function statusTooltipText(def) {
-  let t = def.tooltip || '';
-  const sub = (token, v) => {
-    if (v != null) t = t.split(`{${token}}`).join(String(v));
-  };
-  if (def.proc) {
-    sub('proc.threshold', def.proc.threshold);
-    sub('proc.burstPercent', def.proc.burstPercent);
-    sub('proc.burstMin', def.proc.burstMin);
-    sub('proc.burstMax', def.proc.burstMax);
-    sub('proc.poiseDamage', def.proc.poiseDamage);
-  }
-  if (def.resists) sub('resists.percent', def.resists.percent);
-  if (def.taggedVulnerability) sub('tv.pct', Math.round((def.taggedVulnerability.mult - 1) * 100));
-  if (def.decay && typeof def.decay === 'object') sub('decay.duration', def.decay.duration);
-  return t;
-}
-
-// One typed instance presentation for both combat clients. A registered
-// percent payload is not a generic stack count; its duration is a separate
-// clock and must be named separately.
-function statusInstancePresentation(def, inst) {
-  const rawValue = inst && inst.meter ? inst.meter.value : (inst && inst.stacks) || 0;
-  const valueToken = def.instancePresentation?.valueToken || 'stacks';
-  const durationText = inst && Number.isFinite(inst.duration)
-    ? `${inst.duration} ${inst.duration === 1 ? 'turn' : 'turns'}` : '';
-  const valueText = valueToken === 'percent' ? `${rawValue}%` : String(rawValue);
-  const label = valueToken === 'percent'
-    ? `${def.name} ${valueText}${durationText ? ` · ${durationText}` : ''}`
-    : `${def.name} ×${rawValue}`;
-  return {
-    valueToken,
-    valueText,
-    durationText,
-    label,
-    tooltip: `${statusTooltipText(def)}${durationText ? ` Turns left: ${inst.duration}.` : ''}`,
-    semantic: { statusId: def.id, valueToken, ariaLabel: label },
-  };
-}
-
-/** Pure attribute map shared by both combat clients. */
-function statusInstanceSemanticAttrs(presentation) {
-  return {
-    'data-status-id': presentation.semantic.statusId,
-    'data-status-value-token': presentation.semantic.valueToken,
-    'aria-label': presentation.semantic.ariaLabel,
-  };
-}
-
-// ---- map node types ---------------------------------------------------------
-const NODE_TYPES = {
-  monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
-  fight: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
-  elite: { icon: '☠', name: 'Elite', blurb: 'A hard fight. Drops a relic.' },
-  boss: { icon: '👁', name: 'Boss', blurb: 'The act boss.' },
-  shrine: { icon: '♨', name: 'Shrine of Emberlight', blurb: 'Rest (heal), smith (upgrade a card), or mend an ally.' },
-  merchant: { icon: '⚖', name: 'Merchant', blurb: 'Cards, relics, flasks, card removal.' },
-  treasure: { icon: '▣', name: 'Treasure', blurb: 'A relic, free.' },
-  event: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
-  unknown: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
-};
-const nodeIcon = (type) => (NODE_TYPES[type] || {}).icon || '?';
-const nodeName = (type) => (NODE_TYPES[type] || {}).name || String(type);
-const nodeBlurb = (type) => (NODE_TYPES[type] || {}).blurb || '';
-
-// Tints for the map glyphs. Here rather than in the map's markup for the reason
-// this file already claims in its header — one source, or they diverge.
-const NODE_TINT = {
-  elite: 'var(--ember)',
-  boss: 'var(--ember)',
-  shrine: 'var(--gold)',
-  merchant: 'var(--grace)',
-  treasure: 'var(--gold)',
-};
-
-/**
- * legendEntries() → [{ icon, name, tint }], one row per distinct glyph.
- *
- * Bjorn cold-played the map and could not identify `👁`. It is the BOSS — the
- * most important node on the board — and it was missing from the legend, because
- * the legend was hand-written in map.js while the icons live here, in a file
- * whose own header says it is the single source so they "can't diverge".
- *
- * A claim of single-sourcing with an unchecked second copy beside it. Deriving
- * the legend means a new node type appears in it without anyone remembering to,
- * and the hardcoded list dies — which is the proof the collapse was real rather
- * than a layer of indirection (Bjorn's criterion).
- *
- * Aliases (monster/fight, event/unknown) collapse to one row by glyph.
- */
-function legendEntries() {
-  const seen = new Set();
-  const out = [];
-  for (const [type, def] of Object.entries(NODE_TYPES)) {
-    if (seen.has(def.icon)) continue;
-    seen.add(def.icon);
-    out.push({ icon: def.icon, name: def.name, tint: NODE_TINT[type] || '' });
-  }
-  return out;
-}
-
-// ---- act titles -------------------------------------------------------------
-const ACT_NAMES = {
-  1: 'ACT I — THE FALLOW MARCHES',
-  2: 'ACT II — THE STITCHED COURT',
-  3: 'ACT III — THE ASHEN CROWN',
-};
-// Endless Spire: acts past 3 reuse the act 1-3 names with a "· CYCLE n" marker.
-// The cycling arithmetic is `actPlate` (below, with the per-act art it now also
-// serves) and the count is the NUMBER OF NAMES WRITTEN, asked rather than typed —
-// this line held a literal `3` beside a table of three, which is one fact in two
-// places and would have gone wrong the day a fourth act was named.
-const ACT_NAME_COUNT = Object.keys(ACT_NAMES).length;
-function actTitle(actNumber) {
-  const base = ACT_NAMES[actPlate(actNumber, ACT_NAME_COUNT)] || `ACT ${actNumber}`;
-  const loop = Math.floor((actNumber - 1) / ACT_NAME_COUNT);
-  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
-}
-
-// ---- enemy intents ----------------------------------------------------------
-// `iv` is a preview/snapshot intent:
-//   { kind, moveId?, damage?, hits?, block?, delayed?, pending?, totalDamage? }
-const INTENT_ICONS = { attack: '⚔', block: '🛡', buff: '↑', debuff: '☾', staggered: '✦', unknown: '?' };
-
-// Solo (previewIntent) supplies { kind, damage, hits, block, delayed, pending,
-// totalDamage } and marks unknown via kind:'unknown'; the co-op snapshot intent
-// supplies the same fields plus moveId (null when unknown). These helpers key on
-// kind + field presence so both shapes render identically.
-const isUnknownIntent = (iv) => !iv || iv.kind === 'unknown' || iv.moveId === null;
-
-/** The badge shown over an enemy → { cls, html }. */
-function intentBadge(iv) {
-  if (isUnknownIntent(iv)) return { cls: 'unknown', html: '?' };
-  if (iv.kind === 'staggered') return { cls: 'staggered', html: '✦ STAGGERED' };
-  if (iv.damage != null) {
-    const n = iv.hits > 1 ? `${iv.damage}×${iv.hits}` : `${iv.damage}`;
-    return { cls: `attack${iv.delayed ? ' delayed' : ''}`, html: `<span class="ic">${INTENT_ICONS.attack}</span>${n}${iv.delayed ? ' ⌛' : ''}` };
-  }
-  if (iv.block != null) return { cls: 'block', html: `<span class="ic">${INTENT_ICONS.block}</span>` };
-  if (iv.kind === 'buff') return { cls: 'buff', html: `<span class="ic">${INTENT_ICONS.buff}</span>` };
-  if (iv.kind === 'debuff') return { cls: 'debuff', html: `<span class="ic">${INTENT_ICONS.debuff}</span>` };
-  return { cls: iv.kind || 'unknown', html: '?' };
-}
-
-/** Intent hover tooltip. `victim` names who attacks/debuffs hit ('you' solo,
- *  'each hero' in co-op). Reads totalDamage/pending when the caller has them. */
-function intentTooltip(iv, { victim = 'you' } = {}) {
-  if (isUnknownIntent(iv)) return '<div class="tt-title">Intent: Unknown</div>';
-  if (iv.kind === 'staggered') return `<div class="tt-title">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.`;
-  if (iv.damage != null) {
-    const total = iv.totalDamage != null && iv.hits > 1 ? ` (${iv.totalDamage} total)` : '';
-    let t = `<div class="tt-title">Intent: Attack</div>Attacking ${victim} for <b>${iv.damage}${iv.hits > 1 ? ` × ${iv.hits}${total}` : ''}</b> damage (modifiers included).`;
-    if (iv.pending) t += '<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.';
-    else if (iv.delayed) t += '<br><b>Delayed:</b> it holds this turn and strikes the next. Stagger cancels it.';
-    return t;
-  }
-  if (iv.block != null) return '<div class="tt-title">Intent: Defend</div>Gaining Block.';
-  if (iv.kind === 'buff') return '<div class="tt-title">Intent: Buff</div>Strengthening itself.';
-  if (iv.kind === 'debuff') return `<div class="tt-title">Intent: Debuff</div>Hindering ${victim}.`;
-  return '<div class="tt-title">Intent: Unknown</div>';
-}
-
-// ---- act backdrops ---------------------------------------------------------
-// One rendered plate per act (tools/backdrops-blender.py → assets/bg/*.webp,
-// styled by .backdrop.act-N in combat.css). Endless loops past act 3, so the
-// act cycles back through the three plates rather than rendering art-less.
-const BACKDROP_ACTS = balance.ui.backdropActs;
-function backdropClass(actNumber) {
-  return `backdrop act-${actPlate(actNumber, BACKDROP_ACTS)}`;
-}
-
-// ---- map parchment (the fog's undiscovered ground) --------------------------
-//
-// THREE AUTHORED LOOKS, ONE PER ACT, BOUND BY NAME — Law 1 clause 4, and the
-// backdrop plates directly above are the precedent this copies rather than
-// invents. `assets/map/parchment_act1.webp`, `_act2`, `_act3`; no registration
-// list anywhere, so Freja drops a file in and the act wears it.
-//
-// GENERATED PARCHMENT WAS REFUSED, and on Law 0 rather than on budget: art
-// derived from the graph COUPLES THE FLAVOUR LAYER TO `mapgen`, and Constantine
-// now turns `floors` and `columns` himself — so a knob he reaches for to shorten
-// a run would silently change the art. A tunable that moves a thing its turner
-// was not thinking about is exactly clause 5's silent-plausible-derivation.
-//
-// ~~UNTIL THE ART EXISTS THE GROUND IS A DERIVED PLACEHOLDER and the screen says
-// so rather than this comment~~ — STRUCK 2026-08-08 by Sunna. It did not say so.
-// The three files NEVER EXISTED, the `<image>` resolved to nothing exactly as
-// this paragraph promised, and what a player got under fog was a flat wash: no
-// paper, no grain, no border, on a screen that is 95% ground. A missing thing
-// that renders as "fine, just flat" is invisible, and this one was invisible for
-// as long as the hook has existed.
-//
-// THE PLATES NOW EXIST AND ARE GENERATED, on Constantine's standing constraint
-// ("no billing, keep everything free"): `tools/parchment.mjs` writes three
-// feTurbulence sheets — blotch, fibre, grain — about two kilobytes each, from
-// the plate INDEX and nothing else. The refusal above is untouched and still
-// binds: the only input is the index, never the graph, so no knob he turns to
-// shorten a run can move the paper.
-//
-// THE PER-ACT TONE IS STILL CSS'S AND THE PLATES CARRY NO COLOUR — one home for
-// that datum (`--fog-parchment`), one reader that paints it, one grey texture
-// laid over it. FREJA STILL OWNS THE ACTUAL LOOK: these are the same three
-// filenames, so authored art replaces them by overwriting, and nothing else in
-// the tree moves.
-const PARCHMENT_ACTS = balance.ui.parchmentActs;
-/**
- * THE PLATE'S FILE TYPE, one home and one token.
- *
- * `.svg` because the plate has to EXIST and that is the medium this repo can
- * generate for free (`tools/parchment.mjs`). It is a const rather than a
- * literal in the template below because the day authored `.webp` plates land,
- * the whole of that change should be this line plus three files — and because a
- * literal here would be a second copy of a fact `tools/parchment.mjs`,
- * `tools/bundle.mjs`'s MIME table and the act-plate test all depend on.
- */
-const PARCHMENT_EXT = '.svg';
-function parchmentAsset(actNumber) {
-  return `assets/map/parchment_act${actPlate(actNumber, PARCHMENT_ACTS)}${PARCHMENT_EXT}`;
-}
-function parchmentClass(actNumber) {
-  return `parch-${actPlate(actNumber, PARCHMENT_ACTS)}`;
-}
-
-/**
- * actPlate(actNumber, plates) → 1..plates — WHICH OF N AUTHORED PLATES AN ACT
- * WEARS, once, for every set of per-act art.
- *
- * Endless Spire runs past act 3, so every per-act art set has to answer "what
- * does act 7 look like" and every one of them answers it the same way: cycle.
- * This was written out twice (backdrops here, `actTitle` above) before the
- * parchment would have made it three — and three copies of a modulo is how act 7
- * comes to show plate 1 and be called ACT I · CYCLE 3 while a fourth set shows
- * plate 3, with nothing in the tree able to notice.
- */
-function actPlate(actNumber, plates) {
-  const n = Number(actNumber) > 0 ? Math.floor(Number(actNumber)) : 1;
-  const p = Number.isInteger(plates) && plates > 0 ? plates : 1;
-  return ((n - 1) % p) + 1;
-}
-
-// ---- the in-run menu: ONE table, two widgets --------------------------------
-//
-// The overlay's tab strip and the ☰ quick-nav dropdown are two presentations of
-// the same set of destinations. They used to be one presentation and a hardcoded
-// list (`TABS` in overlay.js) — adding the dropdown beside that list would have
-// made it the second copy this file's header exists to prevent (Law 1).
-//
-// ROWS ARE LAUNCHERS, NOT STATE. `act` is a closed vocabulary the UI resolves to
-// a handler that already exists; `selectTab` in overlay.js stays the only thing
-// that knows which tab is current. The day a row knows something selectTab does
-// not, this is a second menu rather than a quick way into the one we have.
-//
-// The act vocabulary is MENU_ACTS, below — one home, not a list in this comment
-// as well. `act: 'tab'` is the one act that carries a second field: the tab it
-// opens, which is a member of MENU_TABS and joined to it by surfaces.js.
-//
-// TWO READINGS OF "CONTEXT-SPECIFIC", AND THE TABLE SERVES BOTH.
-// Constantine: "all buttons should be context-specific." Marina's dissent: the
-// ends are fixed, the middle is contextual, because a row whose meaning moves
-// between screens is a trap for a player who navigates by muscle memory. They
-// disagree in a way only play settles, so both orders come out of this one
-// table and a setting picks:
-//
-//   fixed ends (Marina)  — group by `band`: head, body, tail. Array order within
-//                          a band. Second row is Deck on every screen.
-//   all contextual (his) — rows marked `local` (they exist only on this screen)
-//                          come first, then the rest; `tail` still last, because
-//                          he fixed Save · Save & Quit as the last two by hand.
-//
-// The map row set is IDENTICAL under both — which is the honest shape of the
-// argument: it only bites where a screen has destinations of its own, and combat
-// is the screen that does.
-const MENU_TABS = [
-  { id: 'deck', label: 'Deck', icon: '🂠', count: 'deck', tip: 'Every card in the climb, not just the ones in hand.' },
-  { id: 'relics', label: 'Relics & Flasks', icon: '◆', tip: 'What you carry, and what each one does.' },
-  { id: 'stats', label: 'Stats', icon: '♜', tip: 'This run in numbers — floor, damage, seed.' },
-  { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
-  { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
-  { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' },
-];
-
-const TAIL = [
-  { act: 'save', icon: '💾', label: 'Save', band: 'tail', tip: 'Write the climb to its slot and stay here.' },
-  { act: 'quit', icon: '⏻', label: 'Save & Quit to Title', band: 'tail', tone: 'danger',
-    tip: 'Save, then back to the title. Continue picks the climb up again.' },
-];
-
-const MENU = {
-  map: [
-    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
-      tip: 'Weapons and armour — swap between fights for free.' },
-    { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
-      tip: 'What each mark on the act map means.' },
-    { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'relics', band: 'body' },
-    { act: 'tab', tab: 'stats', band: 'body' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    ...TAIL,
-  ],
-  // Draw and discard are real destinations that exist ONLY here (combat.js's
-  // pile modals) — the demonstration that context-specific means something.
-  combat: [
-    { act: 'armoury', icon: '⚒', label: 'Armaments', band: 'head', local: true,
-      tip: 'Your hand sets, mid-fight. Swapping costs energy.' },
-    { act: 'tab', tab: 'deck', label: 'Hand / Deck', band: 'body' },
-    { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
-      tip: 'What is still to come, shuffled for viewing.' },
-    { act: 'discard', icon: '✖', label: 'Discard pile', band: 'body', local: true, count: 'discard',
-      tip: 'What you have played and what was discarded.' },
-    { act: 'tab', tab: 'relics', band: 'body' },
-    { act: 'tab', tab: 'stats', band: 'body' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    ...TAIL,
-  ],
-  // The menu already open: the dropdown mirrors the strip behind it, current tab
-  // marked. Controls earns a row here (it is a tab) and not on map/combat, where
-  // it is one click away once you land.
-  overlay: [
-    { act: 'close', icon: '✕', label: 'Close menu', band: 'head', local: true,
-      tip: 'Back to the screen behind this one.' },
-    { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'relics', band: 'body' },
-    { act: 'tab', tab: 'stats', band: 'body' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    { act: 'tab', tab: 'controls', band: 'body' },
-    ...TAIL,
-  ],
-};
-
-const BANDS = ['head', 'body', 'tail'];
-
-// The acts a MENU row may name — the vocabulary, beside the table it governs.
-// It lived in src/ui/surfaces.js, whose header promises THAT FILE HOLDS NO
-// MEMBERS; eight members later it was the second copy that file exists to
-// prevent (Vira, gate of 5c49fed).
-//
-// WHAT THIS CATCHES AND WHAT IT DOES NOT, because a hand-kept list should say
-// so out loud. A launcher row is dropped when the CONTEXT does not offer its act
-// (the map has no draw pile — correct, by design), so two different situations
-// wear the same silence:
-//
-//   TYPO      — `act: 'jorunal'`, not a word at all → not in this list → the
-//               boot check names it. Caught, and this list is why.
-//   ORPHAN    — a word in this list that NO context implements anywhere. Delete
-//               `legend:` from the actions bag in src/ui/screens/map.js — its
-//               only implementation — and the Map legend row silently vanishes
-//               with every check green. NOT CAUGHT HERE, and it cannot be: the
-//               actions bags are built inside a click handler, closed over live
-//               run state, so no source-level join can see them.
-//
-// The orphan edge is answered on the RENDERED PAGE instead, which is where the
-// implemented acts actually exist: quicknav marks its panel
-// `data-surface="menuAct"` and each row `data-member="<act>"`, so an instrument
-// that opens the three contexts can subtract what was drawn from what is
-// declared here. That instrument is Bjorn's lens and is not written yet — this
-// comment is the statement of the gap, not a claim it is closed.
-const MENU_ACTS = ['tab', 'armoury', 'legend', 'draw', 'discard', 'save', 'quit', 'close'];
-
-/** The tab a `tab` row points at, resolved against MENU_TABS. */
-function tabDef(id) {
-  return MENU_TABS.find((t) => t.id === id) || null;
-}
-
-/**
- * menuTabRefs() → every tab id a MENU row NAVIGATES TO, across all contexts.
- *
- * The other half of a `{ act: 'tab', tab: … }` row. `menuRows()` resolves it to
- * blank icon/label/tip when it names nothing, and quicknav keeps the row because
- * the ACT is implemented — so the typo has to be caught by joining the tab, and
- * this is the enumeration that lets surfaces.js do it.
- */
-function menuTabRefs() {
-  return [...new Set(Object.values(MENU).flat()
-    .filter((r) => r.act === 'tab' && typeof r.tab === 'string' && r.tab)
-    .map((r) => r.tab))];
-}
-
-/**
- * menuTabs({ hasSave }) → the overlay's tab strip, in order.
- * The strip and the dropdown read the same table, so a tab cannot exist in one
- * and not the other. `counts` supplies live numbers (deck size) for the label.
- */
-function menuTabs({ hasSave = true, counts = {} } = {}) {
-  return MENU_TABS.filter((t) => hasSave || !t.needsSave).map((t) => ({
-    id: t.id,
-    label: t.count != null && counts[t.count] != null ? `${t.label} (${counts[t.count]})` : t.label,
-    icon: t.icon,
-    tip: t.tip,
-  }));
-}
-
-/**
- * menuRows(context, { fixedEnds, hasSave, counts, current }) → resolved rows.
- *
- * Each row comes back with its icon, label, tooltip and a `sep` flag marking the
- * first row of a new band (drawn as a rule under fixed ends, absent otherwise —
- * the two readings look different, which is the point of being able to try both).
- */
-function menuRows(context, { fixedEnds = true, hasSave = true, counts = {}, current = null } = {}) {
-  const src = (MENU[context] || []).filter((r) => (hasSave ? true : r.band !== 'tail'));
-  const ordered = fixedEnds
-    ? BANDS.flatMap((b) => src.filter((r) => r.band === b))
-    : [
-        ...src.filter((r) => r.local && r.band !== 'tail'),
-        ...src.filter((r) => !r.local && r.band !== 'tail'),
-        ...src.filter((r) => r.band === 'tail'),
-      ];
-  let prevBand = null;
-  return ordered.map((r) => {
-    const t = r.act === 'tab' ? tabDef(r.tab) : null;
-    const countKey = r.count || (t && t.count);
-    const sep = fixedEnds && prevBand !== null && r.band !== prevBand;
-    prevBand = r.band;
-    return {
-      act: r.act,
-      tab: r.tab || null,
-      icon: r.icon || (t && t.icon) || '',
-      label: r.label || (t && t.label) || '',
-      tip: r.tip || (t && t.tip) || '',
-      tone: r.tone || '',
-      badge: countKey != null && counts[countKey] != null ? String(counts[countKey]) : '',
-      on: !!(current && r.act === 'tab' && r.tab === current),
-      sep,
-    };
-  });
-}
-
-// ---- gamepad buttons --------------------------------------------------------
-// One table, two presentations. The hint bar wants a compact glyph and the
-// controls screen wants a readable word; these lived as two near-identical
-// tables (input.js PAD_LABELS / controls.js BUTTON_NAMES) that agreed on
-// buttons 0-11 and silently disagreed on the d-pad and guide.
-const PAD_BUTTONS = {
-  0: { glyph: 'A', name: 'A' },
-  1: { glyph: 'B', name: 'B' },
-  2: { glyph: 'X', name: 'X' },
-  3: { glyph: 'Y', name: 'Y' },
-  4: { glyph: 'LB', name: 'LB' },
-  5: { glyph: 'RB', name: 'RB' },
-  6: { glyph: 'LT', name: 'LT' },
-  7: { glyph: 'RT', name: 'RT' },
-  8: { glyph: 'Back', name: 'Back' },
-  9: { glyph: 'Start', name: 'Start' },
-  10: { glyph: 'L3', name: 'L3' },
-  11: { glyph: 'R3', name: 'R3' },
-  12: { glyph: '▲', name: 'D-Up' },
-  13: { glyph: '▼', name: 'D-Down' },
-  14: { glyph: '◀', name: 'D-Left' },
-  15: { glyph: '▶', name: 'D-Right' },
-  16: { glyph: '⊙', name: 'Guide' },
-};
-/** Compact glyph for the hint bar; falls back to B<n> for unmapped buttons. */
-function padGlyph(btn) {
-  const b = PAD_BUTTONS[btn];
-  return b ? b.glyph : `B${btn}`;
-}
-/** Readable name for the controls/rebind list; '—' when nothing is bound. */
-function padName(btn) {
-  if (btn == null) return '—';
-  const b = PAD_BUTTONS[btn];
-  return b ? b.name : `Btn ${btn}`;
-}
-
-// ---- why a piece is not yours, in the player's words ------------------------
-// `ownership().why()` (src/model/loadout.js) names the GATE and declares the
-// closed set of them as OWNERSHIP_GATES; the sentence is UI copy and lives here.
-// It was a literal inside equipment.js's `gate()`, which was fine while one
-// screen existed and becomes a copy nothing syncs the moment a second one asks
-// the same question (Law 1 clause 2, pointed at prose).
-//
-// DECLARED AND HANDLED: the suite asserts these keys are exactly OWNERSHIP_GATES
-// — a route the model can return with no sentence here renders an empty reason,
-// which is the quiet graceful failure rather than the loud one.
-//
-// A row's own `hint` from unlocks.csv always wins over LOCK_COPY.unearned —
-// that is the whole point of the hint column. This is what is said when the
-// table has nothing to say.
-const LOCK_COPY = Object.freeze({
-  unearned: 'Not yet earned.',
-  unfound: 'Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them.',
-});
-
-// ---- what a kind of armament is called in the plural ------------------------
-// The Compendium's section headings. A LABEL is a word, not a derivation:
-// 'staff' → 'STAVES' is not a rule any pluraliser gets right, and inventing one
-// is how a screen ends up saying STAFFS. So the irregulars are listed and
-// everything else derives, WITH A WARNING — a new kind gets a plausible heading
-// rather than a broken screen, and says so in the console so the plausible one
-// is not mistaken for an authored one (Law 0 clause 5: a generated thing that is
-// wrong but reasonable is the invisible failure).
-const ARMAMENT_KIND_LABELS = { weapon: 'WEAPONS', shield: 'SHIELDS', staff: 'STAVES' };
-function armamentKindLabel(kind) {
-  const known = ARMAMENT_KIND_LABELS[kind];
-  if (known) return known;
-  console.warn(`[content] armament kind ${JSON.stringify(kind)} has no heading in`
-    + ' src/ui/uiContent.js ARMAMENT_KIND_LABELS — showing a derived one.');
-  return `${String(kind || '').toUpperCase()}S`;
-}
-
-
-Object.assign(module.exports, { statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs, NODE_TYPES, nodeIcon, nodeName, nodeBlurb, NODE_TINT, legendEntries, ACT_NAMES, ACT_NAME_COUNT, actTitle, INTENT_ICONS, intentBadge, intentTooltip, BACKDROP_ACTS, backdropClass, PARCHMENT_ACTS, PARCHMENT_EXT, parchmentAsset, parchmentClass, actPlate, MENU_TABS, MENU, MENU_ACTS, menuTabRefs, menuTabs, menuRows, PAD_BUTTONS, padGlyph, padName, LOCK_COPY, armamentKindLabel });
 
 },
 "src/ui/components/hints.js": function (module, exports, require) {
@@ -46468,7 +46699,13 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   let pendingSnap = null; // newest snapshot that arrived while pacing
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
   let handStrip = null; // the live hand strip (components/hand.js), same discipline
-  let endTurnBeat = null; // pointer-only; named keyboard/pad activation is immediate
+  // The beat is the same on pointer, keyboard and pad since S7 went wide
+  // (2026-08-17); the dial is the only switch. This line said "pointer-only;
+  // named keyboard/pad activation is immediate" and was true when written.
+  // UNMEASURED HERE, and said rather than assumed: no `?shot=` state opens a
+  // co-op board, so nothing has driven a key or a pad at THIS End Turn. What is
+  // measured is that it goes through the same `arm()` as combat's.
+  let endTurnBeat = null;
 
   conn.setHandlers({
     onMessage: (msg) => {

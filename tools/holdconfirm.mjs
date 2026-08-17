@@ -56,9 +56,18 @@
 //      declaration with no handler; a control armed under an id nobody declared
 //      is a gap. Neither is visible from a source tree.
 //   9. END TURN ALWAYS HOLDS while the dial is enabled — the literal ruling on
-//      "same with ending turn". A spent hand does not remove the beat. Off still
-//      restores the old one-tap pointer path, while keyboard/pad activation
-//      remains immediate because it cannot be a pointing miss.
+//      "same with ending turn". A spent hand does not remove the beat. Off
+//      restores the old one-tap path.
+//  9b. AND THE DIAL IS ONE SWITCH OVER ALL THREE INPUTS. Constantine,
+//      2026-08-17: "if hold is toggled, then it should be the same, in all
+//      instances. for ending turn, using flask, event choice, shrine rest."
+//      Four actions x keyboard and pad x dial on and off, each cell asking BOTH
+//      halves — the short press aborts, the long press commits — because either
+//      half alone passes against a key that has simply stopped working. Eight
+//      cells were RED at b83bda1 and the numbers are printed at that section.
+//      This is where the sentence "keyboard/pad activation remains immediate
+//      because it cannot be a pointing miss" used to live: it was this tool's
+//      own reasoning, it was good, and his word replaced it.
 //  10. THE SMITH CONFIRMS, and the confirm carries the preview. #105 shipped
 //      that preview as a HOVER tooltip and a phone has no hover, so the touch
 //      player's preview was nothing at all. One tap ARMS, CANCEL takes it back,
@@ -102,6 +111,9 @@
 //   node tools/holdconfirm.mjs --new-entry     Law 0 falsifier, content only
 //   node tools/holdconfirm.mjs --fail-closed   Viki's gate: unknown op must hold
 //   node tools/holdconfirm.mjs --schema        the dial's boot refusal, on 5 known-bads
+//   node tools/holdconfirm.mjs --selftest      the wide hold's known-bad: 5 source
+//                                              plants, each re-run end to end
+//   node tools/holdconfirm.mjs --root DIR      serve a different tree (--selftest's door)
 //   CHROME=/path/to/chrome node tools/holdconfirm.mjs
 //
 // Surfaces driven: ?shot=event, ?shot=combat, ?shot=rest, ?shot=shop,
@@ -124,7 +136,7 @@
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
-import { existsSync, mkdtempSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -136,6 +148,9 @@ const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
 const useDist = args.includes('--dist');
 const mutate = args.includes('--mutate');
+// The tree that gets SERVED. Defaults to this tool's own repo; --selftest points
+// it at a disposable copy carrying one planted defect.
+const SERVE_ROOT = argOf('--root') ? resolve(argOf('--root')) : ROOT;
 // NO OPTIONAL GATES. These were flags because the tool grew that way, and a
 // gate you have to remember to pass is one that will be forgotten — which is
 // the `unasked` bucket below, self-inflicted. They all run every time now; the
@@ -188,12 +203,163 @@ const STATE = `(() => {
   };
 })()`;
 
+// ---- THE RE-RUNNABLE KNOWN-BAD FOR THE WIDE HOLD (--selftest) ---------------
+//
+// `--mutate` above falsifies the POINTER wiring by rewiring the DOM. It cannot
+// reach this one: the wide hold lives in ui/input.js and ui/components/
+// holdconfirm.js, and a defect there arrives as a SOURCE EDIT. So each plant
+// below is exactly that — one contract line replaced in a disposable copy of
+// src/, judged by re-running this whole tool at `--root COPY`: real server,
+// real boot, real CDP keys, real shimmed pad. Nothing is handed to a function.
+//
+// EACH PLANT MUST ALSO LEAVE AN UNTOUCHED CORNER GREEN. A plant that craters
+// the run proves the tool notices breakage, not that it notices THIS breakage.
+const PLANTS = [
+  {
+    name: 'Q1 the source refusal, restored',
+    file: 'src/ui/components/holdconfirm.js',
+    from: '    heldThisPress = origin.source === \'pointer\';',
+    to: "    if (origin.source !== 'pointer') return false;\n    heldThisPress = true;",
+    what: 'the pre-S7 line that made the hold a mouse feature',
+    expect: 'every non-pointer TAP commits again — the eight cells that were red at b83bda1',
+    mustRed: (out) => /FAIL\s+endTurn: ON, a short key press does NOT end the turn/.test(out),
+    mustStay: (out) => /ok\s+endTurn: ON, a held key press DOES end the turn/.test(out)
+      || /ok\s+a completed hold ends the turn/.test(out),
+  },
+  {
+    name: 'Q2 the release contract cut',
+    file: 'src/ui/components/holdconfirm.js',
+    from: '      onEnd: () => { if (armed) stop(\'idle\'); return true; },',
+    to: "      onEnd: () => { if (armed) stop('idle'); },",
+    what: 'the answer input.js reads as "did the gesture consume the activation?"',
+    expect: 'an ABORTED key/pad hold activates on release — the abort commits',
+    mustRed: (out) => /FAIL\s+\w+: ON, a short (key|pad) press does NOT/.test(out),
+    mustStay: (out) => /ok\s+a release before the fill lands does NOT end the turn/.test(out),
+  },
+  {
+    name: 'Q3 the key door closed',
+    file: 'src/ui/input.js',
+    from: '  const held = pressTarget(id);\n  if (held) { pressBegin(source, held); return; }',
+    to: '  /* holdconfirm --selftest Q3: a key action never presses its control */',
+    what: 'the pad half of a `kind: key` action reaching its armed control',
+    expect: 'the pad button commits End Turn on a tap again',
+    mustRed: (out) => /FAIL\s+endTurn: ON, a short pad press does NOT end the turn/.test(out),
+    mustStay: (out) => /ok\s+endTurn: ON, a short key press does NOT end the turn/.test(out),
+  },
+  // Q4 WAS HERE AND IS DELETED, WHICH IS ITSELF THE FINDING. It cut
+  // `if (!(Number(el.dataset.holdMs) > 0)) return null;` out of input.js's
+  // `pressTarget`, on the claim that the clause is THE SWITCH that makes `off`
+  // mean off on a key. IT IS NOT: the switch is armHold's `ms0 > 0`, and with
+  // the dial off `begin` declines the press and `pressBegin` activates
+  // immediately. Watched, this whole tool at --root COPY: the planted tree ran
+  // 111 checks and EXITED 0, every `OFF, one press does…` cell green. The
+  // clause is a redundant guard whose only observable difference is a
+  // `disabled` button on the co-op board, which no `?shot=` state opens — so
+  // it is `unknown`, it is named at the line in input.js, and it keeps no plant
+  // here. A corpus entry that cannot go red is worse than a missing one: it
+  // sells the coverage it does not have.
+  {
+    name: 'Q5 the veil scope dropped',
+    file: 'src/ui/input.js',
+    from: '  const root = scopeRoot();\n  if (!root || !root.contains(el)) return null;',
+    to: '  /* holdconfirm --selftest Q5: the active focus scope is not consulted */',
+    what: 'the clause that leaves an open veil owning the End Turn key',
+    expect: 'holding `e` with the draw pile open ENDS THE TURN under the panel',
+    mustRed: (out) => /FAIL\s+with a veil standing, HOLDING the End Turn key does nothing/.test(out),
+    mustStay: (out) => /ok\s+endTurn: ON, a held key press DOES end the turn/.test(out),
+  },
+  {
+    name: 'Q6 the autorepeat leak',
+    file: 'src/ui/input.js',
+    from: '  if (!typing && keyPressAction && matchAction(ev, keyPressAction)) {\n    ev.preventDefault();\n    ev.stopPropagation();\n    return;\n  }',
+    to: '  /* holdconfirm --selftest Q6: the OS repeat stream reaches the screen */',
+    what: 'the swallow that keeps an OS autorepeat inside the press it belongs to',
+    expect: 'the second keydown (33 ms in) reaches combat and clicks End Turn — the turn '
+      + 'ends a third of the way through a hold that keeps filling',
+    mustRed: (out) => /FAIL\s+endTurn: ON, a short key press does NOT end the turn/.test(out),
+    mustStay: (out) => /ok\s+endTurn: ON, a short pad press does NOT end the turn/.test(out),
+  },
+];
+
+function sandbox() {
+  const dir = mkdtempSync(join(tmpdir(), 'hc-kb-'));
+  for (const d of ['src', 'styles', 'assets', 'content']) {
+    if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
+  }
+  cpSync(resolve(ROOT, 'index.html'), resolve(dir, 'index.html'));
+  return dir;
+}
+
+function plantInto(dir, p) {
+  const path = resolve(dir, p.file);
+  const src = readFileSync(path, 'utf8');
+  const first = src.indexOf(p.from);
+  if (first < 0 || src.indexOf(p.from, first + 1) >= 0) {
+    console.error(`holdconfirm --selftest: ${p.name} found ${first < 0 ? 'NO' : 'MORE THAN ONE'} home in ${p.file}`);
+    console.error('  Each find-string is one of the wide hold\'s CONTRACTS, not a convenience.');
+    console.error('  RE-AIM it at the bytes the defect replaces. Do not delete it and do not');
+    console.error('  loosen it: a corpus that silently stops matching is a suite that has gone');
+    console.error('  green about nothing.');
+    process.exit(2);
+  }
+  writeFileSync(path, src.slice(0, first) + p.to + src.slice(first + p.from.length), 'utf8');
+}
+
+function runAt(root) {
+  return new Promise((res) => {
+    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--root', root],
+      { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...(browserPath ? { CHROME: browserPath } : {}) } });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; });
+    child.stderr.on('data', (d) => { out += d; });
+    child.on('exit', (code) => res({ code, out }));
+  });
+}
+
+async function selftest() {
+  console.log('holdconfirm --selftest — the re-runnable known-bad for the WIDE hold (S7)');
+  console.log(`  DOOR: one source line replaced in a disposable copy of ${ROOT}/src, then this`);
+  console.log('  whole tool re-run at --root COPY. Same server, same boot, same CDP keys, same');
+  console.log('  shimmed pad as the real run above. A source edit is how this defect arrives.\n');
+  let fails = 0;
+  const ok = (b, what) => { if (b) console.log(`  PASS ${what}`); else { fails++; console.log(`  FAIL ${what}`); } };
+
+  const cleanDir = sandbox();
+  const clean = await runAt(cleanDir);
+  ok(clean.code === 0, `control: the copied tree is GREEN (exit ${clean.code}) — the plants are the only difference`);
+  if (clean.code !== 0) console.log(clean.out.split('\n').filter((l) => /FAIL/.test(l)).slice(0, 6).map((l) => `      ${l.trim()}`).join('\n'));
+  try { rmSync(cleanDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
+
+  for (const p of PLANTS) {
+    console.log(`\n  ${p.name}: ${p.what}`);
+    console.log(`    plant: ${p.file} — expect ${p.expect}`);
+    const dir = sandbox();
+    plantInto(dir, p);
+    const r = await runAt(dir);
+    ok(r.code === 1, `${p.name}: the planted tree goes RED (exit ${r.code}, want 1)`);
+    ok(p.mustRed(r.out), `${p.name}: red BY NAME — ${p.expect}`);
+    ok(p.mustStay(r.out), `${p.name}: an untouched corner stays green (right reason, not a crater)`);
+    for (const line of r.out.split('\n').filter((l) => /^\s*FAIL/.test(l)).slice(0, 4)) console.log(`      ${line.trim()}`);
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
+  }
+
+  console.log(`\n  ${fails ? `FAIL — ${fails} selftest check(s) failed` : `PASS — ${PLANTS.length} plants, every one watched red by name`}`);
+  process.exit(fails ? 1 : 0);
+}
+
 async function main() {
   if (!browserPath) { console.error('holdconfirm: no chromium found. Set CHROME=/path/to/chrome.'); process.exit(2); }
+  if (args.includes('--selftest')) return selftest();
 
   let base; let stop = () => {};
   if (useDist) base = pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href;
-  else { const s = await serve({ root: ROOT, port: Number(argOf('--port') || 8288), open: false }); base = `http://127.0.0.1:${s.port}/index.html`; stop = () => s.server.close(); }
+  // `--root` SERVES A DIFFERENT TREE and changes nothing else — the table
+  // imports, the provenance line and this file's own home stay at ROOT. It
+  // exists for --selftest, which plants a source defect into a disposable copy
+  // and re-runs this whole tool against it: the plant then arrives the way the
+  // defect class actually arrives, through the real server, the real boot and
+  // the real keys, rather than being handed to a function.
+  else { const s = await serve({ root: SERVE_ROOT, port: Number(argOf('--port') || 8288), open: false }); base = `http://127.0.0.1:${s.port}/index.html`; stop = () => s.server.close(); }
 
   // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
   // Chrome's own TMPDIR inside it, and removes it whatever happens.
@@ -884,16 +1050,163 @@ async function main() {
           `turn ${off.turn} -> ${off2 && off2.turn}, phase ${off.phase} -> ${off2 && off2.phase}`);
       }
 
-      // 5. Keyboard/pad activation is a synthetic click (detail 0), not a
-      // pointing hazard. It remains immediate under the enabled dial.
-      await openShot('combat');
-      const key0 = await st();
-      await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69 }, sessionId);
-      await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69 }, sessionId);
-      await wait(900);
-      const key1 = await st();
-      ok(`the End Turn key remains immediate and commits once`, key0 && key1 && (key1.turn > key0.turn || key1.phase !== 'player'),
-        `turn ${key0 && key0.turn} -> ${key1 && key1.turn}, phase ${key0 && key0.phase} -> ${key1 && key1.phase}`);
+      // 5. THE KEY THAT CANNOT BE THE CURSOR'S. `.end-turn` matches input.js's
+      // CHROME selector, so the focus cursor SKIPS IT BY DESIGN and neither
+      // Enter nor pad-Confirm can ever arrive on this button. Its keyboard door
+      // is the rebindable `endTurn` key and its pad door is that row's button —
+      // and until 2026-08-17 both walked past the hold as a synthetic click.
+      // Measured at b83bda1: one `e` took turn 1 -> 2 against a 600 ms dial.
+      // Driven in the EVERY INPUT section below, on both non-pointer doors.
+    }
+  }
+
+// ---- THE HOLD IS THE SAME ON EVERY INPUT (S7 wide) --------------------------
+//
+// Constantine, 2026-08-17: "if hold is toggled, then it should be the same, in
+// all instances. for ending turn, using flask, event choice, shrine rest."
+//
+// FOUR ACTIONS x TWO NON-POINTER INPUTS x TWO DIAL POSITIONS, and every cell
+// asks the SAME PAIR — does a short press abort, does a long press commit —
+// because either half alone is a green that proves the wrong thing: a key that
+// has simply STOPPED WORKING passes "the tap does not commit" forever.
+//
+// The pointer half is not repeated here; it is driven per surface above, and a
+// second copy of it would be a second answer to one question.
+//
+// WHAT WAS RED HERE BEFORE THIS SECTION EXISTED — measured at b83bda1, 390x844,
+// dial `normal`, all EIGHT of them, with every pointer cell aborting correctly
+// in the same run:
+//   endTurn      key tap  turn 1 -> 2          pad tap  turn 1 -> 2
+//   eventChoice  key tap  3 bars -> 1          pad tap  3 bars -> 1
+//   useFlask     key tap  hpCurrent 2 -> 1     pad tap  hpCurrent 2 -> 1
+//   shrineRest   key tap  the shrine is gone   pad tap  the shrine is gone
+//
+// THE PAD IS A SHIM ON `navigator.getGamepads`, NAMED RATHER THAN HIDDEN. No
+// CDP domain synthesises a controller. The claim this cell licenses is "CODE
+// READING getGamepads ARMS THE HOLD" — input.js's poller reads that one
+// function, unmodified, at its own 16 ms cadence — and NOT "a controller does".
+// A real pad on a real desk is unmeasured here and stays `unknown`.
+  {
+    console.log(`\n  EVERY INPUT — the dial is one switch and it governs all three`);
+    const PAD_SHIM = `(() => {
+      const pad = { index: 0, id: 'holdconfirm shim (STANDARD GAMEPAD)', mapping: 'standard',
+        connected: true, timestamp: 0, axes: [0, 0, 0, 0],
+        buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })) };
+      navigator.getGamepads = () => [pad, null, null, null];
+      window.__pad = {
+        down(i) { pad.buttons[i] = { pressed: true, touched: true, value: 1 }; pad.timestamp = performance.now(); },
+        up(i) { pad.buttons[i] = { pressed: false, touched: false, value: 0 }; pad.timestamp = performance.now(); },
+        connect() { window.dispatchEvent(new Event('gamepadconnected')); },
+      };
+    })()`;
+    await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: PAD_SHIM }, sessionId);
+
+    const keyEv = (type, key, autoRepeat = false) => cdp.send('Input.dispatchKeyEvent',
+      { type, key, code: key.length === 1 ? `Key${key.toUpperCase()}` : key, autoRepeat,
+        text: type === 'keyDown' && key.length === 1 ? key : undefined }, sessionId);
+    // A REAL held key is the first keydown plus an OS repeat stream at ~30 Hz.
+    // Omit them and the path where a repeat re-enters the press — or fires the
+    // control once per repeat — never runs, which is a key nobody holds.
+    const holdKey = async (k, ms) => {
+      await keyEv('keyDown', k);
+      const until = Date.now() + ms;
+      while (Date.now() < until) { await wait(33); await keyEv('keyDown', k, true); }
+      await keyEv('keyUp', k);
+      await wait(500);
+    };
+    const holdPad = async (b, ms) => {
+      await ev(`(() => { window.__pad.connect(); return 1; })()`); await wait(160);
+      await ev(`(() => { window.__pad.down(${b}); return 1; })()`);
+      await wait(ms);
+      await ev(`(() => { window.__pad.up(${b}); return 1; })()`);
+      await wait(500);
+    };
+    // The focus cursor is PLACED, not walked. Whether the cursor can REACH a
+    // control is tools/inspecthold.mjs's subject; what this section asks is what
+    // the PRESS does once it is standing there, and a failed walk would report
+    // here as a hold that does not hold.
+    const focusOn = (sel) => ev(`(() => { const e = document.querySelector(${JSON.stringify(sel)});
+      if (!e) return 0; document.querySelectorAll('.gp-focus').forEach((x) => x.classList.remove('gp-focus'));
+      e.classList.add('gp-focus'); return 1; })()`);
+
+    // The four rows he named. `sel` is the armed control the cursor stands on;
+    // NULL means the control is not cursor-reachable at all and the action's own
+    // key/button is its only non-pointer door — which is End Turn, and is the
+    // whole reason this section exists.
+    const INPUT_ROWS = [
+      { id: 'endTurn', of: 'end the turn', sel: null, key: 'e', btn: 2,
+        open: (d) => openShot('combat', { shotSettings: JSON.stringify({ holdConfirm: d }) }),
+        read: () => ev(`(window.__combat || {}).turn`), moved: (a, b) => b > a },
+      { id: 'eventChoice', of: 'take the choice', sel: 'button.ev-choice[data-binding="1"]', key: 'Enter', btn: 0,
+        open: (d) => open(d, { id: EVENT }),
+        read: () => ev(`document.querySelectorAll('#choices button').length`), moved: (a, b) => b < a },
+      { id: 'shrineRest', of: 'spend the shrine', sel: '#rest-opt', key: 'Enter', btn: 0,
+        open: (d) => openShot('rest', { shotSettings: JSON.stringify({ holdConfirm: d }) }),
+        read: () => ev(`document.querySelectorAll('#rest-opt').length`), moved: (a, b) => b < a },
+      { id: 'useFlask', of: 'drink the flask', sel: '[data-beat-action="useFlask"]', key: 'Enter', btn: 0,
+        open: async (d) => { await openShot('combat', { shotSettings: JSON.stringify({ holdConfirm: d }) });
+          await press(await pointOf('.flask-slot'), 60); await wait(400); },
+        read: () => ev(`(((window.__combat || {}).player || {}).flaskCharges || {}).hpCurrent`),
+        moved: (a, b) => a != null && b != null && b < a },
+    ];
+
+    for (const row of INPUT_ROWS) {
+      const armSel = row.sel || `[data-beat-action="${row.id}"]`;
+      for (const dial of ['normal', 'off']) {
+        await row.open(dial);
+        const ms = Number(await ev(`Number((document.querySelector(${JSON.stringify(armSel)}) || { dataset: {} }).dataset.holdMs || 0)`)) || 0;
+        if (dial === 'normal' && !(ms > 0)) {
+          skip(`${row.id} on every input`, 'unasked', `no armed control with a live dial at this ref (holdMs=${ms})`);
+          continue;
+        }
+        const drive = { key: (t) => holdKey(row.key, t), pad: (t) => holdPad(row.btn, t) };
+        for (const input of ['key', 'pad']) {
+          // SHORT — under the dial. On `normal` this is the ABORT and it is the
+          // cell that matters; on `off` the same short press IS the whole action.
+          await row.open(dial);
+          if (row.sel) await focusOn(row.sel);
+          const a0 = await row.read();
+          await drive[input](dial === 'off' ? 60 : Math.round((ms || 600) * 0.35));
+          await wait(600);
+          const a1 = await row.read();
+          if (dial === 'off') {
+            ok(`${row.id}: OFF, one ${input} press does ${row.of} — the pre-hold behaviour`,
+              row.moved(a0, a1), `${a0} -> ${a1}`);
+          } else {
+            ok(`${row.id}: ON, a short ${input} press does NOT ${row.of}`, !row.moved(a0, a1), `${a0} -> ${a1}`);
+          }
+          // LONG — past the dial. Without this half, a key that had simply
+          // stopped working would pass the abort cell forever.
+          await row.open(dial);
+          if (row.sel) await focusOn(row.sel);
+          const b0 = await row.read();
+          await drive[input]((ms || 600) + 400);
+          await wait(700);
+          const b1 = await row.read();
+          ok(`${row.id}: ${dial === 'off' ? 'OFF' : 'ON'}, a held ${input} press DOES ${row.of}`,
+            row.moved(b0, b1), `${b0} -> ${b1}`);
+        }
+      }
+    }
+
+    // THE VEIL EDGE, and it is the one this widening could have broken with
+    // nothing above noticing. input.js now CLAIMS the End Turn key when the
+    // button has a live beat — and combat's own handler, which refuses every
+    // screen hotkey while ANY veil stands, is exactly what that claim skips
+    // past. So the claim is scoped to the ACTIVE FOCUS SCOPE, the same
+    // `topVeil()` answer veil-owns-input.mjs measures. Held here too: a rule
+    // enforced only in another tool is a rule this one can silently lose.
+    await openShot('combat');
+    const opened = await ev(`(() => { const p = document.querySelector('.pile'); if (!p) return 0; p.click(); return 1; })()`);
+    await wait(500);
+    const standing = await ev(`document.querySelectorAll('.modal-veil').length`);
+    if (!opened || !standing) skip('the veil edge on the End Turn key', 'unasked', 'no .pile veil would stand at ?shot=combat');
+    else {
+      const v0 = await ev(`(window.__combat || {}).turn`);
+      await holdKey('e', 1000);
+      await wait(700);
+      const v1 = await ev(`(window.__combat || {}).turn`);
+      ok(`with a veil standing, HOLDING the End Turn key does nothing`, v1 === v0, `turn ${v0} -> ${v1}, veils ${standing}`);
     }
   }
 

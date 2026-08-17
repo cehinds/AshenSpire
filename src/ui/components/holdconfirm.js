@@ -43,28 +43,49 @@
 //      second way to fire the thing.
 //   2. COMMIT TWICE. It fires the instant the fill lands, then disarms; the
 //      trailing pointerup and its click find nothing armed.
-//   3. LOCK ANYONE OUT. `ev.detail === 0` — a keyboard Enter on a focused
-//      button, and the synthetic click ui/input.js dispatches for the gamepad
-//      cursor — commits immediately, with no hold. That is not a loophole, it
-//      is the scope: this answers a POINTING failure, a 9 px gap only a finger
-//      can fall into. A focus cursor selects a NAMED element and cannot land
-//      between two bars, so charging it a hold would be ceremony billed to a
-//      player who cannot make the mistake. Named boundary, not silence: pad and
-//      keyboard players get no confirm step. (The CONFIRM form is different and
-//      deliberately so — see armConfirm.)
+//   3. BE A MOUSE FEATURE. THE DIAL IS THE SWITCH AND IT GOVERNS EVERY INPUT.
+//      Constantine, 2026-08-17: "if hold is toggled, then it should be the
+//      same, in all instances. for ending turn, using flask, event choice,
+//      shrine rest." So `balance.ui.holdConfirm` — the dial that already
+//      existed — is the one switch, and when it is on, every one of those four
+//      actions holds on pointer, keyboard AND gamepad; when it is `off`, all
+//      four commit on one press on all three. There is no per-input rule and no
+//      per-action rule left to drift.
 //
-//      ⚠ THIS RULE IS NOW A LIVE BREACH OF S7 AND IT IS UNRESOLVED. Constantine,
-//      2026-08-17: "if press to hold is active for certain things for mouse or
-//      game pad, it shoudl apply to everything including keyboard as well for
-//      those same buttons." End Turn's hold SHIPPED, so at b968e28 a mouse must
-//      hold End Turn for 600 ms and a single `e` ends the turn — measured, not
-//      argued. Rule 3's reasoning above is good and it is not what settles this;
-//      his word does, and whether the beat is owed on every input is Sunna's
-//      read. THE FIX IS ONE LINE — the source guard at the top of armHold's
-//      `begin`, which the press door below already makes sufficient. It is
-//      deliberately not taken in the act that built the door, because it changes
-//      COMMIT semantics on shipped controls and that is not this act's lane.
-//      armInspect, whose stakes are `nothing`, serves all three inputs today.
+//      WHAT IT REPLACED, kept because the reasoning was good and is no longer
+//      the ruling. This form used to refuse every non-pointer source on the
+//      argument that it answers a POINTING failure — a 9 px gap only a finger
+//      can fall into — and a focus cursor selects a NAMED element and cannot
+//      mis-point. True, and beside the point his sentence settles: he asked for
+//      one dial with one meaning, not for the beat to be owed only where the
+//      hazard is. His word outranks the derivation; the derivation is recorded
+//      here rather than deleted, because the cost is real — a pad player who
+//      cannot mis-point now pays 600 ms per End Turn, and `off` is where they
+//      go.
+//
+//      MEASURED AT b83bda1, 390x844, dial `normal`, before this act — the
+//      breach was EIGHT cells, not one:
+//        endTurn      key `e` tap  turn 1 -> 2   ·  pad btn2 tap  turn 1 -> 2
+//        eventChoice  Enter tap    3 bars -> 1   ·  pad btn0 tap  3 bars -> 1
+//        useFlask     Enter tap    hpCurrent 2 -> 1 · pad btn0 tap  2 -> 1
+//        shrineRest   Enter tap    shrine gone   ·  pad btn0 tap  shrine gone
+//      Every pointer cell aborted correctly in the same run.
+//
+//      AND "THE FIX IS ONE LINE" — the sentence this comment used to carry —
+//      WAS WRONG, in the two ways a reader could not see from here:
+//        (a) `.end-turn` matches input.js's CHROME list, so THE FOCUS CURSOR
+//            CANNOT REACH IT. Enter and pad-Confirm never arrive at End Turn at
+//            all; its keyboard door is `e`, a `kind: 'key'` binding that reaches
+//            the button as a synthetic click. Deleting the source guard alone
+//            would have changed nothing whatsoever for the one action with a
+//            measured live breach behind it. The other half of this act is in
+//            ui/input.js: a `key`-kind action that has an armed control presses
+//            it through the same door instead of clicking it.
+//        (b) `onEnd` returned nothing, and input.js reads that return as "did
+//            the gesture consume the activation?". With only the guard deleted,
+//            an ABORTED key hold would have activated on release (the abort
+//            commits — rule 1, inverted) and a COMPLETED one would have fired
+//            at full and then activated again on release. Watched, both.
 //   4. TRAP A SCROLL. Moving more than SLOP px abandons, so a drag that was
 //      trying to scroll the screen never becomes a commit.
 //   5. GO INVISIBLE. The fill is state, not decoration, so it survives
@@ -81,7 +102,7 @@
 // sentence: both go through `armPress`, the ONE door a press-shaped gesture
 // begins at, and that door has pointer, keyboard and gamepad behind it. A form
 // that wants a hold gets all three by construction; a form that refuses one says
-// so on a line of its own (armHold does — see rule 3 above).
+// so on a line of its own. NEITHER FORM REFUSES ONE ANY MORE (rule 3 above).
 //
 // ---------------------------------------------------------------------------
 // THE SEAM FOR VEGA — a hold with no feedback is a gesture you cannot tell is
@@ -94,6 +115,7 @@
 // ---------------------------------------------------------------------------
 
 import { armPress } from '../gesture.js';
+import { setActionControl, releaseActionControl } from '../input.js';
 import { beatFor } from '../../model/secondbeat.js';
 import { sfx } from '../sfx.js';
 import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
@@ -193,30 +215,23 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
   }
 
   function begin(origin, track) {
-    // ─── THE ONE LINE THAT REFUSES S7, AND IT IS A KNOWN LIVE BREACH ────────
-    // Rule 3 above: a focus cursor selects a NAMED element and cannot fall into
-    // the 9 px gap this form exists for, so keyboard and pad commit on one
-    // press. That reasoning is unchanged and it is not mine to overturn —
-    // BUT IT IS NOW IN TENSION WITH A RULE CONSTANTINE STATED IN HIS OWN WORDS
-    // (S7, 2026-08-17, `commons/decisions/directions.md`), and the tension is
-    // not hypothetical: End Turn's hold SHIPPED, so at this commit a mouse must
-    // hold End Turn for 600 ms and a single `e` ends the turn. MEASURED at
-    // b968e28, ?shot=combat: data-beat="hold", data-hold-ms="600", turn 1 -> 2
-    // on one keypress.
-    // The door below serves all three inputs. Deleting this line is the whole
-    // of the fix, and it is deliberately not deleted here: it changes COMMIT
-    // semantics on shipped controls (End Turn, flasks, event choices, the
-    // shrine), which is Sunna's read and Marina's lane, not this act's.
-    // REMOVAL: the day that lane is dealt, or the day Sunna's read says the
-    // beat is owed on every input — one line, no other edit.
-    if (origin.source !== 'pointer') return false;
+    // NO SOURCE IS REFUSED. Rule 3 above is the whole reasoning; what is left
+    // here is the ONE condition that decides whether this press is a hold, and
+    // it is the dial — read fresh, for every press, on every input.
+    //
+    // `heldThisPress` IS A POINTER FACT AND ONLY A POINTER FACT. It exists so
+    // the `click` a lifted finger generates can be swallowed (rule 1). A key or
+    // pad press generates NO click — input.js holds the activation and asks
+    // `onEnd` directly — so setting it for those sources would leave a live
+    // swallow flag with no click to eat, and the next real TAP would pay for
+    // it. That is F3's shape, which armInspect below learned once already.
     heldThisPress = false;
     const ms0 = msOf();
     // The dial is off, or this state of this action owes no beat. Let the
     // click through untouched — that is the pre-hold behaviour, byte for byte.
     if (!(ms0 > 0)) return false;
     if (fired || armed) return false;
-    heldThisPress = true;
+    heldThisPress = origin.source === 'pointer';
     armed = true;
     btn.dataset.hold = 'holding';
     const t0 = performance.now();
@@ -251,7 +266,17 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
       },
       // However it ended — lift, cancel, palm, focus loss. If the fill never
       // reached the end, nothing happened, and that IS the feature.
-      onEnd: () => { if (armed) stop('idle'); },
+      //
+      // THE RETURN IS THE WHOLE OF RULE 1 ON A KEY OR A PAD, and it is `true`
+      // WHICHEVER WAY THIS PRESS ENDED. input.js reads it as "did the gesture
+      // consume the activation?", and both answers are yes for opposite
+      // reasons: a completed hold ALREADY committed at full (firing again on
+      // the release would commit twice), and an early release IS the abort
+      // (activating on it would make the safety step a second way to fire the
+      // thing — rule 1, inverted, which is the failure that looks exactly like
+      // working software). Reaching here at all means `begin` took the press,
+      // so there is no third case to answer.
+      onEnd: () => { if (armed) stop('idle'); return true; },
     });
     return true;
   }
@@ -262,7 +287,21 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
   // state owes no beat) the click is the whole action and passes straight
   // through.
   const onClick = (ev) => {
-    if (ev.detail === 0) { onConfirm(ev); return; } // rule 3: keyboard / pad cursor
+    // `detail === 0` IS A SYNTHETIC CLICK, AND ITS MEANING HAS CHANGED WITH
+    // RULE 3. It is no longer "keyboard and pad skip the beat" — they do not.
+    // It is now the ONE case that reaches here: an activation that did NOT come
+    // through the press door, which happens when the press door already asked
+    // and this form declined (`begin` returned false — the dial is off, or this
+    // state of this action owes no beat). input.js activates immediately in
+    // exactly that case, so the click IS the whole action and must commit.
+    //
+    // NAMED BOUNDARY: a screen that calls `el.click()` on an armed control from
+    // some path input.js does not route still lands here and still skips the
+    // beat. Combat's `e` key was such a path until this act; nothing in this
+    // file can see the next one. What sees it is the page — every armed control
+    // carries `data-beat-action`, and tools/holdconfirm.mjs drives the real
+    // keys and the real pad rather than trusting this comment.
+    if (ev.detail === 0) { onConfirm(ev); return; }
     if (!heldThisPress) { onConfirm(ev); return; }
     heldThisPress = false;
     ev.preventDefault();
@@ -695,7 +734,21 @@ export function beatArmer(meta, registries) {
     // pointerdown; a 0 means this press owes no beat and the click commits.
     const ms = () => (formNow() === 'hold' ? dialMs : 0);
     const disarm = armHold(el, { ms, onConfirm, id: actionId });
-    const wrapped = function disarmBeat() { disarm(); };
+    // THE OTHER HALF OF "ALL INSTANCES" (S7 wide), and it is a REGISTRATION,
+    // never a list. Some actions are reached without the focus cursor at all —
+    // End Turn is the shipped one: `.end-turn` matches input.js's CHROME
+    // selector, so no Enter and no pad Confirm can ever arrive on it, and its
+    // only non-pointer door is the rebindable `e` / pad button 2 of the
+    // `endTurn` row in input.js's own ACTIONS. Telling input.js WHICH ELEMENT
+    // this action id draws lets that key open the same press this file already
+    // serves, instead of a synthetic click that skips the beat.
+    //
+    // EVERY armed control registers, not a chosen few. input.js answers only
+    // for ids that are also a `kind: 'key'` row over there, so the pairing is
+    // the INTERSECTION OF TWO TABLES and nobody maintains a third: give
+    // `shrineRest` a hotkey tomorrow and its hold is already on that key.
+    setActionControl(actionId, el);
+    const wrapped = function disarmBeat() { releaseActionControl(actionId, el); disarm(); };
     // A screen that repaints the control (combat's End Turn, every render) calls
     // this; it re-reads the state and re-dresses. Nothing else changes.
     wrapped.refresh = () => { el.dataset.beat = formNow(); disarm.refresh(); };

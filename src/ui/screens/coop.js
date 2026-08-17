@@ -67,7 +67,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   let pendingSnap = null; // newest snapshot that arrived while pacing
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
   let handStrip = null; // the live hand strip (components/hand.js), same discipline
-  let endTurnBeat = null; // pointer-only; named keyboard/pad activation is immediate
+  // The beat is the same on pointer, keyboard and pad since S7 went wide
+  // (2026-08-17); the dial is the only switch. This line said "pointer-only;
+  // named keyboard/pad activation is immediate" and was true when written.
+  // UNMEASURED HERE, and said rather than assumed: no `?shot=` state opens a
+  // co-op board, so nothing has driven a key or a pad at THIS End Turn. What is
+  // measured is that it goes through the same `arm()` as combat's.
+  let endTurnBeat = null;
 
   conn.setHandlers({
     onMessage: (msg) => {

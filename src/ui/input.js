@@ -18,10 +18,25 @@
 //
 // The number keys (1–9) and letter hotkeys stay owned by the screens; this
 // module adds navigation + controller parity on top without touching them.
-// BOUNDARY, because layer 3 is narrower than it sounds: parity is for the button
-// that presses THE FOCUSED CONTROL. A screen hotkey (1–9 quick-play, `e`) is a
-// different button with no pointer twin, and a hold on one is that screen's
-// design question, not this module's.
+//
+//   3b. THE PRESS IS NOT ONLY THE CURSOR'S (S7 WIDE, 2026-08-17). Constantine:
+//       "if hold is toggled, then it should be the same, in all instances. for
+//       ending turn, using flask, event choice, shrine rest." Layer 3 above
+//       serves the button that presses the FOCUSED control — and End Turn has
+//       no focused control: `.end-turn` matches CHROME below, so the cursor
+//       skips it by design and Confirm can never arrive on it. Its keyboard
+//       door is `e` and its pad door is button 2, both `kind: 'key'`, and both
+//       reached the button as a SYNTHETIC CLICK that walked straight past the
+//       hold. So a `kind: 'key'` action whose control has armed a beat now
+//       opens the same two-ended press the cursor does — see the action-control
+//       registry below.
+//
+// BOUNDARY, and it is narrower than "every key holds": only a key bound to an
+// ACTION ROW here, whose control has ARMED A BEAT, and only while the dial is
+// on. The 1–9 / Q quick-play keys are not action rows and are untouched; the
+// flask keys `f`/`g`/`h` are rows, but what they press is the flask MENU, which
+// commits nothing and owes no beat — the beat is on the menu's Use row, which
+// the cursor reaches normally. Both are silence by derivation, not by a list.
 
 import { padGlyph } from './uiContent.js';
 import { topVeil } from './components/veil.js';
@@ -315,7 +330,14 @@ function setFocus(el, remember = true) {
   // held, a re-render restoring focus elsewhere). That is a CANCEL, the same
   // verdict trackGesture gives a pointer the browser took away: whatever was
   // filling stops, and no activation follows.
-  if (pressEl && pressEl !== el) pressEnd(true);
+  //
+  // `pressEl === prev` IS LOAD-BEARING SINCE S7 WENT WIDE. A press on a NAMED
+  // target (End Turn, which the cursor cannot reach) is not standing on the
+  // focused element, so a focus move is not the cursor stepping off it — and
+  // the old unconditional test would have cancelled a held `e` the moment
+  // anything else moved the cursor, which is a hold that silently stops
+  // filling. Only the press under the element LOSING focus is cancelled.
+  if (pressEl && pressEl === prev && pressEl !== el) pressEnd(true);
   if (prev && prev !== el) {
     prev.classList.remove('gp-focus');
     // Focus-mode tooltips: tooltip.js listens for these so controller players
@@ -447,10 +469,91 @@ function activate() {
 // This module therefore knows nothing about holds, durations, or which controls
 // have one, and it can never drift from the set that does.
 let pressEl = null;
+// The action id that opened a live KEY press on a named target, so its own key
+// closes it. Remembered rather than re-derived, for one reason worth the
+// variable: A REBIND CAN LAND BETWEEN THE DOWN AND THE UP. Asking `matchAction`
+// again at keyup would then match nothing, and the press would be left filling
+// forever on a control whose key no longer exists.
+let keyPressAction = null;
 
-function pressBegin(source) {
+// ---- WHICH CONTROL AN ACTION DRAWS (S7 wide) --------------------------------
+//
+// A REGISTRATION, NEVER A LIST. `components/holdconfirm.js` registers every
+// control it arms under its action id, in the same act that arms it; this
+// module answers only for ids that are ALSO a `kind: 'key'` row in ACTIONS
+// above. So the set of "keys that hold" is the INTERSECTION OF TWO TABLES
+// nobody has to keep in step — and it is empty for every key that presses
+// nothing, which is most of them.
+const actionControls = new Map();
+
+/** The armed control for an action id. `holdconfirm.js` calls this. */
+export function setActionControl(id, el) {
+  if (el) actionControls.set(id, el);
+  else actionControls.delete(id);
+}
+
+/** Release, but only if this element is still the registered one — a screen
+ *  that re-mounts arms the new control before the old disarmer runs, and an
+ *  unconditional delete there would unregister the LIVE one. */
+export function releaseActionControl(id, el) {
+  if (actionControls.get(id) === el) actionControls.delete(id);
+}
+
+/**
+ * The control this action id should PRESS rather than click, or null.
+ *
+ * THREE CONDITIONS, AND EACH IS READ AT PRESS TIME FROM SOMETHING ELSE'S HOME
+ * rather than remembered here:
+ *   1. the control is still on the page — a screen change is a disarm this
+ *      module never has to be told about;
+ *   2. `data-hold-ms` > 0 — reading the value the machinery already published ON
+ *      THE CONTROL, so the dial is not re-derived here.
+ *
+ *      ⚠ AND THIS CLAUSE IS A REDUNDANT GUARD, NOT THE SWITCH — I called it the
+ *      switch and I was wrong, and the plant aimed at it is what said so. THE
+ *      SWITCH IS `armHold`'s `ms0 > 0`: with the dial off, `begin` declines the
+ *      press, `pressBegin` activates immediately, and one key press commits
+ *      exactly as before. MEASURED — remove this line and holdconfirm.mjs runs
+ *      111 checks and STAYS GREEN, including all four `OFF, one press does…`
+ *      cells. Nothing that ships can tell the two apart.
+ *
+ *      SO WHY IT STAYS. Without it, a dial-off key press reaches the control as
+ *      `activateEl`'s dispatched click instead of the SCREEN's own handler, and
+ *      those differ on exactly one thing: a `disabled` button. Combat's End Turn
+ *      is never disabled (measured — no `.disabled` write in combat.js), but
+ *      co-op's is (`et.disabled = !canEnd`), and NO `?shot=` STATE OPENS A
+ *      CO-OP BOARD. So the difference is real, unreachable by any instrument
+ *      here, and both commits are re-guarded at `onConfirm` anyway.
+ *      **`unknown`, not green** — kept because it makes the off position the
+ *      old path by construction rather than by an argument about re-guards,
+ *      and named here because a line nobody has watched matter is the same
+ *      shape as a check nobody has watched fail. It has NO plant, deliberately:
+ *      a corpus entry that cannot go red is decoration, and Q4 was deleted
+ *      rather than kept green. Whoever finds a door onto co-op should aim one
+ *      here first;
+ *   3. the control is inside the ACTIVE FOCUS SCOPE. This is the veil rule, and
+ *      it is derived from `scopeRoot()` rather than restated: with the draw
+ *      pile or any other veil standing, `.end-turn` is not in scope, this
+ *      module declines the key, and the event reaches the screen's own handler
+ *      which refuses it exactly as it does today. Delete this line and `e`
+ *      ends the turn under an open pile — the defect veil-owns-input.mjs
+ *      exists for, one input over.
+ */
+function pressTarget(id) {
+  const el = actionControls.get(id);
+  if (!el || !el.isConnected) return null;
+  if (!(Number(el.dataset.holdMs) > 0)) return null;
+  const root = scopeRoot();
+  if (!root || !root.contains(el)) return null;
+  return el;
+}
+
+function pressBegin(source, target = null) {
   if (pressEl) return; // one press at a time
-  const el = ensureFocus();
+  // A named target is a control the CURSOR CANNOT REACH (End Turn is in
+  // CHROME); pressing it must not move or invent a focus cursor, so
+  // `ensureFocus` is deliberately not consulted on that path.
+  const el = target || ensureFocus();
   if (!el) return;
   const claimed = !el.dispatchEvent(new CustomEvent(PRESS_EVENT, { cancelable: true, detail: { source } }));
   if (!claimed) { activateEl(el); return; }
@@ -459,6 +562,12 @@ function pressBegin(source) {
 
 function pressEnd(cancelled = false) {
   const el = pressEl;
+  // CLEARED EVEN WHEN THERE IS NO LIVE PRESS. A blur, a pad unplug or a focus
+  // move ends the press through the `cancelled` door and never sees the keyup;
+  // leaving the id set would make the guard in onKeydown refuse every later
+  // press for the rest of the session — a hold that stops working and says
+  // nothing, which is the failure mode this whole file is careful about.
+  keyPressAction = null;
   if (!el) return;
   pressEl = null;
   const consumed = !el.dispatchEvent(new CustomEvent(RELEASE_EVENT, { cancelable: true, detail: { cancelled } }));
@@ -489,11 +598,16 @@ function doAction(id, source = 'key') {
   if (!a) return;
   // 'cursor' means "act on the focused control", so it is the one kind that has
   // a press to publish. See the press-door block above.
-  if (a.kind === 'cursor') pressBegin(source);
+  if (a.kind === 'cursor') { pressBegin(source); return; }
+  // A 'key' action whose control has a live beat is ALSO a press (S7 wide) —
+  // this is the pad's half of End Turn's hold, and it costs one branch because
+  // the poller already routes every pad button through here.
+  const held = pressTarget(id);
+  if (held) { pressBegin(source, held); return; }
   // Dispatch the CURRENTLY bound key so a pad press stays in sync with keyboard
   // rebinds (screens match by binding via matchAction). Fixed-key actions
   // (cancel) fall back to a.key.
-  else synthKey(keyBindings[id] || a.defKey || a.key);
+  synthKey(keyBindings[id] || a.defKey || a.key);
 }
 
 // ---- keyboard navigation ----------------------------------------------------
@@ -567,6 +681,52 @@ function onKeydown(ev) {
     if (el) {
       ev.preventDefault();
       pressBegin('key');
+      return;
+    }
+  }
+
+  // ---- a SCREEN HOTKEY that presses a control with a live beat (S7 wide) ----
+  //
+  // Last, deliberately: navigation, the tab ring and Confirm all get the key
+  // first, and anything this does not claim falls through to the screens' own
+  // handlers untouched. `matchAction` is the SAME question the screens ask, so
+  // a rebind moves the hold with the key and there is no second mapping.
+  //
+  // WHY IT MUST STOP PROPAGATION when it claims: the screen's handler would
+  // otherwise ALSO run and `.end-turn`.click() the button — a synthetic click
+  // that commits immediately, which is the whole defect. Claiming and not
+  // stopping would end the turn AND start a hold.
+  //
+  // AUTOREPEAT FIRST, AND IT IS NOT A TIDY-UP — IT IS THE HOLD. A held key is
+  // the first keydown plus an OS stream at ~30 Hz, and every one of those
+  // repeats is THIS press continuing. Fall through on them and the screen's own
+  // handler answers the second keydown, 33 ms in: combat clicks `.end-turn`, a
+  // synthetic click commits, and the turn ends a third of the way into a hold
+  // that visibly keeps filling. MEASURED — tools/holdconfirm.mjs caught exactly
+  // that: `endTurn: ON, a short key press does NOT end the turn — 1 -> 2`, on a
+  // tree whose every other cell was already green, because a probe that taps
+  // without repeats never reaches this line.
+  if (!typing && keyPressAction && matchAction(ev, keyPressAction)) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    return;
+  }
+  if (!typing && !keyPressAction) {
+    for (const a of ACTIONS) {
+      if (a.kind === 'cursor' || !matchAction(ev, a.id)) continue;
+      const held = pressTarget(a.id);
+      if (!held) break; // no beat on this control — the screens own this key
+      // A repeat with no live press is a key held down from BEFORE this control
+      // was armed (a screen change under a held finger). It is not the start of
+      // a press — there will be no matching keyup for a press that never began
+      // — so it is refused rather than armed.
+      if (ev.repeat) break;
+      ev.preventDefault();
+      ev.stopPropagation();
+      engaged = true;
+      keyPressAction = a.id;
+      pressBegin('key', held);
+      return;
     }
   }
 }
@@ -574,8 +734,13 @@ function onKeydown(ev) {
 // The other half of the Confirm key, and the reason a keyboard can hold at all.
 // Deliberately NOT gated on `enabled`: a press that is already live must end
 // however the world changes, or the control is left filling forever.
+//
 function onKeyup(ev) {
-  if (ev.key === CONFIRM_KEY) pressEnd();
+  if (ev.key === CONFIRM_KEY) { pressEnd(); return; }
+  if (keyPressAction && matchAction(ev, keyPressAction)) {
+    keyPressAction = null;
+    pressEnd();
+  }
 }
 
 // ---- gamepad polling (started only while a pad is present) -------------------
@@ -625,7 +790,11 @@ function pollPads() {
       const a = actionForButton(i);
       // Remember WHICH button opened the press so its own release closes it —
       // never whichever button happens to come up next.
-      if (a) { doAction(a.id, 'pad'); if (a.kind === 'cursor' && pressEl) padPressBtn = i; }
+      // `if (pressEl)` and no longer `a.kind === 'cursor'`: a 'key' action whose
+      // control has a live beat opens a press too (S7 wide), and its own button
+      // must be the one that closes it. pressBegin refuses while a press is
+      // live, so a set pressEl here was set by THIS call.
+      if (a) { doAction(a.id, 'pad'); if (pressEl) padPressBtn = i; }
       // D-pad (12–15) navigates regardless of rebinds.
       else if (i === 12) moveFocus('up');
       else if (i === 13) moveFocus('down');

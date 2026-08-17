@@ -133,10 +133,27 @@ async function main() {
     // The key is READ from the game's own bindings, never typed here — a probe
     // that hardcodes 'e' stops measuring the moment a player rebinds End Turn,
     // and it would also stop measuring if the default ever changed.
+    //
+    // AND IT IS A HELD KEY SINCE 2026-08-17 (S7, the WIDE hold), for the same
+    // reason the key is read rather than typed. End Turn's second beat now
+    // applies on EVERY input, so a TAP of this key correctly does nothing — and
+    // this probe's two CONTROL cells went red the hour that landed, which is
+    // the control cells doing their job: the veil cells assert End Turn does
+    // NOTHING, and they would have passed VACUOUSLY against a key that had
+    // simply stopped working. So the press is a real hold, and its LENGTH is
+    // derived from the button's own `data-hold-ms` — the machinery publishes
+    // it, a number typed here goes stale the day the dial's default moves, and
+    // a hold 1 ms short is indistinguishable from a veil eating the key.
     const pressEndTurn = async () => {
       const k = await ev(`(() => { try { const s = JSON.parse(localStorage.getItem('es.meta')||'{}');
         return (s.settings && s.settings.keyBindings && s.settings.keyBindings.endTurn) || 'e'; } catch { return 'e'; } })()`);
-      await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, text: k, windowsVirtualKeyCode: k.toUpperCase().charCodeAt(0) }, S);
+      const dial = Number(await ev(`Number((document.querySelector('.end-turn')||{dataset:{}}).dataset.holdMs || 0)`)) || 0;
+      const down = { type: 'keyDown', key: k, text: k, windowsVirtualKeyCode: k.toUpperCase().charCodeAt(0) };
+      await cdp.send('Input.dispatchKeyEvent', down, S);
+      // A REAL held key is the first keydown plus an OS repeat stream at ~30 Hz;
+      // a harness that omits them is measuring a key nobody holds.
+      const stop = Date.now() + dial + 350;
+      while (Date.now() < stop) { await wait(33); await cdp.send('Input.dispatchKeyEvent', { ...down, autoRepeat: true }, S); }
       await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k }, S);
       await wait(450);
     };
