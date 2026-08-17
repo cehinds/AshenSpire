@@ -14,7 +14,9 @@ import { renderAboutSection } from './about.js';
 import { AUDIO_DEFAULTS } from '../audio.js';
 import { balance } from '../../content/balance.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
-import { MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE } from '../../model/mapknowledge.js';
+import {
+  MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT,
+} from '../../model/mapknowledge.js';
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 
@@ -128,6 +130,15 @@ const ROWS = [
   { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
     choices: MAP_MODES, label: 'Map reveal',
     note: `FOG is the climb as it is meant to be read: only the door you started from, the boss, everywhere you have been, and the places you can step to next are drawn — the rest is unlit parchment. ${FOG_TRAIL_CLAUSE} PATH draws the whole act at once, the way the map looked before the fog. Switching redraws the map straight away, so you can hold the two against the same seed.` },
+  // HIS OWN PARENTHESIS, AS ONE ROW — "as new paths open, the path to the
+  // nearest shrine should have a glowing effect. (make this toggleable in the
+  // settings)". He scoped the switch himself in the same sentence that asked
+  // for the effect, so the row exists whatever anyone thinks the glow needs.
+  // `def` is the resolver's own const (model/mapknowledge.js) rather than a
+  // second `true` typed here — the row three above learned that lesson with the
+  // zoom ladder.
+  { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
+    note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
   // his number as the default and the customization he asked for as the row
   // (D17 message 4: "previous nodes shoudl be faded, maybe 50% saturation or

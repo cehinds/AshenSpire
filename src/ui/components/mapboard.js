@@ -60,7 +60,8 @@ import { assetUrl } from '../assetmap.js';
 import { nodeIcon, actTitle, parchmentAsset, parchmentClass } from '../uiContent.js';
 import { trackGesture } from '../gesture.js';
 import {
-  mapKnowledge, nodeReading, resolveMapMode, HIDDEN, KNOWN, MAP_MODE_DEFAULT,
+  mapKnowledge, nodeReading, resolveMapMode, resolveShrineGlow, shrineLane,
+  HIDDEN, KNOWN, MAP_MODE_DEFAULT,
 } from '../../model/mapknowledge.js';
 import {
   ZOOM_STEPS, ZOOM_MIN, MAP_ZOOM_DEFAULT,
@@ -150,6 +151,9 @@ function indexNodes(nodes) {
  *   `path`      the ids already travelled, in order. Feeds the fog light.
  *   `mode`      'fog' | 'path'; omitted, it is read from `meta`.
  *   `reveal`    the Sealstone Key.
+ *   `shrineGlow` OPTIONAL override for the shrine-lane setting. Omitted, it is
+ *              read from `meta` — the setting is the player's, and this exists
+ *              so a harness can pose both answers without writing a profile.
  *   `mark`      (node) → extra SVG inside the node's <g>. Vote pips live here.
  *   `classes`   (node) → extra classes. `my-vote` lives here.
  *   `tooltip`   (node, reading) → html.
@@ -215,6 +219,33 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   });
   const isDrawn = (id) => know.drawn.has(id);
 
+  // ---- the shrine lane ---------------------------------------------------
+  //
+  // "as new paths open, the path to the nearest shrine should have a glowing
+  // effect. (make this toggleable in the settings)" — Constantine, 2026-08-16.
+  //
+  // THE LANE IS THE VIEWER'S, NOT THE ACT'S, which is why it is computed here
+  // beside the knowledge and not handed in by the screen: it is aimed from
+  // where THIS viewer is standing, and two players on one act have two lanes.
+  //
+  // CLIPPED TO WHAT IS DRAWN, and the clip is the whole safety of the feature.
+  // Under fog the walk to the nearest shrine runs through nodes the player has
+  // not earned; painting the lane over them would leak the act's shape through
+  // a highlight, and it would be the one thing here a player could not un-see.
+  // So a node glows only if it is drawn, and an edge only if BOTH its ends are
+  // — the same rule the edge loop below already applies, for the same reason.
+  const glowOn = viewer.shrineGlow !== undefined
+    ? !!viewer.shrineGlow
+    : resolveShrineGlow(viewer.meta);
+  const lane = glowOn
+    ? shrineLane({ graph: { nodes: byId, startIds: act.startIds, bossId: act.bossId }, run })
+    : [];
+  const laneNodes = new Set(lane.filter(isDrawn));
+  const laneEdge = new Set();
+  for (let i = 0; i + 1 < lane.length; i++) {
+    if (isDrawn(lane[i]) && isDrawn(lane[i + 1])) laneEdge.add(`${lane[i]}>${lane[i + 1]}`);
+  }
+
   // ---- edges (a traveled edge = consecutive pair in the path) ----
   //
   // AN EDGE NEEDS BOTH ITS ENDS. Under fog the nodes one step past the split are
@@ -230,7 +261,8 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       if (!to) continue;
       const ia = path.indexOf(n.id);
       const isTraveled = ia >= 0 && path[ia + 1] === toId;
-      edgeSvg += `<line class="map-edge${isTraveled ? ' traveled' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
+      const isLane = laneEdge.has(`${n.id}>${toId}`);
+      edgeSvg += `<line class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
     }
   }
 
@@ -344,6 +376,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       `k-${rung}`,
       traveled.has(n.id) || n.id === current ? 'visited' : '',
       n.id === current ? 'current' : '',
+      laneNodes.has(n.id) ? 'shrine-lane' : '',
       isReachable ? 'reachable' : '',
       revealed ? 'revealed' : '',
       extra,
@@ -378,6 +411,13 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   scroll.dataset.nodesTotal = String(nodes.length);
   scroll.dataset.nodesHidden = String(know.counts.hidden);
   scroll.dataset.nodesPlaced = String(know.counts.placed);
+  // WHAT THE BOARD SAYS IT GLOWED — the same discipline as the fog census one
+  // line up, and for the same reason: a lane that cannot report itself cannot
+  // be caught painting through the fog. This is the CLIPPED lane, i.e. exactly
+  // the set that should carry `.shrine-lane` in the DOM, so an instrument can
+  // compare two sets rather than trust one count. The full walk is deliberately
+  // NOT published: it names nodes the player has not earned.
+  scroll.dataset.shrineLane = [...laneNodes].join(',');
 
   const saved = savedZoom(viewer.meta);
   let framing = saved == null ? 'fit' : 'saved';

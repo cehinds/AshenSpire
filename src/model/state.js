@@ -98,6 +98,14 @@ export function createRunState({
     startingKitSnapshot: startingKitSnapshot(startingKit),
     attributeMode: selectedAttributeMode,
     attributes,
+    // LEVELS BOUGHT AT SHRINES, per run — Constantine: "players should have the
+    // option to level up their character (per run) by trading cinders". It is a
+    // COUNT and not a copy of anything: the points themselves live in
+    // `attributes` (where every reader already looks, so a level is worth
+    // exactly what the derived-stat table says a point is worth), and this
+    // number is what the creation-rule check at the load door needs in order to
+    // tell a levelled run from a hand-edited one. `model/levelup.js`.
+    levelUps: 0,
     floor: 0,
     actNumber: 1,
     mapNodeId: null,
@@ -366,6 +374,9 @@ export const RUN_SHAPE = [
   // Optional as a pair only so pre-attribute saves can migrate as one block.
   { key: 'attributeMode', type: 'string', optional: true },
   { key: 'attributes', type: 'object', optional: true },
+  // Optional so a run saved before shrine levelling existed still loads: absent
+  // reads as zero levels bought, which is what such a run is.
+  { key: 'levelUps', type: 'number', optional: true },
   // Optional only for the one pre-derived migration at the load door.
   { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
   { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
@@ -430,6 +441,13 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
     }
+  }
+  // A level count is a whole number of purchases and can never be negative. The
+  // ALLOCATION check that reads it lives at the load door
+  // (attributes.js:grantedAttributePoints); this is the shape check, and a
+  // fractional or negative value would silently shift the expected total there.
+  if (run.levelUps !== undefined && (!Number.isInteger(run.levelUps) || run.levelUps < 0)) {
+    problems.push('levelUps must be a non-negative integer');
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.

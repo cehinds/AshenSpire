@@ -1499,6 +1499,10 @@ function showRest() {
     refill,
     meta: saves.loadMeta(),
     onReallocate: () => persist(),
+    // A level is cinders and a permanent point. It persists the moment it is
+    // bought, not when the player leaves the shrine, for the same reason the
+    // reallocation above does: a closed tab must not be able to un-spend it.
+    onLevelUp: () => persist(),
     onDone: () => {
       persist();
       showMap();
@@ -1912,6 +1916,13 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     // deck the bug was reproduced on.
     run.floor = 8;
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
+    // AND A PURSE THAT CAN PAY, for the reason `?shot=shop` twelve lines below
+    // already states about its own remove grid: a fresh run holds 0 cinders, so
+    // the Level up panel this state now has to reach mounts LOCKED, and a
+    // photograph of a greyed-out feature is a green on nothing. Same posing
+    // discipline as the twenty-card deck above — enough to reach the control,
+    // no rng, identical every run.
+    run.cinders = 999;
     showRest();
   } else if (shotState === 'shop') {
     // A REACH STATE, and the fourth of the same shape (`?shotEvent`, `?shotAt`,

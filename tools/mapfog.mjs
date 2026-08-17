@@ -65,7 +65,7 @@ import { mapConfigs } from '../src/content/mapconfig.js';
 import { generateActMap } from '../src/engine/mapgen.js';
 import { createRng, seedFromString } from '../src/engine/rng.js';
 import {
-  mapKnowledge, litNodes, nodeReading, resolveMapMode,
+  mapKnowledge, litNodes, nodeReading, resolveMapMode, nearestShrine,
   HIDDEN, PLACED, KNOWN, RUNGS, rungHeight, MAP_MODES, MAP_MODE_DEFAULT,
 } from '../src/model/mapknowledge.js';
 
@@ -125,6 +125,28 @@ function build({ graph, lit, reveal, demote = null, mode = 'fog' }) {
     if (r !== HIDDEN) drawn.add(node.id);
   }
   return { mode, rung, drawn, counts };
+}
+
+/**
+ * THE LIGHT WITHOUT THE SHRINE UNFOG — the four sources `litNodes` had before
+ * 2026-08-17, so a mutant can remove that one source without removing the rest.
+ * It is a copy of shipped code and that is what a mutant IS: the bench's whole
+ * job is to hold a wrong rule beside the right one.
+ */
+function litFourSources(graph, run) {
+  const lit = new Set();
+  const add = (id) => { if (id && graph.nodes[id]) lit.add(id); };
+  const shine = (id) => {
+    const n = graph.nodes[id];
+    if (!n) return;
+    lit.add(id);
+    for (const to of n.next || []) add(to);
+  };
+  for (const id of (graph.startIds || [])) add(id);
+  add(graph.bossId);
+  for (const id of ((run && run.path) || [])) shine(id);
+  if (run && run.mapNodeId) shine(run.mapNodeId);
+  return lit;
 }
 
 /**
@@ -201,6 +223,33 @@ const MUTANTS = [
         lit: litNodes({ graph, run }),
         demote: (n) => !seen.has(n.id) && n.id !== graph.bossId,
       });
+    }],
+  // ---- the shrine unfog (Constantine, 2026-08-16) --------------------------
+  //
+  // "strines should unfog the next nearest shine node". Two mutants, and they
+  // are the two ways to get one sentence wrong — doing nothing, and doing too
+  // much. Each is killed by a different property below, which is the point of
+  // having both: a single mutant here would leave one of the two properties
+  // `unknown`, and this bench reports that rather than calling it green.
+  ['shrines never unfog the next one (the light as it stood before 2026-08-17)',
+    ({ graph, run, reveal, mode }) => {
+      if (mode !== 'fog') return build({ graph, lit: null, reveal, mode });
+      return build({ graph, reveal, mode, lit: litFourSources(graph, run) });
+    }],
+  // THE OVER-LIGHTING READING, and it is not a strawman — "unfog the next
+  // shrine" plausibly means "show me the way to it", and the lane the glow
+  // draws is exactly that walk, sitting right there in the same file. Lighting
+  // it hands the player the shape of an act nobody has climbed.
+  ['the unfog lights the whole WALK to the next shrine, not the node',
+    ({ graph, run, reveal, mode }) => {
+      if (mode !== 'fog') return build({ graph, lit: null, reveal, mode });
+      const lit = litFourSources(graph, run);
+      for (const id of [...(run.path || []), run.mapNodeId]) {
+        if (!id || !graph.nodes[id] || graph.nodes[id].type !== 'shrine') continue;
+        const found = nearestShrine({ graph, from: id });
+        if (found) for (const step of found.path) lit.add(step);
+      }
+      return build({ graph, reveal, mode, lit });
     }],
   // …and the mirror: a fog that leaks into the mode it must not touch. `path` is
   // the game as it shipped, and "nobody who does not opt in sees a pixel move"
@@ -298,6 +347,46 @@ const PROPERTIES = [
           const p = c.path.rung.get(id);
           if (r !== HIDDEN && r !== p) return `${c.label}: ${id} reads '${p}' unfogged and '${r}' fogged — fog moved the relic's axis`;
           if (rungHeight(r) > rungHeight(p)) return `${c.label}: ${id} is HIGHER under fog (${r}) than without it (${p})`;
+        }
+      }
+      return null;
+    }],
+  // "strines should unfog the next nearest shine node" — Constantine,
+  // 2026-08-16. Over real generated acts, where a shrine may be one step up or
+  // seven, and where the answer is often the pre-boss shrine.
+  ['a shrine you have STOOD ON lights the next shrine ahead of it',
+    (cells) => {
+      let checked = 0;
+      for (const c of cells) {
+        for (const id of [...c.run.path, c.run.mapNodeId]) {
+          const n = id && c.graph.nodes[id];
+          if (!n || n.type !== 'shrine') continue;
+          const found = nearestShrine({ graph: c.graph, from: id });
+          if (!found) continue;
+          checked++;
+          if (!c.fog.drawn.has(found.id)) return `${c.label}: stood on shrine ${id}, and the next shrine ${found.id} is fogged`;
+        }
+      }
+      // AN EMPTY RESULT IS NOT A ZERO. A corpus whose walks never reach a shrine
+      // would pass this property by having nothing to check, which is the
+      // failure this whole file calls `unknown`.
+      return checked ? null : 'NOTHING SWEPT: no cell in this corpus stands on a shrine with another ahead of it';
+    }],
+  // …AND THE MIRROR, which is the half that protects the act. The unfog lights
+  // a NODE. Everything else far above the player must still be dark, or the
+  // route to that shrine has been handed over with it.
+  ['the unfog lights a NODE, not a route — nothing far ahead is lit but landmarks',
+    (cells) => {
+      for (const c of cells) {
+        const frontier = Math.max(...c.run.path.map((id) => c.graph.nodes[id].floor));
+        const doors = new Set(c.graph.startIds);
+        for (const id of c.fog.drawn) {
+          const n = c.graph.nodes[id];
+          // One floor above the frontier is the split, and the split is lit by
+          // design. Anything HIGHER is a landmark or it is a leak.
+          if (n.floor <= frontier + 1) continue;
+          if (doors.has(id) || id === c.graph.bossId || n.type === 'shrine') continue;
+          return `${c.label}: ${id} (${n.type}, floor ${n.floor}) is lit ${n.floor - frontier} floors above the frontier`;
         }
       }
       return null;
@@ -488,6 +577,12 @@ const PROBE = `(() => {
     saidHidden: Number(s.dataset.nodesHidden),
     ground: !!document.querySelector('.map-fog-ground'),
     framing: s.dataset.framing || null,
+    // THE SHRINE LANE, both halves, for the same reason every line above has
+    // two: what the board SAYS it glowed, and what it actually painted. One of
+    // them alone is a number agreeing with itself.
+    laneSaid: (s.dataset.shrineLane || '').split(',').filter(Boolean),
+    laneDrawn: nodes.filter((n) => n.classList.contains('shrine-lane')).map(idOf),
+    laneEdges: document.querySelectorAll('.map-edge.shrine-lane').length,
   };
 })()`;
 
@@ -596,6 +691,34 @@ async function runRendered() {
           const has = r.known.includes(id) ? KNOWN : (r.placed.includes(id) ? PLACED : null);
           if (has !== want) findings.push(`${label}: ${id} is drawn as '${has}' and the ladder says '${want}'`);
         }
+        // ---- THE SHRINE LANE, ON THE RENDERED PAGE ------------------------
+        //
+        // "as new paths open, the path to the nearest shrine should have a
+        // glowing effect. (make this toggleable in the settings)" —
+        // Constantine, 2026-08-16.
+        //
+        // THE ONE THAT MATTERS IS THE CONTAINMENT. A lane clipped to the drawn
+        // set is the whole safety of the feature: a glow painted through the
+        // fog would hand the player the shape of an act nobody has climbed,
+        // and unlike every other defect on this screen it cannot be un-seen.
+        // It is checked HERE, on the page, because the clip lives in the board
+        // and not in the ladder — the headless bench cannot see it.
+        for (const id of r.laneDrawn) {
+          if (!domSet.has(id)) findings.push(`${label}: ${id} GLOWS and is not on the board — the lane leaked through the fog`);
+        }
+        for (const id of r.laneSaid) {
+          if (!domSet.has(id)) findings.push(`${label}: the board published ${id} in its lane and did not draw it`);
+        }
+        // What it says it glowed against what it painted — set against set.
+        const said = new Set(r.laneSaid);
+        for (const id of r.laneDrawn) if (!said.has(id)) findings.push(`${label}: ${id} carries the glow class and is not in data-shrine-lane`);
+        for (const id of said) if (!r.laneDrawn.includes(id)) findings.push(`${label}: ${id} is in data-shrine-lane and carries no glow class`);
+        // AN EDGE NEEDS BOTH ITS ENDS, so a lane of n drawn nodes can paint at
+        // most n−1 edges. More than that is an edge glowing into the dark.
+        if (r.laneEdges > Math.max(0, r.laneDrawn.length - 1)) {
+          findings.push(`${label}: ${r.laneEdges} lane edge(s) for ${r.laneDrawn.length} lane node(s) — an edge is glowing into the fog`);
+        }
+
         // The two clauses of the ask that are visible from here.
         if (mode === 'fog') {
           if (!r.ground) findings.push(`${label}: fog mode drew no parchment ground`);
@@ -611,7 +734,8 @@ async function runRendered() {
           prevDrawn = domSet;
           console.log(`  ${label.padEnd(20)} drawn ${String(r.drawn.length).padStart(2)}/${r.saidTotal}`
             + `  known ${String(r.known.length).padStart(2)}  placed ${String(r.placed.length).padStart(2)}`
-            + `  trail ${String(r.visited.length).padStart(2)}  next ${r.reachable.length}  framing:${r.framing}`);
+            + `  trail ${String(r.visited.length).padStart(2)}  next ${r.reachable.length}`
+            + `  lane ${String(r.laneDrawn.length).padStart(2)}n/${r.laneEdges}e  framing:${r.framing}`);
         } else if (r.drawn.length !== r.saidTotal) {
           findings.push(`${label}: path mode drew ${r.drawn.length} of ${r.saidTotal} — path mode hides nothing`);
         }

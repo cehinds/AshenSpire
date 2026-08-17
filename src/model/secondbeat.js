@@ -171,6 +171,24 @@ export const ACTIONS = Object.freeze({
     hazard: 'pointing',
     note: 'Rest and Smith are two adjacent panels; taking either closes the other',
   },
+  shrineLevelUp: {
+    of: 'buying a level at the shrine',
+    lives: 'src/ui/screens/rest.js',
+    surface: 'rest',
+    // A ROW, NOT A LINE IN A SCREEN — which is the whole point of this file, and
+    // it is why levelling arrived with a second beat without anyone deciding it
+    // should have one. The FORM is `choosing` and not `pointing`, and the
+    // difference is the same one the Smith made: the five stat buttons are far
+    // enough apart that the finger is not the risk — the STAT is. A point spent
+    // on Wisdom by a player who meant Constitution is gone for the run, and
+    // what they need first is to read what the point actually does, which is
+    // why the confirm panel carries the derived-stat sentence rather than a
+    // second copy of it (content/derivedStats.js `presentation.sense`).
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'choosing',
+    note: 'five stat buttons on one panel; the point is permanent and the cinders are gone',
+  },
   smithUpgrade: {
     of: 'smithing a card',
     lives: 'src/ui/screens/rest.js',

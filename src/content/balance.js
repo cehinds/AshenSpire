@@ -67,6 +67,49 @@ export const balance = {
 
   shrine: { healPct: 35 },
 
+  // ---- levelling at a shrine (Constantine, D10 wave 1 + E13) ----------------
+  //
+  // His words, and the whole feature is in them:
+  //
+  //   "also at graces, players should have the option to level up their
+  //    character (per run) by trading cinders to level up. at level up they may
+  //    increase a stat by 1 point."
+  //   "rest sites become where you level, cinders spent past a threshold — 1
+  //    stat point per level, 10–20 level-ups a run, scalable."   (E13)
+  //
+  // FOUR NUMBERS AND NOTHING ELSE, because the rest is derived (Law 0 clause 1):
+  // which attributes may be raised is `content/attributes.js` — adding a sixth
+  // attribute puts a sixth button on the shrine with no UI edit, and that is
+  // this feature's Law 0 falsifier. What a point is WORTH is
+  // `content/derivedStats.js`, already: a CON point is +1 HP per five, a WIS
+  // point is Mana. Nothing about the value of a level is authored here.
+  //
+  //   firstCost   what the FIRST level of a run costs.
+  //   costStep    what each level adds to the next one's price. "cinders spent
+  //               past a threshold, scalable" — a linear ramp, and the ramp is
+  //               the scalable part: raise this and the run gets fewer levels
+  //               with no code touched.
+  //   pointsPerLevel  "they may increase a stat by 1 point". His number.
+  //   maxLevels   null = no ceiling but the cinders themselves. His range is an
+  //               ECONOMY, not a cap, and a cap would answer it by refusing
+  //               rather than by pricing.
+  //
+  // WHY 20 AND 4, AND WHAT IS UNKNOWN ABOUT THEM. Cost(n) = 20 + 4(n−1), so a
+  // run's nth level costs 20, 24, 28 … and n levels cost 2n² + 18n cinders in
+  // total. Against a run's whole cinder budget that is 10 levels at 400, 13 at
+  // 600, 20 at 1200 — inside his 10–20 band across the entire plausible range,
+  // which is the property `tests/engine.test.js` asserts on this table.
+  // **WHAT IS NOT MEASURED IS THE BUDGET ITSELF.** Nobody here has simulated
+  // what a real climb actually earns, or what the shop takes out of it first.
+  // The curve is checked; the range it is checked over is an assumption, and it
+  // is stated as one rather than reported as balance.
+  levelUp: {
+    firstCost: 20,
+    costStep: 4,
+    pointsPerLevel: 1,
+    maxLevels: null,
+  },
+
   // ---- what a grace hands back ----------------------------------------------
   // Grace refills the current Crimson/Azure counts to the allocation stored on
   // the run. The allocation may be redistributed but always sums to capacity.

@@ -211,6 +211,45 @@
 .map-edge { stroke: var(--map-structure); stroke-width: 2; fill: none; }
 .map-edge.traveled { stroke: var(--gold); stroke-width: 3; }
 
+/* ---- the shrine lane (Settings → Display · Shrine path glow) ---------------
+   "as new paths open, the path to the nearest shrine should have a glowing
+   effect" — Constantine, 2026-08-16. WHICH nodes is decided in
+   model/mapknowledge.js and clipped to what the fog already draws
+   (ui/components/mapboard.js); this block is only what that set looks like.
+
+   IT MUST NOT READ AS `reachable`, which is the one thing this could break. The
+   halo and the gold stroke already mean "you may step here", and a second gold
+   cue on nodes you cannot click would make the strongest signal on the screen
+   ambiguous. So the lane is a GLOW AROUND the node rather than a stroke on it —
+   a different channel from every existing cue — and the reachable ring still
+   paints on top of any node wearing both. This is a placeholder that stays out
+   of the way of the cues that already work: the look is Freja's to author and
+   whether it reads is Sunna's to judge. Neither has seen it.
+
+   NO NEW UNIT AND NO STRAY px. The stroke width below is in the SVG's own user
+   space, the one space every other line on this board is drawn in (Law 2).
+   Nothing here is text and nothing here is a box, so Law 4 has no subject. */
+.map-edge.shrine-lane {
+  stroke: var(--gold);
+  stroke-width: 3;
+  stroke-opacity: 0.9;
+  animation: shrineLanePulse 2.2s ease-in-out infinite alternate;
+}
+.map-node.shrine-lane > circle:not(.node-halo) {
+  animation: shrineLanePulse 2.2s ease-in-out infinite alternate;
+}
+@keyframes shrineLanePulse {
+  from { filter: drop-shadow(0 0 2px var(--gold)); }
+  to { filter: drop-shadow(0 0 7px var(--gold)); }
+}
+/* Same contract as every other pulse on this board: the cue survives, the
+   motion does not. A player on Reduced motion still sees the lane. */
+.reduced-motion .map-edge.shrine-lane,
+.reduced-motion .map-node.shrine-lane > circle:not(.node-halo) {
+  animation: none;
+  filter: drop-shadow(0 0 5px var(--gold));
+}
+
 /* ---------------------------- fog of war (Settings → Display · Map reveal) ---
    Everything here is inert unless .mapscreen carries .map-fog, so `path` mode is
    byte-for-byte the screen that shipped.

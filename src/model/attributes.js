@@ -14,6 +14,7 @@ function tables(source) {
       creationModes: source.creationModes.all(),
       attributeRules: source.attributeRules,
       classes: source.classes.all(),
+      balance: source.balance || {},
     };
   }
   return {
@@ -21,7 +22,45 @@ function tables(source) {
     creationModes: Array.isArray(source && source.creationModes) ? source.creationModes : [],
     attributeRules: source && source.attributeRules,
     classes: Array.isArray(source && source.classes) ? source.classes : [],
+    balance: (source && source.balance) || {},
   };
+}
+
+/**
+ * grantedAttributePoints(run, source) — points this run holds ON TOP OF its
+ * creation allocation.
+ *
+ * THE CREATION RULES ARE ABOUT CREATION, AND THIS IS THE LINE THAT SAYS SO.
+ * `standard` is `fixedTotal` at 55 with every cell in 10..15 — rules about the
+ * five minutes at the character screen, enforced at the LOAD DOOR, where they
+ * were the only rules that had ever applied because nothing could change an
+ * allocation after creation. Levelling at a shrine changes one (Constantine:
+ * "at level up they may increase a stat by 1 point"), so those two clauses now
+ * have to be told how many points the run legitimately grew by.
+ *
+ * THIS IS NOT A LOOSENING. A run claiming points it did not buy is still
+ * refused by name; what moved is that the expected total is `55 + granted` and
+ * the per-cell ceiling rises by the same points, since a player may pour every
+ * level into one stat.
+ *
+ * WHY THE SEAM IS HERE AND NOT IN THE SHRINE SCREEN, measured: `save.js` calls
+ * `normalizeRunAttributes` inside the try whose catch ARCHIVES THE SAVE. A
+ * level-up that only incremented `run.attributes` would look perfect on screen
+ * and destroy the player's run at the next load.
+ *
+ * ⚠ ONE HAZARD, NAMED RATHER THAN HIDDEN: `pointsPerLevel` is content, so
+ * editing it re-prices every IN-FLIGHT save's expected total, and those runs are
+ * refused at the door — loudly and by name, never silently healed. It is his
+ * number, it is 1, and nothing has asked for a second value. The day something
+ * does, this needs the treatment `derivedStatRuleSnapshot` already gets:
+ * snapshot the conversion into the run so a content edit cannot re-price a
+ * climb in progress.
+ */
+export function grantedAttributePoints(run, source) {
+  const levels = run && Number.isInteger(run.levelUps) ? run.levelUps : 0;
+  if (levels <= 0) return 0;
+  const per = (tables(source).balance.levelUp || {}).pointsPerLevel;
+  return levels * (Number.isInteger(per) && per > 0 ? per : 1);
 }
 
 export function orderedAttributes(source) {
@@ -53,7 +92,7 @@ function retiredNames(t) {
   return plainObject(map) ? map : {};
 }
 
-function allocationProblems(t, classId, modeId, values, path) {
+function allocationProblems(t, classId, modeId, values, path, granted = 0) {
   const problems = [];
   const attrs = t.attributes.slice().sort((a, b) => a.order - b.order);
   const mode = t.creationModes.find((m) => m && m.id === modeId);
@@ -83,18 +122,30 @@ function allocationProblems(t, classId, modeId, values, path) {
       continue;
     }
     const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
-    if (value < floor || value > mode.maximum) problems.push({ path: `${path}.${id}`, msg: `must be between ${floor} and ${mode.maximum} for mode '${mode.id}'` });
+    // The ceiling rises with granted points because a player may pour every
+    // level into one stat; the FLOOR does not move, because nothing about
+    // levelling can take a point away.
+    const ceiling = mode.maximum + granted;
+    if (value < floor || value > ceiling) {
+      problems.push({ path: `${path}.${id}`, msg: granted
+        ? `must be between ${floor} and ${ceiling} for mode '${mode.id}' with ${granted} levelled point(s)`
+        : `must be between ${floor} and ${ceiling} for mode '${mode.id}'` });
+    }
     total += value;
   }
   if (allIntegers && mode.redistribution === 'fixedTotal') {
-    const expected = mode.baseline * ids.length + mode.bonusPool;
-    if (total !== expected) problems.push({ path, msg: `total ${total} must equal ${expected} for mode '${mode.id}'` });
+    const expected = mode.baseline * ids.length + mode.bonusPool + granted;
+    if (total !== expected) {
+      problems.push({ path, msg: granted
+        ? `total ${total} must equal ${expected} for mode '${mode.id}' with ${granted} levelled point(s)`
+        : `total ${total} must equal ${expected} for mode '${mode.id}'` });
+    }
   }
   return problems;
 }
 
-export function attributeAllocationProblems(source, classId, modeId, values, path = 'attributes') {
-  return allocationProblems(tables(source), classId, modeId, values, path);
+export function attributeAllocationProblems(source, classId, modeId, values, path = 'attributes', granted = 0) {
+  return allocationProblems(tables(source), classId, modeId, values, path, granted);
 }
 
 export function classAttributePreset(source, classId, modeId = defaultCreationModeId(source)) {
@@ -203,7 +254,14 @@ export function normalizeRunAttributes(run, registries) {
     });
     return run;
   }
-  const problems = attributeAllocationProblems(registries, run.class, run.attributeMode, run.attributes);
+  // THE ALLOCATION IS JUDGED AGAINST CREATION PLUS WHAT WAS LEVELLED. A run
+  // that has bought no levels is judged by exactly the rules it always was —
+  // `granted` is 0 and every message is byte-for-byte the one it printed
+  // before.
+  const problems = attributeAllocationProblems(
+    registries, run.class, run.attributeMode, run.attributes, 'attributes',
+    grantedAttributePoints(run, registries),
+  );
   if (problems.length) throw new Error(problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
   run.attributes = Object.fromEntries(orderedAttributes(registries).map((def) => [def.id, run.attributes[def.id]]));
   return run;

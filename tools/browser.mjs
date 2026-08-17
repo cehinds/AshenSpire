@@ -625,4 +625,27 @@ async function selftest() {
   process.exit(fail ? 1 : 0);
 }
 
-if (process.argv.includes('--selftest')) await selftest();
+// ⚠ ONLY WHEN THIS FILE IS THE COMMAND, and the second clause is a bug fix
+// found by an instrument that could not run — Vira, 2026-08-17.
+//
+// This line used to read `if (process.argv.includes('--selftest'))`, at module
+// scope, in a file **24 other tools import**. Every one of them declares its own
+// `--selftest`, and every one of them ends in `process.exit` from THIS
+// function before its own bench is reached. Measured at dev `b83bda1`:
+//
+//     node tools/mapfog.mjs --selftest   ->  "browser --selftest: held — 8 PASS"
+//                                            exit 0, and the fog ladder's nine
+//                                            properties and nine mutants never
+//                                            ran at all.
+//
+// **IT IS THE WORST SHAPE A GREEN CAN HAVE**: the documented command for an
+// instrument printed somebody else's pass, under a different tool's name, and
+// exited 0. Nothing was wrong with either tool — the import ran the wrong bench.
+//
+// WHAT THIS FIXES AND WHAT IT DOES NOT. It fixes the hijack. It does NOT
+// discharge the 23 other benches this was hiding: each of them has now been
+// unreachable by its own command for as long as it has imported this file, and
+// **not one of them has been run in that state**. That is a finding for the
+// table, not something this commit may claim as covered.
+const ENTRY = process.argv[1] ? resolve(process.argv[1]) : '';
+if (process.argv.includes('--selftest') && ENTRY.endsWith('browser.mjs')) await selftest();

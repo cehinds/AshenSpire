@@ -59,6 +59,12 @@ import {
   unlockView, revealState, pieceReveal,
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
+// The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
+// that a headless suite can reach. `mapknowledge.js` is pure by design (its own
+// header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
+// at the top of this file still holds.
+import { nearestShrine, shrineLane, litNodes } from '../src/model/mapknowledge.js';
+import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/model/levelup.js';
 // The one UI import in this suite, and it is deliberate: `settingOn` is where a
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
@@ -4259,6 +4265,278 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const fresh = createRunState({ seed: 7, classId: before.class, registries: REG });
     eq(fresh.attributes.constitution, before.attributes.constitution, 'same class, same CON');
     eq(fresh.maxHp, 90, 'a NEW run of the same class gets E6, so 96 above is preservation and not a coincidence');
+  });
+
+  // ---- 58. the nearest shrine: one computation, two asks -------------------
+  test('58. nearestShrine answers the same question the unfog and the glow both ask', () => {
+    // A HAND-BUILT GRAPH, on purpose: a generated act is a distribution, and
+    // this test is about the ARITHMETIC of the walk. The generated acts are
+    // swept by `tools/mapfog.mjs --selftest`, which is where a property over a
+    // distribution belongs. Shape (edges run upward):
+    //
+    //        s3          f3, a shrine
+    //       /  \
+    //     s1    s2       f2, s2 a shrine, s1 not
+    //       \  /
+    //        a           f1, the entrance
+    const g = {
+      startIds: ['a'],
+      bossId: 's3',
+      nodes: {
+        a: { id: 'a', floor: 1, col: 1, type: 'monster', next: ['s1', 's2'] },
+        s1: { id: 's1', floor: 2, col: 0, type: 'monster', next: ['s3'] },
+        s2: { id: 's2', floor: 2, col: 2, type: 'shrine', next: ['s3'] },
+        s3: { id: 's3', floor: 3, col: 1, type: 'shrine', next: [] },
+      },
+    };
+    const at = (from) => nearestShrine({ graph: g, from });
+    eq(at('a').id, 's2', 'from the entrance the nearest shrine is one step away');
+    eq(at('a').path.join('>'), 'a>s2', 'and the walk to it is the walk the glow draws');
+    eq(at('a').distance, 1, 'distance is counted in steps');
+    // STANDING ON A SHRINE, THE NEAREST SHRINE IS THE NEXT ONE. This is the
+    // clause both asks turn on, and the one an `includeSource` option would
+    // have got wrong: "unfog the NEXT nearest" is meaningless if the answer is
+    // your own feet.
+    eq(at('s2').id, 's3', 'from a shrine, the answer is the next shrine and never itself');
+    eq(at('s3'), null, 'the last shrine of the act has nothing ahead of it — the empty edge');
+    eq(at('nosuch'), null, 'a node that is not in the graph answers null rather than throwing');
+    eq(nearestShrine({ graph: g, from: [] }), null, 'no sources is no answer');
+    eq(at('s1').id, 's3', 'forward only: `next` is one-way and so is the climb');
+
+    // DETERMINISM AT A TIE, and it is not decoration: two shrines equidistant
+    // is the ordinary shape of a seven-column act, and a lane that re-picks on
+    // a re-mount is a lane the player cannot follow.
+    const tie = {
+      startIds: ['a'],
+      bossId: 'z',
+      nodes: {
+        a: { id: 'a', floor: 1, col: 1, type: 'monster', next: ['m', 'b'] },
+        b: { id: 'b', floor: 2, col: 0, type: 'shrine', next: [] },
+        m: { id: 'm', floor: 2, col: 2, type: 'shrine', next: [] },
+        z: { id: 'z', floor: 3, col: 1, type: 'boss', next: [] },
+      },
+    };
+    eq(nearestShrine({ graph: tie, from: 'a' }).id, 'b', 'a tie is settled by the smaller node id');
+    const reordered = { ...tie, nodes: { m: tie.nodes.m, b: tie.nodes.b, a: tie.nodes.a, z: tie.nodes.z } };
+    eq(nearestShrine({ graph: reordered, from: 'a' }).id, 'b',
+      'and re-ordering the graph object does not move the answer');
+    // THE PROBE HAS A REFERENT: the edge order really is m-then-b, so 'b' is
+    // NOT what a first-found walk would have returned. Without this line the
+    // two cells above would pass under the rule they exist to exclude.
+    eq(tie.nodes.a.next.find((id) => tie.nodes[id].type === 'shrine'), 'm',
+      'first-found would have answered m — the sorted answer is not the free one');
+
+    // THE LANE the board glows.
+    eq(shrineLane({ graph: g, run: { mapNodeId: null, path: [] } }).join('>'), 'a>s2',
+      'at the entrance the lane is aimed from the doors');
+    eq(shrineLane({ graph: g, run: { mapNodeId: 's2', path: ['a', 's2'] } }).join('>'), 's2>s3',
+      'standing on a shrine the lane re-aims at the next one — "as new paths open"');
+    eq(shrineLane({ graph: g, run: { mapNodeId: 's3', path: ['a', 's2', 's3'] } }).length, 0,
+      'with no shrine ahead there is no lane, and no lane is not an empty glow');
+  });
+
+  // ---- 59. resting unfogs the next nearest shrine ---------------------------
+  test('59. a shrine you have stood on lights the next shrine, and nothing else', () => {
+    // The graph carries one node the light must NOT reach, so a fog that simply
+    // lit more would be caught here rather than congratulated.
+    const g = {
+      startIds: ['a'],
+      bossId: 'top',
+      nodes: {
+        a: { id: 'a', floor: 1, col: 1, type: 'monster', next: ['s1', 'x'] },
+        s1: { id: 's1', floor: 2, col: 0, type: 'shrine', next: ['mid'] },
+        x: { id: 'x', floor: 2, col: 2, type: 'monster', next: ['mid'] },
+        mid: { id: 'mid', floor: 3, col: 1, type: 'monster', next: ['far'] },
+        // `far` IS THE NODE THAT MAKES THIS TEST MEAN ANYTHING, and it is here
+        // because the first draft of it was wrong. I asserted that the node
+        // between the shrine and the next shrine stays dark, and used `mid` —
+        // which is the shrine's OWN SPLIT and has been lit since the fog
+        // shipped. The assertion went red for the right reason and the reason
+        // was my graph. Two steps up is the nearest node the unfog could leak
+        // to that nothing else already lights.
+        far: { id: 'far', floor: 4, col: 1, type: 'monster', next: ['s2'] },
+        s2: { id: 's2', floor: 5, col: 1, type: 'shrine', next: ['top'] },
+        top: { id: 'top', floor: 6, col: 1, type: 'boss', next: [] },
+      },
+    };
+    const litAt = (run) => litNodes({ graph: g, run });
+
+    // BEFORE any shrine is reached: doors, boss, the trail and the split. `s2`
+    // is three steps up and nothing has earned it.
+    const before = litAt({ path: ['a'], mapNodeId: 'a' });
+    assert(!before.has('s2'), 'the far shrine is fogged before any shrine is reached');
+    assert(before.has('top'), 'the boss is lit from the first frame (unchanged)');
+
+    // STANDING ON `s1`: the next shrine ahead of it lights.
+    const after = litAt({ path: ['a', 's1'], mapNodeId: 's1' });
+    assert(after.has('s2'), 'reaching a shrine unfogs the next nearest shrine — his sentence');
+    // …AND ONLY THE NODE. Lighting the walk to it would hand over the shape of
+    // an act nobody has climbed, which is the one way this could leak. `mid` is
+    // NOT the cell that proves it — the shrine's own split has been lit since
+    // the fog shipped — so the probe is two steps up.
+    assert(after.has('mid'), 'the shrine\'s own split is lit, as it always was (not this feature)');
+    assert(!after.has('far'), 'the walk to that shrine stays dark — the NODE is unfogged, not the route');
+
+    // MONOTONE: everything lit before is still lit. FOG_TRAIL_CLAUSE is a
+    // promise printed on the settings screen, and it survives a fifth source.
+    for (const id of before) assert(after.has(id), `${id} was lit and stayed lit`);
+
+    // ⚠ THE CELL A PLANT FOUND MISSING, and it is the half of this feature the
+    // rest of the test could not see. Every cell above stands ON the shrine, and
+    // `litNodes` lights the current node's next shrine through a SECOND call —
+    // the belt-and-braces one for a posed `?shotAt` position. So deleting the
+    // unfog from the trail loop entirely left this test GREEN. The load-bearing
+    // half is a shrine the player has walked PAST: its light must not go out.
+    const past = litAt({ path: ['a', 's1', 'mid'], mapNodeId: 'mid' });
+    assert(past.has('s2'), 'a shrine BEHIND you still lights the next one — the trail keeps its unfog');
+    for (const id of after) assert(past.has(id), `${id} stayed lit after stepping past the shrine`);
+
+    // THE EMPTY EDGE: standing on the LAST shrine lights no further shrine and
+    // does not throw.
+    const last = litAt({ path: ['a', 's1', 'mid', 'far', 's2'], mapNodeId: 's2' });
+    assert(last.has('top'), 'the last shrine still lights its own split');
+
+    // THE PLANT, and it is the reason the green above is worth anything: with
+    // nothing in the trail typed `shrine`, s2 must go dark. Watched red before
+    // this test was trusted — without it, `after.has('s2')` could be the boss,
+    // the split or an over-wide light and would read identically.
+    const noShrine = { ...g, nodes: { ...g.nodes, s1: { ...g.nodes.s1, type: 'monster' } } };
+    const plant = litNodes({ graph: noShrine, run: { path: ['a', 's1'], mapNodeId: 's1' } });
+    assert(!plant.has('s2'), 'PLANT: no shrine in the trail, s2 dark — so the green above IS the unfog');
+
+    // NEVER A SECOND COPY OF THE TRAIL: nothing is stored, so the same path is
+    // the same light.
+    const twice = litAt({ path: ['a', 's1'], mapNodeId: 's1' });
+    eq([...twice].sort().join(','), [...after].sort().join(','), 'the light is a pure function of the path');
+  });
+
+  // ---- 60. levelling at a shrine -------------------------------------------
+  test('60. a level is one attribute point bought with cinders, and the pools follow', () => {
+    const run = createRunState({ seed: 0x1e7e1, classId: 'reaver', registries: REG });
+    const startCon = run.attributes.constitution;
+    const startHp = run.maxHp;
+    const plan = levelUpPlan(REG, run);
+    eq(plan.levelsTaken, 0, 'a fresh run has taken no levels');
+    eq(plan.cost, REG.balance.levelUp.firstCost, 'the first level costs the authored first price');
+    eq(plan.attributes.length, REG.attributes.all().length,
+      'every authored attribute is offered — the shrine names no stat itself (the Law 0 falsifier)');
+
+    // THE EMPTY EDGE: no cinders, no offer, and both refusals are BY NAME.
+    run.cinders = 0;
+    assert(!levelUpPlan(REG, run).offerable, 'with an empty purse the shrine offers nothing');
+    let refused = '';
+    try { applyLevelUp(REG, run, 'constitution'); } catch (e) { refused = e.message; }
+    assert(/cinders needed/.test(refused), `an unaffordable level is refused by name (got: ${refused})`);
+    let badId = '';
+    try { applyLevelUp(REG, run, 'charisma'); } catch (e) { badId = e.message; }
+    assert(/not an attribute id/.test(badId), `a stat that does not exist is refused by name (got: ${badId})`);
+
+    // THE PURCHASE.
+    run.cinders = 1000;
+    const purse = run.cinders;
+    const manaBefore = run.maxMana;
+    const got = applyLevelUp(REG, run, 'constitution');
+    eq(run.attributes.constitution, startCon + 1, 'the point lands on the stat that was bought');
+    eq(run.cinders, purse - plan.cost, 'the cinders are gone, exactly the priced amount');
+    eq(run.levelUps, 1, 'the purchase is recorded — this is the number the load door reads');
+    eq(got.level, 1, 'the receipt names the level bought');
+    eq(run.maxMana, manaBefore, 'the pool CON does not feed did not move');
+
+    // ⚠ MECHANISM 2, AND THE FINDING THIS TEST WAS WRITTEN WRONG TO FIND. I
+    // asserted `run.maxHp > startHp` and it went RED: one CON point moves NO
+    // NUMBER AT ALL. Every derived rule in content/derivedStats.js has
+    // `pointsPerTier: 5`, so a stat pays out once every five points — reaver
+    // starts at CON 12, and 13 and 14 buy nothing a player can see.
+    //
+    // THE FEATURE IS CORRECT AND MAY FEEL DEAD, and those are two different
+    // seats' calls. His acceptance test is 10–20 levels a run; at a tier width
+    // of 5, spread over five stats, that is roughly THREE visible changes in a
+    // whole climb. This is handed to the player-experience and balance seats,
+    // NOT answered here — the honest fix is a number in a table (tier width,
+    // or a per-point term) and neither is mine to pick tonight.
+    //
+    // So what is asserted is the truth, at the THRESHOLD'S OWN NEIGHBOURHOOD:
+    // the cells either side of a tier boundary, one point apart.
+    eq(run.maxHp, startHp, 'CON 12 → 13 crosses no tier, so max HP does not move — measured, not assumed');
+    const conAt = run.attributes.constitution;
+    applyLevelUp(REG, run, 'constitution'); // 14 — still below the boundary
+    eq(run.maxHp, startHp, `CON ${conAt + 1} is the cell BELOW the boundary and still pays nothing`);
+    applyLevelUp(REG, run, 'constitution'); // 15 — the boundary
+    assert(run.maxHp > startHp, `CON ${conAt + 2} is the first cell ABOVE the boundary and pays a tier`);
+    eq(run.levelUps, 3, 'three levels bought, three points spent, one visible change');
+
+    // A LEVEL IS NOT A REST: the pool grows and the deficit is carried. The
+    // shrine sells the heal at the next panel; a level that healed would make
+    // that panel pointless at the same counter.
+    const hurt = createRunState({ seed: 0x4c4e, classId: 'reaver', registries: REG });
+    hurt.cinders = 1000;
+    hurt.hp = hurt.maxHp - 10;
+    const hurtMax = hurt.maxHp;
+    // Three levels, because of the finding above: fewer would cross no tier and
+    // the ceiling would not move, which would make this cell prove nothing.
+    for (let i = 0; i < 3; i++) applyLevelUp(REG, hurt, 'constitution');
+    eq(hurt.maxHp - hurt.hp, 10, 'the 10-HP deficit is carried across the levels — levelling does not heal');
+    assert(hurt.maxHp > hurtMax, 'and the ceiling still rose (the probe has a referent)');
+
+    // THE RAMP, and the only half of his acceptance test this suite can hold.
+    eq(levelCost(REG, 1) - levelCost(REG, 0), REG.balance.levelUp.costStep, 'each level costs one step more');
+    // ⚠ THE PURSE IS AN ASSUMPTION, NOT A MEASUREMENT. Nobody has simulated
+    // what a climb earns, or what the shop takes out of it first. What is
+    // asserted is that the authored CURVE lands inside his 10–20 band across
+    // the whole plausible range of purses — a property of the table.
+    eq(levelsAffordable(REG, 400), 10, '400 cinders buys 10 levels — the bottom of his band');
+    eq(levelsAffordable(REG, 1200), 20, '1200 buys 20 — the top of it');
+    const mid = levelsAffordable(REG, 600);
+    assert(mid >= 10 && mid <= 20, `a mid purse stays inside the band (got ${mid})`);
+    eq(levelsAffordable(REG, 0), 0, 'the empty edge: no cinders, no levels');
+  });
+
+  // ---- 60b. a levelled run comes back through the real save door ------------
+  test('60b. a levelled run round-trips the load door instead of being archived', () => {
+    // THE SCARY ONE, AND IT IS WHY LEVELLING IS A MODEL FILE. `save.js` calls
+    // normalizeRunAttributes inside the try whose catch ARCHIVES THE SAVE, and
+    // the creation rules it enforces are `fixedTotal` at 55 with every cell in
+    // 10..15. A level-up that only incremented `run.attributes` would look
+    // perfect on screen and destroy the player's run at the next load.
+    const run = createRunState({ seed: 0x5a7ed, classId: 'reaver', registries: REG });
+    run.cinders = 5000;
+    run.seedString = 'LEVELS';
+    for (let i = 0; i < 6; i++) applyLevelUp(REG, run, 'constitution');
+    eq(run.levelUps, 6, 'six levels bought');
+    assert(run.attributes.constitution > 15, 'and the stat is past the creation ceiling of 15');
+
+    const storage = createMemoryStorage();
+    createSaveManager(storage).saveRun(run);
+    const back = createSaveManager(storage).loadRun(REG);
+    assert(back !== null, 'THE LEVELLED RUN LOADS — it is not archived by the creation rules');
+    eq(back.attributes.constitution, run.attributes.constitution, 'the levelled points survive the door');
+    eq(back.levelUps, 6, 'and so does the count that makes them legal');
+    eq(back.maxHp, run.maxHp, 'the derived pool the levels moved is accepted, not re-derived away');
+
+    // THE PLANT — the exact failure this feature would have shipped, watched.
+    // Strip the count and keep the points: a 61-point allocation with no record
+    // of buying them is a hand-edited save, and the door must refuse it.
+    const raw = JSON.parse(storage.getItem(RUN_KEY));
+    delete raw.levelUps;
+    storage.setItem(RUN_KEY, JSON.stringify(raw));
+    eq(createSaveManager(storage).loadRun(REG), null,
+      'PLANT: the same points with no levelUps are REFUSED — so the green above is the count doing work');
+
+    // THE MIRROR PLANT, so this is not "levelUps makes anything legal": six
+    // levels claimed and none spent is refused too.
+    const inflated = JSON.parse(JSON.stringify(raw));
+    inflated.levelUps = 6;
+    inflated.attributes.constitution = 12;
+    storage.setItem(RUN_KEY, JSON.stringify(inflated));
+    eq(createSaveManager(storage).loadRun(REG), null,
+      'PLANT: six levels claimed and none spent is refused — the total is checked in both directions');
+
+    // AND A RUN WITH NO LEVELS IS JUDGED BY EXACTLY THE OLD RULES.
+    const plain = createRunState({ seed: 7, classId: 'reaver', registries: REG });
+    plain.seedString = 'PLAIN';
+    const s2 = createSaveManager(createMemoryStorage());
+    s2.saveRun(plain);
+    assert(s2.loadRun(REG) !== null, 'an unlevelled run loads exactly as it always did');
   });
 
   const passed = results.filter((r) => r.ok).length;

@@ -102,6 +102,119 @@ export function resolveMapMode(meta) {
   return MAP_MODES.includes(m) ? m : MAP_MODE_DEFAULT;
 }
 
+/**
+ * THE SHRINE LANE — one setting, and the row reads its default from here for
+ * the same reason `mapMode` does: a row and a resolver that carry the same
+ * default separately are one fact written twice.
+ *
+ * Constantine scoped this himself — "(make this toggleable in the settings)" —
+ * so the switch exists whether or not the glow is judged to need one. ON is the
+ * shipping default because the glow is the thing he asked for; the row turns it
+ * OFF.
+ */
+export const SHRINE_GLOW_DEFAULT = true;
+
+/** resolveShrineGlow(meta) → boolean. Unset, or unreadable, is the default. */
+export function resolveShrineGlow(meta) {
+  const v = ((meta && meta.settings) || {}).shrinePathGlow;
+  return typeof v === 'boolean' ? v : SHRINE_GLOW_DEFAULT;
+}
+
+/* --------------------------------------------------- the nearest shrine -- */
+
+/**
+ * nearestShrine({ graph, from }) → { id, path, distance } | null
+ *
+ * ONE COMPUTATION, TWO ASKS, and that is why it lives in this file rather than
+ * in either caller. Constantine asked for two things on 2026-08-16:
+ *
+ *   "strines should unfog the next nearest shine node"
+ *   "as new paths open, the path to the nearest shrine should have a glowing
+ *    effect"
+ *
+ * Both are the same question — *which shrine is nearest, walking forward from
+ * here, and what is the walk* — asked from two different `from`s. The unfog
+ * asks it from every shrine the player has STOOD ON; the glow asks it from
+ * where the player is standing NOW. Two answers, one function: a second
+ * traversal would be the second copy that lets the lit shrine and the glowing
+ * lane disagree about which shrine is next.
+ *
+ * (The third ask of that message — levelling at a shrine — shares the SUBJECT
+ * and shares nothing else. It is `model/levelup.js`, and it needs no graph.)
+ *
+ * FORWARD ONLY. `next` is a one-way edge and the climb is one-way, so this is
+ * a plain BFS with no back-edges: a shrine you have already climbed past is
+ * not a shrine you can reach.
+ *
+ * THE SOURCE IS NEVER THE ANSWER. Standing on a shrine, the nearest shrine is
+ * the NEXT one — which is what both asks mean and is why there is no
+ * `includeSource` option to get wrong.
+ *
+ * DETERMINISTIC AT EVERY TIE, and it is a property this file's instrument
+ * asserts rather than a habit. Two shrines at equal distance are settled by
+ * the smaller node id, and every frontier is walked in sorted order, so the
+ * answer does not depend on object key order or on which walker laid the edge
+ * down first. A glow that picks a different lane on a re-mount is a glow the
+ * player cannot follow.
+ *
+ * `from` may be one id or an array of them — the array is what the entrance
+ * needs, where the player is standing on nothing and every door is a source.
+ */
+export function nearestShrine({ graph, from }) {
+  if (!graph || !graph.nodes) return null;
+  const sources = (Array.isArray(from) ? from : [from]).filter((id) => id && graph.nodes[id]);
+  if (!sources.length) return null;
+  const prev = new Map();
+  const seen = new Set(sources);
+  let frontier = [...seen].sort();
+  let distance = 0;
+  while (frontier.length) {
+    distance++;
+    const step = [];
+    for (const id of frontier) {
+      for (const to of graph.nodes[id].next || []) {
+        if (!graph.nodes[to] || seen.has(to)) continue;
+        seen.add(to);
+        prev.set(to, id);
+        step.push(to);
+      }
+    }
+    step.sort();
+    const hit = step.find((id) => graph.nodes[id].type === 'shrine');
+    if (hit) {
+      const path = [hit];
+      let at = hit;
+      while (prev.has(at)) { at = prev.get(at); path.unshift(at); }
+      return { id: hit, path, distance };
+    }
+    frontier = step;
+  }
+  return null;
+}
+
+/**
+ * shrineLane({ graph, run }) → the ids of the walk to the nearest shrine,
+ * source first, shrine last. `[]` when no shrine is reachable ahead.
+ *
+ * "AS NEW PATHS OPEN" IS WHY NOTHING IS STORED. The lane is recomputed from
+ * where the player is standing every time the board mounts, so stepping to a
+ * new node re-aims it — which is the whole of his "as new paths open" with no
+ * event, no cache and nothing to invalidate.
+ *
+ * THE LANE IS NOT THE LIGHT. This returns the whole walk, including nodes the
+ * fog is covering; the board draws the glow only where the node is already
+ * drawn, exactly as it already draws an edge only when both its ends are. A
+ * lane that painted through the fog would be a fog leak wearing a highlight,
+ * and it is the one thing this feature could break that the player could never
+ * un-see. `tools/mapfog.mjs --selftest` asserts the containment.
+ */
+export function shrineLane({ graph, run }) {
+  if (!graph || !graph.nodes) return [];
+  const from = (run && run.mapNodeId) ? run.mapNodeId : (graph.startIds || []);
+  const found = nearestShrine({ graph, from });
+  return found ? found.path : [];
+}
+
 /* ------------------------------------------------------- the type reading -- */
 
 /**
@@ -216,6 +329,19 @@ export const FOG_TRAIL_CLAUSE = 'Fog never closes behind you — anywhere you ha
  *                    the end node." The shrine below it is not a landmark and
  *                    stays fogged until it is reached — the boss is what the
  *                    climb is aimed at; the shrine is a stop on the way.
+ *   the next shrine  "strines should unfog the next nearest shine node"
+ *                    (Constantine, 2026-08-16). For every shrine the player has
+ *                    STOOD ON, the nearest shrine ahead of it (nearestShrine
+ *                    above). The NODE, not the walk to it — his sentence names
+ *                    a node, and lighting the walk would hand over the shape of
+ *                    an act nobody has climbed.
+ *
+ * ARRIVAL, NOT THE REST BUTTON, and the difference is named rather than
+ * discovered. This fires when the player REACHES a shrine, because reaching one
+ * is what `run.path` records; "did they press Rest" is not in the run at all,
+ * and adding a `run.rested` to carry it would be the second copy of the trail
+ * that the paragraph below refuses. A player who walks into a shrine and smiths
+ * instead of resting has still seen the shrine, and the light says so.
  *
  * NOTHING IS STORED, and the stickiness is why that is worth saying twice. A
  * cumulative reveal is the obvious candidate for a `run.seen` array, and a
@@ -237,14 +363,25 @@ export function litNodes({ graph, run }) {
     for (const to of n.next || []) add(to);
   };
 
+  // A shrine the player has stood on lights the next shrine ahead of it. The
+  // set of shrines stood on can only grow (`run.path` only grows), so this
+  // source is monotone by the same construction as the trail itself — which is
+  // what keeps FOG_TRAIL_CLAUSE true with a fifth source in the light.
+  const shrineAhead = (id) => {
+    const n = graph.nodes[id];
+    if (!n || n.type !== 'shrine') return;
+    const found = nearestShrine({ graph, from: id });
+    if (found) add(found.id);
+  };
+
   for (const id of (graph.startIds || [])) add(id);
   add(graph.bossId);
   const path = (run && run.path) || [];
-  for (const id of path) shine(id);
+  for (const id of path) { shine(id); shrineAhead(id); }
   // Belt and braces: in play `mapNodeId` is always the last element of `path`
   // (`enterNode` pushes it), but `?shotAt` poses a node without a history and a
   // hand-edited save could too. Standing somewhere always lights it AND its split.
-  if (run && run.mapNodeId) shine(run.mapNodeId);
+  if (run && run.mapNodeId) { shine(run.mapNodeId); shrineAhead(run.mapNodeId); }
   return lit;
 }
 

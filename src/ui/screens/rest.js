@@ -20,6 +20,7 @@
 // characteristics; this screen names its actions.
 
 import { shrineHealAmount } from '../../engine/encounters.js';
+import { levelUpPlan, applyLevelUp } from '../../model/levelup.js';
 import { passiveFlag, resolveCard } from '../../model/registries.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { esc } from '../components/tooltip.js';
@@ -63,13 +64,40 @@ function refillLineHtml(registries, refill) {
   return `<p class="rest-refill">${said.join(' ')}</p>`;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, healMult = 1, refill = null }) {
+// WHAT A POINT IN THIS STAT DOES, READ AND NEVER TYPED. Every word comes from
+// the content tables — the attribute's own `sense` (content/attributes.js) and
+// the `presentation.label` of every derived stat whose `sourceStat` is this
+// attribute (content/derivedStats.js). So the sixth attribute, or a sixth
+// derived stat, describes itself at the shrine with nothing edited here, and no
+// number a player reads is a copy of one in a table (Law 1 clause 2).
+//
+// THE `→` IS THE ONLY THING THIS SCREEN AUTHORS. Both sides of it are read off
+// the run: the point is permanent and the player is owed the arithmetic before
+// they spend, not a promise about it.
+function levelDetailHtml(registries, run, attr) {
+  const rules = (registries.derivedStatRules || {}).rules || {};
+  const presentation = (registries.derivedStatRules || {}).presentation || {};
+  const feeds = Object.keys(rules)
+    .filter((id) => rules[id] && rules[id].sourceStat === attr.id)
+    .sort((a, b) => ((presentation[a] || {}).order || 0) - ((presentation[b] || {}).order || 0))
+    .map((id) => (presentation[id] || {}).label || id);
+  const now = run.attributes[attr.id];
+  return `<p><b>${esc(attr.label)} ${now} → ${now + 1}</b></p>
+    <p>${esc(attr.sense || '')}</p>
+    ${feeds.length ? `<p class="set-note">Feeds: ${feeds.map(esc).join(' · ')}</p>` : ''}`;
+}
+
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
   const arm = beatArmer(meta, registries);
   const hpCharge = chargeFlaskDefinition(registries, 'hp');
   const manaCharge = chargeFlaskDefinition(registries, 'mana');
+  // "also at graces, players should have the option to level up their character
+  // (per run) by trading cinders to level up." The screen asks the model what
+  // it may offer and prices nothing itself.
+  const level = levelUpPlan(registries, run);
 
   app.innerHTML = `
     <div class="screen">
@@ -95,6 +123,16 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             ${Array.from({ length: run.flaskCharges.capacity + 1 }, (_, hp) => `<button type="button" data-hp="${hp}">${hp}/${run.flaskCharges.capacity - hp}</button>`).join('')}
           </div>
         </div>
+        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt">
+          <div class="glyph">✦</div>
+          <h3>Level up</h3>
+          <p>${level.capped
+            ? `You have taken every level this climb allows (${level.levelsTaken}).`
+            : `${level.cost} cinders for 1 point. You hold ${level.cinders}${level.levelsTaken ? ` · ${level.levelsTaken} taken` : ''}.`}</p>
+          <div class="flask-allocation-controls">
+            ${level.attributes.map((a) => `<button type="button" data-attr="${a.id}"${level.offerable ? '' : ' disabled'}>${esc(a.shortLabel || a.label)} ${run.attributes[a.id]}</button>`).join('')}
+          </div>
+        </div>
       </div>
       <div id="smith-grid" class="deck-strip" style="display:none;max-width:900px"></div>
     </div>`;
@@ -115,6 +153,31 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     if (onReallocate) onReallocate({ ...run.flaskCharges });
     mountRest(app, { registries, run, meta, onDone, onReallocate, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
   }));
+  // THE SECOND BEAT IS NOT DECIDED HERE — `shrineLevelUp` is a row in
+  // model/secondbeat.js and the machinery picks the form from its
+  // characteristics. This screen names the action and hands over the commit,
+  // which is the rule that whole file exists to enforce.
+  if (level.offerable) {
+    for (const attr of level.attributes) {
+      const btn = app.querySelector(`#level-opt [data-attr="${attr.id}"]`);
+      if (!btn) continue;
+      arm(btn, 'shrineLevelUp', {
+        question: `Spend ${level.cost} cinders on ${attr.label}? The point is permanent.`,
+        detailHtml: levelDetailHtml(registries, run, attr),
+        confirmLabel: 'LEVEL UP',
+        onConfirm: () => {
+          applyLevelUp(registries, run, attr.id);
+          sfx.play('shrine');
+          if (onLevelUp) onLevelUp();
+          // RE-MOUNT, the same shape the flask reallocation above already uses:
+          // the price has moved, the purse has moved, and so has a derived pool
+          // the Rest panel is quoting. A screen that stayed put would be
+          // offering the old price for the next point.
+          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill });
+        },
+      });
+    }
+  }
   if (upgradable.length) {
     // OPENING THE GRID IS NOT AN ACTION THE TABLE RULES ON, and the asymmetry
     // is the point: this button commits nothing — it reveals the candidates,
