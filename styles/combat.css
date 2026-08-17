@@ -485,7 +485,18 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 
 /* ---------- hand + controls ---------- */
 .hand-area { height: 23rem; flex-shrink: 0; position: relative; display: flex; align-items: flex-end; justify-content: center; }
-.hand { display: flex; align-items: flex-end; justify-content: center; height: 100%; padding-bottom: 1rem; }
+/* padding-top RESERVES THE FAN'S LIFT, and the number is not written here.
+   components/hand.js anchors the fan on its DEEPEST card and publishes the lift
+   it used as `--fan-lift` on this element (FAN_LIFT_PROP — one home, Law 0
+   clause 4). Absent -> 0px, so a stylesheet that forgets to reserve it SHOWS the
+   clipping rather than hiding it (Law 0 clause 5).
+   ⚠ `.hand-area`'s `height: 23rem` above is a BOX in text units — Law 4 clause 4,
+   inside the known 400-of-548 set, and NOT converted here (ratchet, not sweep).
+   This act LEANS on it: the wide fan's clearance comes out of that box's slack,
+   so at Text S the slack shrinks with the cards and not with the 6 px step.
+   Measured, not assumed: tools/hintstrip.mjs walks Text S and XL at both
+   shapes. */
+.hand { display: flex; align-items: flex-end; justify-content: center; height: 100%; padding-bottom: 1rem; padding-top: var(--fan-lift, 0px); }
 .hand .card { margin: 0 -1.4rem; transform-origin: bottom center; }
 .hand .card:hover, .hand .card.selected {
   transform: translateY(-56px) scale(1.32) !important; z-index: 50 !important;
@@ -843,8 +854,14 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     grid-template-areas: "hand hand" "orb  end";
     align-items: center; gap: 0.8rem; padding: 0 1rem 1rem;
   }
+  /* Same reservation, and the phone is the shape that PROVED it was needed: the
+     fan's lift at the shipped hand of five is 12 px and this rule's own 1.2rem
+     is 12 px, so the centre card's top landed exactly on the border edge —
+     clearance 0.00, measured. At six cards the lift is 15 and the scroller
+     starts eating the card it is featuring. The added room costs the phone up to
+     `--fan-lift` of height, which Law 5 clause 4 spends on purpose. */
   :root[data-layout='narrow'] .hand {
-    grid-area: hand; height: auto; padding: 1.2rem 0 1.6rem;
+    grid-area: hand; height: auto; padding: calc(1.2rem + var(--fan-lift, 0px)) 0 1.6rem;
     justify-content: flex-start; overflow-x: auto; gap: 0.6rem;
     scrollbar-width: thin;
   }

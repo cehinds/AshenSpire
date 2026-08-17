@@ -590,16 +590,106 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
 .reduced-motion .gp-focus { box-shadow: none !important; }
 
-/* ---------- contextual control-hint bar ---------- */
+/* ---------- contextual control strip ---------- */
+/* `pointer-events: none` WAS ON `.hint-bar` AND IS GONE — Constantine,
+   2026-08-17: "all the buttons on those tool tips should also work". That one
+   declaration was the whole of the defect: five chips naming five keys,
+   unpressable, on a device with no keys. They are `<button>`s now
+   (components/hints.js). The bar itself keeps NO pointer-events rule, so its
+   padding stays inert and only the chips take a press — a 96vw invisible
+   click-eater across the board would be a worse bug than the one being fixed. */
 .hint-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 0.6rem; z-index: 40;
-  display: flex; gap: 1.4rem; pointer-events: none; white-space: nowrap;
+  display: flex; gap: 1.4rem; white-space: nowrap;
   padding: 0.4rem 1.2rem; border-radius: 10px; max-width: 96vw; overflow: hidden;
   background: rgba(12, 10, 7, 0.62); border: 1px solid var(--line-soft);
   font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
 }
-.hint-bar.hint-combat { top: 5.8rem; bottom: auto; } /* under the 5.2rem topbar; combat's bottom is full */
-.hint-bar .hint { display: inline-flex; align-items: center; gap: 0.5rem; }
+/* ⚠ TWO LANES MEET IN THIS BLOCK AND BOTH HALVES ARE HERE ON PURPOSE — the
+   rebase resolution is recorded rather than smoothed. Sten's act (15d4bca) made
+   these chips REAL BUTTONS with a tap floor and derived labels: his truth. Mine
+   moves the combat strip to the bottom of the column and lets it wrap: my
+   layout. Neither half was reshaped to fit the other. The one line that
+   genuinely conflicted was `.hint-bar.hint-combat { top: 5.8rem }` — the pinned
+   position he carried forward untouched and I was sent to change — and it is
+   MINE, replaced below. Everything he wrote about the chip itself stands.
+
+   ⚠ AND THE SEAM BIT, ON THE AXIS NOBODY WATCHED. Marina warned that his labels
+   could change WIDTH and told me to measure a wider one; I did, and width is
+   fine (a 9-character rebind wraps, 0 chips clipped). IT BIT ON HEIGHT.
+   `--tap-floor` on `.hint` takes the chip from a line of text to 44 px, so the
+   strip is 54 px tall instead of 25 — and combat's column is then 18 px SHORT at
+   1200x730 Text M, the SHIPPED DEFAULT. Measured on the merged tree: strip
+   687.5..741.5 against a 730 viewport, so 42.5 of 54 px visible — 78.7%,
+   legible, clipped at its bottom edge. At Text XL it is wholly below the fold
+   (+127 px).
+   BOTH HALVES ARE RIGHT AND THE COLUMN IS OVER-SUBSCRIBED: a pressable control
+   owes the tap floor, and his other sentence puts a row at the bottom. What
+   cannot pay for either is `.hand-area height:23rem` plus `.field`'s min-content
+   — Law 4 clause 4's named 400-of-548 debt. NOT resolved here, NOT resolved in
+   the rebase, NOT painted green: tools/hintstrip.mjs prints the number every run
+   as `unknown` and states what turns it into an assertion. It goes to Marina. */
+/* LAW 4 CLAUSE 4, ON A CONTROL THAT WAS TEXT UNTIL TODAY. A fixed floor with
+   intrinsic growth, never a multiple of the text unit: `--tap-floor` is the
+   ergonomic constant (and answers UI size, not Text size), the glyphs inside push
+   the box taller at XL, and the padding is px because it is geometry. The chip
+   was a `<span>` yesterday and owed no floor; the day it became pressable it
+   acquired one.
+   `min-width` IS DELIBERATELY NOT FLOORED, and that is a partial rather than an
+   oversight: five 44 px squares is 220 px of a 390 px phone, and on a strip of
+   words the axis that decides whether a thumb lands is the HEIGHT. */
+.hint-bar .hint {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  min-height: var(--tap-floor); height: auto;
+  padding: 2px 6px; margin: 0; border: 0; border-radius: 6px;
+  background: none; color: inherit; font: inherit; letter-spacing: inherit;
+  cursor: pointer; touch-action: manipulation;
+}
+.hint-bar .hint:hover, .hint-bar .hint:focus-visible { background: rgba(var(--accent-rgb), 0.14); }
+/* The press acknowledged WHERE THE THUMB IS. The fill of a second beat belongs to
+   the control being pressed (`.end-turn` fills under its own words); this is only
+   the chip saying it took the press. */
+.hint-bar .hint:active { background: rgba(var(--accent-rgb), 0.24); }
+/* COMBAT'S STRIP JOINS THE FLOW AT THE BOTTOM OF THE COLUMN. His words,
+   2026-08-17: "this should be at the bottom under the cards, not over lapped by
+   the cards. perhaps shift the cards up a bit to make space for this tool tip."
+
+   ⚠ HIS PREMISE IS HALF RIGHT AND THE HALF THAT IS WRONG IS RECORDED RATHER
+   THAN QUIETLY FIXED. The strip was never overlapped by the CARDS: measured at
+   db09846 on eight wide shapes (1200x730, 1200x600, 1366x768, 1440x900,
+   1920x1080, 1024x640, 900x560, 800x600) it touched 0 of 5 cards at every one,
+   and it WAS 100% inside the TOPBAR at all eight — a bar this rule's old
+   comment called 5.2rem and which measures 141 local px. What the pill actually
+   sat on was the POISE track. So the element he pointed at is right, the
+   direction he wants it moved is right, and the occluder is not the one he
+   named. His instruction is followed exactly; the correction is his to keep.
+
+   IN THE FLOW, NOT PINNED, and it is the same fix and the same reason as the
+   map's (styles/map.css .mapscreen .hint-bar). A fixed pill reserves no height,
+   so "under the cards" written as a bottom offset is a number somebody re-tunes
+   every time the hand changes. As the last row of the .combat column it takes
+   its own height out of .field — which IS the "shift the cards up" half of his
+   sentence, derived from the strip's own box instead of typed.
+
+   IT WRAPS, and this is the seam with Sten's lane (item 1(b): making these
+   chips work and deriving their labels from the live binding and device). The
+   base rule is `white-space: nowrap; overflow: hidden`, so a label WIDER than
+   `E` — a rebind to Backspace, a pad glyph — was silently CLIPPED. A control
+   strip that hides a control is worse than one that is two rows tall. Wrapping
+   is between chips only: `.hint` is an inline-flex unit, so a key never
+   separates from its verb (Law 5 clause 3's shape — the row wraps around items
+   that do not). Measured against a 9-character rebound label, both shapes;
+   tools/hintstrip.mjs holds it.
+
+   `max-width: 96vw` becomes `96%` here — Law 2 forbids vw/vh below body and
+   this is a new write of this rule. The base .hint-bar above keeps its vw and
+   is NOT swept (ratchet, not sweep). */
+.hint-bar.hint-combat {
+  position: static; top: auto; bottom: auto; transform: none;
+  align-self: center; margin: 0 auto 0.6rem; max-width: 96%;
+  flex-wrap: wrap; justify-content: center; row-gap: 0.4rem;
+  white-space: normal; overflow: visible;
+}
 .hint-bar kbd {
   font-family: var(--font-body); font-size: 1rem; min-width: 1.5rem; text-align: center;
   padding: 0.1rem 0.5rem; border-radius: 4px; color: var(--parchment);
@@ -1891,6 +1981,39 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   flex-shrink: 0;
 }
 .choice-group .choice.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); color: var(--gold); }
+/* ---- 'number' rows: a typed field with a slider bound to it ----------------
+   Constantine, 2026-08-17: "I want to be able to enter the value myself and
+   maybe a slider with it that is synced with the value."
+
+   ITS OWN SELECTORS, not `.set-range`'s — that class is a volume slider with a
+   0-100 domain and it is the code path Aurora's #181 has a reviewed diff in.
+   Sharing the styling would have re-coupled what the markup deliberately split.
+
+   THE FIELD IS THE CONTROL AND THE SLIDER IS THE AFFORDANCE, which is why the
+   field comes first in the DOM and takes the tab stop: he asked to type, and the
+   slider is his "maybe". `min-width` on the field, never a fixed width, so a
+   two-digit value is not clipped at XL text — Law 4 clause 4, a floor with
+   intrinsic growth. */
+.num-wrap { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+.num-wrap input.set-num {
+  min-width: 4.5rem;
+  padding: 0.4rem 0.5rem;
+  background: var(--panel);
+  color: var(--gold);
+  border: 1px solid var(--map-structure);
+  border-radius: 4px;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.num-wrap input.set-num:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+/* PART B'S SLIDER IS NOT STYLED HERE YET — it waits on Aurora's #181 (Marina's
+   order). Its rules land here, with its own selector and NOT `.set-range`'s: that
+   class is a 0-100 volume slider and is the code path #181 edits. On a narrow
+   shape it will be `display: none` — Law 5, a narrow shape spends width on
+   height, and the slider is the half he called "maybe" — with the field, which is
+   the half he asked for, fully enterable at every size. */
+
 .range-wrap { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
 .range-wrap .range-val { color: var(--gold); font-size: 1.1rem; width: 2.4rem; text-align: right; font-variant-numeric: tabular-nums; }
 input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor: pointer; }
@@ -3027,6 +3150,21 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   line-height: 1.5;
   color: var(--muted);
 }
+/* THE WAY OUT, NAMED (Constantine's amendment, 2026-08-17). Third and smallest of
+   the three lines, on purpose: the instruction is the heading, the reassurance
+   answers "have I lost my run", and this answers a question only some players
+   have. Dimmer and a size down so it cannot outrank either.
+   It is a POINTER AND NOT A CONTROL — the gate still has no interactive element
+   in it, which is what keeps the ruling in this file's header intact. Same
+   `/ var(--ui-zoom)` carve-out as its siblings and for the same reason written
+   there: this is the message ABOUT the app having zoomed itself to its floor. */
+.upright-hint {
+  font-size: calc(1.25rem / var(--ui-zoom, 1));
+  line-height: 1.5;
+  margin-top: 14px;
+  color: var(--muted);
+  opacity: 0.78;
+}
 /* The glyph is a phone standing up. Box geometry in px — chrome, not type
    (Law 4 clause 3) — and it is `aria-hidden`, so a reader that cannot see it
    loses nothing the sentences do not already say. */
@@ -3578,7 +3716,18 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 
 /* ---------- hand + controls ---------- */
 .hand-area { height: 23rem; flex-shrink: 0; position: relative; display: flex; align-items: flex-end; justify-content: center; }
-.hand { display: flex; align-items: flex-end; justify-content: center; height: 100%; padding-bottom: 1rem; }
+/* padding-top RESERVES THE FAN'S LIFT, and the number is not written here.
+   components/hand.js anchors the fan on its DEEPEST card and publishes the lift
+   it used as `--fan-lift` on this element (FAN_LIFT_PROP — one home, Law 0
+   clause 4). Absent -> 0px, so a stylesheet that forgets to reserve it SHOWS the
+   clipping rather than hiding it (Law 0 clause 5).
+   ⚠ `.hand-area`'s `height: 23rem` above is a BOX in text units — Law 4 clause 4,
+   inside the known 400-of-548 set, and NOT converted here (ratchet, not sweep).
+   This act LEANS on it: the wide fan's clearance comes out of that box's slack,
+   so at Text S the slack shrinks with the cards and not with the 6 px step.
+   Measured, not assumed: tools/hintstrip.mjs walks Text S and XL at both
+   shapes. */
+.hand { display: flex; align-items: flex-end; justify-content: center; height: 100%; padding-bottom: 1rem; padding-top: var(--fan-lift, 0px); }
 .hand .card { margin: 0 -1.4rem; transform-origin: bottom center; }
 .hand .card:hover, .hand .card.selected {
   transform: translateY(-56px) scale(1.32) !important; z-index: 50 !important;
@@ -3936,8 +4085,14 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     grid-template-areas: "hand hand" "orb  end";
     align-items: center; gap: 0.8rem; padding: 0 1rem 1rem;
   }
+  /* Same reservation, and the phone is the shape that PROVED it was needed: the
+     fan's lift at the shipped hand of five is 12 px and this rule's own 1.2rem
+     is 12 px, so the centre card's top landed exactly on the border edge —
+     clearance 0.00, measured. At six cards the lift is 15 and the scroller
+     starts eating the card it is featuring. The added room costs the phone up to
+     `--fan-lift` of height, which Law 5 clause 4 spends on purpose. */
   :root[data-layout='narrow'] .hand {
-    grid-area: hand; height: auto; padding: 1.2rem 0 1.6rem;
+    grid-area: hand; height: auto; padding: calc(1.2rem + var(--fan-lift, 0px)) 0 1.6rem;
     justify-content: flex-start; overflow-x: auto; gap: 0.6rem;
     scrollbar-width: thin;
   }
@@ -4459,7 +4614,7 @@ const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
 const { mountCompendium } = require("src/ui/screens/compendium.js");
-const { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill } = require("src/ui/screens/settings.js");
+const { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions } = require("src/ui/screens/settings.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
@@ -4861,7 +5016,17 @@ function applyUiScale(settings) {
   // recovery line, and the gate stands or falls on the geometry either way.
   const coarse = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
     && window.matchMedia('(pointer: coarse)').matches;
-  updateUprightGate({ short, offerRotate: !turned.short && coarse });
+  // AND HIS AMENDMENT (2026-08-17): *"revert that back, or make that a
+  // configurable setting."* One row — `Display / Short-screen warning`. It is
+  // passed as its OWN argument rather than folded into `short`, deliberately:
+  // `short` is a fact about the viewport that this decider computes, and the
+  // setting is a fact about what the player asked us to do about it. Collapsing
+  // them would hide a preference inside the geometry, and the next reader of
+  // `layoutForCap` would find a `short` that is sometimes false on a short
+  // screen. `!== false` so a profile written before this row existed keeps the
+  // gate — and so does a `?shot=` boot, which by construction has no durable
+  // settings and resolves every one of them to its default.
+  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });
 }
 
 // MINIMUM TAP SIZE → `--tap-target` on <html>, read by `--tap-floor` in
@@ -5124,7 +5289,18 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
-  run = createRunState({ seed, classId, registries, startingKitId, profileMeta: saves.loadMeta() });
+  // HIS TIER DIAL, AND THE ONLY PLACE IT CAN BE SPENT — Constantine,
+  // 2026-08-17: "let's make the increment of 5 points for reasonable change be
+  // confurable as well." A run SNAPSHOTS its derived-stat rules at birth so a
+  // later content change can never re-stat a climb in progress, which is right
+  // and which means this dial has exactly one moment to apply: here. At the
+  // shipping value `derivedStatDialOptions` returns {} and the snapshot is
+  // byte-identical to one made before the dial existed. The settings row says
+  // this out loud so he does not turn it, load a save, and see nothing.
+  run = createRunState({
+    seed, classId, registries, startingKitId, profileMeta: saves.loadMeta(),
+    derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
+  });
   run.seedString = seedToString(seed);
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
@@ -5912,6 +6088,12 @@ function showRest() {
     healMult,
     refill,
     meta: saves.loadMeta(),
+    // HIS LEVEL-VALUE DIAL, resolved at the door of the screen that spends it,
+    // so turning it applies to the NEXT level bought — in any run, including
+    // one already in progress. Unlike the tier size it needs no new run,
+    // because nothing about it is snapshotted: the run records the POINTS it
+    // was granted (model/levelup.js) rather than the rule that granted them.
+    levelValue: resolveLevelUpValue(saves.loadMeta().settings),
     onReallocate: () => persist(),
     // A level is cinders and a permanent point. It persists the moment it is
     // bought, not when the player leaves the shrine, for the same reason the
@@ -6710,11 +6892,66 @@ const balance = {
   // what a real climb actually earns, or what the shop takes out of it first.
   // The curve is checked; the range it is checked over is an assumption, and it
   // is stated as one rather than reported as balance.
+  //
+  // ---- TWO DIALS HE ASKED FOR BY NAME, 2026-08-17 ---------------------------
+  //
+  //   "leave the level up value configurable. also, let's make the increment of
+  //    5 points for reasonable change be confurable as well. that way I can
+  //    test each."
+  //
+  // Only the LADDERS live here. `pointsPerLevel` is the level value's shipping
+  // default and this is its home. The TIER SIZE's default is deliberately NOT
+  // restated in this file — it is `derivedStatRules.defaults.pointsPerTier`,
+  // read at the settings row from its one home, because this file is exactly
+  // where a copy of it would drift. Adding a value he may pick is a row in
+  // these arrays and ZERO UI code (the `tapFloor` row's shape, and the Law 0
+  // falsifier for the dials themselves).
+  //
+  // WHAT THE TIER DIAL DOES NOT REACH, said out loud rather than discovered:
+  // THREE separate vocabularies in this tree carry a 5-point tier —
+  // derived stats (this dial), `equipment.basicCardProfiles[*].pointsPerTier`,
+  // and relic `resource.attributeTier` rows. His sentence is about what a stat
+  // point is WORTH, which is the derived-stat one and the one my HP finding was
+  // about. The other two are their own systems with their own tiers, and a
+  // single global reaching into all three would be collapsing three
+  // distinctions into one number because it is tidier.
   levelUp: {
     firstCost: 20,
     costStep: 4,
     pointsPerLevel: 1,
     maxLevels: null,
+    // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
+    // ladder in his own words: "i don't want a dial for hte level up, I want to
+    // be able to enter the value myself and maybe a slider with it that is
+    // synced with the value." Four chips let him test four things; he said he
+    // wants to test.
+    //
+    // ONE DOMAIN, TWO CONTROLS. The typed field and the slider read these two
+    // numbers, so they cannot disagree about what is enterable — a field that
+    // accepted 50 while the slider stopped at 20 would be the second copy of a
+    // domain, and the player would find it by dragging.
+    //
+    // THE CEILING IS ONE NUMBER HERE AND NOTHING ELSE. 20 is an experimental
+    // bound, not a design claim: at 20 a single level is four tiers of a stat.
+    // If he wants 50, this line is the whole change — no code, no UI, and the
+    // field will say it clamped rather than swallowing the value (Law 0 clause
+    // 5: the silent plausible answer is the dangerous one).
+    pointsPerLevelMin: 1,
+    pointsPerLevelMax: 20,
+    // How many points buy one tier of a derived stat — the DOMAIN, not a ladder,
+    // for the same reason the level value stopped being one. His purpose clause
+    // was "that way I can test each", and a 1-2-3-5 ladder cannot express 4 or
+    // 7. (The four-chip shape a previous seat measured — 92.1 px at 390x844
+    // against 301.2 for a seven-chip row — is why a LADDER could never have been
+    // widened to cover the domain instead: a typed field has no chip count.)
+    //
+    // MIN IS 1 AND IT IS ARITHMETIC, NOT TASTE. The tier is `floor(points /
+    // pointsPerTier)`, so 0 divides by zero, and the content door already
+    // refuses a non-positive value by name (model/validate.js). 20 is the
+    // ceiling for the same reason as the level value's: an experimental bound,
+    // one number here, no code.
+    tierSizeMin: 1,
+    tierSizeMax: 20,
   },
 
   // ---- what a grace hands back ----------------------------------------------
@@ -10428,7 +10665,11 @@ const relics = [
           tag: 'resource.attributeTier',
           resource: 'hp',
           sourceStat: 'constitution',
-          pointsPerTier: 5,
+          // NO `pointsPerTier` — it said 5, which is derivedStatRules' own tier
+          // size written a second time. The row means "+1 HP per TIER of CON";
+          // what a tier is belongs to the rule it folds into. At the shipping
+          // tier size this changes no number (tests 57 and 60c), and stating it
+          // again is still legal if a relic ever wants its own granularity.
           amountPerTier: 1,
         },
       ],
@@ -15447,7 +15688,28 @@ const derivedStatRules = {
       // here rather than argued.
       base: { strategy: 'classField', field: 'maxHp' },
       sourceStat: 'constitution',
-      pointsPerTier: 5,
+      // `pointsPerTier: 5` WAS HERE AND IS DELETED — it restated
+      // `defaults.pointsPerTier`, which is also 5, so it moved no number today
+      // and was a second copy with a live consequence tomorrow (Law 1 clause 2).
+      //
+      // WHAT IT COSTS, MEASURED RATHER THAN ASSUMED — and my first draft of this
+      // comment was WRONG, which is why it says what it says now. A row's own
+      // value beats the defaults it is merged over
+      // (`resolveDerivedStatRules`), so turning `defaults.pointsPerTier` IN
+      // THIS FILE moves Mana, Actions, Draw and Stamina and LEAVES HP ALONE —
+      // silently, and HP is the stat a tier dial is for.
+      //
+      // WHAT IT DOES **NOT** AFFECT, and I claimed it did until a plant said
+      // otherwise: Constantine's Settings → Advanced tier dial. That arrives as
+      // an override LAYER, and a layer's `defaults` is assigned over every row
+      // (same function), so it reached HP with the restatement present.
+      // Restoring the line leaves all 91 tests green.
+      //
+      // So this deletion is a SECOND-COPY fix and not a bug fix: it closes the
+      // OTHER door — the one a designer uses when they edit this file directly
+      // — where the two doors gave two different answers. `tests/engine.test.js`
+      // 60c pins that door, so the copy can now go red instead of being
+      // remembered.
       gainPerTier: 1,
       // WHAT "OTHER BONUSES" COVERS, and it is not a list anyone maintains.
       // Every HP bonus in this tree already arrives through a declared tag or
@@ -16037,8 +16299,14 @@ function validateContent(bundle) {
         : row.tag === 'resource.attributeTier'
           ? ['tag', 'resource', 'sourceStat', 'pointsPerTier', 'amountPerTier']
           : ['tag', 'school', 'amount'];
+      // `pointsPerTier` is ALLOWED and no longer REQUIRED on an attributeTier
+      // row: omitted, it inherits the derived rule it folds into
+      // (model/relicModifiers.js). It stayed required while the tier size was a
+      // constant; the day Constantine asked for that size to be a dial, a row
+      // restating it became a copy that made a reaver unable to start a run.
+      const optional = row.tag === 'resource.attributeTier' ? ['pointsPerTier'] : [];
       for (const key of Object.keys(row)) if (!fields.includes(key)) err(`${path}.${key}`, `unknown field '${key}' for '${row.tag}'`);
-      for (const key of fields) if (row[key] === undefined) err(`${path}.${key}`, `missing required field '${key}'`);
+      for (const key of fields) if (row[key] === undefined && !optional.includes(key)) err(`${path}.${key}`, `missing required field '${key}'`);
       if (row.resource !== undefined && !resourceIds.has(row.resource)) err(`${path}.resource`, `unknown resource '${row.resource}'`);
       if (row.sourceStat !== undefined && !attributeIds.has(row.sourceStat)) err(`${path}.sourceStat`, `unknown attribute '${row.sourceStat}'`);
       if (row.school !== undefined && !DAMAGE_SCHOOLS.includes(row.school)) err(`${path}.school`, `unknown damage school '${row.school}'`);
@@ -21048,7 +21316,6 @@ function tables(source) {
       creationModes: source.creationModes.all(),
       attributeRules: source.attributeRules,
       classes: source.classes.all(),
-      balance: source.balance || {},
     };
   }
   return {
@@ -21056,13 +21323,12 @@ function tables(source) {
     creationModes: Array.isArray(source && source.creationModes) ? source.creationModes : [],
     attributeRules: source && source.attributeRules,
     classes: Array.isArray(source && source.classes) ? source.classes : [],
-    balance: (source && source.balance) || {},
   };
 }
 
 /**
- * grantedAttributePoints(run, source) — points this run holds ON TOP OF its
- * creation allocation.
+ * grantedAttributePoints(run) — points this run holds ON TOP OF its creation
+ * allocation.
  *
  * THE CREATION RULES ARE ABOUT CREATION, AND THIS IS THE LINE THAT SAYS SO.
  * `standard` is `fixedTotal` at 55 with every cell in 10..15 — rules about the
@@ -21082,19 +21348,30 @@ function tables(source) {
  * level-up that only incremented `run.attributes` would look perfect on screen
  * and destroy the player's run at the next load.
  *
- * ⚠ ONE HAZARD, NAMED RATHER THAN HIDDEN: `pointsPerLevel` is content, so
- * editing it re-prices every IN-FLIGHT save's expected total, and those runs are
- * refused at the door — loudly and by name, never silently healed. It is his
- * number, it is 1, and nothing has asked for a second value. The day something
- * does, this needs the treatment `derivedStatRuleSnapshot` already gets:
- * snapshot the conversion into the run so a content edit cannot re-price a
- * climb in progress.
+ * ⚠ THE HAZARD THIS FUNCTION SHIPPED WITH IS GONE, AND THE FIX WAS NOT A BETTER
+ * ERROR MESSAGE. At `e05be89` it multiplied `run.levelUps` by a LIVE read of
+ * `balance.levelUp.pointsPerLevel`. Constantine then asked for that number to be
+ * a dial he turns between test runs — which would have made every in-flight save
+ * fail this check the first time he turned it, and `save.js` ARCHIVES what fails
+ * here. The right answer was to delete the dependency, not to soften the
+ * refusal: the run records the points it was actually granted, at the moment it
+ * was granted them, and this reads what the run recorded.
+ *
+ * **NOTHING IN THIS FUNCTION READS CONTENT ANY MORE.** No setting, no table and
+ * no edit anywhere can refuse a save that was legal when it was written. That is
+ * also why `source` is gone from the signature — a parameter nothing uses is an
+ * invitation to start using it again.
+ *
+ * `levelUps` IS THE FALLBACK AND IT IS EXACT, NOT A GUESS. Runs saved by
+ * `e05be89` carry `levelUps` and no `levelPoints`; THAT BUILD HAD EXACTLY ONE
+ * POSSIBLE VALUE, 1, because the dial did not exist in it. So one point per
+ * level is what those saves were made under — read off the build that wrote
+ * them, never inferred from today's tables (Law 0 clause 5: the plausible guess
+ * is the dangerous one).
  */
-function grantedAttributePoints(run, source) {
-  const levels = run && Number.isInteger(run.levelUps) ? run.levelUps : 0;
-  if (levels <= 0) return 0;
-  const per = (tables(source).balance.levelUp || {}).pointsPerLevel;
-  return levels * (Number.isInteger(per) && per > 0 ? per : 1);
+function grantedAttributePoints(run) {
+  if (run && Number.isInteger(run.levelPoints)) return Math.max(0, run.levelPoints);
+  return run && Number.isInteger(run.levelUps) ? Math.max(0, run.levelUps) : 0;
 }
 
 function orderedAttributes(source) {
@@ -21294,7 +21571,7 @@ function normalizeRunAttributes(run, registries) {
   // before.
   const problems = attributeAllocationProblems(
     registries, run.class, run.attributeMode, run.attributes, 'attributes',
-    grantedAttributePoints(run, registries),
+    grantedAttributePoints(run),
   );
   if (problems.length) throw new Error(problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
   run.attributes = Object.fromEntries(orderedAttributes(registries).map((def) => [def.id, run.attributes[def.id]]));
@@ -21901,7 +22178,11 @@ function relicAttributeTierFoldProblems(term, rule) {
   if (term.sourceStat !== rule.sourceStat) {
     problems.push({ field: 'sourceStat', msg: `must match target rule sourceStat '${rule.sourceStat}'` });
   }
-  if (term.pointsPerTier !== rule.pointsPerTier) {
+  // AN UNSTATED GRANULARITY INHERITS THE RULE IT FOLDS INTO and can never
+  // mismatch it (Law 0 clause 1). A STATED one must still match exactly: "+1 HP
+  // per 5 CON" genuinely cannot be added to a per-1 rule, and that refusal is
+  // the arithmetic protecting itself, not a rule to relax.
+  if (term.pointsPerTier !== undefined && term.pointsPerTier !== rule.pointsPerTier) {
     problems.push({ field: 'pointsPerTier', msg: `must match target rule pointsPerTier ${rule.pointsPerTier}` });
   }
   if (rule.rounding !== 'floor') {
@@ -24292,7 +24573,43 @@ const RELIC_RESOURCE_IDS = Object.freeze(['hp', 'mana', 'stamina']);
 
 const emptyResource = () => ({ flat: 0, attributeTiers: [], total: 0 });
 
-function resolveRelicModifiers(registries, relicIds, { attributes = {} } = {}) {
+/**
+ * The tier granularity a `resource.attributeTier` row folds at.
+ *
+ * A ROW THAT DOES NOT STATE ONE INHERITS THE RULE IT FOLDS INTO — Law 0
+ * clause 1: the entry describes ("+N HP per tier of CON"), the machinery
+ * derives what a tier is. `pointsPerTier` stayed REQUIRED here until
+ * 2026-08-17 and the one shipped row said 5, which is `derivedStatRules`'
+ * own tier size written a second time; the copy was invisible until
+ * Constantine asked for that size to be a dial ("let's make the increment of
+ * 5 points for reasonable change be confurable as well"). At a 1-point tier
+ * the host rule said 1, the relic still said 5, and the fold contract
+ * REFUSED — correctly, since +1 per 5 CON cannot be added to a per-1 rule —
+ * so a reaver could not start a run at all.
+ *
+ * STATING IT IS STILL LEGAL AND STILL MEANS WHAT IT SAID (Law 0 clause 3: an
+ * override is data). It simply must then match the rule it folds into, which
+ * is the contract that has always applied.
+ *
+ * `tierSizes` is the HOST's resolved granularity per resource, passed by the
+ * caller that has it. Absent, the authored table is read — the same answer
+ * every caller got before this parameter existed.
+ */
+function tierSizeFor(registries, resource, row, tierSizes) {
+  if (Number.isInteger(row.pointsPerTier)) return row.pointsPerTier;
+  if (tierSizes && Number.isInteger(tierSizes[resource])) return tierSizes[resource];
+  const table = registries.derivedStatRules || {};
+  const authored = (table.rules || {})[resource] || {};
+  const per = Number.isInteger(authored.pointsPerTier)
+    ? authored.pointsPerTier
+    : (table.defaults || {}).pointsPerTier;
+  if (!Number.isInteger(per) || per <= 0) {
+    throw new Error(`relic modifier on '${resource}' states no pointsPerTier and none could be derived`);
+  }
+  return per;
+}
+
+function resolveRelicModifiers(registries, relicIds, { attributes = {}, tierSizes = null } = {}) {
   const resources = Object.fromEntries(RELIC_RESOURCE_IDS.map((id) => [id, emptyResource()]));
   const damageBySchoolAdd = Object.fromEntries(DAMAGE_SCHOOLS.map((id) => [id, 0]));
   const sources = [];
@@ -24310,11 +24627,15 @@ function resolveRelicModifiers(registries, relicIds, { attributes = {} } = {}) {
         if (!Number.isFinite(points)) {
           throw new Error(`${relicId}.passives.modifiers[${index}].sourceStat '${row.sourceStat}' has no finite run value`);
         }
-        const tier = Math.floor(points / row.pointsPerTier);
+        const per = tierSizeFor(registries, row.resource, row, tierSizes);
+        const tier = Math.floor(points / per);
         const value = tier * row.amountPerTier;
         const term = {
           sourceStat: row.sourceStat,
-          pointsPerTier: row.pointsPerTier,
+          // THE RESOLVED granularity, not the authored one. The receipt is
+          // stamped into the save and read by the fold, so it must say what
+          // was actually used or the audit trail is fiction.
+          pointsPerTier: per,
           amountPerTier: row.amountPerTier,
           tier,
           value,
@@ -24356,7 +24677,8 @@ const { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProf
 const { chargeKindForFlask, createFlaskCharges, flaskCapacity } = require("src/model/gracerefill.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } = require("src/model/attributes.js");
-const { createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot, deriveStat } = require("src/model/derivedStats.js");
+const { createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot, resolveDerivedStatRules, deriveStat } = require("src/model/derivedStats.js");
+
 
 
 
@@ -24446,9 +24768,16 @@ function createRunState({
     // COUNT and not a copy of anything: the points themselves live in
     // `attributes` (where every reader already looks, so a level is worth
     // exactly what the derived-stat table says a point is worth), and this
-    // number is what the creation-rule check at the load door needs in order to
-    // tell a levelled run from a hand-edited one. `model/levelup.js`.
+    // number is what the COST RAMP indexes on. `model/levelup.js`.
     levelUps: 0,
+    // THE POINTS THOSE LEVELS GRANTED, and not a copy of the count above: the
+    // two are one number only while the level value is one number. Constantine
+    // made it a dial on 2026-08-17 ("leave the level up value configurable"),
+    // so six levels at 1 point and three at 2 are the same nine points and a
+    // different number of purchases. The ramp indexes on purchases, the load
+    // door checks points, and neither derives from the other once the dial has
+    // moved mid-run. This is what makes a dial change unable to refuse a save.
+    levelPoints: 0,
     floor: 0,
     actNumber: 1,
     mapNodeId: null,
@@ -24626,7 +24955,25 @@ function initializeRunDerivedStats(run, registries, {
 
   // v1 carried class-authored 40/60/80 Mana pools. It is readable so its
   // current/max ratio can be migrated, but it is never retained as authority.
-  const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, { attributes: run.attributes });
+  // THE HOST'S RESOLVED TIER SIZE, HANDED TO THE RECEIPT THAT HAS TO FOLD INTO
+  // IT. A relic `resource.attributeTier` row that states no `pointsPerTier`
+  // inherits the rule it folds into, and this is where "the rule" is known: the
+  // authored table plus whatever override layer this run is being born with
+  // (Constantine's Settings → Advanced tier dial). Resolved twice — once here
+  // for the granularity, once inside the snapshot for the numbers — because a
+  // receipt computed at one granularity and folded at another is the silent
+  // wrong answer Law 0 clause 5 is about.
+  const hostRules = resolveDerivedStatRules(
+    registries.derivedStatRules,
+    derivedOptions(registries, derivedStatOptions),
+  );
+  const tierSizes = Object.fromEntries(
+    Object.entries(hostRules.rules).map(([id, r]) => [id, r.pointsPerTier]),
+  );
+  const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, {
+    attributes: run.attributes,
+    tierSizes,
+  });
   const receipt = existingIsCurrent
     ? restoredExisting
     : createDerivedStatRuleSnapshot(registries.derivedStatRules, {
@@ -24718,8 +25065,11 @@ const RUN_SHAPE = [
   { key: 'attributeMode', type: 'string', optional: true },
   { key: 'attributes', type: 'object', optional: true },
   // Optional so a run saved before shrine levelling existed still loads: absent
-  // reads as zero levels bought, which is what such a run is.
+  // reads as zero levels bought, which is what such a run is. `levelPoints` is
+  // additionally absent from e05be89's saves, where it is exactly `levelUps` —
+  // that build had one possible level value (attributes.js).
   { key: 'levelUps', type: 'number', optional: true },
+  { key: 'levelPoints', type: 'number', optional: true },
   // Optional only for the one pre-derived migration at the load door.
   { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
   { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
@@ -24789,8 +25139,10 @@ function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger
   // ALLOCATION check that reads it lives at the load door
   // (attributes.js:grantedAttributePoints); this is the shape check, and a
   // fractional or negative value would silently shift the expected total there.
-  if (run.levelUps !== undefined && (!Number.isInteger(run.levelUps) || run.levelUps < 0)) {
-    problems.push('levelUps must be a non-negative integer');
+  for (const key of ['levelUps', 'levelPoints']) {
+    if (run[key] !== undefined && (!Number.isInteger(run[key]) || run[key] < 0)) {
+      problems.push(`${key} must be a non-negative integer`);
+    }
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.
@@ -31460,6 +31812,64 @@ function armInspect(el, { ms, onOpen = null } = {}) {
 let activeConfirm = null;
 
 /**
+ * reveal(panel, actions) — bring a freshly-opened confirm panel ON SCREEN.
+ *
+ * ⚠ WHY THIS EXISTS, AND THE MEASUREMENT IS THE WHOLE ARGUMENT. The panel is
+ * inserted `afterend` of the control it asks about, so where it LANDS is decided
+ * by however tall the screen above it happens to be. At `db09846`, tapping a
+ * Smith candidate put both answers at
+ *
+ *     390x844   .beat-yes / .beat-no  top 1000.22 .. 1044.22   0% on screen
+ *     360x640   .beat-yes / .beat-no  top  938.66 ..  982.66   0% on screen
+ *
+ * — 156 px and 299 px below the fold respectively (`node tools/uprightgate.mjs`,
+ * both shapes, and `tools/holdconfirm.mjs` red on two cells because a CDP touch
+ * at y=1022 lands on nothing).
+ *
+ * IT IS A LEGIBILITY DEFECT AND NOT A STRANDING, and getting that distinction
+ * right cost two seats a measurement each. I read `document.scrollHeight === 844`
+ * and concluded the panel could not be answered at all. **The DOCUMENT does not
+ * scroll; `.screen` does** — `overflow-y: auto`, real travel — so the player CAN
+ * reach it, by scrolling 156 px that nothing on the screen advertises (Vira
+ * re-measured on `b30e624` and corrected my conclusion while confirming my
+ * position; the reach word her probe prints is `scrollable`, not `unreachable`).
+ * A question the player has to go looking for is not a question, so this scrolls
+ * it into view for them.
+ *
+ * NEAREST, NOT CENTRE, AND NOT SMOOTH. `block: 'nearest'` is the least scroll
+ * that makes the thing visible, which keeps the ARMED CARD — `.beat-armed`, one
+ * row above — on screen with it: the player must be able to see which card the
+ * question is about, and a centred or `start` scroll pushes it off. Instant
+ * rather than smooth because a 300 ms animation is a window in which the buttons
+ * are still off screen and a fast second tap lands on nothing, and because a
+ * reduced-motion player is owed no animation at all.
+ *
+ * THE PANEL FIRST, THE ANSWERS SECOND, AND THE SECOND CALL IS NOT BELT-AND-BRACES.
+ * A panel TALLER than the viewport cannot be brought wholly into view, and
+ * `nearest` on the panel would align its TOP — leaving the buttons, which are at
+ * its bottom, exactly where they were. So the actions row is asked for after the
+ * panel, and it is the one that must win. At Text XL on a 360x640 phone the
+ * question, the preview and a wrapped button row are what make that reachable
+ * rather than hypothetical.
+ *
+ * NOTHING IS POSITIONED. This is a scroll, not a placement: the panel keeps the
+ * rect the stylesheet gave it, and Law 2's container/coordinate rules have no
+ * new subject. That also means the fix is INVISIBLE to any probe that refuses to
+ * scroll on principle — see the note in tools/uprightgate.mjs, whose whole
+ * reason for clicking through the Smith by hand is that it will not
+ * scrollIntoView a target itself. Its clause R gates `unreachable` only, so it
+ * was GREEN on this defect and is GREEN on this fix; the cells that can tell the
+ * two apart are in tools/holdconfirm.mjs.
+ */
+function reveal(panel, actions) {
+  if (!panel || typeof panel.scrollIntoView !== 'function') return;
+  panel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  if (actions && typeof actions.scrollIntoView === 'function') {
+    actions.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+}
+
+/**
  * armConfirm(el, { question, detailHtml, confirmLabel, onConfirm, id })
  *   -> disarm()
  *
@@ -31520,6 +31930,7 @@ function armConfirm(el, { question, detailHtml = '', confirmLabel = 'CONFIRM', o
     row.appendChild(no);
     panel.appendChild(row);
     el.insertAdjacentElement('afterend', panel);
+    reveal(panel, row);
     activeConfirm = close;
     beatCue('confirmArm', id, 'confirm');
 
@@ -31897,7 +32308,21 @@ const FOCUS_SELECTOR = [
 // (rebindable) keys / the Menu overlay instead of by wandering into them
 // (StS2-style: navigation stays on cards, targets, and map nodes). Ignored when
 // a modal/overlay is open, where its own contents ARE the scope.
-const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb';
+//
+// `.hint-bar` JOINED THIS LIST the day its chips became real buttons (2026-08-17).
+// It is the purest case in the list rather than an exception to it: every chip in
+// that bar exists to SAY which dedicated key reaches a thing, so a focus cursor
+// wandering onto "D Deck" in order to press it, when `d` presses it, is five new
+// stops in the ring for no new reach. The keyboard and the pad already had these
+// five actions; what they never had was a THUMB, and that is what the buttons are
+// for.
+//
+// ⚠ AND IT INHERITS THE HOLE I MEASURED ON `.end-turn` SIX HOURS AGO: a control
+// in CHROME has no focus-cursor story at all, so Enter and pad-Confirm can never
+// arrive on a chip. Here that costs nothing, and it is stated rather than assumed
+// — a chip's whole subject is a binding those two inputs already carry. The day a
+// chip is the ONLY door to something, it has to leave this list.
+const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb, .hint-bar';
 
 // Rebindable actions. Each carries BOTH a keyboard key (defKey) and a gamepad
 // button (defBtn), and both are rebindable (Controls tab). Delivery:
@@ -32097,6 +32522,50 @@ function keyLabel(id) {
   if (k === 'Escape') return 'Esc';
   if (k === ' ') return 'Space';
   return k.length === 1 ? k.toUpperCase() : k;
+}
+
+/**
+ * actionLabel(id) — THE SYMBOL TO PUT IN FRONT OF A PLAYER, RIGHT NOW.
+ *
+ * ONE HOME FOR "which device is answering", and it had two before: the hint bar
+ * carried `pad ? padLabel(id) || keyLabel(id) : keyLabel(id)` inline and every
+ * other surface in the tree typed the letter. His words are
+ * *"auto map to the current controls configured AND the active device controller
+ * type"* — two derivations, and this function is the second one. The first is
+ * `keyLabel`/`padLabel` reading the live binding maps.
+ *
+ * ⚠ THE BOUNDARY, AND IT IS THE HONEST WORD FOR IT: this answers CONNECTED, not
+ * ACTIVE. `hasGamepad()` is true from the moment a pad is plugged in, so a player
+ * with a pad resting on the desk and both hands on the keyboard reads pad glyphs.
+ * The tree HAS the material for last-used — `doAction` already takes a `source`
+ * and the poller sets `engaged` — and I have not spent it, because switching on
+ * last-used also flips `body.pad-mode`, which hides the cards' quick-play badges,
+ * and a badge that appears and disappears as a player alternates hands is a
+ * legibility call belonging to the seat that owns those badges. `unknown`, named
+ * here rather than in a report nobody reads at the line.
+ */
+function actionLabel(id) {
+  return (hasGamepad() && padLabel(id)) || keyLabel(id);
+}
+
+/**
+ * actionHint(id) — "Menu (M)", derived, for a `title=` or any prose prompt.
+ *
+ * ⚠ WHY THIS EXISTS AT ALL: three places in this tree had typed the letter.
+ * `screens/combat.js` and `screens/map.js` both shipped `title="Menu (M)"`, and
+ * `components/tutorial.js` shipped *"Done? End Turn (or press E)."* All three are
+ * LAW 1 CLAUSE 7 BREACHES OF THE SHARPEST KIND — a second copy of a binding, in
+ * prose, where the first rebind orphans it and nothing says so. A tooltip that
+ * tells a player to press M when M no longer opens the menu is not stale
+ * decoration; it is the game lying about its own controls, and the player has no
+ * way to tell which of the two is wrong.
+ *
+ * Anything that renders one of these into an attribute should also carry
+ * `data-action-hint="<id>"`, so `refreshHintBars()` can re-derive it in place when
+ * a pad arrives or a binding changes without waiting for the screen to re-render.
+ */
+function actionHint(id) {
+  return `${actionShort(id)} (${actionLabel(id)})`;
 }
 
 // ---- focus cursor -----------------------------------------------------------
@@ -32440,6 +32909,47 @@ function doAction(id, source = 'key') {
   synthKey(keyBindings[id] || a.defKey || a.key);
 }
 
+/**
+ * beginActionPress(id) / endActionPress(cancelled) — A TAP IS AN INPUT.
+ *
+ * Constantine, 2026-08-17: *"all the buttons on those tool tips should also work
+ * and auto map to the current controls configured and the active device
+ * controller type."* The hint bar had been an ADVERTISEMENT — `pointer-events:
+ * none`, `aria-hidden`, five spans naming five keys — so on a touchscreen it
+ * described controls the device does not have and answered to nothing.
+ *
+ * THIS IS `doAction`, NOT A FOURTH DELIVERY PATH, and that is the whole design.
+ * A chip is a THUMB arriving at a binding the keyboard and the pad already reach,
+ * so it enters by the door the pad poller enters by and inherits every rule that
+ * lives behind it, free and un-restated:
+ *   - the CURRENT binding is dispatched, so a rebind moves the chip with the key;
+ *   - `pressTarget` gives the chip a HOLD wherever the action owes one — press
+ *     and hold the End Turn chip and `.end-turn` itself fills under the words,
+ *     short-press and it aborts, exactly as `e` does (S7, six hours old);
+ *   - `scopeRoot()` means a chip is refused while a veil stands, for the same
+ *     reason the key is;
+ *   - the dial at `off` collapses both to one press.
+ * A second implementation here would be a second chance to disagree with all of
+ * that, which is the defect this house is named for.
+ *
+ * ⚠ IT DOES NOT SET `engaged`, AND THAT IS DELIBERATE RATHER THAN AN OMISSION.
+ * `engaged` means "this player drives with a keyboard or a pad", and screens use
+ * it to decide whether to plant a focus ring nobody asked for. A thumb on a chip
+ * is the opposite of that evidence. A mouse-only player pressing a chip must not
+ * inherit a focus cursor.
+ *
+ * `cancelled` exists for a pointer the browser takes away mid-press (a scroll, a
+ * drag out of the chip): the same verdict a cancelled hold gets everywhere else
+ * — nothing commits.
+ */
+function beginActionPress(id) {
+  if (!enabled) return;
+  doAction(id, 'pointer');
+}
+function endActionPress(cancelled = false) {
+  pressEnd(cancelled);
+}
+
 // ---- keyboard navigation ----------------------------------------------------
 
 // Controls tab: capture the next keypress to rebind a keyboard action.
@@ -32714,7 +33224,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, focusFirst, setActionControl, releaseActionControl, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/uiContent.js": function (module, exports, require) {
@@ -33588,7 +34098,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b94c855865';
+const SOURCE = 'b7ba75ff2d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -33622,7 +34132,7 @@ const SOURCE = 'b94c855865';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0780';
+const ORDINAL = '0788';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -36773,7 +37283,7 @@ const { passiveFlag } = require("src/model/registries.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
-const { matchAction, isEngaged, focusFirst } = require("src/ui/input.js");
+const { matchAction, isEngaged, focusFirst, actionHint } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
 const { classGlyph, tintCss } = require("src/ui/assets.js");
 const { nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
@@ -36857,7 +37367,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
         <div class="mh-actions">
           <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
-          <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
+          <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
         </div>
         <div class="map-legend-pop" hidden>
           ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
@@ -37052,15 +37562,82 @@ Object.assign(module.exports, { mountMap });
 
 },
 "src/ui/components/hints.js": function (module, exports, require) {
-// src/ui/components/hints.js — the contextual control-hint bar (SPEC §7.3).
+// src/ui/components/hints.js — the contextual control strip (SPEC §7.3).
 //
-// A thin, unobtrusive strip pinned to the bottom of the map and combat screens
-// that lists the currently-bound keys for the dedicated overlay/zone actions, so
-// the rebindable D/R/T/M/E keys are discoverable. Labels come from the live
-// keyLabel() binding, so they reflect rebinds. The whole bar is hidden by CSS
-// when the "Control hints" setting is off (body.hide-hints).
+// A thin strip pinned to the map and combat screens carrying one chip per
+// dedicated overlay/zone action. Each chip says which control reaches that
+// action, and — since 2026-08-17 — IS one.
+//
+// ============================================================================
+// IT WAS AN ADVERTISEMENT AND HE ASKED FOR A CONTROL BAR
+// ============================================================================
+//
+// Constantine, 2026-08-17: *"all the buttons on those tool tips should also work
+// and auto map to the current controls configured and the active device
+// controller type."*
+//
+// TWO HALVES, AND ONLY ONE OF THEM WAS MISSING — measured before anything was
+// written, because Marina's dispatch and my own instinct both said "the strip
+// prints a hardcoded E":
+//
+//   THE LABELS WERE ALREADY DERIVED. `keyLabel(id)` / `padLabel(id)` off the live
+//   binding maps, and `actionShort(id)` off the ACTIONS registry, since this file
+//   was written. A rebind already moved the chip. There was no `E` here to
+//   delete, and I am recording that rather than claiming a fix I did not make.
+//
+//   THE CHIPS DID NOTHING. `pointer-events: none` on `.hint-bar`, `<span>`s,
+//   `role="presentation"`, `aria-hidden="true"`, no handler. On a touchscreen
+//   that is a strip naming five keys the device does not have, answering to
+//   nothing — which is the whole of his complaint.
+//
+// WHERE THE `E` ACTUALLY WAS, and it was three places, none of them here:
+// `screens/combat.js` and `screens/map.js` each shipped `title="Menu (M)"`, and
+// `components/tutorial.js` shipped *"(or press E)"*. All three now derive through
+// `actionHint(id)`. Law 1 clause 7: a binding written by hand is a second copy,
+// and the next rebind orphans it silently.
+//
+// ============================================================================
+// WHAT A TAP ON A CHIP IS
+// ============================================================================
+//
+// It enters `input.js` by the door the GAMEPAD POLLER enters by
+// (`beginActionPress` / `endActionPress` → `doAction`), so it is one thumb
+// arriving at a binding, not a fourth delivery path. Everything behind that door
+// comes free and is not restated here: the current binding, the hold wherever an
+// action owes a second beat (press-and-hold the End Turn chip and `.end-turn`
+// fills under the words; let go early and nothing happens), the veil refusal, and
+// the dial at `off` collapsing it to one press.
+//
+// POINTERDOWN/UP RATHER THAN `click`, for exactly that reason: a hold has a
+// beginning and an end, and `click` only has an end. `pointercancel` and
+// `pointerleave` end it as CANCELLED — the browser taking the gesture, or a thumb
+// sliding off the chip mid-hold, must not commit.
+//
+// ⚠ THE STRIP IS `display: none` ON A NARROW LAYOUT, AND THAT IS THE SEAM.
+// `styles/ui.css` hides `.hint-bar` under `:root[data-layout='narrow']`, with its
+// reason written at the line: *"On a phone it offers 'E End Turn' to a device with
+// no E."* THAT PREMISE IS THE THING THIS CHANGE RETIRES — the chips are now the
+// phone's affordance rather than a keyboard's. **I have not touched that rule**:
+// where the strip sits on a phone, and what the hand does with the room, is
+// Sunna's layout act (moving the strip below the cards and shifting the hand up),
+// and unhiding it from here would be me doing her half in her absence. So today
+// the working buttons are observable on a WIDE shape and hidden on a narrow one,
+// and that is measured, not assumed (1200x730: five chips, all pressable; 390x844:
+// `display: none`). The day her act lands they work for free.
+//
+// LAW 3 CLAUSE 4 NOW HAS A SUBJECT HERE AND IT IS ANSWERED IN PART. These are
+// interactive controls, so each owes a contextual tooltip that fires for the focus
+// cursor too. Each carries a `title` and an `aria-label`, and Law 3 clause 4 says
+// plainly that a native `title=` alone does not satisfy it. The focus cursor
+// cannot reach a chip by design (`.hint-bar` is in input.js's CHROME set), so the
+// cursor half of the clause has no subject; the TOUCH half is the chip's own words
+// under the thumb. Named as partial rather than claimed: the game's own tooltip
+// component is not wired here.
 
-const { keyLabel, padLabel, hasGamepad, actionShort } = require("src/ui/input.js");
+const { keyLabel, padLabel, hasGamepad, actionShort, actionLabel, actionHint, beginActionPress, endActionPress } = require("src/ui/input.js");
+
+
+
 
 // Which action chips each context shows, in reading order — ids only. The
 // labels come from the ACTIONS registry (actionShort), so this can't drift from
@@ -37083,12 +37660,23 @@ function setHintMode(mode) {
 }
 
 // Show controller glyphs when a gamepad is connected, keyboard keys otherwise.
+//
+// `actionLabel(id)` IS THAT CHOICE AND IT USED TO LIVE INLINE HERE. It moved into
+// input.js beside the binding maps it reads, because two other surfaces now ask
+// the same question and three copies of `pad ? padLabel : keyLabel` is three
+// chances to answer it differently. Its boundary — connected, not last-used — is
+// stated at that function.
 function chipsHtml(context, pad) {
   const set = context === 'combat' && hintMode === 'targeting' ? CHIPS.targeting : CHIPS[context];
   return (set || [])
     .map((id) => {
       const key = pad ? padLabel(id) || keyLabel(id) : keyLabel(id);
-      return `<span class="hint"><kbd>${key}</kbd>${actionShort(id)}</span>`;
+      // `type="button"` because these live inside no form and a default submit
+      // button in a game screen is a page reload waiting for a keyboard.
+      // `data-action` is the id, read back at PRESS TIME rather than closed over,
+      // so the strip can be rebuilt under a live press without stranding it.
+      return `<button type="button" class="hint" data-action="${id}" data-action-hint="${id}"`
+        + ` title="${actionHint(id)}" aria-label="${actionHint(id)}"><kbd>${key}</kbd>${actionShort(id)}</button>`;
     })
     .join('');
 }
@@ -37098,7 +37686,55 @@ function hintBarHtml(context) {
   const chips = CHIPS[context] || [];
   if (!chips.length) return '';
   const pad = hasGamepad();
-  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''}" role="presentation" aria-hidden="true">${chipsHtml(context, pad)}</div>`;
+  // `role="presentation"` and `aria-hidden="true"` are GONE, and their removal is
+  // the accessibility half of his ask: a bar of five real buttons announced as
+  // decoration is five controls a screen reader cannot find. `role="toolbar"`
+  // says what it is — a set of sibling controls, not a list and not a tab strip
+  // (Law 3: a tab set is a different thing and takes the bumpers).
+  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''}" role="toolbar" aria-label="Controls">${chipsHtml(context, pad)}</div>`;
+}
+
+// ---- the press, delegated once at the document -------------------------------
+//
+// ONE LISTENER FOR EVERY CHIP THAT WILL EVER EXIST, rather than a pair per chip
+// per rebuild. `chipsHtml` runs on every pad connect, every targeting change and
+// every combat re-render; per-chip listeners on a bar that is thrown away and
+// rebuilt is the leak this file would otherwise grow, and the id is read off the
+// element at press time so a rebuild mid-press cannot strand a stale closure.
+//
+// THE RELEASE IS BOUND AT THE DOCUMENT, NOT THE CHIP, on purpose: a press that
+// begins on a chip and ends anywhere at all must still END. A pointerup that
+// never arrives at the element is exactly how the pre-S7 shape left a control
+// filling forever.
+if (typeof document !== 'undefined') {
+  let pressing = false;
+  const chipOf = (ev) => (ev.target && ev.target.closest ? ev.target.closest('.hint-bar .hint[data-action]') : null);
+  document.addEventListener('pointerdown', (ev) => {
+    const chip = chipOf(ev);
+    if (!chip) return;
+    // The default would focus the button and, on touch, may synthesise a click
+    // later — both of which arrive after the press door has already answered.
+    ev.preventDefault();
+    pressing = true;
+    beginActionPress(chip.dataset.action);
+  });
+  document.addEventListener('pointerup', () => {
+    if (!pressing) return;
+    pressing = false;
+    endActionPress(false);
+  });
+  document.addEventListener('pointercancel', () => {
+    if (!pressing) return;
+    pressing = false;
+    endActionPress(true);
+  });
+  // Sliding off the chip mid-hold is a cancel, matching every other hold in the
+  // tree: the gesture must be able to be taken back by moving away from it.
+  document.addEventListener('pointerout', (ev) => {
+    if (!pressing || chipOf(ev)) return;
+    pressing = false;
+    endActionPress(true);
+  });
 }
 
 /** Rebuild any visible hint bars in place — called when a pad (dis)connects. */
@@ -37115,6 +37751,21 @@ function refreshHintBars() {
   // The End Turn button carries its own key chip — keep it in sync too.
   const etKey = document.querySelector('.end-turn .et-key');
   if (etKey) etKey.textContent = pad ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
+  // EVERY DERIVED CONTROL PROMPT IN THE TREE, wherever it was rendered. A screen
+  // that painted `title="Menu (M)"` an hour ago is not going to re-render because
+  // a pad was plugged in, so the attribute is re-derived in place from the id the
+  // element carries. One loop, no list of screens — a new prompt joins it by
+  // writing `data-action-hint`, which is Law 0 clause 1 on a tooltip.
+  document.querySelectorAll('[data-action-hint]').forEach((el) => {
+    const hint = actionHint(el.dataset.actionHint);
+    el.setAttribute('title', hint);
+    if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', hint);
+  });
+  // Prose that names a control (the tutorial's "or press E") re-derives the same
+  // way: the element says which action it is quoting and gets the live symbol.
+  document.querySelectorAll('[data-action-key]').forEach((el) => {
+    el.textContent = actionLabel(el.dataset.actionKey);
+  });
 }
 
 if (typeof window !== 'undefined') {
@@ -39116,7 +39767,7 @@ const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/qu
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
-const { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad } = require("src/ui/input.js");
+const { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } = require("src/ui/input.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
@@ -39157,7 +39808,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         <div class="hud-top">
           <div class="resbars-host"></div>
           <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
-          <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
+          <button class="topbar-btn" id="combat-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
         </div>
         <div class="hud-bottom">
           <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
@@ -40448,12 +41099,27 @@ Object.assign(module.exports, { openPileModal });
 
 const { anchorLocalBox } = require("src/ui/fx.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
+const { actionLabel } = require("src/ui/input.js");
 
+// `text` IS A FUNCTION WHEREVER IT NAMES A CONTROL, and that is the whole of the
+// change here. The End Turn step shipped as *"Done? End Turn (or press E)."* — a
+// hardcoded `E` in the FIRST THING a new player ever reads, which the first rebind
+// orphans in the one place a player has no way to know it is lying (Law 1 clause
+// 7). It derives from the live binding now, resolved at the moment the callout is
+// SHOWN rather than at module load, so a rebind between boot and first fight still
+// carries. `actionLabel` also answers the active device, so a pad player is told
+// the glyph on the button under their thumb rather than a letter they cannot press.
+//
+// `press 1–9` in the Play-cards step is DELIBERATELY LEFT AS PROSE: the positional
+// quick-play keys are not rows in ACTIONS, are not rebindable, and have no binding
+// to derive from. Said here rather than leaving the next reader to work out which
+// of the two rules applied to which line.
 const STEPS = [
   { sel: '.energy-orb', title: 'Energy', text: 'Three energy each turn. Cards cost energy to play — spend it wisely.' },
   { sel: '.enemy-row .intent', title: 'Enemy intent', text: 'Enemies telegraph their next move. The number is the exact damage they will deal to you.' },
   { sel: '.hand .card', title: 'Play cards', text: 'Click a card or press 1–9. Attacks need a target — click an enemy, or drag the card onto it.' },
-  { sel: '.end-turn', title: 'End your turn', text: 'Done? End Turn (or press E). Unspent energy and most Block are lost at your next turn.' },
+  { sel: '.end-turn', title: 'End your turn',
+    text: () => `Done? End Turn (or press ${actionLabel('endTurn')}). Unspent energy and most Block are lost at your next turn.` },
 ];
 
 function mountTutorial(root, { onDone }) {
@@ -40516,7 +41182,7 @@ function mountTutorial(root, { onDone }) {
   function show() {
     const step = steps[i];
     veil.querySelector('.tut-title').textContent = step.title;
-    veil.querySelector('.tut-text').textContent = step.text;
+    veil.querySelector('.tut-text').textContent = typeof step.text === 'function' ? step.text() : step.text;
     veil.querySelector('.tut-next').textContent = i === steps.length - 1 ? 'Got it' : `Next (${i + 1}/${steps.length})`;
     if (!place()) next(); // target vanished between filter and show
   }
@@ -41847,6 +42513,13 @@ const { armInspect } = require("src/ui/components/holdconfirm.js");
 const { stickTooltip } = require("src/ui/components/tooltip.js");
 const { applyHandExemption } = require("src/ui/handAxis.js");
 
+// The custom property this component publishes so the stylesheets can reserve
+// room for the fan's upward lift without knowing how it is computed. Named here
+// because the value has exactly one author; tools/hintstrip.mjs reads the NAME
+// out of this file rather than typing it, so a rename cannot leave a check
+// asserting a property nobody writes.
+const FAN_LIFT_PROP = '--fan-lift';
+
 function mountHand(handEl, { registries, wireCard = null }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
@@ -41918,13 +42591,50 @@ function mountHand(handEl, { registries, wireCard = null }) {
     handEl.innerHTML = '';
     handEls = [];
     handFan = [];
-    if (emptyHtml != null) { handEl.innerHTML = emptyHtml; return; }
+    // An empty hand fans nothing, so it reserves nothing — stated rather than
+    // left at the last render's value.
+    if (emptyHtml != null) { handEl.style.setProperty(FAN_LIFT_PROP, '0px'); handEl.innerHTML = emptyHtml; return; }
     const n = cards.length;
+    // ONE HOME FOR THE FAN'S OWN HEIGHT COST. The lift is derived here, so the
+    // room for it is published here too and the stylesheets READ it — they never
+    // restate it (Law 0 clause 4). Both `.hand` rules reserve
+    // var(--fan-lift) in padding-top; a stylesheet that forgets falls back to
+    // 0px and the defect is visible, not plausible (Law 0 clause 5).
+    handEl.style.setProperty(FAN_LIFT_PROP, `${((n - 1) / 2) * 6}px`);
     cards.forEach((entry, i) => {
       const el = renderCard(registries, entry.inst,
         entry.preview ? { preview: entry.preview, affordable: entry.affordable } : { affordable: entry.affordable });
       const spread = Math.min(6, n) * 1.2;
-      el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
+      // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
+      // CENTRE. Same arc, same step, same look — translated so the LOWEST card
+      // sits on the strip's own baseline and nothing is pushed below it.
+      //
+      // WHY, and it is his ask plus a defect the ask uncovered. He asked for the
+      // control strip to sit "at the bottom under the cards ... perhaps shift
+      // the cards up a bit to make space". The strip is now the last row of the
+      // .combat column (styles/ui.css .hint-bar.hint-combat), so the column
+      // supplies the space. But the old expression pushed the OUTER cards DOWN
+      // by |i-mid| * 6, and the outermost card's box therefore ended 5.65 local
+      // px BELOW .hand — measured identical, to two decimals, on all eight wide
+      // shapes at db09846, which is a constant and not a coincidence of one
+      // window. Off the bottom of the viewport before this change; onto the
+      // strip after it. A gap constant on the strip would have hidden that
+      // instead of removing it, and would have been re-tuned by the next hand
+      // change: the fan's own overflow is the fan's to not have.
+      //
+      // max|i-mid| is mid, at i = 0 and i = n-1, so subtracting mid puts those
+      // two at 0 and lifts the centre by mid * 6. DERIVED from the same mid the
+      // rotation already uses — no second constant, and n = 1 stays 0.
+      //
+      // THE LIFT HAS TO BE RESERVED, AND IT IS RESERVED FROM HERE — see
+      // FAN_LIFT_PROP below. Measured at 390x844 with the shipped hand of five:
+      // mid * 6 = 12 px and the narrow strip's padding-top is 1.2rem = 12 px, so
+      // the centre card's top landed EXACTLY on .hand's border edge, clearance
+      // 0.00. That is an accident of n = 5, not a fit: at n = 6 the lift is 15 px
+      // against the same 12 and the phone's scroller starts clipping the card it
+      // is meant to feature. A number that is only right for today's hand size.
+      const mid = (n - 1) / 2;
+      el.style.transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
       el.style.zIndex = i;
       if (entry.selected) el.classList.add('selected');
       // The spelled-out unavailability reason is VIEWER data (co-op supplies
@@ -41982,7 +42692,7 @@ function mountHand(handEl, { registries, wireCard = null }) {
 }
 
 
-Object.assign(module.exports, { mountHand });
+Object.assign(module.exports, { FAN_LIFT_PROP, mountHand });
 
 },
 "src/ui/handAxis.js": function (module, exports, require) {
@@ -42206,7 +42916,7 @@ function refillLineHtml(registries, refill) {
 // THE `→` IS THE ONLY THING THIS SCREEN AUTHORS. Both sides of it are read off
 // the run: the point is permanent and the player is owed the arithmetic before
 // they spend, not a promise about it.
-function levelDetailHtml(registries, run, attr) {
+function levelDetailHtml(registries, run, attr, points) {
   const rules = (registries.derivedStatRules || {}).rules || {};
   const presentation = (registries.derivedStatRules || {}).presentation || {};
   const feeds = Object.keys(rules)
@@ -42214,7 +42924,10 @@ function levelDetailHtml(registries, run, attr) {
     .sort((a, b) => ((presentation[a] || {}).order || 0) - ((presentation[b] || {}).order || 0))
     .map((id) => (presentation[id] || {}).label || id);
   const now = run.attributes[attr.id];
-  return `<p><b>${esc(attr.label)} ${now} → ${now + 1}</b></p>
+  // BOTH SIDES OF THE ARROW ARE READ, including the step: the level value is a
+  // dial he turns (Settings → Advanced), so a hard-coded +1 here would be the
+  // confirm panel promising one thing while the purchase does another.
+  return `<p><b>${esc(attr.label)} ${now} → ${now + points}</b></p>
     <p>${esc(attr.sense || '')}</p>
     ${feeds.length ? `<p class="set-note">Feeds: ${feeds.map(esc).join(' · ')}</p>` : ''}`;
 }
@@ -42226,7 +42939,7 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null }) {
+function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
@@ -42243,7 +42956,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
   // "also at graces, players should have the option to level up their character
   // (per run) by trading cinders to level up." The screen asks the model what
   // it may offer and prices nothing itself.
-  const level = levelUpPlan(registries, run);
+  const level = levelUpPlan(registries, run, { pointsPerLevel: levelValue });
 
   app.innerHTML = `
     <div class="screen">
@@ -42298,12 +43011,36 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
             <p class="flask-increment-total">${charge.assigned} of ${charge.capacity} assigned</p>
           </div>
         </div>
-        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt">
+        <!-- THE AFFORDABILITY PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
+             Constantine: "make the flask and the level up collapsible (with
+             level up being grayed out or not visible when there isn't enough
+             cinders)". The fold and the grey-out are the player-experience
+             seat's; the PREDICATE is model/levelup.js's, and these attributes
+             are the seam between them. A styling seat reads data-affordable,
+             data-blocked-by and data-short and never subtracts a cost from a
+             purse - the day it did there would be two answers to "can he afford
+             this" and the screen would eventually disagree with the commit path
+             below.
+             THE SAME OBJECT DRIVES BOTH: the locked class and these attributes
+             come off ONE level plan, computed once per mount, so a disabled card
+             and a refused purchase cannot diverge. An instrument reads them too,
+             which is why they are on the element and not in a closure.
+             NO BACKTICKS IN THIS BLOCK. It sits inside a template literal. I
+             closed the string with a pair of them THREE TIMES tonight, in three
+             files, every time inside a comment explaining myself - and
+             node --check exits 0 on the result because it parses the file as a
+             SCRIPT, so my own "parses" check was silent on all three. The gate
+             that caught this one is tools/linkcheck.mjs. -->
+        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
+             data-affordable="${level.affordable ? '1' : '0'}"
+             data-blocked-by="${level.blockedBy || ''}"
+             data-cost="${level.cost}"
+             data-short="${level.short}">
           <div class="glyph">✦</div>
           <h3>Level up</h3>
           <p>${level.capped
             ? `You have taken every level this climb allows (${level.levelsTaken}).`
-            : `${level.cost} cinders for 1 point. You hold ${level.cinders}${level.levelsTaken ? ` · ${level.levelsTaken} taken` : ''}.`}</p>
+            : `${level.cost} cinders for ${level.pointsPerLevel} point${level.pointsPerLevel === 1 ? '' : 's'}. You hold ${level.cinders}${level.levelsTaken ? ` · ${level.levelsTaken} taken` : ''}.`}</p>
           <div class="flask-allocation-controls">
             ${level.attributes.map((a) => `<button type="button" data-attr="${a.id}"${level.offerable ? '' : ' disabled'}>${esc(a.shortLabel || a.label)} ${run.attributes[a.id]}</button>`).join('')}
           </div>
@@ -42359,7 +43096,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
     });
   }
   // THE SECOND BEAT IS NOT DECIDED HERE — `shrineLevelUp` is a row in
@@ -42371,18 +43108,18 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       const btn = app.querySelector(`#level-opt [data-attr="${attr.id}"]`);
       if (!btn) continue;
       arm(btn, 'shrineLevelUp', {
-        question: `Spend ${level.cost} cinders on ${attr.label}? The point is permanent.`,
-        detailHtml: levelDetailHtml(registries, run, attr),
+        question: `Spend ${level.cost} cinders on ${attr.label}? ${level.pointsPerLevel === 1 ? 'The point is' : `All ${level.pointsPerLevel} points are`} permanent.`,
+        detailHtml: levelDetailHtml(registries, run, attr, level.pointsPerLevel),
         confirmLabel: 'LEVEL UP',
         onConfirm: () => {
-          applyLevelUp(registries, run, attr.id);
+          applyLevelUp(registries, run, attr.id, { pointsPerLevel: levelValue });
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
           // RE-MOUNT, the same shape the flask reallocation above already uses:
           // the price has moved, the purse has moved, and so has a derived pool
           // the Rest panel is quoting. A screen that stayed put would be
           // offering the old price for the next point.
-          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill });
+          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill });
         },
       });
     }
@@ -42522,32 +43259,76 @@ function levelsAffordable(registries, cinders) {
 }
 
 /**
- * levelUpPlan(registries, run) → what the shrine may offer, and why not.
+ * levelUpPlan(registries, run, { pointsPerLevel }) → what the shrine may offer.
  *
- *   { levelsTaken, cost, cinders, affordable, capped, offerable, attributes }
+ *   { levelsTaken, cost, cinders, affordable, capped, short, blockedBy,
+ *     offerable, pointsPerLevel, attributes }
  *
  * `attributes` is READ OFF THE CONTENT TABLE, in its authored order, and is
  * this feature's Law 0 falsifier: a sixth attribute is one row in
  * `content/attributes.js` and it appears at the shrine with zero UI edits. The
  * shrine screen never names a stat.
+ *
+ * ⚠ AFFORDABILITY DOES NOT DEPEND ON `pointsPerLevel`, AND THE DISPATCH THAT
+ * ASKED FOR THIS PREDICATE ASSUMED IT DID. Measured rather than relayed:
+ * `levelCost` is `firstCost + costStep × levelsTaken` and takes no third
+ * argument. The typed value decides what a level GRANTS, never what it COSTS —
+ * which is asserted in `tests/engine.test.js` 60c, in those words, one act
+ * before the question was asked. So the predicate moves with `run.cinders` and
+ * with `levelsTaken`, and is INDIFFERENT to the dial.
+ *
+ * It is still not a constant, and the fold must re-read it rather than cache it:
+ * every purchase raises the next price, and every fight changes the purse.
+ *
+ * `pointsPerLevel` IS AN ARGUMENT, NOT A LOOKUP — Constantine, 2026-08-17:
+ * "leave the level up value configurable". The caller resolves the player's
+ * setting (`resolveLevelUpValue`, settings.js) and hands it in; omitted, the
+ * content default applies. This model stays pure and knows nothing about a
+ * profile, and — the reason that matters — NOTHING AT THE LOAD DOOR EVER READS
+ * THE LIVE VALUE. See `run.levelPoints` in `applyLevelUp`.
  */
-function levelUpPlan(registries, run) {
+function levelUpPlan(registries, run, { pointsPerLevel = null } = {}) {
   const t = table(registries);
   const levelsTaken = Number.isInteger(run && run.levelUps) ? run.levelUps : 0;
   const cost = levelCost(registries, levelsTaken);
   const cinders = Number.isFinite(run && run.cinders) ? run.cinders : 0;
   const capped = Number.isInteger(t.maxLevels) && levelsTaken >= t.maxLevels;
   const affordable = cinders >= cost;
+  const authored = Number.isInteger(t.pointsPerLevel) && t.pointsPerLevel > 0 ? t.pointsPerLevel : 1;
   return {
     levelsTaken,
     cost,
     cinders,
     affordable,
     capped,
+    // ---- THE AFFORDABILITY PREDICATE, for the fold ------------------------
+    //
+    // Constantine: "make the flask and the level up collapsible (with level up
+    // being grayed out or not visible when there isn't enough cinders)".
+    //
+    // ONE DERIVATION, ONE HOME, AND NO SECOND COPY OF THE PRICE. The seat that
+    // authors the fold and the grey-out reads these three fields; it never
+    // subtracts cinders from a cost, because the day it did there would be two
+    // answers to "can he afford this" and the screen would eventually disagree
+    // with the purchase. `#level-opt` publishes them as data attributes
+    // (ui/screens/rest.js) so a component and an instrument read the SAME
+    // derivation the commit path used, rather than re-deriving it.
+    //
+    // `short` — how many cinders are missing, 0 when none are. It is here and
+    // not computed by the caller for exactly the reason above: it is the one
+    // number a disabled label wants, and a caller computing `cost - cinders`
+    // would be the second copy in its cheapest disguise.
+    short: Math.max(0, cost - cinders),
+    // `blockedBy` — WHY it is not offerable, as a token and never as prose. A
+    // closed set of three, so a presentation seat switches on a word instead of
+    // inferring the reason from two numbers: 'cinders' and 'cap' are different
+    // sentences to a player, and only one of them is fixed by fighting a
+    // monster. `null` means it IS offerable.
+    blockedBy: capped ? 'cap' : (affordable ? null : 'cinders'),
     // A cap of `null` is "no ceiling but the cinders themselves" — his range is
     // an economy, not a limit, so the shipped table refuses on price alone.
     offerable: affordable && !capped,
-    pointsPerLevel: Number.isInteger(t.pointsPerLevel) && t.pointsPerLevel > 0 ? t.pointsPerLevel : 1,
+    pointsPerLevel: Number.isInteger(pointsPerLevel) && pointsPerLevel > 0 ? pointsPerLevel : authored,
     attributes: orderedAttributes(registries),
   };
 }
@@ -42575,9 +43356,26 @@ function levelUpPlan(registries, run) {
  * beside it, and a level that healed would make the Rest panel pointless at the
  * same counter. Mana, Stamina and the per-turn stats have no deficit to carry
  * inside a shrine (combat is over), so they take the new maximum.
+ *
+ * ⚠ `run.levelPoints` IS NOT A SECOND COPY OF `run.levelUps`, AND IT BECAME A
+ * SECOND FACT THE MOMENT THE LEVEL VALUE BECAME A DIAL. Six levels at 1 point
+ * and three levels at 2 points are the same nine points and a different number
+ * of purchases; the COST RAMP indexes on purchases, the LOAD DOOR's allocation
+ * check needs points, and there is no arithmetic between them once the dial has
+ * moved mid-run. Deriving one from the other would need the value each purchase
+ * was made at, which is a history nobody is keeping.
+ *
+ * AND IT IS WHAT DELETES THE HAZARD I SHIPPED THIS EVENING. `e05be89` had the
+ * door multiply `levelUps × balance.levelUp.pointsPerLevel` — a LIVE content
+ * read — so turning this dial would have re-priced every in-flight save's
+ * expected total and archived runs at the next load. He has just told us he
+ * intends to turn it repeatedly between test runs, which would have made that
+ * the FIRST thing he hit. The run now records the points it was actually
+ * granted, the door reads what the run recorded, and no setting can refuse a
+ * save. A friendlier error message would have been the wrong fix.
  */
-function applyLevelUp(registries, run, attributeId) {
-  const plan = levelUpPlan(registries, run);
+function applyLevelUp(registries, run, attributeId, { pointsPerLevel = null } = {}) {
+  const plan = levelUpPlan(registries, run, { pointsPerLevel });
   const ids = plan.attributes.map((a) => a.id);
   if (!ids.includes(attributeId)) {
     throw new Error(`levelUp: '${attributeId}' is not an attribute id (${ids.join(', ')})`);
@@ -42591,6 +43389,10 @@ function applyLevelUp(registries, run, attributeId) {
   run.cinders -= plan.cost;
   run.attributes[attributeId] += plan.pointsPerLevel;
   run.levelUps = plan.levelsTaken + 1;
+  // The POINTS this run was actually granted — what the load door checks the
+  // allocation against, recorded at the moment they were granted so no later
+  // change to the dial can re-price them. See the paragraph above.
+  run.levelPoints = (Number.isInteger(run.levelPoints) ? run.levelPoints : 0) + plan.pointsPerLevel;
 
   const rules = run.derivedStatRuleSnapshot.rules;
   const classDef = registries.classes.get(run.class);
@@ -42614,7 +43416,7 @@ function applyLevelUp(registries, run, attributeId) {
     field: `attributes.${attributeId}`,
     was: run.attributes[attributeId] - plan.pointsPerLevel,
     now: run.attributes[attributeId],
-    why: `level ${run.levelUps} bought for ${plan.cost} cinders; pools re-derived from the run's own snapshot (maxHp ${hp ? hp.maxHp : 'unchanged'})`,
+    why: `level ${run.levelUps} bought for ${plan.cost} cinders at ${plan.pointsPerLevel} point(s) each (${run.levelPoints} granted in total); pools re-derived from the run's own snapshot (maxHp ${hp ? hp.maxHp : 'unchanged'})`,
   });
   return { ...plan, spent: plan.cost, attributeId, level: run.levelUps };
 }
@@ -43560,6 +44362,7 @@ const { renderProfileSection } = require("src/ui/screens/profileArchive.js");
 const { renderAboutSection } = require("src/ui/screens/about.js");
 const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
 const { balance } = require("src/content/balance.js");
+const { derivedStatRules } = require("src/content/derivedStats.js");
 const { ZOOM_STEPS, MAP_ZOOM_DEFAULT } = require("src/model/mapview.js");
 const { MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT } = require("src/model/mapknowledge.js");
 
@@ -43569,6 +44372,11 @@ const { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } = 
 
 const UI_DEFAULTS = balance.ui;
 const EQ_DEFAULTS = balance.equipment;
+const LEVEL_DEFAULTS = balance.levelUp || {};
+// THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
+// value the engine actually resolves rows against, so the row that turns it
+// reads it from there and a copy cannot drift.
+const DERIVED_DEFAULTS = derivedStatRules.defaults;
 
 // ---- the grace-refill rows: DERIVED, one per row of the table --------------
 //
@@ -43722,6 +44530,44 @@ const ROWS = [
     note: 'Show the run seed in the map header bar.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
+  // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
+  //
+  //   "rotating to horizontal should work again. I hate that it tells me to
+  //    rerotate to verticle. revert that back, or make that a configurable
+  //    setting."
+  //
+  // HE OFFERED BOTH AND MARINA RULED THE SETTING: a revert deletes whatever the
+  // gate was protecting, a row keeps it reachable. So this is one row in a table
+  // of about forty, and it is deliberately NOT the Settings layout act (E3).
+  //
+  // ⚠ THE DEFAULT IS `true` AND THAT IS MY CALL, NOT HIS, SO IT IS LABELLED AS
+  // MINE — with the measurement that decided it, because his sentence points the
+  // other way and a reader is owed the reason I did not simply follow it.
+  // `node tools/uprightgate.mjs`, 844x390, this tree:
+  //
+  //     .end-turn  top 415.41..439.78  0% on screen  NO scroll path to the rest
+  //     .hand-area 32.05% on screen · .energy-orb 0% on screen, unreachable
+  //
+  // **TURNING THIS OFF DOES NOT DELIVER "rotating to horizontal should work
+  // again."** It replaces a legible refusal with an illegible wall: the board
+  // draws, and the button that ends the turn is off screen inside a container
+  // that scrolls programmatically and never by hand. Defaulting it off would
+  // hand him a screen he cannot play and call it his ask. **Landscape SUPPORT is
+  // a third composition and it is still owed** (upright.js's header sets out why
+  // it is not one change) — this row is the switch he asked for and the honest
+  // half of the answer, not the whole of it.
+  //
+  // HIS ONE WORD FLIPS IT AND COSTS NOTHING: `def: true` -> `def: false`, one
+  // token, no other line in the tree. The default is the only part of this row I
+  // am holding for him.
+  //
+  // DISPLAY, NOT ADVANCED, and that is the departure from where Hold to confirm
+  // and the levelling dials went. Those are tuning knobs he asked to "try"; this
+  // one is found by a player who has just been refused, mid-annoyance, on a phone
+  // — and the gate's own copy now points at it by name. A switch you need because
+  // something is in your way does not live in the debugging surface.
+  { cat: 'Display', key: 'uprightGate', def: true, label: 'Short-screen warning',
+    note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
   // THE QUICK-MENU EXPERIMENT (EldenSpire#34). Three things are compared by
   // being PLAYED rather than looked at: today, and two readings of "the ☰ button
@@ -43854,6 +44700,44 @@ const ROWS = [
     // a long note squeezes the text column beside a chip strip. Three chips,
     // three clauses.
     note: 'What switching armament sets costs mid-fight. FLAT charges the same for every weapon; TALISMAN & RELIC starts there and lets your gear make it dearer or cheaper; WEAPON CATEGORY prices it by the weapon you are drawing — a heavy one is slow, a quick one is not. Takes effect on the next fight.' },
+  // ---- HIS TWO LEVELLING DIALS (2026-08-17) --------------------------------
+  //
+  //   "leave the level up value configurable. also, let's make the increment of
+  //    5 points for reasonable change be confurable as well. that way I can
+  //    test each."
+  //
+  // ADVANCED, AND THE PRECEDENT IS HIS OWN SENTENCE TWO ROWS UP: *"alternatively,
+  // or by a setting, different weapon categories have weapon swap costs. THAT
+  // WAY I CAN TRY EACH."* That ask was ruled into an Advanced row for a reason
+  // that applies here word for word — a tuning question he wants to answer by
+  // playing, not a preference to put in front of a first-time player. Advanced
+  // is this game's debugging surface, his word, and the third knob he has asked
+  // to "test" now sits beside the other two.
+  //
+  // A ROW, NOT A FILE HE EDITS AND REBUILDS. "That way I can test each" is the
+  // requirement and not a footnote: a content edit plus `node tools/launch.mjs
+  // --build-only` between every comparison is a friction that ends an
+  // experiment after two turns of the dial.
+  //
+  // `choices` and `def` are DERIVED and NEITHER NUMBER IS TYPED HERE: the
+  // ladders are `balance.levelUp`, the level value's default is that table's own
+  // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
+  // `derivedStatRules.defaults` — its one home, one import away, so this row
+  // cannot drift from the rule it turns.
+  { cat: 'Advanced', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
+    min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
+    label: 'Level-up value', applied: numberAppliedHtml,
+    note: 'How many stat points one level at a shrine grants — type any whole number from 1 to 20. Takes effect on the next level you buy, in any run, including one already in progress.' },
+  { cat: 'Advanced', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
+    min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
+    label: 'Stat points per tier', applied: numberAppliedHtml,
+    // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
+    // (`derivedStatRuleSnapshot`) so a content change can never re-stat a run in
+    // progress — which is correct, and which means turning this dial and loading
+    // an existing save shows NOTHING. It is written on the row because the
+    // alternative is him concluding the dial is broken. The middle sentence is
+    // the finding that caused the ask: at 5, one level moves no number at all.
+    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw — type any whole number from 1 to 20. At 5 a single level usually changes no number; at 1 every point shows. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
   // Advanced is the debugging surface — his word, and where Hold to confirm
   // already lives. These rows are generated from balance.graceRefill; see the
   // block above the ROWS array.
@@ -44002,6 +44886,60 @@ function rowHtml(settings, r) {
     return `<div class="set-row set-row-wide">
         <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
         <input type="text" class="set-text" spellcheck="false" data-key="${r.key}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}">
+      </div>`;
+  }
+  // ---- 'number': A FIELD HE TYPES INTO, WITH A SLIDER BOUND TO IT ----------
+  //
+  // Constantine, 2026-08-17: "i don't want a dial for hte level up, I want to be
+  // able to enter the value myself and maybe a slider with it that is synced
+  // with the value."
+  //
+  // ⚠ WHY THIS IS A NEW TYPE AND NOT `type: 'range'`, WHICH IS THE OBVIOUS
+  // REUSE AND IS WRONG TWICE OVER:
+  //
+  //   1. `range` IS A VOLUME SLIDER. Its markup hardcodes min="0" max="100"
+  //      step="5" — a level value of 0 is legal in it, 1 is not reachable, and
+  //      the domain belongs to the row here, not to the control.
+  //   2. THOSE ARE THE EXACT LINES AURORA'S #181 EDITS. Reusing `range` would
+  //      have meant editing the one branch another house has a reviewed diff in,
+  //      to add the attributes it needs — turning a collision Marina published as
+  //      VOID at the code level into a real one, in the same act.
+  //
+  // So this branch is a sibling, it never enters the `range` branch, and it
+  // touches neither `.set-range` nor its handler. **Marina's published
+  // conclusion still holds; her stated REASON for it (a boolean row cannot
+  // reach that code path) is no longer the reason, and that is hers to correct
+  // rather than mine to quietly inherit.**
+  //
+  // PART A ONLY, AND PART B'S ABSENCE IS A RULING. His word was "MAYBE a slider
+  // with it that is synced with the value" — a maybe. Marina held the slider
+  // behind Aurora's #181 rather than spend their thirteen reviewed lines on our
+  // not-yet-existing ones, and Part B IS the rebase-behind she published to them.
+  //
+  // I MEASURED THE COLLISION SHE DEFERRED IT ON AND IT IS NOT THERE: this row is
+  // `type: 'number'`, so it never enters the `range` branch below and never
+  // touches `.set-range` or its handler, which are precisely and only what #181
+  // edits. THE DEFERRAL IS HONOURED ANYWAY — she published an order to another
+  // house, and correcting her own sentence is hers, not something I overtake by
+  // shipping. The measurement is the relay; the order is the order.
+  //
+  // `min`/`max`/`step` are the ROW's, so the domain lives in content and this
+  // markup states no number of its own — which is also why Part B cannot drift
+  // from the field: neither control is the value, the resolved number is.
+  if (r.type === 'number') {
+    const val = resolveNumberRow(settings, r);
+    return `<div class="set-row">
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
+        <div class="num-wrap">
+          <input type="number" class="set-num" data-key="${r.key}" value="${val}"
+                 min="${r.min}" max="${r.max}" step="1" inputmode="numeric"
+                 aria-label="${r.label}">
+          <!-- PART B, THE SYNCED SLIDER, IS NOT HERE. See the note above this
+               branch: it is one range input plus three lines in the handler, and
+               it waits on Aurora's 181 by Marina's order. NO BACKTICKS IN THIS
+               BLOCK - it sits inside a template literal, and I closed the string
+               with a pair of them once already tonight. -->
+        </div>
       </div>`;
   }
   if (r.type === 'range') {
@@ -44160,6 +45098,116 @@ function graceRefillAppliedHtml(settings, r) {
  * say so: main.js writes it into the command log by name, and the row prints
  * the rejected value where the choice is made.
  */
+/**
+ * resolveLevelUpValue(settings) → how many stat points one level grants.
+ * resolveStatTierSize(settings) → how many points buy one tier.
+ *
+ * HIS TWO DIALS, resolved the way every other row in this file is: a stored
+ * value the row does not offer, or no value at all, is the SHIPPING DEFAULT —
+ * the same rule `savedZoom`, `resolveMapMode` and `resolveTapSize` use, and for
+ * the same reason. A hand-edited profile or an older build's value must behave
+ * exactly like an absent one, because the alternative is a run created under a
+ * number nothing in the game admits to.
+ *
+ * BOTH RETURN THE ROW'S OWN `def` WHEN UNSET, and both rows derive that `def`
+ * from content, so neither of these functions contains a number.
+ */
+/**
+ * resolveNumberRow(settings, row) → the integer this 'number' row resolves to.
+ *
+ * THE ONE GATE. Every road into a `number` setting runs through here: the markup
+ * that renders it, the handler that commits it, the resolver the game reads it
+ * with, and a hand-edited profile arriving from disk. So the model can only ever
+ * receive an integer inside the row's own domain, whatever is stored — which is
+ * the property `tests/engine.test.js` 60d asserts over a table of rubbish.
+ *
+ * A TYPED FIELD IS A DOOR A LADDER NEVER OPENED, and every one of these answers
+ * had no reason to exist an hour ago:
+ *
+ *   ''  ·  null  ·  undefined      the DEFAULT. An empty field is not a zero.
+ *   'lots'  ·  NaN  ·  Infinity    the DEFAULT. Unreadable is unset — the same
+ *                                  rule `savedZoom` and `resolveMapMode` use.
+ *   0  ·  -3                       CLAMPED UP to `min`. A level that grants
+ *                                  nothing is a purchase that does nothing, and
+ *                                  a negative one would take points away.
+ *   1e9                            CLAMPED DOWN to `max`.
+ *   2.7                            FLOORED. `validateRunShape` requires integer
+ *                                  attributes, so a fractional grant would break
+ *                                  the run's shape three files downstream. It
+ *                                  never gets to leave this function.
+ *   '  7  '                        7. Trimmed, because a field lets him type it.
+ *
+ * FLOOR, NOT ROUND, and it is the tree's own rule rather than my preference:
+ * `derivedStatRules.defaults.rounding` is 'floor' and Constantine settled it in
+ * his own words on the HP formula — "CON 14 gives +2, not +3".
+ */
+function resolveNumberRow(settings, row) {
+  if (!row) throw new Error('resolveNumberRow: no row');
+  const def = Number(row.def);
+  const raw = (settings || {})[row.key];
+  const n = typeof raw === 'string' ? Number(raw.trim()) : Number(raw);
+  if (raw === '' || raw === null || raw === undefined || !Number.isFinite(n)) return def;
+  return Math.min(row.max, Math.max(row.min, Math.floor(n)));
+}
+
+/**
+ * settingsRow(key) → the declared row, for anything that needs its DOMAIN rather
+ * than its value. Exported so a test asserts against the row the screen actually
+ * renders instead of a second copy of its bounds.
+ */
+function settingsRow(key) {
+  const row = ROWS.find((r) => r.key === key);
+  if (!row) throw new Error(`settingsRow: no settings row named '${key}'`);
+  return row;
+}
+
+function resolveLevelUpValue(settings) {
+  return resolveNumberRow(settings, ROWS.find((r) => r.key === 'levelUpValue'));
+}
+
+/**
+ * The `applied` line for ANY `number` row — SILENT WHEN THE PROMISE IS KEPT,
+ * which is Sunna's rule and is why this is not just a readout: "a line that says
+ * the same thing every time you open the screen is not a warning, it is
+ * decoration with a worried face."
+ *
+ * It speaks only when what he typed is NOT what the game will use, which is the
+ * one case a typed field creates and a ladder never could.
+ */
+function numberAppliedHtml(settings, row) {
+  const stored = (settings || {})[row.key];
+  if (stored === undefined || stored === null || stored === '') return '';
+  const used = resolveNumberRow(settings, row);
+  if (String(stored).trim() === String(used)) return '';
+  return `<p class="set-note set-applied">Using <b>${used}</b> — ${row.min}–${row.max}, whole numbers.</p>`;
+}
+
+function resolveStatTierSize(settings) {
+  return resolveNumberRow(settings, settingsRow('statTierSize'));
+}
+
+/**
+ * derivedStatDialOptions(settings) → the `derivedStatOptions` a NEW run is born
+ * with, or `{}` when the dial is at its shipping value.
+ *
+ * THIS IS THE WHOLE WIRING OF THE TIER DIAL AND IT INVENTS NOTHING. The engine
+ * already takes layered overrides — `modeModifiers`, `runModifiers`,
+ * `explicitOverride` — and a layer's `defaults` is assigned onto EVERY rule
+ * (`resolveDerivedStatRules`), which is precisely "one tier size for all the
+ * derived stats, and a row may still say otherwise". The shape he asked about
+ * already existed; this hands it a number.
+ *
+ * `{}` AT THE DEFAULT IS DELIBERATE: a run at the shipping value is born with
+ * no override layer at all, so its snapshot is byte-identical to one created
+ * before this dial existed. Turning the dial and turning it back leaves no
+ * residue in a save.
+ */
+function derivedStatDialOptions(settings) {
+  const size = resolveStatTierSize(settings);
+  if (size === Number(DERIVED_DEFAULTS.pointsPerTier)) return {};
+  return { explicitOverride: { defaults: { pointsPerTier: size } } };
+}
+
 function resolveTapSize(settings) {
   const row = ROWS.find((r) => r.key === 'tapFloor');
   const def = Number(row.def);
@@ -44475,6 +45523,43 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
     input.addEventListener('blur', commit);
   });
 
+  // 'number' rows: the typed field and its slider are ONE value.
+  //
+  // THE FIELD COMMITS ON change/blur, NOT ON EVERY KEYSTROKE, and that is the
+  // whole reason a typed field is usable here: clamping mid-type would fight
+  // him. Typing "12" passes through "1", and a per-keystroke clamp would rewrite
+  // it under his fingers. The slider commits on `input`, because dragging IS the
+  // gesture.
+  //
+  // EVERY COMMIT GOES THROUGH `resolveNumberRow`, so what reaches the profile is
+  // always an integer inside the row's own domain — and it WRITES BACK what it
+  // resolved, so a clamp or a rejection is visible in the field instead of being
+  // swallowed (Law 0 clause 5).
+  container.querySelectorAll('.num-wrap').forEach((wrap) => {
+    const field = wrap.querySelector('.set-num');
+    const key = field.dataset.key;
+    const row = ROWS.find((r) => r.key === key);
+    // ONE COMMIT PATH, WRITTEN FOR TWO CONTROLS BEFORE THE SECOND ONE EXISTS.
+    // `mirror` walks every input in the wrap, so Part B's slider is three lines
+    // — a tag in the markup above — and cannot fall out of sync with the field,
+    // because neither control is the value: the resolved number is.
+    const mirror = (val) => {
+      for (const input of wrap.querySelectorAll('input')) input.value = String(val);
+    };
+    const commit = (raw) => {
+      const val = resolveNumberRow({ [key]: raw }, row);
+      mirror(val);
+      settings[key] = val;
+      onChange({ [key]: val });
+    };
+    // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
+    // clamp on every keypress would rewrite the value under his fingers.
+    field.addEventListener('change', () => commit(field.value));
+    field.addEventListener('blur', () => commit(field.value));
+    // Part B's slider commits on `input`, because dragging IS the gesture:
+    //   slider.addEventListener('input', () => commit(slider.value));
+  });
+
   container.querySelectorAll('.set-range').forEach((slider) => {
     slider.addEventListener('input', () => {
       const val = Number(slider.value);
@@ -44664,7 +45749,7 @@ function openSettings({ meta, onChange, saves = null, onProfileRestored = null }
 }
 
 
-Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, resolveGraceRefill, resolveTapSize, renderSettings, showSettingsNotice, openSettings });
+Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, resolveGraceRefill, resolveNumberRow, settingsRow, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, resolveTapSize, renderSettings, showSettingsNotice, openSettings });
 
 },
 "src/ui/screens/profileArchive.js": function (module, exports, require) {
@@ -47583,6 +48668,43 @@ Object.assign(module.exports, { installHoldBeat });
 // src/ui/components/upright.js — THE ORIENTATION GATE.
 //
 // ============================================================================
+// ⚠ AMENDED BY THE OWNER, 2026-08-17. READ THIS BEFORE THE RULING BELOW.
+// ============================================================================
+//
+// Constantine, unprompted, in his own words:
+//
+//   "rotating to horizontal should work again. I hate that it tells me to
+//    rerotate to verticle. revert that back, or make that a configurable
+//    setting."
+//
+// HE OFFERED TWO ANSWERS AND MARINA RULED THE SECOND — a revert deletes whatever
+// the gate was protecting; a setting keeps the protection reachable. So the gate
+// now takes an `enabled` argument fed by ONE row, `Display / Short-screen
+// warning`, and `SAY.hint` names that row on the gate's own face.
+//
+// ⚠ AND THE LEAST FLATTERING FACT IN THIS LANE IS ALREADY IN THIS FILE, sixty
+// lines down: *"A gate that tells a desktop player to rotate their monitor is a
+// gate nobody trusts the second time."* WE WROTE DOWN THAT THIS NAG CAN BE WRONG,
+// SHIPPED IT WITH NO WAY TO TURN IT OFF, AND LEFT THE OWNER TO ASK. The sentence
+// was about the *wording* being false on a desktop; the amendment is about there
+// being no door at all. Two different defects, one root — a refusal we knew could
+// misfire and gave nobody a switch for.
+//
+// WHAT THE AMENDMENT DID NOT CHANGE, said plainly because the row's default turns
+// on it: **the wall is still there.** At 844x390 on this tree, measured, not
+// argued (`node tools/uprightgate.mjs`):
+//
+//     .end-turn  top 415.41..439.78  0% on screen  NO scroll path to the rest
+//     .energy-orb 0% on screen, unreachable · .hand-area 32.05% on screen
+//
+// So the row ships DEFAULTING ON. Off, the board draws and the turn cannot be
+// ended — that is a choice a player may make with the note in front of them, and
+// it is not "rotating to horizontal should work again". **LANDSCAPE SUPPORT IS
+// STILL OWED** and it is still the thing the four reasons below are about. The
+// default is one token (`def: true` in screens/settings.js) and it is the one part
+// of this held for his word.
+//
+// ============================================================================
 // THE DECISION, AND IT CAME BEFORE ANY LAYOUT: GATE, NOT SUPPORT.
 // ============================================================================
 //
@@ -47734,27 +48856,54 @@ let gate = null;
 // the pointer query is ever wrong about someone, they still read a true
 // sentence here — which is exactly why it must not name the fix.
 const SAFE = 'Your run is safe — nothing is lost, and it comes right back.';
+// ONE LINE NAMING THE WAY OUT, ADDED FOR HIS AMENDMENT, AND IT IS A POINTER AND
+// NOT A CONTROL. He wrote *"I hate that it tells me to rerotate to verticle"* —
+// and the reason he had to ASK is that this screen never said a setting existed.
+// A refusal a player cannot turn off, that does not admit it can be turned off,
+// is the shape of the complaint. It stays a sentence rather than a button, which
+// keeps the header's no-bypass argument intact: what it costs is one tap in a
+// menu, and what that buys is a player who read the row's note before choosing.
+// SHARED BY BOTH VARIANTS for the same reason SAFE is — two doors with two
+// strings is how they drift.
+const HINT = 'Rather draw it anyway? Settings › Display › Short-screen warning.';
 const SAY = {
   rotate: {
     title: 'Turn your phone upright',
     body: 'Sideways there isn’t enough height for the board, and END TURN ends up somewhere your thumb can’t reach.',
     safe: SAFE,
+    hint: HINT,
   },
   resize: {
     title: 'This window is too short',
     body: 'There isn’t enough height for the board, and END TURN ends up somewhere you can’t reach.',
     safe: SAFE,
+    hint: HINT,
   },
 };
 
 /**
- * updateUprightGate({ short, offerRotate })
+ * updateUprightGate({ short, offerRotate, enabled })
  *
- *   short        the viewport is shorter than `uiScale.gateBelowH` — THE ONLY
- *                thing that decides whether the game refuses this shape
+ *   short        the viewport is shorter than `uiScale.gateBelowH` — the only
+ *                GEOMETRIC thing that decides whether this shape is refused
  *   offerRotate  main.js asked the same decider about the SWAPPED viewport and
  *                it is not short, AND the primary pointer is coarse — so
  *                "turn it" is a true and doable instruction. WORDING ONLY.
+ *   enabled      the player's own answer — `Display / Short-screen warning`.
+ *                `false` and nothing stands, whatever the geometry says. It is a
+ *                SECOND, INDEPENDENT gate rather than a term inside `short`,
+ *                because "is this screen too short" and "does this player want to
+ *                be told" are two questions and one of them is his.
+ *
+ * ⚠ `enabled === false` IS THE ONE DOOR THROUGH THIS REFUSAL AND IT IS NOT THE
+ * "CONTINUE ANYWAY" BUTTON THE HEADER RULES OUT. The header's argument stands
+ * unchanged — a door into a wall placed AT the wall is worse than the wall,
+ * because it is pressed in the moment of annoyance by someone who has not been
+ * told what is on the other side. This one is a persisted setting, in the Display
+ * list, reached from a screen that is working, with the cost written on the row;
+ * and the gate does not offer it, it merely NAMES it (see SAY.hint below), which
+ * is the difference between an escape hatch and an informed choice. **His word
+ * amended the ruling and it is recorded here rather than reinterpreted.**
  *
  * Idempotent, and deliberately so: it is called from every applyUiScale, which
  * fires on boot, on every settings change and on a 150ms resize debounce. When
@@ -47762,9 +48911,12 @@ const SAY = {
  * — the part that matters — NOTHING BENEATH IT RE-RENDERS. Turning the phone
  * back removes one element; the run underneath never knew.
  */
-function updateUprightGate({ short, offerRotate } = {}) {
+function updateUprightGate({ short, offerRotate, enabled = true } = {}) {
   if (typeof document === 'undefined') return null;
-  if (!short) {
+  // `enabled === false` takes the gate down by the SAME path a fitting screen
+  // does, so turning the setting off mid-fight removes one element and the run
+  // underneath never knows — the idempotence promise above, applied to his row.
+  if (!short || enabled === false) {
     if (gate) { gate.remove(); gate = null; }
     return null;
   }
@@ -47788,6 +48940,7 @@ function updateUprightGate({ short, offerRotate } = {}) {
       <h2 id="upright-title">${say.title}</h2>
       <p class="upright-say">${say.body}</p>
       <p class="upright-safe">${say.safe}</p>
+      <p class="upright-hint">${say.hint}</p>
     </div>`;
   return gate;
 }

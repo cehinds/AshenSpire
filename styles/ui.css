@@ -303,7 +303,30 @@
   background: rgba(12, 10, 7, 0.62); border: 1px solid var(--line-soft);
   font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
 }
-.hint-bar.hint-combat { top: 5.8rem; bottom: auto; } /* under the 5.2rem topbar; combat's bottom is full */
+/* ⚠ TWO LANES MEET IN THIS BLOCK AND BOTH HALVES ARE HERE ON PURPOSE — the
+   rebase resolution is recorded rather than smoothed. Sten's act (15d4bca) made
+   these chips REAL BUTTONS with a tap floor and derived labels: his truth. Mine
+   moves the combat strip to the bottom of the column and lets it wrap: my
+   layout. Neither half was reshaped to fit the other. The one line that
+   genuinely conflicted was `.hint-bar.hint-combat { top: 5.8rem }` — the pinned
+   position he carried forward untouched and I was sent to change — and it is
+   MINE, replaced below. Everything he wrote about the chip itself stands.
+
+   ⚠ AND THE SEAM BIT, ON THE AXIS NOBODY WATCHED. Marina warned that his labels
+   could change WIDTH and told me to measure a wider one; I did, and width is
+   fine (a 9-character rebind wraps, 0 chips clipped). IT BIT ON HEIGHT.
+   `--tap-floor` on `.hint` takes the chip from a line of text to 44 px, so the
+   strip is 54 px tall instead of 25 — and combat's column is then 18 px SHORT at
+   1200x730 Text M, the SHIPPED DEFAULT. Measured on the merged tree: strip
+   687.5..741.5 against a 730 viewport, so 42.5 of 54 px visible — 78.7%,
+   legible, clipped at its bottom edge. At Text XL it is wholly below the fold
+   (+127 px).
+   BOTH HALVES ARE RIGHT AND THE COLUMN IS OVER-SUBSCRIBED: a pressable control
+   owes the tap floor, and his other sentence puts a row at the bottom. What
+   cannot pay for either is `.hand-area height:23rem` plus `.field`'s min-content
+   — Law 4 clause 4's named 400-of-548 debt. NOT resolved here, NOT resolved in
+   the rebase, NOT painted green: tools/hintstrip.mjs prints the number every run
+   as `unknown` and states what turns it into an assertion. It goes to Marina. */
 /* LAW 4 CLAUSE 4, ON A CONTROL THAT WAS TEXT UNTIL TODAY. A fixed floor with
    intrinsic growth, never a multiple of the text unit: `--tap-floor` is the
    ergonomic constant (and answers UI size, not Text size), the glyphs inside push
@@ -325,6 +348,46 @@
    the control being pressed (`.end-turn` fills under its own words); this is only
    the chip saying it took the press. */
 .hint-bar .hint:active { background: rgba(var(--accent-rgb), 0.24); }
+/* COMBAT'S STRIP JOINS THE FLOW AT THE BOTTOM OF THE COLUMN. His words,
+   2026-08-17: "this should be at the bottom under the cards, not over lapped by
+   the cards. perhaps shift the cards up a bit to make space for this tool tip."
+
+   ⚠ HIS PREMISE IS HALF RIGHT AND THE HALF THAT IS WRONG IS RECORDED RATHER
+   THAN QUIETLY FIXED. The strip was never overlapped by the CARDS: measured at
+   db09846 on eight wide shapes (1200x730, 1200x600, 1366x768, 1440x900,
+   1920x1080, 1024x640, 900x560, 800x600) it touched 0 of 5 cards at every one,
+   and it WAS 100% inside the TOPBAR at all eight — a bar this rule's old
+   comment called 5.2rem and which measures 141 local px. What the pill actually
+   sat on was the POISE track. So the element he pointed at is right, the
+   direction he wants it moved is right, and the occluder is not the one he
+   named. His instruction is followed exactly; the correction is his to keep.
+
+   IN THE FLOW, NOT PINNED, and it is the same fix and the same reason as the
+   map's (styles/map.css .mapscreen .hint-bar). A fixed pill reserves no height,
+   so "under the cards" written as a bottom offset is a number somebody re-tunes
+   every time the hand changes. As the last row of the .combat column it takes
+   its own height out of .field — which IS the "shift the cards up" half of his
+   sentence, derived from the strip's own box instead of typed.
+
+   IT WRAPS, and this is the seam with Sten's lane (item 1(b): making these
+   chips work and deriving their labels from the live binding and device). The
+   base rule is `white-space: nowrap; overflow: hidden`, so a label WIDER than
+   `E` — a rebind to Backspace, a pad glyph — was silently CLIPPED. A control
+   strip that hides a control is worse than one that is two rows tall. Wrapping
+   is between chips only: `.hint` is an inline-flex unit, so a key never
+   separates from its verb (Law 5 clause 3's shape — the row wraps around items
+   that do not). Measured against a 9-character rebound label, both shapes;
+   tools/hintstrip.mjs holds it.
+
+   `max-width: 96vw` becomes `96%` here — Law 2 forbids vw/vh below body and
+   this is a new write of this rule. The base .hint-bar above keeps its vw and
+   is NOT swept (ratchet, not sweep). */
+.hint-bar.hint-combat {
+  position: static; top: auto; bottom: auto; transform: none;
+  align-self: center; margin: 0 auto 0.6rem; max-width: 96%;
+  flex-wrap: wrap; justify-content: center; row-gap: 0.4rem;
+  white-space: normal; overflow: visible;
+}
 .hint-bar kbd {
   font-family: var(--font-body); font-size: 1rem; min-width: 1.5rem; text-align: center;
   padding: 0.1rem 0.5rem; border-radius: 4px; color: var(--parchment);

@@ -53,6 +53,13 @@ import { armInspect } from './holdconfirm.js';
 import { stickTooltip } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
 
+// The custom property this component publishes so the stylesheets can reserve
+// room for the fan's upward lift without knowing how it is computed. Named here
+// because the value has exactly one author; tools/hintstrip.mjs reads the NAME
+// out of this file rather than typing it, so a rename cannot leave a check
+// asserting a property nobody writes.
+export const FAN_LIFT_PROP = '--fan-lift';
+
 export function mountHand(handEl, { registries, wireCard = null }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
@@ -124,13 +131,50 @@ export function mountHand(handEl, { registries, wireCard = null }) {
     handEl.innerHTML = '';
     handEls = [];
     handFan = [];
-    if (emptyHtml != null) { handEl.innerHTML = emptyHtml; return; }
+    // An empty hand fans nothing, so it reserves nothing — stated rather than
+    // left at the last render's value.
+    if (emptyHtml != null) { handEl.style.setProperty(FAN_LIFT_PROP, '0px'); handEl.innerHTML = emptyHtml; return; }
     const n = cards.length;
+    // ONE HOME FOR THE FAN'S OWN HEIGHT COST. The lift is derived here, so the
+    // room for it is published here too and the stylesheets READ it — they never
+    // restate it (Law 0 clause 4). Both `.hand` rules reserve
+    // var(--fan-lift) in padding-top; a stylesheet that forgets falls back to
+    // 0px and the defect is visible, not plausible (Law 0 clause 5).
+    handEl.style.setProperty(FAN_LIFT_PROP, `${((n - 1) / 2) * 6}px`);
     cards.forEach((entry, i) => {
       const el = renderCard(registries, entry.inst,
         entry.preview ? { preview: entry.preview, affordable: entry.affordable } : { affordable: entry.affordable });
       const spread = Math.min(6, n) * 1.2;
-      el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
+      // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
+      // CENTRE. Same arc, same step, same look — translated so the LOWEST card
+      // sits on the strip's own baseline and nothing is pushed below it.
+      //
+      // WHY, and it is his ask plus a defect the ask uncovered. He asked for the
+      // control strip to sit "at the bottom under the cards ... perhaps shift
+      // the cards up a bit to make space". The strip is now the last row of the
+      // .combat column (styles/ui.css .hint-bar.hint-combat), so the column
+      // supplies the space. But the old expression pushed the OUTER cards DOWN
+      // by |i-mid| * 6, and the outermost card's box therefore ended 5.65 local
+      // px BELOW .hand — measured identical, to two decimals, on all eight wide
+      // shapes at db09846, which is a constant and not a coincidence of one
+      // window. Off the bottom of the viewport before this change; onto the
+      // strip after it. A gap constant on the strip would have hidden that
+      // instead of removing it, and would have been re-tuned by the next hand
+      // change: the fan's own overflow is the fan's to not have.
+      //
+      // max|i-mid| is mid, at i = 0 and i = n-1, so subtracting mid puts those
+      // two at 0 and lifts the centre by mid * 6. DERIVED from the same mid the
+      // rotation already uses — no second constant, and n = 1 stays 0.
+      //
+      // THE LIFT HAS TO BE RESERVED, AND IT IS RESERVED FROM HERE — see
+      // FAN_LIFT_PROP below. Measured at 390x844 with the shipped hand of five:
+      // mid * 6 = 12 px and the narrow strip's padding-top is 1.2rem = 12 px, so
+      // the centre card's top landed EXACTLY on .hand's border edge, clearance
+      // 0.00. That is an accident of n = 5, not a fit: at n = 6 the lift is 15 px
+      // against the same 12 and the phone's scroller starts clipping the card it
+      // is meant to feature. A number that is only right for today's hand size.
+      const mid = (n - 1) / 2;
+      el.style.transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
       el.style.zIndex = i;
       if (entry.selected) el.classList.add('selected');
       // The spelled-out unavailability reason is VIEWER data (co-op supplies
