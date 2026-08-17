@@ -719,11 +719,23 @@ const PLANTS = [
     // proved: it is in `mustStay` deliberately, so a future edit that reddens
     // the fold under this plant tells us the plant stopped being the pre-fix
     // placement.
+    // RE-AIMED 2026-08-17 by Bjorn, gating this commit. The negation read
+    // `!/\.cz-fields > \.cz-disc pick:tint: panel opens/` — it embedded the
+    // HOST LABEL, and that label is DERIVED at runtime from the fold host's
+    // parent className. It is the same rot P15 and P16 were just re-aimed for,
+    // in the one position where it fails the other way: a mustRed that stops
+    // matching gives a LOUD false red, a mustStay negation that stops matching
+    // gives a SILENT false green, forever. Measured, same door: one extra
+    // class on `.cz-fields` (`class="cz-fields cz-stack"`) with P17 planted —
+    // the string `.cz-fields > .cz-disc` appears ZERO times in the output, the
+    // run is otherwise identical at 8/14, and this assertion is vacuously true
+    // from then on. It now keys on `pick:tint`, which is the entry's own key
+    // out of the content table, not on a class name a tidy-up can change.
     mustStay: (out) => /PASS each folded row names what is currently chosen, ON THE GLASS/.test(out)
       && /PASS a tap opens the folded picker/.test(out)
       && /PASS every face and armament tile clears the/.test(out)
       && /PASS horizontal travel is ZERO/.test(out)
-      && !/\.cz-fields > \.cz-disc pick:tint: panel opens/.test(out),
+      && !/pick:tint: panel opens/.test(out),
   },
 ];
 
@@ -864,6 +876,19 @@ async function selftest() {
   console.log('  earlier no-op of placeUnderRow is NOT in the corpus and that is deliberate: it goes');
   console.log('  13/13 including the gated row, so it reddens a gate that could already see one row');
   console.log('  and proves nothing about the widening (Bjorn\'s correction, 2026-08-16).');
+  console.log('  P17\'s mustStay NEGATION WAS RE-AIMED 2026-08-17 (Bjorn) off the derived host label');
+  console.log('  onto the entry key. A negation that stops matching does not go red — it goes green');
+  console.log('  and stays green. One extra class on `.cz-fields` deleted its referent entirely,');
+  console.log('  measured through the same door. Read every `!` in this corpus that way.');
+  console.log('  THE TWO DENOMINATOR FLOORS ADDED AT MR-301, and what has actually been watched:');
+  console.log('  the FOLD-ROSTER floor goes red in this corpus already — P8 removes the fold and the');
+  console.log('  anchor sentence prints `NO REFERENT: 0/1 named fold row(s) measured`. The');
+  console.log('  NO-FACE-AT-ALL floor carries NO corpus row; watched red by hand 2026-08-17 (Bjorn),');
+  console.log('  same door, file bytes in a disposable copy — `.disc-reveal` renamed so no host');
+  console.log('  carries a panel: `0/0 anchored across 0 host(s): nothing · NO REFERENT: no face on');
+  console.log('  this screen was measured`, exit 1. It is not a corpus row because that edit craters');
+  console.log('  six sentences at once, which is the shape this corpus refuses. NEITHER FLOOR SEES A');
+  console.log('  PARTIAL LOSS — one host leaving the set is exit 0; see the boundary of a full run.');
   console.log('  The tooltip path (hover/gamepad focus) is ASSERTED every run and has never been');
   console.log('  watched to fail — it carries no plant here.');
   process.exit(fails ? 1 : 0);
@@ -1155,14 +1180,20 @@ async function main() {
     // ---- 7. the anchor (MR-287) -------------------------------------------
     // LAST ON PURPOSE. This pass CLICKS every face on the screen and clicks it
     // shut again; running it earlier would hand sections 1-6 a screen this
-    // pass had touched. It therefore reads the screen AS THIS RUN LEFT IT —
-    // section 3 has opened the expander, so the brief hosts carry one more
-    // face here than they do on arrival. SINCE MR-301 THAT IS INSIDE THE GATE,
-    // not beside it: the expander's own faces are faces a player reaches, so
-    // they are gated, and the count in this sentence is a count of the screen
-    // this run left rather than of the screen a player arrives on.
-    // `.cz-fields` is untouched by the expander, so the fold row reads the
-    // same either way.
+    // pass had touched. It therefore reads the screen AS THIS RUN LEFT IT.
+    //
+    // CORRECTED 2026-08-17 (Bjorn, gating MR-301). This comment claimed the
+    // brief hosts carry the expander's extra face here and that the face is
+    // therefore inside the gate. MEASURED AND FALSE: section 3 opens the
+    // expander, section 6 PICKS a tint, and a pick calls renderPortrait(),
+    // which re-runs mountDisclosure() on both brief hosts — a remount that
+    // shuts the expander. At this line aria-expanded is FALSE, the stats host
+    // holds its 9 face-tier faces, and `derived:stamina` is not measured by
+    // this pass at all. 14 is the ARRIVAL composition, 9 + 4 + 1. Under P8 —
+    // no fold, so no pick, so no remount — the same line reads 10 + 4 + 0,
+    // which is also 14, which is why two different screens have been reading
+    // as one number. THE EXPANDED STATE IS UNGATED; see the boundary.
+    // `.cz-fields` is untouched by the expander either way.
     const anchors = await ev(ANCHOR_READ);
     const foldKeys = new Set(FOLDED.map((row) => row.key));
     const foldAnchors = anchors.filter((row) => foldKeys.has(row.key));
@@ -1171,8 +1202,18 @@ async function main() {
     // `.cz-fields` (the fold), `#cz-brief-stats` and `#cz-brief-armaments`.
     // It is deliberately NOT a list of hosts — a fourth `.cz-disc` appearing
     // on this screen is gated the day it is mounted, with nothing to edit
-    // here, and a host that DISAPPEARS shows up in the denominator floor
-    // below rather than as a quietly smaller green.
+    // here.
+    //
+    // CORRECTED 2026-08-17 (Bjorn, gating MR-301). This comment claimed a host
+    // that DISAPPEARS shows up in the denominator floor below rather than as a
+    // quietly smaller green. MEASURED AND FALSE: `.cz-disc` is a selector, and
+    // a host that stops matching it — or loses its `.disc-reveal` — is
+    // `continue`d in ANCHOR_READ and never reaches the denominator.
+    // `#cz-brief-armaments` reclassed to `.cz-group`, one CSS rule followed,
+    // layout unchanged: PASS, 10/10 across 2 hosts, exit 0. The floors below
+    // are TOTAL loss and the FOLD ROSTER. The PARTIAL loss has no floor, and
+    // giving it one means deriving the denominator from the content door
+    // (`want`), which is a predicate change and is not made here.
     const adrift = anchors.filter((row) => !row.anchored);
     const hosts = [...new Set(anchors.map((row) => row.host))];
     const perHost = hosts.map((h) => {
@@ -1249,8 +1290,24 @@ async function main() {
   console.log('  and 154. IT GOES RED FOR EVERY FACE OF EVERY `.cz-disc` — today the fold row in');
   console.log('  `.cz-fields` plus `#cz-brief-stats` and `#cz-brief-armaments`, 14 faces at both');
   console.log('  shapes. The set is read off the screen, not listed, so a fourth host is gated the');
-  console.log('  day it mounts; a host that VANISHES is caught by the denominator floor beside the');
-  console.log('  predicate, never by a quietly smaller green.');
+  console.log('  day it mounts.');
+  // -------------------------------------------------------------------
+  // CORRECTED 2026-08-17 by Bjorn, gating MR-301. What stood here said: "a
+  // host that VANISHES is caught by the denominator floor beside the
+  // predicate, never by a quietly smaller green." MEASURED, and it is false.
+  // The claim is deleted rather than softened.
+  // -------------------------------------------------------------------
+  console.log('  A HOST THAT LEAVES THE SET IS A QUIETLY SMALLER GREEN, AND THE FLOORS BELOW DO NOT');
+  console.log('  CATCH IT. `.cz-disc` is a SELECTOR: a host that stops matching it, or that loses');
+  console.log('  its `.disc-reveal`, is skipped and never reaches the denominator. Measured');
+  console.log('  2026-08-17 (Bjorn), same door, file bytes in a disposable copy: `#cz-brief-armaments`');
+  console.log('  reclassed `.cz-disc` -> `.cz-group` with the one CSS rule followed so the layout is');
+  console.log('  unchanged — this sentence printed PASS, 10/10 anchored across 2 host(s), EXIT 0,');
+  console.log('  every other sentence green, and four faces of a host Sunna fixed left the gate in');
+  console.log('  silence. The two floors below are the TOTAL loss and the FOLD ROSTER; the PARTIAL');
+  console.log('  loss has no floor. Closing it needs a denominator derived from the content door');
+  console.log('  (want.faces + want.behind + want.armaments + FOLDED) rather than a typed count, and');
+  console.log('  that is a predicate change, not a boundary — it is not made here.');
   // ---------------------------------------------------------------------
   // WIDENED 2026-08-17 by Vira (MR-301). What stood here until this commit was
   // Marina's conditional — RED ONLY FOR THE ROWS IN `FOLDED` — and, below it,
@@ -1281,10 +1338,26 @@ async function main() {
   console.log('  edges are carried by P15 and P16, which reach every host.');
   console.log('  IT IS SILENT on the panel\'s HEIGHT, on whether either is in the viewport, and on');
   console.log('  SCROLL: a panel correctly anchored to a face 900 px down the page is still a panel a');
-  console.log('  player has to scroll to find. It is measured LAST, on the screen this run left —');
-  console.log('  section 3 has opened the expander by then, so the brief hosts carry one more face');
-  console.log('  than arrival does, and since the widening THAT FACE IS GATED TOO. `.cz-fields` is');
-  console.log('  untouched by the expander, so the fold row reads the same either way.');
+  console.log('  player has to scroll to find. It is measured LAST, on the screen this run left.');
+  // -------------------------------------------------------------------
+  // CORRECTED 2026-08-17 by Bjorn, gating MR-301. What stood here said the
+  // brief hosts carry the expander's extra face by section 7 and that the
+  // face is therefore inside the gate. MEASURED, and it is false: the
+  // expander is SHUT again by then. The claim is deleted, and the gap it was
+  // hiding is named instead.
+  // -------------------------------------------------------------------
+  console.log('  AND THE EXPANDED STATE IS NOT IN THE GATE. Section 3 opens the expander, but');
+  console.log('  section 6 PICKS a tint, and a pick calls renderPortrait(), which re-runs');
+  console.log('  mountDisclosure() on both brief hosts (customize.js) — a full remount that shuts');
+  console.log('  the expander. Measured 2026-08-17 (Bjorn): at section 7 aria-expanded is FALSE and');
+  console.log('  `#cz-brief-stats` holds its 9 face-tier faces, so `derived:stamina` — a face a');
+  console.log('  player reaches — is NEVER anchor-measured on a clean run. 14 is the ARRIVAL');
+  console.log('  composition (9 + 4 + 1), not the screen this run left. The corpus already says so');
+  console.log('  and nobody read it: under P8 the fold is gone, so no pick lands, so no remount, and');
+  console.log('  the same line reads `#cz-brief-stats 10/10` — a DIFFERENT 14. The expander is also');
+  console.log('  the state that RE-WRAPS the host, which is the state a placement regression shows');
+  console.log('  in worst. UNGATED, and named rather than assumed. `.cz-fields` is untouched by the');
+  console.log('  expander either way.');
   console.log('  AND `UNDER` IS ONE AXIS. The predicate is `panel.top - face.bottom`; it never');
   console.log('  reads x. Planted at 50ebb39 and watched GREEN at exit 0 (Bjorn):');
   console.log('  `.disc-reveal { position: relative; left: 320px }` — a full-width panel shoved');
